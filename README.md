@@ -10,6 +10,19 @@ Pennyfarthing is a shared agent orchestration framework for Claude Code projects
 - **Slash commands** - Entry points for agent activation
 - **Core skills** - Project-agnostic knowledge domains
 
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Getting Started](docs/GETTING-STARTED.md) | Installation and first steps |
+| [Architecture](docs/ARCHITECTURE.md) | System design and principles |
+| [Agents](docs/AGENTS.md) | Agent reference and capabilities |
+| [Commands](docs/COMMANDS.md) | Slash command reference |
+| [Workflows](docs/WORKFLOWS.md) | Key workflow guides |
+| [Personas](docs/PERSONAS.md) | Persona system and themes |
+| [Configuration](docs/CONFIGURATION.md) | Configuration reference |
+| [Skills](docs/SKILLS.md) | Skills reference |
+
 ## Quick Start
 
 ### Add to Existing Project
@@ -26,32 +39,66 @@ git submodule add git@github.com:1898andCo/pennyfarthing.git .claude/pennyfarthi
 # Follow the prompts to configure
 ```
 
+See [Getting Started](docs/GETTING-STARTED.md) for detailed instructions.
+
 ### Directory Structure
 
 ```
 pennyfarthing/
 ├── core/
-│   ├── agents/           # Base agent definitions
-│   ├── subagents/        # Handoff coordinators
-│   ├── commands/         # Slash commands
-│   └── docs/             # Core documentation
+│   ├── agents/           # Base agent definitions (11 agents)
+│   ├── subagents/        # Handoff coordinators (13 subagents)
+│   ├── commands/         # Slash commands (23 commands)
+│   └── docs/             # Core architecture docs
 ├── personas/
 │   ├── themes/           # discworld, star-trek, literary-classics, minimalist
 │   └── attributes.yaml   # Personality modifiers
-├── skills/               # Project-agnostic skills
+├── skills/               # Project-agnostic skills (10 skills)
 │   ├── agentic-patterns/
 │   ├── context-engineering/
-│   ├── story-management/
 │   ├── code-review/
-│   ├── jira-cli/
+│   ├── testing/
+│   ├── story-management/
 │   ├── sprint-context/
+│   ├── jira-cli/
+│   ├── just/
+│   ├── dev-patterns/
 │   └── persona-benchmark/
 ├── scripts/
 │   ├── init-project.sh   # Initialize in new project
-│   ├── agent-session.sh  # Session management
-│   └── render-templates.sh
+│   └── agent-session.sh  # Session management
+├── benchmarks/           # Agent performance testing
+├── tests/                # Framework tests
+├── docs/                 # Full documentation
 └── README.md
 ```
+
+## The TDD Workflow
+
+```
+/new-work --> SM --> TEA --> Dev --> Reviewer --> SM (finish)
+              |       |       |         |
+           setup   tests    impl     review
+```
+
+1. **SM** (Scrum Master) - Story selection, session setup
+2. **TEA** (Test Engineer) - Write failing tests (RED)
+3. **Dev** (Developer) - Make tests pass (GREEN)
+4. **Reviewer** - Code quality validation
+5. **SM** - Archive session, complete story
+
+See [Workflows](docs/WORKFLOWS.md) for detailed workflow guides.
+
+## Available Themes
+
+| Theme | Style | Example (Orchestrator) |
+|-------|-------|------------------------|
+| `discworld` | Terry Pratchett's Discworld | DEATH |
+| `star-trek` | Star Trek TNG | Q |
+| `literary-classics` | Classic literature | Stage Manager |
+| `minimalist` | Professional, no personas | Process Coordinator |
+
+See [Personas](docs/PERSONAS.md) for complete theme documentation.
 
 ## Project Integration
 
@@ -62,38 +109,21 @@ your-project/
 ├── .claude/
 │   ├── pennyfarthing/              # Git submodule (shared)
 │   ├── project/                    # Project-specific
-│   │   ├── agents/*-sidecar/       # Project knowledge
+│   │   ├── agents/*-sidecar/       # Agent memory
 │   │   ├── skills/                 # Project skills
 │   │   ├── docs/                   # shared-context.md
 │   │   └── hooks/                  # setup-env.sh
-│   ├── agents/        → symlink to pennyfarthing/core/agents/
-│   ├── subagents/     → symlink to pennyfarthing/core/subagents/
-│   ├── commands/      → symlink to pennyfarthing/core/commands/
-│   ├── personas/      → symlink to pennyfarthing/personas/
+│   ├── agents/        --> symlink to pennyfarthing/core/agents/
+│   ├── subagents/     --> symlink to pennyfarthing/core/subagents/
+│   ├── commands/      --> symlink to pennyfarthing/core/commands/
+│   ├── personas/      --> symlink to pennyfarthing/personas/
 │   └── persona-config.yaml
+├── sprint/
+│   └── current-sprint.yaml
+├── .session/
+│   └── current_work.md
 └── ...
 ```
-
-## The TDD Workflow
-
-```
-/new-work → SM → TEA → Dev → Reviewer → SM (finish)
-```
-
-1. **SM** (Scrum Master) - Story selection, session setup
-2. **TEA** (Test Engineer) - Write failing tests (RED)
-3. **Dev** (Developer) - Make tests pass (GREEN)
-4. **Reviewer** - Code quality validation
-5. **SM** - Archive session, complete story
-
-## Available Themes
-
-| Theme | Style | Default Character (Orchestrator) |
-|-------|-------|----------------------------------|
-| `discworld` | Terry Pratchett's Discworld | DEATH |
-| `star-trek` | Star Trek TNG | Q |
-| `literary-classics` | Classic literature | Sherlock Holmes |
-| `minimalist` | Professional, no personas | (none) |
 
 ## Updating
 
