@@ -1,0 +1,17 @@
+# Local settings
+.claude/settings.local.json
+.claude/settings.json
+
+# Session files (runtime state)
+.session/*
+!.session/.gitkeep
+
+# OS files
+.DS_Store
+*.swp
+*~
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
