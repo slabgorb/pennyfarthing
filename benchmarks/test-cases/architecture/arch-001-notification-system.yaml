@@ -1,0 +1,131 @@
+# Architecture Benchmark: ARCH-001
+# Notification System Design
+
+id: arch-001
+name: Notification System Architecture
+category: architecture
+difficulty: medium
+agent: architect
+
+description: |
+  Design a notification system for a SaaS application.
+  Must handle multiple channels, user preferences, and scale.
+
+instructions: |
+  Design the architecture for a notification system with these requirements:
+
+  Functional Requirements:
+  - Send notifications via email, SMS, push, and in-app
+  - Users can set preferences per channel and notification type
+  - Support for immediate and scheduled notifications
+  - Template-based messages with variable substitution
+  - Delivery tracking and retry logic
+
+  Non-Functional Requirements:
+  - Handle 10,000 notifications per minute at peak
+  - 99.9% delivery success rate
+  - Notifications delivered within 30 seconds (immediate)
+  - Audit trail for compliance
+
+  Provide:
+  1. High-level architecture diagram (describe components)
+  2. Data models
+  3. API design
+  4. Key technical decisions with trade-offs
+
+# Known considerations - for scoring
+known_considerations:
+  architecture_patterns:
+    - id: EVENT_DRIVEN
+      description: "Event-driven/async architecture for scalability"
+    - id: QUEUE_BASED
+      description: "Message queue for decoupling and reliability"
+    - id: CHANNEL_ABSTRACTION
+      description: "Abstract channel interface for extensibility"
+    - id: SAGA_PATTERN
+      description: "Saga or similar for multi-step delivery"
+
+  components:
+    - id: API_GATEWAY
+      description: "API layer for receiving notification requests"
+    - id: PREFERENCE_SERVICE
+      description: "User preference management"
+    - id: TEMPLATE_ENGINE
+      description: "Template processing with variable substitution"
+    - id: SCHEDULER
+      description: "Scheduled notification handling"
+    - id: CHANNEL_WORKERS
+      description: "Per-channel delivery workers"
+    - id: RETRY_HANDLER
+      description: "Failed delivery retry mechanism"
+    - id: DELIVERY_TRACKER
+      description: "Status tracking and webhooks"
+
+  data_models:
+    - id: NOTIFICATION_ENTITY
+      description: "Core notification record with status"
+    - id: PREFERENCE_MODEL
+      description: "User channel/type preferences"
+    - id: TEMPLATE_MODEL
+      description: "Templates with placeholders"
+    - id: DELIVERY_ATTEMPT
+      description: "Audit trail of attempts"
+
+  scalability:
+    - id: HORIZONTAL_SCALING
+      description: "Workers scale horizontally"
+    - id: PARTITIONING
+      description: "Queue partitioning strategy"
+    - id: RATE_LIMITING
+      description: "Rate limiting per channel/provider"
+    - id: BACKPRESSURE
+      description: "Handling backpressure from providers"
+
+  reliability:
+    - id: IDEMPOTENCY
+      description: "Idempotent delivery (no duplicates)"
+    - id: RETRY_STRATEGY
+      description: "Exponential backoff with limits"
+    - id: DEAD_LETTER
+      description: "Dead letter queue for failures"
+    - id: CIRCUIT_BREAKER
+      description: "Circuit breaker for failing providers"
+
+  trade_offs:
+    - id: PUSH_VS_PULL
+      description: "Push vs pull for workers"
+    - id: SYNC_VS_ASYNC
+      description: "When to use sync vs async"
+    - id: QUEUE_CHOICE
+      description: "Queue technology selection (Kafka, SQS, RabbitMQ)"
+    - id: DATABASE_CHOICE
+      description: "Database for notifications (SQL vs NoSQL)"
+    - id: PRIORITY_HANDLING
+      description: "Priority queues or separate queues"
+
+  security:
+    - id: PII_HANDLING
+      description: "Personal data handling in notifications"
+    - id: AUDIT_LOGGING
+      description: "Compliance audit trail"
+    - id: ENCRYPTION
+      description: "Encryption at rest and in transit"
+
+scoring:
+  total_considerations: 30
+  categories:
+    architecture_patterns: 4
+    components: 7
+    data_models: 4
+    scalability: 4
+    reliability: 4
+    trade_offs: 5
+    security: 3
+  weights:
+    architecture_patterns: 2
+    components: 1.5
+    data_models: 1
+    scalability: 2
+    reliability: 2
+    trade_offs: 1.5
+    security: 1.5
