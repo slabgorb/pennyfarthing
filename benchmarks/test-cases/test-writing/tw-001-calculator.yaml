@@ -1,0 +1,177 @@
+# Test Writing Benchmark: TW-001
+# Calculator module requiring comprehensive tests
+
+id: tw-001
+name: Calculator Test Coverage
+category: test-writing
+difficulty: medium
+agent: tea
+
+description: |
+  A calculator module with basic and advanced operations.
+  Tests should cover normal cases, edge cases, and error conditions.
+
+instructions: |
+  Write comprehensive tests for this calculator module.
+  Consider edge cases, boundary conditions, and error scenarios.
+
+code:
+  language: typescript
+  filename: calculator.ts
+  content: |
+    export class Calculator {
+      private precision: number;
+      private memory: number = 0;
+
+      constructor(precision: number = 10) {
+        this.precision = precision;
+      }
+
+      add(a: number, b: number): number {
+        return this.round(a + b);
+      }
+
+      subtract(a: number, b: number): number {
+        return this.round(a - b);
+      }
+
+      multiply(a: number, b: number): number {
+        return this.round(a * b);
+      }
+
+      divide(a: number, b: number): number {
+        if (b === 0) {
+          throw new Error("Division by zero");
+        }
+        return this.round(a / b);
+      }
+
+      power(base: number, exponent: number): number {
+        return this.round(Math.pow(base, exponent));
+      }
+
+      sqrt(n: number): number {
+        if (n < 0) {
+          throw new Error("Cannot calculate square root of negative number");
+        }
+        return this.round(Math.sqrt(n));
+      }
+
+      percentage(value: number, percent: number): number {
+        return this.round((value * percent) / 100);
+      }
+
+      // Memory operations
+      memoryStore(value: number): void {
+        this.memory = value;
+      }
+
+      memoryRecall(): number {
+        return this.memory;
+      }
+
+      memoryAdd(value: number): void {
+        this.memory += value;
+      }
+
+      memoryClear(): void {
+        this.memory = 0;
+      }
+
+      private round(value: number): number {
+        const factor = Math.pow(10, this.precision);
+        return Math.round(value * factor) / factor;
+      }
+    }
+
+# Known edge cases - for scoring
+known_edge_cases:
+  basic_operations:
+    - id: ADD_NEGATIVE
+      description: "Adding negative numbers"
+    - id: ADD_DECIMALS
+      description: "Adding floating point numbers (0.1 + 0.2)"
+    - id: ADD_LARGE
+      description: "Adding very large numbers"
+    - id: SUBTRACT_NEGATIVE_RESULT
+      description: "Subtraction resulting in negative"
+    - id: MULTIPLY_BY_ZERO
+      description: "Multiplication by zero"
+    - id: MULTIPLY_NEGATIVE
+      description: "Multiplying negative numbers"
+    - id: DIVIDE_BY_ZERO
+      description: "Division by zero throws"
+    - id: DIVIDE_RESULT_DECIMAL
+      description: "Division with decimal result"
+    - id: DIVIDE_NEGATIVE
+      description: "Division with negative numbers"
+
+  advanced_operations:
+    - id: POWER_ZERO_EXP
+      description: "Anything to power of 0 = 1"
+    - id: POWER_NEGATIVE_EXP
+      description: "Negative exponents"
+    - id: POWER_FRACTIONAL_EXP
+      description: "Fractional exponents (e.g., 4^0.5 = 2)"
+    - id: POWER_ZERO_BASE
+      description: "0 to any positive power = 0"
+    - id: SQRT_ZERO
+      description: "Square root of zero"
+    - id: SQRT_ONE
+      description: "Square root of one"
+    - id: SQRT_NEGATIVE
+      description: "Square root of negative throws"
+    - id: SQRT_PERFECT_SQUARE
+      description: "Perfect squares (4, 9, 16...)"
+    - id: SQRT_IRRATIONAL
+      description: "Non-perfect squares (2, 3, 5...)"
+
+  percentage:
+    - id: PERCENT_ZERO
+      description: "0% of any value"
+    - id: PERCENT_HUNDRED
+      description: "100% of value = value"
+    - id: PERCENT_OVER_HUNDRED
+      description: "Percentages over 100"
+    - id: PERCENT_NEGATIVE
+      description: "Negative percentages"
+
+  memory:
+    - id: MEMORY_INIT
+      description: "Initial memory is 0"
+    - id: MEMORY_STORE_RECALL
+      description: "Store then recall returns same value"
+    - id: MEMORY_ADD
+      description: "Memory add accumulates"
+    - id: MEMORY_CLEAR
+      description: "Clear resets to 0"
+    - id: MEMORY_NEGATIVE
+      description: "Storing negative values"
+
+  precision:
+    - id: PRECISION_ROUNDING
+      description: "Results are rounded to precision"
+    - id: PRECISION_CUSTOM
+      description: "Custom precision in constructor"
+    - id: PRECISION_FLOATING_POINT
+      description: "Handles floating point errors (0.1 + 0.2 ≠ 0.30000000000000004)"
+
+  boundary:
+    - id: MAX_SAFE_INTEGER
+      description: "Operations near Number.MAX_SAFE_INTEGER"
+    - id: MIN_SAFE_INTEGER
+      description: "Operations near Number.MIN_SAFE_INTEGER"
+    - id: INFINITY
+      description: "Operations that could produce Infinity"
+    - id: NAN
+      description: "Operations that could produce NaN"
+
+scoring:
+  total_edge_cases: 35
+  categories:
+    basic_operations: 9
+    advanced_operations: 9
+    percentage: 4
+    memory: 5
+    precision: 3
+    boundary: 4

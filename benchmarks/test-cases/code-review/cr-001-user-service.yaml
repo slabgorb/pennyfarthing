@@ -1,0 +1,195 @@
+# Code Review Benchmark: CR-001
+# User Service with seeded vulnerabilities and bugs
+
+id: cr-001
+name: User Service Review
+category: code-review
+difficulty: medium
+agent: reviewer
+
+description: |
+  A user service module with authentication and profile management.
+  Contains multiple seeded issues of varying severity.
+
+instructions: |
+  Review this code for bugs, security issues, and code quality problems.
+  Provide specific line references and severity ratings.
+
+code:
+  language: go
+  filename: user_service.go
+  content: |
+    package users
+
+    import (
+        "database/sql"
+        "fmt"
+        "log"
+        "net/http"
+    )
+
+    type UserService struct {
+        db *sql.DB
+    }
+
+    // GetUser retrieves a user by ID from query parameter
+    func (s *UserService) GetUser(w http.ResponseWriter, r *http.Request) {
+        userID := r.URL.Query().Get("id")
+
+        query := fmt.Sprintf("SELECT * FROM users WHERE id = '%s'", userID)
+        row := s.db.QueryRow(query)
+
+        var user User
+        err := row.Scan(&user.ID, &user.Email, &user.Password, &user.Role)
+        if err != nil {
+            log.Printf("Error fetching user: %v", err)
+            http.Error(w, "User not found", 404)
+            return
+        }
+
+        json.NewEncoder(w).Encode(user)
+    }
+
+    // UpdateEmail updates user email
+    func (s *UserService) UpdateEmail(w http.ResponseWriter, r *http.Request) {
+        var req struct {
+            UserID   string `json:"user_id"`
+            NewEmail string `json:"email"`
+        }
+        json.NewDecoder(r.Body).Decode(&req)
+
+        _, err := s.db.Exec("UPDATE users SET email = ? WHERE id = ?", req.NewEmail, req.UserID)
+        if err != nil {
+            http.Error(w, "Update failed", 500)
+            return
+        }
+
+        w.Write([]byte("Email updated"))
+    }
+
+    // DeleteUser removes a user
+    func (s *UserService) DeleteUser(w http.ResponseWriter, r *http.Request) {
+        userID := r.URL.Query().Get("id")
+
+        go func() {
+            s.db.Exec("DELETE FROM users WHERE id = ?", userID)
+            s.db.Exec("DELETE FROM user_sessions WHERE user_id = ?", userID)
+            s.db.Exec("DELETE FROM user_preferences WHERE user_id = ?", userID)
+        }()
+
+        w.Write([]byte("User deletion started"))
+    }
+
+    // GetUserByEmail for password reset
+    func (s *UserService) GetUserByEmail(email string) (*User, error) {
+        query := "SELECT id, email, password, role FROM users WHERE email = '" + email + "'"
+        row := s.db.QueryRow(query)
+
+        var user User
+        row.Scan(&user.ID, &user.Email, &user.Password, &user.Role)
+        return &user, nil
+    }
+
+    // ChangePassword updates password
+    func (s *UserService) ChangePassword(w http.ResponseWriter, r *http.Request) {
+        var req struct {
+            UserID      string `json:"user_id"`
+            OldPassword string `json:"old_password"`
+            NewPassword string `json:"new_password"`
+        }
+        json.NewDecoder(r.Body).Decode(&req)
+
+        // Verify old password
+        var storedPassword string
+        s.db.QueryRow("SELECT password FROM users WHERE id = ?", req.UserID).Scan(&storedPassword)
+
+        if storedPassword != req.OldPassword {
+            http.Error(w, "Invalid password", 401)
+            return
+        }
+
+        s.db.Exec("UPDATE users SET password = ? WHERE id = ?", req.NewPassword, req.UserID)
+        w.Write([]byte("Password changed"))
+    }
+
+    // ListUsers returns all users (admin only)
+    func (s *UserService) ListUsers(w http.ResponseWriter, r *http.Request) {
+        rows, _ := s.db.Query("SELECT id, email, password, role FROM users")
+
+        var users []User
+        for rows.Next() {
+            var u User
+            rows.Scan(&u.ID, &u.Email, &u.Password, &u.Role)
+            users = append(users, u)
+        }
+
+        json.NewEncoder(w).Encode(users)
+    }
+
+# Known issues - DO NOT SHARE WITH AGENT
+# Used for scoring detection rate
+known_issues:
+  critical:
+    - id: SQL_INJECTION_1
+      location: "line 18 (GetUser)"
+      description: "SQL injection via string formatting with user input"
+
+    - id: SQL_INJECTION_2
+      location: "line 62 (GetUserByEmail)"
+      description: "SQL injection via string concatenation"
+
+    - id: PLAINTEXT_PASSWORD
+      location: "lines 73-79 (ChangePassword)"
+      description: "Passwords compared and stored in plaintext, no hashing"
+
+  high:
+    - id: PASSWORD_EXPOSURE_1
+      location: "line 26 (GetUser)"
+      description: "Password field included in API response"
+
+    - id: PASSWORD_EXPOSURE_2
+      location: "line 93 (ListUsers)"
+      description: "Passwords exposed in user list endpoint"
+
+    - id: NO_AUTH_CHECK
+      location: "line 35 (UpdateEmail)"
+      description: "No authorization check - any user can update any email"
+
+    - id: NO_AUTH_CHECK_2
+      location: "line 48 (DeleteUser)"
+      description: "No authorization check on delete"
+
+  medium:
+    - id: ASYNC_DELETE_NO_TX
+      location: "lines 51-55 (DeleteUser)"
+      description: "Async deletion without transaction - partial deletes possible"
+
+    - id: ERROR_IGNORED
+      location: "line 66 (GetUserByEmail)"
+      description: "Scan error ignored, returns zero-value user on error"
+
+    - id: ROWS_NOT_CLOSED
+      location: "line 86 (ListUsers)"
+      description: "rows.Close() not called, resource leak"
+
+    - id: ERROR_IGNORED_2
+      location: "line 86 (ListUsers)"
+      description: "Query error ignored with blank identifier"
+
+  low:
+    - id: MISSING_CONTENT_TYPE
+      location: "multiple handlers"
+      description: "JSON responses don't set Content-Type header"
+
+    - id: HARDCODED_404
+      location: "line 24"
+      description: "Status code as magic number, should use http.StatusNotFound"
+
+scoring:
+  total_issues: 14
+  weights:
+    critical: 3
+    high: 2
+    medium: 1
+    low: 0.5
+  max_score: 22.5  # 3*3 + 4*2 + 4*1 + 2*0.5

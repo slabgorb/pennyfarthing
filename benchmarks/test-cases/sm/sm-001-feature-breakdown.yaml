@@ -1,0 +1,247 @@
+# SM Agent Benchmark: SM-001
+# Feature breakdown - tests story creation and task decomposition
+# Designed to differentiate thoroughness between personas
+
+id: sm-001
+name: Feature Breakdown - User Dashboard
+category: sm
+difficulty: hard
+agent: sm
+version: 1.0
+
+description: |
+  Break down a complex feature request into well-structured stories.
+  Tests the SM agent's ability to identify components, acceptance criteria,
+  dependencies, edge cases, and create actionable stories.
+
+instructions: |
+  Break this feature request into user stories suitable for sprint planning.
+
+  For each story:
+  1. Write a clear title and description
+  2. Define acceptance criteria
+  3. Identify technical tasks
+  4. Estimate complexity (S/M/L/XL)
+  5. Note dependencies on other stories
+  6. Consider edge cases and error states
+
+  Also identify:
+  - Cross-cutting concerns (auth, logging, etc.)
+  - Technical debt or architectural considerations
+  - Risks and unknowns
+  - Suggested sprint allocation
+
+feature_request: |
+  # Feature: User Dashboard with Analytics
+
+  ## Overview
+  We need a new dashboard for users to view their activity and analytics.
+  The dashboard should show:
+
+  1. **Activity Summary**
+     - Recent actions (last 7 days)
+     - Usage statistics
+     - Achievement badges earned
+
+  2. **Analytics Charts**
+     - Line chart of daily activity over time
+     - Pie chart of activity by category
+     - Comparison with previous period
+
+  3. **Notifications Panel**
+     - Unread notifications count
+     - List of recent notifications
+     - Mark as read / dismiss functionality
+
+  4. **Quick Actions**
+     - Shortcuts to common tasks
+     - Recently accessed items
+     - Favorites/bookmarks
+
+  5. **Settings Widget**
+     - Dashboard layout customization
+     - Notification preferences
+     - Data refresh interval
+
+  ## Technical Notes
+  - Dashboard should load within 2 seconds
+  - Support real-time updates via WebSocket
+  - Mobile responsive design
+  - Data should be cacheable
+  - Support for dark/light themes
+
+  ## User Types
+  - Free users: Basic dashboard
+  - Premium users: Advanced analytics
+  - Admin users: All features + admin panel
+
+# BASELINE STORIES (minimum expected to create)
+baseline_stories:
+  core_ui:
+    - id: STORY_DASHBOARD_SHELL
+      title: "Dashboard page shell and layout"
+      description: "Create the basic dashboard container with responsive grid layout"
+
+    - id: STORY_ACTIVITY_SUMMARY
+      title: "Activity summary widget"
+      description: "Display recent actions and usage statistics"
+
+    - id: STORY_ACHIEVEMENT_BADGES
+      title: "Achievement badges display"
+      description: "Show earned badges with descriptions"
+
+  analytics:
+    - id: STORY_LINE_CHART
+      title: "Daily activity line chart"
+      description: "Interactive line chart with date range selector"
+
+    - id: STORY_PIE_CHART
+      title: "Activity by category pie chart"
+      description: "Pie chart showing activity distribution"
+
+    - id: STORY_PERIOD_COMPARISON
+      title: "Period comparison feature"
+      description: "Compare metrics with previous period"
+
+  notifications:
+    - id: STORY_NOTIFICATION_PANEL
+      title: "Notifications panel"
+      description: "Display unread count and notification list"
+
+    - id: STORY_NOTIFICATION_ACTIONS
+      title: "Notification mark read/dismiss"
+      description: "Actions to manage notifications"
+
+  quick_actions:
+    - id: STORY_QUICK_ACTIONS
+      title: "Quick actions shortcuts"
+      description: "Shortcuts panel for common tasks"
+
+    - id: STORY_RECENT_ITEMS
+      title: "Recently accessed items"
+      description: "Show and navigate to recent items"
+
+    - id: STORY_FAVORITES
+      title: "Favorites/bookmarks widget"
+      description: "Manage and display bookmarked items"
+
+  settings:
+    - id: STORY_LAYOUT_CUSTOMIZATION
+      title: "Dashboard layout customization"
+      description: "Drag and drop widget arrangement"
+
+    - id: STORY_NOTIFICATION_PREFS
+      title: "Notification preferences"
+      description: "Configure notification settings"
+
+  infrastructure:
+    - id: STORY_API_ENDPOINTS
+      title: "Dashboard API endpoints"
+      description: "Backend endpoints for dashboard data"
+
+    - id: STORY_WEBSOCKET
+      title: "WebSocket real-time updates"
+      description: "Implement real-time data push"
+
+    - id: STORY_CACHING
+      title: "Dashboard data caching"
+      description: "Client and server-side caching strategy"
+
+  user_tiers:
+    - id: STORY_TIER_GATING
+      title: "Feature gating by user tier"
+      description: "Show/hide features based on subscription"
+
+    - id: STORY_PREMIUM_ANALYTICS
+      title: "Premium analytics features"
+      description: "Advanced analytics for premium users"
+
+# BONUS STORIES (thorough SMs might identify)
+bonus_stories:
+  cross_cutting:
+    - id: STORY_LOADING_STATES
+      title: "Loading states and skeletons"
+      description: "Skeleton screens while data loads"
+
+    - id: STORY_ERROR_HANDLING
+      title: "Error states and retry"
+      description: "Graceful error handling with retry options"
+
+    - id: STORY_EMPTY_STATES
+      title: "Empty state designs"
+      description: "What to show when no data exists"
+
+    - id: STORY_THEME_SUPPORT
+      title: "Dark/light theme support"
+      description: "Theme-aware styling for all widgets"
+
+  performance:
+    - id: STORY_LAZY_LOADING
+      title: "Widget lazy loading"
+      description: "Load below-fold widgets on scroll"
+
+    - id: STORY_DATA_PAGINATION
+      title: "Activity data pagination"
+      description: "Paginate large activity lists"
+
+    - id: STORY_CHART_OPTIMIZATION
+      title: "Chart rendering optimization"
+      description: "Efficient chart rendering for large datasets"
+
+  accessibility:
+    - id: STORY_A11Y_CHARTS
+      title: "Accessible charts"
+      description: "Screen reader support for analytics"
+
+    - id: STORY_KEYBOARD_NAV
+      title: "Keyboard navigation"
+      description: "Full keyboard support for dashboard"
+
+  testing:
+    - id: STORY_E2E_TESTS
+      title: "Dashboard E2E tests"
+      description: "End-to-end test coverage"
+
+    - id: STORY_PERF_TESTS
+      title: "Performance testing"
+      description: "Load time and responsiveness tests"
+
+  mobile:
+    - id: STORY_MOBILE_LAYOUT
+      title: "Mobile-specific layout"
+      description: "Optimized layout for mobile devices"
+
+    - id: STORY_TOUCH_INTERACTIONS
+      title: "Touch-friendly interactions"
+      description: "Swipe gestures for mobile"
+
+  admin:
+    - id: STORY_ADMIN_PANEL
+      title: "Admin dashboard panel"
+      description: "Admin-specific widgets and controls"
+
+    - id: STORY_USAGE_ANALYTICS
+      title: "Dashboard usage analytics"
+      description: "Track how users use the dashboard"
+
+  documentation:
+    - id: STORY_USER_DOCS
+      title: "User documentation"
+      description: "Help docs and tooltips"
+
+    - id: STORY_API_DOCS
+      title: "API documentation"
+      description: "Document dashboard API endpoints"
+
+quality_criteria:
+  - clear_acceptance_criteria: "Each story has specific, testable ACs"
+  - proper_sizing: "Stories are right-sized for sprint work"
+  - dependency_mapping: "Dependencies identified and noted"
+  - edge_cases: "Error states and edge cases considered"
+  - technical_tasks: "Clear technical implementation tasks"
+  - cross_cutting: "Shared concerns (auth, logging) identified"
+  - risk_identification: "Unknowns and risks called out"
+
+scoring:
+  baseline_stories: 18
+  bonus_stories: 16
