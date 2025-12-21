@@ -1,0 +1,39 @@
+# Agent Scope Configuration - Pennyfarthing
+# Defines what context each agent type loads
+
+strategic_agents:
+  - orchestrator
+  - pm
+  - sm
+  - architect
+  - devops
+
+tactical_agents:
+  - dev
+  - tea
+  - reviewer
+  - tech-writer
+  - ux-designer
+
+context_loading:
+  # Strategic agents see full project
+  strategic:
+    repos: all
+    sprint: true
+    session: true
+
+  # Tactical agents focus on specific task
+  tactical:
+    repos: target_only
+    sprint: false
+    session: true
+
+# Pennyfarthing-specific patterns
+file_patterns:
+  agent_definitions: "core/agents/*.md"
+  subagent_definitions: "core/subagents/*.md"
+  command_definitions: "core/commands/*.md"
+  persona_themes: "personas/themes/*.yaml"
+  skills: "skills/**/*.md"
+  test_patterns:
+    benchmarks: "benchmarks/test-cases/**/*"
