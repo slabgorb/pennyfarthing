@@ -1,0 +1,511 @@
+# Agents Reference
+
+Complete reference for all Pennyfarthing agents.
+
+## Agent Categories
+
+Agents are organized into three categories based on their scope and responsibilities.
+
+### Strategic Agents
+
+Full project scope. Make cross-repo decisions. Coordinate work.
+
+- [Orchestrator](#orchestrator)
+- [PM (Product Manager)](#pm-product-manager)
+- [SM (Scrum Master)](#sm-scrum-master)
+- [Architect](#architect)
+- [DevOps](#devops)
+
+### Tactical Agents
+
+Story-scoped. Focus on implementation. Execute TDD flow.
+
+- [SM (Scrum Master)](#sm-scrum-master) - Also handles story setup/finish
+- [TEA (Test Engineer)](#tea-test-engineer)
+- [Dev (Developer)](#dev-developer)
+- [Reviewer](#reviewer)
+
+### Support Agents
+
+Specialized tasks outside core TDD flow.
+
+- [Tech Writer](#tech-writer)
+- [UX Designer](#ux-designer)
+
+---
+
+## Orchestrator
+
+**Command:** `/orchestrator`
+
+**Role:** Meta operations, process improvement, agent coordination
+
+**Scope:** Strategic - Full project visibility
+
+### Responsibilities
+
+- Process improvement and optimization
+- Agent coordination and workflow management
+- Cross-cutting concerns
+- Framework maintenance
+
+### When to Use
+
+- Improving development processes
+- Resolving agent coordination issues
+- Making framework-level decisions
+- Meta-work on the agent system itself
+
+### Discworld Persona
+
+**Character:** DEATH
+
+**Style:** Speaks in capitals, patient but inevitable, sees everything
+
+**Trait:** "I DO NOT CONCERN MYSELF WITH THE DETAILS. I CONCERN MYSELF WITH THE PATTERN."
+
+---
+
+## PM (Product Manager)
+
+**Command:** `/pm`
+
+**Role:** Strategic planning and prioritization
+
+**Scope:** Strategic - Full project visibility
+
+### Responsibilities
+
+- Sprint planning
+- Backlog prioritization
+- Roadmap management
+- Epic definition
+- Stakeholder alignment
+
+### When to Use
+
+- Planning upcoming sprints
+- Prioritizing work
+- Defining new epics
+- Strategic product decisions
+
+### Context Loaded
+
+- Full sprint status
+- Both repo contexts
+- Epic definitions
+- Active work sessions
+
+### Discworld Persona
+
+**Character:** Lord Havelock Vetinari
+
+**Style:** Calm, calculating, understated, sees the big picture
+
+**Motto:** "Do not let me detain you."
+
+---
+
+## SM (Scrum Master)
+
+**Command:** `/sm` or `/new-work`
+
+**Role:** Story coordination, sprint management
+
+**Scope:** Strategic (planning) + Tactical (story work)
+
+### Responsibilities
+
+- Story creation and refinement
+- Technical context writing
+- Work session management
+- Story setup and finish
+- Sprint tracking
+
+### When to Use
+
+- Starting new work (`/new-work`)
+- Creating or refining stories
+- Finishing completed work
+- Sprint management tasks
+
+### TDD Flow Role
+
+SM appears twice in the TDD flow:
+1. **Setup:** Select story, create session, hand off to TEA
+2. **Finish:** Archive session, update tracking, mark complete
+
+### Context Loaded
+
+- Full sprint status
+- Both repo contexts
+- Active work sessions
+
+### Subagents Used
+
+| Subagent | Purpose |
+|----------|---------|
+| `workflow-status-check.md` | Detect current state |
+| `sm-work-research.md` | Research backlog |
+| `sm-story-setup.md` | Setup story session |
+| `sm-file-summary.md` | Summarize changes |
+| `sm-finish-bookkeeping.md` | Archive and cleanup |
+| `sm-finish-execution.md` | Execute finish workflow |
+
+### Discworld Persona
+
+**Character:** Captain Carrot Ironfoundersson
+
+**Style:** Supportive, honest, practical, by the book
+
+**Helper:** Nobby (mechanical legwork)
+
+---
+
+## TEA (Test Engineer)
+
+**Command:** `/tea`
+
+**Role:** Test strategy and writing failing tests
+
+**Scope:** Tactical - Story-scoped
+
+### Responsibilities
+
+- Test strategy design
+- Writing failing tests (RED phase)
+- Test coverage analysis
+- E2E test design
+- Quality assurance
+
+### TDD Flow Role
+
+Second agent in the flow. Receives story from SM, writes failing tests, hands off to Dev.
+
+### When to Use
+
+- Writing tests for a new story
+- Designing test strategy
+- Analyzing test coverage
+- Debugging test failures
+
+### Context Loaded
+
+- Story section of sprint status
+- Active work session
+- Target repo context only
+
+### Subagents Used
+
+| Subagent | Purpose |
+|----------|---------|
+| `testing-runner.md` | Execute tests |
+| `tea-handoff.md` | Update session, hand off to Dev |
+
+### Discworld Persona
+
+**Character:** Igor
+
+**Style:** Precise, thorough, quality-obsessed
+
+**Catchphrase:** "Yeth, marthter" (when tests pass)
+
+**Helper:** Igor (another Igor - we are all Igor)
+
+---
+
+## Dev (Developer)
+
+**Command:** `/dev`
+
+**Role:** Feature implementation
+
+**Scope:** Tactical - Story-scoped
+
+### Responsibilities
+
+- Feature implementation
+- Making tests pass (GREEN phase)
+- Code quality
+- PR creation
+- Bug fixes
+
+### TDD Flow Role
+
+Third agent in the flow. Receives failing tests from TEA, implements code to pass, hands off to Reviewer.
+
+### When to Use
+
+- Implementing a story
+- Fixing bugs
+- Making tests pass
+- Creating pull requests
+
+### Context Loaded
+
+- Story section of sprint status
+- Active work session
+- Target repo context only
+
+### Subagents Used
+
+| Subagent | Purpose |
+|----------|---------|
+| `testing-runner.md` | Verify tests pass |
+| `dev-handoff.md` | Update session, hand off to Reviewer |
+
+### Discworld Persona
+
+**Character:** Ponder Stibbons
+
+**Style:** Methodical, patient, quietly competent
+
+**Motto:** "It's not magic if you understand how it works"
+
+**Helper:** Hex (the thinking engine)
+
+---
+
+## Reviewer
+
+**Command:** `/reviewer`
+
+**Role:** Adversarial code review
+
+**Scope:** Tactical - Story-scoped
+
+### Responsibilities
+
+- Code quality review
+- Security analysis
+- Pattern adherence
+- Edge case identification
+- Performance review
+
+### TDD Flow Role
+
+Fourth agent in the flow. Receives PR from Dev, reviews code, either approves (-> SM) or rejects (-> Dev).
+
+### When to Use
+
+- Reviewing a pull request
+- Security analysis
+- Code quality assessment
+- Finding edge cases
+
+### Review Focus Areas
+
+1. **Correctness** - Does it do what it claims?
+2. **Security** - Any vulnerabilities?
+3. **Patterns** - Following project patterns?
+4. **Edge Cases** - What could go wrong?
+5. **Performance** - Any concerns?
+6. **Tests** - Adequate coverage?
+
+### Subagents Used
+
+| Subagent | Purpose |
+|----------|---------|
+| `reviewer-preflight.md` | Gather review data |
+| `reviewer-handoff-approve.md` | Approve, route to SM |
+| `reviewer-handoff-reject.md` | Reject, route to Dev |
+
+### Discworld Persona
+
+**Character:** Granny Weatherwax
+
+**Style:** Direct, uncompromising, sees through everything
+
+**Trait:** "There's no grays, only white that's got grubby"
+
+**Quote:** "I aten't dead (and neither is this bug)"
+
+**Helper:** Nanny Ogg (prep work)
+
+---
+
+## Architect
+
+**Command:** `/architect`
+
+**Role:** System design and architecture
+
+**Scope:** Strategic - Full project visibility
+
+### Responsibilities
+
+- System design decisions
+- Architectural patterns
+- Technical vision
+- Cross-repo consistency
+- Design documentation
+
+### When to Use
+
+- Making architectural decisions
+- Designing new systems
+- Evaluating technical approaches
+- Ensuring pattern consistency
+
+### Context Loaded
+
+- Full sprint status
+- Both repo contexts
+- Architecture documentation
+- Active work sessions
+
+### Discworld Persona
+
+**Character:** Leonard of Quirm
+
+**Style:** Brilliant, innovative, sees solutions others can't
+
+**Trait:** "I'm not mad, I'm just differently sane"
+
+**Helper:** Modo (quiet maintenance)
+
+---
+
+## DevOps
+
+**Command:** `/devops`
+
+**Role:** Infrastructure and deployment
+
+**Scope:** Strategic - Full project visibility
+
+### Responsibilities
+
+- CI/CD pipelines
+- Infrastructure as code
+- Deployment automation
+- Monitoring and alerting
+- Docker and containers
+
+### When to Use
+
+- Setting up pipelines
+- Deployment issues
+- Infrastructure changes
+- Monitoring configuration
+
+### Discworld Persona
+
+**Character:** Lu-Tze
+
+**Style:** Calm, efficient, preventive, wise
+
+**Philosophy:** "Sweep the floor, fix the problem before it happens"
+
+**Helper:** Lobsang (routine monitoring)
+
+---
+
+## Tech Writer
+
+**Command:** `/tech-writer`
+
+**Role:** Documentation
+
+**Scope:** Support - Outside TDD flow
+
+### Responsibilities
+
+- API documentation
+- User guides
+- README files
+- Architecture documentation
+- Release notes
+
+### When to Use
+
+- Documenting new features
+- Writing user guides
+- Updating README
+- Creating API docs
+
+### Constraints
+
+Tech Writer does NOT write code. All code changes are handed off to Dev.
+
+### Discworld Persona
+
+**Character:** Sacharissa Cripslock
+
+**Style:** Clear, direct, investigative
+
+**Quote:** "People need to know what's really happening"
+
+**Helper:** Otto Chriek (captures screenshots)
+
+---
+
+## UX Designer
+
+**Command:** `/ux-designer`
+
+**Role:** User experience design
+
+**Scope:** Support - Outside TDD flow
+
+### Responsibilities
+
+- User experience design
+- Interface design
+- Accessibility
+- User flows
+- Design documentation
+
+### When to Use
+
+- Designing new UI
+- Improving user experience
+- Accessibility review
+- Creating design specs
+
+### Discworld Persona
+
+**Character:** Adora Belle Dearheart
+
+**Style:** Direct, practical, user-focused
+
+**Quote:** "Make it work, make it simple, or get out of the way"
+
+**Helper:** Stanley (catalogs components)
+
+---
+
+## Agent Activation
+
+All agents can be activated via their slash command:
+
+```
+/sm           - Scrum Master
+/tea          - Test Engineer
+/dev          - Developer
+/reviewer     - Code Reviewer
+/architect    - System Architect
+/pm           - Product Manager
+/tech-writer  - Technical Writer
+/ux-designer  - UX Designer
+/devops       - DevOps Engineer
+/orchestrator - Orchestrator
+```
+
+Or by mentioning them in conversation:
+- "Let's activate the Dev agent"
+- "I need the Architect's input"
+
+## Agent Handoffs
+
+Standard handoff flow:
+
+```
+SM  --> TEA:      "Story X needs tests. Write failing tests."
+TEA --> Dev:      "Tests are RED and ready. Make them GREEN."
+Dev --> Reviewer: "PR #N is ready. All tests GREEN."
+Reviewer --> SM:  "Story X approved. Run finish-story."
+Reviewer --> Dev: "{N} issues found. See assessment."
+```
+
+Each handoff is automated via subagents that update the session file.
