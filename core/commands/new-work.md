@@ -1,5 +1,5 @@
 ---
-description: Start a new work session with BMAD
+description: Start a new work session with Pennyfarthing
 ---
 
 # Start New Work Session

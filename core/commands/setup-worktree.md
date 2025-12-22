@@ -17,6 +17,10 @@ Creates an isolated worktree for working on a story/bug without affecting main c
 
 - [ ] Know what you're working on (story ID, bug number, etc.)
 - [ ] Main checkout is on develop (recommended but not required)
+- [ ] Environment variables set in `.claude/project/hooks/setup-env.sh`:
+  - `API_REPO` - Name of your API repository
+  - `UI_REPO` - Name of your UI repository
+- [ ] API/UI symlinks exist at project root (created by `init-project.sh`)
 
 ## Steps
 
@@ -116,20 +120,20 @@ VITE_PORT=$UI_PORT npm run dev
 ./scripts/worktree-manager.sh create 5-2 feat/5-2-csv-import
 
 # 2. Work on the feature
-cd worktrees/5-2/API
+cd worktrees/5-2/$API_REPO
 # ... make changes ...
 git add . && git commit -m "feat(5-2): implement CSV parser"
 
-cd ../UI
+cd ../../../worktrees/5-2/$UI_REPO
 # ... make changes ...
 git add . && git commit -m "feat(5-2): add import UI"
 
 # 3. Push and create PR
-cd worktrees/5-2/API
+cd $PROJECT_ROOT/worktrees/5-2/$API_REPO
 git push -u origin feat/5-2-csv-import
 gh pr create --base develop
 
-cd ../UI
+cd $PROJECT_ROOT/worktrees/5-2/$UI_REPO
 git push -u origin feat/5-2-csv-import
 gh pr create --base develop
 

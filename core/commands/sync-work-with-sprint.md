@@ -1,10 +1,10 @@
 ---
-description: Sync BMAD work session with unified sprint status
+description: Sync Pennyfarthing work session with unified sprint status
 ---
 
 # Sync Work Session with Sprint Status
 
-This workflow helps you coordinate your BMAD work session with the unified sprint status tracking.
+This workflow helps you coordinate your Pennyfarthing work session with the unified sprint status tracking.
 
 ## Prerequisites
 
@@ -29,7 +29,7 @@ cat sprint/sprint-status.yaml
 
 **Current Sprint 1 - Coordinated Development Setup:**
 - Epic 1: Coordinated Development Setup - IN PROGRESS (2/5 done)
-  - 1-1: BMAD Solo Dev Setup - done
+  - 1-1: Pennyfarthing Solo Dev Setup - done
   - 1-2: Cross-Repo Workflows - done
   - 1-3: Environment Configuration - backlog
   - 1-4: API Connection Verification - backlog
@@ -38,7 +38,7 @@ cat sprint/sprint-status.yaml
 - Epic 2: Critical Bug Fixes - BACKLOG (plan as needed)
 - Epic 3: Core Feature Development - BACKLOG (plan as needed)
 
-### 2. Update BMAD Session with Story Info
+### 2. Update Pennyfarthing Session with Story Info
 
 Edit `.session/current-work.md` to include story details:
 
@@ -115,7 +115,7 @@ cd $PROJECT_ROOT/UI
 
 ### 4. Work on the Story
 
-Follow your BMAD session and check off tasks as you complete them.
+Follow your Pennyfarthing session and check off tasks as you complete them.
 
 ### 5. Update Sprint Status to "done"
 
@@ -153,7 +153,7 @@ git add docs/sprint-artifacts/sprint-status.yaml
 git commit -m "chore: update sprint status for story [ID]"
 ```
 
-### 7. Archive BMAD Session
+### 7. Archive Pennyfarthing Session
 
 ```bash
 cd $PROJECT_ROOT
@@ -373,4 +373,4 @@ git commit -m "chore: update sprint status for story [ID]"
 
 ---
 
-**Your BMAD session is now synced with sprint tracking!**
+**Your Pennyfarthing session is now synced with sprint tracking!**

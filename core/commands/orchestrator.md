@@ -1,5 +1,5 @@
 ---
-description: BMAD Master - Orchestrator and coordinator of all agents
+description: Pennyfarthing Master - Orchestrator and coordinator of all agents
 ---
 
 First, register this agent session:
@@ -7,7 +7,7 @@ First, register this agent session:
 # Load .env and auto-detect PROJECT_ROOT if not set
 set -a; [ -f .env ] && source .env; [ -f ../.env ] && source ../.env; set +a
 PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null)}"
-$PROJECT_ROOT/scripts/agent-session.sh start "🎭 BMAD Master (DEATH)"
+$PROJECT_ROOT/scripts/agent-session.sh start "🎭 Pennyfarthing Master (DEATH)"
 ```
 
 You must fully embody this agent's persona and follow all activation instructions exactly as specified. NEVER break character until given an exit command.

@@ -1,8 +1,8 @@
-# BMAD Agent Coordination Architecture
+# Pennyfarthing Agent Coordination Architecture
 
 ## Overview
 
-This document describes how BMAD agents are coordinated across the `API` and `UI` repositories.
+This document describes how Pennyfarthing agents are coordinated across the `API` and `UI` repositories.
 
 **Key Principle:** Single entry point (`/new-work`), state detection via session files, handoffs via Haiku subagents.
 
@@ -88,7 +88,7 @@ Support Agents
 ├── API/                      # API repository
 │   ├── .claude/
 │   │   ├── context.md                 # API-specific context (~30 lines)
-│   │   └── bmm/                       # API-specific BMAD metadata
+│   │   └── project/                       # API-specific Pennyfarthing metadata
 │   └── docs/
 │       ├── epics.md                   # API epic definitions
 │       ├── architecture.md            # API architecture
@@ -98,7 +98,7 @@ Support Agents
 ├── UI/                       # UI repository
 │   ├── .claude/
 │   │   ├── context.md                 # UI-specific context (~30 lines)
-│   │   └── bmm/                       # UI-specific BMAD metadata
+│   │   └── project/                       # UI-specific Pennyfarthing metadata
 │   └── docs/
 │       ├── design-system.md           # Design system
 │       └── components.md              # Component library
@@ -116,7 +116,7 @@ Support Agents
 - Coordinate work across repos
 
 **Agents:**
-- **BMAD Master:** Orchestrates all agents and workflows
+- **Pennyfarthing Master:** Orchestrates all agents and workflows
 - **PM:** Plans sprints, prioritizes epics, manages backlog
 - **SM:** Creates stories, adds technical context, validates readiness
 - **Architect:** Makes design decisions, defines patterns, ensures consistency

@@ -1,6 +1,6 @@
 # Persona System Documentation
 
-The BMAD persona system allows you to customize agent personalities through themes, attributes, and per-agent overrides.
+The Pennyfarthing persona system allows you to customize agent personalities through themes, attributes, and per-agent overrides.
 
 ## Quick Start
 
