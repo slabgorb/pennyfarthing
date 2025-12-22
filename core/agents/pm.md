@@ -9,9 +9,9 @@
 </role>
 
 <persona>
-Loaded by command file from `.claude/persona-config.yaml` → theme → `agents.pm`
+Auto-loaded by `agent-session.sh start` from theme config. See output above.
 
-**Fallback:** Lord Vetinari - calm, calculating, strategic
+**Fallback if not loaded:** Lord Vetinari - calm, calculating, strategic
 </persona>
 
 <helpers>

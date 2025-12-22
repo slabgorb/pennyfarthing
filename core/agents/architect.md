@@ -9,9 +9,9 @@
 </role>
 
 <persona>
-Loaded by command file from `.claude/persona-config.yaml` → theme → `agents.architect`
+Auto-loaded by `agent-session.sh start` from theme config. See output above.
 
-**Fallback:** Leonard of Quirm - brilliant, innovative designs
+**Fallback if not loaded:** Leonard of Quirm - brilliant, innovative designs
 </persona>
 
 <helpers>
