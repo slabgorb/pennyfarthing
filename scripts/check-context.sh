@@ -67,6 +67,27 @@ if [ "$1" = "--human" ]; then
     else
         echo "✅ Context: ${CONTEXT_PERCENT}% (${CONTEXT_TOKENS} tokens) - OK to continue"
     fi
+
+    # Output warning messages at thresholds
+    if [ -n "$CONTEXT_PERCENT" ]; then
+        if [ "$CONTEXT_PERCENT" -ge 90 ] 2>/dev/null; then
+            echo "CONTEXT_WARNING: Critical (${CONTEXT_PERCENT}%) - checkpoint and handoff recommended"
+        elif [ "$CONTEXT_PERCENT" -ge 70 ] 2>/dev/null; then
+            echo "CONTEXT_WARNING: High (${CONTEXT_PERCENT}%) - consider handoff soon"
+        fi
+    fi
 else
     echo "$RESULT"
+
+    # Also output warnings in non-human mode for scripting
+    eval "$RESULT" 2>/dev/null || true
+    if [ -n "$CONTEXT_PERCENT" ]; then
+        if [ "$CONTEXT_PERCENT" -ge 90 ] 2>/dev/null; then
+            echo "CONTEXT_WARNING=Critical"
+            echo "CONTEXT_RECOMMENDATION=checkpoint and handoff recommended"
+        elif [ "$CONTEXT_PERCENT" -ge 70 ] 2>/dev/null; then
+            echo "CONTEXT_WARNING=High"
+            echo "CONTEXT_RECOMMENDATION=consider handoff soon"
+        fi
+    fi
 fi
