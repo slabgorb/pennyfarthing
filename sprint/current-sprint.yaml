@@ -102,7 +102,9 @@ epics:
           - Add validation to workflow-status-check subagent
         points: 2
         priority: P1
-        status: in-progress
+        status: done
+        started: 2025-12-22
+        completed: 2025-12-22
         repos: pennyfarthing
         acceptance_criteria:
           - /new-work checks for epic context file before proceeding
@@ -111,6 +113,6 @@ epics:
 
 summary:
   total_points: 23
-  completed_points: 3
-  in_progress_points: 2
+  completed_points: 5
+  in_progress_points: 0
   velocity_target: 25
