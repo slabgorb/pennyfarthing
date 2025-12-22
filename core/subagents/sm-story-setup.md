@@ -21,6 +21,10 @@ Replace placeholders with actual values:
 - `{REPO}` - "api", "ui", or both
 - `{SLUG}` - kebab-case story description
 - `{TODAY}` - YYYY-MM-DD format
+- `{WORKTREE_NAME}` - (optional) e.g., "wt-36-2" if parallel work
+- `{WORKTREE_PATH}` - (optional) e.g., "/path/to/worktrees/wt-36-2"
+- `{API_PORT}` - (optional) e.g., "8082" for worktree
+- `{UI_PORT}` - (optional) e.g., "5175" for worktree
 
 ---
 
@@ -38,16 +42,39 @@ $PROJECT_ROOT/scripts/jira-claim-story.sh {JIRA_KEY} --claim
 - Exit 2: Continue (not synced to Jira)
 
 ## Step 2: Write Session File
-Write this exact content to .session/current_work.md:
+
+**Session file path:**
+- Main checkout: `.session/current_work.md`
+- Worktree: `.session/current_work.{WORKTREE_NAME}.md`
+
+Write this content to the session file:
 
 ```markdown
 {SESSION_FILE_CONTENT}
 ```
 
+**If worktree mode**, add this section after Story Info:
+
+```markdown
+## Worktree Context
+worktree: {WORKTREE_NAME}
+path: {WORKTREE_PATH}
+api_port: {API_PORT}
+ui_port: {UI_PORT}
+```
+
 ## Step 3: Create Feature Branch
+
+**Main checkout:**
 ```bash
 cd $PROJECT_ROOT/${REPO} && git checkout -b feat/{STORY_ID}-{SLUG}
 ```
+
+**Worktree mode:**
+```bash
+cd {WORKTREE_PATH}/${REPO} && git checkout -b feat/{STORY_ID}-{SLUG}
+```
+
 If both repos: Repeat for API and UI
 
 ## Step 4: Update Sprint Status
@@ -65,15 +92,23 @@ In sprint/current-sprint.yaml, find the story entry and change:
 ### Setup Complete
 - [x] Jira claimed: {JIRA_KEY}
 - [x] Context file: .session/story-{STORY_ID}-context.md
-- [x] Session file: .session/current_work.md
+- [x] Session file: {SESSION_FILE_PATH}
 - [x] Branch: feat/{STORY_ID}-{SLUG}
 - [x] Sprint status: in-progress
+{WORKTREE_INFO}
 
 ### Acceptance Criteria
 {AC_LIST_NUMBERED}
 
 ### Handoff to {NEXT_AGENT}
 {HANDOFF_MESSAGE}
+```
+
+**If worktree mode**, include in `{WORKTREE_INFO}`:
+```
+- [x] Worktree: {WORKTREE_NAME}
+- [x] Path: {WORKTREE_PATH}
+- [x] Ports: API={API_PORT}, UI={UI_PORT}
 ```
 
 ---

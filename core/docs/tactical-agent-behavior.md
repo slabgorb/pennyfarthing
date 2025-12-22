@@ -110,13 +110,12 @@ Every tactical agent MUST perform these steps on activation:
 
 **Session File Naming Convention:**
 - Main checkout: `.session/current_work.md`
-- Worktree: `.session/current_work_wt_{epic}_{story}.md` (e.g., `current_work_wt_5_3a.md`)
-- Worktree directory: `worktrees/wt_{epic}_{story}/` (matches session filename)
+- Worktree: `.session/current_work.{worktree-name}.md` (e.g., `current_work.wt-5-3a.md`)
 
 ```bash
 cd $PROJECT_ROOT
 
-# Find ALL active session files with single glob pattern
+# Find ALL active session files
 SESSIONS=($(ls .session/current_work*.md 2>/dev/null))
 
 # Separate main vs worktree sessions
@@ -124,9 +123,9 @@ MAIN_SESSION=""
 WORKTREE_SESSIONS=()
 
 for f in "${SESSIONS[@]}"; do
-    if [[ "$f" == *"_wt_"* ]]; then
+    if [[ "$f" == *.wt-*.md ]]; then
         WORKTREE_SESSIONS+=("$f")
-    else
+    elif [[ "$f" == *current_work.md ]]; then
         MAIN_SESSION="$f"
     fi
 done
@@ -139,17 +138,21 @@ If multiple sessions exist, list them and ask:
 ```
 Multiple active work sessions found:
 - current_work.md (main checkout) - Story 5-2
-- current_work_wt_11_2.md (worktree) - Story 11-2
+- current_work.wt-11-2.md (worktree) - Story 11-2
 
 Which session? (Enter name or number)
 ```
 
-**Extracting worktree name from session filename:**
+**Detecting worktree context from session file content:**
 ```bash
-# current_work_wt_5_3a.md → wt_5_3a
-WORKTREE_NAME=$(basename "$SESSION_FILE" .md | sed 's/current_work_//')
-WORKTREE_DIR="worktrees/$WORKTREE_NAME"
+# Read worktree info from session file (preferred method)
+if grep -q "^worktree:" "$SESSION_FILE"; then
+    WORKTREE_NAME=$(grep "^worktree:" "$SESSION_FILE" | cut -d' ' -f2)
+    WORKTREE_PATH=$(grep "^path:" "$SESSION_FILE" | cut -d' ' -f2)
+fi
 ```
+
+See `core/docs/worktree-mode.md` for complete worktree documentation.
 
 ### Step 3: Check Phase and Handoff Status
 
@@ -300,17 +303,26 @@ Tactical agents work with these session files:
 | Mode | Session File | Work Location |
 |------|--------------|---------------|
 | Standard | `.session/current_work.md` | Main checkout (`API/`, `UI/`) |
-| Worktree | `.session/current_work_wt_{epic}_{story}.md` | Worktree (`worktrees/wt_{epic}_{story}/API/`, etc.) |
+| Worktree | `.session/current_work.{name}.md` | Worktree (`worktrees/{name}/API/`, etc.) |
 
 **Examples:**
 - `current_work.md` → main checkout
-- `current_work_wt_5_3a.md` → `worktrees/wt_5_3a/`
-- `current_work_wt_11_2.md` → `worktrees/wt_11_2/`
+- `current_work.wt-5-3a.md` → `worktrees/wt-5-3a/`
+
+**For worktree sessions, check the Worktree Context section:**
+```yaml
+## Worktree Context
+worktree: wt-5-3a
+path: /path/to/worktrees/wt-5-3a
+api_port: 8082
+ui_port: 5175
+```
 
 **Always check the session file for:**
 - `Phase:` field to determine whose turn it is (sm, tea, dev, review, approved)
 - `Repos:` field to know which subrepos to work in
 - `Feature Branch:` field for branch names
+- `worktree:` field if working in a worktree (use `path:` for commands)
 
 ## Phase Assessment Templates (MANDATORY)
 
@@ -487,12 +499,24 @@ Tactical agents invoke skills naturally based on their task:
 
 ## Worktree Awareness
 
-When working in a worktree:
+When working in a worktree, read context from the session file:
 
-1. **Navigate first:** `cd worktrees/{name}/UI` (or API)
-2. **Check branch:** Branch should already exist (created by SM)
-3. **Install deps if needed:** `npm install` (UI) or dependencies are shared (API)
-4. **Use correct ports:** `eval $(./scripts/worktree-manager.sh ports {name})`
+```bash
+# Get worktree path from session file
+WORKTREE_PATH=$(grep "^path:" "$SESSION_FILE" | cut -d' ' -f2)
+
+# Use worktree path for all commands
+cd $WORKTREE_PATH/$API_REPO && just test
+cd $WORKTREE_PATH/$UI_REPO && npm test
+```
+
+**Ports are in the session file:**
+```bash
+API_PORT=$(grep "^api_port:" "$SESSION_FILE" | cut -d' ' -f2)
+UI_PORT=$(grep "^ui_port:" "$SESSION_FILE" | cut -d' ' -f2)
+```
+
+**See `core/docs/worktree-mode.md` for complete worktree documentation.**
 
 ## Sidecar Memory (Tactical Agents)
 
