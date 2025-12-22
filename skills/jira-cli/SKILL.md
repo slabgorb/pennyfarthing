@@ -1,13 +1,13 @@
 ---
 name: jira-cli
-description: Jira CLI commands for Conductor sprint management. Use when viewing, assigning, or updating Jira issues from the command line.
+description: Jira CLI commands for sprint management. Use when viewing, assigning, or updating Jira issues from the command line.
 ---
 
-# Jira CLI Skill - Conductor Project
+# Jira CLI Skill
 
 ## Overview
 
-The Conductor project uses `jira-cli` (ankitpokhrel/jira-cli) for Jira integration. This skill covers how to interact with Jira from the command line.
+This skill covers using `jira-cli` (ankitpokhrel/jira-cli) for Jira integration. The examples below use Conductor project settings - update PROJECT_KEY and PROJECT_LABEL for your project.
 
 ## Prerequisites
 
@@ -25,6 +25,14 @@ export JIRA_API_TOKEN='your-token'
 
 ## Project Configuration
 
+Configure these in your project's `.claude/project/hooks/setup-env.sh`:
+
+```bash
+export JIRA_PROJECT_KEY="MSSCI"    # Your Jira project key
+export PROJECT_LABEL="conductor"   # Label for filtering issues
+```
+
+Example settings (Conductor project):
 - **Project Key:** `MSSCI`
 - **Label:** `$PROJECT_LABEL`
 - **Config file:** `~/.config/.jira/.config.yml`

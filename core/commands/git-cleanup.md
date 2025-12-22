@@ -72,7 +72,7 @@ Group changes by these initiative types (based on conventional commits):
 | `docs:` | Documentation | `docs/description` | docs/update-epics |
 | `chore:` | Maintenance | `chore/description` | chore/sprint-cleanup |
 | `chore(sprint):` | Sprint tracking | `chore/sprint-update` | - |
-| `chore(bmad):` | BMAD config | `chore/bmad-cleanup` | - |
+| `chore(pennyfarthing):` | Pennyfarthing config | `chore/pennyfarthing-cleanup` | - |
 | `feat:` | New feature | `feat/story-id-desc` | feat/4-12-risk-scoring |
 | `fix:` | Bug fix | `fix/issue-desc` | fix/validation-error |
 | `refactor:` | Code improvement | `refactor/description` | refactor/seed-data |
@@ -84,10 +84,10 @@ Files: `docs/*.md`, `sprint/*.yaml`, `sprint/*.md`
 - Branch: `chore/sprint-cleanup` or `docs/update-[topic]`
 - Commit: `chore(sprint): update sprint tracking` or `docs: update documentation`
 
-### BMAD Configuration
+### Pennyfarthing Configuration
 Files: `.claude/**/*`
-- Branch: `chore/bmad-[description]`
-- Commit: `chore(bmad): description`
+- Branch: `chore/pennyfarthing-[description]`
+- Commit: `chore(pennyfarthing): description`
 
 ### Feature Work
 Files: `internal/**`, `src/**`, `migrations/**`

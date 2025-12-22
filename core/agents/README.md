@@ -1,8 +1,8 @@
-# BMAD Core Agents
+# Pennyfarthing Core Agents
 
 ## Overview
 
-This directory contains the **single source of truth** for all BMAD agent definitions. Agents are coordinated across both `API` and `UI` repositories.
+This directory contains the **single source of truth** for all Pennyfarthing agent definitions. Agents are coordinated across both `API` and `UI` repositories.
 
 **See:** `../ AGENT-COORDINATION.md` for complete architecture documentation.
 
@@ -225,4 +225,4 @@ cat .claude/agents/pm.md
 
 ---
 
-**Your coordinated BMAD agent system is ready!** 🎯
+**Your coordinated Pennyfarthing agent system is ready!** 🎯

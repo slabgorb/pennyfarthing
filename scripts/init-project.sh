@@ -206,6 +206,22 @@ fi
 mkdir -p "$PROJECT_ROOT/sprint"
 mkdir -p "$PROJECT_ROOT/.session"
 
+# Create API/UI symlinks if repos exist
+# These provide a stable path for framework scripts regardless of actual repo names
+cd "$PROJECT_ROOT"
+API_REPO_DIR="${PROJECT_NAME}-api"
+UI_REPO_DIR="${PROJECT_NAME}-ui"
+
+if [ -d "$API_REPO_DIR" ] && [ ! -e "API" ]; then
+    ln -sf "$API_REPO_DIR" API
+    echo "Created symlink: API -> $API_REPO_DIR"
+fi
+
+if [ -d "$UI_REPO_DIR" ] && [ ! -e "UI" ]; then
+    ln -sf "$UI_REPO_DIR" UI
+    echo "Created symlink: UI -> $UI_REPO_DIR"
+fi
+
 echo ""
 echo "Done! Pennyfarthing initialized for $PROJECT_NAME"
 echo ""
@@ -213,4 +229,7 @@ echo "Next steps:"
 echo "1. Edit .claude/project/docs/shared-context.md with your project details"
 echo "2. Edit .claude/project/docs/agent-scopes.yaml with your repos"
 echo "3. Add project-specific skills to .claude/project/skills/"
-echo "4. Test with: /sm or /new-work"
+echo "4. Create API/UI symlinks if not auto-detected:"
+echo "   ln -sf your-api-repo API"
+echo "   ln -sf your-ui-repo UI"
+echo "5. Test with: /sm or /new-work"

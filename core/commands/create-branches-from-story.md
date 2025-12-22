@@ -119,7 +119,7 @@ This creates:
 
 **Skip to Step 5b** if using worktrees.
 
-### 4. Create BMAD Session
+### 4. Create Pennyfarthing Session
 
 ```bash
 cd $PROJECT_ROOT
@@ -198,7 +198,7 @@ cd $PROJECT_ROOT/UI
 git branch --show-current
 # Should show: feature/[story-id]-[description]
 
-# Check BMAD session exists
+# Check Pennyfarthing session exists
 cd $PROJECT_ROOT
 ls -la .session/current-work.md
 # Should exist
@@ -253,7 +253,7 @@ git checkout main && git pull
 git checkout -b feature/AUTH-123-user-authentication
 git push -u origin feature/AUTH-123-user-authentication
 
-# 3. Create BMAD session
+# 3. Create Pennyfarthing session
 cd ..
 ./scripts/new-work.sh
 
@@ -332,18 +332,18 @@ git fetch origin
 git rebase origin/main
 ```
 
-## Integration with BMAD
+## Integration with Pennyfarthing
 
-This workflow integrates with the solo dev BMAD structure:
+This workflow integrates with the solo dev Pennyfarthing structure:
 
 1. **Branches** - Git manages code isolation
-2. **Session** - BMAD tracks work progress
+2. **Session** - Pennyfarthing tracks work progress
 3. **Context** - Repo context files guide AI
 4. **Archive** - When done, archive session and delete branches
 
 **Workflow:**
 ```
-Story → Branches → BMAD Session → Development → Merge → Archive
+Story → Branches → Pennyfarthing Session → Development → Merge → Archive
 ```
 
 ## Quick Reference
@@ -371,4 +371,4 @@ cd API  # or UI
 
 ---
 
-**You're ready to start development with coordinated branches and BMAD tracking!**
+**You're ready to start development with coordinated branches and Pennyfarthing tracking!**
