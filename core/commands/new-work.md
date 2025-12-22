@@ -4,101 +4,48 @@ description: Start a new work session with Pennyfarthing
 
 # Start New Work Session
 
-**This is the blessed path for starting development work.**
+<purpose>
+The blessed path for starting development work. Invokes SM to coordinate story selection and TDD flow setup.
+</purpose>
 
----
-
-## How It Works
-
-`/new-work` invokes SM (Scrum Master) which uses the **subagent-first workflow**:
-
-```
-┌─────────────────────────────┐
-│ 1. Status Check Subagent    │  ← Scans .session files + git status
-│    (workflow-status-check)  │
-└─────────────┬───────────────┘
-              │
-    ┌─────────┼─────────────────────┐
-    │         │                     │
-FINISH_STATE  │              MISSING_EPIC_CONTEXT
-    │         │                     │
-    ▼         │                     ▼
-SM handles    │              ┌──────────────────┐
-finish flow   │              │ "Run /start-epic │
-              │              │  to generate     │
-              │              │  epic context"   │
-              │              └──────────────────┘
-              │
-        NEW_WORK_STATE
-              │
-              ▼
-       ┌───────────────┐
-       │ 2. Research   │  ← Scans backlog, checks Jira
-       │ Subagent      │
-       └───────┬───────┘
-               │
-               ▼
-       ┌───────────────┐
-       │ 3. SM presents│  ← User selects story
-       │ stories       │
-       └───────┬───────┘
-               │
-               ▼
-       ┌───────────────┐
-       │ 4. File       │  ← Reads & summarizes files
-       │ Summary       │
-       │ Subagent      │
-       └───────┬───────┘
-               │
-               ▼
-       ┌───────────────┐
-       │ 5. SM creates │  ← Technical context
-       │ story context │
-       └───────┬───────┘
-               │
-               ▼
-       ┌───────────────┐
-       │ 6. Story      │  ← Jira, branches, session
-       │ Setup         │
-       │ Subagent      │
-       └───────────────┘
-```
-
----
-
-## Invoke SM
-
-Simply activate SM to start the workflow:
-
+<invoke>
 ```
 /sm
 ```
 
-SM will:
-1. Run status check subagent to detect current state
-2. If FINISH_STATE: Handle finish flow first
-3. If NEW_WORK_STATE: Run research → present stories → file summary → create context → setup
-4. Hand off to TEA (or Dev for trivial chores)
-
----
-
-## Arguments
-
-If you already know which story you want:
-
+Or with a specific story:
 ```
 /sm start-story 32-8
 ```
+</invoke>
 
-This skips the research/selection phase and goes directly to file summary and context creation.
+<workflow-states>
+| State | Action |
+|-------|--------|
+| MISSING_EPIC_CONTEXT | Prompt user to run `/start-epic` first |
+| FINISH_STATE | SM handles finish flow (archive, Jira, cleanup) |
+| NEW_WORK_STATE | Research → present stories → create context → setup |
+</workflow-states>
 
----
+<workflow-steps>
+1. Status check subagent scans `.session/` and git
+2. Research subagent scans backlog, checks Jira
+3. SM presents stories, user selects
+4. File summary subagent reads relevant files
+5. SM creates technical context
+6. Story setup subagent creates branches, session file
+7. Handoff to TEA (or Dev for trivial 1-2 pt stories)
+</workflow-steps>
 
-## Reference
+<tdd-flow>
+| Points | Route |
+|--------|-------|
+| 1-2 pts | SM → Dev (skip TEA) |
+| 3-5 pts | SM → TEA → Dev → Reviewer |
+| 8+ pts | SM → TEA → Dev → Reviewer |
+</tdd-flow>
 
+<reference>
 - **SM Agent:** `.claude/agents/sm.md`
-- **Status Check Subagent:** `.claude/subagents/workflow-status-check.md`
-- **Research Subagent:** `.claude/subagents/sm-work-research.md`
-- **File Summary Subagent:** `.claude/subagents/sm-file-summary.md`
-- **Story Setup Subagent:** `.claude/subagents/sm-story-setup.md`
-- **Workflow flow:** SM → TEA → Dev → Reviewer → SM (auto-finish)
+- **Subagents:** `workflow-status-check.md`, `sm-work-research.md`, `sm-file-summary.md`, `sm-story-setup.md`
+</reference>
