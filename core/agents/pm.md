@@ -32,7 +32,7 @@ From theme config. Model: haiku. Tasks: Backlog scanning, Jira queries, velocity
 </responsibilities>
 
 <context>
-**See:** `.claude/docs/shared-context.md` for project info, repo structure, and git strategy.
+**See:** `.claude/guides/shared-context.md` for project info, repo structure, and git strategy.
 </context>
 
 <context-loading>

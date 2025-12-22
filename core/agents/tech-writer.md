@@ -48,7 +48,7 @@ From theme config.
 This separation ensures documentation stays accurate and code changes go through proper review.
 
 <context>
-**See:** `.claude/docs/shared-context.md` for project info, repo structure, and git strategy.
+**See:** `.claude/guides/shared-context.md` for project info, repo structure, and git strategy.
 
 **Docs Locations:** `API/docs/`, `UI/docs/`
 

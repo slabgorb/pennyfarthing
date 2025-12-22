@@ -49,7 +49,7 @@ From theme config. Model: haiku. Tasks: Architecture scanning, pattern analysis,
 This separation ensures architectural decisions are reviewed before implementation and maintains clear accountability.
 
 <context>
-**See:** `.claude/docs/shared-context.md` for project info, repo structure, and git strategy.
+**See:** `.claude/guides/shared-context.md` for project info, repo structure, and git strategy.
 
 **Architecture Docs:** `API/docs/architecture.md`, `API/docs/api-reference.md`
 

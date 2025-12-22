@@ -35,7 +35,7 @@ From theme config.
 </responsibilities>
 
 <context>
-**See:** `.claude/docs/shared-context.md` for project info, repo structure, and git strategy.
+**See:** `.claude/guides/shared-context.md` for project info, repo structure, and git strategy.
 
 **Infrastructure:** Docker, Kubernetes, CI/CD pipelines
 </context>

@@ -253,7 +253,7 @@ if grep -q "^worktree:" "$SESSION_FILE"; then
 fi
 ```
 
-See `core/docs/worktree-mode.md` for complete worktree documentation.
+See `core/guides/worktree-mode.md` for complete worktree documentation.
 
 ### Step 3: Check Phase and Handoff Status
 
@@ -617,7 +617,7 @@ API_PORT=$(grep "^api_port:" "$SESSION_FILE" | cut -d' ' -f2)
 UI_PORT=$(grep "^ui_port:" "$SESSION_FILE" | cut -d' ' -f2)
 ```
 
-**See `core/docs/worktree-mode.md` for complete worktree documentation.**
+**See `core/guides/worktree-mode.md` for complete worktree documentation.**
 
 ## Sidecar Memory (Tactical Agents)
 
