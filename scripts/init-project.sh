@@ -169,6 +169,62 @@ file_patterns:
 EOF
 fi
 
+# Create repos.yaml for flexible repo configuration
+echo "Creating repos.yaml..."
+if [ ! -f "$PROJECT_ROOT/.claude/project/repos.yaml" ]; then
+    cat > "$PROJECT_ROOT/.claude/project/repos.yaml" << EOF
+# Pennyfarthing Repository Configuration
+# Defines all repositories in this project and how agents interact with them
+version: "1.0"
+
+# Backward compatibility - generates \$API_REPO and \$UI_REPO env vars
+# Set to null if you don't need legacy compatibility
+legacy_compat:
+  api_repo: "${PROJECT_NAME}-api"
+  ui_repo: "${PROJECT_NAME}-ui"
+  create_symlinks: true
+
+# Repository definitions
+# Add, remove, or modify repos as needed for your project structure
+repos:
+  ${PROJECT_NAME}-api:
+    path: "${PROJECT_NAME}-api"
+    type: api                  # api | ui | adapter | service | shared | lib
+    language: go
+    test_command: "just test"
+    build_command: "just build"
+    lint_command: "golangci-lint run"
+    dependencies: []
+
+  ${PROJECT_NAME}-ui:
+    path: "${PROJECT_NAME}-ui"
+    type: ui
+    language: typescript
+    test_command: "npm run test -- --run"
+    build_command: "npm run build"
+    lint_command: "npm run lint"
+    dependencies: []
+
+# Agent behavior by repo type (optional)
+agent_config:
+  type_behaviors:
+    api:
+      pre_test: "docker ps | grep \$TEST_CONTAINER || just test-api-setup"
+    ui:
+      pre_test: ""
+    adapter:
+      isolated: true
+    service:
+      pre_test: "docker-compose up -d"
+
+# Build/test order (respects dependencies)
+# If not specified, uses order repos are defined
+build_order:
+  - ${PROJECT_NAME}-api
+  - ${PROJECT_NAME}-ui
+EOF
+fi
+
 # Create setup-env.sh hook with project variables
 echo "Creating setup-env.sh hook..."
 if [ ! -f "$PROJECT_ROOT/.claude/project/hooks/setup-env.sh" ]; then
@@ -182,7 +238,8 @@ export PROJECT_ROOT="\${PROJECT_ROOT:-\$(git rev-parse --show-toplevel 2>/dev/nu
 export PROJECT_NAME="$PROJECT_NAME"
 export PROJECT_LABEL="$PROJECT_NAME"  # For Jira labels
 
-# Repository names (used in subagents: \$API_REPO, \$UI_REPO)
+# Legacy repository names (for backward compatibility)
+# Prefer using repos.yaml for multi-repo projects
 export API_REPO="${PROJECT_NAME}-api"
 export UI_REPO="${PROJECT_NAME}-ui"
 
@@ -258,10 +315,15 @@ echo ""
 echo "Done! Pennyfarthing initialized for $PROJECT_NAME"
 echo ""
 echo "Next steps:"
-echo "1. Edit .claude/project/docs/shared-context.md with your project details"
-echo "2. Edit .claude/project/docs/agent-scopes.yaml with your repos"
+echo "1. Edit .claude/project/repos.yaml with your actual repository structure"
+echo "   - For multi-repo projects: Add all repos with their types"
+echo "   - For single repo: Remove the second repo entry"
+echo "   - For adapters/microservices: Change types to 'adapter' or 'service'"
+echo "2. Edit .claude/project/docs/shared-context.md with your project details"
 echo "3. Add project-specific skills to .claude/project/skills/"
-echo "4. Create API/UI symlinks if not auto-detected:"
-echo "   ln -sf your-api-repo API"
-echo "   ln -sf your-ui-repo UI"
-echo "5. Test with: /sm or /new-work"
+echo "4. Test with: /sm or /new-work"
+echo ""
+echo "Repo configuration examples:"
+echo "  ./scripts/worktree-manager.sh config   # Show current config"
+echo "  ./scripts/worktree-manager.sh create wt-1 feat/my-feature all   # All repos"
+echo "  ./scripts/worktree-manager.sh create wt-2 feat/api-only api     # API type only"

@@ -18,10 +18,40 @@ description: "run tests"
 - `.claude/skills/testing/SKILL.md` - Quick reference and commands
 - `.claude/skills/testing/references/troubleshooting.md` - For diagnosing failures
 
+## Multi-Repo Support
+
+For projects with multiple repos, use repo-utils.sh for dynamic iteration:
+
+```bash
+source $PROJECT_ROOT/scripts/repo-utils.sh
+
+# Test all repos
+for repo in $(get_repos); do
+    repo_path=$(get_repo_path "$repo")
+    test_cmd=$(get_test_command "$repo")
+
+    if [ -n "$test_cmd" ]; then
+        echo "=== Testing $repo ==="
+        cd $PROJECT_ROOT/$repo_path
+        eval "$test_cmd" 2>&1 | tee $PROJECT_ROOT/.session/test-results-${repo}-${RUN_ID}.log
+    fi
+done
+
+# Test only repos of a specific type
+for repo in $(get_repos_of_type "api"); do
+    # ...
+done
+
+# Test in dependency order
+for repo in $(get_build_order); do
+    # ...
+done
+```
+
 ## Prompt Template
 
 Replace placeholders:
-- `{REPO}` - `api`, `ui`, or `both`
+- `{REPO}` - `api`, `ui`, `all`, `both`, or specific repo name(s)
 - `{CONTEXT}` - Why tests are being run (e.g., "PR review for Story 38-3")
 - `{RUN_ID}` - Unique identifier for this run (use story ID or timestamp)
 - `{PACKAGE}` - (optional) Specific package to test (e.g., `./internal/services/...`)
