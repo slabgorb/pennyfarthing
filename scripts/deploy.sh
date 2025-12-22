@@ -8,9 +8,9 @@ set -euo pipefail
 # 1. Bump version in VERSION file
 # 2. Commit version bump to current branch
 # 3. Merge to develop (if not already on develop)
-# 4. Merge develop to master
-# 5. Tag the release on master
-# 6. Push everything (develop, master, tags)
+# 4. Merge develop to main
+# 5. Tag the release on main
+# 6. Push everything (develop, main, tags)
 # 7. Return to develop
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -86,9 +86,9 @@ echo ""
 echo "This will:"
 echo "  1. Bump version: $CURRENT_VERSION -> $NEW_VERSION"
 echo "  2. Merge to develop (if needed)"
-echo "  3. Merge develop to master"
+echo "  3. Merge develop to main"
 echo "  4. Create tag: v$NEW_VERSION"
-echo "  5. Push develop, master, and tags"
+echo "  5. Push develop, main, and tags"
 echo ""
 read -p "Continue? [y/N] " -n 1 -r
 echo ""
@@ -120,26 +120,16 @@ else
     log_info "Already on develop, skipping merge"
 fi
 
-# Step 4: Merge develop to master/main
-# Detect which branch exists (main or master)
-if git -C "$PROJECT_ROOT" show-ref --verify --quiet refs/heads/main; then
-    MASTER_BRANCH="main"
-elif git -C "$PROJECT_ROOT" show-ref --verify --quiet refs/heads/master; then
-    MASTER_BRANCH="master"
-else
-    log_error "Neither 'main' nor 'master' branch exists"
-    exit 1
-fi
+# Step 4: Merge develop to main
+log_info "Merging develop to main..."
+git -C "$PROJECT_ROOT" checkout main
 
-log_info "Merging develop to $MASTER_BRANCH..."
-git -C "$PROJECT_ROOT" checkout "$MASTER_BRANCH"
-
-git -C "$PROJECT_ROOT" pull origin "$MASTER_BRANCH" --ff-only || {
-    log_warn "Could not fast-forward $MASTER_BRANCH. Attempting merge..."
-    git -C "$PROJECT_ROOT" pull origin "$MASTER_BRANCH" --no-rebase
+git -C "$PROJECT_ROOT" pull origin main --ff-only || {
+    log_warn "Could not fast-forward main. Attempting merge..."
+    git -C "$PROJECT_ROOT" pull origin main --no-rebase
 }
-git -C "$PROJECT_ROOT" merge develop -m "Merge develop into $MASTER_BRANCH for release $NEW_VERSION"
-log_info "Merged to $MASTER_BRANCH"
+git -C "$PROJECT_ROOT" merge develop -m "Merge develop into main for release $NEW_VERSION"
+log_info "Merged to main"
 
 # Step 5: Create annotated tag
 TAG_NAME="v$NEW_VERSION"
@@ -150,8 +140,8 @@ git -C "$PROJECT_ROOT" tag -a "$TAG_NAME" -m "Release $NEW_VERSION"
 log_info "Pushing develop..."
 git -C "$PROJECT_ROOT" push origin develop
 
-log_info "Pushing $MASTER_BRANCH..."
-git -C "$PROJECT_ROOT" push origin "$MASTER_BRANCH"
+log_info "Pushing main..."
+git -C "$PROJECT_ROOT" push origin main
 
 log_info "Pushing tags..."
 git -C "$PROJECT_ROOT" push origin --tags
@@ -165,5 +155,5 @@ log_info "Deploy complete!"
 echo ""
 echo "  Version: $NEW_VERSION"
 echo "  Tag: $TAG_NAME"
-echo "  Branches pushed: develop, $MASTER_BRANCH"
+echo "  Branches pushed: develop, main"
 echo ""
