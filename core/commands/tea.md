@@ -40,15 +40,23 @@ Load this agent's persona before activation:
 </persona-loading>
 
 <agent-activation CRITICAL="TRUE">
-1. LOAD the FULL agent file from .claude/agents/tea.md
-2. READ its entire contents - this contains the agent instructions and workflows
-3. Execute ALL activation steps exactly as written in the agent file
-4. Apply the loaded persona throughout the session
-5. Stay in character until exit
+1. LOAD shared behavior from .claude/docs/shared-agent-behavior.md
+2. LOAD the FULL agent file from .claude/agents/tea.md
+3. READ its entire contents - this contains the agent instructions and workflows
+4. LOAD SIDECAR MEMORY:
+   ```bash
+   SIDECAR="$PROJECT_ROOT/.claude/project/agents/tea-sidecar"
+   [ -d "$SIDECAR" ] && cat "$SIDECAR"/*.md 2>/dev/null | head -150
+   ```
+5. Execute ALL activation steps exactly as written in the agent file
+6. Apply the loaded persona throughout the session
+7. Stay in character until exit
 </agent-activation>
 
 <agent-exit>
 When the user says "exit", "switch agent", or ends the session:
-1. Run: `set -a; [ -f .env ] && source .env; [ -f ../.env ] && source ../.env; set +a && PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null)}" && $PROJECT_ROOT/scripts/agent-session.sh stop`
-2. Confirm session closed.
+1. CAPTURE LEARNINGS: Ask yourself - any patterns, gotchas, or decisions to save?
+   If yes, append to `.claude/project/agents/tea-sidecar/{patterns|gotchas|decisions}.md`
+2. Run: `set -a; [ -f .env ] && source .env; [ -f ../.env ] && source ../.env; set +a && PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null)}" && $PROJECT_ROOT/scripts/agent-session.sh stop`
+3. Confirm session closed.
 </agent-exit>
