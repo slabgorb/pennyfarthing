@@ -34,9 +34,9 @@ $PROJECT_ROOT (set by SessionStart hook)
 mv $PROJECT_ROOT/.session/current_work.md {ARCHIVE_PATH}
 ```
 
-If worktree session file exists (wt-*.md), archive that too:
+If worktree session file exists (current_work.wt-*.md), archive that too:
 ```bash
-mv $PROJECT_ROOT/.session/wt-{WORKTREE_NAME}.md {ARCHIVE_PATH}
+mv $PROJECT_ROOT/.session/current_work.wt-{WORKTREE_NAME}.md {ARCHIVE_PATH}
 ```
 
 ## Step 2: Write Summary File

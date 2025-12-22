@@ -157,7 +157,7 @@ if [ -f ".session/current_work.md" ]; then
 fi
 
 # Check for worktree sessions
-ls .session/current_work_wt_*.md 2>/dev/null
+ls .session/current_work.wt-*.md 2>/dev/null
 ```
 
 ---

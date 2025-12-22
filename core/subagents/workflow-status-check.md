@@ -35,8 +35,8 @@ ls -la .session/*.md .session/*.json 2>/dev/null
 # Read main work file if exists
 cat .session/current_work.md 2>/dev/null | head -50
 
-# Check for worktree sessions
-ls .session/current_work_wt_*.md 2>/dev/null
+# Check for worktree sessions (new naming: current_work.*.md)
+ls .session/current_work.*.md 2>/dev/null
 ```
 
 For each session file found, extract:
@@ -48,6 +48,17 @@ For each session file found, extract:
 - Branch (from `**Branch:**` line)
 - Jira key (from `**Jira:**` line)
 - Started date (from `**Started:**` line)
+
+For worktree detection, check INSIDE the session file:
+```bash
+# Check if this is a worktree session
+grep "^worktree:" "$SESSION_FILE"
+# If found, also extract:
+# - worktree: (the worktree name, e.g., wt-5-3a)
+# - path: (the worktree path)
+# - api_port: (the API port)
+# - ui_port: (the UI port)
+```
 
 ## Step 2: Check Git Status
 
