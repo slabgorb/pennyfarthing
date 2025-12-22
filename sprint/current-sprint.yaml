@@ -77,22 +77,66 @@ epics:
           - Checkpointing saves/restores session state
           - Context warning mechanism implemented
 
-      - id: "1-4"
-        title: "Optimize large subagents and add structured logging"
+      - id: "1-4a"
+        title: "Split workflow-status-check.md subagent"
         jira: MSSCI-11120
         description: |
-          Performance and maintainability improvements:
-          - Split testing-runner.md and workflow-status-check.md if >300 lines
-          - Add structured logging utility for session tracking
-          - Add session file locking to prevent conflicts
-        points: 8
+          Extract repo scanning utilities from workflow-status-check.md (255 lines)
+          into reusable scripts. This subagent is used by all tactical agents.
+        points: 2
+        priority: P2
+        status: in-progress
+        started: 2025-12-22
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Repo scanning logic extracted to scripts/utils/repo-scan.sh
+          - workflow-status-check.md reduced to <200 lines
+          - All agents still function correctly after refactor
+
+      - id: "1-4b"
+        title: "Split testing-runner.md subagent"
+        jira: MSSCI-11120
+        description: |
+          Extract test container setup from testing-runner.md (361 lines)
+          into reusable utilities. Focus on DRY and maintainability.
+        points: 2
         priority: P2
         status: backlog
         repos: pennyfarthing
         acceptance_criteria:
-          - Large subagents split into focused modules
-          - Structured logging captures agent actions
-          - File locking prevents concurrent session conflicts
+          - Test container setup extracted to scripts/utils/test-setup.sh
+          - testing-runner.md reduced to <250 lines
+          - Test workflows still function correctly
+
+      - id: "1-4c"
+        title: "Add structured logging utility"
+        jira: MSSCI-11120
+        description: |
+          Create scripts/utils/logging.sh with structured JSON logging
+          for session tracking and debugging agent workflows.
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - logging.sh provides log_info, log_warn, log_error functions
+          - JSON output format with timestamp, level, agent, message
+          - Integrates with existing session file workflow
+
+      - id: "1-4d"
+        title: "Add session file locking"
+        jira: MSSCI-11120
+        description: |
+          Add file locking mechanism to prevent concurrent session conflicts
+          when multiple agents or terminals access .session files.
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Lock mechanism prevents concurrent writes to session files
+          - Graceful handling when lock cannot be acquired
+          - Lock timeout and cleanup on stale locks
 
       - id: "1-5"
         title: "Add guardrail to ensure epic tech context exists before /new-work"
@@ -117,6 +161,7 @@ epics:
 
 summary:
   total_points: 23
-  completed_points: 5
+  completed_points: 15
   in_progress_points: 0
+  backlog_points: 8
   velocity_target: 25
