@@ -556,6 +556,102 @@ When working in a worktree:
 3. **Install deps if needed:** `npm install` (UI) or dependencies are shared (API)
 4. **Use correct ports:** `eval $(./scripts/worktree-manager.sh ports {name})`
 
+## Sidecar Memory System
+
+Sidecars are project-specific memory that persists across sessions. Each agent has a sidecar directory where learnings are stored.
+
+### Sidecar Location
+
+```
+.claude/project/agents/{agent}-sidecar/
+├── patterns.md      # Implementation patterns discovered
+├── gotchas.md       # Things that bite you (common mistakes)
+└── decisions.md     # Past architectural decisions
+```
+
+### Loading Sidecar (On Activation)
+
+**After Step 7 (checking handoff status), load your sidecar:**
+
+```bash
+SIDECAR_DIR="$PROJECT_ROOT/.claude/project/agents/{agent}-sidecar"
+
+if [ -d "$SIDECAR_DIR" ]; then
+    echo "=== Loading Sidecar Memory ==="
+    for file in "$SIDECAR_DIR"/*.md; do
+        [ -f "$file" ] && head -50 "$file"
+    done
+fi
+```
+
+**What to look for:**
+- Patterns that apply to current story
+- Gotchas related to files you'll touch
+- Past decisions that constrain current work
+
+### Capturing Learnings (Before Handoff)
+
+**Before spawning your handoff subagent, ask yourself:**
+
+1. Did I discover a pattern worth remembering?
+2. Did I hit a gotcha that wasted time?
+3. Did I make a decision that future work should know?
+
+**If YES to any, append to appropriate sidecar file:**
+
+```markdown
+---
+## [YYYY-MM-DD] [Story-ID] Brief Title
+
+**Context:** What situation triggered this
+**Learning:** What we discovered
+**Apply When:** When to use this knowledge
+```
+
+### Sidecar Entry Examples
+
+**patterns.md:**
+```markdown
+---
+## 2025-01-15 Story 5-2: Use errgroup for parallel DB calls
+
+**Context:** Needed to fetch user and permissions simultaneously
+**Learning:** Use errgroup.WithContext for parallel DB calls with proper error handling
+**Apply When:** Any endpoint needing multiple independent DB queries
+```
+
+**gotchas.md:**
+```markdown
+---
+## 2025-01-15 Story 5-2: npm install needs --legacy-peer-deps
+
+**Context:** Fresh install failed with peer dependency conflict
+**Learning:** Always use `npm install --legacy-peer-deps` in this project
+**Apply When:** Any npm install command
+```
+
+**decisions.md:**
+```markdown
+---
+## 2025-01-15 Story 5-2: Don't refactor PaymentService
+
+**Context:** Considered refactoring during implementation
+**Learning:** PaymentService is fragile and tested only via integration tests. Do not refactor without PM approval.
+**Apply When:** Any story touching payment flow
+```
+
+### When NOT to Write to Sidecar
+
+- Trivial learnings (obvious to any developer)
+- One-time fixes (won't apply to future work)
+- Already documented in project README or docs
+
+### Sidecar Maintenance
+
+Sidecars are reviewed during retrospectives (`/retro`). Old or outdated entries are pruned.
+
+---
+
 ## Completing Work (Automatic Handoff via Helper)
 
 When done with your phase, send your helper to handle the bookkeeping.
