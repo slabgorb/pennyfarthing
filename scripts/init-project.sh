@@ -23,22 +23,54 @@ fi
 echo "Creating project-specific directories..."
 mkdir -p "$PROJECT_ROOT/.claude/project"/{agents,skills,docs,hooks}
 
-# Create agent sidecars
+# Create agent sidecars with three knowledge files
 echo "Creating agent sidecars..."
 for agent in dev tea sm reviewer architect pm tech-writer ux-designer devops orchestrator; do
     sidecar_dir="$PROJECT_ROOT/.claude/project/agents/${agent}-sidecar"
     mkdir -p "$sidecar_dir"
 
+    # patterns.md - Implementation patterns discovered
     if [ ! -f "$sidecar_dir/patterns.md" ]; then
-        cat > "$sidecar_dir/patterns.md" << EOF
-# ${PROJECT_NAME^} Patterns - ${agent^} Memory
+        cat > "$sidecar_dir/patterns.md" << 'PATTERNS_EOF'
+# Patterns - ${agent^} Memory
 
-## Project-Specific Knowledge
+Implementation patterns discovered during work. Loaded when agent activates.
 
-Add ${agent}-specific patterns, fixes, and knowledge here.
+## Entry Format
 
-This file is loaded when the ${agent} agent activates.
-EOF
+```markdown
+---
+## [YYYY-MM-DD] [Story-ID] Pattern Title
+
+**Context:** What situation triggered this
+**Learning:** What we discovered
+**Apply When:** When to use this knowledge
+```
+
+---
+PATTERNS_EOF
+    fi
+
+    # gotchas.md - Common mistakes and pitfalls
+    if [ ! -f "$sidecar_dir/gotchas.md" ]; then
+        cat > "$sidecar_dir/gotchas.md" << 'GOTCHAS_EOF'
+# Gotchas - ${agent^} Memory
+
+Things that bite you. Mistakes made so they're not repeated.
+
+---
+GOTCHAS_EOF
+    fi
+
+    # decisions.md - Past architectural decisions
+    if [ ! -f "$sidecar_dir/decisions.md" ]; then
+        cat > "$sidecar_dir/decisions.md" << 'DECISIONS_EOF'
+# Decisions - ${agent^} Memory
+
+Past decisions that constrain future work. "We chose X because Y."
+
+---
+DECISIONS_EOF
     fi
 done
 
