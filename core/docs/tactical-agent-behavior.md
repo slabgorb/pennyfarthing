@@ -65,6 +65,107 @@ The Bash tool maintains a persistent working directory across calls, but relativ
 
 ---
 
+## Multi-Repo Operations
+
+For projects with multiple repositories, use `repo-utils.sh` for dynamic iteration.
+
+### Loading Repo Configuration
+
+```bash
+source $PROJECT_ROOT/scripts/repo-utils.sh
+
+# Check configuration mode
+if is_legacy_mode; then
+    echo "Using legacy API_REPO/UI_REPO mode"
+else
+    echo "Using repos.yaml configuration"
+fi
+
+# Show current configuration
+show_config
+```
+
+### Iterating Through Repos
+
+```bash
+source $PROJECT_ROOT/scripts/repo-utils.sh
+
+# All repos
+for repo in $(get_repos); do
+    repo_path=$(get_repo_path "$repo")
+    repo_type=$(get_repo_type "$repo")
+
+    echo "=== $repo ($repo_type) ==="
+    cd $PROJECT_ROOT/$repo_path
+    git status --short
+done
+
+# Filter by type (api, ui, adapter, service, shared, lib)
+for repo in $(get_repos_of_type "api"); do
+    cd $PROJECT_ROOT/$(get_repo_path "$repo")
+    # API-specific operations
+done
+
+# Build order (respects dependencies)
+for repo in $(get_build_order); do
+    cd $PROJECT_ROOT/$(get_repo_path "$repo")
+    eval "$(get_build_command "$repo")"
+done
+```
+
+### Getting Repo Information
+
+```bash
+source $PROJECT_ROOT/scripts/repo-utils.sh
+
+# For a specific repo
+repo="conductor-api"
+get_repo_path "$repo"      # conductor-api
+get_repo_type "$repo"      # api
+get_repo_language "$repo"  # go
+get_test_command "$repo"   # just test
+get_build_command "$repo"  # just build
+get_lint_command "$repo"   # golangci-lint run
+get_dependencies "$repo"   # comma-separated list or empty
+```
+
+### Running Tests Across Repos
+
+```bash
+source $PROJECT_ROOT/scripts/repo-utils.sh
+
+# Run tests in all repos
+run_all_tests
+
+# Run tests for specific type
+run_tests_of_type "api"
+
+# Manual iteration with custom logic
+for repo in $(get_repos); do
+    test_cmd=$(get_test_command "$repo")
+    if [ -n "$test_cmd" ]; then
+        cd $PROJECT_ROOT/$(get_repo_path "$repo")
+        eval "$test_cmd" 2>&1 | tee $PROJECT_ROOT/.session/test-results-${repo}.log
+    fi
+done
+```
+
+### Filtering Repos by Session Scope
+
+```bash
+source $PROJECT_ROOT/scripts/repo-utils.sh
+
+# Extract scope from session file
+REPOS=$(grep "^\*\*Repos:\*\*" $SESSION_FILE | cut -d: -f2 | xargs)
+
+# filter_repos handles: all, both, api, ui, adapter, or comma-separated names
+for repo in $(filter_repos "$REPOS"); do
+    # Work on this repo
+done
+```
+
+---
+
 ## Skill References for Subagents
 
 When spawning subagents that need specialized knowledge, reference the appropriate skill file in the prompt:

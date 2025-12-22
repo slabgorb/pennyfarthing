@@ -62,6 +62,27 @@ grep "^worktree:" "$SESSION_FILE"
 
 ## Step 2: Check Git Status
 
+Use repo-utils.sh for dynamic multi-repo support:
+
+```bash
+# Load repo configuration
+source $PROJECT_ROOT/scripts/repo-utils.sh
+
+# Check all configured repos
+for repo in $(get_repos); do
+    repo_path=$(get_repo_path "$repo")
+    repo_type=$(get_repo_type "$repo")
+
+    echo "=== $repo ($repo_type) ==="
+    cd $PROJECT_ROOT/$repo_path
+    git status --short
+    echo "Branch: $(git branch --show-current)"
+    echo "Ahead: $(git log origin/develop..HEAD --oneline 2>/dev/null | wc -l) commits"
+done
+```
+
+### Legacy fallback (if repo-utils.sh not available)
+
 ```bash
 # API repo
 cd $PROJECT_ROOT/$API_REPO
@@ -115,10 +136,12 @@ grep -c "status: backlog" $PROJECT_ROOT/sprint/current-sprint.yaml 2>/dev/null
 | 32-8 | Threat Hunt Summary | tea | in-progress | both | 1 |
 
 ### Git State
-| Repo | Branch | Uncommitted | Ahead of Origin |
-|------|--------|-------------|-----------------|
-| API | feat/32-8-hunt-summary | 0 files | 0 commits |
-| UI | feat/32-8-hunt-summary | 0 files | 0 commits |
+| Repo | Type | Branch | Uncommitted | Ahead of Origin |
+|------|------|--------|-------------|-----------------|
+| conductor-api | api | feat/32-8-hunt-summary | 0 files | 0 commits |
+| conductor-ui | ui | feat/32-8-hunt-summary | 0 files | 0 commits |
+
+Note: For multi-repo projects, this table dynamically includes all configured repos.
 
 ### Readiness Assessment
 

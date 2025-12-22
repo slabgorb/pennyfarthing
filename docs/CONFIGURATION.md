@@ -6,6 +6,7 @@ Complete reference for all Pennyfarthing configuration options.
 
 | File | Purpose | Location |
 |------|---------|----------|
+| `repos.yaml` | Multi-repo configuration | `.claude/project/` |
 | `persona-config.yaml` | Theme and personality settings | `.claude/` |
 | `shared-context.md` | Project overview and structure | `.claude/project/docs/` |
 | `agent-scopes.yaml` | Agent scope configuration | `.claude/project/docs/` |
@@ -216,6 +217,214 @@ file_patterns:
     api: "**/*_test.go"
     ui: "**/*.test.ts"
 ```
+
+---
+
+## repos.yaml
+
+Flexible repository configuration for multi-repo projects.
+
+### Location
+
+`.claude/project/repos.yaml`
+
+### Purpose
+
+Defines all repositories in your project with their types, commands, and dependencies. This replaces the legacy `API_REPO`/`UI_REPO` pattern for projects that need more flexibility.
+
+### Template
+
+```yaml
+# Pennyfarthing Repository Configuration
+version: "1.0"
+
+# Backward compatibility - generates $API_REPO and $UI_REPO env vars
+# Set to null if you don't need legacy compatibility
+legacy_compat:
+  api_repo: "conductor-api"
+  ui_repo: "conductor-ui"
+  create_symlinks: true
+
+# Repository definitions
+repos:
+  conductor-api:
+    path: "conductor-api"        # Relative to PROJECT_ROOT
+    type: api                    # api | ui | adapter | service | shared | lib
+    language: go
+    test_command: "just test"
+    build_command: "just build"
+    lint_command: "golangci-lint run"
+    dependencies: []             # Other repos this depends on
+
+  conductor-ui:
+    path: "conductor-ui"
+    type: ui
+    language: typescript
+    test_command: "npm run test -- --run"
+    build_command: "npm run build"
+    lint_command: "npm run lint"
+    dependencies: []
+
+# Agent behavior by repo type (optional)
+agent_config:
+  type_behaviors:
+    api:
+      pre_test: "docker ps | grep $TEST_CONTAINER || just test-api-setup"
+    ui:
+      pre_test: ""
+    adapter:
+      isolated: true            # Adapters don't need other repos
+    service:
+      pre_test: "docker-compose up -d"
+
+# Build/test order (respects dependencies)
+build_order:
+  - conductor-api
+  - conductor-ui
+```
+
+### Repo Types
+
+| Type | Description | Use Case |
+|------|-------------|----------|
+| `api` | Backend API | Main backend service |
+| `ui` | Frontend UI | Web application frontend |
+| `adapter` | External API adapter | Integration with external services |
+| `service` | Microservice | Internal backend service |
+| `shared` | Shared library | Code shared between repos |
+| `lib` | Library package | Standalone library |
+
+### Example Configurations
+
+#### Adapter Project (Multiple Adapters)
+
+```yaml
+version: "1.0"
+
+legacy_compat:
+  api_repo: null
+  ui_repo: null
+  create_symlinks: false
+
+repos:
+  shared-contracts:
+    path: "contracts"
+    type: shared
+    language: go
+    test_command: "go test ./..."
+    dependencies: []
+
+  salesforce-adapter:
+    path: "adapters/salesforce"
+    type: adapter
+    language: go
+    test_command: "go test ./..."
+    dependencies: [shared-contracts]
+
+  dynamics-adapter:
+    path: "adapters/dynamics"
+    type: adapter
+    language: go
+    test_command: "go test ./..."
+    dependencies: [shared-contracts]
+
+build_order:
+  - shared-contracts
+  - salesforce-adapter
+  - dynamics-adapter
+```
+
+#### Microservices
+
+```yaml
+version: "1.0"
+
+repos:
+  gateway:
+    path: "services/gateway"
+    type: api
+    language: go
+    test_command: "go test ./..."
+    dependencies: []
+
+  auth-service:
+    path: "services/auth"
+    type: service
+    language: go
+    test_command: "go test ./..."
+    dependencies: [gateway]
+
+  user-service:
+    path: "services/user"
+    type: service
+    language: go
+    test_command: "go test ./..."
+    dependencies: [gateway, auth-service]
+
+  web-app:
+    path: "apps/web"
+    type: ui
+    language: typescript
+    test_command: "npm test"
+    dependencies: [gateway]
+
+build_order:
+  - gateway
+  - auth-service
+  - user-service
+  - web-app
+```
+
+#### Single Repo
+
+```yaml
+version: "1.0"
+
+legacy_compat:
+  api_repo: null
+  ui_repo: null
+  create_symlinks: false
+
+repos:
+  my-project:
+    path: "."
+    type: api
+    language: go
+    test_command: "go test ./..."
+    build_command: "go build -o bin/app"
+```
+
+### Using repos.yaml in Scripts
+
+```bash
+source $PROJECT_ROOT/scripts/repo-utils.sh
+
+# Check mode
+is_legacy_mode && echo "Legacy" || echo "repos.yaml"
+
+# Iterate repos
+for repo in $(get_repos); do
+    echo "Repo: $repo"
+    echo "  Path: $(get_repo_path $repo)"
+    echo "  Type: $(get_repo_type $repo)"
+    echo "  Test: $(get_test_command $repo)"
+done
+
+# Filter by type
+for repo in $(get_repos_of_type "adapter"); do
+    # Work with adapters
+done
+
+# Respect build order
+for repo in $(get_build_order); do
+    cd $PROJECT_ROOT/$(get_repo_path $repo)
+    eval "$(get_build_command $repo)"
+done
+```
+
+### Backward Compatibility
+
+If `repos.yaml` doesn't exist, the system falls back to `$API_REPO` and `$UI_REPO` environment variables. Existing projects continue to work unchanged.
 
 ---
 

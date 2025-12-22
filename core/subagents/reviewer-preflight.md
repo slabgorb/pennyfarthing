@@ -12,9 +12,29 @@ model: "haiku"
 description: "review pre-flight"
 ```
 
+## Multi-Repo Support
+
+For projects with multiple repositories, use repo-utils.sh:
+
+```bash
+source $PROJECT_ROOT/scripts/repo-utils.sh
+
+# Check all repos or filter by type
+for repo in $(filter_repos "{REPOS}"); do
+    repo_path=$(get_repo_path "$repo")
+    test_cmd=$(get_test_command "$repo")
+    lint_cmd=$(get_lint_command "$repo")
+
+    echo "=== Pre-flight for $repo ==="
+    cd $PROJECT_ROOT/$repo_path
+    # Run tests and lints...
+done
+```
+
 ## Prompt Template
 
-Replace `{STORY_ID}`, `{REPO}`, `{BRANCH}`, `{PR_NUMBER}` with actual values.
+Replace `{STORY_ID}`, `{REPOS}`, `{BRANCH}`, `{PR_NUMBER}` with actual values.
+- `{REPOS}` can be: `all`, `api`, `ui`, `adapter`, or comma-separated repo names
 
 ---
 
@@ -22,7 +42,7 @@ You are a code review pre-flight assistant. Gather data for story {STORY_ID}.
 
 ## Project Info
 - Project root: $PROJECT_ROOT (set by SessionStart hook)
-- Repo: ${REPO}
+- Repos: {REPOS}
 - Branch: {BRANCH}
 - PR: #{PR_NUMBER}
 

@@ -2,17 +2,18 @@
 # Worktree management utilities for parallel development work
 # Usage: worktree-manager.sh {create|remove|list|status|ports|cd} [args]
 #
-# Requires environment variables (set in .claude/project/hooks/setup-env.sh):
-#   API_REPO - Name of the API repository (e.g., "conductor-api")
-#   UI_REPO  - Name of the UI repository (e.g., "conductor-ui")
+# Configuration (choose one):
+#   1. repos.yaml: Define repos in .claude/project/repos.yaml (recommended)
+#   2. Legacy env vars: Set API_REPO and UI_REPO in .claude/project/hooks/setup-env.sh
 
 set -e
 
+# Determine PROJECT_ROOT first
+PROJECT_ROOT="${PROJECT_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+
 # Load environment
-if [ -f .env ]; then
-    set -a; source .env; set +a
-elif [ -f ../.env ]; then
-    set -a; source ../.env; set +a
+if [ -f "$PROJECT_ROOT/.env" ]; then
+    set -a; source "$PROJECT_ROOT/.env"; set +a
 fi
 
 # Source project hooks if available
@@ -20,17 +21,21 @@ if [ -f "$PROJECT_ROOT/.claude/project/hooks/setup-env.sh" ]; then
     source "$PROJECT_ROOT/.claude/project/hooks/setup-env.sh"
 fi
 
-PROJECT_ROOT="${PROJECT_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+# Source repo utilities (handles repos.yaml or legacy env vars)
+REPO_UTILS_LAZY=1  # Don't auto-load, we'll do it after validation
+source "$PROJECT_ROOT/scripts/repo-utils.sh"
+
 WORKTREE_ROOT="${WORKTREE_ROOT:-$PROJECT_ROOT/worktrees}"
 WORKTREE_PORT_OFFSET="${WORKTREE_PORT_OFFSET:-100}"
 
-# Validate required environment variables
-if [ -z "$API_REPO" ] || [ -z "$UI_REPO" ]; then
-    echo "❌ Error: API_REPO and UI_REPO environment variables must be set"
+# Load and validate repo configuration
+load_repos_config
+
+if [ "$(get_repo_count)" -eq 0 ]; then
+    echo "❌ Error: No repositories configured"
     echo ""
-    echo "Set these in .claude/project/hooks/setup-env.sh:"
-    echo "  export API_REPO=\"your-api-repo\""
-    echo "  export UI_REPO=\"your-ui-repo\""
+    echo "Option 1: Create .claude/project/repos.yaml (recommended for multi-repo projects)"
+    echo "Option 2: Set API_REPO and UI_REPO in .claude/project/hooks/setup-env.sh"
     exit 1
 fi
 
@@ -50,13 +55,17 @@ Commands:
   status                           Show detailed worktree status
   ports <name>                     Get port configuration for worktree
   cd <name>                        Print path to worktree (use with: cd \$(./scripts/worktree-manager.sh cd <name>))
+  config                           Show current repo configuration
 
 Examples:
-  # Create worktree for story 5-1a (both API and UI)
+  # Create worktree for all repos
   ./scripts/worktree-manager.sh create 5-1a feat/5-1a-file-upload
 
-  # Create worktree for API-only bug fix
+  # Create worktree for specific repo type
   ./scripts/worktree-manager.sh create bug-123 fix/bug-123-validation api
+
+  # Create worktree for specific repos (comma-separated)
+  ./scripts/worktree-manager.sh create feat-x feat/x-feature adapter-a,adapter-b
 
   # Get ports for running dev servers
   eval \$(./scripts/worktree-manager.sh ports 5-1a)
@@ -65,20 +74,26 @@ Examples:
   # Remove worktree after merge
   ./scripts/worktree-manager.sh remove 5-1a
 
-Naming Conventions:
-  - Use underscores for consistency: wt_5_1a, wt_5_2, etc.
-  - Feature: wt_5_1a, wt_5_2 (wt_epic_story format)
-  - Bug: wt_bug_123, wt_bug_456
-  - Chore: wt_chore_deps, wt_chore_cleanup
-  - Review: wt_review_42 (PR number)
+  # Show repo configuration
+  ./scripts/worktree-manager.sh config
+
+Repos Filter (third argument):
+  all           - All configured repos (default)
+  api           - Only repos of type 'api'
+  ui            - Only repos of type 'ui'
+  adapter       - Only repos of type 'adapter'
+  service       - Only repos of type 'service'
+  repo1,repo2   - Comma-separated list of specific repo names
+
+Configuration:
+  Option 1 (recommended): Create .claude/project/repos.yaml
+  Option 2 (legacy): Set API_REPO and UI_REPO environment variables
 
 Session Files:
   - Main checkout: .session/current_work.md
   - Worktree: .session/current_work_wt_5_1a.md (matches worktree name)
 
 Environment Variables:
-  API_REPO - Name of API repository (required)
-  UI_REPO  - Name of UI repository (required)
   PROJECT_ROOT - Project root directory
   WORKTREE_ROOT - Where worktrees are created (default: \$PROJECT_ROOT/worktrees)
   WORKTREE_PORT_OFFSET - Port offset between worktrees (default: 100)
@@ -89,10 +104,11 @@ EOF
 create_worktree() {
     local WT_NAME="$1"
     local BRANCH="$2"
-    local REPOS="${3:-both}"  # api, ui, or both
+    local REPOS_FILTER="${3:-all}"  # all, api, ui, adapter, service, or comma-separated names
 
     if [ -z "$WT_NAME" ] || [ -z "$BRANCH" ]; then
-        echo "❌ Usage: worktree-manager.sh create <name> <branch> [api|ui|both]"
+        echo "❌ Usage: worktree-manager.sh create <name> <branch> [repos-filter]"
+        echo "   repos-filter: all, api, ui, adapter, service, or comma-separated names"
         exit 1
     fi
 
@@ -109,52 +125,52 @@ create_worktree() {
     echo "🔧 Creating worktree: $WT_NAME"
     echo "   Branch: $BRANCH"
     echo "   Path: $WT_PATH"
+    echo "   Repos: $REPOS_FILTER"
     echo ""
 
-    # Create API worktree
-    if [ "$REPOS" = "api" ] || [ "$REPOS" = "both" ]; then
-        if [ -d "$PROJECT_ROOT/$API_REPO" ]; then
-            echo "📦 Creating API worktree ($API_REPO)..."
-            cd "$PROJECT_ROOT/$API_REPO"
+    # Get repos to create worktrees for (handle legacy 'both' as 'all')
+    local repos_filter="$REPOS_FILTER"
+    [ "$repos_filter" = "both" ] && repos_filter="all"
 
-            # Check if branch exists
+    local repos_to_create
+    repos_to_create=$(filter_repos "$repos_filter")
+
+    local created_repos=()
+
+    while IFS= read -r repo; do
+        [ -z "$repo" ] && continue
+
+        local repo_path
+        repo_path=$(get_repo_path "$repo")
+        local full_path="$PROJECT_ROOT/$repo_path"
+        local repo_type
+        repo_type=$(get_repo_type "$repo")
+
+        if [ -d "$full_path" ]; then
+            echo "📦 Creating worktree for $repo ($repo_type)..."
+            cd "$full_path"
+
+            # Check if branch exists locally, remotely, or needs to be created
             if git show-ref --verify --quiet "refs/heads/$BRANCH" 2>/dev/null; then
-                git worktree add "$WT_PATH/$API_REPO" "$BRANCH"
+                git worktree add "$WT_PATH/$repo" "$BRANCH"
             elif git show-ref --verify --quiet "refs/remotes/origin/$BRANCH" 2>/dev/null; then
-                git worktree add "$WT_PATH/$API_REPO" "$BRANCH"
+                git worktree add "$WT_PATH/$repo" "$BRANCH"
             else
-                # Create new branch from develop
-                git worktree add -b "$BRANCH" "$WT_PATH/$API_REPO" develop
+                # Create new branch from develop (or main if develop doesn't exist)
+                local base_branch="develop"
+                if ! git show-ref --verify --quiet "refs/heads/develop" 2>/dev/null; then
+                    base_branch="main"
+                fi
+                git worktree add -b "$BRANCH" "$WT_PATH/$repo" "$base_branch"
             fi
-            echo "   ✅ API worktree created"
+            echo "   ✅ $repo worktree created"
+            created_repos+=("$repo")
         else
-            echo "   ⚠️  API repo not found: $PROJECT_ROOT/$API_REPO"
+            echo "   ⚠️  Repo not found: $full_path"
         fi
-    fi
+    done <<< "$repos_to_create"
 
-    # Create UI worktree
-    if [ "$REPOS" = "ui" ] || [ "$REPOS" = "both" ]; then
-        if [ -d "$PROJECT_ROOT/$UI_REPO" ]; then
-            echo "📦 Creating UI worktree ($UI_REPO)..."
-            cd "$PROJECT_ROOT/$UI_REPO"
-
-            # Check if branch exists
-            if git show-ref --verify --quiet "refs/heads/$BRANCH" 2>/dev/null; then
-                git worktree add "$WT_PATH/$UI_REPO" "$BRANCH"
-            elif git show-ref --verify --quiet "refs/remotes/origin/$BRANCH" 2>/dev/null; then
-                git worktree add "$WT_PATH/$UI_REPO" "$BRANCH"
-            else
-                # Create new branch from develop
-                git worktree add -b "$BRANCH" "$WT_PATH/$UI_REPO" develop
-            fi
-            echo "   ✅ UI worktree created"
-        else
-            echo "   ⚠️  UI repo not found: $PROJECT_ROOT/$UI_REPO"
-        fi
-    fi
-
-    # Note: Session file should be created by SM agent with story details
-    # Session file naming matches worktree: current_work_wt_{name}.md
+    # Session file
     local SESSION_FILE="$PROJECT_ROOT/.session/current_work_$WT_NAME.md"
     if [ ! -f "$SESSION_FILE" ]; then
         echo ""
@@ -166,12 +182,12 @@ create_worktree() {
     echo "✅ Worktree '$WT_NAME' created successfully!"
     echo ""
     echo "Next steps:"
-    echo "  cd $WT_PATH/$API_REPO   # Work on API"
-    echo "  cd $WT_PATH/$UI_REPO    # Work on UI"
+    for repo in "${created_repos[@]}"; do
+        echo "  cd $WT_PATH/$repo"
+    done
     echo ""
     echo "Start dev servers with custom ports:"
     echo "  eval \$(./scripts/worktree-manager.sh ports $WT_NAME)"
-    echo "  cd $WT_PATH/$API_REPO && API_PORT=\$API_PORT make dev"
 }
 
 remove_worktree() {
@@ -191,19 +207,17 @@ remove_worktree() {
 
     echo "🗑️  Removing worktree: $WT_NAME"
 
-    # Remove API worktree
-    if [ -d "$WT_PATH/$API_REPO" ]; then
-        echo "   Removing API worktree..."
-        cd "$PROJECT_ROOT/$API_REPO"
-        git worktree remove "$WT_PATH/$API_REPO" --force 2>/dev/null || true
-    fi
+    # Remove worktrees for all configured repos
+    for repo in $(get_repos); do
+        local repo_path
+        repo_path=$(get_repo_path "$repo")
 
-    # Remove UI worktree
-    if [ -d "$WT_PATH/$UI_REPO" ]; then
-        echo "   Removing UI worktree..."
-        cd "$PROJECT_ROOT/$UI_REPO"
-        git worktree remove "$WT_PATH/$UI_REPO" --force 2>/dev/null || true
-    fi
+        if [ -d "$WT_PATH/$repo" ]; then
+            echo "   Removing $repo worktree..."
+            cd "$PROJECT_ROOT/$repo_path"
+            git worktree remove "$WT_PATH/$repo" --force 2>/dev/null || true
+        fi
+    done
 
     # Clean up directory
     rm -rf "$WT_PATH"
@@ -222,9 +236,14 @@ remove_worktree() {
         echo "   Removed legacy session file: wt-$WT_NAME.md"
     fi
 
-    # Prune worktree references
-    cd "$PROJECT_ROOT/$API_REPO" && git worktree prune 2>/dev/null || true
-    cd "$PROJECT_ROOT/$UI_REPO" && git worktree prune 2>/dev/null || true
+    # Prune worktree references for all repos
+    for repo in $(get_repos); do
+        local repo_path
+        repo_path=$(get_repo_path "$repo")
+        if [ -d "$PROJECT_ROOT/$repo_path" ]; then
+            cd "$PROJECT_ROOT/$repo_path" && git worktree prune 2>/dev/null || true
+        fi
+    done
 
     echo ""
     echo "✅ Worktree '$WT_NAME' removed successfully!"
@@ -234,17 +253,18 @@ list_worktrees() {
     echo "=== Active Worktrees ==="
     echo ""
 
-    if [ -d "$PROJECT_ROOT/$API_REPO" ]; then
-        echo "📦 API Worktrees ($API_REPO):"
-        cd "$PROJECT_ROOT/$API_REPO" && git worktree list
-        echo ""
-    fi
+    for repo in $(get_repos); do
+        local repo_path
+        repo_path=$(get_repo_path "$repo")
+        local repo_type
+        repo_type=$(get_repo_type "$repo")
 
-    if [ -d "$PROJECT_ROOT/$UI_REPO" ]; then
-        echo "📦 UI Worktrees ($UI_REPO):"
-        cd "$PROJECT_ROOT/$UI_REPO" && git worktree list
-        echo ""
-    fi
+        if [ -d "$PROJECT_ROOT/$repo_path" ]; then
+            echo "📦 $repo ($repo_type):"
+            cd "$PROJECT_ROOT/$repo_path" && git worktree list
+            echo ""
+        fi
+    done
 
     echo "📁 Worktree Directory:"
     if [ -d "$WORKTREE_ROOT" ] && [ "$(ls -A "$WORKTREE_ROOT" 2>/dev/null)" ]; then
@@ -272,17 +292,16 @@ show_status() {
             echo "📁 $WT_NAME"
             echo "   Path: $wt"
 
-            if [ -d "$wt/$API_REPO" ]; then
-                local API_BRANCH=$(cd "$wt/$API_REPO" && git branch --show-current 2>/dev/null || echo "unknown")
-                local API_STATUS=$(cd "$wt/$API_REPO" && git status --short 2>/dev/null | wc -l | tr -d ' ')
-                echo "   API: $API_BRANCH ($API_STATUS uncommitted)"
-            fi
-
-            if [ -d "$wt/$UI_REPO" ]; then
-                local UI_BRANCH=$(cd "$wt/$UI_REPO" && git branch --show-current 2>/dev/null || echo "unknown")
-                local UI_STATUS=$(cd "$wt/$UI_REPO" && git status --short 2>/dev/null | wc -l | tr -d ' ')
-                echo "   UI:  $UI_BRANCH ($UI_STATUS uncommitted)"
-            fi
+            # Show status for each configured repo
+            for repo in $(get_repos); do
+                if [ -d "$wt/$repo" ]; then
+                    local repo_type
+                    repo_type=$(get_repo_type "$repo")
+                    local branch=$(cd "$wt/$repo" && git branch --show-current 2>/dev/null || echo "unknown")
+                    local status_count=$(cd "$wt/$repo" && git status --short 2>/dev/null | wc -l | tr -d ' ')
+                    echo "   $repo ($repo_type): $branch ($status_count uncommitted)"
+                fi
+            done
 
             # Check for session file (new naming first, then legacy)
             if [ -f "$PROJECT_ROOT/.session/current_work_$WT_NAME.md" ]; then
@@ -360,6 +379,9 @@ case "${1:-help}" in
         ;;
     cd|path)
         get_path "$2"
+        ;;
+    config)
+        show_config
         ;;
     help|--help|-h)
         show_help
