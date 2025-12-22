@@ -60,6 +60,30 @@ grep "^worktree:" "$SESSION_FILE"
 # - ui_port: (the UI port)
 ```
 
+## Step 1.5: Check Epic Context
+
+**Before proceeding with git status or state determination, verify epic context exists.**
+
+```bash
+# Check for epic context files
+EPIC_CONTEXTS=$(ls .session/epic-*-context.md 2>/dev/null)
+
+if [ -z "$EPIC_CONTEXTS" ]; then
+    echo "EPIC_CONTEXT_STATUS: MISSING"
+    echo "No epic context files found in .session/"
+else
+    echo "EPIC_CONTEXT_STATUS: PRESENT"
+    # List found epic contexts
+    for ctx in $EPIC_CONTEXTS; do
+        EPIC_ID=$(basename "$ctx" | sed 's/epic-\(.*\)-context.md/\1/')
+        EPIC_TITLE=$(grep "^# Epic" "$ctx" | head -1 | sed 's/# Epic [0-9]*: //')
+        echo "  - Epic $EPIC_ID: $EPIC_TITLE"
+    done
+fi
+```
+
+**If no epic context exists AND we're in NEW_WORK_STATE, this blocks /new-work.**
+
 ## Step 2: Check Git Status
 
 Use repo-utils.sh for dynamic multi-repo support:
@@ -99,10 +123,13 @@ git log origin/develop..HEAD --oneline 2>/dev/null | wc -l
 
 ## Step 3: Determine Workflow State
 
-Apply these rules:
+Apply these rules in order:
+- **MISSING_EPIC_CONTEXT**: No epic context files AND (No current_work.md OR Phase=`complete`)
 - **FINISH_STATE**: Phase=`approved` OR (Phase=`review` AND Status=`approved`)
 - **NEW_WORK_STATE**: No current_work.md OR Phase=`complete` OR file contains "No active work"
 - **IN_PROGRESS_STATE**: Active work exists but not ready to finish
+
+**Note:** MISSING_EPIC_CONTEXT takes precedence over NEW_WORK_STATE. User must run `/start-epic` before `/new-work`.
 
 ## Step 4: Check Readiness
 
@@ -128,7 +155,17 @@ grep -c "status: backlog" $PROJECT_ROOT/sprint/current-sprint.yaml 2>/dev/null
 ## Workflow Status Report
 
 ### Detected State
-**{FINISH_STATE | NEW_WORK_STATE | IN_PROGRESS_STATE}**
+**{MISSING_EPIC_CONTEXT | FINISH_STATE | NEW_WORK_STATE | IN_PROGRESS_STATE}**
+
+### Epic Context Status
+| Status | Epic ID | Title |
+|--------|---------|-------|
+| ✓ PRESENT | 1 | Agentic Best Practices Implementation |
+
+*If MISSING:*
+| Status | Action Required |
+|--------|-----------------|
+| ✗ MISSING | Run `/start-epic` to generate epic technical context |
 
 ### Active Work Sessions
 | Story | Title | Phase | Status | Repos | Days Active |
@@ -169,6 +206,7 @@ Based on current phase, here's what each agent should do:
 
 | Current Phase | Next Agent | Trigger |
 |---------------|------------|---------|
+| MISSING_EPIC_CONTEXT | - | User must run `/start-epic` first |
 | (none) | SM | User runs /new-work or activates SM |
 | sm | TEA | SM completes story setup |
 | tea | Dev | TEA writes failing tests |

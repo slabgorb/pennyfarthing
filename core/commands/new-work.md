@@ -18,41 +18,50 @@ description: Start a new work session with Pennyfarthing
 │    (workflow-status-check)  │
 └─────────────┬───────────────┘
               │
-    ┌─────────┴─────────┐
-    │                   │
-FINISH_STATE        NEW_WORK_STATE
-    │                   │
-    ▼                   ▼
-SM handles         ┌───────────────┐
-finish flow        │ 2. Research   │  ← Scans backlog, checks Jira
-                   │ Subagent      │
-                   └───────┬───────┘
-                           │
-                           ▼
-                   ┌───────────────┐
-                   │ 3. SM presents│  ← User selects story
-                   │ stories       │
-                   └───────┬───────┘
-                           │
-                           ▼
-                   ┌───────────────┐
-                   │ 4. File       │  ← Reads & summarizes files
-                   │ Summary       │
-                   │ Subagent      │
-                   └───────┬───────┘
-                           │
-                           ▼
-                   ┌───────────────┐
-                   │ 5. SM creates │  ← Technical context
-                   │ story context │
-                   └───────┬───────┘
-                           │
-                           ▼
-                   ┌───────────────┐
-                   │ 6. Story      │  ← Jira, branches, session
-                   │ Setup         │
-                   │ Subagent      │
-                   └───────────────┘
+    ┌─────────┼─────────────────────┐
+    │         │                     │
+FINISH_STATE  │              MISSING_EPIC_CONTEXT
+    │         │                     │
+    ▼         │                     ▼
+SM handles    │              ┌──────────────────┐
+finish flow   │              │ "Run /start-epic │
+              │              │  to generate     │
+              │              │  epic context"   │
+              │              └──────────────────┘
+              │
+        NEW_WORK_STATE
+              │
+              ▼
+       ┌───────────────┐
+       │ 2. Research   │  ← Scans backlog, checks Jira
+       │ Subagent      │
+       └───────┬───────┘
+               │
+               ▼
+       ┌───────────────┐
+       │ 3. SM presents│  ← User selects story
+       │ stories       │
+       └───────┬───────┘
+               │
+               ▼
+       ┌───────────────┐
+       │ 4. File       │  ← Reads & summarizes files
+       │ Summary       │
+       │ Subagent      │
+       └───────┬───────┘
+               │
+               ▼
+       ┌───────────────┐
+       │ 5. SM creates │  ← Technical context
+       │ story context │
+       └───────┬───────┘
+               │
+               ▼
+       ┌───────────────┐
+       │ 6. Story      │  ← Jira, branches, session
+       │ Setup         │
+       │ Subagent      │
+       └───────────────┘
 ```
 
 ---

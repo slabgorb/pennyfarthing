@@ -1,16 +1,25 @@
 ---
-description: Sync Conductor epic to Jira MSSCI project using jira CLI
+description: Sync Pennyfarthing epic to Jira MSSCI project using jira CLI
 ---
 
 # Sync Epic to Jira Workflow
 
-This workflow syncs a Conductor epic and its stories to Jira using the `jira` CLI tool.
+This workflow syncs a Pennyfarthing epic and its stories to Jira using the `jira` CLI tool.
+
+**IMPORTANT:** All Pennyfarthing issues MUST be labeled with `pennyfarthing` to distinguish them from Conductor work.
 
 ## Prerequisites
 
 - `jira` CLI installed: `brew install ankitpokhrel/jira-cli/jira-cli`
 - `jira` CLI configured: `jira init`
 - Epic exists in `sprint/current-sprint.yaml`
+
+## Label Requirement
+
+All Pennyfarthing epics and stories must include the `pennyfarthing` label:
+```bash
+-l pennyfarthing
+```
 
 ## Quick Sync
 
@@ -49,10 +58,10 @@ jira issue view MSSCI-123
 ```bash
 jira issue create \
     -tStory \
-    -s"Story 35-2: Topology Editor" \
+    -s"Story 1-5: Add Epic Context Guardrail" \
     -b"Description here" \
     -yHigh \
-    -lcondutor
+    -l pennyfarthing
 ```
 
 ### Create Epic
@@ -60,8 +69,9 @@ jira issue create \
 ```bash
 jira issue create \
     -tEpic \
-    -s"Epic 35: Feature Name" \
-    -b"Epic description"
+    -s"Epic 1: Agentic Best Practices Implementation" \
+    -b"Epic description" \
+    -l pennyfarthing
 ```
 
 ### Assign Issue
