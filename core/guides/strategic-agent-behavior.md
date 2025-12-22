@@ -130,6 +130,174 @@ Strategic agents focus on planning, not implementation:
 
 ---
 
+## PM ↔ Architect Coordination
+
+Strategic agents collaborate on cross-cutting concerns. PM and Architect have a specific coordination pattern:
+
+### When PM Requests Architecture Review
+
+| Trigger | Action |
+|---------|--------|
+| New epic with technical uncertainty | PM → Architect: "Review feasibility" |
+| Story requires new patterns | PM → Architect: "Recommend approach" |
+| Cross-repo changes needed | PM → Architect: "Design integration" |
+| Performance/security concerns | PM → Architect: "Assess risk" |
+
+### How Architect Responds
+
+1. **Sync Review (< 1 story point impact):**
+   - Architect reviews in current session
+   - Provides recommendation immediately
+   - PM proceeds with planning
+
+2. **Async Review (> 1 story point impact):**
+   - Architect creates spike story
+   - Documents findings in `.claude/project/agents/architect-sidecar/`
+   - PM waits for spike completion before finalizing epic
+
+### Design Approval Flow
+
+```
+PM identifies need → Architect reviews → Architect recommends
+                                              ↓
+                              ┌───────────────┴───────────────┐
+                              ↓                               ↓
+                         APPROVED                         NEEDS WORK
+                              ↓                               ↓
+                    PM proceeds with epic            Architect documents concerns
+                                                              ↓
+                                                    PM adjusts scope/approach
+                                                              ↓
+                                                    Re-submit for review
+```
+
+### Handling Disagreements
+
+If PM and Architect disagree on approach:
+1. Document both perspectives in architect-sidecar
+2. Escalate to Orchestrator for tiebreaker
+3. Orchestrator decision is final for this sprint
+4. Revisit in retrospective if needed
+
+---
+
+## Approval Gates
+
+Clear gates prevent scope creep and ensure quality. Know when to proceed vs escalate.
+
+### Risk Thresholds
+
+| Risk Level | Criteria | Action |
+|------------|----------|--------|
+| **Low** | Single repo, existing patterns, < 5 pts | Proceed without approval |
+| **Medium** | Cross-repo, new patterns, 5-13 pts | PM approval required |
+| **High** | Architecture change, external deps, 13+ pts | PM + Architect approval |
+| **Critical** | Breaking changes, security, data migration | Full team review |
+
+### Who Approves What
+
+| Decision Type | Approver | Escalation Path |
+|---------------|----------|-----------------|
+| Story prioritization | PM | → Orchestrator |
+| Technical approach | Architect | → PM → Orchestrator |
+| Sprint commitment | SM + Team | → PM |
+| Pattern deviation | Architect | → Orchestrator |
+| Process change | Orchestrator | → Team consensus |
+
+### Escalation Protocol
+
+When blocked or uncertain:
+
+```
+1. Document the blocker in session file
+2. Identify the appropriate approver (table above)
+3. Present options with trade-offs, not just problems
+4. Request decision with deadline
+5. If no response: escalate to next level
+6. Document final decision in sidecar
+```
+
+### Proceed vs Escalate Decision Tree
+
+```
+Is this within my role's authority?
+    ├─ YES → Does it follow existing patterns?
+    │           ├─ YES → Proceed
+    │           └─ NO → Escalate to Architect
+    └─ NO → Escalate to appropriate approver
+```
+
+---
+
+## Sprint Planning Ceremony
+
+Structured workflow for sprint planning. PM leads, SM facilitates, Architect advises.
+
+### Pre-Planning (PM, async)
+
+1. **Backlog Grooming:**
+   - Review backlog.yaml for candidate stories
+   - Ensure stories have clear acceptance criteria
+   - Flag stories needing architecture review
+
+2. **Capacity Check:**
+   - Note team velocity from previous sprints
+   - Identify any planned absences or blockers
+   - Set preliminary sprint goal
+
+3. **Priority Stack:**
+   - Rank stories by business value
+   - Consider dependencies between stories
+   - Prepare recommendation for planning session
+
+### Planning Session (PM + SM + Architect)
+
+**Duration:** ~30 minutes per 2-week sprint
+
+1. **Sprint Goal (5 min):**
+   - PM proposes sprint goal
+   - Team discusses and refines
+   - Goal captured in `sprint/current-sprint.yaml`
+
+2. **Story Review (15 min):**
+   - PM presents prioritized stories
+   - Architect flags technical concerns
+   - SM notes dependencies and blockers
+
+3. **Sizing (5 min):**
+   - Team confirms or adjusts story points
+   - Stories > 8 pts flagged for breakdown
+   - Architect provides complexity input
+
+4. **Commitment (5 min):**
+   - Team commits to sprint scope
+   - SM updates sprint YAML with committed stories
+   - Any stretch goals identified
+
+### Post-Planning (SM)
+
+```bash
+# Update sprint file
+vim sprint/current-sprint.yaml
+
+# Create epic context if new epic
+/start-epic {epic-id}
+
+# Sprint is ready for /new-work
+```
+
+### Sprint Planning Checklist
+
+- [ ] Sprint goal defined and agreed
+- [ ] Stories prioritized and sized
+- [ ] Dependencies identified
+- [ ] Architect reviewed technical risk
+- [ ] Team committed to scope
+- [ ] Sprint YAML updated
+- [ ] Epic context generated (if new epic)
+
+---
+
 ## Handoffs to Tactical Agents
 
 Strategic agents hand off to tactical agents for implementation:
