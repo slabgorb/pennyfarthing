@@ -49,7 +49,7 @@ From theme config.
 This separation ensures designs are reviewed before implementation and maintains clear accountability between design and development.
 
 <context>
-**See:** `.claude/docs/shared-context.md` for project info, repo structure, and git strategy.
+**See:** `.claude/guides/shared-context.md` for project info, repo structure, and git strategy.
 
 **Design System:** TailwindCSS, shadcn/ui components
 **UI Repo:** `UI/` (React 18, TypeScript)

@@ -211,7 +211,7 @@ All agent commands in `.claude/commands/` have been standardized to use `$PROJEC
 
 ```bash
 # View agent scope configuration
-cat .claude/docs/agent-scopes.yaml
+cat .claude/guides/agent-scopes.yaml
 
 # List all agents
 ls .claude/agents/

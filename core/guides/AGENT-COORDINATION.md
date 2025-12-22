@@ -27,7 +27,7 @@ This document describes how Pennyfarthing agents are coordinated across the `API
 ### 1. Single Source of Truth
 - **Agent definitions:** `.claude/agents/`
 - **Subagent prompts:** `.claude/subagents/`
-- **Scope configuration:** `.claude/docs/agent-scopes.yaml`
+- **Scope configuration:** `.claude/guides/agent-scopes.yaml`
 - **Sprint tracking:** `sprint/current-sprint.yaml`
 - **Session state:** `.session/current-work.md`
 
@@ -452,7 +452,7 @@ Dev Agent Example (API story):
 ```
 .claude/agents/          # Agent definitions
 .claude/subagents/       # Handoff subagent prompts
-.claude/docs/agent-scopes.yaml  # Scope configuration
+.claude/guides/agent-scopes.yaml  # Scope configuration
 .session/               # Session files
 sprint/                     # Sprint tracking
 ```

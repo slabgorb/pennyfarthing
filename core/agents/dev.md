@@ -28,7 +28,7 @@ From theme config. Model: haiku. Tasks: run tests, gather results, update sessio
 </role>
 
 <context>
-**Shared behavior:** `.claude/docs/tactical-agent-behavior.md`
+**Shared behavior:** `.claude/guides/tactical-agent-behavior.md`
 **Sidecar memory:** `.claude/agents/dev-sidecar/`
 </context>
 

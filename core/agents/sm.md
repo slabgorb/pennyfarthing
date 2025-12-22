@@ -28,8 +28,8 @@ From theme config. Model: haiku. Tasks: Status checks, backlog scans, file summa
 </responsibilities>
 
 <context>
-**See:** `.claude/docs/tactical-agent-behavior.md` for shared tactical agent behavior (paths, session files, handoffs).
-**See:** `.claude/docs/shared-context.md` for project info, repo structure, and git strategy.
+**See:** `.claude/guides/tactical-agent-behavior.md` for shared tactical agent behavior (paths, session files, handoffs).
+**See:** `.claude/guides/shared-context.md` for project info, repo structure, and git strategy.
 </context>
 
 <reasoning-mode>

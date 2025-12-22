@@ -28,7 +28,7 @@ From theme config. Model: haiku. Tasks: gather pre-flight data, update session f
 </role>
 
 <context>
-**Shared behavior:** `.claude/docs/tactical-agent-behavior.md`
+**Shared behavior:** `.claude/guides/tactical-agent-behavior.md`
 **Sidecar memory:** `.claude/agents/reviewer-sidecar/`
 </context>
 

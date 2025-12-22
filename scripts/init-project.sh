@@ -260,7 +260,7 @@ echo "Creating symlinks..."
 cd "$PROJECT_ROOT/.claude"
 
 # Remove existing directories/symlinks if they exist
-for target in agents subagents commands personas; do
+for target in agents subagents commands personas guides; do
     [ -e "$target" ] && rm -rf "$target"
 done
 
@@ -268,6 +268,7 @@ done
 ln -sf pennyfarthing/core/agents agents
 ln -sf pennyfarthing/core/subagents subagents
 ln -sf pennyfarthing/core/commands commands
+ln -sf pennyfarthing/core/guides guides
 ln -sf pennyfarthing/personas personas
 
 # Copy persona-config.yaml if it doesn't exist
