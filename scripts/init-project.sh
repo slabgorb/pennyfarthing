@@ -344,6 +344,19 @@ if [ -d "$UI_REPO_DIR" ] && [ ! -e "UI" ]; then
     echo "Created symlink: UI -> $UI_REPO_DIR"
 fi
 
+# Create scripts directory and symlink pennyfarthing scripts
+# These scripts are referenced by agents (e.g., check-context.sh, agent-session.sh)
+mkdir -p scripts
+PENNYFARTHING_SCRIPTS="$CLAUDE_DIR/pennyfarthing/scripts"
+
+# Symlink key scripts that agents reference
+for script in check-context.sh agent-session.sh repo-utils.sh worktree-manager.sh; do
+    if [ -f "$PENNYFARTHING_SCRIPTS/$script" ] && [ ! -e "scripts/$script" ]; then
+        ln -sf "../.claude/pennyfarthing/scripts/$script" "scripts/$script"
+        echo "Created symlink: scripts/$script -> pennyfarthing"
+    fi
+done
+
 echo ""
 echo "Done! Pennyfarthing initialized for $PROJECT_NAME"
 echo ""

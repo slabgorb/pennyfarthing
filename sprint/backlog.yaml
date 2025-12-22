@@ -1,0 +1,10 @@
+# Pennyfarthing Backlog
+# Future epics and stories not yet committed to a sprint
+
+backlog:
+  # Add future epics here as they are identified
+  epics: []
+
+# Notes:
+# - Epic 1 (Agentic Best Practices) moved to Sprint 1
+# - Future epics will be added during sprint planning

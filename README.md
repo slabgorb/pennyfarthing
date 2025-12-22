@@ -116,6 +116,7 @@ your-project/
 │   ├── agents/        --> symlink to pennyfarthing/core/agents/
 │   ├── subagents/     --> symlink to pennyfarthing/core/subagents/
 │   ├── commands/      --> symlink to pennyfarthing/core/commands/
+│   ├── guides/        --> symlink to pennyfarthing/core/guides/
 │   ├── personas/      --> symlink to pennyfarthing/personas/
 │   └── persona-config.yaml
 ├── sprint/
