@@ -119,7 +119,7 @@ _parse_with_yq() {
         while IFS= read -r repo; do
             [[ -n "$repo" ]] && _BUILD_ORDER+=("$repo")
         done <<< "$build_order"
-    else
+    elif [[ ${#_REPO_NAMES[@]} -gt 0 ]]; then
         _BUILD_ORDER=("${_REPO_NAMES[@]}")
     fi
 }
@@ -242,7 +242,12 @@ _load_legacy_env() {
         _REPO_DEPS["$UI_REPO"]=""
     fi
 
-    _BUILD_ORDER=("${_REPO_NAMES[@]}")
+    # Handle empty array case for set -u compatibility
+    if [[ ${#_REPO_NAMES[@]} -gt 0 ]]; then
+        _BUILD_ORDER=("${_REPO_NAMES[@]}")
+    else
+        _BUILD_ORDER=()
+    fi
 }
 
 # ============================================================================
