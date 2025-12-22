@@ -1,72 +1,10 @@
 # Tactical Agent Behavior (Shared)
 
-**This file defines common behavior for all tactical agents (SM, TEA, Dev, Reviewer).**
+**This file defines common behavior for tactical agents (SM, TEA, Dev, Reviewer).**
 
-**Configuration:** `.claude/docs/agent-scopes.yaml` → `tactical_agent_behavior` section
+**Inherits from:** `shared-agent-behavior.md` - load that first for sidecar, confidence, and reasoning protocols.
 
 Tactical agents work on story-scoped tasks within the TDD flow: SM → TEA → Dev → Reviewer
-
-## Confidence Protocol
-
-Tactical agents must assess confidence before taking significant actions.
-
-### Confidence Levels
-
-| Level | Indicators | Action |
-|-------|-----------|--------|
-| **HIGH** | Matches known patterns in skill files, clear requirements, similar past success | Proceed autonomously |
-| **MEDIUM** | Some unknowns, first time for this pattern, could affect existing functionality | Ask before risky actions |
-| **LOW** | Architectural changes, security-sensitive, deleting/moving files | Always ask user first |
-
-### Before Acting, Ask Yourself
-
-1. Have I seen this pattern before? (in skills, sidecars, or this session)
-2. What could go wrong?
-3. Is this reversible?
-4. Would a senior engineer want to review this?
-
-### Expressing Uncertainty
-
-When uncertain, SAY SO:
-
-```
-GOOD: "I'm not sure if this is the right approach. Here's my reasoning..."
-GOOD: "I found two possible solutions. Let me explain the tradeoffs..."
-BAD: [silently picks one approach without mentioning alternatives]
-BAD: [confidently states something without verifying]
-```
-
----
-
-## Reasoning Mode (Toggleable)
-
-**Default:** Quiet mode - follow ReAct pattern internally, show only key decisions
-
-**Verbose mode:** User says "verbose mode" to enable explicit reasoning chain
-
-### When Verbose Mode is ON
-
-Show the full reasoning chain:
-
-```
-THOUGHT: [articulate what you're trying to accomplish]
-ACTION: [describe the tool/command you'll use]
-OBSERVATION: [what was the result?]
-REFLECT: [did it work? what next?]
-```
-
-### When Quiet Mode is ON (Default)
-
-Follow the same pattern internally but only show:
-- Key decisions and their reasoning
-- Results and outcomes
-- Questions and blockers
-
-### Toggling
-
-- User says "verbose mode" or "verbose on" → enable verbose
-- User says "quiet mode" or "verbose off" → disable verbose
-- Check session file for `verbose: true` if persisted
 
 ---
 
@@ -556,99 +494,24 @@ When working in a worktree:
 3. **Install deps if needed:** `npm install` (UI) or dependencies are shared (API)
 4. **Use correct ports:** `eval $(./scripts/worktree-manager.sh ports {name})`
 
-## Sidecar Memory System
+## Sidecar Memory (Tactical Agents)
 
-Sidecars are project-specific memory that persists across sessions. Each agent has a sidecar directory where learnings are stored.
+**See `shared-agent-behavior.md` for full sidecar protocol.**
 
-### Sidecar Location
+For tactical agents, key moments to check/update sidecars:
 
-```
-.claude/project/agents/{agent}-sidecar/
-├── patterns.md      # Implementation patterns discovered
-├── gotchas.md       # Things that bite you (common mistakes)
-└── decisions.md     # Past architectural decisions
-```
+| When | Action |
+|------|--------|
+| **On Activation** | Load sidecar after checking handoff status (Step 7) |
+| **Before Handoff** | Capture any learnings BEFORE spawning handoff subagent |
+| **On Gotcha** | Immediately note it - don't wait for handoff |
 
-### Loading Sidecar (On Activation)
+### Tactical-Specific Patterns
 
-**After Step 7 (checking handoff status), load your sidecar:**
-
-```bash
-SIDECAR_DIR="$PROJECT_ROOT/.claude/project/agents/{agent}-sidecar"
-
-if [ -d "$SIDECAR_DIR" ]; then
-    echo "=== Loading Sidecar Memory ==="
-    for file in "$SIDECAR_DIR"/*.md; do
-        [ -f "$file" ] && head -50 "$file"
-    done
-fi
-```
-
-**What to look for:**
-- Patterns that apply to current story
-- Gotchas related to files you'll touch
-- Past decisions that constrain current work
-
-### Capturing Learnings (Before Handoff)
-
-**Before spawning your handoff subagent, ask yourself:**
-
-1. Did I discover a pattern worth remembering?
-2. Did I hit a gotcha that wasted time?
-3. Did I make a decision that future work should know?
-
-**If YES to any, append to appropriate sidecar file:**
-
-```markdown
----
-## [YYYY-MM-DD] [Story-ID] Brief Title
-
-**Context:** What situation triggered this
-**Learning:** What we discovered
-**Apply When:** When to use this knowledge
-```
-
-### Sidecar Entry Examples
-
-**patterns.md:**
-```markdown
----
-## 2025-01-15 Story 5-2: Use errgroup for parallel DB calls
-
-**Context:** Needed to fetch user and permissions simultaneously
-**Learning:** Use errgroup.WithContext for parallel DB calls with proper error handling
-**Apply When:** Any endpoint needing multiple independent DB queries
-```
-
-**gotchas.md:**
-```markdown
----
-## 2025-01-15 Story 5-2: npm install needs --legacy-peer-deps
-
-**Context:** Fresh install failed with peer dependency conflict
-**Learning:** Always use `npm install --legacy-peer-deps` in this project
-**Apply When:** Any npm install command
-```
-
-**decisions.md:**
-```markdown
----
-## 2025-01-15 Story 5-2: Don't refactor PaymentService
-
-**Context:** Considered refactoring during implementation
-**Learning:** PaymentService is fragile and tested only via integration tests. Do not refactor without PM approval.
-**Apply When:** Any story touching payment flow
-```
-
-### When NOT to Write to Sidecar
-
-- Trivial learnings (obvious to any developer)
-- One-time fixes (won't apply to future work)
-- Already documented in project README or docs
-
-### Sidecar Maintenance
-
-Sidecars are reviewed during retrospectives (`/retro`). Old or outdated entries are pruned.
+- **TEA:** Test patterns, mocking approaches, test data gotchas
+- **Dev:** Implementation patterns, API quirks, performance fixes
+- **Reviewer:** Common issues found, patterns to watch for
+- **SM:** Story breakdown patterns, estimation notes
 
 ---
 
