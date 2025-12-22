@@ -47,8 +47,9 @@ epics:
           - Cross-agent communication protocols
         points: 3
         priority: P1
-        status: in-progress
+        status: done
         started: 2025-12-22
+        completed: 2025-12-22
         repos: pennyfarthing
         acceptance_criteria:
           - PM/Architect coordination documented
@@ -110,6 +111,6 @@ epics:
 
 summary:
   total_points: 23
-  completed_points: 0
+  completed_points: 3
   in_progress_points: 2
   velocity_target: 25
