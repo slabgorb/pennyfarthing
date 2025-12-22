@@ -120,10 +120,19 @@ else
     log_info "Already on develop, skipping merge"
 fi
 
-# Step 4: Merge develop to master
-log_info "Merging develop to master..."
-git -C "$PROJECT_ROOT" checkout master || git -C "$PROJECT_ROOT" checkout main
-MASTER_BRANCH=$(git -C "$PROJECT_ROOT" branch --show-current)
+# Step 4: Merge develop to master/main
+# Detect which branch exists (main or master)
+if git -C "$PROJECT_ROOT" show-ref --verify --quiet refs/heads/main; then
+    MASTER_BRANCH="main"
+elif git -C "$PROJECT_ROOT" show-ref --verify --quiet refs/heads/master; then
+    MASTER_BRANCH="master"
+else
+    log_error "Neither 'main' nor 'master' branch exists"
+    exit 1
+fi
+
+log_info "Merging develop to $MASTER_BRANCH..."
+git -C "$PROJECT_ROOT" checkout "$MASTER_BRANCH"
 
 git -C "$PROJECT_ROOT" pull origin "$MASTER_BRANCH" --ff-only || {
     log_warn "Could not fast-forward $MASTER_BRANCH. Attempting merge..."
