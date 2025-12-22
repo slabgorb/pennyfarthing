@@ -1,6 +1,11 @@
 # Star Trek Theme
 # Characters from Star Trek: The Next Generation
 # Example alternative theme for Agent Framework
+#
+# DISCLAIMER: Star Trek and all related marks, logos, and characters are
+# owned by Paramount Global. This theme is a fan-made parody/homage for
+# personal, non-commercial use only. No copyright infringement intended.
+# This project is not affiliated with, endorsed, or sponsored by Paramount.
 
 theme:
   name: Star Trek
