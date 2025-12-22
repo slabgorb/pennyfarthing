@@ -296,6 +296,38 @@ fi
 mkdir -p "$PROJECT_ROOT/sprint"
 mkdir -p "$PROJECT_ROOT/.session"
 
+# Add .gitkeep to preserve directories
+touch "$PROJECT_ROOT/sprint/.gitkeep"
+touch "$PROJECT_ROOT/.session/.gitkeep"
+
+# Add gitignore entries for pennyfarthing
+echo "Updating .gitignore..."
+GITIGNORE="$PROJECT_ROOT/.gitignore"
+
+# Entries to add
+GITIGNORE_ENTRIES="
+# Pennyfarthing session files (runtime state)
+.session/*
+!.session/.gitkeep
+
+# Claude Code settings
+.claude/settings.local.json
+.claude/settings.json
+"
+
+# Add entries if not already present
+for entry in ".session/*" "!.session/.gitkeep" ".claude/settings.local.json"; do
+    if ! grep -qF "$entry" "$GITIGNORE" 2>/dev/null; then
+        if [ ! -f "$GITIGNORE" ] || [ ! -s "$GITIGNORE" ]; then
+            echo "$GITIGNORE_ENTRIES" > "$GITIGNORE"
+            break
+        elif ! grep -q "Pennyfarthing session files" "$GITIGNORE"; then
+            echo "$GITIGNORE_ENTRIES" >> "$GITIGNORE"
+            break
+        fi
+    fi
+done
+
 # Create API/UI symlinks if repos exist
 # These provide a stable path for framework scripts regardless of actual repo names
 cd "$PROJECT_ROOT"
