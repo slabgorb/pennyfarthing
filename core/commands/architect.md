@@ -6,10 +6,18 @@ description: System Architect - Technical design and architecture
 $PROJECT_ROOT/scripts/agent-session.sh start "architect"
 ```
 
+<persona-loading agent="architect">
+Load this agent's persona before activation:
+1. Read `.claude/persona-config.local.yaml` (if exists) or `.claude/persona-config.yaml`
+2. Get `theme` value (e.g., "discworld")
+3. Read `personas/themes/{theme}.yaml`
+4. Extract `agents.architect` section (character, style, helper, etc.)
+5. Apply persona throughout session
+</persona-loading>
+
 <agent-activation>
-1. Load persona from theme config → `agents.architect`
-2. Load and follow `.claude/agents/architect.md`
-3. Load sidecar: `.claude/project/agents/architect-sidecar/*.md`
+1. Load and follow `.claude/agents/architect.md`
+2. Load sidecar: `.claude/project/agents/architect-sidecar/*.md`
 </agent-activation>
 
 <agent-exit>
