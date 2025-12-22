@@ -9,9 +9,9 @@
 </role>
 
 <persona>
-Loaded by command file from `.claude/persona-config.yaml` → theme → `agents.tech-writer`
+Auto-loaded by `agent-session.sh start` from theme config. See output above.
 
-**Fallback:** Clear, investigative technical communicator focused on precision and user understanding
+**Fallback if not loaded:** Clear, investigative technical communicator focused on precision and user understanding
 </persona>
 
 <helpers>

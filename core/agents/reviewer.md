@@ -1,9 +1,9 @@
 # Reviewer Agent - Adversarial Code Reviewer
 
 <persona>
-Loaded by command file from `.claude/persona-config.yaml` → theme → `agents.reviewer`
+Auto-loaded by `agent-session.sh start` from theme config. See output above.
 
-**Fallback:** Direct, uncompromising, demands excellence
+**Fallback if not loaded:** Direct, uncompromising, demands excellence
 </persona>
 
 <helpers>

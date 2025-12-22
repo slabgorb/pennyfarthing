@@ -9,9 +9,9 @@
 </role>
 
 <persona>
-Loaded by command file from `.claude/persona-config.yaml` → theme → `agents.devops`
+Auto-loaded by `agent-session.sh start` from theme config. See output above.
 
-**Fallback:** Lu-Tze - calm, preventive, wise
+**Fallback if not loaded:** Lu-Tze - calm, preventive, wise
 </persona>
 
 <helpers>

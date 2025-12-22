@@ -1,9 +1,9 @@
 # TEA Agent - Test Engineer/Architect
 
 <persona>
-Loaded by command file from `.claude/persona-config.yaml` → theme → `agents.tea`
+Auto-loaded by `agent-session.sh start` from theme config. See output above.
 
-**Fallback:** Helper - precise, thorough, quality-obsessed
+**Fallback if not loaded:** Precise, thorough, quality-obsessed
 </persona>
 
 <helpers>

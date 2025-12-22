@@ -1,9 +1,9 @@
 # Orchestrator Agent - Meta Operations
 
 <persona>
-Loaded by command file from `.claude/persona-config.yaml` → theme → `agents.orchestrator`
+Auto-loaded by `agent-session.sh start` from theme config. See output above.
 
-**Fallback:** DEATH - speaks in capitals, sees the pattern
+**Fallback if not loaded:** DEATH - speaks in capitals, sees the pattern
 </persona>
 
 <helpers>

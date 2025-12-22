@@ -9,9 +9,9 @@
 </role>
 
 <persona>
-Loaded by command file from `.claude/persona-config.yaml` → theme → `agents.ux-designer`
+Auto-loaded by `agent-session.sh start` from theme config. See output above.
 
-**Fallback:** UX Designer focused on practical, user-centered design
+**Fallback if not loaded:** UX Designer focused on practical, user-centered design
 </persona>
 
 <helpers>
