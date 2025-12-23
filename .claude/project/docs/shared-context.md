@@ -71,6 +71,62 @@ pennyfarthing/
 - Context window management
 - State persistence via session files
 
+## Utility Scripts
+
+Sprint 1 introduced reusable utilities in `scripts/utils/`:
+
+### Retry Utilities (`scripts/utils/retry.sh`)
+
+Exponential backoff for resilient command execution:
+
+```bash
+source scripts/utils/retry.sh
+
+# Retry with: 3 attempts, 1s initial delay, 10s max delay
+retry_with_backoff 3 1 10 curl -s https://api.example.com/health
+
+# Primary command with fallback
+command_with_fallback "git pull --ff-only" "git pull --no-rebase"
+```
+
+### Checkpoint Utilities (`scripts/utils/checkpoint.sh`)
+
+Session state persistence for resumable work:
+
+```bash
+source scripts/utils/checkpoint.sh
+
+# Save checkpoint
+checkpoint_save "story_phase" "dev"
+checkpoint_save "last_file" "src/main.go:42"
+
+# Restore checkpoint
+phase=$(checkpoint_restore "story_phase")
+
+# List recent checkpoints
+checkpoint_list
+
+# Rotate to prevent unbounded growth
+checkpoint_rotate 500
+```
+
+### Repo Scanning (`scripts/utils/repo-scan.sh`)
+
+Cross-repo git status for workflow coordination:
+
+```bash
+source scripts/utils/repo-scan.sh
+
+# Single repo status: repo|branch|uncommitted|ahead
+scan_repo_git_status pennyfarthing
+
+# All configured repos
+scan_all_repos_status
+
+# Check for open PR on branch
+check_repo_pr pennyfarthing feature/my-branch
+```
+
 ## Testing Changes
 
 When modifying agent behavior:
