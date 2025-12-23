@@ -136,8 +136,9 @@ epics:
           when multiple agents or terminals access .session files.
         points: 2
         priority: P2
-        status: in_progress
+        status: done
         started: 2025-12-23
+        completed: 2025-12-23
         repos: pennyfarthing
         acceptance_criteria:
           - Lock mechanism prevents concurrent writes to session files
@@ -167,7 +168,7 @@ epics:
 
 summary:
   total_points: 23
-  completed_points: 19
-  in_progress_points: 2
+  completed_points: 21
+  in_progress_points: 0
   backlog_points: 2
   velocity_target: 25
