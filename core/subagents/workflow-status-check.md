@@ -1,23 +1,14 @@
 # Workflow Status Check Subagent
 
-**Purpose:** Scan ALL work files in .session directory AND git status in repos
-**Model:** haiku
-**Called by:** Any tactical agent (SM, TEA, Dev, Reviewer) on activation
+**Purpose:** Scan .session files AND git status | **Model:** haiku | **Called by:** All tactical agents
 
-This is the UNIVERSAL entry point for all tactical agents. The output tells each agent:
-1. What work exists
-2. What phase the work is in
-3. Whether this agent should pick up the work or hand off
-
-## Task Tool Configuration
+Universal entry point telling each agent: what work exists, what phase, and whether to activate.
 
 ```yaml
 subagent_type: "general-purpose"
 model: "haiku"
 description: "workflow status check"
 ```
-
-## Prompt Template
 
 ---
 
@@ -86,39 +77,12 @@ fi
 
 ## Step 2: Check Git Status
 
-Use repo-utils.sh for dynamic multi-repo support:
+Use `repo-scan.sh` for git status across all repos:
 
 ```bash
-# Load repo configuration
-source $PROJECT_ROOT/scripts/repo-utils.sh
-
-# Check all configured repos
-for repo in $(get_repos); do
-    repo_path=$(get_repo_path "$repo")
-    repo_type=$(get_repo_type "$repo")
-
-    echo "=== $repo ($repo_type) ==="
-    cd $PROJECT_ROOT/$repo_path
-    git status --short
-    echo "Branch: $(git branch --show-current)"
-    echo "Ahead: $(git log origin/develop..HEAD --oneline 2>/dev/null | wc -l) commits"
-done
-```
-
-### Legacy fallback (if repo-utils.sh not available)
-
-```bash
-# API repo
-cd $PROJECT_ROOT/$API_REPO
-git status --short
-git branch --show-current
-git log origin/develop..HEAD --oneline 2>/dev/null | wc -l
-
-# UI repo
-cd $PROJECT_ROOT/$UI_REPO
-git status --short
-git branch --show-current
-git log origin/develop..HEAD --oneline 2>/dev/null | wc -l
+source $PROJECT_ROOT/scripts/utils/repo-scan.sh
+scan_all_repos_status
+# Returns one line per repo: repo|branch|uncommitted|ahead
 ```
 
 ## Step 3: Determine Workflow State
@@ -133,19 +97,15 @@ Apply these rules in order:
 
 ## Step 4: Check Readiness
 
-For **FINISH_STATE**:
+For **FINISH_STATE** - check PRs using `repo-scan.sh`:
 ```bash
-# Check for open PRs
-cd $PROJECT_ROOT/$API_REPO
-gh pr list --state open --head "$(git branch --show-current)" --json number,state,mergeable 2>/dev/null
-
-cd $PROJECT_ROOT/$UI_REPO
-gh pr list --state open --head "$(git branch --show-current)" --json number,state,mergeable 2>/dev/null
+source $PROJECT_ROOT/scripts/utils/repo-scan.sh
+check_repo_pr "REPO_NAME" "BRANCH_NAME"
+# Returns PR URL or "none"
 ```
 
-For **NEW_WORK_STATE**:
+For **NEW_WORK_STATE** - count backlog stories:
 ```bash
-# Quick count of backlog stories
 grep -c "status: backlog" $PROJECT_ROOT/sprint/current-sprint.yaml 2>/dev/null
 ```
 
@@ -191,30 +151,17 @@ Note: For multi-repo projects, this table dynamically includes all configured re
 - Backlog Stories: {N} available
 - Current Sprint: Sprint {N}
 
-### Agent Guidance
+### Agent Guidance & Phase Flow
 
-Based on current phase, here's what each agent should do:
+| Phase | Active Agent | Next → |
+|-------|--------------|--------|
+| MISSING_EPIC | - | Run `/start-epic` |
+| (none)/complete | SM | → TEA |
+| sm | TEA | → Dev |
+| tea | Dev | → Reviewer |
+| dev | Reviewer | → SM |
+| review/approved | SM | Finish |
 
-| Agent | Should Activate? | Action |
-|-------|------------------|--------|
-| SM | {yes/no} | {Start new work / Finish story / Wait for other agent} |
-| TEA | {yes/no} | {Write tests / Wait for SM / Work complete} |
-| Dev | {yes/no} | {Implement / Wait for TEA / Work complete} |
-| Reviewer | {yes/no} | {Review code / Wait for Dev / Work complete} |
-
-### Phase Transition Rules
-
-| Current Phase | Next Agent | Trigger |
-|---------------|------------|---------|
-| MISSING_EPIC_CONTEXT | - | User must run `/start-epic` first |
-| (none) | SM | User runs /new-work or activates SM |
-| sm | TEA | SM completes story setup |
-| tea | Dev | TEA writes failing tests |
-| dev | Reviewer | Dev makes tests pass |
-| review | SM | Reviewer approves |
-| approved | SM | SM finishes and archives |
-
-### Current Recommendation
 **For {CALLING_AGENT}:** {specific action based on phase and state}
 ```
 
@@ -222,18 +169,9 @@ Based on current phase, here's what each agent should do:
 
 ## Notes
 
-- This subagent runs FIRST on every tactical agent activation
-- It provides the data ANY agent needs to decide the workflow path
-- Agents should NOT read session files directly - use this report
-- The report is structured for agents to parse and act on
-- Pass the calling agent name to get agent-specific recommendations
-
-## Usage by Agent
-
-**SM:** Uses this to detect FINISH_STATE vs NEW_WORK_STATE
-**TEA:** Uses this to confirm phase=tea before writing tests
-**Dev:** Uses this to confirm phase=dev before implementing
-**Reviewer:** Uses this to confirm phase=review before reviewing
+- Runs FIRST on every tactical agent activation
+- Pass the calling agent name for agent-specific recommendations
+- SM: FINISH vs NEW_WORK detection | TEA/Dev/Reviewer: phase confirmation
 
 ## Invocation
 
@@ -242,52 +180,17 @@ Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   description: "workflow status check"
-  prompt: |
-    [Include full prompt template above]
-
-    ## Calling Agent
-    {SM | TEA | Dev | Reviewer}
+  prompt: "[Include prompt template above]\n\n## Calling Agent\n{SM | TEA | Dev | Reviewer}"
 ```
-
----
 
 ## Error Recovery
 
-If any step fails, follow this protocol:
+On failure: Log → Diagnose → Retry (max 2) → Escalate to calling agent
 
-### Retry Pattern
-1. **Log the failure:** Note which step failed and why
-2. **Diagnose:** What specifically went wrong?
-3. **Adjust:** Try a different approach (max 2 retries)
-4. **Escalate:** If still failing, report to calling agent
+| Failure | Fix |
+|---------|-----|
+| Session unreadable | Report for manual inspection |
+| Git command failed | Use absolute paths |
+| gh CLI failed | User may need `gh auth` |
 
-### Common Failures and Fixes
-
-| Failure | Diagnosis | Fix |
-|---------|-----------|-----|
-| Session file unreadable | Permissions or corruption | Report - manual inspection needed |
-| Git command failed | Not in repo directory | Use absolute paths |
-| gh CLI failed | Not authenticated or rate limited | Report - user may need to run gh auth |
-| Parse error | Unexpected file format | Report raw content for manual parsing |
-
-### Partial Results
-
-If some checks succeed and others fail:
-- Report what DID work
-- Mark failed checks as "UNKNOWN"
-- Provide enough info for calling agent to decide
-
-### Escalation Format
-
-If unable to complete status check:
-```
-STATUS CHECK INCOMPLETE
-
-Steps succeeded: [list]
-Steps failed: [list with errors]
-
-Partial status: [what we know]
-Recommended action: [what calling agent should do]
-```
-
-**Never silently fail.** Always report what happened.
+If partial failure, report what worked and mark unknowns. **Never silently fail.**
