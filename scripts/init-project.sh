@@ -379,7 +379,10 @@ CLAUDE_DIR="$PROJECT_ROOT/.claude"
 if [ ! -f "$CLAUDE_DIR/settings.local.json" ]; then
     cat > "$CLAUDE_DIR/settings.local.json" << 'SETTINGS_EOF'
 {
-  "statusline": ".claude/statusline.sh",
+  "statusLine": {
+    "type": "command",
+    "command": "$CLAUDE_PROJECT_DIR/.claude/statusline.sh"
+  },
   "permissions": {
     "allow": [
       "Read",

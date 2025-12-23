@@ -106,7 +106,31 @@ FG_GREEN=$'\033[32m'
 FG_YELLOW=$'\033[33m'
 FG_RED=$'\033[31m'
 FG_MAGENTA=$'\033[35m'
+FG_BLUE=$'\033[34m'
+FG_WHITE=$'\033[97m'
 FG_GRAY=$'\033[38;5;245m'
+FG_ORANGE=$'\033[38;5;208m'
+FG_PINK=$'\033[38;5;213m'
+FG_TEAL=$'\033[38;5;43m'
+FG_PURPLE=$'\033[38;5;141m'
+FG_LIME=$'\033[38;5;154m'
+
+# Agent color map
+get_agent_color() {
+    case "$1" in
+        pm)         echo "${FG_PURPLE}${BOLD}" ;;   # Purple - strategic
+        sm)         echo "${FG_BLUE}${BOLD}" ;;     # Blue - coordination
+        dev)        echo "${FG_GREEN}${BOLD}" ;;    # Green - building
+        tea)        echo "${FG_TEAL}${BOLD}" ;;     # Teal - testing
+        reviewer)   echo "${FG_RED}${BOLD}" ;;      # Red - critical eye
+        architect)  echo "${FG_ORANGE}${BOLD}" ;;   # Orange - design
+        devops)     echo "${FG_CYAN}${BOLD}" ;;     # Cyan - infrastructure
+        ux-designer) echo "${FG_PINK}${BOLD}" ;;    # Pink - design
+        tech-writer) echo "${FG_WHITE}${BOLD}" ;;   # White - documentation
+        orchestrator) echo "${FG_MAGENTA}${BOLD}" ;;# Magenta - coordination
+        *)          echo "${FG_MAGENTA}${BOLD}" ;;  # Default
+    esac
+}
 
 # Build progress bar (10 segments)
 bar_width=10
@@ -148,13 +172,19 @@ fi
 
 # Fixed-width formatting using printf
 # Agent: 20 chars, Repo: 14 chars, Branch: 12 chars, Model: 10 chars
-agent_fmt=$(printf "%-20s" "${agent_display:-—}")
+if [ -n "$agent_display" ]; then
+    agent_fmt=$(printf "%-20s" "$agent_display")
+    agent_color=$(get_agent_color "$agent_name")
+else
+    agent_fmt=$(printf "%-20s" "No Agent")
+    agent_color="${FG_GRAY}${DIM}"
+fi
 repo_fmt=$(printf "%-14s" "$dir_name")
 branch_fmt=$(printf "%-12s" "${branch}${branch_dirty}")
 model_fmt=$(printf "%-10s" "$model")
 
 # Build output: Agent | repo | branch | model [progress] pct%
-echo -n "${FG_MAGENTA}${BOLD}${agent_fmt}${RESET}"
+echo -n "${agent_color}${agent_fmt}${RESET}"
 echo -n "${DIM}│${RESET} "
 echo -n "${FG_CYAN}${repo_fmt}${RESET}"
 echo -n "${DIM}│${RESET} "
