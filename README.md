@@ -1,6 +1,10 @@
+<p align="center">
+  <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="200">
+</p>
+
 # Pennyfarthing
 
-**v1.5.1** | **The outer loop goes once, the inner loop goes many times.**
+**v1.6.0** | **The outer loop goes once, the inner loop goes many times.**
 
 Pennyfarthing is a shared agent orchestration framework for Claude Code projects. It provides:
 
