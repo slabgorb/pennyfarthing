@@ -7,9 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [1.5.1] - 2025-12-23
+
 ### Added
 - `/release` command for merge-and-push workflow
 - `scripts/release.sh` - Release script with optional version bump
+
+### Changed
+- Switched default theme to Star Trek TOS
+- Simplified persona definitions (consolidated catchphrases/quirks into trait/quote fields)
 
 ---
 
@@ -125,7 +133,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v1.5.1...HEAD
+[1.5.1]: https://github.com/1898andCo/pennyfarthing/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/1898andCo/pennyfarthing/compare/v1.4.1...v1.5.0
 [1.4.1]: https://github.com/1898andCo/pennyfarthing/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/1898andCo/pennyfarthing/compare/v1.3.0...v1.4.0
