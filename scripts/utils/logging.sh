@@ -2,8 +2,15 @@
 # Structured JSON logging utilities for agent workflows
 # Dev: Fanny Price - "Let other pens dwell on guilt and misery."
 
-# Log file location
-LOG_FILE="${PROJECT_ROOT:-.}/.session/agent-logs.jsonl"
+# Source file locking utilities
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=file-lock.sh
+source "${SCRIPT_DIR}/file-lock.sh" 2>/dev/null || true
+
+# Log file location (evaluated dynamically)
+_get_log_file() {
+    echo "${PROJECT_ROOT:-.}/.session/agent-logs.jsonl"
+}
 
 # _log LEVEL MESSAGE [EXTRA_FIELDS]
 # Internal function to write structured log entry
@@ -20,13 +27,15 @@ _log() {
     local timestamp
     local agent
     local session
+    local log_file
 
     timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
     agent="${AGENT_NAME:-unknown}"
     session="${SESSION_ID:-}"
+    log_file=$(_get_log_file)
 
     # Ensure directory exists
-    mkdir -p "$(dirname "$LOG_FILE")"
+    mkdir -p "$(dirname "$log_file")"
 
     # Escape message for JSON (handle quotes and newlines)
     message=$(printf '%s' "$message" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g' | tr '\n' ' ')
@@ -46,8 +55,14 @@ _log() {
 
     json="${json}}"
 
-    # Write to log file
-    echo "$json" >> "$LOG_FILE"
+    # Acquire lock, write to log file, release lock
+    if lock_acquire "$log_file" "exclusive" 5 2>/dev/null; then
+        echo "$json" >> "$log_file"
+        lock_release "$log_file"
+    else
+        # Fallback: write without lock (better than failing)
+        echo "$json" >> "$log_file"
+    fi
 
     # Also output to stderr for visibility (with color)
     case "$level" in
@@ -114,8 +129,11 @@ log_error() {
 #
 log_list() {
     local count=${1:-20}
-    if [[ -f "$LOG_FILE" ]]; then
-        tail -n "$count" "$LOG_FILE"
+    local log_file
+    log_file=$(_get_log_file)
+
+    if [[ -f "$log_file" ]]; then
+        tail -n "$count" "$log_file"
     fi
 }
 
@@ -126,7 +144,9 @@ log_list() {
 #   log_clear
 #
 log_clear() {
-    rm -f "$LOG_FILE"
+    local log_file
+    log_file=$(_get_log_file)
+    rm -f "$log_file"
 }
 
 # log_rotate [MAX_LINES]
@@ -141,24 +161,31 @@ log_clear() {
 #
 log_rotate() {
     local max_lines=${1:-1000}
+    local log_file
+    log_file=$(_get_log_file)
 
-    if [[ ! -f "$LOG_FILE" ]]; then
+    if [[ ! -f "$log_file" ]]; then
         return 0
     fi
 
-    local current_lines
-    current_lines=$(wc -l < "$LOG_FILE")
+    # Acquire exclusive lock for rotation
+    if lock_acquire "$log_file" "exclusive" 5 2>/dev/null; then
+        local current_lines
+        current_lines=$(wc -l < "$log_file")
 
-    if ((current_lines > max_lines)); then
-        local temp_file
-        temp_file=$(mktemp)
-        tail -n "$max_lines" "$LOG_FILE" > "$temp_file"
-        mv "$temp_file" "$LOG_FILE"
+        if ((current_lines > max_lines)); then
+            local temp_file
+            temp_file=$(mktemp)
+            tail -n "$max_lines" "$log_file" > "$temp_file"
+            mv "$temp_file" "$log_file"
+        fi
+        lock_release "$log_file"
     fi
 }
 
 # Export functions for use when sourced
 if [[ "${BASH_VERSINFO[0]:-0}" -ge 4 ]]; then
+    export -f _get_log_file 2>/dev/null || :
     export -f _log 2>/dev/null || :
     export -f log_info 2>/dev/null || :
     export -f log_warn 2>/dev/null || :
