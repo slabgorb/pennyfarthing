@@ -1,0 +1,28 @@
+# Repository Configuration
+# Defines repository structure for multi-repo projects
+
+# Single repo projects can use minimal config
+repos:
+  main:
+    path: .
+    type: monorepo
+    language: typescript
+    test_command: npm test
+    build_command: npm run build
+    lint_command: npm run lint
+
+# Multi-repo example (uncomment and modify):
+# repos:
+#   api:
+#     path: api
+#     type: api
+#     language: go
+#     test_command: go test ./...
+#     build_command: go build ./...
+#
+#   ui:
+#     path: ui
+#     type: ui
+#     language: typescript
+#     test_command: npm test
+#     build_command: npm run build

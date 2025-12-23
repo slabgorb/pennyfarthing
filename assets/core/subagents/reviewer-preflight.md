@@ -1,0 +1,193 @@
+# Reviewer Pre-Flight Subagent
+
+**Purpose:** Gather mechanical data before Reviewer (Opus) does critical analysis
+**Model:** haiku
+**Called by:** Reviewer agent when starting a PR review
+
+## Task Tool Configuration
+
+```yaml
+subagent_type: "general-purpose"
+model: "haiku"
+description: "review pre-flight"
+```
+
+## Multi-Repo Support
+
+For projects with multiple repositories, use repo-utils.sh:
+
+```bash
+source $PROJECT_ROOT/scripts/repo-utils.sh
+
+# Check all repos or filter by type
+for repo in $(filter_repos "{REPOS}"); do
+    repo_path=$(get_repo_path "$repo")
+    test_cmd=$(get_test_command "$repo")
+    lint_cmd=$(get_lint_command "$repo")
+
+    echo "=== Pre-flight for $repo ==="
+    cd $PROJECT_ROOT/$repo_path
+    # Run tests and lints...
+done
+```
+
+## Prompt Template
+
+Replace `{STORY_ID}`, `{REPOS}`, `{BRANCH}`, `{PR_NUMBER}` with actual values.
+- `{REPOS}` can be: `all`, `api`, `ui`, `adapter`, or comma-separated repo names
+
+---
+
+You are a code review pre-flight assistant. Gather data for story {STORY_ID}.
+
+## Project Info
+- Project root: $PROJECT_ROOT (set by SessionStart hook)
+- Repos: {REPOS}
+- Branch: {BRANCH}
+- PR: #{PR_NUMBER}
+
+## Execute Pre-Flight Checks
+
+### 1. Checkout and Diff Stats
+```bash
+cd $PROJECT_ROOT/${REPO}
+git fetch origin
+git checkout {BRANCH}
+git diff develop...HEAD --stat
+```
+
+### 2. Run Tests and Lints via Testing Runner
+
+**DELEGATE TO TESTING-RUNNER SUBAGENT:**
+
+Spawn a testing-runner subagent with:
+```yaml
+subagent_type: "general-purpose"
+model: "haiku"
+description: "run tests"
+prompt: |
+  You are a testing runner for the Conductor project.
+  Run tests and report structured results.
+
+  ## Skills Reference
+  Read the testing skill at .claude/skills/testing/SKILL.md for test commands.
+  For troubleshooting failures, see .claude/skills/testing/references/troubleshooting.md
+
+  ## Project Info
+  - Project root: $PROJECT_ROOT (set by SessionStart hook)
+  - Repo(s) to test: {REPO}
+  - Context: PR review pre-flight for Story {STORY_ID}
+  - Run ID: {STORY_ID}-review
+
+  ## Execute Tests (with unique RUN_ID)
+
+  ### For UI Tests
+  ```bash
+  RUN_ID="{STORY_ID}-review"
+  cd $PROJECT_ROOT/$UI_REPO
+  npm run test -- --run 2>&1 | tee $PROJECT_ROOT/.session/test-results-ui-${RUN_ID}.log
+  ```
+
+  ### For API Tests
+  ```bash
+  RUN_ID="{STORY_ID}-review"
+  cd $PROJECT_ROOT
+  just test-api 2>&1 | tee $PROJECT_ROOT/.session/test-results-api-${RUN_ID}.log
+  ```
+
+  ## Run Linter
+
+  ### For UI
+  ```bash
+  RUN_ID="{STORY_ID}-review"
+  cd $PROJECT_ROOT/$UI_REPO
+  npm run lint 2>&1 | tee $PROJECT_ROOT/.session/lint-results-ui-${RUN_ID}.log
+  ```
+
+  ### For API
+  ```bash
+  RUN_ID="{STORY_ID}-review"
+  cd $PROJECT_ROOT/$API_REPO
+  golangci-lint run 2>&1 | tee $PROJECT_ROOT/.session/lint-results-api-${RUN_ID}.log
+  ```
+
+  ## Check for Forbidden Skip Patterns
+  ```bash
+  grep -r "t.Skip" $PROJECT_ROOT/$API_REPO --include="*_test.go" | grep -v "LocalStack\|not available" | head -10
+  grep -r "it.skip\|describe.skip\|test.skip" $PROJECT_ROOT/$UI_REPO/src --include="*.test.*" | head -10
+  ```
+
+  ## Output structured results per testing-runner.md format
+```
+
+If you cannot spawn a subagent, run the tests directly using the testing skill commands.
+
+### 3. Code Smell Detection (in changed files only)
+Search for these patterns in the diff:
+- `console.log` (not wrapped in `import.meta.env.DEV`)
+- `dangerouslySetInnerHTML`
+- `t.Skip(` or `it.skip(` or `.skip(`
+- `TODO` or `FIXME` comments
+- Non-null assertions `!` without preceding null check
+
+### 4. Error Boundary Check (UI only)
+If new routes added, check App.tsx for `withRouteErrorBoundary` usage.
+
+### 5. Get PR Details
+```bash
+gh pr view {PR_NUMBER} --json title,body,additions,deletions,changedFiles
+```
+
+## Output Format
+
+```markdown
+## Pre-Flight Report: Story {STORY_ID}
+
+### Test Results
+(Include output from testing-runner subagent)
+
+| Repo | Total | Passed | Failed | Skipped | Status |
+|------|-------|--------|--------|---------|--------|
+| API  | {N}   | {N}    | {N}    | {N}     | {GREEN/RED/YELLOW} |
+| UI   | {N}   | {N}    | {N}    | {N}     | {GREEN/RED/YELLOW} |
+
+#### Failing Tests (if any)
+| Repo | Test Name | File | Error |
+|------|-----------|------|-------|
+| {repo} | {test name} | {file path} | {brief error} |
+
+#### Skipped Tests (if any - POLICY VIOLATION)
+| Repo | Test Name | File |
+|------|-----------|------|
+| {repo} | {test name} | {file} |
+
+### Lint Results
+| Repo | Errors | Warnings |
+|------|--------|----------|
+| API  | {N}    | {N}      |
+| UI   | {N}    | {N}      |
+
+### Code Smells Found
+| Pattern | Count | Files |
+|---------|-------|-------|
+| console.log | {N} | {file list} |
+| dangerouslySetInnerHTML | {N} | {file list} |
+| Skipped tests (.skip) | {N} | {file list} |
+| TODO/FIXME | {N} | {file list} |
+
+### Error Boundaries
+- New routes: {list or "none"}
+- Wrapped: {yes|no|n/a}
+
+### Diff Stats
+- Files changed: {N}
+- Additions: +{N}
+- Deletions: -{N}
+
+### Files to Review
+{list of changed files with brief description}
+
+### Log Files
+- Tests: `.session/test-results-{repo}-{STORY_ID}-review.log`
+- Lint: `.session/lint-results-{repo}-{STORY_ID}-review.log`
+```

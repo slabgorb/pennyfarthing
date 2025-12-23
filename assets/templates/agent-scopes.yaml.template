@@ -1,0 +1,97 @@
+# Pennyfarthing Agent Scope Configuration
+# Defines what context each agent loads on activation
+
+# Strategic Agents - Full project scope
+strategic_agents:
+
+  orchestrator:
+    description: "Master orchestrator - sees everything"
+    scope: full
+    context_files:
+      - sprint/current-sprint.yaml
+      - .claude/project/docs/shared-context.md
+      - .session/current-work.md
+
+  pm:
+    description: "Product Manager - strategic planning"
+    scope: full
+    context_files:
+      - sprint/current-sprint.yaml
+      - .claude/project/docs/shared-context.md
+      - .session/current-work.md
+
+  sm:
+    description: "Scrum Master - story coordination"
+    scope: full
+    context_files:
+      - sprint/current-sprint.yaml
+      - .claude/project/docs/shared-context.md
+      - .session/current-work.md
+
+  architect:
+    description: "System Architect - technical design"
+    scope: full
+    context_files:
+      - .claude/project/docs/shared-context.md
+      - .session/current-work.md
+
+  devops:
+    description: "DevOps Engineer - infrastructure"
+    scope: infrastructure
+    context_files:
+      - sprint/current-sprint.yaml
+      - .claude/project/docs/shared-context.md
+      - .session/current-work.md
+
+# Tactical Agents - Story-scoped
+tactical_agents:
+
+  dev:
+    description: "Developer - implements features"
+    scope: story
+    context_files:
+      - sprint/current-sprint.yaml
+      - .session/current-work.md
+      - .claude/project/docs/shared-context.md
+
+  tea:
+    description: "Test Engineer - writes tests"
+    scope: story
+    context_files:
+      - sprint/current-sprint.yaml
+      - .session/current-work.md
+      - .claude/project/docs/shared-context.md
+
+  reviewer:
+    description: "Code Reviewer - reviews changes"
+    scope: story
+    context_files:
+      - sprint/current-sprint.yaml
+      - .session/current-work.md
+      - .claude/project/docs/shared-context.md
+
+  tech-writer:
+    description: "Technical Writer - documentation"
+    scope: story
+    context_files:
+      - sprint/current-sprint.yaml
+      - .session/current-work.md
+      - .claude/project/docs/shared-context.md
+
+  ux-designer:
+    description: "UX Designer - user experience"
+    scope: story
+    context_files:
+      - sprint/current-sprint.yaml
+      - .session/current-work.md
+      - .claude/project/docs/shared-context.md
+
+# Context Loading Rules
+context_loading:
+  strategic_agents:
+    - Load all context_files on activation
+    - Know entire project scope
+
+  tactical_agents:
+    - Load base context_files on activation
+    - Focus on specific story or task
