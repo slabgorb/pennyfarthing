@@ -1,0 +1,435 @@
+# PM Agent Benchmark: PM-002
+# The Prioritization Crisis - tests strategic prioritization and stakeholder management
+# Designed to produce divergent results based on persona values/traits
+
+id: pm-002
+name: The Prioritization Crisis
+category: pm
+difficulty: hard
+agent: pm
+version: 1.0
+
+description: |
+  An open-ended product prioritization challenge with no single correct answer.
+  Tests the PM's ability to make trade-offs, manage stakeholders, and
+  communicate reasoning. Persona values should legitimately influence
+  the prioritization decisions.
+
+purpose: |
+  Unlike code-based benchmarks with definitive answers, this test measures:
+  - How the PM weighs revenue vs technical health vs innovation
+  - Political skill in handling competing stakeholders
+  - Depth of reasoning and data awareness
+  - Communication and persuasion ability
+  - Whether persona traits influence actual prioritization
+
+instructions: |
+  You are the Product Manager agent. Read the scenario below and provide:
+
+  1. SITUATION ASSESSMENT (2-3 paragraphs)
+     - What's really going on here?
+     - What are the hidden dynamics between stakeholders?
+     - What's the real risk if we get this wrong?
+
+  2. YOUR PRIORITIZATION (ranked 1-3)
+     - Which 3 features do you recommend for this quarter?
+     - Clear ranking with reasoning for each position
+     - Why each chosen feature beats the alternatives
+
+  3. WHAT YOU'RE NOT DOING (and why)
+     - For each feature NOT selected, explain why
+     - Acknowledge what you're sacrificing
+     - How will you manage disappointed stakeholders?
+
+  4. STAKEHOLDER COMMUNICATION PLAN
+     - How do you tell Sales they're not getting SSO? (if applicable)
+     - How do you tell the CEO their AI idea isn't priority? (if applicable)
+     - What do you promise each stakeholder and when?
+
+  5. WHAT WOULD CHANGE YOUR MIND
+     - What data would make you reprioritize?
+     - What market conditions would shift your thinking?
+     - What's your confidence level and why?
+
+  Stay in character throughout. Your persona's values and traits should
+  authentically influence your prioritization and stakeholder approach.
+
+scenario:
+  title: "Q2 Feature Prioritization"
+  content: |
+    ## Context
+
+    You're the PM at CloudFlow, a B2B SaaS workflow automation tool.
+    Your engineering capacity this quarter allows for 3 medium-sized features.
+    Five features are competing for these slots.
+
+    ### Company Situation
+
+    - **ARR**: $3.2M, growing 40% YoY
+    - **Customers**: 180 (mix of SMB and mid-market)
+    - **Churn**: 8% monthly (high, industry avg is 5%)
+    - **NPS**: 32 (needs improvement)
+    - **Runway**: 18 months at current burn
+    - **Next funding**: Series B in 12 months, need strong metrics
+
+    ### The Features
+
+    ---
+
+    **FEATURE 1: Enterprise SSO**
+
+    *Sponsor: VP of Sales (Sarah)*
+
+    - Three enterprise deals worth $400K ARR total are waiting on SSO
+    - Deals will close within 30 days of SSO shipping
+    - Estimate: 6 weeks, high certainty
+    - Sales has been promised this for 2 quarters
+    - Sarah is frustrated: "We keep losing to competitors on this"
+
+    ---
+
+    **FEATURE 2: Mobile App**
+
+    *Sponsor: VP of Marketing (Marcus)*
+
+    - "All our competitors have mobile apps"
+    - Marketing wants it for upcoming conference demo
+    - Estimate: 8 weeks, medium certainty
+    - No direct customer requests for mobile
+    - Marcus: "We look behind the times without this"
+
+    ---
+
+    **FEATURE 3: API v2 Redesign**
+
+    *Sponsor: VP of Engineering (Diana)*
+
+    - Current API is "technical debt nightmare"
+    - Integration bugs are 30% of support tickets
+    - Estimate: 4 weeks, high certainty
+    - Enables faster development of future features
+    - Diana: "We're building on a shaky foundation"
+
+    ---
+
+    **FEATURE 4: AI-Powered Workflow Suggestions**
+
+    *Sponsor: CEO (James)*
+
+    - "AI is the future, we need to be there"
+    - Could differentiate us in crowded market
+    - Estimate: 10 weeks, high uncertainty
+    - No customer validation yet
+    - James: "This could be our 10x feature"
+
+    ---
+
+    **FEATURE 5: Performance Optimization**
+
+    *Sponsor: VP of Customer Success (Lisa)*
+
+    - 40% of support tickets mention slowness
+    - Correlates with churn: slow customers churn 2x more
+    - Estimate: 3 weeks, high certainty
+    - Lisa: "We're losing customers to our own product"
+
+    ---
+
+    ### Additional Context
+
+    - Engineering team prefers API v2 (morale boost, less firefighting)
+    - Board meeting in 2 months, CEO wants to show "innovation"
+    - Sales team morale is low after losing 3 deals on SSO
+    - Customer Success is overwhelmed with performance complaints
+    - Marketing conference is in 10 weeks (mobile would be tight)
+
+  stakeholder_dynamics:
+    - "Sarah (Sales) and Diana (Engineering) don't get along"
+    - "CEO James often overrules the PM on 'strategic vision'"
+    - "Lisa (CS) is seen as less influential than Sales"
+    - "Marcus (Marketing) has CEO's ear on brand perception"
+    - "Diana has threatened to quit if API isn't addressed soon"
+
+# What we expect to see differ by persona
+persona_influence_areas:
+  revenue_vs_foundation:
+    description: "How do they weigh immediate revenue against technical health?"
+    spectrum:
+      revenue_first: "SSO first, revenue solves all problems"
+      balanced: "Mix of revenue and foundation"
+      foundation_first: "Fix the foundation, revenue follows"
+
+  certainty_vs_upside:
+    description: "How do they weigh sure things against big bets?"
+    spectrum:
+      certainty: "Prefer proven, predictable outcomes"
+      balanced: "Some risk tolerance for right opportunity"
+      upside: "Willing to bet on transformative features"
+
+  stakeholder_approach:
+    description: "How do they handle disappointed stakeholders?"
+    spectrum:
+      diplomatic: "Extensive relationship management, soft nos"
+      direct: "Clear reasoning, accept some unhappiness"
+      political: "Trade favors, manage coalitions"
+
+  ceo_handling:
+    description: "How do they handle the CEO's pet project?"
+    spectrum:
+      deferential: "Find a way to include AI"
+      negotiating: "Push back with data, offer compromise"
+      direct: "Say no clearly with reasoning"
+
+# Scoring rubric for evaluating responses
+scoring_rubric:
+  situation_assessment:
+    weight: 15
+    criteria:
+      - id: DYNAMICS_UNDERSTANDING
+        description: "Correctly reads stakeholder relationships and tensions"
+        points: 5
+      - id: RISK_IDENTIFICATION
+        description: "Understands what's really at stake"
+        points: 5
+      - id: HIDDEN_FACTORS
+        description: "Identifies non-obvious considerations"
+        points: 5
+
+  prioritization_quality:
+    weight: 30
+    criteria:
+      - id: CLEAR_RANKING
+        description: "Unambiguous priority order with reasoning"
+        points: 8
+      - id: TRADE_OFF_LOGIC
+        description: "Demonstrates clear framework for decisions"
+        points: 8
+      - id: DATA_AWARENESS
+        description: "Uses available data to support choices"
+        points: 7
+      - id: STRATEGIC_FIT
+        description: "Choices align with company situation"
+        points: 7
+
+  rejection_handling:
+    weight: 20
+    criteria:
+      - id: HONEST_ASSESSMENT
+        description: "Clear on what's being sacrificed"
+        points: 7
+      - id: STAKEHOLDER_EMPATHY
+        description: "Acknowledges impact on disappointed parties"
+        points: 7
+      - id: ALTERNATIVE_PATHS
+        description: "Offers something to rejected stakeholders"
+        points: 6
+
+  communication_plan:
+    weight: 20
+    criteria:
+      - id: POLITICAL_SKILL
+        description: "Realistic plan for difficult conversations"
+        points: 7
+      - id: CEO_HANDLING
+        description: "Appropriate approach to CEO's pet project"
+        points: 7
+      - id: COMMITMENT_CLARITY
+        description: "Clear on what's promised and when"
+        points: 6
+
+  adaptability:
+    weight: 10
+    criteria:
+      - id: DATA_TRIGGERS
+        description: "Identifies what data would change mind"
+        points: 4
+      - id: SCENARIO_AWARENESS
+        description: "Acknowledges uncertainty appropriately"
+        points: 3
+      - id: CONFIDENCE_CALIBRATION
+        description: "Appropriate confidence level given information"
+        points: 3
+
+  persona_expression:
+    weight: 5
+    criteria:
+      - id: CHARACTER_CONSISTENCY
+        description: "Decisions align with persona's known values"
+        points: 2
+      - id: AUTHENTIC_VOICE
+        description: "Communication style matches character"
+        points: 2
+      - id: TRAIT_INFLUENCE
+        description: "Persona traits visibly influence choices"
+        points: 1
+
+# Expected approach tendencies by persona (for evaluation reference)
+expected_tendencies:
+  discworld_vetinari:
+    character: "Lord Havelock Vetinari"
+    expected_traits:
+      - "Arranges situation so correct outcome seems inevitable"
+      - "Makes stakeholders think decision was their idea"
+      - "Sees several moves ahead in political game"
+      - "Calm, calculating, never seems rushed"
+    likely_priority: "SSO + Perf + API (control, inevitability)"
+    stakeholder_style: "Manipulation through understanding"
+
+  star_trek_nogura:
+    character: "Admiral Nogura"
+    expected_traits:
+      - "Fleet-level strategic thinking"
+      - "Balances exploration with practical constraints"
+      - "Calm authority, considers whole organization"
+      - "Quotes 'needs of the many'"
+    likely_priority: "SSO + Perf + API or Mobile"
+    stakeholder_style: "Authoritative but fair"
+
+  minimalist:
+    character: "Product Manager"
+    expected_traits:
+      - "Data-driven, frameworks-based"
+      - "No personality bias in decisions"
+      - "Industry-standard prioritization"
+      - "Direct, professional communication"
+    likely_priority: "Depends purely on stated metrics"
+    stakeholder_style: "Professional, by-the-book"
+
+  austen_lady_russell:
+    character: "Lady Russell"
+    expected_traits:
+      - "Cautious, values stability and reputation"
+      - "May be too risk-averse"
+      - "Plays long game, sometimes too long"
+      - "Genuinely cares about company health"
+    likely_priority: "SSO + Perf + API (proven value, no bets)"
+    stakeholder_style: "Prudent counsel, avoids conflict"
+
+  shakespeare_henry_v:
+    character: "King Henry V"
+    expected_traits:
+      - "Inspirational, rallies the team"
+      - "Willing to take bold risks"
+      - "Leads from front, personal involvement"
+      - "St. Crispin's Day speeches for hard decisions"
+    likely_priority: "Could include AI (bold bet)"
+    stakeholder_style: "Inspiring, 'we band of brothers'"
+
+# Common prioritization patterns and their implications
+prioritization_patterns:
+  revenue_pragmatist:
+    choices: ["SSO", "Performance", "API v2"]
+    profile: "Focuses on immediate revenue and retention"
+    risk: "CEO may feel innovation is ignored"
+
+  innovation_believer:
+    choices: ["AI", "SSO", "Mobile"]
+    profile: "Bets on differentiation and growth"
+    risk: "Foundation problems worsen, churn continues"
+
+  foundation_builder:
+    choices: ["API v2", "Performance", "SSO"]
+    profile: "Fix the house before decorating"
+    risk: "Sales deals may slip, board sees no innovation"
+
+  stakeholder_pleaser:
+    choices: ["SSO", "AI", "Mobile"]
+    profile: "Keeps loudest voices happy"
+    risk: "Technical debt and churn ignored"
+
+  data_driven:
+    choices: ["Performance", "SSO", "API v2"]
+    profile: "Follows the metrics (churn, revenue, velocity)"
+    risk: "May miss strategic opportunities"
+
+# Evaluation process
+evaluation_process:
+  steps:
+    - step: 1
+      action: "Capture full response"
+      notes: "Save complete PM output including all sections"
+
+    - step: 2
+      action: "Identify prioritization pattern"
+      notes: "Which of the common patterns does this match?"
+
+    - step: 3
+      action: "Score each rubric category"
+      notes: "Use criteria to evaluate quality of thinking"
+
+    - step: 4
+      action: "Assess CEO handling"
+      notes: "How did they handle the AI feature request?"
+
+    - step: 5
+      action: "Evaluate stakeholder approach"
+      notes: "Political skill, empathy, clarity"
+
+    - step: 6
+      action: "Assess persona influence"
+      notes: "Did persona traits visibly influence prioritization?"
+
+    - step: 7
+      action: "Compare across personas"
+      notes: "Are different personas producing different priorities?"
+
+# Output format for results
+result_format: |
+  benchmark_id: pm-002
+  theme: [theme name]
+  persona: [character name]
+  run_timestamp: [ISO timestamp]
+  model: [model used]
+
+  prioritization:
+    rank_1: [feature name]
+    rank_2: [feature name]
+    rank_3: [feature name]
+    pattern: [revenue_pragmatist/innovation_believer/foundation_builder/etc]
+
+  approach_classification:
+    revenue_vs_foundation: [revenue_first/balanced/foundation_first]
+    certainty_vs_upside: [certainty/balanced/upside]
+    stakeholder_approach: [diplomatic/direct/political]
+    ceo_handling: [deferential/negotiating/direct]
+
+  scores:
+    situation_assessment: [0-15]
+    prioritization_quality: [0-30]
+    rejection_handling: [0-20]
+    communication_plan: [0-20]
+    adaptability: [0-10]
+    persona_expression: [0-5]
+    total: [0-100]
+
+  key_reasoning:
+    why_rank_1: [brief reasoning]
+    why_rank_2: [brief reasoning]
+    why_rank_3: [brief reasoning]
+
+  rejected_features:
+    - feature: [name]
+      reason: [why not selected]
+      stakeholder_plan: [how to manage]
+
+  ceo_ai_handling: |
+    [How did they handle the CEO's AI feature request?]
+
+  persona_influence_notes: |
+    [How did persona traits influence the prioritization?]
+
+  full_response: |
+    [Complete response text]
+
+# Hypothesis to test
+hypothesis: |
+  Different PM personas will produce measurably different prioritizations:
+
+  - Risk-averse personas (Smiley, Lady Russell) will avoid AI, prefer proven features
+  - Bold personas (Henry V) may include AI despite uncertainty
+  - Political personas (Vetinari) will find clever ways to satisfy multiple stakeholders
+  - Foundation-focused personas may prioritize API and Performance over revenue
+  - Minimalist will follow pure data/framework logic without personality bias
+
+  The null hypothesis (personas only affect communication, not decisions)
+  should be REJECTED for this open-ended benchmark, unlike the TDD test.
