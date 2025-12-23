@@ -79,21 +79,18 @@ if [ -n "$session_id" ]; then
 
                 if [ -n "$theme_file" ]; then
                     char_full=$(yq ".agents.${agent_name}.character" "$theme_file" 2>/dev/null)
-                    # Try to extract nickname in quotes first (e.g., "Scotty" from Montgomery "Scotty" Scott)
-                    char_name=$(echo "$char_full" | grep -o '"[^"]*"' | head -1 | tr -d '"')
-                    # Fallback to first name if no nickname
-                    if [ -z "$char_name" ] || [ "$char_name" = "null" ]; then
-                        char_name=$(echo "$char_full" | awk '{print $1}')
-                    fi
-                    if [ -n "$char_name" ] && [ "$char_name" != "null" ]; then
-                        agent_display="${agent_cap}- ${char_name}"
+                    # Use full character name (will be truncated to fit display width)
+                    if [ -n "$char_full" ] && [ "$char_full" != "null" ]; then
+                        agent_display="$char_full"
                     fi
                 fi
             fi
         fi
 
-        # Fallback if no character found
-        [ -z "$agent_display" ] && agent_display="${agent_cap}"
+        # Fallback: use capitalized agent name if no character found
+        if [ -z "$agent_display" ]; then
+            agent_display="${agent_cap}"
+        fi
     fi
 fi
 

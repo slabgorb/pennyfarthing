@@ -93,6 +93,18 @@ rm -f $PROJECT_ROOT/.session/test-results-*.log
 rm -f $PROJECT_ROOT/.session/lint-results-*.log
 ```
 
+## Step 8: Commit Archive Changes
+
+Commit all the archival and cleanup changes to git:
+
+```bash
+cd $PROJECT_ROOT
+git add sprint/archive/ sprint/context/ sprint/current-sprint.yaml .session/
+git commit -m "chore({STORY_ID}): archive completed story and update sprint status"
+```
+
+If commit fails (nothing to commit), that's fine - continue.
+
 ## Output Format
 
 ```json
@@ -104,6 +116,8 @@ rm -f $PROJECT_ROOT/.session/lint-results-*.log
   "jira_transitioned": true | false,
   "session_cleared": true,
   "context_archived": true | false,
+  "git_committed": true | false,
+  "commit_hash": "abc1234",
   "issues": [],
   "finish_complete": true
 }
