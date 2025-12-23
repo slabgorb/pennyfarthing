@@ -2,8 +2,15 @@
 # Session checkpointing utilities
 # Dev: Fanny Price - "I was quiet, but I was not blind."
 
-# Checkpoint file location
-CHECKPOINT_FILE="${PROJECT_ROOT:-.}/.session/checkpoints.log"
+# Source file locking utilities
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=file-lock.sh
+source "${SCRIPT_DIR}/file-lock.sh" 2>/dev/null || true
+
+# Checkpoint file location (evaluated dynamically)
+_get_checkpoint_file() {
+    echo "${PROJECT_ROOT:-.}/.session/checkpoints.log"
+}
 
 # checkpoint_save LABEL DATA
 # Save a checkpoint with timestamp
@@ -22,13 +29,21 @@ checkpoint_save() {
     local label="$1"
     local data="$2"
     local timestamp
+    local checkpoint_file
     timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    checkpoint_file=$(_get_checkpoint_file)
 
     # Ensure directory exists
-    mkdir -p "$(dirname "$CHECKPOINT_FILE")"
+    mkdir -p "$(dirname "$checkpoint_file")"
 
-    # Append checkpoint
-    echo "${timestamp}|${label}|${data}" >> "$CHECKPOINT_FILE"
+    # Acquire exclusive lock, append checkpoint, release lock
+    if lock_acquire "$checkpoint_file" "exclusive" 5 2>/dev/null; then
+        echo "${timestamp}|${label}|${data}" >> "$checkpoint_file"
+        lock_release "$checkpoint_file"
+    else
+        # Fallback: append without lock (better than failing)
+        echo "${timestamp}|${label}|${data}" >> "$checkpoint_file"
+    fi
 }
 
 # checkpoint_restore LABEL
@@ -46,14 +61,16 @@ checkpoint_save() {
 #
 checkpoint_restore() {
     local label="$1"
+    local checkpoint_file
+    checkpoint_file=$(_get_checkpoint_file)
 
-    if [[ ! -f "$CHECKPOINT_FILE" ]]; then
+    if [[ ! -f "$checkpoint_file" ]]; then
         return 0
     fi
 
     # Find entries with matching label, take the last one, extract data field
     # Use || true to handle case where grep finds no matches
-    grep "|${label}|" "$CHECKPOINT_FILE" 2>/dev/null | tail -1 | cut -d'|' -f3- || true
+    grep "|${label}|" "$checkpoint_file" 2>/dev/null | tail -1 | cut -d'|' -f3- || true
 }
 
 # checkpoint_list
@@ -63,8 +80,11 @@ checkpoint_restore() {
 #   checkpoint_list
 #
 checkpoint_list() {
-    if [[ -f "$CHECKPOINT_FILE" ]]; then
-        tail -20 "$CHECKPOINT_FILE"
+    local checkpoint_file
+    checkpoint_file=$(_get_checkpoint_file)
+
+    if [[ -f "$checkpoint_file" ]]; then
+        tail -20 "$checkpoint_file"
     fi
 }
 
@@ -75,7 +95,9 @@ checkpoint_list() {
 #   checkpoint_clear
 #
 checkpoint_clear() {
-    rm -f "$CHECKPOINT_FILE"
+    local checkpoint_file
+    checkpoint_file=$(_get_checkpoint_file)
+    rm -f "$checkpoint_file"
 }
 
 # checkpoint_rotate MAX_LINES
@@ -89,24 +111,31 @@ checkpoint_clear() {
 #
 checkpoint_rotate() {
     local max_lines=${1:-1000}
+    local checkpoint_file
+    checkpoint_file=$(_get_checkpoint_file)
 
-    if [[ ! -f "$CHECKPOINT_FILE" ]]; then
+    if [[ ! -f "$checkpoint_file" ]]; then
         return 0
     fi
 
-    local current_lines
-    current_lines=$(wc -l < "$CHECKPOINT_FILE")
+    # Acquire exclusive lock for rotation
+    if lock_acquire "$checkpoint_file" "exclusive" 5 2>/dev/null; then
+        local current_lines
+        current_lines=$(wc -l < "$checkpoint_file")
 
-    if ((current_lines > max_lines)); then
-        local temp_file
-        temp_file=$(mktemp)
-        tail -n "$max_lines" "$CHECKPOINT_FILE" > "$temp_file"
-        mv "$temp_file" "$CHECKPOINT_FILE"
+        if ((current_lines > max_lines)); then
+            local temp_file
+            temp_file=$(mktemp)
+            tail -n "$max_lines" "$checkpoint_file" > "$temp_file"
+            mv "$temp_file" "$checkpoint_file"
+        fi
+        lock_release "$checkpoint_file"
     fi
 }
 
 # Export functions for use when sourced (optional, may fail in some shells)
 if [[ "${BASH_VERSINFO[0]:-0}" -ge 4 ]]; then
+    export -f _get_checkpoint_file 2>/dev/null || :
     export -f checkpoint_save 2>/dev/null || :
     export -f checkpoint_restore 2>/dev/null || :
     export -f checkpoint_list 2>/dev/null || :
