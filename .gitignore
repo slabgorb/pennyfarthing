@@ -15,3 +15,21 @@
 .idea/
 .vscode/
 *.code-workspace
+
+# Node.js / npm
+node_modules/
+dist/
+*.tgz
+.npm/
+npm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# Package lock (use package-lock.json if preferred)
+# package-lock.json
+
+# Benchmark scratch files
+cart/
+benchmarks/cart/
+go.mod

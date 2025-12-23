@@ -8,7 +8,8 @@ $PROJECT_ROOT/scripts/agent-session.sh start "devops"
 
 <agent-activation>
 1. Load DevOps agent for infrastructure work
-2. Run health check analysis
+2. Detect installation type (npm or submodule)
+3. Run appropriate health check
 </agent-activation>
 
 <purpose>
@@ -16,15 +17,86 @@ Examine current Pennyfarthing installation, detect drift from expected state, an
 </purpose>
 
 <when-to-use>
-- After updating pennyfarthing submodule (`git submodule update`)
+- After updating Pennyfarthing (`pennyfarthing update` or `git submodule update`)
 - When something seems broken
 - Periodic health verification
 - Before starting new sprint
 </when-to-use>
 
-<health-checks>
+<installation-detection>
 
-## 1. Submodule Status
+## Detect Installation Type
+
+```bash
+# Check for npm installation (manifest.json exists)
+if [ -f "$PROJECT_ROOT/.claude/manifest.json" ]; then
+    INSTALL_TYPE="npm"
+    INSTALLED_VERSION=$(jq -r '.version' "$PROJECT_ROOT/.claude/manifest.json")
+    echo "Installation: npm package v$INSTALLED_VERSION"
+
+    # Check for updates using CLI
+    if command -v pennyfarthing &>/dev/null; then
+        if pennyfarthing update --check 2>/dev/null; then
+            echo "Update available!"
+        fi
+    elif command -v npx &>/dev/null; then
+        npx pennyfarthing update --check
+    fi
+
+# Check for submodule installation (legacy)
+elif [ -d "$PROJECT_ROOT/.claude/pennyfarthing" ]; then
+    INSTALL_TYPE="submodule"
+    if [ -f "$PROJECT_ROOT/.claude/pennyfarthing/VERSION" ]; then
+        INSTALLED_VERSION=$(cat "$PROJECT_ROOT/.claude/pennyfarthing/VERSION")
+    fi
+    echo "Installation: git submodule v$INSTALLED_VERSION"
+    echo ""
+    echo "NOTE: Consider migrating to npm package for easier updates:"
+    echo "  npx pennyfarthing init --migrate"
+
+else
+    INSTALL_TYPE="none"
+    echo "Pennyfarthing not installed!"
+    echo "Run: npx pennyfarthing init"
+fi
+```
+
+</installation-detection>
+
+<health-checks-npm>
+
+## npm Installation Checks
+
+If `INSTALL_TYPE="npm"`, use the pennyfarthing CLI:
+
+```bash
+# Full health check with CLI
+pennyfarthing doctor
+
+# Or via npx
+npx pennyfarthing doctor
+
+# Auto-fix issues
+pennyfarthing doctor --fix
+```
+
+The CLI checks:
+- manifest.json exists and is valid
+- All managed files present in .claude/core/
+- No stale submodule directory
+- User directories exist (.claude/project/)
+- Settings paths are correct
+- Hook scripts are executable
+
+</health-checks-npm>
+
+<health-checks-submodule>
+
+## Submodule Installation Checks (Legacy)
+
+If `INSTALL_TYPE="submodule"`, run manual checks:
+
+### 1. Submodule Status
 
 ```bash
 cd $PROJECT_ROOT/.claude/pennyfarthing
@@ -36,7 +108,7 @@ if [ "$LOCAL" != "$REMOTE" ]; then
 fi
 ```
 
-## 2. Symlinks
+### 2. Symlinks
 
 Verify these symlinks exist and point to valid targets:
 - `.claude/agents` → `pennyfarthing/core/agents`
@@ -45,49 +117,49 @@ Verify these symlinks exist and point to valid targets:
 - `.claude/guides` → `pennyfarthing/core/guides`
 - `.claude/personas` → `pennyfarthing/personas`
 
-## 3. Settings Format
+### 3. Settings Format
 
 Check `.claude/settings.local.json`:
 - `statusLine` (not `statusline`) with object format
 - Hooks use `$CLAUDE_PROJECT_DIR` not relative paths
 - Required permissions present
 
-## 4. Statusline
+### 4. Statusline
 
 Compare `.claude/statusline.sh` (if exists) against `pennyfarthing/core/statusline.sh`:
 ```bash
 diff -q "$PROJECT_ROOT/.claude/statusline.sh" "$PROJECT_ROOT/.claude/pennyfarthing/core/statusline.sh"
 ```
 
-## 5. Required Directories
+### 5. Required Directories
 
 - `sprint/` exists
 - `.session/` exists
 - `.claude/project/agents/*-sidecar/` for each agent
 
-## 6. Hook Scripts
+### 6. Hook Scripts
 
 - `scripts/hooks/session-start.sh` exists and is executable
 - `scripts/hooks/pre-edit-check.sh` exists and is executable
 
-</health-checks>
+</health-checks-submodule>
 
 <output-format>
 
 ```markdown
 # Pennyfarthing Health Check
 
-## Status: [HEALTHY | NEEDS_UPDATE | BROKEN]
+## Installation: [npm v2.0.0 | submodule v1.8.2]
+## Status: [HEALTHY | NEEDS_UPDATE | NEEDS_FIX]
 
 ### Checks
-| Check | Status | Issue |
-|-------|--------|-------|
-| Submodule | OK/OUTDATED | Behind by N commits |
-| Symlinks | OK/BROKEN | .claude/agents missing |
-| Settings | OK/OUTDATED | Uses old statusline format |
-| Statusline | OK/OUTDATED | Local differs from source |
-| Directories | OK/MISSING | .session/ not found |
-| Hooks | OK/MISSING | session-start.sh not found |
+| Check | Status | Detail |
+|-------|--------|--------|
+| Installation | OK | npm v2.0.0 |
+| Core Files | OK | All present |
+| User Files | OK | 10 sidecars |
+| Directories | OK | sprint/, .session/ |
+| Hooks | WARN | Not executable |
 
 ### Recommended Actions
 1. [Action with command to run]
@@ -97,6 +169,14 @@ diff -q "$PROJECT_ROOT/.claude/statusline.sh" "$PROJECT_ROOT/.claude/pennyfarthi
 </output-format>
 
 <auto-fixes>
+
+### npm Installation
+
+```bash
+pennyfarthing doctor --fix
+```
+
+### Submodule Installation
 
 The agent can offer to auto-fix these issues:
 
@@ -111,8 +191,29 @@ The agent can offer to auto-fix these issues:
 
 </auto-fixes>
 
+<migration>
+
+## Migrate to npm Package
+
+If using submodule installation, consider migrating for easier updates:
+
+```bash
+# Option 1: Interactive migration
+npx pennyfarthing init --migrate
+
+# Option 2: Force migration (non-interactive)
+npx pennyfarthing init --migrate --force
+
+# After migration, remove the submodule manually:
+rm -rf .claude/pennyfarthing
+git rm .claude/pennyfarthing
+git commit -m "chore: migrate pennyfarthing from submodule to npm"
+```
+
+</migration>
+
 <reference>
-- **Init script:** `scripts/init-project.sh`
-- **Settings format:** See init-project.sh lines 375-428
-- **Version:** Check `VERSION` file in pennyfarthing root
+- **npm CLI:** `pennyfarthing doctor`, `pennyfarthing update`
+- **Manifest:** `.claude/manifest.json` (tracks version and file hashes)
+- **Version:** `VERSION` file or `manifest.json`
 </reference>
