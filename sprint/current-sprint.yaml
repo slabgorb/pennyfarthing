@@ -119,7 +119,8 @@ epics:
           for session tracking and debugging agent workflows.
         points: 2
         priority: P2
-        status: backlog
+        status: in_progress
+        started: 2025-12-23
         repos: pennyfarthing
         acceptance_criteria:
           - logging.sh provides log_info, log_warn, log_error functions
