@@ -22,6 +22,7 @@ Pennyfarthing is a shared agent orchestration framework for Claude Code projects
 | [Personas](docs/PERSONAS.md) | Persona system and themes |
 | [Configuration](docs/CONFIGURATION.md) | Configuration reference |
 | [Skills](docs/SKILLS.md) | Skills reference |
+| [Changelog](CHANGELOG.md) | Version history and release notes |
 
 ## Quick Start
 

@@ -67,7 +67,11 @@ pennyfarthing/
 │
 ├── scripts/                        # Utility scripts
 │   ├── init-project.sh
-│   └── agent-session.sh
+│   ├── agent-session.sh
+│   └── utils/                      # Reusable utilities
+│       ├── retry.sh                # Exponential backoff
+│       ├── checkpoint.sh           # Session state persistence
+│       └── repo-scan.sh            # Cross-repo git status
 │
 ├── benchmarks/                     # Agent performance testing
 │   ├── test-cases/
@@ -394,3 +398,58 @@ Stories sync to/from Jira via:
 - Improves engagement
 - Fun while remaining professional
 - Configurable per project preference
+
+## Resilience Utilities
+
+Sprint 1 introduced reusable utilities in `scripts/utils/` for robust agent workflows.
+
+### Retry with Backoff
+
+`scripts/utils/retry.sh` provides exponential backoff for transient failures:
+
+```bash
+source scripts/utils/retry.sh
+
+# retry_with_backoff MAX_ATTEMPTS INITIAL_DELAY MAX_DELAY COMMAND
+retry_with_backoff 3 1 10 curl -s https://api.example.com/health
+
+# Primary with fallback
+command_with_fallback "git pull --ff-only" "git pull --no-rebase"
+```
+
+### Session Checkpoints
+
+`scripts/utils/checkpoint.sh` enables session state persistence:
+
+```bash
+source scripts/utils/checkpoint.sh
+
+# Save/restore state
+checkpoint_save "story_phase" "dev"
+phase=$(checkpoint_restore "story_phase")
+
+# Maintenance
+checkpoint_list    # Show recent
+checkpoint_rotate 500  # Prevent unbounded growth
+```
+
+Format: `ISO_TIMESTAMP|LABEL|DATA`
+
+### Repo Scanning
+
+`scripts/utils/repo-scan.sh` provides cross-repo git status:
+
+```bash
+source scripts/utils/repo-scan.sh
+
+# Single repo: returns repo|branch|uncommitted|ahead
+scan_repo_git_status pennyfarthing
+
+# All configured repos
+scan_all_repos_status
+
+# Check for open PR
+check_repo_pr pennyfarthing feature/my-branch
+```
+
+Used by the `workflow-status-check.md` subagent for state detection
