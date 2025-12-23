@@ -25,6 +25,20 @@ protected_patterns=(
     "vendor/*"
 )
 
+# Pennyfarthing submodule protection
+# Edit pennyfarthing files in the pennyfarthing repo, not consuming projects
+if [[ "$file_path" == *".claude/pennyfarthing/"* ]]; then
+    echo "BLOCKED: Cannot edit pennyfarthing submodule files from this repo." >&2
+    echo "File: $file_path" >&2
+    echo "" >&2
+    echo "To modify pennyfarthing:" >&2
+    echo "  1. cd .claude/pennyfarthing" >&2
+    echo "  2. Make changes there" >&2
+    echo "  3. Commit and push to pennyfarthing repo" >&2
+    echo "  4. Update submodule reference in parent: git add .claude/pennyfarthing" >&2
+    exit 2
+fi
+
 # Check if file matches any protected pattern
 for pattern in "${protected_patterns[@]}"; do
     if [[ "$file_path" == $pattern ]]; then
