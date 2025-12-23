@@ -8,8 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Documentation for resilience utilities in `shared-context.md`
-- Resilience utilities section in `docs/ARCHITECTURE.md`
+- `/release` command for merge-and-push workflow
+- `scripts/release.sh` - Release script with optional version bump
 
 ---
 
