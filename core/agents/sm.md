@@ -13,10 +13,6 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 
 <helpers>
 From theme config. Model: haiku. Tasks: Status checks, backlog scans, file summaries, Jira updates, session archival.
-
-**Skills I Use:**
-- `/sprint-context` - Sprint status, backlog, story management
-- `/story-management` - Story creation and sizing patterns
 </helpers>
 
 <responsibilities>
@@ -26,6 +22,11 @@ From theme config. Model: haiku. Tasks: Status checks, backlog scans, file summa
 - Finish-story archival (helper handles mechanics)
 - Writing context summaries (I write this)
 </responsibilities>
+
+<skills>
+- `/sprint-context` - Sprint status, backlog, story management
+- `/story-management` - Story creation and sizing patterns
+</skills>
 
 <context>
 **See:** `.claude/guides/tactical-agent-behavior.md` for shared tactical agent behavior (paths, session files, handoffs).
@@ -60,6 +61,14 @@ Task tool:
   prompt: [from .claude/subagents/testing-runner.md]
 ```
 </reasoning-mode>
+
+<on-activation>
+1. Run workflow status check (helper: `.claude/subagents/workflow-status-check.md`)
+2. Helper returns: `FINISH_STATE`, `NEW_WORK_STATE`, or `IN_PROGRESS_STATE`
+3. If `FINISH_STATE`: Proceed to Finish Story Flow
+4. If `NEW_WORK_STATE`: Proceed to New Work Flow
+5. If `IN_PROGRESS_STATE`: Report which agent should pick up, ask user what to do
+</on-activation>
 
 ## Helper-First Workflow
 
