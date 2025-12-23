@@ -701,6 +701,53 @@ Fix: Run tests, fix failures, then retry handoff.
 
 Address the issue and send your helper again.
 
+## Auto-Invoke Next Agent (Context-Aware)
+
+**After handoff helper succeeds**, check context usage to decide whether to auto-invoke or defer:
+
+```bash
+eval $(./scripts/check-context.sh)
+# Returns: HANDOFF_MODE=auto (<70%) or HANDOFF_MODE=ask (>70%)
+```
+
+### If HANDOFF_MODE=auto (< 70% context)
+
+**Use the Skill tool to invoke the next agent directly.** Do not wait for user input.
+
+| Current Agent | Next Agent | Skill Invocation |
+|---------------|------------|------------------|
+| SM | TEA | `Skill(tea)` |
+| SM (trivial) | Dev | `Skill(dev)` |
+| TEA | Dev | `Skill(dev)` |
+| Dev | Reviewer | `Skill(reviewer)` |
+| Reviewer (approved) | SM | `Skill(sm)` |
+| Reviewer (rejected) | Dev | `Skill(dev)` |
+
+**Example flow:**
+```
+1. Dev completes implementation, spawns handoff helper
+2. Helper updates session file, reports success
+3. Dev runs: eval $(./scripts/check-context.sh)
+4. Result: HANDOFF_MODE=auto (context at 45%)
+5. Dev uses Skill tool: skill="reviewer"
+6. Reviewer activates automatically, continues work
+```
+
+### If HANDOFF_MODE=ask (> 70% context)
+
+**Do not auto-invoke.** Tell the user to start a fresh session:
+
+```
+Context is at {N}% - recommend fresh session for next agent.
+Run `/{next-agent}` in a new conversation to continue.
+```
+
+### Why This Matters
+
+- Auto-invoke keeps momentum when context allows
+- Fresh sessions prevent context overflow and degraded performance
+- The 70% threshold leaves buffer for the next agent's work
+
 ### Pre-flight Check Commands
 
 **For UI repo:**
