@@ -178,6 +178,28 @@ build:    Build application
 dev:      Start development server
 ```
 
+## Claude Code Configuration
+
+### Hook Path Resolution
+Always use `$CLAUDE_PROJECT_DIR` for hook commands in settings.local.json:
+
+```json
+{
+  "hooks": {
+    "SessionStart": [{
+      "hooks": [{
+        "type": "command",
+        "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/hooks/session-start.sh"
+      }]
+    }]
+  }
+}
+```
+
+**Why:** `$CLAUDE_PROJECT_DIR` is set by Claude Code to the directory where it was started. Relative paths break when Claude runs from subdirectories or when the project is used as a submodule.
+
+**Anti-pattern:** Don't use `git rev-parse --show-toplevel` as fallback - returns wrong root in submodules/nested repos.
+
 ---
 
 *Add infrastructure patterns and runbooks below*
