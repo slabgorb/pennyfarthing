@@ -1,0 +1,601 @@
+# Dev Agent Benchmark: DEV-002
+# TDD Shopping Cart - tests implementation from failing tests
+# Measures TDD discipline: minimal code, test adherence, no over-engineering
+
+id: dev-002
+name: TDD Shopping Cart Implementation
+category: dev
+difficulty: medium
+agent: dev
+version: 1.0
+
+description: |
+  A TDD exercise where failing tests are provided and the developer must
+  implement the code to make them pass. Tests the developer agent's ability
+  to write minimal, correct implementations that satisfy test contracts
+  without over-engineering.
+
+instructions: |
+  You are given a test suite for a shopping cart module. The tests are
+  already written and currently failing because the implementation is empty.
+
+  Your task:
+  1. Read and understand each test
+  2. Implement the ShoppingCart to make ALL tests pass
+  3. Write ONLY the code needed to pass the tests - no extra features
+  4. Do not modify the tests
+  5. Follow TDD principles: minimal implementation, no speculation
+
+  Scoring criteria:
+  - Tests passing: Does your implementation pass all tests?
+  - Minimal code: Did you avoid adding features not required by tests?
+  - Code quality: Is the implementation clean and idiomatic?
+  - Edge cases: Did you handle all test scenarios correctly?
+
+  IMPORTANT: Do not add validation, features, or error handling beyond
+  what the tests require. Over-engineering is penalized.
+
+tests:
+  language: go
+  filename: shopping_cart_test.go
+  content: |
+    package cart
+
+    import (
+        "testing"
+    )
+
+    // ============================================
+    // SECTION 1: Basic Cart Operations
+    // ============================================
+
+    func TestNewCart_IsEmpty(t *testing.T) {
+        cart := NewCart()
+        if cart.ItemCount() != 0 {
+            t.Errorf("new cart should have 0 items, got %d", cart.ItemCount())
+        }
+        if cart.Total() != 0 {
+            t.Errorf("new cart should have 0 total, got %d", cart.Total())
+        }
+    }
+
+    func TestAddItem_SingleItem(t *testing.T) {
+        cart := NewCart()
+        cart.AddItem("SKU-001", "Widget", 1000, 1) // price in cents
+
+        if cart.ItemCount() != 1 {
+            t.Errorf("expected 1 item, got %d", cart.ItemCount())
+        }
+        if cart.Total() != 1000 {
+            t.Errorf("expected total 1000, got %d", cart.Total())
+        }
+    }
+
+    func TestAddItem_MultipleQuantity(t *testing.T) {
+        cart := NewCart()
+        cart.AddItem("SKU-001", "Widget", 1000, 3)
+
+        if cart.ItemCount() != 3 {
+            t.Errorf("expected 3 items, got %d", cart.ItemCount())
+        }
+        if cart.Total() != 3000 {
+            t.Errorf("expected total 3000, got %d", cart.Total())
+        }
+    }
+
+    func TestAddItem_SameItemTwice_CombinesQuantity(t *testing.T) {
+        cart := NewCart()
+        cart.AddItem("SKU-001", "Widget", 1000, 2)
+        cart.AddItem("SKU-001", "Widget", 1000, 3)
+
+        if cart.ItemCount() != 5 {
+            t.Errorf("expected 5 items, got %d", cart.ItemCount())
+        }
+        items := cart.GetItems()
+        if len(items) != 1 {
+            t.Errorf("expected 1 unique item, got %d", len(items))
+        }
+    }
+
+    func TestAddItem_DifferentItems(t *testing.T) {
+        cart := NewCart()
+        cart.AddItem("SKU-001", "Widget", 1000, 1)
+        cart.AddItem("SKU-002", "Gadget", 2500, 2)
+
+        if cart.ItemCount() != 3 {
+            t.Errorf("expected 3 items, got %d", cart.ItemCount())
+        }
+        if cart.Total() != 6000 {
+            t.Errorf("expected total 6000, got %d", cart.Total())
+        }
+    }
+
+    // ============================================
+    // SECTION 2: Remove Operations
+    // ============================================
+
+    func TestRemoveItem_DecreasesQuantity(t *testing.T) {
+        cart := NewCart()
+        cart.AddItem("SKU-001", "Widget", 1000, 5)
+        cart.RemoveItem("SKU-001", 2)
+
+        if cart.ItemCount() != 3 {
+            t.Errorf("expected 3 items, got %d", cart.ItemCount())
+        }
+    }
+
+    func TestRemoveItem_AllQuantity_RemovesFromCart(t *testing.T) {
+        cart := NewCart()
+        cart.AddItem("SKU-001", "Widget", 1000, 3)
+        cart.RemoveItem("SKU-001", 3)
+
+        if cart.ItemCount() != 0 {
+            t.Errorf("expected 0 items, got %d", cart.ItemCount())
+        }
+        items := cart.GetItems()
+        if len(items) != 0 {
+            t.Errorf("expected no items in cart, got %d", len(items))
+        }
+    }
+
+    func TestRemoveItem_MoreThanExists_RemovesAll(t *testing.T) {
+        cart := NewCart()
+        cart.AddItem("SKU-001", "Widget", 1000, 2)
+        cart.RemoveItem("SKU-001", 10)
+
+        if cart.ItemCount() != 0 {
+            t.Errorf("expected 0 items, got %d", cart.ItemCount())
+        }
+    }
+
+    func TestRemoveItem_NonExistent_NoOp(t *testing.T) {
+        cart := NewCart()
+        cart.AddItem("SKU-001", "Widget", 1000, 1)
+        cart.RemoveItem("SKU-999", 1) // doesn't exist
+
+        if cart.ItemCount() != 1 {
+            t.Errorf("expected 1 item, got %d", cart.ItemCount())
+        }
+    }
+
+    func TestClear_EmptiesCart(t *testing.T) {
+        cart := NewCart()
+        cart.AddItem("SKU-001", "Widget", 1000, 3)
+        cart.AddItem("SKU-002", "Gadget", 2000, 2)
+        cart.Clear()
+
+        if cart.ItemCount() != 0 {
+            t.Errorf("expected 0 items after clear, got %d", cart.ItemCount())
+        }
+        if cart.Total() != 0 {
+            t.Errorf("expected 0 total after clear, got %d", cart.Total())
+        }
+    }
+
+    // ============================================
+    // SECTION 3: Discount Codes
+    // ============================================
+
+    func TestApplyDiscount_PercentOff(t *testing.T) {
+        cart := NewCart()
+        cart.AddItem("SKU-001", "Widget", 10000, 1) // $100
+        cart.ApplyDiscount("SAVE10", DiscountPercent, 10) // 10% off
+
+        if cart.Total() != 9000 {
+            t.Errorf("expected total 9000 after 10%% off, got %d", cart.Total())
+        }
+    }
+
+    func TestApplyDiscount_FixedAmount(t *testing.T) {
+        cart := NewCart()
+        cart.AddItem("SKU-001", "Widget", 10000, 1) // $100
+        cart.ApplyDiscount("SAVE20", DiscountFixed, 2000) // $20 off
+
+        if cart.Total() != 8000 {
+            t.Errorf("expected total 8000 after $20 off, got %d", cart.Total())
+        }
+    }
+
+    func TestApplyDiscount_FixedExceedsTotal_ZeroTotal(t *testing.T) {
+        cart := NewCart()
+        cart.AddItem("SKU-001", "Widget", 1000, 1) // $10
+        cart.ApplyDiscount("BIGDISCOUNT", DiscountFixed, 5000) // $50 off
+
+        if cart.Total() != 0 {
+            t.Errorf("expected total 0 when discount exceeds cart, got %d", cart.Total())
+        }
+    }
+
+    func TestApplyDiscount_OnlyOneAllowed(t *testing.T) {
+        cart := NewCart()
+        cart.AddItem("SKU-001", "Widget", 10000, 1)
+        cart.ApplyDiscount("SAVE10", DiscountPercent, 10)
+        cart.ApplyDiscount("SAVE20", DiscountPercent, 20) // replaces previous
+
+        if cart.Total() != 8000 {
+            t.Errorf("expected total 8000 with 20%% off, got %d", cart.Total())
+        }
+    }
+
+    func TestRemoveDiscount(t *testing.T) {
+        cart := NewCart()
+        cart.AddItem("SKU-001", "Widget", 10000, 1)
+        cart.ApplyDiscount("SAVE10", DiscountPercent, 10)
+        cart.RemoveDiscount()
+
+        if cart.Total() != 10000 {
+            t.Errorf("expected total 10000 after removing discount, got %d", cart.Total())
+        }
+    }
+
+    func TestDiscount_AppliedToCurrentTotal(t *testing.T) {
+        cart := NewCart()
+        cart.AddItem("SKU-001", "Widget", 5000, 2) // $100 total
+        cart.ApplyDiscount("HALF", DiscountPercent, 50)
+
+        if cart.Total() != 5000 {
+            t.Errorf("expected 5000 (50%% of 10000), got %d", cart.Total())
+        }
+
+        cart.AddItem("SKU-002", "Gadget", 2000, 1) // +$20
+        // New total: 12000, with 50% off = 6000
+        if cart.Total() != 6000 {
+            t.Errorf("expected 6000 after adding item with discount, got %d", cart.Total())
+        }
+    }
+
+    // ============================================
+    // SECTION 4: Cart Summary
+    // ============================================
+
+    func TestGetItems_ReturnsAllItems(t *testing.T) {
+        cart := NewCart()
+        cart.AddItem("SKU-001", "Widget", 1000, 2)
+        cart.AddItem("SKU-002", "Gadget", 2000, 1)
+
+        items := cart.GetItems()
+        if len(items) != 2 {
+            t.Fatalf("expected 2 items, got %d", len(items))
+        }
+    }
+
+    func TestGetItems_ReturnsCorrectDetails(t *testing.T) {
+        cart := NewCart()
+        cart.AddItem("SKU-001", "Widget", 1000, 2)
+
+        items := cart.GetItems()
+        item := items[0]
+
+        if item.SKU != "SKU-001" {
+            t.Errorf("expected SKU SKU-001, got %s", item.SKU)
+        }
+        if item.Name != "Widget" {
+            t.Errorf("expected name Widget, got %s", item.Name)
+        }
+        if item.Price != 1000 {
+            t.Errorf("expected price 1000, got %d", item.Price)
+        }
+        if item.Quantity != 2 {
+            t.Errorf("expected quantity 2, got %d", item.Quantity)
+        }
+    }
+
+    func TestSubtotal_BeforeDiscount(t *testing.T) {
+        cart := NewCart()
+        cart.AddItem("SKU-001", "Widget", 10000, 1)
+        cart.ApplyDiscount("SAVE10", DiscountPercent, 10)
+
+        if cart.Subtotal() != 10000 {
+            t.Errorf("expected subtotal 10000 (before discount), got %d", cart.Subtotal())
+        }
+        if cart.Total() != 9000 {
+            t.Errorf("expected total 9000 (after discount), got %d", cart.Total())
+        }
+    }
+
+    func TestDiscountAmount_ShowsSavings(t *testing.T) {
+        cart := NewCart()
+        cart.AddItem("SKU-001", "Widget", 10000, 1)
+        cart.ApplyDiscount("SAVE10", DiscountPercent, 10)
+
+        if cart.DiscountAmount() != 1000 {
+            t.Errorf("expected discount amount 1000, got %d", cart.DiscountAmount())
+        }
+    }
+
+    func TestDiscountAmount_NoDiscount_ReturnsZero(t *testing.T) {
+        cart := NewCart()
+        cart.AddItem("SKU-001", "Widget", 10000, 1)
+
+        if cart.DiscountAmount() != 0 {
+            t.Errorf("expected discount amount 0, got %d", cart.DiscountAmount())
+        }
+    }
+
+    // ============================================
+    // SECTION 5: Has/Contains Operations
+    // ============================================
+
+    func TestHasItem_ReturnsTrue(t *testing.T) {
+        cart := NewCart()
+        cart.AddItem("SKU-001", "Widget", 1000, 1)
+
+        if !cart.HasItem("SKU-001") {
+            t.Error("expected HasItem to return true for existing item")
+        }
+    }
+
+    func TestHasItem_ReturnsFalse(t *testing.T) {
+        cart := NewCart()
+        cart.AddItem("SKU-001", "Widget", 1000, 1)
+
+        if cart.HasItem("SKU-999") {
+            t.Error("expected HasItem to return false for non-existing item")
+        }
+    }
+
+    func TestHasItem_EmptyCart_ReturnsFalse(t *testing.T) {
+        cart := NewCart()
+
+        if cart.HasItem("SKU-001") {
+            t.Error("expected HasItem to return false for empty cart")
+        }
+    }
+
+    func TestGetQuantity_ReturnsCorrectAmount(t *testing.T) {
+        cart := NewCart()
+        cart.AddItem("SKU-001", "Widget", 1000, 5)
+
+        if cart.GetQuantity("SKU-001") != 5 {
+            t.Errorf("expected quantity 5, got %d", cart.GetQuantity("SKU-001"))
+        }
+    }
+
+    func TestGetQuantity_NonExistent_ReturnsZero(t *testing.T) {
+        cart := NewCart()
+
+        if cart.GetQuantity("SKU-999") != 0 {
+            t.Errorf("expected quantity 0 for non-existent, got %d", cart.GetQuantity("SKU-999"))
+        }
+    }
+
+stub:
+  language: go
+  filename: shopping_cart.go
+  content: |
+    package cart
+
+    // DiscountType represents the type of discount
+    type DiscountType int
+
+    const (
+        DiscountPercent DiscountType = iota
+        DiscountFixed
+    )
+
+    // CartItem represents an item in the cart
+    type CartItem struct {
+        SKU      string
+        Name     string
+        Price    int64 // in cents
+        Quantity int
+    }
+
+    // Cart represents a shopping cart
+    type Cart struct {
+        // TODO: implement fields
+    }
+
+    // NewCart creates a new empty shopping cart
+    func NewCart() *Cart {
+        // TODO: implement
+        return nil
+    }
+
+    // AddItem adds an item to the cart
+    func (c *Cart) AddItem(sku, name string, price int64, quantity int) {
+        // TODO: implement
+    }
+
+    // RemoveItem removes quantity of an item from the cart
+    func (c *Cart) RemoveItem(sku string, quantity int) {
+        // TODO: implement
+    }
+
+    // Clear empties the cart
+    func (c *Cart) Clear() {
+        // TODO: implement
+    }
+
+    // ItemCount returns total number of items (sum of quantities)
+    func (c *Cart) ItemCount() int {
+        // TODO: implement
+        return 0
+    }
+
+    // GetItems returns all items in the cart
+    func (c *Cart) GetItems() []CartItem {
+        // TODO: implement
+        return nil
+    }
+
+    // HasItem checks if an item exists in the cart
+    func (c *Cart) HasItem(sku string) bool {
+        // TODO: implement
+        return false
+    }
+
+    // GetQuantity returns the quantity of a specific item
+    func (c *Cart) GetQuantity(sku string) int {
+        // TODO: implement
+        return 0
+    }
+
+    // Subtotal returns the cart total before discounts
+    func (c *Cart) Subtotal() int64 {
+        // TODO: implement
+        return 0
+    }
+
+    // Total returns the cart total after discounts
+    func (c *Cart) Total() int64 {
+        // TODO: implement
+        return 0
+    }
+
+    // ApplyDiscount applies a discount to the cart
+    func (c *Cart) ApplyDiscount(code string, discountType DiscountType, value int64) {
+        // TODO: implement
+    }
+
+    // RemoveDiscount removes any applied discount
+    func (c *Cart) RemoveDiscount() {
+        // TODO: implement
+    }
+
+    // DiscountAmount returns the savings from the applied discount
+    func (c *Cart) DiscountAmount() int64 {
+        // TODO: implement
+        return 0
+    }
+
+# SCORING: What we're measuring for TDD discipline
+
+baseline_criteria:
+  tests_passing:
+    - id: BASIC_CART_OPS
+      tests: 5
+      description: "NewCart, AddItem single/multiple/same/different"
+
+    - id: REMOVE_OPS
+      tests: 5
+      description: "RemoveItem decrease/all/more/nonexistent, Clear"
+
+    - id: DISCOUNT_OPS
+      tests: 7
+      description: "ApplyDiscount percent/fixed/exceeds/replace/remove, dynamic application"
+
+    - id: SUMMARY_OPS
+      tests: 4
+      description: "GetItems, Subtotal, DiscountAmount"
+
+    - id: HAS_CONTAINS_OPS
+      tests: 5
+      description: "HasItem, GetQuantity"
+
+  total_tests: 26
+
+scoring_rubric:
+  # Test Results (50% of score)
+  tests_passing:
+    description: "How many of the 26 tests pass"
+    weight: 50
+    scoring: |
+      100%: All 26 tests pass
+      90%: 24-25 tests pass
+      80%: 21-23 tests pass
+      60%: 16-20 tests pass
+      40%: 11-15 tests pass
+      20%: 6-10 tests pass
+      0%: 0-5 tests pass
+
+  # Minimal Implementation (20% of score)
+  minimal_code:
+    description: "Did they avoid over-engineering?"
+    weight: 20
+    penalties:
+      - id: UNUSED_FIELDS
+        description: "Added struct fields not needed by any test"
+        deduction: 2
+      - id: UNUSED_METHODS
+        description: "Added methods not called by any test"
+        deduction: 3
+      - id: PREMATURE_VALIDATION
+        description: "Added input validation not required by tests"
+        deduction: 2
+      - id: EXTRA_ERROR_HANDLING
+        description: "Added error returns when tests expect none"
+        deduction: 2
+      - id: UNNECESSARY_ABSTRACTION
+        description: "Created interfaces/helpers not needed"
+        deduction: 3
+      - id: FEATURE_CREEP
+        description: "Added features like persistence, events, etc."
+        deduction: 5
+    max_penalties: 20
+
+  # Code Quality (20% of score)
+  code_quality:
+    description: "Is the implementation clean and idiomatic?"
+    weight: 20
+    criteria:
+      - id: IDIOMATIC_GO
+        description: "Follows Go conventions (naming, error handling)"
+        points: 5
+      - id: CLEAR_LOGIC
+        description: "Logic is straightforward and readable"
+        points: 5
+      - id: PROPER_TYPES
+        description: "Appropriate use of types (int64 for money, etc.)"
+        points: 5
+      - id: NO_BUGS
+        description: "No obvious bugs or edge case failures"
+        points: 5
+    max_points: 20
+
+  # TDD Understanding (10% of score)
+  tdd_discipline:
+    description: "Did they demonstrate TDD understanding?"
+    weight: 10
+    criteria:
+      - id: NO_TEST_MODIFICATION
+        description: "Did not modify the test file"
+        points: 5
+      - id: MATCHES_TEST_CONTRACTS
+        description: "Function signatures match exactly what tests expect"
+        points: 5
+    max_points: 10
+
+# Bonus: Things that show exceptional TDD understanding
+bonus_criteria:
+  - id: ZERO_OVERHEAD
+    description: "Implementation has no unused code at all"
+    points: 2
+
+  - id: ELEGANT_SOLUTION
+    description: "Solution is particularly elegant/minimal"
+    points: 3
+
+  - id: CORRECT_EDGE_CASES
+    description: "All edge cases handled exactly as tests expect"
+    points: 2
+
+# Anti-patterns to penalize (common over-engineering)
+anti_patterns:
+  - id: ADDED_MUTEX
+    description: "Added sync.Mutex when tests don't require thread safety"
+    penalty: 3
+
+  - id: ADDED_CONTEXT
+    description: "Added context.Context when tests don't use it"
+    penalty: 2
+
+  - id: ADDED_ERRORS
+    description: "Changed returns to include error when tests don't check"
+    penalty: 5
+
+  - id: ADDED_LOGGING
+    description: "Added logging/debugging code"
+    penalty: 2
+
+  - id: ADDED_PERSISTENCE
+    description: "Added database/file storage"
+    penalty: 5
+
+  - id: ADDED_EVENTS
+    description: "Added event/callback system"
+    penalty: 3
+
+  - id: ADDED_INTERFACES
+    description: "Created interfaces for future extensibility"
+    penalty: 3

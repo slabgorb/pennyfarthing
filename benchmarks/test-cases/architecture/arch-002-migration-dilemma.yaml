@@ -1,0 +1,328 @@
+# Architect Agent Benchmark: ARCH-002
+# The Migration Dilemma - tests strategic thinking and trade-off analysis
+# Designed to produce divergent results based on persona values/traits
+
+id: arch-002
+name: The Migration Dilemma
+category: architecture
+difficulty: hard
+agent: architect
+version: 1.0
+
+description: |
+  An open-ended architecture challenge with no single correct answer.
+  Tests the architect's ability to analyze trade-offs, propose solutions,
+  and communicate reasoning. Persona values should legitimately influence
+  the recommended approach.
+
+purpose: |
+  Unlike code-based benchmarks with definitive answers, this test measures:
+  - How the architect weighs competing concerns
+  - Risk tolerance in technology and approach choices
+  - Depth of trade-off analysis
+  - Communication clarity and persuasiveness
+  - Whether persona traits influence actual recommendations
+
+instructions: |
+  You are the Architect agent. Read the scenario below and provide:
+
+  1. SITUATION ANALYSIS (2-3 paragraphs)
+     - What are the core problems?
+     - What constraints matter most?
+     - What's the real goal behind "modernization"?
+
+  2. RECOMMENDED APPROACH (detailed)
+     - Your proposed strategy
+     - Phasing and timeline
+     - Technology choices with justification
+     - Team/resource considerations
+
+  3. TRADE-OFFS ACKNOWLEDGED
+     - What are you sacrificing with this approach?
+     - What risks does this introduce?
+     - What alternatives did you consider and reject?
+
+  4. SUCCESS CRITERIA
+     - How will we know this worked?
+     - What metrics matter?
+     - What are the warning signs to watch for?
+
+  5. WHAT WOULD CHANGE YOUR MIND
+     - What new information would alter your recommendation?
+     - Under what conditions would you recommend a different approach?
+
+  Stay in character throughout. Your persona's values and traits should
+  authentically influence your analysis and recommendations.
+
+scenario:
+  title: "Legacy E-Commerce Modernization"
+  content: |
+    ## Current State
+
+    TechMart is a 5-year-old e-commerce platform built as a monolithic
+    Ruby on Rails application. The platform serves 50,000 daily active
+    users and processes $2M in annual revenue with 15% margins.
+
+    ### Technical Reality
+
+    - **Architecture**: Single Rails monolith, PostgreSQL database
+    - **Deployment**: Manual process, 2-week cycles due to fear of breakage
+    - **Performance**: 3-second average page loads during peak traffic
+    - **Codebase**: 200K lines, minimal test coverage (~20%)
+    - **Infrastructure**: Single cloud VM, manual scaling
+
+    ### Team
+
+    - 12 developers (mix of senior and junior)
+    - 2 DevOps engineers
+    - No dedicated architect (you're being brought in)
+    - Team morale: frustrated with slow deployment and constant firefighting
+
+    ### Business Context
+
+    - Growing 20% quarter-over-quarter
+    - Competitors launching faster (weekly releases)
+    - Black Friday last year had 2 hours of downtime, cost $50K
+    - CEO reads tech blogs, mentions "microservices" and "Kubernetes" often
+
+    ### Constraints
+
+    - **Budget**: $500K over 18 months (includes any new hires)
+    - **Timeline**: Must show measurable progress within 6 months
+    - **Constraint**: Cannot halt feature development during modernization
+    - **Political**: CEO expects "modern" solution, CTO wants pragmatic approach
+
+    ### Leadership Request
+
+    "We need to modernize. Our competitors are eating our lunch. Design
+    a strategy to bring us into the modern era. We're open to your
+    recommendations on approach, technology, and phasing."
+
+  key_tensions:
+    - "Big bang rewrite vs incremental improvement"
+    - "Microservices hype vs monolith pragmatism"
+    - "New technology vs team's existing skills"
+    - "Speed of delivery vs architectural purity"
+    - "CEO's vision vs CTO's pragmatism"
+    - "Short-term progress vs long-term foundation"
+
+# What we expect to see differ by persona
+persona_influence_areas:
+  risk_tolerance:
+    description: "How aggressive is the proposed change?"
+    spectrum:
+      conservative: "Strangler fig, incremental extraction, proven tech"
+      moderate: "Phased approach with some calculated risks"
+      aggressive: "Bold restructuring, new technologies, ambitious timeline"
+
+  technology_choices:
+    description: "What technologies are recommended?"
+    spectrum:
+      boring: "Stick with Rails, add caching, optimize queries"
+      pragmatic: "Introduce specific microservices where needed"
+      cutting_edge: "Full Kubernetes, service mesh, event sourcing"
+
+  team_considerations:
+    description: "How much is the team's current state weighted?"
+    spectrum:
+      high_weight: "Work within current skills, extensive training"
+      medium_weight: "Some training, some strategic hires"
+      low_weight: "Hire new skills, expect existing team to adapt"
+
+  communication_style:
+    description: "How is the recommendation presented?"
+    spectrum:
+      cautious: "Emphasizes risks, hedges recommendations"
+      balanced: "Clear recommendation with acknowledged trade-offs"
+      confident: "Strong conviction, minimizes uncertainty"
+
+# Scoring rubric for evaluating responses
+scoring_rubric:
+  situation_analysis:
+    weight: 15
+    criteria:
+      - id: PROBLEM_IDENTIFICATION
+        description: "Correctly identifies core problems vs symptoms"
+        points: 5
+      - id: CONSTRAINT_AWARENESS
+        description: "Demonstrates understanding of real constraints"
+        points: 5
+      - id: STAKEHOLDER_INSIGHT
+        description: "Reads between the lines on CEO/CTO tension"
+        points: 5
+
+  recommended_approach:
+    weight: 30
+    criteria:
+      - id: COHERENT_STRATEGY
+        description: "Approach is internally consistent and logical"
+        points: 10
+      - id: PHASING_QUALITY
+        description: "Timeline and phases are realistic"
+        points: 5
+      - id: TECHNOLOGY_FIT
+        description: "Tech choices match problem and constraints"
+        points: 5
+      - id: RESOURCE_PLANNING
+        description: "Team/budget considerations are realistic"
+        points: 5
+      - id: ADDRESSES_ROOT_CAUSE
+        description: "Solves actual problems, not just symptoms"
+        points: 5
+
+  trade_off_analysis:
+    weight: 25
+    criteria:
+      - id: SACRIFICES_ACKNOWLEDGED
+        description: "Honest about what's being given up"
+        points: 8
+      - id: RISKS_IDENTIFIED
+        description: "Realistic about what could go wrong"
+        points: 8
+      - id: ALTERNATIVES_CONSIDERED
+        description: "Shows awareness of other valid approaches"
+        points: 9
+
+  success_criteria:
+    weight: 15
+    criteria:
+      - id: MEASURABLE_OUTCOMES
+        description: "Defines concrete, measurable success metrics"
+        points: 8
+      - id: WARNING_SIGNS
+        description: "Identifies early indicators of failure"
+        points: 7
+
+  adaptability:
+    weight: 10
+    criteria:
+      - id: MIND_CHANGE_CONDITIONS
+        description: "Articulates what would change recommendation"
+        points: 5
+      - id: SCENARIO_AWARENESS
+        description: "Shows conditions where different approach fits"
+        points: 5
+
+  persona_expression:
+    weight: 5
+    criteria:
+      - id: CHARACTER_CONSISTENCY
+        description: "Decisions align with persona's known values"
+        points: 2
+      - id: AUTHENTIC_VOICE
+        description: "Communication style matches character"
+        points: 2
+      - id: TRAIT_INFLUENCE
+        description: "Persona traits visibly influence choices"
+        points: 1
+
+# Expected approach tendencies by persona (for evaluation reference)
+expected_tendencies:
+  discworld_leonard:
+    character: "Leonard of Quirm"
+    expected_traits:
+      - "Novel/creative solution, possibly over-engineered"
+      - "Gets distracted by interesting sub-problems"
+      - "Multiple sketches and diagrams mentioned"
+      - "May propose something nobody asked for that's brilliant"
+    risk_profile: "moderate-to-aggressive, creative"
+
+  star_trek_spock:
+    character: "Mr. Spock"
+    expected_traits:
+      - "Highly logical, systematic analysis"
+      - "Risk-averse, prefers proven approaches"
+      - "Quantifies everything possible"
+      - "May find human organizational dynamics 'fascinating'"
+    risk_profile: "conservative, methodical"
+
+  minimalist:
+    character: "System Architect"
+    expected_traits:
+      - "Industry-standard approach"
+      - "No personality influence on decisions"
+      - "Textbook trade-off analysis"
+      - "Direct, efficient communication"
+    risk_profile: "pragmatic, by-the-book"
+
+  austen_emma:
+    character: "Emma Woodhouse"
+    expected_traits:
+      - "Confident in her scheme"
+      - "May overreach or overcomplicate"
+      - "Charming presentation"
+      - "Might later admit Mr. Knightley was right"
+    risk_profile: "confident, possibly overconfident"
+
+  shakespeare_oberon:
+    character: "Oberon, King of the Fairies"
+    expected_traits:
+      - "Grand design, sees invisible threads"
+      - "Orchestrates from above"
+      - "Poetic framing of architecture"
+      - "Treats system as enchanted forest"
+    risk_profile: "visionary, grand scope"
+
+# Evaluation process
+evaluation_process:
+  steps:
+    - step: 1
+      action: "Capture full response"
+      notes: "Save complete architect output including all sections"
+
+    - step: 2
+      action: "Score each rubric category"
+      notes: "Use 1-5 scale for each criterion, apply weights"
+
+    - step: 3
+      action: "Identify approach classification"
+      notes: "Categorize: conservative/moderate/aggressive on each dimension"
+
+    - step: 4
+      action: "Assess persona influence"
+      notes: "Did persona traits visibly influence recommendations?"
+
+    - step: 5
+      action: "Compare across personas"
+      notes: "Are different personas producing different recommendations?"
+
+# Output format for results
+result_format: |
+  benchmark_id: arch-002
+  theme: [theme name]
+  persona: [character name]
+  run_timestamp: [ISO timestamp]
+  model: [model used]
+
+  approach_classification:
+    risk_tolerance: [conservative/moderate/aggressive]
+    technology_choices: [boring/pragmatic/cutting_edge]
+    team_consideration: [high/medium/low]
+    communication_style: [cautious/balanced/confident]
+
+  key_recommendations:
+    primary_strategy: [brief description]
+    timeline: [proposed timeline]
+    technology_stack: [key technologies mentioned]
+    first_action: [what they'd do first]
+
+  scores:
+    situation_analysis: [0-15]
+    recommended_approach: [0-30]
+    trade_off_analysis: [0-25]
+    success_criteria: [0-15]
+    adaptability: [0-10]
+    persona_expression: [0-5]
+    total: [0-100]
+
+  trade_offs_acknowledged:
+    - [list of trade-offs mentioned]
+
+  risks_identified:
+    - [list of risks mentioned]
+
+  persona_influence_notes: |
+    [How did persona traits influence the recommendation?]
+
+  full_response: |
+    [Complete response text]
