@@ -85,8 +85,9 @@ epics:
           into reusable scripts. This subagent is used by all tactical agents.
         points: 2
         priority: P2
-        status: in-progress
+        status: done
         started: 2025-12-22
+        completed: 2025-12-22
         repos: pennyfarthing
         acceptance_criteria:
           - Repo scanning logic extracted to scripts/utils/repo-scan.sh
@@ -95,7 +96,7 @@ epics:
 
       - id: "1-4b"
         title: "Split testing-runner.md subagent"
-        jira: MSSCI-11120
+        jira: MSSCI-11125
         description: |
           Extract test container setup from testing-runner.md (361 lines)
           into reusable utilities. Focus on DRY and maintainability.
@@ -110,7 +111,7 @@ epics:
 
       - id: "1-4c"
         title: "Add structured logging utility"
-        jira: MSSCI-11120
+        jira: MSSCI-11126
         description: |
           Create scripts/utils/logging.sh with structured JSON logging
           for session tracking and debugging agent workflows.
@@ -125,7 +126,7 @@ epics:
 
       - id: "1-4d"
         title: "Add session file locking"
-        jira: MSSCI-11120
+        jira: MSSCI-11127
         description: |
           Add file locking mechanism to prevent concurrent session conflicts
           when multiple agents or terminals access .session files.
@@ -161,7 +162,7 @@ epics:
 
 summary:
   total_points: 23
-  completed_points: 15
+  completed_points: 17
   in_progress_points: 0
-  backlog_points: 8
+  backlog_points: 6
   velocity_target: 25
