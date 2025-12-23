@@ -102,8 +102,9 @@ epics:
           into reusable utilities. Focus on DRY and maintainability.
         points: 2
         priority: P2
-        status: in-progress
+        status: done
         started: 2025-12-23
+        completed: 2025-12-23
         repos: pennyfarthing
         acceptance_criteria:
           - Test container setup extracted to scripts/utils/test-setup.sh
