@@ -172,3 +172,24 @@ summary:
   in_progress_points: 0
   backlog_points: 2
   velocity_target: 25
+  status: complete
+  retro_date: 2025-12-23
+  retro_file: sprint/archive/sprint-1-retro.md
+
+lessons_learned:
+  - "TDD flow (SM→TEA→Dev→Reviewer) works well for standard stories"
+  - "Breaking large stories into a/b/c/d sub-stories improves focus"
+  - "Haiku delegation for mechanical tasks preserves Opus context"
+  - "Hardlink approach is POSIX-portable for file locking"
+  - "Agent sidecars (gotchas, patterns, decisions) capture learnings effectively"
+
+improvement_actions:
+  - action: "Automate Jira sync in SM finish workflow"
+    owner: devops
+    target: "Epic 2"
+  - action: "Create sprint metrics script"
+    owner: dev
+    target: "Epic 2"
+  - action: "Add auto-PR flag to finish-story flow"
+    owner: dev
+    target: "Epic 2"
