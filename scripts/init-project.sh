@@ -357,6 +357,89 @@ for script in check-context.sh agent-session.sh repo-utils.sh worktree-manager.s
     fi
 done
 
+# Symlink hooks directory
+if [ ! -e "scripts/hooks" ]; then
+    ln -sf "../.claude/pennyfarthing/scripts/hooks" "scripts/hooks"
+    echo "Created symlink: scripts/hooks -> pennyfarthing"
+fi
+
+# Copy statusline script
+echo "Installing statusline..."
+PENNYFARTHING_DIR="$PROJECT_ROOT/.claude/pennyfarthing"
+if [ -f "$PENNYFARTHING_DIR/.claude/statusline.sh" ]; then
+    cp "$PENNYFARTHING_DIR/.claude/statusline.sh" "$PROJECT_ROOT/.claude/statusline.sh"
+    chmod +x "$PROJECT_ROOT/.claude/statusline.sh"
+    echo "Installed .claude/statusline.sh"
+fi
+
+# Create settings.local.json with proper absolute paths
+# IMPORTANT: Uses $CLAUDE_PROJECT_DIR to ensure hooks work from any subdirectory
+echo "Creating .claude/settings.local.json..."
+CLAUDE_DIR="$PROJECT_ROOT/.claude"
+if [ ! -f "$CLAUDE_DIR/settings.local.json" ]; then
+    cat > "$CLAUDE_DIR/settings.local.json" << 'SETTINGS_EOF'
+{
+  "statusline": ".claude/statusline.sh",
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "Bash",
+      "Edit(.claude/**)",
+      "Edit(sprint/**)",
+      "Edit(.session/**)",
+      "Write(.claude/**)",
+      "Write(sprint/**)",
+      "Write(.session/**)",
+      "Skill(sm)",
+      "Skill(tea)",
+      "Skill(dev)",
+      "Skill(reviewer)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/hooks/session-start.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/hooks/pre-edit-check.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
+SETTINGS_EOF
+    echo "Created settings.local.json with \$CLAUDE_PROJECT_DIR paths"
+else
+    echo "settings.local.json already exists - checking hook paths..."
+    # Check if settings uses relative paths (common migration issue)
+    if grep -q '"command": "scripts/' "$CLAUDE_DIR/settings.local.json" 2>/dev/null; then
+        echo ""
+        echo "WARNING: Your settings.local.json uses relative paths for hooks!"
+        echo "This will break when Claude Code runs from subdirectories."
+        echo ""
+        echo "Update hook commands from:"
+        echo '  "command": "scripts/hooks/session-start.sh"'
+        echo "To:"
+        echo '  "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/hooks/session-start.sh"'
+        echo ""
+    fi
+fi
+
 echo ""
 echo "Done! Pennyfarthing initialized for $PROJECT_NAME"
 echo ""

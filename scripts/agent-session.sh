@@ -1,16 +1,25 @@
 #!/bin/bash
 # Agent session management script
-# Usage: agent-session.sh <action> [agent-name] [options]
-#   start "agent-name"  - Register agent session and output persona
-#   stop                - Remove current session
-#   status              - Output for Claude Code statusLine (reads JSON from stdin)
-
-# Use fixed home directory location - works regardless of which repo we're in
-AGENT_FILE="$HOME/.claude-current-agent"
+# Usage: agent-session.sh <action> [agent-name] [session-id]
+#   start "agent-name" "session-id"  - Register agent session and output persona
+#   stop "session-id"                - Remove session for given ID
+#   stop-all                         - Remove all agent sessions
+#   status                           - Output for Claude Code statusLine (reads JSON from stdin)
+#
+# Session files stored in .session/agents/<session-id> for multi-session support
 
 # Find project root (script is in $PROJECT_ROOT/scripts/)
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Agents directory for multi-session support
+AGENTS_DIR="$PROJECT_ROOT/.session/agents"
+
+# Get agent file path for a session
+get_agent_file() {
+    local session_id="$1"
+    echo "$AGENTS_DIR/$session_id"
+}
 
 # Function to output persona for an agent
 output_persona() {
@@ -86,78 +95,80 @@ output_persona() {
 case "$1" in
   start)
     if [ -z "$2" ]; then
-      echo "Usage: agent-session.sh start \"agent-name\"" >&2
+      echo "Usage: agent-session.sh start \"agent-name\" [session-id]" >&2
       exit 1
     fi
+    # Use provided session ID, fall back to SESSION_ID env var
+    session_id="${3:-$SESSION_ID}"
+    if [ -z "$session_id" ]; then
+      echo "Error: No session ID provided and SESSION_ID not set" >&2
+      exit 1
+    fi
+    mkdir -p "$AGENTS_DIR"
+    AGENT_FILE=$(get_agent_file "$session_id")
     echo "$2" > "$AGENT_FILE"
-    echo "Session: $(basename "$AGENT_FILE")"
+    echo "Session: $session_id -> $2"
 
     # Always output persona on start
     output_persona "$2"
     ;;
   stop)
+    # Use provided session ID, fall back to SESSION_ID env var
+    session_id="${2:-$SESSION_ID}"
+    if [ -z "$session_id" ]; then
+      echo "Usage: agent-session.sh stop [session-id]" >&2
+      exit 1
+    fi
+    AGENT_FILE=$(get_agent_file "$session_id")
     rm -f "$AGENT_FILE" 2>/dev/null
-    echo "Agent session closed."
+    echo "Agent session closed: $session_id"
+    ;;
+  stop-all)
+    rm -rf "$AGENTS_DIR" 2>/dev/null
+    echo "All agent sessions closed."
     ;;
   status)
     # Read JSON from stdin (Claude Code statusLine passes context)
     input=$(cat)
 
-    # Try to get transcript_path from stdin JSON
-    TRANSCRIPT_PATH=""
+    # Get session ID from input
+    session_id=""
     if command -v jq &>/dev/null && [ -n "$input" ]; then
-      TRANSCRIPT_PATH=$(echo "$input" | jq -r '.transcript_path // empty' 2>/dev/null)
+      session_id=$(echo "$input" | jq -r '.session_id // empty' 2>/dev/null)
     fi
 
-    # Fallback: find most recent transcript in project
-    if [ -z "$TRANSCRIPT_PATH" ] || [ ! -f "$TRANSCRIPT_PATH" ]; then
-      CLAUDE_PROJECT="$HOME/.claude/projects/$PROJECT_CLAUDE_PATH"
-      if [ -d "$CLAUDE_PROJECT" ]; then
-        TRANSCRIPT_PATH=$(ls -t "$CLAUDE_PROJECT"/*.jsonl 2>/dev/null | grep -v "agent-" | head -1)
+    # Get agent name for this session
+    if [ -n "$session_id" ]; then
+      AGENT_FILE=$(get_agent_file "$session_id")
+      if [ -f "$AGENT_FILE" ]; then
+        AGENT=$(cat "$AGENT_FILE")
+      else
+        AGENT=""
       fi
-    fi
-
-    # Calculate context from transcript
-    CONTEXT_INFO="--"
-    if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
-      RESULT=$(python3 -c "
-import json
-import sys
-
-try:
-    with open('$TRANSCRIPT_PATH', 'r') as f:
-        lines = f.readlines()
-
-    for line in reversed(lines):
-        try:
-            data = json.loads(line.strip())
-            if 'message' in data and 'usage' in data['message']:
-                usage = data['message']['usage']
-                total = usage.get('cache_read_input_tokens', 0) + usage.get('cache_creation_input_tokens', 0) + usage.get('input_tokens', 0)
-                pct = (total / 200000) * 100
-                print(f'{pct:.0f}%')
-                break
-        except:
-            continue
-except:
-    print('--')
-" 2>/dev/null)
-      if [ -n "$RESULT" ]; then
-        CONTEXT_INFO="$RESULT"
-      fi
-    fi
-
-    # Get agent name
-    if [ -f "$AGENT_FILE" ]; then
-      AGENT=$(cat "$AGENT_FILE")
     else
-      AGENT="No agent"
+      AGENT=""
     fi
 
-    echo "[$CONTEXT_INFO] $AGENT"
+    # Output just the agent name (statusline.sh handles the rest)
+    echo "$AGENT"
+    ;;
+  list)
+    # List all active agent sessions
+    if [ -d "$AGENTS_DIR" ]; then
+      for f in "$AGENTS_DIR"/*; do
+        [ -f "$f" ] && echo "$(basename "$f"): $(cat "$f")"
+      done
+    else
+      echo "No active sessions"
+    fi
     ;;
   *)
-    echo "Usage: agent-session.sh <start|stop|status> [agent-name]" >&2
+    echo "Usage: agent-session.sh <start|stop|stop-all|status|list> [args]" >&2
+    echo "  start \"agent\" \"session-id\"  - Register agent for session" >&2
+    echo "  stop \"session-id\"            - Remove agent for session" >&2
+    echo "  stop-all                      - Remove all agent sessions" >&2
+    echo "  status                        - Get agent for session (reads JSON stdin)" >&2
+    echo "  list                          - List all active sessions" >&2
     exit 1
     ;;
 esac

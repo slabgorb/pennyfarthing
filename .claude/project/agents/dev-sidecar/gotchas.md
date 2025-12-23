@@ -19,6 +19,18 @@ cd $PROJECT_ROOT/$API_REPO && just test
 **Problem:** Creating files without verifying parent directory exists
 **Solution:** Always `ls` parent directory before creating files
 
+### Hook Paths in settings.local.json
+**Problem:** Using relative paths for hook commands breaks when Claude runs from subdirectories
+```json
+// WRONG - breaks from subdirectories
+"command": "scripts/hooks/session-start.sh"
+
+// RIGHT - always resolves to project root
+"command": "\"$CLAUDE_PROJECT_DIR\"/scripts/hooks/session-start.sh"
+```
+**Why:** Hook commands resolve relative to Claude's CWD, not project root. `$CLAUDE_PROJECT_DIR` is set by Claude Code to the directory where it was started.
+**Note:** `git rev-parse --show-toplevel` doesn't work as fallback - returns wrong root in submodules/nested repos.
+
 ## Go-Specific Gotchas
 
 ### Context Cancellation
