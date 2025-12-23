@@ -544,6 +544,176 @@ show_config() {
 }
 
 # ============================================================================
+# Testing Configuration Functions
+# ============================================================================
+
+# Get test environment variables for a repo (as KEY=VALUE lines)
+# Usage: eval "$(get_test_env "conductor-api")"
+get_test_env() {
+    local name="$1"
+    load_repos_config
+
+    if [[ ! -f "$REPOS_CONFIG" ]]; then
+        return 0
+    fi
+
+    if command -v yq &>/dev/null; then
+        yq -r ".repos.\"$name\".test_env // {} | to_entries | .[] | \"export \" + .key + \"=\\\"\" + .value + \"\\\"\"" "$REPOS_CONFIG" 2>/dev/null || true
+    elif command -v python3 &>/dev/null; then
+        python3 -c "
+import yaml
+with open('$REPOS_CONFIG') as f:
+    c = yaml.safe_load(f)
+env = c.get('repos', {}).get('$name', {}).get('test_env', {}) or {}
+for k, v in env.items():
+    print(f'export {k}=\"{v}\"')
+" 2>/dev/null || true
+    fi
+}
+
+# Get test log directory from config
+# Usage: LOG_DIR=$(get_test_log_dir)
+get_test_log_dir() {
+    load_repos_config
+
+    local log_dir=".session"  # default
+
+    if [[ -f "$REPOS_CONFIG" ]]; then
+        if command -v yq &>/dev/null; then
+            log_dir=$(yq -r '.testing.log_dir // ".session"' "$REPOS_CONFIG" 2>/dev/null || echo ".session")
+        elif command -v python3 &>/dev/null; then
+            log_dir=$(python3 -c "
+import yaml
+with open('$REPOS_CONFIG') as f:
+    c = yaml.safe_load(f)
+print(c.get('testing', {}).get('log_dir', '.session') or '.session')
+" 2>/dev/null || echo ".session")
+        fi
+    fi
+
+    echo "$PROJECT_ROOT/$log_dir"
+}
+
+# Get skip patterns for a language
+# Usage: PATTERNS=$(get_skip_patterns "go")
+get_skip_patterns() {
+    local language="$1"
+    load_repos_config
+
+    if [[ ! -f "$REPOS_CONFIG" ]]; then
+        # Default patterns if no config
+        case "$language" in
+            go) echo 't\.Skip' ;;
+            typescript|javascript) echo 'it\.skip|describe\.skip|test\.skip' ;;
+            python) echo '@pytest\.mark\.skip|pytest\.skip' ;;
+            *) echo '' ;;
+        esac
+        return 0
+    fi
+
+    if command -v yq &>/dev/null; then
+        local patterns
+        patterns=$(yq -r ".testing.skip_patterns_by_language.\"$language\".patterns // [] | join(\"|\")" "$REPOS_CONFIG" 2>/dev/null || echo "")
+        if [[ -n "$patterns" ]]; then
+            echo "$patterns"
+        fi
+    elif command -v python3 &>/dev/null; then
+        python3 -c "
+import yaml
+with open('$REPOS_CONFIG') as f:
+    c = yaml.safe_load(f)
+patterns = c.get('testing', {}).get('skip_patterns_by_language', {}).get('$language', {}).get('patterns', []) or []
+print('|'.join(patterns))
+" 2>/dev/null || true
+    fi
+}
+
+# Get skip exceptions for a language
+# Usage: EXCEPTIONS=$(get_skip_exceptions "go")
+get_skip_exceptions() {
+    local language="$1"
+    load_repos_config
+
+    if [[ ! -f "$REPOS_CONFIG" ]]; then
+        # Default exceptions if no config
+        case "$language" in
+            go) echo 'LocalStack|not available|CI environment' ;;
+            *) echo '' ;;
+        esac
+        return 0
+    fi
+
+    if command -v yq &>/dev/null; then
+        yq -r ".testing.skip_patterns_by_language.\"$language\".exceptions // [] | join(\"|\")" "$REPOS_CONFIG" 2>/dev/null || echo ""
+    elif command -v python3 &>/dev/null; then
+        python3 -c "
+import yaml
+with open('$REPOS_CONFIG') as f:
+    c = yaml.safe_load(f)
+exceptions = c.get('testing', {}).get('skip_patterns_by_language', {}).get('$language', {}).get('exceptions', []) or []
+print('|'.join(exceptions))
+" 2>/dev/null || true
+    fi
+}
+
+# Get test file pattern for a language
+# Usage: PATTERN=$(get_test_file_pattern "go")
+get_test_file_pattern() {
+    local language="$1"
+    load_repos_config
+
+    if [[ ! -f "$REPOS_CONFIG" ]]; then
+        # Default patterns if no config
+        case "$language" in
+            go) echo '*_test.go' ;;
+            typescript|javascript) echo '*.test.*' ;;
+            python) echo 'test_*.py' ;;
+            rust) echo '*.rs' ;;
+            *) echo '*' ;;
+        esac
+        return 0
+    fi
+
+    if command -v yq &>/dev/null; then
+        local pattern
+        pattern=$(yq -r ".testing.skip_patterns_by_language.\"$language\".file_pattern // \"\"" "$REPOS_CONFIG" 2>/dev/null || echo "")
+        if [[ -n "$pattern" && "$pattern" != "null" ]]; then
+            echo "$pattern"
+        else
+            # Fallback to defaults
+            case "$language" in
+                go) echo '*_test.go' ;;
+                typescript|javascript) echo '*.test.*' ;;
+                python) echo 'test_*.py' ;;
+                *) echo '*' ;;
+            esac
+        fi
+    fi
+}
+
+# Get container command from config
+# Usage: CMD=$(get_container_command)
+get_container_command() {
+    load_repos_config
+
+    if [[ ! -f "$REPOS_CONFIG" ]]; then
+        echo ""
+        return 0
+    fi
+
+    if command -v yq &>/dev/null; then
+        yq -r '.testing.container_command // ""' "$REPOS_CONFIG" 2>/dev/null || echo ""
+    elif command -v python3 &>/dev/null; then
+        python3 -c "
+import yaml
+with open('$REPOS_CONFIG') as f:
+    c = yaml.safe_load(f)
+print(c.get('testing', {}).get('container_command', '') or '')
+" 2>/dev/null || echo ""
+    fi
+}
+
+# ============================================================================
 # Initialization
 # ============================================================================
 

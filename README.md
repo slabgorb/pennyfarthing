@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**The outer loop goes once, the inner loop goes many times.**
+**v1.5.1** | **The outer loop goes once, the inner loop goes many times.**
 
 Pennyfarthing is a shared agent orchestration framework for Claude Code projects. It provides:
 
@@ -49,7 +49,7 @@ pennyfarthing/
 ├── core/
 │   ├── agents/           # Base agent definitions (11 agents)
 │   ├── subagents/        # Handoff coordinators (13 subagents)
-│   ├── commands/         # Slash commands (23 commands)
+│   ├── commands/         # Slash commands (24 commands)
 │   └── docs/             # Core architecture docs
 ├── personas/
 │   ├── themes/           # discworld, star-trek, literary-classics, minimalist
@@ -95,8 +95,9 @@ See [Workflows](docs/WORKFLOWS.md) for detailed workflow guides.
 | Theme | Style | Example (Orchestrator) |
 |-------|-------|------------------------|
 | `discworld` | Terry Pratchett's Discworld | DEATH |
-| `star-trek` | Star Trek TNG | Q |
-| `literary-classics` | Classic literature | Stage Manager |
+| `star-trek-tng` | Star Trek: The Next Generation | Q |
+| `star-trek-tos` | Star Trek: The Original Series | Guardian of Forever |
+| `literary-classics` | Classic literature (Shakespeare) | The Ghost |
 | `minimalist` | Professional, no personas | Process Coordinator |
 
 See [Personas](docs/PERSONAS.md) for complete theme documentation.
