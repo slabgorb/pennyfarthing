@@ -366,8 +366,8 @@ fi
 # Copy statusline script
 echo "Installing statusline..."
 PENNYFARTHING_DIR="$PROJECT_ROOT/.claude/pennyfarthing"
-if [ -f "$PENNYFARTHING_DIR/.claude/statusline.sh" ]; then
-    cp "$PENNYFARTHING_DIR/.claude/statusline.sh" "$PROJECT_ROOT/.claude/statusline.sh"
+if [ -f "$PENNYFARTHING_DIR/core/statusline.sh" ]; then
+    cp "$PENNYFARTHING_DIR/core/statusline.sh" "$PROJECT_ROOT/.claude/statusline.sh"
     chmod +x "$PROJECT_ROOT/.claude/statusline.sh"
     echo "Installed .claude/statusline.sh"
 fi
