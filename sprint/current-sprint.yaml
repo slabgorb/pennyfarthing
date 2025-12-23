@@ -119,8 +119,9 @@ epics:
           for session tracking and debugging agent workflows.
         points: 2
         priority: P2
-        status: in_progress
+        status: done
         started: 2025-12-23
+        completed: 2025-12-23
         repos: pennyfarthing
         acceptance_criteria:
           - logging.sh provides log_info, log_warn, log_error functions
@@ -165,7 +166,7 @@ epics:
 
 summary:
   total_points: 23
-  completed_points: 17
+  completed_points: 19
   in_progress_points: 0
-  backlog_points: 6
+  backlog_points: 4
   velocity_target: 25
