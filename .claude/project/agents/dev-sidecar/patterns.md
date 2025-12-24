@@ -98,4 +98,14 @@ Target: 450-600 lines loaded
 
 ---
 
+## Pennyfarthing Version Check
+
+### Quick One-Liner
+Check what version of pennyfarthing a repo has:
+```bash
+jq -r .version .claude/manifest.json
+```
+
+---
+
 *Add patterns discovered during implementation below*
