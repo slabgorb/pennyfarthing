@@ -178,3 +178,50 @@ All 10 agent command files in `.claude/commands/`:
 - dev.md, sm.md, tea.md, reviewer.md, pm.md
 - orchestrator.md, architect.md, devops.md
 - tech-writer.md, ux-designer.md
+
+---
+
+## Pattern: Portable Path Resolution (The .claude Climber)
+
+**Problem (2024-12):** Skill instructions used `$CLAUDE_PROJECT_DIR` in Bash commands, but this variable is ONLY set by Claude Code for hooks and statusLine - it's NOT available in Bash tool invocations.
+
+```markdown
+# WRONG - $CLAUDE_PROJECT_DIR is not set in Bash tool context
+Use Bash tool to run: `"$CLAUDE_PROJECT_DIR"/scripts/run.sh agent-session.sh start "dev"`
+```
+
+**Root Cause:** Confusion about which variables are available in which contexts.
+
+**Solution:** Use inline directory climbing to find the project root:
+
+```bash
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/scripts/run.sh" SCRIPT ARGS
+```
+
+This:
+1. Starts from current directory
+2. Climbs until `.claude/` directory found
+3. Runs script from that root
+4. Works from ANY subdirectory
+5. No environment variable dependencies
+
+### Context Reference Table
+
+| Context | `$CLAUDE_PROJECT_DIR` | Use Instead |
+|---------|----------------------|-------------|
+| Hooks (settings.local.json) | ✅ Available | Use it |
+| statusLine | ✅ Available | Use it |
+| Bash tool invocations | ❌ **NOT SET** | Use climber |
+| Scripts (internal) | ❌ Not set | Self-derive from `${BASH_SOURCE[0]}` |
+
+### The Canonical One-Liner
+
+```bash
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/scripts/run.sh" SCRIPT ARGS
+```
+
+### Files Using This Pattern
+
+All agent activation commands in `.claude/commands/`:
+- dev.md, sm.md, tea.md, reviewer.md, pm.md
+- orchestrator.md, architect.md, devops.md, tech-writer.md, ux-designer.md

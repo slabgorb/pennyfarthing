@@ -3,8 +3,11 @@ description: System Architect - Technical design and architecture
 ---
 
 <agent-activation>
-**FIRST:** Use Bash tool to run: `"$CLAUDE_PROJECT_DIR"/scripts/run.sh agent-session.sh start "architect"`
-This loads your persona from the theme config. Adopt the character shown in the output.
+**FIRST:** Use Bash tool to run:
+```bash
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/scripts/run.sh" agent-session.sh start "architect"
+```
+This finds the project root and loads your persona. Adopt the character shown in the output.
 
 Then:
 1. Load and follow `.claude/agents/architect.md`

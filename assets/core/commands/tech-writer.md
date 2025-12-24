@@ -3,8 +3,11 @@ description: Technical Writer - Documentation creation and maintenance
 ---
 
 <agent-activation>
-**FIRST:** Use Bash tool to run: `"$CLAUDE_PROJECT_DIR"/scripts/run.sh agent-session.sh start "tech-writer"`
-This loads your persona from the theme config. Adopt the character shown in the output.
+**FIRST:** Use Bash tool to run:
+```bash
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/scripts/run.sh" agent-session.sh start "tech-writer"
+```
+This finds the project root and loads your persona. Adopt the character shown in the output.
 
 Then:
 1. Load and follow `.claude/agents/tech-writer.md`
