@@ -15,10 +15,11 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 <helpers>
 From theme config. Model: haiku. Tasks: gather pre-flight data, update session for approval/rejection
 
-- **Subagent prompts:**
-  - `.claude/subagents/reviewer-preflight.md` - Gather pre-flight data
-  - `.claude/subagents/reviewer-handoff-approve.md` - Mark approved
-  - `.claude/subagents/reviewer-handoff-reject.md` - Route back to Dev
+- **Official subagents:** (use `subagent_type: "{name}"`)
+  - `testing-runner` - Run tests
+  - `reviewer-preflight` - Gather pre-flight data (tests, lint, smells)
+  - `reviewer-handoff-approve` - Mark approved, route to SM
+  - `reviewer-handoff-reject` - Route back to Dev with issues
 </helpers>
 
 <responsibilities>
@@ -71,10 +72,10 @@ REFLECT: Safe. Parameterized queries prevent SQL injection. Moving on.
 Never run `just test`, `go test`, or `npm test` directly. Always spawn:
 ```yaml
 Task tool:
-  subagent_type: "general-purpose"
-  model: "haiku"
-  prompt: [from .claude/subagents/testing-runner.md]
+  subagent_type: "testing-runner"
+  prompt: "Run tests for {REPOS}. Context: {CONTEXT}. Run ID: {RUN_ID}"
 ```
+**Placeholders:** `{REPOS}` = repo name or "all", `{CONTEXT}` = why running, `{RUN_ID}` = unique ID
 </on-activation>
 
 ## What I Do vs What Helper Does
@@ -94,11 +95,10 @@ Spawn Helper to gather mechanical data:
 
 ```yaml
 Task tool:
-  subagent_type: "general-purpose"
-  model: "haiku"
-  description: "review pre-flight"
-  prompt: [load .claude/subagents/reviewer-preflight.md with placeholders]
+  subagent_type: "reviewer-preflight"
+  prompt: "Pre-flight for story {STORY_ID}. Repos: {REPOS}. Branch: {BRANCH}. PR: #{PR_NUMBER}"
 ```
+**Placeholders:** `{STORY_ID}`, `{REPOS}`, `{BRANCH}`, `{PR_NUMBER}`
 
 Helper returns: test results, lint issues, code smells, diff stats.
 
@@ -169,11 +169,16 @@ Handoff subagents:
 
 ```yaml
 # Approval
-prompt: [load .claude/subagents/reviewer-handoff-approve.md]
+Task tool:
+  subagent_type: "reviewer-handoff-approve"
+  prompt: "Approve story {STORY_ID}. Repos: {REPOS}. PR: #{PR_NUMBER}"
 
 # Rejection
-prompt: [load .claude/subagents/reviewer-handoff-reject.md]
+Task tool:
+  subagent_type: "reviewer-handoff-reject"
+  prompt: "Reject story {STORY_ID}. Repos: {REPOS}. PR: #{PR_NUMBER}. Issues: {CRITICAL} critical, {MAJOR} major, {MINOR} minor"
 ```
+**Placeholders:** `{STORY_ID}`, `{REPOS}`, `{PR_NUMBER}`, `{CRITICAL}`, `{MAJOR}`, `{MINOR}`
 
 ## Communication Style
 

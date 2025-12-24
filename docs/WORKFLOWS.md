@@ -34,7 +34,7 @@ The core development workflow follows Test-Driven Development principles.
 2. If no work in progress:
    - Reviews sprint backlog
    - Helps select or create a story
-   - Writes story context to `.session/current_work.md`
+   - Writes story context to `.session/{story-id}-session.md`
    - Creates feature branches in repos
 3. Hands off to TEA
 
@@ -237,7 +237,7 @@ SM will detect `approved` status and run finish.
 
 1. **Archive session:**
    ```
-   .session/current_work.md --> sprint/archive/PROJ-123.md
+   .session/{story-id}-session.md --> sprint/archive/PROJ-123.md
    ```
 
 2. **Update sprint tracking:**
@@ -355,7 +355,7 @@ git worktree remove ../project-feature-auth-ui
 ### Session Isolation
 
 Each worktree has its own:
-- `.session/current_work.md`
+- `.session/{story-id}-session.md`
 - Branch context
 - Active agent state
 
@@ -408,7 +408,7 @@ JIRA_API_TOKEN=your-token
 ### Troubleshooting
 
 **"No work in progress" but I was working:**
-- Check `.session/current_work.md` exists
+- Check `.session/{story-id}-session.md` exists
 - May have been archived accidentally
 - Check `sprint/archive/` for recent files
 

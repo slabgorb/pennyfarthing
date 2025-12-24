@@ -181,14 +181,15 @@ pennyfarthing init                    # Auto-detect from directory
 pennyfarthing init -f                 # Force, skip prompts
 pennyfarthing init --dry-run          # Preview changes
 pennyfarthing init --skip-templates   # Skip template generation
-pennyfarthing init --migrate          # Auto-migrate from git submodule
 ```
 
 **What it creates:**
-- `.claude/core/` - Agent definitions, commands, guides
-- `.claude/skills/` - Knowledge domains
-- `.claude/personas/` - Theme files
-- `.claude/project/` - Project-specific customizations
+- `.claude/pennyfarthing/` - Source files (agents, commands, guides, skills, personas)
+- `.claude/agents/` → symlink to `pennyfarthing/agents/`
+- `.claude/commands/` → symlink to `pennyfarthing/commands/`
+- `.claude/skills/` → symlink to `pennyfarthing/skills/`
+- `.claude/personas/` → symlink to `pennyfarthing/personas/`
+- `.claude/project/` - Project-specific customizations (you edit this)
 - `scripts/hooks/` - Session hooks
 - `scripts/utils/` - Utility scripts
 - `sprint/` - Sprint tracking
@@ -251,7 +252,8 @@ pennyfarthing uninstall --dry-run     # Preview what would be removed
 ```
 
 **What gets removed (default):**
-- `.claude/core/`, `.claude/skills/`, `.claude/personas/`
+- `.claude/pennyfarthing/` (source files)
+- `.claude/agents/`, `.claude/commands/`, `.claude/skills/`, `.claude/personas/` (symlinks)
 - `.claude/manifest.json`, `.claude/settings.local.json`
 - `scripts/hooks/`, `scripts/utils/`
 
@@ -534,18 +536,17 @@ After initialization:
 ```
 your-project/
 ├── .claude/
-│   ├── core/                    # Managed by Pennyfarthing
+│   ├── pennyfarthing/           # Source files (managed by Pennyfarthing)
 │   │   ├── agents/              # Agent definitions
-│   │   ├── subagents/           # Subagent prompts
 │   │   ├── commands/            # Slash command definitions
 │   │   ├── guides/              # Behavior guides
+│   │   ├── skills/              # Knowledge domains
+│   │   ├── personas/            # Theme files
 │   │   └── statusline.sh        # Status bar script
-│   ├── skills/                  # Knowledge domains
-│   ├── personas/                # Theme files
-│   │   └── themes/
-│   │       ├── discworld.yaml
-│   │       ├── star-trek.yaml
-│   │       └── ...
+│   ├── agents/                  # → symlink to pennyfarthing/agents/
+│   ├── commands/                # → symlink to pennyfarthing/commands/
+│   ├── skills/                  # → symlink to pennyfarthing/skills/
+│   ├── personas/                # → symlink to pennyfarthing/personas/
 │   ├── project/                 # Project-specific (YOU edit this)
 │   │   ├── agents/              # Agent sidecars
 │   │   │   ├── dev-sidecar/
@@ -576,7 +577,7 @@ your-project/
 │   ├── archive/                 # Completed sessions
 │   └── context/                 # Story summaries
 └── .session/
-    ├── current_work.md          # Active work session
+    ├── {story-id}-session.md          # Active work session
     ├── agents/                  # Agent session files
     └── ...
 ```
@@ -650,16 +651,6 @@ This adds the missing SessionStart hooks to `settings.local.json`.
 pennyfarthing init
 ```
 
-#### Submodule Migration
-
-If you have an old submodule installation:
-
-```bash
-pennyfarthing init --migrate
-```
-
-This removes the submodule and installs the npm version.
-
 ### Diagnostic Commands
 
 ```bash
@@ -712,12 +703,13 @@ echo $SESSION_ID
 
 | Purpose | Location |
 |---------|----------|
-| Agent definitions | `.claude/core/agents/` |
-| Slash commands | `.claude/core/commands/` |
+| Agent definitions | `.claude/agents/` (symlink) |
+| Official subagents | `.claude/agents/` (in same directory) |
+| Slash commands | `.claude/commands/` (symlink) |
 | Project docs | `.claude/project/docs/` |
 | Agent sidecars | `.claude/project/agents/` |
 | Sprint data | `sprint/` |
-| Active session | `.session/current_work.md` |
+| Active session | `.session/{story-id}-session.md` |
 | Persona config | `.claude/persona-config.yaml` |
 
 ### Environment Variables

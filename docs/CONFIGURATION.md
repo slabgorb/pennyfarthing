@@ -12,7 +12,7 @@ Complete reference for all Pennyfarthing configuration options.
 | `agent-scopes.yaml` | Agent scope configuration | `.claude/project/docs/` |
 | `setup-env.sh` | Environment variables | `.claude/project/hooks/` |
 | `current-sprint.yaml` | Sprint tracking | `sprint/` |
-| `current_work.md` | Active work session | `.session/` |
+| `{story-id}-session.md` | Active work session | `.session/` |
 
 ---
 
@@ -125,7 +125,7 @@ Project overview loaded by all agents.
 - **Name:** Your Project
 - **Type:** Web application / API / CLI / etc.
 - **Sprint Status:** `sprint/current-sprint.yaml`
-- **Active Work:** `.session/current-work.md`
+- **Active Work:** `.session/{story-id}-session.md`
 
 ## Tech Stack
 
@@ -529,13 +529,13 @@ completed:
 
 ---
 
-## current_work.md
+## {story-id}-session.md
 
 Active work session file.
 
 ### Location
 
-`.session/current_work.md`
+`.session/{story-id}-session.md`
 
 ### Structure
 

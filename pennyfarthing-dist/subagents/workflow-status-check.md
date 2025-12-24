@@ -20,14 +20,13 @@ $CLAUDE_PROJECT_DIR (set by SessionStart hook)
 ## Step 1: Scan Session Files
 
 ```bash
-# List all session files
-ls -la .session/*.md .session/*.json 2>/dev/null
+# List all session files (named after story IDs)
+ls -la .session/*-session.md 2>/dev/null
 
-# Read main work file if exists
-cat .session/current_work.md 2>/dev/null | head -50
-
-# Check for worktree sessions (new naming: current_work.*.md)
-ls .session/current_work.*.md 2>/dev/null
+# For each session file, read and extract info
+for f in .session/*-session.md; do
+    [ -f "$f" ] && head -50 "$f"
+done
 ```
 
 For each session file found, extract:
@@ -88,9 +87,9 @@ scan_all_repos_status
 ## Step 3: Determine Workflow State
 
 Apply these rules in order:
-- **MISSING_EPIC_CONTEXT**: No epic context files AND (No current_work.md OR Phase=`complete`)
+- **MISSING_EPIC_CONTEXT**: No epic context files AND no active session files
 - **FINISH_STATE**: Phase=`approved` OR (Phase=`review` AND Status=`approved`)
-- **NEW_WORK_STATE**: No current_work.md OR Phase=`complete` OR file contains "No active work"
+- **NEW_WORK_STATE**: No *-session.md files OR all have Phase=`complete`
 - **IN_PROGRESS_STATE**: Active work exists but not ready to finish
 
 **Note:** MISSING_EPIC_CONTEXT takes precedence over NEW_WORK_STATE. User must run `/start-epic` before `/new-work`.

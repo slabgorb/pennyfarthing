@@ -187,7 +187,7 @@ To add a new agent:
 ```bash
 # ✅ CORRECT - Use $CLAUDE_PROJECT_DIR
 $CLAUDE_PROJECT_DIR/scripts/agent-session.sh start "Agent Name"
-$CLAUDE_PROJECT_DIR/.session/current-work.md
+$CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md
 
 # ❌ WRONG - Don't use git rev-parse
 $(git rev-parse --show-toplevel)/scripts/agent-session.sh

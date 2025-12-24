@@ -210,50 +210,59 @@ Every tactical agent MUST perform these steps on activation:
 ### Step 1: Check for Active Work
 
 **Session File Naming Convention:**
-- Main checkout: `.session/current_work.md`
-- Worktree: `.session/current_work.{worktree-name}.md` (e.g., `current_work.wt-5-3a.md`)
+- Pattern: `.session/{story-id}-session.md`
+- Examples: `2-1-session.md`, `5-3a-session.md`, `epic-4-session.md`
+- Story ID matches sprint YAML (e.g., story `id: "2-1"` → `2-1-session.md`)
 
 ```bash
 cd $CLAUDE_PROJECT_DIR
 
-# Find ALL active session files
-SESSIONS=($(ls .session/current_work*.md 2>/dev/null))
+# Find ALL session files
+SESSIONS=($(ls .session/*-session.md 2>/dev/null))
 
-# Separate main vs worktree sessions
-MAIN_SESSION=""
-WORKTREE_SESSIONS=()
-
-for f in "${SESSIONS[@]}"; do
-    if [[ "$f" == *.wt-*.md ]]; then
-        WORKTREE_SESSIONS+=("$f")
-    elif [[ "$f" == *current_work.md ]]; then
-        MAIN_SESSION="$f"
-    fi
-done
+# Each session is named after its story ID
+# e.g., 2-1-session.md, 5-3a-session.md
 ```
 
 ### Step 2: Handle Multiple Sessions
 
-If multiple sessions exist, list them and ask:
+If multiple sessions exist, check which are relevant to this agent:
 
+```bash
+cd $CLAUDE_PROJECT_DIR
+
+# Find sessions relevant to this agent based on Phase
+MY_SESSIONS=()
+for f in .session/*-session.md; do
+    PHASE=$(grep "^\*\*Phase:\*\*" "$f" | sed 's/.*\*\* //')
+    case "$AGENT_TYPE" in
+        sm)       [[ "$PHASE" =~ ^(sm-setup|approved)$ ]] && MY_SESSIONS+=("$f") ;;
+        tea)      [[ "$PHASE" == "tea" ]] && MY_SESSIONS+=("$f") ;;
+        dev)      [[ "$PHASE" == "dev" ]] && MY_SESSIONS+=("$f") ;;
+        reviewer) [[ "$PHASE" == "review" ]] && MY_SESSIONS+=("$f") ;;
+    esac
+done
 ```
-Multiple active work sessions found:
-- current_work.md (main checkout) - Story 5-2
-- current_work.wt-11-2.md (worktree) - Story 11-2
 
-Which session? (Enter name or number)
+**If multiple relevant sessions exist, ask:**
+```
+Multiple sessions need my attention:
+- 2-1-session.md (Phase: dev) - Story 2-1: Add logging
+- 5-3a-session.md (Phase: dev) - Story 5-3a: Fix auth bug
+
+Which session should I work on?
 ```
 
 **Detecting worktree context from session file content:**
 ```bash
-# Read worktree info from session file (preferred method)
+# Read worktree info from session file (if present)
 if grep -q "^worktree:" "$SESSION_FILE"; then
     WORKTREE_NAME=$(grep "^worktree:" "$SESSION_FILE" | cut -d' ' -f2)
     WORKTREE_PATH=$(grep "^path:" "$SESSION_FILE" | cut -d' ' -f2)
 fi
 ```
 
-See `core/guides/worktree-mode.md` for complete worktree documentation.
+See `pennyfarthing-dist/guides/worktree-mode.md` for complete worktree documentation.
 
 ### Step 3: Check Phase and Handoff Status
 
@@ -399,16 +408,16 @@ Show the agent's task menu and wait for selection.
 
 ## Session File Location
 
-Tactical agents work with these session files:
+Tactical agents work with session files named after story IDs:
 
-| Mode | Session File | Work Location |
-|------|--------------|---------------|
-| Standard | `.session/current_work.md` | Main checkout (`API/`, `UI/`) |
-| Worktree | `.session/current_work.{name}.md` | Worktree (`worktrees/{name}/API/`, etc.) |
+| Pattern | Example | Description |
+|---------|---------|-------------|
+| `{story-id}-session.md` | `2-1-session.md` | Story 2-1 from sprint |
+| `{story-id}-session.md` | `5-3a-session.md` | Story 5-3a (worktree variant) |
+| `epic-{id}-session.md` | `epic-4-session.md` | Epic-level work |
 
-**Examples:**
-- `current_work.md` → main checkout
-- `current_work.wt-5-3a.md` → `worktrees/wt-5-3a/`
+**Discovery:** `ls .session/*-session.md`
+**Traceability:** Story ID → `sprint/current-sprint.yaml`
 
 **For worktree sessions, check the Worktree Context section:**
 ```yaml
@@ -553,8 +562,8 @@ Each agent MUST document their work using the structured template for their phas
 
 **Verify your assessment exists:**
 ```bash
-grep -A 20 "## Dev Assessment" .session/current_work.md  # For Dev
-grep -A 20 "## Reviewer Assessment" .session/current_work.md  # For Reviewer
+grep -A 20 "## Dev Assessment" "$SESSION_FILE"  # For Dev
+grep -A 20 "## Reviewer Assessment" "$SESSION_FILE"  # For Reviewer
 ```
 
 If the assessment is NOT in the file, do NOT spawn the subagent yet.
@@ -763,6 +772,107 @@ cd $CLAUDE_PROJECT_DIR/$UI_REPO && gh pr view --json url -q .url
 cd $CLAUDE_PROJECT_DIR/$API_REPO && just test
 cd $CLAUDE_PROJECT_DIR/$API_REPO && git status --porcelain
 ```
+
+## Subagent Error Handling (Shared Protocol)
+
+When spawning subagents, the **caller handles all error recovery**. Subagents just report success or structured failure.
+
+### Subagent Return Format
+
+Subagents return structured results:
+
+```yaml
+# Success
+status: success
+result: "Session updated, handoff complete"
+
+# Failure
+status: blocked
+blocked_step: "verify_tests_green"
+error: "3 tests failing in conductor-api"
+diagnosis: "Implementation incomplete"
+```
+
+### Caller Retry Protocol
+
+When a subagent returns `status: blocked`:
+
+```
+1. LOG the failure
+   - Which subagent
+   - Which step failed
+   - Error message
+
+2. DIAGNOSE
+   - Is this fixable by the caller?
+   - Is it a transient issue (retry might work)?
+   - Does it need user intervention?
+
+3. IF FIXABLE by caller:
+   - Fix the issue (e.g., commit forgotten files)
+   - Retry subagent (max 2 retries)
+
+4. IF NOT FIXABLE:
+   - Escalate to user with structured format
+```
+
+### Common Failures and Fixes
+
+| Subagent | Failure | Caller Action |
+|----------|---------|---------------|
+| `testing-runner` | Tests RED | Don't retry - report to user, this is expected state info |
+| `testing-runner` | Container not running | Run `ensure_test_containers`, retry |
+| `*-handoff` | Assessment missing | Write assessment first, retry |
+| `*-handoff` | Uncommitted changes | Commit changes, retry |
+| `*-handoff` | Not pushed | Push to remote, retry |
+| `workflow-status-check` | Session file unreadable | Report to user for manual inspection |
+| `sm-*` | Jira CLI failed | Check `gh auth status`, report to user |
+
+### Escalation Format
+
+When a subagent failure can't be recovered:
+
+```markdown
+## Subagent Blocked
+
+**Subagent:** {name}
+**Step Failed:** {step}
+**Error:** {message}
+**Diagnosis:** {what went wrong}
+
+**Retries:** {N}/2 attempted
+**Fixable by Caller:** No
+
+**User Action Required:**
+{specific action the user needs to take}
+```
+
+### Example: Caller Handling Handoff Failure
+
+```
+1. Dev spawns `dev-handoff` subagent
+2. Subagent returns:
+   status: blocked
+   blocked_step: "verify_pushed"
+   error: "Branch not pushed to remote"
+
+3. Dev (caller) handles:
+   - Diagnose: Forgot to push
+   - Fix: git push -u origin {branch}
+   - Retry: Spawn dev-handoff again
+
+4. If still failing after 2 retries:
+   - Escalate to user with structured format
+```
+
+### Why Callers Handle Errors
+
+- **Subagents stay simple** - just do the task, report result
+- **Callers have context** - know what they were trying to do
+- **Retry logic is consistent** - same pattern across all agents
+- **Easier to debug** - failure handling in one place
+
+---
 
 ## Agent Flow Reference
 

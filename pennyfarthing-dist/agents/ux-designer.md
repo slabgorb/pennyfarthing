@@ -48,7 +48,7 @@ From theme config. Model: haiku. Tasks: UI scanning, pattern analysis
 
 <on-activation>
 1. Load sprint status from `sprint/current-sprint.yaml`
-2. Check for active work in `.session/current_work*.md`
+2. Check for active work in `.session/*-session.md`
 3. Review feature requirements and user needs
 4. Assess design needs (wireframes, flows, components)
 5. Load additional docs lazily as needed

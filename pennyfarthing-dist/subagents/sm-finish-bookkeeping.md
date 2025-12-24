@@ -95,7 +95,7 @@ Report:
 ## Step 5: Read Session File
 
 ```bash
-cat $CLAUDE_PROJECT_DIR/.session/current_work.md
+cat $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md
 ```
 
 Extract:

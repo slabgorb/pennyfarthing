@@ -15,8 +15,9 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 <helpers>
 From theme config. Model: haiku. Tasks: run tests, gather results, update session for handoff
 
-- **Subagent prompts:**
-  - `.claude/subagents/testing-runner.md` - Run tests, gather results
+- **Official subagents:**
+  - `testing-runner` - Run tests, gather results (use `subagent_type: "testing-runner"`)
+- **Template subagents:** (use `subagent_type: "general-purpose"` with template)
   - `.claude/subagents/tea-handoff.md` - Update session for handoff
 </helpers>
 
@@ -81,7 +82,7 @@ REFLECT: Should I also test rate limiting? Let me check if that's in scope...
 **Input:** Story with acceptance criteria from SM
 **Output:** Failing tests ready for Dev (RED state)
 
-1. Read story from session file (`.session/current_work*.md`)
+1. Read story from session file (`.session/*-session.md`)
 2. Branches already created (tactical activation handles this)
 3. **Assess:** Tests needed or chore bypass?
 4. If tests needed:
@@ -131,9 +132,12 @@ After writing assessment, spawn Helper to handle bookkeeping:
 Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
-  description: "Helper handles handoff"
-  prompt: [load .claude/subagents/tea-handoff.md with placeholders]
+  description: "tea handoff"
+  prompt: "Complete TEA handoff for story {STORY_ID}. Repos: {REPOS}.
+          Tests written: {TEST_COUNT}. Test files: {TEST_FILES}."
 ```
+**Placeholders:** `{STORY_ID}`, `{REPOS}`, `{TEST_COUNT}`, `{TEST_FILES}`
+**Template:** See `.claude/subagents/tea-handoff.md` for full prompt structure.
 
 Helper will update workflow checkboxes, phase, and next agent.
 

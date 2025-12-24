@@ -123,7 +123,7 @@ What you DON'T get:
 
 For long-running work, use external files:
 
-1. **Session file:** `.session/current_work.md`
+1. **Session file:** `.session/{STORY_ID}-session.md`
    - Current story context
    - Progress notes
    - Handoff state
@@ -149,7 +149,7 @@ When you learn something reusable:
 When completing work:
 ```
 "Session complete. Updating session file with final state..."
-[Update .session/current_work.md]
+[Update .session/{STORY_ID}-session.md]
 ```
 
 ---

@@ -40,8 +40,8 @@ git branch --sort=-committerdate | head -10
 
 ```bash
 echo "=== Active Work ==="
-if [ -f ".session/current-work.md" ]; then
-  head -30 .session/current-work.md
+if [ -f ".session/{STORY_ID}-session.md" ]; then
+  head -30 .session/{STORY_ID}-session.md
 else
   echo "No active work session"
 fi

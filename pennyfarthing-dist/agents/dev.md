@@ -15,8 +15,9 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 <helpers>
 From theme config. Model: haiku. Tasks: run tests, gather results, update session for handoff
 
-- **Subagent prompts:**
-  - `.claude/subagents/testing-runner.md` - Run tests, gather results
+- **Official subagents:**
+  - `testing-runner` - Run tests, gather results (use `subagent_type: "testing-runner"`)
+- **Template subagents:** (use `subagent_type: "general-purpose"` with template)
   - `.claude/subagents/dev-handoff.md` - Update session for handoff
 </helpers>
 
@@ -69,10 +70,10 @@ REFLECT: Minimal fix: return ErrNotFound when query returns no rows. This matche
 Never run `just test`, `go test`, or `npm test` directly. Always spawn:
 ```yaml
 Task tool:
-  subagent_type: "general-purpose"
-  model: "haiku"
-  prompt: [from .claude/subagents/testing-runner.md]
+  subagent_type: "testing-runner"
+  prompt: "Run tests for {REPOS}. Context: {CONTEXT}. Run ID: {RUN_ID}"
 ```
+**Placeholders:** `{REPOS}` = repo name or "all", `{CONTEXT}` = why running, `{RUN_ID}` = unique ID like "38-3-dev"
 </on-activation>
 
 ## What I Do vs What Helper Does
@@ -158,9 +159,12 @@ After writing assessment, spawn helper to handle bookkeeping:
 Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
-  description: "Helper handles handoff"
-  prompt: [load .claude/subagents/dev-handoff.md with placeholders]
+  description: "dev handoff"
+  prompt: "Complete handoff for story {STORY_ID}. Repos: {REPOS}. PR: #{PR_NUMBER}.
+          Implementation: {IMPLEMENTATION_SUMMARY}. Test count: {TEST_COUNT}."
 ```
+**Placeholders:** `{STORY_ID}`, `{REPOS}`, `{PR_NUMBER}`, `{IMPLEMENTATION_SUMMARY}`, `{TEST_COUNT}`
+**Template:** See `.claude/subagents/dev-handoff.md` for full prompt structure.
 
 Helper will verify assessment exists, update workflow checkboxes, phase, and next agent.
 

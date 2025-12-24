@@ -24,7 +24,7 @@ You are a workflow handoff assistant. Complete the handoff for story {STORY_ID}.
 - From: SM (Captain Carrot)
 - To: TEA (Igor)
 - Repos: {REPOS}
-- Session file: .session/current_work.md
+- Session file: .session/{STORY_ID}-session.md
 - Project root: $CLAUDE_PROJECT_DIR (set by SessionStart hook)
 
 ## Work Summary

@@ -151,13 +151,13 @@ Check for active work on activation:
 cd $CLAUDE_PROJECT_DIR
 
 # Check for session files
-if [ -f ".session/current_work.md" ]; then
+if [ -f ".session/{STORY_ID}-session.md" ]; then
     echo "=== Active Work Session ==="
-    head -50 .session/current_work.md
+    head -50 .session/{STORY_ID}-session.md
 fi
 
 # Check for worktree sessions
-ls .session/current_work.wt-*.md 2>/dev/null
+ls .session/*-session.md (with worktree field) 2>/dev/null
 ```
 
 ---

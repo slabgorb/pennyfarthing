@@ -130,7 +130,7 @@ cd $CLAUDE_PROJECT_DIR
 
 ### 5. Document the Work
 
-Edit `.session/current-work.md`:
+Edit `.session/{STORY_ID}-session.md`:
 
 ```markdown
 # Feature: [Story Title]
@@ -200,7 +200,7 @@ git branch --show-current
 
 # Check Pennyfarthing session exists
 cd $CLAUDE_PROJECT_DIR
-ls -la .session/current-work.md
+ls -la .session/{STORY_ID}-session.md
 # Should exist
 ```
 
@@ -258,7 +258,7 @@ cd ..
 ./scripts/run.sh new-work.sh
 
 # 4. Edit session file
-# Update .session/current-work.md with story details
+# Update .session/{STORY_ID}-session.md with story details
 
 # 5. Start working
 cd API
@@ -363,7 +363,7 @@ git push -u origin feature/STORY-ID-description
 cd .. && ./scripts/run.sh new-work.sh
 
 # Edit session
-# Update .session/current-work.md
+# Update .session/{STORY_ID}-session.md
 
 # Start work
 cd API  # or UI

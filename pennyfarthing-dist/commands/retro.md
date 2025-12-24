@@ -17,7 +17,7 @@ cat sprint/current-sprint.yaml
 ls -la sprint/archive/
 
 # Check any session handoffs
-cat .session/current-work.md 2>/dev/null || echo "No active work"
+cat .session/{STORY_ID}-session.md 2>/dev/null || echo "No active work"
 ```
 
 ## Retro Format: 4 Ls

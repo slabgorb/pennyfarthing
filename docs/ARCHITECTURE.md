@@ -6,18 +6,18 @@ This document describes the system design and architectural principles of Pennyf
 
 ### 1. Single Source of Truth
 
-All definitions live in one place:
-- **Agent definitions:** `core/agents/`
-- **Subagent prompts:** `core/subagents/`
-- **Commands:** `core/commands/`
-- **Personas:** `personas/`
+All definitions live in one place (`pennyfarthing-dist/`), accessed via symlinks:
+- **Agent definitions:** `.claude/agents/` → `pennyfarthing/agents/`
+- **Official subagents:** `.claude/agents/` (same directory as agents)
+- **Commands:** `.claude/commands/` → `pennyfarthing/commands/`
+- **Personas:** `.claude/personas/` → `pennyfarthing/personas/`
 
-Projects consume these via symlinks, not copies.
+Projects consume these via symlinks, not copies. Updates propagate automatically.
 
 ### 2. State Detection Over Explicit Commands
 
 Agents detect workflow state from session files rather than requiring explicit user direction:
-- Read `.session/current_work.md` on activation
+- Read `.session/{story-id}-session.md` on activation
 - Determine appropriate action based on current state
 - No need for separate "pickup", "handoff", or "finish" commands
 
@@ -39,45 +39,38 @@ Context is loaded only when needed:
 
 ```
 pennyfarthing/
-├── core/                           # Framework core
-│   ├── agents/                     # Agent definitions (11 agents)
-│   ├── subagents/                  # Handoff coordinators (13 subagents)
-│   ├── commands/                   # Slash commands (23 commands)
-│   └── docs/                       # Core documentation
+├── pennyfarthing-dist/             # Source files (copied on install)
+│   ├── agents/                     # Agent definitions + official subagents
+│   ├── commands/                   # Slash commands (25 commands)
+│   ├── guides/                     # Behavior guides
+│   ├── skills/                     # Project-agnostic knowledge
+│   └── personas/                   # Theme files
 │
-├── personas/                       # Persona system
-│   ├── themes/                     # Theme files
-│   │   ├── discworld.yaml
-│   │   ├── star-trek.yaml
-│   │   ├── literary-classics.yaml
-│   │   └── minimalist.yaml
-│   └── attributes.yaml             # Personality modifiers
-│
-├── skills/                         # Project-agnostic knowledge
-│   ├── agentic-patterns/
-│   ├── context-engineering/
-│   ├── code-review/
-│   ├── testing/
-│   ├── story-management/
-│   ├── sprint-context/
-│   ├── jira-cli/
-│   ├── just/
-│   ├── dev-patterns/
-│   └── persona-benchmark/
+├── src/                            # NPM CLI source
 │
 ├── scripts/                        # Utility scripts
-│   ├── init-project.sh
 │   ├── agent-session.sh
 │   └── utils/                      # Reusable utilities
 │       ├── retry.sh                # Exponential backoff
 │       ├── checkpoint.sh           # Session state persistence
 │       └── repo-scan.sh            # Cross-repo git status
 │
-├── benchmarks/                     # Agent performance testing
-│   ├── test-cases/
-│   └── results/
-│
 └── tests/                          # Framework tests
+
+After installation (in project):
+
+your-project/.claude/
+├── pennyfarthing/                  # Source (from pennyfarthing-dist/)
+│   ├── agents/                     # Agents + official subagents
+│   ├── commands/
+│   ├── guides/
+│   ├── skills/
+│   └── personas/
+├── agents/                         # → symlink to pennyfarthing/agents/
+├── commands/                       # → symlink to pennyfarthing/commands/
+├── skills/                         # → symlink to pennyfarthing/skills/
+├── personas/                       # → symlink to pennyfarthing/personas/
+└── project/                        # Project-specific (user-editable)
 ```
 
 ## Agent Hierarchy
@@ -150,47 +143,45 @@ SM (Finish - Cleanup)
     |-- Helper: Execution
 ```
 
-## Subagent System
+## Official Subagent System
 
-Subagents are Haiku-based coordinators that manage state transitions.
+Subagents are Haiku-based coordinators that manage state transitions. They use Claude Code's official agent format and are invoked via `Task tool` with `subagent_type: "{name}"`.
+
+Error handling is centralized in the calling agent (see `tactical-agent-behavior.md`). Subagents return structured results with `status: success|blocked`.
 
 ### SM Subagents
 
 | Subagent | Purpose |
 |----------|---------|
-| `sm-story-setup.md` | Claim Jira, write session, create branches |
-| `sm-handoff.md` | General coordination |
-| `sm-work-research.md` | Research stories and context |
-| `sm-file-summary.md` | Summarize file changes |
-| `sm-finish-bookkeeping.md` | Archive session, update sprint |
-| `sm-finish-execution.md` | Execute finish workflow |
+| `workflow-status-check` | Detect workflow state |
+| `sm-work-research` | Research stories and context |
+| `sm-file-summary` | Summarize file changes |
+| `sm-story-setup` | Claim Jira, write session, create branches |
+| `sm-finish-bookkeeping` | Archive session, update sprint |
+| `sm-finish-execution` | Execute finish workflow |
 
 ### TEA Subagents
 
 | Subagent | Purpose |
 |----------|---------|
-| `tea-handoff.md` | Update session after tests (RED) |
-| `testing-runner.md` | Execute tests, report results |
+| `testing-runner` | Execute tests, report results |
+| `tea-handoff` | Update session after tests (RED) |
 
 ### Dev Subagents
 
 | Subagent | Purpose |
 |----------|---------|
-| `dev-handoff.md` | Update session after PR (GREEN) |
+| `testing-runner` | Verify tests pass |
+| `dev-handoff` | Update session after PR (GREEN) |
 
 ### Reviewer Subagents
 
 | Subagent | Purpose |
 |----------|---------|
-| `reviewer-preflight.md` | Gather review data |
-| `reviewer-handoff-approve.md` | Approve and route to SM |
-| `reviewer-handoff-reject.md` | Reject and route to Dev |
-
-### Utility Subagents
-
-| Subagent | Purpose |
-|----------|---------|
-| `workflow-status-check.md` | Detect workflow state |
+| `testing-runner` | Run tests |
+| `reviewer-preflight` | Gather review data |
+| `reviewer-handoff-approve` | Approve and route to SM |
+| `reviewer-handoff-reject` | Reject and route to Dev |
 
 ## Context Loading Strategy
 
@@ -202,7 +193,7 @@ On Activation:
   1. sprint/current-sprint.yaml   # Full sprint
   2. API/.claude/context.md       # API context
   3. UI/.claude/context.md        # UI context
-  4. .session/current_work.md     # Active work
+  4. .session/{story-id}-session.md     # Active work
 ```
 
 **Budget:** ~500-800 lines
@@ -213,7 +204,7 @@ Load focused context:
 ```yaml
 On Activation:
   1. sprint/current-sprint.yaml   # Story section only
-  2. .session/current_work.md     # Active work
+  2. .session/{story-id}-session.md     # Active work
   3. Target repo context          # Based on story
 ```
 
@@ -245,7 +236,7 @@ Total:                    430 lines
 
 ## Session Files
 
-### `.session/current_work.md`
+### `.session/{story-id}-session.md`
 
 Active work session context:
 ```markdown
@@ -387,10 +378,11 @@ Stories sync to/from Jira via:
 
 ### Why Symlinks?
 
-- Single source of truth (core files)
-- Updates propagate automatically
+- Single source of truth (`pennyfarthing/` directory)
+- Updates propagate automatically via `pennyfarthing update`
 - No copy/paste drift
-- Clear separation of core vs project
+- Clear separation of managed vs project files
+- Official subagents live alongside agent definitions
 
 ### Why Personas?
 

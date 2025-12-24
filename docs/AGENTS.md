@@ -141,16 +141,19 @@ SM appears twice in the TDD flow:
 - Both repo contexts
 - Active work sessions
 
-### Subagents Used
+### Official Subagents
+
+Invoked via `Task tool` with `subagent_type: "{name}"`:
 
 | Subagent | Purpose |
 |----------|---------|
-| `workflow-status-check.md` | Detect current state |
-| `sm-work-research.md` | Research backlog |
-| `sm-story-setup.md` | Setup story session |
-| `sm-file-summary.md` | Summarize changes |
-| `sm-finish-bookkeeping.md` | Archive and cleanup |
-| `sm-finish-execution.md` | Execute finish workflow |
+| `workflow-status-check` | Detect current state |
+| `sm-work-research` | Research backlog |
+| `sm-story-setup` | Setup story session |
+| `sm-file-summary` | Summarize changes |
+| `sm-finish-bookkeeping` | Archive and cleanup |
+| `sm-finish-execution` | Execute finish workflow |
+| `testing-runner` | Run tests |
 
 ### Discworld Persona
 
@@ -195,12 +198,14 @@ Second agent in the flow. Receives story from SM, writes failing tests, hands of
 - Active work session
 - Target repo context only
 
-### Subagents Used
+### Official Subagents
+
+Invoked via `Task tool` with `subagent_type: "{name}"`:
 
 | Subagent | Purpose |
 |----------|---------|
-| `testing-runner.md` | Execute tests |
-| `tea-handoff.md` | Update session, hand off to Dev |
+| `testing-runner` | Execute tests |
+| `tea-handoff` | Update session, hand off to Dev |
 
 ### Discworld Persona
 
@@ -247,12 +252,14 @@ Third agent in the flow. Receives failing tests from TEA, implements code to pas
 - Active work session
 - Target repo context only
 
-### Subagents Used
+### Official Subagents
+
+Invoked via `Task tool` with `subagent_type: "{name}"`:
 
 | Subagent | Purpose |
 |----------|---------|
-| `testing-runner.md` | Verify tests pass |
-| `dev-handoff.md` | Update session, hand off to Reviewer |
+| `testing-runner` | Verify tests pass |
+| `dev-handoff` | Update session, hand off to Reviewer |
 
 ### Discworld Persona
 
@@ -302,13 +309,16 @@ Fourth agent in the flow. Receives PR from Dev, reviews code, either approves (-
 5. **Performance** - Any concerns?
 6. **Tests** - Adequate coverage?
 
-### Subagents Used
+### Official Subagents
+
+Invoked via `Task tool` with `subagent_type: "{name}"`:
 
 | Subagent | Purpose |
 |----------|---------|
-| `reviewer-preflight.md` | Gather review data |
-| `reviewer-handoff-approve.md` | Approve, route to SM |
-| `reviewer-handoff-reject.md` | Reject, route to Dev |
+| `testing-runner` | Run tests |
+| `reviewer-preflight` | Gather review data |
+| `reviewer-handoff-approve` | Approve, route to SM |
+| `reviewer-handoff-reject` | Reject, route to Dev |
 
 ### Discworld Persona
 
@@ -508,4 +518,4 @@ Reviewer --> SM:  "Story X approved. Run finish-story."
 Reviewer --> Dev: "{N} issues found. See assessment."
 ```
 
-Each handoff is automated via subagents that update the session file.
+Each handoff is automated via official subagents (invoked with `subagent_type: "{name}"`) that update the session file. Error handling is centralized in the calling agent per the protocol in `tactical-agent-behavior.md`.

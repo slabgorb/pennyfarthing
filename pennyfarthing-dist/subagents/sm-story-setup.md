@@ -43,9 +43,9 @@ $CLAUDE_PROJECT_DIR (set by SessionStart hook)
 
 ## Step 2: Write Session File
 
-**Session file path:**
-- Main checkout: `.session/current_work.md`
-- Worktree: `.session/current_work.{WORKTREE_NAME}.md`
+**Session file path:** `.session/{STORY_ID}-session.md`
+- Example: `.session/36-2-session.md`
+- Story ID comes from sprint YAML
 
 Write this content to the session file:
 
