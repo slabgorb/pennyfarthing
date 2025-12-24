@@ -2,9 +2,121 @@
 # Future epics and stories not yet committed to a sprint
 
 backlog:
-  # Add future epics here as they are identified
-  epics: []
+  epics:
+    - id: epic-2
+      title: "Sprint Operations Polish"
+      description: |
+        Housekeeping improvements from Sprint 1 retrospective.
+        Automates manual workflows and improves developer experience.
+      points: 8
+      priority: P1
+      source: "Sprint 1 Retro"
+      stories:
+        - id: "2-1"
+          title: "Automate Jira sync in SM finish workflow"
+          description: |
+            Integrate automatic Jira status transition when SM finishes a story.
+            Currently requires manual /sync-epic-to-jira invocation.
+          points: 3
+          priority: P1
+          repos: pennyfarthing
+          owner: devops
+        - id: "2-2"
+          title: "Create sprint metrics script"
+          description: |
+            Script to calculate and display sprint metrics:
+            - Points burned vs remaining
+            - Velocity trends
+            - Story completion rates
+          points: 2
+          priority: P2
+          repos: pennyfarthing
+          owner: dev
+        - id: "2-3"
+          title: "Add --auto-pr flag to finish-story flow"
+          description: |
+            Streamline PR creation by adding optional --auto-pr flag
+            that automatically runs gh pr create after review approval.
+          points: 2
+          priority: P2
+          repos: pennyfarthing
+          owner: dev
+        - id: "2-4"
+          title: "Prune stale sidecar entries"
+          description: |
+            Review and clean up agent sidecar files (gotchas, patterns, decisions).
+            Keep 5-15 entries per file, archive old entries.
+          points: 1
+          priority: P2
+          repos: pennyfarthing
+          owner: sm
 
-# Notes:
-# - Epic 1 (Agentic Best Practices) moved to Sprint 1
-# - Future epics will be added during sprint planning
+    - id: epic-3
+      title: "Automatic Context Management & Circuit Breaker"
+      description: |
+        Implement automatic context monitoring that detects when agents
+        approach 70% threshold and triggers handoffs or session continuation.
+        Add circuit breaker pattern to prevent runaway context usage.
+      points: 13
+      priority: P1
+      marker: "high-priority"
+      stories: []  # To be refined during sprint planning
+
+    - id: epic-4
+      title: "Configuration & Permissions Framework"
+      description: |
+        Add missing permissions, hooks, and context_budget sections to
+        settings.local.json. Implement three-tier permission model
+        (read, write, admin) for tool access control.
+      points: 8
+      priority: P1
+      marker: "quick-win"
+      stories: []  # To be refined during sprint planning
+
+    - id: epic-5
+      title: "Skill Discovery & Documentation Hub"
+      description: |
+        Create interactive skill registry with rich metadata (tags, examples,
+        prerequisites, anti-patterns). Enable agents to discover and suggest
+        relevant skills based on task context.
+      points: 13
+      priority: P2
+      marker: "strategic"
+      stories: []  # To be refined during sprint planning
+
+    - id: epic-6
+      title: "Multi-Agent Choreography Patterns"
+      description: |
+        Build library of proven coordination patterns (fan-out/fan-in,
+        sequential, conditional routing, approval gates). Document real
+        examples from Pennyfarthing's own workflows.
+      points: 8
+      priority: P2
+      marker: "quick-win"
+      stories: []  # To be refined during sprint planning
+
+    - id: epic-7
+      title: "Agent Performance Benchmarking Suite"
+      description: |
+        Expand benchmarks/ with comprehensive performance testing.
+        Measure token usage, latency, success rates, cost per agent.
+        Generate performance regression reports.
+      points: 13
+      priority: P2
+      marker: "strategic"
+      stories: []  # To be refined during sprint planning
+
+# Summary
+# Total backlog: 63 points across 6 epics
+#
+# Recommended Sprint 2: Epic 2 (8 pts) + Epic 4 (8 pts) = 16 pts
+# Recommended Sprint 3: Epic 3 (13 pts) or Epic 6 (8 pts)
+#
+# Priority Legend:
+# - P1: High priority, next sprint candidates
+# - P2: Medium priority, future sprints
+#
+# Marker Legend:
+# - high-priority: Critical for production readiness
+# - quick-win: Low effort, high value
+# - strategic: Long-term value, larger investment
