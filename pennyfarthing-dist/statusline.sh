@@ -10,11 +10,15 @@ if ! echo "$input" | jq -e . >/dev/null 2>&1; then
     exit 0
 fi
 
-# Determine PROJECT_ROOT from script location (not from workspace.current_dir)
-# This ensures we find .session/agents/ regardless of user's cwd
-# Script is in assets/core/, so go up two directories
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
+# Use CLAUDE_PROJECT_DIR (set by Claude Code for statusLine)
+# Fallback to script-based detection if not set
+if [ -n "$CLAUDE_PROJECT_DIR" ]; then
+    PROJECT_ROOT="$CLAUDE_PROJECT_DIR"
+else
+    # Script is in pennyfarthing-dist/, go up one level
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+fi
 
 # Extract fields - use cwd for display only, PROJECT_ROOT for file lookups
 cwd=$(echo "$input" | jq -r '.workspace.current_dir // empty' 2>/dev/null)
