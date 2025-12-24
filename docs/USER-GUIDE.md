@@ -427,7 +427,7 @@ Agents load their sidecars on activation, maintaining context across sessions.
   },
   "statusLine": {
     "type": "command",
-    "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/core/statusline.sh"
+    "command": "$CLAUDE_PROJECT_DIR/.claude/statusline.sh"
   },
   "permissions": {
     "allow": [
