@@ -16,7 +16,6 @@ import {
   fileMatchesHash
 } from '../utils/files.js';
 import { getPackageVersion } from '../utils/version.js';
-import { hasSubmodule } from './migrate.js';
 
 interface DoctorOptions {
   fix?: boolean;
@@ -65,7 +64,7 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
 
   // Display results by category
   const categories = [
-    { name: 'Installation', filter: (r: CheckResult) => r.name.startsWith('manifest') || r.name.startsWith('submodule') },
+    { name: 'Installation', filter: (r: CheckResult) => r.name.startsWith('manifest') },
     { name: 'Core Files', filter: (r: CheckResult) => r.name.startsWith('core/') },
     { name: 'User Files', filter: (r: CheckResult) => r.name.startsWith('project/') || r.name.startsWith('persona') || r.name.startsWith('settings') },
     { name: 'Directories', filter: (r: CheckResult) => r.name.startsWith('dir/') },
@@ -128,18 +127,6 @@ function checkInstallation(projectRoot: string, manifest: ReturnType<typeof read
     name: 'manifest/exists',
     status: manifest ? 'pass' : 'fail',
     detail: manifest ? `v${manifest.version}` : 'Run `pennyfarthing init`'
-  });
-
-  // Check for old submodule
-  const hasSub = hasSubmodule(projectRoot);
-  results.push({
-    name: 'submodule/removed',
-    status: hasSub ? 'warn' : 'pass',
-    detail: hasSub ? 'Old submodule still present' : undefined,
-    fix: hasSub ? () => {
-      // Just warn, don't auto-remove submodule for safety
-      logger.warning('Please manually remove: rm -rf .claude/pennyfarthing && git rm .claude/pennyfarthing');
-    } : undefined
   });
 
   return results;

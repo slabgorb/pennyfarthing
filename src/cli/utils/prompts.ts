@@ -93,13 +93,6 @@ export const prompts = {
     ]);
   },
 
-  async submoduleDetected(): Promise<'migrate' | 'abort'> {
-    return select('Git submodule installation detected. How to proceed?', [
-      { name: 'Migrate to npm (recommended)', value: 'migrate' as const },
-      { name: 'Abort', value: 'abort' as const }
-    ]);
-  },
-
   async alreadyInstalled(version: string): Promise<'update' | 'reinstall' | 'abort'> {
     return select(`Pennyfarthing already installed (v${version}). What to do?`, [
       { name: 'Update to latest', value: 'update' as const },
