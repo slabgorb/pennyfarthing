@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enables parallel work with multiple active stories
   - Agents scan `.session/*-session.md` and check Phase field
   - Worktree info stored inside session file, not in filename
+- **Scripts Structure** - `scripts/` now symlinks to `pennyfarthing-dist/scripts/`
+  - Single source of truth eliminates sync issues
+  - Removed legacy scripts (`health-check.sh`, `init-project.sh`) - use CLI instead
+  - Only `deploy.sh` remains as pennyfarthing-specific script
 - **Subagent Invocation** - Changed from template files to `subagent_type: "{name}"` format
 - **Agent Files Updated** - `dev.md`, `tea.md`, `sm.md`, `reviewer.md` use official subagents
 - **Documentation Updated** - AGENTS.md, ARCHITECTURE.md, USER-GUIDE.md, README.md reflect new structure
