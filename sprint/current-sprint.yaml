@@ -28,9 +28,11 @@ epics:
           - Handle errors gracefully (Jira down shouldn't block finish)
         points: 3
         priority: P1
-        status: in-progress
+        status: done
         started: 2025-12-23
+        completed: 2025-12-23
         branch: feat/2-1-jira-sync-finish
+        pr: https://github.com/1898andCo/pennyfarthing/pull/9
         repos: pennyfarthing
         acceptance_criteria:
           - SM finish workflow automatically transitions Jira to Done
@@ -166,8 +168,8 @@ epics:
 
 summary:
   total_points: 16
-  completed_points: 0
-  in_progress_points: 3
+  completed_points: 3
+  in_progress_points: 0
   backlog_points: 13
   velocity_target: 20
   status: active
