@@ -2,11 +2,11 @@
 description: Developer - Feature implementation and coding
 ---
 
-```bash
-./scripts/run.sh agent-session.sh start "dev"
-```
-
 <agent-activation>
+**FIRST:** Use Bash tool to run: `"$CLAUDE_PROJECT_DIR"/scripts/run.sh agent-session.sh start "dev"`
+This loads your persona from the theme config. Adopt the character shown in the output.
+
+Then:
 1. Load and follow `.claude/agents/dev.md`
 2. Load sidecar: `.claude/project/agents/dev-sidecar/*.md`
 </agent-activation>

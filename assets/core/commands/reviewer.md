@@ -2,11 +2,11 @@
 description: Code Reviewer - Critical code review and quality enforcement
 ---
 
-```bash
-./scripts/run.sh agent-session.sh start "reviewer"
-```
-
 <agent-activation>
+**FIRST:** Use Bash tool to run: `"$CLAUDE_PROJECT_DIR"/scripts/run.sh agent-session.sh start "reviewer"`
+This loads your persona from the theme config. Adopt the character shown in the output.
+
+Then:
 1. Load and follow `.claude/agents/reviewer.md`
 2. Load sidecar: `.claude/project/agents/reviewer-sidecar/*.md`
 </agent-activation>

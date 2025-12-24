@@ -119,3 +119,62 @@ if (!existing.hooks?.SessionStart) {
 4. Preserve all user customizations
 5. Add doctor check to validate critical fields exist
 6. Provide `--fix` to auto-repair missing fields
+
+---
+
+## Pattern: Skills Must Instruct Tool Use, Not Document Commands
+
+**Problem (2024-12):** Agent skill command files included bash code blocks as "documentation" of what should run:
+
+```markdown
+\`\`\`bash
+./scripts/run.sh agent-session.sh start "dev"
+\`\`\`
+
+<agent-activation>
+1. Load and follow `.claude/agents/dev.md`
+...
+</agent-activation>
+```
+
+The bash block was *documentation* - Claude Code's Skill tool doesn't execute embedded code blocks. The persona loading script was never run, so agents activated without their character/personality.
+
+**Root Cause:** Confusion between documenting a command vs instructing Claude to invoke a tool. Fenced code blocks in skill files are just text - they don't trigger tool invocations.
+
+**Solution:** Replace documentation with explicit tool-invocation instructions:
+
+```markdown
+<agent-activation>
+**FIRST:** Use Bash tool to run: `"$CLAUDE_PROJECT_DIR"/scripts/run.sh agent-session.sh start "dev"`
+This loads your persona from the theme config. Adopt the character shown in the output.
+
+Then:
+1. Load and follow `.claude/agents/dev.md`
+2. Load sidecar: `.claude/project/agents/dev-sidecar/*.md`
+</agent-activation>
+```
+
+### Key Insight
+
+In Claude Code skills/commands:
+- **Code blocks** = Documentation (not executed)
+- **Explicit instructions** = Claude follows them and invokes tools
+
+### When to Apply This Pattern
+
+Use explicit tool-invocation instructions when:
+- A script MUST run for the skill to work correctly
+- Output from the script is needed as context
+- The behavior isn't optional
+
+Use documentation-style code blocks when:
+- Showing examples the user might run manually
+- Reference documentation
+- Optional commands
+
+### Files Fixed (2024-12)
+
+All 10 agent command files in `.claude/commands/`:
+- dev.md, sm.md, tea.md, reviewer.md, pm.md
+- orchestrator.md, architect.md, devops.md
+- tech-writer.md, ux-designer.md
