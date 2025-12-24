@@ -359,7 +359,7 @@ case "$REPOS" in
 esac
 
 # Create or checkout branches (idempotent, includes verification)
-./scripts/create-feature-branches.sh "$BRANCH" "$REPOS"
+./scripts/run.sh create-feature-branches.sh "$BRANCH" "$REPOS"
 ```
 
 **What this does:**
@@ -706,7 +706,7 @@ Address the issue and send your helper again.
 **After handoff helper succeeds**, check context usage to decide whether to auto-invoke or defer:
 
 ```bash
-eval $(./scripts/check-context.sh)
+eval $(./scripts/run.sh check-context.sh)
 # Returns: HANDOFF_MODE=auto (<70%) or HANDOFF_MODE=ask (>70%)
 ```
 
@@ -727,7 +727,7 @@ eval $(./scripts/check-context.sh)
 ```
 1. Dev completes implementation, spawns handoff helper
 2. Helper updates session file, reports success
-3. Dev runs: eval $(./scripts/check-context.sh)
+3. Dev runs: eval $(./scripts/run.sh check-context.sh)
 4. Result: HANDOFF_MODE=auto (context at 45%)
 5. Dev uses Skill tool: skill="reviewer"
 6. Reviewer activates automatically, continues work

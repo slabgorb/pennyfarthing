@@ -25,100 +25,59 @@ Utility scripts now in `assets/scripts/utils/`:
 ### 3. Released v2.0.0-beta.3 (COMPLETE)
 - Pushed to origin with tag
 
-## What's NOT Done
+## What's DONE
 
-### 1. Fix Script Path References
-The utility scripts are in `scripts/utils/` but references in core files point to wrong paths:
+### 1. Fix Script Path References (COMPLETE - 2025-12-23)
+Updated all script references in `core/` files to use the `./scripts/run.sh <script>` pattern:
+- `core/commands/git-cleanup.md` - fixed 5 references
+- `core/commands/sync-epic-to-jira.md` - fixed 4 references
+- `core/commands/parallel-work.md` - fixed 2 references
+- `core/commands/create-branches-from-story.md` - fixed 6 references
+- `core/commands/sync-work-with-sprint.md` - fixed 1 reference
+- `core/commands/release.md` - fixed 1 reference
+- `core/guides/worktree-mode.md` - fixed 3 references
+- `core/guides/tactical-agent-behavior.md` - fixed 3 references
+- `core/guides/agent-template-*.md` - fixed 3 references
+- `core/agents/*.md` - fixed 7 exit instructions
+- `core/subagents/sm-*.md` - fixed 2 references
 
+### 2. Verify run.sh Handles Utils (COMPLETE)
+The `run.sh` script already correctly searches `scripts/`, `scripts/utils/`, and `scripts/hooks/`.
+
+### 3. Clean Up Conductor Duplicates (COMPLETE - 2025-12-23)
+Removed duplicate scripts from conductor/scripts/:
+- `git-status-all.sh`, `jira-claim-story.sh`, `jira-lib.sh`, `jira-sync-story.sh`
+- `find-related-work.sh`, `check-status.sh`, `create-feature-branches.sh`
+
+Conductor-specific scripts preserved:
+- `build-all.sh`, `start-all.sh`, `dev-setup.sh`, etc. (~40 scripts)
+
+### 4. Reinstall Pennyfarthing in Conductor (COMPLETE - 2025-12-23)
 ```
-# WRONG - points to scripts/ root
-./scripts/git-status-all.sh
-$CLAUDE_PROJECT_DIR/scripts/jira-claim-story.sh
-
-# CORRECT - should point to utils/
-./scripts/run.sh utils/git-status-all.sh
-./scripts/run.sh utils/jira-claim-story.sh
-```
-
-**Files to update:**
-- `core/commands/git-cleanup.md` - references `./scripts/git-status-all.sh`
-- `core/subagents/sm-story-setup.md` - references `jira-claim-story.sh`
-- `core/commands/sync-epic-to-jira.md` - references jira scripts
-- `core/guides/tactical-agent-behavior.md` - references `create-feature-branches.sh`
-- Need to grep for all `.sh` references and fix paths
-
-### 2. Update run.sh to Handle Utils
-The `run.sh` script already handles utils path - verify it works:
-```bash
-if [[ -f "$PROJECT_ROOT/scripts/$SCRIPT_NAME" ]]; then
-    exec "$PROJECT_ROOT/scripts/$SCRIPT_NAME" "$@"
-elif [[ -f "$PROJECT_ROOT/scripts/utils/$SCRIPT_NAME" ]]; then
-    exec "$PROJECT_ROOT/scripts/utils/$SCRIPT_NAME" "$@"
-```
-
-### 3. Clean Up Conductor Duplicates
-Conductor has duplicate scripts that should be removed after pennyfarthing update:
-
-**Remove from conductor/scripts/ (managed by pennyfarthing):**
-- `agent-session.sh`
-- `check-context.sh`
-- `repo-utils.sh`
-- `worktree-manager.sh`
-- `git-status-all.sh`
-- `jira-claim-story.sh`
-- `jira-sync-story.sh`
-- `sync-epic-to-jira.sh`
-- `find-related-work.sh`
-- `create-feature-branches.sh`
-- `check-status.sh`
-- All hooks: `session-start.sh`, `pre-edit-check.sh`, `git-pre-commit-pennyfarthing.sh`
-- All utils: `checkpoint.sh`, `file-lock.sh`, `logging.sh`, etc.
-
-**Keep in conductor/scripts/ (project-specific):**
-- `build-all.sh`, `start-all.sh`, `test-all.sh`
-- `dev-setup.sh`, `setup-mcp.sh`, `setup-standalone.sh`
-- `jira-sync.sh` (different from jira-sync-story.sh)
-- `manage-sprint.sh`, `sprint-common.sh`
-- And ~25 more conductor-specific scripts
-
-### 4. Reinstall Pennyfarthing in Conductor
-```bash
-cd /Users/keithavery/Projects/conductor
 pennyfarthing uninstall --force
 pennyfarthing init --force
-pennyfarthing doctor
+pennyfarthing doctor  # All checks passed
 ```
 
-### 5. Reinstall Pennyfarthing in Siemulator
-```bash
-cd /Users/keithavery/Projects/siemulator
+### 5. Reinstall Pennyfarthing in Siemulator (COMPLETE - 2025-12-23)
+```
 pennyfarthing uninstall --force
 pennyfarthing init --force
-pennyfarthing doctor
+pennyfarthing doctor  # All checks passed
 ```
 
-## Commands to Continue
+## Status: COMPLETE
 
-```bash
-# 1. Find all script references that need fixing
-grep -rn '\.sh' /Users/keithavery/Projects/pennyfarthing/core/ --include="*.md" | grep -E '\./scripts/[a-z]' | grep -v run.sh
-
-# 2. Update references to use run.sh pattern
-# Example: ./scripts/git-status-all.sh → ./scripts/run.sh git-status-all.sh
-
-# 3. Rebuild and test
-npm run build
-cd /Users/keithavery/Projects/siemulator && pennyfarthing update --force
-
-# 4. Clean conductor
-cd /Users/keithavery/Projects/conductor
-# Remove duplicates, then pennyfarthing init
-```
+All script path fixes have been applied:
+1. Core files use `./scripts/run.sh <script>` pattern
+2. run.sh deployed to conductor and siemulator
+3. Duplicate scripts removed from conductor
+4. All projects pass `pennyfarthing doctor`
 
 ## Key Insight
-The `run.sh` bootstrap already handles finding scripts in both `scripts/` and `scripts/utils/`, so the pattern should be:
+The `run.sh` bootstrap handles finding scripts in `scripts/`, `scripts/utils/`, and `scripts/hooks/`:
 ```bash
 ./scripts/run.sh <script-name.sh> [args]
 ```
 
-This works whether the script is in `scripts/` root or `scripts/utils/`.
+This works whether the script is in `scripts/` root or any subdirectory.

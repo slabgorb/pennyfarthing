@@ -35,7 +35,7 @@ $CLAUDE_PROJECT_DIR (set by SessionStart hook)
 
 ## Step 1: Claim in Jira
 ```bash
-$CLAUDE_PROJECT_DIR/scripts/jira-claim-story.sh {JIRA_KEY} --claim
+./scripts/run.sh jira-claim-story.sh {JIRA_KEY} --claim
 ```
 - Exit 0: Claimed successfully - proceed
 - Exit 1: STOP and report "Story assigned to someone else"
