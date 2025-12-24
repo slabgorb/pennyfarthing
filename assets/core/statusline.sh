@@ -61,20 +61,20 @@ if [ -n "$session_id" ]; then
         # Get character name from persona config
         PROJECT_ROOT="$cwd"
         config_file=""
-        if [ -f "$PROJECT_ROOT/.claude/persona-config.local.yaml" ]; then
-            config_file="$PROJECT_ROOT/.claude/persona-config.local.yaml"
-        elif [ -f "$PROJECT_ROOT/.claude/persona-config.yaml" ]; then
-            config_file="$PROJECT_ROOT/.claude/persona-config.yaml"
+        if [ -f "$CLAUDE_PROJECT_DIR/.claude/persona-config.local.yaml" ]; then
+            config_file="$CLAUDE_PROJECT_DIR/.claude/persona-config.local.yaml"
+        elif [ -f "$CLAUDE_PROJECT_DIR/.claude/persona-config.yaml" ]; then
+            config_file="$CLAUDE_PROJECT_DIR/.claude/persona-config.yaml"
         fi
 
         if [ -n "$config_file" ]; then
             theme=$(yq '.theme' "$config_file" 2>/dev/null)
             if [ -n "$theme" ] && [ "$theme" != "null" ]; then
                 theme_file=""
-                if [ -f "$PROJECT_ROOT/.claude/personas/themes/${theme}.yaml" ]; then
-                    theme_file="$PROJECT_ROOT/.claude/personas/themes/${theme}.yaml"
-                elif [ -f "$PROJECT_ROOT/personas/themes/${theme}.yaml" ]; then
-                    theme_file="$PROJECT_ROOT/personas/themes/${theme}.yaml"
+                if [ -f "$CLAUDE_PROJECT_DIR/.claude/personas/themes/${theme}.yaml" ]; then
+                    theme_file="$CLAUDE_PROJECT_DIR/.claude/personas/themes/${theme}.yaml"
+                elif [ -f "$CLAUDE_PROJECT_DIR/personas/themes/${theme}.yaml" ]; then
+                    theme_file="$CLAUDE_PROJECT_DIR/personas/themes/${theme}.yaml"
                 fi
 
                 if [ -n "$theme_file" ]; then

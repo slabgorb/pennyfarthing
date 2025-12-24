@@ -97,8 +97,8 @@ Task tool:
 6. Repeat for remaining tests
 7. Commit and push:
    ```bash
-   cd $PROJECT_ROOT/$API_REPO && git add . && git commit -m "feat(X-Y): implement API"
-   cd $PROJECT_ROOT/$UI_REPO && git push -u origin $(git branch --show-current)
+   cd $CLAUDE_PROJECT_DIR/$API_REPO && git add . && git commit -m "feat(X-Y): implement API"
+   cd $CLAUDE_PROJECT_DIR/$UI_REPO && git push -u origin $(git branch --show-current)
    ```
 8. Create PRs targeting `develop`:
    ```bash
@@ -143,7 +143,7 @@ After writing assessment, ALWAYS spawn handoff subagent to complete bookkeeping.
 Then check context usage:
 
 ```bash
-$PROJECT_ROOT/scripts/check-context.sh --human
+$CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
 **If < 70%:** Invoke `/reviewer` directly to continue the flow

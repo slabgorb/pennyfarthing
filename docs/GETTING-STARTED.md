@@ -1,178 +1,144 @@
 # Getting Started with Pennyfarthing
 
-This guide walks you through installing and configuring Pennyfarthing for your Claude Code project.
+Get up and running with Pennyfarthing in under 5 minutes.
+
+> For complete documentation, see the [User Guide](USER-GUIDE.md).
 
 ## Prerequisites
 
+- Node.js 18+
 - Git
-- An existing project directory
 - Claude Code CLI installed
+- `yq` - `brew install yq`
+- `jq` - `brew install jq`
 
 ## Installation
 
-### Step 1: Add as Git Submodule
+### Step 1: Install Pennyfarthing
+
+```bash
+npm install -g pennyfarthing
+```
+
+### Step 2: Initialize Your Project
 
 ```bash
 cd your-project
-
-# Add pennyfarthing as a submodule
-git submodule add git@github.com:1898andCo/pennyfarthing.git .claude/pennyfarthing
-```
-
-### Step 2: Initialize Project
-
-```bash
-# Run the initialization script
-.claude/pennyfarthing/scripts/init-project.sh your-project-name
+pennyfarthing init
 ```
 
 This creates:
-- `.claude/project/` - Project-specific configuration
-- `.claude/agents/` - Symlink to core agents
-- `.claude/commands/` - Symlink to slash commands
-- `.claude/personas/` - Symlink to persona themes
-- `sprint/` - Sprint tracking directory
-- `.session/` - Work session directory
+- `.claude/` - Agent system and configuration
+- `scripts/` - Hooks and utilities
+- `sprint/` - Sprint tracking
+- `.session/` - Work session files
 
-### Step 3: Configure Your Project
-
-Edit the generated files:
-
-1. **`.claude/project/docs/shared-context.md`** - Add your project details:
-   - Project name and description
-   - Tech stack
-   - Repository structure
-   - Development commands
-
-2. **`.claude/project/docs/agent-scopes.yaml`** - Configure agent behavior:
-   - Define your repositories
-   - Set test patterns
-   - Configure file patterns
-
-3. **`.claude/persona-config.yaml`** - Choose your theme:
-   ```yaml
-   theme: discworld  # or: star-trek, literary-classics, minimalist
-
-   attributes:
-     verbosity: medium
-     formality: casual
-     humor: enabled
-     emoji_use: minimal
-   ```
-
-## Directory Structure After Init
-
-```
-your-project/
-├── .claude/
-│   ├── pennyfarthing/              # Git submodule (shared)
-│   ├── project/                    # Project-specific
-│   │   ├── agents/                 # Agent sidecars (project knowledge)
-│   │   │   ├── dev-sidecar/
-│   │   │   ├── tea-sidecar/
-│   │   │   └── ...
-│   │   ├── skills/                 # Project skills
-│   │   ├── docs/
-│   │   │   ├── shared-context.md   # Project overview
-│   │   │   └── agent-scopes.yaml   # Scope configuration
-│   │   └── hooks/
-│   │       └── setup-env.sh        # Environment setup
-│   ├── agents/        --> symlink to pennyfarthing/core/agents/
-│   ├── subagents/     --> symlink to pennyfarthing/core/subagents/
-│   ├── commands/      --> symlink to pennyfarthing/core/commands/
-│   ├── personas/      --> symlink to pennyfarthing/personas/
-│   └── persona-config.yaml
-├── sprint/
-│   └── current-sprint.yaml         # Sprint tracking
-├── .session/
-│   └── current_work.md             # Active work session
-└── ...
-```
-
-## First Steps
-
-### Start Your First Work Session
+### Step 3: Verify Installation
 
 ```bash
-# In Claude Code
+pennyfarthing doctor
+```
+
+All checks should pass. If not, run `pennyfarthing doctor --fix`.
+
+## Configuration
+
+### 1. Project Context
+
+Edit `.claude/project/docs/shared-context.md`:
+
+```markdown
+# Shared Agent Context - my-project
+
+## Project Overview
+- **Name:** my-project
+- **Type:** Web application
+
+## Tech Stack
+| Repo | Language | Framework |
+|------|----------|-----------|
+| api  | Go       | Chi       |
+| ui   | TypeScript | React   |
+
+## Commands
+```bash
+just dev    # Start servers
+just test   # Run tests
+```
+```
+
+### 2. Choose a Theme
+
+Edit `.claude/persona-config.yaml`:
+
+```yaml
+theme: discworld    # Options: discworld, star-trek, star-trek-tos,
+                    #          literary-classics, jane-austen,
+                    #          shakespeare, minimalist
+```
+
+## Your First Work Session
+
+In Claude Code:
+
+```
 /new-work
 ```
 
-The SM (Scrum Master) agent will activate and:
-1. Show you the current sprint status
-2. Help you select or create a story
-3. Set up the work session
-4. Hand off to TEA for test writing
+The SM (Scrum Master) agent activates and guides you through:
+1. Selecting a story from the backlog
+2. Setting up the work session
+3. Handing off to TEA for test writing
 
-### Understanding the TDD Flow
+## The TDD Flow
 
 ```
-/new-work --> SM --> TEA --> Dev --> Reviewer --> SM (finish)
+/new-work → SM → TEA → Dev → Reviewer → SM (finish)
 ```
 
-1. **SM (Scrum Master)** - Sets up the story, creates branches, initializes session
-2. **TEA (Test Engineer)** - Writes failing tests (RED phase)
-3. **Dev (Developer)** - Implements code to pass tests (GREEN phase)
-4. **Reviewer** - Reviews code quality, security, patterns
-5. **SM** - Archives session, marks story complete
+| Agent | Command | Role |
+|-------|---------|------|
+| SM | `/sm` | Story setup, session management |
+| TEA | `/tea` | Write failing tests |
+| Dev | `/dev` | Make tests pass |
+| Reviewer | `/reviewer` | Code review |
 
-### Quick Commands
+## Quick Commands
 
 | Command | Purpose |
 |---------|---------|
-| `/new-work` | Start a new work session |
+| `/new-work` | Start a work session |
 | `/sm` | Activate Scrum Master |
 | `/tea` | Activate Test Engineer |
 | `/dev` | Activate Developer |
-| `/reviewer` | Activate Code Reviewer |
-| `/architect` | Get architectural guidance |
+| `/reviewer` | Activate Reviewer |
+| `/architect` | Get architecture guidance |
 | `/pm` | Strategic planning |
 
-## Updating Pennyfarthing
+## Updating
 
 ```bash
-cd your-project
-git submodule update --remote .claude/pennyfarthing
+pennyfarthing update
 ```
 
 ## Troubleshooting
 
-### Submodule Not Found
-
-If you see "Error: .claude/pennyfarthing submodule not found":
+### "no such file or directory" errors
 
 ```bash
-# Make sure you're in the project root
-cd your-project
-
-# Add the submodule first
-git submodule add git@github.com:1898andCo/pennyfarthing.git .claude/pennyfarthing
+pennyfarthing doctor --fix
 ```
 
-### Symlinks Broken
-
-If symlinks are broken after pulling:
+### Fresh reinstall
 
 ```bash
-# Re-run init to recreate symlinks
-.claude/pennyfarthing/scripts/init-project.sh your-project-name
-```
-
-### Environment Variables Not Set
-
-Make sure your project's `.env` file is being sourced:
-
-```bash
-# Check if PROJECT_ROOT is set
-echo $PROJECT_ROOT
-
-# Source manually if needed
-source .claude/project/hooks/setup-env.sh
+./scripts/uninstall.sh
+pennyfarthing init
 ```
 
 ## Next Steps
 
-- Read [Architecture](ARCHITECTURE.md) to understand the system design
-- See [Workflows](WORKFLOWS.md) for detailed workflow guides
-- Check [Commands](COMMANDS.md) for all available commands
-- Explore [Personas](PERSONAS.md) to customize agent personalities
+- [User Guide](USER-GUIDE.md) - Complete documentation
+- [Workflows](WORKFLOWS.md) - Detailed workflow guides
+- [Personas](PERSONAS.md) - Customize agent personalities
+- [Commands](COMMANDS.md) - All available commands

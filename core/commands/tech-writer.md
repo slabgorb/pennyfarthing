@@ -3,7 +3,7 @@ description: Technical Writer - Documentation creation and maintenance
 ---
 
 ```bash
-$PROJECT_ROOT/scripts/agent-session.sh start "tech-writer"
+./scripts/run.sh agent-session.sh start "tech-writer"
 ```
 
 <agent-activation>

@@ -25,18 +25,18 @@ Replace placeholders:
 You are a finish execution assistant. Execute mechanical finish steps for story {STORY_ID}.
 
 ## Project Root
-$PROJECT_ROOT (set by SessionStart hook)
+$CLAUDE_PROJECT_DIR (set by SessionStart hook)
 
 ## Step 1: Archive Session File
 
 ```bash
 # Move session file to archive
-mv $PROJECT_ROOT/.session/current_work.md {ARCHIVE_PATH}
+mv $CLAUDE_PROJECT_DIR/.session/current_work.md {ARCHIVE_PATH}
 ```
 
 If worktree session file exists (current_work.wt-*.md), archive that too:
 ```bash
-mv $PROJECT_ROOT/.session/current_work.wt-{WORKTREE_NAME}.md {ARCHIVE_PATH}
+mv $CLAUDE_PROJECT_DIR/.session/current_work.wt-{WORKTREE_NAME}.md {ARCHIVE_PATH}
 ```
 
 ## Step 2: Write Summary File
@@ -83,14 +83,14 @@ No active work. Use `/new-work` to start.
 
 Move story context to archive:
 ```bash
-mv $PROJECT_ROOT/.session/story-{STORY_ID}-context.md $PROJECT_ROOT/sprint/archive/story-{STORY_ID}-context.md 2>/dev/null || echo "NO_CONTEXT_FILE"
+mv $CLAUDE_PROJECT_DIR/.session/story-{STORY_ID}-context.md $CLAUDE_PROJECT_DIR/sprint/archive/story-{STORY_ID}-context.md 2>/dev/null || echo "NO_CONTEXT_FILE"
 ```
 
 ## Step 7: Clean Up Temporary Files
 
 ```bash
-rm -f $PROJECT_ROOT/.session/test-results-*.log
-rm -f $PROJECT_ROOT/.session/lint-results-*.log
+rm -f $CLAUDE_PROJECT_DIR/.session/test-results-*.log
+rm -f $CLAUDE_PROJECT_DIR/.session/lint-results-*.log
 ```
 
 ## Step 8: Commit Archive Changes
@@ -98,7 +98,7 @@ rm -f $PROJECT_ROOT/.session/lint-results-*.log
 Commit all the archival and cleanup changes to git:
 
 ```bash
-cd $PROJECT_ROOT
+cd $CLAUDE_PROJECT_DIR
 git add sprint/archive/ sprint/context/ sprint/current-sprint.yaml .session/
 git commit -m "chore({STORY_ID}): archive completed story and update sprint status"
 ```

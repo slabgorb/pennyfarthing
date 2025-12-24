@@ -28,7 +28,7 @@ Read the testing skill at .claude/skills/testing/SKILL.md for test commands.
 - To: Reviewer (Granny Weatherwax)
 - Repos: {REPOS}
 - Session file: .session/current_work.md
-- Project root: $PROJECT_ROOT (set by SessionStart hook)
+- Project root: $CLAUDE_PROJECT_DIR (set by SessionStart hook)
 
 ## Work Summary
 - {IMPLEMENTATION_SUMMARY}
@@ -42,7 +42,7 @@ Run these checks and STOP if any fail:
 
 0. **Dev Assessment exists in session file:**
    ```bash
-   grep -q "## Dev Assessment" $PROJECT_ROOT/.session/current_work.md
+   grep -q "## Dev Assessment" $CLAUDE_PROJECT_DIR/.session/current_work.md
    ```
    If NOT found: STOP and report "Dev Assessment not written. Dev must write assessment before handoff."
 
@@ -65,7 +65,7 @@ Run these checks and STOP if any fail:
      Read the testing skill at .claude/skills/testing/SKILL.md for test commands.
 
      ## Project Info
-     - Project root: $PROJECT_ROOT (set by SessionStart hook)
+     - Project root: $CLAUDE_PROJECT_DIR (set by SessionStart hook)
      - Repo(s) to test: {REPO}
      - Context: Dev handoff verification for Story {STORY_ID}
      - Run ID: {STORY_ID}-dev
@@ -76,9 +76,9 @@ Run these checks and STOP if any fail:
    If you cannot spawn a subagent, run tests directly:
    ```bash
    RUN_ID="{STORY_ID}-dev"
-   cd $PROJECT_ROOT/${REPO}
-   # UI: npm run test -- --run 2>&1 | tee $PROJECT_ROOT/.session/test-results-ui-${RUN_ID}.log
-   # API: just test 2>&1 | tee $PROJECT_ROOT/.session/test-results-api-${RUN_ID}.log
+   cd $CLAUDE_PROJECT_DIR/${REPO}
+   # UI: npm run test -- --run 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/test-results-ui-${RUN_ID}.log
+   # API: just test 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/test-results-api-${RUN_ID}.log
    ```
 
    Tests MUST be GREEN. If RED, STOP.

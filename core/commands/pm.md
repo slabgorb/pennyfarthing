@@ -3,7 +3,7 @@ description: Product Manager - Strategic planning and prioritization
 ---
 
 ```bash
-$PROJECT_ROOT/scripts/agent-session.sh start "pm"
+./scripts/run.sh agent-session.sh start "pm"
 ```
 
 <agent-activation>

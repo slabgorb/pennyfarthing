@@ -3,7 +3,7 @@ description: Orchestrator - Coordinator of all agents and meta operations
 ---
 
 ```bash
-$PROJECT_ROOT/scripts/agent-session.sh start "orchestrator"
+./scripts/run.sh agent-session.sh start "orchestrator"
 ```
 
 <agent-activation>

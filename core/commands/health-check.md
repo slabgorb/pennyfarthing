@@ -3,7 +3,7 @@ description: Check Pennyfarthing installation health and apply updates
 ---
 
 ```bash
-$PROJECT_ROOT/scripts/agent-session.sh start "devops"
+./scripts/run.sh agent-session.sh start "devops"
 ```
 
 <agent-activation>
@@ -29,9 +29,9 @@ Examine current Pennyfarthing installation, detect drift from expected state, an
 
 ```bash
 # Check for npm installation (manifest.json exists)
-if [ -f "$PROJECT_ROOT/.claude/manifest.json" ]; then
+if [ -f "$CLAUDE_PROJECT_DIR/.claude/manifest.json" ]; then
     INSTALL_TYPE="npm"
-    INSTALLED_VERSION=$(jq -r '.version' "$PROJECT_ROOT/.claude/manifest.json")
+    INSTALLED_VERSION=$(jq -r '.version' "$CLAUDE_PROJECT_DIR/.claude/manifest.json")
     echo "Installation: npm package v$INSTALLED_VERSION"
 
     # Check for updates using CLI
@@ -44,10 +44,10 @@ if [ -f "$PROJECT_ROOT/.claude/manifest.json" ]; then
     fi
 
 # Check for submodule installation (legacy)
-elif [ -d "$PROJECT_ROOT/.claude/pennyfarthing" ]; then
+elif [ -d "$CLAUDE_PROJECT_DIR/.claude/pennyfarthing" ]; then
     INSTALL_TYPE="submodule"
-    if [ -f "$PROJECT_ROOT/.claude/pennyfarthing/VERSION" ]; then
-        INSTALLED_VERSION=$(cat "$PROJECT_ROOT/.claude/pennyfarthing/VERSION")
+    if [ -f "$CLAUDE_PROJECT_DIR/.claude/pennyfarthing/VERSION" ]; then
+        INSTALLED_VERSION=$(cat "$CLAUDE_PROJECT_DIR/.claude/pennyfarthing/VERSION")
     fi
     echo "Installation: git submodule v$INSTALLED_VERSION"
     echo ""
@@ -99,7 +99,7 @@ If `INSTALL_TYPE="submodule"`, run manual checks:
 ### 1. Submodule Status
 
 ```bash
-cd $PROJECT_ROOT/.claude/pennyfarthing
+cd $CLAUDE_PROJECT_DIR/.claude/pennyfarthing
 git fetch origin
 LOCAL=$(git rev-parse HEAD)
 REMOTE=$(git rev-parse origin/main)
@@ -128,7 +128,7 @@ Check `.claude/settings.local.json`:
 
 Compare `.claude/statusline.sh` (if exists) against `pennyfarthing/core/statusline.sh`:
 ```bash
-diff -q "$PROJECT_ROOT/.claude/statusline.sh" "$PROJECT_ROOT/.claude/pennyfarthing/core/statusline.sh"
+diff -q "$CLAUDE_PROJECT_DIR/.claude/statusline.sh" "$CLAUDE_PROJECT_DIR/.claude/pennyfarthing/core/statusline.sh"
 ```
 
 ### 5. Required Directories

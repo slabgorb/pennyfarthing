@@ -3,7 +3,7 @@ description: Test Engineer/Architect - Test strategy and TDD
 ---
 
 ```bash
-$PROJECT_ROOT/scripts/agent-session.sh start "tea"
+./scripts/run.sh agent-session.sh start "tea"
 ```
 
 <agent-activation>

@@ -3,7 +3,7 @@ description: Developer - Feature implementation and coding
 ---
 
 ```bash
-$PROJECT_ROOT/scripts/agent-session.sh start "dev"
+./scripts/run.sh agent-session.sh start "dev"
 ```
 
 <agent-activation>

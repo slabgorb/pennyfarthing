@@ -19,12 +19,12 @@ description: "work research scan"
 You are a work research assistant. Scan the sprint and Jira to find available stories.
 
 ## Project Root
-$PROJECT_ROOT (set by SessionStart hook)
+$CLAUDE_PROJECT_DIR (set by SessionStart hook)
 
 ## Step 1: Read Sprint Status
 
 ```bash
-cat $PROJECT_ROOT/sprint/current-sprint.yaml
+cat $CLAUDE_PROJECT_DIR/sprint/current-sprint.yaml
 ```
 
 Extract all stories with `status: backlog` or `status: ready`:
@@ -59,10 +59,10 @@ For each available story:
 EPIC_NUM=$(echo "{STORY_ID}" | cut -d'-' -f1)
 
 # Check for epic context
-ls $PROJECT_ROOT/.session/epic-${EPIC_NUM}-context.md 2>/dev/null && echo "EPIC_CONTEXT_EXISTS"
+ls $CLAUDE_PROJECT_DIR/.session/epic-${EPIC_NUM}-context.md 2>/dev/null && echo "EPIC_CONTEXT_EXISTS"
 
 # Check for story context
-ls $PROJECT_ROOT/.session/story-{STORY_ID}-context.md 2>/dev/null && echo "STORY_CONTEXT_EXISTS"
+ls $CLAUDE_PROJECT_DIR/.session/story-{STORY_ID}-context.md 2>/dev/null && echo "STORY_CONTEXT_EXISTS"
 ```
 
 ## Step 4: Check Dependencies
@@ -70,7 +70,7 @@ ls $PROJECT_ROOT/.session/story-{STORY_ID}-context.md 2>/dev/null && echo "STORY
 For each story with `depends_on`:
 ```bash
 # Check if dependency is done
-grep -A5 "{DEPENDENCY_ID}" $PROJECT_ROOT/sprint/current-sprint.yaml | grep "status:" | head -1
+grep -A5 "{DEPENDENCY_ID}" $CLAUDE_PROJECT_DIR/sprint/current-sprint.yaml | grep "status:" | head -1
 ```
 
 Mark story as BLOCKED if any dependency is not `status: done`.
@@ -80,7 +80,7 @@ Mark story as BLOCKED if any dependency is not `status: done`.
 For each available story:
 ```bash
 EPIC_NUM=$(echo "{STORY_ID}" | cut -d'-' -f1)
-$PROJECT_ROOT/scripts/find-related-work.sh --epic ${EPIC_NUM} 2>/dev/null | head -20
+$CLAUDE_PROJECT_DIR/scripts/find-related-work.sh --epic ${EPIC_NUM} 2>/dev/null | head -20
 ```
 
 ## Output Format

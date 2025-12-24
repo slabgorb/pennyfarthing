@@ -8,19 +8,19 @@ Every agent MUST follow these protocols.
 
 ## Environment Setup
 
-### $PROJECT_ROOT
+### $CLAUDE_PROJECT_DIR
 
-All paths use `$PROJECT_ROOT` as the base:
+All paths use `$CLAUDE_PROJECT_DIR` as the base:
 
 ```bash
 # Available from <env> block at session start
-Working directory: /path/to/project  # This IS $PROJECT_ROOT
+Working directory: /path/to/project  # This IS $CLAUDE_PROJECT_DIR
 ```
 
 **Always use absolute paths:**
 ```bash
 # CORRECT
-cd $PROJECT_ROOT/API && just test
+cd $CLAUDE_PROJECT_DIR/API && just test
 
 # WRONG - relative paths fail
 cd API && just test
@@ -47,7 +47,7 @@ Every agent has a sidecar directory for project-specific memory that persists ac
 
 ```bash
 AGENT_NAME="{your-agent}"  # dev, tea, sm, reviewer, architect, etc.
-SIDECAR_DIR="$PROJECT_ROOT/.claude/project/agents/${AGENT_NAME}-sidecar"
+SIDECAR_DIR="$CLAUDE_PROJECT_DIR/.claude/project/agents/${AGENT_NAME}-sidecar"
 
 if [ -d "$SIDECAR_DIR" ]; then
     echo "=== Loading Sidecar Memory ==="
@@ -148,7 +148,7 @@ Show only:
 Check for active work on activation:
 
 ```bash
-cd $PROJECT_ROOT
+cd $CLAUDE_PROJECT_DIR
 
 # Check for session files
 if [ -f ".session/current_work.md" ]; then

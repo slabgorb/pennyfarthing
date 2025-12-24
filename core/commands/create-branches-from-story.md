@@ -57,7 +57,7 @@ Run the following commands based on scope:
 #### For API Changes
 
 ```bash
-cd $PROJECT_ROOT/API
+cd $CLAUDE_PROJECT_DIR/API
 
 # Ensure you're on main and up to date
 git checkout main
@@ -76,7 +76,7 @@ git branch --show-current
 #### For UI Changes
 
 ```bash
-cd $PROJECT_ROOT/UI
+cd $CLAUDE_PROJECT_DIR/UI
 
 # Ensure you're on main and up to date
 git checkout main
@@ -97,7 +97,7 @@ git branch --show-current
 Use this instead of Step 3 if you need to work on multiple stories simultaneously:
 
 ```bash
-cd $PROJECT_ROOT
+cd $CLAUDE_PROJECT_DIR
 
 # Create worktree with branches (both API and UI)
 ./scripts/worktree-manager.sh create [story-id] feat/[story-id]-[description]
@@ -122,7 +122,7 @@ This creates:
 ### 4. Create Pennyfarthing Session
 
 ```bash
-cd $PROJECT_ROOT
+cd $CLAUDE_PROJECT_DIR
 
 # Start new work session
 ./scripts/new-work.sh
@@ -189,17 +189,17 @@ Check that everything is ready:
 
 ```bash
 # Check API branch
-cd $PROJECT_ROOT/API
+cd $CLAUDE_PROJECT_DIR/API
 git branch --show-current
 # Should show: feature/[story-id]-[description]
 
 # Check UI branch
-cd $PROJECT_ROOT/UI
+cd $CLAUDE_PROJECT_DIR/UI
 git branch --show-current
 # Should show: feature/[story-id]-[description]
 
 # Check Pennyfarthing session exists
-cd $PROJECT_ROOT
+cd $CLAUDE_PROJECT_DIR
 ls -la .session/current-work.md
 # Should exist
 ```
@@ -215,21 +215,21 @@ You're now ready to start work:
 **Standard (in-place branches):**
 ```bash
 # Work in API
-cd $PROJECT_ROOT/API
+cd $CLAUDE_PROJECT_DIR/API
 # You're on feature branch, AI loads session + API context
 
 # Work in UI
-cd $PROJECT_ROOT/UI
+cd $CLAUDE_PROJECT_DIR/UI
 # You're on feature branch, AI loads session + UI context
 ```
 
 **Worktree (parallel work):**
 ```bash
 # Work in API worktree
-cd $PROJECT_ROOT/worktrees/[story-id]/API
+cd $CLAUDE_PROJECT_DIR/worktrees/[story-id]/API
 
 # Work in UI worktree
-cd $PROJECT_ROOT/worktrees/[story-id]/UI
+cd $CLAUDE_PROJECT_DIR/worktrees/[story-id]/UI
 
 # Get port configuration for dev servers
 eval $(./scripts/worktree-manager.sh ports [story-id])
@@ -242,7 +242,7 @@ echo "API: $API_PORT, UI: $UI_PORT"
 
 ```bash
 # 1. Create API branch
-cd $PROJECT_ROOT/API
+cd $CLAUDE_PROJECT_DIR/API
 git checkout main && git pull
 git checkout -b feature/AUTH-123-user-authentication
 git push -u origin feature/AUTH-123-user-authentication

@@ -31,11 +31,11 @@ Replace placeholders with actual values:
 You are a story setup assistant. Execute these mechanical steps for story {STORY_ID}.
 
 ## Project Root
-$PROJECT_ROOT (set by SessionStart hook)
+$CLAUDE_PROJECT_DIR (set by SessionStart hook)
 
 ## Step 1: Claim in Jira
 ```bash
-$PROJECT_ROOT/scripts/jira-claim-story.sh {JIRA_KEY} --claim
+$CLAUDE_PROJECT_DIR/scripts/jira-claim-story.sh {JIRA_KEY} --claim
 ```
 - Exit 0: Claimed successfully - proceed
 - Exit 1: STOP and report "Story assigned to someone else"
@@ -67,7 +67,7 @@ ui_port: {UI_PORT}
 
 **Main checkout:**
 ```bash
-cd $PROJECT_ROOT/${REPO} && git checkout -b feat/{STORY_ID}-{SLUG}
+cd $CLAUDE_PROJECT_DIR/${REPO} && git checkout -b feat/{STORY_ID}-{SLUG}
 ```
 
 **Worktree mode:**

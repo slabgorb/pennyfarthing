@@ -59,7 +59,7 @@ Support Agents
 ## Directory Structure
 
 ```
-/$PROJECT_ROOT/
+/$CLAUDE_PROJECT_DIR/
 ├── .claude/                              # Base coordination directory
 │   ├── core/                           # Core agent system
 │   │   ├── agents/                     # Single source of truth

@@ -23,7 +23,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Source repo-utils for config access
-source "$PROJECT_ROOT/scripts/repo-utils.sh" 2>/dev/null || {
+source "$CLAUDE_PROJECT_DIR/scripts/repo-utils.sh" 2>/dev/null || {
     echo "Warning: repo-utils.sh not found, using defaults" >&2
 }
 
@@ -49,7 +49,7 @@ get_log_path() {
     if declare -f get_test_log_dir &>/dev/null; then
         log_dir=$(get_test_log_dir)
     else
-        log_dir="$PROJECT_ROOT/.session"
+        log_dir="$CLAUDE_PROJECT_DIR/.session"
     fi
 
     echo "${log_dir}/${log_type}-results-${run_id}.log"
@@ -125,7 +125,7 @@ check_skip_violations() {
         repo_path=$(get_repo_full_path "$repo")
         language=$(get_repo_language "$repo")
     else
-        repo_path="$PROJECT_ROOT/$repo"
+        repo_path="$CLAUDE_PROJECT_DIR/$repo"
         language="unknown"
     fi
 
@@ -194,7 +194,7 @@ show_skip_violations() {
         repo_path=$(get_repo_full_path "$repo")
         language=$(get_repo_language "$repo")
     else
-        repo_path="$PROJECT_ROOT/$repo"
+        repo_path="$CLAUDE_PROJECT_DIR/$repo"
         language="unknown"
     fi
 
@@ -258,7 +258,7 @@ cleanup_test_logs() {
     if declare -f get_test_log_dir &>/dev/null; then
         log_dir=$(get_test_log_dir)
     else
-        log_dir="$PROJECT_ROOT/.session"
+        log_dir="$CLAUDE_PROJECT_DIR/.session"
     fi
 
     rm -f "$log_dir"/test-*-results-*.log 2>/dev/null
@@ -280,7 +280,7 @@ run_repo_tests() {
         repo_path=$(get_repo_full_path "$repo")
         test_cmd=$(get_test_command "$repo")
     else
-        repo_path="$PROJECT_ROOT/$repo"
+        repo_path="$CLAUDE_PROJECT_DIR/$repo"
         test_cmd=""
     fi
 

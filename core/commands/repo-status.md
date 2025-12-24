@@ -18,7 +18,7 @@ Environment variables (set in `.claude/project/hooks/setup-env.sh`):
 Run this command to show the status of all repos:
 
 ```bash
-cd $PROJECT_ROOT
+cd $CLAUDE_PROJECT_DIR
 
 echo "╔══════════════════════════════════════════════════════════════╗"
 echo "║              ${PROJECT_NAME:-PROJECT} REPO STATUS                        ║"

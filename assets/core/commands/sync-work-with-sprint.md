@@ -97,7 +97,7 @@ When you start work, update the sprint status file:
 
 **For API work:**
 ```bash
-cd $PROJECT_ROOT/API
+cd $CLAUDE_PROJECT_DIR/API
 
 # Edit sprint status
 # Change story status from 'backlog' to 'in-progress'
@@ -106,7 +106,7 @@ cd $PROJECT_ROOT/API
 
 **For UI work:**
 ```bash
-cd $PROJECT_ROOT/UI
+cd $CLAUDE_PROJECT_DIR/UI
 
 # Edit sprint status
 # Change story status from 'backlog' to 'in-progress'
@@ -123,7 +123,7 @@ When work is complete:
 
 **For API work:**
 ```bash
-cd $PROJECT_ROOT/API
+cd $CLAUDE_PROJECT_DIR/API
 
 # Edit sprint status
 # Change: 2-2-okta-sso-integration: done
@@ -132,7 +132,7 @@ cd $PROJECT_ROOT/API
 
 **For UI work:**
 ```bash
-cd $PROJECT_ROOT/UI
+cd $CLAUDE_PROJECT_DIR/UI
 
 # Edit sprint status
 # Change: 5-2-environment-configuration-validation: done
@@ -143,12 +143,12 @@ cd $PROJECT_ROOT/UI
 
 ```bash
 # API
-cd $PROJECT_ROOT/API
+cd $CLAUDE_PROJECT_DIR/API
 git add docs/sprint-artifacts/sprint-status.yaml
 git commit -m "chore: update sprint status for story [ID]"
 
 # UI
-cd $PROJECT_ROOT/UI
+cd $CLAUDE_PROJECT_DIR/UI
 git add docs/sprint-artifacts/sprint-status.yaml
 git commit -m "chore: update sprint status for story [ID]"
 ```
@@ -156,7 +156,7 @@ git commit -m "chore: update sprint status for story [ID]"
 ### 7. Archive Pennyfarthing Session
 
 ```bash
-cd $PROJECT_ROOT
+cd $CLAUDE_PROJECT_DIR
 # Invoke /sm and run finish-story task
 # Archive with story ID: story-5-2-env-config-20241202.md
 ```
@@ -202,7 +202,7 @@ backlog → in-progress → review → done
 
 ```bash
 # 1. Start work session
-cd $PROJECT_ROOT
+cd $CLAUDE_PROJECT_DIR
 ./scripts/new-work.sh
 
 # 2. Edit session with story details

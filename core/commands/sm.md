@@ -3,7 +3,7 @@ description: Scrum Master - Story coordination and sprint management
 ---
 
 ```bash
-$PROJECT_ROOT/scripts/agent-session.sh start "sm"
+./scripts/run.sh agent-session.sh start "sm"
 ```
 
 <agent-activation>

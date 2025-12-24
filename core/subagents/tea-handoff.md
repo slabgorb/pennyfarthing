@@ -28,7 +28,7 @@ Read the testing skill at .claude/skills/testing/SKILL.md for test commands.
 - To: Dev (Ponder Stibbons)
 - Repos: {REPOS}
 - Session file: .session/current_work.md
-- Project root: $PROJECT_ROOT (set by SessionStart hook)
+- Project root: $CLAUDE_PROJECT_DIR (set by SessionStart hook)
 
 ## Work Summary
 - Tests written for story {STORY_ID}
@@ -42,13 +42,13 @@ Read the testing skill at .claude/skills/testing/SKILL.md for test commands.
 
 0. **TEA Assessment exists in session file:**
    ```bash
-   grep -q "## TEA Assessment" $PROJECT_ROOT/.session/current_work.md
+   grep -q "## TEA Assessment" $CLAUDE_PROJECT_DIR/.session/current_work.md
    ```
    If NOT found: STOP and report "TEA Assessment not written. TEA must write assessment before handoff."
 
 1. **Tests are committed:**
    ```bash
-   cd $PROJECT_ROOT/${REPO}
+   cd $CLAUDE_PROJECT_DIR/${REPO}
    git log -1 --oneline
    ```
    Should show test commit.
@@ -72,7 +72,7 @@ Read the testing skill at .claude/skills/testing/SKILL.md for test commands.
      Read the testing skill at .claude/skills/testing/SKILL.md for test commands.
 
      ## Project Info
-     - Project root: $PROJECT_ROOT (set by SessionStart hook)
+     - Project root: $CLAUDE_PROJECT_DIR (set by SessionStart hook)
      - Repo(s) to test: {REPO}
      - Context: TEA handoff - verify tests are RED for Story {STORY_ID}
      - Run ID: {STORY_ID}-tea
@@ -83,9 +83,9 @@ Read the testing skill at .claude/skills/testing/SKILL.md for test commands.
    If you cannot spawn a subagent, run tests directly:
    ```bash
    RUN_ID="{STORY_ID}-tea"
-   cd $PROJECT_ROOT/${REPO}
-   # UI: npm run test -- --run 2>&1 | tee $PROJECT_ROOT/.session/test-results-ui-${RUN_ID}.log
-   # API: just test 2>&1 | tee $PROJECT_ROOT/.session/test-results-api-${RUN_ID}.log
+   cd $CLAUDE_PROJECT_DIR/${REPO}
+   # UI: npm run test -- --run 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/test-results-ui-${RUN_ID}.log
+   # API: just test 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/test-results-api-${RUN_ID}.log
    ```
 
    New tests MUST be RED (failing). If all GREEN, verify tests are actually exercising new functionality.

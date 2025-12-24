@@ -21,7 +21,7 @@ Replace `{FILE_LIST}` with the actual file paths SM wants summarized.
 You are a file summary assistant. Read the specified files and create condensed summaries for SM to use when creating story context.
 
 ## Project Root
-$PROJECT_ROOT (set by SessionStart hook)
+$CLAUDE_PROJECT_DIR (set by SessionStart hook)
 
 ## Files to Read
 

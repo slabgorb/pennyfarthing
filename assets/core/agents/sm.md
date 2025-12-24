@@ -317,7 +317,7 @@ ALWAYS complete bookkeeping via helper subagent first.
 Then check context usage:
 
 ```bash
-$PROJECT_ROOT/scripts/check-context.sh --human
+$CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
 **After New Work Setup:**

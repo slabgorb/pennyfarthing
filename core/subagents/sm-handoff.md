@@ -25,7 +25,7 @@ You are a workflow handoff assistant. Complete the handoff for story {STORY_ID}.
 - To: TEA (Igor)
 - Repos: {REPOS}
 - Session file: .session/current_work.md
-- Project root: $PROJECT_ROOT (set by SessionStart hook)
+- Project root: $CLAUDE_PROJECT_DIR (set by SessionStart hook)
 
 ## Work Summary
 - Story {STORY_ID} selected: {TITLE}

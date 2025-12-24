@@ -16,7 +16,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Source repo-utils for multi-repo iteration
-source "$PROJECT_ROOT/scripts/repo-utils.sh" 2>/dev/null || true
+source "$CLAUDE_PROJECT_DIR/scripts/repo-utils.sh" 2>/dev/null || true
 
 # ============================================================================
 # Git Status Functions
@@ -29,17 +29,17 @@ scan_repo_git_status() {
     local repo_path
 
     # Handle both repo name (from config) and direct path
-    if [[ -d "$PROJECT_ROOT/$repo" ]]; then
-        repo_path="$PROJECT_ROOT/$repo"
+    if [[ -d "$CLAUDE_PROJECT_DIR/$repo" ]]; then
+        repo_path="$CLAUDE_PROJECT_DIR/$repo"
     elif declare -f get_repo_path &>/dev/null; then
         repo_path=$(get_repo_full_path "$repo" 2>/dev/null)
     else
-        repo_path="$PROJECT_ROOT/$repo"
+        repo_path="$CLAUDE_PROJECT_DIR/$repo"
     fi
 
     # If repo path doesn't exist, try PROJECT_ROOT itself (for pennyfarthing)
-    if [[ ! -d "$repo_path/.git" && -d "$PROJECT_ROOT/.git" && "$repo" == "pennyfarthing" ]]; then
-        repo_path="$PROJECT_ROOT"
+    if [[ ! -d "$repo_path/.git" && -d "$CLAUDE_PROJECT_DIR/.git" && "$repo" == "pennyfarthing" ]]; then
+        repo_path="$CLAUDE_PROJECT_DIR"
     fi
 
     if [[ ! -d "$repo_path" ]]; then
@@ -71,7 +71,7 @@ scan_all_repos_status() {
         done
     else
         # Fallback: scan common repo patterns
-        for dir in "$PROJECT_ROOT"/*; do
+        for dir in "$CLAUDE_PROJECT_DIR"/*; do
             if [[ -d "$dir/.git" ]]; then
                 local repo_name
                 repo_name=$(basename "$dir")
@@ -80,9 +80,9 @@ scan_all_repos_status() {
         done
 
         # Also check PROJECT_ROOT itself
-        if [[ -d "$PROJECT_ROOT/.git" ]]; then
+        if [[ -d "$CLAUDE_PROJECT_DIR/.git" ]]; then
             local root_name
-            root_name=$(basename "$PROJECT_ROOT")
+            root_name=$(basename "$CLAUDE_PROJECT_DIR")
             scan_repo_git_status "$root_name"
         fi
     fi
@@ -100,17 +100,17 @@ check_repo_pr() {
     local repo_path
 
     # Handle both repo name (from config) and direct path
-    if [[ -d "$PROJECT_ROOT/$repo" ]]; then
-        repo_path="$PROJECT_ROOT/$repo"
+    if [[ -d "$CLAUDE_PROJECT_DIR/$repo" ]]; then
+        repo_path="$CLAUDE_PROJECT_DIR/$repo"
     elif declare -f get_repo_path &>/dev/null; then
         repo_path=$(get_repo_full_path "$repo" 2>/dev/null)
     else
-        repo_path="$PROJECT_ROOT/$repo"
+        repo_path="$CLAUDE_PROJECT_DIR/$repo"
     fi
 
     # If repo path doesn't exist, try PROJECT_ROOT itself
-    if [[ ! -d "$repo_path/.git" && -d "$PROJECT_ROOT/.git" && "$repo" == "pennyfarthing" ]]; then
-        repo_path="$PROJECT_ROOT"
+    if [[ ! -d "$repo_path/.git" && -d "$CLAUDE_PROJECT_DIR/.git" && "$repo" == "pennyfarthing" ]]; then
+        repo_path="$CLAUDE_PROJECT_DIR"
     fi
 
     if [[ ! -d "$repo_path" ]]; then

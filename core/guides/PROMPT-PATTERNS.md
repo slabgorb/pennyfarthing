@@ -97,7 +97,7 @@ The core activation sequence for every agent. The `CRITICAL="TRUE"` attribute si
 3. READ its entire contents
 4. LOAD SIDECAR MEMORY:
    ```bash
-   SIDECAR="$PROJECT_ROOT/.claude/project/agents/{agent}-sidecar"
+   SIDECAR="$CLAUDE_PROJECT_DIR/.claude/project/agents/{agent}-sidecar"
    [ -d "$SIDECAR" ] && cat "$SIDECAR"/*.md 2>/dev/null | head -150
    ```
 5. Execute ALL activation steps exactly as written

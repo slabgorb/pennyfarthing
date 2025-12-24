@@ -70,3 +70,52 @@ This format:
 - Can include metadata (agent, theme)
 - Is easy for agents to parse and use
 - Doesn't interfere with other output
+
+---
+
+## Pattern: Merge Critical Config, Skip User Config
+
+**Problem (2024-12):** When `pennyfarthing init` detected existing `settings.local.json`, it skipped the file entirely. This meant critical hooks (SessionStart) were never installed, causing `$PROJECT_ROOT` to be undefined and agent commands to fail with:
+```
+/scripts/agent-session.sh: no such file or directory
+```
+
+**Root Cause:** The init logic assumed "file exists = user configured it correctly". But users often had partial settings (just permissions) without the critical hooks.
+
+**Solution:** Merge required configuration into existing files instead of skip-or-overwrite.
+
+```typescript
+// Bad: Skip if exists
+if (pathExists(settingsPath)) {
+  logger.skipped('settings.local.json', 'already exists');
+  return;
+}
+
+// Good: Merge required hooks
+const existing = JSON.parse(readFileSync(settingsPath));
+if (!existing.hooks?.SessionStart) {
+  existing.hooks = { ...existing.hooks, SessionStart: requiredHooks };
+  writeFileSync(settingsPath, JSON.stringify(existing, null, 2));
+}
+```
+
+### When to Apply This Pattern
+
+**Merge approach** for config files where:
+- Some fields are REQUIRED for system to function (hooks, paths)
+- Some fields are USER-CUSTOMIZED (permissions, preferences)
+- File may exist with partial configuration
+
+**Skip approach** only for purely user-owned files:
+- Project-specific docs (shared-context.md)
+- User preferences (persona-config.yaml)
+- No system-critical fields
+
+### Implementation Checklist
+
+1. Identify which fields are system-critical vs user-owned
+2. On init/update, read existing file if present
+3. Merge only missing critical fields
+4. Preserve all user customizations
+5. Add doctor check to validate critical fields exist
+6. Provide `--fix` to auto-repair missing fields

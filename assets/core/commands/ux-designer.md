@@ -3,7 +3,7 @@ description: UX Designer - User experience design and UI patterns
 ---
 
 ```bash
-$PROJECT_ROOT/scripts/agent-session.sh start "ux-designer"
+./scripts/run.sh agent-session.sh start "ux-designer"
 ```
 
 <agent-activation>

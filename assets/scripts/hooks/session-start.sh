@@ -16,16 +16,16 @@ input=$(cat)
 session_id=$(echo "$input" | jq -r '.session_id // "unknown"')
 
 # Ensure .session directory exists
-mkdir -p "$PROJECT_ROOT/.session"
+mkdir -p "$CLAUDE_PROJECT_DIR/.session"
 
 # Create session log entry
-echo "$(date -Iseconds) | Session started: $session_id" >> "$PROJECT_ROOT/.session/session-log.txt"
+echo "$(date -Iseconds) | Session started: $session_id" >> "$CLAUDE_PROJECT_DIR/.session/session-log.txt"
 
 # Write environment variables to CLAUDE_ENV_FILE (persists for session)
 if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
     cat >> "$CLAUDE_ENV_FILE" << EOF
 # Pennyfarthing core environment
-export PROJECT_ROOT="$PROJECT_ROOT"
+export PROJECT_ROOT="$CLAUDE_PROJECT_DIR"
 export SESSION_ID="$session_id"
 EOF
 fi
