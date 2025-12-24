@@ -17,6 +17,7 @@ epics:
     priority: P1
     source: "Sprint 1 Retro"
     repos: pennyfarthing
+    jira: https://1898andco.atlassian.net/browse/MSSCI-11142
     stories:
       - id: "2-1"
         title: "Automate Jira sync in SM finish workflow"
@@ -33,6 +34,7 @@ epics:
         completed: 2025-12-23
         branch: feat/2-1-jira-sync-finish
         pr: https://github.com/1898andCo/pennyfarthing/pull/9
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11143
         repos: pennyfarthing
         acceptance_criteria:
           - SM finish workflow automatically transitions Jira to Done
@@ -50,6 +52,7 @@ epics:
         points: 2
         priority: P2
         status: backlog
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11144
         repos: pennyfarthing
         acceptance_criteria:
           - scripts/utils/sprint-metrics.sh displays current sprint stats
@@ -67,6 +70,7 @@ epics:
         points: 2
         priority: P2
         status: backlog
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11145
         repos: pennyfarthing
         acceptance_criteria:
           - --auto-pr flag triggers automatic PR creation
@@ -84,6 +88,7 @@ epics:
         points: 1
         priority: P2
         status: backlog
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11146
         repos: pennyfarthing
         acceptance_criteria:
           - Each sidecar has 5-15 relevant entries
@@ -100,6 +105,7 @@ epics:
     priority: P1
     marker: "quick-win"
     repos: pennyfarthing
+    jira: https://1898andco.atlassian.net/browse/MSSCI-11147
     stories:
       - id: "4-1"
         title: "Document current permissions in settings.local.json"
@@ -112,6 +118,7 @@ epics:
         points: 2
         priority: P1
         status: backlog
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11148
         repos: pennyfarthing
         acceptance_criteria:
           - PERMISSIONS.md documents all current permissions
@@ -128,6 +135,7 @@ epics:
         points: 2
         priority: P1
         status: backlog
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11149
         repos: pennyfarthing
         acceptance_criteria:
           - context_budget settings in settings.local.json template
@@ -144,6 +152,7 @@ epics:
         points: 2
         priority: P2
         status: backlog
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11150
         repos: pennyfarthing
         acceptance_criteria:
           - Hooks section documented in settings template
@@ -160,6 +169,7 @@ epics:
         points: 2
         priority: P2
         status: backlog
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11151
         repos: pennyfarthing
         acceptance_criteria:
           - agent-scopes.yaml defines permissions per agent
