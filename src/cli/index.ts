@@ -40,7 +40,6 @@ program
   .description('Initialize Pennyfarthing in a project')
   .argument('[project-name]', 'Name of the project')
   .option('-f, --force', 'Skip prompts, overwrite existing files')
-  .option('-m, --migrate', 'Auto-migrate from git submodule')
   .option('--skip-templates', 'Skip generating template files')
   .option('--dry-run', 'Show what would be done without doing it')
   .action(initCommand);

@@ -18,4 +18,3 @@ export {
   getAllFiles,
   getDirectoryHashes
 } from './cli/utils/files.js';
-export { hasSubmodule, getSubmoduleVersion } from './cli/commands/migrate.js';

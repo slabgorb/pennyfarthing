@@ -20,11 +20,9 @@ import {
   ensureDir
 } from '../utils/files.js';
 import { getPackageVersion, getAssetsPath } from '../utils/version.js';
-import { migrateFromSubmodule, hasSubmodule } from './migrate.js';
 
 interface InitOptions {
   force?: boolean;
-  migrate?: boolean;
   skipTemplates?: boolean;
   dryRun?: boolean;
 }
@@ -53,26 +51,10 @@ export async function initCommand(
 
   // 1. Check for existing installations
   const hasManifest = manifestExists(projectRoot);
-  const hasSub = hasSubmodule(projectRoot);
   const hasClaudeDir = pathExists(claudeDir);
 
-  // 2. Handle submodule installation
-  if (hasSub) {
-    if (options.force || options.migrate) {
-      await migrateFromSubmodule(projectRoot, { dryRun });
-    } else {
-      const action = await prompts.submoduleDetected();
-      if (action === 'abort') {
-        logger.info('Aborted');
-        return;
-      }
-      await migrateFromSubmodule(projectRoot, { dryRun });
-    }
-    // After migration, continue with normal init to ensure everything is set up
-  }
-
-  // 3. Handle existing npm installation
-  if (hasManifest && !hasSub) {
+  // 2. Handle existing npm installation
+  if (hasManifest) {
     const manifest = readManifest(projectRoot);
     if (!options.force) {
       const action = await prompts.alreadyInstalled(manifest?.version || 'unknown');
@@ -90,7 +72,7 @@ export async function initCommand(
   }
 
   // 4. Handle existing .claude directory without manifest
-  if (hasClaudeDir && !hasManifest && !hasSub && !options.force) {
+  if (hasClaudeDir && !hasManifest && !options.force) {
     const action = await prompts.existingSetup();
     if (action === 'abort') {
       logger.info('Aborted');
