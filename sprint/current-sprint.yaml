@@ -117,7 +117,9 @@ epics:
           - Identify gaps or overly-broad permissions
         points: 2
         priority: P1
-        status: backlog
+        status: in-progress
+        started: 2025-12-24
+        branch: feat/4-1-document-permissions
         jira: https://1898andco.atlassian.net/browse/MSSCI-11148
         repos: pennyfarthing
         acceptance_criteria:
@@ -179,8 +181,8 @@ epics:
 summary:
   total_points: 16
   completed_points: 3
-  in_progress_points: 0
-  backlog_points: 13
+  in_progress_points: 2
+  backlog_points: 11
   velocity_target: 20
   status: active
 
