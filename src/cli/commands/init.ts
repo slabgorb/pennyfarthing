@@ -111,9 +111,7 @@ export async function initCommand(
   // 6. Create directory structure
   logger.info('Creating directories...');
   const directories = [
-    '.claude/core',
-    '.claude/skills',
-    '.claude/personas',
+    '.claude/pennyfarthing',
     '.claude/project/agents',
     '.claude/project/skills',
     '.claude/project/docs',
@@ -135,13 +133,14 @@ export async function initCommand(
   logger.newline();
   logger.info('Copying core files...');
 
+  // New structure: everything installs to .claude/pennyfarthing/
   const managedCopies = [
-    { src: 'core/agents', dest: '.claude/core/agents' },
-    { src: 'core/subagents', dest: '.claude/core/subagents' },
-    { src: 'core/commands', dest: '.claude/core/commands' },
-    { src: 'core/guides', dest: '.claude/core/guides' },
-    { src: 'skills', dest: '.claude/skills' },
-    { src: 'personas', dest: '.claude/personas' },
+    { src: 'agents', dest: '.claude/pennyfarthing/agents' },
+    { src: 'subagents', dest: '.claude/pennyfarthing/subagents' },
+    { src: 'commands', dest: '.claude/pennyfarthing/commands' },
+    { src: 'guides', dest: '.claude/pennyfarthing/guides' },
+    { src: 'skills', dest: '.claude/pennyfarthing/skills' },
+    { src: 'personas', dest: '.claude/pennyfarthing/personas' },
     { src: 'scripts/hooks', dest: 'scripts/hooks' },
     { src: 'scripts/utils', dest: 'scripts/utils' },
     { src: 'scripts/run.sh', dest: 'scripts/run.sh' },
@@ -166,24 +165,28 @@ export async function initCommand(
   }
 
   // Copy statusline.sh
-  const statuslineSrc = join(assetsPath, 'core/statusline.sh');
-  const statuslineDest = join(projectRoot, '.claude/core/statusline.sh');
+  const statuslineSrc = join(assetsPath, 'statusline.sh');
+  const statuslineDest = join(projectRoot, '.claude/pennyfarthing/statusline.sh');
   if (pathExists(statuslineSrc)) {
     if (!dryRun) {
+      ensureDirSync(join(projectRoot, '.claude/pennyfarthing'));
       copySync(statuslineSrc, statuslineDest, { overwrite: true });
     }
-    logger.updated('.claude/core/statusline.sh');
+    logger.updated('.claude/pennyfarthing/statusline.sh');
   }
 
   // 7b. Create symlinks for Claude Code to find commands
+  // These point from .claude/ into .claude/pennyfarthing/
   logger.newline();
   logger.info('Creating symlinks...');
 
   const symlinks = [
-    { target: 'core/commands', link: '.claude/commands' },
-    { target: 'core/agents', link: '.claude/agents' },
-    { target: 'core/subagents', link: '.claude/subagents' },
-    { target: 'core/guides', link: '.claude/guides' }
+    { target: 'pennyfarthing/commands', link: '.claude/commands' },
+    { target: 'pennyfarthing/agents', link: '.claude/agents' },
+    { target: 'pennyfarthing/subagents', link: '.claude/subagents' },
+    { target: 'pennyfarthing/guides', link: '.claude/guides' },
+    { target: 'pennyfarthing/skills', link: '.claude/skills' },
+    { target: 'pennyfarthing/personas', link: '.claude/personas' }
   ];
 
   for (const { target, link } of symlinks) {
@@ -396,11 +399,21 @@ async function mergeSettingsLocalJson(
     logger.info('Added missing SessionEnd hooks');
   }
 
-  // Ensure statusLine is configured
-  if (!existingSettings.statusLine && templateContent.statusLine) {
+  // Ensure statusLine is configured and points to new location
+  const statusLine = existingSettings.statusLine as Record<string, unknown> | undefined;
+  if (!statusLine) {
     existingSettings.statusLine = templateContent.statusLine;
     modified = true;
     logger.info('Added missing statusLine configuration');
+  } else if (statusLine.command && typeof statusLine.command === 'string' &&
+             statusLine.command.includes('.claude/core/statusline.sh')) {
+    // Migrate from old path to new path
+    statusLine.command = statusLine.command.replace(
+      '.claude/core/statusline.sh',
+      '.claude/pennyfarthing/statusline.sh'
+    );
+    modified = true;
+    logger.info('Updated statusLine path to new location');
   }
 
   if (modified && !options.dryRun) {

@@ -90,9 +90,7 @@ export function createManifest(
     updatedAt: now,
     projectName,
     managedPaths: [
-      '.claude/core/',
-      '.claude/skills/',
-      '.claude/personas/',
+      '.claude/pennyfarthing/',
       'scripts/hooks/'
     ],
     fileHashes,
