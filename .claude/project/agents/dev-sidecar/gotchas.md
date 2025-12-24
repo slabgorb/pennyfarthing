@@ -29,7 +29,7 @@ cd $PROJECT_ROOT/$API_REPO && just test
 "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/hooks/session-start.sh"
 ```
 **Why:** Hook commands resolve relative to Claude's CWD, not project root. `$CLAUDE_PROJECT_DIR` is set by Claude Code to the directory where it was started.
-**Note:** `git rev-parse --show-toplevel` doesn't work as fallback - returns wrong root in submodules/nested repos.
+**Note:** `git rev-parse --show-toplevel` doesn't work as fallback - returns wrong root in nested repos.
 
 ## Go-Specific Gotchas
 
