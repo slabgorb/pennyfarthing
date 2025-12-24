@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.1.3] - 2025-12-24
+
+### Fixed
+- YAML syntax errors in `discworld.yaml` theme - 8 helper style strings with quotes followed by unquoted text now properly escaped
+- Status line path in USER-GUIDE.md - corrected to `$CLAUDE_PROJECT_DIR/.claude/statusline.sh`
+
+---
+
 ## [1.5.1] - 2025-12-23
 
 ### Added
