@@ -90,8 +90,7 @@ export function createManifest(
     updatedAt: now,
     projectName,
     managedPaths: [
-      '.claude/pennyfarthing/',
-      'scripts/hooks/'
+      '.claude/pennyfarthing/'
     ],
     fileHashes,
     ...(options?.migrationSource && { migrationSource: options.migrationSource })

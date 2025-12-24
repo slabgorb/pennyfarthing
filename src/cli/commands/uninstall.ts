@@ -12,6 +12,7 @@ interface UninstallOptions {
 }
 
 // Managed paths - always removed
+// Note: .claude/pennyfarthing includes scripts/, agents, commands, etc.
 const MANAGED_PATHS = [
   '.claude/pennyfarthing',
   '.claude/agents',         // symlink
@@ -21,16 +22,7 @@ const MANAGED_PATHS = [
   '.claude/skills',         // symlink
   '.claude/personas',       // symlink
   '.claude/manifest.json',
-  '.claude/settings.local.json',
-  'scripts/hooks',
-  'scripts/utils',
-  'scripts/run.sh',
-  'scripts/agent-session.sh',
-  'scripts/check-context.sh',
-  'scripts/repo-utils.sh',
-  'scripts/worktree-manager.sh',
-  'scripts/release.sh',
-  'scripts/uninstall.sh'
+  '.claude/settings.local.json'
 ];
 
 // Project paths - only removed with --all
