@@ -80,7 +80,7 @@ Mark story as BLOCKED if any dependency is not `status: done`.
 For each available story:
 ```bash
 EPIC_NUM=$(echo "{STORY_ID}" | cut -d'-' -f1)
-$CLAUDE_PROJECT_DIR/scripts/find-related-work.sh --epic ${EPIC_NUM} 2>/dev/null | head -20
+./scripts/run.sh find-related-work.sh --epic ${EPIC_NUM} 2>/dev/null | head -20
 ```
 
 ## Output Format

@@ -100,16 +100,16 @@ Use this instead of Step 3 if you need to work on multiple stories simultaneousl
 cd $CLAUDE_PROJECT_DIR
 
 # Create worktree with branches (both API and UI)
-./scripts/worktree-manager.sh create [story-id] feat/[story-id]-[description]
+./scripts/run.sh worktree-manager.sh create [story-id] feat/[story-id]-[description]
 
 # Example: Story 5-2
-./scripts/worktree-manager.sh create 5-2 feat/5-2-csv-import
+./scripts/run.sh worktree-manager.sh create 5-2 feat/5-2-csv-import
 
 # For API-only work
-./scripts/worktree-manager.sh create [story-id] feat/[story-id]-[description] api
+./scripts/run.sh worktree-manager.sh create [story-id] feat/[story-id]-[description] api
 
 # For UI-only work
-./scripts/worktree-manager.sh create [story-id] feat/[story-id]-[description] ui
+./scripts/run.sh worktree-manager.sh create [story-id] feat/[story-id]-[description] ui
 ```
 
 This creates:
@@ -125,7 +125,7 @@ This creates:
 cd $CLAUDE_PROJECT_DIR
 
 # Start new work session
-./scripts/new-work.sh
+./scripts/run.sh new-work.sh
 ```
 
 ### 5. Document the Work
@@ -232,7 +232,7 @@ cd $CLAUDE_PROJECT_DIR/worktrees/[story-id]/API
 cd $CLAUDE_PROJECT_DIR/worktrees/[story-id]/UI
 
 # Get port configuration for dev servers
-eval $(./scripts/worktree-manager.sh ports [story-id])
+eval $(./scripts/run.sh worktree-manager.sh ports [story-id])
 echo "API: $API_PORT, UI: $UI_PORT"
 ```
 
@@ -255,7 +255,7 @@ git push -u origin feature/AUTH-123-user-authentication
 
 # 3. Create Pennyfarthing session
 cd ..
-./scripts/new-work.sh
+./scripts/run.sh new-work.sh
 
 # 4. Edit session file
 # Update .session/current-work.md with story details
@@ -360,7 +360,7 @@ git checkout -b feature/STORY-ID-description && \
 git push -u origin feature/STORY-ID-description
 
 # Create session
-cd .. && ./scripts/new-work.sh
+cd .. && ./scripts/run.sh new-work.sh
 
 # Edit session
 # Update .session/current-work.md

@@ -21,7 +21,7 @@ All changes MUST follow this workflow:
 ### 1. Gather Current State and Check for Unpushed Commits
 
 ```bash
-./scripts/git-status-all.sh
+./scripts/run.sh git-status-all.sh
 ```
 
 This shows branch, changes, and unpushed commits for all repos.
@@ -51,7 +51,7 @@ fi
 
 ```bash
 echo "=== Worktree Status ==="
-./scripts/worktree-manager.sh status
+./scripts/run.sh worktree-manager.sh status
 ```
 
 This shows all active worktrees with their branches and uncommitted changes.
@@ -226,7 +226,7 @@ When running this command, Claude should:
 
 ```bash
 # View what needs cleanup (all repos)
-./scripts/git-status-all.sh
+./scripts/run.sh git-status-all.sh
 
 # Create cleanup branch
 git checkout develop && git pull
@@ -264,7 +264,7 @@ Stale feature branches can accumulate over time. Include branch cleanup as part 
 ```bash
 echo "=== Branch Status ==="
 
-./scripts/check-status.sh
+./scripts/run.sh check-status.sh
 ```
 
 ### Remove Merged Branches
@@ -310,7 +310,7 @@ cd ..
 
 ```bash
 echo "=== Final State ==="
-./scripts/git-status-all.sh
+./scripts/run.sh git-status-all.sh
 echo ""
 echo "=== Branches ==="
 echo "API:" && git -C API branch

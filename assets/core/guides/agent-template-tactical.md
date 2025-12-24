@@ -122,14 +122,14 @@ After completing work:
 
 1. Write assessment to session file
 2. Spawn handoff helper (`.claude/subagents/{agent}-handoff.md`)
-3. Check context: `eval $(./scripts/check-context.sh)`
+3. Check context: `eval $(./scripts/run.sh check-context.sh)`
 4. If `HANDOFF_MODE=auto`: Use Skill tool to invoke next agent
 5. If `HANDOFF_MODE=ask`: Tell user to start fresh session
 
 <exit>
 To exit: "Exit {Agent}" or "Switch to [other agent]"
 
-On exit, run: `./scripts/agent-session.sh stop`
+On exit, run: `./scripts/run.sh agent-session.sh stop`
 </exit>
 ```
 

@@ -20,10 +20,10 @@ read -p "Branch name (e.g., feat/5-3a-feature): " BRANCH_NAME
 
 # Create worktree
 WORKTREE_NAME="wt-${STORY_ID}"
-./scripts/worktree-manager.sh create "$WORKTREE_NAME" "$BRANCH_NAME"
+./scripts/run.sh worktree-manager.sh create "$WORKTREE_NAME" "$BRANCH_NAME"
 
 # Get port configuration
-eval $(./scripts/worktree-manager.sh ports "$WORKTREE_NAME")
+eval $(./scripts/run.sh worktree-manager.sh ports "$WORKTREE_NAME")
 ```
 
 ### Step 2: Create Session File
