@@ -1,6 +1,6 @@
 {
   "name": "pennyfarthing",
-  "version": "2.0.0-beta.3",
+  "version": "2.1.0",
   "description": "Claude Code agent framework with TDD workflow and persona system",
   "type": "module",
   "keywords": [
