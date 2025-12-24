@@ -1,56 +1,9 @@
 # Pennyfarthing Backlog
 # Future epics and stories not yet committed to a sprint
+# Epic 2 & 4 moved to Sprint 2 (current-sprint.yaml)
 
 backlog:
   epics:
-    - id: epic-2
-      title: "Sprint Operations Polish"
-      description: |
-        Housekeeping improvements from Sprint 1 retrospective.
-        Automates manual workflows and improves developer experience.
-      points: 8
-      priority: P1
-      source: "Sprint 1 Retro"
-      stories:
-        - id: "2-1"
-          title: "Automate Jira sync in SM finish workflow"
-          description: |
-            Integrate automatic Jira status transition when SM finishes a story.
-            Currently requires manual /sync-epic-to-jira invocation.
-          points: 3
-          priority: P1
-          repos: pennyfarthing
-          owner: devops
-        - id: "2-2"
-          title: "Create sprint metrics script"
-          description: |
-            Script to calculate and display sprint metrics:
-            - Points burned vs remaining
-            - Velocity trends
-            - Story completion rates
-          points: 2
-          priority: P2
-          repos: pennyfarthing
-          owner: dev
-        - id: "2-3"
-          title: "Add --auto-pr flag to finish-story flow"
-          description: |
-            Streamline PR creation by adding optional --auto-pr flag
-            that automatically runs gh pr create after review approval.
-          points: 2
-          priority: P2
-          repos: pennyfarthing
-          owner: dev
-        - id: "2-4"
-          title: "Prune stale sidecar entries"
-          description: |
-            Review and clean up agent sidecar files (gotchas, patterns, decisions).
-            Keep 5-15 entries per file, archive old entries.
-          points: 1
-          priority: P2
-          repos: pennyfarthing
-          owner: sm
-
     - id: epic-3
       title: "Automatic Context Management & Circuit Breaker"
       description: |
@@ -60,18 +13,82 @@ backlog:
       points: 13
       priority: P1
       marker: "high-priority"
-      stories: []  # To be refined during sprint planning
+      repos: pennyfarthing
+      stories:
+        - id: "3-1"
+          title: "Implement context usage tracking hook"
+          description: |
+            Create a hook that tracks context usage during agent sessions.
+            - Hook into tool calls to estimate token usage
+            - Store running total in session file
+            - Provide API for agents to query usage
+          points: 3
+          priority: P1
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Hook tracks approximate token usage per session
+            - Usage available via check-context.sh
+            - Persists across tool calls within session
 
-    - id: epic-4
-      title: "Configuration & Permissions Framework"
-      description: |
-        Add missing permissions, hooks, and context_budget sections to
-        settings.local.json. Implement three-tier permission model
-        (read, write, admin) for tool access control.
-      points: 8
-      priority: P1
-      marker: "quick-win"
-      stories: []  # To be refined during sprint planning
+        - id: "3-2"
+          title: "Add automatic warning at 70% threshold"
+          description: |
+            Trigger automatic warning when context reaches 70%.
+            - Inject warning into agent context
+            - Suggest handoff or session split
+            - Log warning to session file
+          points: 3
+          priority: P1
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Warning appears when 70% threshold crossed
+            - Warning includes actionable suggestions
+            - Works with all tactical agents
+
+        - id: "3-3"
+          title: "Implement circuit breaker at 85% threshold"
+          description: |
+            Hard stop at 85% to prevent context overflow.
+            - Force handoff or session end at 85%
+            - Save checkpoint before circuit break
+            - Provide recovery path for user
+          points: 3
+          priority: P1
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Circuit breaker triggers at 85%
+            - Checkpoint saved before break
+            - Clear instructions for resumption
+
+        - id: "3-4"
+          title: "Add session continuation workflow"
+          description: |
+            Enable seamless session continuation after break.
+            - /continue-session command
+            - Load checkpoint and context summary
+            - Resume from last known good state
+          points: 2
+          priority: P2
+          repos: pennyfarthing
+          acceptance_criteria:
+            - /continue-session loads previous checkpoint
+            - Context summary provided for new session
+            - Workflow continues without lost work
+
+        - id: "3-5"
+          title: "Add context usage to statusline"
+          description: |
+            Show context usage in Claude Code statusline.
+            - Display percentage in status bar
+            - Color code (green/yellow/red)
+            - Update in real-time
+          points: 2
+          priority: P2
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Statusline shows context percentage
+            - Color reflects threshold status
+            - Updates during session
 
     - id: epic-5
       title: "Skill Discovery & Documentation Hub"
@@ -82,7 +99,82 @@ backlog:
       points: 13
       priority: P2
       marker: "strategic"
-      stories: []  # To be refined during sprint planning
+      repos: pennyfarthing
+      stories:
+        - id: "5-1"
+          title: "Create skill registry schema"
+          description: |
+            Define structured schema for skill metadata.
+            - Tags, prerequisites, examples, anti-patterns
+            - Version and compatibility info
+            - Usage statistics fields
+          points: 2
+          priority: P1
+          repos: pennyfarthing
+          acceptance_criteria:
+            - skill-registry.yaml schema defined
+            - All 12 skills cataloged with metadata
+            - Schema validates existing skills
+
+        - id: "5-2"
+          title: "Build skill search utility"
+          description: |
+            Script to search skills by tag, name, or description.
+            - Fuzzy matching support
+            - Tag-based filtering
+            - Output formatted for agent consumption
+          points: 3
+          priority: P1
+          repos: pennyfarthing
+          acceptance_criteria:
+            - scripts/utils/skill-search.sh functional
+            - Supports tag and keyword search
+            - JSON output for agent parsing
+
+        - id: "5-3"
+          title: "Add skill suggestions to agents"
+          description: |
+            Agents suggest relevant skills based on task context.
+            - Analyze task keywords
+            - Match against skill registry
+            - Present top 3 suggestions
+          points: 3
+          priority: P2
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Agents suggest skills when relevant
+            - Suggestions based on task analysis
+            - Non-intrusive presentation
+
+        - id: "5-4"
+          title: "Create skill documentation generator"
+          description: |
+            Generate unified skill documentation from registry.
+            - Markdown output for docs/
+            - Include examples and anti-patterns
+            - Auto-update on skill changes
+          points: 3
+          priority: P2
+          repos: pennyfarthing
+          acceptance_criteria:
+            - docs/SKILLS.md auto-generated
+            - Includes all skill metadata
+            - Examples and usage patterns included
+
+        - id: "5-5"
+          title: "Add skill usage analytics"
+          description: |
+            Track which skills are used and how often.
+            - Log skill invocations
+            - Generate usage reports
+            - Identify underutilized skills
+          points: 2
+          priority: P2
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Skill usage logged to .session/
+            - Weekly usage report available
+            - Identifies unused skills
 
     - id: epic-6
       title: "Multi-Agent Choreography Patterns"
@@ -93,7 +185,67 @@ backlog:
       points: 8
       priority: P2
       marker: "quick-win"
-      stories: []  # To be refined during sprint planning
+      repos: pennyfarthing
+      stories:
+        - id: "6-1"
+          title: "Document TDD flow pattern"
+          description: |
+            Document the SM → TEA → Dev → Reviewer pattern.
+            - State machine diagram
+            - Handoff triggers
+            - Error recovery paths
+          points: 2
+          priority: P1
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Pattern documented in guides/
+            - Includes state diagram
+            - Error scenarios covered
+
+        - id: "6-2"
+          title: "Document helper delegation pattern"
+          description: |
+            Document Opus → Haiku delegation pattern.
+            - When to delegate
+            - Prompt construction
+            - Result handling
+          points: 2
+          priority: P1
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Pattern documented with examples
+            - Clear delegation criteria
+            - Anti-patterns identified
+
+        - id: "6-3"
+          title: "Create fan-out/fan-in pattern"
+          description: |
+            Document parallel agent execution pattern.
+            - Spawning multiple agents
+            - Collecting results
+            - Merging outputs
+          points: 2
+          priority: P2
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Pattern documented with example
+            - Shows Task tool parallelism
+            - Result aggregation covered
+
+        - id: "6-4"
+          title: "Create approval gates pattern"
+          description: |
+            Document human-in-the-loop approval pattern.
+            - When to pause for approval
+            - Approval mechanisms (plan mode, AskUserQuestion)
+            - Resumption after approval
+          points: 2
+          priority: P2
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Pattern documented with examples
+            - Different approval types covered
+            - Integration with TDD flow shown
 
     - id: epic-7
       title: "Agent Performance Benchmarking Suite"
@@ -104,13 +256,105 @@ backlog:
       points: 13
       priority: P2
       marker: "strategic"
-      stories: []  # To be refined during sprint planning
+      repos: pennyfarthing
+      stories:
+        - id: "7-1"
+          title: "Create benchmark runner framework"
+          description: |
+            Build reusable framework for running benchmarks.
+            - Load test cases from YAML
+            - Execute against agents
+            - Collect metrics
+          points: 3
+          priority: P1
+          repos: pennyfarthing
+          acceptance_criteria:
+            - scripts/benchmark-runner.sh functional
+            - Loads benchmarks/*.yaml test cases
+            - Outputs structured results
+
+        - id: "7-2"
+          title: "Add token usage metrics"
+          description: |
+            Track token usage per agent/command.
+            - Input tokens
+            - Output tokens
+            - Total cost estimate
+          points: 2
+          priority: P1
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Token usage tracked per benchmark
+            - Cost calculated from usage
+            - Comparison across runs
+
+        - id: "7-3"
+          title: "Add latency metrics"
+          description: |
+            Track response time per agent operation.
+            - Time to first response
+            - Total completion time
+            - Tool call latency
+          points: 2
+          priority: P2
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Latency tracked per benchmark
+            - Breakdown by phase
+            - Historical comparison
+
+        - id: "7-4"
+          title: "Add success rate tracking"
+          description: |
+            Track agent success/failure rates.
+            - Task completion percentage
+            - Error categorization
+            - Retry success rates
+          points: 2
+          priority: P2
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Success/failure logged per run
+            - Error types categorized
+            - Trends over time
+
+        - id: "7-5"
+          title: "Create benchmark dashboard"
+          description: |
+            Generate HTML/Markdown performance reports.
+            - Summary statistics
+            - Trend charts
+            - Regression alerts
+          points: 2
+          priority: P2
+          repos: pennyfarthing
+          acceptance_criteria:
+            - benchmarks/reports/ generated
+            - Includes charts and trends
+            - Alerts on regressions
+
+        - id: "7-6"
+          title: "Add CI integration"
+          description: |
+            Run benchmarks in CI pipeline.
+            - GitHub Actions workflow
+            - Fail on regression
+            - Publish reports
+          points: 2
+          priority: P2
+          repos: pennyfarthing
+          acceptance_criteria:
+            - .github/workflows/benchmark.yml
+            - Runs on PR merge
+            - Reports published to repo
 
 # Summary
-# Total backlog: 63 points across 6 epics
+# Remaining backlog: 47 points across 4 epics
+# Epic 2 (8 pts) + Epic 4 (8 pts) = 16 pts moved to Sprint 2
 #
-# Recommended Sprint 2: Epic 2 (8 pts) + Epic 4 (8 pts) = 16 pts
-# Recommended Sprint 3: Epic 3 (13 pts) or Epic 6 (8 pts)
+# Recommended Sprint 3: Epic 3 (13 pts) - Context Management
+# Recommended Sprint 4: Epic 6 (8 pts) - Choreography Patterns
+# Future: Epic 5 (13 pts), Epic 7 (13 pts) - Strategic
 #
 # Priority Legend:
 # - P1: High priority, next sprint candidates

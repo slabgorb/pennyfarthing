@@ -1,195 +1,177 @@
-# Pennyfarthing Sprint 1
-# Goal: Implement agentic best practices for robust agent coordination
+# Pennyfarthing Sprint 2
+# Goal: Polish sprint operations and establish permissions framework
 
 sprint:
-  number: 1
-  goal: "Complete agentic best practices implementation for production-ready agent workflows"
-  start_date: 2025-12-22
-  end_date: 2025-01-05
+  number: 2
+  goal: "Improve developer experience with automated workflows and proper permissions"
+  start_date: 2025-12-24
+  end_date: 2025-01-07
 
 epics:
-  - id: epic-1
-    title: "Agentic Best Practices Implementation"
-    jira: MSSCI-11116
+  - id: epic-2
+    title: "Sprint Operations Polish"
     description: |
-      Implement Anthropic's agentic best practices patterns into Pennyfarthing.
-      Phase 1 complete (sidecars, permissions, hooks). Remaining: documentation,
-      resilience, and optimization.
-    points: 23
-    priority: P0
+      Housekeeping improvements from Sprint 1 retrospective.
+      Automates manual workflows and improves developer experience.
+    points: 8
+    priority: P1
+    source: "Sprint 1 Retro"
     repos: pennyfarthing
     stories:
-      - id: "1-1"
-        title: "Expand agent command files with workflow context"
-        jira: MSSCI-11117
+      - id: "2-1"
+        title: "Automate Jira sync in SM finish workflow"
         description: |
-          Expand 10 agent command files from 3-line stubs to full workflow
-          documentation. Use new-work.md (95 lines) as template. Commands:
-          dev.md, tea.md, reviewer.md, sm.md, pm.md, architect.md,
-          orchestrator.md, devops.md, tech-writer.md, ux-designer.md
-        points: 5
-        priority: P1
-        status: done
-        started: 2025-12-22
-        completed: 2025-12-22
-        repos: pennyfarthing
-        acceptance_criteria:
-          - Each command file has workflow context similar to new-work.md
-          - Files include activation steps, responsibilities, handoff patterns
-          - Consistent structure across all 10 files
-
-      - id: "1-2"
-        title: "Complete strategic agent behavior guide"
-        jira: MSSCI-11118
-        description: |
-          Expand .claude/guides/strategic-agent-behavior.md with:
-          - PM to Architect coordination patterns
-          - Approval gates and escalation rules
-          - Sprint planning workflows
-          - Cross-agent communication protocols
+          Integrate automatic Jira status transition when SM finishes a story.
+          Currently requires manual /sync-epic-to-jira invocation.
+          - Add Jira transition call to sm-finish-execution.md
+          - Use existing jira-lib.sh utilities
+          - Handle errors gracefully (Jira down shouldn't block finish)
         points: 3
         priority: P1
-        status: done
-        started: 2025-12-22
-        completed: 2025-12-22
+        status: backlog
         repos: pennyfarthing
         acceptance_criteria:
-          - PM/Architect coordination documented
-          - Clear approval gates defined
-          - Sprint planning workflow documented
+          - SM finish workflow automatically transitions Jira to Done
+          - Jira errors are logged but don't block story completion
+          - Works with or without Jira configured
 
-      - id: "1-3"
-        title: "Add resilience utilities (retry, checkpointing)"
-        jira: MSSCI-11119
+      - id: "2-2"
+        title: "Create sprint metrics script"
         description: |
-          Create resilience infrastructure:
-          - scripts/utils/retry.sh with exponential backoff
-          - Checkpoint mechanism in .session/checkpoints.log
-          - Context usage warnings at >70% capacity
-        points: 5
-        priority: P1
-        status: done
-        started: 2025-12-22
-        completed: 2025-12-22
-        repos: pennyfarthing
-        acceptance_criteria:
-          - retry.sh script works with configurable attempts
-          - Checkpointing saves/restores session state
-          - Context warning mechanism implemented
-
-      - id: "1-4a"
-        title: "Split workflow-status-check.md subagent"
-        jira: MSSCI-11120
-        description: |
-          Extract repo scanning utilities from workflow-status-check.md (255 lines)
-          into reusable scripts. This subagent is used by all tactical agents.
+          Script to calculate and display sprint metrics:
+          - Points burned vs remaining
+          - Velocity trends (if historical data exists)
+          - Story completion rates
+          - Days remaining in sprint
         points: 2
         priority: P2
-        status: done
-        started: 2025-12-22
-        completed: 2025-12-22
+        status: backlog
         repos: pennyfarthing
         acceptance_criteria:
-          - Repo scanning logic extracted to scripts/utils/repo-scan.sh
-          - workflow-status-check.md reduced to <200 lines
-          - All agents still function correctly after refactor
+          - scripts/utils/sprint-metrics.sh displays current sprint stats
+          - Shows points completed/remaining/percentage
+          - Readable output suitable for status reports
 
-      - id: "1-4b"
-        title: "Split testing-runner.md subagent"
-        jira: MSSCI-11125
+      - id: "2-3"
+        title: "Add --auto-pr flag to finish-story flow"
         description: |
-          Extract test container setup from testing-runner.md (361 lines)
-          into reusable utilities. Focus on DRY and maintainability.
+          Streamline PR creation by adding optional --auto-pr flag
+          that automatically runs gh pr create after review approval.
+          - Add flag to sm-finish-execution.md workflow
+          - Use existing gh CLI patterns
+          - Default to manual (opt-in automation)
         points: 2
         priority: P2
-        status: done
-        started: 2025-12-23
-        completed: 2025-12-23
+        status: backlog
         repos: pennyfarthing
         acceptance_criteria:
-          - Test container setup extracted to scripts/utils/test-setup.sh
-          - testing-runner.md reduced to <250 lines
-          - Test workflows still function correctly
+          - --auto-pr flag triggers automatic PR creation
+          - PR uses standard template with story context
+          - Works for both single-repo and multi-repo stories
 
-      - id: "1-4c"
-        title: "Add structured logging utility"
-        jira: MSSCI-11126
+      - id: "2-4"
+        title: "Prune stale sidecar entries"
         description: |
-          Create scripts/utils/logging.sh with structured JSON logging
-          for session tracking and debugging agent workflows.
-        points: 2
+          Review and clean up agent sidecar files (gotchas, patterns, decisions).
+          Keep 5-15 entries per file, archive old entries.
+          - Review all 10 agent sidecars
+          - Move outdated entries to archive
+          - Ensure remaining entries are current and valuable
+        points: 1
         priority: P2
-        status: done
-        started: 2025-12-23
-        completed: 2025-12-23
+        status: backlog
         repos: pennyfarthing
         acceptance_criteria:
-          - logging.sh provides log_info, log_warn, log_error functions
-          - JSON output format with timestamp, level, agent, message
-          - Integrates with existing session file workflow
+          - Each sidecar has 5-15 relevant entries
+          - Outdated entries archived to sprint/archive/
+          - All remaining entries verified as current
 
-      - id: "1-4d"
-        title: "Add session file locking"
-        jira: MSSCI-11127
+  - id: epic-4
+    title: "Configuration & Permissions Framework"
+    description: |
+      Add missing permissions, hooks, and context_budget sections to
+      settings.local.json. Implement three-tier permission model
+      (read, write, admin) for tool access control.
+    points: 8
+    priority: P1
+    marker: "quick-win"
+    repos: pennyfarthing
+    stories:
+      - id: "4-1"
+        title: "Document current permissions in settings.local.json"
         description: |
-          Add file locking mechanism to prevent concurrent session conflicts
-          when multiple agents or terminals access .session files.
-        points: 2
-        priority: P2
-        status: done
-        started: 2025-12-23
-        completed: 2025-12-23
-        repos: pennyfarthing
-        acceptance_criteria:
-          - Lock mechanism prevents concurrent writes to session files
-          - Graceful handling when lock cannot be acquired
-          - Lock timeout and cleanup on stale locks
-
-      - id: "1-5"
-        title: "Add guardrail to ensure epic tech context exists before /new-work"
-        jira: MSSCI-11121
-        description: |
-          Create a guardrail that validates epic technical context has been
-          generated (via /start-epic) before allowing /new-work to proceed.
-          This prevents starting work without proper technical analysis.
-          - Check for .session/epic-{N}-context.md before story selection
-          - Prompt user to run /start-epic if context missing
-          - Add validation to workflow-status-check subagent
+          Audit and document the current allowlist in settings.local.json.
+          Create a permissions reference showing what each entry enables.
+          - Catalog all current allowlist entries
+          - Document purpose of each permission
+          - Identify gaps or overly-broad permissions
         points: 2
         priority: P1
-        status: done
-        started: 2025-12-22
-        completed: 2025-12-22
+        status: backlog
         repos: pennyfarthing
         acceptance_criteria:
-          - /new-work checks for epic context file before proceeding
-          - Clear error message directs user to run /start-epic
-          - Guardrail integrated into workflow-status-check subagent
+          - PERMISSIONS.md documents all current permissions
+          - Each permission has clear purpose documented
+          - Recommendations for tightening if needed
+
+      - id: "4-2"
+        title: "Add context_budget configuration"
+        description: |
+          Implement context budget settings that agents can reference.
+          - Add context_budget section to settings template
+          - Define thresholds (warning at 70%, critical at 85%)
+          - Update check-context.sh to use config values
+        points: 2
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - context_budget settings in settings.local.json template
+          - check-context.sh reads from config
+          - Configurable warning/critical thresholds
+
+      - id: "4-3"
+        title: "Create hooks configuration section"
+        description: |
+          Document and organize the hooks configuration pattern.
+          - Audit existing hooks (session-start, pre-edit-check)
+          - Create hooks configuration section in settings
+          - Document how to add custom hooks
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Hooks section documented in settings template
+          - Existing hooks properly configured
+          - HOOKS.md guide for custom hook creation
+
+      - id: "4-4"
+        title: "Add agent-specific permission scopes"
+        description: |
+          Define permission scopes per agent type.
+          - Strategic agents: broader permissions
+          - Tactical agents: focused permissions
+          - Helpers (Haiku): minimal permissions
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - agent-scopes.yaml defines permissions per agent
+          - Documentation explains scope differences
+          - Template includes agent scope examples
 
 summary:
-  total_points: 23
-  completed_points: 21
+  total_points: 16
+  completed_points: 0
   in_progress_points: 0
-  backlog_points: 2
-  velocity_target: 25
-  status: complete
-  retro_date: 2025-12-23
-  retro_file: sprint/archive/sprint-1-retro.md
+  backlog_points: 16
+  velocity_target: 20
+  status: planning
 
-lessons_learned:
-  - "TDD flow (SM→TEA→Dev→Reviewer) works well for standard stories"
-  - "Breaking large stories into a/b/c/d sub-stories improves focus"
-  - "Haiku delegation for mechanical tasks preserves Opus context"
-  - "Hardlink approach is POSIX-portable for file locking"
-  - "Agent sidecars (gotchas, patterns, decisions) capture learnings effectively"
-
-improvement_actions:
-  - action: "Automate Jira sync in SM finish workflow"
-    owner: devops
-    target: "Epic 2"
-  - action: "Create sprint metrics script"
-    owner: dev
-    target: "Epic 2"
-  - action: "Add auto-PR flag to finish-story flow"
-    owner: dev
-    target: "Epic 2"
+# Sprint 2 Planning Notes:
+# - Epic 2 (8 pts): Retro improvements, mostly DevOps/Dev work
+# - Epic 4 (8 pts): Quick win, establishes foundation for future security
+# - Total: 16 pts, leaving buffer for unexpected work
+# - Stories ordered by priority within each epic
