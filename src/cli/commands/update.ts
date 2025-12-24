@@ -128,7 +128,23 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
 
     if (!pathExists(srcPath)) continue;
 
-    // Get files to copy
+    // Handle individual files vs directories
+    if (!isDirectory(srcPath)) {
+      // Single file copy
+      if (skipFiles.some(sf => dest.includes(sf) || sf.includes(dest))) {
+        logger.skipped(dest, 'user modified');
+        continue;
+      }
+
+      if (!dryRun) {
+        ensureDirSync(join(destPath, '..'));
+        copySync(srcPath, destPath, { overwrite: true });
+      }
+      logger.updated(dest);
+      continue;
+    }
+
+    // Directory copy - get all files recursively
     const files = getAllFiles(srcPath);
 
     for (const file of files) {
