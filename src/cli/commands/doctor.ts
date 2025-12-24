@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, chmodSync, statSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, chmodSync, statSync } from 'fs';
 import { join } from 'path';
 import fsExtra from 'fs-extra';
 
@@ -235,7 +235,7 @@ function checkUserFiles(projectRoot: string): CheckResult[] {
     detail: pathExists(personaConfig) ? undefined : 'No theme configured'
   });
 
-  // Check settings.local.json
+  // Check settings.local.json exists
   const settingsLocal = join(projectRoot, '.claude/settings.local.json');
   results.push({
     name: 'settings.local.json',
@@ -243,7 +243,122 @@ function checkUserFiles(projectRoot: string): CheckResult[] {
     detail: pathExists(settingsLocal) ? undefined : 'No local settings'
   });
 
+  // Check SessionStart hooks are configured (critical for PROJECT_ROOT)
+  if (pathExists(settingsLocal)) {
+    const hookCheck = checkSessionStartHooks(projectRoot);
+    results.push(hookCheck);
+  }
+
   return results;
+}
+
+/**
+ * Check that SessionStart hooks are properly configured in settings.local.json
+ * This is critical because session-start.sh exports PROJECT_ROOT
+ */
+function checkSessionStartHooks(projectRoot: string): CheckResult {
+  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+
+  try {
+    const settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+
+    // Check if hooks.SessionStart exists and contains session-start.sh
+    if (!settings.hooks?.SessionStart) {
+      return {
+        name: 'settings/session-start-hook',
+        status: 'fail',
+        detail: 'Missing SessionStart hooks - agents cannot find PROJECT_ROOT',
+        fix: () => {
+          addSessionStartHooks(projectRoot);
+        }
+      };
+    }
+
+    // Check if session-start.sh is configured
+    const hasSessionStartHook = settings.hooks.SessionStart.some((entry: unknown) => {
+      if (typeof entry === 'object' && entry !== null) {
+        const hookEntry = entry as { hooks?: Array<{ command?: string }> };
+        return hookEntry.hooks?.some(h =>
+          h.command?.includes('session-start.sh')
+        );
+      }
+      return false;
+    });
+
+    if (!hasSessionStartHook) {
+      return {
+        name: 'settings/session-start-hook',
+        status: 'fail',
+        detail: 'session-start.sh not configured - PROJECT_ROOT will be undefined',
+        fix: () => {
+          addSessionStartHooks(projectRoot);
+        }
+      };
+    }
+
+    return {
+      name: 'settings/session-start-hook',
+      status: 'pass',
+      detail: undefined
+    };
+  } catch (error) {
+    return {
+      name: 'settings/session-start-hook',
+      status: 'warn',
+      detail: 'Could not parse settings.local.json'
+    };
+  }
+}
+
+/**
+ * Fix function: Add SessionStart hooks to settings.local.json
+ */
+function addSessionStartHooks(projectRoot: string): void {
+  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+
+  const requiredHooks = [
+    {
+      hooks: [
+        {
+          type: 'command',
+          command: '"$CLAUDE_PROJECT_DIR"/scripts/hooks/session-start.sh'
+        }
+      ]
+    },
+    {
+      hooks: [
+        {
+          type: 'command',
+          command: '"$CLAUDE_PROJECT_DIR"/.claude/project/hooks/setup-env.sh'
+        }
+      ]
+    }
+  ];
+
+  let settings: Record<string, unknown> = {};
+
+  if (pathExists(settingsPath)) {
+    try {
+      settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+    } catch {
+      // Start fresh if parse fails
+    }
+  }
+
+  if (!settings.hooks) {
+    settings.hooks = {};
+  }
+
+  const hooks = settings.hooks as Record<string, unknown>;
+
+  if (!hooks.SessionStart) {
+    hooks.SessionStart = requiredHooks;
+  } else if (Array.isArray(hooks.SessionStart)) {
+    // Prepend the required hooks
+    hooks.SessionStart = [...requiredHooks, ...hooks.SessionStart];
+  }
+
+  writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf8');
 }
 
 function checkDirectories(projectRoot: string): CheckResult[] {

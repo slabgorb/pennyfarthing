@@ -25,7 +25,7 @@ Strategic agents have full project scope. They make cross-repo decisions and coo
 Strategic agents load FULL project context on activation:
 
 ```bash
-cd $PROJECT_ROOT
+cd $CLAUDE_PROJECT_DIR
 
 echo "=== Loading Strategic Context ==="
 
@@ -76,7 +76,7 @@ Strategic agents see and coordinate across ALL repos:
 for repo in . API UI; do
     [ -d "$repo" ] || continue
     echo "=== $repo ==="
-    cd "$PROJECT_ROOT/$repo"
+    cd "$CLAUDE_PROJECT_DIR/$repo"
     git branch --show-current
     git status --short
     git log --oneline -3

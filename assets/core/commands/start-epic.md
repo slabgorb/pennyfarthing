@@ -15,7 +15,7 @@ description: Start an epic - move to current sprint and generate tech context
 ## Prerequisites
 
 ```bash
-cd $PROJECT_ROOT
+cd $CLAUDE_PROJECT_DIR
 
 # Verify sprint files exist
 if [ ! -f "sprint/current-sprint.yaml" ] || [ ! -f "sprint/backlog.yaml" ]; then
@@ -41,7 +41,7 @@ Ask the user for the epic ID if not provided:
 ### Step 2: Check Epic Location
 
 ```bash
-cd $PROJECT_ROOT
+cd $CLAUDE_PROJECT_DIR
 
 # Check if epic is in current sprint
 if grep -q "^$EPIC_ID:" sprint/current-sprint.yaml; then

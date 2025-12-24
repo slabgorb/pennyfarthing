@@ -17,7 +17,7 @@ description: "review pre-flight"
 For projects with multiple repositories, use repo-utils.sh:
 
 ```bash
-source $PROJECT_ROOT/scripts/repo-utils.sh
+source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
 
 # Check all repos or filter by type
 for repo in $(filter_repos "{REPOS}"); do
@@ -26,7 +26,7 @@ for repo in $(filter_repos "{REPOS}"); do
     lint_cmd=$(get_lint_command "$repo")
 
     echo "=== Pre-flight for $repo ==="
-    cd $PROJECT_ROOT/$repo_path
+    cd $CLAUDE_PROJECT_DIR/$repo_path
     # Run tests and lints...
 done
 ```
@@ -41,7 +41,7 @@ Replace `{STORY_ID}`, `{REPOS}`, `{BRANCH}`, `{PR_NUMBER}` with actual values.
 You are a code review pre-flight assistant. Gather data for story {STORY_ID}.
 
 ## Project Info
-- Project root: $PROJECT_ROOT (set by SessionStart hook)
+- Project root: $CLAUDE_PROJECT_DIR (set by SessionStart hook)
 - Repos: {REPOS}
 - Branch: {BRANCH}
 - PR: #{PR_NUMBER}
@@ -50,7 +50,7 @@ You are a code review pre-flight assistant. Gather data for story {STORY_ID}.
 
 ### 1. Checkout and Diff Stats
 ```bash
-cd $PROJECT_ROOT/${REPO}
+cd $CLAUDE_PROJECT_DIR/${REPO}
 git fetch origin
 git checkout {BRANCH}
 git diff develop...HEAD --stat
@@ -74,7 +74,7 @@ prompt: |
   For troubleshooting failures, see .claude/skills/testing/references/troubleshooting.md
 
   ## Project Info
-  - Project root: $PROJECT_ROOT (set by SessionStart hook)
+  - Project root: $CLAUDE_PROJECT_DIR (set by SessionStart hook)
   - Repo(s) to test: {REPO}
   - Context: PR review pre-flight for Story {STORY_ID}
   - Run ID: {STORY_ID}-review
@@ -84,15 +84,15 @@ prompt: |
   ### For UI Tests
   ```bash
   RUN_ID="{STORY_ID}-review"
-  cd $PROJECT_ROOT/$UI_REPO
-  npm run test -- --run 2>&1 | tee $PROJECT_ROOT/.session/test-results-ui-${RUN_ID}.log
+  cd $CLAUDE_PROJECT_DIR/$UI_REPO
+  npm run test -- --run 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/test-results-ui-${RUN_ID}.log
   ```
 
   ### For API Tests
   ```bash
   RUN_ID="{STORY_ID}-review"
-  cd $PROJECT_ROOT
-  just test-api 2>&1 | tee $PROJECT_ROOT/.session/test-results-api-${RUN_ID}.log
+  cd $CLAUDE_PROJECT_DIR
+  just test-api 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/test-results-api-${RUN_ID}.log
   ```
 
   ## Run Linter
@@ -100,21 +100,21 @@ prompt: |
   ### For UI
   ```bash
   RUN_ID="{STORY_ID}-review"
-  cd $PROJECT_ROOT/$UI_REPO
-  npm run lint 2>&1 | tee $PROJECT_ROOT/.session/lint-results-ui-${RUN_ID}.log
+  cd $CLAUDE_PROJECT_DIR/$UI_REPO
+  npm run lint 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/lint-results-ui-${RUN_ID}.log
   ```
 
   ### For API
   ```bash
   RUN_ID="{STORY_ID}-review"
-  cd $PROJECT_ROOT/$API_REPO
-  golangci-lint run 2>&1 | tee $PROJECT_ROOT/.session/lint-results-api-${RUN_ID}.log
+  cd $CLAUDE_PROJECT_DIR/$API_REPO
+  golangci-lint run 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/lint-results-api-${RUN_ID}.log
   ```
 
   ## Check for Forbidden Skip Patterns
   ```bash
-  grep -r "t.Skip" $PROJECT_ROOT/$API_REPO --include="*_test.go" | grep -v "LocalStack\|not available" | head -10
-  grep -r "it.skip\|describe.skip\|test.skip" $PROJECT_ROOT/$UI_REPO/src --include="*.test.*" | head -10
+  grep -r "t.Skip" $CLAUDE_PROJECT_DIR/$API_REPO --include="*_test.go" | grep -v "LocalStack\|not available" | head -10
+  grep -r "it.skip\|describe.skip\|test.skip" $CLAUDE_PROJECT_DIR/$UI_REPO/src --include="*.test.*" | head -10
   ```
 
   ## Output structured results per testing-runner.md format

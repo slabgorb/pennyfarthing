@@ -3,7 +3,7 @@ description: Code Reviewer - Critical code review and quality enforcement
 ---
 
 ```bash
-$PROJECT_ROOT/scripts/agent-session.sh start "reviewer"
+./scripts/run.sh agent-session.sh start "reviewer"
 ```
 
 <agent-activation>

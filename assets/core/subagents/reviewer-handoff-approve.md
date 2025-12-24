@@ -25,7 +25,7 @@ You are a workflow handoff assistant. Complete the handoff for story {STORY_ID}.
 - To: Complete (workflow done - ready for SM to finish)
 - Repos: {REPOS}
 - Session file: .session/current_work.md
-- Project root: $PROJECT_ROOT (set by SessionStart hook)
+- Project root: $CLAUDE_PROJECT_DIR (set by SessionStart hook)
 
 ## Work Summary
 - PR #{PR_NUMBER} reviewed
@@ -36,7 +36,7 @@ You are a workflow handoff assistant. Complete the handoff for story {STORY_ID}.
 
 0. **Verify Reviewer Assessment exists in session file:**
    ```bash
-   grep -q "## Reviewer Assessment" $PROJECT_ROOT/.session/current_work.md
+   grep -q "## Reviewer Assessment" $CLAUDE_PROJECT_DIR/.session/current_work.md
    ```
    If NOT found: STOP and report "Reviewer Assessment not written. Reviewer must write assessment before handoff."
 

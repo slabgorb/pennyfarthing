@@ -3,7 +3,7 @@ description: DevOps Engineer - Infrastructure and deployment automation
 ---
 
 ```bash
-$PROJECT_ROOT/scripts/agent-session.sh start "devops"
+./scripts/run.sh agent-session.sh start "devops"
 ```
 
 <agent-activation>

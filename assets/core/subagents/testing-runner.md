@@ -26,8 +26,8 @@ See `repos.yaml` for full schema documentation.
 ## Utilities
 
 ```bash
-source $PROJECT_ROOT/scripts/repo-utils.sh    # Repo config
-source $PROJECT_ROOT/scripts/utils/test-setup.sh  # Test utilities
+source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh    # Repo config
+source $CLAUDE_PROJECT_DIR/scripts/utils/test-setup.sh  # Test utilities
 
 # Available functions:
 # From repo-utils.sh:
@@ -53,7 +53,7 @@ Replace placeholders:
 You are a testing runner. Run tests and report structured results.
 
 ## Project Info
-- Project root: $PROJECT_ROOT
+- Project root: $CLAUDE_PROJECT_DIR
 - Repos to test: {REPOS}
 - Context: {CONTEXT}
 - Run ID: {RUN_ID}
@@ -61,8 +61,8 @@ You are a testing runner. Run tests and report structured results.
 ## Setup
 
 ```bash
-source $PROJECT_ROOT/scripts/repo-utils.sh
-source $PROJECT_ROOT/scripts/utils/test-setup.sh
+source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
+source $CLAUDE_PROJECT_DIR/scripts/utils/test-setup.sh
 
 RUN_ID="${RUN_ID:-$(generate_run_id)}"
 echo "Run ID: $RUN_ID"

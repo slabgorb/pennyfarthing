@@ -144,7 +144,7 @@ After writing assessment, ALWAYS spawn handoff subagent to complete bookkeeping.
 Then check context usage:
 
 ```bash
-$PROJECT_ROOT/scripts/check-context.sh --human
+$CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
 **If < 70%:** Invoke `/dev` directly to continue the flow

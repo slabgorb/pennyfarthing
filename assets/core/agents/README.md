@@ -181,28 +181,28 @@ To add a new agent:
 
 ## Path Standards
 
-**IMPORTANT:** All agent commands use `$PROJECT_ROOT` for path references.
+**IMPORTANT:** All agent commands use `$CLAUDE_PROJECT_DIR` for path references.
 
 ### Standard Pattern
 ```bash
-# ✅ CORRECT - Use $PROJECT_ROOT
-$PROJECT_ROOT/scripts/agent-session.sh start "Agent Name"
-$PROJECT_ROOT/.session/current-work.md
+# ✅ CORRECT - Use $CLAUDE_PROJECT_DIR
+$CLAUDE_PROJECT_DIR/scripts/agent-session.sh start "Agent Name"
+$CLAUDE_PROJECT_DIR/.session/current-work.md
 
 # ❌ WRONG - Don't use git rev-parse
 $(git rev-parse --show-toplevel)/scripts/agent-session.sh
 
 # ❌ WRONG - Don't hardcode paths
-$PROJECT_ROOT/scripts/agent-session.sh
+$CLAUDE_PROJECT_DIR/scripts/agent-session.sh
 ```
 
-### Why $PROJECT_ROOT?
+### Why $CLAUDE_PROJECT_DIR?
 - `$(git rev-parse --show-toplevel)` doesn't work reliably in agent context
 - Hardcoded paths break on different machines
-- `$PROJECT_ROOT` is set by the environment and works consistently
+- `$CLAUDE_PROJECT_DIR` is set by the environment and works consistently
 
 ### Usage in Agent Commands
-All agent commands in `.claude/commands/` have been standardized to use `$PROJECT_ROOT`:
+All agent commands in `.claude/commands/` have been standardized to use `$CLAUDE_PROJECT_DIR`:
 - Agent session registration
 - Script execution
 - File path references

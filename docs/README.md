@@ -6,8 +6,8 @@ Complete documentation for the Pennyfarthing agent orchestration framework.
 
 | Document | Description |
 |----------|-------------|
-| [Getting Started](GETTING-STARTED.md) | Installation and first steps |
-| [Architecture](ARCHITECTURE.md) | System design and principles |
+| [**User Guide**](USER-GUIDE.md) | Complete guide - installation, configuration, usage |
+| [Getting Started](GETTING-STARTED.md) | Quick start guide |
 | [Agents](AGENTS.md) | Agent reference and capabilities |
 | [Commands](COMMANDS.md) | Slash command reference |
 | [Workflows](WORKFLOWS.md) | Key workflow guides |
@@ -24,12 +24,25 @@ Pennyfarthing is a shared agent orchestration framework for Claude Code projects
 - **Subagent Handoffs** - Automated state transitions between agents
 - **Slash Commands** - Entry points for agent activation
 - **Skills** - Project-agnostic knowledge domains
+- **Sprint Management** - Story tracking and workflow coordination
 
-## The Core Philosophy
+## Quick Start
 
-> "The outer loop goes once, the inner loop goes many times."
+```bash
+# Install
+npm install -g pennyfarthing
 
-Strategic planning happens occasionally. Tactical execution (story implementation) happens iteratively.
+# Initialize in your project
+cd your-project
+pennyfarthing init
+
+# Verify installation
+pennyfarthing doctor
+
+# Start working
+# (in Claude Code)
+/new-work
+```
 
 ## The TDD Workflow
 
@@ -45,8 +58,17 @@ Strategic planning happens occasionally. Tactical execution (story implementatio
 4. **Reviewer** - Code quality validation
 5. **SM** - Archive session, complete story
 
+## CLI Commands
+
+| Command | Purpose |
+|---------|---------|
+| `pennyfarthing init` | Initialize in a project |
+| `pennyfarthing update` | Update to latest version |
+| `pennyfarthing doctor` | Check installation health |
+| `pennyfarthing version` | Show version info |
+
 ## Getting Help
 
-- See [Getting Started](GETTING-STARTED.md) for installation
-- See [Workflows](WORKFLOWS.md) for common use cases
-- See [Commands](COMMANDS.md) for command reference
+- See [User Guide](USER-GUIDE.md) for complete documentation
+- See [Troubleshooting](USER-GUIDE.md#troubleshooting) for common issues
+- GitHub Issues: https://github.com/1898andCo/pennyfarthing/issues

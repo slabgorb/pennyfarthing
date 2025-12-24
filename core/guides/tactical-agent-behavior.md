@@ -25,7 +25,7 @@ The Bash tool maintains a persistent working directory across calls, but relativ
 
 1. **At session start, use the PROJECT_ROOT from the `<env>` block:**
    ```
-   Working directory: $PROJECT_ROOT
+   Working directory: $CLAUDE_PROJECT_DIR
    ```
    This is your absolute reference point!
 
@@ -35,25 +35,25 @@ The Bash tool maintains a persistent working directory across calls, but relativ
    cd API && just test
 
    # CORRECT - absolute path always works
-   cd $PROJECT_ROOT/$API_REPO && just test
+   cd $CLAUDE_PROJECT_DIR/$API_REPO && just test
    ```
 
 3. **Best Practice - Explicit cd in every Bash call that needs a specific directory:**
    ```bash
    # Push API branch (from anywhere)
-   cd $PROJECT_ROOT/$API_REPO && git push -u origin feat/branch
+   cd $CLAUDE_PROJECT_DIR/$API_REPO && git push -u origin feat/branch
 
    # Push UI branch (from anywhere)
-   cd $PROJECT_ROOT/$UI_REPO && git push -u origin feat/branch
+   cd $CLAUDE_PROJECT_DIR/$UI_REPO && git push -u origin feat/branch
 
    # Test API (from anywhere)
-   cd $PROJECT_ROOT/$API_REPO && just test
+   cd $CLAUDE_PROJECT_DIR/$API_REPO && just test
 
    # Run tests in both repos (parallel calls)
    # Call 1:
-   cd $PROJECT_ROOT/$API_REPO && just test
+   cd $CLAUDE_PROJECT_DIR/$API_REPO && just test
    # Call 2:
-   cd $PROJECT_ROOT/$UI_REPO && npm test
+   cd $CLAUDE_PROJECT_DIR/$UI_REPO && npm test
    ```
 
 ### Why This Works
@@ -72,7 +72,7 @@ For projects with multiple repositories, use `repo-utils.sh` for dynamic iterati
 ### Loading Repo Configuration
 
 ```bash
-source $PROJECT_ROOT/scripts/repo-utils.sh
+source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
 
 # Check configuration mode
 if is_legacy_mode; then
@@ -88,7 +88,7 @@ show_config
 ### Iterating Through Repos
 
 ```bash
-source $PROJECT_ROOT/scripts/repo-utils.sh
+source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
 
 # All repos
 for repo in $(get_repos); do
@@ -96,19 +96,19 @@ for repo in $(get_repos); do
     repo_type=$(get_repo_type "$repo")
 
     echo "=== $repo ($repo_type) ==="
-    cd $PROJECT_ROOT/$repo_path
+    cd $CLAUDE_PROJECT_DIR/$repo_path
     git status --short
 done
 
 # Filter by type (api, ui, adapter, service, shared, lib)
 for repo in $(get_repos_of_type "api"); do
-    cd $PROJECT_ROOT/$(get_repo_path "$repo")
+    cd $CLAUDE_PROJECT_DIR/$(get_repo_path "$repo")
     # API-specific operations
 done
 
 # Build order (respects dependencies)
 for repo in $(get_build_order); do
-    cd $PROJECT_ROOT/$(get_repo_path "$repo")
+    cd $CLAUDE_PROJECT_DIR/$(get_repo_path "$repo")
     eval "$(get_build_command "$repo")"
 done
 ```
@@ -116,7 +116,7 @@ done
 ### Getting Repo Information
 
 ```bash
-source $PROJECT_ROOT/scripts/repo-utils.sh
+source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
 
 # For a specific repo
 repo="conductor-api"
@@ -132,7 +132,7 @@ get_dependencies "$repo"   # comma-separated list or empty
 ### Running Tests Across Repos
 
 ```bash
-source $PROJECT_ROOT/scripts/repo-utils.sh
+source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
 
 # Run tests in all repos
 run_all_tests
@@ -144,8 +144,8 @@ run_tests_of_type "api"
 for repo in $(get_repos); do
     test_cmd=$(get_test_command "$repo")
     if [ -n "$test_cmd" ]; then
-        cd $PROJECT_ROOT/$(get_repo_path "$repo")
-        eval "$test_cmd" 2>&1 | tee $PROJECT_ROOT/.session/test-results-${repo}.log
+        cd $CLAUDE_PROJECT_DIR/$(get_repo_path "$repo")
+        eval "$test_cmd" 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/test-results-${repo}.log
     fi
 done
 ```
@@ -153,7 +153,7 @@ done
 ### Filtering Repos by Session Scope
 
 ```bash
-source $PROJECT_ROOT/scripts/repo-utils.sh
+source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
 
 # Extract scope from session file
 REPOS=$(grep "^\*\*Repos:\*\*" $SESSION_FILE | cut -d: -f2 | xargs)
@@ -198,7 +198,7 @@ Same pattern - use absolute paths:
 cd worktrees/11-2/API && just test
 
 # CORRECT
-cd $PROJECT_ROOT/worktrees/11-2/$API_REPO && just test
+cd $CLAUDE_PROJECT_DIR/worktrees/11-2/$API_REPO && just test
 ```
 
 ---
@@ -214,7 +214,7 @@ Every tactical agent MUST perform these steps on activation:
 - Worktree: `.session/current_work.{worktree-name}.md` (e.g., `current_work.wt-5-3a.md`)
 
 ```bash
-cd $PROJECT_ROOT
+cd $CLAUDE_PROJECT_DIR
 
 # Find ALL active session files
 SESSIONS=($(ls .session/current_work*.md 2>/dev/null))
@@ -293,7 +293,7 @@ fi
 **MANDATORY:** Before offering to start work, verify the actual state matches the session file.
 
 ```bash
-cd $PROJECT_ROOT
+cd $CLAUDE_PROJECT_DIR
 
 # Check for uncommitted work in affected repos
 REPOS=$(grep "^\*\*Repos:\*\*" $SESSION_FILE | cut -d: -f2 | xargs | tr '[:upper:]' '[:lower:]')
@@ -341,7 +341,7 @@ cd ../UI && npm test -- --run 2>&1 | tail -10
 **MANDATORY:** All tactical agents must ensure they're on the correct branches before starting work.
 
 ```bash
-cd $PROJECT_ROOT
+cd $CLAUDE_PROJECT_DIR
 
 # Extract from session file
 BRANCH=$(grep "Feature Branch:" $SESSION_FILE | cut -d: -f2 | xargs)
@@ -752,16 +752,16 @@ Run `/{next-agent}` in a new conversation to continue.
 
 **For UI repo:**
 ```bash
-cd $PROJECT_ROOT/$UI_REPO && npm test -- --run
-cd $PROJECT_ROOT/$UI_REPO && git status --porcelain
-cd $PROJECT_ROOT/$UI_REPO && git log @{u}..HEAD --oneline
-cd $PROJECT_ROOT/$UI_REPO && gh pr view --json url -q .url
+cd $CLAUDE_PROJECT_DIR/$UI_REPO && npm test -- --run
+cd $CLAUDE_PROJECT_DIR/$UI_REPO && git status --porcelain
+cd $CLAUDE_PROJECT_DIR/$UI_REPO && git log @{u}..HEAD --oneline
+cd $CLAUDE_PROJECT_DIR/$UI_REPO && gh pr view --json url -q .url
 ```
 
 **For API repo:**
 ```bash
-cd $PROJECT_ROOT/$API_REPO && just test
-cd $PROJECT_ROOT/$API_REPO && git status --porcelain
+cd $CLAUDE_PROJECT_DIR/$API_REPO && just test
+cd $CLAUDE_PROJECT_DIR/$API_REPO && git status --porcelain
 ```
 
 ## Agent Flow Reference

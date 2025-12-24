@@ -19,22 +19,22 @@ This skill captures common development patterns, fixes, and gotchas that apply a
 - `cd API && just test` fails with "no such file or directory"
 - Commands fail because assuming wrong directory
 
-**Solution:** Always use absolute paths with `$PROJECT_ROOT`:
+**Solution:** Always use absolute paths with `$CLAUDE_PROJECT_DIR`:
 
 ```bash
 # WRONG - relative cd fails if you're already somewhere else
 cd API && just test
 
 # CORRECT - absolute path always works
-cd $PROJECT_ROOT/API && just test
+cd $CLAUDE_PROJECT_DIR/API && just test
 ```
 
 **Best Practice:** Explicit `cd` with absolute path in every Bash call:
 
 ```bash
 # From anywhere - always works
-cd $PROJECT_ROOT/$API_REPO && git push -u origin feat/branch
-cd $PROJECT_ROOT/$UI_REPO && just test
+cd $CLAUDE_PROJECT_DIR/$API_REPO && git push -u origin feat/branch
+cd $CLAUDE_PROJECT_DIR/$UI_REPO && just test
 ```
 
 ### TypeScript Type Imports
@@ -154,7 +154,7 @@ func TestValidate(t *testing.T) {
 
 ## Common Gotchas
 
-1. **Working directory** - Always use `$PROJECT_ROOT` for absolute paths
+1. **Working directory** - Always use `$CLAUDE_PROJECT_DIR` for absolute paths
 2. **Type imports** - Use `import type` for TypeScript types
 3. **Error handling** - Never ignore errors in Go
 4. **UUID parsing** - Always validate, never panic

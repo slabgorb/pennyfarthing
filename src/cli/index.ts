@@ -7,6 +7,7 @@ import { dirname, join } from 'path';
 import { initCommand } from './commands/init.js';
 import { updateCommand } from './commands/update.js';
 import { doctorCommand } from './commands/doctor.js';
+import { uninstallCommand } from './commands/uninstall.js';
 import { versionCommand } from './commands/version.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -60,6 +61,14 @@ program
   .option('--json', 'Output in JSON format')
   .option('-q, --quiet', 'Only show errors')
   .action(doctorCommand);
+
+program
+  .command('uninstall')
+  .description('Remove Pennyfarthing from the project')
+  .option('-f, --force', 'Skip confirmation prompts')
+  .option('-a, --all', 'Also remove project-specific files (.claude/project, .session)')
+  .option('--dry-run', 'Show what would be removed without removing')
+  .action(uninstallCommand);
 
 program
   .command('version')

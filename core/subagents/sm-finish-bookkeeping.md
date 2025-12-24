@@ -25,13 +25,13 @@ Replace placeholders:
 You are a finish bookkeeping assistant. Execute mechanical finish steps for story {STORY_ID}.
 
 ## Project Root
-$PROJECT_ROOT (set by SessionStart hook)
+$CLAUDE_PROJECT_DIR (set by SessionStart hook)
 
 ## Step 1: Check PR Status
 
 ```bash
 # For each repo in {REPOS}
-cd $PROJECT_ROOT/${REPO}
+cd $CLAUDE_PROJECT_DIR/${REPO}
 gh pr view {BRANCH} --json state,merged,mergeable,url 2>/dev/null || echo "NO_PR"
 ```
 
@@ -44,7 +44,7 @@ Report:
 
 ```bash
 # For each repo in {REPOS}
-cd $PROJECT_ROOT/${REPO}
+cd $CLAUDE_PROJECT_DIR/${REPO}
 
 # Check current branch
 git branch --show-current
@@ -84,7 +84,7 @@ Report: current status, ready for "Done" transition (yes/no)
 
 ```bash
 # Find and extract story entry from sprint YAML
-grep -A 20 "{STORY_ID}" $PROJECT_ROOT/sprint/current-sprint.yaml | head -25
+grep -A 20 "{STORY_ID}" $CLAUDE_PROJECT_DIR/sprint/current-sprint.yaml | head -25
 ```
 
 Report:
@@ -95,7 +95,7 @@ Report:
 ## Step 5: Read Session File
 
 ```bash
-cat $PROJECT_ROOT/.session/current_work.md
+cat $CLAUDE_PROJECT_DIR/.session/current_work.md
 ```
 
 Extract:

@@ -3,7 +3,7 @@ description: System Architect - Technical design and architecture
 ---
 
 ```bash
-$PROJECT_ROOT/scripts/agent-session.sh start "architect"
+./scripts/run.sh agent-session.sh start "architect"
 ```
 
 <agent-activation>

@@ -15,7 +15,7 @@ description: "workflow status check"
 You are a workflow status check assistant. Scan the work state and report.
 
 ## Project Root
-$PROJECT_ROOT (set by SessionStart hook)
+$CLAUDE_PROJECT_DIR (set by SessionStart hook)
 
 ## Step 1: Scan Session Files
 
@@ -80,7 +80,7 @@ fi
 Use `repo-scan.sh` for git status across all repos:
 
 ```bash
-source $PROJECT_ROOT/scripts/utils/repo-scan.sh
+source $CLAUDE_PROJECT_DIR/scripts/utils/repo-scan.sh
 scan_all_repos_status
 # Returns one line per repo: repo|branch|uncommitted|ahead
 ```
@@ -99,14 +99,14 @@ Apply these rules in order:
 
 For **FINISH_STATE** - check PRs using `repo-scan.sh`:
 ```bash
-source $PROJECT_ROOT/scripts/utils/repo-scan.sh
+source $CLAUDE_PROJECT_DIR/scripts/utils/repo-scan.sh
 check_repo_pr "REPO_NAME" "BRANCH_NAME"
 # Returns PR URL or "none"
 ```
 
 For **NEW_WORK_STATE** - count backlog stories:
 ```bash
-grep -c "status: backlog" $PROJECT_ROOT/sprint/current-sprint.yaml 2>/dev/null
+grep -c "status: backlog" $CLAUDE_PROJECT_DIR/sprint/current-sprint.yaml 2>/dev/null
 ```
 
 ## Output Format

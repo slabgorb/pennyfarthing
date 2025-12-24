@@ -156,7 +156,7 @@ After writing assessment, ALWAYS spawn appropriate handoff subagent to complete 
 Then check context usage:
 
 ```bash
-$PROJECT_ROOT/scripts/check-context.sh --human
+$CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
 **If < 70%:** Invoke next agent directly:

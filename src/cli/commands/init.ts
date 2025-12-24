@@ -143,7 +143,14 @@ export async function initCommand(
     { src: 'skills', dest: '.claude/skills' },
     { src: 'personas', dest: '.claude/personas' },
     { src: 'scripts/hooks', dest: 'scripts/hooks' },
-    { src: 'scripts/utils', dest: 'scripts/utils' }
+    { src: 'scripts/utils', dest: 'scripts/utils' },
+    { src: 'scripts/run.sh', dest: 'scripts/run.sh' },
+    { src: 'scripts/agent-session.sh', dest: 'scripts/agent-session.sh' },
+    { src: 'scripts/check-context.sh', dest: 'scripts/check-context.sh' },
+    { src: 'scripts/repo-utils.sh', dest: 'scripts/repo-utils.sh' },
+    { src: 'scripts/worktree-manager.sh', dest: 'scripts/worktree-manager.sh' },
+    { src: 'scripts/release.sh', dest: 'scripts/release.sh' },
+    { src: 'scripts/uninstall.sh', dest: 'scripts/uninstall.sh' }
   ];
 
   for (const { src, dest } of managedCopies) {
@@ -227,8 +234,8 @@ async function generateTemplateFiles(
 ): Promise<void> {
   const templatesPath = join(assetsPath, 'templates');
 
-  const templates = [
-    { template: 'settings.local.json.template', dest: '.claude/settings.local.json' },
+  // Templates that should be skipped if they exist (user-customized)
+  const skipIfExistsTemplates = [
     { template: 'persona-config.yaml.template', dest: '.claude/persona-config.yaml' },
     { template: 'shared-context.md.template', dest: '.claude/project/docs/shared-context.md' },
     { template: 'agent-scopes.yaml.template', dest: '.claude/project/docs/agent-scopes.yaml' },
@@ -236,7 +243,7 @@ async function generateTemplateFiles(
     { template: 'setup-env.sh.template', dest: '.claude/project/hooks/setup-env.sh' }
   ];
 
-  for (const { template, dest } of templates) {
+  for (const { template, dest } of skipIfExistsTemplates) {
     const destPath = join(projectRoot, dest);
 
     // Skip if already exists
@@ -257,6 +264,113 @@ async function generateTemplateFiles(
       }
       logger.created(dest);
     }
+  }
+
+  // Handle settings.local.json specially - merge required hooks
+  await mergeSettingsLocalJson(projectRoot, assetsPath, options);
+}
+
+/**
+ * Merge required hooks into existing settings.local.json
+ * This ensures critical hooks like SessionStart are always configured
+ */
+async function mergeSettingsLocalJson(
+  projectRoot: string,
+  assetsPath: string,
+  options: { dryRun?: boolean }
+): Promise<void> {
+  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+  const templatePath = join(assetsPath, 'templates/settings.local.json.template');
+
+  if (!pathExists(templatePath)) {
+    logger.warning('settings.local.json template not found');
+    return;
+  }
+
+  const templateContent = JSON.parse(readFileSync(templatePath, 'utf8'));
+
+  // If no existing settings, create from template
+  if (!pathExists(settingsPath)) {
+    if (!options.dryRun) {
+      ensureDirSync(join(projectRoot, '.claude'));
+      writeFileSync(settingsPath, JSON.stringify(templateContent, null, 2), 'utf8');
+    }
+    logger.created('.claude/settings.local.json');
+    return;
+  }
+
+  // Read existing settings
+  let existingSettings: Record<string, unknown>;
+  try {
+    existingSettings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+  } catch (error) {
+    logger.warning('Could not parse existing settings.local.json, skipping merge');
+    return;
+  }
+
+  let modified = false;
+
+  // Ensure hooks object exists
+  if (!existingSettings.hooks) {
+    existingSettings.hooks = {};
+    modified = true;
+  }
+
+  const hooks = existingSettings.hooks as Record<string, unknown>;
+
+  // Merge SessionStart hooks - these are critical for PROJECT_ROOT
+  if (!hooks.SessionStart) {
+    hooks.SessionStart = templateContent.hooks?.SessionStart || [];
+    modified = true;
+    logger.info('Added missing SessionStart hooks');
+  } else if (Array.isArray(hooks.SessionStart)) {
+    // Check if session-start.sh hook is configured
+    const hasSessionStartHook = hooks.SessionStart.some((entry: unknown) => {
+      if (typeof entry === 'object' && entry !== null) {
+        const hookEntry = entry as { hooks?: Array<{ command?: string }> };
+        return hookEntry.hooks?.some(h =>
+          h.command?.includes('session-start.sh')
+        );
+      }
+      return false;
+    });
+
+    if (!hasSessionStartHook && templateContent.hooks?.SessionStart) {
+      // Prepend the session-start.sh hook entry
+      const sessionStartEntry = templateContent.hooks.SessionStart.find((entry: unknown) => {
+        if (typeof entry === 'object' && entry !== null) {
+          const hookEntry = entry as { hooks?: Array<{ command?: string }> };
+          return hookEntry.hooks?.some(h => h.command?.includes('session-start.sh'));
+        }
+        return false;
+      });
+      if (sessionStartEntry) {
+        hooks.SessionStart = [sessionStartEntry, ...hooks.SessionStart];
+        modified = true;
+        logger.info('Added missing session-start.sh hook');
+      }
+    }
+  }
+
+  // Merge SessionEnd hooks if missing
+  if (!hooks.SessionEnd && templateContent.hooks?.SessionEnd) {
+    hooks.SessionEnd = templateContent.hooks.SessionEnd;
+    modified = true;
+    logger.info('Added missing SessionEnd hooks');
+  }
+
+  // Ensure statusLine is configured
+  if (!existingSettings.statusLine && templateContent.statusLine) {
+    existingSettings.statusLine = templateContent.statusLine;
+    modified = true;
+    logger.info('Added missing statusLine configuration');
+  }
+
+  if (modified && !options.dryRun) {
+    writeFileSync(settingsPath, JSON.stringify(existingSettings, null, 2), 'utf8');
+    logger.updated('.claude/settings.local.json');
+  } else if (!modified) {
+    logger.skipped('.claude/settings.local.json', 'hooks already configured');
   }
 }
 
