@@ -10,7 +10,12 @@ if ! echo "$input" | jq -e . >/dev/null 2>&1; then
     exit 0
 fi
 
-# Extract fields
+# Determine PROJECT_ROOT from script location (not from workspace.current_dir)
+# This ensures we find .session/agents/ regardless of user's cwd
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Extract fields - use cwd for display only, PROJECT_ROOT for file lookups
 cwd=$(echo "$input" | jq -r '.workspace.current_dir // empty' 2>/dev/null)
 dir_name=$(basename "$cwd" 2>/dev/null || echo "?")
 session_id=$(echo "$input" | jq -r '.session_id // empty' 2>/dev/null)
@@ -52,14 +57,13 @@ fi
 # Agent and character from session
 agent_display=""
 if [ -n "$session_id" ]; then
-    AGENT_FILE="$cwd/.session/agents/${session_id}"
+    AGENT_FILE="$PROJECT_ROOT/.session/agents/${session_id}"
     if [ -f "$AGENT_FILE" ]; then
         agent_name=$(cat "$AGENT_FILE")
         # Capitalize first letter
         agent_cap="$(echo "${agent_name:0:1}" | tr '[:lower:]' '[:upper:]')${agent_name:1}"
 
-        # Get character name from persona config
-        PROJECT_ROOT="$cwd"
+        # Get character name from persona config (PROJECT_ROOT already set above)
         config_file=""
         if [ -f "$PROJECT_ROOT/.claude/persona-config.local.yaml" ]; then
             config_file="$PROJECT_ROOT/.claude/persona-config.local.yaml"
