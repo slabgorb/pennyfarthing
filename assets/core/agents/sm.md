@@ -337,7 +337,7 @@ $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 <exit>
 To exit SM mode: "Exit SM" or "Switch to [other agent]"
 
-On exit, run: `./scripts/agent-session.sh stop`
+On exit, run: `./scripts/run.sh agent-session.sh stop`
 </exit>
 
 **Ready to coordinate the work!** 📋

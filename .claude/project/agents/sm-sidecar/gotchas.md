@@ -125,6 +125,20 @@
 **Problem:** Story context file not created before handoff
 **Solution:** SM must write context file before handing to TEA
 
+## File Operation Gotchas
+
+### Write Without Read
+**Problem:** Write tool fails with "File has not been read yet"
+**Solution:** Always Read existing files before Write, even for session files
+```
+# WRONG - fails if file exists
+Write(.session/current_work.md, content)
+
+# RIGHT - read first
+Read(.session/current_work.md)
+Write(.session/current_work.md, content)
+```
+
 ---
 
 *Add gotchas discovered during story coordination below*

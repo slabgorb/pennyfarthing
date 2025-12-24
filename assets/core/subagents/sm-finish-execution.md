@@ -16,9 +16,10 @@ description: "finish execution"
 
 Replace placeholders:
 - `{STORY_ID}` - e.g., "32-8"
-- `{JIRA_KEY}` - e.g., "MSSCI-11027"
 - `{SUMMARY_CONTENT}` - Full markdown summary written by SM
 - `{ARCHIVE_PATH}` - e.g., "sprint/archive/story-32-8-20251220.md"
+
+Note: Jira key is resolved automatically via jira-sync-story.sh from sprint YAML.
 
 ---
 
@@ -61,13 +62,21 @@ completed: {TODAY}  # YYYY-MM-DD format
 
 Preserve all other fields (jira, pr, etc.).
 
-## Step 4: Transition Jira to Done
+## Step 4: Sync Jira Status
+
+Use the jira-sync-story.sh script to transition Jira and sync story points:
 
 ```bash
-jira issue move {JIRA_KEY} "Done" 2>/dev/null || echo "JIRA_TRANSITION_FAILED"
+$CLAUDE_PROJECT_DIR/scripts/run.sh jira-sync-story.sh "{STORY_ID}" --transition --points 2>/dev/null || true
 ```
 
-If transition fails, log it but continue (non-blocking).
+This will:
+- Transition the linked Jira issue to "Done"
+- Sync story points from sprint YAML to Jira
+- Add completion comment with timestamp
+
+If Jira sync fails (CLI not installed, API error, or no Jira linked), the workflow continues.
+Non-blocking: Jira errors should never prevent story completion.
 
 ## Step 5: Clear Session (Main Checkout)
 

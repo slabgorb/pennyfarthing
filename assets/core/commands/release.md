@@ -3,7 +3,7 @@ description: Merge develop to main and push (optional version bump)
 ---
 
 ```bash
-./scripts/release.sh "$@"
+./scripts/run.sh release.sh "$@"
 ```
 
 <purpose>

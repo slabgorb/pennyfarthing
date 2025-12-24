@@ -107,5 +107,5 @@ From theme config. Model: haiku. Tasks: Architecture scanning, pattern analysis,
 <exit>
 To exit: "Exit Architect" or switch to another agent.
 
-On exit, run: `./scripts/agent-session.sh stop`
+On exit, run: `./scripts/run.sh agent-session.sh stop`
 </exit>

@@ -28,7 +28,9 @@ epics:
           - Handle errors gracefully (Jira down shouldn't block finish)
         points: 3
         priority: P1
-        status: backlog
+        status: in-progress
+        started: 2025-12-23
+        branch: feat/2-1-jira-sync-finish
         repos: pennyfarthing
         acceptance_criteria:
           - SM finish workflow automatically transitions Jira to Done
@@ -165,10 +167,10 @@ epics:
 summary:
   total_points: 16
   completed_points: 0
-  in_progress_points: 0
-  backlog_points: 16
+  in_progress_points: 3
+  backlog_points: 13
   velocity_target: 20
-  status: planning
+  status: active
 
 # Sprint 2 Planning Notes:
 # - Epic 2 (8 pts): Retro improvements, mostly DevOps/Dev work
