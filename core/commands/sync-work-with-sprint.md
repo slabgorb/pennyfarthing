@@ -203,7 +203,7 @@ backlog → in-progress → review → done
 ```bash
 # 1. Start work session
 cd $CLAUDE_PROJECT_DIR
-./scripts/new-work.sh
+./scripts/run.sh new-work.sh
 
 # 2. Edit session with story details
 cat > .session/current-work.md << 'EOF'
