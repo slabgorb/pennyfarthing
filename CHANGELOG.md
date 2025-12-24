@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.0] - 2025-12-24
+
+### Changed
+- **BREAKING:** Restructured installation paths for clarity and single source of truth
+  - Source directory renamed from `assets/` to `pennyfarthing-dist/`
+  - Flattened structure: removed nested `core/` directory
+  - Install location changed from `.claude/core/` to `.claude/pennyfarthing/`
+  - Symlinks now point from `.claude/*` to `.claude/pennyfarthing/*`
+- StatusLine path automatically migrates from old to new location on update
+
+### Removed
+- All submodule migration code (deprecated, no consumers)
+  - Deleted `migrate.ts` and related functions
+  - Removed `--migrate` CLI option
+  - Removed submodule detection from doctor command
+
+### Fixed
+- Update command now runs settings merge before "already up to date" check
+- `hasSubmodule` detection no longer incorrectly flags new installation structure
+
+---
+
 ## [2.1.3] - 2025-12-24
 
 ### Fixed
@@ -141,7 +163,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v1.5.1...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/1898andCo/pennyfarthing/compare/v2.1.3...v2.2.0
+[2.1.3]: https://github.com/1898andCo/pennyfarthing/compare/v1.5.1...v2.1.3
 [1.5.1]: https://github.com/1898andCo/pennyfarthing/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/1898andCo/pennyfarthing/compare/v1.4.1...v1.5.0
 [1.4.1]: https://github.com/1898andCo/pennyfarthing/compare/v1.4.0...v1.4.1
