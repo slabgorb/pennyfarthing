@@ -29,6 +29,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Single source of truth eliminates sync issues
   - Removed legacy scripts (`health-check.sh`, `init-project.sh`) - use CLI instead
   - Only `deploy.sh` remains as pennyfarthing-specific script
+- **CLI Scripts Path** - Scripts now install to `.claude/pennyfarthing/scripts/`
+  - Previously installed to `scripts/` directly
+  - Projects can symlink `scripts/` to `.claude/pennyfarthing/scripts/` for single source
+  - Hooks path updated: `.claude/pennyfarthing/scripts/hooks/session-start.sh`
 - **Subagent Invocation** - Changed from template files to `subagent_type: "{name}"` format
 - **Agent Files Updated** - `dev.md`, `tea.md`, `sm.md`, `reviewer.md` use official subagents
 - **Documentation Updated** - AGENTS.md, ARCHITECTURE.md, USER-GUIDE.md, README.md reflect new structure

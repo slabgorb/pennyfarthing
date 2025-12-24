@@ -308,7 +308,7 @@ function addSessionStartHooks(projectRoot: string): void {
       hooks: [
         {
           type: 'command',
-          command: '"$CLAUDE_PROJECT_DIR"/scripts/hooks/session-start.sh'
+          command: '"$CLAUDE_PROJECT_DIR"/.claude/pennyfarthing/scripts/hooks/session-start.sh'
         }
       ]
     },
@@ -372,8 +372,8 @@ function checkHooks(projectRoot: string): CheckResult[] {
   const results: CheckResult[] = [];
 
   const hooks = [
-    { path: 'scripts/hooks/session-start.sh', name: 'hook/session-start' },
-    { path: 'scripts/hooks/pre-edit-check.sh', name: 'hook/pre-edit-check' }
+    { path: '.claude/pennyfarthing/scripts/hooks/session-start.sh', name: 'hook/session-start' },
+    { path: '.claude/pennyfarthing/scripts/hooks/pre-edit-check.sh', name: 'hook/pre-edit-check' }
   ];
 
   for (const { path, name } of hooks) {

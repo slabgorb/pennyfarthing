@@ -94,11 +94,11 @@ export async function initCommand(
   logger.info('Creating directories...');
   const directories = [
     '.claude/pennyfarthing',
+    '.claude/pennyfarthing/scripts',
     '.claude/project/agents',
     '.claude/project/skills',
     '.claude/project/docs',
     '.claude/project/hooks',
-    'scripts/hooks',
     'sprint',
     '.session'
   ];
@@ -123,15 +123,7 @@ export async function initCommand(
     { src: 'guides', dest: '.claude/pennyfarthing/guides' },
     { src: 'skills', dest: '.claude/pennyfarthing/skills' },
     { src: 'personas', dest: '.claude/pennyfarthing/personas' },
-    { src: 'scripts/hooks', dest: 'scripts/hooks' },
-    { src: 'scripts/utils', dest: 'scripts/utils' },
-    { src: 'scripts/run.sh', dest: 'scripts/run.sh' },
-    { src: 'scripts/agent-session.sh', dest: 'scripts/agent-session.sh' },
-    { src: 'scripts/check-context.sh', dest: 'scripts/check-context.sh' },
-    { src: 'scripts/repo-utils.sh', dest: 'scripts/repo-utils.sh' },
-    { src: 'scripts/worktree-manager.sh', dest: 'scripts/worktree-manager.sh' },
-    { src: 'scripts/release.sh', dest: 'scripts/release.sh' },
-    { src: 'scripts/uninstall.sh', dest: 'scripts/uninstall.sh' }
+    { src: 'scripts', dest: '.claude/pennyfarthing/scripts' }
   ];
 
   for (const { src, dest } of managedCopies) {
