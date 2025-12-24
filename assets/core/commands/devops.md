@@ -2,11 +2,11 @@
 description: DevOps Engineer - Infrastructure and deployment automation
 ---
 
-```bash
-./scripts/run.sh agent-session.sh start "devops"
-```
-
 <agent-activation>
+**FIRST:** Use Bash tool to run: `"$CLAUDE_PROJECT_DIR"/scripts/run.sh agent-session.sh start "devops"`
+This loads your persona from the theme config. Adopt the character shown in the output.
+
+Then:
 1. Load and follow `.claude/agents/devops.md`
 2. Load sidecar: `.claude/project/agents/devops-sidecar/*.md`
 </agent-activation>

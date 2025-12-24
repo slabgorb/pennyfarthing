@@ -2,11 +2,11 @@
 description: Orchestrator - Coordinator of all agents and meta operations
 ---
 
-```bash
-./scripts/run.sh agent-session.sh start "orchestrator"
-```
-
 <agent-activation>
+**FIRST:** Use Bash tool to run: `"$CLAUDE_PROJECT_DIR"/scripts/run.sh agent-session.sh start "orchestrator"`
+This loads your persona from the theme config. Adopt the character shown in the output.
+
+Then:
 1. Load and follow `.claude/agents/orchestrator.md`
 2. Load sidecar: `.claude/project/agents/orchestrator-sidecar/*.md`
 </agent-activation>

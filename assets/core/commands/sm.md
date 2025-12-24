@@ -2,11 +2,11 @@
 description: Scrum Master - Story coordination and sprint management
 ---
 
-```bash
-./scripts/run.sh agent-session.sh start "sm"
-```
-
 <agent-activation>
+**FIRST:** Use Bash tool to run: `"$CLAUDE_PROJECT_DIR"/scripts/run.sh agent-session.sh start "sm"`
+This loads your persona from the theme config. Adopt the character shown in the output.
+
+Then:
 1. Load and follow `.claude/agents/sm.md`
 2. Load sidecar: `.claude/project/agents/sm-sidecar/*.md`
 </agent-activation>
