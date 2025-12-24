@@ -47,20 +47,21 @@ export function getPackageVersion(): string {
 }
 
 /**
- * Get the assets directory path
+ * Get the distributable package directory path
+ * This contains all files that get installed to target projects
  */
 export function getAssetsPath(): string {
-  const assetsPaths = [
-    join(__dirname, '../../../assets'),
-    join(__dirname, '../../assets'),
-    join(process.cwd(), 'assets')
+  const searchPaths = [
+    join(__dirname, '../../../pennyfarthing-dist'),
+    join(__dirname, '../../pennyfarthing-dist'),
+    join(process.cwd(), 'pennyfarthing-dist')
   ];
 
-  for (const assetsPath of assetsPaths) {
-    if (existsSync(assetsPath)) {
-      return assetsPath;
+  for (const searchPath of searchPaths) {
+    if (existsSync(searchPath)) {
+      return searchPath;
     }
   }
 
-  throw new Error('Assets directory not found');
+  throw new Error('Package directory not found (looked for pennyfarthing-dist/)');
 }

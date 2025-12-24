@@ -78,13 +78,14 @@ export async function migrateFromSubmodule(
   logger.newline();
   logger.info('Copying files to new structure...');
 
+  // Migrate to new pennyfarthing/ structure
   const migrations = [
-    { src: 'core/agents', dest: '.claude/core/agents' },
-    { src: 'core/subagents', dest: '.claude/core/subagents' },
-    { src: 'core/commands', dest: '.claude/core/commands' },
-    { src: 'core/guides', dest: '.claude/core/guides' },
-    { src: 'skills', dest: '.claude/skills' },
-    { src: 'personas', dest: '.claude/personas' },
+    { src: 'core/agents', dest: '.claude/pennyfarthing/agents' },
+    { src: 'core/subagents', dest: '.claude/pennyfarthing/subagents' },
+    { src: 'core/commands', dest: '.claude/pennyfarthing/commands' },
+    { src: 'core/guides', dest: '.claude/pennyfarthing/guides' },
+    { src: 'skills', dest: '.claude/pennyfarthing/skills' },
+    { src: 'personas', dest: '.claude/pennyfarthing/personas' },
     { src: 'scripts/hooks', dest: 'scripts/hooks' },
     { src: 'scripts/utils', dest: 'scripts/utils' }
   ];
@@ -110,12 +111,12 @@ export async function migrateFromSubmodule(
 
   for (const statuslineSrc of statuslinePaths) {
     if (pathExists(statuslineSrc)) {
-      const statuslineDest = join(projectRoot, '.claude/core/statusline.sh');
+      const statuslineDest = join(projectRoot, '.claude/pennyfarthing/statusline.sh');
       if (!dryRun) {
-        ensureDirSync(join(projectRoot, '.claude/core'));
+        ensureDirSync(join(projectRoot, '.claude/pennyfarthing'));
         copySync(statuslineSrc, statuslineDest, { overwrite: true });
       }
-      logger.created('.claude/core/statusline.sh');
+      logger.created('.claude/pennyfarthing/statusline.sh');
       break;
     }
   }
@@ -154,21 +155,19 @@ async function updateSettingsPaths(
     let content = readFileSync(settingsPath, 'utf8');
     const original = content;
 
-    // Update paths from old structure to new
+    // Update paths from old structures to new pennyfarthing/ structure
     const pathMappings = [
-      // Old symlink paths → new core paths
-      ['.claude/agents/', '.claude/core/agents/'],
-      ['.claude/subagents/', '.claude/core/subagents/'],
-      ['.claude/commands/', '.claude/core/commands/'],
-      ['.claude/guides/', '.claude/core/guides/'],
-      // Old pennyfarthing submodule paths → new paths
-      ['.claude/pennyfarthing/core/agents/', '.claude/core/agents/'],
-      ['.claude/pennyfarthing/core/subagents/', '.claude/core/subagents/'],
-      ['.claude/pennyfarthing/core/commands/', '.claude/core/commands/'],
-      ['.claude/pennyfarthing/core/guides/', '.claude/core/guides/'],
-      ['.claude/pennyfarthing/skills/', '.claude/skills/'],
-      ['.claude/pennyfarthing/personas/', '.claude/personas/'],
-      ['.claude/pennyfarthing/scripts/', 'scripts/'],
+      // Old core/ paths → new pennyfarthing/ paths
+      ['.claude/core/agents/', '.claude/pennyfarthing/agents/'],
+      ['.claude/core/subagents/', '.claude/pennyfarthing/subagents/'],
+      ['.claude/core/commands/', '.claude/pennyfarthing/commands/'],
+      ['.claude/core/guides/', '.claude/pennyfarthing/guides/'],
+      ['.claude/core/statusline.sh', '.claude/pennyfarthing/statusline.sh'],
+      // Old direct symlink paths → new pennyfarthing/ paths
+      ['.claude/skills/', '.claude/pennyfarthing/skills/'],
+      ['.claude/personas/', '.claude/pennyfarthing/personas/'],
+      // Old submodule paths → new paths
+      ['.claude/pennyfarthing/core/', '.claude/pennyfarthing/'],
       // Hook paths
       ['pennyfarthing/scripts/hooks/', 'scripts/hooks/']
     ];

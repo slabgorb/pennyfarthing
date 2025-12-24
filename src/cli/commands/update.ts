@@ -70,7 +70,11 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
   // 3. Show update info
   logger.header('Pennyfarthing Update');
 
-  if (!updateInfo.needsUpdate && updateInfo.userModifiedFiles.length === 0) {
+  // Always check and update settings (idempotent - only makes changes if needed)
+  const assetsPath = getAssetsPath();
+  const settingsUpdated = await mergeSettingsHooks(projectRoot, assetsPath, { dryRun });
+
+  if (!updateInfo.needsUpdate && updateInfo.userModifiedFiles.length === 0 && !settingsUpdated) {
     logger.success(`Already up to date (v${updateInfo.currentVersion})`);
     return;
   }
@@ -103,14 +107,14 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
   logger.newline();
   logger.info('Updating files...');
 
-  const assetsPath = getAssetsPath();
+  // New structure: everything installs to .claude/pennyfarthing/
   const managedCopies = [
-    { src: 'core/agents', dest: '.claude/core/agents' },
-    { src: 'core/subagents', dest: '.claude/core/subagents' },
-    { src: 'core/commands', dest: '.claude/core/commands' },
-    { src: 'core/guides', dest: '.claude/core/guides' },
-    { src: 'skills', dest: '.claude/skills' },
-    { src: 'personas', dest: '.claude/personas' },
+    { src: 'agents', dest: '.claude/pennyfarthing/agents' },
+    { src: 'subagents', dest: '.claude/pennyfarthing/subagents' },
+    { src: 'commands', dest: '.claude/pennyfarthing/commands' },
+    { src: 'guides', dest: '.claude/pennyfarthing/guides' },
+    { src: 'skills', dest: '.claude/pennyfarthing/skills' },
+    { src: 'personas', dest: '.claude/pennyfarthing/personas' },
     { src: 'scripts/hooks', dest: 'scripts/hooks' },
     { src: 'scripts/utils', dest: 'scripts/utils' },
     { src: 'scripts/run.sh', dest: 'scripts/run.sh' },
@@ -166,24 +170,28 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
   }
 
   // Update statusline
-  const statuslineSrc = join(assetsPath, 'core/statusline.sh');
-  const statuslineDest = join(projectRoot, '.claude/core/statusline.sh');
+  const statuslineSrc = join(assetsPath, 'statusline.sh');
+  const statuslineDest = join(projectRoot, '.claude/pennyfarthing/statusline.sh');
   if (pathExists(statuslineSrc)) {
     if (!dryRun) {
+      ensureDirSync(join(projectRoot, '.claude/pennyfarthing'));
       copySync(statuslineSrc, statuslineDest, { overwrite: true });
     }
-    logger.updated('.claude/core/statusline.sh');
+    logger.updated('.claude/pennyfarthing/statusline.sh');
   }
 
   // Ensure symlinks exist for Claude Code to find commands
+  // These point from .claude/ into .claude/pennyfarthing/
   logger.newline();
   logger.info('Updating symlinks...');
 
   const symlinks = [
-    { target: 'core/commands', link: '.claude/commands' },
-    { target: 'core/agents', link: '.claude/agents' },
-    { target: 'core/subagents', link: '.claude/subagents' },
-    { target: 'core/guides', link: '.claude/guides' }
+    { target: 'pennyfarthing/commands', link: '.claude/commands' },
+    { target: 'pennyfarthing/agents', link: '.claude/agents' },
+    { target: 'pennyfarthing/subagents', link: '.claude/subagents' },
+    { target: 'pennyfarthing/guides', link: '.claude/guides' },
+    { target: 'pennyfarthing/skills', link: '.claude/skills' },
+    { target: 'pennyfarthing/personas', link: '.claude/personas' }
   ];
 
   for (const { target, link } of symlinks) {
@@ -272,11 +280,9 @@ async function checkForUpdates(
     }
 
     // Check if package has a newer version
-    // Map installed path back to assets path
+    // Map installed path back to source path
     const assetsFile = filePath
-      .replace('.claude/core/', 'core/')
-      .replace('.claude/skills/', 'skills/')
-      .replace('.claude/personas/', 'personas/')
+      .replace('.claude/pennyfarthing/', '')
       .replace('scripts/', 'scripts/');
 
     const assetsFilePath = join(assetsPath, assetsFile);
@@ -362,17 +368,18 @@ function collectFileHashes(
 /**
  * Merge required hooks into existing settings.local.json
  * This ensures critical hooks like SessionStart are always configured
+ * Returns true if any changes were made
  */
 async function mergeSettingsHooks(
   projectRoot: string,
   assetsPath: string,
   options: { dryRun?: boolean }
-): Promise<void> {
+): Promise<boolean> {
   const settingsPath = join(projectRoot, '.claude/settings.local.json');
   const templatePath = join(assetsPath, 'templates/settings.local.json.template');
 
   if (!pathExists(templatePath)) {
-    return;
+    return false;
   }
 
   const templateContent = JSON.parse(readFileSync(templatePath, 'utf8'));
@@ -384,7 +391,7 @@ async function mergeSettingsHooks(
       writeFileSync(settingsPath, JSON.stringify(templateContent, null, 2), 'utf8');
     }
     logger.created('.claude/settings.local.json');
-    return;
+    return true;
   }
 
   // Read existing settings
@@ -393,7 +400,7 @@ async function mergeSettingsHooks(
     existingSettings = JSON.parse(readFileSync(settingsPath, 'utf8'));
   } catch (error) {
     logger.warning('Could not parse existing settings.local.json, skipping merge');
-    return;
+    return false;
   }
 
   let modified = false;
@@ -447,15 +454,27 @@ async function mergeSettingsHooks(
     logger.info('Added missing SessionEnd hooks');
   }
 
-  // Ensure statusLine is configured
-  if (!existingSettings.statusLine && templateContent.statusLine) {
+  // Ensure statusLine is configured and points to new location
+  const statusLine = existingSettings.statusLine as Record<string, unknown> | undefined;
+  if (!statusLine) {
     existingSettings.statusLine = templateContent.statusLine;
     modified = true;
     logger.info('Added missing statusLine configuration');
+  } else if (statusLine.command && typeof statusLine.command === 'string' &&
+             statusLine.command.includes('.claude/core/statusline.sh')) {
+    // Migrate from old path to new path
+    statusLine.command = statusLine.command.replace(
+      '.claude/core/statusline.sh',
+      '.claude/pennyfarthing/statusline.sh'
+    );
+    modified = true;
+    logger.info('Updated statusLine path to new location');
   }
 
   if (modified && !options.dryRun) {
     writeFileSync(settingsPath, JSON.stringify(existingSettings, null, 2), 'utf8');
     logger.updated('.claude/settings.local.json');
   }
+
+  return modified;
 }

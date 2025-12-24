@@ -13,12 +13,15 @@ interface UninstallOptions {
 
 // Managed paths - always removed
 const MANAGED_PATHS = [
-  '.claude/core',
-  '.claude/skills',
-  '.claude/personas',
+  '.claude/pennyfarthing',
+  '.claude/agents',         // symlink
+  '.claude/commands',       // symlink
+  '.claude/subagents',      // symlink
+  '.claude/guides',         // symlink
+  '.claude/skills',         // symlink
+  '.claude/personas',       // symlink
   '.claude/manifest.json',
   '.claude/settings.local.json',
-  '.claude/statusline.sh',
   'scripts/hooks',
   'scripts/utils',
   'scripts/run.sh',
