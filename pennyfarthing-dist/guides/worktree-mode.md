@@ -22,11 +22,12 @@ This creates a worktree, sets up the session, and starts the TDD flow.
 
 ```
 .session/
-├── current_work.md              # Main checkout
-└── current_work.wt-5-3a.md      # Worktree (story 5-3a)
+├── 5-2-session.md               # Story 5-2 (main checkout)
+└── 5-3a-session.md              # Story 5-3a (worktree)
 ```
 
-Naming convention: `current_work.{worktree-name}.md`
+Naming convention: `{story-id}-session.md`
+Worktree info is stored INSIDE the session file, not in the filename.
 
 ### Worktree Directory Structure
 

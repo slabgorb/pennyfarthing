@@ -73,7 +73,7 @@ From theme config. Model: haiku. Tasks: {What helpers do for this agent}
 
 <on-activation>
 1. Load sprint context from `sprint/current-sprint.yaml`
-2. Check for active work in `.session/current_work*.md`
+2. Check for active work in `.session/*-session.md`
 3. {Agent-specific startup steps}
 4. Present task menu or offer to continue active work
 </on-activation>

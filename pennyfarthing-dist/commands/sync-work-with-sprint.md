@@ -8,7 +8,7 @@ This workflow helps you coordinate your Pennyfarthing work session with the unif
 
 ## Prerequisites
 
-- [ ] Active work session exists (`.session/current-work.md`)
+- [ ] Active work session exists (`.session/{STORY_ID}-session.md`)
 - [ ] You know which story/epic you're working on
 
 ## Unified Sprint Status
@@ -40,7 +40,7 @@ cat sprint/sprint-status.yaml
 
 ### 2. Update Pennyfarthing Session with Story Info
 
-Edit `.session/current-work.md` to include story details:
+Edit `.session/{STORY_ID}-session.md` to include story details:
 
 ```markdown
 # Feature: [Story Title]
@@ -206,7 +206,7 @@ cd $CLAUDE_PROJECT_DIR
 ./scripts/run.sh new-work.sh
 
 # 2. Edit session with story details
-cat > .session/current-work.md << 'EOF'
+cat > .session/{STORY_ID}-session.md << 'EOF'
 # Feature: Environment Configuration Validation
 
 **Story ID:** 5-2
@@ -331,7 +331,7 @@ Track epic progress in your session:
 # Branch: feature/5-2-env-config-validation
 
 # 2. Session already created, add story details
-# Edit .session/current-work.md with sprint info
+# Edit .session/{STORY_ID}-session.md with sprint info
 
 # 3. Update sprint status to in-progress
 

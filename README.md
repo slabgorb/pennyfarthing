@@ -79,9 +79,16 @@ After initialization:
 ```
 your-project/
 ├── .claude/
-│   ├── core/                 # Agent definitions, commands, guides
-│   ├── skills/               # Knowledge domains
-│   ├── personas/             # Theme files
+│   ├── pennyfarthing/        # Source files (managed)
+│   │   ├── agents/           # Agent definitions + official subagents
+│   │   ├── commands/         # Slash commands
+│   │   ├── guides/           # Behavior guides
+│   │   ├── skills/           # Knowledge domains
+│   │   └── personas/         # Theme files
+│   ├── agents/               # → symlink to pennyfarthing/agents/
+│   ├── commands/             # → symlink to pennyfarthing/commands/
+│   ├── skills/               # → symlink to pennyfarthing/skills/
+│   ├── personas/             # → symlink to pennyfarthing/personas/
 │   ├── project/              # YOUR customizations
 │   │   ├── agents/*-sidecar/ # Agent memory/learnings
 │   │   ├── docs/             # shared-context.md
@@ -97,7 +104,7 @@ your-project/
 │   ├── archive/              # Completed sessions
 │   └── context/              # Story summaries
 └── .session/
-    └── current_work.md       # Active work session
+    └── {story-id}-session.md       # Active work session
 ```
 
 ## Available Themes
@@ -139,13 +146,14 @@ pennyfarthing uninstall --all
 
 Archived sprint data (`sprint/archive/`, `sprint/context/`) is always preserved.
 
-## What's New in v2.0
+## What's New in v2.2
 
-- **NPM Package** - Install via npm instead of git submodule
+- **Official Subagents** - All subagents migrated to Claude Code's official agent format
+- **Symlink Structure** - Source files in `pennyfarthing/`, accessed via symlinks
+- **Centralized Error Handling** - Subagents return structured results, callers handle retries
+- **NPM Package** - Install via npm with `pennyfarthing init`
 - **CLI Tool** - `pennyfarthing init`, `update`, `doctor`, `uninstall`
-- **Settings Merge** - Auto-configures required hooks in existing projects
 - **Health Checks** - `doctor --fix` auto-repairs common issues
-- **Star Trek TOS Theme** - New theme with Kirk, Spock, McCoy, Scotty
 
 ## License
 

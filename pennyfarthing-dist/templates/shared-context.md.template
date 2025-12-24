@@ -6,7 +6,7 @@ This file contains common context loaded by all agents.
 
 - **Name:** ${PROJECT_NAME}
 - **Sprint Status:** `sprint/current-sprint.yaml`
-- **Active Work:** `.session/current_work.md`
+- **Active Work:** `.session/{story-id}-session.md`
 - **Agent Framework:** Pennyfarthing (npm)
 
 ### Tech Stack

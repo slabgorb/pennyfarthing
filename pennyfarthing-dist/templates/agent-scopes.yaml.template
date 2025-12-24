@@ -10,7 +10,7 @@ strategic_agents:
     context_files:
       - sprint/current-sprint.yaml
       - .claude/project/docs/shared-context.md
-      - .session/current-work.md
+      - .session/*-session.md
 
   pm:
     description: "Product Manager - strategic planning"
@@ -18,7 +18,7 @@ strategic_agents:
     context_files:
       - sprint/current-sprint.yaml
       - .claude/project/docs/shared-context.md
-      - .session/current-work.md
+      - .session/*-session.md
 
   sm:
     description: "Scrum Master - story coordination"
@@ -26,14 +26,14 @@ strategic_agents:
     context_files:
       - sprint/current-sprint.yaml
       - .claude/project/docs/shared-context.md
-      - .session/current-work.md
+      - .session/*-session.md
 
   architect:
     description: "System Architect - technical design"
     scope: full
     context_files:
       - .claude/project/docs/shared-context.md
-      - .session/current-work.md
+      - .session/*-session.md
 
   devops:
     description: "DevOps Engineer - infrastructure"
@@ -41,7 +41,7 @@ strategic_agents:
     context_files:
       - sprint/current-sprint.yaml
       - .claude/project/docs/shared-context.md
-      - .session/current-work.md
+      - .session/*-session.md
 
 # Tactical Agents - Story-scoped
 tactical_agents:
@@ -51,7 +51,7 @@ tactical_agents:
     scope: story
     context_files:
       - sprint/current-sprint.yaml
-      - .session/current-work.md
+      - .session/*-session.md
       - .claude/project/docs/shared-context.md
 
   tea:
@@ -59,7 +59,7 @@ tactical_agents:
     scope: story
     context_files:
       - sprint/current-sprint.yaml
-      - .session/current-work.md
+      - .session/*-session.md
       - .claude/project/docs/shared-context.md
 
   reviewer:
@@ -67,7 +67,7 @@ tactical_agents:
     scope: story
     context_files:
       - sprint/current-sprint.yaml
-      - .session/current-work.md
+      - .session/*-session.md
       - .claude/project/docs/shared-context.md
 
   tech-writer:
@@ -75,7 +75,7 @@ tactical_agents:
     scope: story
     context_files:
       - sprint/current-sprint.yaml
-      - .session/current-work.md
+      - .session/*-session.md
       - .claude/project/docs/shared-context.md
 
   ux-designer:
@@ -83,7 +83,7 @@ tactical_agents:
     scope: story
     context_files:
       - sprint/current-sprint.yaml
-      - .session/current-work.md
+      - .session/*-session.md
       - .claude/project/docs/shared-context.md
 
 # Context Loading Rules

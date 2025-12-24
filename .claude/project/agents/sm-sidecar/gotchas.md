@@ -132,11 +132,11 @@
 **Solution:** Always Read existing files before Write, even for session files
 ```
 # WRONG - fails if file exists
-Write(.session/current_work.md, content)
+Write(.session/{story-id}-session.md, content)
 
 # RIGHT - read first
-Read(.session/current_work.md)
-Write(.session/current_work.md, content)
+Read(.session/{story-id}-session.md)
+Write(.session/{story-id}-session.md, content)
 ```
 
 ---

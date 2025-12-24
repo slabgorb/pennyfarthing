@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Official Subagents** - All 12 subagents migrated to Claude Code's official agent format
+  - SM: `workflow-status-check`, `sm-work-research`, `sm-file-summary`, `sm-story-setup`, `sm-finish-bookkeeping`, `sm-finish-execution`
+  - TEA: `tea-handoff`, `testing-runner`
+  - Dev: `dev-handoff`
+  - Reviewer: `reviewer-preflight`, `reviewer-handoff-approve`, `reviewer-handoff-reject`
+- **Centralized Error Handling** - Error recovery protocol in `tactical-agent-behavior.md`
+  - Subagents return `status: success|blocked` with structured data
+  - Callers handle retries (max 2) and escalation
+  - Common failures table for quick diagnosis
+- **Markdownlint Config** - `.markdownlint.json` for consistent documentation style
+
+### Changed
+- **BREAKING: Session File Naming** - Renamed from `current_work.md` to `{story-id}-session.md`
+  - Files now named after story ID: `2-1-session.md`, `5-3a-session.md`
+  - Enables parallel work with multiple active stories
+  - Agents scan `.session/*-session.md` and check Phase field
+  - Worktree info stored inside session file, not in filename
+- **Subagent Invocation** - Changed from template files to `subagent_type: "{name}"` format
+- **Agent Files Updated** - `dev.md`, `tea.md`, `sm.md`, `reviewer.md` use official subagents
+- **Documentation Updated** - AGENTS.md, ARCHITECTURE.md, USER-GUIDE.md, README.md reflect new structure
+
+### Fixed
+- **Statusline PROJECT_ROOT** - Fixed path calculation after v2.2.0 restructure
+  - Now uses `$CLAUDE_PROJECT_DIR` (available in statusLine context)
+  - Fallback to script-based detection for edge cases
+
 ---
 
 ## [2.2.0] - 2025-12-24

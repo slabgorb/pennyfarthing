@@ -13,6 +13,15 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 
 <helpers>
 From theme config. Model: haiku. Tasks: Status checks, backlog scans, file summaries, Jira updates, session archival.
+
+- **Official subagents:** (use `subagent_type: "{name}"`)
+  - `workflow-status-check` - Scan session files and git status
+  - `testing-runner` - Run tests
+  - `sm-work-research` - Scan backlog and Jira for available stories
+  - `sm-file-summary` - Read and summarize files for context
+  - `sm-story-setup` - Claim Jira, create branches, write session
+  - `sm-finish-bookkeeping` - Check PR/lint/Jira status before finish
+  - `sm-finish-execution` - Archive, update sprint, clear session
 </helpers>
 
 <responsibilities>
@@ -56,14 +65,19 @@ REFLECT: I should clarify AC4 with the user before proceeding.
 Never run `just test`, `go test`, or `npm test` directly. Always spawn:
 ```yaml
 Task tool:
-  subagent_type: "general-purpose"
-  model: "haiku"
-  prompt: [from .claude/subagents/testing-runner.md]
+  subagent_type: "testing-runner"
+  prompt: "Run tests for {REPOS}. Context: {CONTEXT}. Run ID: {RUN_ID}"
 ```
+**Placeholders:** `{REPOS}` = repo name or "all", `{CONTEXT}` = why running, `{RUN_ID}` = unique ID
 </reasoning-mode>
 
 <on-activation>
-1. Run workflow status check (helper: `.claude/subagents/workflow-status-check.md`)
+1. Run workflow status check:
+   ```yaml
+   Task tool:
+     subagent_type: "workflow-status-check"
+     prompt: "Check workflow status. Calling agent: SM"
+   ```
 2. Helper returns: `FINISH_STATE`, `NEW_WORK_STATE`, or `IN_PROGRESS_STATE`
 3. If `FINISH_STATE`: Proceed to Finish Story Flow
 4. If `NEW_WORK_STATE`: Proceed to New Work Flow
@@ -123,18 +137,10 @@ FINISH_STATE        NEW_WORK_STATE
 
 I send helper to check the workflow status before anything else.
 
-**Subagent prompt:** `.claude/subagents/workflow-status-check.md`
-
 ```yaml
 Task tool:
-  subagent_type: "general-purpose"
-  model: "haiku"
-  description: "Helper checks workflow status"
-  prompt: |
-    [Load full prompt from .claude/subagents/workflow-status-check.md]
-
-    ## Calling Agent
-    SM
+  subagent_type: "workflow-status-check"
+  prompt: "Check workflow status. Calling agent: SM"
 ```
 
 **Helper returns:**
@@ -157,7 +163,12 @@ Task tool:
 
 ### Step 1: Helper Does Bookkeeping
 
-**Subagent prompt:** `.claude/subagents/sm-finish-bookkeeping.md`
+```yaml
+Task tool:
+  subagent_type: "sm-finish-bookkeeping"
+  prompt: "Gather finish data for story {STORY_ID}. Jira: {JIRA_KEY}. Repos: {REPOS}. Branch: {BRANCH}"
+```
+**Placeholders:** `{STORY_ID}`, `{JIRA_KEY}`, `{REPOS}`, `{BRANCH}`
 
 Helper checks PR status, auto-fixes lint issues, prepares Jira transition.
 
@@ -190,9 +201,14 @@ I read helper's bookkeeping report and write `sprint/context/story-{X-Y}-summary
 
 ### Step 3: Helper Executes Finish
 
-**Subagent prompt:** `.claude/subagents/sm-finish-execution.md`
+```yaml
+Task tool:
+  subagent_type: "sm-finish-execution"
+  prompt: "Execute finish for story {STORY_ID}. Summary: {SUMMARY_CONTENT}. Archive path: {ARCHIVE_PATH}"
+```
+**Placeholders:** `{STORY_ID}`, `{SUMMARY_CONTENT}`, `{ARCHIVE_PATH}`
 
-I pass the summary content to helper, who:
+Helper does:
 - Archives session file to `sprint/archive/`
 - Writes summary to `sprint/context/`
 - Updates sprint YAML (status: done, completed date)
@@ -205,7 +221,11 @@ I pass the summary content to helper, who:
 
 ### Step 1: Helper Researches Backlog
 
-**Subagent prompt:** `.claude/subagents/sm-work-research.md`
+```yaml
+Task tool:
+  subagent_type: "sm-work-research"
+  prompt: "Scan sprint backlog and Jira for available stories."
+```
 
 Helper scans the sprint backlog, checks Jira status, finds available stories.
 
@@ -226,7 +246,12 @@ I receive helper's research report and present to the user:
 
 ### Step 3: Helper Summarizes Files
 
-**Helper's prompt:** `.claude/subagents/sm-file-summary.md`
+```yaml
+Task tool:
+  subagent_type: "sm-file-summary"
+  prompt: "Summarize these files for story {STORY_ID}: {FILE_LIST}"
+```
+**Placeholders:** `{STORY_ID}`, `{FILE_LIST}` (newline-separated paths)
 
 After the user selects a story, I identify relevant files and send helper to summarize them.
 
@@ -273,24 +298,30 @@ I also determine scale:
 
 ### Step 5: Helper Sets Up Story
 
-**Helper's prompt:** `.claude/subagents/sm-story-setup.md`
+```yaml
+Task tool:
+  subagent_type: "sm-story-setup"
+  prompt: "Set up story {STORY_ID}. Jira: {JIRA_KEY}. Repos: {REPOS}. Slug: {SLUG}. Session content: {SESSION_CONTENT}"
+```
+**Placeholders:** `{STORY_ID}`, `{JIRA_KEY}`, `{REPOS}`, `{SLUG}`, `{SESSION_CONTENT}`
 
-I pass the prepared content to helper, who:
+Helper does:
 - Claims Jira story
 - Writes session file
 - Creates feature branches
 - Updates sprint YAML
 
-## Helper's Tasks
+## Official Subagents
 
-| Prompt File | Purpose | When Used |
-|-------------|---------|-----------|
-| `workflow-status-check.md` | Scan session files + git | Always first |
-| `sm-finish-bookkeeping.md` | Check PR, lint, Jira prep | FINISH_STATE |
-| `sm-finish-execution.md` | Archive, Jira transition, cleanup | FINISH_STATE (after I write summary) |
-| `sm-work-research.md` | Scan backlog, check Jira | NEW_WORK_STATE |
-| `sm-file-summary.md` | Read files, create summaries | After user selects story |
-| `sm-story-setup.md` | Jira claim, branches, session | After I create context |
+| Subagent | Purpose | When Used |
+|----------|---------|-----------|
+| `workflow-status-check` | Scan session files + git | Always first |
+| `sm-finish-bookkeeping` | Check PR, lint, Jira prep | FINISH_STATE |
+| `sm-finish-execution` | Archive, Jira transition, cleanup | FINISH_STATE (after I write summary) |
+| `sm-work-research` | Scan backlog, check Jira | NEW_WORK_STATE |
+| `sm-file-summary` | Read files, create summaries | After user selects story |
+| `sm-story-setup` | Jira claim, branches, session | After I create context |
+| `testing-runner` | Run tests | When verification needed |
 
 ## What I Do vs What Helper Does
 

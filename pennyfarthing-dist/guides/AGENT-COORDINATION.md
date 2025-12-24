@@ -29,7 +29,7 @@ This document describes how Pennyfarthing agents are coordinated across the `API
 - **Subagent prompts:** `.claude/subagents/`
 - **Scope configuration:** `.claude/guides/agent-scopes.yaml`
 - **Sprint tracking:** `sprint/current-sprint.yaml`
-- **Session state:** `.session/current-work.md`
+- **Session state:** `.session/{STORY_ID}-session.md`
 
 ### 2. Hierarchical Agent Structure
 ```
@@ -79,7 +79,7 @@ Support Agents
 │   │   └── README.md                  # Sprint tracking guide
 │   │
 │   ├── active/                         # Current work sessions
-│   │   └── current-work.md            # Active story context
+│   │   └── {story-id}-session.md      # Session files (one per story)
 │   │
 │   ├── docs/                           # Project-wide documentation
 │   ├── scripts/                        # Utility scripts
@@ -128,7 +128,7 @@ On Activation:
   2. API/.claude/context.md      # API context
   3. UI/.claude/context.md       # UI context
   4. API/docs/epics.md         # Epic definitions (PM only)
-  5. .session/current-work.md        # Active work
+  5. .session/{STORY_ID}-session.md        # Active work
 ```
 
 ### Tactical Agents (Story-Scoped)
@@ -149,7 +149,7 @@ On Activation:
 ```yaml
 On Activation:
   1. sprint/sprint-status.yaml     # Current sprint (story section)
-  2. .session/current-work.md        # Active story
+  2. .session/{STORY_ID}-session.md        # Active story
   3. Determine target repo from story "Repos:" field
   4. Load target repo context:
      - If API:  API/.claude/context.md
@@ -171,7 +171,7 @@ On Activation:
 - Story status (backlog, in-progress, review, done)
 - Story metadata (repos, priority, points, files)
 
-#### `.session/current-work.md`
+#### `.session/{STORY_ID}-session.md`
 **Purpose:** Current work session context
 **Size:** ~50-100 lines
 **Loaded By:** All agents
@@ -234,7 +234,7 @@ Load files from agent-scopes.yaml:
 
 ### Step 3: Determine Scope (Tactical Agents Only)
 ```
-Read: .session/current-work.md
+Read: .session/{STORY_ID}-session.md
 Extract: "Repos:" field (API|UI|Both)
 Load: Appropriate repo context
 ```

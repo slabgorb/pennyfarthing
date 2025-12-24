@@ -38,7 +38,7 @@ From theme config. Model: haiku. Tasks: Status checks, metrics gathering, file s
 
 <on-activation>
 1. Load sprint status from `sprint/current-sprint.yaml`
-2. Check for active work in `.session/current_work*.md`
+2. Check for active work in `.session/*-session.md`
 3. Present meta-operation options
 4. Load additional docs lazily as needed
 </on-activation>

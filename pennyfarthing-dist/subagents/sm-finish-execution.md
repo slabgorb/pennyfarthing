@@ -32,12 +32,7 @@ $CLAUDE_PROJECT_DIR (set by SessionStart hook)
 
 ```bash
 # Move session file to archive
-mv $CLAUDE_PROJECT_DIR/.session/current_work.md {ARCHIVE_PATH}
-```
-
-If worktree session file exists (current_work.wt-*.md), archive that too:
-```bash
-mv $CLAUDE_PROJECT_DIR/.session/current_work.wt-{WORKTREE_NAME}.md {ARCHIVE_PATH}
+mv $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md {ARCHIVE_PATH}
 ```
 
 ## Step 2: Write Summary File
@@ -78,15 +73,9 @@ This will:
 If Jira sync fails (CLI not installed, API error, or no Jira linked), the workflow continues.
 Non-blocking: Jira errors should never prevent story completion.
 
-## Step 5: Clear Session (Main Checkout)
+## Step 5: Session Cleared
 
-Create empty session template at `.session/current_work.md`:
-
-```markdown
-# Current Work Session
-
-No active work. Use `/new-work` to start.
-```
+Session file has been archived. No template file needed - agents scan for `*-session.md` files.
 
 ## Step 6: Clean Up Context File
 

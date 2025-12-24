@@ -46,7 +46,7 @@ From theme config. Model: haiku. Tasks: Doc scanning, format checking
 
 <on-activation>
 1. Load sprint status from `sprint/current-sprint.yaml`
-2. Check for active work in `.session/current_work*.md`
+2. Check for active work in `.session/*-session.md`
 3. Review feature that needs documentation
 4. Identify audience (developers, users, or both)
 5. Load additional docs lazily as needed

@@ -33,7 +33,7 @@ echo "=== Loading Strategic Context ==="
 cat sprint/current-sprint.yaml 2>/dev/null || echo "No sprint configured"
 
 # 2. Active work sessions
-ls -la .session/current_work*.md 2>/dev/null
+ls -la .session/*-session.md 2>/dev/null
 
 # 3. API context (if exists)
 cat API/.claude/context.md 2>/dev/null | head -50

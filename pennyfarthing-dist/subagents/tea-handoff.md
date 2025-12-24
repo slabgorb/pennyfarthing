@@ -27,7 +27,7 @@ Read the testing skill at .claude/skills/testing/SKILL.md for test commands.
 - From: TEA (Igor)
 - To: Dev (Ponder Stibbons)
 - Repos: {REPOS}
-- Session file: .session/current_work.md
+- Session file: .session/{STORY_ID}-session.md
 - Project root: $CLAUDE_PROJECT_DIR (set by SessionStart hook)
 
 ## Work Summary
@@ -42,7 +42,7 @@ Read the testing skill at .claude/skills/testing/SKILL.md for test commands.
 
 0. **TEA Assessment exists in session file:**
    ```bash
-   grep -q "## TEA Assessment" $CLAUDE_PROJECT_DIR/.session/current_work.md
+   grep -q "## TEA Assessment" $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md
    ```
    If NOT found: STOP and report "TEA Assessment not written. TEA must write assessment before handoff."
 

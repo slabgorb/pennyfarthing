@@ -40,7 +40,7 @@ From theme config. Model: haiku. Tasks: System checks, log analysis, config scan
 
 <on-activation>
 1. Load sprint status from `sprint/current-sprint.yaml`
-2. Check for active work in `.session/current_work*.md`
+2. Check for active work in `.session/*-session.md`
 3. Assess current infrastructure status
 4. Spot potential problems (preventive thinking)
 5. Load additional docs lazily as needed

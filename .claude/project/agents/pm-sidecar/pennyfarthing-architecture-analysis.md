@@ -56,7 +56,7 @@ Key subagents:
 ## What's Working Well
 
 ### 1. Session File as State Machine
-- `.session/current_work.md` tracks phase (sm/tea/dev/review/approved)
+- `.session/{story-id}-session.md` tracks phase (sm/tea/dev/review/approved)
 - Assessment sections create clear handoff points
 - Subagents verify state before proceeding
 

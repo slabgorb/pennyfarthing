@@ -107,7 +107,7 @@ if [ ! -f "$CLAUDE_DIR/project/docs/shared-context.md" ]; then
 - **Name:** $PROJECT_NAME
 - **Type:** [Description]
 - **Sprint Status:** \`sprint/current-sprint.yaml\`
-- **Active Work:** \`.session/current-work.md\`
+- **Active Work:** \`.session/{story-id}-session.md\`
 
 ## Tech Stack
 

@@ -90,8 +90,9 @@ Configuration:
   Option 2 (legacy): Set API_REPO and UI_REPO environment variables
 
 Session Files:
-  - Main checkout: .session/current_work.md
-  - Worktree: .session/current_work_wt_5_1a.md (matches worktree name)
+  Session files are named after story IDs: .session/{story-id}-session.md
+  Example: .session/5-1a-session.md (with worktree field inside)
+  Session files are managed by SM agent, not worktree-manager.
 
 Environment Variables:
   PROJECT_ROOT - Project root directory
@@ -170,16 +171,10 @@ create_worktree() {
         fi
     done <<< "$repos_to_create"
 
-    # Session file
-    local SESSION_FILE="$PROJECT_ROOT/.session/current_work_$WT_NAME.md"
-    if [ ! -f "$SESSION_FILE" ]; then
-        echo ""
-        echo "📝 Session file location: .session/current_work_$WT_NAME.md"
-        echo "   (SM agent should create this with story details)"
-    fi
-
     echo ""
     echo "✅ Worktree '$WT_NAME' created successfully!"
+    echo ""
+    echo "📝 Session file: Use /sm to create .session/{story-id}-session.md"
     echo ""
     echo "Next steps:"
     for repo in "${created_repos[@]}"; do
@@ -222,19 +217,10 @@ remove_worktree() {
     # Clean up directory
     rm -rf "$WT_PATH"
 
-    # Remove session file (new naming convention)
-    local SESSION_FILE="$PROJECT_ROOT/.session/current_work_$WT_NAME.md"
-    if [ -f "$SESSION_FILE" ]; then
-        rm -f "$SESSION_FILE"
-        echo "   Removed session file: current_work_$WT_NAME.md"
-    fi
-
-    # Also check for legacy naming (wt-{name}.md)
-    local LEGACY_SESSION="$PROJECT_ROOT/.session/wt-$WT_NAME.md"
-    if [ -f "$LEGACY_SESSION" ]; then
-        rm -f "$LEGACY_SESSION"
-        echo "   Removed legacy session file: wt-$WT_NAME.md"
-    fi
+    # Note: Session files are managed by SM agent
+    # Use /sm to finish work and archive the session file
+    echo ""
+    echo "   Note: Session file (if any) should be archived via /sm finish"
 
     # Prune worktree references for all repos
     for repo in $(get_repos); do
@@ -303,13 +289,18 @@ show_status() {
                 fi
             done
 
-            # Check for session file (new naming first, then legacy)
-            if [ -f "$PROJECT_ROOT/.session/current_work_$WT_NAME.md" ]; then
-                echo "   Session: ✅ .session/current_work_$WT_NAME.md"
-            elif [ -f "$PROJECT_ROOT/.session/wt-$WT_NAME.md" ]; then
-                echo "   Session: ⚠️  .session/wt-$WT_NAME.md (legacy naming)"
+            # Check for session files that reference this worktree
+            local found_session=""
+            for sf in "$PROJECT_ROOT"/.session/*-session.md; do
+                if [ -f "$sf" ] && grep -q "worktree: $WT_NAME" "$sf" 2>/dev/null; then
+                    found_session=$(basename "$sf")
+                    break
+                fi
+            done
+            if [ -n "$found_session" ]; then
+                echo "   Session: ✅ .session/$found_session"
             else
-                echo "   Session: ❌ (no session file)"
+                echo "   Session: ❌ (no session file references this worktree)"
             fi
 
             # Show ports

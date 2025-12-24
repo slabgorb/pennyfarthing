@@ -28,7 +28,7 @@ eval $(./scripts/run.sh worktree-manager.sh ports "$WORKTREE_NAME")
 
 ### Step 2: Create Session File
 
-Create `.session/current_work.${WORKTREE_NAME}.md` with:
+Create `.session/${STORY_ID}-session.md` with:
 
 ```markdown
 # Story ${STORY_ID}: [Title]

@@ -27,7 +27,7 @@ Read the testing skill at .claude/skills/testing/SKILL.md for test commands.
 - From: Dev (Ponder Stibbons)
 - To: Reviewer (Granny Weatherwax)
 - Repos: {REPOS}
-- Session file: .session/current_work.md
+- Session file: .session/{STORY_ID}-session.md
 - Project root: $CLAUDE_PROJECT_DIR (set by SessionStart hook)
 
 ## Work Summary
@@ -42,7 +42,7 @@ Run these checks and STOP if any fail:
 
 0. **Dev Assessment exists in session file:**
    ```bash
-   grep -q "## Dev Assessment" $CLAUDE_PROJECT_DIR/.session/current_work.md
+   grep -q "## Dev Assessment" $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md
    ```
    If NOT found: STOP and report "Dev Assessment not written. Dev must write assessment before handoff."
 
