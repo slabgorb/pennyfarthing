@@ -25,17 +25,16 @@ protected_patterns=(
     "vendor/*"
 )
 
-# Pennyfarthing submodule protection
-# Edit pennyfarthing files in the pennyfarthing repo, not consuming projects
+# Pennyfarthing managed files protection
+# These are managed by `pennyfarthing update`, don't edit directly
 if [[ "$file_path" == *".claude/pennyfarthing/"* ]]; then
-    echo "BLOCKED: Cannot edit pennyfarthing submodule files from this repo." >&2
+    echo "BLOCKED: Cannot edit managed pennyfarthing files." >&2
     echo "File: $file_path" >&2
     echo "" >&2
-    echo "To modify pennyfarthing:" >&2
-    echo "  1. cd .claude/pennyfarthing" >&2
-    echo "  2. Make changes there" >&2
-    echo "  3. Commit and push to pennyfarthing repo" >&2
-    echo "  4. Update submodule reference in parent: git add .claude/pennyfarthing" >&2
+    echo "These files are managed by pennyfarthing and will be overwritten on update." >&2
+    echo "Instead:" >&2
+    echo "  - Put project-specific customizations in .claude/project/" >&2
+    echo "  - For framework changes, edit the pennyfarthing repo and run 'pennyfarthing update'" >&2
     exit 2
 fi
 

@@ -16,14 +16,15 @@ Pennyfarthing is a **shared agent orchestration framework** designed to be embed
 
 When working on pennyfarthing itself, remember:
 
-1. **Changes propagate**: Agent definitions here affect all projects using pennyfarthing as a submodule
+1. **Changes propagate**: Agent definitions here affect all projects using pennyfarthing via npm
 2. **Backwards compatibility**: Consider how changes affect existing project integrations
 3. **Self-reference**: We use pennyfarthing to develop pennyfarthing (this is intentional)
+4. **Official subagents**: All subagents use Claude Code's official agent format
 
 ## Architecture Principles
 
 ### Single Source of Truth
-All agent definitions live in `core/agents/`. Projects symlink to these, never copy.
+All agent definitions live in `pennyfarthing-dist/agents/`. Projects access via symlinks in `.claude/agents/`.
 
 ### Context Budgeting
 Agents should load 500-800 lines max. Design for just-in-time loading.
@@ -39,17 +40,23 @@ Main agent (Opus) thinks and decides. Helper (Haiku) executes mechanical work.
 
 ```
 pennyfarthing/
-├── core/
-│   ├── agents/          # Agent definitions (single source of truth)
-│   ├── subagents/       # Haiku-based handoff coordinators
-│   ├── commands/        # Slash command definitions
-│   └── docs/            # Core documentation
-├── personas/
-│   ├── attributes.yaml  # Personality dimensions
-│   └── themes/          # Character themes (discworld, star-trek, etc.)
-├── skills/              # Project-agnostic knowledge domains
-├── benchmarks/          # Agent performance testing
-└── scripts/             # Initialization and utilities
+├── pennyfarthing-dist/      # Source files (managed)
+│   ├── agents/              # Agent definitions + official subagents
+│   ├── commands/            # Slash command definitions
+│   ├── guides/              # Behavior guides
+│   ├── skills/              # Project-agnostic knowledge domains
+│   └── personas/            # Character themes
+├── src/                     # NPM CLI source
+├── scripts/                 # Utility scripts
+└── tests/                   # Framework tests
+
+After npm install in project:
+.claude/
+├── pennyfarthing/           # Copy of pennyfarthing-dist/
+├── agents/                  # → symlink to pennyfarthing/agents/
+├── commands/                # → symlink to pennyfarthing/commands/
+├── skills/                  # → symlink to pennyfarthing/skills/
+└── project/                 # Project-specific (user-editable)
 ```
 
 ## Key Domains for Development

@@ -196,9 +196,9 @@ Always use `$CLAUDE_PROJECT_DIR` for hook commands in settings.local.json:
 }
 ```
 
-**Why:** `$CLAUDE_PROJECT_DIR` is set by Claude Code to the directory where it was started. Relative paths break when Claude runs from subdirectories or when the project is used as a submodule.
+**Why:** `$CLAUDE_PROJECT_DIR` is set by Claude Code to the directory where it was started. Relative paths break when Claude runs from subdirectories.
 
-**Anti-pattern:** Don't use `git rev-parse --show-toplevel` as fallback - returns wrong root in submodules/nested repos.
+**Anti-pattern:** Don't use `git rev-parse --show-toplevel` as fallback - returns wrong root in nested repos.
 
 ---
 
