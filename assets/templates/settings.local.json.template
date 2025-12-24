@@ -1,4 +1,22 @@
 {
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "Bash",
+      "Edit(.claude/**)",
+      "Edit(sprint/**)",
+      "Edit(.session/**)",
+      "Write(.claude/**)",
+      "Write(sprint/**)",
+      "Write(.session/**)",
+      "Skill(sm)",
+      "Skill(tea)",
+      "Skill(dev)",
+      "Skill(reviewer)"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {
