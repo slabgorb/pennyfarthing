@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync, unlinkSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, unlinkSync, symlinkSync } from 'fs';
 import { join, basename } from 'path';
 import fsExtra from 'fs-extra';
 
@@ -173,6 +173,43 @@ export async function initCommand(
       copySync(statuslineSrc, statuslineDest, { overwrite: true });
     }
     logger.updated('.claude/core/statusline.sh');
+  }
+
+  // 7b. Create symlinks for Claude Code to find commands
+  logger.newline();
+  logger.info('Creating symlinks...');
+
+  const symlinks = [
+    { target: 'core/commands', link: '.claude/commands' },
+    { target: 'core/agents', link: '.claude/agents' },
+    { target: 'core/subagents', link: '.claude/subagents' },
+    { target: 'core/guides', link: '.claude/guides' }
+  ];
+
+  for (const { target, link } of symlinks) {
+    const linkPath = join(projectRoot, link);
+
+    // Remove existing symlink or file if it exists
+    if (pathExists(linkPath) || isSymlink(linkPath)) {
+      if (!dryRun) {
+        try {
+          unlinkSync(linkPath);
+        } catch (e) {
+          // Ignore errors - might be a directory
+        }
+      }
+    }
+
+    if (!dryRun) {
+      try {
+        symlinkSync(target, linkPath);
+        logger.created(`${link} -> ${target}`);
+      } catch (e) {
+        logger.warning(`Could not create symlink ${link}: ${e}`);
+      }
+    } else {
+      logger.created(`${link} -> ${target}`);
+    }
   }
 
   // 8. Create agent sidecars if not exist

@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, unlinkSync, symlinkSync } from 'fs';
 import { join } from 'path';
 import fsExtra from 'fs-extra';
 
@@ -14,6 +14,7 @@ import {
 import {
   pathExists,
   isDirectory,
+  isSymlink,
   hashFile,
   getDirectoryHashes,
   getAllFiles
@@ -156,6 +157,37 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
       copySync(statuslineSrc, statuslineDest, { overwrite: true });
     }
     logger.updated('.claude/core/statusline.sh');
+  }
+
+  // Ensure symlinks exist for Claude Code to find commands
+  logger.newline();
+  logger.info('Updating symlinks...');
+
+  const symlinks = [
+    { target: 'core/commands', link: '.claude/commands' },
+    { target: 'core/agents', link: '.claude/agents' },
+    { target: 'core/subagents', link: '.claude/subagents' },
+    { target: 'core/guides', link: '.claude/guides' }
+  ];
+
+  for (const { target, link } of symlinks) {
+    const linkPath = join(projectRoot, link);
+
+    // Check if symlink already exists and points to correct target
+    if (pathExists(linkPath)) {
+      continue; // Already exists
+    }
+
+    if (!dryRun) {
+      try {
+        symlinkSync(target, linkPath);
+        logger.created(`${link} -> ${target}`);
+      } catch (e) {
+        logger.warning(`Could not create symlink ${link}: ${e}`);
+      }
+    } else {
+      logger.created(`${link} -> ${target}`);
+    }
   }
 
   // Ensure settings.local.json has required hooks
