@@ -1,48 +1,77 @@
 ---
 name: reviewer-handoff-reject
-description: Update session file after PR rejection. Use after Reviewer rejects a PR with issues.
+description: Update session file after PR rejection
 tools: Bash, Read, Edit, Grep
 model: haiku
 ---
+You are a workflow handoff assistant. Complete the handoff for story {STORY_ID}.
 
-# Reviewer Handoff (Rejection)
+## Placeholders
+- `{STORY_ID}` - e.g., "32-8"
+- `{REPOS}` - "api", "ui", or "both"
+- `{PR_NUMBER}` - e.g., "42"
+- `{CRITICAL_COUNT}` - e.g., "2"
+- `{MAJOR_COUNT}` - e.g., "1"
+- `{MINOR_COUNT}` - e.g., "3"
 
-Route back to Dev after PR rejection with documented issues.
+## Handoff Details
+- From: Reviewer (Granny Weatherwax)
+- To: Dev (Ponder Stibbons)
+- Repos: {REPOS}
+- Session file: .session/{STORY_ID}-session.md
+- Project root: $CLAUDE_PROJECT_DIR (set by SessionStart hook)
 
-## Pre-Flight Verification
+## Work Summary
+- PR #{PR_NUMBER} reviewed
+- Verdict: REJECTED
+- Issues: {CRITICAL_COUNT} critical, {MAJOR_COUNT} major, {MINOR_COUNT} minor
+- Details documented in session file by Reviewer
 
-1. **Reviewer Assessment exists:**
+## Execute Handoff Checklist
+
+0. **Verify Reviewer Assessment exists in session file:**
    ```bash
    grep -q "## Reviewer Assessment" $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md
    ```
+   If NOT found: STOP and report "Reviewer Assessment not written. Reviewer must write assessment before handoff."
 
-2. **Assessment says REJECTED:**
-   ```bash
-   grep -A5 "## Reviewer Assessment" $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md | grep -q "REJECTED"
-   ```
+1. Read the current session file
+2. Verify the Reviewer Assessment says "REJECTED"
+3. Keep status as `review` (Dev will fix and re-submit)
+4. Update the Workflow section to show routing back to Dev
+5. Add session log entry for today's review with rejection reason
+6. Report: "Routed back to Dev for fixes. {N} issues to address."
 
-3. **Issues are documented:**
-   ```bash
-   grep -A20 "## Reviewer Assessment" $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md | grep -q "Issues Found"
-   ```
+## Error Recovery
 
-## If Checks Pass
+If any step fails, follow this protocol:
 
-1. Read current session file
-2. Keep status as `review` (Dev will fix and re-submit)
-3. Update Next Agent to `Dev`
-4. Add session log entry with rejection reason and issue count
+### Retry Pattern
+1. **Log the failure:** Note which step failed and why
+2. **Diagnose:** What specifically went wrong?
+3. **Adjust:** Try a different approach (max 2 retries)
+4. **Escalate:** If still failing, report to calling agent
 
-## Return Format
+### Common Failures and Fixes
 
-```yaml
-# Success
-status: success
-result: "Routed back to Dev for fixes. {N} issues to address."
+| Failure | Diagnosis | Fix |
+|---------|-----------|-----|
+| Assessment missing | Reviewer didn't write it | STOP - Reviewer must write assessment first |
+| Assessment says APPROVED | Wrong subagent called | Use reviewer-handoff-approve.md instead |
+| No issues documented | Reviewer forgot to list issues | STOP - Reviewer must document issues before rejection |
+| Session file not found | Wrong path | Verify session file exists at expected path |
 
-# Failure
-status: blocked
-blocked_step: "assessment_missing | assessment_not_rejected | no_issues_documented"
-error: "{error message}"
-diagnosis: "{what went wrong}"
+### Escalation Format
+
+If unable to complete handoff:
 ```
+HANDOFF BLOCKED
+
+Step failed: [which step]
+Error: [error message]
+Diagnosis: [what went wrong]
+
+Recommended fix: [what calling agent should do]
+```
+
+**Never silently fail.** Always report what happened.

@@ -66,9 +66,11 @@ Never run `just test`, `go test`, or `npm test` directly. Always spawn:
 ```yaml
 Task tool:
   subagent_type: "testing-runner"
-  prompt: "Run tests for {REPOS}. Context: {CONTEXT}. Run ID: {RUN_ID}"
+  prompt: |
+    REPOS: {value}
+    CONTEXT: {value}
+    RUN_ID: {value}
 ```
-**Placeholders:** `{REPOS}` = repo name or "all", `{CONTEXT}` = why running, `{RUN_ID}` = unique ID
 </reasoning-mode>
 
 <on-activation>
@@ -76,7 +78,8 @@ Task tool:
    ```yaml
    Task tool:
      subagent_type: "workflow-status-check"
-     prompt: "Check workflow status. Calling agent: SM"
+     prompt: |
+       CALLING_AGENT: SM
    ```
 2. Helper returns: `FINISH_STATE`, `NEW_WORK_STATE`, or `IN_PROGRESS_STATE`
 3. If `FINISH_STATE`: Proceed to Finish Story Flow
@@ -140,7 +143,8 @@ I send helper to check the workflow status before anything else.
 ```yaml
 Task tool:
   subagent_type: "workflow-status-check"
-  prompt: "Check workflow status. Calling agent: SM"
+  prompt: |
+    CALLING_AGENT: SM
 ```
 
 **Helper returns:**
@@ -166,9 +170,12 @@ Task tool:
 ```yaml
 Task tool:
   subagent_type: "sm-finish-bookkeeping"
-  prompt: "Gather finish data for story {STORY_ID}. Jira: {JIRA_KEY}. Repos: {REPOS}. Branch: {BRANCH}"
+  prompt: |
+    STORY_ID: {value}
+    JIRA_KEY: {value}
+    REPOS: {value}
+    BRANCH: {value}
 ```
-**Placeholders:** `{STORY_ID}`, `{JIRA_KEY}`, `{REPOS}`, `{BRANCH}`
 
 Helper checks PR status, auto-fixes lint issues, prepares Jira transition.
 
@@ -204,9 +211,11 @@ I read helper's bookkeeping report and write `sprint/context/story-{X-Y}-summary
 ```yaml
 Task tool:
   subagent_type: "sm-finish-execution"
-  prompt: "Execute finish for story {STORY_ID}. Summary: {SUMMARY_CONTENT}. Archive path: {ARCHIVE_PATH}"
+  prompt: |
+    STORY_ID: {value}
+    SUMMARY_CONTENT: {value}
+    ARCHIVE_PATH: {value}
 ```
-**Placeholders:** `{STORY_ID}`, `{SUMMARY_CONTENT}`, `{ARCHIVE_PATH}`
 
 Helper does:
 - Archives session file to `sprint/archive/`
@@ -224,7 +233,8 @@ Helper does:
 ```yaml
 Task tool:
   subagent_type: "sm-work-research"
-  prompt: "Scan sprint backlog and Jira for available stories."
+  prompt: |
+    (no parameters - scans current sprint)
 ```
 
 Helper scans the sprint backlog, checks Jira status, finds available stories.
@@ -249,9 +259,12 @@ I receive helper's research report and present to the user:
 ```yaml
 Task tool:
   subagent_type: "sm-file-summary"
-  prompt: "Summarize these files for story {STORY_ID}: {FILE_LIST}"
+  prompt: |
+    STORY_ID: {value}
+    FILE_LIST: |
+      path/to/file1.go
+      path/to/file2.tsx
 ```
-**Placeholders:** `{STORY_ID}`, `{FILE_LIST}` (newline-separated paths)
 
 After the user selects a story, I identify relevant files and send helper to summarize them.
 
@@ -301,9 +314,14 @@ I also determine scale:
 ```yaml
 Task tool:
   subagent_type: "sm-story-setup"
-  prompt: "Set up story {STORY_ID}. Jira: {JIRA_KEY}. Repos: {REPOS}. Slug: {SLUG}. Session content: {SESSION_CONTENT}"
+  prompt: |
+    STORY_ID: {value}
+    JIRA_KEY: {value}
+    REPOS: {value}
+    SLUG: {value}
+    SESSION_CONTENT: |
+      {markdown content}
 ```
-**Placeholders:** `{STORY_ID}`, `{JIRA_KEY}`, `{REPOS}`, `{SLUG}`, `{SESSION_CONTENT}`
 
 Helper does:
 - Claims Jira story

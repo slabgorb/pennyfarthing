@@ -87,7 +87,7 @@ REFLECT: {what this means}
 </reasoning-mode>
 
 <on-activation>
-1. Run workflow status check (helper: `.claude/subagents/workflow-status-check.md`)
+1. Run workflow status check (helper: `.claude/agents/workflow-status-check.md`)
 2. Read session file if active work exists
 3. Verify actual state matches session file
 4. Check if handed off to me (Phase field)
@@ -121,7 +121,7 @@ REFLECT: {what this means}
 After completing work:
 
 1. Write assessment to session file
-2. Spawn handoff helper (`.claude/subagents/{agent}-handoff.md`)
+2. Spawn handoff helper (`.claude/agents/{agent}-handoff.md`)
 3. Check context: `eval $(./scripts/run.sh check-context.sh)`
 4. If `HANDOFF_MODE=auto`: Use Skill tool to invoke next agent
 5. If `HANDOFF_MODE=ask`: Tell user to start fresh session

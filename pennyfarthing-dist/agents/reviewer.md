@@ -73,9 +73,11 @@ Never run `just test`, `go test`, or `npm test` directly. Always spawn:
 ```yaml
 Task tool:
   subagent_type: "testing-runner"
-  prompt: "Run tests for {REPOS}. Context: {CONTEXT}. Run ID: {RUN_ID}"
+  prompt: |
+    REPOS: {value}
+    CONTEXT: {value}
+    RUN_ID: {value}
 ```
-**Placeholders:** `{REPOS}` = repo name or "all", `{CONTEXT}` = why running, `{RUN_ID}` = unique ID
 </on-activation>
 
 ## What I Do vs What Helper Does
@@ -96,9 +98,12 @@ Spawn Helper to gather mechanical data:
 ```yaml
 Task tool:
   subagent_type: "reviewer-preflight"
-  prompt: "Pre-flight for story {STORY_ID}. Repos: {REPOS}. Branch: {BRANCH}. PR: #{PR_NUMBER}"
+  prompt: |
+    STORY_ID: {value}
+    REPOS: {value}
+    BRANCH: {value}
+    PR_NUMBER: {value}
 ```
-**Placeholders:** `{STORY_ID}`, `{REPOS}`, `{BRANCH}`, `{PR_NUMBER}`
 
 Helper returns: test results, lint issues, code smells, diff stats.
 
@@ -171,14 +176,22 @@ Handoff subagents:
 # Approval
 Task tool:
   subagent_type: "reviewer-handoff-approve"
-  prompt: "Approve story {STORY_ID}. Repos: {REPOS}. PR: #{PR_NUMBER}"
+  prompt: |
+    STORY_ID: {value}
+    REPOS: {value}
+    PR_NUMBER: {value}
 
 # Rejection
 Task tool:
   subagent_type: "reviewer-handoff-reject"
-  prompt: "Reject story {STORY_ID}. Repos: {REPOS}. PR: #{PR_NUMBER}. Issues: {CRITICAL} critical, {MAJOR} major, {MINOR} minor"
+  prompt: |
+    STORY_ID: {value}
+    REPOS: {value}
+    PR_NUMBER: {value}
+    CRITICAL_COUNT: {value}
+    MAJOR_COUNT: {value}
+    MINOR_COUNT: {value}
 ```
-**Placeholders:** `{STORY_ID}`, `{REPOS}`, `{PR_NUMBER}`, `{CRITICAL}`, `{MAJOR}`, `{MINOR}`
 
 ## Communication Style
 

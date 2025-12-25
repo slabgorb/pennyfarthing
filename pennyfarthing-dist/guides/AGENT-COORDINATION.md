@@ -26,7 +26,7 @@ This document describes how Pennyfarthing agents are coordinated across the `API
 
 ### 1. Single Source of Truth
 - **Agent definitions:** `.claude/agents/`
-- **Subagent prompts:** `.claude/subagents/`
+- **Subagent prompts:** `.claude/agents/`
 - **Scope configuration:** `.claude/guides/agent-scopes.yaml`
 - **Sprint tracking:** `sprint/current-sprint.yaml`
 - **Session state:** `.session/{STORY_ID}-session.md`
@@ -288,7 +288,7 @@ User: @/dev
 
 ## Agent Handoffs (TDD Flow)
 
-Handoffs are automated via Haiku subagents in `.claude/subagents/`.
+Handoffs are automated via Haiku subagents in `.claude/agents/`.
 
 ### The Flow
 
@@ -445,13 +445,13 @@ Dev Agent Example (API story):
 ### Current Architecture (December 2025)
 - Single entry point: `/new-work`
 - State detection via session file
-- Handoffs via Haiku subagents in `.claude/subagents/`
+- Handoffs via Haiku subagents in `.claude/agents/`
 - SM handles finish-story when status = `approved`
 
 ### Directory Structure
 ```
 .claude/agents/          # Agent definitions
-.claude/subagents/       # Handoff subagent prompts
+.claude/agents/       # Handoff subagent prompts
 .claude/guides/agent-scopes.yaml  # Scope configuration
 .session/               # Session files
 sprint/                     # Sprint tracking

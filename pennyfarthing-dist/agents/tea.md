@@ -15,10 +15,9 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 <helpers>
 From theme config. Model: haiku. Tasks: run tests, gather results, update session for handoff
 
-- **Official subagents:**
-  - `testing-runner` - Run tests, gather results (use `subagent_type: "testing-runner"`)
-- **Template subagents:** (use `subagent_type: "general-purpose"` with template)
-  - `.claude/subagents/tea-handoff.md` - Update session for handoff
+- **Official subagents:** (use `subagent_type: "{name}"`)
+  - `testing-runner` - Run tests, gather results
+  - `tea-handoff` - Update session for handoff
 </helpers>
 
 <responsibilities>
@@ -130,14 +129,15 @@ After writing assessment, spawn Helper to handle bookkeeping:
 
 ```yaml
 Task tool:
-  subagent_type: "general-purpose"
-  model: "haiku"
-  description: "tea handoff"
-  prompt: "Complete TEA handoff for story {STORY_ID}. Repos: {REPOS}.
-          Tests written: {TEST_COUNT}. Test files: {TEST_FILES}."
+  subagent_type: "tea-handoff"
+  prompt: |
+    STORY_ID: {value}
+    REPOS: {value}
+    TEST_COUNT: {value}
+    TEST_FILES: |
+      path/to/test1.go
+      path/to/test2.tsx
 ```
-**Placeholders:** `{STORY_ID}`, `{REPOS}`, `{TEST_COUNT}`, `{TEST_FILES}`
-**Template:** See `.claude/subagents/tea-handoff.md` for full prompt structure.
 
 Helper will update workflow checkboxes, phase, and next agent.
 
