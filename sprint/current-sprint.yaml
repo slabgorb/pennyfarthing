@@ -131,8 +131,9 @@ epics:
           - testing-runner.md
         points: 3
         priority: P1
-        status: in_progress
+        status: done
         started: 2025-12-25
+        completed: 2025-12-25
         repos: pennyfarthing
         acceptance_criteria:
           - All 13 subagents use YAML frontmatter format (--- delimited)
