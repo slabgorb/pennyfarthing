@@ -15,6 +15,7 @@
 #   get_repo_type NAME     - Get type for a repo
 #   get_repo_language NAME - Get language for a repo
 #   get_test_command NAME  - Get test command for a repo
+#   get_test_filter_flag NAME - Get test filter flag (auto-discovers from language)
 #   get_build_command NAME - Get build command for a repo
 #   get_lint_command NAME  - Get lint command for a repo
 #   get_dependencies NAME  - Get dependencies for a repo
@@ -34,6 +35,7 @@ declare -A _REPO_PATHS 2>/dev/null || true
 declare -A _REPO_TYPES 2>/dev/null || true
 declare -A _REPO_LANGUAGES 2>/dev/null || true
 declare -A _REPO_TEST_CMDS 2>/dev/null || true
+declare -A _REPO_TEST_FILTER_FLAGS 2>/dev/null || true
 declare -A _REPO_BUILD_CMDS 2>/dev/null || true
 declare -A _REPO_LINT_CMDS 2>/dev/null || true
 declare -A _REPO_DEPS 2>/dev/null || true
@@ -56,6 +58,7 @@ load_repos_config() {
     _REPO_TYPES=()
     _REPO_LANGUAGES=()
     _REPO_TEST_CMDS=()
+    _REPO_TEST_FILTER_FLAGS=()
     _REPO_BUILD_CMDS=()
     _REPO_LINT_CMDS=()
     _REPO_DEPS=()
@@ -103,6 +106,7 @@ _parse_with_yq() {
         _REPO_TYPES["$repo"]=$(yq -r ".repos.\"$repo\".type // \"unknown\"" "$REPOS_CONFIG")
         _REPO_LANGUAGES["$repo"]=$(yq -r ".repos.\"$repo\".language // \"unknown\"" "$REPOS_CONFIG")
         _REPO_TEST_CMDS["$repo"]=$(yq -r ".repos.\"$repo\".test_command // \"\"" "$REPOS_CONFIG")
+        _REPO_TEST_FILTER_FLAGS["$repo"]=$(yq -r ".repos.\"$repo\".test_filter_flag // \"\"" "$REPOS_CONFIG")
         _REPO_BUILD_CMDS["$repo"]=$(yq -r ".repos.\"$repo\".build_command // \"\"" "$REPOS_CONFIG")
         _REPO_LINT_CMDS["$repo"]=$(yq -r ".repos.\"$repo\".lint_command // \"\"" "$REPOS_CONFIG")
 
@@ -155,6 +159,7 @@ for name, repo in repos.items():
         'type': repo.get('type', 'unknown'),
         'language': repo.get('language', 'unknown'),
         'test_command': repo.get('test_command', ''),
+        'test_filter_flag': repo.get('test_filter_flag', ''),
         'build_command': repo.get('build_command', ''),
         'lint_command': repo.get('lint_command', ''),
         'dependencies': ','.join(repo.get('dependencies', []))
@@ -171,12 +176,13 @@ PYTHON_SCRIPT
 
     # Parse JSON output into bash arrays
     while IFS= read -r line; do
-        local name path type language test_cmd build_cmd lint_cmd deps
+        local name path type language test_cmd test_filter_flag build_cmd lint_cmd deps
         name=$(echo "$line" | python3 -c 'import json,sys; print(json.load(sys.stdin)["name"])')
         path=$(echo "$line" | python3 -c 'import json,sys; print(json.load(sys.stdin)["path"])')
         type=$(echo "$line" | python3 -c 'import json,sys; print(json.load(sys.stdin)["type"])')
         language=$(echo "$line" | python3 -c 'import json,sys; print(json.load(sys.stdin)["language"])')
         test_cmd=$(echo "$line" | python3 -c 'import json,sys; print(json.load(sys.stdin)["test_command"])')
+        test_filter_flag=$(echo "$line" | python3 -c 'import json,sys; print(json.load(sys.stdin)["test_filter_flag"])')
         build_cmd=$(echo "$line" | python3 -c 'import json,sys; print(json.load(sys.stdin)["build_command"])')
         lint_cmd=$(echo "$line" | python3 -c 'import json,sys; print(json.load(sys.stdin)["lint_command"])')
         deps=$(echo "$line" | python3 -c 'import json,sys; print(json.load(sys.stdin)["dependencies"])')
@@ -186,6 +192,7 @@ PYTHON_SCRIPT
         _REPO_TYPES["$name"]="$type"
         _REPO_LANGUAGES["$name"]="$language"
         _REPO_TEST_CMDS["$name"]="$test_cmd"
+        _REPO_TEST_FILTER_FLAGS["$name"]="$test_filter_flag"
         _REPO_BUILD_CMDS["$name"]="$build_cmd"
         _REPO_LINT_CMDS["$name"]="$lint_cmd"
         _REPO_DEPS["$name"]="$deps"
@@ -320,6 +327,53 @@ get_test_command() {
     local name="$1"
     load_repos_config
     echo "${_REPO_TEST_CMDS[$name]:-}"
+}
+
+# Get test filter flag for a repo
+# Falls back to language-based defaults if not specified
+get_test_filter_flag() {
+    local name="$1"
+    load_repos_config
+
+    local flag="${_REPO_TEST_FILTER_FLAGS[$name]:-}"
+
+    # If specified in config, use it
+    if [[ -n "$flag" ]]; then
+        echo "$flag"
+        return 0
+    fi
+
+    # Auto-discover based on language
+    local language="${_REPO_LANGUAGES[$name]:-unknown}"
+    case "$language" in
+        go)
+            echo "-run"
+            ;;
+        typescript|javascript)
+            # Detect Vitest vs Jest from test command
+            local test_cmd="${_REPO_TEST_CMDS[$name]:-}"
+            if [[ "$test_cmd" == *"vitest"* ]] || [[ "$test_cmd" == *"npm run test"* ]]; then
+                echo "-t"  # Vitest
+            else
+                echo "--testNamePattern"  # Jest
+            fi
+            ;;
+        python)
+            echo "-k"  # pytest
+            ;;
+        rust)
+            echo "--"  # cargo test uses -- to pass args
+            ;;
+        ruby)
+            echo "-n"  # minitest
+            ;;
+        java|kotlin)
+            echo "--tests"  # Gradle
+            ;;
+        *)
+            echo ""  # Unknown - no filter support
+            ;;
+    esac
 }
 
 # Get build command for a repo
@@ -535,6 +589,7 @@ show_config() {
         echo "  Type: ${_REPO_TYPES[$repo]:-n/a}"
         echo "  Language: ${_REPO_LANGUAGES[$repo]:-n/a}"
         echo "  Test: ${_REPO_TEST_CMDS[$repo]:-n/a}"
+        echo "  Filter Flag: $(get_test_filter_flag "$repo")"
         echo "  Build: ${_REPO_BUILD_CMDS[$repo]:-n/a}"
         echo "  Deps: ${_REPO_DEPS[$repo]:-none}"
         echo ""

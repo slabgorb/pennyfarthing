@@ -67,9 +67,14 @@ Never run `just test`, `go test`, or `npm test` directly. Always spawn:
 Task tool:
   subagent_type: "testing-runner"
   prompt: |
-    REPOS: {value}
-    CONTEXT: {value}
-    RUN_ID: {value}
+    REPOS: all | repo1,repo2
+    CONTEXT: why running tests
+    RUN_ID: unique-id
+    # Optional - omit to run all tests:
+    FILTER: pattern  # global filter
+    FILTERS:         # or per-repo filters
+      repo1: pattern1
+      repo2: pattern2
 ```
 </reasoning-mode>
 
