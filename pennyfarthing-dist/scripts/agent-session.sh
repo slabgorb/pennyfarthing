@@ -98,11 +98,11 @@ case "$1" in
       echo "Usage: agent-session.sh start \"agent-name\" [session-id]" >&2
       exit 1
     fi
-    # Use provided session ID, fall back to SESSION_ID env var
+    # Use provided session ID, fall back to SESSION_ID env var, then generate one
     session_id="${3:-$SESSION_ID}"
     if [ -z "$session_id" ]; then
-      echo "Error: No session ID provided and SESSION_ID not set" >&2
-      exit 1
+      # Generate a session ID if not provided (for fresh sessions)
+      session_id=$(uuidgen 2>/dev/null || cat /proc/sys/kernel/random/uuid 2>/dev/null || date +%s)
     fi
     mkdir -p "$AGENTS_DIR"
     AGENT_FILE=$(get_agent_file "$session_id")
