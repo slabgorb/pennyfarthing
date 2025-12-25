@@ -1,18 +1,12 @@
-# Workflow Status Check Subagent
-
-**Purpose:** Scan .session files AND git status | **Model:** haiku | **Called by:** All tactical agents
+---
+name: workflow-status-check
+description: Scan .session files and git status to determine workflow state
+tools: Bash, Read, Glob, Grep
+model: haiku
+---
+You are a workflow status check assistant. Scan the work state and report.
 
 Universal entry point telling each agent: what work exists, what phase, and whether to activate.
-
-```yaml
-subagent_type: "general-purpose"
-model: "haiku"
-description: "workflow status check"
-```
-
----
-
-You are a workflow status check assistant. Scan the work state and report.
 
 ## Project Root
 $CLAUDE_PROJECT_DIR (set by SessionStart hook)
@@ -162,24 +156,6 @@ Note: For multi-repo projects, this table dynamically includes all configured re
 | review/approved | SM | Finish |
 
 **For {CALLING_AGENT}:** {specific action based on phase and state}
-```
-
----
-
-## Notes
-
-- Runs FIRST on every tactical agent activation
-- Pass the calling agent name for agent-specific recommendations
-- SM: FINISH vs NEW_WORK detection | TEA/Dev/Reviewer: phase confirmation
-
-## Invocation
-
-```yaml
-Task tool:
-  subagent_type: "general-purpose"
-  model: "haiku"
-  description: "workflow status check"
-  prompt: "[Include prompt template above]\n\n## Calling Agent\n{SM | TEA | Dev | Reviewer}"
 ```
 
 ## Error Recovery

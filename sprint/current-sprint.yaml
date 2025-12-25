@@ -13,7 +13,7 @@ epics:
     description: |
       Housekeeping improvements from Sprint 1 retrospective.
       Automates manual workflows and improves developer experience.
-    points: 11
+    points: 14
     priority: P1
     source: "Sprint 1 Retro"
     repos: pennyfarthing
@@ -172,6 +172,39 @@ epics:
           - pennyfarthing init installs templated content
           - Agent name substituted into template headers
 
+      - id: "2-7"
+        title: "Add user-customizable output styles and preferences"
+        description: |
+          Enable end users to customize agent behavior using Claude Code's
+          native output styles feature plus a Pennyfarthing preferences file.
+
+          Output Styles (ship in pennyfarthing-dist/output-styles/):
+          - verbose.md - Detailed explanations, educational
+          - terse.md - Minimal output, just the essentials
+          - teaching.md - Explains decisions, suggests alternatives
+
+          User Preferences (new file: .claude/pennyfarthing/preferences.yaml):
+          - character_voice: true/false - Enable/disable persona flavor
+          - explain_decisions: true/false - Show reasoning
+          - auto_commit: true/false - Auto-commit on story completion
+
+          CLI Integration:
+          - pennyfarthing init creates preferences.yaml with defaults
+          - agent-session.sh reads preferences and adjusts behavior
+          - Document in README how to customize
+
+          Leverages Claude Code's native /output-style command.
+        points: 3
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - 3 output styles shipped in pennyfarthing-dist/output-styles/
+          - preferences.yaml template with documented options
+          - pennyfarthing init creates preferences file
+          - agent-session.sh respects character_voice preference
+          - README documents customization options
+
   - id: epic-4
     title: "Configuration & Permissions Framework"
     description: |
@@ -257,17 +290,159 @@ epics:
           - Documentation explains scope differences
           - Template includes agent scope examples
 
+  - id: epic-5
+    title: "Theme Management CLI"
+    description: |
+      Add CLI commands for managing persona themes without editing files.
+      End users can list, switch, and customize themes from the command line.
+    points: 8
+    priority: P2
+    repos: pennyfarthing
+    stories:
+      - id: "5-1"
+        title: "Add 'pennyfarthing theme list' command"
+        description: |
+          CLI command to list all available persona themes with previews.
+
+          Usage:
+            pennyfarthing theme list
+
+          Output:
+            Available themes:
+            * shakespeare (current)
+              - SM: Prospero - "Now my charms are all o'erthrown..."
+              - TEA: Hamlet - "To test, or not to test..."
+
+              star-trek-tos
+              - SM: Captain Kirk - "Boldly going where no code has gone..."
+              - TEA: Spock - "Logic dictates we must test..."
+
+              minimalist
+              - SM: Coordinator
+              - TEA: Tester
+
+          Implementation:
+          - Read pennyfarthing-dist/personas/*.yaml
+          - Read .claude/persona-config.yaml for current selection
+          - Format output with agent samples
+        points: 2
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - pennyfarthing theme list shows all available themes
+          - Current theme is marked with asterisk or (current)
+          - Each theme shows sample agent character names
+          - Works from any directory in a Pennyfarthing project
+
+      - id: "5-2"
+        title: "Add 'pennyfarthing theme set' command"
+        description: |
+          CLI command to change the active persona theme.
+
+          Usage:
+            pennyfarthing theme set star-trek
+            pennyfarthing theme set minimalist
+
+          Implementation:
+          - Validate theme exists in pennyfarthing-dist/personas/
+          - Update .claude/persona-config.yaml
+          - Confirm change with preview of new theme
+
+          Error handling:
+          - Theme not found: suggest similar names
+          - No persona-config.yaml: create one
+        points: 2
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - pennyfarthing theme set <name> changes active theme
+          - Updates .claude/persona-config.yaml correctly
+          - Shows confirmation with new theme preview
+          - Validates theme exists before changing
+          - Helpful error for unknown themes
+
+      - id: "5-3"
+        title: "Add 'pennyfarthing theme create' command"
+        description: |
+          CLI command to create a custom theme from a template.
+
+          Usage:
+            pennyfarthing theme create my-theme
+            pennyfarthing theme create my-theme --base shakespeare
+
+          Creates:
+            .claude/pennyfarthing/themes/my-theme.yaml
+
+          Implementation:
+          - Copy base theme (default: minimalist) to user themes dir
+          - Open in $EDITOR or provide path for manual editing
+          - Register in persona-config.yaml custom_themes list
+
+          Custom themes loaded from:
+          - .claude/pennyfarthing/themes/ (project-level)
+          - ~/.claude/pennyfarthing/themes/ (user-level)
+        points: 3
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - pennyfarthing theme create <name> creates new theme file
+          - --base flag copies from existing theme
+          - Theme file has correct YAML structure
+          - Custom themes appear in 'theme list' output
+          - User-level themes work across projects
+
+      - id: "5-4"
+        title: "Add 'pennyfarthing theme show' command"
+        description: |
+          CLI command to display full details of a theme.
+
+          Usage:
+            pennyfarthing theme show
+            pennyfarthing theme show star-trek
+
+          Output:
+            Theme: star-trek
+            Description: Star Trek TOS inspired personas
+
+            Agents:
+              sm:
+                character: Captain Kirk
+                style: Bold leader who makes decisive calls
+                quote: "Risk is our business..."
+              tea:
+                character: Spock
+                style: Logical, precise, analytical
+                quote: "Fascinating..."
+              ...
+
+          Implementation:
+          - Parse theme YAML file
+          - Format all agent mappings
+          - Show quotes and style descriptions
+        points: 1
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - pennyfarthing theme show displays current theme details
+          - pennyfarthing theme show <name> displays specific theme
+          - Shows all agent character mappings
+          - Includes style and quote for each agent
+
 summary:
-  total_points: 19
+  total_points: 30
   completed_points: 6
-  in_progress_points: 0
-  backlog_points: 13
+  in_progress_points: 3
+  backlog_points: 21
   velocity_target: 20
   status: active
 
 # Sprint 2 Planning Notes:
-# - Epic 2 (11 pts): Retro improvements, mostly DevOps/Dev work
+# - Epic 2 (14 pts): Retro improvements, DX polish, user customization
 # - Epic 4 (8 pts): Quick win, establishes foundation for future security
-# - Total: 19 pts, close to velocity target
+# - Epic 5 (8 pts): Theme management CLI for end users
+# - Total: 30 pts (exceeds velocity target - prioritize P1s first)
 # - Stories ordered by priority within each epic
-# - Story 2-5 added: Migrate subagents to official YAML format (P1, 3 pts)

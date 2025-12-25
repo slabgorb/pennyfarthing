@@ -1,23 +1,9 @@
-# Dev Handoff Subagent
-
-**Purpose:** Update session file after Dev completes implementation and creates PR
-**Model:** haiku
-**Called by:** Dev agent after all tests pass and PR is created
-
-## Task Tool Configuration
-
-```yaml
-subagent_type: "general-purpose"
-model: "haiku"
-description: "workflow handoff"
-```
-
-## Prompt Template
-
-Replace placeholders with actual values.
-
 ---
-
+name: dev-handoff
+description: Update session file after Dev completes implementation and creates PR
+tools: Bash, Read, Edit, Grep
+model: haiku
+---
 You are a workflow handoff assistant. Complete the handoff for story {STORY_ID}.
 
 ## Skills Reference
@@ -112,8 +98,6 @@ Run these checks and STOP if any fail:
    - What was implemented summary
 5. Add session log entry for implementation completion
 6. Report: "Ready for Reviewer. PR #{PR_NUMBER} is up."
-
----
 
 ## Error Recovery
 

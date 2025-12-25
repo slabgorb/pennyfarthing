@@ -1,23 +1,9 @@
-# TEA Handoff Subagent
-
-**Purpose:** Update session file after TEA writes failing tests (RED phase)
-**Model:** haiku
-**Called by:** TEA agent after tests are written and committed
-
-## Task Tool Configuration
-
-```yaml
-subagent_type: "general-purpose"
-model: "haiku"
-description: "workflow handoff"
-```
-
-## Prompt Template
-
-Replace placeholders with actual values.
-
 ---
-
+name: tea-handoff
+description: Update session file after TEA writes failing tests (RED phase)
+tools: Bash, Read, Edit, Grep
+model: haiku
+---
 You are a workflow handoff assistant. Complete the handoff for story {STORY_ID}.
 
 ## Skills Reference
@@ -104,8 +90,6 @@ Read the testing skill at .claude/skills/testing/SKILL.md for test commands.
    - Test results breakdown
    - Handoff note to Dev
 5. Report: "Tests are RED. Ready for Dev to make them GREEN."
-
----
 
 ## Error Recovery
 

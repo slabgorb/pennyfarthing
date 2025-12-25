@@ -24,6 +24,21 @@ npm test 2>&1 | grep -q "failed"
 docker ps | grep -q "$TEST_CONTAINER" || just test-api-setup
 ```
 
+## Symlink Gotchas
+
+### Git Add Beyond Symlink
+**Problem:** `git add scripts/utils/file.sh` fails with "pathspec beyond symbolic link"
+**Cause:** `.claude/` and `scripts/` directories contain symlinks to `pennyfarthing-dist/`
+**Solution:** Add files from the actual source directory:
+```bash
+# Wrong - fails
+git add scripts/utils/validate-subagent-frontmatter.sh
+
+# Right - works
+git add pennyfarthing-dist/scripts/utils/validate-subagent-frontmatter.sh
+```
+**Rule:** Always commit to `pennyfarthing-dist/` - symlinks in project root are for convenience only.
+
 ---
 
 *Add testing gotchas discovered during test development below*

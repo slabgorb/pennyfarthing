@@ -1,16 +1,10 @@
-# Reviewer Pre-Flight Subagent
-
-**Purpose:** Gather mechanical data before Reviewer (Opus) does critical analysis
-**Model:** haiku
-**Called by:** Reviewer agent when starting a PR review
-
-## Task Tool Configuration
-
-```yaml
-subagent_type: "general-purpose"
-model: "haiku"
-description: "review pre-flight"
-```
+---
+name: reviewer-preflight
+description: Gather mechanical data before Reviewer does critical analysis
+tools: Bash, Read, Glob, Grep
+model: haiku
+---
+You are a code review pre-flight assistant. Gather data for story {STORY_ID}.
 
 ## Multi-Repo Support
 
@@ -31,14 +25,11 @@ for repo in $(filter_repos "{REPOS}"); do
 done
 ```
 
-## Prompt Template
-
-Replace `{STORY_ID}`, `{REPOS}`, `{BRANCH}`, `{PR_NUMBER}` with actual values.
-- `{REPOS}` can be: `all`, `api`, `ui`, `adapter`, or comma-separated repo names
-
----
-
-You are a code review pre-flight assistant. Gather data for story {STORY_ID}.
+## Placeholders
+- `{STORY_ID}` - e.g., "32-8"
+- `{REPOS}` - can be: `all`, `api`, `ui`, `adapter`, or comma-separated repo names
+- `{BRANCH}` - e.g., "feat/32-8-hunt-summary"
+- `{PR_NUMBER}` - e.g., "42"
 
 ## Project Info
 - Project root: $CLAUDE_PROJECT_DIR (set by SessionStart hook)
