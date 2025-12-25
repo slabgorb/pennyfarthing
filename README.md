@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v3.0.1** | *The outer loop goes once, the inner loop goes many times.*
+**v3.1.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px" margin="10px">
 
@@ -145,6 +145,13 @@ pennyfarthing uninstall --all
 ```
 
 Archived sprint data (`sprint/archive/`, `sprint/context/`) is always preserved.
+
+## What's New in v3.1
+
+- **YAML Frontmatter Subagents** - All 13 subagents now use Claude Code's official YAML frontmatter format with `name`, `description`, `tools`, and `model` fields
+- **Consolidated Agents Directory** - Subagents moved from `subagents/` into `agents/` for single location
+- **Per-Repo Test Filtering** - Testing runner supports auto-discovery and per-repo filter patterns
+- **Frontmatter Validation** - New `validate-subagent-frontmatter.sh` script ensures subagent compliance
 
 ## What's New in v3.0
 
