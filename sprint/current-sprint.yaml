@@ -87,7 +87,8 @@ epics:
           - Ensure remaining entries are current and valuable
         points: 1
         priority: P2
-        status: backlog
+        status: in_progress
+        started: 2025-12-24
         jira: https://1898andco.atlassian.net/browse/MSSCI-11146
         repos: pennyfarthing
         acceptance_criteria:

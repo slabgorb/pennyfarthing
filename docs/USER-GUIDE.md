@@ -2,7 +2,7 @@
 
 Complete guide to using Pennyfarthing, a Claude Code agent framework with TDD workflow and persona system.
 
-**Version:** 2.0.0-beta.2
+**Version:** 3.0.1
 
 ---
 
@@ -561,7 +561,7 @@ your-project/
 │   ├── manifest.json            # Installation manifest
 │   ├── persona-config.yaml      # Theme configuration
 │   └── settings.local.json      # Claude Code settings
-├── scripts/
+├── scripts/                      # → symlink to .claude/pennyfarthing/scripts/
 │   ├── hooks/                   # Session hooks
 │   │   ├── session-start.sh
 │   │   └── pre-edit-check.sh

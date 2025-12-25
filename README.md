@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v2.0.0-beta.2** | *The outer loop goes once, the inner loop goes many times.*
+**v3.0.1** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px" margin="10px">
 
@@ -8,10 +8,10 @@ A Claude Code agent orchestration framework with TDD workflow and themed persona
 
 ## Features
 
-- **10 Agents** - Strategic (PM, Architect) and tactical (SM, TEA, Dev, Reviewer) agents
-- **Automatic Handoffs** - Context-aware agent transitions (auto-invoke when < 70% context)
+- **10 Agents + 13 Subagents** - Strategic (PM, Architect) and tactical (SM, TEA, Dev, Reviewer) agents with official Haiku-based subagents for mechanical tasks
+- **Automatic Handoffs** - Context-aware agent transitions via official subagent format
 - **7 Persona Themes** - Star Trek, Discworld, Shakespeare, Jane Austen, and more
-- **12 Skills** - Reusable knowledge domains (testing, code-review, jira-cli, etc.)
+- **11 Skills** - Reusable knowledge domains (testing, code-review, jira-cli, etc.)
 - **25 Slash Commands** - Entry points for agent activation and workflows
 - **CLI Tool** - `pennyfarthing init`, `update`, `doctor`, `uninstall`
 
@@ -96,7 +96,7 @@ your-project/
 │   ├── manifest.json         # Installation manifest
 │   ├── persona-config.yaml   # Theme selection
 │   └── settings.local.json   # Claude Code settings
-├── scripts/
+├── scripts/                  # → symlink to .claude/pennyfarthing/scripts/
 │   ├── hooks/                # Session hooks
 │   └── utils/                # Utility scripts
 ├── sprint/
@@ -146,11 +146,13 @@ pennyfarthing uninstall --all
 
 Archived sprint data (`sprint/archive/`, `sprint/context/`) is always preserved.
 
-## What's New in v2.2
+## What's New in v3.0
 
-- **Official Subagents** - All subagents migrated to Claude Code's official agent format
-- **Symlink Structure** - Source files in `pennyfarthing/`, accessed via symlinks
-- **Centralized Error Handling** - Subagents return structured results, callers handle retries
+- **Official Subagents** - 13 subagents migrated to Claude Code's official agent format with `subagent_type`
+- **Session File Naming** - Changed from `current_work.md` to `{story-id}-session.md` for parallel work support
+- **Scripts as Symlinks** - `scripts/` symlinks to `pennyfarthing-dist/scripts/` for single source of truth
+- **CLI Scripts Path** - Scripts install to `.claude/pennyfarthing/scripts/`
+- **Centralized Error Handling** - Subagents return structured `status: success|blocked` results
 - **NPM Package** - Install via npm with `pennyfarthing init`
 - **CLI Tool** - `pennyfarthing init`, `update`, `doctor`, `uninstall`
 - **Health Checks** - `doctor --fix` auto-repairs common issues
