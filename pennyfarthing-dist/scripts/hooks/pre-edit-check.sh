@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # Pre-edit hook: Verify edits don't touch protected files
 # Called by Claude Code before Edit/Write tool calls
 #

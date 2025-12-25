@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # Retry utilities with exponential backoff
 # Dev: Fanny Price - "We have all a better guide in ourselves, if we would attend to it."
 
@@ -73,8 +73,4 @@ command_with_fallback() {
     fi
 }
 
-# Export functions for use when sourced (optional, may fail in some shells)
-if [[ "${BASH_VERSINFO[0]:-0}" -ge 4 ]]; then
-    export -f retry_with_backoff 2>/dev/null || :
-    export -f command_with_fallback 2>/dev/null || :
-fi
+# Functions available when sourced - no export needed in zsh

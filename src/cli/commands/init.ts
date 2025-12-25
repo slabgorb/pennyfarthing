@@ -118,7 +118,6 @@ export async function initCommand(
   // New structure: everything installs to .claude/pennyfarthing/
   const managedCopies = [
     { src: 'agents', dest: '.claude/pennyfarthing/agents' },
-    { src: 'subagents', dest: '.claude/pennyfarthing/subagents' },
     { src: 'commands', dest: '.claude/pennyfarthing/commands' },
     { src: 'guides', dest: '.claude/pennyfarthing/guides' },
     { src: 'skills', dest: '.claude/pennyfarthing/skills' },
@@ -157,10 +156,11 @@ export async function initCommand(
   const symlinks = [
     { target: 'pennyfarthing/commands', link: '.claude/commands' },
     { target: 'pennyfarthing/agents', link: '.claude/agents' },
-    { target: 'pennyfarthing/subagents', link: '.claude/subagents' },
     { target: 'pennyfarthing/guides', link: '.claude/guides' },
     { target: 'pennyfarthing/skills', link: '.claude/skills' },
-    { target: 'pennyfarthing/personas', link: '.claude/personas' }
+    { target: 'pennyfarthing/personas', link: '.claude/personas' },
+    // scripts symlink at project root for agent activation
+    { target: '.claude/pennyfarthing/scripts', link: 'scripts' }
   ];
 
   for (const { target, link } of symlinks) {

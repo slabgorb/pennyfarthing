@@ -1,9 +1,9 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # Structured JSON logging utilities for agent workflows
 # Dev: Fanny Price - "Let other pens dwell on guilt and misery."
 
 # Source file locking utilities
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=file-lock.sh
 source "${SCRIPT_DIR}/file-lock.sh" 2>/dev/null || true
 
@@ -183,14 +183,4 @@ log_rotate() {
     fi
 }
 
-# Export functions for use when sourced
-if [[ "${BASH_VERSINFO[0]:-0}" -ge 4 ]]; then
-    export -f _get_log_file 2>/dev/null || :
-    export -f _log 2>/dev/null || :
-    export -f log_info 2>/dev/null || :
-    export -f log_warn 2>/dev/null || :
-    export -f log_error 2>/dev/null || :
-    export -f log_list 2>/dev/null || :
-    export -f log_clear 2>/dev/null || :
-    export -f log_rotate 2>/dev/null || :
-fi
+# Functions available when sourced

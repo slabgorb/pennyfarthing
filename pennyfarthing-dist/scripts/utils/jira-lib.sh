@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # Jira CLI Library Functions
 # Shared functions for interacting with Jira using jira-cli
 # Source this file: source "${SCRIPT_DIR}/jira-lib.sh"

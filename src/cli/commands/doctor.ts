@@ -136,12 +136,11 @@ function checkCoreFiles(projectRoot: string, manifest: ReturnType<typeof readMan
   const results: CheckResult[] = [];
 
   const coreDirs = [
-    { path: '.claude/pennyfarthing/agents', name: 'agents' },
-    { path: '.claude/pennyfarthing/subagents', name: 'subagents' },
-    { path: '.claude/pennyfarthing/commands', name: 'commands' },
-    { path: '.claude/pennyfarthing/guides', name: 'guides' },
-    { path: '.claude/pennyfarthing/skills', name: 'skills' },
-    { path: '.claude/pennyfarthing/personas', name: 'personas' }
+    { path: '.claude/pennyfarthing/agents', name: 'core/agents' },
+    { path: '.claude/pennyfarthing/commands', name: 'core/commands' },
+    { path: '.claude/pennyfarthing/guides', name: 'core/guides' },
+    { path: '.claude/pennyfarthing/skills', name: 'core/skills' },
+    { path: '.claude/pennyfarthing/personas', name: 'core/personas' }
   ];
 
   for (const { path, name } of coreDirs) {

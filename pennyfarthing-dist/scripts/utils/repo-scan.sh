@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # Pennyfarthing Repo Scanning Utilities
 # Provides functions for scanning git status and PRs across repos
 #
@@ -12,7 +12,7 @@
 # Don't exit on error - we want to handle errors gracefully
 set +e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Source repo-utils for multi-repo iteration

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # Worktree management utilities for parallel development work
 # Usage: worktree-manager.sh {create|remove|list|status|ports|cd} [args]
 #

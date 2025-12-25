@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # Show git status across all repos
 # Usage: ./scripts/git-status-all.sh [--brief]
 #
@@ -7,7 +7,7 @@
 set -e
 
 # Source environment (inline to avoid argument passing issues)
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 if [ -f "$SCRIPT_DIR/../.env" ]; then
     set -a; source "$SCRIPT_DIR/../.env"; set +a
 fi

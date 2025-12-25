@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # Pennyfarthing Repository Utilities
 # Provides functions for multi-repo operations with backward compatibility
 #
@@ -102,18 +102,18 @@ _parse_with_yq() {
     while IFS= read -r repo; do
         [[ -z "$repo" ]] && continue
         _REPO_NAMES+=("$repo")
-        _REPO_PATHS["$repo"]=$(yq -r ".repos.\"$repo\".path // \"$repo\"" "$REPOS_CONFIG")
-        _REPO_TYPES["$repo"]=$(yq -r ".repos.\"$repo\".type // \"unknown\"" "$REPOS_CONFIG")
-        _REPO_LANGUAGES["$repo"]=$(yq -r ".repos.\"$repo\".language // \"unknown\"" "$REPOS_CONFIG")
-        _REPO_TEST_CMDS["$repo"]=$(yq -r ".repos.\"$repo\".test_command // \"\"" "$REPOS_CONFIG")
-        _REPO_TEST_FILTER_FLAGS["$repo"]=$(yq -r ".repos.\"$repo\".test_filter_flag // \"\"" "$REPOS_CONFIG")
-        _REPO_BUILD_CMDS["$repo"]=$(yq -r ".repos.\"$repo\".build_command // \"\"" "$REPOS_CONFIG")
-        _REPO_LINT_CMDS["$repo"]=$(yq -r ".repos.\"$repo\".lint_command // \"\"" "$REPOS_CONFIG")
+        _REPO_PATHS[$repo]=$(yq -r ".repos.\"$repo\".path // \"$repo\"" "$REPOS_CONFIG")
+        _REPO_TYPES[$repo]=$(yq -r ".repos.\"$repo\".type // \"unknown\"" "$REPOS_CONFIG")
+        _REPO_LANGUAGES[$repo]=$(yq -r ".repos.\"$repo\".language // \"unknown\"" "$REPOS_CONFIG")
+        _REPO_TEST_CMDS[$repo]=$(yq -r ".repos.\"$repo\".test_command // \"\"" "$REPOS_CONFIG")
+        _REPO_TEST_FILTER_FLAGS[$repo]=$(yq -r ".repos.\"$repo\".test_filter_flag // \"\"" "$REPOS_CONFIG")
+        _REPO_BUILD_CMDS[$repo]=$(yq -r ".repos.\"$repo\".build_command // \"\"" "$REPOS_CONFIG")
+        _REPO_LINT_CMDS[$repo]=$(yq -r ".repos.\"$repo\".lint_command // \"\"" "$REPOS_CONFIG")
 
         # Dependencies as comma-separated list
         local deps
         deps=$(yq -r ".repos.\"$repo\".dependencies // [] | join(\",\")" "$REPOS_CONFIG")
-        _REPO_DEPS["$repo"]="$deps"
+        _REPO_DEPS[$repo]="$deps"
     done <<< "$repo_keys"
 
     # Build order (explicit or default to repo order)
@@ -188,14 +188,14 @@ PYTHON_SCRIPT
         deps=$(echo "$line" | python3 -c 'import json,sys; print(json.load(sys.stdin)["dependencies"])')
 
         _REPO_NAMES+=("$name")
-        _REPO_PATHS["$name"]="$path"
-        _REPO_TYPES["$name"]="$type"
-        _REPO_LANGUAGES["$name"]="$language"
-        _REPO_TEST_CMDS["$name"]="$test_cmd"
-        _REPO_TEST_FILTER_FLAGS["$name"]="$test_filter_flag"
-        _REPO_BUILD_CMDS["$name"]="$build_cmd"
-        _REPO_LINT_CMDS["$name"]="$lint_cmd"
-        _REPO_DEPS["$name"]="$deps"
+        _REPO_PATHS[$name]="$path"
+        _REPO_TYPES[$name]="$type"
+        _REPO_LANGUAGES[$name]="$language"
+        _REPO_TEST_CMDS[$name]="$test_cmd"
+        _REPO_TEST_FILTER_FLAGS[$name]="$test_filter_flag"
+        _REPO_BUILD_CMDS[$name]="$build_cmd"
+        _REPO_LINT_CMDS[$name]="$lint_cmd"
+        _REPO_DEPS[$name]="$deps"
     done < <(echo "$result" | python3 -c 'import json,sys; [print(json.dumps(r)) for r in json.load(sys.stdin)["repos"]]')
 
     # Build order
@@ -229,24 +229,24 @@ _apply_legacy_compat() {
 _load_legacy_env() {
     if [[ -n "${API_REPO:-}" ]]; then
         _REPO_NAMES+=("$API_REPO")
-        _REPO_PATHS["$API_REPO"]="$API_REPO"
-        _REPO_TYPES["$API_REPO"]="api"
-        _REPO_LANGUAGES["$API_REPO"]="go"
-        _REPO_TEST_CMDS["$API_REPO"]="just test"
-        _REPO_BUILD_CMDS["$API_REPO"]="just build"
-        _REPO_LINT_CMDS["$API_REPO"]="golangci-lint run"
-        _REPO_DEPS["$API_REPO"]=""
+        _REPO_PATHS[$API_REPO]="$API_REPO"
+        _REPO_TYPES[$API_REPO]="api"
+        _REPO_LANGUAGES[$API_REPO]="go"
+        _REPO_TEST_CMDS[$API_REPO]="just test"
+        _REPO_BUILD_CMDS[$API_REPO]="just build"
+        _REPO_LINT_CMDS[$API_REPO]="golangci-lint run"
+        _REPO_DEPS[$API_REPO]=""
     fi
 
     if [[ -n "${UI_REPO:-}" ]]; then
         _REPO_NAMES+=("$UI_REPO")
-        _REPO_PATHS["$UI_REPO"]="$UI_REPO"
-        _REPO_TYPES["$UI_REPO"]="ui"
-        _REPO_LANGUAGES["$UI_REPO"]="typescript"
-        _REPO_TEST_CMDS["$UI_REPO"]="npm run test -- --run"
-        _REPO_BUILD_CMDS["$UI_REPO"]="npm run build"
-        _REPO_LINT_CMDS["$UI_REPO"]="npm run lint"
-        _REPO_DEPS["$UI_REPO"]=""
+        _REPO_PATHS[$UI_REPO]="$UI_REPO"
+        _REPO_TYPES[$UI_REPO]="ui"
+        _REPO_LANGUAGES[$UI_REPO]="typescript"
+        _REPO_TEST_CMDS[$UI_REPO]="npm run test -- --run"
+        _REPO_BUILD_CMDS[$UI_REPO]="npm run build"
+        _REPO_LINT_CMDS[$UI_REPO]="npm run lint"
+        _REPO_DEPS[$UI_REPO]=""
     fi
 
     # Handle empty array case for set -u compatibility

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # Pennyfarthing Test Setup Utilities
 # Config-driven test utilities that work with any project structure
 #
@@ -19,7 +19,7 @@
 # Don't exit on error - we want to handle errors gracefully
 set +e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Source repo-utils for config access
@@ -301,7 +301,7 @@ run_repo_tests() {
 
     echo "=== Testing $repo ==="
     (cd "$repo_path" && eval "$test_cmd") 2>&1 | tee "$log_path"
-    local exit_code=${PIPESTATUS[0]}
+    local exit_code=${pipestatus[1]}
 
     if [[ $exit_code -eq 0 ]]; then
         echo "PASS: $repo"

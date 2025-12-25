@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # Create or checkout feature branches in conductor repos
 # Idempotent, worktree-aware, branches from develop
 
