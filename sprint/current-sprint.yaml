@@ -13,7 +13,7 @@ epics:
     description: |
       Housekeeping improvements from Sprint 1 retrospective.
       Automates manual workflows and improves developer experience.
-    points: 8
+    points: 11
     priority: P1
     source: "Sprint 1 Retro"
     repos: pennyfarthing
@@ -99,6 +99,77 @@ epics:
           - Outdated entries archived to sprint/archive/
           - All remaining entries verified as current
         completion_summary: "Pruned 82% of sidecar content (4,157 → 755 lines). Standardized all 10 agent sidecars to patterns/gotchas/decisions format. Original content archived to sprint/archive/sidecar-archive/."
+
+      - id: "2-5"
+        title: "Migrate subagents to official YAML frontmatter format"
+        description: |
+          Convert all 13 subagents from current markdown-with-embedded-YAML format
+          to Claude Code's official YAML frontmatter format.
+
+          Current format:
+            # Subagent Name
+            ```yaml
+            subagent_type: "general-purpose"
+            model: "haiku"
+            ```
+
+          Official format:
+            ---
+            name: subagent-name
+            description: What it does
+            tools: Bash, Read, Glob, Grep
+            model: haiku
+            ---
+            [system prompt]
+
+          Files to convert (13 total):
+          - workflow-status-check.md
+          - sm-work-research.md, sm-file-summary.md, sm-story-setup.md
+          - sm-handoff.md, sm-finish-bookkeeping.md, sm-finish-execution.md
+          - tea-handoff.md, dev-handoff.md
+          - reviewer-preflight.md, reviewer-handoff-approve.md, reviewer-handoff-reject.md
+          - testing-runner.md
+        points: 3
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - All 13 subagents use YAML frontmatter format (--- delimited)
+          - Each has name, description, tools, model fields
+          - Subagents auto-discovered by Claude Code from .claude/agents/
+          - Agent invocation patterns updated if needed
+          - Documentation reflects new format
+
+      - id: "2-6"
+        title: "Create sidecar templates for dist folder"
+        description: |
+          Add sidecar template files to pennyfarthing-dist/templates/ so the CLI
+          installs lean starter content instead of empty files.
+
+          Currently `pennyfarthing init` creates empty sidecars with just headers:
+            # dev patterns
+
+          Should instead install templates with:
+            - Standard 3-file structure (patterns.md, gotchas.md, decisions.md)
+            - Section headers and placeholder prompts
+            - Example format for each entry type
+
+          Files to create:
+          - pennyfarthing-dist/templates/sidecar/patterns.md.template
+          - pennyfarthing-dist/templates/sidecar/gotchas.md.template
+          - pennyfarthing-dist/templates/sidecar/decisions.md.template
+
+          Update CLI:
+          - src/cli/commands/init.ts to use templates instead of empty files
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Sidecar templates exist in pennyfarthing-dist/templates/sidecar/
+          - Templates have section headers and placeholder prompts
+          - pennyfarthing init installs templated content
+          - Agent name substituted into template headers
 
   - id: epic-4
     title: "Configuration & Permissions Framework"
@@ -186,15 +257,16 @@ epics:
           - Template includes agent scope examples
 
 summary:
-  total_points: 16
+  total_points: 19
   completed_points: 6
   in_progress_points: 0
-  backlog_points: 10
+  backlog_points: 13
   velocity_target: 20
   status: active
 
 # Sprint 2 Planning Notes:
-# - Epic 2 (8 pts): Retro improvements, mostly DevOps/Dev work
+# - Epic 2 (11 pts): Retro improvements, mostly DevOps/Dev work
 # - Epic 4 (8 pts): Quick win, establishes foundation for future security
-# - Total: 16 pts, leaving buffer for unexpected work
+# - Total: 19 pts, close to velocity target
 # - Stories ordered by priority within each epic
+# - Story 2-5 added: Migrate subagents to official YAML format (P1, 3 pts)
