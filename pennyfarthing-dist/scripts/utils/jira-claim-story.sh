@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # Check and claim a story in Jira for multi-developer coordination
 # Usage: ./scripts/jira-claim-story.sh <story_key_or_jira_key> [--claim]
 #

@@ -1,9 +1,9 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # Session checkpointing utilities
 # Dev: Fanny Price - "I was quiet, but I was not blind."
 
 # Source file locking utilities
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=file-lock.sh
 source "${SCRIPT_DIR}/file-lock.sh" 2>/dev/null || true
 
@@ -133,12 +133,4 @@ checkpoint_rotate() {
     fi
 }
 
-# Export functions for use when sourced (optional, may fail in some shells)
-if [[ "${BASH_VERSINFO[0]:-0}" -ge 4 ]]; then
-    export -f _get_checkpoint_file 2>/dev/null || :
-    export -f checkpoint_save 2>/dev/null || :
-    export -f checkpoint_restore 2>/dev/null || :
-    export -f checkpoint_list 2>/dev/null || :
-    export -f checkpoint_clear 2>/dev/null || :
-    export -f checkpoint_rotate 2>/dev/null || :
-fi
+# Functions available when sourced

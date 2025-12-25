@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # Enhanced multi-repo git status with color and summaries
 # Usage: ./check-status.sh [repos]
 

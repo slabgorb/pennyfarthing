@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # Uninstall pennyfarthing from a project
 # Usage: uninstall.sh [--force] [--all] [project-root]
 #

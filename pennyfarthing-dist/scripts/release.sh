@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # Pennyfarthing Release Script
 # Merges develop to main and pushes both branches
 #
@@ -17,7 +17,7 @@
 
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 cd "$PROJECT_ROOT"

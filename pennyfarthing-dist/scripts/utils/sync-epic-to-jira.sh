@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # Sync Conductor Epic to Jira MSSCI Project using jira-cli
 # Usage: ./scripts/sync-epic-to-jira.sh <epic_number> [--dry-run] [--with-comments]
 #

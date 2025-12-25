@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 # File locking utilities for session file concurrency protection
 # Dev: Fanny Price - "We have all a better guide in ourselves."
 
@@ -266,14 +266,4 @@ lock_cleanup() {
     done
 }
 
-# Export functions for use when sourced
-if [[ "${BASH_VERSINFO[0]:-0}" -ge 4 ]]; then
-    export -f _get_lock_dir 2>/dev/null || :
-    export -f _get_lock_file 2>/dev/null || :
-    export -f _check_stale_lock 2>/dev/null || :
-    export -f lock_acquire 2>/dev/null || :
-    export -f lock_release 2>/dev/null || :
-    export -f with_lock 2>/dev/null || :
-    export -f lock_status 2>/dev/null || :
-    export -f lock_cleanup 2>/dev/null || :
-fi
+# Functions available when sourced

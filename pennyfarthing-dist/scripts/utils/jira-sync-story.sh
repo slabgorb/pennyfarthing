@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # Sync a single story to Jira using jira CLI
 # Usage: ./scripts/jira-sync-story.sh <story_key> [--transition] [--points] [--comment "message"]
 #

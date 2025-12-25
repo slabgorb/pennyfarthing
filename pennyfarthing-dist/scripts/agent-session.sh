@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # Agent session management script
 # Usage: agent-session.sh <action> [agent-name] [session-id]
 #   start "agent-name" "session-id"  - Register agent session and output persona

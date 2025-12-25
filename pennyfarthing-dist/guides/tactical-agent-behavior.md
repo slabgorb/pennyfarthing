@@ -65,6 +65,69 @@ The Bash tool maintains a persistent working directory across calls, but relativ
 
 ---
 
+## Single-Repo Projects
+
+For projects where Pennyfarthing is installed directly in the repo (not as an orchestrator):
+
+### Configuration
+
+```yaml
+# .claude/project/repos.yaml
+repos:
+  my-project:
+    path: .              # "." means project root IS the repo
+    type: service        # or: api, ui, cli, lib, monorepo
+    language: go         # or: typescript, python, rust, etc.
+    test_command: just test
+    build_command: just build
+    lint_command: just lint
+```
+
+### Key Differences from Multi-Repo
+
+| Aspect | Multi-Repo | Single-Repo |
+|--------|------------|-------------|
+| `path` | `api/`, `ui/` | `.` (project root) |
+| Branches | One per repo | One branch total |
+| PRs | Multiple PRs | Single PR |
+| `cd` pattern | `cd $PROJECT_ROOT/$repo_path` | `cd $PROJECT_ROOT` |
+
+### Commands Still Work
+
+The same repo-utils functions work — they just iterate over one repo:
+
+```bash
+source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
+
+# Returns single repo name
+get_repos  # → "my-project"
+
+# Path is "." so this works:
+cd $CLAUDE_PROJECT_DIR/$(get_repo_path "my-project")
+# Equivalent to: cd $CLAUDE_PROJECT_DIR/.
+
+# Test command
+$(get_test_command "my-project")  # → "just test"
+```
+
+### Simplified Patterns
+
+For single-repo, you can also just work directly:
+
+```bash
+# Direct approach (single-repo only)
+cd $CLAUDE_PROJECT_DIR && just test
+cd $CLAUDE_PROJECT_DIR && just build
+
+# Still works with repo-utils (recommended for consistency)
+for repo in $(get_repos); do
+    cd $CLAUDE_PROJECT_DIR/$(get_repo_path "$repo")
+    eval "$(get_test_command "$repo")"
+done
+```
+
+---
+
 ## Multi-Repo Operations
 
 For projects with multiple repositories, use `repo-utils.sh` for dynamic iteration.

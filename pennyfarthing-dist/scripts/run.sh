@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # Bootstrap script - finds PROJECT_ROOT and runs the requested script
 # Usage: ./scripts/run.sh <script-name> [args...]
 #
