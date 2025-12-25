@@ -151,6 +151,7 @@ Invoked via `Task tool` with `subagent_type: "{name}"`:
 | `sm-work-research` | Research backlog |
 | `sm-story-setup` | Setup story session |
 | `sm-file-summary` | Summarize changes |
+| `sm-handoff` | Handoff bookkeeping to TEA |
 | `sm-finish-bookkeeping` | Archive and cleanup |
 | `sm-finish-execution` | Execute finish workflow |
 | `testing-runner` | Run tests |

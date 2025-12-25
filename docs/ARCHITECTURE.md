@@ -145,7 +145,7 @@ SM (Finish - Cleanup)
 
 ## Official Subagent System
 
-Subagents are Haiku-based coordinators that manage state transitions. They use Claude Code's official agent format and are invoked via `Task tool` with `subagent_type: "{name}"`.
+Pennyfarthing includes 13 official subagents - Haiku-based coordinators that manage state transitions. They use Claude Code's official agent format and are invoked via `Task tool` with `subagent_type: "{name}"`.
 
 Error handling is centralized in the calling agent (see `tactical-agent-behavior.md`). Subagents return structured results with `status: success|blocked`.
 
@@ -157,6 +157,7 @@ Error handling is centralized in the calling agent (see `tactical-agent-behavior
 | `sm-work-research` | Research stories and context |
 | `sm-file-summary` | Summarize file changes |
 | `sm-story-setup` | Claim Jira, write session, create branches |
+| `sm-handoff` | Handoff bookkeeping when SM work done |
 | `sm-finish-bookkeeping` | Archive session, update sprint |
 | `sm-finish-execution` | Execute finish workflow |
 

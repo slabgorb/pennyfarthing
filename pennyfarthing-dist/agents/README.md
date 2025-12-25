@@ -15,14 +15,33 @@ Oversee both repos, make cross-repo decisions, coordinate work.
 - **`pm.md`** - Product Manager (planning, prioritization)
 - **`sm.md`** - Scrum Master (story creation, technical specs)
 - **`architect.md`** - System Architect (design decisions, patterns)
+- **`devops.md`** - DevOps Engineer (infrastructure, deployment)
 
 ### Tactical Agents (Story-Scoped)
 Focus on specific repo(s), implement/test/document features.
 
 - **`dev.md`** - Developer (feature implementation)
 - **`tea.md`** - Test Engineer/Architect (testing, quality)
+- **`reviewer.md`** - Code Reviewer (adversarial review, quality gates)
 - **`tech-writer.md`** - Technical Writer (documentation)
 - **`ux-designer.md`** - UX Designer (UI design, UX)
+
+### Official Subagents (Haiku-based)
+Lightweight subagents for mechanical tasks. Invoked via `Task tool` with `subagent_type`.
+
+- **`workflow-status-check.md`** - Detect workflow state
+- **`sm-work-research.md`** - Research stories and context
+- **`sm-file-summary.md`** - Summarize file changes
+- **`sm-story-setup.md`** - Claim Jira, write session, create branches
+- **`sm-handoff.md`** - Handoff bookkeeping to TEA
+- **`sm-finish-bookkeeping.md`** - Archive session, update sprint
+- **`sm-finish-execution.md`** - Execute finish workflow
+- **`tea-handoff.md`** - Update session after tests (RED)
+- **`dev-handoff.md`** - Update session after PR (GREEN)
+- **`reviewer-preflight.md`** - Gather review data
+- **`reviewer-handoff-approve.md`** - Approve and route to SM
+- **`reviewer-handoff-reject.md`** - Reject and route to Dev
+- **`testing-runner.md`** - Execute tests, report results
 
 ## Context Loading
 
@@ -72,14 +91,33 @@ Each agent file contains:
 ```
 .claude/agents/
 ├── README.md                  # This file
+│
+│ # Main Agents (10)
 ├── orchestrator.md            # Master orchestrator
-├── pm.md                     # Product Manager
-├── sm.md                     # Scrum Master
-├── architect.md              # System Architect
-├── dev.md                    # Developer
-├── tea.md                    # Test Engineer
-├── tech-writer.md            # Technical Writer
-└── ux-designer.md            # UX Designer
+├── pm.md                      # Product Manager
+├── sm.md                      # Scrum Master
+├── architect.md               # System Architect
+├── devops.md                  # DevOps Engineer
+├── dev.md                     # Developer
+├── tea.md                     # Test Engineer
+├── reviewer.md                # Code Reviewer
+├── tech-writer.md             # Technical Writer
+├── ux-designer.md             # UX Designer
+│
+│ # Official Subagents (13)
+├── workflow-status-check.md   # Detect workflow state
+├── sm-work-research.md        # Research stories
+├── sm-file-summary.md         # Summarize files
+├── sm-story-setup.md          # Story setup
+├── sm-handoff.md              # SM handoff
+├── sm-finish-bookkeeping.md   # Archive session
+├── sm-finish-execution.md     # Execute finish
+├── tea-handoff.md             # TEA handoff
+├── dev-handoff.md             # Dev handoff
+├── reviewer-preflight.md      # Review prep
+├── reviewer-handoff-approve.md # Approve PR
+├── reviewer-handoff-reject.md  # Reject PR
+└── testing-runner.md          # Run tests
 ```
 
 ## Context Budget
@@ -103,13 +141,23 @@ Each agent is designed to work within **~500-800 line context budget**:
 
 ## Agent Coordination
 
+### TDD Flow Handoffs
+
+```
+SM → TEA:      Story selected, write failing tests
+TEA → Dev:     Tests written (RED), make them pass
+Dev → Reviewer: Implementation done, review PR
+Reviewer → SM: Story approved, finish it
+Reviewer → Dev: Issues found, fix needed
+```
+
 ### Strategic → Tactical Handoffs
 
 ```
 PM → SM:     Epic needs stories
-SM → Dev:    Story ready for implementation
-Dev → TEA:   Feature needs testing
-Dev → SM:    Story complete, ready for review
+SM → TEA:    Story ready for tests
+TEA → Dev:   Tests ready for implementation
+Dev → Reviewer: PR ready for review
 ```
 
 ### Strategic ↔ Strategic Coordination
@@ -123,8 +171,9 @@ SM ↔ Architect:  Technical approach
 ### Tactical → Strategic Feedback
 
 ```
-Dev → SM:        Story blocked or needs clarification
-TEA → SM:        Test coverage gaps identified
+Dev → SM:         Story blocked or needs clarification
+TEA → SM:         Test coverage gaps identified
+Reviewer → SM:    Code quality concerns
 Tech Writer → SM: Documentation needs
 ```
 
