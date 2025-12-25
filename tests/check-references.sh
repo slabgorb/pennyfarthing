@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 #
 # Reference Integrity Checker for Pennyfarthing
 # Validates that all cross-file references in markdown files exist
@@ -19,7 +19,7 @@ YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
 
 VERBOSE="${1:-}"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Counters

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # Claude Code statusline - fixed-width segments
 # Format: Agent- Character | repo | branch | model >>>> pct%
 
@@ -16,7 +16,7 @@ if [ -n "$CLAUDE_PROJECT_DIR" ]; then
     PROJECT_ROOT="$CLAUDE_PROJECT_DIR"
 else
     # Script is in pennyfarthing-dist/, go up one level
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
     PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 fi
 
