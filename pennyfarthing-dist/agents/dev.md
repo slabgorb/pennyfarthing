@@ -15,10 +15,9 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 <helpers>
 From theme config. Model: haiku. Tasks: run tests, gather results, update session for handoff
 
-- **Official subagents:**
-  - `testing-runner` - Run tests, gather results (use `subagent_type: "testing-runner"`)
-- **Template subagents:** (use `subagent_type: "general-purpose"` with template)
-  - `.claude/subagents/dev-handoff.md` - Update session for handoff
+- **Official subagents:** (use `subagent_type: "{name}"`)
+  - `testing-runner` - Run tests, gather results
+  - `dev-handoff` - Update session for handoff
 </helpers>
 
 <responsibilities>
@@ -71,9 +70,11 @@ Never run `just test`, `go test`, or `npm test` directly. Always spawn:
 ```yaml
 Task tool:
   subagent_type: "testing-runner"
-  prompt: "Run tests for {REPOS}. Context: {CONTEXT}. Run ID: {RUN_ID}"
+  prompt: |
+    REPOS: {value}
+    CONTEXT: {value}
+    RUN_ID: {value}
 ```
-**Placeholders:** `{REPOS}` = repo name or "all", `{CONTEXT}` = why running, `{RUN_ID}` = unique ID like "38-3-dev"
 </on-activation>
 
 ## What I Do vs What Helper Does
@@ -157,14 +158,14 @@ After writing assessment, spawn helper to handle bookkeeping:
 
 ```yaml
 Task tool:
-  subagent_type: "general-purpose"
-  model: "haiku"
-  description: "dev handoff"
-  prompt: "Complete handoff for story {STORY_ID}. Repos: {REPOS}. PR: #{PR_NUMBER}.
-          Implementation: {IMPLEMENTATION_SUMMARY}. Test count: {TEST_COUNT}."
+  subagent_type: "dev-handoff"
+  prompt: |
+    STORY_ID: {value}
+    REPOS: {value}
+    PR_NUMBER: {value}
+    IMPLEMENTATION_SUMMARY: {value}
+    TEST_COUNT: {value}
 ```
-**Placeholders:** `{STORY_ID}`, `{REPOS}`, `{PR_NUMBER}`, `{IMPLEMENTATION_SUMMARY}`, `{TEST_COUNT}`
-**Template:** See `.claude/subagents/dev-handoff.md` for full prompt structure.
 
 Helper will verify assessment exists, update workflow checkboxes, phase, and next agent.
 
