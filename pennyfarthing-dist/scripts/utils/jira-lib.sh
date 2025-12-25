@@ -104,19 +104,27 @@ create_epic() {
     local summary="$1"
     local description="$2"
 
+    # Use PROJECT_LABEL if set, otherwise fall back to PROJECT_NAME
+    local label="${PROJECT_LABEL:-${PROJECT_NAME:-}}"
+
     if [ "$DRY_RUN" = true ]; then
         warn "[DRY-RUN] Would create epic: $summary"
         echo "DRYRUN-EPIC-001"
         return
     fi
 
-    jira issue create \
-        --project "$JIRA_PROJECT" \
-        --type Epic \
-        --summary "$summary" \
-        --body "$description" \
-        --label "$JIRA_LABEL" \
-        --no-input 2>&1 | grep -oE "${JIRA_PROJECT}-[0-9]+" | head -1
+    local args=(
+        --project "$JIRA_PROJECT"
+        --type Epic
+        --summary "$summary"
+        --body "$description"
+        --no-input
+    )
+
+    # Only add label if we have one
+    [ -n "$label" ] && args+=(--label "$label")
+
+    jira issue create "${args[@]}" 2>&1 | grep -oE "${JIRA_PROJECT}-[0-9]+" | head -1
 }
 
 create_story() {
@@ -125,6 +133,9 @@ create_story() {
     local priority="$3"
     local points="$4"
     local parent="$5"
+
+    # Use PROJECT_LABEL if set, otherwise fall back to PROJECT_NAME
+    local label="${PROJECT_LABEL:-${PROJECT_NAME:-}}"
 
     if [ "$DRY_RUN" = true ]; then
         warn "[DRY-RUN] Would create story: $summary"
@@ -138,10 +149,11 @@ create_story() {
         --summary "$summary"
         --body "$description"
         --priority "$priority"
-        --label "$JIRA_LABEL"
         --no-input
     )
 
+    # Only add label if we have one
+    [ -n "$label" ] && args+=(--label "$label")
     [ -n "$parent" ] && args+=(--parent "$parent")
 
     jira issue create "${args[@]}" 2>&1 | grep -oE "${JIRA_PROJECT}-[0-9]+" | head -1

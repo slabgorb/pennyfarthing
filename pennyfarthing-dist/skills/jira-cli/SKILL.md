@@ -29,12 +29,14 @@ Configure these in your project's `.claude/project/hooks/setup-env.sh`:
 
 ```bash
 export JIRA_PROJECT_KEY="MSSCI"    # Your Jira project key
-export PROJECT_LABEL="conductor"   # Label for filtering issues
+export PROJECT_LABEL="conductor"   # Label for filtering issues (defaults to PROJECT_NAME)
 ```
+
+The `PROJECT_LABEL` is used to tag Jira issues created by the sync scripts. If not set, it defaults to `PROJECT_NAME`.
 
 Example settings (Conductor project):
 - **Project Key:** `MSSCI`
-- **Label:** `$PROJECT_LABEL`
+- **Label:** `$PROJECT_LABEL` (or `$PROJECT_NAME` if not set)
 - **Config file:** `~/.config/.jira/.config.yml`
 
 ## Common Operations
