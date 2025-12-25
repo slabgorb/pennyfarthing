@@ -1,11 +1,11 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 set -euo pipefail
 
 # Deploy script for Pennyfarthing
 # Usage: ./scripts/deploy.sh [major|minor|patch]
 #
 # Steps:
-# 1. Bump version in VERSION file
+# 1. Bump version in VERSION, package.json, README.md
 # 2. Commit version bump to current branch
 # 3. Merge to develop (if not already on develop)
 # 4. Merge develop to main
@@ -13,7 +13,7 @@ set -euo pipefail
 # 6. Push everything (develop, main, tags)
 # 7. Return to develop
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 VERSION_FILE="$PROJECT_ROOT/VERSION"
 
@@ -85,6 +85,7 @@ log_info "New version: $NEW_VERSION"
 echo ""
 echo "This will:"
 echo "  1. Bump version: $CURRENT_VERSION -> $NEW_VERSION"
+echo "     - VERSION, package.json, README.md"
 echo "  2. Merge to develop (if needed)"
 echo "  3. Merge develop to main"
 echo "  4. Create tag: v$NEW_VERSION"
@@ -97,12 +98,30 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     exit 0
 fi
 
-# Step 1: Update VERSION file
+# Step 1: Update version files
 echo "$NEW_VERSION" > "$VERSION_FILE"
 log_info "Updated VERSION file"
 
+# Update package.json version
+if [[ -f "$PROJECT_ROOT/package.json" ]]; then
+    sed -i '' "s/\"version\": \"$CURRENT_VERSION\"/\"version\": \"$NEW_VERSION\"/" "$PROJECT_ROOT/package.json"
+    log_info "Updated package.json"
+fi
+
+# Update README.md version badge
+if [[ -f "$PROJECT_ROOT/README.md" ]]; then
+    sed -i '' "s/\*\*v$CURRENT_VERSION\*\*/\*\*v$NEW_VERSION\*\*/" "$PROJECT_ROOT/README.md"
+    log_info "Updated README.md"
+fi
+
+# Regenerate package-lock.json if package.json was updated
+if [[ -f "$PROJECT_ROOT/package.json" ]]; then
+    (cd "$PROJECT_ROOT" && npm install --package-lock-only --silent 2>/dev/null) || true
+    log_info "Updated package-lock.json"
+fi
+
 # Step 2: Commit version bump
-git -C "$PROJECT_ROOT" add VERSION
+git -C "$PROJECT_ROOT" add VERSION package.json package-lock.json README.md 2>/dev/null || true
 git -C "$PROJECT_ROOT" commit -m "chore: bump version to $NEW_VERSION"
 log_info "Committed version bump"
 
