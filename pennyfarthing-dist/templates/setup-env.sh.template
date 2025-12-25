@@ -6,6 +6,7 @@
 if [ -n "$CLAUDE_ENV_FILE" ]; then
     {
         echo "export PROJECT_NAME=\"${PROJECT_NAME}\""
+        echo "export PROJECT_LABEL=\"${PROJECT_NAME}\""
         # Add project-specific env vars here
         # echo "export API_REPO=\"api\""
         # echo "export UI_REPO=\"ui\""
