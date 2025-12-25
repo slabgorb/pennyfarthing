@@ -66,11 +66,15 @@ Handoffs are automatic when context usage is below 70%. Above that threshold, ag
 |----------|-------------|
 | [**User Guide**](docs/USER-GUIDE.md) | Complete documentation |
 | [Getting Started](docs/GETTING-STARTED.md) | Quick start guide |
+| [TDD Flow Diagrams](docs/TDD-FLOW-DIAGRAMS.md) | Visual sequence diagrams and flowcharts |
+| [Architecture](docs/ARCHITECTURE.md) | System design and principles |
 | [Agents](docs/AGENTS.md) | Agent reference |
 | [Commands](docs/COMMANDS.md) | Slash command reference |
+| [Skills](docs/SKILLS.md) | Knowledge domain reference |
 | [Workflows](docs/WORKFLOWS.md) | TDD and workflow guides |
 | [Personas](docs/PERSONAS.md) | Theme customization |
 | [Configuration](docs/CONFIGURATION.md) | Configuration reference |
+| [Permissions](docs/PERMISSIONS.md) | Claude Code permissions setup |
 
 ## Directory Structure
 
