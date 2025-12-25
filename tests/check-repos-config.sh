@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env zsh
 # Validate repos.yaml configuration
 # Usage: ./tests/check-repos-config.sh [path-to-repos.yaml]
 #
