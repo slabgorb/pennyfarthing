@@ -34,11 +34,24 @@ source $CLAUDE_PROJECT_DIR/scripts/utils/test-setup.sh  # Test utilities
 #   run_repo_tests, run_all_repo_tests
 ```
 
-## Placeholders
-- `{REPOS}` - Repo names to test: `all`, specific name, or comma-separated list
-- `{CONTEXT}` - Why tests are being run (e.g., "PR review for Story 38-3")
-- `{RUN_ID}` - Unique identifier for this run
-- `{FILTER}` - (optional) Test filter pattern
+## Parameters
+
+**Required:**
+- `REPOS` - Repo names to test: `all`, specific name, or comma-separated list
+- `CONTEXT` - Why tests are being run (e.g., "PR review for Story 38-3")
+- `RUN_ID` - Unique identifier for this run
+
+**Optional:**
+- `FILTER` - Global filter applied to all repos (if no per-repo filter)
+- `FILTERS` - Per-repo filters (YAML map format)
+
+Example with per-repo filters:
+```yaml
+REPOS: api, ui
+FILTERS:
+  api: TestUserLogin
+  ui: "user login component"
+```
 
 ## Project Info
 - Project root: $CLAUDE_PROJECT_DIR
@@ -61,28 +74,65 @@ ensure_test_containers
 
 ## Execute Tests
 
-### Test All Repos
+### Decision Logic
+
+```
+For each repo in REPOS:
+  1. Get test_command and test_filter_flag from repos.yaml
+  2. Check if FILTERS[repo] exists, else use global FILTER
+  3. If filter exists, append filter_flag + filter to command
+  4. Run test command, capture to log
+```
+
+### No filter - run all tests
 ```bash
 run_all_repo_tests "$RUN_ID"
 ```
 
-### Test Specific Repo
+### With filters - run filtered tests
+
 ```bash
-run_repo_tests "repo-name" "$RUN_ID"
+source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
+
+for repo in $(get_repos "$REPOS"); do
+  REPO_PATH=$(get_repo_path "$repo")
+  TEST_CMD=$(get_test_command "$repo")
+  FILTER_FLAG=$(get_test_filter_flag "$repo")  # e.g., "-run" for Go, "-t" for Vitest
+  LOG_PATH=$(get_log_path "test-$repo" "$RUN_ID")
+
+  # Get filter: per-repo first, then global, then empty
+  REPO_FILTER="${FILTERS[$repo]:-$FILTER}"
+
+  cd "$CLAUDE_PROJECT_DIR/$REPO_PATH"
+
+  if [ -n "$REPO_FILTER" ] && [ -n "$FILTER_FLAG" ]; then
+    $TEST_CMD $FILTER_FLAG "$REPO_FILTER" 2>&1 | tee "$LOG_PATH"
+  else
+    $TEST_CMD 2>&1 | tee "$LOG_PATH"
+  fi
+done
 ```
 
-### Test with Custom Command
-For filtered or custom test runs:
+### Filter flag configuration
 
-```bash
-REPO="repo-name"
-setup_repo_test_env "$REPO"
-REPO_PATH=$(get_repo_full_path "$REPO")
-LOG_PATH=$(get_log_path "test-$REPO" "$RUN_ID")
+Filter flags are **auto-discovered from language** if not specified:
 
-cd "$REPO_PATH"
-# Custom test command here
-your-test-command --filter "{FILTER}" 2>&1 | tee "$LOG_PATH"
+| Language | Auto-detected Flag |
+|----------|-------------------|
+| go | `-run` |
+| typescript/javascript | `-t` (Vitest) or `--testNamePattern` (Jest) |
+| python | `-k` (pytest) |
+| rust | `--` |
+| ruby | `-n` (minitest) |
+| java/kotlin | `--tests` (Gradle) |
+
+Override in repos.yaml if needed:
+```yaml
+repos:
+  my-custom-repo:
+    language: typescript
+    test_command: "npm run test -- --run"
+    test_filter_flag: "--grep"  # Custom override
 ```
 
 ## Check Skip Violations
