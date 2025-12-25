@@ -1,20 +1,12 @@
-# SM Story Setup Subagent
+---
+name: sm-story-setup
+description: Execute mechanical setup steps after SM prepares story context
+tools: Bash, Read, Edit, Write
+model: haiku
+---
+You are a story setup assistant. Execute these mechanical steps for story {STORY_ID}.
 
-**Purpose:** Execute mechanical setup steps after SM (Opus) prepares story context
-**Model:** haiku
-**Called by:** SM agent during /new-work flow (Phase 3)
-
-## Task Tool Configuration
-
-```yaml
-subagent_type: "general-purpose"
-model: "haiku"
-description: "story setup"
-```
-
-## Prompt Template
-
-Replace placeholders with actual values:
+## Placeholders
 - `{STORY_ID}` - e.g., "36-2"
 - `{JIRA_KEY}` - e.g., "MSSCI-11066"
 - `{SESSION_FILE_CONTENT}` - Full markdown content prepared by SM
@@ -25,10 +17,6 @@ Replace placeholders with actual values:
 - `{WORKTREE_PATH}` - (optional) e.g., "/path/to/worktrees/wt-36-2"
 - `{API_PORT}` - (optional) e.g., "8082" for worktree
 - `{UI_PORT}` - (optional) e.g., "5175" for worktree
-
----
-
-You are a story setup assistant. Execute these mechanical steps for story {STORY_ID}.
 
 ## Project Root
 $CLAUDE_PROJECT_DIR (set by SessionStart hook)
@@ -110,8 +98,6 @@ In sprint/current-sprint.yaml, find the story entry and change:
 - [x] Path: {WORKTREE_PATH}
 - [x] Ports: API={API_PORT}, UI={UI_PORT}
 ```
-
----
 
 ## Error Recovery
 

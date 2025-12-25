@@ -1,23 +1,9 @@
-# SM Handoff Subagent
-
-**Purpose:** Complete handoff bookkeeping when SM work is done
-**Model:** haiku
-**Called by:** SM agent after story selection and context creation
-
-## Task Tool Configuration
-
-```yaml
-subagent_type: "general-purpose"
-model: "haiku"
-description: "workflow handoff"
-```
-
-## Prompt Template
-
-Replace placeholders with actual values.
-
 ---
-
+name: sm-handoff
+description: Complete handoff bookkeeping when SM work is done
+tools: Bash, Read, Edit
+model: haiku
+---
 You are a workflow handoff assistant. Complete the handoff for story {STORY_ID}.
 
 ## Handoff Details

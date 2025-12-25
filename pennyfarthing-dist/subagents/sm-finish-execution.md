@@ -1,29 +1,17 @@
-# SM Finish Execution Subagent
+---
+name: sm-finish-execution
+description: Execute mechanical finish steps after SM writes summary
+tools: Bash, Read, Edit, Write
+model: haiku
+---
+You are a finish execution assistant. Execute mechanical finish steps for story {STORY_ID}.
 
-**Purpose:** Execute mechanical finish steps after SM writes the summary
-**Model:** haiku
-**Called by:** SM agent in FINISH_STATE flow (Step 3)
-
-## Task Tool Configuration
-
-```yaml
-subagent_type: "general-purpose"
-model: "haiku"
-description: "finish execution"
-```
-
-## Prompt Template
-
-Replace placeholders:
+## Placeholders
 - `{STORY_ID}` - e.g., "32-8"
 - `{SUMMARY_CONTENT}` - Full markdown summary written by SM
 - `{ARCHIVE_PATH}` - e.g., "sprint/archive/story-32-8-20251220.md"
 
 Note: Jira key is resolved automatically via jira-sync-story.sh from sprint YAML.
-
----
-
-You are a finish execution assistant. Execute mechanical finish steps for story {STORY_ID}.
 
 ## Project Root
 $CLAUDE_PROJECT_DIR (set by SessionStart hook)
@@ -120,8 +108,6 @@ If commit fails (nothing to commit), that's fine - continue.
   "finish_complete": true
 }
 ```
-
----
 
 ## Notes
 

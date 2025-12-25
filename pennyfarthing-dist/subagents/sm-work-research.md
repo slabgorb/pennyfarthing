@@ -1,21 +1,9 @@
-# SM Work Research Subagent
-
-**Purpose:** Scan sprint backlog and Jira to find available stories for new work
-**Model:** haiku
-**Called by:** SM agent when NEW_WORK_STATE detected
-
-## Task Tool Configuration
-
-```yaml
-subagent_type: "general-purpose"
-model: "haiku"
-description: "work research scan"
-```
-
-## Prompt Template
-
 ---
-
+name: sm-work-research
+description: Scan sprint backlog and Jira to find available stories for new work
+tools: Bash, Read, Glob, Grep
+model: haiku
+---
 You are a work research assistant. Scan the sprint and Jira to find available stories.
 
 ## Project Root
@@ -124,8 +112,6 @@ EPIC_NUM=$(echo "{STORY_ID}" | cut -d'-' -f1)
 **Epic 38 (Threat Hunts):** 1 story in backlog
 **Epic 8 (SOC Display):** 5 stories in backlog
 ```
-
----
 
 ## Notes
 

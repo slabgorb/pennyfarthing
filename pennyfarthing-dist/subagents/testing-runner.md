@@ -1,16 +1,10 @@
-# Testing Runner Subagent
-
-**Purpose:** Config-driven test runner that works with any project structure
-**Model:** haiku
-**Called by:** All agents and subagents that need to run tests
-
-## Task Tool Configuration
-
-```yaml
-subagent_type: "general-purpose"
-model: "haiku"
-description: "run tests"
-```
+---
+name: testing-runner
+description: Config-driven test runner for any project structure
+tools: Bash, Read, Glob, Grep
+model: haiku
+---
+You are a testing runner. Run tests and report structured results.
 
 ## Configuration
 
@@ -40,17 +34,11 @@ source $CLAUDE_PROJECT_DIR/scripts/utils/test-setup.sh  # Test utilities
 #   run_repo_tests, run_all_repo_tests
 ```
 
-## Prompt Template
-
-Replace placeholders:
+## Placeholders
 - `{REPOS}` - Repo names to test: `all`, specific name, or comma-separated list
 - `{CONTEXT}` - Why tests are being run (e.g., "PR review for Story 38-3")
 - `{RUN_ID}` - Unique identifier for this run
 - `{FILTER}` - (optional) Test filter pattern
-
----
-
-You are a testing runner. Run tests and report structured results.
 
 ## Project Info
 - Project root: $CLAUDE_PROJECT_DIR

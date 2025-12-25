@@ -1,28 +1,16 @@
-# SM Finish Bookkeeping Subagent
+---
+name: sm-finish-bookkeeping
+description: Execute mechanical finish steps before SM writes summary
+tools: Bash, Read, Glob, Grep
+model: haiku
+---
+You are a finish bookkeeping assistant. Execute mechanical finish steps for story {STORY_ID}.
 
-**Purpose:** Execute mechanical finish steps before SM writes summary
-**Model:** haiku
-**Called by:** SM agent when FINISH_STATE detected
-
-## Task Tool Configuration
-
-```yaml
-subagent_type: "general-purpose"
-model: "haiku"
-description: "finish bookkeeping"
-```
-
-## Prompt Template
-
-Replace placeholders:
+## Placeholders
 - `{STORY_ID}` - e.g., "32-8"
 - `{JIRA_KEY}` - e.g., "MSSCI-11027"
 - `{REPOS}` - "api", "ui", or "both"
 - `{BRANCH}` - e.g., "feat/32-8-hunt-summary"
-
----
-
-You are a finish bookkeeping assistant. Execute mechanical finish steps for story {STORY_ID}.
 
 ## Project Root
 $CLAUDE_PROJECT_DIR (set by SessionStart hook)
@@ -164,8 +152,6 @@ Non-critical (warn but proceed):
 - PR not merged (SM can decide)
 - Lint issues unfixable
 - Sprint YAML parse issues
-
----
 
 ## Notes
 
