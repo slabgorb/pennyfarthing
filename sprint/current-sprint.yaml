@@ -5,7 +5,7 @@ sprint:
   number: 2
   goal: "Improve developer experience with automated workflows and proper permissions"
   start_date: 2025-12-24
-  end_date: 2025-01-07
+  end_date: 2026-01-07
 
 epics:
   - id: epic-2
@@ -51,7 +51,8 @@ epics:
           - Days remaining in sprint
         points: 2
         priority: P2
-        status: backlog
+        status: in-progress
+        started: 2025-12-26
         jira: https://1898andco.atlassian.net/browse/MSSCI-11144
         repos: pennyfarthing
         acceptance_criteria:
