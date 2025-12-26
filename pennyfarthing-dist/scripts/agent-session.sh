@@ -105,6 +105,10 @@ case "$1" in
       session_id=$(uuidgen 2>/dev/null || cat /proc/sys/kernel/random/uuid 2>/dev/null || date +%s)
     fi
     mkdir -p "$AGENTS_DIR"
+
+    # Clean up old session files (older than 7 days) to prevent accumulation
+    find "$AGENTS_DIR" -type f -mtime +7 -delete 2>/dev/null || true
+
     AGENT_FILE=$(get_agent_file "$session_id")
     echo "$2" > "$AGENT_FILE"
     echo "Session: $session_id -> $2"
@@ -119,8 +123,9 @@ case "$1" in
       echo "Usage: agent-session.sh stop [session-id]" >&2
       exit 1
     fi
-    AGENT_FILE=$(get_agent_file "$session_id")
-    rm -f "$AGENT_FILE" 2>/dev/null
+    # NOTE: We intentionally keep the agent file to maintain statusline display.
+    # The file shows the "last active" agent for the session. It gets overwritten
+    # when a new agent starts, and cleaned up by stop-all or session expiry.
     echo "Agent session closed: $session_id"
     ;;
   stop-all)
