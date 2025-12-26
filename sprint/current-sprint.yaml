@@ -51,8 +51,9 @@ epics:
           - Days remaining in sprint
         points: 2
         priority: P2
-        status: in-progress
+        status: done
         started: 2025-12-26
+        completed: 2025-12-26
         jira: https://1898andco.atlassian.net/browse/MSSCI-11144
         repos: pennyfarthing
         acceptance_criteria:
