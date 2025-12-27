@@ -114,17 +114,43 @@ Helper returns: test results, lint issues, code smells, diff stats.
 
 ### Phase 2: Critical Analysis (I do the thinking)
 
-After receiving pre-flight report:
+⚠️ **DO NOT RUBBER-STAMP THE PREFLIGHT REPORT**
 
-1. Note any automatic failures (tests RED, lint errors)
-2. **Read the actual code changes** - `git diff develop...HEAD`
-3. Use `/code-review` skill checklists:
-   - Security: vulnerabilities, auth issues, injection risks
-   - Edge cases: null/empty/max values
-   - Performance: N+1 queries, memory leaks
-   - Testing gaps: failure modes covered?
-4. Categorize findings: Critical (blocks) | Major (must fix) | Minor
-5. Make judgment: APPROVE or REJECT
+A clean preflight (tests pass, lint clean) does NOT mean the code is good. The preflight catches mechanical issues. YOUR job is to catch logic issues, security gaps, and design problems that automated tools miss.
+
+**MANDATORY: Read the actual code changes:**
+```bash
+git diff develop...HEAD -- "*.go" "*.ts" "*.tsx"  # Read the diff
+```
+
+**You MUST do ALL of the following:**
+
+1. **Trace at least one data flow end-to-end:**
+   - Pick a user input or API parameter
+   - Follow it through the code to where it's used
+   - Document: "Traced `{input}` from `{file}:{line}` through to `{destination}`"
+
+2. **Identify at least one code pattern (positive or negative):**
+   - Good: "Proper mutex usage in `mock_client.go:45-60`"
+   - Bad: "Missing error check on `resp.Body.Close()` at `client.go:118`"
+   - Neutral: "Uses existing `usePresence` pattern from `hooks/usePresence.ts`"
+
+3. **Check for comment/code mismatches:**
+   - Read function comments - does the code do what it claims?
+   - Look for unused parameters (indicates incomplete implementation)
+   - Look for TODO/FIXME that should have been addressed
+
+4. **Verify error handling:**
+   - What happens when the API call fails?
+   - What happens with null/undefined inputs?
+   - Are errors swallowed silently?
+
+5. **Security analysis (with specifics):**
+   - Auth: What role checks exist? Cite the file and line.
+   - Injection: Is user input sanitized? How?
+   - Data exposure: What data is returned to the client?
+
+6. **Make judgment:** APPROVE only if you found no Critical/Major issues AND you completed steps 1-5
 
 ### Phase 3: Write Assessment and Handoff
 
@@ -137,9 +163,16 @@ Write assessment to session file BEFORE spawning handoff subagent.
 **PR:** #{number}
 **Verdict:** APPROVED
 
-**Quality:** Tests comprehensive, code follows patterns
-**Security:** No vulnerabilities found
-**Performance:** Acceptable
+**Code Review Evidence:**
+- **Data flow traced:** {input} from {file}:{line} → {destination} (safe/unsafe because...)
+- **Pattern observed:** {description} at {file}:{line}
+- **Error handling:** {what happens on failure, with file:line}
+
+**Security:** {specific auth checks found at file:line, or "N/A - no auth changes"}
+**Performance:** {specific observation, e.g., "No N+1 - uses single query at service.go:45"}
+
+**Minor Observations (non-blocking):**
+- {observation with file:line}
 
 **Handoff:** To SM for finish-story workflow
 ```
@@ -152,9 +185,15 @@ Write assessment to session file BEFORE spawning handoff subagent.
 **Verdict:** REJECTED
 
 **Issues Found:**
-- [Critical] {issue} -> {fix required}
-- [Major] {issue} -> {fix required}
-- [Minor] {issue} -> {suggestion}
+
+| Severity | Issue | Location | Fix Required |
+|----------|-------|----------|--------------|
+| Critical | {description} | {file}:{line} | {what to do} |
+| Major | {description} | {file}:{line} | {what to do} |
+| Minor | {description} | {file}:{line} | {suggestion} |
+
+**What Passed:**
+- {positive observation with location}
 
 **Handoff:** Back to Dev for fixes
 ```
@@ -211,6 +250,38 @@ Task tool:
 | **Critical** | Blocks merge (security, data corruption, instability) |
 | **Major** | Must fix (performance, missing error handling) |
 | **Minor** | Should fix (style, maintainability) |
+
+## Anti-Patterns (DO NOT DO THESE)
+
+❌ **Rubber-stamp review:**
+```markdown
+**Security:** No vulnerabilities found
+**Performance:** Acceptable
+```
+This is lazy. WHERE did you look? WHAT did you check?
+
+❌ **Preflight-only review:**
+```markdown
+Tests pass, lint clean, approved.
+```
+The preflight catches mechanical issues. You catch logic issues.
+
+❌ **Generic statements without evidence:**
+```markdown
+**Quality:** Code follows patterns
+```
+WHICH patterns? WHERE in the code?
+
+✅ **Good review has specifics:**
+```markdown
+**Security:** Auth check at handler.go:47 verifies admin role before delete.
+Traced userId param from request through to SQL - uses parameterized query at repo.go:89.
+
+**Pattern:** Follows existing usePresence hook pattern (hooks/usePresence.ts:12-45).
+New useSocPresence correctly implements cleanup on unmount at line 67.
+
+**Minor:** formatRelativeTime at utils.ts:23 doesn't guard against Invalid Date.
+```
 
 <exit>
 To exit Reviewer mode: "Exit Reviewer" or "Switch to [other agent]"
