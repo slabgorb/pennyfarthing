@@ -2,7 +2,11 @@
 set -euo pipefail
 
 # Deploy script for Pennyfarthing
-# Usage: ./scripts/deploy.sh [major|minor|patch]
+# Usage: ./scripts/deploy.sh [OPTIONS] <major|minor|patch>
+#
+# Options:
+#   -y, --yes       Skip confirmation prompt
+#   --dry-run       Show what would happen without executing
 #
 # Steps:
 # 1. Bump version in VERSION, package.json, README.md
@@ -26,17 +30,54 @@ NC='\033[0m' # No Color
 log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
 log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+log_dry() { echo -e "${YELLOW}[DRY-RUN]${NC} $1"; }
 
-# Validate arguments
-BUMP_TYPE="${1:-}"
-if [[ ! "$BUMP_TYPE" =~ ^(major|minor|patch)$ ]]; then
-    echo "Usage: $0 [major|minor|patch]"
-    echo ""
-    echo "Examples:"
-    echo "  $0 patch   # 1.2.3 -> 1.2.4"
-    echo "  $0 minor   # 1.2.3 -> 1.3.0"
-    echo "  $0 major   # 1.2.3 -> 2.0.0"
+# Parse arguments
+BUMP_TYPE=""
+DRY_RUN=false
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --dry-run)
+            DRY_RUN=true
+            shift
+            ;;
+        major|minor|patch)
+            BUMP_TYPE="$1"
+            shift
+            ;;
+        *)
+            echo "Usage: $0 [--dry-run] <major|minor|patch>"
+            echo ""
+            echo "Options:"
+            echo "  --dry-run    Show what would happen without executing"
+            echo ""
+            echo "Examples:"
+            echo "  $0 patch           # 1.2.3 -> 1.2.4"
+            echo "  $0 minor           # 1.2.3 -> 1.3.0"
+            echo "  $0 major --dry-run # Preview major bump"
+            exit 1
+            ;;
+    esac
+done
+
+if [[ -z "$BUMP_TYPE" ]]; then
+    echo "Usage: $0 [--dry-run] <major|minor|patch>"
     exit 1
+fi
+
+# Helper to run or log commands
+run() {
+    if $DRY_RUN; then
+        log_dry "$*"
+    else
+        "$@"
+    fi
+}
+
+if $DRY_RUN; then
+    echo -e "${YELLOW}=== DRY RUN MODE - No changes will be made ===${NC}"
+    echo ""
 fi
 
 # Check for clean working directory
@@ -81,98 +122,107 @@ esac
 NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
 log_info "New version: $NEW_VERSION"
 
-# Confirm with user
-echo ""
-echo "This will:"
-echo "  1. Bump version: $CURRENT_VERSION -> $NEW_VERSION"
-echo "     - VERSION, package.json, README.md"
-echo "  2. Merge to develop (if needed)"
-echo "  3. Merge develop to main"
-echo "  4. Create tag: v$NEW_VERSION"
-echo "  5. Push develop, main, and tags"
-echo ""
-read -p "Continue? [y/N] " -n 1 -r
-echo ""
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    log_warn "Aborted."
-    exit 0
-fi
 
 # Step 1: Update version files
-echo "$NEW_VERSION" > "$VERSION_FILE"
-log_info "Updated VERSION file"
+if $DRY_RUN; then
+    log_dry "echo $NEW_VERSION > VERSION"
+    log_dry "Update package.json: $CURRENT_VERSION -> $NEW_VERSION"
+    log_dry "Update README.md version badge"
+    log_dry "Update package-lock.json"
+else
+    echo "$NEW_VERSION" > "$VERSION_FILE"
+    log_info "Updated VERSION file"
 
-# Update package.json version
-if [[ -f "$PROJECT_ROOT/package.json" ]]; then
-    sed -i '' "s/\"version\": \"$CURRENT_VERSION\"/\"version\": \"$NEW_VERSION\"/" "$PROJECT_ROOT/package.json"
-    log_info "Updated package.json"
-fi
+    if [[ -f "$PROJECT_ROOT/package.json" ]]; then
+        sed -i '' "s/\"version\": \"$CURRENT_VERSION\"/\"version\": \"$NEW_VERSION\"/" "$PROJECT_ROOT/package.json"
+        log_info "Updated package.json"
+    fi
 
-# Update README.md version badge
-if [[ -f "$PROJECT_ROOT/README.md" ]]; then
-    sed -i '' "s/\*\*v$CURRENT_VERSION\*\*/\*\*v$NEW_VERSION\*\*/" "$PROJECT_ROOT/README.md"
-    log_info "Updated README.md"
-fi
+    if [[ -f "$PROJECT_ROOT/README.md" ]]; then
+        sed -i '' "s/\*\*v$CURRENT_VERSION\*\*/\*\*v$NEW_VERSION\*\*/" "$PROJECT_ROOT/README.md"
+        log_info "Updated README.md"
+    fi
 
-# Regenerate package-lock.json if package.json was updated
-if [[ -f "$PROJECT_ROOT/package.json" ]]; then
-    (cd "$PROJECT_ROOT" && npm install --package-lock-only --silent 2>/dev/null) || true
-    log_info "Updated package-lock.json"
+    if [[ -f "$PROJECT_ROOT/package.json" ]]; then
+        (cd "$PROJECT_ROOT" && npm install --package-lock-only --silent 2>/dev/null) || true
+        log_info "Updated package-lock.json"
+    fi
 fi
 
 # Step 2: Commit version bump
-git -C "$PROJECT_ROOT" add VERSION package.json package-lock.json README.md 2>/dev/null || true
-git -C "$PROJECT_ROOT" commit -m "chore: bump version to $NEW_VERSION"
-log_info "Committed version bump"
+if $DRY_RUN; then
+    log_dry "git commit -m 'chore: bump version to $NEW_VERSION'"
+else
+    git -C "$PROJECT_ROOT" add VERSION package.json package-lock.json README.md 2>/dev/null || true
+    git -C "$PROJECT_ROOT" commit -m "chore: bump version to $NEW_VERSION"
+    log_info "Committed version bump"
+fi
 
 # Step 3: Merge to develop if not already on develop
 if [[ "$CURRENT_BRANCH" != "develop" ]]; then
-    log_info "Merging $CURRENT_BRANCH to develop..."
-    git -C "$PROJECT_ROOT" checkout develop
-    git -C "$PROJECT_ROOT" pull origin develop --ff-only || {
-        log_warn "Could not fast-forward develop. Attempting merge..."
-        git -C "$PROJECT_ROOT" pull origin develop --no-rebase
-    }
-    git -C "$PROJECT_ROOT" merge "$CURRENT_BRANCH" -m "Merge $CURRENT_BRANCH into develop for release $NEW_VERSION"
-    log_info "Merged to develop"
+    if $DRY_RUN; then
+        log_dry "git checkout develop && git merge $CURRENT_BRANCH"
+    else
+        log_info "Merging $CURRENT_BRANCH to develop..."
+        git -C "$PROJECT_ROOT" checkout develop
+        git -C "$PROJECT_ROOT" pull origin develop --ff-only || {
+            log_warn "Could not fast-forward develop. Attempting merge..."
+            git -C "$PROJECT_ROOT" pull origin develop --no-rebase
+        }
+        git -C "$PROJECT_ROOT" merge "$CURRENT_BRANCH" -m "Merge $CURRENT_BRANCH into develop for release $NEW_VERSION"
+        log_info "Merged to develop"
+    fi
 else
     log_info "Already on develop, skipping merge"
 fi
 
 # Step 4: Merge develop to main
-log_info "Merging develop to main..."
-git -C "$PROJECT_ROOT" checkout main
-
-git -C "$PROJECT_ROOT" pull origin main --ff-only || {
-    log_warn "Could not fast-forward main. Attempting merge..."
-    git -C "$PROJECT_ROOT" pull origin main --no-rebase
-}
-git -C "$PROJECT_ROOT" merge develop -m "Merge develop into main for release $NEW_VERSION"
-log_info "Merged to main"
-
-# Step 5: Create annotated tag
 TAG_NAME="v$NEW_VERSION"
-log_info "Creating tag: $TAG_NAME"
-git -C "$PROJECT_ROOT" tag -a "$TAG_NAME" -m "Release $NEW_VERSION"
+if $DRY_RUN; then
+    log_dry "git checkout main && git merge develop"
+    log_dry "git tag -a $TAG_NAME -m 'Release $NEW_VERSION'"
+    log_dry "git push origin develop main --tags"
+    log_dry "git checkout develop"
+else
+    log_info "Merging develop to main..."
+    git -C "$PROJECT_ROOT" checkout main
+    git -C "$PROJECT_ROOT" pull origin main --ff-only || {
+        log_warn "Could not fast-forward main. Attempting merge..."
+        git -C "$PROJECT_ROOT" pull origin main --no-rebase
+    }
+    git -C "$PROJECT_ROOT" merge develop -m "Merge develop into main for release $NEW_VERSION"
+    log_info "Merged to main"
 
-# Step 6: Push everything
-log_info "Pushing develop..."
-git -C "$PROJECT_ROOT" push origin develop
+    # Step 5: Create annotated tag
+    log_info "Creating tag: $TAG_NAME"
+    git -C "$PROJECT_ROOT" tag -a "$TAG_NAME" -m "Release $NEW_VERSION"
 
-log_info "Pushing main..."
-git -C "$PROJECT_ROOT" push origin main
+    # Step 6: Push everything
+    log_info "Pushing develop..."
+    git -C "$PROJECT_ROOT" push origin develop
 
-log_info "Pushing tags..."
-git -C "$PROJECT_ROOT" push origin --tags
+    log_info "Pushing main..."
+    git -C "$PROJECT_ROOT" push origin main
 
-# Step 7: Return to develop
-log_info "Returning to develop..."
-git -C "$PROJECT_ROOT" checkout develop
+    log_info "Pushing tags..."
+    git -C "$PROJECT_ROOT" push origin --tags
+
+    # Step 7: Return to develop
+    log_info "Returning to develop..."
+    git -C "$PROJECT_ROOT" checkout develop
+fi
 
 echo ""
-log_info "Deploy complete!"
-echo ""
-echo "  Version: $NEW_VERSION"
-echo "  Tag: $TAG_NAME"
-echo "  Branches pushed: develop, main"
+if $DRY_RUN; then
+    log_info "Dry run complete. No changes made."
+    echo ""
+    echo "  Would release version: $NEW_VERSION"
+    echo "  Would create tag: $TAG_NAME"
+else
+    log_info "Deploy complete!"
+    echo ""
+    echo "  Version: $NEW_VERSION"
+    echo "  Tag: $TAG_NAME"
+    echo "  Branches pushed: develop, main"
+fi
 echo ""

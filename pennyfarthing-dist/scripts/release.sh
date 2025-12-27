@@ -81,24 +81,12 @@ fi
 if [[ -n "$BUMP_TYPE" ]]; then
     info "Version bump requested: $BUMP_TYPE"
 
-    if $DRY_RUN; then
-        echo -e "${YELLOW}[DRY-RUN]${NC} Would run: ./scripts/deploy.sh $BUMP_TYPE"
-
-        # Show what version would be
-        CURRENT_VERSION=$(cat VERSION 2>/dev/null || echo "0.0.0")
-        IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
-        case "$BUMP_TYPE" in
-            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
-            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
-            patch) PATCH=$((PATCH + 1)) ;;
-        esac
-        NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
-        echo -e "${YELLOW}[DRY-RUN]${NC} Version would change: $CURRENT_VERSION -> $NEW_VERSION"
-        exit 0
-    fi
-
     # Run deploy.sh which handles version bump + full release
-    exec "$SCRIPT_DIR/deploy.sh" "$BUMP_TYPE"
+    if $DRY_RUN; then
+        exec "$SCRIPT_DIR/deploy.sh" --dry-run "$BUMP_TYPE"
+    else
+        exec "$SCRIPT_DIR/deploy.sh" "$BUMP_TYPE"
+    fi
 fi
 
 # No version bump - just merge and push
