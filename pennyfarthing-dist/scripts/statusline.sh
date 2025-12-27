@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # Claude Code statusline - fixed-width segments
-# Format: Agent- Character | repo | branch | model >>>> pct%
+# Format: [ROLE] Theme | repo | branch | model [progress] pct%
 
 input=$(cat)
 
@@ -15,9 +15,9 @@ fi
 if [ -n "$CLAUDE_PROJECT_DIR" ]; then
     PROJECT_ROOT="$CLAUDE_PROJECT_DIR"
 else
-    # Script is in pennyfarthing-dist/, go up one level
+    # Script is in pennyfarthing-dist/scripts/, go up TWO levels to project root
     SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-    PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+    PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 fi
 
 # Extract fields - use cwd for display only, PROJECT_ROOT for file lookups
@@ -59,47 +59,52 @@ if [ -n "$usage" ] && [ "$usage" != "null" ]; then
     fi
 fi
 
-# Agent and character from session
-agent_display=""
-if [ -n "$session_id" ]; then
+# Agent abbreviation map
+get_agent_abbrev() {
+    case "$1" in
+        pm)          echo "PM" ;;
+        sm)          echo "SM" ;;
+        dev)         echo "DEV" ;;
+        tea)         echo "TEA" ;;
+        reviewer)    echo "REV" ;;
+        architect)   echo "ARC" ;;
+        devops)      echo "OPS" ;;
+        ux-designer) echo "UX" ;;
+        tech-writer) echo "DOC" ;;
+        orchestrator) echo "ORC" ;;
+        *)           echo "???" ;;
+    esac
+}
+
+# Agent and theme from session
+agent_name=""
+agent_abbrev=""
+theme_display=""
+
+# Try per-session file first, then fallback to current-agent
+if [ -n "$session_id" ] && [ -f "$PROJECT_ROOT/.session/agents/${session_id}" ]; then
     AGENT_FILE="$PROJECT_ROOT/.session/agents/${session_id}"
-    if [ -f "$AGENT_FILE" ]; then
-        agent_name=$(cat "$AGENT_FILE")
-        # Capitalize first letter
-        agent_cap="$(echo "${agent_name:0:1}" | tr '[:lower:]' '[:upper:]')${agent_name:1}"
+else
+    AGENT_FILE="$PROJECT_ROOT/.session/current-agent"
+fi
+if [ -f "$AGENT_FILE" ]; then
+    agent_name=$(cat "$AGENT_FILE")
+    agent_abbrev=$(get_agent_abbrev "$agent_name")
+fi
 
-        # Get character name from persona config (PROJECT_ROOT already set above)
-        config_file=""
-        if [ -f "$PROJECT_ROOT/.claude/persona-config.local.yaml" ]; then
-            config_file="$PROJECT_ROOT/.claude/persona-config.local.yaml"
-        elif [ -f "$PROJECT_ROOT/.claude/persona-config.yaml" ]; then
-            config_file="$PROJECT_ROOT/.claude/persona-config.yaml"
-        fi
+# Get theme name from persona config
+config_file=""
+if [ -f "$PROJECT_ROOT/.claude/persona-config.local.yaml" ]; then
+    config_file="$PROJECT_ROOT/.claude/persona-config.local.yaml"
+elif [ -f "$PROJECT_ROOT/.claude/persona-config.yaml" ]; then
+    config_file="$PROJECT_ROOT/.claude/persona-config.yaml"
+fi
 
-        if [ -n "$config_file" ]; then
-            theme=$(yq '.theme' "$config_file" 2>/dev/null)
-            if [ -n "$theme" ] && [ "$theme" != "null" ]; then
-                theme_file=""
-                if [ -f "$PROJECT_ROOT/.claude/personas/themes/${theme}.yaml" ]; then
-                    theme_file="$PROJECT_ROOT/.claude/personas/themes/${theme}.yaml"
-                elif [ -f "$PROJECT_ROOT/personas/themes/${theme}.yaml" ]; then
-                    theme_file="$PROJECT_ROOT/personas/themes/${theme}.yaml"
-                fi
-
-                if [ -n "$theme_file" ]; then
-                    char_full=$(yq ".agents.${agent_name}.character" "$theme_file" 2>/dev/null)
-                    # Use full character name (will be truncated to fit display width)
-                    if [ -n "$char_full" ] && [ "$char_full" != "null" ]; then
-                        agent_display="$char_full"
-                    fi
-                fi
-            fi
-        fi
-
-        # Fallback: use capitalized agent name if no character found
-        if [ -z "$agent_display" ]; then
-            agent_display="${agent_cap}"
-        fi
+if [ -n "$config_file" ]; then
+    theme=$(yq '.theme' "$config_file" 2>/dev/null)
+    if [ -n "$theme" ] && [ "$theme" != "null" ]; then
+        # Capitalize first letter of theme for display
+        theme_display="$(echo "${theme:0:1}" | tr '[:lower:]' '[:upper:]')${theme:1}"
     fi
 fi
 
@@ -107,6 +112,7 @@ fi
 RESET=$'\033[0m'
 DIM=$'\033[2m'
 BOLD=$'\033[1m'
+REVERSE=$'\033[7m'
 FG_CYAN=$'\033[36m'
 FG_GREEN=$'\033[32m'
 FG_YELLOW=$'\033[33m'
@@ -177,20 +183,44 @@ else
 fi
 
 # Fixed-width formatting using printf
-# Agent: 20 chars, Repo: 14 chars, Branch: 12 chars, Model: 10 chars
-if [ -n "$agent_display" ]; then
-    agent_fmt=$(printf "%-20s" "$agent_display")
-    agent_color=$(get_agent_color "$agent_name")
-else
-    agent_fmt=$(printf "%-20s" "No Agent")
-    agent_color="${FG_GRAY}${DIM}"
-fi
+# Agent+Theme: ~20 chars, Repo: 14 chars, Branch: 12 chars, Model: 10 chars
 repo_fmt=$(printf "%-14s" "$dir_name")
 branch_fmt=$(printf "%-12s" "${branch}${branch_dirty}")
 model_fmt=$(printf "%-10s" "$model")
 
-# Build output: Agent | repo | branch | model [progress] pct%
-echo -n "${agent_color}${agent_fmt}${RESET}"
+# Build agent display: [ROLE] Theme (role in reverse text with color)
+if [ -n "$agent_abbrev" ]; then
+    agent_color=$(get_agent_color "$agent_name")
+    # Role in reverse text with color, then theme
+    if [ -n "$theme_display" ]; then
+        agent_section="${agent_color}${REVERSE} ${agent_abbrev} ${RESET} ${DIM}${theme_display}${RESET}"
+        # Pad to ~20 chars visual width (abbrev ~3 + spaces ~2 + theme ~10 = ~15, pad to 20)
+        pad_len=$((18 - ${#agent_abbrev} - ${#theme_display}))
+        [ "$pad_len" -lt 0 ] && pad_len=0
+        padding=$(printf "%${pad_len}s" "")
+        agent_section="${agent_section}${padding}"
+    else
+        agent_section="${agent_color}${REVERSE} ${agent_abbrev} ${RESET}"
+        pad_len=$((17 - ${#agent_abbrev}))
+        [ "$pad_len" -lt 0 ] && pad_len=0
+        padding=$(printf "%${pad_len}s" "")
+        agent_section="${agent_section}${padding}"
+    fi
+else
+    # No agent - just show theme if available
+    if [ -n "$theme_display" ]; then
+        agent_section="${DIM}${theme_display}${RESET}"
+        pad_len=$((20 - ${#theme_display}))
+        [ "$pad_len" -lt 0 ] && pad_len=0
+        padding=$(printf "%${pad_len}s" "")
+        agent_section="${agent_section}${padding}"
+    else
+        agent_section=$(printf "%-20s" "")
+    fi
+fi
+
+# Build output: [ROLE] Theme | repo | branch | model [progress] pct%
+echo -n "${agent_section}"
 echo -n "${DIM}│${RESET} "
 echo -n "${FG_CYAN}${repo_fmt}${RESET}"
 echo -n "${DIM}│${RESET} "
