@@ -9,6 +9,7 @@ import { updateCommand } from './commands/update.js';
 import { doctorCommand } from './commands/doctor.js';
 import { uninstallCommand } from './commands/uninstall.js';
 import { versionCommand } from './commands/version.js';
+import { listCommand as themeListCommand } from './commands/theme.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -73,5 +74,15 @@ program
   .command('version')
   .description('Show version information')
   .action(versionCommand);
+
+// Theme management commands
+const themeCmd = program
+  .command('theme')
+  .description('Manage persona themes');
+
+themeCmd
+  .command('list')
+  .description('List available themes')
+  .action(themeListCommand);
 
 program.parse();

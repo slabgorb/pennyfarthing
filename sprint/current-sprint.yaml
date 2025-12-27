@@ -334,7 +334,8 @@ epics:
           - Format output with agent samples
         points: 2
         priority: P1
-        status: backlog
+        status: in-progress
+        started: 2025-12-27
         repos: pennyfarthing
         acceptance_criteria:
           - pennyfarthing theme list shows all available themes
