@@ -399,7 +399,8 @@ epics:
           - ~/.claude/pennyfarthing/themes/ (user-level)
         points: 3
         priority: P2
-        status: backlog
+        status: in-progress
+        started: 2025-12-27
         repos: pennyfarthing
         acceptance_criteria:
           - pennyfarthing theme create <name> creates new theme file

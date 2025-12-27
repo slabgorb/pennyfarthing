@@ -1,7 +1,8 @@
-import { readFileSync, readdirSync, existsSync, writeFileSync, mkdirSync } from 'fs';
+import { readFileSync, readdirSync, existsSync, writeFileSync, mkdirSync, copyFileSync } from 'fs';
 import { join, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { homedir } from 'os';
 import YAML from 'yaml';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -18,6 +19,7 @@ export interface ThemeInfo {
   id: string;
   name: string;
   description: string;
+  isCustom?: boolean;
   agents: {
     sm?: ThemeAgent;
     tea?: ThemeAgent;
@@ -52,6 +54,20 @@ export function getThemesDir(): string {
 }
 
 /**
+ * Get the project-level custom themes directory
+ */
+export function getProjectCustomThemesDir(projectRoot: string): string {
+  return join(projectRoot, '.claude/pennyfarthing/themes');
+}
+
+/**
+ * Get the user-level custom themes directory
+ */
+export function getUserCustomThemesDir(): string {
+  return join(homedir(), '.claude/pennyfarthing/themes');
+}
+
+/**
  * Get the current theme from persona-config.yaml
  */
 export function getCurrentTheme(projectRoot?: string): string | null {
@@ -74,7 +90,7 @@ export function getCurrentTheme(projectRoot?: string): string | null {
 /**
  * Parse a theme YAML file and extract theme info
  */
-export function parseThemeFile(filePath: string): ThemeInfo | null {
+export function parseThemeFile(filePath: string, isCustom = false): ThemeInfo | null {
   try {
     const content = readFileSync(filePath, 'utf8');
     const data = YAML.parse(content);
@@ -89,6 +105,7 @@ export function parseThemeFile(filePath: string): ThemeInfo | null {
       id,
       name: data.theme.name,
       description: data.theme.description || '',
+      isCustom,
       agents: data.agents || {}
     };
   } catch {
@@ -97,18 +114,63 @@ export function parseThemeFile(filePath: string): ThemeInfo | null {
 }
 
 /**
- * Get all available themes
+ * Load themes from a directory
  */
-export function getThemes(): ThemeInfo[] {
-  const themesDir = getThemesDir();
+function loadThemesFromDir(dir: string, isCustom: boolean): ThemeInfo[] {
   const themes: ThemeInfo[] = [];
 
-  const files = readdirSync(themesDir).filter(f => f.endsWith('.yaml'));
+  if (!existsSync(dir)) {
+    return themes;
+  }
+
+  const files = readdirSync(dir).filter(f => f.endsWith('.yaml'));
 
   for (const file of files) {
-    const theme = parseThemeFile(join(themesDir, file));
+    const theme = parseThemeFile(join(dir, file), isCustom);
     if (theme) {
       themes.push(theme);
+    }
+  }
+
+  return themes;
+}
+
+/**
+ * Get all available themes (built-in + custom)
+ */
+export function getThemes(projectRoot?: string): ThemeInfo[] {
+  const themes: ThemeInfo[] = [];
+  const seenIds = new Set<string>();
+
+  // 1. Load built-in themes
+  try {
+    const builtInDir = getThemesDir();
+    for (const theme of loadThemesFromDir(builtInDir, false)) {
+      if (!seenIds.has(theme.id)) {
+        themes.push(theme);
+        seenIds.add(theme.id);
+      }
+    }
+  } catch {
+    // Built-in themes not found - continue with custom themes
+  }
+
+  // 2. Load project-level custom themes
+  const root = projectRoot || process.cwd();
+  const projectDir = getProjectCustomThemesDir(root);
+  for (const theme of loadThemesFromDir(projectDir, true)) {
+    if (!seenIds.has(theme.id)) {
+      themes.push(theme);
+      seenIds.add(theme.id);
+    }
+  }
+
+  // 3. Load user-level custom themes
+  const userDir = getUserCustomThemesDir();
+  for (const theme of loadThemesFromDir(userDir, true)) {
+    if (!seenIds.has(theme.id)) {
+      themes.push(theme);
+      seenIds.add(theme.id);
     }
   }
 
@@ -177,4 +239,118 @@ export function setTheme(themeName: string, projectRoot: string): ThemeInfo {
   writeFileSync(configPath, header + yamlContent, 'utf8');
 
   return theme;
+}
+
+/**
+ * Validate a theme name
+ */
+export function validateThemeName(name: string): { valid: boolean; error?: string } {
+  if (!name) {
+    return { valid: false, error: 'Theme name is required' };
+  }
+
+  if (name !== name.toLowerCase()) {
+    return { valid: false, error: 'Theme name must be lowercase' };
+  }
+
+  if (/\s/.test(name)) {
+    return { valid: false, error: 'Theme name cannot contain spaces (use hyphens instead)' };
+  }
+
+  if (!/^[a-z][a-z0-9-]*$/.test(name)) {
+    return { valid: false, error: 'Theme name must start with a letter and contain only lowercase letters, numbers, and hyphens' };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Get the path to a theme file (built-in or custom)
+ */
+export function getThemeFilePath(themeId: string): string | null {
+  // Check built-in themes first
+  try {
+    const builtInPath = join(getThemesDir(), `${themeId}.yaml`);
+    if (existsSync(builtInPath)) {
+      return builtInPath;
+    }
+  } catch {
+    // Built-in dir not found
+  }
+
+  // Check project-level
+  const projectPath = join(getProjectCustomThemesDir(process.cwd()), `${themeId}.yaml`);
+  if (existsSync(projectPath)) {
+    return projectPath;
+  }
+
+  // Check user-level
+  const userPath = join(getUserCustomThemesDir(), `${themeId}.yaml`);
+  if (existsSync(userPath)) {
+    return userPath;
+  }
+
+  return null;
+}
+
+export interface CreateThemeOptions {
+  baseTheme?: string;
+  userLevel?: boolean;
+}
+
+/**
+ * Create a new custom theme
+ * Returns the path to the created theme file
+ */
+export function createTheme(
+  themeName: string,
+  projectRoot: string,
+  options: CreateThemeOptions = {}
+): string {
+  const { baseTheme = 'minimalist', userLevel = false } = options;
+
+  // Validate theme name
+  const validation = validateThemeName(themeName);
+  if (!validation.valid) {
+    throw new Error(validation.error);
+  }
+
+  // Check if theme already exists
+  const existingThemes = getThemes(projectRoot);
+  if (existingThemes.some(t => t.id === themeName)) {
+    throw new Error(`Theme '${themeName}' already exists`);
+  }
+
+  // Find base theme file
+  const baseThemePath = getThemeFilePath(baseTheme);
+  if (!baseThemePath) {
+    const available = existingThemes.map(t => t.id).join(', ');
+    throw new Error(`Base theme '${baseTheme}' not found. Available themes: ${available}`);
+  }
+
+  // Determine target directory
+  const targetDir = userLevel
+    ? getUserCustomThemesDir()
+    : getProjectCustomThemesDir(projectRoot);
+
+  // Create directory if needed
+  if (!existsSync(targetDir)) {
+    mkdirSync(targetDir, { recursive: true });
+  }
+
+  // Read base theme content
+  const baseContent = readFileSync(baseThemePath, 'utf8');
+  const baseData = YAML.parse(baseContent);
+
+  // Update theme metadata
+  baseData.theme.name = themeName.charAt(0).toUpperCase() + themeName.slice(1).replace(/-/g, ' ');
+  baseData.theme.description = `Custom theme based on ${baseTheme}`;
+
+  // Write new theme file
+  const targetPath = join(targetDir, `${themeName}.yaml`);
+  const header = `# Custom Theme: ${themeName}\n# Based on: ${baseTheme}\n# Edit this file to customize your agent personas\n\n`;
+  const yamlContent = YAML.stringify(baseData);
+  writeFileSync(targetPath, header + yamlContent, 'utf8');
+
+  return targetPath;
 }
