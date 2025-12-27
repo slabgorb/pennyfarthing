@@ -9,7 +9,7 @@ import { updateCommand } from './commands/update.js';
 import { doctorCommand } from './commands/doctor.js';
 import { uninstallCommand } from './commands/uninstall.js';
 import { versionCommand } from './commands/version.js';
-import { listCommand as themeListCommand, setCommand as themeSetCommand, showCommand as themeShowCommand } from './commands/theme.js';
+import { listCommand as themeListCommand, setCommand as themeSetCommand, showCommand as themeShowCommand, createCommand as themeCreateCommand } from './commands/theme.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -96,5 +96,13 @@ themeCmd
   .description('Show details of a theme')
   .argument('[name]', 'Theme name (defaults to current theme)')
   .action(themeShowCommand);
+
+themeCmd
+  .command('create')
+  .description('Create a new custom theme')
+  .argument('<name>', 'Name for the new theme (lowercase, hyphens allowed)')
+  .option('-b, --base <theme>', 'Base theme to copy from', 'minimalist')
+  .option('-u, --user', 'Create as user-level theme (available across projects)')
+  .action(themeCreateCommand);
 
 program.parse();

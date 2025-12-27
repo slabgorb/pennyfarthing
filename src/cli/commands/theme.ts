@@ -1,6 +1,6 @@
 import { existsSync } from 'fs';
 import { join, dirname } from 'path';
-import { getThemes, getCurrentTheme, getAgentSamples, setTheme, ThemeInfo } from '../utils/themes.js';
+import { getThemes, getCurrentTheme, getAgentSamples, setTheme, createTheme, ThemeInfo } from '../utils/themes.js';
 import { manifestExists } from '../utils/manifest.js';
 
 /**
@@ -190,6 +190,48 @@ export async function showCommand(themeName?: string): Promise<void> {
   for (const [agentName, agent] of Object.entries(theme.agents)) {
     if (!agentOrder.includes(agentName) && agent?.character) {
       displayAgent(agentName, agent);
+    }
+  }
+}
+
+export interface CreateCommandOptions {
+  base?: string;
+  user?: boolean;
+}
+
+/**
+ * Create a new custom theme
+ */
+export async function createCommand(
+  themeName: string,
+  options: CreateCommandOptions
+): Promise<void> {
+  const projectRoot = findProjectRoot();
+
+  if (!projectRoot && !options.user) {
+    console.log('Not in a Pennyfarthing project.');
+    console.log('Use --user to create a user-level theme, or run from a project directory.');
+    return;
+  }
+
+  try {
+    const themePath = createTheme(themeName, projectRoot || process.cwd(), {
+      baseTheme: options.base,
+      userLevel: options.user
+    });
+
+    console.log(`Created theme '${themeName}'.`);
+    console.log();
+    console.log(`  File: ${themePath}`);
+    console.log();
+    console.log('Next steps:');
+    console.log(`  1. Edit the theme file to customize your agents`);
+    console.log(`  2. Run 'pennyfarthing theme set ${themeName}' to activate`);
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(error.message);
+    } else {
+      console.error('Error creating theme:', error);
     }
   }
 }
