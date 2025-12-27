@@ -26,12 +26,11 @@ npm run lint      # ESLint (requires separate install)
 
 ```
 pennyfarthing-dist/      # Single source of truth for all definitions
-├── agents/              # 10 main agents + 13 official subagents
+├── agents/              # 10 main agents + 13 official subagents (consolidated)
 ├── commands/            # 25 slash commands
 ├── guides/              # Behavior guides
 ├── skills/              # 11 knowledge domains
 ├── personas/            # 7 theme files
-├── subagents/           # Official subagent definitions
 └── scripts/             # Utility scripts
 
 src/                     # TypeScript CLI source
@@ -85,8 +84,7 @@ Subagents use Claude Code's Task tool with `subagent_type`. Key subagents:
 
 | File | Purpose |
 |------|---------|
-| `pennyfarthing-dist/agents/*.md` | Agent definitions |
-| `pennyfarthing-dist/subagents/*.md` | Official subagent definitions |
+| `pennyfarthing-dist/agents/*.md` | Agent and subagent definitions (consolidated) |
 | `.claude/persona-config.yaml` | Theme selection (current: shakespeare) |
 | `sprint/current-sprint.yaml` | Active sprint and story tracking |
 | `.session/{story-id}-session.md` | Active work context |

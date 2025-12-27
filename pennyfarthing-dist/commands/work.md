@@ -4,6 +4,14 @@ description: Resume work or start new - smart entry point that picks up where yo
 
 # Resume or Start Work
 
+<agent-activation>
+**FIRST:** Use Bash tool to run:
+```bash
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/scripts/run.sh" agent-session.sh start "orchestrator"
+```
+This finds the project root and loads your persona. Adopt the character shown in the output.
+</agent-activation>
+
 <purpose>
 Smart entry point for picking up work after a break. Detects current workflow state and launches the appropriate agent to continue, or starts new work if nothing is in progress.
 </purpose>

@@ -4,20 +4,24 @@ description: Start a new work session with Pennyfarthing
 
 # Start New Work Session
 
+<agent-activation>
+**FIRST:** Use Bash tool to run:
+```bash
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/scripts/run.sh" agent-session.sh start "sm"
+```
+This finds the project root and loads your persona. Adopt the character shown in the output.
+</agent-activation>
+
 <purpose>
-The blessed path for starting development work. Invokes SM to coordinate story selection and TDD flow setup.
+The blessed path for starting development work. Loads SM persona and coordinates story selection and TDD flow setup.
 </purpose>
 
-<invoke>
-```
-/sm
-```
-
-Or with a specific story:
-```
-/sm start-story 32-8
-```
-</invoke>
+<on-invoke>
+After loading persona, follow the SM agent workflow:
+1. Load and follow `.claude/agents/sm.md`
+2. Load sidecar: `.claude/project/agents/sm-sidecar/*.md`
+3. Run workflow status check, then proceed based on state
+</on-invoke>
 
 <workflow-states>
 | State | Action |
