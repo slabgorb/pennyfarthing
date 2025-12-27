@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, existsSync } from 'fs';
+import { readFileSync, readdirSync, existsSync, writeFileSync, mkdirSync } from 'fs';
 import { join, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -132,4 +132,48 @@ export function getAgentSamples(theme: ThemeInfo): string {
   }
 
   return samples.join(' | ');
+}
+
+/**
+ * Set the active theme in persona-config.yaml
+ * Returns the ThemeInfo if successful, throws if theme not found
+ */
+export function setTheme(themeName: string, projectRoot: string): ThemeInfo {
+  const themes = getThemes();
+  const theme = themes.find(t => t.id === themeName);
+
+  if (!theme) {
+    const available = themes.map(t => t.id).join(', ');
+    throw new Error(`Theme '${themeName}' not found. Available themes: ${available}`);
+  }
+
+  const configDir = join(projectRoot, '.claude');
+  const configPath = join(configDir, 'persona-config.yaml');
+
+  // Ensure .claude directory exists
+  if (!existsSync(configDir)) {
+    mkdirSync(configDir, { recursive: true });
+  }
+
+  // Read existing config or create new one
+  let config: Record<string, unknown> = {};
+  if (existsSync(configPath)) {
+    try {
+      const content = readFileSync(configPath, 'utf8');
+      config = YAML.parse(content) || {};
+    } catch {
+      // If parse fails, start fresh
+      config = {};
+    }
+  }
+
+  // Update theme
+  config.theme = themeName;
+
+  // Write back with comment header
+  const header = '# Pennyfarthing Persona Configuration\n\n';
+  const yamlContent = YAML.stringify(config);
+  writeFileSync(configPath, header + yamlContent, 'utf8');
+
+  return theme;
 }

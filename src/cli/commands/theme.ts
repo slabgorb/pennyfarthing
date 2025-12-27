@@ -1,6 +1,6 @@
 import { existsSync } from 'fs';
 import { join, dirname } from 'path';
-import { getThemes, getCurrentTheme, getAgentSamples } from '../utils/themes.js';
+import { getThemes, getCurrentTheme, getAgentSamples, setTheme } from '../utils/themes.js';
 import { manifestExists } from '../utils/manifest.js';
 
 /**
@@ -75,5 +75,40 @@ export async function listCommand(): Promise<void> {
     }
 
     console.log();
+  }
+}
+
+/**
+ * Set the active theme
+ */
+export async function setCommand(themeName: string): Promise<void> {
+  const projectRoot = findProjectRoot();
+
+  if (!projectRoot) {
+    console.log('Not in a Pennyfarthing project.');
+    console.log('Run `pennyfarthing init` to install first.');
+    return;
+  }
+
+  try {
+    const theme = setTheme(themeName, projectRoot);
+
+    console.log(`Theme changed to '${theme.id}'.`);
+    console.log();
+    console.log(`  ${theme.name}`);
+
+    const samples = getAgentSamples(theme);
+    if (samples) {
+      console.log(`  ${samples}`);
+    }
+
+    console.log();
+    console.log('Start a new agent session to use the new theme.');
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(error.message);
+    } else {
+      console.error('Error setting theme:', error);
+    }
   }
 }
