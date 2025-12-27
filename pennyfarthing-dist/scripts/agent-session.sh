@@ -125,13 +125,16 @@ case "$1" in
       echo "Usage: agent-session.sh stop [session-id]" >&2
       exit 1
     fi
-    # NOTE: We intentionally keep the agent file to maintain statusline display.
-    # The file shows the "last active" agent for the session. It gets overwritten
-    # when a new agent starts, and cleaned up by stop-all or session expiry.
+    # Clear the agent file for this session
+    AGENT_FILE=$(get_agent_file "$session_id")
+    rm -f "$AGENT_FILE" 2>/dev/null
+    # Also clear current-agent marker
+    rm -f "$PROJECT_ROOT/.session/current-agent" 2>/dev/null
     echo "Agent session closed: $session_id"
     ;;
   stop-all)
     rm -rf "$AGENTS_DIR" 2>/dev/null
+    rm -f "$PROJECT_ROOT/.session/current-agent" 2>/dev/null
     echo "All agent sessions closed."
     ;;
   status)

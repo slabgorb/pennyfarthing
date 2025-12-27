@@ -36,12 +36,12 @@
         ]
       }
     ],
-    "SessionEnd": [
+    "Stop": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "rm -f ~/.claude-current-agent 2>/dev/null"
+            "command": "rm -f \"$CLAUDE_PROJECT_DIR\"/.session/current-agent 2>/dev/null; rm -f \"$CLAUDE_PROJECT_DIR\"/.session/agents/* 2>/dev/null"
           }
         ]
       }
