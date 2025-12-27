@@ -1,9 +1,3 @@
 # Pennyfarthing Persona Configuration
-# This is pennyfarthing developing itself - appropriately meta
 
-theme: shakespeare
-
-# Override defaults for specific agents if desired
-# agent_overrides:
-#   orchestrator:
-#     verbosity: high
+theme: the-expanse

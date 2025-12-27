@@ -35,6 +35,16 @@ Quick one-liner to check installed version:
 jq -r .version .claude/manifest.json
 ```
 
+## Pennyfarthing Self-Development Symlinks
+
+When developing Pennyfarthing itself, `.claude/` directories (commands, agents, skills, etc.) are symlinks to `pennyfarthing-dist/`. Creating or editing files in the source automatically makes them available - no copy step needed.
+
+```bash
+# .claude/commands -> ../pennyfarthing-dist/commands
+# .claude/agents -> ../pennyfarthing-dist/agents
+# etc.
+```
+
 ---
 
 *Add implementation patterns discovered during development below*

@@ -8,6 +8,7 @@ theme:
   source: "None - pure professional"
   default_emoji_use: none
   default_humor: disabled
+  user_title: ""
 
 agents:
   orchestrator:
