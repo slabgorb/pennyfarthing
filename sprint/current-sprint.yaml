@@ -366,8 +366,9 @@ epics:
           - No persona-config.yaml: create one
         points: 2
         priority: P1
-        status: in-progress
+        status: done
         started: 2025-12-27
+        completed: 2025-12-27
         repos: pennyfarthing
         acceptance_criteria:
           - pennyfarthing theme set <name> changes active theme
