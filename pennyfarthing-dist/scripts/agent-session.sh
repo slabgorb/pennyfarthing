@@ -111,6 +111,8 @@ case "$1" in
 
     AGENT_FILE=$(get_agent_file "$session_id")
     echo "$2" > "$AGENT_FILE"
+    # Also write to current-agent for statusline (session IDs don't sync)
+    echo "$2" > "$PROJECT_ROOT/.session/current-agent"
     echo "Session: $session_id -> $2"
 
     # Always output persona on start
