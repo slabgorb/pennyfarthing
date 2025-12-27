@@ -11,6 +11,7 @@ export interface ThemeAgent {
   character: string;
   style?: string;
   role?: string;
+  quote?: string;
 }
 
 export interface ThemeInfo {
