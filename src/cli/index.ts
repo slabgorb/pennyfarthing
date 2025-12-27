@@ -9,7 +9,7 @@ import { updateCommand } from './commands/update.js';
 import { doctorCommand } from './commands/doctor.js';
 import { uninstallCommand } from './commands/uninstall.js';
 import { versionCommand } from './commands/version.js';
-import { listCommand as themeListCommand, setCommand as themeSetCommand } from './commands/theme.js';
+import { listCommand as themeListCommand, setCommand as themeSetCommand, showCommand as themeShowCommand } from './commands/theme.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -90,5 +90,11 @@ themeCmd
   .description('Set the active theme')
   .argument('<name>', 'Theme name to activate')
   .action(themeSetCommand);
+
+themeCmd
+  .command('show')
+  .description('Show details of a theme')
+  .argument('[name]', 'Theme name (defaults to current theme)')
+  .action(themeShowCommand);
 
 program.parse();

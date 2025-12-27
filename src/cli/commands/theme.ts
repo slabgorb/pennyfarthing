@@ -1,6 +1,6 @@
 import { existsSync } from 'fs';
 import { join, dirname } from 'path';
-import { getThemes, getCurrentTheme, getAgentSamples, setTheme } from '../utils/themes.js';
+import { getThemes, getCurrentTheme, getAgentSamples, setTheme, ThemeInfo } from '../utils/themes.js';
 import { manifestExists } from '../utils/manifest.js';
 
 /**
@@ -109,6 +109,87 @@ export async function setCommand(themeName: string): Promise<void> {
       console.error(error.message);
     } else {
       console.error('Error setting theme:', error);
+    }
+  }
+}
+
+/**
+ * Display theme details for a single agent
+ */
+function displayAgent(name: string, agent: { character: string; style?: string; quote?: string }): void {
+  console.log(`  ${name}:`);
+  console.log(`    Character: ${agent.character}`);
+  if (agent.style) {
+    console.log(`    Style: ${agent.style}`);
+  }
+  if (agent.quote) {
+    console.log(`    Quote: "${agent.quote}"`);
+  }
+}
+
+/**
+ * Show full details of a theme
+ */
+export async function showCommand(themeName?: string): Promise<void> {
+  const projectRoot = findProjectRoot();
+
+  if (!projectRoot) {
+    console.log('Not in a Pennyfarthing project.');
+    console.log('Run `pennyfarthing init` to install first.');
+    return;
+  }
+
+  let themes: ThemeInfo[];
+  try {
+    themes = getThemes();
+  } catch (error) {
+    console.error('Error loading themes:', error instanceof Error ? error.message : error);
+    return;
+  }
+
+  // Determine which theme to show
+  let targetThemeName: string | undefined = themeName;
+  if (!targetThemeName) {
+    const currentTheme = getCurrentTheme(projectRoot);
+    if (!currentTheme) {
+      console.log('No theme currently set.');
+      console.log('Use `pennyfarthing theme set <name>` to select a theme.');
+      return;
+    }
+    targetThemeName = currentTheme;
+  }
+
+  const theme = themes.find(t => t.id === targetThemeName);
+  if (!theme) {
+    const available = themes.map(t => t.id).join(', ');
+    console.error(`Theme '${targetThemeName}' not found.`);
+    console.error(`Available themes: ${available}`);
+    return;
+  }
+
+  // Display theme header
+  console.log(`Theme: ${theme.id}`);
+  if (theme.description) {
+    console.log(`Description: ${theme.description}`);
+  }
+  console.log();
+
+  // Display agents
+  console.log('Agents:');
+
+  const agentOrder = ['sm', 'tea', 'dev', 'reviewer', 'orchestrator', 'pm', 'architect', 'devops', 'tech-writer', 'ux-designer'];
+
+  for (const agentName of agentOrder) {
+    const agent = theme.agents[agentName];
+    if (agent?.character) {
+      displayAgent(agentName, agent);
+    }
+  }
+
+  // Show any other agents not in the standard order
+  for (const [agentName, agent] of Object.entries(theme.agents)) {
+    if (!agentOrder.includes(agentName) && agent?.character) {
+      displayAgent(agentName, agent);
     }
   }
 }
