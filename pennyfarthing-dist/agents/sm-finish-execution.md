@@ -20,10 +20,19 @@ $CLAUDE_PROJECT_DIR (set by SessionStart hook)
 
 ## Step 1: Archive Session File
 
+Archive path format: `sprint/archive/story-{STORY_ID}-{YYYYMMDD}.md`
+
 ```bash
-# Move session file to archive
+# Move session file to archive (file should no longer exist in .session/ after this)
 mv $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md {ARCHIVE_PATH}
+
+# Verify the move succeeded - source should NOT exist
+if [ -f "$CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md" ]; then
+  echo "ERROR: Session file still exists after move"
+fi
 ```
+
+**IMPORTANT:** Do NOT create a stub file in .session/ - the file should simply be gone.
 
 ## Step 2: Write Summary File
 
@@ -77,8 +86,12 @@ mv $CLAUDE_PROJECT_DIR/.session/story-{STORY_ID}-context.md $CLAUDE_PROJECT_DIR/
 ## Step 7: Clean Up Temporary Files
 
 ```bash
+# Remove test/lint logs
 rm -f $CLAUDE_PROJECT_DIR/.session/test-results-*.log
 rm -f $CLAUDE_PROJECT_DIR/.session/lint-results-*.log
+
+# Clean up old agent session files (UUIDs older than 7 days)
+find $CLAUDE_PROJECT_DIR/.session/agents/ -type f -mtime +7 -delete 2>/dev/null || true
 ```
 
 ## Step 8: Commit Archive Changes

@@ -71,6 +71,27 @@ EPIC_NUM=$(echo "{STORY_ID}" | cut -d'-' -f1)
 ./scripts/run.sh find-related-work.sh --epic ${EPIC_NUM} 2>/dev/null | head -20
 ```
 
+## Step 6: Gather Previous Learnings
+
+For each epic with available stories, find summaries from completed stories:
+```bash
+EPIC_NUM=$(echo "{STORY_ID}" | cut -d'-' -f1)
+
+# Find all summaries for this epic
+ls $CLAUDE_PROJECT_DIR/sprint/context/story-${EPIC_NUM}-*-summary.md 2>/dev/null
+
+# Read each summary to extract key learnings
+for summary in $CLAUDE_PROJECT_DIR/sprint/context/story-${EPIC_NUM}-*-summary.md; do
+  echo "=== $(basename $summary) ==="
+  cat "$summary" | head -30
+done
+```
+
+Extract from each summary:
+- **What Was Built** - Understanding of completed work
+- **Key Technical Decisions** - Decisions that may affect new stories
+- **Lessons for Future Work** - Gotchas and patterns to follow
+
 ## Output Format
 
 ```markdown
@@ -106,6 +127,17 @@ EPIC_NUM=$(echo "{STORY_ID}" | cut -d'-' -f1)
 - **Epic 38:** No epic context file (run `/start-epic epic-38` first)
 - **Story 32-8:** Story context exists (.session/story-32-8-context.md)
 
+### Previous Learnings (by Epic)
+
+For each epic with available stories, include key learnings from completed story summaries:
+
+**Epic 2 (Sprint Operations Polish):**
+- Story 2-1: Jira sync requires --transition flag; non-blocking on failure
+- Story 2-2: Sprint metrics script uses yq for YAML parsing
+- Story 2-5: Subagent YAML frontmatter requires name matching filename
+
+*(Extract 2-3 key points from `sprint/context/story-{epic}-*-summary.md` "Lessons" section)*
+
 ### Stories by Epic
 
 **Epic 32 (Monthly Reporting):** 2 stories in backlog
@@ -120,3 +152,4 @@ EPIC_NUM=$(echo "{STORY_ID}" | cut -d'-' -f1)
 - Include Jira assignment check to avoid claiming already-taken work
 - The "Recommended Next" section helps SM present options to user
 - Context gaps help SM know if /start-epic is needed first
+- Previous learnings help SM write better story context by avoiding past mistakes
