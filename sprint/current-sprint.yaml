@@ -343,6 +343,9 @@ epics:
           - Current theme is marked with asterisk or (current)
           - Each theme shows sample agent character names
           - Works from any directory in a Pennyfarthing project
+        branch: feat/5-1-theme-list
+        pr: https://github.com/1898andCo/pennyfarthing/pull/15
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11152
 
       - id: "5-2"
         title: "Add 'pennyfarthing theme set' command"
