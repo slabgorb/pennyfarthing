@@ -12,6 +12,7 @@ theme:
   default_emoji_use: minimal
   default_humor: enabled
   character_immersion: high  # Agents speak in period-appropriate language
+  user_title: Good Patron
 
 agents:
   orchestrator:
