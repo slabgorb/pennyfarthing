@@ -71,8 +71,11 @@ epics:
           - Default to manual (opt-in automation)
         points: 2
         priority: P2
-        status: in-progress
+        status: done
         started: 2025-12-26
+        completed: 2025-12-26
+        branch: feat/2-3-auto-pr-flag
+        pr: https://github.com/1898andCo/pennyfarthing/pull/14
         jira: https://1898andco.atlassian.net/browse/MSSCI-11145
         repos: pennyfarthing
         acceptance_criteria:
@@ -438,9 +441,9 @@ epics:
 
 summary:
   total_points: 30
-  completed_points: 6
-  in_progress_points: 3
-  backlog_points: 21
+  completed_points: 11
+  in_progress_points: 0
+  backlog_points: 19
   velocity_target: 20
   status: active
 
