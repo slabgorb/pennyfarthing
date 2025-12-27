@@ -399,8 +399,9 @@ epics:
           - ~/.claude/pennyfarthing/themes/ (user-level)
         points: 3
         priority: P2
-        status: in-progress
+        status: done
         started: 2025-12-27
+        completed: 2025-12-27
         repos: pennyfarthing
         acceptance_criteria:
           - pennyfarthing theme create <name> creates new theme file
@@ -451,9 +452,9 @@ epics:
 
 summary:
   total_points: 30
-  completed_points: 12
+  completed_points: 15
   in_progress_points: 0
-  backlog_points: 18
+  backlog_points: 15
   velocity_target: 20
   status: active
 
