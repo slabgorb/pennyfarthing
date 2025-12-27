@@ -438,8 +438,9 @@ epics:
           - Show quotes and style descriptions
         points: 1
         priority: P2
-        status: in-progress
+        status: done
         started: 2025-12-27
+        completed: 2025-12-27
         repos: pennyfarthing
         acceptance_criteria:
           - pennyfarthing theme show displays current theme details
@@ -449,9 +450,9 @@ epics:
 
 summary:
   total_points: 30
-  completed_points: 11
+  completed_points: 12
   in_progress_points: 0
-  backlog_points: 19
+  backlog_points: 18
   velocity_target: 20
   status: active
 
