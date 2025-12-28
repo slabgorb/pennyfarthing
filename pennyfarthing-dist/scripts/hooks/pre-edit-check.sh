@@ -27,7 +27,13 @@ protected_patterns=(
 
 # Pennyfarthing managed files protection
 # These are managed by `pennyfarthing update`, don't edit directly
-if [[ "$file_path" == *".claude/pennyfarthing/"* ]]; then
+# EXCEPTION: If we ARE in the pennyfarthing library itself, allow edits
+is_pennyfarthing_lib=false
+if [[ -d "${CLAUDE_PROJECT_DIR:-$PWD}/pennyfarthing-dist" ]]; then
+    is_pennyfarthing_lib=true
+fi
+
+if [[ "$file_path" == *".claude/pennyfarthing/"* ]] && [[ "$is_pennyfarthing_lib" == "false" ]]; then
     echo "BLOCKED: Cannot edit managed pennyfarthing files." >&2
     echo "File: $file_path" >&2
     echo "" >&2
