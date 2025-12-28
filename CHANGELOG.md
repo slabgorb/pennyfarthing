@@ -13,7 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.6.1] - 2025-12-28
 
-*No unreleased changes*
+### Added
+- **Release Automation** - `deploy.sh` now auto-updates CHANGELOG.md during releases
+  - Adds version header with date
+  - Updates version comparison links
+  - Warns if `[Unreleased]` section is empty
+  - Includes CHANGELOG.md in version bump commit
 
 ---
 
