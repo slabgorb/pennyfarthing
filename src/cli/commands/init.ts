@@ -193,17 +193,31 @@ export async function initCommand(
   logger.newline();
   logger.info('Creating agent sidecars...');
 
+  const sidecarTemplatesPath = join(assetsPath, 'templates/sidecar');
+
   for (const agent of AGENTS) {
     const sidecarDir = join(projectRoot, `.claude/project/agents/${agent}-sidecar`);
     if (!pathExists(sidecarDir)) {
       ensureDir(sidecarDir, { dryRun });
 
-      // Create standard sidecar files
+      // Create standard sidecar files using templates
       const sidecarFiles = ['patterns.md', 'gotchas.md', 'decisions.md'];
       for (const file of sidecarFiles) {
         const filePath = join(sidecarDir, file);
+        const templatePath = join(sidecarTemplatesPath, `${file}.template`);
+
         if (!dryRun) {
-          writeFileSync(filePath, `# ${agent} ${file.replace('.md', '')}\n\n`, 'utf8');
+          let content: string;
+
+          // Use template if available, otherwise fall back to simple header
+          if (pathExists(templatePath)) {
+            content = readFileSync(templatePath, 'utf8');
+            content = content.replace(/\$\{AGENT_NAME\}/g, agent);
+          } else {
+            content = `# ${agent} ${file.replace('.md', '')}\n\n`;
+          }
+
+          writeFileSync(filePath, content, 'utf8');
         }
       }
       logger.created(`.claude/project/agents/${agent}-sidecar/`);
