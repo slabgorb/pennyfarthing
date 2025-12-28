@@ -13,7 +13,7 @@ epics:
     description: |
       Housekeeping improvements from Sprint 1 retrospective.
       Automates manual workflows and improves developer experience.
-    points: 14
+    points: 16
     priority: P1
     source: "Sprint 1 Retro"
     repos: pennyfarthing
@@ -171,10 +171,12 @@ epics:
           - src/cli/commands/init.ts to use templates instead of empty files
         points: 2
         priority: P2
-        status: in-progress
+        status: done
         started: 2025-12-28
+        completed: 2025-12-28
         repos: pennyfarthing
         branch: feat/2-6-sidecar-templates
+        pr: https://github.com/1898andCo/pennyfarthing/pull/16
         acceptance_criteria:
           - Sidecar templates exist in pennyfarthing-dist/templates/sidecar/
           - Templates have section headers and placeholder prompts
@@ -453,16 +455,16 @@ epics:
           - Includes style and quote for each agent
 
 summary:
-  total_points: 30
-  completed_points: 15
+  total_points: 32
+  completed_points: 23
   in_progress_points: 0
-  backlog_points: 15
+  backlog_points: 9
   velocity_target: 20
   status: active
 
 # Sprint 2 Planning Notes:
-# - Epic 2 (14 pts): Retro improvements, DX polish, user customization
+# - Epic 2 (16 pts): Retro improvements, DX polish, user customization
 # - Epic 4 (8 pts): Quick win, establishes foundation for future security
 # - Epic 5 (8 pts): Theme management CLI for end users
-# - Total: 30 pts (exceeds velocity target - prioritize P1s first)
+# - Total: 32 pts (exceeds velocity target - prioritize P1s first)
 # - Stories ordered by priority within each epic
