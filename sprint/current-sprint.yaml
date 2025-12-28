@@ -554,7 +554,8 @@ sprint_3:
             - Create .claude/pennyfarthing/themes/ directory on first use
           points: 3
           priority: P1
-          status: backlog
+          status: in-progress
+          started: 2025-12-28
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11197
           acceptance_criteria:
