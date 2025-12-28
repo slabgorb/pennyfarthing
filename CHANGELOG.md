@@ -7,6 +7,100 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+*No unreleased changes*
+
+---
+
+## [3.5.3] - 2025-12-28
+
+### Fixed
+- **Session Hook Logging** - Session start hook now logs actual event source (started, clear, etc.) instead of hardcoding "Session started" for all events
+
+---
+
+## [3.5.2] - 2025-12-28
+
+### Fixed
+- **Statusline Agent Cleanup** - Moved agent cleanup from Stop hook to SessionStart hook for more reliable state reset between sessions
+
+---
+
+## [3.5.1] - 2025-12-28
+
+### Added
+- **User Preferences** - New `.claude/pennyfarthing/preferences.yaml` for customizing agent behavior
+  - `character_voice`: Enable/disable persona flavor text
+  - `explain_decisions`: Show reasoning in output
+  - `auto_commit`: Auto-commit on story completion
+- **Output Styles** - Three styles shipped in `pennyfarthing-dist/output-styles/`
+  - `verbose.md` - Detailed explanations
+  - `terse.md` - Minimal output
+  - `teaching.md` - Educational with alternatives
+
+### Changed
+- `agent-session.sh` respects `character_voice` preference
+- `pennyfarthing init` creates preferences file with defaults
+
+---
+
+## [3.5.0] - 2025-12-28
+
+### Added
+- **Sidecar Templates** - New templates in `pennyfarthing-dist/templates/sidecar/`
+  - `patterns.md.template`, `gotchas.md.template`, `decisions.md.template`
+  - Templates have section headers and placeholder prompts
+- `pennyfarthing init` now installs templated sidecar content instead of empty files
+
+### Fixed
+- **Statusline Installation** - Fixed incorrect source path in `init.ts` and `update.ts`
+  - Now correctly copies from `pennyfarthing-dist/scripts/statusline.sh`
+  - Legacy locations cleaned up during update
+  - Hook path in settings.local.json points to correct location
+
+---
+
+## [3.4.0] - 2025-12-27
+
+### Added
+- **Theme CLI Commands** - Full theme management from command line
+  - `pennyfarthing theme list` - Shows available themes with current marked
+  - `pennyfarthing theme set <name>` - Changes active theme
+  - `pennyfarthing theme show [name]` - Displays theme details
+  - `pennyfarthing theme create <name>` - Creates custom theme from template
+
+---
+
+## [3.3.0] - 2025-12-26
+
+### Added
+- **Sprint Metrics Script** - `scripts/utils/sprint-metrics.sh` displays sprint stats
+  - Points completed/remaining/percentage
+  - Days remaining in sprint
+- **Auto-PR Flag** - `--auto-pr` flag in finish-story flow triggers automatic PR creation
+
+---
+
+## [3.2.0] - 2025-12-25
+
+### Changed
+- **Subagent Format Migration** - All 13 subagents converted to Claude Code's official YAML frontmatter format
+  - Each has `name`, `description`, `tools`, `model` fields in `---` delimited header
+  - Auto-discovered by Claude Code from `.claude/agents/`
+
+---
+
+## [3.1.0] - 2025-12-25
+
+### Changed
+- **Sidecar Pruning** - Reduced sidecar content by 82% (4,157 → 755 lines)
+  - Each agent sidecar now has 5-15 relevant entries
+  - Standardized to patterns/gotchas/decisions format
+  - Original content archived to `sprint/archive/sidecar-archive/`
+
+---
+
+## [3.0.0] - 2025-12-24
+
 ### Added
 - **Official Subagents** - All 12 subagents migrated to Claude Code's official agent format
   - SM: `workflow-status-check`, `sm-work-research`, `sm-file-summary`, `sm-story-setup`, `sm-finish-bookkeeping`, `sm-finish-execution`
@@ -18,6 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Callers handle retries (max 2) and escalation
   - Common failures table for quick diagnosis
 - **Markdownlint Config** - `.markdownlint.json` for consistent documentation style
+- **Automated Jira Sync** - SM finish workflow automatically transitions Jira issues to Done
 
 ### Changed
 - **BREAKING: Session File Naming** - Renamed from `current_work.md` to `{story-id}-session.md`
@@ -41,6 +136,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Statusline PROJECT_ROOT** - Fixed path calculation after v2.2.0 restructure
   - Now uses `$CLAUDE_PROJECT_DIR` (available in statusLine context)
   - Fallback to script-based detection for edge cases
+- **Permissions Documentation** - PERMISSIONS.md documents all current allowlist entries
 
 ---
 
@@ -198,7 +294,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v2.2.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v3.5.3...HEAD
+[3.5.3]: https://github.com/1898andCo/pennyfarthing/compare/v3.5.2...v3.5.3
+[3.5.2]: https://github.com/1898andCo/pennyfarthing/compare/v3.5.1...v3.5.2
+[3.5.1]: https://github.com/1898andCo/pennyfarthing/compare/v3.5.0...v3.5.1
+[3.5.0]: https://github.com/1898andCo/pennyfarthing/compare/v3.4.0...v3.5.0
+[3.4.0]: https://github.com/1898andCo/pennyfarthing/compare/v3.3.0...v3.4.0
+[3.3.0]: https://github.com/1898andCo/pennyfarthing/compare/v3.2.0...v3.3.0
+[3.2.0]: https://github.com/1898andCo/pennyfarthing/compare/v3.1.0...v3.2.0
+[3.1.0]: https://github.com/1898andCo/pennyfarthing/compare/v3.0.0...v3.1.0
+[3.0.0]: https://github.com/1898andCo/pennyfarthing/compare/v2.2.0...v3.0.0
 [2.2.0]: https://github.com/1898andCo/pennyfarthing/compare/v2.1.3...v2.2.0
 [2.1.3]: https://github.com/1898andCo/pennyfarthing/compare/v1.5.1...v2.1.3
 [1.5.1]: https://github.com/1898andCo/pennyfarthing/compare/v1.5.0...v1.5.1
