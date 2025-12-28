@@ -509,3 +509,199 @@ summary:
 # - Total: 34 pts (exceeds velocity target - prioritize P1s first)
 # - Stories ordered by priority within each epic
 # - Story 4-5 added mid-sprint: statusline.sh installation bug (P1)
+
+# ============================================================================
+# SPRINT 3 PLANNING
+# ============================================================================
+
+sprint_3:
+  number: 3
+  goal: "Interactive theme creation and remaining permissions framework"
+  planned_start: 2026-01-08
+  planned_end: 2026-01-21
+  status: planning
+
+  epics:
+    - id: epic-6
+      title: "Interactive Theme Wizard"
+      description: |
+        Interactive slash command for creating custom persona themes without
+        manual YAML editing. Supports three creation modes (AI-driven, guided,
+        manual) with version tracking to warn users when themes may be stale.
+      points: 13
+      priority: P2
+      repos: pennyfarthing
+      jira: https://1898andco.atlassian.net/browse/MSSCI-11196
+      stories:
+        - id: "6-1"
+          title: "Create /theme-maker command skeleton with mode selection"
+          description: |
+            Create the base slash command with mode selection and theme naming.
+
+            Usage: /theme-maker
+
+            Flow:
+            1. Ask: Theme name? (validates unique, valid filename)
+            2. Ask: Creation mode?
+               - AI-Driven: "I'll generate everything from a concept"
+               - Guided: "I'll suggest options, you pick"
+               - Manual: "You specify everything"
+            3. Dispatch to mode handler
+            4. Write skeleton theme to .claude/pennyfarthing/themes/{name}.yaml
+
+            Files:
+            - pennyfarthing-dist/commands/theme-maker.md
+            - Create .claude/pennyfarthing/themes/ directory on first use
+          points: 3
+          priority: P1
+          status: backlog
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11197
+          acceptance_criteria:
+            - /theme-maker launches interactive wizard
+            - Mode selection works with AskUserQuestion
+            - Creates theme directory if missing
+            - Writes skeleton YAML with pennyfarthing_version field
+            - Validates theme name (no spaces, no conflicts)
+
+        - id: "6-2"
+          title: "Implement AI-Driven mode"
+          description: |
+            User provides a universe/concept, AI generates all 10 agent personas.
+
+            Flow:
+            1. Ask: "Describe your theme universe" (text input)
+               Examples: "noir detective", "pirates", "ancient Rome", "cyberpunk"
+            2. AI generates all 10 agents with appropriate characters
+            3. Show preview of generated theme
+            4. Ask: Confirm, regenerate, or edit?
+            5. Write complete theme file
+          points: 3
+          priority: P1
+          status: backlog
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11198
+          acceptance_criteria:
+            - Accepts free-text universe description
+            - Generates coherent characters across all 10 agents
+            - Characters fit their agent roles (SM=leader, TEA=analyst, etc.)
+            - Preview shows all agents before confirming
+            - Regenerate option creates fresh set
+
+        - id: "6-3"
+          title: "Implement Guided mode"
+          description: |
+            AI suggests 3-4 character options per agent, user picks.
+
+            Flow:
+            1. Ask: "Describe your theme universe"
+            2. For each agent (SM, TEA, Dev, Reviewer, ...):
+               - AI suggests 3-4 fitting characters
+               - User picks one (or "Other" for custom)
+            3. AI fills in style/trait/quote for selected characters
+            4. Preview and confirm
+          points: 3
+          priority: P1
+          status: backlog
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11199
+          acceptance_criteria:
+            - Presents 3-4 character options per agent
+            - Options fit the agent role and universe
+            - Other option allows custom character name
+            - Generates style/trait/quote for selections
+            - Can go back and change previous selections
+
+        - id: "6-4"
+          title: "Implement Manual mode"
+          description: |
+            User specifies everything - character, style, trait, quote per agent.
+
+            Flow:
+            1. Ask: Theme description (metadata)
+            2. For each agent:
+               - Ask: Character name
+               - Ask: Style description
+               - Ask: Signature quote
+            3. AI fills in remaining fields (role, expertise, helper)
+            4. Preview and confirm
+          points: 2
+          priority: P2
+          status: backlog
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11200
+          acceptance_criteria:
+            - Collects character, style, quote for each agent
+            - AI completes remaining fields intelligently
+            - Preview shows complete theme
+            - Can skip agents to use defaults
+
+        - id: "6-5"
+          title: "Add version tracking and compatibility warnings"
+          description: |
+            Warn users when custom themes may be outdated.
+
+            Theme file includes:
+              pennyfarthing_version: "3.5.3"
+              created: 2025-12-28
+              last_updated: 2025-12-28
+
+            agent-session.sh changes:
+            - Detect custom theme (path contains .claude/pennyfarthing/themes/)
+            - Compare pennyfarthing_version with current VERSION
+            - If major/minor version differs, show warning
+
+            Warning format:
+              ⚠️ Theme 'my-theme' was created with Pennyfarthing 3.2.0
+                 Current version: 3.5.3 - agent roles may have changed.
+                 Run '/theme-maker --update my-theme' to review.
+          points: 2
+          priority: P1
+          status: backlog
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11201
+          acceptance_criteria:
+            - Custom themes include version metadata
+            - agent-session.sh detects version mismatch
+            - Warning displayed but doesn't block usage
+            - Warning only on major/minor mismatch (not patch)
+
+    # Carry over from Sprint 2 backlog
+    - id: epic-4-continued
+      title: "Configuration & Permissions Framework (continued)"
+      description: |
+        Remaining stories from Epic 4 - permissions framework completion.
+      points: 6
+      priority: P1
+      repos: pennyfarthing
+      stories:
+        - id: "4-2"
+          title: "Add context_budget configuration"
+          points: 2
+          priority: P1
+          status: backlog
+          carried_from: sprint-2
+
+        - id: "4-3"
+          title: "Create hooks configuration section"
+          points: 2
+          priority: P2
+          status: backlog
+          carried_from: sprint-2
+
+        - id: "4-4"
+          title: "Add agent-specific permission scopes"
+          points: 2
+          priority: P2
+          status: backlog
+          carried_from: sprint-2
+
+  sprint_3_summary:
+    planned_points: 19
+    from_epic_6: 13
+    carried_from_sprint_2: 6
+    velocity_target: 20
+    notes: |
+      - Epic 6 is new feature work (theme wizard)
+      - Epic 4 stories carried over from Sprint 2 backlog
+      - Total fits within velocity target
