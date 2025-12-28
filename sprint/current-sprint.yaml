@@ -207,8 +207,10 @@ epics:
           Leverages Claude Code's native /output-style command.
         points: 3
         priority: P2
-        status: backlog
+        status: in-progress
+        started: 2025-12-28
         repos: pennyfarthing
+        branch: feat/2-7-output-styles
         acceptance_criteria:
           - 3 output styles shipped in pennyfarthing-dist/output-styles/
           - preferences.yaml template with documented options
@@ -222,7 +224,7 @@ epics:
       Add missing permissions, hooks, and context_budget sections to
       settings.local.json. Implement three-tier permission model
       (read, write, admin) for tool access control.
-    points: 8
+    points: 10
     priority: P1
     marker: "quick-win"
     repos: pennyfarthing
@@ -300,6 +302,39 @@ epics:
           - agent-scopes.yaml defines permissions per agent
           - Documentation explains scope differences
           - Template includes agent scope examples
+
+      - id: "4-5"
+        title: "Fix statusline.sh installation path bug"
+        description: |
+          BUG: statusline.sh is not being installed correctly.
+
+          Root cause:
+          - init.ts line 141: `join(assetsPath, 'statusline.sh')` is WRONG
+          - File is at `pennyfarthing-dist/scripts/statusline.sh`
+          - Should be: `join(assetsPath, 'scripts/statusline.sh')`
+
+          Additional issues:
+          - Same bug exists in update.ts line 165
+          - Legacy installs may have statusline at:
+            - `.claude/core/statusline.sh` (old)
+            - `.claude/statusline.sh` (older)
+          - Update command should clean up old locations
+          - Hook in settings.local.json may point to wrong location
+
+          Fix required:
+          1. Correct source path in init.ts and update.ts
+          2. Add cleanup of legacy statusline locations during update
+          3. Verify hook path matches installed location
+          4. Consider moving statusline to hooks/ folder for consistency
+        points: 2
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - statusline.sh correctly copied to .claude/pennyfarthing/statusline.sh
+          - Legacy locations cleaned up during update
+          - Hook in settings.local.json points to correct path
+          - Works for fresh installs and upgrades
 
   - id: epic-5
     title: "Theme Management CLI"
@@ -455,16 +490,17 @@ epics:
           - Includes style and quote for each agent
 
 summary:
-  total_points: 32
+  total_points: 34
   completed_points: 23
-  in_progress_points: 0
-  backlog_points: 9
+  in_progress_points: 3
+  backlog_points: 8
   velocity_target: 20
   status: active
 
 # Sprint 2 Planning Notes:
 # - Epic 2 (16 pts): Retro improvements, DX polish, user customization
-# - Epic 4 (8 pts): Quick win, establishes foundation for future security
+# - Epic 4 (10 pts): Quick win + statusline bugfix, establishes foundation for future security
 # - Epic 5 (8 pts): Theme management CLI for end users
-# - Total: 32 pts (exceeds velocity target - prioritize P1s first)
+# - Total: 34 pts (exceeds velocity target - prioritize P1s first)
 # - Stories ordered by priority within each epic
+# - Story 4-5 added mid-sprint: statusline.sh installation bug (P1)
