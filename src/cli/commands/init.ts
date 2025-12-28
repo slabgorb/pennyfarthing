@@ -137,8 +137,8 @@ export async function initCommand(
     }
   }
 
-  // Copy statusline.sh
-  const statuslineSrc = join(assetsPath, 'statusline.sh');
+  // Copy statusline.sh (from scripts/ subdirectory)
+  const statuslineSrc = join(assetsPath, 'scripts/statusline.sh');
   const statuslineDest = join(projectRoot, '.claude/pennyfarthing/statusline.sh');
   if (pathExists(statuslineSrc)) {
     if (!dryRun) {
@@ -146,6 +146,8 @@ export async function initCommand(
       copySync(statuslineSrc, statuslineDest, { overwrite: true });
     }
     logger.updated('.claude/pennyfarthing/statusline.sh');
+  } else {
+    logger.warning(`statusline.sh not found at ${statuslineSrc}`);
   }
 
   // 7b. Create symlinks for Claude Code to find commands
@@ -393,15 +395,23 @@ async function mergeSettingsLocalJson(
     existingSettings.statusLine = templateContent.statusLine;
     modified = true;
     logger.info('Added missing statusLine configuration');
-  } else if (statusLine.command && typeof statusLine.command === 'string' &&
-             statusLine.command.includes('.claude/core/statusline.sh')) {
-    // Migrate from old path to new path
-    statusLine.command = statusLine.command.replace(
+  } else if (statusLine.command && typeof statusLine.command === 'string') {
+    // Migrate from any legacy path to new path
+    const legacyPaths = [
       '.claude/core/statusline.sh',
-      '.claude/pennyfarthing/statusline.sh'
-    );
-    modified = true;
-    logger.info('Updated statusLine path to new location');
+      '.claude/statusline.sh'
+    ];
+    for (const legacyPath of legacyPaths) {
+      if (statusLine.command.includes(legacyPath)) {
+        statusLine.command = statusLine.command.replace(
+          legacyPath,
+          '.claude/pennyfarthing/statusline.sh'
+        );
+        modified = true;
+        logger.info(`Updated statusLine path from ${legacyPath} to new location`);
+        break;
+      }
+    }
   }
 
   if (modified && !options.dryRun) {
