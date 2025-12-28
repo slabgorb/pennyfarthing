@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v3.2.0** | *The outer loop goes once, the inner loop goes many times.*
+**v3.5.3** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px" margin="10px">
 
@@ -58,6 +58,10 @@ Handoffs are automatic when context usage is below 70%. Above that threshold, ag
 | `pennyfarthing doctor` | Check installation health |
 | `pennyfarthing doctor --fix` | Auto-fix common issues |
 | `pennyfarthing uninstall` | Remove for clean reinstall |
+| `pennyfarthing theme list` | Show available themes |
+| `pennyfarthing theme set <name>` | Change active theme |
+| `pennyfarthing theme show [name]` | Display theme details |
+| `pennyfarthing theme create <name>` | Create custom theme |
 | `pennyfarthing version` | Show version info |
 
 ## Documentation
@@ -181,22 +185,22 @@ pennyfarthing uninstall --all
 
 Archived sprint data (`sprint/archive/`, `sprint/context/`) is always preserved.
 
-## What's New in v3.1
+## What's New in v3.5
 
-- **YAML Frontmatter Subagents** - All 13 subagents now use Claude Code's official YAML frontmatter format with `name`, `description`, `tools`, and `model` fields
-- **Consolidated Agents Directory** - Subagents moved from `subagents/` into `agents/` for single location
-- **Per-Repo Test Filtering** - Testing runner supports auto-discovery and per-repo filter patterns
-- **Frontmatter Validation** - New `validate-subagent-frontmatter.sh` script ensures subagent compliance
+- **Theme CLI Commands** - `pennyfarthing theme list|set|show|create` for command-line theme management
+- **User Preferences** - `.claude/pennyfarthing/preferences.yaml` for customizing agent behavior (character_voice, explain_decisions, auto_commit)
+- **Output Styles** - Three built-in styles (verbose, terse, teaching) for Claude Code's `/output-style`
+- **Sidecar Templates** - `pennyfarthing init` now installs templated sidecar content with section headers
+- **Sprint Metrics** - `scripts/utils/sprint-metrics.sh` displays points completed/remaining
+- **Session Hook Improvements** - Logs event source type, cleaner agent state reset
 
 ## What's New in v3.0
 
-- **Official Subagents** - 13 subagents migrated to Claude Code's official agent format with `subagent_type`
-- **Session File Naming** - Changed from `current_work.md` to `{story-id}-session.md` for parallel work support
-- **Scripts as Symlinks** - `scripts/` symlinks to `pennyfarthing-dist/scripts/` for single source of truth
-- **CLI Scripts Path** - Scripts install to `.claude/pennyfarthing/scripts/`
+- **Official Subagents** - 13 subagents in Claude Code's official YAML frontmatter format
+- **Session File Naming** - Changed from `current_work.md` to `{story-id}-session.md` for parallel work
+- **Scripts as Symlinks** - Single source of truth from `pennyfarthing-dist/scripts/`
 - **Centralized Error Handling** - Subagents return structured `status: success|blocked` results
 - **NPM Package** - Install via npm with `pennyfarthing init`
-- **CLI Tool** - `pennyfarthing init`, `update`, `doctor`, `uninstall`
 - **Health Checks** - `doctor --fix` auto-repairs common issues
 
 ## License
