@@ -17,6 +17,12 @@ session_id=$(echo "$input" | jq -r '.session_id // "unknown"')
 
 # Ensure .session directory exists
 mkdir -p "$CLAUDE_PROJECT_DIR/.session"
+mkdir -p "$CLAUDE_PROJECT_DIR/.session/agents"
+
+# Clear stale agent state from previous session
+rm -f "$CLAUDE_PROJECT_DIR/.session/current-agent" 2>/dev/null || true
+# Use find to avoid zsh glob errors when directory is empty
+find "$CLAUDE_PROJECT_DIR/.session/agents" -type f -delete 2>/dev/null || true
 
 # Create session log entry
 echo "$(date -Iseconds) | Session started: $session_id" >> "$CLAUDE_PROJECT_DIR/.session/session-log.txt"
