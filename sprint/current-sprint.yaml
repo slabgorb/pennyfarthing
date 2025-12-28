@@ -207,8 +207,10 @@ epics:
           Leverages Claude Code's native /output-style command.
         points: 3
         priority: P2
-        status: backlog
+        status: in-progress
+        started: 2025-12-28
         repos: pennyfarthing
+        branch: feat/2-7-output-styles
         acceptance_criteria:
           - 3 output styles shipped in pennyfarthing-dist/output-styles/
           - preferences.yaml template with documented options
@@ -457,8 +459,8 @@ epics:
 summary:
   total_points: 32
   completed_points: 23
-  in_progress_points: 0
-  backlog_points: 9
+  in_progress_points: 3
+  backlog_points: 6
   velocity_target: 20
   status: active
 
