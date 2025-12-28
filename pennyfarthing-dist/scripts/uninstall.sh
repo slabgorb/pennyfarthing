@@ -92,6 +92,7 @@ MANAGED_PATHS=(
     ".claude/core"
     ".claude/skills"
     ".claude/personas"
+    ".claude/pennyfarthing"
     ".claude/manifest.json"
     ".claude/settings.local.json"
     ".claude/statusline.sh"
