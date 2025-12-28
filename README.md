@@ -128,6 +128,37 @@ Configure in `.claude/persona-config.yaml`:
 theme: star-trek-tos
 ```
 
+## Customization
+
+### Output Styles
+
+Pennyfarthing ships with output styles for Claude Code's `/output-style` command:
+
+| Style | Description |
+|-------|-------------|
+| `verbose` | Detailed explanations, educational |
+| `terse` | Minimal output, just the essentials |
+| `teaching` | Explains reasoning, suggests alternatives |
+
+Usage: `/output-style verbose` (in Claude Code)
+
+### Preferences
+
+User preferences are configured in `.claude/pennyfarthing/preferences.yaml`:
+
+```yaml
+# Enable persona character voice in agent output
+character_voice: true
+
+# Show reasoning and decision explanations
+explain_decisions: true
+
+# Auto-commit on story completion
+auto_commit: false
+```
+
+Override locally with `.claude/pennyfarthing/preferences.local.yaml` (gitignored).
+
 ## Updating
 
 ```bash
