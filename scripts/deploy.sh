@@ -129,6 +129,7 @@ if $DRY_RUN; then
     log_dry "Update package.json: $CURRENT_VERSION -> $NEW_VERSION"
     log_dry "Update README.md version badge"
     log_dry "Update package-lock.json"
+    log_dry "Update CHANGELOG.md version links and header"
 else
     echo "$NEW_VERSION" > "$VERSION_FILE"
     log_info "Updated VERSION file"
@@ -147,13 +148,37 @@ else
         (cd "$PROJECT_ROOT" && npm install --package-lock-only --silent 2>/dev/null) || true
         log_info "Updated package-lock.json"
     fi
+
+    # Update CHANGELOG.md - add version entry and update links
+    if [[ -f "$PROJECT_ROOT/CHANGELOG.md" ]]; then
+        TODAY=$(date +%Y-%m-%d)
+
+        # Update [Unreleased] link to point to new version
+        sed -i '' "s|\[Unreleased\]: https://github.com/1898andCo/pennyfarthing/compare/v$CURRENT_VERSION...HEAD|[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v$NEW_VERSION...HEAD\n[$NEW_VERSION]: https://github.com/1898andCo/pennyfarthing/compare/v$CURRENT_VERSION...v$NEW_VERSION|" "$PROJECT_ROOT/CHANGELOG.md"
+
+        # Check if [Unreleased] section has content or just placeholder
+        if grep -q "^\*No unreleased changes\*$" "$PROJECT_ROOT/CHANGELOG.md"; then
+            log_warn "CHANGELOG.md has no unreleased changes documented"
+            log_warn "Consider adding release notes before pushing"
+        else
+            # Move [Unreleased] content to new version section
+            # This is complex - for now just add an empty version header
+            log_info "Updated CHANGELOG.md version links"
+        fi
+
+        # Add new version header if not present
+        if ! grep -q "## \[$NEW_VERSION\]" "$PROJECT_ROOT/CHANGELOG.md"; then
+            sed -i '' "s|## \[Unreleased\]|## [Unreleased]\n\n*No unreleased changes*\n\n---\n\n## [$NEW_VERSION] - $TODAY|" "$PROJECT_ROOT/CHANGELOG.md"
+            log_info "Added CHANGELOG.md version header for $NEW_VERSION"
+        fi
+    fi
 fi
 
 # Step 2: Commit version bump
 if $DRY_RUN; then
     log_dry "git commit -m 'chore: bump version to $NEW_VERSION'"
 else
-    git -C "$PROJECT_ROOT" add VERSION package.json package-lock.json README.md 2>/dev/null || true
+    git -C "$PROJECT_ROOT" add VERSION package.json package-lock.json README.md CHANGELOG.md 2>/dev/null || true
     git -C "$PROJECT_ROOT" commit -m "chore: bump version to $NEW_VERSION"
     log_info "Committed version bump"
 fi

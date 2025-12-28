@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.6.0] - 2025-12-28
+
+### Added
+- **Crew Manifest** - Agents now see all character names in their theme during session start, enabling in-universe addressing during handoffs (e.g., "Naomi, the tests are yours" instead of "hand off to TEA")
+- **Sprint 3 Planning** - Epic 6 (Interactive Theme Wizard) added with Jira sync
+
+### Changed
+- **License** - Changed from MIT to All Rights Reserved (Copyright 2025 1898 & Co.)
+
+---
+
 ## [3.5.3] - 2025-12-28
 
 ### Fixed
@@ -294,7 +305,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v3.5.3...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v3.6.0...HEAD
+[3.6.0]: https://github.com/1898andCo/pennyfarthing/compare/v3.5.3...v3.6.0
 [3.5.3]: https://github.com/1898andCo/pennyfarthing/compare/v3.5.2...v3.5.3
 [3.5.2]: https://github.com/1898andCo/pennyfarthing/compare/v3.5.1...v3.5.2
 [3.5.1]: https://github.com/1898andCo/pennyfarthing/compare/v3.5.0...v3.5.1
