@@ -267,6 +267,7 @@ async function generateTemplateFiles(
   // Templates that should be skipped if they exist (user-customized)
   const skipIfExistsTemplates = [
     { template: 'persona-config.yaml.template', dest: '.claude/persona-config.yaml' },
+    { template: 'preferences.yaml.template', dest: '.claude/pennyfarthing/preferences.yaml' },
     { template: 'shared-context.md.template', dest: '.claude/project/docs/shared-context.md' },
     { template: 'agent-scopes.yaml.template', dest: '.claude/project/docs/agent-scopes.yaml' },
     { template: 'repos.yaml.template', dest: '.claude/project/repos.yaml' },

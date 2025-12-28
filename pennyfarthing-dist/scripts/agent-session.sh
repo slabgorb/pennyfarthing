@@ -15,6 +15,34 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 # Agents directory for multi-session support
 AGENTS_DIR="$PROJECT_ROOT/.session/agents"
 
+# Check if character_voice preference is enabled
+# Returns 0 (true) if enabled or not set, 1 (false) if explicitly disabled
+is_character_voice_enabled() {
+  local prefs_file=""
+
+  # Check for local prefs first, then default
+  if [ -f "$PROJECT_ROOT/.claude/pennyfarthing/preferences.local.yaml" ]; then
+    prefs_file="$PROJECT_ROOT/.claude/pennyfarthing/preferences.local.yaml"
+  elif [ -f "$PROJECT_ROOT/.claude/pennyfarthing/preferences.yaml" ]; then
+    prefs_file="$PROJECT_ROOT/.claude/pennyfarthing/preferences.yaml"
+  else
+    # No preferences file = default to enabled
+    return 0
+  fi
+
+  # Read character_voice setting (default to true if not set)
+  local voice=$(yq '.character_voice' "$prefs_file" 2>/dev/null)
+  # If null/empty, default to enabled
+  if [ -z "$voice" ] || [ "$voice" = "null" ]; then
+    return 0
+  fi
+  # If explicitly false, return disabled
+  if [ "$voice" = "false" ]; then
+    return 1
+  fi
+  return 0
+}
+
 # Get agent file path for a session
 get_agent_file() {
     local session_id="$1"
@@ -115,8 +143,10 @@ case "$1" in
     echo "$2" > "$PROJECT_ROOT/.session/current-agent"
     echo "Session: $session_id -> $2"
 
-    # Always output persona on start
-    output_persona "$2"
+    # Output persona on start (unless character_voice is disabled)
+    if is_character_voice_enabled; then
+      output_persona "$2"
+    fi
     ;;
   stop)
     # Use provided session ID, fall back to SESSION_ID env var
