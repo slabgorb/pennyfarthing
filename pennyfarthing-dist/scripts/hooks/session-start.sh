@@ -11,9 +11,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-# Read input from stdin (contains session_id, cwd, etc.)
+# Read input from stdin (contains session_id, source, cwd, etc.)
 input=$(cat)
 session_id=$(echo "$input" | jq -r '.session_id // "unknown"')
+source=$(echo "$input" | jq -r '.source // "unknown"')
 
 # Ensure .session directory exists
 mkdir -p "$CLAUDE_PROJECT_DIR/.session"
@@ -25,7 +26,7 @@ rm -f "$CLAUDE_PROJECT_DIR/.session/current-agent" 2>/dev/null || true
 find "$CLAUDE_PROJECT_DIR/.session/agents" -type f -delete 2>/dev/null || true
 
 # Create session log entry
-echo "$(date -Iseconds) | Session started: $session_id" >> "$CLAUDE_PROJECT_DIR/.session/session-log.txt"
+echo "$(date -Iseconds) | Session $source: $session_id" >> "$CLAUDE_PROJECT_DIR/.session/session-log.txt"
 
 # Write environment variables to CLAUDE_ENV_FILE (persists for session)
 if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
