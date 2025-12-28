@@ -171,8 +171,10 @@ epics:
           - src/cli/commands/init.ts to use templates instead of empty files
         points: 2
         priority: P2
-        status: backlog
+        status: in-progress
+        started: 2025-12-28
         repos: pennyfarthing
+        branch: feat/2-6-sidecar-templates
         acceptance_criteria:
           - Sidecar templates exist in pennyfarthing-dist/templates/sidecar/
           - Templates have section headers and placeholder prompts
