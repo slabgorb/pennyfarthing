@@ -205,4 +205,4 @@ Archived sprint data (`sprint/archive/`, `sprint/context/`) is always preserved.
 
 ## License
 
-MIT - 1898 & Co.
+Copyright 2025 1898 & Co. All rights reserved.
