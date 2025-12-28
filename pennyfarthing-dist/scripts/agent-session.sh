@@ -118,6 +118,18 @@ output_persona() {
   fi
 
   echo "</persona>"
+
+  # Output crew manifest so agents know other characters
+  echo ""
+  echo "<crew theme=\"${theme}\">"
+  echo "When handing off to other agents, address them by character name:"
+  for role in sm tea dev reviewer architect pm tech-writer ux-designer devops orchestrator; do
+    local char=$(yq ".agents.${role}.character // \"\"" "$theme_file" 2>/dev/null)
+    if [ -n "$char" ] && [ "$char" != "null" ] && [ "$char" != "" ]; then
+      printf "  %-12s %s\n" "${role}:" "$char"
+    fi
+  done
+  echo "</crew>"
 }
 
 case "$1" in
