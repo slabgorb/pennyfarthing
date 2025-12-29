@@ -283,8 +283,11 @@ epics:
           - Document how to add custom hooks
         points: 2
         priority: P2
-        status: in_progress
+        status: done
         started: 2025-12-29
+        completed: 2025-12-29
+        branch: feature/4-3-hooks-config
+        pr: https://github.com/1898andCo/pennyfarthing/pull/22
         jira: https://1898andco.atlassian.net/browse/MSSCI-11150
         repos: pennyfarthing
         acceptance_criteria:
@@ -534,9 +537,9 @@ epics:
 
 summary:
   total_points: 37
-  completed_points: 33
+  completed_points: 35
   in_progress_points: 0
-  backlog_points: 4
+  backlog_points: 2
   velocity_target: 20
   status: active
 
