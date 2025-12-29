@@ -8,8 +8,14 @@
 
 set -e
 
-# Determine PROJECT_ROOT first
-PROJECT_ROOT="${PROJECT_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+# Find project root by .claude/ marker if not already set
+if [ -z "$PROJECT_ROOT" ]; then
+    _dir="$PWD"
+    while [[ ! -d "$_dir/.claude" ]] && [[ "$_dir" != "/" ]]; do
+        _dir="$(dirname "$_dir")"
+    done
+    PROJECT_ROOT="$_dir"
+fi
 
 # Load environment
 if [ -f "$PROJECT_ROOT/.env" ]; then
