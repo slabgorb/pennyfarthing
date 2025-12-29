@@ -11,13 +11,16 @@ if ! echo "$input" | jq -e . >/dev/null 2>&1; then
 fi
 
 # Use CLAUDE_PROJECT_DIR (set by Claude Code for statusLine)
-# Fallback to script-based detection if not set
+# Fallback to .claude/ marker detection if not set
 if [ -n "$CLAUDE_PROJECT_DIR" ]; then
     PROJECT_ROOT="$CLAUDE_PROJECT_DIR"
 else
-    # Script is in pennyfarthing-dist/scripts/, go up TWO levels to project root
-    SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-    PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
+    # Find project root by looking for .claude/ marker
+    _dir="$PWD"
+    while [[ ! -d "$_dir/.claude" ]] && [[ "$_dir" != "/" ]]; do
+        _dir="$(dirname "$_dir")"
+    done
+    PROJECT_ROOT="$_dir"
 fi
 
 # Extract fields - use cwd for display only, PROJECT_ROOT for file lookups

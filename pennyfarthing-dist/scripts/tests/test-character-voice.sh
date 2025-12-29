@@ -9,8 +9,12 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
+# Find project root by .claude/ marker
+_dir="$PWD"
+while [[ ! -d "$_dir/.claude" ]] && [[ "$_dir" != "/" ]]; do
+    _dir="$(dirname "$_dir")"
+done
+PROJECT_ROOT="$_dir"
 
 # Colors
 RED='\033[0;31m'
