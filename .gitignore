@@ -33,3 +33,9 @@ npm-debug.log*
 cart/
 benchmarks/cart/
 go.mod
+
+
+# Pennyfarthing runtime
+.session/*
+!.session/.gitkeep
+.claude/settings.local.json
