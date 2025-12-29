@@ -651,7 +651,9 @@ sprint_3:
             4. Preview and confirm
           points: 3
           priority: P1
-          status: backlog
+          status: in_progress
+          started: 2025-12-29
+          branch: feat/6-3-guided-mode
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11199
           acceptance_criteria:
@@ -706,7 +708,7 @@ sprint_3:
                  Run '/theme-maker --update my-theme' to review.
           points: 2
           priority: P1
-          status: backlog
+          status: in_progress
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11201
           acceptance_criteria:
@@ -728,21 +730,21 @@ sprint_3:
           title: "Add context_budget configuration"
           points: 2
           priority: P1
-          status: backlog
+          status: in_progress
           carried_from: sprint-2
 
         - id: "4-3"
           title: "Create hooks configuration section"
           points: 2
           priority: P2
-          status: backlog
+          status: in_progress
           carried_from: sprint-2
 
         - id: "4-4"
           title: "Add agent-specific permission scopes"
           points: 2
           priority: P2
-          status: backlog
+          status: in_progress
           carried_from: sprint-2
 
   sprint_3_summary:
