@@ -8,11 +8,20 @@ import YAML from 'yaml';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+export interface ThemeAgentHelper {
+  name: string;
+  style: string;
+}
+
 export interface ThemeAgent {
   character: string;
   style?: string;
   role?: string;
   quote?: string;
+  trait?: string;
+  expertise?: string;
+  emoji?: string;
+  helper?: ThemeAgentHelper;
 }
 
 export interface ThemeInfo {
@@ -353,4 +362,83 @@ export function createTheme(
   writeFileSync(targetPath, header + yamlContent, 'utf8');
 
   return targetPath;
+}
+
+/**
+ * All 10 required agent types for a complete theme
+ */
+const REQUIRED_AGENTS = [
+  'orchestrator',
+  'sm',
+  'tea',
+  'dev',
+  'reviewer',
+  'architect',
+  'pm',
+  'tech-writer',
+  'ux-designer',
+  'devops'
+] as const;
+
+export interface ThemeSchemaValidationResult {
+  valid: boolean;
+  errors?: string[];
+}
+
+/**
+ * Validate a theme object has all required fields and agents
+ * Used to validate AI-generated themes before writing to file
+ */
+export function validateThemeSchema(themeData: unknown): ThemeSchemaValidationResult {
+  const errors: string[] = [];
+
+  // Check if themeData is an object
+  if (!themeData || typeof themeData !== 'object') {
+    return { valid: false, errors: ['Theme data must be an object'] };
+  }
+
+  const data = themeData as Record<string, unknown>;
+
+  // Check theme section
+  if (!data.theme || typeof data.theme !== 'object') {
+    errors.push('Missing theme section');
+  } else {
+    const theme = data.theme as Record<string, unknown>;
+    if (!theme.name) {
+      errors.push('Missing theme.name');
+    }
+  }
+
+  // Check agents section
+  if (!data.agents || typeof data.agents !== 'object') {
+    errors.push('Missing agents section');
+    return { valid: false, errors };
+  }
+
+  const agents = data.agents as Record<string, unknown>;
+
+  // Check all required agents are present with required fields
+  for (const agentType of REQUIRED_AGENTS) {
+    const agent = agents[agentType];
+    if (!agent || typeof agent !== 'object') {
+      errors.push(`Missing required agent: ${agentType}`);
+      continue;
+    }
+
+    const agentData = agent as Record<string, unknown>;
+
+    // Check required fields for each agent
+    if (!agentData.character) {
+      errors.push(`Agent ${agentType} missing required field: character`);
+    }
+    if (!agentData.style) {
+      errors.push(`Agent ${agentType} missing required field: style`);
+    }
+  }
+
+  if (errors.length > 0) {
+    return { valid: false, errors };
+  }
+
+  return { valid: true };
 }
