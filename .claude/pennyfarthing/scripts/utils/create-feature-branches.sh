@@ -11,14 +11,9 @@ elif [ -f ../.env ]; then
     set -a; source ../.env; set +a
 fi
 
-# Find project root by .claude/ marker if not already set
-if [ -z "$PROJECT_ROOT" ]; then
-    _dir="$PWD"
-    while [[ ! -d "$_dir/.claude" ]] && [[ "$_dir" != "/" ]]; do
-        _dir="$(dirname "$_dir")"
-    done
-    PROJECT_ROOT="$_dir"
-fi
+# Find project root
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/find-root.sh"
 
 show_help() {
     cat << EOF

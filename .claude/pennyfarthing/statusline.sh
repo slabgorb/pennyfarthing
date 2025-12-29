@@ -10,18 +10,10 @@ if ! echo "$input" | jq -e . >/dev/null 2>&1; then
     exit 0
 fi
 
-# Use CLAUDE_PROJECT_DIR (set by Claude Code for statusLine)
-# Fallback to .claude/ marker detection if not set
-if [ -n "$CLAUDE_PROJECT_DIR" ]; then
-    PROJECT_ROOT="$CLAUDE_PROJECT_DIR"
-else
-    # Find project root by looking for .claude/ marker
-    _dir="$PWD"
-    while [[ ! -d "$_dir/.claude" ]] && [[ "$_dir" != "/" ]]; do
-        _dir="$(dirname "$_dir")"
-    done
-    PROJECT_ROOT="$_dir"
-fi
+# Use CLAUDE_PROJECT_DIR if set, otherwise find via .claude/ marker
+PROJECT_ROOT="${CLAUDE_PROJECT_DIR:-}"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/utils/find-root.sh"
 
 # Extract fields - use cwd for display only, PROJECT_ROOT for file lookups
 cwd=$(echo "$input" | jq -r '.workspace.current_dir // empty' 2>/dev/null)

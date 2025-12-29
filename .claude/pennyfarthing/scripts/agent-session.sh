@@ -8,21 +8,9 @@
 #
 # Session files stored in .session/agents/<session-id> for multi-session support
 
-# Find project root by looking for .claude/ marker
-find_project_root() {
-    local dir="$PWD"
-    while [[ ! -d "$dir/.claude" ]] && [[ "$dir" != "/" ]]; do
-        dir="$(dirname "$dir")"
-    done
-    if [[ -d "$dir/.claude" ]]; then
-        echo "$dir"
-    else
-        echo "Error: Could not find project root (no .claude/ directory found)" >&2
-        exit 1
-    fi
-}
-
-PROJECT_ROOT="$(find_project_root)"
+# Find project root
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/utils/find-root.sh"
 
 # Agents directory for multi-session support
 AGENTS_DIR="$PROJECT_ROOT/.session/agents"
