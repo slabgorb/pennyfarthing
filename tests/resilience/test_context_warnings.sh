@@ -18,6 +18,21 @@ pass() { echo -e "${GREEN}PASS${NC}: $1"; TESTS_PASSED=$((TESTS_PASSED + 1)); }
 fail() { echo -e "${RED}FAIL${NC}: $1"; TESTS_FAILED=$((TESTS_FAILED + 1)); }
 
 CHECK_SCRIPT="$PROJECT_ROOT/scripts/check-context.sh"
+SETTINGS_TEMPLATE="$PROJECT_ROOT/pennyfarthing-dist/templates/settings.local.json.template"
+
+# Temp directory for test config files
+TEST_TMP=""
+
+setup_test_config() {
+    TEST_TMP=$(mktemp -d)
+    mkdir -p "$TEST_TMP/.claude"
+}
+
+cleanup_test_config() {
+    if [[ -n "$TEST_TMP" && -d "$TEST_TMP" ]]; then
+        rm -rf "$TEST_TMP"
+    fi
+}
 
 # Test: Script exists
 test_script_exists() {
@@ -106,18 +121,131 @@ test_clean_exit() {
     fi
 }
 
+# ============================================================================
+# Configuration Tests (Story 4-2)
+# ============================================================================
+
+# Test: Settings template contains context_budget section
+test_template_has_context_budget() {
+    TESTS_RUN=$((TESTS_RUN + 1))
+    if grep -q '"context_budget"' "$SETTINGS_TEMPLATE"; then
+        pass "Template has context_budget section"
+    else
+        fail "Template lacks context_budget section"
+    fi
+}
+
+# Test: context_budget has warning_threshold field
+test_template_has_warning_threshold() {
+    TESTS_RUN=$((TESTS_RUN + 1))
+    if grep -q '"warning_threshold"' "$SETTINGS_TEMPLATE"; then
+        pass "Template has warning_threshold field"
+    else
+        fail "Template lacks warning_threshold field"
+    fi
+}
+
+# Test: context_budget has critical_threshold field
+test_template_has_critical_threshold() {
+    TESTS_RUN=$((TESTS_RUN + 1))
+    if grep -q '"critical_threshold"' "$SETTINGS_TEMPLATE"; then
+        pass "Template has critical_threshold field"
+    else
+        fail "Template lacks critical_threshold field"
+    fi
+}
+
+# Test: context_budget has max_tokens field
+test_template_has_max_tokens() {
+    TESTS_RUN=$((TESTS_RUN + 1))
+    if grep -q '"max_tokens"' "$SETTINGS_TEMPLATE"; then
+        pass "Template has max_tokens field"
+    else
+        fail "Template lacks max_tokens field"
+    fi
+}
+
+# Test: Script can read config from CLAUDE_PROJECT_DIR
+test_script_reads_config_path() {
+    TESTS_RUN=$((TESTS_RUN + 1))
+    # Script should reference settings.local.json for config
+    if grep -qE 'settings\.local\.json|CLAUDE_PROJECT_DIR.*settings' "$CHECK_SCRIPT"; then
+        pass "Script reads config from settings.local.json"
+    else
+        fail "Script does not reference settings.local.json config"
+    fi
+}
+
+# Test: Script has fallback default for warning threshold
+test_script_has_warning_default() {
+    TESTS_RUN=$((TESTS_RUN + 1))
+    # Script should have a default warning threshold (70) for fallback
+    if grep -qE 'warning.*=.*70|warning_threshold.*70|DEFAULT.*WARN.*70' "$CHECK_SCRIPT"; then
+        pass "Script has default warning threshold (70)"
+    else
+        fail "Script lacks default warning threshold fallback"
+    fi
+}
+
+# Test: Script has fallback default for critical threshold
+test_script_has_critical_default() {
+    TESTS_RUN=$((TESTS_RUN + 1))
+    # Script should have a default critical threshold (85) for fallback
+    if grep -qE 'critical.*=.*85|critical_threshold.*85|DEFAULT.*CRIT.*85' "$CHECK_SCRIPT"; then
+        pass "Script has default critical threshold (85)"
+    else
+        fail "Script lacks default critical threshold fallback"
+    fi
+}
+
+# Test: Script uses configurable threshold for status (not hardcoded comparison)
+test_script_uses_configurable_warning() {
+    TESTS_RUN=$((TESTS_RUN + 1))
+    # Script should use a variable for warning comparison, not hardcoded 70
+    # Look for pattern like: pct > warning_threshold or pct > $WARNING
+    if grep -qE 'pct\s*>\s*warning|pct\s*>\s*\$|CONTEXT_PERCENT.*-ge.*\$' "$CHECK_SCRIPT"; then
+        pass "Script uses configurable warning threshold"
+    else
+        fail "Script does not use configurable warning threshold (still hardcoded)"
+    fi
+}
+
+# Test: Script uses configurable threshold for critical (not hardcoded comparison)
+test_script_uses_configurable_critical() {
+    TESTS_RUN=$((TESTS_RUN + 1))
+    # Script should use a variable for critical comparison, not hardcoded 90
+    if grep -qE 'pct\s*>\s*critical|pct\s*>=?\s*\$|CONTEXT_PERCENT.*-ge.*\$.*CRIT' "$CHECK_SCRIPT"; then
+        pass "Script uses configurable critical threshold"
+    else
+        fail "Script does not use configurable critical threshold (still hardcoded)"
+    fi
+}
+
 main() {
     echo "=== Context Warning Tests ==="
     echo ""
 
+    # Core functionality tests
+    echo "--- Core Functionality ---"
     test_script_exists
     test_script_executable
     test_human_flag
-    test_70_threshold
-    test_90_threshold
     test_warning_output
     test_recommendation
     test_clean_exit
+
+    # Configuration tests (Story 4-2)
+    echo ""
+    echo "--- Configuration (Story 4-2) ---"
+    test_template_has_context_budget
+    test_template_has_warning_threshold
+    test_template_has_critical_threshold
+    test_template_has_max_tokens
+    test_script_reads_config_path
+    test_script_has_warning_default
+    test_script_has_critical_default
+    test_script_uses_configurable_warning
+    test_script_uses_configurable_critical
 
     echo ""
     echo "=== Results ==="

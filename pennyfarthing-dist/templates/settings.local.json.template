@@ -17,6 +17,11 @@
       "Skill(reviewer)"
     ]
   },
+  "context_budget": {
+    "warning_threshold": 70,
+    "critical_threshold": 85,
+    "max_tokens": 200000
+  },
   "hooks": {
     "SessionStart": [
       {
