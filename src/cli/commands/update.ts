@@ -379,12 +379,36 @@ function collectFileHashes(
 }
 
 /**
+ * Map managed directory to correct project customization location
+ */
+function getMisplacedFileAdvice(relativePath: string): string | null {
+  // Map managed locations to project customization locations
+  const mappings: Array<{ managed: string; project: string; description: string }> = [
+    { managed: '.claude/pennyfarthing/agents/', project: '.claude/project/agents/', description: 'agent sidecars' },
+    { managed: '.claude/pennyfarthing/commands/', project: '.claude/project/commands/', description: 'custom commands' },
+    { managed: '.claude/pennyfarthing/skills/', project: '.claude/project/skills/', description: 'project skills' },
+    { managed: '.claude/pennyfarthing/guides/', project: '.claude/project/guides/', description: 'custom guides' },
+    { managed: '.claude/pennyfarthing/personas/', project: '.claude/project/personas/', description: 'persona overrides' },
+    { managed: '.claude/pennyfarthing/scripts/', project: '.claude/project/scripts/', description: 'custom scripts' }
+  ];
+
+  for (const { managed, project, description } of mappings) {
+    if (relativePath.startsWith(managed)) {
+      const filename = relativePath.replace(managed, '');
+      return `Move ${description} to: ${project}${filename}`;
+    }
+  }
+
+  return null;
+}
+
+/**
  * Clean up stale files that exist locally but not in source.
  *
  * Logic:
  * - If file is in manifest with matching hash: DELETE (stale managed file)
- * - If file is in manifest with different hash: PRESERVE (user modified)
- * - If file is NOT in manifest: PRESERVE (user custom file)
+ * - If file is in manifest with different hash: PRESERVE + WARN (user modified managed file)
+ * - If file is NOT in manifest: PRESERVE + WARN (custom file in wrong location)
  */
 async function cleanupStaleFiles(
   projectRoot: string,
@@ -397,6 +421,7 @@ async function cleanupStaleFiles(
 
   let deletedCount = 0;
   let preservedCount = 0;
+  const misplacedFiles: Array<{ path: string; advice: string }> = [];
 
   for (const { src, dest } of managedCopies) {
     const srcPath = join(assetsPath, src);
@@ -424,7 +449,12 @@ async function cleanupStaleFiles(
       const manifestHash = manifest.fileHashes[relativePath];
 
       if (!manifestHash) {
-        // File not in manifest = user custom file, preserve it
+        // File not in manifest = user custom file in managed location
+        // Preserve it but collect for warning
+        const advice = getMisplacedFileAdvice(relativePath);
+        if (advice) {
+          misplacedFiles.push({ path: relativePath, advice });
+        }
         logger.skipped(relativePath, 'custom file');
         preservedCount++;
         continue;
@@ -434,7 +464,11 @@ async function cleanupStaleFiles(
       const currentHash = hashFile(fullPath);
 
       if (currentHash !== manifestHash) {
-        // User modified this file, preserve it
+        // User modified a managed file - preserve but warn
+        const advice = getMisplacedFileAdvice(relativePath);
+        if (advice) {
+          misplacedFiles.push({ path: relativePath, advice: `Modified managed file. ${advice}` });
+        }
         logger.skipped(relativePath, 'user modified');
         preservedCount++;
         continue;
@@ -457,6 +491,21 @@ async function cleanupStaleFiles(
   }
   if (deletedCount === 0 && preservedCount === 0) {
     logger.info('No stale files found');
+  }
+
+  // Warn about misplaced files
+  if (misplacedFiles.length > 0) {
+    logger.newline();
+    logger.warning('⚠️  Custom files found in managed directories');
+    logger.info('These files may be overwritten by future updates.');
+    logger.info('Consider moving them to the project customization folder:');
+    logger.newline();
+    for (const { path, advice } of misplacedFiles) {
+      logger.info(`  ${path}`);
+      logger.info(`    → ${advice}`);
+    }
+    logger.newline();
+    logger.info('Run `pennyfarthing doctor` for more details.');
   }
 }
 
