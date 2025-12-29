@@ -13,6 +13,44 @@
 PROJECT_DIR="${PROJECT_ROOT:-$(pwd)}"
 CLAUDE_PROJECT_PATH="$HOME/.claude/projects/$(echo "$PROJECT_DIR" | tr '/' '-')"
 
+# Default thresholds (can be overridden by settings.local.json)
+DEFAULT_WARNING_THRESHOLD=70
+DEFAULT_CRITICAL_THRESHOLD=85
+DEFAULT_MAX_TOKENS=200000
+
+# Load thresholds from settings.local.json if available
+SETTINGS_FILE="${CLAUDE_PROJECT_DIR:-$PROJECT_DIR}/.claude/settings.local.json"
+CONFIG=$(python3 -c "
+import json
+import sys
+
+warning_threshold = $DEFAULT_WARNING_THRESHOLD
+critical_threshold = $DEFAULT_CRITICAL_THRESHOLD
+max_tokens = $DEFAULT_MAX_TOKENS
+
+try:
+    with open('$SETTINGS_FILE', 'r') as f:
+        settings = json.load(f)
+        if 'context_budget' in settings:
+            cb = settings['context_budget']
+            warning_threshold = cb.get('warning_threshold', warning_threshold)
+            critical_threshold = cb.get('critical_threshold', critical_threshold)
+            max_tokens = cb.get('max_tokens', max_tokens)
+except:
+    pass
+
+print(f'WARNING_THRESHOLD={warning_threshold}')
+print(f'CRITICAL_THRESHOLD={critical_threshold}')
+print(f'MAX_TOKENS={max_tokens}')
+" 2>/dev/null)
+
+# Apply config or use defaults
+eval "$CONFIG" 2>/dev/null || {
+    WARNING_THRESHOLD=$DEFAULT_WARNING_THRESHOLD
+    CRITICAL_THRESHOLD=$DEFAULT_CRITICAL_THRESHOLD
+    MAX_TOKENS=$DEFAULT_MAX_TOKENS
+}
+
 # Find most recent transcript (current session)
 TRANSCRIPT=$(ls -t "$CLAUDE_PROJECT_PATH"/*.jsonl 2>/dev/null | grep -v "agent-" | head -1)
 
@@ -30,6 +68,9 @@ RESULT=$(python3 -c "
 import sys
 import json
 
+warning_threshold = $WARNING_THRESHOLD
+max_tokens = $MAX_TOKENS
+
 with open('$TRANSCRIPT', 'r') as f:
     lines = f.readlines()
 
@@ -44,12 +85,12 @@ for line in reversed(lines):
             cache_create = usage.get('cache_creation_input_tokens', 0)
 
             total = cache_read + cache_create + input_t
-            pct = (total / 200000) * 100
+            pct = (total / max_tokens) * 100
 
             print(f'CONTEXT_TOKENS={total}')
             print(f'CONTEXT_PERCENT={pct:.0f}')
-            # Leave 30% buffer: 70% threshold + 25% buffer before auto-compact (95%)
-            if pct > 70:
+            # Use configurable warning threshold
+            if pct > warning_threshold:
                 print('CONTEXT_STATUS=HIGH')
                 print('HANDOFF_MODE=auto')
             else:
@@ -68,11 +109,11 @@ if [ "$1" = "--human" ]; then
         echo "✅ Context: ${CONTEXT_PERCENT}% (${CONTEXT_TOKENS} tokens) - OK to continue"
     fi
 
-    # Output warning messages at thresholds
+    # Output warning messages at configurable thresholds
     if [ -n "$CONTEXT_PERCENT" ]; then
-        if [ "$CONTEXT_PERCENT" -ge 90 ] 2>/dev/null; then
+        if [ "$CONTEXT_PERCENT" -ge "$CRITICAL_THRESHOLD" ] 2>/dev/null; then
             echo "CONTEXT_WARNING: Critical (${CONTEXT_PERCENT}%) - checkpoint and handoff recommended"
-        elif [ "$CONTEXT_PERCENT" -ge 70 ] 2>/dev/null; then
+        elif [ "$CONTEXT_PERCENT" -ge "$WARNING_THRESHOLD" ] 2>/dev/null; then
             echo "CONTEXT_WARNING: High (${CONTEXT_PERCENT}%) - consider handoff soon"
         fi
     fi
@@ -82,10 +123,10 @@ else
     # Also output warnings in non-human mode for scripting
     eval "$RESULT" 2>/dev/null || true
     if [ -n "$CONTEXT_PERCENT" ]; then
-        if [ "$CONTEXT_PERCENT" -ge 90 ] 2>/dev/null; then
+        if [ "$CONTEXT_PERCENT" -ge "$CRITICAL_THRESHOLD" ] 2>/dev/null; then
             echo "CONTEXT_WARNING=Critical"
             echo "CONTEXT_RECOMMENDATION=checkpoint and handoff recommended"
-        elif [ "$CONTEXT_PERCENT" -ge 70 ] 2>/dev/null; then
+        elif [ "$CONTEXT_PERCENT" -ge "$WARNING_THRESHOLD" ] 2>/dev/null; then
             echo "CONTEXT_WARNING=High"
             echo "CONTEXT_RECOMMENDATION=consider handoff soon"
         fi
