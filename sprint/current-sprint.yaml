@@ -345,6 +345,35 @@ epics:
           - Hook in settings.local.json points to correct path
           - Works for fresh installs and upgrades
 
+      - id: "4-6"
+        title: "Isolate Pennyfarthing scripts from project /scripts directory"
+        description: |
+          Currently Pennyfarthing symlinks scripts to project root /scripts/, which
+          squats on a directory name that end users should own for their own scripts.
+
+          Problem:
+          - /scripts/ at project root contains Pennyfarthing symlinks
+          - End users forced to create workarounds (project-scripts/, etc.)
+          - Hooks reference $CLAUDE_PROJECT_DIR/scripts/ paths
+
+          Solution:
+          - Move all script references to .claude/pennyfarthing/scripts/
+          - Update hooks in settings.local.json template to use namespaced path
+          - Remove /scripts symlinks during pennyfarthing update
+          - Free /scripts/ for end-user project scripts
+
+          Note: Commands/skills already properly namespaced under .claude/
+        points: 3
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Hooks reference .claude/pennyfarthing/scripts/ instead of /scripts/
+          - Settings template uses namespaced script paths
+          - pennyfarthing update removes legacy /scripts symlinks
+          - End users can use /scripts/ for their own project scripts
+          - Existing functionality preserved (agent-session, check-context, etc.)
+
   - id: epic-5
     title: "Theme Management CLI"
     description: |
@@ -499,10 +528,10 @@ epics:
           - Includes style and quote for each agent
 
 summary:
-  total_points: 34
+  total_points: 37
   completed_points: 30
   in_progress_points: 0
-  backlog_points: 4
+  backlog_points: 7
   velocity_target: 20
   status: active
 
