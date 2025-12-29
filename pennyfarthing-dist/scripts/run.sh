@@ -36,18 +36,20 @@ fi
 SCRIPT_NAME="$1"
 shift
 
-# Handle different script locations
-if [[ -f "$PROJECT_ROOT/scripts/$SCRIPT_NAME" ]]; then
-    exec "$PROJECT_ROOT/scripts/$SCRIPT_NAME" "$@"
-elif [[ -f "$PROJECT_ROOT/scripts/utils/$SCRIPT_NAME" ]]; then
-    exec "$PROJECT_ROOT/scripts/utils/$SCRIPT_NAME" "$@"
-elif [[ -f "$PROJECT_ROOT/scripts/hooks/$SCRIPT_NAME" ]]; then
-    exec "$PROJECT_ROOT/scripts/hooks/$SCRIPT_NAME" "$@"
+# Handle different script locations (namespaced under .claude/pennyfarthing/scripts/)
+SCRIPTS_DIR="$PROJECT_ROOT/.claude/pennyfarthing/scripts"
+
+if [[ -f "$SCRIPTS_DIR/$SCRIPT_NAME" ]]; then
+    exec "$SCRIPTS_DIR/$SCRIPT_NAME" "$@"
+elif [[ -f "$SCRIPTS_DIR/utils/$SCRIPT_NAME" ]]; then
+    exec "$SCRIPTS_DIR/utils/$SCRIPT_NAME" "$@"
+elif [[ -f "$SCRIPTS_DIR/hooks/$SCRIPT_NAME" ]]; then
+    exec "$SCRIPTS_DIR/hooks/$SCRIPT_NAME" "$@"
 else
     echo "Error: Script not found: $SCRIPT_NAME" >&2
     echo "Looked in:" >&2
-    echo "  $PROJECT_ROOT/scripts/$SCRIPT_NAME" >&2
-    echo "  $PROJECT_ROOT/scripts/utils/$SCRIPT_NAME" >&2
-    echo "  $PROJECT_ROOT/scripts/hooks/$SCRIPT_NAME" >&2
+    echo "  $SCRIPTS_DIR/$SCRIPT_NAME" >&2
+    echo "  $SCRIPTS_DIR/utils/$SCRIPT_NAME" >&2
+    echo "  $SCRIPTS_DIR/hooks/$SCRIPT_NAME" >&2
     exit 1
 fi

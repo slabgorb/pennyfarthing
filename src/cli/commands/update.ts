@@ -193,6 +193,36 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
     }
   }
 
+  // Clean up legacy scripts symlink at project root
+  // Scripts are now accessed via .claude/pennyfarthing/scripts/ directly
+  const legacyScriptsSymlink = join(projectRoot, 'scripts');
+  if (isSymlink(legacyScriptsSymlink)) {
+    // Only remove if it points to our managed location
+    try {
+      const target = readFileSync(legacyScriptsSymlink).toString();
+      if (target.includes('.claude/pennyfarthing/scripts') || target.includes('pennyfarthing-dist/scripts')) {
+        if (!dryRun) {
+          unlinkSync(legacyScriptsSymlink);
+        }
+        logger.info('Removed legacy scripts symlink (scripts now at .claude/pennyfarthing/scripts/)');
+      }
+    } catch {
+      // If we can't read the target, check if it's a Pennyfarthing symlink by resolving it
+      const fs = await import('fs');
+      try {
+        const resolved = fs.realpathSync(legacyScriptsSymlink);
+        if (resolved.includes('.claude/pennyfarthing/scripts') || resolved.includes('pennyfarthing-dist/scripts')) {
+          if (!dryRun) {
+            unlinkSync(legacyScriptsSymlink);
+          }
+          logger.info('Removed legacy scripts symlink (scripts now at .claude/pennyfarthing/scripts/)');
+        }
+      } catch {
+        // Symlink might be broken, leave it for user to handle
+      }
+    }
+  }
+
   // Ensure symlinks exist for Claude Code to find commands
   // These point from .claude/ into .claude/pennyfarthing/
   logger.newline();

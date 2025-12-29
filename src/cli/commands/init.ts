@@ -160,9 +160,8 @@ export async function initCommand(
     { target: 'pennyfarthing/agents', link: '.claude/agents' },
     { target: 'pennyfarthing/guides', link: '.claude/guides' },
     { target: 'pennyfarthing/skills', link: '.claude/skills' },
-    { target: 'pennyfarthing/personas', link: '.claude/personas' },
-    // scripts symlink at project root for agent activation
-    { target: '.claude/pennyfarthing/scripts', link: 'scripts' }
+    { target: 'pennyfarthing/personas', link: '.claude/personas' }
+    // Note: scripts are accessed via .claude/pennyfarthing/scripts/ directly (no project root symlink)
   ];
 
   for (const { target, link } of symlinks) {
