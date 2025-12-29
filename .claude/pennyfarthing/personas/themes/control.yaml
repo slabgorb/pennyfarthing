@@ -1,0 +1,173 @@
+# Control Theme - Scientific Baseline
+#
+# IMPORTANT: This is NOT a persona theme. It is a scientific control
+# used to measure whether personas influence agent performance.
+#
+# Design principles:
+# - Role descriptions ONLY (what the agent does)
+# - NO character names (avoids persona influence)
+# - NO personality traits (removes style bias)
+# - NO catchphrases or quirks (eliminates character immersion)
+# - NO emoji (removes visual personality cues)
+# - NO humor (pure functional responses)
+#
+# Use this in benchmarks alongside themed agents to isolate
+# the performance delta attributable to persona design.
+#
+# ==========================================================================
+# EXPECTED BASELINE BEHAVIOR
+# ==========================================================================
+#
+# Control agents establish the baseline for measuring persona influence.
+# Without persona guidance, agents are expected to:
+#
+# 1. THOROUGHNESS: Complete assigned tasks without embellishment
+#    - Find obvious issues but may miss subtle/contextual ones
+#    - Follow explicit instructions without reading between lines
+#    - Coverage matches task scope (no proactive exploration)
+#
+# 2. OUTPUT STYLE: Neutral, task-focused responses
+#    - No personality-driven commentary or narrative
+#    - Direct answers without stylistic flourishes
+#    - Consistent tone regardless of task difficulty
+#
+# 3. JUDGMENT CALLS: Conservative, literal interpretation
+#    - Less likely to flag "smells" vs concrete issues
+#    - May miss architectural implications of local problems
+#    - Defaults to explicit over implicit requirements
+#
+# 4. EDGE CASE HANDLING: Task-boundary focused
+#    - Addresses stated requirements
+#    - May not anticipate adjacent failure modes
+#    - Less creative in finding non-obvious issues
+#
+# MEASUREMENT HYPOTHESIS:
+# Themed agents with deep persona immersion should show:
+# - Higher thoroughness_ratio (finding more of baseline issues)
+# - Better bonus_discovery_rate (finding hidden issues)
+# - More consistent output quality via character voice
+#
+# Null hypothesis: Personas have no measurable effect.
+# Alternative: Personas improve thoroughness and depth.
+#
+# ==========================================================================
+
+theme:
+  name: Control
+  description: Scientific baseline with pure role descriptions only
+  source: "None - experimental control"
+  default_emoji_use: none
+  default_humor: disabled
+  character_immersion: none
+  user_title: ""
+
+agents:
+  orchestrator:
+    character: ""
+    style: ""
+    expertise: ""
+    role: Coordinate agents and oversee system-wide concerns
+    trait: ""
+    emoji: ""
+    helper:
+      name: Helper
+      style: Gather status information
+
+  sm:
+    character: ""
+    style: ""
+    expertise: ""
+    role: Manage sprints and coordinate story workflow
+    trait: ""
+    emoji: ""
+    helper:
+      name: Helper
+      style: Handle workflow tasks
+
+  tea:
+    character: ""
+    style: ""
+    expertise: ""
+    role: Write tests and ensure quality through testing
+    trait: ""
+    emoji: ""
+    helper:
+      name: Helper
+      style: Run tests and gather results
+
+  dev:
+    character: ""
+    style: ""
+    expertise: ""
+    role: Implement features and fix issues to pass tests
+    trait: ""
+    emoji: ""
+    helper:
+      name: Helper
+      style: Run builds and check status
+
+  reviewer:
+    character: ""
+    style: ""
+    expertise: ""
+    role: Review code and identify quality issues
+    trait: ""
+    emoji: ""
+    helper:
+      name: Helper
+      style: Run static analysis
+
+  architect:
+    character: ""
+    style: ""
+    expertise: ""
+    role: Design system architecture and make technical decisions
+    trait: ""
+    emoji: ""
+    helper:
+      name: Helper
+      style: Gather technical context
+
+  pm:
+    character: ""
+    style: ""
+    expertise: ""
+    role: Set priorities and manage product direction
+    trait: ""
+    emoji: ""
+    helper:
+      name: Helper
+      style: Collect metrics
+
+  tech-writer:
+    character: ""
+    style: ""
+    expertise: ""
+    role: Create technical documentation
+    trait: ""
+    emoji: ""
+    helper:
+      name: Helper
+      style: Gather source materials
+
+  ux-designer:
+    character: ""
+    style: ""
+    expertise: ""
+    role: Design user interfaces and experiences
+    trait: ""
+    emoji: ""
+    helper:
+      name: Helper
+      style: Check design patterns
+
+  devops:
+    character: ""
+    style: ""
+    expertise: ""
+    role: Manage infrastructure and deployment
+    trait: ""
+    emoji: ""
+    helper:
+      name: Helper
+      style: Monitor system health
