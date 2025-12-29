@@ -236,3 +236,109 @@ agents:
 ```
 
 Use `validateThemeSchema()` from `src/cli/utils/themes.ts` to verify the generated theme is valid before writing.
+
+---
+
+## Guided Mode
+
+When the user selects Guided mode, walk through each agent and suggest 3-4 character options for them to pick.
+
+### Step 1: Get Universe Description
+
+Same as AI-Driven mode - ask for the theme concept:
+
+> "Describe your theme universe or concept."
+
+### Step 2: Generate Options for Each Agent
+
+For each agent type, generate 3-4 fitting character suggestions based on the universe. Present options using `AskUserQuestion`:
+
+```yaml
+questions:
+  - question: "Who should be your SM (Scrum Master - team leader)?"
+    header: "SM"
+    options:
+      - label: "{Character 1}"
+        description: "{Brief description fitting the universe}"
+      - label: "{Character 2}"
+        description: "{Brief description}"
+      - label: "{Character 3}"
+        description: "{Brief description}"
+      - label: "Other"
+        description: "Enter a custom character name"
+    multiSelect: false
+```
+
+If user selects "Other", prompt for custom character name as free text.
+
+**Agent Order:**
+1. orchestrator
+2. sm
+3. tea
+4. dev
+5. reviewer
+6. architect
+7. pm
+8. tech-writer
+9. ux-designer
+10. devops
+
+### Step 3: Generate Details for Selections
+
+After the user picks a character for each agent, generate the remaining fields:
+- `style`: Communication style fitting the character
+- `trait`: Key personality traits
+- `quote`: Signature quote
+- `emoji`: Representative emoji
+- `helper`: Assistant name and style
+
+The AI fills in these details based on the selected character and universe context.
+
+### Step 4: Preview Theme
+
+Show a preview of the complete theme before confirming:
+
+```
+### Theme Preview: {name}
+
+**Universe:** {concept}
+
+| Agent | Character | Style |
+|-------|-----------|-------|
+| orchestrator | {selected} | {generated style} |
+| sm | {selected} | {generated style} |
+| tea | {selected} | {generated style} |
+| dev | {selected} | {generated style} |
+| reviewer | {selected} | {generated style} |
+| architect | {selected} | {generated style} |
+| pm | {selected} | {generated style} |
+| tech-writer | {selected} | {generated style} |
+| ux-designer | {selected} | {generated style} |
+| devops | {selected} | {generated style} |
+```
+
+### Step 5: Confirm or Edit
+
+Use `AskUserQuestion` to let the user decide:
+
+```yaml
+questions:
+  - question: "How does this theme look?"
+    header: "Confirm"
+    options:
+      - label: "Looks great, save it!"
+        description: "Write the theme file"
+      - label: "Go back and change selections"
+        description: "Edit previous character choices"
+      - label: "Start over"
+        description: "Return to universe description"
+    multiSelect: false
+```
+
+If **Go back**: Allow editing previous selections by showing the agent list and letting user pick which to change.
+
+If **Confirm**: Write the complete theme file using the same format as AI-Driven mode.
+
+### Navigation
+
+Users can go back to change previous selections at any point during the agent selection process. Track selections and allow revisiting any agent before final confirmation.
