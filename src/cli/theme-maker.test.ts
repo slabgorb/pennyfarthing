@@ -256,8 +256,26 @@ describe('Theme Schema Validation (Story 6-2)', () => {
     'devops'
   ];
 
+  // Theme type for testing - allows optional fields and deletions
+  interface TestTheme {
+    theme: {
+      name?: string;
+      description?: string;
+      source?: string;
+      default_emoji_use?: string;
+    };
+    agents: Record<string, {
+      character?: string;
+      style?: string;
+      role?: string;
+      quote?: string;
+      emoji?: string;
+      helper?: { name: string; style: string };
+    }>;
+  }
+
   // Minimal valid theme for testing
-  const createValidTheme = () => ({
+  const createValidTheme = (): TestTheme => ({
     theme: {
       name: 'Test Theme',
       description: 'A test theme'
@@ -342,7 +360,7 @@ describe('Theme Schema Validation (Story 6-2)', () => {
       delete theme.agents.dev;
       const result = validateThemeSchema(theme);
       assert.strictEqual(result.valid, false);
-      assert.ok(result.errors?.length >= 3, 'Should have at least 3 errors');
+      assert.ok(result.errors && result.errors.length >= 3, 'Should have at least 3 errors');
     });
   });
 
