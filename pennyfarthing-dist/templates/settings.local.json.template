@@ -40,6 +40,19 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": {
+          "tool_name": "Edit|Write"
+        },
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/pennyfarthing/scripts/hooks/pre-edit-check.sh"
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
