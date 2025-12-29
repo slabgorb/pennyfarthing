@@ -580,8 +580,9 @@ sprint_3:
             5. Write complete theme file
           points: 3
           priority: P1
-          status: in-progress
+          status: done
           started: 2025-12-29
+          completed: 2025-12-29
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11198
           acceptance_criteria:
