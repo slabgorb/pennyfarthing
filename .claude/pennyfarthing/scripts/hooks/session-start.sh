@@ -7,9 +7,9 @@
 
 set -euo pipefail
 
-# Determine project root
+# Find project root
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+source "$SCRIPT_DIR/../utils/find-root.sh"
 
 # Read input from stdin (contains session_id, source, cwd, etc.)
 input=$(cat)
