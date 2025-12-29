@@ -70,4 +70,48 @@ d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$
 
 ---
 
+## Pattern: Reserve Capacity for Emergent Work
+
+**Problem:** Mid-sprint bug discoveries (like Story 4-5) compete with planned work.
+
+**Solution:** Plan at 80-85% of velocity target to leave room for:
+- Bug fixes discovered during development
+- Process improvements identified during work
+- Urgent customer requests
+
+**Example:** Sprint 2 had 34 points planned against 20pt velocity. Story 4-5 (statusline bug) was added mid-sprint but handled smoothly due to strong velocity.
+
+---
+
+## Pattern: Agent Behavior Drift Detection
+
+**Problem:** Agent behavior degrades over time. Reviewer started rubber-stamping code instead of being adversarial.
+
+**Solution:**
+1. Monitor agent outputs for drift signals
+2. Reinforce critical behaviors explicitly (not just instructionally)
+3. Add behavior tests when possible
+
+**Signals of drift:**
+- Reviewer approving without substantive comments
+- SM skipping handoff protocols
+- Dev not running tests before declaring GREEN
+
+**Fix:** Make the behavior explicit in agent files, not assumed.
+
+---
+
+## Pattern: Release Bundling
+
+**Problem:** Sprint 2 had 8+ version bumps in 4 days. Each small fix triggered a release.
+
+**Solution:**
+- Batch related fixes into single releases
+- Only release when story is fully complete
+- Consider release candidate process for larger changes
+
+**Exception:** Security fixes should release immediately.
+
+---
+
 *Add process patterns discovered during orchestration below*
