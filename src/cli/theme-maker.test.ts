@@ -3,6 +3,7 @@
  *
  * Story 6-1: Command skeleton - basic structure and validation
  * Story 6-2: AI-Driven mode - universe input, agent generation, preview
+ * Story 6-3: Guided mode - character options per agent, user picks
  *
  * Run with: npm test
  */
@@ -379,5 +380,154 @@ describe('Theme Schema Validation (Story 6-2)', () => {
       const result = validateThemeSchema(theme);
       assert.strictEqual(result.valid, true);
     });
+  });
+});
+
+// ============================================================================
+// Story 6-3: Guided Mode Tests
+// ============================================================================
+
+describe('Guided Mode - Command File (Story 6-3)', () => {
+  const commandPath = join(distDir, 'commands', 'theme-maker.md');
+
+  /**
+   * Helper to extract just the Guided Mode section from the command file.
+   * Returns empty string if section doesn't exist.
+   */
+  function getGuidedModeSection(): string {
+    const content = readFileSync(commandPath, 'utf-8');
+    // Split on ## Guided Mode header and take everything until next ## header
+    const match = content.match(/##\s*Guided Mode[\s\S]*?(?=\n##\s|$)/i);
+    return match ? match[0] : '';
+  }
+
+  it('should have Guided mode implementation section', () => {
+    const content = readFileSync(commandPath, 'utf-8');
+    // Look for a dedicated section header for Guided mode
+    assert.ok(
+      content.includes('## Guided Mode') ||
+        content.includes('### Guided Mode'),
+      'Should have dedicated Guided Mode section'
+    );
+  });
+
+  it('should present 3-4 character options per agent in Guided section', () => {
+    const guidedSection = getGuidedModeSection();
+    assert.ok(
+      guidedSection.length > 0,
+      'Guided Mode section must exist'
+    );
+    // Must mention presenting multiple options (3-4) for character selection
+    assert.ok(
+      guidedSection.includes('3-4') ||
+        guidedSection.includes('3 to 4') ||
+        guidedSection.toLowerCase().includes('three to four') ||
+        (guidedSection.toLowerCase().includes('suggest') && guidedSection.toLowerCase().includes('option')),
+      'Guided Mode should mention presenting 3-4 character options'
+    );
+  });
+
+  it('should offer "Other" option for custom character names in Guided section', () => {
+    const guidedSection = getGuidedModeSection();
+    assert.ok(
+      guidedSection.length > 0,
+      'Guided Mode section must exist'
+    );
+    // Must mention "Other" option for custom input within Guided section
+    assert.ok(
+      guidedSection.includes('"Other"') ||
+        guidedSection.includes('Other option') ||
+        guidedSection.toLowerCase().includes('custom character'),
+      'Guided Mode should mention "Other" option for custom character names'
+    );
+  });
+
+  it('should generate style/trait/quote for selections in Guided section', () => {
+    const guidedSection = getGuidedModeSection();
+    assert.ok(
+      guidedSection.length > 0,
+      'Guided Mode section must exist'
+    );
+    const lowerSection = guidedSection.toLowerCase();
+    // Must mention generating/filling style, trait, or quote for selected characters
+    assert.ok(
+      lowerSection.includes('generate') ||
+        lowerSection.includes('fills in') ||
+        lowerSection.includes('fill in') ||
+        (lowerSection.includes('style') && lowerSection.includes('trait')),
+      'Guided Mode should mention generating style/trait/quote for selections'
+    );
+  });
+
+  it('should allow going back to change previous selections in Guided section', () => {
+    const guidedSection = getGuidedModeSection();
+    assert.ok(
+      guidedSection.length > 0,
+      'Guided Mode section must exist'
+    );
+    const lowerSection = guidedSection.toLowerCase();
+    // Must mention ability to go back or change previous selections
+    assert.ok(
+      lowerSection.includes('go back') ||
+        lowerSection.includes('previous') ||
+        lowerSection.includes('change selection') ||
+        lowerSection.includes('edit selection') ||
+        lowerSection.includes('redo'),
+      'Guided Mode should mention ability to go back and change previous selections'
+    );
+  });
+
+  it('should use AskUserQuestion for character selection in Guided section', () => {
+    const guidedSection = getGuidedModeSection();
+    assert.ok(
+      guidedSection.length > 0,
+      'Guided Mode section must exist'
+    );
+    // Guided mode should use AskUserQuestion for user interaction
+    assert.ok(
+      guidedSection.includes('AskUserQuestion'),
+      'Guided Mode should use AskUserQuestion tool for character selection'
+    );
+  });
+
+  it('should iterate through agents for character selection', () => {
+    const guidedSection = getGuidedModeSection();
+    assert.ok(
+      guidedSection.length > 0,
+      'Guided Mode section must exist'
+    );
+    // Must reference iterating through each agent
+    assert.ok(
+      guidedSection.toLowerCase().includes('each agent') ||
+        guidedSection.toLowerCase().includes('for each') ||
+        guidedSection.toLowerCase().includes('per agent'),
+      'Guided Mode should iterate through each agent for character selection'
+    );
+  });
+
+  it('should show preview step in Guided section', () => {
+    const guidedSection = getGuidedModeSection();
+    assert.ok(
+      guidedSection.length > 0,
+      'Guided Mode section must exist'
+    );
+    // Must have preview step
+    assert.ok(
+      guidedSection.toLowerCase().includes('preview'),
+      'Guided Mode should show preview before confirming theme'
+    );
+  });
+
+  it('should have confirm step in Guided section', () => {
+    const guidedSection = getGuidedModeSection();
+    assert.ok(
+      guidedSection.length > 0,
+      'Guided Mode section must exist'
+    );
+    // Must have confirm step
+    assert.ok(
+      guidedSection.toLowerCase().includes('confirm'),
+      'Guided Mode should have confirm step'
+    );
   });
 });
