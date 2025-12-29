@@ -161,6 +161,11 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
     }
   }
 
+  // 5b. Clean up stale files (exist locally but not in source)
+  logger.newline();
+  logger.info('Cleaning up stale files...');
+  await cleanupStaleFiles(projectRoot, assetsPath, manifest, managedCopies, { dryRun });
+
   // Update statusline (from scripts/ subdirectory)
   const statuslineSrc = join(assetsPath, 'scripts/statusline.sh');
   const statuslineDest = join(projectRoot, '.claude/pennyfarthing/statusline.sh');
@@ -371,6 +376,88 @@ function collectFileHashes(
   }
 
   return hashes;
+}
+
+/**
+ * Clean up stale files that exist locally but not in source.
+ *
+ * Logic:
+ * - If file is in manifest with matching hash: DELETE (stale managed file)
+ * - If file is in manifest with different hash: PRESERVE (user modified)
+ * - If file is NOT in manifest: PRESERVE (user custom file)
+ */
+async function cleanupStaleFiles(
+  projectRoot: string,
+  assetsPath: string,
+  manifest: ReturnType<typeof readManifest>,
+  managedCopies: Array<{ src: string; dest: string }>,
+  options: { dryRun?: boolean }
+): Promise<void> {
+  if (!manifest) return;
+
+  let deletedCount = 0;
+  let preservedCount = 0;
+
+  for (const { src, dest } of managedCopies) {
+    const srcPath = join(assetsPath, src);
+    const destPath = join(projectRoot, dest);
+
+    if (!pathExists(destPath) || !isDirectory(destPath)) continue;
+
+    // Get all files in source (what SHOULD exist)
+    const sourceFiles = new Set<string>();
+    if (pathExists(srcPath) && isDirectory(srcPath)) {
+      for (const file of getAllFiles(srcPath)) {
+        sourceFiles.add(file);
+      }
+    }
+
+    // Get all files in destination (what DOES exist)
+    const destFiles = getAllFiles(destPath);
+
+    // Find stale files (in dest but not in source)
+    for (const file of destFiles) {
+      if (sourceFiles.has(file)) continue; // File exists in source, not stale
+
+      const relativePath = join(dest, file);
+      const fullPath = join(destPath, file);
+      const manifestHash = manifest.fileHashes[relativePath];
+
+      if (!manifestHash) {
+        // File not in manifest = user custom file, preserve it
+        logger.skipped(relativePath, 'custom file');
+        preservedCount++;
+        continue;
+      }
+
+      // File is in manifest, check if user modified it
+      const currentHash = hashFile(fullPath);
+
+      if (currentHash !== manifestHash) {
+        // User modified this file, preserve it
+        logger.skipped(relativePath, 'user modified');
+        preservedCount++;
+        continue;
+      }
+
+      // File matches manifest hash = stale managed file, delete it
+      if (!options.dryRun) {
+        unlinkSync(fullPath);
+      }
+      logger.info(`  Deleted stale: ${relativePath}`);
+      deletedCount++;
+    }
+  }
+
+  if (deletedCount > 0) {
+    logger.info(`Removed ${deletedCount} stale file(s)`);
+  }
+  if (preservedCount > 0) {
+    logger.info(`Preserved ${preservedCount} custom/modified file(s)`);
+  }
+  if (deletedCount === 0 && preservedCount === 0) {
+    logger.info('No stale files found');
+  }
 }
 
 /**
