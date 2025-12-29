@@ -365,7 +365,11 @@ epics:
           Note: Commands/skills already properly namespaced under .claude/
         points: 3
         priority: P1
-        status: backlog
+        status: done
+        started: 2025-12-29
+        completed: 2025-12-29
+        branch: feat/4-6-isolate-scripts
+        pr: https://github.com/1898andCo/pennyfarthing/pull/21
         repos: pennyfarthing
         acceptance_criteria:
           - Hooks reference .claude/pennyfarthing/scripts/ instead of /scripts/
@@ -529,9 +533,9 @@ epics:
 
 summary:
   total_points: 37
-  completed_points: 30
+  completed_points: 33
   in_progress_points: 0
-  backlog_points: 7
+  backlog_points: 4
   velocity_target: 20
   status: active
 
