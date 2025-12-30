@@ -304,8 +304,11 @@ epics:
           - Helpers (Haiku): minimal permissions
         points: 2
         priority: P2
-        status: in_progress
+        status: done
         started: 2025-12-29
+        completed: 2025-12-29
+        branch: feat/4-4-agent-scopes
+        pr: https://github.com/1898andCo/pennyfarthing/pull/23
         jira: https://1898andco.atlassian.net/browse/MSSCI-11151
         repos: pennyfarthing
         acceptance_criteria:
@@ -538,11 +541,11 @@ epics:
 
 summary:
   total_points: 37
-  completed_points: 35
+  completed_points: 37
   in_progress_points: 0
-  backlog_points: 2
+  backlog_points: 0
   velocity_target: 20
-  status: active
+  status: complete
 
 # Sprint 2 Planning Notes:
 # - Epic 2 (16 pts): Retro improvements, DX polish, user customization
@@ -648,7 +651,9 @@ sprint_3:
             4. Preview and confirm
           points: 3
           priority: P1
-          status: backlog
+          status: in_progress
+          started: 2025-12-29
+          branch: feat/6-3-guided-mode
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11199
           acceptance_criteria:
@@ -703,7 +708,7 @@ sprint_3:
                  Run '/theme-maker --update my-theme' to review.
           points: 2
           priority: P1
-          status: backlog
+          status: in_progress
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11201
           acceptance_criteria:
@@ -725,21 +730,21 @@ sprint_3:
           title: "Add context_budget configuration"
           points: 2
           priority: P1
-          status: backlog
+          status: in_progress
           carried_from: sprint-2
 
         - id: "4-3"
           title: "Create hooks configuration section"
           points: 2
           priority: P2
-          status: backlog
+          status: in_progress
           carried_from: sprint-2
 
         - id: "4-4"
           title: "Add agent-specific permission scopes"
           points: 2
           priority: P2
-          status: backlog
+          status: in_progress
           carried_from: sprint-2
 
   sprint_3_summary:
