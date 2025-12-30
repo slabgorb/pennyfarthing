@@ -3,6 +3,7 @@
 # Usage: ./scripts/git-status-all.sh [--brief]
 #
 # Shows: branch, status, unpushed commits for all repos
+# Reads repo configuration from .claude/project/repos.yaml
 
 set -e
 
@@ -13,7 +14,10 @@ if [ -f "$SCRIPT_DIR/../.env" ]; then
 fi
 
 # Fallback if PROJECT_ROOT not set
-PROJECT_ROOT="${PROJECT_ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+PROJECT_ROOT="${PROJECT_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+
+# Source repo utilities for dynamic repo configuration
+source "$SCRIPT_DIR/../repo-utils.sh"
 
 # Colors
 GREEN='\033[0;32m'
@@ -23,41 +27,41 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 BRIEF=false
-if [ "$1" = "--brief" ] || [ "$1" = "-b" ]; then
+if [ "${1:-}" = "--brief" ] || [ "${1:-}" = "-b" ]; then
     BRIEF=true
 fi
 
 cd "$PROJECT_ROOT"
 
 show_repo_status() {
-    local name=$1
-    local path=$2
+    local repo_name=$1
+    local repo_dir=$2  # Note: can't use 'path' - it's a zsh special variable
 
-    if [ ! -d "$path/.git" ] && [ ! -d "$path" ]; then
+    if [ ! -d "$repo_dir/.git" ] && [ ! -d "$repo_dir" ]; then
         return
     fi
 
-    local branch=$(git -C "$path" branch --show-current 2>/dev/null || echo "detached")
-    local status=$(git -C "$path" status --short 2>/dev/null)
-    local status_count=$(echo "$status" | grep -c . 2>/dev/null); status_count=${status_count:-0}
-    local unpushed=$(git -C "$path" log origin/develop..HEAD --oneline 2>/dev/null | head -5)
-    local unpushed_count=$(git -C "$path" log origin/develop..HEAD --oneline 2>/dev/null | wc -l | tr -d ' ')
+    local branch=$(git -C "$repo_dir" branch --show-current 2>/dev/null || echo "detached")
+    local git_status=$(git -C "$repo_dir" status --short 2>/dev/null)
+    local git_status_count=$(echo "$git_status" | grep -c . 2>/dev/null); git_status_count=${git_status_count:-0}
+    local unpushed=$(git -C "$repo_dir" log origin/develop..HEAD --oneline 2>/dev/null | head -5)
+    local unpushed_count=$(git -C "$repo_dir" log origin/develop..HEAD --oneline 2>/dev/null | wc -l | tr -d ' ')
 
     if $BRIEF; then
         # One-line format
         local status_indicator=""
-        [ "$status_count" -gt 0 ] && status_indicator="${YELLOW}M${NC}" || status_indicator="${GREEN}✓${NC}"
+        [ "$git_status_count" -gt 0 ] && status_indicator="${YELLOW}M${NC}" || status_indicator="${GREEN}✓${NC}"
         local push_indicator=""
         [ "$unpushed_count" -gt 0 ] && push_indicator=" ${BLUE}↑${unpushed_count}${NC}"
-        echo -e "$name: $branch $status_indicator$push_indicator"
+        echo -e "$repo_name: $branch $status_indicator$push_indicator"
     else
-        echo -e "${BLUE}=== $name ===${NC}"
+        echo -e "${BLUE}=== $repo_name ===${NC}"
         echo -e "Branch: ${GREEN}$branch${NC}"
 
-        if [ -n "$status" ]; then
+        if [ -n "$git_status" ]; then
             echo -e "${YELLOW}Changes:${NC}"
-            echo "$status" | head -10 | sed 's/^/  /'
-            [ "$status_count" -gt 10 ] && echo "  ... and $((status_count - 10)) more"
+            echo "$git_status" | head -10 | sed 's/^/  /'
+            [ "$git_status_count" -gt 10 ] && echo "  ... and $((git_status_count - 10)) more"
         else
             echo -e "${GREEN}Clean${NC}"
         fi
@@ -78,10 +82,17 @@ if ! $BRIEF; then
     echo ""
 fi
 
-# Check each repo
-show_repo_status "Parent" "$PROJECT_ROOT"
-show_repo_status "API" "$PROJECT_ROOT/conductor-api"
-show_repo_status "UI" "$PROJECT_ROOT/conductor-ui"
+# Check each repo from configuration
+repo_count=$(get_repo_count)
+if [[ "$repo_count" -eq 0 ]]; then
+    # No repos configured, just show current directory
+    show_repo_status "Project" "$PROJECT_ROOT"
+else
+    for repo in $(get_repos); do
+        repo_path=$(get_repo_full_path "$repo")
+        show_repo_status "$repo" "$repo_path"
+    done
+fi
 
 if ! $BRIEF; then
     echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -89,13 +100,23 @@ if ! $BRIEF; then
     # Summary
     total_changes=0
     total_unpushed=0
-    for repo in "$PROJECT_ROOT" "$PROJECT_ROOT/conductor-api" "$PROJECT_ROOT/conductor-ui"; do
-        [ -d "$repo/.git" ] || [ -d "$repo" ] || continue
-        count=$(git -C "$repo" status --short 2>/dev/null | wc -l | tr -d ' ')
+
+    if [[ "$repo_count" -eq 0 ]]; then
+        # No repos configured, just check current directory
+        count=$(git -C "$PROJECT_ROOT" status --short 2>/dev/null | wc -l | tr -d ' ')
         total_changes=$((total_changes + count))
-        unpushed=$(git -C "$repo" log origin/develop..HEAD --oneline 2>/dev/null | wc -l | tr -d ' ')
+        unpushed=$(git -C "$PROJECT_ROOT" log origin/develop..HEAD --oneline 2>/dev/null | wc -l | tr -d ' ')
         total_unpushed=$((total_unpushed + unpushed))
-    done
+    else
+        for repo in $(get_repos); do
+            repo_path=$(get_repo_full_path "$repo")
+            [ -d "$repo_path/.git" ] || [ -d "$repo_path" ] || continue
+            count=$(git -C "$repo_path" status --short 2>/dev/null | wc -l | tr -d ' ')
+            total_changes=$((total_changes + count))
+            unpushed=$(git -C "$repo_path" log origin/develop..HEAD --oneline 2>/dev/null | wc -l | tr -d ' ')
+            total_unpushed=$((total_unpushed + unpushed))
+        done
+    fi
 
     if [ "$total_changes" -eq 0 ] && [ "$total_unpushed" -eq 0 ]; then
         echo -e "${GREEN}✅ All repos clean and pushed${NC}"
