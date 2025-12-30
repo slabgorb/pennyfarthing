@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.8.0] - 2025-12-30
+
+*No unreleased changes*
+
+---
+
 ## [3.7.1] - 2025-12-30
 
 *No unreleased changes*
@@ -328,7 +334,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v3.7.1...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v3.8.0...HEAD
+[3.8.0]: https://github.com/1898andCo/pennyfarthing/compare/v3.7.1...v3.8.0
 [3.7.1]: https://github.com/1898andCo/pennyfarthing/compare/v3.7.0...v3.7.1
 [3.7.0]: https://github.com/1898andCo/pennyfarthing/compare/v3.6.1...v3.7.0
 [3.6.1]: https://github.com/1898andCo/pennyfarthing/compare/v3.6.0...v3.6.1
