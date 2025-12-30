@@ -62,6 +62,8 @@ For now (Story 6-1 skeleton), just acknowledge the selection and create a skelet
 
 2. Write skeleton theme file to `.claude/pennyfarthing/themes/{name}.yaml`:
 
+**Important:** Read the current version from the `VERSION` file at project root to set `pennyfarthing_version`.
+
 ```yaml
 # Custom theme: {name}
 # Created by /theme-maker
@@ -69,7 +71,7 @@ For now (Story 6-1 skeleton), just acknowledge the selection and create a skelet
 theme:
   name: {Name}
   description: "Custom theme - edit to customize"
-  pennyfarthing_version: "3.6.1"
+  pennyfarthing_version: "{current version from VERSION file}"
   created: {date}
 
 agents:
@@ -202,7 +204,9 @@ If **Confirm**: Write the complete theme file and proceed to Step 5.
 
 ### Step 5: Write Theme File
 
-Write the complete theme to `.claude/pennyfarthing/themes/{name}.yaml` with full YAML structure:
+Write the complete theme to `.claude/pennyfarthing/themes/{name}.yaml` with full YAML structure.
+
+**Important:** Read the current version from the `VERSION` file at project root to set `pennyfarthing_version`.
 
 ```yaml
 # Custom theme: {name}
@@ -217,7 +221,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: {Appropriate title}
-  pennyfarthing_version: "3.6.1"
+  pennyfarthing_version: "{current version from VERSION file}"
   created: {date}
 
 agents:
