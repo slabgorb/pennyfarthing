@@ -680,9 +680,11 @@ sprint_3:
             4. Preview and confirm
           points: 2
           priority: P2
-          status: in_progress
+          status: done
           started: 2025-12-30
+          completed: 2025-12-30
           branch: feat/6-4-manual-mode
+          pr: https://github.com/1898andCo/pennyfarthing/pull/26
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11200
           acceptance_criteria:
@@ -690,6 +692,7 @@ sprint_3:
             - AI completes remaining fields intelligently
             - Preview shows complete theme
             - Can skip agents to use defaults
+          completion_summary: "Added Manual Mode section to theme-maker.md (~150 lines). Users specify character, style, quote per agent directly with skip option for defaults. AI fills remaining fields. PR #26 merged."
 
         - id: "6-5"
           title: "Add version tracking and compatibility warnings"
