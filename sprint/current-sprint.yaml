@@ -680,7 +680,9 @@ sprint_3:
             4. Preview and confirm
           points: 2
           priority: P2
-          status: backlog
+          status: in_progress
+          started: 2025-12-30
+          branch: feat/6-4-manual-mode
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11200
           acceptance_criteria:
