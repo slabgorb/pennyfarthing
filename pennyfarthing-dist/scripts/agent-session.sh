@@ -49,6 +49,52 @@ get_agent_file() {
     echo "$AGENTS_DIR/$session_id"
 }
 
+# Check if theme version matches current Pennyfarthing version
+# Only warns on major/minor mismatch, not patch
+# Arguments: theme_file, theme_name
+check_theme_version() {
+  local theme_file="$1"
+  local theme_name="$2"
+
+  # Only check custom themes (in .claude/pennyfarthing/themes/)
+  if [[ ! "$theme_file" == *".claude/pennyfarthing/themes/"* ]]; then
+    return 0
+  fi
+
+  # Get theme's pennyfarthing_version
+  local theme_version=$(yq '.theme.pennyfarthing_version // ""' "$theme_file" 2>/dev/null)
+  if [ -z "$theme_version" ] || [ "$theme_version" = "null" ] || [ "$theme_version" = "" ]; then
+    # No version in theme - skip warning (legacy custom theme)
+    return 0
+  fi
+
+  # Get current version from VERSION file
+  local version_file="$PROJECT_ROOT/VERSION"
+  if [ ! -f "$version_file" ]; then
+    # No VERSION file - skip warning
+    return 0
+  fi
+  local current_version=$(cat "$version_file" 2>/dev/null | tr -d '[:space:]')
+  if [ -z "$current_version" ]; then
+    return 0
+  fi
+
+  # Extract major.minor from both versions
+  local theme_major_minor=$(echo "$theme_version" | cut -d. -f1,2)
+  local current_major_minor=$(echo "$current_version" | cut -d. -f1,2)
+
+  # Compare major.minor only
+  if [ "$theme_major_minor" != "$current_major_minor" ]; then
+    echo "" >&2
+    echo "Warning: Theme '${theme_name}' was created with Pennyfarthing ${theme_version}" >&2
+    echo "         Current version: ${current_version} - agent roles may have changed." >&2
+    echo "         Run '/theme-maker --update ${theme_name}' to review." >&2
+    echo "" >&2
+  fi
+
+  return 0
+}
+
 # Function to output persona for an agent
 output_persona() {
   local agent_name="$1"
@@ -73,8 +119,12 @@ output_persona() {
     return 1
   fi
 
-  # Find theme file (check both .claude/personas and personas/)
-  if [ -f "$PROJECT_ROOT/.claude/personas/themes/${theme}.yaml" ]; then
+  # Find theme file (check custom themes first, then built-in locations)
+  # Custom themes: .claude/pennyfarthing/themes/
+  # Built-in: .claude/personas/themes/ and personas/themes/
+  if [ -f "$PROJECT_ROOT/.claude/pennyfarthing/themes/${theme}.yaml" ]; then
+    theme_file="$PROJECT_ROOT/.claude/pennyfarthing/themes/${theme}.yaml"
+  elif [ -f "$PROJECT_ROOT/.claude/personas/themes/${theme}.yaml" ]; then
     theme_file="$PROJECT_ROOT/.claude/personas/themes/${theme}.yaml"
   elif [ -f "$PROJECT_ROOT/personas/themes/${theme}.yaml" ]; then
     theme_file="$PROJECT_ROOT/personas/themes/${theme}.yaml"
@@ -82,6 +132,9 @@ output_persona() {
     echo "<!-- Theme file not found: ${theme}.yaml -->" >&2
     return 1
   fi
+
+  # Check theme version compatibility (warns on major/minor mismatch)
+  check_theme_version "$theme_file" "$theme"
 
   # Extract agent persona
   local persona=$(yq ".agents.${agent_name}" "$theme_file" 2>/dev/null)
