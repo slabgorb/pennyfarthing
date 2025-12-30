@@ -10,7 +10,7 @@ A Claude Code agent orchestration framework with TDD workflow and themed persona
 
 - **10 Agents + 13 Subagents** - Strategic (PM, Architect) and tactical (SM, TEA, Dev, Reviewer) agents with official Haiku-based subagents for mechanical tasks
 - **Automatic Handoffs** - Context-aware agent transitions via official subagent format
-- **7 Persona Themes** - Star Trek, Discworld, Shakespeare, Jane Austen, and more
+- **13 Persona Themes** - Star Trek, Discworld, The Expanse, Princess Bride, and more
 - **11 Skills** - Reusable knowledge domains (testing, code-review, jira-cli, etc.)
 - **25 Slash Commands** - Entry points for agent activation and workflows
 - **CLI Tool** - `pennyfarthing init`, `update`, `doctor`, `uninstall`
@@ -119,13 +119,19 @@ your-project/
 
 | Theme | Style |
 |-------|-------|
-| `star-trek-tos` | Star Trek: The Original Series (Kirk, Spock, McCoy) |
-| `star-trek` | Star Trek: TNG (Picard, Data, Riker) |
+| `the-expanse` | Rocinante crew (Holden, Naomi, Amos, Avasarala) |
+| `star-trek-tng` | Star Trek: TNG (Picard, Data, Riker) |
+| `star-trek-tos` | Star Trek: TOS (Kirk, Spock, McCoy) |
 | `discworld` | Terry Pratchett (DEATH, Vetinari, Vimes) |
+| `princess-bride` | As you wish (Westley, Inigo, Vizzini) |
+| `ted-lasso` | AFC Richmond (Ted, Roy, Keeley) |
+| `parks-and-rec` | Pawnee Parks Dept (Leslie, Ron, April) |
+| `a-team` | I love it when a plan comes together |
 | `shakespeare` | Shakespearean drama (Prospero, Puck, Hamlet) |
 | `jane-austen` | Regency era wit (Mr. Darcy, Elizabeth Bennet) |
-| `literary-classics` | Classic literature mix |
-| `minimalist` | Professional, no personas |
+| `control` | Professional, minimal personas |
+
+Create custom themes with `/theme-maker`.
 
 Configure in `.claude/persona-config.yaml`:
 ```yaml
@@ -185,21 +191,28 @@ pennyfarthing uninstall --all
 
 Archived sprint data (`sprint/archive/`, `sprint/context/`) is always preserved.
 
-## What's New in v3.5
+## What's New in v3.8
 
-- **Theme CLI Commands** - `pennyfarthing theme list|set|show|create` for command-line theme management
-- **User Preferences** - `.claude/pennyfarthing/preferences.yaml` for customizing agent behavior (character_voice, explain_decisions, auto_commit)
-- **Output Styles** - Three built-in styles (verbose, terse, teaching) for Claude Code's `/output-style`
-- **Sidecar Templates** - `pennyfarthing init` now installs templated sidecar content with section headers
-- **Sprint Metrics** - `scripts/utils/sprint-metrics.sh` displays points completed/remaining
-- **Session Hook Improvements** - Logs event source type, cleaner agent state reset
+- **Interactive Theme Wizard** (`/theme-maker`) - Create custom persona themes with three modes:
+  - **AI-Driven** - Describe a concept, AI generates all 10 agent personas
+  - **Guided** - AI suggests characters, you pick from options
+  - **Manual** - Full control over character, style, and quote for each agent
+- **Theme Version Tracking** - Custom themes warn when created with older Pennyfarthing version
+- **Agent Permission Scopes** - Define agent-specific tool allowlists
+- **Configurable Context Thresholds** - Customize warning/critical thresholds for context usage
+- **Hooks Configuration** - Session hooks section with examples
+
+## What's New in v3.6
+
+- **Crew Manifest** - Agents see all character names during handoffs for in-universe addressing
+- **Theme CLI Commands** - `pennyfarthing theme list|set|show|create`
+- **User Preferences** - `.claude/pennyfarthing/preferences.yaml` for agent behavior
+- **Output Styles** - Three built-in styles (verbose, terse, teaching)
 
 ## What's New in v3.0
 
 - **Official Subagents** - 13 subagents in Claude Code's official YAML frontmatter format
 - **Session File Naming** - Changed from `current_work.md` to `{story-id}-session.md` for parallel work
-- **Scripts as Symlinks** - Single source of truth from `pennyfarthing-dist/scripts/`
-- **Centralized Error Handling** - Subagents return structured `status: success|blocked` results
 - **NPM Package** - Install via npm with `pennyfarthing init`
 - **Health Checks** - `doctor --fix` auto-repairs common issues
 

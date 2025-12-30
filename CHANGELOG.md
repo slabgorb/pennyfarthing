@@ -13,19 +13,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.8.0] - 2025-12-30
 
-*No unreleased changes*
+### Added
+- **Theme Version Tracking** - Custom themes now include `pennyfarthing_version` metadata
+  - `agent-session.sh` warns when theme was created with older Pennyfarthing version
+  - Compares major.minor only (ignores patch versions)
+  - Warning displayed but doesn't block theme usage
+- **Theme-maker Documentation** - Comprehensive user docs in COMMANDS.md and PERSONAS.md
+  - All three creation modes documented with examples
+  - Mode comparison tables and workflow examples
 
 ---
 
 ## [3.7.1] - 2025-12-30
 
-*No unreleased changes*
+### Added
+- **Guided Mode for Theme-maker** - Story 6-3 delivered step-by-step character selection
+  - AI suggests 3-4 character options per agent
+  - Users choose or provide custom names
+  - Go-back capability for editing previous selections
+  - Preview before finalizing
+
+### Fixed
+- **Multi-repo Config** - `git-status-all` and `git-cleanup` now honor `repos.yaml` configuration
 
 ---
 
 ## [3.7.0] - 2025-12-29
 
-*No unreleased changes*
+### Added
+- **Interactive Theme Wizard** (`/theme-maker`) - Epic 6 Stories 6-1 and 6-2
+  - Mode selection: AI-Driven, Guided, Manual
+  - AI-Driven mode generates all 10 agent personas from concept description
+  - Theme schema validation with `validateThemeSchema()`
+  - Preview and regenerate workflow
+- **Agent Permission Scopes** - Story 4-4 adds agent-specific tool allowlists
+  - Each agent can define custom permission scopes
+  - Documented in PERMISSIONS.md
+- **Hooks Configuration** - Story 4-3 adds hooks section to configuration
+  - Session hooks documented with examples
+- **Configurable Context Thresholds** - Story 4-2 adds `context_budget` settings
+  - Customizable warning/critical thresholds for context usage
+
+### Changed
+- **Scripts Isolation** - Story 4-6 isolates Pennyfarthing scripts from project `/scripts`
+  - Scripts now in `.claude/pennyfarthing/scripts/`
+  - Standardized `PROJECT_ROOT` detection across all scripts
+
+### Fixed
+- **Misplaced File Warnings** - CLI now warns about custom files in managed directories during update
 
 ---
 
