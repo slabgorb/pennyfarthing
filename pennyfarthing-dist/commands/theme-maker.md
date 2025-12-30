@@ -346,3 +346,152 @@ If **Confirm**: Write the complete theme file using the same format as AI-Driven
 ### Navigation
 
 Users can go back to change previous selections at any point during the agent selection process. Track selections and allow revisiting any agent before final confirmation.
+
+---
+
+## Manual Mode
+
+When the user selects Manual mode, they specify character, style, and quote for each agent directly. No AI suggestions - full control.
+
+### Step 1: Get Theme Description
+
+Ask the user to describe their theme for the metadata:
+
+> "Provide a brief description for your theme (1-2 sentences). This appears in theme listings."
+
+Example: "Characters from 1940s noir detective fiction"
+
+### Step 2: Collect Agent Details
+
+For each agent, collect three pieces of information. Use free-text prompts (not AskUserQuestion with options).
+
+**Agent Order:**
+1. sm
+2. tea
+3. dev
+4. reviewer
+5. architect
+6. pm
+7. tech-writer
+8. ux-designer
+9. devops
+10. orchestrator
+
+For each agent, ask:
+
+> "**{Agent} ({role description})**"
+> "Character name (or 'skip' to use default):"
+
+If not skipped, continue:
+> "Communication style (1-2 sentences):"
+> "Signature quote:"
+
+**Skip Handling:**
+If user types "skip", use these defaults:
+- character: Generic role name (e.g., "Coordinator" for sm)
+- style: "Professional and direct"
+- quote: (leave empty)
+
+**Role Descriptions for Prompts:**
+
+| Agent | Role Description |
+|-------|------------------|
+| sm | Scrum Master - team leader, coordinator |
+| tea | Test Engineer - analyst, finds flaws |
+| dev | Developer - builder, practical |
+| reviewer | Code Reviewer - critical, high standards |
+| architect | System Architect - big-picture designer |
+| pm | Product Manager - strategic planner |
+| tech-writer | Technical Writer - clear communicator |
+| ux-designer | UX Designer - user advocate |
+| devops | DevOps Engineer - infrastructure, reliability |
+| orchestrator | Orchestrator - meta-coordinator, pattern-seer |
+
+### Step 3: Generate Remaining Fields
+
+After collecting user input for all agents, generate the remaining fields for each:
+- `expertise`: Areas of expertise based on character and role
+- `role`: Role description within the theme context
+- `trait`: Key personality traits derived from style
+- `emoji`: Single representative emoji
+- `helper`: Assistant name and style fitting the character
+
+### Step 4: Preview Theme
+
+Show a preview of the complete theme:
+
+```
+## Theme Preview: {name}
+
+**Description:** {user's description}
+
+| Agent | Character | Style | Quote |
+|-------|-----------|-------|-------|
+| sm | {provided} | {provided} | {provided} |
+| tea | {provided} | {provided} | {provided} |
+| dev | {provided} | {provided} | {provided} |
+| reviewer | {provided} | {provided} | {provided} |
+| architect | {provided} | {provided} | {provided} |
+| pm | {provided} | {provided} | {provided} |
+| tech-writer | {provided} | {provided} | {provided} |
+| ux-designer | {provided} | {provided} | {provided} |
+| devops | {provided} | {provided} | {provided} |
+| orchestrator | {provided} | {provided} | {provided} |
+```
+
+### Step 5: Confirm or Edit
+
+Use `AskUserQuestion` to let the user decide:
+
+```yaml
+questions:
+  - question: "How does this theme look?"
+    header: "Confirm"
+    options:
+      - label: "Looks great, save it!"
+        description: "Write the theme file"
+      - label: "Edit an agent"
+        description: "Change details for a specific agent"
+      - label: "Start over"
+        description: "Begin from scratch"
+    multiSelect: false
+```
+
+If **Edit an agent**: Ask which agent to edit, then re-prompt for that agent's details only.
+
+If **Confirm**: Write the complete theme file using the same format as AI-Driven mode.
+
+### Theme File Output
+
+Write to `.claude/pennyfarthing/themes/{name}.yaml`:
+
+```yaml
+# Custom theme: {name}
+# Created by /theme-maker Manual mode
+
+theme:
+  name: {Name}
+  description: "{user's description}"
+  source: "Manually created"
+  default_emoji_use: minimal
+  default_humor: enabled
+  character_immersion: high
+  pennyfarthing_version: "{current version from VERSION file}"
+  created: {date}
+
+agents:
+  sm:
+    character: {user provided}
+    style: {user provided}
+    expertise: {AI generated}
+    role: {AI generated}
+    trait: {AI generated from style}
+    quote: "{user provided}"
+    emoji: "{AI generated}"
+    helper:
+      name: {AI generated}
+      style: "{AI generated}"
+  # ... all 10 agents
+```
+
+Use `validateThemeSchema()` from `src/cli/utils/themes.ts` to verify the theme is valid before writing.
