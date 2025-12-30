@@ -8,7 +8,8 @@ Complete reference for all Pennyfarthing slash commands.
 - [Agent Activation](#agent-activation-commands)
 - [Planning](#planning-commands)
 - [Operations](#operations-commands)
-- [Utilities](#utility-commands)
+- [Sync](#sync-commands)
+- [Theme](#theme-commands)
 
 ---
 
@@ -373,6 +374,132 @@ Complete reference for all Pennyfarthing slash commands.
 
 ---
 
+## Theme Commands
+
+### `/theme-maker`
+
+**Purpose:** Interactive wizard for creating custom persona themes
+
+**Usage:**
+```
+/theme-maker
+```
+
+**What it does:**
+1. Prompts for a theme name (lowercase, hyphens allowed)
+2. Offers three creation modes
+3. Walks through theme creation
+4. Writes theme file to `.claude/pennyfarthing/themes/`
+5. Optionally activates the new theme
+
+**Creation Modes:**
+
+| Mode | Description | Best For |
+|------|-------------|----------|
+| **AI-Driven** | Describe a concept, AI generates all 10 personas | Quick creation, exploring ideas |
+| **Guided** | AI suggests characters, you pick from options | Balance of control and convenience |
+| **Manual** | You specify character, style, quote for each agent | Full control, specific vision |
+
+**Theme Name Rules:**
+- Lowercase letters only
+- Must start with a letter
+- Hyphens allowed (no underscores or spaces)
+- Cannot conflict with existing themes
+
+**Example Session:**
+
+```
+> /theme-maker
+
+Theme name: noir-detective
+
+How would you like to create your theme?
+  ● AI-Driven (Recommended)
+  ○ Guided
+  ○ Manual
+
+Describe your theme universe:
+> 1940s noir detective fiction - fedoras, femme fatales,
+  rain-slicked streets, whiskey, and moral ambiguity
+
+[AI generates 10 agent personas...]
+
+## Theme Preview: noir-detective
+
+| Agent | Character | Style |
+|-------|-----------|-------|
+| sm | Sam Spade | World-weary, trusts no one, gets the job done |
+| tea | The Forensics Guy | Meticulous, finds what others miss |
+| dev | The Mechanic | Quiet, capable, fixes problems permanently |
+| ... | ... | ... |
+
+How does this look?
+  ● Looks great, save it!
+  ○ Regenerate
+  ○ Try different concept
+
+Theme saved to .claude/pennyfarthing/themes/noir-detective.yaml
+Activate with: /set-theme noir-detective
+```
+
+**Output:**
+
+Creates a complete theme file at `.claude/pennyfarthing/themes/{name}.yaml` with:
+- Theme metadata (name, description, version, created date)
+- All 10 agent definitions (character, style, trait, quote, emoji, helper)
+
+**Related Commands:**
+- `/set-theme` - Activate a theme
+- `/show-theme` - View theme details
+- `/list-themes` - List available themes
+
+**See also:** [Persona System](PERSONAS.md)
+
+### `/set-theme`
+
+**Purpose:** Change the active persona theme
+
+**Usage:**
+```
+/set-theme <name>
+```
+
+**What it does:**
+1. Validates theme exists
+2. Updates `.claude/persona-config.yaml`
+3. Theme takes effect on next agent activation
+
+### `/show-theme`
+
+**Purpose:** Display details of a theme
+
+**Usage:**
+```
+/show-theme [name]    # Specific theme
+/show-theme           # Current theme
+```
+
+**What it does:**
+1. Loads theme definition
+2. Displays all agent characters and styles
+3. Shows theme metadata
+
+### `/list-themes`
+
+**Purpose:** List all available themes
+
+**Usage:**
+```
+/list-themes
+```
+
+**What it does:**
+1. Scans built-in themes
+2. Scans custom themes in `.claude/pennyfarthing/themes/`
+3. Lists all with descriptions
+
+---
+
 ## Command Quick Reference
 
 | Command | Purpose | Category |
@@ -400,6 +527,10 @@ Complete reference for all Pennyfarthing slash commands.
 | `/sync-epic-to-jira` | Sync to Jira | Sync |
 | `/sync-work-with-sprint` | Sync work/sprint | Sync |
 | `/update-domain-docs` | Update docs | Sync |
+| `/theme-maker` | Create custom theme | Theme |
+| `/set-theme` | Change active theme | Theme |
+| `/show-theme` | View theme details | Theme |
+| `/list-themes` | List available themes | Theme |
 
 ---
 
