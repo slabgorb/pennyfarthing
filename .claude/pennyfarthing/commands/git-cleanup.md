@@ -171,13 +171,27 @@ git stash pop
 
 ## Multi-Repo Cleanup Pattern
 
-When cleaning up changes across API and UI repos:
+When cleaning up changes across multiple repos (configured in `.claude/project/repos.yaml`):
 
 ```bash
-# For each repo, run the same workflow
-for repo in "." "API" "UI"; do
+# Source repo utilities
+source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
+
+# For each configured repo, run the same workflow
+for_each_repo '
+  # ... branch workflow ...
+  git status --short
+'
+```
+
+Or manually iterate:
+
+```bash
+source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
+for repo in $(get_repos); do
+  repo_path=$(get_repo_full_path "$repo")
   echo "=== Processing $repo ==="
-  cd $repo
+  cd "$repo_path"
   # ... branch workflow ...
   cd -
 done
@@ -272,28 +286,26 @@ echo "=== Branch Status ==="
 **Only remove branches that are fully merged:**
 
 ```bash
-# API repo
-cd API
-git checkout develop
-git pull origin develop
+# Source repo utilities
+source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
 
-# List branches merged into develop
-git branch --merged develop | grep -v "develop\|main"
+# For each configured repo
+for repo in $(get_repos); do
+  repo_path=$(get_repo_full_path "$repo")
+  echo "=== $repo ==="
+  cd "$repo_path"
 
-# Delete merged branches
-git branch --merged develop | grep -v "develop\|main" | xargs -r git branch -d
+  git checkout develop
+  git pull origin develop
 
-cd ..
+  # List branches merged into develop
+  git branch --merged develop | grep -v "develop\|main"
 
-# UI repo
-cd UI
-git checkout develop
-git pull origin develop
+  # Delete merged branches
+  git branch --merged develop | grep -v "develop\|main" | xargs -r git branch -d
 
-# Delete merged branches
-git branch --merged develop | grep -v "develop\|main" | xargs -r git branch -d
-
-cd ..
+  cd -
+done
 ```
 
 ### Branch Cleanup Criteria
@@ -313,8 +325,15 @@ echo "=== Final State ==="
 ./scripts/run.sh git-status-all.sh
 echo ""
 echo "=== Branches ==="
-echo "API:" && git -C API branch
-echo "UI:" && git -C UI branch
+
+# Source repo utilities
+source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
+
+for repo in $(get_repos); do
+  repo_path=$(get_repo_full_path "$repo")
+  echo "$repo:" && git -C "$repo_path" branch
+done
+```
 
 ---
 

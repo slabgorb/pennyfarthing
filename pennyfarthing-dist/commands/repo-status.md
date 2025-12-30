@@ -6,59 +6,44 @@ description: Check git status of all project repos
 
 Check the git status of all project repos at once.
 
-## Prerequisites
+## Configuration
 
-Environment variables (set in `.claude/project/hooks/setup-env.sh`):
-- `PROJECT_NAME` - Name of the project
-- `API_REPO` - Name of API repository
-- `UI_REPO` - Name of UI repository
+Repos are configured in `.claude/project/repos.yaml`. The script automatically reads this configuration.
 
 ## Instructions
 
 Run this command to show the status of all repos:
 
 ```bash
-cd $CLAUDE_PROJECT_DIR
-
-echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║              ${PROJECT_NAME:-PROJECT} REPO STATUS                        ║"
-echo "╚══════════════════════════════════════════════════════════════╝"
-echo ""
-
-echo "┌─────────────────────────────────────────────────────────────┐"
-echo "│ ${PROJECT_NAME:-PROJECT} (parent)                                        │"
-echo "└─────────────────────────────────────────────────────────────┘"
-git status --short --branch
-git log --oneline -1
-echo ""
-
-if [ -d "API" ]; then
-echo "┌─────────────────────────────────────────────────────────────┐"
-echo "│ ${API_REPO:-API}                                                       │"
-echo "└─────────────────────────────────────────────────────────────┘"
-cd API
-git status --short --branch
-git log --oneline -1
-cd ..
-echo ""
-fi
-
-if [ -d "UI" ]; then
-echo "┌─────────────────────────────────────────────────────────────┐"
-echo "│ ${UI_REPO:-UI}                                                        │"
-echo "└─────────────────────────────────────────────────────────────┘"
-cd UI
-git status --short --branch
-git log --oneline -1
-cd ..
-echo ""
-fi
-
-echo "═══════════════════════════════════════════════════════════════"
+$CLAUDE_PROJECT_DIR/scripts/run.sh git-status-all.sh
 ```
 
-Report the results clearly showing:
-- Current branch for each repo
+For a brief one-line-per-repo summary:
+
+```bash
+$CLAUDE_PROJECT_DIR/scripts/run.sh git-status-all.sh --brief
+```
+
+## What It Shows
+
+For each configured repo:
+- Current branch
 - Whether there are uncommitted changes
 - Whether the repo is ahead/behind origin
-- Most recent commit
+- Unpushed commits (if any)
+
+## Adding More Repos
+
+To add repos, edit `.claude/project/repos.yaml`:
+
+```yaml
+repos:
+  my-api:
+    path: my-api        # relative to project root
+    type: api
+    language: go
+  my-ui:
+    path: my-ui
+    type: ui
+    language: typescript
+```
