@@ -213,46 +213,94 @@ Helpers are Haiku-based subagents that handle routine operations.
 
 ## Creating Custom Themes
 
+### Interactive Wizard (Recommended)
+
+Use `/theme-maker` for guided theme creation:
+
+```
+/theme-maker
+```
+
+Three creation modes:
+
+| Mode | You Provide | AI Generates |
+|------|-------------|--------------|
+| **AI-Driven** | Universe concept | All 10 agent personas |
+| **Guided** | Character selections from AI suggestions | Style, traits, quotes |
+| **Manual** | Character, style, quote per agent | Role, expertise, helper |
+
+The wizard handles validation, file creation, and version tracking.
+
+### CLI Command
+
+For quick creation from command line:
+
+```bash
+pennyfarthing theme create noir-detective
+```
+
+Creates a skeleton theme file to edit manually.
+
+### Theme File Location
+
+Custom themes are stored in:
+```
+.claude/pennyfarthing/themes/{name}.yaml
+```
+
 ### Theme File Structure
 
 ```yaml
-# personas/themes/my-theme.yaml
+# Custom theme: noir-detective
+# Created by /theme-maker
+
 theme:
-  name: My Theme
-  description: Custom theme description
-  source: Theme source/inspiration
+  name: Noir Detective
+  description: "1940s noir detective fiction"
+  source: "Classic noir films and novels"
   default_emoji_use: minimal
   default_humor: enabled
+  character_immersion: high
+  user_title: Boss
+  pennyfarthing_version: "3.7.0"
+  created: 2025-01-15
 
 agents:
   sm:
-    character: Character Name
-    style: Communication style description
-    expertise: Areas of expertise
-    role: Role description
-    trait: Key characteristic
-    quote: Signature line (optional)
-    emoji: "🔧"
+    character: Sam Spade
+    style: World-weary, trusts no one, gets the job done
+    expertise: Team coordination, solving mysteries
+    role: The detective who runs the agency
+    trait: Cynical pragmatism, hidden morality
+    quote: "When you're slapped, you'll take it and like it."
+    emoji: "🎩"
     helper:
-      name: Helper Name
-      style: Helper behavior description
+      name: Effie
+      style: "Efficient, loyal, keeps the office running"
 
-  # ... other agents
+  # ... all 10 agents required
 ```
 
-### Required Agent Sections
+### Required Agents
 
-Each theme must define all agents:
-- `orchestrator`
-- `sm`
-- `tea`
-- `dev`
-- `reviewer`
-- `architect`
-- `pm`
-- `tech-writer`
-- `ux-designer`
-- `devops`
+Each theme must define all 10 agents:
+
+| Agent | Role | Character Should Be |
+|-------|------|---------------------|
+| `orchestrator` | Meta-coordinator | Pattern-seer, guide |
+| `sm` | Scrum Master | Leader, coordinator |
+| `tea` | Test Engineer | Detail-oriented, finds flaws |
+| `dev` | Developer | Builder, practical |
+| `reviewer` | Code Reviewer | Critical, high standards |
+| `architect` | System Architect | Big-picture thinker |
+| `pm` | Product Manager | Strategic planner |
+| `tech-writer` | Documentation | Clear communicator |
+| `ux-designer` | UX Design | User advocate |
+| `devops` | Infrastructure | Reliable operator |
+
+### Version Compatibility
+
+Custom themes include `pennyfarthing_version` to track compatibility. When Pennyfarthing updates, you'll see a warning if your theme was created with an older version. The theme still works, but some fields may be missing or deprecated.
 
 ### Theme Guidelines
 
