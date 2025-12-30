@@ -710,7 +710,11 @@ sprint_3:
                  Run '/theme-maker --update my-theme' to review.
           points: 2
           priority: P1
-          status: in_progress
+          status: done
+          started: 2025-12-30
+          completed: 2025-12-30
+          branch: feat/6-5-version-tracking
+          pr: https://github.com/1898andCo/pennyfarthing/pull/25
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11201
           acceptance_criteria:
@@ -718,6 +722,7 @@ sprint_3:
             - agent-session.sh detects version mismatch
             - Warning displayed but doesn't block usage
             - Warning only on major/minor mismatch (not patch)
+          completion_summary: "Implemented version tracking system for custom themes with compatibility warnings. Added check_theme_version() function to agent-session.sh that compares theme version against current VERSION file and warns on major/minor mismatch. Updated theme-maker.md to use dynamic VERSION instead of hardcoded value. All acceptance criteria verified and PR #25 approved."
 
     # Carry over from Sprint 2 backlog
     - id: epic-4-continued
