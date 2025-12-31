@@ -1,0 +1,196 @@
+import { readdirSync, unlinkSync, symlinkSync } from 'fs';
+import { join, relative, dirname } from 'path';
+import fsExtra from 'fs-extra';
+
+const { ensureDirSync, removeSync } = fsExtra;
+import { logger } from './logger.js';
+import { pathExists, isSymlink } from './files.js';
+
+/**
+ * Compute relative path for symlink from link location to target
+ */
+export function computeRelativeSymlink(linkPath: string, targetPath: string): string {
+  return relative(dirname(linkPath), targetPath);
+}
+
+/**
+ * Create commands directory with individual symlinks to each command file.
+ * This allows users to add their own commands alongside built-in ones.
+ */
+export function createCommandsDirectory(
+  projectRoot: string,
+  builtInCommandsPath: string,
+  projectCommandsPath: string,
+  dryRun: boolean
+): void {
+  const commandsDir = join(projectRoot, '.claude/commands');
+
+  // Remove existing symlink or directory
+  if (pathExists(commandsDir) || isSymlink(commandsDir)) {
+    if (!dryRun) {
+      try {
+        unlinkSync(commandsDir);
+      } catch {
+        try {
+          removeSync(commandsDir);
+        } catch {
+          // Ignore
+        }
+      }
+    }
+  }
+
+  // Create commands directory
+  if (!dryRun) {
+    ensureDirSync(commandsDir);
+  }
+  logger.created('.claude/commands/ (directory for built-in + user commands)');
+
+  // Symlink each built-in command
+  if (pathExists(builtInCommandsPath)) {
+    const builtInCommands = readdirSync(builtInCommandsPath).filter(f => f.endsWith('.md'));
+    for (const cmd of builtInCommands) {
+      const linkPath = join(commandsDir, cmd);
+      const targetPath = join(builtInCommandsPath, cmd);
+      const relativeTarget = computeRelativeSymlink(linkPath, targetPath);
+
+      if (!dryRun) {
+        try {
+          symlinkSync(relativeTarget, linkPath);
+        } catch (e) {
+          logger.warning(`Could not create symlink for ${cmd}: ${e}`);
+        }
+      }
+    }
+    logger.info(`  Linked ${builtInCommands.length} built-in commands`);
+  }
+
+  // Symlink user project commands (if any exist)
+  if (pathExists(projectCommandsPath)) {
+    const projectCommands = readdirSync(projectCommandsPath).filter(f => f.endsWith('.md'));
+    let linkedCount = 0;
+    for (const cmd of projectCommands) {
+      const linkPath = join(commandsDir, cmd);
+      if (pathExists(linkPath)) {
+        logger.warning(`  Skipping ${cmd} - would override built-in command`);
+        continue;
+      }
+
+      const targetPath = join(projectCommandsPath, cmd);
+      const relativeTarget = computeRelativeSymlink(linkPath, targetPath);
+
+      if (!dryRun) {
+        try {
+          symlinkSync(relativeTarget, linkPath);
+          linkedCount++;
+        } catch (e) {
+          logger.warning(`Could not create symlink for ${cmd}: ${e}`);
+        }
+      } else {
+        linkedCount++;
+      }
+    }
+    if (linkedCount > 0) {
+      logger.info(`  Linked ${linkedCount} user commands from project/commands/`);
+    }
+  }
+}
+
+/**
+ * Create skills directory with individual symlinks to each skill file.
+ * This allows users to add their own skills alongside built-in ones.
+ */
+export function createSkillsDirectory(
+  projectRoot: string,
+  builtInSkillsPath: string,
+  projectSkillsPath: string,
+  dryRun: boolean
+): void {
+  const skillsDir = join(projectRoot, '.claude/skills');
+
+  // Remove existing symlink or directory
+  if (pathExists(skillsDir) || isSymlink(skillsDir)) {
+    if (!dryRun) {
+      try {
+        unlinkSync(skillsDir);
+      } catch {
+        try {
+          removeSync(skillsDir);
+        } catch {
+          // Ignore
+        }
+      }
+    }
+  }
+
+  // Create skills directory
+  if (!dryRun) {
+    ensureDirSync(skillsDir);
+  }
+  logger.created('.claude/skills/ (directory for built-in + user skills)');
+
+  // Symlink each built-in skill
+  if (pathExists(builtInSkillsPath)) {
+    const builtInSkills = readdirSync(builtInSkillsPath).filter(f => f.endsWith('.md'));
+    for (const skill of builtInSkills) {
+      const linkPath = join(skillsDir, skill);
+      const targetPath = join(builtInSkillsPath, skill);
+      const relativeTarget = computeRelativeSymlink(linkPath, targetPath);
+
+      if (!dryRun) {
+        try {
+          symlinkSync(relativeTarget, linkPath);
+        } catch (e) {
+          logger.warning(`Could not create symlink for ${skill}: ${e}`);
+        }
+      }
+    }
+    logger.info(`  Linked ${builtInSkills.length} built-in skills`);
+  }
+
+  // Symlink user project skills (if any exist)
+  if (pathExists(projectSkillsPath)) {
+    const projectSkills = readdirSync(projectSkillsPath).filter(f => f.endsWith('.md'));
+    let linkedCount = 0;
+    for (const skill of projectSkills) {
+      const linkPath = join(skillsDir, skill);
+      if (pathExists(linkPath)) {
+        logger.warning(`  Skipping ${skill} - would override built-in skill`);
+        continue;
+      }
+
+      const targetPath = join(projectSkillsPath, skill);
+      const relativeTarget = computeRelativeSymlink(linkPath, targetPath);
+
+      if (!dryRun) {
+        try {
+          symlinkSync(relativeTarget, linkPath);
+          linkedCount++;
+        } catch (e) {
+          logger.warning(`Could not create symlink for ${skill}: ${e}`);
+        }
+      } else {
+        linkedCount++;
+      }
+    }
+    if (linkedCount > 0) {
+      logger.info(`  Linked ${linkedCount} user skills from project/skills/`);
+    }
+  }
+}
+
+/**
+ * Check if commands directory needs migration from single symlink to directory
+ */
+export function needsCommandsMigration(projectRoot: string): boolean {
+  const commandsPath = join(projectRoot, '.claude/commands');
+  return isSymlink(commandsPath);
+}
+
+/**
+ * Check if skills directory needs migration from single symlink to directory
+ */
+export function needsSkillsMigration(projectRoot: string): boolean {
+  const skillsPath = join(projectRoot, '.claude/skills');
+  return isSymlink(skillsPath);
+}
