@@ -18,7 +18,6 @@
 
 # Node.js / npm
 node_modules/
-dist/
 *.tgz
 .npm/
 npm-debug.log*
