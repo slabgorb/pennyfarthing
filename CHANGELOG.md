@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [4.0.1] - 2025-12-31
+
+### Fixed
+- **Scripts Path Resolution** - `run.sh` was hardcoded to look for scripts at `.claude/pennyfarthing/scripts/` which only worked in dogfooding setup. Fixed to use `.claude/scripts/` which is the canonical path created by `pennyfarthing init` (symlinked to node_modules or copy-mode location).
+
+---
+
 ## [4.0.0] - 2025-12-31
 
 ### Changed
@@ -386,7 +393,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.1...HEAD
+[4.0.1]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.0...v4.0.1
 [4.0.0]: https://github.com/1898andCo/pennyfarthing/compare/v3.8.0...v4.0.0
 [3.8.0]: https://github.com/1898andCo/pennyfarthing/compare/v3.7.1...v3.8.0
 [3.7.1]: https://github.com/1898andCo/pennyfarthing/compare/v3.7.0...v3.7.1
