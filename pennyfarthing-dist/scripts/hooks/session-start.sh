@@ -20,10 +20,8 @@ source=$(echo "$input" | jq -r '.source // "unknown"')
 mkdir -p "$CLAUDE_PROJECT_DIR/.session"
 mkdir -p "$CLAUDE_PROJECT_DIR/.session/agents"
 
-# Clear stale agent state from previous session
-rm -f "$CLAUDE_PROJECT_DIR/.session/current-agent" 2>/dev/null || true
-# Use find to avoid zsh glob errors when directory is empty
-find "$CLAUDE_PROJECT_DIR/.session/agents" -type f -delete 2>/dev/null || true
+# Note: Agent cleanup is handled by agent-session.sh (7-day TTL) to preserve multi-session state
+# DO NOT clear .session/agents/* here - it breaks parallel sessions
 
 # Create session log entry
 echo "$(date -Iseconds) | Session $source: $session_id" >> "$CLAUDE_PROJECT_DIR/.session/session-log.txt"
