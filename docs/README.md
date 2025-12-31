@@ -29,18 +29,18 @@ Pennyfarthing is a shared agent orchestration framework for Claude Code projects
 ## Quick Start
 
 ```bash
-# Install
-npm install -g pennyfarthing
-
-# Initialize in your project
 cd your-project
+
+# Install as dev dependency
+npm install --save-dev pennyfarthing
+
+# Initialize (creates symlinks)
 pennyfarthing init
 
 # Verify installation
 pennyfarthing doctor
 
-# Start working
-# (in Claude Code)
+# Start working (in Claude Code)
 /new-work
 ```
 
@@ -63,7 +63,7 @@ pennyfarthing doctor
 | Command | Purpose |
 |---------|---------|
 | `pennyfarthing init` | Initialize in a project |
-| `pennyfarthing update` | Update to latest version |
+| `npm update pennyfarthing` | Update to latest version |
 | `pennyfarthing doctor` | Check installation health |
 | `pennyfarthing version` | Show version info |
 

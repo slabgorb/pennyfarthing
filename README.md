@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v3.8.0** | *The outer loop goes once, the inner loop goes many times.*
+**v4.0.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px" margin="10px">
 
@@ -18,11 +18,12 @@ A Claude Code agent orchestration framework with TDD workflow and themed persona
 ## Quick Start
 
 ```bash
-# Install globally
-npm install -g pennyfarthing
-
-# Initialize in your project
 cd your-project
+
+# Install as dev dependency
+npm install --save-dev pennyfarthing
+
+# Initialize (creates symlinks, no file copying)
 pennyfarthing init
 
 # Verify installation
@@ -172,11 +173,11 @@ Override locally with `.claude/pennyfarthing/preferences.local.yaml` (gitignored
 ## Updating
 
 ```bash
-# Update to latest version
-pennyfarthing update
+# v4.0+: Update via npm (symlinks point to node_modules)
+npm update pennyfarthing
 
-# Check for updates without applying
-pennyfarthing update --check
+# Verify after update
+pennyfarthing doctor
 ```
 
 ## Uninstalling
@@ -191,18 +192,22 @@ pennyfarthing uninstall --all
 
 Archived sprint data (`sprint/archive/`, `sprint/context/`) is always preserved.
 
+## What's New in v4.0
+
+- **BREAKING: Link-based Installation** - `pennyfarthing init` now symlinks to `node_modules` instead of copying 100+ files
+  - Reduces codespace pollution significantly
+  - Updates propagate via `npm update`
+  - Requires `npm install pennyfarthing` before init
+
+### Migrating from 3.x
+```bash
+pennyfarthing uninstall
+npm install pennyfarthing
+pennyfarthing init
+```
+Your `.claude/project/` customizations are preserved.
+
 ## What's New in v3.8
-
-- **Interactive Theme Wizard** (`/theme-maker`) - Create custom persona themes with three modes:
-  - **AI-Driven** - Describe a concept, AI generates all 10 agent personas
-  - **Guided** - AI suggests characters, you pick from options
-  - **Manual** - Full control over character, style, and quote for each agent
-- **Theme Version Tracking** - Custom themes warn when created with older Pennyfarthing version
-- **Agent Permission Scopes** - Define agent-specific tool allowlists
-- **Configurable Context Thresholds** - Customize warning/critical thresholds for context usage
-- **Hooks Configuration** - Session hooks section with examples
-
-## What's New in v3.6
 
 - **Crew Manifest** - Agents see all character names during handoffs for in-universe addressing
 - **Theme CLI Commands** - `pennyfarthing theme list|set|show|create`

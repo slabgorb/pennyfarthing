@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Pennyfarthing is a Claude Code agent orchestration framework with TDD workflow and themed personas. It coordinates multiple AI agents (SM, TEA, Dev, Reviewer) through story-driven development cycles.
 
-**Version:** 3.3.0
+**Version:** 4.0.0
 **Node:** >=18.0.0
 **Type:** ES module with TypeScript
 

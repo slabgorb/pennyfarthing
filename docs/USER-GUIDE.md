@@ -2,7 +2,7 @@
 
 Complete guide to using Pennyfarthing, a Claude Code agent framework with TDD workflow and persona system.
 
-**Version:** 3.0.1
+**Version:** 4.0.0
 
 ---
 
@@ -55,17 +55,20 @@ Strategic planning happens occasionally. Tactical execution (story implementatio
 ### Install via NPM
 
 ```bash
-# Install globally
-npm install -g pennyfarthing
+# Install as dev dependency (recommended)
+npm install --save-dev pennyfarthing
 
-# Or use npx
-npx pennyfarthing init
+# Or install globally (still works, but project install preferred)
+npm install -g pennyfarthing
 ```
 
 ### Initialize a Project
 
 ```bash
 cd your-project
+
+# Install the package first
+npm install --save-dev pennyfarthing
 
 # Initialize with project name
 pennyfarthing init my-project
@@ -74,12 +77,29 @@ pennyfarthing init my-project
 pennyfarthing init
 ```
 
-The init command:
+The init command (v4.0+):
 1. Creates `.claude/` directory structure
-2. Copies core agents, commands, and skills
+2. Symlinks to `node_modules/pennyfarthing/pennyfarthing-dist/` (no file copying)
 3. Creates project-specific directories for customization
 4. Sets up agent sidecars for project knowledge
 5. Configures session hooks for environment setup
+
+### Migrating from 3.x
+
+The v4.0 release changes from copying files to symlinking:
+
+```bash
+# Remove old copied files
+pennyfarthing uninstall
+
+# Install package
+npm install --save-dev pennyfarthing
+
+# Re-initialize with symlinks
+pennyfarthing init
+```
+
+Your `.claude/project/` customizations are preserved.
 
 ### Verify Installation
 
@@ -183,15 +203,14 @@ pennyfarthing init --dry-run          # Preview changes
 pennyfarthing init --skip-templates   # Skip template generation
 ```
 
-**What it creates:**
-- `.claude/pennyfarthing/` - Source files (agents, commands, guides, skills, personas)
+**What it creates (v4.0+):**
+- `.claude/pennyfarthing/` → symlink to `node_modules/pennyfarthing/pennyfarthing-dist/`
 - `.claude/agents/` → symlink to `pennyfarthing/agents/`
 - `.claude/commands/` → symlink to `pennyfarthing/commands/`
 - `.claude/skills/` → symlink to `pennyfarthing/skills/`
 - `.claude/personas/` → symlink to `pennyfarthing/personas/`
 - `.claude/project/` - Project-specific customizations (you edit this)
-- `scripts/hooks/` - Session hooks
-- `scripts/utils/` - Utility scripts
+- `scripts/` → symlink to `pennyfarthing/scripts/`
 - `sprint/` - Sprint tracking
 - `.session/` - Work session files
 
@@ -200,18 +219,18 @@ pennyfarthing init --skip-templates   # Skip template generation
 Update Pennyfarthing to the latest version.
 
 ```bash
-pennyfarthing update
-pennyfarthing update --check          # Just check if update available
-pennyfarthing update --force          # Overwrite modified files
-pennyfarthing update --backup         # Backup modified files first
-pennyfarthing update --dry-run        # Preview changes
+# v4.0+: Use npm to update (symlinks point to node_modules)
+npm update pennyfarthing
+
+# Or check current version
+pennyfarthing version
 ```
 
-**Behavior:**
-- Updates managed files (core/, skills/, personas/, hooks/)
-- Preserves project-specific files (.claude/project/)
-- Warns about locally modified files
-- Merges required hooks into settings.local.json
+**Behavior (v4.0+):**
+- Symlinks automatically point to updated package
+- No file copying or overwriting needed
+- `.claude/project/` customizations always preserved
+- Run `pennyfarthing doctor` after major version updates
 
 ### `pennyfarthing doctor`
 
@@ -252,7 +271,7 @@ pennyfarthing uninstall --dry-run     # Preview what would be removed
 ```
 
 **What gets removed (default):**
-- `.claude/pennyfarthing/` (source files)
+- `.claude/pennyfarthing/` (symlink to node_modules)
 - `.claude/agents/`, `.claude/commands/`, `.claude/skills/`, `.claude/personas/` (symlinks)
 - `.claude/manifest.json`, `.claude/settings.local.json`
 - `scripts/hooks/`, `scripts/utils/`

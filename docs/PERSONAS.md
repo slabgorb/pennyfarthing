@@ -262,7 +262,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Boss
-  pennyfarthing_version: "3.7.0"
+  pennyfarthing_version: "4.0.0"
   created: 2025-01-15
 
 agents:
