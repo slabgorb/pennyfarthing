@@ -76,16 +76,12 @@ agent_name=""
 agent_abbrev=""
 theme_display=""
 
-# Try per-session file first, then fallback to current-agent
+# Only use per-session file - no fallback to shared state (prevents cross-session pollution)
 if [ -n "$session_id" ] && [ -f "$PROJECT_ROOT/.session/agents/${session_id}" ]; then
-    AGENT_FILE="$PROJECT_ROOT/.session/agents/${session_id}"
-else
-    AGENT_FILE="$PROJECT_ROOT/.session/current-agent"
-fi
-if [ -f "$AGENT_FILE" ]; then
-    agent_name=$(cat "$AGENT_FILE")
+    agent_name=$(cat "$PROJECT_ROOT/.session/agents/${session_id}")
     agent_abbrev=$(get_agent_abbrev "$agent_name")
 fi
+# If no session_id or file missing, agent_name stays empty -> shows "---"
 
 # Get theme name from persona config
 config_file=""

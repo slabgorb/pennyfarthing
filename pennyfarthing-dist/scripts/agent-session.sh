@@ -204,8 +204,6 @@ case "$1" in
 
     AGENT_FILE=$(get_agent_file "$session_id")
     echo "$2" > "$AGENT_FILE"
-    # Also write to current-agent for statusline (session IDs don't sync)
-    echo "$2" > "$PROJECT_ROOT/.session/current-agent"
     echo "Session: $session_id -> $2"
 
     # Output persona on start (unless character_voice is disabled)
@@ -223,13 +221,10 @@ case "$1" in
     # Clear the agent file for this session
     AGENT_FILE=$(get_agent_file "$session_id")
     rm -f "$AGENT_FILE" 2>/dev/null
-    # Also clear current-agent marker
-    rm -f "$PROJECT_ROOT/.session/current-agent" 2>/dev/null
     echo "Agent session closed: $session_id"
     ;;
   stop-all)
     rm -rf "$AGENTS_DIR" 2>/dev/null
-    rm -f "$PROJECT_ROOT/.session/current-agent" 2>/dev/null
     echo "All agent sessions closed."
     ;;
   status)
