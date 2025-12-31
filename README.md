@@ -78,6 +78,7 @@ Handoffs are automatic when context usage is below 70%. Above that threshold, ag
 | [Skills](docs/SKILLS.md) | Knowledge domain reference |
 | [Workflows](docs/WORKFLOWS.md) | TDD and workflow guides |
 | [Personas](docs/PERSONAS.md) | Theme customization |
+| [Theme Comparison](docs/THEME-COMPARISON.md) | Personality analysis & Big Five (OCEAN) profiles |
 | [Configuration](docs/CONFIGURATION.md) | Configuration reference |
 | [Permissions](docs/PERMISSIONS.md) | Claude Code permissions setup |
 
@@ -131,6 +132,8 @@ your-project/
 | `shakespeare` | Shakespearean drama (Prospero, Puck, Hamlet) |
 | `jane-austen` | Regency era wit (Mr. Darcy, Elizabeth Bennet) |
 | `control` | Professional, minimal personas |
+
+See [Theme Comparison Guide](docs/THEME-COMPARISON.md) for personality analysis, OCEAN profiles, and help choosing between themes.
 
 Create custom themes with `/theme-maker`.
 
