@@ -781,3 +781,50 @@ sprint_3:
       - Epic 6 (theme wizard): 13/13 points complete
       - Epic 4-continued (carried): 6/6 points complete
       - Sprint 3 fully completed ahead of schedule
+
+# =============================================================================
+# SPRINT 4 - Session Isolation & State Management
+# =============================================================================
+
+sprint_4:
+  number: 4
+  goal: "Fix session isolation and improve state management"
+  planned_start: 2025-01-01
+  status: planning
+
+  bugs:
+    - id: "BUG-1"
+      title: "Statusline shows wrong agent when multiple sessions active"
+      description: |
+        BUG: Any session changing agents pollutes the statusline for ALL sessions.
+
+        Root cause (agent-session.sh lines 207-208):
+        ```bash
+        # Also write to current-agent for statusline (session IDs don't sync)
+        echo "$2" > "$PROJECT_ROOT/.session/current-agent"
+        ```
+
+        Every agent activation writes to shared `.session/current-agent` file.
+        The statusline falls back to this file when per-session file is missing.
+
+        Reproduction:
+        1. Open two Claude Code sessions in same project
+        2. Session A: /sm (statusline shows SM)
+        3. Session B: /dev (statusline shows DEV in BOTH sessions)
+
+        Impact: Confusing UX - statusline shows wrong agent role.
+
+        Fix approach:
+        1. Remove the `current-agent` fallback entirely
+        2. Ensure statusline ONLY reads from per-session file
+        3. If no session_id available, show "---" instead of wrong agent
+        4. Verify session_id is always passed to statusline hook
+      points: 2
+      priority: P1
+      status: backlog
+      repos: pennyfarthing
+      acceptance_criteria:
+        - Each session shows its own agent in statusline
+        - No cross-session pollution when multiple sessions active
+        - Statusline shows "---" if no agent active (not stale data)
+        - Works correctly with worktrees (parallel sessions)
