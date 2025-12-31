@@ -6,13 +6,17 @@
 
 ### Run Before Review
 ```bash
-# Tests must pass
-cd $PROJECT_ROOT/$API_REPO && just test
-cd $PROJECT_ROOT/$UI_REPO && npm test
+# Single-repo: tests and lint
+cd $CLAUDE_PROJECT_DIR && just test
+cd $CLAUDE_PROJECT_DIR && just lint
 
-# Lint must pass
-cd $PROJECT_ROOT/$API_REPO && just lint
-cd $PROJECT_ROOT/$UI_REPO && npm run lint
+# Multi-repo: use repo-utils.sh
+source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
+for repo in $(get_repo_names); do
+    cd $CLAUDE_PROJECT_DIR/$(get_repo_path "$repo")
+    $(get_test_command "$repo")
+    $(get_lint_command "$repo")
+done
 ```
 
 ## Forbidden Patterns

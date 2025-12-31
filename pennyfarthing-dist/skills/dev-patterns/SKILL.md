@@ -32,9 +32,13 @@ cd $CLAUDE_PROJECT_DIR/API && just test
 **Best Practice:** Explicit `cd` with absolute path in every Bash call:
 
 ```bash
-# From anywhere - always works
-cd $CLAUDE_PROJECT_DIR/$API_REPO && git push -u origin feat/branch
-cd $CLAUDE_PROJECT_DIR/$UI_REPO && just test
+# Single-repo: from anywhere - always works
+cd $CLAUDE_PROJECT_DIR && git push -u origin feat/branch
+cd $CLAUDE_PROJECT_DIR && just test
+
+# Multi-repo: use repo-utils.sh for dynamic lookup
+source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
+cd $CLAUDE_PROJECT_DIR/$(get_repo_path "myrepo") && just test
 ```
 
 ### TypeScript Type Imports

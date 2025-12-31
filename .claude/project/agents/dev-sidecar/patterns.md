@@ -4,13 +4,17 @@
 
 ## Absolute Paths
 
-Always use `$PROJECT_ROOT` as base for all file operations:
+Always use `$CLAUDE_PROJECT_DIR` as base for all file operations:
 ```bash
-# Correct
-cd $PROJECT_ROOT/$API_REPO && just test
+# Single-repo: correct
+cd $CLAUDE_PROJECT_DIR && just test
+
+# Multi-repo: use repo-utils.sh
+source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
+cd $CLAUDE_PROJECT_DIR/$(get_repo_path "myrepo") && just test
 
 # Wrong - assumes current directory
-cd API && just test
+cd myrepo && just test
 ```
 
 ## Dev Assessment Format
