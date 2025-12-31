@@ -90,7 +90,7 @@ backlog:
             - Color reflects threshold status
             - Updates during session
 
-    - id: epic-5
+    - id: epic-9
       title: "Skill Discovery & Documentation Hub"
       description: |
         Create interactive skill registry with rich metadata (tags, examples,
@@ -101,7 +101,7 @@ backlog:
       marker: "strategic"
       repos: pennyfarthing
       stories:
-        - id: "5-1"
+        - id: "9-1"
           title: "Create skill registry schema"
           description: |
             Define structured schema for skill metadata.
@@ -116,7 +116,7 @@ backlog:
             - All 12 skills cataloged with metadata
             - Schema validates existing skills
 
-        - id: "5-2"
+        - id: "9-2"
           title: "Build skill search utility"
           description: |
             Script to search skills by tag, name, or description.
@@ -131,7 +131,7 @@ backlog:
             - Supports tag and keyword search
             - JSON output for agent parsing
 
-        - id: "5-3"
+        - id: "9-3"
           title: "Add skill suggestions to agents"
           description: |
             Agents suggest relevant skills based on task context.
@@ -146,7 +146,7 @@ backlog:
             - Suggestions based on task analysis
             - Non-intrusive presentation
 
-        - id: "5-4"
+        - id: "9-4"
           title: "Create skill documentation generator"
           description: |
             Generate unified skill documentation from registry.
@@ -161,7 +161,7 @@ backlog:
             - Includes all skill metadata
             - Examples and usage patterns included
 
-        - id: "5-5"
+        - id: "9-5"
           title: "Add skill usage analytics"
           description: |
             Track which skills are used and how often.
@@ -176,7 +176,7 @@ backlog:
             - Weekly usage report available
             - Identifies unused skills
 
-    - id: epic-6
+    - id: epic-10
       title: "Multi-Agent Choreography Patterns"
       description: |
         Build library of proven coordination patterns (fan-out/fan-in,
@@ -187,7 +187,7 @@ backlog:
       marker: "quick-win"
       repos: pennyfarthing
       stories:
-        - id: "6-1"
+        - id: "10-1"
           title: "Document TDD flow pattern"
           description: |
             Document the SM → TEA → Dev → Reviewer pattern.
@@ -202,7 +202,7 @@ backlog:
             - Includes state diagram
             - Error scenarios covered
 
-        - id: "6-2"
+        - id: "10-2"
           title: "Document helper delegation pattern"
           description: |
             Document Opus → Haiku delegation pattern.
@@ -217,7 +217,7 @@ backlog:
             - Clear delegation criteria
             - Anti-patterns identified
 
-        - id: "6-3"
+        - id: "10-3"
           title: "Create fan-out/fan-in pattern"
           description: |
             Document parallel agent execution pattern.
@@ -232,7 +232,7 @@ backlog:
             - Shows Task tool parallelism
             - Result aggregation covered
 
-        - id: "6-4"
+        - id: "10-4"
           title: "Create approval gates pattern"
           description: |
             Document human-in-the-loop approval pattern.
@@ -348,13 +348,82 @@ backlog:
             - Runs on PR merge
             - Reports published to repo
 
+    - id: epic-8
+      title: "Automatic State Reconciliation"
+      description: |
+        Eliminate drift between git state and sprint YAML by automating
+        state synchronization. Work happens across multiple sessions and
+        PRs get merged outside the workflow - the framework should detect
+        and reconcile this automatically, not rely on users running commands.
+      points: 8
+      priority: P1
+      marker: "high-priority"
+      repos: pennyfarthing
+      stories:
+        - id: "8-1"
+          title: "Git hook for PR merge detection"
+          description: |
+            Post-merge hook that detects when PRs merge to develop/main.
+            - Parse PR title/branch for story ID (e.g., feat/5-2-*)
+            - Auto-update sprint YAML status to 'done'
+            - Add completed date
+            - Works even when merge happens outside workflow
+          points: 3
+          priority: P1
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Hook installed via pennyfarthing setup
+            - Detects story ID from branch name pattern
+            - Updates sprint YAML automatically
+            - Logs reconciliation to .session/
+
+        - id: "8-2"
+          title: "Startup drift detection"
+          description: |
+            On agent activation, detect drift between git and YAML state.
+            - Compare merged PRs vs sprint YAML status
+            - Identify stories marked in-progress but already merged
+            - Auto-fix or warn user before proceeding
+          points: 3
+          priority: P1
+          repos: pennyfarthing
+          acceptance_criteria:
+            - workflow-status-check detects merged-but-not-closed
+            - Clear report of drifted stories
+            - Option to auto-reconcile
+
+        - id: "8-3"
+          title: "Session boundary breadcrumbs"
+          description: |
+            Better markers for cross-session continuity.
+            - Write checkpoint on session end
+            - Include last agent, story, phase, git SHA
+            - Next session loads and validates checkpoint
+          points: 2
+          priority: P2
+          repos: pennyfarthing
+          acceptance_criteria:
+            - .session/checkpoint.yaml written on exit
+            - New session validates against current git state
+            - Warns if state changed between sessions
+
 # Summary
-# Remaining backlog: 47 points across 4 epics
-# Epic 2 (8 pts) + Epic 4 (8 pts) = 16 pts moved to Sprint 2
+# Remaining backlog: 55 points across 5 epics
 #
-# Recommended Sprint 3: Epic 3 (13 pts) - Context Management
-# Recommended Sprint 4: Epic 6 (8 pts) - Choreography Patterns
-# Future: Epic 5 (13 pts), Epic 7 (13 pts) - Strategic
+# Completed Epics (for reference):
+# - Epic 2: Core Agent Framework (Sprint 2)
+# - Epic 4: Configuration & Permissions (Sprint 2)
+# - Epic 5: Theme Commands (Sprint 2)
+# - Epic 6: Interactive Theme Wizard (Sprint 3)
+#
+# Backlog Epics:
+# - Epic 3: Context Management (13 pts) - P1
+# - Epic 7: Benchmarking Suite (13 pts) - P2
+# - Epic 8: State Reconciliation (8 pts) - P1
+# - Epic 9: Skill Discovery (13 pts) - P2
+# - Epic 10: Choreography Patterns (8 pts) - P2
+#
+# Recommended Next: Epic 8 (State Reconciliation) or Epic 3 (Context Management)
 #
 # Priority Legend:
 # - P1: High priority, next sprint candidates
