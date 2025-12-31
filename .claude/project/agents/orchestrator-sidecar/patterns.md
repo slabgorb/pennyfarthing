@@ -114,4 +114,39 @@ d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$
 
 ---
 
+## Pattern: Fix-to-Feature Ratio Monitoring
+
+**Problem:** High fix ratio (>0.5:1) indicates integration gaps or inadequate testing.
+
+**Solution:** Track fix commits vs feature commits per sprint.
+
+| Ratio | Health | Interpretation |
+|-------|--------|----------------|
+| < 0.3:1 | 🟢 Good | Features ship clean |
+| 0.3-0.5:1 | 🟡 Watch | Some reactive work |
+| > 0.5:1 | 🔴 Concern | Too much fixing |
+
+**Sprint 2+3 Result:** 1.1:1 (44 fixes / 40 features) - indicates need for pre-release testing.
+
+---
+
+## Pattern: Story Carryover Tracking
+
+**Problem:** Stories that span sprints lose traceability.
+
+**Solution:** Mark carried stories with `carried_from: sprint-N` in YAML.
+
+```yaml
+- id: "4-2"
+  status: done
+  carried_from: sprint-2  # Preserves history
+```
+
+**Benefits:**
+- Original story IDs preserved
+- Velocity reflects actual completion
+- Easy to see what slipped
+
+---
+
 *Add process patterns discovered during orchestration below*

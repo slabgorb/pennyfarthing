@@ -1,10 +1,10 @@
-import { readdirSync, unlinkSync, symlinkSync } from 'fs';
+import { readdirSync, unlinkSync, symlinkSync, statSync } from 'fs';
 import { join, relative, dirname } from 'path';
 import fsExtra from 'fs-extra';
 
 const { ensureDirSync, removeSync } = fsExtra;
 import { logger } from './logger.js';
-import { pathExists, isSymlink } from './files.js';
+import { pathExists, isSymlink, isDirectory } from './files.js';
 
 /**
  * Compute relative path for symlink from link location to target
@@ -129,9 +129,12 @@ export function createSkillsDirectory(
   }
   logger.created('.claude/skills/ (directory for built-in + user skills)');
 
-  // Symlink each built-in skill
+  // Symlink each built-in skill (skills are directories, not .md files)
   if (pathExists(builtInSkillsPath)) {
-    const builtInSkills = readdirSync(builtInSkillsPath).filter(f => f.endsWith('.md'));
+    const builtInSkills = readdirSync(builtInSkillsPath).filter(f => {
+      const fullPath = join(builtInSkillsPath, f);
+      return isDirectory(fullPath) && !f.startsWith('.');
+    });
     for (const skill of builtInSkills) {
       const linkPath = join(skillsDir, skill);
       const targetPath = join(builtInSkillsPath, skill);
@@ -148,9 +151,12 @@ export function createSkillsDirectory(
     logger.info(`  Linked ${builtInSkills.length} built-in skills`);
   }
 
-  // Symlink user project skills (if any exist)
+  // Symlink user project skills (if any exist) - skills are directories
   if (pathExists(projectSkillsPath)) {
-    const projectSkills = readdirSync(projectSkillsPath).filter(f => f.endsWith('.md'));
+    const projectSkills = readdirSync(projectSkillsPath).filter(f => {
+      const fullPath = join(projectSkillsPath, f);
+      return isDirectory(fullPath) && !f.startsWith('.');
+    });
     let linkedCount = 0;
     for (const skill of projectSkills) {
       const linkPath = join(skillsDir, skill);

@@ -16,7 +16,7 @@ export declare function removeSkill(name: string, options: {
     force?: boolean;
 }): Promise<void>;
 /**
- * Link an existing skill file
+ * Link an existing skill directory
  */
 export declare function linkSkill(name: string): Promise<void>;
 /**

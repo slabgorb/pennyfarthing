@@ -172,6 +172,13 @@ output_persona() {
 
   echo "</persona>"
 
+  # Output user title if defined
+  local user_title=$(yq ".theme.user_title // \"\"" "$theme_file" 2>/dev/null)
+  if [ -n "$user_title" ] && [ "$user_title" != "null" ] && [ "$user_title" != "" ]; then
+    echo ""
+    echo "<user-title>Address the user as: ${user_title}</user-title>"
+  fi
+
   # Output crew manifest so agents know other characters
   echo ""
   echo "<crew theme=\"${theme}\">"
