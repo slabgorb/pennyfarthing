@@ -394,6 +394,7 @@ epics:
     points: 8
     priority: P2
     repos: pennyfarthing
+    jira: https://1898andco.atlassian.net/browse/MSSCI-11233
     stories:
       - id: "5-1"
         title: "Add 'pennyfarthing theme list' command"
@@ -465,6 +466,7 @@ epics:
           - Shows confirmation with new theme preview
           - Validates theme exists before changing
           - Helpful error for unknown themes
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11234
 
       - id: "5-3"
         title: "Add 'pennyfarthing theme create' command"
@@ -498,6 +500,7 @@ epics:
           - Theme file has correct YAML structure
           - Custom themes appear in 'theme list' output
           - User-level themes work across projects
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11235
 
       - id: "5-4"
         title: "Add 'pennyfarthing theme show' command"
@@ -538,6 +541,7 @@ epics:
           - pennyfarthing theme show <name> displays specific theme
           - Shows all agent character mappings
           - Includes style and quote for each agent
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11236
 
 summary:
   total_points: 37

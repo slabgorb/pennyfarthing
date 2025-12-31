@@ -53,17 +53,18 @@ jira issue view MSSCI-10988 --raw
 
 ### Assign an Issue
 
-**IMPORTANT:** The `--project` flag is required even though the issue key contains the project prefix.
+**IMPORTANT:** The `-p/--project` flag is required even though the issue key contains the project prefix.
 
 ```bash
-# Assign to a specific user (by email)
-jira issue assign --project MSSCI MSSCI-10988 "michael.rosenfeld@1898andco.io"
+# Assign to a specific user (by email or display name)
+jira issue assign -pMSSCI MSSCI-10988 "michael.rosenfeld@1898andco.io"
+jira issue assign -pMSSCI MSSCI-10988 "Keith Avery"
 
 # Assign to self
-jira issue assign --project MSSCI MSSCI-10988 "$(jira me)"
+jira issue assign -pMSSCI MSSCI-10988 "$(jira me)"
 
 # Unassign
-jira issue assign --project MSSCI MSSCI-10988 x
+jira issue assign -pMSSCI MSSCI-10988 x
 ```
 
 ### Move Issue Status
@@ -88,15 +89,15 @@ jira issue create \
     --label $PROJECT_LABEL \
     --no-input
 
-# Create a story under an epic
+# Create a story under an epic (--parent links it to the epic)
 jira issue create \
-    --project MSSCI \
-    --type Story \
-    --summary "Story Title" \
-    --body "Description" \
+    -pMSSCI \
+    -tStory \
+    -s"Story Title" \
+    -b"Description" \
     --parent MSSCI-10980 \
-    --priority High \
-    --label $PROJECT_LABEL \
+    -yHigh \
+    -l pennyfarthing \
     --no-input
 ```
 
@@ -170,13 +171,11 @@ jira issue assign --project MSSCI MSSCI-10988 "user@email.com"
 
 ### "User not found"
 
-Use the exact email address from Jira, not display name:
+Use either the exact email address or exact display name from Jira:
 ```bash
-# WRONG
-jira issue assign --project MSSCI MSSCI-10988 "Michael Rosenfeld"
-
-# CORRECT
-jira issue assign --project MSSCI MSSCI-10988 "michael.rosenfeld@1898andco.io"
+# Both work - display name or email
+jira issue assign -pMSSCI MSSCI-10988 "Keith Avery"
+jira issue assign -pMSSCI MSSCI-10988 "keith.avery@1898andco.io"
 ```
 
 ### Interactive prompts blocking scripts
