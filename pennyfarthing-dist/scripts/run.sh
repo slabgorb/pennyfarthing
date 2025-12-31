@@ -36,8 +36,10 @@ fi
 SCRIPT_NAME="$1"
 shift
 
-# Handle different script locations (namespaced under .claude/pennyfarthing/scripts/)
-SCRIPTS_DIR="$PROJECT_ROOT/.claude/pennyfarthing/scripts"
+# Handle different script locations
+# In npm-installed projects: .claude/scripts -> node_modules/pennyfarthing/pennyfarthing-dist/scripts
+# In copy mode: .claude/scripts -> pennyfarthing/scripts
+SCRIPTS_DIR="$PROJECT_ROOT/.claude/scripts"
 
 if [[ -f "$SCRIPTS_DIR/$SCRIPT_NAME" ]]; then
     exec "$SCRIPTS_DIR/$SCRIPT_NAME" "$@"

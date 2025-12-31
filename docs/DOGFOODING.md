@@ -127,6 +127,26 @@ git add pennyfarthing-dist/agents/new-agent.md
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+## Known Path Divergences
+
+While symlinks eliminate most sync issues, there's one key architectural difference between dogfooding and npm installation:
+
+```
+DOGFOODING (pennyfarthing repo)          NPM INSTALLATION (other projects)
+─────────────────────────────────        ────────────────────────────────
+.claude/pennyfarthing/                   .claude/scripts/
+  → ../pennyfarthing-dist/                 → node_modules/pennyfarthing/
+                                               pennyfarthing-dist/scripts/
+.claude/pennyfarthing/scripts/
+  (accessed through symlink chain)        (direct symlink to scripts/)
+```
+
+**Important:** Scripts that locate other scripts must use `.claude/scripts/` (the canonical path after init), NOT `.claude/pennyfarthing/scripts/` (dogfooding-specific).
+
+### 2024-12-31: run.sh Path Fix
+
+`run.sh` was hardcoded to look for scripts at `.claude/pennyfarthing/scripts/` which worked in dogfooding but failed in npm-installed projects where scripts live at `.claude/scripts/`. Fixed by updating `run.sh` to use `.claude/scripts/` consistently.
+
 ## Historical Note
 
 Prior to v4.0, `.claude/pennyfarthing/` was a copy of `pennyfarthing-dist/`, requiring manual synchronization. This led to "file not found" errors when scripts were added to source but not copied to the local install. The v4.0 symlink architecture eliminates this entire class of bugs.
