@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, unlinkSync, symlinkSync } from 'fs';
+import { readFileSync, writeFileSync, unlinkSync, symlinkSync, readdirSync } from 'fs';
 import { join, relative, dirname } from 'path';
 import fsExtra from 'fs-extra';
 const { copySync, ensureDirSync, removeSync } = fsExtra;
@@ -28,6 +28,89 @@ function findNodeModulesPath(projectRoot) {
  */
 function computeRelativeSymlink(linkPath, targetPath) {
     return relative(dirname(linkPath), targetPath);
+}
+/**
+ * Create commands directory with individual symlinks to each command file.
+ * This allows users to add their own commands alongside built-in ones.
+ */
+function createCommandsDirectory(projectRoot, builtInCommandsPath, projectCommandsPath, dryRun) {
+    const commandsDir = join(projectRoot, '.claude/commands');
+    // Remove existing symlink or directory
+    if (pathExists(commandsDir) || isSymlink(commandsDir)) {
+        if (!dryRun) {
+            try {
+                unlinkSync(commandsDir);
+            }
+            catch {
+                try {
+                    removeSync(commandsDir);
+                }
+                catch {
+                    // Ignore
+                }
+            }
+        }
+    }
+    // Create commands directory
+    if (!dryRun) {
+        ensureDirSync(commandsDir);
+    }
+    logger.created('.claude/commands/ (directory for built-in + user commands)');
+    // Symlink each built-in command
+    if (pathExists(builtInCommandsPath)) {
+        const builtInCommands = readdirSync(builtInCommandsPath).filter(f => f.endsWith('.md'));
+        for (const cmd of builtInCommands) {
+            const linkPath = join(commandsDir, cmd);
+            const targetPath = join(builtInCommandsPath, cmd);
+            const relativeTarget = computeRelativeSymlink(linkPath, targetPath);
+            if (!dryRun) {
+                try {
+                    symlinkSync(relativeTarget, linkPath);
+                }
+                catch (e) {
+                    logger.warning(`Could not create symlink for ${cmd}: ${e}`);
+                }
+            }
+        }
+        logger.info(`  Linked ${builtInCommands.length} built-in commands`);
+    }
+    // Symlink user project commands (if any exist)
+    if (pathExists(projectCommandsPath)) {
+        const projectCommands = readdirSync(projectCommandsPath).filter(f => f.endsWith('.md'));
+        let linkedCount = 0;
+        for (const cmd of projectCommands) {
+            const linkPath = join(commandsDir, cmd);
+            if (pathExists(linkPath)) {
+                logger.warning(`  Skipping ${cmd} - would override built-in command`);
+                continue;
+            }
+            const targetPath = join(projectCommandsPath, cmd);
+            const relativeTarget = computeRelativeSymlink(linkPath, targetPath);
+            if (!dryRun) {
+                try {
+                    symlinkSync(relativeTarget, linkPath);
+                    linkedCount++;
+                }
+                catch (e) {
+                    logger.warning(`Could not create symlink for ${cmd}: ${e}`);
+                }
+            }
+            else {
+                linkedCount++;
+            }
+        }
+        if (linkedCount > 0) {
+            logger.info(`  Linked ${linkedCount} user commands from project/commands/`);
+        }
+    }
+}
+/**
+ * Check if commands directory needs migration from single symlink to directory
+ */
+function needsCommandsMigration(projectRoot) {
+    const commandsPath = join(projectRoot, '.claude/commands');
+    // Needs migration if it's a symlink (old style) instead of a directory
+    return isSymlink(commandsPath);
 }
 export async function updateCommand(options) {
     const projectRoot = process.cwd();
@@ -124,10 +207,17 @@ async function migrateToSymlinkMode(projectRoot, nodeModulesPath, projectName, v
         }
         logger.info('Removed .claude/pennyfarthing/ directory');
     }
-    // 2. Remove old symlinks and create new ones pointing to node_modules
+    // 2. Ensure project/commands directory exists
+    const projectCommandsDir = join(projectRoot, '.claude/project/commands');
+    if (!pathExists(projectCommandsDir)) {
+        if (!dryRun) {
+            ensureDirSync(projectCommandsDir);
+        }
+        logger.created('.claude/project/commands/ (for user custom commands)');
+    }
+    // 3. Remove old symlinks and create new ones pointing to node_modules (except commands)
     const symlinks = [
         { name: 'agents', link: '.claude/agents' },
-        { name: 'commands', link: '.claude/commands' },
         { name: 'guides', link: '.claude/guides' },
         { name: 'skills', link: '.claude/skills' },
         { name: 'personas', link: '.claude/personas' },
@@ -164,10 +254,13 @@ async function migrateToSymlinkMode(projectRoot, nodeModulesPath, projectName, v
             logger.created(`${link} -> ${relativeTarget}`);
         }
     }
-    // 3. Update settings.local.json paths
+    // 4. Create commands directory with individual symlinks (allows user commands)
+    const builtInCommandsPath = join(nodeModulesPath, 'commands');
+    createCommandsDirectory(projectRoot, builtInCommandsPath, projectCommandsDir, dryRun || false);
+    // 5. Update settings.local.json paths
     const assetsPath = getAssetsPath();
     await mergeSettingsHooks(projectRoot, assetsPath, { dryRun });
-    // 4. Write new manifest
+    // 6. Write new manifest
     logger.newline();
     logger.info('Updating manifest...');
     const nodeModulesRelPath = relative(projectRoot, nodeModulesPath);
@@ -188,9 +281,9 @@ async function updateSymlinkMode(projectRoot, nodeModulesPath, manifest, version
     const dryRun = options.dryRun;
     logger.newline();
     logger.info('Verifying symlinks...');
+    // Verify standard symlinks (not commands - handled separately)
     const symlinks = [
         { name: 'agents', link: '.claude/agents' },
-        { name: 'commands', link: '.claude/commands' },
         { name: 'guides', link: '.claude/guides' },
         { name: 'skills', link: '.claude/skills' },
         { name: 'personas', link: '.claude/personas' },
@@ -218,6 +311,25 @@ async function updateSymlinkMode(projectRoot, nodeModulesPath, manifest, version
         else {
             // Verify symlink points to correct location
             logger.info(`  ✓ ${link}`);
+        }
+    }
+    // Handle commands directory - migrate from symlink to directory if needed
+    const projectCommandsDir = join(projectRoot, '.claude/project/commands');
+    if (!pathExists(projectCommandsDir)) {
+        if (!dryRun) {
+            ensureDirSync(projectCommandsDir);
+        }
+        logger.created('.claude/project/commands/ (for user custom commands)');
+    }
+    if (needsCommandsMigration(projectRoot)) {
+        logger.info('Migrating commands to new directory structure...');
+        const builtInCommandsPath = join(nodeModulesPath, 'commands');
+        createCommandsDirectory(projectRoot, builtInCommandsPath, projectCommandsDir, dryRun || false);
+    }
+    else {
+        const commandsDir = join(projectRoot, '.claude/commands');
+        if (isDirectory(commandsDir)) {
+            logger.info(`  ✓ .claude/commands/ (directory with individual symlinks)`);
         }
     }
     // Update settings
