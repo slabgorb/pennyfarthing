@@ -847,7 +847,9 @@ sprint_4:
         5. Add integration test for multi-session scenario
       points: 3
       priority: P1
-      status: backlog
+      status: done
+      completed: 2025-12-31
+      commit: 8baf46b
       repos: pennyfarthing
       acceptance_criteria:
         - Each session shows its own agent in statusline
