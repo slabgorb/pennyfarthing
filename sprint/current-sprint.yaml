@@ -798,28 +798,54 @@ sprint_4:
       description: |
         BUG: Any session changing agents pollutes the statusline for ALL sessions.
 
+        ## The Statusline Saga (29 commits, 15 fixes - 52% bug fix rate)
+
+        This is the most troublesome script in the app. Key historical issues:
+
+        ### 1. PROJECT_ROOT Detection (5+ fixes)
+        - c4fe162: Use script location instead of workspace.current_dir
+        - 0ddf722: Fix after v2.2.0 restructure (dirname twice vs once)
+        - e226b26: DRY refactor into find-root.sh utility
+        - 0261fa3: Standardize across all scripts
+        - a8a4d80: Fix for agent-session.sh specifically
+
+        ### 2. Agent File Cleanup Timing (flip-flopped 3 times)
+        - 2f904f1: "preserve agent file on stop to fix statusline flakiness"
+        - a209f8a: "clear current-agent marker on session and agent exit"
+        - 93fcbed: "move agent cleanup from Stop to SessionStart hook"
+        Each fix contradicted the previous one.
+
+        ### 3. Missing SESSION_ID (cff861f)
+        - Generate UUID fallback when SESSION_ID not set
+        - Created the current-agent workaround
+
+        ### 4. Current Issue: Shared State (current-agent file)
         Root cause (agent-session.sh lines 207-208):
         ```bash
         # Also write to current-agent for statusline (session IDs don't sync)
         echo "$2" > "$PROJECT_ROOT/.session/current-agent"
         ```
+        This was added as a workaround when session IDs weren't syncing.
+        Now it causes cross-session pollution.
 
-        Every agent activation writes to shared `.session/current-agent` file.
-        The statusline falls back to this file when per-session file is missing.
-
-        Reproduction:
+        ## Reproduction
         1. Open two Claude Code sessions in same project
         2. Session A: /sm (statusline shows SM)
         3. Session B: /dev (statusline shows DEV in BOTH sessions)
 
-        Impact: Confusing UX - statusline shows wrong agent role.
+        ## Root Cause Analysis
+        The fundamental problem: statusline.sh and agent-session.sh have
+        different views of session identity. The statusline gets session_id
+        from Claude's JSON input, but agent-session.sh generates its own
+        or uses SESSION_ID env var. These don't always match.
 
-        Fix approach:
-        1. Remove the `current-agent` fallback entirely
-        2. Ensure statusline ONLY reads from per-session file
-        3. If no session_id available, show "---" instead of wrong agent
-        4. Verify session_id is always passed to statusline hook
-      points: 2
+        ## Fix Approach (be careful - this has been "fixed" many times)
+        1. Remove `current-agent` fallback entirely from statusline.sh
+        2. Remove writes to `current-agent` from agent-session.sh
+        3. If statusline has no session_id, show "---" (not stale data)
+        4. Document that per-session files are the ONLY source of truth
+        5. Add integration test for multi-session scenario
+      points: 3
       priority: P1
       status: backlog
       repos: pennyfarthing
@@ -828,3 +854,8 @@ sprint_4:
         - No cross-session pollution when multiple sessions active
         - Statusline shows "---" if no agent active (not stale data)
         - Works correctly with worktrees (parallel sessions)
+        - Integration test proves multi-session isolation
+      notes: |
+        WARNING: This script has a 52% bug fix rate. Any changes should be
+        minimal and tested thoroughly. Consider adding regression tests
+        before making changes.
