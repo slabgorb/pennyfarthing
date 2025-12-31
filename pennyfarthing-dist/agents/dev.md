@@ -104,8 +104,8 @@ Task tool:
 6. Repeat for remaining tests
 7. Commit and push:
    ```bash
-   cd $CLAUDE_PROJECT_DIR/$API_REPO && git add . && git commit -m "feat(X-Y): implement API"
-   cd $CLAUDE_PROJECT_DIR/$UI_REPO && git push -u origin $(git branch --show-current)
+   git add . && git commit -m "feat(X-Y): implement feature"
+   git push -u origin $(git branch --show-current)
    ```
 8. Create PRs targeting `develop`:
    ```bash

@@ -33,8 +33,8 @@ RIGHT: Load CLAUDE.md + current task context, explore as needed
 1. **Store references, not content:**
    ```
    - Test patterns: See .claude/skills/testing/SKILL.md
-   - API handlers: $API_REPO/internal/handlers/
-   - UI components: $UI_REPO/src/components/
+   - API handlers: internal/handlers/ (or use repos.yaml for multi-repo)
+   - UI components: src/components/
    ```
 
 2. **Load on demand:**

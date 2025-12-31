@@ -70,42 +70,38 @@ prompt: |
   - Context: PR review pre-flight for Story {STORY_ID}
   - Run ID: {STORY_ID}-review
 
-  ## Execute Tests (with unique RUN_ID)
+  ## Execute Tests and Lints
 
-  ### For UI Tests
+  Use repo-utils.sh for dynamic repo handling:
   ```bash
+  source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
   RUN_ID="{STORY_ID}-review"
-  cd $CLAUDE_PROJECT_DIR/$UI_REPO
-  npm run test -- --run 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/test-results-ui-${RUN_ID}.log
-  ```
 
-  ### For API Tests
-  ```bash
-  RUN_ID="{STORY_ID}-review"
-  cd $CLAUDE_PROJECT_DIR
-  just test-api 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/test-results-api-${RUN_ID}.log
-  ```
+  for repo in $(get_repo_names); do
+      repo_path=$(get_repo_path "$repo")
+      test_cmd=$(get_test_command "$repo")
+      lint_cmd=$(get_lint_command "$repo")
 
-  ## Run Linter
+      cd $CLAUDE_PROJECT_DIR/$repo_path
 
-  ### For UI
-  ```bash
-  RUN_ID="{STORY_ID}-review"
-  cd $CLAUDE_PROJECT_DIR/$UI_REPO
-  npm run lint 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/lint-results-ui-${RUN_ID}.log
-  ```
+      # Run tests
+      if [[ -n "$test_cmd" ]]; then
+          $test_cmd 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/test-results-${repo}-${RUN_ID}.log
+      fi
 
-  ### For API
-  ```bash
-  RUN_ID="{STORY_ID}-review"
-  cd $CLAUDE_PROJECT_DIR/$API_REPO
-  golangci-lint run 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/lint-results-api-${RUN_ID}.log
+      # Run linter
+      if [[ -n "$lint_cmd" ]]; then
+          $lint_cmd 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/lint-results-${repo}-${RUN_ID}.log
+      fi
+  done
   ```
 
   ## Check for Forbidden Skip Patterns
   ```bash
-  grep -r "t.Skip" $CLAUDE_PROJECT_DIR/$API_REPO --include="*_test.go" | grep -v "LocalStack\|not available" | head -10
-  grep -r "it.skip\|describe.skip\|test.skip" $CLAUDE_PROJECT_DIR/$UI_REPO/src --include="*.test.*" | head -10
+  source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
+  for repo in $(get_repo_names); do
+      check_skip_violations "$repo"
+  done
   ```
 
   ## Output structured results per testing-runner.md format

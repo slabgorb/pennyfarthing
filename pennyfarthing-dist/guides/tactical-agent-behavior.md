@@ -32,28 +32,23 @@ The Bash tool maintains a persistent working directory across calls, but relativ
 2. **Always use absolute paths for cd:**
    ```bash
    # WRONG - relative cd fails if you're already somewhere else
-   cd API && just test
+   cd myrepo && just test
 
    # CORRECT - absolute path always works
-   cd $CLAUDE_PROJECT_DIR/$API_REPO && just test
+   cd $CLAUDE_PROJECT_DIR && just test
    ```
 
 3. **Best Practice - Explicit cd in every Bash call that needs a specific directory:**
    ```bash
-   # Push API branch (from anywhere)
-   cd $CLAUDE_PROJECT_DIR/$API_REPO && git push -u origin feat/branch
+   # Single repo project
+   cd $CLAUDE_PROJECT_DIR && git push -u origin feat/branch
+   cd $CLAUDE_PROJECT_DIR && just test
 
-   # Push UI branch (from anywhere)
-   cd $CLAUDE_PROJECT_DIR/$UI_REPO && git push -u origin feat/branch
-
-   # Test API (from anywhere)
-   cd $CLAUDE_PROJECT_DIR/$API_REPO && just test
-
-   # Run tests in both repos (parallel calls)
-   # Call 1:
-   cd $CLAUDE_PROJECT_DIR/$API_REPO && just test
-   # Call 2:
-   cd $CLAUDE_PROJECT_DIR/$UI_REPO && npm test
+   # Multi-repo project (use repo-utils.sh)
+   source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
+   for repo in $(get_repo_names); do
+       cd $CLAUDE_PROJECT_DIR/$(get_repo_path "$repo") && $(get_test_command "$repo")
+   done
    ```
 
 ### Why This Works
@@ -258,10 +253,15 @@ Read .claude/skills/dev-patterns/SKILL.md for common patterns and fixes.
 Same pattern - use absolute paths:
 ```bash
 # WRONG
-cd worktrees/11-2/API && just test
+cd worktrees/11-2/myrepo && just test
 
-# CORRECT
-cd $CLAUDE_PROJECT_DIR/worktrees/11-2/$API_REPO && just test
+# CORRECT (single-repo)
+cd $CLAUDE_PROJECT_DIR/worktrees/11-2 && just test
+
+# CORRECT (multi-repo with dynamic lookup)
+WORKTREE="$CLAUDE_PROJECT_DIR/worktrees/11-2"
+source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
+cd $WORKTREE/$(get_repo_path "myrepo") && just test
 ```
 
 ---
@@ -678,9 +678,14 @@ When working in a worktree, read context from the session file:
 # Get worktree path from session file
 WORKTREE_PATH=$(grep "^path:" "$SESSION_FILE" | cut -d' ' -f2)
 
-# Use worktree path for all commands
-cd $WORKTREE_PATH/$API_REPO && just test
-cd $WORKTREE_PATH/$UI_REPO && npm test
+# Use worktree path for all commands (single-repo)
+cd $WORKTREE_PATH && just test
+
+# Multi-repo: iterate with repo-utils
+source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
+for repo in $(get_repo_names); do
+    cd $WORKTREE_PATH/$(get_repo_path "$repo") && $(get_test_command "$repo")
+done
 ```
 
 **Ports are in the session file:**
@@ -822,18 +827,22 @@ Run `/{next-agent}` in a new conversation to continue.
 
 ### Pre-flight Check Commands
 
-**For UI repo:**
+**Single-repo project:**
 ```bash
-cd $CLAUDE_PROJECT_DIR/$UI_REPO && npm test -- --run
-cd $CLAUDE_PROJECT_DIR/$UI_REPO && git status --porcelain
-cd $CLAUDE_PROJECT_DIR/$UI_REPO && git log @{u}..HEAD --oneline
-cd $CLAUDE_PROJECT_DIR/$UI_REPO && gh pr view --json url -q .url
+cd $CLAUDE_PROJECT_DIR && just test
+cd $CLAUDE_PROJECT_DIR && git status --porcelain
+cd $CLAUDE_PROJECT_DIR && git log @{u}..HEAD --oneline
+cd $CLAUDE_PROJECT_DIR && gh pr view --json url -q .url
 ```
 
-**For API repo:**
+**Multi-repo project (use repo-utils.sh):**
 ```bash
-cd $CLAUDE_PROJECT_DIR/$API_REPO && just test
-cd $CLAUDE_PROJECT_DIR/$API_REPO && git status --porcelain
+source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
+for repo in $(get_repo_names); do
+    repo_path=$(get_repo_path "$repo")
+    cd $CLAUDE_PROJECT_DIR/$repo_path && $(get_test_command "$repo")
+    cd $CLAUDE_PROJECT_DIR/$repo_path && git status --porcelain
+done
 ```
 
 ## Subagent Error Handling (Shared Protocol)
