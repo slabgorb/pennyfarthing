@@ -1,1 +1,0 @@
-/Users/keithavery/Projects/thunderdome/.claude/project/commands/establish-baseline.md
