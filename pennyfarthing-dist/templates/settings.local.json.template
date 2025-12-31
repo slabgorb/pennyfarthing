@@ -43,9 +43,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": {
-          "tool_name": "Edit|Write"
-        },
+        "matcher": "Edit|Write",
         "hooks": [
           {
             "type": "command",

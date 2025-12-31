@@ -60,9 +60,7 @@ Hooks are configured in `.claude/settings.local.json`:
     ],
     "PreToolUse": [
       {
-        "matcher": {
-          "tool_name": "Edit|Write"
-        },
+        "matcher": "Edit|Write",
         "hooks": [
           {
             "type": "command",
@@ -79,9 +77,7 @@ Hooks are configured in `.claude/settings.local.json`:
 
 ```json
 {
-  "matcher": {
-    "tool_name": "RegexPattern"  // Optional: filter by tool name
-  },
+  "matcher": "ToolNameRegex",  // Optional: regex to filter by tool name
   "hooks": [
     {
       "type": "command",
@@ -91,11 +87,12 @@ Hooks are configured in `.claude/settings.local.json`:
 }
 ```
 
-### Matcher Options
+### Matcher Format
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `tool_name` | regex | Match specific tools (e.g., `"Edit\|Write"`) |
+The `matcher` field is a regex string that matches tool names:
+- `"Edit|Write"` - Match Edit or Write tools
+- `"Bash"` - Match Bash tool only
+- Omit matcher to run on all tool uses
 
 ## Hook Script Contract
 
@@ -157,7 +154,7 @@ chmod +x .claude/project/hooks/my-custom-hook.sh
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": { "tool_name": "Bash" },
+        "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
