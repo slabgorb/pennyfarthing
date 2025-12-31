@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [4.0.5] - 2025-12-31
+
+### Fixed
+- **Session Isolation (BUG-1)** - Eliminated shared `.session/current-agent` file that caused cross-session pollution. Each Claude Code session now only sees its own agent in the statusline. This script had a 52% bug fix rate (15 fixes out of 29 commits) - this fix removes the root cause rather than adding another workaround.
+
+### Changed
+- `statusline.sh` - Only reads per-session agent file, no fallback to shared state
+- `agent-session.sh` - Removed all writes to `current-agent`
+- `session-start.sh` - Removed aggressive cleanup that wiped all agent files on session start
+
+---
+
 ## [4.0.4] - 2025-12-31
 
 ### Fixed
