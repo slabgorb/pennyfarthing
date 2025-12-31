@@ -1,8 +1,8 @@
-import { existsSync, readdirSync, readlinkSync, unlinkSync, symlinkSync, writeFileSync } from 'fs';
+import { existsSync, readdirSync, readlinkSync, unlinkSync, symlinkSync, writeFileSync, mkdirSync } from 'fs';
 import { join, relative, dirname, basename } from 'path';
 import fsExtra from 'fs-extra';
 
-const { ensureDirSync } = fsExtra;
+const { ensureDirSync, removeSync } = fsExtra;
 import { logger } from '../utils/logger.js';
 import { confirm } from '../utils/prompts.js';
 import { pathExists, isSymlink, isDirectory } from '../utils/files.js';
@@ -64,25 +64,28 @@ export async function listSkill(): Promise<void> {
     return;
   }
 
-  const files = readdirSync(skillsDir).filter(f => f.endsWith('.md')).sort();
+  // Skills are directories, not .md files
+  const entries = readdirSync(skillsDir).filter(f => {
+    const fullPath = join(skillsDir, f);
+    return (isSymlink(fullPath) || isDirectory(fullPath)) && !f.startsWith('.');
+  }).sort();
 
   const builtIn: string[] = [];
   const user: string[] = [];
   const local: string[] = [];
 
-  for (const file of files) {
-    const name = file.replace('.md', '');
-    const source = getSkillSource(skillsDir, file);
+  for (const entry of entries) {
+    const source = getSkillSource(skillsDir, entry);
 
     switch (source.type) {
       case 'built-in':
-        builtIn.push(name);
+        builtIn.push(entry);
         break;
       case 'user':
-        user.push(name);
+        user.push(entry);
         break;
       case 'local':
-        local.push(name);
+        local.push(entry);
         break;
     }
   }
@@ -152,16 +155,16 @@ export async function addSkill(name: string, options: { template?: string; edit?
     process.exit(1);
   }
 
-  // Check if skill already exists
-  const linkPath = join(skillsDir, `${name}.md`);
+  // Check if skill already exists (skills are directories)
+  const linkPath = join(skillsDir, name);
   if (pathExists(linkPath)) {
-    const source = getSkillSource(skillsDir, `${name}.md`);
+    const source = getSkillSource(skillsDir, name);
     if (source.type === 'built-in') {
       logger.error(`'${name}' is a built-in skill and cannot be overridden.`);
       logger.info('Choose a different name for your custom skill.');
     } else {
       logger.error(`Skill '${name}' already exists.`);
-      logger.info(`Edit it at: .claude/project/skills/${name}.md`);
+      logger.info(`Edit it at: .claude/project/skills/${name}/SKILL.md`);
     }
     process.exit(1);
   }
@@ -172,8 +175,9 @@ export async function addSkill(name: string, options: { template?: string; edit?
     logger.created('.claude/project/skills/');
   }
 
-  // Create the skill file
-  const sourcePath = join(projectSkillsDir, `${name}.md`);
+  // Create the skill directory
+  const skillDir = join(projectSkillsDir, name);
+  const skillFilePath = join(skillDir, 'SKILL.md');
 
   const template = options.template || 'default';
   let content: string;
@@ -262,24 +266,26 @@ Add your skill content here.
 `;
   }
 
-  writeFileSync(sourcePath, content, 'utf8');
-  logger.created(`.claude/project/skills/${name}.md`);
+  // Create skill directory and write SKILL.md
+  ensureDirSync(skillDir);
+  writeFileSync(skillFilePath, content, 'utf8');
+  logger.created(`.claude/project/skills/${name}/SKILL.md`);
 
-  // Create symlink in skills directory
-  const relativeTarget = computeRelativeSymlink(linkPath, sourcePath);
+  // Create symlink in skills directory (points to the directory)
+  const relativeTarget = computeRelativeSymlink(linkPath, skillDir);
   symlinkSync(relativeTarget, linkPath);
-  logger.created(`.claude/skills/${name}.md -> ${relativeTarget}`);
+  logger.created(`.claude/skills/${name} -> ${relativeTarget}`);
 
   logger.newline();
   logger.success(`Skill '/${name}' created!`);
   logger.newline();
   logger.info('Next steps:');
-  logger.info(`  1. Edit .claude/project/skills/${name}.md to customize`);
+  logger.info(`  1. Edit .claude/project/skills/${name}/SKILL.md to customize`);
   logger.info(`  2. Use /${name} in Claude Code`);
 
   if (options.edit) {
     logger.newline();
-    logger.info(`Opening ${sourcePath} in editor...`);
+    logger.info(`Opening ${skillFilePath} in editor...`);
     // Could open in $EDITOR here if desired
   }
 }
@@ -298,15 +304,16 @@ export async function removeSkill(name: string, options: { force?: boolean }): P
   const skillsDir = join(projectRoot, '.claude/skills');
   const projectSkillsDir = join(projectRoot, '.claude/project/skills');
 
-  const linkPath = join(skillsDir, `${name}.md`);
-  const sourcePath = join(projectSkillsDir, `${name}.md`);
+  // Skills are directories
+  const linkPath = join(skillsDir, name);
+  const sourceDir = join(projectSkillsDir, name);
 
   if (!pathExists(linkPath)) {
     logger.error(`Skill '${name}' not found.`);
     process.exit(1);
   }
 
-  const source = getSkillSource(skillsDir, `${name}.md`);
+  const source = getSkillSource(skillsDir, name);
 
   if (source.type === 'built-in') {
     logger.error(`'${name}' is a built-in skill and cannot be removed.`);
@@ -326,17 +333,17 @@ export async function removeSkill(name: string, options: { force?: boolean }): P
   // Remove symlink
   if (isSymlink(linkPath)) {
     unlinkSync(linkPath);
-    logger.info(`Removed symlink: .claude/skills/${name}.md`);
+    logger.info(`Removed symlink: .claude/skills/${name}`);
   }
 
-  // Ask about source file
-  if (pathExists(sourcePath)) {
-    const removeSource = options.force || await confirm(`Also delete source file .claude/project/skills/${name}.md?`);
+  // Ask about source directory
+  if (pathExists(sourceDir)) {
+    const removeSource = options.force || await confirm(`Also delete source directory .claude/project/skills/${name}/?`);
     if (removeSource) {
-      unlinkSync(sourcePath);
-      logger.info(`Removed source: .claude/project/skills/${name}.md`);
+      removeSync(sourceDir);
+      logger.info(`Removed source: .claude/project/skills/${name}/`);
     } else {
-      logger.info(`Kept source file: .claude/project/skills/${name}.md`);
+      logger.info(`Kept source directory: .claude/project/skills/${name}/`);
       logger.info('(You can restore with: pennyfarthing skill link ' + name + ')');
     }
   }
@@ -346,7 +353,7 @@ export async function removeSkill(name: string, options: { force?: boolean }): P
 }
 
 /**
- * Link an existing skill file
+ * Link an existing skill directory
  */
 export async function linkSkill(name: string): Promise<void> {
   const projectRoot = process.cwd();
@@ -359,19 +366,20 @@ export async function linkSkill(name: string): Promise<void> {
   const skillsDir = join(projectRoot, '.claude/skills');
   const projectSkillsDir = join(projectRoot, '.claude/project/skills');
 
-  const linkPath = join(skillsDir, `${name}.md`);
-  const sourcePath = join(projectSkillsDir, `${name}.md`);
+  // Skills are directories
+  const linkPath = join(skillsDir, name);
+  const sourceDir = join(projectSkillsDir, name);
 
-  // Check source exists
-  if (!pathExists(sourcePath)) {
-    logger.error(`Source file not found: .claude/project/skills/${name}.md`);
-    logger.info('Create the skill file first, then run this command to link it.');
+  // Check source exists (must be a directory)
+  if (!pathExists(sourceDir) || !isDirectory(sourceDir)) {
+    logger.error(`Source directory not found: .claude/project/skills/${name}/`);
+    logger.info('Create the skill directory first (with SKILL.md inside), then run this command to link it.');
     process.exit(1);
   }
 
   // Check if already linked
   if (pathExists(linkPath)) {
-    const source = getSkillSource(skillsDir, `${name}.md`);
+    const source = getSkillSource(skillsDir, name);
     if (source.type === 'built-in') {
       logger.error(`'${name}' conflicts with a built-in skill.`);
       logger.info('Rename your skill to avoid the conflict.');
@@ -382,10 +390,10 @@ export async function linkSkill(name: string): Promise<void> {
   }
 
   // Create symlink
-  const relativeTarget = computeRelativeSymlink(linkPath, sourcePath);
+  const relativeTarget = computeRelativeSymlink(linkPath, sourceDir);
   symlinkSync(relativeTarget, linkPath);
 
-  logger.success(`Linked '/${name}' -> .claude/project/skills/${name}.md`);
+  logger.success(`Linked '/${name}' -> .claude/project/skills/${name}/`);
 }
 
 /**
@@ -420,18 +428,20 @@ export async function syncSkill(options: { dryRun?: boolean }): Promise<void> {
     logger.info('Dry run mode - no changes will be made');
   }
 
-  // Find user skills that need linking
-  const userSkills = readdirSync(projectSkillsDir).filter(f => f.endsWith('.md'));
+  // Find user skills that need linking (skills are directories)
+  const userSkills = readdirSync(projectSkillsDir).filter(f => {
+    const fullPath = join(projectSkillsDir, f);
+    return isDirectory(fullPath) && !f.startsWith('.');
+  });
   let linked = 0;
   let skipped = 0;
 
-  for (const file of userSkills) {
-    const name = file.replace('.md', '');
-    const linkPath = join(skillsDir, file);
-    const sourcePath = join(projectSkillsDir, file);
+  for (const name of userSkills) {
+    const linkPath = join(skillsDir, name);
+    const sourceDir = join(projectSkillsDir, name);
 
     if (pathExists(linkPath)) {
-      const source = getSkillSource(skillsDir, file);
+      const source = getSkillSource(skillsDir, name);
       if (source.type === 'built-in') {
         logger.warning(`  Skipping ${name} - conflicts with built-in skill`);
         skipped++;
@@ -442,7 +452,7 @@ export async function syncSkill(options: { dryRun?: boolean }): Promise<void> {
     }
 
     // Create symlink
-    const relativeTarget = computeRelativeSymlink(linkPath, sourcePath);
+    const relativeTarget = computeRelativeSymlink(linkPath, sourceDir);
     if (!options.dryRun) {
       symlinkSync(relativeTarget, linkPath);
     }

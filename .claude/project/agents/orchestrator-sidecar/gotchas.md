@@ -48,4 +48,25 @@
 
 ---
 
+## Version Churn Gotcha
+
+**Problem:** Sprint 2+3 had 14 releases in 8 days (1.75/day)
+**Impact:** User update fatigue, changelog noise, npm publish limits
+**Root Cause:** Single-fix patches released immediately after discovery
+**Solution:**
+- Bundle related fixes into single releases
+- Use RC process for larger changes
+- Target <3 releases per sprint
+
+---
+
+## Shared Mutable State Gotcha
+
+**Problem:** BUG-1 - statusline pollution across sessions
+**Root Cause:** `.session/current-agent` file written by all sessions, read by all statuslines
+**Fix:** Removed shared state entirely, each session uses own file
+**Lesson:** Any shared mutable state between concurrent processes is a bug waiting to happen
+
+---
+
 *Add orchestration gotchas discovered during process work below*

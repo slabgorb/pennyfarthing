@@ -38,4 +38,20 @@
 
 ---
 
+### DEC-ORCH-006: Fix-to-Feature Ratio Target
+**Date:** December 2025
+**Problem:** Sprint 2+3 had 1.1:1 fix ratio (44 fixes per 40 features)
+**Decision:** Target <0.5:1 fix ratio; investigate when exceeded
+**Rationale:** High fix ratios indicate shipping too fast, testing too little
+**Action:** Add pre-release testing, bundle fixes into fewer releases
+
+### DEC-ORCH-007: Combined Retrospectives for Fast Sprints
+**Date:** December 2025
+**Problem:** Sprints 2 and 3 overlapped in execution (early start pattern)
+**Decision:** Write combined retros when sprints complete within days of each other
+**Rationale:** Captures cross-sprint patterns better than isolated retros
+**Files:** `sprint/archive/sprint-2-3-combined-retro.md`
+
+---
+
 *Add orchestration decisions made during process work below*
