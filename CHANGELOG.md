@@ -11,10 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [4.0.2] - 2025-12-31
+
+### Fixed
+- **Scripts Path Resolution (Complete)** - `run.sh` now tries both `.claude/scripts/` (npm-installed projects) and `.claude/pennyfarthing/scripts/` (dogfooding). v4.0.1 only tried the former, breaking the pennyfarthing repo itself.
+
+---
+
 ## [4.0.1] - 2025-12-31
 
 ### Fixed
-- **Scripts Path Resolution** - `run.sh` was hardcoded to look for scripts at `.claude/pennyfarthing/scripts/` which only worked in dogfooding setup. Fixed to use `.claude/scripts/` which is the canonical path created by `pennyfarthing init` (symlinked to node_modules or copy-mode location).
+- **Scripts Path Resolution** - `run.sh` was hardcoded to look for scripts at `.claude/pennyfarthing/scripts/` which only worked in dogfooding setup. Fixed to use `.claude/scripts/` which is the canonical path created by `pennyfarthing init` (symlinked to node_modules or copy-mode location). *(Note: Incomplete fix, see 4.0.2)*
 
 ---
 
@@ -393,7 +400,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.1...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.2...HEAD
+[4.0.2]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.1...v4.0.2
 [4.0.1]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.0...v4.0.1
 [4.0.0]: https://github.com/1898andCo/pennyfarthing/compare/v3.8.0...v4.0.0
 [3.8.0]: https://github.com/1898andCo/pennyfarthing/compare/v3.7.1...v3.8.0

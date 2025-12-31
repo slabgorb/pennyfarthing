@@ -37,9 +37,17 @@ SCRIPT_NAME="$1"
 shift
 
 # Handle different script locations
-# In npm-installed projects: .claude/scripts -> node_modules/pennyfarthing/pennyfarthing-dist/scripts
-# In copy mode: .claude/scripts -> pennyfarthing/scripts
-SCRIPTS_DIR="$PROJECT_ROOT/.claude/scripts"
+# Priority 1: .claude/scripts (npm-installed or copy-mode symlink)
+# Priority 2: .claude/pennyfarthing/scripts (dogfooding - pennyfarthing repo itself)
+if [[ -d "$PROJECT_ROOT/.claude/scripts" ]]; then
+    SCRIPTS_DIR="$PROJECT_ROOT/.claude/scripts"
+elif [[ -d "$PROJECT_ROOT/.claude/pennyfarthing/scripts" ]]; then
+    SCRIPTS_DIR="$PROJECT_ROOT/.claude/pennyfarthing/scripts"
+else
+    echo "Error: No scripts directory found" >&2
+    echo "Expected: .claude/scripts or .claude/pennyfarthing/scripts" >&2
+    exit 1
+fi
 
 if [[ -f "$SCRIPTS_DIR/$SCRIPT_NAME" ]]; then
     exec "$SCRIPTS_DIR/$SCRIPT_NAME" "$@"
