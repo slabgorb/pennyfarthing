@@ -2,23 +2,20 @@ import { existsSync, readFileSync, writeFileSync, unlinkSync, symlinkSync, readd
 import { join, relative, dirname } from 'path';
 import fsExtra from 'fs-extra';
 
-const { copySync, ensureDirSync, removeSync } = fsExtra;
+const { ensureDirSync, removeSync } = fsExtra;
 import { logger } from '../utils/logger.js';
 import { prompts, confirm } from '../utils/prompts.js';
 import {
   manifestExists,
   readManifest,
   writeManifest,
-  updateManifestForUpdate,
   createManifest
 } from '../utils/manifest.js';
 import {
   pathExists,
   isDirectory,
   isSymlink,
-  hashFile,
-  getDirectoryHashes,
-  getAllFiles
+  hashFile
 } from '../utils/files.js';
 import { getPackageVersion, getAssetsPath } from '../utils/version.js';
 
@@ -187,23 +184,36 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
   // 3. Show update info
   logger.header('Pennyfarthing Update');
 
-  // Check if we can migrate to symlink mode
+  // Check installation type and node_modules availability
   const nodeModulesPath = findNodeModulesPath(projectRoot);
   const currentInstallType = manifest.installationType || 'copy'; // Default to copy for old manifests
-  const canMigrate = nodeModulesPath !== null && currentInstallType === 'copy';
 
   // Always check and update settings (idempotent - only makes changes if needed)
   const assetsPath = getAssetsPath();
 
-  // Offer migration if available
-  if (canMigrate && !options.force) {
-    logger.info('Migration available: Switch to symlink mode for cleaner installation');
-    logger.info('  (Symlinks to node_modules instead of copying ~120 files)');
-    const shouldMigrate = await confirm('Migrate to symlink mode?');
-    if (shouldMigrate) {
+  // Copy mode is deprecated - force migration
+  if (currentInstallType === 'copy') {
+    if (nodeModulesPath) {
+      logger.info('Migrating from deprecated copy mode to symlink mode...');
       await migrateToSymlinkMode(projectRoot, nodeModulesPath, manifest.projectName, packageVersion, { dryRun });
       return;
+    } else {
+      logger.error('Copy mode is deprecated and node_modules/pennyfarthing not found');
+      logger.error('');
+      logger.error('Please reinstall with npm:');
+      logger.error('  npm install pennyfarthing');
+      logger.error('  npx pennyfarthing init --force');
+      process.exit(1);
     }
+  }
+
+  // Must have node_modules for symlink mode
+  if (!nodeModulesPath) {
+    logger.error('node_modules/pennyfarthing not found');
+    logger.error('');
+    logger.error('Please ensure pennyfarthing is installed:');
+    logger.error('  npm install pennyfarthing');
+    process.exit(1);
   }
 
   const settingsUpdated = await mergeSettingsHooks(projectRoot, assetsPath, { dryRun });
@@ -223,14 +233,8 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
     logger.info('Dry run mode - no changes will be made');
   }
 
-  // Handle based on installation type
-  if (currentInstallType === 'symlink' && nodeModulesPath) {
-    // Symlink mode: just verify symlinks are correct
-    await updateSymlinkMode(projectRoot, nodeModulesPath, manifest, packageVersion, { dryRun });
-  } else {
-    // Copy mode: traditional file copying
-    await updateCopyMode(projectRoot, assetsPath, manifest, packageVersion, options);
-  }
+  // Symlink mode: verify symlinks are correct
+  await updateSymlinkMode(projectRoot, nodeModulesPath, manifest, packageVersion, { dryRun });
 
   // 7. Success
   logger.newline();
@@ -335,7 +339,6 @@ async function migrateToSymlinkMode(
 
   const nodeModulesRelPath = relative(projectRoot, nodeModulesPath);
   const newManifest = createManifest(projectName, version, {
-    installationType: 'symlink',
     nodeModulesPath: nodeModulesRelPath
   });
 
@@ -425,150 +428,11 @@ async function updateSymlinkMode(
 
   const nodeModulesRelPath = relative(projectRoot, nodeModulesPath);
   const newManifest = createManifest(manifest?.projectName || 'unknown', version, {
-    installationType: 'symlink',
     nodeModulesPath: nodeModulesRelPath
   });
 
   writeManifest(projectRoot, newManifest, { dryRun });
   logger.updated('.claude/manifest.json');
-}
-
-/**
- * Update in copy mode - traditional file copying
- */
-async function updateCopyMode(
-  projectRoot: string,
-  assetsPath: string,
-  manifest: ReturnType<typeof readManifest>,
-  version: string,
-  options: UpdateOptions
-): Promise<void> {
-  const dryRun = options.dryRun;
-
-  // Check for user-modified files
-  const updateInfo = await checkForUpdates(projectRoot, manifest);
-  let skipFiles: string[] = [];
-
-  if (updateInfo.userModifiedFiles.length > 0 && !options.force) {
-    const action = await prompts.modifiedFiles(updateInfo.userModifiedFiles);
-
-    if (action === 'skip') {
-      skipFiles = updateInfo.userModifiedFiles;
-    } else if (action === 'backup') {
-      await backupFiles(projectRoot, updateInfo.userModifiedFiles, { dryRun });
-    }
-  }
-
-  // Update managed files
-  logger.newline();
-  logger.info('Updating files...');
-
-  const managedCopies = [
-    { src: 'agents', dest: '.claude/pennyfarthing/agents' },
-    { src: 'commands', dest: '.claude/pennyfarthing/commands' },
-    { src: 'guides', dest: '.claude/pennyfarthing/guides' },
-    { src: 'skills', dest: '.claude/pennyfarthing/skills' },
-    { src: 'personas', dest: '.claude/pennyfarthing/personas' },
-    { src: 'scripts', dest: '.claude/pennyfarthing/scripts' }
-  ];
-
-  for (const { src, dest } of managedCopies) {
-    const srcPath = join(assetsPath, src);
-    const destPath = join(projectRoot, dest);
-
-    if (!pathExists(srcPath)) continue;
-
-    if (!isDirectory(srcPath)) {
-      if (skipFiles.some(sf => dest.includes(sf) || sf.includes(dest))) {
-        logger.skipped(dest, 'user modified');
-        continue;
-      }
-
-      if (!dryRun) {
-        ensureDirSync(join(destPath, '..'));
-        copySync(srcPath, destPath, { overwrite: true });
-      }
-      logger.updated(dest);
-      continue;
-    }
-
-    const files = getAllFiles(srcPath);
-
-    for (const file of files) {
-      const fullDest = join(destPath, file);
-      const relativePath = join(dest, file);
-
-      if (skipFiles.some(sf => relativePath.includes(sf) || sf.includes(relativePath))) {
-        logger.skipped(relativePath, 'user modified');
-        continue;
-      }
-
-      if (!dryRun) {
-        ensureDirSync(join(destPath, file, '..'));
-        copySync(join(srcPath, file), fullDest, { overwrite: true });
-      }
-      logger.updated(relativePath);
-    }
-  }
-
-  // Clean up stale files
-  logger.newline();
-  logger.info('Cleaning up stale files...');
-  await cleanupStaleFiles(projectRoot, assetsPath, manifest, managedCopies, { dryRun });
-
-  // Update symlinks for copy mode
-  logger.newline();
-  logger.info('Updating symlinks...');
-
-  const symlinks = [
-    { target: 'pennyfarthing/commands', link: '.claude/commands' },
-    { target: 'pennyfarthing/agents', link: '.claude/agents' },
-    { target: 'pennyfarthing/guides', link: '.claude/guides' },
-    { target: 'pennyfarthing/skills', link: '.claude/skills' },
-    { target: 'pennyfarthing/personas', link: '.claude/personas' },
-    { target: 'pennyfarthing/scripts', link: '.claude/scripts' }
-  ];
-
-  for (const { target, link } of symlinks) {
-    const linkPath = join(projectRoot, link);
-
-    if (pathExists(linkPath)) {
-      continue;
-    }
-
-    if (!dryRun) {
-      try {
-        symlinkSync(target, linkPath);
-        logger.created(`${link} -> ${target}`);
-      } catch (e) {
-        logger.warning(`Could not create symlink ${link}: ${e}`);
-      }
-    } else {
-      logger.created(`${link} -> ${target}`);
-    }
-  }
-
-  // Update settings
-  await mergeSettingsHooks(projectRoot, assetsPath, { dryRun });
-
-  // Update manifest
-  logger.newline();
-  logger.info('Updating manifest...');
-
-  const newHashes = collectFileHashes(projectRoot, managedCopies);
-  const newManifest = createManifest(manifest?.projectName || 'unknown', version, {
-    installationType: 'copy',
-    fileHashes: newHashes
-  });
-
-  writeManifest(projectRoot, newManifest, { dryRun });
-  logger.updated('.claude/manifest.json');
-
-  // 8. Run doctor
-  logger.newline();
-  logger.info('Running health check...');
-  const { doctorCommand } = await import('./doctor.js');
-  await doctorCommand({ quiet: true });
 }
 
 async function checkForUpdates(
@@ -648,180 +512,6 @@ function compareVersions(a: string, b: string): number {
   }
 
   return 0;
-}
-
-async function backupFiles(
-  projectRoot: string,
-  files: string[],
-  options: { dryRun?: boolean }
-): Promise<void> {
-  const backupDir = join(projectRoot, '.claude/backups', new Date().toISOString().split('T')[0]);
-
-  if (!options.dryRun) {
-    ensureDirSync(backupDir);
-  }
-
-  for (const file of files) {
-    const srcPath = join(projectRoot, file);
-    const destPath = join(backupDir, file);
-
-    if (pathExists(srcPath) && !options.dryRun) {
-      ensureDirSync(join(destPath, '..'));
-      copySync(srcPath, destPath);
-    }
-
-    logger.info(`  Backed up: ${file}`);
-  }
-}
-
-function collectFileHashes(
-  projectRoot: string,
-  managedCopies: Array<{ src: string; dest: string }>
-): Record<string, string> {
-  const hashes: Record<string, string> = {};
-
-  for (const { dest } of managedCopies) {
-    const destPath = join(projectRoot, dest);
-    if (isDirectory(destPath)) {
-      const dirHashes = getDirectoryHashes(destPath);
-      for (const [file, hash] of Object.entries(dirHashes)) {
-        hashes[join(dest, file)] = hash;
-      }
-    }
-  }
-
-  return hashes;
-}
-
-/**
- * Map managed directory to correct project customization location
- */
-function getMisplacedFileAdvice(relativePath: string): string | null {
-  // Map managed locations to project customization locations
-  const mappings: Array<{ managed: string; project: string; description: string }> = [
-    { managed: '.claude/pennyfarthing/agents/', project: '.claude/project/agents/', description: 'agent sidecars' },
-    { managed: '.claude/pennyfarthing/commands/', project: '.claude/project/commands/', description: 'custom commands' },
-    { managed: '.claude/pennyfarthing/skills/', project: '.claude/project/skills/', description: 'project skills' },
-    { managed: '.claude/pennyfarthing/guides/', project: '.claude/project/guides/', description: 'custom guides' },
-    { managed: '.claude/pennyfarthing/personas/', project: '.claude/project/personas/', description: 'persona overrides' },
-    { managed: '.claude/pennyfarthing/scripts/', project: '.claude/project/scripts/', description: 'custom scripts' }
-  ];
-
-  for (const { managed, project, description } of mappings) {
-    if (relativePath.startsWith(managed)) {
-      const filename = relativePath.replace(managed, '');
-      return `Move ${description} to: ${project}${filename}`;
-    }
-  }
-
-  return null;
-}
-
-/**
- * Clean up stale files that exist locally but not in source.
- *
- * Logic:
- * - If file is in manifest with matching hash: DELETE (stale managed file)
- * - If file is in manifest with different hash: PRESERVE + WARN (user modified managed file)
- * - If file is NOT in manifest: PRESERVE + WARN (custom file in wrong location)
- */
-async function cleanupStaleFiles(
-  projectRoot: string,
-  assetsPath: string,
-  manifest: ReturnType<typeof readManifest>,
-  managedCopies: Array<{ src: string; dest: string }>,
-  options: { dryRun?: boolean }
-): Promise<void> {
-  if (!manifest) return;
-
-  let deletedCount = 0;
-  let preservedCount = 0;
-  const misplacedFiles: Array<{ path: string; advice: string }> = [];
-
-  for (const { src, dest } of managedCopies) {
-    const srcPath = join(assetsPath, src);
-    const destPath = join(projectRoot, dest);
-
-    if (!pathExists(destPath) || !isDirectory(destPath)) continue;
-
-    // Get all files in source (what SHOULD exist)
-    const sourceFiles = new Set<string>();
-    if (pathExists(srcPath) && isDirectory(srcPath)) {
-      for (const file of getAllFiles(srcPath)) {
-        sourceFiles.add(file);
-      }
-    }
-
-    // Get all files in destination (what DOES exist)
-    const destFiles = getAllFiles(destPath);
-
-    // Find stale files (in dest but not in source)
-    for (const file of destFiles) {
-      if (sourceFiles.has(file)) continue; // File exists in source, not stale
-
-      const relativePath = join(dest, file);
-      const fullPath = join(destPath, file);
-      const manifestHash = manifest.fileHashes[relativePath];
-
-      if (!manifestHash) {
-        // File not in manifest = user custom file in managed location
-        // Preserve it but collect for warning
-        const advice = getMisplacedFileAdvice(relativePath);
-        if (advice) {
-          misplacedFiles.push({ path: relativePath, advice });
-        }
-        logger.skipped(relativePath, 'custom file');
-        preservedCount++;
-        continue;
-      }
-
-      // File is in manifest, check if user modified it
-      const currentHash = hashFile(fullPath);
-
-      if (currentHash !== manifestHash) {
-        // User modified a managed file - preserve but warn
-        const advice = getMisplacedFileAdvice(relativePath);
-        if (advice) {
-          misplacedFiles.push({ path: relativePath, advice: `Modified managed file. ${advice}` });
-        }
-        logger.skipped(relativePath, 'user modified');
-        preservedCount++;
-        continue;
-      }
-
-      // File matches manifest hash = stale managed file, delete it
-      if (!options.dryRun) {
-        unlinkSync(fullPath);
-      }
-      logger.info(`  Deleted stale: ${relativePath}`);
-      deletedCount++;
-    }
-  }
-
-  if (deletedCount > 0) {
-    logger.info(`Removed ${deletedCount} stale file(s)`);
-  }
-  if (preservedCount > 0) {
-    logger.info(`Preserved ${preservedCount} custom/modified file(s)`);
-  }
-  if (deletedCount === 0 && preservedCount === 0) {
-    logger.info('No stale files found');
-  }
-
-  // Warn about misplaced files
-  if (misplacedFiles.length > 0) {
-    logger.newline();
-    logger.warning('⚠️  Custom files found in managed directories');
-    logger.info('These files may be overwritten by future updates.');
-    logger.info('Consider moving them to the project customization folder:');
-    logger.newline();
-    for (const { path, advice } of misplacedFiles) {
-      logger.info(`  ${path}`);
-      logger.info(`    → ${advice}`);
-    }
-    logger.newline();
-    logger.info('Run `pennyfarthing doctor` for more details.');
-  }
 }
 
 /**

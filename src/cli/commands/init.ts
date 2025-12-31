@@ -1,8 +1,8 @@
-import { existsSync, readFileSync, writeFileSync, unlinkSync, symlinkSync, realpathSync, readdirSync } from 'fs';
+import { readFileSync, writeFileSync, unlinkSync, symlinkSync, readdirSync } from 'fs';
 import { join, basename, relative, dirname } from 'path';
 import fsExtra from 'fs-extra';
 
-const { ensureDirSync, copySync, removeSync } = fsExtra;
+const { ensureDirSync, removeSync } = fsExtra;
 import { logger } from '../utils/logger.js';
 import { prompts, confirm } from '../utils/prompts.js';
 import {
@@ -15,8 +15,6 @@ import {
   pathExists,
   isSymlink,
   isDirectory,
-  copyDirectory,
-  getDirectoryHashes,
   ensureDir
 } from '../utils/files.js';
 import { getPackageVersion, getAssetsPath } from '../utils/version.js';
@@ -228,156 +226,83 @@ export async function initCommand(
     }
   }
 
-  // 7. Determine installation mode: symlink (preferred) or copy (fallback)
+  // 7. Find node_modules installation (required - copy mode removed in v4.0.4)
   const nodeModulesPath = findNodeModulesPath(projectRoot);
-  const useSymlinkMode = nodeModulesPath !== null;
 
-  // Track installation type for manifest
-  let installationType: 'symlink' | 'copy' = 'copy';
-  let nodeModulesRelPath: string | undefined;
-
-  if (useSymlinkMode) {
-    installationType = 'symlink';
-    // Compute relative path from project root to node_modules pennyfarthing-dist
-    nodeModulesRelPath = relative(projectRoot, nodeModulesPath);
-
-    logger.newline();
-    logger.info('Creating symlinks to node_modules...');
-    logger.info(`  Found: ${nodeModulesRelPath}`);
-
-    // Remove legacy .claude/pennyfarthing/ if it exists (migration from copy mode)
-    const legacyPennyfarthingDir = join(projectRoot, '.claude/pennyfarthing');
-    if (pathExists(legacyPennyfarthingDir) && isDirectory(legacyPennyfarthingDir)) {
-      if (!dryRun) {
-        removeSync(legacyPennyfarthingDir);
-      }
-      logger.info('Removed legacy .claude/pennyfarthing/ (migrating to symlink mode)');
-    }
-
-    // Create symlinks pointing to node_modules (except commands - handled separately)
-    const symlinks = [
-      { name: 'agents', link: '.claude/agents' },
-      { name: 'guides', link: '.claude/guides' },
-      { name: 'skills', link: '.claude/skills' },
-      { name: 'personas', link: '.claude/personas' },
-      { name: 'scripts', link: '.claude/scripts' }
-    ];
-
-    for (const { name, link } of symlinks) {
-      const linkPath = join(projectRoot, link);
-      const targetPath = join(nodeModulesPath, name);
-
-      // Remove existing symlink or file
-      if (pathExists(linkPath) || isSymlink(linkPath)) {
-        if (!dryRun) {
-          try {
-            unlinkSync(linkPath);
-          } catch (e) {
-            // Might be a directory from copy mode
-            try {
-              removeSync(linkPath);
-            } catch {
-              // Ignore
-            }
-          }
-        }
-      }
-
-      if (!dryRun) {
-        const relativeTarget = computeRelativeSymlink(linkPath, targetPath);
-        try {
-          symlinkSync(relativeTarget, linkPath);
-          logger.created(`${link} -> ${relativeTarget}`);
-        } catch (e) {
-          logger.warning(`Could not create symlink ${link}: ${e}`);
-        }
-      } else {
-        const relativeTarget = computeRelativeSymlink(linkPath, targetPath);
-        logger.created(`${link} -> ${relativeTarget}`);
-      }
-    }
-
-    // Create commands directory with individual symlinks (allows user commands)
-    const builtInCommandsPath = join(nodeModulesPath, 'commands');
-    const projectCommandsPath = join(projectRoot, '.claude/project/commands');
-    createCommandsDirectory(projectRoot, builtInCommandsPath, projectCommandsPath, dryRun || false);
-  } else {
-    // Fallback: Copy mode (for npx usage or development)
-    logger.newline();
-    logger.warning('node_modules/pennyfarthing not found - using copy mode');
-    logger.info('  (Add pennyfarthing to package.json dependencies for symlink mode)');
-    logger.newline();
-    logger.info('Copying core files...');
-
-    // Create pennyfarthing directory for copies
-    const pennyfarthingDir = join(projectRoot, '.claude/pennyfarthing');
-    if (!pathExists(pennyfarthingDir)) {
-      ensureDir(pennyfarthingDir, { dryRun });
-    }
-
-    const managedCopies = [
-      { src: 'agents', dest: '.claude/pennyfarthing/agents' },
-      { src: 'commands', dest: '.claude/pennyfarthing/commands' },
-      { src: 'guides', dest: '.claude/pennyfarthing/guides' },
-      { src: 'skills', dest: '.claude/pennyfarthing/skills' },
-      { src: 'personas', dest: '.claude/pennyfarthing/personas' },
-      { src: 'scripts', dest: '.claude/pennyfarthing/scripts' }
-    ];
-
-    for (const { src, dest } of managedCopies) {
-      const srcPath = join(assetsPath, src);
-      const destPath = join(projectRoot, dest);
-
-      if (pathExists(srcPath)) {
-        if (!dryRun) {
-          copySync(srcPath, destPath, { overwrite: true });
-        }
-        logger.updated(dest);
-      }
-    }
-
-    // Create symlinks from .claude/ to .claude/pennyfarthing/ (except commands)
-    logger.newline();
-    logger.info('Creating symlinks...');
-
-    const symlinks = [
-      { target: 'pennyfarthing/agents', link: '.claude/agents' },
-      { target: 'pennyfarthing/guides', link: '.claude/guides' },
-      { target: 'pennyfarthing/skills', link: '.claude/skills' },
-      { target: 'pennyfarthing/personas', link: '.claude/personas' },
-      { target: 'pennyfarthing/scripts', link: '.claude/scripts' }
-    ];
-
-    for (const { target, link } of symlinks) {
-      const linkPath = join(projectRoot, link);
-
-      if (pathExists(linkPath) || isSymlink(linkPath)) {
-        if (!dryRun) {
-          try {
-            unlinkSync(linkPath);
-          } catch (e) {
-            // Ignore errors - might be a directory
-          }
-        }
-      }
-
-      if (!dryRun) {
-        try {
-          symlinkSync(target, linkPath);
-          logger.created(`${link} -> ${target}`);
-        } catch (e) {
-          logger.warning(`Could not create symlink ${link}: ${e}`);
-        }
-      } else {
-        logger.created(`${link} -> ${target}`);
-      }
-    }
-
-    // Create commands directory with individual symlinks (allows user commands)
-    const builtInCommandsPath = join(projectRoot, '.claude/pennyfarthing/commands');
-    const projectCommandsPath = join(projectRoot, '.claude/project/commands');
-    createCommandsDirectory(projectRoot, builtInCommandsPath, projectCommandsPath, dryRun || false);
+  if (!nodeModulesPath) {
+    logger.error('node_modules/pennyfarthing not found');
+    logger.error('');
+    logger.error('Pennyfarthing requires npm installation:');
+    logger.error('  npm install pennyfarthing');
+    logger.error('  npx pennyfarthing init');
+    logger.error('');
+    logger.error('For dogfooding (pennyfarthing repo itself), ensure .claude/scripts symlink exists.');
+    process.exit(1);
   }
+
+  // Compute relative path from project root to node_modules pennyfarthing-dist
+  const nodeModulesRelPath = relative(projectRoot, nodeModulesPath);
+
+  logger.newline();
+  logger.info('Creating symlinks to node_modules...');
+  logger.info(`  Found: ${nodeModulesRelPath}`);
+
+  // Remove legacy .claude/pennyfarthing/ if it exists (migration from copy mode)
+  const legacyPennyfarthingDir = join(projectRoot, '.claude/pennyfarthing');
+  if (pathExists(legacyPennyfarthingDir) && isDirectory(legacyPennyfarthingDir)) {
+    if (!dryRun) {
+      removeSync(legacyPennyfarthingDir);
+    }
+    logger.info('Removed legacy .claude/pennyfarthing/ (migrating from copy mode)');
+  }
+
+  // Create symlinks pointing to node_modules (except commands - handled separately)
+  const symlinks = [
+    { name: 'agents', link: '.claude/agents' },
+    { name: 'guides', link: '.claude/guides' },
+    { name: 'skills', link: '.claude/skills' },
+    { name: 'personas', link: '.claude/personas' },
+    { name: 'scripts', link: '.claude/scripts' }
+  ];
+
+  for (const { name, link } of symlinks) {
+    const linkPath = join(projectRoot, link);
+    const targetPath = join(nodeModulesPath, name);
+
+    // Remove existing symlink or file
+    if (pathExists(linkPath) || isSymlink(linkPath)) {
+      if (!dryRun) {
+        try {
+          unlinkSync(linkPath);
+        } catch {
+          // Might be a directory from legacy copy mode
+          try {
+            removeSync(linkPath);
+          } catch {
+            // Ignore
+          }
+        }
+      }
+    }
+
+    if (!dryRun) {
+      const relativeTarget = computeRelativeSymlink(linkPath, targetPath);
+      try {
+        symlinkSync(relativeTarget, linkPath);
+        logger.created(`${link} -> ${relativeTarget}`);
+      } catch (e) {
+        logger.warning(`Could not create symlink ${link}: ${e}`);
+      }
+    } else {
+      const relativeTarget = computeRelativeSymlink(linkPath, targetPath);
+      logger.created(`${link} -> ${relativeTarget}`);
+    }
+  }
+
+  // Create commands directory with individual symlinks (allows user commands)
+  const builtInCommandsPath = join(nodeModulesPath, 'commands');
+  const projectCommandsPath = join(projectRoot, '.claude/project/commands');
+  createCommandsDirectory(projectRoot, builtInCommandsPath, projectCommandsPath, dryRun || false);
 
   // 8. Create agent sidecars if not exist
   logger.newline();
@@ -426,25 +351,8 @@ export async function initCommand(
   logger.newline();
   logger.info('Writing manifest...');
 
-  // For symlink mode, no file hashes needed
-  // For copy mode, collect hashes of copied files
-  let fileHashes: Record<string, string> = {};
-  if (installationType === 'copy') {
-    const managedCopies = [
-      { src: 'agents', dest: '.claude/pennyfarthing/agents' },
-      { src: 'commands', dest: '.claude/pennyfarthing/commands' },
-      { src: 'guides', dest: '.claude/pennyfarthing/guides' },
-      { src: 'skills', dest: '.claude/pennyfarthing/skills' },
-      { src: 'personas', dest: '.claude/pennyfarthing/personas' },
-      { src: 'scripts', dest: '.claude/pennyfarthing/scripts' }
-    ];
-    fileHashes = collectFileHashes(projectRoot, managedCopies);
-  }
-
   const manifest = createManifest(finalName, version, {
-    installationType,
-    nodeModulesPath: nodeModulesRelPath,
-    fileHashes
+    nodeModulesPath: nodeModulesRelPath
   });
   writeManifest(projectRoot, manifest, { dryRun });
   logger.created('.claude/manifest.json');
@@ -628,25 +536,6 @@ async function mergeSettingsLocalJson(
   } else if (!modified) {
     logger.skipped('.claude/settings.local.json', 'hooks already configured');
   }
-}
-
-function collectFileHashes(
-  projectRoot: string,
-  managedCopies: Array<{ src: string; dest: string }>
-): Record<string, string> {
-  const hashes: Record<string, string> = {};
-
-  for (const { dest } of managedCopies) {
-    const destPath = join(projectRoot, dest);
-    if (isDirectory(destPath)) {
-      const dirHashes = getDirectoryHashes(destPath);
-      for (const [file, hash] of Object.entries(dirHashes)) {
-        hashes[join(dest, file)] = hash;
-      }
-    }
-  }
-
-  return hashes;
 }
 
 async function updateGitignore(

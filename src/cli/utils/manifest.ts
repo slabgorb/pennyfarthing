@@ -9,10 +9,10 @@ export interface Manifest {
   installedAt: string;
   updatedAt: string;
   projectName: string;
-  installationType: 'symlink' | 'copy';
-  nodeModulesPath?: string;  // Only for symlink mode
+  installationType: 'symlink' | 'copy';  // copy mode deprecated in v4.0.4
+  nodeModulesPath?: string;
   managedPaths: string[];
-  fileHashes: Record<string, string>;  // Only populated for copy mode
+  fileHashes: Record<string, string>;  // Legacy field from copy mode
   userModified?: string[];
   migrationSource?: string;
 }
@@ -75,33 +75,36 @@ export function writeManifest(
 
 /**
  * Create a new manifest
+ * Note: copy mode was deprecated in v4.0.4 - all installs now use symlink mode
  */
 export function createManifest(
   projectName: string,
   version: string,
   options: {
-    installationType: 'symlink' | 'copy';
     nodeModulesPath?: string;
-    fileHashes?: Record<string, string>;
     migrationSource?: string;
   }
 ): Manifest {
   const now = new Date().toISOString();
 
-  // Managed paths depend on installation type
-  const managedPaths = options.installationType === 'symlink'
-    ? ['.claude/agents', '.claude/commands', '.claude/guides', '.claude/skills', '.claude/personas', '.claude/scripts']
-    : ['.claude/pennyfarthing/'];
+  const managedPaths = [
+    '.claude/agents',
+    '.claude/commands',
+    '.claude/guides',
+    '.claude/skills',
+    '.claude/personas',
+    '.claude/scripts'
+  ];
 
   return {
     version,
     installedAt: now,
     updatedAt: now,
     projectName,
-    installationType: options.installationType,
+    installationType: 'symlink',
     ...(options.nodeModulesPath && { nodeModulesPath: options.nodeModulesPath }),
     managedPaths,
-    fileHashes: options.fileHashes || {},
+    fileHashes: {},
     ...(options.migrationSource && { migrationSource: options.migrationSource })
   };
 }
