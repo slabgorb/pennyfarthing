@@ -9,8 +9,10 @@ export interface Manifest {
   installedAt: string;
   updatedAt: string;
   projectName: string;
+  installationType: 'symlink' | 'copy';
+  nodeModulesPath?: string;  // Only for symlink mode
   managedPaths: string[];
-  fileHashes: Record<string, string>;
+  fileHashes: Record<string, string>;  // Only populated for copy mode
   userModified?: string[];
   migrationSource?: string;
 }
@@ -77,23 +79,30 @@ export function writeManifest(
 export function createManifest(
   projectName: string,
   version: string,
-  fileHashes: Record<string, string>,
-  options?: {
+  options: {
+    installationType: 'symlink' | 'copy';
+    nodeModulesPath?: string;
+    fileHashes?: Record<string, string>;
     migrationSource?: string;
   }
 ): Manifest {
   const now = new Date().toISOString();
+
+  // Managed paths depend on installation type
+  const managedPaths = options.installationType === 'symlink'
+    ? ['.claude/agents', '.claude/commands', '.claude/guides', '.claude/skills', '.claude/personas', '.claude/scripts']
+    : ['.claude/pennyfarthing/'];
 
   return {
     version,
     installedAt: now,
     updatedAt: now,
     projectName,
-    managedPaths: [
-      '.claude/pennyfarthing/'
-    ],
-    fileHashes,
-    ...(options?.migrationSource && { migrationSource: options.migrationSource })
+    installationType: options.installationType,
+    ...(options.nodeModulesPath && { nodeModulesPath: options.nodeModulesPath }),
+    managedPaths,
+    fileHashes: options.fileHashes || {},
+    ...(options.migrationSource && { migrationSource: options.migrationSource })
   };
 }
 
