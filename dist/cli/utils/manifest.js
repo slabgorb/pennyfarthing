@@ -44,22 +44,27 @@ export function writeManifest(projectRoot, manifest, options) {
 }
 /**
  * Create a new manifest
+ * Note: copy mode was deprecated in v4.0.4 - all installs now use symlink mode
  */
 export function createManifest(projectName, version, options) {
     const now = new Date().toISOString();
-    // Managed paths depend on installation type
-    const managedPaths = options.installationType === 'symlink'
-        ? ['.claude/agents', '.claude/commands', '.claude/guides', '.claude/skills', '.claude/personas', '.claude/scripts']
-        : ['.claude/pennyfarthing/'];
+    const managedPaths = [
+        '.claude/agents',
+        '.claude/commands',
+        '.claude/guides',
+        '.claude/skills',
+        '.claude/personas',
+        '.claude/scripts'
+    ];
     return {
         version,
         installedAt: now,
         updatedAt: now,
         projectName,
-        installationType: options.installationType,
+        installationType: 'symlink',
         ...(options.nodeModulesPath && { nodeModulesPath: options.nodeModulesPath }),
         managedPaths,
-        fileHashes: options.fileHashes || {},
+        fileHashes: {},
         ...(options.migrationSource && { migrationSource: options.migrationSource })
     };
 }

@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [4.0.4] - 2025-12-31
+
+### Fixed
+- **Dogfooding Scripts Symlink** - Added `.claude/scripts` symlink to git for the pennyfarthing repo itself. This was the root cause of recurring script resolution failures - the symlink was never tracked, so every fresh clone or clean broke agent commands.
+
+### Removed
+- **Copy Mode Deprecated** - Removed copy mode installation from `init` and `update` commands. All installations now require `npm install pennyfarthing` first. Legacy copy mode installs are automatically migrated to symlink mode on update.
+
+---
+
 ## [4.0.3] - 2025-12-31
 
 ### Fixed

@@ -30,11 +30,10 @@ export declare function writeManifest(projectRoot: string, manifest: Manifest, o
 }): void;
 /**
  * Create a new manifest
+ * Note: copy mode was deprecated in v4.0.4 - all installs now use symlink mode
  */
 export declare function createManifest(projectName: string, version: string, options: {
-    installationType: 'symlink' | 'copy';
     nodeModulesPath?: string;
-    fileHashes?: Record<string, string>;
     migrationSource?: string;
 }): Manifest;
 /**
