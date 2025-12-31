@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [4.0.3] - 2025-12-31
+
+### Fixed
+- **Agent Commands Path** - All agent activation commands now use `$d/.claude/scripts/run.sh` instead of `$d/scripts/run.sh`. The old path only worked in dogfooding; npm-installed projects only have `.claude/scripts/`.
+
+---
+
 ## [4.0.2] - 2025-12-31
 
 ### Fixed
@@ -400,7 +407,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.2...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.3...HEAD
+[4.0.3]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.2...v4.0.3
 [4.0.2]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.1...v4.0.2
 [4.0.1]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.0...v4.0.1
 [4.0.0]: https://github.com/1898andCo/pennyfarthing/compare/v3.8.0...v4.0.0
