@@ -29,7 +29,9 @@
 **Root cause:** Path divergence between dogfooding setup and npm installation:
 - Pennyfarthing repo: `.claude/pennyfarthing/` → `../pennyfarthing-dist/`
 - npm-installed: `.claude/scripts/` → `node_modules/pennyfarthing/pennyfarthing-dist/scripts/`
-**Solution:** Changed `run.sh` line 40 from `.claude/pennyfarthing/scripts` to `.claude/scripts`
+**Solution v1 (4.0.1):** Changed to `.claude/scripts` only - BROKE dogfooding
+**Solution v2 (4.0.2):** Try `.claude/scripts` first, fall back to `.claude/pennyfarthing/scripts`
+**Lesson:** When fixing path issues, test BOTH dogfooding AND npm installation scenarios
 **Fixed:** 2024-12-31
 
 ---
