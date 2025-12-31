@@ -80,11 +80,22 @@ scan_all_repos_status
 
 ## Step 3: Determine Workflow State
 
+**First, check the sprint YAML for ground truth:**
+```bash
+# What does the YAML actually say?
+grep -E "status: (in_progress|backlog|done)" $CLAUDE_PROJECT_DIR/sprint/current-sprint.yaml | sort | uniq -c
+```
+
 Apply these rules in order:
 - **MISSING_EPIC_CONTEXT**: No epic context files AND no active session files
-- **FINISH_STATE**: Phase=`approved` OR (Phase=`review` AND Status=`approved`)
-- **NEW_WORK_STATE**: No *-session.md files OR all have Phase=`complete`
-- **IN_PROGRESS_STATE**: Active work exists but not ready to finish
+- **FINISH_STATE**: Session file has Phase=`approved` OR (Phase=`review` AND Status=`approved`)
+- **NEW_WORK_STATE**: No *-session.md files AND no `status: in_progress` stories in YAML
+- **IN_PROGRESS_STATE**: Session file exists with active phase, OR YAML has `status: in_progress` stories
+
+**CRITICAL:** The sprint YAML `status:` field is the source of truth for story completion.
+- `status: done` = story is DONE, do not report as in-progress
+- `status: in_progress` = story is actually being worked
+- `status: backlog` = story is available for new work
 
 **Note:** MISSING_EPIC_CONTEXT takes precedence over NEW_WORK_STATE. User must run `/start-epic` before `/new-work`.
 
@@ -97,10 +108,23 @@ check_repo_pr "REPO_NAME" "BRANCH_NAME"
 # Returns PR URL or "none"
 ```
 
-For **NEW_WORK_STATE** - count backlog stories:
+For **NEW_WORK_STATE** - check sprint YAML for actual story statuses:
 ```bash
-grep -c "status: backlog" $CLAUDE_PROJECT_DIR/sprint/current-sprint.yaml 2>/dev/null
+# Count stories by status in current sprint
+echo "=== Sprint Story Status ==="
+grep -E "^\s+status:" $CLAUDE_PROJECT_DIR/sprint/current-sprint.yaml | sort | uniq -c
+
+# List any in_progress stories (these are ACTUALLY in progress)
+echo "=== In-Progress Stories ==="
+grep -B5 "status: in_progress" $CLAUDE_PROJECT_DIR/sprint/current-sprint.yaml | grep -E "(id:|title:|status:)"
+
+# Count backlog stories available
+echo "=== Backlog Available ==="
+grep -c "status: backlog" $CLAUDE_PROJECT_DIR/sprint/current-sprint.yaml 2>/dev/null || echo "0"
 ```
+
+**IMPORTANT:** Only report a story as "in progress" if the YAML shows `status: in_progress`.
+Stories with `status: done` are DONE - do not list them as in-progress even if they appear in sprint history.
 
 ## Output Format
 
