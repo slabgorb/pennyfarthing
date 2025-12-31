@@ -319,6 +319,8 @@ Custom themes include `pennyfarthing_version` to track compatibility. When Penny
 - **Literary Classics** - Sophisticated, wit, literary references.
 - **Minimalist** - When you want no personality, just work.
 
+For detailed personality analysis including Big Five (OCEAN) profiles, visual mapping, and most disparate pairs analysis, see [THEME-COMPARISON.md](THEME-COMPARISON.md).
+
 ### Tuning Attributes
 
 For focused work:
