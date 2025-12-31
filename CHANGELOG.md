@@ -11,6 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [4.0.0] - 2025-12-31
+
+### Changed
+- **BREAKING: Link-based Installation** - `pennyfarthing init` now creates symlinks to `node_modules/pennyfarthing/pennyfarthing-dist/` instead of copying files into the project
+  - Reduces codespace pollution (no more 100+ copied files)
+  - Updates propagate automatically via `npm update`
+  - Requires `npm install pennyfarthing` before `pennyfarthing init`
+  - `.claude/pennyfarthing/` now symlinks to package location
+
+### Migration from 3.x
+1. Run `pennyfarthing uninstall` to remove copied files
+2. Run `npm install pennyfarthing` (or add to devDependencies)
+3. Run `pennyfarthing init` to create new symlink structure
+4. Your `.claude/project/` customizations are preserved
+
+---
+
 ## [3.8.0] - 2025-12-30
 
 ### Added
@@ -369,7 +386,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v3.8.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.0...HEAD
+[4.0.0]: https://github.com/1898andCo/pennyfarthing/compare/v3.8.0...v4.0.0
 [3.8.0]: https://github.com/1898andCo/pennyfarthing/compare/v3.7.1...v3.8.0
 [3.7.1]: https://github.com/1898andCo/pennyfarthing/compare/v3.7.0...v3.7.1
 [3.7.0]: https://github.com/1898andCo/pennyfarthing/compare/v3.6.1...v3.7.0

@@ -17,19 +17,21 @@ Get up and running with Pennyfarthing in under 5 minutes.
 ### Step 1: Install Pennyfarthing
 
 ```bash
-npm install -g pennyfarthing
+cd your-project
+npm install --save-dev pennyfarthing
 ```
 
 ### Step 2: Initialize Your Project
 
 ```bash
-cd your-project
 pennyfarthing init
 ```
 
-This creates:
-- `.claude/` - Agent system and configuration
-- `scripts/` - Hooks and utilities
+This creates symlinks (no file copying):
+- `.claude/pennyfarthing/` → `node_modules/pennyfarthing/pennyfarthing-dist/`
+- `.claude/agents/`, `commands/`, `skills/`, `personas/` → symlinks
+- `.claude/project/` - Your customizations (not a symlink)
+- `scripts/` → symlink to pennyfarthing scripts
 - `sprint/` - Sprint tracking
 - `.session/` - Work session files
 
@@ -118,7 +120,9 @@ The SM (Scrum Master) agent activates and guides you through:
 ## Updating
 
 ```bash
-pennyfarthing update
+# v4.0+: Update via npm
+npm update pennyfarthing
+pennyfarthing doctor
 ```
 
 ## Troubleshooting
@@ -132,7 +136,8 @@ pennyfarthing doctor --fix
 ### Fresh reinstall
 
 ```bash
-./scripts/uninstall.sh
+pennyfarthing uninstall
+npm install --save-dev pennyfarthing
 pennyfarthing init
 ```
 
