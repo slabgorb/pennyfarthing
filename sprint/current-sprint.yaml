@@ -733,7 +733,7 @@ sprint_3:
             - Warning only on major/minor mismatch (not patch)
           completion_summary: "Implemented version tracking system for custom themes with compatibility warnings. Added check_theme_version() function to agent-session.sh that compares theme version against current VERSION file and warns on major/minor mismatch. Updated theme-maker.md to use dynamic VERSION instead of hardcoded value. All acceptance criteria verified and PR #25 approved."
 
-    # Carry over from Sprint 2 backlog
+    # Carried from Sprint 2 backlog - ALL COMPLETED
     - id: epic-4-continued
       title: "Configuration & Permissions Framework (continued)"
       description: |
@@ -741,34 +741,43 @@ sprint_3:
       points: 6
       priority: P1
       repos: pennyfarthing
+      status: done
       stories:
         - id: "4-2"
           title: "Add context_budget configuration"
           points: 2
           priority: P1
-          status: in_progress
+          status: done
+          completed: 2025-12-29
+          pr: https://github.com/1898andCo/pennyfarthing/pull/20
           carried_from: sprint-2
 
         - id: "4-3"
           title: "Create hooks configuration section"
           points: 2
           priority: P2
-          status: in_progress
+          status: done
+          completed: 2025-12-29
+          pr: https://github.com/1898andCo/pennyfarthing/pull/22
           carried_from: sprint-2
 
         - id: "4-4"
           title: "Add agent-specific permission scopes"
           points: 2
           priority: P2
-          status: in_progress
+          status: done
+          completed: 2025-12-29
+          pr: https://github.com/1898andCo/pennyfarthing/pull/23
           carried_from: sprint-2
 
   sprint_3_summary:
     planned_points: 19
+    completed_points: 19
     from_epic_6: 13
     carried_from_sprint_2: 6
     velocity_target: 20
+    status: complete
     notes: |
-      - Epic 6 is new feature work (theme wizard)
-      - Epic 4 stories carried over from Sprint 2 backlog
-      - Total fits within velocity target
+      - Epic 6 (theme wizard): 13/13 points complete
+      - Epic 4-continued (carried): 6/6 points complete
+      - Sprint 3 fully completed ahead of schedule
