@@ -11,6 +11,7 @@ import { uninstallCommand } from './commands/uninstall.js';
 import { versionCommand } from './commands/version.js';
 import { listCommand as themeListCommand, setCommand as themeSetCommand, showCommand as themeShowCommand, createCommand as themeCreateCommand } from './commands/theme.js';
 import { listCommand as cmdListCommand, addCommand as cmdAddCommand, removeCommand as cmdRemoveCommand, linkCommand as cmdLinkCommand, syncCommand as cmdSyncCommand } from './commands/command.js';
+import { listSkill as skillListCommand, addSkill as skillAddCommand, removeSkill as skillRemoveCommand, linkSkill as skillLinkCommand, syncSkill as skillSyncCommand } from './commands/skill.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -142,5 +143,42 @@ cmdCmd
   .description('Sync all user commands from project/commands/')
   .option('--dry-run', 'Show what would be done without doing it')
   .action(cmdSyncCommand);
+
+// Skill management commands
+const skillCmd = program
+  .command('skill')
+  .description('Manage custom skills');
+
+skillCmd
+  .command('list')
+  .description('List all available skills')
+  .action(skillListCommand);
+
+skillCmd
+  .command('add')
+  .description('Create a new custom skill')
+  .argument('<name>', 'Skill name (lowercase, hyphens allowed)')
+  .option('-t, --template <type>', 'Template type: default, knowledge, workflow', 'default')
+  .option('-e, --edit', 'Open in editor after creation')
+  .action(skillAddCommand);
+
+skillCmd
+  .command('remove')
+  .description('Remove a custom skill')
+  .argument('<name>', 'Skill name to remove')
+  .option('-f, --force', 'Skip confirmation prompts')
+  .action(skillRemoveCommand);
+
+skillCmd
+  .command('link')
+  .description('Link an existing skill file from project/skills/')
+  .argument('<name>', 'Skill name to link')
+  .action(skillLinkCommand);
+
+skillCmd
+  .command('sync')
+  .description('Sync all user skills from project/skills/')
+  .option('--dry-run', 'Show what would be done without doing it')
+  .action(skillSyncCommand);
 
 program.parse();

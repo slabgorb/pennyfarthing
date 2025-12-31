@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, unlinkSync, symlinkSync, readdirSync } from 'fs';
+import { readFileSync, writeFileSync, unlinkSync, symlinkSync } from 'fs';
 import { join, basename, relative, dirname } from 'path';
 import fsExtra from 'fs-extra';
 const { ensureDirSync, removeSync } = fsExtra;
@@ -7,6 +7,7 @@ import { prompts } from '../utils/prompts.js';
 import { manifestExists, readManifest, writeManifest, createManifest } from '../utils/manifest.js';
 import { pathExists, isSymlink, isDirectory, ensureDir } from '../utils/files.js';
 import { getPackageVersion, getAssetsPath } from '../utils/version.js';
+import { computeRelativeSymlink, createCommandsDirectory, createSkillsDirectory } from '../utils/symlinks.js';
 /**
  * Find pennyfarthing in node_modules (handles monorepo hoisting)
  * Returns the absolute path to pennyfarthing-dist/ or null if not found
@@ -25,94 +26,6 @@ function findNodeModulesPath(projectRoot) {
         dir = dirname(dir);
     }
     return null;
-}
-/**
- * Compute relative path for symlink from link location to target
- */
-function computeRelativeSymlink(linkPath, targetPath) {
-    const linkDir = dirname(linkPath);
-    return relative(linkDir, targetPath);
-}
-/**
- * Create commands directory with individual symlinks to each command file.
- * This allows users to add their own commands alongside built-in ones.
- *
- * @param projectRoot - Project root directory
- * @param builtInCommandsPath - Path to built-in commands (e.g., node_modules/.../commands)
- * @param projectCommandsPath - Path to user project commands (e.g., .claude/project/commands)
- * @param dryRun - If true, don't make actual changes
- */
-function createCommandsDirectory(projectRoot, builtInCommandsPath, projectCommandsPath, dryRun) {
-    const commandsDir = join(projectRoot, '.claude/commands');
-    // Remove existing symlink or directory
-    if (pathExists(commandsDir) || isSymlink(commandsDir)) {
-        if (!dryRun) {
-            try {
-                unlinkSync(commandsDir);
-            }
-            catch {
-                try {
-                    removeSync(commandsDir);
-                }
-                catch {
-                    // Ignore
-                }
-            }
-        }
-    }
-    // Create commands directory
-    if (!dryRun) {
-        ensureDirSync(commandsDir);
-    }
-    logger.created('.claude/commands/ (directory for built-in + user commands)');
-    // Symlink each built-in command
-    if (pathExists(builtInCommandsPath)) {
-        const builtInCommands = readdirSync(builtInCommandsPath).filter(f => f.endsWith('.md'));
-        for (const cmd of builtInCommands) {
-            const linkPath = join(commandsDir, cmd);
-            const targetPath = join(builtInCommandsPath, cmd);
-            const relativeTarget = computeRelativeSymlink(linkPath, targetPath);
-            if (!dryRun) {
-                try {
-                    symlinkSync(relativeTarget, linkPath);
-                }
-                catch (e) {
-                    logger.warning(`Could not create symlink for ${cmd}: ${e}`);
-                }
-            }
-        }
-        logger.info(`  Linked ${builtInCommands.length} built-in commands`);
-    }
-    // Symlink user project commands (if any exist)
-    if (pathExists(projectCommandsPath)) {
-        const projectCommands = readdirSync(projectCommandsPath).filter(f => f.endsWith('.md'));
-        let linkedCount = 0;
-        for (const cmd of projectCommands) {
-            const linkPath = join(commandsDir, cmd);
-            // Don't override built-in commands (user can explicitly remove built-in symlink if needed)
-            if (pathExists(linkPath)) {
-                logger.warning(`  Skipping ${cmd} - would override built-in command`);
-                continue;
-            }
-            const targetPath = join(projectCommandsPath, cmd);
-            const relativeTarget = computeRelativeSymlink(linkPath, targetPath);
-            if (!dryRun) {
-                try {
-                    symlinkSync(relativeTarget, linkPath);
-                    linkedCount++;
-                }
-                catch (e) {
-                    logger.warning(`Could not create symlink for ${cmd}: ${e}`);
-                }
-            }
-            else {
-                linkedCount++;
-            }
-        }
-        if (linkedCount > 0) {
-            logger.info(`  Linked ${linkedCount} user commands from project/commands/`);
-        }
-    }
 }
 const AGENTS = [
     'dev', 'tea', 'sm', 'reviewer', 'architect',
@@ -207,11 +120,10 @@ export async function initCommand(projectName, options) {
         }
         logger.info('Removed legacy .claude/pennyfarthing/ (migrating from copy mode)');
     }
-    // Create symlinks pointing to node_modules (except commands - handled separately)
+    // Create symlinks pointing to node_modules (except commands and skills - handled separately)
     const symlinks = [
         { name: 'agents', link: '.claude/agents' },
         { name: 'guides', link: '.claude/guides' },
-        { name: 'skills', link: '.claude/skills' },
         { name: 'personas', link: '.claude/personas' },
         { name: 'scripts', link: '.claude/scripts' }
     ];
@@ -254,6 +166,10 @@ export async function initCommand(projectName, options) {
     const builtInCommandsPath = join(nodeModulesPath, 'commands');
     const projectCommandsPath = join(projectRoot, '.claude/project/commands');
     createCommandsDirectory(projectRoot, builtInCommandsPath, projectCommandsPath, dryRun || false);
+    // Create skills directory with individual symlinks (allows user skills)
+    const builtInSkillsPath = join(nodeModulesPath, 'skills');
+    const projectSkillsPath = join(projectRoot, '.claude/project/skills');
+    createSkillsDirectory(projectRoot, builtInSkillsPath, projectSkillsPath, dryRun || false);
     // 8. Create agent sidecars if not exist
     logger.newline();
     logger.info('Creating agent sidecars...');
