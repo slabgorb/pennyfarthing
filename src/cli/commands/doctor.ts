@@ -1,5 +1,5 @@
-import { existsSync, readFileSync, writeFileSync, chmodSync, statSync } from 'fs';
-import { join } from 'path';
+import { existsSync, readFileSync, writeFileSync, chmodSync, statSync, readlinkSync, symlinkSync, unlinkSync } from 'fs';
+import { join, relative, dirname } from 'path';
 import fsExtra from 'fs-extra';
 
 const { removeSync } = fsExtra;
@@ -16,6 +16,23 @@ import {
   fileMatchesHash
 } from '../utils/files.js';
 import { getPackageVersion } from '../utils/version.js';
+
+/**
+ * Find pennyfarthing in node_modules (handles monorepo hoisting)
+ */
+function findNodeModulesPath(projectRoot: string): string | null {
+  const standard = join(projectRoot, 'node_modules/pennyfarthing/pennyfarthing-dist');
+  if (pathExists(standard)) return standard;
+
+  let dir = dirname(projectRoot);
+  while (dir !== '/' && dir !== dirname(dir)) {
+    const hoisted = join(dir, 'node_modules/pennyfarthing/pennyfarthing-dist');
+    if (pathExists(hoisted)) return hoisted;
+    dir = dirname(dir);
+  }
+
+  return null;
+}
 
 interface DoctorOptions {
   fix?: boolean;
@@ -45,8 +62,10 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
   const packageVersion = getPackageVersion();
   const manifest = readManifest(projectRoot);
   const installedVersion = manifest?.version || 'not installed';
+  const installationType = manifest?.installationType || 'copy';
 
   logger.info(`Version: ${installedVersion} (installed) / ${packageVersion} (package)`);
+  logger.info(`Mode: ${installationType}${installationType === 'symlink' ? ' (node_modules)' : ' (file copies)'}`);
   logger.newline();
 
   // Run checks
@@ -135,53 +154,159 @@ function checkInstallation(projectRoot: string, manifest: ReturnType<typeof read
 function checkCoreFiles(projectRoot: string, manifest: ReturnType<typeof readManifest>): CheckResult[] {
   const results: CheckResult[] = [];
 
-  const coreDirs = [
-    { path: '.claude/pennyfarthing/agents', name: 'core/agents' },
-    { path: '.claude/pennyfarthing/commands', name: 'core/commands' },
-    { path: '.claude/pennyfarthing/guides', name: 'core/guides' },
-    { path: '.claude/pennyfarthing/skills', name: 'core/skills' },
-    { path: '.claude/pennyfarthing/personas', name: 'core/personas' }
-  ];
+  const installationType = manifest?.installationType || 'copy';
+  const nodeModulesPath = findNodeModulesPath(projectRoot);
 
-  for (const { path, name } of coreDirs) {
-    const fullPath = join(projectRoot, path);
-    const exists = pathExists(fullPath) && isDirectory(fullPath);
+  if (installationType === 'symlink') {
+    // Symlink mode: check that symlinks exist and point to valid targets
+    results.push(...checkSymlinks(projectRoot, nodeModulesPath));
+  } else {
+    // Copy mode: check that directories exist
+    const coreDirs = [
+      { path: '.claude/pennyfarthing/agents', name: 'core/agents' },
+      { path: '.claude/pennyfarthing/commands', name: 'core/commands' },
+      { path: '.claude/pennyfarthing/guides', name: 'core/guides' },
+      { path: '.claude/pennyfarthing/skills', name: 'core/skills' },
+      { path: '.claude/pennyfarthing/personas', name: 'core/personas' },
+      { path: '.claude/pennyfarthing/scripts', name: 'core/scripts' }
+    ];
 
-    results.push({
-      name: name,
-      status: exists ? 'pass' : 'fail',
-      detail: exists ? undefined : 'Missing directory'
-    });
-  }
+    for (const { path, name } of coreDirs) {
+      const fullPath = join(projectRoot, path);
+      const exists = pathExists(fullPath) && isDirectory(fullPath);
 
-  // Check file integrity if manifest exists
-  if (manifest?.fileHashes) {
-    let modifiedCount = 0;
-    let missingCount = 0;
-
-    for (const [filePath, expectedHash] of Object.entries(manifest.fileHashes)) {
-      const fullPath = join(projectRoot, filePath);
-
-      if (!pathExists(fullPath)) {
-        missingCount++;
-      } else if (!fileMatchesHash(fullPath, expectedHash)) {
-        modifiedCount++;
-      }
-    }
-
-    if (modifiedCount > 0) {
       results.push({
-        name: 'core/integrity',
-        status: 'warn',
-        detail: `${modifiedCount} file(s) modified locally`
+        name: name,
+        status: exists ? 'pass' : 'fail',
+        detail: exists ? undefined : 'Missing directory'
       });
     }
 
-    if (missingCount > 0) {
+    // Check file integrity if manifest has hashes
+    if (manifest?.fileHashes && Object.keys(manifest.fileHashes).length > 0) {
+      let modifiedCount = 0;
+      let missingCount = 0;
+
+      for (const [filePath, expectedHash] of Object.entries(manifest.fileHashes)) {
+        const fullPath = join(projectRoot, filePath);
+
+        if (!pathExists(fullPath)) {
+          missingCount++;
+        } else if (!fileMatchesHash(fullPath, expectedHash)) {
+          modifiedCount++;
+        }
+      }
+
+      if (modifiedCount > 0) {
+        results.push({
+          name: 'core/integrity',
+          status: 'warn',
+          detail: `${modifiedCount} file(s) modified locally`
+        });
+      }
+
+      if (missingCount > 0) {
+        results.push({
+          name: 'core/completeness',
+          status: 'fail',
+          detail: `${missingCount} file(s) missing`
+        });
+      }
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Check symlinks for symlink installation mode
+ */
+function checkSymlinks(projectRoot: string, nodeModulesPath: string | null): CheckResult[] {
+  const results: CheckResult[] = [];
+
+  const symlinks = [
+    { name: 'agents', link: '.claude/agents' },
+    { name: 'commands', link: '.claude/commands' },
+    { name: 'guides', link: '.claude/guides' },
+    { name: 'skills', link: '.claude/skills' },
+    { name: 'personas', link: '.claude/personas' },
+    { name: 'scripts', link: '.claude/scripts' }
+  ];
+
+  // Check if node_modules is available
+  if (!nodeModulesPath) {
+    results.push({
+      name: 'core/node_modules',
+      status: 'fail',
+      detail: 'pennyfarthing not found in node_modules - run npm install'
+    });
+    return results;
+  }
+
+  results.push({
+    name: 'core/node_modules',
+    status: 'pass',
+    detail: relative(projectRoot, nodeModulesPath)
+  });
+
+  for (const { name, link } of symlinks) {
+    const linkPath = join(projectRoot, link);
+    const targetPath = join(nodeModulesPath, name);
+    const expectedRelative = relative(dirname(linkPath), targetPath);
+
+    if (!isSymlink(linkPath)) {
+      // Not a symlink
+      if (pathExists(linkPath)) {
+        // It's a directory (copy mode remnant)
+        results.push({
+          name: `symlink/${name}`,
+          status: 'warn',
+          detail: 'Directory instead of symlink - run update to migrate',
+          fix: () => {
+            removeSync(linkPath);
+            symlinkSync(expectedRelative, linkPath);
+          }
+        });
+      } else {
+        // Missing entirely
+        results.push({
+          name: `symlink/${name}`,
+          status: 'fail',
+          detail: 'Missing symlink',
+          fix: () => {
+            symlinkSync(expectedRelative, linkPath);
+          }
+        });
+      }
+      continue;
+    }
+
+    // It's a symlink - check if it resolves
+    try {
+      const resolved = readlinkSync(linkPath);
+      // Verify the target exists
+      if (pathExists(linkPath)) {
+        results.push({
+          name: `symlink/${name}`,
+          status: 'pass',
+          detail: resolved
+        });
+      } else {
+        results.push({
+          name: `symlink/${name}`,
+          status: 'fail',
+          detail: 'Broken symlink - run npm install',
+          fix: () => {
+            unlinkSync(linkPath);
+            symlinkSync(expectedRelative, linkPath);
+          }
+        });
+      }
+    } catch {
       results.push({
-        name: 'core/completeness',
+        name: `symlink/${name}`,
         status: 'fail',
-        detail: `${missingCount} file(s) missing`
+        detail: 'Cannot read symlink'
       });
     }
   }
@@ -307,7 +432,7 @@ function addSessionStartHooks(projectRoot: string): void {
       hooks: [
         {
           type: 'command',
-          command: '"$CLAUDE_PROJECT_DIR"/.claude/pennyfarthing/scripts/hooks/session-start.sh'
+          command: '"$CLAUDE_PROJECT_DIR"/.claude/scripts/hooks/session-start.sh'
         }
       ]
     },
@@ -370,9 +495,10 @@ function checkDirectories(projectRoot: string): CheckResult[] {
 function checkHooks(projectRoot: string): CheckResult[] {
   const results: CheckResult[] = [];
 
+  // Hooks are accessed via .claude/scripts/ symlink (works for both modes)
   const hooks = [
-    { path: '.claude/pennyfarthing/scripts/hooks/session-start.sh', name: 'hook/session-start' },
-    { path: '.claude/pennyfarthing/scripts/hooks/pre-edit-check.sh', name: 'hook/pre-edit-check' }
+    { path: '.claude/scripts/hooks/session-start.sh', name: 'hook/session-start' },
+    { path: '.claude/scripts/hooks/pre-edit-check.sh', name: 'hook/pre-edit-check' }
   ];
 
   for (const { path, name } of hooks) {
@@ -383,7 +509,7 @@ function checkHooks(projectRoot: string): CheckResult[] {
       results.push({
         name,
         status: 'warn',
-        detail: 'Hook script missing'
+        detail: 'Hook script missing - run pennyfarthing update'
       });
       continue;
     }
