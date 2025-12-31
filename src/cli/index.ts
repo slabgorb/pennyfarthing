@@ -10,6 +10,7 @@ import { doctorCommand } from './commands/doctor.js';
 import { uninstallCommand } from './commands/uninstall.js';
 import { versionCommand } from './commands/version.js';
 import { listCommand as themeListCommand, setCommand as themeSetCommand, showCommand as themeShowCommand, createCommand as themeCreateCommand } from './commands/theme.js';
+import { listCommand as cmdListCommand, addCommand as cmdAddCommand, removeCommand as cmdRemoveCommand, linkCommand as cmdLinkCommand, syncCommand as cmdSyncCommand } from './commands/command.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -104,5 +105,42 @@ themeCmd
   .option('-b, --base <theme>', 'Base theme to copy from', 'minimalist')
   .option('-u, --user', 'Create as user-level theme (available across projects)')
   .action(themeCreateCommand);
+
+// Command management commands
+const cmdCmd = program
+  .command('command')
+  .description('Manage custom slash commands');
+
+cmdCmd
+  .command('list')
+  .description('List all available commands')
+  .action(cmdListCommand);
+
+cmdCmd
+  .command('add')
+  .description('Create a new custom command')
+  .argument('<name>', 'Command name (lowercase, hyphens allowed)')
+  .option('-t, --template <type>', 'Template type: default, agent, task', 'default')
+  .option('-e, --edit', 'Open in editor after creation')
+  .action(cmdAddCommand);
+
+cmdCmd
+  .command('remove')
+  .description('Remove a custom command')
+  .argument('<name>', 'Command name to remove')
+  .option('-f, --force', 'Skip confirmation prompts')
+  .action(cmdRemoveCommand);
+
+cmdCmd
+  .command('link')
+  .description('Link an existing command file from project/commands/')
+  .argument('<name>', 'Command name to link')
+  .action(cmdLinkCommand);
+
+cmdCmd
+  .command('sync')
+  .description('Sync all user commands from project/commands/')
+  .option('--dry-run', 'Show what would be done without doing it')
+  .action(cmdSyncCommand);
 
 program.parse();
