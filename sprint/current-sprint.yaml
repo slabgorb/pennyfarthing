@@ -812,14 +812,167 @@ sprint_3:
       - Sprint 3 fully completed ahead of schedule
 
 # =============================================================================
-# SPRINT 4 - Session Isolation & State Management
+# SPRINT 4 - OCEAN Personality Visualization
 # =============================================================================
 
 sprint_4:
   number: 4
-  goal: "Fix session isolation and improve state management"
-  planned_start: 2025-01-01
-  status: planning
+  goal: "OCEAN personality visualization with Chernoff faces for benchmark correlation"
+  planned_start: 2026-01-01
+  status: active
+
+  epics:
+    - id: epic-11
+      title: "OCEAN Personality Visualization with Chernoff Faces"
+      description: |
+        Visualize agent personality profiles using Chernoff faces mapped to
+        OCEAN (Big Five) personality traits. Add OCEAN scores to all 63 theme
+        character definitions, generate SVG faces, and create reports for
+        correlating personality with benchmark performance.
+      points: 31
+      priority: P2
+      marker: "strategic"
+      repos: pennyfarthing
+      stories:
+        - id: "11-1"
+          title: "Define OCEAN → facial feature mapping spec"
+          description: |
+            Create specification document for mapping OCEAN scores to Chernoff face features.
+            - Define 1-5 scale for each OCEAN dimension
+            - Map each dimension to specific facial feature parameters
+            - Document the visual semantics (what each feature means)
+            - Include example mappings for extreme profiles
+          points: 2
+          priority: P1
+          status: in-progress
+          started: 2026-01-01
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Spec document in pennyfarthing-dist/personas/OCEAN-TO-FACE.md
+            - All 5 OCEAN dimensions mapped to facial features
+            - Visual examples of extreme profiles (1-1-1-1-1 vs 5-5-5-5-5)
+            - Approved feature mapping ready for implementation
+
+        - id: "11-2"
+          title: "Add OCEAN profiles to 10 anchor themes"
+          description: |
+            Add OCEAN scores to 10 well-documented, high-usage themes as proof of concept.
+            Anchor themes: deadwood, firefly, breaking-bad, the-good-place, star-trek-tng,
+            discworld, fargo, succession, mass-effect, software-pioneers.
+          points: 3
+          priority: P1
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - 10 theme YAMLs updated with ocean blocks
+            - All 10 agents in each theme have OCEAN scores
+            - Scores consistent with OCEAN-BENCHMARKING.md guidance
+            - 100 character profiles defined (10 themes × 10 agents)
+
+        - id: "11-3"
+          title: "Build Chernoff face generator (OCEAN → SVG)"
+          description: |
+            Implement face generation script that takes OCEAN scores and outputs SVG.
+            - Parse OCEAN scores from theme YAML
+            - Apply mapping spec to generate facial features
+            - Output clean, scalable SVG
+            - Support batch generation for multiple characters
+          points: 5
+          priority: P1
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - scripts/generate-face.sh or Node script functional
+            - Takes theme + agent as input, outputs SVG
+            - Faces visually distinct across OCEAN profiles
+            - SVGs render correctly in browsers and markdown
+
+        - id: "11-4"
+          title: "Generate anchor theme faces + markdown report"
+          description: |
+            Generate faces for all 100 anchor theme characters and create index.
+            - Generate SVG for each character
+            - Create markdown report with embedded faces
+            - Organize by theme (team photos) and by role (cross-theme comparison)
+          points: 2
+          priority: P1
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - 100 SVG faces generated in pennyfarthing-dist/personas/faces/
+            - Markdown index with all faces viewable
+            - Team photo view (10 agents per theme)
+            - Role comparison view (1 role across 10 themes)
+
+        - id: "11-5"
+          title: "Add OCEAN profiles to remaining 53 themes"
+          description: |
+            Batch add OCEAN scores to all remaining theme character definitions.
+            - Use OCEAN-BENCHMARKING.md role recommendations
+            - Cross-reference character traits with OCEAN profiles
+            - Maintain consistency across similar characters
+          points: 8
+          priority: P2
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - All 63 themes have complete OCEAN profiles
+            - 630 total character profiles defined
+            - Validation script confirms all profiles present
+            - Consistent scoring methodology documented
+
+        - id: "11-6"
+          title: "Generate full 630-face matrix with index"
+          description: |
+            Generate faces for all 630 characters and create comprehensive index.
+            - Batch generate all SVGs
+            - Create master matrix (63 themes × 10 agents)
+            - Build navigable markdown documentation
+          points: 3
+          priority: P2
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - 630 SVG faces in pennyfarthing-dist/personas/faces/
+            - Master matrix viewable (HTML or markdown)
+            - Navigation by theme, role, or OCEAN profile
+            - File size and load time acceptable
+
+        - id: "11-7"
+          title: "Build slice/report generator"
+          description: |
+            Create tool to generate custom face reports and slices.
+            - Filter by role (all Reviewers)
+            - Filter by theme (all Deadwood characters)
+            - Filter by OCEAN dimension (all High-O characters)
+            - Compare specific characters side-by-side
+          points: 3
+          priority: P2
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - scripts/face-report.sh generates filtered views
+            - Supports role, theme, and OCEAN filters
+            - Comparison mode for 2-4 characters
+            - Output as markdown with embedded SVGs
+
+        - id: "11-8"
+          title: "Integrate with benchmark output (personality → performance)"
+          description: |
+            Correlate Chernoff faces with benchmark performance data.
+            - Link face visualization to benchmark results
+            - Generate reports showing personality vs performance
+            - Identify which OCEAN profiles excel at which tasks
+            - Visual dashboard for personality-performance correlation
+          points: 5
+          priority: P2
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Benchmark output includes character face
+            - Correlation report shows OCEAN vs task performance
+            - Identifies optimal profiles for each role type
+            - Supports "find characters good at X" queries
 
   bugs:
     - id: "BUG-1"
