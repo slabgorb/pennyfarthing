@@ -6,22 +6,8 @@ import { logger } from '../utils/logger.js';
 import { readManifest } from '../utils/manifest.js';
 import { pathExists, isDirectory, isSymlink, fileMatchesHash } from '../utils/files.js';
 import { getPackageVersion } from '../utils/version.js';
-/**
- * Find pennyfarthing in node_modules (handles monorepo hoisting)
- */
-function findNodeModulesPath(projectRoot) {
-    const standard = join(projectRoot, 'node_modules/pennyfarthing/pennyfarthing-dist');
-    if (pathExists(standard))
-        return standard;
-    let dir = dirname(projectRoot);
-    while (dir !== '/' && dir !== dirname(dir)) {
-        const hoisted = join(dir, 'node_modules/pennyfarthing/pennyfarthing-dist');
-        if (pathExists(hoisted))
-            return hoisted;
-        dir = dirname(dir);
-    }
-    return null;
-}
+import { findNodeModulesPath } from '../utils/node-modules.js';
+import { ALL_SYMLINKS, CORE_AGENTS } from '../utils/constants.js';
 export async function doctorCommand(options) {
     const projectRoot = process.cwd();
     const results = [];
@@ -176,14 +162,6 @@ function checkCoreFiles(projectRoot, manifest) {
  */
 function checkSymlinks(projectRoot, nodeModulesPath) {
     const results = [];
-    const symlinks = [
-        { name: 'agents', link: '.claude/agents' },
-        { name: 'commands', link: '.claude/commands' },
-        { name: 'guides', link: '.claude/guides' },
-        { name: 'skills', link: '.claude/skills' },
-        { name: 'personas', link: '.claude/personas' },
-        { name: 'scripts', link: '.claude/scripts' }
-    ];
     // Check if node_modules is available
     if (!nodeModulesPath) {
         results.push({
@@ -198,7 +176,7 @@ function checkSymlinks(projectRoot, nodeModulesPath) {
         status: 'pass',
         detail: relative(projectRoot, nodeModulesPath)
     });
-    for (const { name, link } of symlinks) {
+    for (const { name, link } of ALL_SYMLINKS) {
         const linkPath = join(projectRoot, link);
         const targetPath = join(nodeModulesPath, name);
         const expectedRelative = relative(dirname(linkPath), targetPath);
@@ -274,8 +252,7 @@ function checkUserFiles(projectRoot) {
     // Check agent sidecars
     const sidecarsDir = join(projectRoot, '.claude/project/agents');
     if (pathExists(sidecarsDir)) {
-        const agents = ['dev', 'tea', 'sm', 'reviewer', 'architect', 'pm', 'devops', 'orchestrator', 'tech-writer', 'ux-designer'];
-        const existingSidecars = agents.filter(a => pathExists(join(sidecarsDir, `${a}-sidecar`)));
+        const existingSidecars = CORE_AGENTS.filter(a => pathExists(join(sidecarsDir, `${a}-sidecar`)));
         results.push({
             name: 'project/sidecars',
             status: existingSidecars.length > 0 ? 'pass' : 'warn',

@@ -1,5 +1,5 @@
-import { existsSync, readFileSync, writeFileSync, unlinkSync, symlinkSync } from 'fs';
-import { join, relative, dirname } from 'path';
+import { existsSync, readFileSync, writeFileSync, symlinkSync } from 'fs';
+import { join, relative } from 'path';
 import fsExtra from 'fs-extra';
 
 const { ensureDirSync, removeSync } = fsExtra;
@@ -23,25 +23,11 @@ import {
   createCommandsDirectory,
   createSkillsDirectory,
   needsCommandsMigration,
-  needsSkillsMigration
+  needsSkillsMigration,
+  removeSymlinkOrDirectory
 } from '../utils/symlinks.js';
-
-/**
- * Find pennyfarthing in node_modules (handles monorepo hoisting)
- */
-function findNodeModulesPath(projectRoot: string): string | null {
-  const standard = join(projectRoot, 'node_modules/pennyfarthing/pennyfarthing-dist');
-  if (pathExists(standard)) return standard;
-
-  let dir = dirname(projectRoot);
-  while (dir !== '/' && dir !== dirname(dir)) {
-    const hoisted = join(dir, 'node_modules/pennyfarthing/pennyfarthing-dist');
-    if (pathExists(hoisted)) return hoisted;
-    dir = dirname(dir);
-  }
-
-  return null;
-}
+import { findNodeModulesPath } from '../utils/node-modules.js';
+import { DIRECTORY_SYMLINKS } from '../utils/constants.js';
 
 interface UpdateOptions {
   force?: boolean;
@@ -193,30 +179,15 @@ async function migrateToSymlinkMode(
   }
 
   // 3. Remove old symlinks and create new ones pointing to node_modules (except commands and skills)
-  const symlinks = [
-    { name: 'agents', link: '.claude/agents' },
-    { name: 'guides', link: '.claude/guides' },
-    { name: 'personas', link: '.claude/personas' },
-    { name: 'scripts', link: '.claude/scripts' }
-  ];
-
   logger.newline();
   logger.info('Creating symlinks to node_modules...');
 
-  for (const { name, link } of symlinks) {
+  for (const { name, link } of DIRECTORY_SYMLINKS) {
     const linkPath = join(projectRoot, link);
     const targetPath = join(nodeModulesPath, name);
 
     // Remove existing symlink or directory
-    if (pathExists(linkPath) || isSymlink(linkPath)) {
-      if (!dryRun) {
-        try {
-          unlinkSync(linkPath);
-        } catch {
-          removeSync(linkPath);
-        }
-      }
-    }
+    removeSymlinkOrDirectory(linkPath, dryRun);
 
     if (!dryRun) {
       const relativeTarget = computeRelativeSymlink(linkPath, targetPath);
@@ -278,14 +249,7 @@ async function updateSymlinkMode(
   logger.info('Verifying symlinks...');
 
   // Verify standard symlinks (not commands or skills - handled separately)
-  const symlinks = [
-    { name: 'agents', link: '.claude/agents' },
-    { name: 'guides', link: '.claude/guides' },
-    { name: 'personas', link: '.claude/personas' },
-    { name: 'scripts', link: '.claude/scripts' }
-  ];
-
-  for (const { name, link } of symlinks) {
+  for (const { name, link } of DIRECTORY_SYMLINKS) {
     const linkPath = join(projectRoot, link);
     const targetPath = join(nodeModulesPath, name);
     const expectedRelative = computeRelativeSymlink(linkPath, targetPath);
