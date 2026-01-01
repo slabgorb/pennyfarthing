@@ -925,7 +925,9 @@ sprint_4:
             - Maintain consistency across similar characters
           points: 8
           priority: P2
-          status: backlog
+          status: in_progress
+          started: 2026-01-01
+          branch: feat/11-5-ocean-remaining-themes
           repos: pennyfarthing
           acceptance_criteria:
             - All 63 themes have complete OCEAN profiles
@@ -1059,8 +1061,8 @@ sprint_4:
   sprint_4_summary:
     total_points: 31
     completed_points: 13
-    in_progress_points: 0
-    backlog_points: 18
+    in_progress_points: 8
+    backlog_points: 10
     velocity_target: 20
     status: in_progress
     completed_stories:
@@ -1068,9 +1070,9 @@ sprint_4:
       - "11-2 (3 pts): OCEAN profiles for anchor themes"
       - "11-3 (5 pts): Chernoff face generator"
       - "11-4 (2 pts): Anchor theme faces + markdown report"
-    in_progress_stories: []
-    backlog_stories:
+    in_progress_stories:
       - "11-5 (8 pts): Add OCEAN to remaining 53 themes"
+    backlog_stories:
       - "11-6 (3 pts): Full 630-face matrix"
       - "11-7 (3 pts): Report generator"
       - "11-8 (5 pts): Benchmark correlation"
