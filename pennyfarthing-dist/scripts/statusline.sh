@@ -76,14 +76,22 @@ agent_name=""
 agent_abbrev=""
 theme_display=""
 
-# Only use per-session file - no fallback to shared state (prevents cross-session pollution)
+# Try session_id match first, then fall back to most recent agent file
 if [ -n "$session_id" ] && [ -f "$PROJECT_ROOT/.session/agents/${session_id}" ]; then
+    # Exact session match (ideal case)
     agent_name=$(cat "$PROJECT_ROOT/.session/agents/${session_id}")
     agent_abbrev=$(get_agent_abbrev "$agent_name")
+elif [ -d "$PROJECT_ROOT/.session/agents" ]; then
+    # Fallback: use most recently modified agent file
+    # This handles the session_id mismatch between hooks
+    latest_file=$(ls -t "$PROJECT_ROOT/.session/agents/" 2>/dev/null | head -1)
+    if [ -n "$latest_file" ] && [ -f "$PROJECT_ROOT/.session/agents/$latest_file" ]; then
+        agent_name=$(cat "$PROJECT_ROOT/.session/agents/$latest_file")
+        agent_abbrev=$(get_agent_abbrev "$agent_name")
+    fi
 fi
-# If no session_id or file missing, agent_name stays empty -> shows "---"
 
-# Get theme name from persona config
+# Get character name from theme for current agent
 config_file=""
 if [ -f "$PROJECT_ROOT/.claude/persona-config.local.yaml" ]; then
     config_file="$PROJECT_ROOT/.claude/persona-config.local.yaml"
@@ -91,13 +99,34 @@ elif [ -f "$PROJECT_ROOT/.claude/persona-config.yaml" ]; then
     config_file="$PROJECT_ROOT/.claude/persona-config.yaml"
 fi
 
+character_display=""
 if [ -n "$config_file" ]; then
     theme=$(yq '.theme' "$config_file" 2>/dev/null)
-    if [ -n "$theme" ] && [ "$theme" != "null" ]; then
-        # Capitalize first letter of theme for display
-        theme_display="$(echo "${theme:0:1}" | tr '[:lower:]' '[:upper:]')${theme:1}"
+    if [ -n "$theme" ] && [ "$theme" != "null" ] && [ -n "$agent_name" ]; then
+        # Find theme file (same resolution as agent-session.sh)
+        theme_file=""
+        if [ -f "$PROJECT_ROOT/.claude/pennyfarthing/themes/${theme}.yaml" ]; then
+            theme_file="$PROJECT_ROOT/.claude/pennyfarthing/themes/${theme}.yaml"
+        elif [ -f "$PROJECT_ROOT/.claude/personas/themes/${theme}.yaml" ]; then
+            theme_file="$PROJECT_ROOT/.claude/personas/themes/${theme}.yaml"
+        elif [ -f "$PROJECT_ROOT/personas/themes/${theme}.yaml" ]; then
+            theme_file="$PROJECT_ROOT/personas/themes/${theme}.yaml"
+        fi
+
+        if [ -n "$theme_file" ]; then
+            full_name=$(yq ".agents.${agent_name}.character" "$theme_file" 2>/dev/null)
+            if [ -n "$full_name" ] && [ "$full_name" != "null" ]; then
+                # Use last name (last word) for compact display
+                character_display=$(echo "$full_name" | awk '{print $NF}')
+            fi
+        fi
+    fi
+    # Fallback to theme name if no character found
+    if [ -z "$character_display" ] && [ -n "$theme" ] && [ "$theme" != "null" ]; then
+        character_display="$(echo "${theme:0:1}" | tr '[:lower:]' '[:upper:]')${theme:1}"
     fi
 fi
+theme_display="$character_display"
 
 # ANSI colors
 RESET=$'\033[0m'

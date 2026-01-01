@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [4.2.1] - 2026-01-01
+
+### Fixed
+- **Statusline Agent Display** - Fixed session_id mismatch between hooks causing agent not to display
+  - Added fallback to most recent agent file when session_id lookup fails
+  - Statusline now shows character name (e.g., "Bullock") instead of theme name
+
+---
+
 ## [4.2.0] - 2026-01-01
 
 ### Added
@@ -481,7 +490,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v4.2.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v4.2.1...HEAD
+[4.2.1]: https://github.com/1898andCo/pennyfarthing/compare/v4.2.0...v4.2.1
 [4.2.0]: https://github.com/1898andCo/pennyfarthing/compare/v4.1.0...v4.2.0
 [4.1.0]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.6...v4.1.0
 [4.0.6]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.5...v4.0.6
