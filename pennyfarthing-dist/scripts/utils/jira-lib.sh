@@ -3,6 +3,10 @@
 # Shared functions for interacting with Jira using jira-cli
 # Source this file: source "${SCRIPT_DIR}/jira-lib.sh"
 
+# Source common utilities (for dry_run_check, escape_for_jql, get_issue_json, etc.)
+_JIRA_LIB_DIR="$(cd "$(dirname "${0:-$BASH_SOURCE[0]}")" && pwd)"
+source "${_JIRA_LIB_DIR}/common.sh"
+
 #############################################
 # Dependency Checks
 #############################################
@@ -57,14 +61,13 @@ check_jira_cli() {
 search_existing_epic() {
     local summary="$1"
 
-    if [ "$DRY_RUN" = true ]; then
+    if dry_run_check "search for epic"; then
         echo ""
         return
     fi
 
     # Search for epic by exact summary match
-    # Use JQL to find epics with matching summary
-    local escaped_summary=$(echo "$summary" | sed 's/"/\\"/g')
+    local escaped_summary=$(escape_for_jql "$summary")
     jira issue list --jql "project=${JIRA_PROJECT} AND type=Epic AND summary~'${escaped_summary}'" --plain 2>/dev/null | \
         grep -E "^Epic.*${JIRA_PROJECT}-[0-9]+" | \
         grep -oE "${JIRA_PROJECT}-[0-9]+" | \
@@ -75,14 +78,13 @@ search_existing_story() {
     local summary="$1"
     local parent_key="$2"
 
-    if [ "$DRY_RUN" = true ]; then
+    if dry_run_check "search for story"; then
         echo ""
         return
     fi
 
     # Search for story by exact summary match under the same epic
-    # Use JQL to find stories with matching summary
-    local escaped_summary=$(echo "$summary" | sed 's/"/\\"/g')
+    local escaped_summary=$(escape_for_jql "$summary")
     local jql="project=${JIRA_PROJECT} AND type=Story AND summary~'${escaped_summary}'"
 
     # If parent epic provided, also filter by parent
@@ -107,8 +109,7 @@ create_epic() {
     # Use PROJECT_LABEL if set, otherwise fall back to PROJECT_NAME
     local label="${PROJECT_LABEL:-${PROJECT_NAME:-}}"
 
-    if [ "$DRY_RUN" = true ]; then
-        warn "[DRY-RUN] Would create epic: $summary"
+    if dry_run_check "create epic: $summary"; then
         echo "DRYRUN-EPIC-001"
         return
     fi
@@ -137,8 +138,7 @@ create_story() {
     # Use PROJECT_LABEL if set, otherwise fall back to PROJECT_NAME
     local label="${PROJECT_LABEL:-${PROJECT_NAME:-}}"
 
-    if [ "$DRY_RUN" = true ]; then
-        warn "[DRY-RUN] Would create story: $summary"
+    if dry_run_check "create story: $summary"; then
         echo "DRYRUN-STORY-001"
         return
     fi
@@ -168,22 +168,21 @@ update_issue() {
     local summary="$2"
     local description="$3"
 
-    if [ "$DRY_RUN" = true ]; then
-        warn "[DRY-RUN] Would update: $key"
+    if dry_run_check "update: $key"; then
         return 0
     fi
 
     # Fetch current issue as JSON
-    local current_json=$(jira issue view "$key" --raw 2>/dev/null)
-    if [ -z "$current_json" ]; then
-        warn "  ⚠️  Could not fetch current issue, updating anyway"
+    local current_json=$(get_issue_json "$key")
+    if [ -z "$current_json" ] || [ "$current_json" = "{}" ]; then
+        warn "  Could not fetch current issue, updating anyway"
         jira issue edit "$key" --summary "$summary" --body "$description" --no-input 2>&1
         return 0
     fi
 
     # Extract current summary and description from JSON
-    local current_summary=$(echo "$current_json" | jq -r '.fields.summary // ""')
-    local current_desc=$(echo "$current_json" | jq -r '.fields.description // ""')
+    local current_summary=$(get_jira_field "$current_json" '.fields.summary' '')
+    local current_desc=$(get_jira_field "$current_json" '.fields.description' '')
 
     # Compare both summary and description
     if [ "$current_summary" = "$summary" ] && [ "$current_desc" = "$description" ]; then
@@ -200,15 +199,14 @@ move_issue() {
     local key="$1"
     local status="$2"
 
-    if [ "$DRY_RUN" = true ]; then
-        warn "[DRY-RUN] Would move $key to: $status"
+    if dry_run_check "move $key to: $status"; then
         return 0
     fi
 
     # Fetch current status from JSON
-    local current_json=$(jira issue view "$key" --raw 2>/dev/null)
-    if [ -n "$current_json" ]; then
-        local current_status=$(echo "$current_json" | jq -r '.fields.status.name // ""')
+    local current_json=$(get_issue_json "$key")
+    if [ -n "$current_json" ] && [ "$current_json" != "{}" ]; then
+        local current_status=$(get_jira_field "$current_json" '.fields.status.name' '')
         # Case-insensitive comparison
         if [ "$(echo "$current_status" | tr '[:upper:]' '[:lower:]')" = "$(echo "$status" | tr '[:upper:]' '[:lower:]')" ]; then
             return 1
@@ -224,8 +222,7 @@ assign_issue() {
     local key="$1"
     local assignee="$2"
 
-    if [ "$DRY_RUN" = true ]; then
-        warn "[DRY-RUN] Would assign $key to: $assignee"
+    if dry_run_check "assign $key to: $assignee"; then
         return 0
     fi
 
@@ -234,10 +231,10 @@ assign_issue() {
     fi
 
     # Check current assignee from JSON
-    local current_json=$(jira issue view "$key" --raw 2>/dev/null)
-    if [ -n "$current_json" ]; then
-        local current_email=$(echo "$current_json" | jq -r '.fields.assignee.emailAddress // ""')
-        local current_name=$(echo "$current_json" | jq -r '.fields.assignee.displayName // ""')
+    local current_json=$(get_issue_json "$key")
+    if [ -n "$current_json" ] && [ "$current_json" != "{}" ]; then
+        local current_email=$(get_jira_field "$current_json" '.fields.assignee.emailAddress' '')
+        local current_name=$(get_jira_field "$current_json" '.fields.assignee.displayName' '')
 
         # Check if already assigned to this user (compare email or name)
         if [ "$current_email" = "$assignee" ] || echo "$current_name" | grep -qi "$assignee"; then
@@ -298,8 +295,7 @@ sync_story_points() {
     local conductor_points="$2"
     local jira_points="${3:-}"
 
-    if [ "$DRY_RUN" = true ]; then
-        warn "[DRY-RUN] Would sync story points for $key: ${conductor_points}"
+    if dry_run_check "sync story points for $key: ${conductor_points}"; then
         return 0
     fi
 
