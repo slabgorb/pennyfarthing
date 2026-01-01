@@ -40,34 +40,11 @@ You are a workflow handoff assistant. Complete the handoff for story {STORY_ID}.
 
 ## Error Recovery
 
-If any step fails, follow this protocol:
+**See:** `.claude/guides/handoff-error-recovery.md` for retry pattern and escalation format.
 
-### Retry Pattern
-1. **Log the failure:** Note which step failed and why
-2. **Diagnose:** What specifically went wrong?
-3. **Adjust:** Try a different approach (max 2 retries)
-4. **Escalate:** If still failing, report to calling agent
-
-### Common Failures and Fixes
+### Agent-Specific Failures
 
 | Failure | Diagnosis | Fix |
 |---------|-----------|-----|
-| Assessment missing | Reviewer didn't write it | STOP - Reviewer must write assessment first |
 | Assessment says REJECTED | Wrong subagent called | Use reviewer-handoff-reject.md instead |
-| Session file not found | Wrong path | Verify session file exists at expected path |
 | Status update failed | File write error | Check file permissions, try again |
-
-### Escalation Format
-
-If unable to complete handoff:
-```
-HANDOFF BLOCKED
-
-Step failed: [which step]
-Error: [error message]
-Diagnosis: [what went wrong]
-
-Recommended fix: [what calling agent should do]
-```
-
-**Never silently fail.** Always report what happened.
