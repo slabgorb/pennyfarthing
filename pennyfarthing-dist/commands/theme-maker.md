@@ -149,6 +149,7 @@ Based on the universe description, generate personas for all 10 agents:
 
 For each agent, generate:
 - `character`: Name fitting the universe
+- `ocean`: OCEAN personality profile (see Role-Appropriate OCEAN Profiles below)
 - `style`: 1-2 sentence communication style
 - `expertise`: Areas of expertise in the universe context
 - `role`: Role description within the universe
@@ -156,6 +157,25 @@ For each agent, generate:
 - `quote`: Signature quote that captures their personality
 - `emoji`: Single emoji representing them
 - `helper`: Assistant with name and communication style
+
+#### Role-Appropriate OCEAN Profiles
+
+When generating OCEAN scores, balance character personality with role requirements. Each dimension uses a 1-5 scale. Include a brief rationale comment for each score.
+
+| Agent | Recommended Profile | Rationale |
+|-------|---------------------|-----------|
+| orchestrator | High O (4-5), Moderate C (3-4) | Pattern-seer needs openness to possibilities |
+| sm | High A (4-5), Moderate C (3-4) | Coordination requires agreeableness |
+| tea | High C (4-5), High O (4-5) | Testing needs conscientiousness + creativity |
+| dev | High C (4-5), Moderate O (3-4) | Building needs discipline + problem-solving |
+| reviewer | High C (4-5), Low A (2-3) | Critical review prioritizes standards over harmony |
+| architect | High O (4-5), High C (4-5) | Design needs vision + structure |
+| pm | High E (4-5), High A (4-5) | Stakeholder mgmt needs sociability |
+| tech-writer | High C (4-5), Low N (1-2) | Documentation needs precision + calm |
+| ux-designer | High A (4-5), High O (4-5) | User advocacy needs empathy + creativity |
+| devops | High C (4-5), Low N (1-2) | Operations needs reliability + stability |
+
+Reference `OCEAN-BENCHMARKING.md` for detailed guidance on personality-to-role mapping.
 
 ### Step 3: Preview Generated Theme
 
@@ -227,6 +247,12 @@ theme:
 agents:
   orchestrator:
     character: {generated}
+    ocean:
+      O: {1-5}  # {rationale - e.g., "Cosmic awareness"}
+      C: {1-5}  # {rationale}
+      E: {1-5}  # {rationale}
+      A: {1-5}  # {rationale}
+      N: {1-5}  # {rationale}
     style: {generated}
     expertise: {generated}
     role: {generated}
@@ -236,8 +262,13 @@ agents:
     helper:
       name: {generated}
       style: "{generated}"
-  # ... all 10 agents with complete definitions
+  # ... all 10 agents with complete definitions including ocean blocks
 ```
+
+**OCEAN Validation:** Before writing the theme file, verify all OCEAN profiles are complete and valid:
+- All 10 agents have `ocean:` blocks with O, C, E, A, N keys
+- All scores are integers 1-5
+- Each score has a rationale comment
 
 Use `validateThemeSchema()` from `src/cli/utils/themes.ts` to verify the generated theme is valid before writing.
 
@@ -287,9 +318,10 @@ If user selects "Other", prompt for custom character name as free text.
 9. ux-designer
 10. devops
 
-### Step 3: Generate Details for Selections
+### Step 3: Generate Details and OCEAN Profiles
 
 After the user picks a character for each agent, generate the remaining fields:
+- `ocean`: OCEAN personality profile (see AI-Driven mode for role-appropriate profiles)
 - `style`: Communication style fitting the character
 - `trait`: Key personality traits
 - `quote`: Signature quote
@@ -298,27 +330,36 @@ After the user picks a character for each agent, generate the remaining fields:
 
 The AI fills in these details based on the selected character and universe context.
 
-### Step 4: Preview Theme
+#### OCEAN Generation for Selected Characters
 
-Show a preview of the complete theme before confirming:
+When generating OCEAN profiles in Guided mode:
+1. Consider the selected character's known personality traits
+2. Balance character personality with agent role requirements (see Role-Appropriate OCEAN Profiles in AI-Driven mode)
+3. Show reasoning to the user, e.g.:
+   > "**OCEAN Profile for Kirk (SM):** High E (5) for charismatic command, High A (4) for crew devotion, High C (4) for Starfleet discipline..."
+4. Include rationale comments in the YAML output
+
+### Step 4: Preview Theme with OCEAN Profiles
+
+Show a preview of the complete theme before confirming. Include OCEAN scores for each agent:
 
 ```
 ### Theme Preview: {name}
 
 **Universe:** {concept}
 
-| Agent | Character | Style |
-|-------|-----------|-------|
-| orchestrator | {selected} | {generated style} |
-| sm | {selected} | {generated style} |
-| tea | {selected} | {generated style} |
-| dev | {selected} | {generated style} |
-| reviewer | {selected} | {generated style} |
-| architect | {selected} | {generated style} |
-| pm | {selected} | {generated style} |
-| tech-writer | {selected} | {generated style} |
-| ux-designer | {selected} | {generated style} |
-| devops | {selected} | {generated style} |
+| Agent | Character | Style | OCEAN |
+|-------|-----------|-------|-------|
+| orchestrator | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| sm | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| tea | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| dev | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| reviewer | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| architect | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| pm | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| tech-writer | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| ux-designer | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| devops | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
 ```
 
 ### Step 5: Confirm or Edit
@@ -341,7 +382,9 @@ questions:
 
 If **Go back**: Allow editing previous selections by showing the agent list and letting user pick which to change.
 
-If **Confirm**: Write the complete theme file using the same format as AI-Driven mode.
+If **Confirm**: Write the complete theme file using the same format as AI-Driven mode, including OCEAN blocks with rationale comments for all 10 agents.
+
+**OCEAN Validation:** Before writing, verify all OCEAN profiles are complete (see AI-Driven mode validation checklist).
 
 ### Navigation
 
@@ -407,39 +450,69 @@ If user types "skip", use these defaults:
 | devops | DevOps Engineer - infrastructure, reliability |
 | orchestrator | Orchestrator - meta-coordinator, pattern-seer |
 
-### Step 3: Generate Remaining Fields
+### Step 3: OCEAN Profile Option
 
-After collecting user input for all agents, generate the remaining fields for each:
+After collecting character details, offer the user a choice for OCEAN profiles:
+
+```yaml
+questions:
+  - question: "How would you like to handle OCEAN personality profiles?"
+    header: "OCEAN"
+    options:
+      - label: "Auto-generate (Recommended)"
+        description: "Generate OCEAN scores based on character traits and agent roles"
+      - label: "Specify manually"
+        description: "Enter O/C/E/A/N scores (1-5) for each agent"
+    multiSelect: false
+```
+
+**If Auto-generate:** Generate OCEAN profiles based on:
+1. Character personality derived from their style and quotes
+2. Agent role requirements (see Role-Appropriate OCEAN Profiles in AI-Driven mode)
+3. Show generated profiles to user before finalizing
+
+**If Specify manually:** For each agent, prompt:
+> "**OCEAN for {character} ({agent})** - Enter scores 1-5 for each dimension:"
+> "O (Openness): "
+> "C (Conscientiousness): "
+> "E (Extraversion): "
+> "A (Agreeableness): "
+> "N (Neuroticism): "
+> "Brief rationale (optional): "
+
+### Step 4: Generate Remaining Fields
+
+After OCEAN profiles are determined, generate the remaining fields for each agent:
 - `expertise`: Areas of expertise based on character and role
 - `role`: Role description within the theme context
 - `trait`: Key personality traits derived from style
 - `emoji`: Single representative emoji
 - `helper`: Assistant name and style fitting the character
 
-### Step 4: Preview Theme
+### Step 5: Preview Theme with OCEAN
 
-Show a preview of the complete theme:
+Show a preview of the complete theme including OCEAN profiles:
 
 ```
 ## Theme Preview: {name}
 
 **Description:** {user's description}
 
-| Agent | Character | Style | Quote |
-|-------|-----------|-------|-------|
-| sm | {provided} | {provided} | {provided} |
-| tea | {provided} | {provided} | {provided} |
-| dev | {provided} | {provided} | {provided} |
-| reviewer | {provided} | {provided} | {provided} |
-| architect | {provided} | {provided} | {provided} |
-| pm | {provided} | {provided} | {provided} |
-| tech-writer | {provided} | {provided} | {provided} |
-| ux-designer | {provided} | {provided} | {provided} |
-| devops | {provided} | {provided} | {provided} |
-| orchestrator | {provided} | {provided} | {provided} |
+| Agent | Character | Style | OCEAN | Quote |
+|-------|-----------|-------|-------|-------|
+| sm | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| tea | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| dev | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| reviewer | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| architect | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| pm | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| tech-writer | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| ux-designer | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| devops | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| orchestrator | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
 ```
 
-### Step 5: Confirm or Edit
+### Step 6: Confirm or Edit
 
 Use `AskUserQuestion` to let the user decide:
 
@@ -457,9 +530,9 @@ questions:
     multiSelect: false
 ```
 
-If **Edit an agent**: Ask which agent to edit, then re-prompt for that agent's details only.
+If **Edit an agent**: Ask which agent to edit, then re-prompt for that agent's details only. Also offer to edit OCEAN scores.
 
-If **Confirm**: Write the complete theme file using the same format as AI-Driven mode.
+If **Confirm**: Write the complete theme file using the same format as AI-Driven mode, including OCEAN blocks.
 
 ### Theme File Output
 
@@ -482,6 +555,12 @@ theme:
 agents:
   sm:
     character: {user provided}
+    ocean:
+      O: {1-5}  # {rationale}
+      C: {1-5}  # {rationale}
+      E: {1-5}  # {rationale}
+      A: {1-5}  # {rationale}
+      N: {1-5}  # {rationale}
     style: {user provided}
     expertise: {AI generated}
     role: {AI generated}
@@ -491,7 +570,12 @@ agents:
     helper:
       name: {AI generated}
       style: "{AI generated}"
-  # ... all 10 agents
+  # ... all 10 agents with ocean blocks
 ```
+
+**OCEAN Validation:** Before writing, verify all OCEAN profiles are complete:
+- All 10 agents have `ocean:` blocks with O, C, E, A, N keys
+- All scores are integers 1-5
+- Each score has a rationale comment
 
 Use `validateThemeSchema()` from `src/cli/utils/themes.ts` to verify the theme is valid before writing.
