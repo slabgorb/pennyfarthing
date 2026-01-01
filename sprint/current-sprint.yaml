@@ -1251,8 +1251,14 @@ backlog:
         .claude/persona-config.local.yaml, so new installations won't have it gitignored.
       points: 1
       priority: P3
-      status: backlog
+      status: done
+      started: 2026-01-01
+      completed: 2026-01-01
+      branch: feat/BL-2-gitignore-local-persona
+      pr: https://github.com/1898andCo/pennyfarthing/pull/41
       repos: pennyfarthing
       acceptance_criteria:
         - updateGitignore() in init.ts includes persona-config.local.yaml
         - New pennyfarthing init installations have entry in .gitignore
+      completion_summary: |
+        Added .claude/persona-config.local.yaml to the gitignore entries in updateGitignore() function. This ensures new Pennyfarthing installations correctly exclude user-local theme preferences from version control, completing the BL-1 feature for multi-developer theme isolation.
