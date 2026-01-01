@@ -833,6 +833,7 @@ sprint_4:
       priority: P2
       marker: "strategic"
       repos: pennyfarthing
+      jira: https://1898andco.atlassian.net/browse/MSSCI-11269
       stories:
         - id: "11-1"
           title: "Define OCEAN → facial feature mapping spec"
@@ -1216,186 +1217,115 @@ sprint_4:
       BL-2 completed: Added persona-config.local.yaml to gitignore.
 
 # =============================================================================
-# SPRINT 5 - Infrastructure & Benchmark Validation
+# SPRINT 5 - Thunderdome Benchmark Integration
 # =============================================================================
 
 sprint_5:
   number: 5
-  goal: "Infrastructure hardening and benchmark validation"
+  goal: "Integrate Pennyfarthing OCEAN profiles with Thunderdome benchmarking"
   planned_start: 2026-01-02
   status: planning
-  velocity_target: 20
+  velocity_target: 15
 
   epics:
     - id: epic-12
-      title: "Testing & CI Infrastructure"
+      title: "Thunderdome Benchmark Integration"
       description: |
-        Address testing gaps identified in Sprint 4 retro:
-        - CI/CD pipeline for automated testing
-        - Visual regression tests for SVG generators
-        - Integration tests for multi-session scenarios
-        - Performance benchmarks baseline
-      points: 10
+        Integrate Pennyfarthing's OCEAN personality profiles and visualization
+        tools with Thunderdome's benchmarking infrastructure. Enable correlation
+        analysis between personality traits and benchmark performance using
+        Thunderdome's existing scenario execution and scoring system.
+      points: 15
       priority: P1
-      source: "Sprint 4 Retro Action Items"
-      repos: pennyfarthing
+      source: "Sprint 4 Retro - Thunderdome Integration"
+      repos: [pennyfarthing, thunderdome]
       stories:
         - id: "12-1"
-          title: "Set up GitHub Actions CI pipeline"
+          title: "Export OCEAN profiles in Thunderdome-compatible format"
           description: |
-            Create GitHub Actions workflow for automated testing on PR.
-            - Run npm test on every PR
-            - Run npm run build to verify TypeScript compiles
-            - Run npm run lint if ESLint is configured
-            - Report test results in PR comments
-            - Block merge if tests fail
+            Create export utility to generate OCEAN profile data in format
+            Thunderdome can consume for correlation analysis.
+            - JSON export of all 630 character OCEAN scores
+            - Include theme and agent metadata
+            - Match Thunderdome's expected schema
+            - CLI command: pennyfarthing export-ocean --format thunderdome
           points: 3
           priority: P1
           status: backlog
           repos: pennyfarthing
           acceptance_criteria:
-            - .github/workflows/ci.yml created
-            - Tests run on every PR to develop/main
-            - Build verification included
-            - PR status checks configured
-            - README badge shows CI status
+            - Export command generates valid JSON
+            - Schema matches Thunderdome expectations
+            - All 630 profiles exportable
+            - Includes theme/agent/character metadata
 
         - id: "12-2"
-          title: "Add visual regression tests for SVG generators"
+          title: "Add OCEAN importer to Thunderdome"
           description: |
-            Create snapshot tests for Chernoff face and spider chart generators.
-            - Generate reference SVGs for known OCEAN profiles
-            - Compare output against snapshots on each test run
-            - Detect unintended visual changes
-            - Support snapshot update workflow
-          points: 3
-          priority: P2
-          status: backlog
-          repos: pennyfarthing
-          acceptance_criteria:
-            - Snapshot tests for generate-face.ts
-            - Snapshot tests for generate-spider.ts
-            - At least 10 reference profiles tested
-            - npm test --update-snapshots workflow documented
-            - CI runs snapshot tests
-
-        - id: "12-3"
-          title: "Add integration tests for multi-session statusline"
-          description: |
-            Create integration tests to prevent BUG-1 regression.
-            - Simulate two concurrent sessions
-            - Verify each session shows its own agent
-            - Test session isolation with different agents
-            - Test worktree scenario if applicable
-          points: 2
-          priority: P2
-          status: backlog
-          repos: pennyfarthing
-          acceptance_criteria:
-            - Integration test simulates multi-session
-            - Verifies no cross-session pollution
-            - Documents reproduction steps for BUG-1
-            - Runs as part of npm test
-
-        - id: "12-4"
-          title: "Create performance benchmark baseline"
-          description: |
-            Establish baseline performance metrics for generators.
-            - Measure time to generate 630 faces
-            - Measure time to generate 630 spider charts
-            - Measure theme parsing time
-            - Store baseline in repository for comparison
-          points: 2
-          priority: P2
-          status: backlog
-          repos: pennyfarthing
-          acceptance_criteria:
-            - scripts/perf-baseline.ts created
-            - Baseline metrics documented
-            - CI can optionally run perf tests
-            - Alert if performance degrades significantly
-
-    - id: epic-13
-      title: "Benchmark Pilot & Validation"
-      description: |
-        Validate the benchmark-integration module with real benchmark data.
-        Run pilot benchmarks with diverse themes to test personality-performance
-        correlation hypotheses.
-      points: 10
-      priority: P2
-      source: "Sprint 4 Retro - Longed For"
-      repos: pennyfarthing
-      stories:
-        - id: "13-1"
-          title: "Define benchmark task suite (5-10 coding tasks)"
-          description: |
-            Create a suite of benchmark tasks that test different skills:
-            - Algorithm implementation (tests C dimension)
-            - Bug fixing (tests O dimension)
-            - Code review (tests A dimension)
-            - Refactoring (tests C, O dimensions)
-            - Documentation (tests A dimension)
-            Each task should have clear success criteria.
-          points: 2
+            Thunderdome side: Import Pennyfarthing OCEAN profiles and associate
+            with benchmark runs.
+            - Parse exported OCEAN JSON
+            - Store profiles in Thunderdome database
+            - Link profiles to benchmark scenario runs
+            - Enable filtering runs by OCEAN dimensions
+          points: 5
           priority: P1
           status: backlog
-          repos: pennyfarthing
+          repos: thunderdome
           acceptance_criteria:
-            - 5-10 benchmark tasks defined
-            - Each task has clear success criteria
-            - Tasks cover different OCEAN dimensions
-            - Tasks stored in benchmark/tasks/
-            - Scoring rubric for each task
+            - Thunderdome imports OCEAN profiles
+            - Profiles linked to scenario runs
+            - Can query runs by personality trait
+            - UI shows OCEAN scores on run details
 
-        - id: "13-2"
-          title: "Run pilot benchmark with 3 themes"
+        - id: "12-3"
+          title: "Generate Chernoff faces in Thunderdome reports"
           description: |
-            Execute benchmark tasks with 3 diverse themes:
-            - star-trek-tng (high structure, diplomatic)
-            - breaking-bad (high risk tolerance, assertive)
-            - discworld (high creativity, unconventional)
-            Record results for each agent role.
-          points: 5
+            Integrate Pennyfarthing's face generator into Thunderdome reporting.
+            - Import generate-face.ts as library or call as subprocess
+            - Embed faces in benchmark result pages
+            - Show face alongside scenario scores
+            - Team comparison view with all agent faces
+          points: 4
           priority: P2
           status: backlog
-          repos: pennyfarthing
+          repos: thunderdome
           acceptance_criteria:
-            - 3 themes benchmarked
-            - All 10 agents tested per theme (30 runs)
-            - Results stored in benchmark/results/
-            - Raw data captured for analysis
-            - Initial observations documented
+            - Faces render in Thunderdome UI
+            - Each benchmark run shows character face
+            - Team view shows 10-agent grid
+            - Faces match Pennyfarthing output exactly
 
-        - id: "13-3"
-          title: "Generate personality-performance correlation report"
+        - id: "12-4"
+          title: "OCEAN-performance correlation dashboard"
           description: |
-            Use benchmark-integration.ts to analyze pilot results.
-            - Correlate OCEAN scores with task performance
-            - Identify which personality traits predict success
-            - Generate visual report with faces/spiders
-            - Document findings and hypotheses
+            Thunderdome dashboard showing correlation between OCEAN traits
+            and benchmark performance across all scenarios.
+            - Scatter plots: each OCEAN dimension vs score
+            - Highlight optimal personality ranges per scenario type
+            - Filter by theme, agent role, scenario category
+            - Export correlation data for further analysis
           points: 3
           priority: P2
           status: backlog
-          repos: pennyfarthing
+          repos: thunderdome
           acceptance_criteria:
-            - Correlation analysis complete
-            - Report generated with visualizations
-            - Top-performing profiles identified per task type
-            - Findings documented in benchmark/FINDINGS.md
-            - Recommendations for theme selection
+            - Dashboard shows 5 OCEAN dimension charts
+            - Correlation coefficients calculated
+            - Filter by theme/role/scenario works
+            - Identifies high-performing personality profiles
 
   sprint_5_summary:
-    total_points: 20
+    total_points: 15
     completed_points: 0
     in_progress_points: 0
-    backlog_points: 20
-    velocity_target: 20
+    backlog_points: 15
+    velocity_target: 15
     status: planning
     notes: |
-      Sprint 5 focuses on infrastructure and validation based on Sprint 4 retro.
-      Epic 12: Address testing gaps (CI, visual regression, integration tests)
-      Epic 13: Validate benchmark module with real pilot data
+      Sprint 5 focuses on integrating Pennyfarthing OCEAN profiles with
+      Thunderdome benchmarking. Leverage Thunderdome's existing scenario
+      execution rather than building parallel benchmark infrastructure.
 
 # =============================================================================
 # BACKLOG - Future Sprint Candidates
