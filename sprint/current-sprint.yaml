@@ -925,9 +925,11 @@ sprint_4:
             - Maintain consistency across similar characters
           points: 8
           priority: P2
-          status: in_progress
+          status: done
           started: 2026-01-01
+          completed: 2026-01-01
           branch: feat/11-5-ocean-remaining-themes
+          pr: https://github.com/1898andCo/pennyfarthing/pull/33
           repos: pennyfarthing
           acceptance_criteria:
             - All 63 themes have complete OCEAN profiles
