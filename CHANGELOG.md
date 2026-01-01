@@ -13,7 +13,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [4.2.3] - 2026-01-01
 
-*No unreleased changes*
+### Added
+- **OCEAN Spider Chart Generator** (11-10) - Pentagon radar charts for OCEAN visualization
+  - `src/scripts/generate-spider.ts` - Creates 5-axis spider chart SVGs
+  - Overlay mode compares 2-3 characters on same chart
+  - Complementary view to Chernoff faces for analytical comparison
+
+### Changed
+- **Spider Chart Design Refinements** (11-11)
+  - Black background with role-specific colors (10 colors for 10 agent types)
+  - Team overlay charts showing all 10 agents per theme (63 overlays)
+  - Tactical agent emphasis with thicker strokes (SM, TEA, Dev, Reviewer)
+  - Centered layout with vertical markdown indices
+- **Face Chart Layout** - Updated to vertical markdown indices to match spider charts
 
 ---
 
