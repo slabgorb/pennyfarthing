@@ -7,9 +7,10 @@
  * Generates SVG faces for all themes and creates markdown indices.
  */
 
-import { writeFileSync, mkdirSync, existsSync, readdirSync } from 'fs';
+import { writeFileSync, mkdirSync, existsSync, readdirSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { parse as parseYaml } from 'yaml';
 import { generateFace } from './generate-face.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -42,7 +43,7 @@ const AGENTS = [
   'devops',
 ];
 
-// Human-readable agent names for markdown
+// Human-readable agent names for markdown (fallback when character name not available)
 const AGENT_NAMES: Record<string, string> = {
   orchestrator: 'Orchestrator',
   sm: 'Scrum Master',
@@ -55,6 +56,36 @@ const AGENT_NAMES: Record<string, string> = {
   'ux-designer': 'UX Designer',
   devops: 'DevOps',
 };
+
+// Cache for theme data to avoid repeated file reads
+const themeCache: Map<string, Record<string, string>> = new Map();
+
+// Load character names for all agents in a theme
+function getCharacterNames(theme: string): Record<string, string> {
+  if (themeCache.has(theme)) {
+    return themeCache.get(theme)!;
+  }
+
+  const themePath = join(themesDir, `${theme}.yaml`);
+  const content = readFileSync(themePath, 'utf-8');
+  const data = parseYaml(content);
+
+  const names: Record<string, string> = {};
+  if (data?.agents) {
+    for (const agent of AGENTS) {
+      names[agent] = data.agents[agent]?.character || AGENT_NAMES[agent];
+    }
+  }
+
+  themeCache.set(theme, names);
+  return names;
+}
+
+// Get a specific character name
+function getCharacterName(theme: string, agent: string): string {
+  const names = getCharacterNames(theme);
+  return names[agent] || AGENT_NAMES[agent];
+}
 
 // Format theme name for display
 function formatTheme(theme: string): string {
@@ -134,17 +165,23 @@ Background colors indicate agent role.
 
 `;
 
+// Generate image tag with character name caption
+function imgWithName(src: string, characterName: string, agentRole: string): string {
+  return `${imgTag(src, characterName)}<br/>**${characterName}**<br/><small>${agentRole}</small>`;
+}
+
 function generateTeamPhotos(): void {
   console.log('Generating team-photos.md...');
 
   let md = `# Team Photos
 
-Chernoff faces for each theme's agent team.
+Chernoff faces for each theme's agent team. Each face shows the character name and their agent role.
 
 ${LEGEND}`;
 
   for (const theme of THEMES) {
     const themeTitle = formatTheme(theme);
+    const charNames = getCharacterNames(theme);
     md += `## ${themeTitle}\n\n`;
 
     // First row: orchestrator, sm, tea, dev, reviewer
@@ -153,7 +190,9 @@ ${LEGEND}`;
     md += '|' + row1Agents.map(() => ':---:').join('|') + '|\n';
     md +=
       '| ' +
-      row1Agents.map((a) => imgTag(`by-theme/${theme}/${a}.svg`, AGENT_NAMES[a])).join(' | ') +
+      row1Agents
+        .map((a) => imgWithName(`by-theme/${theme}/${a}.svg`, charNames[a], AGENT_NAMES[a]))
+        .join(' | ') +
       ' |\n\n';
 
     // Second row: architect, pm, tech-writer, ux-designer, devops
@@ -162,7 +201,9 @@ ${LEGEND}`;
     md += '|' + row2Agents.map(() => ':---:').join('|') + '|\n';
     md +=
       '| ' +
-      row2Agents.map((a) => imgTag(`by-theme/${theme}/${a}.svg`, AGENT_NAMES[a])).join(' | ') +
+      row2Agents
+        .map((a) => imgWithName(`by-theme/${theme}/${a}.svg`, charNames[a], AGENT_NAMES[a]))
+        .join(' | ') +
       ' |\n\n';
   }
 
@@ -179,12 +220,19 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
   return chunks;
 }
 
+// Generate image tag with character name for role gallery (theme name in header, character name below)
+function imgWithCharacter(src: string, theme: string, agent: string): string {
+  const charName = getCharacterName(theme, agent);
+  return `${imgTag(src, charName)}<br/>**${charName}**`;
+}
+
 function generateRoleGallery(): void {
   console.log('Generating role-gallery.md...');
 
   let md = `# Role Gallery
 
 Each agent role across all ${THEMES.length} themes. Compare how the same role varies by theme personality.
+Each face shows the character name who plays that role in each theme.
 
 ${LEGEND}`;
 
@@ -202,7 +250,7 @@ ${LEGEND}`;
       md += '|' + chunk.map(() => ':---:').join('|') + '|\n';
       md +=
         '| ' +
-        chunk.map((t) => imgTag(`by-role/${agent}/${t}.svg`, formatTheme(t))).join(' | ') +
+        chunk.map((t) => imgWithCharacter(`by-role/${agent}/${t}.svg`, t, agent)).join(' | ') +
         ' |\n\n';
     }
   }
