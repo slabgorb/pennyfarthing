@@ -956,8 +956,12 @@ sprint_4:
             - Existing theme OCEAN profiles for format consistency
           points: 3
           priority: P1
-          status: backlog
+          status: done
+          started: 2026-01-01
+          completed: 2026-01-01
           repos: pennyfarthing
+          branch: feat/11-9-theme-maker-ocean
+          pr: https://github.com/1898andCo/pennyfarthing/pull/34
           acceptance_criteria:
             - AI-Driven mode generates OCEAN profiles for all 10 agents
             - Guided mode suggests OCEAN scores matching character selection
@@ -1017,6 +1021,33 @@ sprint_4:
             - Correlation report shows OCEAN vs task performance
             - Identifies optimal profiles for each role type
             - Supports "find characters good at X" queries
+
+        - id: "11-10"
+          title: "Build OCEAN spider chart generator (complement to Chernoff faces)"
+          description: |
+            Create a spider chart visualization for OCEAN profiles.
+            Complements Chernoff faces with a more analytical, dimension-comparable view.
+
+            - Reuse OCEAN parsing logic from face generator (11-3)
+            - Generate 5-axis spider chart SVG showing all dimensions
+            - Support overlay mode for comparing 2-3 characters
+            - Match face generator interface (theme + agent → SVG)
+
+            Design notes:
+            - Pentagon shape with O/C/E/A/N at vertices
+            - Filled polygon showing character's profile
+            - Grid lines at 1-5 scale
+            - Optional: overlay multiple characters with different colors
+          points: 3
+          priority: P2
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - scripts/generate-spider.sh or Node script functional
+            - Takes theme + agent as input, outputs SVG
+            - Spider charts clearly show all 5 OCEAN dimensions
+            - Overlay mode compares 2-3 characters on same chart
+            - SVGs render correctly in browsers and markdown
 
   bugs:
     - id: "BUG-1"
@@ -1090,9 +1121,9 @@ sprint_4:
 
   sprint_4_summary:
     total_points: 34
-    completed_points: 21
+    completed_points: 24
     in_progress_points: 0
-    backlog_points: 14
+    backlog_points: 10
     velocity_target: 20
     status: in_progress
     completed_stories:
@@ -1101,9 +1132,9 @@ sprint_4:
       - "11-3 (5 pts): Chernoff face generator"
       - "11-4 (2 pts): Anchor theme faces + markdown report"
       - "11-5 (8 pts): Add OCEAN to remaining 53 themes"
+      - "11-9 (3 pts): Update /theme-maker to generate OCEAN profiles"
     in_progress_stories: []
     backlog_stories:
-      - "11-9 (3 pts): Update /theme-maker to generate OCEAN profiles"
       - "11-6 (3 pts): Full 630-face matrix"
       - "11-7 (3 pts): Report generator"
       - "11-8 (5 pts): Benchmark correlation"
