@@ -1104,9 +1104,10 @@ sprint_4:
             - Output markdown with embedded spider chart SVGs
           points: 2
           priority: P3
-          status: in_progress
+          status: done
           repos: pennyfarthing
           started: 2026-01-01
+          completed: 2026-01-01
           acceptance_criteria:
             - generate-spider-report.ts mirrors generate-report.ts interface
             - Supports same role, theme, and OCEAN filters
@@ -1185,9 +1186,9 @@ sprint_4:
 
   sprint_4_summary:
     total_points: 37
-    completed_points: 34
+    completed_points: 36
     in_progress_points: 0
-    backlog_points: 7
+    backlog_points: 5
     velocity_target: 20
     status: in_progress
     completed_stories:
@@ -1201,11 +1202,10 @@ sprint_4:
       - "11-10 (3 pts): OCEAN spider chart generator"
       - "11-11 (1 pt): Tweak spider chart design"
       - "11-7 (3 pts): Report generator"
+      - "11-12 (2 pts): Spider chart report generator"
     in_progress_stories: []
     backlog_stories:
       - "11-8 (5 pts): Benchmark correlation"
-      - "11-12 (2 pts): Spider chart report generator"
     notes: |
-      11-7 completed: OCEAN face report generator with filtering and comparison.
-      11-12 added: Spider chart version of report generator (2 pts).
-      Sprint at 92% completion (34/37 points).
+      11-12 completed: Spider chart report generator with filtering and comparison.
+      Sprint at 97% completion (36/37 points).
