@@ -1000,13 +1000,18 @@ sprint_4:
             - Compare specific characters side-by-side
           points: 3
           priority: P2
-          status: backlog
+          status: done
+          started: 2026-01-01
+          completed: 2026-01-01
+          branch: feat/11-7-report-generator
+          pr: https://github.com/1898andCo/pennyfarthing/pull/37
           repos: pennyfarthing
           acceptance_criteria:
             - scripts/face-report.sh generates filtered views
             - Supports role, theme, and OCEAN filters
             - Comparison mode for 2-4 characters
             - Output as markdown with embedded SVGs
+          completion_summary: "Implemented generate-report.ts with 6 functions: parseOceanFilter, filterByOcean, filterByRole, filterByTheme, compareCharacters, generateReport. 48 tests, all passing."
 
         - id: "11-8"
           title: "Integrate with benchmark output (personality → performance)"
@@ -1018,8 +1023,11 @@ sprint_4:
             - Visual dashboard for personality-performance correlation
           points: 5
           priority: P2
-          status: backlog
+          status: done
+          started: 2026-01-01
+          completed: 2026-01-01
           repos: pennyfarthing
+          pr: https://github.com/1898andCo/pennyfarthing/pull/39
           acceptance_criteria:
             - Benchmark output includes character face
             - Correlation report shows OCEAN vs task performance
@@ -1085,6 +1093,29 @@ sprint_4:
             - Visual improvements validated in markdown indices
             - No test regressions
           completion_summary: "Black background, 10 role-specific colors, team overlay charts (63), tactical agent emphasis (thicker strokes), centered layout, vertical markdown indices. Also updated faces to vertical layout."
+
+        - id: "11-12"
+          title: "Build spider chart report generator (parallel to 11-7)"
+          description: |
+            Create a spider chart version of the report generator, parallel to 11-7's
+            face report generator. Uses the same filtering/comparison interface but
+            outputs spider charts instead of Chernoff faces.
+
+            - Reuse filtering logic from generate-report.ts
+            - filterByOcean, filterByRole, filterByTheme work identically
+            - compareCharacters generates spider overlay instead of face table
+            - Output markdown with embedded spider chart SVGs
+          points: 2
+          priority: P3
+          status: done
+          repos: pennyfarthing
+          started: 2026-01-01
+          completed: 2026-01-01
+          acceptance_criteria:
+            - generate-spider-report.ts mirrors generate-report.ts interface
+            - Supports same role, theme, and OCEAN filters
+            - Comparison mode uses spider overlay charts
+            - Output as markdown with embedded SVGs
 
   bugs:
     - id: "BUG-1"
@@ -1157,12 +1188,12 @@ sprint_4:
         before making changes.
 
   sprint_4_summary:
-    total_points: 35
-    completed_points: 30
+    total_points: 37
+    completed_points: 37
     in_progress_points: 0
-    backlog_points: 9
+    backlog_points: 0
     velocity_target: 20
-    status: in_progress
+    status: complete
     completed_stories:
       - "11-1 (2 pts): OCEAN mapping spec"
       - "11-2 (3 pts): OCEAN profiles for anchor themes"
@@ -1173,10 +1204,55 @@ sprint_4:
       - "11-6 (3 pts): Full 630-face matrix"
       - "11-10 (3 pts): OCEAN spider chart generator"
       - "11-11 (1 pt): Tweak spider chart design"
-    in_progress_stories: []
-    backlog_stories:
       - "11-7 (3 pts): Report generator"
       - "11-8 (5 pts): Benchmark correlation"
+      - "11-12 (2 pts): Spider chart report generator"
+    in_progress_stories: []
+    backlog_stories: []
     notes: |
-      11-11 completed: black background, role colors, team overlays, vertical layout.
-      Sprint at 89% completion (31/35 points).
+      11-8 completed: Benchmark integration module with personality-performance correlation.
+      Sprint 4 fully completed (37/37 points = 185% of velocity target).
+      BL-1 completed: Local theme settings for user isolation.
+
+# =============================================================================
+# BACKLOG - Future Sprint Candidates
+# =============================================================================
+
+backlog:
+  stories:
+    - id: "BL-1"
+      title: "Store theme preference in local settings (user isolation)"
+      description: |
+        Theme selection now stored in user-local settings (.claude/persona-config.local.yaml)
+        that are NOT committed to git. Multiple developers can use different themes.
+      points: 3
+      priority: P2
+      status: done
+      started: 2026-01-01
+      completed: 2026-01-01
+      branch: feat/BL-1-local-theme-settings
+      pr: https://github.com/1898andCo/pennyfarthing/pull/40
+      repos: pennyfarthing
+      acceptance_criteria:
+        - Theme preference stored in user-local location
+        - Local preference not committed to git
+        - Project-level theme serves as team default
+        - `pennyfarthing theme set` updates local preference
+        - Multiple developers can use different themes simultaneously
+      completion_summary: |
+        Implemented local theme settings for user isolation. getCurrentTheme() now checks
+        .local.yaml first, setTheme() writes to local by default with {global: true} option.
+        Fixed bug where projectRoot wasn't passed to getThemes(). 8 tests added, all passing.
+
+    - id: "BL-2"
+      title: "Add persona-config.local.yaml to init.ts updateGitignore()"
+      description: |
+        Follow-up from BL-1: The updateGitignore() function in init.ts doesn't include
+        .claude/persona-config.local.yaml, so new installations won't have it gitignored.
+      points: 1
+      priority: P3
+      status: backlog
+      repos: pennyfarthing
+      acceptance_criteria:
+        - updateGitignore() in init.ts includes persona-config.local.yaml
+        - New pennyfarthing init installations have entry in .gitignore

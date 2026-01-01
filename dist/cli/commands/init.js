@@ -327,7 +327,8 @@ async function updateGitignore(projectRoot, options) {
         '# Pennyfarthing runtime',
         '.session/*',
         '!.session/.gitkeep',
-        '.claude/settings.local.json'
+        '.claude/settings.local.json',
+        '.claude/persona-config.local.yaml'
     ];
     let content = '';
     if (pathExists(gitignorePath)) {

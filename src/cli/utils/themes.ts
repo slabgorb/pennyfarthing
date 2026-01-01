@@ -78,22 +78,38 @@ export function getUserCustomThemesDir(): string {
 
 /**
  * Get the current theme from persona-config.yaml
+ * Checks local config first (.local.yaml), then falls back to shared config
  */
 export function getCurrentTheme(projectRoot?: string): string | null {
   const root = projectRoot || process.cwd();
-  const configPath = join(root, '.claude/persona-config.yaml');
+  const localConfigPath = join(root, '.claude/persona-config.local.yaml');
+  const sharedConfigPath = join(root, '.claude/persona-config.yaml');
 
-  if (!existsSync(configPath)) {
-    return null;
+  // Check local config first (user preference)
+  if (existsSync(localConfigPath)) {
+    try {
+      const content = readFileSync(localConfigPath, 'utf8');
+      const config = YAML.parse(content);
+      if (config?.theme) {
+        return config.theme;
+      }
+    } catch {
+      // Fall through to shared config
+    }
   }
 
-  try {
-    const content = readFileSync(configPath, 'utf8');
-    const config = YAML.parse(content);
-    return config?.theme || null;
-  } catch {
-    return null;
+  // Fall back to shared config (project default)
+  if (existsSync(sharedConfigPath)) {
+    try {
+      const content = readFileSync(sharedConfigPath, 'utf8');
+      const config = YAML.parse(content);
+      return config?.theme || null;
+    } catch {
+      return null;
+    }
   }
+
+  return null;
 }
 
 /**
@@ -206,12 +222,19 @@ export function getAgentSamples(theme: ThemeInfo): string {
   return samples.join(' | ');
 }
 
+export interface SetThemeOptions {
+  /** If true, write to shared config instead of local config */
+  global?: boolean;
+}
+
 /**
  * Set the active theme in persona-config.yaml
+ * By default writes to local config (.local.yaml) for user isolation
+ * Use { global: true } to write to shared config (project default)
  * Returns the ThemeInfo if successful, throws if theme not found
  */
-export function setTheme(themeName: string, projectRoot: string): ThemeInfo {
-  const themes = getThemes();
+export function setTheme(themeName: string, projectRoot: string, options: SetThemeOptions = {}): ThemeInfo {
+  const themes = getThemes(projectRoot);
   const theme = themes.find(t => t.id === themeName);
 
   if (!theme) {
@@ -220,7 +243,10 @@ export function setTheme(themeName: string, projectRoot: string): ThemeInfo {
   }
 
   const configDir = join(projectRoot, '.claude');
-  const configPath = join(configDir, 'persona-config.yaml');
+  // Write to local config by default, shared config if global option is set
+  const configPath = options.global
+    ? join(configDir, 'persona-config.yaml')
+    : join(configDir, 'persona-config.local.yaml');
 
   // Ensure .claude directory exists
   if (!existsSync(configDir)) {
@@ -243,7 +269,9 @@ export function setTheme(themeName: string, projectRoot: string): ThemeInfo {
   config.theme = themeName;
 
   // Write back with comment header
-  const header = '# Pennyfarthing Persona Configuration\n\n';
+  const header = options.global
+    ? '# Pennyfarthing Persona Configuration (Project Default)\n\n'
+    : '# Pennyfarthing Persona Configuration (Local User Preference)\n# This file is gitignored - your personal theme choice\n\n';
   const yamlContent = YAML.stringify(config);
   writeFileSync(configPath, header + yamlContent, 'utf8');
 
