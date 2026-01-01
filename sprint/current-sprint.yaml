@@ -1279,22 +1279,22 @@ sprint_5:
             - UI shows OCEAN scores on run details
 
         - id: "12-3"
-          title: "Generate Chernoff faces in Thunderdome reports"
+          title: "Generate OCEAN spider charts in Thunderdome reports"
           description: |
-            Integrate Pennyfarthing's face generator into Thunderdome reporting.
-            - Import generate-face.ts as library or call as subprocess
-            - Embed faces in benchmark result pages
-            - Show face alongside scenario scores
-            - Team comparison view with all agent faces
+            Integrate Pennyfarthing's spider chart generator into Thunderdome reporting.
+            - Import generate-spider.ts as library or call as subprocess
+            - Embed spider charts in benchmark result pages
+            - Show spider chart alongside scenario scores
+            - Team overlay view comparing all 10 agents on single chart
           points: 4
           priority: P2
           status: backlog
           repos: thunderdome
           acceptance_criteria:
-            - Faces render in Thunderdome UI
-            - Each benchmark run shows character face
-            - Team view shows 10-agent grid
-            - Faces match Pennyfarthing output exactly
+            - Spider charts render in Thunderdome UI
+            - Each benchmark run shows character spider chart
+            - Team overlay shows 10-agent comparison
+            - Charts match Pennyfarthing output exactly
 
         - id: "12-4"
           title: "OCEAN-performance correlation dashboard"
