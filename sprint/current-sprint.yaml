@@ -1000,7 +1000,9 @@ sprint_4:
             - Compare specific characters side-by-side
           points: 3
           priority: P2
-          status: backlog
+          status: in_progress
+          started: 2026-01-01
+          branch: feat/11-7-report-generator
           repos: pennyfarthing
           acceptance_criteria:
             - scripts/face-report.sh generates filtered views
@@ -1158,9 +1160,9 @@ sprint_4:
 
   sprint_4_summary:
     total_points: 35
-    completed_points: 30
-    in_progress_points: 0
-    backlog_points: 9
+    completed_points: 31
+    in_progress_points: 3
+    backlog_points: 5
     velocity_target: 20
     status: in_progress
     completed_stories:
@@ -1173,9 +1175,9 @@ sprint_4:
       - "11-6 (3 pts): Full 630-face matrix"
       - "11-10 (3 pts): OCEAN spider chart generator"
       - "11-11 (1 pt): Tweak spider chart design"
-    in_progress_stories: []
-    backlog_stories:
+    in_progress_stories:
       - "11-7 (3 pts): Report generator"
+    backlog_stories:
       - "11-8 (5 pts): Benchmark correlation"
     notes: |
       11-11 completed: black background, role colors, team overlays, vertical layout.
