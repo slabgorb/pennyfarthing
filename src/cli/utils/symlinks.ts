@@ -14,6 +14,33 @@ export function computeRelativeSymlink(linkPath: string, targetPath: string): st
 }
 
 /**
+ * Remove a symlink or directory at the given path
+ * Handles both symlinks and directories (for migration from copy mode)
+ * Returns true if something was removed, false if path didn't exist
+ */
+export function removeSymlinkOrDirectory(path: string, dryRun: boolean = false): boolean {
+  if (!pathExists(path) && !isSymlink(path)) {
+    return false;
+  }
+
+  if (dryRun) {
+    return true;
+  }
+
+  try {
+    unlinkSync(path);
+    return true;
+  } catch {
+    try {
+      removeSync(path);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+
+/**
  * Create commands directory with individual symlinks to each command file.
  * This allows users to add their own commands alongside built-in ones.
  */
@@ -26,19 +53,7 @@ export function createCommandsDirectory(
   const commandsDir = join(projectRoot, '.claude/commands');
 
   // Remove existing symlink or directory
-  if (pathExists(commandsDir) || isSymlink(commandsDir)) {
-    if (!dryRun) {
-      try {
-        unlinkSync(commandsDir);
-      } catch {
-        try {
-          removeSync(commandsDir);
-        } catch {
-          // Ignore
-        }
-      }
-    }
-  }
+  removeSymlinkOrDirectory(commandsDir, dryRun);
 
   // Create commands directory
   if (!dryRun) {
@@ -109,19 +124,7 @@ export function createSkillsDirectory(
   const skillsDir = join(projectRoot, '.claude/skills');
 
   // Remove existing symlink or directory
-  if (pathExists(skillsDir) || isSymlink(skillsDir)) {
-    if (!dryRun) {
-      try {
-        unlinkSync(skillsDir);
-      } catch {
-        try {
-          removeSync(skillsDir);
-        } catch {
-          // Ignore
-        }
-      }
-    }
-  }
+  removeSymlinkOrDirectory(skillsDir, dryRun);
 
   // Create skills directory
   if (!dryRun) {

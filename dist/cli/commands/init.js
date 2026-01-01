@@ -1,36 +1,15 @@
-import { readFileSync, writeFileSync, unlinkSync, symlinkSync } from 'fs';
-import { join, basename, relative, dirname } from 'path';
+import { readFileSync, writeFileSync, symlinkSync } from 'fs';
+import { join, basename, relative } from 'path';
 import fsExtra from 'fs-extra';
 const { ensureDirSync, removeSync } = fsExtra;
 import { logger } from '../utils/logger.js';
 import { prompts } from '../utils/prompts.js';
 import { manifestExists, readManifest, writeManifest, createManifest } from '../utils/manifest.js';
-import { pathExists, isSymlink, isDirectory, ensureDir } from '../utils/files.js';
+import { pathExists, isDirectory, ensureDir } from '../utils/files.js';
 import { getPackageVersion, getAssetsPath } from '../utils/version.js';
-import { computeRelativeSymlink, createCommandsDirectory, createSkillsDirectory } from '../utils/symlinks.js';
-/**
- * Find pennyfarthing in node_modules (handles monorepo hoisting)
- * Returns the absolute path to pennyfarthing-dist/ or null if not found
- */
-function findNodeModulesPath(projectRoot) {
-    // Check standard location first
-    const standard = join(projectRoot, 'node_modules/pennyfarthing/pennyfarthing-dist');
-    if (pathExists(standard))
-        return standard;
-    // Check hoisted locations (monorepo)
-    let dir = dirname(projectRoot);
-    while (dir !== '/' && dir !== dirname(dir)) {
-        const hoisted = join(dir, 'node_modules/pennyfarthing/pennyfarthing-dist');
-        if (pathExists(hoisted))
-            return hoisted;
-        dir = dirname(dir);
-    }
-    return null;
-}
-const AGENTS = [
-    'dev', 'tea', 'sm', 'reviewer', 'architect',
-    'pm', 'tech-writer', 'ux-designer', 'devops', 'orchestrator'
-];
+import { computeRelativeSymlink, createCommandsDirectory, createSkillsDirectory, removeSymlinkOrDirectory } from '../utils/symlinks.js';
+import { findNodeModulesPath } from '../utils/node-modules.js';
+import { CORE_AGENTS, DIRECTORY_SYMLINKS } from '../utils/constants.js';
 export async function initCommand(projectName, options) {
     const projectRoot = process.cwd();
     const claudeDir = join(projectRoot, '.claude');
@@ -121,32 +100,11 @@ export async function initCommand(projectName, options) {
         logger.info('Removed legacy .claude/pennyfarthing/ (migrating from copy mode)');
     }
     // Create symlinks pointing to node_modules (except commands and skills - handled separately)
-    const symlinks = [
-        { name: 'agents', link: '.claude/agents' },
-        { name: 'guides', link: '.claude/guides' },
-        { name: 'personas', link: '.claude/personas' },
-        { name: 'scripts', link: '.claude/scripts' }
-    ];
-    for (const { name, link } of symlinks) {
+    for (const { name, link } of DIRECTORY_SYMLINKS) {
         const linkPath = join(projectRoot, link);
         const targetPath = join(nodeModulesPath, name);
-        // Remove existing symlink or file
-        if (pathExists(linkPath) || isSymlink(linkPath)) {
-            if (!dryRun) {
-                try {
-                    unlinkSync(linkPath);
-                }
-                catch {
-                    // Might be a directory from legacy copy mode
-                    try {
-                        removeSync(linkPath);
-                    }
-                    catch {
-                        // Ignore
-                    }
-                }
-            }
-        }
+        // Remove existing symlink or directory
+        removeSymlinkOrDirectory(linkPath, dryRun);
         if (!dryRun) {
             const relativeTarget = computeRelativeSymlink(linkPath, targetPath);
             try {
@@ -174,7 +132,7 @@ export async function initCommand(projectName, options) {
     logger.newline();
     logger.info('Creating agent sidecars...');
     const sidecarTemplatesPath = join(assetsPath, 'templates/sidecar');
-    for (const agent of AGENTS) {
+    for (const agent of CORE_AGENTS) {
         const sidecarDir = join(projectRoot, `.claude/project/agents/${agent}-sidecar`);
         if (!pathExists(sidecarDir)) {
             ensureDir(sidecarDir, { dryRun });

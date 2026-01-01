@@ -3,6 +3,12 @@
  */
 export declare function computeRelativeSymlink(linkPath: string, targetPath: string): string;
 /**
+ * Remove a symlink or directory at the given path
+ * Handles both symlinks and directories (for migration from copy mode)
+ * Returns true if something was removed, false if path didn't exist
+ */
+export declare function removeSymlinkOrDirectory(path: string, dryRun?: boolean): boolean;
+/**
  * Create commands directory with individual symlinks to each command file.
  * This allows users to add their own commands alongside built-in ones.
  */
