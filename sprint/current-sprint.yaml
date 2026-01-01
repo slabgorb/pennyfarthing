@@ -833,6 +833,7 @@ sprint_4:
       priority: P2
       marker: "strategic"
       repos: pennyfarthing
+      jira: https://1898andco.atlassian.net/browse/MSSCI-11269
       stories:
         - id: "11-1"
           title: "Define OCEAN → facial feature mapping spec"
@@ -1213,6 +1214,7 @@ sprint_4:
       11-8 completed: Benchmark integration module with personality-performance correlation.
       Sprint 4 fully completed (37/37 points = 185% of velocity target).
       BL-1 completed: Local theme settings for user isolation.
+      BL-2 completed: Added persona-config.local.yaml to gitignore.
 
 # =============================================================================
 # BACKLOG - Future Sprint Candidates
@@ -1261,4 +1263,5 @@ backlog:
         - updateGitignore() in init.ts includes persona-config.local.yaml
         - New pennyfarthing init installations have entry in .gitignore
       completion_summary: |
-        Added .claude/persona-config.local.yaml to the gitignore entries in updateGitignore() function. This ensures new Pennyfarthing installations correctly exclude user-local theme preferences from version control, completing the BL-1 feature for multi-developer theme isolation.
+        Added persona-config.local.yaml to gitignore entries in updateGitignore() function.
+        Ensures new installations correctly exclude user-local theme preferences from git.
