@@ -1109,8 +1109,8 @@ sprint_4:
       points: 3
       priority: P1
       status: done
-      completed: 2025-12-31
-      commit: 8baf46b
+      completed: 2026-01-01
+      fix_summary: "Added fallback to most recent agent file when session_id mismatch occurs. Also shows character name instead of theme name."
       repos: pennyfarthing
       acceptance_criteria:
         - Each session shows its own agent in statusline
