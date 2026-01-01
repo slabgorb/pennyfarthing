@@ -11,6 +11,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [4.3.0] - 2026-01-01
+
+### Sprint 4 Release: OCEAN Personality Visualization
+
+This release completes Epic 11 - a comprehensive personality visualization system for all 630 Pennyfarthing characters across 63 themes.
+
+### Added
+- **Report Generators** (11-7, 11-12)
+  - `src/scripts/generate-report.ts` - Chernoff face report generator with filtering
+  - `src/scripts/generate-spider-report.ts` - Spider chart report generator
+  - Filter by role, theme, or OCEAN dimension
+  - Comparison mode for side-by-side character analysis
+- **Benchmark Integration** (11-8)
+  - `src/scripts/benchmark-integration.ts` - OCEAN-performance correlation analysis
+  - `correlateWithBenchmark()`, `findOptimalProfiles()`, `analyzeRolePerformance()`
+  - Identifies personality traits that predict task success
+- **Local Theme Settings** (BL-1)
+  - Theme preference stored in `.claude/persona-config.local.yaml`
+  - Multiple developers can use different themes on same project
+  - Project-level theme serves as team default
+
+### Fixed
+- **Gitignore for Local Config** (BL-2) - `pennyfarthing init` now adds `persona-config.local.yaml` to `.gitignore`
+
+### Summary
+| Metric | Value |
+|--------|-------|
+| Stories Completed | 14 |
+| Points Delivered | 40 |
+| OCEAN Profiles | 630 |
+| SVG Faces | 630 |
+| Spider Charts | 693 (630 individual + 63 team overlays) |
+| Tests | 588 |
+
+---
+
 ## [4.2.3] - 2026-01-01
 
 ### Added
