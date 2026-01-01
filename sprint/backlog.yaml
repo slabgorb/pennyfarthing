@@ -24,6 +24,9 @@ backlog:
             - Provide API for agents to query usage
           points: 3
           priority: P1
+          status: done
+          completed: 2026-01-01
+          notes: "Already implemented via check-context.sh reading Claude transcript"
           repos: pennyfarthing
           acceptance_criteria:
             - Hook tracks approximate token usage per session
@@ -39,6 +42,8 @@ backlog:
             - Log warning to session file
           points: 3
           priority: P1
+          status: in_progress
+          started: 2026-01-01
           repos: pennyfarthing
           acceptance_criteria:
             - Warning appears when 70% threshold crossed
@@ -410,7 +415,7 @@ backlog:
             - Warns if state changed between sessions
 
 # Summary
-# Remaining backlog: 53 points across 5 epics
+# Remaining backlog: 50 points across 5 epics
 #
 # Completed Epics (for reference):
 # - Epic 2: Core Agent Framework (Sprint 2)
@@ -419,7 +424,7 @@ backlog:
 # - Epic 6: Interactive Theme Wizard (Sprint 3)
 #
 # Backlog Epics:
-# - Epic 3: Context Management (11 pts remaining, 2 done) - P1
+# - Epic 3: Context Management (8 pts remaining, 5 done) - P1
 # - Epic 7: Benchmarking Suite (13 pts) - P2
 # - Epic 8: State Reconciliation (8 pts) - P1
 # - Epic 9: Skill Discovery (13 pts) - P2
