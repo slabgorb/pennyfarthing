@@ -904,9 +904,11 @@ sprint_4:
             - Organize by theme (team photos) and by role (cross-theme comparison)
           points: 2
           priority: P1
-          status: in_progress
+          status: done
           started: 2026-01-01
+          completed: 2026-01-01
           branch: feat/11-4-anchor-faces
+          pr: https://github.com/keithavery/pennyfarthing/pull/32
           repos: pennyfarthing
           acceptance_criteria:
             - 100 SVG faces generated in pennyfarthing-dist/personas/faces/
@@ -1053,3 +1055,22 @@ sprint_4:
         WARNING: This script has a 52% bug fix rate. Any changes should be
         minimal and tested thoroughly. Consider adding regression tests
         before making changes.
+
+  sprint_4_summary:
+    total_points: 31
+    completed_points: 13
+    in_progress_points: 0
+    backlog_points: 18
+    velocity_target: 20
+    status: in_progress
+    completed_stories:
+      - "11-1 (2 pts): OCEAN mapping spec"
+      - "11-2 (3 pts): OCEAN profiles for anchor themes"
+      - "11-3 (5 pts): Chernoff face generator"
+      - "11-4 (2 pts): Anchor theme faces + markdown report"
+    in_progress_stories: []
+    backlog_stories:
+      - "11-5 (8 pts): Add OCEAN to remaining 53 themes"
+      - "11-6 (3 pts): Full 630-face matrix"
+      - "11-7 (3 pts): Report generator"
+      - "11-8 (5 pts): Benchmark correlation"
