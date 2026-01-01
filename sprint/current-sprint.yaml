@@ -1235,31 +1235,12 @@ sprint_5:
         tools with Thunderdome's benchmarking infrastructure. Enable correlation
         analysis between personality traits and benchmark performance using
         Thunderdome's existing scenario execution and scoring system.
-      points: 10
+      points: 7
       priority: P1
       source: "Sprint 4 Retro - Thunderdome Integration"
-      repos: [pennyfarthing, thunderdome]
+      repos: thunderdome
       stories:
         - id: "12-1"
-          title: "Read OCEAN profiles from pennyfarthing-dist in Thunderdome"
-          description: |
-            Add pennyfarthing as dependency and read OCEAN profiles directly
-            from theme YAML files in pennyfarthing-dist/personas/themes/.
-            - Add pennyfarthing to package.json
-            - Parse ocean: blocks from theme YAMLs
-            - Associate profiles with benchmark runs by theme/agent
-            - Enable filtering runs by OCEAN dimensions
-          points: 3
-          priority: P1
-          status: backlog
-          repos: thunderdome
-          acceptance_criteria:
-            - Thunderdome reads OCEAN from pennyfarthing-dist
-            - Profiles linked to scenario runs
-            - Can query runs by personality trait
-            - UI shows OCEAN scores on run details
-
-        - id: "12-2"
           title: "Generate OCEAN spider charts in Thunderdome reports"
           description: |
             Integrate Pennyfarthing's spider chart generator into Thunderdome reporting.
@@ -1277,7 +1258,7 @@ sprint_5:
             - Team overlay shows 10-agent comparison
             - Charts match Pennyfarthing output exactly
 
-        - id: "12-3"
+        - id: "12-2"
           title: "OCEAN-performance correlation dashboard"
           description: |
             Thunderdome dashboard showing correlation between OCEAN traits
@@ -1297,10 +1278,10 @@ sprint_5:
             - Identifies high-performing personality profiles
 
   sprint_5_summary:
-    total_points: 10
+    total_points: 7
     completed_points: 0
     in_progress_points: 0
-    backlog_points: 10
+    backlog_points: 7
     velocity_target: 10
     status: planning
     notes: |
