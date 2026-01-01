@@ -733,6 +733,33 @@ sprint_3:
             - Warning only on major/minor mismatch (not patch)
           completion_summary: "Implemented version tracking system for custom themes with compatibility warnings. Added check_theme_version() function to agent-session.sh that compares theme version against current VERSION file and warns on major/minor mismatch. Updated theme-maker.md to use dynamic VERSION instead of hardcoded value. All acceptance criteria verified and PR #25 approved."
 
+    - id: epic-3
+      title: "Context Management & Circuit Breaker"
+      description: |
+        Implement context budget monitoring with warnings and circuit breaker
+        for preventing overflow conditions.
+      points: 5
+      priority: P1
+      repos: pennyfarthing
+      jira: https://1898andco.atlassian.net/browse/MSSCI-11203
+      stories:
+        - id: "3-2"
+          title: "Add automatic warning at 70% threshold"
+          description: |
+            Implement PreToolUse hook to monitor context and warn agents at 70% and 85% usage.
+          points: 3
+          priority: P1
+          status: done
+          started: 2025-12-30
+          completed: 2026-01-01
+          branch: feat/3-2-context-warning
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11204
+          acceptance_criteria:
+            - Warning appears when 70% threshold crossed
+            - Warning includes actionable suggestions
+            - Works with all tactical agents
+
     # Carried from Sprint 2 backlog - ALL COMPLETED
     - id: epic-4-continued
       title: "Configuration & Permissions Framework (continued)"
@@ -771,13 +798,15 @@ sprint_3:
           carried_from: sprint-2
 
   sprint_3_summary:
-    planned_points: 19
-    completed_points: 19
+    planned_points: 24
+    completed_points: 24
+    from_epic_3: 3
     from_epic_6: 13
-    carried_from_sprint_2: 6
+    carried_from_sprint_2: 8
     velocity_target: 20
     status: complete
     notes: |
+      - Epic 3 (context management): 3/3 points complete
       - Epic 6 (theme wizard): 13/13 points complete
       - Epic 4-continued (carried): 6/6 points complete
       - Sprint 3 fully completed ahead of schedule
