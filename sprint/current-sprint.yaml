@@ -1212,3 +1212,47 @@ sprint_4:
     notes: |
       11-8 completed: Benchmark integration module with personality-performance correlation.
       Sprint 4 fully completed (37/37 points = 185% of velocity target).
+      BL-1 completed: Local theme settings for user isolation.
+
+# =============================================================================
+# BACKLOG - Future Sprint Candidates
+# =============================================================================
+
+backlog:
+  stories:
+    - id: "BL-1"
+      title: "Store theme preference in local settings (user isolation)"
+      description: |
+        Theme selection now stored in user-local settings (.claude/persona-config.local.yaml)
+        that are NOT committed to git. Multiple developers can use different themes.
+      points: 3
+      priority: P2
+      status: done
+      started: 2026-01-01
+      completed: 2026-01-01
+      branch: feat/BL-1-local-theme-settings
+      pr: https://github.com/1898andCo/pennyfarthing/pull/40
+      repos: pennyfarthing
+      acceptance_criteria:
+        - Theme preference stored in user-local location
+        - Local preference not committed to git
+        - Project-level theme serves as team default
+        - `pennyfarthing theme set` updates local preference
+        - Multiple developers can use different themes simultaneously
+      completion_summary: |
+        Implemented local theme settings for user isolation. getCurrentTheme() now checks
+        .local.yaml first, setTheme() writes to local by default with {global: true} option.
+        Fixed bug where projectRoot wasn't passed to getThemes(). 8 tests added, all passing.
+
+    - id: "BL-2"
+      title: "Add persona-config.local.yaml to init.ts updateGitignore()"
+      description: |
+        Follow-up from BL-1: The updateGitignore() function in init.ts doesn't include
+        .claude/persona-config.local.yaml, so new installations won't have it gitignored.
+      points: 1
+      priority: P3
+      status: backlog
+      repos: pennyfarthing
+      acceptance_criteria:
+        - updateGitignore() in init.ts includes persona-config.local.yaml
+        - New pennyfarthing init installations have entry in .gitignore
