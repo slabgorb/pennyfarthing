@@ -261,20 +261,13 @@ Replace duplicated error recovery sections with:
 
 ## Implementation Plan
 
-| Phase | Scope | Estimated Impact | Status |
-|-------|-------|------------------|--------|
-| 1 | CLI utilities | ~150 lines consolidated | Complete |
-| 2 | Shell helpers | ~50 lines consolidated | Complete |
-| 3 | Agent templates | ~100 lines consolidated | Complete |
+| Phase | Scope | Estimated Impact |
+|-------|-------|------------------|
+| 1 | CLI utilities | ~150 lines consolidated |
+| 2 | Shell helpers | ~50 lines consolidated |
+| 3 | Agent templates | ~100 lines consolidated |
 
 **Total reduction:** ~25-30% duplication across affected files
-
-## Implementation Status
-
-**All phases complete.** Commits:
-- `68d3809` - Phase 1: CLI utilities (node-modules.ts, constants.ts, symlinks.ts)
-- `a33bb02` - Phase 2: Bash helpers (common.sh, jira-lib.sh refactor)
-- `de9de27` - Phase 3: Agent templates (handoff-error-recovery.md)
 
 ## Alternatives Considered
 
