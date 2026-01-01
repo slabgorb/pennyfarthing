@@ -101,9 +101,15 @@ Run these checks and STOP if any fail:
 
 ## Error Recovery
 
-**See:** `.claude/guides/handoff-error-recovery.md` for retry pattern and escalation format.
+If any step fails, follow this protocol:
 
-### Agent-Specific Failures
+### Retry Pattern
+1. **Log the failure:** Note which step failed and why
+2. **Diagnose:** What specifically went wrong?
+3. **Adjust:** Try a different approach (max 2 retries)
+4. **Escalate:** If still failing, report to calling agent
+
+### Common Failures and Fixes
 
 | Failure | Diagnosis | Fix |
 |---------|-----------|-----|
@@ -111,3 +117,19 @@ Run these checks and STOP if any fail:
 | Uncommitted changes | Dev forgot to commit | Report - Dev must commit first |
 | Not pushed | Git push failed | Check branch, try push again |
 | PR not found | gh pr view failed | Verify PR was created, check PR number |
+| Assessment missing | Dev didn't write it | STOP - Dev must write assessment first |
+
+### Escalation Format
+
+If unable to complete handoff:
+```
+HANDOFF BLOCKED
+
+Step failed: [which step]
+Error: [error message]
+Diagnosis: [what went wrong]
+
+Recommended fix: [what calling agent should do]
+```
+
+**Never silently fail.** Always report what happened.
