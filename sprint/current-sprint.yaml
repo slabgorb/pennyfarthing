@@ -1039,19 +1039,49 @@ sprint_4:
 
             Design notes:
             - Pentagon shape with O/C/E/A/N at vertices
-            - Filled polygon showing character's profile
+            - Unfilled polygon (stroke only) for clean stacking
             - Grid lines at 1-5 scale
-            - Optional: overlay multiple characters with different colors
+            - Overlay mode with different colors and legend
           points: 3
           priority: P2
-          status: backlog
+          status: done
+          started: 2026-01-01
+          completed: 2026-01-01
+          branch: feat/11-10-spider-chart
+          pr: https://github.com/1898andCo/pennyfarthing/pull/36
           repos: pennyfarthing
           acceptance_criteria:
-            - scripts/generate-spider.sh or Node script functional
+            - scripts/generate-spider.ts Node script functional
             - Takes theme + agent as input, outputs SVG
             - Spider charts clearly show all 5 OCEAN dimensions
             - Overlay mode compares 2-3 characters on same chart
             - SVGs render correctly in browsers and markdown
+          completion_summary: "Implemented pentagon spider chart with unfilled polygons for OCEAN visualization. Three functions: generateSpider, generateSpiderFromOcean, generateOverlaySpider. 29 tests passing."
+
+        - id: "11-11"
+          title: "Tweak spider chart design"
+          description: |
+            Follow-up to refine spider chart visual design based on review.
+
+            Potential areas for adjustment:
+            - Line weights and stroke styles
+            - Grid line visibility/opacity
+            - Label positioning and font sizing
+            - Color palette for overlay mode
+            - Pentagon rotation/orientation
+            - Score-to-radius mapping curve
+            - Legend placement and styling
+
+            Changes should regenerate all 630 spider charts after tweaks.
+          points: 1
+          priority: P3
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Design tweaks applied to generate-spider.ts
+            - All 630 spider charts regenerated
+            - Visual improvements validated in markdown indices
+            - No test regressions
 
   bugs:
     - id: "BUG-1"
@@ -1124,10 +1154,10 @@ sprint_4:
         before making changes.
 
   sprint_4_summary:
-    total_points: 34
-    completed_points: 27
+    total_points: 35
+    completed_points: 30
     in_progress_points: 0
-    backlog_points: 7
+    backlog_points: 9
     velocity_target: 20
     status: in_progress
     completed_stories:
@@ -1138,7 +1168,13 @@ sprint_4:
       - "11-5 (8 pts): Add OCEAN to remaining 53 themes"
       - "11-9 (3 pts): Update /theme-maker to generate OCEAN profiles"
       - "11-6 (3 pts): Full 630-face matrix"
+      - "11-10 (3 pts): OCEAN spider chart generator"
     in_progress_stories: []
     backlog_stories:
       - "11-7 (3 pts): Report generator"
       - "11-8 (5 pts): Benchmark correlation"
+      - "11-11 (1 pt): Tweak spider chart design"
+    notes: |
+      11-10 adds pentagon spider charts as complement to Chernoff faces.
+      11-11 added for design refinements.
+      Sprint at 86% completion (30/35 points).
