@@ -10,7 +10,7 @@ A Claude Code agent orchestration framework with TDD workflow and themed persona
 
 - **10 Agents + 13 Subagents** - Strategic (PM, Architect) and tactical (SM, TEA, Dev, Reviewer) agents with official Haiku-based subagents for mechanical tasks
 - **Automatic Handoffs** - Context-aware agent transitions via official subagent format
-- **13 Persona Themes** - Star Trek, Discworld, The Expanse, Princess Bride, and more
+- **50+ Persona Themes** - Star Trek, Breaking Bad, Dune, The Office, Game of Thrones, and more
 - **11 Skills** - Reusable knowledge domains (testing, code-review, jira-cli, etc.)
 - **25 Slash Commands** - Entry points for agent activation and workflows
 - **CLI Tool** - `pennyfarthing init`, `update`, `doctor`, `uninstall`
@@ -194,6 +194,18 @@ pennyfarthing uninstall --all
 ```
 
 Archived sprint data (`sprint/archive/`, `sprint/context/`) is always preserved.
+
+## What's New in v4.1
+
+- **Mega Persona Pack** - 50+ new themes with OCEAN personality standardization
+  - TV dramas: Breaking Bad, The Wire, Fargo, MASH, The Office, The Good Place
+  - Sci-fi: Star Wars, Dune, Foundation, Mass Effect, Blade Runner, Firefly
+  - Fantasy: Game of Thrones, The Witcher, Sandman, His Dark Materials
+  - Comics: Marvel MCU, Watchmen, Doctor Who
+  - Period: The Crown, Succession, West Wing, Rome, Deadwood
+- **OCEAN Benchmarking** - All themes include Big Five personality profiles
+- **ADR Documentation** - Architecture Decision Records in `docs/adr/`
+- **CLI Refactoring** - Consolidated code with new shared utilities
 
 ## What's New in v4.0
 

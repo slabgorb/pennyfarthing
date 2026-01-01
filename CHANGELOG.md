@@ -13,7 +13,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [4.1.0] - 2026-01-01
 
-*No unreleased changes*
+### Added
+- **Mega Persona Pack** - 50+ new themes with OCEAN personality standardization
+  - Breaking Bad, The Wire, Firefly, Fargo, MASH, The Office, The Good Place
+  - Star Wars, Dune, Foundation, Mass Effect, Blade Runner, Neuromancer
+  - Game of Thrones, The Crown, Succession, West Wing, Rome
+  - Marvel MCU, Watchmen, Sandman, Doctor Who, The Witcher
+  - And many more - see `pennyfarthing theme list` for full catalog
+- **OCEAN Benchmarking** - All themes now include Big Five personality profiles for character consistency
+- **ADR Documentation** - Architecture Decision Records in `docs/adr/`
+  - ADR-0001: Code duplication consolidation strategy
+
+### Changed
+- **CLI Refactoring** - Consolidated duplicate code in init/update/doctor commands
+  - New `src/cli/utils/constants.ts` for shared paths and patterns
+  - New `src/cli/utils/node-modules.ts` for package resolution
+  - Simplified symlink utilities
+- **Bash Utilities** - Added `pennyfarthing-dist/scripts/utils/common.sh` with shared functions
+  - `find_project_root()`, `log_info/warn/error()`, `require_command()`
+  - Eliminates duplication across shell scripts
 
 ---
 
@@ -441,7 +459,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.3...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v4.1.0...HEAD
+[4.1.0]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.6...v4.1.0
+[4.0.6]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.5...v4.0.6
+[4.0.5]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.4...v4.0.5
+[4.0.4]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.3...v4.0.4
 [4.0.3]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.2...v4.0.3
 [4.0.2]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.1...v4.0.2
 [4.0.1]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.0...v4.0.1
