@@ -733,6 +733,33 @@ sprint_3:
             - Warning only on major/minor mismatch (not patch)
           completion_summary: "Implemented version tracking system for custom themes with compatibility warnings. Added check_theme_version() function to agent-session.sh that compares theme version against current VERSION file and warns on major/minor mismatch. Updated theme-maker.md to use dynamic VERSION instead of hardcoded value. All acceptance criteria verified and PR #25 approved."
 
+    - id: epic-3
+      title: "Context Management & Circuit Breaker"
+      description: |
+        Implement context budget monitoring with warnings and circuit breaker
+        for preventing overflow conditions.
+      points: 5
+      priority: P1
+      repos: pennyfarthing
+      jira: https://1898andco.atlassian.net/browse/MSSCI-11203
+      stories:
+        - id: "3-2"
+          title: "Add automatic warning at 70% threshold"
+          description: |
+            Implement PreToolUse hook to monitor context and warn agents at 70% and 85% usage.
+          points: 3
+          priority: P1
+          status: done
+          started: 2025-12-30
+          completed: 2026-01-01
+          branch: feat/3-2-context-warning
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11204
+          acceptance_criteria:
+            - Warning appears when 70% threshold crossed
+            - Warning includes actionable suggestions
+            - Works with all tactical agents
+
     # Carried from Sprint 2 backlog - ALL COMPLETED
     - id: epic-4-continued
       title: "Configuration & Permissions Framework (continued)"
@@ -771,26 +798,260 @@ sprint_3:
           carried_from: sprint-2
 
   sprint_3_summary:
-    planned_points: 19
-    completed_points: 19
+    planned_points: 24
+    completed_points: 24
+    from_epic_3: 3
     from_epic_6: 13
-    carried_from_sprint_2: 6
+    carried_from_sprint_2: 8
     velocity_target: 20
     status: complete
     notes: |
+      - Epic 3 (context management): 3/3 points complete
       - Epic 6 (theme wizard): 13/13 points complete
       - Epic 4-continued (carried): 6/6 points complete
       - Sprint 3 fully completed ahead of schedule
 
 # =============================================================================
-# SPRINT 4 - Session Isolation & State Management
+# SPRINT 4 - OCEAN Personality Visualization
 # =============================================================================
 
 sprint_4:
   number: 4
-  goal: "Fix session isolation and improve state management"
-  planned_start: 2025-01-01
-  status: planning
+  goal: "OCEAN personality visualization with Chernoff faces for benchmark correlation"
+  planned_start: 2026-01-01
+  status: active
+
+  epics:
+    - id: epic-11
+      title: "OCEAN Personality Visualization with Chernoff Faces"
+      description: |
+        Visualize agent personality profiles using Chernoff faces mapped to
+        OCEAN (Big Five) personality traits. Add OCEAN scores to all 63 theme
+        character definitions, generate SVG faces, and create reports for
+        correlating personality with benchmark performance.
+      points: 31
+      priority: P2
+      marker: "strategic"
+      repos: pennyfarthing
+      stories:
+        - id: "11-1"
+          title: "Define OCEAN → facial feature mapping spec"
+          description: |
+            Create specification document for mapping OCEAN scores to Chernoff face features.
+            - Define 1-5 scale for each OCEAN dimension
+            - Map each dimension to specific facial feature parameters
+            - Document the visual semantics (what each feature means)
+            - Include example mappings for extreme profiles
+          points: 2
+          priority: P1
+          status: done
+          started: 2026-01-01
+          completed: 2026-01-01
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Spec document in pennyfarthing-dist/personas/OCEAN-TO-FACE.md
+            - All 5 OCEAN dimensions mapped to facial features
+            - Visual examples of extreme profiles (1-1-1-1-1 vs 5-5-5-5-5)
+            - Approved feature mapping ready for implementation
+
+        - id: "11-2"
+          title: "Add OCEAN profiles to 10 anchor themes"
+          description: |
+            Add OCEAN scores to 10 well-documented, high-usage themes as proof of concept.
+            Anchor themes: deadwood, firefly, breaking-bad, the-good-place, star-trek-tng,
+            discworld, fargo, succession, mass-effect, software-pioneers.
+          points: 3
+          priority: P1
+          status: done
+          started: 2026-01-01
+          completed: 2026-01-01
+          repos: pennyfarthing
+          pr: https://github.com/1898andCo/pennyfarthing/pull/30
+          acceptance_criteria:
+            - 10 theme YAMLs updated with ocean blocks
+            - All 10 agents in each theme have OCEAN scores
+            - Scores consistent with OCEAN-BENCHMARKING.md guidance
+            - 100 character profiles defined (10 themes × 10 agents)
+
+        - id: "11-3"
+          title: "Build Chernoff face generator (OCEAN → SVG)"
+          description: |
+            Implement face generation script that takes OCEAN scores and outputs SVG.
+            - Parse OCEAN scores from theme YAML
+            - Apply mapping spec to generate facial features
+            - Output clean, scalable SVG
+            - Support batch generation for multiple characters
+          points: 5
+          priority: P1
+          status: done
+          started: 2026-01-01
+          completed: 2026-01-01
+          branch: feat/11-3-chernoff-generator
+          pr: https://github.com/1898andCo/pennyfarthing/pull/31
+          repos: pennyfarthing
+          acceptance_criteria:
+            - scripts/generate-face.sh or Node script functional
+            - Takes theme + agent as input, outputs SVG
+            - Faces visually distinct across OCEAN profiles
+            - SVGs render correctly in browsers and markdown
+
+        - id: "11-4"
+          title: "Generate anchor theme faces + markdown report"
+          description: |
+            Generate faces for all 100 anchor theme characters and create index.
+            - Generate SVG for each character
+            - Create markdown report with embedded faces
+            - Organize by theme (team photos) and by role (cross-theme comparison)
+          points: 2
+          priority: P1
+          status: done
+          started: 2026-01-01
+          completed: 2026-01-01
+          branch: feat/11-4-anchor-faces
+          pr: https://github.com/keithavery/pennyfarthing/pull/32
+          repos: pennyfarthing
+          acceptance_criteria:
+            - 100 SVG faces generated in pennyfarthing-dist/personas/faces/
+            - Markdown index with all faces viewable
+            - Team photo view (10 agents per theme)
+            - Role comparison view (1 role across 10 themes)
+
+        - id: "11-5"
+          title: "Add OCEAN profiles to remaining 53 themes"
+          description: |
+            Batch add OCEAN scores to all remaining theme character definitions.
+            - Use OCEAN-BENCHMARKING.md role recommendations
+            - Cross-reference character traits with OCEAN profiles
+            - Maintain consistency across similar characters
+          points: 8
+          priority: P2
+          status: done
+          started: 2026-01-01
+          completed: 2026-01-01
+          branch: feat/11-5-ocean-remaining-themes
+          pr: https://github.com/1898andCo/pennyfarthing/pull/33
+          repos: pennyfarthing
+          acceptance_criteria:
+            - All 63 themes have complete OCEAN profiles
+            - 630 total character profiles defined
+            - Validation script confirms all profiles present
+            - Consistent scoring methodology documented
+          completion_summary: "Added 530 OCEAN profiles across 53 themes (630 total). Created add-ocean-profiles.ts batch processor and validate-ocean-profiles.ts validator. 100% coverage confirmed."
+
+        - id: "11-9"
+          title: "Update /theme-maker to generate OCEAN profiles"
+          description: |
+            The /theme-maker command creates new themes but doesn't include OCEAN
+            personality profiles. Update all three creation modes (AI-Driven, Guided,
+            Manual) to generate OCEAN blocks for each agent.
+
+            Changes needed:
+            - AI-Driven mode: Generate character-appropriate OCEAN scores with rationales
+            - Guided mode: Suggest OCEAN profiles based on selected characters
+            - Manual mode: Prompt for OCEAN scores or auto-generate from character traits
+            - All modes: Include ocean: block in generated YAML with O/C/E/A/N scores
+
+            Reference:
+            - OCEAN-BENCHMARKING.md for role-appropriate score ranges
+            - Existing theme OCEAN profiles for format consistency
+          points: 3
+          priority: P1
+          status: done
+          started: 2026-01-01
+          completed: 2026-01-01
+          repos: pennyfarthing
+          branch: feat/11-9-theme-maker-ocean
+          pr: https://github.com/1898andCo/pennyfarthing/pull/34
+          acceptance_criteria:
+            - AI-Driven mode generates OCEAN profiles for all 10 agents
+            - Guided mode suggests OCEAN scores matching character selection
+            - Manual mode allows OCEAN input or auto-generation
+            - Generated themes pass validate-ocean-profiles.ts
+            - OCEAN rationale comments included in output
+
+        - id: "11-6"
+          title: "Generate full 630-face matrix with index"
+          description: |
+            Generate faces for all 630 characters and create comprehensive index.
+            - Batch generate all SVGs
+            - Create master matrix (63 themes × 10 agents)
+            - Build navigable markdown documentation
+          points: 3
+          priority: P2
+          status: done
+          started: 2026-01-01
+          completed: 2026-01-01
+          branch: feat/11-6-face-matrix
+          pr: https://github.com/1898andCo/pennyfarthing/pull/35
+          repos: pennyfarthing
+          acceptance_criteria:
+            - 630 SVG faces in pennyfarthing-dist/personas/faces/
+            - Master matrix viewable (HTML or markdown)
+            - Navigation by theme, role, or OCEAN profile
+            - File size and load time acceptable
+
+        - id: "11-7"
+          title: "Build slice/report generator"
+          description: |
+            Create tool to generate custom face reports and slices.
+            - Filter by role (all Reviewers)
+            - Filter by theme (all Deadwood characters)
+            - Filter by OCEAN dimension (all High-O characters)
+            - Compare specific characters side-by-side
+          points: 3
+          priority: P2
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - scripts/face-report.sh generates filtered views
+            - Supports role, theme, and OCEAN filters
+            - Comparison mode for 2-4 characters
+            - Output as markdown with embedded SVGs
+
+        - id: "11-8"
+          title: "Integrate with benchmark output (personality → performance)"
+          description: |
+            Correlate Chernoff faces with benchmark performance data.
+            - Link face visualization to benchmark results
+            - Generate reports showing personality vs performance
+            - Identify which OCEAN profiles excel at which tasks
+            - Visual dashboard for personality-performance correlation
+          points: 5
+          priority: P2
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Benchmark output includes character face
+            - Correlation report shows OCEAN vs task performance
+            - Identifies optimal profiles for each role type
+            - Supports "find characters good at X" queries
+
+        - id: "11-10"
+          title: "Build OCEAN spider chart generator (complement to Chernoff faces)"
+          description: |
+            Create a spider chart visualization for OCEAN profiles.
+            Complements Chernoff faces with a more analytical, dimension-comparable view.
+
+            - Reuse OCEAN parsing logic from face generator (11-3)
+            - Generate 5-axis spider chart SVG showing all dimensions
+            - Support overlay mode for comparing 2-3 characters
+            - Match face generator interface (theme + agent → SVG)
+
+            Design notes:
+            - Pentagon shape with O/C/E/A/N at vertices
+            - Filled polygon showing character's profile
+            - Grid lines at 1-5 scale
+            - Optional: overlay multiple characters with different colors
+          points: 3
+          priority: P2
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - scripts/generate-spider.sh or Node script functional
+            - Takes theme + agent as input, outputs SVG
+            - Spider charts clearly show all 5 OCEAN dimensions
+            - Overlay mode compares 2-3 characters on same chart
+            - SVGs render correctly in browsers and markdown
 
   bugs:
     - id: "BUG-1"
@@ -861,3 +1122,23 @@ sprint_4:
         WARNING: This script has a 52% bug fix rate. Any changes should be
         minimal and tested thoroughly. Consider adding regression tests
         before making changes.
+
+  sprint_4_summary:
+    total_points: 34
+    completed_points: 27
+    in_progress_points: 0
+    backlog_points: 7
+    velocity_target: 20
+    status: in_progress
+    completed_stories:
+      - "11-1 (2 pts): OCEAN mapping spec"
+      - "11-2 (3 pts): OCEAN profiles for anchor themes"
+      - "11-3 (5 pts): Chernoff face generator"
+      - "11-4 (2 pts): Anchor theme faces + markdown report"
+      - "11-5 (8 pts): Add OCEAN to remaining 53 themes"
+      - "11-9 (3 pts): Update /theme-maker to generate OCEAN profiles"
+      - "11-6 (3 pts): Full 630-face matrix"
+    in_progress_stories: []
+    backlog_stories:
+      - "11-7 (3 pts): Report generator"
+      - "11-8 (5 pts): Benchmark correlation"

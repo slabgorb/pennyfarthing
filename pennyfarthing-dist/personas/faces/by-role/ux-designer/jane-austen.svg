@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Background -->
+  <rect x="0" y="0" width="200" height="200" fill="#E8D8E8" />
+
+  <!-- Face -->
+  <ellipse cx="100" cy="100" rx="45" ry="52.5"
+    fill="none" stroke="black" stroke-width="2.125" />
+
+  <!-- Left Eye -->
+  <circle cx="77.5" cy="92.125" r="13"
+    fill="none" stroke="black" stroke-width="2.125" />
+  <circle cx="77.5" cy="92.125" r="6"
+    fill="black" stroke="none" />
+
+  <!-- Right Eye -->
+  <circle cx="122.5" cy="92.125" r="13"
+    fill="none" stroke="black" stroke-width="2.125" />
+  <circle cx="122.5" cy="92.125" r="6"
+    fill="black" stroke="none" />
+
+  <!-- Left Eyebrow -->
+  <line x1="67.75" y1="74.45969639742528"
+        x2="87.25" y2="67.79030360257472"
+    stroke="black" stroke-width="2.125" stroke-linecap="round" />
+
+  <!-- Right Eyebrow -->
+  <line x1="112.75" y1="67.79030360257472"
+        x2="132.25" y2="74.45969639742528"
+    stroke="black" stroke-width="2.125" stroke-linecap="round" />
+
+  <!-- Mouth -->
+  <path d="M 79.5 118.375 Q 100 132.375 120.5 118.375"
+    fill="none" stroke="black" stroke-width="2.125" stroke-linecap="round" />
+</svg>
