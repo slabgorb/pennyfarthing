@@ -11,7 +11,8 @@ import { loadThemeOcean, OceanScores } from './generate-face.js';
 
 // Chart configuration
 const VIEW_SIZE = 200;
-const CENTER = VIEW_SIZE / 2;
+const CENTER_X = VIEW_SIZE / 2;
+const CENTER_Y = VIEW_SIZE / 2 + 8; // Shifted down to balance top/bottom margins
 const OUTER_RADIUS = 70; // Leaves room for labels
 const LABEL_RADIUS = OUTER_RADIUS + 18;
 
@@ -25,7 +26,21 @@ const DIMENSION_LABELS: Record<keyof OceanScores, string> = {
   N: 'N',
 };
 
-// Colors for overlay mode
+// Role-specific colors (consistent across all charts for visual training)
+export const ROLE_COLORS: Record<string, string> = {
+  orchestrator: '#f59e0b', // Amber
+  sm: '#10b981',           // Emerald
+  tea: '#ef4444',          // Red
+  dev: '#3b82f6',          // Blue
+  reviewer: '#8b5cf6',     // Purple
+  architect: '#06b6d4',    // Cyan
+  pm: '#ec4899',           // Pink
+  'tech-writer': '#84cc16', // Lime
+  'ux-designer': '#f97316', // Orange
+  devops: '#6366f1',       // Indigo
+};
+
+// Legacy overlay colors (for arbitrary comparisons)
 const OVERLAY_COLORS = [
   '#2563eb', // Blue
   '#dc2626', // Red
@@ -34,9 +49,11 @@ const OVERLAY_COLORS = [
   '#ea580c', // Orange
 ];
 
-// Grid and axis styling
-const GRID_COLOR = '#e5e7eb';
-const AXIS_COLOR = '#9ca3af';
+// Background and styling (dark theme for consistent rendering)
+const BACKGROUND_COLOR = '#000000';
+const GRID_COLOR = '#374151';
+const AXIS_COLOR = '#4b5563';
+const LABEL_COLOR = '#e5e7eb';
 const DATA_STROKE_WIDTH = 2;
 const GRID_STROKE_WIDTH = 1;
 
@@ -56,8 +73,8 @@ function getPoint(dimensionIndex: number, score: number, radius: number): { x: n
   const r = radius * normalizedScore;
 
   return {
-    x: CENTER + r * Math.cos(angle),
-    y: CENTER + r * Math.sin(angle),
+    x: CENTER_X + r * Math.cos(angle),
+    y: CENTER_Y + r * Math.sin(angle),
   };
 }
 
@@ -67,8 +84,8 @@ function getPoint(dimensionIndex: number, score: number, radius: number): { x: n
 function getVertex(dimensionIndex: number): { x: number; y: number } {
   const angle = ((dimensionIndex * 72 - 90) * Math.PI) / 180;
   return {
-    x: CENTER + OUTER_RADIUS * Math.cos(angle),
-    y: CENTER + OUTER_RADIUS * Math.sin(angle),
+    x: CENTER_X + OUTER_RADIUS * Math.cos(angle),
+    y: CENTER_Y + OUTER_RADIUS * Math.sin(angle),
   };
 }
 
@@ -77,8 +94,8 @@ function getVertex(dimensionIndex: number): { x: number; y: number } {
  */
 function getLabelPosition(dimensionIndex: number): { x: number; y: number; anchor: string } {
   const angle = ((dimensionIndex * 72 - 90) * Math.PI) / 180;
-  const x = CENTER + LABEL_RADIUS * Math.cos(angle);
-  const y = CENTER + LABEL_RADIUS * Math.sin(angle);
+  const x = CENTER_X + LABEL_RADIUS * Math.cos(angle);
+  const y = CENTER_Y + LABEL_RADIUS * Math.sin(angle);
 
   // Text anchor depends on position
   let anchor = 'middle';
@@ -95,8 +112,8 @@ function generateGridPolygon(scale: number): string {
   const points = DIMENSIONS.map((_, i) => {
     const angle = ((i * 72 - 90) * Math.PI) / 180;
     const r = OUTER_RADIUS * scale;
-    const x = CENTER + r * Math.cos(angle);
-    const y = CENTER + r * Math.sin(angle);
+    const x = CENTER_X + r * Math.cos(angle);
+    const y = CENTER_Y + r * Math.sin(angle);
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   }).join(' ');
 
@@ -108,7 +125,7 @@ function generateGridPolygon(scale: number): string {
  */
 function generateAxisLine(dimensionIndex: number): string {
   const vertex = getVertex(dimensionIndex);
-  return `<line x1="${CENTER}" y1="${CENTER}" x2="${vertex.x.toFixed(1)}" y2="${vertex.y.toFixed(1)}" stroke="${AXIS_COLOR}" stroke-width="${GRID_STROKE_WIDTH}" />`;
+  return `<line x1="${CENTER_X}" y1="${CENTER_Y}" x2="${vertex.x.toFixed(1)}" y2="${vertex.y.toFixed(1)}" stroke="${AXIS_COLOR}" stroke-width="${GRID_STROKE_WIDTH}" />`;
 }
 
 /**
@@ -121,19 +138,19 @@ function generateLabel(dimensionIndex: number): string {
   // Adjust y for vertical centering
   const yOffset = dimensionIndex === 0 ? -4 : dimensionIndex === 2 || dimensionIndex === 3 ? 4 : 0;
 
-  return `<text x="${pos.x.toFixed(1)}" y="${(pos.y + yOffset).toFixed(1)}" text-anchor="${pos.anchor}" font-family="sans-serif" font-size="12" font-weight="bold" fill="#374151">${label}</text>`;
+  return `<text x="${pos.x.toFixed(1)}" y="${(pos.y + yOffset).toFixed(1)}" text-anchor="${pos.anchor}" font-family="sans-serif" font-size="12" font-weight="bold" fill="${LABEL_COLOR}">${label}</text>`;
 }
 
 /**
  * Generate data polygon from OCEAN scores
  */
-function generateDataPolygon(ocean: OceanScores, color: string = '#2563eb'): string {
+function generateDataPolygon(ocean: OceanScores, color: string = '#2563eb', strokeWidth: number = DATA_STROKE_WIDTH): string {
   const points = DIMENSIONS.map((dim, i) => {
     const point = getPoint(i, ocean[dim], OUTER_RADIUS);
     return `${point.x.toFixed(1)},${point.y.toFixed(1)}`;
   }).join(' ');
 
-  return `<polygon points="${points}" fill="none" stroke="${color}" stroke-width="${DATA_STROKE_WIDTH}" stroke-linejoin="round" />`;
+  return `<polygon points="${points}" fill="none" stroke="${color}" stroke-width="${strokeWidth}" stroke-linejoin="round" />`;
 }
 
 /**
@@ -155,6 +172,9 @@ export function generateSpiderFromOcean(ocean: OceanScores, color: string = '#25
   const dataPolygon = generateDataPolygon(ocean, color);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VIEW_SIZE} ${VIEW_SIZE}">
+  <!-- Background -->
+  <rect width="${VIEW_SIZE}" height="${VIEW_SIZE}" fill="${BACKGROUND_COLOR}" />
+
   <!-- Grid -->
   ${gridPolygons}
 
@@ -171,10 +191,12 @@ export function generateSpiderFromOcean(ocean: OceanScores, color: string = '#25
 
 /**
  * Generate SVG spider chart from theme and agent
+ * Uses role-specific color for consistent visual training
  */
 export function generateSpider(theme: string, agent: string): string {
   const ocean = loadThemeOcean(theme, agent);
-  return generateSpiderFromOcean(ocean);
+  const color = ROLE_COLORS[agent] || '#2563eb';
+  return generateSpiderFromOcean(ocean, color);
 }
 
 /**
@@ -209,7 +231,7 @@ function generateLegendItem(
   const y = VIEW_SIZE - 10 - yOffset;
 
   return `<rect x="${x}" y="${y - 8}" width="12" height="12" fill="none" stroke="${color}" stroke-width="2" />
-  <text x="${x + 16}" y="${y}" font-family="sans-serif" font-size="10" fill="#374151">${label}</text>`;
+  <text x="${x + 16}" y="${y}" font-family="sans-serif" font-size="10" fill="${LABEL_COLOR}">${label}</text>`;
 }
 
 /**
@@ -247,6 +269,9 @@ export function generateOverlaySpider(characters: CharacterSpec[]): string {
     .join('\n  ');
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VIEW_SIZE} ${VIEW_SIZE}">
+  <!-- Background -->
+  <rect width="${VIEW_SIZE}" height="${VIEW_SIZE}" fill="${BACKGROUND_COLOR}" />
+
   <!-- Grid -->
   ${gridPolygons}
 
@@ -261,5 +286,85 @@ export function generateOverlaySpider(characters: CharacterSpec[]): string {
 
   <!-- Legend -->
   ${legendItems}
+</svg>`;
+}
+
+// Agent order for team overlay (matches AGENTS in generate-all-spiders.ts)
+const TEAM_AGENTS = [
+  'orchestrator',
+  'sm',
+  'tea',
+  'dev',
+  'reviewer',
+  'architect',
+  'pm',
+  'tech-writer',
+  'ux-designer',
+  'devops',
+];
+
+// Human-readable agent names for legend
+const AGENT_DISPLAY_NAMES: Record<string, string> = {
+  orchestrator: 'Orch',
+  sm: 'SM',
+  tea: 'TEA',
+  dev: 'Dev',
+  reviewer: 'Rev',
+  architect: 'Arch',
+  pm: 'PM',
+  'tech-writer': 'TW',
+  'ux-designer': 'UX',
+  devops: 'Ops',
+};
+
+// Tactical agents get emphasized (thicker stroke) in team overlays
+const TACTICAL_AGENTS = new Set(['sm', 'tea', 'dev', 'reviewer']);
+const TACTICAL_STROKE_WIDTH = 2.5;
+const STRATEGIC_STROKE_WIDTH = 1;
+
+/**
+ * Generate team overlay spider chart showing all 10 agents for a theme
+ * Uses role-specific colors for consistent visual training
+ */
+export function generateTeamOverlay(theme: string): string {
+  // Grid pentagons
+  const gridPolygons = [0.2, 0.4, 0.6, 0.8, 1.0]
+    .map((scale) => generateGridPolygon(scale))
+    .join('\n  ');
+
+  // Axis lines
+  const axisLines = TEAM_AGENTS.slice(0, 5)
+    .map((_, i) => generateAxisLine(i))
+    .join('\n  ');
+
+  // Dimension labels
+  const labels = DIMENSIONS.map((_, i) => generateLabel(i)).join('\n  ');
+
+  // Data polygons for each agent (using role colors)
+  // Tactical agents (sm, tea, dev, reviewer) emphasized with thicker strokes
+  // Strategic/support agents de-emphasized with thinner strokes
+  const dataPolygons = TEAM_AGENTS.map((agent) => {
+    const ocean = loadThemeOcean(theme, agent);
+    const color = ROLE_COLORS[agent];
+    const strokeWidth = TACTICAL_AGENTS.has(agent) ? TACTICAL_STROKE_WIDTH : STRATEGIC_STROKE_WIDTH;
+    return generateDataPolygon(ocean, color, strokeWidth);
+  }).join('\n  ');
+
+  // Legend removed - color key is in markdown header
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${VIEW_SIZE} ${VIEW_SIZE}">
+  <!-- Background -->
+  <rect width="${VIEW_SIZE}" height="${VIEW_SIZE}" fill="${BACKGROUND_COLOR}" />
+
+  <!-- Grid -->
+  ${gridPolygons}
+
+  <!-- Axes -->
+  ${axisLines}
+
+  <!-- Data -->
+  ${dataPolygons}
+
+  <!-- Labels -->
+  ${labels}
 </svg>`;
 }

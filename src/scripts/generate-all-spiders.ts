@@ -11,7 +11,7 @@ import { writeFileSync, mkdirSync, existsSync, readdirSync, readFileSync } from 
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { parse as parseYaml } from 'yaml';
-import { generateSpider } from './generate-spider.js';
+import { generateSpider, generateTeamOverlay, ROLE_COLORS } from './generate-spider.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -145,9 +145,14 @@ function generateSvgFiles(): void {
 
       count++;
     }
+
+    // Generate team overlay for this theme
+    const teamOverlay = generateTeamOverlay(theme);
+    const teamOverlayPath = join(byThemeDir, theme, 'team-overlay.svg');
+    writeFileSync(teamOverlayPath, teamOverlay);
   }
 
-  console.log(`Generated ${count} SVG files.`);
+  console.log(`Generated ${count} individual + ${THEMES.length} team overlay SVG files.`);
 }
 
 // Fixed image size for consistent display
@@ -155,6 +160,26 @@ const IMG_SIZE = 100;
 
 function imgTag(src: string, alt: string): string {
   return `<img src="${src}" alt="${escapeForAttr(alt)}" width="${IMG_SIZE}" height="${IMG_SIZE}">`;
+}
+
+// Generate role color legend markdown
+function generateRoleColorLegend(): string {
+  const roleOrder = [
+    ['orchestrator', 'Orchestrator'],
+    ['sm', 'Scrum Master'],
+    ['tea', 'Test Engineer'],
+    ['dev', 'Developer'],
+    ['reviewer', 'Reviewer'],
+    ['architect', 'Architect'],
+    ['pm', 'Product Manager'],
+    ['tech-writer', 'Tech Writer'],
+    ['ux-designer', 'UX Designer'],
+    ['devops', 'DevOps'],
+  ];
+
+  return roleOrder
+    .map(([role, name]) => `| ![${role}](https://via.placeholder.com/12/${ROLE_COLORS[role].slice(1)}/000000?text=+) \`${ROLE_COLORS[role]}\` | ${name} |`)
+    .join('\n');
 }
 
 const LEGEND = `## Reading the Spider Charts
@@ -173,6 +198,23 @@ Each spider chart visualizes OCEAN personality scores on a pentagon:
 - Score 5 = 100% from center (outer ring)
 - Grid lines show levels 1-5
 
+## Role Colors
+
+Each role has a consistent color across all charts. **Bold** = tactical (emphasized in overlays).
+
+| Color | Role |
+|:-----:|:-----|
+| <span style="color:${ROLE_COLORS['orchestrator']}">${ROLE_COLORS['orchestrator']}</span> | Orchestrator |
+| <span style="color:${ROLE_COLORS['sm']}">**${ROLE_COLORS['sm']}**</span> | **Scrum Master** |
+| <span style="color:${ROLE_COLORS['tea']}">**${ROLE_COLORS['tea']}**</span> | **Test Engineer** |
+| <span style="color:${ROLE_COLORS['dev']}">**${ROLE_COLORS['dev']}**</span> | **Developer** |
+| <span style="color:${ROLE_COLORS['reviewer']}">**${ROLE_COLORS['reviewer']}**</span> | **Reviewer** |
+| <span style="color:${ROLE_COLORS['architect']}">${ROLE_COLORS['architect']}</span> | Architect |
+| <span style="color:${ROLE_COLORS['pm']}">${ROLE_COLORS['pm']}</span> | Product Manager |
+| <span style="color:${ROLE_COLORS['tech-writer']}">${ROLE_COLORS['tech-writer']}</span> | Tech Writer |
+| <span style="color:${ROLE_COLORS['ux-designer']}">${ROLE_COLORS['ux-designer']}</span> | UX Designer |
+| <span style="color:${ROLE_COLORS['devops']}">${ROLE_COLORS['devops']}</span> | DevOps |
+
 ---
 
 `;
@@ -183,12 +225,19 @@ function imgWithName(src: string, characterName: string, agentRole: string): str
   return `${imgTag(src, characterName)}<br/>**${safeName}**<br/><small>${agentRole}</small>`;
 }
 
+// Larger image size for team overlay
+const OVERLAY_IMG_SIZE = 200;
+
+function overlayImgTag(src: string, alt: string): string {
+  return `<img src="${src}" alt="${escapeForAttr(alt)}" width="${OVERLAY_IMG_SIZE}" height="${OVERLAY_IMG_SIZE}">`;
+}
+
 function generateTeamPhotos(): void {
   console.log('Generating team-spiders.md...');
 
   let md = `# Team Spider Charts
 
-OCEAN spider charts for each theme's agent team. Each chart shows the character's personality profile.
+OCEAN spider charts for each theme's agent team. Each theme shows a combined team overlay followed by individual role charts.
 
 ${LEGEND}`;
 
@@ -197,40 +246,26 @@ ${LEGEND}`;
     const charNames = getCharacterNames(theme);
     md += `## ${themeTitle}\n\n`;
 
-    // First row: orchestrator, sm, tea, dev, reviewer
-    const row1Agents = AGENTS.slice(0, 5);
-    md += '| ' + row1Agents.map((a) => AGENT_NAMES[a]).join(' | ') + ' |\n';
-    md += '|' + row1Agents.map(() => ':---:').join('|') + '|\n';
-    md +=
-      '| ' +
-      row1Agents
-        .map((a) => imgWithName(`by-theme/${theme}/${a}.svg`, charNames[a], AGENT_NAMES[a]))
-        .join(' | ') +
-      ' |\n\n';
+    // Team overlay at top
+    md += `### Team Overview\n\n`;
+    md += `${overlayImgTag(`by-theme/${theme}/team-overlay.svg`, `${themeTitle} Team Overlay`)}\n\n`;
 
-    // Second row: architect, pm, tech-writer, ux-designer, devops
-    const row2Agents = AGENTS.slice(5);
-    md += '| ' + row2Agents.map((a) => AGENT_NAMES[a]).join(' | ') + ' |\n';
-    md += '|' + row2Agents.map(() => ':---:').join('|') + '|\n';
-    md +=
-      '| ' +
-      row2Agents
-        .map((a) => imgWithName(`by-theme/${theme}/${a}.svg`, charNames[a], AGENT_NAMES[a]))
-        .join(' | ') +
-      ' |\n\n';
+    // Vertical list: one agent per row for easy comparison
+    md += `### Individual Roles\n\n`;
+    md += '| Role | Spider | Character |\n';
+    md += '|:-----|:------:|:----------|\n';
+
+    for (const agent of AGENTS) {
+      const charName = escapeForMarkdown(charNames[agent]);
+      const imgSrc = `by-theme/${theme}/${agent}.svg`;
+      md += `| ${AGENT_NAMES[agent]} | ${imgTag(imgSrc, charNames[agent])} | **${charName}** |\n`;
+    }
+
+    md += '\n';
   }
 
   writeFileSync(join(spidersDir, 'team-spiders.md'), md);
   console.log('Generated team-spiders.md');
-}
-
-// Chunk array into groups of specified size
-function chunkArray<T>(arr: T[], size: number): T[][] {
-  const chunks: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) {
-    chunks.push(arr.slice(i, i + size));
-  }
-  return chunks;
 }
 
 // Generate image tag with character name for role gallery
@@ -245,27 +280,25 @@ function generateRoleGallery(): void {
 
   let md = `# Role Spider Gallery
 
-Each agent role across all ${THEMES.length} themes. Compare how personality profiles vary by theme.
+Each agent role across all ${THEMES.length} themes. Vertical layout for easy visual comparison of how personality profiles vary.
 
 ${LEGEND}`;
-
-  // Chunk themes into rows of 6 for readable tables (slightly smaller than faces due to chart complexity)
-  const ROW_SIZE = 6;
 
   for (const agent of AGENTS) {
     const agentName = AGENT_NAMES[agent];
     md += `## ${agentName}\n\n`;
 
-    const themeChunks = chunkArray(THEMES, ROW_SIZE);
+    // Vertical list: one theme per row for easy comparison
+    md += '| Theme | Spider | Character |\n';
+    md += '|:------|:------:|:----------|\n';
 
-    for (const chunk of themeChunks) {
-      md += '| ' + chunk.map((t) => formatTheme(t)).join(' | ') + ' |\n';
-      md += '|' + chunk.map(() => ':---:').join('|') + '|\n';
-      md +=
-        '| ' +
-        chunk.map((t) => imgWithCharacter(`by-role/${agent}/${t}.svg`, t, agent)).join(' | ') +
-        ' |\n\n';
+    for (const theme of THEMES) {
+      const charName = escapeForMarkdown(getCharacterName(theme, agent));
+      const imgSrc = `by-role/${agent}/${theme}.svg`;
+      md += `| ${formatTheme(theme)} | ${imgTag(imgSrc, charName)} | **${charName}** |\n`;
     }
+
+    md += '\n';
   }
 
   writeFileSync(join(spidersDir, 'role-spiders.md'), md);
