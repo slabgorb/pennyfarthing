@@ -84,6 +84,8 @@ backlog:
             - Update in real-time
           points: 2
           priority: P2
+          status: done
+          completed: 2026-01-01
           repos: pennyfarthing
           acceptance_criteria:
             - Statusline shows context percentage
@@ -408,7 +410,7 @@ backlog:
             - Warns if state changed between sessions
 
 # Summary
-# Remaining backlog: 55 points across 5 epics
+# Remaining backlog: 53 points across 5 epics
 #
 # Completed Epics (for reference):
 # - Epic 2: Core Agent Framework (Sprint 2)
@@ -417,7 +419,7 @@ backlog:
 # - Epic 6: Interactive Theme Wizard (Sprint 3)
 #
 # Backlog Epics:
-# - Epic 3: Context Management (13 pts) - P1
+# - Epic 3: Context Management (11 pts remaining, 2 done) - P1
 # - Epic 7: Benchmarking Suite (13 pts) - P2
 # - Epic 8: State Reconciliation (8 pts) - P1
 # - Epic 9: Skill Discovery (13 pts) - P2
