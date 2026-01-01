@@ -93,34 +93,11 @@ Read the testing skill at .claude/skills/testing/SKILL.md for test commands.
 
 ## Error Recovery
 
-If any step fails, follow this protocol:
+**See:** `.claude/guides/handoff-error-recovery.md` for retry pattern and escalation format.
 
-### Retry Pattern
-1. **Log the failure:** Note which step failed and why
-2. **Diagnose:** What specifically went wrong?
-3. **Adjust:** Try a different approach (max 2 retries)
-4. **Escalate:** If still failing, report to calling agent
-
-### Common Failures and Fixes
+### Agent-Specific Failures
 
 | Failure | Diagnosis | Fix |
 |---------|-----------|-----|
 | Tests all GREEN | Tests don't exercise new code | Report - TEA must verify tests are correct |
 | Tests not committed | git commit failed | Check staging, try commit again |
-| Assessment missing | TEA didn't write it | STOP - TEA must write assessment first |
-| Session file not found | Wrong path | Verify session file exists at expected path |
-
-### Escalation Format
-
-If unable to complete handoff:
-```
-HANDOFF BLOCKED
-
-Step failed: [which step]
-Error: [error message]
-Diagnosis: [what went wrong]
-
-Recommended fix: [what calling agent should do]
-```
-
-**Never silently fail.** Always report what happened.
