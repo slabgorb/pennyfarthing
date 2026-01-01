@@ -195,6 +195,14 @@ pennyfarthing uninstall --all
 
 Archived sprint data (`sprint/archive/`, `sprint/context/`) is always preserved.
 
+## What's Coming in v4.2
+
+- **Chernoff Face Visualization** - OCEAN personality profiles rendered as Chernoff faces (SVG + ASCII)
+  - 630 character faces across all 63 themes
+  - `/theme-maker` generates OCEAN profiles automatically
+- **Context Warning Hook** - Automatic alerts at 70% context usage
+- **Session Isolation Fix** - Multi-session statusline pollution resolved
+
 ## What's New in v4.1
 
 - **Mega Persona Pack** - 50+ new themes with OCEAN personality standardization

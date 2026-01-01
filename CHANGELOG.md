@@ -7,7 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-*No unreleased changes*
+### Added
+- **OCEAN Personality Visualization (Epic 11)** - Chernoff face visualization for agent personality profiles
+  - OCEAN → facial feature mapping specification (`pennyfarthing-dist/personas/OCEAN-TO-FACE.md`)
+  - Chernoff face generator (`src/scripts/generate-face.ts`) - converts OCEAN scores to SVG
+  - ASCII face generator (`src/scripts/generate-ascii-face.ts`) - terminal-friendly visualization
+  - Full 630-face matrix across all 63 themes (10 agents each)
+  - OCEAN profiles added to all theme character definitions
+  - `/theme-maker` now generates OCEAN profiles in all creation modes
+- **Context Warning Hook** - Automatic warning at 70% context usage threshold
+  - PreToolUse hook monitors context budget
+  - Actionable suggestions for context management
+  - Configurable thresholds in settings
+
+### Fixed
+- **Session Isolation (BUG-1)** - Eliminated shared `.session/current-agent` file causing cross-session pollution
+  - Each Claude Code session now shows only its own agent in statusline
+  - Removed shared state workaround that caused agent bleed between sessions
 
 ---
 
