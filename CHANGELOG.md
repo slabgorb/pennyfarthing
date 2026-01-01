@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+*No unreleased changes*
+
+---
+
+## [4.2.0] - 2026-01-01
+
 ### Added
 - **OCEAN Personality Visualization (Epic 11)** - Chernoff face visualization for agent personality profiles
   - OCEAN → facial feature mapping specification (`pennyfarthing-dist/personas/OCEAN-TO-FACE.md`)
@@ -475,7 +481,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v4.1.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v4.2.0...HEAD
+[4.2.0]: https://github.com/1898andCo/pennyfarthing/compare/v4.1.0...v4.2.0
 [4.1.0]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.6...v4.1.0
 [4.0.6]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.5...v4.0.6
 [4.0.5]: https://github.com/1898andCo/pennyfarthing/compare/v4.0.4...v4.0.5
