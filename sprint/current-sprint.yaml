@@ -1213,6 +1213,189 @@ sprint_4:
       11-8 completed: Benchmark integration module with personality-performance correlation.
       Sprint 4 fully completed (37/37 points = 185% of velocity target).
       BL-1 completed: Local theme settings for user isolation.
+      BL-2 completed: Added persona-config.local.yaml to gitignore.
+
+# =============================================================================
+# SPRINT 5 - Infrastructure & Benchmark Validation
+# =============================================================================
+
+sprint_5:
+  number: 5
+  goal: "Infrastructure hardening and benchmark validation"
+  planned_start: 2026-01-02
+  status: planning
+  velocity_target: 20
+
+  epics:
+    - id: epic-12
+      title: "Testing & CI Infrastructure"
+      description: |
+        Address testing gaps identified in Sprint 4 retro:
+        - CI/CD pipeline for automated testing
+        - Visual regression tests for SVG generators
+        - Integration tests for multi-session scenarios
+        - Performance benchmarks baseline
+      points: 10
+      priority: P1
+      source: "Sprint 4 Retro Action Items"
+      repos: pennyfarthing
+      stories:
+        - id: "12-1"
+          title: "Set up GitHub Actions CI pipeline"
+          description: |
+            Create GitHub Actions workflow for automated testing on PR.
+            - Run npm test on every PR
+            - Run npm run build to verify TypeScript compiles
+            - Run npm run lint if ESLint is configured
+            - Report test results in PR comments
+            - Block merge if tests fail
+          points: 3
+          priority: P1
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - .github/workflows/ci.yml created
+            - Tests run on every PR to develop/main
+            - Build verification included
+            - PR status checks configured
+            - README badge shows CI status
+
+        - id: "12-2"
+          title: "Add visual regression tests for SVG generators"
+          description: |
+            Create snapshot tests for Chernoff face and spider chart generators.
+            - Generate reference SVGs for known OCEAN profiles
+            - Compare output against snapshots on each test run
+            - Detect unintended visual changes
+            - Support snapshot update workflow
+          points: 3
+          priority: P2
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Snapshot tests for generate-face.ts
+            - Snapshot tests for generate-spider.ts
+            - At least 10 reference profiles tested
+            - npm test --update-snapshots workflow documented
+            - CI runs snapshot tests
+
+        - id: "12-3"
+          title: "Add integration tests for multi-session statusline"
+          description: |
+            Create integration tests to prevent BUG-1 regression.
+            - Simulate two concurrent sessions
+            - Verify each session shows its own agent
+            - Test session isolation with different agents
+            - Test worktree scenario if applicable
+          points: 2
+          priority: P2
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Integration test simulates multi-session
+            - Verifies no cross-session pollution
+            - Documents reproduction steps for BUG-1
+            - Runs as part of npm test
+
+        - id: "12-4"
+          title: "Create performance benchmark baseline"
+          description: |
+            Establish baseline performance metrics for generators.
+            - Measure time to generate 630 faces
+            - Measure time to generate 630 spider charts
+            - Measure theme parsing time
+            - Store baseline in repository for comparison
+          points: 2
+          priority: P2
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - scripts/perf-baseline.ts created
+            - Baseline metrics documented
+            - CI can optionally run perf tests
+            - Alert if performance degrades significantly
+
+    - id: epic-13
+      title: "Benchmark Pilot & Validation"
+      description: |
+        Validate the benchmark-integration module with real benchmark data.
+        Run pilot benchmarks with diverse themes to test personality-performance
+        correlation hypotheses.
+      points: 10
+      priority: P2
+      source: "Sprint 4 Retro - Longed For"
+      repos: pennyfarthing
+      stories:
+        - id: "13-1"
+          title: "Define benchmark task suite (5-10 coding tasks)"
+          description: |
+            Create a suite of benchmark tasks that test different skills:
+            - Algorithm implementation (tests C dimension)
+            - Bug fixing (tests O dimension)
+            - Code review (tests A dimension)
+            - Refactoring (tests C, O dimensions)
+            - Documentation (tests A dimension)
+            Each task should have clear success criteria.
+          points: 2
+          priority: P1
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - 5-10 benchmark tasks defined
+            - Each task has clear success criteria
+            - Tasks cover different OCEAN dimensions
+            - Tasks stored in benchmark/tasks/
+            - Scoring rubric for each task
+
+        - id: "13-2"
+          title: "Run pilot benchmark with 3 themes"
+          description: |
+            Execute benchmark tasks with 3 diverse themes:
+            - star-trek-tng (high structure, diplomatic)
+            - breaking-bad (high risk tolerance, assertive)
+            - discworld (high creativity, unconventional)
+            Record results for each agent role.
+          points: 5
+          priority: P2
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - 3 themes benchmarked
+            - All 10 agents tested per theme (30 runs)
+            - Results stored in benchmark/results/
+            - Raw data captured for analysis
+            - Initial observations documented
+
+        - id: "13-3"
+          title: "Generate personality-performance correlation report"
+          description: |
+            Use benchmark-integration.ts to analyze pilot results.
+            - Correlate OCEAN scores with task performance
+            - Identify which personality traits predict success
+            - Generate visual report with faces/spiders
+            - Document findings and hypotheses
+          points: 3
+          priority: P2
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Correlation analysis complete
+            - Report generated with visualizations
+            - Top-performing profiles identified per task type
+            - Findings documented in benchmark/FINDINGS.md
+            - Recommendations for theme selection
+
+  sprint_5_summary:
+    total_points: 20
+    completed_points: 0
+    in_progress_points: 0
+    backlog_points: 20
+    velocity_target: 20
+    status: planning
+    notes: |
+      Sprint 5 focuses on infrastructure and validation based on Sprint 4 retro.
+      Epic 12: Address testing gaps (CI, visual regression, integration tests)
+      Epic 13: Validate benchmark module with real pilot data
 
 # =============================================================================
 # BACKLOG - Future Sprint Candidates
@@ -1251,8 +1434,15 @@ backlog:
         .claude/persona-config.local.yaml, so new installations won't have it gitignored.
       points: 1
       priority: P3
-      status: backlog
+      status: done
+      started: 2026-01-01
+      completed: 2026-01-01
+      branch: feat/BL-2-gitignore-local-persona
+      pr: https://github.com/1898andCo/pennyfarthing/pull/41
       repos: pennyfarthing
       acceptance_criteria:
         - updateGitignore() in init.ts includes persona-config.local.yaml
         - New pennyfarthing init installations have entry in .gitignore
+      completion_summary: |
+        Added persona-config.local.yaml to gitignore entries in updateGitignore() function.
+        Ensures new installations correctly exclude user-local theme preferences from git.
