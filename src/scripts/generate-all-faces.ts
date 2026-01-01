@@ -2,11 +2,12 @@
  * Batch Chernoff Face Generator
  *
  * Story 11-4: Generate anchor theme faces + markdown report
+ * Story 11-6: Generate full 630-face matrix with index
  *
- * Generates 100 SVG faces for anchor themes and creates markdown indices.
+ * Generates SVG faces for all themes and creates markdown indices.
  */
 
-import { writeFileSync, mkdirSync, existsSync } from 'fs';
+import { writeFileSync, mkdirSync, existsSync, readdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { generateFace } from './generate-face.js';
@@ -17,20 +18,15 @@ const __dirname = dirname(__filename);
 // Navigate from dist/scripts/ to project root, then to output directory
 const projectRoot = join(__dirname, '..', '..');
 const facesDir = join(projectRoot, 'pennyfarthing-dist', 'personas', 'faces');
+const themesDir = join(projectRoot, 'pennyfarthing-dist', 'personas', 'themes');
 
-// 10 anchor themes with OCEAN data
-const THEMES = [
-  'deadwood',
-  'firefly',
-  'breaking-bad',
-  'the-good-place',
-  'star-trek-tng',
-  'discworld',
-  'fargo',
-  'succession',
-  'mass-effect',
-  'software-pioneers',
-];
+// Dynamically load all themes from the themes directory
+function getAllThemes(): string[] {
+  const files = readdirSync(themesDir).filter((f) => f.endsWith('.yaml'));
+  return files.map((f) => f.replace('.yaml', '')).sort();
+}
+
+const THEMES = getAllThemes();
 
 // 10 agents per theme
 const AGENTS = [
@@ -174,36 +170,41 @@ ${LEGEND}`;
   console.log('Generated team-photos.md');
 }
 
+// Chunk array into groups of specified size
+function chunkArray<T>(arr: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
+}
+
 function generateRoleGallery(): void {
   console.log('Generating role-gallery.md...');
 
   let md = `# Role Gallery
 
-Each agent role across all 10 anchor themes. Compare how the same role varies by theme personality.
+Each agent role across all ${THEMES.length} themes. Compare how the same role varies by theme personality.
 
 ${LEGEND}`;
+
+  // Chunk themes into rows of 7 for readable tables
+  const ROW_SIZE = 7;
 
   for (const agent of AGENTS) {
     const agentName = AGENT_NAMES[agent];
     md += `## ${agentName}\n\n`;
 
-    // First row: first 5 themes
-    const row1Themes = THEMES.slice(0, 5);
-    md += '| ' + row1Themes.map((t) => formatTheme(t)).join(' | ') + ' |\n';
-    md += '|' + row1Themes.map(() => ':---:').join('|') + '|\n';
-    md +=
-      '| ' +
-      row1Themes.map((t) => imgTag(`by-role/${agent}/${t}.svg`, formatTheme(t))).join(' | ') +
-      ' |\n\n';
+    const themeChunks = chunkArray(THEMES, ROW_SIZE);
 
-    // Second row: last 5 themes
-    const row2Themes = THEMES.slice(5);
-    md += '| ' + row2Themes.map((t) => formatTheme(t)).join(' | ') + ' |\n';
-    md += '|' + row2Themes.map(() => ':---:').join('|') + '|\n';
-    md +=
-      '| ' +
-      row2Themes.map((t) => imgTag(`by-role/${agent}/${t}.svg`, formatTheme(t))).join(' | ') +
-      ' |\n\n';
+    for (const chunk of themeChunks) {
+      md += '| ' + chunk.map((t) => formatTheme(t)).join(' | ') + ' |\n';
+      md += '|' + chunk.map(() => ':---:').join('|') + '|\n';
+      md +=
+        '| ' +
+        chunk.map((t) => imgTag(`by-role/${agent}/${t}.svg`, formatTheme(t))).join(' | ') +
+        ' |\n\n';
+    }
   }
 
   writeFileSync(join(facesDir, 'role-gallery.md'), md);
