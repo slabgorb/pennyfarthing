@@ -904,7 +904,9 @@ sprint_4:
             - Organize by theme (team photos) and by role (cross-theme comparison)
           points: 2
           priority: P1
-          status: backlog
+          status: in_progress
+          started: 2026-01-01
+          branch: feat/11-4-anchor-faces
           repos: pennyfarthing
           acceptance_criteria:
             - 100 SVG faces generated in pennyfarthing-dist/personas/faces/

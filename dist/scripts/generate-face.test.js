@@ -89,57 +89,59 @@ describe('AC2: Theme + Agent Input → SVG Output', () => {
 // ============================================================================
 describe('AC3: OCEAN → SVG Parameter Mapping', () => {
     // Test the mapping function directly with known values
-    it('should map O=1 to small eye radius (6px)', async () => {
+    it('should map O=1 to small eye radius (8px)', async () => {
         const { oceanToParams } = await import('./generate-face.js');
         const params = oceanToParams({ O: 1, C: 3, E: 3, A: 3, N: 3 });
-        assert.strictEqual(params.eyeRadius, 6, 'O=1 should map to 6px eye radius');
+        assert.strictEqual(params.eyeRadius, 8, 'O=1 should map to 8px eye radius');
     });
-    it('should map O=5 to large eye radius (14px)', async () => {
+    it('should map O=5 to large eye radius (18px)', async () => {
         const { oceanToParams } = await import('./generate-face.js');
         const params = oceanToParams({ O: 5, C: 3, E: 3, A: 3, N: 3 });
-        assert.strictEqual(params.eyeRadius, 14, 'O=5 should map to 14px eye radius');
+        assert.strictEqual(params.eyeRadius, 18, 'O=5 should map to 18px eye radius');
     });
-    it('should map C=1 to round face (100x100)', async () => {
+    it('should map C=1 to wide round face (110x90)', async () => {
         const { oceanToParams } = await import('./generate-face.js');
         const params = oceanToParams({ O: 3, C: 1, E: 3, A: 3, N: 3 });
-        assert.strictEqual(params.faceWidth, 100, 'C=1 should map to 100px face width');
-        assert.strictEqual(params.faceHeight, 100, 'C=1 should map to 100px face height');
+        assert.strictEqual(params.faceWidth, 110, 'C=1 should map to 110px face width');
+        assert.strictEqual(params.faceHeight, 90, 'C=1 should map to 90px face height');
+        assert.strictEqual(params.cornerRadius, 50, 'C=1 should have very round corners');
     });
-    it('should map C=5 to angular face (80x115)', async () => {
+    it('should map C=5 to narrow angular face (70x120)', async () => {
         const { oceanToParams } = await import('./generate-face.js');
         const params = oceanToParams({ O: 3, C: 5, E: 3, A: 3, N: 3 });
-        assert.strictEqual(params.faceWidth, 80, 'C=5 should map to 80px face width');
-        assert.strictEqual(params.faceHeight, 115, 'C=5 should map to 115px face height');
+        assert.strictEqual(params.faceWidth, 70, 'C=5 should map to 70px face width');
+        assert.strictEqual(params.faceHeight, 120, 'C=5 should map to 120px face height');
+        assert.strictEqual(params.cornerRadius, 5, 'C=5 should have angular corners');
     });
-    it('should map E=1 to narrow mouth (15px)', async () => {
+    it('should map E=1 to narrow mouth (12px)', async () => {
         const { oceanToParams } = await import('./generate-face.js');
         const params = oceanToParams({ O: 3, C: 3, E: 1, A: 3, N: 3 });
-        assert.strictEqual(params.mouthWidth, 15, 'E=1 should map to 15px mouth width');
+        assert.strictEqual(params.mouthWidth, 12, 'E=1 should map to 12px mouth width');
     });
-    it('should map E=5 to wide mouth (40px)', async () => {
+    it('should map E=5 to wide mouth (50px)', async () => {
         const { oceanToParams } = await import('./generate-face.js');
         const params = oceanToParams({ O: 3, C: 3, E: 5, A: 3, N: 3 });
-        assert.strictEqual(params.mouthWidth, 40, 'E=5 should map to 40px mouth width');
+        assert.strictEqual(params.mouthWidth, 50, 'E=5 should map to 50px mouth width');
     });
-    it('should map A=1 to angled-down eyebrows (-15 degrees)', async () => {
+    it('should map A=1 to angled-down eyebrows (-20 degrees)', async () => {
         const { oceanToParams } = await import('./generate-face.js');
         const params = oceanToParams({ O: 3, C: 3, E: 3, A: 1, N: 3 });
-        assert.strictEqual(params.eyebrowAngle, -15, 'A=1 should map to -15 degree eyebrows');
+        assert.strictEqual(params.eyebrowAngle, -20, 'A=1 should map to -20 degree eyebrows');
     });
-    it('should map A=5 to raised eyebrows (+15 degrees)', async () => {
+    it('should map A=5 to raised eyebrows (+20 degrees)', async () => {
         const { oceanToParams } = await import('./generate-face.js');
         const params = oceanToParams({ O: 3, C: 3, E: 3, A: 5, N: 3 });
-        assert.strictEqual(params.eyebrowAngle, 15, 'A=5 should map to +15 degree eyebrows');
+        assert.strictEqual(params.eyebrowAngle, 20, 'A=5 should map to +20 degree eyebrows');
     });
-    it('should map N=1 to light stroke (1px)', async () => {
+    it('should map N=1 to light stroke (1.5px)', async () => {
         const { oceanToParams } = await import('./generate-face.js');
         const params = oceanToParams({ O: 3, C: 3, E: 3, A: 3, N: 1 });
-        assert.strictEqual(params.strokeWidth, 1, 'N=1 should map to 1px stroke');
+        assert.strictEqual(params.strokeWidth, 1.5, 'N=1 should map to 1.5px stroke');
     });
-    it('should map N=5 to heavy stroke (3px)', async () => {
+    it('should map N=5 to heavy stroke (4px)', async () => {
         const { oceanToParams } = await import('./generate-face.js');
         const params = oceanToParams({ O: 3, C: 3, E: 3, A: 3, N: 5 });
-        assert.strictEqual(params.strokeWidth, 3, 'N=5 should map to 3px stroke');
+        assert.strictEqual(params.strokeWidth, 4, 'N=5 should map to 4px stroke');
     });
 });
 describe('AC3: Extreme Profiles Produce Different SVGs', () => {
@@ -151,8 +153,8 @@ describe('AC3: Extreme Profiles Produce Different SVGs', () => {
         const intenseSvg = generateSvgFromParams(intense);
         assert.notStrictEqual(stoicSvg, intenseSvg, 'Extreme profiles should produce different SVGs');
         // Verify specific differences exist
-        assert.ok(stoicSvg.includes('r="6"') || stoicSvg.includes('r="6px"'), 'Stoic should have small eyes');
-        assert.ok(intenseSvg.includes('r="14"') || intenseSvg.includes('r="14px"'), 'Intense should have large eyes');
+        assert.ok(stoicSvg.includes('r="8"') || stoicSvg.includes('r="8px"'), 'Stoic should have small eyes (8px)');
+        assert.ok(intenseSvg.includes('r="18"') || intenseSvg.includes('r="18px"'), 'Intense should have large eyes (18px)');
     });
     it('should produce measurably different parameters for each OCEAN value', async () => {
         const { oceanToParams } = await import('./generate-face.js');
