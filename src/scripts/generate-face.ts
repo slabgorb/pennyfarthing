@@ -39,6 +39,20 @@ export interface FaceParams {
   strokeWidth: number;
 }
 
+// Pastel background colors by agent role
+const AGENT_COLORS: Record<string, string> = {
+  orchestrator: '#E8D5E8', // Soft lavender
+  sm: '#D5E8D5', // Soft mint green
+  tea: '#D5E0E8', // Soft sky blue
+  dev: '#E8E8D5', // Soft cream
+  reviewer: '#E8D5D5', // Soft rose
+  architect: '#D5D8E8', // Soft periwinkle
+  pm: '#E8DDD5', // Soft peach
+  'tech-writer': '#D5E8E8', // Soft cyan
+  'ux-designer': '#E8D8E8', // Soft orchid
+  devops: '#DDE8D5', // Soft sage
+};
+
 /**
  * Load OCEAN scores from a theme YAML file for a specific agent
  */
@@ -79,12 +93,12 @@ export function loadThemeOcean(theme: string, agent: string): OceanScores {
 /**
  * Map OCEAN scores to SVG face parameters per OCEAN-TO-FACE.md spec
  *
- * Mappings:
- * - O (Openness) → Eye size: 1→6px, 5→14px
- * - C (Conscientiousness) → Face shape: 1→100x100 round, 5→80x115 angular
- * - E (Extraversion) → Mouth width: 1→15px, 5→40px
- * - A (Agreeableness) → Eyebrow angle: 1→-15°, 5→+15°
- * - N (Neuroticism) → Stroke width: 1→1px, 5→3px
+ * Mappings (adjusted for visibility):
+ * - O (Openness) → Eye size: 1→8px, 5→18px (more extreme)
+ * - C (Conscientiousness) → Face shape: 1→95x95 round, 5→85x105 angular (reduced variance)
+ * - E (Extraversion) → Mouth width: 1→12px, 5→50px (more extreme)
+ * - A (Agreeableness) → Eyebrow angle: 1→-20°, 5→+20° (more extreme)
+ * - N (Neuroticism) → Stroke width: 1→1.5px, 5→4px (more visible)
  */
 export function oceanToParams(ocean: OceanScores): FaceParams {
   // Linear interpolation helper
@@ -94,25 +108,25 @@ export function oceanToParams(ocean: OceanScores): FaceParams {
     return min + t * (max - min);
   };
 
-  // Openness → Eye Size (6px to 14px)
-  const eyeRadius = Math.round(lerp(ocean.O, 6, 14));
-  const pupilRadius = Math.round(lerp(ocean.O, 2, 6));
+  // Openness → Eye Size (8px to 18px - more extreme range)
+  const eyeRadius = Math.round(lerp(ocean.O, 8, 18));
+  const pupilRadius = Math.round(lerp(ocean.O, 3, 8));
 
-  // Conscientiousness → Face Shape
-  // Width: 100 to 80, Height: 100 to 115, Corner: 50% to 10%
-  const faceWidth = Math.round(lerp(ocean.C, 100, 80));
-  const faceHeight = Math.round(lerp(ocean.C, 100, 115));
-  const cornerRadius = Math.round(lerp(ocean.C, 50, 10));
+  // Conscientiousness → Face Shape (dramatic variance)
+  // C=1: Wide round face (110x90), C=5: Narrow tall angular face (70x120)
+  const faceWidth = Math.round(lerp(ocean.C, 110, 70));
+  const faceHeight = Math.round(lerp(ocean.C, 90, 120));
+  const cornerRadius = Math.round(lerp(ocean.C, 50, 5)); // Round to angular
 
-  // Extraversion → Mouth (width 15 to 40, curve flat to strong)
-  const mouthWidth = Math.round(lerp(ocean.E, 15, 40));
-  const mouthCurve = Math.round(lerp(ocean.E, 0, 15)); // Bezier control Y offset
+  // Extraversion → Mouth (width 12 to 50, curve flat to strong - more extreme)
+  const mouthWidth = Math.round(lerp(ocean.E, 12, 50));
+  const mouthCurve = Math.round(lerp(ocean.E, -5, 20)); // Negative = frown, positive = smile
 
-  // Agreeableness → Eyebrow Angle (-15° to +15°)
-  const eyebrowAngle = Math.round(lerp(ocean.A, -15, 15));
+  // Agreeableness → Eyebrow Angle (-20° to +20° - more extreme)
+  const eyebrowAngle = Math.round(lerp(ocean.A, -20, 20));
 
-  // Neuroticism → Stroke Width (1px to 3px)
-  const strokeWidth = lerp(ocean.N, 1, 3);
+  // Neuroticism → Stroke Width (1.5px to 4px - more visible)
+  const strokeWidth = lerp(ocean.N, 1.5, 4);
 
   return {
     eyeRadius,
@@ -129,8 +143,10 @@ export function oceanToParams(ocean: OceanScores): FaceParams {
 
 /**
  * Generate SVG string from face parameters
+ * @param params - Face parameters from oceanToParams
+ * @param backgroundColor - Optional background color (hex string)
  */
-export function generateSvgFromParams(params: FaceParams): string {
+export function generateSvgFromParams(params: FaceParams, backgroundColor?: string): string {
   const {
     eyeRadius,
     pupilRadius,
@@ -162,31 +178,42 @@ export function generateSvgFromParams(params: FaceParams): string {
   const mouthHalfWidth = mouthWidth / 2;
 
   // Mouth path (quadratic bezier for curve)
+  // In SVG, Y increases downward. For a smile, control point must be BELOW the line (larger Y)
+  // Positive mouthCurve = smile (control point BELOW line, curve opens upward)
+  // Negative mouthCurve = frown (control point ABOVE line, curve opens downward)
   const mouthStartX = cx - mouthHalfWidth;
   const mouthEndX = cx + mouthHalfWidth;
-  const mouthControlY = mouthY + mouthCurve; // Positive = smile down, we want smile up
-  const mouthPath = mouthCurve > 0
-    ? `M ${mouthStartX} ${mouthY} Q ${cx} ${mouthY - mouthCurve} ${mouthEndX} ${mouthY}`
-    : `M ${mouthStartX} ${mouthY} L ${mouthEndX} ${mouthY}`;
+  const mouthControlY = mouthY + mouthCurve; // Add: positive curve = point goes down = smile opens up
+  const mouthPath = `M ${mouthStartX} ${mouthY} Q ${cx} ${mouthControlY} ${mouthEndX} ${mouthY}`;
 
   // Eyebrow positions and rotation
   const eyebrowY = eyeY - eyeRadius - 8;
   const eyebrowLength = eyeRadius * 1.5;
-  const eyebrowRad = (eyebrowAngle * Math.PI) / 180;
 
-  // Generate eyebrow lines (rotated around their outer edge)
-  // Left eyebrow: rotate around left end
-  const leftBrowStartX = leftEyeX - eyebrowLength / 2;
-  const leftBrowEndX = leftEyeX + eyebrowLength / 2;
-  const leftBrowDy = Math.sin(-eyebrowRad) * eyebrowLength; // Negative for inner end higher when positive angle
+  // Calculate vertical offset for eyebrow tilt
+  // Positive angle (friendly): inner ends UP, outer ends DOWN
+  // Negative angle (stern): inner ends DOWN, outer ends UP
+  const browTilt = Math.sin((eyebrowAngle * Math.PI) / 180) * (eyebrowLength / 2);
 
-  // Right eyebrow: mirror
-  const rightBrowStartX = rightEyeX - eyebrowLength / 2;
-  const rightBrowEndX = rightEyeX + eyebrowLength / 2;
-  const rightBrowDy = Math.sin(eyebrowRad) * eyebrowLength;
+  // Left eyebrow: outer=left (x1), inner=right (x2)
+  const leftBrowOuterX = leftEyeX - eyebrowLength / 2;
+  const leftBrowInnerX = leftEyeX + eyebrowLength / 2;
+  const leftBrowOuterY = eyebrowY + browTilt;  // Positive tilt pushes outer DOWN
+  const leftBrowInnerY = eyebrowY - browTilt;  // Positive tilt pushes inner UP
+
+  // Right eyebrow: inner=left (x1), outer=right (x2) - mirrored
+  const rightBrowInnerX = rightEyeX - eyebrowLength / 2;
+  const rightBrowOuterX = rightEyeX + eyebrowLength / 2;
+  const rightBrowInnerY = eyebrowY - browTilt; // Positive tilt pushes inner UP
+  const rightBrowOuterY = eyebrowY + browTilt; // Positive tilt pushes outer DOWN
+
+  // Background (optional)
+  const bgRect = backgroundColor
+    ? `\n  <!-- Background -->\n  <rect x="0" y="0" width="200" height="200" fill="${backgroundColor}" />\n`
+    : '';
 
   // Build SVG
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">${bgRect}
   <!-- Face -->
   <ellipse cx="${cx}" cy="${cy}" rx="${faceRx}" ry="${faceRy}"
     fill="none" stroke="black" stroke-width="${strokeWidth}" />
@@ -204,13 +231,13 @@ export function generateSvgFromParams(params: FaceParams): string {
     fill="black" stroke="none" />
 
   <!-- Left Eyebrow -->
-  <line x1="${leftBrowStartX}" y1="${eyebrowY + leftBrowDy / 2}"
-        x2="${leftBrowEndX}" y2="${eyebrowY - leftBrowDy / 2}"
+  <line x1="${leftBrowOuterX}" y1="${leftBrowOuterY}"
+        x2="${leftBrowInnerX}" y2="${leftBrowInnerY}"
     stroke="black" stroke-width="${strokeWidth}" stroke-linecap="round" />
 
   <!-- Right Eyebrow -->
-  <line x1="${rightBrowStartX}" y1="${eyebrowY - rightBrowDy / 2}"
-        x2="${rightBrowEndX}" y2="${eyebrowY + rightBrowDy / 2}"
+  <line x1="${rightBrowInnerX}" y1="${rightBrowInnerY}"
+        x2="${rightBrowOuterX}" y2="${rightBrowOuterY}"
     stroke="black" stroke-width="${strokeWidth}" stroke-linecap="round" />
 
   <!-- Mouth -->
@@ -227,5 +254,6 @@ export function generateSvgFromParams(params: FaceParams): string {
 export function generateFace(theme: string, agent: string): string {
   const ocean = loadThemeOcean(theme, agent);
   const params = oceanToParams(ocean);
-  return generateSvgFromParams(params);
+  const backgroundColor = AGENT_COLORS[agent] || '#F0F0F0'; // Default light gray
+  return generateSvgFromParams(params, backgroundColor);
 }
