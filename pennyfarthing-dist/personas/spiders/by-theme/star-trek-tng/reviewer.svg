@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Grid -->
+  <polygon points="100.0,86.0 113.3,95.7 108.2,111.3 91.8,111.3 86.7,95.7" fill="none" stroke="#e5e7eb" stroke-width="1" />
+  <polygon points="100.0,72.0 126.6,91.3 116.5,122.7 83.5,122.7 73.4,91.3" fill="none" stroke="#e5e7eb" stroke-width="1" />
+  <polygon points="100.0,58.0 139.9,87.0 124.7,134.0 75.3,134.0 60.1,87.0" fill="none" stroke="#e5e7eb" stroke-width="1" />
+  <polygon points="100.0,44.0 153.3,82.7 132.9,145.3 67.1,145.3 46.7,82.7" fill="none" stroke="#e5e7eb" stroke-width="1" />
+  <polygon points="100.0,30.0 166.6,78.4 141.1,156.6 58.9,156.6 33.4,78.4" fill="none" stroke="#e5e7eb" stroke-width="1" />
+
+  <!-- Axes -->
+  <line x1="100" y1="100" x2="100.0" y2="30.0" stroke="#9ca3af" stroke-width="1" />
+  <line x1="100" y1="100" x2="166.6" y2="78.4" stroke="#9ca3af" stroke-width="1" />
+  <line x1="100" y1="100" x2="141.1" y2="156.6" stroke="#9ca3af" stroke-width="1" />
+  <line x1="100" y1="100" x2="58.9" y2="156.6" stroke="#9ca3af" stroke-width="1" />
+  <line x1="100" y1="100" x2="33.4" y2="78.4" stroke="#9ca3af" stroke-width="1" />
+
+  <!-- Data -->
+  <polygon points="100.0,44.0 166.6,78.4 116.5,122.7 75.3,134.0 86.7,95.7" fill="none" stroke="#2563eb" stroke-width="2" stroke-linejoin="round" />
+
+  <!-- Labels -->
+  <text x="100.0" y="8.0" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="bold" fill="#374151">O</text>
+  <text x="183.7" y="72.8" text-anchor="start" font-family="sans-serif" font-size="12" font-weight="bold" fill="#374151">C</text>
+  <text x="151.7" y="175.2" text-anchor="start" font-family="sans-serif" font-size="12" font-weight="bold" fill="#374151">E</text>
+  <text x="48.3" y="175.2" text-anchor="end" font-family="sans-serif" font-size="12" font-weight="bold" fill="#374151">A</text>
+  <text x="16.3" y="72.8" text-anchor="end" font-family="sans-serif" font-size="12" font-weight="bold" fill="#374151">N</text>
+</svg>
