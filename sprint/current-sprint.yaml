@@ -883,7 +883,9 @@ sprint_4:
             - Support batch generation for multiple characters
           points: 5
           priority: P1
-          status: backlog
+          status: in_progress
+          started: 2026-01-01
+          branch: feat/11-3-chernoff-generator
           repos: pennyfarthing
           acceptance_criteria:
             - scripts/generate-face.sh or Node script functional
