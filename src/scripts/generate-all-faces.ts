@@ -186,7 +186,7 @@ function generateTeamPhotos(): void {
 
   let md = `# Team Photos
 
-Chernoff faces for each theme's agent team. Each face shows the character name and their agent role.
+Chernoff faces for each theme's agent team. Vertical layout for easy visual comparison.
 
 ${LEGEND}`;
 
@@ -195,40 +195,21 @@ ${LEGEND}`;
     const charNames = getCharacterNames(theme);
     md += `## ${themeTitle}\n\n`;
 
-    // First row: orchestrator, sm, tea, dev, reviewer
-    const row1Agents = AGENTS.slice(0, 5);
-    md += '| ' + row1Agents.map((a) => AGENT_NAMES[a]).join(' | ') + ' |\n';
-    md += '|' + row1Agents.map(() => ':---:').join('|') + '|\n';
-    md +=
-      '| ' +
-      row1Agents
-        .map((a) => imgWithName(`by-theme/${theme}/${a}.svg`, charNames[a], AGENT_NAMES[a]))
-        .join(' | ') +
-      ' |\n\n';
+    // Vertical list: one agent per row for easy comparison
+    md += '| Role | Face | Character |\n';
+    md += '|:-----|:----:|:----------|\n';
 
-    // Second row: architect, pm, tech-writer, ux-designer, devops
-    const row2Agents = AGENTS.slice(5);
-    md += '| ' + row2Agents.map((a) => AGENT_NAMES[a]).join(' | ') + ' |\n';
-    md += '|' + row2Agents.map(() => ':---:').join('|') + '|\n';
-    md +=
-      '| ' +
-      row2Agents
-        .map((a) => imgWithName(`by-theme/${theme}/${a}.svg`, charNames[a], AGENT_NAMES[a]))
-        .join(' | ') +
-      ' |\n\n';
+    for (const agent of AGENTS) {
+      const charName = escapeForMarkdown(charNames[agent]);
+      const imgSrc = `by-theme/${theme}/${agent}.svg`;
+      md += `| ${AGENT_NAMES[agent]} | ${imgTag(imgSrc, charNames[agent])} | **${charName}** |\n`;
+    }
+
+    md += '\n';
   }
 
   writeFileSync(join(facesDir, 'team-photos.md'), md);
   console.log('Generated team-photos.md');
-}
-
-// Chunk array into groups of specified size
-function chunkArray<T>(arr: T[], size: number): T[][] {
-  const chunks: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) {
-    chunks.push(arr.slice(i, i + size));
-  }
-  return chunks;
 }
 
 // Generate image tag with character name for role gallery (theme name in header, character name below)
@@ -243,28 +224,25 @@ function generateRoleGallery(): void {
 
   let md = `# Role Gallery
 
-Each agent role across all ${THEMES.length} themes. Compare how the same role varies by theme personality.
-Each face shows the character name who plays that role in each theme.
+Each agent role across all ${THEMES.length} themes. Vertical layout for easy visual comparison of how personality profiles vary.
 
 ${LEGEND}`;
-
-  // Chunk themes into rows of 7 for readable tables
-  const ROW_SIZE = 7;
 
   for (const agent of AGENTS) {
     const agentName = AGENT_NAMES[agent];
     md += `## ${agentName}\n\n`;
 
-    const themeChunks = chunkArray(THEMES, ROW_SIZE);
+    // Vertical list: one theme per row for easy comparison
+    md += '| Theme | Face | Character |\n';
+    md += '|:------|:----:|:----------|\n';
 
-    for (const chunk of themeChunks) {
-      md += '| ' + chunk.map((t) => formatTheme(t)).join(' | ') + ' |\n';
-      md += '|' + chunk.map(() => ':---:').join('|') + '|\n';
-      md +=
-        '| ' +
-        chunk.map((t) => imgWithCharacter(`by-role/${agent}/${t}.svg`, t, agent)).join(' | ') +
-        ' |\n\n';
+    for (const theme of THEMES) {
+      const charName = escapeForMarkdown(getCharacterName(theme, agent));
+      const imgSrc = `by-role/${agent}/${theme}.svg`;
+      md += `| ${formatTheme(theme)} | ${imgTag(imgSrc, charName)} | **${charName}** |\n`;
     }
+
+    md += '\n';
   }
 
   writeFileSync(join(facesDir, 'role-gallery.md'), md);
