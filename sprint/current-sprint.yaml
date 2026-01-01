@@ -1022,6 +1022,33 @@ sprint_4:
             - Identifies optimal profiles for each role type
             - Supports "find characters good at X" queries
 
+        - id: "11-10"
+          title: "Build OCEAN spider chart generator (complement to Chernoff faces)"
+          description: |
+            Create a spider chart visualization for OCEAN profiles.
+            Complements Chernoff faces with a more analytical, dimension-comparable view.
+
+            - Reuse OCEAN parsing logic from face generator (11-3)
+            - Generate 5-axis spider chart SVG showing all dimensions
+            - Support overlay mode for comparing 2-3 characters
+            - Match face generator interface (theme + agent → SVG)
+
+            Design notes:
+            - Pentagon shape with O/C/E/A/N at vertices
+            - Filled polygon showing character's profile
+            - Grid lines at 1-5 scale
+            - Optional: overlay multiple characters with different colors
+          points: 3
+          priority: P2
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - scripts/generate-spider.sh or Node script functional
+            - Takes theme + agent as input, outputs SVG
+            - Spider charts clearly show all 5 OCEAN dimensions
+            - Overlay mode compares 2-3 characters on same chart
+            - SVGs render correctly in browsers and markdown
+
   bugs:
     - id: "BUG-1"
       title: "Statusline shows wrong agent when multiple sessions active"
