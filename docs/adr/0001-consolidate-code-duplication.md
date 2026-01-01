@@ -261,13 +261,29 @@ Replace duplicated error recovery sections with:
 
 ## Implementation Plan
 
-| Phase | Scope | Estimated Impact |
-|-------|-------|------------------|
-| 1 | CLI utilities | ~150 lines consolidated |
-| 2 | Shell helpers | ~50 lines consolidated |
-| 3 | Agent templates | ~100 lines consolidated |
+| Phase | Scope | Estimated Impact | Status |
+|-------|-------|------------------|--------|
+| 1 | CLI utilities | ~150 lines consolidated | Complete |
+| 2 | Shell helpers | ~50 lines consolidated | Complete |
+| 3 | Agent templates | ~100 lines consolidated | Not implemented |
 
-**Total reduction:** ~25-30% duplication across affected files
+**Total reduction:** ~140 lines (Phases 1 & 2)
+
+## Implementation Status
+
+Commits:
+- `68d3809` - Phase 1: CLI utilities (node-modules.ts, constants.ts, symlinks.ts)
+- `a33bb02` - Phase 2: Bash helpers (common.sh, jira-lib.sh refactor)
+
+### Phase 3 Decision
+
+Phase 3 was attempted but reverted. Rationale:
+
+1. **Haiku subagents don't reliably read referenced files** - They're task-focused with limited context
+2. **Reliability > DRY for agent instructions** - Inline content ensures agents have the information
+3. **Different trade-off than code** - Phases 1 & 2 consolidated executed code; Phase 3 was documentation
+
+The ~90 lines of duplication in handoff agents is acceptable for reliable error handling.
 
 ## Alternatives Considered
 
