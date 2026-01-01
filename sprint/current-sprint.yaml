@@ -1091,6 +1091,27 @@ sprint_4:
             - No test regressions
           completion_summary: "Black background, 10 role-specific colors, team overlay charts (63), tactical agent emphasis (thicker strokes), centered layout, vertical markdown indices. Also updated faces to vertical layout."
 
+        - id: "11-12"
+          title: "Build spider chart report generator (parallel to 11-7)"
+          description: |
+            Create a spider chart version of the report generator, parallel to 11-7's
+            face report generator. Uses the same filtering/comparison interface but
+            outputs spider charts instead of Chernoff faces.
+
+            - Reuse filtering logic from generate-report.ts
+            - filterByOcean, filterByRole, filterByTheme work identically
+            - compareCharacters generates spider overlay instead of face table
+            - Output markdown with embedded spider chart SVGs
+          points: 2
+          priority: P3
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - generate-spider-report.ts mirrors generate-report.ts interface
+            - Supports same role, theme, and OCEAN filters
+            - Comparison mode uses spider overlay charts
+            - Output as markdown with embedded SVGs
+
   bugs:
     - id: "BUG-1"
       title: "Statusline shows wrong agent when multiple sessions active"
@@ -1162,10 +1183,10 @@ sprint_4:
         before making changes.
 
   sprint_4_summary:
-    total_points: 35
+    total_points: 37
     completed_points: 34
     in_progress_points: 0
-    backlog_points: 5
+    backlog_points: 7
     velocity_target: 20
     status: in_progress
     completed_stories:
@@ -1182,6 +1203,8 @@ sprint_4:
     in_progress_stories: []
     backlog_stories:
       - "11-8 (5 pts): Benchmark correlation"
+      - "11-12 (2 pts): Spider chart report generator"
     notes: |
       11-7 completed: OCEAN face report generator with filtering and comparison.
-      Sprint at 97% completion (34/35 points). Only 11-8 (benchmark correlation) remains.
+      11-12 added: Spider chart version of report generator (2 pts).
+      Sprint at 92% completion (34/37 points).
