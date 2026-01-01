@@ -978,9 +978,11 @@ sprint_4:
             - Build navigable markdown documentation
           points: 3
           priority: P2
-          status: in_progress
+          status: done
           started: 2026-01-01
+          completed: 2026-01-01
           branch: feat/11-6-face-matrix
+          pr: https://github.com/1898andCo/pennyfarthing/pull/35
           repos: pennyfarthing
           acceptance_criteria:
             - 630 SVG faces in pennyfarthing-dist/personas/faces/
@@ -1123,8 +1125,8 @@ sprint_4:
 
   sprint_4_summary:
     total_points: 34
-    completed_points: 24
-    in_progress_points: 3
+    completed_points: 27
+    in_progress_points: 0
     backlog_points: 7
     velocity_target: 20
     status: in_progress
@@ -1135,8 +1137,8 @@ sprint_4:
       - "11-4 (2 pts): Anchor theme faces + markdown report"
       - "11-5 (8 pts): Add OCEAN to remaining 53 themes"
       - "11-9 (3 pts): Update /theme-maker to generate OCEAN profiles"
-    in_progress_stories:
       - "11-6 (3 pts): Full 630-face matrix"
+    in_progress_stories: []
     backlog_stories:
       - "11-7 (3 pts): Report generator"
       - "11-8 (5 pts): Benchmark correlation"
