@@ -1000,15 +1000,18 @@ sprint_4:
             - Compare specific characters side-by-side
           points: 3
           priority: P2
-          status: in_progress
+          status: done
           started: 2026-01-01
+          completed: 2026-01-01
           branch: feat/11-7-report-generator
+          pr: https://github.com/1898andCo/pennyfarthing/pull/37
           repos: pennyfarthing
           acceptance_criteria:
             - scripts/face-report.sh generates filtered views
             - Supports role, theme, and OCEAN filters
             - Comparison mode for 2-4 characters
             - Output as markdown with embedded SVGs
+          completion_summary: "Implemented generate-report.ts with 6 functions: parseOceanFilter, filterByOcean, filterByRole, filterByTheme, compareCharacters, generateReport. 48 tests, all passing."
 
         - id: "11-8"
           title: "Integrate with benchmark output (personality → performance)"
@@ -1160,8 +1163,8 @@ sprint_4:
 
   sprint_4_summary:
     total_points: 35
-    completed_points: 31
-    in_progress_points: 3
+    completed_points: 34
+    in_progress_points: 0
     backlog_points: 5
     velocity_target: 20
     status: in_progress
@@ -1175,10 +1178,10 @@ sprint_4:
       - "11-6 (3 pts): Full 630-face matrix"
       - "11-10 (3 pts): OCEAN spider chart generator"
       - "11-11 (1 pt): Tweak spider chart design"
-    in_progress_stories:
       - "11-7 (3 pts): Report generator"
+    in_progress_stories: []
     backlog_stories:
       - "11-8 (5 pts): Benchmark correlation"
     notes: |
-      11-11 completed: black background, role colors, team overlays, vertical layout.
-      Sprint at 89% completion (31/35 points).
+      11-7 completed: OCEAN face report generator with filtering and comparison.
+      Sprint at 97% completion (34/35 points). Only 11-8 (benchmark correlation) remains.
