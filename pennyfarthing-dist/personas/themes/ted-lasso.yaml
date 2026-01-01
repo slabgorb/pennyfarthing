@@ -1,6 +1,9 @@
-# Theme: ted-lasso
-# Ted Lasso (2020-2023) - Believe!
-# "Be curious, not judgmental."
+# Ted Lasso Theme
+# Ted Lasso (2020-2023)
+#
+# DISCLAIMER: Ted Lasso and all related characters are owned by
+# Apple TV+. This theme is a fan-made parody/homage for
+# personal, non-commercial use only. No copyright infringement intended.
 
 theme:
   name: Ted Lasso
@@ -130,3 +133,20 @@ agents:
     helper:
       name: The Higgins Family
       style: Five boys helping with the deployments
+
+# Additional characters for OCEAN gap coverage
+
+additional_characters:
+  nate_shelley:
+    character: Nate Shelley
+    style: Validation-seeking that corrupts into villain arc, then redemption
+    expertise: Tactics (genuine), resentment, growth through fall and recovery
+    role: The one who shows how meekness becomes cruelty, then finds redemption
+    quote: "I'm not a kit man anymore."
+    ocean_profile_arc: "M-H-L-M-H → M-H-M-L-H → redemption"
+    gap_filled: Villain arc from meekness - tests how validation-seeking corrupts, and how redemption works
+    best_role: Anti-pattern for toxic growth, redemption arc testing
+    arc_phases:
+      phase_1: "Kit man Nate (M-H-L-M-H) - meek, anxious, overlooked"
+      phase_2: "Villain Nate (M-H-M-L-H) - resentful, cruel, validation-addicted"
+      phase_3: "Redeemed Nate - growth through genuine self-acceptance"
