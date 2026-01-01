@@ -24,6 +24,9 @@ backlog:
             - Provide API for agents to query usage
           points: 3
           priority: P1
+          status: done
+          completed: 2026-01-01
+          notes: "Already implemented via check-context.sh reading Claude transcript"
           repos: pennyfarthing
           acceptance_criteria:
             - Hook tracks approximate token usage per session
@@ -39,6 +42,9 @@ backlog:
             - Log warning to session file
           points: 3
           priority: P1
+          status: done
+          started: 2026-01-01
+          completed: 2026-01-01
           repos: pennyfarthing
           acceptance_criteria:
             - Warning appears when 70% threshold crossed
@@ -84,6 +90,8 @@ backlog:
             - Update in real-time
           points: 2
           priority: P2
+          status: done
+          completed: 2026-01-01
           repos: pennyfarthing
           acceptance_criteria:
             - Statusline shows context percentage
@@ -408,7 +416,7 @@ backlog:
             - Warns if state changed between sessions
 
 # Summary
-# Remaining backlog: 55 points across 5 epics
+# Remaining backlog: 47 points across 5 epics
 #
 # Completed Epics (for reference):
 # - Epic 2: Core Agent Framework (Sprint 2)
@@ -417,11 +425,14 @@ backlog:
 # - Epic 6: Interactive Theme Wizard (Sprint 3)
 #
 # Backlog Epics:
-# - Epic 3: Context Management (13 pts) - P1
+# - Epic 3: Context Management (5 pts remaining, 8 done) - P1
 # - Epic 7: Benchmarking Suite (13 pts) - P2
 # - Epic 8: State Reconciliation (8 pts) - P1
 # - Epic 9: Skill Discovery (13 pts) - P2
 # - Epic 10: Choreography Patterns (8 pts) - P2
+#
+# In Sprint 4:
+# - Epic 11: OCEAN Chernoff Faces (31 pts) - P2 strategic
 #
 # Recommended Next: Epic 8 (State Reconciliation) or Epic 3 (Context Management)
 #
