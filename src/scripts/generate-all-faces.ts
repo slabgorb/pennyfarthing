@@ -87,6 +87,16 @@ function getCharacterName(theme: string, agent: string): string {
   return names[agent] || AGENT_NAMES[agent];
 }
 
+// Escape quotes for use in HTML attributes
+function escapeForAttr(str: string): string {
+  return str.replace(/"/g, '&quot;');
+}
+
+// Escape quotes for use in markdown text (replace with single quotes)
+function escapeForMarkdown(str: string): string {
+  return str.replace(/"/g, "'");
+}
+
 // Format theme name for display
 function formatTheme(theme: string): string {
   return theme
@@ -144,7 +154,7 @@ function generateSvgFiles(): void {
 const IMG_SIZE = 80;
 
 function imgTag(src: string, alt: string): string {
-  return `<img src="${src}" alt="${alt}" width="${IMG_SIZE}" height="${IMG_SIZE}">`;
+  return `<img src="${src}" alt="${escapeForAttr(alt)}" width="${IMG_SIZE}" height="${IMG_SIZE}">`;
 }
 
 const LEGEND = `## Reading the Faces
@@ -167,7 +177,8 @@ Background colors indicate agent role.
 
 // Generate image tag with character name caption
 function imgWithName(src: string, characterName: string, agentRole: string): string {
-  return `${imgTag(src, characterName)}<br/>**${characterName}**<br/><small>${agentRole}</small>`;
+  const safeName = escapeForMarkdown(characterName);
+  return `${imgTag(src, characterName)}<br/>**${safeName}**<br/><small>${agentRole}</small>`;
 }
 
 function generateTeamPhotos(): void {
@@ -223,7 +234,8 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
 // Generate image tag with character name for role gallery (theme name in header, character name below)
 function imgWithCharacter(src: string, theme: string, agent: string): string {
   const charName = getCharacterName(theme, agent);
-  return `${imgTag(src, charName)}<br/>**${charName}**`;
+  const safeName = escapeForMarkdown(charName);
+  return `${imgTag(src, charName)}<br/>**${safeName}**`;
 }
 
 function generateRoleGallery(): void {
