@@ -1235,54 +1235,35 @@ sprint_5:
         tools with Thunderdome's benchmarking infrastructure. Enable correlation
         analysis between personality traits and benchmark performance using
         Thunderdome's existing scenario execution and scoring system.
-      points: 15
+      points: 10
       priority: P1
       source: "Sprint 4 Retro - Thunderdome Integration"
       repos: [pennyfarthing, thunderdome]
       stories:
         - id: "12-1"
-          title: "Export OCEAN profiles in Thunderdome-compatible format"
+          title: "Read OCEAN profiles from pennyfarthing-dist in Thunderdome"
           description: |
-            Create export utility to generate OCEAN profile data in format
-            Thunderdome can consume for correlation analysis.
-            - JSON export of all 630 character OCEAN scores
-            - Include theme and agent metadata
-            - Match Thunderdome's expected schema
-            - CLI command: pennyfarthing export-ocean --format thunderdome
-          points: 3
-          priority: P1
-          status: backlog
-          repos: pennyfarthing
-          acceptance_criteria:
-            - Export command generates valid JSON
-            - Schema matches Thunderdome expectations
-            - All 630 profiles exportable
-            - Includes theme/agent/character metadata
-
-        - id: "12-2"
-          title: "Add OCEAN importer to Thunderdome"
-          description: |
-            Thunderdome side: Import Pennyfarthing OCEAN profiles and associate
-            with benchmark runs.
-            - Parse exported OCEAN JSON
-            - Store profiles in Thunderdome database
-            - Link profiles to benchmark scenario runs
+            Add pennyfarthing as dependency and read OCEAN profiles directly
+            from theme YAML files in pennyfarthing-dist/personas/themes/.
+            - Add pennyfarthing to package.json
+            - Parse ocean: blocks from theme YAMLs
+            - Associate profiles with benchmark runs by theme/agent
             - Enable filtering runs by OCEAN dimensions
-          points: 5
+          points: 3
           priority: P1
           status: backlog
           repos: thunderdome
           acceptance_criteria:
-            - Thunderdome imports OCEAN profiles
+            - Thunderdome reads OCEAN from pennyfarthing-dist
             - Profiles linked to scenario runs
             - Can query runs by personality trait
             - UI shows OCEAN scores on run details
 
-        - id: "12-3"
+        - id: "12-2"
           title: "Generate OCEAN spider charts in Thunderdome reports"
           description: |
             Integrate Pennyfarthing's spider chart generator into Thunderdome reporting.
-            - Import generate-spider.ts as library or call as subprocess
+            - Import generate-spider.ts from pennyfarthing
             - Embed spider charts in benchmark result pages
             - Show spider chart alongside scenario scores
             - Team overlay view comparing all 10 agents on single chart
@@ -1296,7 +1277,7 @@ sprint_5:
             - Team overlay shows 10-agent comparison
             - Charts match Pennyfarthing output exactly
 
-        - id: "12-4"
+        - id: "12-3"
           title: "OCEAN-performance correlation dashboard"
           description: |
             Thunderdome dashboard showing correlation between OCEAN traits
@@ -1316,11 +1297,11 @@ sprint_5:
             - Identifies high-performing personality profiles
 
   sprint_5_summary:
-    total_points: 15
+    total_points: 10
     completed_points: 0
     in_progress_points: 0
-    backlog_points: 15
-    velocity_target: 15
+    backlog_points: 10
+    velocity_target: 10
     status: planning
     notes: |
       Sprint 5 focuses on integrating Pennyfarthing OCEAN profiles with
