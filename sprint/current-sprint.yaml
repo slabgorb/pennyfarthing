@@ -936,6 +936,34 @@ sprint_4:
             - 630 total character profiles defined
             - Validation script confirms all profiles present
             - Consistent scoring methodology documented
+          completion_summary: "Added 530 OCEAN profiles across 53 themes (630 total). Created add-ocean-profiles.ts batch processor and validate-ocean-profiles.ts validator. 100% coverage confirmed."
+
+        - id: "11-9"
+          title: "Update /theme-maker to generate OCEAN profiles"
+          description: |
+            The /theme-maker command creates new themes but doesn't include OCEAN
+            personality profiles. Update all three creation modes (AI-Driven, Guided,
+            Manual) to generate OCEAN blocks for each agent.
+
+            Changes needed:
+            - AI-Driven mode: Generate character-appropriate OCEAN scores with rationales
+            - Guided mode: Suggest OCEAN profiles based on selected characters
+            - Manual mode: Prompt for OCEAN scores or auto-generate from character traits
+            - All modes: Include ocean: block in generated YAML with O/C/E/A/N scores
+
+            Reference:
+            - OCEAN-BENCHMARKING.md for role-appropriate score ranges
+            - Existing theme OCEAN profiles for format consistency
+          points: 3
+          priority: P1
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - AI-Driven mode generates OCEAN profiles for all 10 agents
+            - Guided mode suggests OCEAN scores matching character selection
+            - Manual mode allows OCEAN input or auto-generation
+            - Generated themes pass validate-ocean-profiles.ts
+            - OCEAN rationale comments included in output
 
         - id: "11-6"
           title: "Generate full 630-face matrix with index"
@@ -1061,10 +1089,10 @@ sprint_4:
         before making changes.
 
   sprint_4_summary:
-    total_points: 31
-    completed_points: 13
-    in_progress_points: 8
-    backlog_points: 10
+    total_points: 34
+    completed_points: 21
+    in_progress_points: 0
+    backlog_points: 14
     velocity_target: 20
     status: in_progress
     completed_stories:
@@ -1072,9 +1100,10 @@ sprint_4:
       - "11-2 (3 pts): OCEAN profiles for anchor themes"
       - "11-3 (5 pts): Chernoff face generator"
       - "11-4 (2 pts): Anchor theme faces + markdown report"
-    in_progress_stories:
       - "11-5 (8 pts): Add OCEAN to remaining 53 themes"
+    in_progress_stories: []
     backlog_stories:
+      - "11-9 (3 pts): Update /theme-maker to generate OCEAN profiles"
       - "11-6 (3 pts): Full 630-face matrix"
       - "11-7 (3 pts): Report generator"
       - "11-8 (5 pts): Benchmark correlation"
