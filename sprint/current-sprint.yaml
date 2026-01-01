@@ -1104,8 +1104,9 @@ sprint_4:
             - Output markdown with embedded spider chart SVGs
           points: 2
           priority: P3
-          status: backlog
+          status: in_progress
           repos: pennyfarthing
+          started: 2026-01-01
           acceptance_criteria:
             - generate-spider-report.ts mirrors generate-report.ts interface
             - Supports same role, theme, and OCEAN filters
