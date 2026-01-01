@@ -1075,13 +1075,16 @@ sprint_4:
             Changes should regenerate all 630 spider charts after tweaks.
           points: 1
           priority: P3
-          status: backlog
+          status: done
+          started: 2026-01-01
+          completed: 2026-01-01
           repos: pennyfarthing
           acceptance_criteria:
             - Design tweaks applied to generate-spider.ts
             - All 630 spider charts regenerated
             - Visual improvements validated in markdown indices
             - No test regressions
+          completion_summary: "Black background, 10 role-specific colors, team overlay charts (63), tactical agent emphasis (thicker strokes), centered layout, vertical markdown indices. Also updated faces to vertical layout."
 
   bugs:
     - id: "BUG-1"
@@ -1169,12 +1172,11 @@ sprint_4:
       - "11-9 (3 pts): Update /theme-maker to generate OCEAN profiles"
       - "11-6 (3 pts): Full 630-face matrix"
       - "11-10 (3 pts): OCEAN spider chart generator"
+      - "11-11 (1 pt): Tweak spider chart design"
     in_progress_stories: []
     backlog_stories:
       - "11-7 (3 pts): Report generator"
       - "11-8 (5 pts): Benchmark correlation"
-      - "11-11 (1 pt): Tweak spider chart design"
     notes: |
-      11-10 adds pentagon spider charts as complement to Chernoff faces.
-      11-11 added for design refinements.
-      Sprint at 86% completion (30/35 points).
+      11-11 completed: black background, role colors, team overlays, vertical layout.
+      Sprint at 89% completion (31/35 points).
