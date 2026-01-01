@@ -862,9 +862,11 @@ sprint_4:
             discworld, fargo, succession, mass-effect, software-pioneers.
           points: 3
           priority: P1
-          status: in-progress
+          status: done
           started: 2026-01-01
+          completed: 2026-01-01
           repos: pennyfarthing
+          pr: https://github.com/1898andCo/pennyfarthing/pull/30
           acceptance_criteria:
             - 10 theme YAMLs updated with ocean blocks
             - All 10 agents in each theme have OCEAN scores
