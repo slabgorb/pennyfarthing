@@ -116,8 +116,18 @@ if [ -n "$config_file" ]; then
         if [ -n "$theme_file" ]; then
             full_name=$(yq ".agents.${agent_name}.character" "$theme_file" 2>/dev/null)
             if [ -n "$full_name" ] && [ "$full_name" != "null" ]; then
-                # Use last name (last word) for compact display
-                character_display=$(echo "$full_name" | awk '{print $NF}')
+                # Smart character name extraction:
+                # 1. Remove parenthetical content: "Breq (Justice of Toren)" → "Breq"
+                # 2. Strip common titles: "Captain Kirk" → "Kirk"
+                # 3. If single word remains, use it; otherwise take last word
+                clean_name=$(echo "$full_name" | sed 's/ *([^)]*)//g' | xargs)
+                clean_name=$(echo "$clean_name" | sed -E 's/^(Captain|Lieutenant|Dr\.|Doc|Mr\.|Mrs\.|Ms\.|Admiral|Commander|Chief|Ensign|Translator|Agent|Colonel|Major|Sergeant|Professor|Lord|Lady|Sir|The) +//i')
+                word_count=$(echo "$clean_name" | wc -w | tr -d ' ')
+                if [ "$word_count" -eq 1 ]; then
+                    character_display="$clean_name"
+                else
+                    character_display=$(echo "$clean_name" | awk '{print $NF}')
+                fi
             fi
         fi
     fi
