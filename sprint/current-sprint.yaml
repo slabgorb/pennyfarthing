@@ -956,9 +956,12 @@ sprint_4:
             - Existing theme OCEAN profiles for format consistency
           points: 3
           priority: P1
-          status: in_progress
+          status: done
+          started: 2026-01-01
+          completed: 2026-01-01
           repos: pennyfarthing
           branch: feat/11-9-theme-maker-ocean
+          pr: https://github.com/1898andCo/pennyfarthing/pull/34
           acceptance_criteria:
             - AI-Driven mode generates OCEAN profiles for all 10 agents
             - Guided mode suggests OCEAN scores matching character selection
@@ -1091,9 +1094,9 @@ sprint_4:
 
   sprint_4_summary:
     total_points: 34
-    completed_points: 21
+    completed_points: 24
     in_progress_points: 0
-    backlog_points: 14
+    backlog_points: 10
     velocity_target: 20
     status: in_progress
     completed_stories:
@@ -1102,9 +1105,9 @@ sprint_4:
       - "11-3 (5 pts): Chernoff face generator"
       - "11-4 (2 pts): Anchor theme faces + markdown report"
       - "11-5 (8 pts): Add OCEAN to remaining 53 themes"
+      - "11-9 (3 pts): Update /theme-maker to generate OCEAN profiles"
     in_progress_stories: []
     backlog_stories:
-      - "11-9 (3 pts): Update /theme-maker to generate OCEAN profiles"
       - "11-6 (3 pts): Full 630-face matrix"
       - "11-7 (3 pts): Report generator"
       - "11-8 (5 pts): Benchmark correlation"
