@@ -1699,7 +1699,8 @@ backlog:
             - Submit triggers results display
           points: 3
           priority: P1
-          status: ready
+          status: in_progress
+          started: 2026-01-02
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11301
           acceptance_criteria:
