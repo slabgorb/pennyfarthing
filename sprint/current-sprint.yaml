@@ -1475,6 +1475,28 @@ sprint_5:
       This phased approach minimizes risk - both projects remain functional throughout.
 
 # =============================================================================
+# SPRINT 6 - Showcase Website & TRAIL Research (ACTIVE)
+# =============================================================================
+
+sprint_6:
+  number: 6
+  goal: "Launch showcase website and complete TRAIL-OCEAN correlation research"
+  planned_start: 2026-01-02
+  status: active
+  velocity_target: 20
+  epics:
+    - epic-13  # Pennyfarthing Showcase Website (37 pts) - see backlog for full details
+    - epic-14  # TRAIL-Inspired OCEAN Correlation Research (14 pts) - see backlog for full details
+  summary:
+    total_points: 51
+    epic_13_completed: 21  # 13-1,2,3,4,5,6,7,8 done
+    epic_14_completed: 14  # All 5 stories done
+    remaining: 16  # Epic 13 stories 9-14
+    notes: |
+      Epic 14 complete (14/14 pts).
+      Epic 13 in progress (21/37 pts, stories 13-9 through 13-14 remaining).
+
+# =============================================================================
 # BACKLOG - Future Sprint Candidates
 # =============================================================================
 
