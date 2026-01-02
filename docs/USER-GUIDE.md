@@ -2,7 +2,7 @@
 
 Complete guide to using Pennyfarthing, a Claude Code agent framework with TDD workflow and persona system.
 
-**Version:** 4.0.0
+**Version:** 5.0.0
 
 ---
 
@@ -28,11 +28,13 @@ Complete guide to using Pennyfarthing, a Claude Code agent framework with TDD wo
 Pennyfarthing is a shared agent orchestration framework for Claude Code projects. It provides:
 
 - **Agent System** - Coordinated multi-agent workflows for TDD development
-- **Persona System** - Theme-based character personalities (Discworld, Star Trek, etc.)
+- **Persona System** - 63 themed character personalities (Discworld, Star Trek, The Expanse, etc.)
 - **Subagent Handoffs** - Automated state transitions between agents
 - **Slash Commands** - Entry points for agent activation
 - **Skills** - Project-agnostic knowledge domains
 - **Sprint Management** - Story tracking and workflow coordination
+- **Scientific Benchmarking** - TRAIL framework for evaluating code review effectiveness
+- **Showcase Website** - Interactive theme gallery with OCEAN personality visualizations
 
 ### Core Philosophy
 
@@ -149,8 +151,7 @@ just test
 
 **`.claude/persona-config.yaml`** - Choose a theme:
 ```yaml
-theme: discworld  # Options: discworld, star-trek, star-trek-tos,
-                  #          literary-classics, jane-austen, shakespeare, minimalist
+theme: discworld  # 63 themes available - see THEME-COMPARISON.md for full list
 attributes:
   verbosity: medium
   formality: casual
@@ -511,15 +512,18 @@ Pennyfarthing includes several persona themes that give agents distinct personal
 
 ### Available Themes
 
-| Theme | Description |
-|-------|-------------|
-| `discworld` | Terry Pratchett's Discworld characters |
-| `star-trek` | Star Trek: The Next Generation crew |
-| `star-trek-tos` | Star Trek: The Original Series crew |
-| `literary-classics` | Classic literature characters |
-| `jane-austen` | Jane Austen novel characters |
-| `shakespeare` | Shakespearean characters |
-| `minimalist` | No personalities, just functional |
+Pennyfarthing includes **63 persona themes** across diverse universes:
+
+| Category | Examples |
+|----------|----------|
+| **Sci-Fi** | Star Trek TNG, Star Trek TOS, The Expanse, Firefly, Doctor Who, Stargate |
+| **Fantasy** | Discworld, Lord of the Rings, Harry Potter, Dragon Age, Mistborn |
+| **Literary** | Shakespeare, Jane Austen, Literary Classics, Sherlock Holmes, Pride & Prejudice |
+| **Animated** | Avatar TLA, Gravity Falls, Adventure Time, Steven Universe |
+| **Games** | Mass Effect, Baldur's Gate 3, Portal, Hollow Knight |
+| **Professional** | Minimalist (no personas), Corporate, Academic |
+
+For the complete theme list with OCEAN personality profiles, see [THEME-COMPARISON.md](THEME-COMPARISON.md).
 
 ### Setting a Theme
 

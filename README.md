@@ -10,10 +10,11 @@ A Claude Code agent orchestration framework with TDD workflow and themed persona
 
 - **10 Agents + 13 Subagents** - Strategic (PM, Architect) and tactical (SM, TEA, Dev, Reviewer) agents with official Haiku-based subagents for mechanical tasks
 - **Automatic Handoffs** - Context-aware agent transitions via official subagent format
-- **50+ Persona Themes** - Star Trek, Breaking Bad, Dune, The Office, Game of Thrones, and more
-- **11 Skills** - Reusable knowledge domains (testing, code-review, jira-cli, etc.)
-- **25 Slash Commands** - Entry points for agent activation and workflows
-- **CLI Tool** - `pennyfarthing init`, `update`, `doctor`, `uninstall`
+- **63 Persona Themes** - Star Trek, Breaking Bad, Dune, The Office, Game of Thrones, and more with OCEAN personality profiles
+- **13 Skills** - Reusable knowledge domains (testing, code-review, judge, jira-cli, etc.)
+- **28 Slash Commands** - Entry points for agent activation, benchmarking, and workflows
+- **Scientific Benchmarking** - Evaluate personas against standardized scenarios with statistical analysis
+- **CLI Tool** - `pennyfarthing init`, `update`, `doctor`, `uninstall`, `theme`
 
 ## Quick Start
 
@@ -118,21 +119,21 @@ your-project/
     └── {story-id}-session.md       # Active work session
 ```
 
-## Available Themes
+## Available Themes (63 total)
 
-| Theme | Style |
-|-------|-------|
-| `the-expanse` | Rocinante crew (Holden, Naomi, Amos, Avasarala) |
-| `star-trek-tng` | Star Trek: TNG (Picard, Data, Riker) |
-| `star-trek-tos` | Star Trek: TOS (Kirk, Spock, McCoy) |
-| `discworld` | Terry Pratchett (DEATH, Vetinari, Vimes) |
-| `princess-bride` | As you wish (Westley, Inigo, Vizzini) |
-| `ted-lasso` | AFC Richmond (Ted, Roy, Keeley) |
-| `parks-and-rec` | Pawnee Parks Dept (Leslie, Ron, April) |
-| `a-team` | I love it when a plan comes together |
-| `shakespeare` | Shakespearean drama (Prospero, Puck, Hamlet) |
-| `jane-austen` | Regency era wit (Mr. Darcy, Elizabeth Bennet) |
-| `control` | Professional, minimal personas |
+| Category | Themes |
+|----------|--------|
+| **Sci-Fi TV** | `the-expanse`, `star-trek-tng`, `star-trek-tos`, `firefly`, `battlestar-galactica`, `doctor-who` |
+| **Sci-Fi Film** | `star-wars`, `dune`, `blade-runner`, `the-matrix`, `alien` |
+| **Fantasy** | `game-of-thrones`, `lord-of-the-rings`, `the-witcher`, `sandman`, `his-dark-materials` |
+| **Drama** | `breaking-bad`, `the-wire`, `succession`, `mad-men`, `deadwood`, `fargo` |
+| **Comedy** | `the-office`, `parks-and-rec`, `ted-lasso`, `the-good-place`, `arrested-development` |
+| **Literary** | `discworld`, `shakespeare`, `jane-austen`, `sherlock-holmes`, `hitchhikers-guide` |
+| **Games** | `mass-effect`, `portal`, `baldurs-gate`, `disco-elysium` |
+| **Classic** | `princess-bride`, `a-team`, `mash`, `west-wing` |
+| **Minimal** | `control`, `minimalist` |
+
+All 63 themes include OCEAN (Big Five) personality profiles and Chernoff face visualizations.
 
 See [Theme Comparison Guide](docs/THEME-COMPARISON.md) for personality analysis, OCEAN profiles, and help choosing between themes.
 
@@ -221,46 +222,9 @@ Archived sprint data (`sprint/archive/`, `sprint/context/`) is always preserved.
 - **Context Warning Hook** - Automatic alerts at 70% context usage
 - **Session Isolation Fix** - Multi-session statusline pollution resolved
 
-## What's New in v4.1
+---
 
-- **Mega Persona Pack** - 50+ new themes with OCEAN personality standardization
-  - TV dramas: Breaking Bad, The Wire, Fargo, MASH, The Office, The Good Place
-  - Sci-fi: Star Wars, Dune, Foundation, Mass Effect, Blade Runner, Firefly
-  - Fantasy: Game of Thrones, The Witcher, Sandman, His Dark Materials
-  - Comics: Marvel MCU, Watchmen, Doctor Who
-  - Period: The Crown, Succession, West Wing, Rome, Deadwood
-- **OCEAN Benchmarking** - All themes include Big Five personality profiles
-- **ADR Documentation** - Architecture Decision Records in `docs/adr/`
-- **CLI Refactoring** - Consolidated code with new shared utilities
-
-## What's New in v4.0
-
-- **BREAKING: Link-based Installation** - `pennyfarthing init` now symlinks to `node_modules` instead of copying 100+ files
-  - Reduces codespace pollution significantly
-  - Updates propagate via `npm update`
-  - Requires `npm install pennyfarthing` before init
-
-### Migrating from 3.x
-```bash
-pennyfarthing uninstall
-npm install pennyfarthing
-pennyfarthing init
-```
-Your `.claude/project/` customizations are preserved.
-
-## What's New in v3.8
-
-- **Crew Manifest** - Agents see all character names during handoffs for in-universe addressing
-- **Theme CLI Commands** - `pennyfarthing theme list|set|show|create`
-- **User Preferences** - `.claude/pennyfarthing/preferences.yaml` for agent behavior
-- **Output Styles** - Three built-in styles (verbose, terse, teaching)
-
-## What's New in v3.0
-
-- **Official Subagents** - 13 subagents in Claude Code's official YAML frontmatter format
-- **Session File Naming** - Changed from `current_work.md` to `{story-id}-session.md` for parallel work
-- **NPM Package** - Install via npm with `pennyfarthing init`
-- **Health Checks** - `doctor --fix` auto-repairs common issues
+*For full changelog, see [CHANGELOG.md](CHANGELOG.md)*
 
 ## License
 
