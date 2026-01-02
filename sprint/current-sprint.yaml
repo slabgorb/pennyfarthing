@@ -1589,9 +1589,11 @@ backlog:
             - Responsive navigation (hamburger on mobile)
           points: 2
           priority: P1
-          status: in_progress
+          status: done
           started: "2026-01-02"
+          completed: "2026-01-02"
           branch: feat/13-2-base-layout
+          pr: https://github.com/1898andCo/pennyfarthing/pull/52
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11296
           acceptance_criteria:
@@ -1679,7 +1681,8 @@ backlog:
             - Related characters (same role, different themes)
           points: 3
           priority: P1
-          status: ready
+          status: in-progress
+          started: 2026-01-02
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11300
           acceptance_criteria:
