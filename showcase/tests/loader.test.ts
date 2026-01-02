@@ -148,6 +148,17 @@ describe('Story 13-3: Theme Data Loader', () => {
         }
       }
     });
+
+    it('should have generate-themes.ts script in scripts/', () => {
+      const scriptPath = join(ROOT, 'scripts', 'generate-themes.ts');
+      expect(existsSync(scriptPath)).toBe(true);
+    });
+
+    it('should have prebuild script in package.json', () => {
+      const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf-8'));
+      expect(pkg.scripts?.prebuild).toBeDefined();
+      expect(pkg.scripts.prebuild).toContain('generate-themes');
+    });
   });
 
   describe('AC4: Build completes in < 30 seconds', () => {
