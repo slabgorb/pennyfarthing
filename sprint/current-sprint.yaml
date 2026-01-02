@@ -1565,9 +1565,13 @@ backlog:
             - Set up TypeScript strict mode
           points: 3
           priority: P1
-          status: ready
+          status: done
+          started: 2026-01-02
+          completed: 2026-01-02
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11295
+          branch: feat/13-1-astro-showcase
+          pr: https://github.com/1898andCo/pennyfarthing/pull/43
           acceptance_criteria:
             - Astro project in showcase/ with package.json
             - React integration working (test with simple component)
