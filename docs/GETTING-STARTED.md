@@ -71,7 +71,22 @@ just test   # Run tests
 
 ### 2. Choose a Theme
 
-Edit `.claude/persona-config.yaml`:
+In Claude Code:
+
+```
+/list-themes       # Browse 90+ available themes
+/set-theme         # Interactive theme selector
+/show-theme        # Preview current or any theme
+```
+
+Or via CLI:
+
+```bash
+pennyfarthing theme list
+pennyfarthing theme set discworld
+```
+
+Or edit `.claude/persona-config.yaml` directly:
 
 ```yaml
 theme: discworld    # 63 themes available - see THEME-COMPARISON.md

@@ -1,5 +1,5 @@
 {
-  "version": "4.0.0",
+  "version": "4.3.0",
   "installedAt": "2025-12-28T20:31:56.376Z",
   "updatedAt": "2025-12-28T20:31:56.376Z",
   "projectName": "pennyfarthing",
@@ -89,7 +89,6 @@
     ".claude/pennyfarthing/personas/themes/discworld.yaml": "a48368770564b0666b213ab8417d346881569bb578248a647fcdfbd2fd110207",
     ".claude/pennyfarthing/personas/themes/jane-austen.yaml": "cf44de95982ed2855c4d4b6d5d8d58feb72d5e11f05c28c18a47fc804c7d693e",
     ".claude/pennyfarthing/personas/themes/legion-of-doom.yaml": "0149af175d3eb9a3e4559c05a06127c48e8e606bad63eb6fa240089145312675",
-    ".claude/pennyfarthing/personas/themes/minimalist.yaml": "a116c3ee3c7124827da03a9a42e2ab4d97dbc097c71586628816d4fc2960d4e7",
     ".claude/pennyfarthing/personas/themes/parks-and-rec.yaml": "c32e364f4f24698bad3f5b3acac8f6abc90b2add8f8295f98355b42ed4786ddc",
     ".claude/pennyfarthing/personas/themes/princess-bride.yaml": "6b291456bd9ada209a911447bb85f32d25023454783f300ea8a07de2c856a2f2",
     ".claude/pennyfarthing/personas/themes/shakespeare.yaml": "0a03b21396e437cdc24d90ed7ddd4267fefcbfea96a84fdeab380da178936039",
