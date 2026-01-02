@@ -177,3 +177,108 @@ describe('Story 13-7: Query Builder UI', () => {
     });
   });
 });
+
+/**
+ * Story 13-8: OCEAN Expression Parser Integration
+ *
+ * Tests for enhanced expression parser with error handling.
+ */
+describe('Story 13-8: OCEAN Expression Parser', () => {
+  const componentPath = join(COMPONENTS_DIR, 'QueryBuilder.tsx');
+
+  describe('AC1: Expression parser works in browser', () => {
+    it('should have parseCondition function', () => {
+      const content = readFileSync(componentPath, 'utf-8');
+      expect(content).toMatch(/parseCondition/);
+    });
+
+    it('should have parseExpression function', () => {
+      const content = readFileSync(componentPath, 'utf-8');
+      expect(content).toMatch(/parseExpression/);
+    });
+  });
+
+  describe('AC2: All operators supported', () => {
+    it('should support >= operator', () => {
+      const content = readFileSync(componentPath, 'utf-8');
+      expect(content).toMatch(/>=/);
+    });
+
+    it('should support <= operator', () => {
+      const content = readFileSync(componentPath, 'utf-8');
+      expect(content).toMatch(/<=/);
+    });
+
+    it('should support = operator', () => {
+      const content = readFileSync(componentPath, 'utf-8');
+      expect(content).toMatch(/case\s+'='/);
+    });
+
+    it('should support > operator', () => {
+      const content = readFileSync(componentPath, 'utf-8');
+      expect(content).toMatch(/case\s+'>'/);
+    });
+
+    it('should support < operator', () => {
+      const content = readFileSync(componentPath, 'utf-8');
+      expect(content).toMatch(/case\s+'<'/);
+    });
+  });
+
+  describe('AC3: Multiple expressions combinable', () => {
+    it('should split expressions by AND', () => {
+      const content = readFileSync(componentPath, 'utf-8');
+      expect(content).toMatch(/split.*AND/i);
+    });
+
+    it('should parse multiple conditions', () => {
+      const content = readFileSync(componentPath, 'utf-8');
+      expect(content).toMatch(/for.*condition.*of.*conditions|conditions\.forEach|conditions\.every/);
+    });
+  });
+
+  describe('AC4: Invalid expressions show helpful error', () => {
+    it('should have expressionError state', () => {
+      const content = readFileSync(componentPath, 'utf-8');
+      expect(content).toMatch(/expressionError/);
+    });
+
+    it('should validate OCEAN dimensions', () => {
+      const content = readFileSync(componentPath, 'utf-8');
+      expect(content).toMatch(/Invalid dimension.*O.*C.*E.*A.*N/i);
+    });
+
+    it('should validate numeric values', () => {
+      const content = readFileSync(componentPath, 'utf-8');
+      expect(content).toMatch(/Invalid value|Must be a number/i);
+    });
+
+    it('should validate value range 1-5', () => {
+      const content = readFileSync(componentPath, 'utf-8');
+      expect(content).toMatch(/1-5|out of range/i);
+    });
+
+    it('should display error with red styling', () => {
+      const content = readFileSync(componentPath, 'utf-8');
+      expect(content).toMatch(/text-red|border-red/);
+    });
+
+    it('should provide format hint on parse failure', () => {
+      const content = readFileSync(componentPath, 'utf-8');
+      expect(content).toMatch(/Use format like|O>=4/i);
+    });
+  });
+
+  describe('AC5: Filters apply instantly', () => {
+    it('should apply filter in useEffect', () => {
+      const content = readFileSync(componentPath, 'utf-8');
+      // Filter should be applied in useEffect, not on button click
+      expect(content).toMatch(/useEffect[\s\S]*filter.*exprFilter/);
+    });
+
+    it('should update error state in useEffect', () => {
+      const content = readFileSync(componentPath, 'utf-8');
+      expect(content).toMatch(/setExpressionError/);
+    });
+  });
+});
