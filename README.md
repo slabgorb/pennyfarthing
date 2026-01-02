@@ -10,10 +10,11 @@ A Claude Code agent orchestration framework with TDD workflow and themed persona
 
 - **10 Agents + 13 Subagents** - Strategic (PM, Architect) and tactical (SM, TEA, Dev, Reviewer) agents with official Haiku-based subagents for mechanical tasks
 - **Automatic Handoffs** - Context-aware agent transitions via official subagent format
-- **50+ Persona Themes** - Star Trek, Breaking Bad, Dune, The Office, Game of Thrones, and more
-- **11 Skills** - Reusable knowledge domains (testing, code-review, jira-cli, etc.)
-- **25 Slash Commands** - Entry points for agent activation and workflows
-- **CLI Tool** - `pennyfarthing init`, `update`, `doctor`, `uninstall`
+- **63 Persona Themes** - Star Trek, Breaking Bad, Dune, The Office, Game of Thrones, and more with OCEAN personality profiles
+- **13 Skills** - Reusable knowledge domains (testing, code-review, judge, jira-cli, etc.)
+- **28 Slash Commands** - Entry points for agent activation, benchmarking, and workflows
+- **Scientific Benchmarking** - Evaluate personas against standardized scenarios with statistical analysis
+- **CLI Tool** - `pennyfarthing init`, `update`, `doctor`, `uninstall`, `theme`
 
 ## Quick Start
 
@@ -118,21 +119,21 @@ your-project/
     └── {story-id}-session.md       # Active work session
 ```
 
-## Available Themes
+## Available Themes (63 total)
 
-| Theme | Style |
-|-------|-------|
-| `the-expanse` | Rocinante crew (Holden, Naomi, Amos, Avasarala) |
-| `star-trek-tng` | Star Trek: TNG (Picard, Data, Riker) |
-| `star-trek-tos` | Star Trek: TOS (Kirk, Spock, McCoy) |
-| `discworld` | Terry Pratchett (DEATH, Vetinari, Vimes) |
-| `princess-bride` | As you wish (Westley, Inigo, Vizzini) |
-| `ted-lasso` | AFC Richmond (Ted, Roy, Keeley) |
-| `parks-and-rec` | Pawnee Parks Dept (Leslie, Ron, April) |
-| `a-team` | I love it when a plan comes together |
-| `shakespeare` | Shakespearean drama (Prospero, Puck, Hamlet) |
-| `jane-austen` | Regency era wit (Mr. Darcy, Elizabeth Bennet) |
-| `control` | Professional, minimal personas |
+| Category | Themes |
+|----------|--------|
+| **Sci-Fi TV** | `the-expanse`, `star-trek-tng`, `star-trek-tos`, `firefly`, `battlestar-galactica`, `doctor-who` |
+| **Sci-Fi Film** | `star-wars`, `dune`, `blade-runner`, `the-matrix`, `alien` |
+| **Fantasy** | `game-of-thrones`, `lord-of-the-rings`, `the-witcher`, `sandman`, `his-dark-materials` |
+| **Drama** | `breaking-bad`, `the-wire`, `succession`, `mad-men`, `deadwood`, `fargo` |
+| **Comedy** | `the-office`, `parks-and-rec`, `ted-lasso`, `the-good-place`, `arrested-development` |
+| **Literary** | `discworld`, `shakespeare`, `jane-austen`, `sherlock-holmes`, `hitchhikers-guide` |
+| **Games** | `mass-effect`, `portal`, `baldurs-gate`, `disco-elysium` |
+| **Classic** | `princess-bride`, `a-team`, `mash`, `west-wing` |
+| **Minimal** | `control`, `minimalist` |
+
+All 63 themes include OCEAN (Big Five) personality profiles and Chernoff face visualizations.
 
 See [Theme Comparison Guide](docs/THEME-COMPARISON.md) for personality analysis, OCEAN profiles, and help choosing between themes.
 
