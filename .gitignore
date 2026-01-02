@@ -1,6 +1,7 @@
 # Local settings
 .claude/settings.local.json
 .claude/settings.json
+.claude/persona-config.yaml
 .claude/persona-config.local.yaml
 
 # Session files (runtime state)
