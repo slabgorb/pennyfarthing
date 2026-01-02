@@ -1633,7 +1633,7 @@ backlog:
             - 4-6 cards per row responsive grid
           points: 3
           priority: P1
-          status: ready
+          status: done
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11298
           acceptance_criteria:
