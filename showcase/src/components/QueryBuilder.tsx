@@ -81,6 +81,9 @@ export default function QueryBuilder({ themes, characters, onResults = () => {} 
   // Expression input for advanced OCEAN queries
   const [expression, setExpression] = useState('');
 
+  // Expression parse error (null = valid or empty)
+  const [expressionError, setExpressionError] = useState<string | null>(null);
+
   // Sort option
   const [sortBy, setSortBy] = useState('name');
 
@@ -92,33 +95,84 @@ export default function QueryBuilder({ themes, characters, onResults = () => {} 
     );
   }, [themes, themeSearch]);
 
-  // Parse expression and apply filters
-  const parseExpression = (expr: string): ((char: Character) => boolean) | null => {
-    if (!expr.trim()) return null;
+  // Valid OCEAN dimensions and operators
+  const VALID_DIMS = ['O', 'C', 'E', 'A', 'N'];
+  const VALID_OPS = ['>=', '<=', '>', '<', '='];
 
-    // Simple parser for expressions like "O>=4 AND C=3"
+  // Parse and validate a single OCEAN condition
+  const parseCondition = (condition: string): { error: string } | { dim: string; op: string; val: number } => {
+    const trimmed = condition.trim();
+    if (!trimmed) return { error: 'Empty condition' };
+
+    // Match pattern: dimension, operator, value
+    const match = trimmed.match(/^([A-Za-z])\s*(>=|<=|>|<|=)\s*(.+)$/);
+
+    if (!match) {
+      // Try to give helpful feedback
+      const dimMatch = trimmed.match(/^([A-Za-z])/);
+      if (dimMatch) {
+        const dim = dimMatch[1].toUpperCase();
+        if (!VALID_DIMS.includes(dim)) {
+          return { error: `Invalid dimension: ${dim}. Use O, C, E, A, or N` };
+        }
+        return { error: `Invalid format: "${trimmed}". Use format like "O>=4"` };
+      }
+      return { error: `Cannot parse: "${trimmed}". Use format like "O>=4"` };
+    }
+
+    const [, dimRaw, op, valRaw] = match;
+    const dim = dimRaw.toUpperCase();
+
+    // Validate dimension
+    if (!VALID_DIMS.includes(dim)) {
+      return { error: `Invalid dimension: ${dim}. Use O, C, E, A, or N` };
+    }
+
+    // Validate value is a number 1-5
+    const val = parseInt(valRaw, 10);
+    if (isNaN(val)) {
+      return { error: `Invalid value: "${valRaw}". Must be a number 1-5` };
+    }
+    if (val < 1 || val > 5) {
+      return { error: `Value out of range: ${val}. OCEAN scores are 1-5` };
+    }
+
+    return { dim, op, val };
+  };
+
+  // Parse expression and return filter + error
+  const parseExpression = (expr: string): { filter: ((char: Character) => boolean) | null; error: string | null } => {
+    if (!expr.trim()) return { filter: null, error: null };
+
+    // Split by AND (case insensitive)
     const conditions = expr.split(/\s+AND\s+/i);
+    const parsed: Array<{ dim: string; op: string; val: number }> = [];
 
-    return (char: Character) => {
-      return conditions.every(condition => {
-        const match = condition.match(/^([OCEAN])\s*(>=|<=|>|<|=)\s*(\d)$/i);
-        if (!match) return true; // Invalid condition, skip
+    // Parse each condition
+    for (const condition of conditions) {
+      const result = parseCondition(condition);
+      if ('error' in result) {
+        return { filter: null, error: result.error };
+      }
+      parsed.push(result);
+    }
 
-        const [, dim, op, valStr] = match;
-        const dimension = dim.toUpperCase() as keyof typeof char.ocean;
-        const value = parseInt(valStr, 10);
-        const charValue = char.ocean[dimension];
-
+    // Build filter function
+    const filter = (char: Character) => {
+      return parsed.every(({ dim, op, val }) => {
+        const charValue = char.ocean[dim as keyof typeof char.ocean];
         switch (op) {
-          case '>=': return charValue >= value;
-          case '<=': return charValue <= value;
-          case '>': return charValue > value;
-          case '<': return charValue < value;
-          case '=': return charValue === value;
+          case '>=': return charValue >= val;
+          case '<=': return charValue <= val;
+          case '>': return charValue > val;
+          case '<': return charValue < val;
+          case '=': return charValue === val;
           default: return true;
         }
       });
     };
+
+    return { filter, error: null };
   };
 
   // Apply all filters and update results
@@ -146,7 +200,8 @@ export default function QueryBuilder({ themes, characters, onResults = () => {} 
     }
 
     // Apply expression filter
-    const exprFilter = parseExpression(expression);
+    const { filter: exprFilter, error } = parseExpression(expression);
+    setExpressionError(error);
     if (exprFilter) {
       results = results.filter(exprFilter);
     }
@@ -242,11 +297,21 @@ export default function QueryBuilder({ themes, characters, onResults = () => {} 
           value={expression}
           onChange={(e) => setExpression(e.target.value)}
           placeholder="e.g., O>=4 AND C=3 AND E<=2"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+            expressionError
+              ? 'border-red-500 focus:ring-red-500'
+              : 'border-gray-300 focus:ring-indigo-500'
+          }`}
         />
-        <p className="text-xs text-gray-500 mt-1">
-          Use O, C, E, A, N with operators: =, &gt;=, &lt;=, &gt;, &lt;. Combine with AND.
-        </p>
+        {expressionError ? (
+          <p className="text-xs text-red-600 mt-1">
+            ⚠ {expressionError}
+          </p>
+        ) : (
+          <p className="text-xs text-gray-500 mt-1">
+            Use O, C, E, A, N with operators: =, &gt;=, &lt;=, &gt;, &lt;. Combine with AND.
+          </p>
+        )}
       </div>
 
       {/* Role Filter */}
