@@ -1,0 +1,435 @@
+# Pennyfarthing Completed Sprints Archive
+# Sprints 2-5 (completed December 2025 - January 2026)
+
+# =============================================================================
+# SPRINT 2 - Sprint Operations Polish
+# =============================================================================
+
+sprint_2:
+  number: 2
+  goal: "Improve developer experience with automated workflows and proper permissions"
+  start_date: 2025-12-24
+  end_date: 2026-01-07
+  status: complete
+  total_points: 37
+  completed_points: 37
+  velocity_target: 20
+
+  epics:
+    - id: epic-2
+      title: "Sprint Operations Polish"
+      description: "Housekeeping improvements from Sprint 1 retrospective."
+      points: 16
+      priority: P1
+      source: "Sprint 1 Retro"
+      repos: pennyfarthing
+      jira: https://1898andco.atlassian.net/browse/MSSCI-11142
+      stories:
+        - id: "2-1"
+          title: "Automate Jira sync in SM finish workflow"
+          points: 3
+          status: done
+          completed: 2025-12-23
+          pr: https://github.com/1898andCo/pennyfarthing/pull/9
+
+        - id: "2-2"
+          title: "Create sprint metrics script"
+          points: 2
+          status: done
+          completed: 2025-12-26
+
+        - id: "2-3"
+          title: "Add --auto-pr flag to finish-story flow"
+          points: 2
+          status: done
+          completed: 2025-12-26
+          pr: https://github.com/1898andCo/pennyfarthing/pull/14
+
+        - id: "2-4"
+          title: "Prune stale sidecar entries"
+          points: 1
+          status: done
+          completed: 2025-12-25
+          pr: https://github.com/1898andCo/pennyfarthing/pull/11
+
+        - id: "2-5"
+          title: "Migrate subagents to official YAML frontmatter format"
+          points: 3
+          status: done
+          completed: 2025-12-25
+
+        - id: "2-6"
+          title: "Create sidecar templates for dist folder"
+          points: 2
+          status: done
+          completed: 2025-12-28
+          pr: https://github.com/1898andCo/pennyfarthing/pull/16
+
+        - id: "2-7"
+          title: "Add user-customizable output styles and preferences"
+          points: 3
+          status: done
+          completed: 2025-12-28
+
+    - id: epic-4
+      title: "Configuration & Permissions Framework"
+      points: 10
+      priority: P1
+      repos: pennyfarthing
+      jira: https://1898andco.atlassian.net/browse/MSSCI-11147
+      stories:
+        - id: "4-1"
+          title: "Document current permissions in settings.local.json"
+          points: 2
+          status: done
+          completed: 2025-12-24
+          pr: https://github.com/1898andCo/pennyfarthing/pull/10
+
+        - id: "4-2"
+          title: "Add context_budget configuration"
+          points: 2
+          status: done
+          completed: 2025-12-29
+          pr: https://github.com/1898andCo/pennyfarthing/pull/20
+
+        - id: "4-3"
+          title: "Create hooks configuration section"
+          points: 2
+          status: done
+          completed: 2025-12-29
+          pr: https://github.com/1898andCo/pennyfarthing/pull/22
+
+        - id: "4-4"
+          title: "Add agent-specific permission scopes"
+          points: 2
+          status: done
+          completed: 2025-12-29
+          pr: https://github.com/1898andCo/pennyfarthing/pull/23
+
+        - id: "4-5"
+          title: "Fix statusline.sh installation path bug"
+          points: 2
+          status: done
+          completed: 2025-12-28
+          pr: https://github.com/1898andCo/pennyfarthing/pull/17
+
+        - id: "4-6"
+          title: "Isolate Pennyfarthing scripts from project /scripts directory"
+          points: 3
+          status: done
+          completed: 2025-12-29
+          pr: https://github.com/1898andCo/pennyfarthing/pull/21
+
+    - id: epic-5
+      title: "Theme Management CLI"
+      points: 8
+      priority: P2
+      repos: pennyfarthing
+      jira: https://1898andco.atlassian.net/browse/MSSCI-11233
+      stories:
+        - id: "5-1"
+          title: "Add 'pennyfarthing theme list' command"
+          points: 2
+          status: done
+          completed: 2025-12-27
+          pr: https://github.com/1898andCo/pennyfarthing/pull/15
+
+        - id: "5-2"
+          title: "Add 'pennyfarthing theme set' command"
+          points: 2
+          status: done
+          completed: 2025-12-27
+
+        - id: "5-3"
+          title: "Add 'pennyfarthing theme create' command"
+          points: 3
+          status: done
+          completed: 2025-12-27
+
+        - id: "5-4"
+          title: "Add 'pennyfarthing theme show' command"
+          points: 1
+          status: done
+          completed: 2025-12-27
+
+# =============================================================================
+# SPRINT 3 - Interactive Theme Creation
+# =============================================================================
+
+sprint_3:
+  number: 3
+  goal: "Interactive theme creation and remaining permissions framework"
+  planned_start: 2026-01-08
+  planned_end: 2026-01-21
+  status: complete
+  planned_points: 24
+  completed_points: 24
+  velocity_target: 20
+
+  epics:
+    - id: epic-6
+      title: "Interactive Theme Wizard"
+      points: 13
+      priority: P2
+      repos: pennyfarthing
+      jira: https://1898andco.atlassian.net/browse/MSSCI-11196
+      stories:
+        - id: "6-1"
+          title: "Create /theme-maker command skeleton with mode selection"
+          points: 3
+          status: done
+          completed: 2025-12-28
+
+        - id: "6-2"
+          title: "Implement AI-Driven mode"
+          points: 3
+          status: done
+          completed: 2025-12-29
+
+        - id: "6-3"
+          title: "Implement Guided mode"
+          points: 3
+          status: done
+          completed: 2025-12-30
+          pr: https://github.com/1898andCo/pennyfarthing/pull/24
+
+        - id: "6-4"
+          title: "Implement Manual mode"
+          points: 2
+          status: done
+          completed: 2025-12-30
+          pr: https://github.com/1898andCo/pennyfarthing/pull/26
+
+        - id: "6-5"
+          title: "Add version tracking and compatibility warnings"
+          points: 2
+          status: done
+          completed: 2025-12-30
+          pr: https://github.com/1898andCo/pennyfarthing/pull/25
+
+    - id: epic-3
+      title: "Context Management & Circuit Breaker"
+      points: 3
+      priority: P1
+      repos: pennyfarthing
+      jira: https://1898andco.atlassian.net/browse/MSSCI-11203
+      stories:
+        - id: "3-2"
+          title: "Add automatic warning at 70% threshold"
+          points: 3
+          status: done
+          completed: 2026-01-01
+
+# =============================================================================
+# SPRINT 4 - OCEAN Personality Visualization
+# =============================================================================
+
+sprint_4:
+  number: 4
+  goal: "OCEAN personality visualization with Chernoff faces for benchmark correlation"
+  planned_start: 2026-01-01
+  status: complete
+  total_points: 37
+  completed_points: 37
+  velocity_target: 20
+
+  epics:
+    - id: epic-11
+      title: "OCEAN Personality Visualization with Chernoff Faces"
+      points: 34
+      priority: P2
+      repos: pennyfarthing
+      jira: https://1898andco.atlassian.net/browse/MSSCI-11269
+      stories:
+        - id: "11-1"
+          title: "Define OCEAN → facial feature mapping spec"
+          points: 2
+          status: done
+          completed: 2026-01-01
+
+        - id: "11-2"
+          title: "Add OCEAN profiles to 10 anchor themes"
+          points: 3
+          status: done
+          completed: 2026-01-01
+          pr: https://github.com/1898andCo/pennyfarthing/pull/30
+
+        - id: "11-3"
+          title: "Build Chernoff face generator (OCEAN → SVG)"
+          points: 5
+          status: done
+          completed: 2026-01-01
+          pr: https://github.com/1898andCo/pennyfarthing/pull/31
+
+        - id: "11-4"
+          title: "Generate anchor theme faces + markdown report"
+          points: 2
+          status: done
+          completed: 2026-01-01
+          pr: https://github.com/keithavery/pennyfarthing/pull/32
+
+        - id: "11-5"
+          title: "Add OCEAN profiles to remaining 53 themes"
+          points: 8
+          status: done
+          completed: 2026-01-01
+          pr: https://github.com/1898andCo/pennyfarthing/pull/33
+
+        - id: "11-6"
+          title: "Generate full 630-face matrix with index"
+          points: 3
+          status: done
+          completed: 2026-01-01
+          pr: https://github.com/1898andCo/pennyfarthing/pull/35
+
+        - id: "11-7"
+          title: "Build slice/report generator"
+          points: 3
+          status: done
+          completed: 2026-01-01
+          pr: https://github.com/1898andCo/pennyfarthing/pull/37
+
+        - id: "11-8"
+          title: "Integrate with benchmark output (personality → performance)"
+          points: 5
+          status: done
+          completed: 2026-01-01
+          pr: https://github.com/1898andCo/pennyfarthing/pull/39
+
+        - id: "11-9"
+          title: "Update /theme-maker to generate OCEAN profiles"
+          points: 3
+          status: done
+          completed: 2026-01-01
+          pr: https://github.com/1898andCo/pennyfarthing/pull/34
+
+        - id: "11-10"
+          title: "Build OCEAN spider chart generator"
+          points: 3
+          status: done
+          completed: 2026-01-01
+          pr: https://github.com/1898andCo/pennyfarthing/pull/36
+
+        - id: "11-11"
+          title: "Tweak spider chart design"
+          points: 1
+          status: done
+          completed: 2026-01-01
+
+        - id: "11-12"
+          title: "Build spider chart report generator"
+          points: 2
+          status: done
+          completed: 2026-01-01
+
+  bugs:
+    - id: "BUG-1"
+      title: "Statusline shows wrong agent when multiple sessions active"
+      points: 3
+      status: done
+      completed: 2026-01-01
+      fix_summary: "Added fallback to most recent agent file when session_id mismatch occurs."
+
+# =============================================================================
+# SPRINT 5 - Scientific Benchmarking Migration
+# =============================================================================
+
+sprint_5:
+  number: 5
+  goal: "Migrate scientific benchmarking tools from Thunderdome to Pennyfarthing"
+  planned_start: 2026-01-02
+  completed: 2026-01-02
+  status: complete
+  completed_points: 18
+  velocity_target: 20
+
+  epics:
+    - id: epic-12
+      title: "Scientific Benchmarking Migration (Phase 1)"
+      points: 18
+      priority: P1
+      repos: pennyfarthing
+      jira: https://1898andco.atlassian.net/browse/MSSCI-11285
+      stories:
+        - id: "12-1"
+          title: "Copy /solo command to Pennyfarthing"
+          points: 3
+          status: done
+          completed: 2026-01-02
+          pr: https://github.com/1898andCo/pennyfarthing/pull/42
+
+        - id: "12-2"
+          title: "Copy /judge skill to Pennyfarthing"
+          points: 3
+          status: done
+          completed: 2026-01-02
+          pr: https://github.com/1898andCo/pennyfarthing/pull/44
+
+        - id: "12-3"
+          title: "Copy /benchmark and /benchmark-control commands"
+          points: 3
+          status: done
+          completed: 2026-01-02
+          pr: https://github.com/1898andCo/pennyfarthing/pull/44
+
+        - id: "12-4"
+          title: "Copy scenarios library to Pennyfarthing"
+          points: 2
+          status: done
+          completed: 2026-01-02
+          pr: https://github.com/1898andCo/pennyfarthing/pull/44
+
+        - id: "12-5"
+          title: "Copy /finalize-run skill"
+          points: 2
+          status: done
+          completed: 2026-01-02
+          pr: https://github.com/1898andCo/pennyfarthing/pull/44
+
+        - id: "12-6"
+          title: "Update benchmark-integration.ts for local results"
+          points: 2
+          status: done
+          completed: 2026-01-02
+          pr: https://github.com/1898andCo/pennyfarthing/pull/44
+
+        - id: "12-7"
+          title: "Create benchmarking documentation"
+          points: 2
+          status: done
+          completed: 2026-01-02
+          pr: https://github.com/1898andCo/pennyfarthing/pull/44
+
+        - id: "12-8"
+          title: "End-to-end integration test"
+          points: 1
+          status: done
+          completed: 2026-01-02
+          pr: https://github.com/1898andCo/pennyfarthing/pull/44
+
+  backlog_completed:
+    - id: "BL-1"
+      title: "Store theme preference in local settings (user isolation)"
+      points: 3
+      status: done
+      completed: 2026-01-01
+      pr: https://github.com/1898andCo/pennyfarthing/pull/40
+
+    - id: "BL-2"
+      title: "Add persona-config.local.yaml to init.ts updateGitignore()"
+      points: 1
+      status: done
+      completed: 2026-01-01
+      pr: https://github.com/1898andCo/pennyfarthing/pull/41
+
+# =============================================================================
+# CUMULATIVE METRICS
+# =============================================================================
+
+cumulative:
+  sprints_completed: 4
+  total_points_delivered: 116
+  total_stories_completed: 57
+  average_velocity: 29  # 116 / 4
+  velocity_target: 20
+  performance: "145%"  # 29/20

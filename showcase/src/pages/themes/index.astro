@@ -1,0 +1,95 @@
+---
+/**
+ * Theme Gallery Page
+ *
+ * Displays all 63+ themes in a filterable, searchable grid.
+ * Each theme shows a spider chart thumbnail and character preview.
+ */
+
+import Base from '../../layouts/Base.astro';
+import ThemeCard from '../../components/ThemeCard.astro';
+import ThemeGrid from '../../components/ThemeGrid.astro';
+import ThemeFilter from '../../components/ThemeFilter.tsx';
+import { loadThemes } from '../../lib/loader';
+
+// Load all themes at build time
+const themes = await loadThemes();
+
+// Extract unique source types for filter
+const sourceTypes = [...new Set(themes.map((t) => t.metadata.source))].sort();
+---
+
+<Base title="Theme Gallery | Pennyfarthing Showcase" description="Browse 63+ themed AI personas with OCEAN personality profiles and spider chart visualizations.">
+  <div class="max-w-7xl mx-auto">
+    <header class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">Theme Gallery</h1>
+      <p class="text-gray-600">
+        Explore {themes.length} unique themes, each with 10 carefully crafted agent personas.
+      </p>
+    </header>
+
+    <!-- Filter component (React island) -->
+    <ThemeFilter
+      client:load
+      sourceTypes={sourceTypes}
+      onFilter={(filter) => {
+        // Client-side filtering handled by React
+        const cards = document.querySelectorAll('[data-theme-card]');
+        const searchLower = filter.search.toLowerCase();
+
+        cards.forEach((card) => {
+          const name = card.getAttribute('data-theme-name')?.toLowerCase() ?? '';
+          const source = card.getAttribute('data-theme-source') ?? '';
+
+          const matchesSearch = !filter.search || name.includes(searchLower);
+          const matchesSource =
+            filter.sourceType.length === 0 || filter.sourceType.includes(source);
+
+          (card as HTMLElement).style.display =
+            matchesSearch && matchesSource ? 'flex' : 'none';
+        });
+      }}
+    />
+
+    <!-- Theme grid -->
+    <ThemeGrid>
+      {themes.map((theme) => (
+        <div
+          data-theme-card
+          data-theme-name={theme.metadata.name}
+          data-theme-source={theme.metadata.source}
+          class="flex"
+        >
+          <ThemeCard theme={theme} />
+        </div>
+      ))}
+    </ThemeGrid>
+
+    <!-- Empty state -->
+    <div id="empty-state" class="hidden text-center py-12 text-gray-500">
+      <p>No themes match your filters.</p>
+      <p class="text-sm mt-2">Try adjusting your search or filter criteria.</p>
+    </div>
+  </div>
+</Base>
+
+<script>
+  // Show/hide empty state based on visible cards
+  function updateEmptyState() {
+    const cards = document.querySelectorAll('[data-theme-card]');
+    const visibleCards = Array.from(cards).filter(
+      (card) => (card as HTMLElement).style.display !== 'none'
+    );
+    const emptyState = document.getElementById('empty-state');
+
+    if (emptyState) {
+      emptyState.classList.toggle('hidden', visibleCards.length > 0);
+    }
+  }
+
+  // Watch for filter changes
+  const observer = new MutationObserver(updateEmptyState);
+  document.querySelectorAll('[data-theme-card]').forEach((card) => {
+    observer.observe(card, { attributes: true, attributeFilter: ['style'] });
+  });
+</script>

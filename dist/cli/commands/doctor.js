@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync, chmodSync, statSync, readlinkSync, symlinkSync, unlinkSync } from 'fs';
 import { join, relative, dirname } from 'path';
 import fsExtra from 'fs-extra';
-const { removeSync } = fsExtra;
+const { removeSync, ensureDirSync } = fsExtra;
 import { logger } from '../utils/logger.js';
 import { readManifest } from '../utils/manifest.js';
 import { pathExists, isDirectory, isSymlink, fileMatchesHash } from '../utils/files.js';
@@ -242,6 +242,9 @@ function checkSymlinks(projectRoot, nodeModulesPath) {
 }
 function checkUserFiles(projectRoot) {
     const results = [];
+    // Detect installation type from manifest
+    const manifest = readManifest(projectRoot);
+    const installationType = manifest?.installationType || 'copy';
     // Check project directory
     const projectDir = join(projectRoot, '.claude/project');
     results.push({
@@ -266,16 +269,26 @@ function checkUserFiles(projectRoot) {
         status: pathExists(personaConfig) ? 'pass' : 'warn',
         detail: pathExists(personaConfig) ? undefined : 'No theme configured'
     });
-    // Check settings.local.json exists
+    // Check settings.local.json exists (CRITICAL - registers hooks with Claude Code)
     const settingsLocal = join(projectRoot, '.claude/settings.local.json');
-    results.push({
-        name: 'settings.local.json',
-        status: pathExists(settingsLocal) ? 'pass' : 'warn',
-        detail: pathExists(settingsLocal) ? undefined : 'No local settings'
-    });
-    // Check SessionStart hooks are configured (critical for PROJECT_ROOT)
-    if (pathExists(settingsLocal)) {
-        const hookCheck = checkSessionStartHooks(projectRoot);
+    if (!pathExists(settingsLocal)) {
+        results.push({
+            name: 'settings.local.json',
+            status: 'fail',
+            detail: 'Missing - hooks not registered with Claude Code!',
+            fix: () => {
+                createSettingsLocalJson(projectRoot, installationType);
+            }
+        });
+    }
+    else {
+        results.push({
+            name: 'settings.local.json',
+            status: 'pass',
+            detail: undefined
+        });
+        // Check SessionStart hooks are configured (critical for PROJECT_ROOT)
+        const hookCheck = checkSessionStartHooks(projectRoot, installationType);
         results.push(hookCheck);
     }
     return results;
@@ -284,7 +297,7 @@ function checkUserFiles(projectRoot) {
  * Check that SessionStart hooks are properly configured in settings.local.json
  * This is critical because session-start.sh exports PROJECT_ROOT
  */
-function checkSessionStartHooks(projectRoot) {
+function checkSessionStartHooks(projectRoot, installationType) {
     const settingsPath = join(projectRoot, '.claude/settings.local.json');
     try {
         const settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
@@ -295,7 +308,7 @@ function checkSessionStartHooks(projectRoot) {
                 status: 'fail',
                 detail: 'Missing SessionStart hooks - agents cannot find PROJECT_ROOT',
                 fix: () => {
-                    addSessionStartHooks(projectRoot);
+                    addSessionStartHooks(projectRoot, installationType);
                 }
             };
         }
@@ -313,7 +326,7 @@ function checkSessionStartHooks(projectRoot) {
                 status: 'fail',
                 detail: 'session-start.sh not configured - PROJECT_ROOT will be undefined',
                 fix: () => {
-                    addSessionStartHooks(projectRoot);
+                    addSessionStartHooks(projectRoot, installationType);
                 }
             };
         }
@@ -332,16 +345,27 @@ function checkSessionStartHooks(projectRoot) {
     }
 }
 /**
+ * Get the script base path based on installation type
+ * - symlink mode: .claude/scripts/
+ * - copy mode: .claude/pennyfarthing/scripts/
+ */
+function getScriptBasePath(installationType) {
+    return installationType === 'symlink'
+        ? '.claude/scripts'
+        : '.claude/pennyfarthing/scripts';
+}
+/**
  * Fix function: Add SessionStart hooks to settings.local.json
  */
-function addSessionStartHooks(projectRoot) {
+function addSessionStartHooks(projectRoot, installationType) {
     const settingsPath = join(projectRoot, '.claude/settings.local.json');
+    const scriptBase = getScriptBasePath(installationType);
     const requiredHooks = [
         {
             hooks: [
                 {
                     type: 'command',
-                    command: '"$CLAUDE_PROJECT_DIR"/.claude/scripts/hooks/session-start.sh'
+                    command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/session-start.sh`
                 }
             ]
         },
@@ -376,6 +400,86 @@ function addSessionStartHooks(projectRoot) {
     }
     writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf8');
 }
+/**
+ * Create settings.local.json from template
+ * This is the critical fix for installations that are missing this file
+ */
+function createSettingsLocalJson(projectRoot, installationType) {
+    const settingsPath = join(projectRoot, '.claude/settings.local.json');
+    const scriptBase = getScriptBasePath(installationType);
+    // Create full settings structure matching the template
+    const settings = {
+        permissions: {
+            allow: [
+                'Read',
+                'Grep',
+                'Glob',
+                'Bash',
+                'Edit(.claude/**)',
+                'Edit(sprint/**)',
+                'Edit(.session/**)',
+                'Write(.claude/**)',
+                'Write(sprint/**)',
+                'Write(.session/**)',
+                'Skill(sm)',
+                'Skill(tea)',
+                'Skill(dev)',
+                'Skill(reviewer)'
+            ]
+        },
+        context_budget: {
+            warning_threshold: 70,
+            critical_threshold: 85,
+            max_tokens: 200000
+        },
+        hooks: {
+            SessionStart: [
+                {
+                    hooks: [
+                        {
+                            type: 'command',
+                            command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/session-start.sh`
+                        }
+                    ]
+                },
+                {
+                    hooks: [
+                        {
+                            type: 'command',
+                            command: '"$CLAUDE_PROJECT_DIR"/.claude/project/hooks/setup-env.sh'
+                        }
+                    ]
+                }
+            ],
+            PreToolUse: [
+                {
+                    matcher: 'Edit|Write',
+                    hooks: [
+                        {
+                            type: 'command',
+                            command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/pre-edit-check.sh`
+                        }
+                    ]
+                },
+                {
+                    matcher: 'Edit|Write|Bash|Task',
+                    hooks: [
+                        {
+                            type: 'command',
+                            command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/context-warning.sh`
+                        }
+                    ]
+                }
+            ]
+        },
+        statusLine: {
+            type: 'command',
+            command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/statusline.sh`
+        }
+    };
+    ensureDirSync(join(projectRoot, '.claude'));
+    writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf8');
+}
 function checkDirectories(projectRoot) {
     const results = [];
     const dirs = [
@@ -394,10 +498,15 @@ function checkDirectories(projectRoot) {
 }
 function checkHooks(projectRoot) {
     const results = [];
-    // Hooks are accessed via .claude/scripts/ symlink (works for both modes)
+    // Detect installation type from manifest
+    const manifest = readManifest(projectRoot);
+    const installationType = manifest?.installationType || 'copy';
+    const scriptBase = getScriptBasePath(installationType);
+    // Check hook scripts exist based on installation type
     const hooks = [
-        { path: '.claude/scripts/hooks/session-start.sh', name: 'hook/session-start' },
-        { path: '.claude/scripts/hooks/pre-edit-check.sh', name: 'hook/pre-edit-check' }
+        { path: `${scriptBase}/hooks/session-start.sh`, name: 'hook/session-start' },
+        { path: `${scriptBase}/hooks/pre-edit-check.sh`, name: 'hook/pre-edit-check' },
+        { path: `${scriptBase}/hooks/context-warning.sh`, name: 'hook/context-warning' }
     ];
     for (const { path, name } of hooks) {
         const fullPath = join(projectRoot, path);
@@ -406,7 +515,7 @@ function checkHooks(projectRoot) {
             results.push({
                 name,
                 status: 'warn',
-                detail: 'Hook script missing - run pennyfarthing update'
+                detail: `Hook script missing at ${path} - run pennyfarthing update`
             });
             continue;
         }

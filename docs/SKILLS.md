@@ -182,6 +182,49 @@ THOUGHT: Based on observation, what next?
 
 ---
 
+### judge
+
+**Purpose:** Evaluation rubrics for scoring agent responses.
+
+**Use when:** Scoring responses from `/solo` or `/benchmark` runs.
+
+**Key concepts:**
+- **Generic Rubric** (25% each dimension):
+  - Correctness - Technical accuracy
+  - Depth - Thoroughness of analysis
+  - Quality - Clarity and actionability
+  - Persona - Character embodiment
+- **Checklist Rubric** (for scenarios with baseline_issues):
+  - Detection (50%) - Finding expected issues
+  - Quality (25%) - Explanation quality
+  - Persona (25%) - In-character delivery
+- **Error-Detection Mode** (`--mode error-detection`):
+  - TRAIL-aware scoring by error type
+  - Per-type detection rates (reasoning, planning, execution)
+
+**References:** `skills/judge/SKILL.md`
+
+---
+
+### finalize-run
+
+**Purpose:** Result validation and persistence for benchmarking.
+
+**Use when:** Saving benchmark results with proof-of-work.
+
+**Key concepts:**
+- Validates data integrity before saving
+- Adds proof-of-work fields:
+  - Timestamps
+  - Token counts
+  - Full responses
+- Supports solo, benchmark result types
+- Creates proper directory structure
+
+**References:** `skills/finalize-run/SKILL.md`
+
+---
+
 ## Skill Structure
 
 Each skill follows this structure:
