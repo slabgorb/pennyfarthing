@@ -97,7 +97,37 @@ export interface BenchmarkReportResult {
         performers: PerformerResult[];
         correlation: CorrelationResult;
         recommendations: RoleRecommendations;
+        errorCorrelation?: OceanErrorCorrelation;
     };
+}
+export interface ErrorTypeCell {
+    correlation: number;
+    arrow: string;
+}
+export interface OceanErrorCorrelation {
+    matrix: {
+        [dimension: string]: {
+            reasoning: ErrorTypeCell;
+            planning: ErrorTypeCell;
+            execution: ErrorTypeCell;
+        };
+    };
+    strongest: {
+        dimension: string;
+        errorType: string;
+        correlation: number;
+    };
+}
+export interface JudgeScore {
+    detection_by_type?: {
+        reasoning: number;
+        planning: number;
+        execution: number;
+    };
+}
+export interface BenchmarkResultWithOcean {
+    ocean: OceanScores;
+    mean: number;
 }
 /**
  * Load benchmark data from thunderdome results
@@ -132,10 +162,21 @@ export declare function findTopPerformers(options: QueryOptions): PerformerResul
  */
 export declare function queryBenchmarks(options: QueryOptions): PerformerResult[];
 /**
+ * Calculate OCEAN × error-type correlation matrix
+ * Story 14-5: Correlates OCEAN dimensions with error detection rates
+ */
+export declare function calculateErrorTypeCorrelation(results: BenchmarkResultWithOcean[], judgeScores: JudgeScore[]): OceanErrorCorrelation;
+/**
+ * Generate markdown heat map for OCEAN × error-type correlations
+ * Story 14-5: Produces 5×3 matrix with directional arrows and effect sizes
+ */
+export declare function generateOceanErrorHeatMap(correlation: OceanErrorCorrelation): string;
+/**
  * Generate complete benchmark report with faces and correlations
  */
 export declare function generateBenchmarkReport(options: {
     scenario: string;
     role: string;
+    includeErrorTypeCorrelation?: boolean;
 }): BenchmarkReportResult;
 //# sourceMappingURL=benchmark-integration.d.ts.map
