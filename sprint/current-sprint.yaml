@@ -1681,10 +1681,13 @@ backlog:
             - Related characters (same role, different themes)
           points: 3
           priority: P1
-          status: in-progress
+          status: done
           started: 2026-01-02
+          completed: 2026-01-02
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11300
+          branch: feat/13-6-character-profile-pages
+          pr: https://github.com/1898andCo/pennyfarthing/pull/54
           acceptance_criteria:
             - 640 character pages generated
             - Full character details displayed
@@ -1925,9 +1928,12 @@ backlog:
             Mix of single-type and mixed-type scenarios across difficulties.
           points: 5
           priority: P1
-          status: in-progress
+          status: done
           started: 2026-01-02
+          completed: 2026-01-02
           repos: pennyfarthing
+          branch: feat/14-4-debugging-scenarios
+          pr: https://github.com/1898andCo/pennyfarthing/pull/53
           acceptance_criteria:
             - 10 scenarios in scenarios/debugging/
             - Each scenario has 4-8 baseline_issues with error_type tags
