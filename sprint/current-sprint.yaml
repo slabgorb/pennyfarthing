@@ -1736,9 +1736,11 @@ backlog:
             - Combine multiple expressions with AND
           points: 2
           priority: P1
-          status: in_progress
+          status: done
           started: "2026-01-02"
+          completed: "2026-01-02"
           branch: feat/13-8-ocean-expression-parser
+          pr: https://github.com/1898andCo/pennyfarthing/pull/61
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11302
           acceptance_criteria:
