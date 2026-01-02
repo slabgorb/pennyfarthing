@@ -273,3 +273,15 @@ The benchmarking system enforces strict integrity:
 - `.claude/project/skills/judge/SKILL.md` - Evaluation rubrics
 - `.claude/project/skills/finalize-run/SKILL.md` - Result validation
 - `src/scripts/benchmark-integration.ts` - OCEAN correlation module
+
+---
+
+## TRAIL-OCEAN Research
+
+For hypothesis-driven research correlating OCEAN dimensions with error detection:
+
+- [TRAIL-OCEAN Hypothesis Mapping](../pennyfarthing-dist/personas/TRAIL-OCEAN-MAPPING.md) - Complete hypothesis document
+
+## Legacy Framework
+
+Note: `benchmarks/README.md` documents an older framework using `just` commands. The current system uses `/solo`, `/benchmark-control`, and `/benchmark`.

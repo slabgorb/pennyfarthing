@@ -319,3 +319,13 @@ theme: the-expanse    # Change this value
 All agents adopt new characters immediately. No restart required.
 
 See [PERSONAS.md](PERSONAS.md) for full theme configuration and custom theme creation.
+
+---
+
+## Research Documents
+
+For deeper OCEAN research and methodology:
+
+- [OCEAN Benchmarking Guide](../pennyfarthing-dist/personas/OCEAN-BENCHMARKING.md) - Role recommendations, universe strengths, performance correlations
+- [OCEAN to Face Mapping](../pennyfarthing-dist/personas/OCEAN-TO-FACE.md) - Chernoff face visualization specification
+- [Showcase Website](SHOWCASE.md) - Interactive theme gallery with spider charts and character profiles

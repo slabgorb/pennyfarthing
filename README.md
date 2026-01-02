@@ -222,46 +222,9 @@ Archived sprint data (`sprint/archive/`, `sprint/context/`) is always preserved.
 - **Context Warning Hook** - Automatic alerts at 70% context usage
 - **Session Isolation Fix** - Multi-session statusline pollution resolved
 
-## What's New in v4.1
+---
 
-- **Mega Persona Pack** - 50+ new themes with OCEAN personality standardization
-  - TV dramas: Breaking Bad, The Wire, Fargo, MASH, The Office, The Good Place
-  - Sci-fi: Star Wars, Dune, Foundation, Mass Effect, Blade Runner, Firefly
-  - Fantasy: Game of Thrones, The Witcher, Sandman, His Dark Materials
-  - Comics: Marvel MCU, Watchmen, Doctor Who
-  - Period: The Crown, Succession, West Wing, Rome, Deadwood
-- **OCEAN Benchmarking** - All themes include Big Five personality profiles
-- **ADR Documentation** - Architecture Decision Records in `docs/adr/`
-- **CLI Refactoring** - Consolidated code with new shared utilities
-
-## What's New in v4.0
-
-- **BREAKING: Link-based Installation** - `pennyfarthing init` now symlinks to `node_modules` instead of copying 100+ files
-  - Reduces codespace pollution significantly
-  - Updates propagate via `npm update`
-  - Requires `npm install pennyfarthing` before init
-
-### Migrating from 3.x
-```bash
-pennyfarthing uninstall
-npm install pennyfarthing
-pennyfarthing init
-```
-Your `.claude/project/` customizations are preserved.
-
-## What's New in v3.8
-
-- **Crew Manifest** - Agents see all character names during handoffs for in-universe addressing
-- **Theme CLI Commands** - `pennyfarthing theme list|set|show|create`
-- **User Preferences** - `.claude/pennyfarthing/preferences.yaml` for agent behavior
-- **Output Styles** - Three built-in styles (verbose, terse, teaching)
-
-## What's New in v3.0
-
-- **Official Subagents** - 13 subagents in Claude Code's official YAML frontmatter format
-- **Session File Naming** - Changed from `current_work.md` to `{story-id}-session.md` for parallel work
-- **NPM Package** - Install via npm with `pennyfarthing init`
-- **Health Checks** - `doctor --fix` auto-repairs common issues
+*For full changelog, see [CHANGELOG.md](CHANGELOG.md)*
 
 ## License
 
