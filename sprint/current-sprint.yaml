@@ -1217,6 +1217,213 @@ sprint_4:
       BL-2 completed: Added persona-config.local.yaml to gitignore.
 
 # =============================================================================
+# SPRINT 5 - Scientific Benchmarking Migration
+# =============================================================================
+
+sprint_5:
+  number: 5
+  goal: "Migrate scientific benchmarking tools from Thunderdome to Pennyfarthing"
+  planned_start: 2026-01-02
+  velocity_target: 20
+  status: planning
+
+  epics:
+    - id: epic-12
+      title: "Scientific Benchmarking Migration (Phase 1)"
+      description: |
+        Migrate scientific research tools from Thunderdome to Pennyfarthing to establish
+        clear separation of concerns:
+
+        - **Pennyfarthing:** Scientific research platform for persona benchmarking
+        - **Thunderdome:** Entertainment arena for duels and tournaments
+
+        This epic covers Phase 1 (additive migration). Phase 2 (Thunderdome cleanup)
+        will follow in Sprint 6.
+
+        ## Background
+        Users are confused by Thunderdome's dual purpose. The /solo, /benchmark, and
+        /judge commands are scientific tools that belong with the persona framework.
+        Duels and tournaments are entertainment features that should remain in Thunderdome.
+
+        ## Architectural Decisions
+        - ADR-1: Pennyfarthing owns scenarios (single source of truth)
+        - ADR-2: Pennyfarthing owns /judge (consistent scientific rigor)
+        - ADR-3: Each project stores own results (clear ownership)
+      points: 18
+      priority: P1
+      marker: "strategic"
+      repos: pennyfarthing
+      jira: https://1898andco.atlassian.net/browse/MSSCI-11285
+      stories:
+        - id: "12-1"
+          title: "Copy /solo command to Pennyfarthing"
+          description: |
+            Migrate the /solo command from Thunderdome. This is the canonical
+            agent execution path for scientific benchmarking.
+
+            - Copy .claude/project/commands/solo.md
+            - Adapt paths for Pennyfarthing structure
+            - Create results/solo/ directory
+            - Test with existing themes
+          points: 3
+          priority: P1
+          status: ready
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11286
+          acceptance_criteria:
+            - /solo command works in Pennyfarthing
+            - Executes agent with --tools "" flag (critical for valid results)
+            - Saves results to results/solo/
+            - Works with all 63 persona themes
+
+        - id: "12-2"
+          title: "Copy /judge skill to Pennyfarthing"
+          description: |
+            Migrate the /judge skill that evaluates agent responses against
+            rubric criteria.
+
+            - Copy .claude/project/skills/judge/
+            - Ensure rubric scoring works standalone
+            - Support both solo and comparison modes
+          points: 3
+          priority: P1
+          status: ready
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11287
+          acceptance_criteria:
+            - /judge skill evaluates responses against rubric
+            - Supports --mode solo (single agent scoring)
+            - Supports --mode compare (head-to-head, for future duel support)
+            - Returns structured score JSON
+
+        - id: "12-3"
+          title: "Copy /benchmark and /benchmark-control commands"
+          description: |
+            Migrate the statistical benchmarking commands.
+
+            - Copy benchmark.md and benchmark-control.md
+            - Adapt for Pennyfarthing paths
+            - Create results/baselines/ and results/benchmarks/ directories
+            - Ensure Cohen's d effect size calculation works
+          points: 3
+          priority: P1
+          status: ready
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11288
+          acceptance_criteria:
+            - /benchmark-control creates baseline with n=10 runs
+            - /benchmark compares persona against control baseline
+            - Cohen's d effect size calculated correctly
+            - 95% confidence intervals displayed
+            - Results saved to appropriate directories
+
+        - id: "12-4"
+          title: "Copy scenarios library to Pennyfarthing"
+          description: |
+            Migrate the scenario challenge definitions.
+
+            - Copy scenarios/ directory structure
+            - Include schema.yaml for validation
+            - Organize by category (code-review, dev, sm, tea, architecture)
+            - Exclude test fixtures
+          points: 2
+          priority: P1
+          status: ready
+          repos: pennyfarthing
+          acceptance_criteria:
+            - scenarios/ directory with all categories
+            - schema.yaml for scenario validation
+            - README.md documenting scenario format
+            - At least 10 scenarios across categories
+
+        - id: "12-5"
+          title: "Copy /finalize-run skill"
+          description: |
+            Migrate the result persistence skill.
+
+            - Copy .claude/project/skills/finalize-run/
+            - Adapt output paths for Pennyfarthing
+            - Ensure proof-of-work fields saved correctly
+          points: 2
+          priority: P1
+          status: ready
+          repos: pennyfarthing
+          acceptance_criteria:
+            - /finalize-run saves results with proof-of-work
+            - Supports solo, benchmark result types
+            - Creates proper directory structure
+            - Validates data before saving
+
+        - id: "12-6"
+          title: "Update benchmark-integration.ts for local results"
+          description: |
+            Modify the existing benchmark-integration module (from Story 11-8)
+            to read from Pennyfarthing's local results instead of Thunderdome.
+
+            - Change default benchmark path to local results/
+            - Add configurable path option (from Sprint 4 retro)
+            - Update tests for new paths
+          points: 2
+          priority: P1
+          status: ready
+          repos: pennyfarthing
+          acceptance_criteria:
+            - benchmark-integration.ts reads from results/benchmarks/
+            - Configurable BENCHMARK_PATH environment variable
+            - Graceful fallback if path doesn't exist
+            - All existing tests pass with updated paths
+
+        - id: "12-7"
+          title: "Create benchmarking documentation"
+          description: |
+            Document the new scientific benchmarking capabilities in Pennyfarthing.
+
+            - Add docs/BENCHMARKING.md
+            - Document /solo, /benchmark, /judge usage
+            - Include scenario creation guide
+            - Add interpretation guide for statistics
+          points: 2
+          priority: P2
+          status: ready
+          repos: pennyfarthing
+          acceptance_criteria:
+            - docs/BENCHMARKING.md exists
+            - Explains scientific benchmarking workflow
+            - Documents all commands and options
+            - Includes example workflows
+
+        - id: "12-8"
+          title: "End-to-end integration test"
+          description: |
+            Verify the complete benchmarking workflow works in Pennyfarthing.
+
+            - Run /benchmark-control for one scenario
+            - Run /benchmark for one persona
+            - Verify results saved correctly
+            - Verify benchmark-integration.ts reads results
+          points: 1
+          priority: P1
+          status: ready
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Full workflow executes without errors
+            - Baseline created successfully
+            - Benchmark comparison works
+            - Results queryable via benchmark-integration.ts
+
+  sprint_5_plan:
+    committed_points: 18
+    buffer_points: 2
+    stretch_goals: []
+    risks:
+      - "Path differences between Thunderdome and Pennyfarthing may require adjustments"
+      - "Scenario dependencies on Thunderdome-specific features"
+    notes: |
+      Phase 1 focuses on ADDITIVE changes to Pennyfarthing.
+      Phase 2 (Sprint 6) will clean up Thunderdome by removing migrated code.
+      This phased approach minimizes risk - both projects remain functional throughout.
+
+# =============================================================================
 # BACKLOG - Future Sprint Candidates
 # =============================================================================
 
