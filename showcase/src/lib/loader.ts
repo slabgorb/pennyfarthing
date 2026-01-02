@@ -6,9 +6,14 @@
  */
 
 import { readFileSync, readdirSync } from 'fs';
-import { join, basename } from 'path';
+import { join, basename, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { parse } from 'yaml';
 import type { Theme, Agent, ThemeMetadata, RawThemeYaml } from './types';
+
+// ESM-compatible __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Path to theme YAML files relative to showcase directory
 const THEMES_DIR = join(__dirname, '..', '..', '..', 'pennyfarthing-dist', 'personas', 'themes');
