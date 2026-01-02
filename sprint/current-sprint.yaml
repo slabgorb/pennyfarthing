@@ -1612,7 +1612,9 @@ backlog:
             - Cache theme data during build for performance
           points: 3
           priority: P1
-          status: ready
+          status: done
+          started: 2026-01-02
+          completed: 2026-01-02
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11297
           acceptance_criteria:
