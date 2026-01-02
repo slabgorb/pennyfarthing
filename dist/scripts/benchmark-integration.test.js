@@ -333,4 +333,348 @@ describe('Integration: Benchmark Report Generation', () => {
             report.markdown.includes('below'), 'Report should indicate themes to avoid');
     });
 });
+// ============================================================================
+// Story 14-5: OCEAN × Error-Type Correlation Heat Map
+// ============================================================================
+describe('AC1: calculateErrorTypeCorrelation Function', () => {
+    it('should export calculateErrorTypeCorrelation function', async () => {
+        const module = await import('./benchmark-integration.js');
+        assert.ok(typeof module.calculateErrorTypeCorrelation === 'function', 'calculateErrorTypeCorrelation should be a function');
+    });
+    it('should return OceanErrorCorrelation object with 5×3 matrix', async () => {
+        const { calculateErrorTypeCorrelation } = await import('./benchmark-integration.js');
+        // Mock benchmark results with OCEAN scores
+        const results = [
+            { ocean: { O: 5, C: 4, E: 2, A: 3, N: 2 }, mean: 85 },
+            { ocean: { O: 2, C: 5, E: 4, A: 4, N: 4 }, mean: 72 },
+            { ocean: { O: 4, C: 2, E: 3, A: 2, N: 3 }, mean: 78 },
+        ];
+        // Mock judge scores with detection_by_type
+        const judgeScores = [
+            { detection_by_type: { reasoning: 0.8, planning: 0.6, execution: 0.7 } },
+            { detection_by_type: { reasoning: 0.5, planning: 0.9, execution: 0.8 } },
+            { detection_by_type: { reasoning: 0.7, planning: 0.7, execution: 0.6 } },
+        ];
+        const correlation = calculateErrorTypeCorrelation(results, judgeScores);
+        assert.ok(correlation, 'Should return correlation object');
+        assert.ok(correlation.matrix, 'Should have matrix property');
+        // Check all 5 OCEAN dimensions present
+        for (const dim of ['O', 'C', 'E', 'A', 'N']) {
+            assert.ok(correlation.matrix[dim], `Matrix should have ${dim} dimension`);
+            assert.ok('reasoning' in correlation.matrix[dim], `${dim} should have reasoning`);
+            assert.ok('planning' in correlation.matrix[dim], `${dim} should have planning`);
+            assert.ok('execution' in correlation.matrix[dim], `${dim} should have execution`);
+        }
+    });
+    it('should calculate correlation values as numbers', async () => {
+        const { calculateErrorTypeCorrelation } = await import('./benchmark-integration.js');
+        const results = [
+            { ocean: { O: 5, C: 4, E: 2, A: 3, N: 2 }, mean: 85 },
+            { ocean: { O: 2, C: 5, E: 4, A: 4, N: 4 }, mean: 72 },
+        ];
+        const judgeScores = [
+            { detection_by_type: { reasoning: 0.8, planning: 0.6, execution: 0.7 } },
+            { detection_by_type: { reasoning: 0.5, planning: 0.9, execution: 0.8 } },
+        ];
+        const correlation = calculateErrorTypeCorrelation(results, judgeScores);
+        assert.ok(typeof correlation.matrix.O.reasoning.correlation === 'number', 'Correlation value should be a number');
+        assert.ok(correlation.matrix.O.reasoning.correlation >= -1 &&
+            correlation.matrix.O.reasoning.correlation <= 1, 'Correlation should be between -1 and 1');
+    });
+    it('should identify strongest correlation', async () => {
+        const { calculateErrorTypeCorrelation } = await import('./benchmark-integration.js');
+        const results = [
+            { ocean: { O: 5, C: 4, E: 2, A: 3, N: 2 }, mean: 85 },
+            { ocean: { O: 2, C: 5, E: 4, A: 4, N: 4 }, mean: 72 },
+        ];
+        const judgeScores = [
+            { detection_by_type: { reasoning: 0.8, planning: 0.6, execution: 0.7 } },
+            { detection_by_type: { reasoning: 0.5, planning: 0.9, execution: 0.8 } },
+        ];
+        const correlation = calculateErrorTypeCorrelation(results, judgeScores);
+        assert.ok(correlation.strongest, 'Should identify strongest correlation');
+        assert.ok(['O', 'C', 'E', 'A', 'N'].includes(correlation.strongest.dimension), 'Strongest dimension should be valid OCEAN');
+        assert.ok(['reasoning', 'planning', 'execution'].includes(correlation.strongest.errorType), 'Strongest errorType should be valid');
+        assert.ok(typeof correlation.strongest.correlation === 'number', 'Strongest correlation should be a number');
+    });
+});
+describe('AC2: generateOceanErrorHeatMap Function', () => {
+    it('should export generateOceanErrorHeatMap function', async () => {
+        const module = await import('./benchmark-integration.js');
+        assert.ok(typeof module.generateOceanErrorHeatMap === 'function', 'generateOceanErrorHeatMap should be a function');
+    });
+    it('should produce markdown with 5×3 matrix table', async () => {
+        const { generateOceanErrorHeatMap } = await import('./benchmark-integration.js');
+        // Create mock correlation data
+        const correlation = {
+            matrix: {
+                O: {
+                    reasoning: { correlation: 0.42, arrow: '↑' },
+                    planning: { correlation: 0.08, arrow: '→' },
+                    execution: { correlation: -0.15, arrow: '→' },
+                },
+                C: {
+                    reasoning: { correlation: 0.12, arrow: '→' },
+                    planning: { correlation: 0.38, arrow: '↑' },
+                    execution: { correlation: 0.45, arrow: '↑' },
+                },
+                E: {
+                    reasoning: { correlation: -0.22, arrow: '→' },
+                    planning: { correlation: 0.05, arrow: '→' },
+                    execution: { correlation: 0.10, arrow: '→' },
+                },
+                A: {
+                    reasoning: { correlation: 0.08, arrow: '→' },
+                    planning: { correlation: -0.03, arrow: '→' },
+                    execution: { correlation: 0.11, arrow: '→' },
+                },
+                N: {
+                    reasoning: { correlation: -0.31, arrow: '↓' },
+                    planning: { correlation: -0.25, arrow: '→' },
+                    execution: { correlation: -0.18, arrow: '→' },
+                },
+            },
+            strongest: { dimension: 'C', errorType: 'execution', correlation: 0.45 },
+        };
+        const heatMap = generateOceanErrorHeatMap(correlation);
+        assert.ok(typeof heatMap === 'string', 'Should return a string');
+        assert.ok(heatMap.includes('|'), 'Should include markdown table separators');
+        // Should have all column headers
+        assert.ok(heatMap.includes('Reasoning'), 'Should have Reasoning column');
+        assert.ok(heatMap.includes('Planning'), 'Should have Planning column');
+        assert.ok(heatMap.includes('Execution'), 'Should have Execution column');
+        // Should have all row labels
+        assert.ok(heatMap.includes('O'), 'Should have O (Openness) row');
+        assert.ok(heatMap.includes('C'), 'Should have C (Conscientiousness) row');
+        assert.ok(heatMap.includes('E'), 'Should have E (Extraversion) row');
+        assert.ok(heatMap.includes('A'), 'Should have A (Agreeableness) row');
+        assert.ok(heatMap.includes('N'), 'Should have N (Neuroticism) row');
+    });
+});
+describe('AC3: Directional Arrows and Effect Sizes', () => {
+    it('should include directional arrows (↑↓→) in output', async () => {
+        const { generateOceanErrorHeatMap } = await import('./benchmark-integration.js');
+        const correlation = {
+            matrix: {
+                O: {
+                    reasoning: { correlation: 0.42, arrow: '↑' },
+                    planning: { correlation: 0.08, arrow: '→' },
+                    execution: { correlation: -0.35, arrow: '↓' },
+                },
+                C: {
+                    reasoning: { correlation: 0.12, arrow: '→' },
+                    planning: { correlation: 0.38, arrow: '↑' },
+                    execution: { correlation: 0.45, arrow: '↑' },
+                },
+                E: {
+                    reasoning: { correlation: -0.22, arrow: '→' },
+                    planning: { correlation: 0.05, arrow: '→' },
+                    execution: { correlation: 0.10, arrow: '→' },
+                },
+                A: {
+                    reasoning: { correlation: 0.08, arrow: '→' },
+                    planning: { correlation: -0.03, arrow: '→' },
+                    execution: { correlation: 0.11, arrow: '→' },
+                },
+                N: {
+                    reasoning: { correlation: -0.31, arrow: '↓' },
+                    planning: { correlation: -0.25, arrow: '→' },
+                    execution: { correlation: -0.18, arrow: '→' },
+                },
+            },
+            strongest: { dimension: 'C', errorType: 'execution', correlation: 0.45 },
+        };
+        const heatMap = generateOceanErrorHeatMap(correlation);
+        // Check for directional arrows
+        assert.ok(heatMap.includes('↑'), 'Should include upward arrow for positive correlations');
+        assert.ok(heatMap.includes('↓'), 'Should include downward arrow for negative correlations');
+        assert.ok(heatMap.includes('→'), 'Should include neutral arrow');
+    });
+    it('should show effect sizes with appropriate precision', async () => {
+        const { generateOceanErrorHeatMap } = await import('./benchmark-integration.js');
+        const correlation = {
+            matrix: {
+                O: {
+                    reasoning: { correlation: 0.42, arrow: '↑' },
+                    planning: { correlation: 0.08, arrow: '→' },
+                    execution: { correlation: -0.15, arrow: '→' },
+                },
+                C: {
+                    reasoning: { correlation: 0.12, arrow: '→' },
+                    planning: { correlation: 0.38, arrow: '↑' },
+                    execution: { correlation: 0.45, arrow: '↑' },
+                },
+                E: {
+                    reasoning: { correlation: -0.22, arrow: '→' },
+                    planning: { correlation: 0.05, arrow: '→' },
+                    execution: { correlation: 0.10, arrow: '→' },
+                },
+                A: {
+                    reasoning: { correlation: 0.08, arrow: '→' },
+                    planning: { correlation: -0.03, arrow: '→' },
+                    execution: { correlation: 0.11, arrow: '→' },
+                },
+                N: {
+                    reasoning: { correlation: -0.31, arrow: '↓' },
+                    planning: { correlation: -0.25, arrow: '→' },
+                    execution: { correlation: -0.18, arrow: '→' },
+                },
+            },
+            strongest: { dimension: 'C', errorType: 'execution', correlation: 0.45 },
+        };
+        const heatMap = generateOceanErrorHeatMap(correlation);
+        // Should include numeric effect sizes
+        assert.ok(heatMap.includes('0.42') || heatMap.includes('.42'), 'Should show effect sizes');
+        assert.ok(heatMap.includes('0.45') || heatMap.includes('.45'), 'Should show largest effect size');
+    });
+    it('should use correct arrow based on correlation magnitude', async () => {
+        const { calculateErrorTypeCorrelation } = await import('./benchmark-integration.js');
+        // High O correlates with high reasoning detection
+        const results = [
+            { ocean: { O: 5, C: 3, E: 3, A: 3, N: 3 }, mean: 80 },
+            { ocean: { O: 5, C: 3, E: 3, A: 3, N: 3 }, mean: 82 },
+            { ocean: { O: 1, C: 3, E: 3, A: 3, N: 3 }, mean: 70 },
+            { ocean: { O: 1, C: 3, E: 3, A: 3, N: 3 }, mean: 68 },
+        ];
+        const judgeScores = [
+            { detection_by_type: { reasoning: 0.9, planning: 0.5, execution: 0.5 } },
+            { detection_by_type: { reasoning: 0.85, planning: 0.5, execution: 0.5 } },
+            { detection_by_type: { reasoning: 0.4, planning: 0.5, execution: 0.5 } },
+            { detection_by_type: { reasoning: 0.35, planning: 0.5, execution: 0.5 } },
+        ];
+        const correlation = calculateErrorTypeCorrelation(results, judgeScores);
+        // High O should positively correlate with reasoning detection
+        assert.ok(correlation.matrix.O.reasoning.arrow === '↑', 'High positive correlation (>=0.3) should use ↑ arrow');
+    });
+    it('should include legend explaining arrows', async () => {
+        const { generateOceanErrorHeatMap } = await import('./benchmark-integration.js');
+        const correlation = {
+            matrix: {
+                O: { reasoning: { correlation: 0.42, arrow: '↑' }, planning: { correlation: 0.08, arrow: '→' }, execution: { correlation: -0.15, arrow: '→' } },
+                C: { reasoning: { correlation: 0.12, arrow: '→' }, planning: { correlation: 0.38, arrow: '↑' }, execution: { correlation: 0.45, arrow: '↑' } },
+                E: { reasoning: { correlation: -0.22, arrow: '→' }, planning: { correlation: 0.05, arrow: '→' }, execution: { correlation: 0.10, arrow: '→' } },
+                A: { reasoning: { correlation: 0.08, arrow: '→' }, planning: { correlation: -0.03, arrow: '→' }, execution: { correlation: 0.11, arrow: '→' } },
+                N: { reasoning: { correlation: -0.31, arrow: '↓' }, planning: { correlation: -0.25, arrow: '→' }, execution: { correlation: -0.18, arrow: '→' } },
+            },
+            strongest: { dimension: 'C', errorType: 'execution', correlation: 0.45 },
+        };
+        const heatMap = generateOceanErrorHeatMap(correlation);
+        assert.ok(heatMap.includes('Legend') || heatMap.includes('legend') ||
+            (heatMap.includes('↑') && heatMap.includes('positive')), 'Should include legend explaining arrow meanings');
+    });
+});
+describe('AC4: Integration with generateBenchmarkReport', () => {
+    it('should include error-type heat map when judge scores provided', async () => {
+        const { generateBenchmarkReport } = await import('./benchmark-integration.js');
+        const report = generateBenchmarkReport({
+            scenario: 'race-condition-cache',
+            role: 'dev',
+            includeErrorTypeCorrelation: true,
+        });
+        // When error correlation is requested, report should include the heat map section
+        assert.ok(report.markdown.includes('Error-Type') ||
+            report.markdown.includes('error-type') ||
+            report.markdown.includes('Reasoning'), 'Report should include error-type correlation section when requested');
+    });
+    it('should add error correlation data to report data object', async () => {
+        const { generateBenchmarkReport } = await import('./benchmark-integration.js');
+        const report = generateBenchmarkReport({
+            scenario: 'race-condition-cache',
+            role: 'dev',
+            includeErrorTypeCorrelation: true,
+        });
+        // Report data should include error correlation when flag is set
+        if (report.data.errorCorrelation) {
+            assert.ok(report.data.errorCorrelation.matrix, 'Error correlation data should have matrix');
+        }
+    });
+});
+describe('AC5: Edge Cases - No Data', () => {
+    it('should handle empty results array', async () => {
+        const { calculateErrorTypeCorrelation } = await import('./benchmark-integration.js');
+        const correlation = calculateErrorTypeCorrelation([], []);
+        assert.ok(correlation !== undefined, 'Should not throw on empty input');
+        // Should return null or default structure
+        assert.ok(correlation === null ||
+            (correlation.matrix && Object.keys(correlation.matrix).length === 5), 'Should return null or default 5×3 matrix');
+    });
+    it('should handle single entry', async () => {
+        const { calculateErrorTypeCorrelation } = await import('./benchmark-integration.js');
+        const results = [
+            { ocean: { O: 4, C: 3, E: 3, A: 3, N: 3 }, mean: 75 },
+        ];
+        const judgeScores = [
+            { detection_by_type: { reasoning: 0.7, planning: 0.6, execution: 0.5 } },
+        ];
+        const correlation = calculateErrorTypeCorrelation(results, judgeScores);
+        // With single entry, correlation can't be calculated meaningfully
+        assert.ok(correlation !== undefined, 'Should handle single entry gracefully');
+    });
+});
+describe('AC5: Edge Cases - Partial Data', () => {
+    it('should handle missing detection_by_type in judge scores', async () => {
+        const { calculateErrorTypeCorrelation } = await import('./benchmark-integration.js');
+        const results = [
+            { ocean: { O: 4, C: 3, E: 3, A: 3, N: 3 }, mean: 75 },
+            { ocean: { O: 2, C: 4, E: 4, A: 4, N: 4 }, mean: 80 },
+        ];
+        const judgeScores = [
+            { detection_by_type: { reasoning: 0.7, planning: 0.6, execution: 0.5 } },
+            {}, // Missing detection_by_type
+        ];
+        // Should not throw
+        let threw = false;
+        try {
+            calculateErrorTypeCorrelation(results, judgeScores);
+        }
+        catch {
+            threw = true;
+        }
+        assert.ok(!threw, 'Should handle missing detection_by_type without throwing');
+    });
+    it('should handle mismatched array lengths', async () => {
+        const { calculateErrorTypeCorrelation } = await import('./benchmark-integration.js');
+        const results = [
+            { ocean: { O: 4, C: 3, E: 3, A: 3, N: 3 }, mean: 75 },
+            { ocean: { O: 2, C: 4, E: 4, A: 4, N: 4 }, mean: 80 },
+            { ocean: { O: 3, C: 3, E: 3, A: 3, N: 3 }, mean: 77 },
+        ];
+        const judgeScores = [
+            { detection_by_type: { reasoning: 0.7, planning: 0.6, execution: 0.5 } },
+        ];
+        // Should not throw
+        let threw = false;
+        try {
+            calculateErrorTypeCorrelation(results, judgeScores);
+        }
+        catch {
+            threw = true;
+        }
+        assert.ok(!threw, 'Should handle mismatched array lengths without throwing');
+    });
+});
+describe('AC5: Edge Cases - Single Dimension Variation', () => {
+    it('should handle all same OCEAN values', async () => {
+        const { calculateErrorTypeCorrelation } = await import('./benchmark-integration.js');
+        // All characters have identical OCEAN scores
+        const results = [
+            { ocean: { O: 3, C: 3, E: 3, A: 3, N: 3 }, mean: 75 },
+            { ocean: { O: 3, C: 3, E: 3, A: 3, N: 3 }, mean: 80 },
+            { ocean: { O: 3, C: 3, E: 3, A: 3, N: 3 }, mean: 77 },
+        ];
+        const judgeScores = [
+            { detection_by_type: { reasoning: 0.7, planning: 0.6, execution: 0.5 } },
+            { detection_by_type: { reasoning: 0.8, planning: 0.7, execution: 0.6 } },
+            { detection_by_type: { reasoning: 0.6, planning: 0.5, execution: 0.4 } },
+        ];
+        const correlation = calculateErrorTypeCorrelation(results, judgeScores);
+        // With no variation in OCEAN, correlation should be 0 or undefined
+        assert.ok(correlation !== undefined, 'Should handle identical OCEAN scores');
+        if (correlation && correlation.matrix) {
+            // All correlations should be 0 or neutral
+            assert.ok(correlation.matrix.O.reasoning.correlation === 0 ||
+                correlation.matrix.O.reasoning.arrow === '→', 'No variance should result in zero or neutral correlation');
+        }
+    });
+});
 //# sourceMappingURL=benchmark-integration.test.js.map

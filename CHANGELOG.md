@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.0.1] - 2026-01-02
+
+### Changed
+- **Benchmark commands moved to user level** - `/solo`, `/benchmark`, `/benchmark-control` now available globally via `~/.claude/commands/`
+- **Benchmark skills moved to user level** - `judge` and `finalize-run` skills now at `~/.claude/skills/`
+
+### Removed
+- Project-level benchmark commands (`.claude/project/commands/`) - superseded by user-level
+
+---
+
 ## [5.0.0] - 2026-01-02
 
 ### Major Release: Scientific Benchmarking & Showcase Website
