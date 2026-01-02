@@ -1654,8 +1654,11 @@ backlog:
             - "Compare this team" button
           points: 3
           priority: P1
-          status: ready
+          status: done
+          completed: 2026-01-02
           repos: pennyfarthing
+          branch: feat/13-5-theme-detail-page
+          pr: https://github.com/1898andCo/pennyfarthing/pull/51
           jira: https://1898andco.atlassian.net/browse/MSSCI-11299
           acceptance_criteria:
             - 64 theme detail pages generated
@@ -1919,7 +1922,8 @@ backlog:
             Mix of single-type and mixed-type scenarios across difficulties.
           points: 5
           priority: P1
-          status: ready
+          status: in-progress
+          started: 2026-01-02
           repos: pennyfarthing
           acceptance_criteria:
             - 10 scenarios in scenarios/debugging/
