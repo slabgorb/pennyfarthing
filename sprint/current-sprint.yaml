@@ -1830,3 +1830,100 @@ backlog:
             - Touch targets meet accessibility guidelines
             - Social sharing shows proper previews
             - Search engines can index all pages
+
+    - id: epic-14
+      title: "TRAIL-Inspired OCEAN Correlation Research"
+      description: |
+        Leverage TRAIL benchmark's agentic error taxonomy to deepen OCEAN personality →
+        problem space correlation research. Build on existing infrastructure (630 OCEAN
+        profiles, /judge, benchmark-integration.ts) to answer: which OCEAN dimensions
+        predict which error-detection capabilities?
+
+        Key deliverables:
+        - Extended scenario schema with error_type taxonomy (reasoning/planning/execution)
+        - 10 debugging challenge scenarios tagged by TRAIL error types
+        - TRAIL-OCEAN hypothesis mapping document
+        - Error-detection mode for /judge skill
+        - OCEAN × error-type correlation heat map visualization
+      points: 14
+      priority: P1
+      marker: "strategic"
+      repos: pennyfarthing
+      target_sprint: 6
+      plan_file: ~/.claude/plans/deep-brewing-rain.md
+      stories:
+        - id: "14-1"
+          title: "Extend scenario schema with error_type taxonomy"
+          description: |
+            Add error_type field to baseline_issues items in schema.yaml.
+            Enum: reasoning, planning, execution (TRAIL categories).
+          points: 1
+          priority: P1
+          status: ready
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Schema validates error_type field on baseline_issues
+            - Enum restricts to reasoning, planning, execution
+            - Existing scenarios pass validation (field is optional)
+
+        - id: "14-2"
+          title: "Write TRAIL-OCEAN hypothesis mapping"
+          description: |
+            Document a priori predictions before running experiments.
+            Map each TRAIL error category to primary/secondary OCEAN predictors.
+          points: 2
+          priority: P1
+          status: ready
+          repos: pennyfarthing
+          acceptance_criteria:
+            - All 3 TRAIL categories mapped to OCEAN dimensions
+            - Primary and secondary predictors identified
+            - Testable predictions stated
+            - Methodology section explains testing approach
+
+        - id: "14-3"
+          title: "Add error-detection mode to /judge"
+          description: |
+            Extend judge with TRAIL-aware scoring that tracks error types.
+            New mode: --mode error-detection with per-type detection rates.
+          points: 3
+          priority: P1
+          status: ready
+          repos: pennyfarthing
+          acceptance_criteria:
+            - --mode error-detection activates type-aware scoring
+            - Output includes per-type detection rates
+            - Identifies strengths/weaknesses by error type
+            - Falls back gracefully if no error_type tags present
+
+        - id: "14-4"
+          title: "Create debugging challenge scenarios"
+          description: |
+            Build 10 new scenarios tagged with TRAIL error types.
+            Mix of single-type and mixed-type scenarios across difficulties.
+          points: 5
+          priority: P1
+          status: ready
+          repos: pennyfarthing
+          acceptance_criteria:
+            - 10 scenarios in scenarios/debugging/
+            - Each scenario has 4-8 baseline_issues with error_type tags
+            - Mix of single-type and mixed-type scenarios
+            - Difficulty calibrated (easy/medium/hard distribution)
+            - All pass schema validation
+
+        - id: "14-5"
+          title: "Build OCEAN × error-type correlation heat map"
+          description: |
+            Extend benchmark-integration.ts to analyze and visualize
+            OCEAN-to-error-type correlations. 5×3 matrix output.
+          points: 3
+          priority: P1
+          status: ready
+          repos: pennyfarthing
+          acceptance_criteria:
+            - calculateErrorTypeCorrelation() implemented and tested
+            - generateOceanErrorHeatMap() produces 5×3 matrix
+            - Markdown rendering shows directional arrows + effect sizes
+            - Integrates with existing generateBenchmarkReport()
+            - Tests cover edge cases
