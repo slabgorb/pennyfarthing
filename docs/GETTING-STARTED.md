@@ -74,9 +74,7 @@ just test   # Run tests
 Edit `.claude/persona-config.yaml`:
 
 ```yaml
-theme: discworld    # Options: discworld, star-trek, star-trek-tos,
-                    #          literary-classics, jane-austen,
-                    #          shakespeare, minimalist
+theme: discworld    # 63 themes available - see THEME-COMPARISON.md
 ```
 
 ## Your First Work Session
