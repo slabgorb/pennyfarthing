@@ -1622,6 +1622,7 @@ backlog:
             - TypeScript types for Theme, Agent, OceanScores
             - themes.json generated in public/ for client queries
             - Build completes in < 30 seconds
+          completion_summary: "Implemented ESM-compatible build script (generate-themes.ts) with prebuild hook integration. Created YAML→JSON pipeline with type-safe transformations. All 63 themes + generated types generate themes.json (~600KB) during build. 2 integration tests validate output and performance."
 
         # Phase 2: Browse Experience
         - id: "13-4"
