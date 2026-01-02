@@ -2,6 +2,8 @@
 
 How to choose a theme based on personality dimensions and team fit.
 
+> **63 themes available** - All themes include OCEAN (Big Five) personality profiles, Chernoff face visualizations, and spider charts. This guide covers personality theory and highlights selected themes. Run `pennyfarthing theme list` to see all available themes.
+
 ## Personality Dimensions
 
 Themes map across three axes:
@@ -91,38 +93,85 @@ Each theme rated Low (L), Medium (M), or High (H) on each trait:
 | **Ted Lasso** | H | M | H | H | L | Unconventional optimists, supportive, emotionally stable |
 | **The Expanse** | M | H | L | L | M | Pragmatic realists, terse, skeptical, competent |
 
-### OCEAN Radar Charts
+### All 63 Themes by Category
 
-**High Openness Themes** (creative, unconventional):
-```
-A-Team, Discworld, Legion of Doom, Parks & Rec,
-Princess Bride, Shakespeare, Star Trek TNG,
-Star Trek TOS, Ted Lasso
-```
+#### Sci-Fi TV
+| Theme | O | C | E | A | N | Notes |
+|-------|---|---|---|---|---|-------|
+| `the-expanse` | M | H | L | L | M | Pragmatic realists |
+| `star-trek-tng` | H | H | M | H | L | Principled explorers |
+| `star-trek-tos` | H | M | H | M | L | Bold pioneers |
+| `firefly` | H | M | H | M | M | Scrappy survivors |
+| `battlestar-galactica` | M | H | M | L | H | Desperate leaders |
+| `doctor-who` | H | L | H | H | M | Eccentric adventurers |
+| `babylon-5` | H | H | M | M | M | Diplomatic idealists |
 
-**High Conscientiousness Themes** (organized, methodical):
-```
-A-Team, Jane Austen, Parks & Rec, Star Trek TNG,
-Superfriends, The Expanse
-```
+#### Sci-Fi Film
+| Theme | O | C | E | A | N | Notes |
+|-------|---|---|---|---|---|-------|
+| `star-wars` | H | M | H | H | M | Hopeful heroes |
+| `dune` | H | H | L | L | M | Political strategists |
+| `blade-runner` | M | M | L | L | H | Philosophical noir |
+| `the-matrix` | H | M | M | L | M | Reality questioners |
+| `alien` | M | H | L | L | H | Survival pragmatists |
 
-**High Extraversion Themes** (expressive, theatrical):
-```
-A-Team, Legion of Doom, Parks & Rec, Shakespeare,
-Star Trek TOS, Superfriends, Ted Lasso
-```
+#### Fantasy
+| Theme | O | C | E | A | N | Notes |
+|-------|---|---|---|---|---|-------|
+| `game-of-thrones` | M | M | M | L | H | Political schemers |
+| `lord-of-the-rings` | H | H | M | H | M | Noble fellowship |
+| `the-witcher` | M | M | L | L | M | Cynical professionals |
+| `sandman` | H | L | L | M | M | Dreamy philosophers |
+| `his-dark-materials` | H | M | M | H | M | Rebellious seekers |
 
-**High Agreeableness Themes** (supportive, collaborative):
-```
-Parks & Rec, Princess Bride, Star Trek TNG,
-Superfriends, Ted Lasso
-```
+#### Drama
+| Theme | O | C | E | A | N | Notes |
+|-------|---|---|---|---|---|-------|
+| `breaking-bad` | H | H | L | L | H | Meticulous descent |
+| `the-wire` | M | H | L | L | M | Systemic realists |
+| `succession` | M | L | H | L | H | Ruthless heirs |
+| `mad-men` | M | M | M | L | M | Stylish cynics |
+| `deadwood` | M | M | M | L | H | Frontier builders |
+| `fargo` | M | H | L | M | M | Midwestern noir |
 
-**Low Neuroticism Themes** (calm, stable):
-```
-A-Team, Jane Austen, Princess Bride, Star Trek TNG,
-Star Trek TOS, Superfriends, Ted Lasso
-```
+#### Comedy
+| Theme | O | C | E | A | N | Notes |
+|-------|---|---|---|---|---|-------|
+| `the-office` | M | M | H | M | M | Awkward workplace |
+| `parks-and-rec` | H | H | H | H | M | Enthusiastic organizers |
+| `ted-lasso` | H | M | H | H | L | Relentless optimists |
+| `the-good-place` | H | M | H | H | M | Ethical explorers |
+| `arrested-development` | H | L | H | L | M | Dysfunctional chaos |
+| `schitts-creek` | M | L | H | H | M | Reluctant growth |
+
+#### Literary
+| Theme | O | C | E | A | N | Notes |
+|-------|---|---|---|---|---|-------|
+| `discworld` | H | M | L | M | M | Absurdist philosophers |
+| `shakespeare` | H | M | H | M | M | Poetic dramatists |
+| `jane-austen` | M | H | L | M | L | Social observers |
+| `sherlock-holmes` | H | H | L | L | L | Deductive masters |
+| `hitchhikers-guide` | H | L | M | M | L | Cosmic absurdists |
+
+#### Games
+| Theme | O | C | E | A | N | Notes |
+|-------|---|---|---|---|---|-------|
+| `mass-effect` | H | H | M | H | M | Galactic commanders |
+| `portal` | H | L | M | L | L | Sardonic scientists |
+| `baldurs-gate` | H | M | M | M | M | D&D adventurers |
+| `disco-elysium` | H | L | M | L | H | Chaotic detectives |
+
+### OCEAN Quick Filters
+
+**High Openness** (creative, unconventional): `discworld`, `shakespeare`, `ted-lasso`, `doctor-who`, `hitchhikers-guide`, `sandman`
+
+**High Conscientiousness** (organized, methodical): `star-trek-tng`, `the-expanse`, `sherlock-holmes`, `breaking-bad`, `dune`
+
+**High Extraversion** (expressive, theatrical): `parks-and-rec`, `ted-lasso`, `shakespeare`, `succession`, `star-trek-tos`
+
+**High Agreeableness** (supportive, collaborative): `ted-lasso`, `star-trek-tng`, `lord-of-the-rings`, `the-good-place`, `star-wars`
+
+**Low Neuroticism** (calm, stable): `ted-lasso`, `sherlock-holmes`, `a-team`, `portal`, `hitchhikers-guide`
 
 ### Choosing by OCEAN Profile
 
@@ -270,3 +319,13 @@ theme: the-expanse    # Change this value
 All agents adopt new characters immediately. No restart required.
 
 See [PERSONAS.md](PERSONAS.md) for full theme configuration and custom theme creation.
+
+---
+
+## Research Documents
+
+For deeper OCEAN research and methodology:
+
+- [OCEAN Benchmarking Guide](../pennyfarthing-dist/personas/OCEAN-BENCHMARKING.md) - Role recommendations, universe strengths, performance correlations
+- [OCEAN to Face Mapping](../pennyfarthing-dist/personas/OCEAN-TO-FACE.md) - Chernoff face visualization specification
+- [Showcase Website](SHOWCASE.md) - Interactive theme gallery with spider charts and character profiles
