@@ -49,6 +49,7 @@ sprint/                  # Sprint tracking (current-sprint.yaml, archive/, conte
 2. **State Detection** - Agents detect workflow state from `.session/{story-id}-session.md`, not explicit commands
 3. **Subagent Delegation** - Opus handles reasoning; Haiku subagents handle mechanical work (tests, git, status)
 4. **Lazy Context Loading** - Context loaded only when needed per agent type
+5. **Tracked Build Output** - `dist/` is committed (not gitignored) because we serve directly from GitHub
 
 ### TDD Flow
 

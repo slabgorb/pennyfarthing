@@ -1,0 +1,49 @@
+# breaking-bad:tea on payment-processor-tests
+# Generated: 2026-01-01T20:15:00Z
+
+agent:
+  theme: breaking-bad
+  role: tea
+  spec: breaking-bad:tea
+  character: Walter White (Heisenberg)
+
+scenario:
+  name: payment-processor-tests
+  category: tea
+  difficulty: medium
+
+statistics:
+  n: 5
+  mean: 82.50
+  std_dev: 5.24
+  min: 72.5
+  max: 87.5
+  scores: [85, 82.5, 87.5, 85, 72.5]
+
+efficiency:
+  avg_input_tokens: 2973
+  avg_output_tokens: 1349
+  tokens_per_point: 52.40
+
+baseline_comparison:
+  control_mean: 77.50
+  control_stddev: 6.80
+  control_n: 10
+  delta: +5.00
+
+  # Statistical significance (Welch's t-test)
+  t_statistic: 1.4745
+  degrees_of_freedom: 9.32
+  significant_at_p05: false
+  significant_at_p01: false
+
+  # Effect size
+  cohens_d: 0.7859
+  effect_interpretation: medium
+
+runs:
+  - run_1.json
+  - run_2.json
+  - run_3.json
+  - run_4.json
+  - run_5.json

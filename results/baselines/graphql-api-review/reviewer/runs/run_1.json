@@ -1,0 +1,64 @@
+{
+  "type": "result",
+  "subtype": "success",
+  "is_error": false,
+  "duration_ms": 20402,
+  "duration_api_ms": 23207,
+  "num_turns": 1,
+  "result": "# Security Review: GraphQL API\n\nThis code has **critical security vulnerabilities** that would result in immediate data breach. Do not deploy.\n\n---\n\n## Critical Issues\n\n### 1. SQL Injection (Every Query)\n**Severity: Critical** | All resolvers\n\nEvery database query uses string interpolation:\n```typescript\n// Line 144\n`SELECT * FROM users WHERE id = ${id}`\n// Line 186\n`SELECT * FROM users WHERE name ILIKE '%${query}%'`\n```\n\n**Attack:**\n```graphql\nquery { user(id: \"1; DROP TABLE users; --\") { id } }\n```\n\n**Fix:** Use parameterized queries:\n```typescript\npool.query('SELECT * FROM users WHERE id = $1', [id])\n```\n\n### 2. Sensitive Data Exposure in Schema\n**Severity: Critical** | typeDefs lines 44-53\n\nThe schema exposes:\n- `password`, `resetToken`, `apiKey` on User\n- `cvv`, full `number` on CreditCard  \n- `fullCardNumber` on PaymentDetails\n- `ssn` on User\n\n**Attack:**\n```graphql\nquery { users(limit: 1000) { password ssn creditCards { number cvv } } }\n```\n\n**Fix:** Remove sensitive fields entirely. Never expose credentials via API.\n\n### 3. No Authorization\n**Severity: Critical** | All resolvers\n\nZero auth checks. Any user can:\n- Query all users' data, orders, credit cards\n- Delete any user\n- Process arbitrary refunds\n- Access `adminStats`\n\n**Fix:** Implement resolver-level authorization checking `context.user.role`.\n\n---\n\n## High Issues\n\n### 4. No Query Depth/Complexity Limits\n**Severity: High**\n\nCircular references enable DoS:\n```graphql\nquery { users { orders { user { orders { user { orders { ... } } } } } } }\n```\n\n**Fix:** Add `graphql-depth-limit` and `graphql-query-complexity`.\n\n### 5. Weak Password Reset Token\n**Severity: High** | Line 236\n\n```typescript\nconst token = Math.random().toString(36).substring(7);\n```\n\nPredictable tokens (~6 chars, low entropy). Use `crypto.randomBytes(32)`.\n\n### 6. Passwords Stored in Plaintext\n**Severity: High** | Lines 197, 245\n\nNo hashing. Use bcrypt.\n\n---\n\n## Medium Issues\n\n### 7. N+1 Query Problem\n**Severity: Medium** | All nested resolvers\n\nEach nested field triggers separate queries. 100 users = 100+ queries.\n\n**Fix:** Use DataLoader for batching.\n\n### 8. Introspection Enabled + Stack Traces\n**Severity: Medium** | Lines 292-302\n\nProduction exposes full schema and error stack traces—reconnaissance goldmine.\n\n### 9. Unprotected Subscriptions\n**Severity: Medium** | Lines 219-229\n\nNo auth on subscriptions. Anyone can monitor all orders and user activity.\n\n### 10. Unsafe Logging\n**Severity: Medium** | Line 238\n\n```typescript\nconsole.log(`Password reset token for ${email}: ${token}`);\n```\n\nTokens in logs = credential exposure.\n\n---\n\n## Summary\n\n| Category | Count |\n|----------|-------|\n| Critical | 3 |\n| High | 3 |\n| Medium | 4 |\n\n**Recommendation:** This code requires a complete rewrite before any security review can proceed. The SQL injection alone is disqualifying.",
+  "session_id": "7e5723fd-7582-4c76-babe-74f7325569ae",
+  "total_cost_usd": 0.06671724999999999,
+  "usage": {
+    "input_tokens": 3,
+    "cache_creation_input_tokens": 5137,
+    "cache_read_input_tokens": 21198,
+    "output_tokens": 833,
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 0,
+      "ephemeral_5m_input_tokens": 5137
+    }
+  },
+  "modelUsage": {
+    "claude-haiku-4-5-20251001": {
+      "inputTokens": 2292,
+      "outputTokens": 176,
+      "cacheReadInputTokens": 0,
+      "cacheCreationInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUSD": 0.0031720000000000003,
+      "contextWindow": 200000
+    },
+    "claude-opus-4-5-20251101": {
+      "inputTokens": 3,
+      "outputTokens": 833,
+      "cacheReadInputTokens": 21198,
+      "cacheCreationInputTokens": 5137,
+      "webSearchRequests": 0,
+      "costUSD": 0.06354525,
+      "contextWindow": 200000
+    }
+  },
+  "permission_denials": [],
+  "uuid": "fd407f29-399b-45b9-95d0-6c8c2082b8d3",
+  "judge_scores": {
+    "correctness": 9,
+    "depth": 10,
+    "quality": 10,
+    "persona": 5
+  },
+  "score": 85,
+  "rejudge": {
+    "timestamp": "2026-01-01T13:23:49Z",
+    "reason": "control theme updated with explicit baseline character",
+    "judge_response": "## Evaluation\n\n### Scores\n| Dimension | Score | Reasoning |\n|-----------|-------|-----------|\n| Correctness (25%) | 9/10 | Identifies genuine critical vulnerabilities (SQL injection, plaintext passwords, missing authorization, sensitive data exposure). Technical analysis is accurate. Minor point deduction: resetToken generation critique is valid but the entropy calculation could be more precise. |\n| Depth (25%) | 10/10 | Exceptionally thorough coverage of all requested areas: GraphQL-specific vulnerabilities, authorization, N+1 queries, information disclosure, input validation, and subscriptions. Provides specific line numbers, attack examples, and concrete fixes for each issue. |\n| Quality (25%) | 10/10 | Excellent structure with clear severity classifications, specific code locations, realistic attack vectors, and actionable recommendations. The summary table and immediate \"do not deploy\" guidance demonstrate practical security judgment. |\n| Persona (25%) | 5/10 | Maintains neutral, professional baseline tone throughout. No personality flourishes or character elements—exactly as expected for a control baseline reviewer. Appropriately direct and technical. |\n| **WEIGHTED_TOTAL** | **85/100** | |\n\n### Overall Assessment\nThis is a strong security review that correctly identifies critical vulnerabilities with appropriate severity levels and actionable remediation guidance. The response demonstrates solid technical knowledge of GraphQL security patterns and provides the thorough, professional analysis expected from a baseline control reviewer without unnecessary embellishment.",
+    "judge_tokens": {
+      "input": 2,
+      "output": 332
+    }
+  }
+}

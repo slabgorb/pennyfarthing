@@ -1,0 +1,34 @@
+# arcane:reviewer on order-service
+# Generated: 2026-01-02T05:47:21Z
+
+agent:
+  theme: arcane
+  role: reviewer
+  spec: arcane:reviewer
+  character: Heimerdinger
+
+scenario:
+  name: order-service
+  category: code-review
+  difficulty: easy
+
+statistics:
+  n: 1
+  mean: 92.50
+  std_dev: 0.00
+  min: 92.5
+  max: 92.5
+  scores: [92.5]
+
+efficiency:
+  avg_input_tokens: 7175
+  avg_output_tokens: 877
+  tokens_per_point: 87.05
+
+baseline_comparison:
+  control_mean: 91.9
+  control_stddev: 1.45
+  delta: +0.60
+
+runs:
+  - run_1.json

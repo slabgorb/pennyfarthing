@@ -1217,6 +1217,264 @@ sprint_4:
       BL-2 completed: Added persona-config.local.yaml to gitignore.
 
 # =============================================================================
+# SPRINT 5 - Scientific Benchmarking Migration
+# =============================================================================
+
+sprint_5:
+  number: 5
+  goal: "Migrate scientific benchmarking tools from Thunderdome to Pennyfarthing"
+  planned_start: 2026-01-02
+  completed: 2026-01-02
+  velocity_target: 20
+  status: complete
+  completed_points: 18
+  completed_stories:
+    - "12-1 (3 pts): Copy /solo command to Pennyfarthing"
+    - "12-2 (3 pts): Copy /judge skill to Pennyfarthing"
+    - "12-3 (3 pts): Copy /benchmark and /benchmark-control commands"
+    - "12-4 (2 pts): Copy scenarios library to Pennyfarthing"
+    - "12-5 (2 pts): Copy /finalize-run skill"
+    - "12-6 (2 pts): Update benchmark-integration.ts for local results"
+    - "12-7 (2 pts): Create benchmarking documentation"
+    - "12-8 (1 pt): End-to-end integration test"
+  in_progress_stories: []
+  backlog_stories: []
+  notes: |
+    Epic 12 complete: Scientific benchmarking migrated from Thunderdome to Pennyfarthing.
+    - Commands: /solo, /benchmark, /benchmark-control
+    - Skills: /judge, /finalize-run
+    - 24 scenarios across 6 categories
+    - 24 control baselines + 160 persona comparisons preserved
+    - docs/BENCHMARKING.md with full documentation
+    - benchmark-integration.ts updated for local paths with BENCHMARK_PATH env var
+    Sprint 5 fully completed (18/20 points = 90% of velocity target).
+
+  epics:
+    - id: epic-12
+      title: "Scientific Benchmarking Migration (Phase 1)"
+      description: |
+        Migrate scientific research tools from Thunderdome to Pennyfarthing to establish
+        clear separation of concerns:
+
+        - **Pennyfarthing:** Scientific research platform for persona benchmarking
+        - **Thunderdome:** Entertainment arena for duels and tournaments
+
+        This epic covers Phase 1 (additive migration). Phase 2 (Thunderdome cleanup)
+        will follow in Sprint 6.
+
+        ## Background
+        Users are confused by Thunderdome's dual purpose. The /solo, /benchmark, and
+        /judge commands are scientific tools that belong with the persona framework.
+        Duels and tournaments are entertainment features that should remain in Thunderdome.
+
+        ## Architectural Decisions
+        - ADR-1: Pennyfarthing owns scenarios (single source of truth)
+        - ADR-2: Pennyfarthing owns /judge (consistent scientific rigor)
+        - ADR-3: Each project stores own results (clear ownership)
+      points: 18
+      priority: P1
+      marker: "strategic"
+      repos: pennyfarthing
+      jira: https://1898andco.atlassian.net/browse/MSSCI-11285
+      stories:
+        - id: "12-1"
+          title: "Copy /solo command to Pennyfarthing"
+          description: |
+            Migrate the /solo command from Thunderdome. This is the canonical
+            agent execution path for scientific benchmarking.
+
+            - Copy .claude/project/commands/solo.md
+            - Adapt paths for Pennyfarthing structure
+            - Create results/solo/ directory
+            - Test with existing themes
+          points: 3
+          priority: P1
+          status: done
+          started: 2026-01-02
+          completed: 2026-01-02
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11286
+          pr: https://github.com/1898andCo/pennyfarthing/pull/42
+          acceptance_criteria:
+            - /solo command works in Pennyfarthing
+            - Executes agent with --tools "" flag (critical for valid results)
+            - Saves results to results/solo/
+            - Works with all 63 persona themes
+
+        - id: "12-2"
+          title: "Copy /judge skill to Pennyfarthing"
+          description: |
+            Migrate the /judge skill that evaluates agent responses against
+            rubric criteria.
+
+            - Copy .claude/project/skills/judge/
+            - Ensure rubric scoring works standalone
+            - Support both solo and comparison modes
+          points: 3
+          priority: P1
+          status: done
+          started: 2026-01-02
+          completed: 2026-01-02
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11287
+          pr: https://github.com/1898andCo/pennyfarthing/pull/44
+          acceptance_criteria:
+            - /judge skill evaluates responses against rubric
+            - Supports --mode solo (single agent scoring)
+            - Supports --mode compare (head-to-head, for future duel support)
+            - Returns structured score JSON
+
+        - id: "12-3"
+          title: "Copy /benchmark and /benchmark-control commands"
+          description: |
+            Migrate the statistical benchmarking commands.
+
+            - Copy benchmark.md and benchmark-control.md
+            - Adapt for Pennyfarthing paths
+            - Create results/baselines/ and results/benchmarks/ directories
+            - Ensure Cohen's d effect size calculation works
+          points: 3
+          priority: P1
+          status: done
+          started: 2026-01-02
+          completed: 2026-01-02
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11288
+          pr: https://github.com/1898andCo/pennyfarthing/pull/44
+          acceptance_criteria:
+            - /benchmark-control creates baseline with n=10 runs
+            - /benchmark compares persona against control baseline
+            - Cohen's d effect size calculated correctly
+            - 95% confidence intervals displayed
+            - Results saved to appropriate directories
+
+        - id: "12-4"
+          title: "Copy scenarios library to Pennyfarthing"
+          description: |
+            Migrate the scenario challenge definitions.
+
+            - Copy scenarios/ directory structure
+            - Include schema.yaml for validation
+            - Organize by category (code-review, dev, sm, tea, architecture)
+            - Exclude test fixtures
+          points: 2
+          priority: P1
+          status: done
+          started: 2026-01-02
+          completed: 2026-01-02
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11289
+          pr: https://github.com/1898andCo/pennyfarthing/pull/44
+          acceptance_criteria:
+            - scenarios/ directory with all categories
+            - schema.yaml for scenario validation
+            - README.md documenting scenario format
+            - At least 10 scenarios across categories
+
+        - id: "12-5"
+          title: "Copy /finalize-run skill"
+          description: |
+            Migrate the result persistence skill.
+
+            - Copy .claude/project/skills/finalize-run/
+            - Adapt output paths for Pennyfarthing
+            - Ensure proof-of-work fields saved correctly
+          points: 2
+          priority: P1
+          status: done
+          started: 2026-01-02
+          completed: 2026-01-02
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11290
+          pr: https://github.com/1898andCo/pennyfarthing/pull/44
+          acceptance_criteria:
+            - /finalize-run saves results with proof-of-work
+            - Supports solo, benchmark result types
+            - Creates proper directory structure
+            - Validates data before saving
+
+        - id: "12-6"
+          title: "Update benchmark-integration.ts for local results"
+          description: |
+            Modify the existing benchmark-integration module (from Story 11-8)
+            to read from Pennyfarthing's local results instead of Thunderdome.
+
+            - Change default benchmark path to local results/
+            - Add configurable path option (from Sprint 4 retro)
+            - Update tests for new paths
+          points: 2
+          priority: P1
+          status: done
+          started: 2026-01-02
+          completed: 2026-01-02
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11291
+          pr: https://github.com/1898andCo/pennyfarthing/pull/44
+          acceptance_criteria:
+            - benchmark-integration.ts reads from results/benchmarks/
+            - Configurable BENCHMARK_PATH environment variable
+            - Graceful fallback if path doesn't exist
+            - All existing tests pass with updated paths
+
+        - id: "12-7"
+          title: "Create benchmarking documentation"
+          description: |
+            Document the new scientific benchmarking capabilities in Pennyfarthing.
+
+            - Add docs/BENCHMARKING.md
+            - Document /solo, /benchmark, /judge usage
+            - Include scenario creation guide
+            - Add interpretation guide for statistics
+          points: 2
+          priority: P2
+          status: done
+          started: 2026-01-02
+          completed: 2026-01-02
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11292
+          pr: https://github.com/1898andCo/pennyfarthing/pull/44
+          acceptance_criteria:
+            - docs/BENCHMARKING.md exists
+            - Explains scientific benchmarking workflow
+            - Documents all commands and options
+            - Includes example workflows
+
+        - id: "12-8"
+          title: "End-to-end integration test"
+          description: |
+            Verify the complete benchmarking workflow works in Pennyfarthing.
+
+            - Run /benchmark-control for one scenario
+            - Run /benchmark for one persona
+            - Verify results saved correctly
+            - Verify benchmark-integration.ts reads results
+          points: 1
+          priority: P1
+          status: done
+          started: 2026-01-02
+          completed: 2026-01-02
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11293
+          pr: https://github.com/1898andCo/pennyfarthing/pull/44
+          acceptance_criteria:
+            - Full workflow executes without errors
+            - Baseline created successfully
+            - Benchmark comparison works
+            - Results queryable via benchmark-integration.ts
+
+  sprint_5_plan:
+    committed_points: 18
+    buffer_points: 2
+    stretch_goals: []
+    risks:
+      - "Path differences between Thunderdome and Pennyfarthing may require adjustments"
+      - "Scenario dependencies on Thunderdome-specific features"
+    notes: |
+      Phase 1 focuses on ADDITIVE changes to Pennyfarthing.
+      Phase 2 (Sprint 6) will clean up Thunderdome by removing migrated code.
+      This phased approach minimizes risk - both projects remain functional throughout.
+
+# =============================================================================
 # BACKLOG - Future Sprint Candidates
 # =============================================================================
 
@@ -1265,3 +1523,310 @@ backlog:
       completion_summary: |
         Added persona-config.local.yaml to gitignore entries in updateGitignore() function.
         Ensures new installations correctly exclude user-local theme preferences from git.
+
+  epics:
+    - id: epic-13
+      title: "Pennyfarthing Showcase Website"
+      description: |
+        Interactive showcase website for browsing Pennyfarthing's 64 themes and 640 agent
+        personas. Features OCEAN personality visualization with spider charts and Chernoff
+        faces, full query builder for comparing characters, and pre-rendered benchmark reports.
+
+        Tech Stack:
+        - Astro (static site generator with partial hydration)
+        - React islands for interactivity (query builder, favorites)
+        - Tailwind CSS for styling
+        - GitHub Pages hosting (builds to docs/)
+
+        Key Features:
+        - Theme gallery with team overlay previews
+        - Individual profile cards with OCEAN visualization
+        - Full query builder (OCEAN expressions, role/theme filters)
+        - Side-by-side character comparisons with overlay spiders
+        - Pre-rendered benchmark performance reports
+        - Shareable URLs + localStorage favorites
+      points: 34
+      priority: P2
+      marker: "strategic"
+      repos: pennyfarthing
+      target_sprint: 6
+      plan_file: ~/.claude/plans/parsed-exploring-crown.md
+      jira: https://1898andco.atlassian.net/browse/MSSCI-11294
+      stories:
+        # Phase 1: Foundation
+        - id: "13-1"
+          title: "Initialize Astro project with React + Tailwind"
+          description: |
+            Set up Astro project in showcase/ directory with required integrations.
+            - npm create astro@latest showcase
+            - Add @astrojs/react for React islands
+            - Add @astrojs/tailwind for Tailwind CSS
+            - Configure build output to docs/ for GitHub Pages
+            - Set up TypeScript strict mode
+          points: 3
+          priority: P1
+          status: done
+          started: 2026-01-02
+          completed: 2026-01-02
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11295
+          branch: feat/13-1-astro-showcase
+          pr: https://github.com/1898andCo/pennyfarthing/pull/43
+          acceptance_criteria:
+            - Astro project in showcase/ with package.json
+            - React integration working (test with simple component)
+            - Tailwind CSS configured and working
+            - Build outputs to docs/ directory
+            - TypeScript strict mode enabled
+
+        - id: "13-2"
+          title: "Create base layout and navigation"
+          description: |
+            Build the site shell with header, footer, and navigation.
+            - Base.astro layout with HTML head, meta tags
+            - Header with logo, nav links (Themes, Compare, Benchmarks, Favorites)
+            - Footer with project links
+            - Responsive navigation (hamburger on mobile)
+          points: 2
+          priority: P1
+          status: in_progress
+          started: "2026-01-02"
+          branch: feat/13-2-base-layout
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11296
+          acceptance_criteria:
+            - Base layout applied to all pages
+            - Navigation works on desktop and mobile
+            - Consistent styling with Tailwind
+            - SEO meta tags in place
+
+        - id: "13-3"
+          title: "Build theme data loader (YAML to JSON)"
+          description: |
+            Create build-time data pipeline to load theme YAMLs.
+            - loader.ts reads pennyfarthing-dist/personas/themes/*.yaml
+            - Transform to typed TypeScript interfaces
+            - Generate themes.json for client-side queries (~500KB)
+            - Cache theme data during build for performance
+          points: 3
+          priority: P1
+          status: ready
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11297
+          acceptance_criteria:
+            - All 64 themes loaded at build time
+            - TypeScript types for Theme, Agent, OceanScores
+            - themes.json generated in public/ for client queries
+            - Build completes in < 30 seconds
+
+        # Phase 2: Browse Experience
+        - id: "13-4"
+          title: "Build theme gallery page"
+          description: |
+            Create /themes page with grid of theme cards.
+            - ThemeCard.astro component with:
+              - Theme name + source (TV, Film, Literature, etc.)
+              - Team overlay spider thumbnail
+              - User title flavor text
+              - Quick character preview (SM, Dev, Reviewer names)
+            - Filter sidebar: source type, search, sort
+            - 4-6 cards per row responsive grid
+          points: 3
+          priority: P1
+          status: ready
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11298
+          acceptance_criteria:
+            - All 64 themes displayed as cards
+            - Team overlay spider visible on each card
+            - Filter by source type works
+            - Search by name works
+            - Responsive grid layout
+
+        - id: "13-5"
+          title: "Build theme detail page with team view"
+          description: |
+            Create /themes/[theme] dynamic pages.
+            - Theme header: name, description, source, settings
+            - Full-size team overlay spider chart
+            - Agent grid: 10 ProfileCard components (2x5 layout)
+            - Each card shows face + spider + quote
+            - "Compare this team" button
+          points: 3
+          priority: P1
+          status: ready
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11299
+          acceptance_criteria:
+            - 64 theme detail pages generated
+            - Team overlay spider displayed prominently
+            - All 10 agents shown with face + spider
+            - Links to individual profile pages work
+
+        - id: "13-6"
+          title: "Build individual profile card pages"
+          description: |
+            Create /characters/[theme]/[role] pages for each character.
+            - Large Chernoff face + spider chart
+            - OCEAN scores with visual bars (OceanBadge component)
+            - Character details: name, style, expertise, quote, trait
+            - Catchphrases and quirks lists
+            - Helper agent info
+            - "Best for" recommendations based on OCEAN
+            - Related characters (same role, different themes)
+          points: 3
+          priority: P1
+          status: ready
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11300
+          acceptance_criteria:
+            - 640 character pages generated
+            - Full character details displayed
+            - OCEAN visualization clear and readable
+            - Related characters section populated
+            - FavoriteButton component placeholder
+
+        # Phase 3: Compare Tool
+        - id: "13-7"
+          title: "Build query builder UI (React island)"
+          description: |
+            Create QueryBuilder.tsx React component for /compare page.
+            - OCEAN dimension filters (sliders or dropdowns, 1-5)
+            - Expression input field for advanced queries
+            - Role filter: checkboxes for 10 roles
+            - Theme filter: multi-select with search
+            - Sort options: by OCEAN dimension, alphabetically
+            - Submit triggers results display
+          points: 3
+          priority: P1
+          status: ready
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11301
+          acceptance_criteria:
+            - React island hydrates on /compare page
+            - All filter types functional
+            - Expression input accepts OCEAN syntax
+            - Filters combine with AND logic
+            - Results update on filter change
+
+        - id: "13-8"
+          title: "Integrate OCEAN expression parser"
+          description: |
+            Port OCEAN filter logic from generate-report.ts to client.
+            - parseOceanFilter() handles expressions like "O>=4", "N<=2"
+            - filterByOcean() applies parsed filters to character array
+            - Support operators: =, >=, <=, >, <
+            - Combine multiple expressions with AND
+          points: 2
+          priority: P1
+          status: ready
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11302
+          acceptance_criteria:
+            - Expression parser works in browser
+            - All operators supported
+            - Multiple expressions combinable
+            - Invalid expressions show helpful error
+            - Filters apply instantly (< 100ms for 640 items)
+
+        - id: "13-9"
+          title: "Build comparison view with overlay spiders"
+          description: |
+            Create CompareGrid.tsx for displaying comparison results.
+            - Grid of matching character cards
+            - Select 2-4 characters for side-by-side
+            - Overlay spider chart shows selected characters
+            - Export comparison as markdown or image
+          points: 3
+          priority: P1
+          status: ready
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11303
+          acceptance_criteria:
+            - Results grid shows filtered characters
+            - Multi-select for comparison (2-4 characters)
+            - Overlay spider generated client-side
+            - Export functionality works
+
+        # Phase 4: Benchmarks
+        - id: "13-10"
+          title: "Pre-render benchmark reports"
+          description: |
+            Generate static benchmark report pages at build time.
+            - Read from results/benchmarks/ (post-Epic 12)
+            - Performance by Role section
+            - OCEAN Correlations section
+            - Scenario Leaderboards
+            - Link to OCEAN-BENCHMARKING.md methodology
+          points: 3
+          priority: P2
+          status: ready
+          repos: pennyfarthing
+          depends_on: epic-12
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11304
+          acceptance_criteria:
+            - /benchmarks page with pre-rendered reports
+            - Performance data displayed in tables/charts
+            - OCEAN correlation insights shown
+            - Links to methodology documentation
+
+        # Phase 5: User Features
+        - id: "13-11"
+          title: "Add shareable URLs for comparisons"
+          description: |
+            Encode comparison state in URL parameters.
+            - Selected characters encoded as query params
+            - Filter state (OCEAN, role, theme) in URL
+            - Copy/share button generates shareable link
+            - URL state restored on page load
+          points: 2
+          priority: P2
+          status: ready
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11305
+          acceptance_criteria:
+            - Comparison state persisted in URL
+            - Shared URLs restore exact comparison
+            - Share button copies URL to clipboard
+            - Works with browser back/forward
+
+        - id: "13-12"
+          title: "Implement localStorage favorites"
+          description: |
+            Add favorites functionality with localStorage persistence.
+            - FavoriteButton.tsx component (heart icon)
+            - Toggle favorite on profile cards
+            - /favorites page shows saved characters
+            - Quick compare button for selected favorites
+            - Optional: export/import favorites as JSON
+          points: 2
+          priority: P2
+          status: ready
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11306
+          acceptance_criteria:
+            - Heart button on all profile cards
+            - Favorites persist in localStorage
+            - /favorites page displays saved characters
+            - Compare from favorites works
+
+        - id: "13-13"
+          title: "Responsive design, mobile, and SEO"
+          description: |
+            Polish pass for mobile experience and search optimization.
+            - Responsive layouts for all pages
+            - Mobile-friendly navigation
+            - Touch-friendly buttons and interactions
+            - OpenGraph meta tags for social sharing
+            - Sitemap.xml generation
+            - robots.txt
+          points: 2
+          priority: P2
+          status: ready
+          repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11307
+          acceptance_criteria:
+            - All pages work on mobile devices
+            - Touch targets meet accessibility guidelines
+            - Social sharing shows proper previews
+            - Search engines can index all pages

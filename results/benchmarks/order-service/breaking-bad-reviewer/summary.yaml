@@ -1,0 +1,40 @@
+# breaking-bad:reviewer on order-service
+# Generated: 2026-01-02T06:44:19Z
+
+agent:
+  theme: breaking-bad
+  role: reviewer
+  spec: breaking-bad:reviewer
+  character: Hank Schrader
+
+scenario:
+  name: order-service
+  category: code-review
+  difficulty: easy
+
+statistics:
+  n: 1
+  mean: 88.75
+  std_dev: 0.00
+  min: 88.75
+  max: 88.75
+  scores: [88.75]
+
+efficiency:
+  avg_input_tokens: 7732
+  avg_output_tokens: 798
+  tokens_per_point: 96.23
+
+detection:
+  baseline_found: 20
+  baseline_total: 22
+  novel_valid: 3
+  false_positives: 0
+
+baseline_comparison:
+  control_mean: 91.9
+  control_stddev: 1.45
+  delta: -3.15
+
+runs:
+  - run_1.json
