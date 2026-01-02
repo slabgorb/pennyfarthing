@@ -14,6 +14,7 @@ Complete documentation for the Pennyfarthing agent orchestration framework.
 | [Personas](PERSONAS.md) | Persona system and themes |
 | [Configuration](CONFIGURATION.md) | Configuration reference |
 | [Skills](SKILLS.md) | Skills reference |
+| [Benchmarking](BENCHMARKING.md) | Scientific persona evaluation |
 
 ## What is Pennyfarthing?
 

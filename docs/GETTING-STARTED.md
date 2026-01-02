@@ -141,9 +141,38 @@ npm install --save-dev pennyfarthing
 pennyfarthing init
 ```
 
+## Scientific Benchmarking (Optional)
+
+Evaluate persona effectiveness with standardized scenarios:
+
+```bash
+# Create a baseline (run 10 times)
+/benchmark-control reviewer --scenario order-service
+
+# Compare a persona against baseline
+/benchmark discworld reviewer --scenario order-service
+```
+
+See [BENCHMARKING.md](BENCHMARKING.md) for complete guide.
+
+## Showcase Website
+
+Browse all 63 themes and 630 character profiles at the interactive showcase:
+
+```bash
+# Build and serve locally
+cd showcase && npm run dev
+```
+
+Features:
+- Theme gallery with OCEAN spider charts
+- Individual character profiles with Chernoff faces
+- Side-by-side personality comparisons
+
 ## Next Steps
 
 - [User Guide](USER-GUIDE.md) - Complete documentation
 - [Workflows](WORKFLOWS.md) - Detailed workflow guides
 - [Personas](PERSONAS.md) - Customize agent personalities
 - [Commands](COMMANDS.md) - All available commands
+- [Benchmarking](BENCHMARKING.md) - Scientific persona evaluation
