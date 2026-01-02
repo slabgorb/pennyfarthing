@@ -1612,7 +1612,8 @@ backlog:
             - Cache theme data during build for performance
           points: 3
           priority: P1
-          status: ready
+          status: in-progress
+          started: 2026-01-02
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11297
           acceptance_criteria:
@@ -1948,7 +1949,8 @@ backlog:
             OCEAN-to-error-type correlations. 5×3 matrix output.
           points: 3
           priority: P1
-          status: ready
+          status: in_progress
+          started: 2026-01-02
           repos: pennyfarthing
           acceptance_criteria:
             - calculateErrorTypeCorrelation() implemented and tested
