@@ -2,6 +2,8 @@
 
 Interactive website for browsing themes and character profiles.
 
+**Live Site:** https://animated-meme-3e4494y.pages.github.io/showcase/
+
 ## Features
 
 - **Theme Gallery** - Browse 63 themes with OCEAN spider charts
