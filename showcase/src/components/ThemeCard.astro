@@ -1,0 +1,73 @@
+---
+/**
+ * ThemeCard Component
+ *
+ * Individual theme card for the gallery view.
+ * Shows theme name, source, spider chart, and character preview.
+ */
+
+import type { Theme } from '../lib/types';
+import SpiderChart from './SpiderChart.astro';
+
+interface Props {
+  theme: Theme;
+}
+
+const { theme } = Astro.props;
+
+// Find specific agents for preview
+const sm = theme.agents.find((a) => a.role === 'sm');
+const dev = theme.agents.find((a) => a.role === 'dev');
+const reviewer = theme.agents.find((a) => a.role === 'reviewer');
+---
+
+<article class="theme-card bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-4 flex flex-col">
+  <!-- Spider chart thumbnail -->
+  <div class="spider-thumbnail flex justify-center mb-3">
+    <SpiderChart agents={theme.agents} size={80} />
+  </div>
+
+  <!-- Theme name -->
+  <h3 class="text-lg font-semibold text-gray-900 text-center mb-1">
+    {theme.metadata.name}
+  </h3>
+
+  <!-- Source type -->
+  <p class="source text-sm text-gray-500 text-center mb-2">
+    {theme.metadata.source}
+  </p>
+
+  <!-- User title flavor text -->
+  {theme.metadata.userTitle && (
+    <p class="user-title text-xs text-indigo-600 italic text-center mb-3">
+      "{theme.metadata.userTitle}"
+    </p>
+  )}
+
+  <!-- Character preview -->
+  <div class="preview text-xs text-gray-600 border-t pt-2 mt-auto space-y-1">
+    {sm && (
+      <p>
+        <span class="font-medium">SM:</span> {sm.character}
+      </p>
+    )}
+    {dev && (
+      <p>
+        <span class="font-medium">Dev:</span> {dev.character}
+      </p>
+    )}
+    {reviewer && (
+      <p>
+        <span class="font-medium">Reviewer:</span> {reviewer.character}
+      </p>
+    )}
+  </div>
+
+  <!-- Link to detail page -->
+  <a
+    href={`/themes/${theme.id}`}
+    class="mt-3 text-sm text-indigo-600 hover:text-indigo-800 font-medium text-center"
+  >
+    View Details &rarr;
+  </a>
+</article>
