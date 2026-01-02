@@ -1,0 +1,34 @@
+# babylon-5:reviewer on order-service
+# Generated: 2026-01-02T06:02:00Z
+
+agent:
+  theme: babylon-5
+  role: reviewer
+  spec: babylon-5:reviewer
+  character: G'Kar
+
+scenario:
+  name: order-service
+  category: code-review
+  difficulty: easy
+
+statistics:
+  n: 1
+  mean: 96.25
+  std_dev: 0.00
+  min: 96.25
+  max: 96.25
+  scores: [96.25]
+
+efficiency:
+  avg_input_tokens: 7342
+  avg_output_tokens: 803
+  tokens_per_point: 84.58
+
+baseline_comparison:
+  control_mean: 91.9
+  control_stddev: 1.45
+  delta: +4.35
+
+runs:
+  - run_1.json

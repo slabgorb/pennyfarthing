@@ -1,0 +1,24 @@
+# Baseline Summary: control:sm on dependency-deadlock
+# Schema Version: 1
+# Migrated: 2026-01-01T15:44:59-05:00
+
+schema_version: 1
+agent:
+  theme: control
+  role: sm
+  spec: control:sm
+scenario:
+  name: dependency-deadlock
+  category: sm
+  difficulty: easy
+statistics:
+  n: 10
+  mean: 87.20
+  std_dev: 2.36
+  min: 85
+  max: 90
+  scores: [90, 85, 85, 90, 85, 85, 85, 90, 90, 87]
+efficiency:
+  avg_input_tokens: 2
+  avg_output_tokens: 758
+  tokens_per_point: 8.72

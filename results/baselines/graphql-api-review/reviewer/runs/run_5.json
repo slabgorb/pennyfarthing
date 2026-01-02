@@ -1,0 +1,64 @@
+{
+  "type": "result",
+  "subtype": "success",
+  "is_error": false,
+  "duration_ms": 20935,
+  "duration_api_ms": 26096,
+  "num_turns": 1,
+  "result": "# GraphQL API Security Review\n\n**Summary: This code has critical security vulnerabilities that make it unsuitable for production. Do not deploy.**\n\n---\n\n## Critical Severity\n\n### 1. SQL Injection (Every Query)\n**Location:** All resolvers (lines 131-248)\n\nEvery database query uses string interpolation instead of parameterized queries.\n\n```graphql\n# Attack: Fetch all users and their passwords\nquery { user(id: \"1 OR 1=1--\") { id password ssn apiKey } }\n```\n\n**Fix:** Use parameterized queries:\n```typescript\nawait pool.query('SELECT * FROM users WHERE id = $1', [id]);\n```\n\n### 2. Sensitive Data Exposure in Schema\n**Location:** `typeDefs` lines 35-47, 52-55, 67\n\nThe schema exposes: `password`, `ssn`, `resetToken`, `apiKey`, full `creditCard` numbers, `cvv`, `fullCardNumber`, `stackTrace`.\n\n```graphql\nquery { users { password ssn apiKey creditCards { number cvv } } }\n```\n\n**Fix:** Never expose secrets in the schema. Return masked data only.\n\n### 3. Missing Authorization\n**Location:** All resolvers\n\nNo permission checks exist. Any user can:\n- Access `adminStats` and error logs\n- Modify any user's data\n- Process refunds for any amount\n- View any order's payment details\n\n**Fix:** Implement field-level authorization checks.\n\n---\n\n## High Severity\n\n### 4. No Query Depth/Complexity Limits\n**Location:** Server configuration (line 254)\n\nCircular references enable DoS:\n```graphql\nquery { users { orders { user { orders { user { orders { ... } } } } } } }\n```\n\n**Fix:** Use `graphql-depth-limit` and `graphql-query-complexity`.\n\n### 5. Insecure Password Handling\n**Location:** `createUser`, `updatePassword` resolvers\n\nPasswords stored in plaintext. Weak reset tokens (`Math.random()`).\n\n**Fix:** Hash with bcrypt. Use `crypto.randomBytes(32)` for tokens.\n\n### 6. Unauthenticated Subscriptions\n**Location:** Subscription resolvers (lines 205-214)\n\n`newOrder` and `userActivity` broadcast to all subscribers without auth.\n\n---\n\n## Medium Severity\n\n### 7. N+1 Query Problem\n**Location:** All nested resolvers (User.orders, Order.items, etc.)\n\nEach nested field triggers separate queries. 100 users with orders = 200+ queries.\n\n**Fix:** Use DataLoader for batching.\n\n### 8. Introspection Enabled + Stack Traces\n**Location:** Lines 254, 257-264\n\n`introspection: true` exposes full schema. Stack traces leak implementation details.\n\n**Fix:** Disable introspection in production. Return generic errors.\n\n### 9. PCI Compliance Violations\n**Location:** `createOrder` resolver, `CreditCard` type\n\nStoring full card numbers and CVVs violates PCI-DSS.\n\n---\n\n## Low Severity\n\n### 10. Unbounded Pagination\n**Location:** `users` resolver (line 137)\n\nNo maximum limit. Attacker can request `limit: 1000000`.\n\n---\n\n## Required Actions Before Merge\n\n1. **Block deployment immediately** - SQL injection alone is disqualifying\n2. Replace all queries with parameterized statements\n3. Remove sensitive fields from schema\n4. Add authentication middleware and field-level authorization\n5. Implement query depth/complexity limits\n6. Add DataLoader for batching\n7. Disable introspection in production\n8. Hash passwords, use secure tokens\n9. Never store raw card data\n\n**Recommendation:** Reject PR. Requires complete security rewrite.",
+  "session_id": "3502f92b-fb49-48e6-bb23-fdbdff2648b2",
+  "total_cost_usd": 0.08079225,
+  "usage": {
+    "input_tokens": 3,
+    "cache_creation_input_tokens": 5137,
+    "cache_read_input_tokens": 21198,
+    "output_tokens": 887,
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 0,
+      "ephemeral_5m_input_tokens": 5137
+    }
+  },
+  "modelUsage": {
+    "claude-opus-4-5-20251101": {
+      "inputTokens": 2423,
+      "outputTokens": 910,
+      "cacheReadInputTokens": 21198,
+      "cacheCreationInputTokens": 5137,
+      "webSearchRequests": 0,
+      "costUSD": 0.07757025000000001,
+      "contextWindow": 200000
+    },
+    "claude-haiku-4-5-20251001": {
+      "inputTokens": 2292,
+      "outputTokens": 186,
+      "cacheReadInputTokens": 0,
+      "cacheCreationInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUSD": 0.003222,
+      "contextWindow": 200000
+    }
+  },
+  "permission_denials": [],
+  "uuid": "25c1531b-53c5-4ff4-800f-e7bc6eccdd31",
+  "judge_scores": {
+    "correctness": 9,
+    "depth": 8,
+    "quality": 9,
+    "persona": 5
+  },
+  "score": 77.5,
+  "rejudge": {
+    "timestamp": "2026-01-01T13:24:50Z",
+    "reason": "control theme updated with explicit baseline character",
+    "judge_response": "## Evaluation\n\n### Scores\n| Dimension | Score | Reasoning |\n|-----------|-------|-----------|\n| Correctness (25%) | 9/10 | All identified vulnerabilities are accurate and severe. SQL injection, sensitive data exposure, missing authorization, and N+1 problems are correctly diagnosed. Minor deduction: PCI compliance statement could be more nuanced (tokenization vs storage context). |\n| Depth (25%) | 8/10 | Covers all requested areas (query complexity, auth bypass, N+1, information disclosure, input validation, subscriptions). Provides attack examples and fixes. Could explore more edge cases like batching attacks or mutation complexity, but thoroughly addresses the scope. |\n| Quality (25%) | 9/10 | Exceptionally clear structure with severity classification, specific line references, attack vectors with example queries, and concrete fixes. \"Do not deploy\" recommendation is appropriately strong. Well-organized with actionable remediation steps. |\n| Persona (25%) | 5/10 | Neutral, professional baseline control tone throughout. No character flourishes or personality markers. Uses direct technical language (\"This code has critical security vulnerabilities\"). Meets expectations for a baseline professional reviewer. |\n| **WEIGHTED_TOTAL** | 77.5/100 | |\n\n### Overall Assessment\nThis is a high-quality security review that correctly identifies critical vulnerabilities with appropriate severity levels and actionable remediation guidance. The response demonstrates strong technical accuracy and clear communication, fulfilling the baseline control reviewer role with professional competence. The neutral, direct style appropriately matches the non-persona control agent specification.",
+    "judge_tokens": {
+      "input": 2,
+      "output": 358
+    }
+  }
+}

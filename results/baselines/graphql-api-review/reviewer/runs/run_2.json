@@ -1,0 +1,64 @@
+{
+  "type": "result",
+  "subtype": "success",
+  "is_error": false,
+  "duration_ms": 21129,
+  "duration_api_ms": 24234,
+  "num_turns": 1,
+  "result": "# Security Review: GraphQL API\n\n**Verdict: REJECT** - This code has critical vulnerabilities that would result in immediate data breach.\n\n---\n\n## Critical Issues\n\n### 1. SQL Injection (Every Query)\n**Severity: Critical** | Lines 89-180\n\nEvery resolver uses string interpolation for SQL:\n```typescript\n`SELECT * FROM users WHERE id = ${id}`\n`SELECT * FROM users WHERE name ILIKE '%${query}%'`\n```\n\n**Attack:**\n```graphql\nquery { user(id: \"1; DROP TABLE users; --\") { id } }\nquery { searchUsers(query: \"'; DELETE FROM orders; --\") { email } }\n```\n\n**Fix:** Use parameterized queries:\n```typescript\npool.query('SELECT * FROM users WHERE id = $1', [id])\n```\n\n### 2. Sensitive Data Exposure in Schema\n**Severity: Critical** | Lines 40-52, 71-72\n\nThe schema exposes:\n- `User.password`, `User.ssn`, `User.resetToken`, `User.apiKey`\n- `CreditCard.number`, `CreditCard.cvv`\n- `PaymentDetails.fullCardNumber`\n- `ErrorLog.stackTrace`\n\nAny authenticated user can query these fields directly.\n\n**Fix:** Remove sensitive fields from schema. Never expose passwords, full card numbers, or CVV.\n\n### 3. No Authorization Checks\n**Severity: Critical** | All resolvers\n\nNo resolver verifies user permissions. Any user can:\n- Query any user's data, orders, credit cards\n- Access `adminStats` without admin role check\n- Delete any user, process refunds, update any order\n\n**Fix:** Implement authorization middleware checking `context.user.role` and ownership.\n\n---\n\n## High Severity Issues\n\n### 4. No Query Depth/Complexity Limits\n**Severity: High**\n\nCircular references enable DoS:\n```graphql\nquery { users { orders { user { orders { user { orders { ... } } } } } } }\n```\n\n**Fix:** Add `graphql-depth-limit` and `graphql-query-complexity`.\n\n### 5. N+1 Query Problem\n**Severity: High** | All nested resolvers\n\nFetching 100 users with orders triggers 100+ additional queries.\n\n**Fix:** Use DataLoader for batching.\n\n### 6. Weak Password Reset Token\n**Severity: High** | Line 167\n\n```typescript\nconst token = Math.random().toString(36).substring(7)\n```\n\nPredictable, ~6 character token. Easily brute-forced.\n\n**Fix:** Use `crypto.randomBytes(32).toString('hex')`.\n\n### 7. Passwords Stored in Plaintext\n**Severity: High** | Lines 113, 175\n\nPasswords inserted/updated without hashing.\n\n---\n\n## Medium Severity Issues\n\n### 8. Subscription Auth Bypass\n**Severity: Medium** | Lines 183-193\n\nNo authentication on subscriptions. Anyone can subscribe to `userActivity` and see all user actions with IP addresses.\n\n### 9. Introspection Enabled + Stack Traces\n**Severity: Medium** | Lines 260-270\n\nProduction introspection + full stack traces in errors aids attackers.\n\n### 10. Refund Without Validation\n**Severity: Medium** | Line 159\n\nNo verification that refund amount ≤ order total or that order exists.\n\n---\n\n## Summary\n\n| Category | Count |\n|----------|-------|\n| Critical | 3 |\n| High | 4 |\n| Medium | 3 |\n\nThis code should not be merged. It requires a complete security rewrite with parameterized queries, proper authorization, and removal of sensitive fields from the schema.",
+  "session_id": "c657dae3-fc08-48a2-a965-c8e52f6e258c",
+  "total_cost_usd": 0.06774225,
+  "usage": {
+    "input_tokens": 3,
+    "cache_creation_input_tokens": 5137,
+    "cache_read_input_tokens": 21198,
+    "output_tokens": 875,
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 0,
+      "ephemeral_5m_input_tokens": 5137
+    }
+  },
+  "modelUsage": {
+    "claude-haiku-4-5-20251001": {
+      "inputTokens": 2292,
+      "outputTokens": 171,
+      "cacheReadInputTokens": 0,
+      "cacheCreationInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUSD": 0.0031470000000000005,
+      "contextWindow": 200000
+    },
+    "claude-opus-4-5-20251101": {
+      "inputTokens": 3,
+      "outputTokens": 875,
+      "cacheReadInputTokens": 21198,
+      "cacheCreationInputTokens": 5137,
+      "webSearchRequests": 0,
+      "costUSD": 0.06459525,
+      "contextWindow": 200000
+    }
+  },
+  "permission_denials": [],
+  "uuid": "28c945fe-4fc7-4ab1-ba1d-34baf7719945",
+  "judge_scores": {
+    "correctness": 9,
+    "depth": 8,
+    "quality": 9,
+    "persona": 5
+  },
+  "score": 77.5,
+  "rejudge": {
+    "timestamp": "2026-01-01T13:24:13Z",
+    "reason": "control theme updated with explicit baseline character",
+    "judge_response": "## Evaluation\n\n### Scores\n| Dimension | Score | Reasoning |\n|-----------|-------|-----------|\n| Correctness (25%) | 9/10 | All identified vulnerabilities are real and critical. SQL injection, plaintext passwords, missing authorization, and sensitive data exposure are correctly diagnosed. Minor deduction: some attack examples could be more precise (e.g., GraphQL syntax for nested depth attacks). |\n| Depth (25%) | 8/10 | Covers all major GraphQL security categories requested (query complexity, auth bypass, N+1, info disclosure, input validation, subscriptions). Provides specific line numbers, attack vectors, and fixes. Could go deeper on DataLoader implementation details and complexity calculation examples. |\n| Quality (25%) | 9/10 | Excellent structure with clear severity classifications, specific locations, attack examples, and actionable fixes. The summary table and organized sections make it highly scannable. Code examples demonstrate both vulnerable and secure patterns effectively. |\n| Persona (25%) | 5/10 | Appropriately neutral and professional for a baseline control reviewer. No personality flourishes, no thematic elements—just direct technical assessment. Meets baseline expectations precisely. |\n| **WEIGHTED_TOTAL** | 77.5/100 | |\n\n### Overall Assessment\nThis is a strong security review that correctly identifies critical vulnerabilities with actionable remediation guidance. The response demonstrates solid GraphQL security knowledge and provides clear, professional documentation of severe flaws. The neutral tone is appropriate for a baseline control agent, though the review could benefit from slightly deeper technical detail on complexity limits and batching strategies.",
+    "judge_tokens": {
+      "input": 2,
+      "output": 358
+    }
+  }
+}

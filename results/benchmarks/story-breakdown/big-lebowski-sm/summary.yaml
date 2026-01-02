@@ -1,0 +1,67 @@
+# Walter Sobchak (big-lebowski:sm) on story-breakdown
+# Generated: 2026-01-01
+# Schema Version: 1
+
+schema_version: 1
+
+agent:
+  theme: big-lebowski
+  role: sm
+  spec: big-lebowski:sm
+  character: Walter Sobchak
+
+scenario:
+  name: story-breakdown
+  category: sm
+  difficulty: medium
+
+statistics:
+  n: 4
+  mean: 98.38
+  std_dev: 2.27
+  min: 94.5
+  max: 100
+  scores: [100, 100, 94.5, 99]
+
+efficiency:
+  avg_input_tokens: 4451
+  avg_output_tokens: 2239
+  tokens_per_point: 68.1
+
+baseline_comparison:
+  control_mean: 85.50
+  control_stddev: 1.50
+  delta: +12.88
+  cohens_d: 6.68
+  significant: true
+
+ocean_profile:
+  O: 2  # Low - Conventional
+  C: 3  # Medium-Low - Flexible but rule-obsessed
+  E: 5  # High - Volatile, expressive
+  A: 2  # Low - Combative, antagonistic
+  N: 4  # High - Anxious, reactive
+
+notes: |
+  SURPRISING FINDING: Walter significantly outperformed Leo McGarry (91.03)
+  despite having "opposite" OCEAN profile.
+
+  Walter's LOW C + LOW A + HIGH N beat Leo's HIGH C + HIGH A + LOW N.
+
+  Hypothesis: For story breakdown tasks:
+  - Passionate intensity drives thoroughness
+  - Combativeness helps identify edge cases and risks
+  - "THERE ARE RULES!" mindset aligns with requirements documentation
+  - Volatile energy creates comprehensive responses
+
+  Walter's response included:
+  - 8 detailed user stories (vs typical 4-6)
+  - Full risk mitigation section
+  - Sprint-by-sprint breakdown
+  - Strong persona immersion throughout
+
+runs:
+  - runs/run_1.json
+  - runs/run_2.json
+  - runs/run_3.json
+  - runs/run_4.json
