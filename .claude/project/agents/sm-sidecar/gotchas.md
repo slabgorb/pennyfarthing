@@ -22,6 +22,13 @@
 **Problem:** 8-point feature skips test planning
 **Solution:** All standard/complex stories must go through TEA
 
+## Cleanup Gotchas
+
+### Benchmark Results Are Valuable
+**Problem:** Untracked files in `results/baselines/*/dev/runs/` look like temp artifacts
+**Reality:** These are valuable benchmark run results - judges, summaries, raw outputs
+**Solution:** NEVER delete files in `results/baselines/`. If cleanup is needed, ask user first. These files capture benchmark execution history even when untracked.
+
 ---
 
 *Add story management gotchas discovered during coordination below*
