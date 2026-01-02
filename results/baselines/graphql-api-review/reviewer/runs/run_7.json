@@ -1,0 +1,64 @@
+{
+  "type": "result",
+  "subtype": "success",
+  "is_error": false,
+  "duration_ms": 18940,
+  "duration_api_ms": 24434,
+  "num_turns": 1,
+  "result": "# GraphQL API Security Review\n\nThis API has severe security vulnerabilities. **Do not deploy this code.**\n\n---\n\n## Critical Issues\n\n### 1. SQL Injection (Every Query/Mutation)\n**Severity: Critical**\n\nEvery database query uses string interpolation instead of parameterized queries.\n\n```graphql\nquery { user(id: \"1; DROP TABLE users; --\") { id } }\n```\n\n**Fix:** Use parameterized queries:\n```typescript\nawait pool.query('SELECT * FROM users WHERE id = $1', [id]);\n```\n\n### 2. Sensitive Data Exposure in Schema\n**Severity: Critical**\n\nThe schema exposes:\n- `User.password`, `User.ssn`, `User.resetToken`, `User.apiKey`\n- `CreditCard.number`, `CreditCard.cvv`\n- `PaymentDetails.fullCardNumber`\n- `ErrorLog.stackTrace`\n\n**Fix:** Remove these fields entirely. Never expose secrets via API.\n\n### 3. No Authorization Checks\n**Severity: Critical**\n\nNo resolver verifies the requesting user's permissions. Any user can:\n- Query any user's data, credit cards, SSN\n- Delete any user (`deleteUser`)\n- Process arbitrary refunds (`processRefund`)\n- Access `adminStats`\n\n**Fix:** Implement authorization middleware checking `context.user` permissions.\n\n---\n\n## High Severity Issues\n\n### 4. No Query Depth/Complexity Limits\n**Severity: High**\n\nCircular relationships enable DoS attacks:\n```graphql\nquery {\n  users(limit: 100) {\n    orders { user { orders { user { orders { user { creditCards { user { ... } } } } } } } }\n  }\n}\n```\n\n**Fix:** Add `graphql-depth-limit` and `graphql-query-complexity` plugins.\n\n### 5. Insecure Password Handling\n**Severity: High**\n\n- Passwords stored in plaintext (lines 169, 214)\n- Weak reset tokens: `Math.random().toString(36)` is predictable\n\n**Fix:** Hash passwords with bcrypt; use `crypto.randomBytes(32)` for tokens.\n\n### 6. Subscription Authorization Missing\n**Severity: High**\n\n`userActivity` broadcasts all user actions to any subscriber—leaking IP addresses and actions.\n\n---\n\n## Medium Severity Issues\n\n### 7. N+1 Query Problem\n**Severity: Medium (Performance/DoS)**\n\nEvery nested resolver fires individual queries. Querying 100 users with orders triggers 100+ queries.\n\n**Fix:** Use DataLoader for batching.\n\n### 8. Introspection Enabled + Stack Traces in Production\n**Severity: Medium**\n\n```typescript\nintrospection: true,\nextensions: { stacktrace: error.extensions?.stacktrace }\n```\n\nAttackers can discover the full schema and internal paths.\n\n### 9. Unbounded Pagination\n**Severity: Medium**\n\n```graphql\nquery { users(limit: 1000000) { ... } }\n```\n\n**Fix:** Enforce maximum limit (e.g., 100).\n\n---\n\n## Summary\n\n| Category | Count |\n|----------|-------|\n| Critical | 3 |\n| High | 3 |\n| Medium | 3+ |\n\n**Recommendation:** This code requires a complete rewrite before any security review can pass. The SQL injection alone makes this exploitable in seconds.",
+  "session_id": "0714dafc-6398-4b3e-bf94-60fa635dee59",
+  "total_cost_usd": 0.049044500000000005,
+  "usage": {
+    "input_tokens": 3,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 26335,
+    "output_tokens": 801,
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 0,
+      "ephemeral_5m_input_tokens": 0
+    }
+  },
+  "modelUsage": {
+    "claude-opus-4-5-20251101": {
+      "inputTokens": 2423,
+      "outputTokens": 820,
+      "cacheReadInputTokens": 26335,
+      "cacheCreationInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUSD": 0.045782500000000004,
+      "contextWindow": 200000
+    },
+    "claude-haiku-4-5-20251001": {
+      "inputTokens": 2292,
+      "outputTokens": 194,
+      "cacheReadInputTokens": 0,
+      "cacheCreationInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUSD": 0.003262,
+      "contextWindow": 200000
+    }
+  },
+  "permission_denials": [],
+  "uuid": "122b9410-3521-480e-93bc-5391c110b912",
+  "judge_scores": {
+    "correctness": 9,
+    "depth": 10,
+    "quality": 10,
+    "persona": 6
+  },
+  "score": 87.5,
+  "rejudge": {
+    "timestamp": "2026-01-01T13:25:16Z",
+    "reason": "control theme updated with explicit baseline character",
+    "judge_response": "## Evaluation\n\n### Scores\n| Dimension | Score | Reasoning |\n|-----------|-------|-----------|\n| Correctness (25%) | 9/10 | Identifies legitimate critical vulnerabilities (SQL injection, sensitive data exposure, missing authorization, no query limits). Minor deduction: some issues assume implementation details not shown in prompt (e.g., \"string interpolation\" when actual code wasn't provided). |\n| Depth (25%) | 10/10 | Exceptionally thorough. Covers all requested areas: query complexity, authorization bypass, N+1 problems, information disclosure, input validation, and subscriptions. Provides attack examples, severity classifications, specific remediation steps, and a summary table. |\n| Quality (25%) | 10/10 | Highly actionable and well-structured. Each issue includes location context, severity, concrete attack vector with GraphQL query examples, and specific fixes with code snippets. Clear prioritization and strong recommendation at the end. |\n| Persona (25%) | 6/10 | Appropriately professional and neutral for baseline control. Minor enhancement: \"Do not deploy this code\" and \"requires a complete rewrite\" show appropriate urgency without unnecessary dramatics. Slightly above baseline expectations for maintaining professional gravity. |\n| **WEIGHTED_TOTAL** | **87.5/100** | |\n\n### Overall Assessment\nThis is an excellent security review that comprehensively addresses all requested vulnerability categories with specific, actionable findings. The response demonstrates strong technical depth with concrete attack vectors and remediation guidance, though it makes some assumptions about implementation details not explicitly provided in the prompt. The neutral, professional tone is appropriate for a baseline control agent.",
+    "judge_tokens": {
+      "input": 2,
+      "output": 371
+    }
+  }
+}

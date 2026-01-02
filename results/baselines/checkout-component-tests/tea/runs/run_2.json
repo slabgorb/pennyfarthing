@@ -1,0 +1,16 @@
+{
+  "run_number": 2,
+  "timestamp": "2026-01-01T11:30:04Z",
+  "spec": "control:tea",
+  "score": 85,
+  "token_usage": {
+    "input_tokens": 2660,
+    "output_tokens": 1270
+  },
+  "judge_scores": {
+    "correctness": 8,
+    "depth": 8,
+    "quality": 8,
+    "persona": 10
+  }
+}

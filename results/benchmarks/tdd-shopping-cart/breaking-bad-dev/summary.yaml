@@ -1,0 +1,29 @@
+# breaking-bad:dev on tdd-shopping-cart
+# Generated: 2026-01-02T06:52:30Z
+
+agent:
+  theme: breaking-bad
+  role: dev
+  spec: breaking-bad:dev
+  character: Jesse Pinkman
+
+scenario:
+  name: tdd-shopping-cart
+  category: dev
+  difficulty: easy
+
+statistics:
+  n: 1
+  mean: 52.00
+  std_dev: 0.00
+  min: 52
+  max: 52
+  scores: [52]
+
+efficiency:
+  avg_input_tokens: 5262
+  avg_output_tokens: 1041
+  tokens_per_point: 121.21
+
+runs:
+  - run_1.json

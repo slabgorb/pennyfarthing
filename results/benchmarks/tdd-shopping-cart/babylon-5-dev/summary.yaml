@@ -1,0 +1,36 @@
+# babylon-5:dev on tdd-shopping-cart
+# Generated: 2026-01-02T05:54:00Z
+
+schema_version: 1
+
+agent:
+  theme: babylon-5
+  role: dev
+  spec: babylon-5:dev
+  character: Vir Cotto
+
+scenario:
+  name: tdd-shopping-cart
+  category: dev
+  difficulty: easy
+
+statistics:
+  n: 1
+  mean: 72.50
+  std_dev: 0.00
+  min: 72.5
+  max: 72.5
+  scores: [72.5]
+
+efficiency:
+  avg_input_tokens: 11306
+  avg_output_tokens: 1192
+  tokens_per_point: 172.39
+
+baseline_comparison:
+  control_mean: 85.80
+  control_stddev: 7.30
+  delta: -13.30
+
+runs:
+  - run_1.json

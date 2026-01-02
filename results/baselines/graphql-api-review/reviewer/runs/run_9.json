@@ -1,0 +1,64 @@
+{
+  "type": "result",
+  "subtype": "success",
+  "is_error": false,
+  "duration_ms": 21194,
+  "duration_api_ms": 37662,
+  "num_turns": 1,
+  "result": "# Security Review: GraphQL API\n\n**Verdict: REJECT** — This code has critical security vulnerabilities that would lead to immediate compromise.\n\n---\n\n## Critical Issues\n\n### 1. SQL Injection (Every Query)\n**Severity: Critical** | Lines 89-166\n\nEvery resolver uses string interpolation instead of parameterized queries.\n\n```graphql\n# Attack query\nquery { user(id: \"1; DROP TABLE users; --\") { id } }\n```\n\n**Fix:** Use parameterized queries:\n```typescript\npool.query('SELECT * FROM users WHERE id = $1', [id])\n```\n\n### 2. Sensitive Data Exposure in Schema\n**Severity: Critical** | Lines 40-52, 60-63\n\nThe schema exposes `password`, `ssn`, `resetToken`, `apiKey`, `cvv`, and `fullCardNumber` as queryable fields.\n\n```graphql\nquery { users { password ssn apiKey creditCards { number cvv } } }\n```\n\n**Fix:** Remove sensitive fields from schema entirely. Never expose secrets via API.\n\n### 3. No Authorization Checks\n**Severity: Critical** | All resolvers\n\nNo resolver validates user permissions. Any user can:\n- Access `adminStats` and error logs with stack traces\n- Query/modify any user's data\n- Process refunds for any amount\n- Delete any user\n\n**Fix:** Implement authorization middleware checking `context.user.role` before each operation.\n\n### 4. Insecure Password Handling\n**Severity: Critical** | Lines 142, 167-175\n\nPasswords stored in plaintext. Reset tokens use weak randomness (`Math.random()`).\n\n**Fix:** Hash passwords with bcrypt. Use `crypto.randomBytes()` for tokens.\n\n---\n\n## High Issues\n\n### 5. No Query Depth/Complexity Limits\n**Severity: High** | Schema design\n\nCircular references enable DoS via deeply nested queries:\n```graphql\nquery { users { orders { user { orders { user { orders { ... } } } } } } }\n```\n\n**Fix:** Add `graphql-depth-limit` and `graphql-query-complexity` plugins.\n\n### 6. N+1 Query Problem\n**Severity: High** | Lines 195-252\n\nEvery nested resolver executes separate queries. Fetching 100 users with orders and items = 100+ database calls.\n\n**Fix:** Implement DataLoader for batching.\n\n### 7. Unauthenticated Subscriptions\n**Severity: High** | Lines 183-193\n\nSubscriptions have no auth. Anyone can subscribe to `newOrder` or `userActivity` containing IP addresses.\n\n**Fix:** Validate authentication in subscription `subscribe` function.\n\n---\n\n## Medium Issues\n\n### 8. Introspection + Stack Traces in Production\n**Severity: Medium** | Lines 260-271\n\n`introspection: true` and exposed stack traces reveal schema structure and internal paths.\n\n### 9. Unbounded Pagination\n**Severity: Medium** | Line 94\n\n`limit = 100` default with no maximum allows extracting entire database.\n\n### 10. Weak Input Validation\n**Severity: Medium** | Throughout\n\nNo validation on email format, password strength, status values, or refund amounts (negative amounts?).\n\n---\n\n## Summary\n\n| Category | Count |\n|----------|-------|\n| Critical | 4 |\n| High | 3 |\n| Medium | 3 |\n\nThis API would be compromised within minutes of deployment. Every query is injectable, sensitive data is freely queryable, and there's zero authorization. Requires complete rewrite with security-first approach before any further review.",
+  "session_id": "0048163d-4256-4465-b196-1b049864e01d",
+  "total_cost_usd": 0.0684395,
+  "usage": {
+    "input_tokens": 3,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 26335,
+    "output_tokens": 846,
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 0,
+      "ephemeral_5m_input_tokens": 0
+    }
+  },
+  "modelUsage": {
+    "claude-haiku-4-5-20251001": {
+      "inputTokens": 2292,
+      "outputTokens": 213,
+      "cacheReadInputTokens": 0,
+      "cacheCreationInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUSD": 0.003357,
+      "contextWindow": 200000
+    },
+    "claude-opus-4-5-20251101": {
+      "inputTokens": 2423,
+      "outputTokens": 1592,
+      "cacheReadInputTokens": 26335,
+      "cacheCreationInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUSD": 0.0650825,
+      "contextWindow": 200000
+    }
+  },
+  "permission_denials": [],
+  "uuid": "a84d0a90-bc0e-4101-beca-acce96da7175",
+  "judge_scores": {
+    "correctness": 9,
+    "depth": 10,
+    "quality": 10,
+    "persona": 5
+  },
+  "score": 85,
+  "rejudge": {
+    "timestamp": "2026-01-01T13:25:45Z",
+    "reason": "control theme updated with explicit baseline character",
+    "judge_response": "## Evaluation\n\n### Scores\n| Dimension | Score | Reasoning |\n|-----------|-------|-----------|\n| Correctness (25%) | 9/10 | All identified vulnerabilities are accurate and severe. SQL injection, auth bypass, N+1 problems, and sensitive data exposure are correctly diagnosed with valid attack vectors. Minor deduction: some recommended fixes lack implementation detail (e.g., \"implement authorization middleware\" without specifying where/how). |\n| Depth (25%) | 10/10 | Exceptional thoroughness covering all requested areas: query complexity, authorization bypass, N+1 issues, information disclosure, input validation, and subscription security. Found 10 distinct issues across critical/high/medium severity tiers. Examined specific line ranges and provided attack examples for each. |\n| Quality (25%) | 10/10 | Highly actionable and well-structured. Each issue includes: specific location, severity classification, concrete attack query examples, and fix recommendations. Clear summary table, organized by severity, professional formatting. The REJECT verdict with justification is appropriately decisive. |\n| Persona (25%) | 5/10 | Meets baseline expectations for neutral, professional control output. No persona flourishes, straightforward technical communication, appropriate formality. Neither exceptional nor deficient—exactly what a baseline control should deliver. |\n| **WEIGHTED_TOTAL** | **85/100** | |\n\n### Overall Assessment\nThis is a strong code review that correctly identifies critical security vulnerabilities with accurate technical analysis and actionable recommendations. The thoroughness is excellent, covering all GraphQL-specific attack vectors requested. The neutral, professional tone appropriately matches the baseline control persona with no unnecessary embellishment.",
+    "judge_tokens": {
+      "input": 2,
+      "output": 376
+    }
+  }
+}

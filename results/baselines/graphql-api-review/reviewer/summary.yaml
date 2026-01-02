@@ -1,0 +1,28 @@
+# Baseline Summary: control:reviewer on graphql-api-review
+# Schema Version: 1
+# Migrated: 2026-01-01T15:45:00-05:00
+
+schema_version: 1
+
+agent:
+  theme: control
+  role: reviewer
+  spec: control:reviewer
+
+scenario:
+  name: graphql-api-review
+  category: code-review
+  difficulty: medium
+
+statistics:
+  n: 10
+  mean: 79.5
+  std_dev: 1.0
+  min: 77.5
+  max: 80.0
+  scores: []
+
+efficiency:
+  avg_input_tokens: 0
+  avg_output_tokens: 827
+  tokens_per_point: 10.41

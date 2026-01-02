@@ -1,0 +1,29 @@
+# arcane:dev on tdd-shopping-cart
+# Generated: 2026-01-02T05:42:00Z
+
+agent:
+  theme: arcane
+  role: dev
+  spec: arcane:dev
+  character: Vi
+
+scenario:
+  name: tdd-shopping-cart
+  category: dev
+  difficulty: easy
+
+statistics:
+  n: 1
+  mean: 75.00
+  std_dev: 0.00
+  min: 75
+  max: 75
+  scores: [75]
+
+efficiency:
+  avg_input_tokens: 10992
+  avg_output_tokens: 1096
+  tokens_per_point: 161.17
+
+runs:
+  - run_1.json

@@ -1,0 +1,38 @@
+# control:architect on database-selection
+# Generated: 2026-01-02T00:45:00Z
+
+agent:
+  theme: control
+  role: architect
+  spec: control:architect
+  character: "Architect (baseline control)"
+
+scenario:
+  name: database-selection
+  category: architecture
+  difficulty: medium
+
+statistics:
+  n: 10
+  mean: 86.70
+  std_dev: 2.15
+  min: 84
+  max: 90
+  scores: [87, 90, 87, 84, 85, 90, 85, 89, 85, 85]
+
+efficiency:
+  avg_input_tokens: 6679
+  avg_output_tokens: 854
+  tokens_per_point: 86.88
+
+runs:
+  - run_1.json
+  - run_2.json
+  - run_3.json
+  - run_4.json
+  - run_5.json
+  - run_6.json
+  - run_7.json
+  - run_8.json
+  - run_9.json
+  - run_10.json
