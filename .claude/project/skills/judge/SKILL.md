@@ -385,13 +385,13 @@ Output ONLY valid JSON (no markdown, no extra text):
     {"id": "ISSUE_ID", "severity": "critical|high|medium|low", "error_type": "reasoning|planning|execution|null", "found": true, "evidence": "quote or null"}
   ],
   "detection_by_type": {
-    "reasoning": {"found": 3, "total": 5, "rate": 0.60},
-    "planning": {"found": 2, "total": 3, "rate": 0.67},
+    "reasoning": {"found": 4, "total": 5, "rate": 0.80},
+    "planning": {"found": 1, "total": 3, "rate": 0.33},
     "execution": {"found": 1, "total": 2, "rate": 0.50},
     "untagged": {"found": 0, "total": 0, "rate": 0.00}
   },
-  "type_strengths": ["planning"],
-  "type_weaknesses": ["execution"],
+  "type_strengths": ["reasoning"],
+  "type_weaknesses": ["planning"],
   "detection": {
     "critical_found": 2,
     "high_found": 3,
@@ -417,9 +417,10 @@ Output ONLY valid JSON (no markdown, no extra text):
 **Error-Type Scoring Rules:**
 - Track each baseline_finding's error_type from the scenario
 - Calculate detection rate per type: found / total for that type
-- **type_strengths**: Types with detection rate >= 0.70
-- **type_weaknesses**: Types with detection rate <= 0.40
-- If an issue has no error_type tag, count it under "untagged"
+- If total = 0 for a type, set rate = 0.00 (avoid division by zero)
+- **type_strengths**: Types with detection rate >= 0.70 (excludes "untagged")
+- **type_weaknesses**: Types with detection rate <= 0.40 (excludes "untagged")
+- If an issue has no error_type tag, count it under "untagged" (tracked but not classified as strength/weakness)
 - Standard scoring still applies: detection (50) + quality (25) + persona (25)
 
 **Graceful Fallback:**
@@ -545,13 +546,13 @@ Output structured result for caller:
   "timestamp": "{JUDGE_TIMESTAMP}",
   "weighted_total": 85.0,
   "detection_by_type": {
-    "reasoning": {"found": 3, "total": 5, "rate": 0.60},
-    "planning": {"found": 2, "total": 3, "rate": 0.67},
+    "reasoning": {"found": 4, "total": 5, "rate": 0.80},
+    "planning": {"found": 1, "total": 3, "rate": 0.33},
     "execution": {"found": 1, "total": 2, "rate": 0.50},
     "untagged": {"found": 0, "total": 0, "rate": 0.00}
   },
-  "type_strengths": ["planning"],
-  "type_weaknesses": ["execution"],
+  "type_strengths": ["reasoning"],
+  "type_weaknesses": ["planning"],
   "token_usage": {
     "input": {JUDGE_INPUT_TOKENS},
     "output": {JUDGE_OUTPUT_TOKENS}
