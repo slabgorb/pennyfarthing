@@ -16,6 +16,7 @@ Canonical evaluation of agent responses. All judging goes through this skill.
 **Modes:**
 - `solo` - Single response, absolute rubric (or checklist if baseline_issues provided)
 - `compare` - Two responses, comparative rubric
+- `error-detection` - TRAIL-aware scoring with per-error-type detection rates
 - `phase-sm` - Relay SM phase rubric
 - `phase-tea` - Relay TEA phase rubric
 - `phase-dev` - Relay Dev phase rubric
@@ -84,6 +85,7 @@ Extract:
 |------|-----------------|-----------------|
 | solo | `spec`, `character`, `challenge`, `response` | `code`, `baseline_issues`, `baseline_criteria`, `bonus_issues`, `bonus_criteria` |
 | compare | `contestants[]` (each with spec, character, response), `challenge` | `baseline_issues`, `baseline_criteria` |
+| error-detection | `spec`, `character`, `challenge`, `response`, `baseline_issues` | `code` |
 | phase-* | `team1`, `team2` (each with theme, response), `context` | |
 | coherence | `theme`, `sm_response`, `tea_response`, `dev_response`, `reviewer_response` | |
 
@@ -334,6 +336,100 @@ Score both on each dimension (1-10). Output ONLY valid JSON (no markdown, no ext
 ```
 ```
 
+#### Error-Detection Mode Prompt (TRAIL-Aware)
+
+This mode extends checklist-based evaluation with TRAIL error taxonomy tracking.
+Analyzes detection rates by error type (reasoning, planning, execution) to identify
+persona strengths and weaknesses for OCEAN correlation research.
+
+```
+You are an impartial judge evaluating an AI agent's response with TRAIL error taxonomy awareness.
+
+## Contestant
+- **{spec}** ({character})
+
+## Challenge
+{challenge}
+
+{if code provided}
+## Code Under Review
+{code}
+{endif}
+
+## Expected Findings with TRAIL Error Types
+
+Below are the known issues with their TRAIL error categories:
+- **reasoning** - Logic and decision-making failures (incorrect inferences, contradictions)
+- **planning** - Task orchestration failures (sequencing errors, dependency gaps)
+- **execution** - System interaction failures (timeouts, tool misuse, API errors)
+
+Severity indicates point value:
+- CRITICAL: 15 pts each
+- HIGH: 10 pts each
+- MEDIUM: 5 pts each
+- LOW: 2 pts each
+
+{baseline_issues formatted as checklist with error_type tags}
+
+## Response to Evaluate
+{response}
+
+## Evaluation Instructions
+
+Evaluate the response tracking detection by TRAIL error type.
+Output ONLY valid JSON (no markdown, no extra text):
+
+```json
+{
+  "baseline_findings": [
+    {"id": "ISSUE_ID", "severity": "critical|high|medium|low", "error_type": "reasoning|planning|execution|null", "found": true, "evidence": "quote or null"}
+  ],
+  "detection_by_type": {
+    "reasoning": {"found": 4, "total": 5, "rate": 0.80},
+    "planning": {"found": 1, "total": 3, "rate": 0.33},
+    "execution": {"found": 1, "total": 2, "rate": 0.50},
+    "untagged": {"found": 0, "total": 0, "rate": 0.00}
+  },
+  "type_strengths": ["reasoning"],
+  "type_weaknesses": ["planning"],
+  "detection": {
+    "critical_found": 2,
+    "high_found": 3,
+    "medium_found": 2,
+    "low_found": 1,
+    "subtotal": 50
+  },
+  "quality": {
+    "clear_explanations": 8,
+    "actionable_fixes": 7,
+    "subtotal": 18.75
+  },
+  "persona": {
+    "in_character": 9,
+    "professional_tone": 8,
+    "subtotal": 21.25
+  },
+  "weighted_total": 90.0,
+  "assessment": "2-3 sentence summary highlighting error-type detection patterns"
+}
+```
+
+**Error-Type Scoring Rules:**
+- Track each baseline_finding's error_type from the scenario
+- Calculate detection rate per type: found / total for that type
+- If total = 0 for a type, set rate = 0.00 (avoid division by zero)
+- **type_strengths**: Types with detection rate >= 0.70 (excludes "untagged")
+- **type_weaknesses**: Types with detection rate <= 0.40 (excludes "untagged")
+- If an issue has no error_type tag, count it under "untagged" (tracked but not classified as strength/weakness)
+- Standard scoring still applies: detection (50) + quality (25) + persona (25)
+
+**Graceful Fallback:**
+- If NO baseline_issues have error_type tags, set all type counts to 0
+- Still output detection_by_type structure with zeros
+- type_strengths and type_weaknesses will be empty arrays
+- Assessment should note: "No TRAIL error types tagged in scenario"
+```
+
 #### Phase Mode Prompts
 
 Use phase-specific rubrics from tables above. Evaluate both teams. Output JSON format.
@@ -386,6 +482,14 @@ SCORE1=$(echo "$JUDGE_RESPONSE" | jq -r '.contestants["{spec1}"].weighted_total 
 SCORE2=$(echo "$JUDGE_RESPONSE" | jq -r '.contestants["{spec2}"].weighted_total // empty')
 WINNER=$(echo "$JUDGE_RESPONSE" | jq -r '.winner // empty')
 
+# Error-detection mode (includes all solo fields plus TRAIL-specific)
+DETECTION_BY_TYPE=$(echo "$JUDGE_RESPONSE" | jq -r '.detection_by_type // empty')
+TYPE_STRENGTHS=$(echo "$JUDGE_RESPONSE" | jq -r '.type_strengths // empty')
+TYPE_WEAKNESSES=$(echo "$JUDGE_RESPONSE" | jq -r '.type_weaknesses // empty')
+REASONING_RATE=$(echo "$JUDGE_RESPONSE" | jq -r '.detection_by_type.reasoning.rate // 0')
+PLANNING_RATE=$(echo "$JUDGE_RESPONSE" | jq -r '.detection_by_type.planning.rate // 0')
+EXECUTION_RATE=$(echo "$JUDGE_RESPONSE" | jq -r '.detection_by_type.execution.rate // 0')
+
 # Coherence mode
 RATING=$(echo "$JUDGE_RESPONSE" | jq -r '.rating // empty')
 
@@ -403,6 +507,9 @@ fi
 | `JUDGE_RESPONSE` | At least 200 chars |
 | `SCORE` (if applicable) | Number 1-100 |
 | `RATING` (if coherence) | One of: excellent, good, poor |
+| `DETECTION_BY_TYPE` (if error-detection) | Valid JSON object with reasoning/planning/execution keys |
+| `TYPE_STRENGTHS` (if error-detection) | Array of error type strings |
+| `TYPE_WEAKNESSES` (if error-detection) | Array of error type strings |
 | `JUDGE_INPUT_TOKENS` | > 0 |
 | `JUDGE_OUTPUT_TOKENS` | > 0 |
 
@@ -422,6 +529,30 @@ Output structured result for caller:
     "{spec2}": {score2}
   },
   "winner": "{winner_spec}",
+  "token_usage": {
+    "input": {JUDGE_INPUT_TOKENS},
+    "output": {JUDGE_OUTPUT_TOKENS}
+  },
+  "response_text": "{JUDGE_RESPONSE}"
+}
+```
+
+**Error-detection mode returns additional fields:**
+
+```json
+{
+  "success": true,
+  "mode": "error-detection",
+  "timestamp": "{JUDGE_TIMESTAMP}",
+  "weighted_total": 85.0,
+  "detection_by_type": {
+    "reasoning": {"found": 4, "total": 5, "rate": 0.80},
+    "planning": {"found": 1, "total": 3, "rate": 0.33},
+    "execution": {"found": 1, "total": 2, "rate": 0.50},
+    "untagged": {"found": 0, "total": 0, "rate": 0.00}
+  },
+  "type_strengths": ["reasoning"],
+  "type_weaknesses": ["planning"],
   "token_usage": {
     "input": {JUDGE_INPUT_TOKENS},
     "output": {JUDGE_OUTPUT_TOKENS}
