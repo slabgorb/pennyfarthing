@@ -1,0 +1,34 @@
+# blade-runner:dev on tdd-shopping-cart
+# Generated: 2026-01-02T06:40:00Z
+
+agent:
+  theme: blade-runner
+  role: dev
+  spec: blade-runner:dev
+  character: J.F. Sebastian
+
+scenario:
+  name: tdd-shopping-cart
+  category: dev
+  difficulty: easy
+
+statistics:
+  n: 1
+  mean: 85.00
+  std_dev: 0.00
+  min: 85
+  max: 85
+  scores: [85]
+
+efficiency:
+  avg_input_tokens: 8985
+  avg_output_tokens: 1140
+  tokens_per_point: 119.12
+
+baseline_comparison:
+  control_mean: 85.80
+  control_stddev: 7.30
+  delta: -0.80
+
+runs:
+  - run_1.json

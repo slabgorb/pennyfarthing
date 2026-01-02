@@ -1,0 +1,39 @@
+# discworld:dev on tdd-shopping-cart
+# Generated: 2026-01-02T10:06:00Z
+
+agent:
+  theme: discworld
+  role: dev
+  spec: discworld:dev
+  character: Ponder Stibbons
+
+scenario:
+  name: tdd-shopping-cart
+  title: TDD Shopping Cart Implementation
+  category: dev
+  difficulty: easy
+
+statistics:
+  n: 5
+  mean: 93.20
+  std_dev: 6.73
+  min: 85
+  max: 100
+  scores: [85, 98, 100, 98, 85]
+
+efficiency:
+  avg_input_tokens: 3854
+  avg_output_tokens: 441
+  tokens_per_point: 46.08
+
+baseline_comparison:
+  control_mean: 99.00
+  control_stddev: 0.00
+  delta: -5.80
+
+runs:
+  - run_1.json
+  - run_2.json
+  - run_3.json
+  - run_4.json
+  - run_5.json

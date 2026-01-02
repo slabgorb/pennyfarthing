@@ -1,0 +1,28 @@
+# Baseline Summary: control:tea on checkout-component-tests
+# Schema Version: 1
+# Migrated: 2026-01-01T15:44:59-05:00
+
+schema_version: 1
+
+agent:
+  theme: control
+  role: tea
+  spec: control:tea
+
+scenario:
+  name: checkout-component-tests
+  category: tea
+  difficulty: easy
+
+statistics:
+  n: 10
+  mean: 82.35
+  std_dev: 6.52
+  min: 62.5
+  max: 88
+  scores: [62.5, 85, 88, 85, 82.5, 85, 85, 85, 83, 82.5]
+
+efficiency:
+  avg_input_tokens: 2689
+  avg_output_tokens: 1295
+  tokens_per_point: 48.36

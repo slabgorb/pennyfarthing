@@ -2,9 +2,10 @@
  * Benchmark Integration Module
  *
  * Story 11-8: Integrate with Benchmark Output
+ * Story 12-6: Update for local results (Epic 12 migration)
  *
  * Correlates Chernoff faces and OCEAN profiles with benchmark performance data.
- * Reads benchmark results from thunderdome and merges with pennyfarthing OCEAN profiles.
+ * Reads benchmark results from local results/ directory (or BENCHMARK_PATH env var).
  */
 export interface OceanScores {
     O: number;

@@ -1,0 +1,35 @@
+# star-trek-tng:dev on tdd-shopping-cart
+# Generated: 2026-01-02T09:16:00Z
+
+agent:
+  theme: star-trek-tng
+  role: dev
+  spec: star-trek-tng:dev
+  character: Lieutenant Commander Geordi La Forge
+
+scenario:
+  name: tdd-shopping-cart
+  title: TDD Shopping Cart Implementation
+  category: dev
+  difficulty: easy
+
+statistics:
+  n: 1
+  mean: 80.00
+  std_dev: 0.00
+  min: 80
+  max: 80
+  scores: [80]
+
+efficiency:
+  avg_input_tokens: 9544
+  avg_output_tokens: 1119
+  tokens_per_point: 133.29
+
+baseline_comparison:
+  control_mean: 99.00
+  control_stddev: 0.00
+  delta: -19.00
+
+runs:
+  - run_1.json

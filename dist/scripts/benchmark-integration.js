@@ -2,9 +2,10 @@
  * Benchmark Integration Module
  *
  * Story 11-8: Integrate with Benchmark Output
+ * Story 12-6: Update for local results (Epic 12 migration)
  *
  * Correlates Chernoff faces and OCEAN profiles with benchmark performance data.
- * Reads benchmark results from thunderdome and merges with pennyfarthing OCEAN profiles.
+ * Reads benchmark results from local results/ directory (or BENCHMARK_PATH env var).
  */
 import { readdirSync, readFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
@@ -16,9 +17,12 @@ const __dirname = dirname(__filename);
 const projectRoot = join(__dirname, '..', '..');
 const themesDir = join(projectRoot, 'pennyfarthing-dist', 'personas', 'themes');
 const facesDir = join(projectRoot, 'pennyfarthing-dist', 'personas', 'faces');
-// Thunderdome benchmark location (sibling project)
-const thunderdomeRoot = join(projectRoot, '..', 'thunderdome');
-const benchmarksDir = join(thunderdomeRoot, 'results', 'benchmarks');
+// Benchmark results location
+// Configurable via BENCHMARK_PATH environment variable
+// Defaults to local results/benchmarks/ directory
+const benchmarksDir = process.env.BENCHMARK_PATH
+    ? join(process.env.BENCHMARK_PATH, 'benchmarks')
+    : join(projectRoot, 'results', 'benchmarks');
 // ============================================================================
 // Constants
 // ============================================================================
