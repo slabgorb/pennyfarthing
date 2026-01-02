@@ -1896,13 +1896,21 @@ backlog:
             New mode: --mode error-detection with per-type detection rates.
           points: 3
           priority: P1
-          status: ready
+          status: done
+          started: 2026-01-02
+          completed: 2026-01-02
           repos: pennyfarthing
+          pr: https://github.com/1898andCo/pennyfarthing/pull/50
           acceptance_criteria:
             - --mode error-detection activates type-aware scoring
             - Output includes per-type detection rates
             - Identifies strengths/weaknesses by error type
             - Falls back gracefully if no error_type tags present
+          completion_summary: |
+            Added error-detection mode to /judge skill with TRAIL error taxonomy support.
+            Tracks per-type detection rates (reasoning/planning/execution) and identifies
+            type_strengths (>=0.70) and type_weaknesses (<=0.40). Includes graceful fallback
+            when no error_type tags present. Fixed example rates after review rejection.
 
         - id: "14-4"
           title: "Create debugging challenge scenarios"
