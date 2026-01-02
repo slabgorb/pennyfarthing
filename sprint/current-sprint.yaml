@@ -1589,9 +1589,11 @@ backlog:
             - Responsive navigation (hamburger on mobile)
           points: 2
           priority: P1
-          status: in_progress
+          status: done
           started: "2026-01-02"
+          completed: "2026-01-02"
           branch: feat/13-2-base-layout
+          pr: https://github.com/1898andCo/pennyfarthing/pull/52
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11296
           acceptance_criteria:
@@ -1610,7 +1612,11 @@ backlog:
             - Cache theme data during build for performance
           points: 3
           priority: P1
-          status: ready
+          status: done
+          started: "2026-01-02"
+          completed: "2026-01-02"
+          branch: feat/13-3-theme-data-loader
+          pr: https://github.com/1898andCo/pennyfarthing/pull/55
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11297
           acceptance_criteria:
@@ -1654,7 +1660,11 @@ backlog:
             - "Compare this team" button
           points: 3
           priority: P1
-          status: ready
+          status: done
+          started: "2026-01-02"
+          completed: "2026-01-02"
+          branch: feat/13-5-theme-detail-page
+          pr: https://github.com/1898andCo/pennyfarthing/pull/51
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11299
           acceptance_criteria:
@@ -1676,7 +1686,11 @@ backlog:
             - Related characters (same role, different themes)
           points: 3
           priority: P1
-          status: ready
+          status: done
+          started: "2026-01-02"
+          completed: "2026-01-02"
+          branch: feat/13-6-character-profile-pages
+          pr: https://github.com/1898andCo/pennyfarthing/pull/54
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11300
           acceptance_criteria:
@@ -1834,6 +1848,38 @@ backlog:
             - Social sharing shows proper previews
             - Search engines can index all pages
 
+        - id: "13-14"
+          title: "Add theme sprite sheets to agent pages"
+          description: |
+            Display woodcut-style sprite sheets on theme detail pages in the showcase.
+            Sprite sheets show all 10 agents in a 5x2 grid (500x200px total).
+
+            Assets:
+            - Sprite prompt templates in docs/sprite-prompts/*.txt (63 themes)
+            - Generated sprite images to be stored in showcase/public/sprites/
+
+            Implementation:
+            - Add sprite sheet display to theme detail page (/themes/[theme])
+            - Position prominently as team portrait (above or beside team spider)
+            - Fallback to 'control' sprite sheet for themes without custom sprites
+            - Lazy load sprites for performance
+            - Alt text for accessibility
+
+            Image generation (manual/external):
+            - Use prompts from docs/sprite-prompts/ with Hugging Face FLUX or similar
+            - Woodcut style: black and white, bold linework, crosshatching
+            - Save as PNG at 500x200px (or 2x for retina)
+          points: 3
+          priority: P2
+          status: ready
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Sprite sheet displayed on theme detail pages
+            - Falls back to 'control' sprite when theme-specific sprite unavailable
+            - Lazy loading for performance
+            - Accessible alt text describing the team
+            - Control sprite + at least 5 theme sprites generated for demo
+
     - id: epic-14
       title: "TRAIL-Inspired OCEAN Correlation Research"
       description: |
@@ -1922,7 +1968,11 @@ backlog:
             Mix of single-type and mixed-type scenarios across difficulties.
           points: 5
           priority: P1
-          status: ready
+          status: done
+          started: "2026-01-02"
+          completed: "2026-01-02"
+          branch: feat/14-4-debugging-scenarios
+          pr: https://github.com/1898andCo/pennyfarthing/pull/53
           repos: pennyfarthing
           acceptance_criteria:
             - 10 scenarios in scenarios/debugging/
@@ -1938,7 +1988,11 @@ backlog:
             OCEAN-to-error-type correlations. 5×3 matrix output.
           points: 3
           priority: P1
-          status: ready
+          status: done
+          started: "2026-01-02"
+          completed: "2026-01-02"
+          branch: feat/14-5-ocean-error-heatmap
+          pr: https://github.com/1898andCo/pennyfarthing/pull/56
           repos: pennyfarthing
           acceptance_criteria:
             - calculateErrorTypeCorrelation() implemented and tested
