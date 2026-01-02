@@ -11,6 +11,99 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.0.0] - 2026-01-02
+
+### Major Release: Scientific Benchmarking & Showcase Website
+
+This release marks a significant milestone with two major additions:
+1. **Scientific Benchmarking System** - Complete persona evaluation framework migrated from Thunderdome
+2. **Showcase Website** - Interactive website for browsing themes and personality profiles
+
+### Added
+
+#### Epic 12: Scientific Benchmarking Migration
+- **`/solo` Command** - Single agent evaluation against scenarios
+  - Runs agents on standardized challenges
+  - Supports theme:role specification (e.g., `discworld:reviewer`)
+  - Configurable runs with `--runs N`
+  - Results saved to `results/solo/`
+- **`/benchmark-control` Command** - Create control baselines
+  - Run 10+ iterations to establish statistical baseline
+  - Required before comparing personas
+  - Results saved to `results/baselines/`
+- **`/benchmark` Command** - Compare persona against baseline
+  - Statistical analysis with Cohen's d effect size
+  - 95% confidence intervals
+  - Results saved to `results/benchmarks/`
+- **`/judge` Skill** - Evaluation rubrics for scoring responses
+  - Generic rubric (correctness, depth, quality, persona)
+  - Checklist rubric for scenarios with expected issues
+  - `--mode error-detection` for TRAIL-aware scoring
+- **`/finalize-run` Skill** - Result validation and persistence
+  - Proof-of-work fields (timestamps, token counts)
+  - Data integrity validation
+- **Scenarios Library** - 24+ standardized challenges
+  - Categories: architecture, code-review, dev, sm, tea, debugging
+  - Schema validation for scenario format
+  - SWE-bench integration for ground-truth evaluation
+- **BENCHMARKING.md** - Comprehensive documentation
+
+#### Epic 13: Pennyfarthing Showcase Website (Partial)
+- **Astro Project** - Static site generator with React islands
+  - Tailwind CSS styling
+  - TypeScript strict mode
+  - Build output to `docs/` for GitHub Pages
+- **Theme Data Loader** - Build-time YAML → JSON pipeline
+  - All 63 themes loaded at build time
+  - Type-safe TypeScript interfaces
+  - `themes.json` (~600KB) for client queries
+- **Theme Gallery Page** - Browse all 64 themes
+  - Team overlay spider chart thumbnails
+  - Filter by source type, search, sort
+  - Responsive grid layout
+- **Theme Detail Pages** - 64 generated pages
+  - Full-size team overlay spider chart
+  - 10 ProfileCard components per theme
+- **Character Profile Pages** - 640 generated pages
+  - Large Chernoff face + spider chart
+  - OCEAN scores with visual bars
+  - Character details, quotes, catchphrases
+
+#### Epic 14: TRAIL-Inspired OCEAN Correlation Research
+- **Error Type Taxonomy** - Extended scenario schema
+  - `error_type` field: reasoning, planning, execution
+  - Based on TRAIL benchmark categories
+- **TRAIL-OCEAN Hypothesis Mapping** - Research document
+  - A priori predictions for OCEAN → error detection
+  - Testable hypotheses for each TRAIL category
+- **Debugging Scenarios** - 10 new challenges
+  - Tagged with TRAIL error types
+  - Mix of single-type and mixed-type scenarios
+  - 61 baseline issues across scenarios
+- **Error-Detection Mode** - Enhanced `/judge` skill
+  - Per-type detection rates
+  - Strengths/weaknesses by error type
+
+### Changed
+- **Benchmark Integration Module** - Now reads from local `results/` directory
+  - Configurable via `BENCHMARK_PATH` environment variable
+  - Graceful fallback for missing paths
+- **Sprint Tracking** - Split completed.yaml from current-sprint.yaml
+  - Sprints 2-5 archived to `sprint/completed.yaml`
+  - Current sprint file reduced from ~1900 to ~250 lines
+
+### Summary
+| Metric | Value |
+|--------|-------|
+| New Commands | 3 (`/solo`, `/benchmark`, `/benchmark-control`) |
+| New Skills | 2 (`/judge`, `/finalize-run`) |
+| Scenarios | 24+ (6 categories) |
+| Showcase Pages | 768 (64 themes + 64 detail + 640 characters) |
+| TRAIL Hypotheses | 9 (3 error types × 3 predictions) |
+| Debugging Scenarios | 10 (61 tagged issues) |
+
+---
+
 ## [4.3.0] - 2026-01-01
 
 ### Sprint 4 Release: OCEAN Personality Visualization
