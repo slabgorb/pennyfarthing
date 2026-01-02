@@ -1,0 +1,21 @@
+---
+import '../styles/global.css';
+import TestReactIsland from '../components/TestReactIsland';
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Pennyfarthing Showcase</title>
+	</head>
+	<body class="bg-gray-100 min-h-screen">
+		<main class="container mx-auto px-4 py-8">
+			<h1 class="text-4xl font-bold text-gray-900 mb-4">Pennyfarthing Showcase</h1>
+			<p class="text-gray-600 mb-8">Astro + React + Tailwind CSS</p>
+			<TestReactIsland client:load />
+		</main>
+	</body>
+</html>
