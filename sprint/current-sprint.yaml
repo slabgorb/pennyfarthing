@@ -1699,10 +1699,12 @@ backlog:
             - Submit triggers results display
           points: 3
           priority: P1
-          status: in_progress
+          status: done
           started: 2026-01-02
+          completed: 2026-01-02
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11301
+          pr: https://github.com/1898andCo/pennyfarthing/pull/59
           acceptance_criteria:
             - React island hydrates on /compare page
             - All filter types functional
