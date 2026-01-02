@@ -1859,7 +1859,11 @@ backlog:
             Enum: reasoning, planning, execution (TRAIL categories).
           points: 1
           priority: P1
-          status: ready
+          status: done
+          started: 2026-01-02
+          completed: 2026-01-02
+          branch: feat/epic-14-trail-ocean
+          pr: https://github.com/1898andCo/pennyfarthing/pull/46
           repos: pennyfarthing
           acceptance_criteria:
             - Schema validates error_type field on baseline_issues
