@@ -1877,7 +1877,11 @@ backlog:
             Map each TRAIL error category to primary/secondary OCEAN predictors.
           points: 2
           priority: P1
-          status: ready
+          status: done
+          started: 2026-01-02
+          completed: 2026-01-02
+          branch: feat/14-2-trail-ocean-mapping
+          pr: https://github.com/1898andCo/pennyfarthing/pull/48
           repos: pennyfarthing
           acceptance_criteria:
             - All 3 TRAIL categories mapped to OCEAN dimensions
