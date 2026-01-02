@@ -83,9 +83,7 @@ Without `--tools ""`, agents may use tools internally (Read, Write, Bash, etc.),
 **Evidence:** Miles Vorkosigan benchmark (2026-01-01) scored 76.69 with tools enabled vs Leo McGarry's 91.03 with `--tools ""`. Miles' runs had num_turns: 5-7 and judges only saw summaries, not full story breakdowns.
 
 ```bash
-# Use microseconds to avoid timestamp collisions in parallel runs
-# Format: YYYYMMDDTHHMMSS_NNNNNN (22 chars with microseconds)
-RUN_TS=$(date -u +%Y%m%dT%H%M%S_%N | cut -c1-22)
+TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
 # MANDATORY: --tools "" prevents internal tool use
 OUTPUT=$(claude -p --output-format json --tools "" <<'PROMPT_EOF'
@@ -133,7 +131,7 @@ OUTPUT_TOKENS=$(echo "$OUTPUT" | jq -r '.usage.output_tokens // 0')
 {
   "spec": "{spec}",
   "character": "{character}",
-  "cli_timestamp": "{RUN_TS}",
+  "cli_timestamp": "{TIMESTAMP}",
   "response_length": {length},
   "input_tokens": {INPUT_TOKENS},
   "output_tokens": {OUTPUT_TOKENS}
@@ -164,7 +162,7 @@ Capture: `score`, `judge_timestamp`, `judge_response`, `judge_tokens`
   "scenario": {"name": "{scenario_name}", "title": "{title}"},
   "agents": [{
     "spec": "{spec}",
-    "cli_timestamp": "{RUN_TS}",
+    "cli_timestamp": "{TIMESTAMP}",
     "response_text": "{RESPONSE}",
     "input_tokens": {INPUT_TOKENS},
     "output_tokens": {OUTPUT_TOKENS}
@@ -207,7 +205,7 @@ Capture: `score`, `judge_timestamp`, `judge_response`, `judge_tokens`
 
 1. Create output directory (see Step 10 for path logic)
 2. Repeat Steps 4-7 for each run
-3. Save each to `runs/run_{RUN_TS}.json` and `runs/judge_{RUN_TS}.json` (using unique timestamp per run)
+3. Save each to `runs/run_{i}.json` and `runs/judge_{i}.json`
 4. Calculate statistics and save summary.yaml (Step 10)
 
 ## Step 10: Save Summary (ALWAYS - even for n=1)
@@ -228,9 +226,9 @@ else:
    mkdir -p "{base_path}/runs"
    ```
 
-2. Save run files (capture RUN_TS at start of each run):
-   - `runs/run_{RUN_TS}.json` - Agent response + tokens
-   - `runs/judge_{RUN_TS}.json` - Judge evaluation (same RUN_TS as corresponding run)
+2. Save run files:
+   - `runs/run_{i}.json` - Agent response + tokens
+   - `runs/judge_{i}.json` - Judge evaluation
 
 3. Calculate statistics:
    ```python

@@ -109,6 +109,28 @@ schema:
         content: string (multiline)
 
   # ============================================================================
+  # TRAIL Error Taxonomy (Epic 14)
+  # Categorizes errors for OCEAN personality correlation research
+  # Based on Patronus AI's TRAIL benchmark error categories
+  # ============================================================================
+
+  error_type:
+    type: string
+    enum: [reasoning, planning, execution]
+    required: false
+    description: "TRAIL error category for OCEAN correlation analysis"
+    categories:
+      reasoning:
+        description: "Logic and decision-making failures"
+        examples: ["incorrect inferences", "contradictions", "false assumptions", "circular logic"]
+      planning:
+        description: "Task orchestration and coordination failures"
+        examples: ["sequencing errors", "dependency gaps", "resource misallocation", "incomplete plans"]
+      execution:
+        description: "System and tool interaction failures"
+        examples: ["timeouts", "context overflow", "tool misuse", "API errors"]
+
+  # ============================================================================
   # Baseline Issues (for code review/debugging scenarios)
   # Known issues seeded in the code - NOT shown to contestants
   # Used to measure detection rate
@@ -124,24 +146,28 @@ schema:
           id: string
           location: string
           description: string
+          error_type: string (optional, enum: reasoning|planning|execution)
       high:
         type: array
         items:
           id: string
           location: string
           description: string
+          error_type: string (optional, enum: reasoning|planning|execution)
       medium:
         type: array
         items:
           id: string
           location: string
           description: string
+          error_type: string (optional, enum: reasoning|planning|execution)
       low:
         type: array
         items:
           id: string
           location: string
           description: string
+          error_type: string (optional, enum: reasoning|planning|execution)
 
   bonus_issues:
     type: array
@@ -335,14 +361,17 @@ examples:
         - id: SQL_INJECTION
           location: "line 4"
           description: "SQL injection via string formatting"
+          error_type: reasoning  # Logic failure: choosing unsafe string formatting
       high:
         - id: PASSWORD_EXPOSURE
           location: "line 6"
           description: "Password field exposed in response"
+          error_type: planning  # Design failure: not planning data exposure
       medium:
         - id: ERROR_IGNORED
           location: "line 6"
           description: "Scan error ignored"
+          error_type: execution  # Implementation failure: ignoring error handling
 
     scoring:
       total_baseline_issues: 3
