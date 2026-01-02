@@ -1,21 +1,27 @@
 ---
-import '../styles/global.css';
+import Base from '../layouts/Base.astro';
 import TestReactIsland from '../components/TestReactIsland';
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Pennyfarthing Showcase</title>
-	</head>
-	<body class="bg-gray-100 min-h-screen">
-		<main class="container mx-auto px-4 py-8">
-			<h1 class="text-4xl font-bold text-gray-900 mb-4">Pennyfarthing Showcase</h1>
-			<p class="text-gray-600 mb-8">Astro + React + Tailwind CSS</p>
-			<TestReactIsland client:load />
-		</main>
-	</body>
-</html>
+<Base title="Pennyfarthing Showcase" description="Browse 64 themed AI personas with OCEAN personality profiles, spider charts, and Chernoff faces.">
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-4xl font-bold text-gray-900 mb-4">Pennyfarthing Showcase</h1>
+    <p class="text-gray-600 mb-8">
+      Explore 64 themed AI agent personas with OCEAN personality profiles,
+      interactive spider charts, and Chernoff faces.
+    </p>
+
+    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <!-- Theme cards will be added in story 13-4 -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-semibold text-gray-800 mb-2">Coming Soon</h2>
+        <p class="text-gray-600">Theme gallery and persona browser</p>
+      </div>
+    </div>
+
+    <!-- React Island Test (from story 13-1) -->
+    <div class="mt-8">
+      <TestReactIsland client:load />
+    </div>
+  </div>
+</Base>
