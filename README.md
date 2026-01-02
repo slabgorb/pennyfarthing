@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v4.2.3** | *The outer loop goes once, the inner loop goes many times.*
+**v5.0.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px" margin="10px">
 
@@ -81,6 +81,7 @@ Handoffs are automatic when context usage is below 70%. Above that threshold, ag
 | [Theme Comparison](docs/THEME-COMPARISON.md) | Personality analysis & Big Five (OCEAN) profiles |
 | [Configuration](docs/CONFIGURATION.md) | Configuration reference |
 | [Permissions](docs/PERMISSIONS.md) | Claude Code permissions setup |
+| [Benchmarking](docs/BENCHMARKING.md) | Scientific persona evaluation |
 
 ## Directory Structure
 
@@ -194,6 +195,23 @@ pennyfarthing uninstall --all
 ```
 
 Archived sprint data (`sprint/archive/`, `sprint/context/`) is always preserved.
+
+## What's New in v5.0
+
+- **Scientific Benchmarking** - Complete persona evaluation framework
+  - `/solo` - Run agents on standardized scenarios
+  - `/benchmark-control` - Create statistical baselines (n=10)
+  - `/benchmark` - Compare personas with Cohen's d effect size
+  - `/judge` - Rubric-based evaluation with TRAIL error detection
+  - 24+ scenarios across 6 categories
+  - See [BENCHMARKING.md](docs/BENCHMARKING.md) for details
+- **Showcase Website** - Interactive theme browser (in progress)
+  - 768 static pages (themes, details, character profiles)
+  - OCEAN spider charts and Chernoff faces
+  - Built with Astro + React + Tailwind
+- **TRAIL-OCEAN Research** - Error detection correlation analysis
+  - Extended scenario schema with error_type taxonomy
+  - 10 debugging scenarios with 61 tagged issues
 
 ## What's New in v4.2
 

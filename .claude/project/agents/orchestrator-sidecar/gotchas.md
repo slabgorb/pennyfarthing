@@ -69,4 +69,15 @@
 
 ---
 
+## Missing settings.local.json on Copy-Mode Installs
+
+**Problem:** Installations from v4.0.0-v4.0.3 (copy mode) may be missing `settings.local.json`
+**Impact:** Hooks not registered with Claude Code - agents, statusline, context warnings don't work
+**Root Cause:** `mergeSettingsLocalJson()` in init.ts silently failed to create the file
+**Detection:** `pennyfarthing doctor` shows `✗ settings.local.json - Missing`
+**Fix:** Run `pennyfarthing doctor --fix` to auto-create the file
+**Code Fix:** Added `createSettingsLocalJson()` to doctor.ts (PR pending)
+
+---
+
 *Add orchestration gotchas discovered during process work below*

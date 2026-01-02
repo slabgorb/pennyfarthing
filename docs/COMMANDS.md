@@ -7,6 +7,7 @@ Complete reference for all Pennyfarthing slash commands.
 - [TDD Workflow](#tdd-workflow-commands)
 - [Agent Activation](#agent-activation-commands)
 - [Planning](#planning-commands)
+- [Benchmarking](#benchmarking-commands)
 - [Operations](#operations-commands)
 - [Sync](#sync-commands)
 - [Theme](#theme-commands)
@@ -258,6 +259,81 @@ Complete reference for all Pennyfarthing slash commands.
 2. Free-form discussion
 3. Creative problem solving
 4. Less structured than `/brainstorm`
+
+---
+
+## Benchmarking Commands
+
+### `/solo`
+
+**Purpose:** Run a single agent on a standardized scenario for evaluation
+
+**Usage:**
+```
+/solo discworld:reviewer --scenario order-service
+/solo ted-lasso:sm --scenario sprint-planning-conflict --runs 4
+/solo control:dev --scenario tdd-shopping-cart --no-judge
+```
+
+**Arguments:**
+- `theme:agent` - Persona and role to evaluate (e.g., `discworld:reviewer`)
+- `--scenario <name>` - Scenario from `scenarios/` directory
+- `--runs N` - Number of runs (default: 1, max: 20)
+- `--no-judge` - Skip evaluation, return raw response
+
+**What it does:**
+1. Loads specified theme and agent persona
+2. Runs agent on scenario with `--tools ""` (critical for valid results)
+3. Evaluates response with `/judge` (unless `--no-judge`)
+4. Saves results to `results/solo/`
+
+**See also:** [BENCHMARKING.md](BENCHMARKING.md)
+
+### `/benchmark-control`
+
+**Purpose:** Create a statistical baseline for a scenario
+
+**Usage:**
+```
+/benchmark-control reviewer --scenario order-service
+/benchmark-control dev --scenario tdd-shopping-cart --runs 10
+```
+
+**Arguments:**
+- `agent` - Role to benchmark (sm, dev, reviewer, architect, tea)
+- `--scenario <name>` - Scenario name (or choose interactively)
+- `--runs N` - Number of runs (default: 10 for baselines)
+
+**What it does:**
+1. Runs the control (no-persona) agent N times
+2. Calculates mean, standard deviation, 95% CI
+3. Saves baseline to `results/baselines/{scenario}/{role}/`
+
+**Required before:** Using `/benchmark` to compare personas
+
+### `/benchmark`
+
+**Purpose:** Compare a persona's performance against the control baseline
+
+**Usage:**
+```
+/benchmark discworld reviewer --scenario order-service
+/benchmark the-expanse sm --scenario sprint-planning-conflict --runs 8
+```
+
+**Arguments:**
+- `theme` - Persona theme (e.g., `discworld`, `the-expanse`)
+- `agent` - Role to benchmark
+- `--scenario <name>` - Scenario name (or choose interactively)
+- `--runs N` - Number of runs (default: 4)
+
+**What it does:**
+1. Runs persona agent N times on scenario
+2. Compares against baseline with Cohen's d effect size
+3. Calculates 95% confidence intervals
+4. Saves results to `results/benchmarks/{scenario}/{theme}-{role}/`
+
+**Requires:** Control baseline created with `/benchmark-control`
 
 ---
 
@@ -520,6 +596,9 @@ Creates a complete theme file at `.claude/pennyfarthing/themes/{name}.yaml` with
 | `/start-epic` | Start an epic | Planning |
 | `/brainstorm` | Problem solving | Planning |
 | `/party-mode` | Creative brainstorm | Planning |
+| `/solo` | Single agent evaluation | Benchmarking |
+| `/benchmark-control` | Create baseline | Benchmarking |
+| `/benchmark` | Compare vs baseline | Benchmarking |
 | `/repo-status` | Check git status | Operations |
 | `/git-cleanup` | Organize commits | Operations |
 | `/setup-worktree` | Create worktree | Operations |
