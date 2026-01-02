@@ -1224,8 +1224,30 @@ sprint_5:
   number: 5
   goal: "Migrate scientific benchmarking tools from Thunderdome to Pennyfarthing"
   planned_start: 2026-01-02
+  completed: 2026-01-02
   velocity_target: 20
-  status: planning
+  status: complete
+  completed_points: 18
+  completed_stories:
+    - "12-1 (3 pts): Copy /solo command to Pennyfarthing"
+    - "12-2 (3 pts): Copy /judge skill to Pennyfarthing"
+    - "12-3 (3 pts): Copy /benchmark and /benchmark-control commands"
+    - "12-4 (2 pts): Copy scenarios library to Pennyfarthing"
+    - "12-5 (2 pts): Copy /finalize-run skill"
+    - "12-6 (2 pts): Update benchmark-integration.ts for local results"
+    - "12-7 (2 pts): Create benchmarking documentation"
+    - "12-8 (1 pt): End-to-end integration test"
+  in_progress_stories: []
+  backlog_stories: []
+  notes: |
+    Epic 12 complete: Scientific benchmarking migrated from Thunderdome to Pennyfarthing.
+    - Commands: /solo, /benchmark, /benchmark-control
+    - Skills: /judge, /finalize-run
+    - 24 scenarios across 6 categories
+    - 24 control baselines + 160 persona comparisons preserved
+    - docs/BENCHMARKING.md with full documentation
+    - benchmark-integration.ts updated for local paths with BENCHMARK_PATH env var
+    Sprint 5 fully completed (18/20 points = 90% of velocity target).
 
   epics:
     - id: epic-12
@@ -1290,9 +1312,12 @@ sprint_5:
             - Support both solo and comparison modes
           points: 3
           priority: P1
-          status: ready
+          status: done
+          started: 2026-01-02
+          completed: 2026-01-02
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11287
+          pr: https://github.com/1898andCo/pennyfarthing/pull/44
           acceptance_criteria:
             - /judge skill evaluates responses against rubric
             - Supports --mode solo (single agent scoring)
@@ -1310,9 +1335,12 @@ sprint_5:
             - Ensure Cohen's d effect size calculation works
           points: 3
           priority: P1
-          status: ready
+          status: done
+          started: 2026-01-02
+          completed: 2026-01-02
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11288
+          pr: https://github.com/1898andCo/pennyfarthing/pull/44
           acceptance_criteria:
             - /benchmark-control creates baseline with n=10 runs
             - /benchmark compares persona against control baseline
@@ -1331,9 +1359,12 @@ sprint_5:
             - Exclude test fixtures
           points: 2
           priority: P1
-          status: ready
+          status: done
+          started: 2026-01-02
+          completed: 2026-01-02
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11289
+          pr: https://github.com/1898andCo/pennyfarthing/pull/44
           acceptance_criteria:
             - scenarios/ directory with all categories
             - schema.yaml for scenario validation
@@ -1350,9 +1381,12 @@ sprint_5:
             - Ensure proof-of-work fields saved correctly
           points: 2
           priority: P1
-          status: ready
+          status: done
+          started: 2026-01-02
+          completed: 2026-01-02
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11290
+          pr: https://github.com/1898andCo/pennyfarthing/pull/44
           acceptance_criteria:
             - /finalize-run saves results with proof-of-work
             - Supports solo, benchmark result types
@@ -1370,9 +1404,12 @@ sprint_5:
             - Update tests for new paths
           points: 2
           priority: P1
-          status: ready
+          status: done
+          started: 2026-01-02
+          completed: 2026-01-02
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11291
+          pr: https://github.com/1898andCo/pennyfarthing/pull/44
           acceptance_criteria:
             - benchmark-integration.ts reads from results/benchmarks/
             - Configurable BENCHMARK_PATH environment variable
@@ -1390,9 +1427,12 @@ sprint_5:
             - Add interpretation guide for statistics
           points: 2
           priority: P2
-          status: ready
+          status: done
+          started: 2026-01-02
+          completed: 2026-01-02
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11292
+          pr: https://github.com/1898andCo/pennyfarthing/pull/44
           acceptance_criteria:
             - docs/BENCHMARKING.md exists
             - Explains scientific benchmarking workflow
@@ -1410,9 +1450,12 @@ sprint_5:
             - Verify benchmark-integration.ts reads results
           points: 1
           priority: P1
-          status: ready
+          status: done
+          started: 2026-01-02
+          completed: 2026-01-02
           repos: pennyfarthing
           jira: https://1898andco.atlassian.net/browse/MSSCI-11293
+          pr: https://github.com/1898andCo/pennyfarthing/pull/44
           acceptance_criteria:
             - Full workflow executes without errors
             - Baseline created successfully
@@ -1754,6 +1797,7 @@ backlog:
           priority: P2
           status: ready
           repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11306
           acceptance_criteria:
             - Heart button on all profile cards
             - Favorites persist in localStorage
@@ -1774,6 +1818,7 @@ backlog:
           priority: P2
           status: ready
           repos: pennyfarthing
+          jira: https://1898andco.atlassian.net/browse/MSSCI-11307
           acceptance_criteria:
             - All pages work on mobile devices
             - Touch targets meet accessibility guidelines
