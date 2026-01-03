@@ -34,6 +34,28 @@
 **Lesson:** When fixing path issues, test BOTH dogfooding AND npm installation scenarios
 **Fixed:** 2024-12-31
 
+## Benchmark Data Issues
+
+### Missing Baseline Comparisons on Benchmark Page
+**Problem:** Benchmark page shows "N/A" for Control and Delta columns
+**Root cause:** Data architecture mismatch between storage and loader:
+- Baselines stored in `results/baselines/{scenario}/{role}/summary.yaml`
+- Themed results stored in `results/benchmarks/{scenario}/{theme-role}/summary.yaml`
+- `benchmark-loader.ts` only reads from `results/benchmarks/`, ignores `results/baselines/`
+- Themed summaries lack embedded `baseline_comparison` section
+
+**Example:**
+- `results/baselines/django-10097/dev/summary.yaml` → control mean: 65.50
+- `results/benchmarks/django-10097/breaking-bad-dev/summary.yaml` → mean: 64.38, NO baseline_comparison
+- Expected delta: -1.12 (theme underperforms control)
+
+**Solution:** Update `showcase/src/lib/benchmark-loader.ts` to:
+1. Load baselines from `results/baselines/` first
+2. Match each themed summary to its baseline (same scenario + role)
+3. Calculate `delta = theme.mean - baseline.mean` at load time
+
+**Discovered:** 2026-01-03
+
 ---
 
 *Add implementation gotchas discovered during development below*
