@@ -3,6 +3,9 @@
  *
  * Build-time data pipeline that loads benchmark summary.yaml files
  * from results/benchmarks/ and transforms them for the showcase.
+ *
+ * Also loads control baselines from results/baselines/ and calculates
+ * delta comparisons for themed summaries that lack embedded baseline data.
  */
 
 import { readFileSync, readdirSync, existsSync } from 'fs';
@@ -14,8 +17,9 @@ import { parse } from 'yaml';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Path to benchmark results relative to showcase directory
+// Paths to benchmark results relative to showcase directory
 const BENCHMARKS_DIR = join(__dirname, '..', '..', '..', 'results', 'benchmarks');
+const BASELINES_DIR = join(__dirname, '..', '..', '..', 'results', 'baselines');
 
 /**
  * Raw YAML structure for benchmark summary files
@@ -166,9 +170,66 @@ function loadSummaryFile(filePath: string): BenchmarkSummary | null {
 }
 
 /**
+ * Baseline statistics for comparison
+ */
+interface BaselineStats {
+  mean: number;
+  stdDev: number;
+}
+
+/**
+ * Load all baseline summaries into a lookup map
+ *
+ * Returns map keyed by "scenario:role" for O(1) lookups
+ * Traverses results/baselines/{scenario}/{role}/summary.yaml
+ */
+function loadBaselines(): Map<string, BaselineStats> {
+  const baselines = new Map<string, BaselineStats>();
+
+  if (!existsSync(BASELINES_DIR)) {
+    return baselines;
+  }
+
+  // Get all scenario directories
+  const scenarios = readdirSync(BASELINES_DIR, { withFileTypes: true })
+    .filter((d) => d.isDirectory())
+    .map((d) => d.name);
+
+  for (const scenario of scenarios) {
+    const scenarioDir = join(BASELINES_DIR, scenario);
+
+    // Get all role directories within each scenario
+    const roles = readdirSync(scenarioDir, { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name);
+
+    for (const role of roles) {
+      const summaryPath = join(scenarioDir, role, 'summary.yaml');
+
+      if (existsSync(summaryPath)) {
+        try {
+          const content = readFileSync(summaryPath, 'utf-8');
+          const raw = parse(content) as RawBenchmarkSummary;
+          const key = `${scenario}:${role}`;
+          baselines.set(key, {
+            mean: raw.statistics.mean,
+            stdDev: raw.statistics.std_dev,
+          });
+        } catch {
+          // Skip malformed baseline files
+        }
+      }
+    }
+  }
+
+  return baselines;
+}
+
+/**
  * Load all benchmark summary.yaml files
  *
  * Traverses results/benchmarks/{scenario}/{theme-role}/summary.yaml
+ * Also loads baselines from results/baselines/ and calculates deltas
  */
 export async function loadBenchmarkSummaries(): Promise<BenchmarkSummary[]> {
   const summaries: BenchmarkSummary[] = [];
@@ -176,6 +237,9 @@ export async function loadBenchmarkSummaries(): Promise<BenchmarkSummary[]> {
   if (!existsSync(BENCHMARKS_DIR)) {
     return summaries;
   }
+
+  // Load baselines first for comparison lookups
+  const baselines = loadBaselines();
 
   // Get all scenario directories
   const scenarios = readdirSync(BENCHMARKS_DIR, { withFileTypes: true })
@@ -196,6 +260,18 @@ export async function loadBenchmarkSummaries(): Promise<BenchmarkSummary[]> {
       if (existsSync(summaryPath)) {
         const summary = loadSummaryFile(summaryPath);
         if (summary) {
+          // If no embedded baseline comparison, calculate from baselines
+          if (!summary.baselineComparison) {
+            const baselineKey = `${summary.scenario.name}:${summary.agent.role}`;
+            const baseline = baselines.get(baselineKey);
+            if (baseline) {
+              summary.baselineComparison = {
+                controlMean: baseline.mean,
+                controlStddev: baseline.stdDev,
+                delta: summary.statistics.mean - baseline.mean,
+              };
+            }
+          }
           summaries.push(summary);
         }
       }
