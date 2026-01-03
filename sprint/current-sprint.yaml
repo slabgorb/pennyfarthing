@@ -164,7 +164,8 @@ epics:
           - /favorites page shows saved characters
         points: 2
         priority: P2
-        status: ready
+        status: in-progress
+        started: 2026-01-03
         jira: https://1898andco.atlassian.net/browse/MSSCI-11306
         acceptance_criteria:
           - Heart button on all profile cards
