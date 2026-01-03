@@ -23,9 +23,18 @@ const { agent, themeId } = Astro.props;
   href={`/characters/${themeId}/${agent.role}`}
   class="profile-card bg-stone-800 border border-stone-700 rounded-lg shadow-md hover:shadow-lg hover:border-amber-600 transition-all p-4 flex flex-col items-center text-center cursor-pointer"
 >
-  <!-- Agent emoji/face placeholder -->
-  <div class="face text-4xl mb-2">
-    {agent.emoji || '👤'}
+  <!-- Agent portrait with emoji fallback -->
+  <div class="face w-16 h-16 mb-2 flex items-center justify-center">
+    <img
+      src={`/sprites/${themeId}/${agent.role}.png`}
+      alt={agent.character}
+      class="portrait w-full h-full object-cover rounded"
+      loading="lazy"
+      onerror="this.style.display='none'; this.nextElementSibling.style.display='block'"
+    />
+    <span class="emoji-fallback text-4xl hidden">
+      {agent.emoji || '👤'}
+    </span>
   </div>
 
   <!-- Character name -->

@@ -17,6 +17,7 @@ const themes = themesData.map(t => t.metadata.name);
 const characters = themesData.flatMap(theme =>
   Object.values(theme.agents).map((agent) => ({
     theme: theme.metadata.name,
+    themeId: theme.id,
     role: agent.role,
     name: agent.character,
     ocean: agent.ocean,
@@ -24,6 +25,7 @@ const characters = themesData.flatMap(theme =>
     expertise: agent.expertise,
     trait: agent.trait,
     roleSummary: agent.roleSummary,
+    emoji: agent.emoji,
   }))
 );
 

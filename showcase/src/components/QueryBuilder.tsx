@@ -6,7 +6,7 @@
  * Redesigned with stacked layout per UX spec.
  */
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef, type ReactNode } from 'react';
 import CharacterCard from './CharacterCard';
 import {
   decodeUrlToState,
@@ -89,6 +89,29 @@ function OverlaySpiderChart({ characters, size = 250 }: { characters: Character[
   );
 }
 
+// Small portrait for chips
+function ChipPortrait({ themeId, role, emoji, name }: { themeId?: string; role: string; emoji?: string; name: string }) {
+  const [imgError, setImgError] = useState(false);
+  const spritePath = themeId ? `/sprites/${themeId}/${role}.png` : null;
+
+  if (!spritePath || imgError) {
+    return (
+      <div className="w-6 h-6 flex items-center justify-center text-sm bg-stone-600 rounded">
+        {emoji || '👤'}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={spritePath}
+      alt={name}
+      className="w-6 h-6 object-cover rounded"
+      onError={() => setImgError(true)}
+    />
+  );
+}
+
 // OCEAN dimension labels
 const OCEAN_DIMENSIONS = [
   { key: 'O', label: 'Openness', description: 'Creativity and curiosity' },
@@ -124,6 +147,7 @@ export interface OceanFilters {
 
 export interface Character {
   theme: string;
+  themeId?: string;
   role: string;
   name: string;
   ocean: { O: number; C: number; E: number; A: number; N: number };
@@ -131,6 +155,7 @@ export interface Character {
   expertise?: string;
   trait?: string;
   roleSummary?: string;
+  emoji?: string;
 }
 
 interface Props {
@@ -650,8 +675,9 @@ export default function QueryBuilder({ themes, characters }: Props) {
             {selectedChars.map((char) => (
               <div
                 key={`${char.theme}-${char.role}`}
-                className="flex items-center gap-2 bg-stone-700 rounded-lg px-3 py-1.5"
+                className="flex items-center gap-2 bg-stone-700 rounded-lg px-2 py-1.5"
               >
+                <ChipPortrait themeId={char.themeId} role={char.role} emoji={char.emoji} name={char.name} />
                 <span className="text-amber-100 font-medium text-sm">{char.name}</span>
                 <span className="text-stone-400 text-xs">{char.role}</span>
                 <button
