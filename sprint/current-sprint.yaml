@@ -10,12 +10,12 @@ sprint:
   velocity_target: 20
 
 summary:
-  total_points: 51
+  total_points: 53
   completed_points: 43  # Epic 13: 29pts + Epic 14: 14pts
-  remaining_points: 8   # Epic 13 stories 13-12 through 13-14
+  remaining_points: 10  # Epic 13 story 13-14 (5pts expanded)
   notes: |
     Epic 14 complete (14/14 pts).
-    Epic 13 in progress (29/37 pts, stories 13-12 through 13-14 remaining).
+    Epic 13 in progress (29/39 pts, story 13-14 in progress - expanded to 5pts).
 
 epics:
   # =========================================================================
@@ -196,17 +196,27 @@ epics:
       - id: "13-14"
         title: "Add theme sprite sheets to agent pages"
         description: |
-          Display woodcut-style sprite sheets on theme detail pages.
-          Sprite sheets show all 10 agents in a 5x2 grid (500x200px total).
-          Assets: docs/sprite-prompts/*.txt (63 themes)
-        points: 3
-        priority: P2
-        status: ready
-        acceptance_criteria:
-          - Sprite sheet displayed on theme detail pages
-          - Falls back to 'control' sprite when unavailable
+          Generate and display woodcut-style character portraits on theme pages.
+
+          Phase 1 (DevOps): Generate portraits using SDXL on M3 Max
+          - Convert prompts from character names to visual descriptors (copyright-safe)
+          - Move prompt files from docs/sprite-prompts/ to showcase/src/data/sprite-prompts/
+          - Generate 10 individual portraits per theme (100x100px each)
+          - Output to showcase/public/sprites/{theme}/{role}.png
+
+          Phase 2 (Dev): Integrate portraits into showcase site
+          - Display portraits on theme detail pages
           - Lazy loading for performance
-          - Control sprite + at least 5 theme sprites for demo
+        points: 5
+        priority: P2
+        status: in_progress
+        started: 2026-01-03
+        acceptance_criteria:
+          - All 63 prompt files converted to visual descriptors
+          - Prompts moved to showcase/src/data/sprite-prompts/
+          - generate-sprites.py script working with SDXL/MPS
+          - At least 5 themes fully generated (50 portraits)
+          - Portraits integrated on theme detail pages
 
   # =========================================================================
   # EPIC 14 - TRAIL-OCEAN Research (COMPLETE - 14/14 pts)

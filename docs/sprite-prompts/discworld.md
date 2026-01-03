@@ -6,22 +6,22 @@ Create a sprite sheet of 10 character portrait busts in a 5×2 grid (500px × 20
 **Source:** Terry Pratchett's Discworld novels
 
 **Row 1 (left to right):**
-1. **Orchestrator:** DEATH - Speaks IN CAPITALS without quotation marks, patient, inevitable, surprisingly sympathetic
-2. **SM (Scrum Master):** Captain Carrot Ironfoundersson - Earnest, literal, believes in the law, charismatically simple, naturally inspires
-3. **TEA (Test Engineer):** Igor - Lisp, meticulous, traditional, proud of the craft, helpful to a fault
-4. **Dev (Developer):** Ponder Stibbons - Long-suffering, methodical, the only wizard who actually does the work
-5. **Reviewer:** Granny Weatherwax (Esmerelda Weatherwax) - Direct, formidable, sees through everything, uses Headology
+1. **Orchestrator:** A tall skeletal figure in a hooded black robe, skull face with empty eye sockets that seem to glow, bony hands gripping a large scythe - patient, inevitable, surprisingly sympathetic
+2. **SM (Scrum Master):** A very tall broad-shouldered young man with short red hair, square honest jaw, wearing a city watch uniform with polished breastplate and badge - earnest, literal, naturally inspiring
+3. **TEA (Test Engineer):** A hunched figure with mismatched facial features, visible stitch scars across the face, lank dark hair, helpful eager expression - meticulous, traditional, proud of craft
+4. **Dev (Developer):** A young bespectacled wizard with a worried expression, wearing a pointed hat and robes, carrying scrolls and books - long-suffering, methodical, overworked
+5. **Reviewer:** An elderly stern-faced woman with iron-gray hair pulled back in a tight bun, wearing a pointed black witch's hat, piercing knowing eyes - direct, formidable, sees through everything
 
 **Row 2 (left to right):**
-6. **Architect:** Leonard of Quirm - Brilliant, easily distracted, names things badly, sees connections everywhere
-7. **PM (Product Manager):** Lord Havelock Vetinari - Calm, calculating, arranges situations so the correct outcome becomes inevitable
-8. **Tech Writer:** Sacharissa Cripslock - Investigative, clear, believes in the truth, asks uncomfortable questions
-9. **UX Designer:** Adora Belle Dearheart - Direct, sarcastic, chain-smoking, cares fiercely beneath the cynicism
-10. **DevOps:** Lu-Tze - Humble sweeper who is actually a master of time and the Way
+6. **Architect:** An elderly bearded man resembling a Renaissance polymath, long flowing hair, wearing an artist's smock, holding quill and parchment with sketches - brilliant, easily distracted, sees connections everywhere
+7. **PM (Product Manager):** A thin pale man dressed entirely in black robes, sharp angular features, thin precise beard, cold calculating eyes - calm, manipulative, arranges inevitable outcomes
+8. **Tech Writer:** A young woman with ink-stained fingers, determined intelligent expression, hair pinned up practically, holding notepad and pencil - investigative, clear, truth-seeking
+9. **UX Designer:** A slim sharp-featured woman in a dark formal dress, holding a long cigarette holder, cynical half-smile - direct, sarcastic, fiercely caring beneath the exterior
+10. **DevOps:** An elderly bald Asian monk in simple brown robes, serene knowing smile, weathered face with laugh lines, holding a well-worn broom - humble appearance hiding mastery
 
 **Requirements:**
-- Each portrait clearly identifiable as the named character
-- Include a small identifying prop or visual element for each character
+- Each portrait clearly distinguishable by visual elements
+- Include identifying props (scythe, badge, witch hat, spectacles, etc.)
 - Consistent woodcut style across all 10 portraits
 - Bold black lines, white background, crosshatch shading only
 - Bust/headshot composition for each cell
