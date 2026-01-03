@@ -184,8 +184,9 @@ epics:
           - Any remaining rough edges
         points: 2
         priority: P2
-        status: in_progress
+        status: done
         started: 2026-01-03
+        completed: 2026-01-03
         jira: https://1898andco.atlassian.net/browse/MSSCI-11307
         acceptance_criteria:
           - Site polished for desktop exploration
