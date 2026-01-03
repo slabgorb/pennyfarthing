@@ -6,7 +6,7 @@ Generates 10 individual portraits per theme using Stable Diffusion SDXL on M3 Ma
 Output: showcase/public/sprites/{theme}/{role}.png (100x100px each)
 
 Usage:
-    python3 docs/sprite-prompts/generate-sprites.py [--dry-run] [--theme THEME]
+    python3 showcase/src/data/sprite-prompts/generate-sprites.py [--dry-run] [--theme THEME]
 """
 
 import argparse
@@ -29,7 +29,7 @@ except ImportError as e:
 
 # Configuration
 PROMPTS_DIR = Path(__file__).parent
-OUTPUT_DIR = Path(__file__).parent.parent.parent / "showcase" / "public" / "sprites"
+OUTPUT_DIR = Path(__file__).parent.parent.parent.parent / "public" / "sprites"
 MODEL_ID = "stabilityai/stable-diffusion-xl-base-1.0"
 
 # SDXL generates at 1024x1024, we'll resize to 100x100
