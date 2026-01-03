@@ -1,0 +1,101 @@
+# Sprint 5 - Archived
+# Goal: Migrate scientific benchmarking tools from Thunderdome to Pennyfarthing
+# Status: COMPLETE (18/18 points)
+
+sprint:
+  number: 5
+  goal: "Migrate scientific benchmarking tools from Thunderdome to Pennyfarthing"
+  start_date: 2026-01-02
+  completed: 2026-01-02
+  status: complete
+  total_points: 18
+  completed_points: 18
+  velocity_target: 20
+
+epics:
+  - id: epic-12
+    title: "Scientific Benchmarking Migration (Phase 1)"
+    description: |
+      Migrate scientific research tools from Thunderdome to Pennyfarthing to establish
+      clear separation of concerns:
+      - Pennyfarthing: Scientific research platform for persona benchmarking
+      - Thunderdome: Entertainment arena for duels and tournaments
+    points: 18
+    priority: P1
+    marker: "strategic"
+    repos: pennyfarthing
+    jira: https://1898andco.atlassian.net/browse/MSSCI-11285
+    status: complete
+    stories:
+      - id: "12-1"
+        title: "Copy /solo command to Pennyfarthing"
+        points: 3
+        status: done
+        completed: 2026-01-02
+        pr: https://github.com/1898andCo/pennyfarthing/pull/42
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11286
+
+      - id: "12-2"
+        title: "Copy /judge skill to Pennyfarthing"
+        points: 3
+        status: done
+        completed: 2026-01-02
+        pr: https://github.com/1898andCo/pennyfarthing/pull/44
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11287
+
+      - id: "12-3"
+        title: "Copy /benchmark and /benchmark-control commands"
+        points: 3
+        status: done
+        completed: 2026-01-02
+        pr: https://github.com/1898andCo/pennyfarthing/pull/44
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11288
+
+      - id: "12-4"
+        title: "Copy scenarios library to Pennyfarthing"
+        points: 2
+        status: done
+        completed: 2026-01-02
+        pr: https://github.com/1898andCo/pennyfarthing/pull/44
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11289
+
+      - id: "12-5"
+        title: "Copy /finalize-run skill"
+        points: 2
+        status: done
+        completed: 2026-01-02
+        pr: https://github.com/1898andCo/pennyfarthing/pull/44
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11290
+
+      - id: "12-6"
+        title: "Update benchmark-integration.ts for local results"
+        points: 2
+        status: done
+        completed: 2026-01-02
+        pr: https://github.com/1898andCo/pennyfarthing/pull/44
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11291
+
+      - id: "12-7"
+        title: "Create benchmarking documentation"
+        points: 2
+        status: done
+        completed: 2026-01-02
+        pr: https://github.com/1898andCo/pennyfarthing/pull/44
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11292
+
+      - id: "12-8"
+        title: "End-to-end integration test"
+        points: 1
+        status: done
+        completed: 2026-01-02
+        pr: https://github.com/1898andCo/pennyfarthing/pull/44
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11293
+
+notes: |
+  Sprint 5 completed same day (90% velocity target).
+  - Commands: /solo, /benchmark, /benchmark-control
+  - Skills: /judge, /finalize-run
+  - 24 scenarios across 6 categories
+  - 24 control baselines + 160 persona comparisons preserved
+  - docs/BENCHMARKING.md with full documentation
+  - benchmark-integration.ts updated for local paths with BENCHMARK_PATH env var
