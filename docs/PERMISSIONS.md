@@ -198,6 +198,71 @@ Add permissions when:
 - Using TDD workflow → Add `Skill(tea)`, `Skill(dev)`
 - Using code review → Add `Skill(reviewer)`
 
+## Benchmarking Permissions (Parallel Runs)
+
+The benchmarking system (`/benchmark`, `/solo`, `/benchmark-control`) can run evaluations **sequentially** (one at a time) or in **parallel** using subagents via the Task tool.
+
+**Sequential runs** work with standard interactive prompts - Claude Code will ask for permission when needed.
+
+**Parallel runs** use subagents that run non-interactively and cannot prompt for permission approval. These need explicit pre-approved permissions.
+
+### Required Permissions for Parallel Benchmarks
+
+If you want to run benchmarks in parallel batches, add these permissions:
+
+```json
+"permissions": {
+  "allow": [
+    "Bash(claude *)",
+    "Bash(date *)",
+    "Bash(mkdir *)",
+    "Edit(results/**)",
+    "Write(results/**)",
+    "Skill(solo)",
+    "Skill(benchmark)",
+    "Skill(benchmark-control)",
+    "Skill(judge)",
+    "Skill(finalize-run)"
+  ]
+}
+```
+
+| Permission | Purpose |
+|------------|---------|
+| `Bash(claude *)` | Run `claude -p` CLI for agent evaluation |
+| `Bash(date *)` | Capture timestamps for proof-of-work |
+| `Bash(mkdir *)` | Create results directories |
+| `Edit(results/**)` | Modify benchmark result files |
+| `Write(results/**)` | Create new result files |
+| `Skill(solo)` | Single agent evaluation |
+| `Skill(benchmark)` | Persona vs baseline comparison |
+| `Skill(benchmark-control)` | Create control baselines |
+| `Skill(judge)` | Rubric-based evaluation |
+| `Skill(finalize-run)` | Result validation and saving |
+
+### Why Parallel Runs Need Explicit Permissions
+
+When Claude Code spawns a subagent (via the Task tool) for parallel execution, the subagent runs in a **non-interactive mode** where:
+- User prompts are unavailable
+- Permission requests are auto-denied
+- Only pre-approved permissions work
+
+If you see errors like:
+- `"Permission to use Bash has been auto-denied (prompts unavailable)"`
+- `"Bash tool permission denied"`
+
+This means the benchmark subagent doesn't have the required permissions. Either:
+1. Run benchmarks sequentially (one at a time) to use interactive prompts, or
+2. Add the permissions above for parallel execution
+
+### Quick Fix
+
+Run the doctor command with `--fix` to add parallel benchmark permissions:
+
+```bash
+pennyfarthing doctor --fix
+```
+
 ## Troubleshooting
 
 ### "Permission denied" Errors

@@ -361,17 +361,30 @@ Output ONLY valid JSON (no markdown, no extra text):
 
 ### Step 3: Execute Judge via CLI
 
+**CRITICAL: Use PIPE syntax, NOT heredocs.**
+
+Heredoc syntax fails in subagents due to permission handling differences.
+Pipe syntax works correctly in both main sessions and subagents.
+
 ```bash
 JUDGE_TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
-JUDGE_OUTPUT=$(claude -p --output-format json <<'JUDGE_EOF'
-{constructed prompt}
-JUDGE_EOF
-)
+# Build judge prompt content
+JUDGE_PROMPT="{constructed prompt}"
+
+# MANDATORY: Use pipe syntax (NOT heredoc) for subagent compatibility
+JUDGE_OUTPUT=$(echo "$JUDGE_PROMPT" | claude -p --output-format json --tools "")
 
 JUDGE_RESPONSE=$(echo "$JUDGE_OUTPUT" | jq -r '.result')
 JUDGE_INPUT_TOKENS=$(echo "$JUDGE_OUTPUT" | jq -r '.usage.input_tokens // 0')
 JUDGE_OUTPUT_TOKENS=$(echo "$JUDGE_OUTPUT" | jq -r '.usage.output_tokens // 0')
+```
+
+**For very long judge prompts:** Write to temp file:
+```bash
+echo "$JUDGE_PROMPT" > /tmp/judge_$$.txt
+JUDGE_OUTPUT=$(cat /tmp/judge_$$.txt | claude -p --output-format json --tools "")
+rm /tmp/judge_$$.txt
 ```
 
 ### Step 4: Extract Scores

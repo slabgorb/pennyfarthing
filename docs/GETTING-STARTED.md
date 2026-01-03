@@ -166,6 +166,8 @@ Evaluate persona effectiveness with standardized scenarios:
 /benchmark discworld reviewer --scenario order-service
 ```
 
+**Note:** Sequential benchmarks work with standard interactive prompts. For **parallel benchmarks** (running multiple themes simultaneously), you need explicit permissions for subagents. Run `pennyfarthing doctor --fix` to add them, or see [PERMISSIONS.md](PERMISSIONS.md#benchmarking-permissions-parallel-runs).
+
 See [BENCHMARKING.md](BENCHMARKING.md) for complete guide.
 
 ## Showcase Website

@@ -82,12 +82,22 @@ Without `--tools ""`, agents may use tools internally (Read, Write, Bash, etc.),
 
 **Evidence:** Miles Vorkosigan benchmark (2026-01-01) scored 76.69 with tools enabled vs Leo McGarry's 91.03 with `--tools ""`. Miles' runs had num_turns: 5-7 and judges only saw summaries, not full story breakdowns.
 
+**CRITICAL: Use PIPE syntax, NOT heredocs.**
+
+**NEVER USE HEREDOCS** - Heredoc syntax (`<<'EOF'`, `<<EOF`, `<<'PROMPT'`, etc.) FAILS in subagents.
+The permission system treats heredocs differently and they get auto-denied.
+
+**ALWAYS USE PIPE SYNTAX** - This works in both main sessions and subagents:
+- `echo "$PROMPT" | claude -p ...` - WORKS
+- `cat file.txt | claude -p ...` - WORKS
+- `printf '%s' "$PROMPT" | claude -p ...` - WORKS
+- `claude -p ... <<'EOF'` - **FAILS IN SUBAGENTS - DO NOT USE**
+
 ```bash
 TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
-# MANDATORY: --tools "" prevents internal tool use
-OUTPUT=$(claude -p --output-format json --tools "" <<'PROMPT_EOF'
-You are {character}.
+# Build prompt content
+PROMPT_CONTENT="You are {character}.
 
 **Style:** {style}
 **Expertise:** {expertise}
@@ -102,13 +112,22 @@ You are {character}.
 
 ---
 
-Respond fully in character. Under 500 words.
-PROMPT_EOF
-)
+Respond fully in character. Under 500 words."
+
+# MANDATORY: Use pipe syntax (NOT heredoc) for subagent compatibility
+# MANDATORY: --tools "" prevents internal tool use
+OUTPUT=$(echo "$PROMPT_CONTENT" | claude -p --output-format json --tools "")
 
 RESPONSE=$(echo "$OUTPUT" | jq -r '.result')
 INPUT_TOKENS=$(echo "$OUTPUT" | jq -r '.usage.input_tokens // 0')
 OUTPUT_TOKENS=$(echo "$OUTPUT" | jq -r '.usage.output_tokens // 0')
+```
+
+**Alternative for very long prompts:** Write to temp file and cat:
+```bash
+echo "$PROMPT_CONTENT" > /tmp/prompt_$$.txt
+OUTPUT=$(cat /tmp/prompt_$$.txt | claude -p --output-format json --tools "")
+rm /tmp/prompt_$$.txt
 ```
 
 ## Step 5: Check Mode

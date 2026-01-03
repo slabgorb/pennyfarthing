@@ -346,9 +346,105 @@ function checkUserFiles(projectRoot: string): CheckResult[] {
     // Check SessionStart hooks are configured (critical for PROJECT_ROOT)
     const hookCheck = checkSessionStartHooks(projectRoot, installationType);
     results.push(hookCheck);
+
+    // Check benchmark permissions (needed for /benchmark, /solo subagents)
+    const benchmarkCheck = checkBenchmarkPermissions(projectRoot);
+    results.push(benchmarkCheck);
   }
 
   return results;
+}
+
+/**
+ * Check that benchmark-required permissions are configured in settings.local.json
+ * Subagents need explicit Bash(claude *) permission since they run non-interactively
+ */
+function checkBenchmarkPermissions(projectRoot: string): CheckResult {
+  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+
+  try {
+    const settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+    const permissions = settings.permissions?.allow || [];
+
+    // Check for required benchmark permissions
+    const hasClaudeBash = permissions.some((p: string) =>
+      p === 'Bash(claude *)' || p === 'Bash' && permissions.includes('Bash(claude *)')
+    );
+
+    // Check if Bash(claude *) specifically exists (needed for subagents)
+    const hasExplicitClaudeBash = permissions.includes('Bash(claude *)');
+
+    if (!hasExplicitClaudeBash) {
+      return {
+        name: 'settings/benchmark-permissions',
+        status: 'warn',
+        detail: 'Missing Bash(claude *) for parallel benchmarks (sequential runs unaffected)',
+        fix: () => {
+          addBenchmarkPermissions(projectRoot);
+        }
+      };
+    }
+
+    return {
+      name: 'settings/benchmark-permissions',
+      status: 'pass',
+      detail: undefined
+    };
+  } catch {
+    return {
+      name: 'settings/benchmark-permissions',
+      status: 'warn',
+      detail: 'Could not check benchmark permissions'
+    };
+  }
+}
+
+/**
+ * Fix function: Add benchmark permissions to settings.local.json
+ */
+function addBenchmarkPermissions(projectRoot: string): void {
+  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+
+  const requiredPermissions = [
+    'Bash(claude *)',
+    'Bash(date *)',
+    'Bash(mkdir *)',
+    'Edit(results/**)',
+    'Write(results/**)',
+    'Skill(solo)',
+    'Skill(benchmark)',
+    'Skill(benchmark-control)',
+    'Skill(judge)',
+    'Skill(finalize-run)'
+  ];
+
+  let settings: Record<string, unknown> = {};
+
+  if (pathExists(settingsPath)) {
+    try {
+      settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+    } catch {
+      // Start fresh if parse fails
+    }
+  }
+
+  if (!settings.permissions) {
+    settings.permissions = { allow: [] };
+  }
+
+  const permissions = settings.permissions as { allow: string[] };
+  if (!Array.isArray(permissions.allow)) {
+    permissions.allow = [];
+  }
+
+  // Add missing permissions
+  for (const perm of requiredPermissions) {
+    if (!permissions.allow.includes(perm)) {
+      permissions.allow.push(perm);
+    }
+  }
+
+  writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf8');
 }
 
 /**
@@ -488,16 +584,26 @@ function createSettingsLocalJson(projectRoot: string, installationType: string):
         'Grep',
         'Glob',
         'Bash',
+        'Bash(claude *)',
+        'Bash(date *)',
+        'Bash(mkdir *)',
         'Edit(.claude/**)',
         'Edit(sprint/**)',
         'Edit(.session/**)',
+        'Edit(results/**)',
         'Write(.claude/**)',
         'Write(sprint/**)',
         'Write(.session/**)',
+        'Write(results/**)',
         'Skill(sm)',
         'Skill(tea)',
         'Skill(dev)',
-        'Skill(reviewer)'
+        'Skill(reviewer)',
+        'Skill(solo)',
+        'Skill(benchmark)',
+        'Skill(benchmark-control)',
+        'Skill(judge)',
+        'Skill(finalize-run)'
       ]
     },
     context_budget: {

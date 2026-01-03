@@ -5,16 +5,26 @@
       "Grep",
       "Glob",
       "Bash",
+      "Bash(claude *)",
+      "Bash(date *)",
+      "Bash(mkdir *)",
       "Edit(.claude/**)",
       "Edit(sprint/**)",
       "Edit(.session/**)",
+      "Edit(results/**)",
       "Write(.claude/**)",
       "Write(sprint/**)",
       "Write(.session/**)",
+      "Write(results/**)",
       "Skill(sm)",
       "Skill(tea)",
       "Skill(dev)",
-      "Skill(reviewer)"
+      "Skill(reviewer)",
+      "Skill(solo)",
+      "Skill(benchmark)",
+      "Skill(benchmark-control)",
+      "Skill(judge)",
+      "Skill(finalize-run)"
     ]
   },
   "context_budget": {
