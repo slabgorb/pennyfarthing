@@ -31,9 +31,9 @@ const relatedCharacters = themes
 ---
 
 <section class="related-characters">
-  <h3 class="text-lg font-semibold text-gray-800 mb-4">
+  <h3 class="text-lg font-semibold text-amber-100 mb-4">
     Related Characters
-    <span class="text-sm font-normal text-gray-500 ml-2">
+    <span class="text-sm font-normal text-stone-400 ml-2">
       (Same role, different themes)
     </span>
   </h3>
@@ -44,13 +44,13 @@ const relatedCharacters = themes
         {relatedCharacters.map(({ theme, agent }) => (
           <a
             href={`/characters/${theme.id}/${agent.role}`}
-            class="related-card flex-shrink-0 w-48 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-4 text-center group"
+            class="related-card flex-shrink-0 w-48 bg-stone-800 border border-stone-700 rounded-lg shadow-sm hover:shadow-md hover:border-amber-600 transition-all p-4 text-center cursor-pointer"
           >
             <div class="emoji text-3xl mb-2">{agent.emoji || '👤'}</div>
-            <h4 class="character text-sm font-semibold text-gray-900 group-hover:text-indigo-600 truncate">
+            <h4 class="character text-sm font-semibold text-amber-100 truncate">
               {agent.character}
             </h4>
-            <p class="theme-name text-xs text-gray-500 truncate mb-2">
+            <p class="theme-name text-xs text-stone-400 truncate mb-2">
               {theme.metadata.name}
             </p>
             <div class="spider flex justify-center">
@@ -61,7 +61,7 @@ const relatedCharacters = themes
       </div>
     </div>
   ) : (
-    <p class="text-sm text-gray-500 italic">
+    <p class="text-sm text-stone-400 italic">
       No related characters found for this role.
     </p>
   )}

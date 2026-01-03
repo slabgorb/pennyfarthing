@@ -176,22 +176,21 @@ epics:
           - Compare from favorites works
 
       - id: "13-13"
-        title: "Responsive design, mobile, and SEO"
+        title: "Final tweaks of site"
         description: |
-          Polish pass for mobile experience and search optimization.
-          - Responsive layouts for all pages
-          - Mobile-friendly navigation
-          - OpenGraph meta tags for social sharing
-          - Sitemap.xml generation
+          Final polish pass for desktop experience.
+          - Visual refinements and consistency
+          - UX improvements based on exploration
+          - Any remaining rough edges
         points: 2
         priority: P2
-        status: ready
+        status: in_progress
+        started: 2026-01-03
         jira: https://1898andco.atlassian.net/browse/MSSCI-11307
         acceptance_criteria:
-          - All pages work on mobile devices
-          - Touch targets meet accessibility guidelines
-          - Social sharing shows proper previews
-          - Search engines can index all pages
+          - Site polished for desktop exploration
+          - Visual consistency across pages
+          - Smooth user experience
 
       - id: "13-14"
         title: "Add theme sprite sheets to agent pages"

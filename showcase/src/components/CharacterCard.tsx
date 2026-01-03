@@ -1,7 +1,7 @@
 /**
  * CharacterCard Component
  *
- * Displays a character with name, theme, role, and mini OCEAN bars.
+ * Displays a character with name, theme, role, spider chart and OCEAN bars side by side.
  * Used in the Compare page results grid and Favorites page.
  */
 
@@ -17,6 +17,7 @@ interface CharacterCardProps {
   };
   onSelect?: () => void;
   showFavorite?: boolean;
+  isSelected?: boolean;
 }
 
 const OCEAN_LABELS: Record<string, string> = {
@@ -28,20 +29,94 @@ const OCEAN_LABELS: Record<string, string> = {
 };
 
 const OCEAN_COLORS: Record<string, string> = {
-  O: 'bg-blue-500',
-  C: 'bg-green-500',
+  O: 'bg-purple-500',
+  C: 'bg-blue-500',
   E: 'bg-yellow-500',
-  A: 'bg-pink-500',
-  N: 'bg-purple-500',
+  A: 'bg-green-500',
+  N: 'bg-red-500',
 };
 
-export default function CharacterCard({ character, onSelect, showFavorite = true }: CharacterCardProps) {
+// Mini Spider Chart Component
+function MiniSpiderChart({ ocean, size = 60 }: { ocean: Record<string, number>; size?: number }) {
+  const center = size / 2;
+  const maxRadius = (size / 2) * 0.8;
+  const dimensions = ['O', 'C', 'E', 'A', 'N'];
+
+  // Generate polygon points for the data
+  const dataPoints = dimensions.map((dim, i) => {
+    const angle = (i * 72 - 90) * (Math.PI / 180);
+    const score = ocean[dim];
+    const radius = (score / 5) * maxRadius;
+    return `${(center + radius * Math.cos(angle)).toFixed(1)},${(center + radius * Math.sin(angle)).toFixed(1)}`;
+  }).join(' ');
+
+  // Generate grid pentagon points
+  const gridLevels = [1, 2, 3, 4, 5].map(level => {
+    const radius = (level / 5) * maxRadius;
+    return dimensions.map((_, i) => {
+      const angle = (i * 72 - 90) * (Math.PI / 180);
+      return `${(center + radius * Math.cos(angle)).toFixed(1)},${(center + radius * Math.sin(angle)).toFixed(1)}`;
+    }).join(' ');
+  });
+
+  // Generate axis lines
+  const axisLines = dimensions.map((_, i) => {
+    const angle = (i * 72 - 90) * (Math.PI / 180);
+    return {
+      x2: center + maxRadius * Math.cos(angle),
+      y2: center + maxRadius * Math.sin(angle),
+    };
+  });
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="flex-shrink-0">
+      {/* Grid pentagons */}
+      {gridLevels.map((points, i) => (
+        <polygon
+          key={i}
+          points={points}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="0.5"
+          className="text-stone-600"
+          opacity={0.3 + i * 0.1}
+        />
+      ))}
+      {/* Axis lines */}
+      {axisLines.map((line, i) => (
+        <line
+          key={i}
+          x1={center}
+          y1={center}
+          x2={line.x2}
+          y2={line.y2}
+          stroke="currentColor"
+          strokeWidth="0.5"
+          className="text-stone-600"
+        />
+      ))}
+      {/* Data polygon */}
+      <polygon
+        points={dataPoints}
+        fill="currentColor"
+        fillOpacity="0.3"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        className="text-amber-500"
+      />
+    </svg>
+  );
+}
+
+export default function CharacterCard({ character, onSelect, showFavorite = true, isSelected = false }: CharacterCardProps) {
   const { name, theme, role, ocean } = character;
   const characterId = buildCharacterId(theme, role);
 
   return (
     <div
-      className="bg-[var(--bg-card)] rounded-lg border border-[var(--border-color)] hover:border-[var(--border-light)] hover:bg-[var(--bg-card-hover)] transition-all p-4 cursor-pointer relative"
+      className={`bg-stone-800 border-2 rounded-lg hover:border-amber-600 transition-all p-4 cursor-pointer relative ${
+        isSelected ? 'border-amber-500 ring-2 ring-amber-500/30' : 'border-stone-700'
+      }`}
       onClick={onSelect}
       role={onSelect ? "button" : undefined}
       tabIndex={onSelect ? 0 : undefined}
@@ -53,34 +128,41 @@ export default function CharacterCard({ character, onSelect, showFavorite = true
         </div>
       )}
       <div className="mb-3 pr-8">
-        <h3 className="font-semibold text-[var(--text-primary)] truncate" title={name}>
+        <h3 className="font-semibold text-amber-100 truncate" title={name}>
           {name}
         </h3>
-        <p className="text-sm text-[var(--text-muted)] truncate">
-          {theme} &middot; {role}
+        <p className="text-sm text-stone-400 truncate">
+          {theme} · {role}
         </p>
       </div>
 
-      <div className="space-y-1.5">
-        {(['O', 'C', 'E', 'A', 'N'] as const).map((dim) => (
-          <div key={dim} className="flex items-center gap-2">
-            <span
-              className="text-xs font-medium text-[var(--text-muted)] w-4"
-              title={OCEAN_LABELS[dim]}
-            >
-              {dim}
-            </span>
-            <div className="flex-1 h-1.5 bg-[var(--bg-darker)] rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full ${OCEAN_COLORS[dim]}`}
-                style={{ width: `${(ocean[dim] / 5) * 100}%` }}
-              />
+      {/* Spider chart and bars side by side */}
+      <div className="flex gap-3 items-center">
+        {/* Mini Spider Chart */}
+        <MiniSpiderChart ocean={ocean} size={70} />
+
+        {/* OCEAN Bars */}
+        <div className="flex-1 space-y-1">
+          {(['O', 'C', 'E', 'A', 'N'] as const).map((dim) => (
+            <div key={dim} className="flex items-center gap-1.5">
+              <span
+                className="text-xs font-medium text-stone-400 w-3"
+                title={OCEAN_LABELS[dim]}
+              >
+                {dim}
+              </span>
+              <div className="flex-1 h-1.5 bg-stone-700 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${OCEAN_COLORS[dim]}`}
+                  style={{ width: `${(ocean[dim] / 5) * 100}%` }}
+                />
+              </div>
+              <span className="text-xs text-stone-400 w-3 text-right">
+                {ocean[dim]}
+              </span>
             </div>
-            <span className="text-xs text-[var(--text-muted)] w-3 text-right">
-              {ocean[dim]}
-            </span>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );

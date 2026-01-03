@@ -20,6 +20,10 @@ const characters = themesData.flatMap(theme =>
     role: agent.role,
     name: agent.character,
     ocean: agent.ocean,
+    style: agent.style,
+    expertise: agent.expertise,
+    trait: agent.trait,
+    roleSummary: agent.roleSummary,
   }))
 );
 
@@ -30,8 +34,8 @@ const description = 'Compare AI personas across 64 themes using OCEAN personalit
 <Base title={title} description={description}>
   <div class="max-w-7xl mx-auto">
     <header class="mb-6">
-      <h1 class="text-3xl font-bold text-[var(--text-primary)] mb-2">Compare Characters</h1>
-      <p class="text-[var(--text-secondary)]">
+      <h1 class="text-3xl font-bold text-amber-100 mb-2">Compare Characters</h1>
+      <p class="text-stone-300">
         Filter and compare {characters.length} characters across {themes.length} themes
         using OCEAN personality dimensions.
       </p>

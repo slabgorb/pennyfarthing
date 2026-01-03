@@ -64,65 +64,65 @@ const bestFor = getBestForRecommendations(agent.ocean);
     <!-- Character Header -->
     <header class="profile-header text-center mb-8">
       <div class="emoji text-8xl mb-4">{agent.emoji || '👤'}</div>
-      <h1 class="character text-3xl font-bold text-gray-900 mb-2">
+      <h1 class="character text-3xl font-bold text-amber-100 mb-2">
         {agent.character}
       </h1>
-      <div class="role-badge inline-block px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium uppercase mb-2">
+      <div class="role-badge inline-block px-3 py-1 bg-stone-700 text-amber-500 rounded-full text-sm font-medium uppercase mb-2">
         {agent.role}
       </div>
-      <p class="theme-link text-sm text-gray-500">
-        from <a href={`/themes/${theme.id}`} class="text-indigo-600 hover:text-indigo-800">{theme.metadata.name}</a>
+      <p class="theme-link text-sm text-stone-400">
+        from <a href={`/themes/${theme.id}`} class="text-amber-500 hover:text-amber-400">{theme.metadata.name}</a>
       </p>
     </header>
 
     <!-- OCEAN Visualization Section -->
     <section class="ocean-section grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-      <div class="spider-container bg-white rounded-lg shadow-md p-6 flex flex-col items-center">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">Personality Profile</h2>
+      <div class="spider-container bg-stone-800 border border-stone-700 rounded-lg shadow-md p-6 flex flex-col items-center">
+        <h2 class="text-lg font-semibold text-amber-100 mb-4">Personality Profile</h2>
         <SpiderChart agents={[agent]} size={200} showLabels={true} />
       </div>
-      <div class="bars-container bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">OCEAN Scores</h2>
+      <div class="bars-container bg-stone-800 border border-stone-700 rounded-lg shadow-md p-6">
+        <h2 class="text-lg font-semibold text-amber-100 mb-4">OCEAN Scores</h2>
         <OceanBadge ocean={agent.ocean} />
       </div>
     </section>
 
     <!-- Character Details Section -->
-    <section class="details-section bg-white rounded-lg shadow-md p-6 mb-8">
-      <h2 class="text-lg font-semibold text-gray-800 mb-4">Character Details</h2>
+    <section class="details-section bg-stone-800 border border-stone-700 rounded-lg shadow-md p-6 mb-8">
+      <h2 class="text-lg font-semibold text-amber-100 mb-4">Character Details</h2>
 
       <div class="detail-grid grid gap-4">
         <div class="detail-item">
-          <span class="label text-sm font-medium text-gray-500">Style:</span>
-          <p class="value text-gray-900">{agent.style}</p>
+          <span class="label text-sm font-medium text-stone-400">Style:</span>
+          <p class="value text-stone-200">{agent.style}</p>
         </div>
 
         <div class="detail-item">
-          <span class="label text-sm font-medium text-gray-500">Expertise:</span>
-          <p class="value text-gray-900">{agent.expertise}</p>
+          <span class="label text-sm font-medium text-stone-400">Expertise:</span>
+          <p class="value text-stone-200">{agent.expertise}</p>
         </div>
 
         <div class="detail-item">
-          <span class="label text-sm font-medium text-gray-500">Quote:</span>
-          <p class="value text-gray-900 italic">"{agent.quote}"</p>
+          <span class="label text-sm font-medium text-stone-400">Quote:</span>
+          <p class="value text-stone-200 italic">"{agent.quote}"</p>
         </div>
 
         <div class="detail-item">
-          <span class="label text-sm font-medium text-gray-500">Trait:</span>
-          <p class="value text-gray-900">{agent.trait}</p>
+          <span class="label text-sm font-medium text-stone-400">Trait:</span>
+          <p class="value text-stone-200">{agent.trait}</p>
         </div>
       </div>
     </section>
 
     <!-- Personality Expression Section -->
-    <section class="expression-section bg-white rounded-lg shadow-md p-6 mb-8">
-      <h2 class="text-lg font-semibold text-gray-800 mb-4">Personality Expression</h2>
+    <section class="expression-section bg-stone-800 border border-stone-700 rounded-lg shadow-md p-6 mb-8">
+      <h2 class="text-lg font-semibold text-amber-100 mb-4">Personality Expression</h2>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         {agent.catchphrases && agent.catchphrases.length > 0 && (
           <div class="catchphrases">
-            <h3 class="text-sm font-medium text-gray-500 mb-2">Catchphrases:</h3>
-            <ul class="list-disc list-inside text-gray-900">
+            <h3 class="text-sm font-medium text-stone-400 mb-2">Catchphrases:</h3>
+            <ul class="list-disc list-inside text-stone-200">
               {agent.catchphrases.map((phrase) => (
                 <li class="text-sm">{phrase}</li>
               ))}
@@ -132,8 +132,8 @@ const bestFor = getBestForRecommendations(agent.ocean);
 
         {agent.quirks && agent.quirks.length > 0 && (
           <div class="quirks">
-            <h3 class="text-sm font-medium text-gray-500 mb-2">Quirks:</h3>
-            <ul class="list-disc list-inside text-gray-900">
+            <h3 class="text-sm font-medium text-stone-400 mb-2">Quirks:</h3>
+            <ul class="list-disc list-inside text-stone-200">
               {agent.quirks.map((quirk) => (
                 <li class="text-sm">{quirk}</li>
               ))}
@@ -145,21 +145,21 @@ const bestFor = getBestForRecommendations(agent.ocean);
 
     <!-- Helper Info Section -->
     {agent.helper && agent.helper.name && (
-      <section class="helper-section bg-white rounded-lg shadow-md p-6 mb-8">
-        <h2 class="text-lg font-semibold text-gray-800 mb-4">Helper</h2>
+      <section class="helper-section bg-stone-800 border border-stone-700 rounded-lg shadow-md p-6 mb-8">
+        <h2 class="text-lg font-semibold text-amber-100 mb-4">Helper</h2>
         <div class="helper-info">
-          <span class="helper-name font-medium text-gray-900">{agent.helper.name}</span>
+          <span class="helper-name font-medium text-stone-200">{agent.helper.name}</span>
           {agent.helper.style && (
-            <p class="helper-style text-sm text-gray-600 mt-1">{agent.helper.style}</p>
+            <p class="helper-style text-sm text-stone-400 mt-1">{agent.helper.style}</p>
           )}
         </div>
       </section>
     )}
 
     <!-- Best For Section -->
-    <section class="best-for-section bg-indigo-50 rounded-lg p-6 mb-8">
-      <h2 class="text-lg font-semibold text-indigo-900 mb-4">Best For</h2>
-      <ul class="list-disc list-inside text-indigo-800">
+    <section class="best-for-section bg-stone-700 border border-stone-600 rounded-lg p-6 mb-8">
+      <h2 class="text-lg font-semibold text-amber-100 mb-4">Best For</h2>
+      <ul class="list-disc list-inside text-stone-200">
         {bestFor.map((rec) => (
           <li class="text-sm">{rec}</li>
         ))}
@@ -167,7 +167,7 @@ const bestFor = getBestForRecommendations(agent.ocean);
     </section>
 
     <!-- Related Characters Section -->
-    <div class="related-section bg-white rounded-lg shadow-md p-6 mb-8">
+    <div class="related-section bg-stone-800 border border-stone-700 rounded-lg shadow-md p-6 mb-8">
       <RelatedCharacters
         role={agent.role}
         currentTheme={theme.id}
@@ -181,11 +181,11 @@ const bestFor = getBestForRecommendations(agent.ocean);
     </div>
 
     <!-- Navigation -->
-    <div class="navigation flex justify-between items-center pt-6 border-t border-gray-200">
-      <a href={`/themes/${theme.id}`} class="text-indigo-600 hover:text-indigo-800 text-sm">
+    <div class="navigation flex justify-between items-center pt-6 border-t border-stone-700">
+      <a href={`/themes/${theme.id}`} class="text-amber-500 hover:text-amber-400 text-sm">
         &larr; Back to {theme.metadata.name}
       </a>
-      <a href="/themes" class="text-indigo-600 hover:text-indigo-800 text-sm">
+      <a href="/themes" class="text-amber-500 hover:text-amber-400 text-sm">
         All Themes
       </a>
     </div>

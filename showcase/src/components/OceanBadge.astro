@@ -44,10 +44,10 @@ const dimensions: (keyof OceanScores)[] = ['O', 'C', 'E', 'A', 'N'];
     return (
       <div class="ocean-row flex items-center gap-3" key={dim}>
         <div class="dimension-label w-8 text-right">
-          <span class="font-bold text-gray-700">{dim}</span>
+          <span class="font-bold text-stone-300">{dim}</span>
         </div>
 
-        <div class="bar-container flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
+        <div class="bar-container flex-1 h-3 bg-stone-700 rounded-full overflow-hidden">
           <div
             class={`bar h-full rounded-full ${dimensionColors[dim]}`}
             style={`width: ${percentage}%`}
@@ -60,14 +60,14 @@ const dimensions: (keyof OceanScores)[] = ['O', 'C', 'E', 'A', 'N'];
         </div>
 
         <div class="score-value w-8 text-left">
-          <span class="text-sm font-medium text-gray-600">{score.toFixed(1)}</span>
+          <span class="text-sm font-medium text-stone-300">{score.toFixed(1)}</span>
         </div>
       </div>
     );
   })}
 
-  <div class="legend mt-3 pt-3 border-t border-gray-200">
-    <div class="flex flex-wrap gap-2 text-xs text-gray-500">
+  <div class="legend mt-3 pt-3 border-t border-stone-700">
+    <div class="flex flex-wrap gap-2 text-xs text-stone-400">
       {dimensions.map((dim) => (
         <span class="flex items-center gap-1" key={dim}>
           <span class={`w-2 h-2 rounded-full ${dimensionColors[dim]}`} />
