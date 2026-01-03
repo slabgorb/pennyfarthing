@@ -49,8 +49,8 @@ ROLES = [
 # Files to skip
 SKIP_FILES = {"DEVOPS-HANDOFF.md", "generate-prompts.js", "generate-prompts.sh"}
 
-# Base style prompt (short, under 77 tokens total with character)
-STYLE_PREFIX = "Traditional woodcut portrait bust, black and white, bold linework, crosshatching, medieval style. "
+# Style suffix (character comes first for emphasis)
+STYLE_SUFFIX = ", traditional woodcut portrait bust, black and white, bold linework, crosshatching, medieval style"
 
 
 def parse_prompt_file(prompt_path: Path) -> dict:
@@ -103,14 +103,11 @@ def parse_prompt_file(prompt_path: Path) -> dict:
 
 def build_portrait_prompt(char_name: str, char_desc: str, source: str) -> str:
     """Build a short prompt for a single portrait (under 77 tokens)."""
-    # Keep it concise: style + character name + brief description
-    prompt = f"{STYLE_PREFIX}{char_name}"
-    if source:
-        prompt += f" from {source}"
-    # Add a brief trait if space allows
-    brief_desc = char_desc.split(",")[0]  # Take first trait only
-    if len(prompt) + len(brief_desc) < 200:  # rough char limit
-        prompt += f", {brief_desc}"
+    # char_name now contains visual description, char_desc has personality
+    # We primarily use visual description, add personality briefly
+    prompt = f"{char_name}"
+    # Add style at end
+    prompt += STYLE_SUFFIX
     return prompt
 
 
@@ -219,7 +216,9 @@ def main():
             prompt = build_portrait_prompt(char["name"], char["description"], parsed["source"])
 
             try:
-                image = generate_portrait(pipe, prompt, seed=args.seed)
+                # Vary seed per character for diversity (base_seed + role_index)
+                role_seed = args.seed + ROLES.index(role)
+                image = generate_portrait(pipe, prompt, seed=role_seed)
                 image.save(out_path, "PNG")
                 successful += 1
                 tqdm.write(f"  {theme}/{role}: {char['name']}")
