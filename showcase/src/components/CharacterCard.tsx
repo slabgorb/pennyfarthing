@@ -2,8 +2,11 @@
  * CharacterCard Component
  *
  * Displays a character with name, theme, role, and mini OCEAN bars.
- * Used in the Compare page results grid.
+ * Used in the Compare page results grid and Favorites page.
  */
+
+import FavoriteButton from './FavoriteButton';
+import { buildCharacterId } from '../lib/favorites-store';
 
 interface CharacterCardProps {
   character: {
@@ -13,6 +16,7 @@ interface CharacterCardProps {
     ocean: { O: number; C: number; E: number; A: number; N: number };
   };
   onSelect?: () => void;
+  showFavorite?: boolean;
 }
 
 const OCEAN_LABELS: Record<string, string> = {
@@ -31,18 +35,24 @@ const OCEAN_COLORS: Record<string, string> = {
   N: 'bg-purple-500',
 };
 
-export default function CharacterCard({ character, onSelect }: CharacterCardProps) {
+export default function CharacterCard({ character, onSelect, showFavorite = true }: CharacterCardProps) {
   const { name, theme, role, ocean } = character;
+  const characterId = buildCharacterId(theme, role);
 
   return (
     <div
-      className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow p-4 cursor-pointer"
+      className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow p-4 cursor-pointer relative"
       onClick={onSelect}
       role={onSelect ? "button" : undefined}
       tabIndex={onSelect ? 0 : undefined}
       onKeyDown={onSelect ? (e) => e.key === 'Enter' && onSelect() : undefined}
     >
-      <div className="mb-3">
+      {showFavorite && (
+        <div className="absolute top-2 right-2">
+          <FavoriteButton characterId={characterId} />
+        </div>
+      )}
+      <div className="mb-3 pr-8">
         <h3 className="font-semibold text-gray-900 truncate" title={name}>
           {name}
         </h3>
