@@ -40,3 +40,4 @@ go.mod
 .session/*
 !.session/.gitkeep
 .claude/settings.local.json
+showcase/dist/
