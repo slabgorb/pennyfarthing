@@ -222,11 +222,28 @@ export default function QueryBuilder({ themes, characters }: Props) {
   };
 
   // Set OCEAN dimension filter
-  const setOceanFilter = (dim: keyof OceanFilters, value: number | null) => {
+  // Value format: "" (any), "=1" (exact), ">=1" (minimum)
+  const setOceanFilter = (dim: keyof OceanFilters, value: string) => {
+    if (!value) {
+      setOceanFilters(prev => ({ ...prev, [dim]: null }));
+      return;
+    }
+
+    const isExact = value.startsWith('=');
+    const num = parseInt(value.replace(/^[>=]+/, ''), 10);
+
     setOceanFilters(prev => ({
       ...prev,
-      [dim]: value !== null ? { min: value, max: 5 } : null,
+      [dim]: isExact ? { min: num, max: num } : { min: num, max: 5 },
     }));
+  };
+
+  // Get select value from filter state
+  const getOceanSelectValue = (dim: keyof OceanFilters): string => {
+    const filter = oceanFilters[dim];
+    if (!filter) return '';
+    if (filter.min === filter.max) return `=${filter.min}`;
+    return `>=${filter.min}`;
   };
 
   // Clear all filters
@@ -260,20 +277,25 @@ export default function QueryBuilder({ themes, characters }: Props) {
                   {key}
                 </span>
                 <select
-                  value={oceanFilters[key as keyof OceanFilters]?.min ?? ''}
-                  onChange={(e) => setOceanFilter(
-                    key as keyof OceanFilters,
-                    e.target.value ? parseInt(e.target.value, 10) : null
-                  )}
+                  value={getOceanSelectValue(key as keyof OceanFilters)}
+                  onChange={(e) => setOceanFilter(key as keyof OceanFilters, e.target.value)}
                   aria-label={`Filter by ${label}`}
-                  className="text-sm py-1 px-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[60px]"
+                  className="text-sm py-1 px-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[70px]"
                 >
                   <option value="">Any</option>
-                  <option value="1">1+</option>
-                  <option value="2">2+</option>
-                  <option value="3">3+</option>
-                  <option value="4">4+</option>
-                  <option value="5">5</option>
+                  <optgroup label="Exactly">
+                    <option value="=1">=1</option>
+                    <option value="=2">=2</option>
+                    <option value="=3">=3</option>
+                    <option value="=4">=4</option>
+                    <option value="=5">=5</option>
+                  </optgroup>
+                  <optgroup label="At least">
+                    <option value=">=1">1+</option>
+                    <option value=">=2">2+</option>
+                    <option value=">=3">3+</option>
+                    <option value=">=4">4+</option>
+                  </optgroup>
                 </select>
               </div>
             ))}
