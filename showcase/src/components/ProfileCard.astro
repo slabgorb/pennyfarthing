@@ -5,6 +5,7 @@
  * Individual agent card for theme detail view.
  * Shows agent emoji/face, character name, spider chart, quote,
  * and links to the full profile page.
+ * Entire card is clickable.
  */
 
 import type { Agent } from '../lib/types';
@@ -20,7 +21,7 @@ const { agent, themeId } = Astro.props;
 
 <a
   href={`/characters/${themeId}/${agent.role}`}
-  class="profile-card bg-white rounded-lg shadow-md hover:shadow-lg transition-all p-4 flex flex-col items-center text-center group"
+  class="profile-card bg-stone-800 border border-stone-700 rounded-lg shadow-md hover:shadow-lg hover:border-amber-600 transition-all p-4 flex flex-col items-center text-center cursor-pointer"
 >
   <!-- Agent emoji/face placeholder -->
   <div class="face text-4xl mb-2">
@@ -28,12 +29,12 @@ const { agent, themeId } = Astro.props;
   </div>
 
   <!-- Character name -->
-  <h4 class="character text-sm font-semibold text-gray-900 mb-1 group-hover:text-indigo-600">
+  <h4 class="character text-sm font-semibold text-amber-100 mb-1">
     {agent.character}
   </h4>
 
   <!-- Role label -->
-  <p class="role text-xs text-gray-500 uppercase tracking-wide mb-2">
+  <p class="role text-xs text-stone-400 uppercase tracking-wide mb-2">
     {agent.role}
   </p>
 
@@ -43,7 +44,7 @@ const { agent, themeId } = Astro.props;
   </div>
 
   <!-- Quote -->
-  <p class="quote text-xs text-gray-600 italic line-clamp-2">
+  <p class="quote text-xs text-stone-300 italic line-clamp-2">
     "{agent.quote}"
   </p>
 </a>

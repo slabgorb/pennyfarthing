@@ -1,27 +1,105 @@
 ---
+/**
+ * Home Page
+ *
+ * Landing page for the Pennyfarthing Showcase.
+ * Features hero section, quick stats, and navigation to main sections.
+ */
+
 import Base from '../layouts/Base.astro';
-import TestReactIsland from '../components/TestReactIsland';
+import { loadThemes } from '../lib/loader';
+
+const themes = await loadThemes();
+const totalAgents = themes.length * 10;
+
+// Get a few featured themes for preview
+const featuredThemes = themes.slice(0, 4);
 ---
 
-<Base title="Pennyfarthing Showcase" description="Browse 64 themed AI personas with OCEAN personality profiles, spider charts, and Chernoff faces.">
-  <div class="max-w-4xl mx-auto">
-    <h1 class="text-4xl font-bold text-[var(--text-primary)] mb-4">Pennyfarthing Showcase</h1>
-    <p class="text-[var(--text-secondary)] mb-8">
-      Explore 64 themed AI agent personas with OCEAN personality profiles,
-      interactive spider charts, and Chernoff faces.
-    </p>
+<Base title="Pennyfarthing Showcase" description="Browse 64 themed AI personas with OCEAN personality profiles, spider charts, and interactive comparisons.">
+  <div class="max-w-6xl mx-auto px-4">
+    <!-- Hero Section -->
+    <section class="hero text-center py-12">
+      <img src="/pennyfarthing.png" alt="Pennyfarthing" class="h-24 w-24 mx-auto mb-6" />
+      <h1 class="text-4xl font-bold text-amber-100 mb-4">Pennyfarthing Showcase</h1>
+      <p class="text-xl text-stone-300 mb-8 max-w-2xl mx-auto">
+        Explore {themes.length} themed AI agent personas with OCEAN personality profiles,
+        interactive spider charts, and side-by-side comparisons.
+      </p>
+      <a
+        href="/themes"
+        class="inline-flex items-center px-8 py-4 bg-amber-600 text-stone-900 font-semibold rounded-lg hover:bg-amber-500 transition-colors text-lg"
+      >
+        Browse Themes
+        <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </a>
+    </section>
 
-    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      <!-- Theme cards will be added in story 13-4 -->
-      <div class="bg-[var(--bg-card)] rounded-lg border border-[var(--border-color)] p-6">
-        <h2 class="text-xl font-semibold text-[var(--text-primary)] mb-2">Coming Soon</h2>
-        <p class="text-[var(--text-secondary)]">Theme gallery and persona browser</p>
+    <!-- Stats Section -->
+    <section class="stats grid grid-cols-3 gap-6 py-8 border-y border-stone-700">
+      <div class="stat text-center">
+        <div class="text-3xl font-bold text-amber-500">{themes.length}</div>
+        <div class="text-stone-400">Themes</div>
       </div>
-    </div>
+      <div class="stat text-center">
+        <div class="text-3xl font-bold text-amber-500">{totalAgents}</div>
+        <div class="text-stone-400">Characters</div>
+      </div>
+      <div class="stat text-center">
+        <div class="text-3xl font-bold text-amber-500">10</div>
+        <div class="text-stone-400">Agent Roles</div>
+      </div>
+    </section>
 
-    <!-- React Island Test (from story 13-1) -->
-    <div class="mt-8">
-      <TestReactIsland client:load />
-    </div>
+    <!-- Features Section -->
+    <section class="features grid md:grid-cols-2 lg:grid-cols-4 gap-6 py-12">
+      <a href="/themes" class="feature-card bg-stone-800 border border-stone-700 rounded-lg p-6 hover:border-amber-600 transition-all">
+        <div class="text-3xl mb-3">🎭</div>
+        <h2 class="text-lg font-semibold text-amber-100 mb-2">Theme Gallery</h2>
+        <p class="text-stone-400 text-sm">Browse all {themes.length} themed persona collections</p>
+      </a>
+
+      <a href="/compare" class="feature-card bg-stone-800 border border-stone-700 rounded-lg p-6 hover:border-amber-600 transition-all">
+        <div class="text-3xl mb-3">⚖️</div>
+        <h2 class="text-lg font-semibold text-amber-100 mb-2">Compare</h2>
+        <p class="text-stone-400 text-sm">Side-by-side OCEAN profile comparisons</p>
+      </a>
+
+      <a href="/benchmarks" class="feature-card bg-stone-800 border border-stone-700 rounded-lg p-6 hover:border-amber-600 transition-all">
+        <div class="text-3xl mb-3">📊</div>
+        <h2 class="text-lg font-semibold text-amber-100 mb-2">Benchmarks</h2>
+        <p class="text-stone-400 text-sm">Performance analysis and insights</p>
+      </a>
+
+      <a href="/favorites" class="feature-card bg-stone-800 border border-stone-700 rounded-lg p-6 hover:border-amber-600 transition-all">
+        <div class="text-3xl mb-3">❤️</div>
+        <h2 class="text-lg font-semibold text-amber-100 mb-2">Favorites</h2>
+        <p class="text-stone-400 text-sm">Your saved characters</p>
+      </a>
+    </section>
+
+    <!-- Featured Themes Preview -->
+    <section class="featured py-8">
+      <h2 class="text-2xl font-bold text-amber-100 mb-6 text-center">Featured Themes</h2>
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {featuredThemes.map((theme) => (
+          <a
+            href={`/themes/${theme.id}`}
+            class="theme-preview bg-stone-800 border border-stone-700 rounded-lg p-4 hover:border-amber-600 transition-all text-center"
+          >
+            <h3 class="text-lg font-semibold text-amber-100 mb-1">{theme.metadata.name}</h3>
+            <p class="text-sm text-stone-400 mb-2">{theme.metadata.source}</p>
+            <p class="text-xs text-amber-500 italic">"{theme.metadata.userTitle}"</p>
+          </a>
+        ))}
+      </div>
+      <div class="text-center mt-6">
+        <a href="/themes" class="text-amber-500 hover:text-amber-400">
+          View all {themes.length} themes →
+        </a>
+      </div>
+    </section>
   </div>
 </Base>

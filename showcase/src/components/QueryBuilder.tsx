@@ -15,6 +15,79 @@ import {
   copyToClipboard,
   type UrlState,
 } from '../lib/url-state';
+import { getOverlayColors, oceanToPolygonPoints } from '../lib/spider-utils';
+
+// Overlay Spider Chart for comparing multiple characters
+function OverlaySpiderChart({ characters, size = 250 }: { characters: Character[]; size?: number }) {
+  const colors = getOverlayColors();
+  const center = size / 2;
+  const maxRadius = (size / 2) * 0.8;
+  const dimensions = ['O', 'C', 'E', 'A', 'N'];
+
+  // Generate grid pentagons
+  const gridLevels = [1, 2, 3, 4, 5].map(level => {
+    const radius = (level / 5) * maxRadius;
+    return dimensions.map((_, i) => {
+      const angle = (i * 72 - 90) * (Math.PI / 180);
+      return `${(center + radius * Math.cos(angle)).toFixed(1)},${(center + radius * Math.sin(angle)).toFixed(1)}`;
+    }).join(' ');
+  });
+
+  // Generate axis lines
+  const axisLines = dimensions.map((_, i) => {
+    const angle = (i * 72 - 90) * (Math.PI / 180);
+    return { x2: center + maxRadius * Math.cos(angle), y2: center + maxRadius * Math.sin(angle) };
+  });
+
+  // Generate label positions
+  const labelPositions = dimensions.map((dim, i) => {
+    const angle = (i * 72 - 90) * (Math.PI / 180);
+    const labelRadius = (size / 2) * 0.95;
+    return { x: center + labelRadius * Math.cos(angle), y: center + labelRadius * Math.sin(angle), label: dim };
+  });
+
+  return (
+    <div className="flex flex-col items-center">
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        {/* Grid pentagons */}
+        {gridLevels.map((points, i) => (
+          <polygon key={i} points={points} fill="none" stroke="#57534e" strokeWidth="0.5" opacity={0.4 + i * 0.1} />
+        ))}
+        {/* Axis lines */}
+        {axisLines.map((line, i) => (
+          <line key={i} x1={center} y1={center} x2={line.x2} y2={line.y2} stroke="#57534e" strokeWidth="0.5" />
+        ))}
+        {/* Character polygons */}
+        {characters.map((char, idx) => (
+          <polygon
+            key={`${char.theme}-${char.role}`}
+            points={oceanToPolygonPoints(char.ocean, size)}
+            fill={colors[idx]}
+            fillOpacity="0.2"
+            stroke={colors[idx]}
+            strokeWidth="2.5"
+          />
+        ))}
+        {/* Labels */}
+        {labelPositions.map((pos) => (
+          <text key={pos.label} x={pos.x} y={pos.y} textAnchor="middle" dominantBaseline="middle" className="text-sm font-medium" fill="#fef3c7">
+            {pos.label}
+          </text>
+        ))}
+      </svg>
+      {/* Legend */}
+      <div className="flex flex-wrap justify-center gap-4 mt-4">
+        {characters.map((char, idx) => (
+          <div key={`${char.theme}-${char.role}`} className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded" style={{ backgroundColor: colors[idx] }} />
+            <span className="text-sm text-stone-200">{char.name}</span>
+            <span className="text-xs text-stone-400">({char.role})</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 // OCEAN dimension labels
 const OCEAN_DIMENSIONS = [
@@ -54,6 +127,10 @@ export interface Character {
   role: string;
   name: string;
   ocean: { O: number; C: number; E: number; A: number; N: number };
+  style?: string;
+  expertise?: string;
+  trait?: string;
+  roleSummary?: string;
 }
 
 interface Props {
@@ -96,6 +173,9 @@ export default function QueryBuilder({ themes, characters }: Props) {
 
   // Share button feedback state
   const [shareStatus, setShareStatus] = useState<'idle' | 'copied' | 'error'>('idle');
+
+  // Selected characters for comparison (max 4)
+  const [selectedChars, setSelectedChars] = useState<Character[]>([]);
 
   // Initialize state from URL on mount
   useEffect(() => {
@@ -297,7 +377,7 @@ export default function QueryBuilder({ themes, characters }: Props) {
   };
 
   // Set OCEAN dimension filter
-  // Value format: "" (any), "=1" (exact), ">=1" (minimum)
+  // Value format: "" (any), "=1" (exact), ">=1" (at least), "<=5" (at most)
   const setOceanFilter = (dim: keyof OceanFilters, value: string) => {
     if (!value) {
       setOceanFilters(prev => ({ ...prev, [dim]: null }));
@@ -305,11 +385,21 @@ export default function QueryBuilder({ themes, characters }: Props) {
     }
 
     const isExact = value.startsWith('=');
-    const num = parseInt(value.replace(/^[>=]+/, ''), 10);
+    const isAtMost = value.startsWith('<=');
+    const num = parseInt(value.replace(/^[<>=]+/, ''), 10);
+
+    let range: { min: number; max: number };
+    if (isExact) {
+      range = { min: num, max: num };
+    } else if (isAtMost) {
+      range = { min: 1, max: num };
+    } else {
+      range = { min: num, max: 5 };
+    }
 
     setOceanFilters(prev => ({
       ...prev,
-      [dim]: isExact ? { min: num, max: num } : { min: num, max: 5 },
+      [dim]: range,
     }));
   };
 
@@ -318,6 +408,7 @@ export default function QueryBuilder({ themes, characters }: Props) {
     const filter = oceanFilters[dim];
     if (!filter) return '';
     if (filter.min === filter.max) return `=${filter.min}`;
+    if (filter.min === 1) return `<=${filter.max}`;
     return `>=${filter.min}`;
   };
 
@@ -335,6 +426,26 @@ export default function QueryBuilder({ themes, characters }: Props) {
   const hasAdvancedFilters = selectedRoles.length > 0 || selectedThemes.length > 0 || expression.trim() !== '';
   const hasActiveFilters = hasOceanFilters || hasAdvancedFilters;
   const advancedFilterCount = selectedRoles.length + selectedThemes.length + (expression.trim() ? 1 : 0);
+
+  // Toggle character selection for comparison
+  const toggleCharSelection = (char: Character) => {
+    const charKey = `${char.theme}-${char.role}`;
+    const isSelected = selectedChars.some(c => `${c.theme}-${c.role}` === charKey);
+
+    if (isSelected) {
+      setSelectedChars(prev => prev.filter(c => `${c.theme}-${c.role}` !== charKey));
+    } else if (selectedChars.length < 4) {
+      setSelectedChars(prev => [...prev, char]);
+    }
+  };
+
+  // Check if a character is selected
+  const isCharSelected = (char: Character) => {
+    return selectedChars.some(c => `${c.theme}-${c.role}` === `${char.theme}-${char.role}`);
+  };
+
+  // Clear comparison selection
+  const clearSelection = () => setSelectedChars([]);
 
   return (
     <div className="space-y-4">
@@ -366,10 +477,15 @@ export default function QueryBuilder({ themes, characters }: Props) {
                     <option value="=5">=5</option>
                   </optgroup>
                   <optgroup label="At least">
-                    <option value=">=1">1+</option>
                     <option value=">=2">2+</option>
                     <option value=">=3">3+</option>
                     <option value=">=4">4+</option>
+                    <option value=">=5">5</option>
+                  </optgroup>
+                  <optgroup label="At most">
+                    <option value="<=2">≤2</option>
+                    <option value="<=3">≤3</option>
+                    <option value="<=4">≤4</option>
                   </optgroup>
                 </select>
               </div>
@@ -513,10 +629,91 @@ export default function QueryBuilder({ themes, characters }: Props) {
         )}
       </div>
 
+      {/* Comparison Panel */}
+      {selectedChars.length > 0 && (
+        <div className="bg-stone-800 border border-amber-600 rounded-lg p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-amber-100">
+              Comparing {selectedChars.length} Character{selectedChars.length > 1 ? 's' : ''}
+            </h3>
+            <button
+              type="button"
+              onClick={clearSelection}
+              className="text-sm text-stone-400 hover:text-amber-500"
+            >
+              Clear selection
+            </button>
+          </div>
+
+          {/* Selected character chips */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {selectedChars.map((char) => (
+              <div
+                key={`${char.theme}-${char.role}`}
+                className="flex items-center gap-2 bg-stone-700 rounded-lg px-3 py-1.5"
+              >
+                <span className="text-amber-100 font-medium text-sm">{char.name}</span>
+                <span className="text-stone-400 text-xs">{char.role}</span>
+                <button
+                  type="button"
+                  onClick={() => toggleCharSelection(char)}
+                  className="text-stone-400 hover:text-red-400 ml-1"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Overlay Spider Chart - show when 2+ selected */}
+          {selectedChars.length >= 2 ? (
+            <div className="space-y-6">
+              <OverlaySpiderChart characters={selectedChars} size={280} />
+
+              {/* Personality Traits Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-stone-700">
+                      <th className="text-left py-2 px-3 text-stone-400 font-medium">Character</th>
+                      <th className="text-left py-2 px-3 text-stone-400 font-medium">Style</th>
+                      <th className="text-left py-2 px-3 text-stone-400 font-medium">Trait</th>
+                      <th className="text-left py-2 px-3 text-stone-400 font-medium">Expertise</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedChars.map((char, idx) => (
+                      <tr key={`${char.theme}-${char.role}`} className="border-b border-stone-700/50">
+                        <td className="py-2 px-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded" style={{ backgroundColor: getOverlayColors()[idx] }} />
+                            <span className="text-amber-100 font-medium">{char.name}</span>
+                          </div>
+                        </td>
+                        <td className="py-2 px-3 text-stone-300">{char.style || '—'}</td>
+                        <td className="py-2 px-3 text-stone-300">{char.trait || '—'}</td>
+                        <td className="py-2 px-3 text-stone-300">{char.expertise || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <p className="text-stone-400 text-sm text-center py-8">
+              Select one more character to see the overlay comparison
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Results Count and Share */}
       <div className="flex items-center justify-between py-2">
-        <span className="text-sm text-[var(--text-secondary)]">
-          Showing {results.length} of {characters.length} characters
+        <span className="text-sm text-stone-300">
+          {selectedChars.length === 0
+            ? `Showing ${results.length} of ${characters.length} characters — click to select for comparison`
+            : `Showing ${results.length} of ${characters.length} characters`
+          }
         </span>
         <button
           type="button"
@@ -560,23 +757,25 @@ export default function QueryBuilder({ themes, characters }: Props) {
           <CharacterCard
             key={`${char.theme}-${char.role}-${idx}`}
             character={char}
+            onSelect={() => toggleCharSelection(char)}
+            isSelected={isCharSelected(char)}
           />
         ))}
       </div>
 
       {results.length > 100 && (
-        <p className="text-center text-sm text-gray-500 py-4">
+        <p className="text-center text-sm text-stone-400 py-4">
           Showing first 100 results. Use filters to narrow down.
         </p>
       )}
 
       {results.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-gray-500">No characters match your filters.</p>
+          <p className="text-stone-400">No characters match your filters.</p>
           <button
             type="button"
             onClick={clearFilters}
-            className="mt-2 text-sm text-indigo-600 hover:text-indigo-800"
+            className="mt-2 text-sm text-amber-500 hover:text-amber-400"
           >
             Clear all filters
           </button>
