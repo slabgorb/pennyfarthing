@@ -15,9 +15,9 @@ const themes = themesData.map(t => t.metadata.name);
 
 // Flatten all characters from all themes
 const characters = themesData.flatMap(theme =>
-  Object.entries(theme.agents).map(([role, agent]) => ({
+  Object.values(theme.agents).map((agent) => ({
     theme: theme.metadata.name,
-    role,
+    role: agent.role,
     name: agent.character,
     ocean: agent.ocean,
   }))
