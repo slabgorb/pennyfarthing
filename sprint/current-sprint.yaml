@@ -11,11 +11,11 @@ sprint:
 
 summary:
   total_points: 51
-  completed_points: 38  # Epic 13: 24pts + Epic 14: 14pts
-  remaining_points: 13  # Epic 13 stories 10-14
+  completed_points: 41  # Epic 13: 27pts + Epic 14: 14pts
+  remaining_points: 10  # Epic 13 stories 13-11 through 13-14
   notes: |
     Epic 14 complete (14/14 pts).
-    Epic 13 in progress (24/37 pts, stories 13-10 through 13-14 remaining).
+    Epic 13 in progress (27/37 pts, stories 13-11 through 13-14 remaining).
 
 epics:
   # =========================================================================
@@ -28,7 +28,7 @@ epics:
       personas. Features OCEAN personality visualization with spider charts and Chernoff
       faces, full query builder for comparing characters, and pre-rendered benchmark reports.
     points: 37
-    completed_points: 24
+    completed_points: 27
     priority: P2
     marker: "strategic"
     repos: pennyfarthing
@@ -124,9 +124,11 @@ epics:
           - Scenario Leaderboards
         points: 3
         priority: P2
-        status: ready
+        status: done
+        completed: 2026-01-02
         depends_on: epic-12
         jira: https://1898andco.atlassian.net/browse/MSSCI-11304
+        pr: https://github.com/1898andCo/pennyfarthing/pull/63
         acceptance_criteria:
           - /benchmarks page with pre-rendered reports
           - Performance data displayed in tables/charts
