@@ -2,6 +2,20 @@
 
 Pennyfarthing provides a scientific benchmarking system for measuring persona performance against standardized scenarios. This guide explains how to use the benchmarking commands and interpret results.
 
+## Prerequisites
+
+### For Sequential Runs
+No special setup required. Sequential benchmarks (one at a time) use standard interactive prompts.
+
+### For Parallel Runs
+Running multiple benchmarks simultaneously via subagents requires explicit permissions. Run:
+
+```bash
+pennyfarthing doctor --fix
+```
+
+This adds the required permissions for parallel execution. See [PERMISSIONS.md](PERMISSIONS.md#benchmarking-permissions-parallel-runs) for details.
+
 ## Overview
 
 The benchmarking system allows you to:
