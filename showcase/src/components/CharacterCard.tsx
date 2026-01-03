@@ -41,7 +41,7 @@ export default function CharacterCard({ character, onSelect, showFavorite = true
 
   return (
     <div
-      className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow p-4 cursor-pointer relative"
+      className="bg-[var(--bg-card)] rounded-lg border border-[var(--border-color)] hover:border-[var(--border-light)] hover:bg-[var(--bg-card-hover)] transition-all p-4 cursor-pointer relative"
       onClick={onSelect}
       role={onSelect ? "button" : undefined}
       tabIndex={onSelect ? 0 : undefined}
@@ -53,10 +53,10 @@ export default function CharacterCard({ character, onSelect, showFavorite = true
         </div>
       )}
       <div className="mb-3 pr-8">
-        <h3 className="font-semibold text-gray-900 truncate" title={name}>
+        <h3 className="font-semibold text-[var(--text-primary)] truncate" title={name}>
           {name}
         </h3>
-        <p className="text-sm text-gray-600 truncate">
+        <p className="text-sm text-[var(--text-muted)] truncate">
           {theme} &middot; {role}
         </p>
       </div>
@@ -65,18 +65,18 @@ export default function CharacterCard({ character, onSelect, showFavorite = true
         {(['O', 'C', 'E', 'A', 'N'] as const).map((dim) => (
           <div key={dim} className="flex items-center gap-2">
             <span
-              className="text-xs font-medium text-gray-500 w-4"
+              className="text-xs font-medium text-[var(--text-muted)] w-4"
               title={OCEAN_LABELS[dim]}
             >
               {dim}
             </span>
-            <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div className="flex-1 h-1.5 bg-[var(--bg-darker)] rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full ${OCEAN_COLORS[dim]}`}
                 style={{ width: `${(ocean[dim] / 5) * 100}%` }}
               />
             </div>
-            <span className="text-xs text-gray-400 w-3 text-right">
+            <span className="text-xs text-[var(--text-muted)] w-3 text-right">
               {ocean[dim]}
             </span>
           </div>

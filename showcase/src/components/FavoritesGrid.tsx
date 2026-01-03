@@ -85,7 +85,7 @@ export default function FavoritesGrid({ allCharacters }: FavoritesGridProps) {
 
   if (!isLoaded) {
     return (
-      <div className="text-center py-12 text-gray-500">
+      <div className="text-center py-12 text-[var(--text-muted)]">
         Loading favorites...
       </div>
     );
@@ -100,7 +100,7 @@ export default function FavoritesGrid({ allCharacters }: FavoritesGridProps) {
           viewBox="0 0 24 24"
           strokeWidth={1.5}
           stroke="currentColor"
-          className="w-16 h-16 mx-auto text-gray-300 mb-4"
+          className="w-16 h-16 mx-auto text-[var(--text-muted)] mb-4"
         >
           <path
             strokeLinecap="round"
@@ -108,13 +108,13 @@ export default function FavoritesGrid({ allCharacters }: FavoritesGridProps) {
             d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
           />
         </svg>
-        <h2 className="text-xl font-semibold text-gray-700 mb-2">No favorites yet</h2>
-        <p className="text-gray-500 mb-4">
+        <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-2">No favorites yet</h2>
+        <p className="text-[var(--text-secondary)] mb-4">
           Click the heart icon on any character card to add them to your favorites.
         </p>
         <a
           href="/compare"
-          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center px-4 py-2 bg-[var(--accent-cyan)] text-[var(--bg-dark)] rounded-lg hover:bg-[var(--accent-green)] transition-colors font-medium"
         >
           Browse Characters
         </a>
@@ -126,10 +126,10 @@ export default function FavoritesGrid({ allCharacters }: FavoritesGridProps) {
     <div>
       {/* Actions Bar */}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-        <p className="text-gray-600">
+        <p className="text-[var(--text-secondary)]">
           {favorites.length} favorite{favorites.length !== 1 ? 's' : ''}
           {selectedChars.size > 0 && (
-            <span className="ml-2 text-blue-600">
+            <span className="ml-2 text-[var(--accent-cyan)]">
               • {selectedChars.size} selected
             </span>
           )}
@@ -140,15 +140,15 @@ export default function FavoritesGrid({ allCharacters }: FavoritesGridProps) {
             disabled={selectedChars.size < 2}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               selectedChars.size >= 2
-                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                ? 'bg-[var(--accent-cyan)] text-[var(--bg-dark)] hover:bg-[var(--accent-green)]'
+                : 'bg-[var(--bg-card)] text-[var(--text-muted)] cursor-not-allowed'
             }`}
           >
             Compare Selected ({selectedChars.size}/4)
           </button>
           <button
             onClick={handleClearAll}
-            className="px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+            className="px-4 py-2 text-[var(--accent-pink)] hover:text-[var(--accent-orange)] hover:bg-[var(--bg-card)] rounded-lg transition-colors"
           >
             Clear All
           </button>
@@ -157,7 +157,7 @@ export default function FavoritesGrid({ allCharacters }: FavoritesGridProps) {
 
       {/* Selection hint */}
       {selectedChars.size === 0 && (
-        <p className="text-sm text-gray-500 mb-4">
+        <p className="text-sm text-[var(--text-muted)] mb-4">
           Click on cards to select characters for comparison (2-4 characters)
         </p>
       )}
@@ -174,7 +174,7 @@ export default function FavoritesGrid({ allCharacters }: FavoritesGridProps) {
             <div
               key={charId}
               className={`rounded-lg ${
-                isSelected ? 'ring-2 ring-blue-500 ring-offset-2' : ''
+                isSelected ? 'ring-2 ring-[var(--accent-cyan)] ring-offset-2 ring-offset-[var(--bg-dark)]' : ''
               }`}
             >
               <CharacterCard
