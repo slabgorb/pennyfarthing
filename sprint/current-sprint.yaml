@@ -164,9 +164,11 @@ epics:
           - /favorites page shows saved characters
         points: 2
         priority: P2
-        status: in-progress
+        status: done
         started: 2026-01-03
+        completed: 2026-01-03
         jira: https://1898andco.atlassian.net/browse/MSSCI-11306
+        pr: https://github.com/1898andCo/pennyfarthing/pull/67
         acceptance_criteria:
           - Heart button on all profile cards
           - Favorites persist in localStorage
