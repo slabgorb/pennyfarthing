@@ -6,8 +6,15 @@
  * Redesigned with stacked layout per UX spec.
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import CharacterCard from './CharacterCard';
+import {
+  decodeUrlToState,
+  updateBrowserUrl,
+  buildShareableUrl,
+  copyToClipboard,
+  type UrlState,
+} from '../lib/url-state';
 
 // OCEAN dimension labels
 const OCEAN_DIMENSIONS = [
@@ -55,6 +62,9 @@ interface Props {
 }
 
 export default function QueryBuilder({ themes, characters }: Props) {
+  // Track if we've initialized from URL (prevents overwriting URL on first render)
+  const initializedFromUrl = useRef(false);
+
   // OCEAN range filters (null = no filter)
   const [oceanFilters, setOceanFilters] = useState<OceanFilters>({
     O: null, C: null, E: null, A: null, N: null,
@@ -83,6 +93,71 @@ export default function QueryBuilder({ themes, characters }: Props) {
 
   // Filtered results
   const [results, setResults] = useState<Character[]>(characters);
+
+  // Share button feedback state
+  const [shareStatus, setShareStatus] = useState<'idle' | 'copied' | 'error'>('idle');
+
+  // Initialize state from URL on mount
+  useEffect(() => {
+    const urlState = decodeUrlToState(new URLSearchParams(window.location.search));
+
+    // Apply URL state to component state
+    setOceanFilters(urlState.oceanFilters);
+    setSelectedRoles(urlState.selectedRoles);
+    setSelectedThemes(urlState.selectedThemes);
+    setExpression(urlState.expression);
+    setSortBy(urlState.sortBy);
+
+    // Open advanced section if any advanced filters are active
+    if (urlState.selectedRoles.length > 0 ||
+        urlState.selectedThemes.length > 0 ||
+        urlState.expression.trim() !== '') {
+      setAdvancedOpen(true);
+    }
+
+    initializedFromUrl.current = true;
+  }, []);
+
+  // Build current state object for URL updates
+  const getCurrentState = useCallback((): Partial<UrlState> => ({
+    oceanFilters,
+    selectedRoles,
+    selectedThemes,
+    expression,
+    sortBy,
+    selectedChars: [], // Character selection handled separately if needed
+  }), [oceanFilters, selectedRoles, selectedThemes, expression, sortBy]);
+
+  // Update URL when filter state changes (after initial load)
+  useEffect(() => {
+    if (!initializedFromUrl.current) return;
+    updateBrowserUrl(getCurrentState());
+  }, [getCurrentState]);
+
+  // Handle browser back/forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      const urlState = decodeUrlToState(new URLSearchParams(window.location.search));
+      setOceanFilters(urlState.oceanFilters);
+      setSelectedRoles(urlState.selectedRoles);
+      setSelectedThemes(urlState.selectedThemes);
+      setExpression(urlState.expression);
+      setSortBy(urlState.sortBy);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Handle share button click
+  const handleShare = async () => {
+    const url = buildShareableUrl(getCurrentState());
+    const success = await copyToClipboard(url);
+    setShareStatus(success ? 'copied' : 'error');
+
+    // Reset status after feedback duration
+    setTimeout(() => setShareStatus('idle'), 2000);
+  };
 
   // Filter themes based on search
   const filteredThemes = useMemo(() => {
@@ -438,11 +513,45 @@ export default function QueryBuilder({ themes, characters }: Props) {
         )}
       </div>
 
-      {/* Results Count */}
+      {/* Results Count and Share */}
       <div className="flex items-center justify-between py-2">
         <span className="text-sm text-gray-600">
           Showing {results.length} of {characters.length} characters
         </span>
+        <button
+          type="button"
+          onClick={handleShare}
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-colors ${
+            shareStatus === 'copied'
+              ? 'bg-green-100 text-green-700'
+              : shareStatus === 'error'
+              ? 'bg-red-100 text-red-700'
+              : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
+          }`}
+        >
+          {shareStatus === 'copied' ? (
+            <>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Copied!
+            </>
+          ) : shareStatus === 'error' ? (
+            <>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Failed
+            </>
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+              Share
+            </>
+          )}
+        </button>
       </div>
 
       {/* Results Grid */}
