@@ -339,14 +339,14 @@ export default function QueryBuilder({ themes, characters }: Props) {
   return (
     <div className="space-y-4">
       {/* Primary Filter Bar */}
-      <div className="bg-white rounded-lg shadow p-4">
+      <div className="bg-[var(--bg-card)] rounded-lg border border-[var(--border-color)] p-4">
         <div className="flex flex-wrap items-center gap-4">
           {/* OCEAN Filters - Compact */}
-          <div className="flex items-center gap-2 border-r border-gray-200 pr-4">
+          <div className="flex items-center gap-2 border-r border-[var(--border-color)] pr-4">
             {OCEAN_DIMENSIONS.map(({ key, label, description }) => (
               <div key={key} className="flex items-center gap-1">
                 <span
-                  className="font-bold text-sm text-gray-700 w-4"
+                  className="font-bold text-sm text-[var(--text-secondary)] w-4"
                   title={`${label} - ${description}`}
                 >
                   {key}
@@ -355,7 +355,7 @@ export default function QueryBuilder({ themes, characters }: Props) {
                   value={getOceanSelectValue(key as keyof OceanFilters)}
                   onChange={(e) => setOceanFilter(key as keyof OceanFilters, e.target.value)}
                   aria-label={`Filter by ${label}`}
-                  className="text-sm py-1 px-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[70px]"
+                  className="text-sm py-1 px-2 border border-[var(--border-color)] rounded focus:outline-none focus:ring-2 focus:ring-[var(--accent-cyan)] min-w-[70px] bg-[var(--bg-input)] text-[var(--text-primary)]"
                 >
                   <option value="">Any</option>
                   <optgroup label="Exactly">
@@ -378,11 +378,11 @@ export default function QueryBuilder({ themes, characters }: Props) {
 
           {/* Sort */}
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Sort:</span>
+            <span className="text-sm text-[var(--text-secondary)]">Sort:</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="text-sm py-1 px-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="text-sm py-1 px-2 border border-[var(--border-color)] rounded focus:outline-none focus:ring-2 focus:ring-[var(--accent-cyan)] bg-[var(--bg-input)] text-[var(--text-primary)]"
             >
               {SORT_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -397,7 +397,7 @@ export default function QueryBuilder({ themes, characters }: Props) {
             <button
               type="button"
               onClick={clearFilters}
-              className="text-sm text-indigo-600 hover:text-indigo-800"
+              className="text-sm text-[var(--accent-cyan)] hover:text-[var(--accent-green)]"
             >
               Clear filters
             </button>
@@ -406,24 +406,24 @@ export default function QueryBuilder({ themes, characters }: Props) {
       </div>
 
       {/* Advanced Filters (Collapsible) */}
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-[var(--bg-card)] rounded-lg border border-[var(--border-color)]">
         <button
           type="button"
           onClick={() => setAdvancedOpen(!advancedOpen)}
-          className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
+          className="w-full flex items-center justify-between p-4 text-left hover:bg-[var(--bg-card-hover)]"
         >
           <div className="flex items-center gap-2">
             <svg
-              className={`w-4 h-4 text-gray-500 transition-transform ${advancedOpen ? 'rotate-90' : ''}`}
+              className={`w-4 h-4 text-[var(--text-muted)] transition-transform ${advancedOpen ? 'rotate-90' : ''}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
-            <span className="text-sm font-medium text-gray-700">Advanced Filters</span>
+            <span className="text-sm font-medium text-[var(--text-secondary)]">Advanced Filters</span>
             {hasAdvancedFilters && (
-              <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-xs">
+              <span className="bg-[var(--accent-cyan)] text-[var(--bg-dark)] px-2 py-0.5 rounded-full text-xs font-medium">
                 {advancedFilterCount}
               </span>
             )}
@@ -431,10 +431,10 @@ export default function QueryBuilder({ themes, characters }: Props) {
         </button>
 
         {advancedOpen && (
-          <div className="border-t border-gray-200 p-4 space-y-4">
+          <div className="border-t border-[var(--border-color)] p-4 space-y-4">
             {/* Expression Input */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                 OCEAN Expression
               </label>
               <input
@@ -442,16 +442,16 @@ export default function QueryBuilder({ themes, characters }: Props) {
                 value={expression}
                 onChange={(e) => setExpression(e.target.value)}
                 placeholder="e.g., O>=4 AND C=3 AND E<=2"
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 text-sm ${
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 text-sm bg-[var(--bg-input)] text-[var(--text-primary)] ${
                   expressionError
-                    ? 'border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 focus:ring-indigo-500'
+                    ? 'border-[var(--accent-pink)] focus:ring-[var(--accent-pink)]'
+                    : 'border-[var(--border-color)] focus:ring-[var(--accent-cyan)]'
                 }`}
               />
               {expressionError ? (
-                <p className="text-xs text-red-600 mt-1">{expressionError}</p>
+                <p className="text-xs text-[var(--accent-pink)] mt-1">{expressionError}</p>
               ) : (
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-[var(--text-muted)] mt-1">
                   Use O, C, E, A, N with operators: =, &gt;=, &lt;=, &gt;, &lt;. Combine with AND.
                 </p>
               )}
@@ -459,7 +459,7 @@ export default function QueryBuilder({ themes, characters }: Props) {
 
             {/* Role Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Roles</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Roles</label>
               <div className="flex flex-wrap gap-2">
                 {ROLES.map((role) => (
                   <label key={role} className="inline-flex items-center">
@@ -467,9 +467,9 @@ export default function QueryBuilder({ themes, characters }: Props) {
                       type="checkbox"
                       checked={selectedRoles.includes(role)}
                       onChange={() => toggleRole(role)}
-                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      className="rounded border-[var(--border-color)] text-[var(--accent-cyan)] focus:ring-[var(--accent-cyan)] bg-[var(--bg-input)]"
                     />
-                    <span className="ml-1.5 text-sm text-gray-700">{role}</span>
+                    <span className="ml-1.5 text-sm text-[var(--text-secondary)]">{role}</span>
                   </label>
                 ))}
               </div>
@@ -477,15 +477,15 @@ export default function QueryBuilder({ themes, characters }: Props) {
 
             {/* Theme Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Themes</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Themes</label>
               <input
                 type="text"
                 value={themeSearch}
                 onChange={(e) => setThemeSearch(e.target.value)}
                 placeholder="Search themes..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-2 text-sm"
+                className="w-full px-3 py-2 border border-[var(--border-color)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent-cyan)] mb-2 text-sm bg-[var(--bg-input)] text-[var(--text-primary)]"
               />
-              <div className="max-h-32 overflow-y-auto border border-gray-200 rounded-md p-2">
+              <div className="max-h-32 overflow-y-auto border border-[var(--border-color)] rounded-md p-2 bg-[var(--bg-darker)]">
                 <div className="flex flex-wrap gap-1.5">
                   {filteredThemes.slice(0, 30).map((theme) => (
                     <button
@@ -494,15 +494,15 @@ export default function QueryBuilder({ themes, characters }: Props) {
                       onClick={() => toggleTheme(theme)}
                       className={`px-2 py-0.5 text-xs rounded-full transition-colors ${
                         selectedThemes.includes(theme)
-                          ? 'bg-indigo-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          ? 'bg-[var(--accent-cyan)] text-[var(--bg-dark)]'
+                          : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)]'
                       }`}
                     >
                       {theme}
                     </button>
                   ))}
                   {filteredThemes.length > 30 && (
-                    <span className="text-xs text-gray-500 py-0.5">
+                    <span className="text-xs text-[var(--text-muted)] py-0.5">
                       +{filteredThemes.length - 30} more
                     </span>
                   )}
@@ -515,7 +515,7 @@ export default function QueryBuilder({ themes, characters }: Props) {
 
       {/* Results Count and Share */}
       <div className="flex items-center justify-between py-2">
-        <span className="text-sm text-gray-600">
+        <span className="text-sm text-[var(--text-secondary)]">
           Showing {results.length} of {characters.length} characters
         </span>
         <button
@@ -523,10 +523,10 @@ export default function QueryBuilder({ themes, characters }: Props) {
           onClick={handleShare}
           className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-colors ${
             shareStatus === 'copied'
-              ? 'bg-green-100 text-green-700'
+              ? 'bg-[var(--accent-green)] text-[var(--bg-dark)]'
               : shareStatus === 'error'
-              ? 'bg-red-100 text-red-700'
-              : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
+              ? 'bg-[var(--accent-pink)] text-[var(--text-primary)]'
+              : 'bg-[var(--bg-card)] text-[var(--accent-cyan)] hover:bg-[var(--bg-card-hover)]'
           }`}
         >
           {shareStatus === 'copied' ? (

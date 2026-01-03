@@ -21,7 +21,7 @@ export default function MobileMenu({ navLinks }: Props) {
       {/* Hamburger Button */}
       <button
         onClick={toggleMenu}
-        className="p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md"
+        className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-cyan)] rounded-md"
         aria-label={isOpen ? 'Close menu' : 'Open menu'}
         aria-expanded={isOpen}
       >
@@ -51,12 +51,12 @@ export default function MobileMenu({ navLinks }: Props) {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-50 border border-gray-200">
+        <div className="absolute right-0 mt-2 w-48 bg-[var(--bg-card)] rounded-md shadow-lg py-2 z-50 border border-[var(--border-color)]">
           {navLinks.map(link => (
             <a
               key={link.href}
               href={link.href}
-              className="block px-4 py-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+              className="block px-4 py-2 text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-primary)]"
               onClick={() => setIsOpen(false)}
             >
               {link.label}

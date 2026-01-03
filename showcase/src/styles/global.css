@@ -1,1 +1,67 @@
 @import "tailwindcss";
+
+/* Monokai-inspired dark theme */
+:root {
+  --bg-dark: #272822;
+  --bg-darker: #1e1e1e;
+  --bg-card: #3e3d32;
+  --bg-card-hover: #49483e;
+  --bg-input: #3e3d32;
+  --text-primary: #f8f8f2;
+  --text-secondary: #a6a6a0;
+  --text-muted: #75715e;
+  --border-color: #49483e;
+  --border-light: #5c5b50;
+  --accent-pink: #f92672;
+  --accent-orange: #fd971f;
+  --accent-yellow: #e6db74;
+  --accent-green: #a6e22e;
+  --accent-cyan: #66d9ef;
+  --accent-purple: #ae81ff;
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+}
+
+/* Customize scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-darker);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-light);
+}
+
+/* Form elements inherit dark styling */
+select, input, textarea {
+  background-color: var(--bg-input);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+select:focus, input:focus, textarea:focus {
+  border-color: var(--accent-cyan);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(102, 217, 239, 0.2);
+}
+
+/* Links default styling */
+a {
+  color: var(--accent-cyan);
+}
+
+a:hover {
+  color: var(--accent-green);
+}

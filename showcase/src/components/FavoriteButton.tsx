@@ -42,10 +42,10 @@ export default function FavoriteButton({ characterId, className = '' }: Favorite
       type="button"
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      className={`p-1.5 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-pink-400 ${
+      className={`p-1.5 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--accent-pink)] ${
         favorited
-          ? 'text-pink-500 hover:text-pink-600'
-          : 'text-gray-300 hover:text-pink-400'
+          ? 'text-[var(--accent-pink)] hover:text-[var(--accent-orange)]'
+          : 'text-[var(--text-muted)] hover:text-[var(--accent-pink)]'
       } ${className}`}
       aria-label={favorited ? 'Remove from favorites' : 'Add to favorites'}
       title={favorited ? 'Remove from favorites' : 'Add to favorites'}
