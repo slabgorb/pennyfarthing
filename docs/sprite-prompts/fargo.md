@@ -6,18 +6,18 @@ Create a sprite sheet of 10 character portrait busts in a 5×2 grid (500px × 20
 **Source:** Fargo TV Series (2014-present), FX / Noah Hawley
 
 **Row 1 (left to right):**
-1. **Orchestrator:** Mr. Wrench (Seasons 1, 3, 4) - Deaf hitman who orchestrates through silent observation
-2. **SM (Scrum Master):** Molly Solverson (Season 1) - Pregnant deputy who leads through dogged competence
-3. **TEA (Test Engineer):** Lorne Malvo (Season 1) - Chaos agent who tests the fabric of civilization
-4. **Dev (Developer):** Nikki Swango (Season 3) - Bridge champion who implements through cunning
-5. **Reviewer:** Mike Milligan (Season 2) - Kansas City hitman whose reviews are philosophical monologues
+1. **Orchestrator:** A tall imposing man with long dark hair, leather jacket, intense watchful eyes, visible hearing aids, communicating through sign language gestures, rugged scarred face - orchestrates through silent observation
+2. **SM (Scrum Master):** A young pregnant woman with kind determined face, wearing Minnesota deputy sheriff uniform with winter parka, badge visible, sensible Midwestern haircut - leads through dogged competence
+3. **TEA (Test Engineer):** A man with wolf-like features, cold predator eyes, wearing dark utilitarian clothing, slight smirk suggesting malevolent amusement, cropped graying hair - chaos agent who tests the fabric of civilization
+4. **Dev (Developer):** An attractive woman with sharp clever features, auburn hair, wearing practical clothing with bridge tournament pin, carrying playing cards, cunning smile - implements through cunning
+5. **Reviewer:** An African American man with distinctive afro, wearing stylish 1970s suit with wide lapels, philosophical expression, casually menacing demeanor - reviews are philosophical monologues
 
 **Row 2 (left to right):**
-6. **Architect:** VM Varga (Season 3) - Stateless parasite whose architecture is pure exploitation
-7. **PM (Product Manager):** Lou Solverson (Season 2) - State trooper whose vision is simple: stop the killing
-8. **Tech Writer:** Betsy Solverson (Season 2) - Housewife with cancer who documents with clarity
-9. **UX Designer:** Gloria Burgle (Season 3) - Chief who technology won't recognize
-10. **DevOps:** Hanzee Dent (Season 2) - Native American tracker who maintains Gerhardt operations
+6. **Architect:** A gaunt skeletal man with terrible teeth, greasy thinning hair, wearing expensive but ill-fitting suit, bulging unsettling eyes, carrying manila folders - architecture is pure exploitation
+7. **PM (Product Manager):** A middle-aged man with honest tired face, wearing Minnesota State Patrol uniform with winter jacket, wedding ring visible, Vietnam veteran bearing - vision is simple: stop the killing
+8. **Tech Writer:** A warm gentle woman with 1970s homemaker styling, wearing modest dress with cardigan, brave smile despite illness, holding notebook - documents with clarity
+9. **UX Designer:** A pragmatic woman with no-nonsense short hair, wearing small-town police chief uniform, frustrated expression as automatic doors won't open for her - technology won't recognize
+10. **DevOps:** A Native American man with long dark hair in braids, wearing practical work clothes, intense tracking eyes, traditional beadwork visible under jacket - maintains operations with lethal precision
 
 **Requirements:**
 - Each portrait clearly identifiable as the named character

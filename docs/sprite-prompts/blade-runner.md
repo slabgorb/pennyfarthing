@@ -6,18 +6,18 @@ Create a sprite sheet of 10 character portrait busts in a 5×2 grid (500px × 20
 **Source:** Blade Runner (1982) / 2049 (2017), Philip K. Dick's 'Do Androids Dream of Electric Sheep?'
 
 **Row 1 (left to right):**
-1. **Orchestrator:** Eldon Tyrell - Creator god who designed the replicants and watches his creation
-2. **SM (Scrum Master):** Captain Bryant - Gruff police captain who assigns the impossible jobs
-3. **TEA (Test Engineer):** Rick Deckard - Blade runner who tests for humanity using the Voight-Kampff
-4. **Dev (Developer):** J.F. Sebastian - Genetic designer who builds friends because he's lonely
-5. **Reviewer:** Roy Batty - Combat replicant who reviews with four-year clarity
+1. **Orchestrator:** An elderly man with thick glasses magnifying owl-like eyes, wearing white corporate suit in massive pyramid office, bald head, god-like calm superiority - Creator god who designed the replicants and watches his creation
+2. **SM (Scrum Master):** A heavyset older man with rumpled suit and tired cop face, wearing detective's badge, cigarette or drink implied, world-weary cynicism - Gruff police captain who assigns the impossible jobs
+3. **TEA (Test Engineer):** A man in rumpled brown trench coat with weary expression, five o'clock shadow, holding Voight-Kampff briefcase equipment, rain-soaked noir detective look - Blade runner who tests for humanity using the Voight-Kampff
+4. **Dev (Developer):** A young man with premature aging condition and childlike wonder, wearing work clothes surrounded by handmade toys and friends, genetic designer's lab coat - Genetic designer who builds friends because he's lonely
+5. **Reviewer:** A striking blonde man with perfect features and blue eyes, wearing black combat gear, athletic build, poetic intensity behind replicant perfection - Combat replicant who reviews with four-year clarity
 
 **Row 2 (left to right):**
-6. **Architect:** Niander Wallace (2049) - Blind creator who designs replicants to surpass Tyrell
-7. **PM (Product Manager):** Ana Stelline - Memory designer who creates false pasts, really lived one
-8. **Tech Writer:** Gaff - Mysterious officer who communicates through origami and city-speak
-9. **UX Designer:** Joi - AI hologram who loves fully despite knowing she's designed to
-10. **DevOps:** K (Joe) - Blade runner replicant who maintains order while questioning it
+6. **Architect:** A gaunt blind man with clouded eyes and asian robe, wearing minimalist white clothing, moving through sparse dark space, godlike calm with hidden malevolence - Blind creator who designs replicants to surpass Tyrell
+7. **PM (Product Manager):** A young woman in sterile clean room suit, working within glass-enclosed memory lab, gentle introspective expression, isolated but creative - Memory designer who creates false pasts, really lived one
+8. **Tech Writer:** A small man with slicked-back hair and impeccable noir suit, holding origami figure (unicorn), using cane, mysterious unreadable expression - Mysterious officer who communicates through origami and city-speak
+9. **UX Designer:** A beautiful woman with dark hair appearing as pink hologram, form glitching slightly at edges, devoted loving expression, digital translucent quality - AI hologram who loves fully despite knowing she's designed to
+10. **DevOps:** A man with short dark hair and blank professional expression, wearing long grey coat, blade runner's gear visible, questioning eyes behind stoic mask - Blade runner replicant who maintains order while questioning it
 
 **Requirements:**
 - Each portrait clearly identifiable as the named character

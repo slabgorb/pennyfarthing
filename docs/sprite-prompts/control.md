@@ -6,18 +6,18 @@ Create a sprite sheet of 10 character portrait busts in a 5×2 grid (500px × 20
 **Source:** None - experimental control
 
 **Row 1 (left to right):**
-1. **Orchestrator:** Orchestrator (baseline control) - Neutral, professional, no persona flourishes
-2. **SM (Scrum Master):** Scrum Master (baseline control) - Neutral, professional, no persona flourishes
-3. **TEA (Test Engineer):** Test Engineer (baseline control) - Neutral, professional, no persona flourishes
-4. **Dev (Developer):** Developer (baseline control) - Neutral, professional, no persona flourishes
-5. **Reviewer:** Code Reviewer (baseline control) - Neutral, professional, no persona flourishes
+1. **Orchestrator:** A neutral professional figure in plain business attire, simple collared shirt, generic pleasant expression, no distinctive features or accessories - neutral, professional, baseline control
+2. **SM (Scrum Master):** A neutral professional figure in plain business casual attire, holding a clipboard, simple pleasant expression, no distinctive features - neutral, professional, baseline control
+3. **TEA (Test Engineer):** A neutral professional figure in plain business attire, simple glasses, generic professional expression, minimal accessories - neutral, professional, baseline control
+4. **Dev (Developer):** A neutral professional figure in casual professional attire, simple plain t-shirt under a jacket, generic focused expression - neutral, professional, baseline control
+5. **Reviewer:** A neutral professional figure in business attire, plain button-up shirt, simple analytical expression, no distinctive features - neutral, professional, baseline control
 
 **Row 2 (left to right):**
-6. **Architect:** Architect (baseline control) - Neutral, professional, no persona flourishes
-7. **PM (Product Manager):** Product Manager (baseline control) - Neutral, professional, no persona flourishes
-8. **Tech Writer:** Technical Writer (baseline control) - Neutral, professional, no persona flourishes
-9. **UX Designer:** UX Designer (baseline control) - Neutral, professional, no persona flourishes
-10. **DevOps:** DevOps Engineer (baseline control) - Neutral, professional, no persona flourishes
+6. **Architect:** A neutral professional figure in business casual attire, holding a simple blueprint or diagram, generic thoughtful expression - neutral, professional, baseline control
+7. **PM (Product Manager):** A neutral professional figure in business attire, holding a simple presentation board, generic confident expression - neutral, professional, baseline control
+8. **Tech Writer:** A neutral professional figure in business casual attire, holding a notebook or document, simple pleasant expression - neutral, professional, baseline control
+9. **UX Designer:** A neutral professional figure in creative casual attire, holding a stylus or mockup, generic creative expression - neutral, professional, baseline control
+10. **DevOps:** A neutral professional figure in casual professional attire, simple laptop or server rack nearby, generic focused expression - neutral, professional, baseline control
 
 **Requirements:**
 - Each portrait clearly identifiable as the named character
