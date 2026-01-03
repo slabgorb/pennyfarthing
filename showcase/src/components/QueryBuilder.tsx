@@ -3,10 +3,11 @@
  *
  * Interactive query builder for the /compare page with OCEAN filters,
  * role/theme filters, expression input, and sorting options.
- * Uses client:load directive for hydration in Astro.
+ * Redesigned with stacked layout per UX spec.
  */
 
 import { useState, useEffect, useMemo } from 'react';
+import CharacterCard from './CharacterCard';
 
 // OCEAN dimension labels
 const OCEAN_DIMENSIONS = [
@@ -41,15 +42,6 @@ export interface OceanFilters {
   N: { min: number; max: number } | null;
 }
 
-export interface QueryState {
-  ocean: OceanFilters;
-  roles: string[];
-  themes: string[];
-  themeSearch: string;
-  expression: string;
-  sortBy: string;
-}
-
 export interface Character {
   theme: string;
   role: string;
@@ -60,10 +52,9 @@ export interface Character {
 interface Props {
   themes: string[];
   characters: Character[];
-  onResults?: (results: Character[]) => void;
 }
 
-export default function QueryBuilder({ themes, characters, onResults = () => {} }: Props) {
+export default function QueryBuilder({ themes, characters }: Props) {
   // OCEAN range filters (null = no filter)
   const [oceanFilters, setOceanFilters] = useState<OceanFilters>({
     O: null, C: null, E: null, A: null, N: null,
@@ -87,6 +78,12 @@ export default function QueryBuilder({ themes, characters, onResults = () => {} 
   // Sort option
   const [sortBy, setSortBy] = useState('name');
 
+  // Advanced filters section collapsed state
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+
+  // Filtered results
+  const [results, setResults] = useState<Character[]>(characters);
+
   // Filter themes based on search
   const filteredThemes = useMemo(() => {
     if (!themeSearch) return themes;
@@ -97,18 +94,15 @@ export default function QueryBuilder({ themes, characters, onResults = () => {} 
 
   // Valid OCEAN dimensions and operators
   const VALID_DIMS = ['O', 'C', 'E', 'A', 'N'];
-  const VALID_OPS = ['>=', '<=', '>', '<', '='];
 
   // Parse and validate a single OCEAN condition
   const parseCondition = (condition: string): { error: string } | { dim: string; op: string; val: number } => {
     const trimmed = condition.trim();
     if (!trimmed) return { error: 'Empty condition' };
 
-    // Match pattern: dimension, operator, value
     const match = trimmed.match(/^([A-Za-z])\s*(>=|<=|>|<|=)\s*(.+)$/);
 
     if (!match) {
-      // Try to give helpful feedback
       const dimMatch = trimmed.match(/^([A-Za-z])/);
       if (dimMatch) {
         const dim = dimMatch[1].toUpperCase();
@@ -123,12 +117,10 @@ export default function QueryBuilder({ themes, characters, onResults = () => {} 
     const [, dimRaw, op, valRaw] = match;
     const dim = dimRaw.toUpperCase();
 
-    // Validate dimension
     if (!VALID_DIMS.includes(dim)) {
       return { error: `Invalid dimension: ${dim}. Use O, C, E, A, or N` };
     }
 
-    // Validate value is a number 1-5
     const val = parseInt(valRaw, 10);
     if (isNaN(val)) {
       return { error: `Invalid value: "${valRaw}". Must be a number 1-5` };
@@ -144,11 +136,9 @@ export default function QueryBuilder({ themes, characters, onResults = () => {} 
   const parseExpression = (expr: string): { filter: ((char: Character) => boolean) | null; error: string | null } => {
     if (!expr.trim()) return { filter: null, error: null };
 
-    // Split by AND (case insensitive)
     const conditions = expr.split(/\s+AND\s+/i);
     const parsed: Array<{ dim: string; op: string; val: number }> = [];
 
-    // Parse each condition
     for (const condition of conditions) {
       const result = parseCondition(condition);
       if ('error' in result) {
@@ -157,7 +147,6 @@ export default function QueryBuilder({ themes, characters, onResults = () => {} 
       parsed.push(result);
     }
 
-    // Build filter function
     const filter = (char: Character) => {
       return parsed.every(({ dim, op, val }) => {
         const charValue = char.ocean[dim as keyof typeof char.ocean];
@@ -177,46 +166,46 @@ export default function QueryBuilder({ themes, characters, onResults = () => {} 
 
   // Apply all filters and update results
   useEffect(() => {
-    let results = [...characters];
+    let filtered = [...characters];
 
-    // Apply OCEAN range filters (AND logic)
+    // Apply OCEAN range filters
     Object.entries(oceanFilters).forEach(([dim, range]) => {
       if (range) {
-        results = results.filter(char => {
+        filtered = filtered.filter(char => {
           const value = char.ocean[dim as keyof typeof char.ocean];
           return value >= range.min && value <= range.max;
         });
       }
     });
 
-    // Apply role filter (OR within roles, AND with other filters)
+    // Apply role filter
     if (selectedRoles.length > 0) {
-      results = results.filter(char => selectedRoles.includes(char.role));
+      filtered = filtered.filter(char => selectedRoles.includes(char.role));
     }
 
-    // Apply theme filter (OR within themes, AND with other filters)
+    // Apply theme filter
     if (selectedThemes.length > 0) {
-      results = results.filter(char => selectedThemes.includes(char.theme));
+      filtered = filtered.filter(char => selectedThemes.includes(char.theme));
     }
 
     // Apply expression filter
     const { filter: exprFilter, error } = parseExpression(expression);
     setExpressionError(error);
     if (exprFilter) {
-      results = results.filter(exprFilter);
+      filtered = filtered.filter(exprFilter);
     }
 
     // Apply sorting
-    results.sort((a, b) => {
+    filtered.sort((a, b) => {
       if (sortBy === 'name') {
         return a.name.localeCompare(b.name);
       }
       const dim = sortBy as keyof typeof a.ocean;
-      return b.ocean[dim] - a.ocean[dim]; // Descending for OCEAN scores
+      return b.ocean[dim] - a.ocean[dim];
     });
 
-    onResults(results);
-  }, [oceanFilters, selectedRoles, selectedThemes, expression, sortBy, characters, onResults]);
+    setResults(filtered);
+  }, [oceanFilters, selectedRoles, selectedThemes, expression, sortBy, characters]);
 
   // Toggle role selection
   const toggleRole = (role: string) => {
@@ -250,150 +239,217 @@ export default function QueryBuilder({ themes, characters, onResults = () => {} 
     setSortBy('name');
   };
 
-  const hasActiveFilters =
-    Object.values(oceanFilters).some(v => v !== null) ||
-    selectedRoles.length > 0 ||
-    selectedThemes.length > 0 ||
-    expression.trim() !== '';
+  const hasOceanFilters = Object.values(oceanFilters).some(v => v !== null);
+  const hasAdvancedFilters = selectedRoles.length > 0 || selectedThemes.length > 0 || expression.trim() !== '';
+  const hasActiveFilters = hasOceanFilters || hasAdvancedFilters;
+  const advancedFilterCount = selectedRoles.length + selectedThemes.length + (expression.trim() ? 1 : 0);
 
   return (
-    <div className="query-builder bg-white rounded-lg shadow p-6">
-      {/* OCEAN Dimension Filters */}
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-3">OCEAN Filters</h3>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          {OCEAN_DIMENSIONS.map(({ key, label }) => (
-            <div key={key}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {key}: {label}
-              </label>
-              <select
-                value={oceanFilters[key as keyof OceanFilters]?.min ?? ''}
-                onChange={(e) => setOceanFilter(
-                  key as keyof OceanFilters,
-                  e.target.value ? parseInt(e.target.value, 10) : null
-                )}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">Any</option>
-                <option value="1">1+</option>
-                <option value="2">2+</option>
-                <option value="3">3+</option>
-                <option value="4">4+</option>
-                <option value="5">5</option>
-              </select>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Expression Input */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          OCEAN Expression (Advanced Query)
-        </label>
-        <input
-          type="text"
-          value={expression}
-          onChange={(e) => setExpression(e.target.value)}
-          placeholder="e.g., O>=4 AND C=3 AND E<=2"
-          className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-            expressionError
-              ? 'border-red-500 focus:ring-red-500'
-              : 'border-gray-300 focus:ring-indigo-500'
-          }`}
-        />
-        {expressionError ? (
-          <p className="text-xs text-red-600 mt-1">
-            ⚠ {expressionError}
-          </p>
-        ) : (
-          <p className="text-xs text-gray-500 mt-1">
-            Use O, C, E, A, N with operators: =, &gt;=, &lt;=, &gt;, &lt;. Combine with AND.
-          </p>
-        )}
-      </div>
-
-      {/* Role Filter */}
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-3">Roles</h3>
-        <div className="flex flex-wrap gap-2">
-          {ROLES.map((role) => (
-            <label key={role} className="inline-flex items-center">
-              <input
-                type="checkbox"
-                checked={selectedRoles.includes(role)}
-                onChange={() => toggleRole(role)}
-                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-              />
-              <span className="ml-2 text-sm text-gray-700">{role}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Theme Filter */}
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-3">Themes</h3>
-        <input
-          type="text"
-          value={themeSearch}
-          onChange={(e) => setThemeSearch(e.target.value)}
-          placeholder="Search themes..."
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-3"
-        />
-        <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2">
-          <div className="flex flex-wrap gap-2">
-            {filteredThemes.slice(0, 20).map((theme) => (
-              <button
-                key={theme}
-                type="button"
-                onClick={() => toggleTheme(theme)}
-                className={`px-3 py-1 text-sm rounded-full transition-colors ${
-                  selectedThemes.includes(theme)
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {theme}
-              </button>
+    <div className="space-y-4">
+      {/* Primary Filter Bar */}
+      <div className="bg-white rounded-lg shadow p-4">
+        <div className="flex flex-wrap items-center gap-4">
+          {/* OCEAN Filters - Compact */}
+          <div className="flex items-center gap-2 border-r border-gray-200 pr-4">
+            {OCEAN_DIMENSIONS.map(({ key, label, description }) => (
+              <div key={key} className="flex items-center gap-1">
+                <span
+                  className="font-bold text-sm text-gray-700 w-4"
+                  title={`${label} - ${description}`}
+                >
+                  {key}
+                </span>
+                <select
+                  value={oceanFilters[key as keyof OceanFilters]?.min ?? ''}
+                  onChange={(e) => setOceanFilter(
+                    key as keyof OceanFilters,
+                    e.target.value ? parseInt(e.target.value, 10) : null
+                  )}
+                  aria-label={`Filter by ${label}`}
+                  className="text-sm py-1 px-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[60px]"
+                >
+                  <option value="">Any</option>
+                  <option value="1">1+</option>
+                  <option value="2">2+</option>
+                  <option value="3">3+</option>
+                  <option value="4">4+</option>
+                  <option value="5">5</option>
+                </select>
+              </div>
             ))}
-            {filteredThemes.length > 20 && (
-              <span className="text-sm text-gray-500 py-1">
-                +{filteredThemes.length - 20} more
+          </div>
+
+          {/* Sort */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Sort:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="text-sm py-1 px-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              {SORT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Clear Filters */}
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="text-sm text-indigo-600 hover:text-indigo-800"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Advanced Filters (Collapsible) */}
+      <div className="bg-white rounded-lg shadow">
+        <button
+          type="button"
+          onClick={() => setAdvancedOpen(!advancedOpen)}
+          className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
+        >
+          <div className="flex items-center gap-2">
+            <svg
+              className={`w-4 h-4 text-gray-500 transition-transform ${advancedOpen ? 'rotate-90' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+            <span className="text-sm font-medium text-gray-700">Advanced Filters</span>
+            {hasAdvancedFilters && (
+              <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-xs">
+                {advancedFilterCount}
               </span>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Sort Options */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Sort by
-        </label>
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        >
-          {SORT_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Clear Filters */}
-      {hasActiveFilters && (
-        <button
-          type="button"
-          onClick={clearFilters}
-          className="text-sm text-indigo-600 hover:text-indigo-800"
-        >
-          Clear all filters
         </button>
+
+        {advancedOpen && (
+          <div className="border-t border-gray-200 p-4 space-y-4">
+            {/* Expression Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                OCEAN Expression
+              </label>
+              <input
+                type="text"
+                value={expression}
+                onChange={(e) => setExpression(e.target.value)}
+                placeholder="e.g., O>=4 AND C=3 AND E<=2"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 text-sm ${
+                  expressionError
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-indigo-500'
+                }`}
+              />
+              {expressionError ? (
+                <p className="text-xs text-red-600 mt-1">{expressionError}</p>
+              ) : (
+                <p className="text-xs text-gray-500 mt-1">
+                  Use O, C, E, A, N with operators: =, &gt;=, &lt;=, &gt;, &lt;. Combine with AND.
+                </p>
+              )}
+            </div>
+
+            {/* Role Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Roles</label>
+              <div className="flex flex-wrap gap-2">
+                {ROLES.map((role) => (
+                  <label key={role} className="inline-flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedRoles.includes(role)}
+                      onChange={() => toggleRole(role)}
+                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="ml-1.5 text-sm text-gray-700">{role}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Theme Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Themes</label>
+              <input
+                type="text"
+                value={themeSearch}
+                onChange={(e) => setThemeSearch(e.target.value)}
+                placeholder="Search themes..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-2 text-sm"
+              />
+              <div className="max-h-32 overflow-y-auto border border-gray-200 rounded-md p-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {filteredThemes.slice(0, 30).map((theme) => (
+                    <button
+                      key={theme}
+                      type="button"
+                      onClick={() => toggleTheme(theme)}
+                      className={`px-2 py-0.5 text-xs rounded-full transition-colors ${
+                        selectedThemes.includes(theme)
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {theme}
+                    </button>
+                  ))}
+                  {filteredThemes.length > 30 && (
+                    <span className="text-xs text-gray-500 py-0.5">
+                      +{filteredThemes.length - 30} more
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Results Count */}
+      <div className="flex items-center justify-between py-2">
+        <span className="text-sm text-gray-600">
+          Showing {results.length} of {characters.length} characters
+        </span>
+      </div>
+
+      {/* Results Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {results.slice(0, 100).map((char, idx) => (
+          <CharacterCard
+            key={`${char.theme}-${char.role}-${idx}`}
+            character={char}
+          />
+        ))}
+      </div>
+
+      {results.length > 100 && (
+        <p className="text-center text-sm text-gray-500 py-4">
+          Showing first 100 results. Use filters to narrow down.
+        </p>
+      )}
+
+      {results.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-gray-500">No characters match your filters.</p>
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="mt-2 text-sm text-indigo-600 hover:text-indigo-800"
+          >
+            Clear all filters
+          </button>
+        </div>
       )}
     </div>
   );

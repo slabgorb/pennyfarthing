@@ -140,11 +140,11 @@ describe('Story 13-7: Query Builder UI', () => {
       expect(content).toMatch(/useEffect/);
     });
 
-    it('should pass filtered results to callback', () => {
+    it('should manage filtered results internally', () => {
       const componentPath = join(COMPONENTS_DIR, 'QueryBuilder.tsx');
       const content = readFileSync(componentPath, 'utf-8');
-      // Should call the results callback with filtered data
-      expect(content).toMatch(/onResults\(|onChange\(|onFilter\(/);
+      // Should set results state after filtering (results rendered inside component)
+      expect(content).toMatch(/setResults\(/);
     });
   });
 
