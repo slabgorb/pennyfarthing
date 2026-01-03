@@ -63,7 +63,17 @@ const bestFor = getBestForRecommendations(agent.ocean);
   <div class="character-profile max-w-4xl mx-auto px-4 py-8">
     <!-- Character Header -->
     <header class="profile-header text-center mb-8">
-      <div class="emoji text-8xl mb-4">{agent.emoji || '👤'}</div>
+      <div class="portrait-container w-32 h-32 mx-auto mb-4 flex items-center justify-center">
+        <img
+          src={`/sprites/${theme.id}/${agent.role}.png`}
+          alt={agent.character}
+          class="portrait w-full h-full object-cover rounded-lg shadow-lg"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='block'"
+        />
+        <span class="emoji-fallback text-8xl hidden">
+          {agent.emoji || '👤'}
+        </span>
+      </div>
       <h1 class="character text-3xl font-bold text-amber-100 mb-2">
         {agent.character}
       </h1>

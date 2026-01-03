@@ -1,10 +1,11 @@
 /**
  * CharacterCard Component
  *
- * Displays a character with name, theme, role, spider chart and OCEAN bars side by side.
+ * Displays a character with portrait, name, theme, role, and OCEAN bars.
  * Used in the Compare page results grid and Favorites page.
  */
 
+import { useState } from 'react';
 import FavoriteButton from './FavoriteButton';
 import { buildCharacterId } from '../lib/favorites-store';
 
@@ -12,8 +13,10 @@ interface CharacterCardProps {
   character: {
     name: string;
     theme: string;
+    themeId?: string;
     role: string;
     ocean: { O: number; C: number; E: number; A: number; N: number };
+    emoji?: string;
   };
   onSelect?: () => void;
   showFavorite?: boolean;
@@ -108,13 +111,36 @@ function MiniSpiderChart({ ocean, size = 60 }: { ocean: Record<string, number>; 
   );
 }
 
+// Portrait with emoji fallback
+function Portrait({ themeId, role, emoji, name }: { themeId?: string; role: string; emoji?: string; name: string }) {
+  const [imgError, setImgError] = useState(false);
+  const spritePath = themeId ? `/sprites/${themeId}/${role}.png` : null;
+
+  if (!spritePath || imgError) {
+    return (
+      <div className="w-12 h-12 flex items-center justify-center text-2xl bg-stone-700 rounded">
+        {emoji || '👤'}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={spritePath}
+      alt={name}
+      className="w-12 h-12 object-cover rounded"
+      onError={() => setImgError(true)}
+    />
+  );
+}
+
 export default function CharacterCard({ character, onSelect, showFavorite = true, isSelected = false }: CharacterCardProps) {
-  const { name, theme, role, ocean } = character;
+  const { name, theme, themeId, role, ocean, emoji } = character;
   const characterId = buildCharacterId(theme, role);
 
   return (
     <div
-      className={`bg-stone-800 border-2 rounded-lg hover:border-amber-600 transition-all p-4 cursor-pointer relative ${
+      className={`bg-stone-800 border-2 rounded-lg hover:border-amber-600 transition-all p-3 cursor-pointer relative ${
         isSelected ? 'border-amber-500 ring-2 ring-amber-500/30' : 'border-stone-700'
       }`}
       onClick={onSelect}
@@ -127,41 +153,56 @@ export default function CharacterCard({ character, onSelect, showFavorite = true
           <FavoriteButton characterId={characterId} />
         </div>
       )}
-      <div className="mb-3 pr-8">
-        <h3 className="font-semibold text-amber-100 truncate" title={name}>
+
+      {/* Name and theme/role on top */}
+      <div className="mb-2 pr-6">
+        <h3 className="font-semibold text-amber-100 truncate text-sm" title={name}>
           {name}
         </h3>
-        <p className="text-sm text-stone-400 truncate">
+        <p className="text-xs text-stone-400 truncate">
           {theme} · {role}
         </p>
       </div>
 
-      {/* Spider chart and bars side by side */}
-      <div className="flex gap-3 items-center">
-        {/* Mini Spider Chart */}
-        <MiniSpiderChart ocean={ocean} size={70} />
+      {/* Spider chart, bar graph, and portrait inline */}
+      <div className="flex items-center gap-2">
+        {/* Spider Chart - always visible */}
+        <MiniSpiderChart ocean={ocean} size={56} />
 
-        {/* OCEAN Bars */}
-        <div className="flex-1 space-y-1">
+        {/* OCEAN Bars with ticks */}
+        <div className="space-y-1">
           {(['O', 'C', 'E', 'A', 'N'] as const).map((dim) => (
-            <div key={dim} className="flex items-center gap-1.5">
+            <div key={dim} className="flex items-center gap-1">
               <span
                 className="text-xs font-medium text-stone-400 w-3"
                 title={OCEAN_LABELS[dim]}
               >
                 {dim}
               </span>
-              <div className="flex-1 h-1.5 bg-stone-700 rounded-full overflow-hidden">
+              <div className="w-14 h-1.5 bg-stone-700 rounded-full overflow-hidden relative">
+                {/* Tick marks at 1,2,3,4 */}
+                {[1, 2, 3, 4].map((tick) => (
+                  <div
+                    key={tick}
+                    className="absolute w-px h-full bg-stone-600"
+                    style={{ left: `${(tick / 5) * 100}%` }}
+                  />
+                ))}
                 <div
-                  className={`h-full rounded-full ${OCEAN_COLORS[dim]}`}
+                  className={`h-full rounded-full ${OCEAN_COLORS[dim]} relative z-10`}
                   style={{ width: `${(ocean[dim] / 5) * 100}%` }}
                 />
               </div>
-              <span className="text-xs text-stone-400 w-3 text-right">
+              <span className="text-xs text-stone-500 w-3 text-right">
                 {ocean[dim]}
               </span>
             </div>
           ))}
+        </div>
+
+        {/* Portrait aligned right */}
+        <div className="ml-auto">
+          <Portrait themeId={themeId} role={role} emoji={emoji} name={name} />
         </div>
       </div>
     </div>
