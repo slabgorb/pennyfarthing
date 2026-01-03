@@ -144,7 +144,8 @@ epics:
           - Copy/share button generates shareable link
         points: 2
         priority: P2
-        status: ready
+        status: in_progress
+        started: 2026-01-02
         jira: https://1898andco.atlassian.net/browse/MSSCI-11305
         acceptance_criteria:
           - Comparison state persisted in URL
