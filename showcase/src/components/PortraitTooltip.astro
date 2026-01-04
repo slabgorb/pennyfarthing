@@ -31,7 +31,7 @@ const roleDisplay: Record<string, string> = {
 };
 
 const roleName = roleDisplay[agent.role] || agent.role;
-const spritePath = `/sprites/${themeId}/${agent.role}.png`;
+const portraitPath = `/portraits/${themeId}/${agent.role}.png`;
 ---
 
 <div class="portrait-tooltip-wrapper group relative block flex-shrink-0">
@@ -43,7 +43,7 @@ const spritePath = `/sprites/${themeId}/${agent.role}.png`;
       <div class="flex gap-3 mb-2">
         <!-- Full size portrait -->
         <img
-          src={spritePath}
+          src={portraitPath}
           alt={agent.character}
           class="w-24 h-24 rounded object-cover bg-stone-700 flex-shrink-0"
         />
