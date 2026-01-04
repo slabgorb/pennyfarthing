@@ -129,6 +129,7 @@ function formatDelta(delta: number | undefined): { text: string; class: string }
                     <tr class="text-stone-400 text-left">
                       <th class="pb-2">#</th>
                       <th class="pb-2">Theme</th>
+                      <th class="pb-2">Persona</th>
                       <th class="pb-2 text-right">Mean Score</th>
                       <th class="pb-2 text-right">Delta</th>
                     </tr>
@@ -140,6 +141,7 @@ function formatDelta(delta: number | undefined): { text: string; class: string }
                         <tr class="border-t border-stone-700">
                           <td class="py-2 text-stone-500">{i + 1}</td>
                           <td class="py-2 font-medium text-stone-200">{entry.theme}</td>
+                          <td class="py-2 text-amber-200">{entry.persona || '—'}</td>
                           <td class="py-2 text-right text-stone-300">{entry.averageScore.toFixed(1)}</td>
                           <td class={`py-2 text-right ${delta.class}`}>{delta.text}</td>
                         </tr>
