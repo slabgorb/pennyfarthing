@@ -78,33 +78,43 @@ agents:
   # Mode handler will populate these (Stories 6-2, 6-3, 6-4)
   orchestrator:
     character: Coordinator
+    shortName: Coordinator
     style: Placeholder - run mode handler to customize
   sm:
     character: Coordinator
+    shortName: Coordinator
     style: Placeholder - run mode handler to customize
   tea:
     character: Tester
+    shortName: Tester
     style: Placeholder - run mode handler to customize
   dev:
     character: Developer
+    shortName: Developer
     style: Placeholder - run mode handler to customize
   reviewer:
     character: Reviewer
+    shortName: Reviewer
     style: Placeholder - run mode handler to customize
   architect:
     character: Architect
+    shortName: Architect
     style: Placeholder - run mode handler to customize
   pm:
     character: Manager
+    shortName: Manager
     style: Placeholder - run mode handler to customize
   tech-writer:
     character: Writer
+    shortName: Writer
     style: Placeholder - run mode handler to customize
   ux-designer:
     character: Designer
+    shortName: Designer
     style: Placeholder - run mode handler to customize
   devops:
     character: Operator
+    shortName: Operator
     style: Placeholder - run mode handler to customize
 ```
 
@@ -149,6 +159,7 @@ Based on the universe description, generate personas for all 10 agents:
 
 For each agent, generate:
 - `character`: Name fitting the universe
+- `shortName`: Display name for UI (see Short Name Generation below)
 - `ocean`: OCEAN personality profile (see Role-Appropriate OCEAN Profiles below)
 - `style`: 1-2 sentence communication style
 - `expertise`: Areas of expertise in the universe context
@@ -157,6 +168,24 @@ For each agent, generate:
 - `quote`: Signature quote that captures their personality
 - `emoji`: Single emoji representing them
 - `helper`: Assistant with name and communication style
+
+#### Short Name Generation
+
+The `shortName` is a concise display name for portrait labels. Follow this priority:
+
+1. **Quoted nicknames first**: If character has a quoted nickname like "Hannibal" or "Starbuck", use it
+2. **Unique first name**: If first name is unique among all characters in the theme
+3. **Unique surname**: If surname distinguishes the character
+4. **First + Last**: If needed for disambiguation
+5. **Iconic names**: Keep full for iconic two-word names (e.g., "Big Brother", "Sun Tzu")
+
+Skip titles like "Dr.", "Captain", "President" when extracting shortName.
+
+Examples:
+- `Colonel John "Hannibal" Smith` → `Hannibal`
+- `Kara "Starbuck" Thrace` → `Starbuck`
+- `President Josiah Bartlet` → `Josiah`
+- `Big Brother` → `Big Brother` (iconic, keep full)
 
 #### Role-Appropriate OCEAN Profiles
 
@@ -186,18 +215,18 @@ Display a preview of all generated agents before confirming:
 
 **Universe:** {user's concept}
 
-| Agent | Character | Style |
-|-------|-----------|-------|
-| orchestrator | {name} | {style summary} |
-| sm | {name} | {style summary} |
-| tea | {name} | {style summary} |
-| dev | {name} | {style summary} |
-| reviewer | {name} | {style summary} |
-| architect | {name} | {style summary} |
-| pm | {name} | {style summary} |
-| tech-writer | {name} | {style summary} |
-| ux-designer | {name} | {style summary} |
-| devops | {name} | {style summary} |
+| Agent | Character | Short | Style |
+|-------|-----------|-------|-------|
+| orchestrator | {name} | {shortName} | {style summary} |
+| sm | {name} | {shortName} | {style summary} |
+| tea | {name} | {shortName} | {style summary} |
+| dev | {name} | {shortName} | {style summary} |
+| reviewer | {name} | {shortName} | {style summary} |
+| architect | {name} | {shortName} | {style summary} |
+| pm | {name} | {shortName} | {style summary} |
+| tech-writer | {name} | {shortName} | {style summary} |
+| ux-designer | {name} | {shortName} | {style summary} |
+| devops | {name} | {shortName} | {style summary} |
 ```
 
 ### Step 4: Confirm or Regenerate
@@ -247,6 +276,7 @@ theme:
 agents:
   orchestrator:
     character: {generated}
+    shortName: {generated - see Short Name Generation}
     ocean:
       O: {1-5}  # {rationale - e.g., "Cosmic awareness"}
       C: {1-5}  # {rationale}
@@ -262,7 +292,7 @@ agents:
     helper:
       name: {generated}
       style: "{generated}"
-  # ... all 10 agents with complete definitions including ocean blocks
+  # ... all 10 agents with complete definitions including ocean blocks and shortName
 ```
 
 **OCEAN Validation:** Before writing the theme file, verify all OCEAN profiles are complete and valid:
@@ -348,18 +378,18 @@ Show a preview of the complete theme before confirming. Include OCEAN scores for
 
 **Universe:** {concept}
 
-| Agent | Character | Style | OCEAN |
-|-------|-----------|-------|-------|
-| orchestrator | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
-| sm | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
-| tea | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
-| dev | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
-| reviewer | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
-| architect | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
-| pm | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
-| tech-writer | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
-| ux-designer | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
-| devops | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| Agent | Character | Short | Style | OCEAN |
+|-------|-----------|-------|-------|-------|
+| orchestrator | {selected} | {shortName} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| sm | {selected} | {shortName} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| tea | {selected} | {shortName} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| dev | {selected} | {shortName} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| reviewer | {selected} | {shortName} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| architect | {selected} | {shortName} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| pm | {selected} | {shortName} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| tech-writer | {selected} | {shortName} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| ux-designer | {selected} | {shortName} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| devops | {selected} | {shortName} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
 ```
 
 ### Step 5: Confirm or Edit
@@ -498,18 +528,18 @@ Show a preview of the complete theme including OCEAN profiles:
 
 **Description:** {user's description}
 
-| Agent | Character | Style | OCEAN | Quote |
-|-------|-----------|-------|-------|-------|
-| sm | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
-| tea | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
-| dev | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
-| reviewer | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
-| architect | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
-| pm | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
-| tech-writer | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
-| ux-designer | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
-| devops | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
-| orchestrator | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| Agent | Character | Short | Style | OCEAN | Quote |
+|-------|-----------|-------|-------|-------|-------|
+| sm | {provided} | {shortName} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| tea | {provided} | {shortName} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| dev | {provided} | {shortName} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| reviewer | {provided} | {shortName} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| architect | {provided} | {shortName} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| pm | {provided} | {shortName} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| tech-writer | {provided} | {shortName} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| ux-designer | {provided} | {shortName} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| devops | {provided} | {shortName} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| orchestrator | {provided} | {shortName} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
 ```
 
 ### Step 6: Confirm or Edit
@@ -555,6 +585,7 @@ theme:
 agents:
   sm:
     character: {user provided}
+    shortName: {generated - see Short Name Generation}
     ocean:
       O: {1-5}  # {rationale}
       C: {1-5}  # {rationale}

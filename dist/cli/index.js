@@ -11,6 +11,7 @@ import { versionCommand } from './commands/version.js';
 import { listCommand as themeListCommand, setCommand as themeSetCommand, showCommand as themeShowCommand, createCommand as themeCreateCommand } from './commands/theme.js';
 import { listCommand as cmdListCommand, addCommand as cmdAddCommand, removeCommand as cmdRemoveCommand, linkCommand as cmdLinkCommand, syncCommand as cmdSyncCommand } from './commands/command.js';
 import { listSkill as skillListCommand, addSkill as skillAddCommand, removeSkill as skillRemoveCommand, linkSkill as skillLinkCommand, syncSkill as skillSyncCommand } from './commands/skill.js';
+import { cyclistCommand } from './commands/cyclist.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 // Read version from VERSION file
@@ -68,6 +69,19 @@ program
     .command('version')
     .description('Show version information')
     .action(versionCommand);
+program
+    .command('cyclist')
+    .description('Launch Cyclist with Pennyfarthing context')
+    .option('-p, --port <port>', 'Server port', '3000')
+    .option('--no-open', "Don't open browser automatically")
+    .option('--cyclist-path <path>', 'Path to cyclist installation')
+    .action(async (options) => {
+    await cyclistCommand({
+        port: options.port ? parseInt(options.port, 10) : undefined,
+        noOpen: options.open === false,
+        cyclistPath: options.cyclistPath,
+    });
+});
 // Theme management commands
 const themeCmd = program
     .command('theme')

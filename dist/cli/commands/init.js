@@ -190,7 +190,7 @@ async function generateTemplateFiles(projectRoot, projectName, assetsPath, optio
         { template: 'preferences.yaml.template', dest: '.claude/preferences.yaml' },
         { template: 'shared-context.md.template', dest: '.claude/project/docs/shared-context.md' },
         { template: 'agent-scopes.yaml.template', dest: '.claude/project/docs/agent-scopes.yaml' },
-        { template: 'repos.yaml.template', dest: '.claude/project/repos.yaml' },
+        { template: 'pennyfarthing-settings.yaml.template', dest: '.claude/project/pennyfarthing-settings.yaml' },
         { template: 'setup-env.sh.template', dest: '.claude/project/hooks/setup-env.sh' }
     ];
     for (const { template, dest } of skipIfExistsTemplates) {

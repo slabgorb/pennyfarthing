@@ -69,4 +69,39 @@
 
 ---
 
+## Sprite/Portrait Regeneration
+
+**Location:** `showcase/src/data/sprite-prompts/`
+
+**Files:**
+- `{theme}.md` - Visual descriptions for each character (generator reads the character name field)
+- `generate-sprites.py` - SDXL-based portrait generator
+- `queue-sprites.sh` - Batch generation script
+- `requirements.txt` - Python dependencies
+
+**Setup (one-time):**
+```bash
+cd showcase/src/data/sprite-prompts
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+**Regenerate specific portraits:**
+```bash
+source showcase/src/data/sprite-prompts/.venv/bin/activate
+
+# Delete portraits to regenerate
+rm showcase/public/sprites/{theme}/{role}.png
+
+# Update description in showcase/src/data/sprite-prompts/{theme}.md
+
+# Regenerate (skips existing)
+python3 showcase/src/data/sprite-prompts/generate-sprites.py --theme {theme} --skip-existing
+```
+
+**Requirements:** Apple Silicon Mac (M1/M2/M3) with ~10GB RAM, ~6.5GB disk for SDXL model.
+
+---
+
 *Add story management patterns discovered during coordination below*

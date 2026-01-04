@@ -1,0 +1,157 @@
+# Sprint 2 - Archived
+# Goal: Polish sprint operations and establish permissions framework
+# Status: COMPLETE (37/37 points)
+
+sprint:
+  number: 2
+  goal: "Improve developer experience with automated workflows and proper permissions"
+  start_date: 2025-12-24
+  end_date: 2026-01-07
+  status: complete
+  total_points: 37
+  completed_points: 37
+
+epics:
+  - id: epic-2
+    title: "Sprint Operations Polish"
+    description: |
+      Housekeeping improvements from Sprint 1 retrospective.
+      Automates manual workflows and improves developer experience.
+    points: 16
+    priority: P1
+    source: "Sprint 1 Retro"
+    repos: pennyfarthing
+    jira: https://1898andco.atlassian.net/browse/MSSCI-11142
+    status: complete
+    stories:
+      - id: "2-1"
+        title: "Automate Jira sync in SM finish workflow"
+        points: 3
+        status: done
+        completed: 2025-12-23
+        pr: https://github.com/1898andCo/pennyfarthing/pull/9
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11143
+
+      - id: "2-2"
+        title: "Create sprint metrics script"
+        points: 2
+        status: done
+        completed: 2025-12-26
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11144
+
+      - id: "2-3"
+        title: "Add --auto-pr flag to finish-story flow"
+        points: 2
+        status: done
+        completed: 2025-12-26
+        pr: https://github.com/1898andCo/pennyfarthing/pull/14
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11145
+
+      - id: "2-4"
+        title: "Prune stale sidecar entries"
+        points: 1
+        status: done
+        completed: 2025-12-25
+        pr: https://github.com/1898andCo/pennyfarthing/pull/11
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11146
+        completion_summary: "Pruned 82% of sidecar content (4,157 → 755 lines). Standardized all 10 agent sidecars."
+
+      - id: "2-5"
+        title: "Migrate subagents to official YAML frontmatter format"
+        points: 3
+        status: done
+        completed: 2025-12-25
+        repos: pennyfarthing
+
+      - id: "2-6"
+        title: "Create sidecar templates for dist folder"
+        points: 2
+        status: done
+        completed: 2025-12-28
+        pr: https://github.com/1898andCo/pennyfarthing/pull/16
+
+      - id: "2-7"
+        title: "Add user-customizable output styles and preferences"
+        points: 3
+        status: done
+        completed: 2025-12-28
+        pr: https://github.com/1898andCo/pennyfarthing/pull/17
+
+  - id: epic-4
+    title: "Configuration & Permissions Framework"
+    description: |
+      Add missing permissions, hooks, and context_budget sections to
+      settings.local.json. Implement three-tier permission model.
+    points: 10
+    priority: P1
+    repos: pennyfarthing
+    jira: https://1898andco.atlassian.net/browse/MSSCI-11147
+    status: complete
+    stories:
+      - id: "4-1"
+        title: "Document current permissions in settings.local.json"
+        points: 2
+        status: done
+        completed: 2025-12-24
+        pr: https://github.com/1898andCo/pennyfarthing/pull/10
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11148
+
+      - id: "4-5"
+        title: "Fix statusline.sh installation path bug"
+        points: 2
+        status: done
+        completed: 2025-12-28
+        pr: https://github.com/1898andCo/pennyfarthing/pull/17
+
+      - id: "4-6"
+        title: "Isolate Pennyfarthing scripts from project /scripts directory"
+        points: 3
+        status: done
+        completed: 2025-12-29
+        pr: https://github.com/1898andCo/pennyfarthing/pull/21
+
+  - id: epic-5
+    title: "Theme Management CLI"
+    description: |
+      Add CLI commands for managing persona themes without editing files.
+    points: 8
+    priority: P2
+    repos: pennyfarthing
+    jira: https://1898andco.atlassian.net/browse/MSSCI-11233
+    status: complete
+    stories:
+      - id: "5-1"
+        title: "Add 'pennyfarthing theme list' command"
+        points: 2
+        status: done
+        completed: 2025-12-27
+        pr: https://github.com/1898andCo/pennyfarthing/pull/15
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11152
+
+      - id: "5-2"
+        title: "Add 'pennyfarthing theme set' command"
+        points: 2
+        status: done
+        completed: 2025-12-27
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11234
+
+      - id: "5-3"
+        title: "Add 'pennyfarthing theme create' command"
+        points: 3
+        status: done
+        completed: 2025-12-27
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11235
+
+      - id: "5-4"
+        title: "Add 'pennyfarthing theme show' command"
+        points: 1
+        status: done
+        completed: 2025-12-27
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11236
+
+notes: |
+  Sprint 2 completed ahead of schedule.
+  - Epic 2 (16 pts): Retro improvements, DX polish
+  - Epic 4 (10 pts): Permissions foundation + statusline bugfix
+  - Epic 5 (8 pts): Theme management CLI
+  - Retro: sprint/archive/sprint-2-retro.md
