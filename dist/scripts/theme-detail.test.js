@@ -18,7 +18,7 @@ const projectRoot = join(__dirname, '..', '..');
 const PAGES_DIR = join(projectRoot, 'showcase', 'src', 'pages');
 const COMPONENTS_DIR = join(projectRoot, 'showcase', 'src', 'components');
 describe('Story 13-5: Theme Detail Page', () => {
-    describe('AC1: 64 theme detail pages generated', () => {
+    describe('AC1: Theme detail pages generated for all themes', () => {
         it('should have dynamic [theme].astro route', () => {
             const pagePath = join(PAGES_DIR, 'themes', '[theme].astro');
             assert.ok(existsSync(pagePath), 'Dynamic theme page should exist');
