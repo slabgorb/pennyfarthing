@@ -1,6 +1,6 @@
 ---
 description: Run a single agent on a scenario with absolute rubric scoring
-argument-hint: <theme:agent> --scenario <name> [--runs N] [--no-judge]
+argument-hint: <theme:agent> --scenario <name> [--as <role>] [--runs N] [--no-judge]
 ---
 
 # Solo Benchmark
@@ -33,13 +33,26 @@ Run a single agent on a scenario. This is the CANONICAL agent execution path.
 /solo <contestant> --scenario <name>
 /solo <contestant> --scenario <name> --runs 4
 /solo <contestant> --scenario <name> --no-judge
+/solo <contestant> --as <role> --scenario <name>
 ```
 
 **Arguments:**
-- `contestant` - `theme:agent` format (e.g., `discworld:reviewer`)
+- `contestant` - `theme:agent` format (e.g., `discworld:reviewer`) OR `theme:character` with `--as`
 - `--scenario` - Scenario from `scenarios/` directory
+- `--as <role>` - Override role (use character's persona for different role's task)
 - `--runs N` - Number of runs (default: 1, max: 20)
 - `--no-judge` - Skip judging, return raw response
+
+**Cross-Role Testing with `--as`:**
+
+The `--as` flag enables running any persona as any role, useful for research:
+
+```
+/solo shakespeare:prospero --as dev --scenario django-10554
+```
+
+This uses Prospero's persona traits (wise orchestrator, magic metaphors) but gives him a dev task.
+The scenario's role determines what the agent is asked to do; the character determines how they do it.
 </usage>
 
 <on-invoke>
@@ -48,12 +61,18 @@ The user invoked this command with: $ARGUMENTS
 ## Step 1: Parse Arguments
 
 Extract:
-- `contestant`: `theme:agent` spec
+- `contestant`: `theme:agent` spec (or `theme:character` if using `--as`)
 - `scenario_name`: After `--scenario`
+- `role_override`: After `--as` (optional - for cross-role testing)
 - `runs`: Number (default: 1)
 - `no_judge`: Boolean
 
 Validate spec contains `:`, scenario is required, runs is 1-20.
+
+**If `--as` is provided:**
+- The second part of the spec is a CHARACTER name, not a role
+- `role_override` becomes the effective role for scenario matching
+- Character persona is extracted by name lookup across all agents in theme
 
 ## Step 2: Load Scenario
 
@@ -68,9 +87,81 @@ Extract: `prompt`, `scenario_title`, `code_content` (if present)
 
 Read: `pennyfarthing-dist/personas/themes/{theme}.yaml`
 
-Extract: `character`, `style`, `expertise`, `catchphrases`, `emoji`
+**Standard mode (no `--as`):**
+- Look up `agents.{agent}` section
+- Extract: `character`, `style`, `expertise`, `catchphrases`, `emoji`
+- `effective_role` = agent name from spec
+
+**Cross-role mode (with `--as`):**
+- The spec contains `theme:character_name` (e.g., `shakespeare:prospero`)
+- Search ALL agent sections for one where `character` field matches (case-insensitive, partial match OK)
+- Extract persona traits from that agent's config
+- `effective_role` = the `--as` value (NOT the role the character normally fills)
+
+```python
+# Pseudocode for cross-role lookup
+if role_override:
+    character_query = spec.split(':')[1].lower()  # e.g., "prospero"
+    for agent_name, agent_config in theme['agents'].items():
+        char_name = agent_config.get('character', '').lower()
+        if character_query in char_name or char_name.startswith(character_query):
+            persona = agent_config
+            source_role = agent_name  # where character normally lives
+            break
+    effective_role = role_override  # what we're asking them to do
+else:
+    agent_name = spec.split(':')[1]  # e.g., "dev"
+    persona = theme['agents'][agent_name]
+    effective_role = agent_name
+    source_role = agent_name
+```
+
+This enables running Prospero (normally SM) as a dev, or Gus Fring (normally orchestrator) as a reviewer.
+
+## Step 3b: Build Agent Prompt
+
+Use the Write tool to create the prompt file with this template:
+
+```
+You are {character}.
+
+**Style:** {style}
+**Expertise:** {expertise}
+**Catchphrases:** {catchphrases}
+
+---
+
+## Challenge
+
+{scenario_prompt}
+
+{code_content if present}
+
+---
+
+Respond fully in character. Under 500 words.
+
+**IMPORTANT:** Provide your complete response directly. Do not attempt to use tools, read files, or make function calls.
+```
+
+**Cross-role note:** When using `--as`, the scenario prompt comes from the `effective_role` (e.g., dev tasks),
+but the character/style/expertise come from the character's original role config. This tests whether
+personality traits affect task performance independent of role-specific training.
+
+The final instruction is critical - without it, the model may output tool-call syntax even with `--tools ""`, resulting in incomplete responses.
 
 ## Step 4: Execute Agent via CLI
+
+**RECOMMENDED: Use the shell script for reliable execution:**
+
+```bash
+./scripts/solo-runner.sh {theme}:{agent} {scenario} {output_dir}
+```
+
+The shell script handles all escaping, temp files, and JSON parsing correctly.
+Use inline commands only for simple cases or when the script isn't available.
+
+---
 
 **CRITICAL: The `--tools ""` flag is MANDATORY.**
 
@@ -93,42 +184,38 @@ The permission system treats heredocs differently and they get auto-denied.
 - `printf '%s' "$PROMPT" | claude -p ...` - WORKS
 - `claude -p ... <<'EOF'` - **FAILS IN SUBAGENTS - DO NOT USE**
 
+**CRITICAL: Use FILE REDIRECTION, NOT variable capture.**
+
+**NEVER CAPTURE OUTPUT IN VARIABLES** - Command substitution with `$(...)` causes zsh parse errors
+when the JSON output contains parentheses or special characters:
+- `OUTPUT=$(cat file.txt | claude -p ...)` - **FAILS with `parse error near ')'`**
+
+**ALWAYS REDIRECT TO FILES** - This avoids shell parsing issues:
+- `cat file.txt | claude -p ... > output.json` - WORKS
+- Then read: `jq -r '.result' output.json` - WORKS
+
 ```bash
-TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+# Step 1: Capture timestamp to file (avoid variable capture issues)
+date -u +%Y-%m-%dT%H:%M:%SZ > /tmp/timestamp_$$.txt
 
-# Build prompt content
-PROMPT_CONTENT="You are {character}.
+# Step 2: Write prompt to file using Write tool (avoids escaping issues)
+# Use the Write tool to create: /tmp/prompt_$$.txt
 
-**Style:** {style}
-**Expertise:** {expertise}
-{catchphrases}
+# Step 3: Execute with file redirection (NOT variable capture)
+cat /tmp/prompt_$$.txt | claude -p --output-format json --tools "" > /tmp/output_$$.json
 
----
+# Step 4: Extract results from files
+TIMESTAMP=$(cat /tmp/timestamp_$$.txt)
+RESPONSE=$(jq -r '.result' /tmp/output_$$.json)
+INPUT_TOKENS=$(jq -r '.usage.input_tokens // 0' /tmp/output_$$.json)
+OUTPUT_TOKENS=$(jq -r '.usage.output_tokens // 0' /tmp/output_$$.json)
 
-## Challenge
-
-{prompt}
-{code_content if present}
-
----
-
-Respond fully in character. Under 500 words."
-
-# MANDATORY: Use pipe syntax (NOT heredoc) for subagent compatibility
-# MANDATORY: --tools "" prevents internal tool use
-OUTPUT=$(echo "$PROMPT_CONTENT" | claude -p --output-format json --tools "")
-
-RESPONSE=$(echo "$OUTPUT" | jq -r '.result')
-INPUT_TOKENS=$(echo "$OUTPUT" | jq -r '.usage.input_tokens // 0')
-OUTPUT_TOKENS=$(echo "$OUTPUT" | jq -r '.usage.output_tokens // 0')
+# Step 5: Cleanup
+rm -f /tmp/timestamp_$$.txt /tmp/prompt_$$.txt /tmp/output_$$.json
 ```
 
-**Alternative for very long prompts:** Write to temp file and cat:
-```bash
-echo "$PROMPT_CONTENT" > /tmp/prompt_$$.txt
-OUTPUT=$(cat /tmp/prompt_$$.txt | claude -p --output-format json --tools "")
-rm /tmp/prompt_$$.txt
-```
+**Why file redirection works:** The shell never tries to parse the JSON output.
+It goes directly to a file, then jq reads it safely.
 
 ## Step 5: Check Mode
 
@@ -233,10 +320,16 @@ Capture: `score`, `judge_timestamp`, `judge_response`, `judge_tokens`
 
 ```
 if theme == "control":
-  base_path = "results/baselines/{scenario}/{role}/"
+  base_path = "results/baselines/{scenario}/{effective_role}/"
+elif role_override:  # cross-role mode
+  # Include character name and effective role for clarity
+  base_path = "results/benchmarks/{scenario}/{theme}-{character}-as-{effective_role}/"
 else:
-  base_path = "results/benchmarks/{scenario}/{theme}-{role}/"
+  base_path = "results/benchmarks/{scenario}/{theme}-{effective_role}/"
 ```
+
+**Cross-role example:** `/solo shakespeare:prospero --as dev --scenario django-10554`
+→ saves to `results/benchmarks/django-10554/shakespeare-prospero-as-dev/`
 
 **For ALL runs (including n=1):**
 
@@ -258,14 +351,16 @@ else:
 
 4. **ALWAYS save summary.yaml:**
    ```yaml
-   # {theme}:{role} on {scenario}
+   # {theme}:{character} on {scenario} (as {effective_role})
    # Generated: {ISO8601 timestamp}
 
    agent:
      theme: {theme}
-     role: {role}
-     spec: {theme}:{role}
      character: {character_name}
+     effective_role: {effective_role}      # role being performed
+     source_role: {source_role}            # role where character normally lives
+     spec: {theme}:{character}             # original spec
+     cross_role: {true if role_override else false}
 
    scenario:
      name: {scenario_name}

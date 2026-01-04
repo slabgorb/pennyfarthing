@@ -1,0 +1,6 @@
+name: mock-scenario
+title: Mock Scenario for Testing
+category: dev
+difficulty: easy
+prompt: |
+  This is a test scenario. Respond with "TEST PASSED" and your character name.

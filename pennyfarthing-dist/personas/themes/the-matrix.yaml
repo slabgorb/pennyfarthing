@@ -35,6 +35,7 @@ agents:
     shortName: Oracle
   sm:
     character: Morpheus
+    # JOB FAIR VALIDATED: Scored 92.5 as SM - already optimal
     ocean:
       O: 5
       C: 5

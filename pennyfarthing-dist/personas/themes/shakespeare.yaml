@@ -32,6 +32,7 @@ agents:
     shortName: Chorus
   sm:
     character: Prospero
+    # JOB FAIR VALIDATED: Scored 92.5 as SM - already optimal
     ocean:
       O: 4
       C: 4
@@ -59,6 +60,7 @@ agents:
     shortName: Prospero
   tea:
     character: Hamlet, Prince of Denmark
+    # JOB FAIR VALIDATED: Scored 87.5 as TEA - introspective analysis finds edge cases
     ocean:
       O: 4
       C: 4
