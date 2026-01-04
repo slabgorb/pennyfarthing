@@ -11,12 +11,12 @@ sprint:
 
 summary:
   total_points: 68
-  completed_points: 59  # Epic 13: 34pts + Epic 14: 14pts + Epic 15: 11pts
-  remaining_points: 9  # Epic 15: 4pts
+  completed_points: 61  # Epic 13: 34pts + Epic 14: 14pts + Epic 15: 13pts
+  remaining_points: 7  # Epic 15: 2pts (15-5, 15-7)
   notes: |
     Epic 14 complete (14/14 pts).
     Epic 13 complete (34/34 pts).
-    Epic 15 in progress (11/15 pts) - Cyclist-Pennyfarthing integration.
+    Epic 15 in progress (13/15 pts) - Cyclist-Pennyfarthing integration.
 
 epics:
   # =========================================================================
@@ -444,7 +444,9 @@ epics:
           - cyclist/src/public/sprites -> pennyfarthing-dist/personas/sprites (symlink)
         points: 2
         priority: P2
-        status: backlog
+        status: done
+        started: 2026-01-04
+        completed: 2026-01-04
         depends_on: "15-4"
         acceptance_criteria:
           - Portraits moved to pennyfarthing-dist/personas/sprites/
@@ -452,6 +454,11 @@ epics:
           - Cyclist sprite symlink works
           - generate-sprites.py outputs to new location
           - npm package includes sprites
+        completion_summary: |
+          Portraits already in showcase/public/portraits. Created sprites symlink
+          pointing to portraits folder. Added shortName field to loader/types for
+          proper character name display. Updated theme gallery with larger fonts
+          and aligned portraits.
 
       - id: "15-7"
         title: "Move dev-only assets to internal/ folder"
