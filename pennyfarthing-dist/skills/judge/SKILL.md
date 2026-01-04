@@ -361,31 +361,41 @@ Output ONLY valid JSON (no markdown, no extra text):
 
 ### Step 3: Execute Judge via CLI
 
-**CRITICAL: Use PIPE syntax, NOT heredocs.**
+**CRITICAL: Follow this execution pattern for all contexts (main session, skills, subagents).**
 
-Heredoc syntax fails in subagents due to permission handling differences.
-Pipe syntax works correctly in both main sessions and subagents.
+**Three rules to avoid shell parsing errors:**
 
+1. **Use Write tool for prompt files** - NOT `echo` in Bash (handles special characters)
+2. **Use file redirection for output** - NOT variable capture `$(...)` (avoids zsh parse errors)
+3. **Use pipe syntax** - NOT heredocs (works in subagents)
+
+**Why variable capture fails:**
 ```bash
-JUDGE_TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-
-# Build judge prompt content
-JUDGE_PROMPT="{constructed prompt}"
-
-# MANDATORY: Use pipe syntax (NOT heredoc) for subagent compatibility
-JUDGE_OUTPUT=$(echo "$JUDGE_PROMPT" | claude -p --output-format json --tools "")
-
-JUDGE_RESPONSE=$(echo "$JUDGE_OUTPUT" | jq -r '.result')
-JUDGE_INPUT_TOKENS=$(echo "$JUDGE_OUTPUT" | jq -r '.usage.input_tokens // 0')
-JUDGE_OUTPUT_TOKENS=$(echo "$JUDGE_OUTPUT" | jq -r '.usage.output_tokens // 0')
+# This FAILS - zsh tries to parse JSON with () characters
+OUTPUT=$(cat prompt.txt | claude -p --output-format json --tools "")
+# Error: parse error near ')'
 ```
 
-**For very long judge prompts:** Write to temp file:
+**Correct pattern:**
+
 ```bash
-echo "$JUDGE_PROMPT" > /tmp/judge_$$.txt
-JUDGE_OUTPUT=$(cat /tmp/judge_$$.txt | claude -p --output-format json --tools "")
-rm /tmp/judge_$$.txt
+# Step 1: Use Write tool to create prompt file (NOT echo in Bash)
+# The Write tool handles escaping properly in all contexts
+
+# Step 2: Capture timestamp (simple command, safe to capture)
+date -u +%Y-%m-%dT%H:%M:%SZ > .scratch/judge_ts.txt
+
+# Step 3: Execute with FILE REDIRECTION (NOT variable capture)
+cat .scratch/judge_prompt.txt | claude -p --output-format json --tools "" > .scratch/judge_output.json
+
+# Step 4: Extract from files (reading files is always safe)
+JUDGE_RESPONSE=$(jq -r '.result' .scratch/judge_output.json)
+JUDGE_INPUT_TOKENS=$(jq -r '.usage.input_tokens // 0' .scratch/judge_output.json)
+JUDGE_OUTPUT_TOKENS=$(jq -r '.usage.output_tokens // 0' .scratch/judge_output.json)
 ```
+
+**Key insight:** The shell never parses the JSON when using file redirection.
+The output goes directly to a file, then jq reads it safely.
 
 ### Step 4: Extract Scores
 
