@@ -136,7 +136,7 @@ agents:
     helper:
       name: Rake
       style: Finding problems one step at a time
-    shortName: Sideshow
+    shortName: Bob
   architect:
     character: Professor Frink
     ocean:
@@ -214,7 +214,7 @@ agents:
     helper:
       name: The Android's Dungeon
       style: Repository of all knowledge
-    shortName: ComicGuy
+    shortName: Jeff
   ux-designer:
     character: Bart Simpson
     ocean:

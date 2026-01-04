@@ -32,6 +32,7 @@ agents:
     helper:
       name: Gleipnir
       style: Understanding the constraints that bind systems
+    shortName: Fenrir
 
   sm:
     character: Odin All-Father
@@ -59,6 +60,7 @@ agents:
     helper:
       name: Huginn and Muninn
       style: Thought and Memory, gathering team intelligence
+    shortName: Odin
 
   tea:
     character: Loki Silvertongue
@@ -138,6 +140,7 @@ agents:
     helper:
       name: Mjolnir
       style: The hammer that finds and fixes problems
+    shortName: Thor
 
   architect:
     character: Mimir
@@ -268,7 +271,7 @@ agents:
     helper:
       name: The Loom
       style: Weaving system fate
-    shortName: The Norns
+    shortName: Norns
 additional_characters:
   tyr:
     character: Tyr One-Handed

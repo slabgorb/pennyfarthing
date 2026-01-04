@@ -16,6 +16,7 @@ theme:
 agents:
   orchestrator:
     character: Voltaire
+    shortName: Voltaire
     ocean:
       O: 5  # Very high openness - prolific wit
       C: 4  # High conscientiousness - wrote constantly
@@ -42,6 +43,7 @@ agents:
 
   sm:
     character: Jean-Jacques Rousseau
+    shortName: Rousseau
     # JOB FAIR OPTIMIZED: Rousseau moved here; Franklin excels at dev (+18.75)
     ocean:
       O: 5  # Very high openness - visionary, emotional
@@ -69,6 +71,7 @@ agents:
 
   tea:
     character: David Hume
+    shortName: Hume
     ocean:
       O: 5  # Very high openness - radical skeptic
       C: 4  # High conscientiousness - careful philosopher
@@ -95,6 +98,7 @@ agents:
 
   dev:
     character: Benjamin Franklin
+    shortName: Franklin
     # JOB FAIR OPTIMIZED: Franklin scored best as dev (+18.75 over Rousseau)
     ocean:
       O: 5  # Very high openness - inventor, diplomat, everything
@@ -122,6 +126,7 @@ agents:
 
   reviewer:
     character: Immanuel Kant
+    shortName: Kant
     ocean:
       O: 5  # Very high openness - revolutionary system
       C: 5  # Very high conscientiousness - clockwork routine
@@ -148,6 +153,7 @@ agents:
 
   architect:
     character: John Locke
+    shortName: Locke
     ocean:
       O: 5  # Very high openness - tabula rasa
       C: 4  # High conscientiousness - physician, philosopher
@@ -174,6 +180,7 @@ agents:
 
   pm:
     character: Adam Smith
+    shortName: Smith
     ocean:
       O: 4  # High openness - saw the system
       C: 4  # High conscientiousness - careful observer
@@ -200,6 +207,7 @@ agents:
 
   tech-writer:
     character: Denis Diderot
+    shortName: Diderot
     ocean:
       O: 5  # Very high openness - encyclopedic ambition
       C: 5  # Very high conscientiousness - 25 years on Encyclopédie
@@ -226,6 +234,7 @@ agents:
 
   ux-designer:
     character: Thomas Paine
+    shortName: Paine
     ocean:
       O: 5  # Very high openness - revolutionary vision
       C: 4  # High conscientiousness - prolific pamphleteer
@@ -252,6 +261,7 @@ agents:
 
   devops:
     character: Montesquieu
+    shortName: Montesquieu
     ocean:
       O: 5  # Very high openness - comparative method
       C: 5  # Very high conscientiousness - Spirit of the Laws

@@ -32,7 +32,7 @@ agents:
     helper:
       name: Bob Network
       style: Replicant coordination
-    shortName: Original
+    shortName: Bob
   sm:
     character: Riker
     ocean:

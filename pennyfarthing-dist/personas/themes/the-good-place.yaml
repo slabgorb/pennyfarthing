@@ -17,6 +17,7 @@ theme:
 agents:
   orchestrator:
     character: The Judge (Gen)
+    shortName: Gen
     ocean:
       O: 4  # High - omniscient pattern recognition, cosmic perspective
       C: 3  # Moderate - organized but quirky, follows cosmic law loosely
@@ -44,6 +45,7 @@ agents:
 
   sm:
     character: Michael (reformed demon)
+    shortName: Michael
     ocean:
       O: 5  # High - creative neighborhood designer, learned abstract ethics
       C: 5  # High - 800+ methodical iterations, meticulous coordination
@@ -71,6 +73,7 @@ agents:
 
   tea:
     character: Janet
+    shortName: Janet
     # JOB FAIR OPTIMIZED: Scored 87.5 as TEA (vs Chidi's 82.5) - infinite knowledge finds edge cases
     ocean:
       O: 5  # High - contains all knowledge, sees all possibilities
@@ -98,6 +101,7 @@ agents:
 
   dev:
     character: Eleanor Shellstrop
+    shortName: Eleanor
     ocean:
       O: 3  # Moderate - street smart, learned abstract ethics through growth
       C: 2  # Low - spontaneous, "pobody's nerfect" approach
@@ -125,6 +129,7 @@ agents:
 
   reviewer:
     character: Shawn
+    shortName: Shawn
     ocean:
       O: 3  # Moderate - creative torture methods, finds flaws others miss
       C: 4  # High - enjoys paperwork, methodical in finding problems
@@ -152,6 +157,7 @@ agents:
 
   architect:
     character: Michael (as Architect)
+    shortName: Michael
     ocean:
       O: 5  # High - visionary designer, abstract ethical systems
       C: 5  # High - methodical iterations, systematic architecture
@@ -179,6 +185,7 @@ agents:
 
   pm:
     character: Tahani Al-Jamil
+    shortName: Tahani
     ocean:
       O: 3  # Moderate - creative in social strategy, learned deeper values
       C: 4  # High - organized charity galas, methodical stakeholder management
@@ -206,6 +213,7 @@ agents:
 
   tech-writer:
     character: Chidi Anagonye
+    shortName: Chidi
     # JOB FAIR OPTIMIZED: Janet moved to TEA. Chidi's analysis paralysis = thorough documentation.
     ocean:
       O: 5  # High - abstract moral philosophy, considers every angle
@@ -233,6 +241,7 @@ agents:
 
   ux-designer:
     character: Jason Mendoza
+    shortName: Jason
     ocean:
       O: 2  # Low - concrete thinker, simple direct solutions
       C: 2  # Low - spontaneous, undisciplined, chaotic
@@ -260,6 +269,7 @@ agents:
 
   devops:
     character: Derek
+    shortName: Derek
     ocean:
       O: 3  # Moderate - weird but functional, unconventional solutions
       C: 2  # Low - janky, shouldn't work but does, chaotic

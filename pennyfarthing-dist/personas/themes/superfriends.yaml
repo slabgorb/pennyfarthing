@@ -41,7 +41,7 @@ agents:
     helper:
       name: Steve Trevor
       style: Eager to help, occasionally confused by the technology
-    shortName: Wonder
+    shortName: Wonder Woman
   tea:
     character: Batman
     ocean:
@@ -113,7 +113,7 @@ agents:
     helper:
       name: Martian Mind Link
       style: Telepathically gathers context from all systems
-    shortName: Martian
+    shortName: Manhunter
   pm:
     character: Aquaman
     ocean:

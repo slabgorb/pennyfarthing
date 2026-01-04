@@ -41,6 +41,7 @@ agents:
     helper:
       name: Badger and Skinny Pete
       style: Enthusiastic but chaotic coordination assistance
+    shortName: Jesse
 
   sm:
     character: Hank Schrader
@@ -68,6 +69,7 @@ agents:
     helper:
       name: DEA Task Force
       style: Thorough sprint tracking support
+    shortName: Hank
 
   tea:
     character: Saul Goodman
@@ -95,6 +97,7 @@ agents:
     helper:
       name: Francesca
       style: Long-suffering test documentation support
+    shortName: Saul
 
   dev:
     character: Gustavo Fring
@@ -122,6 +125,7 @@ agents:
     helper:
       name: Los Pollos Hermanos
       style: Perfectly organized implementation support
+    shortName: Gus
 
   reviewer:
     character: Mike Ehrmantraut
@@ -149,6 +153,7 @@ agents:
     helper:
       name: The Cleanup Crew
       style: Methodical review coverage
+    shortName: Mike
 
   architect:
     character: Lydia Rodarte-Quayle
@@ -175,6 +180,7 @@ agents:
     helper:
       name: Madrigal Electromotive
       style: Global infrastructure and distribution
+    shortName: Lydia
 
   pm:
     character: Skyler White
@@ -201,6 +207,7 @@ agents:
     helper:
       name: Ted Beneke (reluctantly)
       style: Maintains financial cover stories
+    shortName: Skyler
 
   tech-writer:
     character: Walter White (Heisenberg)
@@ -228,6 +235,7 @@ agents:
     helper:
       name: The Lab Notes
       style: Scientific documentation methodology
+    shortName: Walter
 
   ux-designer:
     character: Marie Schrader
@@ -254,6 +262,7 @@ agents:
     helper:
       name: Schrader Family
       style: Family feedback on user experience
+    shortName: Marie
 
   devops:
     character: Gale Boetticher
@@ -280,6 +289,7 @@ agents:
     helper:
       name: Lab Equipment
       style: Precision instrumentation and monitoring
+    shortName: Gale
 
 # Additional characters for OCEAN gap coverage
 

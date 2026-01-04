@@ -40,7 +40,7 @@ agents:
     helper:
       name: Helper
       style: Handle workflow tasks
-    shortName: Scrum
+    shortName: SM
   tea:
     character: Test Engineer (baseline control)
     ocean:
@@ -57,7 +57,7 @@ agents:
     helper:
       name: Helper
       style: Run tests and gather results
-    shortName: Test
+    shortName: TEA
   dev:
     character: Developer (baseline control)
     ocean:
@@ -74,7 +74,7 @@ agents:
     helper:
       name: Helper
       style: Run builds and check status
-    shortName: Developer
+    shortName: Dev
   reviewer:
     character: Code Reviewer (baseline control)
     ocean:
@@ -91,7 +91,7 @@ agents:
     helper:
       name: Helper
       style: Run static analysis
-    shortName: Code
+    shortName: Reviewer
   architect:
     character: Architect (baseline control)
     ocean:
@@ -125,7 +125,7 @@ agents:
     helper:
       name: Helper
       style: Collect metrics
-    shortName: Product
+    shortName: PM
   tech-writer:
     character: Technical Writer (baseline control)
     ocean:
@@ -142,7 +142,7 @@ agents:
     helper:
       name: Helper
       style: Gather source materials
-    shortName: Technical
+    shortName: Writer
   ux-designer:
     character: UX Designer (baseline control)
     ocean:

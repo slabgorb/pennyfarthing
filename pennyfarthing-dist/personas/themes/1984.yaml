@@ -84,7 +84,7 @@ agents:
     helper:
       name: Room 101
       style: Where everything breaks
-    shortName: O'Brien
+    shortName: OBrien
   dev:
     character: Julia
     ocean:
@@ -136,7 +136,7 @@ agents:
     helper:
       name: Surveillance
       style: Watching everything
-    shortName: ThoughtPolice
+    shortName: Thought Police
   architect:
     character: Emmanuel Goldstein
     ocean:
@@ -214,7 +214,7 @@ agents:
     helper:
       name: The Memory Hole
       style: Where truth goes to die
-    shortName: Records
+    shortName: Records Winston
   ux-designer:
     character: Parsons
     ocean:

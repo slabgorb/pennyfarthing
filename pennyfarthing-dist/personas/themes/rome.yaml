@@ -40,6 +40,7 @@ agents:
     helper:
       name: The Thirteenth Legion
       style: Loyal implementation force
+    shortName: Caesar
 
   sm:
     character: Titus Pullo
@@ -67,6 +68,7 @@ agents:
     helper:
       name: Brute Force
       style: Coordination through action
+    shortName: Pullo
 
   tea:
     character: Atia of the Julii
@@ -93,6 +95,7 @@ agents:
     helper:
       name: Timon
       style: Mercenary enforcement of discoveries
+    shortName: Atia
 
   dev:
     character: Lucius Vorenus
@@ -120,6 +123,7 @@ agents:
     helper:
       name: Legion Standards
       style: Disciplined implementation
+    shortName: Vorenus
 
   reviewer:
     character: Marcus Tullius Cicero
@@ -146,6 +150,7 @@ agents:
     helper:
       name: Tiro
       style: Secretary documenting the reviews
+    shortName: Cicero
 
   architect:
     character: Gaius Octavian
@@ -172,6 +177,7 @@ agents:
     helper:
       name: Marcus Agrippa
       style: Implements the architectural vision
+    shortName: Octavian
 
   pm:
     character: Servilia of the Junii
@@ -198,6 +204,7 @@ agents:
     helper:
       name: The Curse
       style: Supernatural product management
+    shortName: Servilia
 
   tech-writer:
     character: Posca
@@ -224,6 +231,7 @@ agents:
     helper:
       name: The Secretariat
       style: Administrative documentation
+    shortName: Posca
 
   ux-designer:
     character: Cleopatra
@@ -250,6 +258,7 @@ agents:
     helper:
       name: Egyptian Court
       style: Theatrical production support
+    shortName: Cleopatra
 
   devops:
     character: Mark Antony
@@ -276,3 +285,4 @@ agents:
     helper:
       name: The Eastern Legions
       style: Operational military force
+    shortName: Antony

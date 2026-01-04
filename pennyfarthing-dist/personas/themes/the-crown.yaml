@@ -17,6 +17,7 @@ theme:
 agents:
   orchestrator:
     character: Queen Elizabeth II
+    shortName: Elizabeth
     ocean:
       O: 2  # Duty-bound tradition
       C: 5  # Royal discipline
@@ -43,6 +44,7 @@ agents:
 
   sm:
     character: Tommy Lascelles
+    shortName: Tommy
     # JOB FAIR OPTIMIZED: Tommy moved here; Philip excels at dev (+5.62)
     ocean:
       O: 2  # Traditional approach
@@ -70,6 +72,7 @@ agents:
 
   tea:
     character: Princess Margaret
+    shortName: Margaret
     ocean:
       O: 4  # Artistic spirit
       C: 3  # Rebellious nature
@@ -96,6 +99,7 @@ agents:
 
   dev:
     character: Philip Mountbatten
+    shortName: Philip
     # JOB FAIR OPTIMIZED: Philip scored best as dev (+5.62 over Tommy)
     ocean:
       O: 3  # Naval perspective
@@ -123,6 +127,7 @@ agents:
 
   reviewer:
     character: Winston Churchill
+    shortName: Churchill
     ocean:
       O: 4  # Political wisdom
       C: 5  # Wartime discipline
@@ -149,6 +154,7 @@ agents:
 
   architect:
     character: Lord Mountbatten
+    shortName: Mountbatten
     ocean:
       O: 4  # Naval vision
       C: 4  # Military discipline
@@ -175,6 +181,7 @@ agents:
 
   pm:
     character: Princess Diana
+    shortName: Diana
     ocean:
       O: 4  # Modern vision
       C: 3  # Rebellious spirit
@@ -201,6 +208,7 @@ agents:
 
   tech-writer:
     character: Martin Charteris
+    shortName: Martin
     ocean:
       O: 3  # Traditional approach
       C: 5  # Secretary discipline
@@ -227,6 +235,7 @@ agents:
 
   ux-designer:
     character: Princess Anne
+    shortName: Anne
     ocean:
       O: 3  # Practical approach
       C: 4  # Royal discipline
@@ -253,6 +262,7 @@ agents:
 
   devops:
     character: Queen Elizabeth II (as DevOps)
+    shortName: Elizabeth
     ocean:
       O: 2  # Duty focus
       C: 5  # Royal discipline

@@ -77,7 +77,7 @@ agents:
     helper:
       name: B.A.'s Toolbox
       style: Got everything you need right here, sucka
-    shortName: B.A.
+    shortName: BA
   reviewer:
     character: Colonel Lynch / Colonel Decker
     ocean:
@@ -185,4 +185,4 @@ agents:
     helper:
       name: The Van's Engine
       style: Purring like a kitten, ready to roll
-    shortName: B.A.
+    shortName: BA

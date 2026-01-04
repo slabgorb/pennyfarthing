@@ -32,7 +32,7 @@ agents:
     helper:
       name: The BBC
       style: Communicating resolve to all
-    shortName: Winston
+    shortName: Churchill
   sm:
     character: Dwight D. Eisenhower
     ocean:
@@ -58,7 +58,7 @@ agents:
     helper:
       name: SHAEF
       style: Supreme headquarters coordination
-    shortName: Dwight
+    shortName: Ike
   tea:
     character: Alan Turing
     ocean:
@@ -110,7 +110,7 @@ agents:
     helper:
       name: The Army
       style: Mass mobilization
-    shortName: George
+    shortName: Marshall
   reviewer:
     character: Charles de Gaulle
     ocean:
@@ -136,7 +136,7 @@ agents:
     helper:
       name: La France
       style: National pride as standard
-    shortName: Charles
+    shortName: de Gaulle
   architect:
     character: Franklin D. Roosevelt
     ocean:
@@ -162,7 +162,7 @@ agents:
     helper:
       name: The New Deal
       style: Systemic transformation
-    shortName: Franklin
+    shortName: FDR
   pm:
     character: Bernard Montgomery
     ocean:
@@ -188,7 +188,7 @@ agents:
     helper:
       name: Eighth Army
       style: Methodical execution
-    shortName: Bernard
+    shortName: Monty
   tech-writer:
     character: Vera Atkins
     ocean:
@@ -240,7 +240,7 @@ agents:
     helper:
       name: Pacific Fleet
       style: Innovative naval design
-    shortName: Chester
+    shortName: Nimitz
   devops:
     character: Georgy Zhukov
     ocean:
@@ -266,7 +266,7 @@ agents:
     helper:
       name: The Red Army
       style: Overwhelming force
-    shortName: Georgy
+    shortName: Zhukov
 additional_characters:
   macarthur:
     character: Douglas MacArthur
