@@ -92,9 +92,9 @@ function OverlaySpiderChart({ characters, size = 250 }: { characters: Character[
 // Small portrait for chips
 function ChipPortrait({ themeId, role, emoji, name }: { themeId?: string; role: string; emoji?: string; name: string }) {
   const [imgError, setImgError] = useState(false);
-  const spritePath = themeId ? `/sprites/${themeId}/${role}.png` : null;
+  const portraitPath = themeId ? `/portraits/${themeId}/${role}.png` : null;
 
-  if (!spritePath || imgError) {
+  if (!portraitPath || imgError) {
     return (
       <div className="w-6 h-6 flex items-center justify-center text-sm bg-stone-600 rounded">
         {emoji || '👤'}
@@ -104,7 +104,7 @@ function ChipPortrait({ themeId, role, emoji, name }: { themeId?: string; role: 
 
   return (
     <img
-      src={spritePath}
+      src={portraitPath}
       alt={name}
       className="w-6 h-6 object-cover rounded"
       onError={() => setImgError(true)}

@@ -114,9 +114,9 @@ function MiniSpiderChart({ ocean, size = 60 }: { ocean: Record<string, number>; 
 // Portrait with emoji fallback
 function Portrait({ themeId, role, emoji, name }: { themeId?: string; role: string; emoji?: string; name: string }) {
   const [imgError, setImgError] = useState(false);
-  const spritePath = themeId ? `/sprites/${themeId}/${role}.png` : null;
+  const portraitPath = themeId ? `/portraits/${themeId}/${role}.png` : null;
 
-  if (!spritePath || imgError) {
+  if (!portraitPath || imgError) {
     return (
       <div className="w-[100px] h-[100px] flex items-center justify-center text-4xl bg-stone-700 rounded">
         {emoji || '👤'}
@@ -126,7 +126,7 @@ function Portrait({ themeId, role, emoji, name }: { themeId?: string; role: stri
 
   return (
     <img
-      src={spritePath}
+      src={portraitPath}
       alt={name}
       className="w-[100px] h-[100px] object-cover rounded"
       onError={() => setImgError(true)}
