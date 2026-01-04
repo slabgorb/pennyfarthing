@@ -11,11 +11,11 @@ sprint:
 
 summary:
   total_points: 68
-  completed_points: 43  # Epic 13: 29pts + Epic 14: 14pts
-  remaining_points: 25  # Epic 13: 10pts + Epic 15: 15pts
+  completed_points: 48  # Epic 13: 29pts + Epic 14: 14pts
+  remaining_points: 20  # Epic 13: 10pts + Epic 15: 15pts
   notes: |
     Epic 14 complete (14/14 pts).
-    Epic 13 in progress (29/39 pts, story 13-14 in progress - expanded to 5pts).
+    Epic 13 complete (34/39 pts).
     Epic 15 added (0/15 pts) - Cyclist-Pennyfarthing integration.
 
 epics:
@@ -29,7 +29,7 @@ epics:
       personas. Features OCEAN personality visualization with spider charts and Chernoff
       faces, full query builder for comparing characters, and pre-rendered benchmark reports.
     points: 37
-    completed_points: 29
+    completed_points: 34
     priority: P2
     marker: "strategic"
     repos: pennyfarthing
@@ -210,8 +210,9 @@ epics:
           - Lazy loading for performance
         points: 5
         priority: P2
-        status: in_progress
+        status: done
         started: 2026-01-03
+        completed: 2026-01-04
         acceptance_criteria:
           - All 63 prompt files converted to visual descriptors
           - Prompts moved to showcase/src/data/sprite-prompts/
