@@ -1,0 +1,38 @@
+# control:dev on astropy-12907
+# Generated: 2026-01-03T01:43:42Z
+
+agent:
+  theme: control
+  role: dev
+  spec: control:dev
+  character: Developer (baseline control)
+
+scenario:
+  name: astropy-12907
+  category: dev
+  difficulty: medium
+
+statistics:
+  n: 10
+  mean: 77.50
+  std_dev: 8.54
+  min: 64
+  max: 89
+  scores: [82, 68, 64, 89, 75, 86, 68, 81, 74, 88]
+
+efficiency:
+  avg_input_tokens: 2
+  avg_output_tokens: 1205
+  tokens_per_point: 15.57
+
+runs:
+  - run_1.json
+  - run_2.json
+  - run_3.json
+  - run_4.json
+  - run_5.json
+  - run_6.json
+  - run_7.json
+  - run_8.json
+  - run_9.json
+  - run_10.json

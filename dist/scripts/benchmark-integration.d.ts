@@ -5,7 +5,7 @@
  * Story 12-6: Update for local results (Epic 12 migration)
  *
  * Correlates Chernoff faces and OCEAN profiles with benchmark performance data.
- * Reads benchmark results from local results/ directory (or BENCHMARK_PATH env var).
+ * Reads benchmark results from internal/results/ directory (or BENCHMARK_PATH env var).
  */
 export interface OceanScores {
     O: number;

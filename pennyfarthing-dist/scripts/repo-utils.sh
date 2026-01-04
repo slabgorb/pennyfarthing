@@ -28,7 +28,7 @@ set -euo pipefail
 
 # Determine PROJECT_ROOT if not set
 PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-REPOS_CONFIG="${PROJECT_ROOT}/.claude/project/repos.yaml"
+REPOS_CONFIG="${PROJECT_ROOT}/.claude/project/pennyfarthing-settings.yaml"
 
 # Cache for parsed config (associative arrays)
 declare -A _REPO_PATHS 2>/dev/null || true

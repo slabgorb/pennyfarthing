@@ -36,7 +36,16 @@ benchmarks/cart/
 go.mod
 
 
+# Python
+.venv/
+__pycache__/
+*.pyc
+
 # Pennyfarthing runtime
 .session/*
 !.session/.gitkeep
 .claude/settings.local.json
+internal/showcase/dist/
+
+# Git worktrees
+worktrees/

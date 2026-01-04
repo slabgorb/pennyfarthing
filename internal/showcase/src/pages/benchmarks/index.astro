@@ -1,0 +1,328 @@
+---
+/**
+ * Benchmarks Page
+ *
+ * Pre-rendered benchmark reports showing persona performance across scenarios.
+ * Data loaded at build time from results/benchmarks/
+ */
+import Base from '../../layouts/Base.astro';
+import CharacterTooltip from '../../components/CharacterTooltip.astro';
+import {
+  loadBenchmarkSummaries,
+  groupByScenario,
+  groupByRole,
+  calculateRoleLeaderboard,
+  type BenchmarkSummary,
+  type RoleLeaderboard
+} from '../../lib/benchmark-loader';
+import { loadThemes } from '../../lib/loader';
+import type { Agent, Theme } from '../../lib/types';
+
+// Load all benchmark data at build time
+const summaries = await loadBenchmarkSummaries();
+const byScenario = groupByScenario(summaries);
+const byRole = groupByRole(summaries);
+
+// Load theme data for character tooltips
+const themes = await loadThemes();
+
+// Build lookup map: "theme:role" -> { agent, themeId, themeName }
+type AgentLookup = { agent: Agent; themeId: string; themeName: string };
+const agentLookup = new Map<string, AgentLookup>();
+for (const theme of themes) {
+  for (const agent of theme.agents) {
+    const key = `${theme.id}:${agent.role}`;
+    agentLookup.set(key, {
+      agent,
+      themeId: theme.id,
+      themeName: theme.metadata.name
+    });
+  }
+}
+
+// Helper to get agent info for tooltip
+function getAgentInfo(themeId: string, role: string): AgentLookup | undefined {
+  return agentLookup.get(`${themeId}:${role}`);
+}
+
+// Calculate leaderboards for each role
+const roleLeaderboards: Record<string, RoleLeaderboard[]> = {};
+for (const [role, roleSummaries] of Object.entries(byRole)) {
+  roleLeaderboards[role] = calculateRoleLeaderboard(roleSummaries);
+}
+
+// Get unique roles and scenarios for display
+const roles = Object.keys(byRole).sort();
+const scenarios = Object.keys(byScenario).sort();
+
+// Format role name for display
+function formatRole(role: string): string {
+  const roleNames: Record<string, string> = {
+    'dev': 'Developer',
+    'tea': 'Test Engineer',
+    'reviewer': 'Code Reviewer',
+    'sm': 'Scrum Master',
+    'architect': 'Architect',
+    'devops': 'DevOps',
+    'pm': 'Product Manager',
+    'tech-writer': 'Tech Writer',
+    'ux-designer': 'UX Designer',
+    'orchestrator': 'Orchestrator'
+  };
+  return roleNames[role] || role;
+}
+
+// Format delta with sign and color class
+function formatDelta(delta: number | undefined): { text: string; class: string } {
+  if (delta === undefined) return { text: 'N/A', class: 'text-stone-500' };
+  const sign = delta >= 0 ? '+' : '';
+  const colorClass = delta >= 0 ? 'text-green-400' : 'text-red-400';
+  return { text: `${sign}${delta.toFixed(1)}`, class: colorClass };
+}
+---
+
+<Base title="Benchmarks | Pennyfarthing" description="Persona agent performance benchmarks comparing themed agents against control baselines.">
+  <div class="max-w-6xl mx-auto">
+    <h1 class="text-4xl font-bold text-amber-100 mb-4">Performance Benchmarks</h1>
+    <p class="text-stone-300 mb-8">
+      Comparing persona agents against control baselines across {scenarios.length} scenarios.
+      Scores range from 0-100, with delta showing improvement over control.
+    </p>
+
+    <!-- Methodology Section -->
+    <section class="bg-stone-800 border border-stone-700 rounded-lg p-6 mb-8">
+      <h2 class="text-xl font-semibold text-amber-100 mb-3">How Benchmarks Work</h2>
+      <p class="text-stone-300 mb-4">
+        Each persona agent is evaluated on standardized scenarios and scored by an independent judge.
+        The delta shows how much a persona improves (or regresses) compared to a control agent without personality.
+      </p>
+      <ul class="text-stone-400 space-y-1 text-sm">
+        <li><strong class="text-amber-200">Score:</strong> 0-100 scale based on task completion, quality, and persona adherence</li>
+        <li><strong class="text-amber-200">Delta vs Control:</strong> Positive means persona outperforms baseline</li>
+        <li><strong class="text-amber-200">OCEAN:</strong> Big Five personality traits (Openness, Conscientiousness, Extraversion, Agreeableness, Neuroticism)</li>
+      </ul>
+      <p class="text-amber-500 text-sm mt-3">
+        <a href="https://github.com/1898andCo/pennyfarthing#benchmarks" class="underline hover:text-amber-400">
+          Learn more about our methodology
+        </a>
+      </p>
+    </section>
+
+    <!-- Role Leaderboards Section -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold text-amber-100 mb-6">Leaderboard by Role</h2>
+      <p class="text-stone-300 mb-4">
+        Top performing themes for each agent role, ranked by average score across all scenarios.
+      </p>
+
+      <div class="grid gap-6 md:grid-cols-2">
+        {roles.map(role => {
+          const leaderboard = roleLeaderboards[role]?.slice(0, 5) || [];
+          return (
+            <div class="bg-stone-800 border border-stone-700 rounded-lg shadow-md p-4">
+              <h3 class="text-lg font-semibold text-amber-100 mb-3 border-b border-stone-600 pb-2">
+                {formatRole(role)}
+              </h3>
+              {leaderboard.length > 0 ? (
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="text-stone-400 text-left">
+                      <th class="pb-2">#</th>
+                      <th class="pb-2">Theme</th>
+                      <th class="pb-2 text-right">Mean Score</th>
+                      <th class="pb-2 text-right">Delta</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {leaderboard.map((entry, i) => {
+                      const delta = formatDelta(entry.averageDelta);
+                      return (
+                        <tr class="border-t border-stone-700">
+                          <td class="py-2 text-stone-500">{i + 1}</td>
+                          <td class="py-2 font-medium text-stone-200">{entry.theme}</td>
+                          <td class="py-2 text-right text-stone-300">{entry.averageScore.toFixed(1)}</td>
+                          <td class={`py-2 text-right ${delta.class}`}>{delta.text}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              ) : (
+                <p class="text-stone-500 text-sm">No benchmark data for this role</p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+
+    <!-- Scenario Performance Section -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold text-amber-100 mb-6">Performance by Scenario</h2>
+      <p class="text-stone-300 mb-4">
+        How personas performed on each benchmark scenario. Click a scenario to see detailed results.
+      </p>
+
+      <div class="space-y-4">
+        {scenarios.map(scenario => {
+          const scenarioData = byScenario[scenario] || [];
+          const avgScore = scenarioData.length > 0
+            ? scenarioData.reduce((sum, s) => sum + s.statistics.mean, 0) / scenarioData.length
+            : 0;
+          const bestPerformer = scenarioData.sort((a, b) => b.statistics.mean - a.statistics.mean)[0];
+
+          // Get control baseline (same for all entries in scenario)
+          const controlMean = scenarioData.find(s => s.baselineComparison)?.baselineComparison?.controlMean;
+
+          // Calculate average delta vs control
+          const deltas = scenarioData
+            .filter(s => s.baselineComparison?.delta !== undefined)
+            .map(s => s.baselineComparison!.delta);
+          const avgDelta = deltas.length > 0
+            ? deltas.reduce((a, b) => a + b, 0) / deltas.length
+            : undefined;
+          const avgDeltaFormatted = formatDelta(avgDelta);
+
+          return (
+            <details class="bg-stone-800 border border-stone-700 rounded-lg shadow-md">
+              <summary class="p-4 cursor-pointer hover:bg-stone-700 flex items-center justify-between">
+                <div>
+                  <span class="font-semibold text-stone-200">{scenario}</span>
+                  <span class="text-stone-500 ml-2 text-sm">({scenarioData.length} themes tested)</span>
+                </div>
+                <div class="text-right flex items-center gap-3">
+                  {controlMean !== undefined && (
+                    <span class="text-stone-500">Control: {controlMean.toFixed(1)}</span>
+                  )}
+                  <span class="text-stone-400">Avg: {avgScore.toFixed(1)}</span>
+                  {avgDelta !== undefined && (
+                    <span class={avgDeltaFormatted.class}>vs Control: {avgDeltaFormatted.text}</span>
+                  )}
+                  {bestPerformer && (
+                    <span class="text-green-400">Best: {bestPerformer.agent.theme} ({bestPerformer.statistics.mean.toFixed(1)})</span>
+                  )}
+                </div>
+              </summary>
+              <div class="p-4 border-t border-stone-700">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="text-stone-400 text-left border-b border-stone-600">
+                      <th class="pb-2">Theme</th>
+                      <th class="pb-2">Character</th>
+                      <th class="pb-2">Role</th>
+                      <th class="pb-2 text-right">Score</th>
+                      <th class="pb-2 text-right">Control</th>
+                      <th class="pb-2 text-right">Delta</th>
+                      <th class="pb-2 text-right">Runs</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {scenarioData.sort((a, b) => b.statistics.mean - a.statistics.mean).map(summary => {
+                      const delta = formatDelta(summary.baselineComparison?.delta);
+                      const agentInfo = getAgentInfo(summary.agent.theme, summary.agent.role);
+                      return (
+                        <tr class="border-t border-stone-700">
+                          <td class="py-2 font-medium text-stone-200">{summary.agent.theme}</td>
+                          <td class="py-2 text-amber-200">
+                            {agentInfo ? (
+                              <CharacterTooltip
+                                agent={agentInfo.agent}
+                                themeId={agentInfo.themeId}
+                                themeName={agentInfo.themeName}
+                              >
+                                {summary.agent.character || '—'}
+                              </CharacterTooltip>
+                            ) : (
+                              summary.agent.character || '—'
+                            )}
+                          </td>
+                          <td class="py-2 text-stone-400">{summary.agent.role}</td>
+                          <td class="py-2 text-right text-stone-300">{summary.statistics.mean.toFixed(1)}</td>
+                          <td class="py-2 text-right text-stone-500">
+                            {summary.baselineComparison?.controlMean?.toFixed(1) || 'N/A'}
+                          </td>
+                          <td class={`py-2 text-right ${delta.class}`}>{delta.text}</td>
+                          <td class="py-2 text-right text-stone-500">{summary.statistics.n}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          );
+        })}
+      </div>
+    </section>
+
+    <!-- OCEAN Correlation Section -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold text-amber-100 mb-6">OCEAN Personality Correlations</h2>
+      <p class="text-stone-300 mb-4">
+        Exploring how Big Five personality traits correlate with benchmark performance.
+        OCEAN profiles shape agent behavior and task approach.
+      </p>
+
+      <div class="bg-stone-800 border border-stone-700 rounded-lg p-6">
+        <div class="grid gap-4 md:grid-cols-5 text-center">
+          <div class="bg-stone-700 rounded-lg p-4 shadow-sm">
+            <div class="text-2xl font-bold text-purple-400">O</div>
+            <div class="text-sm text-stone-300">Openness</div>
+            <div class="text-xs text-stone-500 mt-1">Creativity, curiosity</div>
+          </div>
+          <div class="bg-stone-700 rounded-lg p-4 shadow-sm">
+            <div class="text-2xl font-bold text-blue-400">C</div>
+            <div class="text-sm text-stone-300">Conscientiousness</div>
+            <div class="text-xs text-stone-500 mt-1">Organization, diligence</div>
+          </div>
+          <div class="bg-stone-700 rounded-lg p-4 shadow-sm">
+            <div class="text-2xl font-bold text-green-400">E</div>
+            <div class="text-sm text-stone-300">Extraversion</div>
+            <div class="text-xs text-stone-500 mt-1">Assertiveness, energy</div>
+          </div>
+          <div class="bg-stone-700 rounded-lg p-4 shadow-sm">
+            <div class="text-2xl font-bold text-yellow-400">A</div>
+            <div class="text-sm text-stone-300">Agreeableness</div>
+            <div class="text-xs text-stone-500 mt-1">Cooperation, trust</div>
+          </div>
+          <div class="bg-stone-700 rounded-lg p-4 shadow-sm">
+            <div class="text-2xl font-bold text-red-400">N</div>
+            <div class="text-sm text-stone-300">Neuroticism</div>
+            <div class="text-xs text-stone-500 mt-1">Emotional sensitivity</div>
+          </div>
+        </div>
+        <p class="text-stone-400 text-sm mt-4 text-center">
+          Each persona has unique OCEAN scores (1-5 scale) that influence their problem-solving approach.
+          <a href="/compare" class="text-amber-500 underline hover:text-amber-400 ml-1">
+            Compare personas by personality
+          </a>
+        </p>
+      </div>
+    </section>
+
+    <!-- Summary Stats -->
+    <section class="bg-stone-800 border border-stone-700 rounded-lg p-6">
+      <h2 class="text-xl font-semibold text-amber-100 mb-4">Benchmark Summary</h2>
+      <div class="grid gap-4 md:grid-cols-4 text-center">
+        <div>
+          <div class="text-3xl font-bold text-amber-100">{summaries.length}</div>
+          <div class="text-stone-400 text-sm">Total Evaluations</div>
+        </div>
+        <div>
+          <div class="text-3xl font-bold text-amber-100">{scenarios.length}</div>
+          <div class="text-stone-400 text-sm">Scenarios</div>
+        </div>
+        <div>
+          <div class="text-3xl font-bold text-amber-100">{roles.length}</div>
+          <div class="text-stone-400 text-sm">Agent Roles</div>
+        </div>
+        <div>
+          <div class="text-3xl font-bold text-amber-100">
+            {new Set(summaries.map(s => s.agent.theme)).size}
+          </div>
+          <div class="text-stone-400 text-sm">Themes Tested</div>
+        </div>
+      </div>
+    </section>
+  </div>
+</Base>

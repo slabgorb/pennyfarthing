@@ -29,6 +29,81 @@ source "$PROJECT_ROOT/scripts/repo-utils.sh"
 WORKTREE_ROOT="${WORKTREE_ROOT:-$PROJECT_ROOT/worktrees}"
 WORKTREE_PORT_OFFSET="${WORKTREE_PORT_OFFSET:-100}"
 
+# ============================================================================
+# Services Configuration
+# ============================================================================
+
+# Load services configuration from pennyfarthing-settings.yaml
+# Sets: _SERVICES_JSON, _PORT_OFFSET
+# Returns 1 if no services configured
+load_services_config() {
+    local config_file="${PROJECT_ROOT}/.claude/project/pennyfarthing-settings.yaml"
+
+    if [[ ! -f "$config_file" ]]; then
+        _SERVICES_JSON=""
+        _PORT_OFFSET=$WORKTREE_PORT_OFFSET
+        return 1
+    fi
+
+    # Parse services config using yq (preferred) or Python fallback
+    local config
+    if command -v yq &>/dev/null; then
+        # Check if services section exists
+        local has_services
+        has_services=$(yq '.services.definitions' "$config_file" 2>/dev/null)
+        if [[ -z "$has_services" || "$has_services" == "null" ]]; then
+            _SERVICES_JSON=""
+            _PORT_OFFSET=$WORKTREE_PORT_OFFSET
+            return 1
+        fi
+
+        local port_offset
+        port_offset=$(yq '.services.port_offset // 100' "$config_file" 2>/dev/null)
+        local definitions_json
+        definitions_json=$(yq -o=json '.services.definitions' "$config_file" 2>/dev/null)
+
+        _PORT_OFFSET=$port_offset
+        _SERVICES_JSON="$definitions_json"
+        return 0
+    elif command -v python3 &>/dev/null; then
+        config=$(python3 -c "
+import yaml
+import json
+import sys
+
+try:
+    with open('$config_file', 'r') as f:
+        settings = yaml.safe_load(f)
+
+    if not settings or 'services' not in settings or 'definitions' not in settings['services']:
+        sys.exit(1)
+
+    svc = settings['services']
+    port_offset = svc.get('port_offset', ${WORKTREE_PORT_OFFSET})
+    definitions = svc['definitions']
+
+    # Ensure env_var is set for each service
+    for d in definitions:
+        if 'env_var' not in d:
+            d['env_var'] = d['name'].upper().replace(' ', '_').replace('-', '_') + '_PORT'
+
+    print(f'_PORT_OFFSET={port_offset}')
+    print(f\"_SERVICES_JSON='{json.dumps(definitions)}'\")
+except Exception:
+    sys.exit(1)
+" 2>/dev/null)
+
+        if [[ $? -eq 0 && -n "$config" ]]; then
+            eval "$config"
+            return 0
+        fi
+    fi
+
+    _SERVICES_JSON=""
+    _PORT_OFFSET=$WORKTREE_PORT_OFFSET
+    return 1
+}
+
 # Load and validate repo configuration
 load_repos_config
 
@@ -304,11 +379,27 @@ show_status() {
                 echo "   Session: ❌ (no session file references this worktree)"
             fi
 
-            # Show ports
+            # Show ports (from services config)
             local WT_INDEX=$(ls -1 "$WORKTREE_ROOT" 2>/dev/null | grep -n "^$WT_NAME$" | cut -d: -f1)
             WT_INDEX=${WT_INDEX:-1}
-            local OFFSET=$((WT_INDEX * WORKTREE_PORT_OFFSET))
-            echo "   Ports: API=$((8080 + OFFSET)), UI=$((5173 + OFFSET))"
+            if load_services_config; then
+                local OFFSET=$((_PORT_OFFSET * WT_INDEX))
+                local ports_display
+                ports_display=$(python3 -c "
+import json
+services = $_SERVICES_JSON
+offset = $OFFSET
+parts = []
+for svc in services:
+    name = svc['name']
+    port = svc['base_port'] + offset
+    parts.append(f'{name}={port}')
+print(', '.join(parts))
+" 2>/dev/null)
+                echo "   Ports: $ports_display"
+            else
+                echo "   Ports: (no services configured)"
+            fi
             echo ""
         fi
     done
@@ -318,20 +409,40 @@ get_ports() {
     local WT_NAME="$1"
 
     if [ -z "$WT_NAME" ]; then
-        echo "❌ Usage: worktree-manager.sh ports <name>"
+        echo "# Usage: worktree-manager.sh ports <name>" >&2
+        echo "# Outputs shell variables for service ports" >&2
+        exit 1
+    fi
+
+    # Load services configuration
+    if ! load_services_config; then
+        echo "# No services configured in .claude/project/pennyfarthing-settings.yaml" >&2
+        echo "# Add a 'services' section with 'definitions' array" >&2
         exit 1
     fi
 
     # Calculate port offset based on worktree index
     local WT_INDEX=$(ls -1 "$WORKTREE_ROOT" 2>/dev/null | grep -n "^$WT_NAME$" | cut -d: -f1)
     WT_INDEX=${WT_INDEX:-1}
-    local OFFSET=$((WT_INDEX * WORKTREE_PORT_OFFSET))
+    local OFFSET=$((_PORT_OFFSET * WT_INDEX))
 
-    # Output as shell variables (can be eval'd)
-    echo "export API_PORT=$((8080 + OFFSET))"
-    echo "export UI_PORT=$((5173 + OFFSET))"
-    echo "export WS_PORT=$((8081 + OFFSET))"
+    # Output worktree info
     echo "export WORKTREE_PATH=$WORKTREE_ROOT/$WT_NAME"
+    echo "export WORKTREE_INDEX=$WT_INDEX"
+    echo "export WORKTREE_PORT_OFFSET=$OFFSET"
+
+    # Generate exports for each configured service
+    python3 -c "
+import json
+
+services = $_SERVICES_JSON
+offset = $OFFSET
+
+for svc in services:
+    env_var = svc.get('env_var', svc['name'].upper().replace(' ', '_').replace('-', '_') + '_PORT')
+    port = svc['base_port'] + offset
+    print(f'export {env_var}={port}')
+" 2>/dev/null
 }
 
 get_path() {

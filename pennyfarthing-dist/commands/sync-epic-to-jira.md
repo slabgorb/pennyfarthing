@@ -14,6 +14,8 @@ This workflow syncs a Pennyfarthing epic and its stories to Jira using the `jira
 - `jira` CLI configured: `jira init`
 - Epic exists in `sprint/current-sprint.yaml`
 
+**For complete jira CLI reference, see the `jira-cli` skill** (`.claude/skills/jira-cli/SKILL.md`). The examples below are quick references; the skill has troubleshooting, user mappings, and edge cases.
+
 ## Label Requirement
 
 All Pennyfarthing epics and stories must include the `pennyfarthing` label:
@@ -47,6 +49,8 @@ done
 
 ## Manual Jira CLI Commands
 
+**IMPORTANT:** Most commands require `-p MSSCI` (project flag) even when the issue key contains the project prefix.
+
 ### View Issue
 
 ```bash
@@ -57,39 +61,56 @@ jira issue view MSSCI-123
 
 ```bash
 jira issue create \
+    -p MSSCI \
     -tStory \
     -s"Story 1-5: Add Epic Context Guardrail" \
     -b"Description here" \
     -yHigh \
-    -l pennyfarthing
+    -l pennyfarthing \
+    --no-input
 ```
 
 ### Create Epic
 
 ```bash
 jira issue create \
+    -p MSSCI \
     -tEpic \
     -s"Epic 1: Agentic Best Practices Implementation" \
     -b"Epic description" \
-    -l pennyfarthing
+    -l pennyfarthing \
+    --no-input
+```
+
+### Link Story to Epic
+
+```bash
+# Use --parent to link a story to its epic
+jira issue create \
+    -p MSSCI \
+    -tStory \
+    -s"Story Title" \
+    --parent MSSCI-EPIC_KEY \
+    -l pennyfarthing \
+    --no-input
 ```
 
 ### Assign Issue
 
 ```bash
 # Assign to self
-jira issue assign MSSCI-123 $(jira me)
+jira issue assign -p MSSCI MSSCI-123 "$(jira me)"
 
 # Assign to someone else
-jira issue assign MSSCI-123 "John Doe"
+jira issue assign -p MSSCI MSSCI-123 "john.doe@1898andco.io"
 ```
 
 ### Transition Issue
 
 ```bash
-jira issue move MSSCI-123 "In Progress"
-jira issue move MSSCI-123 "In Review"
-jira issue move MSSCI-123 "Done"
+jira issue move MSSCI-123 "In Progress" -p MSSCI
+jira issue move MSSCI-123 "In Review" -p MSSCI
+jira issue move MSSCI-123 "Done" -p MSSCI
 ```
 
 ### Add Comment
