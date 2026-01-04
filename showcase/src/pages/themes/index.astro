@@ -2,13 +2,13 @@
 /**
  * Theme Gallery Page
  *
- * Displays all 63+ themes in a filterable, searchable grid.
- * Each theme shows a spider chart thumbnail and character preview.
+ * Displays all 63+ themes in a filterable, scrollable list.
+ * Each theme shows a spider chart thumbnail and character portraits.
+ * Sticky header shows agent role labels aligned with portrait columns.
  */
 
 import Base from '../../layouts/Base.astro';
-import ThemeCard from '../../components/ThemeCard.astro';
-import ThemeGrid from '../../components/ThemeGrid.astro';
+import ThemeRow from '../../components/ThemeRow.astro';
 import ThemeFilter from '../../components/ThemeFilter.tsx';
 import { loadThemes } from '../../lib/loader';
 
@@ -17,11 +17,28 @@ const themes = await loadThemes();
 
 // Extract unique source types for filter
 const sourceTypes = [...new Set(themes.map((t) => t.metadata.source))].sort();
+
+// Agent roles in display order (matches ThemeRow)
+const roles = ['sm', 'tea', 'dev', 'reviewer', 'architect', 'pm', 'ux-designer', 'tech-writer', 'devops', 'orchestrator'];
+
+// Human-readable role labels
+const roleLabels: Record<string, string> = {
+  'sm': 'SM',
+  'tea': 'TEA',
+  'dev': 'Dev',
+  'reviewer': 'Review',
+  'architect': 'Arch',
+  'pm': 'PM',
+  'ux-designer': 'UX',
+  'tech-writer': 'Docs',
+  'devops': 'Ops',
+  'orchestrator': 'Orch',
+};
 ---
 
 <Base title="Theme Gallery | Pennyfarthing Showcase" description="Browse 63+ themed AI personas with OCEAN personality profiles and spider chart visualizations.">
-  <div class="max-w-7xl mx-auto">
-    <header class="mb-8">
+  <div class="w-full px-4 md:px-6 lg:px-8">
+    <header class="mb-6">
       <h1 class="text-3xl font-bold text-amber-100 mb-2">Theme Gallery</h1>
       <p class="text-stone-300">
         Explore {themes.length} unique themes, each with 10 carefully crafted agent personas.
@@ -29,30 +46,46 @@ const sourceTypes = [...new Set(themes.map((t) => t.metadata.source))].sort();
     </header>
 
     <!-- Filter component (React island) -->
-    <ThemeFilter
-      client:load
-      sourceTypes={sourceTypes}
-      onFilter={(filter) => {
-        // Client-side filtering handled by React
-        const cards = document.querySelectorAll('[data-theme-card]');
-        const searchLower = filter.search.toLowerCase();
+    <div class="mb-4">
+      <ThemeFilter
+        client:load
+        sourceTypes={sourceTypes}
+        onFilter={(filter) => {
+          const cards = document.querySelectorAll('[data-theme-card]');
+          const searchLower = filter.search.toLowerCase();
 
-        cards.forEach((card) => {
-          const name = card.getAttribute('data-theme-name')?.toLowerCase() ?? '';
-          const source = card.getAttribute('data-theme-source') ?? '';
+          cards.forEach((card) => {
+            const name = card.getAttribute('data-theme-name')?.toLowerCase() ?? '';
+            const source = card.getAttribute('data-theme-source') ?? '';
 
-          const matchesSearch = !filter.search || name.includes(searchLower);
-          const matchesSource =
-            filter.sourceType.length === 0 || filter.sourceType.includes(source);
+            const matchesSearch = !filter.search || name.includes(searchLower);
+            const matchesSource =
+              filter.sourceType.length === 0 || filter.sourceType.includes(source);
 
-          (card as HTMLElement).style.display =
-            matchesSearch && matchesSource ? 'flex' : 'none';
-        });
-      }}
-    />
+            (card as HTMLElement).style.display =
+              matchesSearch && matchesSource ? 'flex' : 'none';
+          });
+        }}
+      />
+    </div>
 
-    <!-- Theme grid -->
-    <ThemeGrid>
+    <!-- Sticky header with role labels -->
+    <div class="sticky top-0 z-20 bg-[#272822] border-b border-stone-700 py-2 mb-2">
+      <div class="theme-row-layout">
+        <div class="theme-row-spider"></div>
+        <div class="theme-row-info"></div>
+        <div class="theme-row-portraits">
+          {roles.map((role) => (
+            <div class="portrait-cell text-center">
+              <span class="text-xs text-stone-400 font-medium uppercase tracking-wide">{roleLabels[role]}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <!-- Theme list -->
+    <div class="theme-list flex flex-col gap-2">
       {themes.map((theme) => (
         <div
           data-theme-card
@@ -60,10 +93,10 @@ const sourceTypes = [...new Set(themes.map((t) => t.metadata.source))].sort();
           data-theme-source={theme.metadata.source}
           class="flex"
         >
-          <ThemeCard theme={theme} />
+          <ThemeRow theme={theme} />
         </div>
       ))}
-    </ThemeGrid>
+    </div>
 
     <!-- Empty state -->
     <div id="empty-state" class="hidden text-center py-12 text-stone-400">
