@@ -84,7 +84,7 @@ agents:
     helper:
       name: Paradise Lost
       style: The book that taught the monster meaning
-    shortName: Frankenstein's
+    shortName: Creature
   dev:
     character: Dr. Jekyll
     ocean:
@@ -162,7 +162,7 @@ agents:
     helper:
       name: The Crew of Light
       style: Team assembled against darkness
-    shortName: Van
+    shortName: Helsing
   pm:
     character: Mina Harker
     ocean:

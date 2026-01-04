@@ -110,7 +110,7 @@ agents:
     helper:
       name: Seymour
       style: Loyal implementation companion (waited 1000 years)
-    shortName: Philip
+    shortName: Fry
   reviewer:
     character: Bender Bending Rodriguez
     ocean:
@@ -188,7 +188,7 @@ agents:
     helper:
       name: Planet Express Ship
       style: Reliable delivery infrastructure
-    shortName: Turanga
+    shortName: Leela
   tech-writer:
     character: Kif Kroker
     ocean:

@@ -32,7 +32,7 @@ agents:
     helper:
       name: Counterpoint
       style: Voices in harmony
-    shortName: Johann Bach
+    shortName: Bach
   sm:
     character: Wolfgang Amadeus Mozart
     ocean:
@@ -110,7 +110,7 @@ agents:
     helper:
       name: The Piano
       style: Delicate precision
-    shortName: Frédéric
+    shortName: Chopin
   reviewer:
     character: Richard Wagner
     ocean:
@@ -136,7 +136,7 @@ agents:
     helper:
       name: Bayreuth
       style: Total artwork review
-    shortName: Richard
+    shortName: Wagner
   architect:
     character: Johann Sebastian Bach (Architect)
     ocean:
@@ -162,7 +162,7 @@ agents:
     helper:
       name: The Fugue
       style: Perfect structural form
-    shortName: Johann Bach
+    shortName: Johann
   pm:
     character: Franz Joseph Haydn
     ocean:

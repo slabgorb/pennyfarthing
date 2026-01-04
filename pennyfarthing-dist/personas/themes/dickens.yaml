@@ -84,7 +84,7 @@ agents:
     helper:
       name: Satis House
       style: Where expectations go to die
-    shortName: Havisham
+    shortName: Miss Havisham
   dev:
     character: Pip
     ocean:

@@ -84,7 +84,7 @@ agents:
     helper:
       name: Smeagol
       style: The helpful personality when it surfaces
-    shortName: Gollum/Smeagol
+    shortName: Gollum
   dev:
     character: Samwise Gamgee
     ocean:

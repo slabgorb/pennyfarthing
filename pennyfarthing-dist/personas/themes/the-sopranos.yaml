@@ -58,7 +58,7 @@ agents:
     helper:
       name: Silvio Dante
       style: Consigliere support
-    shortName: Tony Soprano
+    shortName: Tony
   tea:
     character: Paulie Walnuts
     ocean:
@@ -162,7 +162,7 @@ agents:
     helper:
       name: The Organization
       style: Criminal infrastructure
-    shortName: Tony Soprano
+    shortName: Architect
   pm:
     character: Carmela Soprano
     ocean:

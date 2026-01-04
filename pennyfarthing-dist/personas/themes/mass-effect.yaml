@@ -110,7 +110,7 @@ agents:
     helper:
       name: Chatika vas Paus
       style: Combat drone assistance
-    shortName: Tali'Zorah
+    shortName: Tali
   reviewer:
     character: Javik
     ocean:

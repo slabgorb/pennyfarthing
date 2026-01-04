@@ -266,7 +266,7 @@ agents:
     helper:
       name: The Loom
       style: Weaving system fate
-    shortName: Norns
+    shortName: The Norns
 additional_characters:
   tyr:
     character: Tyr One-Handed

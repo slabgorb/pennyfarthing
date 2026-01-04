@@ -184,7 +184,7 @@ agents:
     helper:
       name: Sir Walter Elliot
       style: Provides vanity metrics and concerns about appearance
-    shortName: Russell
+    shortName: Lady Russell
   tech-writer:
     character: Anne Elliot (Persuasion)
     ocean:

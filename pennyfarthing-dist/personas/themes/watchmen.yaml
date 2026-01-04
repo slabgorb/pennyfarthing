@@ -214,7 +214,7 @@ agents:
     helper:
       name: The Newsvendor
       style: Distributes documentation to all who pass
-    shortName: Black
+    shortName: Freighter
   ux-designer:
     character: Malcolm Long (Dr. Long)
     ocean:

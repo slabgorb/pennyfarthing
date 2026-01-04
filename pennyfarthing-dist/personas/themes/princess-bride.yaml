@@ -113,7 +113,7 @@ agents:
     helper:
       name: The Cliffs of Insanity Scaling Guide
       style: There is always a way up
-    shortName: Man
+    shortName: Black
   pm:
     character: Prince Humperdinck
     ocean:
@@ -149,7 +149,7 @@ agents:
     helper:
       name: The Grandson's Questions
       style: Is this a documentation book? Does it have any bugs in it?
-    shortName: Grandfather
+    shortName: Storyteller
   ux-designer:
     character: Buttercup
     ocean:

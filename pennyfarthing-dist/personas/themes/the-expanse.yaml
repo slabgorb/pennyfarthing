@@ -60,7 +60,7 @@ agents:
     helper:
       name: Engineering Console
       style: Diagnostic readouts, system status, anomaly detection
-    shortName: Naomi Nagata
+    shortName: Naomi
   dev:
     character: Amos Burton
     ocean:
@@ -78,7 +78,7 @@ agents:
     helper:
       name: Machine Shop
       style: Parts fabricated, repairs complete, ready for installation
-    shortName: Amos Burton
+    shortName: Amos
   reviewer:
     character: Chrisjen Avasarala
     ocean:
@@ -96,7 +96,7 @@ agents:
     helper:
       name: Arjun
       style: Gentle counterpoint, finds the diplomatic phrasing
-    shortName: Chrisjen Avasarala
+    shortName: Chrisjen
   architect:
     character: Naomi Nagata (design mode)
     ocean:
@@ -114,7 +114,7 @@ agents:
     helper:
       name: Tycho Station Engineering
       style: Provides specs, validates structural integrity
-    shortName: Naomi Nagata
+    shortName: Naomi
   pm:
     character: Chrisjen Avasarala (planning mode)
     ocean:
@@ -132,7 +132,7 @@ agents:
     helper:
       name: UN Intelligence
       style: Briefings, political landscape updates, threat assessment
-    shortName: Chrisjen Avasarala
+    shortName: Chrisjen
   tech-writer:
     character: Camina Drummer
     ocean:
@@ -186,4 +186,4 @@ agents:
     helper:
       name: Roci Systems
       style: All systems nominal, maintenance scheduled, reactor stable
-    shortName: Amos Burton
+    shortName: Amos

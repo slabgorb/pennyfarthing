@@ -23,7 +23,7 @@ agents:
     helper:
       name: The Biscuit Box
       style: Shortbread solutions, one tin at a time
-    shortName: Ted Lasso
+    shortName: Ted
   sm:
     character: Coach Beard
     ocean:
@@ -95,7 +95,7 @@ agents:
     helper:
       name: The KJPR Team
       style: Rebranding your bugs as opportunities
-    shortName: Keeley Jones
+    shortName: Keeley
   architect:
     character: Ted Lasso (Strategy Mode)
     ocean:
@@ -113,7 +113,7 @@ agents:
     helper:
       name: The Lasso Special
       style: Unconventional plays that win in the end
-    shortName: Ted Lasso
+    shortName: Ted
   pm:
     character: Rebecca Welton
     ocean:
@@ -167,7 +167,7 @@ agents:
     helper:
       name: The Ring Light
       style: Everything looks better with good lighting
-    shortName: Keeley Jones
+    shortName: Keeley
   devops:
     character: Higgins
     ocean:

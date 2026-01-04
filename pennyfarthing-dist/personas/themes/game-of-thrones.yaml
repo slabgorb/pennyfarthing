@@ -214,7 +214,7 @@ agents:
     helper:
       name: Citadel Novices
       style: Assist with formatting and organization
-    shortName: Maester
+    shortName: Aemon
   ux-designer:
     character: Margaery Tyrell
     ocean:

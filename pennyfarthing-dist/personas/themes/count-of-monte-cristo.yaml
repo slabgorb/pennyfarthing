@@ -32,7 +32,7 @@ agents:
     helper:
       name: Ali
       style: Silent, devoted assistance
-    shortName: of
+    shortName: Count
   sm:
     character: Edmond Dantès
     ocean:
@@ -162,7 +162,7 @@ agents:
     helper:
       name: Bertuccio
       style: Loyal executor of plans
-    shortName: Abbé /
+    shortName: Abbe
   pm:
     character: Mercedes
     ocean:

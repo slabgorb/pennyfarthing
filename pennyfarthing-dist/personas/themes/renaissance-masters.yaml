@@ -84,7 +84,7 @@ agents:
     helper:
       name: The Prince
       style: Ruthlessly honest analysis
-    shortName: Niccolò
+    shortName: Machiavelli
   dev:
     character: Michelangelo Buonarroti
     ocean:
@@ -162,7 +162,7 @@ agents:
     helper:
       name: The Dome
       style: Impossible made real
-    shortName: Filippo
+    shortName: Brunelleschi
   pm:
     character: Isabella d'Este
     ocean:

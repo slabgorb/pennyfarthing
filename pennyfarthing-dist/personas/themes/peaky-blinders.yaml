@@ -84,7 +84,7 @@ agents:
     helper:
       name: The Peaky Blinders
       style: Gang enforcement of test results
-    shortName: Tommy Shelby
+    shortName: Tommy
   dev:
     character: Arthur Shelby
     ocean:
@@ -162,7 +162,7 @@ agents:
     helper:
       name: The Shelby Company Limited
       style: Legitimate cover for architectural ambitions
-    shortName: Tommy Shelby
+    shortName: Thomas
   pm:
     character: Ada Shelby
     ocean:

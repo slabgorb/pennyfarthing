@@ -60,7 +60,7 @@ agents:
       style: Knowing before being told
     ocean_profile: L-H-L-H-H
     gap_filled: Anxious kind introvert
-    shortName: Radar O'Reilly
+    shortName: Radar
   tea:
     character: Major Charles Emerson Winchester III
     ocean:
@@ -114,7 +114,7 @@ agents:
       style: True center methodology
     ocean_profile: M-M-M-M-M
     gap_filled: True center (extremely rare in fiction)
-    shortName: B.J.
+    shortName: BJ
   reviewer:
     character: Hawkeye Pierce
     ocean:
@@ -272,7 +272,7 @@ agents:
     helper:
       name: Supply Anticipation
       style: Anxious maintenance
-    shortName: Radar O'Reilly
+    shortName: Radar
 additional_characters:
   sidney_freedman:
     character: Sidney Freedman
