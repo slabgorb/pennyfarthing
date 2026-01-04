@@ -136,7 +136,7 @@ agents:
     helper:
       name: Brandt
       style: Enthusiastically agrees with everything the boss says
-    shortName: Big Lebowski
+    shortName: Big
   architect:
     character: Maude Lebowski
     ocean:
@@ -214,7 +214,7 @@ agents:
     helper:
       name: The Beetle
       style: Mobile documentation station
-    shortName: Da
+    shortName: Da Fino
   ux-designer:
     character: Donny
     ocean:

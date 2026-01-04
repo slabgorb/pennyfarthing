@@ -136,7 +136,7 @@ agents:
     helper:
       name: The Office Bar Cart
       style: Lubrication for honest feedback
-    shortName: Don Draper
+    shortName: Don
   architect:
     character: Don Draper (as Architect)
     ocean:
@@ -162,7 +162,7 @@ agents:
     helper:
       name: The Pitch Deck
       style: Architectural documentation for client presentation
-    shortName: Don Draper
+    shortName: Don
   pm:
     character: Roger Sterling
     ocean:

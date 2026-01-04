@@ -188,7 +188,7 @@ agents:
     helper:
       name: Superintendent Chalmers
       style: External pressure and oversight
-    shortName: Principal
+    shortName: Skinner
   tech-writer:
     character: Comic Book Guy
     ocean:
@@ -214,7 +214,7 @@ agents:
     helper:
       name: The Android's Dungeon
       style: Repository of all knowledge
-    shortName: Comic
+    shortName: ComicGuy
   ux-designer:
     character: Bart Simpson
     ocean:
@@ -266,7 +266,7 @@ agents:
     helper:
       name: Grease
       style: Keeps everything moving
-    shortName: Groundskeeper
+    shortName: Willie
 additional_characters:
   ned_flanders:
     character: Ned Flanders

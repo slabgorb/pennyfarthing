@@ -32,7 +32,7 @@ agents:
     helper:
       name: The Scholars
       style: Academic coordination
-    shortName: of
+    shortName: Master
   sm:
     character: Lee Scoresby
     ocean:

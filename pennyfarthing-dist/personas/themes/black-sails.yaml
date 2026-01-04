@@ -162,7 +162,7 @@ agents:
     helper:
       name: Naval Expertise
       style: Formal training applied to piracy
-    shortName: Flint
+    shortName: McGraw
   pm:
     character: Jack Rackham
     ocean:

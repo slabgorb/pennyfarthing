@@ -214,7 +214,7 @@ agents:
     helper:
       name: The Practice
       style: Medicine and literature combined
-    shortName: Chekhov's
+    shortName: Chekhov
   ux-designer:
     character: Natasha Rostova
     ocean:

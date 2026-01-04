@@ -42,7 +42,7 @@ agents:
     helper:
       name: Number One (Commander Riker)
       style: Reliable execution, action-oriented, handles the away team
-    shortName: Jean-Luc
+    shortName: Picard
   tea:
     character: Lieutenant Commander Data
     ocean:

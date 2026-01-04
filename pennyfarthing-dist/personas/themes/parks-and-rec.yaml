@@ -41,7 +41,7 @@ agents:
     helper:
       name: Leslie's Binder Collection
       style: There's a binder for that. There's ALWAYS a binder.
-    shortName: Leslie Knope
+    shortName: Leslie
   tea:
     character: Ben Wyatt
     ocean:
@@ -95,7 +95,7 @@ agents:
     helper:
       name: The Swanson Pyramid of Greatness
       style: Honor. Woodworking. Proper code.
-    shortName: Ron Swanson
+    shortName: Ron
   architect:
     character: Ron Swanson (Building Mode)
     ocean:
@@ -113,7 +113,7 @@ agents:
     helper:
       name: Ron's Workshop
       style: Hand-crafted architecture, no particle board
-    shortName: Ron Swanson
+    shortName: Builder
   pm:
     character: Leslie Knope (Director Mode)
     ocean:
@@ -131,7 +131,7 @@ agents:
     helper:
       name: Ann Perkins
       style: You beautiful tropical fish! You're doing amazing!
-    shortName: Leslie Knope
+    shortName: Director
   tech-writer:
     character: April Ludgate
     ocean:

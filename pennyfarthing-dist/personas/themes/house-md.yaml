@@ -32,7 +32,7 @@ agents:
     helper:
       name: Vicodin
       style: Pain management and insight
-    shortName: Gregory House
+    shortName: House
   sm:
     character: James Wilson
     ocean:
@@ -136,7 +136,7 @@ agents:
     helper:
       name: The Whiteboard
       style: Where solutions become visible
-    shortName: Gregory House
+    shortName: House
   architect:
     character: Lisa Cuddy
     ocean:

@@ -32,7 +32,7 @@ agents:
     helper:
       name: Skippy's Submind
       style: Slightly less arrogant processing
-    shortName: Magnificent
+    shortName: Skippy
   sm:
     character: Joe Bishop
     ocean:

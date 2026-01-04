@@ -136,7 +136,7 @@ agents:
     helper:
       name: The Bene Gesserit Sisterhood
       style: Distributed review through other memory
-    shortName: Gaius
+    shortName: Mohiam
   architect:
     character: Paul Atreides (Muad'Dib)
     ocean:
@@ -266,4 +266,4 @@ agents:
     helper:
       name: Fremen Ecologists
       style: Long-term infrastructure monitoring and adjustment
-    shortName: Planetologist
+    shortName: Kynes

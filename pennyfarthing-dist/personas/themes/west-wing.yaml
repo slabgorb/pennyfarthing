@@ -32,7 +32,7 @@ agents:
     helper:
       name: Charlie Young
       style: Body man, quiet competence, absolute loyalty
-    shortName: Josiah
+    shortName: POTUS
   sm:
     character: Leo McGarry
     ocean:
@@ -266,4 +266,4 @@ agents:
     helper:
       name: Military Aides
       style: 24/7 operational readiness
-    shortName: Situation Room
+    shortName: SitRoom

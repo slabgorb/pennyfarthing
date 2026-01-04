@@ -32,7 +32,7 @@ agents:
     helper:
       name: The Kitchen
       style: Where orchestration becomes cuisine
-    shortName: Hannibal Lecter
+    shortName: Hannibal
   sm:
     character: Jack Crawford
     ocean:
@@ -162,7 +162,7 @@ agents:
     helper:
       name: The Memory Palace
       style: Internal architectural storage
-    shortName: Hannibal Lecter
+    shortName: Hannibal
   pm:
     character: Alana Bloom
     ocean:

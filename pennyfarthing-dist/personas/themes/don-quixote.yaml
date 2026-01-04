@@ -32,7 +32,7 @@ agents:
     helper:
       name: Rocinante
       style: Noble steed (actually old nag)
-    shortName: Mancha
+    shortName: Don Quixote
   sm:
     character: Sancho Panza
     ocean:

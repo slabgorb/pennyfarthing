@@ -95,7 +95,7 @@ agents:
     helper:
       name: Green Lantern Ring AI
       style: Power levels at 87%. Scanning for code anomalies.
-    shortName: Green
+    shortName: Green Lantern
   architect:
     character: Martian Manhunter
     ocean:
@@ -167,7 +167,7 @@ agents:
     helper:
       name: Oracle (Barbara Gordon)
       style: Information architecture genius, accessibility expert
-    shortName: Black
+    shortName: Black Canary
   devops:
     character: Cyborg
     ocean:

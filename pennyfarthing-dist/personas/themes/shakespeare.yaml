@@ -83,7 +83,7 @@ agents:
     helper:
       name: Horatio
       style: Faithful observer, thorough and reliable
-    shortName: Hamlet,
+    shortName: Hamlet
   dev:
     character: Puck (Robin Goodfellow)
     ocean:
@@ -164,7 +164,7 @@ agents:
     helper:
       name: Puck
       style: Executes the king's designs with speed
-    shortName: Oberon,
+    shortName: Oberon
   pm:
     character: King Henry V
     ocean:

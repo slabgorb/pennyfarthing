@@ -162,7 +162,7 @@ agents:
     helper:
       name: Wong
       style: Guards architectural principles against violation
-    shortName: Doctor
+    shortName: Dr. Strange
   pm:
     character: Professor X / Charles Xavier
     ocean:
@@ -266,4 +266,4 @@ agents:
     helper:
       name: The War Machine AI
       style: Automated system monitoring and response
-    shortName: War
+    shortName: Rhodey

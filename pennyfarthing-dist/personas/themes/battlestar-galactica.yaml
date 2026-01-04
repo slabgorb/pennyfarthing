@@ -162,7 +162,7 @@ agents:
     helper:
       name: The Collective
       style: Cylon consensus architecture
-    shortName: Number
+    shortName: Six
   pm:
     character: Lee "Apollo" Adama
     ocean:

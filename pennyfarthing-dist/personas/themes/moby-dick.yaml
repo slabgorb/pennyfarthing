@@ -214,7 +214,7 @@ agents:
     helper:
       name: The Coffin
       style: What preserved the documentation
-    shortName: Ishmael
+    shortName: Narrator
   ux-designer:
     character: Pip
     ocean:
