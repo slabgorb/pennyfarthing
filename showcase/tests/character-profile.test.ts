@@ -17,7 +17,7 @@ const PAGES_DIR = join(SRC, 'pages');
 const COMPONENTS_DIR = join(SRC, 'components');
 
 describe('Story 13-6: Individual Character Profile Pages', () => {
-  describe('AC1: 640 character pages generated (64 themes × 10 roles)', () => {
+  describe('AC1: Character pages generated for all themes × 10 roles', () => {
     it('should have dynamic route file for characters', () => {
       // Astro uses [...slug].astro or nested [param] for dynamic routes
       const routePath = join(PAGES_DIR, 'characters', '[theme]', '[role].astro');
