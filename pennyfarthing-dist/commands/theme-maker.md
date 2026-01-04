@@ -186,18 +186,18 @@ Display a preview of all generated agents before confirming:
 
 **Universe:** {user's concept}
 
-| Agent | Character | Style |
-|-------|-----------|-------|
-| orchestrator | {name} | {style summary} |
-| sm | {name} | {style summary} |
-| tea | {name} | {style summary} |
-| dev | {name} | {style summary} |
-| reviewer | {name} | {style summary} |
-| architect | {name} | {style summary} |
-| pm | {name} | {style summary} |
-| tech-writer | {name} | {style summary} |
-| ux-designer | {name} | {style summary} |
-| devops | {name} | {style summary} |
+| Agent | Character | Short | Style |
+|-------|-----------|-------|-------|
+| orchestrator | {name} | {shortName} | {style summary} |
+| sm | {name} | {shortName} | {style summary} |
+| tea | {name} | {shortName} | {style summary} |
+| dev | {name} | {shortName} | {style summary} |
+| reviewer | {name} | {shortName} | {style summary} |
+| architect | {name} | {shortName} | {style summary} |
+| pm | {name} | {shortName} | {style summary} |
+| tech-writer | {name} | {shortName} | {style summary} |
+| ux-designer | {name} | {shortName} | {style summary} |
+| devops | {name} | {shortName} | {style summary} |
 ```
 
 ### Step 4: Confirm or Regenerate
@@ -348,18 +348,18 @@ Show a preview of the complete theme before confirming. Include OCEAN scores for
 
 **Universe:** {concept}
 
-| Agent | Character | Style | OCEAN |
-|-------|-----------|-------|-------|
-| orchestrator | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
-| sm | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
-| tea | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
-| dev | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
-| reviewer | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
-| architect | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
-| pm | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
-| tech-writer | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
-| ux-designer | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
-| devops | {selected} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| Agent | Character | Short | Style | OCEAN |
+|-------|-----------|-------|-------|-------|
+| orchestrator | {selected} | {shortName} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| sm | {selected} | {shortName} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| tea | {selected} | {shortName} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| dev | {selected} | {shortName} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| reviewer | {selected} | {shortName} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| architect | {selected} | {shortName} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| pm | {selected} | {shortName} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| tech-writer | {selected} | {shortName} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| ux-designer | {selected} | {shortName} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
+| devops | {selected} | {shortName} | {generated style} | O:{n} C:{n} E:{n} A:{n} N:{n} |
 ```
 
 ### Step 5: Confirm or Edit
@@ -498,18 +498,18 @@ Show a preview of the complete theme including OCEAN profiles:
 
 **Description:** {user's description}
 
-| Agent | Character | Style | OCEAN | Quote |
-|-------|-----------|-------|-------|-------|
-| sm | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
-| tea | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
-| dev | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
-| reviewer | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
-| architect | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
-| pm | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
-| tech-writer | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
-| ux-designer | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
-| devops | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
-| orchestrator | {provided} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| Agent | Character | Short | Style | OCEAN | Quote |
+|-------|-----------|-------|-------|-------|-------|
+| sm | {provided} | {shortName} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| tea | {provided} | {shortName} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| dev | {provided} | {shortName} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| reviewer | {provided} | {shortName} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| architect | {provided} | {shortName} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| pm | {provided} | {shortName} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| tech-writer | {provided} | {shortName} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| ux-designer | {provided} | {shortName} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| devops | {provided} | {shortName} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
+| orchestrator | {provided} | {shortName} | {provided} | O:{n} C:{n} E:{n} A:{n} N:{n} | {provided} |
 ```
 
 ### Step 6: Confirm or Edit
