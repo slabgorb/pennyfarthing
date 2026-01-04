@@ -5,7 +5,7 @@
  * Story 12-6: Update for local results (Epic 12 migration)
  *
  * Correlates Chernoff faces and OCEAN profiles with benchmark performance data.
- * Reads benchmark results from local results/ directory (or BENCHMARK_PATH env var).
+ * Reads benchmark results from internal/results/ directory (or BENCHMARK_PATH env var).
  */
 import { readdirSync, readFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
@@ -19,10 +19,10 @@ const themesDir = join(projectRoot, 'pennyfarthing-dist', 'personas', 'themes');
 const facesDir = join(projectRoot, 'pennyfarthing-dist', 'personas', 'faces');
 // Benchmark results location
 // Configurable via BENCHMARK_PATH environment variable
-// Defaults to local results/benchmarks/ directory
+// Defaults to internal/results/benchmarks/ directory (dev-only, excluded from npm)
 const benchmarksDir = process.env.BENCHMARK_PATH
     ? join(process.env.BENCHMARK_PATH, 'benchmarks')
-    : join(projectRoot, 'results', 'benchmarks');
+    : join(projectRoot, 'internal', 'results', 'benchmarks');
 // ============================================================================
 // Constants
 // ============================================================================
