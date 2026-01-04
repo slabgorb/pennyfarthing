@@ -1,10 +1,12 @@
-# Pennyfarthing Repository Configuration
-# This file configures multi-repo projects for agent workflows
+# Pennyfarthing Project Settings
+# Consolidated configuration for agent workflows, repos, services, and testing
 #
-# Used by: scripts/repo-utils.sh, scripts/utils/test-setup.sh
+# Used by: repo-utils.sh, worktree-manager.sh, test-setup.sh
 #
-# For single-repo projects, this file is optional - utilities will
-# work with sensible defaults.
+# Sections:
+#   repos     - Repository definitions (multi-repo support)
+#   services  - Dev server ports for worktree management
+#   testing   - Test configuration and skip patterns
 
 # ============================================================================
 # Repository Definitions
@@ -58,6 +60,30 @@ repos:
     test_command: ""  # No tests for agent framework itself
     build_command: ""
     lint_command: "shellcheck scripts/**/*.sh"
+
+# ============================================================================
+# Services Configuration
+# ============================================================================
+# Define dev server ports for worktree management
+# Each service gets offset ports in worktrees (base + worktree_index * port_offset)
+#
+# Example for Go API + React UI project:
+#   services:
+#     port_offset: 100
+#     definitions:
+#       - name: API
+#         base_port: 8080
+#         env_var: API_PORT
+#       - name: UI
+#         base_port: 5173
+#         env_var: UI_PORT
+
+services:
+  port_offset: 100
+  definitions:
+    - name: Showcase
+      base_port: 4321
+      env_var: SHOWCASE_PORT
 
 # ============================================================================
 # Testing Configuration
