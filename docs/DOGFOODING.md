@@ -147,6 +147,46 @@ DOGFOODING (pennyfarthing repo)          NPM INSTALLATION (other projects)
 
 `run.sh` was hardcoded to look for scripts at `.claude/pennyfarthing/scripts/` which worked in dogfooding but failed in npm-installed projects where scripts live at `.claude/scripts/`. Fixed by updating `run.sh` to use `.claude/scripts/` consistently.
 
+## Project Configuration
+
+The consolidated project configuration lives at `.claude/project/pennyfarthing-settings.yaml`:
+
+```yaml
+# Pennyfarthing Project Settings
+
+repos:
+  pennyfarthing:
+    path: "."
+    type: cli
+    language: bash
+
+services:
+  port_offset: 100
+  definitions:
+    - name: Showcase
+      base_port: 4321
+      env_var: SHOWCASE_PORT
+
+testing:
+  log_dir: ".session"
+```
+
+### Services Configuration
+
+Services define dev server ports for worktree management. Each service gets offset ports in worktrees:
+
+```
+Main checkout:     SHOWCASE_PORT=4321
+Worktree #1:       SHOWCASE_PORT=4421  (4321 + 100*1)
+Worktree #2:       SHOWCASE_PORT=4521  (4321 + 100*2)
+```
+
+Test with: `./scripts/run.sh worktree-manager.sh ports <worktree-name>`
+
+### 2025-01-04: repos.yaml → pennyfarthing-settings.yaml
+
+Renamed `repos.yaml` to `pennyfarthing-settings.yaml` and added the `services` section for worktree port management. The file now consolidates repos, services, and testing configuration in one place.
+
 ## Historical Note
 
 Prior to v4.0, `.claude/pennyfarthing/` was a copy of `pennyfarthing-dist/`, requiring manual synchronization. This led to "file not found" errors when scripts were added to source but not copied to the local install. The v4.0 symlink architecture eliminates this entire class of bugs.
