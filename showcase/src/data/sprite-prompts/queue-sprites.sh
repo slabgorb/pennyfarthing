@@ -6,21 +6,10 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SCRIPT="$SCRIPT_DIR/generate-sprites.py"
 VENV="$HOME/.venvs/sd/bin/activate"
 
-# Themes to generate (excluding already complete/in-progress)
+# Themes to generate - 7 missing themes
 THEMES=(
-  agatha-christie arcane avatar-the-last-airbender babylon-5 battlestar-galactica
-  better-call-saul big-lebowski black-sails blade-runner bobiverse
-  breaking-bad control deadwood doctor-who dune
-  expeditionary-force fargo foundation game-of-thrones hannibal
-  harry-potter his-dark-materials historical-figures imperial-radch inspector-morse
-  jane-austen justified legion-of-doom les-miserables mad-men
-  marvel-mcu mash mass-effect neuromancer parks-and-rec
-  peaky-blinders princess-bride rome sandman shakespeare
-  sherlock-holmes snow-crash software-pioneers star-trek-tng star-trek-tos
-  succession superfriends ted-lasso the-americans the-crown
-  the-expanse the-good-place the-office the-sopranos the-wire
-  the-witcher vorkosigan-saga watchmen west-wing world-explorers
-  wwii-leaders
+  hitchhikers-guide house-md jazz-legends lord-of-the-rings
+  military-commanders moby-dick norse-mythology
 )
 
 BATCH_SIZE=3

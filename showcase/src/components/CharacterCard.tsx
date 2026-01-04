@@ -118,7 +118,7 @@ function Portrait({ themeId, role, emoji, name }: { themeId?: string; role: stri
 
   if (!spritePath || imgError) {
     return (
-      <div className="w-12 h-12 flex items-center justify-center text-2xl bg-stone-700 rounded">
+      <div className="w-[100px] h-[100px] flex items-center justify-center text-4xl bg-stone-700 rounded">
         {emoji || '👤'}
       </div>
     );
@@ -128,7 +128,7 @@ function Portrait({ themeId, role, emoji, name }: { themeId?: string; role: stri
     <img
       src={spritePath}
       alt={name}
-      className="w-12 h-12 object-cover rounded"
+      className="w-[100px] h-[100px] object-cover rounded"
       onError={() => setImgError(true)}
     />
   );
