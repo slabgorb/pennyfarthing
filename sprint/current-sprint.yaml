@@ -384,7 +384,8 @@ epics:
           - Document usage in README
         points: 2
         priority: P2
-        status: backlog
+        status: in-progress
+        started: 2026-01-04
         depends_on: "15-3"
         jira: https://1898andco.atlassian.net/browse/MSSCI-11351
         acceptance_criteria:
@@ -450,6 +451,36 @@ epics:
           - Cyclist sprite symlink works
           - generate-sprites.py outputs to new location
           - npm package includes sprites
+
+      - id: "15-7"
+        title: "Move dev-only assets to internal/ folder"
+        description: |
+          Separate internal development assets from distributable code.
+          Creates clear boundary between "what clients get" vs "dev tools".
+
+          Move to internal/:
+          - showcase/ -> internal/showcase/
+          - results/ -> internal/results/ (benchmark results)
+          - Any other dev-only tooling
+
+          Keep at root (distributed):
+          - pennyfarthing-dist/
+          - src/ (CLI)
+          - dist/
+
+          Update:
+          - .npmignore to exclude internal/
+          - Any scripts that reference moved paths
+          - Documentation
+        points: 2
+        priority: P2
+        status: backlog
+        acceptance_criteria:
+          - internal/ folder created with dev-only assets
+          - showcase moved and still builds
+          - .npmignore excludes internal/
+          - pennyfarthing init doesn't reference internal/
+          - Clear separation documented
 
 # =============================================================================
 # BACKLOG - Future Sprint Candidates
