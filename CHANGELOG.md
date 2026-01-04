@@ -11,6 +11,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.1.0] - 2026-01-04
+
+### Sprint 6 Complete: Showcase Website, TRAIL-OCEAN Research, Cyclist Integration
+
+This release completes three major epics with 65 story points delivered.
+
+### Added
+
+#### Epic 13: Pennyfarthing Showcase Website (Complete)
+- **Query Builder** - Interactive OCEAN expression parser for filtering characters
+- **Comparison View** - Side-by-side character comparisons with overlay spider charts
+- **Benchmark Reports** - Pre-rendered performance data from Epic 12
+- **Shareable URLs** - Comparison state encoded in URL parameters
+- **Favorites System** - localStorage persistence for saved characters
+- **Character Portraits** - Woodcut-style sprite sheets for all 91 themes
+
+#### Epic 14: TRAIL-OCEAN Correlation Research (Complete)
+- **OCEAN x Error-Type Heat Map** - Visualization of personality-error correlations
+- **Debugging Scenarios Complete** - All 5 TRAIL-tagged scenarios implemented
+
+#### Epic 15: Cyclist-Pennyfarthing Integration (Complete)
+- **`pennyfarthing cyclist` Command** - Launch Cyclist with Pennyfarthing context
+- **Metadata Module** - Real-time persona, story, and git status in Cyclist sidebar
+- **Sprite Symlinks** - Shared portrait assets between showcase and Cyclist
+- **Statusbar Detection** - Automatically disabled when running in Cyclist
+
+### Changed
+- **Dev assets relocated** - `showcase/` and `results/` moved to `internal/` folder
+- **npm package cleaner** - `.npmignore` excludes `internal/` from distribution
+- **Theme count** - Now 91 themes (up from 63)
+
+### Summary
+| Metric | Value |
+|--------|-------|
+| Stories Completed | 26 |
+| Points Delivered | 65 |
+| Themes | 91 |
+| Characters | 910 |
+| Showcase Pages | 1006 |
+
+---
+
 ## [5.0.1] - 2026-01-02
 
 ### Changed
@@ -658,7 +700,11 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v4.2.3...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v5.1.0...HEAD
+[5.1.0]: https://github.com/1898andCo/pennyfarthing/compare/v5.0.1...v5.1.0
+[5.0.1]: https://github.com/1898andCo/pennyfarthing/compare/v5.0.0...v5.0.1
+[5.0.0]: https://github.com/1898andCo/pennyfarthing/compare/v4.3.0...v5.0.0
+[4.3.0]: https://github.com/1898andCo/pennyfarthing/compare/v4.2.3...v4.3.0
 [4.2.3]: https://github.com/1898andCo/pennyfarthing/compare/v4.2.2...v4.2.3
 [4.2.2]: https://github.com/1898andCo/pennyfarthing/compare/v4.2.1...v4.2.2
 [4.2.1]: https://github.com/1898andCo/pennyfarthing/compare/v4.2.0...v4.2.1
