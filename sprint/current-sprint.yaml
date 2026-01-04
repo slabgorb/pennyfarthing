@@ -1,21 +1,22 @@
 # Pennyfarthing Sprint 6 (Active)
-# Goal: Launch showcase website and complete TRAIL-OCEAN correlation research
+# Goal: Launch showcase website, TRAIL-OCEAN research, and Cyclist integration
 # History: See sprint/archive/sprint-{1-5}.yaml for completed sprints
 
 sprint:
   number: 6
-  goal: "Launch showcase website and complete TRAIL-OCEAN correlation research"
+  goal: "Launch showcase website, complete TRAIL-OCEAN research, and integrate Cyclist UI"
   planned_start: 2026-01-02
   status: active
   velocity_target: 20
 
 summary:
-  total_points: 53
+  total_points: 68
   completed_points: 43  # Epic 13: 29pts + Epic 14: 14pts
-  remaining_points: 10  # Epic 13 story 13-14 (5pts expanded)
+  remaining_points: 25  # Epic 13: 10pts + Epic 15: 15pts
   notes: |
     Epic 14 complete (14/14 pts).
     Epic 13 in progress (29/39 pts, story 13-14 in progress - expanded to 5pts).
+    Epic 15 added (0/15 pts) - Cyclist-Pennyfarthing integration.
 
 epics:
   # =========================================================================
@@ -264,6 +265,154 @@ epics:
         points: 3
         status: done
         pr: https://github.com/1898andCo/pennyfarthing/pull/56
+
+  # =========================================================================
+  # EPIC 15 - Cyclist-Pennyfarthing Integration (15 pts)
+  # =========================================================================
+  - id: epic-15
+    title: "Cyclist-Pennyfarthing Integration"
+    description: |
+      Integrate Cyclist (Claude REPL wrapper with sidebar UI) with Pennyfarthing's
+      rich metadata system. Enables visual display of agent personas, session stats,
+      sprint progress, and git status alongside the Claude terminal.
+
+      Architecture: Hybrid launcher + file watching
+      - `pennyfarthing cyclist` command launches cyclist with project context
+      - Cyclist watches .session/agents/* for live agent changes
+      - Sidebar displays persona, stats, story, and git info
+      - Statusbar disabled when running in Cyclist (redundant)
+    points: 15
+    completed_points: 0
+    priority: P2
+    marker: "tooling"
+    repos: pennyfarthing, cyclist
+    jira: https://1898andco.atlassian.net/browse/MSSCI-11347
+    plan_file: ~/.claude/plans/dreamy-puzzling-newt.md
+    stories:
+      - id: "15-1"
+        title: "Add pennyfarthing cyclist launcher command"
+        description: |
+          New CLI command to launch Cyclist with Pennyfarthing context.
+
+          - Find cyclist installation (sibling dir or CYCLIST_PATH env)
+          - Set environment: CYCLIST_PROJECT_DIR, CYCLIST_THEME, CYCLIST_THEME_PATH
+          - Spawn cyclist server process
+          - Open browser to localhost:3000
+
+          File: src/cli/commands/cyclist.ts
+        points: 3
+        priority: P1
+        status: backlog
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11348
+        acceptance_criteria:
+          - Command registered in pennyfarthing CLI
+          - Finds cyclist in ../cyclist or via CYCLIST_PATH
+          - Sets correct environment variables
+          - Spawns cyclist server successfully
+          - Opens browser (--no-open flag to disable)
+          - Helpful error if cyclist not found
+
+      - id: "15-2"
+        title: "Add Pennyfarthing metadata module to Cyclist"
+        description: |
+          New module in Cyclist that reads Pennyfarthing config and watches for changes.
+
+          - Read .claude/persona-config.yaml for theme
+          - Load theme YAML for agent personas
+          - Watch .session/agents/* for agent changes
+          - Expose GET /api/persona endpoint
+          - Expose WebSocket /ws/persona for live updates
+
+          File: cyclist/src/pennyfarthing.ts
+        points: 5
+        priority: P1
+        status: backlog
+        depends_on: "15-1"
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11349
+        acceptance_criteria:
+          - Detects Pennyfarthing project (.claude/ exists)
+          - Reads theme config correctly
+          - Parses theme YAML for agent data
+          - Watches agent files for changes
+          - API returns current persona with character, role, quote, OCEAN
+          - WebSocket broadcasts on agent change
+
+      - id: "15-3"
+        title: "Enhance Cyclist sidebar with persona/story/git sections"
+        description: |
+          Update Cyclist UI to display rich Pennyfarthing metadata.
+
+          Sidebar sections:
+          - Persona: portrait, character name, role, quote
+          - Stats: tokens, messages, context (existing)
+          - Story: current story title, phase, sprint progress
+          - Git: branch, clean/dirty status
+
+          Files:
+          - cyclist/src/public/js/persona.js (new)
+          - cyclist/src/public/index.html (modify)
+          - cyclist/src/public/styles.css (modify)
+        points: 3
+        priority: P1
+        status: backlog
+        depends_on: "15-2"
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11350
+        acceptance_criteria:
+          - Persona section shows character and quote
+          - Portrait loads from sprite symlink
+          - Story section shows current work
+          - Git section shows branch status
+          - Live updates when agent changes
+
+      - id: "15-4"
+        title: "Set up sprite symlink and end-to-end test"
+        description: |
+          Final integration setup and testing.
+
+          - Create symlink: cyclist/src/public/sprites -> pennyfarthing/showcase/public/sprites
+          - Test full flow: pennyfarthing cyclist → sidebar shows persona
+          - Test agent switching: invoke /dev, verify sidebar updates
+          - Document usage in README
+        points: 2
+        priority: P2
+        status: backlog
+        depends_on: "15-3"
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11351
+        acceptance_criteria:
+          - Sprite symlink works correctly
+          - Full integration flow tested
+          - Agent changes reflected in sidebar
+          - Documentation updated
+
+      - id: "15-5"
+        title: "Conditionally disable statusbar when running in Cyclist"
+        description: |
+          Detect when Claude is running inside Cyclist and disable the redundant statusbar.
+
+          Options to explore:
+          1. Environment variable: CYCLIST_ACTIVE=1 set by Cyclist when spawning Claude
+          2. TTY detection: Check if running in Cyclist's PTY
+          3. Config flag: pennyfarthing cyclist sets a flag in .claude/
+
+          Implementation:
+          - Cyclist sets CYCLIST_ACTIVE=1 when spawning Claude PTY
+          - statusline.sh checks for this env var
+          - If set, output empty string (disable statusbar)
+          - Sidebar in Cyclist provides all the same information
+
+          Files:
+          - cyclist/src/server.ts (set env var when spawning)
+          - pennyfarthing-dist/scripts/statusline.sh (check and skip)
+        points: 2
+        priority: P2
+        status: backlog
+        depends_on: "15-2"
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11352
+        acceptance_criteria:
+          - Cyclist sets CYCLIST_ACTIVE=1 when spawning Claude
+          - statusline.sh detects env var and outputs nothing
+          - Statusbar hidden when in Cyclist, visible otherwise
+          - No visual duplication between sidebar and statusbar
 
 # =============================================================================
 # BACKLOG - Future Sprint Candidates
