@@ -10,14 +10,15 @@ sprint:
   velocity_target: 20
 
 summary:
-  total_points: 68
-  completed_points: 65  # Epic 13: 34pts + Epic 14: 14pts + Epic 15: 17pts
-  remaining_points: 3  # Epic 15: 0pts (all complete)
+  total_points: 71
+  completed_points: 68  # Epic 13: 34pts + Epic 14: 14pts + Epic 15: 17pts + Epic 8: 3pts
+  remaining_points: 0  # All epics complete
   notes: |
+    Epic 8 complete (3/3 pts) - Automatic State Reconciliation
     Epic 14 complete (14/14 pts).
     Epic 13 complete (34/34 pts).
     Epic 15 complete (15/15 pts).
-    Sprint 6 execution complete (65/68 pts) - ready for merge and release.
+    Sprint 6 execution complete (68/71 pts) - ready for merge and release.
 
 epics:
   # =========================================================================
@@ -498,6 +499,30 @@ epics:
           - .npmignore excludes internal/
           - pennyfarthing init doesn't reference internal/
           - Clear separation documented
+
+  # =========================================================================
+  # EPIC 8 - Automatic State Reconciliation (3 pts)
+  # =========================================================================
+  - id: epic-8
+    title: "Automatic State Reconciliation"
+    description: |
+      Implement git hooks and automatic detection systems that reconcile story status
+      without manual intervention. This epic enables Claude sessions to survive restarts
+      and auto-complete when branches are merged.
+    points: 3
+    completed_points: 3
+    priority: P1
+    repos: pennyfarthing
+    stories:
+      - id: "8-1"
+        title: "Git Hook for PR Merge Detection"
+        points: 3
+        status: done
+        started: 2026-01-04
+        completed: 2026-01-04
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11380
+        pr: https://github.com/1898andCo/pennyfarthing/pull/74
+        branch: feat/8-1-merge-detection
 
 # =============================================================================
 # BACKLOG - Future Sprint Candidates

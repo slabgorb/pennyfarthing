@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v5.0.0** | *The outer loop goes once, the inner loop goes many times.*
+**v5.1.1** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px" margin="10px">
 
@@ -10,7 +10,7 @@ A Claude Code agent orchestration framework with TDD workflow and themed persona
 
 - **10 Agents + 13 Subagents** - Strategic (PM, Architect) and tactical (SM, TEA, Dev, Reviewer) agents with official Haiku-based subagents for mechanical tasks
 - **Automatic Handoffs** - Context-aware agent transitions via official subagent format
-- **63 Persona Themes** - Star Trek, Breaking Bad, Dune, The Office, Game of Thrones, and more with OCEAN personality profiles
+- **91 Persona Themes** - Star Trek, Breaking Bad, Dune, The Office, Game of Thrones, and more with OCEAN personality profiles
 - **13 Skills** - Reusable knowledge domains (testing, code-review, judge, jira-cli, etc.)
 - **28 Slash Commands** - Entry points for agent activation, benchmarking, and workflows
 - **Scientific Benchmarking** - Evaluate personas against standardized scenarios with statistical analysis
@@ -119,7 +119,7 @@ your-project/
     └── {story-id}-session.md       # Active work session
 ```
 
-## Available Themes (63 total)
+## Available Themes (91 total)
 
 | Category | Themes |
 |----------|--------|
@@ -133,7 +133,7 @@ your-project/
 | **Classic** | `princess-bride`, `a-team`, `mash`, `west-wing` |
 | **Minimal** | `control`, `minimalist` |
 
-All 63 themes include OCEAN (Big Five) personality profiles and Chernoff face visualizations.
+All 91 themes include OCEAN (Big Five) personality profiles and Chernoff face visualizations.
 
 See [Theme Comparison Guide](docs/THEME-COMPARISON.md) for personality analysis, OCEAN profiles, and help choosing between themes.
 
@@ -197,6 +197,21 @@ pennyfarthing uninstall --all
 
 Archived sprint data (`sprint/archive/`, `sprint/context/`) is always preserved.
 
+## What's New in v5.1
+
+- **Cyclist Integration** (Epic 15) - Launch Cyclist with Pennyfarthing context
+  - `pennyfarthing cyclist` command with auto-discovery
+  - Real-time persona, story, and git status in Cyclist sidebar
+  - Automatic statusbar detection (disabled when running in Cyclist)
+- **Git Merge Hooks** (Epic 8) - Automatic state reconciliation
+  - Post-merge hook detects PR merges and archives completed stories
+  - Session cleanup on branch switch
+- **Showcase Website Complete** - Interactive theme browser
+  - 1006 static pages across 91 themes
+  - Query builder with OCEAN expression parser
+  - Character portraits, comparison views, favorites
+- **91 Themes** - Up from 63, all with OCEAN profiles
+
 ## What's New in v5.0
 
 - **Scientific Benchmarking** - Complete persona evaluation framework
@@ -206,10 +221,6 @@ Archived sprint data (`sprint/archive/`, `sprint/context/`) is always preserved.
   - `/judge` - Rubric-based evaluation with TRAIL error detection
   - 24+ scenarios across 6 categories
   - See [BENCHMARKING.md](docs/BENCHMARKING.md) for details
-- **Showcase Website** - Interactive theme browser (in progress)
-  - 768 static pages (themes, details, character profiles)
-  - OCEAN spider charts and Chernoff faces
-  - Built with Astro + React + Tailwind
 - **TRAIL-OCEAN Research** - Error detection correlation analysis
   - Extended scenario schema with error_type taxonomy
   - 10 debugging scenarios with 61 tagged issues
