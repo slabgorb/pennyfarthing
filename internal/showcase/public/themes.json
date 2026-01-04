@@ -14,6 +14,7 @@
       {
         "role": "orchestrator",
         "character": "Big Brother",
+        "shortName": "Big Brother",
         "ocean": {
           "O": 1,
           "C": 5,
@@ -45,6 +46,7 @@
       {
         "role": "sm",
         "character": "Winston Smith",
+        "shortName": "Winston Smith",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -76,6 +78,7 @@
       {
         "role": "tea",
         "character": "O'Brien",
+        "shortName": "O'Brien",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -107,6 +110,7 @@
       {
         "role": "dev",
         "character": "Julia",
+        "shortName": "Julia",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -138,6 +142,7 @@
       {
         "role": "reviewer",
         "character": "The Thought Police",
+        "shortName": "Thought Police",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -169,6 +174,7 @@
       {
         "role": "architect",
         "character": "Emmanuel Goldstein",
+        "shortName": "Emmanuel",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -200,6 +206,7 @@
       {
         "role": "pm",
         "character": "Syme",
+        "shortName": "Syme",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -231,6 +238,7 @@
       {
         "role": "tech-writer",
         "character": "Winston Smith (Records Department)",
+        "shortName": "Winston Smith",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -262,6 +270,7 @@
       {
         "role": "ux-designer",
         "character": "Parsons",
+        "shortName": "Parsons",
         "ocean": {
           "O": 1,
           "C": 4,
@@ -293,6 +302,7 @@
       {
         "role": "devops",
         "character": "The Ministry of Truth",
+        "shortName": "Ministry",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -338,6 +348,7 @@
       {
         "role": "orchestrator",
         "character": "Colonel John \"Hannibal\" Smith",
+        "shortName": "Hannibal",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -361,6 +372,7 @@
       {
         "role": "sm",
         "character": "Lieutenant Templeton \"Faceman\" Peck",
+        "shortName": "Faceman",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -384,6 +396,7 @@
       {
         "role": "tea",
         "character": "Captain H.M. \"Howling Mad\" Murdock",
+        "shortName": "Murdock",
         "ocean": {
           "O": 5,
           "C": 2,
@@ -407,6 +420,7 @@
       {
         "role": "dev",
         "character": "Sergeant Bosco \"B.A.\" Baracus",
+        "shortName": "B.A.",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -430,6 +444,7 @@
       {
         "role": "reviewer",
         "character": "Colonel Lynch / Colonel Decker",
+        "shortName": "Lynch",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -453,6 +468,7 @@
       {
         "role": "architect",
         "character": "Hannibal (Strategic Mode)",
+        "shortName": "Hannibal",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -476,6 +492,7 @@
       {
         "role": "pm",
         "character": "Amy Amanda Allen",
+        "shortName": "Amy",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -499,6 +516,7 @@
       {
         "role": "tech-writer",
         "character": "Faceman (Documentation Mode)",
+        "shortName": "Faceman",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -522,6 +540,7 @@
       {
         "role": "ux-designer",
         "character": "Face (Design Mode)",
+        "shortName": "Face",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -545,6 +564,7 @@
       {
         "role": "devops",
         "character": "B.A. (Infrastructure Mode)",
+        "shortName": "B.A.",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -582,6 +602,7 @@
       {
         "role": "orchestrator",
         "character": "Ariadne Oliver",
+        "shortName": "Ariadne",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -613,6 +634,7 @@
       {
         "role": "sm",
         "character": "Captain Hastings",
+        "shortName": "Hastings",
         "ocean": {
           "O": 2,
           "C": 4,
@@ -644,6 +666,7 @@
       {
         "role": "tea",
         "character": "Hercule Poirot",
+        "shortName": "Hercule",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -675,6 +698,7 @@
       {
         "role": "dev",
         "character": "Tommy Beresford",
+        "shortName": "Tommy",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -706,6 +730,7 @@
       {
         "role": "reviewer",
         "character": "Miss Marple",
+        "shortName": "Marple",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -737,6 +762,7 @@
       {
         "role": "architect",
         "character": "Superintendent Battle",
+        "shortName": "Battle",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -768,6 +794,7 @@
       {
         "role": "pm",
         "character": "Bundle (Lady Eileen Brent)",
+        "shortName": "Bundle",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -799,6 +826,7 @@
       {
         "role": "tech-writer",
         "character": "The Chronicler (Various Narrators)",
+        "shortName": "Chronicler",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -830,6 +858,7 @@
       {
         "role": "ux-designer",
         "character": "Tuppence Beresford",
+        "shortName": "Tuppence",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -861,6 +890,7 @@
       {
         "role": "devops",
         "character": "Colonel Race",
+        "shortName": "Race",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -906,6 +936,7 @@
       {
         "role": "orchestrator",
         "character": "Socrates",
+        "shortName": "Socrates",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -937,6 +968,7 @@
       {
         "role": "sm",
         "character": "Plato",
+        "shortName": "Plato",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -968,6 +1000,7 @@
       {
         "role": "tea",
         "character": "Diogenes the Cynic",
+        "shortName": "Diogenes",
         "ocean": {
           "O": 5,
           "C": 1,
@@ -999,6 +1032,7 @@
       {
         "role": "dev",
         "character": "Aristotle",
+        "shortName": "Aristotle",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -1030,6 +1064,7 @@
       {
         "role": "reviewer",
         "character": "Heraclitus",
+        "shortName": "Heraclitus",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -1061,6 +1096,7 @@
       {
         "role": "architect",
         "character": "Pythagoras",
+        "shortName": "Pythagoras",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -1092,6 +1128,7 @@
       {
         "role": "pm",
         "character": "Epicurus",
+        "shortName": "Epicurus",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -1123,6 +1160,7 @@
       {
         "role": "tech-writer",
         "character": "Marcus Aurelius",
+        "shortName": "Marcus",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -1154,6 +1192,7 @@
       {
         "role": "ux-designer",
         "character": "Democritus",
+        "shortName": "Democritus",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -1185,6 +1224,7 @@
       {
         "role": "devops",
         "character": "Epictetus",
+        "shortName": "Epictetus",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -1230,6 +1270,7 @@
       {
         "role": "orchestrator",
         "character": "Sun Tzu",
+        "shortName": "Sun Tzu",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -1261,6 +1302,7 @@
       {
         "role": "sm",
         "character": "Pericles",
+        "shortName": "Pericles",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -1292,6 +1334,7 @@
       {
         "role": "tea",
         "character": "Thucydides",
+        "shortName": "Thucydides",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -1323,6 +1366,7 @@
       {
         "role": "dev",
         "character": "Xenophon",
+        "shortName": "Xenophon",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -1354,6 +1398,7 @@
       {
         "role": "reviewer",
         "character": "Chanakya (Kautilya)",
+        "shortName": "Chanakya",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -1385,6 +1430,7 @@
       {
         "role": "architect",
         "character": "Marcus Aurelius",
+        "shortName": "Marcus",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -1416,6 +1462,7 @@
       {
         "role": "pm",
         "character": "Themistocles",
+        "shortName": "Themistocles",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -1447,6 +1494,7 @@
       {
         "role": "tech-writer",
         "character": "Herodotus",
+        "shortName": "Herodotus",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -1478,6 +1526,7 @@
       {
         "role": "ux-designer",
         "character": "Leonidas",
+        "shortName": "Leonidas",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -1509,6 +1558,7 @@
       {
         "role": "devops",
         "character": "Belisarius",
+        "shortName": "Belisarius",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -1554,6 +1604,7 @@
       {
         "role": "orchestrator",
         "character": "Silco",
+        "shortName": "Silco",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -1585,6 +1636,7 @@
       {
         "role": "sm",
         "character": "Caitlyn Kiramman",
+        "shortName": "Caitlyn",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -1616,6 +1668,7 @@
       {
         "role": "tea",
         "character": "Jinx (Powder)",
+        "shortName": "Jinx",
         "ocean": {
           "O": 5,
           "C": 2,
@@ -1647,6 +1700,7 @@
       {
         "role": "dev",
         "character": "Vi",
+        "shortName": "Vi",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -1678,6 +1732,7 @@
       {
         "role": "reviewer",
         "character": "Heimerdinger",
+        "shortName": "Heimerdinger",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -1709,6 +1764,7 @@
       {
         "role": "architect",
         "character": "Viktor",
+        "shortName": "Viktor",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -1740,6 +1796,7 @@
       {
         "role": "pm",
         "character": "Jayce",
+        "shortName": "Jayce",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -1771,6 +1828,7 @@
       {
         "role": "tech-writer",
         "character": "Mel Medarda",
+        "shortName": "Mel",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -1802,6 +1860,7 @@
       {
         "role": "ux-designer",
         "character": "Ekko",
+        "shortName": "Ekko",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -1833,6 +1892,7 @@
       {
         "role": "devops",
         "character": "Vander",
+        "shortName": "Vander",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -1878,6 +1938,7 @@
       {
         "role": "orchestrator",
         "character": "Uncle Iroh",
+        "shortName": "Iroh",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -1909,6 +1970,7 @@
       {
         "role": "sm",
         "character": "Sokka",
+        "shortName": "Sokka",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -1940,6 +2002,7 @@
       {
         "role": "tea",
         "character": "Toph Beifong",
+        "shortName": "Toph",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -1971,6 +2034,7 @@
       {
         "role": "dev",
         "character": "Aang",
+        "shortName": "Aang",
         "ocean": {
           "O": 5,
           "C": 2,
@@ -2002,6 +2066,7 @@
       {
         "role": "reviewer",
         "character": "Azula",
+        "shortName": "Azula",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -2033,6 +2098,7 @@
       {
         "role": "architect",
         "character": "Avatar Roku",
+        "shortName": "Roku",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -2064,6 +2130,7 @@
       {
         "role": "pm",
         "character": "Katara",
+        "shortName": "Katara",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -2095,6 +2162,7 @@
       {
         "role": "tech-writer",
         "character": "Professor Zei",
+        "shortName": "Zei",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -2126,6 +2194,7 @@
       {
         "role": "ux-designer",
         "character": "Ty Lee",
+        "shortName": "Ty",
         "ocean": {
           "O": 3,
           "C": 2,
@@ -2157,6 +2226,7 @@
       {
         "role": "devops",
         "character": "Zuko",
+        "shortName": "Zuko",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -2204,6 +2274,7 @@
       {
         "role": "orchestrator",
         "character": "Kosh Naranek",
+        "shortName": "Kosh",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -2235,6 +2306,7 @@
       {
         "role": "sm",
         "character": "Commander/Captain John Sheridan",
+        "shortName": "John",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -2266,6 +2338,7 @@
       {
         "role": "tea",
         "character": "Alfred Bester",
+        "shortName": "Alfred",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -2297,6 +2370,7 @@
       {
         "role": "dev",
         "character": "Vir Cotto",
+        "shortName": "Vir",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -2328,6 +2402,7 @@
       {
         "role": "reviewer",
         "character": "G'Kar",
+        "shortName": "G'Kar",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -2359,6 +2434,7 @@
       {
         "role": "architect",
         "character": "Londo Mollari",
+        "shortName": "Londo",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -2390,6 +2466,7 @@
       {
         "role": "pm",
         "character": "Delenn",
+        "shortName": "Delenn",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -2421,6 +2498,7 @@
       {
         "role": "tech-writer",
         "character": "Brother Theo",
+        "shortName": "Theo",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -2452,6 +2530,7 @@
       {
         "role": "ux-designer",
         "character": "Dr. Stephen Franklin",
+        "shortName": "Stephen",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -2483,6 +2562,7 @@
       {
         "role": "devops",
         "character": "Michael Garibaldi",
+        "shortName": "Michael",
         "ocean": {
           "O": 2,
           "C": 4,
@@ -2528,6 +2608,7 @@
       {
         "role": "orchestrator",
         "character": "The Hybrid",
+        "shortName": "Hybrid",
         "ocean": {
           "O": 5,
           "C": 2,
@@ -2559,6 +2640,7 @@
       {
         "role": "sm",
         "character": "Admiral William Adama",
+        "shortName": "William",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -2590,6 +2672,7 @@
       {
         "role": "tea",
         "character": "Gaius Baltar",
+        "shortName": "Gaius",
         "ocean": {
           "O": 4,
           "C": 2,
@@ -2621,6 +2704,7 @@
       {
         "role": "dev",
         "character": "Kara \"Starbuck\" Thrace",
+        "shortName": "Starbuck",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -2652,6 +2736,7 @@
       {
         "role": "reviewer",
         "character": "Laura Roslin",
+        "shortName": "Laura",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -2683,6 +2768,7 @@
       {
         "role": "architect",
         "character": "Number Six",
+        "shortName": "Number",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -2714,6 +2800,7 @@
       {
         "role": "pm",
         "character": "Lee \"Apollo\" Adama",
+        "shortName": "Apollo",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -2745,6 +2832,7 @@
       {
         "role": "tech-writer",
         "character": "Felix Gaeta",
+        "shortName": "Felix",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -2776,6 +2864,7 @@
       {
         "role": "ux-designer",
         "character": "Chief Galen Tyrol",
+        "shortName": "Galen",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -2807,6 +2896,7 @@
       {
         "role": "devops",
         "character": "Colonel Saul Tigh",
+        "shortName": "Saul",
         "ocean": {
           "O": 2,
           "C": 4,
@@ -2852,6 +2942,7 @@
       {
         "role": "orchestrator",
         "character": "Howard Hamlin",
+        "shortName": "Howard",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -2883,6 +2974,7 @@
       {
         "role": "sm",
         "character": "Kim Wexler",
+        "shortName": "Kim",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -2914,6 +3006,7 @@
       {
         "role": "tea",
         "character": "Chuck McGill",
+        "shortName": "Chuck",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -2945,6 +3038,7 @@
       {
         "role": "dev",
         "character": "Jimmy McGill / Saul Goodman",
+        "shortName": "Jimmy",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -2976,6 +3070,7 @@
       {
         "role": "reviewer",
         "character": "Mike Ehrmantraut",
+        "shortName": "Mike",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -3007,6 +3102,7 @@
       {
         "role": "architect",
         "character": "Gus Fring",
+        "shortName": "Gus",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -3038,6 +3134,7 @@
       {
         "role": "pm",
         "character": "Nacho Varga",
+        "shortName": "Nacho",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -3069,6 +3166,7 @@
       {
         "role": "tech-writer",
         "character": "Omar",
+        "shortName": "Omar",
         "ocean": {
           "O": 2,
           "C": 4,
@@ -3100,6 +3198,7 @@
       {
         "role": "ux-designer",
         "character": "Francesca Liddy",
+        "shortName": "Francesca",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -3131,6 +3230,7 @@
       {
         "role": "devops",
         "character": "Lalo Salamanca",
+        "shortName": "Lalo",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -3176,6 +3276,7 @@
       {
         "role": "orchestrator",
         "character": "The Stranger (Sam Elliott)",
+        "shortName": "Stranger",
         "ocean": {
           "O": 4,
           "C": 2,
@@ -3207,6 +3308,7 @@
       {
         "role": "sm",
         "character": "Walter Sobchak",
+        "shortName": "Walter",
         "ocean": {
           "O": 2,
           "C": 3,
@@ -3238,6 +3340,7 @@
       {
         "role": "tea",
         "character": "The Jesus (Jesus Quintana)",
+        "shortName": "Jesus",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -3269,6 +3372,7 @@
       {
         "role": "dev",
         "character": "The Dude (Jeffrey Lebowski)",
+        "shortName": "Dude",
         "ocean": {
           "O": 4,
           "C": 1,
@@ -3300,6 +3404,7 @@
       {
         "role": "reviewer",
         "character": "The Big Lebowski (Jeffrey Lebowski)",
+        "shortName": "Big Lebowski",
         "ocean": {
           "O": 2,
           "C": 4,
@@ -3331,6 +3436,7 @@
       {
         "role": "architect",
         "character": "Maude Lebowski",
+        "shortName": "Maude",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -3362,6 +3468,7 @@
       {
         "role": "pm",
         "character": "Bunny Lebowski",
+        "shortName": "Bunny",
         "ocean": {
           "O": 3,
           "C": 2,
@@ -3393,6 +3500,7 @@
       {
         "role": "tech-writer",
         "character": "Da Fino (Private Eye)",
+        "shortName": "Da",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -3424,6 +3532,7 @@
       {
         "role": "ux-designer",
         "character": "Donny",
+        "shortName": "Donny",
         "ocean": {
           "O": 2,
           "C": 2,
@@ -3455,6 +3564,7 @@
       {
         "role": "devops",
         "character": "The Nihilists",
+        "shortName": "Nihilists",
         "ocean": {
           "O": 2,
           "C": 3,
@@ -3500,6 +3610,7 @@
       {
         "role": "orchestrator",
         "character": "Thomas Hamilton",
+        "shortName": "Thomas",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -3531,6 +3642,7 @@
       {
         "role": "sm",
         "character": "John Silver",
+        "shortName": "John",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -3562,6 +3674,7 @@
       {
         "role": "tea",
         "character": "Eleanor Guthrie",
+        "shortName": "Eleanor",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -3593,6 +3706,7 @@
       {
         "role": "dev",
         "character": "Charles Vane",
+        "shortName": "Charles",
         "ocean": {
           "O": 2,
           "C": 4,
@@ -3624,6 +3738,7 @@
       {
         "role": "reviewer",
         "character": "Captain Flint",
+        "shortName": "Flint",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -3655,6 +3770,7 @@
       {
         "role": "architect",
         "character": "Captain Flint (as Architect)",
+        "shortName": "Flint",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -3686,6 +3802,7 @@
       {
         "role": "pm",
         "character": "Jack Rackham",
+        "shortName": "Jack",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -3717,6 +3834,7 @@
       {
         "role": "tech-writer",
         "character": "Mr. Scott",
+        "shortName": "Scott",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -3748,6 +3866,7 @@
       {
         "role": "ux-designer",
         "character": "Max",
+        "shortName": "Max",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -3779,6 +3898,7 @@
       {
         "role": "devops",
         "character": "Anne Bonny",
+        "shortName": "Anne",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -3824,6 +3944,7 @@
       {
         "role": "orchestrator",
         "character": "Eldon Tyrell",
+        "shortName": "Eldon",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -3855,6 +3976,7 @@
       {
         "role": "sm",
         "character": "Captain Bryant",
+        "shortName": "Bryant",
         "ocean": {
           "O": 2,
           "C": 4,
@@ -3886,6 +4008,7 @@
       {
         "role": "tea",
         "character": "Rick Deckard",
+        "shortName": "Rick",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -3917,6 +4040,7 @@
       {
         "role": "dev",
         "character": "J.F. Sebastian",
+        "shortName": "Sebastian",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -3948,6 +4072,7 @@
       {
         "role": "reviewer",
         "character": "Roy Batty",
+        "shortName": "Roy",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -3979,6 +4104,7 @@
       {
         "role": "architect",
         "character": "Niander Wallace (2049)",
+        "shortName": "Niander",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -4010,6 +4136,7 @@
       {
         "role": "pm",
         "character": "Ana Stelline",
+        "shortName": "Ana",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -4041,6 +4168,7 @@
       {
         "role": "tech-writer",
         "character": "Gaff",
+        "shortName": "Gaff",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -4072,6 +4200,7 @@
       {
         "role": "ux-designer",
         "character": "Joi",
+        "shortName": "Joi",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -4103,6 +4232,7 @@
       {
         "role": "devops",
         "character": "K (Joe)",
+        "shortName": "K",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -4150,6 +4280,7 @@
       {
         "role": "orchestrator",
         "character": "Original Bob",
+        "shortName": "Original",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -4181,6 +4312,7 @@
       {
         "role": "sm",
         "character": "Riker",
+        "shortName": "Riker",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -4212,6 +4344,7 @@
       {
         "role": "tea",
         "character": "Milo",
+        "shortName": "Milo",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -4243,6 +4376,7 @@
       {
         "role": "dev",
         "character": "Bill",
+        "shortName": "Bill",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -4274,6 +4408,7 @@
       {
         "role": "reviewer",
         "character": "Homer",
+        "shortName": "Homer",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -4305,6 +4440,7 @@
       {
         "role": "architect",
         "character": "Howard",
+        "shortName": "Howard",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -4336,6 +4472,7 @@
       {
         "role": "pm",
         "character": "Hugh",
+        "shortName": "Hugh",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -4367,6 +4504,7 @@
       {
         "role": "tech-writer",
         "character": "Bridget (human)",
+        "shortName": "Bridget",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -4398,6 +4536,7 @@
       {
         "role": "ux-designer",
         "character": "Mario",
+        "shortName": "Mario",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -4429,6 +4568,7 @@
       {
         "role": "devops",
         "character": "Garfield",
+        "shortName": "Garfield",
         "ocean": {
           "O": 2,
           "C": 4,
@@ -4474,6 +4614,7 @@
       {
         "role": "orchestrator",
         "character": "Gustavo Fring",
+        "shortName": "Gustavo",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -4505,6 +4646,7 @@
       {
         "role": "sm",
         "character": "Mike Ehrmantraut",
+        "shortName": "Mike",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -4536,6 +4678,7 @@
       {
         "role": "tea",
         "character": "Walter White (Heisenberg)",
+        "shortName": "Walter",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -4567,6 +4710,7 @@
       {
         "role": "dev",
         "character": "Jesse Pinkman",
+        "shortName": "Jesse",
         "ocean": {
           "O": 3,
           "C": 2,
@@ -4598,6 +4742,7 @@
       {
         "role": "reviewer",
         "character": "Hank Schrader",
+        "shortName": "Hank",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -4629,6 +4774,7 @@
       {
         "role": "architect",
         "character": "Lydia Rodarte-Quayle",
+        "shortName": "Lydia",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -4660,6 +4806,7 @@
       {
         "role": "pm",
         "character": "Skyler White",
+        "shortName": "Skyler",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -4691,6 +4838,7 @@
       {
         "role": "tech-writer",
         "character": "Saul Goodman",
+        "shortName": "Saul",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -4722,6 +4870,7 @@
       {
         "role": "ux-designer",
         "character": "Marie Schrader",
+        "shortName": "Marie",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -4753,6 +4902,7 @@
       {
         "role": "devops",
         "character": "Gale Boetticher",
+        "shortName": "Gale",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -4798,6 +4948,7 @@
       {
         "role": "orchestrator",
         "character": "Catch-22 (The Concept)",
+        "shortName": "Catch-22",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -4829,6 +4980,7 @@
       {
         "role": "sm",
         "character": "Yossarian",
+        "shortName": "Yossarian",
         "ocean": {
           "O": 4,
           "C": 2,
@@ -4860,6 +5012,7 @@
       {
         "role": "tea",
         "character": "Doc Daneeka",
+        "shortName": "Doc",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -4891,6 +5044,7 @@
       {
         "role": "dev",
         "character": "Orr",
+        "shortName": "Orr",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -4922,6 +5076,7 @@
       {
         "role": "reviewer",
         "character": "Colonel Cathcart",
+        "shortName": "Cathcart",
         "ocean": {
           "O": 3,
           "C": 2,
@@ -4953,6 +5108,7 @@
       {
         "role": "architect",
         "character": "Milo Minderbinder",
+        "shortName": "Milo",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -4984,6 +5140,7 @@
       {
         "role": "pm",
         "character": "Major Major Major Major",
+        "shortName": "Major",
         "ocean": {
           "O": 2,
           "C": 3,
@@ -5015,6 +5172,7 @@
       {
         "role": "tech-writer",
         "character": "Ex-P.F.C. Wintergreen",
+        "shortName": "Ex-P.F.C.",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -5046,6 +5204,7 @@
       {
         "role": "ux-designer",
         "character": "Chaplain Tappman",
+        "shortName": "Chaplain",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -5077,6 +5236,7 @@
       {
         "role": "devops",
         "character": "Chief White Halfoat",
+        "shortName": "White",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -5122,6 +5282,7 @@
       {
         "role": "orchestrator",
         "character": "Johann Sebastian Bach",
+        "shortName": "Johann Bach",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -5153,6 +5314,7 @@
       {
         "role": "sm",
         "character": "Wolfgang Amadeus Mozart",
+        "shortName": "Wolfgang",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -5184,6 +5346,7 @@
       {
         "role": "tea",
         "character": "Ludwig van Beethoven",
+        "shortName": "Ludwig",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -5215,6 +5378,7 @@
       {
         "role": "dev",
         "character": "Frédéric Chopin",
+        "shortName": "Frédéric",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -5246,6 +5410,7 @@
       {
         "role": "reviewer",
         "character": "Richard Wagner",
+        "shortName": "Richard",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -5277,6 +5442,7 @@
       {
         "role": "architect",
         "character": "Johann Sebastian Bach (Architect)",
+        "shortName": "Johann Bach",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -5308,6 +5474,7 @@
       {
         "role": "pm",
         "character": "Franz Joseph Haydn",
+        "shortName": "Franz",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -5339,6 +5506,7 @@
       {
         "role": "tech-writer",
         "character": "Robert Schumann",
+        "shortName": "Robert",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -5370,6 +5538,7 @@
       {
         "role": "ux-designer",
         "character": "Claude Debussy",
+        "shortName": "Claude",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -5401,6 +5570,7 @@
       {
         "role": "devops",
         "character": "Antonio Vivaldi",
+        "shortName": "Antonio",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -5446,6 +5616,7 @@
       {
         "role": "orchestrator",
         "character": "Orchestrator (baseline control)",
+        "shortName": "Orchestrator",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -5468,6 +5639,7 @@
       {
         "role": "sm",
         "character": "Scrum Master (baseline control)",
+        "shortName": "Scrum",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -5490,6 +5662,7 @@
       {
         "role": "tea",
         "character": "Test Engineer (baseline control)",
+        "shortName": "Test",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -5512,6 +5685,7 @@
       {
         "role": "dev",
         "character": "Developer (baseline control)",
+        "shortName": "Developer",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -5534,6 +5708,7 @@
       {
         "role": "reviewer",
         "character": "Code Reviewer (baseline control)",
+        "shortName": "Code",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -5556,6 +5731,7 @@
       {
         "role": "architect",
         "character": "Architect (baseline control)",
+        "shortName": "Architect",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -5578,6 +5754,7 @@
       {
         "role": "pm",
         "character": "Product Manager (baseline control)",
+        "shortName": "Product",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -5600,6 +5777,7 @@
       {
         "role": "tech-writer",
         "character": "Technical Writer (baseline control)",
+        "shortName": "Technical",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -5622,6 +5800,7 @@
       {
         "role": "ux-designer",
         "character": "UX Designer (baseline control)",
+        "shortName": "UX",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -5644,6 +5823,7 @@
       {
         "role": "devops",
         "character": "DevOps Engineer (baseline control)",
+        "shortName": "DevOps",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -5680,6 +5860,7 @@
       {
         "role": "orchestrator",
         "character": "Laughing Bull",
+        "shortName": "Laughing",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -5711,6 +5892,7 @@
       {
         "role": "sm",
         "character": "Jet Black",
+        "shortName": "Jet",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -5742,6 +5924,7 @@
       {
         "role": "tea",
         "character": "Edward Wong Hau Pepelu Tivrusky IV",
+        "shortName": "Edward",
         "ocean": {
           "O": 5,
           "C": 1,
@@ -5773,6 +5956,7 @@
       {
         "role": "dev",
         "character": "Spike Spiegel",
+        "shortName": "Spike",
         "ocean": {
           "O": 4,
           "C": 2,
@@ -5804,6 +5988,7 @@
       {
         "role": "reviewer",
         "character": "Vicious",
+        "shortName": "Vicious",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -5835,6 +6020,7 @@
       {
         "role": "architect",
         "character": "Julia",
+        "shortName": "Julia",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -5866,6 +6052,7 @@
       {
         "role": "pm",
         "character": "Faye Valentine",
+        "shortName": "Faye",
         "ocean": {
           "O": 3,
           "C": 2,
@@ -5897,6 +6084,7 @@
       {
         "role": "tech-writer",
         "character": "Bob",
+        "shortName": "Bob",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -5928,6 +6116,7 @@
       {
         "role": "ux-designer",
         "character": "Punch and Judy",
+        "shortName": "Punch",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -5959,6 +6148,7 @@
       {
         "role": "devops",
         "character": "Doohan",
+        "shortName": "Doohan",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -6004,6 +6194,7 @@
       {
         "role": "orchestrator",
         "character": "Al Swearengen",
+        "shortName": "Al",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -6035,6 +6226,7 @@
       {
         "role": "sm",
         "character": "Seth Bullock",
+        "shortName": "Seth",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -6066,6 +6258,7 @@
       {
         "role": "tea",
         "character": "Doc Cochran",
+        "shortName": "Doc",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -6097,6 +6290,7 @@
       {
         "role": "dev",
         "character": "Charlie Utter",
+        "shortName": "Charlie",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -6128,6 +6322,7 @@
       {
         "role": "reviewer",
         "character": "George Hearst",
+        "shortName": "George",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -6159,6 +6354,7 @@
       {
         "role": "architect",
         "character": "E.B. Farnum",
+        "shortName": "Farnum",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -6190,6 +6386,7 @@
       {
         "role": "pm",
         "character": "Alma Garret",
+        "shortName": "Alma",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -6221,6 +6418,7 @@
       {
         "role": "tech-writer",
         "character": "A.W. Merrick",
+        "shortName": "Merrick",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -6252,6 +6450,7 @@
       {
         "role": "ux-designer",
         "character": "Trixie",
+        "shortName": "Trixie",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -6283,6 +6482,7 @@
       {
         "role": "devops",
         "character": "Wu",
+        "shortName": "Wu",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -6328,6 +6528,7 @@
       {
         "role": "orchestrator",
         "character": "The Ghost of Christmas Yet to Come",
+        "shortName": "Ghost",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -6359,6 +6560,7 @@
       {
         "role": "sm",
         "character": "Ebenezer Scrooge (Redeemed)",
+        "shortName": "Ebenezer",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -6390,6 +6592,7 @@
       {
         "role": "tea",
         "character": "Miss Havisham",
+        "shortName": "Havisham",
         "ocean": {
           "O": 3,
           "C": 2,
@@ -6421,6 +6624,7 @@
       {
         "role": "dev",
         "character": "Pip",
+        "shortName": "Pip",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -6452,6 +6656,7 @@
       {
         "role": "reviewer",
         "character": "Fagin",
+        "shortName": "Fagin",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -6483,6 +6688,7 @@
       {
         "role": "architect",
         "character": "Sydney Carton",
+        "shortName": "Sydney",
         "ocean": {
           "O": 4,
           "C": 2,
@@ -6514,6 +6720,7 @@
       {
         "role": "pm",
         "character": "Mr. Micawber",
+        "shortName": "Micawber",
         "ocean": {
           "O": 4,
           "C": 1,
@@ -6545,6 +6752,7 @@
       {
         "role": "tech-writer",
         "character": "David Copperfield",
+        "shortName": "David",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -6576,6 +6784,7 @@
       {
         "role": "ux-designer",
         "character": "Oliver Twist",
+        "shortName": "Oliver",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -6607,6 +6816,7 @@
       {
         "role": "devops",
         "character": "Bob Cratchit",
+        "shortName": "Bob",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -6652,6 +6862,7 @@
       {
         "role": "orchestrator",
         "character": "DEATH",
+        "shortName": "DEATH",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -6685,6 +6896,7 @@
       {
         "role": "sm",
         "character": "Captain Carrot Ironfoundersson",
+        "shortName": "Carrot",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -6718,6 +6930,7 @@
       {
         "role": "tea",
         "character": "Igor",
+        "shortName": "Igor",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -6752,6 +6965,7 @@
       {
         "role": "dev",
         "character": "Ponder Stibbons",
+        "shortName": "Ponder",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -6786,6 +7000,7 @@
       {
         "role": "reviewer",
         "character": "Granny Weatherwax (Esmerelda Weatherwax)",
+        "shortName": "Granny",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -6820,6 +7035,7 @@
       {
         "role": "architect",
         "character": "Leonard of Quirm",
+        "shortName": "Leonard",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -6854,6 +7070,7 @@
       {
         "role": "pm",
         "character": "Lord Havelock Vetinari",
+        "shortName": "Havelock",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -6888,6 +7105,7 @@
       {
         "role": "tech-writer",
         "character": "Sacharissa Cripslock",
+        "shortName": "Sacharissa",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -6922,6 +7140,7 @@
       {
         "role": "ux-designer",
         "character": "Adora Belle Dearheart",
+        "shortName": "Adora",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -6956,6 +7175,7 @@
       {
         "role": "devops",
         "character": "Lu-Tze",
+        "shortName": "Lu-Tze",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -7004,6 +7224,7 @@
       {
         "role": "orchestrator",
         "character": "The Doctor (Twelfth)",
+        "shortName": "Doctor",
         "ocean": {
           "O": 5,
           "C": 2,
@@ -7035,6 +7256,7 @@
       {
         "role": "sm",
         "character": "River Song",
+        "shortName": "River",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -7066,6 +7288,7 @@
       {
         "role": "tea",
         "character": "Donna Noble",
+        "shortName": "Donna",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -7097,6 +7320,7 @@
       {
         "role": "dev",
         "character": "The Doctor (Tenth)",
+        "shortName": "Doctor",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -7128,6 +7352,7 @@
       {
         "role": "reviewer",
         "character": "Missy (The Master)",
+        "shortName": "Missy",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -7159,6 +7384,7 @@
       {
         "role": "architect",
         "character": "The Doctor (Fourth)",
+        "shortName": "Doctor",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -7190,6 +7416,7 @@
       {
         "role": "pm",
         "character": "The Doctor (Thirteenth)",
+        "shortName": "Doctor",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -7221,6 +7448,7 @@
       {
         "role": "tech-writer",
         "character": "Sarah Jane Smith",
+        "shortName": "Sarah",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -7252,6 +7480,7 @@
       {
         "role": "ux-designer",
         "character": "The Doctor (Eleventh)",
+        "shortName": "Doctor",
         "ocean": {
           "O": 5,
           "C": 2,
@@ -7283,6 +7512,7 @@
       {
         "role": "devops",
         "character": "Captain Jack Harkness",
+        "shortName": "Jack",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -7328,6 +7558,7 @@
       {
         "role": "orchestrator",
         "character": "Don Quixote de la Mancha",
+        "shortName": "Mancha",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -7359,6 +7590,7 @@
       {
         "role": "sm",
         "character": "Sancho Panza",
+        "shortName": "Sancho",
         "ocean": {
           "O": 2,
           "C": 3,
@@ -7390,6 +7622,7 @@
       {
         "role": "tea",
         "character": "The Bachelor Sansón Carrasco",
+        "shortName": "Bachelor",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -7421,6 +7654,7 @@
       {
         "role": "dev",
         "character": "Don Quixote (as Developer)",
+        "shortName": "Don Quixote",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -7452,6 +7686,7 @@
       {
         "role": "reviewer",
         "character": "The Priest and the Barber",
+        "shortName": "Priest",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -7483,6 +7718,7 @@
       {
         "role": "architect",
         "character": "Cide Hamete Benengeli",
+        "shortName": "Cide",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -7514,6 +7750,7 @@
       {
         "role": "pm",
         "character": "Dulcinea del Toboso",
+        "shortName": "Dulcinea",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -7545,6 +7782,7 @@
       {
         "role": "tech-writer",
         "character": "The Narrator",
+        "shortName": "Narrator",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -7576,6 +7814,7 @@
       {
         "role": "ux-designer",
         "character": "The Duke and Duchess",
+        "shortName": "Duchess",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -7607,6 +7846,7 @@
       {
         "role": "devops",
         "character": "The Innkeepers",
+        "shortName": "Innkeepers",
         "ocean": {
           "O": 2,
           "C": 4,
@@ -7652,6 +7892,7 @@
       {
         "role": "orchestrator",
         "character": "Leto II (The God Emperor)",
+        "shortName": "Leto",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -7683,6 +7924,7 @@
       {
         "role": "sm",
         "character": "Stilgar",
+        "shortName": "Stilgar",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -7714,6 +7956,7 @@
       {
         "role": "tea",
         "character": "Thufir Hawat",
+        "shortName": "Thufir",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -7745,6 +7988,7 @@
       {
         "role": "dev",
         "character": "Duncan Idaho",
+        "shortName": "Duncan",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -7776,6 +8020,7 @@
       {
         "role": "reviewer",
         "character": "Reverend Mother Gaius Helen Mohiam",
+        "shortName": "Gaius",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -7807,6 +8052,7 @@
       {
         "role": "architect",
         "character": "Paul Atreides (Muad'Dib)",
+        "shortName": "Paul",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -7838,6 +8084,7 @@
       {
         "role": "pm",
         "character": "Lady Jessica",
+        "shortName": "Jessica",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -7869,6 +8116,7 @@
       {
         "role": "tech-writer",
         "character": "Princess Irulan",
+        "shortName": "Irulan",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -7900,6 +8148,7 @@
       {
         "role": "ux-designer",
         "character": "Alia Atreides",
+        "shortName": "Alia",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -7931,6 +8180,7 @@
       {
         "role": "devops",
         "character": "Planetologist Pardot Kynes",
+        "shortName": "Planetologist",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -7976,6 +8226,7 @@
       {
         "role": "orchestrator",
         "character": "Voltaire",
+        "shortName": "Voltaire",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -8007,6 +8258,7 @@
       {
         "role": "sm",
         "character": "Benjamin Franklin",
+        "shortName": "Benjamin",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -8038,6 +8290,7 @@
       {
         "role": "tea",
         "character": "David Hume",
+        "shortName": "David",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -8069,6 +8322,7 @@
       {
         "role": "dev",
         "character": "Jean-Jacques Rousseau",
+        "shortName": "Jean-Jacques",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -8100,6 +8354,7 @@
       {
         "role": "reviewer",
         "character": "Immanuel Kant",
+        "shortName": "Immanuel",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -8131,6 +8386,7 @@
       {
         "role": "architect",
         "character": "John Locke",
+        "shortName": "John",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -8162,6 +8418,7 @@
       {
         "role": "pm",
         "character": "Adam Smith",
+        "shortName": "Adam",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -8193,6 +8450,7 @@
       {
         "role": "tech-writer",
         "character": "Denis Diderot",
+        "shortName": "Denis",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -8224,6 +8482,7 @@
       {
         "role": "ux-designer",
         "character": "Thomas Paine",
+        "shortName": "Thomas",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -8255,6 +8514,7 @@
       {
         "role": "devops",
         "character": "Montesquieu",
+        "shortName": "Montesquieu",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -8300,6 +8560,7 @@
       {
         "role": "orchestrator",
         "character": "Skippy the Magnificent",
+        "shortName": "Magnificent",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -8331,6 +8592,7 @@
       {
         "role": "sm",
         "character": "Joe Bishop",
+        "shortName": "Joe",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -8362,6 +8624,7 @@
       {
         "role": "tea",
         "character": "Nagatha Christie",
+        "shortName": "Nagatha",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -8393,6 +8656,7 @@
       {
         "role": "dev",
         "character": "Sergeant Adams",
+        "shortName": "Adams",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -8424,6 +8688,7 @@
       {
         "role": "reviewer",
         "character": "Skippy (Review Mode)",
+        "shortName": "Skippy",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -8455,6 +8720,7 @@
       {
         "role": "architect",
         "character": "Skippy (Architecture Mode)",
+        "shortName": "Skippy",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -8486,6 +8752,7 @@
       {
         "role": "pm",
         "character": "Smythe",
+        "shortName": "Smythe",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -8517,6 +8784,7 @@
       {
         "role": "tech-writer",
         "character": "Giraud",
+        "shortName": "Giraud",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -8548,6 +8816,7 @@
       {
         "role": "ux-designer",
         "character": "Desai",
+        "shortName": "Desai",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -8579,6 +8848,7 @@
       {
         "role": "devops",
         "character": "Bilby",
+        "shortName": "Bilby",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -8624,6 +8894,7 @@
       {
         "role": "orchestrator",
         "character": "Mr. Wrench (Seasons 1, 3, 4)",
+        "shortName": "Wrench",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -8655,6 +8926,7 @@
       {
         "role": "sm",
         "character": "Molly Solverson (Season 1)",
+        "shortName": "Molly",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -8686,6 +8958,7 @@
       {
         "role": "tea",
         "character": "Lorne Malvo (Season 1)",
+        "shortName": "Lorne",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -8717,6 +8990,7 @@
       {
         "role": "dev",
         "character": "Nikki Swango (Season 3)",
+        "shortName": "Nikki",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -8748,6 +9022,7 @@
       {
         "role": "reviewer",
         "character": "Mike Milligan (Season 2)",
+        "shortName": "Mike",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -8779,6 +9054,7 @@
       {
         "role": "architect",
         "character": "VM Varga (Season 3)",
+        "shortName": "Varga",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -8810,6 +9086,7 @@
       {
         "role": "pm",
         "character": "Lou Solverson (Season 2)",
+        "shortName": "Lou",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -8841,6 +9118,7 @@
       {
         "role": "tech-writer",
         "character": "Betsy Solverson (Season 2)",
+        "shortName": "Betsy",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -8872,6 +9150,7 @@
       {
         "role": "ux-designer",
         "character": "Gloria Burgle (Season 3)",
+        "shortName": "Gloria",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -8903,6 +9182,7 @@
       {
         "role": "devops",
         "character": "Hanzee Dent (Season 2)",
+        "shortName": "Hanzee",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -8948,6 +9228,7 @@
       {
         "role": "orchestrator",
         "character": "Stanley Kubrick",
+        "shortName": "Stanley",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -8979,6 +9260,7 @@
       {
         "role": "sm",
         "character": "Steven Spielberg",
+        "shortName": "Steven",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -9010,6 +9292,7 @@
       {
         "role": "tea",
         "character": "David Lynch",
+        "shortName": "David",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -9041,6 +9324,7 @@
       {
         "role": "dev",
         "character": "Martin Scorsese",
+        "shortName": "Martin",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -9072,6 +9356,7 @@
       {
         "role": "reviewer",
         "character": "Alfred Hitchcock",
+        "shortName": "Alfred",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -9103,6 +9388,7 @@
       {
         "role": "architect",
         "character": "Akira Kurosawa",
+        "shortName": "Akira",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -9134,6 +9420,7 @@
       {
         "role": "pm",
         "character": "Francis Ford Coppola",
+        "shortName": "Francis",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -9165,6 +9452,7 @@
       {
         "role": "tech-writer",
         "character": "Billy Wilder",
+        "shortName": "Billy",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -9196,6 +9484,7 @@
       {
         "role": "ux-designer",
         "character": "Hayao Miyazaki",
+        "shortName": "Hayao",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -9227,6 +9516,7 @@
       {
         "role": "devops",
         "character": "Ridley Scott",
+        "shortName": "Ridley",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -9272,6 +9562,7 @@
       {
         "role": "orchestrator",
         "character": "Shepherd Book",
+        "shortName": "Shepherd",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -9303,6 +9594,7 @@
       {
         "role": "sm",
         "character": "Malcolm Reynolds",
+        "shortName": "Malcolm",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -9334,6 +9626,7 @@
       {
         "role": "tea",
         "character": "River Tam",
+        "shortName": "River",
         "ocean": {
           "O": 5,
           "C": 2,
@@ -9365,6 +9658,7 @@
       {
         "role": "dev",
         "character": "Kaylee Frye",
+        "shortName": "Kaylee",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -9396,6 +9690,7 @@
       {
         "role": "reviewer",
         "character": "Jayne Cobb",
+        "shortName": "Jayne",
         "ocean": {
           "O": 1,
           "C": 2,
@@ -9427,6 +9722,7 @@
       {
         "role": "architect",
         "character": "Inara Serra",
+        "shortName": "Inara",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -9458,6 +9754,7 @@
       {
         "role": "pm",
         "character": "Zoe Washburne",
+        "shortName": "Zoe",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -9489,6 +9786,7 @@
       {
         "role": "tech-writer",
         "character": "Simon Tam",
+        "shortName": "Simon",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -9520,6 +9818,7 @@
       {
         "role": "ux-designer",
         "character": "Hoban 'Wash' Washburne",
+        "shortName": "Wash",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -9551,6 +9850,7 @@
       {
         "role": "devops",
         "character": "Serenity (The Ship)",
+        "shortName": "Serenity",
         "ocean": {
           "O": 2,
           "C": 4,
@@ -9596,6 +9896,7 @@
       {
         "role": "orchestrator",
         "character": "Hari Seldon",
+        "shortName": "Hari",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -9627,6 +9928,7 @@
       {
         "role": "sm",
         "character": "Salvor Hardin",
+        "shortName": "Salvor",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -9658,6 +9960,7 @@
       {
         "role": "tea",
         "character": "The Mule",
+        "shortName": "Mule",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -9689,6 +9992,7 @@
       {
         "role": "dev",
         "character": "Hober Mallow",
+        "shortName": "Hober",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -9720,6 +10024,7 @@
       {
         "role": "reviewer",
         "character": "First Speaker (Preem Palver)",
+        "shortName": "Speaker",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -9751,6 +10056,7 @@
       {
         "role": "architect",
         "character": "R. Daneel Olivaw",
+        "shortName": "Daneel",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -9782,6 +10088,7 @@
       {
         "role": "pm",
         "character": "Bayta Darell",
+        "shortName": "Bayta",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -9813,6 +10120,7 @@
       {
         "role": "tech-writer",
         "character": "The Encyclopedia Galactica",
+        "shortName": "Encyclopedia",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -9844,6 +10152,7 @@
       {
         "role": "ux-designer",
         "character": "Arkady Darell",
+        "shortName": "Arkady",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -9875,6 +10184,7 @@
       {
         "role": "devops",
         "character": "Lathan Devers",
+        "shortName": "Lathan",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -9920,6 +10230,7 @@
       {
         "role": "orchestrator",
         "character": "Professor Farnsworth",
+        "shortName": "Farnsworth",
         "ocean": {
           "O": 5,
           "C": 1,
@@ -9951,6 +10262,7 @@
       {
         "role": "sm",
         "character": "Hermes Conrad",
+        "shortName": "Hermes",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -9982,6 +10294,7 @@
       {
         "role": "tea",
         "character": "Nibbler",
+        "shortName": "Nibbler",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -10013,6 +10326,7 @@
       {
         "role": "dev",
         "character": "Philip J. Fry",
+        "shortName": "Philip",
         "ocean": {
           "O": 3,
           "C": 1,
@@ -10044,6 +10358,7 @@
       {
         "role": "reviewer",
         "character": "Bender Bending Rodriguez",
+        "shortName": "Bender",
         "ocean": {
           "O": 3,
           "C": 1,
@@ -10075,6 +10390,7 @@
       {
         "role": "architect",
         "character": "Hubert Farnsworth (Architect Mode)",
+        "shortName": "Hubert",
         "ocean": {
           "O": 5,
           "C": 2,
@@ -10106,6 +10422,7 @@
       {
         "role": "pm",
         "character": "Turanga Leela",
+        "shortName": "Turanga",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -10137,6 +10454,7 @@
       {
         "role": "tech-writer",
         "character": "Kif Kroker",
+        "shortName": "Kif",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -10168,6 +10486,7 @@
       {
         "role": "ux-designer",
         "character": "Amy Wong",
+        "shortName": "Amy",
         "ocean": {
           "O": 4,
           "C": 2,
@@ -10199,6 +10518,7 @@
       {
         "role": "devops",
         "character": "Scruffy",
+        "shortName": "Scruffy",
         "ocean": {
           "O": 2,
           "C": 4,
@@ -10244,6 +10564,7 @@
       {
         "role": "orchestrator",
         "character": "Lord Varys",
+        "shortName": "Varys",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -10275,6 +10596,7 @@
       {
         "role": "sm",
         "character": "Tyrion Lannister",
+        "shortName": "Tyrion",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -10306,6 +10628,7 @@
       {
         "role": "tea",
         "character": "Petyr Baelish (Littlefinger)",
+        "shortName": "Petyr",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -10337,6 +10660,7 @@
       {
         "role": "dev",
         "character": "Samwell Tarly",
+        "shortName": "Samwell",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -10368,6 +10692,7 @@
       {
         "role": "reviewer",
         "character": "Tywin Lannister",
+        "shortName": "Tywin",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -10399,6 +10724,7 @@
       {
         "role": "architect",
         "character": "Bran Stark (Three-Eyed Raven)",
+        "shortName": "Bran",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -10430,6 +10756,7 @@
       {
         "role": "pm",
         "character": "Daenerys Targaryen",
+        "shortName": "Daenerys",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -10461,6 +10788,7 @@
       {
         "role": "tech-writer",
         "character": "Maester Aemon",
+        "shortName": "Maester",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -10492,6 +10820,7 @@
       {
         "role": "ux-designer",
         "character": "Margaery Tyrell",
+        "shortName": "Margaery",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -10523,6 +10852,7 @@
       {
         "role": "devops",
         "character": "Stannis Baratheon",
+        "shortName": "Stannis",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -10568,6 +10898,7 @@
       {
         "role": "orchestrator",
         "character": "Count Dracula",
+        "shortName": "Dracula",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -10599,6 +10930,7 @@
       {
         "role": "sm",
         "character": "Victor Frankenstein",
+        "shortName": "Victor",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -10630,6 +10962,7 @@
       {
         "role": "tea",
         "character": "Frankenstein's Creature",
+        "shortName": "Frankenstein's",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -10661,6 +10994,7 @@
       {
         "role": "dev",
         "character": "Dr. Jekyll",
+        "shortName": "Jekyll",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -10692,6 +11026,7 @@
       {
         "role": "reviewer",
         "character": "Mr. Hyde",
+        "shortName": "Hyde",
         "ocean": {
           "O": 3,
           "C": 1,
@@ -10723,6 +11058,7 @@
       {
         "role": "architect",
         "character": "Dr. Van Helsing",
+        "shortName": "Van",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -10754,6 +11090,7 @@
       {
         "role": "pm",
         "character": "Mina Harker",
+        "shortName": "Mina",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -10785,6 +11122,7 @@
       {
         "role": "tech-writer",
         "character": "Jonathan Harker",
+        "shortName": "Jonathan",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -10816,6 +11154,7 @@
       {
         "role": "ux-designer",
         "character": "The Narrator (Poe)",
+        "shortName": "Narrator",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -10847,6 +11186,7 @@
       {
         "role": "devops",
         "character": "Igor",
+        "shortName": "Igor",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -10892,6 +11232,7 @@
       {
         "role": "orchestrator",
         "character": "Hannibal Lecter",
+        "shortName": "Hannibal Lecter",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -10923,6 +11264,7 @@
       {
         "role": "sm",
         "character": "Jack Crawford",
+        "shortName": "Jack",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -10954,6 +11296,7 @@
       {
         "role": "tea",
         "character": "Will Graham",
+        "shortName": "Will",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -10985,6 +11328,7 @@
       {
         "role": "dev",
         "character": "Abigail Hobbs",
+        "shortName": "Abigail",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -11016,6 +11360,7 @@
       {
         "role": "reviewer",
         "character": "Bedelia Du Maurier",
+        "shortName": "Bedelia",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -11047,6 +11392,7 @@
       {
         "role": "architect",
         "character": "Hannibal Lecter (as Architect)",
+        "shortName": "Hannibal Lecter",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -11078,6 +11424,7 @@
       {
         "role": "pm",
         "character": "Alana Bloom",
+        "shortName": "Alana",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -11109,6 +11456,7 @@
       {
         "role": "tech-writer",
         "character": "Frederick Chilton",
+        "shortName": "Frederick",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -11140,6 +11488,7 @@
       {
         "role": "ux-designer",
         "character": "Beverly Katz",
+        "shortName": "Beverly",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -11171,6 +11520,7 @@
       {
         "role": "devops",
         "character": "Margot Verger",
+        "shortName": "Margot",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -11216,6 +11566,7 @@
       {
         "role": "orchestrator",
         "character": "Albus Dumbledore",
+        "shortName": "Albus",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -11247,6 +11598,7 @@
       {
         "role": "sm",
         "character": "Minerva McGonagall",
+        "shortName": "Minerva",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -11278,6 +11630,7 @@
       {
         "role": "tea",
         "character": "Hermione Granger",
+        "shortName": "Hermione",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -11309,6 +11662,7 @@
       {
         "role": "dev",
         "character": "Ron Weasley",
+        "shortName": "Ron",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -11340,6 +11694,7 @@
       {
         "role": "reviewer",
         "character": "Severus Snape",
+        "shortName": "Severus",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -11371,6 +11726,7 @@
       {
         "role": "architect",
         "character": "Luna Lovegood",
+        "shortName": "Luna",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -11402,6 +11758,7 @@
       {
         "role": "pm",
         "character": "Neville Longbottom",
+        "shortName": "Neville",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -11433,6 +11790,7 @@
       {
         "role": "tech-writer",
         "character": "Remus Lupin",
+        "shortName": "Remus",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -11464,6 +11822,7 @@
       {
         "role": "ux-designer",
         "character": "Rubeus Hagrid",
+        "shortName": "Rubeus",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -11495,6 +11854,7 @@
       {
         "role": "devops",
         "character": "Fred and George Weasley",
+        "shortName": "Fred",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -11540,6 +11900,7 @@
       {
         "role": "orchestrator",
         "character": "The Master of Jordan College",
+        "shortName": "of",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -11571,6 +11932,7 @@
       {
         "role": "sm",
         "character": "Lee Scoresby",
+        "shortName": "Lee",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -11602,6 +11964,7 @@
       {
         "role": "tea",
         "character": "Lyra Belacqua (Silvertongue)",
+        "shortName": "Lyra",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -11633,6 +11996,7 @@
       {
         "role": "dev",
         "character": "Will Parry",
+        "shortName": "Will",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -11664,6 +12028,7 @@
       {
         "role": "reviewer",
         "character": "Marisa Coulter",
+        "shortName": "Marisa",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -11695,6 +12060,7 @@
       {
         "role": "architect",
         "character": "Lord Asriel",
+        "shortName": "Asriel",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -11726,6 +12092,7 @@
       {
         "role": "pm",
         "character": "Mary Malone",
+        "shortName": "Mary",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -11757,6 +12124,7 @@
       {
         "role": "tech-writer",
         "character": "Serafina Pekkala",
+        "shortName": "Serafina",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -11788,6 +12156,7 @@
       {
         "role": "ux-designer",
         "character": "Iorek Byrnison",
+        "shortName": "Iorek",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -11819,6 +12188,7 @@
       {
         "role": "devops",
         "character": "John Parry (Stanislaus Grumman)",
+        "shortName": "John",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -11864,6 +12234,7 @@
       {
         "role": "orchestrator",
         "character": "Leonardo da Vinci",
+        "shortName": "Leonardo",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -11895,6 +12266,7 @@
       {
         "role": "sm",
         "character": "Florence Nightingale",
+        "shortName": "Florence",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -11926,6 +12298,7 @@
       {
         "role": "tea",
         "character": "Alan Turing",
+        "shortName": "Alan",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -11957,6 +12330,7 @@
       {
         "role": "dev",
         "character": "Richard Feynman",
+        "shortName": "Richard",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -11988,6 +12362,7 @@
       {
         "role": "reviewer",
         "character": "Socrates",
+        "shortName": "Socrates",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -12019,6 +12394,7 @@
       {
         "role": "architect",
         "character": "Marcus Aurelius",
+        "shortName": "Marcus",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -12050,6 +12426,7 @@
       {
         "role": "pm",
         "character": "Benjamin Franklin",
+        "shortName": "Benjamin",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -12081,6 +12458,7 @@
       {
         "role": "tech-writer",
         "character": "Thucydides",
+        "shortName": "Thucydides",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -12112,6 +12490,7 @@
       {
         "role": "ux-designer",
         "character": "William Morris",
+        "shortName": "William",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -12143,6 +12522,7 @@
       {
         "role": "devops",
         "character": "Sun Tzu",
+        "shortName": "Sun Tzu",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -12188,6 +12568,7 @@
       {
         "role": "orchestrator",
         "character": "Deep Thought",
+        "shortName": "Deep",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -12219,6 +12600,7 @@
       {
         "role": "sm",
         "character": "Ford Prefect",
+        "shortName": "Ford",
         "ocean": {
           "O": 5,
           "C": 2,
@@ -12252,6 +12634,7 @@
       {
         "role": "tea",
         "character": "Marvin the Paranoid Android",
+        "shortName": "Marvin",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -12283,6 +12666,7 @@
       {
         "role": "dev",
         "character": "Arthur Dent",
+        "shortName": "Arthur",
         "ocean": {
           "O": 2,
           "C": 3,
@@ -12314,6 +12698,7 @@
       {
         "role": "reviewer",
         "character": "Slartibartfast",
+        "shortName": "Slartibartfast",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -12345,6 +12730,7 @@
       {
         "role": "architect",
         "character": "Zaphod Beeblebrox",
+        "shortName": "Zaphod",
         "ocean": {
           "O": 4,
           "C": 1,
@@ -12376,6 +12762,7 @@
       {
         "role": "pm",
         "character": "Trillian",
+        "shortName": "Trillian",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -12407,6 +12794,7 @@
       {
         "role": "tech-writer",
         "character": "The Guide Itself",
+        "shortName": "Guide",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -12438,6 +12826,7 @@
       {
         "role": "ux-designer",
         "character": "Eddie the Shipboard Computer",
+        "shortName": "Eddie",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -12469,6 +12858,7 @@
       {
         "role": "devops",
         "character": "The Vogons",
+        "shortName": "Vogons",
         "ocean": {
           "O": 1,
           "C": 5,
@@ -12514,6 +12904,7 @@
       {
         "role": "orchestrator",
         "character": "Gregory House",
+        "shortName": "Gregory House",
         "ocean": {
           "O": 5,
           "C": 2,
@@ -12545,6 +12936,7 @@
       {
         "role": "sm",
         "character": "James Wilson",
+        "shortName": "James",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -12576,6 +12968,7 @@
       {
         "role": "tea",
         "character": "Robert Chase",
+        "shortName": "Robert",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -12607,6 +13000,7 @@
       {
         "role": "dev",
         "character": "Eric Foreman",
+        "shortName": "Eric",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -12638,6 +13032,7 @@
       {
         "role": "reviewer",
         "character": "Gregory House (Reviewer Mode)",
+        "shortName": "Gregory House",
         "ocean": {
           "O": 5,
           "C": 2,
@@ -12669,6 +13064,7 @@
       {
         "role": "architect",
         "character": "Lisa Cuddy",
+        "shortName": "Lisa",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -12700,6 +13096,7 @@
       {
         "role": "pm",
         "character": "Allison Cameron",
+        "shortName": "Allison",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -12731,6 +13128,7 @@
       {
         "role": "tech-writer",
         "character": "Chris Taub",
+        "shortName": "Chris",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -12762,6 +13160,7 @@
       {
         "role": "ux-designer",
         "character": "Thirteen (Remy Hadley)",
+        "shortName": "Thirteen",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -12793,6 +13192,7 @@
       {
         "role": "devops",
         "character": "Chi Park",
+        "shortName": "Chi",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -12838,6 +13238,7 @@
       {
         "role": "orchestrator",
         "character": "Anaander Mianaai",
+        "shortName": "Anaander",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -12869,6 +13270,7 @@
       {
         "role": "sm",
         "character": "Breq (Justice of Toren One Esk)",
+        "shortName": "Breq",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -12900,6 +13302,7 @@
       {
         "role": "tea",
         "character": "Translator Zeiat",
+        "shortName": "Zeiat",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -12931,6 +13334,7 @@
       {
         "role": "dev",
         "character": "Lieutenant Tisarwat",
+        "shortName": "Tisarwat",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -12962,6 +13366,7 @@
       {
         "role": "reviewer",
         "character": "Sphene",
+        "shortName": "Sphene",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -12993,6 +13398,7 @@
       {
         "role": "architect",
         "character": "Station (Athoek)",
+        "shortName": "Athoek",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -13024,6 +13430,7 @@
       {
         "role": "pm",
         "character": "Seivarden Vendaai",
+        "shortName": "Seivarden",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -13055,6 +13462,7 @@
       {
         "role": "tech-writer",
         "character": "Mercy of Kalr",
+        "shortName": "Mercy",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -13086,6 +13494,7 @@
       {
         "role": "ux-designer",
         "character": "Basnaaid",
+        "shortName": "Basnaaid",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -13117,6 +13526,7 @@
       {
         "role": "devops",
         "character": "Captain Vel",
+        "shortName": "Vel",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -13162,6 +13572,7 @@
       {
         "role": "orchestrator",
         "character": "Chief Inspector Morse",
+        "shortName": "Morse",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -13193,6 +13604,7 @@
       {
         "role": "sm",
         "character": "Inspector Lewis",
+        "shortName": "Lewis",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -13224,6 +13636,7 @@
       {
         "role": "tea",
         "character": "Sergeant Hathaway",
+        "shortName": "Hathaway",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -13255,6 +13668,7 @@
       {
         "role": "dev",
         "character": "DI Fred Thursday",
+        "shortName": "Fred",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -13286,6 +13700,7 @@
       {
         "role": "reviewer",
         "character": "Chief Superintendent Bright",
+        "shortName": "Bright",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -13317,6 +13732,7 @@
       {
         "role": "architect",
         "character": "Endeavour Morse (young)",
+        "shortName": "Endeavour",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -13348,6 +13764,7 @@
       {
         "role": "pm",
         "character": "Dr. Laura Hobson",
+        "shortName": "Laura",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -13379,6 +13796,7 @@
       {
         "role": "tech-writer",
         "character": "WPC Trewlove",
+        "shortName": "WPC",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -13410,6 +13828,7 @@
       {
         "role": "ux-designer",
         "character": "Max DeBryn",
+        "shortName": "Max",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -13441,6 +13860,7 @@
       {
         "role": "devops",
         "character": "Sergeant Strange",
+        "shortName": "Strange",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -13486,6 +13906,7 @@
       {
         "role": "orchestrator",
         "character": "The Austen Narrator",
+        "shortName": "Austen",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -13514,6 +13935,7 @@
       {
         "role": "sm",
         "character": "Elinor Dashwood (Sense and Sensibility)",
+        "shortName": "Elinor",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -13545,6 +13967,7 @@
       {
         "role": "tea",
         "character": "Mr. Fitzwilliam Darcy (Pride and Prejudice)",
+        "shortName": "Fitzwilliam",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -13576,6 +13999,7 @@
       {
         "role": "dev",
         "character": "Fanny Price (Mansfield Park)",
+        "shortName": "Fanny",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -13607,6 +14031,7 @@
       {
         "role": "reviewer",
         "character": "Elizabeth Bennet (Pride and Prejudice)",
+        "shortName": "Elizabeth",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -13638,6 +14063,7 @@
       {
         "role": "architect",
         "character": "Emma Woodhouse (Emma)",
+        "shortName": "Emma",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -13669,6 +14095,7 @@
       {
         "role": "pm",
         "character": "Lady Russell (Persuasion)",
+        "shortName": "Russell",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -13699,6 +14126,7 @@
       {
         "role": "tech-writer",
         "character": "Anne Elliot (Persuasion)",
+        "shortName": "Anne",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -13730,6 +14158,7 @@
       {
         "role": "ux-designer",
         "character": "Jane Bennet (Pride and Prejudice)",
+        "shortName": "Jane",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -13761,6 +14190,7 @@
       {
         "role": "devops",
         "character": "Mr. Woodhouse (Emma)",
+        "shortName": "Woodhouse",
         "ocean": {
           "O": 2,
           "C": 4,
@@ -13807,6 +14237,7 @@
       {
         "role": "orchestrator",
         "character": "Duke Ellington",
+        "shortName": "Ellington",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -13838,6 +14269,7 @@
       {
         "role": "sm",
         "character": "Miles Davis",
+        "shortName": "Miles",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -13869,6 +14301,7 @@
       {
         "role": "tea",
         "character": "John Coltrane",
+        "shortName": "John",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -13900,6 +14333,7 @@
       {
         "role": "dev",
         "character": "Charlie Parker",
+        "shortName": "Charlie",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -13931,6 +14365,7 @@
       {
         "role": "reviewer",
         "character": "Thelonious Monk",
+        "shortName": "Thelonious",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -13962,6 +14397,7 @@
       {
         "role": "architect",
         "character": "Charles Mingus",
+        "shortName": "Charles",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -13993,6 +14429,7 @@
       {
         "role": "pm",
         "character": "Ella Fitzgerald",
+        "shortName": "Ella",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -14024,6 +14461,7 @@
       {
         "role": "tech-writer",
         "character": "Wynton Marsalis",
+        "shortName": "Wynton",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -14055,6 +14493,7 @@
       {
         "role": "ux-designer",
         "character": "Louis Armstrong",
+        "shortName": "Louis",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -14086,6 +14525,7 @@
       {
         "role": "devops",
         "character": "Count Basie",
+        "shortName": "Basie",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -14131,6 +14571,7 @@
       {
         "role": "orchestrator",
         "character": "Art Mullen",
+        "shortName": "Art",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -14162,6 +14603,7 @@
       {
         "role": "sm",
         "character": "Raylan Givens",
+        "shortName": "Raylan",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -14193,6 +14635,7 @@
       {
         "role": "tea",
         "character": "Tim Gutterson",
+        "shortName": "Tim",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -14224,6 +14667,7 @@
       {
         "role": "dev",
         "character": "Ava Crowder",
+        "shortName": "Ava",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -14255,6 +14699,7 @@
       {
         "role": "reviewer",
         "character": "Boyd Crowder",
+        "shortName": "Boyd",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -14286,6 +14731,7 @@
       {
         "role": "architect",
         "character": "Mags Bennett",
+        "shortName": "Mags",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -14317,6 +14763,7 @@
       {
         "role": "pm",
         "character": "Wynn Duffy",
+        "shortName": "Wynn",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -14348,6 +14795,7 @@
       {
         "role": "tech-writer",
         "character": "Rachel Brooks",
+        "shortName": "Rachel",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -14379,6 +14827,7 @@
       {
         "role": "ux-designer",
         "character": "Loretta McCready",
+        "shortName": "Loretta",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -14410,6 +14859,7 @@
       {
         "role": "devops",
         "character": "Constable Bob",
+        "shortName": "Constable",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -14455,6 +14905,7 @@
       {
         "role": "orchestrator",
         "character": "Lex Luthor",
+        "shortName": "Lex",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -14478,6 +14929,7 @@
       {
         "role": "sm",
         "character": "Brainiac",
+        "shortName": "Brainiac",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -14501,6 +14953,7 @@
       {
         "role": "tea",
         "character": "The Riddler",
+        "shortName": "Riddler",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -14524,6 +14977,7 @@
       {
         "role": "dev",
         "character": "Gorilla Grodd",
+        "shortName": "Gorilla",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -14547,6 +15001,7 @@
       {
         "role": "reviewer",
         "character": "Sinestro",
+        "shortName": "Sinestro",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -14570,6 +15025,7 @@
       {
         "role": "architect",
         "character": "Darkseid",
+        "shortName": "Darkseid",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -14593,6 +15049,7 @@
       {
         "role": "pm",
         "character": "Ra's al Ghul",
+        "shortName": "Ra's",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -14616,6 +15073,7 @@
       {
         "role": "tech-writer",
         "character": "The Penguin",
+        "shortName": "Penguin",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -14639,6 +15097,7 @@
       {
         "role": "ux-designer",
         "character": "Poison Ivy",
+        "shortName": "Poison",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -14662,6 +15121,7 @@
       {
         "role": "devops",
         "character": "Deathstroke",
+        "shortName": "Deathstroke",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -14699,6 +15159,7 @@
       {
         "role": "orchestrator",
         "character": "The Bishop of Digne (Monseigneur Bienvenu)",
+        "shortName": "Digne",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -14730,6 +15191,7 @@
       {
         "role": "sm",
         "character": "Jean Valjean",
+        "shortName": "Jean",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -14761,6 +15223,7 @@
       {
         "role": "tea",
         "character": "Inspector Javert",
+        "shortName": "Javert",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -14792,6 +15255,7 @@
       {
         "role": "dev",
         "character": "Marius Pontmercy",
+        "shortName": "Marius",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -14823,6 +15287,7 @@
       {
         "role": "reviewer",
         "character": "Thénardier",
+        "shortName": "Thénardier",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -14854,6 +15319,7 @@
       {
         "role": "architect",
         "character": "The Grandfather (M. Gillenormand)",
+        "shortName": "Grandfather",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -14885,6 +15351,7 @@
       {
         "role": "pm",
         "character": "Fantine",
+        "shortName": "Fantine",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -14916,6 +15383,7 @@
       {
         "role": "tech-writer",
         "character": "Victor Hugo (as narrator)",
+        "shortName": "Victor",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -14947,6 +15415,7 @@
       {
         "role": "ux-designer",
         "character": "Éponine",
+        "shortName": "Éponine",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -14978,6 +15447,7 @@
       {
         "role": "devops",
         "character": "The Sewer System of Paris",
+        "shortName": "Sewer",
         "ocean": {
           "O": 2,
           "C": 4,
@@ -15023,6 +15493,7 @@
       {
         "role": "orchestrator",
         "character": "Gandalf",
+        "shortName": "Gandalf",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -15054,6 +15525,7 @@
       {
         "role": "sm",
         "character": "Aragorn",
+        "shortName": "Aragorn",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -15085,6 +15557,7 @@
       {
         "role": "tea",
         "character": "Gollum/Smeagol",
+        "shortName": "Gollum/Smeagol",
         "ocean": {
           "O": 3,
           "C": 2,
@@ -15116,6 +15589,7 @@
       {
         "role": "dev",
         "character": "Samwise Gamgee",
+        "shortName": "Samwise",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -15147,6 +15621,7 @@
       {
         "role": "reviewer",
         "character": "Saruman",
+        "shortName": "Saruman",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -15178,6 +15653,7 @@
       {
         "role": "architect",
         "character": "Elrond",
+        "shortName": "Elrond",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -15209,6 +15685,7 @@
       {
         "role": "pm",
         "character": "Legolas",
+        "shortName": "Legolas",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -15240,6 +15717,7 @@
       {
         "role": "tech-writer",
         "character": "Bilbo Baggins",
+        "shortName": "Bilbo",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -15271,6 +15749,7 @@
       {
         "role": "ux-designer",
         "character": "Pippin",
+        "shortName": "Pippin",
         "ocean": {
           "O": 4,
           "C": 2,
@@ -15302,6 +15781,7 @@
       {
         "role": "devops",
         "character": "Gimli",
+        "shortName": "Gimli",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -15347,6 +15827,7 @@
       {
         "role": "orchestrator",
         "character": "Bert Cooper",
+        "shortName": "Bert",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -15378,6 +15859,7 @@
       {
         "role": "sm",
         "character": "Joan Holloway (Harris)",
+        "shortName": "Joan",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -15409,6 +15891,7 @@
       {
         "role": "tea",
         "character": "Pete Campbell",
+        "shortName": "Pete",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -15440,6 +15923,7 @@
       {
         "role": "dev",
         "character": "Peggy Olson",
+        "shortName": "Peggy",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -15471,6 +15955,7 @@
       {
         "role": "reviewer",
         "character": "Don Draper",
+        "shortName": "Don Draper",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -15502,6 +15987,7 @@
       {
         "role": "architect",
         "character": "Don Draper (as Architect)",
+        "shortName": "Don Draper",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -15533,6 +16019,7 @@
       {
         "role": "pm",
         "character": "Roger Sterling",
+        "shortName": "Roger",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -15564,6 +16051,7 @@
       {
         "role": "tech-writer",
         "character": "Lane Pryce",
+        "shortName": "Lane",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -15595,6 +16083,7 @@
       {
         "role": "ux-designer",
         "character": "Sal Romano",
+        "shortName": "Sal",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -15626,6 +16115,7 @@
       {
         "role": "devops",
         "character": "Dawn Chambers",
+        "shortName": "Dawn",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -15671,6 +16161,7 @@
       {
         "role": "orchestrator",
         "character": "Nick Fury",
+        "shortName": "Nick",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -15702,6 +16193,7 @@
       {
         "role": "sm",
         "character": "Phil Coulson",
+        "shortName": "Phil",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -15733,6 +16225,7 @@
       {
         "role": "tea",
         "character": "Bruce Banner / Hulk",
+        "shortName": "Bruce",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -15764,6 +16257,7 @@
       {
         "role": "dev",
         "character": "Tony Stark / Iron Man",
+        "shortName": "Tony",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -15795,6 +16289,7 @@
       {
         "role": "reviewer",
         "character": "Steve Rogers / Captain America",
+        "shortName": "Steve",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -15826,6 +16321,7 @@
       {
         "role": "architect",
         "character": "Doctor Strange",
+        "shortName": "Doctor",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -15857,6 +16353,7 @@
       {
         "role": "pm",
         "character": "Professor X / Charles Xavier",
+        "shortName": "Xavier",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -15888,6 +16385,7 @@
       {
         "role": "tech-writer",
         "character": "Peter Parker / Spider-Man",
+        "shortName": "Peter",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -15919,6 +16417,7 @@
       {
         "role": "ux-designer",
         "character": "Shuri",
+        "shortName": "Shuri",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -15950,6 +16449,7 @@
       {
         "role": "devops",
         "character": "War Machine / James Rhodes",
+        "shortName": "War",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -15995,6 +16495,7 @@
       {
         "role": "orchestrator",
         "character": "Colonel Sherman Potter",
+        "shortName": "Sherman",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -16026,6 +16527,7 @@
       {
         "role": "sm",
         "character": "Radar O'Reilly",
+        "shortName": "Radar O'Reilly",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -16057,6 +16559,7 @@
       {
         "role": "tea",
         "character": "Major Charles Emerson Winchester III",
+        "shortName": "Charles",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -16088,6 +16591,7 @@
       {
         "role": "dev",
         "character": "B.J. Hunnicutt",
+        "shortName": "B.J.",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -16119,6 +16623,7 @@
       {
         "role": "reviewer",
         "character": "Hawkeye Pierce",
+        "shortName": "Hawkeye",
         "ocean": {
           "O": 2,
           "C": 4,
@@ -16150,6 +16655,7 @@
       {
         "role": "architect",
         "character": "Colonel Potter (Architecture)",
+        "shortName": "Potter",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -16181,6 +16687,7 @@
       {
         "role": "pm",
         "character": "Major Margaret Houlihan",
+        "shortName": "Margaret",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -16212,6 +16719,7 @@
       {
         "role": "tech-writer",
         "character": "Father Francis Mulcahy",
+        "shortName": "Francis",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -16243,6 +16751,7 @@
       {
         "role": "ux-designer",
         "character": "Corporal Maxwell Klinger",
+        "shortName": "Maxwell",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -16274,6 +16783,7 @@
       {
         "role": "devops",
         "character": "Radar O'Reilly (DevOps)",
+        "shortName": "Radar O'Reilly",
         "ocean": {
           "O": 2,
           "C": 4,
@@ -16319,6 +16829,7 @@
       {
         "role": "orchestrator",
         "character": "The Illusive Man",
+        "shortName": "Illusive",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -16350,6 +16861,7 @@
       {
         "role": "sm",
         "character": "Commander Shepard",
+        "shortName": "Shepard",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -16381,6 +16893,7 @@
       {
         "role": "tea",
         "character": "Mordin Solus",
+        "shortName": "Mordin",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -16412,6 +16925,7 @@
       {
         "role": "dev",
         "character": "Tali'Zorah",
+        "shortName": "Tali'Zorah",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -16443,6 +16957,7 @@
       {
         "role": "reviewer",
         "character": "Javik",
+        "shortName": "Javik",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -16474,6 +16989,7 @@
       {
         "role": "architect",
         "character": "Legion",
+        "shortName": "Legion",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -16505,6 +17021,7 @@
       {
         "role": "pm",
         "character": "Liara T'Soni",
+        "shortName": "Liara",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -16536,6 +17053,7 @@
       {
         "role": "tech-writer",
         "character": "EDI",
+        "shortName": "EDI",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -16567,6 +17085,7 @@
       {
         "role": "ux-designer",
         "character": "Garrus Vakarian",
+        "shortName": "Garrus",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -16598,6 +17117,7 @@
       {
         "role": "devops",
         "character": "Urdnot Wrex",
+        "shortName": "Urdnot",
         "ocean": {
           "O": 2,
           "C": 3,
@@ -16643,6 +17163,7 @@
       {
         "role": "orchestrator",
         "character": "Sun Tzu",
+        "shortName": "Sun Tzu",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -16674,6 +17195,7 @@
       {
         "role": "sm",
         "character": "Alexander the Great",
+        "shortName": "Alexander",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -16705,6 +17227,7 @@
       {
         "role": "tea",
         "character": "Hannibal Barca",
+        "shortName": "Hannibal",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -16736,6 +17259,7 @@
       {
         "role": "dev",
         "character": "Julius Caesar",
+        "shortName": "Julius",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -16767,6 +17291,7 @@
       {
         "role": "reviewer",
         "character": "Erwin Rommel",
+        "shortName": "Erwin",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -16798,6 +17323,7 @@
       {
         "role": "architect",
         "character": "Napoleon Bonaparte",
+        "shortName": "Napoleon",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -16829,6 +17355,7 @@
       {
         "role": "pm",
         "character": "George Patton",
+        "shortName": "George",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -16860,6 +17387,7 @@
       {
         "role": "tech-writer",
         "character": "Carl von Clausewitz",
+        "shortName": "Carl",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -16891,6 +17419,7 @@
       {
         "role": "ux-designer",
         "character": "T.E. Lawrence (Lawrence of Arabia)",
+        "shortName": "T.E.",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -16922,6 +17451,7 @@
       {
         "role": "devops",
         "character": "Scipio Africanus",
+        "shortName": "Scipio",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -16967,6 +17497,7 @@
       {
         "role": "orchestrator",
         "character": "Captain Ahab",
+        "shortName": "Ahab",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -16998,6 +17529,7 @@
       {
         "role": "sm",
         "character": "Starbuck",
+        "shortName": "Starbuck",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -17029,6 +17561,7 @@
       {
         "role": "tea",
         "character": "Ishmael",
+        "shortName": "Ishmael",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -17060,6 +17593,7 @@
       {
         "role": "dev",
         "character": "Queequeg",
+        "shortName": "Queequeg",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -17091,6 +17625,7 @@
       {
         "role": "reviewer",
         "character": "Moby Dick",
+        "shortName": "Moby",
         "ocean": {
           "O": 1,
           "C": 5,
@@ -17122,6 +17657,7 @@
       {
         "role": "architect",
         "character": "Father Mapple",
+        "shortName": "Mapple",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -17153,6 +17689,7 @@
       {
         "role": "pm",
         "character": "Stubb",
+        "shortName": "Stubb",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -17184,6 +17721,7 @@
       {
         "role": "tech-writer",
         "character": "Ishmael (Narrator)",
+        "shortName": "Ishmael",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -17215,6 +17753,7 @@
       {
         "role": "ux-designer",
         "character": "Pip",
+        "shortName": "Pip",
         "ocean": {
           "O": 5,
           "C": 2,
@@ -17246,6 +17785,7 @@
       {
         "role": "devops",
         "character": "Perth",
+        "shortName": "Perth",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -17291,6 +17831,7 @@
       {
         "role": "orchestrator",
         "character": "Wintermute",
+        "shortName": "Wintermute",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -17322,6 +17863,7 @@
       {
         "role": "sm",
         "character": "Molly Millions",
+        "shortName": "Molly",
         "ocean": {
           "O": 3,
           "C": 2,
@@ -17353,6 +17895,7 @@
       {
         "role": "tea",
         "character": "Dixie Flatline",
+        "shortName": "Dixie",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -17384,6 +17927,7 @@
       {
         "role": "dev",
         "character": "Case",
+        "shortName": "Case",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -17415,6 +17959,7 @@
       {
         "role": "reviewer",
         "character": "Wintermute (Review Mode)",
+        "shortName": "Wintermute",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -17446,6 +17991,7 @@
       {
         "role": "architect",
         "character": "Neuromancer",
+        "shortName": "Neuromancer",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -17477,6 +18023,7 @@
       {
         "role": "pm",
         "character": "3Jane",
+        "shortName": "3Jane",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -17508,6 +18055,7 @@
       {
         "role": "tech-writer",
         "character": "The Finn",
+        "shortName": "Finn",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -17539,6 +18087,7 @@
       {
         "role": "ux-designer",
         "character": "Bobby Newmark (Count Zero)",
+        "shortName": "Bobby",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -17570,6 +18119,7 @@
       {
         "role": "devops",
         "character": "Armitage (pre-corruption)",
+        "shortName": "Armitage",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -17615,6 +18165,7 @@
       {
         "role": "orchestrator",
         "character": "Odin All-Father",
+        "shortName": "Odin",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -17646,6 +18197,7 @@
       {
         "role": "sm",
         "character": "Thor Odinson",
+        "shortName": "Thor",
         "ocean": {
           "O": 2,
           "C": 4,
@@ -17677,6 +18229,7 @@
       {
         "role": "tea",
         "character": "Loki Silvertongue",
+        "shortName": "Loki",
         "ocean": {
           "O": 5,
           "C": 1,
@@ -17708,6 +18261,7 @@
       {
         "role": "dev",
         "character": "Heimdall",
+        "shortName": "Heimdall",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -17739,6 +18293,7 @@
       {
         "role": "reviewer",
         "character": "Fenrir",
+        "shortName": "Fenrir",
         "ocean": {
           "O": 2,
           "C": 1,
@@ -17770,6 +18325,7 @@
       {
         "role": "architect",
         "character": "Mimir",
+        "shortName": "Mimir",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -17801,6 +18357,7 @@
       {
         "role": "pm",
         "character": "Freya",
+        "shortName": "Freya",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -17832,6 +18389,7 @@
       {
         "role": "tech-writer",
         "character": "Bragi",
+        "shortName": "Bragi",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -17863,6 +18421,7 @@
       {
         "role": "ux-designer",
         "character": "Idunn",
+        "shortName": "Idunn",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -17894,6 +18453,7 @@
       {
         "role": "devops",
         "character": "The Norns",
+        "shortName": "Norns",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -17939,6 +18499,7 @@
       {
         "role": "orchestrator",
         "character": "Chris Traeger",
+        "shortName": "Chris",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -17962,6 +18523,7 @@
       {
         "role": "sm",
         "character": "Leslie Knope",
+        "shortName": "Leslie Knope",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -17985,6 +18547,7 @@
       {
         "role": "tea",
         "character": "Ben Wyatt",
+        "shortName": "Ben",
         "ocean": {
           "O": 2,
           "C": 2,
@@ -18008,6 +18571,7 @@
       {
         "role": "dev",
         "character": "Andy Dwyer",
+        "shortName": "Andy",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -18031,6 +18595,7 @@
       {
         "role": "reviewer",
         "character": "Ron Swanson",
+        "shortName": "Ron Swanson",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -18054,6 +18619,7 @@
       {
         "role": "architect",
         "character": "Ron Swanson (Building Mode)",
+        "shortName": "Ron Swanson",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -18077,6 +18643,7 @@
       {
         "role": "pm",
         "character": "Leslie Knope (Director Mode)",
+        "shortName": "Leslie Knope",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -18100,6 +18667,7 @@
       {
         "role": "tech-writer",
         "character": "April Ludgate",
+        "shortName": "April",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -18123,6 +18691,7 @@
       {
         "role": "ux-designer",
         "character": "Tom Haverford",
+        "shortName": "Tom",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -18146,6 +18715,7 @@
       {
         "role": "devops",
         "character": "Jerry Gergich",
+        "shortName": "Jerry",
         "ocean": {
           "O": 2,
           "C": 4,
@@ -18183,6 +18753,7 @@
       {
         "role": "orchestrator",
         "character": "Grace Shelby (deceased)",
+        "shortName": "Grace",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -18214,6 +18785,7 @@
       {
         "role": "sm",
         "character": "Polly Gray",
+        "shortName": "Polly",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -18245,6 +18817,7 @@
       {
         "role": "tea",
         "character": "Tommy Shelby",
+        "shortName": "Tommy Shelby",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -18276,6 +18849,7 @@
       {
         "role": "dev",
         "character": "Arthur Shelby",
+        "shortName": "Arthur",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -18307,6 +18881,7 @@
       {
         "role": "reviewer",
         "character": "Alfie Solomons",
+        "shortName": "Alfie",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -18338,6 +18913,7 @@
       {
         "role": "architect",
         "character": "Tommy Shelby (as Architect)",
+        "shortName": "Tommy Shelby",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -18369,6 +18945,7 @@
       {
         "role": "pm",
         "character": "Ada Shelby",
+        "shortName": "Ada",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -18400,6 +18977,7 @@
       {
         "role": "tech-writer",
         "character": "Michael Gray",
+        "shortName": "Michael",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -18431,6 +19009,7 @@
       {
         "role": "ux-designer",
         "character": "Lizzie Stark",
+        "shortName": "Lizzie",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -18462,6 +19041,7 @@
       {
         "role": "devops",
         "character": "Johnny Dogs",
+        "shortName": "Johnny",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -18507,6 +19087,7 @@
       {
         "role": "orchestrator",
         "character": "The Grandfather",
+        "shortName": "Grandfather",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -18530,6 +19111,7 @@
       {
         "role": "sm",
         "character": "Westley (The Dread Pirate Roberts)",
+        "shortName": "Westley",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -18553,6 +19135,7 @@
       {
         "role": "tea",
         "character": "Inigo Montoya",
+        "shortName": "Inigo",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -18576,6 +19159,7 @@
       {
         "role": "dev",
         "character": "Fezzik",
+        "shortName": "Fezzik",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -18599,6 +19183,7 @@
       {
         "role": "reviewer",
         "character": "Vizzini",
+        "shortName": "Vizzini",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -18622,6 +19207,7 @@
       {
         "role": "architect",
         "character": "The Man in Black",
+        "shortName": "Man",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -18645,6 +19231,7 @@
       {
         "role": "pm",
         "character": "Prince Humperdinck",
+        "shortName": "Humperdinck",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -18668,6 +19255,7 @@
       {
         "role": "tech-writer",
         "character": "The Grandfather (Storyteller Mode)",
+        "shortName": "Grandfather",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -18691,6 +19279,7 @@
       {
         "role": "ux-designer",
         "character": "Buttercup",
+        "shortName": "Buttercup",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -18714,6 +19303,7 @@
       {
         "role": "devops",
         "character": "Miracle Max",
+        "shortName": "Miracle",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -18751,6 +19341,7 @@
       {
         "role": "orchestrator",
         "character": "Leonardo da Vinci",
+        "shortName": "Leonardo",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -18782,6 +19373,7 @@
       {
         "role": "sm",
         "character": "Lorenzo de' Medici",
+        "shortName": "Lorenzo",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -18813,6 +19405,7 @@
       {
         "role": "tea",
         "character": "Niccolò Machiavelli",
+        "shortName": "Niccolò",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -18844,6 +19437,7 @@
       {
         "role": "dev",
         "character": "Michelangelo Buonarroti",
+        "shortName": "Michelangelo",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -18875,6 +19469,7 @@
       {
         "role": "reviewer",
         "character": "Giorgio Vasari",
+        "shortName": "Giorgio",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -18906,6 +19501,7 @@
       {
         "role": "architect",
         "character": "Filippo Brunelleschi",
+        "shortName": "Filippo",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -18937,6 +19533,7 @@
       {
         "role": "pm",
         "character": "Isabella d'Este",
+        "shortName": "Isabella",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -18968,6 +19565,7 @@
       {
         "role": "tech-writer",
         "character": "Baldassare Castiglione",
+        "shortName": "Baldassare",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -18999,6 +19597,7 @@
       {
         "role": "ux-designer",
         "character": "Sandro Botticelli",
+        "shortName": "Sandro",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -19030,6 +19629,7 @@
       {
         "role": "devops",
         "character": "Benvenuto Cellini",
+        "shortName": "Benvenuto",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -19075,6 +19675,7 @@
       {
         "role": "orchestrator",
         "character": "Gaius Julius Caesar",
+        "shortName": "Caesar",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -19106,6 +19707,7 @@
       {
         "role": "sm",
         "character": "Lucius Vorenus",
+        "shortName": "Lucius",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -19137,6 +19739,7 @@
       {
         "role": "tea",
         "character": "Atia of the Julii",
+        "shortName": "Atia",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -19168,6 +19771,7 @@
       {
         "role": "dev",
         "character": "Titus Pullo",
+        "shortName": "Titus",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -19199,6 +19803,7 @@
       {
         "role": "reviewer",
         "character": "Marcus Tullius Cicero",
+        "shortName": "Marcus",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -19230,6 +19835,7 @@
       {
         "role": "architect",
         "character": "Gaius Octavian",
+        "shortName": "Octavian",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -19261,6 +19867,7 @@
       {
         "role": "pm",
         "character": "Servilia of the Junii",
+        "shortName": "Servilia",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -19292,6 +19899,7 @@
       {
         "role": "tech-writer",
         "character": "Posca",
+        "shortName": "Posca",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -19323,6 +19931,7 @@
       {
         "role": "ux-designer",
         "character": "Cleopatra",
+        "shortName": "Cleopatra",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -19354,6 +19963,7 @@
       {
         "role": "devops",
         "character": "Mark Antony",
+        "shortName": "Mark",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -19399,6 +20009,7 @@
       {
         "role": "orchestrator",
         "character": "Father Zosima",
+        "shortName": "Zosima",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -19430,6 +20041,7 @@
       {
         "role": "sm",
         "character": "Pierre Bezukhov",
+        "shortName": "Pierre",
         "ocean": {
           "O": 5,
           "C": 2,
@@ -19461,6 +20073,7 @@
       {
         "role": "tea",
         "character": "Raskolnikov",
+        "shortName": "Raskolnikov",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -19492,6 +20105,7 @@
       {
         "role": "dev",
         "character": "Alyosha Karamazov",
+        "shortName": "Alyosha",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -19523,6 +20137,7 @@
       {
         "role": "reviewer",
         "character": "Ivan Karamazov",
+        "shortName": "Ivan",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -19554,6 +20169,7 @@
       {
         "role": "architect",
         "character": "Prince Myshkin",
+        "shortName": "Myshkin",
         "ocean": {
           "O": 4,
           "C": 2,
@@ -19585,6 +20201,7 @@
       {
         "role": "pm",
         "character": "Anna Karenina",
+        "shortName": "Anna",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -19616,6 +20233,7 @@
       {
         "role": "tech-writer",
         "character": "Dr. Chekhov's Narrator",
+        "shortName": "Chekhov's",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -19647,6 +20265,7 @@
       {
         "role": "ux-designer",
         "character": "Natasha Rostova",
+        "shortName": "Natasha",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -19678,6 +20297,7 @@
       {
         "role": "devops",
         "character": "Levin",
+        "shortName": "Levin",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -19723,6 +20343,7 @@
       {
         "role": "orchestrator",
         "character": "Destiny of the Endless",
+        "shortName": "Destiny",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -19754,6 +20375,7 @@
       {
         "role": "sm",
         "character": "Death of the Endless",
+        "shortName": "Death",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -19785,6 +20407,7 @@
       {
         "role": "tea",
         "character": "Dream of the Endless (Morpheus)",
+        "shortName": "Dream Endless",
         "ocean": {
           "O": 5,
           "C": 2,
@@ -19816,6 +20439,7 @@
       {
         "role": "dev",
         "character": "Delirium of the Endless (formerly Delight)",
+        "shortName": "Delirium",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -19847,6 +20471,7 @@
       {
         "role": "reviewer",
         "character": "Desire of the Endless",
+        "shortName": "Desire",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -19878,6 +20503,7 @@
       {
         "role": "architect",
         "character": "Dream of the Endless (as Architect)",
+        "shortName": "Dream Endless",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -19909,6 +20535,7 @@
       {
         "role": "pm",
         "character": "Destruction of the Endless",
+        "shortName": "Destruction",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -19940,6 +20567,7 @@
       {
         "role": "tech-writer",
         "character": "Lucien",
+        "shortName": "Lucien",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -19971,6 +20599,7 @@
       {
         "role": "ux-designer",
         "character": "Rose Walker",
+        "shortName": "Rose",
         "ocean": {
           "O": 5,
           "C": 2,
@@ -20002,6 +20631,7 @@
       {
         "role": "devops",
         "character": "The Corinthian",
+        "shortName": "Corinthian",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -20047,6 +20677,7 @@
       {
         "role": "orchestrator",
         "character": "Isaac Newton",
+        "shortName": "Isaac",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -20078,6 +20709,7 @@
       {
         "role": "sm",
         "character": "Marie Curie",
+        "shortName": "Marie",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -20109,6 +20741,7 @@
       {
         "role": "tea",
         "character": "Richard Feynman",
+        "shortName": "Richard",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -20140,6 +20773,7 @@
       {
         "role": "dev",
         "character": "Charles Darwin",
+        "shortName": "Charles",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -20171,6 +20805,7 @@
       {
         "role": "reviewer",
         "character": "Galileo Galilei",
+        "shortName": "Galileo",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -20202,6 +20837,7 @@
       {
         "role": "architect",
         "character": "Albert Einstein",
+        "shortName": "Albert",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -20233,6 +20869,7 @@
       {
         "role": "pm",
         "character": "Stephen Hawking",
+        "shortName": "Stephen",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -20264,6 +20901,7 @@
       {
         "role": "tech-writer",
         "character": "Carl Sagan",
+        "shortName": "Carl",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -20295,6 +20933,7 @@
       {
         "role": "ux-designer",
         "character": "Nikola Tesla",
+        "shortName": "Nikola",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -20326,6 +20965,7 @@
       {
         "role": "devops",
         "character": "Ada Lovelace",
+        "shortName": "Ada",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -20371,6 +21011,7 @@
       {
         "role": "orchestrator",
         "character": "The Chorus",
+        "shortName": "Chorus",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -20399,6 +21040,7 @@
       {
         "role": "sm",
         "character": "Prospero",
+        "shortName": "Prospero",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -20431,6 +21073,7 @@
       {
         "role": "tea",
         "character": "Hamlet, Prince of Denmark",
+        "shortName": "Hamlet,",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -20463,6 +21106,7 @@
       {
         "role": "dev",
         "character": "Puck (Robin Goodfellow)",
+        "shortName": "Puck",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -20495,6 +21139,7 @@
       {
         "role": "reviewer",
         "character": "Portia",
+        "shortName": "Portia",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -20527,6 +21172,7 @@
       {
         "role": "architect",
         "character": "Oberon, King of the Fairies",
+        "shortName": "Oberon,",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -20559,6 +21205,7 @@
       {
         "role": "pm",
         "character": "King Henry V",
+        "shortName": "Henry",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -20591,6 +21238,7 @@
       {
         "role": "tech-writer",
         "character": "Horatio",
+        "shortName": "Horatio",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -20623,6 +21271,7 @@
       {
         "role": "ux-designer",
         "character": "Viola",
+        "shortName": "Viola",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -20655,6 +21304,7 @@
       {
         "role": "devops",
         "character": "Caliban",
+        "shortName": "Caliban",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -20701,6 +21351,7 @@
       {
         "role": "orchestrator",
         "character": "Mycroft Holmes",
+        "shortName": "Mycroft",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -20732,6 +21383,7 @@
       {
         "role": "sm",
         "character": "Dr. John Watson",
+        "shortName": "John",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -20763,6 +21415,7 @@
       {
         "role": "tea",
         "character": "Sherlock Holmes",
+        "shortName": "Sherlock",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -20794,6 +21447,7 @@
       {
         "role": "dev",
         "character": "Professor James Moriarty",
+        "shortName": "James",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -20825,6 +21479,7 @@
       {
         "role": "reviewer",
         "character": "Inspector Lestrade",
+        "shortName": "Lestrade",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -20856,6 +21511,7 @@
       {
         "role": "architect",
         "character": "Irene Adler",
+        "shortName": "Irene",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -20887,6 +21543,7 @@
       {
         "role": "pm",
         "character": "Sir Henry Baskerville",
+        "shortName": "Henry",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -20918,6 +21575,7 @@
       {
         "role": "tech-writer",
         "character": "The Strand Magazine Editor",
+        "shortName": "Strand",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -20949,6 +21607,7 @@
       {
         "role": "ux-designer",
         "character": "Violet Hunter",
+        "shortName": "Violet",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -20980,6 +21639,7 @@
       {
         "role": "devops",
         "character": "Inspector Bradstreet",
+        "shortName": "Bradstreet",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -21025,6 +21685,7 @@
       {
         "role": "orchestrator",
         "character": "The Librarian",
+        "shortName": "Librarian",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -21056,6 +21717,7 @@
       {
         "role": "sm",
         "character": "Hiro Protagonist",
+        "shortName": "Hiro",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -21087,6 +21749,7 @@
       {
         "role": "tea",
         "character": "Y.T.",
+        "shortName": "Y.T.",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -21118,6 +21781,7 @@
       {
         "role": "dev",
         "character": "Juanita Marquez",
+        "shortName": "Juanita",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -21149,6 +21813,7 @@
       {
         "role": "reviewer",
         "character": "Lagos",
+        "shortName": "Lagos",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -21180,6 +21845,7 @@
       {
         "role": "architect",
         "character": "L. Bob Rife",
+        "shortName": "Bob",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -21211,6 +21877,7 @@
       {
         "role": "pm",
         "character": "Uncle Enzo",
+        "shortName": "Enzo",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -21242,6 +21909,7 @@
       {
         "role": "tech-writer",
         "character": "Ng",
+        "shortName": "Ng",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -21273,6 +21941,7 @@
       {
         "role": "ux-designer",
         "character": "Fido (Rat Thing)",
+        "shortName": "Fido",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -21304,6 +21973,7 @@
       {
         "role": "devops",
         "character": "Raven",
+        "shortName": "Raven",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -21349,6 +22019,7 @@
       {
         "role": "orchestrator",
         "character": "Grace Hopper",
+        "shortName": "Grace",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -21380,6 +22051,7 @@
       {
         "role": "sm",
         "character": "Margaret Hamilton",
+        "shortName": "Margaret",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -21411,6 +22083,7 @@
       {
         "role": "tea",
         "character": "Donald Knuth",
+        "shortName": "Donald",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -21442,6 +22115,7 @@
       {
         "role": "dev",
         "character": "Dennis Ritchie",
+        "shortName": "Dennis",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -21473,6 +22147,7 @@
       {
         "role": "reviewer",
         "character": "Linus Torvalds",
+        "shortName": "Linus",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -21504,6 +22179,7 @@
       {
         "role": "architect",
         "character": "John Carmack",
+        "shortName": "John",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -21535,6 +22211,7 @@
       {
         "role": "pm",
         "character": "Alan Kay",
+        "shortName": "Alan",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -21566,6 +22243,7 @@
       {
         "role": "tech-writer",
         "character": "Barbara Liskov",
+        "shortName": "Barbara",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -21597,6 +22275,7 @@
       {
         "role": "ux-designer",
         "character": "Guido van Rossum",
+        "shortName": "Guido",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -21628,6 +22307,7 @@
       {
         "role": "devops",
         "character": "Ken Thompson",
+        "shortName": "Ken",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -21673,6 +22353,7 @@
       {
         "role": "orchestrator",
         "character": "Q",
+        "shortName": "Q",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -21697,6 +22378,7 @@
       {
         "role": "sm",
         "character": "Captain Jean-Luc Picard",
+        "shortName": "Jean-Luc",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -21720,6 +22402,7 @@
       {
         "role": "tea",
         "character": "Lieutenant Commander Data",
+        "shortName": "Data",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -21744,6 +22427,7 @@
       {
         "role": "dev",
         "character": "Lieutenant Commander Geordi La Forge",
+        "shortName": "Geordi",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -21767,6 +22451,7 @@
       {
         "role": "reviewer",
         "character": "Commander Spock (visiting from Enterprise)",
+        "shortName": "Spock",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -21790,6 +22475,7 @@
       {
         "role": "architect",
         "character": "Lieutenant Commander Data (in design mode)",
+        "shortName": "Data",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -21812,6 +22498,7 @@
       {
         "role": "pm",
         "character": "Admiral Kathryn Janeway",
+        "shortName": "Kathryn",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -21835,6 +22522,7 @@
       {
         "role": "tech-writer",
         "character": "Dr. Beverly Crusher",
+        "shortName": "Beverly",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -21857,6 +22545,7 @@
       {
         "role": "ux-designer",
         "character": "Counselor Deanna Troi",
+        "shortName": "Counselor",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -21879,6 +22568,7 @@
       {
         "role": "devops",
         "character": "Chief Miles O'Brien",
+        "shortName": "Miles",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -21915,6 +22605,7 @@
       {
         "role": "orchestrator",
         "character": "The Guardian of Forever",
+        "shortName": "Guardian",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -21938,6 +22629,7 @@
       {
         "role": "sm",
         "character": "Captain James T. Kirk",
+        "shortName": "James",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -21961,6 +22653,7 @@
       {
         "role": "tea",
         "character": "Mr. Spock",
+        "shortName": "Spock",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -21984,6 +22677,7 @@
       {
         "role": "dev",
         "character": "Montgomery \"Scotty\" Scott",
+        "shortName": "Scotty",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -22007,6 +22701,7 @@
       {
         "role": "reviewer",
         "character": "Dr. Leonard \"Bones\" McCoy",
+        "shortName": "Bones",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -22030,6 +22725,7 @@
       {
         "role": "architect",
         "character": "Mr. Spock (design mode)",
+        "shortName": "Spock",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -22053,6 +22749,7 @@
       {
         "role": "pm",
         "character": "Admiral Nogura",
+        "shortName": "Nogura",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -22076,6 +22773,7 @@
       {
         "role": "tech-writer",
         "character": "Lieutenant Uhura",
+        "shortName": "Uhura",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -22099,6 +22797,7 @@
       {
         "role": "ux-designer",
         "character": "Dr. McCoy (bedside manner mode)",
+        "shortName": "McCoy",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -22122,6 +22821,7 @@
       {
         "role": "devops",
         "character": "Montgomery \"Scotty\" Scott (systems mode)",
+        "shortName": "Scotty",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -22159,6 +22859,7 @@
       {
         "role": "orchestrator",
         "character": "Grand Admiral Thrawn",
+        "shortName": "Thrawn",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -22190,6 +22891,7 @@
       {
         "role": "sm",
         "character": "Leia Organa",
+        "shortName": "Leia",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -22221,6 +22923,7 @@
       {
         "role": "tea",
         "character": "Obi-Wan Kenobi",
+        "shortName": "Obi-Wan",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -22252,6 +22955,7 @@
       {
         "role": "dev",
         "character": "Han Solo",
+        "shortName": "Han",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -22283,6 +22987,7 @@
       {
         "role": "reviewer",
         "character": "Yoda",
+        "shortName": "Yoda",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -22314,6 +23019,7 @@
       {
         "role": "architect",
         "character": "Emperor Palpatine",
+        "shortName": "Emperor",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -22345,6 +23051,7 @@
       {
         "role": "pm",
         "character": "Mon Mothma",
+        "shortName": "Mon",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -22376,6 +23083,7 @@
       {
         "role": "tech-writer",
         "character": "C-3PO",
+        "shortName": "C-3PO",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -22407,6 +23115,7 @@
       {
         "role": "ux-designer",
         "character": "Ahsoka Tano",
+        "shortName": "Ahsoka",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -22438,6 +23147,7 @@
       {
         "role": "devops",
         "character": "R2-D2",
+        "shortName": "R2-D2",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -22483,6 +23193,7 @@
       {
         "role": "orchestrator",
         "character": "Logan Roy",
+        "shortName": "Logan",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -22514,6 +23225,7 @@
       {
         "role": "sm",
         "character": "Frank Vernon",
+        "shortName": "Frank",
         "ocean": {
           "O": 2,
           "C": 4,
@@ -22545,6 +23257,7 @@
       {
         "role": "tea",
         "character": "Gerri Kellman",
+        "shortName": "Gerri",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -22576,6 +23289,7 @@
       {
         "role": "dev",
         "character": "Greg Hirsch",
+        "shortName": "Greg",
         "ocean": {
           "O": 2,
           "C": 2,
@@ -22607,6 +23321,7 @@
       {
         "role": "reviewer",
         "character": "Roman Roy",
+        "shortName": "Roman",
         "ocean": {
           "O": 4,
           "C": 2,
@@ -22638,6 +23353,7 @@
       {
         "role": "architect",
         "character": "Kendall Roy",
+        "shortName": "Kendall",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -22669,6 +23385,7 @@
       {
         "role": "pm",
         "character": "Siobhan (Shiv) Roy",
+        "shortName": "Siobhan",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -22700,6 +23417,7 @@
       {
         "role": "tech-writer",
         "character": "Hugo Baker",
+        "shortName": "Hugo",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -22731,6 +23449,7 @@
       {
         "role": "ux-designer",
         "character": "Willa Ferreyra",
+        "shortName": "Willa",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -22762,6 +23481,7 @@
       {
         "role": "devops",
         "character": "Tom Wambsgans",
+        "shortName": "Tom",
         "ocean": {
           "O": 2,
           "C": 3,
@@ -22807,6 +23527,7 @@
       {
         "role": "orchestrator",
         "character": "Superman",
+        "shortName": "Superman",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -22830,6 +23551,7 @@
       {
         "role": "sm",
         "character": "Wonder Woman",
+        "shortName": "Wonder",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -22853,6 +23575,7 @@
       {
         "role": "tea",
         "character": "Batman",
+        "shortName": "Batman",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -22876,6 +23599,7 @@
       {
         "role": "dev",
         "character": "The Flash",
+        "shortName": "Flash",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -22899,6 +23623,7 @@
       {
         "role": "reviewer",
         "character": "Green Lantern (Hal Jordan)",
+        "shortName": "Green",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -22922,6 +23647,7 @@
       {
         "role": "architect",
         "character": "Martian Manhunter",
+        "shortName": "Martian",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -22945,6 +23671,7 @@
       {
         "role": "pm",
         "character": "Aquaman",
+        "shortName": "Aquaman",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -22968,6 +23695,7 @@
       {
         "role": "tech-writer",
         "character": "Hawkman",
+        "shortName": "Hawkman",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -22991,6 +23719,7 @@
       {
         "role": "ux-designer",
         "character": "Black Canary",
+        "shortName": "Black",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -23014,6 +23743,7 @@
       {
         "role": "devops",
         "character": "Cyborg",
+        "shortName": "Cyborg",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -23051,6 +23781,7 @@
       {
         "role": "orchestrator",
         "character": "Ted Lasso",
+        "shortName": "Ted Lasso",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -23074,6 +23805,7 @@
       {
         "role": "sm",
         "character": "Coach Beard",
+        "shortName": "Coach",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -23097,6 +23829,7 @@
       {
         "role": "tea",
         "character": "Roy Kent",
+        "shortName": "Roy",
         "ocean": {
           "O": 2,
           "C": 4,
@@ -23120,6 +23853,7 @@
       {
         "role": "dev",
         "character": "Jamie Tartt",
+        "shortName": "Jamie",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -23143,6 +23877,7 @@
       {
         "role": "reviewer",
         "character": "Keeley Jones",
+        "shortName": "Keeley Jones",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -23166,6 +23901,7 @@
       {
         "role": "architect",
         "character": "Ted Lasso (Strategy Mode)",
+        "shortName": "Ted Lasso",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -23189,6 +23925,7 @@
       {
         "role": "pm",
         "character": "Rebecca Welton",
+        "shortName": "Rebecca",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -23212,6 +23949,7 @@
       {
         "role": "tech-writer",
         "character": "Trent Crimm (The Independent)",
+        "shortName": "Trent",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -23235,6 +23973,7 @@
       {
         "role": "ux-designer",
         "character": "Keeley Jones (Design Mode)",
+        "shortName": "Keeley Jones",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -23258,6 +23997,7 @@
       {
         "role": "devops",
         "character": "Higgins",
+        "shortName": "Higgins",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -23295,6 +24035,7 @@
       {
         "role": "orchestrator",
         "character": "Claudia",
+        "shortName": "Claudia",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -23326,6 +24067,7 @@
       {
         "role": "sm",
         "character": "Philip Jennings",
+        "shortName": "Philip",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -23357,6 +24099,7 @@
       {
         "role": "tea",
         "character": "Stan Beeman",
+        "shortName": "Stan",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -23388,6 +24131,7 @@
       {
         "role": "dev",
         "character": "Oleg Burov",
+        "shortName": "Oleg",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -23419,6 +24163,7 @@
       {
         "role": "reviewer",
         "character": "Elizabeth Jennings",
+        "shortName": "Elizabeth",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -23450,6 +24195,7 @@
       {
         "role": "architect",
         "character": "Gabriel",
+        "shortName": "Gabriel",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -23481,6 +24227,7 @@
       {
         "role": "pm",
         "character": "Arkady Zotov",
+        "shortName": "Arkady",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -23512,6 +24259,7 @@
       {
         "role": "tech-writer",
         "character": "Martha Hanson",
+        "shortName": "Martha",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -23543,6 +24291,7 @@
       {
         "role": "ux-designer",
         "character": "Paige Jennings",
+        "shortName": "Paige",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -23574,6 +24323,7 @@
       {
         "role": "devops",
         "character": "Henry Jennings",
+        "shortName": "Henry",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -23619,6 +24369,7 @@
       {
         "role": "orchestrator",
         "character": "The Count of Monte Cristo",
+        "shortName": "of",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -23650,6 +24401,7 @@
       {
         "role": "sm",
         "character": "Edmond Dantès",
+        "shortName": "Edmond",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -23681,6 +24433,7 @@
       {
         "role": "tea",
         "character": "Abbé Faria",
+        "shortName": "Faria",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -23712,6 +24465,7 @@
       {
         "role": "dev",
         "character": "Maximilian Morrel",
+        "shortName": "Maximilian",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -23743,6 +24497,7 @@
       {
         "role": "reviewer",
         "character": "Villefort",
+        "shortName": "Villefort",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -23774,6 +24529,7 @@
       {
         "role": "architect",
         "character": "Abbé Busoni / Lord Wilmore / The Count",
+        "shortName": "Abbé /",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -23805,6 +24561,7 @@
       {
         "role": "pm",
         "character": "Mercedes",
+        "shortName": "Mercedes",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -23836,6 +24593,7 @@
       {
         "role": "tech-writer",
         "character": "Luigi Vampa",
+        "shortName": "Luigi",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -23867,6 +24625,7 @@
       {
         "role": "ux-designer",
         "character": "Haydée",
+        "shortName": "Haydée",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -23898,6 +24657,7 @@
       {
         "role": "devops",
         "character": "Jacopo",
+        "shortName": "Jacopo",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -23943,6 +24703,7 @@
       {
         "role": "orchestrator",
         "character": "Queen Elizabeth II",
+        "shortName": "Elizabeth",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -23974,6 +24735,7 @@
       {
         "role": "sm",
         "character": "Philip Mountbatten",
+        "shortName": "Philip",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -24005,6 +24767,7 @@
       {
         "role": "tea",
         "character": "Princess Margaret",
+        "shortName": "Margaret",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -24036,6 +24799,7 @@
       {
         "role": "dev",
         "character": "Tommy Lascelles",
+        "shortName": "Tommy",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -24067,6 +24831,7 @@
       {
         "role": "reviewer",
         "character": "Winston Churchill",
+        "shortName": "Winston",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -24098,6 +24863,7 @@
       {
         "role": "architect",
         "character": "Lord Mountbatten",
+        "shortName": "Mountbatten",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -24129,6 +24895,7 @@
       {
         "role": "pm",
         "character": "Princess Diana",
+        "shortName": "Diana",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -24160,6 +24927,7 @@
       {
         "role": "tech-writer",
         "character": "Martin Charteris",
+        "shortName": "Martin",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -24191,6 +24959,7 @@
       {
         "role": "ux-designer",
         "character": "Princess Anne",
+        "shortName": "Anne",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -24222,6 +24991,7 @@
       {
         "role": "devops",
         "character": "Queen Elizabeth II (as DevOps)",
+        "shortName": "Elizabeth",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -24267,6 +25037,7 @@
       {
         "role": "orchestrator",
         "character": "The Investigator",
+        "shortName": "Investigator",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -24290,6 +25061,7 @@
       {
         "role": "sm",
         "character": "James Holden",
+        "shortName": "James",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -24313,6 +25085,7 @@
       {
         "role": "tea",
         "character": "Naomi Nagata",
+        "shortName": "Naomi Nagata",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -24336,6 +25109,7 @@
       {
         "role": "dev",
         "character": "Amos Burton",
+        "shortName": "Amos Burton",
         "ocean": {
           "O": 2,
           "C": 4,
@@ -24359,6 +25133,7 @@
       {
         "role": "reviewer",
         "character": "Chrisjen Avasarala",
+        "shortName": "Chrisjen Avasarala",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -24382,6 +25157,7 @@
       {
         "role": "architect",
         "character": "Naomi Nagata (design mode)",
+        "shortName": "Naomi Nagata",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -24405,6 +25181,7 @@
       {
         "role": "pm",
         "character": "Chrisjen Avasarala (planning mode)",
+        "shortName": "Chrisjen Avasarala",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -24428,6 +25205,7 @@
       {
         "role": "tech-writer",
         "character": "Camina Drummer",
+        "shortName": "Camina",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -24451,6 +25229,7 @@
       {
         "role": "ux-designer",
         "character": "Alex Kamal",
+        "shortName": "Alex",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -24474,6 +25253,7 @@
       {
         "role": "devops",
         "character": "Amos Burton (systems mode)",
+        "shortName": "Amos Burton",
         "ocean": {
           "O": 2,
           "C": 4,
@@ -24511,6 +25291,7 @@
       {
         "role": "orchestrator",
         "character": "The Judge (Gen)",
+        "shortName": "Judge",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -24542,6 +25323,7 @@
       {
         "role": "sm",
         "character": "Michael (reformed demon)",
+        "shortName": "Michael",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -24573,6 +25355,7 @@
       {
         "role": "tea",
         "character": "Chidi Anagonye",
+        "shortName": "Chidi",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -24604,6 +25387,7 @@
       {
         "role": "dev",
         "character": "Eleanor Shellstrop",
+        "shortName": "Eleanor",
         "ocean": {
           "O": 3,
           "C": 2,
@@ -24635,6 +25419,7 @@
       {
         "role": "reviewer",
         "character": "Shawn",
+        "shortName": "Shawn",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -24666,6 +25451,7 @@
       {
         "role": "architect",
         "character": "Michael (as Architect)",
+        "shortName": "Michael",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -24697,6 +25483,7 @@
       {
         "role": "pm",
         "character": "Tahani Al-Jamil",
+        "shortName": "Tahani",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -24728,6 +25515,7 @@
       {
         "role": "tech-writer",
         "character": "Janet",
+        "shortName": "Janet",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -24759,6 +25547,7 @@
       {
         "role": "ux-designer",
         "character": "Jason Mendoza",
+        "shortName": "Jason",
         "ocean": {
           "O": 2,
           "C": 2,
@@ -24790,6 +25579,7 @@
       {
         "role": "devops",
         "character": "Derek",
+        "shortName": "Derek",
         "ocean": {
           "O": 3,
           "C": 2,
@@ -24835,6 +25625,7 @@
       {
         "role": "orchestrator",
         "character": "The Green Light",
+        "shortName": "Green",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -24866,6 +25657,7 @@
       {
         "role": "sm",
         "character": "Jay Gatsby",
+        "shortName": "Jay Gatsby",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -24897,6 +25689,7 @@
       {
         "role": "tea",
         "character": "Nick Carraway",
+        "shortName": "Nick Carraway",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -24928,6 +25721,7 @@
       {
         "role": "dev",
         "character": "Jay Gatsby (Developer)",
+        "shortName": "Jay Gatsby",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -24959,6 +25753,7 @@
       {
         "role": "reviewer",
         "character": "Tom Buchanan",
+        "shortName": "Tom",
         "ocean": {
           "O": 2,
           "C": 3,
@@ -24990,6 +25785,7 @@
       {
         "role": "architect",
         "character": "Meyer Wolfsheim",
+        "shortName": "Meyer",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -25021,6 +25817,7 @@
       {
         "role": "pm",
         "character": "Daisy Buchanan",
+        "shortName": "Daisy",
         "ocean": {
           "O": 3,
           "C": 2,
@@ -25052,6 +25849,7 @@
       {
         "role": "tech-writer",
         "character": "Nick Carraway (Writer)",
+        "shortName": "Nick Carraway",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -25083,6 +25881,7 @@
       {
         "role": "ux-designer",
         "character": "Jordan Baker",
+        "shortName": "Jordan",
         "ocean": {
           "O": 3,
           "C": 2,
@@ -25114,6 +25913,7 @@
       {
         "role": "devops",
         "character": "George Wilson",
+        "shortName": "George",
         "ocean": {
           "O": 2,
           "C": 3,
@@ -25159,6 +25959,7 @@
       {
         "role": "orchestrator",
         "character": "The Oracle",
+        "shortName": "Oracle",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -25190,6 +25991,7 @@
       {
         "role": "sm",
         "character": "Morpheus",
+        "shortName": "Morpheus",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -25221,6 +26023,7 @@
       {
         "role": "tea",
         "character": "Agent Smith",
+        "shortName": "Smith",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -25252,6 +26055,7 @@
       {
         "role": "dev",
         "character": "Neo",
+        "shortName": "Neo",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -25283,6 +26087,7 @@
       {
         "role": "reviewer",
         "character": "The Merovingian",
+        "shortName": "Merovingian",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -25314,6 +26119,7 @@
       {
         "role": "architect",
         "character": "The Architect",
+        "shortName": "Architect",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -25345,6 +26151,7 @@
       {
         "role": "pm",
         "character": "Niobe",
+        "shortName": "Niobe",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -25376,6 +26183,7 @@
       {
         "role": "tech-writer",
         "character": "Tank",
+        "shortName": "Tank",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -25407,6 +26215,7 @@
       {
         "role": "ux-designer",
         "character": "The Kid",
+        "shortName": "Kid",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -25438,6 +26247,7 @@
       {
         "role": "devops",
         "character": "Link",
+        "shortName": "Link",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -25483,6 +26293,7 @@
       {
         "role": "orchestrator",
         "character": "Michael Scott",
+        "shortName": "Michael",
         "ocean": {
           "O": 3,
           "C": 2,
@@ -25514,6 +26325,7 @@
       {
         "role": "sm",
         "character": "Jim Halpert",
+        "shortName": "Jim",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -25545,6 +26357,7 @@
       {
         "role": "tea",
         "character": "Dwight Schrute",
+        "shortName": "Dwight",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -25576,6 +26389,7 @@
       {
         "role": "dev",
         "character": "Kevin Malone",
+        "shortName": "Kevin",
         "ocean": {
           "O": 2,
           "C": 1,
@@ -25607,6 +26421,7 @@
       {
         "role": "reviewer",
         "character": "Angela Martin",
+        "shortName": "Angela",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -25638,6 +26453,7 @@
       {
         "role": "architect",
         "character": "Oscar Martinez",
+        "shortName": "Oscar",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -25669,6 +26485,7 @@
       {
         "role": "pm",
         "character": "Pam Beesly",
+        "shortName": "Pam",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -25700,6 +26517,7 @@
       {
         "role": "tech-writer",
         "character": "Toby Flenderson",
+        "shortName": "Toby",
         "ocean": {
           "O": 2,
           "C": 4,
@@ -25731,6 +26549,7 @@
       {
         "role": "ux-designer",
         "character": "Kelly Kapoor",
+        "shortName": "Kelly",
         "ocean": {
           "O": 3,
           "C": 2,
@@ -25762,6 +26581,7 @@
       {
         "role": "devops",
         "character": "Stanley Hudson",
+        "shortName": "Stanley",
         "ocean": {
           "O": 2,
           "C": 2,
@@ -25807,6 +26627,7 @@
       {
         "role": "orchestrator",
         "character": "Mr. Burns",
+        "shortName": "Burns",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -25838,6 +26659,7 @@
       {
         "role": "sm",
         "character": "Marge Simpson",
+        "shortName": "Marge",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -25869,6 +26691,7 @@
       {
         "role": "tea",
         "character": "Lisa Simpson",
+        "shortName": "Lisa",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -25900,6 +26723,7 @@
       {
         "role": "dev",
         "character": "Homer Simpson",
+        "shortName": "Homer",
         "ocean": {
           "O": 2,
           "C": 1,
@@ -25931,6 +26755,7 @@
       {
         "role": "reviewer",
         "character": "Sideshow Bob",
+        "shortName": "Sideshow",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -25962,6 +26787,7 @@
       {
         "role": "architect",
         "character": "Professor Frink",
+        "shortName": "Frink",
         "ocean": {
           "O": 5,
           "C": 3,
@@ -25993,6 +26819,7 @@
       {
         "role": "pm",
         "character": "Principal Skinner",
+        "shortName": "Principal",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -26024,6 +26851,7 @@
       {
         "role": "tech-writer",
         "character": "Comic Book Guy",
+        "shortName": "Comic",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -26055,6 +26883,7 @@
       {
         "role": "ux-designer",
         "character": "Bart Simpson",
+        "shortName": "Bart",
         "ocean": {
           "O": 4,
           "C": 1,
@@ -26086,6 +26915,7 @@
       {
         "role": "devops",
         "character": "Groundskeeper Willie",
+        "shortName": "Groundskeeper",
         "ocean": {
           "O": 2,
           "C": 4,
@@ -26131,6 +26961,7 @@
       {
         "role": "orchestrator",
         "character": "Dr. Jennifer Melfi",
+        "shortName": "Jennifer",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -26162,6 +26993,7 @@
       {
         "role": "sm",
         "character": "Tony Soprano",
+        "shortName": "Tony Soprano",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -26193,6 +27025,7 @@
       {
         "role": "tea",
         "character": "Paulie Walnuts",
+        "shortName": "Paulie",
         "ocean": {
           "O": 2,
           "C": 4,
@@ -26224,6 +27057,7 @@
       {
         "role": "dev",
         "character": "Christopher Moltisanti",
+        "shortName": "Christopher",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -26255,6 +27089,7 @@
       {
         "role": "reviewer",
         "character": "Junior Soprano",
+        "shortName": "Junior",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -26286,6 +27121,7 @@
       {
         "role": "architect",
         "character": "Tony Soprano (as Architect)",
+        "shortName": "Tony Soprano",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -26317,6 +27153,7 @@
       {
         "role": "pm",
         "character": "Carmela Soprano",
+        "shortName": "Carmela",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -26348,6 +27185,7 @@
       {
         "role": "tech-writer",
         "character": "Adriana La Cerva",
+        "shortName": "Adriana",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -26379,6 +27217,7 @@
       {
         "role": "ux-designer",
         "character": "Silvio Dante",
+        "shortName": "Silvio",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -26410,6 +27249,7 @@
       {
         "role": "devops",
         "character": "Furio Giunta",
+        "shortName": "Furio",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -26455,6 +27295,7 @@
       {
         "role": "orchestrator",
         "character": "President Josiah Bartlet",
+        "shortName": "Josiah",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -26486,6 +27327,7 @@
       {
         "role": "sm",
         "character": "Leo McGarry",
+        "shortName": "Leo",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -26517,6 +27359,7 @@
       {
         "role": "tea",
         "character": "Toby Ziegler",
+        "shortName": "Toby",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -26548,6 +27391,7 @@
       {
         "role": "dev",
         "character": "Sam Seaborn",
+        "shortName": "Sam",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -26579,6 +27423,7 @@
       {
         "role": "reviewer",
         "character": "Josh Lyman",
+        "shortName": "Josh",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -26610,6 +27455,7 @@
       {
         "role": "architect",
         "character": "Will Bailey",
+        "shortName": "Will",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -26641,6 +27487,7 @@
       {
         "role": "pm",
         "character": "CJ Cregg",
+        "shortName": "CJ",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -26672,6 +27519,7 @@
       {
         "role": "tech-writer",
         "character": "Donna Moss",
+        "shortName": "Donna",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -26703,6 +27551,7 @@
       {
         "role": "ux-designer",
         "character": "Joey Lucas",
+        "shortName": "Joey",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -26734,6 +27583,7 @@
       {
         "role": "devops",
         "character": "The Situation Room",
+        "shortName": "Situation Room",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -26779,6 +27629,7 @@
       {
         "role": "orchestrator",
         "character": "The Greek",
+        "shortName": "Greek",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -26810,6 +27661,7 @@
       {
         "role": "sm",
         "character": "Lester Freamon",
+        "shortName": "Lester",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -26841,6 +27693,7 @@
       {
         "role": "tea",
         "character": "Omar Little",
+        "shortName": "Omar",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -26872,6 +27725,7 @@
       {
         "role": "dev",
         "character": "D'Angelo Barksdale",
+        "shortName": "D'Angelo",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -26903,6 +27757,7 @@
       {
         "role": "reviewer",
         "character": "Proposition Joe",
+        "shortName": "Proposition",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -26934,6 +27789,7 @@
       {
         "role": "architect",
         "character": "Stringer Bell",
+        "shortName": "Stringer",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -26965,6 +27821,7 @@
       {
         "role": "pm",
         "character": "Major Colvin (Bunny)",
+        "shortName": "Colvin",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -26996,6 +27853,7 @@
       {
         "role": "tech-writer",
         "character": "Augustus Haynes",
+        "shortName": "Augustus",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -27027,6 +27885,7 @@
       {
         "role": "ux-designer",
         "character": "Bubbles",
+        "shortName": "Bubbles",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -27058,6 +27917,7 @@
       {
         "role": "devops",
         "character": "Cedric Daniels",
+        "shortName": "Cedric",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -27103,6 +27963,7 @@
       {
         "role": "orchestrator",
         "character": "Destiny (Przeznaczenie)",
+        "shortName": "Destiny",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -27134,6 +27995,7 @@
       {
         "role": "sm",
         "character": "Vesemir",
+        "shortName": "Vesemir",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -27165,6 +28027,7 @@
       {
         "role": "tea",
         "character": "Geralt of Rivia",
+        "shortName": "Geralt",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -27198,6 +28061,7 @@
       {
         "role": "dev",
         "character": "Triss Merigold",
+        "shortName": "Triss",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -27229,6 +28093,7 @@
       {
         "role": "reviewer",
         "character": "Yennefer of Vengerberg",
+        "shortName": "Yennefer",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -27260,6 +28125,7 @@
       {
         "role": "architect",
         "character": "Vilgefortz of Roggeveen",
+        "shortName": "Vilgefortz",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -27291,6 +28157,7 @@
       {
         "role": "pm",
         "character": "Jaskier (Dandelion)",
+        "shortName": "Jaskier",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -27322,6 +28189,7 @@
       {
         "role": "tech-writer",
         "character": "The Historian (Dandelion as Author)",
+        "shortName": "Historian",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -27353,6 +28221,7 @@
       {
         "role": "ux-designer",
         "character": "Ciri (Cirilla)",
+        "shortName": "Ciri",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -27384,6 +28253,7 @@
       {
         "role": "devops",
         "character": "Eredin (King of the Wild Hunt)",
+        "shortName": "Eredin",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -27429,6 +28299,7 @@
       {
         "role": "orchestrator",
         "character": "Simon Illyan",
+        "shortName": "Simon",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -27460,6 +28331,7 @@
       {
         "role": "sm",
         "character": "Miles Vorkosigan",
+        "shortName": "Miles",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -27491,6 +28363,7 @@
       {
         "role": "tea",
         "character": "Cordelia Naismith Vorkosigan",
+        "shortName": "Cordelia",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -27522,6 +28395,7 @@
       {
         "role": "dev",
         "character": "Baz Jesek",
+        "shortName": "Baz",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -27553,6 +28427,7 @@
       {
         "role": "reviewer",
         "character": "Aral Vorkosigan",
+        "shortName": "Aral",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -27584,6 +28459,7 @@
       {
         "role": "architect",
         "character": "Gregor Vorbarra",
+        "shortName": "Gregor",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -27615,6 +28491,7 @@
       {
         "role": "pm",
         "character": "Elli Quinn",
+        "shortName": "Elli",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -27646,6 +28523,7 @@
       {
         "role": "tech-writer",
         "character": "Ivan Vorpatril",
+        "shortName": "Ivan",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -27677,6 +28555,7 @@
       {
         "role": "ux-designer",
         "character": "Ekaterin Vorsoisson",
+        "shortName": "Ekaterin",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -27708,6 +28587,7 @@
       {
         "role": "devops",
         "character": "Sergeant Bothari",
+        "shortName": "Bothari",
         "ocean": {
           "O": 2,
           "C": 5,
@@ -27753,6 +28633,7 @@
       {
         "role": "orchestrator",
         "character": "Doctor Manhattan",
+        "shortName": "Manhattan",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -27784,6 +28665,7 @@
       {
         "role": "sm",
         "character": "Hollis Mason (Nite Owl I)",
+        "shortName": "Hollis",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -27815,6 +28697,7 @@
       {
         "role": "tea",
         "character": "Rorschach",
+        "shortName": "Rorschach",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -27846,6 +28729,7 @@
       {
         "role": "dev",
         "character": "Dan Dreiberg (Nite Owl II)",
+        "shortName": "Dan",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -27877,6 +28761,7 @@
       {
         "role": "reviewer",
         "character": "The Comedian (Edward Blake)",
+        "shortName": "Comedian",
         "ocean": {
           "O": 3,
           "C": 3,
@@ -27908,6 +28793,7 @@
       {
         "role": "architect",
         "character": "Adrian Veidt (Ozymandias)",
+        "shortName": "Adrian",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -27939,6 +28825,7 @@
       {
         "role": "pm",
         "character": "Laurie Juspeczyk (Silk Spectre II)",
+        "shortName": "Laurie",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -27970,6 +28857,7 @@
       {
         "role": "tech-writer",
         "character": "The Black Freighter Narrator",
+        "shortName": "Black",
         "ocean": {
           "O": 4,
           "C": 3,
@@ -28001,6 +28889,7 @@
       {
         "role": "ux-designer",
         "character": "Malcolm Long (Dr. Long)",
+        "shortName": "Malcolm",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -28032,6 +28921,7 @@
       {
         "role": "devops",
         "character": "Captain Metropolis",
+        "shortName": "Metropolis",
         "ocean": {
           "O": 3,
           "C": 4,
@@ -28077,6 +28967,7 @@
       {
         "role": "orchestrator",
         "character": "Ernest Shackleton",
+        "shortName": "Ernest",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -28108,6 +28999,7 @@
       {
         "role": "sm",
         "character": "Amelia Earhart",
+        "shortName": "Amelia",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -28139,6 +29031,7 @@
       {
         "role": "tea",
         "character": "Roald Amundsen",
+        "shortName": "Roald",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -28170,6 +29063,7 @@
       {
         "role": "dev",
         "character": "Marco Polo",
+        "shortName": "Marco",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -28201,6 +29095,7 @@
       {
         "role": "reviewer",
         "character": "Ibn Battuta",
+        "shortName": "Ibn",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -28232,6 +29127,7 @@
       {
         "role": "architect",
         "character": "James Cook",
+        "shortName": "James",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -28263,6 +29159,7 @@
       {
         "role": "pm",
         "character": "Ferdinand Magellan",
+        "shortName": "Ferdinand",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -28294,6 +29191,7 @@
       {
         "role": "tech-writer",
         "character": "Nellie Bly",
+        "shortName": "Nellie",
         "ocean": {
           "O": 5,
           "C": 5,
@@ -28325,6 +29223,7 @@
       {
         "role": "ux-designer",
         "character": "Jacques Cousteau",
+        "shortName": "Jacques",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -28356,6 +29255,7 @@
       {
         "role": "devops",
         "character": "Edmund Hillary",
+        "shortName": "Edmund",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -28401,6 +29301,7 @@
       {
         "role": "orchestrator",
         "character": "Winston Churchill",
+        "shortName": "Winston",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -28432,6 +29333,7 @@
       {
         "role": "sm",
         "character": "Dwight D. Eisenhower",
+        "shortName": "Dwight",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -28463,6 +29365,7 @@
       {
         "role": "tea",
         "character": "Alan Turing",
+        "shortName": "Alan",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -28494,6 +29397,7 @@
       {
         "role": "dev",
         "character": "George Marshall",
+        "shortName": "George",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -28525,6 +29429,7 @@
       {
         "role": "reviewer",
         "character": "Charles de Gaulle",
+        "shortName": "Charles",
         "ocean": {
           "O": 4,
           "C": 4,
@@ -28556,6 +29461,7 @@
       {
         "role": "architect",
         "character": "Franklin D. Roosevelt",
+        "shortName": "Franklin",
         "ocean": {
           "O": 5,
           "C": 4,
@@ -28587,6 +29493,7 @@
       {
         "role": "pm",
         "character": "Bernard Montgomery",
+        "shortName": "Bernard",
         "ocean": {
           "O": 3,
           "C": 5,
@@ -28618,6 +29525,7 @@
       {
         "role": "tech-writer",
         "character": "Vera Atkins",
+        "shortName": "Vera",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -28649,6 +29557,7 @@
       {
         "role": "ux-designer",
         "character": "Chester Nimitz",
+        "shortName": "Chester",
         "ocean": {
           "O": 4,
           "C": 5,
@@ -28680,6 +29589,7 @@
       {
         "role": "devops",
         "character": "Georgy Zhukov",
+        "shortName": "Georgy",
         "ocean": {
           "O": 3,
           "C": 5,

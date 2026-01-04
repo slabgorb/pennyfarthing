@@ -1,0 +1,15 @@
+# Development-only assets (not distributed via npm)
+internal/
+
+# Other dev files
+.session/
+.claude/
+sprint/
+docs/
+test/
+*.md
+!README.md
+.git/
+.gitignore
+.eslintrc*
+tsconfig.json
