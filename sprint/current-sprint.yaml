@@ -11,12 +11,12 @@ sprint:
 
 summary:
   total_points: 68
-  completed_points: 48  # Epic 13: 29pts + Epic 14: 14pts
-  remaining_points: 20  # Epic 13: 10pts + Epic 15: 15pts
+  completed_points: 51  # Epic 13: 29pts + Epic 14: 14pts
+  remaining_points: 17  # Epic 13: 10pts + Epic 15: 15pts
   notes: |
     Epic 14 complete (14/14 pts).
     Epic 13 complete (34/39 pts).
-    Epic 15 added (0/15 pts) - Cyclist-Pennyfarthing integration.
+    Epic 15 in progress (3/15 pts) - Cyclist-Pennyfarthing integration.
 
 epics:
   # =========================================================================
@@ -283,7 +283,7 @@ epics:
       - Sidebar displays persona, stats, story, and git info
       - Statusbar disabled when running in Cyclist (redundant)
     points: 15
-    completed_points: 0
+    completed_points: 3
     priority: P2
     marker: "tooling"
     repos: pennyfarthing, cyclist
@@ -303,8 +303,9 @@ epics:
           File: src/cli/commands/cyclist.ts
         points: 3
         priority: P1
-        status: in_progress
+        status: done
         started: 2026-01-04
+        completed: 2026-01-04
         jira: https://1898andco.atlassian.net/browse/MSSCI-11348
         acceptance_criteria:
           - Command registered in pennyfarthing CLI
