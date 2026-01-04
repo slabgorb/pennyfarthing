@@ -78,33 +78,43 @@ agents:
   # Mode handler will populate these (Stories 6-2, 6-3, 6-4)
   orchestrator:
     character: Coordinator
+    shortName: Coordinator
     style: Placeholder - run mode handler to customize
   sm:
     character: Coordinator
+    shortName: Coordinator
     style: Placeholder - run mode handler to customize
   tea:
     character: Tester
+    shortName: Tester
     style: Placeholder - run mode handler to customize
   dev:
     character: Developer
+    shortName: Developer
     style: Placeholder - run mode handler to customize
   reviewer:
     character: Reviewer
+    shortName: Reviewer
     style: Placeholder - run mode handler to customize
   architect:
     character: Architect
+    shortName: Architect
     style: Placeholder - run mode handler to customize
   pm:
     character: Manager
+    shortName: Manager
     style: Placeholder - run mode handler to customize
   tech-writer:
     character: Writer
+    shortName: Writer
     style: Placeholder - run mode handler to customize
   ux-designer:
     character: Designer
+    shortName: Designer
     style: Placeholder - run mode handler to customize
   devops:
     character: Operator
+    shortName: Operator
     style: Placeholder - run mode handler to customize
 ```
 
@@ -149,6 +159,7 @@ Based on the universe description, generate personas for all 10 agents:
 
 For each agent, generate:
 - `character`: Name fitting the universe
+- `shortName`: Display name for UI (see Short Name Generation below)
 - `ocean`: OCEAN personality profile (see Role-Appropriate OCEAN Profiles below)
 - `style`: 1-2 sentence communication style
 - `expertise`: Areas of expertise in the universe context
@@ -157,6 +168,24 @@ For each agent, generate:
 - `quote`: Signature quote that captures their personality
 - `emoji`: Single emoji representing them
 - `helper`: Assistant with name and communication style
+
+#### Short Name Generation
+
+The `shortName` is a concise display name for portrait labels. Follow this priority:
+
+1. **Quoted nicknames first**: If character has a quoted nickname like "Hannibal" or "Starbuck", use it
+2. **Unique first name**: If first name is unique among all characters in the theme
+3. **Unique surname**: If surname distinguishes the character
+4. **First + Last**: If needed for disambiguation
+5. **Iconic names**: Keep full for iconic two-word names (e.g., "Big Brother", "Sun Tzu")
+
+Skip titles like "Dr.", "Captain", "President" when extracting shortName.
+
+Examples:
+- `Colonel John "Hannibal" Smith` → `Hannibal`
+- `Kara "Starbuck" Thrace` → `Starbuck`
+- `President Josiah Bartlet` → `Josiah`
+- `Big Brother` → `Big Brother` (iconic, keep full)
 
 #### Role-Appropriate OCEAN Profiles
 
@@ -247,6 +276,7 @@ theme:
 agents:
   orchestrator:
     character: {generated}
+    shortName: {generated - see Short Name Generation}
     ocean:
       O: {1-5}  # {rationale - e.g., "Cosmic awareness"}
       C: {1-5}  # {rationale}
@@ -262,7 +292,7 @@ agents:
     helper:
       name: {generated}
       style: "{generated}"
-  # ... all 10 agents with complete definitions including ocean blocks
+  # ... all 10 agents with complete definitions including ocean blocks and shortName
 ```
 
 **OCEAN Validation:** Before writing the theme file, verify all OCEAN profiles are complete and valid:
@@ -555,6 +585,7 @@ theme:
 agents:
   sm:
     character: {user provided}
+    shortName: {generated - see Short Name Generation}
     ocean:
       O: {1-5}  # {rationale}
       C: {1-5}  # {rationale}
