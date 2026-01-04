@@ -487,7 +487,8 @@ epics:
           - Documentation
         points: 2
         priority: P2
-        status: backlog
+        status: in-progress
+        started: 2026-01-04
         acceptance_criteria:
           - internal/ folder created with dev-only assets
           - showcase moved and still builds
