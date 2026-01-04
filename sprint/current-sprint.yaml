@@ -11,12 +11,12 @@ sprint:
 
 summary:
   total_points: 68
-  completed_points: 61  # Epic 13: 34pts + Epic 14: 14pts + Epic 15: 13pts
-  remaining_points: 7  # Epic 15: 2pts (15-5, 15-7)
+  completed_points: 63  # Epic 13: 34pts + Epic 14: 14pts + Epic 15: 15pts
+  remaining_points: 5  # Epic 15: 2pts (15-7)
   notes: |
     Epic 14 complete (14/14 pts).
     Epic 13 complete (34/34 pts).
-    Epic 15 in progress (13/15 pts) - Cyclist-Pennyfarthing integration.
+    Epic 15 nearly complete (15/17 pts) - only 15-7 remaining.
 
 epics:
   # =========================================================================
@@ -283,7 +283,7 @@ epics:
       - Sidebar displays persona, stats, story, and git info
       - Statusbar disabled when running in Cyclist (redundant)
     points: 15
-    completed_points: 8
+    completed_points: 13
     priority: P2
     marker: "tooling"
     repos: pennyfarthing, cyclist
@@ -416,10 +416,14 @@ epics:
           - pennyfarthing-dist/scripts/statusline.sh (check and skip)
         points: 2
         priority: P2
-        status: in_progress
+        status: done
         started: 2026-01-04
+        completed: 2026-01-04
         depends_on: "15-2"
         jira: https://1898andco.atlassian.net/browse/MSSCI-11352
+        pr:
+          - https://github.com/1898andCo/pennyfarthing/pull/72
+          - https://github.com/1898andCo/cyclist/pull/9
         acceptance_criteria:
           - Cyclist sets CYCLIST_ACTIVE=1 when spawning Claude
           - statusline.sh detects env var and outputs nothing
