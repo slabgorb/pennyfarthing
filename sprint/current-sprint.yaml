@@ -423,6 +423,34 @@ epics:
           - Statusbar hidden when in Cyclist, visible otherwise
           - No visual duplication between sidebar and statusbar
 
+      - id: "15-6"
+        title: "Move portrait images to pennyfarthing-dist"
+        description: |
+          Relocate agent portrait images from showcase to core distribution.
+          With Cyclist integration, portraits are now core functionality.
+
+          Tasks:
+          - Move showcase/public/sprites/{theme}/*.png to pennyfarthing-dist/personas/sprites/
+          - Update Cyclist sprite symlink to point to new location
+          - Update showcase to reference new location (or symlink back)
+          - Update generate-sprites.py output path
+          - Include sprites in npm package distribution
+
+          Files:
+          - pennyfarthing-dist/personas/sprites/{theme}/{role}.png (new location)
+          - showcase/public/sprites -> ../../pennyfarthing-dist/personas/sprites (symlink)
+          - cyclist/src/public/sprites -> pennyfarthing-dist/personas/sprites (symlink)
+        points: 2
+        priority: P2
+        status: backlog
+        depends_on: "15-4"
+        acceptance_criteria:
+          - Portraits moved to pennyfarthing-dist/personas/sprites/
+          - Showcase uses symlink to new location
+          - Cyclist sprite symlink works
+          - generate-sprites.py outputs to new location
+          - npm package includes sprites
+
 # =============================================================================
 # BACKLOG - Future Sprint Candidates
 # =============================================================================
