@@ -303,7 +303,8 @@ epics:
           File: src/cli/commands/cyclist.ts
         points: 3
         priority: P1
-        status: backlog
+        status: in_progress
+        started: 2026-01-04
         jira: https://1898andco.atlassian.net/browse/MSSCI-11348
         acceptance_criteria:
           - Command registered in pennyfarthing CLI
