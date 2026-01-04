@@ -8,7 +8,7 @@ A Claude Code agent orchestration framework with TDD workflow and themed persona
 
 ---
 
-### 🎭 [**Browse 91 Themes in the Interactive Showcase →**](https://animated-meme-3e4494y.pages.github.io/showcase/)
+### 🎭 [**Browse 91 Themes in the Interactive Showcase →**](https://animated-meme-3e4494y.pages.github.io/)
 
 Explore all themes with OCEAN spider charts, Chernoff faces, and 910 character profiles.
 

@@ -2,7 +2,7 @@
 
 Interactive website for browsing themes and character profiles.
 
-**Live Site:** https://animated-meme-3e4494y.pages.github.io/showcase/
+**Live Site:** https://animated-meme-3e4494y.pages.github.io/
 
 ## Features
 
