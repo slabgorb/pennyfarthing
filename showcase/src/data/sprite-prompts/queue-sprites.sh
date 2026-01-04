@@ -4,7 +4,21 @@
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SCRIPT="$SCRIPT_DIR/generate-sprites.py"
-VENV="$HOME/.venvs/sd/bin/activate"
+
+# Use project-local venv if it exists, otherwise fall back to home dir
+if [[ -f "$SCRIPT_DIR/.venv/bin/activate" ]]; then
+  VENV="$SCRIPT_DIR/.venv/bin/activate"
+elif [[ -f "$HOME/.venvs/sd/bin/activate" ]]; then
+  VENV="$HOME/.venvs/sd/bin/activate"
+else
+  echo "ERROR: No Python venv found with torch/diffusers."
+  echo "Create one with:"
+  echo "  cd $SCRIPT_DIR"
+  echo "  python3 -m venv .venv"
+  echo "  source .venv/bin/activate"
+  echo "  pip install -r requirements.txt"
+  exit 1
+fi
 
 # Themes to generate - 7 missing themes
 THEMES=(
