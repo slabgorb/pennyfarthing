@@ -31,6 +31,7 @@ export interface AgentHelper {
 export interface Agent {
   role: string; // Agent role key (sm, tea, dev, etc.)
   character: string;
+  shortName: string; // Display name for portraits
   ocean: OceanScores;
   style: string;
   expertise: string;
@@ -82,6 +83,7 @@ export interface RawThemeYaml {
     string,
     {
       character: string;
+      shortName?: string;
       ocean: OceanScores;
       style: string;
       expertise: string;

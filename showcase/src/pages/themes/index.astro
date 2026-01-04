@@ -78,7 +78,7 @@ const roleLabels: Record<string, string> = {
           <th class="py-2 px-2 text-left min-w-[140px]"></th>
           {roles.map((role) => (
             <th class="py-2 px-1 text-center">
-              <span class="text-xs text-stone-400 font-medium uppercase tracking-wide">{roleLabels[role]}</span>
+              <span class="text-sm text-stone-400 font-medium uppercase tracking-wide">{roleLabels[role]}</span>
             </th>
           ))}
         </tr>
@@ -98,10 +98,10 @@ const roleLabels: Record<string, string> = {
             </td>
             <td class="py-2 px-2">
               <a href={`/themes/${theme.id}`} class="block">
-                <div class="text-base font-semibold text-amber-100 truncate max-w-[180px]">
+                <div class="text-lg font-semibold text-amber-100 truncate max-w-[200px]">
                   {theme.metadata.name}
                 </div>
-                <div class="text-sm text-stone-400 truncate max-w-[180px]">
+                <div class="text-base text-stone-400 truncate max-w-[200px]">
                   {theme.metadata.source}
                 </div>
               </a>
@@ -109,10 +109,10 @@ const roleLabels: Record<string, string> = {
             {roles.map((role) => {
               const agent = theme.agents.find((a) => a.role === role);
               const spritePath = `/sprites/${theme.id}/${role}.png`;
-              const firstName = agent?.character?.split(' ')[0] || role;
+              const displayName = agent?.shortName || role;
               return (
-                <td class="py-2 px-1 text-center">
-                  <div class="flex flex-col items-center">
+                <td class="py-2 px-1 text-center align-top">
+                  <div class="flex flex-col items-center h-full">
                     {agent ? (
                       <PortraitTooltip agent={agent} themeName={theme.metadata.name} themeId={theme.id}>
                         <a href={`/characters/${theme.id}/${role}`} class="block">
@@ -142,7 +142,7 @@ const roleLabels: Record<string, string> = {
                         </div>
                       </a>
                     )}
-                    <span class="portrait-name text-[10px] text-stone-500 mt-1 truncate max-w-[60px]">{firstName}</span>
+                    <span class="portrait-name text-xs text-stone-500 mt-1 text-center leading-tight max-w-[70px] h-8 flex items-start justify-center">{displayName}</span>
                   </div>
                 </td>
               );
