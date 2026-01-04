@@ -6,9 +6,9 @@ Interactive website for browsing themes and character profiles.
 
 ## Features
 
-- **Theme Gallery** - Browse 63 themes with OCEAN spider charts
+- **Theme Gallery** - Browse 91 themes with OCEAN spider charts
 - **Theme Detail Pages** - Team overlay visualizations showing all 10 agents
-- **Character Profiles** - 630 character pages with Chernoff face visualizations
+- **Character Profiles** - 910 character pages with Chernoff face visualizations
 - **Filters** - Filter by OCEAN dimensions, role, source universe
 
 ## Local Development

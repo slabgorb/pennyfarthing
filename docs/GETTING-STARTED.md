@@ -89,7 +89,7 @@ pennyfarthing theme set discworld
 Or edit `.claude/persona-config.yaml` directly:
 
 ```yaml
-theme: discworld    # 63 themes available - see THEME-COMPARISON.md
+theme: discworld    # 91 themes available - see THEME-COMPARISON.md
 ```
 
 ## Your First Work Session
@@ -172,7 +172,7 @@ See [BENCHMARKING.md](BENCHMARKING.md) for complete guide.
 
 ## Showcase Website
 
-Browse all 63 themes and 630 character profiles at the interactive showcase:
+Browse all 91 themes and 910 character profiles at the interactive showcase:
 
 ```bash
 # Build and serve locally
