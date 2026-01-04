@@ -6,6 +6,14 @@
 
 A Claude Code agent orchestration framework with TDD workflow and themed personas. Install via npm, configure once, and let coordinated agents guide your development.
 
+---
+
+### 🎭 [**Browse 91 Themes in the Interactive Showcase →**](https://animated-meme-3e4494y.pages.github.io/showcase/)
+
+Explore all themes with OCEAN spider charts, Chernoff faces, and 910 character profiles.
+
+---
+
 ## Features
 
 - **10 Agents + 13 Subagents** - Strategic (PM, Architect) and tactical (SM, TEA, Dev, Reviewer) agents with official Haiku-based subagents for mechanical tasks
