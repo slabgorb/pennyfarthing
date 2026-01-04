@@ -2,13 +2,14 @@
 /**
  * Theme Gallery Page
  *
- * Displays all 63+ themes in a filterable, scrollable list.
+ * Displays all 63+ themes in a table layout for perfect column alignment.
  * Each theme shows a spider chart thumbnail and character portraits.
  * Sticky header shows agent role labels aligned with portrait columns.
  */
 
 import Base from '../../layouts/Base.astro';
-import ThemeRow from '../../components/ThemeRow.astro';
+import SpiderChart from '../../components/SpiderChart.astro';
+import PortraitTooltip from '../../components/PortraitTooltip.astro';
 import ThemeFilter from '../../components/ThemeFilter.tsx';
 import { loadThemes } from '../../lib/loader';
 
@@ -18,7 +19,7 @@ const themes = await loadThemes();
 // Extract unique source types for filter
 const sourceTypes = [...new Set(themes.map((t) => t.metadata.source))].sort();
 
-// Agent roles in display order (matches ThemeRow)
+// Agent roles in display order
 const roles = ['sm', 'tea', 'dev', 'reviewer', 'architect', 'pm', 'ux-designer', 'tech-writer', 'devops', 'orchestrator'];
 
 // Human-readable role labels
@@ -51,52 +52,105 @@ const roleLabels: Record<string, string> = {
         client:load
         sourceTypes={sourceTypes}
         onFilter={(filter) => {
-          const cards = document.querySelectorAll('[data-theme-card]');
+          const rows = document.querySelectorAll('[data-theme-row]');
           const searchLower = filter.search.toLowerCase();
 
-          cards.forEach((card) => {
-            const name = card.getAttribute('data-theme-name')?.toLowerCase() ?? '';
-            const source = card.getAttribute('data-theme-source') ?? '';
+          rows.forEach((row) => {
+            const name = row.getAttribute('data-theme-name')?.toLowerCase() ?? '';
+            const source = row.getAttribute('data-theme-source') ?? '';
 
             const matchesSearch = !filter.search || name.includes(searchLower);
             const matchesSource =
               filter.sourceType.length === 0 || filter.sourceType.includes(source);
 
-            (card as HTMLElement).style.display =
-              matchesSearch && matchesSource ? 'flex' : 'none';
+            (row as HTMLElement).style.display =
+              matchesSearch && matchesSource ? 'table-row' : 'none';
           });
         }}
       />
     </div>
 
-    <!-- Sticky header with role labels -->
-    <div class="sticky top-0 z-20 bg-[#272822] border-b border-stone-700 py-2 mb-2">
-      <div class="theme-row-layout">
-        <div class="theme-row-spider"></div>
-        <div class="theme-row-info"></div>
-        <div class="theme-row-portraits">
+    <!-- Theme table -->
+    <table class="theme-table w-full border-collapse">
+      <thead class="sticky top-0 z-20 bg-[#272822]">
+        <tr class="border-b border-stone-700">
+          <th class="py-2 px-2 w-14"></th>
+          <th class="py-2 px-2 text-left min-w-[140px]"></th>
           {roles.map((role) => (
-            <div class="portrait-cell text-center">
+            <th class="py-2 px-1 text-center">
               <span class="text-xs text-stone-400 font-medium uppercase tracking-wide">{roleLabels[role]}</span>
-            </div>
+            </th>
           ))}
-        </div>
-      </div>
-    </div>
-
-    <!-- Theme list -->
-    <div class="theme-list flex flex-col gap-2">
-      {themes.map((theme) => (
-        <div
-          data-theme-card
-          data-theme-name={theme.metadata.name}
-          data-theme-source={theme.metadata.source}
-          class="flex"
-        >
-          <ThemeRow theme={theme} />
-        </div>
-      ))}
-    </div>
+        </tr>
+      </thead>
+      <tbody>
+        {themes.map((theme) => (
+          <tr
+            data-theme-row
+            data-theme-name={theme.metadata.name}
+            data-theme-source={theme.metadata.source}
+            class="theme-row border-b border-stone-700/30 hover:bg-stone-800/50 transition-colors"
+          >
+            <td class="py-2 px-2">
+              <a href={`/themes/${theme.id}`} class="block">
+                <SpiderChart agents={theme.agents} size={48} />
+              </a>
+            </td>
+            <td class="py-2 px-2">
+              <a href={`/themes/${theme.id}`} class="block">
+                <div class="text-base font-semibold text-amber-100 truncate max-w-[180px]">
+                  {theme.metadata.name}
+                </div>
+                <div class="text-sm text-stone-400 truncate max-w-[180px]">
+                  {theme.metadata.source}
+                </div>
+              </a>
+            </td>
+            {roles.map((role) => {
+              const agent = theme.agents.find((a) => a.role === role);
+              const spritePath = `/sprites/${theme.id}/${role}.png`;
+              const firstName = agent?.character?.split(' ')[0] || role;
+              return (
+                <td class="py-2 px-1 text-center">
+                  <div class="flex flex-col items-center">
+                    {agent ? (
+                      <PortraitTooltip agent={agent} themeName={theme.metadata.name} themeId={theme.id}>
+                        <a href={`/characters/${theme.id}/${role}`} class="block">
+                          <img
+                            src={spritePath}
+                            alt={agent.character}
+                            class="w-10 h-10 mx-auto rounded bg-stone-700 hover:ring-2 hover:ring-amber-500 transition-all object-cover"
+                            loading="lazy"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                          />
+                          <div class="w-10 h-10 mx-auto rounded bg-stone-700 items-center justify-center text-lg hidden">
+                            {agent.emoji || '👤'}
+                          </div>
+                        </a>
+                      </PortraitTooltip>
+                    ) : (
+                      <a href={`/characters/${theme.id}/${role}`} class="block" title={role}>
+                        <img
+                          src={spritePath}
+                          alt={role}
+                          class="w-10 h-10 mx-auto rounded bg-stone-700 hover:ring-2 hover:ring-amber-500 transition-all object-cover"
+                          loading="lazy"
+                          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                        />
+                        <div class="w-10 h-10 mx-auto rounded bg-stone-700 items-center justify-center text-lg hidden">
+                          👤
+                        </div>
+                      </a>
+                    )}
+                    <span class="portrait-name text-[10px] text-stone-500 mt-1 truncate max-w-[60px]">{firstName}</span>
+                  </div>
+                </td>
+              );
+            })}
+          </tr>
+        ))}
+      </tbody>
+    </table>
 
     <!-- Empty state -->
     <div id="empty-state" class="hidden text-center py-12 text-stone-400">
@@ -107,22 +161,22 @@ const roleLabels: Record<string, string> = {
 </Base>
 
 <script>
-  // Show/hide empty state based on visible cards
+  // Show/hide empty state based on visible rows
   function updateEmptyState() {
-    const cards = document.querySelectorAll('[data-theme-card]');
-    const visibleCards = Array.from(cards).filter(
-      (card) => (card as HTMLElement).style.display !== 'none'
+    const rows = document.querySelectorAll('[data-theme-row]');
+    const visibleRows = Array.from(rows).filter(
+      (row) => (row as HTMLElement).style.display !== 'none'
     );
     const emptyState = document.getElementById('empty-state');
 
     if (emptyState) {
-      emptyState.classList.toggle('hidden', visibleCards.length > 0);
+      emptyState.classList.toggle('hidden', visibleRows.length > 0);
     }
   }
 
   // Watch for filter changes
   const observer = new MutationObserver(updateEmptyState);
-  document.querySelectorAll('[data-theme-card]').forEach((card) => {
-    observer.observe(card, { attributes: true, attributeFilter: ['style'] });
+  document.querySelectorAll('[data-theme-row]').forEach((row) => {
+    observer.observe(row, { attributes: true, attributeFilter: ['style'] });
   });
 </script>
