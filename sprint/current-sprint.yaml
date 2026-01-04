@@ -384,8 +384,9 @@ epics:
           - Document usage in README
         points: 2
         priority: P2
-        status: in-progress
+        status: done
         started: 2026-01-04
+        completed: 2026-01-04
         depends_on: "15-3"
         jira: https://1898andco.atlassian.net/browse/MSSCI-11351
         acceptance_criteria:
