@@ -209,7 +209,10 @@ export async function initCommand(
     }
   }
 
-  // 9. Generate template files (if not exist and not skipped)
+  // 9. Install git hooks
+  await installGitHooks(projectRoot, nodeModulesPath, { dryRun });
+
+  // 10. Generate template files (if not exist and not skipped)
   if (!options.skipTemplates) {
     logger.newline();
     logger.info('Generating configuration files...');
@@ -238,6 +241,65 @@ export async function initCommand(
   logger.info('  1. Edit .claude/project/docs/shared-context.md with your project info');
   logger.info('  2. Configure .claude/persona-config.yaml for your preferred theme');
   logger.info('  3. Run `pennyfarthing doctor` to verify installation');
+}
+
+/**
+ * Install git hooks from pennyfarthing-dist to .git/hooks
+ * Currently installs: post-merge hook for automatic sprint YAML updates
+ */
+async function installGitHooks(
+  projectRoot: string,
+  nodeModulesPath: string,
+  options: { dryRun?: boolean }
+): Promise<void> {
+  const gitHooksDir = join(projectRoot, '.git/hooks');
+
+  // Check if .git directory exists (is a git repo)
+  if (!pathExists(join(projectRoot, '.git'))) {
+    logger.info('Not a git repository, skipping git hook installation');
+    return;
+  }
+
+  logger.newline();
+  logger.info('Installing git hooks...');
+
+  // Ensure hooks directory exists
+  if (!pathExists(gitHooksDir) && !options.dryRun) {
+    ensureDir(gitHooksDir, { dryRun: options.dryRun });
+  }
+
+  // Install post-merge hook
+  const postMergeSource = join(nodeModulesPath, 'scripts/hooks/post-merge.sh');
+  const postMergeDest = join(gitHooksDir, 'post-merge');
+
+  if (!pathExists(postMergeSource)) {
+    logger.warning('post-merge hook source not found, skipping');
+    return;
+  }
+
+  // Check if hook already exists
+  if (pathExists(postMergeDest)) {
+    // Check if it's already our hook (contains pennyfarthing marker)
+    const existingContent = readFileSync(postMergeDest, 'utf8');
+    if (existingContent.includes('pennyfarthing') || existingContent.includes('Story 8-1')) {
+      logger.skipped('.git/hooks/post-merge', 'already installed');
+      return;
+    }
+
+    // Existing non-pennyfarthing hook - backup and replace
+    if (!options.dryRun) {
+      const backupPath = `${postMergeDest}.backup`;
+      writeFileSync(backupPath, existingContent, 'utf8');
+      logger.info(`Backed up existing hook to ${backupPath}`);
+    }
+  }
+
+  // Copy the hook
+  if (!options.dryRun) {
+    const hookContent = readFileSync(postMergeSource, 'utf8');
+    writeFileSync(postMergeDest, hookContent, { mode: 0o755 });
+  }
+  logger.created('.git/hooks/post-merge');
 }
 
 async function generateTemplateFiles(
