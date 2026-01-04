@@ -7,21 +7,18 @@ const yaml = require('yaml');
 const THEMES_DIR = path.join(__dirname, '../../pennyfarthing-dist/personas/themes');
 const OUTPUT_DIR = __dirname;
 
-const PROMPT_TEMPLATE = `Create a sprite sheet of 10 character portrait busts in a 5×2 grid (500px × 200px total, each portrait 100×100px).
+const PROMPT_TEMPLATE = `Generate individual character portraits for the {{THEME_NAME}} theme.
 
 **Style:** Traditional woodcut illustration, black and white only, bold linework with crosshatching for shading. High contrast, no grayscale gradients - only pure black lines on white background. Evokes medieval or Renaissance woodblock prints.
 
-**Theme:** {{THEME_NAME}}
 **Source:** {{SOURCE}}
 
-**Row 1 (left to right):**
+**Characters:**
 1. **Orchestrator:** {{ORCHESTRATOR}}
 2. **SM (Scrum Master):** {{SM}}
 3. **TEA (Test Engineer):** {{TEA}}
 4. **Dev (Developer):** {{DEV}}
 5. **Reviewer:** {{REVIEWER}}
-
-**Row 2 (left to right):**
 6. **Architect:** {{ARCHITECT}}
 7. **PM (Product Manager):** {{PM}}
 8. **Tech Writer:** {{TECH_WRITER}}
@@ -31,9 +28,9 @@ const PROMPT_TEMPLATE = `Create a sprite sheet of 10 character portrait busts in
 **Requirements:**
 - Each portrait clearly identifiable as the named character
 - Include a small identifying prop or visual element for each character
-- Consistent woodcut style across all 10 portraits
+- Consistent woodcut style across all portraits
 - Bold black lines, white background, crosshatch shading only
-- Bust/headshot composition for each cell
+- Bust/headshot composition
 `;
 
 function getCharacterDescription(agent) {

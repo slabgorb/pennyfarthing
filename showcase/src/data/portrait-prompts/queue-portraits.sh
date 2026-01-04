@@ -1,9 +1,9 @@
 #!/bin/bash
-# Queue sprite generation for remaining themes
+# Queue portrait generation for remaining themes
 # Runs 3 themes in parallel, waits for completion, then next batch
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-SCRIPT="$SCRIPT_DIR/generate-sprites.py"
+SCRIPT="$SCRIPT_DIR/generate-portraits.py"
 
 # Use project-local venv if it exists, otherwise fall back to home dir
 if [[ -f "$SCRIPT_DIR/.venv/bin/activate" ]]; then
@@ -29,7 +29,7 @@ THEMES=(
 BATCH_SIZE=3
 TOTAL=${#THEMES[@]}
 
-echo "=== Sprite Generation Queue ==="
+echo "=== Portrait Generation Queue ==="
 echo "Total themes: $TOTAL"
 echo "Batch size: $BATCH_SIZE"
 echo ""
