@@ -50,19 +50,20 @@ const roles = ['sm', 'tea', 'dev', 'reviewer', 'architect', 'pm', 'ux-designer',
       {roles.map((role) => {
         const agent = theme.agents.find((a) => a.role === role);
         const spritePath = `/sprites/${theme.id}/${role}.png`;
+        const characterName = agent?.character?.split(' ')[0] || role;
         return (
-          <div class="portrait-cell flex items-center justify-center">
+          <div class="portrait-cell">
             {agent ? (
               <PortraitTooltip agent={agent} themeName={theme.metadata.name} themeId={theme.id}>
                 <a href={`/characters/${theme.id}/${role}`} class="block">
                   <img
                     src={spritePath}
                     alt={agent.character}
-                    class="w-10 h-10 rounded object-cover bg-stone-700 hover:ring-2 hover:ring-amber-500 transition-all"
+                    class="rounded bg-stone-700 hover:ring-2 hover:ring-amber-500 transition-all"
                     loading="lazy"
                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
                   />
-                  <div class="w-10 h-10 rounded bg-stone-700 items-center justify-center text-lg hidden">
+                  <div class="rounded bg-stone-700 items-center justify-center text-lg hidden aspect-square">
                     {agent.emoji || '👤'}
                   </div>
                 </a>
@@ -72,15 +73,16 @@ const roles = ['sm', 'tea', 'dev', 'reviewer', 'architect', 'pm', 'ux-designer',
                 <img
                   src={spritePath}
                   alt={role}
-                  class="w-10 h-10 rounded object-cover bg-stone-700 hover:ring-2 hover:ring-amber-500 transition-all"
+                  class="rounded bg-stone-700 hover:ring-2 hover:ring-amber-500 transition-all"
                   loading="lazy"
                   onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
                 />
-                <div class="w-10 h-10 rounded bg-stone-700 items-center justify-center text-lg hidden">
+                <div class="rounded bg-stone-700 items-center justify-center text-lg hidden aspect-square">
                   👤
                 </div>
               </a>
             )}
+            <span class="portrait-name">{characterName}</span>
           </div>
         );
       })}
@@ -88,13 +90,3 @@ const roles = ['sm', 'tea', 'dev', 'reviewer', 'architect', 'pm', 'ux-designer',
   </div>
 </div>
 
-<style>
-  /* Row-specific styles - layout is in global.css */
-  @media (max-width: 768px) {
-    .portrait-cell :global(img),
-    .portrait-cell :global(div) {
-      width: 32px !important;
-      height: 32px !important;
-    }
-  }
-</style>
