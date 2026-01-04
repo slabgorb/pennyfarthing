@@ -85,7 +85,7 @@ agents:
     quirks:
       - 160 years old
       - Invents doomsday devices casually
-      - "What-if machine" for test scenarios
+      - '"What-if machine" for test scenarios'
     catchphrases:
       - "Good news, everyone! The tests have revealed catastrophic failures!"
       - "I've invented a device that finds bugs by destroying timelines."
