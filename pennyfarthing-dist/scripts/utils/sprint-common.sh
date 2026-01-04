@@ -104,3 +104,76 @@ extract_jira_key() {
     echo "$input"
     return 1
 }
+
+# extract_story_id BRANCH_NAME
+# Extract story ID from branch name pattern feat/X-Y-*
+# Returns: X-Y (e.g., "8-1" from "feat/8-1-merge-detection")
+# Returns empty string for non-matching branches
+extract_story_id() {
+    local branch="$1"
+
+    # Match pattern: feat/EPIC-STORY-description or feat/EPIC-STORY
+    # Uses basic regex compatible with both bash and zsh
+    if [[ "$branch" =~ ^feat/([0-9]+-[0-9]+) ]]; then
+        echo "${match[1]:-${BASH_REMATCH[1]}}"
+    fi
+    # Returns empty string for non-matching patterns
+}
+
+# update_story_status STORY_ID [NEW_STATUS]
+# Update story status in sprint YAML and add completed date
+# Uses yq for YAML manipulation
+# Arguments:
+#   STORY_ID - Story identifier (e.g., "8-1")
+#   NEW_STATUS - Optional status, defaults to "done"
+update_story_status() {
+    local story_id="$1"
+    local new_status="${2:-done}"
+    local completed_date
+    completed_date=$(date +%Y-%m-%d)
+
+    local sprint_file="$PROJECT_ROOT/sprint/current-sprint.yaml"
+
+    if [[ ! -f "$sprint_file" ]]; then
+        return 1
+    fi
+
+    # Check if yq is available
+    if ! command -v yq &>/dev/null; then
+        echo "Warning: yq not found, cannot update sprint YAML" >&2
+        return 1
+    fi
+
+    # Extract epic and story numbers
+    local epic_num="${story_id%%-*}"
+    local story_num="${story_id#*-}"
+
+    # Update status and add completed date using yq
+    yq eval -i "
+        (.epics[] | select(.id == \"$epic_num\") | .stories[] | select(.id == \"$story_num\")).status = \"$new_status\" |
+        (.epics[] | select(.id == \"$epic_num\") | .stories[] | select(.id == \"$story_num\")).completed = \"$completed_date\"
+    " "$sprint_file"
+
+    return $?
+}
+
+# log_reconciliation STORY_ID MESSAGE
+# Log reconciliation event to .session/ directory
+# Arguments:
+#   STORY_ID - Story identifier (e.g., "8-1")
+#   MESSAGE - Optional message, defaults to "Merge detected"
+log_reconciliation() {
+    local story_id="$1"
+    local message="${2:-Merge detected}"
+    local timestamp
+    timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+
+    local session_dir="$PROJECT_ROOT/.session"
+
+    # Ensure session directory exists
+    mkdir -p "$session_dir"
+
+    local log_file="$session_dir/reconciliation.log"
+
+    echo "[$timestamp] Story $story_id: $message" >> "$log_file"
+}

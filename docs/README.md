@@ -23,7 +23,7 @@ Complete documentation for the Pennyfarthing agent orchestration framework.
 Pennyfarthing is a shared agent orchestration framework for Claude Code projects. It provides:
 
 - **Agent System** - Coordinated multi-agent workflows for TDD development
-- **63 Persona Themes** - Character personalities with OCEAN profiles (Discworld, Star Trek, The Expanse, etc.)
+- **91 Persona Themes** - Character personalities with OCEAN profiles (Discworld, Star Trek, The Expanse, etc.)
 - **Subagent Handoffs** - Automated state transitions between agents
 - **Slash Commands** - Entry points for agent activation
 - **Skills** - Project-agnostic knowledge domains

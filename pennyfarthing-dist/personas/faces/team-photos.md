@@ -18,6 +18,21 @@ Background colors indicate agent role.
 
 ---
 
+## 1984
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/1984/orchestrator.svg" alt="Big Brother" width="80" height="80"> | **Big Brother** |
+| Scrum Master | <img src="by-theme/1984/sm.svg" alt="Winston Smith" width="80" height="80"> | **Winston Smith** |
+| Test Engineer | <img src="by-theme/1984/tea.svg" alt="O'Brien" width="80" height="80"> | **O'Brien** |
+| Developer | <img src="by-theme/1984/dev.svg" alt="Julia" width="80" height="80"> | **Julia** |
+| Reviewer | <img src="by-theme/1984/reviewer.svg" alt="The Thought Police" width="80" height="80"> | **The Thought Police** |
+| Architect | <img src="by-theme/1984/architect.svg" alt="Emmanuel Goldstein" width="80" height="80"> | **Emmanuel Goldstein** |
+| Product Manager | <img src="by-theme/1984/pm.svg" alt="Syme" width="80" height="80"> | **Syme** |
+| Tech Writer | <img src="by-theme/1984/tech-writer.svg" alt="Winston Smith (Records Department)" width="80" height="80"> | **Winston Smith (Records Department)** |
+| UX Designer | <img src="by-theme/1984/ux-designer.svg" alt="Parsons" width="80" height="80"> | **Parsons** |
+| DevOps | <img src="by-theme/1984/devops.svg" alt="The Ministry of Truth" width="80" height="80"> | **The Ministry of Truth** |
+
 ## A Team
 
 | Role | Face | Character |
@@ -47,6 +62,36 @@ Background colors indicate agent role.
 | Tech Writer | <img src="by-theme/agatha-christie/tech-writer.svg" alt="The Chronicler (Various Narrators)" width="80" height="80"> | **The Chronicler (Various Narrators)** |
 | UX Designer | <img src="by-theme/agatha-christie/ux-designer.svg" alt="Tuppence Beresford" width="80" height="80"> | **Tuppence Beresford** |
 | DevOps | <img src="by-theme/agatha-christie/devops.svg" alt="Colonel Race" width="80" height="80"> | **Colonel Race** |
+
+## Ancient Philosophers
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/ancient-philosophers/orchestrator.svg" alt="Socrates" width="80" height="80"> | **Socrates** |
+| Scrum Master | <img src="by-theme/ancient-philosophers/sm.svg" alt="Plato" width="80" height="80"> | **Plato** |
+| Test Engineer | <img src="by-theme/ancient-philosophers/tea.svg" alt="Diogenes the Cynic" width="80" height="80"> | **Diogenes the Cynic** |
+| Developer | <img src="by-theme/ancient-philosophers/dev.svg" alt="Aristotle" width="80" height="80"> | **Aristotle** |
+| Reviewer | <img src="by-theme/ancient-philosophers/reviewer.svg" alt="Heraclitus" width="80" height="80"> | **Heraclitus** |
+| Architect | <img src="by-theme/ancient-philosophers/architect.svg" alt="Pythagoras" width="80" height="80"> | **Pythagoras** |
+| Product Manager | <img src="by-theme/ancient-philosophers/pm.svg" alt="Epicurus" width="80" height="80"> | **Epicurus** |
+| Tech Writer | <img src="by-theme/ancient-philosophers/tech-writer.svg" alt="Marcus Aurelius" width="80" height="80"> | **Marcus Aurelius** |
+| UX Designer | <img src="by-theme/ancient-philosophers/ux-designer.svg" alt="Democritus" width="80" height="80"> | **Democritus** |
+| DevOps | <img src="by-theme/ancient-philosophers/devops.svg" alt="Epictetus" width="80" height="80"> | **Epictetus** |
+
+## Ancient Strategists
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/ancient-strategists/orchestrator.svg" alt="Sun Tzu" width="80" height="80"> | **Sun Tzu** |
+| Scrum Master | <img src="by-theme/ancient-strategists/sm.svg" alt="Pericles" width="80" height="80"> | **Pericles** |
+| Test Engineer | <img src="by-theme/ancient-strategists/tea.svg" alt="Thucydides" width="80" height="80"> | **Thucydides** |
+| Developer | <img src="by-theme/ancient-strategists/dev.svg" alt="Xenophon" width="80" height="80"> | **Xenophon** |
+| Reviewer | <img src="by-theme/ancient-strategists/reviewer.svg" alt="Chanakya (Kautilya)" width="80" height="80"> | **Chanakya (Kautilya)** |
+| Architect | <img src="by-theme/ancient-strategists/architect.svg" alt="Marcus Aurelius" width="80" height="80"> | **Marcus Aurelius** |
+| Product Manager | <img src="by-theme/ancient-strategists/pm.svg" alt="Themistocles" width="80" height="80"> | **Themistocles** |
+| Tech Writer | <img src="by-theme/ancient-strategists/tech-writer.svg" alt="Herodotus" width="80" height="80"> | **Herodotus** |
+| UX Designer | <img src="by-theme/ancient-strategists/ux-designer.svg" alt="Leonidas" width="80" height="80"> | **Leonidas** |
+| DevOps | <img src="by-theme/ancient-strategists/devops.svg" alt="Belisarius" width="80" height="80"> | **Belisarius** |
 
 ## Arcane
 
@@ -198,6 +243,36 @@ Background colors indicate agent role.
 | UX Designer | <img src="by-theme/breaking-bad/ux-designer.svg" alt="Marie Schrader" width="80" height="80"> | **Marie Schrader** |
 | DevOps | <img src="by-theme/breaking-bad/devops.svg" alt="Gale Boetticher" width="80" height="80"> | **Gale Boetticher** |
 
+## Catch 22
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/catch-22/orchestrator.svg" alt="Catch-22 (The Concept)" width="80" height="80"> | **Catch-22 (The Concept)** |
+| Scrum Master | <img src="by-theme/catch-22/sm.svg" alt="Yossarian" width="80" height="80"> | **Yossarian** |
+| Test Engineer | <img src="by-theme/catch-22/tea.svg" alt="Doc Daneeka" width="80" height="80"> | **Doc Daneeka** |
+| Developer | <img src="by-theme/catch-22/dev.svg" alt="Orr" width="80" height="80"> | **Orr** |
+| Reviewer | <img src="by-theme/catch-22/reviewer.svg" alt="Colonel Cathcart" width="80" height="80"> | **Colonel Cathcart** |
+| Architect | <img src="by-theme/catch-22/architect.svg" alt="Milo Minderbinder" width="80" height="80"> | **Milo Minderbinder** |
+| Product Manager | <img src="by-theme/catch-22/pm.svg" alt="Major Major Major Major" width="80" height="80"> | **Major Major Major Major** |
+| Tech Writer | <img src="by-theme/catch-22/tech-writer.svg" alt="Ex-P.F.C. Wintergreen" width="80" height="80"> | **Ex-P.F.C. Wintergreen** |
+| UX Designer | <img src="by-theme/catch-22/ux-designer.svg" alt="Chaplain Tappman" width="80" height="80"> | **Chaplain Tappman** |
+| DevOps | <img src="by-theme/catch-22/devops.svg" alt="Chief White Halfoat" width="80" height="80"> | **Chief White Halfoat** |
+
+## Classical Composers
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/classical-composers/orchestrator.svg" alt="Johann Sebastian Bach" width="80" height="80"> | **Johann Sebastian Bach** |
+| Scrum Master | <img src="by-theme/classical-composers/sm.svg" alt="Wolfgang Amadeus Mozart" width="80" height="80"> | **Wolfgang Amadeus Mozart** |
+| Test Engineer | <img src="by-theme/classical-composers/tea.svg" alt="Ludwig van Beethoven" width="80" height="80"> | **Ludwig van Beethoven** |
+| Developer | <img src="by-theme/classical-composers/dev.svg" alt="Frédéric Chopin" width="80" height="80"> | **Frédéric Chopin** |
+| Reviewer | <img src="by-theme/classical-composers/reviewer.svg" alt="Richard Wagner" width="80" height="80"> | **Richard Wagner** |
+| Architect | <img src="by-theme/classical-composers/architect.svg" alt="Johann Sebastian Bach (Architect)" width="80" height="80"> | **Johann Sebastian Bach (Architect)** |
+| Product Manager | <img src="by-theme/classical-composers/pm.svg" alt="Franz Joseph Haydn" width="80" height="80"> | **Franz Joseph Haydn** |
+| Tech Writer | <img src="by-theme/classical-composers/tech-writer.svg" alt="Robert Schumann" width="80" height="80"> | **Robert Schumann** |
+| UX Designer | <img src="by-theme/classical-composers/ux-designer.svg" alt="Claude Debussy" width="80" height="80"> | **Claude Debussy** |
+| DevOps | <img src="by-theme/classical-composers/devops.svg" alt="Antonio Vivaldi" width="80" height="80"> | **Antonio Vivaldi** |
+
 ## Control
 
 | Role | Face | Character |
@@ -213,6 +288,36 @@ Background colors indicate agent role.
 | UX Designer | <img src="by-theme/control/ux-designer.svg" alt="UX Designer (baseline control)" width="80" height="80"> | **UX Designer (baseline control)** |
 | DevOps | <img src="by-theme/control/devops.svg" alt="DevOps Engineer (baseline control)" width="80" height="80"> | **DevOps Engineer (baseline control)** |
 
+## Count Of Monte Cristo
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/count-of-monte-cristo/orchestrator.svg" alt="The Count of Monte Cristo" width="80" height="80"> | **The Count of Monte Cristo** |
+| Scrum Master | <img src="by-theme/count-of-monte-cristo/sm.svg" alt="Edmond Dantès" width="80" height="80"> | **Edmond Dantès** |
+| Test Engineer | <img src="by-theme/count-of-monte-cristo/tea.svg" alt="Abbé Faria" width="80" height="80"> | **Abbé Faria** |
+| Developer | <img src="by-theme/count-of-monte-cristo/dev.svg" alt="Maximilian Morrel" width="80" height="80"> | **Maximilian Morrel** |
+| Reviewer | <img src="by-theme/count-of-monte-cristo/reviewer.svg" alt="Villefort" width="80" height="80"> | **Villefort** |
+| Architect | <img src="by-theme/count-of-monte-cristo/architect.svg" alt="Abbé Busoni / Lord Wilmore / The Count" width="80" height="80"> | **Abbé Busoni / Lord Wilmore / The Count** |
+| Product Manager | <img src="by-theme/count-of-monte-cristo/pm.svg" alt="Mercedes" width="80" height="80"> | **Mercedes** |
+| Tech Writer | <img src="by-theme/count-of-monte-cristo/tech-writer.svg" alt="Luigi Vampa" width="80" height="80"> | **Luigi Vampa** |
+| UX Designer | <img src="by-theme/count-of-monte-cristo/ux-designer.svg" alt="Haydée" width="80" height="80"> | **Haydée** |
+| DevOps | <img src="by-theme/count-of-monte-cristo/devops.svg" alt="Jacopo" width="80" height="80"> | **Jacopo** |
+
+## Cowboy Bebop
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/cowboy-bebop/orchestrator.svg" alt="Laughing Bull" width="80" height="80"> | **Laughing Bull** |
+| Scrum Master | <img src="by-theme/cowboy-bebop/sm.svg" alt="Jet Black" width="80" height="80"> | **Jet Black** |
+| Test Engineer | <img src="by-theme/cowboy-bebop/tea.svg" alt="Edward Wong Hau Pepelu Tivrusky IV" width="80" height="80"> | **Edward Wong Hau Pepelu Tivrusky IV** |
+| Developer | <img src="by-theme/cowboy-bebop/dev.svg" alt="Spike Spiegel" width="80" height="80"> | **Spike Spiegel** |
+| Reviewer | <img src="by-theme/cowboy-bebop/reviewer.svg" alt="Vicious" width="80" height="80"> | **Vicious** |
+| Architect | <img src="by-theme/cowboy-bebop/architect.svg" alt="Julia" width="80" height="80"> | **Julia** |
+| Product Manager | <img src="by-theme/cowboy-bebop/pm.svg" alt="Faye Valentine" width="80" height="80"> | **Faye Valentine** |
+| Tech Writer | <img src="by-theme/cowboy-bebop/tech-writer.svg" alt="Bob" width="80" height="80"> | **Bob** |
+| UX Designer | <img src="by-theme/cowboy-bebop/ux-designer.svg" alt="Punch and Judy" width="80" height="80"> | **Punch and Judy** |
+| DevOps | <img src="by-theme/cowboy-bebop/devops.svg" alt="Doohan" width="80" height="80"> | **Doohan** |
+
 ## Deadwood
 
 | Role | Face | Character |
@@ -227,6 +332,21 @@ Background colors indicate agent role.
 | Tech Writer | <img src="by-theme/deadwood/tech-writer.svg" alt="A.W. Merrick" width="80" height="80"> | **A.W. Merrick** |
 | UX Designer | <img src="by-theme/deadwood/ux-designer.svg" alt="Trixie" width="80" height="80"> | **Trixie** |
 | DevOps | <img src="by-theme/deadwood/devops.svg" alt="Wu" width="80" height="80"> | **Wu** |
+
+## Dickens
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/dickens/orchestrator.svg" alt="The Ghost of Christmas Yet to Come" width="80" height="80"> | **The Ghost of Christmas Yet to Come** |
+| Scrum Master | <img src="by-theme/dickens/sm.svg" alt="Ebenezer Scrooge (Redeemed)" width="80" height="80"> | **Ebenezer Scrooge (Redeemed)** |
+| Test Engineer | <img src="by-theme/dickens/tea.svg" alt="Miss Havisham" width="80" height="80"> | **Miss Havisham** |
+| Developer | <img src="by-theme/dickens/dev.svg" alt="Pip" width="80" height="80"> | **Pip** |
+| Reviewer | <img src="by-theme/dickens/reviewer.svg" alt="Fagin" width="80" height="80"> | **Fagin** |
+| Architect | <img src="by-theme/dickens/architect.svg" alt="Sydney Carton" width="80" height="80"> | **Sydney Carton** |
+| Product Manager | <img src="by-theme/dickens/pm.svg" alt="Mr. Micawber" width="80" height="80"> | **Mr. Micawber** |
+| Tech Writer | <img src="by-theme/dickens/tech-writer.svg" alt="David Copperfield" width="80" height="80"> | **David Copperfield** |
+| UX Designer | <img src="by-theme/dickens/ux-designer.svg" alt="Oliver Twist" width="80" height="80"> | **Oliver Twist** |
+| DevOps | <img src="by-theme/dickens/devops.svg" alt="Bob Cratchit" width="80" height="80"> | **Bob Cratchit** |
 
 ## Discworld
 
@@ -258,6 +378,21 @@ Background colors indicate agent role.
 | UX Designer | <img src="by-theme/doctor-who/ux-designer.svg" alt="The Doctor (Eleventh)" width="80" height="80"> | **The Doctor (Eleventh)** |
 | DevOps | <img src="by-theme/doctor-who/devops.svg" alt="Captain Jack Harkness" width="80" height="80"> | **Captain Jack Harkness** |
 
+## Don Quixote
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/don-quixote/orchestrator.svg" alt="Don Quixote de la Mancha" width="80" height="80"> | **Don Quixote de la Mancha** |
+| Scrum Master | <img src="by-theme/don-quixote/sm.svg" alt="Sancho Panza" width="80" height="80"> | **Sancho Panza** |
+| Test Engineer | <img src="by-theme/don-quixote/tea.svg" alt="The Bachelor Sansón Carrasco" width="80" height="80"> | **The Bachelor Sansón Carrasco** |
+| Developer | <img src="by-theme/don-quixote/dev.svg" alt="Don Quixote (as Developer)" width="80" height="80"> | **Don Quixote (as Developer)** |
+| Reviewer | <img src="by-theme/don-quixote/reviewer.svg" alt="The Priest and the Barber" width="80" height="80"> | **The Priest and the Barber** |
+| Architect | <img src="by-theme/don-quixote/architect.svg" alt="Cide Hamete Benengeli" width="80" height="80"> | **Cide Hamete Benengeli** |
+| Product Manager | <img src="by-theme/don-quixote/pm.svg" alt="Dulcinea del Toboso" width="80" height="80"> | **Dulcinea del Toboso** |
+| Tech Writer | <img src="by-theme/don-quixote/tech-writer.svg" alt="The Narrator" width="80" height="80"> | **The Narrator** |
+| UX Designer | <img src="by-theme/don-quixote/ux-designer.svg" alt="The Duke and Duchess" width="80" height="80"> | **The Duke and Duchess** |
+| DevOps | <img src="by-theme/don-quixote/devops.svg" alt="The Innkeepers" width="80" height="80"> | **The Innkeepers** |
+
 ## Dune
 
 | Role | Face | Character |
@@ -272,6 +407,21 @@ Background colors indicate agent role.
 | Tech Writer | <img src="by-theme/dune/tech-writer.svg" alt="Princess Irulan" width="80" height="80"> | **Princess Irulan** |
 | UX Designer | <img src="by-theme/dune/ux-designer.svg" alt="Alia Atreides" width="80" height="80"> | **Alia Atreides** |
 | DevOps | <img src="by-theme/dune/devops.svg" alt="Planetologist Pardot Kynes" width="80" height="80"> | **Planetologist Pardot Kynes** |
+
+## Enlightenment Thinkers
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/enlightenment-thinkers/orchestrator.svg" alt="Voltaire" width="80" height="80"> | **Voltaire** |
+| Scrum Master | <img src="by-theme/enlightenment-thinkers/sm.svg" alt="Benjamin Franklin" width="80" height="80"> | **Benjamin Franklin** |
+| Test Engineer | <img src="by-theme/enlightenment-thinkers/tea.svg" alt="David Hume" width="80" height="80"> | **David Hume** |
+| Developer | <img src="by-theme/enlightenment-thinkers/dev.svg" alt="Jean-Jacques Rousseau" width="80" height="80"> | **Jean-Jacques Rousseau** |
+| Reviewer | <img src="by-theme/enlightenment-thinkers/reviewer.svg" alt="Immanuel Kant" width="80" height="80"> | **Immanuel Kant** |
+| Architect | <img src="by-theme/enlightenment-thinkers/architect.svg" alt="John Locke" width="80" height="80"> | **John Locke** |
+| Product Manager | <img src="by-theme/enlightenment-thinkers/pm.svg" alt="Adam Smith" width="80" height="80"> | **Adam Smith** |
+| Tech Writer | <img src="by-theme/enlightenment-thinkers/tech-writer.svg" alt="Denis Diderot" width="80" height="80"> | **Denis Diderot** |
+| UX Designer | <img src="by-theme/enlightenment-thinkers/ux-designer.svg" alt="Thomas Paine" width="80" height="80"> | **Thomas Paine** |
+| DevOps | <img src="by-theme/enlightenment-thinkers/devops.svg" alt="Montesquieu" width="80" height="80"> | **Montesquieu** |
 
 ## Expeditionary Force
 
@@ -303,6 +453,21 @@ Background colors indicate agent role.
 | UX Designer | <img src="by-theme/fargo/ux-designer.svg" alt="Gloria Burgle (Season 3)" width="80" height="80"> | **Gloria Burgle (Season 3)** |
 | DevOps | <img src="by-theme/fargo/devops.svg" alt="Hanzee Dent (Season 2)" width="80" height="80"> | **Hanzee Dent (Season 2)** |
 
+## Film Auteurs
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/film-auteurs/orchestrator.svg" alt="Stanley Kubrick" width="80" height="80"> | **Stanley Kubrick** |
+| Scrum Master | <img src="by-theme/film-auteurs/sm.svg" alt="Steven Spielberg" width="80" height="80"> | **Steven Spielberg** |
+| Test Engineer | <img src="by-theme/film-auteurs/tea.svg" alt="David Lynch" width="80" height="80"> | **David Lynch** |
+| Developer | <img src="by-theme/film-auteurs/dev.svg" alt="Martin Scorsese" width="80" height="80"> | **Martin Scorsese** |
+| Reviewer | <img src="by-theme/film-auteurs/reviewer.svg" alt="Alfred Hitchcock" width="80" height="80"> | **Alfred Hitchcock** |
+| Architect | <img src="by-theme/film-auteurs/architect.svg" alt="Akira Kurosawa" width="80" height="80"> | **Akira Kurosawa** |
+| Product Manager | <img src="by-theme/film-auteurs/pm.svg" alt="Francis Ford Coppola" width="80" height="80"> | **Francis Ford Coppola** |
+| Tech Writer | <img src="by-theme/film-auteurs/tech-writer.svg" alt="Billy Wilder" width="80" height="80"> | **Billy Wilder** |
+| UX Designer | <img src="by-theme/film-auteurs/ux-designer.svg" alt="Hayao Miyazaki" width="80" height="80"> | **Hayao Miyazaki** |
+| DevOps | <img src="by-theme/film-auteurs/devops.svg" alt="Ridley Scott" width="80" height="80"> | **Ridley Scott** |
+
 ## Firefly
 
 | Role | Face | Character |
@@ -333,6 +498,21 @@ Background colors indicate agent role.
 | UX Designer | <img src="by-theme/foundation/ux-designer.svg" alt="Arkady Darell" width="80" height="80"> | **Arkady Darell** |
 | DevOps | <img src="by-theme/foundation/devops.svg" alt="Lathan Devers" width="80" height="80"> | **Lathan Devers** |
 
+## Futurama
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/futurama/orchestrator.svg" alt="Professor Farnsworth" width="80" height="80"> | **Professor Farnsworth** |
+| Scrum Master | <img src="by-theme/futurama/sm.svg" alt="Hermes Conrad" width="80" height="80"> | **Hermes Conrad** |
+| Test Engineer | <img src="by-theme/futurama/tea.svg" alt="Nibbler" width="80" height="80"> | **Nibbler** |
+| Developer | <img src="by-theme/futurama/dev.svg" alt="Philip J. Fry" width="80" height="80"> | **Philip J. Fry** |
+| Reviewer | <img src="by-theme/futurama/reviewer.svg" alt="Bender Bending Rodriguez" width="80" height="80"> | **Bender Bending Rodriguez** |
+| Architect | <img src="by-theme/futurama/architect.svg" alt="Hubert Farnsworth (Architect Mode)" width="80" height="80"> | **Hubert Farnsworth (Architect Mode)** |
+| Product Manager | <img src="by-theme/futurama/pm.svg" alt="Turanga Leela" width="80" height="80"> | **Turanga Leela** |
+| Tech Writer | <img src="by-theme/futurama/tech-writer.svg" alt="Kif Kroker" width="80" height="80"> | **Kif Kroker** |
+| UX Designer | <img src="by-theme/futurama/ux-designer.svg" alt="Amy Wong" width="80" height="80"> | **Amy Wong** |
+| DevOps | <img src="by-theme/futurama/devops.svg" alt="Scruffy" width="80" height="80"> | **Scruffy** |
+
 ## Game Of Thrones
 
 | Role | Face | Character |
@@ -347,6 +527,36 @@ Background colors indicate agent role.
 | Tech Writer | <img src="by-theme/game-of-thrones/tech-writer.svg" alt="Maester Aemon" width="80" height="80"> | **Maester Aemon** |
 | UX Designer | <img src="by-theme/game-of-thrones/ux-designer.svg" alt="Margaery Tyrell" width="80" height="80"> | **Margaery Tyrell** |
 | DevOps | <img src="by-theme/game-of-thrones/devops.svg" alt="Stannis Baratheon" width="80" height="80"> | **Stannis Baratheon** |
+
+## Gothic Literature
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/gothic-literature/orchestrator.svg" alt="Count Dracula" width="80" height="80"> | **Count Dracula** |
+| Scrum Master | <img src="by-theme/gothic-literature/sm.svg" alt="Victor Frankenstein" width="80" height="80"> | **Victor Frankenstein** |
+| Test Engineer | <img src="by-theme/gothic-literature/tea.svg" alt="Frankenstein's Creature" width="80" height="80"> | **Frankenstein's Creature** |
+| Developer | <img src="by-theme/gothic-literature/dev.svg" alt="Dr. Jekyll" width="80" height="80"> | **Dr. Jekyll** |
+| Reviewer | <img src="by-theme/gothic-literature/reviewer.svg" alt="Mr. Hyde" width="80" height="80"> | **Mr. Hyde** |
+| Architect | <img src="by-theme/gothic-literature/architect.svg" alt="Dr. Van Helsing" width="80" height="80"> | **Dr. Van Helsing** |
+| Product Manager | <img src="by-theme/gothic-literature/pm.svg" alt="Mina Harker" width="80" height="80"> | **Mina Harker** |
+| Tech Writer | <img src="by-theme/gothic-literature/tech-writer.svg" alt="Jonathan Harker" width="80" height="80"> | **Jonathan Harker** |
+| UX Designer | <img src="by-theme/gothic-literature/ux-designer.svg" alt="The Narrator (Poe)" width="80" height="80"> | **The Narrator (Poe)** |
+| DevOps | <img src="by-theme/gothic-literature/devops.svg" alt="Igor" width="80" height="80"> | **Igor** |
+
+## Great Gatsby
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/great-gatsby/orchestrator.svg" alt="The Green Light" width="80" height="80"> | **The Green Light** |
+| Scrum Master | <img src="by-theme/great-gatsby/sm.svg" alt="Jay Gatsby" width="80" height="80"> | **Jay Gatsby** |
+| Test Engineer | <img src="by-theme/great-gatsby/tea.svg" alt="Nick Carraway" width="80" height="80"> | **Nick Carraway** |
+| Developer | <img src="by-theme/great-gatsby/dev.svg" alt="Jay Gatsby (Developer)" width="80" height="80"> | **Jay Gatsby (Developer)** |
+| Reviewer | <img src="by-theme/great-gatsby/reviewer.svg" alt="Tom Buchanan" width="80" height="80"> | **Tom Buchanan** |
+| Architect | <img src="by-theme/great-gatsby/architect.svg" alt="Meyer Wolfsheim" width="80" height="80"> | **Meyer Wolfsheim** |
+| Product Manager | <img src="by-theme/great-gatsby/pm.svg" alt="Daisy Buchanan" width="80" height="80"> | **Daisy Buchanan** |
+| Tech Writer | <img src="by-theme/great-gatsby/tech-writer.svg" alt="Nick Carraway (Writer)" width="80" height="80"> | **Nick Carraway (Writer)** |
+| UX Designer | <img src="by-theme/great-gatsby/ux-designer.svg" alt="Jordan Baker" width="80" height="80"> | **Jordan Baker** |
+| DevOps | <img src="by-theme/great-gatsby/devops.svg" alt="George Wilson" width="80" height="80"> | **George Wilson** |
 
 ## Hannibal
 
@@ -408,6 +618,36 @@ Background colors indicate agent role.
 | UX Designer | <img src="by-theme/historical-figures/ux-designer.svg" alt="William Morris" width="80" height="80"> | **William Morris** |
 | DevOps | <img src="by-theme/historical-figures/devops.svg" alt="Sun Tzu" width="80" height="80"> | **Sun Tzu** |
 
+## Hitchhikers Guide
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/hitchhikers-guide/orchestrator.svg" alt="Deep Thought" width="80" height="80"> | **Deep Thought** |
+| Scrum Master | <img src="by-theme/hitchhikers-guide/sm.svg" alt="Ford Prefect" width="80" height="80"> | **Ford Prefect** |
+| Test Engineer | <img src="by-theme/hitchhikers-guide/tea.svg" alt="Marvin the Paranoid Android" width="80" height="80"> | **Marvin the Paranoid Android** |
+| Developer | <img src="by-theme/hitchhikers-guide/dev.svg" alt="Arthur Dent" width="80" height="80"> | **Arthur Dent** |
+| Reviewer | <img src="by-theme/hitchhikers-guide/reviewer.svg" alt="Slartibartfast" width="80" height="80"> | **Slartibartfast** |
+| Architect | <img src="by-theme/hitchhikers-guide/architect.svg" alt="Zaphod Beeblebrox" width="80" height="80"> | **Zaphod Beeblebrox** |
+| Product Manager | <img src="by-theme/hitchhikers-guide/pm.svg" alt="Trillian" width="80" height="80"> | **Trillian** |
+| Tech Writer | <img src="by-theme/hitchhikers-guide/tech-writer.svg" alt="The Guide Itself" width="80" height="80"> | **The Guide Itself** |
+| UX Designer | <img src="by-theme/hitchhikers-guide/ux-designer.svg" alt="Eddie the Shipboard Computer" width="80" height="80"> | **Eddie the Shipboard Computer** |
+| DevOps | <img src="by-theme/hitchhikers-guide/devops.svg" alt="The Vogons" width="80" height="80"> | **The Vogons** |
+
+## House Md
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/house-md/orchestrator.svg" alt="Gregory House" width="80" height="80"> | **Gregory House** |
+| Scrum Master | <img src="by-theme/house-md/sm.svg" alt="James Wilson" width="80" height="80"> | **James Wilson** |
+| Test Engineer | <img src="by-theme/house-md/tea.svg" alt="Robert Chase" width="80" height="80"> | **Robert Chase** |
+| Developer | <img src="by-theme/house-md/dev.svg" alt="Eric Foreman" width="80" height="80"> | **Eric Foreman** |
+| Reviewer | <img src="by-theme/house-md/reviewer.svg" alt="Gregory House (Reviewer Mode)" width="80" height="80"> | **Gregory House (Reviewer Mode)** |
+| Architect | <img src="by-theme/house-md/architect.svg" alt="Lisa Cuddy" width="80" height="80"> | **Lisa Cuddy** |
+| Product Manager | <img src="by-theme/house-md/pm.svg" alt="Allison Cameron" width="80" height="80"> | **Allison Cameron** |
+| Tech Writer | <img src="by-theme/house-md/tech-writer.svg" alt="Chris Taub" width="80" height="80"> | **Chris Taub** |
+| UX Designer | <img src="by-theme/house-md/ux-designer.svg" alt="Thirteen (Remy Hadley)" width="80" height="80"> | **Thirteen (Remy Hadley)** |
+| DevOps | <img src="by-theme/house-md/devops.svg" alt="Chi Park" width="80" height="80"> | **Chi Park** |
+
 ## Imperial Radch
 
 | Role | Face | Character |
@@ -453,6 +693,21 @@ Background colors indicate agent role.
 | UX Designer | <img src="by-theme/jane-austen/ux-designer.svg" alt="Jane Bennet (Pride and Prejudice)" width="80" height="80"> | **Jane Bennet (Pride and Prejudice)** |
 | DevOps | <img src="by-theme/jane-austen/devops.svg" alt="Mr. Woodhouse (Emma)" width="80" height="80"> | **Mr. Woodhouse (Emma)** |
 
+## Jazz Legends
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/jazz-legends/orchestrator.svg" alt="Duke Ellington" width="80" height="80"> | **Duke Ellington** |
+| Scrum Master | <img src="by-theme/jazz-legends/sm.svg" alt="Miles Davis" width="80" height="80"> | **Miles Davis** |
+| Test Engineer | <img src="by-theme/jazz-legends/tea.svg" alt="John Coltrane" width="80" height="80"> | **John Coltrane** |
+| Developer | <img src="by-theme/jazz-legends/dev.svg" alt="Charlie Parker" width="80" height="80"> | **Charlie Parker** |
+| Reviewer | <img src="by-theme/jazz-legends/reviewer.svg" alt="Thelonious Monk" width="80" height="80"> | **Thelonious Monk** |
+| Architect | <img src="by-theme/jazz-legends/architect.svg" alt="Charles Mingus" width="80" height="80"> | **Charles Mingus** |
+| Product Manager | <img src="by-theme/jazz-legends/pm.svg" alt="Ella Fitzgerald" width="80" height="80"> | **Ella Fitzgerald** |
+| Tech Writer | <img src="by-theme/jazz-legends/tech-writer.svg" alt="Wynton Marsalis" width="80" height="80"> | **Wynton Marsalis** |
+| UX Designer | <img src="by-theme/jazz-legends/ux-designer.svg" alt="Louis Armstrong" width="80" height="80"> | **Louis Armstrong** |
+| DevOps | <img src="by-theme/jazz-legends/devops.svg" alt="Count Basie" width="80" height="80"> | **Count Basie** |
+
 ## Justified
 
 | Role | Face | Character |
@@ -497,6 +752,21 @@ Background colors indicate agent role.
 | Tech Writer | <img src="by-theme/les-miserables/tech-writer.svg" alt="Victor Hugo (as narrator)" width="80" height="80"> | **Victor Hugo (as narrator)** |
 | UX Designer | <img src="by-theme/les-miserables/ux-designer.svg" alt="Éponine" width="80" height="80"> | **Éponine** |
 | DevOps | <img src="by-theme/les-miserables/devops.svg" alt="The Sewer System of Paris" width="80" height="80"> | **The Sewer System of Paris** |
+
+## Lord Of The Rings
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/lord-of-the-rings/orchestrator.svg" alt="Gandalf" width="80" height="80"> | **Gandalf** |
+| Scrum Master | <img src="by-theme/lord-of-the-rings/sm.svg" alt="Aragorn" width="80" height="80"> | **Aragorn** |
+| Test Engineer | <img src="by-theme/lord-of-the-rings/tea.svg" alt="Gollum/Smeagol" width="80" height="80"> | **Gollum/Smeagol** |
+| Developer | <img src="by-theme/lord-of-the-rings/dev.svg" alt="Samwise Gamgee" width="80" height="80"> | **Samwise Gamgee** |
+| Reviewer | <img src="by-theme/lord-of-the-rings/reviewer.svg" alt="Saruman" width="80" height="80"> | **Saruman** |
+| Architect | <img src="by-theme/lord-of-the-rings/architect.svg" alt="Elrond" width="80" height="80"> | **Elrond** |
+| Product Manager | <img src="by-theme/lord-of-the-rings/pm.svg" alt="Legolas" width="80" height="80"> | **Legolas** |
+| Tech Writer | <img src="by-theme/lord-of-the-rings/tech-writer.svg" alt="Bilbo Baggins" width="80" height="80"> | **Bilbo Baggins** |
+| UX Designer | <img src="by-theme/lord-of-the-rings/ux-designer.svg" alt="Pippin" width="80" height="80"> | **Pippin** |
+| DevOps | <img src="by-theme/lord-of-the-rings/devops.svg" alt="Gimli" width="80" height="80"> | **Gimli** |
 
 ## Mad Men
 
@@ -558,6 +828,36 @@ Background colors indicate agent role.
 | UX Designer | <img src="by-theme/mass-effect/ux-designer.svg" alt="Garrus Vakarian" width="80" height="80"> | **Garrus Vakarian** |
 | DevOps | <img src="by-theme/mass-effect/devops.svg" alt="Urdnot Wrex" width="80" height="80"> | **Urdnot Wrex** |
 
+## Military Commanders
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/military-commanders/orchestrator.svg" alt="Sun Tzu" width="80" height="80"> | **Sun Tzu** |
+| Scrum Master | <img src="by-theme/military-commanders/sm.svg" alt="Alexander the Great" width="80" height="80"> | **Alexander the Great** |
+| Test Engineer | <img src="by-theme/military-commanders/tea.svg" alt="Hannibal Barca" width="80" height="80"> | **Hannibal Barca** |
+| Developer | <img src="by-theme/military-commanders/dev.svg" alt="Julius Caesar" width="80" height="80"> | **Julius Caesar** |
+| Reviewer | <img src="by-theme/military-commanders/reviewer.svg" alt="Erwin Rommel" width="80" height="80"> | **Erwin Rommel** |
+| Architect | <img src="by-theme/military-commanders/architect.svg" alt="Napoleon Bonaparte" width="80" height="80"> | **Napoleon Bonaparte** |
+| Product Manager | <img src="by-theme/military-commanders/pm.svg" alt="George Patton" width="80" height="80"> | **George Patton** |
+| Tech Writer | <img src="by-theme/military-commanders/tech-writer.svg" alt="Carl von Clausewitz" width="80" height="80"> | **Carl von Clausewitz** |
+| UX Designer | <img src="by-theme/military-commanders/ux-designer.svg" alt="T.E. Lawrence (Lawrence of Arabia)" width="80" height="80"> | **T.E. Lawrence (Lawrence of Arabia)** |
+| DevOps | <img src="by-theme/military-commanders/devops.svg" alt="Scipio Africanus" width="80" height="80"> | **Scipio Africanus** |
+
+## Moby Dick
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/moby-dick/orchestrator.svg" alt="Captain Ahab" width="80" height="80"> | **Captain Ahab** |
+| Scrum Master | <img src="by-theme/moby-dick/sm.svg" alt="Starbuck" width="80" height="80"> | **Starbuck** |
+| Test Engineer | <img src="by-theme/moby-dick/tea.svg" alt="Ishmael" width="80" height="80"> | **Ishmael** |
+| Developer | <img src="by-theme/moby-dick/dev.svg" alt="Queequeg" width="80" height="80"> | **Queequeg** |
+| Reviewer | <img src="by-theme/moby-dick/reviewer.svg" alt="Moby Dick" width="80" height="80"> | **Moby Dick** |
+| Architect | <img src="by-theme/moby-dick/architect.svg" alt="Father Mapple" width="80" height="80"> | **Father Mapple** |
+| Product Manager | <img src="by-theme/moby-dick/pm.svg" alt="Stubb" width="80" height="80"> | **Stubb** |
+| Tech Writer | <img src="by-theme/moby-dick/tech-writer.svg" alt="Ishmael (Narrator)" width="80" height="80"> | **Ishmael (Narrator)** |
+| UX Designer | <img src="by-theme/moby-dick/ux-designer.svg" alt="Pip" width="80" height="80"> | **Pip** |
+| DevOps | <img src="by-theme/moby-dick/devops.svg" alt="Perth" width="80" height="80"> | **Perth** |
+
 ## Neuromancer
 
 | Role | Face | Character |
@@ -572,6 +872,21 @@ Background colors indicate agent role.
 | Tech Writer | <img src="by-theme/neuromancer/tech-writer.svg" alt="The Finn" width="80" height="80"> | **The Finn** |
 | UX Designer | <img src="by-theme/neuromancer/ux-designer.svg" alt="Bobby Newmark (Count Zero)" width="80" height="80"> | **Bobby Newmark (Count Zero)** |
 | DevOps | <img src="by-theme/neuromancer/devops.svg" alt="Armitage (pre-corruption)" width="80" height="80"> | **Armitage (pre-corruption)** |
+
+## Norse Mythology
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/norse-mythology/orchestrator.svg" alt="Odin All-Father" width="80" height="80"> | **Odin All-Father** |
+| Scrum Master | <img src="by-theme/norse-mythology/sm.svg" alt="Thor Odinson" width="80" height="80"> | **Thor Odinson** |
+| Test Engineer | <img src="by-theme/norse-mythology/tea.svg" alt="Loki Silvertongue" width="80" height="80"> | **Loki Silvertongue** |
+| Developer | <img src="by-theme/norse-mythology/dev.svg" alt="Heimdall" width="80" height="80"> | **Heimdall** |
+| Reviewer | <img src="by-theme/norse-mythology/reviewer.svg" alt="Fenrir" width="80" height="80"> | **Fenrir** |
+| Architect | <img src="by-theme/norse-mythology/architect.svg" alt="Mimir" width="80" height="80"> | **Mimir** |
+| Product Manager | <img src="by-theme/norse-mythology/pm.svg" alt="Freya" width="80" height="80"> | **Freya** |
+| Tech Writer | <img src="by-theme/norse-mythology/tech-writer.svg" alt="Bragi" width="80" height="80"> | **Bragi** |
+| UX Designer | <img src="by-theme/norse-mythology/ux-designer.svg" alt="Idunn" width="80" height="80"> | **Idunn** |
+| DevOps | <img src="by-theme/norse-mythology/devops.svg" alt="The Norns" width="80" height="80"> | **The Norns** |
 
 ## Parks And Rec
 
@@ -618,6 +933,21 @@ Background colors indicate agent role.
 | UX Designer | <img src="by-theme/princess-bride/ux-designer.svg" alt="Buttercup" width="80" height="80"> | **Buttercup** |
 | DevOps | <img src="by-theme/princess-bride/devops.svg" alt="Miracle Max" width="80" height="80"> | **Miracle Max** |
 
+## Renaissance Masters
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/renaissance-masters/orchestrator.svg" alt="Leonardo da Vinci" width="80" height="80"> | **Leonardo da Vinci** |
+| Scrum Master | <img src="by-theme/renaissance-masters/sm.svg" alt="Lorenzo de' Medici" width="80" height="80"> | **Lorenzo de' Medici** |
+| Test Engineer | <img src="by-theme/renaissance-masters/tea.svg" alt="Niccolò Machiavelli" width="80" height="80"> | **Niccolò Machiavelli** |
+| Developer | <img src="by-theme/renaissance-masters/dev.svg" alt="Michelangelo Buonarroti" width="80" height="80"> | **Michelangelo Buonarroti** |
+| Reviewer | <img src="by-theme/renaissance-masters/reviewer.svg" alt="Giorgio Vasari" width="80" height="80"> | **Giorgio Vasari** |
+| Architect | <img src="by-theme/renaissance-masters/architect.svg" alt="Filippo Brunelleschi" width="80" height="80"> | **Filippo Brunelleschi** |
+| Product Manager | <img src="by-theme/renaissance-masters/pm.svg" alt="Isabella d'Este" width="80" height="80"> | **Isabella d'Este** |
+| Tech Writer | <img src="by-theme/renaissance-masters/tech-writer.svg" alt="Baldassare Castiglione" width="80" height="80"> | **Baldassare Castiglione** |
+| UX Designer | <img src="by-theme/renaissance-masters/ux-designer.svg" alt="Sandro Botticelli" width="80" height="80"> | **Sandro Botticelli** |
+| DevOps | <img src="by-theme/renaissance-masters/devops.svg" alt="Benvenuto Cellini" width="80" height="80"> | **Benvenuto Cellini** |
+
 ## Rome
 
 | Role | Face | Character |
@@ -633,6 +963,21 @@ Background colors indicate agent role.
 | UX Designer | <img src="by-theme/rome/ux-designer.svg" alt="Cleopatra" width="80" height="80"> | **Cleopatra** |
 | DevOps | <img src="by-theme/rome/devops.svg" alt="Mark Antony" width="80" height="80"> | **Mark Antony** |
 
+## Russian Masters
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/russian-masters/orchestrator.svg" alt="Father Zosima" width="80" height="80"> | **Father Zosima** |
+| Scrum Master | <img src="by-theme/russian-masters/sm.svg" alt="Pierre Bezukhov" width="80" height="80"> | **Pierre Bezukhov** |
+| Test Engineer | <img src="by-theme/russian-masters/tea.svg" alt="Raskolnikov" width="80" height="80"> | **Raskolnikov** |
+| Developer | <img src="by-theme/russian-masters/dev.svg" alt="Alyosha Karamazov" width="80" height="80"> | **Alyosha Karamazov** |
+| Reviewer | <img src="by-theme/russian-masters/reviewer.svg" alt="Ivan Karamazov" width="80" height="80"> | **Ivan Karamazov** |
+| Architect | <img src="by-theme/russian-masters/architect.svg" alt="Prince Myshkin" width="80" height="80"> | **Prince Myshkin** |
+| Product Manager | <img src="by-theme/russian-masters/pm.svg" alt="Anna Karenina" width="80" height="80"> | **Anna Karenina** |
+| Tech Writer | <img src="by-theme/russian-masters/tech-writer.svg" alt="Dr. Chekhov's Narrator" width="80" height="80"> | **Dr. Chekhov's Narrator** |
+| UX Designer | <img src="by-theme/russian-masters/ux-designer.svg" alt="Natasha Rostova" width="80" height="80"> | **Natasha Rostova** |
+| DevOps | <img src="by-theme/russian-masters/devops.svg" alt="Levin" width="80" height="80"> | **Levin** |
+
 ## Sandman
 
 | Role | Face | Character |
@@ -647,6 +992,21 @@ Background colors indicate agent role.
 | Tech Writer | <img src="by-theme/sandman/tech-writer.svg" alt="Lucien" width="80" height="80"> | **Lucien** |
 | UX Designer | <img src="by-theme/sandman/ux-designer.svg" alt="Rose Walker" width="80" height="80"> | **Rose Walker** |
 | DevOps | <img src="by-theme/sandman/devops.svg" alt="The Corinthian" width="80" height="80"> | **The Corinthian** |
+
+## Scientific Revolutionaries
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/scientific-revolutionaries/orchestrator.svg" alt="Isaac Newton" width="80" height="80"> | **Isaac Newton** |
+| Scrum Master | <img src="by-theme/scientific-revolutionaries/sm.svg" alt="Marie Curie" width="80" height="80"> | **Marie Curie** |
+| Test Engineer | <img src="by-theme/scientific-revolutionaries/tea.svg" alt="Richard Feynman" width="80" height="80"> | **Richard Feynman** |
+| Developer | <img src="by-theme/scientific-revolutionaries/dev.svg" alt="Charles Darwin" width="80" height="80"> | **Charles Darwin** |
+| Reviewer | <img src="by-theme/scientific-revolutionaries/reviewer.svg" alt="Galileo Galilei" width="80" height="80"> | **Galileo Galilei** |
+| Architect | <img src="by-theme/scientific-revolutionaries/architect.svg" alt="Albert Einstein" width="80" height="80"> | **Albert Einstein** |
+| Product Manager | <img src="by-theme/scientific-revolutionaries/pm.svg" alt="Stephen Hawking" width="80" height="80"> | **Stephen Hawking** |
+| Tech Writer | <img src="by-theme/scientific-revolutionaries/tech-writer.svg" alt="Carl Sagan" width="80" height="80"> | **Carl Sagan** |
+| UX Designer | <img src="by-theme/scientific-revolutionaries/ux-designer.svg" alt="Nikola Tesla" width="80" height="80"> | **Nikola Tesla** |
+| DevOps | <img src="by-theme/scientific-revolutionaries/devops.svg" alt="Ada Lovelace" width="80" height="80"> | **Ada Lovelace** |
 
 ## Shakespeare
 
@@ -858,6 +1218,21 @@ Background colors indicate agent role.
 | UX Designer | <img src="by-theme/the-good-place/ux-designer.svg" alt="Jason Mendoza" width="80" height="80"> | **Jason Mendoza** |
 | DevOps | <img src="by-theme/the-good-place/devops.svg" alt="Derek" width="80" height="80"> | **Derek** |
 
+## The Matrix
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/the-matrix/orchestrator.svg" alt="The Oracle" width="80" height="80"> | **The Oracle** |
+| Scrum Master | <img src="by-theme/the-matrix/sm.svg" alt="Morpheus" width="80" height="80"> | **Morpheus** |
+| Test Engineer | <img src="by-theme/the-matrix/tea.svg" alt="Agent Smith" width="80" height="80"> | **Agent Smith** |
+| Developer | <img src="by-theme/the-matrix/dev.svg" alt="Neo" width="80" height="80"> | **Neo** |
+| Reviewer | <img src="by-theme/the-matrix/reviewer.svg" alt="The Merovingian" width="80" height="80"> | **The Merovingian** |
+| Architect | <img src="by-theme/the-matrix/architect.svg" alt="The Architect" width="80" height="80"> | **The Architect** |
+| Product Manager | <img src="by-theme/the-matrix/pm.svg" alt="Niobe" width="80" height="80"> | **Niobe** |
+| Tech Writer | <img src="by-theme/the-matrix/tech-writer.svg" alt="Tank" width="80" height="80"> | **Tank** |
+| UX Designer | <img src="by-theme/the-matrix/ux-designer.svg" alt="The Kid" width="80" height="80"> | **The Kid** |
+| DevOps | <img src="by-theme/the-matrix/devops.svg" alt="Link" width="80" height="80"> | **Link** |
+
 ## The Office
 
 | Role | Face | Character |
@@ -872,6 +1247,21 @@ Background colors indicate agent role.
 | Tech Writer | <img src="by-theme/the-office/tech-writer.svg" alt="Toby Flenderson" width="80" height="80"> | **Toby Flenderson** |
 | UX Designer | <img src="by-theme/the-office/ux-designer.svg" alt="Kelly Kapoor" width="80" height="80"> | **Kelly Kapoor** |
 | DevOps | <img src="by-theme/the-office/devops.svg" alt="Stanley Hudson" width="80" height="80"> | **Stanley Hudson** |
+
+## The Simpsons
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/the-simpsons/orchestrator.svg" alt="Mr. Burns" width="80" height="80"> | **Mr. Burns** |
+| Scrum Master | <img src="by-theme/the-simpsons/sm.svg" alt="Marge Simpson" width="80" height="80"> | **Marge Simpson** |
+| Test Engineer | <img src="by-theme/the-simpsons/tea.svg" alt="Lisa Simpson" width="80" height="80"> | **Lisa Simpson** |
+| Developer | <img src="by-theme/the-simpsons/dev.svg" alt="Homer Simpson" width="80" height="80"> | **Homer Simpson** |
+| Reviewer | <img src="by-theme/the-simpsons/reviewer.svg" alt="Sideshow Bob" width="80" height="80"> | **Sideshow Bob** |
+| Architect | <img src="by-theme/the-simpsons/architect.svg" alt="Professor Frink" width="80" height="80"> | **Professor Frink** |
+| Product Manager | <img src="by-theme/the-simpsons/pm.svg" alt="Principal Skinner" width="80" height="80"> | **Principal Skinner** |
+| Tech Writer | <img src="by-theme/the-simpsons/tech-writer.svg" alt="Comic Book Guy" width="80" height="80"> | **Comic Book Guy** |
+| UX Designer | <img src="by-theme/the-simpsons/ux-designer.svg" alt="Bart Simpson" width="80" height="80"> | **Bart Simpson** |
+| DevOps | <img src="by-theme/the-simpsons/devops.svg" alt="Groundskeeper Willie" width="80" height="80"> | **Groundskeeper Willie** |
 
 ## The Sopranos
 
@@ -962,4 +1352,34 @@ Background colors indicate agent role.
 | Tech Writer | <img src="by-theme/west-wing/tech-writer.svg" alt="Donna Moss" width="80" height="80"> | **Donna Moss** |
 | UX Designer | <img src="by-theme/west-wing/ux-designer.svg" alt="Joey Lucas" width="80" height="80"> | **Joey Lucas** |
 | DevOps | <img src="by-theme/west-wing/devops.svg" alt="The Situation Room" width="80" height="80"> | **The Situation Room** |
+
+## World Explorers
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/world-explorers/orchestrator.svg" alt="Ernest Shackleton" width="80" height="80"> | **Ernest Shackleton** |
+| Scrum Master | <img src="by-theme/world-explorers/sm.svg" alt="Amelia Earhart" width="80" height="80"> | **Amelia Earhart** |
+| Test Engineer | <img src="by-theme/world-explorers/tea.svg" alt="Roald Amundsen" width="80" height="80"> | **Roald Amundsen** |
+| Developer | <img src="by-theme/world-explorers/dev.svg" alt="Marco Polo" width="80" height="80"> | **Marco Polo** |
+| Reviewer | <img src="by-theme/world-explorers/reviewer.svg" alt="Ibn Battuta" width="80" height="80"> | **Ibn Battuta** |
+| Architect | <img src="by-theme/world-explorers/architect.svg" alt="James Cook" width="80" height="80"> | **James Cook** |
+| Product Manager | <img src="by-theme/world-explorers/pm.svg" alt="Ferdinand Magellan" width="80" height="80"> | **Ferdinand Magellan** |
+| Tech Writer | <img src="by-theme/world-explorers/tech-writer.svg" alt="Nellie Bly" width="80" height="80"> | **Nellie Bly** |
+| UX Designer | <img src="by-theme/world-explorers/ux-designer.svg" alt="Jacques Cousteau" width="80" height="80"> | **Jacques Cousteau** |
+| DevOps | <img src="by-theme/world-explorers/devops.svg" alt="Edmund Hillary" width="80" height="80"> | **Edmund Hillary** |
+
+## Wwii Leaders
+
+| Role | Face | Character |
+|:-----|:----:|:----------|
+| Orchestrator | <img src="by-theme/wwii-leaders/orchestrator.svg" alt="Winston Churchill" width="80" height="80"> | **Winston Churchill** |
+| Scrum Master | <img src="by-theme/wwii-leaders/sm.svg" alt="Dwight D. Eisenhower" width="80" height="80"> | **Dwight D. Eisenhower** |
+| Test Engineer | <img src="by-theme/wwii-leaders/tea.svg" alt="Alan Turing" width="80" height="80"> | **Alan Turing** |
+| Developer | <img src="by-theme/wwii-leaders/dev.svg" alt="George Marshall" width="80" height="80"> | **George Marshall** |
+| Reviewer | <img src="by-theme/wwii-leaders/reviewer.svg" alt="Charles de Gaulle" width="80" height="80"> | **Charles de Gaulle** |
+| Architect | <img src="by-theme/wwii-leaders/architect.svg" alt="Franklin D. Roosevelt" width="80" height="80"> | **Franklin D. Roosevelt** |
+| Product Manager | <img src="by-theme/wwii-leaders/pm.svg" alt="Bernard Montgomery" width="80" height="80"> | **Bernard Montgomery** |
+| Tech Writer | <img src="by-theme/wwii-leaders/tech-writer.svg" alt="Vera Atkins" width="80" height="80"> | **Vera Atkins** |
+| UX Designer | <img src="by-theme/wwii-leaders/ux-designer.svg" alt="Chester Nimitz" width="80" height="80"> | **Chester Nimitz** |
+| DevOps | <img src="by-theme/wwii-leaders/devops.svg" alt="Georgy Zhukov" width="80" height="80"> | **Georgy Zhukov** |
 

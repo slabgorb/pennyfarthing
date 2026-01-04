@@ -2,7 +2,7 @@
 
 Complete guide to using Pennyfarthing, a Claude Code agent framework with TDD workflow and persona system.
 
-**Version:** 5.0.0
+**Version:** 5.1.1
 
 ---
 
@@ -151,7 +151,7 @@ just test
 
 **`.claude/persona-config.yaml`** - Choose a theme:
 ```yaml
-theme: discworld  # 63 themes available - see THEME-COMPARISON.md for full list
+theme: discworld  # 91 themes available - see THEME-COMPARISON.md for full list
 attributes:
   verbosity: medium
   formality: casual
@@ -512,7 +512,7 @@ Pennyfarthing includes several persona themes that give agents distinct personal
 
 ### Available Themes
 
-Pennyfarthing includes **63 persona themes** across diverse universes:
+Pennyfarthing includes **91 persona themes** across diverse universes:
 
 | Category | Examples |
 |----------|----------|

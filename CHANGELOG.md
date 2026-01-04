@@ -11,6 +11,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.1.1] - 2026-01-04
+
+### Added
+
+#### Epic 8: Automatic State Reconciliation (Complete)
+- **Git Hook for PR Merge Detection** (Story 8-1)
+  - Post-merge hook detects when PR branches are merged
+  - Automatically archives completed story sessions
+  - Updates sprint YAML status to done
+  - Cleans up stale session files on branch switch
+
+### Summary
+| Metric | Value |
+|--------|-------|
+| Stories Completed | 1 |
+| Points Delivered | 3 |
+
+---
+
 ## [5.1.0] - 2026-01-04
 
 ### Sprint 6 Complete: Showcase Website, TRAIL-OCEAN Research, Cyclist Integration
@@ -700,7 +719,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v5.1.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v5.1.1...HEAD
+[5.1.1]: https://github.com/1898andCo/pennyfarthing/compare/v5.1.0...v5.1.1
 [5.1.0]: https://github.com/1898andCo/pennyfarthing/compare/v5.0.1...v5.1.0
 [5.0.1]: https://github.com/1898andCo/pennyfarthing/compare/v5.0.0...v5.0.1
 [5.0.0]: https://github.com/1898andCo/pennyfarthing/compare/v4.3.0...v5.0.0
