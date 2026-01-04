@@ -213,9 +213,9 @@ If you want to run benchmarks in parallel batches, add these permissions:
 ```json
 "permissions": {
   "allow": [
-    "Bash(claude *)",
-    "Bash(date *)",
-    "Bash(mkdir *)",
+    "Bash(claude:*)",
+    "Bash(date:*)",
+    "Bash(mkdir:*)",
     "Edit(results/**)",
     "Write(results/**)",
     "Skill(solo)",
@@ -229,9 +229,9 @@ If you want to run benchmarks in parallel batches, add these permissions:
 
 | Permission | Purpose |
 |------------|---------|
-| `Bash(claude *)` | Run `claude -p` CLI for agent evaluation |
-| `Bash(date *)` | Capture timestamps for proof-of-work |
-| `Bash(mkdir *)` | Create results directories |
+| `Bash(claude:*)` | Run `claude -p` CLI for agent evaluation |
+| `Bash(date:*)` | Capture timestamps for proof-of-work |
+| `Bash(mkdir:*)` | Create results directories |
 | `Edit(results/**)` | Modify benchmark result files |
 | `Write(results/**)` | Create new result files |
 | `Skill(solo)` | Single agent evaluation |

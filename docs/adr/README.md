@@ -36,6 +36,7 @@ What becomes easier or more difficult because of this change?
 | ADR | Title | Status | Date |
 |-----|-------|--------|------|
 | [0001](./0001-consolidate-code-duplication.md) | Consolidate Code Duplication | Proposed | 2025-12-31 |
+| [0002](./0002-context-budget-optimization.md) | Context Budget Optimization | Proposed | 2026-01-03 |
 
 ## Creating a New ADR
 
