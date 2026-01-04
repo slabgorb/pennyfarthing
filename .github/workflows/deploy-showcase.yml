@@ -4,7 +4,7 @@ on:
   push:
     branches: [develop]
     paths:
-      - 'showcase/**'
+      - 'internal/showcase/**'
       - 'pennyfarthing-dist/personas/**'
   workflow_dispatch:
 
@@ -29,23 +29,23 @@ jobs:
         with:
           node-version: "20"
           cache: npm
-          cache-dependency-path: showcase/package-lock.json
+          cache-dependency-path: internal/showcase/package-lock.json
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
       - name: Install dependencies
         run: npm ci
-        working-directory: showcase
+        working-directory: internal/showcase
 
       - name: Build Astro site
         run: npm run build
-        working-directory: showcase
+        working-directory: internal/showcase
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: showcase/dist
+          path: internal/showcase/dist
 
   deploy:
     environment:
