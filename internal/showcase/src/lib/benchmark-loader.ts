@@ -2,9 +2,9 @@
  * Benchmark Data Loader
  *
  * Build-time data pipeline that loads benchmark summary.yaml files
- * from results/benchmarks/ and transforms them for the showcase.
+ * from internal/results/benchmarks/ and transforms them for the showcase.
  *
- * Also loads control baselines from results/baselines/ and calculates
+ * Also loads control baselines from internal/results/baselines/ and calculates
  * delta comparisons for themed summaries that lack embedded baseline data.
  */
 

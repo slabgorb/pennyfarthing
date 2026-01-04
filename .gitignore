@@ -45,7 +45,7 @@ __pycache__/
 .session/*
 !.session/.gitkeep
 .claude/settings.local.json
-showcase/dist/
+internal/showcase/dist/
 
 # Git worktrees
 worktrees/

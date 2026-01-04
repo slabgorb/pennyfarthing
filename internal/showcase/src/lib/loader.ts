@@ -15,8 +15,8 @@ import type { Theme, Agent, ThemeMetadata, RawThemeYaml } from './types';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Path to theme YAML files relative to showcase directory
-const THEMES_DIR = join(__dirname, '..', '..', '..', 'pennyfarthing-dist', 'personas', 'themes');
+// Path to theme YAML files relative to showcase directory (inside internal/)
+const THEMES_DIR = join(__dirname, '..', '..', '..', '..', 'pennyfarthing-dist', 'personas', 'themes');
 
 /**
  * Transform raw YAML agent data to typed Agent interface
