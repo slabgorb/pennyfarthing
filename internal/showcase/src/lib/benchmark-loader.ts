@@ -104,6 +104,7 @@ export type ScenarioGroup = Record<string, BenchmarkSummary[]>;
  */
 export interface RoleLeaderboard {
   theme: string;
+  persona?: string;
   averageScore: number;
   averageDelta?: number;
   scenarioCount: number;
@@ -339,6 +340,9 @@ export function calculateRoleLeaderboard(summaries: BenchmarkSummary[]): RoleLea
     const scores = themeSummaries.map((s) => s.statistics.mean);
     const averageScore = scores.reduce((a, b) => a + b, 0) / scores.length;
 
+    // Get persona from first summary (all summaries for same theme+role should have same persona)
+    const persona = themeSummaries[0]?.agent.character;
+
     // Calculate average delta if baseline data exists
     const deltas = themeSummaries
       .filter((s) => s.baselineComparison?.delta !== undefined)
@@ -349,6 +353,7 @@ export function calculateRoleLeaderboard(summaries: BenchmarkSummary[]): RoleLea
 
     leaderboard.push({
       theme,
+      persona,
       averageScore,
       averageDelta,
       scenarioCount: themeSummaries.length,
