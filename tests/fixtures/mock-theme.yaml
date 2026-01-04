@@ -1,0 +1,21 @@
+# Minimal theme for testing character lookup
+theme:
+  name: test-theme
+  description: Testing only
+
+agents:
+  sm:
+    character: Prospero
+    style: Wise orchestrator
+  dev:
+    character: Puck (Robin Goodfellow)
+    style: Swift mischievous sprite
+  reviewer:
+    character: Portia
+    style: Sharp legal mind
+  architect:
+    character: Oberon, King of the Fairies
+    style: Grand fairy designs
+  tea:
+    character: Hamlet, Prince of Denmark
+    style: Contemplative tester

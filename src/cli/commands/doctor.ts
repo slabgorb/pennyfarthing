@@ -357,7 +357,7 @@ function checkUserFiles(projectRoot: string): CheckResult[] {
 
 /**
  * Check that benchmark-required permissions are configured in settings.local.json
- * Subagents need explicit Bash(claude *) permission since they run non-interactively
+ * Subagents need explicit Bash(claude:*) permission since they run non-interactively
  */
 function checkBenchmarkPermissions(projectRoot: string): CheckResult {
   const settingsPath = join(projectRoot, '.claude/settings.local.json');
@@ -368,17 +368,17 @@ function checkBenchmarkPermissions(projectRoot: string): CheckResult {
 
     // Check for required benchmark permissions
     const hasClaudeBash = permissions.some((p: string) =>
-      p === 'Bash(claude *)' || p === 'Bash' && permissions.includes('Bash(claude *)')
+      p === 'Bash(claude:*)' || p === 'Bash' && permissions.includes('Bash(claude:*)')
     );
 
-    // Check if Bash(claude *) specifically exists (needed for subagents)
-    const hasExplicitClaudeBash = permissions.includes('Bash(claude *)');
+    // Check if Bash(claude:*) specifically exists (needed for subagents)
+    const hasExplicitClaudeBash = permissions.includes('Bash(claude:*)');
 
     if (!hasExplicitClaudeBash) {
       return {
         name: 'settings/benchmark-permissions',
         status: 'warn',
-        detail: 'Missing Bash(claude *) for parallel benchmarks (sequential runs unaffected)',
+        detail: 'Missing Bash(claude:*) for parallel benchmarks (sequential runs unaffected)',
         fix: () => {
           addBenchmarkPermissions(projectRoot);
         }
@@ -406,9 +406,9 @@ function addBenchmarkPermissions(projectRoot: string): void {
   const settingsPath = join(projectRoot, '.claude/settings.local.json');
 
   const requiredPermissions = [
-    'Bash(claude *)',
-    'Bash(date *)',
-    'Bash(mkdir *)',
+    'Bash(claude:*)',
+    'Bash(date:*)',
+    'Bash(mkdir:*)',
     'Edit(results/**)',
     'Write(results/**)',
     'Skill(solo)',
@@ -584,9 +584,9 @@ function createSettingsLocalJson(projectRoot: string, installationType: string):
         'Grep',
         'Glob',
         'Bash',
-        'Bash(claude *)',
-        'Bash(date *)',
-        'Bash(mkdir *)',
+        'Bash(claude:*)',
+        'Bash(date:*)',
+        'Bash(mkdir:*)',
         'Edit(.claude/**)',
         'Edit(sprint/**)',
         'Edit(.session/**)',

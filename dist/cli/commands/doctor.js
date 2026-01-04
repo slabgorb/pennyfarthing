@@ -298,7 +298,7 @@ function checkUserFiles(projectRoot) {
 }
 /**
  * Check that benchmark-required permissions are configured in settings.local.json
- * Subagents need explicit Bash(claude *) permission since they run non-interactively
+ * Subagents need explicit Bash(claude:*) permission since they run non-interactively
  */
 function checkBenchmarkPermissions(projectRoot) {
     const settingsPath = join(projectRoot, '.claude/settings.local.json');
@@ -306,14 +306,14 @@ function checkBenchmarkPermissions(projectRoot) {
         const settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
         const permissions = settings.permissions?.allow || [];
         // Check for required benchmark permissions
-        const hasClaudeBash = permissions.some((p) => p === 'Bash(claude *)' || p === 'Bash' && permissions.includes('Bash(claude *)'));
-        // Check if Bash(claude *) specifically exists (needed for subagents)
-        const hasExplicitClaudeBash = permissions.includes('Bash(claude *)');
+        const hasClaudeBash = permissions.some((p) => p === 'Bash(claude:*)' || p === 'Bash' && permissions.includes('Bash(claude:*)'));
+        // Check if Bash(claude:*) specifically exists (needed for subagents)
+        const hasExplicitClaudeBash = permissions.includes('Bash(claude:*)');
         if (!hasExplicitClaudeBash) {
             return {
                 name: 'settings/benchmark-permissions',
                 status: 'warn',
-                detail: 'Missing Bash(claude *) for parallel benchmarks (sequential runs unaffected)',
+                detail: 'Missing Bash(claude:*) for parallel benchmarks (sequential runs unaffected)',
                 fix: () => {
                     addBenchmarkPermissions(projectRoot);
                 }
@@ -339,9 +339,9 @@ function checkBenchmarkPermissions(projectRoot) {
 function addBenchmarkPermissions(projectRoot) {
     const settingsPath = join(projectRoot, '.claude/settings.local.json');
     const requiredPermissions = [
-        'Bash(claude *)',
-        'Bash(date *)',
-        'Bash(mkdir *)',
+        'Bash(claude:*)',
+        'Bash(date:*)',
+        'Bash(mkdir:*)',
         'Edit(results/**)',
         'Write(results/**)',
         'Skill(solo)',
@@ -496,9 +496,9 @@ function createSettingsLocalJson(projectRoot, installationType) {
                 'Grep',
                 'Glob',
                 'Bash',
-                'Bash(claude *)',
-                'Bash(date *)',
-                'Bash(mkdir *)',
+                'Bash(claude:*)',
+                'Bash(date:*)',
+                'Bash(mkdir:*)',
                 'Edit(.claude/**)',
                 'Edit(sprint/**)',
                 'Edit(.session/**)',

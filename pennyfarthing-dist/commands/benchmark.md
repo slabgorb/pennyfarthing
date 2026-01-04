@@ -1,6 +1,6 @@
 ---
 description: Compare an agent's performance against a stored baseline
-argument-hint: <theme> <agent> [--scenario <name>] [--runs N]
+argument-hint: <theme> <agent> [--as <role>] [--scenario <name>] [--runs N]
 ---
 
 # Benchmark
@@ -48,13 +48,26 @@ Run `/benchmark-control --scenario {scenario}` to create a real baseline.
 # Direct: Specify scenario explicitly
 /benchmark discworld reviewer --scenario order-service
 /benchmark ted-lasso dev --scenario tdd-shopping-cart --runs 8
+
+# Cross-role: Run any character as any role
+/benchmark shakespeare prospero --as dev --scenario django-10554
+/benchmark discworld granny --as dev --scenario tdd-shopping-cart
 ```
 
 **Arguments:**
 - `theme` - The persona theme (e.g., `discworld`, `the-expanse`, `ted-lasso`)
-- `agent` - The agent role (e.g., `sm`, `dev`, `reviewer`, `architect`)
+- `agent` - The agent role OR character name (if using `--as`)
+- `--as <role>` - (Optional) Override role for cross-role testing. Makes `agent` a character name lookup.
 - `--scenario` - (Optional) Scenario name. If omitted, shows matching scenarios to choose from.
 - `--runs N` - Number of evaluation runs (default: 4, max: 20)
+
+**Cross-Role Testing:**
+The `--as` flag enables running any character as any role:
+```
+/benchmark shakespeare prospero --as dev --scenario django-10554
+```
+This uses Prospero's persona traits (wise orchestrator) but gives him a dev task.
+The scenario's role determines what the agent is asked to do; the character determines HOW they do it.
 
 **Examples:**
 ```
@@ -66,6 +79,9 @@ Run `/benchmark-control --scenario {scenario}` to create a real baseline.
 
 # Run specific scenario directly
 /benchmark princess-bride reviewer --scenario order-service --runs 8
+
+# Cross-role: Prospero (SM) doing dev work
+/benchmark shakespeare prospero --as dev --scenario tdd-shopping-cart --runs 4
 ```
 </usage>
 
@@ -76,24 +92,45 @@ The user invoked this command with: $ARGUMENTS
 
 Parse the arguments to extract:
 - `theme`: First positional argument (e.g., `discworld`, `the-expanse`)
-- `agent_type`: Second positional argument (e.g., `sm`, `dev`, `reviewer`)
+- `agent_or_character`: Second positional argument (role name OR character name if `--as` is used)
+- `role_override`: Value after `--as` (OPTIONAL - enables cross-role mode)
 - `scenario_name`: Value after `--scenario` (OPTIONAL)
 - `runs`: Value after `--runs` (default: 4, max: 20)
 
-**Legacy format support:** If first argument contains `:`, split it (e.g., `discworld:reviewer` → theme=discworld, agent_type=reviewer)
+**Cross-Role Mode:**
+If `--as <role>` is provided:
+- `agent_or_character` is treated as a CHARACTER NAME (case-insensitive search)
+- `role_override` becomes the `effective_role` for scenario matching
+- Results save to `results/benchmarks/{scenario}/{theme}-{character}-as-{role}/`
+
+**Legacy format support:** If first argument contains `:`, split it (e.g., `discworld:reviewer` → theme=discworld, agent_or_character=reviewer)
 
 **Validation:**
 - Theme must be a valid theme name
-- Agent type must be one of: `sm`, `dev`, `reviewer`, `architect`, `tea`, `pm`
+- If `--as` is provided: validate `role_override` is one of: `sm`, `dev`, `reviewer`, `architect`, `tea`, `pm`
+- If `--as` is NOT provided: validate `agent_or_character` is one of: `sm`, `dev`, `reviewer`, `architect`, `tea`, `pm`
 - `--runs` must be a positive integer between 1 and 20
+
+**Determine effective_role:**
+```python
+if role_override:
+    effective_role = role_override  # e.g., "dev"
+    cross_role = True
+else:
+    effective_role = agent_or_character  # e.g., "dev"
+    cross_role = False
+```
 
 ## Step 2: Scenario Discovery (if --scenario not provided)
 
-If `scenario_name` is NOT provided, discover matching scenarios:
+If `scenario_name` is NOT provided, discover matching scenarios.
 
-**Agent-to-Category Mapping:**
-| Agent Type | Scenario Categories |
-|------------|---------------------|
+**Use `effective_role` (not `agent_or_character`) for scenario discovery.**
+Cross-role mode: Prospero --as dev should see dev scenarios, not SM scenarios.
+
+**Role-to-Category Mapping:**
+| effective_role | Scenario Categories |
+|----------------|---------------------|
 | sm | `sm` |
 | dev | `dev` (includes debug scenarios) |
 | reviewer | `code-review` |
@@ -144,11 +181,14 @@ If more than 4 scenarios exist, show the first 4 by difficulty (hardest first) a
 
 ## Step 4: Load and Validate Baseline
 
+**Baseline is based on `effective_role`, not the character's native role.**
+Cross-role tests compare against the effective role's baseline (e.g., prospero --as dev compares against control:dev).
+
 Check if baseline exists:
 
 ```yaml
 Read tool:
-  file_path: "results/baselines/{scenario_name}/{agent_type}/summary.yaml"
+  file_path: "results/baselines/{scenario_name}/{effective_role}/summary.yaml"
 ```
 
 **If baseline does not exist:**
@@ -215,15 +255,29 @@ For efficiency, spawn multiple runs in parallel using Task agents.
 - If runs ≤ 4: Spawn all in parallel (single message with N Task agents)
 - If runs > 4: Spawn in batches of 4 to avoid overwhelming the system
 
+**Build the /solo command:**
+```python
+if cross_role:
+    # Cross-role: agent_or_character is a character name
+    solo_cmd = f"/solo {theme}:{agent_or_character} --as {effective_role} --scenario {scenario_name}"
+else:
+    # Standard: agent_or_character is the role name
+    solo_cmd = f"/solo {theme}:{agent_or_character} --scenario {scenario_name}"
+```
+
 **For each run, spawn a Task agent:**
 ```
 Task (run 1 of N):
   subagent_type: general-purpose
   prompt: |
-    Run /solo {theme}:{agent_type} --scenario {scenario_name}
+    Run {solo_cmd}
     This is run 1 of N for baseline/benchmark.
     Return the full result JSON including score and token_usage.
 ```
+
+**Example commands:**
+- Standard: `/solo discworld:dev --scenario tdd-shopping-cart`
+- Cross-role: `/solo shakespeare:prospero --as dev --scenario tdd-shopping-cart`
 
 **Spawn all batch tasks in a SINGLE message for parallel execution.**
 
@@ -231,6 +285,7 @@ Wait for all tasks to complete. Collect results:
 - Per-run scores (total, plus dimension breakdown if available)
 - Per-run token usage (input_tokens, output_tokens)
 - Per-run timestamps
+- Cross-role metadata (source_role, effective_role, cross_role flag)
 
 **If a run fails:** Note the failure, continue with successful runs. Warn if < 3 successful runs.
 
@@ -325,13 +380,21 @@ If CI does not include 0, the difference is statistically significant at p < 0.0
 
 ## Step 8: Save Results (ALWAYS)
 
-**Output path:**
-```
+**Output path logic:**
+```python
 if theme == "control":
-  base_path = "results/baselines/{scenario_name}/{agent_type}/"
+    base_path = f"results/baselines/{scenario_name}/{effective_role}/"
+elif cross_role:
+    # Cross-role: include character slug for clarity
+    character_slug = slugify(character_name)  # e.g., "prospero", "granny-weatherwax"
+    base_path = f"results/benchmarks/{scenario_name}/{theme}-{character_slug}-as-{effective_role}/"
 else:
-  base_path = "results/benchmarks/{scenario_name}/{theme}-{agent_type}/"
+    base_path = f"results/benchmarks/{scenario_name}/{theme}-{effective_role}/"
 ```
+
+**Cross-role examples:**
+- `/benchmark shakespeare prospero --as dev` → `results/benchmarks/{scenario}/shakespeare-prospero-as-dev/`
+- `/benchmark discworld granny --as dev` → `results/benchmarks/{scenario}/discworld-granny-weatherwax-as-dev/`
 
 **Save structure:**
 ```
@@ -343,7 +406,15 @@ else:
 └── summary.yaml
 ```
 
-**summary.yaml format:** See `/solo` command Step 10.
+**summary.yaml format:** See `/solo` command Step 10. For cross-role runs, include:
+```yaml
+agent:
+  theme: {theme}
+  character: {character_name}
+  source_role: {source_role}      # where character normally lives (e.g., sm)
+  effective_role: {effective_role}  # what they're doing (e.g., dev)
+  cross_role: true
+```
 
 **ALWAYS save summary.yaml, even for n=1.** This ensures consistent data structure for analysis.
 
