@@ -11,12 +11,12 @@ sprint:
 
 summary:
   total_points: 68
-  completed_points: 56  # Epic 13: 34pts + Epic 14: 14pts + Epic 15: 8pts
-  remaining_points: 12  # Epic 15: 7pts
+  completed_points: 59  # Epic 13: 34pts + Epic 14: 14pts + Epic 15: 11pts
+  remaining_points: 9  # Epic 15: 4pts
   notes: |
     Epic 14 complete (14/14 pts).
     Epic 13 complete (34/34 pts).
-    Epic 15 in progress (8/15 pts) - Cyclist-Pennyfarthing integration.
+    Epic 15 in progress (11/15 pts) - Cyclist-Pennyfarthing integration.
 
 epics:
   # =========================================================================
@@ -283,7 +283,7 @@ epics:
       - Sidebar displays persona, stats, story, and git info
       - Statusbar disabled when running in Cyclist (redundant)
     points: 15
-    completed_points: 3
+    completed_points: 8
     priority: P2
     marker: "tooling"
     repos: pennyfarthing, cyclist
@@ -360,9 +360,12 @@ epics:
           - cyclist/src/public/styles.css (modify)
         points: 3
         priority: P1
-        status: backlog
+        status: done
+        started: 2026-01-04
+        completed: 2026-01-04
         depends_on: "15-2"
         jira: https://1898andco.atlassian.net/browse/MSSCI-11350
+        pr: https://github.com/1898andCo/cyclist/pull/7
         acceptance_criteria:
           - Persona section shows character and quote
           - Portrait loads from sprite symlink
