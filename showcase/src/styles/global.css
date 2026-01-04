@@ -65,3 +65,61 @@ a {
 a:hover {
   color: var(--accent-green);
 }
+
+/* Theme gallery row layout - shared between header and rows */
+.theme-row-layout {
+  display: grid;
+  grid-template-columns: 56px minmax(120px, 200px) 1fr;
+  gap: 1rem;
+  align-items: center;
+}
+
+.theme-row-portraits {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 0.25rem;
+}
+
+.portrait-cell {
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive adjustments for theme gallery */
+@media (max-width: 1024px) {
+  .theme-row-layout {
+    grid-template-columns: 48px minmax(100px, 160px) 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .theme-row-layout {
+    grid-template-columns: 40px minmax(80px, 120px) 1fr;
+    gap: 0.5rem;
+  }
+
+  .theme-row-portraits {
+    gap: 0.125rem;
+  }
+
+  .portrait-cell {
+    min-width: 32px;
+  }
+}
+
+@media (max-width: 640px) {
+  .theme-row-layout {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .theme-row-spider {
+    display: none;
+  }
+
+  .theme-row-portraits {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
