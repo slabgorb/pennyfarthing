@@ -416,7 +416,8 @@ epics:
           - pennyfarthing-dist/scripts/statusline.sh (check and skip)
         points: 2
         priority: P2
-        status: backlog
+        status: in_progress
+        started: 2026-01-04
         depends_on: "15-2"
         jira: https://1898andco.atlassian.net/browse/MSSCI-11352
         acceptance_criteria:
