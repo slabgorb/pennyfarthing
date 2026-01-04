@@ -11,12 +11,12 @@ sprint:
 
 summary:
   total_points: 68
-  completed_points: 51  # Epic 13: 29pts + Epic 14: 14pts
-  remaining_points: 17  # Epic 13: 10pts + Epic 15: 15pts
+  completed_points: 56  # Epic 13: 34pts + Epic 14: 14pts + Epic 15: 8pts
+  remaining_points: 12  # Epic 15: 7pts
   notes: |
     Epic 14 complete (14/14 pts).
-    Epic 13 complete (34/39 pts).
-    Epic 15 in progress (3/15 pts) - Cyclist-Pennyfarthing integration.
+    Epic 13 complete (34/34 pts).
+    Epic 15 in progress (8/15 pts) - Cyclist-Pennyfarthing integration.
 
 epics:
   # =========================================================================
@@ -329,9 +329,12 @@ epics:
           File: cyclist/src/pennyfarthing.ts
         points: 5
         priority: P1
-        status: backlog
+        status: done
+        started: 2026-01-04
+        completed: 2026-01-04
         depends_on: "15-1"
         jira: https://1898andco.atlassian.net/browse/MSSCI-11349
+        pr: https://github.com/1898andCo/cyclist/pull/6
         acceptance_criteria:
           - Detects Pennyfarthing project (.claude/ exists)
           - Reads theme config correctly
