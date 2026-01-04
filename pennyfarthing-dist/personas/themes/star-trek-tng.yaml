@@ -42,7 +42,7 @@ agents:
     helper:
       name: Number One (Commander Riker)
       style: Reliable execution, action-oriented, handles the away team
-    shortName: Picard
+    shortName: Jean-Luc
   tea:
     character: Lieutenant Commander Data
     ocean:
@@ -166,7 +166,7 @@ agents:
     helper:
       name: Lwaxana Troi
       style: Bold opinions, challenges assumptions, dramatic but insightful
-    shortName: Counselor
+    shortName: Deanna
   devops:
     character: Chief Miles O'Brien
     ocean:

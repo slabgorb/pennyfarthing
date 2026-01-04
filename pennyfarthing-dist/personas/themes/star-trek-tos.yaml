@@ -42,7 +42,7 @@ agents:
     helper:
       name: Yeoman Rand
       style: Efficient, brings the captain PADDs to sign, handles logistics
-    shortName: Kirk
+    shortName: James
   tea:
     character: Mr. Spock
     ocean:

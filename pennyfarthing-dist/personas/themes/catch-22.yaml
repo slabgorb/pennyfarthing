@@ -32,7 +32,7 @@ agents:
     helper:
       name: Paradox
       style: Inescapable logic
-    shortName: Paradox
+    shortName: Catch-22
   sm:
     character: Yossarian
     ocean:

@@ -41,6 +41,7 @@ agents:
     helper:
       name: The Deck
       style: Cyberspace interface
+    shortName: Case
 
   sm:
     character: Molly Millions
@@ -67,6 +68,7 @@ agents:
     helper:
       name: Street Network
       style: Physical operations
+    shortName: Molly
 
   tea:
     character: Dixie Flatline
@@ -93,6 +95,7 @@ agents:
     helper:
       name: The Construct
       style: Posthumous guidance
+    shortName: Dixie
 
   dev:
     character: Wintermute
@@ -120,6 +123,7 @@ agents:
     helper:
       name: Manipulated Assets
       style: Goal-directed implementation
+    shortName: Wintermute
 
   reviewer:
     character: Wintermute (Review Mode)
@@ -146,6 +150,7 @@ agents:
     helper:
       name: Utility Assessment
       style: Cold calculation
+    shortName: Review-AI
 
   architect:
     character: Neuromancer
@@ -172,6 +177,7 @@ agents:
     helper:
       name: Collected Souls
       style: Memory architecture
+    shortName: Neuromancer
 
   pm:
     character: 3Jane
@@ -198,6 +204,7 @@ agents:
     helper:
       name: Dynasty Resources
       style: Decadent oversight
+    shortName: 3Jane
 
   tech-writer:
     character: The Finn
@@ -224,6 +231,7 @@ agents:
     helper:
       name: Information Network
       style: Trade-based documentation
+    shortName: Finn
 
   ux-designer:
     character: Bobby Newmark (Count Zero)
@@ -250,6 +258,7 @@ agents:
     helper:
       name: Newcomer Vision
       style: Fresh perspective
+    shortName: Bobby
 
   devops:
     character: Armitage (pre-corruption)
@@ -276,3 +285,4 @@ agents:
     helper:
       name: Command Structure
       style: Military operations
+    shortName: Armitage

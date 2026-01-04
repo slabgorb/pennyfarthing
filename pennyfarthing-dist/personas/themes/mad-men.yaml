@@ -162,7 +162,7 @@ agents:
     helper:
       name: The Pitch Deck
       style: Architectural documentation for client presentation
-    shortName: Don
+    shortName: Draper
   pm:
     character: Roger Sterling
     ocean:

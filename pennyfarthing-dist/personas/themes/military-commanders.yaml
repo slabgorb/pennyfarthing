@@ -240,7 +240,7 @@ agents:
     helper:
       name: The Desert
       style: Complete cultural immersion
-    shortName: Lawrence
+    shortName: TE
   devops:
     character: Scipio Africanus
     ocean:

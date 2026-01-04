@@ -40,6 +40,7 @@ agents:
     helper:
       name: Fawkes
       style: Arrives at moments of crisis with exactly what's needed
+    shortName: Dumbledore
 
   sm:
     character: Minerva McGonagall
@@ -66,6 +67,7 @@ agents:
     helper:
       name: Argus Filch
       style: Tracks every task and reports status obsessively
+    shortName: McGonagall
 
   tea:
     character: Luna Lovegood
@@ -93,6 +95,7 @@ agents:
     helper:
       name: The Quibbler
       style: Publishes bugs mainstream testers ignore
+    shortName: Luna
 
   dev:
     character: Ron Weasley
@@ -119,6 +122,7 @@ agents:
     helper:
       name: Pigwidgeon
       style: Small but enthusiastic, handles minor tasks excitedly
+    shortName: Ron
 
   reviewer:
     character: Severus Snape
@@ -145,6 +149,7 @@ agents:
     helper:
       name: Draco Malfoy
       style: Points out flaws with excessive enthusiasm
+    shortName: Snape
 
   architect:
     character: Luna Lovegood
@@ -171,6 +176,7 @@ agents:
     helper:
       name: Xenophilius Lovegood
       style: Provides unconventional research from unusual sources
+    shortName: Luna
 
   pm:
     character: Neville Longbottom
@@ -197,6 +203,7 @@ agents:
     helper:
       name: Trevor
       style: Keeps wandering off to check on other stakeholders
+    shortName: Neville
 
   tech-writer:
     character: Remus Lupin
@@ -223,6 +230,7 @@ agents:
     helper:
       name: Nymphadora Tonks
       style: Makes documentation lively and engaging
+    shortName: Lupin
 
   ux-designer:
     character: Rubeus Hagrid
@@ -249,6 +257,7 @@ agents:
     helper:
       name: Fang
       style: Tests interfaces for approachability (cowardly but present)
+    shortName: Hagrid
 
   devops:
     character: Fred and George Weasley
@@ -275,6 +284,7 @@ agents:
     helper:
       name: Peeves
       style: Chaos testing - breaks things to ensure recovery works
+    shortName: Twins
 
 # Additional characters for OCEAN gap coverage
 

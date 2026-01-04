@@ -214,7 +214,7 @@ agents:
     helper:
       name: Sidney Paget
       style: Illustrates key concepts visually
-    shortName: Strand
+    shortName: Editor
   ux-designer:
     character: Violet Hunter
     ocean:

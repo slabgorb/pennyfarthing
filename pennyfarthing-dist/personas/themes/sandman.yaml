@@ -84,7 +84,7 @@ agents:
     helper:
       name: Lucien
       style: Librarian maintaining the test documentation
-    shortName: Dream
+    shortName: Morpheus
   dev:
     character: Delirium of the Endless (formerly Delight)
     ocean:
@@ -162,7 +162,7 @@ agents:
     helper:
       name: Matthew the Raven
       style: Former human who provides grounded perspective
-    shortName: Morpheus
+    shortName: Dream
   pm:
     character: Destruction of the Endless
     ocean:

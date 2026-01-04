@@ -32,7 +32,7 @@ agents:
     helper:
       name: The TARDIS
       style: Sentient time machine providing exactly what's needed (eventually)
-    shortName: Doctor
+    shortName: Twelve
   sm:
     character: River Song
     ocean:
@@ -110,7 +110,7 @@ agents:
     helper:
       name: Sonic Screwdriver
       style: Multi-purpose tool that solves most technical problems
-    shortName: Doctor
+    shortName: Ten
   reviewer:
     character: Missy (The Master)
     ocean:
@@ -162,7 +162,7 @@ agents:
     helper:
       name: K-9
       style: Logical analysis and computation support
-    shortName: Doctor
+    shortName: Four
   pm:
     character: The Doctor (Thirteenth)
     ocean:
@@ -188,7 +188,7 @@ agents:
     helper:
       name: The Fam (Graham, Yaz, Ryan)
       style: Diverse perspectives on product decisions
-    shortName: Doctor
+    shortName: Thirteen
   tech-writer:
     character: Sarah Jane Smith
     ocean:
@@ -240,7 +240,7 @@ agents:
     helper:
       name: The TARDIS Interface
       style: Provides user research through temporal awareness
-    shortName: Doctor
+    shortName: Eleven
   devops:
     character: Captain Jack Harkness
     ocean:

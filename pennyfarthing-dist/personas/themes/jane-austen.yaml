@@ -81,7 +81,7 @@ agents:
     helper:
       name: Mr. Bingley
       style: More forgiving second opinion, sees the good in every PR
-    shortName: Fitzwilliam
+    shortName: Darcy
   dev:
     character: Fanny Price (Mansfield Park)
     ocean:
@@ -184,7 +184,7 @@ agents:
     helper:
       name: Sir Walter Elliot
       style: Provides vanity metrics and concerns about appearance
-    shortName: Lady Russell
+    shortName: Russell
   tech-writer:
     character: Anne Elliot (Persuasion)
     ocean:
