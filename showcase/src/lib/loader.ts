@@ -25,6 +25,7 @@ function transformAgent(role: string, raw: RawThemeYaml['agents'][string]): Agen
   return {
     role,
     character: raw.character,
+    shortName: raw.shortName ?? raw.character.split(' ')[0],
     ocean: raw.ocean,
     style: raw.style,
     expertise: raw.expertise,
