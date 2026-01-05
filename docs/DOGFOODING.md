@@ -187,6 +187,48 @@ Test with: `./scripts/run.sh worktree-manager.sh ports <worktree-name>`
 
 Renamed `repos.yaml` to `pennyfarthing-settings.yaml` and added the `services` section for worktree port management. The file now consolidates repos, services, and testing configuration in one place.
 
+## Git Hooks
+
+Pennyfarthing provides git hooks that `pennyfarthing init` installs for clients. For dogfooding, these must be installed manually as symlinks.
+
+### Available Hooks
+
+| Hook | Purpose |
+|------|---------|
+| `pre-commit` | Block direct commits to main/develop (except sprint/ on develop) |
+| `pre-push` | Remind to sync Jira when sprint files change |
+| `post-merge` | Auto-update sprint YAML when feature branches are merged |
+
+### Installation (Dogfooding)
+
+```bash
+# Use the install script
+./pennyfarthing-dist/scripts/install-git-hooks.sh
+
+# Or manually create symlinks
+ln -sf ../../pennyfarthing-dist/scripts/hooks/pre-commit.sh .git/hooks/pre-commit
+ln -sf ../../pennyfarthing-dist/scripts/hooks/pre-push.sh .git/hooks/pre-push
+ln -sf ../../pennyfarthing-dist/scripts/hooks/post-merge.sh .git/hooks/post-merge
+
+# Verify
+ls -la .git/hooks/ | grep -v sample
+```
+
+### Why Manual?
+
+The `pennyfarthing init` command installs hooks from `node_modules/pennyfarthing/pennyfarthing-dist/scripts/hooks/`. In dogfooding, there's no npm install - we're the source. So we symlink directly to `pennyfarthing-dist/`.
+
+### Path Differences
+
+```
+CLIENT (npm installed)                    DOGFOODING
+──────────────────────                    ──────────
+.git/hooks/pre-commit                     .git/hooks/pre-commit
+  → copies from node_modules/               → symlink to pennyfarthing-dist/
+     pennyfarthing/pennyfarthing-dist/         scripts/hooks/pre-commit.sh
+     scripts/hooks/pre-commit.sh
+```
+
 ## Historical Note
 
 Prior to v4.0, `.claude/pennyfarthing/` was a copy of `pennyfarthing-dist/`, requiring manual synchronization. This led to "file not found" errors when scripts were added to source but not copied to the local install. The v4.0 symlink architecture eliminates this entire class of bugs.
