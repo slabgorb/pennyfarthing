@@ -206,6 +206,19 @@ pennyfarthing uninstall --all
 
 Archived sprint data (`sprint/archive/`, `sprint/context/`) is always preserved.
 
+## What's New in v5.2
+
+- **Job Fair Benchmarking** - Data-driven role optimization
+  - `/job-fair` command evaluates all characters against all roles
+  - `--as` flag for `/solo` enables cross-role testing
+  - Cohen's d effect sizes in leaderboards
+  - Model/cost tracking per benchmark run
+- **53 Themes Optimized** - Role reassignments based on benchmark data
+  - Notable: Gandalf→dev (+8.12), Inigo Montoya→dev (+7.50), Phil Coulson→dev (+6.25)
+  - All optimizations marked with `JOB FAIR OPTIMIZED` and delta scores
+- **Developer Experience** - `pennyfarthing doctor --dogfood` for framework developers
+- **Git Branch Protection** - Pre-commit/pre-push hooks prevent direct main commits
+
 ## What's New in v5.1
 
 - **Cyclist Integration** (Epic 15) - Launch Cyclist with Pennyfarthing context
