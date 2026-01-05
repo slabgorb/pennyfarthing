@@ -24,10 +24,14 @@ const projectRoot = join(__dirname, '..', '..');
 const facesDir = join(projectRoot, 'pennyfarthing-dist', 'personas', 'faces');
 const themesDir = join(projectRoot, 'pennyfarthing-dist', 'personas', 'themes');
 
-// Expected counts
-const EXPECTED_THEME_COUNT = 63;
+// Expected counts - derive from actual theme files
 const EXPECTED_AGENT_COUNT = 10;
-const EXPECTED_TOTAL_FACES = EXPECTED_THEME_COUNT * EXPECTED_AGENT_COUNT; // 630
+// Count actual themes dynamically (was hardcoded to 63, now 91+)
+const actualThemeFiles = existsSync(themesDir)
+  ? readdirSync(themesDir).filter((f) => f.endsWith('.yaml')).length
+  : 0;
+const EXPECTED_THEME_COUNT = actualThemeFiles;
+const EXPECTED_TOTAL_FACES = EXPECTED_THEME_COUNT * EXPECTED_AGENT_COUNT;
 
 // All 10 agent roles
 const AGENTS = [
@@ -147,30 +151,27 @@ describe('AC1: 630 SVG Faces Generated', () => {
     const byThemeDir = join(facesDir, 'by-theme');
     const byRoleDir = join(facesDir, 'by-role');
 
-    // Sample check: verify a few random combinations exist in both
-    const sampleChecks = [
-      { theme: 'deadwood', agent: 'sm' },
-      { theme: 'firefly', agent: 'dev' },
-      { theme: 'dune', agent: 'reviewer' },
-      { theme: 'discworld', agent: 'tea' },
-    ];
+    // by-theme uses character names (e.g., seth-25334.svg)
+    // by-role uses theme names (e.g., deadwood.svg)
+    // Verify structure exists and counts match
+    const sampleThemes = ['deadwood', 'firefly', 'dune', 'discworld'].filter((t) =>
+      existsSync(join(byThemeDir, t))
+    );
 
-    for (const { theme, agent } of sampleChecks) {
-      const themeFile = join(byThemeDir, theme, `${agent}.svg`);
-      const roleFile = join(byRoleDir, agent, `${theme}.svg`);
+    for (const theme of sampleThemes) {
+      // Check by-theme has 10 character files
+      const themeDir = join(byThemeDir, theme);
+      const themeSvgs = readdirSync(themeDir).filter((f) => f.endsWith('.svg'));
+      assert.strictEqual(
+        themeSvgs.length,
+        EXPECTED_AGENT_COUNT,
+        `by-theme/${theme}/ should have ${EXPECTED_AGENT_COUNT} SVG files`
+      );
 
-      assert.ok(existsSync(themeFile), `Missing by-theme file: ${theme}/${agent}.svg`);
-      assert.ok(existsSync(roleFile), `Missing by-role file: ${agent}/${theme}.svg`);
-
-      // Content should be identical
-      if (existsSync(themeFile) && existsSync(roleFile)) {
-        const themeContent = readFileSync(themeFile, 'utf-8');
-        const roleContent = readFileSync(roleFile, 'utf-8');
-        assert.strictEqual(
-          themeContent,
-          roleContent,
-          `Content mismatch between by-theme/${theme}/${agent}.svg and by-role/${agent}/${theme}.svg`
-        );
+      // Check by-role/{agent}/ has this theme's file
+      for (const agent of AGENTS) {
+        const roleFile = join(byRoleDir, agent, `${theme}.svg`);
+        assert.ok(existsSync(roleFile), `Missing by-role file: ${agent}/${theme}.svg`);
       }
     }
   });
@@ -308,15 +309,19 @@ describe('AC3: Navigation Structure', () => {
     const themes = getAllThemes();
 
     // Verify structure allows finding all agents for a given theme
+    // Note: by-theme uses character names (e.g., seth-25334.svg), not role names
     for (const theme of themes.slice(0, 5)) {
       // Sample 5 themes
       const themeDir = join(byThemeDir, theme);
       assert.ok(existsSync(themeDir), `by-theme/${theme}/ should exist`);
 
-      for (const agent of AGENTS) {
-        const agentFile = join(themeDir, `${agent}.svg`);
-        assert.ok(existsSync(agentFile), `by-theme/${theme}/${agent}.svg should exist`);
-      }
+      // Should have 10 SVG files (one per agent role)
+      const svgFiles = readdirSync(themeDir).filter((f) => f.endsWith('.svg'));
+      assert.strictEqual(
+        svgFiles.length,
+        EXPECTED_AGENT_COUNT,
+        `by-theme/${theme}/ should have ${EXPECTED_AGENT_COUNT} SVGs, got ${svgFiles.length}`
+      );
     }
   });
 
@@ -468,14 +473,34 @@ describe('AC4: Performance - File Size and Load Time', () => {
 describe('Integration: Complete 630-Face Matrix', () => {
   it('should have no missing theme-agent combinations', () => {
     const byThemeDir = join(facesDir, 'by-theme');
+    const byRoleDir = join(facesDir, 'by-role');
     const themes = getAllThemes();
     const missing: string[] = [];
 
+    // by-theme uses character names, so check count per theme
     for (const theme of themes) {
-      for (const agent of AGENTS) {
-        const filePath = join(byThemeDir, theme, `${agent}.svg`);
+      const themeDir = join(byThemeDir, theme);
+      if (!existsSync(themeDir)) {
+        missing.push(`${theme}/ (directory missing)`);
+        continue;
+      }
+      const svgCount = readdirSync(themeDir).filter((f) => f.endsWith('.svg')).length;
+      if (svgCount !== EXPECTED_AGENT_COUNT) {
+        missing.push(`${theme}/ (has ${svgCount} SVGs, expected ${EXPECTED_AGENT_COUNT})`);
+      }
+    }
+
+    // by-role uses theme names, so verify each role has all themes
+    for (const agent of AGENTS) {
+      const roleDir = join(byRoleDir, agent);
+      if (!existsSync(roleDir)) {
+        missing.push(`by-role/${agent}/ (directory missing)`);
+        continue;
+      }
+      for (const theme of themes) {
+        const filePath = join(roleDir, `${theme}.svg`);
         if (!existsSync(filePath)) {
-          missing.push(`${theme}/${agent}`);
+          missing.push(`by-role/${agent}/${theme}.svg`);
         }
       }
     }

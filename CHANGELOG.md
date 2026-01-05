@@ -11,6 +11,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.2.0] - 2026-01-05
+
+### Job Fair: Data-Driven Role Optimization
+
+This release introduces systematic character-to-role benchmarking and applies optimizations across 53 themes.
+
+### Added
+
+#### Job Fair Benchmarking Infrastructure
+- **Cross-role testing** - `--as` flag for `/solo` command to run any character as any role
+- **`/job-fair` command** - Systematic evaluation of all characters in a theme against all roles
+- **Model/cost tracking** - Per-run metrics for better observability
+- **Cohen's d effect sizes** - Statistical comparison in leaderboards
+- **Leaderboard persona column** - Show character names alongside role performance
+
+#### Developer Experience
+- **`--dogfood` flag** - `pennyfarthing doctor --dogfood` runs internal health checks for framework developers
+- **Git branch protection** - Pre-commit and pre-push hooks prevent direct main commits
+- **Sprint 6 documentation** - Retro and Cyclist API docs added
+
+### Changed
+
+#### Theme Optimizations (53 themes)
+Role reassignments based on benchmark performance data. Notable improvements:
+- **lord-of-the-rings**: Gandalf→dev (+8.12), Aragorn→orchestrator, Gollum→reviewer
+- **princess-bride**: Inigo Montoya→dev (+7.50), Fezzik→tea
+- **marvel-mcu**: Phil Coulson→dev (+6.25), Tony Stark→sm
+- **breaking-bad**: Walter White→tea, Jesse Pinkman→dev, Hank→sm
+- And 49 more themes with `JOB FAIR OPTIMIZED` markers and delta scores
+
+#### Maintenance
+- **Portrait reorganization** - Renamed and realigned after role swaps
+- **shortName standardization** - Consistent across all 91 theme files
+
+### Fixed
+- Shell command patterns to avoid zsh parse errors
+- Bash permission prefix matching with correct colon syntax
+- Test path updates for relocated showcase in `internal/`
+
+### Summary
+| Metric | Value |
+|--------|-------|
+| Themes Optimized | 53 |
+| New Commands | 1 (`/job-fair`) |
+| New Flags | 2 (`--as`, `--dogfood`) |
+
+---
+
 ## [5.1.1] - 2026-01-04
 
 ### Added

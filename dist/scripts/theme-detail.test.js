@@ -13,10 +13,10 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-// Navigate from dist/scripts/ to showcase directory
+// Navigate from dist/scripts/ to internal/showcase directory
 const projectRoot = join(__dirname, '..', '..');
-const PAGES_DIR = join(projectRoot, 'showcase', 'src', 'pages');
-const COMPONENTS_DIR = join(projectRoot, 'showcase', 'src', 'components');
+const PAGES_DIR = join(projectRoot, 'internal', 'showcase', 'src', 'pages');
+const COMPONENTS_DIR = join(projectRoot, 'internal', 'showcase', 'src', 'components');
 describe('Story 13-5: Theme Detail Page', () => {
     describe('AC1: Theme detail pages generated for all themes', () => {
         it('should have dynamic [theme].astro route', () => {
