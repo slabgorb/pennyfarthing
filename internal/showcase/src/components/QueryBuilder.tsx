@@ -90,9 +90,9 @@ function OverlaySpiderChart({ characters, size = 250 }: { characters: Character[
 }
 
 // Small portrait for chips
-function ChipPortrait({ themeId, role, emoji, name }: { themeId?: string; role: string; emoji?: string; name: string }) {
+function ChipPortrait({ themeId, slug, emoji, name }: { themeId?: string; slug?: string; emoji?: string; name: string }) {
   const [imgError, setImgError] = useState(false);
-  const portraitPath = themeId ? `/portraits/${themeId}/${role}.png` : null;
+  const portraitPath = themeId && slug ? `/portraits/${themeId}/${slug}.png` : null;
 
   if (!portraitPath || imgError) {
     return (
@@ -149,6 +149,7 @@ export interface Character {
   theme: string;
   themeId?: string;
   role: string;
+  slug?: string;
   name: string;
   ocean: { O: number; C: number; E: number; A: number; N: number };
   style?: string;
@@ -677,7 +678,7 @@ export default function QueryBuilder({ themes, characters }: Props) {
                 key={`${char.theme}-${char.role}`}
                 className="flex items-center gap-2 bg-stone-700 rounded-lg px-2 py-1.5"
               >
-                <ChipPortrait themeId={char.themeId} role={char.role} emoji={char.emoji} name={char.name} />
+                <ChipPortrait themeId={char.themeId} slug={char.slug} emoji={char.emoji} name={char.name} />
                 <span className="text-amber-100 font-medium text-sm">{char.name}</span>
                 <span className="text-stone-400 text-xs">{char.role}</span>
                 <button

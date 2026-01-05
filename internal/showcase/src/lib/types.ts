@@ -30,6 +30,7 @@ export interface AgentHelper {
  */
 export interface Agent {
   role: string; // Agent role key (sm, tea, dev, etc.)
+  slug: string; // Unique character identifier within theme (for asset paths)
   character: string;
   shortName: string; // Display name for portraits
   ocean: OceanScores;
