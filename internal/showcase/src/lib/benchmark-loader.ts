@@ -182,7 +182,7 @@ interface BaselineStats {
  * Load all baseline summaries into a lookup map
  *
  * Returns map keyed by "scenario:role" for O(1) lookups
- * Traverses results/baselines/{scenario}/{role}/summary.yaml
+ * Traverses internal/results/baselines/{scenario}/{role}/summary.yaml
  */
 function loadBaselines(): Map<string, BaselineStats> {
   const baselines = new Map<string, BaselineStats>();
@@ -229,8 +229,8 @@ function loadBaselines(): Map<string, BaselineStats> {
 /**
  * Load all benchmark summary.yaml files
  *
- * Traverses results/benchmarks/{scenario}/{theme-role}/summary.yaml
- * Also loads baselines from results/baselines/ and calculates deltas
+ * Traverses internal/results/benchmarks/{scenario}/{theme-role}/summary.yaml
+ * Also loads baselines from internal/results/baselines/ and calculates deltas
  */
 export async function loadBenchmarkSummaries(): Promise<BenchmarkSummary[]> {
   const summaries: BenchmarkSummary[] = [];

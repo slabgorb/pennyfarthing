@@ -1,6 +1,6 @@
 # Baseline Summary Schema v1.0
 # All summary.yaml files MUST conform to this structure
-# Location: results/baselines/{scenario}/{role}/summary.yaml
+# Location: internal/results/baselines/{scenario}/{role}/summary.yaml
 
 # =============================================================================
 # REQUIRED FIELDS - Scripts depend on these exact paths

@@ -285,7 +285,7 @@ Complete reference for all Pennyfarthing slash commands.
 1. Loads specified theme and agent persona
 2. Runs agent on scenario with `--tools ""` (critical for valid results)
 3. Evaluates response with `/judge` (unless `--no-judge`)
-4. Saves results to `results/solo/`
+4. Saves results to `internal/results/solo/`
 
 **See also:** [BENCHMARKING.md](BENCHMARKING.md)
 
@@ -307,7 +307,7 @@ Complete reference for all Pennyfarthing slash commands.
 **What it does:**
 1. Runs the control (no-persona) agent N times
 2. Calculates mean, standard deviation, 95% CI
-3. Saves baseline to `results/baselines/{scenario}/{role}/`
+3. Saves baseline to `internal/results/baselines/{scenario}/{role}/`
 
 **Required before:** Using `/benchmark` to compare personas
 
@@ -331,7 +331,7 @@ Complete reference for all Pennyfarthing slash commands.
 1. Runs persona agent N times on scenario
 2. Compares against baseline with Cohen's d effect size
 3. Calculates 95% confidence intervals
-4. Saves results to `results/benchmarks/{scenario}/{theme}-{role}/`
+4. Saves results to `internal/results/benchmarks/{scenario}/{theme}-{role}/`
 
 **Requires:** Control baseline created with `/benchmark-control`
 

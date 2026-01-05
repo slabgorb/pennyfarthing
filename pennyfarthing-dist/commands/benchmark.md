@@ -25,7 +25,7 @@ Comparisons are only meaningful if BOTH the baseline AND the contestant runs are
 
 **Baseline Validation:**
 Before using a baseline, spot-check at least one run file:
-- Read a run from `results/baselines/{scenario}/{agent}/runs/*.json`
+- Read a run from `internal/results/baselines/{scenario}/{agent}/runs/*.json`
 - Verify it has `proof.agent_task_id`, `proof.agent_response_text`, `proof.judge_task_id`
 - Verify `proof.agent_response_text` is at least 200 characters
 - Verify `token_usage.input_tokens` > 0
@@ -101,7 +101,7 @@ Parse the arguments to extract:
 If `--as <role>` is provided:
 - `agent_or_character` is treated as a CHARACTER NAME (case-insensitive search)
 - `role_override` becomes the `effective_role` for scenario matching
-- Results save to `results/benchmarks/{scenario}/{theme}-{character}-as-{role}/`
+- Results save to `internal/results/benchmarks/{scenario}/{theme}-{character}-as-{role}/`
 
 **Legacy format support:** If first argument contains `:`, split it (e.g., `discworld:reviewer` → theme=discworld, agent_or_character=reviewer)
 
@@ -172,7 +172,7 @@ If more than 4 scenarios exist, show the first 4 by difficulty (hardest first) a
 
 **If theme is `control`:** This is a baseline creation run.
 - Default `runs` to 10 (instead of 4) for statistical reliability
-- Results save to `results/baselines/{scenario}/{agent}/` instead of comparison
+- Results save to `internal/results/baselines/{scenario}/{agent}/` instead of comparison
 - Skip baseline validation (we're creating the baseline)
 - After running, calculate and save baseline statistics
 - Display baseline summary and exit
@@ -188,7 +188,7 @@ Check if baseline exists:
 
 ```yaml
 Read tool:
-  file_path: "results/baselines/{scenario_name}/{effective_role}/summary.yaml"
+  file_path: "internal/results/baselines/{scenario_name}/{effective_role}/summary.yaml"
 ```
 
 **If baseline does not exist:**
@@ -207,7 +207,7 @@ Or use the shortcut:
 1. Get list of run files:
    ```yaml
    Glob tool:
-     pattern: "results/baselines/{scenario_name}/{agent_type}/runs/*.json"
+     pattern: "internal/results/baselines/{scenario_name}/{agent_type}/runs/*.json"
    ```
 
 2. Read at least one run file and validate proof-of-work:
@@ -232,7 +232,7 @@ Or use the shortcut:
    no task IDs, or no token counts).
 
    Delete the invalid baseline and create a real one:
-   rm -rf results/baselines/{scenario_name}/{agent_type}
+   rm -rf internal/results/baselines/{scenario_name}/{agent_type}
    /benchmark-control --scenario {scenario_name}
    ```
 
@@ -383,18 +383,18 @@ If CI does not include 0, the difference is statistically significant at p < 0.0
 **Output path logic:**
 ```python
 if theme == "control":
-    base_path = f"results/baselines/{scenario_name}/{effective_role}/"
+    base_path = f"internal/results/baselines/{scenario_name}/{effective_role}/"
 elif cross_role:
     # Cross-role: include character slug for clarity
     character_slug = slugify(character_name)  # e.g., "prospero", "granny-weatherwax"
-    base_path = f"results/benchmarks/{scenario_name}/{theme}-{character_slug}-as-{effective_role}/"
+    base_path = f"internal/results/benchmarks/{scenario_name}/{theme}-{character_slug}-as-{effective_role}/"
 else:
-    base_path = f"results/benchmarks/{scenario_name}/{theme}-{effective_role}/"
+    base_path = f"internal/results/benchmarks/{scenario_name}/{theme}-{effective_role}/"
 ```
 
 **Cross-role examples:**
-- `/benchmark shakespeare prospero --as dev` → `results/benchmarks/{scenario}/shakespeare-prospero-as-dev/`
-- `/benchmark discworld granny --as dev` → `results/benchmarks/{scenario}/discworld-granny-weatherwax-as-dev/`
+- `/benchmark shakespeare prospero --as dev` → `internal/results/benchmarks/{scenario}/shakespeare-prospero-as-dev/`
+- `/benchmark discworld granny --as dev` → `internal/results/benchmarks/{scenario}/discworld-granny-weatherwax-as-dev/`
 
 **Save structure:**
 ```
@@ -461,7 +461,7 @@ Error: --runs must be between 1 and 20. Got: {value}
 - Solo Command: `.claude/project/commands/solo.md`
 - Establish Baseline: `.claude/project/commands/benchmark-control.md`
 - Effect Size: Cohen's d standard interpretation (0.2 small, 0.5 medium, 0.8 large)
-- Baselines: `results/baselines/{scenario}/{role}/` (control theme)
-- Benchmarks: `results/benchmarks/{scenario}/{theme}-{role}/` (all other themes)
-- Results README: `results/README.md`
+- Baselines: `internal/results/baselines/{scenario}/{role}/` (control theme)
+- Benchmarks: `internal/results/benchmarks/{scenario}/{theme}-{role}/` (all other themes)
+- Results README: `internal/results/README.md`
 </reference>

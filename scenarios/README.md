@@ -126,7 +126,7 @@ Check the baseline statistics:
 
 ### Step 5: Document Baseline
 
-Save results to `results/baselines/<scenario-name>/`:
+Save results to `internal/results/baselines/<scenario-name>/`:
 - `baseline.json` - Run statistics
 - `runs/` - Individual response files
 
@@ -142,4 +142,4 @@ Save results to `results/baselines/<scenario-name>/`:
 
 - `schema.yaml` - Full scenario schema definition (includes `difficulty_calibration` section)
 - `bracket-config.yaml` - Tournament bracket configuration
-- `../results/baselines/` - Control baseline data for calibration
+- `../internal/results/baselines/` - Control baseline data for calibration

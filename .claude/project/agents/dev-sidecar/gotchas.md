@@ -39,18 +39,18 @@
 ### Missing Baseline Comparisons on Benchmark Page
 **Problem:** Benchmark page shows "N/A" for Control and Delta columns
 **Root cause:** Data architecture mismatch between storage and loader:
-- Baselines stored in `results/baselines/{scenario}/{role}/summary.yaml`
-- Themed results stored in `results/benchmarks/{scenario}/{theme-role}/summary.yaml`
-- `benchmark-loader.ts` only reads from `results/benchmarks/`, ignores `results/baselines/`
+- Baselines stored in `internal/results/baselines/{scenario}/{role}/summary.yaml`
+- Themed results stored in `internal/results/benchmarks/{scenario}/{theme-role}/summary.yaml`
+- `benchmark-loader.ts` reads from `internal/results/benchmarks/` and `internal/results/baselines/`
 - Themed summaries lack embedded `baseline_comparison` section
 
 **Example:**
-- `results/baselines/django-10097/dev/summary.yaml` → control mean: 65.50
-- `results/benchmarks/django-10097/breaking-bad-dev/summary.yaml` → mean: 64.38, NO baseline_comparison
+- `internal/results/baselines/django-10097/dev/summary.yaml` → control mean: 65.50
+- `internal/results/benchmarks/django-10097/breaking-bad-dev/summary.yaml` → mean: 64.38, NO baseline_comparison
 - Expected delta: -1.12 (theme underperforms control)
 
 **Solution:** Update `showcase/src/lib/benchmark-loader.ts` to:
-1. Load baselines from `results/baselines/` first
+1. Load baselines from `internal/results/baselines/` first
 2. Match each themed summary to its baseline (same scenario + role)
 3. Calculate `delta = theme.mean - baseline.mean` at load time
 

@@ -53,7 +53,7 @@ Generate static benchmark report pages at build time, displaying performance dat
 ### Technical Approach
 
 **Data Flow:**
-- YAML files read from `results/benchmarks/{scenario}/{theme}-{role}/summary.yaml`
+- YAML files read from `internal/results/benchmarks/{scenario}/{theme}-{role}/summary.yaml`
 - Parsed via `yaml.parse()` with snake_case to camelCase transformation
 - Aggregated by scenario and role for display
 - Built into static HTML at build time (no runtime data loading)

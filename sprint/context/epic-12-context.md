@@ -37,7 +37,7 @@ This is Phase 1 (ADDITIVE migration). Phase 2 (Sprint 6) will clean up Thunderdo
 - `--tools ""` flag is CRITICAL (prevents multi-turn contamination)
 - Modes: full (agent + judge + save) or `--no-judge` (raw response)
 - Integrates with `/judge` and `/finalize-run`
-- Output paths: `results/baselines/{scenario}/{role}/` or `results/benchmarks/{scenario}/{theme}-{role}/`
+- Output paths: `internal/results/baselines/{scenario}/{role}/` or `internal/results/benchmarks/{scenario}/{theme}-{role}/`
 
 **Key `/benchmark` Features:**
 - Validates baseline proof-of-work before comparing
@@ -163,8 +163,8 @@ All commands/skills must update paths from Thunderdome conventions to Pennyfarth
 |------------------|-------------------|
 | `.claude/pennyfarthing/personas/themes/` | `pennyfarthing-dist/personas/themes/` |
 | `scenarios/` | `scenarios/` (same, at root) |
-| `results/baselines/` | `results/baselines/` (same) |
-| `results/benchmarks/` | `results/benchmarks/` (same) |
+| `results/baselines/` | `internal/results/baselines/` |
+| `results/benchmarks/` | `internal/results/benchmarks/` |
 
 ## Story Dependency Graph
 
