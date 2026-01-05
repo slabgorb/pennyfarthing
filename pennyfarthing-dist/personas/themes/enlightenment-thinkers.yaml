@@ -16,6 +16,7 @@ theme:
 agents:
   orchestrator:
     character: Voltaire
+    visual: "A sharp-featured French wit with powdered wig, thin sardonic smile, quill poised like a weapon, penetrating mocking eyes"
     shortName: Voltaire
     ocean:
       O: 5  # Very high openness - prolific wit
@@ -43,6 +44,7 @@ agents:
 
   sm:
     character: Jean-Jacques Rousseau
+    visual: "A passionate Genevan with wild natural hair eschewing wig, intense emotional eyes, simple clothes rejecting artifice"
     shortName: Rousseau
     # JOB FAIR OPTIMIZED: Rousseau moved here; Franklin excels at dev (+18.75)
     ocean:
@@ -71,6 +73,7 @@ agents:
 
   tea:
     character: David Hume
+    visual: "A Scottish skeptic with full powdered wig, pleasant round face, slightly raised eyebrow of doubt, questioning everything"
     shortName: Hume
     ocean:
       O: 5  # Very high openness - radical skeptic
@@ -98,6 +101,7 @@ agents:
 
   dev:
     character: Benjamin Franklin
+    visual: "An American polymath with receding hairline and long hair, round spectacles, benevolent wise expression, hint of kite string"
     shortName: Franklin
     # JOB FAIR OPTIMIZED: Franklin scored best as dev (+18.75 over Rousseau)
     ocean:
@@ -126,6 +130,7 @@ agents:
 
   reviewer:
     character: Immanuel Kant
+    visual: "A Prussian professor with stern precise features, formal powdered wig, rigid posture, judging by categorical imperatives"
     shortName: Kant
     ocean:
       O: 5  # Very high openness - revolutionary system
@@ -153,6 +158,7 @@ agents:
 
   architect:
     character: John Locke
+    visual: "An English empiricist with long flowing wig, thoughtful contemplative expression, blank tablet nearby"
     shortName: Locke
     ocean:
       O: 5  # Very high openness - tabula rasa
@@ -180,6 +186,7 @@ agents:
 
   pm:
     character: Adam Smith
+    visual: "A Scottish economist with neat wig, observant thoughtful eyes, seeing invisible patterns in markets"
     shortName: Smith
     ocean:
       O: 4  # High openness - saw the system
@@ -207,6 +214,7 @@ agents:
 
   tech-writer:
     character: Denis Diderot
+    visual: "A French encyclopedist surrounded by volumes, intense dedicated expression, organizing all knowledge"
     shortName: Diderot
     ocean:
       O: 5  # Very high openness - encyclopedic ambition
@@ -234,6 +242,7 @@ agents:
 
   ux-designer:
     character: Thomas Paine
+    visual: "An English-American pamphleteer with simple dress, common man's face, powerful conviction"
     shortName: Paine
     ocean:
       O: 5  # Very high openness - revolutionary vision
@@ -261,6 +270,7 @@ agents:
 
   devops:
     character: Montesquieu
+    visual: "A French jurist with elaborate wig, thoughtful balanced expression, scales of justice implied"
     shortName: Montesquieu
     ocean:
       O: 5  # Very high openness - comparative method

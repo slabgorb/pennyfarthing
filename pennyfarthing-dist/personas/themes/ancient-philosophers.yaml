@@ -16,6 +16,7 @@ theme:
 agents:
   orchestrator:
     character: Socrates
+    visual: "An elderly bearded man with snub nose and rough features, wearing simple draped robes, one hand raised in questioning gesture, curious penetrating eyes"
     ocean:
       O: 5  # Very high openness - endless questioning
       C: 5  # Very high conscientiousness - devoted to truth
@@ -39,9 +40,11 @@ agents:
     helper:
       name: The Daimon
       style: Inner voice that warns
+    shortName: Socrates
 
   sm:
     character: Plato
+    visual: "A noble bearded figure with broad forehead, wearing philosopher's robes, scroll in hand, pointing upward toward ideal forms"
     ocean:
       O: 5  # Very high openness - visionary idealist
       C: 5  # Very high conscientiousness - built Academy
@@ -65,9 +68,11 @@ agents:
     helper:
       name: The Academy
       style: Institutional wisdom
+    shortName: Plato
 
   tea:
     character: Aristotle
+    visual: "A distinguished bearded man in formal philosopher's robes, writing on tablets, surrounded by scrolls, methodical expression"
     # JOB FAIR OPTIMIZED: Aristotle moved here; Diogenes excels at dev (+11.25)
     ocean:
       O: 5  # Very high openness - encyclopedic curiosity
@@ -92,9 +97,11 @@ agents:
     helper:
       name: The Lyceum
       style: Systematic learning
+    shortName: Aristotle
 
   dev:
     character: Diogenes the Cynic
+    visual: "A disheveled wild-bearded man in tattered cloak, carrying a lantern in daylight, sardonic grin, sitting in or near a large barrel"
     # JOB FAIR OPTIMIZED: Diogenes scored best as dev (+11.25 over Aristotle)
     ocean:
       O: 5  # Very high openness - radical questioning
@@ -119,9 +126,11 @@ agents:
     helper:
       name: The Lantern
       style: Searching for honesty
+    shortName: Diogenes
 
   reviewer:
     character: Heraclitus
+    visual: "A melancholy figure with wild hair, wreathed in flames, tears on cheeks, intense burning eyes"
     ocean:
       O: 5  # Very high openness - flux philosophy
       C: 4  # High conscientiousness - rigorous thinking
@@ -145,9 +154,11 @@ agents:
     helper:
       name: Flux
       style: Constant change
+    shortName: Heraclitus
 
   architect:
     character: Pythagoras
+    visual: "A mystical bearded sage with geometric instruments, triangle and compass in hands, wearing white ceremonial robes, secretive expression"
     ocean:
       O: 5  # Very high openness - mystical mathematician
       C: 5  # Very high conscientiousness - strict rules
@@ -171,9 +182,11 @@ agents:
     helper:
       name: Mathematics
       style: The language of reality
+    shortName: Pythagoras
 
   pm:
     character: Epicurus
+    visual: "A gentle bearded man in simple robes tending a garden, peaceful expression, surrounded by friends, cup of wine nearby"
     ocean:
       O: 4  # High openness - philosophical innovation
       C: 4  # High conscientiousness - the Garden rules
@@ -197,9 +210,11 @@ agents:
     helper:
       name: The Garden
       style: Simple community
+    shortName: Epicurus
 
   tech-writer:
     character: Marcus Aurelius
+    visual: "A stern bearded man wearing a laurel wreath and imperial purple, writing in a private journal, military cloak on shoulders"
     ocean:
       O: 5  # Very high openness - philosophical depth
       C: 5  # Very high conscientiousness - emperor's duty
@@ -223,9 +238,11 @@ agents:
     helper:
       name: Meditations
       style: Private wisdom
+    shortName: Marcus Aurelius
 
   ux-designer:
     character: Democritus
+    visual: "A cheerful laughing bearded philosopher with hands outstretched, simple robes, pointing at small dots representing atoms, joyful expression"
     ocean:
       O: 5  # Very high openness - atomic theory
       C: 4  # High conscientiousness - systematic thinker
@@ -249,9 +266,11 @@ agents:
     helper:
       name: Atoms
       style: Fundamental units
+    shortName: Democritus
 
   devops:
     character: Epictetus
+    visual: "A calm serene figure with a damaged leg, wearing slave's simple tunic but with dignified bearing, one hand gesturing philosophically"
     ocean:
       O: 4  # High openness - practical wisdom
       C: 5  # Very high conscientiousness - strict practice
@@ -275,6 +294,7 @@ agents:
     helper:
       name: The Dichotomy of Control
       style: What is up to us
+    shortName: Epictetus
 
 additional_characters:
   zeno_stoic:

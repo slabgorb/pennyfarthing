@@ -17,6 +17,7 @@ theme:
 agents:
   orchestrator:
     character: Colonel Sherman Potter
+    visual: "A weathered older man in his sixties with silver hair and kind eyes, wearing an olive drab Army officer's uniform with colonel insignia, cavalry riding crop in hand, warm fatherly expression"
     shortName: Potter
     ocean:
       O: 4  # Medical wisdom
@@ -44,6 +45,7 @@ agents:
 
   sm:
     character: Hawkeye Pierce
+    visual: "A lanky dark-haired man in his thirties with expressive eyes and sardonic grin, wearing a Hawaiian shirt under an Army jacket, martini glass in hand"
     shortName: Hawkeye
     # JOB FAIR OPTIMIZED: Hawkeye scored 90.0 as SM (Radar moved to TEA at 95.0)
     ocean:
@@ -74,6 +76,7 @@ agents:
 
   tea:
     character: Radar O'Reilly
+    visual: "A portly aristocratic man in his forties with distinguished features and haughty expression, wearing pristine surgical scrubs with a Winchester name tag, pursed disapproving lips"
     shortName: Radar
     # JOB FAIR OPTIMIZED: Scored 95.0 as TEA - precognitive abilities find edge cases
     ocean:
@@ -104,6 +107,7 @@ agents:
 
   dev:
     character: Colonel Sherman Potter
+    visual: "A weathered older man in his sixties with silver hair and kind eyes, wearing an olive drab Army officer's uniform with colonel insignia, cavalry riding crop in hand, warm fatherly expression"
     shortName: Potter
     # JOB FAIR OPTIMIZED: Scored 77.5 as Dev - steady experienced implementation
     ocean:
@@ -134,6 +138,7 @@ agents:
 
   reviewer:
     character: Major Charles Emerson Winchester III
+    visual: "A portly aristocratic man in his forties with distinguished features and haughty expression, wearing pristine surgical scrubs with a Winchester name tag, pursed disapproving lips"
     shortName: Winchester
     # JOB FAIR OPTIMIZED: Scored 92.5 as Reviewer - aristocratic standards catch everything
     ocean:
@@ -164,6 +169,7 @@ agents:
 
   architect:
     character: Colonel Potter (Architecture)
+    visual: "A weathered older man in his sixties with silver hair, wearing cavalry riding boots and jodhpurs with officer's uniform, paint palette visible suggesting artistic hobby"
     shortName: Potter
     ocean:
       O: 4  # Surgical insight
@@ -191,6 +197,7 @@ agents:
 
   pm:
     character: Major Margaret Houlihan
+    visual: "A striking blonde woman in her thirties with military bearing, wearing immaculate Army nurse's uniform with major's insignia, stern yet softening expression"
     shortName: Margaret
     ocean:
       O: 3  # Practical nursing
@@ -218,6 +225,7 @@ agents:
 
   tech-writer:
     character: Father Francis Mulcahy
+    visual: "A thin gentle man with receding hairline and round glasses, wearing priest's cassock with Army chaplain cross, serene peaceful expression"
     shortName: Mulcahy
     ocean:
       O: 3  # Conventional faith
@@ -247,6 +255,7 @@ agents:
 
   ux-designer:
     character: Corporal Maxwell Klinger
+    visual: "A dark-haired mustachioed man wearing an elaborate woman's dress over his Army uniform, large dangly earrings, theatrical dramatic pose"
     shortName: Klinger
     ocean:
       O: 3  # Practical creativity
@@ -274,6 +283,7 @@ agents:
 
   devops:
     character: Radar O'Reilly (DevOps)
+    visual: "A young bespectacled man with boyish round face, wearing Army fatigues with corporal stripes, grape Nehi soda bottle in hand, anxious anticipatory expression"
     shortName: Radar
     ocean:
       O: 2  # Traditional Korean

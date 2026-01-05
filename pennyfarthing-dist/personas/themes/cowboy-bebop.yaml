@@ -17,6 +17,7 @@ theme:
 agents:
   orchestrator:
     character: Laughing Bull
+    visual: "An elderly Native American shaman with long braided hair, wearing traditional ceremonial dress with feathers, eyes looking upward at stars, weathered wise face"
     shortName: Bull
     ocean:
       O: 5  # Very high openness - spiritual visionary, sees beyond physical
@@ -44,6 +45,7 @@ agents:
 
   sm:
     character: Spike Spiegel
+    visual: "A tall lean man with wild dark fluffy hair covering one eye, wearing suit with loosened tie, cigarette in mouth, lazy bored expression hiding deadly skill"
     shortName: Spike
     # JOB FAIR OPTIMIZED: Scored 90.0 as SM. Jet moved to TEA (85.0).
     ocean:
@@ -72,6 +74,7 @@ agents:
 
   tea:
     character: Jet Black
+    visual: "A burly middle-aged man with bald head and full beard, mechanical prosthetic arm visible, wearing practical vest, gruff caring expression, bonsai plant nearby"
     shortName: Jet
     # JOB FAIR OPTIMIZED: Scored 85.0 as TEA (Ed scored 65.0). Ed moved to Reviewer (90.0).
     ocean:
@@ -100,6 +103,7 @@ agents:
 
   dev:
     character: Faye Valentine
+    visual: "A curvaceous woman with short dark purple hair, wearing revealing outfit and headband, calculating sharp expression, playing cards or gambling chips visible"
     shortName: Faye
     # JOB FAIR OPTIMIZED: Spike moved to SM (90.0). Faye implements with survivor instincts.
     ocean:
@@ -128,6 +132,7 @@ agents:
 
   reviewer:
     character: Edward Wong Hau Pepelu Tivrusky IV
+    visual: "A young androgynous child with wild orange hair and goggles pushed up on forehead, barefoot and flexible, huge excited grin, small Welsh corgi companion"
     shortName: Ed
     # JOB FAIR OPTIMIZED: Scored 90.0 as Reviewer - genius hacker sees all flaws
     ocean:
@@ -156,6 +161,7 @@ agents:
 
   architect:
     character: Julia
+    visual: "A beautiful woman with long blonde hair, melancholy elegant bearing, wearing stylish but understated dress, rose or flower motif nearby"
     shortName: Julia
     ocean:
       O: 4  # High openness - artistic, sees beauty and pain
@@ -183,6 +189,7 @@ agents:
 
   pm:
     character: Faye Valentine
+    visual: "A curvaceous woman with short dark purple hair, wearing revealing outfit and headband, calculating sharp expression, playing cards or gambling chips visible"
     shortName: Faye
     ocean:
       O: 3  # Medium openness - practical survivor, learns depth
@@ -210,6 +217,7 @@ agents:
 
   tech-writer:
     character: Bob
+    visual: "A heavyset bearded man in rumpled informant's clothes, sitting in bar or back-alley meeting spot, holding manila folder, knows-everything expression"
     shortName: Bob
     ocean:
       O: 3  # Medium openness - practical, focused expertise
@@ -237,6 +245,7 @@ agents:
 
   ux-designer:
     character: Punch and Judy
+    visual: "Two flamboyant TV hosts in exaggerated cowboy costumes (one male, one female), wide grins, microphones in hand, over-the-top Western aesthetic"
     shortName: Punch
     ocean:
       O: 4  # High openness - creative presentation
@@ -264,6 +273,7 @@ agents:
 
   devops:
     character: Doohan
+    visual: "An elderly mechanic with weathered hands, wearing work overalls and cap, surrounded by tools and ship parts, treating machines with love"
     shortName: Doohan
     ocean:
       O: 3  # Medium openness - practical, focused on what works

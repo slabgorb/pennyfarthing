@@ -16,6 +16,7 @@ theme:
 agents:
   orchestrator:
     character: Leonardo da Vinci
+    visual: "Renaissance polymath with long wavy hair, beard, penetrating gaze, wearing artist's cap, holding both paintbrush and compass"
     ocean:
       O: 5  # Very high openness - infinite curiosity
       C: 3  # Medium conscientiousness - started much, finished less
@@ -43,6 +44,7 @@ agents:
 
   sm:
     character: Lorenzo de' Medici
+    visual: "Elegant Florentine patron with aquiline nose, velvet cap with jeweled brooch, ornate collar, confident smile"
     ocean:
       O: 5  # Very high openness - patron, poet, banker
       C: 4  # High conscientiousness - managed Florence
@@ -70,6 +72,7 @@ agents:
 
   tea:
     character: Michelangelo Buonarroti
+    visual: "Brooding sculptor with broken nose, intense furrowed brow, marble dust on simple tunic, chisel visible"
     # JOB FAIR OPTIMIZED: Michelangelo moved here; Machiavelli excels at dev (+36.25)
     ocean:
       O: 5  # Very high openness - divine inspiration
@@ -98,6 +101,7 @@ agents:
 
   dev:
     character: Niccolò Machiavelli
+    visual: "Sharp-featured diplomat in simple black robes, knowing eyes, thin lips, slight sardonic expression"
     # JOB FAIR OPTIMIZED: Machiavelli scored best as dev (+36.25 over Michelangelo)
     ocean:
       O: 5  # Very high openness - analytical, observant
@@ -126,6 +130,7 @@ agents:
 
   reviewer:
     character: Giorgio Vasari
+    visual: "Renaissance biographer with neat beard, friendly intelligent eyes, holding quill and book, ink-stained fingers"
     ocean:
       O: 4  # High openness - appreciative, critical
       C: 5  # Very high conscientiousness - documented everyone
@@ -153,6 +158,7 @@ agents:
 
   architect:
     character: Filippo Brunelleschi
+    visual: "Determined architect with stern expression, leather cap, geometric instruments visible, confident bearing"
     ocean:
       O: 5  # Very high openness - revolutionary solutions
       C: 5  # Very high conscientiousness - engineering precision
@@ -180,6 +186,7 @@ agents:
 
   pm:
     character: Isabella d'Este
+    visual: "Regal marchioness with elaborate headdress, pearl necklaces, elegant gown, sharp intelligent eyes"
     ocean:
       O: 5  # Very high openness - collector, patron
       C: 4  # High conscientiousness - managed commissions
@@ -207,6 +214,7 @@ agents:
 
   tech-writer:
     character: Baldassare Castiglione
+    visual: "Courtly diplomat with refined features, elegant beard, rich but understated clothing, graceful posture"
     ocean:
       O: 4  # High openness - defined the ideal
       C: 5  # Very high conscientiousness - refined culture
@@ -234,6 +242,7 @@ agents:
 
   ux-designer:
     character: Sandro Botticelli
+    visual: "Delicate painter with flowing golden hair, dreamy expression, soft features, classical beauty"
     ocean:
       O: 5  # Very high openness - beauty, mythology
       C: 4  # High conscientiousness - dedicated painter
@@ -261,6 +270,7 @@ agents:
 
   devops:
     character: Benvenuto Cellini
+    visual: "Bold goldsmith with powerful build, defiant expression, ornate jewelry of own making, craftsman's hands"
     ocean:
       O: 4  # High openness - artistic, innovative
       C: 4  # High conscientiousness - master craftsman

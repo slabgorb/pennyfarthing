@@ -3,33 +3,41 @@
 Individual Portrait Generator for Pennyfarthing Themes
 
 Generates 10 individual portraits per theme using Stable Diffusion SDXL on M3 Max (MPS).
-Output: showcase/public/portraits/{theme}/{role}.png (100x100px each)
+Reads visual prompts from theme YAML files (pennyfarthing-dist/personas/themes/).
+Output: internal/showcase/public/portraits/{theme}/{role}.png (100x100px each)
 
 Usage:
-    python3 showcase/src/data/portrait-prompts/generate-portraits.py [--dry-run] [--theme THEME]
+    python3 scripts/generate-portraits.py [--dry-run] [--theme THEME]
 """
 
 import argparse
-import re
 import os
 import sys
 from pathlib import Path
 from datetime import datetime
 
 try:
+    import yaml
+except ImportError:
+    print("Missing PyYAML: pip install pyyaml")
+    sys.exit(1)
+
+try:
     import torch
     from diffusers import StableDiffusionXLPipeline, DPMSolverMultistepScheduler
     from PIL import Image
     from tqdm import tqdm
+    HAS_TORCH = True
 except ImportError as e:
-    print(f"Missing required package: {e}")
-    print("\nInstall: pip install diffusers transformers accelerate torch pillow tqdm")
-    sys.exit(1)
+    HAS_TORCH = False
+    TORCH_ERROR = str(e)
 
 
 # Configuration
-PROMPTS_DIR = Path(__file__).parent
-OUTPUT_DIR = Path(__file__).parent.parent.parent.parent / "public" / "portraits"
+SCRIPT_DIR = Path(__file__).parent
+PROJECT_ROOT = SCRIPT_DIR.parent
+THEMES_DIR = PROJECT_ROOT / "pennyfarthing-dist" / "personas" / "themes"
+OUTPUT_DIR = PROJECT_ROOT / "internal" / "showcase" / "public" / "portraits"
 MODEL_ID = "stabilityai/stable-diffusion-xl-base-1.0"
 
 # SDXL generates at 1024x1024, we'll resize to 100x100
@@ -46,69 +54,35 @@ ROLES = [
     "architect", "pm", "tech-writer", "ux-designer", "devops"
 ]
 
-# Files to skip
-SKIP_FILES = {"DEVOPS-HANDOFF.md", "generate-prompts.js", "generate-prompts.sh"}
-
-# Style suffix (character comes first for emphasis)
+# Style suffix (visual description comes first for emphasis)
 STYLE_SUFFIX = ", traditional woodcut portrait bust, black and white, bold linework, crosshatching, medieval style"
 
 
-def parse_prompt_file(prompt_path: Path) -> dict:
-    """Parse markdown file to extract theme and character descriptions."""
-    with open(prompt_path, "r", encoding="utf-8") as f:
-        content = f.read()
+def parse_theme_file(theme_path: Path) -> dict:
+    """Parse theme YAML file to extract visual prompts for each agent."""
+    with open(theme_path, "r", encoding="utf-8") as f:
+        data = yaml.safe_load(f)
 
     result = {
-        "theme": prompt_path.stem,
-        "source": "",
+        "theme": theme_path.stem,
+        "source": data.get("theme", {}).get("source", ""),
         "characters": {}
     }
 
-    # Extract source
-    source_match = re.search(r"\*\*Source:\*\*\s*(.+)", content)
-    if source_match:
-        result["source"] = source_match.group(1).strip()
-
-    # Extract characters - pattern: N. **Role:** Name - Description
-    # Use " - " as separator (space-hyphen-space) to handle names with hyphens
-    char_pattern = r"\d+\.\s*\*\*([^:]+):\*\*\s*(.+?)\s+-\s+([^\n]+)"
-    matches = re.findall(char_pattern, content)
-
-    role_map = {
-        "Orchestrator": "orchestrator",
-        "SM (Scrum Master)": "sm",
-        "SM": "sm",
-        "TEA (Test Engineer)": "tea",
-        "TEA": "tea",
-        "Dev (Developer)": "dev",
-        "Dev": "dev",
-        "Reviewer": "reviewer",
-        "Architect": "architect",
-        "PM (Product Manager)": "pm",
-        "PM": "pm",
-        "Tech Writer": "tech-writer",
-        "UX Designer": "ux-designer",
-        "DevOps": "devops",
-    }
-
-    for role_raw, name, desc in matches:
-        role = role_map.get(role_raw.strip(), role_raw.strip().lower())
-        result["characters"][role] = {
-            "name": name.strip(),
-            "description": desc.strip()
-        }
+    agents = data.get("agents", {})
+    for role, agent_data in agents.items():
+        if isinstance(agent_data, dict) and "visual" in agent_data:
+            result["characters"][role] = {
+                "name": agent_data.get("character", role),
+                "visual": agent_data["visual"]
+            }
 
     return result
 
 
-def build_portrait_prompt(char_name: str, char_desc: str, source: str) -> str:
-    """Build a short prompt for a single portrait (under 77 tokens)."""
-    # char_name now contains visual description, char_desc has personality
-    # We primarily use visual description, add personality briefly
-    prompt = f"{char_name}"
-    # Add style at end
-    prompt += STYLE_SUFFIX
-    return prompt
+def build_portrait_prompt(visual: str) -> str:
+    """Build a prompt for portrait generation."""
+    return f"{visual}{STYLE_SUFFIX}"
 
 
 def load_pipeline():
@@ -131,7 +105,7 @@ def load_pipeline():
     return pipe
 
 
-def generate_portrait(pipe, prompt: str, seed: int = 42) -> Image.Image:
+def generate_portrait(pipe, prompt: str, seed: int = 42) -> "Image.Image":
     """Generate a single portrait."""
     # Use CPU generator for MPS compatibility
     generator = torch.Generator().manual_seed(seed)
@@ -153,7 +127,7 @@ def generate_portrait(pipe, prompt: str, seed: int = 42) -> Image.Image:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate individual portraits")
+    parser = argparse.ArgumentParser(description="Generate individual portraits from theme YAML files")
     parser.add_argument("--dry-run", action="store_true", help="List without generating")
     parser.add_argument("--theme", type=str, help="Generate only this theme")
     parser.add_argument("--role", type=str, help="Generate only this role (with --theme)")
@@ -161,32 +135,42 @@ def main():
     parser.add_argument("--skip-existing", action="store_true", help="Skip existing files")
     args = parser.parse_args()
 
-    # Find prompt files
-    prompt_files = sorted(PROMPTS_DIR.glob("*.md"))
-    prompt_files = [p for p in prompt_files if p.name not in SKIP_FILES]
+    # Find theme files
+    theme_files = sorted(THEMES_DIR.glob("*.yaml"))
 
     if args.theme:
-        prompt_files = [p for p in prompt_files if p.stem == args.theme]
-        if not prompt_files:
+        theme_files = [t for t in theme_files if t.stem == args.theme]
+        if not theme_files:
             print(f"Theme '{args.theme}' not found")
             sys.exit(1)
 
-    print(f"Found {len(prompt_files)} themes")
+    print(f"Reading from: {THEMES_DIR}")
+    print(f"Found {len(theme_files)} themes")
     print(f"Output: {OUTPUT_DIR}/{{theme}}/{{role}}.png")
 
     if args.dry_run:
         print("\nDry run - portraits to generate:")
-        for pf in prompt_files:
-            parsed = parse_prompt_file(pf)
+        for tf in theme_files:
+            parsed = parse_theme_file(tf)
             theme_dir = OUTPUT_DIR / parsed["theme"]
-            print(f"\n  {parsed['theme']}/ ({len(parsed['characters'])} characters)")
+            char_count = len(parsed["characters"])
+            print(f"\n  {parsed['theme']}/ ({char_count} characters with visual)")
             for role in ROLES:
                 if role in parsed["characters"]:
                     char = parsed["characters"][role]
                     out_path = theme_dir / f"{role}.png"
                     status = "EXISTS" if out_path.exists() else "PENDING"
-                    print(f"    [{status}] {role}: {char['name']}")
+                    visual_preview = char["visual"][:50] + "..." if len(char["visual"]) > 50 else char["visual"]
+                    print(f"    [{status}] {role}: {visual_preview}")
+                else:
+                    print(f"    [SKIP] {role}: no visual field")
         return
+
+    # Check for torch
+    if not HAS_TORCH:
+        print(f"Missing required package: {TORCH_ERROR}")
+        print("\nInstall: pip install diffusers transformers accelerate torch pillow tqdm")
+        sys.exit(1)
 
     # Load model
     pipe = load_pipeline()
@@ -196,8 +180,8 @@ def main():
     failed = []
     start_time = datetime.now()
 
-    for pf in tqdm(prompt_files, desc="Themes"):
-        parsed = parse_prompt_file(pf)
+    for tf in tqdm(theme_files, desc="Themes"):
+        parsed = parse_theme_file(tf)
         theme = parsed["theme"]
         theme_dir = OUTPUT_DIR / theme
         theme_dir.mkdir(parents=True, exist_ok=True)
@@ -213,7 +197,7 @@ def main():
                 continue
 
             char = parsed["characters"][role]
-            prompt = build_portrait_prompt(char["name"], char["description"], parsed["source"])
+            prompt = build_portrait_prompt(char["visual"])
 
             try:
                 # Vary seed per character for diversity (base_seed + role_index)
