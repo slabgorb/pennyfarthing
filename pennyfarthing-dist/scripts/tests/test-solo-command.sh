@@ -178,53 +178,53 @@ test_tools_explanation
 echo ""
 
 # ==============================================================================
-# AC3: Saves results to results/solo/
+# AC3: Saves results to internal/results/solo/
 # ==============================================================================
 
-echo "--- AC3: Saves results to results/solo/ ---"
+echo "--- AC3: Saves results to internal/results/solo/ ---"
 echo ""
 
-# Test: results/solo directory exists
+# Test: internal/results/solo directory exists
 test_results_dir_exists() {
-    local results_dir="$PROJECT_ROOT/results/solo"
+    local results_dir="$PROJECT_ROOT/internal/results/solo"
 
     if [[ -d "$results_dir" ]]; then
-        pass "results/solo/ directory exists"
+        pass "internal/results/solo/ directory exists"
     else
-        fail "results/solo/ directory exists" \
-             "directory at results/solo/" \
+        fail "internal/results/solo/ directory exists" \
+             "directory at internal/results/solo/" \
              "directory not found"
     fi
 }
 
-# Test: results/solo has .gitkeep
+# Test: internal/results/solo has .gitkeep
 test_results_has_gitkeep() {
-    local gitkeep="$PROJECT_ROOT/results/solo/.gitkeep"
+    local gitkeep="$PROJECT_ROOT/internal/results/solo/.gitkeep"
 
     if [[ -f "$gitkeep" ]]; then
-        pass "results/solo/.gitkeep exists"
+        pass "internal/results/solo/.gitkeep exists"
     else
-        fail "results/solo/.gitkeep exists" \
+        fail "internal/results/solo/.gitkeep exists" \
              ".gitkeep file present" \
              "file not found"
     fi
 }
 
-# Test: solo.md references results/solo path
+# Test: solo.md references internal/results/solo path
 test_solo_saves_to_results() {
     local solo_file="$PROJECT_ROOT/.claude/project/commands/solo.md"
 
     if [[ ! -f "$solo_file" ]]; then
-        fail "solo.md saves to results/solo" "file exists" "file not found"
+        fail "solo.md saves to internal/results/solo" "file exists" "file not found"
         return
     fi
 
-    if grep -q "results/solo" "$solo_file" 2>/dev/null; then
-        pass "solo.md references results/solo/ path"
+    if grep -q "internal/results/solo" "$solo_file" 2>/dev/null; then
+        pass "solo.md references internal/results/solo/ path"
     else
-        fail "solo.md saves to results/solo" \
-             "results/solo/ in save path" \
-             "no results/solo/ path found"
+        fail "solo.md saves to internal/results/solo" \
+             "internal/results/solo/ in save path" \
+             "no internal/results/solo/ path found"
     fi
 }
 
@@ -321,7 +321,7 @@ if [[ $TESTS_FAILED -gt 0 ]]; then
     echo "     - Adapt from thunderdome, update theme path"
     echo "  2. Ensure --tools \"\" flag in CLI invocation (AC2)"
     echo "     - CRITICAL: prevents multi-turn contamination"
-    echo "  3. Create results/solo/.gitkeep (AC3)"
+    echo "  3. Create internal/results/solo/.gitkeep (AC3)"
     echo "  4. Theme path: pennyfarthing-dist/personas/themes/{theme}.yaml (AC4)"
     exit 1
 else

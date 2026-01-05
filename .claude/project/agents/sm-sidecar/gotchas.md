@@ -25,9 +25,9 @@
 ## Cleanup Gotchas
 
 ### Benchmark Results Are Valuable
-**Problem:** Untracked files in `results/baselines/*/dev/runs/` look like temp artifacts
+**Problem:** Untracked files in `internal/results/baselines/*/dev/runs/` look like temp artifacts
 **Reality:** These are valuable benchmark run results - judges, summaries, raw outputs
-**Solution:** NEVER delete files in `results/baselines/`. If cleanup is needed, ask user first. These files capture benchmark execution history even when untracked.
+**Solution:** NEVER delete files in `internal/results/baselines/`. If cleanup is needed, ask user first. These files capture benchmark execution history even when untracked.
 
 ---
 

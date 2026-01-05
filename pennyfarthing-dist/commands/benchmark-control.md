@@ -19,7 +19,7 @@ Default: 10 runs for statistically meaningful baseline data.
 <critical-integrity-requirements>
 **See `/benchmark` for full integrity requirements.**
 
-Baselines are saved to `results/baselines/{scenario}/{agent}/` with:
+Baselines are saved to `internal/results/baselines/{scenario}/{agent}/` with:
 - Individual runs in `runs/*.json` with proof-of-work
 - Summary statistics in `summary.yaml` (mean, std_dev, CI)
 - Timestamp validation (runs must take 30+ seconds each)
@@ -64,6 +64,6 @@ Now execute the equivalent `/benchmark` command with the translated arguments.
 
 <reference>
 - Main command: `.claude/project/commands/benchmark.md`
-- Baselines location: `results/baselines/{scenario}/{role}/`
-- Results README: `results/README.md`
+- Baselines location: `internal/results/baselines/{scenario}/{role}/`
+- Results README: `internal/results/README.md`
 </reference>

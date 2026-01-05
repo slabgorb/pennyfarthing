@@ -96,7 +96,7 @@ Found {N} characters ready to compete!
 Scan for roles that have established baselines:
 
 ```bash
-Glob: results/baselines/*/
+Glob: internal/results/baselines/*/
 
 For each directory:
   - Extract role from path
@@ -278,7 +278,7 @@ Display final report:
 ## Step 9: Save Results
 
 ```python
-output_dir = f"results/job-fair/{theme}-{timestamp}"
+output_dir = f"internal/results/job-fair/{theme}-{timestamp}"
 mkdir(output_dir)
 ```
 
@@ -342,9 +342,9 @@ Display:
 ```markdown
 ---
 
-✓ Results saved to: results/job-fair/{theme}-{timestamp}/
-✓ Report: results/job-fair/{theme}-{timestamp}/report.md
-✓ Data: results/job-fair/{theme}-{timestamp}/summary.yaml
+✓ Results saved to: internal/results/job-fair/{theme}-{timestamp}/
+✓ Report: internal/results/job-fair/{theme}-{timestamp}/report.md
+✓ Data: internal/results/job-fair/{theme}-{timestamp}/summary.yaml
 ```
 
 </on-invoke>
@@ -382,6 +382,6 @@ Continuing with {M} successful combinations...
 - Solo command with --as: `pennyfarthing-dist/commands/solo.md`
 - Solo runner script: `scripts/solo-runner.sh`
 - Theme files: `pennyfarthing-dist/personas/themes/*.yaml`
-- Baselines: `results/baselines/{scenario}/{role}/`
-- Output: `results/job-fair/{theme}-{timestamp}/`
+- Baselines: `internal/results/baselines/{scenario}/{role}/`
+- Output: `internal/results/job-fair/{theme}-{timestamp}/`
 </reference>

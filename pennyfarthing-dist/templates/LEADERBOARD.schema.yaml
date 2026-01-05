@@ -170,9 +170,9 @@ highlights:
 
 # Data sources
 data_sources:
-  baseline: "results/baselines/{scenario}/{role}/summary.yaml"
-  themes: "results/benchmarks/{scenario}/{theme}-{role}/summary.yaml"
-  cross_role: "results/benchmarks/{scenario}/{theme}-{character}-as-{role}/summary.yaml"
+  baseline: "internal/results/baselines/{scenario}/{role}/summary.yaml"
+  themes: "internal/results/benchmarks/{scenario}/{theme}-{role}/summary.yaml"
+  cross_role: "internal/results/benchmarks/{scenario}/{theme}-{character}-as-{role}/summary.yaml"
   ocean_analysis: "./OCEAN-ANALYSIS.md"
 
 # Generation requirements

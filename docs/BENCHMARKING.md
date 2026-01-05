@@ -46,7 +46,7 @@ Run a single agent on a scenario.
 - Agent response with character embodiment
 - Judge evaluation (unless `--no-judge`)
 - Score out of 100 with dimension breakdown
-- Results saved to `results/solo/` or `results/benchmarks/`
+- Results saved to `internal/results/solo/` or `internal/results/benchmarks/`
 
 ### `/benchmark-control` - Create Baseline
 
@@ -63,7 +63,7 @@ Create a control baseline for a scenario. Required before comparing personas.
 - `--runs N` - Number of runs (default: 10 for baselines)
 
 **Output:**
-- Baseline saved to `results/baselines/{scenario}/{role}/`
+- Baseline saved to `internal/results/baselines/{scenario}/{role}/`
 - Summary with mean, standard deviation, 95% CI
 
 ### `/benchmark` - Compare Against Baseline
@@ -83,7 +83,7 @@ Compare a persona's performance against the control baseline.
 
 **Output:**
 - Comparison against baseline with effect size
-- Results saved to `results/benchmarks/{scenario}/{theme}-{role}/`
+- Results saved to `internal/results/benchmarks/{scenario}/{theme}-{role}/`
 
 ## Scenarios
 
@@ -266,7 +266,7 @@ const correlation = calculateOceanCorrelation('order-service', 'reviewer');
 /benchmark the-expanse reviewer --scenario order-service --runs 4
 
 # 4. View results
-cat results/benchmarks/order-service/discworld-reviewer/summary.yaml
+cat internal/results/benchmarks/order-service/discworld-reviewer/summary.yaml
 ```
 
 ## Integrity Requirements

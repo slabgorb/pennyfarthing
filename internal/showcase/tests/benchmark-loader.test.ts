@@ -1,7 +1,7 @@
 /**
  * Story 13-10: Benchmark Loader Tests (RED Phase)
  *
- * Tests for the benchmark data loader that reads from results/benchmarks/
+ * Tests for the benchmark data loader that reads from internal/results/benchmarks/
  * and transforms summary.yaml files into typed data for the showcase.
  *
  * Run with: npm test
@@ -21,7 +21,7 @@ import {
 } from '../src/lib/benchmark-loader';
 
 describe('Story 13-10: Benchmark Loader', () => {
-  describe('AC1: Load benchmark data from results/benchmarks/', () => {
+  describe('AC1: Load benchmark data from internal/results/benchmarks/', () => {
     it('should export loadBenchmarkSummaries function', () => {
       expect(typeof loadBenchmarkSummaries).toBe('function');
     });

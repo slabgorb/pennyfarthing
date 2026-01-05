@@ -10,15 +10,15 @@ sprint:
   velocity_target: 20
 
 summary:
-  total_points: 94
-  completed_points: 91  # Epic 13: 34pts + Epic 14: 14pts + Epic 15: 17pts + Epic 8: 3pts + Epic 16: 23pts
+  total_points: 96
+  completed_points: 93  # Epic 13: 34pts + Epic 14: 14pts + Epic 15: 17pts + Epic 8: 3pts + Epic 16: 25pts
   remaining_points: 0  # All epics complete
   notes: |
     Epic 8 complete (3/3 pts) - Automatic State Reconciliation
     Epic 14 complete (14/14 pts).
     Epic 13 complete (34/34 pts).
     Epic 15 complete (15/15 pts).
-    Epic 16 complete (23/23 pts) - Retroactive: Michael Pursifull's job-fair & benchmarking work.
+    Epic 16 complete (25/25 pts) - Retroactive: Michael Pursifull's job-fair & benchmarking work.
     Sprint 6 execution complete - v5.2.0 released.
 
 epics:
@@ -122,7 +122,7 @@ epics:
         title: "Pre-render benchmark reports"
         description: |
           Generate static benchmark report pages at build time.
-          - Read from results/benchmarks/ (post-Epic 12)
+          - Read from internal/results/benchmarks/ (post-Epic 12)
           - Performance by Role section
           - OCEAN Correlations section
           - Scenario Leaderboards
@@ -536,8 +536,8 @@ epics:
       analysis of persona performance across roles. Features: job-fair command, --as flag,
       SWE-bench scenarios, Cohen's d analysis, leaderboard codification, cost tracking.
       Work done by Michael Pursifull (arcaven).
-    points: 23
-    completed_points: 23
+    points: 25
+    completed_points: 25
     priority: P1
     marker: "research"
     repos: pennyfarthing
@@ -630,6 +630,37 @@ epics:
         pr:
           - https://github.com/1898andCo/pennyfarthing/pull/58
           - https://github.com/1898andCo/pennyfarthing/pull/64
+
+      - id: "16-8"
+        title: "Fix relocated benchmark results paths"
+        description: |
+          Follow-up fix after results were moved to internal/results/.
+
+          Story 15-7 moved results/ to internal/results/ but 20+ files still
+          referenced the old paths, causing job-fair and benchmark commands
+          to fail finding existing baselines.
+
+          Updated path references in:
+          - Commands (4): benchmark, benchmark-control, solo, job-fair
+          - Docs (4): BENCHMARKING.md, COMMANDS.md, scenarios/README.md, schema
+          - Scripts (3): generate-leaderboard.sh, job-fair-runner.sh, tests
+          - Showcase (3): benchmark-loader.ts, index.astro, tests
+          - Agent gotchas (2): dev-sidecar, sm-sidecar
+          - Sprint context (4): current-sprint.yaml, epic contexts
+        points: 2
+        priority: P2
+        status: done
+        started: 2026-01-05
+        completed: 2026-01-05
+        depends_on: "15-7"
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11359
+        pr: https://github.com/1898andCo/pennyfarthing/pull/79
+        branch: MSSCI-11359-fix-results-paths
+        acceptance_criteria:
+          - All baseline lookups find existing data in internal/results/
+          - New baselines save to correct location
+          - Job-fair discovers all existing baselines
+          - Documentation matches implementation
 
 # =============================================================================
 # BACKLOG - Future Sprint Candidates

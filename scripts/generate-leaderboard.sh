@@ -17,8 +17,8 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-BASELINE_DIR="$PROJECT_DIR/results/baselines/$SCENARIO/$ROLE"
-BENCHMARK_DIR="$PROJECT_DIR/results/benchmarks/$SCENARIO"
+BASELINE_DIR="$PROJECT_DIR/internal/results/baselines/$SCENARIO/$ROLE"
+BENCHMARK_DIR="$PROJECT_DIR/internal/results/benchmarks/$SCENARIO"
 OUTPUT_FILE="$BENCHMARK_DIR/LEADERBOARD.md"
 
 # Check baseline exists

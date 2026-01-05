@@ -280,7 +280,7 @@ Capture: `score`, `judge_timestamp`, `judge_response`, `judge_tokens`
     "output_tokens": {judge_output}
   },
   "scores": {"{spec}": {score}},
-  "output_path": "results/solo/{timestamp}-{theme}-{agent}.json"
+  "output_path": "internal/results/solo/{timestamp}-{theme}-{agent}.json"
 }
 ```
 
@@ -320,16 +320,16 @@ Capture: `score`, `judge_timestamp`, `judge_response`, `judge_tokens`
 
 ```
 if theme == "control":
-  base_path = "results/baselines/{scenario}/{effective_role}/"
+  base_path = "internal/results/baselines/{scenario}/{effective_role}/"
 elif role_override:  # cross-role mode
   # Include character name and effective role for clarity
-  base_path = "results/benchmarks/{scenario}/{theme}-{character}-as-{effective_role}/"
+  base_path = "internal/results/benchmarks/{scenario}/{theme}-{character}-as-{effective_role}/"
 else:
-  base_path = "results/benchmarks/{scenario}/{theme}-{effective_role}/"
+  base_path = "internal/results/benchmarks/{scenario}/{theme}-{effective_role}/"
 ```
 
 **Cross-role example:** `/solo shakespeare:prospero --as dev --scenario django-10554`
-→ saves to `results/benchmarks/django-10554/shakespeare-prospero-as-dev/`
+→ saves to `internal/results/benchmarks/django-10554/shakespeare-prospero-as-dev/`
 
 **For ALL runs (including n=1):**
 
@@ -405,7 +405,7 @@ else:
 - **Finalize-Run Skill:** `.claude/project/skills/finalize-run/SKILL.md`
 - **Themes:** `pennyfarthing-dist/personas/themes/*.yaml`
 - **Scenarios:** `scenarios/**/*.yaml`
-- **Baselines:** `results/baselines/{scenario}/{role}/` (control theme)
-- **Benchmarks:** `results/benchmarks/{scenario}/{theme}-{role}/` (all other themes)
-- **Results README:** `results/README.md`
+- **Baselines:** `internal/results/baselines/{scenario}/{role}/` (control theme)
+- **Benchmarks:** `internal/results/benchmarks/{scenario}/{theme}-{role}/` (all other themes)
+- **Results README:** `internal/results/README.md`
 </reference>

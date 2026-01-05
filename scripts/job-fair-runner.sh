@@ -49,7 +49,7 @@ get_baseline() {
 
 # Create output directory
 TIMESTAMP=$(date -u +%Y%m%dT%H%M%SZ)
-OUTPUT_DIR="$PROJECT_DIR/results/job-fair/${THEME}-${TIMESTAMP}"
+OUTPUT_DIR="$PROJECT_DIR/internal/results/job-fair/${THEME}-${TIMESTAMP}"
 mkdir -p "$OUTPUT_DIR"
 
 echo "=== Job Fair: $THEME ==="
