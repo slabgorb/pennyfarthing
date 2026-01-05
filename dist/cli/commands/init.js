@@ -271,8 +271,38 @@ async function generateTemplateFiles(projectRoot, projectName, assetsPath, optio
     await mergeSettingsLocalJson(projectRoot, assetsPath, options);
 }
 /**
+ * Get list of installed skill names from the skills directory
+ */
+function getInstalledSkillNames(projectRoot) {
+    const skillsDir = join(projectRoot, '.claude/skills');
+    if (!pathExists(skillsDir)) {
+        return [];
+    }
+    const { readdirSync, statSync, lstatSync } = require('fs');
+    try {
+        const entries = readdirSync(skillsDir);
+        return entries.filter((entry) => {
+            if (entry.startsWith('.'))
+                return false;
+            const entryPath = join(skillsDir, entry);
+            // Check if it's a directory or symlink to directory
+            try {
+                const stats = statSync(entryPath);
+                return stats.isDirectory();
+            }
+            catch {
+                return false;
+            }
+        });
+    }
+    catch {
+        return [];
+    }
+}
+/**
  * Merge required hooks into existing settings.local.json
  * This ensures critical hooks like SessionStart are always configured
+ * Also registers installed skills in permissions.allow
  */
 async function mergeSettingsLocalJson(projectRoot, assetsPath, options) {
     const settingsPath = join(projectRoot, '.claude/settings.local.json');
@@ -282,13 +312,29 @@ async function mergeSettingsLocalJson(projectRoot, assetsPath, options) {
         return;
     }
     const templateContent = JSON.parse(readFileSync(templatePath, 'utf8'));
-    // If no existing settings, create from template
+    // Get installed skills to register in permissions
+    const installedSkills = getInstalledSkillNames(projectRoot);
+    // If no existing settings, create from template with all installed skills
     if (!pathExists(settingsPath)) {
+        // Add all installed skills to permissions
+        if (installedSkills.length > 0) {
+            const permissions = templateContent.permissions?.allow || [];
+            for (const skill of installedSkills) {
+                const skillPermission = `Skill(${skill})`;
+                if (!permissions.includes(skillPermission)) {
+                    permissions.push(skillPermission);
+                }
+            }
+            templateContent.permissions = { ...templateContent.permissions, allow: permissions };
+        }
         if (!options.dryRun) {
             ensureDirSync(join(projectRoot, '.claude'));
             writeFileSync(settingsPath, JSON.stringify(templateContent, null, 2), 'utf8');
         }
         logger.created('.claude/settings.local.json');
+        if (installedSkills.length > 0) {
+            logger.info(`  Registered ${installedSkills.length} skills in permissions`);
+        }
         return;
     }
     // Read existing settings
@@ -367,12 +413,37 @@ async function mergeSettingsLocalJson(projectRoot, assetsPath, options) {
             }
         }
     }
+    // Merge skill permissions - ensure all installed skills are registered
+    if (installedSkills.length > 0) {
+        if (!existingSettings.permissions) {
+            existingSettings.permissions = { allow: [] };
+            modified = true;
+        }
+        const permissions = existingSettings.permissions;
+        if (!permissions.allow) {
+            permissions.allow = [];
+            modified = true;
+        }
+        const allowList = permissions.allow;
+        let skillsAdded = 0;
+        for (const skill of installedSkills) {
+            const skillPermission = `Skill(${skill})`;
+            if (!allowList.includes(skillPermission)) {
+                allowList.push(skillPermission);
+                skillsAdded++;
+                modified = true;
+            }
+        }
+        if (skillsAdded > 0) {
+            logger.info(`Registered ${skillsAdded} missing skills in permissions`);
+        }
+    }
     if (modified && !options.dryRun) {
         writeFileSync(settingsPath, JSON.stringify(existingSettings, null, 2), 'utf8');
         logger.updated('.claude/settings.local.json');
     }
     else if (!modified) {
-        logger.skipped('.claude/settings.local.json', 'hooks already configured');
+        logger.skipped('.claude/settings.local.json', 'already configured');
     }
 }
 async function updateGitignore(projectRoot, options) {
