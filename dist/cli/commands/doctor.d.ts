@@ -2,6 +2,7 @@ interface DoctorOptions {
     fix?: boolean;
     json?: boolean;
     quiet?: boolean;
+    dogfood?: boolean;
 }
 export declare function doctorCommand(options: DoctorOptions): Promise<void>;
 export {};

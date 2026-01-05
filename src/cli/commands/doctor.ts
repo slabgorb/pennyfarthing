@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, writeFileSync, chmodSync, statSync, readlinkSync, symlinkSync, unlinkSync } from 'fs';
 import { join, relative, dirname } from 'path';
+import { spawnSync } from 'child_process';
 import fsExtra from 'fs-extra';
 
 const { removeSync, ensureDirSync } = fsExtra;
@@ -23,6 +24,7 @@ interface DoctorOptions {
   fix?: boolean;
   json?: boolean;
   quiet?: boolean;
+  dogfood?: boolean;
 }
 
 interface CheckResult {
@@ -34,6 +36,26 @@ interface CheckResult {
 
 export async function doctorCommand(options: DoctorOptions): Promise<void> {
   const projectRoot = process.cwd();
+
+  // Handle dogfooding mode - run the dogfood script instead
+  if (options.dogfood) {
+    const dogfoodScript = join(projectRoot, 'pennyfarthing-dist/scripts/doctor-dogfood.sh');
+
+    if (!existsSync(dogfoodScript)) {
+      logger.error('Dogfood mode requires the pennyfarthing repo (pennyfarthing-dist/ not found)');
+      logger.info('This flag is for developers working on pennyfarthing itself.');
+      process.exit(1);
+    }
+
+    const args = options.fix ? ['--fix'] : [];
+    const result = spawnSync(dogfoodScript, args, {
+      stdio: 'inherit',
+      cwd: projectRoot,
+    });
+
+    process.exit(result.status ?? 0);
+  }
+
   const results: CheckResult[] = [];
 
   if (options.quiet) {
