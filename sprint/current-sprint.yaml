@@ -10,15 +10,16 @@ sprint:
   velocity_target: 20
 
 summary:
-  total_points: 71
-  completed_points: 68  # Epic 13: 34pts + Epic 14: 14pts + Epic 15: 17pts + Epic 8: 3pts
+  total_points: 94
+  completed_points: 91  # Epic 13: 34pts + Epic 14: 14pts + Epic 15: 17pts + Epic 8: 3pts + Epic 16: 23pts
   remaining_points: 0  # All epics complete
   notes: |
     Epic 8 complete (3/3 pts) - Automatic State Reconciliation
     Epic 14 complete (14/14 pts).
     Epic 13 complete (34/34 pts).
     Epic 15 complete (15/15 pts).
-    Sprint 6 execution complete (68/71 pts) - ready for merge and release.
+    Epic 16 complete (23/23 pts) - Retroactive: Michael Pursifull's job-fair & benchmarking work.
+    Sprint 6 execution complete - v5.2.0 released.
 
 epics:
   # =========================================================================
@@ -523,6 +524,112 @@ epics:
         jira: https://1898andco.atlassian.net/browse/MSSCI-11380
         pr: https://github.com/1898andCo/pennyfarthing/pull/74
         branch: feat/8-1-merge-detection
+
+  # =========================================================================
+  # EPIC 16 - Persona Performance Analytics & Job-Fair Optimization (23 pts)
+  # Retroactive epic capturing Michael Pursifull's benchmarking work
+  # =========================================================================
+  - id: epic-16
+    title: "Persona Performance Analytics & Job-Fair Optimization"
+    description: |
+      Cross-role persona benchmarking, job-fair character evaluation, and statistical
+      analysis of persona performance across roles. Features: job-fair command, --as flag,
+      SWE-bench scenarios, Cohen's d analysis, leaderboard codification, cost tracking.
+      Work done by Michael Pursifull (arcaven).
+    points: 23
+    completed_points: 23
+    priority: P1
+    marker: "research"
+    repos: pennyfarthing
+    status: complete
+    jira: https://1898andco.atlassian.net/browse/MSSCI-11357
+    stories:
+      - id: "16-1"
+        title: "Cross-role benchmarking with --as flag"
+        description: |
+          Enable running any persona character as any role for research into whether
+          personality traits affect task performance independent of role-specific training.
+          Added --as argument to /benchmark and /solo commands with character name lookup.
+        points: 3
+        status: done
+        completed: 2026-01-04
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11333
+        pr: https://github.com/1898andCo/pennyfarthing/pull/75
+
+      - id: "16-2"
+        title: "Job-fair command and theme optimization"
+        description: |
+          Created /job-fair command for discovering optimal persona-role assignments.
+          Test matrix: Each character × 4 roles (SM, TEA, Dev, Reviewer).
+          Optimized 40+ theme role assignments based on benchmark results.
+        points: 5
+        status: done
+        completed: 2026-01-04
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11333
+        pr: https://github.com/1898andCo/pennyfarthing/pull/75
+
+      - id: "16-3"
+        title: "SWE-bench reviewer & TEA scenarios"
+        description: |
+          Adapted SWE-bench issues to test personas across different roles.
+          Reviewer scenarios: code review with verdict (APPROVE/REQUEST_CHANGES/COMMENT).
+          TEA scenarios: TDD RED phase test writing.
+        points: 3
+        status: done
+        completed: 2026-01-04
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11333
+        pr: https://github.com/1898andCo/pennyfarthing/pull/75
+
+      - id: "16-4"
+        title: "Statistical analysis (Cohen's d) & leaderboards"
+        description: |
+          Added Cohen's d effect size calculations to all leaderboards.
+          Created LEADERBOARD.template.md, LEADERBOARD.schema.yaml, generate-leaderboard.sh.
+          Track model usage and cost per benchmark run.
+        points: 3
+        status: done
+        completed: 2026-01-04
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11333
+        pr: https://github.com/1898andCo/pennyfarthing/pull/75
+
+      - id: "16-5"
+        title: "MOAB benchmarks (90 themes)"
+        description: |
+          Complete race-condition-cache benchmarks for all 90 themes.
+          Mother of All Benchmarks - comprehensive persona performance analysis.
+        points: 5
+        status: done
+        completed: 2026-01-03
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11330
+        pr: https://github.com/1898andCo/pennyfarthing/pull/66
+
+      - id: "16-6"
+        title: "Cost/usage tracking per run"
+        description: |
+          Extract modelUsage from CLI output (per-model token breakdown).
+          Track total_cost_usd per run.
+          Include metrics in agent and judge JSON files and summary.
+        points: 2
+        status: done
+        completed: 2026-01-04
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11333
+        pr: https://github.com/1898andCo/pennyfarthing/pull/75
+
+      - id: "16-7"
+        title: "Bug fixes & DX improvements"
+        description: |
+          - First-run experience improvements (MSSCI-11312)
+          - Parallel benchmark execution with pipe syntax (MSSCI-11314)
+          - Bash permission syntax fix (cmd:* not cmd *)
+          - No-tools instruction fix for truncated responses
+          - Shell command patterns for zsh compatibility
+        points: 2
+        status: done
+        completed: 2026-01-03
+        jira: https://1898andco.atlassian.net/browse/MSSCI-11312
+        pr:
+          - https://github.com/1898andCo/pennyfarthing/pull/58
+          - https://github.com/1898andCo/pennyfarthing/pull/64
 
 # =============================================================================
 # BACKLOG - Future Sprint Candidates
