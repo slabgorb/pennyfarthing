@@ -49,23 +49,57 @@ const AGENT_NAMES = {
     'ux-designer': 'UX Designer',
     devops: 'DevOps',
 };
-// Cache for theme data to avoid repeated file reads
 const themeCache = new Map();
-// Load character names for all agents in a theme
-function getCharacterNames(theme) {
+// Convert name to URL-safe slug (lowercase kebab-case)
+function toSlug(name) {
+    return name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+}
+// Generate OCEAN suffix from scores
+function oceanSuffix(ocean) {
+    return `${ocean.O}${ocean.C}${ocean.E}${ocean.A}${ocean.N}`;
+}
+// Load agent data for all agents in a theme
+function getAgentData(theme) {
     if (themeCache.has(theme)) {
         return themeCache.get(theme);
     }
     const themePath = join(themesDir, `${theme}.yaml`);
     const content = readFileSync(themePath, 'utf-8');
     const data = parseYaml(content);
-    const names = {};
+    const agents = {};
     if (data?.agents) {
         for (const agent of AGENTS) {
-            names[agent] = data.agents[agent]?.character || AGENT_NAMES[agent];
+            const agentInfo = data.agents[agent];
+            if (agentInfo) {
+                const character = agentInfo.character || AGENT_NAMES[agent];
+                const shortName = agentInfo.shortName || character.split(' ')[0];
+                const baseSlug = toSlug(shortName);
+                const ocean = agentInfo.ocean || { O: 3, C: 3, E: 3, A: 3, N: 3 };
+                const slug = `${baseSlug}-${oceanSuffix(ocean)}`;
+                agents[agent] = { character, shortName, slug };
+            }
+            else {
+                agents[agent] = {
+                    character: AGENT_NAMES[agent],
+                    shortName: AGENT_NAMES[agent],
+                    slug: agent,
+                };
+            }
         }
     }
-    themeCache.set(theme, names);
+    themeCache.set(theme, agents);
+    return agents;
+}
+// Load character names for all agents in a theme (backward compat)
+function getCharacterNames(theme) {
+    const agents = getAgentData(theme);
+    const names = {};
+    for (const agent of AGENTS) {
+        names[agent] = agents[agent]?.character || AGENT_NAMES[agent];
+    }
     return names;
 }
 // Get a specific character name
@@ -109,12 +143,14 @@ function generateSvgFiles() {
     // Generate spider charts
     let count = 0;
     for (const theme of THEMES) {
+        const agentData = getAgentData(theme);
         for (const agent of AGENTS) {
             const svg = generateSpider(theme, agent);
-            // Write to by-theme directory
-            const themeFilePath = join(byThemeDir, theme, `${agent}.svg`);
+            const slug = agentData[agent]?.slug || agent;
+            // Write to by-theme directory using slug-based naming
+            const themeFilePath = join(byThemeDir, theme, `${slug}.svg`);
             writeFileSync(themeFilePath, svg);
-            // Write to by-role directory
+            // Write to by-role directory (keeps role-based for cross-theme comparison)
             const roleFilePath = join(byRoleDir, agent, `${theme}.svg`);
             writeFileSync(roleFilePath, svg);
             count++;
@@ -213,9 +249,11 @@ ${LEGEND}`;
         md += `### Individual Roles\n\n`;
         md += '| Role | Spider | Character |\n';
         md += '|:-----|:------:|:----------|\n';
+        const agentData = getAgentData(theme);
         for (const agent of AGENTS) {
             const charName = escapeForMarkdown(charNames[agent]);
-            const imgSrc = `by-theme/${theme}/${agent}.svg`;
+            const slug = agentData[agent]?.slug || agent;
+            const imgSrc = `by-theme/${theme}/${slug}.svg`;
             md += `| ${AGENT_NAMES[agent]} | ${imgTag(imgSrc, charNames[agent])} | **${charName}** |\n`;
         }
         md += '\n';
