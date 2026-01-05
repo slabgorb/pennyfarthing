@@ -3,14 +3,14 @@ Create a sprite sheet of 10 character portrait busts in a 5x2 grid (500px x 200p
 **Style:** Traditional woodcut illustration, black and white only, bold linework with crosshatching for shading. High contrast, no grayscale gradients - only pure black lines on white background. Evokes medieval or Renaissance woodblock prints.
 
 **Row 1 (left to right):**
-1. **Orchestrator:** Ancient wizard with long beard, pointed hat, wise penetrating eyes, staff visible - powerful yet grandfatherly
-2. **SM (Scrum Master):** Rugged ranger king with worn noble features, sword hilt visible, weathered cloak - steadfast determination
-3. **TEA (Test Engineer):** Wretched creature with large bulging eyes, thin wispy hair, split personality suggested in expression - grasping hands
-4. **Dev (Developer):** Loyal hobbit gardener with round honest face, curly hair, determined expression - carrying pack and supplies
-5. **Reviewer:** Corrupted white wizard with sharp aristocratic features, white robes and beard - persuasive yet menacing gaze
+1. **Orchestrator:** Rugged ranger king with worn noble features, sword hilt visible, weathered cloak - steadfast determination
+2. **SM (Scrum Master):** Loyal hobbit gardener with round honest face, curly hair, determined expression - carrying pack and supplies
+3. **TEA (Test Engineer):** Elven lord with ageless features, pointed ears, crown of wisdom, ancient knowing eyes - dignified bearing
+4. **Dev (Developer):** Ancient wizard with long beard, pointed hat, wise penetrating eyes, staff visible - powerful yet grandfatherly
+5. **Reviewer:** Wretched creature with large bulging eyes, thin wispy hair, split personality suggested in expression - grasping hands
+6. **Architect:** Corrupted white wizard with sharp aristocratic features, white robes and beard - persuasive yet menacing gaze
 
 **Row 2 (left to right):**
-6. **Architect:** Elven lord with ageless features, pointed ears, crown of wisdom, ancient knowing eyes - dignified bearing
 7. **PM (Product Manager):** Elven archer prince with keen eyes, long flowing hair, bow visible - alert watchful expression
 8. **Tech Writer:** Elderly hobbit with round cheerful face, spectacles, quill and book in hand - storyteller's expression
 9. **UX Designer:** Young curious hobbit with eager innocent expression, slightly mischievous - hungry for adventure and breakfast

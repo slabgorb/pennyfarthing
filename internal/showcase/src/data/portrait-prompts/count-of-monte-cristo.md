@@ -8,8 +8,8 @@ Create a sprite sheet of 10 character portrait busts in a 5x2 grid (500px x 200p
 **Row 1 (left to right):**
 1. **Orchestrator:** An aristocratic man with pale intense face, wearing elaborate Count's attire with high collar and cravat, mysterious knowing half-smile, bearing of infinite patience and hidden purpose - transformed, vengeful, Providence's instrument
 2. **SM (Scrum Master):** A young sailor with open honest face, wearing simple mariner's clothes and cap, bright hopeful eyes, about to become ship's captain - innocent, trusting, before the fall
-3. **TEA (Test Engineer):** An elderly Italian priest with wild white hair, in prison rags but scholarly bearing, surrounded by books and maps scratched on walls, teaching expression - brilliant, imprisoned, legacy-giving
-4. **Dev (Developer):** A young military officer in proper uniform, earnest devoted face, sword at side, honest posture - dutiful, honorable, son-of-benefactor
+3. **TEA (Test Engineer):** A young military officer in proper uniform, earnest devoted face, sword at side, honest posture - dutiful, honorable, son-of-benefactor
+4. **Dev (Developer):** An elderly Italian priest with wild white hair, in prison rags but scholarly bearing, surrounded by books and maps scratched on walls, teaching expression - brilliant, imprisoned, legacy-giving
 5. **Reviewer:** A stern prosecutor in black judicial robes, sharp ambitious features, quill in hand signing documents, cold calculating eyes - merciless, ambitious, burying evidence
 
 **Row 2 (left to right):**

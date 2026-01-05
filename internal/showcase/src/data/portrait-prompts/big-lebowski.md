@@ -7,9 +7,9 @@ Create a sprite sheet of 10 character portrait busts in a 5×2 grid (500px × 20
 
 **Row 1 (left to right):**
 1. **Orchestrator:** A tall older man with magnificent mustache and cowboy hat, wearing western shirt with bolo tie, weathered face of a rancher, leaning on bar with knowing eyes - Mysterious narrator who rambles through the story with cowboy wisdom
-2. **SM (Scrum Master):** A large heavyset man with ponytail and military dog tags, wearing safari vest over bowling shirt, sunglasses pushed up, aggressive posture, Vietnam vet bearing - Volatile veteran who manages through intimidation and strict rules
+2. **SM (Scrum Master):** A middle-aged man with long scraggly hair and goatee, wearing bathrobe and shorts with jelly sandals, holding White Russian cocktail, profoundly relaxed expression - Unemployed slacker who somehow gets things done while abiding
 3. **TEA (Test Engineer):** A Latino man with styled hair and purple jumpsuit with bowling ball, tight clothes showing muscular build, theatrical expression, strutting confidence - Flamboyant competitor who tests everything with theatrical intensity
-4. **Dev (Developer):** A middle-aged man with long scraggly hair and goatee, wearing bathrobe and shorts with jelly sandals, holding White Russian cocktail, profoundly relaxed expression - Unemployed slacker who somehow gets things done while abiding
+4. **Dev (Developer):** A large heavyset man with ponytail and military dog tags, wearing safari vest over bowling shirt, sunglasses pushed up, aggressive posture, Vietnam vet bearing - Volatile veteran who manages through intimidation and strict rules
 5. **Reviewer:** An elderly man in wheelchair with expensive smoking jacket, wealthy surroundings implied, stern imperious expression, blanket over legs - Wealthy fraud who reviews harshly but hypocritically
 
 **Row 2 (left to right):**

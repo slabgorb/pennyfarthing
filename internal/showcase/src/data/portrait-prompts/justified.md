@@ -6,10 +6,10 @@ Create a sprite sheet of 10 character portrait busts in a 5×2 grid (500px × 20
 **Source:** Justified (2010-2015), FX / Graham Yost, based on Elmore Leonard
 
 **Row 1 (left to right):**
-1. **Orchestrator:** A stocky middle-aged man with graying hair and tired eyes, wearing a dark suit and tie with US Marshal badge visible, perpetually exasperated expression - Chief Deputy who orchestrates marshals through exasperation
+1. **Orchestrator:** A beautiful blonde woman in her thirties with Southern elegance, wearing simple but refined clothing, watchful eyes that have seen hardship - Woman who implements survival through adaptation
 2. **SM (Scrum Master):** A lean man in his late thirties with dark hair swept back, wearing a tan cowboy hat, white dress shirt with slim tie, and holstered pistol at his hip, confident smirk - Marshal whose leadership style is questionable but effective
 3. **TEA (Test Engineer):** A wiry man with short military-style haircut, calm intelligent eyes, wearing casual button-down shirt, alert posture suggesting combat readiness - Sniper whose testing is patient and lethal
-4. **Dev (Developer):** A beautiful blonde woman in her thirties with Southern elegance, wearing simple but refined clothing, watchful eyes that have seen hardship - Woman who implements survival through adaptation
+4. **Dev (Developer):** A stocky middle-aged man with graying hair and tired eyes, wearing a dark suit and tie with US Marshal badge visible, perpetually exasperated expression - Chief Deputy who orchestrates marshals through exasperation
 5. **Reviewer:** A charismatic man with slicked-back dark hair and piercing eyes, wearing button-down shirt with sleeves rolled up, charming yet dangerous smile - Criminal philosopher whose reviews are eloquent and dangerous
 
 **Row 2 (left to right):**

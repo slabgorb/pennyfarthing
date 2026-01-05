@@ -7,7 +7,7 @@ Create a sprite sheet of 10 character portrait busts in a 5×2 grid (500px × 20
 
 **Row 1 (left to right):**
 1. **Orchestrator:** An extremely elderly hunched scientist with wild white hair, thick round glasses, lab coat, holding a beaker of something dangerous - senile genius, inventor of doomsday devices
-2. **SM (Scrum Master):** A Jamaican bureaucrat with small round glasses, neat dreadlocks tied back, clipboard and stamp, precise expression - Grade 36 bureaucrat, forms for everything, limbo champion physique
+2. **SM (Scrum Master):** A one-eyed mutant woman with long purple hair in ponytail, captain's uniform, competent determined expression - cyclops captain, managing impossible deliveries
 3. **TEA (Test Engineer):** A small round alien creature with three eyes on stalks, tiny body, deceptively cute appearance hiding ancient intelligence - cosmic awareness, adorable yet omniscient
 4. **Dev (Developer):** A young orange-haired delivery worker with vacant cheerful expression, red jacket, simple-minded but lucky - 20th century fish out of water, accidentally heroic
 5. **Reviewer:** A shiny metallic robot with cylindrical body, antenna, cigar, sardonic expression, threatening posture - bending unit, loves to hate, gleefully destructive reviews

@@ -9,7 +9,7 @@ Create a sprite sheet of 10 character portrait busts in a 5×2 grid (500px × 20
 1. **Orchestrator:** A tall hooded spectral figure in flowing black robes, faceless darkness beneath the hood, one skeletal hand pointing forward - silent, ominous, showing inevitable futures
 2. **SM (Scrum Master):** An elderly gentleman in Victorian nightgown and cap, wild white hair, joyful exuberant expression, arms spread wide in generous welcome - transformed, ebullient, reformed
 3. **TEA (Test Engineer):** An aged woman in tattered yellowed wedding dress and veil, wild unkempt gray hair, hollow haunted eyes, cobwebs on her shoulders - frozen in time, obsessive, bitter
-4. **Dev (Developer):** A young man with earnest hopeful expression, simple working clothes transitioning to gentleman's attire, cap in hand - aspiring, expectant, humble origins
+4. **Dev (Developer):** An elderly gentleman in Victorian nightgown and cap, wild white hair, joyful exuberant expression, arms spread wide in generous welcome - transformed, ebullient, reformed
 5. **Reviewer:** A thin elderly man with hooked nose and crafty knowing eyes, greasy hair under a battered hat, fingers like claws - cunning, pickpocket's watchfulness, calculating
 
 **Row 2 (left to right):**

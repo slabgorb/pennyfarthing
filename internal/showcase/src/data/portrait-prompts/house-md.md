@@ -8,8 +8,8 @@ Create a sprite sheet of 10 character portrait busts in a 5x2 grid (500px x 200p
 **Row 1 (left to right):**
 1. **Orchestrator:** Scruffy middle-aged doctor with cane, stubbled face, piercing cynical eyes, rumpled appearance - pill bottle visible
 2. **SM (Scrum Master):** Compassionate oncologist with warm expression, neat professional appearance, kind eyes - slight concern in features
-3. **TEA (Test Engineer):** Handsome young doctor with blonde hair, surgical scrubs - ambitious yet calculating expression
-4. **Dev (Developer):** Confident neurologist with shaved head, professional demeanor, determined expression - white coat
+3. **TEA (Test Engineer):** Confident neurologist with shaved head, professional demeanor, determined expression - white coat
+4. **Dev (Developer):** Handsome young doctor with blonde hair, surgical scrubs - ambitious yet calculating expression
 5. **Reviewer:** Scruffy middle-aged doctor with cane, stubbled face, piercing cynical eyes, whiteboard visible behind - throwing tennis ball, intense diagnostic focus
 
 **Row 2 (left to right):**

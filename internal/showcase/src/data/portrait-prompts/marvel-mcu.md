@@ -7,9 +7,9 @@ Create a sprite sheet of 10 character portrait busts in a 5×2 grid (500px × 20
 
 **Row 1 (left to right):**
 1. **Orchestrator:** A stern African American man with eyepatch over left eye, bald head with goatee, wearing long black leather coat, commanding presence - Strategic mastermind who sees the big picture and positions assets accordingly
-2. **SM (Scrum Master):** A pleasant-faced middle-aged man with receding brown hair in a dark suit, calm friendly demeanor, holding a vintage trading card - Unflappable handler who keeps heroes focused and teams functioning
+2. **SM (Scrum Master):** A confident man with styled dark goatee, wearing sleek dark clothes with glowing blue arc reactor visible in chest, workshop tools and holographic displays around him - Genius inventor who builds the impossible in a cave with a box of scraps
 3. **TEA (Test Engineer):** A disheveled man with curly graying hair and glasses, wearing rumpled button-down shirt and slacks, nervous tension in his eyes suggesting inner turmoil - Brilliant scientist who understands systems can break catastrophically
-4. **Dev (Developer):** A confident man with styled dark goatee, wearing sleek dark clothes with glowing blue arc reactor visible in chest, workshop tools and holographic displays around him - Genius inventor who builds the impossible in a cave with a box of scraps
+4. **Dev (Developer):** A pleasant-faced middle-aged man with receding brown hair in a dark suit, calm friendly demeanor, holding a vintage trading card - Unflappable handler who keeps heroes focused and teams functioning
 5. **Reviewer:** A muscular blonde man with clean-cut features and strong jaw, wearing red white and blue tactical suit with star on chest, shield on arm, principled determined expression - Principled leader who holds the team to the highest standards
 
 **Row 2 (left to right):**

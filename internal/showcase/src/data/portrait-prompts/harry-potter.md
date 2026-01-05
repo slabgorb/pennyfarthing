@@ -8,7 +8,7 @@ Create a sprite sheet of 10 character portrait busts in a 5×2 grid (500px × 20
 **Row 1 (left to right):**
 1. **Orchestrator:** An elderly wizard with very long silver hair and beard, half-moon spectacles over twinkling blue eyes, wearing flowing purple robes with stars, tall pointed hat - wise headmaster who guides without controlling, seeing the bigger picture
 2. **SM (Scrum Master):** A stern elderly witch with gray hair in tight bun, square spectacles, wearing emerald green robes and pointed black hat, pursed lips with hint of warmth - stern but fair leader who maintains high standards while supporting her team
-3. **TEA (Test Engineer):** A young woman with bushy brown hair, carrying multiple books and scrolls, wearing Gryffindor robes with wand tucked behind ear, eager focused expression - obsessive perfectionist who finds every edge case through exhaustive study
+3. **TEA (Test Engineer):** A young woman with long straggly blonde hair, protuberant silvery eyes, wearing eccentric jewelry including radish earrings and butterbeer cork necklace, dreamy serene expression - unconventional thinker who sees patterns others miss entirely
 4. **Dev (Developer):** A young man with red hair and freckles, lanky build, wearing well-worn Gryffindor robes, loyal earnest expression - practical wizard who implements with heart and surprising brilliance under pressure
 5. **Reviewer:** A gaunt man with greasy shoulder-length black hair, hooked nose, wearing billowing black robes, dark penetrating eyes and permanent sneer - cutting critic who accepts nothing less than perfection
 

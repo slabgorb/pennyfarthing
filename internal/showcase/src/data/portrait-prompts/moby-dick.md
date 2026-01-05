@@ -9,10 +9,10 @@ Create a sprite sheet of 10 character portrait busts in a 5x2 grid (500px x 200p
 1. **Orchestrator:** Obsessed whaling captain with grizzled beard, ivory peg leg visible, scarred face, burning monomanic eyes - whale bone harpoon
 2. **SM (Scrum Master):** Quaker first mate with honest weathered face, moral concern in eyes, practical seaman's clothes - conflicted conscience
 3. **TEA (Test Engineer):** Young philosophical sailor with observant thoughtful expression, everyman features - survivor's quiet wisdom
-4. **Dev (Developer):** Polynesian harpooner with elaborate tattoos covering face and body, exotic features, quiet noble strength - loyal friend
-5. **Reviewer:** Massive white sperm whale emerging from water, ancient and inscrutable, scarred from harpoons - force of nature
+4. **Dev (Developer):** Massive white sperm whale emerging from water, ancient and inscrutable, scarred from harpoons - force of nature
 
 **Row 2 (left to right):**
+5. **Reviewer:** Polynesian harpooner with elaborate tattoos covering face and body, exotic features, quiet noble strength - loyal friend
 6. **Architect:** Former whaler turned preacher in ship-bow pulpit, weathered hands raised, fire-and-brimstone expression - rope ladder
 7. **PM (Product Manager):** Cheerful second mate with pipe in mouth, easy-going smile, laughing at fate - practical seaman
 8. **Tech Writer:** Young philosophical sailor with observant thoughtful expression, everyman features, holding quill and journal - encyclopedic interest, documenting everything, survivor

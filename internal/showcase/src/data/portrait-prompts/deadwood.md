@@ -7,9 +7,9 @@ Create a sprite sheet of 10 character portrait busts in a 5×2 grid (500px × 20
 
 **Row 1 (left to right):**
 1. **Orchestrator:** A rough middle-aged man with long dark hair and a scraggly beard, wearing a Victorian-era waistcoat and rolled-up sleeves, intense predatory eyes, holding a whiskey glass, saloon owner's commanding presence - runs the camp through manipulation and violence
-2. **SM (Scrum Master):** A tall stern man with a thick dark mustache and intense burning eyes, wearing a period-appropriate suit with a sheriff's star badge, rigid upright posture, barely contained fury - brings law to chaos through sheer intensity
+2. **SM (Scrum Master):** A rugged frontiersman with long hair and a full beard, wearing buckskin jacket and wide-brimmed hat, reliable steady expression, dusty trail-worn appearance - implements reliably without drama
 3. **TEA (Test Engineer):** An older weathered man with wild gray hair and beard, wearing a rumpled doctor's coat stained with work, wire spectacles, holding a medical bag and whiskey bottle, exhausted but caring eyes - examines everything with scientific rigor and whiskey
-4. **Dev (Developer):** A rugged frontiersman with long hair and a full beard, wearing buckskin jacket and wide-brimmed hat, reliable steady expression, dusty trail-worn appearance - implements reliably without drama
+4. **Dev (Developer):** A tall stern man with a thick dark mustache and intense burning eyes, wearing a period-appropriate suit with a sheriff's star badge, rigid upright posture, barely contained fury - brings law to chaos through sheer intensity
 5. **Reviewer:** A wealthy older man with silver hair and cold ruthless eyes, wearing an expensive dark suit and fine vest, gold pocket watch chain visible, possessive acquisitive expression - reviews to acquire and destroy
 
 **Row 2 (left to right):**

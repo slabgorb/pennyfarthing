@@ -7,9 +7,9 @@ Create a sprite sheet of 10 character portrait busts in a 5x2 grid (500px x 200p
 
 **Row 1 (left to right):**
 1. **Orchestrator:** Elegant big band leader in formal suit, refined posture, piano keys visible - composed and dignified expression
-2. **SM (Scrum Master):** Cool trumpet player with intense gaze, turned slightly away, modern and introspective - revolutionary aura
+2. **SM (Scrum Master):** Brilliant bebop saxophonist with animated expression, fast fingers suggested, genius energy - intense focus
 3. **TEA (Test Engineer):** Spiritual saxophonist with eyes closed in concentration, intense expression - seeking transcendence through music
-4. **Dev (Developer):** Brilliant bebop saxophonist with animated expression, fast fingers suggested, genius energy - intense focus
+4. **Dev (Developer):** Cool trumpet player with intense gaze, turned slightly away, modern and introspective - revolutionary aura
 5. **Reviewer:** Eccentric pianist with distinctive hat, angular features, unique hand position - mysterious half-smile
 
 **Row 2 (left to right):**

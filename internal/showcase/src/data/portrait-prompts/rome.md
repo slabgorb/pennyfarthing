@@ -7,9 +7,9 @@ Create a sprite sheet of 10 character portrait busts in a 5×2 grid (500px × 20
 
 **Row 1 (left to right):**
 1. **Orchestrator:** A balding middle-aged Roman man with sharp features and intense commanding gaze, wearing a laurel wreath crown and draped purple-bordered toga, thin lips set in calculating expression - dictator perpetuo who orchestrates the death of the Republic
-2. **SM (Scrum Master):** A stern Roman soldier in his forties with close-cropped dark hair and weathered face, wearing centurion armor with transverse horsehair crest on helmet, deep-set honorable eyes - centurion whose honor drives him through impossible situations
+2. **SM (Scrum Master):** A burly Roman legionary with unkempt hair and battle scars, broad grinning face, wearing simple soldier's tunic and leather balteus belt, muscular arms - legionary whose chaotic competence implements the impossible
 3. **TEA (Test Engineer):** An elegant Roman noblewoman with elaborately curled dark hair pinned with golden ornaments, wearing rich stola with draped palla, sharp calculating eyes and knowing smile - patrician schemer who tests everyone's weakness
-4. **Dev (Developer):** A burly Roman legionary with unkempt hair and battle scars, broad grinning face, wearing simple soldier's tunic and leather balteus belt, muscular arms - legionary whose chaotic competence implements the impossible
+4. **Dev (Developer):** A stern Roman soldier in his forties with close-cropped dark hair and weathered face, wearing centurion armor with transverse horsehair crest on helmet, deep-set honorable eyes - centurion whose honor drives him through impossible situations
 5. **Reviewer:** An elderly Roman senator with thin white hair and deeply lined intellectual face, wearing plain white toga draped formally, holding a scroll, piercing oratorical gaze - orator whose reviews are devastating speeches
 
 **Row 2 (left to right):**

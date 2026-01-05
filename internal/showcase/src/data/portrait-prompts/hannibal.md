@@ -7,9 +7,9 @@ Create a sprite sheet of 10 character portrait busts in a 5×2 grid (500px × 20
 
 **Row 1 (left to right):**
 1. **Orchestrator:** A refined man in his fifties with slicked-back graying hair, high cheekbones, wearing an immaculate three-piece suit with paisley tie, maroon eyes with unsettling calm - psychiatrist and cannibal whose orchestration is aesthetic murder
-2. **SM (Scrum Master):** A stern Black man in his fifties with graying temples, wearing a dark FBI suit with American flag pin, deep-set weary eyes, commanding presence - FBI director who drives his team too hard because he must
+2. **SM (Scrum Master):** A young woman with long dark hair and innocent face, wearing simple sweater, large vulnerable eyes hiding secrets - survivor daughter whose implementation was survival
 3. **TEA (Test Engineer):** A disheveled man in his thirties with curly brown hair and stubble, wearing rumpled layers and glasses, haunted blue eyes avoiding direct gaze - empath who tests by becoming the killer
-4. **Dev (Developer):** A young woman with long dark hair and innocent face, wearing simple sweater, large vulnerable eyes hiding secrets - survivor daughter whose implementation was survival
+4. **Dev (Developer):** A stern Black man in his fifties with graying temples, wearing a dark FBI suit with American flag pin, deep-set weary eyes, commanding presence - FBI director who drives his team too hard because he must
 5. **Reviewer:** An elegant blonde woman in her forties with perfect coiffed hair, wearing designer silk blouse and pearls, ice-blue eyes with detached observation - psychiatrist who reviews with clinical detachment
 
 **Row 2 (left to right):**

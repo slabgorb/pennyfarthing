@@ -5,8 +5,8 @@ Create a sprite sheet of 10 character portrait busts in a 5x2 grid (500px x 200p
 **Row 1 (left to right):**
 1. **Orchestrator:** 17th century natural philosopher with long flowing wig, stern focused expression, severe features, apple symbolically nearby - discovered universal laws of motion
 2. **SM (Scrum Master):** Determined woman scientist with dark hair pinned up, laboratory coat, intense dedicated eyes, glowing vials - won two Nobel prizes through unstoppable dedication
-3. **TEA (Test Engineer):** Cheerful physicist with wild hair, mischievous grin, bongo drums visible, casual open collar - tests through playful first principles
-4. **Dev (Developer):** Bearded Victorian naturalist with kind eyes, specimen collection visible, weathered from travels, patient expression - gathers evidence until truth is undeniable
+3. **TEA (Test Engineer):** Bearded Victorian naturalist with kind eyes, specimen collection visible, weathered from travels, patient expression - gathers evidence until truth is undeniable
+4. **Dev (Developer):** Cheerful physicist with wild hair, mischievous grin, bongo drums visible, casual open collar - tests through playful first principles
 5. **Reviewer:** Renaissance astronomer with pointed beard, defiant expression, telescope nearby, scholar's robes - observes truth regardless of authority
 
 **Theme:** Scientific Revolutionaries

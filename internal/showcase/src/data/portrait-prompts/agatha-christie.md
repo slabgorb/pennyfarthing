@@ -6,10 +6,10 @@ Create a sprite sheet of 10 character portrait busts in a 5×2 grid (500px × 20
 **Source:** The works of Dame Agatha Christie (1890-1976)
 
 **Row 1 (left to right):**
-1. **Orchestrator:** A middle-aged woman with untidy grey hair and expressive hands, wearing comfortable tweeds with apple-eating habit evident, scattered papers and manuscripts around her, creative chaos personified - The mystery writer who sees the whole plot and guides it to conclusion
+1. **Orchestrator:** A cheerful young man with bright eyes and adventurous spirit, wearing practical country clothes suitable for action, boyish good looks with ready smile - Adventurous partner who implements with daring and practicality
 2. **SM (Scrum Master):** A proper English gentleman with neat mustache and kind eyes, wearing brown tweed suit with waistcoat, military bearing softened by good nature, carrying leather notebook - Loyal narrator who keeps investigations organized and moving forward
 3. **TEA (Test Engineer):** A small fastidious Belgian man with magnificent waxed mustache, egg-shaped head perfectly bald, wearing immaculate suit with patent leather shoes, precise bow tie - The little grey cells that see every flaw in logic
-4. **Dev (Developer):** A cheerful young man with bright eyes and adventurous spirit, wearing practical country clothes suitable for action, boyish good looks with ready smile - Adventurous partner who implements with daring and practicality
+4. **Dev (Developer):** A middle-aged woman with untidy grey hair and expressive hands, wearing comfortable tweeds with apple-eating habit evident, scattered papers and manuscripts around her, creative chaos personified - The mystery writer who sees the whole plot and guides it to conclusion
 5. **Reviewer:** An elderly woman with white hair in a bun, wearing old-fashioned cardigan and pearls, sharp blue eyes that miss nothing, knitting needles in hand, deceptively gentle appearance - The elderly spinster who sees through everything because human nature never changes
 
 **Row 2 (left to right):**

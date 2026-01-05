@@ -7,9 +7,9 @@ Create a sprite sheet of 10 character portrait busts in a 5×2 grid (500px × 20
 
 **Row 1 (left to right):**
 1. **Orchestrator:** A bald man with intense green eyes and sharp features, wearing a futuristic green and purple armored suit with high collar, arrogant smirk - Megalomaniacal genius, elaborate speeches, always has a master plan
-2. **SM (Scrum Master):** A green-skinned android with metallic skull-like head covered in circuitry, three pink nodes on forehead, cold expressionless face - Coldly logical, obsessively organized, collects everything
+2. **SM (Scrum Master):** A massive silverback gorilla with enlarged cranium indicating superior intelligence, wearing technological headband, stern authoritative expression - Hyper-intelligent, builds incredible things, dismissive of lesser minds
 3. **TEA (Test Engineer):** A slender man in a bright green bodysuit covered with purple question marks, orange domino mask, holding a question mark-shaped cane, manic grin - Obsessed with puzzles, finds flaws compulsively, leaves clues
-4. **Dev (Developer):** A massive silverback gorilla with enlarged cranium indicating superior intelligence, wearing technological headband, stern authoritative expression - Hyper-intelligent, builds incredible things, dismissive of lesser minds
+4. **Dev (Developer):** A green-skinned android with metallic skull-like head covered in circuitry, three pink nodes on forehead, cold expressionless face - Coldly logical, obsessively organized, collects everything
 5. **Reviewer:** A pink-skinned alien with pointed ears and angular features, black hair with widow's peak, wearing black and blue uniform, yellow power ring glowing on his finger - Fear-inducing critiques, yellow power ring of judgment
 
 **Row 2 (left to right):**

@@ -9,7 +9,7 @@ Create a sprite sheet of 10 character portrait busts in a 5×2 grid (500px × 20
 1. **Orchestrator:** A gaunt elderly Spanish knight with wild eyes and sparse beard, wearing dented armor and a barber's basin as helmet, holding a lance - delusional, noble, seeing giants everywhere
 2. **SM (Scrum Master):** A short round peasant with a broad honest face, simple tunic, riding astride (implied), practical worried expression - loyal squire, proverb-ready, grounded
 3. **TEA (Test Engineer):** A young Spanish scholar in academic robes, clever sharp features, holding a mirror, knowing smirk - educated, scheming to cure madness, disguised knight
-4. **Dev (Developer):** A gaunt knight mid-charge, lance lowered, eyes blazing with conviction, armor askew, transforming reality through sheer belief - visionary, persistent, seeing magic in mundane
+4. **Dev (Developer):** A short round peasant with a broad honest face, simple tunic, riding astride (implied), practical worried expression - loyal squire, proverb-ready, grounded
 5. **Reviewer:** Two figures merged: a bald priest with tonsure and stern expression, and a portly barber with shaving basin - critical friends, burning dangerous books, worried caregivers
 
 **Row 2 (left to right):**

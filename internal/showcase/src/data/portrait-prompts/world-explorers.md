@@ -8,8 +8,8 @@ Create a sprite sheet of 10 character portrait busts in a 5x2 grid (500px x 200p
 **Row 1 (left to right):**
 1. **Orchestrator:** Rugged polar explorer with weathered face, warm expedition gear, frostbitten but determined expression - saved all his men when the ship was crushed in ice
 2. **SM (Scrum Master):** Daring aviatrix with leather flying cap, goggles pushed up, confident smile, flight jacket - first woman to cross oceans solo by air
-3. **TEA (Test Engineer):** Methodical polar explorer with Norwegian features, fur-lined hood, calculating precise expression, sled dogs nearby - prepared so thoroughly luck became irrelevant
-4. **Dev (Developer):** Medieval merchant traveler with Venetian cap, exotic silk robes, camel visible, wonder in eyes - brought treasures from the Silk Road
+3. **TEA (Test Engineer):** Medieval merchant traveler with Venetian cap, exotic silk robes, camel visible, wonder in eyes - brought treasures from the Silk Road
+4. **Dev (Developer):** Methodical polar explorer with Norwegian features, fur-lined hood, calculating precise expression, sled dogs nearby - prepared so thoroughly luck became irrelevant
 5. **Reviewer:** Medieval Islamic scholar with turban, traveling robes, astrolabe or map, wise traveled expression - wandered 75,000 miles across the known world
 
 **Row 2 (left to right):**

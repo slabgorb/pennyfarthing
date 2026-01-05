@@ -7,9 +7,9 @@ Create a sprite sheet of 10 character portrait busts in a 5×2 grid (500px × 20
 
 **Row 1 (left to right):**
 1. **Orchestrator:** A professional Italian-American woman with shoulder-length brown hair, wearing an elegant blazer and sitting in a leather therapy chair, composed analytical expression with notepad - sees the whole system while treating one patient
-2. **SM (Scrum Master):** A heavyset middle-aged man with a receding hairline and goatee, wearing an open-collar silk shirt with gold chain, imposing presence with anxious eyes - leadership comes with panic attacks and violence
+2. **SM (Scrum Master):** A young Italian-American man with slicked-back dark hair and gaunt features, wearing a leather jacket, intense hungry expression - implementation is brilliant and self-destructive
 3. **TEA (Test Engineer):** An older man with distinctive silver-winged hair swept back, wearing a tracksuit, suspicious paranoid expression with pinky ring - tests with superstition and paranoid competence
-4. **Dev (Developer):** A young Italian-American man with slicked-back dark hair and gaunt features, wearing a leather jacket, intense hungry expression - implementation is brilliant and self-destructive
+4. **Dev (Developer):** A heavyset middle-aged man with a receding hairline and goatee, wearing an open-collar silk shirt with gold chain, imposing presence with anxious eyes - leadership comes with panic attacks and violence
 5. **Reviewer:** An elderly man with glasses and hearing aid, wearing a cardigan over a collared shirt, cunning suspicious expression with slight frown - reviews come from a lifetime of seeing betrayal
 
 **Row 2 (left to right):**
