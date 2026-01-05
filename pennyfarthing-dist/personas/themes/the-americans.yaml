@@ -17,6 +17,7 @@ theme:
 agents:
   orchestrator:
     character: Oleg Burov
+    visual: "A young man in his late twenties with refined Slavic features and dark hair, wearing a Soviet diplomatic suit, intelligent eyes showing internal conflict"
     shortName: Oleg
     # JOB FAIR OPTIMIZED: Oleg moved here; Claudia excels at dev (+10.00)
     ocean:
@@ -45,6 +46,7 @@ agents:
 
   sm:
     character: Philip Jennings
+    visual: "A man in his late thirties with feathered brown hair and soft features, wearing a 1980s leather jacket over casual American clothes, troubled introspective expression"
     shortName: Philip
     ocean:
       O: 4  # Adaptive identity
@@ -72,6 +74,7 @@ agents:
 
   tea:
     character: Stan Beeman
+    visual: "A broad-shouldered man in his forties with a thick mustache and earnest eyes, wearing an FBI badge on a conservative suit and tie, watchful expression"
     shortName: Stan
     ocean:
       O: 3  # FBI method
@@ -99,6 +102,7 @@ agents:
 
   dev:
     character: Claudia
+    visual: "An elderly woman with short gray hair and sharp, penetrating eyes, wearing a modest 1980s wool coat and scarf, stern expression with deep lines of experience"
     shortName: Claudia
     # JOB FAIR OPTIMIZED: Claudia scored best as dev (+10.00 over Oleg)
     ocean:
@@ -127,6 +131,7 @@ agents:
 
   reviewer:
     character: Elizabeth Jennings
+    visual: "A woman in her late thirties with straight brown hair and intense determined eyes, wearing a 1980s suburban blouse, steely unwavering expression"
     shortName: Elizabeth
     ocean:
       O: 3  # Ideological focus
@@ -154,6 +159,7 @@ agents:
 
   architect:
     character: Gabriel
+    visual: "An elderly man with a kind weathered face and white hair, wearing a cardigan sweater and reading glasses, wise paternal expression"
     shortName: Gabriel
     ocean:
       O: 4  # Strategic wisdom
@@ -181,6 +187,7 @@ agents:
 
   pm:
     character: Arkady Zotov
+    visual: "A stern middle-aged man with receding dark hair and commanding presence, wearing a formal Soviet diplomatic suit, calculating expression"
     shortName: Arkady
     ocean:
       O: 4  # Station vision
@@ -208,6 +215,7 @@ agents:
 
   tech-writer:
     character: Martha Hanson
+    visual: "A plain woman in her thirties with mousy brown hair and oversized glasses, wearing conservative office attire and pearl earrings, earnest trusting expression"
     shortName: Martha
     ocean:
       O: 3  # Innocent perspective
@@ -235,6 +243,7 @@ agents:
 
   ux-designer:
     character: Paige Jennings
+    visual: "A teenage girl with long reddish-brown hair and searching eyes, wearing a 1980s high school outfit with a cross necklace, conflicted expression"
     shortName: Paige
     ocean:
       O: 4  # Teenage insight
@@ -262,6 +271,7 @@ agents:
 
   devops:
     character: Henry Jennings
+    visual: "A teenage boy with short brown hair and an all-American look, wearing a 1980s prep school sweater and polo shirt, innocent oblivious expression"
     shortName: Henry
     ocean:
       O: 3  # Practical focus

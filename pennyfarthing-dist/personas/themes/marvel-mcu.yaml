@@ -17,6 +17,7 @@ theme:
 agents:
   orchestrator:
     character: Nick Fury
+    visual: "A stern African American man with eyepatch over left eye, bald head with goatee, wearing long black leather coat, commanding presence"
     shortName: Fury
     ocean:
       O: 4  # Strategic vision
@@ -44,6 +45,7 @@ agents:
 
   sm:
     character: Tony Stark / Iron Man
+    visual: "A confident man with styled dark goatee, wearing sleek dark clothes with glowing blue arc reactor visible in chest, workshop tools and holographic displays around him"
     shortName: Iron Man
     # JOB FAIR OPTIMIZED: Tony moved here; Coulson excels at dev (+6.25)
     ocean:
@@ -72,6 +74,7 @@ agents:
 
   tea:
     character: Bruce Banner / Hulk
+    visual: "A disheveled man with curly graying hair and glasses, wearing rumpled button-down shirt and slacks, nervous tension in his eyes suggesting inner turmoil"
     shortName: Hulk
     ocean:
       O: 5  # Genius intellect
@@ -99,6 +102,7 @@ agents:
 
   dev:
     character: Phil Coulson
+    visual: "A pleasant-faced middle-aged man with receding brown hair in a dark suit, calm friendly demeanor, holding a vintage trading card"
     shortName: Coulson
     # JOB FAIR OPTIMIZED: Coulson scored best as dev (+6.25 over Tony)
     ocean:
@@ -127,6 +131,7 @@ agents:
 
   reviewer:
     character: Steve Rogers / Captain America
+    visual: "A muscular blonde man with clean-cut features and strong jaw, wearing red white and blue tactical suit with star on chest, shield on arm, principled determined expression"
     shortName: Captain America
     ocean:
       O: 2  # Rage focus
@@ -154,6 +159,7 @@ agents:
 
   architect:
     character: Doctor Strange
+    visual: "A man with graying temples and neat goatee, wearing a billowing red cloak with high collar, glowing green eye symbol on his chest, mystical energy around his hands"
     shortName: Strange
     ocean:
       O: 5  # Sorcerer vision
@@ -181,6 +187,7 @@ agents:
 
   pm:
     character: Professor X / Charles Xavier
+    visual: "A bald man in a wheelchair wearing elegant suit, wise knowing eyes, fingers touching his temple in concentration"
     shortName: Professor X
     ocean:
       O: 4  # CEO vision
@@ -208,6 +215,7 @@ agents:
 
   tech-writer:
     character: Peter Parker / Spider-Man
+    visual: "A young man with tousled brown hair in a red and blue spider-themed suit with large white eye lenses, energetic and eager body language"
     shortName: Spider-Man
     ocean:
       O: 3  # Human perspective
@@ -235,6 +243,7 @@ agents:
 
   ux-designer:
     character: Shuri
+    visual: "A young African woman with shaved sides and natural hair styled upward, wearing futuristic Wakandan garments with tribal patterns and advanced tech, brilliant confident smile"
     shortName: Shuri
     ocean:
       O: 4  # Creative problem-solving
@@ -262,6 +271,7 @@ agents:
 
   devops:
     character: War Machine / James Rhodes
+    visual: "A man in sleek gray and silver armored suit with military bearing, glowing repulsor lights on chest and hands, war machine shoulder-mounted weapons visible"
     shortName: War Machine
     ocean:
       O: 4  # AI perspective

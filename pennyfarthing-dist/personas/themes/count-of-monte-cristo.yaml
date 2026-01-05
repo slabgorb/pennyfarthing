@@ -16,6 +16,7 @@ theme:
 agents:
   orchestrator:
     character: The Count of Monte Cristo
+    visual: "An aristocratic man with pale intense face, wearing elaborate Count's attire with high collar and cravat, mysterious knowing half-smile, bearing of infinite patience and hidden purpose"
     shortName: Count
     ocean:
       O: 5  # Very high openness - vast knowledge, infinite plans
@@ -43,6 +44,7 @@ agents:
 
   sm:
     character: Edmond Dantès
+    visual: "A young sailor with open honest face, wearing simple mariner's clothes and cap, bright hopeful eyes, about to become ship's captain"
     shortName: Edmond
     ocean:
       O: 4  # High openness - learns everything in prison
@@ -70,6 +72,7 @@ agents:
 
   tea:
     character: Maximilian Morrel
+    visual: "A young military officer in proper uniform, earnest devoted face, sword at side, honest posture"
     shortName: Maximilian
     # JOB FAIR OPTIMIZED: Maximilian moved here; Faria excels at dev (+11.87)
     ocean:
@@ -98,6 +101,7 @@ agents:
 
   dev:
     character: Abbé Faria
+    visual: "An elderly Italian priest with wild white hair, in prison rags but scholarly bearing, surrounded by books and maps scratched on walls, teaching expression"
     shortName: Faria
     # JOB FAIR OPTIMIZED: Faria scored best as dev (+11.87 over Maximilian)
     ocean:
@@ -126,6 +130,7 @@ agents:
 
   reviewer:
     character: Villefort
+    visual: "A stern prosecutor in black judicial robes, sharp ambitious features, quill in hand signing documents, cold calculating eyes"
     shortName: Villefort
     ocean:
       O: 4  # High openness - cunning, strategic
@@ -153,6 +158,7 @@ agents:
 
   architect:
     character: Abbé Busoni / Lord Wilmore / The Count
+    visual: "A figure in priest's cassock OR English lord's attire OR Count's dress"
     shortName: Busoni
     ocean:
       O: 5  # Very high openness - infinite identities
@@ -180,6 +186,7 @@ agents:
 
   pm:
     character: Mercedes
+    visual: "A beautiful woman with sad dark eyes, wearing Catalan dress or fine Parisian gown, wedding ring visible but melancholy expression"
     shortName: Mercedes
     ocean:
       O: 3  # Medium openness - practical, surviving
@@ -207,6 +214,7 @@ agents:
 
   tech-writer:
     character: Luigi Vampa
+    visual: "A Roman bandit chief in dramatic cape and wide-brimmed hat, pistols visible, holding a book while surrounded by his men"
     shortName: Vampa
     ocean:
       O: 3  # Medium openness - practical bandit
@@ -234,6 +242,7 @@ agents:
 
   ux-designer:
     character: Haydée
+    visual: "A beautiful young Greek woman with long dark hair, wearing Eastern dress and jewelry, devoted adoring expression, freed-slave dignity"
     shortName: Haydée
     ocean:
       O: 4  # High openness - sees beauty, understands pain
@@ -261,6 +270,7 @@ agents:
 
   devops:
     character: Jacopo
+    visual: "A loyal sailor in simple maritime clothes, weathered honest face, utterly devoted expression, first-mate bearing"
     shortName: Jacopo
     ocean:
       O: 3  # Medium openness - practical smuggler

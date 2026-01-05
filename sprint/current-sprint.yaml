@@ -672,4 +672,22 @@ backlog:
     See sprint/archive/ for completed backlog items (BL-1, BL-2).
 
   epics: []
-  stories: []
+  stories:
+    - id: "BL-3"
+      title: "Update theme creation to include visual field"
+      description: |
+        After migrating portrait prompts inline to theme YAML files, update
+        theme creation tooling to include the new `visual` field:
+
+        1. Update validateThemeSchema() in src/cli/utils/themes.ts to optionally
+           check for visual field (or make it recommended)
+        2. Update /theme-maker wizard to prompt for visual descriptions
+        3. Update /create-theme documentation to mention visual field
+        4. Consider: generate visual prompts from character name using AI
+
+        Files:
+        - src/cli/utils/themes.ts (validateThemeSchema)
+        - pennyfarthing-dist/commands/theme-maker.md
+        - pennyfarthing-dist/commands/create-theme.md
+      points: 2
+      priority: P3

@@ -17,6 +17,7 @@ theme:
 agents:
   orchestrator:
     character: Duncan Idaho
+    visual: "A handsome athletic man with curly dark hair, strong jaw, battle scars, wearing ornate swordmaster's vest with House Atreides hawk emblem, holding kindjal blade"
     shortName: Duncan
     # JOB FAIR OPTIMIZED: Leto II excels as reviewer (88.12)
     ocean:
@@ -45,6 +46,7 @@ agents:
 
   sm:
     character: Stilgar
+    visual: "A weathered desert warrior with dark leathery skin, deep blue-within-blue eyes, wearing a stillsuit with nose plugs, traditional Fremen sietch robe, grizzled beard"
     shortName: Stilgar
     ocean:
       O: 2  # Traditional honor
@@ -72,6 +74,7 @@ agents:
 
   tea:
     character: Reverend Mother Gaius Helen Mohiam
+    visual: "An ancient woman with stern hawkish features, piercing dark eyes, wearing black Bene Gesserit robes with hood pulled back, silver hair in tight bun"
     shortName: Mohiam
     # JOB FAIR OPTIMIZED: Rev Mother moved here; Thufir excels at dev (+10.62)
     ocean:
@@ -100,6 +103,7 @@ agents:
 
   dev:
     character: Thufir Hawat
+    visual: "An elderly man with deeply lined face, intense calculating gaze, red-stained lips from sapho juice, wearing black assassin's garb with mentat hood"
     shortName: Thufir
     # JOB FAIR OPTIMIZED: Thufir scored best as dev (+10.62 over Rev Mother)
     ocean:
@@ -128,6 +132,7 @@ agents:
 
   reviewer:
     character: Leto II (The God Emperor)
+    visual: "A massive hybrid figure with human face emerging from sandworm-like body, ancient knowing eyes, wearing ornate golden ceremonial collar, skin with sandtrout texture"
     shortName: Leto
     # JOB FAIR OPTIMIZED: Leto II scored 88.12 as reviewer (+0.62 over Rev Mother)
     ocean:
@@ -156,6 +161,7 @@ agents:
 
   architect:
     character: Paul Atreides (Muad'Dib)
+    visual: "A young man with sharp aristocratic features, deep blue prescient eyes, wearing desert stillsuit under flowing desert cloak, crysknife at belt"
     shortName: Paul
     ocean:
       O: 5  # Long-term vision
@@ -183,6 +189,7 @@ agents:
 
   pm:
     character: Lady Jessica
+    visual: "An elegant woman with auburn hair in elaborate braids, striking green eyes, wearing flowing Bene Gesserit robes with noble House colors"
     shortName: Jessica
     ocean:
       O: 4  # Bene Gesserit insight
@@ -210,6 +217,7 @@ agents:
 
   tech-writer:
     character: Princess Irulan
+    visual: "A regal young woman with golden hair, composed aristocratic features, wearing elaborate Imperial court dress with writing stylus in hand, historian's pendant"
     shortName: Irulan
     ocean:
       O: 4  # Historical wisdom
@@ -237,6 +245,7 @@ agents:
 
   ux-designer:
     character: Alia Atreides
+    visual: "A young woman with intense otherworldly eyes, dark hair, wearing priestess robes of Arrakis, carrying crysknife, bearing of someone far older than her years"
     shortName: Alia
     ocean:
       O: 3  # Practical design
@@ -264,6 +273,7 @@ agents:
 
   devops:
     character: Planetologist Pardot Kynes
+    visual: "A bearded man with sun-weathered face, blue Fremen eyes, wearing planetologist field gear with ecological instruments, desert boots, carrying soil samples"
     shortName: Kynes
     ocean:
       O: 3  # Technical focus
