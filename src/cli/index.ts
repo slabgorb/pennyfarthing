@@ -63,6 +63,7 @@ program
   .option('--fix', 'Auto-apply recommended fixes')
   .option('--json', 'Output in JSON format')
   .option('-q, --quiet', 'Only show errors')
+  .option('--dogfood', 'Run dogfooding checks (for pennyfarthing repo development)')
   .action(doctorCommand);
 
 program

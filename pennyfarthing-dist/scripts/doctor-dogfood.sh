@@ -240,6 +240,75 @@ else
 fi
 
 echo ""
+echo "Checking for broken symlinks..."
+echo ""
+
+# Find broken symlinks in key directories
+BROKEN_LINKS=$(find .claude pennyfarthing-dist scripts -type l ! -exec test -e {} \; -print 2>/dev/null)
+if [[ -n "$BROKEN_LINKS" ]]; then
+    while IFS= read -r link; do
+        fail "Broken symlink: $link"
+        if $FIX_MODE; then
+            rm "$link" 2>/dev/null && fix "Removed $link"
+        fi
+    done <<< "$BROKEN_LINKS"
+else
+    ok "No broken symlinks"
+fi
+
+echo ""
+echo "Checking file locations..."
+echo ""
+
+# Check for files that should be in pennyfarthing-dist but aren't
+# Only check directories that are NOT symlinks (symlink dirs are fine)
+MISPLACED=0
+
+# .claude/agents should be a symlink, not a real directory with files
+if [[ -d ".claude/agents" ]] && [[ ! -L ".claude/agents" ]]; then
+    warn ".claude/agents/ is a directory, should be symlink to pennyfarthing/agents"
+    ((MISPLACED++))
+fi
+
+# .claude/commands should be a symlink
+if [[ -d ".claude/commands" ]] && [[ ! -L ".claude/commands" ]]; then
+    warn ".claude/commands/ is a directory, should be symlink to pennyfarthing/commands"
+    ((MISPLACED++))
+fi
+
+# .claude/skills should be a symlink
+if [[ -d ".claude/skills" ]] && [[ ! -L ".claude/skills" ]]; then
+    warn ".claude/skills/ is a directory, should be symlink to pennyfarthing/skills"
+    ((MISPLACED++))
+fi
+
+if [[ $MISPLACED -eq 0 ]]; then
+    ok "All .claude/ directories properly symlinked"
+fi
+
+echo ""
+echo "Checking scripts/ structure..."
+echo ""
+
+# Count distributed vs local scripts
+DIST_SCRIPTS=0
+LOCAL_SCRIPTS=0
+if compgen -G "scripts/*.sh" > /dev/null 2>&1; then
+    for f in scripts/*.sh; do
+        if [[ -L "$f" ]]; then
+            ((DIST_SCRIPTS++))
+        elif [[ -f "$f" ]]; then
+            ((LOCAL_SCRIPTS++))
+        fi
+    done
+fi
+
+ok "$DIST_SCRIPTS distributed scripts (symlinks to pennyfarthing-dist/)"
+if [[ $LOCAL_SCRIPTS -gt 0 ]]; then
+    ok "$LOCAL_SCRIPTS local scripts (dogfooding only, not in npm package)"
+fi
+
+echo ""
 echo "Checking Claude Code integration..."
 echo ""
 
