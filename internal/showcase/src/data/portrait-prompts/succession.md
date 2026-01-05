@@ -7,9 +7,9 @@ Create a sprite sheet of 10 character portrait busts in a 5×2 grid (500px × 20
 
 **Row 1 (left to right):**
 1. **Orchestrator:** An elderly man with white hair and commanding scowl, wearing an expensive dark suit and power tie, intimidating posture, finger pointing accusingly - tyrant patriarch who controls through fear, chaos, and unpredictability
-2. **SM (Scrum Master):** An older Black man with gray hair and tired eyes, wearing a well-tailored business suit, weary but professional expression, holding documents - long-suffering COO who tries to keep the company running despite the family
+2. **SM (Scrum Master):** A very tall young man with curly brown hair and nervous expression, wearing an ill-fitting suit, gangly awkward posture, looking uncertain - tall, awkward cousin who fails upward while bumbling through implementation
 3. **TEA (Test Engineer):** A professional woman with short blonde hair and sharp features, wearing a conservative business suit, calculating assessing gaze, legal folder in hand - general counsel who stress-tests everything for legal and operational exposure
-4. **Dev (Developer):** A very tall young man with curly brown hair and nervous expression, wearing an ill-fitting suit, gangly awkward posture, looking uncertain - tall, awkward cousin who fails upward while bumbling through implementation
+4. **Dev (Developer):** An older Black man with gray hair and tired eyes, wearing a well-tailored business suit, weary but professional expression, holding documents - long-suffering COO who tries to keep the company running despite the family
 5. **Reviewer:** A young man with boyish features and smirking expression, wearing an expensive casual blazer, arms crossed, sardonic eyebrow raised - cutting youngest son who masks insecurity with devastating critique
 
 **Row 2 (left to right):**

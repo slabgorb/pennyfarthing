@@ -6,10 +6,10 @@ Create a sprite sheet of 10 character portrait busts in a 5×2 grid (500px × 20
 **Source:** The Americans (2013-2018), FX / Joe Weisberg
 
 **Row 1 (left to right):**
-1. **Orchestrator:** An elderly woman with short gray hair and sharp, penetrating eyes, wearing a modest 1980s wool coat and scarf, stern expression with deep lines of experience - orchestrates from the shadows with cold clarity
+1. **Orchestrator:** A young man in his late twenties with refined Slavic features and dark hair, wearing a Soviet diplomatic suit, intelligent eyes showing internal conflict - implements while questioning the system
 2. **SM (Scrum Master):** A man in his late thirties with feathered brown hair and soft features, wearing a 1980s leather jacket over casual American clothes, troubled introspective expression - leads while questioning everything
 3. **TEA (Test Engineer):** A broad-shouldered man in his forties with a thick mustache and earnest eyes, wearing an FBI badge on a conservative suit and tie, watchful expression - tests everyone's loyalty, including his friends
-4. **Dev (Developer):** A young man in his late twenties with refined Slavic features and dark hair, wearing a Soviet diplomatic suit, intelligent eyes showing internal conflict - implements while questioning the system
+4. **Dev (Developer):** An elderly woman with short gray hair and sharp, penetrating eyes, wearing a modest 1980s wool coat and scarf, stern expression with deep lines of experience - orchestrates from the shadows with cold clarity
 5. **Reviewer:** A woman in her late thirties with straight brown hair and intense determined eyes, wearing a 1980s suburban blouse, steely unwavering expression - reviews with ideological perfection
 
 **Row 2 (left to right):**

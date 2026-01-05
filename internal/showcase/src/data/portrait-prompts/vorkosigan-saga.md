@@ -7,9 +7,9 @@ Create a sprite sheet of 10 character portrait busts in a 5×2 grid (500px × 20
 
 **Row 1 (left to right):**
 1. **Orchestrator:** A middle-aged man with thinning brown hair and unremarkable features designed to be forgettable, wearing a plain gray Imperial Security uniform, intense watchful eyes that miss nothing, subtle earpiece visible - ImpSec chief who orchestrates through total recall and paranoid competence
-2. **SM (Scrum Master):** A very short man with a hunched spine and brittle bones, bright gray eyes full of manic energy, wearing a Dendarii mercenary admiral's gray and white uniform, commanding presence despite small stature - manic genius who leads through sheer force of personality and lateral thinking
+2. **SM (Scrum Master):** A tall lean man with a brown beard and competent hands, wearing engineer's coveralls with Dendarii fleet insignia, tools at belt, steady reliable expression - engineer who implements through steady competence and quiet loyalty
 3. **TEA (Test Engineer):** A woman in her fifties with short reddish-brown hair going gray, calm direct gaze, wearing practical Barrayaran clothing, wedding ring visible, serene confident expression - Betan who tests through ethical clarity and unflinching honesty
-4. **Dev (Developer):** A tall lean man with a brown beard and competent hands, wearing engineer's coveralls with Dendarii fleet insignia, tools at belt, steady reliable expression - engineer who implements through steady competence and quiet loyalty
+4. **Dev (Developer):** A very short man with a hunched spine and brittle bones, bright gray eyes full of manic energy, wearing a Dendarii mercenary admiral's gray and white uniform, commanding presence despite small stature - manic genius who leads through sheer force of personality and lateral thinking
 5. **Reviewer:** A powerfully built man in his sixties with graying hair and weathered commanding face, wearing Barrayaran count's formal uniform with military decorations, eyes carrying weight of difficult decisions - lord regent who reviews with the weight of duty and hard experience
 
 **Row 2 (left to right):**

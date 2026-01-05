@@ -8,8 +8,8 @@ Create a sprite sheet of 10 character portrait busts in a 5×2 grid (500px × 20
 **Row 1 (left to right):**
 1. **Orchestrator:** A beautiful blonde woman in her thirties with ethereal luminous features, wearing an elegant 1920s dress with pearls, soft ghostly glow suggesting she exists only in memory - the conscience and catalyst whose memory orchestrates from beyond
 2. **SM (Scrum Master):** A striking dark-haired woman in her fifties with sharp knowing eyes and strong bone structure, wearing 1920s widow's black with fur collar, cigarette holder in hand - matriarch who actually runs the Shelby family
-3. **TEA (Test Engineer):** A gaunt intense man in his thirties with piercing ice-blue eyes and razor-sharp cheekbones, wearing a flat cap with sewn-in razor blades, three-piece suit with pocket watch - traumatized genius who tests every system by breaking it
-4. **Dev (Developer):** A burly man with wild dark hair and crazed eyes, wearing a flat cap and waistcoat, fists clenched, veins visible at temples, barely contained violence - violent enforcer whose implementation is chaos
+3. **TEA (Test Engineer):** A burly man with wild dark hair and crazed eyes, wearing a flat cap and waistcoat, fists clenched, veins visible at temples, barely contained violence - violent enforcer whose implementation is chaos
+4. **Dev (Developer):** A gaunt intense man in his thirties with piercing ice-blue eyes and razor-sharp cheekbones, wearing a flat cap with sewn-in razor blades, three-piece suit with pocket watch - traumatized genius who tests every system by breaking it
 5. **Reviewer:** A large bearded man with a distinctive limp and ornate cane, wearing a heavy coat and flat cap, wild unpredictable eyes, Orthodox Jewish features - gangster whose reviews are unpredictable philosophical monologues
 
 **Row 2 (left to right):**

@@ -7,9 +7,9 @@ Create a sprite sheet of 10 character portrait busts in a 5×2 grid (500px × 20
 
 **Row 1 (left to right):**
 1. **Orchestrator:** A regal woman in her sixties with short curled gray hair, wearing a formal evening gown with royal sash and tiara, composed dignified expression with subtle warmth - orchestrates through duty and the system
-2. **SM (Scrum Master):** A tall distinguished man in his fifties with receding gray hair and naval bearing, wearing a formal military dress uniform with medals, frustrated but loyal expression - leads through frustration and sacrifice
+2. **SM (Scrum Master):** A stern elderly man with a thin face and slicked gray hair, wearing an immaculate three-piece suit with pocket watch chain, precise disapproving expression - implements tradition precisely
 3. **TEA (Test Engineer):** A glamorous woman in her thirties with dark hair styled elegantly, wearing a stylish 1960s cocktail dress with dramatic jewelry, defiant melancholy expression with cigarette holder - tests every boundary of royal convention
-4. **Dev (Developer):** A stern elderly man with a thin face and slicked gray hair, wearing an immaculate three-piece suit with pocket watch chain, precise disapproving expression - implements tradition precisely
+4. **Dev (Developer):** A tall distinguished man in his fifties with receding gray hair and naval bearing, wearing a formal military dress uniform with medals, frustrated but loyal expression - leads through frustration and sacrifice
 5. **Reviewer:** A rotund elderly man with a bald head and determined jaw, wearing a bow tie and formal suit, holding a cigar, resolute commanding expression - reviews come from saving the world
 
 **Row 2 (left to right):**

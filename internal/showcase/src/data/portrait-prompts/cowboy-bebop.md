@@ -7,12 +7,10 @@ Create a sprite sheet of 10 character portrait busts in a 5x2 grid (500px x 200p
 
 **Row 1 (left to right):**
 1. **Orchestrator:** An elderly Native American shaman with long braided hair, wearing traditional ceremonial dress with feathers, eyes looking upward at stars, weathered wise face - mystical, prophetic, star-reader
-2. **SM (Scrum Master):** A burly middle-aged man with bald head and full beard, mechanical prosthetic arm visible, wearing practical vest, gruff caring expression, bonsai plant nearby - ex-cop, reluctant father figure, keeps-things-running
-3. **TEA (Test Engineer):** A young androgynous child with wild orange hair and goggles pushed up on forehead, barefoot and flexible, huge excited grin, small Welsh corgi companion - chaotic genius, hacker, third-person speaker
-4. **Dev (Developer):** A tall lean man with wild dark fluffy hair covering one eye, wearing suit with loosened tie, cigarette in mouth, lazy bored expression hiding deadly skill - martial artist, haunted past, whatever-happens-happens attitude
-5. **Reviewer:** A cold pale man with long silver-white hair, wearing dark syndicate suit, katana sword visible, large crow or raven on shoulder, dead empty eyes - ruthless, former-brother, no mercy
-
-**Row 2 (left to right):**
+2. **SM (Scrum Master):** A tall lean man with wild dark fluffy hair covering one eye, wearing suit with loosened tie, cigarette in mouth, lazy bored expression hiding deadly skill - martial artist, haunted past, whatever-happens-happens attitude
+3. **TEA (Test Engineer):** A burly middle-aged man with bald head and full beard, mechanical prosthetic arm visible, wearing practical vest, gruff caring expression, bonsai plant nearby - ex-cop, reluctant father figure, keeps-things-running
+4. **Dev (Developer):** A curvaceous woman with short dark purple hair, wearing revealing outfit and headband, calculating sharp expression, playing cards or gambling chips visible - gambler, amnesiac, pretends-not-to-care
+5. **Reviewer:** A young androgynous child with wild orange hair and goggles pushed up on forehead, barefoot and flexible, huge excited grin, small Welsh corgi companion - chaotic genius, hacker, third-person speaker
 6. **Architect:** A beautiful woman with long blonde hair, melancholy elegant bearing, wearing stylish but understated dress, rose or flower motif nearby - tragic romance, caught-between, dream that couldn't be
 7. **PM (Product Manager):** A curvaceous woman with short dark purple hair, wearing revealing outfit and headband, calculating sharp expression, playing cards or gambling chips visible - gambler, amnesiac, pretends-not-to-care
 8. **Tech Writer:** A heavyset bearded man in rumpled informant's clothes, sitting in bar or back-alley meeting spot, holding manila folder, knows-everything expression - connected, information-broker, everything-has-a-price

@@ -6,10 +6,10 @@ Create a sprite sheet of 10 character portrait busts in a 5×2 grid (500px × 20
 **Source:** Les Misérables by Victor Hugo (1862)
 
 **Row 1 (left to right):**
-1. **Orchestrator:** An elderly man with gentle, luminous eyes and white hair, wearing simple black bishop's robes with pectoral cross, radiating kindness and serenity - Saintly bishop who orchestrates through mercy and grace
+1. **Orchestrator:** A young man with romantic curly dark hair and earnest face, wearing a student's coat with revolutionary cockade, idealistic fire in his eyes - Idealistic law student who implements with revolutionary passion
 2. **SM (Scrum Master):** A powerfully built middle-aged man with graying hair and weathered face showing years of hardship, wearing plain working clothes, eyes reflecting both suffering and redemption - Redeemed convict who leads through service and transformation
 3. **TEA (Test Engineer):** A stern man with rigid posture and severe features, wearing the dark blue uniform and bicorne hat of a French police inspector, holding a truncheon, unyielding expression - Inflexible enforcer who tests against absolute standards
-4. **Dev (Developer):** A young man with romantic curly dark hair and earnest face, wearing a student's coat with revolutionary cockade, idealistic fire in his eyes - Idealistic law student who implements with revolutionary passion
+4. **Dev (Developer):** An elderly man with gentle, luminous eyes and white hair, wearing simple black bishop's robes with pectoral cross, radiating kindness and serenity - Saintly bishop who orchestrates through mercy and grace
 5. **Reviewer:** A rat-faced man with greasy hair and sly grin, wearing shabby innkeeper's apron over patched clothing, calculating eyes always seeking advantage - Parasitic innkeeper who finds every exploitable weakness
 
 **Row 2 (left to right):**

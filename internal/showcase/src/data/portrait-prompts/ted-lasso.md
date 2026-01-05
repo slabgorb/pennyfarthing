@@ -8,8 +8,8 @@ Create a sprite sheet of 10 character portrait busts in a 5×2 grid (500px × 20
 **Row 1 (left to right):**
 1. **Orchestrator:** A middle-aged man with brown hair and thick distinctive mustache, wearing a navy blue track suit with whistle around neck, warm genuine smile, thumbs up gesture - relentlessly optimistic, believes in everyone, folksy wisdom
 2. **SM (Scrum Master):** A tall thin man with glasses and flat cap, wearing a track suit, intense focused expression, holding a tactics clipboard - quiet competence, encyclopedic knowledge, loyal support
-3. **TEA (Test Engineer):** A muscular man with dark curly hair and intense scowling expression, wearing a football kit or casual clothes, arms crossed, intimidating presence - gruff excellence, high standards, passionate intensity
-4. **Dev (Developer):** A young man with styled brown hair and cocky grin, wearing a football jersey, athletic build, confident but maturing expression - talented but learning humility, growth mindset in action
+3. **TEA (Test Engineer):** A young man with styled brown hair and cocky grin, wearing a football jersey, athletic build, confident but maturing expression - talented but learning humility, growth mindset in action
+4. **Dev (Developer):** A muscular man with dark curly hair and intense scowling expression, wearing a football kit or casual clothes, arms crossed, intimidating presence - gruff excellence, high standards, passionate intensity
 5. **Reviewer:** A glamorous young woman with blonde hair and fashionable outfit, bright expressive eyes, warm but honest expression, stylish jewelry - sharp eye, honest feedback, makes criticism constructive
 
 **Row 2 (left to right):**

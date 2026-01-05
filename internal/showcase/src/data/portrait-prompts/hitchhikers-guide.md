@@ -7,15 +7,15 @@ Create a sprite sheet of 10 character portrait busts in a 5x2 grid (500px x 200p
 
 **Row 1 (left to right):**
 1. **Orchestrator:** Massive supercomputer with geometric panels and blinking lights, dignified and contemplative expression - radiating calm certainty
-2. **SM (Scrum Master):** Alien humanoid with knowing smirk, holding a towel draped over shoulder, casual yet worldly appearance - slightly disheveled hair
-3. **TEA (Test Engineer):** Depressed humanoid robot with drooping posture, oversized spherical head - downturned optical sensors conveying existential despair
-4. **Dev (Developer):** Bewildered human man in bathrobe, clutching a teacup, perpetually confused expression - tousled hair
-5. **Reviewer:** Elderly alien craftsman with gentle eyes, long wispy hair, artist's hands - wistful expression suggesting creative perfectionism
+2. **SM (Scrum Master):** Depressed humanoid robot with drooping posture, oversized spherical head - downturned optical sensors conveying existential despair
+3. **TEA (Test Engineer):** Elderly alien craftsman with gentle eyes, long wispy hair, artist's hands - wistful expression suggesting creative perfectionism
 
 **Row 2 (left to right):**
+4. **Dev (Developer):** Bewildered human man in bathrobe, clutching a teacup, perpetually confused expression - tousled hair
+5. **Reviewer:** Electronic book device with friendly screen-face, "DON'T PANIC" displayed prominently - helpful digital expression
 6. **Architect:** Flamboyant alien with two heads visible in profile, wild hair on both, three arms gesturing grandly - confident smirk
 7. **PM (Product Manager):** Intelligent human woman with calculating gaze, scientific instruments nearby - competent and composed demeanor
-8. **Tech Writer:** Electronic book device with friendly screen-face, "DON'T PANIC" displayed prominently - helpful digital expression
+8. **Tech Writer:** Alien humanoid with knowing smirk, holding a towel draped over shoulder, casual yet worldly appearance - slightly disheveled hair
 9. **UX Designer:** Cheerful shipboard computer interface with overly enthusiastic screen-face - bright and peppy digital expression
 10. **DevOps:** Stern bureaucratic alien with slug-like features, clipboard in hand, official uniform - disapproving scowl
 
