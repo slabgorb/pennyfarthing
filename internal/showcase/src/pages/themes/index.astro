@@ -108,7 +108,7 @@ const roleLabels: Record<string, string> = {
             </td>
             {roles.map((role) => {
               const agent = theme.agents.find((a) => a.role === role);
-              const spritePath = `/sprites/${theme.id}/${role}.png`;
+              const spritePath = agent ? `/sprites/${theme.id}/${agent.slug}.png` : `/sprites/${theme.id}/${role}.png`;
               const displayName = agent?.shortName || role;
               return (
                 <td class="py-2 px-1 text-center align-top">

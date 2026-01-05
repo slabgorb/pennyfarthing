@@ -19,13 +19,34 @@ const __dirname = dirname(__filename);
 const THEMES_DIR = join(__dirname, '..', '..', '..', '..', 'pennyfarthing-dist', 'personas', 'themes');
 
 /**
+ * Convert a name to a URL-safe slug (lowercase kebab-case)
+ */
+function toSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+/**
+ * Generate OCEAN suffix from scores (e.g., "54432" for O=5,C=4,E=4,A=3,N=2)
+ */
+function oceanSuffix(ocean: { O: number; C: number; E: number; A: number; N: number }): string {
+  return `${ocean.O}${ocean.C}${ocean.E}${ocean.A}${ocean.N}`;
+}
+
+/**
  * Transform raw YAML agent data to typed Agent interface
  */
 function transformAgent(role: string, raw: RawThemeYaml['agents'][string]): Agent {
+  const shortName = raw.shortName ?? raw.character.split(' ')[0];
+  const baseSlug = toSlug(shortName);
+  const slug = `${baseSlug}-${oceanSuffix(raw.ocean)}`;
   return {
     role,
+    slug,
     character: raw.character,
-    shortName: raw.shortName ?? raw.character.split(' ')[0],
+    shortName,
     ocean: raw.ocean,
     style: raw.style,
     expertise: raw.expertise,

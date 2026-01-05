@@ -15,6 +15,7 @@ interface CharacterCardProps {
     theme: string;
     themeId?: string;
     role: string;
+    slug?: string;
     ocean: { O: number; C: number; E: number; A: number; N: number };
     emoji?: string;
   };
@@ -112,9 +113,9 @@ function MiniSpiderChart({ ocean, size = 60 }: { ocean: Record<string, number>; 
 }
 
 // Portrait with emoji fallback
-function Portrait({ themeId, role, emoji, name }: { themeId?: string; role: string; emoji?: string; name: string }) {
+function Portrait({ themeId, slug, emoji, name }: { themeId?: string; slug?: string; emoji?: string; name: string }) {
   const [imgError, setImgError] = useState(false);
-  const portraitPath = themeId ? `/portraits/${themeId}/${role}.png` : null;
+  const portraitPath = themeId && slug ? `/portraits/${themeId}/${slug}.png` : null;
 
   if (!portraitPath || imgError) {
     return (
@@ -135,7 +136,7 @@ function Portrait({ themeId, role, emoji, name }: { themeId?: string; role: stri
 }
 
 export default function CharacterCard({ character, onSelect, showFavorite = true, isSelected = false }: CharacterCardProps) {
-  const { name, theme, themeId, role, ocean, emoji } = character;
+  const { name, theme, themeId, role, slug, ocean, emoji } = character;
   const characterId = buildCharacterId(theme, role);
 
   return (
@@ -202,7 +203,7 @@ export default function CharacterCard({ character, onSelect, showFavorite = true
 
         {/* Portrait aligned right */}
         <div className="ml-auto">
-          <Portrait themeId={themeId} role={role} emoji={emoji} name={name} />
+          <Portrait themeId={themeId} slug={slug} emoji={emoji} name={name} />
         </div>
       </div>
     </div>

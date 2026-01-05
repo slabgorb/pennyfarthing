@@ -53,7 +53,7 @@ const roles = ['sm', 'tea', 'dev', 'reviewer', 'architect', 'pm', 'ux-designer',
   <div class="portraits flex gap-1 flex-grow justify-end z-10">
     {roles.map((role) => {
       const agent = theme.agents.find((a) => a.role === role);
-      const portraitPath = `/portraits/${theme.id}/${role}.png`;
+      const portraitPath = agent ? `/portraits/${theme.id}/${agent.slug}.png` : `/portraits/${theme.id}/${role}.png`;
       return agent ? (
         <PortraitTooltip agent={agent} themeName={theme.metadata.name} themeId={theme.id}>
           <a href={`/characters/${theme.id}/${role}`} class="portrait-container flex-shrink-0 block">

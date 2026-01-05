@@ -58,10 +58,28 @@ const AGENT_NAMES: Record<string, string> = {
 };
 
 // Cache for theme data to avoid repeated file reads
-const themeCache: Map<string, Record<string, string>> = new Map();
+interface AgentData {
+  character: string;
+  shortName: string;
+  slug: string;
+}
+const themeCache: Map<string, Record<string, AgentData>> = new Map();
 
-// Load character names for all agents in a theme
-function getCharacterNames(theme: string): Record<string, string> {
+// Convert name to URL-safe slug (lowercase kebab-case)
+function toSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+// Generate OCEAN suffix from scores
+function oceanSuffix(ocean: { O: number; C: number; E: number; A: number; N: number }): string {
+  return `${ocean.O}${ocean.C}${ocean.E}${ocean.A}${ocean.N}`;
+}
+
+// Load agent data for all agents in a theme
+function getAgentData(theme: string): Record<string, AgentData> {
   if (themeCache.has(theme)) {
     return themeCache.get(theme)!;
   }
@@ -70,14 +88,38 @@ function getCharacterNames(theme: string): Record<string, string> {
   const content = readFileSync(themePath, 'utf-8');
   const data = parseYaml(content);
 
-  const names: Record<string, string> = {};
+  const agents: Record<string, AgentData> = {};
   if (data?.agents) {
     for (const agent of AGENTS) {
-      names[agent] = data.agents[agent]?.character || AGENT_NAMES[agent];
+      const agentInfo = data.agents[agent];
+      if (agentInfo) {
+        const character = agentInfo.character || AGENT_NAMES[agent];
+        const shortName = agentInfo.shortName || character.split(' ')[0];
+        const baseSlug = toSlug(shortName);
+        const ocean = agentInfo.ocean || { O: 3, C: 3, E: 3, A: 3, N: 3 };
+        const slug = `${baseSlug}-${oceanSuffix(ocean)}`;
+        agents[agent] = { character, shortName, slug };
+      } else {
+        agents[agent] = {
+          character: AGENT_NAMES[agent],
+          shortName: AGENT_NAMES[agent],
+          slug: agent,
+        };
+      }
     }
   }
 
-  themeCache.set(theme, names);
+  themeCache.set(theme, agents);
+  return agents;
+}
+
+// Load character names for all agents in a theme (backward compat)
+function getCharacterNames(theme: string): Record<string, string> {
+  const agents = getAgentData(theme);
+  const names: Record<string, string> = {};
+  for (const agent of AGENTS) {
+    names[agent] = agents[agent]?.character || AGENT_NAMES[agent];
+  }
   return names;
 }
 
@@ -132,14 +174,16 @@ function generateSvgFiles(): void {
   // Generate spider charts
   let count = 0;
   for (const theme of THEMES) {
+    const agentData = getAgentData(theme);
     for (const agent of AGENTS) {
       const svg = generateSpider(theme, agent);
+      const slug = agentData[agent]?.slug || agent;
 
-      // Write to by-theme directory
-      const themeFilePath = join(byThemeDir, theme, `${agent}.svg`);
+      // Write to by-theme directory using slug-based naming
+      const themeFilePath = join(byThemeDir, theme, `${slug}.svg`);
       writeFileSync(themeFilePath, svg);
 
-      // Write to by-role directory
+      // Write to by-role directory (keeps role-based for cross-theme comparison)
       const roleFilePath = join(byRoleDir, agent, `${theme}.svg`);
       writeFileSync(roleFilePath, svg);
 
@@ -255,9 +299,11 @@ ${LEGEND}`;
     md += '| Role | Spider | Character |\n';
     md += '|:-----|:------:|:----------|\n';
 
+    const agentData = getAgentData(theme);
     for (const agent of AGENTS) {
       const charName = escapeForMarkdown(charNames[agent]);
-      const imgSrc = `by-theme/${theme}/${agent}.svg`;
+      const slug = agentData[agent]?.slug || agent;
+      const imgSrc = `by-theme/${theme}/${slug}.svg`;
       md += `| ${AGENT_NAMES[agent]} | ${imgTag(imgSrc, charNames[agent])} | **${charName}** |\n`;
     }
 
