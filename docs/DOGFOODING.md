@@ -2,6 +2,26 @@
 
 Pennyfarthing uses itself for development - "eating your own dogfood." With v4.0's symlink-based installation, synchronization issues are eliminated.
 
+## Quick Start for New Developers
+
+```bash
+# Clone the repo
+git clone https://github.com/1898andCo/pennyfarthing.git
+cd pennyfarthing
+
+# Install dependencies
+npm install
+
+# Install git hooks
+./pennyfarthing-dist/scripts/install-git-hooks.sh
+
+# Check your setup
+./pennyfarthing-dist/scripts/doctor-dogfood.sh
+
+# Fix any issues automatically
+./pennyfarthing-dist/scripts/doctor-dogfood.sh --fix
+```
+
 ## The Structure (v4.0+)
 
 ```
