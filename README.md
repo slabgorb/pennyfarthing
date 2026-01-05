@@ -91,6 +91,7 @@ Handoffs are automatic when context usage is below 70%. Above that threshold, ag
 | [Configuration](docs/CONFIGURATION.md) | Configuration reference |
 | [Permissions](docs/PERMISSIONS.md) | Claude Code permissions setup |
 | [Benchmarking](docs/BENCHMARKING.md) | Scientific persona evaluation |
+| [Cyclist](docs/CYCLIST.md) | Cyclist sidebar integration |
 
 ## Directory Structure
 
