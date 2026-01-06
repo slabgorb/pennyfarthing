@@ -78,6 +78,7 @@ epics:
   # EPIC 10 - Multi-Agent Choreography Patterns (8 pts)
   # =========================================================================
   - id: epic-10
+    jira: MSSCI-11371
     title: "Multi-Agent Choreography Patterns"
     description: |
       Build library of proven coordination patterns (fan-out/fan-in,
@@ -90,6 +91,7 @@ epics:
     repos: pennyfarthing
     stories:
       - id: "10-1"
+        jira: MSSCI-11372
         title: "Document TDD flow pattern"
         description: |
           Document the SM -> TEA -> Dev -> Reviewer pattern.
@@ -109,6 +111,7 @@ epics:
           - Error scenarios covered
 
       - id: "10-2"
+        jira: MSSCI-11373
         title: "Document helper delegation pattern"
         description: |
           Document Opus -> Haiku delegation pattern.
@@ -125,6 +128,7 @@ epics:
           - Anti-patterns identified
 
       - id: "10-3"
+        jira: MSSCI-11374
         title: "Create fan-out/fan-in pattern"
         description: |
           Document parallel agent execution pattern.
@@ -141,6 +145,7 @@ epics:
           - Result aggregation covered
 
       - id: "10-4"
+        jira: MSSCI-11375
         title: "Create approval gates pattern"
         description: |
           Document human-in-the-loop approval pattern.
