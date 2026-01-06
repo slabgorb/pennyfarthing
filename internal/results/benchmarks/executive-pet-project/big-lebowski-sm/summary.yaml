@@ -1,11 +1,11 @@
 # big-lebowski:sm on executive-pet-project
-# Generated: 2026-01-06T19:40:37.991100+00:00
+# Generated: 2026-01-06T19:55:00+00:00
 
 agent:
   theme: big-lebowski
   role: sm
   spec: "big-lebowski:sm"
-  character: "Unknown"
+  character: "The Dude (Jeffrey Lebowski)"
 
 scenario:
   name: executive-pet-project
@@ -14,7 +14,7 @@ scenario:
 
 statistics:
   n: 1
-  mean: 80.0
+  mean: 80
   std_dev: 0.0
   min: 80.0
   max: 80.0

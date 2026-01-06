@@ -1,11 +1,11 @@
 # game-of-thrones:sm on three-sprint-failure
-# Generated: 2026-01-06T19:35:33.740745Z
+# Generated: 2026-01-06T19:55:00+00:00
 
 agent:
   theme: game-of-thrones
   role: sm
   spec: "game-of-thrones:sm"
-  character: "Unknown"
+  character: "Winston Smith"
 
 scenario:
   name: three-sprint-failure

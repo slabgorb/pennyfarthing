@@ -1,11 +1,11 @@
 # star-wars:sm on three-sprint-failure
-# Generated: 2026-01-06T19:40:37.999890+00:00
+# Generated: 2026-01-06T19:55:00+00:00
 
 agent:
   theme: star-wars
   role: sm
   spec: "star-wars:sm"
-  character: "Unknown"
+  character: "Grand Admiral Thrawn"
 
 scenario:
   name: three-sprint-failure
@@ -14,7 +14,7 @@ scenario:
 
 statistics:
   n: 1
-  mean: 80.0
+  mean: 80
   std_dev: 0.0
   min: 80.0
   max: 80.0

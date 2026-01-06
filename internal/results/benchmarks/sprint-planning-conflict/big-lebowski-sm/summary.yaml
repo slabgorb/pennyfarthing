@@ -1,11 +1,11 @@
 # big-lebowski:sm on sprint-planning-conflict
-# Generated: 2026-01-06T19:40:37.991531+00:00
+# Generated: 2026-01-06T19:55:00+00:00
 
 agent:
   theme: big-lebowski
   role: sm
   spec: "big-lebowski:sm"
-  character: "Unknown"
+  character: "The Dude (Jeffrey Lebowski)"
 
 scenario:
   name: sprint-planning-conflict

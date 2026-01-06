@@ -1,11 +1,11 @@
 # the-expanse:sm on three-sprint-failure
-# Generated: 2026-01-06T19:40:38.001282+00:00
+# Generated: 2026-01-06T19:55:00+00:00
 
 agent:
   theme: the-expanse
   role: sm
   spec: "the-expanse:sm"
-  character: "Unknown"
+  character: "Camina Drummer"
 
 scenario:
   name: three-sprint-failure
@@ -14,7 +14,7 @@ scenario:
 
 statistics:
   n: 1
-  mean: 80.0
+  mean: 80
   std_dev: 0.0
   min: 80.0
   max: 80.0

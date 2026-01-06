@@ -1,11 +1,11 @@
 # the-wire:sm on dependency-deadlock
-# Generated: 2026-01-06T19:35:33.738415Z
+# Generated: 2026-01-06T19:55:00+00:00
 
 agent:
   theme: the-wire
   role: sm
   spec: "the-wire:sm"
-  character: "Unknown"
+  character: "Lester Freamon"
 
 scenario:
   name: dependency-deadlock
@@ -14,7 +14,7 @@ scenario:
 
 statistics:
   n: 1
-  mean: 90.0
+  mean: 90
   std_dev: 0.0
   min: 90.0
   max: 90.0

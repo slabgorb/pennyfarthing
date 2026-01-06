@@ -1,11 +1,11 @@
 # big-lebowski:sm on dependency-deadlock
-# Generated: 2026-01-06T19:40:37.991685+00:00
+# Generated: 2026-01-06T19:55:00+00:00
 
 agent:
   theme: big-lebowski
   role: sm
   spec: "big-lebowski:sm"
-  character: "Unknown"
+  character: "The Dude (Jeffrey Lebowski)"
 
 scenario:
   name: dependency-deadlock

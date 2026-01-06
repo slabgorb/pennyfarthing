@@ -1,11 +1,11 @@
 # the-wire:sm on three-sprint-failure
-# Generated: 2026-01-06T19:35:33.738041Z
+# Generated: 2026-01-06T19:55:00+00:00
 
 agent:
   theme: the-wire
   role: sm
   spec: "the-wire:sm"
-  character: "Unknown"
+  character: "Lester Freamon"
 
 scenario:
   name: three-sprint-failure
@@ -14,7 +14,7 @@ scenario:
 
 statistics:
   n: 1
-  mean: 80.0
+  mean: 80
   std_dev: 0.0
   min: 80.0
   max: 80.0

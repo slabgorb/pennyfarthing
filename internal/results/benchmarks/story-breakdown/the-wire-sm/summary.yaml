@@ -1,11 +1,11 @@
 # the-wire:sm on story-breakdown
-# Generated: 2026-01-06T19:35:33.738276Z
+# Generated: 2026-01-06T19:55:00+00:00
 
 agent:
   theme: the-wire
   role: sm
   spec: "the-wire:sm"
-  character: "Unknown"
+  character: "Lester Freamon"
 
 scenario:
   name: story-breakdown

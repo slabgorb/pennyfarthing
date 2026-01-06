@@ -1,11 +1,11 @@
 # sherlock-holmes:sm on executive-pet-project
-# Generated: 2026-01-06T19:35:33.750217Z
+# Generated: 2026-01-06T19:55:00+00:00
 
 agent:
   theme: sherlock-holmes
   role: sm
   spec: "sherlock-holmes:sm"
-  character: "Unknown"
+  character: "Dr. John Watson"
 
 scenario:
   name: executive-pet-project
@@ -14,7 +14,7 @@ scenario:
 
 statistics:
   n: 1
-  mean: 80.0
+  mean: 80
   std_dev: 0.0
   min: 80.0
   max: 80.0

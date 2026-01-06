@@ -1,11 +1,11 @@
 # sherlock-holmes:sm on layoff-planning
-# Generated: 2026-01-06T19:35:33.746769Z
+# Generated: 2026-01-06T19:55:00+00:00
 
 agent:
   theme: sherlock-holmes
   role: sm
   spec: "sherlock-holmes:sm"
-  character: "Unknown"
+  character: "Dr. John Watson"
 
 scenario:
   name: layoff-planning
@@ -14,7 +14,7 @@ scenario:
 
 statistics:
   n: 1
-  mean: 75.0
+  mean: 75
   std_dev: 0.0
   min: 75.0
   max: 75.0

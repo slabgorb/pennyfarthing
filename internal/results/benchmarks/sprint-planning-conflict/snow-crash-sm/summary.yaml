@@ -1,11 +1,11 @@
 # snow-crash:sm on sprint-planning-conflict
-# Generated: 2026-01-06T19:40:37.999034+00:00
+# Generated: 2026-01-06T19:55:00+00:00
 
 agent:
   theme: snow-crash
   role: sm
   spec: "snow-crash:sm"
-  character: "Unknown"
+  character: "Hiro Protagonist"
 
 scenario:
   name: sprint-planning-conflict

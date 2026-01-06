@@ -1,11 +1,11 @@
 # cowboy-bebop:sm on sprint-planning-conflict
-# Generated: 2026-01-06T19:40:37.993754+00:00
+# Generated: 2026-01-06T19:55:00+00:00
 
 agent:
   theme: cowboy-bebop
   role: sm
   spec: "cowboy-bebop:sm"
-  character: "Unknown"
+  character: "Spike Spiegel"
 
 scenario:
   name: sprint-planning-conflict
@@ -14,7 +14,7 @@ scenario:
 
 statistics:
   n: 1
-  mean: 85.0
+  mean: 85
   std_dev: 0.0
   min: 85.0
   max: 85.0
