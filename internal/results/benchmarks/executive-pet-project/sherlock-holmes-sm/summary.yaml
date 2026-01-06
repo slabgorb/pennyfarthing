@@ -1,14 +1,14 @@
-# big-lebowski:sm on story-breakdown
-# Generated: 2026-01-06T19:40:37.992000+00:00
+# sherlock-holmes:sm on executive-pet-project
+# Generated: 2026-01-06T19:35:33.750217Z
 
 agent:
-  theme: big-lebowski
+  theme: sherlock-holmes
   role: sm
-  spec: "big-lebowski:sm"
+  spec: "sherlock-holmes:sm"
   character: "Unknown"
 
 scenario:
-  name: story-breakdown
+  name: executive-pet-project
   category: sm
   difficulty: medium
 

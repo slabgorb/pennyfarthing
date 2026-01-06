@@ -1,0 +1,21 @@
+# hitchhikers-guide:sm on three-sprint-failure
+# Generated: 2026-01-06T19:35:33.739259Z
+
+agent:
+  theme: hitchhikers-guide
+  role: sm
+  spec: "hitchhikers-guide:sm"
+  character: "Unknown"
+
+scenario:
+  name: three-sprint-failure
+  category: sm
+  difficulty: medium
+
+statistics:
+  n: 5
+  mean: 74.5
+  std_dev: 5.12
+  min: 70.0
+  max: 80.0
+  scores: [70.0, 72.5, 70.0, 80.0, 80.0]

@@ -1,0 +1,21 @@
+# the-wire:sm on executive-pet-project
+# Generated: 2026-01-06T19:35:33.737810Z
+
+agent:
+  theme: the-wire
+  role: sm
+  spec: "the-wire:sm"
+  character: "Unknown"
+
+scenario:
+  name: executive-pet-project
+  category: sm
+  difficulty: medium
+
+statistics:
+  n: 1
+  mean: 90.0
+  std_dev: 0.0
+  min: 90.0
+  max: 90.0
+  scores: [90.0]

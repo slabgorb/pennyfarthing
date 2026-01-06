@@ -1,0 +1,21 @@
+# inspector-morse:sm on three-sprint-failure
+# Generated: 2026-01-06T19:40:37.996345+00:00
+
+agent:
+  theme: inspector-morse
+  role: sm
+  spec: "inspector-morse:sm"
+  character: "Unknown"
+
+scenario:
+  name: three-sprint-failure
+  category: sm
+  difficulty: medium
+
+statistics:
+  n: 1
+  mean: 72.5
+  std_dev: 0.0
+  min: 72.5
+  max: 72.5
+  scores: [72.5]

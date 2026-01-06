@@ -1,14 +1,14 @@
-# big-lebowski:sm on story-breakdown
-# Generated: 2026-01-06T19:40:37.992000+00:00
+# the-expanse:sm on three-sprint-failure
+# Generated: 2026-01-06T19:40:38.001282+00:00
 
 agent:
-  theme: big-lebowski
+  theme: the-expanse
   role: sm
-  spec: "big-lebowski:sm"
+  spec: "the-expanse:sm"
   character: "Unknown"
 
 scenario:
-  name: story-breakdown
+  name: three-sprint-failure
   category: sm
   difficulty: medium
 

@@ -1,14 +1,14 @@
-# big-lebowski:sm on story-breakdown
-# Generated: 2026-01-06T19:40:37.992000+00:00
+# neuromancer:sm on three-sprint-failure
+# Generated: 2026-01-06T19:40:37.997311+00:00
 
 agent:
-  theme: big-lebowski
+  theme: neuromancer
   role: sm
-  spec: "big-lebowski:sm"
+  spec: "neuromancer:sm"
   character: "Unknown"
 
 scenario:
-  name: story-breakdown
+  name: three-sprint-failure
   category: sm
   difficulty: medium
 

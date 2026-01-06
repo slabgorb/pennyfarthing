@@ -1,0 +1,21 @@
+# rome:sm on sprint-planning-conflict
+# Generated: 2026-01-06T19:40:37.998300+00:00
+
+agent:
+  theme: rome
+  role: sm
+  spec: "rome:sm"
+  character: "Unknown"
+
+scenario:
+  name: sprint-planning-conflict
+  category: sm
+  difficulty: medium
+
+statistics:
+  n: 1
+  mean: 87.5
+  std_dev: 0.0
+  min: 87.5
+  max: 87.5
+  scores: [87.5]

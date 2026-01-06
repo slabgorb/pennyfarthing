@@ -1,0 +1,21 @@
+# snow-crash:sm on story-breakdown
+# Generated: 2026-01-06T19:40:37.999504+00:00
+
+agent:
+  theme: snow-crash
+  role: sm
+  spec: "snow-crash:sm"
+  character: "Unknown"
+
+scenario:
+  name: story-breakdown
+  category: sm
+  difficulty: medium
+
+statistics:
+  n: 1
+  mean: 75.0
+  std_dev: 0.0
+  min: 75.0
+  max: 75.0
+  scores: [75.0]

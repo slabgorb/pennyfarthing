@@ -1,0 +1,21 @@
+# discworld:sm on dependency-deadlock
+# Generated: 2026-01-06T19:40:37.994697+00:00
+
+agent:
+  theme: discworld
+  role: sm
+  spec: "discworld:sm"
+  character: "Unknown"
+
+scenario:
+  name: dependency-deadlock
+  category: sm
+  difficulty: medium
+
+statistics:
+  n: 1
+  mean: 87.5
+  std_dev: 0.0
+  min: 87.5
+  max: 87.5
+  scores: [87.5]

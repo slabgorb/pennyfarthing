@@ -1,0 +1,21 @@
+# the-expanse:sm on story-breakdown
+# Generated: 2026-01-06T19:40:38.001175+00:00
+
+agent:
+  theme: the-expanse
+  role: sm
+  spec: "the-expanse:sm"
+  character: "Unknown"
+
+scenario:
+  name: story-breakdown
+  category: sm
+  difficulty: medium
+
+statistics:
+  n: 1
+  mean: 82.5
+  std_dev: 0.0
+  min: 82.5
+  max: 82.5
+  scores: [82.5]

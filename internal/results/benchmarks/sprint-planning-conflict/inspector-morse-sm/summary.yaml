@@ -1,0 +1,21 @@
+# inspector-morse:sm on sprint-planning-conflict
+# Generated: 2026-01-06T19:40:37.996236+00:00
+
+agent:
+  theme: inspector-morse
+  role: sm
+  spec: "inspector-morse:sm"
+  character: "Unknown"
+
+scenario:
+  name: sprint-planning-conflict
+  category: sm
+  difficulty: medium
+
+statistics:
+  n: 1
+  mean: 82.5
+  std_dev: 0.0
+  min: 82.5
+  max: 82.5
+  scores: [82.5]
