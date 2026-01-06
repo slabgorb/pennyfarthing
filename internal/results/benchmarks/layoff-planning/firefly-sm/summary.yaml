@@ -1,11 +1,11 @@
 # firefly:sm on layoff-planning
-# Generated: 2026-01-06T19:35:51.674771+00:00
+# Generated: 2026-01-06T20:05:00+00:00
 
 agent:
   theme: firefly
   role: sm
   spec: "firefly:sm"
-  character: "Unknown"
+  character: "Zoe Washburne"
 
 scenario:
   name: layoff-planning
@@ -14,7 +14,7 @@ scenario:
 
 statistics:
   n: 1
-  mean: 85.0
+  mean: 85
   std_dev: 0.0
   min: 85.0
   max: 85.0
