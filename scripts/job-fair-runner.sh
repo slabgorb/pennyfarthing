@@ -182,3 +182,27 @@ fi
 echo ""
 echo "=== Job Fair Complete ==="
 echo "Results: $OUTPUT_DIR/summary.yaml"
+
+# Update manifest
+MANIFEST_FILE="$PROJECT_DIR/internal/results/job-fair/manifest.yaml"
+if [[ -f "$MANIFEST_FILE" ]]; then
+    echo ""
+    echo "### Updating manifest..."
+
+    # Check if theme already in manifest
+    if grep -q "theme: $THEME$" "$MANIFEST_FILE"; then
+        echo "Theme '$THEME' already in manifest"
+    else
+        # Append new entry before the "# Themes not yet run" comment
+        ENTRY="  - theme: $THEME
+    timestamp: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+    has_raw_data: true
+    runs_per_combo: $RUNS
+
+"
+        # Insert before the comment line
+        sed -i.bak "/^# Themes not yet run/i\\
+$ENTRY" "$MANIFEST_FILE" && rm -f "${MANIFEST_FILE}.bak"
+        echo "Added '$THEME' to manifest"
+    fi
+fi

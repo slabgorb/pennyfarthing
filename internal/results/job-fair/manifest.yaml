@@ -1,0 +1,61 @@
+# Job Fair Results Manifest
+# Tracks completed themes and data integrity status
+# Updated: 2026-01-05
+
+completed_themes:
+  - theme: deadwood
+    timestamp: 2026-01-05T22:26:26Z
+    has_raw_data: true
+    runs_per_combo: 1
+
+  - theme: fargo
+    timestamp: 2026-01-04T04:36:58Z
+    has_raw_data: false
+    runs_per_combo: 1
+    note: "Raw JSON data lost in path migration; summary.yaml preserved"
+
+  - theme: firefly
+    timestamp: 2026-01-04T04:00:12Z
+    has_raw_data: false
+    runs_per_combo: 2-4
+    note: "Raw JSON data lost in path migration; summary.yaml preserved"
+
+  - theme: hitchhikers-guide
+    timestamp: 2026-01-04T03:44:00Z
+    has_raw_data: true
+    runs_per_combo: 1
+
+  - theme: lord-of-the-rings
+    timestamp: 2026-01-04T03:44:00Z
+    has_raw_data: true
+    runs_per_combo: 1
+
+  - theme: mash
+    timestamp: 2026-01-04T04:50:00Z
+    has_raw_data: false
+    runs_per_combo: 1
+    note: "Raw JSON data lost in path migration; summary.yaml preserved"
+
+  - theme: norse-mythology
+    timestamp: 2026-01-04T03:44:00Z
+    has_raw_data: true
+    runs_per_combo: 1
+
+  - theme: the-expanse
+    timestamp: 2026-01-04T02:44:10Z
+    has_raw_data: true
+    runs_per_combo: 1
+
+  - theme: the-office
+    timestamp: 2026-01-04T05:00:00Z
+    has_raw_data: false
+    runs_per_combo: 1
+    note: "Raw JSON data lost in path migration; summary.yaml preserved"
+
+  - theme: the-wire
+    timestamp: 2026-01-04T03:44:00Z
+    has_raw_data: true
+    runs_per_combo: 1
+
+# Themes not yet run (81 remaining)
+# Run /job-fair <theme> to add to this list
