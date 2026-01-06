@@ -24,6 +24,7 @@ epics:
   # EPIC 3 - Context Management & Circuit Breaker (5 pts remaining of 13)
   # =========================================================================
   - id: epic-3
+    jira: MSSCI-11376
     title: "Automatic Context Management & Circuit Breaker"
     description: |
       Implement automatic context monitoring that detects when agents
@@ -44,6 +45,7 @@ epics:
 
       # SPRINT 7 STORIES (5 pts)
       - id: "3-3"
+        jira: MSSCI-11379
         title: "Implement circuit breaker at 85% threshold"
         description: |
           Hard stop at 85% to prevent context overflow.
@@ -62,6 +64,7 @@ epics:
           - Clear instructions for resumption
 
       - id: "3-4"
+        jira: MSSCI-11380
         title: "Add session continuation workflow"
         description: |
           Enable seamless session continuation after break.
