@@ -140,8 +140,10 @@ epics:
           - Merging outputs
         points: 2
         priority: P2
-        status: in-progress
+        status: done
         started: 2026-01-06
+        completed: 2026-01-06
+        pr: "https://github.com/1898andCo/pennyfarthing/pull/85"
         repos: pennyfarthing
         acceptance_criteria:
           - Pattern documented with example
