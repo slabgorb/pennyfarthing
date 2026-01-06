@@ -11,6 +11,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.3.0] - 2026-01-06
+
+### Context Circuit Breaker & Choreography Patterns
+
+This release completes Epic 3 (Context Management) and Epic 10 (Choreography Patterns), adding robust context overflow protection and comprehensive multi-agent coordination documentation.
+
+### Added
+
+#### Epic 3: Context Management & Circuit Breaker (Complete)
+- **`/continue-session` Command** (Story 3-4) - Resume work after context circuit breaker triggers
+  - Scans `.session/checkpoints.log` for saved checkpoints
+  - Interactive checkpoint selection with timestamps
+  - Restores phase, context summary, and file references
+  - Routes to appropriate agent (TEA, Dev, or Reviewer) based on saved phase
+  - Handles edge cases: no checkpoints, stale checkpoints (>24h), multiple options
+- **Context Circuit Breaker Hook** (Story 3-3) - Hard stop at 85% context usage
+  - PreToolUse hook blocks further tool calls when threshold exceeded
+  - Provides clear recovery instructions pointing to `/continue-session`
+  - Checkpoint conventions documented: `phase:{story-id}`, `context:{story-id}`, `files:{story-id}`
+
+#### Epic 10: Multi-Agent Choreography Patterns (Complete)
+- **TDD Flow Pattern** (Story 10-1) - `guides/patterns/tdd-flow-pattern.md`
+  - SM → TEA → Dev → Reviewer state machine
+  - Handoff triggers and error recovery paths
+  - 402 lines of comprehensive documentation
+- **Helper Delegation Pattern** (Story 10-2) - `guides/patterns/helper-delegation-pattern.md`
+  - Opus → Haiku delegation criteria
+  - Prompt construction and result handling
+  - Anti-patterns and best practices (488 lines)
+- **Fan-Out/Fan-In Pattern** (Story 10-3) - `guides/patterns/fan-out-fan-in-pattern.md`
+  - Parallel agent execution with Task tool
+  - Result aggregation strategies
+  - Error handling for partial failures (574 lines)
+- **Approval Gates Pattern** (Story 10-4) - `guides/patterns/approval-gates-pattern.md`
+  - Human-in-the-loop approval mechanisms
+  - Plan mode vs AskUserQuestion decision tree
+  - Integration with TDD flow (746 lines)
+
+### Summary
+| Metric | Value |
+|--------|-------|
+| Epics Completed | 2 (Epic 3, Epic 10) |
+| Stories Completed | 6 |
+| Points Delivered | 15 |
+| New Commands | 1 (`/continue-session`) |
+| Pattern Guides | 4 (2,210 lines total) |
+
+---
+
 ## [5.2.0] - 2026-01-05
 
 ### Job Fair: Data-Driven Role Optimization
@@ -767,7 +816,9 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v5.1.1...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v5.3.0...HEAD
+[5.3.0]: https://github.com/1898andCo/pennyfarthing/compare/v5.2.0...v5.3.0
+[5.2.0]: https://github.com/1898andCo/pennyfarthing/compare/v5.1.1...v5.2.0
 [5.1.1]: https://github.com/1898andCo/pennyfarthing/compare/v5.1.0...v5.1.1
 [5.1.0]: https://github.com/1898andCo/pennyfarthing/compare/v5.0.1...v5.1.0
 [5.0.1]: https://github.com/1898andCo/pennyfarthing/compare/v5.0.0...v5.0.1
