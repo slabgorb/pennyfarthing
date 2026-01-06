@@ -10,14 +10,17 @@ sprint:
   velocity_target: 20
 
 summary:
-  total_points: 16
+  total_points: 26
   completed_points: 11
-  remaining_points: 5
+  remaining_points: 15
   notes: |
     Mixed sprint: stability (Epic 3), documentation (Epic 10), new capability (Epic 7).
     Carried from backlog - Epic 3 has 5/13 pts already done in prior sprints.
     Stories 10-1, 10-2, 10-3, and 10-4 completed 2026-01-06. Epic 10 complete (8/8 pts).
     Stories 3-3 and 3-4 completed 2026-01-06. Epic 3 complete (10/13 pts in this sprint, 13/13 total).
+    Added Story 7-2 (5 pts) - Expand job-fair with role-selective execution.
+    Added Story 7-3 (2 pts) - Fix showcase auto-deploy.
+    Added Story 7-4 (3 pts) - Aggregate job-fair results into benchmark stats.
 
 epics:
   # =========================================================================
@@ -181,7 +184,7 @@ epics:
           - Integration with TDD flow shown
 
   # =========================================================================
-  # EPIC 7 - Agent Performance Benchmarking Suite (3 pts this sprint)
+  # EPIC 7 - Agent Performance Benchmarking Suite (13 pts this sprint)
   # =========================================================================
   - id: epic-7
     title: "Agent Performance Benchmarking Suite"
@@ -189,32 +192,93 @@ epics:
       Expand benchmarks/ with comprehensive performance testing.
       Measure token usage, latency, success rates, cost per agent.
       Generate performance regression reports.
-    points: 13
+    points: 23
     completed_points: 0
     priority: P2
     marker: "strategic"
     repos: pennyfarthing
     stories:
-      # SPRINT 7 STORY (3 pts - just the framework start)
+      # SPRINT 7 STORIES
       - id: "7-1"
+        jira: MSSCI-11390
         title: "Create benchmark runner framework"
         description: |
           Build reusable framework for running benchmarks.
           - Load test cases from YAML
           - Execute against agents
           - Collect metrics
+          First: Evaluate existing infrastructure (job-fair-runner.sh,
+          solo-runner.sh) against these goals. Plan and implement improvements.
         points: 3
         priority: P1
         status: backlog
         repos: pennyfarthing
         acceptance_criteria:
+          - Evaluate existing scripts against goals (document what exists vs needed)
           - scripts/benchmark-runner.sh functional
           - Loads benchmarks/*.yaml test cases
+          - Execute benchmarks against agents
           - Outputs structured results
 
-      # DEFERRED TO FUTURE SPRINT (10 pts)
-      # - 7-2: Token usage metrics (2 pts)
-      # - 7-3: Latency metrics (2 pts)
-      # - 7-4: Success rate tracking (2 pts)
-      # - 7-5: Benchmark dashboard (2 pts)
-      # - 7-6: CI integration (2 pts)
+      - id: "7-2"
+        jira: MSSCI-11387
+        title: "Expand Job-Fair with Role-Selective Execution"
+        description: |
+          Expand job-fair to support the architect role and enable selective
+          role execution for backfilling scenarios where some roles have
+          already been tested.
+          - Add --roles flag for selective execution
+          - Implement incremental summary merging
+          - Create architect baseline
+          - Backfill architect across 81 themes
+        points: 5
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Job-fair runner accepts --roles flag (e.g., --roles architect)
+          - When --roles specified, only those roles benchmarked
+          - Results merge with existing summaries (preserve existing data)
+          - Architect baseline established (database-selection, 10 runs)
+          - Architect backfilled across all 81 themes
+          - Swap recommendations updated to include architect
+
+      - id: "7-3"
+        jira: MSSCI-11388
+        title: "Fix Showcase Auto-Deploy on PR Merge"
+        description: |
+          PR #88 merged to develop but the Deploy Showcase workflow
+          didn't trigger automatically. Fix the workflow triggers.
+        points: 2
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Workflow triggers automatically on push to develop
+          - Workflow triggers on PR merge to develop
+          - Manual dispatch remains available as backup
+          - Document trigger conditions in workflow file
+
+      - id: "7-4"
+        jira: MSSCI-11389
+        title: "Aggregate Job-Fair Results into Benchmark Statistics"
+        description: |
+          Job-fair runs generate valuable benchmark data but it's not
+          being aggregated into general statistics. Create summary stats.
+        points: 3
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Job-fair results contribute to overall benchmark statistics
+          - Baseline calculations incorporate job-fair control runs
+          - Scenario performance tracked across themes
+          - Summary statistics available (mean by role, variance, top performers)
+          - Historical trend tracking for benchmark quality
+
+      # DEFERRED TO FUTURE SPRINT
+      # - 7-5: Token usage metrics (2 pts)
+      # - 7-6: Latency metrics (2 pts)
+      # - 7-7: Success rate tracking (2 pts)
+      # - 7-8: Benchmark dashboard (2 pts)
+      # - 7-9: CI integration (2 pts)
