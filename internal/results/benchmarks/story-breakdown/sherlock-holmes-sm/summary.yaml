@@ -1,11 +1,11 @@
 # sherlock-holmes:sm on story-breakdown
-# Generated: 2026-01-06T19:35:33.745398Z
+# Generated: 2026-01-06T19:55:00+00:00
 
 agent:
   theme: sherlock-holmes
   role: sm
   spec: "sherlock-holmes:sm"
-  character: "Unknown"
+  character: "Dr. John Watson"
 
 scenario:
   name: story-breakdown
@@ -14,7 +14,7 @@ scenario:
 
 statistics:
   n: 2
-  mean: 70.0
+  mean: 70
   std_dev: 3.54
   min: 67.5
   max: 72.5

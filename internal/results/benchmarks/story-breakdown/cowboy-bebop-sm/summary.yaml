@@ -1,11 +1,11 @@
 # cowboy-bebop:sm on story-breakdown
-# Generated: 2026-01-06T19:40:37.993866+00:00
+# Generated: 2026-01-06T19:55:00+00:00
 
 agent:
   theme: cowboy-bebop
   role: sm
   spec: "cowboy-bebop:sm"
-  character: "Unknown"
+  character: "Spike Spiegel"
 
 scenario:
   name: story-breakdown
@@ -14,7 +14,7 @@ scenario:
 
 statistics:
   n: 1
-  mean: 80.0
+  mean: 80
   std_dev: 0.0
   min: 80.0
   max: 80.0

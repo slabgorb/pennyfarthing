@@ -1,11 +1,11 @@
 # neuromancer:sm on story-breakdown
-# Generated: 2026-01-06T19:40:37.996908+00:00
+# Generated: 2026-01-06T19:55:00+00:00
 
 agent:
   theme: neuromancer
   role: sm
   spec: "neuromancer:sm"
-  character: "Unknown"
+  character: "Molly Millions"
 
 scenario:
   name: story-breakdown
@@ -14,7 +14,7 @@ scenario:
 
 statistics:
   n: 1
-  mean: 75.0
+  mean: 75
   std_dev: 0.0
   min: 75.0
   max: 75.0

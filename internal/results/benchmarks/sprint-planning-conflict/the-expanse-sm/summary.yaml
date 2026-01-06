@@ -1,11 +1,11 @@
 # the-expanse:sm on sprint-planning-conflict
-# Generated: 2026-01-06T19:40:38.001055+00:00
+# Generated: 2026-01-06T19:55:00+00:00
 
 agent:
   theme: the-expanse
   role: sm
   spec: "the-expanse:sm"
-  character: "Unknown"
+  character: "Camina Drummer"
 
 scenario:
   name: sprint-planning-conflict

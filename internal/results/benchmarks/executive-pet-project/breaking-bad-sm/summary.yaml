@@ -1,11 +1,11 @@
 # breaking-bad:sm on executive-pet-project
-# Generated: 2026-01-06T19:40:37.992749+00:00
+# Generated: 2026-01-06T19:55:00+00:00
 
 agent:
   theme: breaking-bad
   role: sm
   spec: "breaking-bad:sm"
-  character: "Unknown"
+  character: "Hank Schrader"
 
 scenario:
   name: executive-pet-project
@@ -14,7 +14,7 @@ scenario:
 
 statistics:
   n: 1
-  mean: 85.0
+  mean: 85
   std_dev: 0.0
   min: 85.0
   max: 85.0

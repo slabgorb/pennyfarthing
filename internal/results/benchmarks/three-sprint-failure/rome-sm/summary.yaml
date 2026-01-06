@@ -1,11 +1,11 @@
 # rome:sm on three-sprint-failure
-# Generated: 2026-01-06T19:40:37.998407+00:00
+# Generated: 2026-01-06T19:55:00+00:00
 
 agent:
   theme: rome
   role: sm
   spec: "rome:sm"
-  character: "Unknown"
+  character: "Titus Pullo"
 
 scenario:
   name: three-sprint-failure
@@ -14,7 +14,7 @@ scenario:
 
 statistics:
   n: 1
-  mean: 70.0
+  mean: 70
   std_dev: 0.0
   min: 70.0
   max: 70.0

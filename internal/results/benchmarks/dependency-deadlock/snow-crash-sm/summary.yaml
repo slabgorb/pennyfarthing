@@ -1,11 +1,11 @@
 # snow-crash:sm on dependency-deadlock
-# Generated: 2026-01-06T19:40:37.999285+00:00
+# Generated: 2026-01-06T19:55:00+00:00
 
 agent:
   theme: snow-crash
   role: sm
   spec: "snow-crash:sm"
-  character: "Unknown"
+  character: "Hiro Protagonist"
 
 scenario:
   name: dependency-deadlock
@@ -14,7 +14,7 @@ scenario:
 
 statistics:
   n: 1
-  mean: 80.0
+  mean: 80
   std_dev: 0.0
   min: 80.0
   max: 80.0

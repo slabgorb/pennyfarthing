@@ -1,11 +1,11 @@
 # game-of-thrones:sm on sprint-planning-conflict
-# Generated: 2026-01-06T19:35:33.740949Z
+# Generated: 2026-01-06T19:55:00+00:00
 
 agent:
   theme: game-of-thrones
   role: sm
   spec: "game-of-thrones:sm"
-  character: "Unknown"
+  character: "Lieutenant Templeton "Faceman" Peck"
 
 scenario:
   name: sprint-planning-conflict
@@ -14,7 +14,7 @@ scenario:
 
 statistics:
   n: 1
-  mean: 90.0
+  mean: 90
   std_dev: 0.0
   min: 90.0
   max: 90.0
