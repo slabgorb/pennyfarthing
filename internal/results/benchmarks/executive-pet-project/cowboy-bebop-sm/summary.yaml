@@ -1,0 +1,21 @@
+# cowboy-bebop:sm on executive-pet-project
+# Generated: 2026-01-06T19:40:37.993968+00:00
+
+agent:
+  theme: cowboy-bebop
+  role: sm
+  spec: "cowboy-bebop:sm"
+  character: "Unknown"
+
+scenario:
+  name: executive-pet-project
+  category: sm
+  difficulty: medium
+
+statistics:
+  n: 1
+  mean: 90.0
+  std_dev: 0.0
+  min: 90.0
+  max: 90.0
+  scores: [90.0]

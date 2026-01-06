@@ -1,0 +1,21 @@
+# firefly:sm on executive-pet-project
+# Generated: 2026-01-06T19:35:51.674616+00:00
+
+agent:
+  theme: firefly
+  role: sm
+  spec: "firefly:sm"
+  character: "Unknown"
+
+scenario:
+  name: executive-pet-project
+  category: sm
+  difficulty: medium
+
+statistics:
+  n: 1
+  mean: 92.5
+  std_dev: 0.0
+  min: 92.5
+  max: 92.5
+  scores: [92.5]

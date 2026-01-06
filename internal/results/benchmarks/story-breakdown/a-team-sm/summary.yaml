@@ -1,11 +1,11 @@
-# big-lebowski:sm on story-breakdown
-# Generated: 2026-01-06T19:40:37.992000+00:00
+# a-team:sm on story-breakdown
+# Generated: 2026-01-06T19:35:33.736532Z
 
 agent:
-  theme: big-lebowski
+  theme: a-team
   role: sm
-  spec: "big-lebowski:sm"
-  character: "Unknown"
+  spec: "a-team:sm"
+  character: "Lieutenant Templeton \"Faceman\" Peck"
 
 scenario:
   name: story-breakdown

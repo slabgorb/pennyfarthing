@@ -1,0 +1,21 @@
+# the-wire:sm on story-breakdown
+# Generated: 2026-01-06T19:35:33.738276Z
+
+agent:
+  theme: the-wire
+  role: sm
+  spec: "the-wire:sm"
+  character: "Unknown"
+
+scenario:
+  name: story-breakdown
+  category: sm
+  difficulty: medium
+
+statistics:
+  n: 1
+  mean: 82.5
+  std_dev: 0.0
+  min: 82.5
+  max: 82.5
+  scores: [82.5]

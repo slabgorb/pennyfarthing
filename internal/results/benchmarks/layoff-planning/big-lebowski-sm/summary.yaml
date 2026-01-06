@@ -1,5 +1,5 @@
-# big-lebowski:sm on story-breakdown
-# Generated: 2026-01-06T19:40:37.992000+00:00
+# big-lebowski:sm on layoff-planning
+# Generated: 2026-01-06T19:40:37.991921+00:00
 
 agent:
   theme: big-lebowski
@@ -8,7 +8,7 @@ agent:
   character: "Unknown"
 
 scenario:
-  name: story-breakdown
+  name: layoff-planning
   category: sm
   difficulty: medium
 

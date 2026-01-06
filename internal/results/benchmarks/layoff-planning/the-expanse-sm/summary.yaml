@@ -1,0 +1,21 @@
+# the-expanse:sm on layoff-planning
+# Generated: 2026-01-06T19:40:38.001390+00:00
+
+agent:
+  theme: the-expanse
+  role: sm
+  spec: "the-expanse:sm"
+  character: "Unknown"
+
+scenario:
+  name: layoff-planning
+  category: sm
+  difficulty: medium
+
+statistics:
+  n: 1
+  mean: 92.5
+  std_dev: 0.0
+  min: 92.5
+  max: 92.5
+  scores: [92.5]

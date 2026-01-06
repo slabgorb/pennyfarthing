@@ -1,10 +1,10 @@
-# big-lebowski:sm on story-breakdown
-# Generated: 2026-01-06T19:40:37.992000+00:00
+# rome:sm on story-breakdown
+# Generated: 2026-01-06T19:40:37.998197+00:00
 
 agent:
-  theme: big-lebowski
+  theme: rome
   role: sm
-  spec: "big-lebowski:sm"
+  spec: "rome:sm"
   character: "Unknown"
 
 scenario:

@@ -1,0 +1,21 @@
+# neuromancer:sm on story-breakdown
+# Generated: 2026-01-06T19:40:37.996908+00:00
+
+agent:
+  theme: neuromancer
+  role: sm
+  spec: "neuromancer:sm"
+  character: "Unknown"
+
+scenario:
+  name: story-breakdown
+  category: sm
+  difficulty: medium
+
+statistics:
+  n: 1
+  mean: 75.0
+  std_dev: 0.0
+  min: 75.0
+  max: 75.0
+  scores: [75.0]

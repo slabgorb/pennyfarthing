@@ -1,0 +1,21 @@
+# firefly:sm on layoff-planning
+# Generated: 2026-01-06T19:35:51.674771+00:00
+
+agent:
+  theme: firefly
+  role: sm
+  spec: "firefly:sm"
+  character: "Unknown"
+
+scenario:
+  name: layoff-planning
+  category: sm
+  difficulty: medium
+
+statistics:
+  n: 1
+  mean: 85.0
+  std_dev: 0.0
+  min: 85.0
+  max: 85.0
+  scores: [85.0]

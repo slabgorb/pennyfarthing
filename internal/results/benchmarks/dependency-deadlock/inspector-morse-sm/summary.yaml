@@ -1,0 +1,21 @@
+# inspector-morse:sm on dependency-deadlock
+# Generated: 2026-01-06T19:40:37.995960+00:00
+
+agent:
+  theme: inspector-morse
+  role: sm
+  spec: "inspector-morse:sm"
+  character: "Unknown"
+
+scenario:
+  name: dependency-deadlock
+  category: sm
+  difficulty: medium
+
+statistics:
+  n: 1
+  mean: 85.0
+  std_dev: 0.0
+  min: 85.0
+  max: 85.0
+  scores: [85.0]
