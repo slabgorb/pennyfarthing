@@ -11,12 +11,12 @@ sprint:
 
 summary:
   total_points: 16
-  completed_points: 7
-  remaining_points: 9
+  completed_points: 9
+  remaining_points: 7
   notes: |
     Mixed sprint: stability (Epic 3), documentation (Epic 10), new capability (Epic 7).
     Carried from backlog - Epic 3 has 5/13 pts already done in prior sprints.
-    Stories 10-1 and 10-2 (TDD flow and helper delegation patterns) completed 2026-01-06.
+    Stories 10-1, 10-2, 10-3, and 10-4 completed 2026-01-06. Epic 10 complete (8/8 pts).
 
 epics:
   # =========================================================================
@@ -85,10 +85,12 @@ epics:
       sequential, conditional routing, approval gates). Document real
       examples from Pennyfarthing's own workflows.
     points: 8
-    completed_points: 4
+    completed_points: 8
     priority: P2
     marker: "quick-win"
     repos: pennyfarthing
+    status: done
+    completed: 2026-01-06
     stories:
       - id: "10-1"
         jira: MSSCI-11372
@@ -160,8 +162,10 @@ epics:
           - Resumption after approval
         points: 2
         priority: P2
-        status: in-progress
+        status: done
         started: 2026-01-06
+        completed: 2026-01-06
+        pr: "https://github.com/1898andCo/pennyfarthing/pull/86"
         repos: pennyfarthing
         acceptance_criteria:
           - Pattern documented with examples
