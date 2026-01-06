@@ -11,8 +11,8 @@ sprint:
 
 summary:
   total_points: 16
-  completed_points: 0
-  remaining_points: 16
+  completed_points: 3
+  remaining_points: 13
   notes: |
     Mixed sprint: stability (Epic 3), documentation (Epic 10), new capability (Epic 7).
     Carried from backlog - Epic 3 has 5/13 pts already done in prior sprints.
@@ -48,7 +48,9 @@ epics:
           - Provide recovery path for user
         points: 3
         priority: P1
-        status: backlog
+        status: done
+        completed: 2026-01-06
+        pr: "https://github.com/1898andCo/pennyfarthing/pull/82"
         repos: pennyfarthing
         acceptance_criteria:
           - Circuit breaker triggers at 85%
