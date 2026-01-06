@@ -69,6 +69,15 @@
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/pennyfarthing/scripts/hooks/context-warning.sh"
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write|Bash|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/pennyfarthing/scripts/hooks/context-circuit-breaker.sh"
+          }
+        ]
       }
     ]
   },
