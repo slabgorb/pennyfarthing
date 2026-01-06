@@ -1,3 +1,4 @@
+# JOB FAIR OPTIMIZED - Jay Gatsby as SM (confirmed optimal)
 theme:
   name: The Great Gatsby
   description: Characters from Fitzgerald's masterpiece - jazz age, green light, American dream
@@ -35,6 +36,7 @@ agents:
       style: Always receding
     shortName: Light
   sm:
+    # JOB FAIR OPTIMIZED: Jay Gatsby confirmed as optimal SM
     character: Jay Gatsby
     visual: "A handsome self-made man in immaculate 1920s evening wear, hopeful yearning expression, reaching toward something unseen, pink suit suggested"
     ocean:
