@@ -1,11 +1,11 @@
 # firefly:sm on executive-pet-project
-# Generated: 2026-01-06T19:35:51.674616+00:00
+# Generated: 2026-01-06T20:05:00+00:00
 
 agent:
   theme: firefly
   role: sm
   spec: "firefly:sm"
-  character: "Unknown"
+  character: "Zoe Washburne"
 
 scenario:
   name: executive-pet-project
