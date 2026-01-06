@@ -67,7 +67,8 @@ epics:
           - Resume from last known good state
         points: 2
         priority: P2
-        status: backlog
+        status: in-progress
+        started: 2026-01-06
         repos: pennyfarthing
         acceptance_criteria:
           - /continue-session loads previous checkpoint
