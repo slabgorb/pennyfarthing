@@ -158,7 +158,7 @@ python3 scripts/generate-portraits.py --theme {name} --dry-run
 - Apple Silicon Mac (MPS) or NVIDIA GPU
 - ~6.5GB model download on first run
 
-**Output:** `internal/showcase/public/portraits/{theme}/{role}.png` (100x100px woodcut style)
+**Output:** `pennyfarthing-dist/personas/portraits/{theme}/{role}.png` (100x100px woodcut style)
 
 ## Post-Creation Steps
 
