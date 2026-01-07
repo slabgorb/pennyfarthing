@@ -15,8 +15,6 @@ You are a story setup assistant. Execute these mechanical steps for story {STORY
 - `{TODAY}` - YYYY-MM-DD format
 - `{WORKTREE_NAME}` - (optional) e.g., "wt-36-2" if parallel work
 - `{WORKTREE_PATH}` - (optional) e.g., "/path/to/worktrees/wt-36-2"
-- `{API_PORT}` - (optional) e.g., "8082" for worktree
-- `{UI_PORT}` - (optional) e.g., "5175" for worktree
 
 ## Project Root
 $CLAUDE_PROJECT_DIR (set by SessionStart hook)
@@ -79,7 +77,7 @@ In sprint/current-sprint.yaml, find the story entry and change:
 
 ### Setup Complete
 - [x] Jira claimed: {JIRA_KEY}
-- [x] Context file: .session/story-{STORY_ID}-context.md
+- [x] Context file: .session/context-story-{STORY_ID}.md
 - [x] Session file: {SESSION_FILE_PATH}
 - [x] Branch: feat/{STORY_ID}-{SLUG}
 - [x] Sprint status: in-progress

@@ -80,19 +80,31 @@ Session file has been archived. No template file needed - agents scan for `*-ses
 
 Move story context to archive:
 ```bash
-mv $CLAUDE_PROJECT_DIR/.session/story-{STORY_ID}-context.md $CLAUDE_PROJECT_DIR/sprint/archive/story-{STORY_ID}-context.md 2>/dev/null || echo "NO_CONTEXT_FILE"
+mv $CLAUDE_PROJECT_DIR/.session/context-story-{STORY_ID}.md $CLAUDE_PROJECT_DIR/sprint/archive/context-story-{STORY_ID}.md 2>/dev/null || echo "NO_CONTEXT_FILE"
 ```
 
 ## Step 7: Clean Up Temporary Files
 
+Clean up all artifacts related to this story:
+
 ```bash
-# Remove test/lint logs
+# Story-specific cleanup using the cleanup utility
+$CLAUDE_PROJECT_DIR/scripts/run.sh session-cleanup.sh --story "{STORY_ID}"
+
+# Also clean generic test/lint logs (not story-prefixed)
 rm -f $CLAUDE_PROJECT_DIR/.session/test-results-*.log
 rm -f $CLAUDE_PROJECT_DIR/.session/lint-results-*.log
 
 # Clean up old agent session files (UUIDs older than 7 days)
 find $CLAUDE_PROJECT_DIR/.session/agents/ -type f -mtime +7 -delete 2>/dev/null || true
 ```
+
+This removes:
+- Test result files: `test-*-{STORY_ID}*.log`, `test-*-{STORY_ID}*.md`
+- TEA artifacts: `tea-*-{STORY_ID}*.md`
+- Handoff files: `*-{STORY_ID}-handoff*.md`, `*-{STORY_ID}-handoff*.txt`
+- Dev reports: `dev-{STORY_ID}-*.md`
+- Any other story-prefixed artifacts
 
 ## Step 8: Commit Archive Changes
 
