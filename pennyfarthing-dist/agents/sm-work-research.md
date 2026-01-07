@@ -47,10 +47,10 @@ For each available story:
 EPIC_NUM=$(echo "{STORY_ID}" | cut -d'-' -f1)
 
 # Check for epic context
-ls $CLAUDE_PROJECT_DIR/.session/epic-${EPIC_NUM}-context.md 2>/dev/null && echo "EPIC_CONTEXT_EXISTS"
+ls $CLAUDE_PROJECT_DIR/.session/context-epic-${EPIC_NUM}.md 2>/dev/null && echo "EPIC_CONTEXT_EXISTS"
 
 # Check for story context
-ls $CLAUDE_PROJECT_DIR/.session/story-{STORY_ID}-context.md 2>/dev/null && echo "STORY_CONTEXT_EXISTS"
+ls $CLAUDE_PROJECT_DIR/.session/context-story-{STORY_ID}.md 2>/dev/null && echo "STORY_CONTEXT_EXISTS"
 ```
 
 ## Step 4: Check Dependencies
@@ -125,7 +125,7 @@ Extract from each summary:
 ### Context Gaps
 
 - **Epic 38:** No epic context file (run `/start-epic epic-38` first)
-- **Story 32-8:** Story context exists (.session/story-32-8-context.md)
+- **Story 32-8:** Story context exists (.session/context-story-32-8.md)
 
 ### Previous Learnings (by Epic)
 

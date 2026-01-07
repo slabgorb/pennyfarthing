@@ -33,6 +33,25 @@ Provide the epic ID when invoking this command:
 
 ## Workflow Steps
 
+### Step 0: Clean Previous Work Artifacts
+
+Before starting a new epic, clean up stale artifacts from previous work:
+
+```bash
+cd $CLAUDE_PROJECT_DIR
+
+# Run conservative cleanup (7+ day old artifacts)
+$CLAUDE_PROJECT_DIR/scripts/run.sh session-cleanup.sh --dry-run
+
+# If dry-run looks good, run actual cleanup
+$CLAUDE_PROJECT_DIR/scripts/run.sh session-cleanup.sh
+
+# Archive epic contexts for completed epics
+$CLAUDE_PROJECT_DIR/scripts/run.sh session-cleanup.sh --aggressive
+```
+
+This ensures a clean slate before starting new epic work and archives contexts from completed epics.
+
 ### Step 1: Identify Epic
 
 Ask the user for the epic ID if not provided:
@@ -96,7 +115,7 @@ The SM agent will:
    - Database changes
    - Testing strategy
    - Story breakdown with acceptance criteria
-4. Save context to `.session/epic-$EPIC_ID-context.md`
+4. Save context to `.session/context-epic-$EPIC_ID.md`
 
 ### Step 5: Confirm Ready
 
@@ -106,7 +125,7 @@ After tech context is generated:
 ✅ Epic $EPIC_ID is ready for development
 
 Next steps:
-1. Review the tech context: cat .session/epic-$EPIC_ID-context.md
+1. Review the tech context: cat .session/context-epic-$EPIC_ID.md
 2. Start first story: /new-work
 3. SM will select from this epic's stories
 ```
