@@ -61,10 +61,9 @@ Run these checks and STOP if any fail:
 
    If you cannot spawn a subagent, run tests directly:
    ```bash
-   RUN_ID="{STORY_ID}-dev"
    cd $CLAUDE_PROJECT_DIR/${REPO}
-   # UI: npm run test -- --run 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/test-results-ui-${RUN_ID}.log
-   # API: just test 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/test-results-api-${RUN_ID}.log
+   # UI: npm run test -- --run 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/test-{STORY_ID}-dev-green.log
+   # API: just test 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/test-{STORY_ID}-dev-green.log
    ```
 
    Tests MUST be GREEN. If RED, STOP.

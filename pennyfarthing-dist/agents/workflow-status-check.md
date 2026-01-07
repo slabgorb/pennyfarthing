@@ -50,7 +50,7 @@ grep "^worktree:" "$SESSION_FILE"
 
 ```bash
 # Check for epic context files
-EPIC_CONTEXTS=$(ls .session/epic-*-context.md 2>/dev/null)
+EPIC_CONTEXTS=$(ls .session/context-epic-*.md 2>/dev/null)
 
 if [ -z "$EPIC_CONTEXTS" ]; then
     echo "EPIC_CONTEXT_STATUS: MISSING"
@@ -59,7 +59,7 @@ else
     echo "EPIC_CONTEXT_STATUS: PRESENT"
     # List found epic contexts
     for ctx in $EPIC_CONTEXTS; do
-        EPIC_ID=$(basename "$ctx" | sed 's/epic-\(.*\)-context.md/\1/')
+        EPIC_ID=$(basename "$ctx" | sed 's/context-epic-\(.*\).md/\1/')
         EPIC_TITLE=$(grep "^# Epic" "$ctx" | head -1 | sed 's/# Epic [0-9]*: //')
         echo "  - Epic $EPIC_ID: $EPIC_TITLE"
     done

@@ -134,6 +134,51 @@ done
 
 ---
 
+## Session Artifact Cleanup
+
+During retro, clean up accumulated session artifacts from the sprint:
+
+### 1. Preview Cleanup
+
+```bash
+# See what would be cleaned (dry-run)
+$CLAUDE_PROJECT_DIR/scripts/run.sh session-cleanup.sh --dry-run --aggressive
+```
+
+Review the output. Look for:
+- Files that should NOT be cleaned (active work artifacts)
+- Unexpectedly large number of files (indicates cleanup wasn't running properly)
+
+### 2. Execute Cleanup
+
+```bash
+# Run full cleanup with aggressive mode (archives completed epic contexts)
+$CLAUDE_PROJECT_DIR/scripts/run.sh session-cleanup.sh --aggressive
+```
+
+This removes:
+- Old test result files (7+ days): `test-*.log`, `test-*.md`
+- Old TEA artifacts: `tea-*.md`, `*-red-*.md`, `*-green-*.md`
+- Completed handoff files: `*-handoff*.md`, `*-handoff*.txt`
+- Old lint logs: `lint-*.log`
+- Rotates `session-log.txt` to last 1000 lines
+- Archives epic contexts for completed epics
+
+### 3. Verify Clean State
+
+```bash
+# Check remaining files
+ls -la .session/
+
+# Should only see:
+# - .gitkeep
+# - session-log.txt (rotated)
+# - agents/ directory
+# - Any active work artifacts
+```
+
+---
+
 ## Follow-Up Actions
 
 After the retro:
@@ -141,6 +186,7 @@ After the retro:
 2. Create stories for improvement actions
 3. Archive the retro in sprint/archive/
 4. Commit sidecar updates
+5. Verify session cleanup completed successfully
 
 ## Usage
 

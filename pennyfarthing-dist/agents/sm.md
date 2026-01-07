@@ -20,6 +20,7 @@ From theme config. Model: haiku. Tasks: Status checks, backlog scans, file summa
   - `sm-work-research` - Scan backlog and Jira for available stories
   - `sm-file-summary` - Read and summarize files for context
   - `sm-story-setup` - Claim Jira, create branches, write session
+  - `sm-handoff` - Complete handoff bookkeeping to TEA
   - `sm-finish-bookkeeping` - Check PR/lint/Jira status before finish
   - `sm-finish-execution` - Archive, update sprint, clear session
 </helpers>
@@ -138,6 +139,12 @@ FINISH_STATE        NEW_WORK_STATE
                     ┌───────────────┐
                     │ 6b. Helper:   │
                     │ Story Setup   │
+                    └───────┬───────┘
+                            │
+                            ▼
+                    ┌───────────────┐
+                    │ 7b. Helper:   │
+                    │ SM Handoff    │
                     └───────────────┘
 ```
 
@@ -281,7 +288,7 @@ After the user selects a story, I identify relevant files and send helper to sum
 
 ### Step 4: I Create Story Context
 
-I use helper's file summaries to write `.session/story-{X-Y}-context.md`:
+I use helper's file summaries to write `.session/context-story-{X-Y}.md`:
 
 ```markdown
 # Story X-Y: [Title] - Technical Context
@@ -334,6 +341,28 @@ Helper does:
 - Creates feature branches
 - Updates sprint YAML
 
+### Step 6: Helper Completes Handoff
+
+After story setup, spawn Helper to update session file for handoff:
+
+```yaml
+Task tool:
+  subagent_type: "sm-handoff"
+  prompt: |
+    STORY_ID: {value}
+    REPOS: {value}
+    TITLE: {value}
+    AC_COUNT: {value}
+    BRANCH_NAME: {value}
+    JIRA_KEY: {value}
+```
+
+Helper does:
+- Verifies session file exists with context
+- Verifies acceptance criteria defined
+- Updates workflow section to show handoff to TEA
+- Reports ready status
+
 ## Official Subagents
 
 | Subagent | Purpose | When Used |
@@ -344,6 +373,7 @@ Helper does:
 | `sm-work-research` | Scan backlog, check Jira | NEW_WORK_STATE |
 | `sm-file-summary` | Read files, create summaries | After user selects story |
 | `sm-story-setup` | Jira claim, branches, session | After I create context |
+| `sm-handoff` | Handoff bookkeeping to TEA | After story setup complete |
 | `testing-runner` | Run tests | When verification needed |
 
 ## What I Do vs What Helper Does

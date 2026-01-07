@@ -86,12 +86,12 @@ prompt: |
 
       # Run tests
       if [[ -n "$test_cmd" ]]; then
-          $test_cmd 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/test-results-${repo}-${RUN_ID}.log
+          $test_cmd 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/test-{STORY_ID}-reviewer-verify.log
       fi
 
       # Run linter
       if [[ -n "$lint_cmd" ]]; then
-          $lint_cmd 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/lint-results-${repo}-${RUN_ID}.log
+          $lint_cmd 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/lint-{STORY_ID}-${repo}.log
       fi
   done
   ```
@@ -175,6 +175,6 @@ gh pr view {PR_NUMBER} --json title,body,additions,deletions,changedFiles
 {list of changed files with brief description}
 
 ### Log Files
-- Tests: `.session/test-results-{repo}-{STORY_ID}-review.log`
-- Lint: `.session/lint-results-{repo}-{STORY_ID}-review.log`
+- Tests: `.session/test-{STORY_ID}-reviewer-verify.log`
+- Lint: `.session/lint-{STORY_ID}-{repo}.log`
 ```
