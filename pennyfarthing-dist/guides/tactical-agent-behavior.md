@@ -203,7 +203,7 @@ for repo in $(get_repos); do
     test_cmd=$(get_test_command "$repo")
     if [ -n "$test_cmd" ]; then
         cd $CLAUDE_PROJECT_DIR/$(get_repo_path "$repo")
-        eval "$test_cmd" 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/test-results-${repo}.log
+        eval "$test_cmd" 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/test-${STORY_ID}-${repo}.log
     fi
 done
 ```
