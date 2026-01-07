@@ -78,6 +78,38 @@ scan_all_repos_status
 # Returns one line per repo: repo|branch|uncommitted|ahead
 ```
 
+## Step 2.5: Check Jira Ownership for In-Progress Stories
+
+**CRITICAL for multi-developer coordination.** For any story with `status: in_progress` in the YAML, verify WHO owns it in Jira.
+
+```bash
+# Get current user for comparison
+CURRENT_USER=$(jira me 2>/dev/null || echo "unknown")
+
+# For each in_progress story, extract Jira key and check assignment
+# First, find in_progress stories and their Jira keys
+grep -B10 "status: in_progress" $CLAUDE_PROJECT_DIR/sprint/current-sprint.yaml | grep -E "(id:|jira:)" | paste - - | while read line; do
+    STORY_ID=$(echo "$line" | grep -oE 'id: "[^"]+"' | cut -d'"' -f2)
+    JIRA_KEY=$(echo "$line" | grep -oE 'MSSCI-[0-9]+')
+
+    if [ -n "$JIRA_KEY" ]; then
+        # Query Jira for assignment
+        JIRA_INFO=$(jira issue view "$JIRA_KEY" --raw 2>/dev/null | jq -r '{
+            assignee: (.fields.assignee.displayName // "Unassigned"),
+            status: .fields.status.name
+        }' 2>/dev/null)
+
+        ASSIGNEE=$(echo "$JIRA_INFO" | jq -r '.assignee')
+        echo "OWNERSHIP_CHECK: $STORY_ID | $JIRA_KEY | $ASSIGNEE"
+    fi
+done
+```
+
+**Ownership Classification:**
+- `Unassigned` → Available for current user to claim
+- Current user's name → YOUR work, can continue
+- Someone else's name → **COLLEAGUE'S WORK - DO NOT OFFER**
+
 ## Step 3: Determine Workflow State
 
 **First, check the sprint YAML for ground truth:**
@@ -89,13 +121,18 @@ grep -E "status: (in_progress|backlog|done)" $CLAUDE_PROJECT_DIR/sprint/current-
 Apply these rules in order:
 - **MISSING_EPIC_CONTEXT**: No epic context files AND no active session files
 - **FINISH_STATE**: Session file has Phase=`approved` OR (Phase=`review` AND Status=`approved`)
-- **NEW_WORK_STATE**: No *-session.md files AND no `status: in_progress` stories in YAML
-- **IN_PROGRESS_STATE**: Session file exists with active phase, OR YAML has `status: in_progress` stories
+- **NEW_WORK_STATE**: No *-session.md files AND no `status: in_progress` stories owned by current user in YAML
+- **IN_PROGRESS_STATE**: Session file exists with active phase, OR YAML has `status: in_progress` stories owned by current user
+- **COLLEAGUE_IN_PROGRESS**: YAML has `status: in_progress` but Jira shows assigned to someone else
 
 **CRITICAL:** The sprint YAML `status:` field is the source of truth for story completion.
 - `status: done` = story is DONE, do not report as in-progress
-- `status: in_progress` = story is actually being worked
+- `status: in_progress` = story is being worked - CHECK JIRA FOR OWNER
 - `status: backlog` = story is available for new work
+
+**CRITICAL:** Jira assignment is the source of truth for WHO owns in-progress work.
+- If Jira shows assigned to someone other than current user, that story is OFF LIMITS
+- Report colleague-owned stories in output but DO NOT offer them as resumable work
 
 **Note:** MISSING_EPIC_CONTEXT takes precedence over NEW_WORK_STATE. User must run `/start-epic` before `/new-work`.
 
@@ -134,6 +171,8 @@ Stories with `status: done` are DONE - do not list them as in-progress even if t
 ### Detected State
 **{MISSING_EPIC_CONTEXT | FINISH_STATE | NEW_WORK_STATE | IN_PROGRESS_STATE}**
 
+*Note: If colleague work exists, state is still NEW_WORK_STATE (their work doesn't block you).*
+
 ### Epic Context Status
 | Status | Epic ID | Title |
 |--------|---------|-------|
@@ -144,10 +183,17 @@ Stories with `status: done` are DONE - do not list them as in-progress even if t
 |--------|-----------------|
 | ✗ MISSING | Run `/start-epic` to generate epic technical context |
 
-### Active Work Sessions
+### Active Work Sessions (Your Work)
 | Story | Title | Phase | Status | Repos | Days Active |
 |-------|-------|-------|--------|-------|-------------|
 | 32-8 | Threat Hunt Summary | tea | in-progress | both | 1 |
+
+### Colleague Work (DO NOT OFFER)
+| Story | Title | Jira | Assignee | Status |
+|-------|-------|------|----------|--------|
+| 7-2 | Job-Fair Role-Selective | MSSCI-11387 | Michael Pursifull | In Progress |
+
+*Stories assigned to colleagues in Jira are excluded from work options.*
 
 ### Git State
 | Repo | Type | Branch | Uncommitted | Ahead of Origin |
@@ -178,6 +224,15 @@ Note: For multi-repo projects, this table dynamically includes all configured re
 | tea | Dev | → Reviewer |
 | dev | Reviewer | → SM |
 | review/approved | SM | Finish |
+
+### Multi-Developer Coordination
+
+| Scenario | Action |
+|----------|--------|
+| Story in YAML `in_progress` + Jira assigned to YOU | Your work - offer to continue |
+| Story in YAML `in_progress` + Jira assigned to COLLEAGUE | Their work - DO NOT offer, show in "Colleague Work" |
+| Story in YAML `in_progress` + Jira unassigned | Orphaned work - offer to claim or skip |
+| Story in YAML `backlog` + Jira unassigned | Available - offer as new work option |
 
 **For {CALLING_AGENT}:** {specific action based on phase and state}
 ```
