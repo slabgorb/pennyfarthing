@@ -20,7 +20,7 @@ set -euo pipefail
 # Find project root
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-SUBAGENTS_DIR="$PROJECT_ROOT/pennyfarthing-dist/agents"
+SUBAGENTS_DIR="$PROJECT_ROOT/agents"
 
 # Colors
 RED='\033[0;31m'
