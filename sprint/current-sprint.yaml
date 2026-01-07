@@ -21,6 +21,10 @@ summary:
     Added Story 7-2 (5 pts) - Expand job-fair with role-selective execution.
     Added Story 7-3 (2 pts) - Fix showcase auto-deploy.
     Added Story 7-4 (3 pts) - Aggregate job-fair results into benchmark stats.
+    Story 7-2 reviewed 2026-01-06: ~40% complete. --roles flag done, architect baseline done,
+    but architect backfill only 12/81 themes. Moved to in_progress with detailed gap analysis.
+    Story 7-2 amended: Scope narrowed to ARCHITECT role only. Must select best architect
+    scenario, then backfill across 81 themes. Other roles (pm, devops, etc.) out of scope.
 
 epics:
   # =========================================================================
@@ -224,24 +228,151 @@ epics:
         jira: MSSCI-11387
         title: "Expand Job-Fair with Role-Selective Execution"
         description: |
-          Expand job-fair to support the architect role and enable selective
+          Expand job-fair to support additional roles and enable selective
           role execution for backfilling scenarios where some roles have
           already been tested.
           - Add --roles flag for selective execution
           - Implement incremental summary merging
-          - Create architect baseline
-          - Backfill architect across 81 themes
+          - Review and select optimal benchmark scenario per role
+          - Backfill roles with established baselines across all themes
         points: 5
         priority: P1
-        status: backlog
+        status: in_progress
         repos: pennyfarthing
+        notes: |
+          PARTIAL COMPLETION (reviewed 2026-01-06):
+          ✓ --roles flag documented in job-fair.md
+          ✓ Architect baseline exists (database-selection, n=10, mean=86.70)
+          ✗ Incremental merge untested - no evidence of merge behavior
+          ✗ Architect backfill: 12/81 themes (15% complete)
+          ✗ No architect swap recommendations in theme files
+
+          SCENARIO SELECTION (added 2026-01-06):
+          Current job-fair scenarios:
+            - dev: race-condition-cache (std=0.63 - POOR differentiation)
+            - reviewer: order-service (std=1.45 - POOR differentiation)
+            - tea: payment-processor-tests (std=3.75 - acceptable)
+            - sm: sprint-planning-conflict (std=2.29 - acceptable)
+
+          ARCHITECT SCENARIO SELECTION (this story's focus):
+            DECISION: Use `legacy-modernization` for architect role
+            - Penalty-based scoring catches consulting bullshit
+            - Tests hard choices: who to disappoint, what to sacrifice
+            - Baseline exists: mean=87.2, std=3.25, n=10
+
+          ARCHITECT ANALYSIS (Niander Wallace, 2026-01-06):
+          Reviewed all 28 baselines. Current suite has critical flaws:
+
+          | Role | Current | Problem | Recommended | Improvement |
+          |------|---------|---------|-------------|-------------|
+          | architect | database-selection | std=2.15 | legacy-modernization | std=3.25 (+51%) |
+          | dev | race-condition-cache | std=0.63 | tdd-shopping-cart | std=7.30 (+1059%) |
+          | reviewer | order-service | std=1.45 | security-review | std=9.44 (+551%) |
+          | tea | payment-processor-tests | std=3.75 | checkout-component-tests | std=6.52 (+74%) |
+          | sm | sprint-planning-conflict | std=2.29 | dependency-deadlock | std=2.36 (+3%) |
+
+          RATIONALE:
+          - Low std dev = all personas score the same = no differentiation = useless test
+          - race-condition-cache (std=0.63) is worst offender - essentially random noise
+          - security-review has 6x more signal than order-service
+          - tdd-shopping-cart tests TDD discipline, not just "can you code"
+
+          DEV ROLE SUB-COMPETENCY ANALYSIS (2026-01-06):
+          Developer work falls into two distinct competency areas requiring different
+          evaluation approaches. Dev is the ONLY role with dual-scenario testing.
+
+          DEV SCENARIO CLASSIFICATION:
+          | Scenario | Category | Type | Mean | Std | Differentiation |
+          |----------|----------|------|------|-----|-----------------|
+          | tdd-shopping-cart | dev | CODEGEN | 85.8 | 7.30 | EXCELLENT |
+          | event-processor-tdd | dev | CODEGEN | 87.9 | 5.00 | Good |
+          | astropy-12907 | swe-bench | DEBUG | 77.5 | 8.54 | EXCELLENT |
+          | buggy-user-service | debug | DEBUG | 74.3 | 7.37 | Good |
+          | flask-5014 | swe-bench | DEBUG | 83.5 | 12.55 | BEST (n=6) |
+          | migration-disaster | dev | DEBUG | 76.5 | 5.10 | Good |
+          | null-pointer | debug | DEBUG | 82.8 | 1.50 | Poor |
+          | race-condition-cache | dev | DEBUG | 76.8 | 0.63 | TERRIBLE |
+          | django-10097 | swe-bench | DEBUG | 65.5 | 3.12 | Poor |
+          | matplotlib-14623 | swe-bench | DEBUG | 48.0 | 4.97 | Moderate |
+
+          DEV SUB-COMPETENCY MODEL:
+          ┌─────────────────────────────────────────────────────────────┐
+          │ dev-codegen: Tests TDD discipline, minimal implementation   │
+          │   Scenario: tdd-shopping-cart (std=7.30)                    │
+          │   Tests: Over-engineering resistance, test-first mindset    │
+          │   Baseline: mean=85.8, n=10                                 │
+          ├─────────────────────────────────────────────────────────────┤
+          │ dev-debug: Tests crisis debugging, root cause analysis      │
+          │   Scenario: astropy-12907 (std=8.54)                        │
+          │   Tests: Real OSS bug fix, systematic debugging approach    │
+          │   Baseline: mean=77.5, n=10                                 │
+          └─────────────────────────────────────────────────────────────┘
+
+          RATIONALE FOR SCENARIO SELECTION:
+          - tdd-shopping-cart: Highest std dev among codegen scenarios (7.30)
+            Tests TDD discipline - penalizes over-engineering
+          - astropy-12907: Highest std dev among debug scenarios with n=10 (8.54)
+            Real SWE-bench bug - tests actual debugging on OSS codebase
+          - race-condition-cache REJECTED: std=0.63 provides zero signal
+          - flask-5014 considered but has only n=6 runs
+
+          PERSONA INSIGHTS THIS ENABLES:
+          - "Great at TDD, struggles with debugging" → Pair programming candidate
+          - "Excellent debugger, over-engineers new code" → Maintenance specialist
+          - "Balanced both competencies" → True generalist dev
+
+          RECOMMENDATION FOR FUTURE STORY:
+          Update job-fair to use optimal scenarios for ALL roles, not just architect.
+          Current suite "coddles the mediocre" - Wallace
+
+          Other roles (pm, devops, tech-writer, ux-designer, orchestrator):
+            OUT OF SCOPE - no scenarios currently available for job-fair testing.
+
+          REMAINING WORK:
+          ARCHITECT:
+          1. Audit architect-category scenarios (list all available) [DONE - Wallace]
+          2. Select best competency-testing scenario for architect [DONE - legacy-modernization]
+          3. Confirm architect baseline exists (or establish one) [DONE - n=10, mean=87.2]
+          4. Run job-fair --roles architect across all 81 themes
+          5. Verify incremental merge preserves existing dev/reviewer/tea/sm data
+          6. Analyze architect results and apply swap recommendations
+
+          DEV SUB-COMPETENCY:
+          7. Classify all dev scenarios as codegen/debug [DONE - see table above]
+          8. Select best scenario per sub-competency [DONE]
+             - dev-codegen: tdd-shopping-cart (std=7.30)
+             - dev-debug: astropy-12907 (std=8.54)
+          9. Update job-fair to run BOTH scenarios for dev role
+          10. Update job-fair results format to show dev-codegen/dev-debug separately
+          11. Backfill dev with new dual-scenario approach across themes
+
+          TEA TESTING NOTES (Jinx, 2026-01-06):
+          Available architect scenarios:
+            - database-selection (easy, baseline 86.7) - clear trade-offs, multiple valid
+            - legacy-modernization (easy, baseline 87.2) - impossible constraints, penalty scoring
+            - scaling-decision (hard, NO baseline) - Black Friday crunch
+
+          Scenario selection concern: database-selection may be TOO EASY (control=86.7).
+          Consider legacy-modernization for better persona differentiation.
+
+          REQUIRED TESTS:
+          1. test_scenario_selection: Verify chosen scenario tests architect competence
+          2. test_incremental_merge: Run on theme with existing data, verify preservation
+          3. test_baseline_quality: Check score variance across themes (if all 85-90, low signal)
+          4. test_swap_validation: Verify champion > native with statistical significance
         acceptance_criteria:
-          - Job-fair runner accepts --roles flag (e.g., --roles architect)
-          - When --roles specified, only those roles benchmarked
-          - Results merge with existing summaries (preserve existing data)
-          - Architect baseline established (database-selection, 10 runs)
-          - Architect backfilled across all 81 themes
-          - Swap recommendations updated to include architect
+          - Job-fair runner accepts --roles flag (e.g., --roles architect) [DONE]
+          - When --roles specified, only those roles benchmarked [DONE - documented]
+          - Results merge with existing summaries (preserve existing data) [NEEDS VERIFICATION]
+          - Best architect scenario selected from available options [DONE - legacy-modernization]
+          - Architect baseline established (10 runs minimum) [DONE - legacy-modernization, n=10]
+          - Architect backfilled across all 81 themes [12/81 - IN PROGRESS]
+          - Architect swap recommendations applied to theme files [NOT STARTED]
+          - Dev sub-competency model defined (codegen vs debug) [DONE]
+          - Dev scenarios classified by type (see analysis above) [DONE]
+          - Best dev-codegen scenario selected [DONE - tdd-shopping-cart, std=7.30]
+          - Best dev-debug scenario selected [DONE - astropy-12907, std=8.54]
+          - Job-fair updated to run BOTH dev scenarios (only role with 2 tests) [NOT STARTED]
 
       - id: "7-3"
         jira: MSSCI-11388
