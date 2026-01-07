@@ -357,7 +357,7 @@ python3 scripts/generate-portraits.py --theme {theme-name}
 python3 scripts/generate-portraits.py --theme {theme-name} --dry-run
 ```
 
-**Output:** `internal/showcase/public/portraits/{theme}/{role}.png` (100x100px woodcut style)
+**Output:** `pennyfarthing-dist/personas/portraits/{theme}/{role}.png` (100x100px woodcut style)
 
 **If generation fails:** The theme file is still valid - portraits can be generated later manually.
 

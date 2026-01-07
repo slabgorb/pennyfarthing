@@ -248,7 +248,8 @@ schema:
 
   # ============================================================================
   # Difficulty Calibration
-  # Score bands based on empirical 10-run control baselines (Epic 7)
+  # Score bands based on empirical 10-run control baselines
+  # Last calibrated: 2026-01-02 (24 scenarios, 240 runs)
   # ============================================================================
 
   difficulty_calibration:
@@ -259,19 +260,43 @@ schema:
         easy:
           range: "85-100"
           interpretation: "Most control agents succeed consistently"
-          examples: ["sprint-planning-conflict (90.5)", "tdd-shopping-cart (85.8)"]
+          count: 12
+          examples:
+            - "order-service (91.9)"
+            - "executive-pet-project (91.1)"
+            - "sprint-planning-conflict (90.5)"
+            - "scaling-decision (88.6)"
+            - "event-processor-tdd (87.9)"
+            - "tdd-shopping-cart (85.8)"
         medium:
           range: "70-85"
           interpretation: "Moderate challenge, some variance expected"
-          examples: ["migration-disaster (76.5)", "race-condition-cache (76.8)"]
+          count: 9
+          examples:
+            - "null-pointer (82.8)"
+            - "checkout-component-tests (82.4)"
+            - "react-auth-component (82.3)"
+            - "terraform-infrastructure (80.9)"
+            - "graphql-api-review (79.5)"
+            - "payment-processor-tests (79.2)"
+            - "race-condition-cache (76.8)"
+            - "migration-disaster (76.5)"
+            - "buggy-user-service (74.3)"
         hard:
           range: "55-70"
           interpretation: "Significant challenge, control often struggles"
-          examples: ["event-processor-tdd (65.25)"]
+          count: 3
+          examples:
+            - "cli-tool-tests (64.5)"
+            - "microservice-integration-tests (63.1)"
         extreme:
           range: "<55"
           interpretation: "Most control agents fail or produce incomplete responses"
-          examples: ["(gap identified - scenarios needed)"]
+          count: 2
+          examples:
+            - "three-sprint-failure (49.0)"
+            - "layoff-planning (48.6)"
+          notes: "Only ethical dilemma scenarios reach extreme - control handles technical challenges well"
 
       calibration_requirements:
         baseline_runs: 10

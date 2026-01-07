@@ -17,7 +17,7 @@ if [[ "$1" == "--dry-run" ]]; then
 fi
 
 THEMES_DIR="$PROJECT_DIR/pennyfarthing-dist/personas/themes"
-PORTRAITS_DIR="$PROJECT_DIR/internal/showcase/public/portraits"
+PORTRAITS_DIR="$PROJECT_DIR/pennyfarthing-dist/personas/portraits"
 FACES_DIR="$PROJECT_DIR/pennyfarthing-dist/personas/faces/by-theme"
 SPIDERS_DIR="$PROJECT_DIR/pennyfarthing-dist/personas/spiders/by-theme"
 
