@@ -7,7 +7,7 @@ Reads visual prompts from theme YAML files in two locations:
   - Built-in: pennyfarthing-dist/personas/themes/
   - Custom:   .claude/pennyfarthing/themes/ (takes precedence)
 
-Output: internal/showcase/public/portraits/{theme}/{role}.png (100x100px each)
+Output: pennyfarthing-dist/personas/portraits/{theme}/{role}.png (100x100px each)
 
 Usage:
     python3 scripts/generate-portraits.py [--dry-run] [--theme THEME]
@@ -42,7 +42,7 @@ SCRIPT_DIR = Path(__file__).parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 BUILTIN_THEMES_DIR = PROJECT_ROOT / "pennyfarthing-dist" / "personas" / "themes"
 CUSTOM_THEMES_DIR = PROJECT_ROOT / ".claude" / "pennyfarthing" / "themes"
-OUTPUT_DIR = PROJECT_ROOT / "internal" / "showcase" / "public" / "portraits"
+OUTPUT_DIR = PROJECT_ROOT / "pennyfarthing-dist" / "personas" / "portraits"
 MODEL_ID = "stabilityai/stable-diffusion-xl-base-1.0"
 
 # SDXL generates at 1024x1024, we'll resize to 100x100
