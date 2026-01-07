@@ -3,11 +3,15 @@
 Individual Portrait Generator for Pennyfarthing Themes
 
 Generates 10 individual portraits per theme using Stable Diffusion SDXL on M3 Max (MPS).
-Reads visual prompts from theme YAML files (pennyfarthing-dist/personas/themes/).
+Reads visual prompts from theme YAML files in two locations:
+  - Built-in: pennyfarthing-dist/personas/themes/
+  - Custom:   .claude/pennyfarthing/themes/ (takes precedence)
+
 Output: internal/showcase/public/portraits/{theme}/{role}.png (100x100px each)
 
 Usage:
     python3 scripts/generate-portraits.py [--dry-run] [--theme THEME]
+    python3 scripts/generate-portraits.py --theme gilligans-island --dry-run
 """
 
 import argparse
@@ -36,7 +40,8 @@ except ImportError as e:
 # Configuration
 SCRIPT_DIR = Path(__file__).parent
 PROJECT_ROOT = SCRIPT_DIR.parent
-THEMES_DIR = PROJECT_ROOT / "pennyfarthing-dist" / "personas" / "themes"
+BUILTIN_THEMES_DIR = PROJECT_ROOT / "pennyfarthing-dist" / "personas" / "themes"
+CUSTOM_THEMES_DIR = PROJECT_ROOT / ".claude" / "pennyfarthing" / "themes"
 OUTPUT_DIR = PROJECT_ROOT / "internal" / "showcase" / "public" / "portraits"
 MODEL_ID = "stabilityai/stable-diffusion-xl-base-1.0"
 
@@ -135,16 +140,34 @@ def main():
     parser.add_argument("--skip-existing", action="store_true", help="Skip existing files")
     args = parser.parse_args()
 
-    # Find theme files
-    theme_files = sorted(THEMES_DIR.glob("*.yaml"))
+    # Find theme files from both built-in and custom directories
+    # Custom themes take precedence over built-in themes with same name
+    theme_map = {}
+
+    # First add built-in themes
+    if BUILTIN_THEMES_DIR.exists():
+        for tf in BUILTIN_THEMES_DIR.glob("*.yaml"):
+            theme_map[tf.stem] = tf
+
+    # Then add/override with custom themes
+    if CUSTOM_THEMES_DIR.exists():
+        for tf in CUSTOM_THEMES_DIR.glob("*.yaml"):
+            theme_map[tf.stem] = tf
+
+    theme_files = sorted(theme_map.values(), key=lambda p: p.stem)
 
     if args.theme:
-        theme_files = [t for t in theme_files if t.stem == args.theme]
-        if not theme_files:
+        if args.theme in theme_map:
+            theme_files = [theme_map[args.theme]]
+        else:
             print(f"Theme '{args.theme}' not found")
+            print(f"  Searched: {BUILTIN_THEMES_DIR}")
+            print(f"  Searched: {CUSTOM_THEMES_DIR}")
             sys.exit(1)
 
-    print(f"Reading from: {THEMES_DIR}")
+    print(f"Theme sources:")
+    print(f"  Built-in: {BUILTIN_THEMES_DIR}")
+    print(f"  Custom:   {CUSTOM_THEMES_DIR}")
     print(f"Found {len(theme_files)} themes")
     print(f"Output: {OUTPUT_DIR}/{{theme}}/{{role}}.png")
 

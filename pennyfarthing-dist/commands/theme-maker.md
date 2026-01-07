@@ -160,6 +160,7 @@ Based on the universe description, generate personas for all 10 agents:
 For each agent, generate:
 - `character`: Name fitting the universe
 - `shortName`: Display name for UI (see Short Name Generation below)
+- `visual`: Visual description for portrait generation (see Visual Descriptions below)
 - `ocean`: OCEAN personality profile (see Role-Appropriate OCEAN Profiles below)
 - `style`: 1-2 sentence communication style
 - `expertise`: Areas of expertise in the universe context
@@ -186,6 +187,27 @@ Examples:
 - `Kara "Starbuck" Thrace` → `Starbuck`
 - `President Josiah Bartlet` → `Josiah`
 - `Big Brother` → `Big Brother` (iconic, keep full)
+
+#### Visual Descriptions
+
+The `visual` field provides a portrait prompt for image generation. These descriptions are used by `scripts/generate-portraits.py` to create woodcut-style portraits.
+
+**Guidelines:**
+- Focus on physical appearance, distinctive features, and visual props
+- Include clothing, expression, and setting elements
+- Be specific and visual - describe what a portrait would show
+- Avoid abstract concepts - translate personality to visual cues
+
+**Examples:**
+- `"Stout sea captain in blue shirt and captain's hat, frustrated but caring expression"`
+- `"Scholarly man with glasses, surrounded by coconut-based inventions, explaining something"`
+- `"Massive bound wolf with fierce eyes, chains visible, barely contained power"`
+- `"Elegant socialite with pearls, perfectly coiffed hair, holding documentation"`
+
+**For non-character entities** (like objects or places used as personas):
+- Describe them visually as if they were a character
+- `"Bamboo and coconut radio receiver with antenna, static crackling"` (for The Radio)
+- `"Crystal clear tropical lagoon surrounded by palm trees, naturally inviting"` (for The Lagoon)
 
 #### Role-Appropriate OCEAN Profiles
 
@@ -277,6 +299,7 @@ agents:
   orchestrator:
     character: {generated}
     shortName: {generated - see Short Name Generation}
+    visual: "{generated - see Visual Descriptions}"
     ocean:
       O: {1-5}  # {rationale - e.g., "Cosmic awareness"}
       C: {1-5}  # {rationale}
@@ -292,7 +315,7 @@ agents:
     helper:
       name: {generated}
       style: "{generated}"
-  # ... all 10 agents with complete definitions including ocean blocks and shortName
+  # ... all 10 agents with complete definitions including ocean blocks, shortName, and visual
 ```
 
 **OCEAN Validation:** Before writing the theme file, verify all OCEAN profiles are complete and valid:
@@ -301,6 +324,42 @@ agents:
 - Each score has a rationale comment
 
 Use `validateThemeSchema()` from `src/cli/utils/themes.ts` to verify the generated theme is valid before writing.
+
+### Step 6: Generate Portraits (Optional)
+
+After writing the theme file, offer to generate portraits:
+
+```yaml
+questions:
+  - question: "Would you like to generate portraits for this theme?"
+    header: "Portraits"
+    options:
+      - label: "Yes, generate portraits"
+        description: "Run portrait generator using Stable Diffusion SDXL (requires GPU/MPS)"
+      - label: "No, skip portraits"
+        description: "Theme file is ready, portraits can be generated later"
+    multiSelect: false
+```
+
+**If Yes:** Run the portrait generator:
+
+```bash
+python3 scripts/generate-portraits.py --theme {theme-name}
+```
+
+**Requirements:**
+- Python 3 with: `pip install diffusers transformers accelerate torch pillow pyyaml tqdm`
+- Apple Silicon Mac (MPS) or NVIDIA GPU (CUDA)
+- First run downloads ~6.5GB SDXL model
+
+**Dry run first:** To preview what will be generated:
+```bash
+python3 scripts/generate-portraits.py --theme {theme-name} --dry-run
+```
+
+**Output:** `internal/showcase/public/portraits/{theme}/{role}.png` (100x100px woodcut style)
+
+**If generation fails:** The theme file is still valid - portraits can be generated later manually.
 
 ---
 
