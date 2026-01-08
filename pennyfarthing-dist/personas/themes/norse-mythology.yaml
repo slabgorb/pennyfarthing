@@ -39,6 +39,7 @@ agents:
   sm:
     # JOB FAIR OPTIMIZED: Baldur moved here - the beloved coordinates the team
     character: Baldur the Bright
+    visual: "A radiant young Norse god with golden hair and luminous skin, wearing white robes with gold trim, peaceful handsome face emanating light, beloved by all"
     ocean:
       O: 4  # High openness - sees beauty in all things
       C: 5  # Very high conscientiousness - thorough, careful
@@ -67,6 +68,7 @@ agents:
   tea:
     # JOB FAIR OPTIMIZED: Tyr moved here - the god of law tests with sacrifice
     character: Tyr One-Handed
+    visual: "A stern Norse warrior god with one hand missing at the wrist, wearing war armor with runes, short dark hair, noble bearing despite sacrifice, determined eyes"
     ocean:
       O: 3  # Medium openness - focused on law and justice
       C: 5  # Very high conscientiousness - law and duty bound
