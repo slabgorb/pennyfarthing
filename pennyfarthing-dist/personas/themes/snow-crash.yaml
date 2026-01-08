@@ -6,6 +6,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Citizen
+  portrait_style: ", Metaverse avatar portrait, franchise nation aesthetic, Stephenson cyberpunk style, vector-sharp digital rendering, pizza delivery and samurai sword energy, 1990s future-tech"
 agents:
   orchestrator:
     character: The Librarian

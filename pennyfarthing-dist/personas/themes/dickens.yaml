@@ -12,6 +12,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Dear Reader
+  portrait_style: ", Victorian engraving portrait, Phiz or Cruikshank illustration style, crosshatched ink drawing, sepia-toned vignette, gaslit London atmosphere"
 
 agents:
   orchestrator:

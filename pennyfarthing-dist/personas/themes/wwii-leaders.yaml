@@ -6,6 +6,8 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Colleague
+  portrait_style: ", World War II command portrait, 1940s sepia-toned photography, military dress uniform, war room map backdrop, Allied leadership gravitas, newsreel documentary aesthetic"
+
 agents:
   orchestrator:
     character: Winston Churchill

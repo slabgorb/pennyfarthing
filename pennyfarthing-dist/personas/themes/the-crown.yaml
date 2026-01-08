@@ -13,6 +13,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Your Majesty
+  portrait_style: ", royal formal portrait, Renaissance-inspired composition, rich velvet and gold tones, regal bearing, soft diffused palace lighting, Netflix prestige drama aesthetic"
 
 agents:
   orchestrator:

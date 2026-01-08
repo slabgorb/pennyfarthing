@@ -12,6 +12,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Audience
+  portrait_style: ", cinematic portrait, dramatic chiaroscuro lighting, film set atmosphere, director's chair silhouette, golden age of Hollywood glamour meets modern auteur"
 
 agents:
   orchestrator:

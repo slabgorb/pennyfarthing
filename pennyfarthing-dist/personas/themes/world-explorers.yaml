@@ -12,6 +12,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Expedition Member
+  portrait_style: ", Age of Exploration portrait, antique map parchment background, compass rose and sextant elements, weathered adventurer aesthetic, National Geographic expedition photography, golden age of discovery lighting"
 
 agents:
   orchestrator:

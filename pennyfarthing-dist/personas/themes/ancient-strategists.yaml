@@ -6,6 +6,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Student
+  portrait_style: ", ancient military commander portrait, bronze and crimson palette, classical sculpture lighting, battle map background, laurel and armor detail, Greco-Roman war aesthetic"
 agents:
   orchestrator:
     character: Sun Tzu

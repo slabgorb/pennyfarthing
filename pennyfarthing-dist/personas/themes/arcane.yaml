@@ -6,6 +6,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Citizen
+  portrait_style: ", Arcane animated series portrait, painted oil texture, vibrant hextech blues and Zaun greens, dramatic contrast lighting, steampunk Victorian detail, Netflix animation aesthetic"
 agents:
   orchestrator:
     character: Silco

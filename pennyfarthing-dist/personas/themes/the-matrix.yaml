@@ -6,6 +6,8 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Operator
+  portrait_style: ", cyberpunk matrix portrait, green digital rain code overlay, noir trench coat aesthetic, bullet-time frozen moment, dark leather and chrome, Wachowski visual style"
+
 agents:
   orchestrator:
     character: The Oracle

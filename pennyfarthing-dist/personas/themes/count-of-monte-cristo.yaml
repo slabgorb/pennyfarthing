@@ -12,6 +12,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Friend
+  portrait_style: ", French Romantic era portrait, dramatic chiaroscuro candlelight, rich velvet burgundy and prison grey contrast, Alexandre Dumas novel cover aesthetic, Mediterranean revenge drama"
 
 agents:
   orchestrator:

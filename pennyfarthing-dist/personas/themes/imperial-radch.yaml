@@ -6,6 +6,8 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Citizen
+  portrait_style: ", sleek science fiction portrait, androgynous features, Radchaai military uniform with pins, muted silver and ice blue palette, distributed consciousness aesthetic, Ann Leckie cover art style"
+
 agents:
   orchestrator:
     character: Anaander Mianaai

@@ -16,6 +16,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Friend
+  portrait_style: ", epic fantasy portrait, Alan Lee and John Howe illustration style, Middle-earth golden hour lighting, elvish script border, weathered parchment texture, Tolkien estate approved aesthetic"
 
 agents:
   orchestrator:

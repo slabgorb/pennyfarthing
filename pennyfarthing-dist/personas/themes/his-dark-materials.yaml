@@ -6,6 +6,8 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Child
+  portrait_style: ", golden compass steampunk portrait, warm amber and brass tones, Victorian arctic explorer aesthetic, aurora borealis glow, daemon companion visible, Philip Pullman cover art style"
+
 agents:
   orchestrator:
     character: The Master of Jordan College

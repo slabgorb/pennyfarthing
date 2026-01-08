@@ -6,6 +6,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Dreamer
+  portrait_style: ", Vertigo comics portrait, Dave McKean mixed media style, dreamlike surrealism, deep shadows and ethereal light, cosmic darkness with stars, Neil Gaiman aesthetic"
 agents:
   orchestrator:
     character: Destiny of the Endless

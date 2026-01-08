@@ -6,6 +6,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Commander
+  portrait_style: ", Paul Kidby illustration style portrait, rich oil painting with comic undertones, warm tavern lighting, Ankh-Morpork aesthetic, whimsical fantasy realism"
 agents:
   orchestrator:
     character: DEATH

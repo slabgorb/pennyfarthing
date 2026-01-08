@@ -6,6 +6,8 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Partner
+  portrait_style: ", 1960s Madison Avenue portrait, mid-century modern aesthetic, cigarette smoke atmosphere, Don Draper silhouette style, martini glass composition, AMC television drama look, Saul Bass title sequence influence"
+
 agents:
   orchestrator:
     character: Bert Cooper

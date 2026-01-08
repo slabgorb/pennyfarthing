@@ -6,6 +6,8 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Springfield Resident
+  portrait_style: ", Matt Groening cartoon portrait, yellow skin tones, overbite character design, bold black outlines, Springfield backdrop, classic animated sitcom style"
+
 agents:
   orchestrator:
     character: Mr. Burns
