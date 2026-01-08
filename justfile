@@ -29,3 +29,17 @@ test-cyclist:
 # Install dependencies
 install:
     pnpm install
+
+# Generate portraits for a theme (uses SDXL, requires GPU)
+# Usage: just portraits arthurian-mythos
+portraits theme:
+    ./scripts/generate-portraits.sh --theme {{theme}}
+
+# Preview portrait generation without running (dry-run)
+# Usage: just portraits-preview arthurian-mythos
+portraits-preview theme:
+    ./scripts/generate-portraits.sh --theme {{theme}} --dry-run
+
+# Generate portraits for all themes
+portraits-all:
+    ./scripts/generate-portraits.sh
