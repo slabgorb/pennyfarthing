@@ -13,7 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Fellow Replicant
-  portrait_style: ", sci-fi VR avatar, clean digital hologram blue, scan lines, Star Trek tribute, deep space starfield"
+  portrait_style: ", seen through CRT screen, scan lines"
 agents:
   orchestrator:
     character: Original Bob

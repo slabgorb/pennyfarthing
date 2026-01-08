@@ -17,7 +17,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Friend
-  portrait_style: ", epic fantasy, fantasy illustration, golden hour lighting, elvish script border, weathered parchment"
+  portrait_style: ", animated epic fantasy, elvish script border"
 
 agents:
   orchestrator:

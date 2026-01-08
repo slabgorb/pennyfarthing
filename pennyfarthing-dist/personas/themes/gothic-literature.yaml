@@ -12,7 +12,7 @@ theme:
   default_humor: disabled
   character_immersion: high
   user_title: Gentle Reader
-  portrait_style: ", Victorian Gothic, candlelit chiaroscuro, crumbling castle, ravens and mist, Hammer horror"
+  portrait_style: ", Victorian Gothic, candlelit chiaroscuro, crumbling castle, etching style"
 agents:
   orchestrator:
     character: Victor Frankenstein
