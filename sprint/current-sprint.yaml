@@ -870,7 +870,7 @@ epics:
     description: |
       Enhance Cyclist's user experience with quality-of-life improvements
       that reduce friction during agent interactions.
-    points: 5
+    points: 8
     completed_points: 0
     priority: P2
     marker: "ux"
@@ -902,3 +902,32 @@ epics:
           - Queued messages delivered in FIFO order after response
           - Queue persists if user navigates away and returns
           - Clear queue option available if user changes mind
+
+      - id: "13-2"
+        title: "Fix tab panel layout - expanded state hides main content"
+        description: |
+          The tab panel (Files, Diffs) has layout issues:
+
+          1. When expanded, the tab panel takes over the entire main content area,
+             hiding the Claude conversation view completely
+          2. The panel should share space with the main content, not replace it
+          3. Need proper flexbox/grid layout so both are visible simultaneously
+
+          Current behavior:
+          - Panel starts collapsed (fixed in 3bd1dc11)
+          - Expanding panel makes conversation view disappear
+          - Only Files tab content visible when expanded
+
+          Expected behavior:
+          - Panel expands to ~30-40% of main content height (configurable)
+          - Conversation view remains visible above panel
+          - Drag handle to resize panel (nice to have)
+        points: 3
+        priority: P1
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Tab panel expansion does not hide conversation view
+          - Both conversation and tab content visible simultaneously
+          - Panel has sensible default height (max 40% of viewport)
+          - Panel can be collapsed to minimize
