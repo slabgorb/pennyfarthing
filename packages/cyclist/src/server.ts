@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Express } from 'express';
 import { fileURLToPath } from 'url';
 import { createServer, Server } from 'http';
 import { join } from 'path';
@@ -27,7 +27,7 @@ export type { StoryInfo, WorkflowStep, CriteriaItem } from './story-parser.js';
 export { getGitInfo } from './api/index.js';
 export type { GitInfo } from './api/index.js';
 
-export const app = express();
+export const app: Express = express();
 
 // Parse JSON bodies
 app.use(express.json());
