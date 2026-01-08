@@ -59,6 +59,42 @@ pennyfarthing doctor
 
 Handoffs are automatic when context usage is below 70%. Above that threshold, agents recommend starting a fresh session.
 
+## Cyclist - Visual Desktop Interface
+
+Cyclist is the visual companion to Pennyfarthing - a desktop application that wraps Claude Code in a rich UI with real-time agent personas, session stats, and workflow visualization.
+
+```bash
+# Run from monorepo (development)
+cd packages/cyclist
+pnpm run dev
+
+# Or build the distributable app
+pnpm run build:electron
+```
+
+### Features
+
+- **Real-time Persona Display** - Character portraits and OCEAN personality profiles update as agents change
+- **Session Statistics** - Token usage (input/output), context percentage, model info
+- **Story Progress** - Visual TDD workflow tracker (SM → TEA → Dev → Reviewer)
+- **Task Visualizer** - Live todo list from Claude's TodoWrite tool
+- **Rich Text Editor** - TipTap-based prompt editor with formatting
+- **Tab Panel** - Diff viewer, file browser, workspace tools
+
+### Architecture
+
+Cyclist uses Electron with an Express server for the UI:
+
+| Component | Purpose |
+|-----------|---------|
+| `main.ts` | Electron main process, IPC handlers, PTY spawn |
+| `preload.ts` | Secure IPC bridge via contextBridge |
+| `pennyfarthing.ts` | Theme loading, persona detection |
+| `claude-service.ts` | Claude Code CLI wrapper |
+| `otlp-receiver.ts` | OpenTelemetry metrics receiver |
+
+See [Cyclist Documentation](docs/CYCLIST.md) for full details.
+
 ## CLI Commands
 
 | Command | Description |

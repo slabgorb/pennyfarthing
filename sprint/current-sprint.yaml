@@ -861,3 +861,44 @@ epics:
           - API endpoint for evaluation data retrieval
           - Integration with job-fair baseline data
           - Historical trend storage for regression detection
+
+  # =========================================================================
+  # EPIC 13 - Cyclist UX Improvements
+  # =========================================================================
+  - id: epic-13
+    title: "Cyclist UX Improvements"
+    description: |
+      Enhance Cyclist's user experience with quality-of-life improvements
+      that reduce friction during agent interactions.
+    points: 5
+    completed_points: 0
+    priority: P2
+    marker: "ux"
+    repos: cyclist
+    status: backlog
+    stories:
+      - id: "13-1"
+        title: "Implement message input buffer for non-blocking input"
+        description: |
+          Currently, users cannot type or queue messages while Claude is
+          processing a response - input is blocked until the response completes.
+
+          Implement a message buffer that:
+          - Allows users to type and submit messages while Claude is working
+          - Queues messages for delivery when Claude is ready
+          - Shows visual indicator of queued messages
+          - Delivers queued messages in order once current response completes
+
+          This enables a more fluid conversation flow where users can
+          capture thoughts immediately rather than waiting.
+        points: 5
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Input field remains active while Claude is processing
+          - Messages submitted during processing are queued (not lost)
+          - Visual indicator shows number of queued messages
+          - Queued messages delivered in FIFO order after response
+          - Queue persists if user navigates away and returns
+          - Clear queue option available if user changes mind

@@ -1,357 +1,316 @@
-# Cyclist Integration
+# Cyclist - Visual Desktop Interface
 
-Cyclist is a Claude REPL wrapper with a sidebar UI that displays real-time agent personas, session stats, story progress, and git status alongside the Claude terminal.
+Cyclist is a desktop application for running Claude Code with a visual terminal interface. It provides real-time agent personas, session statistics, story progress tracking, and a rich text editor - all wrapped in an Electron app.
 
-> **Note:** Cyclist is transitioning from Express/WebSocket to an Electron-based desktop application. The API documented here applies to the current web-based implementation. Electron version will use IPC instead of HTTP/WebSocket.
+## Overview
+
+As of v6.0, Cyclist is integrated into the Pennyfarthing monorepo as `@pennyfarthing/cyclist`. It uses:
+
+- **Electron** for the desktop application shell
+- **Express** for serving the UI and handling API requests
+- **node-pty** for pseudo-terminal emulation
+- **xterm.js** for terminal rendering
+- **TipTap** for rich text editing
 
 ## Quick Start
 
-```bash
-# From your Pennyfarthing project directory
-pennyfarthing cyclist
-
-# With custom port
-pennyfarthing cyclist --port 4000
-
-# Without auto-opening browser
-pennyfarthing cyclist --no-open
-```
-
-## Prerequisites
-
-Cyclist must be installed as a sibling directory or via `CYCLIST_PATH`:
+### Development Mode
 
 ```bash
-# Option 1: Sibling directory (development)
-ls ../cyclist/package.json  # Should exist
-
-# Option 2: Environment variable
-export CYCLIST_PATH=/path/to/cyclist
+# From the monorepo root
+cd packages/cyclist
+pnpm install
+pnpm run dev
 ```
 
-## How It Works
+This launches Electron with hot reload enabled - changes to `dist/*` trigger automatic refresh.
 
-### Architecture
+### Single Run (No Hot Reload)
 
-```
-pennyfarthing cyclist
-        │
-        ▼
-┌─────────────────┐
-│ Pennyfarthing   │  Sets environment variables:
-│ CLI             │  - CYCLIST_PROJECT_DIR
-│                 │  - CYCLIST_THEME
-│                 │  - CYCLIST_THEME_PATH
-│                 │  - CYCLIST_SESSION_ID
-│                 │  - CYCLIST_ACTIVE=1
-└────────┬────────┘
-         │ spawn
-         ▼
-┌─────────────────┐
-│ Cyclist Server  │  Runs on localhost:3000
-│                 │  - Express HTTP server
-│                 │  - WebSocket connections
-│                 │  - PTY for Claude terminal
-└────────┬────────┘
-         │ watches
-         ▼
-┌─────────────────┐
-│ .session/agents │  File-based agent state
-│                 │  One file per session ID
-└─────────────────┘
+```bash
+pnpm run dev:once
 ```
 
-### Environment Variables
+### Build Distributable App
 
-| Variable | Description |
-|----------|-------------|
-| `CYCLIST_PROJECT_DIR` | Path to the Pennyfarthing project |
-| `CYCLIST_THEME` | Active theme name (e.g., "west-wing") |
-| `CYCLIST_THEME_PATH` | Full path to theme YAML file |
-| `CYCLIST_SESSION_ID` | Claude Code session ID for agent lookup |
-| `CYCLIST_ACTIVE` | Set to "1" when running in Cyclist |
-
-### Statusbar Detection
-
-When `CYCLIST_ACTIVE=1` is set, Pennyfarthing's statusline hook outputs nothing. This prevents duplicate information since Cyclist's sidebar displays the same data.
-
-## API Reference
-
-Cyclist exposes HTTP REST endpoints and WebSocket connections for real-time updates.
-
-### REST Endpoints
-
-#### GET /api/persona
-
-Returns the current agent persona.
-
-**Response:**
-```json
-{
-  "character": "Leo McGarry",
-  "displayName": "Leo",
-  "role": "sm",
-  "roleDescription": "Chief of Staff who runs the White House through sheer will",
-  "style": "Direct, pragmatic, protective",
-  "theme": "west-wing",
-  "quote": "This guy's walking down the street when he falls in a hole...",
-  "ocean": {
-    "O": 65,
-    "C": 90,
-    "E": 70,
-    "A": 55,
-    "N": 45
-  }
-}
+```bash
+pnpm run build:electron
 ```
 
-**Errors:**
-- `404` - Not a Pennyfarthing project or no active persona
+Build artifacts are placed in `packages/cyclist/release/`:
 
-#### GET /api/portrait
+| Platform | Output |
+|----------|--------|
+| macOS | `Cyclist-{version}.dmg`, `Cyclist-{version}-mac.zip` |
+| Windows | `Cyclist Setup {version}.exe`, `Cyclist {version}.exe` (portable) |
+| Linux | `Cyclist-{version}.AppImage`, `cyclist_{version}_amd64.deb` |
 
-Returns the current portrait image path.
+## Project Directory
 
-**Response:**
-```json
-{
-  "src": "/portraits/west-wing/sm.png"
-}
+Cyclist needs a project directory to operate on. Specify it via:
+
+1. **CLI Argument** (recommended for scripts):
+   ```bash
+   electron . --project-dir=/path/to/project
+   ```
+
+2. **Folder Picker** (default when no argument):
+   - Shows native folder picker on launch
+   - If canceled, app quits gracefully
+
+## Architecture
+
+### Process Model
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     Electron Main Process                        │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
+│  │ PTY (Claude)│  │ OTLP Server │  │ Pennyfarthing Detection │  │
+│  │ node-pty    │  │ Port 4318   │  │ Theme/Persona Loading   │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
+│         │                │                      │                │
+│         └────────────────┼──────────────────────┘                │
+│                          │                                       │
+│                    IPC Channels                                  │
+│                          │                                       │
+└──────────────────────────┼───────────────────────────────────────┘
+                           │
+┌──────────────────────────┼───────────────────────────────────────┐
+│                    Preload Script                                │
+│              (contextBridge - secure IPC)                        │
+└──────────────────────────┼───────────────────────────────────────┘
+                           │
+┌──────────────────────────┼───────────────────────────────────────┐
+│                    Renderer Process                              │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
+│  │ MessageView │  │   Sidebar   │  │   Tab Panel             │  │
+│  │ (terminal)  │  │  (persona,  │  │ (diffs, files, browser) │  │
+│  │             │  │   stats)    │  │                         │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
+│                                                                  │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │              TipTap Rich Text Editor                        ││
+│  │         (prompt input with formatting toolbar)              ││
+│  └─────────────────────────────────────────────────────────────┘│
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-#### POST /api/portrait
+### Key Source Files
 
-Sets the current portrait.
+| File | Purpose |
+|------|---------|
+| `src/main.ts` | Electron main process, IPC handlers, PTY management |
+| `src/preload.ts` | Secure IPC bridge via contextBridge |
+| `src/pennyfarthing.ts` | Theme loading, persona detection, agent watching |
+| `src/claude-service.ts` | Claude Code CLI wrapper (programmatic mode) |
+| `src/otlp-receiver.ts` | OpenTelemetry metrics receiver (port 4318) |
+| `src/parser.ts` | Parses Claude CLI output for stats |
+| `src/story-parser.ts` | Extracts story info from session files |
+| `src/tool-stats.ts` | Parses tool usage statistics |
+| `src/paths.ts` | Project directory management |
 
-**Request:**
-```json
-{
-  "src": "/portraits/west-wing/dev.png"
-}
-```
+### Frontend Modules
 
-#### GET /api/stats
+| File | Purpose |
+|------|---------|
+| `public/js/persona.js` | Persona section updates |
+| `public/js/portrait.js` | Character portrait loading |
+| `public/js/stats.js` | Session statistics display |
+| `public/js/story.js` | Story progress and workflow |
+| `public/js/todos.js` | Task visualizer |
+| `public/js/editor.js` | TipTap editor initialization |
+| `public/js/controls.js` | Permission mode controls |
+| `public/js/theme.js` | Theme management |
 
-Returns current session statistics.
+## IPC Channels
 
-**Response:**
-```json
-{
-  "tokens": 1250,
-  "messages": 15,
-  "model": "claude-opus-4-5",
-  "status": "Ready",
-  "context": "42%"
-}
-```
+All main↔renderer communication uses typed IPC channels:
 
-#### POST /api/stats
+### Data Channels
 
-Updates session statistics (partial updates supported).
+| Channel | Purpose |
+|---------|---------|
+| `stats:get` / `stats:update` | Session statistics |
+| `persona:get` / `persona:update` | Agent persona data |
+| `story:get` / `story:update` | Story progress |
+| `git:get` / `git:update` | Git status |
+| `toolStats:get` / `toolStats:update` | Tool usage stats |
+| `tokenStats:get` / `tokenStats:update` | Token consumption |
+| `todos:get` / `todos:update` | Todo list items |
+| `context:update` | Context usage percentage |
 
-**Request:**
-```json
-{
-  "tokens": 1500,
-  "context": "55%"
-}
-```
+### Claude SDK Channels
 
-#### GET /api/story
+| Channel | Purpose |
+|---------|---------|
+| `claude:send` | Send prompt to Claude |
+| `claude:message` | Receive message chunks |
+| `claude:complete` | Conversation complete |
+| `claude:error` | Error handling |
+| `claude:setMode` / `claude:getMode` | Permission mode |
+| `claude:abort` | Cancel current request |
+| `claude:clear` | Clear session |
 
-Returns current story information.
+### Other Channels
 
-**Response:**
-```json
-{
-  "id": "15-3",
-  "title": "Enhance Cyclist sidebar with persona/story/git sections",
-  "phase": "dev",
-  "status": "in_progress",
-  "points": 3,
-  "sprint": {
-    "number": 6,
-    "completed": 65,
-    "total": 71
-  }
-}
-```
+| Channel | Purpose |
+|---------|---------|
+| `agent:launch` | Launch specific agent |
+| `diff:update` | Diff viewer updates |
+| `file-browser:list-directory` | File browser navigation |
+| `file-browser:open-file` | Open file in editor |
 
-#### GET /api/git
+## UI Components
 
-Returns git status for the project.
+### Sidebar Sections
 
-**Response:**
-```json
-{
-  "branch": "develop",
-  "clean": true,
-  "ahead": 0,
-  "behind": 0
-}
-```
-
-### WebSocket Connections
-
-#### /ws/stats
-
-Real-time session statistics updates. Debounced to 100ms.
-
-**Message format:**
-```json
-{
-  "tokens": 1500,
-  "messages": 18,
-  "model": "claude-opus-4-5",
-  "status": "Working",
-  "context": "55%"
-}
-```
-
-#### /ws/persona
-
-Real-time persona updates when agent changes.
-
-**Message format:**
-Same as `GET /api/persona` response.
-
-## Sidebar Sections
-
-The Cyclist sidebar displays four sections:
-
-### 1. Persona Section
-- Character portrait (woodcut-style)
+#### 1. Persona Section
+- Character portrait (woodcut-style, OCEAN-slugged filenames)
 - Character name and role
 - Theme name
 - Character quote
+- Activity lines (helper tasks, tool usage)
 
-### 2. Stats Section
-- Token count
-- Message count
-- Model name
-- Context usage percentage
-
-### 3. Story Section
+#### 2. Story Section
 - Story ID and title
-- Current phase (SM, TEA, Dev, Reviewer)
+- Current phase indicator
+- Workflow progress visualization (SM → TEA → Dev → Reviewer)
+- Acceptance criteria checklist
 - Sprint progress bar
 
-### 4. Git Section
+#### 3. Git Section
 - Current branch
 - Clean/dirty status
 - Ahead/behind remote
 
-## Portrait Assets
+#### 4. Tasks Section (Collapsible)
+- Live todo list from TodoWrite tool
+- Progress indicator (completed/total)
+- Status icons (pending, in_progress, completed)
 
-Portraits are stored in `pennyfarthing-dist/personas/sprites/` and symlinked into Cyclist:
+### Main Content Area
+
+- **MessageView** - Rendered Claude conversation
+- **Tab Panel** - Workspace tools (diffs, files, browser)
+- **Quick Actions** - Suggested prompt buttons
+- **Editor** - Rich text input with toolbar
+- **Stats Strip** - Compact stats in prompt bar
+
+## Portrait System
+
+Portraits are stored with OCEAN-slugged filenames for each character:
 
 ```
-cyclist/src/public/sprites → pennyfarthing-dist/personas/sprites/
+pennyfarthing-dist/personas/sprites/{theme}/
+├── {ocean-slug-character1}.png
+├── {ocean-slug-character2}.png
+└── ...
 ```
 
-Each theme has portraits for all 10 agent roles:
-```
-sprites/{theme}/
-├── sm.png
-├── tea.png
-├── dev.png
-├── reviewer.png
-├── pm.png
-├── architect.png
-├── devops.png
-├── tech-writer.png
-├── ux-designer.png
-└── orchestrator.png
-```
+The OCEAN slug format encodes personality traits:
+- First letter of each trait (O, C, E, A, N)
+- H/M/L for High/Medium/Low
+- Example: `OHCHEHAHNH-leo-mcgarry.png`
 
-## Pennyfarthing Module API
-
-The `pennyfarthing.ts` module provides these functions:
-
-### detectPennyfarthingProject(projectDir)
-
-Checks if a directory is a Pennyfarthing project.
+Portrait resolution uses `@pennyfarthing/shared`:
 
 ```typescript
-import { detectPennyfarthingProject } from './pennyfarthing.js';
+import { resolvePortraitPath } from '@pennyfarthing/shared';
 
-if (detectPennyfarthingProject('/path/to/project')) {
-  console.log('Pennyfarthing project detected');
-}
+const portraitPath = resolvePortraitPath(theme, character, oceanSlug);
 ```
 
-### getCurrentPersona(projectDir, sessionId?)
+## Environment Variables
 
-Gets the current agent persona.
+| Variable | Purpose |
+|----------|---------|
+| `CYCLIST_COMMAND` | Override Claude CLI path |
+| `CYCLIST_SESSION_ID` | Session ID for persona lookup |
+| `CYCLIST_PROJECT_DIR` | Project directory path |
+| `CYCLIST_THEME` | Active theme name |
+| `CYCLIST_ACTIVE` | Set to "1" when running in Cyclist |
+| `PORT` | Server port (default: 1898) |
+
+## Pennyfarthing Integration
+
+### Theme Detection
+
+Cyclist reads theme configuration from the project:
 
 ```typescript
-import { getCurrentPersona } from './pennyfarthing.js';
+import { loadThemeConfig, loadThemeYaml } from './pennyfarthing.js';
 
-const persona = getCurrentPersona('/path/to/project', 'session-123');
-// Returns Persona object or null
+const config = loadThemeConfig('/path/to/project');
+// { theme: 'west-wing' }
+
+const agents = loadThemeYaml(themePath);
+// { sm: {...}, dev: {...}, tea: {...}, ... }
 ```
 
-### watchAgentChanges(projectDir, sessionId, callback)
+### Agent Watching
 
-Watches for agent changes and invokes callback.
+Cyclist monitors `.session/agents/` for agent changes:
 
 ```typescript
 import { watchAgentChanges } from './pennyfarthing.js';
 
 const cleanup = watchAgentChanges(
-  '/path/to/project',
-  'session-123',
+  projectDir,
+  sessionId,
   (agentRole) => console.log(`Agent changed to: ${agentRole}`)
 );
-
-// Later: cleanup() to stop watching
 ```
 
-### loadThemeConfig(projectDir)
+### Statusbar Suppression
 
-Loads theme configuration from persona-config.yaml.
+When `CYCLIST_ACTIVE=1` is set, Pennyfarthing's statusline hook outputs nothing - Cyclist's sidebar displays the same information.
 
-```typescript
-import { loadThemeConfig } from './pennyfarthing.js';
+## OpenTelemetry Integration
 
-const config = loadThemeConfig('/path/to/project');
-// { theme: 'west-wing' }
+Cyclist includes an OTLP receiver on port 4318 that captures:
+
+- Token usage (input/output)
+- API request timings
+- Tool call events
+- Context percentage
+
+Configure Claude Code to send telemetry:
+
+```bash
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
 ```
 
-### loadThemeYaml(themePath)
+## Keyboard Shortcuts
 
-Parses a theme YAML file.
+| Shortcut | Action |
+|----------|--------|
+| `Cmd/Ctrl+Enter` | Send prompt |
+| `Escape` | Stop Claude |
+| `Cmd/Ctrl+B` | Bold |
+| `Cmd/Ctrl+I` | Italic |
+| `Cmd/Ctrl+Shift+C` | Code block |
 
-```typescript
-import { loadThemeYaml } from './pennyfarthing.js';
+## Menu Structure
 
-const agents = loadThemeYaml('/path/to/west-wing.yaml');
-// { sm: {...}, dev: {...}, tea: {...}, ... }
-```
+### Agents Menu
 
-### computeDisplayNames(agents)
+| Tactical | Strategic |
+|----------|-----------|
+| SM (Scrum Master) | PM (Product Manager) |
+| TEA (Test Engineer) | Architect |
+| Dev (Developer) | DevOps |
+| Reviewer | Tech Writer |
+|  | UX Designer |
 
-Computes shortest unique display names for characters.
+### Workflows Menu
 
-```typescript
-import { computeDisplayNames } from './pennyfarthing.js';
-
-const displayNames = computeDisplayNames(agents);
-// Map { 'Leo McGarry' => 'Leo', 'Sam Seaborn' => 'Sam', ... }
-```
+- New Work (`/new-work`)
+- Continue Session (`/continue-session`)
+- Sprint Context (`/sprint-context`)
+- Work (`/work`)
 
 ## Troubleshooting
-
-### Cyclist not found
-
-```
-Error: Cyclist not found. Set CYCLIST_PATH environment variable
-```
-
-**Solution:** Install Cyclist at `../cyclist` or set `CYCLIST_PATH`:
-```bash
-export CYCLIST_PATH=/path/to/cyclist
-```
 
 ### Persona not loading
 
@@ -361,17 +320,40 @@ export CYCLIST_PATH=/path/to/cyclist
 
 ### Portrait not showing
 
-1. Verify sprite symlink exists: `ls cyclist/src/public/sprites`
-2. Check portrait file exists: `ls pennyfarthing-dist/personas/sprites/{theme}/{role}.png`
-3. Regenerate portraits if missing: `python scripts/generate-sprites.py`
+1. Verify portrait exists in `pennyfarthing-dist/personas/sprites/{theme}/`
+2. Check OCEAN-slug filename matches character
+3. Confirm `@pennyfarthing/shared` resolver is working
 
-### Statusbar showing in Cyclist
+### High memory usage
 
-1. Verify `CYCLIST_ACTIVE=1` is set in Cyclist's spawn environment
-2. Check `statusline.sh` respects the environment variable
+The Electron process includes Chromium overhead. For lighter usage:
+- Use standalone mode: `pnpm run dev:server` (browser-based)
+- Close unused tabs in the tab panel
+
+### Hot reload not working
+
+1. Ensure you're running `pnpm run dev` (not `dev:once`)
+2. Check `electron-reload` is installed
+3. Verify `dist/` is being updated by TypeScript compiler
+
+## Testing
+
+Tests use Vitest with happy-dom for DOM tests:
+
+```bash
+# Run all tests
+pnpm test
+
+# Run specific test file
+pnpm test -- tests/parser.test.ts
+
+# Watch mode
+pnpm test -- --watch
+```
 
 ## See Also
 
 - [User Guide](USER-GUIDE.md) - Complete Pennyfarthing documentation
-- [Personas](PERSONAS.md) - Theme customization
-- [Architecture](ARCHITECTURE.md) - System design
+- [Personas](PERSONAS.md) - Theme customization and OCEAN profiles
+- [Architecture](ARCHITECTURE.md) - System design principles
+- [Quick Action Setup](../packages/cyclist/docs/QUICK-ACTION-SETUP.md) - Finder integration
