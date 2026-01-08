@@ -70,4 +70,42 @@ See: `~/.claude/plans/cyclist-settings-flow.md`
 
 ---
 
+### ADR-002: Merge Cyclist into Pennyfarthing Monorepo
+
+**Date:** 2026-01-07
+**Status:** Accepted
+**Author:** Mimir (Architect)
+
+#### Context
+
+Cyclist (Electron GUI) cannot find portrait assets when running against Pennyfarthing in dogfooding mode due to hardcoded `node_modules/pennyfarthing/...` path resolution. Analysis revealed complete functional coupling - Cyclist has zero standalone value without Pennyfarthing.
+
+#### Decision
+
+Merge Cyclist into Pennyfarthing as a **pnpm workspace monorepo** with three packages:
+- `@pennyfarthing/core` - CLI framework (~5MB, lean)
+- `@pennyfarthing/cyclist` - Electron GUI (~200MB, optional)
+- `@pennyfarthing/shared` - Path resolution, theme loading utilities
+
+Key design: Smart portrait resolution that checks monorepo root first (dogfooding), then npm package locations (production).
+
+#### Consequences
+
+**Positive:**
+- Portrait resolution works in all scenarios (dogfooding, npm install, Electron app)
+- Single repo enables atomic commits and coordinated releases
+- Electron deps are conditional - CLI-only users get lean install
+- Follows Pennyfarthing's "single source of truth" principle
+
+**Negative:**
+- Requires pnpm for workspace protocol
+- One-time migration effort (4 phases)
+- Larger clone includes both packages
+
+#### Implementation Guidance
+
+See: `~/.claude/plans/snuggly-bouncing-forest.md`
+
+---
+
 *Add decisions made during architecture work below*

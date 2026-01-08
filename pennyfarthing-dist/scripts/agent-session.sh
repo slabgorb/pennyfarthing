@@ -172,6 +172,13 @@ output_persona() {
 
   echo "</persona>"
 
+  # Output portrait path if available (for Claude to read with Read tool)
+  local portrait_path=$(node "$PROJECT_ROOT/scripts/resolve-portrait.mjs" "$theme" "$agent_name" 2>/dev/null)
+  if [ -n "$portrait_path" ] && [ -f "$portrait_path" ]; then
+    echo ""
+    echo "<portrait>$portrait_path</portrait>"
+  fi
+
   # Output user title if defined
   local user_title=$(yq ".theme.user_title // \"\"" "$theme_file" 2>/dev/null)
   if [ -n "$user_title" ] && [ "$user_title" != "null" ] && [ "$user_title" != "" ]; then
