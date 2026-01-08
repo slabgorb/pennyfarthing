@@ -6,7 +6,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Colleague
-  portrait_style: ", World War II command portrait, 1940s sepia-toned photography, military dress uniform, war room map backdrop, Allied leadership gravitas, newsreel documentary aesthetic"
+  portrait_style: ", WWII command, 1940s sepia photography, military uniform, Allied leadership newsreel aesthetic"
 
 agents:
   orchestrator:

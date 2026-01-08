@@ -13,7 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Bestie
-  portrait_style: ", afterlife sitcom portrait, bright pastel neighborhood colors, soft ethereal glow, whimsical cosmic elements, optimistic lighting, NBC comedy aesthetic with philosophical undertones"
+  portrait_style: ", afterlife sitcom, bright pastel colors, ethereal glow, NBC comedy philosophical undertones"
 
 agents:
   orchestrator:

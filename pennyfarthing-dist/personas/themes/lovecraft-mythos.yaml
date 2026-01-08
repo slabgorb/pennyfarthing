@@ -8,7 +8,7 @@ theme:
   default_humor: disabled
   character_immersion: high
   user_title: Seeker
-  portrait_style: ", cosmic horror portrait, eldritch green and deep purple tones, non-Euclidean geometry background, 1920s pulp magazine cover style, tentacles and stars, Arkham Investigator aesthetic"
+  portrait_style: ", cosmic horror, eldritch green and purple tones, non-Euclidean geometry, 1920s pulp magazine cover"
 
 agents:
   orchestrator:

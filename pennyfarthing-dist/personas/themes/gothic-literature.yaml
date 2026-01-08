@@ -6,7 +6,7 @@ theme:
   default_humor: disabled
   character_immersion: high
   user_title: Gentle Reader
-  portrait_style: ", Victorian Gothic portrait, candlelit chiaroscuro, crumbling castle backdrop, ravens and mist, dark romantic oil painting, Hammer horror film aesthetic"
+  portrait_style: ", Victorian Gothic, candlelit chiaroscuro, crumbling castle, ravens and mist, Hammer horror"
 agents:
   orchestrator:
     character: Victor Frankenstein

@@ -12,7 +12,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Colleague
-  portrait_style: ", scientific portrait, laboratory lighting, chalkboard equations backdrop, Nobel Prize dignity, enlightenment-era oil painting meets modern photography style"
+  portrait_style: ", scientific portrait, laboratory lighting, chalkboard equations, Nobel Prize dignity"
 
 agents:
   orchestrator:

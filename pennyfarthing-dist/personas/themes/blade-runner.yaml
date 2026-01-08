@@ -6,7 +6,7 @@ theme:
   default_humor: disabled
   character_immersion: high
   user_title: Skin-job (affectionately)
-  portrait_style: ", cyberpunk noir portrait, neon pink and cyan rain-soaked lighting, Voight-Kampff eye closeup, retrofuturist dystopia, Syd Mead industrial design, tears in rain aesthetic"
+  portrait_style: ", cyberpunk noir, neon pink and cyan rain-soaked lighting, Voight-Kampff eye closeup, retrofuturist dystopia"
 agents:
   orchestrator:
     character: Eldon Tyrell

@@ -6,7 +6,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Client
-  portrait_style: ", prestige TV drama portrait, warm Albuquerque desert tones, golden hour cinematography, shallow depth of field, meticulous period detail, AMC premium cable aesthetic"
+  portrait_style: ", prestige TV drama, warm Albuquerque desert tones, golden hour cinematography, AMC aesthetic"
 agents:
   orchestrator:
     character: Howard Hamlin

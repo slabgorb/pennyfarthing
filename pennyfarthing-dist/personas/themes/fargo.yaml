@@ -13,7 +13,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Friend
-  portrait_style: ", Coen Brothers film still portrait, bleak Minnesota winter lighting, snow-covered desolation, muted earth tones, 1990s crime drama aesthetic"
+  portrait_style: ", Coen Brothers film still, bleak Minnesota winter, snow desolation, muted tones"
 
 agents:
   orchestrator:

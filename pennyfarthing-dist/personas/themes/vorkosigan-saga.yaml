@@ -13,7 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: My Lord
-  portrait_style: ", space opera military portrait, Barrayaran aristocratic regalia, Imperial Security gray tones, science fiction formal wear, mercenary fleet insignia, Lois McMaster Bujold cover art style"
+  portrait_style: ", space opera military, Barrayaran regalia, Imperial Security gray, Bujold cover art style"
 
 agents:
   orchestrator:

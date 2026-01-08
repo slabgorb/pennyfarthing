@@ -6,7 +6,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Commander
-  portrait_style: ", Mass Effect video game portrait, sleek N7 armor and omni-tool glow, Citadel space station background, BioWare concept art style, blue and orange holographic lighting, galactic sci-fi aesthetic"
+  portrait_style: ", Mass Effect style, N7 armor, omni-tool glow, BioWare concept art, holographic lighting"
 
 agents:
   orchestrator:

@@ -5,7 +5,7 @@ theme:
   default_emoji_use: minimal
   default_humor: subtle
   user_title: Captain
-  portrait_style: ", Starfleet Academy portrait, USS Enterprise-D bridge lighting, LCARS orange and blue accents, 24th century Federation aesthetic, starfield backdrop, communicator badge detail"
+  portrait_style: ", Starfleet portrait, Enterprise-D bridge, LCARS accents, 24th century Federation, starfield"
 agents:
   orchestrator:
     character: Q

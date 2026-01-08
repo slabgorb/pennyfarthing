@@ -6,7 +6,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Good Patron
-  portrait_style: ", Elizabethan portrait, Tudor court style, rich velvet textures, theatrical candlelight, Globe Theatre aesthetic, ornate ruff collar details, Renaissance drama"
+  portrait_style: ", Elizabethan portrait, Tudor court, rich velvet, theatrical candlelight, Globe Theatre"
 agents:
   orchestrator:
     character: The Chorus
