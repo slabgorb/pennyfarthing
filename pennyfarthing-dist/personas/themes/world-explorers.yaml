@@ -12,7 +12,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Expedition Member
-  portrait_style: ", Age of Exploration, antique map parchment, weathered adventurer, National Geographic expedition photography"
+  portrait_style: ", Age of Exploration, antique map parchment, weathered adventurer, expedition documentary style"
 
 agents:
   orchestrator:

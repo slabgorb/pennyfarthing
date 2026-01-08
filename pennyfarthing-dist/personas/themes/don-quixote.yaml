@@ -12,7 +12,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Fellow Knight
-  portrait_style: ", Spanish Golden Age, Gustave Dore engraving, chivalric romance, windmills, sepia ochre"
+  portrait_style: ", Spanish Golden Age, classical engraving, chivalric romance, windmills, sepia ochre"
 
 agents:
   orchestrator:

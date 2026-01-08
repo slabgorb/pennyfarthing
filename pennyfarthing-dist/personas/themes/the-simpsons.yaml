@@ -6,7 +6,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Springfield Resident
-  portrait_style: ", Matt Groening cartoon, yellow skin, bold black outlines, Springfield classic sitcom"
+  portrait_style: ", animated sitcom style, yellow skin, bold black outlines, classic cartoon illustration"
 
 agents:
   orchestrator:

@@ -6,7 +6,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Sir/Ma'am
-  portrait_style: ", West Wing walk-and-talk, White House corridors, Sorkin motion blur, idealistic golden hour"
+  portrait_style: ", political drama, White House corridors, walk-and-talk motion blur, idealistic golden hour"
 
 agents:
   orchestrator:

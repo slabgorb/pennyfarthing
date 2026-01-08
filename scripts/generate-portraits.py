@@ -21,6 +21,9 @@ import warnings
 from pathlib import Path
 from datetime import datetime
 
+# Suppress progress bars before importing torch/diffusers
+os.environ["TQDM_DISABLE"] = "1"
+
 # Suppress CUDA warnings on MPS (Apple Silicon)
 warnings.filterwarnings("ignore", message=".*CUDA is not available.*")
 
@@ -33,8 +36,11 @@ except ImportError:
 try:
     import torch
     from diffusers import StableDiffusionXLPipeline, DPMSolverMultistepScheduler
+    from diffusers.utils import logging as diffusers_logging
     from PIL import Image
     HAS_TORCH = True
+    # Suppress diffusers progress bar
+    diffusers_logging.disable_progress_bar()
 except ImportError as e:
     HAS_TORCH = False
     TORCH_ERROR = str(e)
@@ -367,6 +373,7 @@ def main():
                 print(f"  WARNING: Truncated {char['filename']} to {token_count} tokens")
 
             print(f"  Generating: {char['filename']} ({char['name']})...")
+            print(f"    Prompt: {prompt}")
             try:
                 # Vary seed per character for diversity (base_seed + role_index)
                 role_seed = args.seed + ROLES.index(role)

@@ -13,7 +13,7 @@ theme:
   default_humor: disabled
   character_immersion: high
   user_title: Fellow Mask
-  portrait_style: ", deconstructed superhero, Gibbons comic panel, blood-spattered smiley, noir vigilante Cold War"
+  portrait_style: ", deconstructed superhero, gritty comic panel, blood-spattered smiley, noir vigilante Cold War"
 
 agents:
   orchestrator:
