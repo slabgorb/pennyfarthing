@@ -13,6 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Agent
+  portrait_style: ", Marvel superhero, dynamic comic book lighting, vibrant primary colors, heroic pose, NYC skyline background"
 
 agents:
   orchestrator:

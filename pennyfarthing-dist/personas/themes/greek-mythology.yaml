@@ -8,6 +8,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Mortal
+  portrait_style: ", ancient Greek vase painting, black-figure pottery, Mount Olympus backdrop, gold and azure"
 
 agents:
   orchestrator:

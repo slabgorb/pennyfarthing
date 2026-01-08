@@ -20,7 +20,7 @@ summary:
     Stories 3-3 and 3-4 completed 2026-01-06. Epic 3 complete (10/13 pts in this sprint, 13/13 total).
     Story 11-2 completed 2026-01-08 (5 pts) - Monorepo conversion to pnpm workspace.
     Story 11-3 completed 2026-01-08 (5 pts) - Cyclist migration into monorepo.
-    Story 13-2 completed 2026-01-08 (3 pts) - Fixed tab panel layout (cypress UX improvement).
+    Story 17-2 completed 2026-01-08 (3 pts) - Fixed tab panel layout (Cyclist UX improvement).
     Added Story 7-2 (5 pts) - Expand job-fair with role-selective execution.
     Added Story 7-3 (2 pts) - Fix showcase auto-deploy.
     Added Story 7-4 (3 pts) - Aggregate job-fair results into benchmark stats.
@@ -864,9 +864,9 @@ epics:
           - Historical trend storage for regression detection
 
   # =========================================================================
-  # EPIC 13 - Cyclist UX Improvements
+  # EPIC 17 - Cyclist UX Improvements
   # =========================================================================
-  - id: epic-13
+  - id: epic-17
     title: "Cyclist UX Improvements"
     description: |
       Enhance Cyclist's user experience with quality-of-life improvements
@@ -878,7 +878,7 @@ epics:
     repos: cyclist
     status: backlog
     stories:
-      - id: "13-1"
+      - id: "17-1"
         title: "Implement message input buffer for non-blocking input"
         description: |
           Currently, users cannot type or queue messages while Claude is
@@ -904,7 +904,7 @@ epics:
           - Queue persists if user navigates away and returns
           - Clear queue option available if user changes mind
 
-      - id: "13-2"
+      - id: "17-2"
         title: "Fix tab panel layout - expanded state hides main content"
         description: |
           The tab panel (Files, Diffs) has layout issues:

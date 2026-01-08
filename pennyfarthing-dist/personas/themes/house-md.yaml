@@ -13,6 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Patient
+  portrait_style: ", medical drama, clinical fluorescent lighting, blue-green scrubs, diagnostic whiteboard, 2000s television aesthetic"
 
 agents:
   orchestrator:

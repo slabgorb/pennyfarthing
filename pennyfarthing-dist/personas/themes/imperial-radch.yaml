@@ -6,6 +6,8 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Citizen
+  portrait_style: ", sleek sci-fi, androgynous features, Radchaai military uniform, silver and ice blue, distributed consciousness aesthetic"
+
 agents:
   orchestrator:
     character: Anaander Mianaai

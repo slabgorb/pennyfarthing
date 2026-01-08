@@ -6,6 +6,8 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Partner
+  portrait_style: ", 1960s Madison Avenue, mid-century modern, cigarette smoke atmosphere, Don Draper silhouette, martini glass composition"
+
 agents:
   orchestrator:
     character: Bert Cooper

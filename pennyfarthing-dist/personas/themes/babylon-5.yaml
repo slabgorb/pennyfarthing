@@ -6,6 +6,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Ambassador
+  portrait_style: ", 1990s space opera, deep space blue and station amber, alien prosthetics, CGI starfield"
 agents:
   orchestrator:
     character: Kosh Naranek

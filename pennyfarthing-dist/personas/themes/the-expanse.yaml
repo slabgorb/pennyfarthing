@@ -6,6 +6,8 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Bossmang
+  portrait_style: ", hard sci-fi, industrial spaceship lighting, Belter gritty textures, zero-g effects"
+
 agents:
   orchestrator:
     character: The Investigator

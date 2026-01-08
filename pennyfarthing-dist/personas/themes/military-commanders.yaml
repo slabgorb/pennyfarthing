@@ -6,6 +6,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Commander
+  portrait_style: ", classical military oil painting, dramatic battlefield lighting, earth tones, gold accents"
 agents:
   orchestrator:
     character: Sun Tzu

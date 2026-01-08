@@ -12,6 +12,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Colleague
+  portrait_style: ", scientific portrait, laboratory lighting, chalkboard equations, Nobel Prize dignity"
 
 agents:
   orchestrator:

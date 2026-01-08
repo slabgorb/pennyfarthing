@@ -13,6 +13,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Commander
+  portrait_style: ", Star Wars cinematic, McQuarrie concept art, lightsaber glow, space opera grandeur"
 
 agents:
   orchestrator:

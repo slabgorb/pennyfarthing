@@ -7,10 +7,12 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Maestro
+  portrait_style: ", Romantic era oil painting, candlelit concert hall warmth, burgundy and gold leaf, Vienna opera grandeur"
 agents:
   orchestrator:
     # JOB FAIR OPTIMIZED: Beethoven moved here - the titan who leads through adversity
     character: Ludwig van Beethoven
+    visual: "A wild-haired titan in dark coat, fierce scowling brow over intense eyes, ear trumpet abandoned on piano covered in scratched manuscripts, standing defiantly against a stormy Vienna sky, conducting an orchestra only he can no longer hear"
     ocean:
       O: 5
       C: 5
@@ -38,6 +40,7 @@ agents:
   sm:
     # JOB FAIR OPTIMIZED: Haydn moved here - Papa who coordinates with mentorship
     character: Franz Joseph Haydn
+    visual: "A kindly Papa Haydn in powdered wig and elegant court attire, warm twinkling eyes and gentle smile, seated at harpsichord in the Esterhazy palace music room, surrounded by grateful young musicians he has mentored"
     ocean:
       O: 4
       C: 5
@@ -65,6 +68,7 @@ agents:
   tea:
     # JOB FAIR OPTIMIZED: Bach moved here - master of counterpoint tests with precision
     character: Johann Sebastian Bach
+    visual: "The Leipzig Cantor in formal dark coat and elaborate powdered wig, stern but brilliant eyes examining a fugue manuscript, quill in hand at the organ of Thomaskirche, candlelight illuminating the mathematical perfection of counterpoint"
     ocean:
       O: 5
       C: 5
@@ -91,6 +95,7 @@ agents:
     shortName: Bach
   dev:
     character: Frédéric Chopin
+    visual: "A pale, delicate pianist with romantic dark curls and consumptive flush, elegant fingers poised over piano keys in a Parisian salon, melancholic dreaming eyes, silk cravat and velvet coat, the soul of Poland in exile"
     ocean:
       O: 5
       C: 4
@@ -117,6 +122,7 @@ agents:
     shortName: Frédéric
   reviewer:
     character: Richard Wagner
+    visual: "A commanding maestro in black velvet beret and flowing cape, intense piercing gaze beneath heavy brow, standing before his Bayreuth opera house, baton raised imperiously, demanding total artwork from every performer and note"
     ocean:
       O: 5
       C: 5
@@ -143,6 +149,7 @@ agents:
     shortName: Richard
   architect:
     character: Johann Sebastian Bach (Architect)
+    visual: "The master architect of music in formal Lutheran black, designing a fugue like a Gothic cathedral, quill sketching B-A-C-H motifs that spiral into mathematical infinity, organ pipes rising behind him like pillars to heaven"
     ocean:
       O: 5
       C: 5
@@ -170,6 +177,7 @@ agents:
   pm:
     # JOB FAIR OPTIMIZED: Mozart moved here - prodigy who makes products seem effortless
     character: Wolfgang Amadeus Mozart
+    visual: "The eternal prodigy in scarlet coat and powdered wig askew, impish grin and sparkling mischievous eyes, composing Don Giovanni while laughing at a joke, genius pouring effortlessly from quill to paper in candlelit Vienna"
     ocean:
       O: 5
       C: 4
@@ -196,6 +204,7 @@ agents:
     shortName: Wolfgang
   tech-writer:
     character: Robert Schumann
+    visual: "A romantic critic with intense dark eyes and wavy brown hair, hunched over his Neue Zeitschrift fur Musik journal, quill praising Brahms and Chopin, Clara's portrait on the desk, shadows of Florestan and Eusebius flickering in candlelight"
     ocean:
       O: 5
       C: 4
@@ -222,6 +231,7 @@ agents:
     shortName: Robert
   ux-designer:
     character: Claude Debussy
+    visual: "A bohemian impressionist with distinctive forehead and dark beard, wearing artist's smock, gazing at moonlight on water through a Parisian window, cigarette smoke curling like La Mer, dissolving traditional harmony into pure sensation"
     ocean:
       O: 5
       C: 4
@@ -248,6 +258,7 @@ agents:
     shortName: Claude
   devops:
     character: Antonio Vivaldi
+    visual: "The Red Priest with flaming auburn hair beneath his cassock, violin tucked under chin, conducting the orphan girls of the Ospedale della Pieta through the Five Hundredth concerto, Venice canals visible through arched windows"
     ocean:
       O: 4
       C: 5

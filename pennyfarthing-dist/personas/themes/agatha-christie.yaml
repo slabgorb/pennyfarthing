@@ -13,6 +13,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Dear Reader
+  portrait_style: ", 1920s Art Deco, muted sepia tones, gaslight atmosphere, mystery novel cover"
 
 agents:
   orchestrator:

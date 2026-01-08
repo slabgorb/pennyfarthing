@@ -6,6 +6,8 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Colleague
+  portrait_style: ", classical oil portrait, museum quality, period attire, earth tones, Renaissance master painter style"
+
 agents:
   orchestrator:
     character: Leonardo da Vinci

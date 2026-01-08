@@ -5,6 +5,7 @@ theme:
   default_emoji_use: moderate
   default_humor: enabled
   user_title: Client
+  portrait_style: ", 1980s action TV, bold primary colors, explosion orange background, vintage VHS aesthetic"
 agents:
   orchestrator:
     character: Colonel John "Hannibal" Smith
