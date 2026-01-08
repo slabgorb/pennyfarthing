@@ -18,8 +18,8 @@ summary:
     Carried from backlog - Epic 3 has 5/13 pts already done in prior sprints.
     Stories 10-1, 10-2, 10-3, and 10-4 completed 2026-01-06. Epic 10 complete (8/8 pts).
     Stories 3-3 and 3-4 completed 2026-01-06. Epic 3 complete (10/13 pts in this sprint, 13/13 total).
-    Story 11-2 completed 2026-01-08 (5 pts) - Monorepo conversion to pnpm workspace.
-    Story 11-3 completed 2026-01-08 (5 pts) - Cyclist migration into monorepo.
+    Story 18-2 completed 2026-01-08 (5 pts) - Monorepo conversion to pnpm workspace.
+    Story 18-3 completed 2026-01-08 (5 pts) - Cyclist migration into monorepo.
     Story 17-2 completed 2026-01-08 (3 pts) - Fixed tab panel layout (Cyclist UX improvement).
     Added Story 7-2 (5 pts) - Expand job-fair with role-selective execution.
     Added Story 7-3 (2 pts) - Fix showcase auto-deploy.
@@ -29,10 +29,10 @@ summary:
     Story 7-2 amended: Scope narrowed to ARCHITECT role only. Must select best architect
     scenario, then backfill across 81 themes. Other roles (pm, devops, etc.) out of scope.
 
-    NEW: Epic 12 added (21 pts) - Rich Agent Telemetry (claude_telemetry port).
+    NEW: Epic 19 added (21 pts) - Rich Agent Telemetry (claude_telemetry port).
     Ports TechNickAI/claude_telemetry patterns to TypeScript for Pennyfarthing/Cyclist.
     Extends E6 OTLP receiver with tool-level spans, agent context, TDD metrics.
-    Epic 12 is BACKLOG - not in current sprint scope.
+    Epic 19 is BACKLOG - not in current sprint scope.
 
 epics:
   # =========================================================================
@@ -423,9 +423,11 @@ epics:
       # - 7-9: CI integration (2 pts)
 
   # =========================================================================
-  # EPIC 11 - Cyclist-Pennyfarthing Monorepo Consolidation (19 pts)
+  # EPIC 18 - Cyclist-Pennyfarthing Monorepo Consolidation (19 pts)
+  # NOTE: Was epic-11, renumbered to avoid collision with archived Epic 11
+  #       (OCEAN Personality Visualization, Sprint 4)
   # =========================================================================
-  - id: epic-11
+  - id: epic-18
     jira: MSSCI-11417
     title: "Cyclist-Pennyfarthing Monorepo Consolidation"
     description: |
@@ -447,7 +449,7 @@ epics:
     status: in_progress
     stories:
       # Phase 1: Preparation (Non-Breaking)
-      - id: "11-1"
+      - id: "18-1"
         jira: MSSCI-11418
         title: "Create @pennyfarthing/shared package with portrait resolver"
         description: |
@@ -473,7 +475,7 @@ epics:
           - Unit tests for path resolution
 
       # Phase 2: Monorepo Conversion
-      - id: "11-2"
+      - id: "18-2"
         jira: MSSCI-11419
         title: "Convert Pennyfarthing to pnpm workspace structure"
         description: |
@@ -497,7 +499,7 @@ epics:
           - pennyfarthing CLI still functional
           - Existing tests pass
 
-      - id: "11-3"
+      - id: "18-3"
         jira: MSSCI-11420
         title: "Migrate Cyclist into monorepo as @pennyfarthing/cyclist"
         description: |
@@ -521,7 +523,7 @@ epics:
           - Dogfooding scenario works (portraits load from pennyfarthing-dist/)
 
       # Phase 3: Testing
-      - id: "11-4"
+      - id: "18-4"
         jira: MSSCI-11421
         title: "Test all install and runtime scenarios"
         description: |
@@ -542,7 +544,7 @@ epics:
           - Electron-builder produces working app
 
       # Phase 4: Publish & Cleanup
-      - id: "11-5"
+      - id: "18-5"
         jira: MSSCI-11422
         title: "Update CI/CD and publish scoped packages"
         description: |
@@ -562,11 +564,11 @@ epics:
           - Old cyclist repo archived with pointer to monorepo
           - README documents both install paths
 
-      - id: "11-6"
+      - id: "18-6"
         title: "Fix pre-existing test failures (tech debt)"
         description: |
           Tech debt cleanup for pre-existing test failures discovered during
-          Story 11-2 workspace conversion review.
+          Story 18-2 workspace conversion review.
 
           19 failing tests across 3 areas:
           1. Story 15-1 Cyclist Launcher Command (1 test) - CLI registration issue
@@ -574,7 +576,7 @@ epics:
           3. 630 SVG faces tests (15 tests) - Hardcoded 63 theme count, now 91+ themes
 
           These failures existed before the workspace conversion and are
-          unrelated to Epic 11 work.
+          unrelated to Epic 18 work.
         points: 2
         priority: P3
         status: backlog
@@ -586,13 +588,15 @@ epics:
           - All 697 tests pass (0 failures)
 
   # =========================================================================
-  # EPIC 12 - Rich Agent Telemetry (claude_telemetry port)
+  # EPIC 19 - Rich Agent Telemetry (claude_telemetry port)
+  # NOTE: Was epic-12, renumbered to avoid collision with archived Epic 12
+  #       (Scientific Benchmarking Migration, Sprint 5)
   # =========================================================================
   # Reference: https://github.com/TechNickAI/claude_telemetry
   # Ports the best patterns from Python claude_telemetry to TypeScript
   # for native integration with Pennyfarthing/Cyclist
   # =========================================================================
-  - id: epic-12
+  - id: epic-19
     jira: MSSCI-11425
     title: "Rich Agent Telemetry (claude_telemetry port)"
     description: |
@@ -619,7 +623,7 @@ epics:
     status: backlog
     stories:
       # Phase 1: Foundation - Extend OTLP Receiver
-      - id: "12-1"
+      - id: "19-1"
         jira: MSSCI-11426
         title: "Extend OTLP receiver for tool spans and events"
         description: |
@@ -643,7 +647,7 @@ epics:
           - Execution timing captured per tool
           - Events stored in session-scoped memory
 
-      - id: "12-2"
+      - id: "19-2"
         jira: MSSCI-11427
         title: "Create telemetry-types.ts with OTEL semantic conventions"
         description: |
@@ -668,7 +672,7 @@ epics:
           - Includes cost calculation fields
           - JSDoc documentation for all types
 
-      - id: "12-3"
+      - id: "19-3"
         jira: MSSCI-11428
         title: "Implement span hierarchy builder"
         description: |
@@ -695,7 +699,7 @@ epics:
           - Hierarchy available for UI display and export
 
       # Phase 2: Agent-Level Tracking for Pennyfarthing
-      - id: "12-4"
+      - id: "19-4"
         jira: MSSCI-11429
         title: "Add Pennyfarthing agent context to telemetry"
         description: |
@@ -719,7 +723,7 @@ epics:
           - All telemetry spans include agent attribute
           - Per-agent token aggregation in getTokenStats()
 
-      - id: "12-5"
+      - id: "19-5"
         jira: MSSCI-11430
         title: "Add story context to telemetry"
         description: |
@@ -743,7 +747,7 @@ epics:
           - Aggregation available by story
 
       # Phase 3: TDD Cycle Metrics
-      - id: "12-6"
+      - id: "19-6"
         jira: MSSCI-11431
         title: "Track TDD phase transitions"
         description: |
@@ -768,7 +772,7 @@ epics:
           - Duration calculated between phases
           - TDD cycle metrics exposed via API
 
-      - id: "12-7"
+      - id: "19-7"
         jira: MSSCI-11432
         title: "Create telemetry dashboard API"
         description: |
@@ -792,7 +796,7 @@ epics:
           - Story costs enable budget tracking
 
       # Phase 4: Export and Visualization
-      - id: "12-8"
+      - id: "19-8"
         jira: MSSCI-11433
         title: "Add OTEL export to external backends"
         description: |
@@ -820,7 +824,7 @@ epics:
           - Graceful fallback if export fails
 
       # Phase 5: Agent Evaluation
-      - id: "12-9"
+      - id: "19-9"
         jira: MSSCI-11434
         title: "Create agent evaluation tool with performance metrics"
         description: |
@@ -894,7 +898,8 @@ epics:
           capture thoughts immediately rather than waiting.
         points: 5
         priority: P2
-        status: backlog
+        status: in_progress
+        started: 2026-01-08
         repos: cyclist
         acceptance_criteria:
           - Input field remains active while Claude is processing
@@ -903,6 +908,30 @@ epics:
           - Queued messages delivered in FIFO order after response
           - Queue persists if user navigates away and returns
           - Clear queue option available if user changes mind
+
+      - id: "17-3"
+        title: "Cyclist UX bug cleanup batch"
+        description: |
+          Multiple UX bugs affecting Cyclist usability:
+
+          1. Portrait panel shows hardcoded 'Ponder Stibbons' and not loading portrait image
+          2. Token count and context percentage not populating
+          3. Some keys not responding in certain modes
+          4. AC (Acceptance Criteria) list needs collapse functionality
+          5. Next phase message font size too small, and incorrectly shows 'Ponder Stibbons'
+
+          Additional bugs may be added during implementation.
+        points: 3
+        priority: P1
+        status: in_progress
+        started: 2026-01-08
+        repos: cyclist
+        acceptance_criteria:
+          - Portrait panel loads correct persona from theme (not hardcoded)
+          - Token count and context % display real values from telemetry
+          - All keyboard shortcuts work in all modes
+          - AC list has expand/collapse toggle
+          - Next phase message uses correct agent name from theme with larger font
 
       - id: "17-2"
         title: "Fix tab panel layout - expanded state hides main content"

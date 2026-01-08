@@ -1,10 +1,10 @@
-# Story 11-2: Convert Pennyfarthing to pnpm workspace structure
+# Story 18-2: Convert Pennyfarthing to pnpm workspace structure
 
 ## Story Info
 - Story ID: 11-2
 - Title: Convert Pennyfarthing to pnpm workspace structure
 - Points: 5
-- Epic: epic-11 (Cyclist-Pennyfarthing Monorepo Consolidation)
+- Epic: epic-18 (Cyclist-Pennyfarthing Monorepo Consolidation)
 - Jira: MSSCI-11419
 - Priority: P1
 - Repo: pennyfarthing
@@ -30,7 +30,7 @@ Key changes:
 6. Existing tests pass
 
 ## Epic Context
-Epic 11 focuses on merging Cyclist (Electron GUI) into Pennyfarthing as a pnpm workspace monorepo. Story 11-2 is Phase 2 (Monorepo Conversion), following the completed Story 11-1 (Create @pennyfarthing/shared package).
+Epic 11 focuses on merging Cyclist (Electron GUI) into Pennyfarthing as a pnpm workspace monorepo. Story 18-2 is Phase 2 (Monorepo Conversion), following the completed Story 18-1 (Create @pennyfarthing/shared package).
 
 The monorepo will have three packages:
 - @pennyfarthing/core (CLI, lean ~5MB)

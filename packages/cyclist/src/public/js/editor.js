@@ -46,6 +46,166 @@ let toolbarButtons = null;
 let isSubmitting = false;
 
 // ============================================================================
+// Message Queue (Story 17-1)
+// ============================================================================
+
+/** localStorage key for persisting message queue */
+export const MESSAGE_QUEUE_KEY = 'cyclist-message-queue';
+
+/** Maximum number of messages to queue */
+export const MAX_QUEUE_SIZE = 10;
+
+/** Queued messages waiting to be sent */
+let messageQueue = [];
+
+/** Callback invoked when queue changes */
+let onQueueChangeCallback = null;
+
+/**
+ * Check if Claude is currently processing a message
+ * @returns {boolean} True if processing
+ */
+export function isProcessing() {
+  return isSubmitting;
+}
+
+/**
+ * Set the processing state
+ * @param {boolean} value - New processing state
+ */
+export function setProcessing(value) {
+  isSubmitting = value;
+}
+
+/**
+ * Get the current message queue
+ * @returns {string[]} Copy of the message queue
+ */
+export function getMessageQueue() {
+  return [...messageQueue];
+}
+
+/**
+ * Get the number of queued messages
+ * @returns {number} Queue length
+ */
+export function getQueueCount() {
+  return messageQueue.length;
+}
+
+/**
+ * Set callback for queue changes
+ * @param {Function|null} callback - Called with new queue count when queue changes
+ */
+export function setOnQueueChange(callback) {
+  onQueueChangeCallback = callback;
+}
+
+/**
+ * Notify listener of queue change
+ */
+function notifyQueueChange() {
+  if (onQueueChangeCallback) {
+    onQueueChangeCallback(messageQueue.length);
+  }
+}
+
+/**
+ * Save message queue to localStorage
+ */
+export function saveMessageQueue() {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(MESSAGE_QUEUE_KEY, JSON.stringify(messageQueue));
+  } catch (e) {
+    console.warn('Failed to save message queue:', e);
+  }
+}
+
+/**
+ * Load message queue from localStorage
+ */
+export function loadMessageQueue() {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    const stored = localStorage.getItem(MESSAGE_QUEUE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        messageQueue = parsed;
+        notifyQueueChange();
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to load message queue:', e);
+    messageQueue = [];
+  }
+}
+
+/**
+ * Add a message to the queue
+ * @param {string} message - Message to queue
+ * @returns {boolean} True if message was queued
+ */
+export function queueMessage(message) {
+  // Don't queue empty messages
+  if (!message || !message.trim()) {
+    return false;
+  }
+
+  // Enforce max queue size
+  if (messageQueue.length >= MAX_QUEUE_SIZE) {
+    return false;
+  }
+
+  messageQueue.push(message);
+  saveMessageQueue();
+  notifyQueueChange();
+  return true;
+}
+
+/**
+ * Remove and return the first message from the queue
+ * @returns {string|undefined} First message or undefined if empty
+ */
+export function dequeueMessage() {
+  if (messageQueue.length === 0) {
+    return undefined;
+  }
+  const message = messageQueue.shift();
+  saveMessageQueue();
+  notifyQueueChange();
+  return message;
+}
+
+/**
+ * Process the next message in the queue
+ * Should be called when Claude finishes processing
+ */
+export function processNextInQueue() {
+  if (messageQueue.length === 0 || isSubmitting) {
+    return;
+  }
+  const message = dequeueMessage();
+  if (message) {
+    // Trigger submit with the queued message
+    if (typeof window !== 'undefined' && window.electronAPI?.claude?.send) {
+      isSubmitting = true;
+      window.electronAPI.claude.send(message);
+    }
+  }
+}
+
+/**
+ * Clear all queued messages
+ */
+export function clearMessageQueue() {
+  messageQueue = [];
+  saveMessageQueue();
+  notifyQueueChange();
+}
+
+// ============================================================================
 // Command History (B-9.4)
 // ============================================================================
 

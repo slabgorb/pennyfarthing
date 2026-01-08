@@ -1,13 +1,14 @@
-# Story 11-2: Convert Pennyfarthing to pnpm workspace structure - Summary
+# Story 18-2: Convert Pennyfarthing to pnpm workspace structure - Summary
+<!-- NOTE: Was Story 18-2, renumbered with epic -->
 
-**Epic:** 11 - Cyclist-Pennyfarthing Monorepo Consolidation
+**Epic:** 18 - Cyclist-Pennyfarthing Monorepo Consolidation
 **Points:** 5 | **Priority:** P1
 **Repos:** pennyfarthing
 **Jira:** MSSCI-11419
 **Completed:** 2026-01-08
 
 ## What Was Built
-Restructured the Pennyfarthing repository from a single-package npm project to a pnpm workspace monorepo. This Phase 2 of Epic 11 enables future integration of the Cyclist Electron GUI by establishing a shared workspace structure with proper package isolation.
+Restructured the Pennyfarthing repository from a single-package npm project to a pnpm workspace monorepo. This Phase 2 of Epic 18 enables future integration of the Cyclist Electron GUI by establishing a shared workspace structure with proper package isolation.
 
 ## Key Technical Decisions
 - Used `tsconfig.base.json` at root with package-level configs extending it, enabling shared TypeScript settings while allowing per-package customization
@@ -35,15 +36,15 @@ Restructured the Pennyfarthing repository from a single-package npm project to a
 - Updated: Root `package.json` converted to workspace root, 14 files updated for monorepo path resolution
 
 ## Commits
-- `a12d2d42` - test(11-2): add failing tests for pnpm workspace structure
-- `b754dc45` - feat(11-2): convert to pnpm workspace structure
-- `c39c0578` - fix(11-2): resolve path resolution for pnpm workspace structure
-- `3794ed7b` - chore: add Story 11-6 tech debt for pre-existing test failures
+- `a12d2d42` - test(18-2): add failing tests for pnpm workspace structure
+- `b754dc45` - feat(18-2): convert to pnpm workspace structure
+- `c39c0578` - fix(18-2): resolve path resolution for pnpm workspace structure
+- `3794ed7b` - chore: add Story 18-6 tech debt for pre-existing test failures
 
 ## Lessons for Future Work
-- Pre-existing test failures (19 tests) were discovered during this work and documented in Story 11-6 for separate resolution
+- Pre-existing test failures (19 tests) were discovered during this work and documented in Story 18-6 for separate resolution
 - The `findMonorepoRoot()` pattern should be reused when adding new packages that need to access shared resources
-- When adding Cyclist (Story 11-3), follow the same pattern: create `packages/cyclist/` with its own package.json extending tsconfig.base.json
+- When adding Cyclist (Story 18-3), follow the same pattern: create `packages/cyclist/` with its own package.json extending tsconfig.base.json
 
 ## Workflow Completion
 - SM: Story setup - Complete

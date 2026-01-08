@@ -131,6 +131,27 @@ async function initStatsStrip() {
     });
   }
 
+  // Context polling - get context % from check-context.sh via /api/context
+  // Poll every 10 seconds since this runs a script
+  if (window.electronAPI?.context?.get) {
+    const pollContext = async () => {
+      try {
+        const ctx = await window.electronAPI.context.get();
+        if (ctx && ctx.percent !== null && ctx.percent !== undefined) {
+          updateContextMeter(ctx.percent);
+        }
+      } catch (err) {
+        // Silent fail - context is optional
+      }
+    };
+
+    // Initial fetch
+    pollContext();
+
+    // Poll every 10 seconds
+    setInterval(pollContext, 10000);
+  }
+
   console.log('[StatsStrip] IPC connected');
 }
 

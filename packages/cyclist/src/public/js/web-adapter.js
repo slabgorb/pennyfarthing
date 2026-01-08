@@ -195,14 +195,14 @@ if (window.electronAPI) {
     story: createDataAPI('/api/story', null), // No WebSocket for story yet
     git: createDataAPI('/api/git', null), // No WebSocket for git yet
     toolStats: createDataAPI('/api/stats', null), // Uses same stats endpoint
-    tokenStats: createDataAPI('/api/stats', null), // Uses same stats endpoint
+    tokenStats: createDataAPI('/api/token-stats', '/ws/token-stats'), // Token stats from OTLP
     todos: {
       get: () => Promise.resolve({ todos: [] }), // Todos managed in-browser for now
       onUpdate: () => {} // No-op
     },
 
-    // Context API (push only)
-    context: createPushOnlyAPI(null), // Context updates not available in web mode yet
+    // Context API - polls /api/context for context usage from check-context.sh
+    context: createDataAPI('/api/context', null),
 
     // Claude API via WebSocket
     claude: {

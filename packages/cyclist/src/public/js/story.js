@@ -9,6 +9,50 @@ const GIT_POLL_INTERVAL = 5000;    // 5 seconds
 let storyPollTimer = null;
 let gitPollTimer = null;
 
+// Cache for theme agent-to-character mappings
+let themeAgentsCache = null;
+
+/**
+ * Fetch and cache theme agents mapping
+ */
+async function loadThemeAgents() {
+  try {
+    const response = await fetch('/api/theme-agents');
+    if (response.ok) {
+      themeAgentsCache = await response.json();
+    }
+  } catch (err) {
+    // Silent fail - name resolution is optional
+  }
+}
+
+/**
+ * Resolve a role name to character name using cached theme agents
+ * @param {string} text - Text that may contain role names like "sm", "dev", "tea"
+ * @returns {string} Text with role names replaced by character names
+ */
+function resolveAgentNames(text) {
+  if (!text || !themeAgentsCache) return text;
+
+  // Common role patterns to look for
+  const roles = ['sm', 'tea', 'dev', 'reviewer', 'architect', 'pm', 'orchestrator'];
+
+  let result = text;
+  for (const role of roles) {
+    const agent = themeAgentsCache[role];
+    if (agent) {
+      const name = agent.shortName || agent.character;
+      // Replace standalone role names (case insensitive, word boundaries)
+      // Use negative lookahead to skip replacement when role is followed by parenthesis
+      // (already has character name appended, e.g., "Dev (Julia)")
+      const regex = new RegExp(`\\b${role}\\b(?!\\s*\\()`, 'gi');
+      result = result.replace(regex, name);
+    }
+  }
+
+  return result;
+}
+
 /**
  * Update story section in the UI
  * @param {Object} story - Story data from IPC
@@ -118,10 +162,11 @@ function updateStoryDetails(story) {
 
   detailsEl.style.display = 'block';
 
-  // Update next agent
+  // Update next agent (resolve role names to character names)
   if (nextAgentEl) {
     if (story.nextAgent) {
-      nextAgentEl.textContent = `→ ${story.nextAgent}`;
+      const displayName = resolveAgentNames(story.nextAgent);
+      nextAgentEl.textContent = `→ ${displayName}`;
       nextAgentEl.style.display = 'block';
     } else {
       nextAgentEl.style.display = 'none';
@@ -154,27 +199,40 @@ function updateStoryDetails(story) {
 }
 
 /**
- * B-13: Update acceptance criteria checklist
+ * B-13: Update acceptance criteria checklist (collapsible like todos)
  * @param {Array|null} criteria - Array of criteria items
  */
 function updateAcceptanceCriteria(criteria) {
-  const criteriaEl = document.getElementById('acceptance-criteria');
-  if (!criteriaEl) return;
+  const acSection = document.getElementById('ac-section');
+  const acList = document.getElementById('ac-list');
+  const acProgress = document.getElementById('ac-progress');
+
+  if (!acSection || !acList) return;
 
   if (!criteria || criteria.length === 0) {
-    criteriaEl.style.display = 'none';
+    acSection.style.display = 'none';
     return;
   }
 
-  criteriaEl.style.display = 'block';
+  acSection.style.display = 'block';
 
-  // Render criteria items
-  criteriaEl.innerHTML = criteria.map(c =>
-    `<div class="criteria-item ${c.completed ? 'done' : ''}">
-      <span class="criteria-icon">${c.completed ? '✓' : '○'}</span>
-      <span class="criteria-text">${c.text}</span>
+  // Update progress count
+  const completed = criteria.filter(c => c.completed).length;
+  if (acProgress) {
+    acProgress.textContent = `(${completed}/${criteria.length})`;
+  }
+
+  // Render criteria items (simple text, no checkboxes)
+  acList.innerHTML = criteria.map(c =>
+    `<div class="ac-item ${c.completed ? 'ac-done' : ''}">
+      <span class="ac-text">${c.text}</span>
     </div>`
   ).join('');
+
+  // Auto-expand if there are items, collapse if empty
+  if (criteria.length > 0) {
+    acSection.classList.remove('collapsed');
+  }
 }
 
 /**
@@ -262,6 +320,9 @@ async function initStoryGit() {
     return;
   }
 
+  // Load theme agents for name resolution
+  await loadThemeAgents();
+
   // Get initial data
   await Promise.all([refreshStory(), refreshGit()]);
 
@@ -281,6 +342,17 @@ async function initStoryGit() {
   // Start polling for periodic refresh (file changes, etc.)
   startStoryPolling();
   startGitPolling();
+
+  // Set up AC section collapse toggle handler
+  const acHeader = document.querySelector('#ac-section .section-header');
+  if (acHeader) {
+    acHeader.addEventListener('click', () => {
+      const acSection = document.getElementById('ac-section');
+      if (acSection) {
+        acSection.classList.toggle('collapsed');
+      }
+    });
+  }
 
   console.log('Story/Git IPC connected');
 }

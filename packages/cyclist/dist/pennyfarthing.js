@@ -75,10 +75,11 @@ export function loadThemeConfig(projectDir) {
     try {
         const content = readFileSync(configPath, 'utf-8');
         const config = parseYaml(content);
-        if (!config || typeof config.theme !== 'string') {
+        // Theme can be parsed as number (e.g., "1984"), coerce to string
+        if (!config || config.theme === undefined || config.theme === null) {
             return null;
         }
-        return { theme: config.theme };
+        return { theme: String(config.theme) };
     }
     catch {
         return null;

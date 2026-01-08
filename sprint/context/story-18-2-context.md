@@ -1,6 +1,7 @@
-# Story 11-2: Convert to pnpm Workspace Structure
+# Story 18-2: Convert to pnpm Workspace Structure
+<!-- NOTE: Was Story 11-2, renumbered with epic -->
 
-**Epic:** 11 - Cyclist-Pennyfarthing Monorepo Consolidation
+**Epic:** 18 - Cyclist-Pennyfarthing Monorepo Consolidation
 **Points:** 5
 **Jira:** MSSCI-11419
 **Created:** 2026-01-08
@@ -14,7 +15,7 @@ Restructure Pennyfarthing as a pnpm workspace monorepo with `@pennyfarthing/core
 ### Current State
 - Monolithic `src/cli/` with TypeScript compilation to `dist/`
 - `bin/pennyfarthing.js` entry point
-- `packages/shared/` created in Story 11-1 with portrait resolver
+- `packages/shared/` created in Story 18-1 with portrait resolver
 
 ### Target State
 ```
@@ -57,8 +58,8 @@ pennyfarthing/
 
 ## Dependencies
 
-- **Depends on:** Story 11-1 (DONE) - @pennyfarthing/shared exists
-- **Blocks:** Story 11-3 (Cyclist migration needs workspace)
+- **Depends on:** Story 18-1 (DONE) - @pennyfarthing/shared exists
+- **Blocks:** Story 18-3 (Cyclist migration needs workspace)
 
 ## Acceptance Criteria
 
@@ -91,4 +92,4 @@ pennyfarthing doctor      # Should run health check
 ## Reference
 
 - ADR-002: `~/.claude/plans/snuggly-bouncing-forest.md`
-- Epic Context: `.session/epic-11-context.md`
+- Epic Context: `.session/epic-18-context.md`

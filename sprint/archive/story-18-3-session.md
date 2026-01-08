@@ -1,11 +1,11 @@
-# Story 11-3 Session
+# Story 18-3 Session
 
 **Story ID:** 11-3
 **Jira:** MSSCI-11420
 **Title:** Migrate Cyclist into monorepo as @pennyfarthing/cyclist
 **Points:** 5
 **Priority:** P1
-**Epic:** epic-11 (Cyclist-Pennyfarthing Monorepo Consolidation)
+**Epic:** epic-18 (Cyclist-Pennyfarthing Monorepo Consolidation)
 **Repos:** pennyfarthing
 **Phase:** green
 
@@ -36,8 +36,8 @@ Epic 11 consolidates Cyclist (Electron GUI) into Pennyfarthing as a pnpm workspa
 ADR-002 approved 2026-01-07. See: ~/.claude/plans/snuggly-bouncing-forest.md
 
 ### Prior Story Status
-- Story 11-1: DONE (2026-01-07) - Created @pennyfarthing/shared package with portrait resolver
-- Story 11-2: DONE (2026-01-08) - Converted Pennyfarthing to pnpm workspace structure
+- Story 18-1: DONE (2026-01-07) - Created @pennyfarthing/shared package with portrait resolver
+- Story 18-2: DONE (2026-01-08) - Converted Pennyfarthing to pnpm workspace structure
 
 ### Technical Details
 The shared package (11-1) provides:
@@ -190,7 +190,7 @@ Migration architecturally sound, shared resolver integration clean, workspace pr
 ### Test Results
 - All 28 acceptance criteria tests passing
 - All 4 build verification tests passing
-- Pre-existing failures: 18 tests from unrelated stories (debugging scenarios, SVG faces) tracked in Story 11-6
+- Pre-existing failures: 18 tests from unrelated stories (debugging scenarios, SVG faces) tracked in Story 18-6
 
 ### Approval Criteria Met
 1. packages/cyclist/ contains Cyclist source - VERIFIED

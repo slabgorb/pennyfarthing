@@ -34,7 +34,6 @@ try:
     import torch
     from diffusers import StableDiffusionXLPipeline, DPMSolverMultistepScheduler
     from PIL import Image
-    from tqdm import tqdm
     HAS_TORCH = True
 except ImportError as e:
     HAS_TORCH = False
@@ -193,8 +192,9 @@ def build_portrait_prompt(visual: str, style_suffix: str = None) -> tuple[str, b
     Returns:
         tuple: (prompt, was_truncated, token_count)
     """
+    prefix = str("Avoid photorealism:")
     suffix = style_suffix if style_suffix is not None else DEFAULT_STYLE_SUFFIX
-    prompt, was_truncated = truncate_prompt_to_clip_limit(visual, suffix)
+    prompt, was_truncated = truncate_prompt_to_clip_limit(prefix + visual, suffix)
     token_count = count_clip_tokens(prompt)
     return prompt, was_truncated, token_count
 
@@ -328,7 +328,7 @@ def main():
     # Check for torch
     if not HAS_TORCH:
         print(f"Missing required package: {TORCH_ERROR}")
-        print("\nInstall: pip install diffusers transformers accelerate torch pillow tqdm")
+        print("\nInstall: pip install diffusers transformers accelerate torch pillow")
         sys.exit(1)
 
     # Load model
@@ -340,13 +340,15 @@ def main():
     truncated = []
     start_time = datetime.now()
 
-    for tf in tqdm(theme_files, desc="Themes"):
+    total_themes = len(theme_files)
+    for theme_idx, tf in enumerate(theme_files, 1):
         parsed = parse_theme_file(tf)
         theme = parsed["theme"]
         theme_dir = output_base / theme
         theme_dir.mkdir(parents=True, exist_ok=True)
 
         roles_to_gen = [args.role] if args.role else ROLES
+        print(f"\n[{theme_idx}/{total_themes}] Theme: {theme}")
 
         for role in roles_to_gen:
             if role not in parsed["characters"]:
@@ -355,24 +357,26 @@ def main():
             char = parsed["characters"][role]
             out_path = theme_dir / char["filename"]
             if args.skip_existing and out_path.exists():
+                print(f"  SKIP (exists): {char['filename']}")
                 continue
 
             prompt, was_truncated, token_count = build_portrait_prompt(char["visual"], parsed["portrait_style"])
 
             if was_truncated:
                 truncated.append((theme, char["filename"], token_count))
-                tqdm.write(f"  ⚠️ TRUNCATED {theme}/{char['filename']} to {token_count} tokens")
+                print(f"  WARNING: Truncated {char['filename']} to {token_count} tokens")
 
+            print(f"  Generating: {char['filename']} ({char['name']})...")
             try:
                 # Vary seed per character for diversity (base_seed + role_index)
                 role_seed = args.seed + ROLES.index(role)
                 image = generate_portrait(pipe, prompt, seed=role_seed)
                 image.save(out_path, "PNG")
                 successful += 1
-                tqdm.write(f"  {theme}/{char['filename']}: {char['name']}")
+                print(f"  DONE: {char['filename']}")
             except Exception as e:
                 failed.append((theme, char["filename"], str(e)))
-                tqdm.write(f"  FAILED {theme}/{char['filename']}: {e}")
+                print(f"  FAILED: {char['filename']}: {e}")
 
     # Summary
     elapsed = datetime.now() - start_time
