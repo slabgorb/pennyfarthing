@@ -169,16 +169,7 @@
   <script type="module" src="/js/components/TabContainer.js"></script>
   <script type="module" src="/js/components/DiffViewer.js"></script>
   <script type="module" src="/js/components/FileBrowser.js"></script>
-  <script type="module">
-    // Open file browser tab on startup
-    import TabManager from '/js/tabs.js';
-    TabManager.addTab({
-      id: 'browser-main',
-      type: 'browser',
-      label: 'Files',
-      closeable: false,
-    });
-  </script>
+  <!-- Files tab will be added on demand, not on startup -->
   <script type="module" src="/js/controls.js"></script>
   <!-- TipTap bundle must load before editor.js -->
   <script src="/js/tiptap.bundle.js"></script>

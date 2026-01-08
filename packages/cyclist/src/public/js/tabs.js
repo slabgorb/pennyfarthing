@@ -22,17 +22,19 @@ const initialState = {
  * @param {Object} tab - Tab to add { id, type, label, closeable, data? }
  * @returns {Object} New state
  */
-export function addTab(state, tab) {
+export function addTab(state, tab, options = {}) {
+  const { expand = false } = options;
+
   // Check for duplicate - switch to existing tab instead
   if (state.tabs.find(t => t.id === tab.id)) {
-    return { ...state, activeTab: tab.id, collapsed: false };
+    return { ...state, activeTab: tab.id, collapsed: expand ? false : state.collapsed };
   }
 
   const newTabs = [...state.tabs, tab];
   return {
     tabs: newTabs,
     activeTab: tab.id,
-    collapsed: false, // Expand when adding tab
+    collapsed: expand ? false : state.collapsed, // Only expand if explicitly requested
   };
 }
 
@@ -82,7 +84,7 @@ export function setActiveTab(state, tabId) {
   return {
     ...state,
     activeTab: tabId,
-    collapsed: false, // Expand when switching tabs
+    // Keep current collapsed state - don't auto-expand
   };
 }
 
@@ -155,7 +157,7 @@ export function loadTabState() {
     return {
       tabs: parsed.tabs || [],
       activeTab: parsed.activeTab ?? null,
-      collapsed: parsed.collapsed ?? true,
+      collapsed: true, // Always start collapsed - don't persist expand state
     };
   } catch {
     return { ...initialState };
@@ -164,10 +166,13 @@ export function loadTabState() {
 
 /**
  * Initialize tab state (load and validate)
+ * Always starts collapsed regardless of saved state
  * @returns {Object} Validated state
  */
 export function initTabState() {
   const state = loadTabState();
+  // Always start collapsed - user can expand if needed
+  state.collapsed = true;
 
   // Validate activeTab exists in tabs
   if (state.activeTab && !state.tabs.find(t => t.id === state.activeTab)) {
@@ -228,9 +233,11 @@ export const TabManager = {
 
   /**
    * Add a tab
+   * @param {Object} tab - Tab to add
+   * @param {Object} options - Options { expand: boolean }
    */
-  addTab(tab) {
-    this._setState(addTab(this.getState(), tab));
+  addTab(tab, options) {
+    this._setState(addTab(this.getState(), tab, options));
   },
 
   /**
