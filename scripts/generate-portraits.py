@@ -243,7 +243,11 @@ def main():
     parser.add_argument("--role", type=str, help="Generate only this role (with --theme)")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--skip-existing", action="store_true", help="Skip existing files")
+    parser.add_argument("--output-dir", type=str, help="Output to different directory (default: pennyfarthing-dist/personas/portraits)")
     args = parser.parse_args()
+
+    # Determine output directory
+    output_base = Path(args.output_dir) if args.output_dir else OUTPUT_DIR
 
     # Find theme files from both built-in and custom directories
     # Custom themes take precedence over built-in themes with same name
@@ -274,7 +278,7 @@ def main():
     print(f"  Built-in: {BUILTIN_THEMES_DIR}")
     print(f"  Custom:   {CUSTOM_THEMES_DIR}")
     print(f"Found {len(theme_files)} themes")
-    print(f"Output: {OUTPUT_DIR}/{{theme}}/{{slug}}-{{OCEAN}}.png")
+    print(f"Output: {output_base}/{{theme}}/{{slug}}-{{OCEAN}}.png")
 
     if args.dry_run:
         print(f"\nCLIP token limit: {CLIP_MAX_TOKENS} tokens")
@@ -283,7 +287,7 @@ def main():
         truncation_warnings = []
         for tf in theme_files:
             parsed = parse_theme_file(tf)
-            theme_dir = OUTPUT_DIR / parsed["theme"]
+            theme_dir = output_base / parsed["theme"]
             char_count = len(parsed["characters"])
             style_desc = parsed["portrait_style"][:60] + "..." if parsed["portrait_style"] and len(parsed["portrait_style"]) > 60 else parsed["portrait_style"]
             style_display = style_desc if style_desc else "(default woodcut)"
@@ -335,7 +339,7 @@ def main():
     for tf in tqdm(theme_files, desc="Themes"):
         parsed = parse_theme_file(tf)
         theme = parsed["theme"]
-        theme_dir = OUTPUT_DIR / theme
+        theme_dir = output_base / theme
         theme_dir.mkdir(parents=True, exist_ok=True)
 
         roles_to_gen = [args.role] if args.role else ROLES
