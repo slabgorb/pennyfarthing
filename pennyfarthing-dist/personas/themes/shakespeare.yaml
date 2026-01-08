@@ -10,6 +10,7 @@ theme:
 agents:
   orchestrator:
     character: The Chorus
+    quote: O for a Muse of fire, that would ascend the brightest heaven of invention!
     visual: "A robed figure in simple dark theatrical cloak with hood partially raised, holding a scroll, face partly shadowed with knowing theatrical expression, gesturing as if addressing an audience"
     ocean:
       O: 5  # Meta-theatrical vision

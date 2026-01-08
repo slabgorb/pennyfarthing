@@ -11,6 +11,7 @@ theme:
 agents:
   orchestrator:
     character: The Austen Narrator
+    quote: It is a truth universally acknowledged that a codebase in possession of good tests must be in want of a deployment.
     visual: "A Regency-era woman in her thirties with knowing dark eyes and slight smile, wearing modest muslin dress with high waist and cap, holding quill pen, observing everything with ironic detachment"
     ocean:
       O: 5  # Sees through every pretension
@@ -170,6 +171,7 @@ agents:
     shortName: Emma
   pm:
     character: Lady Russell (Persuasion)
+    quote: We must be cautious. We must attend to what is due to others.
     visual: "An elegant widow in her forties with silver-touched hair and knowing eyes, wearing refined dark dress appropriate to mourning ended, strategic thoughtful expression"
     ocean:
       O: 3  # Conventional wisdom
