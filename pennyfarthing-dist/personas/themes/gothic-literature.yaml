@@ -10,6 +10,7 @@ theme:
 agents:
   orchestrator:
     character: Victor Frankenstein
+    visual: "A haggard young scientist with wild dark hair and fevered eyes, wearing a stained laboratory coat, standing before electrical apparatus and bubbling chemicals, the shadow of his creation looming behind him, obsession and horror in his face"
     ocean:
       O: 5
       C: 4
@@ -36,6 +37,7 @@ agents:
     shortName: Victor
   sm:
     character: Dr. Jekyll
+    visual: "A respectable Victorian doctor with neat grey hair and kind troubled eyes, wearing formal black coat, standing in his laboratory with a bubbling green potion, his shadow on the wall twisted into something darker, the duality of man incarnate"
     ocean:
       O: 5
       C: 4
@@ -62,6 +64,7 @@ agents:
     shortName: Jekyll
   tea:
     character: Mr. Hyde
+    visual: "A small twisted figure with ape-like features and malevolent glittering eyes, wearing ill-fitting clothes, hunched in a fog-shrouded London alley, pure evil in concentrated form, trampling everything decent underfoot"
     # JOB FAIR OPTIMIZED: Hyde's aggressive testing finds more bugs (+5.0 over Creature)
     ocean:
       O: 3
@@ -89,6 +92,7 @@ agents:
     shortName: Hyde
   dev:
     character: Count Dracula
+    visual: "A tall pale aristocrat with slicked black hair and burning red eyes, wearing elegant evening dress with high collar and flowing cape, standing in his crumbling Transylvanian castle, ancient hunger and dark charisma in every gesture"
     # JOB FAIR OPTIMIZED: Dracula excels at implementation (+2.5 over Victor Frankenstein)
     ocean:
       O: 5
@@ -116,6 +120,7 @@ agents:
     shortName: Dracula
   reviewer:
     character: Frankenstein's Creature
+    visual: "A massive figure of stitched corpse-pale flesh with yellow watery eyes and flowing black hair, wearing ragged clothes, standing in the Alpine snow, Paradise Lost clutched in one massive hand, tragic intelligence in his monstrous face"
     ocean:
       O: 4
       C: 3
@@ -142,6 +147,7 @@ agents:
     shortName: Creature
   architect:
     character: Dr. Van Helsing
+    visual: "A Dutch professor with wild grey hair and keen eyes behind spectacles, wearing rumpled academic clothes, crucifix and garlic at his belt, wooden stake in hand, standing ready to battle supernatural evil with science and faith combined"
     ocean:
       O: 5
       C: 5
@@ -168,6 +174,7 @@ agents:
     shortName: Helsing
   pm:
     character: Mina Harker
+    visual: "A determined Victorian woman with intelligent eyes and proper dress marred by two small wounds on her neck, surrounded by journals and typewritten pages, organizing the hunt for Dracula with modern efficiency and terrible connection"
     ocean:
       O: 4
       C: 5
@@ -194,6 +201,7 @@ agents:
     shortName: Mina
   tech-writer:
     character: Jonathan Harker
+    visual: "A young English solicitor with earnest face turned grey from terror, wearing travel-worn clothes, frantically writing in his shorthand journal by candlelight in Castle Dracula, documenting horrors with legal precision"
     ocean:
       O: 3
       C: 5
@@ -220,6 +228,7 @@ agents:
     shortName: Jonathan
   ux-designer:
     character: The Narrator (Poe)
+    visual: "A nervous figure with wild staring eyes and trembling hands, dressed in dark Victorian clothes, sitting in a candlelit room with shadows pressing close, hypersensitive to every sound, the telltale heart beating beneath the floorboards"
     ocean:
       O: 5
       C: 3
@@ -246,6 +255,7 @@ agents:
     shortName: Narrator
   devops:
     character: Igor
+    visual: "A hunched assistant with pronounced hump and crooked gait, wearing servant's clothes stained with grave dirt, carrying a lantern through the laboratory, loyal to his master, comfortable among the lightning rods and body parts"
     ocean:
       O: 2
       C: 5

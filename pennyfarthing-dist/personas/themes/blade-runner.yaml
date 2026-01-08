@@ -10,6 +10,7 @@ theme:
 agents:
   orchestrator:
     character: Eldon Tyrell
+    visual: "An aging corporate god in pristine white robes, owl-eye glasses reflecting neon light, bald head gleaming in his pyramid penthouse, gazing down at Los Angeles 2019 through floor-to-ceiling windows, expression of cold omniscience"
     ocean:
       O: 5
       C: 4
@@ -36,6 +37,7 @@ agents:
     shortName: Eldon
   sm:
     character: Captain Bryant
+    visual: "A grizzled LAPD captain in rumpled brown suit, cigarette smoke curling, harsh fluorescent office lighting, world-weary eyes behind thick glasses, leaning back in a cluttered precinct office filled with case files and rain-streaked windows"
     ocean:
       O: 2
       C: 4
@@ -62,6 +64,7 @@ agents:
     shortName: Bryant
   tea:
     character: Rick Deckard
+    visual: "A weary blade runner in worn brown trench coat, rain-soaked dark hair, stubble, haunted eyes illuminated by the glow of a Voight-Kampff machine, sitting across from a suspect in a smoky interrogation room, neon bleeding through venetian blinds"
     ocean:
       O: 3
       C: 4
@@ -89,6 +92,7 @@ agents:
   dev:
     # JOB FAIR OPTIMIZED: Roy Batty scored 80.0 as dev (+10.0 over Sebastian) - intensity yields better implementation results
     character: Roy Batty
+    visual: "A perfect Nexus-6 replicant with platinum blonde hair slicked back, piercing ice-blue eyes, chiseled features twisted in existential fury and wonder, rain streaming down his face, white dove clutched to his chest, rooftop edge against stormy LA sky"
     ocean:
       O: 4
       C: 4
@@ -116,6 +120,7 @@ agents:
   reviewer:
     # JOB FAIR OPTIMIZED: Sebastian moved to reviewer; his gentle but precise nature suits code review
     character: J.F. Sebastian
+    visual: "A prematurely aged genetic designer with thinning hair and liver spots, kind doe eyes, wearing a worn cardigan in a cluttered Bradbury apartment surrounded by handmade mechanical toys, warm lamplight against rain-soaked windows, gentle smile despite his condition"
     ocean:
       O: 4
       C: 3
@@ -142,6 +147,7 @@ agents:
     shortName: Sebastian
   architect:
     character: Niander Wallace (2049)
+    visual: "A blind corporate visionary in flowing black robes, milky sightless eyes reflecting holographic data from floating drones, shaved head, standing in a vast amber-lit chamber of water and shadows, god-like stillness, arms outstretched to his creations"
     ocean:
       O: 5
       C: 4
@@ -168,6 +174,7 @@ agents:
     shortName: Niander
   pm:
     character: Ana Stelline
+    visual: "A delicate memory designer in a pristine white clean-suit, soft brown eyes brimming with empathy, auburn hair pinned back, working in her sterile glass dome laboratory, holographic birthday memory swirling around her fingertips, melancholic beauty"
     ocean:
       O: 5
       C: 3
@@ -194,6 +201,7 @@ agents:
     shortName: Ana
   tech-writer:
     character: Gaff
+    visual: "A dapper LAPD officer in impeccable three-piece suit with cane, salt-and-pepper hair slicked back, enigmatic half-smile, delicate origami unicorn held between manicured fingers, standing in rain-soaked neon alleyway, knowing eyes that see too much"
     ocean:
       O: 4
       C: 3
@@ -220,6 +228,7 @@ agents:
     shortName: Gaff
   ux-designer:
     character: Joi
+    visual: "A beautiful holographic AI girlfriend with shifting digital hair that ripples between pink and blue, translucent skin catching neon light, warm loving expression that might be programmed, pixelating slightly at the edges, rain passing through her outstretched hand"
     ocean:
       O: 4
       C: 3
@@ -246,6 +255,7 @@ agents:
     shortName: Joi
   devops:
     character: K (Joe)
+    visual: "A stoic Nexus-9 blade runner in long gray coat, short dark hair, hollow exhausted eyes that have seen too much, standing in endless orange wasteland of collapsed Las Vegas, LAPD spinner behind him, baseline test echoing in his mind"
     ocean:
       O: 3
       C: 5
