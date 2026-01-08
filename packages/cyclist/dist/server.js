@@ -5,7 +5,7 @@ import { join } from 'path';
 // Path resolution
 import { publicDir, nodeModulesDir, portraitsDir, getProjectDirectory } from './paths.js';
 // API routers
-import { createStatsRouter, createPortraitRouter, createPersonaRouter, createGitRouter, createOTLPRouter, createStoryRouter, } from './api/index.js';
+import { createStatsRouter, createPortraitRouter, createPersonaRouter, createGitRouter, createOTLPRouter, createStoryRouter, createFileBrowserRouter, } from './api/index.js';
 // WebSocket setup
 import { setupWebSocketServers } from './websocket.js';
 // Re-exports for main.ts and tests
@@ -37,6 +37,7 @@ app.use('/api/portrait', createPortraitRouter());
 app.use('/api/persona', createPersonaRouter(getProjectDir));
 app.use('/api/story', createStoryRouter(getProjectDir));
 app.use('/api/git', createGitRouter(getProjectDir));
+app.use('/api/files', createFileBrowserRouter(getProjectDir));
 app.use('/v1', createOTLPRouter());
 // Create HTTP server with WebSocket support
 export function createTerminalServer() {

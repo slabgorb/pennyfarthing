@@ -5,4 +5,5 @@ export { createPersonaRouter, broadcastPersona, getPersonaClients } from './pers
 export { createGitRouter, getGitInfo } from './git.js';
 export { createOTLPRouter } from './otlp.js';
 export { createStoryRouter } from './story.js';
+export { createFileBrowserRouter } from './file-browser.js';
 //# sourceMappingURL=index.js.map
