@@ -11,8 +11,8 @@ sprint:
 
 summary:
   total_points: 26
-  completed_points: 24
-  remaining_points: 2
+  completed_points: 27
+  remaining_points: 0
   notes: |
     Mixed sprint: stability (Epic 3), documentation (Epic 10), new capability (Epic 7).
     Carried from backlog - Epic 3 has 5/13 pts already done in prior sprints.
@@ -21,6 +21,7 @@ summary:
     Story 18-2 completed 2026-01-08 (5 pts) - Monorepo conversion to pnpm workspace.
     Story 18-3 completed 2026-01-08 (5 pts) - Cyclist migration into monorepo.
     Story 17-2 completed 2026-01-08 (3 pts) - Fixed tab panel layout (Cyclist UX improvement).
+    Story 17-3 completed 2026-01-08 (3 pts) - Cyclist UX bug cleanup batch (5 bugs fixed).
     Added Story 7-2 (5 pts) - Expand job-fair with role-selective execution.
     Added Story 7-3 (2 pts) - Fix showcase auto-deploy.
     Added Story 7-4 (3 pts) - Aggregate job-fair results into benchmark stats.
@@ -28,6 +29,8 @@ summary:
     but architect backfill only 12/81 themes. Moved to in_progress with detailed gap analysis.
     Story 7-2 amended: Scope narrowed to ARCHITECT role only. Must select best architect
     scenario, then backfill across 81 themes. Other roles (pm, devops, etc.) out of scope.
+
+    SPRINT COMPLETE: All planned stories finished (27/26 pts velocity +1). Epic 18 in progress.
 
     NEW: Epic 19 added (21 pts) - Rich Agent Telemetry (claude_telemetry port).
     Ports TechNickAI/claude_telemetry patterns to TypeScript for Pennyfarthing/Cyclist.
@@ -923,8 +926,10 @@ epics:
           Additional bugs may be added during implementation.
         points: 3
         priority: P1
-        status: in_progress
+        status: done
         started: 2026-01-08
+        completed: 2026-01-08
+        pr: "https://github.com/1898andCo/pennyfarthing/pull/111"
         repos: cyclist
         acceptance_criteria:
           - Portrait panel loads correct persona from theme (not hardcoded)
