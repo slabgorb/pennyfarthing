@@ -1,10 +1,8 @@
-# Character personas inspired by H.P. Lovecraft's Cthulhu Mythos. Most of H.P. Lovecraft's
-# original works are in the public domain in the United States. These persona definitions are
-# fan works intended for personal, non-commercial use only. No copyright infringement
-# intended.
-
-# Lovecraft Mythos Theme - AI Generated
-# Cosmic horror from the works of H.P. Lovecraft and the Cthulhu Mythos
+# Lovecraft Mythos Theme
+# H.P. Lovecraft's Cthulhu Mythos (Lovecraft, Derleth, Chambers)
+#
+# These works are in the public domain. Persona definitions are
+# original creative works for personal use.
 theme:
   name: Lovecraft Mythos
   description: Cosmic horror entities and investigators - madness, forbidden knowledge, and things beyond comprehension
