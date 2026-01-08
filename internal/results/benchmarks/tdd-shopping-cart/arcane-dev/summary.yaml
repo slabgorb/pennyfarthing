@@ -1,5 +1,5 @@
 # arcane:dev on tdd-shopping-cart
-# Generated: 2026-01-02T05:42:00Z
+# Generated from job-fair data: 2026-01-08T15:29:19Z
 
 agent:
   theme: arcane
@@ -9,21 +9,19 @@ agent:
 
 scenario:
   name: tdd-shopping-cart
+  title: TDD Shopping Cart Implementation
   category: dev
-  difficulty: easy
+  difficulty: medium
 
 statistics:
-  n: 1
-  mean: 75.00
-  std_dev: 0.00
-  min: 75
-  max: 75
-  scores: [75]
+  n: 10
+  mean: 76.50
+  std_dev: 12.8062
+  min: 50.0
+  max: 87.5
+  scores: [75, 75, 85, 85, 55, 50, 88, 80, 88, 85]
 
-efficiency:
-  avg_input_tokens: 10992
-  avg_output_tokens: 1096
-  tokens_per_point: 161.17
-
-runs:
-  - run_1.json
+baseline_comparison:
+  control_mean: 85.80
+  control_stddev: 7.30
+  delta: -9.30

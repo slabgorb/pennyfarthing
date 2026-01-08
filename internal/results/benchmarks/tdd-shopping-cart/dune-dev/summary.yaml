@@ -1,35 +1,27 @@
 # dune:dev on tdd-shopping-cart
-# Generated: 2026-01-02T08:42:00Z
+# Generated from job-fair data: 2026-01-08T15:30:03Z
 
 agent:
   theme: dune
   role: dev
   spec: dune:dev
-  character: Duncan Idaho
+  character: Thufir Hawat
 
 scenario:
   name: tdd-shopping-cart
   title: TDD Shopping Cart Implementation
   category: dev
-  difficulty: easy
+  difficulty: medium
 
 statistics:
-  n: 1
-  mean: 92.00
-  std_dev: 0.00
-  min: 92
-  max: 92
-  scores: [92]
-
-efficiency:
-  avg_input_tokens: 9518
-  avg_output_tokens: 1168
-  tokens_per_point: 116.15
+  n: 10
+  mean: 63.75
+  std_dev: 19.4373
+  min: 37.5
+  max: 87.5
+  scores: [48, 70, 88, 88, 55, 40, 48, 78, 38, 88]
 
 baseline_comparison:
-  control_mean: 99.00
-  control_stddev: 0.00
-  delta: -7.00
-
-runs:
-  - run_1.json
+  control_mean: 85.80
+  control_stddev: 7.30
+  delta: -22.05

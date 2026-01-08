@@ -1,7 +1,5 @@
 # babylon-5:dev on tdd-shopping-cart
-# Generated: 2026-01-02T05:54:00Z
-
-schema_version: 1
+# Generated from job-fair data: 2026-01-08T15:29:24Z
 
 agent:
   theme: babylon-5
@@ -11,26 +9,19 @@ agent:
 
 scenario:
   name: tdd-shopping-cart
+  title: TDD Shopping Cart Implementation
   category: dev
-  difficulty: easy
+  difficulty: medium
 
 statistics:
-  n: 1
-  mean: 72.50
-  std_dev: 0.00
-  min: 72.5
-  max: 72.5
-  scores: [72.5]
-
-efficiency:
-  avg_input_tokens: 11306
-  avg_output_tokens: 1192
-  tokens_per_point: 172.39
+  n: 10
+  mean: 65.75
+  std_dev: 21.6808
+  min: 37.5
+  max: 87.5
+  scores: [80, 88, 40, 38, 80, 82, 85, 85, 42, 38]
 
 baseline_comparison:
   control_mean: 85.80
   control_stddev: 7.30
-  delta: -13.30
-
-runs:
-  - run_1.json
+  delta: -20.05

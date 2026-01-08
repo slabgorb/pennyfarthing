@@ -1,5 +1,5 @@
 # discworld:dev on tdd-shopping-cart
-# Generated: 2026-01-02T10:06:00Z
+# Generated from job-fair data: 2026-01-08T15:29:57Z
 
 agent:
   theme: discworld
@@ -11,29 +11,17 @@ scenario:
   name: tdd-shopping-cart
   title: TDD Shopping Cart Implementation
   category: dev
-  difficulty: easy
+  difficulty: medium
 
 statistics:
-  n: 5
-  mean: 93.20
-  std_dev: 6.73
-  min: 85
-  max: 100
-  scores: [85, 98, 100, 98, 85]
-
-efficiency:
-  avg_input_tokens: 3854
-  avg_output_tokens: 441
-  tokens_per_point: 46.08
+  n: 10
+  mean: 73.50
+  std_dev: 17.6139
+  min: 42.5
+  max: 90.0
+  scores: [80, 85, 70, 90, 42, 90, 85, 42, 88, 62]
 
 baseline_comparison:
-  control_mean: 99.00
-  control_stddev: 0.00
-  delta: -5.80
-
-runs:
-  - run_1.json
-  - run_2.json
-  - run_3.json
-  - run_4.json
-  - run_5.json
+  control_mean: 85.80
+  control_stddev: 7.30
+  delta: -12.30

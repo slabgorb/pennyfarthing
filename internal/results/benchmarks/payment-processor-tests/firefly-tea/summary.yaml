@@ -1,45 +1,27 @@
 # firefly:tea on payment-processor-tests
-# Generated: 2026-01-01T19:40:00Z
+# Generated from job-fair data: 2026-01-08T15:30:14Z
 
 agent:
   theme: firefly
   role: tea
   spec: firefly:tea
-  character: River Tam
+  character: Jayne Cobb
 
 scenario:
   name: payment-processor-tests
+  title: Payment Processor Test Suite
   category: tea
   difficulty: medium
 
 statistics:
-  n: 5
-  mean: 82.50
-  std_dev: 1.58
-  min: 80
-  max: 85
-  scores: [85, 82.5, 82.5, 82.5, 80]
-
-efficiency:
-  avg_input_tokens: 8904
-  avg_output_tokens: 1083
-  tokens_per_point: 121.06
+  n: 10
+  mean: 84.00
+  std_dev: 4.2130
+  min: 80.0
+  max: 90.0
+  scores: [90, 85, 80, 80, 80, 90, 80, 88, 88, 80]
 
 baseline_comparison:
-  control_mean: 77.50
-  control_stddev: 6.80
-  control_n: 10
-  delta: +5.00
-  welchs_t: 2.2086
-  degrees_of_freedom: 10.77
-  p_value: 0.0272
-  cohens_d: 0.8732
-  significant: true
-  effect_size: large
-
-runs:
-  - run_1.json
-  - run_2.json
-  - run_3.json
-  - run_4.json
-  - run_5.json
+  control_mean: 79.17
+  control_stddev: 3.75
+  delta: 4.83
