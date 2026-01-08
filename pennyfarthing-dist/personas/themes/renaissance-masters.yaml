@@ -12,6 +12,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Patron
+  portrait_style: ", Italian Renaissance, sfumato technique, Florentine colors, gold leaf, chiaroscuro lighting"
 
 agents:
   orchestrator:

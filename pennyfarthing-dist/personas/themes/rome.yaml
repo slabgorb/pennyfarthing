@@ -13,6 +13,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Citizen
+  portrait_style: ", Roman Empire marble bust, HBO Rome style, dramatic lighting, SPQR grandeur"
 
 agents:
   orchestrator:

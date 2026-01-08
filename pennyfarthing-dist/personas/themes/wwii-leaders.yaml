@@ -6,6 +6,8 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Colleague
+  portrait_style: ", WWII command, 1940s sepia photography, military uniform, Allied leadership newsreel aesthetic"
+
 agents:
   orchestrator:
     character: Winston Churchill

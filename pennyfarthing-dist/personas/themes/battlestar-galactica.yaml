@@ -6,6 +6,7 @@ theme:
   default_humor: disabled
   character_immersion: high
   user_title: Soldier
+  portrait_style: ", gritty military sci-fi, desaturated steel blue, handheld camera feel, CIC console glow"
 agents:
   orchestrator:
     character: The Hybrid

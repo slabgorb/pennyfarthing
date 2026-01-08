@@ -13,6 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Meatbag
+  portrait_style: ", Matt Groening animation, bold outlines, New New York, year 3000 retrofuturism"
 
 agents:
   orchestrator:

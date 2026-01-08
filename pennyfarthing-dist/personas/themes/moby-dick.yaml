@@ -12,6 +12,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Shipmate
+  portrait_style: ", maritime oil painting, stormy sea backdrop, dark oceanic tones, scrimshaw details"
 
 agents:
   orchestrator:

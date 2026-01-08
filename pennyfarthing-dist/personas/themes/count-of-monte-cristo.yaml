@@ -12,6 +12,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Friend
+  portrait_style: ", French Romantic era, dramatic chiaroscuro candlelight, burgundy and grey, Dumas novel cover"
 
 agents:
   orchestrator:

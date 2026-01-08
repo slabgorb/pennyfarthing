@@ -6,6 +6,8 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Commander
+  portrait_style: ", Mass Effect style, N7 armor, omni-tool glow, BioWare concept art, holographic lighting"
+
 agents:
   orchestrator:
     character: The Illusive Man

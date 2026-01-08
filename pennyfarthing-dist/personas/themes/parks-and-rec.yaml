@@ -12,6 +12,7 @@ theme:
   default_emoji_use: moderate
   default_humor: enabled
   user_title: Citizen of Pawnee
+  portrait_style: ", bright cheerful portrait, warm office lighting, Pawnee aesthetic, waffle-warm tones"
 
 agents:
   orchestrator:

@@ -36,6 +36,15 @@ except ImportError as e:
     HAS_TORCH = False
     TORCH_ERROR = str(e)
 
+# CLIP tokenizer for accurate token counting (optional - falls back to word estimate)
+try:
+    from transformers import CLIPTokenizer
+    CLIP_TOKENIZER = CLIPTokenizer.from_pretrained("openai/clip-vit-large-patch14")
+    HAS_CLIP_TOKENIZER = True
+except Exception:
+    CLIP_TOKENIZER = None
+    HAS_CLIP_TOKENIZER = False
+
 
 # Configuration
 SCRIPT_DIR = Path(__file__).parent
@@ -52,6 +61,9 @@ OUTPUT_SIZE = 100
 # Generation parameters
 NUM_INFERENCE_STEPS = 30
 GUIDANCE_SCALE = 7.5
+
+# CLIP token limit - prompts are truncated beyond this
+CLIP_MAX_TOKENS = 77
 
 # Role order for the 10 agents
 ROLES = [
@@ -71,6 +83,47 @@ def to_slug(name: str) -> str:
     slug = re.sub(r'[^a-z0-9]+', '-', slug)
     slug = re.sub(r'^-|-$', '', slug)
     return slug
+
+
+def count_clip_tokens(text: str) -> int:
+    """Count CLIP tokens in text. Uses actual tokenizer if available, else estimates."""
+    if HAS_CLIP_TOKENIZER and CLIP_TOKENIZER:
+        tokens = CLIP_TOKENIZER.encode(text)
+        return len(tokens)
+    else:
+        # Fallback: estimate ~1.3 tokens per word (empirical average for CLIP)
+        return int(len(text.split()) * 1.3)
+
+
+def truncate_prompt_to_clip_limit(visual: str, style_suffix: str, max_tokens: int = CLIP_MAX_TOKENS) -> tuple[str, bool]:
+    """Truncate prompt to fit within CLIP token limit.
+
+    Strategy: Prioritize the visual description over the style suffix.
+    If combined prompt exceeds limit, progressively trim the visual description.
+
+    Returns:
+        tuple: (truncated_prompt, was_truncated)
+    """
+    combined = f"{visual}{style_suffix}"
+    token_count = count_clip_tokens(combined)
+
+    if token_count <= max_tokens:
+        return combined, False
+
+    # Need to truncate - prioritize visual by trimming words from end
+    visual_words = visual.split()
+    style_tokens = count_clip_tokens(style_suffix)
+    available_for_visual = max_tokens - style_tokens - 2  # Buffer for safety
+
+    # Binary search for optimal truncation point
+    while visual_words and count_clip_tokens(" ".join(visual_words)) > available_for_visual:
+        visual_words = visual_words[:-1]
+
+    truncated_visual = " ".join(visual_words)
+    if truncated_visual and not truncated_visual.endswith((",", ".", ";")):
+        truncated_visual = truncated_visual.rstrip(",. ")
+
+    return f"{truncated_visual}{style_suffix}", True
 
 
 def ocean_suffix(ocean: dict) -> str:
@@ -126,15 +179,20 @@ def parse_theme_file(theme_path: Path) -> dict:
     return result
 
 
-def build_portrait_prompt(visual: str, style_suffix: str = None) -> str:
-    """Build a prompt for portrait generation.
+def build_portrait_prompt(visual: str, style_suffix: str = None) -> tuple[str, bool, int]:
+    """Build a prompt for portrait generation with CLIP token limit enforcement.
 
     Args:
         visual: The character's visual description from theme YAML
         style_suffix: Optional theme-specific style suffix. Falls back to DEFAULT_STYLE_SUFFIX.
+
+    Returns:
+        tuple: (prompt, was_truncated, token_count)
     """
     suffix = style_suffix if style_suffix is not None else DEFAULT_STYLE_SUFFIX
-    return f"{visual}{suffix}"
+    prompt, was_truncated = truncate_prompt_to_clip_limit(visual, suffix)
+    token_count = count_clip_tokens(prompt)
+    return prompt, was_truncated, token_count
 
 
 def load_pipeline():
@@ -219,7 +277,10 @@ def main():
     print(f"Output: {OUTPUT_DIR}/{{theme}}/{{slug}}-{{OCEAN}}.png")
 
     if args.dry_run:
+        print(f"\nCLIP token limit: {CLIP_MAX_TOKENS} tokens")
+        print(f"Tokenizer: {'CLIP (accurate)' if HAS_CLIP_TOKENIZER else 'word estimate (fallback)'}")
         print("\nDry run - portraits to generate:")
+        truncation_warnings = []
         for tf in theme_files:
             parsed = parse_theme_file(tf)
             theme_dir = OUTPUT_DIR / parsed["theme"]
@@ -233,10 +294,27 @@ def main():
                     char = parsed["characters"][role]
                     out_path = theme_dir / char["filename"]
                     status = "EXISTS" if out_path.exists() else "PENDING"
-                    visual_preview = char["visual"][:50] + "..." if len(char["visual"]) > 50 else char["visual"]
-                    print(f"    [{status}] {char['filename']}: {visual_preview}")
+
+                    # Check token count and truncation
+                    prompt, was_truncated, token_count = build_portrait_prompt(char["visual"], parsed["portrait_style"])
+                    token_status = f"{token_count}tok"
+                    if was_truncated:
+                        token_status = f"⚠️ {token_count}tok TRUNCATED"
+                        truncation_warnings.append((parsed["theme"], role, char["filename"]))
+
+                    visual_preview = char["visual"][:40] + "..." if len(char["visual"]) > 40 else char["visual"]
+                    print(f"    [{status}] {char['filename']} ({token_status}): {visual_preview}")
                 else:
                     print(f"    [SKIP] {role}: no visual field")
+
+        if truncation_warnings:
+            print(f"\n{'='*60}")
+            print(f"⚠️  WARNING: {len(truncation_warnings)} prompts will be truncated!")
+            print(f"    CLIP limit is {CLIP_MAX_TOKENS} tokens. Consider shortening:")
+            for theme, role, filename in truncation_warnings[:10]:
+                print(f"    - {theme}/{filename} ({role})")
+            if len(truncation_warnings) > 10:
+                print(f"    ... and {len(truncation_warnings) - 10} more")
         return
 
     # Check for torch
@@ -251,6 +329,7 @@ def main():
     # Track results
     successful = 0
     failed = []
+    truncated = []
     start_time = datetime.now()
 
     for tf in tqdm(theme_files, desc="Themes"):
@@ -270,7 +349,11 @@ def main():
             if args.skip_existing and out_path.exists():
                 continue
 
-            prompt = build_portrait_prompt(char["visual"], parsed["portrait_style"])
+            prompt, was_truncated, token_count = build_portrait_prompt(char["visual"], parsed["portrait_style"])
+
+            if was_truncated:
+                truncated.append((theme, char["filename"], token_count))
+                tqdm.write(f"  ⚠️ TRUNCATED {theme}/{char['filename']} to {token_count} tokens")
 
             try:
                 # Vary seed per character for diversity (base_seed + role_index)
@@ -287,6 +370,8 @@ def main():
     elapsed = datetime.now() - start_time
     print(f"\n{'='*50}")
     print(f"Complete: {successful} portraits in {elapsed}")
+    if truncated:
+        print(f"Truncated: {len(truncated)} prompts exceeded {CLIP_MAX_TOKENS} token limit")
     if failed:
         print(f"Failed: {len(failed)}")
         for t, r, e in failed:
