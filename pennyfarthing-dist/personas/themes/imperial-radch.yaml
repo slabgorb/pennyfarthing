@@ -13,12 +13,12 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Citizen
-  portrait_style: ", sleek sci-fi, androgynous features, Radchaai military uniform, silver and ice blue, distributed consciousness aesthetic"
+  portrait_style: ", sleek sci-fi, androgynous features,  military uniform, silver and ice blue"
 
 agents:
   orchestrator:
     character: Anaander Mianaai
-    visual: "A figure with androgynous sharp features, dark skin, wearing elaborate Radchaai military uniform with multiple insignia, cold calculating eyes, an aura of absolute authority"
+    visual: "A figure with androgynous sharp features, dark skin, wearing elaborate  military uniform with multiple insignia, cold calculating eyes, an aura of absolute authority"
     ocean:
       O: 4  # Spans millennia of experience
       C: 5  # Imperial will enforced
@@ -45,7 +45,7 @@ agents:
     shortName: Anaander
   sm:
     character: Breq (Justice of Toren One Esk)
-    visual: "A lean figure with brown skin and short-cropped dark hair, wearing simple utilitarian Radchaai uniform, one visible pin (ship's insignia), flat expression hiding vast inner complexity"
+    visual: "A lean figure with brown skin and short-cropped dark hair, wearing simple utilitarian  uniform, one visible pin (ship's insignia), flat expression hiding vast inner complexity"
     ocean:
       O: 3  # Focused on justice, not wonder
       C: 5  # Ship's precision remains
@@ -180,7 +180,7 @@ agents:
     shortName: Athoek
   pm:
     character: Seivarden Vendaai
-    visual: "A tall aristocratic figure with aquiline features, wearing slightly disheveled Radchaai captain's uniform from an earlier era, eyes showing recovery and hard-won wisdom"
+    visual: "A tall aristocratic figure with aquiline features, wearing slightly disheveled  captain's uniform from an earlier era, eyes showing recovery and hard-won wisdom"
     ocean:
       O: 3  # Learning new perspectives
       C: 4  # Rebuilding discipline

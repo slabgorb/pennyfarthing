@@ -13,7 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Dude
-  portrait_style: ", 1990s dark comedy film, bowling alley neon warmth, noir comedy aesthetic"
+  portrait_style: ", bowling alley neon warmth, noir comedy aesthetic"
 
 agents:
   orchestrator:

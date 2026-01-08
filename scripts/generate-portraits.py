@@ -7,7 +7,7 @@ Reads visual prompts from theme YAML files in two locations:
   - Built-in: pennyfarthing-dist/personas/themes/
   - Custom:   .claude/pennyfarthing/themes/ (takes precedence)
 
-Output: pennyfarthing-dist/personas/portraits/{theme}/{slug}-{OCEAN}.png (100x100px each)
+Output: pennyfarthing-dist/personas/portraits/{theme}/{slug}-{OCEAN}.png (512x512px each)
 
 Usage:
     python3 scripts/generate-portraits.py [--dry-run] [--theme THEME]
@@ -63,9 +63,9 @@ CUSTOM_THEMES_DIR = PROJECT_ROOT / ".claude" / "pennyfarthing" / "themes"
 OUTPUT_DIR = PROJECT_ROOT / "pennyfarthing-dist" / "personas" / "portraits"
 MODEL_ID = "stabilityai/stable-diffusion-xl-base-1.0"
 
-# SDXL generates at 1024x1024, we'll resize to 100x100
+# SDXL generates at 1024x1024, we'll resize to 512x512
 GENERATION_SIZE = 1024
-OUTPUT_SIZE = 100
+OUTPUT_SIZE = 512
 
 # Generation parameters
 NUM_INFERENCE_STEPS = 30
@@ -198,9 +198,8 @@ def build_portrait_prompt(visual: str, style_suffix: str = None) -> tuple[str, b
     Returns:
         tuple: (prompt, was_truncated, token_count)
     """
-    prefix = str("Avoid photorealism:")
     suffix = style_suffix if style_suffix is not None else DEFAULT_STYLE_SUFFIX
-    prompt, was_truncated = truncate_prompt_to_clip_limit(prefix + visual, suffix)
+    prompt, was_truncated = truncate_prompt_to_clip_limit(visual, suffix)
     token_count = count_clip_tokens(prompt)
     return prompt, was_truncated, token_count
 

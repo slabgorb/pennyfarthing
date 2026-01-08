@@ -13,7 +13,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Your Majesty
-  portrait_style: ", royal formal, Renaissance composition, velvet and gold tones, streaming prestige aesthetic"
+  portrait_style: ", royal formal, Renaissance composition, velvet and gold tones"
 
 agents:
   orchestrator:

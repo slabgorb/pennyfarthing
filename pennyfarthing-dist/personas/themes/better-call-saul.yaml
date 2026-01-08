@@ -13,7 +13,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Client
-  portrait_style: ", prestige TV drama, warm desert tones, golden hour cinematography, cinematic aesthetic"
+  portrait_style: ", 60's popart silkscreen, warm desert tones, golden hour cinematography, cinematic aesthetic"
 agents:
   orchestrator:
     character: Howard Hamlin
