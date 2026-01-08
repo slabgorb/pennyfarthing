@@ -30,6 +30,16 @@ export const EDITOR_OPTIONS = {
 };
 
 // ============================================================================
+// Message Queue Constants (Story 17-1)
+// ============================================================================
+
+/** localStorage key for persisting message queue */
+export const MESSAGE_QUEUE_KEY = 'cyclist-message-queue';
+
+/** Maximum number of messages allowed in queue */
+export const MAX_QUEUE_SIZE = 10;
+
+// ============================================================================
 // State
 // ============================================================================
 
@@ -44,6 +54,15 @@ let toolbarButtons = null;
 
 /** Flag to prevent duplicate sends while processing */
 let isSubmitting = false;
+
+/** Flag indicating Claude is currently processing a response (Story 17-1) */
+let processingState = false;
+
+/** Message queue for non-blocking input (Story 17-1) */
+let messageQueue = [];
+
+/** Callback invoked when queue count changes (Story 17-1) */
+let onQueueChangeCallback = null;
 
 // ============================================================================
 // Message Queue (Story 17-1)
@@ -743,6 +762,157 @@ export function jsonToMarkdown(doc) {
 }
 
 // ============================================================================
+// Message Queue API (Story 17-1)
+// ============================================================================
+
+/**
+ * Check if Claude is currently processing a response
+ * @returns {boolean} True if processing
+ */
+export function isProcessing() {
+  return processingState;
+}
+
+/**
+ * Set the processing state
+ * @param {boolean} value - New processing state
+ */
+export function setProcessing(value) {
+  processingState = Boolean(value);
+}
+
+/**
+ * Get a copy of the current message queue
+ * @returns {string[]} Array of queued messages
+ */
+export function getMessageQueue() {
+  return [...messageQueue];
+}
+
+/**
+ * Get the current queue count
+ * @returns {number} Number of messages in queue
+ */
+export function getQueueCount() {
+  return messageQueue.length;
+}
+
+/**
+ * Set callback for queue changes (for UI updates)
+ * @param {Function|null} callback - Called with new count when queue changes
+ */
+export function setOnQueueChange(callback) {
+  onQueueChangeCallback = callback;
+}
+
+/**
+ * Notify listeners of queue change
+ * @private
+ */
+function notifyQueueChange() {
+  if (onQueueChangeCallback) {
+    onQueueChangeCallback(messageQueue.length);
+  }
+}
+
+/**
+ * Save message queue to localStorage
+ */
+export function saveMessageQueue() {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(MESSAGE_QUEUE_KEY, JSON.stringify(messageQueue));
+  } catch (e) {
+    console.warn('Failed to save message queue:', e);
+  }
+}
+
+/**
+ * Load message queue from localStorage
+ */
+export function loadMessageQueue() {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    const stored = localStorage.getItem(MESSAGE_QUEUE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        messageQueue = parsed;
+        notifyQueueChange();
+      }
+    }
+  } catch (e) {
+    // Handle corrupted data gracefully
+    console.warn('Failed to load message queue:', e);
+    messageQueue = [];
+  }
+}
+
+/**
+ * Add a message to the queue
+ * @param {string} message - Message to queue
+ * @returns {boolean} True if message was queued, false if rejected
+ */
+export function queueMessage(message) {
+  // Reject empty or whitespace-only messages
+  if (!message || !message.trim()) {
+    return false;
+  }
+
+  // Enforce max queue size
+  if (messageQueue.length >= MAX_QUEUE_SIZE) {
+    return false;
+  }
+
+  messageQueue.push(message);
+  saveMessageQueue();
+  notifyQueueChange();
+  return true;
+}
+
+/**
+ * Remove and return the first message from the queue (FIFO)
+ * @returns {string|null} The dequeued message, or null if queue is empty
+ */
+export function dequeueMessage() {
+  if (messageQueue.length === 0) {
+    return null;
+  }
+
+  const message = messageQueue.shift();
+  saveMessageQueue();
+  notifyQueueChange();
+  return message;
+}
+
+/**
+ * Clear all messages from the queue
+ */
+export function clearMessageQueue() {
+  messageQueue = [];
+  saveMessageQueue();
+  notifyQueueChange();
+}
+
+/**
+ * Process the next message in the queue (if any)
+ * This is called when Claude finishes processing and is ready for more input
+ */
+export function processNextInQueue() {
+  if (messageQueue.length === 0) return;
+  if (processingState) return;
+
+  const nextMessage = dequeueMessage();
+  if (nextMessage && editorInstance) {
+    // Clear editor and insert the queued message
+    clearEditor();
+    editorInstance.commands.insertContent(nextMessage);
+    // Submit it
+    submitEditorContent();
+  }
+}
+
+// ============================================================================
 // Public API
 // ============================================================================
 
@@ -949,19 +1119,33 @@ export async function createEditor() {
 function submitEditorContent() {
   if (!editorInstance) return;
 
+  const markdown = getEditorMarkdown();
+
+  // Don't submit empty content
+  if (!markdown.trim()) return;
+
+  // 17-1: If Claude is processing, queue the message instead of sending
+  if (processingState) {
+    const queued = queueMessage(markdown);
+    if (queued) {
+      console.log('[Editor] Message queued while processing');
+      clearEditor();
+      editorInstance.commands.focus();
+    } else {
+      console.log('[Editor] Queue full or message invalid');
+    }
+    return;
+  }
+
   // Prevent duplicate sends while a request is in progress
   if (isSubmitting) {
     console.log('[Editor] Ignoring submit - already processing');
     return;
   }
 
-  const markdown = getEditorMarkdown();
-
-  // Don't submit empty content
-  if (!markdown.trim()) return;
-
   // Mark as submitting to prevent duplicates
   isSubmitting = true;
+  processingState = true; // 17-1: Mark Claude as processing
 
   // B-9.4: Add to command history and reset navigation state
   addToHistory(markdown);

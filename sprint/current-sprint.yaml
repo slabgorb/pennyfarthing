@@ -901,8 +901,10 @@ epics:
           capture thoughts immediately rather than waiting.
         points: 5
         priority: P2
-        status: in_progress
+        status: done
         started: 2026-01-08
+        completed: 2026-01-08
+        pr: "https://github.com/1898andCo/pennyfarthing-2/pull/112"
         repos: cyclist
         acceptance_criteria:
           - Input field remains active while Claude is processing

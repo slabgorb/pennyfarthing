@@ -17,7 +17,7 @@ import {
   setQuickActionsVisible
 } from './components/MessageView.js';
 import { updateActivity, clearActivity } from './activity.js';
-import { resetSubmitting } from './editor.js';
+import { resetSubmitting, setProcessing, processNextInQueue, setOnQueueChange, clearMessageQueue, loadMessageQueue } from './editor.js';
 
 // Wait for DOM to be ready
 if (document.readyState === 'loading') {
@@ -67,6 +67,8 @@ function initMessageView() {
       hideThinking();
       clearActivity();
       resetSubmitting(); // Allow new submissions
+      setProcessing(false); // 17-1: Mark processing complete
+      processNextInQueue(); // 17-1: Send next queued message if any
     });
 
     window.electronAPI.claude.onError((error) => {
@@ -74,6 +76,7 @@ function initMessageView() {
       hideThinking();  // Also hide on error
       clearActivity();
       resetSubmitting(); // Allow new submissions even on error
+      setProcessing(false); // 17-1: Mark processing complete on error too
       addMessage({
         type: 'error',
         error: error,
@@ -123,6 +126,31 @@ function initMessageView() {
         }
       }
     });
+  }
+
+  // 17-1: Wire up message queue indicator
+  const queueIndicator = document.getElementById('queue-indicator');
+  const queueCount = queueIndicator?.querySelector('.queue-count');
+  const queueClearBtn = queueIndicator?.querySelector('.queue-clear-btn');
+
+  if (queueIndicator && queueCount) {
+    // Update indicator when queue changes
+    setOnQueueChange((count) => {
+      queueCount.textContent = count;
+      queueIndicator.style.display = count > 0 ? 'flex' : 'none';
+    });
+
+    // Wire up clear button
+    if (queueClearBtn) {
+      queueClearBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        clearMessageQueue();
+      });
+    }
+
+    // Load any persisted queue from localStorage
+    loadMessageQueue();
   }
 }
 

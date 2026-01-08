@@ -1368,6 +1368,45 @@ html, body {
 }
 
 /* =============================================================================
+   17-1: Message Queue Indicator
+   ============================================================================= */
+
+.queue-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--accent);
+  color: var(--bg-primary);
+  border-radius: 1rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  min-width: 2.5rem;
+  justify-content: center;
+}
+
+.queue-indicator .queue-count {
+  min-width: 1rem;
+  text-align: center;
+}
+
+.queue-indicator .queue-clear-btn {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.75rem;
+  line-height: 1;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+.queue-indicator .queue-clear-btn:hover {
+  opacity: 1;
+}
+
+/* =============================================================================
    B-17: Todo Section Styles
    ============================================================================= */
 

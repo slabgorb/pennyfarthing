@@ -59,6 +59,11 @@
           </div>
           <!-- B-20: Control buttons moved from sidebar -->
           <div id="editor-controls">
+            <!-- 17-1: Message queue indicator -->
+            <div id="queue-indicator" class="queue-indicator" style="display: none;" title="Messages queued">
+              <span class="queue-count">0</span>
+              <button class="queue-clear-btn" title="Clear queue">✕</button>
+            </div>
             <button id="stop-btn" class="stop-btn" disabled title="Stop Claude (Esc)">
               <span class="stop-icon">■</span>
             </button>
