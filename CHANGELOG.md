@@ -11,6 +11,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [6.0.0] - 2026-01-08
+
+### Major Release: Monorepo Consolidation & Cyclist Integration
+
+This release restructures Pennyfarthing as a **pnpm workspace monorepo** and integrates Cyclist as the official GUI companion.
+
+### BREAKING CHANGES
+
+- **Monorepo Structure** - Project converted from single package to pnpm workspace
+  - Root package is now `pennyfarthing-monorepo` (private)
+  - Core functionality in `packages/core` (published as `pennyfarthing`)
+  - Cyclist GUI in `packages/cyclist` (published as `@pennyfarthing/cyclist`)
+  - Shared utilities in `packages/shared` (published as `@pennyfarthing/shared`)
+
+### Added
+
+#### Epic 11: Cyclist-Pennyfarthing Monorepo Consolidation
+- **Story 11-1: @pennyfarthing/shared Package**
+  - Portrait resolver with multi-environment support (monorepo, npm, Electron)
+  - `resolvePortraitPath(theme, agent)` - finds portrait files across all install scenarios
+  - `resolvePennyfarthingDist()` - locates pennyfarthing-dist directory
+- **Story 11-2: pnpm Workspace Structure**
+  - Three-package architecture with proper cross-references
+  - Workspace-level scripts: `pnpm build`, `pnpm test`, `pnpm dev`
+  - ADR-002 documents architectural decision
+- **Story 11-3: Cyclist Migration**
+  - Cyclist integrated as `@pennyfarthing/cyclist`
+  - Preserves all existing Cyclist functionality
+  - Uses shared portrait resolver for sidebar persona display
+
+#### New Themes (3)
+- **Arthurian Mythos** - Knights of the Round Table (Arthur, Lancelot, Merlin, Morgan le Fay)
+- **Greek Mythology** - Olympian gods and heroes (Zeus, Athena, Hephaestus, Hermes)
+- **Lovecraft Mythos** - Cosmic horror entities (Nyarlathotep, Yog-Sothoth, Elder Things)
+
+### Changed
+- **Portrait Filenames** - Now use OCEAN-slug format (`arthur-45452.png` instead of `sm.png`)
+  - Generation script updated to extract shortName and OCEAN scores
+  - Cyclist resolves portraits using character slugs for theme consistency
+- **Package Manager** - Switched from npm to pnpm for workspace support
+
+### Fixed
+- **Cyclist Portrait Display** - Portraits now appear correctly in sidebar for all themes
+- **TypeScript Compilation** - Explicit Express types for pnpm workspace compatibility
+
+### Summary
+| Metric | Value |
+|--------|-------|
+| Epic Completed | 1 (Epic 11 - partial) |
+| Stories Completed | 3 |
+| Points Delivered | 13 |
+| New Themes | 3 (94 total) |
+| New Characters | 30 |
+| Packages | 3 (@pennyfarthing/core, @pennyfarthing/cyclist, @pennyfarthing/shared) |
+
+---
+
 ## [5.3.0] - 2026-01-06
 
 ### Context Circuit Breaker & Choreography Patterns
@@ -816,7 +873,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v5.3.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v6.0.0...HEAD
+[6.0.0]: https://github.com/1898andCo/pennyfarthing/compare/v5.3.0...v6.0.0
 [5.3.0]: https://github.com/1898andCo/pennyfarthing/compare/v5.2.0...v5.3.0
 [5.2.0]: https://github.com/1898andCo/pennyfarthing/compare/v5.1.1...v5.2.0
 [5.1.1]: https://github.com/1898andCo/pennyfarthing/compare/v5.1.0...v5.1.1
