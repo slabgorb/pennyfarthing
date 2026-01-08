@@ -6,6 +6,7 @@
 # Usage:
 #   ./scripts/generate-portraits.sh --theme arthurian-mythos --dry-run
 #   ./scripts/generate-portraits.sh --theme shakespeare
+#   ./scripts/generate-portraits.sh --theme star-trek-tos --output-dir /tmp/portraits
 #   ./scripts/generate-portraits.sh --help
 
 set -euo pipefail
