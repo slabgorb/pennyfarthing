@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v5.3.0** | *The outer loop goes once, the inner loop goes many times.*
+**v6.0.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px" margin="10px">
 
@@ -18,7 +18,7 @@ Explore all themes with OCEAN spider charts, Chernoff faces, and 910 character p
 
 - **10 Agents + 13 Subagents** - Strategic (PM, Architect) and tactical (SM, TEA, Dev, Reviewer) agents with official Haiku-based subagents for mechanical tasks
 - **Automatic Handoffs** - Context-aware agent transitions via official subagent format
-- **91 Persona Themes** - Star Trek, Breaking Bad, Dune, The Office, Game of Thrones, and more with OCEAN personality profiles
+- **94 Persona Themes** - Star Trek, Breaking Bad, Dune, The Office, Game of Thrones, Arthurian Mythos, and more with OCEAN personality profiles
 - **13 Skills** - Reusable knowledge domains (testing, code-review, judge, jira-cli, etc.)
 - **28 Slash Commands** - Entry points for agent activation, benchmarking, and workflows
 - **Scientific Benchmarking** - Evaluate personas against standardized scenarios with statistical analysis
@@ -128,13 +128,14 @@ your-project/
     └── {story-id}-session.md       # Active work session
 ```
 
-## Available Themes (91 total)
+## Available Themes (94 total)
 
 | Category | Themes |
 |----------|--------|
 | **Sci-Fi TV** | `the-expanse`, `star-trek-tng`, `star-trek-tos`, `firefly`, `battlestar-galactica`, `doctor-who` |
 | **Sci-Fi Film** | `star-wars`, `dune`, `blade-runner`, `the-matrix`, `alien` |
-| **Fantasy** | `game-of-thrones`, `lord-of-the-rings`, `the-witcher`, `sandman`, `his-dark-materials` |
+| **Fantasy** | `game-of-thrones`, `lord-of-the-rings`, `the-witcher`, `sandman`, `his-dark-materials`, `arthurian-mythos` |
+| **Mythology** | `greek-mythology`, `lovecraft-mythos`, `norse-mythology` |
 | **Drama** | `breaking-bad`, `the-wire`, `succession`, `mad-men`, `deadwood`, `fargo` |
 | **Comedy** | `the-office`, `parks-and-rec`, `ted-lasso`, `the-good-place`, `arrested-development` |
 | **Literary** | `discworld`, `shakespeare`, `jane-austen`, `sherlock-holmes`, `hitchhikers-guide` |
@@ -142,7 +143,7 @@ your-project/
 | **Classic** | `princess-bride`, `a-team`, `mash`, `west-wing` |
 | **Minimal** | `control`, `minimalist` |
 
-All 91 themes include OCEAN (Big Five) personality profiles and Chernoff face visualizations.
+All 94 themes include OCEAN (Big Five) personality profiles and Chernoff face visualizations.
 
 See [Theme Comparison Guide](docs/THEME-COMPARISON.md) for personality analysis, OCEAN profiles, and help choosing between themes.
 
@@ -206,54 +207,27 @@ pennyfarthing uninstall --all
 
 Archived sprint data (`sprint/archive/`, `sprint/context/`) is always preserved.
 
-## What's New in v5.2
+## What's New in v6.0
 
-- **Job Fair Benchmarking** - Data-driven role optimization
-  - `/job-fair` command evaluates all characters against all roles
-  - `--as` flag for `/solo` enables cross-role testing
-  - Cohen's d effect sizes in leaderboards
-  - Model/cost tracking per benchmark run
-- **53 Themes Optimized** - Role reassignments based on benchmark data
-  - Notable: Gandalf→dev (+8.12), Inigo Montoya→dev (+7.50), Phil Coulson→dev (+6.25)
-  - All optimizations marked with `JOB FAIR OPTIMIZED` and delta scores
-- **Developer Experience** - `pennyfarthing doctor --dogfood` for framework developers
-- **Git Branch Protection** - Pre-commit/pre-push hooks prevent direct main commits
+- **Monorepo Architecture** - Restructured as pnpm workspace
+  - `@pennyfarthing/core` - Main framework package
+  - `@pennyfarthing/cyclist` - GUI companion (Electron)
+  - `@pennyfarthing/shared` - Cross-package utilities (portrait resolver)
+- **Cyclist Integration** - Full GUI support with persona sidebar
+  - Portrait resolver works across all install scenarios
+  - Real-time agent display with OCEAN-slugged filenames
+- **3 New Themes** - Arthurian Mythos, Greek Mythology, Lovecraft Mythos
+  - 30 new characters with full OCEAN profiles
+  - Woodcut-style portraits for all characters
+- **94 Total Themes** - Up from 91
 
-## What's New in v5.1
+## What's New in v5.x
 
-- **Cyclist Integration** (Epic 15) - Launch Cyclist with Pennyfarthing context
-  - `pennyfarthing cyclist` command with auto-discovery
-  - Real-time persona, story, and git status in Cyclist sidebar
-  - Automatic statusbar detection (disabled when running in Cyclist)
-- **Git Merge Hooks** (Epic 8) - Automatic state reconciliation
-  - Post-merge hook detects PR merges and archives completed stories
-  - Session cleanup on branch switch
-- **Showcase Website Complete** - Interactive theme browser
-  - 1006 static pages across 91 themes
-  - Query builder with OCEAN expression parser
-  - Character portraits, comparison views, favorites
-- **91 Themes** - Up from 63, all with OCEAN profiles
-
-## What's New in v5.0
-
-- **Scientific Benchmarking** - Complete persona evaluation framework
-  - `/solo` - Run agents on standardized scenarios
-  - `/benchmark-control` - Create statistical baselines (n=10)
-  - `/benchmark` - Compare personas with Cohen's d effect size
-  - `/judge` - Rubric-based evaluation with TRAIL error detection
-  - 24+ scenarios across 6 categories
-  - See [BENCHMARKING.md](docs/BENCHMARKING.md) for details
-- **TRAIL-OCEAN Research** - Error detection correlation analysis
-  - Extended scenario schema with error_type taxonomy
-  - 10 debugging scenarios with 61 tagged issues
-
-## What's New in v4.2
-
-- **Chernoff Face Visualization** - OCEAN personality profiles rendered as Chernoff faces (SVG + ASCII)
-  - 630 character faces across all 63 themes
-  - `/theme-maker` generates OCEAN profiles automatically
-- **Context Warning Hook** - Automatic alerts at 70% context usage
-- **Session Isolation Fix** - Multi-session statusline pollution resolved
+- **Job Fair Benchmarking** - Data-driven role optimization with `/job-fair` command
+- **Context Circuit Breaker** - Hard stop at 85% context with `/continue-session` recovery
+- **Choreography Patterns** - 4 comprehensive guides (TDD flow, helper delegation, fan-out/fan-in, approval gates)
+- **Scientific Benchmarking** - `/solo`, `/benchmark`, `/judge` commands for persona evaluation
+- **Showcase Website** - Interactive theme browser at [showcase site](https://animated-meme-3e4494y.pages.github.io/)
 
 ---
 
