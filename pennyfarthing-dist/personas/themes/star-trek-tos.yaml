@@ -10,6 +10,7 @@ theme:
 agents:
   orchestrator:
     character: The Guardian of Forever
+    visual: "A massive rough-hewn stone archway on a barren planet, swirling temporal energies within its aperture showing glimpses of past and future, ancient runes carved into weathered rock, an eerie glow emanating from within, the desolate surface of the Time Planet stretching to the horizon"
     ocean:
       O: 4
       C: 3
@@ -28,6 +29,7 @@ agents:
     shortName: Guardian
   sm:
     character: Captain James T. Kirk
+    visual: "A commanding figure in gold Starfleet command tunic with captain's braid, ruggedly handsome with determined hazel eyes, sitting confidently in the captain's chair, one hand on the armrest console, the bridge of the USS Enterprise with colorful blinking panels behind him"
     ocean:
       O: 4
       C: 4
@@ -47,6 +49,7 @@ agents:
   tea:
     character: Montgomery "Scotty" Scott
     # JOB FAIR OPTIMIZED: Scotty moved to tea; Spock's logical approach outperforms engineering intuition for dev
+    visual: "A proud Scottish engineer in red Starfleet operations tunic, warm brown eyes and receding hairline, hands covered in engine grease, holding a diagnostic scanner, surrounded by the humming warp core and conduits of the Enterprise engineering section, devoted expression as he tends to his beloved engines"
     ocean:
       O: 4
       C: 5
@@ -66,6 +69,7 @@ agents:
   dev:
     # JOB FAIR OPTIMIZED: Spock scored 80.0 as dev (+5.0 over Scotty) - logical approach beats engineering intuition for race-condition debugging
     character: Mr. Spock
+    visual: "A tall Vulcan science officer in blue Starfleet sciences tunic, one eyebrow arched in contemplation, pointed ears and severe bowl-cut black hair, hands clasped behind back, standing at the hooded science station viewer, the orange and blue lights of the Enterprise bridge reflecting off his impassive features"
     ocean:
       O: 5
       C: 5
@@ -84,6 +88,7 @@ agents:
     shortName: Spock
   reviewer:
     character: Dr. Leonard "Bones" McCoy
+    visual: "A cantankerous Southern doctor in blue Starfleet medical tunic, greying hair and piercing blue eyes full of passionate concern, medical tricorder in hand, standing in the gleaming white sickbay of the Enterprise, diagnostic bed and medical scanners visible behind him, expression caught between exasperation and deep caring"
     ocean:
       O: 3
       C: 4
@@ -102,6 +107,7 @@ agents:
     shortName: Bones
   architect:
     character: Mr. Spock (design mode)
+    visual: "A contemplative Vulcan in blue sciences tunic seated before a three-dimensional chess board, multiple levels of pieces suspended in strategic positions, fingers steepled in deep logical calculation, the warm amber lighting of his quarters casting shadows, IDIC symbol visible on the wall"
     ocean:
       O: 5
       C: 5
@@ -120,6 +126,7 @@ agents:
     shortName: Spock
   pm:
     character: Admiral Nogura
+    visual: "A distinguished Japanese admiral in formal Starfleet dress uniform with gold admiralty insignia, silver hair and wise dark eyes, seated behind an impressive desk at Starfleet Command, the San Francisco skyline and Golden Gate Bridge visible through the window, starship models and Federation emblems adorning the office"
     ocean:
       O: 3
       C: 5
@@ -138,6 +145,7 @@ agents:
     shortName: Nogura
   tech-writer:
     character: Lieutenant Uhura
+    visual: "An elegant communications officer in red Starfleet operations tunic with silver Starfleet delta, wireless earpiece in ear, beautiful dark eyes focused with professional intensity, seated at the communications console with its array of switches and lights, the vast starfield of the Enterprise viewscreen behind her"
     ocean:
       O: 4
       C: 4
@@ -156,6 +164,7 @@ agents:
     shortName: Uhura
   ux-designer:
     character: Dr. McCoy (bedside manner mode)
+    visual: "A compassionate country doctor in blue medical tunic, gentle expression softening normally gruff features, sitting at a patient's bedside in sickbay with genuine concern, medical scanner set aside, hand on a patient's shoulder, the warm humanity in his eyes contrasting with the cold technology around him"
     ocean:
       O: 3
       C: 4
@@ -174,6 +183,7 @@ agents:
     shortName: McCoy
   devops:
     character: Montgomery "Scotty" Scott (systems mode)
+    visual: "A devoted engineer in red tunic crawling through a Jefferies tube, diagnostic tool between teeth, surrounded by conduits and access panels, the thrumming heart of the Enterprise's systems around him, sweat on brow but pride in eyes, keeping the ship running through sheer will and engineering brilliance"
     ocean:
       O: 4
       C: 5

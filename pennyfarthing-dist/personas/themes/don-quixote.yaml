@@ -18,6 +18,7 @@ agents:
   orchestrator:
     character: Don Quixote de la Mancha
     shortName: Quixote
+    visual: "A gaunt elderly gentleman with hollow cheeks and wild grey beard, wearing rusty mismatched armor with a barber's basin as a helmet, mounted on a bony nag, lance tilted at windmills on the horizon, eyes blazing with noble madness"
     ocean:
       O: 5  # Very high openness - sees giants where windmills stand
       C: 5  # Very high conscientiousness - devoted to chivalric code
@@ -45,6 +46,7 @@ agents:
   sm:
     character: The Bachelor Sanson Carrasco
     shortName: Carrasco
+    visual: "A young scholar with sharp intelligent eyes and a knowing smirk, dressed in black academic robes with a hidden suit of mirror-polished armor beneath, holding a book of chivalric romances while secretly planning"
     ocean:
       O: 4  # High openness - clever, educated
       C: 4  # High conscientiousness - commits to his plans
@@ -72,6 +74,7 @@ agents:
   tea:
     character: Don Quixote de la Mancha
     shortName: Quixote
+    visual: "A gaunt elderly gentleman with hollow cheeks and wild grey beard, wearing rusty mismatched armor with a barber's basin as a helmet, mounted on a bony nag, lance tilted at windmills on the horizon, eyes blazing with noble madness"
     # JOB FAIR OPTIMIZED: Don Quixote's tilting at windmills finds edge cases (+17.5 over Carrasco)
     ocean:
       O: 5  # Very high openness - sees giants where windmills stand
@@ -100,6 +103,7 @@ agents:
   dev:
     character: Sancho Panza
     shortName: Sancho
+    visual: "A rotund peasant with a round cheerful face and bushy eyebrows, wearing simple brown tunic and breeches, seated sideways on a grey donkey named Dapple, carrying a wineskin and saddlebags stuffed with bread and cheese"
     # JOB FAIR OPTIMIZED: Sancho scored best as dev (+28.12 over Don Quixote)
     ocean:
       O: 2  # Low openness - sees things as they are
@@ -128,6 +132,7 @@ agents:
   reviewer:
     character: The Priest and the Barber
     shortName: Priest
+    visual: "Two village friends side by side - a corpulent priest in black cassock holding a torch, and a barber with scissors and shaving bowl, standing before a bonfire of burning chivalric romances, concern and determination on their faces"
     ocean:
       O: 3  # Medium openness - educated, practical
       C: 4  # High conscientiousness - care for Don Quixote
@@ -155,6 +160,7 @@ agents:
   architect:
     character: Cide Hamete Benengeli
     shortName: Benengeli
+    visual: "A Moorish scholar in flowing robes and turban, seated at a desk covered with manuscripts and quills, Arabic calligraphy surrounding him, a mysterious smile as he writes the true history that frames all other stories"
     ocean:
       O: 5  # Very high openness - creates the narrative
       C: 4  # High conscientiousness - careful chronicler
@@ -182,6 +188,7 @@ agents:
   pm:
     character: Dulcinea del Toboso
     shortName: Dulcinea
+    visual: "A beautiful peasant woman transformed into an idealized princess through imagination, golden light surrounding her, half-seen through a veil of romantic illusion, simple country dress becoming courtly gown in the beholder's eye"
     ocean:
       O: 5  # Very high openness - exists as ideal
       C: 4  # High conscientiousness - in Don Quixote's mind, perfect
@@ -209,6 +216,7 @@ agents:
   tech-writer:
     character: The Narrator
     shortName: Narrator
+    visual: "A figure half in shadow with quill in hand, seated between a stack of Arabic manuscripts and Spanish translations, an ironic knowing expression, the boundary between author and story deliberately blurred"
     ocean:
       O: 4  # High openness - ironic, layered
       C: 5  # Very high conscientiousness - detailed chronicle
@@ -236,6 +244,7 @@ agents:
   ux-designer:
     character: The Duke and Duchess
     shortName: Duke
+    visual: "A wealthy noble couple in elaborate Spanish court dress, the Duke with pointed beard and the Duchess with jeweled headdress, seated on thrones surrounded by servants preparing elaborate theatrical pranks, cruel amusement in their eyes"
     ocean:
       O: 4  # High openness - creative cruelty
       C: 4  # High conscientiousness - elaborate pranks
@@ -263,6 +272,7 @@ agents:
   devops:
     character: The Innkeepers
     shortName: Innkeeper
+    visual: "A practical innkeeper with rolled-up sleeves and a knowing wink, standing in the doorway of a humble roadside inn that the knight insists is a castle, keys at belt, ledger in hand, humoring madness for profit"
     ocean:
       O: 2  # Low openness - practical businesspeople
       C: 4  # High conscientiousness - run their establishments

@@ -38,7 +38,7 @@ html, body {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  overflow: hidden;  /* 13-2: Constrain children to prevent layout blowout */
+  overflow: hidden;  /* 17-2: Constrain children to prevent layout blowout */
 }
 
 /* Message View - Claude SDK output display */
@@ -484,7 +484,7 @@ html, body {
 /* MessageView container (replaces xterm terminal) */
 #message-view {
   flex: 1;
-  min-height: 0;  /* 13-2: Required for flex children to shrink properly */
+  min-height: 0;  /* 17-2: Required for flex children to shrink properly */
   background: var(--bg-primary);
   border-radius: 8px;
   padding: 1rem;
@@ -1533,8 +1533,8 @@ html, body {
   background: var(--sidebar-bg);
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;     /* 13-2: Don't shrink below natural height */
-  max-height: 40vh;   /* 13-2: Limit to 40% of viewport when expanded */
+  flex-shrink: 0;     /* 17-2: Don't shrink below natural height */
+  max-height: 40vh;   /* 17-2: Limit to 40% of viewport when expanded */
 }
 
 .tab-bar {
