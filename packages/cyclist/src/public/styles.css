@@ -1,0 +1,1924 @@
+/* Cyclist - Dark Theme Styles */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg-primary: #1a1a2e;
+  --bg-secondary: #16213e;
+  --bg-terminal: #0f0f1a;
+  --text-primary: #e4e4e7;
+  --text-secondary: #a1a1aa;
+  --accent: #4f46e5;
+  --border: #27272a;
+  --status-ready: #22c55e;
+  --status-working: #f59e0b;  /* B-20: Brightened for WCAG AA contrast */
+  --status-error: #ef4444;
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+#main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Message View - Claude SDK output display */
+/* Main styles in #message-view section below */
+
+/* B-9.6: Quick Action Buttons */
+/* B-20: Quick action transitions */
+#quick-actions {
+  padding: 0;
+  transition: opacity 0.2s ease, max-height 0.2s ease;
+}
+
+#quick-actions:empty {
+  display: none;
+}
+
+.quick-actions-container {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+}
+
+.quick-action-btn {
+  padding: 0.375rem 0.75rem;
+  background: var(--accent);
+  color: var(--text-on-accent, #fff);
+  border: none;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+  white-space: nowrap;
+}
+
+.quick-action-btn:hover {
+  background: var(--accent-hover, var(--accent));
+  transform: translateY(-1px);
+}
+
+.quick-action-btn:active {
+  transform: translateY(0);
+}
+
+/* B-20: Focus indicators for accessibility */
+.quick-action-btn:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Rich Text Editor */
+#editor-wrapper {
+  border-top: 1px solid var(--border);
+  position: relative; /* For completion popup positioning */
+}
+
+#editor-container {
+  background: var(--bg-secondary);
+  display: flex;
+  flex-direction: column;
+}
+
+#editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-primary);
+}
+
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.toolbar-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+
+.toolbar-btn:active {
+  background: var(--border);
+}
+
+.toolbar-btn.is-active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+/* B-20: Focus indicators for accessibility */
+.toolbar-btn:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 0.25rem;
+}
+
+.toolbar-spacer {
+  flex: 1;
+}
+
+/* Mode button in editor toolbar */
+.mode-btn {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-transform: uppercase;
+}
+
+/* Default state - MANUAL (white/neutral) */
+.mode-btn {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.mode-btn:hover {
+  background: var(--bg-secondary);
+  border-color: var(--accent);
+}
+
+/* B-20: Focus indicators for accessibility */
+.mode-btn:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* PLAN mode - teal */
+.mode-btn.mode-plan {
+  background: #14b8a6;
+  color: white;
+  border-color: #14b8a6;
+}
+
+/* ACCEPT mode - purple */
+.mode-btn.mode-accept {
+  background: #8b5cf6;
+  color: white;
+  border-color: #8b5cf6;
+}
+
+/* B-22: Stats Strip - compact stats display in prompt bar */
+/* B-20: Increased font sizes for readability */
+#stats-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8125rem;
+}
+
+.model-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  background: var(--accent);
+  color: white;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.token-stats {
+  display: flex;
+  gap: 0.5rem;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  color: var(--text-secondary);
+}
+
+.token-in,
+.token-out {
+  white-space: nowrap;
+}
+
+.context-mini {
+  position: relative;
+  width: 80px;
+  height: 8px;
+  background: var(--bg-primary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.context-mini-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: var(--status-ready);
+  border-radius: 4px;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.context-mini-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.7rem;  /* B-20: Increased for readability */
+  font-weight: 600;
+  color: var(--text-primary);
+  text-shadow: 0 0 2px var(--bg-primary);
+}
+
+/* Context mini level colors (matching sidebar context meter) */
+.context-mini.level-safe .context-mini-fill {
+  background: var(--status-ready);
+}
+
+.context-mini.level-warning .context-mini-fill {
+  background: var(--status-working);
+}
+
+.context-mini.level-danger .context-mini-fill {
+  background: var(--status-error);
+}
+
+.context-mini.level-critical .context-mini-fill {
+  background: var(--status-error);
+  animation: pulse 0.5s infinite;
+}
+
+/* B-20: Editor row with controls on right */
+#editor-row {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+
+#editor {
+  flex: 1;
+  height: 150px;
+  min-height: 100px;
+  max-height: 300px;
+  padding: 0.75rem 1rem;
+  overflow-y: auto;
+  background: var(--bg-primary);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* B-20: Control buttons beside editor */
+#editor-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+#editor:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+#editor .ProseMirror {
+  height: 100%;
+  outline: none;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+#editor .ProseMirror p {
+  margin: 0 0 0.5rem 0;
+}
+
+#editor .ProseMirror p:last-child {
+  margin-bottom: 0;
+}
+
+#editor .ProseMirror strong {
+  font-weight: 700;
+}
+
+#editor .ProseMirror em {
+  font-style: italic;
+}
+
+#editor .ProseMirror code {
+  background: var(--bg-primary);
+  color: var(--accent);
+  padding: 0.125rem 0.25rem;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 0.9em;
+}
+
+#editor .ProseMirror pre {
+  background: var(--bg-primary);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin: 0.5rem 0;
+  overflow-x: auto;
+}
+
+#editor .ProseMirror pre code {
+  background: none;
+  padding: 0;
+  color: var(--text-primary);
+}
+
+#editor .ProseMirror ul,
+#editor .ProseMirror ol {
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+#editor .ProseMirror li {
+  margin: 0.25rem 0;
+}
+
+#editor .ProseMirror blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 1rem;
+  margin: 0.5rem 0;
+  color: var(--text-secondary);
+}
+
+/* Editor placeholder */
+#editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: 'Type your message... (Enter to send)';
+  color: var(--text-secondary);
+  float: left;
+  pointer-events: none;
+  height: 0;
+  opacity: 0.6;
+}
+
+/* B-9.5: Completion Popup */
+.completion-popup {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 4px;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 100;
+}
+
+.completion-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.completion-item:hover {
+  background: var(--bg-secondary);
+}
+
+.completion-item.selected {
+  background: var(--accent);
+  color: white;
+}
+
+.completion-name {
+  font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.completion-desc {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-left: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.completion-item.selected .completion-desc {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+#sidebar {
+  width: 280px;
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem;
+  gap: 0.5rem;
+  font-size: 1rem;  /* Base size for sidebar text */
+}
+
+#portrait {
+  width: 100px;
+  height: 100px;
+  min-width: 100px;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+#portrait img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  transition: opacity 0.2s ease;
+  position: relative;
+  z-index: 1;
+  image-rendering: pixelated;  /* Keep crisp edges for small images */
+}
+
+/* MessageView container (replaces xterm terminal) */
+#message-view {
+  flex: 1;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  padding: 1rem;
+  overflow-y: auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 1rem;          /* B-15: Increased from 0.875rem for readability */
+  line-height: 1.6;         /* B-15: Increased from 1.5 for better spacing */
+}
+
+/* Message styling */
+.message {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 6px;
+  background: var(--bg-secondary);
+}
+
+.message-assistant {
+  border-left: 3px solid var(--accent);
+}
+
+/* User messages - distinct from assistant */
+.message-user {
+  border-left: 3px solid var(--text-secondary);
+  background: color-mix(in srgb, var(--bg-secondary) 70%, var(--bg-primary));
+}
+
+.message-user p {
+  margin: 0.5rem 0;
+  color: var(--text-primary);
+}
+
+/* Thinking indicator - throbbing border and background on persona card */
+.persona-section.thinking {
+  animation: thinking-throb 1.5s ease-in-out infinite;
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+@keyframes thinking-throb {
+  0%, 100% {
+    box-shadow: 0 0 0 2px var(--accent);
+    background: var(--bg-primary);
+  }
+  50% {
+    box-shadow: 0 0 12px 4px var(--accent);
+    background: color-mix(in srgb, var(--accent) 15%, var(--bg-primary));
+  }
+}
+
+.message-assistant p {
+  margin: 0.75rem 0;        /* B-15: Increased from 0.5rem */
+  max-width: 72ch;          /* B-15: Optimal reading width */
+}
+
+/* B-15: Typography hierarchy for headers */
+.message-assistant h1 {
+  font-size: 1.5rem;
+  margin: 1.5rem 0 0.75rem;
+  color: var(--text-primary);
+}
+
+.message-assistant h2 {
+  font-size: 1.25rem;
+  margin: 1.25rem 0 0.5rem;
+  color: var(--text-primary);
+}
+
+.message-assistant h3 {
+  font-size: 1.125rem;
+  margin: 1rem 0 0.5rem;
+  color: var(--text-primary);
+}
+
+.message-assistant h4,
+.message-assistant h5,
+.message-assistant h6 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0.75rem 0 0.5rem;
+  color: var(--text-primary);
+}
+
+/* B-15: Improved inline code styling */
+.message-assistant code {
+  background: var(--bg-primary);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  border: 1px solid var(--border);  /* B-15: Added border for visibility */
+}
+
+/* B-15: Improved code block styling */
+.message-assistant pre {
+  background: var(--bg-terminal);   /* B-15: Darker for better contrast */
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.5rem 0;
+  border: 1px solid var(--border);
+  line-height: 1.25;                /* Tight line spacing for code */
+}
+
+.message-assistant pre code {
+  background: none;
+  padding: 0;
+  border: none;
+  font-size: 0.875rem;              /* Slightly smaller for code */
+  line-height: inherit;
+}
+
+/* Syntax highlighting colors */
+.message-assistant pre code .keyword { color: #c792ea; }
+.message-assistant pre code .string { color: #c3e88d; }
+.message-assistant pre code .number { color: #f78c6c; }
+.message-assistant pre code .comment { color: #676e95; font-style: italic; }
+.message-assistant pre code .function { color: #82aaff; }
+.message-assistant pre code .operator { color: #89ddff; }
+.message-assistant pre code .class-name { color: #ffcb6b; }
+.message-assistant pre code .punctuation { color: #89ddff; }
+
+/* B-15: Improved list styling */
+.message-assistant ul,
+.message-assistant ol {
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+}
+
+.message-assistant li {
+  margin: 0.375rem 0;
+  padding-left: 0.25rem;
+}
+
+.message-assistant li ul,
+.message-assistant li ol {
+  margin: 0.25rem 0;
+}
+
+/* B-15: Table styling */
+.message-assistant .table-wrapper {
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.message-assistant table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.message-assistant th {
+  background: var(--bg-primary);
+  font-weight: 600;
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+}
+
+.message-assistant td {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.message-assistant tr:nth-child(even) {
+  background: color-mix(in srgb, var(--bg-secondary) 50%, transparent);
+}
+
+.message-tool-use {
+  border-left: 3px solid var(--status-working);
+}
+
+.tool-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.tool-name {
+  font-weight: 600;
+  color: var(--status-working);
+}
+
+.tool-id {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.message-tool-result {
+  border-left: 3px solid var(--status-ready);
+}
+
+.message-tool-result.error {
+  border-left-color: var(--status-error);
+}
+
+.message-error {
+  border-left: 3px solid var(--status-error);
+  color: var(--status-error);
+}
+
+.message-system {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  border-left: 3px solid var(--border);
+}
+
+.message-result {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  border-left: 3px solid var(--accent);
+}
+
+/* B-14: Init message styling */
+.init-model {
+  font-weight: 600;
+  color: var(--accent);
+  margin-left: 0.5rem;
+}
+
+.init-mode {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  margin-left: 0.5rem;
+}
+
+/* B-14: Result message styling */
+.result-turns {
+  margin-left: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* B-14: Tool status indicator */
+.tool-status {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-left: auto;
+  background: transparent;
+}
+
+.tool-status-running .tool-status {
+  background: var(--status-working);
+  animation: pulse 1s infinite;
+}
+
+.tool-status-complete .tool-status {
+  background: var(--status-ready);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.collapsible summary {
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+.collapsible summary:hover {
+  color: var(--text-primary);
+}
+
+#stats {
+  background: var(--bg-primary);
+  border-radius: 8px;
+  padding: 0.5rem;
+  overflow: auto;
+}
+
+/* Hide redundant header */
+.stats-header {
+  display: none;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  border-bottom: none;
+}
+
+.stat-item:last-child {
+  border-bottom: none;
+}
+
+.stat-inline {
+  justify-content: flex-start;
+  gap: 0.5rem;
+}
+
+.stat-inline .stat-label {
+  min-width: auto;
+}
+
+.stat-inline .stat-value {
+  margin-right: 1rem;
+}
+
+.stat-inline .stat-value:last-child {
+  margin-right: 0;
+}
+
+.stat-label {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.stat-value {
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+/* Pulse animation for stat value updates */
+@keyframes pulse {
+  0% {
+    background-color: rgba(79, 70, 229, 0.3);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.stat-value.updated {
+  animation: pulse 0.5s ease-out;
+}
+
+/* Status color coding */
+.status-ready {
+  color: var(--status-ready);
+}
+
+.status-working {
+  color: var(--status-working);
+}
+
+.status-error {
+  color: var(--status-error);
+}
+
+/* Status dot indicator next to model */
+.model-with-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--status-error);
+  flex-shrink: 0;
+}
+
+.status-dot.connected {
+  background-color: var(--status-ready);
+}
+
+.status-dot.working {
+  background-color: var(--status-working);
+}
+
+/* Tool Stats (E5-2) */
+.tool-stats {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.tools-breakdown {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  padding-left: 1rem;
+}
+
+.tools-breakdown:empty {
+  display: none;
+}
+
+.tool-errors {
+  color: var(--status-error);
+}
+
+.tool-errors.has-errors {
+  display: flex !important;
+}
+
+.tool-errors.active {
+  animation: error-pulse 0.5s ease;
+}
+
+@keyframes error-pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+[data-stat="tools-total"],
+[data-stat="files-changed"],
+[data-stat="tool-errors"] .error-count {
+  font-weight: 600;
+}
+
+/* B-20: Portrait placeholder with SVG silhouette */
+.portrait-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  opacity: 0.6;
+}
+
+.portrait-placeholder svg {
+  width: 48px;
+  height: 48px;
+}
+
+/* Persona Section Styles */
+.persona-section {
+  background: var(--bg-primary);
+  border-radius: 8px;
+  overflow: hidden;
+  padding: 0.5rem 0.75rem;  /* B-20: Standardized sidebar padding */
+}
+
+/* Project name at top of persona section */
+.project-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Theme name at bottom of persona section */
+.theme-name {
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: 0.5rem;
+  opacity: 0.5;
+}
+
+/* Activity Line - shows current tool/subagent activity */
+.activity-line {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 0.125rem 0.5rem;
+  margin-top: 0.125rem;
+  min-height: 1.25rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* First activity line gets slightly more top margin */
+.activity-line:first-of-type {
+  margin-top: 0.25rem;
+}
+
+.activity-line.active {
+  opacity: 1;
+}
+
+.activity-line .tool-icon {
+  margin-right: 0.25rem;
+}
+
+.activity-line .subagent {
+  color: var(--accent);
+}
+
+.persona-header {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.persona-info {
+  flex: 1;
+  min-width: 0;  /* Allow text truncation */
+}
+
+#character-name,
+.character-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.125rem;
+}
+
+#character-role,
+.character-role {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  margin-bottom: 0.25rem;
+}
+
+/* Quote always visible */
+#character-quote,
+.character-quote {
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--text-secondary);
+  line-height: 1.3;
+  margin-top: 0.25rem;
+}
+
+/* Story Section Styles */
+.story-section {
+  background: var(--bg-primary);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  border-left: 2px solid var(--accent);
+}
+
+/* Hide redundant header - story title is self-explanatory */
+.story-section h3 {
+  display: none;
+}
+
+#story-title,
+.story-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.375rem;
+  line-height: 1.25;
+}
+
+/* Phase as inline badge */
+#story-phase,
+.story-phase {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  padding: 0.125rem 0.375rem;
+  border-radius: 3px;
+  margin-bottom: 0.5rem;
+}
+
+.sprint-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.sprint-points {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* B-13: Workflow Progress Visualization */
+.workflow-progress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+  margin: 0.5rem 0;
+  padding: 0.375rem 0.25rem;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.workflow-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.125rem 0.25rem;
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.workflow-step.status-done {
+  opacity: 0.7;
+}
+
+.workflow-step.status-current {
+  background: var(--accent);
+  color: var(--bg-primary);
+}
+
+.workflow-step.status-pending {
+  opacity: 0.5;
+}
+
+.workflow-icon {
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.workflow-icon.status-done {
+  color: var(--success, #4caf50);
+}
+
+.workflow-icon.status-current {
+  color: var(--bg-primary);
+}
+
+.workflow-icon.status-pending {
+  color: var(--text-secondary);
+}
+
+/* B-20: Increased workflow label sizes for readability */
+.workflow-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.workflow-arrow {
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  opacity: 0.5;
+}
+
+/* B-13: Story Details (Next Agent, PR) */
+.story-details {
+  margin: 0.375rem 0;
+  font-size: 0.7rem;
+}
+
+.next-agent {
+  color: var(--accent);
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.story-pr {
+  color: var(--text-secondary);
+}
+
+.story-pr .pr-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.story-pr .pr-link:hover {
+  text-decoration: underline;
+}
+
+/* B-21: Acceptance Criteria Styles (matching TODO list) */
+#acceptance-criteria {
+  margin-top: 0.5rem;
+  padding-top: 0.375rem;
+  border-top: 1px solid var(--border);
+}
+
+.criteria-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  font-size: 0.85rem;
+  line-height: 1.3;
+}
+
+.criteria-icon {
+  flex-shrink: 0;
+  width: 1rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.criteria-text {
+  flex: 1;
+  word-break: break-word;
+  color: var(--text-primary);
+}
+
+/* Completed criteria styling */
+.criteria-item.done .criteria-icon {
+  color: var(--status-ready, #22c55e);
+}
+
+.criteria-item.done .criteria-text {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+/* Git Section Styles */
+.git-section {
+  background: var(--bg-primary);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+/* Hide redundant header */
+.git-section h3 {
+  display: none;
+}
+
+#git-branch,
+.git-branch {
+  font-size: 0.9rem;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#git-status,
+.git-status {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.125rem 0.375rem;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.status-clean {
+  background: color-mix(in srgb, var(--status-ready) 20%, transparent);
+  color: var(--status-ready);
+}
+
+.status-dirty {
+  background: color-mix(in srgb, var(--status-working) 20%, transparent);
+  color: var(--status-working);
+}
+
+/* Theme Toggle Button */
+.theme-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}
+
+#theme-toggle,
+.theme-toggle {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+#theme-toggle:hover,
+.theme-toggle:hover {
+  background: var(--bg-secondary);
+  border-color: var(--accent);
+}
+
+#theme-toggle:focus,
+.theme-toggle:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.theme-icon {
+  display: inline-block;
+}
+
+/* Theme transition for key elements */
+#sidebar,
+#terminal,
+#editor,
+#editor-container,
+#editor-toolbar,
+#stats,
+.persona-section,
+.story-section,
+.git-section {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* B-20: Control buttons beside editor (compact square style) */
+.stop-btn,
+.clear-btn {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+/* B-20: Focus indicators for accessibility */
+.stop-btn:focus,
+.clear-btn:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.clear-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.clear-btn:active {
+  background: var(--border);
+}
+
+.clear-icon {
+  font-size: 1.25rem;
+}
+
+.stop-btn:not(:disabled):hover {
+  background: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
+
+.stop-btn:not(:disabled):active {
+  background: #b02a37;
+}
+
+.stop-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.stop-icon {
+  font-size: 1.25rem;
+}
+
+/* =============================================================================
+   B-17: Todo Section Styles
+   ============================================================================= */
+
+.todo-section {
+  background: var(--bg-primary);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  border-left: 2px solid var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.todo-section .section-header {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  gap: 0.5rem;
+}
+
+.todo-section .section-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.todo-section .todo-progress {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-left: auto;
+}
+
+.todo-section .collapse-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  transition: transform 0.2s ease;
+}
+
+.todo-section.collapsed .collapse-btn {
+  transform: rotate(-90deg);
+}
+
+/* B-20: Focus indicators for accessibility */
+.todo-section .collapse-btn:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.todo-section .section-content {
+  margin-top: 0.5rem;
+  overflow: hidden;
+  transition: max-height 0.2s ease, opacity 0.2s ease;
+  max-height: 500px;
+  opacity: 1;
+}
+
+.todo-section.collapsed .section-content {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+}
+
+/* Todo Items */
+.todo-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  font-size: 0.85rem;
+  line-height: 1.3;
+}
+
+.todo-indicator {
+  flex-shrink: 0;
+  width: 1rem;
+  text-align: center;
+}
+
+.todo-content {
+  flex: 1;
+  word-break: break-word;
+}
+
+/* Status-specific styling */
+.todo-completed .todo-indicator {
+  color: var(--status-ready, #22c55e);
+}
+
+.todo-completed .todo-content {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.todo-in_progress .todo-indicator {
+  color: var(--status-working, #eab308);
+}
+
+.todo-in-progress {
+  background: rgba(234, 179, 8, 0.1);
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  margin: 0.125rem -0.5rem;
+}
+
+.todo-pending .todo-indicator {
+  color: var(--text-secondary, #a1a1aa);
+}
+
+.todo-pending .todo-content {
+  color: var(--text-secondary);
+}
+
+/* =============================================================================
+   B-19: Context Meter Styles
+   ============================================================================= */
+
+.context-meter {
+  margin-top: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+.context-meter-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+  color: var(--text-secondary);
+}
+
+.context-percent {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* Color level states */
+.context-meter.level-safe .progress-fill {
+  background: var(--status-ready);
+}
+
+.context-meter.level-warning .progress-fill {
+  background: var(--status-working);
+}
+
+.context-meter.level-danger .progress-fill {
+  background: var(--status-error);
+}
+
+.context-meter.level-critical .progress-fill {
+  background: var(--status-error);
+  animation: pulse 0.5s infinite;
+}
+
+/* =============================================================================
+ * E8-1: Tab Panel
+ * Tabbed workspace for diffs, file browser, and file viewer
+ * ============================================================================= */
+
+.tab-panel {
+  border-top: 1px solid var(--border-color);
+  background: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.tab-bar {
+  display: flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-color);
+  min-height: 32px;
+}
+
+.tab-bar-tabs {
+  display: flex;
+  flex: 1;
+  gap: 0.25rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.tab-bar-tabs::-webkit-scrollbar {
+  height: 4px;
+}
+
+.tab-bar-tabs::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 2px;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.tab:hover {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.05));
+  color: var(--text-primary);
+}
+
+.tab.active {
+  background: var(--accent-color);
+  color: var(--bg-color);
+  border-color: var(--accent-color);
+}
+
+.tab-label {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tab-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  opacity: 0.6;
+  cursor: pointer;
+  border-radius: 2px;
+  font-size: 14px;
+  line-height: 1;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.tab-close:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.tab.active .tab-close:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.tab-panel-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 10px;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.2s ease;
+}
+
+.tab-panel-toggle:hover {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.05));
+  color: var(--text-primary);
+}
+
+.tab-panel.collapsed .tab-panel-toggle {
+  transform: rotate(180deg);
+}
+
+.tab-content {
+  flex: 1;
+  overflow: auto;
+  max-height: 300px;
+  min-height: 100px;
+  transition: max-height 0.2s ease, min-height 0.2s ease, opacity 0.2s ease;
+}
+
+.tab-panel.collapsed .tab-content {
+  max-height: 0;
+  min-height: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.tab-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 100px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* Hide tab bar when no tabs */
+.tab-panel:not(:has(.tab)) .tab-bar {
+  display: none;
+}
+
+/* Also hide entire panel when collapsed and no tabs */
+.tab-panel.collapsed:not(:has(.tab)) {
+  display: none;
+}
+
+/* =============================================================================
+ * E8-2: Diff Viewer
+ * Side-by-side diff display for Edit/Write tool changes
+ * ============================================================================= */
+
+.diff-viewer {
+  display: flex;
+  height: 100%;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.diff-panel {
+  flex: 1;
+  overflow: auto;
+  border-right: 1px solid var(--border);
+  background: var(--bg-terminal);
+}
+
+.diff-panel:last-child {
+  border-right: none;
+}
+
+.diff-header {
+  padding: 0.5rem;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.diff-line {
+  display: flex;
+  white-space: pre;
+  min-height: 1.4em;
+}
+
+.diff-line-number {
+  width: 3rem;
+  text-align: right;
+  padding-right: 0.5rem;
+  color: var(--text-secondary);
+  user-select: none;
+  flex-shrink: 0;
+  opacity: 0.6;
+  font-size: 0.85em;
+}
+
+.diff-line-content {
+  flex: 1;
+  padding-left: 0.5rem;
+  overflow-x: auto;
+}
+
+/* Added lines - green background */
+.diff-line.added {
+  background: rgba(46, 160, 67, 0.15);
+}
+
+.diff-line.added .diff-line-content {
+  color: var(--status-ready, #2ea043);
+}
+
+.diff-line.added .diff-line-number {
+  color: var(--status-ready, #2ea043);
+  opacity: 0.8;
+}
+
+/* Removed lines - red background */
+.diff-line.removed {
+  background: rgba(248, 81, 73, 0.15);
+}
+
+.diff-line.removed .diff-line-content {
+  color: var(--status-error, #f85149);
+}
+
+.diff-line.removed .diff-line-number {
+  color: var(--status-error, #f85149);
+  opacity: 0.8;
+}
+
+/* Unchanged lines - normal styling */
+.diff-line.unchanged {
+  background: transparent;
+}
+
+.diff-line.unchanged .diff-line-content {
+  color: var(--text-primary);
+}
+
+/* Empty state for new files */
+.diff-empty-state {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Language-specific classes for syntax highlighting (future enhancement) */
+.diff-viewer.lang-typescript,
+.diff-viewer.lang-javascript {
+  /* TypeScript/JavaScript specific styles if needed */
+}
+
+.diff-viewer.lang-css {
+  /* CSS specific styles if needed */
+}
+
+.diff-viewer.lang-html {
+  /* HTML specific styles if needed */
+}
+
+.diff-viewer.lang-json {
+  /* JSON specific styles if needed */
+}
+
+.diff-viewer.lang-markdown {
+  /* Markdown specific styles if needed */
+}
+
+.diff-viewer.lang-plain {
+  /* Plain text styles */
+}
+
+/* =============================================================================
+ * E8-3: File Browser
+ * Tree view for navigating project files
+ * ============================================================================= */
+
+.file-browser {
+  height: 100%;
+  overflow: auto;
+  background: var(--bg-terminal);
+  padding: 0.5rem;
+}
+
+.file-tree {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.tree-item {
+  display: flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s ease;
+}
+
+.tree-item:hover {
+  background: var(--bg-secondary);
+}
+
+.tree-item.directory {
+  font-weight: 500;
+}
+
+.tree-item.directory.expanded {
+  color: var(--text-primary);
+}
+
+.tree-item.file {
+  color: var(--text-secondary);
+}
+
+.tree-item.file:hover {
+  color: var(--text-primary);
+}
+
+/* Modified file indicator (AC5) */
+.tree-item.modified {
+  position: relative;
+}
+
+.tree-item.modified::after {
+  content: '';
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.tree-chevron {
+  width: 1rem;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  transition: transform 0.15s ease;
+}
+
+.tree-indent {
+  width: 1rem;
+  flex-shrink: 0;
+}
+
+.tree-icon {
+  width: 1.25rem;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.tree-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-children {
+  padding-left: 1rem;
+  border-left: 1px solid var(--border);
+  margin-left: 0.5rem;
+}
+
+/* Empty states */
+.file-browser-empty,
+.file-browser-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 100px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.file-browser-error {
+  color: var(--status-error);
+}

@@ -11,13 +11,15 @@ sprint:
 
 summary:
   total_points: 26
-  completed_points: 11
-  remaining_points: 15
+  completed_points: 21
+  remaining_points: 5
   notes: |
     Mixed sprint: stability (Epic 3), documentation (Epic 10), new capability (Epic 7).
     Carried from backlog - Epic 3 has 5/13 pts already done in prior sprints.
     Stories 10-1, 10-2, 10-3, and 10-4 completed 2026-01-06. Epic 10 complete (8/8 pts).
     Stories 3-3 and 3-4 completed 2026-01-06. Epic 3 complete (10/13 pts in this sprint, 13/13 total).
+    Story 11-2 completed 2026-01-08 (5 pts) - Monorepo conversion to pnpm workspace.
+    Story 11-3 completed 2026-01-08 (5 pts) - Cyclist migration into monorepo.
     Added Story 7-2 (5 pts) - Expand job-fair with role-selective execution.
     Added Story 7-3 (2 pts) - Fix showcase auto-deploy.
     Added Story 7-4 (3 pts) - Aggregate job-fair results into benchmark stats.
@@ -437,7 +439,7 @@ epics:
       - @pennyfarthing/cyclist (Electron GUI, optional ~200MB)
       - @pennyfarthing/shared (path resolution, theme loading)
     points: 19
-    completed_points: 3
+    completed_points: 13
     priority: P1
     marker: "architectural"
     repos: pennyfarthing
@@ -482,8 +484,9 @@ epics:
           - Verify npm run build still works
         points: 5
         priority: P1
-        status: in_progress
+        status: done
         started: 2026-01-08
+        completed: 2026-01-08
         repos: pennyfarthing
         acceptance_criteria:
           - packages/core/src/ contains former src/
@@ -504,7 +507,10 @@ epics:
           - Verify portrait loading in all scenarios
         points: 5
         priority: P1
-        status: backlog
+        status: done
+        started: 2026-01-07
+        completed: 2026-01-08
+        pr: "https://github.com/1898andCo/pennyfarthing/pull/95"
         repos: pennyfarthing
         acceptance_criteria:
           - packages/cyclist/ contains Cyclist source
