@@ -17,8 +17,12 @@ Usage:
 import argparse
 import os
 import sys
+import warnings
 from pathlib import Path
 from datetime import datetime
+
+# Suppress CUDA warnings on MPS (Apple Silicon)
+warnings.filterwarnings("ignore", message=".*CUDA is not available.*")
 
 try:
     import yaml
