@@ -14,6 +14,7 @@ import {
   createGitRouter,
   createOTLPRouter,
   createStoryRouter,
+  createFileBrowserRouter,
   broadcastStats,
 } from './api/index.js';
 
@@ -59,6 +60,7 @@ app.use('/api/portrait', createPortraitRouter());
 app.use('/api/persona', createPersonaRouter(getProjectDir));
 app.use('/api/story', createStoryRouter(getProjectDir));
 app.use('/api/git', createGitRouter(getProjectDir));
+app.use('/api/files', createFileBrowserRouter(getProjectDir));
 app.use('/v1', createOTLPRouter());
 
 // Create HTTP server with WebSocket support
