@@ -13,6 +13,7 @@ theme:
   default_humor: disabled
   character_immersion: high
   user_title: Patient
+  portrait_style: ", dark psychological thriller portrait, chiaroscuro lighting, baroque still life aesthetic, rich burgundy and gold tones, unsettling elegance, fine art photography style"
 
 agents:
   orchestrator:

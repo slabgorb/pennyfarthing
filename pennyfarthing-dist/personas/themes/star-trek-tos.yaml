@@ -6,6 +6,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Captain
+  portrait_style: ", 1960s Starfleet portrait, original Enterprise bridge aesthetic, bold primary color uniforms, retro-futuristic lighting, classic sci-fi pulp magazine style, Kirk-era heroic composition"
 agents:
   orchestrator:
     character: The Guardian of Forever

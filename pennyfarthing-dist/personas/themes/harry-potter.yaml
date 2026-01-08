@@ -13,6 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Fellow Witch/Wizard
+  portrait_style: ", magical portrait in gilded frame, warm candlelit Hogwarts aesthetic, enchanted moving painting style, rich house colors, wizarding world fantasy art"
 
 agents:
   orchestrator:

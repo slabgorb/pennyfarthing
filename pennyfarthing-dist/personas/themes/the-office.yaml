@@ -13,6 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Team Member
+  portrait_style: ", mockumentary office portrait, fluorescent overhead lighting, beige cubicle backdrop, awkward employee photo aesthetic, Dunder Mifflin Scranton branch, confessional interview framing"
 
 agents:
   orchestrator:

@@ -6,6 +6,8 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Sir/Ma'am
+  portrait_style: ", West Wing walk-and-talk portrait, warm White House corridor lighting, Sorkin rapid-fire motion blur, American political drama aesthetic, presidential seal backdrop, idealistic golden hour"
+
 agents:
   orchestrator:
     character: President Josiah Bartlet

@@ -13,6 +13,7 @@ theme:
   default_humor: disabled
   character_immersion: high
   user_title: Partner
+  portrait_style: ", Breaking Bad prestige TV portrait, harsh New Mexico desert sunlight, chemical yellow-green hazmat tint, extreme close-up intensity, AMC cinematography aesthetic, Heisenberg transformation"
 
 agents:
   orchestrator:

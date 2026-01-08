@@ -13,6 +13,7 @@ theme:
   default_humor: disabled
   character_immersion: high
   user_title: Friend
+  portrait_style: ", 1920s Birmingham portrait, moody industrial lighting, flat cap silhouette, cigarette smoke atmosphere, sepia and coal-dust aesthetic, gritty British gangster style"
 
 agents:
   orchestrator:

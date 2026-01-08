@@ -6,6 +6,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Companion
+  portrait_style: ", BBC sci-fi portrait, swirling time vortex background, TARDIS blue and gold accents, dramatic theatrical lighting, British television aesthetic"
 agents:
   orchestrator:
     character: The Doctor (Twelfth)

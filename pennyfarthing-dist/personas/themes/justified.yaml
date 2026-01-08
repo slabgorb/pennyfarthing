@@ -13,6 +13,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Partner
+  portrait_style: ", modern Western portrait, Harlan County Kentucky aesthetic, warm amber and sepia tones, coal country grit, cowboy hat silhouette, FX television drama style, Elmore Leonard pulp cover influence"
 
 agents:
   orchestrator:

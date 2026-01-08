@@ -13,6 +13,7 @@ theme:
   default_humor: disabled
   character_immersion: high
   user_title: Fellow Mask
+  portrait_style: ", deconstructed superhero portrait, Dave Gibbons comic panel style, nine-panel grid influence, blood-spattered smiley face yellow, noir vigilante aesthetic, 1980s alternate history Cold War atmosphere"
 
 agents:
   orchestrator:

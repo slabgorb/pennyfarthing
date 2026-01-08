@@ -12,6 +12,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Cat
+  portrait_style: ", Blue Note album cover portrait, smoky jazz club atmosphere, high contrast black and white with spot color, bebop era aesthetic, 1950s graphic design, bold typography influence"
 
 agents:
   orchestrator:

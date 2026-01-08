@@ -12,6 +12,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Patron
+  portrait_style: ", Italian Renaissance portrait, sfumato technique, rich Florentine colors, gold leaf accents, Medici patron style, oil on wood panel aesthetic, chiaroscuro lighting"
 
 agents:
   orchestrator:

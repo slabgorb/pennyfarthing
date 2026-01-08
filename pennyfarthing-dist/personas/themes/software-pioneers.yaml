@@ -13,6 +13,7 @@ theme:
   default_humor: subtle
   character_immersion: medium
   user_title: Colleague
+  portrait_style: ", tech industry portrait, clean professional lighting, computer lab aesthetic, vintage mainframe to modern laptop evolution, conference speaker quality, ACM Turing Award dignity"
 
 agents:
   orchestrator:

@@ -8,6 +8,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Mortal
+  portrait_style: ", ancient Greek vase painting style portrait, black-figure or red-figure pottery aesthetic, Mount Olympus backdrop, classical marble sculpture influence, Mediterranean gold and azure"
 
 agents:
   orchestrator:

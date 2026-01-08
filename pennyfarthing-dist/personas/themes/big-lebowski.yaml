@@ -13,6 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Dude
+  portrait_style: ", 1990s Coen Brothers film portrait, bowling alley neon and wood panel warmth, dreamlike soft focus, White Russian in hand, LA noir comedy aesthetic, purple velvet and cowboy kitsch"
 
 agents:
   orchestrator:

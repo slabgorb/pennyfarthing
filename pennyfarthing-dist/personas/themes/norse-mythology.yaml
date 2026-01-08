@@ -7,6 +7,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Mortal
+  portrait_style: ", Viking Age portrait, carved runestone aesthetic, weathered wood and iron textures, dramatic northern lights backdrop, Celtic knotwork borders, Norse mythological art style"
 agents:
   orchestrator:
     # JOB FAIR OPTIMIZED: Odin moved here - the All-Father orchestrates across nine worlds

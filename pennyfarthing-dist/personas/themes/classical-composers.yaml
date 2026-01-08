@@ -7,6 +7,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Maestro
+  portrait_style: ", Romantic era oil painting portrait, candlelit concert hall warmth, rich burgundy and gold leaf accents, powdered wig or wild genius hair, Vienna opera house grandeur aesthetic"
 agents:
   orchestrator:
     # JOB FAIR OPTIMIZED: Beethoven moved here - the titan who leads through adversity

@@ -6,6 +6,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Citizen of the Foundation
+  portrait_style: ", classic science fiction portrait, Michael Whelan book cover style, galactic empire grandeur, psychohistory equations floating, retro-futurist 1950s aesthetic"
 agents:
   orchestrator:
     character: Hari Seldon

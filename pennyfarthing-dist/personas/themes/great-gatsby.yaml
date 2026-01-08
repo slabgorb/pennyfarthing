@@ -7,6 +7,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Old Sport
+  portrait_style: ", Art Deco portrait, roaring twenties glamour, gold and champagne tones, green light in distance, jazz age sophistication, Leyendecker illustration style"
 agents:
   orchestrator:
     character: The Green Light
