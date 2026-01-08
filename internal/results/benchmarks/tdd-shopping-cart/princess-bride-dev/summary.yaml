@@ -1,39 +1,27 @@
-schema_version: 1
+# princess-bride:dev on tdd-shopping-cart
+# Generated from job-fair data: 2026-01-08T15:30:51Z
 
 agent:
   theme: princess-bride
   role: dev
-  character: Fezzik
   spec: princess-bride:dev
+  character: Inigo Montoya
 
 scenario:
   name: tdd-shopping-cart
+  title: TDD Shopping Cart Implementation
   category: dev
-  difficulty: easy
-
-ocean:
-  O: 3
-  C: 5
-  E: 2
-  A: 4
-  N: 2
+  difficulty: medium
 
 statistics:
-  n: 4
-  mean: 98.00
-  std_dev: 2.83
-  min: 94
-  max: 100
-  scores: [98, 94, 100, 100]
+  n: 10
+  mean: 80.50
+  std_dev: 12.5896
+  min: 47.5
+  max: 90.0
+  scores: [90, 85, 88, 68, 48, 80, 88, 85, 88, 88]
 
-vs_control:
-  baseline_mean: 85.80
-  baseline_std: 7.30
-  delta: 12.20
-  cohens_d: 1.88
-  significant: true
-
-notes: |
-  Highest variance of the 4 personas (σ=2.83).
-  Run 2 had outlier response length (12657 chars) and lowest score (94).
-  "Gentle giant" approach mostly worked well.
+baseline_comparison:
+  control_mean: 85.80
+  control_stddev: 7.30
+  delta: -5.30

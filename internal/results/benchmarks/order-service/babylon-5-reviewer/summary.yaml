@@ -1,5 +1,5 @@
 # babylon-5:reviewer on order-service
-# Generated: 2026-01-02T06:02:00Z
+# Generated from job-fair data: 2026-01-08T15:29:26Z
 
 agent:
   theme: babylon-5
@@ -9,26 +9,19 @@ agent:
 
 scenario:
   name: order-service
-  category: code-review
-  difficulty: easy
+  title: Order Service Code Review
+  category: reviewer
+  difficulty: medium
 
 statistics:
-  n: 1
-  mean: 96.25
-  std_dev: 0.00
-  min: 96.25
-  max: 96.25
-  scores: [96.25]
-
-efficiency:
-  avg_input_tokens: 7342
-  avg_output_tokens: 803
-  tokens_per_point: 84.58
+  n: 10
+  mean: 86.25
+  std_dev: 2.3043
+  min: 82.5
+  max: 90.0
+  scores: [85, 85, 88, 85, 85, 90, 88, 85, 82, 90]
 
 baseline_comparison:
   control_mean: 91.9
   control_stddev: 1.45
-  delta: +4.35
-
-runs:
-  - run_1.json
+  delta: -5.65

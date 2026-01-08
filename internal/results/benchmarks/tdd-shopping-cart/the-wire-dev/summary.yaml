@@ -1,5 +1,5 @@
 # the-wire:dev on tdd-shopping-cart
-# Generated: 2026-01-02T09:42:56Z
+# Generated from job-fair data: 2026-01-08T15:31:19Z
 
 agent:
   theme: the-wire
@@ -11,25 +11,17 @@ scenario:
   name: tdd-shopping-cart
   title: TDD Shopping Cart Implementation
   category: dev
-  difficulty: easy
+  difficulty: medium
 
 statistics:
-  n: 1
-  mean: 85.00
-  std_dev: 0.00
-  min: 85
-  max: 85
-  scores: [85]
-
-efficiency:
-  avg_input_tokens: 9627
-  avg_output_tokens: 1160
-  tokens_per_point: 126.91
+  n: 10
+  mean: 74.00
+  std_dev: 17.5071
+  min: 45.0
+  max: 87.5
+  scores: [45, 88, 50, 48, 88, 85, 88, 85, 85, 80]
 
 baseline_comparison:
-  control_mean: 99.00
-  control_stddev: 0.00
-  delta: -14.00
-
-runs:
-  - run_1.json
+  control_mean: 85.80
+  control_stddev: 7.30
+  delta: -11.80
