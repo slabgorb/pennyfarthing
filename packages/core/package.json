@@ -1,0 +1,60 @@
+{
+  "name": "@pennyfarthing/core",
+  "version": "5.3.1",
+  "description": "Claude Code agent framework with TDD workflow and persona system",
+  "type": "module",
+  "keywords": [
+    "claude",
+    "claude-code",
+    "agents",
+    "ai",
+    "tdd",
+    "workflow",
+    "anthropic"
+  ],
+  "license": "UNLICENSED",
+  "author": "1898andCo",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/1898andCo/pennyfarthing.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/1898andCo/pennyfarthing#readme",
+  "bugs": {
+    "url": "https://github.com/1898andCo/pennyfarthing/issues"
+  },
+  "bin": {
+    "pennyfarthing": "./bin/pennyfarthing.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/",
+    "bin/"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "node --test dist/**/*.test.js",
+    "lint": "eslint src/",
+    "clean": "rm -rf dist/"
+  },
+  "dependencies": {
+    "@pennyfarthing/shared": "workspace:*",
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "fs-extra": "^11.2.0",
+    "inquirer": "^9.2.12",
+    "open": "^11.0.0",
+    "yaml": "^2.3.4"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/inquirer": "^9.0.7",
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
