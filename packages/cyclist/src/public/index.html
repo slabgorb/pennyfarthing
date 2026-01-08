@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyclist - Claude Code Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div id="container">
+    <div id="main-content">
+      <main id="message-view">
+        <!-- MessageView will be mounted here -->
+      </main>
+      <!-- Quick action buttons for suggested prompts (B-9.6) -->
+      <div id="quick-actions"></div>
+      <!-- E8-1: Tab Panel for workspace (diffs, files, browser) -->
+      <div id="tab-panel" class="tab-panel collapsed">
+        <div class="tab-bar">
+          <div class="tab-bar-tabs" id="tab-bar-tabs">
+            <!-- Dynamic tabs inserted here -->
+          </div>
+          <button class="tab-panel-toggle" id="tab-panel-toggle" title="Toggle panel">▼</button>
+        </div>
+        <div class="tab-content" id="tab-content">
+          <!-- Active tab content rendered here -->
+        </div>
+      </div>
+      <div id="editor-wrapper">
+        <div id="editor-toolbar">
+          <button type="button" class="toolbar-btn" data-action="bold" title="Bold (Ctrl+B)"><strong>B</strong></button>
+          <button type="button" class="toolbar-btn" data-action="italic" title="Italic (Ctrl+I)"><em>I</em></button>
+          <button type="button" class="toolbar-btn" data-action="strike" title="Strikethrough">S̶</button>
+          <button type="button" class="toolbar-btn" data-action="code" title="Inline Code">&lt;/&gt;</button>
+          <span class="toolbar-divider"></span>
+          <button type="button" class="toolbar-btn" data-action="heading" title="Heading">H</button>
+          <button type="button" class="toolbar-btn" data-action="bulletList" title="Bullet List">•</button>
+          <button type="button" class="toolbar-btn" data-action="orderedList" title="Numbered List">1.</button>
+          <button type="button" class="toolbar-btn" data-action="blockquote" title="Quote">"</button>
+          <button type="button" class="toolbar-btn" data-action="codeBlock" title="Code Block">{ }</button>
+          <span class="toolbar-spacer"></span>
+          <button type="button" class="mode-btn" data-control="plan-mode" title="Cycle permission mode: Manual → Plan → Accept → Danger">MANUAL</button>
+        </div>
+        <!-- B-22: Stats Strip - compact stats display in prompt bar -->
+        <div id="stats-strip">
+          <span class="model-badge" data-stat="strip-model">—</span>
+          <span class="token-stats">
+            <span class="token-in" data-stat="strip-input">↓ —</span>
+            <span class="token-out" data-stat="strip-output">↑ —</span>
+          </span>
+          <div class="context-mini">
+            <div class="context-mini-fill"></div>
+            <span class="context-mini-label" data-stat="strip-context">—%</span>
+          </div>
+        </div>
+        <div id="editor-row">
+          <div id="editor">
+            <!-- TipTap editor will be mounted here -->
+          </div>
+          <!-- B-20: Control buttons moved from sidebar -->
+          <div id="editor-controls">
+            <button id="stop-btn" class="stop-btn" disabled title="Stop Claude (Esc)">
+              <span class="stop-icon">■</span>
+            </button>
+            <button id="clear-btn" class="clear-btn" title="Clear session and start fresh">
+              <span class="clear-icon">⟳</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <aside id="sidebar">
+      <!-- Persona Section -->
+      <div id="persona-section" class="persona-section">
+        <div id="project-name" class="project-name"></div>
+        <div class="persona-header">
+          <div id="portrait">
+            <img src="" alt="Character portrait" style="display: none;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <!-- B-20: SVG silhouette instead of "?" -->
+            <div class="portrait-placeholder" style="display: flex;">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+            </div>
+          </div>
+          <div id="persona-info" class="persona-info">
+            <div id="character-name" class="character-name">Loading...</div>
+            <div id="character-role" class="character-role"></div>
+            <div id="character-quote" class="character-quote"></div>
+          </div>
+        </div>
+        <div id="theme-name" class="theme-name"></div>
+        <div id="helper-line" class="activity-line"></div>
+        <div id="helper-task-line" class="activity-line"></div>
+        <div id="tool-use-line" class="activity-line"></div>
+      </div>
+
+      <!-- Story Section (B-13: Enhanced) -->
+      <div id="story-section" class="story-section">
+        <h3>Current Story</h3>
+        <div id="story-title" class="story-title">No active story</div>
+        <div id="story-phase" class="story-phase">Phase: -</div>
+        <!-- B-13: Workflow Progress Visualization -->
+        <div id="workflow-progress" class="workflow-progress" style="display: none;">
+          <div class="workflow-step" data-agent="sm">
+            <span class="workflow-icon">○</span>
+            <span class="workflow-label">SM</span>
+          </div>
+          <span class="workflow-arrow">→</span>
+          <div class="workflow-step" data-agent="tea">
+            <span class="workflow-icon">○</span>
+            <span class="workflow-label">TEA</span>
+          </div>
+          <span class="workflow-arrow">→</span>
+          <div class="workflow-step" data-agent="dev">
+            <span class="workflow-icon">○</span>
+            <span class="workflow-label">Dev</span>
+          </div>
+          <span class="workflow-arrow">→</span>
+          <div class="workflow-step" data-agent="reviewer">
+            <span class="workflow-icon">○</span>
+            <span class="workflow-label">Rev</span>
+          </div>
+        </div>
+        <!-- B-13: Next Agent & PR Info -->
+        <div id="story-details" class="story-details" style="display: none;">
+          <div id="next-agent" class="next-agent"></div>
+          <div id="story-pr" class="story-pr"></div>
+        </div>
+        <!-- B-13: Acceptance Criteria Checklist -->
+        <div id="acceptance-criteria" class="acceptance-criteria" style="display: none;"></div>
+        <div id="sprint-progress" class="sprint-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 0%"></div>
+          </div>
+          <span class="sprint-points">0/0 pts</span>
+        </div>
+      </div>
+
+      <!-- Git Section -->
+      <div id="git-section" class="git-section">
+        <h3>Git</h3>
+        <div id="git-branch" class="git-branch">-</div>
+        <div id="git-status" class="git-status status-clean">Clean</div>
+      </div>
+
+      <!-- B-17: Tasks Section (Todo Visualizer) -->
+      <section id="todo-section" class="todo-section collapsed">
+        <div class="section-header" data-action="toggle-collapse">
+          <span class="section-title">Tasks</span>
+          <span id="todo-progress" class="todo-progress">(0/0)</span>
+          <button class="collapse-btn" aria-label="Toggle tasks">▼</button>
+        </div>
+        <div id="todo-list" class="section-content"></div>
+      </section>
+    </aside>
+  </div>
+  <!-- Theme management: applyTheme, loadTheme, getCurrentTheme -->
+  <script src="/js/theme.js"></script>
+  <!-- MessageView: SDK message display -->
+  <script type="module" src="/js/message-view-init.js"></script>
+  <script type="module" src="/js/portrait.js"></script>
+  <script src="/js/stats.js"></script>
+  <script src="/js/stats-strip.js"></script>
+  <script src="/js/context.js"></script>
+  <script type="module" src="/js/persona.js"></script>
+  <script type="module" src="/js/story.js"></script>
+  <script type="module" src="/js/todos.js"></script>
+  <script type="module" src="/js/components/TabContainer.js"></script>
+  <script type="module" src="/js/controls.js"></script>
+  <!-- TipTap bundle must load before editor.js -->
+  <script src="/js/tiptap.bundle.js"></script>
+  <script type="module" src="/js/editor.js"></script>
+  <script type="module">
+    // Initialize the rich text editor
+    import { createEditor } from '/js/editor.js';
+    createEditor();
+  </script>
+</body>
+</html>
