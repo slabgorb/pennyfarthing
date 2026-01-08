@@ -1,9 +1,10 @@
-# Story 11-3: Migrate Cyclist into monorepo as @pennyfarthing/cyclist - Summary
+# Story 18-3: Migrate Cyclist into monorepo as @pennyfarthing/cyclist - Summary
+<!-- NOTE: Was Story 11-3, renumbered with epic -->
 
 **Completed:** 2026-01-08
 **Points:** 5
 **Jira:** MSSCI-11420
-**Epic:** 11 - Cyclist-Pennyfarthing Monorepo Consolidation
+**Epic:** 18 - Cyclist-Pennyfarthing Monorepo Consolidation
 
 ## What Was Built
 

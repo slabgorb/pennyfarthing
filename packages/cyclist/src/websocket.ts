@@ -3,6 +3,8 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { watch } from 'fs';
 import { getCurrentStats, getStatsClients } from './api/stats.js';
 import { getPersonaClients, broadcastPersona } from './api/persona.js';
+import { getTokenStatsClients } from './api/token-stats.js';
+import { getTokenStats } from './otlp-receiver.js';
 import { detectPennyfarthingProject, getCurrentPersona, watchAgentChanges } from './pennyfarthing.js';
 import { ClaudeService, type SDKMessage, type PermissionMode } from './claude-service.js';
 import { publicDir } from './paths.js';
@@ -38,6 +40,9 @@ export function setupWebSocketServers(
   // WebSocket server for persona at /ws/persona
   const personaWss = new WebSocketServer({ noServer: true });
 
+  // WebSocket server for token stats at /ws/token-stats
+  const tokenStatsWss = new WebSocketServer({ noServer: true });
+
   // WebSocket server for Claude at /ws/claude (web mode)
   const claudeWss = new WebSocketServer({ noServer: true });
 
@@ -59,6 +64,10 @@ export function setupWebSocketServers(
     } else if (pathname === '/ws/persona') {
       personaWss.handleUpgrade(request, socket, head, (ws) => {
         personaWss.emit('connection', ws, request);
+      });
+    } else if (pathname === '/ws/token-stats') {
+      tokenStatsWss.handleUpgrade(request, socket, head, (ws) => {
+        tokenStatsWss.emit('connection', ws, request);
       });
     } else if (pathname === '/ws/claude') {
       claudeWss.handleUpgrade(request, socket, head, (ws) => {
@@ -119,6 +128,29 @@ export function setupWebSocketServers(
     // Handle errors gracefully
     ws.on('error', () => {
       personaClients.delete(ws);
+    });
+  });
+
+  // Handle token stats WebSocket connections
+  const tokenStatsClients = getTokenStatsClients();
+  tokenStatsWss.on('connection', (ws: WebSocket) => {
+    // Add client to broadcast set
+    tokenStatsClients.add(ws);
+
+    // Send initial token stats on connection
+    const tokenStats = getTokenStats();
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(tokenStats));
+    }
+
+    // Remove client on disconnect
+    ws.on('close', () => {
+      tokenStatsClients.delete(ws);
+    });
+
+    // Handle errors gracefully
+    ws.on('error', () => {
+      tokenStatsClients.delete(ws);
     });
   });
 

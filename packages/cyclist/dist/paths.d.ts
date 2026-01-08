@@ -13,7 +13,7 @@ export declare function setProjectDirectory(dir: string): void;
 export declare function isValidProjectDirectory(dir: string): boolean;
 /**
  * Get the project directory for Claude to run in
- * Priority: CLI arg → selected dir (from picker) → null (triggers picker)
+ * Priority: CLI arg → env var → selected dir (from picker) → null (triggers picker)
  */
 export declare function getProjectDirectory(): string | null;
 /**

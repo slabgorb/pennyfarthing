@@ -20,7 +20,7 @@ PYTHON_SCRIPT="$SCRIPT_DIR/generate-portraits.py"
 if [[ ! -d "$VENV_DIR" ]]; then
     echo "Error: Virtual environment not found at $VENV_DIR"
     echo "Create it with: python3 -m venv .venv"
-    echo "Then install: pip install diffusers transformers accelerate torch pillow tqdm pyyaml"
+    echo "Then install: pip install diffusers transformers accelerate torch pillow pyyaml"
     exit 1
 fi
 
@@ -36,7 +36,7 @@ source "$VENV_DIR/bin/activate"
 # Verify torch is available
 if ! python -c "import torch" 2>/dev/null; then
     echo "Error: torch not installed in venv"
-    echo "Install with: pip install diffusers transformers accelerate torch pillow tqdm"
+    echo "Install with: pip install diffusers transformers accelerate torch pillow"
     deactivate
     exit 1
 fi

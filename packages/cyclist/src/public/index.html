@@ -127,8 +127,15 @@
           <div id="next-agent" class="next-agent"></div>
           <div id="story-pr" class="story-pr"></div>
         </div>
-        <!-- B-13: Acceptance Criteria Checklist -->
-        <div id="acceptance-criteria" class="acceptance-criteria" style="display: none;"></div>
+        <!-- B-13: Acceptance Criteria Checklist (collapsible like todos) -->
+        <section id="ac-section" class="ac-section collapsed" style="display: none;">
+          <div class="section-header" data-action="toggle-ac-collapse">
+            <span class="section-title">Acceptance Criteria</span>
+            <span id="ac-progress" class="ac-progress">(0/0)</span>
+            <button class="collapse-btn" aria-label="Toggle criteria">▼</button>
+          </div>
+          <div id="ac-list" class="section-content"></div>
+        </section>
         <div id="sprint-progress" class="sprint-progress">
           <div class="progress-bar">
             <div class="progress-fill" style="width: 0%"></div>

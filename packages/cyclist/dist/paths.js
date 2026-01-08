@@ -52,12 +52,23 @@ export function isValidProjectDirectory(dir) {
 }
 /**
  * Get the project directory for Claude to run in
- * Priority: CLI arg → selected dir (from picker) → null (triggers picker)
+ * Priority: CLI arg → env var → selected dir (from picker) → null (triggers picker)
  */
 export function getProjectDirectory() {
-    const dir = projectDirFromArg || selectedProjectDir;
-    if (dir && isValidProjectDirectory(dir))
-        return dir;
+    // Check CLI arg first
+    if (projectDirFromArg && isValidProjectDirectory(projectDirFromArg)) {
+        return projectDirFromArg;
+    }
+    // Check environment variable (useful for web mode)
+    const envDir = process.env.CYCLIST_PROJECT_DIR;
+    if (envDir && isValidProjectDirectory(envDir)) {
+        console.log('[Cyclist] Project directory from env:', envDir);
+        return envDir;
+    }
+    // Check selected directory (from picker)
+    if (selectedProjectDir && isValidProjectDirectory(selectedProjectDir)) {
+        return selectedProjectDir;
+    }
     return null;
 }
 /**

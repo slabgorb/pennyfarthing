@@ -15,18 +15,20 @@ export function getGitInfo(projectDir) {
             encoding: 'utf-8',
         });
         const clean = status.trim() === '';
-        // Get ahead/behind counts
+        // Get ahead/behind counts (suppress stderr for branches without upstream)
         let ahead = null;
         let behind = null;
         try {
             const aheadOutput = execSync('git rev-list --count @{u}..HEAD', {
                 cwd: projectDir,
                 encoding: 'utf-8',
+                stdio: ['pipe', 'pipe', 'pipe'],
             });
             ahead = parseInt(aheadOutput.trim(), 10);
             const behindOutput = execSync('git rev-list --count HEAD..@{u}', {
                 cwd: projectDir,
                 encoding: 'utf-8',
+                stdio: ['pipe', 'pipe', 'pipe'],
             });
             behind = parseInt(behindOutput.trim(), 10);
         }

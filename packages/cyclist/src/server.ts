@@ -15,6 +15,10 @@ import {
   createOTLPRouter,
   createStoryRouter,
   createFileBrowserRouter,
+  createTokenStatsRouter,
+  createContextRouter,
+  createThemeAgentsRouter,
+  initTokenStatsBroadcast,
   broadcastStats,
 } from './api/index.js';
 
@@ -61,7 +65,13 @@ app.use('/api/persona', createPersonaRouter(getProjectDir));
 app.use('/api/story', createStoryRouter(getProjectDir));
 app.use('/api/git', createGitRouter(getProjectDir));
 app.use('/api/files', createFileBrowserRouter(getProjectDir));
+app.use('/api/token-stats', createTokenStatsRouter());
+app.use('/api/context', createContextRouter(getProjectDir));
+app.use('/api/theme-agents', createThemeAgentsRouter(getProjectDir));
 app.use('/v1', createOTLPRouter());
+
+// Initialize token stats WebSocket broadcast callback
+initTokenStatsBroadcast();
 
 // Create HTTP server with WebSocket support
 export function createTerminalServer(): Server {
