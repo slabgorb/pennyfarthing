@@ -555,6 +555,29 @@ epics:
           - Old cyclist repo archived with pointer to monorepo
           - README documents both install paths
 
+      - id: "11-6"
+        title: "Fix pre-existing test failures (tech debt)"
+        description: |
+          Tech debt cleanup for pre-existing test failures discovered during
+          Story 11-2 workspace conversion review.
+
+          19 failing tests across 3 areas:
+          1. Story 15-1 Cyclist Launcher Command (1 test) - CLI registration issue
+          2. Debugging scenarios tests (3 tests) - Missing scenarios/debugging/ directory
+          3. 630 SVG faces tests (15 tests) - Hardcoded 63 theme count, now 91+ themes
+
+          These failures existed before the workspace conversion and are
+          unrelated to Epic 11 work.
+        points: 2
+        priority: P3
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Story 15-1 cyclist command test passes
+          - Debugging scenario tests either pass or are skipped with explanation
+          - SVG face tests updated for dynamic theme count (91+)
+          - All 697 tests pass (0 failures)
+
   # =========================================================================
   # EPIC 12 - Rich Agent Telemetry (claude_telemetry port)
   # =========================================================================
