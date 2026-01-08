@@ -7,7 +7,7 @@ Reads visual prompts from theme YAML files in two locations:
   - Built-in: pennyfarthing-dist/personas/themes/
   - Custom:   .claude/pennyfarthing/themes/ (takes precedence)
 
-Output: pennyfarthing-dist/personas/portraits/{theme}/{role}.png (100x100px each)
+Output: pennyfarthing-dist/personas/portraits/{theme}/{slug}-{OCEAN}.png (100x100px each)
 
 Usage:
     python3 scripts/generate-portraits.py [--dry-run] [--theme THEME]
@@ -63,6 +63,29 @@ ROLES = [
 STYLE_SUFFIX = ", traditional woodcut portrait bust, black and white, bold linework, crosshatching, medieval style"
 
 
+def to_slug(name: str) -> str:
+    """Convert a name to URL-safe slug (lowercase kebab-case)."""
+    import re
+    slug = name.lower()
+    slug = re.sub(r'[^a-z0-9]+', '-', slug)
+    slug = re.sub(r'^-|-$', '', slug)
+    return slug
+
+
+def ocean_suffix(ocean: dict) -> str:
+    """Generate OCEAN suffix from scores (e.g., '54432' for O=5,C=4,E=4,A=3,N=2)."""
+    return f"{ocean['O']}{ocean['C']}{ocean['E']}{ocean['A']}{ocean['N']}"
+
+
+def generate_portrait_filename(short_name: str, ocean: dict) -> str:
+    """Generate portrait filename from shortName and OCEAN scores.
+
+    Format: {shortName-slug}-{OCEAN}.png (e.g., 'yoda-54242.png')
+    """
+    slug = to_slug(short_name)
+    return f"{slug}-{ocean_suffix(ocean)}.png"
+
+
 def parse_theme_file(theme_path: Path) -> dict:
     """Parse theme YAML file to extract visual prompts for each agent."""
     with open(theme_path, "r", encoding="utf-8") as f:
@@ -77,9 +100,24 @@ def parse_theme_file(theme_path: Path) -> dict:
     agents = data.get("agents", {})
     for role, agent_data in agents.items():
         if isinstance(agent_data, dict) and "visual" in agent_data:
+            # Get shortName, fallback to first word of character name
+            character = agent_data.get("character", role)
+            short_name = agent_data.get("shortName", character.split()[0])
+            ocean = agent_data.get("ocean", {})
+
+            # Generate filename if OCEAN scores are available
+            if ocean and all(k in ocean for k in ['O', 'C', 'E', 'A', 'N']):
+                filename = generate_portrait_filename(short_name, ocean)
+            else:
+                # Fallback to role-based name if no OCEAN scores
+                filename = f"{role}.png"
+
             result["characters"][role] = {
-                "name": agent_data.get("character", role),
-                "visual": agent_data["visual"]
+                "name": character,
+                "shortName": short_name,
+                "visual": agent_data["visual"],
+                "ocean": ocean,
+                "filename": filename
             }
 
     return result
@@ -169,7 +207,7 @@ def main():
     print(f"  Built-in: {BUILTIN_THEMES_DIR}")
     print(f"  Custom:   {CUSTOM_THEMES_DIR}")
     print(f"Found {len(theme_files)} themes")
-    print(f"Output: {OUTPUT_DIR}/{{theme}}/{{role}}.png")
+    print(f"Output: {OUTPUT_DIR}/{{theme}}/{{slug}}-{{OCEAN}}.png")
 
     if args.dry_run:
         print("\nDry run - portraits to generate:")
@@ -181,10 +219,10 @@ def main():
             for role in ROLES:
                 if role in parsed["characters"]:
                     char = parsed["characters"][role]
-                    out_path = theme_dir / f"{role}.png"
+                    out_path = theme_dir / char["filename"]
                     status = "EXISTS" if out_path.exists() else "PENDING"
                     visual_preview = char["visual"][:50] + "..." if len(char["visual"]) > 50 else char["visual"]
-                    print(f"    [{status}] {role}: {visual_preview}")
+                    print(f"    [{status}] {char['filename']}: {visual_preview}")
                 else:
                     print(f"    [SKIP] {role}: no visual field")
         return
@@ -215,11 +253,11 @@ def main():
             if role not in parsed["characters"]:
                 continue
 
-            out_path = theme_dir / f"{role}.png"
+            char = parsed["characters"][role]
+            out_path = theme_dir / char["filename"]
             if args.skip_existing and out_path.exists():
                 continue
 
-            char = parsed["characters"][role]
             prompt = build_portrait_prompt(char["visual"])
 
             try:
@@ -228,10 +266,10 @@ def main():
                 image = generate_portrait(pipe, prompt, seed=role_seed)
                 image.save(out_path, "PNG")
                 successful += 1
-                tqdm.write(f"  {theme}/{role}: {char['name']}")
+                tqdm.write(f"  {theme}/{char['filename']}: {char['name']}")
             except Exception as e:
-                failed.append((theme, role, str(e)))
-                tqdm.write(f"  FAILED {theme}/{role}: {e}")
+                failed.append((theme, char["filename"], str(e)))
+                tqdm.write(f"  FAILED {theme}/{char['filename']}: {e}")
 
     # Summary
     elapsed = datetime.now() - start_time
