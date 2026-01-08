@@ -40,8 +40,11 @@ if git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
     branch=$(git -C "$cwd" branch --show-current 2>/dev/null)
     [ -z "$branch" ] && branch=$(git -C "$cwd" rev-parse --short HEAD 2>/dev/null)
 
-    # Check if dirty
-    if [ -n "$(git -C "$cwd" status --porcelain 2>/dev/null)" ]; then
+    # Check if dirty using diff-index (doesn't lock the index like status does)
+    # This avoids "index.lock: File exists" errors when multiple Claude sessions
+    # run concurrent statusline updates during git operations
+    if ! git -C "$cwd" diff-index --quiet HEAD -- 2>/dev/null || \
+       [ -n "$(git -C "$cwd" ls-files --others --exclude-standard 2>/dev/null | head -1)" ]; then
         branch_dirty="*"
     fi
 fi

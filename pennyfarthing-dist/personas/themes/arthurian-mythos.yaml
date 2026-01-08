@@ -8,6 +8,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Good Knight
+  portrait_style: ", illuminated manuscript portrait, gold leaf accents, rich jewel tones on aged vellum, Celtic knotwork border, medieval heraldic style"
 
 agents:
   orchestrator:
