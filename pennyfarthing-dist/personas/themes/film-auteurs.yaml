@@ -12,7 +12,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Audience
-  portrait_style: ", cinematic, dramatic chiaroscuro lighting, film set, director's chair, Hollywood golden age"
+  portrait_style: ", cinematic, dramatic chiaroscuro lighting, film set, director's chair, classic cinema golden age"
 
 agents:
   orchestrator:

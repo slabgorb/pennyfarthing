@@ -12,7 +12,7 @@ theme:
   default_emoji_use: moderate
   default_humor: enabled
   user_title: Y'all
-  portrait_style: ", warm sports comedy, soft golden lighting, stadium backdrop, Apple TV+ heartfelt aesthetic"
+  portrait_style: ", warm sports comedy, soft golden lighting, stadium backdrop, heartfelt illustration"
 
 agents:
   orchestrator:

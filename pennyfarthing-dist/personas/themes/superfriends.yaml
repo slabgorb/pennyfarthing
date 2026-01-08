@@ -5,7 +5,7 @@ theme:
   default_emoji_use: moderate
   default_humor: enabled
   user_title: Citizen
-  portrait_style: ", 1980s Saturday morning cartoon, bold cel animation, Hanna-Barbera starburst effects"
+  portrait_style: ", 1980s superhero cartoon, bold cel animation, classic cartoon starburst effects"
 
 agents:
   orchestrator:

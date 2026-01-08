@@ -6,7 +6,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Dear Client
-  portrait_style: ", Victorian detective, gaslight and fog, Baker Street, Sidney Paget style"
+  portrait_style: ", Victorian detective, gaslight and fog, Baker Street, Victorian pen and ink"
 agents:
   orchestrator:
     character: Mycroft Holmes

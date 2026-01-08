@@ -12,7 +12,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Dear Reader
-  portrait_style: ", Victorian engraving, Phiz illustration style, crosshatched ink, sepia vignette, gaslit London"
+  portrait_style: ", Victorian engraving, Victorian crosshatch illustration, crosshatched ink, sepia vignette, gaslit London"
 
 agents:
   orchestrator:

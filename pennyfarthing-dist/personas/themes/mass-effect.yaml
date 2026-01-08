@@ -6,7 +6,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Commander
-  portrait_style: ", Mass Effect style, N7 armor, omni-tool glow, BioWare concept art, holographic lighting"
+  portrait_style: ", sci-fi military armor, holographic omni-tool glow, space opera RPG concept art, holographic lighting"
 
 agents:
   orchestrator:
@@ -160,7 +160,7 @@ agents:
     trait: Architectures through distributed consensus
     quirks:
       - 1,183 programs
-      - Shepard's N7 armor patch
+      - Shepard's sci-fi military armor patch
       - Seeks understanding
     catchphrases:
       - "Consensus: this architecture serves collective interests."
