@@ -924,7 +924,8 @@ epics:
           - Drag handle to resize panel (nice to have)
         points: 3
         priority: P1
-        status: backlog
+        status: in-progress
+        started: 2026-01-08
         repos: cyclist
         acceptance_criteria:
           - Tab panel expansion does not hide conversation view
