@@ -38,7 +38,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/pennyfarthing/scripts/hooks/session-start.sh"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/scripts/hooks/session-start.sh"
           }
         ]
       },
@@ -57,7 +57,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/pennyfarthing/scripts/hooks/pre-edit-check.sh"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/scripts/hooks/pre-edit-check.sh"
           }
         ]
       },
@@ -66,7 +66,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/pennyfarthing/scripts/hooks/context-warning.sh"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/scripts/hooks/context-warning.sh"
           }
         ]
       },
@@ -75,7 +75,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/pennyfarthing/scripts/hooks/context-circuit-breaker.sh"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/scripts/hooks/context-circuit-breaker.sh"
           }
         ]
       }
@@ -83,6 +83,6 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/pennyfarthing/scripts/statusline.sh"
+    "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/scripts/statusline.sh"
   }
 }

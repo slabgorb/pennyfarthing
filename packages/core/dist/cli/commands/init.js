@@ -402,7 +402,8 @@ async function mergeSettingsLocalJson(projectRoot, assetsPath, options) {
         const legacyPaths = [
             '.claude/core/statusline.sh',
             '.claude/statusline.sh',
-            '.claude/pennyfarthing/statusline.sh' // Also migrate from old copy-mode path
+            '.claude/pennyfarthing/statusline.sh', // Old copy-mode path (v4.0.0-4.0.3)
+            '.claude/pennyfarthing/scripts/statusline.sh' // Bug in template (fixed in v4.0.5)
         ];
         for (const legacyPath of legacyPaths) {
             if (statusLine.command.includes(legacyPath)) {
@@ -410,6 +411,32 @@ async function mergeSettingsLocalJson(projectRoot, assetsPath, options) {
                 modified = true;
                 logger.info(`Updated statusLine path from ${legacyPath} to new location`);
                 break;
+            }
+        }
+    }
+    // Migrate hook paths from legacy .claude/pennyfarthing/scripts/ to .claude/scripts/
+    const migrateHookPaths = (hookArray) => {
+        let migrated = false;
+        for (const entry of hookArray) {
+            if (typeof entry === 'object' && entry !== null) {
+                const hookEntry = entry;
+                if (hookEntry.hooks) {
+                    for (const h of hookEntry.hooks) {
+                        if (h.command && h.command.includes('.claude/pennyfarthing/scripts/')) {
+                            h.command = h.command.replace('.claude/pennyfarthing/scripts/', '.claude/scripts/');
+                            migrated = true;
+                        }
+                    }
+                }
+            }
+        }
+        return migrated;
+    };
+    for (const hookType of ['SessionStart', 'SessionEnd', 'PreToolUse', 'PostToolUse']) {
+        if (Array.isArray(hooks[hookType])) {
+            if (migrateHookPaths(hooks[hookType])) {
+                modified = true;
+                logger.info(`Migrated ${hookType} hook paths to new location`);
             }
         }
     }
