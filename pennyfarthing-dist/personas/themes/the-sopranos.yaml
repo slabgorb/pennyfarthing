@@ -13,7 +13,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Friend
-  portrait_style: ", HBO prestige crime drama portrait, New Jersey suburban noir, therapy session lighting, Italian-American family aesthetic, Bada Bing neon glow, melancholy golden hour"
+  portrait_style: ", HBO crime drama, New Jersey suburban noir, Bada Bing neon, melancholy golden hour"
 
 agents:
   orchestrator:

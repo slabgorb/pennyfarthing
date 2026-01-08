@@ -13,7 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Meatbag
-  portrait_style: ", Matt Groening animation style portrait, bold outlines, New New York cityscape background, year 3000 retrofuturism, Planet Express delivery aesthetic"
+  portrait_style: ", Matt Groening animation, bold outlines, New New York, year 3000 retrofuturism"
 
 agents:
   orchestrator:

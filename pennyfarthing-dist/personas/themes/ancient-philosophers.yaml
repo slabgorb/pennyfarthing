@@ -12,7 +12,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Student
-  portrait_style: ", classical Greek marble bust portrait, warm Mediterranean light, terracotta and ochre tones, laurel wreath detail, Athenian agora background, ancient wisdom aesthetic"
+  portrait_style: ", classical Greek marble bust, warm Mediterranean light, terracotta tones, laurel wreath"
 
 agents:
   orchestrator:

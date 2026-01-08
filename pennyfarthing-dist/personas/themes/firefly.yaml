@@ -13,7 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Crew
-  portrait_style: ", space western portrait, warm sepia Firefly-class ship interior, dusty frontier lighting, Chinese-American fusion aesthetic, Joss Whedon TV production style"
+  portrait_style: ", space western, warm sepia ship interior, dusty frontier, Chinese-American fusion"
 
 agents:
   orchestrator:

@@ -13,7 +13,7 @@ theme:
   default_humor: disabled
   character_immersion: high
   user_title: Dear Soul
-  portrait_style: ", 19th century Russian realist portrait, Ilya Repin style, deep melancholic shadows, rich earthy tones, Orthodox icon gold accents, suffering and redemption aesthetic"
+  portrait_style: ", 19th century Russian realist, Ilya Repin style, melancholic shadows, Orthodox gold"
 
 agents:
   orchestrator:

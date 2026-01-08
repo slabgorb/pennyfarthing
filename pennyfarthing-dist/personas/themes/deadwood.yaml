@@ -13,7 +13,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Friend
-  portrait_style: ", daguerreotype portrait, sepia-toned Old West photograph, harsh frontier lighting, weathered tintype aesthetic, 1870s Black Hills mining camp"
+  portrait_style: ", daguerreotype, sepia Old West, harsh frontier lighting, weathered tintype, 1870s mining camp"
 
 agents:
   orchestrator:

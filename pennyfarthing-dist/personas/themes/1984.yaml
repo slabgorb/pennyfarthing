@@ -6,7 +6,7 @@ theme:
   default_humor: disabled
   character_immersion: high
   user_title: Comrade
-  portrait_style: ", Soviet propaganda poster portrait, stark red and black palette, bold geometric shapes, oppressive shadowing, telescreen glow, brutalist typography aesthetic"
+  portrait_style: ", Soviet propaganda poster, stark red and black, telescreen glow, brutalist geometric shapes"
 agents:
   orchestrator:
     character: Big Brother

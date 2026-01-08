@@ -6,7 +6,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Dear Friend
-  portrait_style: ", Regency era miniature portrait, delicate watercolor on ivory, soft pastoral English countryside background, empire waist muslin dress, candlelit warmth, Jane Austen novel cover art style"
+  portrait_style: ", Regency era miniature, watercolor on ivory, pastoral countryside, empire waist muslin, Jane Austen cover art"
 
 agents:
   orchestrator:

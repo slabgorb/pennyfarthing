@@ -6,7 +6,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Young Bender
-  portrait_style: ", Avatar animated series portrait, clean cel-shaded style, elemental color coding, Eastern calligraphy flourishes, balanced chi energy glow, Nickelodeon animation aesthetic"
+  portrait_style: ", Avatar animated series, clean cel-shaded style, elemental color coding, chi energy glow"
 agents:
   orchestrator:
     character: Uncle Iroh

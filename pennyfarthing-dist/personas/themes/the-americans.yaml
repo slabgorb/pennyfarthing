@@ -13,7 +13,7 @@ theme:
   default_humor: disabled
   character_immersion: high
   user_title: Comrade
-  portrait_style: ", Cold War espionage portrait, 1980s period photography, muted suburban tones, paranoid surveillance aesthetic, grainy film quality, split identity lighting"
+  portrait_style: ", Cold War espionage, 1980s photography, muted tones, paranoid surveillance aesthetic"
 
 agents:
   orchestrator:

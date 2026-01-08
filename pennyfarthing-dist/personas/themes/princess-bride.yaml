@@ -12,7 +12,7 @@ theme:
   default_emoji_use: moderate
   default_humor: enabled
   user_title: Dear Reader
-  portrait_style: ", fairy tale storybook portrait, warm romantic lighting, Renaissance Faire aesthetic, soft fantasy illustration style, enchanted forest backdrop, classic adventure film quality"
+  portrait_style: ", fairy tale storybook, warm romantic lighting, Renaissance Faire, enchanted forest backdrop"
 
 agents:
   orchestrator:

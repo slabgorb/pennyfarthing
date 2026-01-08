@@ -6,7 +6,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Child
-  portrait_style: ", golden compass steampunk portrait, warm amber and brass tones, Victorian arctic explorer aesthetic, aurora borealis glow, daemon companion visible, Philip Pullman cover art style"
+  portrait_style: ", golden compass steampunk, amber and brass tones, Victorian arctic aesthetic, aurora glow, daemon visible"
 
 agents:
   orchestrator:

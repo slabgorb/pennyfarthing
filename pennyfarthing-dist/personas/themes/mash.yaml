@@ -13,7 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Doctor
-  portrait_style: ", Korean War MASH unit portrait, olive drab Army aesthetic, surgical tent canvas background, 1970s CBS television look, warm earth tones, martini still and Hawaiian shirt details"
+  portrait_style: ", Korean War MASH unit, olive drab Army, surgical tent canvas, 1970s CBS television, warm earth tones"
 
 agents:
   orchestrator:

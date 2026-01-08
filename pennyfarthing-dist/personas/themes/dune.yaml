@@ -13,7 +13,7 @@ theme:
   default_humor: disabled
   character_immersion: high
   user_title: Cousin
-  portrait_style: ", epic science fiction portrait, golden desert light, spice-tinted atmosphere, ornate stillsuit detail, John Schoenherr book cover aesthetic, blue-within-blue eyes"
+  portrait_style: ", epic sci-fi, golden desert light, spice atmosphere, stillsuit detail, blue-within-blue eyes"
 
 agents:
   orchestrator:

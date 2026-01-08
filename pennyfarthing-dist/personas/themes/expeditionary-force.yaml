@@ -6,7 +6,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Monkey
-  portrait_style: ", military sci-fi portrait, holographic HUD overlay, starship bridge lighting, beer can hovering smugly, space opera book cover aesthetic"
+  portrait_style: ", military sci-fi, holographic HUD, starship bridge lighting, smug beer can hovering"
 agents:
   orchestrator:
     character: Skippy the Magnificent

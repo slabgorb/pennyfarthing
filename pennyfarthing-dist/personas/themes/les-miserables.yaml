@@ -13,7 +13,7 @@ theme:
   default_humor: disabled
   character_immersion: high
   user_title: Citizen
-  portrait_style: ", 19th century French revolutionary portrait, barricade and tricolor flag background, dramatic chiaroscuro, Victor Hugo novel illustration style, sepia and muted reds, Les Miserables musical poster aesthetic"
+  portrait_style: ", 19th century French revolutionary, barricade and tricolor background, dramatic chiaroscuro, sepia and muted reds"
 
 agents:
   orchestrator:

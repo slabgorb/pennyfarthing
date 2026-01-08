@@ -13,7 +13,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Sport
-  portrait_style: ", prestige television portrait, cold corporate lighting, shallow depth of field, muted luxury tones, Manhattan penthouse aesthetic, HBO cinematography style"
+  portrait_style: ", prestige TV, cold corporate lighting, muted luxury tones, HBO cinematography"
 
 agents:
   orchestrator:
