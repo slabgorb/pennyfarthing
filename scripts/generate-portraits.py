@@ -59,8 +59,9 @@ ROLES = [
     "architect", "pm", "tech-writer", "ux-designer", "devops"
 ]
 
-# Style suffix (visual description comes first for emphasis)
-STYLE_SUFFIX = ", traditional woodcut portrait bust, black and white, bold linework, crosshatching, medieval style"
+# Default style suffix (visual description comes first for emphasis)
+# Themes can override this by setting 'portrait_style' in their theme metadata
+DEFAULT_STYLE_SUFFIX = ", traditional woodcut portrait bust, black and white, bold linework, crosshatching, medieval style"
 
 
 def to_slug(name: str) -> str:
@@ -91,9 +92,11 @@ def parse_theme_file(theme_path: Path) -> dict:
     with open(theme_path, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
 
+    theme_metadata = data.get("theme", {})
     result = {
         "theme": theme_path.stem,
-        "source": data.get("theme", {}).get("source", ""),
+        "source": theme_metadata.get("source", ""),
+        "portrait_style": theme_metadata.get("portrait_style", None),
         "characters": {}
     }
 
@@ -123,9 +126,15 @@ def parse_theme_file(theme_path: Path) -> dict:
     return result
 
 
-def build_portrait_prompt(visual: str) -> str:
-    """Build a prompt for portrait generation."""
-    return f"{visual}{STYLE_SUFFIX}"
+def build_portrait_prompt(visual: str, style_suffix: str = None) -> str:
+    """Build a prompt for portrait generation.
+
+    Args:
+        visual: The character's visual description from theme YAML
+        style_suffix: Optional theme-specific style suffix. Falls back to DEFAULT_STYLE_SUFFIX.
+    """
+    suffix = style_suffix if style_suffix is not None else DEFAULT_STYLE_SUFFIX
+    return f"{visual}{suffix}"
 
 
 def load_pipeline():
@@ -215,7 +224,10 @@ def main():
             parsed = parse_theme_file(tf)
             theme_dir = OUTPUT_DIR / parsed["theme"]
             char_count = len(parsed["characters"])
+            style_desc = parsed["portrait_style"][:60] + "..." if parsed["portrait_style"] and len(parsed["portrait_style"]) > 60 else parsed["portrait_style"]
+            style_display = style_desc if style_desc else "(default woodcut)"
             print(f"\n  {parsed['theme']}/ ({char_count} characters with visual)")
+            print(f"    Style: {style_display}")
             for role in ROLES:
                 if role in parsed["characters"]:
                     char = parsed["characters"][role]
@@ -258,7 +270,7 @@ def main():
             if args.skip_existing and out_path.exists():
                 continue
 
-            prompt = build_portrait_prompt(char["visual"])
+            prompt = build_portrait_prompt(char["visual"], parsed["portrait_style"])
 
             try:
                 # Vary seed per character for diversity (base_seed + role_index)
