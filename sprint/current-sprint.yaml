@@ -26,6 +26,11 @@ summary:
     Story 7-2 amended: Scope narrowed to ARCHITECT role only. Must select best architect
     scenario, then backfill across 81 themes. Other roles (pm, devops, etc.) out of scope.
 
+    NEW: Epic 12 added (21 pts) - Rich Agent Telemetry (claude_telemetry port).
+    Ports TechNickAI/claude_telemetry patterns to TypeScript for Pennyfarthing/Cyclist.
+    Extends E6 OTLP receiver with tool-level spans, agent context, TDD metrics.
+    Epic 12 is BACKLOG - not in current sprint scope.
+
 epics:
   # =========================================================================
   # EPIC 3 - Context Management & Circuit Breaker (5 pts remaining of 13)
@@ -413,3 +418,416 @@ epics:
       # - 7-7: Success rate tracking (2 pts)
       # - 7-8: Benchmark dashboard (2 pts)
       # - 7-9: CI integration (2 pts)
+
+  # =========================================================================
+  # EPIC 11 - Cyclist-Pennyfarthing Monorepo Consolidation (19 pts)
+  # =========================================================================
+  - id: epic-11
+    jira: MSSCI-11417
+    title: "Cyclist-Pennyfarthing Monorepo Consolidation"
+    description: |
+      Merge Cyclist (Electron GUI) into Pennyfarthing as a pnpm workspace
+      monorepo with conditional dependencies. Fixes dogfooding portrait
+      resolution and enables coordinated releases.
+
+      ADR-002 approved 2026-01-07. See: ~/.claude/plans/snuggly-bouncing-forest.md
+
+      Three packages:
+      - @pennyfarthing/core (CLI, lean ~5MB)
+      - @pennyfarthing/cyclist (Electron GUI, optional ~200MB)
+      - @pennyfarthing/shared (path resolution, theme loading)
+    points: 19
+    completed_points: 3
+    priority: P1
+    marker: "architectural"
+    repos: pennyfarthing
+    status: in_progress
+    stories:
+      # Phase 1: Preparation (Non-Breaking)
+      - id: "11-1"
+        jira: MSSCI-11418
+        title: "Create @pennyfarthing/shared package with portrait resolver"
+        description: |
+          Create the shared utilities package with smart path resolution.
+          - packages/shared/ directory structure
+          - portrait-resolver.ts with multi-scenario path detection
+          - theme-loader.ts for shared theme/persona loading
+          - TypeScript config extending base
+          NON-BREAKING: Can be developed and tested independently.
+        points: 3
+        priority: P1
+        status: done
+        started: 2026-01-07
+        completed: 2026-01-07
+        pr: "https://github.com/1898andCo/pennyfarthing/pull/94"
+        repos: pennyfarthing
+        acceptance_criteria:
+          - packages/shared/ created with package.json
+          - portrait-resolver.ts checks 5 path scenarios in priority order
+          - PENNYFARTHING_DIST env var override works
+          - Monorepo root detection works (for dogfooding)
+          - node_modules paths work (for npm installs)
+          - Unit tests for path resolution
+
+      # Phase 2: Monorepo Conversion
+      - id: "11-2"
+        jira: MSSCI-11419
+        title: "Convert Pennyfarthing to pnpm workspace structure"
+        description: |
+          Restructure repository as pnpm workspace monorepo.
+          - Create packages/core/ and move existing src/
+          - Create root pnpm-workspace.yaml
+          - Create tsconfig.base.json for shared config
+          - Update all import paths
+          - Verify npm run build still works
+        points: 5
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - packages/core/src/ contains former src/
+          - pnpm-workspace.yaml defines packages/*
+          - pnpm install works from root
+          - pnpm build compiles all packages
+          - pennyfarthing CLI still functional
+          - Existing tests pass
+
+      - id: "11-3"
+        jira: MSSCI-11420
+        title: "Migrate Cyclist into monorepo as @pennyfarthing/cyclist"
+        description: |
+          Copy Cyclist from ~/Projects/cyclist/ into packages/cyclist/.
+          - Update dependencies to use workspace:* protocol
+          - Update imports to use @pennyfarthing/shared
+          - Update path resolution to use shared resolver
+          - Verify portrait loading in all scenarios
+        points: 5
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - packages/cyclist/ contains Cyclist source
+          - Dependencies use workspace:* for internal packages
+          - Portrait resolution uses @pennyfarthing/shared
+          - Electron app starts and shows portraits
+          - Dogfooding scenario works (portraits load from pennyfarthing-dist/)
+
+      # Phase 3: Testing
+      - id: "11-4"
+        jira: MSSCI-11421
+        title: "Test all install and runtime scenarios"
+        description: |
+          Verify the monorepo works in all usage patterns.
+          - npm install @pennyfarthing/core only (no Electron deps)
+          - npm install @pennyfarthing/cyclist (pulls core + Electron)
+          - Dogfooding: pnpm install in repo
+          - Electron packaged app portrait access
+        points: 3
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Core-only install is lean (~5MB, no Electron)
+          - Cyclist install includes core dependency
+          - Portrait resolution works in npm-installed project
+          - Portrait resolution works in monorepo development
+          - Electron-builder produces working app
+
+      # Phase 4: Publish & Cleanup
+      - id: "11-5"
+        jira: MSSCI-11422
+        title: "Update CI/CD and publish scoped packages"
+        description: |
+          Configure GitHub Actions for workspace-aware publishing.
+          - Update CI workflow for pnpm workspaces
+          - Configure npm publishing for scoped packages
+          - Archive ~/Projects/cyclist repo with deprecation notice
+          - Update README with new install instructions
+        points: 3
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - CI builds all packages successfully
+          - npm publish works for @pennyfarthing/core
+          - npm publish works for @pennyfarthing/cyclist
+          - Old cyclist repo archived with pointer to monorepo
+          - README documents both install paths
+
+  # =========================================================================
+  # EPIC 12 - Rich Agent Telemetry (claude_telemetry port)
+  # =========================================================================
+  # Reference: https://github.com/TechNickAI/claude_telemetry
+  # Ports the best patterns from Python claude_telemetry to TypeScript
+  # for native integration with Pennyfarthing/Cyclist
+  # =========================================================================
+  - id: epic-12
+    jira: MSSCI-11425
+    title: "Rich Agent Telemetry (claude_telemetry port)"
+    description: |
+      Port the key patterns from TechNickAI/claude_telemetry to TypeScript.
+      Extends Cyclist's existing OTLP receiver (E6 epic) with richer telemetry:
+      - Tool-level spans with inputs/outputs
+      - Agent execution traces with parent/child hierarchy
+      - Cost attribution per agent/story
+      - TDD cycle metrics (RED→GREEN time)
+
+      This enables observability for headless agent operations, CI/CD runs,
+      and production deployments of Pennyfarthing agents.
+
+      Key patterns to port:
+      1. Hook-based capture (non-blocking, async telemetry)
+      2. Span hierarchy (agent.run → tool.* → events)
+      3. Rich attributes (gen_ai.* semantic conventions)
+      4. Pass-through design (works with any Claude Code flags)
+    points: 26
+    completed_points: 0
+    priority: P2
+    marker: "observability"
+    repos: pennyfarthing, cyclist
+    status: backlog
+    stories:
+      # Phase 1: Foundation - Extend OTLP Receiver
+      - id: "12-1"
+        jira: MSSCI-11426
+        title: "Extend OTLP receiver for tool spans and events"
+        description: |
+          Enhance Cyclist's existing /v1/metrics and /v1/logs endpoints
+          to parse tool-level telemetry from Claude Code's OTEL output.
+
+          Claude Code emits:
+          - claude_code.tool_result events (via OTEL logs)
+          - claude_code.user_prompt events
+          - claude_code.api_request events
+
+          Add parsing for these event types and store in memory.
+        points: 3
+        priority: P1
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - /v1/logs endpoint parses claude_code.tool_result events
+          - /v1/logs endpoint parses claude_code.user_prompt events
+          - Tool name, inputs, outputs extracted from events
+          - Execution timing captured per tool
+          - Events stored in session-scoped memory
+
+      - id: "12-2"
+        jira: MSSCI-11427
+        title: "Create telemetry-types.ts with OTEL semantic conventions"
+        description: |
+          Define TypeScript interfaces for rich telemetry following
+          OpenTelemetry semantic conventions for GenAI.
+
+          Reference: gen_ai.* attributes from OTEL spec
+          Reference: claude_telemetry's attribute mapping
+
+          Types to define:
+          - AgentSpan (parent span for agent execution)
+          - ToolSpan (child span for each tool call)
+          - PromptEvent, CompletionEvent
+          - TokenUsage, CostAttribution
+        points: 2
+        priority: P1
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - telemetry-types.ts with full type definitions
+          - Follows OTEL gen_ai.* semantic conventions
+          - Includes cost calculation fields
+          - JSDoc documentation for all types
+
+      - id: "12-3"
+        jira: MSSCI-11428
+        title: "Implement span hierarchy builder"
+        description: |
+          Build parent/child span relationships from flat OTEL events.
+
+          Pattern from claude_telemetry:
+          ```
+          claude.agent.run (parent span)
+            ├─ user.prompt (event)
+            ├─ tool.Read (child span)
+            ├─ tool.Write (child span)
+            └─ agent.completed (event)
+          ```
+
+          Use trace_id and span_id from OTEL to reconstruct hierarchy.
+        points: 3
+        priority: P1
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Spans grouped by trace_id
+          - Parent/child relationships established via parent_span_id
+          - Events attached to their parent spans
+          - Hierarchy available for UI display and export
+
+      # Phase 2: Agent-Level Tracking for Pennyfarthing
+      - id: "12-4"
+        jira: MSSCI-11429
+        title: "Add Pennyfarthing agent context to telemetry"
+        description: |
+          Extend telemetry to track which Pennyfarthing agent (SM, TEA, Dev,
+          Reviewer) is currently active. This enables per-agent cost tracking
+          and performance comparison.
+
+          Implementation:
+          - Set PENNYFARTHING_AGENT env var at agent activation
+          - Cyclist captures this in session state
+          - All spans tagged with agent identifier
+
+          Enables: "TEA used 50K tokens, Dev used 120K tokens"
+        points: 3
+        priority: P1
+        status: backlog
+        repos: pennyfarthing, cyclist
+        acceptance_criteria:
+          - Agent activation sets PENNYFARTHING_AGENT env var
+          - Cyclist reads agent from environment or session
+          - All telemetry spans include agent attribute
+          - Per-agent token aggregation in getTokenStats()
+
+      - id: "12-5"
+        jira: MSSCI-11430
+        title: "Add story context to telemetry"
+        description: |
+          Tag telemetry with current story ID for cost attribution.
+          Enables: "Story 11-1 cost $2.34 across all agents"
+
+          Implementation:
+          - Read story ID from .session/{story-id}-session.md
+          - Pass PENNYFARTHING_STORY_ID to Claude Code spawn
+          - Include in all telemetry spans
+
+          Cross-story aggregation for sprint-level cost reports.
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing, cyclist
+        acceptance_criteria:
+          - Story ID extracted from session file
+          - PENNYFARTHING_STORY_ID set in PTY environment
+          - Telemetry includes story_id attribute
+          - Aggregation available by story
+
+      # Phase 3: TDD Cycle Metrics
+      - id: "12-6"
+        jira: MSSCI-11431
+        title: "Track TDD phase transitions"
+        description: |
+          Measure time spent in each TDD phase:
+          - RED phase: TEA writing failing tests
+          - GREEN phase: Dev implementing to pass
+          - REFACTOR phase: Dev cleanup (optional)
+          - REVIEW phase: Reviewer evaluation
+
+          Parse session file for phase transitions:
+          - **Phase:** tea → dev → reviewer
+          - Calculate duration between transitions
+
+          Enables: "Average RED→GREEN time: 12 minutes"
+        points: 3
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Session file parsed for phase changes
+          - Phase transition timestamps recorded
+          - Duration calculated between phases
+          - TDD cycle metrics exposed via API
+
+      - id: "12-7"
+        jira: MSSCI-11432
+        title: "Create telemetry dashboard API"
+        description: |
+          REST API endpoints for telemetry visualization:
+          - GET /api/telemetry/session - Current session stats
+          - GET /api/telemetry/tools - Tool usage breakdown
+          - GET /api/telemetry/agents - Per-agent stats
+          - GET /api/telemetry/stories - Per-story costs
+          - GET /api/telemetry/tdd - TDD cycle metrics
+
+          Returns JSON for consumption by UI or external tools.
+        points: 3
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - REST endpoints return structured JSON
+          - Session stats include tokens, costs, duration
+          - Tool breakdown shows frequency and timing
+          - Agent stats enable performance comparison
+          - Story costs enable budget tracking
+
+      # Phase 4: Export and Visualization
+      - id: "12-8"
+        jira: MSSCI-11433
+        title: "Add OTEL export to external backends"
+        description: |
+          Forward enriched telemetry to external OTEL backends.
+          Cyclist acts as a telemetry enrichment layer:
+          1. Receives raw Claude Code OTEL
+          2. Enriches with agent/story context
+          3. Exports to configured backend
+
+          Supported backends (via OTEL exporters):
+          - Grafana Cloud
+          - Honeycomb
+          - Datadog
+          - Any OTLP endpoint
+
+          Configuration via env vars (matching claude_telemetry pattern).
+        points: 2
+        priority: P3
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - CYCLIST_OTEL_EXPORT_ENDPOINT configurable
+          - Enriched spans exported to external backend
+          - Works with Grafana Cloud (tested)
+          - Graceful fallback if export fails
+
+      # Phase 5: Agent Evaluation
+      - id: "12-9"
+        jira: MSSCI-11434
+        title: "Create agent evaluation tool with performance metrics"
+        description: |
+          Build an agent evaluation framework that tracks and compares
+          agent performance across tasks. Leverages telemetry data to
+          compute quality metrics beyond just token counts.
+
+          Metrics to track per agent:
+          - Task completion rate (success/failure/partial)
+          - Average tokens per task type
+          - Average time to completion
+          - Tool usage efficiency (tools called vs minimum needed)
+          - Error/retry rate
+          - Code quality signals (tests passing, review approval rate)
+
+          Evaluation dimensions:
+          - By agent role (SM, TEA, Dev, Reviewer)
+          - By persona/theme (Shakespeare vs Norse vs Discworld)
+          - By task type (story setup, test writing, implementation, review)
+          - By complexity (story points correlation)
+
+          Output:
+          - Agent performance dashboard data
+          - Persona recommendations ("Hamlet outperforms Tyr on TEA tasks")
+          - Regression detection ("Dev performance dropped 15% this sprint")
+
+          Integration with job-fair benchmarking for controlled comparisons.
+        points: 5
+        priority: P2
+        status: backlog
+        repos: pennyfarthing, cyclist
+        acceptance_criteria:
+          - AgentEvaluation type defined with all metric fields
+          - Evaluation data collected from telemetry spans
+          - Per-agent metrics aggregated and stored
+          - Per-persona comparison available
+          - Task completion tracking (success/failure/partial)
+          - Tool efficiency metric calculated
+          - API endpoint for evaluation data retrieval
+          - Integration with job-fair baseline data
+          - Historical trend storage for regression detection
