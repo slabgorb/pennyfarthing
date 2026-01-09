@@ -1,8 +1,68 @@
 /**
- * OTLP Receiver - Parses OpenTelemetry metrics from Claude Code
+ * OTLP Receiver - Parses OpenTelemetry metrics and logs from Claude Code
  *
  * Receives OTLP HTTP/JSON format metrics and extracts token usage data.
+ * Story 19-1: Extended to parse tool and prompt events from OTLP logs.
  */
+
+// =============================================================================
+// Tool Event Types (Story 19-1)
+// =============================================================================
+
+/**
+ * Parsed tool execution event from OTLP logs
+ */
+export interface ToolEvent {
+  /** Tool name (e.g., 'Read', 'Write', 'Bash', 'Grep') */
+  toolName: string;
+  /** Tool input (file path, command, pattern, etc.) */
+  input?: string;
+  /** Tool output (file contents, command output, etc.) */
+  output?: string;
+  /** Tool execution duration in milliseconds */
+  durationMs?: number;
+  /** Whether the tool execution succeeded */
+  success: boolean;
+  /** Error message if tool failed */
+  error?: string;
+  /** Event timestamp in milliseconds */
+  timestamp: number;
+  /** Trace ID for correlation */
+  traceId?: string;
+  /** Span ID for correlation */
+  spanId?: string;
+}
+
+/**
+ * Parsed user prompt event from OTLP logs
+ */
+export interface ParsedPromptEvent {
+  /** The prompt text */
+  promptText: string;
+  /** Token count for the prompt */
+  tokens?: number;
+  /** Event timestamp in milliseconds */
+  timestamp: number;
+  /** Trace ID for correlation */
+  traceId?: string;
+  /** Span ID for correlation */
+  spanId?: string;
+}
+
+/**
+ * Raw parsed log event before categorization
+ */
+interface RawLogEvent {
+  name: string;
+  timestamp: number;
+  traceId?: string;
+  spanId?: string;
+  attributes: Record<string, string | number | boolean | undefined>;
+}
+
+// Session event stores (in-memory)
+let toolEvents: ToolEvent[] = [];
+let promptEvents: ParsedPromptEvent[] = [];
 
 // Token stats interface
 export interface TokenStats {
@@ -179,4 +239,166 @@ export function resetTokenStats(): void {
     totalCostUsd: 0,
     lastUpdated: 0,
   };
+}
+
+// =============================================================================
+// OTLP Logs Parsing (Story 19-1)
+// =============================================================================
+
+// OTLP Logs JSON structure types
+interface OTLPLogAttribute {
+  key: string;
+  value: {
+    stringValue?: string;
+    intValue?: number;
+    boolValue?: boolean;
+  };
+}
+
+interface OTLPLogRecord {
+  timeUnixNano?: string;
+  body?: { stringValue?: string };
+  traceId?: string;
+  spanId?: string;
+  attributes?: OTLPLogAttribute[];
+}
+
+interface OTLPScopeLogs {
+  logRecords?: OTLPLogRecord[];
+}
+
+interface OTLPResourceLogs {
+  scopeLogs?: OTLPScopeLogs[];
+}
+
+interface OTLPLogsPayload {
+  resourceLogs?: OTLPResourceLogs[];
+}
+
+/**
+ * Parse OTLP logs payload and extract raw events
+ */
+export function parseOTLPLogs(body: unknown): RawLogEvent[] {
+  const events: RawLogEvent[] = [];
+
+  try {
+    const payload = body as OTLPLogsPayload;
+
+    if (!payload?.resourceLogs) {
+      return events;
+    }
+
+    for (const resourceLog of payload.resourceLogs) {
+      if (!resourceLog?.scopeLogs) continue;
+
+      for (const scopeLog of resourceLog.scopeLogs) {
+        if (!scopeLog?.logRecords) continue;
+
+        for (const logRecord of scopeLog.logRecords) {
+          const eventName = logRecord.body?.stringValue;
+          if (!eventName) continue;
+
+          // Convert nanoseconds to milliseconds
+          const timestamp = logRecord.timeUnixNano
+            ? Math.floor(Number(logRecord.timeUnixNano) / 1_000_000)
+            : Date.now();
+
+          // Extract attributes into a flat object
+          const attributes: Record<string, string | number | boolean | undefined> = {};
+          if (logRecord.attributes) {
+            for (const attr of logRecord.attributes) {
+              if (attr.value.stringValue !== undefined) {
+                attributes[attr.key] = attr.value.stringValue;
+              } else if (attr.value.intValue !== undefined) {
+                attributes[attr.key] = attr.value.intValue;
+              } else if (attr.value.boolValue !== undefined) {
+                attributes[attr.key] = attr.value.boolValue;
+              }
+            }
+          }
+
+          events.push({
+            name: eventName,
+            timestamp,
+            traceId: logRecord.traceId,
+            spanId: logRecord.spanId,
+            attributes,
+          });
+        }
+      }
+    }
+  } catch {
+    // Malformed payload - return empty array
+  }
+
+  return events;
+}
+
+/**
+ * Record a tool event to session storage
+ */
+export function recordToolEvent(event: ToolEvent): void {
+  toolEvents.push(event);
+}
+
+/**
+ * Record a prompt event to session storage
+ */
+export function recordPromptEvent(event: ParsedPromptEvent): void {
+  promptEvents.push(event);
+}
+
+/**
+ * Get all stored tool events
+ */
+export function getToolEvents(): ToolEvent[] {
+  return [...toolEvents];
+}
+
+/**
+ * Get all stored prompt events
+ */
+export function getPromptEvents(): ParsedPromptEvent[] {
+  return [...promptEvents];
+}
+
+/**
+ * Reset event stores (for new session or testing)
+ */
+export function resetEventStore(): void {
+  toolEvents = [];
+  promptEvents = [];
+}
+
+/**
+ * Process raw log events and store them appropriately
+ * Called by the /v1/logs endpoint
+ */
+export function processLogEvents(rawEvents: RawLogEvent[]): void {
+  for (const event of rawEvents) {
+    if (event.name === 'claude_code.tool_result') {
+      const toolEvent: ToolEvent = {
+        toolName: event.attributes['tool.name'] as string || 'unknown',
+        input: event.attributes['tool.input'] as string | undefined,
+        output: event.attributes['tool.output'] as string | undefined,
+        durationMs: event.attributes['tool.duration_ms'] as number | undefined,
+        success: event.attributes['tool.success'] as boolean ?? true,
+        error: event.attributes['tool.error'] as string | undefined,
+        timestamp: event.timestamp,
+        traceId: event.traceId,
+        spanId: event.spanId,
+      };
+      recordToolEvent(toolEvent);
+    } else if (event.name === 'claude_code.user_prompt') {
+      const promptEvent: ParsedPromptEvent = {
+        promptText: event.attributes['prompt.text'] as string || '',
+        tokens: event.attributes['prompt.tokens'] as number | undefined,
+        timestamp: event.timestamp,
+        traceId: event.traceId,
+        spanId: event.spanId,
+      };
+      recordPromptEvent(promptEvent);
+    }
+    // Other event types (like claude_code.api_request) are ignored for now
+  }
 }

@@ -25,6 +25,7 @@ import {
   isValidProjectDirectory,
   parseProjectDirArg,
 } from './paths.js';
+import { getContextUsage, ContextInfo } from './api/context.js';
 
 // Re-export project directory functions for external consumers
 export { getProjectDirectory, setProjectDirectory, isValidProjectDirectory };
@@ -80,6 +81,7 @@ export const IPC_DATA_CHANNELS = {
   TODOS_GET: 'todos:get',
   TODOS_UPDATE: 'todos:update',
   // B-19: Context usage progress bar
+  CONTEXT_GET: 'context:get',
   CONTEXT_UPDATE: 'context:update',
 } as const;
 
@@ -229,6 +231,7 @@ export function getDataChannels(): string[] {
     IPC_DATA_CHANNELS.TOOL_STATS_GET,
     IPC_DATA_CHANNELS.TOKEN_STATS_GET,
     IPC_DATA_CHANNELS.TODOS_GET,
+    IPC_DATA_CHANNELS.CONTEXT_GET,
   ];
 }
 
@@ -444,6 +447,86 @@ export function resetTodos(): void {
 }
 
 // =============================================================================
+// Context State (B-19)
+// =============================================================================
+
+/**
+ * Current context state - updated by polling check-context.sh
+ */
+let currentContext: ContextInfo = {
+  percent: null,
+  tokens: null,
+  status: null,
+  error: null,
+};
+
+/**
+ * Get current context (for testing and IPC)
+ */
+export function getContext(): ContextInfo {
+  return { ...currentContext };
+}
+
+/**
+ * Update context state and broadcast if changed
+ * Returns true if context was updated (values changed)
+ */
+export function updateContextState(context: ContextInfo): boolean {
+  // Check if values actually changed
+  if (
+    currentContext.percent === context.percent &&
+    currentContext.tokens === context.tokens &&
+    currentContext.status === context.status
+  ) {
+    return false;
+  }
+  currentContext = { ...context };
+  broadcastToRenderer(IPC_DATA_CHANNELS.CONTEXT_UPDATE, currentContext);
+  return true;
+}
+
+/**
+ * Context polling interval in milliseconds
+ * 15 seconds balances responsiveness vs overhead
+ */
+export const CONTEXT_POLL_INTERVAL_MS = 15000;
+
+/**
+ * Timer reference for context polling
+ */
+let contextPollTimer: NodeJS.Timeout | null = null;
+
+/**
+ * Start polling context usage
+ * Calls getContextUsage periodically and broadcasts changes
+ */
+export function startContextPolling(projectDir: string): () => void {
+  // Initial fetch
+  const initialContext = getContextUsage(projectDir);
+  updateContextState(initialContext);
+
+  // Set up polling
+  contextPollTimer = setInterval(() => {
+    const context = getContextUsage(projectDir);
+    const changed = updateContextState(context);
+    if (changed) {
+      console.log('Context updated:', context.percent, '%');
+    }
+  }, CONTEXT_POLL_INTERVAL_MS);
+
+  console.log('Context polling started (every', CONTEXT_POLL_INTERVAL_MS / 1000, 's)');
+
+  // Return cleanup function
+  return () => {
+    if (contextPollTimer) {
+      clearInterval(contextPollTimer);
+      contextPollTimer = null;
+      console.log('Context polling stopped');
+    }
+  };
+}
+
+// =============================================================================
 // Server Control (B-2.1)
 // =============================================================================
 
@@ -593,6 +676,11 @@ export function setupDataIPCHandlers(ipcMain: {
     return getTodos();
   });
 
+  // Context handler - returns current context usage (B-19)
+  ipcMain.handle(IPC_DATA_CHANNELS.CONTEXT_GET, async () => {
+    return getContext();
+  });
+
   console.log('Data IPC handlers registered:', getDataChannels());
 }
 
@@ -630,6 +718,9 @@ export function startProjectWatchers(): void {
       }
     });
     console.log('Agent change watcher started for:', projectDir);
+
+    // Start context polling (B-19)
+    startContextPolling(projectDir);
   }
 }
 

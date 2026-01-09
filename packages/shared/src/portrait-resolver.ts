@@ -105,13 +105,14 @@ export function resolvePortraitPath(theme: string, agent: string): string | null
     // Map agent names to portrait file prefixes based on theme conventions
     // For most themes, portrait names use character short names
     // We need to find a file that contains the agent name or its mapping
+    // Note: This includes characters from multiple themes (shakespeare, norse, a-team)
     const agentMappings: Record<string, string[]> = {
-      'sm': ['prospero', 'baldur', 'sm'],
-      'tea': ['hamlet', 'tyr', 'tea'],
-      'dev': ['puck', 'loki', 'dev'],
-      'reviewer': ['portia', 'heimdall', 'reviewer'],
-      'architect': ['oberon', 'mimir', 'architect'],
-      'pm': ['henry', 'thor', 'pm'],
+      'sm': ['prospero', 'baldur', 'face', 'faceman', 'sm'],
+      'tea': ['hamlet', 'tyr', 'murdock', 'tea'],
+      'dev': ['puck', 'loki', 'ba', 'dev'],
+      'reviewer': ['portia', 'heimdall', 'lynch', 'decker', 'reviewer'],
+      'architect': ['oberon', 'mimir', 'hannibal', 'architect'],
+      'pm': ['henry', 'thor', 'amy', 'pm'],
       'tech-writer': ['horatio', 'bragi', 'tech-writer'],
       'ux-designer': ['viola', 'idunn', 'ux-designer'],
       'devops': ['caliban', 'norns', 'devops'],

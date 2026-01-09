@@ -108,4 +108,46 @@ See: `~/.claude/plans/snuggly-bouncing-forest.md`
 
 ---
 
+### ADR-003: Command & Skill Expansion Strategy
+
+**Date:** 2026-01-09
+**Status:** Accepted
+**Author:** Milo Minderbinder (Architect)
+
+#### Context
+
+Analysis of Anthropic's official skills repository (16 skills) and community Claude Code commands revealed gaps in Pennyfarthing's tooling. Question: Should we add a new "skills layer" or use the existing pattern?
+
+#### Decision
+
+**No new layer needed.** The existing command/skill separation is sufficient:
+- **Commands** = Workflow steps (do X, then Y)
+- **Skills** = Reference documentation (how X works)
+
+**Priority implementation order:**
+1. `/check` - Pre-commit quality gate (3 pts)
+2. `/prime` - Context loading at agent activation (2 pts)
+3. `mermaid` skill - Diagram reference docs (2 pts)
+4. `/run-ci` - Thin CI wrapper (2 pts)
+5. `changelog` skill - Release enhancement (1 pt)
+
+**Key integration:** `/check` runs AUTOMATICALLY in dev-handoff subagent.
+
+#### Consequences
+
+**Positive:**
+- Leverages existing patterns, no architectural changes
+- `/check` prevents broken code reaching reviewer
+- `/prime` reduces agent cold-start overhead
+
+**Negative:**
+- 10 story points of new work (Epic 21)
+- `/run-ci` may need `act` dependency for GitHub Actions
+
+#### Implementation Guidance
+
+See: `~/.claude/plans/cached-percolating-dolphin.md`
+
+---
+
 *Add decisions made during architecture work below*
