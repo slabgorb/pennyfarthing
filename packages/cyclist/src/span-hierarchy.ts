@@ -19,6 +19,7 @@
 
 import type { AgentSpan, ToolSpan, PromptEvent, SpanStatus } from './telemetry-types.js';
 import type { ToolEvent, ParsedPromptEvent } from './otlp-receiver.js';
+import { getAgentContext } from './agent-context.js';
 
 // =============================================================================
 // Session State
@@ -173,6 +174,7 @@ function createOrUpdateAgentSpan(
       attributes: {
         'gen_ai.system': 'claude',
         'gen_ai.request.model': 'unknown', // Will be populated by future stories
+        'pennyfarthing.agent': getAgentContext(), // Story 19-4: Agent context
       },
       events: [],
       childSpans: [],
@@ -355,6 +357,7 @@ export function buildSpanHierarchy(
       attributes: {
         'gen_ai.system': 'claude',
         'gen_ai.request.model': 'unknown',
+        'pennyfarthing.agent': getAgentContext(), // Story 19-4: Agent context
       },
       events,
       childSpans,

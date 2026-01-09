@@ -3,7 +3,9 @@
  *
  * Receives OTLP HTTP/JSON format metrics and extracts token usage data.
  * Story 19-1: Extended to parse tool and prompt events from OTLP logs.
+ * Story 19-4: Extended with per-agent token aggregation.
  */
+import { aggregateTokensForAgent, resetAgentTokenStats } from './agent-context.js';
 // Session event stores (in-memory)
 let toolEvents = [];
 let promptEvents = [];
@@ -99,6 +101,8 @@ export function aggregateTokenStats(parsed) {
     }
     if (hadUpdate) {
         sessionTokens.lastUpdated = Date.now();
+        // Story 19-4: Track tokens by agent
+        aggregateTokensForAgent(parsed);
         // Notify callback (triggers IPC broadcast in Electron)
         if (onTokenStatsUpdate) {
             onTokenStatsUpdate({ ...sessionTokens });
@@ -123,6 +127,8 @@ export function resetTokenStats() {
         totalCostUsd: 0,
         lastUpdated: 0,
     };
+    // Story 19-4: Also reset per-agent stats
+    resetAgentTokenStats();
 }
 /**
  * Parse OTLP logs payload and extract raw events
