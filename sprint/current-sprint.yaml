@@ -4,15 +4,15 @@
 
 sprint:
   number: 7
-  goal: "Complete context management circuit breaker, document choreography patterns, start benchmark framework"
+  goal: "Complete context management circuit breaker, document choreography patterns, start benchmark framework, rich agent telemetry"
   planned_start: 2026-01-06
   status: active
-  velocity_target: 20
+  velocity_target: 100
 
 summary:
-  total_points: 26
+  total_points: 52
   completed_points: 27
-  remaining_points: 0
+  remaining_points: 26
   notes: |
     Mixed sprint: stability (Epic 3), documentation (Epic 10), new capability (Epic 7).
     Carried from backlog - Epic 3 has 5/13 pts already done in prior sprints.
@@ -32,10 +32,10 @@ summary:
 
     SPRINT COMPLETE: All planned stories finished (27/26 pts velocity +1). Epic 18 in progress.
 
-    NEW: Epic 19 added (21 pts) - Rich Agent Telemetry (claude_telemetry port).
+    NEW: Epic 19 added (26 pts) - Rich Agent Telemetry (claude_telemetry port).
     Ports TechNickAI/claude_telemetry patterns to TypeScript for Pennyfarthing/Cyclist.
     Extends E6 OTLP receiver with tool-level spans, agent context, TDD metrics.
-    Epic 19 is BACKLOG - not in current sprint scope.
+    Epic 19 brought into Sprint 7 scope (2026-01-08). Velocity target adjusted to 100.
 
 epics:
   # =========================================================================
@@ -393,7 +393,8 @@ epics:
           didn't trigger automatically. Fix the workflow triggers.
         points: 2
         priority: P1
-        status: backlog
+        status: in_progress
+        started: 2026-01-09
         repos: pennyfarthing
         acceptance_criteria:
           - Workflow triggers automatically on push to develop
@@ -623,7 +624,8 @@ epics:
     priority: P2
     marker: "observability"
     repos: pennyfarthing, cyclist
-    status: backlog
+    status: in_progress
+    started: 2026-01-08
     stories:
       # Phase 1: Foundation - Extend OTLP Receiver
       - id: "19-1"
