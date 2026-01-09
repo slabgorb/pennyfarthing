@@ -1,1 +1,1 @@
-{"version":3,"file":"otlp.d.ts","sourceRoot":"","sources":["../../src/api/otlp.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,EAAE,MAAM,SAAS,CAAC;AAIjC,wBAAgB,gBAAgB,IAAI,MAAM,CAmCzC"}
+{"version":3,"file":"otlp.d.ts","sourceRoot":"","sources":["../../src/api/otlp.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,EAAE,MAAM,SAAS,CAAC;AASjC,wBAAgB,gBAAgB,IAAI,MAAM,CA4CzC"}

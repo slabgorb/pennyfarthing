@@ -76,14 +76,9 @@ export interface ElectronClaudeAPI {
 
 /**
  * Context API interface for context usage updates (B-19)
- * Only needs onUpdate since context is pushed from main process
+ * Provides get() for request/response and onUpdate() for push updates
  */
-export interface ElectronContextAPI {
-  /**
-   * Subscribe to context usage updates from main process
-   */
-  onUpdate: (callback: (event: unknown, data: unknown) => void) => void;
-}
+// Context API now uses standard ElectronDataAPI pattern (B-19)
 
 /**
  * Agent API interface for agent launcher (B-23)
@@ -140,7 +135,7 @@ export interface ElectronAPI {
   toolStats: ElectronDataAPI;
   tokenStats: ElectronDataAPI;
   todos: ElectronDataAPI; // B-17: Todo visualizer
-  context: ElectronContextAPI; // B-19: Context usage progress bar
+  context: ElectronDataAPI; // B-19: Context usage progress bar
   claude: ElectronClaudeAPI;
   agent: ElectronAgentAPI; // B-23: Agent launcher
   diff: ElectronDiffAPI; // E8-2: Diff viewer
@@ -207,12 +202,7 @@ function createElectronAPI(): ElectronAPI {
       // Todos API (B-17)
       todos: createDataAPI(ipcRenderer, 'todos:get', 'todos:update'),
       // Context API (B-19)
-      context: {
-        onUpdate: (callback: (event: unknown, data: unknown) => void) => {
-          ipcRenderer.removeAllListeners('context:update');
-          ipcRenderer.on('context:update', callback);
-        },
-      },
+      context: createDataAPI(ipcRenderer, 'context:get', 'context:update'),
       // Claude SDK API (E7-3)
       claude: {
         send: (prompt: string) => ipcRenderer.invoke('claude:send', prompt),
@@ -272,11 +262,7 @@ function createElectronAPI(): ElectronAPI {
       // Todos API (B-17) - test stub
       todos: createDataAPI(null, 'todos:get', 'todos:update'),
       // Context API (B-19) - test stub
-      context: {
-        onUpdate: (_callback: (event: unknown, data: unknown) => void) => {
-          // No-op in test environment
-        },
-      },
+      context: createDataAPI(null, 'context:get', 'context:update'),
       // Claude SDK API (E7-3) - test stub
       claude: {
         send: (_prompt: string) => Promise.resolve(),

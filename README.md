@@ -29,18 +29,20 @@ Explore all themes with OCEAN spider charts, Chernoff faces, and 910 character p
 ```bash
 cd your-project
 
-# Install as dev dependency
-npm install --save-dev pennyfarthing
+# Install as dev dependency (scoped package)
+npm install --save-dev @pennyfarthing/core
 
 # Initialize (creates symlinks, no file copying)
-pennyfarthing init
+npx pennyfarthing init
 
 # Verify installation
-pennyfarthing doctor
+npx pennyfarthing doctor
 
 # Start working (in Claude Code)
 /new-work
 ```
+
+> **Note:** The package was renamed from `pennyfarthing` to `@pennyfarthing/core` in v6.0. If upgrading, uninstall the old package first: `npm uninstall pennyfarthing`
 
 ## The TDD Flow
 
@@ -224,12 +226,14 @@ Override locally with `.claude/pennyfarthing/preferences.local.yaml` (gitignored
 ## Updating
 
 ```bash
-# v4.0+: Update via npm (symlinks point to node_modules)
-npm update pennyfarthing
+# v6.0+: Update via npm (scoped package)
+npm update @pennyfarthing/core
 
 # Verify after update
-pennyfarthing doctor
+npx pennyfarthing doctor
 ```
+
+> **Migrating from v5.x?** Uninstall the old package first: `npm uninstall pennyfarthing && npm install --save-dev @pennyfarthing/core`
 
 ## Uninstalling
 

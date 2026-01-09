@@ -1,0 +1,80 @@
+name: Publish to npm
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package to publish'
+        required: true
+        type: choice
+        options:
+          - core
+          - shared
+          - all
+      dry_run:
+        description: 'Dry run (no actual publish)'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build all packages
+        run: pnpm run build
+
+      - name: Run tests
+        run: pnpm --filter @pennyfarthing/shared test
+
+      # Publish @pennyfarthing/shared (dependency of other packages)
+      - name: Publish @pennyfarthing/shared
+        if: github.event_name == 'release' || inputs.package == 'shared' || inputs.package == 'all'
+        run: |
+          cd packages/shared
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            npm publish --dry-run --access public
+          else
+            npm publish --access public --provenance
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Publish @pennyfarthing/core
+      - name: Publish @pennyfarthing/core
+        if: github.event_name == 'release' || inputs.package == 'core' || inputs.package == 'all'
+        run: |
+          cd packages/core
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            npm publish --dry-run --access public
+          else
+            npm publish --access public --provenance
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Note: @pennyfarthing/cyclist is private (not published to npm)
+      # It's distributed as a packaged Electron app instead

@@ -121,12 +121,13 @@ describe('portrait-resolver', () => {
 
   describe('resolvePortraitPath', () => {
     it('should resolve portrait path for valid theme and agent', () => {
-      const result = resolvePortraitPath('shakespeare', 'sm');
+      // Use a-team which has actual portraits (shakespeare has only .gitkeep)
+      const result = resolvePortraitPath('a-team', 'sm');
 
       assert.ok(result !== null, 'Should find portrait');
-      assert.ok(result!.includes('shakespeare'), 'Path should include theme');
-      // Portrait files use character names (prospero) not agent names (sm)
-      assert.ok(result!.includes('prospero'), 'Path should include character name');
+      assert.ok(result!.includes('a-team'), 'Path should include theme');
+      // Portrait files use character names (faceman) not agent names (sm)
+      assert.ok(result!.includes('face'), 'Path should include character name');
       assert.ok(result!.endsWith('.png') || result!.endsWith('.jpg'), 'Should be image file');
     });
 
@@ -137,7 +138,7 @@ describe('portrait-resolver', () => {
     });
 
     it('should return null for invalid agent', () => {
-      const result = resolvePortraitPath('shakespeare', 'nonexistent-agent');
+      const result = resolvePortraitPath('a-team', 'nonexistent-agent');
 
       assert.strictEqual(result, null);
     });
@@ -154,13 +155,13 @@ describe('portrait-resolver', () => {
       // to resolve portraits for known themes
       delete process.env.PENNYFARTHING_DIST;
 
-      const result = resolvePortraitPath('shakespeare', 'dev');
+      const result = resolvePortraitPath('a-team', 'dev');
 
       // If dist is found (which it is in monorepo), should find portrait
-      // dev maps to puck in shakespeare theme
+      // dev maps to ba in a-team theme
       if (result !== null) {
-        assert.ok(result.includes('shakespeare'));
-        assert.ok(result.includes('puck'));
+        assert.ok(result.includes('a-team'));
+        assert.ok(result.includes('ba'));
       }
     });
   });
