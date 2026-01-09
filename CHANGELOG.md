@@ -11,6 +11,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [6.0.4] - 2026-01-09
+
+### Fixed
+
+#### Cyclist Bug Fixes
+- **Clear Stale Data** - `/clear` now properly resets tool events, tool stats, and context percentage
+- **Focus Stealing** - Changed Files panel no longer steals focus when new diffs arrive
+- **Panel Resizers** - Fixed resizers not allowing panel expansion (main-content min-width issue)
+
+### Added
+
+#### Cyclist Enhancements
+- **Open in Editor** - Click file path in diff header to open file in `$EDITOR`
+  - Supports VS Code, Cursor, Vim, Neovim, Emacs, Sublime
+  - Falls back to generic editor launch
+- **Diff Panel Resize** - Diff panel now supports drag-to-resize (matching file panel)
+- **CSS Variables** - Standardized panel dimensions via `--sidebar-width`, `--panel-min-width`, `--panel-default-width`
+
+---
+
+## [6.0.3] - 2026-01-09
+
+### Fixed
+- **Changed Files Panel** - Fixed SDK message structure parsing for Edit/Write tools
+- **SDK Message Gotcha** - Documented Claude SDK message structure in dev sidecar
+
+---
+
 ## [6.0.0] - 2026-01-08
 
 ### Major Release: Monorepo Consolidation & Cyclist Integration
