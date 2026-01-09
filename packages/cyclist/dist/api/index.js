@@ -9,4 +9,5 @@ export { createFileBrowserRouter } from './file-browser.js';
 export { createTokenStatsRouter, broadcastTokenStats, getTokenStatsClients, initTokenStatsBroadcast } from './token-stats.js';
 export { createContextRouter, getContextUsage } from './context.js';
 export { createThemeAgentsRouter, getThemeAgents } from './theme-agents.js';
+export { createModeRouter, getModeInfo } from './mode.js';
 //# sourceMappingURL=index.js.map

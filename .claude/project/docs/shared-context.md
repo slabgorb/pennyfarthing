@@ -140,3 +140,44 @@ When modifying agent behavior:
 1. Use the benchmark framework in `benchmarks/`
 2. Test across multiple personas to ensure capability isn't tied to theme
 3. Consider edge cases in handoff transitions
+
+## Cyclist Package
+
+Cyclist is a visual terminal interface for Claude Code, providing:
+- Real-time terminal output with persona styling
+- Agent portraits and OCEAN personality traits
+- Story/session progress tracking
+- Git status and context information
+
+### Key Modules
+
+| Module | Purpose |
+|--------|---------|
+| `packages/cyclist/src/parser.ts` | Parse Claude CLI output for stats |
+| `packages/cyclist/src/claude-service.ts` | Claude Code CLI wrapper (programmatic mode) |
+| `packages/cyclist/src/otlp-receiver.ts` | OpenTelemetry metrics receiver |
+| `packages/cyclist/src/pennyfarthing.ts` | Theme/persona config reader |
+
+### Running Cyclist
+
+```bash
+# Web mode (browser)
+just cyclist-web /path/to/project
+
+# Electron mode
+just cyclist-electron
+
+# Server only (standalone)
+just cyclist-server /path/to/project
+```
+
+### IPC Pattern
+
+All main↔renderer communication uses typed IPC:
+```typescript
+// Define channels, create handlers, expose via preload
+window.electronAPI.xxx.get()           // Request data
+window.electronAPI.xxx.onUpdate(cb)    // Subscribe to updates
+```
+
+See `.claude/project/agents/dev-sidecar/gotchas.md` for IPC registration gotchas.

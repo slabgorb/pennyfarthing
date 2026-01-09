@@ -1,18 +1,9 @@
 /**
  * E8-3: File Browser Component
  *
- * Provides a tree view of the project directory within the tabbed workspace.
+ * Provides a tree view of the project directory in the left panel.
  * Users can navigate directories, view file structure, and click files to open them.
  */
-
-import TabManager from '../tabs.js';
-import { registerContentRenderer } from './TabContainer.js';
-
-// =============================================================================
-// Constants
-// =============================================================================
-
-const BROWSER_TAB_ID = 'file-browser';
 
 // =============================================================================
 // Type Definitions (for documentation)
@@ -326,32 +317,6 @@ export function handleDirectoryClick(entry, state, onLoadDirectory) {
 }
 
 // =============================================================================
-// Tab Management (Singleton Pattern)
-// =============================================================================
-
-/**
- * Open file browser tab (singleton pattern)
- * @param {Object} tabManager - TabManager instance (or mock for testing)
- */
-export function openFileBrowser(tabManager) {
-  const state = tabManager.getState();
-
-  // If already exists, just switch to it
-  if (state.tabs.find(t => t.id === BROWSER_TAB_ID)) {
-    tabManager.setActiveTab(BROWSER_TAB_ID);
-    return;
-  }
-
-  // Create new singleton tab
-  tabManager.addTab({
-    id: BROWSER_TAB_ID,
-    type: 'browser',
-    label: 'Files',
-    closeable: false,
-  });
-}
-
-// =============================================================================
 // File Browser Component
 // =============================================================================
 
@@ -435,9 +400,8 @@ function attachEventListeners(container) {
 
       treeState = await handleDirectoryClick(entry, treeState, onLoadDirectory);
 
-      // Re-render the tree
+      // Re-render the tree (event listener already attached via delegation)
       renderFileTree(container, getCachedListing(treeState, treeState.rootPath)?.entries || [], treeState);
-      attachEventListeners(container);
     } else {
       // File click - open in viewer tab
       const entry = {
@@ -456,35 +420,68 @@ function attachEventListeners(container) {
 }
 
 // =============================================================================
-// Content Renderer Registration
-// =============================================================================
-
-// Register browser content renderer with TabContainer
-registerContentRenderer('browser', (container, _tab) => {
-  renderFileBrowser(container);
-});
-
-// =============================================================================
 // IPC Integration
 // =============================================================================
 
 /**
- * Initialize FileBrowser IPC listeners
+ * Initialize the left panel file tree
+ * Renders directly into #file-panel-tree
+ */
+async function initLeftPanelTree() {
+  const treeContainer = document.getElementById('file-panel-tree');
+  if (!treeContainer) {
+    console.log('[FileBrowser] Left panel tree container not found');
+    return;
+  }
+
+  // Get root path from electronAPI if available
+  if (!treeState && window.electronAPI?.fileBrowser) {
+    try {
+      const listing = await window.electronAPI.fileBrowser.listDirectory('');
+      initFileBrowser(listing.path);
+      treeState = cacheDirectoryListing(treeState, listing);
+      console.log('[FileBrowser] Loaded root directory:', listing.path);
+    } catch (err) {
+      console.error('[FileBrowser] Failed to load root directory:', err);
+      treeContainer.innerHTML = '<div class="file-browser-error">Failed to load directory</div>';
+      return;
+    }
+  }
+
+  if (!treeState) {
+    treeContainer.innerHTML = '<div class="file-browser-empty">No project loaded</div>';
+    return;
+  }
+
+  // Get root listing and render
+  const rootListing = getCachedListing(treeState, treeState.rootPath);
+  if (rootListing) {
+    renderFileTree(treeContainer, rootListing.entries, treeState);
+    attachEventListeners(treeContainer);
+    console.log('[FileBrowser] Left panel tree initialized');
+  }
+}
+
+/**
+ * Initialize FileBrowser IPC listeners and left panel
  * Listens for diff updates to track modified files
  */
 export function init() {
+  // Initialize the left panel file tree
+  initLeftPanelTree();
+
   // Listen for diff updates to track modified files (AC5)
   if (window.electronAPI?.diff?.onUpdate) {
     window.electronAPI.diff.onUpdate((_event, data) => {
       if (treeState && data.filePath) {
         treeState = markFileModified(treeState, data.filePath);
         // Refresh the tree to show modified indicator
-        const container = document.querySelector('.file-tree');
+        const container = document.getElementById('file-panel-tree');
         if (container && treeState) {
           const rootListing = getCachedListing(treeState, treeState.rootPath);
           if (rootListing) {
             renderFileTree(container, rootListing.entries, treeState);
-            attachEventListeners(container);
+            // Event listener already attached via delegation - no need to re-attach
           }
         }
       }
@@ -508,7 +505,6 @@ if (typeof document !== 'undefined') {
 
 export default {
   init,
-  openFileBrowser,
   createInitialTreeState,
   toggleDirectory,
   isDirectoryExpanded,
