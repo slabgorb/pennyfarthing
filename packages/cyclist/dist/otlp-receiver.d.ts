@@ -3,6 +3,7 @@
  *
  * Receives OTLP HTTP/JSON format metrics and extracts token usage data.
  * Story 19-1: Extended to parse tool and prompt events from OTLP logs.
+ * Story 19-4: Extended with per-agent token aggregation.
  */
 /**
  * Parsed tool execution event from OTLP logs

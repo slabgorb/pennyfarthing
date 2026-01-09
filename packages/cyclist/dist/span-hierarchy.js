@@ -16,6 +16,7 @@
  * @see telemetry-types.ts for type definitions
  * @see otlp-receiver.ts for event sources
  */
+import { getAgentContext } from './agent-context.js';
 // =============================================================================
 // Session State
 // =============================================================================
@@ -143,6 +144,7 @@ function createOrUpdateAgentSpan(traceId, toolEvents, promptEvents) {
             attributes: {
                 'gen_ai.system': 'claude',
                 'gen_ai.request.model': 'unknown', // Will be populated by future stories
+                'pennyfarthing.agent': getAgentContext(), // Story 19-4: Agent context
             },
             events: [],
             childSpans: [],
@@ -292,6 +294,7 @@ export function buildSpanHierarchy(toolEvents, promptEvents) {
             attributes: {
                 'gen_ai.system': 'claude',
                 'gen_ai.request.model': 'unknown',
+                'pennyfarthing.agent': getAgentContext(), // Story 19-4: Agent context
             },
             events,
             childSpans,
