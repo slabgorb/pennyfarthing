@@ -14,7 +14,7 @@ theme:
   default_humor: disabled
   character_immersion: high
   user_title: Stranger
-  portrait_style: "movie storyboard art, rough charcoal and sepia sketch, dynamic action lines, dusty wasteland atmosphere"
+  portrait_style: ", movie storyboard art, rough charcoal and sepia sketch, dynamic action lines, dusty wasteland atmosphere"
 agents:
   orchestrator:
     character: The Dag
