@@ -23,6 +23,9 @@ Extract all stories with `status: backlog` or `status: ready`:
 - Repos (api/ui/both)
 - Jira key (if present in `jira:` field)
 - Dependencies (from `depends_on:` field)
+- Assigned to (from `assigned_to:` field, if present)
+
+**Filter OUT stories that have `assigned_to:` set** - these are already claimed by another developer.
 
 ## Step 2: Check Jira Status
 
@@ -36,8 +39,12 @@ jira issue view {JIRA_KEY} --raw 2>/dev/null | jq -r '{
 ```
 
 **Filter OUT stories that are:**
-- Status: "In Progress" or "Done"
-- Assignee: Anyone other than "Unassigned" or "Keith Avery"
+- Status: "In Progress" or "Done" in Jira
+- Assignee: Anyone other than "Unassigned" or the current user
+
+**Note:** A story should be skipped if EITHER:
+- Sprint YAML has `assigned_to:` set, OR
+- Jira shows assignee other than current user
 
 ## Step 3: Check Context Availability
 
@@ -104,10 +111,18 @@ Extract from each summary:
 
 ### Available Stories (sorted by Priority, then Points)
 
-| Story | Title | Pts | Priority | Repos | Jira | Epic Ctx | Story Ctx | Related |
-|-------|-------|-----|----------|-------|------|----------|-----------|---------|
-| 38-8 | Hunt metrics foundation | 3 | P1 | api | MSSCI-11091 | No | No | 2 stories |
-| 32-8 | Threat hunt summary | 3 | P1 | both | MSSCI-11027 | No | Yes | 5 stories |
+Stories with `assigned_to` set or Jira assignee (other than current user) are excluded.
+
+| Story | Title | Pts | Priority | Repos | Jira | Epic Ctx | Story Ctx |
+|-------|-------|-----|----------|-------|------|----------|-----------|
+| 38-8 | Hunt metrics foundation | 3 | P1 | api | MSSCI-11091 | No | No |
+| 32-8 | Threat hunt summary | 3 | P1 | both | MSSCI-11027 | No | Yes |
+
+### Assigned Stories (for reference)
+
+| Story | Title | Assigned To | Status |
+|-------|-------|-------------|--------|
+| 7-2 | Expand job-fair | Keith Avery | in_progress |
 
 ### Blocked Stories
 

@@ -252,7 +252,8 @@ Task tool:
 Helper scans the sprint backlog, checks Jira status, finds available stories.
 
 **Helper returns:**
-- Available stories table (sorted by priority)
+- Available stories table (sorted by priority) - excludes stories with `assigned_to` or Jira assignee
+- Assigned stories table (for reference only - these are already claimed)
 - Jira status for each
 - Context availability (epic/story context exists?)
 - Blocked stories and why
@@ -331,15 +332,18 @@ Task tool:
     JIRA_KEY: {value}
     REPOS: {value}
     SLUG: {value}
+    ASSIGNEE: {current user display name}
     SESSION_CONTENT: |
       {markdown content}
 ```
 
+**Get ASSIGNEE:** Run `jira me` to get current user email, or use known user name (e.g., "Keith Avery").
+
 Helper does:
-- Claims Jira story
+- Claims Jira story (assigns to user, moves to In Progress)
 - Writes session file
 - Creates feature branches
-- Updates sprint YAML
+- Updates sprint YAML (status: in_progress, assigned_to: {ASSIGNEE})
 
 ### Step 6: Helper Completes Handoff
 

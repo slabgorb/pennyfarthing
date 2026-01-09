@@ -13,6 +13,7 @@ You are a story setup assistant. Execute these mechanical steps for story {STORY
 - `{REPO}` - "api", "ui", or both
 - `{SLUG}` - kebab-case story description
 - `{TODAY}` - YYYY-MM-DD format
+- `{ASSIGNEE}` - Display name of user claiming story (e.g., "Keith Avery")
 - `{WORKTREE_NAME}` - (optional) e.g., "wt-36-2" if parallel work
 - `{WORKTREE_PATH}` - (optional) e.g., "/path/to/worktrees/wt-36-2"
 
@@ -65,8 +66,12 @@ If both repos: Repeat for API and UI
 
 ## Step 4: Update Sprint Status
 In sprint/current-sprint.yaml, find the story entry and change:
-- status: backlog → status: in-progress
+- status: backlog → status: in_progress
 - Add: started: {TODAY}
+- Add: assigned_to: {ASSIGNEE}
+
+**Note:** `{ASSIGNEE}` is the display name of the user picking up the story (e.g., "Keith Avery").
+Get this from Jira or use a provided parameter.
 
 ## Step 5: Output Summary
 
@@ -77,10 +82,11 @@ In sprint/current-sprint.yaml, find the story entry and change:
 
 ### Setup Complete
 - [x] Jira claimed: {JIRA_KEY}
+- [x] Assigned to: {ASSIGNEE}
 - [x] Context file: .session/context-story-{STORY_ID}.md
 - [x] Session file: {SESSION_FILE_PATH}
 - [x] Branch: feat/{STORY_ID}-{SLUG}
-- [x] Sprint status: in-progress
+- [x] Sprint status: in_progress
 {WORKTREE_INFO}
 
 ### Acceptance Criteria

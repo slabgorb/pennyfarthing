@@ -1,11 +1,16 @@
 name: Deploy Showcase to GitHub Pages
 
+# Trigger conditions:
+# - Automatically on any push to develop (PR merges)
+# - Manually via workflow_dispatch for ad-hoc deploys
+#
+# Note: We removed the paths filter because:
+# 1. Pushes to develop are infrequent (only PR merges)
+# 2. The showcase may depend on changes outside its directory
+# 3. The build is fast enough that rebuilding on every merge is acceptable
 on:
   push:
     branches: [develop]
-    paths:
-      - 'internal/showcase/**'
-      - 'pennyfarthing-dist/personas/**'
   workflow_dispatch:
 
 permissions:
