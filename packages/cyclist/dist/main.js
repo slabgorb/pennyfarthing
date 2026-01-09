@@ -641,30 +641,38 @@ export function setupClaudeIPCHandlers(ipcMain) {
                     updateTodosState(todos);
                 }
                 // E8-2: Broadcast diff data for Edit/Write tool messages
-                if (message.type === 'tool_use') {
-                    const toolMsg = message;
-                    if (toolMsg.tool_name === 'Edit') {
-                        const input = toolMsg.input;
-                        broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, {
-                            id: toolMsg.tool_id,
-                            filePath: input.file_path,
-                            oldContent: input.old_string,
-                            newContent: input.new_string,
-                            toolType: 'Edit',
-                            timestamp: Date.now(),
-                        });
-                    }
-                    else if (toolMsg.tool_name === 'Write') {
-                        const input = toolMsg.input;
-                        broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, {
-                            id: toolMsg.tool_id,
-                            filePath: input.file_path,
-                            oldContent: '',
-                            newContent: input.content,
-                            toolType: 'Write',
-                            timestamp: Date.now(),
-                            isNewFile: true,
-                        });
+                // Tool_use blocks are nested inside 'assistant' messages under message.content[]
+                if (message.type === 'assistant') {
+                    const assistantMsg = message;
+                    const content = assistantMsg.message?.content;
+                    if (content && Array.isArray(content)) {
+                        for (const block of content) {
+                            if (block.type === 'tool_use') {
+                                if (block.name === 'Edit') {
+                                    const input = block.input;
+                                    broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, {
+                                        id: block.id || `edit-${Date.now()}`,
+                                        filePath: input.file_path,
+                                        oldContent: input.old_string,
+                                        newContent: input.new_string,
+                                        toolType: 'Edit',
+                                        timestamp: Date.now(),
+                                    });
+                                }
+                                else if (block.name === 'Write') {
+                                    const input = block.input;
+                                    broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, {
+                                        id: block.id || `write-${Date.now()}`,
+                                        filePath: input.file_path,
+                                        oldContent: '',
+                                        newContent: input.content,
+                                        toolType: 'Write',
+                                        timestamp: Date.now(),
+                                        isNewFile: true,
+                                    });
+                                }
+                            }
+                        }
                     }
                 }
             }
