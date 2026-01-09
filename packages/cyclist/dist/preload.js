@@ -67,13 +67,7 @@ function createElectronAPI() {
             // Todos API (B-17)
             todos: createDataAPI(ipcRenderer, 'todos:get', 'todos:update'),
             // Context API (B-19)
-            context: {
-                get: () => ipcRenderer.invoke('context:get'),
-                onUpdate: (callback) => {
-                    ipcRenderer.removeAllListeners('context:update');
-                    ipcRenderer.on('context:update', callback);
-                },
-            },
+            context: createDataAPI(ipcRenderer, 'context:get', 'context:update'),
             // Claude SDK API (E7-3)
             claude: {
                 send: (prompt) => ipcRenderer.invoke('claude:send', prompt),
@@ -134,12 +128,7 @@ function createElectronAPI() {
             // Todos API (B-17) - test stub
             todos: createDataAPI(null, 'todos:get', 'todos:update'),
             // Context API (B-19) - test stub
-            context: {
-                get: () => Promise.resolve({ percent: null, tokens: null, status: null, error: null }),
-                onUpdate: (_callback) => {
-                    // No-op in test environment
-                },
-            },
+            context: createDataAPI(null, 'context:get', 'context:update'),
             // Claude SDK API (E7-3) - test stub
             claude: {
                 send: (_prompt) => Promise.resolve(),

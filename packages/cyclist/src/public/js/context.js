@@ -133,11 +133,15 @@ async function initContextMeter() {
     }
   });
 
-  // Also subscribe to context:update channel if available
+  // Also subscribe to context:update channel if available (B-19)
+  // Context API returns { percent, tokens, status, error } from check-context.sh
   if (window.electronAPI?.context?.onUpdate) {
     window.electronAPI.context.onUpdate((_event, data) => {
-      if (data && typeof data.inputTokens !== 'undefined') {
-        updateContextMeter(data.inputTokens, data.outputTokens);
+      if (data && data.percent !== null && data.percent !== undefined) {
+        // Context API provides percent directly, convert to tokens for meter
+        // Assume 200K max tokens for display purposes
+        const estimatedTokens = Math.round((data.percent / 100) * 200000);
+        updateContextMeter(estimatedTokens, 0);
       }
     });
   }
