@@ -40,6 +40,20 @@ export interface Persona {
 }
 
 /**
+ * Full persona details for popup display
+ * Extends basic Persona with voice, quirks, background from theme file
+ */
+export interface FullPersonaDetails extends Persona {
+  voice?: string;
+  quirks?: string[];
+  background?: string;
+  roleMapping: string;  // e.g., "SM → Hawkeye Pierce"
+  expertise?: string;
+  catchphrases?: string[];
+  visual?: string;
+}
+
+/**
  * Theme configuration from persona-config.yaml
  */
 interface ThemeConfig {
@@ -388,6 +402,103 @@ export function getCurrentPersona(projectDir: string, sessionId?: string): Perso
     quote: persona.quote,
     helper: helper || undefined,  // Helper/subagent info (e.g., "The Fellowship")
     ocean: persona.ocean,
+  };
+}
+
+/**
+ * Gets full persona details including voice, quirks, background for popup display
+ * @param projectDir - The project directory
+ * @param sessionId - Optional session ID for session-specific lookup
+ * @returns FullPersonaDetails object or null if not available
+ */
+export function getFullPersonaDetails(projectDir: string, sessionId?: string): FullPersonaDetails | null {
+  // Check if this is a Pennyfarthing project
+  if (!detectPennyfarthingProject(projectDir)) {
+    return null;
+  }
+
+  // Get theme configuration
+  const config = loadThemeConfig(projectDir);
+  if (!config) {
+    return null;
+  }
+
+  // Find theme file path
+  const possiblePaths = [
+    join(projectDir, '.claude', 'personas', 'themes', `${config.theme}.yaml`),
+    join(projectDir, '.claude', 'pennyfarthing', 'themes', `${config.theme}.yaml`),
+    join(projectDir, 'pennyfarthing-dist', 'personas', 'themes', `${config.theme}.yaml`),
+  ];
+
+  const envThemePath = process.env.CYCLIST_THEME_PATH;
+  if (envThemePath) {
+    possiblePaths.unshift(envThemePath);
+  }
+
+  let themePath: string | null = null;
+  for (const path of possiblePaths) {
+    if (existsSync(path)) {
+      themePath = path;
+      break;
+    }
+  }
+
+  if (!themePath) {
+    return null;
+  }
+
+  // Load full theme YAML (not just the processed agents)
+  let themeData: Record<string, unknown>;
+  try {
+    const content = readFileSync(themePath, 'utf-8');
+    themeData = parseYaml(content) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+
+  const agents = themeData.agents as Record<string, Record<string, unknown>> | undefined;
+  if (!agents) {
+    return null;
+  }
+
+  // Get current agent
+  const agentRole = getCurrentAgent(projectDir, sessionId);
+  if (!agentRole) {
+    return null;
+  }
+
+  // Get raw persona data for agent role
+  const rawPersona = agents[agentRole];
+  if (!rawPersona) {
+    return null;
+  }
+
+  // Get the basic persona first
+  const basicPersona = getCurrentPersona(projectDir, sessionId);
+  if (!basicPersona) {
+    return null;
+  }
+
+  // Build role mapping string
+  const roleMapping = `${agentRole.toUpperCase()} → ${basicPersona.character}`;
+
+  // Extract additional fields from raw theme data
+  const voice = rawPersona.voice as string | undefined;
+  const quirks = rawPersona.quirks as string[] | undefined;
+  const background = rawPersona.role as string | undefined; // "role" in theme is the character background
+  const expertise = rawPersona.expertise as string | undefined;
+  const catchphrases = rawPersona.catchphrases as string[] | undefined;
+  const visual = rawPersona.visual as string | undefined;
+
+  return {
+    ...basicPersona,
+    voice,
+    quirks,
+    background,
+    roleMapping,
+    expertise,
+    catchphrases,
+    visual,
   };
 }
 

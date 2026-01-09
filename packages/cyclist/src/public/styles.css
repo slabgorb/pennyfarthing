@@ -1974,7 +1974,7 @@ html, body {
 
 .diff-panel-content {
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
   padding: 8px 0;
 }
 
@@ -2036,7 +2036,7 @@ html, body {
   font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
   font-size: 13px;
   line-height: 1.4;
-  overflow: auto;
+  overflow: hidden;
   background: var(--bg-terminal);
 }
 
@@ -2337,5 +2337,194 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   .changed-file-item {
     transition: none;
+  }
+}
+
+/* ========================================
+   Story 17-4: Persona Popup Modal
+   ======================================== */
+
+/* Make persona section clickable */
+#persona-section {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+#persona-section:hover {
+  background-color: var(--bg-secondary);
+}
+
+/* Backdrop overlay */
+.persona-popup-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 999;
+}
+
+/* Popup modal */
+.persona-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 480px;
+  max-height: 80vh;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  display: none;
+}
+
+.persona-popup.active {
+  display: block;
+}
+
+/* Close button */
+.popup-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+  border-radius: 4px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.popup-close:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+}
+
+/* Popup content layout */
+.persona-popup-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Header with portrait and title */
+.popup-header {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+/* Large portrait */
+.popup-portrait {
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.popup-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.popup-portrait .portrait-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+/* Title area */
+.popup-title-area {
+  flex: 1;
+  min-width: 0;
+}
+
+.popup-character-name {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.role-mapping {
+  font-size: 0.9rem;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.popup-theme {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+}
+
+/* Attributes section */
+.popup-attributes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.popup-attr {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.persona-attr-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+}
+
+.persona-style,
+.persona-voice,
+.persona-background,
+.persona-quirks {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+/* Responsive adjustments */
+@media (max-width: 500px) {
+  .persona-popup {
+    padding: 16px;
+    max-width: 95%;
+  }
+
+  .popup-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .popup-portrait {
+    width: 100px;
+    height: 100px;
+  }
+
+  .popup-character-name {
+    font-size: 1.25rem;
   }
 }

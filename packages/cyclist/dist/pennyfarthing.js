@@ -318,6 +318,90 @@ export function getCurrentPersona(projectDir, sessionId) {
     };
 }
 /**
+ * Gets full persona details including voice, quirks, background for popup display
+ * @param projectDir - The project directory
+ * @param sessionId - Optional session ID for session-specific lookup
+ * @returns FullPersonaDetails object or null if not available
+ */
+export function getFullPersonaDetails(projectDir, sessionId) {
+    // Check if this is a Pennyfarthing project
+    if (!detectPennyfarthingProject(projectDir)) {
+        return null;
+    }
+    // Get theme configuration
+    const config = loadThemeConfig(projectDir);
+    if (!config) {
+        return null;
+    }
+    // Find theme file path
+    const possiblePaths = [
+        join(projectDir, '.claude', 'personas', 'themes', `${config.theme}.yaml`),
+        join(projectDir, '.claude', 'pennyfarthing', 'themes', `${config.theme}.yaml`),
+        join(projectDir, 'pennyfarthing-dist', 'personas', 'themes', `${config.theme}.yaml`),
+    ];
+    const envThemePath = process.env.CYCLIST_THEME_PATH;
+    if (envThemePath) {
+        possiblePaths.unshift(envThemePath);
+    }
+    let themePath = null;
+    for (const path of possiblePaths) {
+        if (existsSync(path)) {
+            themePath = path;
+            break;
+        }
+    }
+    if (!themePath) {
+        return null;
+    }
+    // Load full theme YAML (not just the processed agents)
+    let themeData;
+    try {
+        const content = readFileSync(themePath, 'utf-8');
+        themeData = parseYaml(content);
+    }
+    catch {
+        return null;
+    }
+    const agents = themeData.agents;
+    if (!agents) {
+        return null;
+    }
+    // Get current agent
+    const agentRole = getCurrentAgent(projectDir, sessionId);
+    if (!agentRole) {
+        return null;
+    }
+    // Get raw persona data for agent role
+    const rawPersona = agents[agentRole];
+    if (!rawPersona) {
+        return null;
+    }
+    // Get the basic persona first
+    const basicPersona = getCurrentPersona(projectDir, sessionId);
+    if (!basicPersona) {
+        return null;
+    }
+    // Build role mapping string
+    const roleMapping = `${agentRole.toUpperCase()} → ${basicPersona.character}`;
+    // Extract additional fields from raw theme data
+    const voice = rawPersona.voice;
+    const quirks = rawPersona.quirks;
+    const background = rawPersona.role; // "role" in theme is the character background
+    const expertise = rawPersona.expertise;
+    const catchphrases = rawPersona.catchphrases;
+    const visual = rawPersona.visual;
+    return {
+        ...basicPersona,
+        voice,
+        quirks,
+        background,
+        roleMapping,
+        expertise,
+        catchphrases,
+        visual,
+    };
+}
+/**
  * Watches for agent changes and invokes callback when agent changes
  * @param projectDir - The project directory
  * @param sessionId - Optional session ID for session-specific watching
