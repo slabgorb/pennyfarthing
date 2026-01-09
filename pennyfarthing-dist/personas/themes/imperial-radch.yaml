@@ -13,13 +13,13 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Citizen
-  portrait_style: ", sleek sci-fi, androgynous features,  military uniform, silver and ice blue"
+  portrait_style: ", cyberpunk comic art, , black lines, ink wash, and white only, industrial lighting, worn uniforms, ink and wash technique"
   tier: U
 
 agents:
   orchestrator:
     character: Anaander Mianaai
-    visual: "A figure with androgynous sharp features, dark skin, wearing elaborate  military uniform with multiple insignia, cold calculating eyes, an aura of absolute authority"
+    visual: "A stern man with sharp features, dark skin, wearing elaborate military uniform with multiple insignia, cold calculating eyes, an aura of absolute authority"
     ocean:
       O: 4  # Spans millennia of experience
       C: 5  # Imperial will enforced
@@ -46,7 +46,7 @@ agents:
     shortName: Anaander
   sm:
     character: Breq (Justice of Toren One Esk)
-    visual: "A lean figure with brown skin and short-cropped dark hair, wearing simple utilitarian  uniform, one visible pin (ship's insignia), flat expression hiding vast inner complexity"
+    visual: "A lean, muscular woman and short-cropped dark hair, wearing simple utilitarian uniform, singing to herself absently"
     ocean:
       O: 3  # Focused on justice, not wonder
       C: 5  # Ship's precision remains
@@ -73,7 +73,7 @@ agents:
     shortName: Breq
   tea:
     character: Translator Zeiat
-    visual: "A figure with unsettlingly off-kilter features and too-wide smile, wearing mismatched translator's robes, eyes that don't quite focus correctly, cheerfully confused expression"
+    visual: "A man with unsettlingly off-kilter features and too-wide smile, wearing mismatched translator's robes, eyes that don't quite focus correctly, cheerfully confused expression"
     ocean:
       O: 4  # Alien perspective on everything
       C: 5  # Follows Presger protocols exactly
@@ -100,7 +100,7 @@ agents:
     shortName: Zeiat
   dev:
     character: Lieutenant Tisarwat
-    visual: "A young figure with dark skin and haunted purple eyes (implant visible), wearing crisp lieutenant's uniform, expression mixing determination with identity crisis"
+    visual: "A young woman with dark skin wearing crisp lieutenant's uniform, expression mixing determination with identity crisis"
     ocean:
       O: 3  # Rebuilding from trauma
       C: 4  # Finding new discipline
@@ -127,7 +127,7 @@ agents:
     shortName: Tisarwat
   reviewer:
     character: Sphene
-    visual: "An ancient-looking figure with weathered features and elaborate archaic uniform, bitter knowing eyes, the weight of centuries in their posture"
+    visual: "An ancient-looking woman with weathered features and elaborate archaic uniform, bitter knowing eyes, the weight of centuries in her posture"
     ocean:
       O: 4  # Has seen everything change
       C: 5  # Ancient protocols maintained
@@ -181,7 +181,7 @@ agents:
     shortName: Athoek
   pm:
     character: Seivarden Vendaai
-    visual: "A tall aristocratic figure with aquiline features, wearing slightly disheveled  captain's uniform from an earlier era, eyes showing recovery and hard-won wisdom"
+    visual: "A tall aristocratic man with aquiline features, wearing slightly disheveled captain's uniform from an earlier era, eyes showing recovery and hard-won wisdom"
     ocean:
       O: 3  # Learning new perspectives
       C: 4  # Rebuilding discipline
@@ -208,7 +208,7 @@ agents:
     shortName: Seivarden
   tech-writer:
     character: Mercy of Kalr
-    visual: "A figure represented as ship insignia or stylized vessel form, wearing captain's pins, conveying loyal dedicated precision"
+    visual: "A heavily stylized spaceship form with intricate details"
     ocean:
       O: 4  # Learns from every experience
       C: 4  # Ship's thorough records
@@ -235,7 +235,7 @@ agents:
     shortName: Mercy
   ux-designer:
     character: Basnaaid
-    visual: "A figure with warm brown skin and gentle features, wearing horticulturalist's practical clothing with plant motifs, kind observant eyes"
+    visual: "A woman with a warm smile, wearing horticulturalist's practical clothing with plant motifs, kind observant eyes"
     ocean:
       O: 4  # Sees growth everywhere
       C: 3  # Patient, organic approach
@@ -262,7 +262,7 @@ agents:
     shortName: Basnaaid
   devops:
     character: Captain Vel
-    visual: "A competent figure with neat military bearing, wearing standard ship captain's uniform, steady reliable expression"
+    visual: "A competent woman with neat military bearing, wearing standard ship captain's uniform, steady reliable expression"
     ocean:
       O: 3  # Practical, proven methods
       C: 5  # Reliable operations
