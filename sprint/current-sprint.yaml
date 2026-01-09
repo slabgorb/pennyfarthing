@@ -842,6 +842,38 @@ epics:
     - Context checks target Cyclist''s session transcript only
     - Agent state lookups use session-specific files
     - Multiple Cyclist instances don''t interfere with each other
+  - id: 17-8
+    title: 'Fix story panel not loading in Electron (IPC vs HTTP mismatch)'
+    description: 'The Story Panel shows "No active story" in Electron even when
+      there IS an active session with story data. The same functionality works
+      correctly in the web view.
+
+      Root cause: Web view uses HTTP API (`/api/story`) via Express router, while
+      Electron uses IPC (`story:get` handler). Both call `getStoryInfo()` but the
+      IPC path may have different project directory resolution or timing issues.
+
+      Investigation needed:
+      1. Compare project directory resolution between HTTP and IPC paths
+      2. Check if IPC handler is being called (add logging)
+      3. Verify `detectPennyfarthingProject()` returns true for IPC path
+      4. Check timing of initial story fetch vs window ready
+
+      Files to investigate:
+      - packages/cyclist/src/main.ts (IPC handler at line ~649)
+      - packages/cyclist/src/api/story.ts (HTTP router)
+      - packages/cyclist/src/public/js/story.js (client-side refresh)
+      - packages/cyclist/src/story-parser.ts (shared parsing logic)
+      '
+    points: 3
+    priority: P1
+    status: backlog
+    repos: cyclist
+    acceptance_criteria:
+    - Story panel shows active story in Electron app
+    - Story title, phase, and sprint progress display correctly
+    - Acceptance criteria checklist renders with correct items
+    - Workflow progress visualization updates properly
+    - Parity between Electron IPC and web HTTP behavior
 - id: epic-21
   title: Command & Skill Expansion
   description: 'Add high-value commands and skills identified from Anthropic''s official
