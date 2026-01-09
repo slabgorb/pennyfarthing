@@ -393,8 +393,10 @@ epics:
           didn't trigger automatically. Fix the workflow triggers.
         points: 2
         priority: P1
-        status: in_progress
+        status: done
         started: 2026-01-09
+        completed: 2026-01-09
+        pr: "https://github.com/1898andCo/pennyfarthing/pull/114"
         repos: pennyfarthing
         acceptance_criteria:
           - Workflow triggers automatically on push to develop
