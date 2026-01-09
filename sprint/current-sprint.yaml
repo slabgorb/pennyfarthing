@@ -6,8 +6,8 @@ sprint:
   velocity_target: 100
 summary:
   total_points: 106
-  completed_points: 51
-  remaining_points: 55
+  completed_points: 57
+  remaining_points: 49
   notes: |
     Sprint 7 focus: Benchmark framework, monorepo, telemetry.
 
@@ -20,10 +20,10 @@ summary:
     - Stories 17-5, 17-6, 17-7 (Cyclist UX bugs) - 7 pts - done 2026-01-09
     - Stories 19-1, 19-2 (Telemetry foundation) - 5 pts - done 2026-01-09
     - Story 7-2 (Job-fair expansion) - 5 pts - done 2026-01-09
+    - Epic 17 completed (17-4, 17-8 via bug branches) - 6 pts - done 2026-01-09
 
     BACKLOG:
     - Epic 19: Rich telemetry - 19-3 through 19-9 (21 pts remaining)
-    - Epic 17: 17-4 popup profile (3 pts), 17-8 story panel IPC (3 pts)
     - Epic 7: 7-1 benchmark runner (3 pts), 7-4 aggregate stats (3 pts)
     - Epic 21: Command & Skill Expansion (12 pts)
 epics:
@@ -695,14 +695,17 @@ epics:
 
     '
   points: 24
-  completed_points: 18
+  completed_points: 24
   priority: P2
   marker: ux
   repos: cyclist
-  status: in_progress
+  status: done
+  completed: 2026-01-09
   stories:
   - id: 17-4
     title: Popup profile view for persona details
+    status: done
+    completed: 2026-01-09
     description: 'Add a popup/modal profile view that shows full details for a persona
 
       when clicked. Currently personas show minimal info - this enables
@@ -842,6 +845,8 @@ epics:
     - Multiple Cyclist instances don''t interfere with each other
   - id: 17-8
     title: 'Fix story panel not loading in Electron (IPC vs HTTP mismatch)'
+    status: done
+    completed: 2026-01-09
     description: 'The Story Panel shows "No active story" in Electron even when
       there IS an active session with story data. The same functionality works
       correctly in the web view.
