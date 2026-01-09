@@ -12,6 +12,7 @@ import { ToolStats } from './tool-stats.js';
 import { ClaudeService, SDKMessage } from './claude-service.js';
 import { type TodoItem } from './todos.js';
 import { getProjectDirectory, setProjectDirectory, isValidProjectDirectory } from './paths.js';
+import { ContextInfo } from './api/context.js';
 export { getProjectDirectory, setProjectDirectory, isValidProjectDirectory };
 /**
  * IPC channel names for sidebar data communication (B-2)
@@ -32,6 +33,7 @@ export declare const IPC_DATA_CHANNELS: {
     readonly TOKEN_STATS_UPDATE: "tokenStats:update";
     readonly TODOS_GET: "todos:get";
     readonly TODOS_UPDATE: "todos:update";
+    readonly CONTEXT_GET: "context:get";
     readonly CONTEXT_UPDATE: "context:update";
 };
 /**
@@ -178,6 +180,25 @@ export declare function updateTodosState(todos: TodoItem[]): void;
  * Called when clearing session
  */
 export declare function resetTodos(): void;
+/**
+ * Get current context (for testing and IPC)
+ */
+export declare function getContext(): ContextInfo;
+/**
+ * Update context state and broadcast if changed
+ * Returns true if context was updated (values changed)
+ */
+export declare function updateContextState(context: ContextInfo): boolean;
+/**
+ * Context polling interval in milliseconds
+ * 15 seconds balances responsiveness vs overhead
+ */
+export declare const CONTEXT_POLL_INTERVAL_MS = 15000;
+/**
+ * Start polling context usage
+ * Calls getContextUsage periodically and broadcasts changes
+ */
+export declare function startContextPolling(projectDir: string): () => void;
 /**
  * Server startup configuration
  * In Electron mode, server can be disabled since we use IPC

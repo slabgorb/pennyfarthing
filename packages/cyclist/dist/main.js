@@ -18,6 +18,7 @@ import { ClaudeService } from './claude-service.js';
 import { isTodoWriteMessage, extractTodos } from './todos.js';
 import { listDirectory as listDir } from './file-browser.js';
 import { getProjectDirectory, setProjectDirectory, isValidProjectDirectory, parseProjectDirArg, } from './paths.js';
+import { getContextUsage } from './api/context.js';
 // Re-export project directory functions for external consumers
 export { getProjectDirectory, setProjectDirectory, isValidProjectDirectory };
 import * as fs from 'fs';
@@ -66,6 +67,7 @@ export const IPC_DATA_CHANNELS = {
     TODOS_GET: 'todos:get',
     TODOS_UPDATE: 'todos:update',
     // B-19: Context usage progress bar
+    CONTEXT_GET: 'context:get',
     CONTEXT_UPDATE: 'context:update',
 };
 /**
@@ -176,6 +178,7 @@ export function getDataChannels() {
         IPC_DATA_CHANNELS.TOOL_STATS_GET,
         IPC_DATA_CHANNELS.TOKEN_STATS_GET,
         IPC_DATA_CHANNELS.TODOS_GET,
+        IPC_DATA_CHANNELS.CONTEXT_GET,
     ];
 }
 // Stats state managed by main process
@@ -354,6 +357,74 @@ export function resetTodos() {
     broadcastToRenderer(IPC_DATA_CHANNELS.TODOS_UPDATE, currentTodos);
 }
 // =============================================================================
+// Context State (B-19)
+// =============================================================================
+/**
+ * Current context state - updated by polling check-context.sh
+ */
+let currentContext = {
+    percent: null,
+    tokens: null,
+    status: null,
+    error: null,
+};
+/**
+ * Get current context (for testing and IPC)
+ */
+export function getContext() {
+    return { ...currentContext };
+}
+/**
+ * Update context state and broadcast if changed
+ * Returns true if context was updated (values changed)
+ */
+export function updateContextState(context) {
+    // Check if values actually changed
+    if (currentContext.percent === context.percent &&
+        currentContext.tokens === context.tokens &&
+        currentContext.status === context.status) {
+        return false;
+    }
+    currentContext = { ...context };
+    broadcastToRenderer(IPC_DATA_CHANNELS.CONTEXT_UPDATE, currentContext);
+    return true;
+}
+/**
+ * Context polling interval in milliseconds
+ * 15 seconds balances responsiveness vs overhead
+ */
+export const CONTEXT_POLL_INTERVAL_MS = 15000;
+/**
+ * Timer reference for context polling
+ */
+let contextPollTimer = null;
+/**
+ * Start polling context usage
+ * Calls getContextUsage periodically and broadcasts changes
+ */
+export function startContextPolling(projectDir) {
+    // Initial fetch
+    const initialContext = getContextUsage(projectDir);
+    updateContextState(initialContext);
+    // Set up polling
+    contextPollTimer = setInterval(() => {
+        const context = getContextUsage(projectDir);
+        const changed = updateContextState(context);
+        if (changed) {
+            console.log('Context updated:', context.percent, '%');
+        }
+    }, CONTEXT_POLL_INTERVAL_MS);
+    console.log('Context polling started (every', CONTEXT_POLL_INTERVAL_MS / 1000, 's)');
+    // Return cleanup function
+    return () => {
+        if (contextPollTimer) {
+            clearInterval(contextPollTimer);
+            contextPollTimer = null;
+            console.log('Context polling stopped');
+        }
+    };
+}
+// =============================================================================
 // Server Control (B-2.1)
 // =============================================================================
 /**
@@ -482,6 +553,10 @@ export function setupDataIPCHandlers(ipcMain) {
     ipcMain.handle(IPC_DATA_CHANNELS.TODOS_GET, async () => {
         return getTodos();
     });
+    // Context handler - returns current context usage (B-19)
+    ipcMain.handle(IPC_DATA_CHANNELS.CONTEXT_GET, async () => {
+        return getContext();
+    });
     console.log('Data IPC handlers registered:', getDataChannels());
 }
 /**
@@ -515,6 +590,8 @@ export function startProjectWatchers() {
             }
         });
         console.log('Agent change watcher started for:', projectDir);
+        // Start context polling (B-19)
+        startContextPolling(projectDir);
     }
 }
 // =============================================================================

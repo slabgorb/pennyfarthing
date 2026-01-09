@@ -76,9 +76,14 @@ export interface ElectronClaudeAPI {
 
 /**
  * Context API interface for context usage updates (B-19)
- * Only needs onUpdate since context is pushed from main process
+ * Provides get() for request/response and onUpdate() for push updates
  */
 export interface ElectronContextAPI {
+  /**
+   * Get current context usage via IPC invoke
+   */
+  get: () => Promise<unknown>;
+
   /**
    * Subscribe to context usage updates from main process
    */
@@ -208,6 +213,7 @@ function createElectronAPI(): ElectronAPI {
       todos: createDataAPI(ipcRenderer, 'todos:get', 'todos:update'),
       // Context API (B-19)
       context: {
+        get: () => ipcRenderer.invoke('context:get'),
         onUpdate: (callback: (event: unknown, data: unknown) => void) => {
           ipcRenderer.removeAllListeners('context:update');
           ipcRenderer.on('context:update', callback);
@@ -273,6 +279,7 @@ function createElectronAPI(): ElectronAPI {
       todos: createDataAPI(null, 'todos:get', 'todos:update'),
       // Context API (B-19) - test stub
       context: {
+        get: () => Promise.resolve({ percent: null, tokens: null, status: null, error: null }),
         onUpdate: (_callback: (event: unknown, data: unknown) => void) => {
           // No-op in test environment
         },

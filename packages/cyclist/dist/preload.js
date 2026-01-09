@@ -68,6 +68,7 @@ function createElectronAPI() {
             todos: createDataAPI(ipcRenderer, 'todos:get', 'todos:update'),
             // Context API (B-19)
             context: {
+                get: () => ipcRenderer.invoke('context:get'),
                 onUpdate: (callback) => {
                     ipcRenderer.removeAllListeners('context:update');
                     ipcRenderer.on('context:update', callback);
@@ -134,6 +135,7 @@ function createElectronAPI() {
             todos: createDataAPI(null, 'todos:get', 'todos:update'),
             // Context API (B-19) - test stub
             context: {
+                get: () => Promise.resolve({ percent: null, tokens: null, status: null, error: null }),
                 onUpdate: (_callback) => {
                     // No-op in test environment
                 },
