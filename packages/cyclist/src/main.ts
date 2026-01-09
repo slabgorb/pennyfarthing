@@ -244,12 +244,12 @@ export function getDataChannels(): string[] {
 
 /**
  * Current stats state - updated by SDK messages
+ * Context is handled separately via dedicated context IPC channel (B-19)
  * Exported for testing
  */
 export interface StatsState {
   model: string;
   status: string;
-  context: string;
   mode: string;
   connected: boolean;
 }
@@ -258,7 +258,6 @@ export interface StatsState {
 let currentStats: StatsState = {
   model: '—',
   status: '—',
-  context: '—',
   mode: '—',
   connected: true, // SDK mode is always "connected"
 };
