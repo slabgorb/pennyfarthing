@@ -14,6 +14,7 @@ theme:
   character_immersion: high
   user_title: Cousin
   portrait_style: ", ink and watercolor wash, sepia tones, detailed linework"
+  tier: B
 
 agents:
   orchestrator:

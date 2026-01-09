@@ -28,8 +28,8 @@ function createDataAPI(ipcRenderer, getChannel, updateChannel) {
         return {
             get: () => ipcRenderer.invoke(getChannel),
             onUpdate: (callback) => {
-                // Clean up previous listeners on refresh
-                ipcRenderer.removeAllListeners(updateChannel);
+                // Multiple modules can subscribe to the same channel
+                // On page refresh, old listeners are garbage collected
                 ipcRenderer.on(updateChannel, callback);
             },
         };
@@ -76,29 +76,24 @@ function createElectronAPI() {
                 setMode: (mode) => ipcRenderer.invoke('claude:setMode', mode),
                 getMode: () => ipcRenderer.invoke('claude:getMode'),
                 onMessage: (callback) => {
-                    ipcRenderer.removeAllListeners('claude:message');
                     ipcRenderer.on('claude:message', (_event, msg) => callback(msg));
                 },
                 onComplete: (callback) => {
-                    ipcRenderer.removeAllListeners('claude:complete');
                     ipcRenderer.on('claude:complete', () => callback());
                 },
                 onError: (callback) => {
-                    ipcRenderer.removeAllListeners('claude:error');
                     ipcRenderer.on('claude:error', (_event, err) => callback(err));
                 },
             },
             // Agent launcher API (B-23)
             agent: {
                 onLaunch: (callback) => {
-                    ipcRenderer.removeAllListeners('agent:launch');
                     ipcRenderer.on('agent:launch', callback);
                 },
             },
             // Diff viewer API (E8-2)
             diff: {
                 onUpdate: (callback) => {
-                    ipcRenderer.removeAllListeners('diff:update');
                     ipcRenderer.on('diff:update', callback);
                 },
             },
@@ -107,7 +102,6 @@ function createElectronAPI() {
                 listDirectory: (path) => ipcRenderer.invoke('file-browser:list-directory', path),
                 openFile: (path) => ipcRenderer.invoke('file-browser:open-file', path),
                 onFileOpened: (callback) => {
-                    ipcRenderer.removeAllListeners('file-browser:file-opened');
                     ipcRenderer.on('file-browser:file-opened', callback);
                 },
             },

@@ -14,6 +14,7 @@ theme:
   character_immersion: high
   user_title: Soldier
   portrait_style: ", WWII allied propaganda poster, no words or text, red white and blue color scheme"
+  tier: F
 agents:
   orchestrator:
     # JOB FAIR OPTIMIZED: Orr moved here - the one who escapes orchestrates the system

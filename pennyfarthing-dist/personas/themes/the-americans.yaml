@@ -14,6 +14,7 @@ theme:
   character_immersion: high
   user_title: Comrade
   portrait_style: ", Cold War espionage, Soviet propaganda illustration, red and black color scheme"
+  tier: B
 
 agents:
   orchestrator:

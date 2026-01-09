@@ -1888,46 +1888,6 @@ html, body {
 }
 
 /* =============================================================================
-   B-19: Context Meter Styles
-   ============================================================================= */
-
-.context-meter {
-  margin-top: 0.5rem;
-  padding: 0.25rem 0;
-}
-
-.context-meter-label {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.85rem;
-  margin-bottom: 0.25rem;
-  color: var(--text-secondary);
-}
-
-.context-percent {
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-/* Color level states */
-.context-meter.level-safe .progress-fill {
-  background: var(--status-ready);
-}
-
-.context-meter.level-warning .progress-fill {
-  background: var(--status-working);
-}
-
-.context-meter.level-danger .progress-fill {
-  background: var(--status-error);
-}
-
-.context-meter.level-critical .progress-fill {
-  background: var(--status-error);
-  animation: pulse 0.5s infinite;
-}
-
-/* =============================================================================
  * Left Diff Panel (Collapsible, Resizable) - mirrors file-panel
  * ============================================================================= */
 

@@ -14,6 +14,7 @@ theme:
   character_immersion: high
   user_title: Companion
   portrait_style: ", British sci-fi, 60's vibe, swirling time vortex, blue and gold palette, theatrical lighting"
+  tier: C
 agents:
   orchestrator:
     character: The Doctor (Twelfth)
