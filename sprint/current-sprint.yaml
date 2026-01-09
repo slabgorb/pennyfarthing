@@ -6,8 +6,8 @@ sprint:
   velocity_target: 100
 summary:
   total_points: 106
-  completed_points: 57
-  remaining_points: 49
+  completed_points: 54
+  remaining_points: 52
   notes: |
     Sprint 7 focus: Benchmark framework, monorepo, telemetry.
 
@@ -20,9 +20,10 @@ summary:
     - Stories 17-5, 17-6, 17-7 (Cyclist UX bugs) - 7 pts - done 2026-01-09
     - Stories 19-1, 19-2 (Telemetry foundation) - 5 pts - done 2026-01-09
     - Story 7-2 (Job-fair expansion) - 5 pts - done 2026-01-09
-    - Epic 17 completed (17-4, 17-8 via bug branches) - 6 pts - done 2026-01-09
+    - Story 17-8 (Story panel IPC fix) - 3 pts - done 2026-01-09
 
     BACKLOG:
+    - Epic 17: 17-4 Popup profile view (3 pts remaining)
     - Epic 19: Rich telemetry - 19-3 through 19-9 (21 pts remaining)
     - Epic 7: 7-1 benchmark runner (3 pts), 7-4 aggregate stats (3 pts)
     - Epic 21: Command & Skill Expansion (12 pts)
@@ -695,17 +696,17 @@ epics:
 
     '
   points: 24
-  completed_points: 24
+  completed_points: 21
   priority: P2
   marker: ux
   repos: cyclist
-  status: done
-  completed: 2026-01-09
+  status: in_progress
   stories:
   - id: 17-4
     title: Popup profile view for persona details
-    status: done
-    completed: 2026-01-09
+    status: in_progress
+    started: 2026-01-09
+    assigned_to: Keith Avery
     description: 'Add a popup/modal profile view that shows full details for a persona
 
       when clicked. Currently personas show minimal info - this enables

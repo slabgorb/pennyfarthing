@@ -1,9 +1,13 @@
 /**
  * Persona Module - Electron IPC client for persona updates
+ * Story 17-4: Added popup profile view for full persona details
  */
 
 /** Module-level storage for helper name (used by activity.js and MessageView.js) */
 let currentHelperName = null;
+
+/** Module-level storage for current persona data (for popup) */
+let currentPersonaData = null;
 
 /**
  * Get the current helper name for subagent display
@@ -45,6 +49,9 @@ export function updatePersona(persona) {
 
   // Store helper name for activity.js and MessageView.js
   currentHelperName = persona.helper?.name || null;
+
+  // Store persona data for popup
+  currentPersonaData = persona;
 
   const projectEl = document.getElementById('project-name');
   const themeEl = document.getElementById('theme-name');
@@ -110,9 +117,160 @@ async function initPersona() {
   console.log('Persona IPC connected');
 }
 
+/**
+ * Fetch full persona details from API
+ * @returns {Promise<Object|null>} Full persona data or null
+ */
+async function fetchFullPersonaDetails() {
+  try {
+    // Try IPC first (Electron)
+    if (window.electronAPI?.persona?.getFullDetails) {
+      return await window.electronAPI.persona.getFullDetails();
+    }
+    // Fallback to HTTP API (web mode)
+    const response = await fetch('/api/persona/full');
+    if (response.ok) {
+      return await response.json();
+    }
+    return null;
+  } catch (err) {
+    console.error('Failed to fetch full persona details:', err);
+    return null;
+  }
+}
+
+/**
+ * Show the persona popup with full details
+ */
+async function showPersonaPopup() {
+  const popup = document.getElementById('persona-popup');
+  const backdrop = document.getElementById('persona-popup-backdrop');
+  if (!popup || !backdrop) return;
+
+  // Fetch full details
+  const fullPersona = await fetchFullPersonaDetails();
+  if (!fullPersona && !currentPersonaData) return;
+
+  // Use full details if available, otherwise fall back to current data
+  const persona = fullPersona || currentPersonaData;
+
+  // Update popup content
+  const characterNameEl = popup.querySelector('[data-persona="character"]');
+  const roleMappingEl = popup.querySelector('[data-persona="role-mapping"]');
+  const themeEl = popup.querySelector('[data-persona="theme"]');
+  const styleEl = popup.querySelector('[data-persona="style"]');
+  const voiceEl = popup.querySelector('[data-persona="voice"]');
+  const backgroundEl = popup.querySelector('[data-persona="background"]');
+  const quirksEl = popup.querySelector('[data-persona="quirks"]');
+
+  if (characterNameEl) characterNameEl.textContent = persona.character || '—';
+  if (roleMappingEl) roleMappingEl.textContent = persona.roleMapping || `${(persona.role || '').toUpperCase()} → ${persona.character || ''}`;
+  if (themeEl) themeEl.textContent = humanize(persona.theme || '');
+  if (styleEl) styleEl.textContent = persona.style || '—';
+  if (voiceEl) voiceEl.textContent = persona.voice || '—';
+  if (backgroundEl) backgroundEl.textContent = persona.background || persona.roleDescription || '—';
+  if (quirksEl) {
+    if (Array.isArray(persona.quirks) && persona.quirks.length > 0) {
+      quirksEl.textContent = persona.quirks.join(', ');
+    } else {
+      quirksEl.textContent = '—';
+    }
+  }
+
+  // Update portrait
+  const portraitContainer = popup.querySelector('.popup-portrait');
+  if (portraitContainer && persona.slug && persona.theme) {
+    const img = portraitContainer.querySelector('img');
+    const placeholder = portraitContainer.querySelector('.portrait-placeholder');
+    if (img) {
+      img.src = `/portraits/${persona.theme}/${persona.slug}.png`;
+      img.style.display = 'block';
+      img.onerror = () => {
+        img.style.display = 'none';
+        if (placeholder) placeholder.style.display = 'flex';
+      };
+      img.onload = () => {
+        if (placeholder) placeholder.style.display = 'none';
+      };
+    }
+  }
+
+  // Show popup and backdrop
+  backdrop.style.display = 'block';
+  popup.style.display = 'block';
+  popup.classList.add('active');
+  popup.focus();
+}
+
+/**
+ * Hide the persona popup
+ */
+function hidePersonaPopup() {
+  const popup = document.getElementById('persona-popup');
+  const backdrop = document.getElementById('persona-popup-backdrop');
+  if (popup) {
+    popup.style.display = 'none';
+    popup.classList.remove('active');
+  }
+  if (backdrop) {
+    backdrop.style.display = 'none';
+  }
+}
+
+/**
+ * Initialize popup event handlers
+ */
+function initPersonaPopup() {
+  const personaSection = document.getElementById('persona-section');
+  const popup = document.getElementById('persona-popup');
+  const backdrop = document.getElementById('persona-popup-backdrop');
+  const closeBtn = popup?.querySelector('.popup-close');
+
+  // Click on persona section opens popup
+  if (personaSection) {
+    personaSection.addEventListener('click', () => {
+      showPersonaPopup();
+    });
+  }
+
+  // Close button
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      hidePersonaPopup();
+    });
+  }
+
+  // Click on backdrop closes popup
+  if (backdrop) {
+    backdrop.addEventListener('click', () => {
+      hidePersonaPopup();
+    });
+  }
+
+  // Escape key closes popup
+  if (popup) {
+    popup.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        hidePersonaPopup();
+      }
+    });
+  }
+
+  // Global escape handler for when popup is open
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      const popup = document.getElementById('persona-popup');
+      if (popup && popup.classList.contains('active')) {
+        hidePersonaPopup();
+      }
+    }
+  });
+}
+
 // Initialize on page load (guard for test environments without DOM)
 if (typeof document !== 'undefined') {
   document.addEventListener('DOMContentLoaded', () => {
     initPersona();
+    initPersonaPopup();
   });
 }

@@ -33,6 +33,19 @@ export interface Persona {
     };
 }
 /**
+ * Full persona details for popup display
+ * Extends basic Persona with voice, quirks, background from theme file
+ */
+export interface FullPersonaDetails extends Persona {
+    voice?: string;
+    quirks?: string[];
+    background?: string;
+    roleMapping: string;
+    expertise?: string;
+    catchphrases?: string[];
+    visual?: string;
+}
+/**
  * Theme configuration from persona-config.yaml
  */
 interface ThemeConfig {
@@ -89,6 +102,13 @@ export declare function getCurrentAgent(projectDir: string, sessionId?: string):
  * @returns Persona object or null if not available
  */
 export declare function getCurrentPersona(projectDir: string, sessionId?: string): Persona | null;
+/**
+ * Gets full persona details including voice, quirks, background for popup display
+ * @param projectDir - The project directory
+ * @param sessionId - Optional session ID for session-specific lookup
+ * @returns FullPersonaDetails object or null if not available
+ */
+export declare function getFullPersonaDetails(projectDir: string, sessionId?: string): FullPersonaDetails | null;
 /**
  * Watches for agent changes and invokes callback when agent changes
  * @param projectDir - The project directory

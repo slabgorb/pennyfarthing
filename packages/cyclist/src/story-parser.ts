@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync } from 'fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 import { parse as parseYaml } from 'yaml';
 
@@ -250,8 +250,17 @@ export function getStoryInfo(projectDir: string): StoryInfo {
       return nullResult;
     }
 
-    // Read the first session file (most recent by name sort)
-    const sessionFile = files.sort().reverse()[0];
+    // Find the most recently modified session file
+    let sessionFile = files[0];
+    let latestMtime = 0;
+    for (const file of files) {
+      const filePath = join(sessionDir, file);
+      const stat = statSync(filePath);
+      if (stat.mtimeMs > latestMtime) {
+        latestMtime = stat.mtimeMs;
+        sessionFile = file;
+      }
+    }
     const sessionPath = join(sessionDir, sessionFile);
     const sessionContent = readFileSync(sessionPath, 'utf-8');
     const storyInfo = parseSessionFile(sessionContent);

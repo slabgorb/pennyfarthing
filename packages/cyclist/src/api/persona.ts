@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { WebSocket } from 'ws';
-import { detectPennyfarthingProject, getCurrentPersona, Persona } from '../pennyfarthing.js';
+import { detectPennyfarthingProject, getCurrentPersona, getFullPersonaDetails, Persona } from '../pennyfarthing.js';
 
 // Persona WebSocket clients (for real-time persona updates)
 const personaClients = new Set<WebSocket>();
@@ -39,6 +39,23 @@ export function createPersonaRouter(getProjectDir: () => string): Router {
     }
 
     res.json(persona);
+  });
+
+  // Full persona API - GET complete persona details for popup
+  router.get('/full', (_req, res) => {
+    const projectDir = getProjectDir();
+    const sessionId = process.env.CYCLIST_SESSION_ID;
+
+    if (!detectPennyfarthingProject(projectDir)) {
+      return res.status(404).json({ error: 'Not a Pennyfarthing project' });
+    }
+
+    const fullPersona = getFullPersonaDetails(projectDir, sessionId);
+    if (!fullPersona) {
+      return res.status(404).json({ error: 'No active persona' });
+    }
+
+    res.json(fullPersona);
   });
 
   return router;

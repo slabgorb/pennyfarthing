@@ -188,7 +188,6 @@ export function getDataChannels() {
 let currentStats = {
     model: '—',
     status: '—',
-    context: '—',
     mode: '—',
     connected: true, // SDK mode is always "connected"
 };
