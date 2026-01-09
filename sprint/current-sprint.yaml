@@ -484,7 +484,12 @@ epics:
       '
     points: 3
     priority: P1
-    status: backlog
+    status: done
+    started: 2026-01-09
+    completed: '2026-01-09'
+    pr: https://github.com/1898andCo/pennyfarthing/pull/127
+    archived: 2026-01-09
+    assigned_to: Keith Avery
     repos: pennyfarthing, cyclist
     acceptance_criteria:
     - Agent activation sets PENNYFARTHING_AGENT env var
