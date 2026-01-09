@@ -19,12 +19,18 @@ export function getGitInfo(projectDir: string): GitInfo | null {
       encoding: 'utf-8',
     }).trim();
 
-    // Check if clean (no uncommitted changes)
-    const status = execSync('git status --porcelain', {
-      cwd: projectDir,
-      encoding: 'utf-8',
-    });
-    const clean = status.trim() === '';
+    // Check if clean using diff-index (faster, doesn't hold lock like --porcelain)
+    let clean = true;
+    try {
+      execSync('git diff-index --quiet HEAD --', {
+        cwd: projectDir,
+        encoding: 'utf-8',
+      });
+      clean = true;
+    } catch {
+      // Exit code 1 means there are changes
+      clean = false;
+    }
 
     // Get ahead/behind counts (suppress stderr for branches without upstream)
     let ahead: number | null = null;

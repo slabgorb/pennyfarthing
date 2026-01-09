@@ -1,203 +1,34 @@
 # Pennyfarthing Sprint 7 (Active)
-# Goal: Context circuit breaker, choreography patterns documentation, benchmark framework start
-# History: See sprint/archive/sprint-{1-6}.yaml for completed sprints
+# Goal: Benchmark framework, monorepo consolidation, rich agent telemetry
+# History: See sprint/completed.yaml for Sprint 6 (Epic 3 & 10)
 
 sprint:
   number: 7
-  goal: "Complete context management circuit breaker, document choreography patterns, start benchmark framework"
+  goal: "Benchmark framework expansion, monorepo consolidation, rich agent telemetry"
   planned_start: 2026-01-06
   status: active
-  velocity_target: 20
+  velocity_target: 100
 
 summary:
-  total_points: 26
-  completed_points: 27
-  remaining_points: 0
+  total_points: 74  # Epic 7 (13) + Epic 18 (19) + Epic 19 (26) + Epic 17 remaining (8) = 66 active
+  completed_points: 29  # 7-3(2) + 17-1(5) + 17-2(3) + 17-3(3) + 18-1(3) + 18-2(5) + 18-3(5) + 19-2(2) = 28 (moved to completed.yaml)
+  remaining_points: 45  # 7-1(3) + 7-2(5) + 7-4(3) + 18-4(3) + 18-5(3) + 18-6(2) + 19-1(3) + 19-3(3) + 19-4(3) + 19-5(2) + 19-6(3) + 19-7(3) + 19-8(2) + 19-9(5)
   notes: |
-    Mixed sprint: stability (Epic 3), documentation (Epic 10), new capability (Epic 7).
-    Carried from backlog - Epic 3 has 5/13 pts already done in prior sprints.
-    Stories 10-1, 10-2, 10-3, and 10-4 completed 2026-01-06. Epic 10 complete (8/8 pts).
-    Stories 3-3 and 3-4 completed 2026-01-06. Epic 3 complete (10/13 pts in this sprint, 13/13 total).
-    Story 18-2 completed 2026-01-08 (5 pts) - Monorepo conversion to pnpm workspace.
-    Story 18-3 completed 2026-01-08 (5 pts) - Cyclist migration into monorepo.
-    Story 17-2 completed 2026-01-08 (3 pts) - Fixed tab panel layout (Cyclist UX improvement).
-    Story 17-3 completed 2026-01-08 (3 pts) - Cyclist UX bug cleanup batch (5 bugs fixed).
-    Added Story 7-2 (5 pts) - Expand job-fair with role-selective execution.
-    Added Story 7-3 (2 pts) - Fix showcase auto-deploy.
-    Added Story 7-4 (3 pts) - Aggregate job-fair results into benchmark stats.
-    Story 7-2 reviewed 2026-01-06: ~40% complete. --roles flag done, architect baseline done,
-    but architect backfill only 12/81 themes. Moved to in_progress with detailed gap analysis.
-    Story 7-2 amended: Scope narrowed to ARCHITECT role only. Must select best architect
-    scenario, then backfill across 81 themes. Other roles (pm, devops, etc.) out of scope.
+    Sprint 7 focus: Benchmark framework, monorepo, telemetry.
 
-    SPRINT COMPLETE: All planned stories finished (27/26 pts velocity +1). Epic 18 in progress.
+    COMPLETED (archived to completed.yaml):
+    - Epic 3 (Context Circuit Breaker) - 5 pts - done 2026-01-06
+    - Epic 10 (Choreography Patterns) - 8 pts - done 2026-01-06
+    - Story 7-3 (Showcase Auto-Deploy) - 2 pts - done 2026-01-09
+    - Story 17-1, 17-2, 17-3 (Cyclist UX) - 11 pts - done 2026-01-08
+    - Story 18-1, 18-2, 18-3 (Monorepo) - 13 pts - done 2026-01-08
 
-    NEW: Epic 19 added (21 pts) - Rich Agent Telemetry (claude_telemetry port).
-    Ports TechNickAI/claude_telemetry patterns to TypeScript for Pennyfarthing/Cyclist.
-    Extends E6 OTLP receiver with tool-level spans, agent context, TDD metrics.
-    Epic 19 is BACKLOG - not in current sprint scope.
+    IN PROGRESS:
+    - Story 7-2: Expand job-fair (architect backfill 12/81 themes)
+    - Epic 18: Stories 18-4, 18-5, 18-6 remaining
+    - Epic 19: Rich telemetry - all stories pending
 
 epics:
-  # =========================================================================
-  # EPIC 3 - Context Management & Circuit Breaker (5 pts remaining of 13)
-  # =========================================================================
-  - id: epic-3
-    jira: MSSCI-11376
-    title: "Automatic Context Management & Circuit Breaker"
-    description: |
-      Implement automatic context monitoring that detects when agents
-      approach 70% threshold and triggers handoffs or session continuation.
-      Add circuit breaker pattern to prevent runaway context usage.
-    points: 13
-    completed_points: 10
-    priority: P1
-    marker: "high-priority"
-    repos: pennyfarthing
-    status: done
-    completed: 2026-01-06
-    stories:
-      # PREVIOUSLY COMPLETED (8 pts - not in this sprint, for reference only)
-      # - 3-1: Context usage tracking hook (3 pts) - done
-      # - 3-2: Automatic warning at 70% threshold (3 pts) - done
-      # - 3-5: Context usage in statusline (2 pts) - done
-
-      # SPRINT 7 STORIES (5 pts)
-      - id: "3-3"
-        jira: MSSCI-11379
-        title: "Implement circuit breaker at 85% threshold"
-        description: |
-          Hard stop at 85% to prevent context overflow.
-          - Force handoff or session end at 85%
-          - Save checkpoint before circuit break
-          - Provide recovery path for user
-        points: 3
-        priority: P1
-        status: done
-        completed: 2026-01-06
-        pr: "https://github.com/1898andCo/pennyfarthing/pull/82"
-        repos: pennyfarthing
-        acceptance_criteria:
-          - Circuit breaker triggers at 85%
-          - Checkpoint saved before break
-          - Clear instructions for resumption
-
-      - id: "3-4"
-        jira: MSSCI-11380
-        title: "Add session continuation workflow"
-        description: |
-          Enable seamless session continuation after break.
-          - /continue-session command
-          - Load checkpoint and context summary
-          - Resume from last known good state
-        points: 2
-        priority: P2
-        status: done
-        completed: 2026-01-06
-        pr: "https://github.com/1898andCo/pennyfarthing/pull/87"
-        repos: pennyfarthing
-        acceptance_criteria:
-          - /continue-session loads previous checkpoint
-          - Context summary provided for new session
-          - Workflow continues without lost work
-
-  # =========================================================================
-  # EPIC 10 - Multi-Agent Choreography Patterns (8 pts)
-  # =========================================================================
-  - id: epic-10
-    jira: MSSCI-11371
-    title: "Multi-Agent Choreography Patterns"
-    description: |
-      Build library of proven coordination patterns (fan-out/fan-in,
-      sequential, conditional routing, approval gates). Document real
-      examples from Pennyfarthing's own workflows.
-    points: 8
-    completed_points: 8
-    priority: P2
-    marker: "quick-win"
-    repos: pennyfarthing
-    status: done
-    completed: 2026-01-06
-    stories:
-      - id: "10-1"
-        jira: MSSCI-11372
-        title: "Document TDD flow pattern"
-        description: |
-          Document the SM -> TEA -> Dev -> Reviewer pattern.
-          - State machine diagram
-          - Handoff triggers
-          - Error recovery paths
-        points: 2
-        priority: P1
-        status: done
-        started: 2026-01-06
-        completed: 2026-01-06
-        pr: "https://github.com/1898andCo/pennyfarthing/pull/83"
-        repos: pennyfarthing
-        acceptance_criteria:
-          - Pattern documented in guides/
-          - Includes state diagram
-          - Error scenarios covered
-
-      - id: "10-2"
-        jira: MSSCI-11373
-        title: "Document helper delegation pattern"
-        description: |
-          Document Opus -> Haiku delegation pattern.
-          - When to delegate
-          - Prompt construction
-          - Result handling
-        points: 2
-        priority: P1
-        status: done
-        started: 2026-01-06
-        completed: 2026-01-06
-        pr: "https://github.com/1898andCo/pennyfarthing/pull/84"
-        repos: pennyfarthing
-        acceptance_criteria:
-          - Pattern documented with examples
-          - Clear delegation criteria
-          - Anti-patterns identified
-
-      - id: "10-3"
-        jira: MSSCI-11374
-        title: "Create fan-out/fan-in pattern"
-        description: |
-          Document parallel agent execution pattern.
-          - Spawning multiple agents
-          - Collecting results
-          - Merging outputs
-        points: 2
-        priority: P2
-        status: done
-        started: 2026-01-06
-        completed: 2026-01-06
-        pr: "https://github.com/1898andCo/pennyfarthing/pull/85"
-        repos: pennyfarthing
-        acceptance_criteria:
-          - Pattern documented with example
-          - Shows Task tool parallelism
-          - Result aggregation covered
-
-      - id: "10-4"
-        jira: MSSCI-11375
-        title: "Create approval gates pattern"
-        description: |
-          Document human-in-the-loop approval pattern.
-          - When to pause for approval
-          - Approval mechanisms (plan mode, AskUserQuestion)
-          - Resumption after approval
-        points: 2
-        priority: P2
-        status: done
-        started: 2026-01-06
-        completed: 2026-01-06
-        pr: "https://github.com/1898andCo/pennyfarthing/pull/86"
-        repos: pennyfarthing
-        acceptance_criteria:
-          - Pattern documented with examples
-          - Different approval types covered
-          - Integration with TDD flow shown
-
   # =========================================================================
   # EPIC 7 - Agent Performance Benchmarking Suite (13 pts this sprint)
   # =========================================================================
@@ -385,21 +216,7 @@ epics:
           - Best dev-debug scenario selected [DONE - astropy-12907, std=8.54]
           - Job-fair updated to run BOTH dev scenarios (only role with 2 tests) [NOT STARTED]
 
-      - id: "7-3"
-        jira: MSSCI-11388
-        title: "Fix Showcase Auto-Deploy on PR Merge"
-        description: |
-          PR #88 merged to develop but the Deploy Showcase workflow
-          didn't trigger automatically. Fix the workflow triggers.
-        points: 2
-        priority: P1
-        status: backlog
-        repos: pennyfarthing
-        acceptance_criteria:
-          - Workflow triggers automatically on push to develop
-          - Workflow triggers on PR merge to develop
-          - Manual dispatch remains available as backup
-          - Document trigger conditions in workflow file
+      # Story 7-3 completed 2026-01-09 - moved to completed.yaml
 
       - id: "7-4"
         jira: MSSCI-11389
@@ -451,79 +268,7 @@ epics:
     repos: pennyfarthing
     status: in_progress
     stories:
-      # Phase 1: Preparation (Non-Breaking)
-      - id: "18-1"
-        jira: MSSCI-11418
-        title: "Create @pennyfarthing/shared package with portrait resolver"
-        description: |
-          Create the shared utilities package with smart path resolution.
-          - packages/shared/ directory structure
-          - portrait-resolver.ts with multi-scenario path detection
-          - theme-loader.ts for shared theme/persona loading
-          - TypeScript config extending base
-          NON-BREAKING: Can be developed and tested independently.
-        points: 3
-        priority: P1
-        status: done
-        started: 2026-01-07
-        completed: 2026-01-07
-        pr: "https://github.com/1898andCo/pennyfarthing/pull/94"
-        repos: pennyfarthing
-        acceptance_criteria:
-          - packages/shared/ created with package.json
-          - portrait-resolver.ts checks 5 path scenarios in priority order
-          - PENNYFARTHING_DIST env var override works
-          - Monorepo root detection works (for dogfooding)
-          - node_modules paths work (for npm installs)
-          - Unit tests for path resolution
-
-      # Phase 2: Monorepo Conversion
-      - id: "18-2"
-        jira: MSSCI-11419
-        title: "Convert Pennyfarthing to pnpm workspace structure"
-        description: |
-          Restructure repository as pnpm workspace monorepo.
-          - Create packages/core/ and move existing src/
-          - Create root pnpm-workspace.yaml
-          - Create tsconfig.base.json for shared config
-          - Update all import paths
-          - Verify npm run build still works
-        points: 5
-        priority: P1
-        status: done
-        started: 2026-01-08
-        completed: 2026-01-08
-        repos: pennyfarthing
-        acceptance_criteria:
-          - packages/core/src/ contains former src/
-          - pnpm-workspace.yaml defines packages/*
-          - pnpm install works from root
-          - pnpm build compiles all packages
-          - pennyfarthing CLI still functional
-          - Existing tests pass
-
-      - id: "18-3"
-        jira: MSSCI-11420
-        title: "Migrate Cyclist into monorepo as @pennyfarthing/cyclist"
-        description: |
-          Copy Cyclist from ~/Projects/cyclist/ into packages/cyclist/.
-          - Update dependencies to use workspace:* protocol
-          - Update imports to use @pennyfarthing/shared
-          - Update path resolution to use shared resolver
-          - Verify portrait loading in all scenarios
-        points: 5
-        priority: P1
-        status: done
-        started: 2026-01-07
-        completed: 2026-01-08
-        pr: "https://github.com/1898andCo/pennyfarthing/pull/95"
-        repos: pennyfarthing
-        acceptance_criteria:
-          - packages/cyclist/ contains Cyclist source
-          - Dependencies use workspace:* for internal packages
-          - Portrait resolution uses @pennyfarthing/shared
-          - Electron app starts and shows portraits
-          - Dogfooding scenario works (portraits load from pennyfarthing-dist/)
+      # Stories 18-1, 18-2, 18-3 completed - moved to completed.yaml
 
       # Phase 3: Testing
       - id: "18-4"
@@ -619,11 +364,12 @@ epics:
       3. Rich attributes (gen_ai.* semantic conventions)
       4. Pass-through design (works with any Claude Code flags)
     points: 26
-    completed_points: 0
+    completed_points: 2
     priority: P2
     marker: "observability"
     repos: pennyfarthing, cyclist
-    status: backlog
+    status: in_progress
+    started: 2026-01-08
     stories:
       # Phase 1: Foundation - Extend OTLP Receiver
       - id: "19-1"
@@ -667,8 +413,12 @@ epics:
           - TokenUsage, CostAttribution
         points: 2
         priority: P1
-        status: backlog
+        status: done
+        started: 2026-01-09
+        completed: 2026-01-09
+        assigned_to: Keith Avery
         repos: cyclist
+        pr: "https://github.com/1898andCo/pennyfarthing/pull/115"
         acceptance_criteria:
           - telemetry-types.ts with full type definitions
           - Follows OTEL gen_ai.* semantic conventions
@@ -871,101 +621,7 @@ epics:
           - Historical trend storage for regression detection
 
   # =========================================================================
-  # EPIC 17 - Cyclist UX Improvements
+  # EPIC 17 - Cyclist UX Improvements (COMPLETED)
   # =========================================================================
-  - id: epic-17
-    title: "Cyclist UX Improvements"
-    description: |
-      Enhance Cyclist's user experience with quality-of-life improvements
-      that reduce friction during agent interactions.
-    points: 8
-    completed_points: 0
-    priority: P2
-    marker: "ux"
-    repos: cyclist
-    status: backlog
-    stories:
-      - id: "17-1"
-        title: "Implement message input buffer for non-blocking input"
-        description: |
-          Currently, users cannot type or queue messages while Claude is
-          processing a response - input is blocked until the response completes.
-
-          Implement a message buffer that:
-          - Allows users to type and submit messages while Claude is working
-          - Queues messages for delivery when Claude is ready
-          - Shows visual indicator of queued messages
-          - Delivers queued messages in order once current response completes
-
-          This enables a more fluid conversation flow where users can
-          capture thoughts immediately rather than waiting.
-        points: 5
-        priority: P2
-        status: in_progress
-        started: 2026-01-08
-        repos: cyclist
-        acceptance_criteria:
-          - Input field remains active while Claude is processing
-          - Messages submitted during processing are queued (not lost)
-          - Visual indicator shows number of queued messages
-          - Queued messages delivered in FIFO order after response
-          - Queue persists if user navigates away and returns
-          - Clear queue option available if user changes mind
-
-      - id: "17-3"
-        title: "Cyclist UX bug cleanup batch"
-        description: |
-          Multiple UX bugs affecting Cyclist usability:
-
-          1. Portrait panel shows hardcoded 'Ponder Stibbons' and not loading portrait image
-          2. Token count and context percentage not populating
-          3. Some keys not responding in certain modes
-          4. AC (Acceptance Criteria) list needs collapse functionality
-          5. Next phase message font size too small, and incorrectly shows 'Ponder Stibbons'
-
-          Additional bugs may be added during implementation.
-        points: 3
-        priority: P1
-        status: done
-        started: 2026-01-08
-        completed: 2026-01-08
-        pr: "https://github.com/1898andCo/pennyfarthing/pull/111"
-        repos: cyclist
-        acceptance_criteria:
-          - Portrait panel loads correct persona from theme (not hardcoded)
-          - Token count and context % display real values from telemetry
-          - All keyboard shortcuts work in all modes
-          - AC list has expand/collapse toggle
-          - Next phase message uses correct agent name from theme with larger font
-
-      - id: "17-2"
-        title: "Fix tab panel layout - expanded state hides main content"
-        description: |
-          The tab panel (Files, Diffs) has layout issues:
-
-          1. When expanded, the tab panel takes over the entire main content area,
-             hiding the Claude conversation view completely
-          2. The panel should share space with the main content, not replace it
-          3. Need proper flexbox/grid layout so both are visible simultaneously
-
-          Current behavior:
-          - Panel starts collapsed (fixed in 3bd1dc11)
-          - Expanding panel makes conversation view disappear
-          - Only Files tab content visible when expanded
-
-          Expected behavior:
-          - Panel expands to ~30-40% of main content height (configurable)
-          - Conversation view remains visible above panel
-          - Drag handle to resize panel (nice to have)
-        points: 3
-        priority: P1
-        status: done
-        started: 2026-01-08
-        completed: 2026-01-08
-        pr: "https://github.com/keithavery/pennyfarthing/pull/103"
-        repos: cyclist
-        acceptance_criteria:
-          - Tab panel expansion does not hide conversation view
-          - Both conversation and tab content visible simultaneously
-          - Panel has sensible default height (max 40% of viewport)
-          - Panel can be collapsed to minimize
+  # Stories 17-1, 17-2, 17-3 completed 2026-01-08 - moved to completed.yaml
+  # Epic 17 complete: 11/11 points delivered
