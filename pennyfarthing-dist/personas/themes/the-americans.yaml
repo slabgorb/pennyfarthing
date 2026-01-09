@@ -14,6 +14,7 @@ theme:
   character_immersion: high
   user_title: Comrade
   portrait_style: ", Cold War espionage, Soviet propaganda illustration, 1980s period style"
+  tier: B
 
 agents:
   orchestrator:

@@ -13,6 +13,7 @@ theme:
   character_immersion: high
   user_title: Good Patron
   portrait_style: ", Elizabethan portrait, Tudor court, rich velvet, theatrical candlelight, Globe Theatre"
+  tier: A
 agents:
   orchestrator:
     character: The Chorus

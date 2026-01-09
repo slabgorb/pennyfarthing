@@ -14,6 +14,7 @@ theme:
   character_immersion: high
   user_title: Citizen
   portrait_style: ", sleek sci-fi, androgynous features,  military uniform, silver and ice blue"
+  tier: U
 
 agents:
   orchestrator:

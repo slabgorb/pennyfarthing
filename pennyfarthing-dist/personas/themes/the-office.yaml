@@ -14,6 +14,7 @@ theme:
   character_immersion: high
   user_title: Team Member
   portrait_style: ", mockumentary style, fluorescent lighting, beige cubicle backdrop, confessional interview framing"
+  tier: C
 
 agents:
   orchestrator:

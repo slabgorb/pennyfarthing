@@ -14,6 +14,7 @@ theme:
   character_immersion: high
   user_title: Captain
   portrait_style: ", 1960s Starfleet, bold primary uniforms, retro-futuristic lighting, Kirk-era heroic"
+  tier: C
 agents:
   orchestrator:
     character: The Guardian of Forever
