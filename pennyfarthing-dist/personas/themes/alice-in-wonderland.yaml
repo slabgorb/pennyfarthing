@@ -13,7 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: my Dear
-  portrait_style: ", John Tenniel engraving, Victorian woodcut illustration, fine crosshatching, black ink on cream paper, 1865 original edition style"
+  portrait_style: ", John Tenniel engraving, fine crosshatching, 1865 original edition style"
 agents:
   orchestrator:
     character: The Cheshire Cat

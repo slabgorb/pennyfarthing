@@ -13,7 +13,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Friend
-  portrait_style: ", bleak Minnesota winter, snow desolation, muted tones, stylized silhouette"
+  portrait_style: ", noir graphic novel, clean line art, limited color palette, falling snow, bleak Minnesota winter, stark illustration"
 
 agents:
   orchestrator:

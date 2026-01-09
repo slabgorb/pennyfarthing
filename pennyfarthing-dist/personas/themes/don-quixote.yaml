@@ -12,7 +12,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Fellow Knight
-  portrait_style: ", Spanish Golden Age, Picasso-style black and white, chivalric romance, windmills, sepia ochre"
+  portrait_style: ", Picasso ink sketch style, bold black brushstrokes on white, minimalist gestural drawing, stark silhouette, 1955 Don Quixote sketch aesthetic"
 
 agents:
   orchestrator:
