@@ -1,8 +1,20 @@
 /**
  * Stats Strip - Compact stats display in prompt bar (B-22)
  * Shows model badge, token counts, and context meter
- * Subscribes to existing IPC channels from stats.js
  */
+
+/**
+ * Format token count for display
+ * @param {number} n - Token count
+ * @returns {string} - Formatted string (e.g., "1.2k", "45k", "1.5M")
+ */
+function formatTokenCount(n) {
+  if (n === undefined || n === null) return '—';
+  if (n < 1000) return String(n);
+  if (n < 10000) return (n / 1000).toFixed(1) + 'k';
+  if (n < 1000000) return Math.round(n / 1000) + 'k';
+  return (n / 1000000).toFixed(1) + 'M';
+}
 
 /**
  * Update the context meter level class based on percentage
@@ -112,10 +124,8 @@ async function initStatsStrip() {
     try {
       const tokenStats = await window.electronAPI.tokenStats.get();
       if (tokenStats) {
-        // Reuse formatTokenCount from stats.js (loaded before this script)
-        const formatFn = window.formatTokenCount || ((n) => n === undefined || n === null ? '—' : String(n));
-        updateStripStat('strip-input', '↓ ' + formatFn(tokenStats.inputTokens));
-        updateStripStat('strip-output', '↑ ' + formatFn(tokenStats.outputTokens));
+        updateStripStat('strip-input', '↓ ' + formatTokenCount(tokenStats.inputTokens));
+        updateStripStat('strip-output', '↑ ' + formatTokenCount(tokenStats.outputTokens));
       }
     } catch (err) {
       console.error('[StatsStrip] Failed to get initial token stats:', err);
@@ -124,9 +134,8 @@ async function initStatsStrip() {
     // Subscribe to token stats updates
     window.electronAPI.tokenStats.onUpdate((_event, tokenStats) => {
       if (tokenStats) {
-        const formatFn = window.formatTokenCount || ((n) => n === undefined || n === null ? '—' : String(n));
-        updateStripStat('strip-input', '↓ ' + formatFn(tokenStats.inputTokens));
-        updateStripStat('strip-output', '↑ ' + formatFn(tokenStats.outputTokens));
+        updateStripStat('strip-input', '↓ ' + formatTokenCount(tokenStats.inputTokens));
+        updateStripStat('strip-output', '↑ ' + formatTokenCount(tokenStats.outputTokens));
       }
     });
   }

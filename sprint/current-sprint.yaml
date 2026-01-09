@@ -767,8 +767,10 @@ epics:
       '
     points: 2
     priority: P1
-    status: backlog
+    status: in_progress
     repos: cyclist
+    started: 2026-01-09
+    assigned_to: Keith Avery
     acceptance_criteria:
     - Changed Files panel displays list of modified files
     - Selecting a file shows diff in detail view
