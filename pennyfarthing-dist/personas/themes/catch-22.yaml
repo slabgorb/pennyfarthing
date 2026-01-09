@@ -13,7 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Soldier
-  portrait_style: ", WWII satirical propaganda style, absurdist military bureaucracy, B-25 silhouette"
+  portrait_style: ", WWII allied propaganda poster, no words or text, red white and blue color scheme"
 agents:
   orchestrator:
     # JOB FAIR OPTIMIZED: Orr moved here - the one who escapes orchestrates the system
@@ -74,7 +74,7 @@ agents:
   tea:
     # JOB FAIR OPTIMIZED: Yossarian moved here - the only sane tester who sees clearly
     character: Yossarian
-    visual: "A wild-eyed bombardier with unkempt dark hair, wearing only a flak vest and dog tags, sitting naked in a tree at Snowden's funeral, paranoid but completely rational expression, everyone trying to kill him and only he can see it"
+    visual: "A wild-eyed bombardier with unkempt dark hair, wearing a rumpled flight suit"
     ocean:
       O: 4
       C: 2

@@ -12,8 +12,8 @@ theme:
   default_emoji_use: minimal
   default_humor: enabled
   character_immersion: high
-  user_title: Curious One
-  portrait_style: "John Tenniel engraving, Victorian woodcut illustration, fine crosshatching, black ink on cream paper, 1865 original edition style"
+  user_title: my Dear
+  portrait_style: ", John Tenniel engraving, Victorian woodcut illustration, fine crosshatching, black ink on cream paper, 1865 original edition style"
 agents:
   orchestrator:
     character: The Cheshire Cat
