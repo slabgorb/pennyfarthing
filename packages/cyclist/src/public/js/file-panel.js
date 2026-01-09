@@ -9,9 +9,11 @@
  */
 
 const STORAGE_KEY = 'cyclist-file-panel';
-const MIN_WIDTH = 150;
+// Read CSS variables for consistent panel sizing
+const rootStyles = typeof getComputedStyle !== 'undefined' ? getComputedStyle(document.documentElement) : null;
+const MIN_WIDTH = parseInt(rootStyles?.getPropertyValue('--panel-min-width') || '150', 10);
 const COLLAPSE_THRESHOLD = 50;
-const DEFAULT_WIDTH = 280;
+const DEFAULT_WIDTH = parseInt(rootStyles?.getPropertyValue('--panel-default-width') || '280', 10);
 
 let panel = null;
 let resizeHandle = null;

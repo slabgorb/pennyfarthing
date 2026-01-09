@@ -90,8 +90,10 @@ function render() {
 /**
  * Select a file and show its diff
  * @param {string} filePath - Path to select
+ * @param {Object} options - Selection options
+ * @param {boolean} options.focus - Whether to focus the selected item (default: false)
  */
-export function selectFile(filePath) {
+export function selectFile(filePath, { focus = false } = {}) {
   selectedFilePath = filePath;
   render();
 
@@ -104,10 +106,12 @@ export function selectFile(filePath) {
     DiffPanel.expand();
   }
 
-  // Focus the selected item for keyboard nav
-  const selectedEl = container?.querySelector('.changed-file-item.selected');
-  if (selectedEl) {
-    selectedEl.focus();
+  // Only focus when explicitly requested (user interaction)
+  if (focus) {
+    const selectedEl = container?.querySelector('.changed-file-item.selected');
+    if (selectedEl) {
+      selectedEl.focus();
+    }
   }
 }
 
@@ -126,7 +130,7 @@ export function getSelectedFile() {
 function handleClick(e) {
   const item = e.target.closest('.changed-file-item');
   if (item) {
-    selectFile(item.dataset.filepath);
+    selectFile(item.dataset.filepath, { focus: true });
   }
 }
 
@@ -158,7 +162,7 @@ function handleKeydown(e) {
       e.preventDefault();
       // Already selected, just ensure diff is shown
       if (selectedFilePath) {
-        selectFile(selectedFilePath);
+        selectFile(selectedFilePath, { focus: true });
       }
       return;
     case 'Home':
@@ -174,7 +178,7 @@ function handleKeydown(e) {
   }
 
   if (nextIndex !== currentIndex && items[nextIndex]) {
-    selectFile(items[nextIndex].dataset.filepath);
+    selectFile(items[nextIndex].dataset.filepath, { focus: true });
   }
 }
 

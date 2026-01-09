@@ -250,10 +250,23 @@ export function renderDiff(container, diffData) {
   const viewer = document.createElement('div');
   viewer.className = `diff-viewer ${langClass}`;
 
-  // File header
+  // File header with clickable path
   const header = document.createElement('div');
   header.className = 'diff-file-header';
-  header.innerHTML = `<span class="file-path">${diffData.filePath}</span>`;
+
+  const filePathLink = document.createElement('a');
+  filePathLink.className = 'file-path file-path-link';
+  filePathLink.href = '#';
+  filePathLink.textContent = diffData.filePath;
+  filePathLink.title = 'Click to open in editor';
+  filePathLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (window.electron?.fileBrowser?.openInEditor) {
+      window.electron.fileBrowser.openInEditor(diffData.filePath);
+    }
+  });
+
+  header.appendChild(filePathLink);
   viewer.appendChild(header);
 
   // New file indicator

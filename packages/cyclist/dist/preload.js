@@ -101,6 +101,7 @@ function createElectronAPI() {
             fileBrowser: {
                 listDirectory: (path) => ipcRenderer.invoke('file-browser:list-directory', path),
                 openFile: (path) => ipcRenderer.invoke('file-browser:open-file', path),
+                openInEditor: (path, lineNumber) => ipcRenderer.invoke('file-browser:open-in-editor', path, lineNumber),
                 onFileOpened: (callback) => {
                     ipcRenderer.on('file-browser:file-opened', callback);
                 },
@@ -156,6 +157,7 @@ function createElectronAPI() {
             fileBrowser: {
                 listDirectory: (_path) => Promise.resolve({ path: '', entries: [] }),
                 openFile: (_path) => Promise.resolve(),
+                openInEditor: (_path, _lineNumber) => Promise.resolve(true),
                 onFileOpened: (_callback) => {
                     // No-op in test environment
                 },

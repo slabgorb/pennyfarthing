@@ -35,6 +35,7 @@ export declare const IPC_DATA_CHANNELS: {
     readonly TODOS_UPDATE: "todos:update";
     readonly CONTEXT_GET: "context:get";
     readonly CONTEXT_UPDATE: "context:update";
+    readonly TOOL_EVENTS_UPDATE: "toolEvents:update";
 };
 /**
  * IPC channel names for Claude SDK communication (E7-3)
@@ -67,6 +68,7 @@ export declare const IPC_DIFF_CHANNELS: {
 export declare const IPC_FILE_BROWSER_CHANNELS: {
     readonly LIST_DIRECTORY: "file-browser:list-directory";
     readonly OPEN_FILE: "file-browser:open-file";
+    readonly OPEN_IN_EDITOR: "file-browser:open-in-editor";
 };
 /**
  * Agent definition for Electron menu
@@ -184,6 +186,11 @@ export declare function resetTodos(): void;
  * Get current context (for testing and IPC)
  */
 export declare function getContext(): ContextInfo;
+/**
+ * Reset context state to initial values
+ * Called when clearing session
+ */
+export declare function resetContext(): void;
 /**
  * Update context state and broadcast if changed
  * Returns true if context was updated (values changed)

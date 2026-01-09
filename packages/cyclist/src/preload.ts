@@ -122,6 +122,13 @@ export interface ElectronFileBrowserAPI {
   openFile: (path: string) => Promise<void>;
 
   /**
+   * Open a file in the user's external editor ($EDITOR)
+   * @param path - File path to open
+   * @param lineNumber - Optional line number to jump to
+   */
+  openInEditor: (path: string, lineNumber?: number) => Promise<boolean>;
+
+  /**
    * Subscribe to file open events
    */
   onFileOpened: (callback: (event: unknown, data: { path: string }) => void) => void;
@@ -236,6 +243,7 @@ function createElectronAPI(): ElectronAPI {
       fileBrowser: {
         listDirectory: (path: string) => ipcRenderer.invoke('file-browser:list-directory', path),
         openFile: (path: string) => ipcRenderer.invoke('file-browser:open-file', path),
+        openInEditor: (path: string, lineNumber?: number) => ipcRenderer.invoke('file-browser:open-in-editor', path, lineNumber),
         onFileOpened: (callback: (event: unknown, data: { path: string }) => void) => {
           ipcRenderer.on('file-browser:file-opened', callback);
         },
@@ -290,6 +298,7 @@ function createElectronAPI(): ElectronAPI {
       fileBrowser: {
         listDirectory: (_path: string) => Promise.resolve({ path: '', entries: [] }),
         openFile: (_path: string) => Promise.resolve(),
+        openInEditor: (_path: string, _lineNumber?: number) => Promise.resolve(true),
         onFileOpened: (_callback: (event: unknown, data: { path: string }) => void) => {
           // No-op in test environment
         },

@@ -15,7 +15,7 @@ import { dirname, join, basename } from 'path';
 import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
 import { getStoryInfo, getGitInfo } from './server.js';
 import { parseToolStats, ToolStats, createEmptyStats } from './tool-stats.js';
-import { getTokenStats, setTokenStatsCallback, TokenStats, aggregateTokenStats, resetTokenStats } from './otlp-receiver.js';
+import { getTokenStats, setTokenStatsCallback, TokenStats, aggregateTokenStats, resetTokenStats, resetEventStore } from './otlp-receiver.js';
 import { ClaudeService, SDKMessage } from './claude-service.js';
 import { isTodoWriteMessage, extractTodos, type TodoItem } from './todos.js';
 import { listDirectory as listDir, type DirectoryListing } from './file-browser.js';
@@ -83,6 +83,8 @@ export const IPC_DATA_CHANNELS = {
   // B-19: Context usage progress bar
   CONTEXT_GET: 'context:get',
   CONTEXT_UPDATE: 'context:update',
+  // Tool events (changed files, diffs)
+  TOOL_EVENTS_UPDATE: 'toolEvents:update',
 } as const;
 
 /**
@@ -119,6 +121,7 @@ export const IPC_DIFF_CHANNELS = {
 export const IPC_FILE_BROWSER_CHANNELS = {
   LIST_DIRECTORY: 'file-browser:list-directory',
   OPEN_FILE: 'file-browser:open-file',
+  OPEN_IN_EDITOR: 'file-browser:open-in-editor',
 } as const;
 
 // =============================================================================
@@ -465,6 +468,20 @@ let currentContext: ContextInfo = {
  */
 export function getContext(): ContextInfo {
   return { ...currentContext };
+}
+
+/**
+ * Reset context state to initial values
+ * Called when clearing session
+ */
+export function resetContext(): void {
+  currentContext = {
+    percent: null,
+    tokens: null,
+    status: null,
+    error: null,
+  };
+  broadcastToRenderer(IPC_DATA_CHANNELS.CONTEXT_UPDATE, currentContext);
 }
 
 /**
@@ -847,16 +864,21 @@ export function setupClaudeIPCHandlers(ipcMain: {
     return true;
   });
 
-  // Clear handler - resets session and token stats (like /clear in CLI)
+  // Clear handler - resets all session state (like /clear in CLI)
   ipcMain.handle(IPC_CLAUDE_CHANNELS.CLAUDE_CLEAR, async () => {
     const service = getClaudeService();
     service.clearSession();
     clearSessionId();
     resetTokenStats();
-    resetTodos(); // B-17: Clear todos on session clear
-    // Broadcast zeroed token stats to update sidebar immediately
+    resetTodos();
+    resetEventStore(); // Clear tool events (changed files, diffs)
+    resetToolStats();
+    resetContext(); // Clear context percentage
+    // Broadcast zeroed stats to update UI immediately
     broadcastToRenderer(IPC_DATA_CHANNELS.TOKEN_STATS_UPDATE, getTokenStats());
-    console.log('Session and token stats cleared');
+    broadcastToRenderer(IPC_DATA_CHANNELS.TOOL_STATS_UPDATE, createEmptyStats());
+    broadcastToRenderer(IPC_DATA_CHANNELS.TOOL_EVENTS_UPDATE, []);
+    console.log('Session cleared: tokens, todos, tool events, tool stats, context');
     return true;
   });
 
@@ -892,6 +914,44 @@ export function setupFileBrowserIPCHandlers(ipcMain: {
     console.log('[FileBrowser] Open file requested:', filePath);
     broadcastToRenderer('file-browser:file-opened', { path: filePath });
     return true;
+  });
+
+  // Open in external editor handler - opens file in user's $EDITOR
+  ipcMain.handle(IPC_FILE_BROWSER_CHANNELS.OPEN_IN_EDITOR, async (_event: unknown, ...args: unknown[]) => {
+    const filePath = args[0] as string;
+    const lineNumber = args[1] as number | undefined;
+    const editor = process.env.EDITOR || process.env.VISUAL || 'code';
+
+    console.log('[FileBrowser] Opening in editor:', editor, filePath, lineNumber ? `:${lineNumber}` : '');
+
+    try {
+      const { spawn } = await import('child_process');
+
+      // Build args based on editor type
+      let editorArgs: string[];
+      if (editor.includes('code') || editor.includes('cursor')) {
+        // VS Code / Cursor: --goto file:line
+        editorArgs = lineNumber ? ['--goto', `${filePath}:${lineNumber}`] : [filePath];
+      } else if (editor.includes('vim') || editor.includes('nvim')) {
+        // Vim/Neovim: +line file
+        editorArgs = lineNumber ? [`+${lineNumber}`, filePath] : [filePath];
+      } else if (editor.includes('emacs')) {
+        // Emacs: +line file
+        editorArgs = lineNumber ? [`+${lineNumber}`, filePath] : [filePath];
+      } else if (editor.includes('subl')) {
+        // Sublime: file:line
+        editorArgs = lineNumber ? [`${filePath}:${lineNumber}`] : [filePath];
+      } else {
+        // Generic fallback
+        editorArgs = [filePath];
+      }
+
+      spawn(editor, editorArgs, { detached: true, stdio: 'ignore' }).unref();
+      return true;
+    } catch (error) {
+      console.error('[FileBrowser] Failed to open in editor:', error);
+      return false;
+    }
   });
 
   console.log('File browser IPC handlers registered');
