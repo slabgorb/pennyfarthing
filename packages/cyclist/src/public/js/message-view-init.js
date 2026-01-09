@@ -17,7 +17,7 @@ import {
   setQuickActionsVisible
 } from './components/MessageView.js';
 import { updateActivity, clearActivity } from './activity.js';
-import { resetSubmitting, setProcessing, processNextInQueue, setOnQueueChange, clearMessageQueue, loadMessageQueue } from './editor.js';
+import { resetSubmitting, setProcessing, processNextInQueue, setOnQueueChange, clearMessageQueue, loadMessageQueue, getMessageQueue, removeFromQueue } from './editor.js';
 
 // Wait for DOM to be ready
 if (document.readyState === 'loading') {
@@ -128,17 +128,79 @@ function initMessageView() {
     });
   }
 
-  // 17-1: Wire up message queue indicator
+  // 17-1: Wire up message queue indicator with dropdown
   const queueIndicator = document.getElementById('queue-indicator');
+  const queueToggle = queueIndicator?.querySelector('.queue-toggle');
   const queueCount = queueIndicator?.querySelector('.queue-count');
-  const queueClearBtn = queueIndicator?.querySelector('.queue-clear-btn');
+  const queueDropdown = document.getElementById('queue-dropdown');
+  const queueList = queueDropdown?.querySelector('.queue-list');
+  const queueClearBtn = queueDropdown?.querySelector('.queue-clear-btn');
+
+  /**
+   * Render the queue list items
+   */
+  function renderQueueList() {
+    if (!queueList) return;
+    const messages = getMessageQueue();
+
+    if (messages.length === 0) {
+      queueList.innerHTML = '<li class="queue-empty">No messages queued</li>';
+      return;
+    }
+
+    queueList.innerHTML = messages.map((msg, i) => `
+      <li class="queue-item" data-index="${i}">
+        <span class="queue-item-number">${i + 1}</span>
+        <span class="queue-item-text" title="${msg.replace(/"/g, '&quot;')}">${msg}</span>
+        <button class="queue-item-remove" data-index="${i}" title="Remove">✕</button>
+      </li>
+    `).join('');
+  }
+
+  /**
+   * Toggle dropdown visibility
+   */
+  function toggleDropdown() {
+    if (!queueDropdown) return;
+    const isVisible = queueDropdown.style.display !== 'none';
+    queueDropdown.style.display = isVisible ? 'none' : 'block';
+    if (!isVisible) {
+      renderQueueList();
+    }
+  }
+
+  /**
+   * Close dropdown
+   */
+  function closeDropdown() {
+    if (queueDropdown) {
+      queueDropdown.style.display = 'none';
+    }
+  }
 
   if (queueIndicator && queueCount) {
     // Update indicator when queue changes
     setOnQueueChange((count) => {
       queueCount.textContent = count;
       queueIndicator.style.display = count > 0 ? 'flex' : 'none';
+      // Re-render list if dropdown is open
+      if (queueDropdown?.style.display !== 'none') {
+        renderQueueList();
+      }
+      // Close dropdown if queue becomes empty
+      if (count === 0) {
+        closeDropdown();
+      }
     });
+
+    // Toggle dropdown on click
+    if (queueToggle) {
+      queueToggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleDropdown();
+      });
+    }
 
     // Wire up clear button
     if (queueClearBtn) {
@@ -146,8 +208,30 @@ function initMessageView() {
         e.preventDefault();
         e.stopPropagation();
         clearMessageQueue();
+        closeDropdown();
       });
     }
+
+    // Wire up individual remove buttons via event delegation
+    if (queueList) {
+      queueList.addEventListener('click', (e) => {
+        const removeBtn = e.target.closest('.queue-item-remove');
+        if (removeBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          const index = parseInt(removeBtn.dataset.index, 10);
+          removeFromQueue(index);
+        }
+      });
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (queueDropdown?.style.display !== 'none' &&
+          !queueIndicator.contains(e.target)) {
+        closeDropdown();
+      }
+    });
 
     // Load any persisted queue from localStorage
     loadMessageQueue();
