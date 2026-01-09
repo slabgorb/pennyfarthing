@@ -602,6 +602,80 @@ sprint_7_completed:
       completed: 2026-01-08
       pr: "https://github.com/1898andCo/pennyfarthing/pull/95"
 
+    - id: "18-4"
+      epic: epic-18
+      jira: MSSCI-11421
+      title: "Test all install and runtime scenarios"
+      points: 3
+      status: done
+      completed: 2026-01-09
+      repos: pennyfarthing
+
+    - id: "18-5"
+      epic: epic-18
+      jira: MSSCI-11422
+      title: "Update CI/CD and publish scoped packages"
+      points: 3
+      status: done
+      completed: 2026-01-09
+      repos: pennyfarthing
+
+    - id: "18-6"
+      epic: epic-18
+      title: "Fix pre-existing test failures (tech debt)"
+      points: 2
+      status: done
+      completed: 2026-01-09
+      repos: pennyfarthing
+
+    - id: "17-5"
+      epic: epic-17
+      title: "BUG: Changed Files panel not showing files"
+      points: 2
+      status: done
+      started: 2026-01-09
+      completed: 2026-01-09
+      repos: cyclist
+
+    - id: "17-6"
+      epic: epic-17
+      title: "BUG: Context meter not wired to Electron polling"
+      points: 2
+      status: done
+      started: 2026-01-09
+      completed: 2026-01-09
+      repos: cyclist
+
+    - id: "17-7"
+      epic: epic-17
+      title: "Session ID tracking for context and agent state"
+      points: 3
+      status: done
+      started: 2026-01-09
+      completed: 2026-01-09
+      repos: cyclist, pennyfarthing
+      pr: "https://github.com/1898andCo/pennyfarthing/pull/123"
+
+    - id: "19-1"
+      epic: epic-19
+      jira: MSSCI-11426
+      title: "Extend OTLP receiver for tool spans and events"
+      points: 3
+      status: done
+      started: 2026-01-09
+      completed: 2026-01-09
+      repos: cyclist
+      pr: "#119"
+
+    - id: "7-2"
+      epic: epic-7
+      jira: MSSCI-11387
+      title: "Expand Job-Fair with Role-Selective Execution"
+      points: 5
+      status: done
+      completed: 2026-01-09
+      repos: pennyfarthing
+
 # =============================================================================
 # CUMULATIVE METRICS
 # =============================================================================

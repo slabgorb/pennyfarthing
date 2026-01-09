@@ -5,36 +5,27 @@ sprint:
   status: active
   velocity_target: 100
 summary:
-  total_points: 91
-  completed_points: 40
-  remaining_points: 51
-  notes: 'Sprint 7 focus: Benchmark framework, monorepo, telemetry.
-
+  total_points: 106
+  completed_points: 51
+  remaining_points: 55
+  notes: |
+    Sprint 7 focus: Benchmark framework, monorepo, telemetry.
 
     COMPLETED (archived to completed.yaml):
-
     - Epic 3 (Context Circuit Breaker) - 5 pts - done 2026-01-06
-
     - Epic 10 (Choreography Patterns) - 8 pts - done 2026-01-06
-
     - Story 7-3 (Showcase Auto-Deploy) - 2 pts - done 2026-01-09
+    - Stories 17-1, 17-2, 17-3 (Cyclist UX) - 11 pts - done 2026-01-08
+    - Epic 18 (Monorepo Consolidation) - 21 pts - done 2026-01-09
+    - Stories 17-5, 17-6, 17-7 (Cyclist UX bugs) - 7 pts - done 2026-01-09
+    - Stories 19-1, 19-2 (Telemetry foundation) - 5 pts - done 2026-01-09
+    - Story 7-2 (Job-fair expansion) - 5 pts - done 2026-01-09
 
-    - Story 17-1, 17-2, 17-3 (Cyclist UX) - 11 pts - done 2026-01-08
-
-    - Epic 18 (Monorepo Consolidation) - 19 pts - done 2026-01-09
-
-
-    IN PROGRESS:
-
-    - Story 7-2: Expand job-fair (architect backfill 12/81 themes)
-
-    - Epic 19: Rich telemetry - 19-1 in progress
-
-    - Story 17-4: Popup profile view for persona details (new)
-
-    - Epic 21: Command & Skill Expansion (new - 12 pts)
-
-    '
+    BACKLOG:
+    - Epic 19: Rich telemetry - 19-3 through 19-9 (21 pts remaining)
+    - Epic 17: 17-4 popup profile (3 pts), 17-8 story panel IPC (3 pts)
+    - Epic 7: 7-1 benchmark runner (3 pts), 7-4 aggregate stats (3 pts)
+    - Epic 21: Command & Skill Expansion (12 pts)
 epics:
 - id: epic-7
   title: Agent Performance Benchmarking Suite
@@ -46,7 +37,7 @@ epics:
 
     '
   points: 23
-  completed_points: 0
+  completed_points: 7
   priority: P2
   marker: strategic
   repos: pennyfarthing
@@ -232,8 +223,8 @@ epics:
     - @pennyfarthing/shared (path resolution, theme loading)
 
     '
-  points: 19
-  completed_points: 19
+  points: 21
+  completed_points: 21
   priority: P1
   marker: architectural
   repos: pennyfarthing
@@ -703,8 +694,8 @@ epics:
     Includes panel layouts, persona display, and navigation improvements.
 
     '
-  points: 18
-  completed_points: 11
+  points: 24
+  completed_points: 18
   priority: P2
   marker: ux
   repos: cyclist
