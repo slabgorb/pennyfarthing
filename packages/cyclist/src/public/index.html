@@ -8,15 +8,15 @@
 </head>
 <body>
   <div id="container">
-    <!-- Left file panel (collapsible, resizable) -->
+    <!-- Left file panel (collapsible, resizable) - shows changed files -->
     <div id="file-panel" class="file-panel collapsed">
       <div class="file-panel-header">
-        <span class="file-panel-title">Files</span>
+        <span class="file-panel-title">Changed</span>
         <button class="file-panel-collapse-btn" id="file-panel-collapse" title="Collapse panel">◀</button>
       </div>
       <div class="file-panel-content">
-        <div class="file-tree" id="file-panel-tree">
-          <!-- File tree rendered here -->
+        <div class="changed-files-list" id="changed-files-list">
+          <!-- Changed files rendered here -->
         </div>
       </div>
     </div>
@@ -34,7 +34,7 @@
     </div>
     <div class="resize-handle" id="diff-panel-resize" title="Drag to resize"></div>
     <!-- Toggle buttons visible when panels are collapsed -->
-    <button class="file-panel-expand-btn" id="file-panel-expand" title="Show files"><span class="expand-label">FILES</span></button>
+    <button class="file-panel-expand-btn" id="file-panel-expand" title="Show changed files"><span class="expand-label">CHANGED</span></button>
     <button class="diff-panel-expand-btn" id="diff-panel-expand" title="Show diffs"><span class="expand-label">DIFFS</span></button>
     <div id="main-content">
       <main id="message-view">
@@ -210,7 +210,13 @@
   <script type="module" src="/js/diff-panel.js"></script>
   <script type="module" src="/js/components/DiffViewer.js"></script>
   <script type="module" src="/js/file-panel.js"></script>
-  <script type="module" src="/js/components/FileBrowser.js"></script>
+  <script type="module" src="/js/components/ChangedFilesList.js"></script>
+  <script type="module">
+    // Wire up ChangedFilesList to receive diff notifications
+    import * as ChangedFilesList from '/js/components/ChangedFilesList.js';
+    import * as DiffViewer from '/js/components/DiffViewer.js';
+    DiffViewer.setOnDiffAdded(ChangedFilesList.handleDiffAdded);
+  </script>
   <!-- Files tab will be added on demand, not on startup -->
   <script type="module" src="/js/controls.js"></script>
   <!-- TipTap bundle must load before editor.js -->

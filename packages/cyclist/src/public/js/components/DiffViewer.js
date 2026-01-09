@@ -69,33 +69,38 @@ export function extractDiffDataFromWrite(message) {
 }
 
 // =============================================================================
-// Tab Creation
+// State Management
 // =============================================================================
 
 // Store diffs for the current session
 const diffs = [];
 
+// Callback for when a diff is added (used by ChangedFilesList)
+let onDiffAddedCallback = null;
+
 /**
- * Handle incoming diff data - render to diff panel
+ * Set callback for when diff is added
+ * @param {Function} callback - Function to call with diffData
+ */
+export function setOnDiffAdded(callback) {
+  onDiffAddedCallback = callback;
+}
+
+/**
+ * Handle incoming diff data - store and notify listeners
  * @param {Object} diffData - DiffData from tool message
  */
 export function handleDiffUpdate(diffData) {
   // Add to diffs list
   diffs.push(diffData);
 
-  // Get the panel content element
-  const container = DiffPanel.getContentElement();
-  if (!container) {
-    console.warn('[DiffViewer] Diff panel content element not found');
-    return;
-  }
-
-  // Render the diff
-  renderDiff(container, diffData);
-
-  // Update count and expand panel
+  // Update diff count badge
   DiffPanel.setDiffCount(diffs.length);
-  DiffPanel.expand();
+
+  // Notify listeners (ChangedFilesList will handle selection and rendering)
+  if (onDiffAddedCallback) {
+    onDiffAddedCallback(diffData);
+  }
 }
 
 /**
@@ -316,6 +321,7 @@ export default {
   handleDiffUpdate,
   getDiffs,
   clearDiffs,
+  setOnDiffAdded,
   computeDiff,
   getFileExtension,
   getLanguageClass,

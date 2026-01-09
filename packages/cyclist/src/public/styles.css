@@ -2276,3 +2276,87 @@ html, body {
 .file-browser-error {
   color: var(--status-error);
 }
+
+/* =============================================================================
+ * Changed Files List
+ * Master list showing files Claude has modified in this session
+ * ============================================================================= */
+
+.changed-files-list {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-size: 13px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.changed-file-item {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+  white-space: nowrap;
+}
+
+.changed-file-item:hover {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.05));
+}
+
+.changed-file-item.selected {
+  background: var(--selected-bg, rgba(99, 102, 241, 0.2));
+}
+
+.changed-file-item:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.changed-file-item:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.changed-file-icon {
+  width: 16px;
+  flex-shrink: 0;
+  text-align: center;
+  color: var(--text-secondary);
+  margin-right: 8px;
+}
+
+.changed-file-item.selected .changed-file-icon {
+  color: var(--accent);
+}
+
+.changed-file-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+
+.changed-file-badge {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.changed-files-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 100px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .changed-file-item {
+    transition: none;
+  }
+}
