@@ -13,6 +13,7 @@ theme:
   default_humor: enabled
   user_title: Dear Reader
   portrait_style: ", fairy tale storybook watercolor illustration, warm romantic lighting, Renaissance Faire, enchanted forest backdrop"
+  tier: C
 
 agents:
   orchestrator:

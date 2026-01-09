@@ -125,3 +125,37 @@ window.electronAPI.xxx.onUpdate((_event, data) => { ... });
 ---
 
 *Add implementation gotchas discovered during development below*
+
+### Claude SDK Message Structure for Tool Detection
+
+**Situation:** Detecting when Claude uses Edit/Write tools to trigger UI updates (e.g., Changed Files panel).
+
+**Problem:** Code checked `if (message.type === 'tool_use')` at the top level, but this never matches because the Claude SDK nests tool_use blocks inside assistant messages.
+
+**Root Cause:** SDK message structure is:
+```javascript
+// WRONG - this doesn't exist at top level
+message.type === 'tool_use'
+message.tool_name === 'Edit'
+
+// CORRECT - tool_use is nested inside assistant messages
+message.type === 'assistant'
+message.message.content[] // array of content blocks
+  block.type === 'tool_use'
+  block.name === 'Edit'    // tool name
+  block.id === 'toolu_xxx' // tool id
+  block.input === { ... }  // tool parameters
+```
+
+**Prevention:** Look at existing patterns in the codebase. `todos.ts` has `isTodoWriteMessage()` which correctly parses the SDK structure:
+```typescript
+if (msg.type !== 'assistant') return false;
+const content = msg.message?.content;
+return content.some(block => block.type === 'tool_use' && block.name === 'TodoWrite');
+```
+
+**Fix:** Update tool detection to iterate through assistant message content blocks instead of checking top-level message type.
+
+**Discovered:** 2026-01-09 (Story 17-5)
+
+---

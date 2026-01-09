@@ -201,9 +201,7 @@
   <!-- MessageView: SDK message display -->
   <script type="module" src="/js/message-view-init.js"></script>
   <script type="module" src="/js/portrait.js"></script>
-  <script src="/js/stats.js"></script>
   <script src="/js/stats-strip.js"></script>
-  <script src="/js/context.js"></script>
   <script type="module" src="/js/persona.js"></script>
   <script type="module" src="/js/story.js"></script>
   <script type="module" src="/js/todos.js"></script>
@@ -215,6 +213,7 @@
     // Wire up ChangedFilesList to receive diff notifications
     import * as ChangedFilesList from '/js/components/ChangedFilesList.js';
     import * as DiffViewer from '/js/components/DiffViewer.js';
+    ChangedFilesList.init();
     DiffViewer.setOnDiffAdded(ChangedFilesList.handleDiffAdded);
   </script>
   <!-- Files tab will be added on demand, not on startup -->

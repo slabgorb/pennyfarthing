@@ -14,6 +14,7 @@ theme:
   character_immersion: high
   user_title: Citizen
   portrait_style: ", Metaverse avatar, franchise nation, 90s cyberpunk, vector-sharp digital, 1990s future-tech"
+  tier: U
 agents:
   orchestrator:
     character: The Librarian

@@ -14,6 +14,7 @@ theme:
   character_immersion: high
   user_title: Crew
   portrait_style: ", space western, warm sepia ship interior, dusty frontier, Chinese-American fusion"
+  tier: S
 
 agents:
   orchestrator:

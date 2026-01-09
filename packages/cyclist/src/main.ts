@@ -785,29 +785,37 @@ export function setupClaudeIPCHandlers(ipcMain: {
         }
 
         // E8-2: Broadcast diff data for Edit/Write tool messages
-        if (message.type === 'tool_use') {
-          const toolMsg = message as { tool_name: string; tool_id: string; input: Record<string, unknown> };
-          if (toolMsg.tool_name === 'Edit') {
-            const input = toolMsg.input as { file_path: string; old_string: string; new_string: string };
-            broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, {
-              id: toolMsg.tool_id,
-              filePath: input.file_path,
-              oldContent: input.old_string,
-              newContent: input.new_string,
-              toolType: 'Edit',
-              timestamp: Date.now(),
-            });
-          } else if (toolMsg.tool_name === 'Write') {
-            const input = toolMsg.input as { file_path: string; content: string };
-            broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, {
-              id: toolMsg.tool_id,
-              filePath: input.file_path,
-              oldContent: '',
-              newContent: input.content,
-              toolType: 'Write',
-              timestamp: Date.now(),
-              isNewFile: true,
-            });
+        // Tool_use blocks are nested inside 'assistant' messages under message.content[]
+        if (message.type === 'assistant') {
+          const assistantMsg = message as { message?: { content?: Array<{ type: string; name?: string; id?: string; input?: Record<string, unknown> }> } };
+          const content = assistantMsg.message?.content;
+          if (content && Array.isArray(content)) {
+            for (const block of content) {
+              if (block.type === 'tool_use') {
+                if (block.name === 'Edit') {
+                  const input = block.input as { file_path: string; old_string: string; new_string: string };
+                  broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, {
+                    id: block.id || `edit-${Date.now()}`,
+                    filePath: input.file_path,
+                    oldContent: input.old_string,
+                    newContent: input.new_string,
+                    toolType: 'Edit',
+                    timestamp: Date.now(),
+                  });
+                } else if (block.name === 'Write') {
+                  const input = block.input as { file_path: string; content: string };
+                  broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, {
+                    id: block.id || `write-${Date.now()}`,
+                    filePath: input.file_path,
+                    oldContent: '',
+                    newContent: input.content,
+                    toolType: 'Write',
+                    timestamp: Date.now(),
+                    isNewFile: true,
+                  });
+                }
+              }
+            }
           }
         }
       }
