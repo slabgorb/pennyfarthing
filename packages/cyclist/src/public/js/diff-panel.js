@@ -1,19 +1,28 @@
 /**
- * Diff Panel - Collapsible bottom panel for displaying diffs
+ * Diff Panel - Collapsible, resizable panel for displaying diffs
  *
  * Features:
  * - Click button to collapse/expand
+ * - Drag handle to resize width
+ * - Drag to near-zero width to collapse
  * - Shows diff count badge
- * - Persists collapsed state to localStorage
+ * - Persists width and collapsed state to localStorage
  */
 
 const STORAGE_KEY = 'cyclist-diff-panel';
+const MIN_WIDTH = 150;
+const COLLAPSE_THRESHOLD = 50;
+const DEFAULT_WIDTH = 350;
 
 let panel = null;
+let resizeHandle = null;
 let collapseBtn = null;
 let expandBtn = null;
 let countBadge = null;
 let contentEl = null;
+let isDragging = false;
+let startX = 0;
+let startWidth = 0;
 
 /**
  * Get saved panel state from localStorage
@@ -27,7 +36,29 @@ function loadState() {
   } catch (e) {
     console.warn('[DiffPanel] Failed to load state:', e);
   }
-  return { collapsed: true };
+  return { width: DEFAULT_WIDTH, collapsed: true };
+}
+
+/**
+ * Get current panel width (or saved width if collapsed)
+ */
+function getCurrentWidth() {
+  const state = loadState();
+  return state.width || DEFAULT_WIDTH;
+}
+
+/**
+ * Set panel width
+ */
+function setWidth(width) {
+  if (!panel) return;
+
+  const clampedWidth = Math.max(MIN_WIDTH, Math.min(width, window.innerWidth * 0.5));
+  panel.style.width = `${clampedWidth}px`;
+
+  const state = loadState();
+  state.width = clampedWidth;
+  saveState(state);
 }
 
 /**
@@ -65,16 +96,19 @@ export function collapse() {
 export function expand() {
   if (!panel) return;
 
+  const state = loadState();
+  const width = state.width || DEFAULT_WIDTH;
+
+  panel.style.width = `${width}px`;
   panel.classList.remove('collapsed');
   if (expandBtn) {
     expandBtn.classList.remove('visible');
   }
 
-  const state = loadState();
   state.collapsed = false;
   saveState(state);
 
-  console.log('[DiffPanel] Expanded');
+  console.log('[DiffPanel] Expanded to', width);
 }
 
 /**
@@ -148,10 +182,71 @@ export function showDiff(content) {
 }
 
 /**
+ * Handle mouse down on resize handle
+ */
+function onResizeStart(e) {
+  if (!panel) return;
+
+  isDragging = true;
+  startX = e.clientX;
+  startWidth = panel.offsetWidth;
+
+  resizeHandle.classList.add('dragging');
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
+
+  document.addEventListener('mousemove', onResizeMove);
+  document.addEventListener('mouseup', onResizeEnd);
+
+  e.preventDefault();
+}
+
+/**
+ * Handle mouse move during resize
+ */
+function onResizeMove(e) {
+  if (!isDragging || !panel) return;
+
+  const delta = e.clientX - startX;
+  const newWidth = startWidth + delta;
+
+  // If dragged below threshold, prepare to collapse
+  if (newWidth < COLLAPSE_THRESHOLD) {
+    panel.style.width = `${COLLAPSE_THRESHOLD}px`;
+    panel.style.opacity = '0.5';
+  } else {
+    panel.style.opacity = '1';
+    setWidth(newWidth);
+  }
+}
+
+/**
+ * Handle mouse up after resize
+ */
+function onResizeEnd() {
+  if (!isDragging) return;
+
+  isDragging = false;
+  resizeHandle.classList.remove('dragging');
+  document.body.style.cursor = '';
+  document.body.style.userSelect = '';
+
+  document.removeEventListener('mousemove', onResizeMove);
+  document.removeEventListener('mouseup', onResizeEnd);
+
+  // Check if should collapse
+  if (panel && panel.offsetWidth <= COLLAPSE_THRESHOLD) {
+    panel.style.opacity = '1';
+    collapse();
+  }
+}
+
+/**
  * Initialize diff panel
  */
 export function init() {
   panel = document.getElementById('diff-panel');
+  resizeHandle = document.getElementById('diff-panel-resize');
   collapseBtn = document.getElementById('diff-panel-collapse');
   expandBtn = document.getElementById('diff-panel-expand');
   countBadge = document.getElementById('diff-panel-count');
@@ -164,6 +259,11 @@ export function init() {
 
   // Load saved state
   const state = loadState();
+
+  // Apply saved width
+  if (state.width) {
+    panel.style.width = `${state.width}px`;
+  }
 
   // Apply collapsed state
   if (state.collapsed) {
@@ -186,7 +286,12 @@ export function init() {
     expandBtn.addEventListener('click', expand);
   }
 
-  console.log('[DiffPanel] Initialized, collapsed:', state.collapsed);
+  // Set up resize handle
+  if (resizeHandle) {
+    resizeHandle.addEventListener('mousedown', onResizeStart);
+  }
+
+  console.log('[DiffPanel] Initialized, collapsed:', state.collapsed, 'width:', state.width);
 }
 
 // Export for external use
@@ -201,6 +306,8 @@ export default {
   setContent,
   clearContent,
   showDiff,
+  setWidth,
+  getCurrentWidth,
 };
 
 // Auto-initialize on DOM ready
