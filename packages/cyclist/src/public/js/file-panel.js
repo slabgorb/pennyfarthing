@@ -204,9 +204,11 @@ export function init() {
     panel.classList.remove('collapsed');
   }
 
-  // Set up collapse button
-  if (collapseBtn) {
-    collapseBtn.addEventListener('click', collapse);
+  // Set up header click to collapse (entire header is clickable)
+  const header = panel.querySelector('.file-panel-header');
+  if (header) {
+    header.style.cursor = 'pointer';
+    header.addEventListener('click', collapse);
   }
 
   // Set up expand button
