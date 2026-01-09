@@ -14,6 +14,7 @@ theme:
   character_immersion: high
   user_title: Citizen
   portrait_style: ", Roman Empire marble bust, prestige historical drama, dramatic lighting, SPQR grandeur"
+  tier: C
 
 agents:
   orchestrator:

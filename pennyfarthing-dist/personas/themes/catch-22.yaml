@@ -14,6 +14,7 @@ theme:
   character_immersion: high
   user_title: Soldier
   portrait_style: ", WWII satirical propaganda style, absurdist military bureaucracy, B-25 silhouette"
+  tier: F
 agents:
   orchestrator:
     # JOB FAIR OPTIMIZED: Orr moved here - the one who escapes orchestrates the system

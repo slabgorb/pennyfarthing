@@ -13,6 +13,7 @@ theme:
   character_immersion: high
   user_title: Dear Reader
   portrait_style: ", Victorian engraving, Victorian crosshatch illustration, crosshatched ink, sepia vignette, gaslit London"
+  tier: A
 
 agents:
   orchestrator:

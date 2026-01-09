@@ -14,6 +14,7 @@ theme:
   character_immersion: high
   user_title: Commander
   portrait_style: ", space opera cinematic, retro sci-fi concept art, lightsaber glow, galactic adventure grandeur"
+  tier: S
 
 agents:
   orchestrator:

@@ -18,6 +18,7 @@ theme:
   character_immersion: high
   user_title: Friend
   portrait_style: ", animated epic fantasy, elvish script border"
+  tier: F
 
 agents:
   orchestrator:

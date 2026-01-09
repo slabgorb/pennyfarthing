@@ -154,7 +154,7 @@ const isElectron = typeof process !== 'undefined' &&
  * @param updateChannel - The channel name for update subscriptions
  */
 function createDataAPI(
-  ipcRenderer: { invoke: (channel: string) => Promise<unknown>; on: (channel: string, callback: (event: unknown, data: unknown) => void) => void; removeAllListeners: (channel: string) => void } | null,
+  ipcRenderer: { invoke: (channel: string) => Promise<unknown>; on: (channel: string, callback: (event: unknown, data: unknown) => void) => void } | null,
   getChannel: string,
   updateChannel: string
 ): ElectronDataAPI {
@@ -162,8 +162,8 @@ function createDataAPI(
     return {
       get: () => ipcRenderer.invoke(getChannel),
       onUpdate: (callback: (event: unknown, data: unknown) => void) => {
-        // Clean up previous listeners on refresh
-        ipcRenderer.removeAllListeners(updateChannel);
+        // Multiple modules can subscribe to the same channel
+        // On page refresh, old listeners are garbage collected
         ipcRenderer.on(updateChannel, callback);
       },
     };
@@ -211,29 +211,24 @@ function createElectronAPI(): ElectronAPI {
         setMode: (mode: 'default' | 'plan' | 'acceptEdits' | 'dangerouslySkipPermissions') => ipcRenderer.invoke('claude:setMode', mode),
         getMode: () => ipcRenderer.invoke('claude:getMode') as Promise<'default' | 'plan' | 'acceptEdits' | 'dangerouslySkipPermissions'>,
         onMessage: (callback: (message: unknown) => void) => {
-          ipcRenderer.removeAllListeners('claude:message');
           ipcRenderer.on('claude:message', (_event: unknown, msg: unknown) => callback(msg));
         },
         onComplete: (callback: () => void) => {
-          ipcRenderer.removeAllListeners('claude:complete');
           ipcRenderer.on('claude:complete', () => callback());
         },
         onError: (callback: (error: string) => void) => {
-          ipcRenderer.removeAllListeners('claude:error');
           ipcRenderer.on('claude:error', (_event: unknown, err: unknown) => callback(err as string));
         },
       },
       // Agent launcher API (B-23)
       agent: {
         onLaunch: (callback: (event: unknown, command: string) => void) => {
-          ipcRenderer.removeAllListeners('agent:launch');
           ipcRenderer.on('agent:launch', callback);
         },
       },
       // Diff viewer API (E8-2)
       diff: {
         onUpdate: (callback: (event: unknown, data: unknown) => void) => {
-          ipcRenderer.removeAllListeners('diff:update');
           ipcRenderer.on('diff:update', callback);
         },
       },
@@ -242,7 +237,6 @@ function createElectronAPI(): ElectronAPI {
         listDirectory: (path: string) => ipcRenderer.invoke('file-browser:list-directory', path),
         openFile: (path: string) => ipcRenderer.invoke('file-browser:open-file', path),
         onFileOpened: (callback: (event: unknown, data: { path: string }) => void) => {
-          ipcRenderer.removeAllListeners('file-browser:file-opened');
           ipcRenderer.on('file-browser:file-opened', callback);
         },
       },
