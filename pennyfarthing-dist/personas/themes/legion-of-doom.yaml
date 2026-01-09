@@ -2,7 +2,7 @@
 # Challenge of the Super Friends (1978-1979)
 #
 # DISCLAIMER: Legion of Doom and all related characters are owned by
-# Remedy Entertainment / 505 Games. This theme is a fan-made parody/homage for
+# DC Comics/Warner Bros. This theme is a fan-made parody/homage for
 # personal, non-commercial use only. No copyright infringement intended.
 
 theme:
@@ -12,7 +12,7 @@ theme:
   default_emoji_use: moderate
   default_humor: enabled
   user_title: Fellow Villain
-  portrait_style: ", 1970s Saturday morning cartoon, bold flat colors, Hanna-Barbera cel style, villain lighting, Hall of Doom background"
+  portrait_style: ", 1970s Saturday morning cartoon, bold flat colors, classic cel animation, villain lighting, swamp headquarters background"
 
 agents:
   orchestrator:

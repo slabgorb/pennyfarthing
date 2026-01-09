@@ -1,8 +1,8 @@
 # Jazz Legends Theme
-# Great Figures of Jazz Music
+# Jazz Musicians (20th Century)
 #
-# NOTE: These are historical figures.
-# This theme is an educational homage for personal, non-commercial use only.
+# These are historical figures and public persons. Persona definitions are
+# original creative works for personal use.
 
 theme:
   name: Jazz Legends
@@ -12,7 +12,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Cat
-  portrait_style: ", Blue Note album cover, smoky jazz club, high contrast black and white, bebop era, 1950s graphic design"
+  portrait_style: ", vintage jazz album cover, smoky jazz club, high contrast black and white, bebop era, 1950s graphic design"
 
 agents:
   orchestrator:

@@ -33,6 +33,168 @@ html, body {
   width: 100vw;
 }
 
+/* =============================================================================
+ * Left File Panel (Collapsible, Resizable)
+ * ============================================================================= */
+
+.file-panel {
+  display: flex;
+  flex-direction: column;
+  width: 280px;
+  min-width: 150px;
+  max-width: 50vw;
+  height: 100%;
+  background: var(--bg-secondary, #1a1a2e);
+  border-right: 1px solid var(--border, #333);
+  transition: width 0.2s ease, min-width 0.2s ease, opacity 0.2s ease;
+  overflow: hidden;
+}
+
+.file-panel.collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+  border-right: none;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.file-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-tertiary, #252540);
+  border-bottom: 1px solid var(--border, #333);
+  flex-shrink: 0;
+}
+
+.file-panel-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #888);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.file-panel-collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 12px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.file-panel-collapse-btn:hover {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.1));
+  color: var(--text-primary, #fff);
+}
+
+.file-panel-content {
+  flex: 1;
+  overflow: auto;
+  padding: 8px 0;
+}
+
+/* Resize handle between file panel and main content */
+.resize-handle {
+  width: 4px;
+  height: 100%;
+  background: transparent;
+  cursor: col-resize;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+
+.resize-handle:hover,
+.resize-handle.dragging {
+  background: var(--accent, #6366f1);
+}
+
+.file-panel.collapsed + .resize-handle {
+  display: none;
+}
+
+/* Expand button (visible when panel is collapsed) */
+.file-panel-expand-btn {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 48px;
+  padding: 0;
+  border: none;
+  border-radius: 0 4px 4px 0;
+  background: var(--bg-tertiary, #252540);
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  font-size: 12px;
+  z-index: 10;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.file-panel-expand-btn:hover {
+  background: var(--accent, #6366f1);
+  color: var(--text-primary, #fff);
+}
+
+.file-panel.collapsed ~ .file-panel-expand-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* File tree styles (moved from tab panel context) */
+#file-panel-tree {
+  font-size: 13px;
+}
+
+#file-panel-tree .tree-item {
+  display: flex;
+  align-items: center;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+  white-space: nowrap;
+}
+
+#file-panel-tree .tree-item:hover {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.05));
+}
+
+#file-panel-tree .tree-item.selected {
+  background: var(--selected-bg, rgba(99, 102, 241, 0.2));
+}
+
+#file-panel-tree .tree-chevron {
+  width: 16px;
+  flex-shrink: 0;
+  color: var(--text-secondary, #888);
+}
+
+#file-panel-tree .tree-icon {
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+#file-panel-tree .tree-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#file-panel-tree .tree-children {
+  padding-left: 16px;
+}
+
 #main-content {
   flex: 1;
   display: flex;

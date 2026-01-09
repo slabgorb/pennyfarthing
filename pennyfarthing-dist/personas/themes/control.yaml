@@ -1,3 +1,9 @@
+# Control Theme
+# Experimental baseline with no persona elements
+#
+# No copyrighted material used. This theme is for
+# scientific baseline comparison purposes only.
+
 theme:
   name: Control
   description: Scientific baseline with minimal role descriptions - no persona depth

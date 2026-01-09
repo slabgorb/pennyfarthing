@@ -1,8 +1,8 @@
 # Big Lebowski Theme
 # The Big Lebowski (1998), Coen Brothers
 #
-# DISCLAIMER: Big Lebowski and all related characters are owned by
-# Universal Pictures / Coen Brothers. This theme is a fan-made parody/homage for
+# DISCLAIMER: The Big Lebowski and all related characters are owned by
+# Universal Pictures. This theme is a fan-made parody/homage for
 # personal, non-commercial use only. No copyright infringement intended.
 
 theme:
@@ -13,7 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Dude
-  portrait_style: ", 1990s Coen Brothers film, bowling alley neon warmth, White Russian in hand, LA noir comedy"
+  portrait_style: ", bowling alley neon warmth, noir comedy aesthetic"
 
 agents:
   orchestrator:

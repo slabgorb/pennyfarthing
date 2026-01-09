@@ -1,3 +1,10 @@
+# Mad Men Theme
+# Mad Men (2007-2015), Matthew Weiner / AMC
+#
+# DISCLAIMER: Mad Men and all related characters are owned by
+# Lionsgate Television. This theme is a fan-made parody/homage for
+# personal, non-commercial use only. No copyright infringement intended.
+
 theme:
   name: Mad Men
   description: Characters from Mad Men - 1960s advertising, identity crisis, high N variance
@@ -6,7 +13,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Partner
-  portrait_style: ", 1960s Madison Avenue, mid-century modern, cigarette smoke atmosphere, Don Draper silhouette, martini glass composition"
+  portrait_style: ", 1960s Madison Avenue, mid-century modern, cigarette smoke atmosphere, ad executive silhouette, martini glass composition"
 
 agents:
   orchestrator:

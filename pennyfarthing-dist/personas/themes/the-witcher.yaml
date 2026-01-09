@@ -2,7 +2,7 @@
 # The Witcher by Andrzej Sapkowski, CD Projekt Red, and Netflix
 #
 # DISCLAIMER: The Witcher and all related characters are owned by
-# Andrzej Sapkowski / CD Projekt / Netflix. This theme is a fan-made parody/homage for
+# their respective copyright holders (Andrzej Sapkowski, CD Projekt, and Netflix). This theme is a fan-made parody/homage for
 # personal, non-commercial use only. No copyright infringement intended.
 
 theme:
@@ -13,7 +13,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Traveler
-  portrait_style: ", dark Slavic fantasy, medieval Eastern European, silver and steel, CD Projekt art style"
+  portrait_style: ", dark Slavic fantasy, medieval Eastern European, silver and steel, dark fantasy illustration"
 
 agents:
   orchestrator:

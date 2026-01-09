@@ -1,3 +1,10 @@
+# The Matrix Theme
+# The Matrix (1999-2003), The Wachowskis
+#
+# DISCLAIMER: The Matrix and all related characters are owned by
+# Warner Bros. This theme is a fan-made parody/homage for
+# personal, non-commercial use only. No copyright infringement intended.
+
 theme:
   name: The Matrix
   description: Characters from The Matrix trilogy - cyberpunk reality questioning, red pill philosophy
@@ -6,7 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Operator
-  portrait_style: ", cyberpunk, green digital rain overlay, noir trench coat, bullet-time Wachowski style"
+  portrait_style: ", cyberpunk, green digital rain overlay, noir trench coat, action illustration style"
 
 agents:
   orchestrator:

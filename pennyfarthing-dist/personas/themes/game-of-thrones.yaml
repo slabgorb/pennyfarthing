@@ -2,7 +2,7 @@
 # A Song of Ice and Fire by George R.R. Martin and HBO
 #
 # DISCLAIMER: Game of Thrones and all related characters are owned by
-# George R.R. Martin / HBO. This theme is a fan-made parody/homage for
+# the respective copyright holders. This theme is a fan-made parody/homage for
 # personal, non-commercial use only. No copyright infringement intended.
 
 theme:
@@ -13,7 +13,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: My Lord/Lady
-  portrait_style: ", medieval fantasy, HBO production, gritty lighting, Westerosi heraldry, ice and fire"
+  portrait_style: ", medieval fantasy,  gritty lighting, ice and fire"
 
 agents:
   orchestrator:

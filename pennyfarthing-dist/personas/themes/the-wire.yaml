@@ -1,3 +1,10 @@
+# The Wire Theme
+# The Wire (2002-2008), HBO / David Simon
+#
+# DISCLAIMER: The Wire and all related characters are owned by
+# HBO. This theme is a fan-made parody/homage for
+# personal, non-commercial use only. No copyright infringement intended.
+
 theme:
   name: The Wire
   description: Characters from The Wire - institutional failure, methodical investigation, 'a man got to have a code'
@@ -6,7 +13,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Partner
-  portrait_style: ", gritty urban realism, Baltimore street photography, institutional lighting, HBO naturalistic cinematography"
+  portrait_style: ", gritty urban screenprinted-poster style, Baltimore street scenes"
 
 agents:
   orchestrator:

@@ -1,3 +1,10 @@
+# Arcane Theme
+# Arcane (2021-present), Netflix / Riot Games
+#
+# DISCLAIMER: Arcane and all related characters are owned by
+# Riot Games. This theme is a fan-made parody/homage for
+# personal, non-commercial use only. No copyright infringement intended.
+
 theme:
   name: Arcane
   description: Characters from Arcane / League of Legends - modern, visually documented, clear arcs
@@ -6,7 +13,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Citizen
-  portrait_style: ", Arcane animated series, painted oil texture, hextech blues and Zaun greens, Netflix animation"
+  portrait_style: ", painted oil texture, hextech blues and undercity greens, modern painterly animation"
 agents:
   orchestrator:
     character: Silco

@@ -2,7 +2,7 @@
 # Breaking Bad (2008-2013), AMC / Vince Gilligan
 #
 # DISCLAIMER: Breaking Bad and all related characters are owned by
-# Sony Pictures Television / AMC. This theme is a fan-made parody/homage for
+# Sony Pictures Television. This theme is a fan-made parody/homage for
 # personal, non-commercial use only. No copyright infringement intended.
 
 theme:
@@ -13,7 +13,7 @@ theme:
   default_humor: disabled
   character_immersion: high
   user_title: Partner
-  portrait_style: ", Breaking Bad prestige TV, harsh New Mexico desert sunlight, chemical yellow-green hazmat tint, AMC cinematography"
+  portrait_style: ", hand-rubbed etching style, harsh New Mexico desert sunlight, chemical yellow-green hazmat tint"
 
 agents:
   orchestrator:

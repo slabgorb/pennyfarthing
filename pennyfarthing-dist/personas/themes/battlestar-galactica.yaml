@@ -1,3 +1,10 @@
+# Battlestar Galactica Theme
+# Battlestar Galactica (2004-2009), Ronald D. Moore / Sci Fi Channel
+#
+# DISCLAIMER: Battlestar Galactica and all related characters are owned by
+# NBCUniversal. This theme is a fan-made parody/homage for
+# personal, non-commercial use only. No copyright infringement intended.
+
 theme:
   name: Battlestar Galactica
   description: Characters from BSG (2004) - crisis conditions, moral ambiguity, testing under pressure
@@ -6,7 +13,7 @@ theme:
   default_humor: disabled
   character_immersion: high
   user_title: Soldier
-  portrait_style: ", gritty military sci-fi, desaturated steel blue, handheld camera feel, CIC console glow"
+  portrait_style: ", gritty military sci-fi, desaturated steel blue, handheld camera feel, command console glow"
 agents:
   orchestrator:
     character: The Hybrid

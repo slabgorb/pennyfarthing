@@ -2,7 +2,7 @@
 # Marvel Cinematic Universe (2008-present)
 #
 # DISCLAIMER: Marvel MCU and all related characters are owned by
-# Lucasfilm Ltd. / Disney. This theme is a fan-made parody/homage for
+# Marvel/Disney. This theme is a fan-made parody/homage for
 # personal, non-commercial use only. No copyright infringement intended.
 
 theme:
@@ -13,7 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Agent
-  portrait_style: ", Marvel superhero, dynamic comic book lighting, vibrant primary colors, heroic pose, NYC skyline background"
+  portrait_style: ", modern comic book superhero portrait, vibrant primary colors, heroic pose"
 
 agents:
   orchestrator:

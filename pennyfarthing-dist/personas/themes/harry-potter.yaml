@@ -2,7 +2,7 @@
 # Harry Potter series by J.K. Rowling
 #
 # DISCLAIMER: Harry Potter and all related characters are owned by
-# J.K. Rowling / Warner Bros.. This theme is a fan-made parody/homage for
+# Warner Bros Entertainment Inc. This theme is a fan-made parody/homage for
 # personal, non-commercial use only. No copyright infringement intended.
 
 theme:
@@ -13,7 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Fellow Witch/Wizard
-  portrait_style: ", magical gilded frame, candlelit Hogwarts, enchanted moving painting, wizarding world fantasy art"
+  portrait_style: ", magical gilded frame, candlelit castle interior, enchanted moving painting, wizarding fantasy art"
 
 agents:
   orchestrator:

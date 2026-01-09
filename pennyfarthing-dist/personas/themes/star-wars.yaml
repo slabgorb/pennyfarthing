@@ -2,7 +2,7 @@
 # Star Wars (1977-present), Lucasfilm / Disney
 #
 # DISCLAIMER: Star Wars and all related characters are owned by
-# Lucasfilm Ltd. / Disney. This theme is a fan-made parody/homage for
+# Lucasfilm/Disney. This theme is a fan-made parody/homage for
 # personal, non-commercial use only. No copyright infringement intended.
 
 theme:
@@ -13,7 +13,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Commander
-  portrait_style: ", Star Wars cinematic, McQuarrie concept art, lightsaber glow, space opera grandeur"
+  portrait_style: ", space opera cinematic, retro sci-fi concept art, lightsaber glow, galactic adventure grandeur"
 
 agents:
   orchestrator:

@@ -1,3 +1,10 @@
+# Discworld Theme
+# Terry Pratchett's Discworld novels
+#
+# DISCLAIMER: Discworld and all related characters are owned by
+# Narrativia Ltd (Terry Pratchett Estate). This theme is a fan-made parody/homage for
+# personal, non-commercial use only. No copyright infringement intended.
+
 theme:
   name: Discworld
   description: Characters from Terry Pratchett's Discworld series
@@ -6,7 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Commander
-  portrait_style: ", Paul Kidby illustration, oil painting with comic undertones, warm tavern, Ankh-Morpork whimsy"
+  portrait_style: ", satirical fantasy oil painting, comic undertones, warm tavern light, fantasy city whimsy"
 agents:
   orchestrator:
     character: DEATH

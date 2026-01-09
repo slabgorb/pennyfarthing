@@ -8,6 +8,21 @@
 </head>
 <body>
   <div id="container">
+    <!-- Left file panel (collapsible, resizable) -->
+    <div id="file-panel" class="file-panel collapsed">
+      <div class="file-panel-header">
+        <span class="file-panel-title">Files</span>
+        <button class="file-panel-collapse-btn" id="file-panel-collapse" title="Collapse panel">◀</button>
+      </div>
+      <div class="file-panel-content">
+        <div class="file-tree" id="file-panel-tree">
+          <!-- File tree rendered here -->
+        </div>
+      </div>
+    </div>
+    <div class="resize-handle" id="file-panel-resize" title="Drag to resize"></div>
+    <!-- Toggle button visible when panel is collapsed -->
+    <button class="file-panel-expand-btn" id="file-panel-expand" title="Show files">▶</button>
     <div id="main-content">
       <main id="message-view">
         <!-- MessageView will be mounted here -->
@@ -193,6 +208,7 @@
   <script type="module" src="/js/todos.js"></script>
   <script type="module" src="/js/components/TabContainer.js"></script>
   <script type="module" src="/js/components/DiffViewer.js"></script>
+  <script type="module" src="/js/file-panel.js"></script>
   <script type="module" src="/js/components/FileBrowser.js"></script>
   <!-- Files tab will be added on demand, not on startup -->
   <script type="module" src="/js/controls.js"></script>

@@ -1,9 +1,8 @@
 # Russian Masters Theme
-# Russian Literature Collection (19th Century)
-# Featuring characters from Dostoevsky, Tolstoy, Chekhov, and others
+# Russian Literature Collection (Dostoevsky, Tolstoy, Chekhov)
 #
-# NOTE: These are public domain works.
-# This theme is an educational homage for personal, non-commercial use only.
+# These works are in the public domain. Persona definitions are
+# original creative works for personal use.
 
 theme:
   name: Russian Masters
@@ -13,7 +12,7 @@ theme:
   default_humor: disabled
   character_immersion: high
   user_title: Dear Soul
-  portrait_style: ", 19th century Russian realist, Ilya Repin style, melancholic shadows, Orthodox gold"
+  portrait_style: ", 19th century Russian realist, Russian realist painting, melancholic shadows, Orthodox gold"
 
 agents:
   orchestrator:

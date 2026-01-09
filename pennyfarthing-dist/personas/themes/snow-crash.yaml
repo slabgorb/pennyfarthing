@@ -1,3 +1,10 @@
+# Snow Crash Theme
+# Snow Crash (1992), Neal Stephenson
+#
+# DISCLAIMER: Snow Crash and all related characters are owned by
+# Neal Stephenson. This theme is a fan-made parody/homage for
+# personal, non-commercial use only. No copyright infringement intended.
+
 theme:
   name: Snow Crash
   description: Characters from Snow Crash - polymath hackers, franchise nations, linguistic programming
@@ -6,7 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Citizen
-  portrait_style: ", Metaverse avatar, franchise nation, Stephenson cyberpunk, vector-sharp digital, 1990s future-tech"
+  portrait_style: ", Metaverse avatar, franchise nation, 90s cyberpunk, vector-sharp digital, 1990s future-tech"
 agents:
   orchestrator:
     character: The Librarian
