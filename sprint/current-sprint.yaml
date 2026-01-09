@@ -6,27 +6,43 @@ sprint:
   velocity_target: 100
 summary:
   total_points: 106
-  completed_points: 57
-  remaining_points: 49
-  notes: |
-    Sprint 7 focus: Benchmark framework, monorepo, telemetry.
+  completed_points: 60
+  remaining_points: 46
+  notes: 'Sprint 7 focus: Benchmark framework, monorepo, telemetry.
+
 
     COMPLETED (archived to completed.yaml):
+
     - Epic 3 (Context Circuit Breaker) - 5 pts - done 2026-01-06
+
     - Epic 10 (Choreography Patterns) - 8 pts - done 2026-01-06
+
     - Story 7-3 (Showcase Auto-Deploy) - 2 pts - done 2026-01-09
+
     - Stories 17-1, 17-2, 17-3 (Cyclist UX) - 11 pts - done 2026-01-08
+
     - Epic 18 (Monorepo Consolidation) - 21 pts - done 2026-01-09
+
     - Stories 17-5, 17-6, 17-7 (Cyclist UX bugs) - 7 pts - done 2026-01-09
+
     - Stories 19-1, 19-2 (Telemetry foundation) - 5 pts - done 2026-01-09
+
     - Story 7-2 (Job-fair expansion) - 5 pts - done 2026-01-09
+
     - Story 17-8 (Story panel IPC fix) - 3 pts - done 2026-01-09
+
     - Epic 17 complete (17-4 Popup profile) - 3 pts - done 2026-01-09
 
+
     BACKLOG:
+
     - Epic 19: Rich telemetry - 19-3 through 19-9 (21 pts remaining)
+
     - Epic 7: 7-1 benchmark runner (3 pts), 7-4 aggregate stats (3 pts)
+
     - Epic 21: Command & Skill Expansion (12 pts)
+
+    '
 epics:
 - id: epic-7
   title: Agent Performance Benchmarking Suite
@@ -91,92 +107,65 @@ epics:
     priority: P1
     status: done
     repos: pennyfarthing
-    notes: "PARTIAL COMPLETION (reviewed 2026-01-06):\n✓ --roles flag documented in\
-      \ job-fair.md\n✓ Architect baseline exists (database-selection, n=10, mean=86.70)\n\
-      ✗ Incremental merge untested - no evidence of merge behavior\n✗ Architect backfill:\
-      \ 12/81 themes (15% complete)\n✗ No architect swap recommendations in theme\
-      \ files\n\nSCENARIO SELECTION (added 2026-01-06):\nCurrent job-fair scenarios:\n\
-      \  - dev: race-condition-cache (std=0.63 - POOR differentiation)\n  - reviewer:\
-      \ order-service (std=1.45 - POOR differentiation)\n  - tea: payment-processor-tests\
-      \ (std=3.75 - acceptable)\n  - sm: sprint-planning-conflict (std=2.29 - acceptable)\n\
-      \nARCHITECT SCENARIO SELECTION (this story's focus):\n  DECISION: Use `legacy-modernization`\
-      \ for architect role\n  - Penalty-based scoring catches consulting bullshit\n\
-      \  - Tests hard choices: who to disappoint, what to sacrifice\n  - Baseline\
-      \ exists: mean=87.2, std=3.25, n=10\n\nARCHITECT ANALYSIS (Niander Wallace,\
-      \ 2026-01-06):\nReviewed all 28 baselines. Current suite has critical flaws:\n\
-      \n| Role | Current | Problem | Recommended | Improvement |\n|------|---------|---------|-------------|-------------|\n\
-      | architect | database-selection | std=2.15 | legacy-modernization | std=3.25\
-      \ (+51%) |\n| dev | race-condition-cache | std=0.63 | tdd-shopping-cart | std=7.30\
-      \ (+1059%) |\n| reviewer | order-service | std=1.45 | security-review | std=9.44\
-      \ (+551%) |\n| tea | payment-processor-tests | std=3.75 | checkout-component-tests\
-      \ | std=6.52 (+74%) |\n| sm | sprint-planning-conflict | std=2.29 | dependency-deadlock\
-      \ | std=2.36 (+3%) |\n\nRATIONALE:\n- Low std dev = all personas score the same\
-      \ = no differentiation = useless test\n- race-condition-cache (std=0.63) is\
-      \ worst offender - essentially random noise\n- security-review has 6x more signal\
-      \ than order-service\n- tdd-shopping-cart tests TDD discipline, not just \"\
-      can you code\"\n\nDEV ROLE SUB-COMPETENCY ANALYSIS (2026-01-06):\nDeveloper\
-      \ work falls into two distinct competency areas requiring different\nevaluation\
-      \ approaches. Dev is the ONLY role with dual-scenario testing.\n\nDEV SCENARIO\
-      \ CLASSIFICATION:\n| Scenario | Category | Type | Mean | Std | Differentiation\
-      \ |\n|----------|----------|------|------|-----|-----------------|\n| tdd-shopping-cart\
-      \ | dev | CODEGEN | 85.8 | 7.30 | EXCELLENT |\n| event-processor-tdd | dev |\
-      \ CODEGEN | 87.9 | 5.00 | Good |\n| astropy-12907 | swe-bench | DEBUG | 77.5\
-      \ | 8.54 | EXCELLENT |\n| buggy-user-service | debug | DEBUG | 74.3 | 7.37 |\
-      \ Good |\n| flask-5014 | swe-bench | DEBUG | 83.5 | 12.55 | BEST (n=6) |\n|\
-      \ migration-disaster | dev | DEBUG | 76.5 | 5.10 | Good |\n| null-pointer |\
-      \ debug | DEBUG | 82.8 | 1.50 | Poor |\n| race-condition-cache | dev | DEBUG\
-      \ | 76.8 | 0.63 | TERRIBLE |\n| django-10097 | swe-bench | DEBUG | 65.5 | 3.12\
-      \ | Poor |\n| matplotlib-14623 | swe-bench | DEBUG | 48.0 | 4.97 | Moderate\
-      \ |\n\nDEV SUB-COMPETENCY MODEL:\n┌─────────────────────────────────────────────────────────────┐\n\
-      │ dev-codegen: Tests TDD discipline, minimal implementation   │\n│   Scenario:\
-      \ tdd-shopping-cart (std=7.30)                    │\n│   Tests: Over-engineering\
-      \ resistance, test-first mindset    │\n│   Baseline: mean=85.8, n=10       \
-      \                          │\n├─────────────────────────────────────────────────────────────┤\n\
-      │ dev-debug: Tests crisis debugging, root cause analysis      │\n│   Scenario:\
-      \ astropy-12907 (std=8.54)                        │\n│   Tests: Real OSS bug\
-      \ fix, systematic debugging approach    │\n│   Baseline: mean=77.5, n=10   \
-      \                              │\n└─────────────────────────────────────────────────────────────┘\n\
-      \nRATIONALE FOR SCENARIO SELECTION:\n- tdd-shopping-cart: Highest std dev among\
-      \ codegen scenarios (7.30)\n  Tests TDD discipline - penalizes over-engineering\n\
-      - astropy-12907: Highest std dev among debug scenarios with n=10 (8.54)\n  Real\
-      \ SWE-bench bug - tests actual debugging on OSS codebase\n- race-condition-cache\
-      \ REJECTED: std=0.63 provides zero signal\n- flask-5014 considered but has only\
-      \ n=6 runs\n\nPERSONA INSIGHTS THIS ENABLES:\n- \"Great at TDD, struggles with\
-      \ debugging\" → Pair programming candidate\n- \"Excellent debugger, over-engineers\
-      \ new code\" → Maintenance specialist\n- \"Balanced both competencies\" → True\
-      \ generalist dev\n\nRECOMMENDATION FOR FUTURE STORY:\nUpdate job-fair to use\
-      \ optimal scenarios for ALL roles, not just architect.\nCurrent suite \"coddles\
-      \ the mediocre\" - Wallace\n\nOther roles (pm, devops, tech-writer, ux-designer,\
-      \ orchestrator):\n  OUT OF SCOPE - no scenarios currently available for job-fair\
-      \ testing.\n\nREMAINING WORK:\nARCHITECT:\n1. Audit architect-category scenarios\
-      \ (list all available) [DONE - Wallace]\n2. Select best competency-testing scenario\
-      \ for architect [DONE - legacy-modernization]\n3. Confirm architect baseline\
-      \ exists (or establish one) [DONE - n=10, mean=87.2]\n4. Run job-fair --roles\
-      \ architect across all 81 themes\n5. Verify incremental merge preserves existing\
-      \ dev/reviewer/tea/sm data\n6. Analyze architect results and apply swap recommendations\n\
-      \nDEV SUB-COMPETENCY:\n7. Classify all dev scenarios as codegen/debug [DONE\
-      \ - see table above]\n8. Select best scenario per sub-competency [DONE]\n  \
-      \ - dev-codegen: tdd-shopping-cart (std=7.30)\n   - dev-debug: astropy-12907\
-      \ (std=8.54)\n9. Update job-fair to run BOTH scenarios for dev role\n10. Update\
-      \ job-fair results format to show dev-codegen/dev-debug separately\n11. Backfill\
-      \ dev with new dual-scenario approach across themes\n\nTEA TESTING NOTES (Jinx,\
-      \ 2026-01-06):\nAvailable architect scenarios:\n  - database-selection (easy,\
-      \ baseline 86.7) - clear trade-offs, multiple valid\n  - legacy-modernization\
-      \ (easy, baseline 87.2) - impossible constraints, penalty scoring\n  - scaling-decision\
-      \ (hard, NO baseline) - Black Friday crunch\n\nScenario selection concern: database-selection\
-      \ may be TOO EASY (control=86.7).\nConsider legacy-modernization for better\
-      \ persona differentiation.\n\nREQUIRED TESTS:\n1. test_scenario_selection: Verify\
-      \ chosen scenario tests architect competence\n2. test_incremental_merge: Run\
-      \ on theme with existing data, verify preservation\n3. test_baseline_quality:\
-      \ Check score variance across themes (if all 85-90, low signal)\n4. test_swap_validation:\
-      \ Verify champion > native with statistical significance\n"
+    notes: "PARTIAL COMPLETION (reviewed 2026-01-06):\n✓ --roles flag documented in job-fair.md\n✓ Architect baseline exists\
+      \ (database-selection, n=10, mean=86.70)\n✗ Incremental merge untested - no evidence of merge behavior\n✗ Architect\
+      \ backfill: 12/81 themes (15% complete)\n✗ No architect swap recommendations in theme files\n\nSCENARIO SELECTION (added\
+      \ 2026-01-06):\nCurrent job-fair scenarios:\n  - dev: race-condition-cache (std=0.63 - POOR differentiation)\n  - reviewer:\
+      \ order-service (std=1.45 - POOR differentiation)\n  - tea: payment-processor-tests (std=3.75 - acceptable)\n  - sm:\
+      \ sprint-planning-conflict (std=2.29 - acceptable)\n\nARCHITECT SCENARIO SELECTION (this story's focus):\n  DECISION:\
+      \ Use `legacy-modernization` for architect role\n  - Penalty-based scoring catches consulting bullshit\n  - Tests hard\
+      \ choices: who to disappoint, what to sacrifice\n  - Baseline exists: mean=87.2, std=3.25, n=10\n\nARCHITECT ANALYSIS\
+      \ (Niander Wallace, 2026-01-06):\nReviewed all 28 baselines. Current suite has critical flaws:\n\n| Role | Current |\
+      \ Problem | Recommended | Improvement |\n|------|---------|---------|-------------|-------------|\n| architect | database-selection\
+      \ | std=2.15 | legacy-modernization | std=3.25 (+51%) |\n| dev | race-condition-cache | std=0.63 | tdd-shopping-cart\
+      \ | std=7.30 (+1059%) |\n| reviewer | order-service | std=1.45 | security-review | std=9.44 (+551%) |\n| tea | payment-processor-tests\
+      \ | std=3.75 | checkout-component-tests | std=6.52 (+74%) |\n| sm | sprint-planning-conflict | std=2.29 | dependency-deadlock\
+      \ | std=2.36 (+3%) |\n\nRATIONALE:\n- Low std dev = all personas score the same = no differentiation = useless test\n\
+      - race-condition-cache (std=0.63) is worst offender - essentially random noise\n- security-review has 6x more signal\
+      \ than order-service\n- tdd-shopping-cart tests TDD discipline, not just \"can you code\"\n\nDEV ROLE SUB-COMPETENCY\
+      \ ANALYSIS (2026-01-06):\nDeveloper work falls into two distinct competency areas requiring different\nevaluation approaches.\
+      \ Dev is the ONLY role with dual-scenario testing.\n\nDEV SCENARIO CLASSIFICATION:\n| Scenario | Category | Type | Mean\
+      \ | Std | Differentiation |\n|----------|----------|------|------|-----|-----------------|\n| tdd-shopping-cart | dev\
+      \ | CODEGEN | 85.8 | 7.30 | EXCELLENT |\n| event-processor-tdd | dev | CODEGEN | 87.9 | 5.00 | Good |\n| astropy-12907\
+      \ | swe-bench | DEBUG | 77.5 | 8.54 | EXCELLENT |\n| buggy-user-service | debug | DEBUG | 74.3 | 7.37 | Good |\n| flask-5014\
+      \ | swe-bench | DEBUG | 83.5 | 12.55 | BEST (n=6) |\n| migration-disaster | dev | DEBUG | 76.5 | 5.10 | Good |\n| null-pointer\
+      \ | debug | DEBUG | 82.8 | 1.50 | Poor |\n| race-condition-cache | dev | DEBUG | 76.8 | 0.63 | TERRIBLE |\n| django-10097\
+      \ | swe-bench | DEBUG | 65.5 | 3.12 | Poor |\n| matplotlib-14623 | swe-bench | DEBUG | 48.0 | 4.97 | Moderate |\n\n\
+      DEV SUB-COMPETENCY MODEL:\n┌─────────────────────────────────────────────────────────────┐\n│ dev-codegen: Tests TDD\
+      \ discipline, minimal implementation   │\n│   Scenario: tdd-shopping-cart (std=7.30)                    │\n│   Tests:\
+      \ Over-engineering resistance, test-first mindset    │\n│   Baseline: mean=85.8, n=10                              \
+      \   │\n├─────────────────────────────────────────────────────────────┤\n│ dev-debug: Tests crisis debugging, root cause\
+      \ analysis      │\n│   Scenario: astropy-12907 (std=8.54)                        │\n│   Tests: Real OSS bug fix, systematic\
+      \ debugging approach    │\n│   Baseline: mean=77.5, n=10                                 │\n└─────────────────────────────────────────────────────────────┘\n\
+      \nRATIONALE FOR SCENARIO SELECTION:\n- tdd-shopping-cart: Highest std dev among codegen scenarios (7.30)\n  Tests TDD\
+      \ discipline - penalizes over-engineering\n- astropy-12907: Highest std dev among debug scenarios with n=10 (8.54)\n\
+      \  Real SWE-bench bug - tests actual debugging on OSS codebase\n- race-condition-cache REJECTED: std=0.63 provides zero\
+      \ signal\n- flask-5014 considered but has only n=6 runs\n\nPERSONA INSIGHTS THIS ENABLES:\n- \"Great at TDD, struggles\
+      \ with debugging\" → Pair programming candidate\n- \"Excellent debugger, over-engineers new code\" → Maintenance specialist\n\
+      - \"Balanced both competencies\" → True generalist dev\n\nRECOMMENDATION FOR FUTURE STORY:\nUpdate job-fair to use optimal\
+      \ scenarios for ALL roles, not just architect.\nCurrent suite \"coddles the mediocre\" - Wallace\n\nOther roles (pm,\
+      \ devops, tech-writer, ux-designer, orchestrator):\n  OUT OF SCOPE - no scenarios currently available for job-fair testing.\n\
+      \nREMAINING WORK:\nARCHITECT:\n1. Audit architect-category scenarios (list all available) [DONE - Wallace]\n2. Select\
+      \ best competency-testing scenario for architect [DONE - legacy-modernization]\n3. Confirm architect baseline exists\
+      \ (or establish one) [DONE - n=10, mean=87.2]\n4. Run job-fair --roles architect across all 81 themes\n5. Verify incremental\
+      \ merge preserves existing dev/reviewer/tea/sm data\n6. Analyze architect results and apply swap recommendations\n\n\
+      DEV SUB-COMPETENCY:\n7. Classify all dev scenarios as codegen/debug [DONE - see table above]\n8. Select best scenario\
+      \ per sub-competency [DONE]\n   - dev-codegen: tdd-shopping-cart (std=7.30)\n   - dev-debug: astropy-12907 (std=8.54)\n\
+      9. Update job-fair to run BOTH scenarios for dev role\n10. Update job-fair results format to show dev-codegen/dev-debug\
+      \ separately\n11. Backfill dev with new dual-scenario approach across themes\n\nTEA TESTING NOTES (Jinx, 2026-01-06):\n\
+      Available architect scenarios:\n  - database-selection (easy, baseline 86.7) - clear trade-offs, multiple valid\n  -\
+      \ legacy-modernization (easy, baseline 87.2) - impossible constraints, penalty scoring\n  - scaling-decision (hard,\
+      \ NO baseline) - Black Friday crunch\n\nScenario selection concern: database-selection may be TOO EASY (control=86.7).\n\
+      Consider legacy-modernization for better persona differentiation.\n\nREQUIRED TESTS:\n1. test_scenario_selection: Verify\
+      \ chosen scenario tests architect competence\n2. test_incremental_merge: Run on theme with existing data, verify preservation\n\
+      3. test_baseline_quality: Check score variance across themes (if all 85-90, low signal)\n4. test_swap_validation: Verify\
+      \ champion > native with statistical significance\n"
     acceptance_criteria:
     - Job-fair runner accepts --roles flag (e.g., --roles architect) [DONE]
     - When --roles specified, only those roles benchmarked [DONE - documented]
     - Results merge with existing summaries (preserve existing data) [NEEDS VERIFICATION]
     - Best architect scenario selected from available options [DONE - legacy-modernization]
-    - Architect baseline established (10 runs minimum) [DONE - legacy-modernization,
-      n=10]
+    - Architect baseline established (10 runs minimum) [DONE - legacy-modernization, n=10]
     - Architect backfilled across all 81 themes [12/81 - IN PROGRESS]
     - Architect swap recommendations applied to theme files [NOT STARTED]
     - Dev sub-competency model defined (codegen vs debug) [DONE]
@@ -373,7 +362,7 @@ epics:
 
     '
   points: 26
-  completed_points: 5
+  completed_points: 8
   priority: P2
   marker: observability
   repos: pennyfarthing, cyclist
@@ -454,19 +443,23 @@ epics:
   - id: 19-3
     jira: MSSCI-11428
     title: Implement span hierarchy builder
-    description: "Build parent/child span relationships from flat OTEL events.\n\n\
-      Pattern from claude_telemetry:\n```\nclaude.agent.run (parent span)\n  ├─ user.prompt\
-      \ (event)\n  ├─ tool.Read (child span)\n  ├─ tool.Write (child span)\n  └─ agent.completed\
+    description: "Build parent/child span relationships from flat OTEL events.\n\nPattern from claude_telemetry:\n```\nclaude.agent.run\
+      \ (parent span)\n  ├─ user.prompt (event)\n  ├─ tool.Read (child span)\n  ├─ tool.Write (child span)\n  └─ agent.completed\
       \ (event)\n```\n\nUse trace_id and span_id from OTEL to reconstruct hierarchy.\n"
     points: 3
     priority: P1
-    status: backlog
+    status: done
+    started: 2026-01-09
+    assigned_to: Keith Avery
     repos: cyclist
     acceptance_criteria:
     - Spans grouped by trace_id
     - Parent/child relationships established via parent_span_id
     - Events attached to their parent spans
     - Hierarchy available for UI display and export
+    completed: '2026-01-09'
+    pr: https://github.com/1898andCo/pennyfarthing/pull/126
+    archived: 2026-01-09
   - id: 19-4
     jira: MSSCI-11429
     title: Add Pennyfarthing agent context to telemetry
@@ -705,7 +698,7 @@ epics:
   stories:
   - id: 17-4
     title: Popup profile view for persona details
-    status: done
+    status: backlog
     completed: 2026-01-09
     description: 'Add a popup/modal profile view that shows full details for a persona
 
@@ -729,7 +722,6 @@ epics:
       '
     points: 3
     priority: P2
-    status: backlog
     repos: cyclist
     acceptance_criteria:
     - Clicking persona triggers popup/modal display
@@ -773,27 +765,18 @@ epics:
     - Panel updates when files change
   - id: 17-6
     title: 'BUG: Context meter not wired to Electron polling'
-    description: 'The context meter in the stats strip shows "—%" because the IPC
-      infrastructure is incomplete.
+    description: 'The context meter in the stats strip shows "—%" because the IPC infrastructure is incomplete.
 
-      EXISTING:
-      - getContextUsage() in api/context.ts (calls check-context.sh)
-      - /api/context server endpoint
-      - Frontend polling code in stats-strip.js (lines 134-153)
+      EXISTING: - getContextUsage() in api/context.ts (calls check-context.sh) - /api/context server endpoint - Frontend polling
+      code in stats-strip.js (lines 134-153)
 
-      MISSING:
-      - context:get IPC handler in main.ts setupDataIPCHandlers()
-      - context.get() method in preload.ts (only onUpdate exists)
-      - Polling/broadcast in startProjectWatchers()
+      MISSING: - context:get IPC handler in main.ts setupDataIPCHandlers() - context.get() method in preload.ts (only onUpdate
+      exists) - Polling/broadcast in startProjectWatchers()
 
-      FIX:
-      1. Add context:get handler to main.ts (like toolStats:get)
-      2. Add context.get() to preload ElectronContextAPI
-      3. Add polling interval in startProjectWatchers (every 10-30s)
-      4. Broadcast context:update when values change
+      FIX: 1. Add context:get handler to main.ts (like toolStats:get) 2. Add context.get() to preload ElectronContextAPI 3.
+      Add polling interval in startProjectWatchers (every 10-30s) 4. Broadcast context:update when values change
 
-      Reference: Token stats and tool stats patterns in main.ts work correctly.
-      '
+      Reference: Token stats and tool stats patterns in main.ts work correctly. '
     points: 2
     priority: P1
     status: done
@@ -809,27 +792,19 @@ epics:
     - Stats strip displays actual context percentage
     - Context meter updates in real-time during conversation
   - id: 17-7
-    title: 'Session ID tracking for context and agent state'
-    description: 'The context meter currently checks the most recent Claude transcript
-      in the project directory, which may be the wrong session (e.g., a terminal
-      session instead of Cyclist''s PTY session).
+    title: Session ID tracking for context and agent state
+    description: 'The context meter currently checks the most recent Claude transcript in the project directory, which may
+      be the wrong session (e.g., a terminal session instead of Cyclist''s PTY session).
 
-      Need to track Cyclist''s Claude session ID and use it for:
-      - Context usage checking (check correct transcript)
-      - Agent state lookups (which agent is active in THIS session)
-      - Story context (which story THIS session is working on)
+      Need to track Cyclist''s Claude session ID and use it for: - Context usage checking (check correct transcript) - Agent
+      state lookups (which agent is active in THIS session) - Story context (which story THIS session is working on)
 
-      Implementation:
-      1. ClaudeService already captures session_id from init messages
-      2. Pass session ID to getContextUsage() and check-context.sh
-      3. Add --session flag to check-context.sh to target specific transcript
-      4. Use session ID for agent state lookups
+      Implementation: 1. ClaudeService already captures session_id from init messages 2. Pass session ID to getContextUsage()
+      and check-context.sh 3. Add --session flag to check-context.sh to target specific transcript 4. Use session ID for agent
+      state lookups
 
-      Files to modify:
-      - packages/cyclist/src/main.ts (pass session to context polling)
-      - packages/cyclist/src/api/context.ts (accept session param)
-      - scripts/check-context.sh (add --session flag)
-      '
+      Files to modify: - packages/cyclist/src/main.ts (pass session to context polling) - packages/cyclist/src/api/context.ts
+      (accept session param) - scripts/check-context.sh (add --session flag) '
     points: 3
     priority: P1
     status: done
@@ -845,32 +820,24 @@ epics:
     - Agent state lookups use session-specific files
     - Multiple Cyclist instances don''t interfere with each other
   - id: 17-8
-    title: 'Fix story panel not loading in Electron (IPC vs HTTP mismatch)'
-    status: done
+    title: Fix story panel not loading in Electron (IPC vs HTTP mismatch)
+    status: backlog
     completed: 2026-01-09
-    description: 'The Story Panel shows "No active story" in Electron even when
-      there IS an active session with story data. The same functionality works
-      correctly in the web view.
+    description: 'The Story Panel shows "No active story" in Electron even when there IS an active session with story data.
+      The same functionality works correctly in the web view.
 
-      Root cause: Web view uses HTTP API (`/api/story`) via Express router, while
-      Electron uses IPC (`story:get` handler). Both call `getStoryInfo()` but the
-      IPC path may have different project directory resolution or timing issues.
+      Root cause: Web view uses HTTP API (`/api/story`) via Express router, while Electron uses IPC (`story:get` handler).
+      Both call `getStoryInfo()` but the IPC path may have different project directory resolution or timing issues.
 
-      Investigation needed:
-      1. Compare project directory resolution between HTTP and IPC paths
-      2. Check if IPC handler is being called (add logging)
-      3. Verify `detectPennyfarthingProject()` returns true for IPC path
-      4. Check timing of initial story fetch vs window ready
+      Investigation needed: 1. Compare project directory resolution between HTTP and IPC paths 2. Check if IPC handler is
+      being called (add logging) 3. Verify `detectPennyfarthingProject()` returns true for IPC path 4. Check timing of initial
+      story fetch vs window ready
 
-      Files to investigate:
-      - packages/cyclist/src/main.ts (IPC handler at line ~649)
-      - packages/cyclist/src/api/story.ts (HTTP router)
-      - packages/cyclist/src/public/js/story.js (client-side refresh)
-      - packages/cyclist/src/story-parser.ts (shared parsing logic)
-      '
+      Files to investigate: - packages/cyclist/src/main.ts (IPC handler at line ~649) - packages/cyclist/src/api/story.ts
+      (HTTP router) - packages/cyclist/src/public/js/story.js (client-side refresh) - packages/cyclist/src/story-parser.ts
+      (shared parsing logic) '
     points: 3
     priority: P1
-    status: backlog
     repos: cyclist
     acceptance_criteria:
     - Story panel shows active story in Electron app
