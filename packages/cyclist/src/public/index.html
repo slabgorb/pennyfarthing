@@ -21,26 +21,27 @@
       </div>
     </div>
     <div class="resize-handle" id="file-panel-resize" title="Drag to resize"></div>
-    <!-- Toggle button visible when panel is collapsed -->
-    <button class="file-panel-expand-btn" id="file-panel-expand" title="Show files">▶</button>
+    <!-- Left diff panel (collapsible, resizable) -->
+    <div id="diff-panel" class="diff-panel collapsed">
+      <div class="diff-panel-header">
+        <span class="diff-panel-title">Diffs</span>
+        <span class="diff-panel-count" id="diff-panel-count"></span>
+        <button class="diff-panel-collapse-btn" id="diff-panel-collapse" title="Collapse panel">◀</button>
+      </div>
+      <div class="diff-panel-content" id="diff-panel-content">
+        <!-- Diff content rendered here -->
+      </div>
+    </div>
+    <div class="resize-handle" id="diff-panel-resize" title="Drag to resize"></div>
+    <!-- Toggle buttons visible when panels are collapsed -->
+    <button class="file-panel-expand-btn" id="file-panel-expand" title="Show files"><span class="expand-label">FILES</span></button>
+    <button class="diff-panel-expand-btn" id="diff-panel-expand" title="Show diffs"><span class="expand-label">DIFFS</span></button>
     <div id="main-content">
       <main id="message-view">
         <!-- MessageView will be mounted here -->
       </main>
       <!-- Quick action buttons for suggested prompts (B-9.6) -->
       <div id="quick-actions"></div>
-      <!-- E8-1: Tab Panel for workspace (diffs, files, browser) -->
-      <div id="tab-panel" class="tab-panel collapsed">
-        <div class="tab-bar">
-          <div class="tab-bar-tabs" id="tab-bar-tabs">
-            <!-- Dynamic tabs inserted here -->
-          </div>
-          <button class="tab-panel-toggle" id="tab-panel-toggle" title="Toggle panel">▼</button>
-        </div>
-        <div class="tab-content" id="tab-content">
-          <!-- Active tab content rendered here -->
-        </div>
-      </div>
       <div id="editor-wrapper">
         <div id="editor-toolbar">
           <button type="button" class="toolbar-btn" data-action="bold" title="Bold (Ctrl+B)"><strong>B</strong></button>
@@ -206,7 +207,7 @@
   <script type="module" src="/js/persona.js"></script>
   <script type="module" src="/js/story.js"></script>
   <script type="module" src="/js/todos.js"></script>
-  <script type="module" src="/js/components/TabContainer.js"></script>
+  <script type="module" src="/js/diff-panel.js"></script>
   <script type="module" src="/js/components/DiffViewer.js"></script>
   <script type="module" src="/js/file-panel.js"></script>
   <script type="module" src="/js/components/FileBrowser.js"></script>
