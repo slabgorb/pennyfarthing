@@ -767,9 +767,10 @@ epics:
       '
     points: 2
     priority: P1
-    status: in_progress
+    status: done
     repos: cyclist
     started: 2026-01-09
+    completed: 2026-01-09
     assigned_to: Keith Avery
     acceptance_criteria:
     - Changed Files panel displays list of modified files
@@ -836,8 +837,12 @@ epics:
       '
     points: 3
     priority: P1
-    status: backlog
+    status: done
+    started: 2026-01-09
+    completed: 2026-01-09
+    assigned_to: Keith Avery
     repos: cyclist, pennyfarthing
+    pr: https://github.com/1898andCo/pennyfarthing/pull/123
     acceptance_criteria:
     - ClaudeService session ID passed to context polling
     - check-context.sh accepts --session <id> flag
