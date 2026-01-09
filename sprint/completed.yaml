@@ -676,6 +676,24 @@ sprint_7_completed:
       completed: 2026-01-09
       repos: pennyfarthing
 
+    - id: "17-4"
+      epic: epic-17
+      title: "Popup profile view for persona details"
+      points: 3
+      status: done
+      completed: 2026-01-09
+      repos: cyclist
+      notes: "Completed via bug branch"
+
+    - id: "17-8"
+      epic: epic-17
+      title: "Fix story panel not loading in Electron (IPC vs HTTP mismatch)"
+      points: 3
+      status: done
+      completed: 2026-01-09
+      repos: cyclist
+      notes: "Completed via bug branch"
+
 # =============================================================================
 # CUMULATIVE METRICS
 # =============================================================================
