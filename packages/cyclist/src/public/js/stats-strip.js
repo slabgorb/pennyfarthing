@@ -93,29 +93,26 @@ async function initStatsStrip() {
     return;
   }
 
-  // Get initial stats for model and context
+  // Get initial stats for model only (context handled separately via context IPC)
   try {
     const stats = await window.electronAPI.stats.get();
     if (stats) {
       if (stats.model) {
         updateStripStat('strip-model', stats.model);
       }
-      if (stats.context !== undefined) {
-        updateContextMeter(stats.context);
-      }
+      // Note: stats.context is a placeholder '—', don't use it
+      // Real context comes from dedicated context IPC channel below
     }
   } catch (err) {
     console.error('[StatsStrip] Failed to get initial stats:', err);
   }
 
-  // Subscribe to stats updates (model, context)
+  // Subscribe to stats updates (model only - context handled separately)
   window.electronAPI.stats.onUpdate((_event, stats) => {
     if (stats.model !== undefined) {
       updateStripStat('strip-model', stats.model);
     }
-    if (stats.context !== undefined) {
-      updateContextMeter(stats.context);
-    }
+    // Don't update context from stats channel - it's always '—'
   });
 
   // Token stats subscription

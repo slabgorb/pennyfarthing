@@ -422,7 +422,7 @@ html, body {
 .context-mini {
   position: relative;
   width: 80px;
-  height: 8px;
+  height: 18px;
   background: var(--bg-primary);
   border-radius: 4px;
   overflow: hidden;
@@ -443,7 +443,7 @@ html, body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 0.7rem;  /* B-20: Increased for readability */
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-primary);
   text-shadow: 0 0 2px var(--bg-primary);
