@@ -810,6 +810,38 @@ epics:
     - context:update broadcast when values change
     - Stats strip displays actual context percentage
     - Context meter updates in real-time during conversation
+  - id: 17-7
+    title: 'Session ID tracking for context and agent state'
+    description: 'The context meter currently checks the most recent Claude transcript
+      in the project directory, which may be the wrong session (e.g., a terminal
+      session instead of Cyclist''s PTY session).
+
+      Need to track Cyclist''s Claude session ID and use it for:
+      - Context usage checking (check correct transcript)
+      - Agent state lookups (which agent is active in THIS session)
+      - Story context (which story THIS session is working on)
+
+      Implementation:
+      1. ClaudeService already captures session_id from init messages
+      2. Pass session ID to getContextUsage() and check-context.sh
+      3. Add --session flag to check-context.sh to target specific transcript
+      4. Use session ID for agent state lookups
+
+      Files to modify:
+      - packages/cyclist/src/main.ts (pass session to context polling)
+      - packages/cyclist/src/api/context.ts (accept session param)
+      - scripts/check-context.sh (add --session flag)
+      '
+    points: 3
+    priority: P1
+    status: backlog
+    repos: cyclist, pennyfarthing
+    acceptance_criteria:
+    - ClaudeService session ID passed to context polling
+    - check-context.sh accepts --session <id> flag
+    - Context checks target Cyclist''s session transcript only
+    - Agent state lookups use session-specific files
+    - Multiple Cyclist instances don''t interfere with each other
 - id: epic-21
   title: Command & Skill Expansion
   description: 'Add high-value commands and skills identified from Anthropic''s official
