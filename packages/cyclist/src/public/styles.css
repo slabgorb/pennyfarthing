@@ -1368,42 +1368,151 @@ html, body {
 }
 
 /* =============================================================================
-   17-1: Message Queue Indicator
+   17-1: Message Queue Indicator with Dropdown
    ============================================================================= */
 
 .queue-indicator {
+  position: relative;
+}
+
+.queue-toggle {
   display: flex;
   align-items: center;
   gap: 0.25rem;
   background: var(--accent);
   color: var(--bg-primary);
+  border: none;
   border-radius: 1rem;
   padding: 0.25rem 0.5rem;
   font-size: 0.75rem;
   font-weight: 600;
-  min-width: 2.5rem;
-  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
 }
 
-.queue-indicator .queue-count {
+.queue-toggle:hover {
+  opacity: 0.9;
+}
+
+.queue-toggle .queue-count {
   min-width: 1rem;
   text-align: center;
 }
 
-.queue-indicator .queue-clear-btn {
-  background: none;
-  border: none;
-  color: inherit;
-  cursor: pointer;
-  padding: 0;
-  font-size: 0.75rem;
-  line-height: 1;
-  opacity: 0.7;
-  transition: opacity 0.15s ease;
+.queue-toggle .queue-label {
+  opacity: 0.9;
 }
 
-.queue-indicator .queue-clear-btn:hover {
+.queue-dropdown {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: 0.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  min-width: 300px;
+  max-width: 400px;
+  max-height: 300px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 100;
+}
+
+.queue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.queue-header .queue-clear-btn {
+  background: none;
+  border: none;
+  color: var(--error-color);
+  cursor: pointer;
+  font-size: 0.7rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  transition: background 0.15s ease;
+}
+
+.queue-header .queue-clear-btn:hover {
+  background: rgba(255, 100, 100, 0.1);
+}
+
+.queue-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.queue-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.8rem;
+  color: var(--text-primary);
+}
+
+.queue-item:last-child {
+  border-bottom: none;
+}
+
+.queue-item-number {
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  background: var(--accent);
+  color: var(--bg-primary);
+  border-radius: 50%;
+  font-size: 0.65rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.queue-item-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 280px;
+}
+
+.queue-item-remove {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.125rem;
+  font-size: 0.7rem;
+  opacity: 0.6;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.queue-item-remove:hover {
   opacity: 1;
+  color: var(--error-color);
+}
+
+.queue-empty {
+  padding: 1rem;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-style: italic;
 }
 
 /* =============================================================================
