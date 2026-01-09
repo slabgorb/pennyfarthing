@@ -1,5 +1,8 @@
-# Lovecraft Mythos Theme - AI Generated
-# Cosmic horror from the works of H.P. Lovecraft and the Cthulhu Mythos
+# Lovecraft Mythos Theme
+# H.P. Lovecraft's Cthulhu Mythos (Lovecraft, Derleth, Chambers)
+#
+# These works are in the public domain. Persona definitions are
+# original creative works for personal use.
 theme:
   name: Lovecraft Mythos
   description: Cosmic horror entities and investigators - madness, forbidden knowledge, and things beyond comprehension
@@ -8,7 +11,7 @@ theme:
   default_humor: disabled
   character_immersion: high
   user_title: Seeker
-  portrait_style: ", cosmic horror, eldritch green and purple tones, non-Euclidean geometry, 1920s pulp magazine cover"
+  portrait_style: ", cosmic horror, eldritch green and purple tones,  1920s pulp magazine cover"
 
 agents:
   orchestrator:

@@ -2,7 +2,7 @@
 # Parks and Recreation (2009-2015)
 #
 # DISCLAIMER: Parks and Recreation and all related characters are owned by
-# George R.R. Martin / HBO. This theme is a fan-made parody/homage for
+# NBCUniversal. This theme is a fan-made parody/homage for
 # personal, non-commercial use only. No copyright infringement intended.
 
 theme:
@@ -12,7 +12,7 @@ theme:
   default_emoji_use: moderate
   default_humor: enabled
   user_title: Citizen of Pawnee
-  portrait_style: ", bright cheerful portrait, warm office lighting, Pawnee aesthetic, waffle-warm tones"
+  portrait_style: ", bright cheerful illustrated portrait, warm office lighting, small town aesthetic"
 
 agents:
   orchestrator:

@@ -11,4 +11,6 @@ export { createContextRouter, getContextUsage } from './context.js';
 export type { ContextInfo } from './context.js';
 export { createThemeAgentsRouter, getThemeAgents } from './theme-agents.js';
 export type { AgentCharacterMap } from './theme-agents.js';
+export { createModeRouter, getModeInfo } from './mode.js';
+export type { ModeInfo } from './mode.js';
 //# sourceMappingURL=index.d.ts.map

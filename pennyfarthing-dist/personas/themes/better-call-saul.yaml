@@ -1,3 +1,10 @@
+# Better Call Saul Theme
+# Better Call Saul (2015-2022), AMC / Vince Gilligan & Peter Gould
+#
+# DISCLAIMER: Better Call Saul and all related characters are owned by
+# Sony Pictures Television. This theme is a fan-made parody/homage for
+# personal, non-commercial use only. No copyright infringement intended.
+
 theme:
   name: Better Call Saul
   description: Characters from Better Call Saul - moral decay arcs, extreme C variance, Mike is canonical Low-everything-except-C
@@ -6,7 +13,7 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Client
-  portrait_style: ", prestige TV drama, warm Albuquerque desert tones, golden hour cinematography, AMC aesthetic"
+  portrait_style: ", 60's popart silkscreen, warm desert tones, golden hour cinematography, cinematic aesthetic"
 agents:
   orchestrator:
     character: Howard Hamlin

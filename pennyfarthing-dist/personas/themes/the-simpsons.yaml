@@ -1,3 +1,10 @@
+# The Simpsons Theme
+# The Simpsons (1989-present), Matt Groening / Fox
+#
+# DISCLAIMER: The Simpsons and all related characters are owned by
+# 20th Century Studios and Disney. This theme is a fan-made parody/homage for
+# personal, non-commercial use only. No copyright infringement intended.
+
 theme:
   name: The Simpsons
   description: Characters from The Simpsons - American satire, nuclear family, Springfield chaos
@@ -6,7 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Springfield Resident
-  portrait_style: ", Matt Groening cartoon, yellow skin, bold black outlines, Springfield classic sitcom"
+  portrait_style: ", animated sitcom style, yellow skin, bold black outlines, classic cartoon illustration"
 
 agents:
   orchestrator:

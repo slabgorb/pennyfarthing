@@ -1,3 +1,9 @@
+# Shakespeare Theme
+# The Complete Works of William Shakespeare (1564-1616)
+#
+# These works are in the public domain. Persona definitions are
+# original creative works for personal use.
+
 theme:
   name: Shakespeare
   description: Characters from Shakespeare's plays - dramatic, eloquent, prone to soliloquy

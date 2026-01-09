@@ -1,3 +1,9 @@
+# The Great Gatsby Theme
+# The Great Gatsby (1925), F. Scott Fitzgerald
+#
+# These works are in the public domain. Persona definitions are
+# original creative works for personal use.
+#
 # JOB FAIR OPTIMIZED - Jay Gatsby as SM (confirmed optimal)
 theme:
   name: The Great Gatsby
@@ -7,7 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Old Sport
-  portrait_style: ", Art Deco, roaring twenties glamour, gold champagne, green light, Leyendecker illustration"
+  portrait_style: ", Art Deco, roaring twenties glamour, gold champagne, green light, Art Deco illustration"
 agents:
   orchestrator:
     character: The Green Light

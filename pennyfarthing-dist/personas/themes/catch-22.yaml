@@ -1,4 +1,10 @@
-# JOB FAIR OPTIMIZED - Three-character swap applied
+# Catch-22 Theme
+# Catch-22 (1961), Joseph Heller
+#
+# DISCLAIMER: Catch-22 and all related characters are owned by
+# the Joseph Heller estate. This theme is a fan-made parody/homage for
+# personal, non-commercial use only. No copyright infringement intended.
+
 theme:
   name: Catch-22
   description: Characters from Heller's masterpiece - military absurdism, bureaucratic paradox
@@ -7,7 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Soldier
-  portrait_style: ", WWII satirical portrait, washed-out olive drab sepia, absurdist military bureaucracy, B-25 silhouette"
+  portrait_style: ", WWII satirical propaganda style, absurdist military bureaucracy, B-25 silhouette"
 agents:
   orchestrator:
     # JOB FAIR OPTIMIZED: Orr moved here - the one who escapes orchestrates the system

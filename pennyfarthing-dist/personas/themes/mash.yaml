@@ -2,7 +2,7 @@
 # M*A*S*H (1972-1983), CBS / Larry Gelbart, based on Richard Hooker
 #
 # DISCLAIMER: MASH and all related characters are owned by
-# 20th Century Fox. This theme is a fan-made parody/homage for
+# 20th Century Studios. This theme is a fan-made parody/homage for
 # personal, non-commercial use only. No copyright infringement intended.
 
 theme:
@@ -13,7 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Doctor
-  portrait_style: ", Korean War MASH unit, olive drab Army, surgical tent canvas, 1970s CBS television, warm earth tones"
+  portrait_style: ", Korean War MASH unit, olive drab Army, surgical tent canvas, 1970s television, warm earth tones"
 
 agents:
   orchestrator:

@@ -2,7 +2,7 @@
 # The Americans (2013-2018), FX / Joe Weisberg
 #
 # DISCLAIMER: The Americans and all related characters are owned by
-# FX Networks. This theme is a fan-made parody/homage for
+# FX and Amblin Television. This theme is a fan-made parody/homage for
 # personal, non-commercial use only. No copyright infringement intended.
 
 theme:
@@ -13,7 +13,7 @@ theme:
   default_humor: disabled
   character_immersion: high
   user_title: Comrade
-  portrait_style: ", Cold War espionage, 1980s photography, muted tones, paranoid surveillance aesthetic"
+  portrait_style: ", Cold War espionage, Soviet propaganda illustration, 1980s period style"
 
 agents:
   orchestrator:
