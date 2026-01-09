@@ -13,7 +13,7 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Springfield Resident
-  portrait_style: ", animated sitcom style, yellow skin, bold black outlines, classic cartoon illustration"
+  portrait_style: ", animated sitcom style, bold black outlines"
 
 agents:
   orchestrator:
