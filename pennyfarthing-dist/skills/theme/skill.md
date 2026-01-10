@@ -1,0 +1,116 @@
+---
+name: theme
+description: Manage persona themes - list available themes, show current/specific theme details, and set active theme. Use for all theme-related operations.
+---
+
+# Theme Management Skill
+
+## Overview
+
+Pennyfarthing uses themed personas to give each agent a unique character. This skill provides commands to list, view, and change themes.
+
+## Quick Reference
+
+| Action | Command |
+|--------|---------|
+| List all themes | `/list-themes` or see below |
+| Show current theme | `/show-theme` |
+| Show specific theme | `/show-theme <name>` |
+| Set active theme | `/set-theme <name>` |
+| Create new theme | `/theme-maker` (interactive) |
+
+## List Available Themes
+
+To see all available themes:
+
+```bash
+ls pennyfarthing-dist/personas/themes/*.yaml | xargs -I{} basename {} .yaml | sort
+```
+
+To show the current theme:
+
+```bash
+cat .claude/persona-config.local.yaml 2>/dev/null || cat .claude/persona-config.yaml 2>/dev/null || echo "No theme configured"
+```
+
+## Show Theme Details
+
+To display a theme's agent mappings:
+
+```bash
+# Show current theme
+THEME=$(cat .claude/persona-config.local.yaml 2>/dev/null | grep "^theme:" | cut -d'"' -f2)
+[ -z "$THEME" ] && THEME=$(cat .claude/persona-config.yaml 2>/dev/null | grep "^theme:" | cut -d'"' -f2)
+cat pennyfarthing-dist/personas/themes/${THEME}.yaml
+```
+
+Or for a specific theme:
+
+```bash
+cat pennyfarthing-dist/personas/themes/<theme-name>.yaml
+```
+
+## Set Active Theme
+
+To change the active theme:
+
+1. Verify theme exists:
+   ```bash
+   ls pennyfarthing-dist/personas/themes/<name>.yaml
+   ```
+
+2. Update the config file (`.claude/persona-config.local.yaml` or `.claude/persona-config.yaml`):
+   - Edit the `theme:` line to the new theme name
+
+3. Start a new agent session to use the new theme
+
+## Theme File Locations
+
+| Location | Purpose |
+|----------|---------|
+| `pennyfarthing-dist/personas/themes/` | Built-in themes (96+) |
+| `.claude/pennyfarthing/themes/` | User-created custom themes |
+| `.claude/persona-config.local.yaml` | Local theme selection (gitignored) |
+| `.claude/persona-config.yaml` | Shared theme selection (committed) |
+
+## Theme Structure
+
+Each theme YAML defines agents with:
+
+```yaml
+theme:
+  name: theme-name
+  description: Brief description
+
+agents:
+  sm:
+    character: Character Name
+    style: Communication style description
+    quote: Signature quote
+    trait: Key personality trait
+    helper: Helper/assistant description
+  tea:
+    # ...same structure...
+  dev:
+    # ...
+```
+
+## Creating Custom Themes
+
+For creating new themes, use `/theme-maker` which provides:
+- **AI-Driven Mode**: Describe a concept, AI generates all personas
+- **Guided Mode**: Pick from AI-suggested characters
+- **Manual Mode**: Specify every detail yourself
+
+See the `theme-creation` skill for full documentation.
+
+## Common Theme Categories
+
+Themes are available across many categories:
+- **TV/Film**: star-trek-tos, star-trek-tng, breaking-bad, the-wire, firefly, etc.
+- **Literature**: shakespeare, jane-austen, dickens, discworld, dune, etc.
+- **Historical**: ancient-philosophers, military-commanders, renaissance-masters, etc.
+- **Mythology**: greek-mythology, norse-mythology, arthurian-mythos, etc.
+- **Animated**: futurama, the-simpsons, avatar-the-last-airbender, etc.
+
+Run the list command to see all 96+ available themes.

@@ -5,9 +5,9 @@ sprint:
   status: active
   velocity_target: 100
 summary:
-  total_points: 106
+  total_points: 109
   completed_points: 71
-  remaining_points: 35
+  remaining_points: 38
   notes: 'Sprint 7 focus: Benchmark framework, monorepo, telemetry.
 
 
@@ -46,7 +46,7 @@ summary:
 
     - Epic 21: Command & Skill Expansion - 21-4 (2 pts remaining)
 
-    - Epic 22: Verbose Mode - 22-4, 22-6 (3 pts remaining)
+    - Epic 22: Verbose Mode - 22-4, 22-6, 22-7 (6 pts remaining)
 
 '
 epics:
@@ -1092,8 +1092,8 @@ epics:
 
       This addresses the gap between Claude's autonomy and user oversight,
       especially important for shell commands and file modifications.
-    points: 13
-    completed_points: 3
+    points: 16
+    completed_points: 10
     priority: P1
     marker: safety
     repos: cyclist
@@ -1277,3 +1277,49 @@ epics:
           - Filter by tool type
           - Export to JSON
           - Log clears on session reset
+      - id: 22-7
+        title: Fix token count accuracy and UI improvements
+        description: |
+          The token counts displayed in the stats strip (input/output tokens)
+          don't align with the context meter percentage. These use completely
+          different data sources:
+
+          Current implementation:
+          - Token counts: From OTEL telemetry (claude_code.api_request events)
+          - Context meter: From check-context.sh reading Claude transcript files
+
+          Problem:
+          - OTEL telemetry may not capture all token usage accurately
+          - Transcript-based context is the ground truth for context window
+          - Token stats may be cumulative while context is current window
+          - Different refresh rates cause visual mismatch
+
+          Solution options:
+          1. Use transcript-based calculation for both (consistent, accurate)
+          2. Fix OTEL token capture to match transcript data
+          3. Clearly label what each metric represents if they differ
+
+          The context meter is likely more accurate since it reads actual
+          Claude session state. Token stats may need to be derived from
+          the same source or clearly documented as "cumulative session tokens"
+          vs "current context window".
+
+          Additional scope:
+          - Fix diff panel scrolling (lines wrap instead of horizontal scroll)
+          - Create /theme skill for theme management
+          - Update CLAUDE.md to reference theme skill instead of hardcoded list
+        points: 3
+        priority: P1
+        status: in_progress
+        started: 2026-01-10
+        assigned_to: Keith Avery
+        repos: cyclist, pennyfarthing
+        acceptance_criteria:
+          - Token counts accurately reflect actual usage
+          - Clear documentation of what each metric measures
+          - If sources differ, UI clearly distinguishes cumulative vs current
+          - Context meter remains source of truth for context window
+          - Stats refresh at consistent intervals
+          - Diff panel scrolls horizontally for long lines (no wrapping)
+          - /theme skill created with list/show/set documentation
+          - CLAUDE.md references theme skill instead of hardcoded theme list
