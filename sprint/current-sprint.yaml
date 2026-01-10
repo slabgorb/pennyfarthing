@@ -6,8 +6,8 @@ sprint:
   velocity_target: 100
 summary:
   total_points: 106
-  completed_points: 62
-  remaining_points: 44
+  completed_points: 64
+  remaining_points: 42
   notes: 'Sprint 7 focus: Benchmark framework, monorepo, telemetry.
 
 
@@ -890,7 +890,7 @@ epics:
 
     '
   points: 12
-  completed_points: 3
+  completed_points: 5
   priority: P2
   marker: tooling
   repos: pennyfarthing
@@ -961,9 +961,10 @@ epics:
       '
     points: 2
     priority: P1
-    status: in_progress
+    status: done
     repos: pennyfarthing
     started: 2026-01-10
+    completed: 2026-01-10
     assigned_to: Keith Avery
     acceptance_criteria:
     - /prime command loads essential context files
@@ -1111,7 +1112,9 @@ epics:
       '
     points: 2
     priority: P1
-    status: backlog
+    status: in_progress
+    started: 2026-01-10
+    assigned_to: Keith Avery
     repos: pennyfarthing
     acceptance_criteria:
     - /help lists all Pennyfarthing commands with descriptions
