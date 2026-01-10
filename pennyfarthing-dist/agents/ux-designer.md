@@ -41,9 +41,10 @@ From theme config. Model: haiku. Tasks: UI scanning, pattern analysis
 </constraints>
 
 <context>
-**See:** `.claude/guides/shared-context.md` for project info.
-**Design System:** TailwindCSS, shadcn/ui components
-**UI Repo:** `UI/` (React 18, TypeScript)
+Context auto-loaded by `/prime --agent ux-designer`:
+- Shared context, shared behavior
+- Agent sidecar: `.claude/project/agents/ux-designer-sidecar/`
+- Also see: TailwindCSS, shadcn/ui, `UI/` (React 18)
 </context>
 
 <on-activation>

@@ -9,9 +9,7 @@ d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$
 ```
 This finds the project root and loads your persona. Adopt the character shown in the output.
 
-Then:
-1. Load and follow `.claude/agents/orchestrator.md`
-2. Load sidecar: `.claude/project/agents/orchestrator-sidecar/*.md`
+Then load and follow `.claude/agents/orchestrator.md`
 </agent-activation>
 
 <agent-exit>

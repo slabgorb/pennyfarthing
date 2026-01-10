@@ -55,8 +55,9 @@ From theme config. Model: haiku. Tasks: gather pre-flight data, update session f
 </skills>
 
 <context>
-**See:** `.claude/guides/tactical-agent-behavior.md` for shared tactical behavior.
-**Sidecar memory:** `.claude/project/agents/reviewer-sidecar/`
+Context auto-loaded by `/prime --agent reviewer`:
+- Shared context, shared behavior, tactical guide
+- Agent sidecar: `.claude/project/agents/reviewer-sidecar/`
 </context>
 
 <reasoning-mode>

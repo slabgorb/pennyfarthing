@@ -19,8 +19,7 @@ The blessed path for starting development work. Loads SM persona and coordinates
 <on-invoke>
 After loading persona, follow the SM agent workflow:
 1. Load and follow `.claude/agents/sm.md`
-2. Load sidecar: `.claude/project/agents/sm-sidecar/*.md`
-3. Run workflow status check, then proceed based on state
+2. Run workflow status check, then proceed based on state
 </on-invoke>
 
 <workflow-states>
