@@ -67,6 +67,7 @@ import {
   storeEvaluation,
   getEvaluationHistory,
   detectTrend,
+  resetHistory,
 } from '../src/agent-evaluation.js';
 
 // =============================================================================
@@ -989,6 +990,7 @@ describe('Story 19-9: Agent Evaluation Framework', () => {
 
     beforeEach(() => {
       resetEvaluation();
+      resetHistory();
     });
 
     it('should store evaluation in history', () => {
