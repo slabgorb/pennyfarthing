@@ -47,6 +47,7 @@ summary:
     '
 epics:
 - id: epic-7
+  jira: MSSCI-11494
   title: Agent Performance Benchmarking Suite
   description: 'Expand benchmarks/ with comprehensive performance testing.
 
@@ -866,6 +867,7 @@ epics:
     - Workflow progress visualization updates properly
     - Parity between Electron IPC and web HTTP behavior
 - id: epic-21
+  jira: MSSCI-11495
   title: Command & Skill Expansion
   description: 'Add high-value commands and skills identified from Anthropic''s official
 
@@ -888,13 +890,14 @@ epics:
 
     '
   points: 12
-  completed_points: 0
+  completed_points: 3
   priority: P2
   marker: tooling
   repos: pennyfarthing
-  status: backlog
+  status: in_progress
   stories:
   - id: 21-1
+    jira: MSSCI-11496
     title: /check command with dev-handoff integration
     description: 'Create a /check command that runs code quality gates:
 
