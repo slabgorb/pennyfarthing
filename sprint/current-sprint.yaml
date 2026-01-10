@@ -719,7 +719,7 @@ epics:
   stories:
   - id: 17-4
     title: Popup profile view for persona details
-    status: backlog
+    status: done
     completed: 2026-01-09
     description: 'Add a popup/modal profile view that shows full details for a persona
 
@@ -1073,7 +1073,9 @@ epics:
       '
     points: 1
     priority: P3
-    status: backlog
+    status: in_progress
+    started: 2026-01-10
+    assigned_to: Keith Avery
     repos: pennyfarthing
     acceptance_criteria:
     - Skill file created with Keep a Changelog format
@@ -1112,8 +1114,9 @@ epics:
       '
     points: 2
     priority: P1
-    status: in_progress
+    status: done
     started: 2026-01-10
+    completed: 2026-01-10
     assigned_to: Keith Avery
     repos: pennyfarthing
     acceptance_criteria:
@@ -1197,9 +1200,9 @@ epics:
     points: 2
     priority: P1
     status: done
-    completed: 2026-01-10
     repos: cyclist
     started: 2026-01-10
+    completed: 2026-01-10
     assigned_to: Keith Avery
     acceptance_criteria:
     - Abort button visible during tool execution
