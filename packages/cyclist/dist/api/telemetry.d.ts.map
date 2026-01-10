@@ -1,1 +1,1 @@
-{"version":3,"file":"telemetry.d.ts","sourceRoot":"","sources":["../../src/api/telemetry.ts"],"names":[],"mappings":"AAAA;;;;;GAKG;AAEH,OAAO,EAAE,MAAM,EAAE,MAAM,SAAS,CAAC;AAOjC;;;;;;;;;GASG;AACH,wBAAgB,qBAAqB,IAAI,MAAM,CAyK9C"}
+{"version":3,"file":"telemetry.d.ts","sourceRoot":"","sources":["../../src/api/telemetry.ts"],"names":[],"mappings":"AAAA;;;;;GAKG;AAEH,OAAO,EAAE,MAAM,EAAE,MAAM,SAAS,CAAC;AAOjC;;;;;;;;;GASG;AACH,wBAAgB,qBAAqB,IAAI,MAAM,CA2K9C"}

@@ -66,11 +66,11 @@ export function createTelemetryRouter(): Router {
       // Count parent span
       spanCount++;
 
-      // Aggregate tokens from span
-      if (span.tokenUsage) {
-        totalInputTokens += span.tokenUsage.input || 0;
-        totalOutputTokens += span.tokenUsage.output || 0;
-        totalCacheRead += span.tokenUsage.cache_read || 0;
+      // Aggregate tokens from span attributes (OTEL gen_ai.* convention)
+      if (span.attributes) {
+        totalInputTokens += span.attributes['gen_ai.usage.input_tokens'] || 0;
+        totalOutputTokens += span.attributes['gen_ai.usage.output_tokens'] || 0;
+        totalCost += span.attributes['gen_ai.usage.total_cost_usd'] || 0;
       }
 
       // Track timing
@@ -128,8 +128,10 @@ export function createTelemetryRouter(): Router {
     for (const span of spans) {
       if (span.childSpans) {
         for (const child of span.childSpans) {
-          const toolName = (child.attributes?.['tool.name'] as string) || 'unknown';
-          const duration = (child.attributes?.['tool.duration_ms'] as number) || child.durationMs || 0;
+          const toolName = child.attributes['tool.name'] || 'unknown';
+          // Use tool.duration_ms attribute, or calculate from start/end times
+          const duration = child.attributes['tool.duration_ms'] ??
+            (child.endTime && child.startTime ? child.endTime - child.startTime : 0);
 
           if (!toolStats[toolName]) {
             toolStats[toolName] = { count: 0, totalDuration: 0 };
