@@ -36,7 +36,7 @@ summary:
 
     BACKLOG:
 
-    - Epic 19: Rich telemetry - 19-3 through 19-9 (21 pts remaining)
+    - Epic 19: Rich telemetry - 19-3 through 19-8 (13 pts remaining after 19-9 done)
 
     - Epic 7: 7-1 benchmark runner (3 pts), 7-4 aggregate stats (3 pts)
 
@@ -362,7 +362,7 @@ epics:
 
     '
   points: 26
-  completed_points: 8
+  completed_points: 13
   priority: P2
   marker: observability
   repos: pennyfarthing, cyclist
@@ -683,8 +683,10 @@ epics:
       '
     points: 5
     priority: P2
-    status: in_progress
+    status: done
     started: 2026-01-10
+    completed: 2026-01-10
+    pr: https://github.com/1898andCo/pennyfarthing/pull/130
     assigned_to: Keith Avery
     repos: pennyfarthing, cyclist
     acceptance_criteria:
