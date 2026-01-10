@@ -921,7 +921,9 @@ epics:
       '
     points: 3
     priority: P1
-    status: backlog
+    status: in_progress
+    started: 2026-01-10
+    assigned_to: Keith Avery
     repos: pennyfarthing
     acceptance_criteria:
     - /check command runs lint, type check, and tests
