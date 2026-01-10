@@ -6,8 +6,8 @@ sprint:
   velocity_target: 100
 summary:
   total_points: 106
-  completed_points: 67
-  remaining_points: 39
+  completed_points: 71
+  remaining_points: 35
   notes: 'Sprint 7 focus: Benchmark framework, monorepo, telemetry.
 
 
@@ -25,7 +25,7 @@ summary:
 
     - Stories 17-5, 17-6, 17-7 (Cyclist UX bugs) - 7 pts - done 2026-01-09
 
-    - Stories 19-1, 19-2, 19-3, 19-4, 19-5 (Telemetry) - 13 pts - done 2026-01-10
+    - Stories 19-1 through 19-7, 19-9 (Telemetry) - 24 pts - done 2026-01-10
 
     - Story 7-2 (Job-fair expansion) - 5 pts - done 2026-01-09
 
@@ -37,14 +37,16 @@ summary:
 
     - Story 7-4 (Aggregate job-fair stats) - 3 pts - done 2026-01-10
 
+    - Stories 21-3, 21-6 (mermaid skill, /help) - 4 pts - done 2026-01-10
+
 
     BACKLOG:
 
-    - Epic 19: Rich telemetry - 19-7, 19-8 (5 pts remaining)
+    - Epic 19: Rich telemetry - 19-8 (2 pts remaining)
 
-    - Epic 21: Command & Skill Expansion (7 pts remaining)
+    - Epic 21: Command & Skill Expansion - 21-4 (2 pts remaining)
 
-    - Epic 22: Verbose Mode - Tool Visibility & Intervention (5 pts remaining)
+    - Epic 22: Verbose Mode - 22-4, 22-6 (3 pts remaining)
 
 '
 epics:
@@ -832,7 +834,7 @@ epics:
 
 '
     points: 12
-    completed_points: 5
+    completed_points: 10
     priority: P2
     marker: tooling
     repos: pennyfarthing
@@ -943,10 +945,12 @@ epics:
 '
         points: 2
         priority: P2
-        status: in_progress
+        status: done
+        completed: 2026-01-10
         repos: pennyfarthing
         started: 2026-01-10
         assigned_to: Keith Avery
+        pr: '#144'
         acceptance_criteria:
           - Skill file created with comprehensive examples
           - Prerequisites documented (CLI install or GitHub)
@@ -1064,6 +1068,7 @@ epics:
         completed: 2026-01-10
         assigned_to: Keith Avery
         repos: pennyfarthing
+        pr: '#136'
         acceptance_criteria:
           - /help lists all Pennyfarthing commands with descriptions
           - /help lists all agents and their roles
