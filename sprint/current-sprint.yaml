@@ -6,8 +6,8 @@ sprint:
   velocity_target: 100
 summary:
   total_points: 106
-  completed_points: 64
-  remaining_points: 42
+  completed_points: 67
+  remaining_points: 39
   notes: 'Sprint 7 focus: Benchmark framework, monorepo, telemetry.
 
 
@@ -33,16 +33,18 @@ summary:
 
     - Epic 17 complete (17-4 Popup profile) - 3 pts - done 2026-01-09
 
+    - Story 7-1 (Benchmark runner framework) - 3 pts - done 2026-01-10
+
+    - Story 7-4 (Aggregate job-fair stats) - 3 pts - done 2026-01-10
+
 
     BACKLOG:
 
-    - Epic 19: Rich telemetry - 19-3 through 19-8 (13 pts remaining after 19-9 done)
+    - Epic 19: Rich telemetry - 19-7, 19-8 (5 pts remaining)
 
-    - Epic 7: 7-1 benchmark runner (3 pts), 7-4 aggregate stats (3 pts)
+    - Epic 21: Command & Skill Expansion (7 pts remaining)
 
-    - Epic 21: Command & Skill Expansion (12 pts)
-
-    - Epic 22: Verbose Mode - Tool Visibility & Intervention (new - 13 pts)
+    - Epic 22: Verbose Mode - Tool Visibility & Intervention (5 pts remaining)
 
     '
 epics:
@@ -57,7 +59,7 @@ epics:
 
     '
   points: 23
-  completed_points: 7
+  completed_points: 13
   priority: P2
   marker: strategic
   repos: pennyfarthing
@@ -189,8 +191,10 @@ epics:
       '
     points: 3
     priority: P2
-    status: backlog
+    status: done
+    completed: 2026-01-10
     repos: pennyfarthing
+    assigned_to: Keith Avery
     acceptance_criteria:
     - Job-fair results contribute to overall benchmark statistics
     - Baseline calculations incorporate job-fair control runs
