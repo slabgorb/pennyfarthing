@@ -6,8 +6,8 @@ sprint:
   velocity_target: 100
 summary:
   total_points: 106
-  completed_points: 60
-  remaining_points: 46
+  completed_points: 62
+  remaining_points: 44
   notes: 'Sprint 7 focus: Benchmark framework, monorepo, telemetry.
 
 
@@ -25,7 +25,7 @@ summary:
 
     - Stories 17-5, 17-6, 17-7 (Cyclist UX bugs) - 7 pts - done 2026-01-09
 
-    - Stories 19-1, 19-2 (Telemetry foundation) - 5 pts - done 2026-01-09
+    - Stories 19-1, 19-2, 19-3, 19-4, 19-5 (Telemetry) - 13 pts - done 2026-01-10
 
     - Story 7-2 (Job-fair expansion) - 5 pts - done 2026-01-09
 
@@ -518,8 +518,11 @@ epics:
       '
     points: 2
     priority: P2
-    status: in_progress
+    status: done
     started: 2026-01-09
+    completed: '2026-01-10'
+    pr: https://github.com/1898andCo/pennyfarthing/pull/128
+    archived: 2026-01-10
     assigned_to: Keith Avery
     repos: pennyfarthing, cyclist
     acceptance_criteria:
