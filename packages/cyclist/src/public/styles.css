@@ -2170,8 +2170,9 @@ html, body {
 }
 
 .diff-line-content {
-  flex: 1;
+  flex: none;  /* Don't grow/shrink - use natural width */
   padding-left: 0.25rem;
+  white-space: pre;  /* Preserve whitespace, prevent wrapping */
   /* No overflow - let parent container scroll */
 }
 
