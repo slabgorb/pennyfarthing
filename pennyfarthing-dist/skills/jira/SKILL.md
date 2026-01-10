@@ -1,5 +1,5 @@
 ---
-name: jira-cli
+name: jira
 description: Jira CLI commands for sprint management. Use when viewing, assigning, or updating Jira issues from the command line.
 ---
 
@@ -7,13 +7,13 @@ description: Jira CLI commands for sprint management. Use when viewing, assignin
 
 ## Overview
 
-This skill covers using `jira-cli` (ankitpokhrel/jira-cli) for Jira integration. The examples below use Conductor project settings - update PROJECT_KEY and PROJECT_LABEL for your project.
+This skill covers using `jira` (ankitpokhrel/jira) for Jira integration. The examples below use Conductor project settings - update PROJECT_KEY and PROJECT_LABEL for your project.
 
 ## Prerequisites
 
 ```bash
-# Install jira-cli
-brew install ankitpokhrel/jira-cli/jira-cli
+# Install jira
+brew install ankitpokhrel/jira/jira
 
 # Initialize (one-time setup)
 jira init
@@ -100,6 +100,42 @@ jira issue create \
     -l pennyfarthing \
     --no-input
 ```
+
+### Link Issues (Parent-Child)
+
+**CRITICAL:** Argument order matters! First issue becomes the PARENT, second becomes the CHILD.
+
+```bash
+# CORRECT: Epic is parent, Story is child
+jira issue link MSSCI-11494 MSSCI-11390 "Parent-Child"
+# Result: Epic "IS PARENT OF" Story ✓
+
+# WRONG: This makes the Story parent of the Epic!
+jira issue link MSSCI-11390 MSSCI-11494 "Parent-Child"
+# Result: Story "IS PARENT OF" Epic ✗
+```
+
+**Verify the link direction:**
+```bash
+# Check what an issue is linked to
+jira issue view MSSCI-11494 --plain | grep -A5 "Linked Issues"
+# Should show: IS PARENT OF (not IS CHILD OF)
+```
+
+**Fix incorrect links:**
+```bash
+# Remove the bad link
+jira issue unlink MSSCI-11390 MSSCI-11494
+
+# Re-create with correct order (parent first, child second)
+jira issue link MSSCI-11494 MSSCI-11390 "Parent-Child"
+```
+
+**Available link types:**
+- `Parent-Child` - For epic/story hierarchy
+- `Blocks` - For dependencies
+- `Relates` - For general relationships
+- `Duplicate` - For duplicate issues
 
 ### Search Issues
 
@@ -199,6 +235,8 @@ export JIRA_API_TOKEN='new-token'
 | View issue | `jira issue view MSSCI-XXX` |
 | Assign | `jira issue assign --project MSSCI MSSCI-XXX "email@1898andco.io"` |
 | Move status | `jira issue move MSSCI-XXX "In Progress" --project MSSCI` |
+| Link parent→child | `jira issue link MSSCI-PARENT MSSCI-CHILD "Parent-Child"` |
+| Unlink issues | `jira issue unlink MSSCI-XXX MSSCI-YYY` |
 | Get my username | `jira me` |
 | List issues | `jira issue list --jql "project=MSSCI"` |
 | Claim story | `./scripts/jira-claim-story.sh MSSCI-XXX --claim` |

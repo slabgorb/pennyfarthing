@@ -892,7 +892,7 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 - **Skills** (10 project-agnostic knowledge domains)
   - agentic-patterns, context-engineering, code-review
   - testing, story-management, sprint-context
-  - jira-cli, just, dev-patterns, persona-benchmark
+  - jira, just, dev-patterns, persona-benchmark
 - **TDD Workflow:** SM → TEA → Dev → Reviewer → SM
 - Session file system (`.session/current_work.md`)
 - Sprint tracking (`sprint/current-sprint.yaml`)

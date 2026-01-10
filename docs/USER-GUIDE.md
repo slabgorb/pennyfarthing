@@ -620,7 +620,7 @@ Skills are reusable knowledge domains that agents can reference.
 | `code-review` | Review guidelines |
 | `testing` | Test patterns and best practices |
 | `dev-patterns` | Implementation patterns |
-| `jira-cli` | Jira CLI usage |
+| `jira` | Jira CLI usage |
 | `just` | Justfile task runner |
 | `yq` | YAML processing |
 

@@ -32,7 +32,7 @@
 ```markdown
 ## Prerequisites
 - `jira` CLI installed
-- See `jira-cli` skill for complete CLI reference
+- See `jira` skill for complete CLI reference
 ```
 
 **Separation of Concerns:**
@@ -53,7 +53,7 @@
 jira issue create -tEpic -s"Title"  # Missing -p flag!
 
 # After (in command file)
-**See `jira-cli` skill for complete CLI reference.**
+**See `jira` skill for complete CLI reference.**
 ```
 
 ---
