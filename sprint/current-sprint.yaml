@@ -80,7 +80,8 @@ epics:
       '
     points: 3
     priority: P1
-    status: in_progress
+    status: done
+    completed: 2026-01-10
     repos: pennyfarthing
     started: 2026-01-10
     assigned_to: Keith Avery
