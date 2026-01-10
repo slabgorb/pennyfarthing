@@ -51,3 +51,7 @@ If `--bump` specified, delegates to `deploy.sh` which also:
 - On develop branch (or will switch to it)
 - Origin remote configured
 </prerequisites>
+
+<skills>
+- `/changelog` - For changelog format reference, auto-generation patterns, and version bump decisions
+</skills>
