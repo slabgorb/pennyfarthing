@@ -42,6 +42,8 @@ summary:
 
     - Epic 21: Command & Skill Expansion (12 pts)
 
+    - Epic 22: Verbose Mode - Tool Visibility & Intervention (new - 13 pts)
+
     '
 epics:
 - id: epic-7
@@ -1110,3 +1112,192 @@ epics:
     - Context-aware (shows relevant commands for current state)
     - Provides quick-start for new users
     - Links to full documentation
+- id: epic-22
+  title: Verbose Mode - Tool Visibility & Intervention
+  description: |
+    Give users real-time visibility into what Claude is doing and the ability
+    to intervene before or during dangerous operations. Currently tool execution
+    is hidden in collapsed blocks - users can't see what's about to run or
+    abort operations quickly.
+
+    Key capabilities:
+    - Tool Activity Bar: Prominent display of currently running operation
+    - Abort functionality: Stop long-running or dangerous operations
+    - Bash approval gate: Optional pre-execution confirmation for shell commands
+    - Verbose mode toggle: Expand tool blocks by default for full transparency
+
+    This addresses the gap between Claude's autonomy and user oversight,
+    especially important for shell commands and file modifications.
+  points: 13
+  completed_points: 0
+  priority: P1
+  marker: safety
+  repos: cyclist
+  status: backlog
+  stories:
+  - id: 22-1
+    title: Tool Activity Bar component
+    description: |
+      Create a sticky activity bar that shows the currently executing tool
+      with full details. Replaces/augments the small activity line in persona section.
+
+      Design:
+      - Sticky bar at bottom of message view (above input)
+      - Shows: Tool icon, tool name, key parameter (file path, command, etc.)
+      - Progress indicator for long-running operations
+      - Elapsed time counter
+      - Prominent when active, hidden when idle
+
+      Implementation:
+      - New component: ToolActivityBar.js
+      - Subscribe to tool_use messages from claude-service
+      - Track tool start/end via tool_use/tool_result pairing
+      - CSS animations for appear/disappear transitions
+    points: 3
+    priority: P1
+    status: backlog
+    repos: cyclist
+    acceptance_criteria:
+    - Activity bar appears when tool execution starts
+    - Shows tool name and primary parameter (file, command, pattern)
+    - Elapsed time updates in real-time
+    - Bar disappears gracefully when tool completes
+    - Works in both Electron and web modes
+  - id: 22-2
+    title: Abort button for running operations
+    description: |
+      Add abort functionality to stop Claude mid-operation. Critical for
+      long-running Bash commands or runaway operations.
+
+      Implementation:
+      - Add ABORT button to Tool Activity Bar
+      - Wire to claude:abort IPC channel (already exists)
+      - Send SIGINT to PTY process
+      - Show "Aborting..." state during cleanup
+      - Clear activity bar on abort completion
+
+      Edge cases:
+      - Multiple rapid aborts
+      - Abort during subagent execution
+      - Cleanup of partial file writes
+    points: 2
+    priority: P1
+    status: backlog
+    repos: cyclist
+    acceptance_criteria:
+    - Abort button visible during tool execution
+    - Clicking abort stops the current operation
+    - PTY process receives SIGINT
+    - Activity bar shows abort state
+    - Claude receives abort notification gracefully
+  - id: 22-3
+    title: Bash command approval gate
+    description: |
+      Optional pre-execution approval for shell commands. Pause before
+      running Bash to let user review and approve/reject.
+
+      Design:
+      - Setting: "Require approval for shell commands" (default: off)
+      - When enabled, Bash tool_use triggers approval modal
+      - Modal shows full command with syntax highlighting
+      - Approve/Reject/Always Allow buttons
+      - "Always Allow" adds pattern to allowlist
+
+      Implementation:
+      - Intercept tool_use messages where tool_name === 'Bash'
+      - Show approval modal before forwarding to Claude
+      - If rejected, inject tool_result with error
+      - Allowlist stored in cyclist settings
+    points: 3
+    priority: P1
+    status: backlog
+    repos: cyclist
+    acceptance_criteria:
+    - Setting toggle in Cyclist preferences
+    - Approval modal appears before Bash execution
+    - Full command visible with syntax highlighting
+    - Approve continues execution normally
+    - Reject sends error back to Claude
+    - Always Allow adds to session allowlist
+  - id: 22-4
+    title: Dangerous path detection
+    description: |
+      Detect and warn when Claude attempts to modify sensitive paths,
+      regardless of tool type (Write, Edit, Bash with redirect).
+
+      Sensitive paths:
+      - .env, .env.* (secrets)
+      - .git/ (repository internals)
+      - node_modules/ (dependencies)
+      - package-lock.json, pnpm-lock.yaml (lockfiles)
+      - ~/.ssh/, ~/.aws/ (credentials)
+      - System paths (/etc, /usr, etc.)
+
+      Implementation:
+      - Path pattern matcher utility
+      - Check tool inputs before execution
+      - Trigger approval modal for sensitive paths
+      - Allowlist for intentional overrides
+    points: 2
+    priority: P2
+    status: backlog
+    repos: cyclist
+    acceptance_criteria:
+    - Sensitive path patterns defined and configurable
+    - Write/Edit to sensitive paths triggers warning
+    - Bash commands with redirects to sensitive paths detected
+    - User can approve or reject
+    - Allowlist persists for session
+  - id: 22-5
+    title: Verbose mode setting with expanded tool blocks
+    description: |
+      Add a "Verbose Mode" toggle that changes how tool execution is displayed
+      in the message view.
+
+      When enabled:
+      - Tool use blocks expanded by default (not collapsed)
+      - Tool inputs shown inline without requiring click
+      - Tool results shown inline (with scroll for long output)
+      - Syntax highlighting for code/commands
+
+      Setting location:
+      - Cyclist menu: View > Verbose Mode
+      - Persisted in cyclist settings
+      - Keyboard shortcut: Cmd+Shift+V
+    points: 2
+    priority: P2
+    status: backlog
+    repos: cyclist
+    acceptance_criteria:
+    - Verbose mode toggle in View menu
+    - When enabled, tool blocks render expanded
+    - Tool inputs visible without clicking
+    - Setting persists across sessions
+    - Keyboard shortcut works
+  - id: 22-6
+    title: Tool execution audit log
+    description: |
+      Maintain a session-scoped audit log of all tool executions for
+      review and debugging. Complements the real-time activity bar.
+
+      Features:
+      - Log all tool_use and tool_result events
+      - Include timestamps, duration, success/failure
+      - Filterable by tool type
+      - Exportable as JSON/CSV
+      - Accessible via menu: Tools > Execution Log
+
+      Implementation:
+      - Extend existing tool-stats.ts
+      - Add structured event logging
+      - Create simple log viewer panel
+    points: 1
+    priority: P3
+    status: backlog
+    repos: cyclist
+    acceptance_criteria:
+    - All tool executions logged with metadata
+    - Log viewer accessible from menu
+    - Filter by tool type
+    - Export to JSON
+    - Log clears on session reset
