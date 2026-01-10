@@ -15,6 +15,11 @@ theme:
   user_title: Comrade
   portrait_style: ", Soviet propaganda poster, stark red and black, brutalist geometric shapes"
   tier: U
+  dimensions:
+    tone: dramatic
+    era: futuristic
+    genre: literary
+    energy: contemplative
 agents:
   orchestrator:
     character: Big Brother
