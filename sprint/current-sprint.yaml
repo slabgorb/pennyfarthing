@@ -1073,8 +1073,9 @@ epics:
       '
     points: 1
     priority: P3
-    status: in_progress
+    status: done
     started: 2026-01-10
+    completed: 2026-01-10
     assigned_to: Keith Avery
     repos: pennyfarthing
     acceptance_criteria:
