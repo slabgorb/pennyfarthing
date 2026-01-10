@@ -11,6 +11,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [6.1.0] - 2026-01-10
+
+### Rich Telemetry, Tool Visibility & Command Expansion
+
+This release adds comprehensive agent telemetry, real-time tool visibility in Cyclist, and expands the command/skill library.
+
+### Added
+
+#### Epic 19: Rich Agent Telemetry (Stories 19-1 through 19-7, 19-9)
+- **OTEL Event Parsing** (19-1) - Parse claude_code.tool_result and user_prompt events from OTEL logs
+- **Telemetry Types** (19-2) - TypeScript interfaces following gen_ai.* semantic conventions
+- **Span Hierarchy Builder** (19-3) - Reconstruct parent/child relationships from flat OTEL events
+- **Agent Context Telemetry** (19-4) - Track which Pennyfarthing agent (SM/TEA/Dev/Reviewer) is active
+- **Story Context Telemetry** (19-5) - Tag telemetry with story ID for cost attribution
+- **TDD Phase Metrics** (19-6) - Measure time in RED/GREEN/REVIEW phases
+- **Telemetry Dashboard API** (19-7) - REST endpoints for session, tool, agent, story, and TDD metrics
+- **Agent Evaluation Framework** (19-9) - Performance tracking across agents and personas
+
+#### Epic 21: Command & Skill Expansion (Stories 21-1 through 21-3, 21-5, 21-6)
+- **`/check` Command** (21-1) - Pre-commit quality gate running lint, type check, and tests
+  - Integrated with dev-handoff subagent for automatic validation
+  - `--skip-check` flag for bypassing when needed
+- **`/prime` Command** (21-2) - Load essential project context at agent activation
+  - Auto-invoked by agent-session.sh on start
+- **Mermaid Skill** (21-3) - Diagram generation reference with templates
+  - Flowcharts, sequence diagrams, ER diagrams, state diagrams
+  - GitHub/GitLab native rendering support
+- **Changelog Skill** (21-5) - Keep a Changelog format with conventional commits parsing
+- **`/help` Command** (21-6) - Context-aware help for all Pennyfarthing commands and agents
+
+#### Epic 22: Verbose Mode - Tool Visibility (Stories 22-1 through 22-3, 22-5)
+- **Tool Activity Bar** (22-1) - Sticky bar showing current tool execution with elapsed time
+- **Abort Button** (22-2) - Stop long-running operations with SIGINT to PTY
+- **Bash Command Approval Gate** (22-3) - Optional pre-execution confirmation for shell commands
+  - Approve/Reject/Always Allow workflow
+  - Pattern-based allowlist
+- **Verbose Mode Toggle** (22-5) - Expand tool blocks by default (Cmd+Shift+V)
+
+#### Epic 7: Agent Performance Benchmarking (Stories 7-1, 7-4)
+- **Benchmark Runner Framework** (7-1) - `scripts/benchmark-runner.sh` for systematic testing
+  - Loads scenarios from YAML
+  - Structured result output
+- **Job-Fair Statistics Aggregation** (7-4) - Aggregate results into benchmark statistics
+
+#### Cyclist Enhancements
+- **Popup Profile View** (17-4) - Click persona to see full character details in modal
+
+### Fixed
+- **TypeScript Property Access** (19-7) - Correct property access in telemetry API
+- **Stats Module Consolidation** - stats.js → stats-strip.js with updated tests
+- **Context IPC Channel** - Dedicated channel for meter updates
+- **Vestigial Context Field** - Removed stale state from stats
+
+### Summary
+| Metric | Value |
+|--------|-------|
+| Stories Completed | 17 |
+| Points Delivered | 44 |
+| New Commands | 3 (`/check`, `/prime`, `/help`) |
+| New Skills | 2 (mermaid, changelog) |
+| Telemetry Endpoints | 5 (session, tools, agents, stories, tdd) |
+
+---
+
 ## [6.0.4] - 2026-01-09
 
 ### Fixed
@@ -901,7 +965,10 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v6.0.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v6.1.0...HEAD
+[6.1.0]: https://github.com/1898andCo/pennyfarthing/compare/v6.0.4...v6.1.0
+[6.0.4]: https://github.com/1898andCo/pennyfarthing/compare/v6.0.3...v6.0.4
+[6.0.3]: https://github.com/1898andCo/pennyfarthing/compare/v6.0.0...v6.0.3
 [6.0.0]: https://github.com/1898andCo/pennyfarthing/compare/v5.3.0...v6.0.0
 [5.3.0]: https://github.com/1898andCo/pennyfarthing/compare/v5.2.0...v5.3.0
 [5.2.0]: https://github.com/1898andCo/pennyfarthing/compare/v5.1.1...v5.2.0
