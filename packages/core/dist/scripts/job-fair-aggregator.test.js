@@ -355,4 +355,262 @@ describe('Edge Cases: Statistical Calculations', () => {
         cleanupTestFixtures();
     });
 });
+// ============================================================================
+// Story 7-5: Persona Differential Dimensions
+// ============================================================================
+const TEST_THEMES_DIR = join(process.cwd(), 'internal', 'results', 'themes-test');
+// Mock theme YAML with dimensions
+const MOCK_THEME_COMEDIC = `
+theme:
+  name: comedic-theme
+  description: A comedic theme
+  dimensions:
+    tone: comedic
+    era: contemporary
+    genre: comedy
+    energy: high-energy
+agents:
+  orchestrator:
+    character: Joker
+`;
+const MOCK_THEME_SERIOUS = `
+theme:
+  name: serious-theme
+  description: A serious theme
+  dimensions:
+    tone: serious
+    era: futuristic
+    genre: sci-fi
+    energy: contemplative
+agents:
+  orchestrator:
+    character: Commander
+`;
+const MOCK_THEME_NO_DIMENSIONS = `
+theme:
+  name: no-dims
+  description: Theme without dimensions
+agents:
+  orchestrator:
+    character: Generic
+`;
+function setupDimensionTestFixtures() {
+    // Create test theme directory
+    mkdirSync(TEST_THEMES_DIR, { recursive: true });
+    // Write theme files
+    writeFileSync(join(TEST_THEMES_DIR, 'comedic-theme.yaml'), MOCK_THEME_COMEDIC);
+    writeFileSync(join(TEST_THEMES_DIR, 'serious-theme.yaml'), MOCK_THEME_SERIOUS);
+    writeFileSync(join(TEST_THEMES_DIR, 'no-dims.yaml'), MOCK_THEME_NO_DIMENSIONS);
+    // Create results directories for these themes
+    const comedicDir = join(TEST_RESULTS_DIR, 'comedic-theme-20260107T100000Z');
+    const seriousDir = join(TEST_RESULTS_DIR, 'serious-theme-20260107T100000Z');
+    mkdirSync(comedicDir, { recursive: true });
+    mkdirSync(seriousDir, { recursive: true });
+    // Comedic theme results
+    writeFileSync(join(comedicDir, 'summary.yaml'), `
+theme: comedic-theme
+timestamp: "2026-01-07T10:00:00Z"
+matrix:
+  joker:
+    dev: 92.0
+    reviewer: 88.0
+  clown:
+    dev: 88.0
+    reviewer: 85.0
+`);
+    // Serious theme results
+    writeFileSync(join(seriousDir, 'summary.yaml'), `
+theme: serious-theme
+timestamp: "2026-01-07T10:00:00Z"
+matrix:
+  commander:
+    dev: 85.0
+    reviewer: 90.0
+  officer:
+    dev: 82.0
+    reviewer: 88.0
+`);
+}
+function cleanupDimensionTestFixtures() {
+    if (existsSync(TEST_THEMES_DIR)) {
+        rmSync(TEST_THEMES_DIR, { recursive: true, force: true });
+    }
+    cleanupTestFixtures();
+}
+describe('Story 7-5: Dimension Type Exports', () => {
+    it('should export DimensionName type', async () => {
+        const module = await import('./job-fair-aggregator.js');
+        // Type exists at compile time; runtime check is that related functions exist
+        assert.ok(module.aggregateByDimension, 'aggregateByDimension should exist');
+    });
+    it('should export aggregateByDimension function', async () => {
+        const module = await import('./job-fair-aggregator.js');
+        assert.ok(typeof module.aggregateByDimension === 'function', 'aggregateByDimension should be a function');
+    });
+    it('should export getDimensionValues function', async () => {
+        const module = await import('./job-fair-aggregator.js');
+        assert.ok(typeof module.getDimensionValues === 'function', 'getDimensionValues should be a function');
+    });
+    it('should export generateDifferentialReport function', async () => {
+        const module = await import('./job-fair-aggregator.js');
+        assert.ok(typeof module.generateDifferentialReport === 'function', 'generateDifferentialReport should be a function');
+    });
+});
+describe('Story 7-5: getDimensionValues', () => {
+    beforeEach(() => {
+        setupTestFixtures();
+        setupDimensionTestFixtures();
+    });
+    afterEach(() => cleanupDimensionTestFixtures());
+    it('should list themes by dimension value', async () => {
+        const { getDimensionValues } = await import('./job-fair-aggregator.js');
+        const values = await getDimensionValues('tone', TEST_THEMES_DIR);
+        assert.ok(Array.isArray(values), 'Should return array');
+        assert.ok(values.length >= 2, 'Should have at least 2 tone values');
+        // Check structure
+        const comedic = values.find(v => v.value === 'comedic');
+        const serious = values.find(v => v.value === 'serious');
+        assert.ok(comedic, 'Should find comedic tone');
+        assert.ok(serious, 'Should find serious tone');
+        assert.ok(comedic.theme_count >= 1, 'Comedic should have at least 1 theme');
+        assert.ok(serious.theme_count >= 1, 'Serious should have at least 1 theme');
+    });
+    it('should handle all dimension types', async () => {
+        const { getDimensionValues } = await import('./job-fair-aggregator.js');
+        const toneValues = await getDimensionValues('tone', TEST_THEMES_DIR);
+        const eraValues = await getDimensionValues('era', TEST_THEMES_DIR);
+        const genreValues = await getDimensionValues('genre', TEST_THEMES_DIR);
+        const energyValues = await getDimensionValues('energy', TEST_THEMES_DIR);
+        assert.ok(toneValues.length >= 1, 'Should have tone values');
+        assert.ok(eraValues.length >= 1, 'Should have era values');
+        assert.ok(genreValues.length >= 1, 'Should have genre values');
+        assert.ok(energyValues.length >= 1, 'Should have energy values');
+    });
+    it('should skip themes without dimensions', async () => {
+        const { getDimensionValues } = await import('./job-fair-aggregator.js');
+        const values = await getDimensionValues('tone', TEST_THEMES_DIR);
+        // no-dims theme should not contribute to any dimension counts
+        const total = values.reduce((sum, v) => sum + v.theme_count, 0);
+        assert.ok(total === 2, 'Total should be 2 (comedic + serious, not no-dims)');
+    });
+});
+describe('Story 7-5: aggregateByDimension', () => {
+    beforeEach(() => {
+        setupTestFixtures();
+        setupDimensionTestFixtures();
+    });
+    afterEach(() => cleanupDimensionTestFixtures());
+    it('should group results by dimension value', async () => {
+        const { aggregateByDimension } = await import('./job-fair-aggregator.js');
+        const stats = await aggregateByDimension('tone', TEST_RESULTS_DIR, TEST_THEMES_DIR);
+        assert.ok(stats, 'Should return dimension stats');
+        assert.strictEqual(stats.dimension, 'tone', 'Should indicate dimension');
+        assert.ok(Array.isArray(stats.values), 'Should have values array');
+    });
+    it('should calculate per-value statistics', async () => {
+        const { aggregateByDimension } = await import('./job-fair-aggregator.js');
+        const stats = await aggregateByDimension('tone', TEST_RESULTS_DIR, TEST_THEMES_DIR);
+        const comedic = stats.values.find(v => v.value === 'comedic');
+        assert.ok(comedic, 'Should find comedic group');
+        assert.ok(comedic.themes.length >= 1, 'Comedic should have themes');
+        assert.ok(comedic.sample_size > 0, 'Comedic should have samples');
+        assert.ok(typeof comedic.overall_mean === 'number', 'Should have overall_mean');
+        assert.ok(comedic.by_role.dev, 'Should have dev role stats');
+        assert.ok(typeof comedic.by_role.dev.mean_score === 'number', 'Dev should have mean_score');
+    });
+    it('should generate pairwise comparisons', async () => {
+        const { aggregateByDimension } = await import('./job-fair-aggregator.js');
+        const stats = await aggregateByDimension('tone', TEST_RESULTS_DIR, TEST_THEMES_DIR);
+        assert.ok(Array.isArray(stats.comparisons), 'Should have comparisons array');
+        if (stats.comparisons.length > 0) {
+            const comp = stats.comparisons[0];
+            assert.ok(comp.dimension === 'tone', 'Comparison should have dimension');
+            assert.ok(comp.value_a, 'Comparison should have value_a');
+            assert.ok(comp.value_b, 'Comparison should have value_b');
+            assert.ok(typeof comp.delta === 'number', 'Comparison should have delta');
+            assert.ok(['significant', 'marginal', 'not_significant'].includes(comp.significance), 'Comparison should have significance level');
+        }
+    });
+    it('should include per-role comparisons', async () => {
+        const { aggregateByDimension } = await import('./job-fair-aggregator.js');
+        const stats = await aggregateByDimension('tone', TEST_RESULTS_DIR, TEST_THEMES_DIR);
+        if (stats.comparisons.length > 0) {
+            const comp = stats.comparisons[0];
+            assert.ok(comp.by_role, 'Comparison should have by_role');
+            if (comp.by_role.dev) {
+                assert.ok(typeof comp.by_role.dev.delta === 'number', 'Role comparison should have delta');
+                assert.ok(comp.by_role.dev.significance, 'Role comparison should have significance');
+            }
+        }
+    });
+});
+describe('Story 7-5: generateDifferentialReport', () => {
+    beforeEach(() => {
+        setupTestFixtures();
+        setupDimensionTestFixtures();
+    });
+    afterEach(() => cleanupDimensionTestFixtures());
+    it('should generate markdown report', async () => {
+        const { generateDifferentialReport } = await import('./job-fair-aggregator.js');
+        const report = await generateDifferentialReport('tone', TEST_RESULTS_DIR, TEST_THEMES_DIR);
+        assert.ok(typeof report === 'string', 'Report should be a string');
+        assert.ok(report.includes('# Differential Report'), 'Report should have title');
+        assert.ok(report.includes('tone'), 'Report should mention dimension');
+    });
+    it('should include summary by value', async () => {
+        const { generateDifferentialReport } = await import('./job-fair-aggregator.js');
+        const report = await generateDifferentialReport('tone', TEST_RESULTS_DIR, TEST_THEMES_DIR);
+        assert.ok(report.includes('## Summary by Value'), 'Report should have summary section');
+        assert.ok(report.includes('Overall mean'), 'Report should include overall mean');
+    });
+    it('should include pairwise comparisons', async () => {
+        const { generateDifferentialReport } = await import('./job-fair-aggregator.js');
+        const report = await generateDifferentialReport('tone', TEST_RESULTS_DIR, TEST_THEMES_DIR);
+        assert.ok(report.includes('## Pairwise Comparisons'), 'Report should have comparisons section');
+    });
+    it('should indicate significance levels', async () => {
+        const { generateDifferentialReport } = await import('./job-fair-aggregator.js');
+        const report = await generateDifferentialReport('tone', TEST_RESULTS_DIR, TEST_THEMES_DIR);
+        // Report should mention significance in some form
+        const hasSignificance = report.includes('SIGNIFICANT') ||
+            report.includes('marginal') ||
+            report.includes('not significant');
+        assert.ok(hasSignificance, 'Report should indicate significance levels');
+    });
+});
+describe('Story 7-5: Edge Cases', () => {
+    beforeEach(() => setupDimensionTestFixtures());
+    afterEach(() => cleanupDimensionTestFixtures());
+    it('should handle empty results directory', async () => {
+        const { aggregateByDimension } = await import('./job-fair-aggregator.js');
+        const emptyDir = join(TEST_RESULTS_DIR, 'empty');
+        mkdirSync(emptyDir, { recursive: true });
+        const stats = await aggregateByDimension('tone', emptyDir, TEST_THEMES_DIR);
+        assert.ok(stats, 'Should return stats');
+        assert.deepStrictEqual(stats.values, [], 'Should have empty values');
+        assert.deepStrictEqual(stats.comparisons, [], 'Should have empty comparisons');
+    });
+    it('should handle themes without matching dimension', async () => {
+        const { aggregateByDimension } = await import('./job-fair-aggregator.js');
+        // Create a theme with only some dimensions
+        const partialTheme = join(TEST_THEMES_DIR, 'partial.yaml');
+        writeFileSync(partialTheme, `
+theme:
+  name: partial
+  dimensions:
+    tone: comedic
+    # missing era, genre, energy
+`);
+        const stats = await aggregateByDimension('era', TEST_RESULTS_DIR, TEST_THEMES_DIR);
+        // Should still work, just with fewer themes
+        assert.ok(stats, 'Should return stats');
+    });
+    it('should handle non-existent themes directory', async () => {
+        const { getDimensionValues } = await import('./job-fair-aggregator.js');
+        const nonExistent = join(process.cwd(), 'does-not-exist');
+        const values = await getDimensionValues('tone', nonExistent);
+        assert.ok(Array.isArray(values), 'Should return empty array');
+        assert.strictEqual(values.length, 0, 'Should have no values');
+    });
+});
 //# sourceMappingURL=job-fair-aggregator.test.js.map

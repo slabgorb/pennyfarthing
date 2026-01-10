@@ -51,6 +51,9 @@ importers:
 
   packages/cyclist:
     dependencies:
+      '@pennyfarthing/core':
+        specifier: workspace:^
+        version: link:../core
       '@pennyfarthing/shared':
         specifier: workspace:*
         version: link:../shared

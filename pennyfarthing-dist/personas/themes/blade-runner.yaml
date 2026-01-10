@@ -15,6 +15,11 @@ theme:
   user_title: Skin-job (affectionately)
   portrait_style: ", cyberpunk noir, neon pink and cyan rain-soaked lighting, Voight-Kampff eye closeup, retrofuturist dystopia"
   tier: B
+  dimensions:
+    tone: dramatic
+    era: futuristic
+    genre: sci-fi
+    energy: contemplative
 agents:
   orchestrator:
     character: Eldon Tyrell

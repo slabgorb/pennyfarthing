@@ -15,6 +15,11 @@ theme:
   user_title: Operator
   portrait_style: ", cyberpunk, green digital rain overlay, action illustration style"
   tier: A
+  dimensions:
+    tone: serious
+    era: futuristic
+    genre: sci-fi
+    energy: high-energy
 
 agents:
   orchestrator:
