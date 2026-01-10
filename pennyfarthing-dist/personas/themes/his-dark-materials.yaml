@@ -1,3 +1,10 @@
+# His Dark Materials Theme
+# His Dark Materials trilogy by Philip Pullman
+#
+# DISCLAIMER: His Dark Materials and all related characters are owned by
+# Philip Pullman. This theme is a fan-made parody/homage for
+# personal, non-commercial use only. No copyright infringement intended.
+
 theme:
   name: His Dark Materials
   description: Characters from Philip Pullman's His Dark Materials - clear A variance, strong archetypes, daemons
@@ -7,6 +14,7 @@ theme:
   character_immersion: high
   user_title: Child
   portrait_style: ", golden compass steampunk, amber and brass tones, Victorian arctic aesthetic, aurora glow, daemon visible"
+  tier: B
 
 agents:
   orchestrator:

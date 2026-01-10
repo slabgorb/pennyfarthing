@@ -63,8 +63,7 @@ Invoke SM to complete story setup in the worktree context.
 <agent-activation>
 1. Load persona from theme config → `agents.sm`
 2. Load and follow `.claude/agents/sm.md`
-3. Load sidecar: `.claude/project/agents/sm-sidecar/*.md`
-4. SM will detect worktree session and work in that context
+3. SM will detect worktree session and work in that context
 </agent-activation>
 
 <agent-exit>

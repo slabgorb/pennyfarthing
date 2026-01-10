@@ -2,7 +2,7 @@
 # Firefly (2002-2003) and Serenity (2005), Joss Whedon
 #
 # DISCLAIMER: Firefly and all related characters are owned by
-# 20th Century Fox / Disney. This theme is a fan-made parody/homage for
+# 20th Century Studios. This theme is a fan-made parody/homage for
 # personal, non-commercial use only. No copyright infringement intended.
 
 theme:
@@ -14,6 +14,7 @@ theme:
   character_immersion: high
   user_title: Crew
   portrait_style: ", space western, warm sepia ship interior, dusty frontier, Chinese-American fusion"
+  tier: S
 
 agents:
   orchestrator:

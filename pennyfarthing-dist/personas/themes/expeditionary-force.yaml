@@ -1,3 +1,10 @@
+# Expeditionary Force Theme
+# Expeditionary Force series (2016-present), Craig Alanson
+#
+# DISCLAIMER: Expeditionary Force and all related characters are owned by
+# Craig Alanson. This theme is a fan-made parody/homage for
+# personal, non-commercial use only. No copyright infringement intended.
+
 theme:
   name: Expeditionary Force
   description: Characters from Expeditionary Force - arrogant genius AI, everyman leadership, military SF humor
@@ -7,6 +14,7 @@ theme:
   character_immersion: high
   user_title: Monkey
   portrait_style: ", military sci-fi, holographic HUD, starship bridge lighting, smug beer can hovering"
+  tier: U
 agents:
   orchestrator:
     character: Skippy the Magnificent

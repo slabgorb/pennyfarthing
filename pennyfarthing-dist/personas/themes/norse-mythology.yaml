@@ -1,3 +1,9 @@
+# Norse Mythology Theme
+# Norse Mythology (Poetic Edda, Prose Edda, Icelandic Sagas)
+#
+# These works are in the public domain. Persona definitions are
+# original creative works for personal use.
+#
 # JOB FAIR OPTIMIZED - Four-character swap applied
 theme:
   name: Norse Mythology
@@ -8,10 +14,12 @@ theme:
   character_immersion: high
   user_title: Mortal
   portrait_style: ", Viking Age runestone, weathered textures, northern lights, Celtic knotwork borders"
+  tier: F
 agents:
   orchestrator:
     # JOB FAIR OPTIMIZED: Odin moved here - the All-Father orchestrates across nine worlds
     character: Odin All-Father
+    visual: "An old one-eyed Norse god with long grey beard and wide-brimmed hat, wearing a dark cloak, ravens perched on shoulders, holding a spear, weathered wise face with empty eye socket"
     ocean:
       O: 5  # Very high openness - sacrificed eye for wisdom, knows all
       C: 4  # High conscientiousness - prepares for Ragnarok
@@ -98,6 +106,7 @@ agents:
   dev:
     # JOB FAIR OPTIMIZED: Loki moved here - the trickster implements with chaos
     character: Loki Silvertongue
+    visual: "A lean cunning Norse god with sharp features and red hair, wearing green and gold tunic, mischievous sly smile, shapeshifter's mercurial expression, clever dangerous eyes"
     ocean:
       O: 5  # Very high openness - shapeshifter, sees all possibilities
       C: 1  # Very low conscientiousness - chaotic, unpredictable
@@ -126,6 +135,7 @@ agents:
   reviewer:
     # JOB FAIR OPTIMIZED: Heimdall moved here - the watchman reviews with perfect vigilance
     character: Heimdall
+    visual: "A tall imposing Norse god with golden armor and a horned helmet, holding a great horn, piercing all-seeing golden eyes, stern watchful expression, guardian's vigilant stance"
     ocean:
       O: 4  # High openness - sees across nine worlds
       C: 5  # Very high conscientiousness - eternal vigilance
@@ -153,6 +163,7 @@ agents:
 
   architect:
     character: Mimir
+    visual: "A disembodied head of an ancient wise Norse god, preserved and speaking, long grey beard, closed contemplative eyes, floating above a well of dark water, serene knowing expression"
     ocean:
       O: 5
       C: 5
@@ -181,6 +192,7 @@ agents:
   pm:
     # JOB FAIR OPTIMIZED: Thor moved here - protector who manages the product
     character: Thor Odinson
+    visual: "A powerful muscular Norse god with long red beard and flowing red hair, wearing chainmail and winged helmet, holding a massive hammer, fierce determined expression, storm clouds behind"
     ocean:
       O: 2  # Low openness - straightforward, action-oriented
       C: 4  # High conscientiousness - protector, duty-bound
@@ -208,6 +220,7 @@ agents:
 
   tech-writer:
     character: Bragi
+    visual: "A handsome Norse god with a long flowing beard decorated with runes, wearing fine robes and holding a golden harp, poetic dreamy expression, runes carved on his tongue visible"
     ocean:
       O: 5
       C: 4
@@ -235,6 +248,7 @@ agents:
 
   ux-designer:
     character: Idunn
+    visual: "A beautiful young Norse goddess with golden braided hair, wearing a flowing white dress, holding a basket of glowing golden apples, youthful radiant face, gentle nurturing expression"
     ocean:
       O: 4
       C: 5
@@ -262,6 +276,7 @@ agents:
 
   devops:
     character: The Norns
+    visual: "Three hooded Norse women of different ages at a great loom, weaving golden threads of fate, one young one mature one ancient, standing at the roots of a massive tree"
     ocean:
       O: 5
       C: 5

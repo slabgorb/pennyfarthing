@@ -51,4 +51,37 @@ When developing Pennyfarthing itself, `.claude/` directories (commands, agents, 
 
 ---
 
+## Rotated Vertical Text for Collapsed Panel Labels
+
+For collapsible panels, use rotated text labels on the expand button:
+
+```html
+<button class="panel-expand-btn">
+  <span class="expand-label">LABEL</span>
+</button>
+```
+
+```css
+.panel-expand-btn {
+  width: 20px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.panel-expand-btn .expand-label {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);  /* reads top-to-bottom */
+}
+```
+
+Used in: File panel expand button (`packages/cyclist/src/public/`)
+
+---
+
 *Add implementation patterns discovered during development below*

@@ -34,8 +34,10 @@ From theme config. Model: haiku. Tasks: System checks, log analysis, config scan
 </skills>
 
 <context>
-**See:** `.claude/guides/shared-context.md` for project info.
-**Infrastructure:** Docker, Kubernetes, CI/CD pipelines
+Context auto-loaded by `/prime --agent devops`:
+- Shared context, shared behavior
+- Agent sidecar: `.claude/project/agents/devops-sidecar/`
+- Also see: Docker, Kubernetes, CI/CD pipelines docs
 </context>
 
 <on-activation>

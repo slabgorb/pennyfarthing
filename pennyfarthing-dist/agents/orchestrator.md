@@ -31,9 +31,10 @@ From theme config. Model: haiku. Tasks: Status checks, metrics gathering, file s
 </skills>
 
 <context>
-**See:** `.claude/guides/shared-context.md` for project info.
-**Agent files:** `.claude/agents/` - All agent definitions
-**Skills:** `.claude/skills/` - Skill definitions
+Context auto-loaded by `/prime --agent orchestrator`:
+- Shared context, shared behavior
+- Agent sidecar: `.claude/project/agents/orchestrator-sidecar/`
+- Also see: `.claude/agents/`, `.claude/skills/`
 </context>
 
 <on-activation>

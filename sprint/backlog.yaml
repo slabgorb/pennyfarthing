@@ -415,8 +415,73 @@ backlog:
             - New session validates against current git state
             - Warns if state changed between sessions
 
+    - id: epic-20
+      title: "Cyclist Web Mode Improvements"
+      description: |
+        Improve Cyclist web mode UX to match Electron mode capabilities.
+        Currently, web mode requires manual OTEL configuration to get
+        token stats, and some features only work in Electron.
+      points: 8
+      priority: P2
+      marker: "quick-win"
+      repos: cyclist
+      stories:
+        - id: "20-1"
+          title: "Auto-configure OTEL for web mode"
+          description: |
+            Make token stats work automatically in web mode without
+            requiring manual OTEL environment variables.
+
+            Options to explore:
+            - Port file: Cyclist writes port to .cyclist-port, hooks read it
+            - Browser launch: Cyclist spawns Claude Code subprocess like Electron
+            - Documentation: Clear setup instructions in UI when stats unavailable
+
+            Current workaround: `just claude-with-cyclist` launcher script
+          points: 3
+          priority: P1
+          repos: cyclist
+          acceptance_criteria:
+            - Token stats appear in web mode without manual OTEL config
+            - Clear error message if OTEL not configured
+            - Documentation for manual setup as fallback
+
+        - id: "20-2"
+          title: "Web mode feature parity audit"
+          description: |
+            Audit all Electron-only features and create plan to support
+            them in web mode or document limitations.
+
+            Known gaps:
+            - Agent menu (Electron menu bar)
+            - Permission mode toggle (requires PTY control)
+            - Native file dialogs
+          points: 2
+          priority: P2
+          repos: cyclist
+          acceptance_criteria:
+            - Feature parity matrix documented
+            - Web alternatives identified for key features
+            - Limitations clearly documented
+
+        - id: "20-3"
+          title: "Cyclist launcher with integrated Claude Code"
+          description: |
+            Create a launcher mode where Cyclist web spawns Claude Code
+            as a subprocess (like Electron mode), giving full control
+            over OTEL config and permission modes.
+
+            Would enable web mode to have same capabilities as Electron.
+          points: 3
+          priority: P2
+          repos: cyclist
+          acceptance_criteria:
+            - Web server can spawn Claude Code subprocess
+            - OTEL automatically configured
+            - WebSocket bridges subprocess I/O to browser
+
 # Summary
-# Remaining backlog: 47 points across 5 epics
+# Remaining backlog: 55 points across 6 epics
 #
 # Completed Epics (for reference):
 # - Epic 2: Core Agent Framework (Sprint 2)

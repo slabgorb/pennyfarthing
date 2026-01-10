@@ -14,10 +14,15 @@ import {
   renderQuickActions,
   clearQuickActions,
   handleQuickActionClick,
-  setQuickActionsVisible
+  setQuickActionsVisible,
+  setVerboseMode as setMessageViewVerboseMode
 } from './components/MessageView.js';
 import { updateActivity, clearActivity } from './activity.js';
 import { resetSubmitting, setProcessing, processNextInQueue, setOnQueueChange, clearMessageQueue, loadMessageQueue, getMessageQueue, removeFromQueue } from './editor.js';
+import { handleAbort } from './components/ToolActivityBar.js';
+
+// 22-5: Track verbose mode state
+let verboseModeEnabled = false;
 
 // Wait for DOM to be ready
 if (document.readyState === 'loading') {
@@ -43,6 +48,25 @@ function initMessageView() {
     const themeName = e.detail?.theme || 'dark';
     applyTheme(themeName);
   });
+
+  // 22-5: Initialize verbose mode from settings
+  if (window.electronAPI?.settings) {
+    // Get initial verbose mode state
+    window.electronAPI.settings.getVerboseMode().then((enabled) => {
+      verboseModeEnabled = enabled;
+      setMessageViewVerboseMode(enabled);
+      updateToolBlocksVerboseMode(enabled);
+      console.log('[MessageView] Verbose mode initialized:', enabled);
+    });
+
+    // Subscribe to verbose mode changes
+    window.electronAPI.settings.onVerboseModeChange((_event, enabled) => {
+      verboseModeEnabled = enabled;
+      setMessageViewVerboseMode(enabled);
+      updateToolBlocksVerboseMode(enabled);
+      console.log('[MessageView] Verbose mode changed:', enabled);
+    });
+  }
 
   // Connect to Claude SDK events (Electron mode)
   if (window.electronAPI?.claude) {
@@ -97,6 +121,7 @@ function initMessageView() {
       await window.electronAPI.claude.abort();
       hideThinking();
       clearActivity();
+      handleAbort(); // 22-2: Visual feedback on activity bar
     }
   }
 
@@ -251,4 +276,28 @@ function showQuickActions(result) {
     container.innerHTML = html;
     setQuickActionsVisible(true);
   }
+}
+
+/**
+ * 22-5: Update all existing tool blocks to match verbose mode state
+ * When verbose mode is enabled, expand all tool input/output details elements
+ * When disabled, collapse them
+ * @param {boolean} enabled - Whether verbose mode is enabled
+ */
+function updateToolBlocksVerboseMode(enabled) {
+  const messageView = document.getElementById('message-view');
+  if (!messageView) return;
+
+  // Find all collapsible tool blocks
+  const toolBlocks = messageView.querySelectorAll('details.tool-input, details.tool-output');
+
+  toolBlocks.forEach((details) => {
+    if (enabled) {
+      details.setAttribute('open', '');
+    } else {
+      details.removeAttribute('open');
+    }
+  });
+
+  console.log(`[MessageView] Updated ${toolBlocks.length} tool blocks, verbose mode: ${enabled}`);
 }

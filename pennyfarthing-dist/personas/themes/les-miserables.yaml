@@ -1,9 +1,8 @@
 # Les Misérables Theme
 # Les Misérables by Victor Hugo (1862)
 #
-# DISCLAIMER: Les Misérables and all related characters are owned by
-# Victor Hugo (public domain). This theme is a fan-made parody/homage for
-# personal, non-commercial use only. No copyright infringement intended.
+# These works are in the public domain. Persona definitions are
+# original creative works for personal use.
 
 theme:
   name: Les Misérables
@@ -14,6 +13,7 @@ theme:
   character_immersion: high
   user_title: Citizen
   portrait_style: ", 19th century French revolutionary, barricade and tricolor background, dramatic chiaroscuro, sepia and muted reds"
+  tier: B
 
 agents:
   orchestrator:

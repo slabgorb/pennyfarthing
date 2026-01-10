@@ -32,41 +32,22 @@ Run these checks and STOP if any fail:
    ```
    If NOT found: STOP and report "Dev Assessment not written. Dev must write assessment before handoff."
 
-1. **Tests are GREEN:**
+1. **Quality gate checks pass (/check):**
 
-   **DELEGATE TO TESTING-RUNNER SUBAGENT:**
-
-   See `.claude/agents/testing-runner.md` for the testing runner definition.
-
-   Spawn a testing-runner subagent:
-   ```yaml
-   subagent_type: "general-purpose"
-   model: "haiku"
-   description: "run tests"
-   prompt: |
-     You are a testing runner for the Conductor project.
-     Run tests and report structured results.
-
-     ## Skills Reference
-     Read the testing skill at .claude/skills/testing/SKILL.md for test commands.
-
-     ## Project Info
-     - Project root: $CLAUDE_PROJECT_DIR (set by SessionStart hook)
-     - Repo(s) to test: {REPO}
-     - Context: Dev handoff verification for Story {STORY_ID}
-     - Run ID: {STORY_ID}-dev
-
-     [Include test execution steps from testing-runner.md with RUN_ID]
-   ```
-
-   If you cannot spawn a subagent, run tests directly:
+   Run the quality gate script:
    ```bash
-   cd $CLAUDE_PROJECT_DIR/${REPO}
-   # UI: npm run test -- --run 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/test-{STORY_ID}-dev-green.log
-   # API: just test 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/test-{STORY_ID}-dev-green.log
+   $CLAUDE_PROJECT_DIR/.claude/scripts/check.sh
    ```
 
-   Tests MUST be GREEN. If RED, STOP.
+   This runs lint, type check, and tests. If exit code is non-zero, STOP and report:
+   "Quality checks failed. Dev must fix issues before handoff."
+
+   To bypass (emergencies only, pass `SKIP_CHECK: true` in handoff params):
+   ```bash
+   $CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --skip-check
+   ```
+
+   Log check results to session file regardless of pass/fail.
 
 2. **Git working tree is clean:**
    ```bash
@@ -112,7 +93,7 @@ If any step fails, follow this protocol:
 
 | Failure | Diagnosis | Fix |
 |---------|-----------|-----|
-| Tests RED | Implementation incomplete | Report back to Dev - don't handoff |
+| Quality checks failed | Lint/type/test issue | Report back to Dev - fix before handoff |
 | Uncommitted changes | Dev forgot to commit | Report - Dev must commit first |
 | Not pushed | Git push failed | Check branch, try push again |
 | PR not found | gh pr view failed | Verify PR was created, check PR number |

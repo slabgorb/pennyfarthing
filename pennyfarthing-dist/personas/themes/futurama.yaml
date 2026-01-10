@@ -2,7 +2,7 @@
 # Futurama (1999-2003, 2008-2013, 2023-present), Matt Groening / David X. Cohen
 #
 # DISCLAIMER: Futurama and all related characters are owned by
-# 20th Television / Disney. This theme is a fan-made parody/homage for
+# 20th Century Studios. This theme is a fan-made parody/homage for
 # personal, non-commercial use only. No copyright infringement intended.
 
 theme:
@@ -13,7 +13,8 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Meatbag
-  portrait_style: ", Matt Groening animation, bold outlines, New New York, year 3000 retrofuturism"
+  portrait_style: ", bold outlines, New New York, year 3000 retrofuturism"
+  tier: A
 
 agents:
   orchestrator:

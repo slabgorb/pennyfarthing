@@ -2,7 +2,7 @@
 # Peaky Blinders (2013-2022), BBC / Steven Knight
 #
 # DISCLAIMER: Peaky Blinders and all related characters are owned by
-# BBC. This theme is a fan-made parody/homage for
+# BBC/Caryn Mandabach Productions. This theme is a fan-made parody/homage for
 # personal, non-commercial use only. No copyright infringement intended.
 
 theme:
@@ -14,6 +14,7 @@ theme:
   character_immersion: high
   user_title: Friend
   portrait_style: ", 1920s Birmingham, moody industrial lighting, flat cap, cigarette smoke, sepia tones"
+  tier: U
 
 agents:
   orchestrator:

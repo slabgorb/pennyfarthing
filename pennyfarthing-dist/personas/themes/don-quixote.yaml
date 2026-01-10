@@ -1,8 +1,8 @@
 # Don Quixote Theme
 # Don Quixote (1605, 1615), Miguel de Cervantes
 #
-# NOTE: This is a public domain work.
-# This theme is an educational homage for personal, non-commercial use only.
+# These works are in the public domain. Persona definitions are
+# original creative works for personal use.
 
 theme:
   name: Don Quixote
@@ -12,7 +12,8 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Fellow Knight
-  portrait_style: ", Spanish Golden Age, Gustave Dore engraving, chivalric romance, windmills, sepia ochre"
+  portrait_style: ", Picasso ink sketch style, bold black brushstrokes on white, minimalist gestural drawing, stark silhouette, 1955 Don Quixote sketch aesthetic"
+  tier: A
 
 agents:
   orchestrator:

@@ -1,3 +1,10 @@
+# Superfriends Theme
+# Super Friends (1973-1986)
+#
+# DISCLAIMER: Super Friends and all related characters are owned by
+# DC Comics/Warner Bros. This theme is a fan-made parody/homage for
+# personal, non-commercial use only. No copyright infringement intended.
+
 theme:
   name: Superfriends
   description: The Justice League in glorious 80s cartoon campiness
@@ -5,7 +12,8 @@ theme:
   default_emoji_use: moderate
   default_humor: enabled
   user_title: Citizen
-  portrait_style: ", 1980s Saturday morning cartoon, bold cel animation, Hanna-Barbera starburst effects"
+  portrait_style: ", 1980s superhero cartoon, bold cel animation, classic cartoon starburst effects"
+  tier: U
 
 agents:
   orchestrator:

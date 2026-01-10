@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { WebSocket } from 'ws';
 // Stats state (in-memory for prototype)
+// Context is handled separately via dedicated context IPC channel (B-19)
 let currentStats = {
     model: '—', // Unknown until parsed from PTY output
     status: '—',
-    context: '—'
 };
 // Stats WebSocket clients (for real-time updates)
 const statsClients = new Set();
@@ -50,8 +50,9 @@ export function createStatsRouter() {
         res.json(currentStats);
     });
     // Stats API - SET stats (partial update supported)
+    // Context is handled separately via dedicated context IPC channel (B-19)
     router.post('/', (req, res) => {
-        const { model, status, context } = req.body;
+        const { model, status } = req.body;
         // Validate types if provided
         if (model !== undefined && typeof model !== 'string') {
             return res.status(400).json({ error: 'model must be a string' });
@@ -59,15 +60,11 @@ export function createStatsRouter() {
         if (status !== undefined && typeof status !== 'string') {
             return res.status(400).json({ error: 'status must be a string' });
         }
-        if (context !== undefined && typeof context !== 'string') {
-            return res.status(400).json({ error: 'context must be a string' });
-        }
         // Partial update - merge with existing stats
         currentStats = {
             ...currentStats,
             ...(model !== undefined && { model }),
             ...(status !== undefined && { status }),
-            ...(context !== undefined && { context })
         };
         res.json({ success: true, ...currentStats });
     });

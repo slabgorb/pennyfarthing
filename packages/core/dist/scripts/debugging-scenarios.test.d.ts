@@ -1,6 +1,10 @@
 /**
  * Tests for Story 14-4: Create Debugging Challenge Scenarios
  *
+ * SKIPPED: The scenarios/debugging/ directory was never created.
+ * Story 14-4 was planned but not implemented. These tests are retained
+ * for when the feature is implemented, but skipped to avoid false failures.
+ *
  * These tests verify:
  * AC1: 10 scenarios in scenarios/debugging/
  * AC2: Each scenario has 4-8 baseline_issues with error_type tags

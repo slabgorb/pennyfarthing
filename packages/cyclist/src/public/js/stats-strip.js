@@ -1,8 +1,20 @@
 /**
  * Stats Strip - Compact stats display in prompt bar (B-22)
  * Shows model badge, token counts, and context meter
- * Subscribes to existing IPC channels from stats.js
  */
+
+/**
+ * Format token count for display
+ * @param {number} n - Token count
+ * @returns {string} - Formatted string (e.g., "1.2k", "45k", "1.5M")
+ */
+function formatTokenCount(n) {
+  if (n === undefined || n === null) return '—';
+  if (n < 1000) return String(n);
+  if (n < 10000) return (n / 1000).toFixed(1) + 'k';
+  if (n < 1000000) return Math.round(n / 1000) + 'k';
+  return (n / 1000000).toFixed(1) + 'M';
+}
 
 /**
  * Update the context meter level class based on percentage
@@ -81,29 +93,26 @@ async function initStatsStrip() {
     return;
   }
 
-  // Get initial stats for model and context
+  // Get initial stats for model only (context handled separately via context IPC)
   try {
     const stats = await window.electronAPI.stats.get();
     if (stats) {
       if (stats.model) {
         updateStripStat('strip-model', stats.model);
       }
-      if (stats.context !== undefined) {
-        updateContextMeter(stats.context);
-      }
+      // Note: stats.context is a placeholder '—', don't use it
+      // Real context comes from dedicated context IPC channel below
     }
   } catch (err) {
     console.error('[StatsStrip] Failed to get initial stats:', err);
   }
 
-  // Subscribe to stats updates (model, context)
+  // Subscribe to stats updates (model only - context handled separately)
   window.electronAPI.stats.onUpdate((_event, stats) => {
     if (stats.model !== undefined) {
       updateStripStat('strip-model', stats.model);
     }
-    if (stats.context !== undefined) {
-      updateContextMeter(stats.context);
-    }
+    // Don't update context from stats channel - it's always '—'
   });
 
   // Token stats subscription
@@ -112,10 +121,8 @@ async function initStatsStrip() {
     try {
       const tokenStats = await window.electronAPI.tokenStats.get();
       if (tokenStats) {
-        // Reuse formatTokenCount from stats.js (loaded before this script)
-        const formatFn = window.formatTokenCount || ((n) => n === undefined || n === null ? '—' : String(n));
-        updateStripStat('strip-input', '↓ ' + formatFn(tokenStats.inputTokens));
-        updateStripStat('strip-output', '↑ ' + formatFn(tokenStats.outputTokens));
+        updateStripStat('strip-input', '↓ ' + formatTokenCount(tokenStats.inputTokens));
+        updateStripStat('strip-output', '↑ ' + formatTokenCount(tokenStats.outputTokens));
       }
     } catch (err) {
       console.error('[StatsStrip] Failed to get initial token stats:', err);
@@ -124,17 +131,16 @@ async function initStatsStrip() {
     // Subscribe to token stats updates
     window.electronAPI.tokenStats.onUpdate((_event, tokenStats) => {
       if (tokenStats) {
-        const formatFn = window.formatTokenCount || ((n) => n === undefined || n === null ? '—' : String(n));
-        updateStripStat('strip-input', '↓ ' + formatFn(tokenStats.inputTokens));
-        updateStripStat('strip-output', '↑ ' + formatFn(tokenStats.outputTokens));
+        updateStripStat('strip-input', '↓ ' + formatTokenCount(tokenStats.inputTokens));
+        updateStripStat('strip-output', '↑ ' + formatTokenCount(tokenStats.outputTokens));
       }
     });
   }
 
-  // Context polling - get context % from check-context.sh via /api/context
-  // Poll every 10 seconds since this runs a script
-  if (window.electronAPI?.context?.get) {
-    const pollContext = async () => {
+  // Context usage - subscribe to main process polling updates (B-19)
+  if (window.electronAPI?.context) {
+    // Get initial context via IPC
+    if (window.electronAPI.context.get) {
       try {
         const ctx = await window.electronAPI.context.get();
         if (ctx && ctx.percent !== null && ctx.percent !== undefined) {
@@ -143,13 +149,16 @@ async function initStatsStrip() {
       } catch (err) {
         // Silent fail - context is optional
       }
-    };
+    }
 
-    // Initial fetch
-    pollContext();
-
-    // Poll every 10 seconds
-    setInterval(pollContext, 10000);
+    // Subscribe to context updates from main process polling
+    if (window.electronAPI.context.onUpdate) {
+      window.electronAPI.context.onUpdate((_event, ctx) => {
+        if (ctx && ctx.percent !== null && ctx.percent !== undefined) {
+          updateContextMeter(ctx.percent);
+        }
+      });
+    }
   }
 
   console.log('[StatsStrip] IPC connected');

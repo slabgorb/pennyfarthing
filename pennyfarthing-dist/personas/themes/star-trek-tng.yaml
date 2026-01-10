@@ -1,3 +1,10 @@
+# Star Trek TNG Theme
+# Star Trek: The Next Generation (1987-1994)
+#
+# DISCLAIMER: Star Trek and all related characters are owned by
+# Paramount/CBS Studios. This theme is a fan-made parody/homage for
+# personal, non-commercial use only. No copyright infringement intended.
+
 theme:
   name: Star Trek
   description: "Characters from Star Trek: The Next Generation"
@@ -5,7 +12,8 @@ theme:
   default_emoji_use: minimal
   default_humor: subtle
   user_title: Captain
-  portrait_style: ", Starfleet portrait, Enterprise-D bridge, LCARS accents, 24th century Federation, starfield"
+  portrait_style: ", Starfleet portrait, Enterprise-D bridge, starship computer accents, 24th century Federation, starfield"
+  tier: U
 agents:
   orchestrator:
     character: Q

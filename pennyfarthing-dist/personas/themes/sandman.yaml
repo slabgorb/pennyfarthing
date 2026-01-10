@@ -1,3 +1,10 @@
+# Sandman Theme
+# The Sandman by Neil Gaiman (1989-1996)
+#
+# DISCLAIMER: The Sandman and all related characters are owned by
+# DC Comics/Warner Bros. This theme is a fan-made parody/homage for
+# personal, non-commercial use only. No copyright infringement intended.
+
 theme:
   name: Sandman
   description: Characters from Neil Gaiman's Sandman - the Endless, cosmic abstraction, stories about stories
@@ -6,7 +13,8 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Dreamer
-  portrait_style: ", Vertigo comics, Dave McKean mixed media, dreamlike surrealism, cosmic darkness, stars"
+  portrait_style: ", dark fantasy illustration, mixed media collage, dreamlike surrealism, cosmic darkness, stars"
+  tier: U
 agents:
   orchestrator:
     character: Destiny of the Endless

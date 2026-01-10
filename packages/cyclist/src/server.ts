@@ -18,6 +18,9 @@ import {
   createTokenStatsRouter,
   createContextRouter,
   createThemeAgentsRouter,
+  createModeRouter,
+  createTelemetryRouter,
+  createEvaluationRouter,
   initTokenStatsBroadcast,
   broadcastStats,
 } from './api/index.js';
@@ -68,6 +71,9 @@ app.use('/api/files', createFileBrowserRouter(getProjectDir));
 app.use('/api/token-stats', createTokenStatsRouter());
 app.use('/api/context', createContextRouter(getProjectDir));
 app.use('/api/theme-agents', createThemeAgentsRouter(getProjectDir));
+app.use('/api/mode', createModeRouter());
+app.use('/api/telemetry', createTelemetryRouter());
+app.use('/api/evaluation', createEvaluationRouter());
 app.use('/v1', createOTLPRouter());
 
 // Initialize token stats WebSocket broadcast callback

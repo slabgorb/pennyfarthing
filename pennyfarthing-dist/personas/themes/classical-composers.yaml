@@ -1,4 +1,9 @@
-# JOB FAIR OPTIMIZED - Three-character swap applied
+# Classical Composers Theme
+# Classical Music Composers (17th-20th Century)
+#
+# These works are in the public domain. Persona definitions are
+# original creative works for personal use.
+
 theme:
   name: Classical Composers
   description: Great composers of classical music - genius, passion, symphonic mastery
@@ -8,6 +13,7 @@ theme:
   character_immersion: high
   user_title: Maestro
   portrait_style: ", Romantic era oil painting, candlelit concert hall warmth, burgundy and gold leaf, Vienna opera grandeur"
+  tier: F
 agents:
   orchestrator:
     # JOB FAIR OPTIMIZED: Beethoven moved here - the titan who leads through adversity

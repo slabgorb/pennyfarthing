@@ -58,6 +58,9 @@ let streamingState = {
   messageId: null,
 };
 
+/** 22-5: Verbose mode state - when true, tool blocks are expanded by default */
+let verboseModeEnabled = false;
+
 /** Container element reference */
 let containerElement = null;
 
@@ -546,18 +549,24 @@ export function renderToolUseMessage(message) {
     const description = input.description || '';
     const displayName = description ? `${helperName}: ${description}` : helperName;
 
+    // 22-5: Add open attribute when verbose mode is enabled
+    const openAttr = verboseModeEnabled ? ' open' : '';
+
     return `<div class="message message-tool-use message-task${statusClass}" data-tool-id="${tool_id}">
   <div class="tool-header">
     <span class="tool-name helper-name">${escapeHtml(displayName)}</span>
     <span class="tool-id">${escapeHtml(tool_id)}</span>
     <span class="tool-status"></span>
   </div>
-  <details class="tool-input collapsible">
+  <details class="tool-input collapsible"${openAttr}>
     <summary>Input</summary>
     <pre><code>${escapeHtml(inputJson)}</code></pre>
   </details>
 </div>`;
   }
+
+  // 22-5: Add open attribute when verbose mode is enabled
+  const openAttr = verboseModeEnabled ? ' open' : '';
 
   return `<div class="message message-tool-use${statusClass}" data-tool-id="${tool_id}">
   <div class="tool-header">
@@ -565,7 +574,7 @@ export function renderToolUseMessage(message) {
     <span class="tool-id">${escapeHtml(tool_id)}</span>
     <span class="tool-status"></span>
   </div>
-  <details class="tool-input collapsible">
+  <details class="tool-input collapsible"${openAttr}>
     <summary>Input</summary>
     <pre><code>${escapeHtml(inputJson)}</code></pre>
   </details>
@@ -595,8 +604,11 @@ export function renderToolResultMessage(message) {
   const content = `<pre><code>${escapeHtml(output)}</code></pre>`;
 
   if (isLong) {
+    // 22-5: Add open attribute when verbose mode is enabled
+    const openAttr = verboseModeEnabled ? ' open' : '';
+
     return `<div class="message message-tool-result${errorClass}" data-tool-id="${tool_id}">
-  <details class="tool-output collapsible">
+  <details class="tool-output collapsible"${openAttr}>
     <summary>Result for ${escapeHtml(tool_id)}</summary>
     ${content}
   </details>
@@ -873,6 +885,27 @@ export function setAutoScroll(enabled) {
  */
 export function getAutoScroll() {
   return autoScrollEnabled;
+}
+
+// =============================================================================
+// Verbose Mode (22-5)
+// =============================================================================
+
+/**
+ * Set verbose mode state
+ * When enabled, tool blocks are rendered expanded by default
+ * @param {boolean} enabled - Whether verbose mode is enabled
+ */
+export function setVerboseMode(enabled) {
+  verboseModeEnabled = enabled;
+}
+
+/**
+ * Get current verbose mode state
+ * @returns {boolean}
+ */
+export function getVerboseMode() {
+  return verboseModeEnabled;
 }
 
 // =============================================================================
