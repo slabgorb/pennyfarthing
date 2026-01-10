@@ -242,6 +242,23 @@
     </div>
   </div>
 
+  <!-- 22-3: Bash Command Approval Modal -->
+  <div id="approval-modal" class="approval-modal hidden" tabindex="-1" aria-hidden="true">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Approve Command?</h3>
+        <span class="safety-indicator">Safe</span>
+      </div>
+      <div class="command-display"></div>
+      <div class="modal-actions">
+        <button class="approve-btn" data-action="approve" title="Approve and execute (Enter)">Approve</button>
+        <button class="always-allow-btn" data-action="always-allow" title="Approve and allow similar commands (A)">Always Allow</button>
+        <button class="reject-btn" data-action="reject" title="Reject command (Esc)">Reject</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Web adapter: provides window.electronAPI in browser mode (no-op in Electron) -->
   <script src="/js/web-adapter.js"></script>
   <!-- Livereload: auto-refresh in dev mode -->
@@ -252,6 +269,8 @@
   <script type="module" src="/js/message-view-init.js"></script>
   <!-- 22-1: Tool Activity Bar - prominent tool execution display -->
   <script type="module" src="/js/components/ToolActivityBar.js"></script>
+  <!-- 22-3: Bash Command Approval Modal -->
+  <script type="module" src="/js/components/ApprovalModal.js"></script>
   <script type="module" src="/js/portrait.js"></script>
   <script src="/js/stats-strip.js"></script>
   <script type="module" src="/js/persona.js"></script>

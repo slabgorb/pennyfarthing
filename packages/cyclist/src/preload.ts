@@ -134,6 +134,40 @@ export interface ElectronFileBrowserAPI {
   onFileOpened: (callback: (event: unknown, data: { path: string }) => void) => void;
 }
 
+/**
+ * Bash Approval API interface (22-3)
+ * Provides IPC channels for Bash command approval workflow
+ */
+export interface ElectronBashAPI {
+  /**
+   * Subscribe to approval request events from main process
+   * Triggered when a Bash command needs user approval
+   */
+  onApprovalRequest: (callback: (event: unknown, data: { command: string; toolId: string }) => void) => void;
+
+  /**
+   * Send approval response back to main process
+   * @param response - Approval decision
+   */
+  sendApprovalResponse: (response: { toolId: string; approved: boolean; alwaysAllow: boolean }) => Promise<void>;
+}
+
+/**
+ * Settings API interface (22-3)
+ * Provides access to Cyclist settings including approval gate
+ */
+export interface ElectronSettingsAPI {
+  /**
+   * Get the current state of the Bash approval gate
+   */
+  getBashApprovalGate: () => Promise<boolean>;
+
+  /**
+   * Set the state of the Bash approval gate
+   */
+  setBashApprovalGate: (enabled: boolean) => Promise<void>;
+}
+
 export interface ElectronAPI {
   stats: ElectronDataAPI;
   persona: ElectronDataAPI;
@@ -147,6 +181,8 @@ export interface ElectronAPI {
   agent: ElectronAgentAPI; // B-23: Agent launcher
   diff: ElectronDiffAPI; // E8-2: Diff viewer
   fileBrowser: ElectronFileBrowserAPI; // E8-3: File browser
+  bash: ElectronBashAPI; // 22-3: Bash approval gate
+  settings: ElectronSettingsAPI; // 22-3: Settings API
 }
 
 // Check if we're running in Electron (has contextBridge available)
@@ -248,6 +284,19 @@ function createElectronAPI(): ElectronAPI {
           ipcRenderer.on('file-browser:file-opened', callback);
         },
       },
+      // Bash approval API (22-3)
+      bash: {
+        onApprovalRequest: (callback: (event: unknown, data: { command: string; toolId: string }) => void) => {
+          ipcRenderer.on('bash:approval-request', callback);
+        },
+        sendApprovalResponse: (response: { toolId: string; approved: boolean; alwaysAllow: boolean }) =>
+          ipcRenderer.invoke('bash:approval-response', response),
+      },
+      // Settings API (22-3)
+      settings: {
+        getBashApprovalGate: () => ipcRenderer.invoke('settings:getBashApprovalGate') as Promise<boolean>,
+        setBashApprovalGate: (enabled: boolean) => ipcRenderer.invoke('settings:setBashApprovalGate', enabled),
+      },
     };
   } else {
     // Running in Node (tests) - return testable structure
@@ -302,6 +351,19 @@ function createElectronAPI(): ElectronAPI {
         onFileOpened: (_callback: (event: unknown, data: { path: string }) => void) => {
           // No-op in test environment
         },
+      },
+      // Bash approval API (22-3) - test stub
+      bash: {
+        onApprovalRequest: (_callback: (event: unknown, data: { command: string; toolId: string }) => void) => {
+          // No-op in test environment
+        },
+        sendApprovalResponse: (_response: { toolId: string; approved: boolean; alwaysAllow: boolean }) =>
+          Promise.resolve(),
+      },
+      // Settings API (22-3) - test stub
+      settings: {
+        getBashApprovalGate: () => Promise.resolve(false),
+        setBashApprovalGate: (_enabled: boolean) => Promise.resolve(),
       },
     };
   }
