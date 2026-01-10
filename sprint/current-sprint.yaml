@@ -1135,11 +1135,11 @@ epics:
     This addresses the gap between Claude's autonomy and user oversight,
     especially important for shell commands and file modifications.
   points: 13
-  completed_points: 0
+  completed_points: 3
   priority: P1
   marker: safety
   repos: cyclist
-  status: backlog
+  status: in_progress
   stories:
   - id: 22-1
     title: Tool Activity Bar component
@@ -1161,7 +1161,8 @@ epics:
       - CSS animations for appear/disappear transitions
     points: 3
     priority: P1
-    status: in_progress
+    status: done
+    completed: 2026-01-10
     repos: cyclist
     started: 2026-01-10
     assigned_to: Keith Avery
@@ -1190,8 +1191,10 @@ epics:
       - Cleanup of partial file writes
     points: 2
     priority: P1
-    status: backlog
+    status: in_progress
     repos: cyclist
+    started: 2026-01-10
+    assigned_to: Keith Avery
     acceptance_criteria:
     - Abort button visible during tool execution
     - Clicking abort stops the current operation

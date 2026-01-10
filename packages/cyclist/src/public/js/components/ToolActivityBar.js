@@ -40,6 +40,12 @@ let activityBarElement = null;
 /** Timeout for hiding the bar */
 let hideTimeout = null;
 
+/** Aborting state flag */
+let abortingState = false;
+
+/** Delay before hiding bar after abort (ms) - longer to show feedback */
+const ABORT_HIDE_DELAY_MS = 1000;
+
 /**
  * Get the basename from a file path
  * @param {string} filepath
@@ -330,6 +336,84 @@ export function handleMessage(message) {
  */
 export function isElectronEnvironment() {
   return typeof window !== 'undefined' && window.electronAPI !== undefined;
+}
+
+/**
+ * Check if currently in aborting state
+ * @returns {boolean}
+ */
+export function isAborting() {
+  return abortingState;
+}
+
+/**
+ * Stop all active tools and clear tracking
+ */
+function stopAllTools() {
+  // Stop all tool timers
+  activeTools.clear();
+  stopTimerUpdateLoop();
+}
+
+/**
+ * Reset the aborting state
+ */
+function resetAbortingState() {
+  abortingState = false;
+
+  // Guard for Node.js test environment
+  if (typeof document === 'undefined') return;
+
+  if (!activityBarElement) {
+    activityBarElement = document.getElementById('tool-activity-bar');
+  }
+  if (activityBarElement) {
+    activityBarElement.classList.remove('aborting');
+  }
+}
+
+/**
+ * Handle abort - called when user aborts running operations
+ * Stops all tools, shows visual feedback, and hides bar after delay
+ */
+export function handleAbort() {
+  // Guard for Node.js test environment
+  if (typeof document === 'undefined') return;
+
+  // Stop all active tools
+  stopAllTools();
+
+  // Set aborting state
+  abortingState = true;
+
+  // Get element reference
+  if (!activityBarElement) {
+    activityBarElement = document.getElementById('tool-activity-bar');
+  }
+  if (!activityBarElement) return;
+
+  // Add aborting class for visual feedback
+  activityBarElement.classList.add('aborting');
+
+  // Update display to show aborting
+  const nameEl = activityBarElement.querySelector('.tool-name');
+  if (nameEl) nameEl.textContent = 'Aborting...';
+
+  const paramEl = activityBarElement.querySelector('.tool-param');
+  if (paramEl) paramEl.textContent = '';
+
+  // Cancel any existing hide timeout
+  if (hideTimeout) {
+    clearTimeout(hideTimeout);
+    hideTimeout = null;
+  }
+
+  // Schedule hide after longer delay to show feedback
+  hideTimeout = setTimeout(() => {
+    hideActivityBar();
+    resetAbortingState();
+    hideTimeout = null;
+  }, ABORT_HIDE_DELAY_MS);
 }
 
 /**
