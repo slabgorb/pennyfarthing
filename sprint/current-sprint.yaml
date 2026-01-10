@@ -1314,6 +1314,14 @@ epics:
         started: 2026-01-10
         assigned_to: Keith Avery
         repos: cyclist, pennyfarthing
+        notes: |
+          FINDINGS (2026-01-10):
+          - Changed Files panel now removes committed files after git commit
+          - Implementation: git-commit-detector.js watches for Bash tool_use with git commit
+          - On successful tool_result, extracts committed files from output (create mode lines)
+          - Falls back to removing all diffs if file paths not extractable
+          - Wired via message-view-init.js onMessage handler
+          - Tests: 13 passing in tests/22-7-git-commit-detector.test.ts
         acceptance_criteria:
           - Token counts accurately reflect actual usage
           - Clear documentation of what each metric measures
@@ -1323,3 +1331,4 @@ epics:
           - Diff panel scrolls horizontally for long lines (no wrapping)
           - /theme skill created with list/show/set documentation
           - CLAUDE.md references theme skill instead of hardcoded theme list
+          - Changed Files panel removes files after git commit (DONE)

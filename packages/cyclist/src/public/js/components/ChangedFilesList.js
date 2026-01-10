@@ -97,13 +97,13 @@ export function selectFile(filePath, { focus = false } = {}) {
   selectedFilePath = filePath;
   render();
 
-  // Show diff for this file
+  // Show diff for this file (but don't auto-expand the panel)
   const diffs = DiffViewer.getDiffs().filter(d => d.filePath === filePath);
   if (diffs.length > 0) {
     // Show most recent diff for this file
     const mostRecent = diffs[diffs.length - 1];
     DiffViewer.renderDiff(DiffPanel.getContentElement(), mostRecent);
-    DiffPanel.expand();
+    // Don't auto-expand - user controls panel visibility
   }
 
   // Only focus when explicitly requested (user interaction)
@@ -192,6 +192,32 @@ export function handleDiffAdded(diffData) {
 }
 
 /**
+ * Handle diffs removed (e.g., after git commit)
+ * Re-renders the list and adjusts selection if needed
+ * @param {string[]} removedPaths - Array of file paths that were removed
+ */
+export function handleDiffsRemoved(removedPaths) {
+  // Check if currently selected file was removed
+  if (selectedFilePath && removedPaths.includes(selectedFilePath)) {
+    // Get remaining files
+    const fileChanges = getFileChanges();
+    const remainingPaths = Object.keys(fileChanges);
+
+    if (remainingPaths.length > 0) {
+      // Select the first remaining file
+      selectFile(remainingPaths[0]);
+    } else {
+      // No files left, clear selection
+      selectedFilePath = null;
+      DiffPanel.clearContent();
+    }
+  }
+
+  // Re-render the list
+  render();
+}
+
+/**
  * Clear all changes and reset state
  */
 export function clear() {
@@ -228,6 +254,7 @@ export default {
   selectFile,
   getSelectedFile,
   handleDiffAdded,
+  handleDiffsRemoved,
   clear,
   render,
 };
