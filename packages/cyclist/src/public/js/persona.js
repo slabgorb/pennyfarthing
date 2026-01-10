@@ -41,6 +41,28 @@ function humanize(str) {
 }
 
 /**
+ * Update OCEAN scores display
+ * @param {Object} ocean - OCEAN scores { O, C, E, A, N } with values 1-5
+ */
+function updateOceanScores(ocean) {
+  const oceanContainer = document.getElementById('ocean-scores');
+  if (!oceanContainer) return;
+
+  const traits = ['O', 'C', 'E', 'A', 'N'];
+  for (const trait of traits) {
+    const row = oceanContainer.querySelector(`[data-trait="${trait}"]`);
+    if (!row) continue;
+
+    const value = ocean?.[trait] ?? 0;
+    const valueEl = row.querySelector('.trait-value');
+
+    if (valueEl) {
+      valueEl.textContent = value > 0 ? value : '-';
+    }
+  }
+}
+
+/**
  * Update persona display in the UI
  * @param {Object} persona - Persona data from IPC
  */
@@ -57,21 +79,21 @@ export function updatePersona(persona) {
   const themeEl = document.getElementById('theme-name');
   const nameEl = document.getElementById('character-name');
   const roleEl = document.getElementById('character-role');
-  const quoteEl = document.getElementById('character-quote');
+  const benchmarkEl = document.getElementById('benchmark-score');
 
   // Project name at top (repo folder name)
   if (projectEl && persona.projectName) {
     projectEl.textContent = persona.projectName;
   }
 
-  // Theme name at bottom, humanized
+  // Theme name centered below portrait, humanized
   if (themeEl && persona.theme) {
     themeEl.textContent = humanize(persona.theme);
   }
 
   if (nameEl) {
-    // Use displayName (smart short name) if available, fall back to full character name
-    nameEl.textContent = persona.displayName || persona.character || '';
+    // Use full character name
+    nameEl.textContent = persona.character || '';
   }
 
   if (roleEl) {
@@ -79,8 +101,18 @@ export function updatePersona(persona) {
     roleEl.textContent = (persona.role || '').toUpperCase();
   }
 
-  if (quoteEl && persona.quote) {
-    quoteEl.textContent = `"${persona.quote}"`;
+  // Update OCEAN scores
+  if (persona.ocean) {
+    updateOceanScores(persona.ocean);
+  }
+
+  // Update benchmark score if available
+  if (benchmarkEl) {
+    if (persona.benchmarkScore) {
+      benchmarkEl.innerHTML = `Job Fair: <span class="score-value">${persona.benchmarkScore}</span>`;
+    } else {
+      benchmarkEl.textContent = '';
+    }
   }
 
   // Update portrait using the portrait module's function

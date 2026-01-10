@@ -19,6 +19,7 @@ let panel = null;
 let resizeHandle = null;
 let collapseBtn = null;
 let expandBtn = null;
+let countBadge = null;
 let isDragging = false;
 let startX = 0;
 let startWidth = 0;
@@ -118,6 +119,16 @@ function toggle() {
 }
 
 /**
+ * Update the changed file count badge
+ * @param {number} count - Number of changed files
+ */
+export function setFileCount(count) {
+  if (!countBadge) return;
+  countBadge.textContent = count > 0 ? count : '';
+  countBadge.style.display = count > 0 ? 'inline-flex' : 'none';
+}
+
+/**
  * Handle mouse down on resize handle
  */
 function onResizeStart(e) {
@@ -185,6 +196,7 @@ export function init() {
   resizeHandle = document.getElementById('file-panel-resize');
   collapseBtn = document.getElementById('file-panel-collapse');
   expandBtn = document.getElementById('file-panel-expand');
+  countBadge = document.getElementById('file-panel-count');
 
   if (!panel) {
     console.warn('[FilePanel] Panel element not found');
@@ -234,6 +246,7 @@ export default {
   toggle,
   setWidth,
   getCurrentWidth,
+  setFileCount,
 };
 
 // Auto-initialize on DOM ready

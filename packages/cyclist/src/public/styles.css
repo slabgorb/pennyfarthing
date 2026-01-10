@@ -18,7 +18,7 @@
   --status-working: #f59e0b;  /* B-20: Brightened for WCAG AA contrast */
   --status-error: #ef4444;
   /* Panel dimensions - standardized */
-  --sidebar-width: 280px;
+  --sidebar-width: 300px;  /* 128px portrait + identity info + padding */
   --panel-min-width: 150px;
   --panel-default-width: 280px;
 }
@@ -166,6 +166,28 @@ html, body {
 .file-panel.collapsed ~ .file-panel-expand-btn {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* Panel count badges on expand buttons */
+.panel-count-badge {
+  display: none;
+  position: absolute;
+  top: 4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  font-size: 10px;
+  font-weight: bold;
+  color: #fff;
+  background: var(--accent, #6366f1);
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+.panel-count-badge:not(:empty) {
+  display: inline-flex;
 }
 
 /* File tree styles (moved from tab panel context) */
@@ -407,15 +429,26 @@ html, body {
   letter-spacing: 0.03em;
 }
 
-.token-stats {
+.stats-label {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  opacity: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.token-stats,
+.context-stats {
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.375rem;
   font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
   color: var(--text-secondary);
 }
 
 .token-in,
-.token-out {
+.token-out,
+.context-tokens {
   white-space: nowrap;
 }
 
@@ -640,24 +673,111 @@ html, body {
   flex-shrink: 0;
 }
 
+/* Portrait row: portrait + identity info side by side */
+.portrait-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
 #portrait {
-  width: 100px;
-  height: 100px;
-  min-width: 100px;
+  width: 128px;
+  height: 128px;
+  min-width: 128px;
   background: var(--bg-primary);
   border-radius: 8px;
   overflow: hidden;
   position: relative;
+  flex-shrink: 0;
 }
 
 #portrait img {
-  width: 100px;
-  height: 100px;
+  width: 128px;
+  height: 128px;
   object-fit: cover;
   transition: opacity 0.2s ease;
   position: relative;
   z-index: 1;
-  image-rendering: pixelated;  /* Keep crisp edges for small images */
+}
+
+/* Character name - centered above portrait */
+.character-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+/* Portrait details: role and OCEAN (next to portrait) */
+.portrait-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.portrait-details .character-role {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Theme name - centered below portrait */
+.theme-name {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* OCEAN personality scores - in portrait details */
+.ocean-scores {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ocean-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.ocean-row .trait-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.ocean-row .trait-value {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Benchmark score display */
+.benchmark-score {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+}
+
+.benchmark-score:empty {
+  display: none;
+}
+
+.benchmark-score .score-value {
+  font-weight: 600;
+  color: var(--accent);
 }
 
 /* MessageView container (replaces xterm terminal) */
@@ -1116,14 +1236,14 @@ html, body {
   letter-spacing: 0.08em;
 }
 
-/* Theme name at bottom of persona section */
+/* Theme name under portrait */
 .theme-name {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   letter-spacing: 0.05em;
   color: var(--text-secondary);
   text-align: center;
-  margin-top: 0.5rem;
-  opacity: 0.5;
+  margin-top: 0.25rem;
+  opacity: 0.7;
 }
 
 /* Activity Line - shows current tool/subagent activity */
@@ -1158,42 +1278,11 @@ html, body {
   color: var(--accent);
 }
 
-.persona-header {
-  display: flex;
-  gap: 0.5rem;
-  align-items: flex-start;
-}
-
+/* Legacy persona-info container - no longer used in main panel */
 .persona-info {
-  flex: 1;
-  min-width: 0;  /* Allow text truncation */
-}
-
-#character-name,
-.character-name {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 0.125rem;
-}
-
-#character-role,
-.character-role {
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--accent);
-  margin-bottom: 0.25rem;
-}
-
-/* Quote always visible */
-#character-quote,
-.character-quote {
-  font-size: 0.85rem;
-  font-style: italic;
-  color: var(--text-secondary);
-  line-height: 1.3;
-  margin-top: 0.25rem;
+  text-align: center;
+  margin-top: 0.5rem;
+  display: none;  /* Hidden - character info now in .portrait-details */
 }
 
 /* Story Section Styles */
@@ -2425,8 +2514,8 @@ html, body {
 
 /* Large portrait */
 .popup-portrait {
-  width: 120px;
-  height: 120px;
+  width: 256px;
+  height: 256px;
   flex-shrink: 0;
   border-radius: 8px;
   overflow: hidden;
@@ -2507,7 +2596,7 @@ html, body {
 }
 
 /* Responsive adjustments */
-@media (max-width: 500px) {
+@media (max-width: 600px) {
   .persona-popup {
     padding: 16px;
     max-width: 95%;
@@ -2520,8 +2609,8 @@ html, body {
   }
 
   .popup-portrait {
-    width: 100px;
-    height: 100px;
+    width: 200px;
+    height: 200px;
   }
 
   .popup-character-name {
