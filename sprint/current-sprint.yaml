@@ -683,7 +683,9 @@ epics:
       '
     points: 5
     priority: P2
-    status: backlog
+    status: in_progress
+    started: 2026-01-10
+    assigned_to: Keith Avery
     repos: pennyfarthing, cyclist
     acceptance_criteria:
     - AgentEvaluation type defined with all metric fields
