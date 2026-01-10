@@ -1,3 +1,10 @@
+# Bobiverse Theme
+# Bobiverse series (2016-present), Dennis E. Taylor
+#
+# DISCLAIMER: Bobiverse and all related characters are owned by
+# Dennis E. Taylor. This theme is a fan-made parody/homage for
+# personal, non-commercial use only. No copyright infringement intended.
+
 theme:
   name: Bobiverse
   description: Characters from Bobiverse - personality drift from common origin, replicant identity, space exploration
@@ -6,7 +13,8 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Fellow Replicant
-  portrait_style: ", sci-fi VR avatar, clean digital hologram blue, scan lines, Star Trek tribute, deep space starfield"
+  portrait_style: ", seen through CRT screen, scan lines"
+  tier: U
 agents:
   orchestrator:
     character: Original Bob

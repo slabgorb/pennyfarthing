@@ -17,6 +17,10 @@
   --status-ready: #22c55e;
   --status-working: #f59e0b;  /* B-20: Brightened for WCAG AA contrast */
   --status-error: #ef4444;
+  /* Panel dimensions - standardized */
+  --sidebar-width: 280px;
+  --panel-min-width: 150px;
+  --panel-default-width: 280px;
 }
 
 html, body {
@@ -33,11 +37,184 @@ html, body {
   width: 100vw;
 }
 
+/* =============================================================================
+ * Left File Panel (Collapsible, Resizable)
+ * ============================================================================= */
+
+.file-panel {
+  display: flex;
+  flex-direction: column;
+  width: var(--panel-default-width);
+  min-width: var(--panel-min-width);
+  max-width: 50vw;
+  height: 100%;
+  background: var(--bg-secondary, #1a1a2e);
+  border-right: 1px solid var(--border, #333);
+  transition: width 0.2s ease, min-width 0.2s ease, opacity 0.2s ease;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.file-panel.collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+  border-right: none;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.file-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-tertiary, #252540);
+  border-bottom: 1px solid var(--border, #333);
+  flex-shrink: 0;
+}
+
+.file-panel-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #888);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.file-panel-collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 12px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.file-panel-collapse-btn:hover {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.1));
+  color: var(--text-primary, #fff);
+}
+
+.file-panel-content {
+  flex: 1;
+  overflow: auto;
+  padding: 8px 0;
+}
+
+/* Resize handle between file panel and main content */
+.resize-handle {
+  width: 4px;
+  height: 100%;
+  background: transparent;
+  cursor: col-resize;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+
+.resize-handle:hover,
+.resize-handle.dragging {
+  background: var(--accent, #6366f1);
+}
+
+.file-panel.collapsed + .resize-handle {
+  display: none;
+}
+
+/* Expand button (visible when panel is collapsed) */
+.file-panel-expand-btn {
+  position: absolute;
+  left: 0;
+  top: 50px;
+  width: 20px;
+  height: 60px;
+  padding: 0;
+  border: none;
+  border-radius: 0 4px 4px 0;
+  background: var(--bg-tertiary, #252540);
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  z-index: 10;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, background 0.15s ease, color 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-panel-expand-btn .expand-label {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+}
+
+.file-panel-expand-btn:hover {
+  background: var(--accent, #6366f1);
+  color: var(--text-primary, #fff);
+}
+
+.file-panel.collapsed ~ .file-panel-expand-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* File tree styles (moved from tab panel context) */
+#file-panel-tree {
+  font-size: 13px;
+}
+
+#file-panel-tree .tree-item {
+  display: flex;
+  align-items: center;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+  white-space: nowrap;
+}
+
+#file-panel-tree .tree-item:hover {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.05));
+}
+
+#file-panel-tree .tree-item.selected {
+  background: var(--selected-bg, rgba(99, 102, 241, 0.2));
+}
+
+#file-panel-tree .tree-chevron {
+  width: 16px;
+  flex-shrink: 0;
+  color: var(--text-secondary, #888);
+}
+
+#file-panel-tree .tree-icon {
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+#file-panel-tree .tree-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#file-panel-tree .tree-children {
+  padding-left: 16px;
+}
+
 #main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  min-width: var(--sidebar-width);  /* Match sidebar width to allow panels to expand */
   overflow: hidden;  /* 17-2: Constrain children to prevent layout blowout */
 }
 
@@ -245,7 +422,7 @@ html, body {
 .context-mini {
   position: relative;
   width: 80px;
-  height: 8px;
+  height: 18px;
   background: var(--bg-primary);
   border-radius: 4px;
   overflow: hidden;
@@ -266,7 +443,7 @@ html, body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 0.7rem;  /* B-20: Increased for readability */
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-primary);
   text-shadow: 0 0 2px var(--bg-primary);
@@ -451,7 +628,8 @@ html, body {
 }
 
 #sidebar {
-  width: 280px;
+  width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
   background: var(--bg-secondary);
   border-left: 1px solid var(--border);
   display: flex;
@@ -459,6 +637,7 @@ html, body {
   padding: 0.75rem;
   gap: 0.5rem;
   font-size: 1rem;  /* Base size for sidebar text */
+  flex-shrink: 0;
 }
 
 #portrait {
@@ -1716,146 +1895,63 @@ html, body {
 }
 
 /* =============================================================================
-   B-19: Context Meter Styles
-   ============================================================================= */
-
-.context-meter {
-  margin-top: 0.5rem;
-  padding: 0.25rem 0;
-}
-
-.context-meter-label {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.85rem;
-  margin-bottom: 0.25rem;
-  color: var(--text-secondary);
-}
-
-.context-percent {
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-/* Color level states */
-.context-meter.level-safe .progress-fill {
-  background: var(--status-ready);
-}
-
-.context-meter.level-warning .progress-fill {
-  background: var(--status-working);
-}
-
-.context-meter.level-danger .progress-fill {
-  background: var(--status-error);
-}
-
-.context-meter.level-critical .progress-fill {
-  background: var(--status-error);
-  animation: pulse 0.5s infinite;
-}
-
-/* =============================================================================
- * E8-1: Tab Panel
- * Tabbed workspace for diffs, file browser, and file viewer
+ * Left Diff Panel (Collapsible, Resizable) - mirrors file-panel
  * ============================================================================= */
 
-.tab-panel {
-  border-top: 1px solid var(--border-color);
-  background: var(--sidebar-bg);
+.diff-panel {
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;     /* 17-2: Don't shrink below natural height */
-  max-height: 40vh;   /* 17-2: Limit to 40% of viewport when expanded */
-}
-
-.tab-bar {
-  display: flex;
-  align-items: center;
-  padding: 0.25rem 0.5rem;
-  gap: 0.25rem;
-  border-bottom: 1px solid var(--border-color);
-  background: var(--bg-color);
-  min-height: 32px;
-}
-
-.tab-bar-tabs {
-  display: flex;
-  flex: 1;
-  gap: 0.25rem;
-  overflow-x: auto;
-  scrollbar-width: thin;
-}
-
-.tab-bar-tabs::-webkit-scrollbar {
-  height: 4px;
-}
-
-.tab-bar-tabs::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 2px;
-}
-
-.tab {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  background: transparent;
-  border: 1px solid transparent;
-  white-space: nowrap;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-}
-
-.tab:hover {
-  background: var(--hover-bg, rgba(255, 255, 255, 0.05));
-  color: var(--text-primary);
-}
-
-.tab.active {
-  background: var(--accent-color);
-  color: var(--bg-color);
-  border-color: var(--accent-color);
-}
-
-.tab-label {
-  max-width: 150px;
+  width: 350px;
+  min-width: var(--panel-min-width);
+  max-width: 50vw;
+  height: 100%;
+  background: var(--bg-secondary, #1a1a2e);
+  border-right: 1px solid var(--border, #333);
+  transition: width 0.2s ease, min-width 0.2s ease, opacity 0.2s ease;
   overflow: hidden;
-  text-overflow: ellipsis;
+  flex-shrink: 0;
 }
 
-.tab-close {
+.diff-panel.collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+  border-right: none;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.diff-panel-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: inherit;
-  opacity: 0.6;
-  cursor: pointer;
-  border-radius: 2px;
-  font-size: 14px;
-  line-height: 1;
-  transition: opacity 0.15s ease, background 0.15s ease;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-tertiary, #252540);
+  border-bottom: 1px solid var(--border, #333);
+  flex-shrink: 0;
 }
 
-.tab-close:hover {
-  opacity: 1;
-  background: rgba(0, 0, 0, 0.2);
+.diff-panel-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #888);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.tab.active .tab-close:hover {
-  background: rgba(0, 0, 0, 0.3);
+.diff-panel-count {
+  font-size: 11px;
+  color: var(--text-secondary, #888);
+  background: var(--bg-tertiary, #252540);
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 8px;
 }
 
-.tab-panel-toggle {
+.diff-panel-count:empty {
+  display: none;
+}
+
+.diff-panel-collapse-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1864,156 +1960,158 @@ html, body {
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--text-secondary, #888);
   cursor: pointer;
   border-radius: 4px;
-  font-size: 10px;
-  transition: background 0.15s ease, color 0.15s ease, transform 0.2s ease;
+  font-size: 12px;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
-.tab-panel-toggle:hover {
-  background: var(--hover-bg, rgba(255, 255, 255, 0.05));
-  color: var(--text-primary);
+.diff-panel-collapse-btn:hover {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.1));
+  color: var(--text-primary, #fff);
 }
 
-.tab-panel.collapsed .tab-panel-toggle {
-  transform: rotate(180deg);
-}
-
-.tab-content {
+.diff-panel-content {
   flex: 1;
-  overflow: auto;
-  max-height: 300px;
-  min-height: 100px;
-  transition: max-height 0.2s ease, min-height 0.2s ease, opacity 0.2s ease;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 0;
 }
 
-.tab-panel.collapsed .tab-content {
-  max-height: 0;
-  min-height: 0;
+/* Hide resize handle when diff panel is collapsed */
+.diff-panel.collapsed + .resize-handle {
+  display: none;
+}
+
+/* Expand button (visible when panel is collapsed) */
+.diff-panel-expand-btn {
+  position: absolute;
+  left: 0;
+  top: 118px;  /* Below FILES button (50px + 60px + 8px gap) */
+  width: 20px;
+  height: 60px;
+  padding: 0;
+  border: none;
+  border-radius: 0 4px 4px 0;
+  background: var(--bg-tertiary, #252540);
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  z-index: 10;
   opacity: 0;
-  overflow: hidden;
-}
-
-.tab-placeholder {
+  pointer-events: none;
+  transition: opacity 0.2s ease, background 0.15s ease, color 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  min-height: 100px;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
 }
 
-/* Hide tab bar when no tabs */
-.tab-panel:not(:has(.tab)) .tab-bar {
-  display: none;
+.diff-panel-expand-btn .expand-label {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
 }
 
-/* Also hide entire panel when collapsed and no tabs */
-.tab-panel.collapsed:not(:has(.tab)) {
-  display: none;
+.diff-panel-expand-btn:hover {
+  background: var(--accent, #6366f1);
+  color: var(--text-primary, #fff);
+}
+
+.diff-panel-expand-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 /* =============================================================================
  * E8-2: Diff Viewer
- * Side-by-side diff display for Edit/Write tool changes
+ * Unified diff display (git diff style) for Edit/Write tool changes
  * ============================================================================= */
 
 .diff-viewer {
   display: flex;
+  flex-direction: column;
   height: 100%;
   font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
   font-size: 13px;
   line-height: 1.4;
-}
-
-.diff-panel {
-  flex: 1;
-  overflow: auto;
-  border-right: 1px solid var(--border);
+  overflow: hidden;
   background: var(--bg-terminal);
 }
 
-.diff-panel:last-child {
-  border-right: none;
-}
-
-.diff-header {
-  padding: 0.5rem;
-  background: var(--bg-secondary);
+.diff-file-header {
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-secondary, #1a1a2e);
   border-bottom: 1px solid var(--border);
   font-weight: 600;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
+  font-size: 0.85rem;
+  color: var(--text-primary, #fff);
+}
+
+.diff-file-header .file-path {
+  color: var(--accent, #6366f1);
+}
+
+.diff-file-header .file-path-link {
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.diff-file-header .file-path-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
 }
 
 .diff-line {
   display: flex;
   white-space: pre;
   min-height: 1.4em;
+  padding: 0 0.5rem;
 }
 
-.diff-line-number {
-  width: 3rem;
-  text-align: right;
-  padding-right: 0.5rem;
-  color: var(--text-secondary);
+.diff-line-prefix {
+  width: 1.5rem;
+  text-align: center;
+  color: inherit;
   user-select: none;
   flex-shrink: 0;
-  opacity: 0.6;
-  font-size: 0.85em;
+  font-weight: 600;
 }
 
 .diff-line-content {
   flex: 1;
-  padding-left: 0.5rem;
+  padding-left: 0.25rem;
   overflow-x: auto;
 }
 
-/* Added lines - green background */
+/* Added lines - green */
 .diff-line.added {
   background: rgba(46, 160, 67, 0.15);
-}
-
-.diff-line.added .diff-line-content {
   color: var(--status-ready, #2ea043);
 }
 
-.diff-line.added .diff-line-number {
-  color: var(--status-ready, #2ea043);
-  opacity: 0.8;
-}
-
-/* Removed lines - red background */
+/* Removed lines - red */
 .diff-line.removed {
   background: rgba(248, 81, 73, 0.15);
-}
-
-.diff-line.removed .diff-line-content {
   color: var(--status-error, #f85149);
 }
 
-.diff-line.removed .diff-line-number {
-  color: var(--status-error, #f85149);
-  opacity: 0.8;
-}
-
-/* Unchanged lines - normal styling */
-.diff-line.unchanged {
+/* Context/unchanged lines */
+.diff-line.context {
   background: transparent;
+  color: var(--text-secondary, #888);
 }
 
-.diff-line.unchanged .diff-line-content {
-  color: var(--text-primary);
-}
-
-/* Empty state for new files */
-.diff-empty-state {
-  padding: 2rem;
-  text-align: center;
-  color: var(--text-secondary);
+/* New file indicator */
+.diff-new-file {
+  padding: 0.5rem 0.75rem;
+  background: rgba(46, 160, 67, 0.1);
+  color: var(--status-ready, #2ea043);
   font-style: italic;
+  border-bottom: 1px solid var(--border);
 }
 
 /* Language-specific classes for syntax highlighting (future enhancement) */
@@ -2157,4 +2255,553 @@ html, body {
 
 .file-browser-error {
   color: var(--status-error);
+}
+
+/* =============================================================================
+ * Changed Files List
+ * Master list showing files Claude has modified in this session
+ * ============================================================================= */
+
+.changed-files-list {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-size: 13px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.changed-file-item {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+  white-space: nowrap;
+}
+
+.changed-file-item:hover {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.05));
+}
+
+.changed-file-item.selected {
+  background: var(--selected-bg, rgba(99, 102, 241, 0.2));
+}
+
+.changed-file-item:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.changed-file-item:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.changed-file-icon {
+  width: 16px;
+  flex-shrink: 0;
+  text-align: center;
+  color: var(--text-secondary);
+  margin-right: 8px;
+}
+
+.changed-file-item.selected .changed-file-icon {
+  color: var(--accent);
+}
+
+.changed-file-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+
+.changed-file-badge {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.changed-files-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 100px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .changed-file-item {
+    transition: none;
+  }
+}
+
+/* ========================================
+   Story 17-4: Persona Popup Modal
+   ======================================== */
+
+/* Make persona section clickable */
+#persona-section {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+#persona-section:hover {
+  background-color: var(--bg-secondary);
+}
+
+/* Backdrop overlay */
+.persona-popup-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 999;
+}
+
+/* Popup modal */
+.persona-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 480px;
+  max-height: 80vh;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  display: none;
+}
+
+.persona-popup.active {
+  display: block;
+}
+
+/* Close button */
+.popup-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+  border-radius: 4px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.popup-close:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+}
+
+/* Popup content layout */
+.persona-popup-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Header with portrait and title */
+.popup-header {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+/* Large portrait */
+.popup-portrait {
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.popup-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.popup-portrait .portrait-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+/* Title area */
+.popup-title-area {
+  flex: 1;
+  min-width: 0;
+}
+
+.popup-character-name {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.role-mapping {
+  font-size: 0.9rem;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.popup-theme {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-transform: capitalize;
+}
+
+/* Attributes section */
+.popup-attributes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.popup-attr {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.persona-attr-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+}
+
+.persona-style,
+.persona-voice,
+.persona-background,
+.persona-quirks {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+/* Responsive adjustments */
+@media (max-width: 500px) {
+  .persona-popup {
+    padding: 16px;
+    max-width: 95%;
+  }
+
+  .popup-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .popup-portrait {
+    width: 100px;
+    height: 100px;
+  }
+
+  .popup-character-name {
+    font-size: 1.25rem;
+  }
+}
+
+/* =============================================================================
+ * 22-1: Tool Activity Bar
+ * Prominent sticky bar showing currently executing tools with real-time timer
+ * ============================================================================= */
+
+#tool-activity-bar {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  z-index: 50;
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+}
+
+#tool-activity-bar.hidden {
+  opacity: 0;
+  transform: translateY(100%);
+  visibility: hidden;
+  pointer-events: none;
+}
+
+#tool-activity-bar[hidden] {
+  opacity: 0;
+  transform: translateY(100%);
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Status indicator - pulsing dot */
+#tool-activity-bar .tool-status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--status-working);
+  animation: pulse 1s infinite;
+  flex-shrink: 0;
+}
+
+/* Tool icon */
+#tool-activity-bar .tool-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+/* Tool name */
+#tool-activity-bar .tool-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+/* Primary parameter */
+#tool-activity-bar .tool-param {
+  flex: 1;
+  font-size: 0.85rem;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Elapsed time - monospace for alignment */
+#tool-activity-bar .elapsed-time {
+  font-size: 0.85rem;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  color: var(--text-secondary);
+  min-width: 4ch;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* 22-2: Aborting state - visual feedback when operation is being aborted */
+#tool-activity-bar.aborting {
+  background: rgba(220, 53, 69, 0.15);
+  border-color: #dc3545;
+}
+
+#tool-activity-bar.aborting .tool-status-indicator {
+  background: #dc3545;
+  animation: none;
+}
+
+#tool-activity-bar.aborting .tool-name {
+  color: #dc3545;
+}
+
+/* ==========================================================================
+   22-3: Bash Command Approval Modal
+   ========================================================================== */
+
+/* Modal container - fixed overlay */
+#approval-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+#approval-modal.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Modal overlay/backdrop */
+#approval-modal .modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+/* Modal content box */
+#approval-modal .modal-content {
+  position: relative;
+  background: var(--bg-primary, #1e1e1e);
+  border: 1px solid var(--border, #333);
+  border-radius: 8px;
+  padding: 1.5rem;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* Modal header */
+#approval-modal .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border, #333);
+}
+
+#approval-modal .modal-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text-primary, #fff);
+}
+
+/* Safety indicator */
+#approval-modal .safety-indicator {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+#approval-modal .safety-indicator.safety-safe {
+  background: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+}
+
+#approval-modal .safety-indicator.safety-caution {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+}
+
+#approval-modal .safety-indicator.safety-danger {
+  background: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+}
+
+/* Command display - syntax highlighting */
+#approval-modal .command-display {
+  background: var(--bg-secondary, #252525);
+  border: 1px solid var(--border, #333);
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text-primary, #fff);
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-x: auto;
+}
+
+/* Syntax highlighting classes */
+.syntax-keyword {
+  color: #c586c0;
+  font-weight: 500;
+}
+
+.syntax-path {
+  color: #4ec9b0;
+}
+
+.syntax-string {
+  color: #ce9178;
+}
+
+.syntax-operator {
+  color: #d4d4d4;
+  font-weight: 600;
+}
+
+/* Modal action buttons */
+#approval-modal .modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+#approval-modal .modal-actions button {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+  border: none;
+}
+
+#approval-modal .modal-actions button:hover {
+  transform: translateY(-1px);
+}
+
+#approval-modal .modal-actions button:active {
+  transform: translateY(0);
+}
+
+/* Approve button - success styling */
+.approve-btn {
+  background: #28a745;
+  color: white;
+}
+
+.approve-btn:hover {
+  background: #218838;
+}
+
+/* Always Allow button - secondary styling */
+.always-allow-btn {
+  background: var(--bg-secondary, #252525);
+  color: var(--text-primary, #fff);
+  border: 1px solid var(--border, #333) !important;
+}
+
+.always-allow-btn:hover {
+  background: var(--bg-tertiary, #333);
+}
+
+/* Reject button - danger styling */
+.reject-btn {
+  background: var(--danger-color, #dc3545);
+  color: white;
+}
+
+.reject-btn:hover {
+  background: var(--danger-hover, #c82333);
 }

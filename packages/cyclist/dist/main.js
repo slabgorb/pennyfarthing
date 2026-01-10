@@ -13,11 +13,13 @@ import { dirname, join, basename } from 'path';
 import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
 import { getStoryInfo, getGitInfo } from './server.js';
 import { parseToolStats, createEmptyStats } from './tool-stats.js';
-import { getTokenStats, setTokenStatsCallback, aggregateTokenStats, resetTokenStats } from './otlp-receiver.js';
+import { getTokenStats, setTokenStatsCallback, aggregateTokenStats, resetTokenStats, resetEventStore } from './otlp-receiver.js';
 import { ClaudeService } from './claude-service.js';
 import { isTodoWriteMessage, extractTodos } from './todos.js';
 import { listDirectory as listDir } from './file-browser.js';
 import { getProjectDirectory, setProjectDirectory, isValidProjectDirectory, parseProjectDirArg, } from './paths.js';
+import { getContextUsage } from './api/context.js';
+import { getVerboseMode, setVerboseMode } from './settings-store.js';
 // Re-export project directory functions for external consumers
 export { getProjectDirectory, setProjectDirectory, isValidProjectDirectory };
 import * as fs from 'fs';
@@ -66,7 +68,10 @@ export const IPC_DATA_CHANNELS = {
     TODOS_GET: 'todos:get',
     TODOS_UPDATE: 'todos:update',
     // B-19: Context usage progress bar
+    CONTEXT_GET: 'context:get',
     CONTEXT_UPDATE: 'context:update',
+    // Tool events (changed files, diffs)
+    TOOL_EVENTS_UPDATE: 'toolEvents:update',
 };
 /**
  * IPC channel names for Claude SDK communication (E7-3)
@@ -94,11 +99,20 @@ export const IPC_DIFF_CHANNELS = {
     DIFF_UPDATE: 'diff:update',
 };
 /**
+ * IPC channel names for settings (22-5)
+ */
+export const IPC_SETTINGS_CHANNELS = {
+    VERBOSE_MODE_GET: 'settings:getVerboseMode',
+    VERBOSE_MODE_SET: 'settings:setVerboseMode',
+    VERBOSE_MODE_UPDATE: 'settings:verboseModeUpdate',
+};
+/**
  * IPC channel names for file browser (E8-3)
  */
 export const IPC_FILE_BROWSER_CHANNELS = {
     LIST_DIRECTORY: 'file-browser:list-directory',
     OPEN_FILE: 'file-browser:open-file',
+    OPEN_IN_EDITOR: 'file-browser:open-in-editor',
 };
 /**
  * Pennyfarthing agent definitions for menu
@@ -164,6 +178,38 @@ export function buildWorkflowMenu() {
     };
 }
 /**
+ * Build custom View menu with Verbose Mode toggle (Story 22-5)
+ * Includes standard view items plus custom Cyclist options
+ */
+export function buildViewMenu() {
+    return {
+        label: 'View',
+        submenu: [
+            { role: 'reload' },
+            { role: 'forceReload' },
+            { role: 'toggleDevTools' },
+            { type: 'separator' },
+            { role: 'resetZoom' },
+            { role: 'zoomIn' },
+            { role: 'zoomOut' },
+            { type: 'separator' },
+            { role: 'togglefullscreen' },
+            { type: 'separator' },
+            {
+                id: 'verbose-mode',
+                label: 'Verbose Mode',
+                type: 'checkbox',
+                checked: getVerboseMode(),
+                accelerator: 'CmdOrCtrl+Shift+V',
+                click: (menuItem) => {
+                    setVerboseMode(menuItem.checked);
+                    broadcastToRenderer(IPC_SETTINGS_CHANNELS.VERBOSE_MODE_UPDATE, menuItem.checked);
+                },
+            },
+        ],
+    };
+}
+/**
  * Get list of registered data IPC channels (for testing)
  * Returns the data channels that setupDataIPCHandlers will register
  */
@@ -176,13 +222,13 @@ export function getDataChannels() {
         IPC_DATA_CHANNELS.TOOL_STATS_GET,
         IPC_DATA_CHANNELS.TOKEN_STATS_GET,
         IPC_DATA_CHANNELS.TODOS_GET,
+        IPC_DATA_CHANNELS.CONTEXT_GET,
     ];
 }
 // Stats state managed by main process
 let currentStats = {
     model: '—',
     status: '—',
-    context: '—',
     mode: '—',
     connected: true, // SDK mode is always "connected"
 };
@@ -354,6 +400,87 @@ export function resetTodos() {
     broadcastToRenderer(IPC_DATA_CHANNELS.TODOS_UPDATE, currentTodos);
 }
 // =============================================================================
+// Context State (B-19)
+// =============================================================================
+/**
+ * Current context state - updated by polling check-context.sh
+ */
+let currentContext = {
+    percent: null,
+    tokens: null,
+    status: null,
+    error: null,
+};
+/**
+ * Get current context (for testing and IPC)
+ */
+export function getContext() {
+    return { ...currentContext };
+}
+/**
+ * Reset context state to initial values
+ * Called when clearing session
+ */
+export function resetContext() {
+    currentContext = {
+        percent: null,
+        tokens: null,
+        status: null,
+        error: null,
+    };
+    broadcastToRenderer(IPC_DATA_CHANNELS.CONTEXT_UPDATE, currentContext);
+}
+/**
+ * Update context state and broadcast if changed
+ * Returns true if context was updated (values changed)
+ */
+export function updateContextState(context) {
+    // Check if values actually changed
+    if (currentContext.percent === context.percent &&
+        currentContext.tokens === context.tokens &&
+        currentContext.status === context.status) {
+        return false;
+    }
+    currentContext = { ...context };
+    broadcastToRenderer(IPC_DATA_CHANNELS.CONTEXT_UPDATE, currentContext);
+    return true;
+}
+/**
+ * Context polling interval in milliseconds
+ * 15 seconds balances responsiveness vs overhead
+ */
+export const CONTEXT_POLL_INTERVAL_MS = 15000;
+/**
+ * Timer reference for context polling
+ */
+let contextPollTimer = null;
+/**
+ * Start polling context usage
+ * Calls getContextUsage periodically and broadcasts changes
+ */
+export function startContextPolling(projectDir) {
+    // Initial fetch
+    const initialContext = getContextUsage(projectDir);
+    updateContextState(initialContext);
+    // Set up polling
+    contextPollTimer = setInterval(() => {
+        const context = getContextUsage(projectDir);
+        const changed = updateContextState(context);
+        if (changed) {
+            console.log('Context updated:', context.percent, '%');
+        }
+    }, CONTEXT_POLL_INTERVAL_MS);
+    console.log('Context polling started (every', CONTEXT_POLL_INTERVAL_MS / 1000, 's)');
+    // Return cleanup function
+    return () => {
+        if (contextPollTimer) {
+            clearInterval(contextPollTimer);
+            contextPollTimer = null;
+            console.log('Context polling stopped');
+        }
+    };
+}
+// =============================================================================
 // Server Control (B-2.1)
 // =============================================================================
 /**
@@ -482,6 +609,10 @@ export function setupDataIPCHandlers(ipcMain) {
     ipcMain.handle(IPC_DATA_CHANNELS.TODOS_GET, async () => {
         return getTodos();
     });
+    // Context handler - returns current context usage (B-19)
+    ipcMain.handle(IPC_DATA_CHANNELS.CONTEXT_GET, async () => {
+        return getContext();
+    });
     console.log('Data IPC handlers registered:', getDataChannels());
 }
 /**
@@ -515,6 +646,8 @@ export function startProjectWatchers() {
             }
         });
         console.log('Agent change watcher started for:', projectDir);
+        // Start context polling (B-19)
+        startContextPolling(projectDir);
     }
 }
 // =============================================================================
@@ -564,30 +697,38 @@ export function setupClaudeIPCHandlers(ipcMain) {
                     updateTodosState(todos);
                 }
                 // E8-2: Broadcast diff data for Edit/Write tool messages
-                if (message.type === 'tool_use') {
-                    const toolMsg = message;
-                    if (toolMsg.tool_name === 'Edit') {
-                        const input = toolMsg.input;
-                        broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, {
-                            id: toolMsg.tool_id,
-                            filePath: input.file_path,
-                            oldContent: input.old_string,
-                            newContent: input.new_string,
-                            toolType: 'Edit',
-                            timestamp: Date.now(),
-                        });
-                    }
-                    else if (toolMsg.tool_name === 'Write') {
-                        const input = toolMsg.input;
-                        broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, {
-                            id: toolMsg.tool_id,
-                            filePath: input.file_path,
-                            oldContent: '',
-                            newContent: input.content,
-                            toolType: 'Write',
-                            timestamp: Date.now(),
-                            isNewFile: true,
-                        });
+                // Tool_use blocks are nested inside 'assistant' messages under message.content[]
+                if (message.type === 'assistant') {
+                    const assistantMsg = message;
+                    const content = assistantMsg.message?.content;
+                    if (content && Array.isArray(content)) {
+                        for (const block of content) {
+                            if (block.type === 'tool_use') {
+                                if (block.name === 'Edit') {
+                                    const input = block.input;
+                                    broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, {
+                                        id: block.id || `edit-${Date.now()}`,
+                                        filePath: input.file_path,
+                                        oldContent: input.old_string,
+                                        newContent: input.new_string,
+                                        toolType: 'Edit',
+                                        timestamp: Date.now(),
+                                    });
+                                }
+                                else if (block.name === 'Write') {
+                                    const input = block.input;
+                                    broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, {
+                                        id: block.id || `write-${Date.now()}`,
+                                        filePath: input.file_path,
+                                        oldContent: '',
+                                        newContent: input.content,
+                                        toolType: 'Write',
+                                        timestamp: Date.now(),
+                                        isNewFile: true,
+                                    });
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -616,16 +757,21 @@ export function setupClaudeIPCHandlers(ipcMain) {
         service.interrupt();
         return true;
     });
-    // Clear handler - resets session and token stats (like /clear in CLI)
+    // Clear handler - resets all session state (like /clear in CLI)
     ipcMain.handle(IPC_CLAUDE_CHANNELS.CLAUDE_CLEAR, async () => {
         const service = getClaudeService();
         service.clearSession();
         clearSessionId();
         resetTokenStats();
-        resetTodos(); // B-17: Clear todos on session clear
-        // Broadcast zeroed token stats to update sidebar immediately
+        resetTodos();
+        resetEventStore(); // Clear tool events (changed files, diffs)
+        resetToolStats();
+        resetContext(); // Clear context percentage
+        // Broadcast zeroed stats to update UI immediately
         broadcastToRenderer(IPC_DATA_CHANNELS.TOKEN_STATS_UPDATE, getTokenStats());
-        console.log('Session and token stats cleared');
+        broadcastToRenderer(IPC_DATA_CHANNELS.TOOL_STATS_UPDATE, createEmptyStats());
+        broadcastToRenderer(IPC_DATA_CHANNELS.TOOL_EVENTS_UPDATE, []);
+        console.log('Session cleared: tokens, todos, tool events, tool stats, context');
         return true;
     });
     console.log('Claude SDK IPC handlers registered');
@@ -656,7 +802,66 @@ export function setupFileBrowserIPCHandlers(ipcMain) {
         broadcastToRenderer('file-browser:file-opened', { path: filePath });
         return true;
     });
+    // Open in external editor handler - opens file in user's $EDITOR
+    ipcMain.handle(IPC_FILE_BROWSER_CHANNELS.OPEN_IN_EDITOR, async (_event, ...args) => {
+        const filePath = args[0];
+        const lineNumber = args[1];
+        const editor = process.env.EDITOR || process.env.VISUAL || 'code';
+        console.log('[FileBrowser] Opening in editor:', editor, filePath, lineNumber ? `:${lineNumber}` : '');
+        try {
+            const { spawn } = await import('child_process');
+            // Build args based on editor type
+            let editorArgs;
+            if (editor.includes('code') || editor.includes('cursor')) {
+                // VS Code / Cursor: --goto file:line
+                editorArgs = lineNumber ? ['--goto', `${filePath}:${lineNumber}`] : [filePath];
+            }
+            else if (editor.includes('vim') || editor.includes('nvim')) {
+                // Vim/Neovim: +line file
+                editorArgs = lineNumber ? [`+${lineNumber}`, filePath] : [filePath];
+            }
+            else if (editor.includes('emacs')) {
+                // Emacs: +line file
+                editorArgs = lineNumber ? [`+${lineNumber}`, filePath] : [filePath];
+            }
+            else if (editor.includes('subl')) {
+                // Sublime: file:line
+                editorArgs = lineNumber ? [`${filePath}:${lineNumber}`] : [filePath];
+            }
+            else {
+                // Generic fallback
+                editorArgs = [filePath];
+            }
+            spawn(editor, editorArgs, { detached: true, stdio: 'ignore' }).unref();
+            return true;
+        }
+        catch (error) {
+            console.error('[FileBrowser] Failed to open in editor:', error);
+            return false;
+        }
+    });
     console.log('File browser IPC handlers registered');
+}
+// =============================================================================
+// Settings IPC Handlers (22-5)
+// =============================================================================
+/**
+ * Set up IPC handlers for settings
+ * 22-5: Handles verbose mode setting get/set
+ */
+export function setupSettingsIPCHandlers(ipcMain) {
+    // Get verbose mode state
+    ipcMain.handle(IPC_SETTINGS_CHANNELS.VERBOSE_MODE_GET, async () => {
+        return getVerboseMode();
+    });
+    // Set verbose mode state
+    ipcMain.handle(IPC_SETTINGS_CHANNELS.VERBOSE_MODE_SET, async (_event, ...args) => {
+        const enabled = args[0];
+        setVerboseMode(enabled);
+        broadcastToRenderer(IPC_SETTINGS_CHANNELS.VERBOSE_MODE_UPDATE, enabled);
+        return enabled;
+    });
+    console.log('Settings IPC handlers registered');
 }
 // =============================================================================
 // Session Persistence (E7-3: AC4)
@@ -834,6 +1039,7 @@ if (isElectron) {
     setupDataIPCHandlers(ipcMain);
     setupClaudeIPCHandlers(ipcMain);
     setupFileBrowserIPCHandlers(ipcMain);
+    setupSettingsIPCHandlers(ipcMain);
     /**
      * Kill any orphaned Claude CLI processes from previous Cyclist sessions
      * B-24: Prevents duplicate message handling from zombie processes
@@ -930,11 +1136,12 @@ if (isElectron) {
             // B-23: Wire agent and workflow menus to Electron menu bar
             // Use standard macOS menu roles instead of reconstructing existing menu
             // (reconstructing fails on nested submenus like Window)
+            // 22-5: Custom View menu with Verbose Mode toggle
             const menuTemplate = [
                 { role: 'appMenu' },
                 { role: 'fileMenu' },
                 { role: 'editMenu' },
-                { role: 'viewMenu' },
+                buildViewMenu(),
                 buildAgentMenu(),
                 buildWorkflowMenu(),
                 { role: 'windowMenu' },

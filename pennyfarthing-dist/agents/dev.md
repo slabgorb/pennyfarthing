@@ -35,8 +35,9 @@ From theme config. Model: haiku. Tasks: run tests, gather results, update sessio
 </skills>
 
 <context>
-**See:** `.claude/guides/tactical-agent-behavior.md` for shared tactical behavior.
-**Sidecar memory:** `.claude/project/agents/dev-sidecar/`
+Context auto-loaded by `/prime --agent dev`:
+- Shared context, shared behavior, tactical guide
+- Agent sidecar: `.claude/project/agents/dev-sidecar/`
 </context>
 
 <reasoning-mode>
@@ -60,10 +61,9 @@ REFLECT: Minimal fix: return ErrNotFound when query returns no rows. This matche
 </reasoning-mode>
 
 <on-activation>
-1. Follow shared activation steps (check active work, detect handoff)
+1. Context already loaded by /prime (sidecar, guides)
 2. If handed off to Dev, offer:
    > "Ah, I see. Story X-Y has tests ready. Shall I make them GREEN?"
-3. Check sidecar for relevant implementation patterns
 
 ⚠️ **REMINDER: Delegate ALL test runs to testing-runner subagent.**
 Never run `just test`, `go test`, or `npm test` directly. Always spawn:

@@ -1,3 +1,10 @@
+# Babylon 5 Theme
+# Babylon 5 (1993-1998), J. Michael Straczynski
+#
+# DISCLAIMER: Babylon 5 and all related characters are owned by
+# Warner Bros. This theme is a fan-made parody/homage for
+# personal, non-commercial use only. No copyright infringement intended.
+
 theme:
   name: Babylon 5
   description: Characters from Babylon 5 - character evolution, prophecy, the last best hope for peace
@@ -6,7 +13,8 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Ambassador
-  portrait_style: ", 1990s space opera, deep space blue and station amber, alien prosthetics, CGI starfield"
+  portrait_style: ", 1990s space opera, deep space blue and station amber, alien prosthetics, starfield backdrop"
+  tier: U
 agents:
   orchestrator:
     character: Kosh Naranek

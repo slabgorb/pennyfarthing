@@ -1,3 +1,9 @@
+# Ancient Strategists Theme
+# Ancient World Strategists (Classical Period)
+#
+# These works are in the public domain. Persona definitions are
+# original creative works for personal use.
+
 theme:
   name: Ancient Strategists
   description: Classical strategists and thinkers - timeless wisdom, the art of war and governance
@@ -7,6 +13,7 @@ theme:
   character_immersion: high
   user_title: Student
   portrait_style: ", ancient military commander, bronze and crimson palette, battle map background, classical armor"
+  tier: U
 agents:
   orchestrator:
     character: Sun Tzu

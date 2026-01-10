@@ -1,8 +1,8 @@
 # Ancient Philosophers Theme
-# Philosophers of the Ancient World
+# Ancient Greek and Roman Philosophy
 #
-# NOTE: These are historical figures.
-# This theme is an educational homage for personal, non-commercial use only.
+# These works are in the public domain. Persona definitions are
+# original creative works for personal use.
 
 theme:
   name: Ancient Philosophers
@@ -13,6 +13,7 @@ theme:
   character_immersion: high
   user_title: Student
   portrait_style: ", classical Greek marble bust, warm Mediterranean light, terracotta tones, laurel wreath"
+  tier: B
 
 agents:
   orchestrator:

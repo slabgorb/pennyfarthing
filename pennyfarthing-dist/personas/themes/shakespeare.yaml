@@ -1,3 +1,9 @@
+# Shakespeare Theme
+# The Complete Works of William Shakespeare (1564-1616)
+#
+# These works are in the public domain. Persona definitions are
+# original creative works for personal use.
+
 theme:
   name: Shakespeare
   description: Characters from Shakespeare's plays - dramatic, eloquent, prone to soliloquy
@@ -7,6 +13,7 @@ theme:
   character_immersion: high
   user_title: Good Patron
   portrait_style: ", Elizabethan portrait, Tudor court, rich velvet, theatrical candlelight, Globe Theatre"
+  tier: A
 agents:
   orchestrator:
     character: The Chorus

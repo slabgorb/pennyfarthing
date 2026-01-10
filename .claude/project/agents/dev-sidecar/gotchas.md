@@ -58,4 +58,104 @@
 
 ---
 
+## Cyclist-Specific Gotchas
+
+### PTY→SDK Migration: Dual-Path Code Conflicts
+
+**Situation:** Adding SDK-based functionality when PTY-based code still exists (during E7 migration).
+
+**Problem:** Old PTY-based code keeps overwriting SDK changes. Example:
+- `stats.js` updates mode button based on PTY output (old E5 approach)
+- `controls.js` tries to use IPC to SDK (new E7 approach)
+- Both fight over the same UI element
+
+**Prevention:**
+1. Search for ALL references before adding SDK handlers: `grep -r "data-control=\"plan-mode\""`
+2. When adding SDK approach, DISABLE the PTY approach in same commit
+3. Reference E7 stories - PTY removal is planned for E7-5
+
+**Fix:** Find all PTY-based handlers for the feature and disable them. The SDK is now the source of truth.
+
+---
+
+### IPC Handler Not Registered
+
+**Situation:** Adding new IPC channels in main.ts but getting "No handler registered" errors.
+
+**Problem:** You defined `setupXxxIPCHandlers()` function but forgot to CALL it in the main initialization block.
+
+**Prevention:** After creating a new `setupXxxIPCHandlers()` function, immediately add the call near other setup calls (search for `setupIPCHandlers`).
+
+**Fix:** Find where `setupIPCHandlers(ipcMain)` is called and add your new handler setup there.
+
+```typescript
+// In main.ts initialization:
+setupIPCHandlers(ipcMain);
+setupDataIPCHandlers(ipcMain);
+setupClaudeIPCHandlers(ipcMain);  // Don't forget this!
+```
+
+---
+
+### Electron IPC Pattern Consistency
+
+**Situation:** Adding new data APIs to Cyclist renderer.
+
+**Problem:** Inconsistent IPC patterns cause confusion and bugs.
+
+**Prevention:** Follow the established pattern:
+```typescript
+// main.ts - Channel definitions
+export const IPC_XXX_CHANNELS = {
+  XXX_GET: 'xxx:get',
+  XXX_UPDATE: 'xxx:update',
+};
+
+// main.ts - Broadcast helper usage
+broadcastToRenderer(IPC_XXX_CHANNELS.XXX_UPDATE, data);
+
+// preload.ts - Safe IPC bridge
+xxx: createDataAPI(ipcRenderer, 'xxx:get', 'xxx:update'),
+
+// Renderer - Usage
+const data = await window.electronAPI.xxx.get();
+window.electronAPI.xxx.onUpdate((_event, data) => { ... });
+```
+
+---
+
 *Add implementation gotchas discovered during development below*
+
+### Claude SDK Message Structure for Tool Detection
+
+**Situation:** Detecting when Claude uses Edit/Write tools to trigger UI updates (e.g., Changed Files panel).
+
+**Problem:** Code checked `if (message.type === 'tool_use')` at the top level, but this never matches because the Claude SDK nests tool_use blocks inside assistant messages.
+
+**Root Cause:** SDK message structure is:
+```javascript
+// WRONG - this doesn't exist at top level
+message.type === 'tool_use'
+message.tool_name === 'Edit'
+
+// CORRECT - tool_use is nested inside assistant messages
+message.type === 'assistant'
+message.message.content[] // array of content blocks
+  block.type === 'tool_use'
+  block.name === 'Edit'    // tool name
+  block.id === 'toolu_xxx' // tool id
+  block.input === { ... }  // tool parameters
+```
+
+**Prevention:** Look at existing patterns in the codebase. `todos.ts` has `isTodoWriteMessage()` which correctly parses the SDK structure:
+```typescript
+if (msg.type !== 'assistant') return false;
+const content = msg.message?.content;
+return content.some(block => block.type === 'tool_use' && block.name === 'TodoWrite');
+```
+
+**Fix:** Update tool detection to iterate through assistant message content blocks instead of checking top-level message type.
+
+**Discovered:** 2026-01-09 (Story 17-5)
+
+---

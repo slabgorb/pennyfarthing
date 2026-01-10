@@ -2,7 +2,7 @@
 # Dune by Frank Herbert (1965) and sequels
 #
 # DISCLAIMER: Dune and all related characters are owned by
-# the Frank Herbert estate / Legendary Pictures. This theme is a fan-made parody/homage for
+# Herbert Properties LLC. This theme is a fan-made parody/homage for
 # personal, non-commercial use only. No copyright infringement intended.
 
 theme:
@@ -13,7 +13,8 @@ theme:
   default_humor: disabled
   character_immersion: high
   user_title: Cousin
-  portrait_style: ", epic sci-fi, golden desert light, spice atmosphere, stillsuit detail, blue-within-blue eyes"
+  portrait_style: ", ink and watercolor wash, sepia tones, detailed linework"
+  tier: B
 
 agents:
   orchestrator:

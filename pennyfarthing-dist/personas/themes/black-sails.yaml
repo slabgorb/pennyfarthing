@@ -13,7 +13,8 @@ theme:
   default_humor: disabled
   character_immersion: high
   user_title: Captain
-  portrait_style: ", Golden Age of Piracy, weathered parchment candlelight, Caribbean turquoise and blood red, Starz prestige"
+  portrait_style: ", Golden Age of Piracy, weathered parchment candlelight, Caribbean turquoise and blood red, cinematic drama"
+  tier: B
 
 agents:
   orchestrator:

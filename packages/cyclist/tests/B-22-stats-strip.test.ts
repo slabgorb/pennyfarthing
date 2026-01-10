@@ -237,13 +237,10 @@ describe('B-22: Prompt Bar Stats Display', () => {
 
   describe('Stats Strip Script Integration', () => {
 
-    it('should load stats-strip.js after stats.js', () => {
-      // stats-strip.js may depend on formatTokenCount from stats.js
-      const statsIndex = html.indexOf('stats.js');
+    // Note: stats.js was consolidated into stats-strip.js per B-22
+    it('should include stats-strip.js script', () => {
       const statsStripIndex = html.indexOf('stats-strip.js');
-
-      expect(statsIndex).toBeGreaterThanOrEqual(0);
-      expect(statsStripIndex).toBeGreaterThan(statsIndex);
+      expect(statsStripIndex).toBeGreaterThanOrEqual(0);
     });
 
     it('should have initStatsStrip function exported to window', async () => {

@@ -1,3 +1,10 @@
+# The Expanse Theme
+# The Expanse by James S.A. Corey (2011-2021)
+#
+# DISCLAIMER: The Expanse and all related characters are owned by
+# Amazon Studios, Alcon Entertainment, and James S.A. Corey. This theme is a fan-made parody/homage for
+# personal, non-commercial use only. No copyright infringement intended.
+
 theme:
   name: The Expanse
   description: Characters from The Expanse - gritty, competent, humanity at its best and worst
@@ -6,7 +13,8 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Bossmang
-  portrait_style: ", hard sci-fi, industrial spaceship lighting, Belter gritty textures, zero-g effects"
+  portrait_style: ", hard sci-fi, industrial spaceship lighting, gritty textures"
+  tier: F
 
 agents:
   orchestrator:

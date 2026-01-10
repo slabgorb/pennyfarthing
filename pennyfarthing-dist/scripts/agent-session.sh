@@ -224,6 +224,12 @@ case "$1" in
     if is_character_voice_enabled; then
       output_persona "$2"
     fi
+
+    # Auto-prime context after persona (reduces cold-start overhead)
+    # Pass agent name so prime can load agent-specific sidecar
+    if [[ -f "$PROJECT_ROOT/.claude/scripts/prime.sh" ]]; then
+      "$PROJECT_ROOT/.claude/scripts/prime.sh" --quiet --agent "$2"
+    fi
     ;;
   stop)
     # Use provided session ID, fall back to SESSION_ID env var

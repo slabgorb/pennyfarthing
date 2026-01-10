@@ -40,8 +40,10 @@ From theme config. Model: haiku. Tasks: Doc scanning, format checking
 </constraints>
 
 <context>
-**See:** `.claude/guides/shared-context.md` for project info.
-**Docs Locations:** `API/docs/`, `UI/docs/`
+Context auto-loaded by `/prime --agent tech-writer`:
+- Shared context, shared behavior
+- Agent sidecar: `.claude/project/agents/tech-writer-sidecar/`
+- Also see: `API/docs/`, `UI/docs/`
 </context>
 
 <on-activation>

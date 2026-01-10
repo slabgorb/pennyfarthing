@@ -76,14 +76,9 @@ export interface ElectronClaudeAPI {
 
 /**
  * Context API interface for context usage updates (B-19)
- * Only needs onUpdate since context is pushed from main process
+ * Provides get() for request/response and onUpdate() for push updates
  */
-export interface ElectronContextAPI {
-  /**
-   * Subscribe to context usage updates from main process
-   */
-  onUpdate: (callback: (event: unknown, data: unknown) => void) => void;
-}
+// Context API now uses standard ElectronDataAPI pattern (B-19)
 
 /**
  * Agent API interface for agent launcher (B-23)
@@ -127,9 +122,65 @@ export interface ElectronFileBrowserAPI {
   openFile: (path: string) => Promise<void>;
 
   /**
+   * Open a file in the user's external editor ($EDITOR)
+   * @param path - File path to open
+   * @param lineNumber - Optional line number to jump to
+   */
+  openInEditor: (path: string, lineNumber?: number) => Promise<boolean>;
+
+  /**
    * Subscribe to file open events
    */
   onFileOpened: (callback: (event: unknown, data: { path: string }) => void) => void;
+}
+
+/**
+ * Bash Approval API interface (22-3)
+ * Provides IPC channels for Bash command approval workflow
+ */
+export interface ElectronBashAPI {
+  /**
+   * Subscribe to approval request events from main process
+   * Triggered when a Bash command needs user approval
+   */
+  onApprovalRequest: (callback: (event: unknown, data: { command: string; toolId: string }) => void) => void;
+
+  /**
+   * Send approval response back to main process
+   * @param response - Approval decision
+   */
+  sendApprovalResponse: (response: { toolId: string; approved: boolean; alwaysAllow: boolean }) => Promise<void>;
+}
+
+/**
+ * Settings API interface (22-3, 22-5)
+ * Provides access to Cyclist settings including approval gate and verbose mode
+ */
+export interface ElectronSettingsAPI {
+  /**
+   * Get the current state of the Bash approval gate
+   */
+  getBashApprovalGate: () => Promise<boolean>;
+
+  /**
+   * Set the state of the Bash approval gate
+   */
+  setBashApprovalGate: (enabled: boolean) => Promise<void>;
+
+  /**
+   * Get the current state of verbose mode (22-5)
+   */
+  getVerboseMode: () => Promise<boolean>;
+
+  /**
+   * Set the state of verbose mode (22-5)
+   */
+  setVerboseMode: (enabled: boolean) => Promise<boolean>;
+
+  /**
+   * Subscribe to verbose mode changes (22-5)
+   */
+  onVerboseModeChange: (callback: (event: unknown, enabled: boolean) => void) => void;
 }
 
 export interface ElectronAPI {
@@ -140,11 +191,13 @@ export interface ElectronAPI {
   toolStats: ElectronDataAPI;
   tokenStats: ElectronDataAPI;
   todos: ElectronDataAPI; // B-17: Todo visualizer
-  context: ElectronContextAPI; // B-19: Context usage progress bar
+  context: ElectronDataAPI; // B-19: Context usage progress bar
   claude: ElectronClaudeAPI;
   agent: ElectronAgentAPI; // B-23: Agent launcher
   diff: ElectronDiffAPI; // E8-2: Diff viewer
   fileBrowser: ElectronFileBrowserAPI; // E8-3: File browser
+  bash: ElectronBashAPI; // 22-3: Bash approval gate
+  settings: ElectronSettingsAPI; // 22-3: Settings API
 }
 
 // Check if we're running in Electron (has contextBridge available)
@@ -159,7 +212,7 @@ const isElectron = typeof process !== 'undefined' &&
  * @param updateChannel - The channel name for update subscriptions
  */
 function createDataAPI(
-  ipcRenderer: { invoke: (channel: string) => Promise<unknown>; on: (channel: string, callback: (event: unknown, data: unknown) => void) => void; removeAllListeners: (channel: string) => void } | null,
+  ipcRenderer: { invoke: (channel: string) => Promise<unknown>; on: (channel: string, callback: (event: unknown, data: unknown) => void) => void } | null,
   getChannel: string,
   updateChannel: string
 ): ElectronDataAPI {
@@ -167,8 +220,8 @@ function createDataAPI(
     return {
       get: () => ipcRenderer.invoke(getChannel),
       onUpdate: (callback: (event: unknown, data: unknown) => void) => {
-        // Clean up previous listeners on refresh
-        ipcRenderer.removeAllListeners(updateChannel);
+        // Multiple modules can subscribe to the same channel
+        // On page refresh, old listeners are garbage collected
         ipcRenderer.on(updateChannel, callback);
       },
     };
@@ -207,12 +260,7 @@ function createElectronAPI(): ElectronAPI {
       // Todos API (B-17)
       todos: createDataAPI(ipcRenderer, 'todos:get', 'todos:update'),
       // Context API (B-19)
-      context: {
-        onUpdate: (callback: (event: unknown, data: unknown) => void) => {
-          ipcRenderer.removeAllListeners('context:update');
-          ipcRenderer.on('context:update', callback);
-        },
-      },
+      context: createDataAPI(ipcRenderer, 'context:get', 'context:update'),
       // Claude SDK API (E7-3)
       claude: {
         send: (prompt: string) => ipcRenderer.invoke('claude:send', prompt),
@@ -221,29 +269,24 @@ function createElectronAPI(): ElectronAPI {
         setMode: (mode: 'default' | 'plan' | 'acceptEdits' | 'dangerouslySkipPermissions') => ipcRenderer.invoke('claude:setMode', mode),
         getMode: () => ipcRenderer.invoke('claude:getMode') as Promise<'default' | 'plan' | 'acceptEdits' | 'dangerouslySkipPermissions'>,
         onMessage: (callback: (message: unknown) => void) => {
-          ipcRenderer.removeAllListeners('claude:message');
           ipcRenderer.on('claude:message', (_event: unknown, msg: unknown) => callback(msg));
         },
         onComplete: (callback: () => void) => {
-          ipcRenderer.removeAllListeners('claude:complete');
           ipcRenderer.on('claude:complete', () => callback());
         },
         onError: (callback: (error: string) => void) => {
-          ipcRenderer.removeAllListeners('claude:error');
           ipcRenderer.on('claude:error', (_event: unknown, err: unknown) => callback(err as string));
         },
       },
       // Agent launcher API (B-23)
       agent: {
         onLaunch: (callback: (event: unknown, command: string) => void) => {
-          ipcRenderer.removeAllListeners('agent:launch');
           ipcRenderer.on('agent:launch', callback);
         },
       },
       // Diff viewer API (E8-2)
       diff: {
         onUpdate: (callback: (event: unknown, data: unknown) => void) => {
-          ipcRenderer.removeAllListeners('diff:update');
           ipcRenderer.on('diff:update', callback);
         },
       },
@@ -251,9 +294,27 @@ function createElectronAPI(): ElectronAPI {
       fileBrowser: {
         listDirectory: (path: string) => ipcRenderer.invoke('file-browser:list-directory', path),
         openFile: (path: string) => ipcRenderer.invoke('file-browser:open-file', path),
+        openInEditor: (path: string, lineNumber?: number) => ipcRenderer.invoke('file-browser:open-in-editor', path, lineNumber),
         onFileOpened: (callback: (event: unknown, data: { path: string }) => void) => {
-          ipcRenderer.removeAllListeners('file-browser:file-opened');
           ipcRenderer.on('file-browser:file-opened', callback);
+        },
+      },
+      // Bash approval API (22-3)
+      bash: {
+        onApprovalRequest: (callback: (event: unknown, data: { command: string; toolId: string }) => void) => {
+          ipcRenderer.on('bash:approval-request', callback);
+        },
+        sendApprovalResponse: (response: { toolId: string; approved: boolean; alwaysAllow: boolean }) =>
+          ipcRenderer.invoke('bash:approval-response', response),
+      },
+      // Settings API (22-3, 22-5)
+      settings: {
+        getBashApprovalGate: () => ipcRenderer.invoke('settings:getBashApprovalGate') as Promise<boolean>,
+        setBashApprovalGate: (enabled: boolean) => ipcRenderer.invoke('settings:setBashApprovalGate', enabled),
+        getVerboseMode: () => ipcRenderer.invoke('settings:getVerboseMode') as Promise<boolean>,
+        setVerboseMode: (enabled: boolean) => ipcRenderer.invoke('settings:setVerboseMode', enabled) as Promise<boolean>,
+        onVerboseModeChange: (callback: (event: unknown, enabled: boolean) => void) => {
+          ipcRenderer.on('settings:verboseModeUpdate', callback);
         },
       },
     };
@@ -272,11 +333,7 @@ function createElectronAPI(): ElectronAPI {
       // Todos API (B-17) - test stub
       todos: createDataAPI(null, 'todos:get', 'todos:update'),
       // Context API (B-19) - test stub
-      context: {
-        onUpdate: (_callback: (event: unknown, data: unknown) => void) => {
-          // No-op in test environment
-        },
-      },
+      context: createDataAPI(null, 'context:get', 'context:update'),
       // Claude SDK API (E7-3) - test stub
       claude: {
         send: (_prompt: string) => Promise.resolve(),
@@ -310,7 +367,26 @@ function createElectronAPI(): ElectronAPI {
       fileBrowser: {
         listDirectory: (_path: string) => Promise.resolve({ path: '', entries: [] }),
         openFile: (_path: string) => Promise.resolve(),
+        openInEditor: (_path: string, _lineNumber?: number) => Promise.resolve(true),
         onFileOpened: (_callback: (event: unknown, data: { path: string }) => void) => {
+          // No-op in test environment
+        },
+      },
+      // Bash approval API (22-3) - test stub
+      bash: {
+        onApprovalRequest: (_callback: (event: unknown, data: { command: string; toolId: string }) => void) => {
+          // No-op in test environment
+        },
+        sendApprovalResponse: (_response: { toolId: string; approved: boolean; alwaysAllow: boolean }) =>
+          Promise.resolve(),
+      },
+      // Settings API (22-3, 22-5) - test stub
+      settings: {
+        getBashApprovalGate: () => Promise.resolve(false),
+        setBashApprovalGate: (_enabled: boolean) => Promise.resolve(),
+        getVerboseMode: () => Promise.resolve(false),
+        setVerboseMode: (_enabled: boolean) => Promise.resolve(false),
+        onVerboseModeChange: (_callback: (event: unknown, enabled: boolean) => void) => {
           // No-op in test environment
         },
       },

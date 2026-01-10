@@ -28,8 +28,8 @@ function createDataAPI(ipcRenderer, getChannel, updateChannel) {
         return {
             get: () => ipcRenderer.invoke(getChannel),
             onUpdate: (callback) => {
-                // Clean up previous listeners on refresh
-                ipcRenderer.removeAllListeners(updateChannel);
+                // Multiple modules can subscribe to the same channel
+                // On page refresh, old listeners are garbage collected
                 ipcRenderer.on(updateChannel, callback);
             },
         };
@@ -67,12 +67,7 @@ function createElectronAPI() {
             // Todos API (B-17)
             todos: createDataAPI(ipcRenderer, 'todos:get', 'todos:update'),
             // Context API (B-19)
-            context: {
-                onUpdate: (callback) => {
-                    ipcRenderer.removeAllListeners('context:update');
-                    ipcRenderer.on('context:update', callback);
-                },
-            },
+            context: createDataAPI(ipcRenderer, 'context:get', 'context:update'),
             // Claude SDK API (E7-3)
             claude: {
                 send: (prompt) => ipcRenderer.invoke('claude:send', prompt),
@@ -81,29 +76,24 @@ function createElectronAPI() {
                 setMode: (mode) => ipcRenderer.invoke('claude:setMode', mode),
                 getMode: () => ipcRenderer.invoke('claude:getMode'),
                 onMessage: (callback) => {
-                    ipcRenderer.removeAllListeners('claude:message');
                     ipcRenderer.on('claude:message', (_event, msg) => callback(msg));
                 },
                 onComplete: (callback) => {
-                    ipcRenderer.removeAllListeners('claude:complete');
                     ipcRenderer.on('claude:complete', () => callback());
                 },
                 onError: (callback) => {
-                    ipcRenderer.removeAllListeners('claude:error');
                     ipcRenderer.on('claude:error', (_event, err) => callback(err));
                 },
             },
             // Agent launcher API (B-23)
             agent: {
                 onLaunch: (callback) => {
-                    ipcRenderer.removeAllListeners('agent:launch');
                     ipcRenderer.on('agent:launch', callback);
                 },
             },
             // Diff viewer API (E8-2)
             diff: {
                 onUpdate: (callback) => {
-                    ipcRenderer.removeAllListeners('diff:update');
                     ipcRenderer.on('diff:update', callback);
                 },
             },
@@ -111,9 +101,26 @@ function createElectronAPI() {
             fileBrowser: {
                 listDirectory: (path) => ipcRenderer.invoke('file-browser:list-directory', path),
                 openFile: (path) => ipcRenderer.invoke('file-browser:open-file', path),
+                openInEditor: (path, lineNumber) => ipcRenderer.invoke('file-browser:open-in-editor', path, lineNumber),
                 onFileOpened: (callback) => {
-                    ipcRenderer.removeAllListeners('file-browser:file-opened');
                     ipcRenderer.on('file-browser:file-opened', callback);
+                },
+            },
+            // Bash approval API (22-3)
+            bash: {
+                onApprovalRequest: (callback) => {
+                    ipcRenderer.on('bash:approval-request', callback);
+                },
+                sendApprovalResponse: (response) => ipcRenderer.invoke('bash:approval-response', response),
+            },
+            // Settings API (22-3, 22-5)
+            settings: {
+                getBashApprovalGate: () => ipcRenderer.invoke('settings:getBashApprovalGate'),
+                setBashApprovalGate: (enabled) => ipcRenderer.invoke('settings:setBashApprovalGate', enabled),
+                getVerboseMode: () => ipcRenderer.invoke('settings:getVerboseMode'),
+                setVerboseMode: (enabled) => ipcRenderer.invoke('settings:setVerboseMode', enabled),
+                onVerboseModeChange: (callback) => {
+                    ipcRenderer.on('settings:verboseModeUpdate', callback);
                 },
             },
         };
@@ -133,11 +140,7 @@ function createElectronAPI() {
             // Todos API (B-17) - test stub
             todos: createDataAPI(null, 'todos:get', 'todos:update'),
             // Context API (B-19) - test stub
-            context: {
-                onUpdate: (_callback) => {
-                    // No-op in test environment
-                },
-            },
+            context: createDataAPI(null, 'context:get', 'context:update'),
             // Claude SDK API (E7-3) - test stub
             claude: {
                 send: (_prompt) => Promise.resolve(),
@@ -171,7 +174,25 @@ function createElectronAPI() {
             fileBrowser: {
                 listDirectory: (_path) => Promise.resolve({ path: '', entries: [] }),
                 openFile: (_path) => Promise.resolve(),
+                openInEditor: (_path, _lineNumber) => Promise.resolve(true),
                 onFileOpened: (_callback) => {
+                    // No-op in test environment
+                },
+            },
+            // Bash approval API (22-3) - test stub
+            bash: {
+                onApprovalRequest: (_callback) => {
+                    // No-op in test environment
+                },
+                sendApprovalResponse: (_response) => Promise.resolve(),
+            },
+            // Settings API (22-3, 22-5) - test stub
+            settings: {
+                getBashApprovalGate: () => Promise.resolve(false),
+                setBashApprovalGate: (_enabled) => Promise.resolve(),
+                getVerboseMode: () => Promise.resolve(false),
+                setVerboseMode: (_enabled) => Promise.resolve(false),
+                onVerboseModeChange: (_callback) => {
                     // No-op in test environment
                 },
             },

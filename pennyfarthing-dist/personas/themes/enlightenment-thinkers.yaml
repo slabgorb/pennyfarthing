@@ -1,8 +1,8 @@
 # Enlightenment Thinkers Theme
-# Philosophers of the Enlightenment
+# Enlightenment Philosophers (17th-18th Century)
 #
-# NOTE: These are historical figures.
-# This theme is an educational homage for personal, non-commercial use only.
+# These works are in the public domain. Persona definitions are
+# original creative works for personal use.
 
 theme:
   name: Enlightenment Thinkers
@@ -13,6 +13,7 @@ theme:
   character_immersion: high
   user_title: Citizen
   portrait_style: ", 18th century oil, salon style, candlelit scholarly, powdered wig, books and quills"
+  tier: B
 
 agents:
   orchestrator:

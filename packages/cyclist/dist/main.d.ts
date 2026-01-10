@@ -12,6 +12,7 @@ import { ToolStats } from './tool-stats.js';
 import { ClaudeService, SDKMessage } from './claude-service.js';
 import { type TodoItem } from './todos.js';
 import { getProjectDirectory, setProjectDirectory, isValidProjectDirectory } from './paths.js';
+import { ContextInfo } from './api/context.js';
 export { getProjectDirectory, setProjectDirectory, isValidProjectDirectory };
 /**
  * IPC channel names for sidebar data communication (B-2)
@@ -32,7 +33,9 @@ export declare const IPC_DATA_CHANNELS: {
     readonly TOKEN_STATS_UPDATE: "tokenStats:update";
     readonly TODOS_GET: "todos:get";
     readonly TODOS_UPDATE: "todos:update";
+    readonly CONTEXT_GET: "context:get";
     readonly CONTEXT_UPDATE: "context:update";
+    readonly TOOL_EVENTS_UPDATE: "toolEvents:update";
 };
 /**
  * IPC channel names for Claude SDK communication (E7-3)
@@ -60,11 +63,20 @@ export declare const IPC_DIFF_CHANNELS: {
     readonly DIFF_UPDATE: "diff:update";
 };
 /**
+ * IPC channel names for settings (22-5)
+ */
+export declare const IPC_SETTINGS_CHANNELS: {
+    readonly VERBOSE_MODE_GET: "settings:getVerboseMode";
+    readonly VERBOSE_MODE_SET: "settings:setVerboseMode";
+    readonly VERBOSE_MODE_UPDATE: "settings:verboseModeUpdate";
+};
+/**
  * IPC channel names for file browser (E8-3)
  */
 export declare const IPC_FILE_BROWSER_CHANNELS: {
     readonly LIST_DIRECTORY: "file-browser:list-directory";
     readonly OPEN_FILE: "file-browser:open-file";
+    readonly OPEN_IN_EDITOR: "file-browser:open-in-editor";
 };
 /**
  * Agent definition for Electron menu
@@ -113,18 +125,26 @@ export declare function buildWorkflowMenu(): {
     submenu: unknown[];
 };
 /**
+ * Build custom View menu with Verbose Mode toggle (Story 22-5)
+ * Includes standard view items plus custom Cyclist options
+ */
+export declare function buildViewMenu(): {
+    label: string;
+    submenu: unknown[];
+};
+/**
  * Get list of registered data IPC channels (for testing)
  * Returns the data channels that setupDataIPCHandlers will register
  */
 export declare function getDataChannels(): string[];
 /**
  * Current stats state - updated by SDK messages
+ * Context is handled separately via dedicated context IPC channel (B-19)
  * Exported for testing
  */
 export interface StatsState {
     model: string;
     status: string;
-    context: string;
     mode: string;
     connected: boolean;
 }
@@ -178,6 +198,30 @@ export declare function updateTodosState(todos: TodoItem[]): void;
  * Called when clearing session
  */
 export declare function resetTodos(): void;
+/**
+ * Get current context (for testing and IPC)
+ */
+export declare function getContext(): ContextInfo;
+/**
+ * Reset context state to initial values
+ * Called when clearing session
+ */
+export declare function resetContext(): void;
+/**
+ * Update context state and broadcast if changed
+ * Returns true if context was updated (values changed)
+ */
+export declare function updateContextState(context: ContextInfo): boolean;
+/**
+ * Context polling interval in milliseconds
+ * 15 seconds balances responsiveness vs overhead
+ */
+export declare const CONTEXT_POLL_INTERVAL_MS = 15000;
+/**
+ * Start polling context usage
+ * Calls getContextUsage periodically and broadcasts changes
+ */
+export declare function startContextPolling(projectDir: string): () => void;
 /**
  * Server startup configuration
  * In Electron mode, server can be disabled since we use IPC
@@ -266,6 +310,13 @@ export declare function setupClaudeIPCHandlers(ipcMain: {
  * E8-3: Handles directory listing and file opening
  */
 export declare function setupFileBrowserIPCHandlers(ipcMain: {
+    handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
+}): void;
+/**
+ * Set up IPC handlers for settings
+ * 22-5: Handles verbose mode setting get/set
+ */
+export declare function setupSettingsIPCHandlers(ipcMain: {
     handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
 }): void;
 /**

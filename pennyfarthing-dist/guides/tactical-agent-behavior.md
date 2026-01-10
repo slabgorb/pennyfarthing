@@ -2,7 +2,7 @@
 
 **This file defines common behavior for tactical agents (SM, TEA, Dev, Reviewer).**
 
-**Inherits from:** `shared-agent-behavior.md` - load that first for sidecar, confidence, and reasoning protocols.
+Auto-loaded by `/prime --agent <name>` for tactical agents only.
 
 Tactical agents work on story-scoped tasks within the TDD flow: SM → TEA → Dev → Reviewer
 

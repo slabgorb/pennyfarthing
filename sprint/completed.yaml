@@ -426,10 +426,282 @@ sprint_5:
 # CUMULATIVE METRICS
 # =============================================================================
 
-cumulative:
-  sprints_completed: 4
-  total_points_delivered: 116
-  total_stories_completed: 57
-  average_velocity: 29  # 116 / 4
+# =============================================================================
+# SPRINT 6 - Context Circuit Breaker & Choreography Patterns
+# =============================================================================
+
+sprint_6:
+  number: 6
+  goal: "Complete context management circuit breaker, document choreography patterns"
+  planned_start: 2026-01-06
+  completed: 2026-01-06
+  status: complete
+  completed_points: 13
   velocity_target: 20
-  performance: "145%"  # 29/20
+
+  epics:
+    - id: epic-3
+      jira: MSSCI-11376
+      title: "Automatic Context Management & Circuit Breaker"
+      description: |
+        Implement automatic context monitoring that detects when agents
+        approach 70% threshold and triggers handoffs or session continuation.
+        Add circuit breaker pattern to prevent runaway context usage.
+      points: 5  # This sprint's portion (3-3 and 3-4)
+      priority: P1
+      repos: pennyfarthing
+      status: done
+      completed: 2026-01-06
+      stories:
+        - id: "3-3"
+          jira: MSSCI-11379
+          title: "Implement circuit breaker at 85% threshold"
+          points: 3
+          status: done
+          completed: 2026-01-06
+          pr: "https://github.com/1898andCo/pennyfarthing/pull/82"
+
+        - id: "3-4"
+          jira: MSSCI-11380
+          title: "Add session continuation workflow"
+          points: 2
+          status: done
+          completed: 2026-01-06
+          pr: "https://github.com/1898andCo/pennyfarthing/pull/87"
+
+    - id: epic-10
+      jira: MSSCI-11371
+      title: "Multi-Agent Choreography Patterns"
+      description: |
+        Build library of proven coordination patterns (fan-out/fan-in,
+        sequential, conditional routing, approval gates). Document real
+        examples from Pennyfarthing's own workflows.
+      points: 8
+      priority: P2
+      repos: pennyfarthing
+      status: done
+      completed: 2026-01-06
+      stories:
+        - id: "10-1"
+          jira: MSSCI-11372
+          title: "Document TDD flow pattern"
+          points: 2
+          status: done
+          completed: 2026-01-06
+          pr: "https://github.com/1898andCo/pennyfarthing/pull/83"
+
+        - id: "10-2"
+          jira: MSSCI-11373
+          title: "Document helper delegation pattern"
+          points: 2
+          status: done
+          completed: 2026-01-06
+          pr: "https://github.com/1898andCo/pennyfarthing/pull/84"
+
+        - id: "10-3"
+          jira: MSSCI-11374
+          title: "Create fan-out/fan-in pattern"
+          points: 2
+          status: done
+          completed: 2026-01-06
+          pr: "https://github.com/1898andCo/pennyfarthing/pull/85"
+
+        - id: "10-4"
+          jira: MSSCI-11375
+          title: "Create approval gates pattern"
+          points: 2
+          status: done
+          completed: 2026-01-06
+          pr: "https://github.com/1898andCo/pennyfarthing/pull/86"
+
+# =============================================================================
+# SPRINT 7 - Completed Stories (Sprint still active)
+# =============================================================================
+
+sprint_7_completed:
+  note: "Sprint 7 is still active - these are completed stories archived for cleanliness"
+
+  completed_stories:
+    # Epic 7 - Benchmarking
+    - id: "7-3"
+      epic: epic-7
+      jira: MSSCI-11388
+      title: "Fix Showcase Auto-Deploy on PR Merge"
+      points: 2
+      status: done
+      started: 2026-01-09
+      completed: 2026-01-09
+      pr: "https://github.com/1898andCo/pennyfarthing/pull/114"
+
+    # Epic 17 - Cyclist UX Improvements
+    - id: "17-1"
+      epic: epic-17
+      title: "Implement message input buffer for non-blocking input"
+      points: 5
+      status: done
+      started: 2026-01-08
+      completed: 2026-01-08
+      pr: "https://github.com/1898andCo/pennyfarthing-2/pull/112"
+
+    - id: "17-2"
+      epic: epic-17
+      title: "Fix tab panel layout - expanded state hides main content"
+      points: 3
+      status: done
+      started: 2026-01-08
+      completed: 2026-01-08
+      pr: "https://github.com/keithavery/pennyfarthing/pull/103"
+
+    - id: "17-3"
+      epic: epic-17
+      title: "Cyclist UX bug cleanup batch"
+      points: 3
+      status: done
+      started: 2026-01-08
+      completed: 2026-01-08
+      pr: "https://github.com/1898andCo/pennyfarthing/pull/111"
+
+    # Epic 19 - Rich Agent Telemetry
+    - id: "19-2"
+      epic: epic-19
+      jira: MSSCI-11427
+      title: "Create telemetry-types.ts with OTEL semantic conventions"
+      points: 2
+      status: done
+      started: 2026-01-09
+      completed: 2026-01-09
+      pr: "https://github.com/1898andCo/pennyfarthing/pull/115"
+
+    # Epic 18 - Monorepo Consolidation
+    - id: "18-1"
+      epic: epic-18
+      jira: MSSCI-11418
+      title: "Create @pennyfarthing/shared package with portrait resolver"
+      points: 3
+      status: done
+      started: 2026-01-07
+      completed: 2026-01-07
+      pr: "https://github.com/1898andCo/pennyfarthing/pull/94"
+
+    - id: "18-2"
+      epic: epic-18
+      jira: MSSCI-11419
+      title: "Convert Pennyfarthing to pnpm workspace structure"
+      points: 5
+      status: done
+      started: 2026-01-08
+      completed: 2026-01-08
+
+    - id: "18-3"
+      epic: epic-18
+      jira: MSSCI-11420
+      title: "Migrate Cyclist into monorepo as @pennyfarthing/cyclist"
+      points: 5
+      status: done
+      started: 2026-01-07
+      completed: 2026-01-08
+      pr: "https://github.com/1898andCo/pennyfarthing/pull/95"
+
+    - id: "18-4"
+      epic: epic-18
+      jira: MSSCI-11421
+      title: "Test all install and runtime scenarios"
+      points: 3
+      status: done
+      completed: 2026-01-09
+      repos: pennyfarthing
+
+    - id: "18-5"
+      epic: epic-18
+      jira: MSSCI-11422
+      title: "Update CI/CD and publish scoped packages"
+      points: 3
+      status: done
+      completed: 2026-01-09
+      repos: pennyfarthing
+
+    - id: "18-6"
+      epic: epic-18
+      title: "Fix pre-existing test failures (tech debt)"
+      points: 2
+      status: done
+      completed: 2026-01-09
+      repos: pennyfarthing
+
+    - id: "17-5"
+      epic: epic-17
+      title: "BUG: Changed Files panel not showing files"
+      points: 2
+      status: done
+      started: 2026-01-09
+      completed: 2026-01-09
+      repos: cyclist
+
+    - id: "17-6"
+      epic: epic-17
+      title: "BUG: Context meter not wired to Electron polling"
+      points: 2
+      status: done
+      started: 2026-01-09
+      completed: 2026-01-09
+      repos: cyclist
+
+    - id: "17-7"
+      epic: epic-17
+      title: "Session ID tracking for context and agent state"
+      points: 3
+      status: done
+      started: 2026-01-09
+      completed: 2026-01-09
+      repos: cyclist, pennyfarthing
+      pr: "https://github.com/1898andCo/pennyfarthing/pull/123"
+
+    - id: "19-1"
+      epic: epic-19
+      jira: MSSCI-11426
+      title: "Extend OTLP receiver for tool spans and events"
+      points: 3
+      status: done
+      started: 2026-01-09
+      completed: 2026-01-09
+      repos: cyclist
+      pr: "#119"
+
+    - id: "7-2"
+      epic: epic-7
+      jira: MSSCI-11387
+      title: "Expand Job-Fair with Role-Selective Execution"
+      points: 5
+      status: done
+      completed: 2026-01-09
+      repos: pennyfarthing
+
+    - id: "17-4"
+      epic: epic-17
+      title: "Popup profile view for persona details"
+      points: 3
+      status: done
+      completed: 2026-01-09
+      repos: cyclist
+      notes: "Completed via bug branch"
+
+    - id: "17-8"
+      epic: epic-17
+      title: "Fix story panel not loading in Electron (IPC vs HTTP mismatch)"
+      points: 3
+      status: done
+      completed: 2026-01-09
+      repos: cyclist
+      notes: "Completed via bug branch"
+
+# =============================================================================
+# CUMULATIVE METRICS
+# =============================================================================
+
+cumulative:
+  sprints_completed: 5
+  total_points_delivered: 129  # 116 + 13 (Sprint 6)
+  total_stories_completed: 63  # 57 + 6 (Sprint 6)
+  average_velocity: 25.8  # 129 / 5
+  velocity_target: 20
+  performance: "129%"  # 25.8/20

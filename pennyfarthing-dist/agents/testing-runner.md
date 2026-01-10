@@ -77,19 +77,66 @@ ensure_test_containers
 ### Decision Logic
 
 ```
-For each repo in REPOS:
-  1. Get test_command and test_filter_flag from repos.yaml
-  2. Check if FILTERS[repo] exists, else use global FILTER
-  3. If filter exists, append filter_flag + filter to command
-  4. Run test command, capture to log
+If no FILTER or FILTERS specified:
+  → Use /check command (runs lint + typecheck + tests)
+Else:
+  → Use per-repo filtered test execution
 ```
 
-### No filter - run all tests
+### No filter - use /check (recommended)
+
+For unfiltered runs, delegate to the `/check` command which runs all quality gates:
+
 ```bash
-run_all_repo_tests "$RUN_ID"
+# Run checks in project root
+$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh
+
+# Run checks in a specific repo
+$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --repo api
+$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --repo ui
 ```
 
-### With filters - run filtered tests
+This runs:
+- Lint (via justfile or npm/go tooling)
+- Type check (if TypeScript)
+- Tests (via justfile or npm/go tooling)
+
+Exit code 0 = all passed, non-zero = something failed.
+
+### With filter - use /check --filter
+
+For filtered test runs, use the `--filter` option:
+
+```bash
+# Run only tests matching pattern
+$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --filter "TestUserLogin"
+
+# Run only tests, skip lint and typecheck
+$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --tests-only --filter "TestUserLogin"
+
+# Run filtered tests in a specific repo
+$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --repo api --filter "TestUserLogin"
+$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --repo ui --tests-only --filter "login component"
+```
+
+The filter is passed to the underlying test runner:
+- Go: `-run "PATTERN"`
+- Node (jest/vitest): `-t "PATTERN"`
+- justfile: `just test PATTERN`
+
+### Running multiple repos
+
+To run checks across multiple repos, call check.sh multiple times:
+
+```bash
+# Run all checks in both repos
+$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --repo api
+$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --repo ui
+```
+
+Or use the legacy per-repo approach below for complex filtering scenarios.
+
+### Legacy: per-repo filtered tests
 
 ```bash
 source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh

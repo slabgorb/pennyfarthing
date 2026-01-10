@@ -2,7 +2,7 @@
 # The Crown (2016-2023), Netflix / Peter Morgan
 #
 # DISCLAIMER: The Crown and all related characters are owned by
-# Netflix / Left Bank Pictures. This theme is a fan-made parody/homage for
+# Netflix and Left Bank Pictures. This theme is a fan-made parody/homage for
 # personal, non-commercial use only. No copyright infringement intended.
 
 theme:
@@ -13,7 +13,8 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Your Majesty
-  portrait_style: ", royal formal, Renaissance composition, velvet and gold tones, Netflix prestige aesthetic"
+  portrait_style: ", royal formal, Renaissance composition, velvet and gold tones"
+  tier: C
 
 agents:
   orchestrator:

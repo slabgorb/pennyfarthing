@@ -1,3 +1,9 @@
+# Sherlock Holmes Theme
+# The Complete Sherlock Holmes by Sir Arthur Conan Doyle (1859-1930)
+#
+# These works are in the public domain. Persona definitions are
+# original creative works for personal use.
+
 theme:
   name: Sherlock Holmes
   description: Characters from Arthur Conan Doyle's detective stories - analytical, methodical, deductive
@@ -6,7 +12,8 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Dear Client
-  portrait_style: ", Victorian detective, gaslight and fog, Baker Street, Sidney Paget style"
+  portrait_style: ", Victorian detective, gaslight and fog, Baker Street, Victorian pen and ink"
+  tier: F
 agents:
   orchestrator:
     character: Mycroft Holmes

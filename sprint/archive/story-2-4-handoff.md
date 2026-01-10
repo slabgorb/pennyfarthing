@@ -49,7 +49,7 @@ The pm-sidecar files (1,131 lines total) are almost entirely redundant:
 2. `code-review` - Review checklists
 3. `context-engineering` - Context window management
 4. `dev-patterns` - Development gotchas
-5. `jira-cli` - Jira commands
+5. `jira` - Jira commands
 6. `just` - Just recipes
 7. `sprint-context` - Sprint status
 8. `story-management` - Story sizing

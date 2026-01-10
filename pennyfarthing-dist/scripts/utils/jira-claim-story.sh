@@ -2,7 +2,7 @@
 # Check and claim a story in Jira for multi-developer coordination
 # Usage: ./scripts/jira-claim-story.sh <story_key_or_jira_key> [--claim]
 #
-# This script uses the `jira` CLI tool (https://github.com/ankitpokhrel/jira-cli)
+# This script uses the `jira` CLI tool (https://github.com/ankitpokhrel/jira)
 #
 # Parameters:
 #   <story_key_or_jira_key>  Either:

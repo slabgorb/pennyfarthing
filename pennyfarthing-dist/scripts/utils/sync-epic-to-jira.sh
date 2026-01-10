@@ -1,10 +1,10 @@
 #!/usr/bin/env zsh
-# Sync Conductor Epic to Jira MSSCI Project using jira-cli
+# Sync Conductor Epic to Jira MSSCI Project using jira
 # Usage: ./scripts/sync-epic-to-jira.sh <epic_number> [--dry-run] [--with-comments]
 #
 # Prerequisites:
-#   - jira-cli installed: brew install ankitpokhrel/jira-cli/jira-cli
-#   - jira-cli configured: jira init
+#   - jira installed: brew install ankitpokhrel/jira/jira
+#   - jira configured: jira init
 #   - JIRA_API_TOKEN environment variable set
 #
 # Options:

@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v6.0.0** | *The outer loop goes once, the inner loop goes many times.*
+**v6.0.4** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px" margin="10px">
 
@@ -19,7 +19,7 @@ Explore all themes with OCEAN spider charts, Chernoff faces, and 910 character p
 - **10 Agents + 13 Subagents** - Strategic (PM, Architect) and tactical (SM, TEA, Dev, Reviewer) agents with official Haiku-based subagents for mechanical tasks
 - **Automatic Handoffs** - Context-aware agent transitions via official subagent format
 - **94 Persona Themes** - Star Trek, Breaking Bad, Dune, The Office, Game of Thrones, Arthurian Mythos, and more with OCEAN personality profiles
-- **13 Skills** - Reusable knowledge domains (testing, code-review, judge, jira-cli, etc.)
+- **13 Skills** - Reusable knowledge domains (testing, code-review, judge, jira, etc.)
 - **28 Slash Commands** - Entry points for agent activation, benchmarking, and workflows
 - **Scientific Benchmarking** - Evaluate personas against standardized scenarios with statistical analysis
 - **CLI Tool** - `pennyfarthing init`, `update`, `doctor`, `uninstall`, `theme`
@@ -29,18 +29,20 @@ Explore all themes with OCEAN spider charts, Chernoff faces, and 910 character p
 ```bash
 cd your-project
 
-# Install as dev dependency
-npm install --save-dev pennyfarthing
+# Install as dev dependency (scoped package)
+npm install --save-dev @pennyfarthing/core
 
 # Initialize (creates symlinks, no file copying)
-pennyfarthing init
+npx pennyfarthing init
 
 # Verify installation
-pennyfarthing doctor
+npx pennyfarthing doctor
 
 # Start working (in Claude Code)
 /new-work
 ```
+
+> **Note:** The package was renamed from `pennyfarthing` to `@pennyfarthing/core` in v6.0. If upgrading, uninstall the old package first: `npm uninstall pennyfarthing`
 
 ## The TDD Flow
 
@@ -224,12 +226,14 @@ Override locally with `.claude/pennyfarthing/preferences.local.yaml` (gitignored
 ## Updating
 
 ```bash
-# v4.0+: Update via npm (symlinks point to node_modules)
-npm update pennyfarthing
+# v6.0+: Update via npm (scoped package)
+npm update @pennyfarthing/core
 
 # Verify after update
-pennyfarthing doctor
+npx pennyfarthing doctor
 ```
+
+> **Migrating from v5.x?** Uninstall the old package first: `npm uninstall pennyfarthing && npm install --save-dev @pennyfarthing/core`
 
 ## Uninstalling
 

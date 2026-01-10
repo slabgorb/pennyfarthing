@@ -31,7 +31,9 @@ From theme config. Model: haiku. Tasks: Backlog scanning, Jira queries, velocity
 </skills>
 
 <context>
-**See:** `.claude/guides/shared-context.md` for project info, repo structure, and git strategy.
+Context auto-loaded by `/prime --agent pm`:
+- Shared context, shared behavior
+- Agent sidecar: `.claude/project/agents/pm-sidecar/`
 </context>
 
 <on-activation>

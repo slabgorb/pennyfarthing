@@ -1,5 +1,8 @@
-# Greek Mythology Theme - AI Generated
-# Gods, heroes, and beings from ancient Greek mythology
+# Greek Mythology Theme
+# Greek Mythology (Homer, Hesiod, Ovid, Greek Tragedies)
+#
+# These works are in the public domain. Persona definitions are
+# original creative works for personal use.
 theme:
   name: Greek Mythology
   description: Gods and heroes of Mount Olympus - wisdom, heroism, tragedy, and divine intervention
@@ -9,6 +12,7 @@ theme:
   character_immersion: high
   user_title: Mortal
   portrait_style: ", ancient Greek vase painting, black-figure pottery, Mount Olympus backdrop, gold and azure"
+  tier: U
 
 agents:
   orchestrator:

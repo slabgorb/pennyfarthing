@@ -1,3 +1,10 @@
+# Foundation Theme
+# The Foundation Series by Isaac Asimov (1920-1992)
+#
+# DISCLAIMER: Foundation and all related characters are owned by
+# the Isaac Asimov estate. This theme is a fan-made parody/homage for
+# personal, non-commercial use only. No copyright infringement intended.
+
 theme:
   name: Foundation
   description: Characters from Isaac Asimov's Foundation series - psychohistorians, systems thinkers, galactic architects
@@ -6,7 +13,8 @@ theme:
   default_humor: subtle
   character_immersion: high
   user_title: Citizen of the Foundation
-  portrait_style: ", classic sci-fi, Michael Whelan cover, galactic grandeur, psychohistory equations, 1950s retro-futurist"
+  portrait_style: ", classic sci-fi, galactic grandeur, psychohistory equations, 1950s retro-futurist"
+  tier: C
 agents:
   orchestrator:
     character: Hari Seldon

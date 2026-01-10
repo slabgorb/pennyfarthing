@@ -2,11 +2,10 @@
  * E8-2: Diff Viewer Component
  *
  * Renders side-by-side diff when Claude modifies files via Edit or Write tools.
- * Automatically opens diff tab when file changes are detected.
+ * Automatically opens diff panel when file changes are detected.
  */
 
-import TabManager from '../tabs.js';
-import { registerContentRenderer } from './TabContainer.js';
+import DiffPanel from '../diff-panel.js';
 
 // =============================================================================
 // Tool Detection
@@ -70,32 +69,54 @@ export function extractDiffDataFromWrite(message) {
 }
 
 // =============================================================================
-// Tab Creation
+// State Management
 // =============================================================================
 
+// Store diffs for the current session
+const diffs = [];
+
+// Callback for when a diff is added (used by ChangedFilesList)
+let onDiffAddedCallback = null;
+
 /**
- * Create a diff tab configuration
- * @param {Object} diffData - DiffData object
- * @returns {Object} Tab configuration for TabManager
+ * Set callback for when diff is added
+ * @param {Function} callback - Function to call with diffData
  */
-export function createDiffTab(diffData) {
-  const filename = diffData.filePath.split('/').pop() || 'unknown';
-  return {
-    id: `diff-${diffData.id}`,
-    type: 'diff',
-    label: `Diff: ${filename}`,
-    closeable: true,
-    data: diffData,
-  };
+export function setOnDiffAdded(callback) {
+  onDiffAddedCallback = callback;
 }
 
 /**
- * Handle incoming diff data - create or update tab
+ * Handle incoming diff data - store and notify listeners
  * @param {Object} diffData - DiffData from tool message
  */
 export function handleDiffUpdate(diffData) {
-  const tab = createDiffTab(diffData);
-  TabManager.addTab(tab);
+  // Add to diffs list
+  diffs.push(diffData);
+
+  // Update diff count badge
+  DiffPanel.setDiffCount(diffs.length);
+
+  // Notify listeners (ChangedFilesList will handle selection and rendering)
+  if (onDiffAddedCallback) {
+    onDiffAddedCallback(diffData);
+  }
+}
+
+/**
+ * Get all diffs in current session
+ * @returns {Array} Array of diff data
+ */
+export function getDiffs() {
+  return [...diffs];
+}
+
+/**
+ * Clear all diffs
+ */
+export function clearDiffs() {
+  diffs.length = 0;
+  DiffPanel.clearContent();
 }
 
 // =============================================================================
@@ -182,34 +203,42 @@ export function getLanguageClass(ext) {
 }
 
 // =============================================================================
-// DOM Rendering
+// DOM Rendering (Unified Diff / Git Diff Style)
 // =============================================================================
 
 /**
- * Create a diff line DOM element
- * @param {Object} line - Diff line { type, line, lineNumber }
+ * Create a unified diff line DOM element
+ * @param {Object} line - Diff line { type, line }
  * @returns {HTMLElement} Diff line element
  */
 export function createDiffLineElement(line) {
   const el = document.createElement('div');
   el.className = `diff-line ${line.type}`;
 
-  const lineNum = document.createElement('span');
-  lineNum.className = 'diff-line-number';
-  lineNum.textContent = String(line.lineNumber);
+  const prefix = document.createElement('span');
+  prefix.className = 'diff-line-prefix';
+
+  // Git diff style prefixes
+  if (line.type === 'added') {
+    prefix.textContent = '+';
+  } else if (line.type === 'removed') {
+    prefix.textContent = '-';
+  } else {
+    prefix.textContent = ' ';
+  }
 
   const content = document.createElement('span');
   content.className = 'diff-line-content';
   content.textContent = line.line;
 
-  el.appendChild(lineNum);
+  el.appendChild(prefix);
   el.appendChild(content);
 
   return el;
 }
 
 /**
- * Render diff content into container
+ * Render unified diff content into container (git diff style)
  * @param {HTMLElement} container - Container element
  * @param {Object} diffData - DiffData object
  */
@@ -221,59 +250,51 @@ export function renderDiff(container, diffData) {
   const viewer = document.createElement('div');
   viewer.className = `diff-viewer ${langClass}`;
 
+  // File header with clickable path
+  const header = document.createElement('div');
+  header.className = 'diff-file-header';
+
+  const filePathLink = document.createElement('a');
+  filePathLink.className = 'file-path file-path-link';
+  filePathLink.href = '#';
+  filePathLink.textContent = diffData.filePath;
+  filePathLink.title = 'Click to open in editor';
+  filePathLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (window.electron?.fileBrowser?.openInEditor) {
+      window.electron.fileBrowser.openInEditor(diffData.filePath);
+    }
+  });
+
+  header.appendChild(filePathLink);
+  viewer.appendChild(header);
+
+  // New file indicator
+  if (diffData.isNewFile || diffData.oldContent === '') {
+    const newFileEl = document.createElement('div');
+    newFileEl.className = 'diff-new-file';
+    newFileEl.textContent = 'New file';
+    viewer.appendChild(newFileEl);
+  }
+
+  // Compute and render unified diff
   const diff = computeDiff(diffData.oldContent, diffData.newContent);
 
-  // Create old panel (left)
-  const oldPanel = document.createElement('div');
-  oldPanel.className = 'diff-panel';
-
-  if (diffData.isNewFile || diffData.oldContent === '') {
-    const emptyState = document.createElement('div');
-    emptyState.className = 'diff-empty-state';
-    emptyState.textContent = 'New file';
-    oldPanel.appendChild(emptyState);
-  } else {
-    const removedLines = diff.filter(d => d.type === 'removed');
-    for (const line of removedLines) {
-      const lineEl = createDiffLineElement(line);
-      oldPanel.appendChild(lineEl);
-    }
-  }
-
-  // Create new panel (right)
-  const newPanel = document.createElement('div');
-  newPanel.className = 'diff-panel';
-
+  // Render removed lines first, then added lines (unified style)
+  const removedLines = diff.filter(d => d.type === 'removed');
   const addedLines = diff.filter(d => d.type === 'added');
-  const unchangedLines = diff.filter(d => d.type === 'unchanged');
 
-  if (addedLines.length > 0) {
-    for (const line of addedLines) {
-      const lineEl = createDiffLineElement(line);
-      newPanel.appendChild(lineEl);
-    }
-  } else if (unchangedLines.length > 0) {
-    for (const line of unchangedLines) {
-      const lineEl = createDiffLineElement(line);
-      newPanel.appendChild(lineEl);
-    }
+  for (const line of removedLines) {
+    viewer.appendChild(createDiffLineElement(line));
   }
 
-  viewer.appendChild(oldPanel);
-  viewer.appendChild(newPanel);
+  for (const line of addedLines) {
+    viewer.appendChild(createDiffLineElement(line));
+  }
 
   container.innerHTML = '';
   container.appendChild(viewer);
 }
-
-// =============================================================================
-// Content Renderer Registration
-// =============================================================================
-
-// Register diff content renderer with TabContainer
-registerContentRenderer('diff', (container, tab) => {
-  renderDiff(container, tab.data);
-});
 
 // =============================================================================
 // IPC Integration
@@ -310,8 +331,10 @@ export default {
   detectWriteTool,
   extractDiffDataFromEdit,
   extractDiffDataFromWrite,
-  createDiffTab,
   handleDiffUpdate,
+  getDiffs,
+  clearDiffs,
+  setOnDiffAdded,
   computeDiff,
   getFileExtension,
   getLanguageClass,

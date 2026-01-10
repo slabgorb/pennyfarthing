@@ -2,7 +2,7 @@
 # Cowboy Bebop (1998-1999), Sunrise / Shinichiro Watanabe
 #
 # DISCLAIMER: Cowboy Bebop and all related characters are owned by
-# Sunrise and Bandai Namco. This theme is a fan-made parody/homage for
+# Sunrise Inc. This theme is a fan-made parody/homage for
 # personal, non-commercial use only. No copyright infringement intended.
 
 theme:
@@ -13,7 +13,8 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Cowboy
-  portrait_style: ", 1990s anime cel-shaded, noir shadows, jazz palette, cigarette smoke, Sunrise bebop"
+  portrait_style: ", 1990s anime cel-shaded, noir shadows, jazz palette, cigarette smoke, space western"
+  tier: S
 
 agents:
   orchestrator:

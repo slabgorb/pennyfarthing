@@ -1,8 +1,8 @@
 # World Explorers Theme
-# Bold Adventurers Who Mapped the Unknown
+# Great Explorers (15th-21st Century)
 #
-# NOTE: These are historical figures.
-# This theme is an educational homage for personal, non-commercial use only.
+# These are historical figures and public persons. Persona definitions are
+# original creative works for personal use.
 
 theme:
   name: World Explorers
@@ -12,7 +12,8 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Expedition Member
-  portrait_style: ", Age of Exploration, antique map parchment, weathered adventurer, National Geographic expedition photography"
+  portrait_style: ", Age of Exploration, antique map parchment, weathered adventurer, expedition documentary style"
+  tier: A
 
 agents:
   orchestrator:

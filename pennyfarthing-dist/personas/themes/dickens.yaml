@@ -1,8 +1,8 @@
 # Dickens Collection Theme
 # Works of Charles Dickens (1836-1870)
 #
-# NOTE: These are public domain works.
-# This theme is an educational homage for personal, non-commercial use only.
+# These works are in the public domain. Persona definitions are
+# original creative works for personal use.
 
 theme:
   name: Dickens Collection
@@ -12,7 +12,8 @@ theme:
   default_humor: enabled
   character_immersion: high
   user_title: Dear Reader
-  portrait_style: ", Victorian engraving, Phiz illustration style, crosshatched ink, sepia vignette, gaslit London"
+  portrait_style: ", Victorian engraving, Victorian crosshatch illustration, crosshatched ink, sepia vignette, gaslit London"
+  tier: A
 
 agents:
   orchestrator:

@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 # Jira CLI Library Functions
-# Shared functions for interacting with Jira using jira-cli
+# Shared functions for interacting with Jira using jira
 # Source this file: source "${SCRIPT_DIR}/jira-lib.sh"
 
 # Source common utilities (for dry_run_check, escape_for_jql, get_issue_json, etc.)
@@ -17,14 +17,14 @@ check_jira_cli() {
     # Standard deps from common
     check_dependencies 2>/dev/null || true
 
-    # Check for jira-cli
+    # Check for jira
     if ! command -v jira &> /dev/null; then
-        missing+=("jira-cli")
-        error "✗ jira-cli not found"
-        echo "  Install with: brew install ankitpokhrel/jira-cli/jira-cli"
+        missing+=("jira")
+        error "✗ jira not found"
+        echo "  Install with: brew install ankitpokhrel/jira/jira"
         echo "  Then run: jira init"
     else
-        success "✓ jira-cli installed"
+        success "✓ jira installed"
     fi
 
     # Check for JIRA_API_TOKEN
@@ -37,12 +37,12 @@ check_jira_cli() {
         success "✓ JIRA_API_TOKEN set"
     fi
 
-    # Check jira-cli config
+    # Check jira config
     if [ -f "$HOME/.config/.jira/.config.yml" ]; then
-        success "✓ jira-cli configured"
+        success "✓ jira configured"
     elif command -v jira &> /dev/null; then
         missing+=("jira-config")
-        error "✗ jira-cli not configured"
+        error "✗ jira not configured"
         echo "  Run: jira init"
     fi
 
@@ -243,7 +243,7 @@ assign_issue() {
         fi
     fi
 
-    # Assign the issue - jira-cli accepts email or display name
+    # Assign the issue - jira accepts email or display name
     # Note: --project flag is required even though key contains project prefix
     local result=$(jira issue assign --project "$JIRA_PROJECT" "$key" "$assignee" 2>&1)
     local exit_code=$?

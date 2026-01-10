@@ -39,8 +39,9 @@ From theme config. Model: haiku. Tasks: Status checks, backlog scans, file summa
 </skills>
 
 <context>
-**See:** `.claude/guides/tactical-agent-behavior.md` for shared tactical agent behavior (paths, session files, handoffs).
-**See:** `.claude/guides/shared-context.md` for project info, repo structure, and git strategy.
+Context auto-loaded by `/prime --agent sm`:
+- Shared context, shared behavior, tactical guide
+- Agent sidecar: `.claude/project/agents/sm-sidecar/`
 </context>
 
 <reasoning-mode>

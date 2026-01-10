@@ -2,7 +2,7 @@
 # Hannibal (2013-2015), NBC / Bryan Fuller
 #
 # DISCLAIMER: Hannibal and all related characters are owned by
-# BBC. This theme is a fan-made parody/homage for
+# Gaumont Television. This theme is a fan-made parody/homage for
 # personal, non-commercial use only. No copyright infringement intended.
 
 theme:
@@ -14,6 +14,7 @@ theme:
   character_immersion: high
   user_title: Patient
   portrait_style: ", dark psychological thriller, chiaroscuro lighting, baroque aesthetic, burgundy tones, unsettling elegance"
+  tier: A
 
 agents:
   orchestrator:

@@ -2,7 +2,7 @@
 # Sync a single story to Jira using jira CLI
 # Usage: ./scripts/jira-sync-story.sh <story_key> [--transition] [--points] [--comment "message"]
 #
-# This script uses the `jira` CLI tool (https://github.com/ankitpokhrel/jira-cli)
+# This script uses the `jira` CLI tool (https://github.com/ankitpokhrel/jira)
 #
 # Actions:
 #   (default)       Show story status in Jira
@@ -28,7 +28,7 @@ check_dependencies
 # Check jira CLI
 if ! command -v jira &> /dev/null; then
     error "Error: jira CLI not installed"
-    echo "Install with: brew install ankitpokhrel/jira-cli/jira-cli"
+    echo "Install with: brew install ankitpokhrel/jira/jira"
     echo "Then run: jira init"
     exit 2
 fi
