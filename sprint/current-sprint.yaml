@@ -842,7 +842,7 @@ epics:
     - Multiple Cyclist instances don''t interfere with each other
   - id: 17-8
     title: Fix story panel not loading in Electron (IPC vs HTTP mismatch)
-    status: backlog
+    status: done
     completed: 2026-01-09
     description: 'The Story Panel shows "No active story" in Electron even when there IS an active session with story data.
       The same functionality works correctly in the web view.
