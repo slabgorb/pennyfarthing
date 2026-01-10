@@ -14,7 +14,7 @@ This workflow syncs a Pennyfarthing epic and its stories to Jira using the `jira
 - `jira` CLI configured: `jira init`
 - Epic exists in `sprint/current-sprint.yaml`
 
-**For complete jira CLI reference, see the `jira-cli` skill** (`.claude/skills/jira-cli/SKILL.md`). The examples below are quick references; the skill has troubleshooting, user mappings, and edge cases.
+**For complete jira CLI reference, see the `jira` skill** (`.claude/skills/jira/SKILL.md`). The examples below are quick references; the skill has troubleshooting, user mappings, and edge cases.
 
 ## Label Requirement
 

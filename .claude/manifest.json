@@ -76,7 +76,7 @@
     ".claude/pennyfarthing/skills/code-review/SKILL.md": "bc1d6cc32d2b68935b517ebc73dc12ebf539db9f10180f90de8392e432e3b631",
     ".claude/pennyfarthing/skills/context-engineering/SKILL.md": "c2d5729de3e4a7298222a9326f41c9292891563f748b1a128a7c95412c8ec9c4",
     ".claude/pennyfarthing/skills/dev-patterns/SKILL.md": "1441bf84de9a6307dd44856658e3e9473b06d43b819f939c3229d1c34406edab",
-    ".claude/pennyfarthing/skills/jira-cli/SKILL.md": "c94666214cb9ed3078bb03e03f1a24520b8a4ad1d49e526fde4b1e525ba39bd8",
+    ".claude/pennyfarthing/skills/jira/SKILL.md": "c94666214cb9ed3078bb03e03f1a24520b8a4ad1d49e526fde4b1e525ba39bd8",
     ".claude/pennyfarthing/skills/just/SKILL.md": "76b636a5e3a4bbc686d4ec3014d36c8a5ba079e65a8911c1add961fa5ac331d7",
     ".claude/pennyfarthing/skills/persona-benchmark/SKILL.md": "4cc2e58e86d36c99af41487b607ac907559ee4ea36fffecca2a125312de297f3",
     ".claude/pennyfarthing/skills/sprint-context/SKILL.md": "26265bf465e8e9afc1e5163d0536af8780a4cb59d5aa3612b4ff5eec4d55a7e3",

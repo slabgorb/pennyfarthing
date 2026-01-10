@@ -122,7 +122,7 @@ THOUGHT: Based on observation, what next?
 
 ---
 
-### jira-cli
+### jira
 
 **Purpose:** Jira integration using the CLI.
 

@@ -19,7 +19,7 @@ Explore all themes with OCEAN spider charts, Chernoff faces, and 910 character p
 - **10 Agents + 13 Subagents** - Strategic (PM, Architect) and tactical (SM, TEA, Dev, Reviewer) agents with official Haiku-based subagents for mechanical tasks
 - **Automatic Handoffs** - Context-aware agent transitions via official subagent format
 - **94 Persona Themes** - Star Trek, Breaking Bad, Dune, The Office, Game of Thrones, Arthurian Mythos, and more with OCEAN personality profiles
-- **13 Skills** - Reusable knowledge domains (testing, code-review, judge, jira-cli, etc.)
+- **13 Skills** - Reusable knowledge domains (testing, code-review, judge, jira, etc.)
 - **28 Slash Commands** - Entry points for agent activation, benchmarking, and workflows
 - **Scientific Benchmarking** - Evaluate personas against standardized scenarios with statistical analysis
 - **CLI Tool** - `pennyfarthing init`, `update`, `doctor`, `uninstall`, `theme`
