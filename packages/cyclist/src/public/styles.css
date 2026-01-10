@@ -1974,8 +1974,7 @@ html, body {
 
 .diff-panel-content {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: auto;  /* Allow both horizontal and vertical scrolling */
   padding: 8px 0;
 }
 
@@ -2031,13 +2030,11 @@ html, body {
  * ============================================================================= */
 
 .diff-viewer {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+  display: block;  /* Block layout to allow natural content flow */
+  min-width: max-content;  /* Expand to fit widest line */
   font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
   font-size: 13px;
   line-height: 1.4;
-  overflow: hidden;
   background: var(--bg-terminal);
 }
 
@@ -2070,6 +2067,8 @@ html, body {
   white-space: pre;
   min-height: 1.4em;
   padding: 0 0.5rem;
+  width: max-content;  /* Prevent wrapping, expand to content width */
+  min-width: 100%;  /* At minimum fill the container */
 }
 
 .diff-line-prefix {
@@ -2084,7 +2083,7 @@ html, body {
 .diff-line-content {
   flex: 1;
   padding-left: 0.25rem;
-  overflow-x: auto;
+  /* No overflow - let parent container scroll */
 }
 
 /* Added lines - green */
