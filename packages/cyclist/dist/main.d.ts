@@ -63,6 +63,14 @@ export declare const IPC_DIFF_CHANNELS: {
     readonly DIFF_UPDATE: "diff:update";
 };
 /**
+ * IPC channel names for settings (22-5)
+ */
+export declare const IPC_SETTINGS_CHANNELS: {
+    readonly VERBOSE_MODE_GET: "settings:getVerboseMode";
+    readonly VERBOSE_MODE_SET: "settings:setVerboseMode";
+    readonly VERBOSE_MODE_UPDATE: "settings:verboseModeUpdate";
+};
+/**
  * IPC channel names for file browser (E8-3)
  */
 export declare const IPC_FILE_BROWSER_CHANNELS: {
@@ -113,6 +121,14 @@ export declare function buildAgentMenu(): {
  * Build Electron menu for workflows
  */
 export declare function buildWorkflowMenu(): {
+    label: string;
+    submenu: unknown[];
+};
+/**
+ * Build custom View menu with Verbose Mode toggle (Story 22-5)
+ * Includes standard view items plus custom Cyclist options
+ */
+export declare function buildViewMenu(): {
     label: string;
     submenu: unknown[];
 };
@@ -294,6 +310,13 @@ export declare function setupClaudeIPCHandlers(ipcMain: {
  * E8-3: Handles directory listing and file opening
  */
 export declare function setupFileBrowserIPCHandlers(ipcMain: {
+    handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
+}): void;
+/**
+ * Set up IPC handlers for settings
+ * 22-5: Handles verbose mode setting get/set
+ */
+export declare function setupSettingsIPCHandlers(ipcMain: {
     handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
 }): void;
 /**

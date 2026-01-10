@@ -1292,7 +1292,9 @@ epics:
       - Keyboard shortcut: Cmd+Shift+V
     points: 2
     priority: P2
-    status: backlog
+    status: in_progress
+    started: 2026-01-10
+    assigned_to: Keith Avery
     repos: cyclist
     acceptance_criteria:
     - Verbose mode toggle in View menu

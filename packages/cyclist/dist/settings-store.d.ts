@@ -2,7 +2,7 @@
  * Settings Store for Cyclist
  *
  * Provides persistent storage for application settings including
- * the Bash approval gate feature (Story 22-3).
+ * the Bash approval gate feature (Story 22-3) and verbose mode (Story 22-5).
  *
  * Settings are stored in memory for the session with optional
  * file persistence for future enhancement.
@@ -45,4 +45,15 @@ export declare function clearAllowlist(): void;
  * @returns Glob pattern (e.g., 'git commit -m "msg"' -> 'git *')
  */
 export declare function extractPattern(command: string): string;
+/**
+ * Get the current state of verbose mode
+ * When enabled, tool blocks are expanded by default
+ * @returns true if verbose mode is enabled, false otherwise
+ */
+export declare function getVerboseMode(): boolean;
+/**
+ * Set the state of verbose mode
+ * @param enabled - true to enable verbose mode, false to disable
+ */
+export declare function setVerboseMode(enabled: boolean): void;
 //# sourceMappingURL=settings-store.d.ts.map
