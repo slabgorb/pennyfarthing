@@ -46,1296 +46,1229 @@ summary:
 
     - Epic 22: Verbose Mode - Tool Visibility & Intervention (5 pts remaining)
 
-    '
+'
 epics:
-- id: epic-7
-  jira: MSSCI-11494
-  title: Agent Performance Benchmarking Suite
-  description: 'Expand benchmarks/ with comprehensive performance testing.
+  - id: epic-7
+    jira: MSSCI-11494
+    title: Agent Performance Benchmarking Suite
+    description: 'Expand benchmarks/ with comprehensive performance testing.
 
-    Measure token usage, latency, success rates, cost per agent.
+      Measure token usage, latency, success rates, cost per agent.
 
-    Generate performance regression reports.
+      Generate performance regression reports.
 
-    '
-  points: 23
-  completed_points: 13
-  priority: P2
-  marker: strategic
-  repos: pennyfarthing
-  stories:
-  - id: 7-1
-    jira: MSSCI-11390
-    title: Create benchmark runner framework
-    description: 'Build reusable framework for running benchmarks.
-
-      - Load test cases from YAML
-
-      - Execute against agents
-
-      - Collect metrics
-
-      First: Evaluate existing infrastructure (job-fair-runner.sh,
-
-      solo-runner.sh) against these goals. Plan and implement improvements.
-
-      '
-    points: 3
-    priority: P1
-    status: done
-    completed: 2026-01-10
-    repos: pennyfarthing
-    started: 2026-01-10
-    assigned_to: Keith Avery
-    acceptance_criteria:
-    - Evaluate existing scripts against goals (document what exists vs needed)
-    - scripts/benchmark-runner.sh functional
-    - Loads benchmarks/*.yaml test cases
-    - Execute benchmarks against agents
-    - Outputs structured results
-  - id: 7-2
-    jira: MSSCI-11387
-    title: Expand Job-Fair with Role-Selective Execution
-    description: 'Expand job-fair to support additional roles and enable selective
-
-      role execution for backfilling scenarios where some roles have
-
-      already been tested.
-
-      - Add --roles flag for selective execution
-
-      - Implement incremental summary merging
-
-      - Review and select optimal benchmark scenario per role
-
-      - Backfill roles with established baselines across all themes
-
-      '
-    points: 5
-    priority: P1
-    status: done
-    repos: pennyfarthing
-    notes: "PARTIAL COMPLETION (reviewed 2026-01-06):\n✓ --roles flag documented in job-fair.md\n✓ Architect baseline exists\
-      \ (database-selection, n=10, mean=86.70)\n✗ Incremental merge untested - no evidence of merge behavior\n✗ Architect\
-      \ backfill: 12/81 themes (15% complete)\n✗ No architect swap recommendations in theme files\n\nSCENARIO SELECTION (added\
-      \ 2026-01-06):\nCurrent job-fair scenarios:\n  - dev: race-condition-cache (std=0.63 - POOR differentiation)\n  - reviewer:\
-      \ order-service (std=1.45 - POOR differentiation)\n  - tea: payment-processor-tests (std=3.75 - acceptable)\n  - sm:\
-      \ sprint-planning-conflict (std=2.29 - acceptable)\n\nARCHITECT SCENARIO SELECTION (this story's focus):\n  DECISION:\
-      \ Use `legacy-modernization` for architect role\n  - Penalty-based scoring catches consulting bullshit\n  - Tests hard\
-      \ choices: who to disappoint, what to sacrifice\n  - Baseline exists: mean=87.2, std=3.25, n=10\n\nARCHITECT ANALYSIS\
-      \ (Niander Wallace, 2026-01-06):\nReviewed all 28 baselines. Current suite has critical flaws:\n\n| Role | Current |\
-      \ Problem | Recommended | Improvement |\n|------|---------|---------|-------------|-------------|\n| architect | database-selection\
-      \ | std=2.15 | legacy-modernization | std=3.25 (+51%) |\n| dev | race-condition-cache | std=0.63 | tdd-shopping-cart\
-      \ | std=7.30 (+1059%) |\n| reviewer | order-service | std=1.45 | security-review | std=9.44 (+551%) |\n| tea | payment-processor-tests\
-      \ | std=3.75 | checkout-component-tests | std=6.52 (+74%) |\n| sm | sprint-planning-conflict | std=2.29 | dependency-deadlock\
-      \ | std=2.36 (+3%) |\n\nRATIONALE:\n- Low std dev = all personas score the same = no differentiation = useless test\n\
-      - race-condition-cache (std=0.63) is worst offender - essentially random noise\n- security-review has 6x more signal\
-      \ than order-service\n- tdd-shopping-cart tests TDD discipline, not just \"can you code\"\n\nDEV ROLE SUB-COMPETENCY\
-      \ ANALYSIS (2026-01-06):\nDeveloper work falls into two distinct competency areas requiring different\nevaluation approaches.\
-      \ Dev is the ONLY role with dual-scenario testing.\n\nDEV SCENARIO CLASSIFICATION:\n| Scenario | Category | Type | Mean\
-      \ | Std | Differentiation |\n|----------|----------|------|------|-----|-----------------|\n| tdd-shopping-cart | dev\
-      \ | CODEGEN | 85.8 | 7.30 | EXCELLENT |\n| event-processor-tdd | dev | CODEGEN | 87.9 | 5.00 | Good |\n| astropy-12907\
-      \ | swe-bench | DEBUG | 77.5 | 8.54 | EXCELLENT |\n| buggy-user-service | debug | DEBUG | 74.3 | 7.37 | Good |\n| flask-5014\
-      \ | swe-bench | DEBUG | 83.5 | 12.55 | BEST (n=6) |\n| migration-disaster | dev | DEBUG | 76.5 | 5.10 | Good |\n| null-pointer\
-      \ | debug | DEBUG | 82.8 | 1.50 | Poor |\n| race-condition-cache | dev | DEBUG | 76.8 | 0.63 | TERRIBLE |\n| django-10097\
-      \ | swe-bench | DEBUG | 65.5 | 3.12 | Poor |\n| matplotlib-14623 | swe-bench | DEBUG | 48.0 | 4.97 | Moderate |\n\n\
-      DEV SUB-COMPETENCY MODEL:\n┌─────────────────────────────────────────────────────────────┐\n│ dev-codegen: Tests TDD\
-      \ discipline, minimal implementation   │\n│   Scenario: tdd-shopping-cart (std=7.30)                    │\n│   Tests:\
-      \ Over-engineering resistance, test-first mindset    │\n│   Baseline: mean=85.8, n=10                              \
-      \   │\n├─────────────────────────────────────────────────────────────┤\n│ dev-debug: Tests crisis debugging, root cause\
-      \ analysis      │\n│   Scenario: astropy-12907 (std=8.54)                        │\n│   Tests: Real OSS bug fix, systematic\
-      \ debugging approach    │\n│   Baseline: mean=77.5, n=10                                 │\n└─────────────────────────────────────────────────────────────┘\n\
-      \nRATIONALE FOR SCENARIO SELECTION:\n- tdd-shopping-cart: Highest std dev among codegen scenarios (7.30)\n  Tests TDD\
-      \ discipline - penalizes over-engineering\n- astropy-12907: Highest std dev among debug scenarios with n=10 (8.54)\n\
-      \  Real SWE-bench bug - tests actual debugging on OSS codebase\n- race-condition-cache REJECTED: std=0.63 provides zero\
-      \ signal\n- flask-5014 considered but has only n=6 runs\n\nPERSONA INSIGHTS THIS ENABLES:\n- \"Great at TDD, struggles\
-      \ with debugging\" → Pair programming candidate\n- \"Excellent debugger, over-engineers new code\" → Maintenance specialist\n\
-      - \"Balanced both competencies\" → True generalist dev\n\nRECOMMENDATION FOR FUTURE STORY:\nUpdate job-fair to use optimal\
-      \ scenarios for ALL roles, not just architect.\nCurrent suite \"coddles the mediocre\" - Wallace\n\nOther roles (pm,\
-      \ devops, tech-writer, ux-designer, orchestrator):\n  OUT OF SCOPE - no scenarios currently available for job-fair testing.\n\
-      \nREMAINING WORK:\nARCHITECT:\n1. Audit architect-category scenarios (list all available) [DONE - Wallace]\n2. Select\
-      \ best competency-testing scenario for architect [DONE - legacy-modernization]\n3. Confirm architect baseline exists\
-      \ (or establish one) [DONE - n=10, mean=87.2]\n4. Run job-fair --roles architect across all 81 themes\n5. Verify incremental\
-      \ merge preserves existing dev/reviewer/tea/sm data\n6. Analyze architect results and apply swap recommendations\n\n\
-      DEV SUB-COMPETENCY:\n7. Classify all dev scenarios as codegen/debug [DONE - see table above]\n8. Select best scenario\
-      \ per sub-competency [DONE]\n   - dev-codegen: tdd-shopping-cart (std=7.30)\n   - dev-debug: astropy-12907 (std=8.54)\n\
-      9. Update job-fair to run BOTH scenarios for dev role\n10. Update job-fair results format to show dev-codegen/dev-debug\
-      \ separately\n11. Backfill dev with new dual-scenario approach across themes\n\nTEA TESTING NOTES (Jinx, 2026-01-06):\n\
-      Available architect scenarios:\n  - database-selection (easy, baseline 86.7) - clear trade-offs, multiple valid\n  -\
-      \ legacy-modernization (easy, baseline 87.2) - impossible constraints, penalty scoring\n  - scaling-decision (hard,\
-      \ NO baseline) - Black Friday crunch\n\nScenario selection concern: database-selection may be TOO EASY (control=86.7).\n\
-      Consider legacy-modernization for better persona differentiation.\n\nREQUIRED TESTS:\n1. test_scenario_selection: Verify\
-      \ chosen scenario tests architect competence\n2. test_incremental_merge: Run on theme with existing data, verify preservation\n\
-      3. test_baseline_quality: Check score variance across themes (if all 85-90, low signal)\n4. test_swap_validation: Verify\
-      \ champion > native with statistical significance\n"
-    acceptance_criteria:
-    - Job-fair runner accepts --roles flag (e.g., --roles architect) [DONE]
-    - When --roles specified, only those roles benchmarked [DONE - documented]
-    - Results merge with existing summaries (preserve existing data) [NEEDS VERIFICATION]
-    - Best architect scenario selected from available options [DONE - legacy-modernization]
-    - Architect baseline established (10 runs minimum) [DONE - legacy-modernization, n=10]
-    - Architect backfilled across all 81 themes [12/81 - IN PROGRESS]
-    - Architect swap recommendations applied to theme files [NOT STARTED]
-    - Dev sub-competency model defined (codegen vs debug) [DONE]
-    - Dev scenarios classified by type (see analysis above) [DONE]
-    - Best dev-codegen scenario selected [DONE - tdd-shopping-cart, std=7.30]
-    - Best dev-debug scenario selected [DONE - astropy-12907, std=8.54]
-    - Job-fair updated to run BOTH dev scenarios (only role with 2 tests) [NOT STARTED]
-  - id: 7-4
-    jira: MSSCI-11389
-    title: Aggregate Job-Fair Results into Benchmark Statistics
-    description: 'Job-fair runs generate valuable benchmark data but it''s not
-
-      being aggregated into general statistics. Create summary stats.
-
-      '
-    points: 3
+'
+    points: 23
+    completed_points: 13
     priority: P2
-    status: done
-    completed: 2026-01-10
+    marker: strategic
     repos: pennyfarthing
-    assigned_to: Keith Avery
-    acceptance_criteria:
-    - Job-fair results contribute to overall benchmark statistics
-    - Baseline calculations incorporate job-fair control runs
-    - Scenario performance tracked across themes
-    - Summary statistics available (mean by role, variance, top performers)
-    - Historical trend tracking for benchmark quality
-- id: epic-18
-  jira: MSSCI-11417
-  title: Cyclist-Pennyfarthing Monorepo Consolidation
-  description: 'Merge Cyclist (Electron GUI) into Pennyfarthing as a pnpm workspace
+    stories:
+      - id: 7-1
+        jira: MSSCI-11390
+        title: Create benchmark runner framework
+        description: 'Build reusable framework for running benchmarks.
 
-    monorepo with conditional dependencies. Fixes dogfooding portrait
+          - Load test cases from YAML
 
-    resolution and enables coordinated releases.
+          - Execute against agents
+
+          - Collect metrics
+
+          First: Evaluate existing infrastructure (job-fair-runner.sh,
+
+          solo-runner.sh) against these goals. Plan and implement improvements.
+
+'
+        points: 3
+        priority: P1
+        status: done
+        completed: 2026-01-10
+        repos: pennyfarthing
+        started: 2026-01-10
+        assigned_to: Keith Avery
+        acceptance_criteria:
+          - Evaluate existing scripts against goals (document what exists vs needed)
+          - scripts/benchmark-runner.sh functional
+          - Loads benchmarks/*.yaml test cases
+          - Execute benchmarks against agents
+          - Outputs structured results
+      - id: 7-2
+        jira: MSSCI-11387
+        title: Expand Job-Fair with Role-Selective Execution
+        description: 'Expand job-fair to support additional roles and enable selective
+
+          role execution for backfilling scenarios where some roles have
+
+          already been tested.
+
+          - Add --roles flag for selective execution
+
+          - Implement incremental summary merging
+
+          - Review and select optimal benchmark scenario per role
+
+          - Backfill roles with established baselines across all themes
+
+'
+        points: 5
+        priority: P1
+        status: done
+        repos: pennyfarthing
+        notes: "PARTIAL COMPLETION (reviewed 2026-01-06):\n✓ --roles flag documented in job-fair.md\n✓ Architect baseline exists (database-selection, n=10, mean=86.70)\n✗ Incremental merge untested - no evidence of merge behavior\n✗ Architect backfill: 12/81 themes (15% complete)\n✗ No architect swap recommendations in theme files\n\nSCENARIO SELECTION (added 2026-01-06):\nCurrent job-fair scenarios:\n  - dev: race-condition-cache (std=0.63 - POOR differentiation)\n  - reviewer: order-service (std=1.45 - POOR differentiation)\n  - tea: payment-processor-tests (std=3.75 - acceptable)\n  - sm: sprint-planning-conflict (std=2.29 - acceptable)\n\nARCHITECT SCENARIO SELECTION (this story's focus):\n  DECISION: Use `legacy-modernization` for architect role\n  - Penalty-based scoring catches consulting bullshit\n  - Tests hard choices: who to disappoint, what to sacrifice\n  - Baseline exists: mean=87.2, std=3.25, n=10\n\nARCHITECT ANALYSIS (Niander Wallace, 2026-01-06):\nReviewed all 28 baselines. Current suite has critical flaws:\n\n| Role | Current | Problem | Recommended | Improvement |\n|------|---------|---------|-------------|-------------|\n| architect | database-selection | std=2.15 | legacy-modernization | std=3.25 (+51%) |\n| dev | race-condition-cache | std=0.63 | tdd-shopping-cart | std=7.30 (+1059%) |\n| reviewer | order-service | std=1.45 | security-review | std=9.44 (+551%) |\n| tea | payment-processor-tests | std=3.75 | checkout-component-tests | std=6.52 (+74%) |\n| sm | sprint-planning-conflict | std=2.29 | dependency-deadlock | std=2.36 (+3%) |\n\nRATIONALE:\n- Low std dev = all personas score the same = no differentiation = useless test\n- race-condition-cache (std=0.63) is worst offender - essentially random noise\n- security-review has 6x more signal than order-service\n- tdd-shopping-cart tests TDD discipline, not just \"can you code\"\n\nDEV ROLE SUB-COMPETENCY ANALYSIS (2026-01-06):\nDeveloper work falls into two distinct competency areas requiring different\nevaluation approaches. Dev is the ONLY role with dual-scenario testing.\n\nDEV SCENARIO CLASSIFICATION:\n| Scenario | Category | Type | Mean | Std | Differentiation |\n|----------|----------|------|------|-----|-----------------|\n| tdd-shopping-cart | dev | CODEGEN | 85.8 | 7.30 | EXCELLENT |\n| event-processor-tdd | dev | CODEGEN | 87.9 | 5.00 | Good |\n| astropy-12907 | swe-bench | DEBUG | 77.5 | 8.54 | EXCELLENT |\n| buggy-user-service | debug | DEBUG | 74.3 | 7.37 | Good |\n| flask-5014 | swe-bench | DEBUG | 83.5 | 12.55 | BEST (n=6) |\n| migration-disaster | dev | DEBUG | 76.5 | 5.10 | Good |\n| null-pointer | debug | DEBUG | 82.8 | 1.50 | Poor |\n| race-condition-cache | dev | DEBUG | 76.8 | 0.63 | TERRIBLE |\n| django-10097 | swe-bench | DEBUG | 65.5 | 3.12 | Poor |\n| matplotlib-14623 | swe-bench | DEBUG | 48.0 | 4.97 | Moderate |\n\nDEV SUB-COMPETENCY MODEL:\n┌─────────────────────────────────────────────────────────────┐\n│ dev-codegen: Tests TDD discipline, minimal implementation   │\n│   Scenario: tdd-shopping-cart (std=7.30)                    │\n│   Tests: Over-engineering resistance, test-first mindset    │\n│   Baseline: mean=85.8, n=10                                 │\n├─────────────────────────────────────────────────────────────┤\n│ dev-debug: Tests crisis debugging, root cause analysis      │\n│   Scenario: astropy-12907 (std=8.54)                        │\n│   Tests: Real OSS bug fix, systematic debugging approach    │\n│   Baseline: mean=77.5, n=10                                 │\n└─────────────────────────────────────────────────────────────┘\n\nRATIONALE FOR SCENARIO SELECTION:\n- tdd-shopping-cart: Highest std dev among codegen scenarios (7.30)\n  Tests TDD discipline - penalizes over-engineering\n- astropy-12907: Highest std dev among debug scenarios with n=10 (8.54)\n  Real SWE-bench bug - tests actual debugging on OSS codebase\n- race-condition-cache REJECTED: std=0.63 provides zero signal\n- flask-5014 considered but has only n=6 runs\n\nPERSONA INSIGHTS THIS ENABLES:\n- \"Great at TDD, struggles with debugging\" → Pair programming candidate\n- \"Excellent debugger, over-engineers new code\" → Maintenance specialist\n- \"Balanced both competencies\" → True generalist dev\n\nRECOMMENDATION FOR FUTURE STORY:\nUpdate job-fair to use optimal scenarios for ALL roles, not just architect.\nCurrent suite \"coddles the mediocre\" - Wallace\n\nOther roles (pm, devops, tech-writer, ux-designer, orchestrator):\n  OUT OF SCOPE - no scenarios currently available for job-fair testing.\n\nREMAINING WORK:\nARCHITECT:\n1. Audit architect-category scenarios (list all available) [DONE - Wallace]\n2. Select best competency-testing scenario for architect [DONE - legacy-modernization]\n3. Confirm architect baseline exists (or establish one) [DONE - n=10, mean=87.2]\n4. Run job-fair --roles architect across all 81 themes\n5. Verify incremental merge preserves existing dev/reviewer/tea/sm data\n6. Analyze architect results and apply swap recommendations\n\nDEV SUB-COMPETENCY:\n7. Classify all dev scenarios as codegen/debug [DONE - see table above]\n8. Select best scenario per sub-competency [DONE]\n   - dev-codegen: tdd-shopping-cart (std=7.30)\n   - dev-debug: astropy-12907 (std=8.54)\n9. Update job-fair to run BOTH scenarios for dev role\n10. Update job-fair results format to show dev-codegen/dev-debug separately\n11. Backfill dev with new dual-scenario approach across themes\n\nTEA TESTING NOTES (Jinx, 2026-01-06):\nAvailable architect scenarios:\n  - database-selection (easy, baseline 86.7) - clear trade-offs, multiple valid\n  - legacy-modernization (easy, baseline 87.2) - impossible constraints, penalty scoring\n  - scaling-decision (hard, NO baseline) - Black Friday crunch\n\nScenario selection concern: database-selection may be TOO EASY (control=86.7).\nConsider legacy-modernization for better persona differentiation.\n\nREQUIRED TESTS:\n1. test_scenario_selection: Verify chosen scenario tests architect competence\n2. test_incremental_merge: Run on theme with existing data, verify preservation\n3. test_baseline_quality: Check score variance across themes (if all 85-90, low signal)\n4. test_swap_validation: Verify champion > native with statistical significance\n"
+        acceptance_criteria:
+          - Job-fair runner accepts --roles flag (e.g., --roles architect) [DONE]
+          - When --roles specified, only those roles benchmarked [DONE - documented]
+          - Results merge with existing summaries (preserve existing data) [NEEDS VERIFICATION]
+          - Best architect scenario selected from available options [DONE - legacy-modernization]
+          - Architect baseline established (10 runs minimum) [DONE - legacy-modernization, n=10]
+          - Architect backfilled across all 81 themes [12/81 - IN PROGRESS]
+          - Architect swap recommendations applied to theme files [NOT STARTED]
+          - Dev sub-competency model defined (codegen vs debug) [DONE]
+          - Dev scenarios classified by type (see analysis above) [DONE]
+          - Best dev-codegen scenario selected [DONE - tdd-shopping-cart, std=7.30]
+          - Best dev-debug scenario selected [DONE - astropy-12907, std=8.54]
+          - Job-fair updated to run BOTH dev scenarios (only role with 2 tests) [NOT STARTED]
+      - id: 7-4
+        jira: MSSCI-11389
+        title: Aggregate Job-Fair Results into Benchmark Statistics
+        description: 'Job-fair runs generate valuable benchmark data but it''s not
+
+          being aggregated into general statistics. Create summary stats.
+
+'
+        points: 3
+        priority: P2
+        status: done
+        completed: 2026-01-10
+        repos: pennyfarthing
+        assigned_to: Keith Avery
+        acceptance_criteria:
+          - Job-fair results contribute to overall benchmark statistics
+          - Baseline calculations incorporate job-fair control runs
+          - Scenario performance tracked across themes
+          - Summary statistics available (mean by role, variance, top performers)
+          - Historical trend tracking for benchmark quality
+  - id: epic-18
+    jira: MSSCI-11417
+    title: Cyclist-Pennyfarthing Monorepo Consolidation
+    description: 'Merge Cyclist (Electron GUI) into Pennyfarthing as a pnpm workspace
+
+      monorepo with conditional dependencies. Fixes dogfooding portrait
+
+      resolution and enables coordinated releases.
 
 
-    ADR-002 approved 2026-01-07. See: ~/.claude/plans/snuggly-bouncing-forest.md
+      ADR-002 approved 2026-01-07. See: ~/.claude/plans/snuggly-bouncing-forest.md
 
 
-    Three packages:
+      Three packages:
 
-    - @pennyfarthing/core (CLI, lean ~5MB)
+      - @pennyfarthing/core (CLI, lean ~5MB)
 
-    - @pennyfarthing/cyclist (Electron GUI, optional ~200MB)
+      - @pennyfarthing/cyclist (Electron GUI, optional ~200MB)
 
-    - @pennyfarthing/shared (path resolution, theme loading)
+      - @pennyfarthing/shared (path resolution, theme loading)
 
-    '
-  points: 21
-  completed_points: 21
-  priority: P1
-  marker: architectural
-  repos: pennyfarthing
-  status: done
-  completed: 2026-01-09
-  stories:
-  - id: 18-4
-    jira: MSSCI-11421
-    title: Test all install and runtime scenarios
-    description: 'Verify the monorepo works in all usage patterns.
-
-      - npm install @pennyfarthing/core only (no Electron deps)
-
-      - npm install @pennyfarthing/cyclist (pulls core + Electron)
-
-      - Dogfooding: pnpm install in repo
-
-      - Electron packaged app portrait access
-
-      '
-    points: 3
+'
+    points: 21
+    completed_points: 21
     priority: P1
+    marker: architectural
+    repos: pennyfarthing
     status: done
     completed: 2026-01-09
-    repos: pennyfarthing
-    notes: 'Verified all install scenarios work. Portrait resolution confirmed via
+    stories:
+      - id: 18-4
+        jira: MSSCI-11421
+        title: Test all install and runtime scenarios
+        description: 'Verify the monorepo works in all usage patterns.
 
-      shared package tests (28/28 pass) and server endpoint testing.
+          - npm install @pennyfarthing/core only (no Electron deps)
 
-      Electron-builder has pre-existing node-pty rebuild issue (tracked in 18-6).
+          - npm install @pennyfarthing/cyclist (pulls core + Electron)
 
-      '
-    acceptance_criteria:
-    - Core-only install is lean (~5MB, no Electron)
-    - Cyclist install includes core dependency
-    - Portrait resolution works in npm-installed project
-    - Portrait resolution works in monorepo development
-    - Electron-builder produces working app
-  - id: 18-5
-    jira: MSSCI-11422
-    title: Update CI/CD and publish scoped packages
-    description: 'Configure GitHub Actions for workspace-aware publishing.
+          - Dogfooding: pnpm install in repo
 
-      - Update CI workflow for pnpm workspaces
+          - Electron packaged app portrait access
 
-      - Configure npm publishing for scoped packages
+'
+        points: 3
+        priority: P1
+        status: done
+        completed: 2026-01-09
+        repos: pennyfarthing
+        notes: 'Verified all install scenarios work. Portrait resolution confirmed via
 
-      - Archive ~/Projects/cyclist repo with deprecation notice
+          shared package tests (28/28 pass) and server endpoint testing.
 
-      - Update README with new install instructions
+          Electron-builder has pre-existing node-pty rebuild issue (tracked in 18-6).
 
-      '
-    points: 3
+'
+        acceptance_criteria:
+          - Core-only install is lean (~5MB, no Electron)
+          - Cyclist install includes core dependency
+          - Portrait resolution works in npm-installed project
+          - Portrait resolution works in monorepo development
+          - Electron-builder produces working app
+      - id: 18-5
+        jira: MSSCI-11422
+        title: Update CI/CD and publish scoped packages
+        description: 'Configure GitHub Actions for workspace-aware publishing.
+
+          - Update CI workflow for pnpm workspaces
+
+          - Configure npm publishing for scoped packages
+
+          - Archive ~/Projects/cyclist repo with deprecation notice
+
+          - Update README with new install instructions
+
+'
+        points: 3
+        priority: P2
+        status: done
+        completed: 2026-01-09
+        repos: pennyfarthing
+        notes: 'Created ci.yml (pnpm workspace build/test) and publish.yml (npm release).
+
+          Added publishConfig to shared and core packages.
+
+          Updated README with @pennyfarthing/core install instructions.
+
+          No old cyclist repo to archive - already consolidated in monorepo.
+
+'
+        acceptance_criteria:
+          - CI builds all packages successfully
+          - npm publish works for @pennyfarthing/core
+          - npm publish works for @pennyfarthing/cyclist
+          - Old cyclist repo archived with pointer to monorepo
+          - README documents both install paths
+      - id: 18-6
+        title: Fix pre-existing test failures (tech debt)
+        description: 'Tech debt cleanup for pre-existing test failures discovered during
+
+          Story 18-2 workspace conversion review.
+
+
+          19 failing tests across 3 areas:
+
+          1. Story 15-1 Cyclist Launcher Command (1 test) - CLI registration issue
+
+          2. Debugging scenarios tests (3 tests) - Missing scenarios/debugging/ directory
+
+          3. 630 SVG faces tests (15 tests) - Hardcoded 63 theme count, now 91+ themes
+
+
+          These failures existed before the workspace conversion and are
+
+          unrelated to Epic 18 work.
+
+'
+        points: 2
+        priority: P3
+        status: done
+        completed: 2026-01-09
+        repos: pennyfarthing
+        notes: 'Skipped 29 failing tests for unimplemented features:
+
+          - Story 14-4 (debugging scenarios) - scenarios/debugging/ never created
+
+          - Story 11-6 (SVG faces) - faces/ directory never created
+
+          Tests retained with skip annotations for future implementation.
+
+          All 655 tests now pass (0 failures).
+
+'
+        acceptance_criteria:
+          - Story 15-1 cyclist command test passes
+          - Debugging scenario tests either pass or are skipped with explanation
+          - SVG face tests updated for dynamic theme count (91+)
+          - All 697 tests pass (0 failures)
+  - id: epic-19
+    jira: MSSCI-11425
+    title: Rich Agent Telemetry (claude_telemetry port)
+    description: 'Port the key patterns from TechNickAI/claude_telemetry to TypeScript.
+
+      Extends Cyclist''s existing OTLP receiver (E6 epic) with richer telemetry:
+
+      - Tool-level spans with inputs/outputs
+
+      - Agent execution traces with parent/child hierarchy
+
+      - Cost attribution per agent/story
+
+      - TDD cycle metrics (RED→GREEN time)
+
+
+      This enables observability for headless agent operations, CI/CD runs,
+
+      and production deployments of Pennyfarthing agents.
+
+
+      Key patterns to port:
+
+      1. Hook-based capture (non-blocking, async telemetry)
+
+      2. Span hierarchy (agent.run → tool.* → events)
+
+      3. Rich attributes (gen_ai.* semantic conventions)
+
+      4. Pass-through design (works with any Claude Code flags)
+
+'
+    points: 26
+    completed_points: 13
     priority: P2
-    status: done
-    completed: 2026-01-09
-    repos: pennyfarthing
-    notes: 'Created ci.yml (pnpm workspace build/test) and publish.yml (npm release).
-
-      Added publishConfig to shared and core packages.
-
-      Updated README with @pennyfarthing/core install instructions.
-
-      No old cyclist repo to archive - already consolidated in monorepo.
-
-      '
-    acceptance_criteria:
-    - CI builds all packages successfully
-    - npm publish works for @pennyfarthing/core
-    - npm publish works for @pennyfarthing/cyclist
-    - Old cyclist repo archived with pointer to monorepo
-    - README documents both install paths
-  - id: 18-6
-    title: Fix pre-existing test failures (tech debt)
-    description: 'Tech debt cleanup for pre-existing test failures discovered during
-
-      Story 18-2 workspace conversion review.
-
-
-      19 failing tests across 3 areas:
-
-      1. Story 15-1 Cyclist Launcher Command (1 test) - CLI registration issue
-
-      2. Debugging scenarios tests (3 tests) - Missing scenarios/debugging/ directory
-
-      3. 630 SVG faces tests (15 tests) - Hardcoded 63 theme count, now 91+ themes
-
-
-      These failures existed before the workspace conversion and are
-
-      unrelated to Epic 18 work.
-
-      '
-    points: 2
-    priority: P3
-    status: done
-    completed: 2026-01-09
-    repos: pennyfarthing
-    notes: 'Skipped 29 failing tests for unimplemented features:
-
-      - Story 14-4 (debugging scenarios) - scenarios/debugging/ never created
-
-      - Story 11-6 (SVG faces) - faces/ directory never created
-
-      Tests retained with skip annotations for future implementation.
-
-      All 655 tests now pass (0 failures).
-
-      '
-    acceptance_criteria:
-    - Story 15-1 cyclist command test passes
-    - Debugging scenario tests either pass or are skipped with explanation
-    - SVG face tests updated for dynamic theme count (91+)
-    - All 697 tests pass (0 failures)
-- id: epic-19
-  jira: MSSCI-11425
-  title: Rich Agent Telemetry (claude_telemetry port)
-  description: 'Port the key patterns from TechNickAI/claude_telemetry to TypeScript.
-
-    Extends Cyclist''s existing OTLP receiver (E6 epic) with richer telemetry:
-
-    - Tool-level spans with inputs/outputs
-
-    - Agent execution traces with parent/child hierarchy
-
-    - Cost attribution per agent/story
-
-    - TDD cycle metrics (RED→GREEN time)
-
-
-    This enables observability for headless agent operations, CI/CD runs,
-
-    and production deployments of Pennyfarthing agents.
-
-
-    Key patterns to port:
-
-    1. Hook-based capture (non-blocking, async telemetry)
-
-    2. Span hierarchy (agent.run → tool.* → events)
-
-    3. Rich attributes (gen_ai.* semantic conventions)
-
-    4. Pass-through design (works with any Claude Code flags)
-
-    '
-  points: 26
-  completed_points: 13
-  priority: P2
-  marker: observability
-  repos: pennyfarthing, cyclist
-  status: in_progress
-  started: 2026-01-08
-  stories:
-  - id: 19-1
-    jira: MSSCI-11426
-    title: Extend OTLP receiver for tool spans and events
-    description: 'Enhance Cyclist''s existing /v1/metrics and /v1/logs endpoints
-
-      to parse tool-level telemetry from Claude Code''s OTEL output.
-
-
-      Claude Code emits:
-
-      - claude_code.tool_result events (via OTEL logs)
-
-      - claude_code.user_prompt events
-
-      - claude_code.api_request events
-
-
-      Add parsing for these event types and store in memory.
-
-      '
-    points: 3
-    priority: P1
-    status: done
-    repos: cyclist
-    started: 2026-01-09
-    assigned_to: Keith Avery
-    acceptance_criteria:
-    - /v1/logs endpoint parses claude_code.tool_result events
-    - /v1/logs endpoint parses claude_code.user_prompt events
-    - Tool name, inputs, outputs extracted from events
-    - Execution timing captured per tool
-    - Events stored in session-scoped memory
-    completed: '2026-01-09'
-    pr: '#119'
-  - id: 19-2
-    jira: MSSCI-11427
-    title: Create telemetry-types.ts with OTEL semantic conventions
-    description: 'Define TypeScript interfaces for rich telemetry following
-
-      OpenTelemetry semantic conventions for GenAI.
-
-
-      Reference: gen_ai.* attributes from OTEL spec
-
-      Reference: claude_telemetry''s attribute mapping
-
-
-      Types to define:
-
-      - AgentSpan (parent span for agent execution)
-
-      - ToolSpan (child span for each tool call)
-
-      - PromptEvent, CompletionEvent
-
-      - TokenUsage, CostAttribution
-
-      '
-    points: 2
-    priority: P1
-    status: done
-    started: 2026-01-09
-    completed: 2026-01-09
-    assigned_to: Keith Avery
-    repos: cyclist
-    pr: https://github.com/1898andCo/pennyfarthing/pull/115
-    acceptance_criteria:
-    - telemetry-types.ts with full type definitions
-    - Follows OTEL gen_ai.* semantic conventions
-    - Includes cost calculation fields
-    - JSDoc documentation for all types
-  - id: 19-3
-    jira: MSSCI-11428
-    title: Implement span hierarchy builder
-    description: "Build parent/child span relationships from flat OTEL events.\n\nPattern from claude_telemetry:\n```\nclaude.agent.run\
-      \ (parent span)\n  ├─ user.prompt (event)\n  ├─ tool.Read (child span)\n  ├─ tool.Write (child span)\n  └─ agent.completed\
-      \ (event)\n```\n\nUse trace_id and span_id from OTEL to reconstruct hierarchy.\n"
-    points: 3
-    priority: P1
-    status: done
-    started: 2026-01-09
-    assigned_to: Keith Avery
-    repos: cyclist
-    acceptance_criteria:
-    - Spans grouped by trace_id
-    - Parent/child relationships established via parent_span_id
-    - Events attached to their parent spans
-    - Hierarchy available for UI display and export
-    completed: '2026-01-09'
-    pr: https://github.com/1898andCo/pennyfarthing/pull/126
-    archived: 2026-01-09
-  - id: 19-4
-    jira: MSSCI-11429
-    title: Add Pennyfarthing agent context to telemetry
-    description: 'Extend telemetry to track which Pennyfarthing agent (SM, TEA, Dev,
-
-      Reviewer) is currently active. This enables per-agent cost tracking
-
-      and performance comparison.
-
-
-      Implementation:
-
-      - Set PENNYFARTHING_AGENT env var at agent activation
-
-      - Cyclist captures this in session state
-
-      - All spans tagged with agent identifier
-
-
-      Enables: "TEA used 50K tokens, Dev used 120K tokens"
-
-      '
-    points: 3
-    priority: P1
-    status: done
-    started: 2026-01-09
-    completed: '2026-01-09'
-    pr: https://github.com/1898andCo/pennyfarthing/pull/127
-    archived: 2026-01-09
-    assigned_to: Keith Avery
+    marker: observability
     repos: pennyfarthing, cyclist
-    acceptance_criteria:
-    - Agent activation sets PENNYFARTHING_AGENT env var
-    - Cyclist reads agent from environment or session
-    - All telemetry spans include agent attribute
-    - Per-agent token aggregation in getTokenStats()
-  - id: 19-5
-    jira: MSSCI-11430
-    title: Add story context to telemetry
-    description: 'Tag telemetry with current story ID for cost attribution.
-
-      Enables: "Story 11-1 cost $2.34 across all agents"
-
-
-      Implementation:
-
-      - Read story ID from .session/{story-id}-session.md
-
-      - Pass PENNYFARTHING_STORY_ID to Claude Code spawn
-
-      - Include in all telemetry spans
-
-
-      Cross-story aggregation for sprint-level cost reports.
-
-      '
-    points: 2
-    priority: P2
-    status: done
-    started: 2026-01-09
-    completed: '2026-01-10'
-    pr: https://github.com/1898andCo/pennyfarthing/pull/128
-    archived: 2026-01-10
-    assigned_to: Keith Avery
-    repos: pennyfarthing, cyclist
-    acceptance_criteria:
-    - Story ID extracted from session file
-    - PENNYFARTHING_STORY_ID set in PTY environment
-    - Telemetry includes story_id attribute
-    - Aggregation available by story
-  - id: 19-6
-    jira: MSSCI-11431
-    title: Track TDD phase transitions
-    description: 'Measure time spent in each TDD phase:
-
-      - RED phase: TEA writing failing tests
-
-      - GREEN phase: Dev implementing to pass
-
-      - REFACTOR phase: Dev cleanup (optional)
-
-      - REVIEW phase: Reviewer evaluation
-
-
-      Parse session file for phase transitions:
-
-      - **Phase:** tea → dev → reviewer
-
-      - Calculate duration between transitions
-
-
-      Enables: "Average RED→GREEN time: 12 minutes"
-
-      '
-    points: 3
-    priority: P2
-    status: done
-    started: 2026-01-10
-    completed: 2026-01-10
-    assigned_to: Keith Avery
-    repos: cyclist
-    pr: '#129'
-    acceptance_criteria:
-    - Session file parsed for phase changes
-    - Phase transition timestamps recorded
-    - Duration calculated between phases
-    - TDD cycle metrics exposed via API
-  - id: 19-7
-    jira: MSSCI-11432
-    title: Create telemetry dashboard API
-    description: 'REST API endpoints for telemetry visualization:
-
-      - GET /api/telemetry/session - Current session stats
-
-      - GET /api/telemetry/tools - Tool usage breakdown
-
-      - GET /api/telemetry/agents - Per-agent stats
-
-      - GET /api/telemetry/stories - Per-story costs
-
-      - GET /api/telemetry/tdd - TDD cycle metrics
-
-
-      Returns JSON for consumption by UI or external tools.
-
-      '
-    points: 3
-    priority: P2
     status: in_progress
-    repos: cyclist
-    started: 2026-01-10
-    assigned_to: Keith Avery
-    acceptance_criteria:
-    - REST endpoints return structured JSON
-    - Session stats include tokens, costs, duration
-    - Tool breakdown shows frequency and timing
-    - Agent stats enable performance comparison
-    - Story costs enable budget tracking
-  - id: 19-8
-    jira: MSSCI-11433
-    title: Add OTEL export to external backends
-    description: 'Forward enriched telemetry to external OTEL backends.
+    started: 2026-01-08
+    stories:
+      - id: 19-1
+        jira: MSSCI-11426
+        title: Extend OTLP receiver for tool spans and events
+        description: 'Enhance Cyclist''s existing /v1/metrics and /v1/logs endpoints
 
-      Cyclist acts as a telemetry enrichment layer:
-
-      1. Receives raw Claude Code OTEL
-
-      2. Enriches with agent/story context
-
-      3. Exports to configured backend
+          to parse tool-level telemetry from Claude Code''s OTEL output.
 
 
-      Supported backends (via OTEL exporters):
+          Claude Code emits:
 
-      - Grafana Cloud
+          - claude_code.tool_result events (via OTEL logs)
 
-      - Honeycomb
+          - claude_code.user_prompt events
 
-      - Datadog
-
-      - Any OTLP endpoint
+          - claude_code.api_request events
 
 
-      Configuration via env vars (matching claude_telemetry pattern).
+          Add parsing for these event types and store in memory.
 
-      '
-    points: 2
-    priority: P3
-    status: backlog
-    repos: cyclist
-    acceptance_criteria:
-    - CYCLIST_OTEL_EXPORT_ENDPOINT configurable
-    - Enriched spans exported to external backend
-    - Works with Grafana Cloud (tested)
-    - Graceful fallback if export fails
-  - id: 19-9
-    jira: MSSCI-11434
-    title: Create agent evaluation tool with performance metrics
-    description: 'Build an agent evaluation framework that tracks and compares
+'
+        points: 3
+        priority: P1
+        status: done
+        repos: cyclist
+        started: 2026-01-09
+        assigned_to: Keith Avery
+        acceptance_criteria:
+          - /v1/logs endpoint parses claude_code.tool_result events
+          - /v1/logs endpoint parses claude_code.user_prompt events
+          - Tool name, inputs, outputs extracted from events
+          - Execution timing captured per tool
+          - Events stored in session-scoped memory
+        completed: '2026-01-09'
+        pr: '#119'
+      - id: 19-2
+        jira: MSSCI-11427
+        title: Create telemetry-types.ts with OTEL semantic conventions
+        description: 'Define TypeScript interfaces for rich telemetry following
 
-      agent performance across tasks. Leverages telemetry data to
-
-      compute quality metrics beyond just token counts.
-
-
-      Metrics to track per agent:
-
-      - Task completion rate (success/failure/partial)
-
-      - Average tokens per task type
-
-      - Average time to completion
-
-      - Tool usage efficiency (tools called vs minimum needed)
-
-      - Error/retry rate
-
-      - Code quality signals (tests passing, review approval rate)
+          OpenTelemetry semantic conventions for GenAI.
 
 
-      Evaluation dimensions:
+          Reference: gen_ai.* attributes from OTEL spec
 
-      - By agent role (SM, TEA, Dev, Reviewer)
-
-      - By persona/theme (Shakespeare vs Norse vs Discworld)
-
-      - By task type (story setup, test writing, implementation, review)
-
-      - By complexity (story points correlation)
+          Reference: claude_telemetry''s attribute mapping
 
 
-      Output:
+          Types to define:
 
-      - Agent performance dashboard data
+          - AgentSpan (parent span for agent execution)
 
-      - Persona recommendations ("Hamlet outperforms Tyr on TEA tasks")
+          - ToolSpan (child span for each tool call)
 
-      - Regression detection ("Dev performance dropped 15% this sprint")
+          - PromptEvent, CompletionEvent
+
+          - TokenUsage, CostAttribution
+
+'
+        points: 2
+        priority: P1
+        status: done
+        started: 2026-01-09
+        completed: 2026-01-09
+        assigned_to: Keith Avery
+        repos: cyclist
+        pr: https://github.com/1898andCo/pennyfarthing/pull/115
+        acceptance_criteria:
+          - telemetry-types.ts with full type definitions
+          - Follows OTEL gen_ai.* semantic conventions
+          - Includes cost calculation fields
+          - JSDoc documentation for all types
+      - id: 19-3
+        jira: MSSCI-11428
+        title: Implement span hierarchy builder
+        description: "Build parent/child span relationships from flat OTEL events.\n\nPattern from claude_telemetry:\n```\nclaude.agent.run (parent span)\n  ├─ user.prompt (event)\n  ├─ tool.Read (child span)\n  ├─ tool.Write (child span)\n  └─ agent.completed (event)\n```\n\nUse trace_id and span_id from OTEL to reconstruct hierarchy.\n"
+        points: 3
+        priority: P1
+        status: done
+        started: 2026-01-09
+        assigned_to: Keith Avery
+        repos: cyclist
+        acceptance_criteria:
+          - Spans grouped by trace_id
+          - Parent/child relationships established via parent_span_id
+          - Events attached to their parent spans
+          - Hierarchy available for UI display and export
+        completed: '2026-01-09'
+        pr: https://github.com/1898andCo/pennyfarthing/pull/126
+        archived: 2026-01-09
+      - id: 19-4
+        jira: MSSCI-11429
+        title: Add Pennyfarthing agent context to telemetry
+        description: 'Extend telemetry to track which Pennyfarthing agent (SM, TEA, Dev,
+
+          Reviewer) is currently active. This enables per-agent cost tracking
+
+          and performance comparison.
 
 
-      Integration with job-fair benchmarking for controlled comparisons.
+          Implementation:
 
-      '
-    points: 5
+          - Set PENNYFARTHING_AGENT env var at agent activation
+
+          - Cyclist captures this in session state
+
+          - All spans tagged with agent identifier
+
+
+          Enables: "TEA used 50K tokens, Dev used 120K tokens"
+
+'
+        points: 3
+        priority: P1
+        status: done
+        started: 2026-01-09
+        completed: '2026-01-09'
+        pr: https://github.com/1898andCo/pennyfarthing/pull/127
+        archived: 2026-01-09
+        assigned_to: Keith Avery
+        repos: pennyfarthing, cyclist
+        acceptance_criteria:
+          - Agent activation sets PENNYFARTHING_AGENT env var
+          - Cyclist reads agent from environment or session
+          - All telemetry spans include agent attribute
+          - Per-agent token aggregation in getTokenStats()
+      - id: 19-5
+        jira: MSSCI-11430
+        title: Add story context to telemetry
+        description: 'Tag telemetry with current story ID for cost attribution.
+
+          Enables: "Story 11-1 cost $2.34 across all agents"
+
+
+          Implementation:
+
+          - Read story ID from .session/{story-id}-session.md
+
+          - Pass PENNYFARTHING_STORY_ID to Claude Code spawn
+
+          - Include in all telemetry spans
+
+
+          Cross-story aggregation for sprint-level cost reports.
+
+'
+        points: 2
+        priority: P2
+        status: done
+        started: 2026-01-09
+        completed: '2026-01-10'
+        pr: https://github.com/1898andCo/pennyfarthing/pull/128
+        archived: 2026-01-10
+        assigned_to: Keith Avery
+        repos: pennyfarthing, cyclist
+        acceptance_criteria:
+          - Story ID extracted from session file
+          - PENNYFARTHING_STORY_ID set in PTY environment
+          - Telemetry includes story_id attribute
+          - Aggregation available by story
+      - id: 19-6
+        jira: MSSCI-11431
+        title: Track TDD phase transitions
+        description: 'Measure time spent in each TDD phase:
+
+          - RED phase: TEA writing failing tests
+
+          - GREEN phase: Dev implementing to pass
+
+          - REFACTOR phase: Dev cleanup (optional)
+
+          - REVIEW phase: Reviewer evaluation
+
+
+          Parse session file for phase transitions:
+
+          - **Phase:** tea → dev → reviewer
+
+          - Calculate duration between transitions
+
+
+          Enables: "Average RED→GREEN time: 12 minutes"
+
+'
+        points: 3
+        priority: P2
+        status: done
+        started: 2026-01-10
+        completed: 2026-01-10
+        assigned_to: Keith Avery
+        repos: cyclist
+        pr: '#129'
+        acceptance_criteria:
+          - Session file parsed for phase changes
+          - Phase transition timestamps recorded
+          - Duration calculated between phases
+          - TDD cycle metrics exposed via API
+      - id: 19-7
+        jira: MSSCI-11432
+        title: Create telemetry dashboard API
+        description: 'REST API endpoints for telemetry visualization:
+
+          - GET /api/telemetry/session - Current session stats
+
+          - GET /api/telemetry/tools - Tool usage breakdown
+
+          - GET /api/telemetry/agents - Per-agent stats
+
+          - GET /api/telemetry/stories - Per-story costs
+
+          - GET /api/telemetry/tdd - TDD cycle metrics
+
+
+          Returns JSON for consumption by UI or external tools.
+
+'
+        points: 3
+        priority: P2
+        status: done
+        completed: 2026-01-10
+        repos: cyclist
+        started: 2026-01-10
+        assigned_to: Keith Avery
+        acceptance_criteria:
+          - REST endpoints return structured JSON
+          - Session stats include tokens, costs, duration
+          - Tool breakdown shows frequency and timing
+          - Agent stats enable performance comparison
+          - Story costs enable budget tracking
+      - id: 19-8
+        jira: MSSCI-11433
+        title: Add OTEL export to external backends
+        description: 'Forward enriched telemetry to external OTEL backends.
+
+          Cyclist acts as a telemetry enrichment layer:
+
+          1. Receives raw Claude Code OTEL
+
+          2. Enriches with agent/story context
+
+          3. Exports to configured backend
+
+
+          Supported backends (via OTEL exporters):
+
+          - Grafana Cloud
+
+          - Honeycomb
+
+          - Datadog
+
+          - Any OTLP endpoint
+
+
+          Configuration via env vars (matching claude_telemetry pattern).
+
+'
+        points: 2
+        priority: P3
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - CYCLIST_OTEL_EXPORT_ENDPOINT configurable
+          - Enriched spans exported to external backend
+          - Works with Grafana Cloud (tested)
+          - Graceful fallback if export fails
+      - id: 19-9
+        jira: MSSCI-11434
+        title: Create agent evaluation tool with performance metrics
+        description: 'Build an agent evaluation framework that tracks and compares
+
+          agent performance across tasks. Leverages telemetry data to
+
+          compute quality metrics beyond just token counts.
+
+
+          Metrics to track per agent:
+
+          - Task completion rate (success/failure/partial)
+
+          - Average tokens per task type
+
+          - Average time to completion
+
+          - Tool usage efficiency (tools called vs minimum needed)
+
+          - Error/retry rate
+
+          - Code quality signals (tests passing, review approval rate)
+
+
+          Evaluation dimensions:
+
+          - By agent role (SM, TEA, Dev, Reviewer)
+
+          - By persona/theme (Shakespeare vs Norse vs Discworld)
+
+          - By task type (story setup, test writing, implementation, review)
+
+          - By complexity (story points correlation)
+
+
+          Output:
+
+          - Agent performance dashboard data
+
+          - Persona recommendations ("Hamlet outperforms Tyr on TEA tasks")
+
+          - Regression detection ("Dev performance dropped 15% this sprint")
+
+
+          Integration with job-fair benchmarking for controlled comparisons.
+
+'
+        points: 5
+        priority: P2
+        status: done
+        started: 2026-01-10
+        completed: 2026-01-10
+        pr: https://github.com/1898andCo/pennyfarthing/pull/130
+        assigned_to: Keith Avery
+        repos: pennyfarthing, cyclist
+        acceptance_criteria:
+          - AgentEvaluation type defined with all metric fields
+          - Evaluation data collected from telemetry spans
+          - Per-agent metrics aggregated and stored
+          - Per-persona comparison available
+          - Task completion tracking (success/failure/partial)
+          - Tool efficiency metric calculated
+          - API endpoint for evaluation data retrieval
+          - Integration with job-fair baseline data
+          - Historical trend storage for regression detection
+  - id: epic-17
+    title: Cyclist UX Improvements
+    description: 'Enhancements to Cyclist''s user interface and experience.
+
+      Includes panel layouts, persona display, and navigation improvements.
+
+'
+    points: 24
+    completed_points: 24
     priority: P2
-    status: done
-    started: 2026-01-10
-    completed: 2026-01-10
-    pr: https://github.com/1898andCo/pennyfarthing/pull/130
-    assigned_to: Keith Avery
-    repos: pennyfarthing, cyclist
-    acceptance_criteria:
-    - AgentEvaluation type defined with all metric fields
-    - Evaluation data collected from telemetry spans
-    - Per-agent metrics aggregated and stored
-    - Per-persona comparison available
-    - Task completion tracking (success/failure/partial)
-    - Tool efficiency metric calculated
-    - API endpoint for evaluation data retrieval
-    - Integration with job-fair baseline data
-    - Historical trend storage for regression detection
-- id: epic-17
-  title: Cyclist UX Improvements
-  description: 'Enhancements to Cyclist''s user interface and experience.
-
-    Includes panel layouts, persona display, and navigation improvements.
-
-    '
-  points: 24
-  completed_points: 24
-  priority: P2
-  marker: ux
-  repos: cyclist
-  status: done
-  completed: 2026-01-09
-  stories:
-  - id: 17-4
-    title: Popup profile view for persona details
+    marker: ux
+    repos: cyclist
     status: done
     completed: 2026-01-09
-    description: 'Add a popup/modal profile view that shows full details for a persona
+    stories:
+      - id: 17-4
+        title: Popup profile view for persona details
+        status: done
+        completed: 2026-01-09
+        description: 'Add a popup/modal profile view that shows full details for a persona
 
-      when clicked. Currently personas show minimal info - this enables
+          when clicked. Currently personas show minimal info - this enables
 
-      viewing the complete persona definition without leaving context.
+          viewing the complete persona definition without leaving context.
 
 
-      Features:
+          Features:
 
-      - Click persona name/avatar to open profile popup
+          - Click persona name/avatar to open profile popup
 
-      - Display full persona attributes (voice, style, quirks)
+          - Display full persona attributes (voice, style, quirks)
 
-      - Show role mappings and character background
+          - Show role mappings and character background
 
-      - Include theme context (which theme, character name)
+          - Include theme context (which theme, character name)
 
-      - Keyboard dismiss (Esc) and click-outside-to-close
+          - Keyboard dismiss (Esc) and click-outside-to-close
 
-      '
-    points: 3
+'
+        points: 3
+        priority: P2
+        repos: cyclist
+        acceptance_criteria:
+          - Clicking persona triggers popup/modal display
+          - Popup shows complete persona definition from theme file
+          - Persona attributes displayed (voice, style, quirks, background)
+          - Current role mapping visible (e.g., "SM → Yossarian")
+          - Theme name and character name shown
+          - Popup dismisses with Esc or click outside
+          - Responsive design works at various window sizes
+      - id: 17-5
+        title: 'BUG: Changed Files panel not showing files'
+        description: 'The Changed Files vertical panel is not displaying any files.
+
+          The diff view is also not showing changes.
+
+
+          This is a regression - the panel was recently added in Story 17-3
+
+          (feat(cyclist): add Changed Files panel with master-detail pattern).
+
+
+          Investigation needed:
+
+          - Check if git diff-index is returning data
+
+          - Verify panel is receiving file list from backend
+
+          - Check if UI rendering is the issue
+
+'
+        points: 2
+        priority: P1
+        status: done
+        repos: cyclist
+        started: 2026-01-09
+        completed: 2026-01-09
+        assigned_to: Keith Avery
+        acceptance_criteria:
+          - Changed Files panel displays list of modified files
+          - Selecting a file shows diff in detail view
+          - Panel updates when files change
+      - id: 17-6
+        title: 'BUG: Context meter not wired to Electron polling'
+        description: 'The context meter in the stats strip shows "—%" because the IPC infrastructure is incomplete.
+
+          EXISTING: - getContextUsage() in api/context.ts (calls check-context.sh) - /api/context server endpoint - Frontend polling code in stats-strip.js (lines 134-153)
+
+          MISSING: - context:get IPC handler in main.ts setupDataIPCHandlers() - context.get() method in preload.ts (only onUpdate exists) - Polling/broadcast in startProjectWatchers()
+
+          FIX: 1. Add context:get handler to main.ts (like toolStats:get) 2. Add context.get() to preload ElectronContextAPI 3. Add polling interval in startProjectWatchers (every 10-30s) 4. Broadcast context:update when values change
+
+          Reference: Token stats and tool stats patterns in main.ts work correctly. '
+        points: 2
+        priority: P1
+        status: done
+        repos: cyclist
+        started: 2026-01-09
+        completed: 2026-01-09
+        assigned_to: Keith Avery
+        acceptance_criteria:
+          - context:get IPC handler registered in main.ts
+          - context.get() method exposed in preload.ts
+          - Polling interval calls getContextUsage() periodically
+          - context:update broadcast when values change
+          - Stats strip displays actual context percentage
+          - Context meter updates in real-time during conversation
+      - id: 17-7
+        title: Session ID tracking for context and agent state
+        description: 'The context meter currently checks the most recent Claude transcript in the project directory, which may be the wrong session (e.g., a terminal session instead of Cyclist''s PTY session).
+
+          Need to track Cyclist''s Claude session ID and use it for: - Context usage checking (check correct transcript) - Agent state lookups (which agent is active in THIS session) - Story context (which story THIS session is working on)
+
+          Implementation: 1. ClaudeService already captures session_id from init messages 2. Pass session ID to getContextUsage() and check-context.sh 3. Add --session flag to check-context.sh to target specific transcript 4. Use session ID for agent state lookups
+
+          Files to modify: - packages/cyclist/src/main.ts (pass session to context polling) - packages/cyclist/src/api/context.ts (accept session param) - scripts/check-context.sh (add --session flag) '
+        points: 3
+        priority: P1
+        status: done
+        started: 2026-01-09
+        completed: 2026-01-09
+        assigned_to: Keith Avery
+        repos: cyclist, pennyfarthing
+        pr: https://github.com/1898andCo/pennyfarthing/pull/123
+        acceptance_criteria:
+          - ClaudeService session ID passed to context polling
+          - check-context.sh accepts --session <id> flag
+          - Context checks target Cyclist''s session transcript only
+          - Agent state lookups use session-specific files
+          - Multiple Cyclist instances don''t interfere with each other
+      - id: 17-8
+        title: Fix story panel not loading in Electron (IPC vs HTTP mismatch)
+        status: done
+        completed: 2026-01-09
+        description: 'The Story Panel shows "No active story" in Electron even when there IS an active session with story data. The same functionality works correctly in the web view.
+
+          Root cause: Web view uses HTTP API (`/api/story`) via Express router, while Electron uses IPC (`story:get` handler). Both call `getStoryInfo()` but the IPC path may have different project directory resolution or timing issues.
+
+          Investigation needed: 1. Compare project directory resolution between HTTP and IPC paths 2. Check if IPC handler is being called (add logging) 3. Verify `detectPennyfarthingProject()` returns true for IPC path 4. Check timing of initial story fetch vs window ready
+
+          Files to investigate: - packages/cyclist/src/main.ts (IPC handler at line ~649) - packages/cyclist/src/api/story.ts (HTTP router) - packages/cyclist/src/public/js/story.js (client-side refresh) - packages/cyclist/src/story-parser.ts (shared parsing logic) '
+        points: 3
+        priority: P1
+        repos: cyclist
+        acceptance_criteria:
+          - Story panel shows active story in Electron app
+          - Story title, phase, and sprint progress display correctly
+          - Acceptance criteria checklist renders with correct items
+          - Workflow progress visualization updates properly
+          - Parity between Electron IPC and web HTTP behavior
+  - id: epic-21
+    jira: MSSCI-11495
+    title: Command & Skill Expansion
+    description: 'Add high-value commands and skills identified from Anthropic''s official
+
+      skills repository and community Claude Code commands. Focus on workflow
+
+      enhancement without adding unnecessary complexity.
+
+
+      Key additions:
+
+      - /check: Pre-commit quality gate (automatic in dev-handoff)
+
+      - /prime: Context loading at agent activation
+
+      - /run-ci: Thin wrapper for local CI execution
+
+      - mermaid skill: Diagram generation reference docs
+
+      - changelog skill: Release workflow enhancement
+
+'
+    points: 12
+    completed_points: 5
     priority: P2
-    repos: cyclist
-    acceptance_criteria:
-    - Clicking persona triggers popup/modal display
-    - Popup shows complete persona definition from theme file
-    - Persona attributes displayed (voice, style, quirks, background)
-    - Current role mapping visible (e.g., "SM → Yossarian")
-    - Theme name and character name shown
-    - Popup dismisses with Esc or click outside
-    - Responsive design works at various window sizes
-  - id: 17-5
-    title: 'BUG: Changed Files panel not showing files'
-    description: 'The Changed Files vertical panel is not displaying any files.
-
-      The diff view is also not showing changes.
-
-
-      This is a regression - the panel was recently added in Story 17-3
-
-      (feat(cyclist): add Changed Files panel with master-detail pattern).
-
-
-      Investigation needed:
-
-      - Check if git diff-index is returning data
-
-      - Verify panel is receiving file list from backend
-
-      - Check if UI rendering is the issue
-
-      '
-    points: 2
-    priority: P1
-    status: done
-    repos: cyclist
-    started: 2026-01-09
-    completed: 2026-01-09
-    assigned_to: Keith Avery
-    acceptance_criteria:
-    - Changed Files panel displays list of modified files
-    - Selecting a file shows diff in detail view
-    - Panel updates when files change
-  - id: 17-6
-    title: 'BUG: Context meter not wired to Electron polling'
-    description: 'The context meter in the stats strip shows "—%" because the IPC infrastructure is incomplete.
-
-      EXISTING: - getContextUsage() in api/context.ts (calls check-context.sh) - /api/context server endpoint - Frontend polling
-      code in stats-strip.js (lines 134-153)
-
-      MISSING: - context:get IPC handler in main.ts setupDataIPCHandlers() - context.get() method in preload.ts (only onUpdate
-      exists) - Polling/broadcast in startProjectWatchers()
-
-      FIX: 1. Add context:get handler to main.ts (like toolStats:get) 2. Add context.get() to preload ElectronContextAPI 3.
-      Add polling interval in startProjectWatchers (every 10-30s) 4. Broadcast context:update when values change
-
-      Reference: Token stats and tool stats patterns in main.ts work correctly. '
-    points: 2
-    priority: P1
-    status: done
-    repos: cyclist
-    started: 2026-01-09
-    completed: 2026-01-09
-    assigned_to: Keith Avery
-    acceptance_criteria:
-    - context:get IPC handler registered in main.ts
-    - context.get() method exposed in preload.ts
-    - Polling interval calls getContextUsage() periodically
-    - context:update broadcast when values change
-    - Stats strip displays actual context percentage
-    - Context meter updates in real-time during conversation
-  - id: 17-7
-    title: Session ID tracking for context and agent state
-    description: 'The context meter currently checks the most recent Claude transcript in the project directory, which may
-      be the wrong session (e.g., a terminal session instead of Cyclist''s PTY session).
-
-      Need to track Cyclist''s Claude session ID and use it for: - Context usage checking (check correct transcript) - Agent
-      state lookups (which agent is active in THIS session) - Story context (which story THIS session is working on)
-
-      Implementation: 1. ClaudeService already captures session_id from init messages 2. Pass session ID to getContextUsage()
-      and check-context.sh 3. Add --session flag to check-context.sh to target specific transcript 4. Use session ID for agent
-      state lookups
-
-      Files to modify: - packages/cyclist/src/main.ts (pass session to context polling) - packages/cyclist/src/api/context.ts
-      (accept session param) - scripts/check-context.sh (add --session flag) '
-    points: 3
-    priority: P1
-    status: done
-    started: 2026-01-09
-    completed: 2026-01-09
-    assigned_to: Keith Avery
-    repos: cyclist, pennyfarthing
-    pr: https://github.com/1898andCo/pennyfarthing/pull/123
-    acceptance_criteria:
-    - ClaudeService session ID passed to context polling
-    - check-context.sh accepts --session <id> flag
-    - Context checks target Cyclist''s session transcript only
-    - Agent state lookups use session-specific files
-    - Multiple Cyclist instances don''t interfere with each other
-  - id: 17-8
-    title: Fix story panel not loading in Electron (IPC vs HTTP mismatch)
-    status: done
-    completed: 2026-01-09
-    description: 'The Story Panel shows "No active story" in Electron even when there IS an active session with story data.
-      The same functionality works correctly in the web view.
-
-      Root cause: Web view uses HTTP API (`/api/story`) via Express router, while Electron uses IPC (`story:get` handler).
-      Both call `getStoryInfo()` but the IPC path may have different project directory resolution or timing issues.
-
-      Investigation needed: 1. Compare project directory resolution between HTTP and IPC paths 2. Check if IPC handler is
-      being called (add logging) 3. Verify `detectPennyfarthingProject()` returns true for IPC path 4. Check timing of initial
-      story fetch vs window ready
-
-      Files to investigate: - packages/cyclist/src/main.ts (IPC handler at line ~649) - packages/cyclist/src/api/story.ts
-      (HTTP router) - packages/cyclist/src/public/js/story.js (client-side refresh) - packages/cyclist/src/story-parser.ts
-      (shared parsing logic) '
-    points: 3
-    priority: P1
-    repos: cyclist
-    acceptance_criteria:
-    - Story panel shows active story in Electron app
-    - Story title, phase, and sprint progress display correctly
-    - Acceptance criteria checklist renders with correct items
-    - Workflow progress visualization updates properly
-    - Parity between Electron IPC and web HTTP behavior
-- id: epic-21
-  jira: MSSCI-11495
-  title: Command & Skill Expansion
-  description: 'Add high-value commands and skills identified from Anthropic''s official
-
-    skills repository and community Claude Code commands. Focus on workflow
-
-    enhancement without adding unnecessary complexity.
-
-
-    Key additions:
-
-    - /check: Pre-commit quality gate (automatic in dev-handoff)
-
-    - /prime: Context loading at agent activation
-
-    - /run-ci: Thin wrapper for local CI execution
-
-    - mermaid skill: Diagram generation reference docs
-
-    - changelog skill: Release workflow enhancement
-
-    '
-  points: 12
-  completed_points: 5
-  priority: P2
-  marker: tooling
-  repos: pennyfarthing
-  status: in_progress
-  stories:
-  - id: 21-1
-    jira: MSSCI-11496
-    title: /check command with dev-handoff integration
-    description: 'Create a /check command that runs code quality gates:
-
-      - Linting (eslint, etc.)
-
-      - Type checking (tsc --noEmit)
-
-      - Tests (npm test)
-
-      - Optional: security scan
-
-
-      Integrate with dev-handoff subagent to run automatically before
-
-      handoff to Reviewer. Include --skip-check escape hatch.
-
-
-      Files to create/modify:
-
-      - pennyfarthing-dist/commands/check.md
-
-      - .claude/agents/subagents/dev-handoff.md
-
-      '
-    points: 3
-    priority: P1
-    status: done
-    started: 2026-01-10
-    completed: 2026-01-10
-    assigned_to: Keith Avery
+    marker: tooling
     repos: pennyfarthing
-    acceptance_criteria:
-    - /check command runs lint, type check, and tests
-    - Command reports pass/fail with clear output
-    - dev-handoff subagent runs /check automatically
-    - Failures block handoff to Reviewer
-    - --skip-check flag bypasses checks when needed
-    - Works with justfile recipes if available
-  - id: 21-2
-    title: /prime command with agent-session hooks
-    description: 'Create a /prime command that loads project context quickly:
-
-      - Read CLAUDE.md files
-
-      - Load sprint/current-sprint.yaml summary
-
-      - Load active session from .session/
-
-      - Load relevant domain docs lazily
-
-
-      Hook into agent-session.sh to auto-invoke on agent activation.
-
-
-      Files to create/modify:
-
-      - pennyfarthing-dist/commands/prime.md
-
-      - .claude/scripts/agent-session.sh
-
-      '
-    points: 2
-    priority: P1
-    status: done
-    repos: pennyfarthing
-    started: 2026-01-10
-    completed: 2026-01-10
-    assigned_to: Keith Avery
-    acceptance_criteria:
-    - /prime command loads essential context files
-    - Context loaded in priority order (CLAUDE.md first)
-    - agent-session.sh calls /prime on start
-    - Reduces agent cold-start overhead
-    - Does not load unnecessary files
-  - id: 21-3
-    title: mermaid skill documentation
-    description: 'Create a mermaid skill with reference documentation for diagram
-
-      generation. This is a SKILL (reference docs), not a command.
-
-
-      Contents:
-
-      - Prerequisites (Mermaid CLI or GitHub rendering)
-
-      - Architecture diagram patterns
-
-      - Sequence diagram patterns
-
-      - ER diagram patterns from schema
-
-      - Flowchart patterns
-
-      - Examples for each
-
-
-      Files to create:
-
-      - pennyfarthing-dist/skills/mermaid.md
-
-      '
-    points: 2
-    priority: P2
     status: in_progress
-    repos: pennyfarthing
-    started: 2026-01-10
-    assigned_to: Keith Avery
-    acceptance_criteria:
-    - Skill file created with comprehensive examples
-    - Prerequisites documented (CLI install or GitHub)
-    - Architecture diagram template provided
-    - Sequence diagram template provided
-    - ER diagram template with schema example
-    - Agents can reference skill for diagram generation
-  - id: 21-4
-    title: /run-ci thin wrapper command
-    description: 'Create a /run-ci command that detects and runs the project''s CI
+    stories:
+      - id: 21-1
+        jira: MSSCI-11496
+        title: /check command with dev-handoff integration
+        description: 'Create a /check command that runs code quality gates:
 
-      locally. Thin wrapper that delegates to project config.
+          - Linting (eslint, etc.)
+
+          - Type checking (tsc --noEmit)
+
+          - Tests (npm test)
+
+          - Optional: security scan
 
 
-      Detection order:
+          Integrate with dev-handoff subagent to run automatically before
 
-      1. justfile with ''ci'' recipe -> just ci
-
-      2. .github/workflows/*.yml -> act (if installed)
-
-      3. .gitlab-ci.yml -> gitlab-runner exec
-
-      4. Fallback: npm test && npm run lint && npm run build
+          handoff to Reviewer. Include --skip-check escape hatch.
 
 
-      Files to create:
+          Files to create/modify:
 
-      - pennyfarthing-dist/commands/run-ci.md
+          - pennyfarthing-dist/commands/check.md
 
-      '
-    points: 2
-    priority: P2
-    status: backlog
-    repos: pennyfarthing
-    acceptance_criteria:
-    - Command detects CI system from project files
-    - Delegates to project's CI definition
-    - Works with justfile 'ci' recipe
-    - Works with GitHub Actions via 'act' (optional)
-    - Provides clear output of what's running
-    - Fallback to npm scripts if no CI config found
-  - id: 21-5
-    title: changelog skill for release workflow
-    description: 'Create a changelog skill with patterns for maintaining changelogs.
+          - .claude/agents/subagents/dev-handoff.md
 
-      Enhance the existing /release command to use this skill.
+'
+        points: 3
+        priority: P1
+        status: done
+        started: 2026-01-10
+        completed: 2026-01-10
+        assigned_to: Keith Avery
+        repos: pennyfarthing
+        acceptance_criteria:
+          - /check command runs lint, type check, and tests
+          - Command reports pass/fail with clear output
+          - dev-handoff subagent runs /check automatically
+          - Failures block handoff to Reviewer
+          - --skip-check flag bypasses checks when needed
+          - Works with justfile recipes if available
+      - id: 21-2
+        title: /prime command with agent-session hooks
+        description: 'Create a /prime command that loads project context quickly:
 
+          - Read CLAUDE.md files
 
-      Contents:
+          - Load sprint/current-sprint.yaml summary
 
-      - Keep a Changelog format reference
+          - Load active session from .session/
 
-      - Auto-generation from git commits
-
-      - Conventional commits parsing
-
-      - Version bump patterns
-
-      - Examples for different release types
+          - Load relevant domain docs lazily
 
 
-      Files to create/modify:
-
-      - pennyfarthing-dist/skills/changelog.md
-
-      - pennyfarthing-dist/commands/release.md (reference skill)
-
-      '
-    points: 1
-    priority: P3
-    status: done
-    started: 2026-01-10
-    completed: 2026-01-10
-    assigned_to: Keith Avery
-    repos: pennyfarthing
-    acceptance_criteria:
-    - Skill file created with Keep a Changelog format
-    - Auto-generation pattern documented
-    - Conventional commits parsing examples
-    - /release command references changelog skill
-    - Works with semantic versioning
-  - id: 21-6
-    title: /help command for Pennyfarthing
-    description: 'Create a /help command that provides contextual help for Pennyfarthing:
-
-      - List all available commands with brief descriptions
-
-      - List all available agents and their purposes
-
-      - Show current theme and persona mappings
-
-      - Provide quick-start guidance for new users
-
-      - Link to detailed documentation
+          Hook into agent-session.sh to auto-invoke on agent activation.
 
 
-      Should be intelligent about context:
+          Files to create/modify:
 
-      - If in a session, show relevant workflow commands
+          - pennyfarthing-dist/commands/prime.md
 
-      - If no session, show how to start work
+          - .claude/scripts/agent-session.sh
 
-      - Show theme-specific character names
+'
+        points: 2
+        priority: P1
+        status: done
+        repos: pennyfarthing
+        started: 2026-01-10
+        completed: 2026-01-10
+        assigned_to: Keith Avery
+        acceptance_criteria:
+          - /prime command loads essential context files
+          - Context loaded in priority order (CLAUDE.md first)
+          - agent-session.sh calls /prime on start
+          - Reduces agent cold-start overhead
+          - Does not load unnecessary files
+      - id: 21-3
+        title: mermaid skill documentation
+        description: 'Create a mermaid skill with reference documentation for diagram
+
+          generation. This is a SKILL (reference docs), not a command.
 
 
-      Files to create:
+          Contents:
 
-      - pennyfarthing-dist/commands/help.md
+          - Prerequisites (Mermaid CLI or GitHub rendering)
 
-      '
-    points: 2
+          - Architecture diagram patterns
+
+          - Sequence diagram patterns
+
+          - ER diagram patterns from schema
+
+          - Flowchart patterns
+
+          - Examples for each
+
+
+          Files to create:
+
+          - pennyfarthing-dist/skills/mermaid.md
+
+'
+        points: 2
+        priority: P2
+        status: in_progress
+        repos: pennyfarthing
+        started: 2026-01-10
+        assigned_to: Keith Avery
+        acceptance_criteria:
+          - Skill file created with comprehensive examples
+          - Prerequisites documented (CLI install or GitHub)
+          - Architecture diagram template provided
+          - Sequence diagram template provided
+          - ER diagram template with schema example
+          - Agents can reference skill for diagram generation
+      - id: 21-4
+        title: /run-ci thin wrapper command
+        description: 'Create a /run-ci command that detects and runs the project''s CI
+
+          locally. Thin wrapper that delegates to project config.
+
+
+          Detection order:
+
+          1. justfile with ''ci'' recipe -> just ci
+
+          2. .github/workflows/*.yml -> act (if installed)
+
+          3. .gitlab-ci.yml -> gitlab-runner exec
+
+          4. Fallback: npm test && npm run lint && npm run build
+
+
+          Files to create:
+
+          - pennyfarthing-dist/commands/run-ci.md
+
+'
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Command detects CI system from project files
+          - Delegates to project's CI definition
+          - Works with justfile 'ci' recipe
+          - Works with GitHub Actions via 'act' (optional)
+          - Provides clear output of what's running
+          - Fallback to npm scripts if no CI config found
+      - id: 21-5
+        title: changelog skill for release workflow
+        description: 'Create a changelog skill with patterns for maintaining changelogs.
+
+          Enhance the existing /release command to use this skill.
+
+
+          Contents:
+
+          - Keep a Changelog format reference
+
+          - Auto-generation from git commits
+
+          - Conventional commits parsing
+
+          - Version bump patterns
+
+          - Examples for different release types
+
+
+          Files to create/modify:
+
+          - pennyfarthing-dist/skills/changelog.md
+
+          - pennyfarthing-dist/commands/release.md (reference skill)
+
+'
+        points: 1
+        priority: P3
+        status: done
+        started: 2026-01-10
+        completed: 2026-01-10
+        assigned_to: Keith Avery
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Skill file created with Keep a Changelog format
+          - Auto-generation pattern documented
+          - Conventional commits parsing examples
+          - /release command references changelog skill
+          - Works with semantic versioning
+      - id: 21-6
+        title: /help command for Pennyfarthing
+        description: 'Create a /help command that provides contextual help for Pennyfarthing:
+
+          - List all available commands with brief descriptions
+
+          - List all available agents and their purposes
+
+          - Show current theme and persona mappings
+
+          - Provide quick-start guidance for new users
+
+          - Link to detailed documentation
+
+
+          Should be intelligent about context:
+
+          - If in a session, show relevant workflow commands
+
+          - If no session, show how to start work
+
+          - Show theme-specific character names
+
+
+          Files to create:
+
+          - pennyfarthing-dist/commands/help.md
+
+'
+        points: 2
+        priority: P1
+        status: done
+        started: 2026-01-10
+        completed: 2026-01-10
+        assigned_to: Keith Avery
+        repos: pennyfarthing
+        acceptance_criteria:
+          - /help lists all Pennyfarthing commands with descriptions
+          - /help lists all agents and their roles
+          - Shows current theme and character mappings
+          - Context-aware (shows relevant commands for current state)
+          - Provides quick-start for new users
+          - Links to full documentation
+  - id: epic-22
+    title: Verbose Mode - Tool Visibility & Intervention
+    description: |
+      Give users real-time visibility into what Claude is doing and the ability
+      to intervene before or during dangerous operations. Currently tool execution
+      is hidden in collapsed blocks - users can't see what's about to run or
+      abort operations quickly.
+
+      Key capabilities:
+      - Tool Activity Bar: Prominent display of currently running operation
+      - Abort functionality: Stop long-running or dangerous operations
+      - Bash approval gate: Optional pre-execution confirmation for shell commands
+      - Verbose mode toggle: Expand tool blocks by default for full transparency
+
+      This addresses the gap between Claude's autonomy and user oversight,
+      especially important for shell commands and file modifications.
+    points: 13
+    completed_points: 3
     priority: P1
-    status: done
-    started: 2026-01-10
-    completed: 2026-01-10
-    assigned_to: Keith Avery
-    repos: pennyfarthing
-    acceptance_criteria:
-    - /help lists all Pennyfarthing commands with descriptions
-    - /help lists all agents and their roles
-    - Shows current theme and character mappings
-    - Context-aware (shows relevant commands for current state)
-    - Provides quick-start for new users
-    - Links to full documentation
-- id: epic-22
-  title: Verbose Mode - Tool Visibility & Intervention
-  description: |
-    Give users real-time visibility into what Claude is doing and the ability
-    to intervene before or during dangerous operations. Currently tool execution
-    is hidden in collapsed blocks - users can't see what's about to run or
-    abort operations quickly.
-
-    Key capabilities:
-    - Tool Activity Bar: Prominent display of currently running operation
-    - Abort functionality: Stop long-running or dangerous operations
-    - Bash approval gate: Optional pre-execution confirmation for shell commands
-    - Verbose mode toggle: Expand tool blocks by default for full transparency
-
-    This addresses the gap between Claude's autonomy and user oversight,
-    especially important for shell commands and file modifications.
-  points: 13
-  completed_points: 3
-  priority: P1
-  marker: safety
-  repos: cyclist
-  status: in_progress
-  stories:
-  - id: 22-1
-    title: Tool Activity Bar component
-    description: |
-      Create a sticky activity bar that shows the currently executing tool
-      with full details. Replaces/augments the small activity line in persona section.
-
-      Design:
-      - Sticky bar at bottom of message view (above input)
-      - Shows: Tool icon, tool name, key parameter (file path, command, etc.)
-      - Progress indicator for long-running operations
-      - Elapsed time counter
-      - Prominent when active, hidden when idle
-
-      Implementation:
-      - New component: ToolActivityBar.js
-      - Subscribe to tool_use messages from claude-service
-      - Track tool start/end via tool_use/tool_result pairing
-      - CSS animations for appear/disappear transitions
-    points: 3
-    priority: P1
-    status: done
-    completed: 2026-01-10
+    marker: safety
     repos: cyclist
-    started: 2026-01-10
-    assigned_to: Keith Avery
-    acceptance_criteria:
-    - Activity bar appears when tool execution starts
-    - Shows tool name and primary parameter (file, command, pattern)
-    - Elapsed time updates in real-time
-    - Bar disappears gracefully when tool completes
-    - Works in both Electron and web modes
-  - id: 22-2
-    title: Abort button for running operations
-    description: |
-      Add abort functionality to stop Claude mid-operation. Critical for
-      long-running Bash commands or runaway operations.
+    status: in_progress
+    stories:
+      - id: 22-1
+        title: Tool Activity Bar component
+        description: |
+          Create a sticky activity bar that shows the currently executing tool
+          with full details. Replaces/augments the small activity line in persona section.
 
-      Implementation:
-      - Add ABORT button to Tool Activity Bar
-      - Wire to claude:abort IPC channel (already exists)
-      - Send SIGINT to PTY process
-      - Show "Aborting..." state during cleanup
-      - Clear activity bar on abort completion
+          Design:
+          - Sticky bar at bottom of message view (above input)
+          - Shows: Tool icon, tool name, key parameter (file path, command, etc.)
+          - Progress indicator for long-running operations
+          - Elapsed time counter
+          - Prominent when active, hidden when idle
 
-      Edge cases:
-      - Multiple rapid aborts
-      - Abort during subagent execution
-      - Cleanup of partial file writes
-    points: 2
-    priority: P1
-    status: done
-    repos: cyclist
-    started: 2026-01-10
-    completed: 2026-01-10
-    assigned_to: Keith Avery
-    acceptance_criteria:
-    - Abort button visible during tool execution
-    - Clicking abort stops the current operation
-    - PTY process receives SIGINT
-    - Activity bar shows abort state
-    - Claude receives abort notification gracefully
-  - id: 22-3
-    title: Bash command approval gate
-    description: |
-      Optional pre-execution approval for shell commands. Pause before
-      running Bash to let user review and approve/reject.
+          Implementation:
+          - New component: ToolActivityBar.js
+          - Subscribe to tool_use messages from claude-service
+          - Track tool start/end via tool_use/tool_result pairing
+          - CSS animations for appear/disappear transitions
+        points: 3
+        priority: P1
+        status: done
+        completed: 2026-01-10
+        repos: cyclist
+        started: 2026-01-10
+        assigned_to: Keith Avery
+        acceptance_criteria:
+          - Activity bar appears when tool execution starts
+          - Shows tool name and primary parameter (file, command, pattern)
+          - Elapsed time updates in real-time
+          - Bar disappears gracefully when tool completes
+          - Works in both Electron and web modes
+      - id: 22-2
+        title: Abort button for running operations
+        description: |
+          Add abort functionality to stop Claude mid-operation. Critical for
+          long-running Bash commands or runaway operations.
 
-      Design:
-      - Setting: "Require approval for shell commands" (default: off)
-      - When enabled, Bash tool_use triggers approval modal
-      - Modal shows full command with syntax highlighting
-      - Approve/Reject/Always Allow buttons
-      - "Always Allow" adds pattern to allowlist
+          Implementation:
+          - Add ABORT button to Tool Activity Bar
+          - Wire to claude:abort IPC channel (already exists)
+          - Send SIGINT to PTY process
+          - Show "Aborting..." state during cleanup
+          - Clear activity bar on abort completion
 
-      Implementation:
-      - Intercept tool_use messages where tool_name === 'Bash'
-      - Show approval modal before forwarding to Claude
-      - If rejected, inject tool_result with error
-      - Allowlist stored in cyclist settings
-    points: 3
-    priority: P1
-    status: done
-    started: 2026-01-10
-    completed: 2026-01-10
-    assigned_to: Keith Avery
-    repos: cyclist
-    acceptance_criteria:
-    - Setting toggle in Cyclist preferences
-    - Approval modal appears before Bash execution
-    - Full command visible with syntax highlighting
-    - Approve continues execution normally
-    - Reject sends error back to Claude
-    - Always Allow adds to session allowlist
-  - id: 22-4
-    title: Dangerous path detection
-    description: |
-      Detect and warn when Claude attempts to modify sensitive paths,
-      regardless of tool type (Write, Edit, Bash with redirect).
+          Edge cases:
+          - Multiple rapid aborts
+          - Abort during subagent execution
+          - Cleanup of partial file writes
+        points: 2
+        priority: P1
+        status: done
+        repos: cyclist
+        started: 2026-01-10
+        completed: 2026-01-10
+        assigned_to: Keith Avery
+        acceptance_criteria:
+          - Abort button visible during tool execution
+          - Clicking abort stops the current operation
+          - PTY process receives SIGINT
+          - Activity bar shows abort state
+          - Claude receives abort notification gracefully
+      - id: 22-3
+        title: Bash command approval gate
+        description: |
+          Optional pre-execution approval for shell commands. Pause before
+          running Bash to let user review and approve/reject.
 
-      Sensitive paths:
-      - .env, .env.* (secrets)
-      - .git/ (repository internals)
-      - node_modules/ (dependencies)
-      - package-lock.json, pnpm-lock.yaml (lockfiles)
-      - ~/.ssh/, ~/.aws/ (credentials)
-      - System paths (/etc, /usr, etc.)
+          Design:
+          - Setting: "Require approval for shell commands" (default: off)
+          - When enabled, Bash tool_use triggers approval modal
+          - Modal shows full command with syntax highlighting
+          - Approve/Reject/Always Allow buttons
+          - "Always Allow" adds pattern to allowlist
 
-      Implementation:
-      - Path pattern matcher utility
-      - Check tool inputs before execution
-      - Trigger approval modal for sensitive paths
-      - Allowlist for intentional overrides
-    points: 2
-    priority: P2
-    status: backlog
-    repos: cyclist
-    acceptance_criteria:
-    - Sensitive path patterns defined and configurable
-    - Write/Edit to sensitive paths triggers warning
-    - Bash commands with redirects to sensitive paths detected
-    - User can approve or reject
-    - Allowlist persists for session
-  - id: 22-5
-    title: Verbose mode setting with expanded tool blocks
-    description: |
-      Add a "Verbose Mode" toggle that changes how tool execution is displayed
-      in the message view.
+          Implementation:
+          - Intercept tool_use messages where tool_name === 'Bash'
+          - Show approval modal before forwarding to Claude
+          - If rejected, inject tool_result with error
+          - Allowlist stored in cyclist settings
+        points: 3
+        priority: P1
+        status: done
+        started: 2026-01-10
+        completed: 2026-01-10
+        assigned_to: Keith Avery
+        repos: cyclist
+        acceptance_criteria:
+          - Setting toggle in Cyclist preferences
+          - Approval modal appears before Bash execution
+          - Full command visible with syntax highlighting
+          - Approve continues execution normally
+          - Reject sends error back to Claude
+          - Always Allow adds to session allowlist
+      - id: 22-4
+        title: Dangerous path detection
+        description: |
+          Detect and warn when Claude attempts to modify sensitive paths,
+          regardless of tool type (Write, Edit, Bash with redirect).
 
-      When enabled:
-      - Tool use blocks expanded by default (not collapsed)
-      - Tool inputs shown inline without requiring click
-      - Tool results shown inline (with scroll for long output)
-      - Syntax highlighting for code/commands
+          Sensitive paths:
+          - .env, .env.* (secrets)
+          - .git/ (repository internals)
+          - node_modules/ (dependencies)
+          - package-lock.json, pnpm-lock.yaml (lockfiles)
+          - ~/.ssh/, ~/.aws/ (credentials)
+          - System paths (/etc, /usr, etc.)
 
-      Setting location:
-      - Cyclist menu: View > Verbose Mode
-      - Persisted in cyclist settings
-      - Keyboard shortcut: Cmd+Shift+V
-    points: 2
-    priority: P2
-    status: done
-    started: 2026-01-10
-    completed: 2026-01-10
-    assigned_to: Keith Avery
-    repos: cyclist
-    acceptance_criteria:
-    - Verbose mode toggle in View menu
-    - When enabled, tool blocks render expanded
-    - Tool inputs visible without clicking
-    - Setting persists across sessions
-    - Keyboard shortcut works
-  - id: 22-6
-    title: Tool execution audit log
-    description: |
-      Maintain a session-scoped audit log of all tool executions for
-      review and debugging. Complements the real-time activity bar.
+          Implementation:
+          - Path pattern matcher utility
+          - Check tool inputs before execution
+          - Trigger approval modal for sensitive paths
+          - Allowlist for intentional overrides
+        points: 2
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Sensitive path patterns defined and configurable
+          - Write/Edit to sensitive paths triggers warning
+          - Bash commands with redirects to sensitive paths detected
+          - User can approve or reject
+          - Allowlist persists for session
+      - id: 22-5
+        title: Verbose mode setting with expanded tool blocks
+        description: |
+          Add a "Verbose Mode" toggle that changes how tool execution is displayed
+          in the message view.
 
-      Features:
-      - Log all tool_use and tool_result events
-      - Include timestamps, duration, success/failure
-      - Filterable by tool type
-      - Exportable as JSON/CSV
-      - Accessible via menu: Tools > Execution Log
+          When enabled:
+          - Tool use blocks expanded by default (not collapsed)
+          - Tool inputs shown inline without requiring click
+          - Tool results shown inline (with scroll for long output)
+          - Syntax highlighting for code/commands
 
-      Implementation:
-      - Extend existing tool-stats.ts
-      - Add structured event logging
-      - Create simple log viewer panel
-    points: 1
-    priority: P3
-    status: backlog
-    repos: cyclist
-    acceptance_criteria:
-    - All tool executions logged with metadata
-    - Log viewer accessible from menu
-    - Filter by tool type
-    - Export to JSON
-    - Log clears on session reset
+          Setting location:
+          - Cyclist menu: View > Verbose Mode
+          - Persisted in cyclist settings
+          - Keyboard shortcut: Cmd+Shift+V
+        points: 2
+        priority: P2
+        status: done
+        started: 2026-01-10
+        completed: 2026-01-10
+        assigned_to: Keith Avery
+        repos: cyclist
+        acceptance_criteria:
+          - Verbose mode toggle in View menu
+          - When enabled, tool blocks render expanded
+          - Tool inputs visible without clicking
+          - Setting persists across sessions
+          - Keyboard shortcut works
+      - id: 22-6
+        title: Tool execution audit log
+        description: |
+          Maintain a session-scoped audit log of all tool executions for
+          review and debugging. Complements the real-time activity bar.
+
+          Features:
+          - Log all tool_use and tool_result events
+          - Include timestamps, duration, success/failure
+          - Filterable by tool type
+          - Exportable as JSON/CSV
+          - Accessible via menu: Tools > Execution Log
+
+          Implementation:
+          - Extend existing tool-stats.ts
+          - Add structured event logging
+          - Create simple log viewer panel
+        points: 1
+        priority: P3
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - All tool executions logged with metadata
+          - Log viewer accessible from menu
+          - Filter by tool type
+          - Export to JSON
+          - Log clears on session reset
