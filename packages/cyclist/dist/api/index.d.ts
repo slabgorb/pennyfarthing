@@ -13,4 +13,5 @@ export { createThemeAgentsRouter, getThemeAgents } from './theme-agents.js';
 export type { AgentCharacterMap } from './theme-agents.js';
 export { createModeRouter, getModeInfo } from './mode.js';
 export type { ModeInfo } from './mode.js';
+export { createTelemetryRouter } from './telemetry.js';
 //# sourceMappingURL=index.d.ts.map
