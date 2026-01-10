@@ -556,8 +556,12 @@ epics:
       '
     points: 3
     priority: P2
-    status: backlog
+    status: done
+    started: 2026-01-10
+    completed: 2026-01-10
+    assigned_to: Keith Avery
     repos: cyclist
+    pr: '#129'
     acceptance_criteria:
     - Session file parsed for phase changes
     - Phase transition timestamps recorded
@@ -679,7 +683,9 @@ epics:
       '
     points: 5
     priority: P2
-    status: backlog
+    status: in_progress
+    started: 2026-01-10
+    assigned_to: Keith Avery
     repos: pennyfarthing, cyclist
     acceptance_criteria:
     - AgentEvaluation type defined with all metric fields

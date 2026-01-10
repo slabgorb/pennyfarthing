@@ -5,7 +5,7 @@ import { join } from 'path';
 // Path resolution
 import { publicDir, nodeModulesDir, portraitsDir, getProjectDirectory } from './paths.js';
 // API routers
-import { createStatsRouter, createPortraitRouter, createPersonaRouter, createGitRouter, createOTLPRouter, createStoryRouter, createFileBrowserRouter, createTokenStatsRouter, createContextRouter, createThemeAgentsRouter, createModeRouter, createTelemetryRouter, initTokenStatsBroadcast, } from './api/index.js';
+import { createStatsRouter, createPortraitRouter, createPersonaRouter, createGitRouter, createOTLPRouter, createStoryRouter, createFileBrowserRouter, createTokenStatsRouter, createContextRouter, createThemeAgentsRouter, createModeRouter, createTelemetryRouter, createEvaluationRouter, initTokenStatsBroadcast, } from './api/index.js';
 // WebSocket setup
 import { setupWebSocketServers } from './websocket.js';
 // Re-exports for main.ts and tests
@@ -43,6 +43,7 @@ app.use('/api/context', createContextRouter(getProjectDir));
 app.use('/api/theme-agents', createThemeAgentsRouter(getProjectDir));
 app.use('/api/mode', createModeRouter());
 app.use('/api/telemetry', createTelemetryRouter());
+app.use('/api/evaluation', createEvaluationRouter());
 app.use('/v1', createOTLPRouter());
 // Initialize token stats WebSocket broadcast callback
 initTokenStatsBroadcast();
