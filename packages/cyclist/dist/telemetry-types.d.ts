@@ -265,6 +265,121 @@ export interface TDDMetrics {
     };
 }
 /**
+ * Quality signals for agent performance
+ */
+export interface QualitySignals {
+    /** Whether tests are currently passing */
+    testsPassing?: boolean;
+    /** Rate of review approvals (0.0-1.0) */
+    reviewApprovalRate?: number;
+    /** Whether lint checks pass */
+    lintClean?: boolean;
+    /** Whether build succeeds */
+    buildSuccess?: boolean;
+}
+/**
+ * Performance metrics for a specific agent role
+ */
+export interface AgentMetrics {
+    /** Agent role (sm, tea, dev, reviewer) */
+    agentRole: string;
+    /** Task completion rate (0.0-1.0) */
+    taskCompletionRate: number;
+    /** Average tokens per task */
+    averageTokens: number;
+    /** Average time per task in milliseconds */
+    averageTimeMs: number;
+    /** Tool usage efficiency (0.0-1.0) */
+    toolEfficiency: number;
+    /** Error/failure rate (0.0-1.0) */
+    errorRate: number;
+    /** Quality signals from CI/review */
+    qualitySignals: QualitySignals;
+}
+/**
+ * Performance metrics for a specific persona/theme
+ */
+export interface PersonaMetrics extends AgentMetrics {
+    /** Persona character name (e.g., 'Hamlet') */
+    persona?: string;
+    /** Theme name (e.g., 'shakespeare') */
+    theme: string;
+}
+/**
+ * Metrics broken down by task type
+ */
+export interface TaskMetrics {
+    /** Task type identifier */
+    taskType: string;
+    /** Number of tasks of this type */
+    count: number;
+    /** Average tokens for this task type */
+    averageTokens: number;
+    /** Average time for this task type in milliseconds */
+    averageTimeMs: number;
+    /** Success rate for this task type (0.0-1.0) */
+    successRate: number;
+}
+/**
+ * Regression alert for performance drops
+ */
+export interface RegressionAlert {
+    /** Agent role affected */
+    agentRole: string;
+    /** Metric that regressed */
+    metric: string;
+    /** Current metric value */
+    currentValue: number;
+    /** Baseline metric value */
+    baselineValue: number;
+    /** Percent change from baseline */
+    percentChange: number;
+    /** Severity level */
+    severity: 'info' | 'warning' | 'critical';
+}
+/**
+ * Job-fair baseline data for comparison
+ */
+export interface JobFairBaseline {
+    /** Persona character name */
+    persona: string;
+    /** Agent role */
+    agentRole: string;
+    /** Task type */
+    taskType: string;
+    /** Baseline metrics */
+    metrics: {
+        averageTokens: number;
+        averageTimeMs: number;
+        completionRate: number;
+    };
+}
+/**
+ * Trend direction for historical analysis
+ */
+export type TrendDirection = 'improving' | 'stable' | 'declining' | 'unknown';
+/**
+ * Complete agent evaluation result
+ */
+export interface AgentEvaluation {
+    /** Unique evaluation identifier */
+    evaluationId: string;
+    /** Evaluation timestamp */
+    timestamp: number;
+    /** Story ID if evaluation is story-scoped */
+    storyId?: string;
+    /** Metrics aggregated by agent role */
+    agentMetrics: Record<string, AgentMetrics>;
+    /** Metrics aggregated by persona/theme */
+    personaMetrics: Record<string, PersonaMetrics>;
+    /** Metrics aggregated by task type */
+    taskTypeMetrics: Record<string, TaskMetrics>;
+    /** Active regression alerts */
+    regressionAlerts: RegressionAlert[];
+    /** Generated recommendations */
+    recommendations: string[];
+}
+/**
  * Check if a span is an agent span (has childSpans and events)
  */
 export declare function isAgentSpan(span: AgentSpan | ToolSpan): span is AgentSpan;
