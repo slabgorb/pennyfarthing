@@ -150,4 +150,62 @@ See: `~/.claude/plans/cached-percolating-dolphin.md`
 
 ---
 
+### ADR-004: Verbose Mode - Tool Visibility & User Intervention
+
+**Date:** 2026-01-10
+**Status:** Accepted
+**Author:** The White Queen (Architect)
+
+#### Context
+
+Users running Claude Code through Cyclist have limited visibility into tool execution. Tool calls are either shown briefly in a small activity line (persona section) or hidden in collapsed `<details>` blocks in the message view. This creates two problems:
+
+1. **Lack of oversight**: Users can't easily see what Claude is about to execute
+2. **No intervention**: Long-running or dangerous operations can't be stopped quickly
+
+This is particularly concerning for Bash commands that could modify files, install packages, or run arbitrary shell code.
+
+#### Decision
+
+Create **Epic 22: Verbose Mode** with a layered approach to tool visibility and intervention:
+
+**Layer 1: Tool Activity Bar** (22-1, 22-2)
+- Sticky bar showing currently executing tool with full details
+- Prominent ABORT button to stop operations via SIGINT
+- Elapsed time counter for awareness of long-running operations
+
+**Layer 2: Approval Gates** (22-3, 22-4)
+- Optional pre-execution approval for Bash commands
+- Automatic detection of dangerous path modifications (.env, .git/, credentials)
+- Allowlist system for repeated safe operations
+
+**Layer 3: Display Controls** (22-5, 22-6)
+- Verbose mode toggle to expand all tool blocks by default
+- Session audit log for post-hoc review of tool executions
+
+**Key Design Principle**: All safety features are opt-in (except the activity bar). Default behavior preserves Claude's autonomy while giving users tools to increase oversight when needed.
+
+#### Consequences
+
+**Positive:**
+- Users can see exactly what Claude is doing in real-time
+- Dangerous operations can be stopped before or during execution
+- Audit trail enables debugging and accountability
+- Graduated controls let users choose their comfort level
+
+**Negative:**
+- Approval gates add friction to autonomous workflows
+- Activity bar takes visual space (mitigated by auto-hide when idle)
+- Abort may leave partial state (documented edge case)
+
+#### Implementation Guidance
+
+- 22-1 and 22-2 are foundational - implement together
+- 22-3 builds on existing approval modal patterns (see quick actions)
+- 22-4 can reuse PreToolUse hook patterns from Pennyfarthing
+- 22-5 is CSS/rendering change, lowest risk
+- 22-6 extends existing tool-stats.ts infrastructure
+
+---
+
 *Add decisions made during architecture work below*
