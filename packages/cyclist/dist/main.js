@@ -19,6 +19,7 @@ import { isTodoWriteMessage, extractTodos } from './todos.js';
 import { listDirectory as listDir } from './file-browser.js';
 import { getProjectDirectory, setProjectDirectory, isValidProjectDirectory, parseProjectDirArg, } from './paths.js';
 import { getContextUsage } from './api/context.js';
+import { getVerboseMode, setVerboseMode } from './settings-store.js';
 // Re-export project directory functions for external consumers
 export { getProjectDirectory, setProjectDirectory, isValidProjectDirectory };
 import * as fs from 'fs';
@@ -98,6 +99,14 @@ export const IPC_DIFF_CHANNELS = {
     DIFF_UPDATE: 'diff:update',
 };
 /**
+ * IPC channel names for settings (22-5)
+ */
+export const IPC_SETTINGS_CHANNELS = {
+    VERBOSE_MODE_GET: 'settings:getVerboseMode',
+    VERBOSE_MODE_SET: 'settings:setVerboseMode',
+    VERBOSE_MODE_UPDATE: 'settings:verboseModeUpdate',
+};
+/**
  * IPC channel names for file browser (E8-3)
  */
 export const IPC_FILE_BROWSER_CHANNELS = {
@@ -166,6 +175,38 @@ export function buildWorkflowMenu() {
     return {
         label: 'Workflows',
         submenu,
+    };
+}
+/**
+ * Build custom View menu with Verbose Mode toggle (Story 22-5)
+ * Includes standard view items plus custom Cyclist options
+ */
+export function buildViewMenu() {
+    return {
+        label: 'View',
+        submenu: [
+            { role: 'reload' },
+            { role: 'forceReload' },
+            { role: 'toggleDevTools' },
+            { type: 'separator' },
+            { role: 'resetZoom' },
+            { role: 'zoomIn' },
+            { role: 'zoomOut' },
+            { type: 'separator' },
+            { role: 'togglefullscreen' },
+            { type: 'separator' },
+            {
+                id: 'verbose-mode',
+                label: 'Verbose Mode',
+                type: 'checkbox',
+                checked: getVerboseMode(),
+                accelerator: 'CmdOrCtrl+Shift+V',
+                click: (menuItem) => {
+                    setVerboseMode(menuItem.checked);
+                    broadcastToRenderer(IPC_SETTINGS_CHANNELS.VERBOSE_MODE_UPDATE, menuItem.checked);
+                },
+            },
+        ],
     };
 }
 /**
@@ -802,6 +843,27 @@ export function setupFileBrowserIPCHandlers(ipcMain) {
     console.log('File browser IPC handlers registered');
 }
 // =============================================================================
+// Settings IPC Handlers (22-5)
+// =============================================================================
+/**
+ * Set up IPC handlers for settings
+ * 22-5: Handles verbose mode setting get/set
+ */
+export function setupSettingsIPCHandlers(ipcMain) {
+    // Get verbose mode state
+    ipcMain.handle(IPC_SETTINGS_CHANNELS.VERBOSE_MODE_GET, async () => {
+        return getVerboseMode();
+    });
+    // Set verbose mode state
+    ipcMain.handle(IPC_SETTINGS_CHANNELS.VERBOSE_MODE_SET, async (_event, ...args) => {
+        const enabled = args[0];
+        setVerboseMode(enabled);
+        broadcastToRenderer(IPC_SETTINGS_CHANNELS.VERBOSE_MODE_UPDATE, enabled);
+        return enabled;
+    });
+    console.log('Settings IPC handlers registered');
+}
+// =============================================================================
 // Session Persistence (E7-3: AC4)
 // =============================================================================
 // Session ID file path (stored in project directory)
@@ -977,6 +1039,7 @@ if (isElectron) {
     setupDataIPCHandlers(ipcMain);
     setupClaudeIPCHandlers(ipcMain);
     setupFileBrowserIPCHandlers(ipcMain);
+    setupSettingsIPCHandlers(ipcMain);
     /**
      * Kill any orphaned Claude CLI processes from previous Cyclist sessions
      * B-24: Prevents duplicate message handling from zombie processes
@@ -1073,11 +1136,12 @@ if (isElectron) {
             // B-23: Wire agent and workflow menus to Electron menu bar
             // Use standard macOS menu roles instead of reconstructing existing menu
             // (reconstructing fails on nested submenus like Window)
+            // 22-5: Custom View menu with Verbose Mode toggle
             const menuTemplate = [
                 { role: 'appMenu' },
                 { role: 'fileMenu' },
                 { role: 'editMenu' },
-                { role: 'viewMenu' },
+                buildViewMenu(),
                 buildAgentMenu(),
                 buildWorkflowMenu(),
                 { role: 'windowMenu' },

@@ -153,8 +153,8 @@ export interface ElectronBashAPI {
 }
 
 /**
- * Settings API interface (22-3)
- * Provides access to Cyclist settings including approval gate
+ * Settings API interface (22-3, 22-5)
+ * Provides access to Cyclist settings including approval gate and verbose mode
  */
 export interface ElectronSettingsAPI {
   /**
@@ -166,6 +166,21 @@ export interface ElectronSettingsAPI {
    * Set the state of the Bash approval gate
    */
   setBashApprovalGate: (enabled: boolean) => Promise<void>;
+
+  /**
+   * Get the current state of verbose mode (22-5)
+   */
+  getVerboseMode: () => Promise<boolean>;
+
+  /**
+   * Set the state of verbose mode (22-5)
+   */
+  setVerboseMode: (enabled: boolean) => Promise<boolean>;
+
+  /**
+   * Subscribe to verbose mode changes (22-5)
+   */
+  onVerboseModeChange: (callback: (event: unknown, enabled: boolean) => void) => void;
 }
 
 export interface ElectronAPI {
@@ -292,10 +307,15 @@ function createElectronAPI(): ElectronAPI {
         sendApprovalResponse: (response: { toolId: string; approved: boolean; alwaysAllow: boolean }) =>
           ipcRenderer.invoke('bash:approval-response', response),
       },
-      // Settings API (22-3)
+      // Settings API (22-3, 22-5)
       settings: {
         getBashApprovalGate: () => ipcRenderer.invoke('settings:getBashApprovalGate') as Promise<boolean>,
         setBashApprovalGate: (enabled: boolean) => ipcRenderer.invoke('settings:setBashApprovalGate', enabled),
+        getVerboseMode: () => ipcRenderer.invoke('settings:getVerboseMode') as Promise<boolean>,
+        setVerboseMode: (enabled: boolean) => ipcRenderer.invoke('settings:setVerboseMode', enabled) as Promise<boolean>,
+        onVerboseModeChange: (callback: (event: unknown, enabled: boolean) => void) => {
+          ipcRenderer.on('settings:verboseModeUpdate', callback);
+        },
       },
     };
   } else {
@@ -360,10 +380,15 @@ function createElectronAPI(): ElectronAPI {
         sendApprovalResponse: (_response: { toolId: string; approved: boolean; alwaysAllow: boolean }) =>
           Promise.resolve(),
       },
-      // Settings API (22-3) - test stub
+      // Settings API (22-3, 22-5) - test stub
       settings: {
         getBashApprovalGate: () => Promise.resolve(false),
         setBashApprovalGate: (_enabled: boolean) => Promise.resolve(),
+        getVerboseMode: () => Promise.resolve(false),
+        setVerboseMode: (_enabled: boolean) => Promise.resolve(false),
+        onVerboseModeChange: (_callback: (event: unknown, enabled: boolean) => void) => {
+          // No-op in test environment
+        },
       },
     };
   }

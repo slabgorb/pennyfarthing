@@ -113,10 +113,15 @@ function createElectronAPI() {
                 },
                 sendApprovalResponse: (response) => ipcRenderer.invoke('bash:approval-response', response),
             },
-            // Settings API (22-3)
+            // Settings API (22-3, 22-5)
             settings: {
                 getBashApprovalGate: () => ipcRenderer.invoke('settings:getBashApprovalGate'),
                 setBashApprovalGate: (enabled) => ipcRenderer.invoke('settings:setBashApprovalGate', enabled),
+                getVerboseMode: () => ipcRenderer.invoke('settings:getVerboseMode'),
+                setVerboseMode: (enabled) => ipcRenderer.invoke('settings:setVerboseMode', enabled),
+                onVerboseModeChange: (callback) => {
+                    ipcRenderer.on('settings:verboseModeUpdate', callback);
+                },
             },
         };
     }
@@ -181,10 +186,15 @@ function createElectronAPI() {
                 },
                 sendApprovalResponse: (_response) => Promise.resolve(),
             },
-            // Settings API (22-3) - test stub
+            // Settings API (22-3, 22-5) - test stub
             settings: {
                 getBashApprovalGate: () => Promise.resolve(false),
                 setBashApprovalGate: (_enabled) => Promise.resolve(),
+                getVerboseMode: () => Promise.resolve(false),
+                setVerboseMode: (_enabled) => Promise.resolve(false),
+                onVerboseModeChange: (_callback) => {
+                    // No-op in test environment
+                },
             },
         };
     }

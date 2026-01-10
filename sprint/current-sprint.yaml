@@ -1010,8 +1010,10 @@ epics:
       '
     points: 2
     priority: P2
-    status: backlog
+    status: in_progress
     repos: pennyfarthing
+    started: 2026-01-10
+    assigned_to: Keith Avery
     acceptance_criteria:
     - Skill file created with comprehensive examples
     - Prerequisites documented (CLI install or GitHub)
@@ -1299,7 +1301,10 @@ epics:
       - Keyboard shortcut: Cmd+Shift+V
     points: 2
     priority: P2
-    status: backlog
+    status: done
+    started: 2026-01-10
+    completed: 2026-01-10
+    assigned_to: Keith Avery
     repos: cyclist
     acceptance_criteria:
     - Verbose mode toggle in View menu
