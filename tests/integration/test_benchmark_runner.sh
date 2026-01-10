@@ -135,22 +135,19 @@ assert_contains "usage" "$OUTPUT" "No args shows usage"
 
 # Test B2: Invalid mode
 echo "Test B2: Invalid mode rejected..."
-OUTPUT=$($RUNNER --mode invalid 2>&1 || true)
-EXIT_CODE=$?
+OUTPUT=$($RUNNER --mode invalid 2>&1) && EXIT_CODE=0 || EXIT_CODE=$?
 assert_exit_code 1 $EXIT_CODE "Invalid mode exits with error"
 assert_contains "error\|invalid\|unknown" "$OUTPUT" "Invalid mode error message"
 
 # Test B3: Missing required arguments for solo mode
 echo "Test B3: Solo mode requires agent..."
-OUTPUT=$($RUNNER --mode solo --case dev-001 2>&1 || true)
-EXIT_CODE=$?
+OUTPUT=$($RUNNER --mode solo --case dev-001 2>&1) && EXIT_CODE=0 || EXIT_CODE=$?
 assert_exit_code 1 $EXIT_CODE "Solo without agent exits with error"
 assert_contains "agent\|required" "$OUTPUT" "Missing agent error message"
 
 # Test B4: Non-existent test case
 echo "Test B4: Non-existent test case..."
-OUTPUT=$($RUNNER --mode solo --case nonexistent-999 --agent rome:dev 2>&1 || true)
-EXIT_CODE=$?
+OUTPUT=$($RUNNER --mode solo --case nonexistent-999 --agent rome:dev 2>&1) && EXIT_CODE=0 || EXIT_CODE=$?
 assert_exit_code 1 $EXIT_CODE "Non-existent case exits with error"
 assert_contains "not found\|invalid\|error" "$OUTPUT" "Non-existent case error message"
 
