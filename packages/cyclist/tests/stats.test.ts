@@ -121,11 +121,7 @@ describe('E1-5: Stats Dashboard', () => {
       expect(css).toMatch(/\.model-badge[^}]*background/);
     });
 
-    it('should have stats.js script included', () => {
-      const hasStatsScript = html.includes('stats.js');
-      expect(hasStatsScript).toBe(true);
-    });
-
+    // Note: stats.js was consolidated into stats-strip.js per B-22
     it('should have stats-strip.js script included', () => {
       const hasStatsStripScript = html.includes('stats-strip.js');
       expect(hasStatsStripScript).toBe(true);
@@ -142,21 +138,21 @@ describe('E1-5: Stats Dashboard', () => {
     });
 
     it('should preserve unmodified stats on partial update', async () => {
-      // Set initial state
+      // Set initial state with unique values (note: context is handled by separate /api/context endpoint per B-19)
+      const uniqueStatus = `Working-${Date.now()}`;
       await request(app)
         .post('/api/stats')
-        .send({ model: 'test-model', status: 'Working', context: '50%' });
+        .send({ model: 'test-model', status: uniqueStatus });
 
       // Update only model
       await request(app)
         .post('/api/stats')
         .send({ model: 'updated-model' });
 
-      // Status and context should be preserved
+      // Status should be preserved
       const response = await request(app).get('/api/stats');
       expect(response.body.model).toBe('updated-model');
-      expect(response.body.status).toBe('Working');
-      expect(response.body.context).toBe('50%');
+      expect(response.body.status).toBe(uniqueStatus);
     });
   });
 });
