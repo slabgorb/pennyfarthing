@@ -1974,7 +1974,8 @@ html, body {
 
 .diff-panel-content {
   flex: 1;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 8px 0;
 }
 

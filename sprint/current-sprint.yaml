@@ -518,7 +518,9 @@ epics:
       '
     points: 2
     priority: P2
-    status: backlog
+    status: in_progress
+    started: 2026-01-09
+    assigned_to: Keith Avery
     repos: pennyfarthing, cyclist
     acceptance_criteria:
     - Story ID extracted from session file

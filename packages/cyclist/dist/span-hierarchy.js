@@ -17,6 +17,7 @@
  * @see otlp-receiver.ts for event sources
  */
 import { getAgentContext } from './agent-context.js';
+import { getStoryContext } from './story-context.js';
 // =============================================================================
 // Session State
 // =============================================================================
@@ -145,6 +146,7 @@ function createOrUpdateAgentSpan(traceId, toolEvents, promptEvents) {
                 'gen_ai.system': 'claude',
                 'gen_ai.request.model': 'unknown', // Will be populated by future stories
                 'pennyfarthing.agent': getAgentContext(), // Story 19-4: Agent context
+                'pennyfarthing.story_id': getStoryContext(), // Story 19-5: Story context
             },
             events: [],
             childSpans: [],
@@ -295,6 +297,7 @@ export function buildSpanHierarchy(toolEvents, promptEvents) {
                 'gen_ai.system': 'claude',
                 'gen_ai.request.model': 'unknown',
                 'pennyfarthing.agent': getAgentContext(), // Story 19-4: Agent context
+                'pennyfarthing.story_id': getStoryContext(), // Story 19-5: Story context
             },
             events,
             childSpans,
