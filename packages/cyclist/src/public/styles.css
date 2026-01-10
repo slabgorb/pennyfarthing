@@ -2626,3 +2626,182 @@ html, body {
 #tool-activity-bar.aborting .tool-name {
   color: #dc3545;
 }
+
+/* ==========================================================================
+   22-3: Bash Command Approval Modal
+   ========================================================================== */
+
+/* Modal container - fixed overlay */
+#approval-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+#approval-modal.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Modal overlay/backdrop */
+#approval-modal .modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+/* Modal content box */
+#approval-modal .modal-content {
+  position: relative;
+  background: var(--bg-primary, #1e1e1e);
+  border: 1px solid var(--border, #333);
+  border-radius: 8px;
+  padding: 1.5rem;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* Modal header */
+#approval-modal .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border, #333);
+}
+
+#approval-modal .modal-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text-primary, #fff);
+}
+
+/* Safety indicator */
+#approval-modal .safety-indicator {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+#approval-modal .safety-indicator.safety-safe {
+  background: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+}
+
+#approval-modal .safety-indicator.safety-caution {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+}
+
+#approval-modal .safety-indicator.safety-danger {
+  background: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+}
+
+/* Command display - syntax highlighting */
+#approval-modal .command-display {
+  background: var(--bg-secondary, #252525);
+  border: 1px solid var(--border, #333);
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text-primary, #fff);
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-x: auto;
+}
+
+/* Syntax highlighting classes */
+.syntax-keyword {
+  color: #c586c0;
+  font-weight: 500;
+}
+
+.syntax-path {
+  color: #4ec9b0;
+}
+
+.syntax-string {
+  color: #ce9178;
+}
+
+.syntax-operator {
+  color: #d4d4d4;
+  font-weight: 600;
+}
+
+/* Modal action buttons */
+#approval-modal .modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+#approval-modal .modal-actions button {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+  border: none;
+}
+
+#approval-modal .modal-actions button:hover {
+  transform: translateY(-1px);
+}
+
+#approval-modal .modal-actions button:active {
+  transform: translateY(0);
+}
+
+/* Approve button - success styling */
+.approve-btn {
+  background: #28a745;
+  color: white;
+}
+
+.approve-btn:hover {
+  background: #218838;
+}
+
+/* Always Allow button - secondary styling */
+.always-allow-btn {
+  background: var(--bg-secondary, #252525);
+  color: var(--text-primary, #fff);
+  border: 1px solid var(--border, #333) !important;
+}
+
+.always-allow-btn:hover {
+  background: var(--bg-tertiary, #333);
+}
+
+/* Reject button - danger styling */
+.reject-btn {
+  background: var(--danger-color, #dc3545);
+  color: white;
+}
+
+.reject-btn:hover {
+  background: var(--danger-hover, #c82333);
+}

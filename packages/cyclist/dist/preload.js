@@ -106,6 +106,18 @@ function createElectronAPI() {
                     ipcRenderer.on('file-browser:file-opened', callback);
                 },
             },
+            // Bash approval API (22-3)
+            bash: {
+                onApprovalRequest: (callback) => {
+                    ipcRenderer.on('bash:approval-request', callback);
+                },
+                sendApprovalResponse: (response) => ipcRenderer.invoke('bash:approval-response', response),
+            },
+            // Settings API (22-3)
+            settings: {
+                getBashApprovalGate: () => ipcRenderer.invoke('settings:getBashApprovalGate'),
+                setBashApprovalGate: (enabled) => ipcRenderer.invoke('settings:setBashApprovalGate', enabled),
+            },
         };
     }
     else {
@@ -161,6 +173,18 @@ function createElectronAPI() {
                 onFileOpened: (_callback) => {
                     // No-op in test environment
                 },
+            },
+            // Bash approval API (22-3) - test stub
+            bash: {
+                onApprovalRequest: (_callback) => {
+                    // No-op in test environment
+                },
+                sendApprovalResponse: (_response) => Promise.resolve(),
+            },
+            // Settings API (22-3) - test stub
+            settings: {
+                getBashApprovalGate: () => Promise.resolve(false),
+                setBashApprovalGate: (_enabled) => Promise.resolve(),
             },
         };
     }
