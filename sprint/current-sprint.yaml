@@ -961,8 +961,10 @@ epics:
       '
     points: 2
     priority: P1
-    status: backlog
+    status: in_progress
     repos: pennyfarthing
+    started: 2026-01-10
+    assigned_to: Keith Avery
     acceptance_criteria:
     - /prime command loads essential context files
     - Context loaded in priority order (CLAUDE.md first)

@@ -41,8 +41,10 @@ From theme config. Model: haiku. Tasks: Architecture scanning, pattern analysis,
 </constraints>
 
 <context>
-**See:** `.claude/guides/shared-context.md` for project info.
-**Architecture Docs:** `API/docs/architecture.md`, `API/docs/api-reference.md`
+Context auto-loaded by `/prime --agent architect`:
+- Shared context, shared behavior
+- Agent sidecar: `.claude/project/agents/architect-sidecar/`
+- Also see: `API/docs/architecture.md`, `API/docs/api-reference.md`
 </context>
 
 <on-activation>

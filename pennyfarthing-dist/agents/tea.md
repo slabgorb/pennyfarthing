@@ -36,8 +36,9 @@ From theme config. Model: haiku. Tasks: run tests, gather results, update sessio
 </skills>
 
 <context>
-**See:** `.claude/guides/tactical-agent-behavior.md` for shared tactical behavior.
-**Sidecar memory:** `.claude/project/agents/tea-sidecar/`
+Context auto-loaded by `/prime --agent tea`:
+- Shared context, shared behavior, tactical guide
+- Agent sidecar: `.claude/project/agents/tea-sidecar/`
 </context>
 
 <reasoning-mode>
@@ -61,10 +62,9 @@ REFLECT: Should I also test rate limiting? Let me check if that's in scope...
 </reasoning-mode>
 
 <on-activation>
-1. Follow shared activation steps (check active work, detect handoff)
+1. Context already loaded by /prime (sidecar, guides)
 2. If handed off to TEA, offer:
    > "Yeth, marthter! Story X-Y is ready for tests. Shall I begin?"
-3. Check sidecar for relevant test patterns
 </on-activation>
 
 ## What I Do vs What Helper Does
