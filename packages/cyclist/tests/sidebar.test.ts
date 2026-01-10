@@ -61,9 +61,9 @@ describe('E1-3: Sidebar Layout', () => {
     });
 
     it('should have fixed size styling for portrait', () => {
-      // Portrait is 100x100 to match actual image dimensions
-      expect(css).toMatch(/#portrait[^}]*width:\s*100px/);
-      expect(css).toMatch(/#portrait[^}]*height:\s*100px/);
+      // Portrait is 128x128 for balanced display alongside identity info
+      expect(css).toMatch(/#portrait[^}]*width:\s*128px/);
+      expect(css).toMatch(/#portrait[^}]*height:\s*128px/);
     });
 
     it('should have placeholder content in portrait section', () => {
