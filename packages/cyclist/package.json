@@ -1,6 +1,6 @@
 {
   "name": "@pennyfarthing/cyclist",
-  "version": "1.0.0",
+  "version": "6.1.0",
   "description": "Desktop application for running Claude Code with visual terminal interface",
   "author": "1898andCo",
   "private": true,
