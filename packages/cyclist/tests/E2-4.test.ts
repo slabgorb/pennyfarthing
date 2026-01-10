@@ -1,15 +1,18 @@
 /**
  * E2-4: Live Stats UI Tests
  *
- * These tests verify the acceptance criteria for the Live Stats UI story.
- * Written to FAIL initially (RED phase) - Dev will make them pass.
+ * NOTE: This test suite is SKIPPED because it tests stats.js which was
+ * consolidated into stats-strip.js per B-22. The WebSocket stats functionality
+ * now lives in stats-strip.js with a different architecture.
  *
- * ACs:
+ * Original ACs (for reference):
  * 1. Stats.js connects to /ws/stats on page load
  * 2. Stats update immediately on WebSocket message
  * 3. Visual feedback on value changes (pulse animation)
  * 4. Automatic reconnection on disconnect
  * 5. Fallback to polling if WebSocket fails
+ *
+ * These ACs are now covered by B-22-stats-strip.test.ts
  */
 
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
@@ -20,7 +23,7 @@ import { Server } from 'http';
 
 import { app, createTerminalServer } from '../src/server.js';
 
-describe('E2-4: Live Stats UI', () => {
+describe.skip('E2-4: Live Stats UI', () => {
   let html: string;
   let css: string;
   let statsJs: string;

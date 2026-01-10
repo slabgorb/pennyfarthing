@@ -240,10 +240,7 @@ describe('E6-3: Token Display UI', () => {
 
   describe('Stats Strip Integration', () => {
 
-    it('should include stats.js script in HTML', () => {
-      expect(html).toContain('stats.js');
-    });
-
+    // Note: stats.js was consolidated into stats-strip.js per B-22
     it('should include stats-strip.js script in HTML', () => {
       expect(html).toContain('stats-strip.js');
     });
