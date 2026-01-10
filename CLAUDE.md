@@ -30,7 +30,7 @@ pennyfarthing-dist/      # Single source of truth for all definitions
 ├── commands/            # 25 slash commands
 ├── guides/              # Behavior guides
 ├── skills/              # 11 knowledge domains
-├── personas/            # 7 theme files
+├── personas/            # Themed agent personas (96+ themes)
 └── scripts/             # Utility scripts
 
 src/                     # TypeScript CLI source
@@ -86,7 +86,7 @@ Subagents use Claude Code's Task tool with `subagent_type`. Key subagents:
 | File | Purpose |
 |------|---------|
 | `pennyfarthing-dist/agents/*.md` | Agent and subagent definitions (consolidated) |
-| `.claude/persona-config.yaml` | Theme selection (current: shakespeare) |
+| `.claude/persona-config.local.yaml` | Theme selection (use `/theme` skill) |
 | `sprint/current-sprint.yaml` | Active sprint and story tracking |
 | `.session/{story-id}-session.md` | Active work context |
 | `scripts/utils/` | Resilience utilities (retry.sh, checkpoint.sh, repo-scan.sh) |
@@ -102,6 +102,4 @@ pennyfarthing uninstall      # Remove from project
 
 ## Persona System
 
-7 themes available: `star-trek-tos`, `star-trek`, `discworld`, `shakespeare`, `jane-austen`, `literary-classics`, `minimalist`
-
-Configured in `.claude/persona-config.yaml`. Each theme defines character mappings for agents with style attributes.
+Agents use themed personas for character and style. See `.claude/skills/theme/skill.md` for theme management.
