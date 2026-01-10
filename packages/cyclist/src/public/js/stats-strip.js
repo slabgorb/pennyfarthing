@@ -65,8 +65,9 @@ function updateStripStat(dataStat, value) {
 /**
  * Update context meter fill width and level
  * @param {number} percent - Context usage percentage (0-100)
+ * @param {number} [tokens] - Context token count (optional)
  */
-function updateContextMeter(percent) {
+function updateContextMeter(percent, tokens) {
   const contextMini = document.querySelector('#stats-strip .context-mini');
   const fill = document.querySelector('#stats-strip .context-mini-fill');
   const label = document.querySelector('#stats-strip .context-mini-label');
@@ -77,6 +78,11 @@ function updateContextMeter(percent) {
 
   if (label) {
     label.textContent = `${percent}%`;
+  }
+
+  // Update context tokens display (ground truth from transcript)
+  if (tokens !== undefined && tokens !== null) {
+    updateStripStat('strip-context-tokens', formatTokenCount(tokens));
   }
 
   updateContextLevel(contextMini, percent);
@@ -138,13 +144,14 @@ async function initStatsStrip() {
   }
 
   // Context usage - subscribe to main process polling updates (B-19)
+  // Context data includes both percent and tokens (ground truth from transcript)
   if (window.electronAPI?.context) {
     // Get initial context via IPC
     if (window.electronAPI.context.get) {
       try {
         const ctx = await window.electronAPI.context.get();
         if (ctx && ctx.percent !== null && ctx.percent !== undefined) {
-          updateContextMeter(ctx.percent);
+          updateContextMeter(ctx.percent, ctx.tokens);
         }
       } catch (err) {
         // Silent fail - context is optional
@@ -155,7 +162,7 @@ async function initStatsStrip() {
     if (window.electronAPI.context.onUpdate) {
       window.electronAPI.context.onUpdate((_event, ctx) => {
         if (ctx && ctx.percent !== null && ctx.percent !== undefined) {
-          updateContextMeter(ctx.percent);
+          updateContextMeter(ctx.percent, ctx.tokens);
         }
       });
     }

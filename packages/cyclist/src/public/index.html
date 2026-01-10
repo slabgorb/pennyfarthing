@@ -34,8 +34,8 @@
     </div>
     <div class="resize-handle" id="diff-panel-resize" title="Drag to resize"></div>
     <!-- Toggle buttons visible when panels are collapsed -->
-    <button class="file-panel-expand-btn" id="file-panel-expand" title="Show changed files"><span class="expand-label">CHANGED</span></button>
-    <button class="diff-panel-expand-btn" id="diff-panel-expand" title="Show diffs"><span class="expand-label">DIFFS</span></button>
+    <button class="file-panel-expand-btn" id="file-panel-expand" title="Show changed files"><span class="expand-label">CHANGED</span><span class="panel-count-badge" id="file-panel-count"></span></button>
+    <button class="diff-panel-expand-btn" id="diff-panel-expand" title="Show diffs"><span class="expand-label">DIFFS</span><span class="panel-count-badge" id="diff-panel-count"></span></button>
     <div id="main-content">
       <main id="message-view">
         <!-- MessageView will be mounted here -->
@@ -68,9 +68,14 @@
         <!-- B-22: Stats Strip - compact stats display in prompt bar -->
         <div id="stats-strip">
           <span class="model-badge" data-stat="strip-model">—</span>
-          <span class="token-stats">
+          <span class="token-stats" title="Session totals (cumulative)">
+            <span class="stats-label">Session:</span>
             <span class="token-in" data-stat="strip-input">↓ —</span>
             <span class="token-out" data-stat="strip-output">↑ —</span>
+          </span>
+          <span class="context-stats" title="Current context window">
+            <span class="stats-label">Context:</span>
+            <span class="context-tokens" data-stat="strip-context-tokens">—</span>
           </span>
           <div class="context-mini">
             <div class="context-mini-fill"></div>
@@ -111,26 +116,34 @@
       <!-- Persona Section -->
       <div id="persona-section" class="persona-section">
         <div id="project-name" class="project-name"></div>
-        <div class="persona-header">
+        <!-- Character name above portrait -->
+        <div id="character-name" class="character-name">Loading...</div>
+        <!-- Portrait with role/OCEAN beside it -->
+        <div class="portrait-row">
           <div id="portrait">
             <img src="" alt="Character portrait" style="display: none;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <!-- B-20: SVG silhouette instead of "?" -->
             <div class="portrait-placeholder" style="display: flex;">
               <svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
               </svg>
             </div>
           </div>
-          <div id="persona-info" class="persona-info">
-            <div id="character-name" class="character-name">Loading...</div>
+          <div class="portrait-details">
             <div id="character-role" class="character-role"></div>
-            <div id="character-quote" class="character-quote"></div>
+            <div id="ocean-scores" class="ocean-scores">
+              <div class="ocean-row" data-trait="O"><span class="trait-label">O</span><span class="trait-value"></span></div>
+              <div class="ocean-row" data-trait="C"><span class="trait-label">C</span><span class="trait-value"></span></div>
+              <div class="ocean-row" data-trait="E"><span class="trait-label">E</span><span class="trait-value"></span></div>
+              <div class="ocean-row" data-trait="A"><span class="trait-label">A</span><span class="trait-value"></span></div>
+              <div class="ocean-row" data-trait="N"><span class="trait-label">N</span><span class="trait-value"></span></div>
+            </div>
           </div>
         </div>
+        <!-- Theme centered under portrait -->
         <div id="theme-name" class="theme-name"></div>
+        <div id="benchmark-score" class="benchmark-score"></div>
         <div id="helper-line" class="activity-line"></div>
         <div id="helper-task-line" class="activity-line"></div>
-        <div id="tool-use-line" class="activity-line"></div>
       </div>
 
       <!-- Story Section (B-13: Enhanced) -->
@@ -286,6 +299,7 @@
     import * as DiffViewer from '/js/components/DiffViewer.js';
     ChangedFilesList.init();
     DiffViewer.setOnDiffAdded(ChangedFilesList.handleDiffAdded);
+    DiffViewer.setOnDiffsRemoved(ChangedFilesList.handleDiffsRemoved);
   </script>
   <!-- Files tab will be added on demand, not on startup -->
   <script type="module" src="/js/controls.js"></script>
