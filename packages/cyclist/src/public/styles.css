@@ -2611,3 +2611,18 @@ html, body {
   text-align: right;
   flex-shrink: 0;
 }
+
+/* 22-2: Aborting state - visual feedback when operation is being aborted */
+#tool-activity-bar.aborting {
+  background: rgba(220, 53, 69, 0.15);
+  border-color: #dc3545;
+}
+
+#tool-activity-bar.aborting .tool-status-indicator {
+  background: #dc3545;
+  animation: none;
+}
+
+#tool-activity-bar.aborting .tool-name {
+  color: #dc3545;
+}

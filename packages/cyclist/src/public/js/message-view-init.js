@@ -18,6 +18,7 @@ import {
 } from './components/MessageView.js';
 import { updateActivity, clearActivity } from './activity.js';
 import { resetSubmitting, setProcessing, processNextInQueue, setOnQueueChange, clearMessageQueue, loadMessageQueue, getMessageQueue, removeFromQueue } from './editor.js';
+import { handleAbort } from './components/ToolActivityBar.js';
 
 // Wait for DOM to be ready
 if (document.readyState === 'loading') {
@@ -97,6 +98,7 @@ function initMessageView() {
       await window.electronAPI.claude.abort();
       hideThinking();
       clearActivity();
+      handleAbort(); // 22-2: Visual feedback on activity bar
     }
   }
 
