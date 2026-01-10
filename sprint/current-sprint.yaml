@@ -80,8 +80,10 @@ epics:
       '
     points: 3
     priority: P1
-    status: backlog
+    status: in_progress
     repos: pennyfarthing
+    started: 2026-01-10
+    assigned_to: Keith Avery
     acceptance_criteria:
     - Evaluate existing scripts against goals (document what exists vs needed)
     - scripts/benchmark-runner.sh functional
