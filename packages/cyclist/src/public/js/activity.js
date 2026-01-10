@@ -1,30 +1,11 @@
 /**
- * Activity Line - Shows current tool/subagent activity
+ * Activity Line - Shows current subagent activity
  *
  * Displays a lightweight status line in the persona section
- * showing what Claude is currently doing (tool calls, subagent spawns).
+ * showing when Claude spawns a subagent (helper name and task).
  */
 
 import { getHelperName } from './persona.js';
-
-/** Tool icons for common tools */
-const TOOL_ICONS = {
-  Task: '🚀',
-  Bash: '⚡',
-  Read: '📖',
-  Write: '✏️',
-  Edit: '✏️',
-  Glob: '🔍',
-  Grep: '🔎',
-  WebFetch: '🌐',
-  WebSearch: '🔎',
-  TodoWrite: '📋',
-  AskUserQuestion: '❓',
-  default: '🔧',
-};
-
-/** Clear timeout handle */
-let clearTimeoutId = null;
 
 /** Track active subagent for persistent display */
 let activeSubagent = null;
@@ -45,13 +26,6 @@ function getHelperTaskLine() {
   return document.getElementById('helper-task-line');
 }
 
-/**
- * Get the tool use line element (shows current tool)
- * @returns {HTMLElement|null}
- */
-function getToolUseLine() {
-  return document.getElementById('tool-use-line');
-}
 
 /**
  * Format the helper name for the helper line
@@ -73,36 +47,6 @@ function formatHelperTask(input) {
   return truncate(description, 40);
 }
 
-/**
- * Format a tool use message for display
- * @param {object} message - The tool_use message
- * @returns {string} Formatted activity text
- */
-function formatToolActivity(message) {
-  const { tool_name, input } = message;
-  const icon = TOOL_ICONS[tool_name] || TOOL_ICONS.default;
-
-  // For other tools, show a brief description of what they're doing
-  let detail = '';
-  if (input) {
-    if (input.pattern) {
-      detail = truncate(input.pattern, 25);
-    } else if (input.file_path) {
-      detail = truncate(basename(input.file_path), 25);
-    } else if (input.command) {
-      detail = truncate(input.command.split(' ')[0], 20);
-    } else if (input.query) {
-      detail = truncate(input.query, 25);
-    } else if (input.url) {
-      detail = truncate(new URL(input.url).hostname, 20);
-    }
-  }
-
-  if (detail) {
-    return `<span class="tool-icon">${icon}</span>${tool_name}: ${detail}`;
-  }
-  return `<span class="tool-icon">${icon}</span>${tool_name}`;
-}
 
 /**
  * Truncate a string to max length with ellipsis
@@ -114,16 +58,6 @@ function truncate(str, maxLen) {
   if (!str) return '';
   if (str.length <= maxLen) return str;
   return str.slice(0, maxLen - 1) + '…';
-}
-
-/**
- * Get basename from a file path
- * @param {string} filepath
- * @returns {string}
- */
-function basename(filepath) {
-  if (!filepath) return '';
-  return filepath.split('/').pop() || filepath;
 }
 
 /**
@@ -149,60 +83,25 @@ function extractToolUse(message) {
 }
 
 /**
- * Check if message contains tool_result
- * @param {object} message - SDK message
- * @returns {boolean}
- */
-function hasToolResult(message) {
-  if (message.type !== 'user') return false;
-  const content = message.message?.content;
-  if (!Array.isArray(content)) return false;
-  return content.some(item => item.type === 'tool_result');
-}
-
-/**
  * Update the activity lines based on a message
  * @param {object} message - SDK message
  */
 export function updateActivity(message) {
   const helperLine = getHelperLine();
   const helperTaskLine = getHelperTaskLine();
-  const toolUseLine = getToolUseLine();
-  if (!toolUseLine) return;
-
-  // Clear any pending timeout
-  if (clearTimeoutId) {
-    clearTimeout(clearTimeoutId);
-    clearTimeoutId = null;
-  }
+  if (!helperLine || !helperTaskLine) return;
 
   // Check for tool_use embedded in assistant message
   const toolUse = extractToolUse(message);
   if (toolUse) {
     // Task tool = subagent spawn, show on helper lines
-    if (toolUse.tool_name === 'Task' && helperLine && helperTaskLine) {
+    if (toolUse.tool_name === 'Task') {
       activeSubagent = toolUse.input;
       helperLine.innerHTML = formatHelperName(toolUse.input);
       helperLine.classList.add('active');
       helperTaskLine.innerHTML = formatHelperTask(toolUse.input);
       helperTaskLine.classList.add('active');
-      // Clear the tool use line when spawning
-      toolUseLine.innerHTML = '';
-      toolUseLine.classList.remove('active');
-    } else {
-      // Regular tool - show on tool use line
-      toolUseLine.innerHTML = formatToolActivity(toolUse);
-      toolUseLine.classList.add('active');
     }
-    return;
-  }
-
-  // Check for tool_result embedded in user message
-  if (hasToolResult(message)) {
-    // Keep showing for a moment, then fade
-    clearTimeoutId = setTimeout(() => {
-      toolUseLine.classList.remove('active');
-    }, 500);
   }
 }
 
@@ -212,12 +111,6 @@ export function updateActivity(message) {
 export function clearActivity() {
   const helperLine = getHelperLine();
   const helperTaskLine = getHelperTaskLine();
-  const toolUseLine = getToolUseLine();
-
-  if (clearTimeoutId) {
-    clearTimeout(clearTimeoutId);
-    clearTimeoutId = null;
-  }
 
   if (helperLine) {
     helperLine.innerHTML = '';
@@ -227,11 +120,6 @@ export function clearActivity() {
   if (helperTaskLine) {
     helperTaskLine.innerHTML = '';
     helperTaskLine.classList.remove('active');
-  }
-
-  if (toolUseLine) {
-    toolUseLine.innerHTML = '';
-    toolUseLine.classList.remove('active');
   }
 
   activeSubagent = null;
