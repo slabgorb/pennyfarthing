@@ -1310,7 +1310,8 @@ epics:
           - Update CLAUDE.md to reference theme skill instead of hardcoded list
         points: 3
         priority: P1
-        status: in_progress
+        status: done
+        completed: 2026-01-10
         started: 2026-01-10
         assigned_to: Keith Avery
         repos: cyclist, pennyfarthing
