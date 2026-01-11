@@ -135,6 +135,28 @@ export interface ElectronFileBrowserAPI {
 }
 
 /**
+ * Command API interface (23-3)
+ * Provides IPC channels for Claude Code command execution
+ */
+export interface ElectronCommandAPI {
+  /**
+   * Execute a Claude Code command (e.g., '/compact', '/doctor')
+   * @param command - The command to execute
+   */
+  execute: (command: string) => Promise<void>;
+
+  /**
+   * Subscribe to command result events
+   */
+  onResult: (callback: (result: unknown) => void) => void;
+
+  /**
+   * Subscribe to command error events
+   */
+  onError: (callback: (error: string) => void) => void;
+}
+
+/**
  * Bash Approval API interface (22-3)
  * Provides IPC channels for Bash command approval workflow
  */
@@ -266,6 +288,7 @@ export interface ElectronAPI {
   agent: ElectronAgentAPI; // B-23: Agent launcher
   diff: ElectronDiffAPI; // E8-2: Diff viewer
   fileBrowser: ElectronFileBrowserAPI; // E8-3: File browser
+  command: ElectronCommandAPI; // 23-3: Command execution
   bash: ElectronBashAPI; // 22-3: Bash approval gate
   path: ElectronPathAPI; // 22-4: Dangerous path approval gate
   settings: ElectronSettingsAPI; // 22-3, 22-4: Settings API
@@ -373,6 +396,16 @@ function createElectronAPI(): ElectronAPI {
           ipcRenderer.on('file-browser:file-opened', callback);
         },
       },
+      // Command API (23-3)
+      command: {
+        execute: (command: string) => ipcRenderer.invoke('command:execute', command),
+        onResult: (callback: (result: unknown) => void) => {
+          ipcRenderer.on('command:result', (_event: unknown, result: unknown) => callback(result));
+        },
+        onError: (callback: (error: string) => void) => {
+          ipcRenderer.on('command:error', (_event: unknown, error: unknown) => callback(error as string));
+        },
+      },
       // Bash approval API (22-3)
       bash: {
         onApprovalRequest: (callback: (event: unknown, data: { command: string; toolId: string }) => void) => {
@@ -469,6 +502,16 @@ function createElectronAPI(): ElectronAPI {
         openFile: (_path: string) => Promise.resolve(),
         openInEditor: (_path: string, _lineNumber?: number) => Promise.resolve(true),
         onFileOpened: (_callback: (event: unknown, data: { path: string }) => void) => {
+          // No-op in test environment
+        },
+      },
+      // Command API (23-3) - test stub
+      command: {
+        execute: (_command: string) => Promise.resolve(),
+        onResult: (_callback: (result: unknown) => void) => {
+          // No-op in test environment
+        },
+        onError: (_callback: (error: string) => void) => {
           // No-op in test environment
         },
       },
