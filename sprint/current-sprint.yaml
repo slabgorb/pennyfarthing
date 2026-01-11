@@ -5,8 +5,8 @@ sprint:
   status: active
   velocity_target: 100
 summary:
-  total_points: 109
-  completed_points: 73
+  total_points: 112
+  completed_points: 76
   remaining_points: 36
   notes: 'Sprint 7 focus: Benchmark framework, monorepo, telemetry.
 
@@ -60,7 +60,7 @@ epics:
       Generate performance regression reports.
 
 '
-    points: 23
+    points: 26
     completed_points: 13
     priority: P2
     marker: strategic
@@ -151,6 +151,39 @@ epics:
           - Scenario performance tracked across themes
           - Summary statistics available (mean by role, variance, top performers)
           - Historical trend tracking for benchmark quality
+      - id: 7-5
+        title: Add persona differential dimensions to benchmarking
+        description: |
+          Extend benchmarking to compare personas along categorical dimensions
+          beyond just theme names. This enables analysis like "comedic personas
+          outperform serious ones on creative tasks" or "historical personas
+          do better at research than action-oriented ones."
+
+          Differential dimensions to tag themes with:
+          - Tone: comedic / serious / satirical / dramatic
+          - Era: historical / contemporary / futuristic / timeless
+          - Genre: action / drama / sci-fi / fantasy / literary
+          - Energy: high-energy / measured / contemplative
+
+          Implementation:
+          1. Add dimension tags to theme YAML files (tone, era, genre, energy)
+          2. Extend job-fair aggregator to group results by dimension
+          3. Generate differential reports (e.g., "comedic vs serious" comparison)
+          4. Add dimension filters to benchmark queries
+
+          This builds on story 7-4's aggregation infrastructure.
+        points: 3
+        priority: P2
+        status: done
+        completed: 2026-01-10
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Theme files include dimension tags (tone, era, genre, energy)
+          - At least 10 anchor themes tagged with all dimensions
+          - Job-fair aggregator groups results by dimension
+          - Differential report shows performance by dimension value
+          - Statistical significance noted for dimension comparisons
+          - API endpoint for dimension-filtered queries
   - id: epic-18
     jira: MSSCI-11417
     title: Cyclist-Pennyfarthing Monorepo Consolidation
@@ -1227,7 +1260,9 @@ epics:
           - Allowlist for intentional overrides
         points: 2
         priority: P2
-        status: backlog
+        status: in_progress
+        assigned_to: Keith Avery
+        started: 2026-01-10
         repos: cyclist
         acceptance_criteria:
           - Sensitive path patterns defined and configurable

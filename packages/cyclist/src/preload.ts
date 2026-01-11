@@ -153,8 +153,8 @@ export interface ElectronBashAPI {
 }
 
 /**
- * Settings API interface (22-3, 22-5)
- * Provides access to Cyclist settings including approval gate and verbose mode
+ * Settings API interface (22-3, 22-4, 22-5)
+ * Provides access to Cyclist settings including approval gate, dangerous path gate, and verbose mode
  */
 export interface ElectronSettingsAPI {
   /**
@@ -166,6 +166,16 @@ export interface ElectronSettingsAPI {
    * Set the state of the Bash approval gate
    */
   setBashApprovalGate: (enabled: boolean) => Promise<void>;
+
+  /**
+   * Get the current state of the dangerous path gate (22-4)
+   */
+  getDangerousPathGate: () => Promise<boolean>;
+
+  /**
+   * Set the state of the dangerous path gate (22-4)
+   */
+  setDangerousPathGate: (enabled: boolean) => Promise<void>;
 
   /**
    * Get the current state of verbose mode (22-5)
@@ -183,6 +193,24 @@ export interface ElectronSettingsAPI {
   onVerboseModeChange: (callback: (event: unknown, enabled: boolean) => void) => void;
 }
 
+/**
+ * Path Approval API interface (22-4)
+ * Provides IPC channels for dangerous path approval workflow
+ */
+export interface ElectronPathAPI {
+  /**
+   * Subscribe to approval request events from main process
+   * Triggered when a dangerous path operation needs user approval
+   */
+  onApprovalRequest: (callback: (event: unknown, data: { path: string; toolId: string; category: string }) => void) => void;
+
+  /**
+   * Send approval response back to main process
+   * @param response - Approval decision
+   */
+  sendApprovalResponse: (response: { toolId: string; approved: boolean; alwaysAllow: boolean }) => Promise<void>;
+}
+
 export interface ElectronAPI {
   stats: ElectronDataAPI;
   persona: ElectronDataAPI;
@@ -197,7 +225,8 @@ export interface ElectronAPI {
   diff: ElectronDiffAPI; // E8-2: Diff viewer
   fileBrowser: ElectronFileBrowserAPI; // E8-3: File browser
   bash: ElectronBashAPI; // 22-3: Bash approval gate
-  settings: ElectronSettingsAPI; // 22-3: Settings API
+  path: ElectronPathAPI; // 22-4: Dangerous path approval gate
+  settings: ElectronSettingsAPI; // 22-3, 22-4: Settings API
 }
 
 // Check if we're running in Electron (has contextBridge available)
@@ -307,10 +336,20 @@ function createElectronAPI(): ElectronAPI {
         sendApprovalResponse: (response: { toolId: string; approved: boolean; alwaysAllow: boolean }) =>
           ipcRenderer.invoke('bash:approval-response', response),
       },
-      // Settings API (22-3, 22-5)
+      // Dangerous path approval API (22-4)
+      path: {
+        onApprovalRequest: (callback: (event: unknown, data: { path: string; toolId: string; category: string }) => void) => {
+          ipcRenderer.on('path:approval-request', callback);
+        },
+        sendApprovalResponse: (response: { toolId: string; approved: boolean; alwaysAllow: boolean }) =>
+          ipcRenderer.invoke('path:approval-response', response),
+      },
+      // Settings API (22-3, 22-4, 22-5)
       settings: {
         getBashApprovalGate: () => ipcRenderer.invoke('settings:getBashApprovalGate') as Promise<boolean>,
         setBashApprovalGate: (enabled: boolean) => ipcRenderer.invoke('settings:setBashApprovalGate', enabled),
+        getDangerousPathGate: () => ipcRenderer.invoke('settings:getDangerousPathGate') as Promise<boolean>,
+        setDangerousPathGate: (enabled: boolean) => ipcRenderer.invoke('settings:setDangerousPathGate', enabled),
         getVerboseMode: () => ipcRenderer.invoke('settings:getVerboseMode') as Promise<boolean>,
         setVerboseMode: (enabled: boolean) => ipcRenderer.invoke('settings:setVerboseMode', enabled) as Promise<boolean>,
         onVerboseModeChange: (callback: (event: unknown, enabled: boolean) => void) => {
@@ -380,10 +419,20 @@ function createElectronAPI(): ElectronAPI {
         sendApprovalResponse: (_response: { toolId: string; approved: boolean; alwaysAllow: boolean }) =>
           Promise.resolve(),
       },
-      // Settings API (22-3, 22-5) - test stub
+      // Dangerous path approval API (22-4) - test stub
+      path: {
+        onApprovalRequest: (_callback: (event: unknown, data: { path: string; toolId: string; category: string }) => void) => {
+          // No-op in test environment
+        },
+        sendApprovalResponse: (_response: { toolId: string; approved: boolean; alwaysAllow: boolean }) =>
+          Promise.resolve(),
+      },
+      // Settings API (22-3, 22-4, 22-5) - test stub
       settings: {
         getBashApprovalGate: () => Promise.resolve(false),
         setBashApprovalGate: (_enabled: boolean) => Promise.resolve(),
+        getDangerousPathGate: () => Promise.resolve(true),
+        setDangerousPathGate: (_enabled: boolean) => Promise.resolve(),
         getVerboseMode: () => Promise.resolve(false),
         setVerboseMode: (_enabled: boolean) => Promise.resolve(false),
         onVerboseModeChange: (_callback: (event: unknown, enabled: boolean) => void) => {
