@@ -129,6 +129,21 @@ export function setFileCount(count) {
 }
 
 /**
+ * Reset file panel state for session clear (23-2)
+ * Clears the file list DOM and resets the count badge
+ */
+export function resetState() {
+  // Clear the file list content
+  const fileList = document.getElementById('file-list');
+  if (fileList) {
+    fileList.innerHTML = '';
+  }
+  // Reset count badge
+  setFileCount(0);
+  console.log('[FilePanel] State reset');
+}
+
+/**
  * Handle mouse down on resize handle
  */
 function onResizeStart(e) {
@@ -247,6 +262,7 @@ export default {
   setWidth,
   getCurrentWidth,
   setFileCount,
+  resetState,
 };
 
 // Auto-initialize on DOM ready

@@ -7,6 +7,9 @@
  * - acceptEdits (ACCEPT): Auto-accept file edits
  */
 
+import { resetState as resetFilePanel } from './file-panel.js';
+import { resetState as resetDiffPanel } from './diff-panel.js';
+
 /**
  * Mode cycle order
  */
@@ -102,6 +105,16 @@ async function clearSession(event) {
         el.textContent = '—';
       }
     });
+
+    // Reset panel states (23-2)
+    resetFilePanel();
+    resetDiffPanel();
+
+    // Clear agent panel persona display (23-2 fix: use correct IDs)
+    const nameEl = document.getElementById('character-name');
+    const roleEl = document.getElementById('character-role');
+    if (nameEl) nameEl.textContent = '';
+    if (roleEl) roleEl.textContent = '';
   } catch (error) {
     console.error('Failed to clear session:', error);
   }

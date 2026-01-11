@@ -499,7 +499,9 @@ epics:
           - Agent panel / agent selection (shows stale agent)
         points: 2
         priority: P1
-        status: backlog
+        status: in_progress
+        started: 2026-01-11
+        assigned_to: Keith Avery
         repos: cyclist
         acceptance_criteria:
           - Clear resets changed files panel to empty
