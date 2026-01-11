@@ -587,7 +587,9 @@ epics:
 '
         points: 2
         priority: P3
-        status: backlog
+        status: in_progress
+        started: 2026-01-10
+        assigned_to: Keith Avery
         repos: cyclist
         acceptance_criteria:
           - CYCLIST_OTEL_EXPORT_ENDPOINT configurable
