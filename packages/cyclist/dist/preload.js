@@ -108,6 +108,16 @@ function createElectronAPI() {
                     ipcRenderer.on('file-browser:file-opened', callback);
                 },
             },
+            // Command API (23-3)
+            command: {
+                execute: (command) => ipcRenderer.invoke('command:execute', command),
+                onResult: (callback) => {
+                    ipcRenderer.on('command:result', (_event, result) => callback(result));
+                },
+                onError: (callback) => {
+                    ipcRenderer.on('command:error', (_event, error) => callback(error));
+                },
+            },
             // Bash approval API (22-3)
             bash: {
                 onApprovalRequest: (callback) => {
@@ -203,6 +213,16 @@ function createElectronAPI() {
                 openFile: (_path) => Promise.resolve(),
                 openInEditor: (_path, _lineNumber) => Promise.resolve(true),
                 onFileOpened: (_callback) => {
+                    // No-op in test environment
+                },
+            },
+            // Command API (23-3) - test stub
+            command: {
+                execute: (_command) => Promise.resolve(),
+                onResult: (_callback) => {
+                    // No-op in test environment
+                },
+                onError: (_callback) => {
                     // No-op in test environment
                 },
             },

@@ -131,6 +131,15 @@ export const IPC_FILE_BROWSER_CHANNELS = {
     OPEN_IN_EDITOR: 'file-browser:open-in-editor',
 };
 /**
+ * IPC channel names for command execution (23-3)
+ * Used to execute Claude Code commands via IPC rather than PTY injection
+ */
+export const IPC_COMMAND_CHANNELS = {
+    EXECUTE: 'command:execute',
+    RESULT: 'command:result',
+    ERROR: 'command:error',
+};
+/**
  * Pennyfarthing agent definitions for menu
  * Tactical agents follow the TDD flow: SM → TEA → Dev → Reviewer
  * Strategic agents handle architecture and planning
@@ -1115,6 +1124,50 @@ export function setupAuditLogIPCHandlers(ipcMain) {
     console.log('Audit log IPC handlers registered');
 }
 // =============================================================================
+// Command IPC Handlers (23-3)
+// =============================================================================
+// Track registered command channels for testing
+// Initialized with known channels so getCommandChannels() works before setupCommandIPCHandlers()
+let registeredCommandChannels = [IPC_COMMAND_CHANNELS.EXECUTE];
+/**
+ * Get list of registered command channels (for testing)
+ * 23-3: Allows tests to verify channel registration
+ */
+export function getCommandChannels() {
+    return [...registeredCommandChannels];
+}
+/**
+ * Set up IPC handlers for command execution
+ * 23-3: Handles Claude Code command execution via IPC
+ */
+export function setupCommandIPCHandlers(ipcMain) {
+    // Execute command in Claude PTY session
+    ipcMain.handle(IPC_COMMAND_CHANNELS.EXECUTE, async (_event, ...args) => {
+        const command = args[0];
+        // Get the Claude service singleton
+        const service = getClaudeService();
+        if (!service) {
+            broadcastToRenderer(IPC_COMMAND_CHANNELS.ERROR, 'Claude service not initialized');
+            throw new Error('Claude service not initialized');
+        }
+        try {
+            // Send command to Claude and stream results
+            // The command will be executed in the PTY session
+            for await (const message of service.sendMessage(command)) {
+                broadcastToRenderer(IPC_COMMAND_CHANNELS.RESULT, message);
+            }
+        }
+        catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            broadcastToRenderer(IPC_COMMAND_CHANNELS.ERROR, message);
+            throw error;
+        }
+    });
+    // Track registered channels
+    registeredCommandChannels = [IPC_COMMAND_CHANNELS.EXECUTE];
+    console.log('Command IPC handlers registered');
+}
+// =============================================================================
 // Session Persistence (E7-3: AC4)
 // =============================================================================
 // Session ID file path (stored in project directory)
@@ -1292,6 +1345,7 @@ if (isElectron) {
     setupFileBrowserIPCHandlers(ipcMain);
     setupSettingsIPCHandlers(ipcMain);
     setupAuditLogIPCHandlers(ipcMain);
+    setupCommandIPCHandlers(ipcMain); // 23-3: Command execution
     /**
      * Kill any orphaned Claude CLI processes from previous Cyclist sessions
      * B-24: Prevents duplicate message handling from zombie processes

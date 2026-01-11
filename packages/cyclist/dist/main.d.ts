@@ -92,6 +92,15 @@ export declare const IPC_FILE_BROWSER_CHANNELS: {
     readonly OPEN_IN_EDITOR: "file-browser:open-in-editor";
 };
 /**
+ * IPC channel names for command execution (23-3)
+ * Used to execute Claude Code commands via IPC rather than PTY injection
+ */
+export declare const IPC_COMMAND_CHANNELS: {
+    readonly EXECUTE: "command:execute";
+    readonly RESULT: "command:result";
+    readonly ERROR: "command:error";
+};
+/**
  * Agent definition for Electron menu
  */
 export interface AgentDefinition {
@@ -378,6 +387,18 @@ export declare function setupSettingsIPCHandlers(ipcMain: {
  * 22-6: Handles audit log get/filter/export/clear
  */
 export declare function setupAuditLogIPCHandlers(ipcMain: {
+    handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
+}): void;
+/**
+ * Get list of registered command channels (for testing)
+ * 23-3: Allows tests to verify channel registration
+ */
+export declare function getCommandChannels(): string[];
+/**
+ * Set up IPC handlers for command execution
+ * 23-3: Handles Claude Code command execution via IPC
+ */
+export declare function setupCommandIPCHandlers(ipcMain: {
     handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
 }): void;
 /**
