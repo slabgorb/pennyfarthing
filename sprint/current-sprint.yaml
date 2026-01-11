@@ -358,7 +358,7 @@ epics:
         pr_link: https://github.com/your-org/cyclist/pull/171
         acceptance_criteria:
           - Numbered lists without question context ignored
-          - "Here are the files" type lists not shown as choices
+          - '"Here are the files" type lists not shown as choices'
           - Long lists (>5) treated as enumeration by default
           - Reduces false positive rate significantly
       - id: 25-3
@@ -408,7 +408,7 @@ epics:
         acceptance_criteria:
           - Detects confirmation question patterns
           - Shows Yes/No buttons
-          - "Yes" sends affirmative response
+          - '"Yes" sends affirmative response'
           - Works even without numbered options
       - id: 25-5
         title: Structured Output Markers (Claude-side)
