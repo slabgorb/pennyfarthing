@@ -2,15 +2,17 @@
  * Job-Fair Aggregator Module
  *
  * Story 7-4: Aggregate Job-Fair Results into Benchmark Statistics
+ * Story 7-5: Add Persona Differential Dimensions to Benchmarking
  *
  * Aggregates job-fair results across multiple themes into unified benchmark
- * statistics with historical trend tracking.
+ * statistics with historical trend tracking and dimension-based analysis.
  *
  * Design decisions (from brainstorm):
  * - Latest run per theme only (avoids duplicate counting)
  * - Single-pass with pure functions (simple, testable)
  * - Single history file for trends (aggregate/history.yaml)
  * - Self-contained baseline (mean score as baseline reference)
+ * - Dimension grouping for comparative analysis (7-5)
  */
 export interface Performer {
     character: string;
@@ -40,6 +42,53 @@ export interface AggregateStats {
     by_role: Record<string, RoleStats>;
     overall_champions: OverallChampion[];
     historical_trend: TrendPoint[];
+}
+/** Valid dimension names for theme categorization */
+export type DimensionName = 'tone' | 'era' | 'genre' | 'energy';
+/** Valid values for each dimension */
+export interface DimensionValues {
+    tone: 'comedic' | 'serious' | 'satirical' | 'dramatic';
+    era: 'historical' | 'contemporary' | 'futuristic' | 'timeless';
+    genre: 'action' | 'drama' | 'sci-fi' | 'fantasy' | 'literary' | 'comedy';
+    energy: 'high-energy' | 'measured' | 'contemplative';
+}
+/** Dimensions block in theme YAML */
+export interface ThemeDimensions {
+    tone?: DimensionValues['tone'];
+    era?: DimensionValues['era'];
+    genre?: DimensionValues['genre'];
+    energy?: DimensionValues['energy'];
+}
+/** Stats for a specific dimension value (e.g., tone: "comedic") */
+export interface DimensionValueStats {
+    value: string;
+    themes: string[];
+    sample_size: number;
+    by_role: Record<string, {
+        mean_score: number;
+        std_dev: number;
+        n: number;
+    }>;
+    overall_mean: number;
+}
+/** Comparison between two dimension values */
+export interface DimensionComparison {
+    dimension: DimensionName;
+    value_a: string;
+    value_b: string;
+    delta: number;
+    significance: 'significant' | 'marginal' | 'not_significant';
+    by_role: Record<string, {
+        delta: number;
+        significance: 'significant' | 'marginal' | 'not_significant';
+    }>;
+}
+/** Full dimension aggregation result */
+export interface DimensionStats {
+    dimension: DimensionName;
+    last_updated: string;
+    values: DimensionValueStats[];
+    comparisons: DimensionComparison[];
 }
 /**
  * Aggregate job-fair results from all themes
@@ -77,4 +126,25 @@ export declare function getHistoricalTrend(role: string | undefined, resultsDir:
  * AC5: Historical trend tracking for benchmark quality
  */
 export declare function saveHistoricalSnapshot(resultsDir: string): Promise<void>;
+/**
+ * Aggregate job-fair results by a specific dimension
+ *
+ * Story 7-5: AC - Job-fair aggregator groups results by dimension
+ */
+export declare function aggregateByDimension(dimension: DimensionName, resultsDir: string, themesDir?: string): Promise<DimensionStats>;
+/**
+ * Get all available dimension values with theme counts
+ *
+ * Useful for API endpoints to show available filter options
+ */
+export declare function getDimensionValues(dimension: DimensionName, themesDir?: string): Promise<Array<{
+    value: string;
+    theme_count: number;
+}>>;
+/**
+ * Generate a differential report comparing dimension values
+ *
+ * Story 7-5: AC - Differential report shows performance by dimension value
+ */
+export declare function generateDifferentialReport(dimension: DimensionName, resultsDir: string, themesDir?: string): Promise<string>;
 //# sourceMappingURL=job-fair-aggregator.d.ts.map

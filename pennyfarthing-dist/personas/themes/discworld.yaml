@@ -15,6 +15,11 @@ theme:
   user_title: Commander
   portrait_style: ", ink and wash illustration, satirical fantasy, whimsical yet serious"
   tier: U
+  dimensions:
+    tone: satirical
+    era: timeless
+    genre: fantasy
+    energy: measured
 agents:
   orchestrator:
     character: DEATH
