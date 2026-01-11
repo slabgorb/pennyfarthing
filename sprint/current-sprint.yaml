@@ -5,17 +5,18 @@ sprint:
   status: active
   velocity_target: 30
 summary:
-  total_points: 27
+  total_points: 45
   completed_points: 14
-  remaining_points: 13
+  remaining_points: 31
   notes: |
-    Sprint 8 focus: State reconciliation, skill discovery, Cyclist web mode parity.
+    Sprint 8 focus: State reconciliation, skill discovery, smart question detection.
 
     EPICS:
-    - Epic 8 (State Reconciliation) - 8 pts - P1
+    - Epic 8 (State Reconciliation) - 8 pts - P1 - DONE
     - Epic 9 (Skill Discovery) - 13 pts - P2
-    - Epic 20 (Cyclist Web Mode) - 8 pts - P2
-    - Epic 22 carryover (22-6) - 1 pt - P3
+    - Epic 20 (Cyclist Web Mode) - 5 pts - P2 - DONE
+    - Epic 22 carryover (22-6) - 1 pt - P3 - DONE
+    - Epic 25 (Smart Question Detection) - 18 pts - P1
 epics:
   - id: epic-8
     title: Automatic State Reconciliation
@@ -293,3 +294,146 @@ epics:
           - Filter by tool type
           - Export to JSON
           - Log clears on session reset
+  - id: epic-25
+    title: Smart Question Detection & Quick Actions
+    jira_key: MSSCI-11530
+    description: |
+      Improve Cyclist's ability to detect when Claude is asking questions
+      or prompting for action. Reduce false positives (enumerations mistaken
+      for questions), catch handoff prompts, and add "yes, proceed" buttons.
+      Two-pronged approach: better parsing AND easier-to-parse Claude output.
+    points: 18
+    completed_points: 0
+    priority: P1
+    marker: ux
+    repos: cyclist, pennyfarthing
+    status: planned
+    stories:
+      - id: 25-1
+        title: Audit Current Quick Actions Detection
+        jira_key: MSSCI-11531
+        description: |
+          Review and document current detection patterns in quick-actions.js.
+          Identify false positive patterns (enumerations, lists that aren't choices).
+          Catalog missed patterns (handoffs, confirmations, proceed prompts).
+        points: 2
+        priority: P1
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Document all current detection patterns
+          - List of false positive examples
+          - List of missed pattern examples
+          - Recommendations for fixes
+      - id: 25-2
+        title: Fix Enumeration False Positives
+        jira_key: MSSCI-11532
+        description: |
+          Stop detecting numbered lists as choices when they're just enumerations.
+          Heuristics:
+          - Check if list items are actionable (verbs vs nouns)
+          - Check for question context before list
+          - Check list length (>5 items likely enumeration)
+          - Check for "here are" / "the following" prefixes
+        points: 3
+        priority: P1
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Numbered lists without question context ignored
+          - "Here are the files" type lists not shown as choices
+          - Long lists (>5) treated as enumeration by default
+          - Reduces false positive rate significantly
+      - id: 25-3
+        title: Detect Handoff & Action Prompts
+        jira_key: MSSCI-11533
+        description: |
+          Detect agent handoff and action prompts like:
+          - "invoke /reviewer to continue"
+          - "run /dev to implement"
+          - "use /sm to finish"
+          - "shall I proceed with..."
+          - "ready for review"
+          Show appropriate action button for each.
+        points: 3
+        priority: P1
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Detects "invoke X" patterns
+          - Detects "ready for X" patterns
+          - Shows button to invoke the suggested command
+          - Works for all Pennyfarthing agents
+      - id: 25-4
+        title: Universal 'Yes, Proceed' Button
+        jira_key: MSSCI-11534
+        description: |
+          Add smart "Yes, proceed" detection for general confirmations:
+          - "shall I..." / "should I..."
+          - "would you like me to..."
+          - "do you want me to..."
+          - "ready to..." / "proceed with..."
+          Always show "Yes" and "No" buttons for these.
+        points: 2
+        priority: P1
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Detects confirmation question patterns
+          - Shows Yes/No buttons
+          - "Yes" sends affirmative response
+          - Works even without numbered options
+      - id: 25-5
+        title: Structured Output Markers (Claude-side)
+        jira_key: MSSCI-11537
+        description: |
+          Add optional markers in Pennyfarthing agent output to make
+          parsing easier. Agents can emit structured hints:
+          - <!-- QUESTION: yes/no --> for confirmations
+          - <!-- CHOICES: 1,2,3 --> for numbered choices
+          - <!-- HANDOFF: /reviewer --> for handoffs
+          Cyclist detects these for guaranteed accurate parsing.
+        points: 3
+        priority: P2
+        status: backlog
+        repos: pennyfarthing, cyclist
+        acceptance_criteria:
+          - Marker format defined and documented
+          - Key agents emit markers for questions
+          - Cyclist parses markers with 100% accuracy
+          - Markers hidden from user display
+      - id: 25-6
+        title: Confidence Scoring for Detection
+        jira_key: MSSCI-11535
+        description: |
+          Add confidence scores to quick action detection:
+          - High confidence: show buttons prominently
+          - Medium confidence: show buttons subtly
+          - Low confidence: don't show buttons
+          Tunable thresholds in settings.
+        points: 2
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Detection returns confidence score
+          - UI varies by confidence level
+          - Threshold configurable in settings
+          - Reduces noise from uncertain detections
+      - id: 25-7
+        title: Quick Action Analytics
+        jira_key: MSSCI-11536
+        description: |
+          Track quick action usage to improve detection:
+          - Log when buttons shown vs clicked
+          - Track false positive dismissals
+          - Identify patterns that need tuning
+          Report in diagnostics panel.
+        points: 3
+        priority: P3
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Usage logged to session
+          - False positive tracking
+          - Analytics viewable in diagnostics
