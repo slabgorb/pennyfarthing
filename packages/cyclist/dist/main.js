@@ -566,24 +566,91 @@ export const USAGE_POLL_INTERVAL_MS = 60000;
  */
 let usagePollTimer = null;
 /**
+ * Max tokens for rate limit calculation (Claude Max plan)
+ * This is the token limit per 5-hour block
+ */
+const MAX_TOKENS_PER_BLOCK = 185_707_244;
+/**
+ * Fetch usage stats from ccusage CLI
+ * Uses local JSONL files to calculate 5-hour and weekly usage
+ */
+async function fetchUsageFromCcusage() {
+    try {
+        // Run ccusage blocks --json to get 5-hour block data
+        const output = execSync('npx ccusage@latest blocks --json --offline 2>/dev/null', {
+            encoding: 'utf-8',
+            timeout: 30000,
+            stdio: ['pipe', 'pipe', 'pipe'],
+        });
+        const data = JSON.parse(output);
+        const blocks = data.blocks || [];
+        // Find the active block (current 5-hour window)
+        const activeBlock = blocks.find((b) => b.isActive);
+        // Calculate 5-hour percentage from active block
+        let fiveHourPercent = 0;
+        let fiveHourResetAt = null;
+        if (activeBlock) {
+            fiveHourPercent = Math.round((activeBlock.totalTokens / MAX_TOKENS_PER_BLOCK) * 100);
+            fiveHourResetAt = activeBlock.endTime || null;
+        }
+        // Calculate weekly usage from last 7 days of blocks
+        const now = new Date();
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        // Sum tokens from blocks in the last 7 days
+        let weeklyTokens = 0;
+        for (const block of blocks) {
+            const blockStart = new Date(block.startTime);
+            if (blockStart >= weekAgo) {
+                weeklyTokens += block.totalTokens || 0;
+            }
+        }
+        // Weekly limit is roughly 33.6 blocks worth (7 days * 24 hours / 5 hours per block)
+        const weeklyMaxTokens = MAX_TOKENS_PER_BLOCK * 33.6;
+        const weeklyPercent = Math.round((weeklyTokens / weeklyMaxTokens) * 100);
+        // Weekly reset is end of current week (Sunday midnight UTC)
+        const daysUntilSunday = (7 - now.getUTCDay()) % 7 || 7;
+        const weeklyReset = new Date(now);
+        weeklyReset.setUTCDate(weeklyReset.getUTCDate() + daysUntilSunday);
+        weeklyReset.setUTCHours(0, 0, 0, 0);
+        return {
+            fiveHourPercent: Math.min(fiveHourPercent, 100),
+            weeklyPercent: Math.min(weeklyPercent, 100),
+            fiveHourResetAt,
+            weeklyResetAt: weeklyReset.toISOString(),
+            planType: 'max',
+        };
+    }
+    catch (error) {
+        console.warn('[UsageStats] Failed to fetch from ccusage:', error);
+        return null;
+    }
+}
+/**
  * Start polling usage stats
- * Calls /status periodically and parses output for usage limits
- *
- * TODO: Implement actual /status parsing when format is determined.
- * Until then, UI shows placeholder values (—%).
+ * Uses ccusage CLI to read local JSONL files for usage data
  */
 export function startUsagePolling(_projectDir) {
+    // Initial fetch
+    fetchUsageFromCcusage().then((stats) => {
+        if (stats) {
+            updateUsageStats(stats);
+            console.log('[UsageStats] Initial fetch:', stats.fiveHourPercent + '% (5hr),', stats.weeklyPercent + '% (weekly)');
+        }
+    });
     // Set up polling interval
-    // When /status parsing is implemented, this will fetch and broadcast real data
-    usagePollTimer = setInterval(() => {
-        // TODO: Call /status, parse output, and update usage stats
-        // For now, polling is set up but no data is broadcast until real integration
+    usagePollTimer = setInterval(async () => {
+        const stats = await fetchUsageFromCcusage();
+        if (stats) {
+            updateUsageStats(stats);
+        }
     }, USAGE_POLL_INTERVAL_MS);
+    console.log('[UsageStats] Polling started (every', USAGE_POLL_INTERVAL_MS / 1000, 's)');
     // Return cleanup function
     return () => {
         if (usagePollTimer) {
             clearInterval(usagePollTimer);
             usagePollTimer = null;
+            console.log('[UsageStats] Polling stopped');
         }
     };
 }
