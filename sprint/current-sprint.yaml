@@ -25,11 +25,11 @@ epics:
       PRs get merged outside the workflow - the framework should detect
       and reconcile this automatically.
     points: 8
-    completed_points: 3
+    completed_points: 8
     priority: P1
     marker: high-priority
     repos: pennyfarthing
-    status: in_progress
+    status: done
     stories:
       - id: 8-1
         title: Git hook for PR merge detection
@@ -78,8 +78,9 @@ epics:
           - Next session loads and validates checkpoint
         points: 2
         priority: P2
-        status: in_progress
+        status: done
         started: 2026-01-11
+        completed: 2026-01-11
         assigned_to: Keith Avery
         repos: pennyfarthing
         acceptance_criteria:
@@ -198,7 +199,7 @@ epics:
     completed_points: 0
     priority: P2
     marker: quick-win
-    repos: cyclist
+    repos: pennyfarthing
     status: planned
     stories:
       - id: 20-1
@@ -215,8 +216,10 @@ epics:
           Current workaround: `just claude-with-cyclist` launcher script
         points: 3
         priority: P1
-        status: backlog
-        repos: cyclist
+        status: in_progress
+        started: 2026-01-11
+        assigned_to: Keith Avery
+        repos: pennyfarthing
         acceptance_criteria:
           - Token stats appear in web mode without manual OTEL config
           - Clear error message if OTEL not configured
@@ -234,7 +237,7 @@ epics:
         points: 2
         priority: P2
         status: backlog
-        repos: cyclist
+        repos: pennyfarthing
         acceptance_criteria:
           - Feature parity matrix documented
           - Web alternatives identified for key features
@@ -250,7 +253,7 @@ epics:
         points: 3
         priority: P2
         status: backlog
-        repos: cyclist
+        repos: pennyfarthing
         acceptance_criteria:
           - Web server can spawn Claude Code subprocess
           - OTEL automatically configured

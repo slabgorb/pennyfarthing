@@ -2,6 +2,7 @@ import express, { Express } from 'express';
 import { fileURLToPath } from 'url';
 import { createServer, Server } from 'http';
 import { join } from 'path';
+import { existsSync, writeFileSync, unlinkSync, readFileSync } from 'fs';
 
 // Path resolution
 import { publicDir, nodeModulesDir, portraitsDir, getProjectDirectory } from './paths.js';
@@ -96,4 +97,73 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   server.listen(PORT, () => {
     console.log(`Cyclist running at http://localhost:${PORT}`);
   });
+}
+
+// ============================================================================
+// Port File Discovery Pattern (Story 20-1)
+// ============================================================================
+
+const PORT_FILE_NAME = '.cyclist-port';
+
+/**
+ * Write the server port to a .cyclist-port file for auto-discovery.
+ * Called when Cyclist server starts to enable hook-based OTEL configuration.
+ */
+export function writePortFile(projectDir: string, port: number): void {
+  const portFilePath = join(projectDir, PORT_FILE_NAME);
+  writeFileSync(portFilePath, String(port));
+}
+
+/**
+ * Remove the .cyclist-port file during shutdown.
+ * Prevents stale port files from pointing to non-existent servers.
+ */
+export function cleanupPortFile(projectDir: string): void {
+  const portFilePath = join(projectDir, PORT_FILE_NAME);
+  if (existsSync(portFilePath)) {
+    unlinkSync(portFilePath);
+  }
+}
+
+/**
+ * Read the port number from .cyclist-port file.
+ * Returns null if file doesn't exist, is empty, or contains invalid content.
+ */
+export function readPortFile(projectDir: string): number | null {
+  const portFilePath = join(projectDir, PORT_FILE_NAME);
+
+  if (!existsSync(portFilePath)) {
+    return null;
+  }
+
+  const content = readFileSync(portFilePath, 'utf-8').trim();
+
+  if (!content) {
+    return null;
+  }
+
+  const port = parseInt(content, 10);
+
+  if (isNaN(port)) {
+    return null;
+  }
+
+  return port;
+}
+
+/**
+ * Get OTEL configuration environment variables based on port file.
+ * Returns null if no valid port file exists.
+ */
+export function getOtelConfig(projectDir: string): { OTEL_EXPORTER_OTLP_PROTOCOL: string; OTEL_EXPORTER_OTLP_ENDPOINT: string } | null {
+  const port = readPortFile(projectDir);
+
+  if (port === null) {
+    return null;
+  }
+
+  return {
+    OTEL_EXPORTER_OTLP_PROTOCOL: 'http/json',
+    OTEL_EXPORTER_OTLP_ENDPOINT: `http://localhost:${port}`,
+  };
 }
