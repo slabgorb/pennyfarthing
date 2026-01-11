@@ -519,6 +519,7 @@ epics:
           - Clear resets agent panel (no agent selected)
           - Clear resets context % to 0 or "—"
           - Clear resets token counts to 0 or "—"
+        archived: 2026-01-11
       - id: 23-3
         title: Command Abstraction Layer (IPC)
         description: |
