@@ -500,6 +500,62 @@ html, body {
   animation: pulse 0.5s infinite;
 }
 
+/* 23-1: Usage limits display */
+.usage-5hr,
+.usage-weekly {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-size: 0.75rem;
+  cursor: help;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.usage-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  opacity: 0.8;
+}
+
+.usage-value {
+  font-weight: 600;
+}
+
+/* 23-1: Usage level colors (based on remaining capacity) */
+/* Green = safe (>50% remaining) */
+.usage-safe {
+  background: rgba(46, 204, 113, 0.15);
+  color: var(--status-ready, #2ecc71);
+}
+
+.usage-safe .usage-value {
+  color: var(--status-ready, #2ecc71);
+}
+
+/* Yellow = warning (25-50% remaining) */
+.usage-warning {
+  background: rgba(241, 196, 15, 0.15);
+  color: var(--status-working, #f1c40f);
+}
+
+.usage-warning .usage-value {
+  color: var(--status-working, #f1c40f);
+}
+
+/* Red = danger (<25% remaining) */
+.usage-danger {
+  background: rgba(231, 76, 60, 0.15);
+  color: var(--status-error, #e74c3c);
+}
+
+.usage-danger .usage-value {
+  color: var(--status-error, #e74c3c);
+}
+
 /* B-20: Editor row with controls on right */
 #editor-row {
   display: flex;

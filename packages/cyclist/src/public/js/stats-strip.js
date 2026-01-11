@@ -1,6 +1,6 @@
 /**
  * Stats Strip - Compact stats display in prompt bar (B-22)
- * Shows model badge, token counts, and context meter
+ * Shows model badge, context meter, and usage limits (23-1)
  */
 
 /**
@@ -37,6 +37,57 @@ function updateContextLevel(contextMini, percent) {
   } else {
     contextMini.classList.add('level-safe');
   }
+}
+
+/**
+ * Update usage level class based on remaining percentage (23-1)
+ * Note: Usage shows remaining capacity, so higher is better
+ * @param {HTMLElement} element - The usage element
+ * @param {number} percent - Remaining usage percentage (higher = more remaining)
+ */
+function updateUsageLevel(element, percent) {
+  if (!element) return;
+
+  // Remove all level classes
+  element.classList.remove('usage-safe', 'usage-warning', 'usage-danger');
+
+  // Add appropriate level class based on remaining percentage
+  // Green (>50%), Yellow (25-50%), Red (<25%)
+  if (percent > 50) {
+    element.classList.add('usage-safe');
+  } else if (percent > 25) {
+    element.classList.add('usage-warning');
+  } else {
+    element.classList.add('usage-danger');
+  }
+}
+
+/**
+ * Format relative time until reset (23-1)
+ * @param {string|Date} resetAt - ISO timestamp or Date
+ * @returns {string} - Formatted string (e.g., "2h 34m", "5d 3h")
+ */
+function formatResetTime(resetAt) {
+  if (!resetAt) return 'Unknown';
+
+  const reset = new Date(resetAt);
+  const now = new Date();
+  const diffMs = reset.getTime() - now.getTime();
+
+  if (diffMs <= 0) return 'Resetting...';
+
+  const hours = Math.floor(diffMs / (1000 * 60 * 60));
+  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+  const days = Math.floor(hours / 24);
+  const remainingHours = hours % 24;
+
+  if (days > 0) {
+    return `${days}d ${remainingHours}h`;
+  }
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes}m`;
 }
 
 /**
@@ -89,6 +140,54 @@ function updateContextMeter(percent, tokens) {
 }
 
 /**
+ * Update usage meter display (23-1)
+ * @param {Object} usageStats - Usage stats object
+ * @param {number} usageStats.fiveHourPercent - 5-hour remaining percentage
+ * @param {number} usageStats.weeklyPercent - Weekly remaining percentage
+ * @param {string} usageStats.fiveHourResetAt - ISO timestamp for 5-hour reset
+ * @param {string} usageStats.weeklyResetAt - ISO timestamp for weekly reset
+ */
+function updateUsageMeter(usageStats) {
+  if (!usageStats) return;
+
+  // Update 5-hour usage
+  const usage5hr = document.querySelector('#stats-strip .usage-5hr');
+  if (usage5hr) {
+    const valueSpan = usage5hr.querySelector('.usage-value');
+    if (valueSpan) {
+      // Calculate remaining percentage (100 - used)
+      const remaining5hr = Math.max(0, 100 - (usageStats.fiveHourPercent || 0));
+      valueSpan.textContent = `${Math.round(remaining5hr)}%`;
+    }
+    // Update tooltip with reset time
+    if (usageStats.fiveHourResetAt) {
+      usage5hr.title = `5-hour block: Resets in ${formatResetTime(usageStats.fiveHourResetAt)}`;
+    }
+    // Update level class
+    const remaining5hr = Math.max(0, 100 - (usageStats.fiveHourPercent || 0));
+    updateUsageLevel(usage5hr, remaining5hr);
+  }
+
+  // Update weekly usage
+  const usageWeekly = document.querySelector('#stats-strip .usage-weekly');
+  if (usageWeekly) {
+    const valueSpan = usageWeekly.querySelector('.usage-value');
+    if (valueSpan) {
+      // Calculate remaining percentage (100 - used)
+      const remainingWeekly = Math.max(0, 100 - (usageStats.weeklyPercent || 0));
+      valueSpan.textContent = `${Math.round(remainingWeekly)}%`;
+    }
+    // Update tooltip with reset time
+    if (usageStats.weeklyResetAt) {
+      usageWeekly.title = `Weekly: Resets in ${formatResetTime(usageStats.weeklyResetAt)}`;
+    }
+    // Update level class
+    const remainingWeekly = Math.max(0, 100 - (usageStats.weeklyPercent || 0));
+    updateUsageLevel(usageWeekly, remainingWeekly);
+  }
+}
+
+/**
  * Initialize stats strip IPC subscriptions
  * Reuses existing channels from stats.js
  */
@@ -121,27 +220,7 @@ async function initStatsStrip() {
     // Don't update context from stats channel - it's always '—'
   });
 
-  // Token stats subscription
-  if (window.electronAPI?.tokenStats) {
-    // Get initial token stats
-    try {
-      const tokenStats = await window.electronAPI.tokenStats.get();
-      if (tokenStats) {
-        updateStripStat('strip-input', '↓ ' + formatTokenCount(tokenStats.inputTokens));
-        updateStripStat('strip-output', '↑ ' + formatTokenCount(tokenStats.outputTokens));
-      }
-    } catch (err) {
-      console.error('[StatsStrip] Failed to get initial token stats:', err);
-    }
-
-    // Subscribe to token stats updates
-    window.electronAPI.tokenStats.onUpdate((_event, tokenStats) => {
-      if (tokenStats) {
-        updateStripStat('strip-input', '↓ ' + formatTokenCount(tokenStats.inputTokens));
-        updateStripStat('strip-output', '↑ ' + formatTokenCount(tokenStats.outputTokens));
-      }
-    });
-  }
+  // 23-1: Token stats subscription removed - replaced by usage limits
 
   // Context usage - subscribe to main process polling updates (B-19)
   // Context data includes both percent and tokens (ground truth from transcript)
@@ -168,6 +247,30 @@ async function initStatsStrip() {
     }
   }
 
+  // 23-1: Usage stats subscription
+  if (window.electronAPI?.usageStats) {
+    // Get initial usage stats via IPC
+    if (window.electronAPI.usageStats.get) {
+      try {
+        const usage = await window.electronAPI.usageStats.get();
+        if (usage) {
+          updateUsageMeter(usage);
+        }
+      } catch (err) {
+        console.error('[StatsStrip] Failed to get initial usage stats:', err);
+      }
+    }
+
+    // Subscribe to usage stats updates from main process polling
+    if (window.electronAPI.usageStats.onUpdate) {
+      window.electronAPI.usageStats.onUpdate((_event, usage) => {
+        if (usage) {
+          updateUsageMeter(usage);
+        }
+      });
+    }
+  }
+
   console.log('[StatsStrip] IPC connected');
 }
 
@@ -178,3 +281,4 @@ initStatsStrip();
 window.initStatsStrip = initStatsStrip;
 window.updateStripStat = updateStripStat;
 window.updateContextMeter = updateContextMeter;
+window.updateUsageMeter = updateUsageMeter;
