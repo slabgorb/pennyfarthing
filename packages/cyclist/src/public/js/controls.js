@@ -5,6 +5,8 @@
  * - default (MANUAL): Ask permission for everything
  * - plan (PLAN): Read-only planning mode
  * - acceptEdits (ACCEPT): Auto-accept file edits
+ *
+ * 23-4: Adds Cmd+Shift+K keyboard shortcut for compact command
  */
 
 import { resetState as resetFilePanel } from './file-panel.js';
@@ -121,6 +123,29 @@ async function clearSession(event) {
 }
 
 /**
+ * 23-4: Handle keyboard shortcut for compact command
+ * Cmd+Shift+K (Mac) or Ctrl+Shift+K (Windows/Linux)
+ */
+function handleCompactShortcut(event) {
+  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+  const modifierKey = isMac ? event.metaKey : event.ctrlKey;
+
+  if (modifierKey && event.shiftKey && event.key === 'K') {
+    event.preventDefault();
+    event.stopPropagation();
+
+    console.log('[Controls] Compact shortcut triggered (Cmd/Ctrl+Shift+K)');
+
+    // Call executeCompact from stats-strip.js if available
+    if (window.executeCompact) {
+      window.executeCompact();
+    } else {
+      console.warn('[Controls] executeCompact not available');
+    }
+  }
+}
+
+/**
  * Initialize controls
  */
 function initControls() {
@@ -160,6 +185,10 @@ function initControls() {
       })
       .catch(err => console.error('Failed to get initial mode:', err));
   }
+
+  // 23-4: Register global keyboard shortcut for compact (Cmd+Shift+K / Ctrl+Shift+K)
+  document.addEventListener('keydown', handleCompactShortcut);
+  console.log('[Controls] Compact keyboard shortcut registered (Cmd/Ctrl+Shift+K)');
 }
 
 // Initialize when DOM is ready
