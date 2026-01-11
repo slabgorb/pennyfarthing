@@ -168,7 +168,9 @@ epics:
           - Auto-update on skill changes
         points: 3
         priority: P2
-        status: backlog
+        status: in_progress
+        started: 2026-01-11
+        assigned_to: Keith Avery
         repos: pennyfarthing
         acceptance_criteria:
           - docs/SKILLS.md auto-generated
