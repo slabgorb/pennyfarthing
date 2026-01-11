@@ -148,7 +148,9 @@ epics:
           - Present top 3 suggestions
         points: 3
         priority: P2
-        status: backlog
+        status: in_progress
+        started: 2026-01-11
+        assigned_to: Keith Avery
         repos: pennyfarthing
         acceptance_criteria:
           - Agents suggest skills when relevant
