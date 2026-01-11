@@ -18,6 +18,7 @@ export {
   PHASE_TO_AGENT,
   stripMarkdown,
   truncateText,
+  detectStructuredMarkers,
   detectQuestionPattern,
   detectHandoffPattern,
   detectListChoices,

@@ -244,6 +244,12 @@ $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 
 **If > 70%:** Tell user: "Context high. Start fresh with `/sm` (approve) or `/dev` (reject)"
 
+**Handoff Marker:** Include at end of handoff message:
+```
+<!-- CYCLIST:HANDOFF:/sm -->   # For approvals
+<!-- CYCLIST:HANDOFF:/dev -->  # For rejections
+```
+
 Handoff subagents:
 
 ```yaml

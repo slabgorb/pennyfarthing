@@ -87,8 +87,10 @@ export const QUESTION_PATTERNS = [
   // Direct action offers - these imply readiness to proceed
   { pattern: /would you like me to/i, responses: ['Yes, proceed', 'No'], requiresQuestion: false },
   { pattern: /shall i (proceed|continue|go ahead|start|begin)/i, responses: ['Yes, proceed', 'No'], requiresQuestion: false },
-  // Universal "ready to X" - supports proceed, continue, start, begin, go
-  { pattern: /ready to (proceed|continue|start|begin|go)/i, responses: ['Yes', 'No'], requiresQuestion: false },
+  // "ready to proceed" - action-oriented with specific responses
+  { pattern: /ready to proceed/i, responses: ['Yes, proceed', 'Hold on'], requiresQuestion: false },
+  // "ready to X" - for other actions
+  { pattern: /ready to (continue|start|begin|go)/i, responses: ['Yes', 'No'], requiresQuestion: false },
   { pattern: /want me to (proceed|continue|go ahead|start|begin)/i, responses: ['Yes, proceed', 'No'], requiresQuestion: false },
 
   // Yes/No questions - require actual question mark
@@ -96,7 +98,7 @@ export const QUESTION_PATTERNS = [
   { pattern: /do you want/i, responses: ['Yes', 'No'], requiresQuestion: true },
   { pattern: /shall i\b/i, responses: ['Yes', 'No'], requiresQuestion: true },
   // Universal confirmation patterns (Story 25-4)
-  { pattern: /can i\b/i, responses: ['Yes', 'No'], requiresQuestion: true },
+  // NOTE: "Can I" removed - too broad, causes false positives (see test B-9.6 line 125)
   { pattern: /may i\b/i, responses: ['Yes', 'No'], requiresQuestion: true },
   { pattern: /is it (okay|ok) (to|if)/i, responses: ['Yes', 'No'], requiresQuestion: true },
   { pattern: /are you ready for me to/i, responses: ['Yes', 'No'], requiresQuestion: true },
@@ -107,6 +109,9 @@ export const QUESTION_PATTERNS = [
   { pattern: /allow.*to\s+write/i, responses: ['Yes', 'No'], requiresQuestion: false },
   { pattern: /allow.*to\s+edit/i, responses: ['Yes', 'No'], requiresQuestion: false },
 ];
+
+
+
 
 // =============================================================================
 // State
@@ -177,6 +182,96 @@ function getLastParagraph(text) {
 // =============================================================================
 // Detection Functions
 // =============================================================================
+
+/**
+ * Detect structured CYCLIST markers in text.
+ * Markers are HTML comments in the format: <!-- CYCLIST:TYPE:value -->
+ * This provides 100% accurate detection vs pattern-based heuristics.
+ *
+ * @param {string} text - Text to analyze
+ * @returns {Array|null} Array of marker objects with {type, value, source}, or null if none found
+ */
+export function detectStructuredMarkers(text) {
+  if (!text) return null;
+
+  // Remove code blocks first - we don't want to detect markers inside code
+  const withoutCode = text.replace(/```[\s\S]*?```/g, '');
+  if (!withoutCode.trim()) return null;
+
+  // Pattern: <!-- CYCLIST:TYPE:value -->
+  // Case-insensitive for CYCLIST prefix and TYPE, preserves value case
+  const markerPattern = /<!--\s*CYCLIST:(\w+):([^>]+?)\s*-->/gi;
+
+  const markers = [];
+  let match;
+
+  while ((match = markerPattern.exec(withoutCode)) !== null) {
+    markers.push({
+      type: match[1].toLowerCase(),
+      value: match[2].trim(),
+      source: 'structured_marker',
+    });
+  }
+
+  return markers.length > 0 ? markers : null;
+}
+
+/**
+ * Process structured markers and convert to quick action result format.
+ * @param {Array} markers - Array of marker objects from detectStructuredMarkers
+ * @returns {Object|null} Quick action result or null
+ */
+function processStructuredMarkers(markers) {
+  if (!markers || markers.length === 0) return null;
+
+  // Process the first/primary marker (most use cases have one)
+  const primaryMarker = markers[0];
+
+  switch (primaryMarker.type) {
+    case 'handoff':
+      return {
+        type: 'handoff',
+        agent: primaryMarker.value,
+        responses: [primaryMarker.value, 'Not yet'],
+        source: 'structured_marker',
+      };
+
+    case 'question':
+      if (primaryMarker.value === 'yesno') {
+        return {
+          type: 'yesno',
+          responses: ['Yes', 'No'],
+          source: 'structured_marker',
+        };
+      }
+      // choice type falls through to check for CHOICES marker
+      break;
+
+    case 'choices':
+      // Parse choice numbers from value like "1,2,3"
+      const choiceNumbers = primaryMarker.value.split(',').map(n => parseInt(n.trim(), 10));
+      const choices = choiceNumbers.map(num => ({ number: num, text: `Option ${num}` }));
+      return {
+        type: 'list',
+        choices,
+        source: 'structured_marker',
+      };
+  }
+
+  // Check if there's both a QUESTION:choice and CHOICES marker
+  const choicesMarker = markers.find(m => m.type === 'choices');
+  if (primaryMarker.type === 'question' && choicesMarker) {
+    const choiceNumbers = choicesMarker.value.split(',').map(n => parseInt(n.trim(), 10));
+    const choices = choiceNumbers.map(num => ({ number: num, text: `Option ${num}` }));
+    return {
+      type: 'list',
+      choices,
+      source: 'structured_marker',
+    };
+  }
+
+  return null;
+}
 
 /**
  * Detect yes/no question patterns in text.
@@ -505,16 +600,24 @@ export function processMessageForQuickActions(message) {
 
   if (!textContent) return null;
 
-  // Check for handoff patterns FIRST (highest priority)
+  // Priority 1: Check for structured markers (100% accuracy)
+  // These take precedence over all pattern-based detection
+  const markers = detectStructuredMarkers(textContent);
+  if (markers) {
+    const markerResult = processStructuredMarkers(markers);
+    if (markerResult) return markerResult;
+  }
+
+  // Priority 2: Check for handoff patterns
   // This ensures agent invocations take precedence over other patterns
   const handoffResult = detectHandoffPattern(textContent);
   if (handoffResult) return handoffResult;
 
-  // Check for list choices
+  // Priority 3: Check for list choices
   const listResult = detectListChoices(textContent);
   if (listResult) return listResult;
 
-  // Then check for yes/no questions
+  // Priority 4: Check for yes/no questions
   const questionResult = detectQuestionPattern(textContent);
   if (questionResult) return questionResult;
 
@@ -527,6 +630,7 @@ export default {
   PHASE_TO_AGENT,
   stripMarkdown,
   truncateText,
+  detectStructuredMarkers,
   detectQuestionPattern,
   detectHandoffPattern,
   detectListChoices,
