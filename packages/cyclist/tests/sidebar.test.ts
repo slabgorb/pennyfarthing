@@ -86,9 +86,12 @@ describe('E1-3: Sidebar Layout', () => {
       expect(modelBadge).not.toBeNull();
     });
 
-    it('should have token stats in stats strip', () => {
-      const tokenStats = document.querySelector('#stats-strip .token-stats');
-      expect(tokenStats).not.toBeNull();
+    // 23-1: Token stats replaced by usage limits
+    it('should have usage stats in stats strip', () => {
+      const usage5hr = document.querySelector('#stats-strip .usage-5hr');
+      const usageWeekly = document.querySelector('#stats-strip .usage-weekly');
+      expect(usage5hr).not.toBeNull();
+      expect(usageWeekly).not.toBeNull();
     });
 
     it('should have context meter in stats strip', () => {
