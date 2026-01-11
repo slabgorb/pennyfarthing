@@ -15,6 +15,11 @@ theme:
   user_title: Brave Sir User
   portrait_style: ", Terry Gilliam animation style, cut-out collage, absurdist Victorian"
   tier: A
+  dimensions:
+    tone: comedic
+    era: historical
+    genre: comedy
+    energy: high-energy
 
 agents:
   orchestrator:

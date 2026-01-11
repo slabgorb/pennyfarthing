@@ -19,6 +19,11 @@ theme:
   user_title: Friend
   portrait_style: ", animated epic fantasy, elvish script border"
   tier: F
+  dimensions:
+    tone: serious
+    era: timeless
+    genre: fantasy
+    energy: contemplative
 
 agents:
   orchestrator:

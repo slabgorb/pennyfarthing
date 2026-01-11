@@ -2,19 +2,25 @@
  * Job-Fair Aggregator Module
  *
  * Story 7-4: Aggregate Job-Fair Results into Benchmark Statistics
+ * Story 7-5: Add Persona Differential Dimensions to Benchmarking
  *
  * Aggregates job-fair results across multiple themes into unified benchmark
- * statistics with historical trend tracking.
+ * statistics with historical trend tracking and dimension-based analysis.
  *
  * Design decisions (from brainstorm):
  * - Latest run per theme only (avoids duplicate counting)
  * - Single-pass with pure functions (simple, testable)
  * - Single history file for trends (aggregate/history.yaml)
  * - Self-contained baseline (mean score as baseline reference)
+ * - Dimension grouping for comparative analysis (7-5)
  */
 import { readdirSync, readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
+// ESM-compatible __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 // ============================================================================
 // Helper Functions
 // ============================================================================
@@ -309,5 +315,233 @@ export async function saveHistoricalSnapshot(resultsDir) {
     // Save updated history
     const historyPath = getHistoryFilePath(resultsDir);
     writeFileSync(historyPath, stringifyYaml({ snapshots: existingTrend }));
+}
+// ============================================================================
+// Story 7-5: Dimension Aggregation Functions
+// ============================================================================
+/** Default path to themes directory */
+const DEFAULT_THEMES_DIR = join(__dirname, '../../../../pennyfarthing-dist/personas/themes');
+/**
+ * Load dimensions from a theme YAML file
+ */
+function loadThemeDimensions(themeName, themesDir = DEFAULT_THEMES_DIR) {
+    const themePath = join(themesDir, `${themeName}.yaml`);
+    if (!existsSync(themePath))
+        return null;
+    try {
+        const content = readFileSync(themePath, 'utf-8');
+        const data = parseYaml(content);
+        return data.theme?.dimensions || null;
+    }
+    catch {
+        return null;
+    }
+}
+/**
+ * Calculate statistical significance using simplified t-test approximation
+ * Returns significance level based on effect size and sample sizes
+ */
+function calculateSignificance(mean1, mean2, std1, std2, n1, n2) {
+    if (n1 < 2 || n2 < 2)
+        return 'not_significant';
+    const pooledStd = Math.sqrt(((n1 - 1) * std1 * std1 + (n2 - 1) * std2 * std2) / (n1 + n2 - 2));
+    if (pooledStd === 0)
+        return 'not_significant';
+    // Calculate effect size (Cohen's d)
+    const effectSize = Math.abs(mean1 - mean2) / pooledStd;
+    // Effect size thresholds: small=0.2, medium=0.5, large=0.8
+    if (effectSize >= 0.8)
+        return 'significant';
+    if (effectSize >= 0.5)
+        return 'marginal';
+    return 'not_significant';
+}
+/**
+ * Aggregate job-fair results by a specific dimension
+ *
+ * Story 7-5: AC - Job-fair aggregator groups results by dimension
+ */
+export async function aggregateByDimension(dimension, resultsDir, themesDir = DEFAULT_THEMES_DIR) {
+    const latestRuns = getLatestRunPerTheme(resultsDir);
+    // Group themes by dimension value
+    const themesByValue = new Map();
+    const themeScores = new Map();
+    for (const [theme] of latestRuns) {
+        const dimensions = loadThemeDimensions(theme, themesDir);
+        if (!dimensions)
+            continue;
+        const value = dimensions[dimension];
+        if (!value)
+            continue;
+        if (!themesByValue.has(value)) {
+            themesByValue.set(value, []);
+        }
+        themesByValue.get(value).push(theme);
+    }
+    // Parse scores for each theme
+    for (const [theme, dirName] of latestRuns) {
+        const summaryPath = join(resultsDir, dirName, 'summary.yaml');
+        if (!existsSync(summaryPath))
+            continue;
+        const result = parseSummaryYaml(summaryPath, theme);
+        if (result && result.scores.length > 0) {
+            themeScores.set(theme, result.scores.map(s => ({ role: s.role, score: s.score })));
+        }
+    }
+    // Calculate stats for each dimension value
+    const values = [];
+    for (const [value, themes] of themesByValue) {
+        const roleScores = new Map();
+        let totalScores = [];
+        for (const theme of themes) {
+            const scores = themeScores.get(theme);
+            if (!scores)
+                continue;
+            for (const { role, score } of scores) {
+                if (!roleScores.has(role)) {
+                    roleScores.set(role, []);
+                }
+                roleScores.get(role).push(score);
+                totalScores.push(score);
+            }
+        }
+        const byRole = {};
+        for (const [role, scores] of roleScores) {
+            const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
+            const stdDev = calculateStdDev(scores, mean);
+            byRole[role] = { mean_score: mean, std_dev: stdDev, n: scores.length };
+        }
+        const overallMean = totalScores.length > 0
+            ? totalScores.reduce((a, b) => a + b, 0) / totalScores.length
+            : 0;
+        values.push({
+            value,
+            themes,
+            sample_size: totalScores.length,
+            by_role: byRole,
+            overall_mean: overallMean,
+        });
+    }
+    // Generate pairwise comparisons
+    const comparisons = [];
+    for (let i = 0; i < values.length; i++) {
+        for (let j = i + 1; j < values.length; j++) {
+            const a = values[i];
+            const b = values[j];
+            // Get all roles present in both
+            const allRoles = new Set([...Object.keys(a.by_role), ...Object.keys(b.by_role)]);
+            const roleComparisons = {};
+            for (const role of allRoles) {
+                const aRole = a.by_role[role];
+                const bRole = b.by_role[role];
+                if (aRole && bRole) {
+                    const delta = aRole.mean_score - bRole.mean_score;
+                    const significance = calculateSignificance(aRole.mean_score, bRole.mean_score, aRole.std_dev, bRole.std_dev, aRole.n, bRole.n);
+                    roleComparisons[role] = { delta, significance };
+                }
+            }
+            // Overall comparison
+            const overallDelta = a.overall_mean - b.overall_mean;
+            // For overall significance, use aggregated stats
+            const aScores = Object.values(a.by_role);
+            const bScores = Object.values(b.by_role);
+            const aStd = aScores.length > 0
+                ? Math.sqrt(aScores.reduce((sum, r) => sum + r.std_dev * r.std_dev, 0) / aScores.length)
+                : 0;
+            const bStd = bScores.length > 0
+                ? Math.sqrt(bScores.reduce((sum, r) => sum + r.std_dev * r.std_dev, 0) / bScores.length)
+                : 0;
+            const overallSignificance = calculateSignificance(a.overall_mean, b.overall_mean, aStd, bStd, a.sample_size, b.sample_size);
+            comparisons.push({
+                dimension,
+                value_a: a.value,
+                value_b: b.value,
+                delta: overallDelta,
+                significance: overallSignificance,
+                by_role: roleComparisons,
+            });
+        }
+    }
+    return {
+        dimension,
+        last_updated: new Date().toISOString(),
+        values,
+        comparisons,
+    };
+}
+/**
+ * Get all available dimension values with theme counts
+ *
+ * Useful for API endpoints to show available filter options
+ */
+export async function getDimensionValues(dimension, themesDir = DEFAULT_THEMES_DIR) {
+    const valueCounts = new Map();
+    if (!existsSync(themesDir))
+        return [];
+    const entries = readdirSync(themesDir, { withFileTypes: true });
+    for (const entry of entries) {
+        if (!entry.isFile() || !entry.name.endsWith('.yaml'))
+            continue;
+        const themeName = entry.name.replace('.yaml', '');
+        const dimensions = loadThemeDimensions(themeName, themesDir);
+        if (dimensions && dimensions[dimension]) {
+            const value = dimensions[dimension];
+            valueCounts.set(value, (valueCounts.get(value) || 0) + 1);
+        }
+    }
+    return Array.from(valueCounts.entries())
+        .map(([value, theme_count]) => ({ value, theme_count }))
+        .sort((a, b) => b.theme_count - a.theme_count);
+}
+/**
+ * Generate a differential report comparing dimension values
+ *
+ * Story 7-5: AC - Differential report shows performance by dimension value
+ */
+export async function generateDifferentialReport(dimension, resultsDir, themesDir = DEFAULT_THEMES_DIR) {
+    const stats = await aggregateByDimension(dimension, resultsDir, themesDir);
+    const lines = [
+        `# Differential Report: ${dimension}`,
+        '',
+        `Generated: ${stats.last_updated}`,
+        '',
+        '## Summary by Value',
+        '',
+    ];
+    // Sort values by overall mean descending
+    const sortedValues = [...stats.values].sort((a, b) => b.overall_mean - a.overall_mean);
+    for (const v of sortedValues) {
+        lines.push(`### ${v.value}`);
+        lines.push(`- Themes: ${v.themes.length} (${v.themes.join(', ')})`);
+        lines.push(`- Sample size: ${v.sample_size}`);
+        lines.push(`- Overall mean: ${v.overall_mean.toFixed(2)}`);
+        lines.push('');
+        lines.push('| Role | Mean | Std Dev | N |');
+        lines.push('|------|------|---------|---|');
+        for (const [role, roleStats] of Object.entries(v.by_role)) {
+            lines.push(`| ${role} | ${roleStats.mean_score.toFixed(2)} | ${roleStats.std_dev.toFixed(2)} | ${roleStats.n} |`);
+        }
+        lines.push('');
+    }
+    lines.push('## Pairwise Comparisons');
+    lines.push('');
+    for (const comp of stats.comparisons) {
+        const sigLabel = comp.significance === 'significant' ? '**SIGNIFICANT**'
+            : comp.significance === 'marginal' ? '*marginal*'
+                : 'not significant';
+        const direction = comp.delta > 0 ? '>' : comp.delta < 0 ? '<' : '=';
+        lines.push(`### ${comp.value_a} ${direction} ${comp.value_b}`);
+        lines.push(`- Delta: ${comp.delta > 0 ? '+' : ''}${comp.delta.toFixed(2)} (${sigLabel})`);
+        lines.push('');
+        if (Object.keys(comp.by_role).length > 0) {
+            lines.push('| Role | Delta | Significance |');
+            lines.push('|------|-------|--------------|');
+            for (const [role, roleComp] of Object.entries(comp.by_role)) {
+                lines.push(`| ${role} | ${roleComp.delta > 0 ? '+' : ''}${roleComp.delta.toFixed(2)} | ${roleComp.significance} |`);
+            }
+            lines.push('');
+        }
+    }
+    return lines.join('\n');
 }
 //# sourceMappingURL=job-fair-aggregator.js.map
