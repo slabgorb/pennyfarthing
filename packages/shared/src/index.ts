@@ -17,3 +17,9 @@ export {
   type Theme,
   type ThemeAgent,
 } from './theme-loader.js';
+
+export {
+  searchSkills,
+  type SearchOptions,
+  type SkillResult,
+} from './skill-search.js';
