@@ -273,10 +273,7 @@ export declare function resetUsageStats(): void;
 export declare const USAGE_POLL_INTERVAL_MS = 60000;
 /**
  * Start polling usage stats
- * Calls /status periodically and parses output for usage limits
- *
- * TODO: Implement actual /status parsing when format is determined.
- * Until then, UI shows placeholder values (—%).
+ * Uses ccusage CLI to read local JSONL files for usage data
  */
 export declare function startUsagePolling(_projectDir: string): () => void;
 /**
