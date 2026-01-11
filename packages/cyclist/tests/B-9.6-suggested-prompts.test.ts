@@ -1615,13 +1615,14 @@ Ready for review. Please invoke /reviewer.`
         expect(result.type).toBe('yesno');
       });
 
-      it('should detect "can I" pattern', async () => {
+      it('should NOT detect "can I" pattern (too broad, see line 125)', async () => {
         const { detectQuestionPattern } = await import('../src/public/js/components/MessageView.js');
 
+        // "Can I" was intentionally excluded - causes false positives
+        // See original test at line 125 documenting this decision
         const result = detectQuestionPattern('Can I proceed with the deployment?');
 
-        expect(result).not.toBeNull();
-        expect(result.type).toBe('yesno');
+        expect(result).toBeNull();
       });
 
       it('should detect "may I" pattern', async () => {

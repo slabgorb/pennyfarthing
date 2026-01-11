@@ -98,7 +98,7 @@ export const QUESTION_PATTERNS = [
   { pattern: /do you want/i, responses: ['Yes', 'No'], requiresQuestion: true },
   { pattern: /shall i\b/i, responses: ['Yes', 'No'], requiresQuestion: true },
   // Universal confirmation patterns (Story 25-4)
-  { pattern: /can i\b/i, responses: ['Yes', 'No'], requiresQuestion: true },
+  // NOTE: "Can I" removed - too broad, causes false positives (see test B-9.6 line 125)
   { pattern: /may i\b/i, responses: ['Yes', 'No'], requiresQuestion: true },
   { pattern: /is it (okay|ok) (to|if)/i, responses: ['Yes', 'No'], requiresQuestion: true },
   { pattern: /are you ready for me to/i, responses: ['Yes', 'No'], requiresQuestion: true },
