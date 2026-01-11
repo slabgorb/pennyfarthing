@@ -240,8 +240,10 @@ export declare const CONTEXT_POLL_INTERVAL_MS = 15000;
 /**
  * Start polling context usage
  * Calls getContextUsage periodically and broadcasts changes
+ * @param projectDir - The project directory
+ * @param getSessionId - Optional function to get current session ID (for session-specific context)
  */
-export declare function startContextPolling(projectDir: string): () => void;
+export declare function startContextPolling(projectDir: string, getSessionId?: () => string | null): () => void;
 /**
  * Usage stats structure - tracks Claude API usage limits
  */
