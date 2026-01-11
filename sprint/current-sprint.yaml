@@ -88,6 +88,7 @@ epics:
 
   - id: epic-9
     title: Skill Discovery & Documentation Hub
+    jira_key: MSSCI-11512
     description: |
       Create interactive skill registry with rich metadata (tags, examples,
       prerequisites, anti-patterns). Enable agents to discover and suggest
@@ -97,10 +98,11 @@ epics:
     priority: P2
     marker: strategic
     repos: pennyfarthing
-    status: planned
+    status: in-progress
     stories:
       - id: 9-1
         title: Create skill registry schema
+        jira_key: MSSCI-11515
         description: |
           Define structured schema for skill metadata.
           - Tags, prerequisites, examples, anti-patterns
@@ -108,15 +110,18 @@ epics:
           - Usage statistics fields
         points: 2
         priority: P1
-        status: backlog
+        status: in_progress
+        started: 2026-01-11
+        assigned_to: Keith Avery
         repos: pennyfarthing
         acceptance_criteria:
           - skill-registry.yaml schema defined
-          - All 12 skills cataloged with metadata
+          - All 18 skills cataloged with metadata
           - Schema validates existing skills
 
       - id: 9-2
         title: Build skill search utility
+        jira_key: MSSCI-11516
         description: |
           Script to search skills by tag, name, or description.
           - Fuzzy matching support
@@ -133,6 +138,7 @@ epics:
 
       - id: 9-3
         title: Add skill suggestions to agents
+        jira_key: MSSCI-11518
         description: |
           Agents suggest relevant skills based on task context.
           - Analyze task keywords
@@ -149,6 +155,7 @@ epics:
 
       - id: 9-4
         title: Create skill documentation generator
+        jira_key: MSSCI-11521
         description: |
           Generate unified skill documentation from registry.
           - Markdown output for docs/
@@ -165,6 +172,7 @@ epics:
 
       - id: 9-5
         title: Add skill usage analytics
+        jira_key: MSSCI-11523
         description: |
           Track which skills are used and how often.
           - Log skill invocations
