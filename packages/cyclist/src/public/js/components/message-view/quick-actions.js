@@ -225,19 +225,37 @@ export function detectListChoices(text) {
 
   // Require a "choice" context - look for indicators that these ARE choices
   const textLower = text.toLowerCase();
-  const choiceIndicators = [
-    'which', 'choose', 'select', 'pick', 'option', 'prefer',
-    'would you like', 'do you want', 'should i', 'approach',
+
+  // Strong indicators - explicit choice language
+  const strongChoiceIndicators = [
+    'which', 'choose', 'select', 'pick', 'prefer',
+  ];
+
+  // Weak indicators - might be choice context, but also common in documentation
+  const weakChoiceIndicators = [
+    'option', 'would you like', 'do you want', 'should i', 'approach',
     'alternative', 'either', 'or we could',
   ];
 
-  const hasChoiceContext = choiceIndicators.some(indicator =>
+  const hasStrongContext = strongChoiceIndicators.some(indicator =>
     textLower.includes(indicator)
   );
 
-  // If no choice context, don't show buttons - it's probably documentation
-  if (!hasChoiceContext) {
-    return null;
+  const hasWeakContext = weakChoiceIndicators.some(indicator =>
+    textLower.includes(indicator)
+  );
+
+  // For long lists (>5 items), require strong choice indicators
+  // Long lists are more likely to be documentation/enumeration
+  if (choices.length > 5) {
+    if (!hasStrongContext) {
+      return null;
+    }
+  } else {
+    // For shorter lists, weak context is sufficient
+    if (!hasStrongContext && !hasWeakContext) {
+      return null;
+    }
   }
 
   return { type: 'list', choices };
