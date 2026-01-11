@@ -9,9 +9,9 @@
 # Uses SCRIPT_DIR if available (preferred), falls back to PWD.
 
 # Skip if PROJECT_ROOT is already set (e.g., by run.sh or CLAUDE_PROJECT_DIR)
-if [ -z "$PROJECT_ROOT" ]; then
+if [ -z "${PROJECT_ROOT:-}" ]; then
     # Prefer SCRIPT_DIR (stable, set by caller) over PWD (may not be in project)
-    if [ -n "$SCRIPT_DIR" ]; then
+    if [ -n "${SCRIPT_DIR:-}" ]; then
         _find_root_dir="$SCRIPT_DIR"
     else
         _find_root_dir="$PWD"
