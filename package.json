@@ -13,7 +13,8 @@
     "url": "https://github.com/1898andCo/pennyfarthing/issues"
   },
   "scripts": {
-    "build": "pnpm -r build",
+    "build": "pnpm -r build && ./scripts/utils/generate-skill-docs.sh",
+    "docs": "./scripts/utils/generate-skill-docs.sh",
     "dev": "pnpm -r --parallel dev",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",

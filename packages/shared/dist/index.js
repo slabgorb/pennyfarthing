@@ -6,4 +6,5 @@ export { resolvePennyfarthingDist, resolvePortraitPath, getPortraitPaths, } from
 export { loadTheme, listThemes, getAgentPersona, } from './theme-loader.js';
 export { searchSkills, } from './skill-search.js';
 export { suggestSkills, suggestFromSession, suggestFromKeywords, } from './skill-suggest.js';
+export { generateSkillDocs, } from './generate-skill-docs.js';
 //# sourceMappingURL=index.js.map

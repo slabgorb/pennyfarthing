@@ -1,356 +1,354 @@
-# Skills Reference
+# Pennyfarthing Skills Reference
 
-Skills are project-agnostic knowledge domains that agents can load on demand.
+This document is auto-generated from `skill-registry.yaml`. Do not edit manually.
 
-## Overview
+## Table of Contents
 
-Skills provide reusable knowledge that isn't tied to any specific project. They're loaded by agents when relevant tasks arise.
+- [AI/LLM](#aillm)
+  - [agentic-patterns](#agentic-patterns)
+  - [context-engineering](#context-engineering)
+- [Benchmarking](#benchmarking)
+  - [finalize-run](#finalize-run)
+  - [judge](#judge)
+  - [persona-benchmark](#persona-benchmark)
+- [Development](#development)
+  - [code-review](#code-review)
+  - [dev-patterns](#dev-patterns)
+  - [testing](#testing)
+- [Documentation](#documentation)
+  - [changelog](#changelog)
+- [Project Management](#project-management)
+  - [jira](#jira)
+  - [sprint-context](#sprint-context)
+  - [story-management](#story-management)
+- [Theming](#theming)
+  - [theme](#theme)
+  - [theme-creation](#theme-creation)
+- [Tools](#tools)
+  - [cyclist](#cyclist)
+  - [just](#just)
+  - [mermaid](#mermaid)
+  - [yq](#yq)
 
-**Location:** `pennyfarthing/skills/`
-
-## Available Skills
+## AI/LLM
 
 ### agentic-patterns
 
-**Purpose:** Core reasoning patterns for building effective LLM agents.
+Core reasoning patterns for building effective LLM agents
 
-**Use when:** Designing agent behavior, debugging failures, improving reliability.
+**Tags:** reasoning, patterns, agents, llm
 
-**Key concepts:**
-- **ReAct** - Reasoning and Acting loop (Thought -> Action -> Observation)
-- **Plan-and-Execute** - Decompose complex goals into sub-tasks
-- **Self-Reflection** - Evaluate outputs before presenting
-- **Confidence calibration** - Know when to ask vs act
-- **Error recovery** - Retry patterns and graceful degradation
-- **Multi-agent coordination** - Handoff patterns and state sync
+**Keywords:** react, reflection, planning, tool-use, chain-of-thought
 
-**Example patterns:**
-```
-THOUGHT: What am I trying to accomplish?
-ACTION: Execute tool based on reasoning
-OBSERVATION: What was the result?
-THOUGHT: Based on observation, what next?
-```
+**Examples:**
+- Designing agent behavior: `/agentic-patterns`
+- Debugging agent failures: `/agentic-patterns troubleshooting`
 
----
+**Anti-patterns:**
+- Don't apply patterns mechanically without understanding context
+
+**Related:** [context-engineering](#context-engineering)
 
 ### context-engineering
 
-**Purpose:** Strategies for managing context windows efficiently.
+Strategies for managing context windows in long-running agent sessions
 
-**Use when:** Working on complex tasks, approaching context limits, designing subagent prompts.
+**Tags:** context, optimization, agents
 
-**Key concepts:**
-- **Just-in-time loading** - Don't pre-load everything, store references
-- **Context editing** - Clear stale results, summarize findings
-- **Subagent patterns** - Spawn for data-heavy tasks, receive summaries
-- **Memory tools** - Session files, sidecars, progress logs
-- **Context budgets** - Stay under 500-800 lines per activation
+**Keywords:** context-window, tokens, summarization, lazy-loading
 
-**Core principle:**
-> Find the smallest set of high-signal tokens that maximize the likelihood of your desired outcome.
+**Examples:**
+- Approaching context limits: `/context-engineering`
+- Designing subagent prompts: `/context-engineering subagent-design`
 
----
+**Anti-patterns:**
+- Don't load unnecessary context upfront
+- Don't repeat large code blocks in prompts
 
-### code-review
+**Related:** [agentic-patterns](#agentic-patterns)
 
-**Purpose:** Code review checklists and patterns.
-
-**Use when:** Reviewing PRs, self-reviewing before commit, checking for common issues.
-
-**Key checklists:**
-- **API Handler Review** - Authorization, validation, error handling, tests
-- **UI Component Review** - Props, loading states, errors, accessibility
-- **Database Changes** - Migrations, indexes, constraints
-- **Security** - SQL injection, XSS, auth, secrets
-- **Performance** - N+1 queries, pagination, indexes, memoization
-
-**Comment format:**
-```
-**[MUST FIX]** This leaks internal error details.
-**[SUGGESTION]** Consider using useMemo here.
-**[QUESTION]** What happens if clientId is undefined?
-**[NICE]** Good use of the centralized utility!
-```
-
----
-
-### testing
-
-**Purpose:** Test commands and TDD workflow patterns.
-
-**Use when:** Writing tests, running test suites, debugging test failures.
-
-**Key concepts:**
-- Test command reference for API and UI
-- TDD workflow (RED -> GREEN -> REFACTOR)
-- Test patterns for each project type
-- Coverage requirements and strategies
-- Test isolation and setup patterns
-
-**References:** `skills/testing/references/`
-
----
-
-### story-management
-
-**Purpose:** Story creation, sizing, and templates.
-
-**Use when:** Creating stories, estimating points, writing acceptance criteria.
-
-**Key concepts:**
-- Story templates (feature, bug, tech debt)
-- Sizing guidelines (1, 2, 3, 5, 8 points)
-- Acceptance criteria patterns
-- Definition of ready
-- Definition of done
-
----
-
-### sprint-context
-
-**Purpose:** Sprint tracking and story management.
-
-**Use when:** Managing sprint work, tracking progress, updating status.
-
-**Key concepts:**
-- Sprint YAML structure
-- Story lifecycle (draft -> ready -> in_progress -> review -> done)
-- Status updates and transitions
-- Velocity tracking
-- Backlog management
-
----
-
-### jira
-
-**Purpose:** Jira integration using the CLI.
-
-**Use when:** Syncing with Jira, creating issues, updating status.
-
-**Key commands:**
-- `jira issue create` - Create new issues
-- `jira issue move` - Transition status
-- `jira sprint add` - Add to sprint
-- `jira issue view` - View issue details
-- `jira issue list` - Query issues
-
----
-
-### just
-
-**Purpose:** Just command runner reference.
-
-**Use when:** Running project commands via `just`.
-
-**Key concepts:**
-- Justfile patterns
-- Common recipes (build, test, dev, lint)
-- Variable substitution
-- Recipe dependencies
-
-**References:** `skills/just/references/`
-
----
-
-### dev-patterns
-
-**Purpose:** Implementation patterns and common gotchas.
-
-**Use when:** Implementing features, debugging issues, following project conventions.
-
-**Key concepts:**
-- Project-specific coding patterns
-- Common mistakes and fixes
-- Error handling patterns
-- Database patterns
-- API patterns
-
----
-
-### persona-benchmark
-
-**Purpose:** Agent performance evaluation.
-
-**Use when:** Evaluating agent behavior, tuning persona settings, benchmarking.
-
-**Key concepts:**
-- Benchmark test cases by agent type
-- Scoring rubrics
-- Performance metrics
-- Persona effectiveness evaluation
-
----
-
-### judge
-
-**Purpose:** Evaluation rubrics for scoring agent responses.
-
-**Use when:** Scoring responses from `/solo` or `/benchmark` runs.
-
-**Key concepts:**
-- **Generic Rubric** (25% each dimension):
-  - Correctness - Technical accuracy
-  - Depth - Thoroughness of analysis
-  - Quality - Clarity and actionability
-  - Persona - Character embodiment
-- **Checklist Rubric** (for scenarios with baseline_issues):
-  - Detection (50%) - Finding expected issues
-  - Quality (25%) - Explanation quality
-  - Persona (25%) - In-character delivery
-- **Error-Detection Mode** (`--mode error-detection`):
-  - TRAIL-aware scoring by error type
-  - Per-type detection rates (reasoning, planning, execution)
-
-**References:** `skills/judge/SKILL.md`
-
----
+## Benchmarking
 
 ### finalize-run
 
-**Purpose:** Result validation and persistence for benchmarking.
+Validate and save benchmark run results - single exit point for all runs
 
-**Use when:** Saving benchmark results with proof-of-work.
+**Tags:** benchmark, validation, results
 
-**Key concepts:**
-- Validates data integrity before saving
-- Adds proof-of-work fields:
-  - Timestamps
-  - Token counts
-  - Full responses
-- Supports solo, benchmark result types
-- Creates proper directory structure
-
-**References:** `skills/finalize-run/SKILL.md`
-
----
-
-## Skill Structure
-
-Each skill follows this structure:
-
-```
-skills/
-└── skill-name/
-    ├── SKILL.md           # Main skill definition
-    └── references/        # Supporting documentation (optional)
-        ├── patterns.md
-        ├── examples.md
-        └── ...
-```
-
-### SKILL.md Format
-
-```markdown
----
-name: skill-name
-description: Brief description of skill purpose
----
-
-# Skill Name
-
-## Overview
-What this skill provides.
-
-## Key Concepts
-Main topics covered.
-
-## Patterns
-Reusable patterns and templates.
-
-## Reference
-Quick reference information.
-
-## Examples
-Usage examples.
-```
-
----
-
-## Loading Skills
-
-Skills are loaded automatically by agents when needed:
-
-1. Agent encounters relevant task
-2. Agent reads skill file from `skills/skill-name/SKILL.md`
-3. Agent applies skill knowledge
-4. References loaded on demand from `references/`
-
-### Manual Loading
-
-Agents can explicitly reference skills:
-```
-"Let me load the code-review skill for this PR review..."
-[reads skills/code-review/SKILL.md]
-```
-
----
-
-## Creating Project Skills
-
-Project-specific skills live in `.claude/project/skills/`.
-
-### Structure
-
-```
-.claude/project/skills/
-└── my-skill/
-    ├── SKILL.md
-    └── references/
-```
-
-### When to Create
-
-Create a project skill when:
-- Knowledge is project-specific but reusable
-- Multiple agents need the same patterns
-- Information doesn't fit in agent sidecars
-
-### Skill Template
-
-```markdown
----
-name: my-project-skill
-description: Project-specific skill for [purpose]
----
-
-# [Skill Name]
-
-## Overview
-[What this skill provides for this project]
-
-## Key Patterns
-[Project-specific patterns]
-
-## Reference
-[Quick reference information]
-
-## Examples
-[Project-specific examples]
-```
-
----
-
-## Skill vs Sidecar
-
-| Use Case | Location |
-|----------|----------|
-| Agent-specific project knowledge | Agent sidecar (`.claude/project/agents/{agent}-sidecar/`) |
-| Cross-agent project knowledge | Project skill (`.claude/project/skills/`) |
-| Framework-level knowledge | Core skill (`pennyfarthing/skills/`) |
+**Keywords:** benchmark, save, validate, guardrail
 
 **Examples:**
-- "How Dev handles errors in this project" -> Dev sidecar
-- "Project-wide API patterns" -> Project skill
-- "General TDD patterns" -> Core testing skill
+- Completing a benchmark run: `/finalize-run`
+
+**Anti-patterns:**
+- Never save results without passing through this skill
+
+**Related:** [judge](#judge), [persona-benchmark](#persona-benchmark)
+
+### judge
+
+Evaluate agent responses using standardized rubrics
+
+**Tags:** evaluation, rubrics, scoring
+
+**Keywords:** evaluation, scoring, metrics, grading
+
+**Examples:**
+- Evaluating agent response: `/judge evaluate`
+- Running benchmark comparison: `/judge compare`
+
+**Anti-patterns:**
+- Don't modify rubrics during a benchmark run
+
+**Related:** [finalize-run](#finalize-run), [persona-benchmark](#persona-benchmark)
+
+### persona-benchmark
+
+Run benchmarks to compare persona effectiveness
+
+**Tags:** benchmark, personas, comparison
+
+**Keywords:** benchmark, comparison, personas, testing
+
+**Examples:**
+- Testing persona on code review: `/persona-benchmark cr-001 discworld`
+- Testing tech writer persona: `/persona-benchmark tw-001 literary-classics`
+
+**Anti-patterns:**
+- Don't compare results across different rubric versions
+
+**Related:** [judge](#judge), [finalize-run](#finalize-run), [theme](#theme)
+
+## Development
+
+### code-review
+
+Code review checklists and patterns for quality assurance
+
+**Tags:** review, quality, checklist
+
+**Keywords:** pr, pull-request, quality, linting, security
+
+**Examples:**
+- Self-review before commit: `/code-review`
+- Reviewing a PR: `/code-review pr-checklist`
+
+**Anti-patterns:**
+- Don't skip security considerations in review
+- Don't approve without running tests
+
+**Related:** [testing](#testing), [dev-patterns](#dev-patterns)
+
+### dev-patterns
+
+Common development patterns, fixes, and gotchas
+
+**Tags:** patterns, debugging, implementation
+
+**Keywords:** implementation, debugging, fixes, best-practices
+
+**Examples:**
+- Implementing features: `/dev-patterns`
+- Avoiding known pitfalls: `/dev-patterns gotchas`
+
+**Anti-patterns:**
+- Don't apply patterns from other frameworks blindly
+
+**Related:** [code-review](#code-review), [testing](#testing)
+
+### testing
+
+Test commands and TDD workflow patterns
+
+**Tags:** tdd, testing, quality
+
+**Keywords:** jest, vitest, pytest, unit-test, integration, tdd, red-green
+
+**Examples:**
+- Running project tests: `/testing`
+- Debugging test failures: `/testing troubleshoot`
+
+**Anti-patterns:**
+- Don't run tests directly - use testing-runner subagent
+- Don't skip RED phase in TDD workflow
+
+**Related:** [dev-patterns](#dev-patterns), [code-review](#code-review)
+
+## Documentation
+
+### changelog
+
+Maintain changelogs following Keep a Changelog format with conventional commits
+
+**Tags:** changelog, releases, versioning
+
+**Keywords:** keepachangelog, conventional-commits, semver, release-notes
+
+**Examples:**
+- Creating release notes: `/changelog`
+- Auto-generating from commits: `/changelog generate`
+
+**Anti-patterns:**
+- Don't manually edit CHANGELOG.md entries after generation
+
+## Project Management
+
+### jira
+
+Jira CLI commands for sprint management
+
+**Tags:** jira, issues, sprint
+
+**Keywords:** atlassian, issues, tickets, backlog
+
+**Examples:**
+- Viewing sprint issues: `/jira sprint`
+- Assigning issues: `/jira assign ISSUE-123`
+
+**Anti-patterns:**
+- Don't bypass Jira for sprint tracking
+
+**Related:** [sprint-context](#sprint-context), [story-management](#story-management)
+
+### sprint-context
+
+Sprint status, backlog, and story management context
+
+**Tags:** sprint, status, backlog
+
+**Keywords:** sprint, backlog, velocity, kanban
+
+**Examples:**
+- Checking sprint status: `/sprint-context`
+- Finding available stories: `/sprint-context available`
+
+**Anti-patterns:**
+- Don't manually edit sprint YAML - use skills
+
+**Related:** [story-management](#story-management), [jira](#jira)
+
+### story-management
+
+Story creation, sizing, and sprint workflow patterns
+
+**Tags:** stories, sizing, workflow
+
+**Keywords:** user-stories, estimation, points, acceptance-criteria
+
+**Examples:**
+- Creating new stories: `/story-management create`
+- Sizing stories: `/story-management size`
+
+**Anti-patterns:**
+- Don't create stories without acceptance criteria
+
+**Related:** [sprint-context](#sprint-context), [jira](#jira)
+
+## Theming
+
+### theme
+
+Manage persona themes - list, show, and set active theme
+
+**Tags:** personas, themes, customization
+
+**Keywords:** personas, characters, discworld, literary-classics
+
+**Examples:**
+- Listing available themes: `/list-themes`
+- Showing current theme: `/show-theme`
+- Setting active theme: `/set-theme discworld`
+
+**Anti-patterns:**
+- Don't edit persona-config.local.yaml directly - use skill
+
+**Related:** [theme-creation](#theme-creation)
+
+### theme-creation
+
+Create custom persona themes with AI-driven generation
+
+**Tags:** personas, themes, creation
+
+**Keywords:** personas, custom, generation, wizard
+
+**Examples:**
+- Creating new theme: `/theme-maker`
+- Interactive theme wizard: `/create-theme`
+
+**Anti-patterns:**
+- Don't create incomplete themes missing required agents
+
+**Related:** [theme](#theme)
+
+## Tools
+
+### cyclist
+
+Launch Cyclist visual terminal for Claude Code monitoring
+
+**Tags:** visual, monitoring, terminal
+
+**Keywords:** tui, terminal, visualization, dashboard
+
+**Examples:**
+- Starting visual monitor: `/cyclist`
+- Debugging sessions: `/cyclist debug`
+
+**Anti-patterns:**
+- Don't run Cyclist in headless environments
+
+### just
+
+Run just recipes for project tasks like dev servers, tests, and databases
+
+**Tags:** tasks, runner, automation
+
+**Keywords:** justfile, make, tasks, automation, command-runner
+
+**Examples:**
+- Starting dev servers: `/just dev`
+- Running database tasks: `/just db-reset`
+
+**Anti-patterns:**
+- Don't create complex recipes - keep them simple and composable
+
+**Related:** [testing](#testing)
+
+### mermaid
+
+Generate diagrams using Mermaid syntax for documentation
+
+**Tags:** diagrams, visualization, documentation
+
+**Keywords:** flowchart, sequence, er-diagram, gantt, class-diagram
+
+**Examples:**
+- Creating architecture diagrams: `/mermaid architecture`
+- Sequence diagrams: `/mermaid sequence`
+
+**Anti-patterns:**
+- Don't create overly complex diagrams - split into multiple if needed
+
+**Related:** [changelog](#changelog)
+
+### yq
+
+YAML processor for reading, modifying, and querying YAML files
+
+**Tags:** yaml, processing, cli
+
+**Keywords:** yaml, jq, parsing, query, mikefarah
+
+**Examples:**
+- Reading YAML values: `/yq read`
+- Modifying YAML files: `/yq modify`
+
+**Anti-patterns:**
+- Don't use complex expressions without testing first
+
+**Related:** [just](#just)
 
 ---
 
-## Skill Best Practices
-
-1. **Keep skills focused** - One domain per skill
-2. **Include examples** - Show, don't just tell
-3. **Update when learning** - Add new patterns as discovered
-4. **Reference, don't duplicate** - Point to authoritative sources
-5. **Use checklists** - Easy to follow and verify
-6. **Keep it scannable** - Tables, bullet points, clear headers
+*Generated by `generate-skill-docs`*
