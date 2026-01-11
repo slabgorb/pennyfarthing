@@ -87,13 +87,19 @@ export const QUESTION_PATTERNS = [
   // Direct action offers - these imply readiness to proceed
   { pattern: /would you like me to/i, responses: ['Yes, proceed', 'No'], requiresQuestion: false },
   { pattern: /shall i (proceed|continue|go ahead|start|begin)/i, responses: ['Yes, proceed', 'No'], requiresQuestion: false },
-  { pattern: /ready to proceed/i, responses: ['Yes, proceed', 'Hold on'], requiresQuestion: false },
+  // Universal "ready to X" - supports proceed, continue, start, begin, go
+  { pattern: /ready to (proceed|continue|start|begin|go)/i, responses: ['Yes', 'No'], requiresQuestion: false },
   { pattern: /want me to (proceed|continue|go ahead|start|begin)/i, responses: ['Yes, proceed', 'No'], requiresQuestion: false },
 
   // Yes/No questions - require actual question mark
   { pattern: /should i\b/i, responses: ['Yes', 'No'], requiresQuestion: true },
   { pattern: /do you want/i, responses: ['Yes', 'No'], requiresQuestion: true },
   { pattern: /shall i\b/i, responses: ['Yes', 'No'], requiresQuestion: true },
+  // Universal confirmation patterns (Story 25-4)
+  { pattern: /can i\b/i, responses: ['Yes', 'No'], requiresQuestion: true },
+  { pattern: /may i\b/i, responses: ['Yes', 'No'], requiresQuestion: true },
+  { pattern: /is it (okay|ok) (to|if)/i, responses: ['Yes', 'No'], requiresQuestion: true },
+  { pattern: /are you ready for me to/i, responses: ['Yes', 'No'], requiresQuestion: true },
 
   // Permission prompts (tool approval) - these are actual permission requests
   { pattern: /allow.*to\s+(run|execute)/i, responses: ['Yes', 'No'], requiresQuestion: false },
