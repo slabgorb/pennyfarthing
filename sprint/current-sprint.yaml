@@ -322,7 +322,7 @@ epics:
 
 '
     points: 26
-    completed_points: 13
+    completed_points: 15
     priority: P2
     marker: observability
     repos: pennyfarthing, cyclist
@@ -587,10 +587,12 @@ epics:
 '
         points: 2
         priority: P3
-        status: in_progress
+        status: done
         started: 2026-01-10
+        completed: 2026-01-10
         assigned_to: Keith Avery
         repos: cyclist
+        pr: https://github.com/1898andCo/pennyfarthing/pull/152
         acceptance_criteria:
           - CYCLIST_OTEL_EXPORT_ENDPOINT configurable
           - Enriched spans exported to external backend
