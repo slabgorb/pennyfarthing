@@ -9,7 +9,7 @@
 export { highlightCode } from './syntax-highlighter.js';
 
 // Markdown parsing
-export { parseMarkdown, escapeHtml } from './markdown-parser.js';
+export { parseMarkdown, escapeHtml, stripMarkers } from './markdown-parser.js';
 
 // Quick actions
 export {
