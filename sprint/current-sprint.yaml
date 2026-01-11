@@ -96,7 +96,7 @@ epics:
       prerequisites, anti-patterns). Enable agents to discover and suggest
       relevant skills based on task context.
     points: 13
-    completed_points: 8
+    completed_points: 11
     priority: P2
     marker: strategic
     repos: pennyfarthing
@@ -169,8 +169,9 @@ epics:
           - Auto-update on skill changes
         points: 3
         priority: P2
-        status: in_progress
+        status: done
         started: 2026-01-11
+        completed: 2026-01-11
         assigned_to: Keith Avery
         repos: pennyfarthing
         acceptance_criteria:
@@ -187,7 +188,9 @@ epics:
           - Identify underutilized skills
         points: 2
         priority: P2
-        status: backlog
+        status: in_progress
+        started: 2026-01-11
+        assigned_to: Keith Avery
         repos: pennyfarthing
         acceptance_criteria:
           - Skill usage logged to .session/
