@@ -6,8 +6,8 @@ sprint:
   velocity_target: 30
 summary:
   total_points: 45
-  completed_points: 14
-  remaining_points: 31
+  completed_points: 16
+  remaining_points: 29
   notes: |
     Sprint 8 focus: State reconciliation, skill discovery, smart question detection.
 
@@ -306,11 +306,11 @@ epics:
       for questions), catch handoff prompts, and add "yes, proceed" buttons.
       Two-pronged approach: better parsing AND easier-to-parse Claude output.
     points: 18
-    completed_points: 0
+    completed_points: 2
     priority: P1
     marker: ux
     repos: cyclist, pennyfarthing
-    status: planned
+    status: in_progress
     stories:
       - id: 25-1
         title: Audit Current Quick Actions Detection
@@ -321,10 +321,13 @@ epics:
           Catalog missed patterns (handoffs, confirmations, proceed prompts).
         points: 2
         priority: P1
-        status: in_progress
+        status: done
         started: 2026-01-11
+        completed: 2026-01-11
         assigned_to: Keith Avery
         repos: cyclist
+        pr: 169
+        pr_link: https://github.com/1898andCo/pennyfarthing/pull/169
         acceptance_criteria:
           - Document all current detection patterns
           - List of false positive examples
