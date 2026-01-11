@@ -1,0 +1,1 @@
+../../pennyfarthing-dist/commands/party-mode.md

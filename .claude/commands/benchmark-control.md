@@ -1,0 +1,1 @@
+../../pennyfarthing-dist/commands/benchmark-control.md
