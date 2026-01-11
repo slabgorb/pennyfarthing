@@ -404,7 +404,7 @@ html, body {
   border-color: #8b5cf6;
 }
 
-/* B-22: Stats Strip - compact stats display in prompt bar */
+/* B-22: Stats Strip - compact stats display below editor */
 /* B-20: Increased font sizes for readability */
 #stats-strip {
   display: flex;
@@ -412,7 +412,7 @@ html, body {
   gap: 0.75rem;
   padding: 0.25rem 0.75rem;
   background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
+  border-top: 1px solid var(--border);
   font-size: 0.8125rem;
 }
 
@@ -2893,4 +2893,178 @@ html, body {
 
 .reject-btn:hover {
   background: var(--danger-hover, #c82333);
+}
+
+/* ==========================================================================
+   22-4: Dangerous Path Approval Modal
+   ========================================================================== */
+
+/* Modal container - fixed overlay (inherits from #approval-modal) */
+#dangerous-path-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+#dangerous-path-modal.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Modal overlay/backdrop */
+#dangerous-path-modal .modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+/* Modal content box */
+#dangerous-path-modal .modal-content {
+  position: relative;
+  background: var(--bg-primary, #1e1e1e);
+  border: 1px solid var(--border, #333);
+  border-radius: 8px;
+  padding: 1.5rem;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* Modal header */
+#dangerous-path-modal .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border, #333);
+}
+
+#dangerous-path-modal .modal-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text-primary, #fff);
+}
+
+/* Category indicator - badge styling */
+.category-indicator {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* Category-specific colors */
+.category-indicator.category-secrets,
+.category-indicator.secrets {
+  background: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+}
+
+.category-indicator.category-git {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+}
+
+.category-indicator.category-dependencies,
+.category-indicator.dependencies {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+}
+
+.category-indicator.category-system {
+  background: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+}
+
+/* Path warning section */
+#dangerous-path-modal .path-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  color: var(--text-secondary, #aaa);
+  font-size: 0.9rem;
+}
+
+#dangerous-path-modal .warning-icon {
+  font-size: 1.2rem;
+}
+
+/* Path display - prominent mono styling */
+#dangerous-path-modal .path-display {
+  background: var(--bg-secondary, #252525);
+  border: 1px solid var(--border, #333);
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-size: 0.95rem;
+  color: var(--status-error, #f85149);
+  word-break: break-all;
+  overflow-x: auto;
+}
+
+/* Modal action buttons - inherit from #approval-modal */
+#dangerous-path-modal .modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+#dangerous-path-modal .modal-actions button {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+  border: none;
+}
+
+#dangerous-path-modal .modal-actions button:hover {
+  transform: translateY(-1px);
+}
+
+#dangerous-path-modal .modal-actions button:active {
+  transform: translateY(0);
+}
+
+/* Danger/caution styling for path types */
+.path-category {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.path-category.danger,
+.path-category.secrets {
+  background: rgba(220, 53, 69, 0.15);
+  color: #dc3545;
+}
+
+.path-category.caution,
+.path-category.warning,
+.path-category.dependencies {
+  background: rgba(255, 193, 7, 0.15);
+  color: #ffc107;
 }
