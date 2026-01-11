@@ -153,6 +153,47 @@ export interface ElectronBashAPI {
 }
 
 /**
+ * Audit Log API interface (22-6)
+ * Provides access to tool execution audit log
+ */
+export interface ElectronAuditLogAPI {
+  /**
+   * Get all entries, optionally filtered by tool type
+   */
+  getEntries: (toolType?: string) => Promise<unknown[]>;
+
+  /**
+   * Get unique tool types in the log
+   */
+  getTypes: () => Promise<string[]>;
+
+  /**
+   * Export log as JSON or CSV
+   */
+  export: (format: 'json' | 'csv', toolType?: string) => Promise<string>;
+
+  /**
+   * Get stats summary
+   */
+  getStats: () => Promise<{ total: number; byType: Record<string, number>; successCount: number; errorCount: number }>;
+
+  /**
+   * Clear the audit log
+   */
+  clear: () => Promise<boolean>;
+
+  /**
+   * Subscribe to new entry events
+   */
+  onEntry: (callback: (entry: unknown) => void) => void;
+
+  /**
+   * Subscribe to show audit log event (from menu)
+   */
+  onShow: (callback: () => void) => void;
+}
+
+/**
  * Settings API interface (22-3, 22-4, 22-5)
  * Provides access to Cyclist settings including approval gate, dangerous path gate, and verbose mode
  */
@@ -227,6 +268,7 @@ export interface ElectronAPI {
   bash: ElectronBashAPI; // 22-3: Bash approval gate
   path: ElectronPathAPI; // 22-4: Dangerous path approval gate
   settings: ElectronSettingsAPI; // 22-3, 22-4: Settings API
+  auditLog: ElectronAuditLogAPI; // 22-6: Audit log
 }
 
 // Check if we're running in Electron (has contextBridge available)
@@ -356,6 +398,20 @@ function createElectronAPI(): ElectronAPI {
           ipcRenderer.on('settings:verboseModeUpdate', callback);
         },
       },
+      // Audit Log API (22-6)
+      auditLog: {
+        getEntries: (toolType?: string) => ipcRenderer.invoke('auditLog:getEntries', toolType) as Promise<unknown[]>,
+        getTypes: () => ipcRenderer.invoke('auditLog:getTypes') as Promise<string[]>,
+        export: (format: 'json' | 'csv', toolType?: string) => ipcRenderer.invoke('auditLog:export', format, toolType) as Promise<string>,
+        getStats: () => ipcRenderer.invoke('auditLog:getStats') as Promise<{ total: number; byType: Record<string, number>; successCount: number; errorCount: number }>,
+        clear: () => ipcRenderer.invoke('auditLog:clear') as Promise<boolean>,
+        onEntry: (callback: (entry: unknown) => void) => {
+          ipcRenderer.on('auditLog:entry', (_event: unknown, entry: unknown) => callback(entry));
+        },
+        onShow: (callback: () => void) => {
+          ipcRenderer.on('tools:showAuditLog', () => callback());
+        },
+      },
     };
   } else {
     // Running in Node (tests) - return testable structure
@@ -436,6 +492,20 @@ function createElectronAPI(): ElectronAPI {
         getVerboseMode: () => Promise.resolve(false),
         setVerboseMode: (_enabled: boolean) => Promise.resolve(false),
         onVerboseModeChange: (_callback: (event: unknown, enabled: boolean) => void) => {
+          // No-op in test environment
+        },
+      },
+      // Audit Log API (22-6) - test stub
+      auditLog: {
+        getEntries: (_toolType?: string) => Promise.resolve([]),
+        getTypes: () => Promise.resolve([]),
+        export: (_format: 'json' | 'csv', _toolType?: string) => Promise.resolve(''),
+        getStats: () => Promise.resolve({ total: 0, byType: {}, successCount: 0, errorCount: 0 }),
+        clear: () => Promise.resolve(true),
+        onEntry: (_callback: (entry: unknown) => void) => {
+          // No-op in test environment
+        },
+        onShow: (_callback: () => void) => {
           // No-op in test environment
         },
       },

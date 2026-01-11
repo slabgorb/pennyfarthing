@@ -7,8 +7,8 @@ sprint:
 
 summary:
   total_points: 30
-  completed_points: 0
-  remaining_points: 30
+  completed_points: 1
+  remaining_points: 29
   notes: |
     Sprint 8 focus: State reconciliation, skill discovery, Cyclist web mode parity.
 
@@ -251,7 +251,7 @@ epics:
     description: |
       Carryover from Sprint 7. One remaining story for audit logging.
     points: 1
-    completed_points: 0
+    completed_points: 1
     priority: P3
     marker: safety
     repos: cyclist
@@ -276,7 +276,10 @@ epics:
           - Create simple log viewer panel
         points: 1
         priority: P3
-        status: backlog
+        status: done
+        started: 2026-01-11
+        completed: 2026-01-11
+        assigned_to: Keith Avery
         repos: cyclist
         acceptance_criteria:
           - All tool executions logged with metadata
