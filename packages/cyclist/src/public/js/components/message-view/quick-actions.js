@@ -84,30 +84,30 @@ export const HANDOFF_PATTERNS = [
 ];
 
 export const QUESTION_PATTERNS = [
-  // Direct action offers - these imply readiness to proceed
-  { pattern: /would you like me to/i, responses: ['Yes, proceed', 'No'], requiresQuestion: false },
-  { pattern: /shall i (proceed|continue|go ahead|start|begin)/i, responses: ['Yes, proceed', 'No'], requiresQuestion: false },
+  // Direct action offers - these imply readiness to proceed (high confidence 0.85)
+  { pattern: /would you like me to/i, responses: ['Yes, proceed', 'No'], requiresQuestion: false, confidence: 0.85 },
+  { pattern: /shall i (proceed|continue|go ahead|start|begin)/i, responses: ['Yes, proceed', 'No'], requiresQuestion: false, confidence: 0.85 },
   // "ready to proceed" - action-oriented with specific responses
-  { pattern: /ready to proceed/i, responses: ['Yes, proceed', 'Hold on'], requiresQuestion: false },
+  { pattern: /ready to proceed/i, responses: ['Yes, proceed', 'Hold on'], requiresQuestion: false, confidence: 0.85 },
   // "ready to X" - for other actions
-  { pattern: /ready to (continue|start|begin|go)/i, responses: ['Yes', 'No'], requiresQuestion: false },
-  { pattern: /want me to (proceed|continue|go ahead|start|begin)/i, responses: ['Yes, proceed', 'No'], requiresQuestion: false },
+  { pattern: /ready to (continue|start|begin|go)/i, responses: ['Yes', 'No'], requiresQuestion: false, confidence: 0.80 },
+  { pattern: /want me to (proceed|continue|go ahead|start|begin)/i, responses: ['Yes, proceed', 'No'], requiresQuestion: false, confidence: 0.85 },
 
-  // Yes/No questions - require actual question mark
-  { pattern: /should i\b/i, responses: ['Yes', 'No'], requiresQuestion: true },
-  { pattern: /do you want/i, responses: ['Yes', 'No'], requiresQuestion: true },
-  { pattern: /shall i\b/i, responses: ['Yes', 'No'], requiresQuestion: true },
+  // Yes/No questions - require actual question mark (moderate confidence 0.75-0.80)
+  { pattern: /should i\b/i, responses: ['Yes', 'No'], requiresQuestion: true, confidence: 0.80 },
+  { pattern: /do you want/i, responses: ['Yes', 'No'], requiresQuestion: true, confidence: 0.80 },
+  { pattern: /shall i\b/i, responses: ['Yes', 'No'], requiresQuestion: true, confidence: 0.80 },
   // Universal confirmation patterns (Story 25-4)
   // NOTE: "Can I" removed - too broad, causes false positives (see test B-9.6 line 125)
-  { pattern: /may i\b/i, responses: ['Yes', 'No'], requiresQuestion: true },
-  { pattern: /is it (okay|ok) (to|if)/i, responses: ['Yes', 'No'], requiresQuestion: true },
-  { pattern: /are you ready for me to/i, responses: ['Yes', 'No'], requiresQuestion: true },
+  { pattern: /may i\b/i, responses: ['Yes', 'No'], requiresQuestion: true, confidence: 0.75 },
+  { pattern: /is it (okay|ok) (to|if)/i, responses: ['Yes', 'No'], requiresQuestion: true, confidence: 0.75 },
+  { pattern: /are you ready for me to/i, responses: ['Yes', 'No'], requiresQuestion: true, confidence: 0.80 },
 
-  // Permission prompts (tool approval) - these are actual permission requests
-  { pattern: /allow.*to\s+(run|execute)/i, responses: ['Yes', 'No'], requiresQuestion: false },
-  { pattern: /allow.*to\s+read/i, responses: ['Yes', 'No'], requiresQuestion: false },
-  { pattern: /allow.*to\s+write/i, responses: ['Yes', 'No'], requiresQuestion: false },
-  { pattern: /allow.*to\s+edit/i, responses: ['Yes', 'No'], requiresQuestion: false },
+  // Permission prompts (tool approval) - these are actual permission requests (high confidence 0.85)
+  { pattern: /allow.*to\s+(run|execute)/i, responses: ['Yes', 'No'], requiresQuestion: false, confidence: 0.85 },
+  { pattern: /allow.*to\s+read/i, responses: ['Yes', 'No'], requiresQuestion: false, confidence: 0.85 },
+  { pattern: /allow.*to\s+write/i, responses: ['Yes', 'No'], requiresQuestion: false, confidence: 0.85 },
+  { pattern: /allow.*to\s+edit/i, responses: ['Yes', 'No'], requiresQuestion: false, confidence: 0.85 },
 ];
 
 
@@ -122,6 +122,9 @@ let quickActionsVisible = false;
 
 /** Auto-submit enabled (stretch goal) */
 let autoSubmitEnabled = false;
+
+/** Confidence threshold for filtering low-confidence detections (default 0.6) */
+let confidenceThreshold = 0.6;
 
 // =============================================================================
 // Text Processing Utilities
@@ -227,6 +230,7 @@ function processStructuredMarkers(markers) {
   // Process the first/primary marker (most use cases have one)
   const primaryMarker = markers[0];
 
+  // Structured markers always have confidence 1.0 - they're explicit signals
   switch (primaryMarker.type) {
     case 'handoff':
       return {
@@ -234,6 +238,7 @@ function processStructuredMarkers(markers) {
         agent: primaryMarker.value,
         responses: [primaryMarker.value, 'Not yet'],
         source: 'structured_marker',
+        confidence: 1.0,
       };
 
     case 'question':
@@ -242,6 +247,7 @@ function processStructuredMarkers(markers) {
           type: 'yesno',
           responses: ['Yes', 'No'],
           source: 'structured_marker',
+          confidence: 1.0,
         };
       }
       // choice type falls through to check for CHOICES marker
@@ -255,6 +261,7 @@ function processStructuredMarkers(markers) {
         type: 'list',
         choices,
         source: 'structured_marker',
+        confidence: 1.0,
       };
   }
 
@@ -267,6 +274,7 @@ function processStructuredMarkers(markers) {
       type: 'list',
       choices,
       source: 'structured_marker',
+      confidence: 1.0,
     };
   }
 
@@ -288,13 +296,13 @@ export function detectQuestionPattern(text) {
 
   const endsWithQuestion = lastParagraph.trimEnd().endsWith('?');
 
-  for (const { pattern, responses, requiresQuestion } of QUESTION_PATTERNS) {
+  for (const { pattern, responses, requiresQuestion, confidence } of QUESTION_PATTERNS) {
     if (pattern.test(lastParagraph)) {
       // If pattern requires a question mark, check for it
       if (requiresQuestion && !endsWithQuestion) {
         continue;
       }
-      return { type: 'yesno', responses };
+      return { type: 'yesno', responses, confidence };
     }
   }
 
@@ -332,13 +340,15 @@ export function detectHandoffPattern(text) {
 
       if (type === 'direct' || type === 'context') {
         // Direct agent mention - normalize to /agent format
+        // Direct patterns have highest confidence (0.98)
         const agent = `/${captured}`;
-        lastMatch = { agent, index: match.index };
+        lastMatch = { agent, index: match.index, confidence: 0.98 };
       } else if (type === 'phase') {
         // Phase keyword - map to agent
+        // Phase patterns have slightly lower confidence (0.90)
         const agent = PHASE_TO_AGENT[captured];
         if (agent) {
-          lastMatch = { agent, index: match.index };
+          lastMatch = { agent, index: match.index, confidence: 0.90 };
         }
       }
     }
@@ -350,6 +360,7 @@ export function detectHandoffPattern(text) {
     type: 'handoff',
     agent: lastMatch.agent,
     responses: [lastMatch.agent, 'Not yet'],
+    confidence: lastMatch.confidence,
   };
 }
 
@@ -428,7 +439,8 @@ export function detectListChoices(text) {
   // Check first word of first few items
   for (let i = 0; i < Math.min(choices.length, 3); i++) {
     const firstWord = choices[i].text.toLowerCase().split(/\s+/)[0];
-    if (notChoiceIndicators.includes(firstWord)) {
+    // Don't filter out single-letter choices (e.g., "A", "B", "C")
+    if (firstWord.length > 1 && notChoiceIndicators.includes(firstWord)) {
       return null;
     }
     // Also reject if it looks like a file path
@@ -472,7 +484,16 @@ export function detectListChoices(text) {
     }
   }
 
-  return { type: 'list', choices };
+  // Calculate confidence based on context strength and list length
+  // Strong context: 0.90 base, weak context: 0.70 base
+  // Longer lists decrease confidence slightly
+  let baseConfidence = hasStrongContext ? 0.90 : 0.70;
+
+  // Decrease confidence for longer lists (each item after 3 reduces by 0.03)
+  const lengthPenalty = Math.max(0, (choices.length - 3) * 0.03);
+  const confidence = Math.max(0.60, baseConfidence - lengthPenalty);
+
+  return { type: 'list', choices, confidence };
 }
 
 // =============================================================================
@@ -574,6 +595,22 @@ export function getAutoSubmit() {
 }
 
 /**
+ * Set confidence threshold for filtering detections
+ * @param {number} threshold - Value between 0.0 and 1.0
+ */
+export function setConfidenceThreshold(threshold) {
+  confidenceThreshold = threshold;
+}
+
+/**
+ * Get current confidence threshold
+ * @returns {number} Current threshold (default 0.6)
+ */
+export function getConfidenceThreshold() {
+  return confidenceThreshold;
+}
+
+/**
  * Called when a response is submitted to clear quick actions
  */
 export function onResponseSubmitted() {
@@ -600,26 +637,34 @@ export function processMessageForQuickActions(message) {
 
   if (!textContent) return null;
 
+  // Helper to check if result meets confidence threshold
+  const meetsThreshold = (result) => {
+    if (!result) return false;
+    // Results without confidence (shouldn't happen) pass through
+    if (result.confidence === undefined) return true;
+    return result.confidence >= confidenceThreshold;
+  };
+
   // Priority 1: Check for structured markers (100% accuracy)
   // These take precedence over all pattern-based detection
   const markers = detectStructuredMarkers(textContent);
   if (markers) {
     const markerResult = processStructuredMarkers(markers);
-    if (markerResult) return markerResult;
+    if (markerResult && meetsThreshold(markerResult)) return markerResult;
   }
 
   // Priority 2: Check for handoff patterns
   // This ensures agent invocations take precedence over other patterns
   const handoffResult = detectHandoffPattern(textContent);
-  if (handoffResult) return handoffResult;
+  if (handoffResult && meetsThreshold(handoffResult)) return handoffResult;
 
   // Priority 3: Check for list choices
   const listResult = detectListChoices(textContent);
-  if (listResult) return listResult;
+  if (listResult && meetsThreshold(listResult)) return listResult;
 
   // Priority 4: Check for yes/no questions
   const questionResult = detectQuestionPattern(textContent);
-  if (questionResult) return questionResult;
+  if (questionResult && meetsThreshold(questionResult)) return questionResult;
 
   return null;
 }
@@ -641,6 +686,8 @@ export default {
   getQuickActionsVisible,
   setAutoSubmit,
   getAutoSubmit,
+  setConfidenceThreshold,
+  getConfidenceThreshold,
   onResponseSubmitted,
   processMessageForQuickActions,
 };

@@ -29,6 +29,8 @@ export {
   getQuickActionsVisible,
   setAutoSubmit,
   getAutoSubmit,
+  setConfidenceThreshold,
+  getConfidenceThreshold,
   onResponseSubmitted,
   processMessageForQuickActions,
 } from './quick-actions.js';
