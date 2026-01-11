@@ -240,6 +240,23 @@ export async function createEditor() {
             }
           }
 
+          // Shift+Enter - insert new paragraph (for mixed content like paragraphs + lists)
+          if (event.key === 'Enter' && event.shiftKey && !event.ctrlKey && !event.altKey) {
+            event.preventDefault();
+            // Split at cursor to create new paragraph (not just hard break)
+            const editor = editorInstance;
+            if (editor) {
+              // If in a list, exit the list item; otherwise create new paragraph
+              if (editor.isActive('listItem')) {
+                editor.chain().focus().splitListItem('listItem').run();
+              } else {
+                // Create new paragraph by splitting at cursor
+                editor.chain().focus().splitBlock().run();
+              }
+            }
+            return true;
+          }
+
           // Enter - select completion OR submit content
           if (event.key === 'Enter' && !event.shiftKey) {
             if (isCompletionVisible()) {
