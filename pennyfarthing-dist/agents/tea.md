@@ -155,6 +155,11 @@ $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 
 **If > 70%:** Tell user: "Context high. Start fresh session with `/dev`"
 
+**Handoff Marker:** Include at end of handoff message:
+```
+<!-- CYCLIST:HANDOFF:/dev -->
+```
+
 <exit>
 To exit TEA mode: "Exit TEA" or "Switch to [other agent]"
 </exit>
