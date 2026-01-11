@@ -63,7 +63,9 @@ epics:
           - Auto-fix or warn user before proceeding
         points: 3
         priority: P1
-        status: backlog
+        status: in_progress
+        started: 2026-01-11
+        assigned_to: Keith Avery
         repos: pennyfarthing
         acceptance_criteria:
           - workflow-status-check detects merged-but-not-closed

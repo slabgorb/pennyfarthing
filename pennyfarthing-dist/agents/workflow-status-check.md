@@ -78,7 +78,42 @@ scan_all_repos_status
 # Returns one line per repo: repo|branch|uncommitted|ahead
 ```
 
-## Step 2.5: Check Jira Ownership for In-Progress Stories
+## Step 2.5: Detect Drift (Merged but Not Closed)
+
+**Check for drifted stories before state determination.** A story is "drifted" when its branch was merged but YAML or Jira still shows status other than `done`.
+
+```bash
+source $CLAUDE_PROJECT_DIR/pennyfarthing-dist/scripts/utils/sprint-common.sh
+drifted=$(detect_drift)
+
+if [ -n "$drifted" ]; then
+    echo "=== Drifted Stories Detected ==="
+    echo "The following stories have merged branches but are not marked 'done':"
+    echo "$drifted"
+    echo ""
+    echo "Each entry shows: story_id:yaml_status:jira_status"
+fi
+```
+
+**Drift detection checks both:**
+- **YAML drift**: Sprint YAML shows `in_progress` but branch is merged
+- **Jira drift**: Jira shows status other than "Done" or "Closed" but branch is merged
+
+**If drift found:**
+1. Report drifted stories with their YAML and Jira status to the user
+2. Offer auto-reconcile option (y/n) to update both YAML and Jira to done
+3. If user accepts, call `reconcile_drift` for each story which:
+   - Updates YAML status to `done`
+   - Transitions Jira issue to "Done"
+   - Logs reconciliation to `.session/reconciliation.log`
+
+**Auto-reconcile prompt:**
+```
+Would you like to auto-reconcile these drifted stories? (y/n)
+This will update YAML status to 'done' and transition Jira to 'Done'.
+```
+
+## Step 2.6: Check Jira Ownership for In-Progress Stories
 
 **CRITICAL for multi-developer coordination.** For any story with `status: in_progress` in the YAML, verify WHO owns it in Jira.
 
