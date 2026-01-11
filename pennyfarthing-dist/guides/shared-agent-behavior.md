@@ -175,6 +175,63 @@ Agents invoke skills based on task:
 
 ---
 
+## Structured Output Markers (Cyclist Integration)
+
+Emit HTML comment markers to enable 100% accurate quick-action button detection in Cyclist.
+
+### Marker Format
+
+```html
+<!-- CYCLIST:TYPE:value -->
+```
+
+| Marker | Usage | Example |
+|--------|-------|---------|
+| `HANDOFF` | Agent handoff | `<!-- CYCLIST:HANDOFF:/tea -->` |
+| `QUESTION` | Yes/No questions | `<!-- CYCLIST:QUESTION:yesno -->` |
+| `CHOICES` | Numbered choices | `<!-- CYCLIST:CHOICES:1,2,3 -->` |
+
+### When to Emit
+
+- **Before handoffs:** Include marker after handoff text
+- **Before yes/no questions:** Include marker after question
+- **Before numbered choices:** Include marker listing choice numbers
+
+### Example Usage
+
+```markdown
+Ready to hand off to the Caterpillar for test writing.
+
+**Invoke `/tea` to begin the RED phase.**
+
+<!-- CYCLIST:HANDOFF:/tea -->
+```
+
+```markdown
+Shall I proceed with the implementation?
+
+<!-- CYCLIST:QUESTION:yesno -->
+```
+
+```markdown
+Which approach do you prefer?
+
+1. Option A - Simple approach
+2. Option B - More flexible
+3. Option C - Full featured
+
+<!-- CYCLIST:CHOICES:1,2,3 -->
+```
+
+### Key Points
+
+- Markers are **invisible** to users (HTML comments)
+- Markers are **optional** - pattern detection still works as fallback
+- Place marker at **end of message** after relevant text
+- Use **exact agent names**: `/sm`, `/tea`, `/dev`, `/reviewer`, `/architect`, etc.
+
+---
+
 ## Exit Protocol
 
 Before exiting or switching agents:
