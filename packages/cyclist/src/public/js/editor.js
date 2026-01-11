@@ -46,11 +46,11 @@ import {
 } from './editor/message-queue.js';
 
 // Re-export constants for external consumers
-export { EDITOR_CONTAINER_ID, EDITOR_OPTIONS } from './editor/constants.js';
+export { EDITOR_CONTAINER_ID, EDITOR_OPTIONS, EDITOR_EXTENSIONS } from './editor/constants.js';
 export { MESSAGE_QUEUE_KEY, MAX_QUEUE_SIZE } from './editor/constants.js';
 
 // Re-export tab completion for external consumers
-export { getCompletionState, showCompletionPopup, closeCompletionPopup, navigateCompletion, selectCompletion } from './editor/tab-completion.js';
+export { getCompletionState, showCompletionPopup, closeCompletionPopup, navigateCompletion, selectCompletion, updateCompletions } from './editor/tab-completion.js';
 
 // Re-export message queue for external consumers
 export {

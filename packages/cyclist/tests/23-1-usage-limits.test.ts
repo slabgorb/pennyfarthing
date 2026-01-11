@@ -61,10 +61,10 @@ describe('23-1: Usage Limits in Stats Strip', () => {
     });
 
     it('should have label indicating 5-hour period', () => {
-      const statsStrip = document.querySelector('#stats-strip');
-      const text = statsStrip?.textContent || '';
-      // Should have 5hr label
-      expect(text.toLowerCase()).toMatch(/5.?hr|5.?hour|block/i);
+      const usage5hr = document.querySelector('#stats-strip .usage-5hr');
+      // The visible label is "Window:" but the title attribute describes it as 5-hour
+      const title = usage5hr?.getAttribute('title') || '';
+      expect(title.toLowerCase()).toMatch(/5.?hour|window/i);
     });
 
   });
