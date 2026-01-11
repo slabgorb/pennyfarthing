@@ -10,7 +10,7 @@ git clone https://github.com/1898andCo/pennyfarthing.git
 cd pennyfarthing
 
 # Install dependencies
-npm install
+pnpm install
 
 # Install git hooks
 ./pennyfarthing-dist/scripts/install-git-hooks.sh
@@ -22,29 +22,55 @@ npm install
 ./pennyfarthing-dist/scripts/doctor-dogfood.sh --fix
 ```
 
-## The Structure (v4.0+)
+## The Structure (v4.0.4+)
+
+The dogfooding structure now matches exactly what `pennyfarthing init` creates:
 
 ```
 pennyfarthing/
-├── pennyfarthing-dist/          ← SOURCE OF TRUTH (distributable package)
+├── pennyfarthing-dist/          <- SOURCE OF TRUTH (distributable package)
 │   ├── agents/
 │   ├── commands/
 │   ├── scripts/
+│   ├── skills/
 │   └── ...
 │
-├── .claude/                      ← CLAUDE CODE INTEGRATION
-│   ├── pennyfarthing/ -> ../pennyfarthing-dist/   ← SYMLINK (not a copy!)
+├── .claude/                      <- CLAUDE CODE INTEGRATION
+│   ├── agents -> ../pennyfarthing-dist/agents       (direct symlink)
+│   ├── guides -> ../pennyfarthing-dist/guides       (direct symlink)
+│   ├── personas -> ../pennyfarthing-dist/personas   (direct symlink)
+│   ├── scripts -> ../pennyfarthing-dist/scripts     (direct symlink)
 │   │
-│   ├── agents -> pennyfarthing/agents     (symlink)
-│   ├── commands -> pennyfarthing/commands (symlink)
-│   └── skills -> pennyfarthing/skills     (symlink)
-│
-└── scripts/ -> .claude/pennyfarthing/scripts/    ← SYMLINK to source
+│   ├── commands/                 <- DIRECTORY (not symlink!)
+│   │   ├── dev.md -> ../../pennyfarthing-dist/commands/dev.md
+│   │   ├── sm.md -> ../../pennyfarthing-dist/commands/sm.md
+│   │   └── ... (individual file symlinks)
+│   │
+│   ├── skills/                   <- DIRECTORY (not symlink!)
+│   │   ├── testing -> ../../pennyfarthing-dist/skills/testing
+│   │   ├── changelog -> ../../pennyfarthing-dist/skills/changelog
+│   │   └── ... (individual folder symlinks)
+│   │
+│   └── project/                  <- Real directory (project-specific)
+│       ├── agents/               <- Agent sidecars
+│       ├── commands/             <- User commands (optional)
+│       └── skills/               <- User skills (optional)
 ```
 
-**Key change in v4.0:** `.claude/pennyfarthing/` is now a symlink to `pennyfarthing-dist/`, not a copy. Changes to source are immediately available everywhere.
+**Key insight:** The `.claude/commands/` and `.claude/skills/` directories allow adding user-specific commands/skills alongside built-ins without conflicts.
 
-## Data Flow Diagram (v4.0+)
+## Dogfood vs Fresh Install Parity
+
+The dogfood structure is **identical** to what `pennyfarthing init` creates, except:
+
+| Aspect | Dogfood | Fresh Install |
+|--------|---------|---------------|
+| Base path | `../pennyfarthing-dist/` | `../node_modules/pennyfarthing/pennyfarthing-dist/` |
+| Source | Local development | npm package |
+
+The relative structure within `.claude/` is the same.
+
+## Data Flow Diagram (v4.0.4+)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -56,14 +82,14 @@ pennyfarthing/
 
 ┌──────────────────┐         ┌──────────────────┐         ┌──────────────────┐
 │ pennyfarthing-   │         │ .claude/         │         │ Other Projects   │
-│ dist/            │◀──LINK──│ pennyfarthing/   │         │ (npm install)    │
-│                  │         │ (symlink)        │         │                  │
-│ • Source of truth│         │ • Points here    │         │ • Symlink to     │
-│ • Edit here      │         │ • No sync needed │         │   node_modules/  │
-│ • Commit changes │         │ • Used by Claude │         │   pennyfarthing  │
+│ dist/            │◀──LINK──│                  │         │ (npm install)    │
+│                  │         │ Direct symlinks  │         │                  │
+│ • Source of truth│         │ to source        │         │ • Symlink to     │
+│ • Edit here      │         │ (single hop)     │         │   node_modules/  │
+│ • Commit changes │         │                  │         │                  │
 └────────┬─────────┘         └──────────────────┘         └──────────────────┘
          │
-         │ All symlinks resolve to here
+         │ All symlinks resolve here (1 hop)
          ▼
 ┌──────────────────┐
 │ Single source    │
@@ -84,15 +110,15 @@ ADDING A NEW SCRIPT (v4.0+)
 
 Step 1: Create in source - DONE!
 ┌──────────────────────────────────────┐
-│ pennyfarthing-dist/scripts/new.sh   │  ← File created here
+│ pennyfarthing-dist/scripts/new.sh   │  <- File created here
 └──────────────────────────────────────┘
          │
-         │  .claude/pennyfarthing/ is a symlink
+         │  .claude/scripts is a direct symlink
          ▼
 ┌──────────────────────────────────────┐
-│ .claude/pennyfarthing/scripts/      │  ← Automatically available!
+│ .claude/scripts/new.sh              │  <- Automatically available!
 │                                      │
-│   Symlink resolves to source         │
+│   Single-hop symlink resolves        │
 └──────────────────────────────────────┘
 ```
 
@@ -111,7 +137,7 @@ git add pennyfarthing-dist/scripts/new-script.sh
 # No copy step needed - symlinks handle everything
 ```
 
-### New Agent/Command/Skill
+### New Agent
 
 ```bash
 # 1. Create in source
@@ -120,8 +146,39 @@ vim pennyfarthing-dist/agents/new-agent.md
 # 2. Commit
 git add pennyfarthing-dist/agents/new-agent.md
 
-# Symlink chain resolves automatically:
-# .claude/agents -> .claude/pennyfarthing/agents -> pennyfarthing-dist/agents
+# Symlink resolves automatically:
+# .claude/agents -> ../pennyfarthing-dist/agents
+```
+
+### New Command
+
+```bash
+# 1. Create in source
+vim pennyfarthing-dist/commands/new-command.md
+
+# 2. Add symlink to .claude/commands/
+ln -s ../../pennyfarthing-dist/commands/new-command.md .claude/commands/new-command.md
+
+# 3. Commit both
+git add pennyfarthing-dist/commands/new-command.md
+git add .claude/commands/new-command.md
+```
+
+Note: Commands use individual file symlinks to allow user-defined commands alongside built-ins.
+
+### New Skill
+
+```bash
+# 1. Create skill directory in source
+mkdir pennyfarthing-dist/skills/new-skill
+vim pennyfarthing-dist/skills/new-skill/skill.md
+
+# 2. Add symlink to .claude/skills/
+ln -s ../../pennyfarthing-dist/skills/new-skill .claude/skills/new-skill
+
+# 3. Commit both
+git add pennyfarthing-dist/skills/new-skill/
+git add .claude/skills/new-skill
 ```
 
 ## Directory Purposes
@@ -129,87 +186,31 @@ git add pennyfarthing-dist/agents/new-agent.md
 | Location | Purpose | Git Tracked |
 |----------|---------|-------------|
 | `pennyfarthing-dist/` | Source of truth | Yes |
-| `.claude/pennyfarthing/` | Symlink to source | Yes (symlink) |
-| `scripts/` | Symlink to pennyfarthing scripts | Yes (symlink) |
-| `.claude/agents` etc. | Symlinks to pennyfarthing | Yes (symlinks) |
+| `.claude/agents` | Symlink to source | Yes (symlink) |
+| `.claude/commands/` | Directory with file symlinks | Yes |
+| `.claude/skills/` | Directory with folder symlinks | Yes |
+| `.claude/project/` | Project-specific files | Yes |
 
-## Summary (v4.0+)
+## Summary (v4.0.4+)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     DOGFOODING GOLDEN RULE (v4.0+)               │
+│                     DOGFOODING GOLDEN RULE (v4.0.4+)            │
 │                                                                  │
 │   Edit files in pennyfarthing-dist/ only.                       │
 │   Symlinks handle everything else automatically.                 │
 │                                                                  │
 │   Source: pennyfarthing-dist/   (edit and commit here)          │
-│   Local:  .claude/pennyfarthing/ -> symlink (no manual sync)    │
+│   Local:  .claude/* -> direct symlinks (single hop)             │
+│                                                                  │
+│   For commands/skills: add individual symlinks to the           │
+│   .claude/commands/ or .claude/skills/ directories.             │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-## Known Path Divergences
-
-While symlinks eliminate most sync issues, there's one key architectural difference between dogfooding and npm installation:
-
-```
-DOGFOODING (pennyfarthing repo)          NPM INSTALLATION (other projects)
-─────────────────────────────────        ────────────────────────────────
-.claude/pennyfarthing/                   .claude/scripts/
-  → ../pennyfarthing-dist/                 → node_modules/pennyfarthing/
-                                               pennyfarthing-dist/scripts/
-.claude/pennyfarthing/scripts/
-  (accessed through symlink chain)        (direct symlink to scripts/)
-```
-
-**Important:** Scripts that locate other scripts must use `.claude/scripts/` (the canonical path after init), NOT `.claude/pennyfarthing/scripts/` (dogfooding-specific).
-
-### 2024-12-31: run.sh Path Fix
-
-`run.sh` was hardcoded to look for scripts at `.claude/pennyfarthing/scripts/` which worked in dogfooding but failed in npm-installed projects where scripts live at `.claude/scripts/`. Fixed by updating `run.sh` to use `.claude/scripts/` consistently.
-
-## Project Configuration
-
-The consolidated project configuration lives at `.claude/project/pennyfarthing-settings.yaml`:
-
-```yaml
-# Pennyfarthing Project Settings
-
-repos:
-  pennyfarthing:
-    path: "."
-    type: cli
-    language: bash
-
-services:
-  port_offset: 100
-  definitions:
-    - name: Showcase
-      base_port: 4321
-      env_var: SHOWCASE_PORT
-
-testing:
-  log_dir: ".session"
-```
-
-### Services Configuration
-
-Services define dev server ports for worktree management. Each service gets offset ports in worktrees:
-
-```
-Main checkout:     SHOWCASE_PORT=4321
-Worktree #1:       SHOWCASE_PORT=4421  (4321 + 100*1)
-Worktree #2:       SHOWCASE_PORT=4521  (4321 + 100*2)
-```
-
-Test with: `./scripts/run.sh worktree-manager.sh ports <worktree-name>`
-
-### 2025-01-04: repos.yaml → pennyfarthing-settings.yaml
-
-Renamed `repos.yaml` to `pennyfarthing-settings.yaml` and added the `services` section for worktree port management. The file now consolidates repos, services, and testing configuration in one place.
-
 ## Git Hooks
 
-Pennyfarthing provides git hooks that `pennyfarthing init` installs for clients. For dogfooding, these must be installed manually as symlinks.
+Pennyfarthing provides git hooks that `pennyfarthing init` installs for clients. For dogfooding, these must be installed manually.
 
 ### Available Hooks
 
@@ -234,21 +235,10 @@ ln -sf ../../pennyfarthing-dist/scripts/hooks/post-merge.sh .git/hooks/post-merg
 ls -la .git/hooks/ | grep -v sample
 ```
 
-### Why Manual?
-
-The `pennyfarthing init` command installs hooks from `node_modules/pennyfarthing/pennyfarthing-dist/scripts/hooks/`. In dogfooding, there's no npm install - we're the source. So we symlink directly to `pennyfarthing-dist/`.
-
-### Path Differences
-
-```
-CLIENT (npm installed)                    DOGFOODING
-──────────────────────                    ──────────
-.git/hooks/pre-commit                     .git/hooks/pre-commit
-  → copies from node_modules/               → symlink to pennyfarthing-dist/
-     pennyfarthing/pennyfarthing-dist/         scripts/hooks/pre-commit.sh
-     scripts/hooks/pre-commit.sh
-```
-
 ## Historical Note
 
-Prior to v4.0, `.claude/pennyfarthing/` was a copy of `pennyfarthing-dist/`, requiring manual synchronization. This led to "file not found" errors when scripts were added to source but not copied to the local install. The v4.0 symlink architecture eliminates this entire class of bugs.
+Prior to v4.0, `.claude/pennyfarthing/` was a copy of `pennyfarthing-dist/`, requiring manual synchronization.
+
+v4.0-v4.0.3 used chained symlinks (`.claude/pennyfarthing -> ../pennyfarthing-dist`, then `.claude/agents -> pennyfarthing/agents`). This caused permission issues with Claude Code which doesn't follow symlink chains.
+
+v4.0.4+ uses direct single-hop symlinks, matching what `pennyfarthing init` creates for external users.
