@@ -261,6 +261,7 @@ export interface ElectronAPI {
   tokenStats: ElectronDataAPI;
   todos: ElectronDataAPI; // B-17: Todo visualizer
   context: ElectronDataAPI; // B-19: Context usage progress bar
+  usageStats: ElectronDataAPI; // 23-1: Usage limits
   claude: ElectronClaudeAPI;
   agent: ElectronAgentAPI; // B-23: Agent launcher
   diff: ElectronDiffAPI; // E8-2: Diff viewer
@@ -332,6 +333,8 @@ function createElectronAPI(): ElectronAPI {
       todos: createDataAPI(ipcRenderer, 'todos:get', 'todos:update'),
       // Context API (B-19)
       context: createDataAPI(ipcRenderer, 'context:get', 'context:update'),
+      // Usage Stats API (23-1)
+      usageStats: createDataAPI(ipcRenderer, 'usageStats:get', 'usageStats:update'),
       // Claude SDK API (E7-3)
       claude: {
         send: (prompt: string) => ipcRenderer.invoke('claude:send', prompt),
@@ -429,6 +432,8 @@ function createElectronAPI(): ElectronAPI {
       todos: createDataAPI(null, 'todos:get', 'todos:update'),
       // Context API (B-19) - test stub
       context: createDataAPI(null, 'context:get', 'context:update'),
+      // Usage Stats API (23-1) - test stub
+      usageStats: createDataAPI(null, 'usageStats:get', 'usageStats:update'),
       // Claude SDK API (E7-3) - test stub
       claude: {
         send: (_prompt: string) => Promise.resolve(),

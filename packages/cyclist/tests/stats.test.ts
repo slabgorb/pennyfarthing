@@ -42,11 +42,12 @@ describe('E1-5: Stats Dashboard', () => {
       expect(modelValue).not.toBeNull();
     });
 
-    it('should display token metrics', () => {
-      const inputTokens = document.querySelector('#stats-strip [data-stat="strip-input"]');
-      const outputTokens = document.querySelector('#stats-strip [data-stat="strip-output"]');
-      expect(inputTokens).not.toBeNull();
-      expect(outputTokens).not.toBeNull();
+    // 23-1: Token metrics replaced by usage limits display
+    it('should display usage metrics', () => {
+      const usage5hr = document.querySelector('#stats-strip [data-stat="strip-usage-5hr"]');
+      const usageWeekly = document.querySelector('#stats-strip [data-stat="strip-usage-weekly"]');
+      expect(usage5hr).not.toBeNull();
+      expect(usageWeekly).not.toBeNull();
     });
 
     it('should display context meter', () => {
@@ -97,8 +98,9 @@ describe('E1-5: Stats Dashboard', () => {
       expect(css).toMatch(/\.model-badge[^}]*font-weight/);
     });
 
-    it('should have token stats with monospace font', () => {
-      expect(css).toMatch(/(\.token-stats|\.token-in|\.token-out)[^}]*font-family[^}]*mono/);
+    // 23-1: Token stats replaced by usage limits
+    it('should have usage stats with monospace font', () => {
+      expect(css).toMatch(/(\.usage-5hr|\.usage-weekly)[^}]*font-family[^}]*mono/);
     });
 
     it('should have consistent spacing in stats strip', () => {

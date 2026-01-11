@@ -68,6 +68,8 @@ function createElectronAPI() {
             todos: createDataAPI(ipcRenderer, 'todos:get', 'todos:update'),
             // Context API (B-19)
             context: createDataAPI(ipcRenderer, 'context:get', 'context:update'),
+            // Usage Stats API (23-1)
+            usageStats: createDataAPI(ipcRenderer, 'usageStats:get', 'usageStats:update'),
             // Claude SDK API (E7-3)
             claude: {
                 send: (prompt) => ipcRenderer.invoke('claude:send', prompt),
@@ -164,6 +166,8 @@ function createElectronAPI() {
             todos: createDataAPI(null, 'todos:get', 'todos:update'),
             // Context API (B-19) - test stub
             context: createDataAPI(null, 'context:get', 'context:update'),
+            // Usage Stats API (23-1) - test stub
+            usageStats: createDataAPI(null, 'usageStats:get', 'usageStats:update'),
             // Claude SDK API (E7-3) - test stub
             claude: {
                 send: (_prompt) => Promise.resolve(),
