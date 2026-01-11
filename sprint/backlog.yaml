@@ -507,6 +507,125 @@ backlog:
             - Analytics viewable in diagnostics
             - Data informs future improvements
 
+    - id: epic-26
+      title: "Image Paste & Screenshot Support"
+      description: |
+        Enable users to share images with Claude through Cyclist via clipboard
+        paste. Supports pasting screenshots (Cmd+Shift+4, etc.), copied images,
+        and files copied from Finder/Explorer. Images are properly encoded for
+        Claude's multimodal vision capabilities.
+      points: 14
+      priority: P2
+      marker: "strategic"
+      repos: cyclist
+      status: planned
+      stories:
+        - id: "26-1"
+          title: "Clipboard image paste"
+          description: |
+            Cmd+V pastes images from clipboard into input area.
+            - Screenshots from OS tools (Cmd+Shift+4, Snipping Tool)
+            - Images copied from browsers or other apps
+            - Detect image data in clipboard on paste event
+            - Show visual feedback when image detected
+          points: 3
+          priority: P1
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Cmd+V pastes clipboard images
+            - Works with OS screenshot tools
+            - Works with images copied from browser
+            - Visual feedback on successful paste
+
+        - id: "26-2"
+          title: "Clipboard file paste"
+          description: |
+            Cmd+V pastes image files copied from Finder/Explorer.
+            - Detect file references in clipboard
+            - Read file contents and convert to image data
+            - Support common formats: PNG, JPG, GIF, WebP
+          points: 2
+          priority: P1
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Paste files copied from Finder/Explorer
+            - Supports PNG, JPG, GIF, WebP
+            - Graceful error for unsupported formats
+
+        - id: "26-3"
+          title: "Image preview before send"
+          description: |
+            Show thumbnail preview of attached images before sending.
+            - Thumbnail appears above/beside input field
+            - Click X to remove image
+            - Shows filename or "Screenshot" label
+            - Preview scales to reasonable size
+          points: 2
+          priority: P1
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Thumbnail preview displayed
+            - Remove button (X) works
+            - Appropriate label shown
+            - Preview doesn't obstruct input
+
+        - id: "26-4"
+          title: "Base64 encoding for Claude API"
+          description: |
+            Properly encode images for Claude's vision API.
+            - Convert image to base64 data URL
+            - Include correct MIME type
+            - Inject into Claude Code message format
+            - Handle PTY integration for image data
+          points: 3
+          priority: P1
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Images encoded as base64 with MIME type
+            - Claude receives and processes image
+            - Image appears in conversation context
+            - Works in both Electron and web modes
+
+        - id: "26-5"
+          title: "Image size validation & resize"
+          description: |
+            Validate image size and optionally resize large images.
+            - Warn if image exceeds recommended size (5MB)
+            - Block if image exceeds max size (20MB)
+            - Option to auto-resize large images
+            - Show file size in preview
+          points: 2
+          priority: P2
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Warning for images > 5MB
+            - Block images > 20MB with clear message
+            - Optional auto-resize to fit limits
+            - File size shown in preview tooltip
+
+        - id: "26-6"
+          title: "Multiple image support"
+          description: |
+            Allow attaching multiple images to a single message.
+            - Paste additional images to add to queue
+            - Show all thumbnails in preview area
+            - Remove individual images
+            - Clear all button
+          points: 2
+          priority: P2
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Multiple images can be attached
+            - All thumbnails visible
+            - Individual remove works
+            - Clear all option available
+
 # =============================================================================
 # MOVED TO SPRINT 8
 # =============================================================================
@@ -536,11 +655,12 @@ backlog:
 # =============================================================================
 # BACKLOG SUMMARY
 # =============================================================================
-# Remaining backlog: 70 pts
+# Remaining backlog: 84 pts
 #   - Epic 7-6: CI integration (2 pts)
 #   - Epic 23: Cyclist Command Integration (29 pts)
 #   - Epic 24: Configuration & Theme Switcher (21 pts)
-#   - Epic 25: Smart Question Detection (18 pts) - NEW
+#   - Epic 25: Smart Question Detection (18 pts)
+#   - Epic 26: Image Paste & Screenshot Support (14 pts) - NEW
 # Active in Sprint 8: 30 pts
 #
 # Priority Legend:
