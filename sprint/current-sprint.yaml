@@ -499,10 +499,13 @@ epics:
           - Agent panel / agent selection (shows stale agent)
         points: 2
         priority: P1
-        status: in_progress
+        status: done
         started: 2026-01-11
+        completed: 2026-01-11
         assigned_to: Keith Avery
         repos: cyclist
+        pr: 172
+        pr_link: https://github.com/1898andCo/pennyfarthing/pull/172
         acceptance_criteria:
           - Clear resets changed files panel to empty
           - Clear resets diffs panel to empty
