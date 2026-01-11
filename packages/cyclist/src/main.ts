@@ -706,25 +706,16 @@ let usagePollTimer: NodeJS.Timeout | null = null;
 /**
  * Start polling usage stats
  * Calls /status periodically and parses output for usage limits
+ *
+ * TODO: Implement actual /status parsing when format is determined.
+ * Until then, UI shows placeholder values (—%).
  */
 export function startUsagePolling(_projectDir: string): () => void {
-  // Initial fetch - set default values
-  // In real implementation, would call /status and parse
-  // For now, using mock data until we determine exact /status format
-  const mockStats: UsageStats = {
-    fiveHourPercent: 50,
-    weeklyPercent: 30,
-    fiveHourResetAt: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),
-    weeklyResetAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-    planType: 'pro',
-  };
-  updateUsageStats(mockStats);
-
-  // Set up polling
+  // Set up polling interval
+  // When /status parsing is implemented, this will fetch and broadcast real data
   usagePollTimer = setInterval(() => {
-    // In real implementation, would call /status and parse
-    // For now, just rebroadcast current stats
-    broadcastToRenderer(IPC_DATA_CHANNELS.USAGE_STATS_UPDATE, currentUsageStats);
+    // TODO: Call /status, parse output, and update usage stats
+    // For now, polling is set up but no data is broadcast until real integration
   }, USAGE_POLL_INTERVAL_MS);
 
   // Return cleanup function
