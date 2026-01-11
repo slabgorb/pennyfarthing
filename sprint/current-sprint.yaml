@@ -5,9 +5,9 @@ sprint:
   status: active
   velocity_target: 30
 summary:
-  total_points: 30
+  total_points: 27
   completed_points: 14
-  remaining_points: 16
+  remaining_points: 13
   notes: |
     Sprint 8 focus: State reconciliation, skill discovery, Cyclist web mode parity.
 
@@ -197,12 +197,12 @@ epics:
       Improve Cyclist web mode UX to match Electron mode capabilities.
       Currently, web mode requires manual OTEL configuration to get
       token stats, and some features only work in Electron.
-    points: 8
+    points: 5
     completed_points: 5
     priority: P2
     marker: quick-win
     repos: pennyfarthing
-    status: planned
+    status: done
     stories:
       - id: 20-1
         title: Auto-configure OTEL for web mode
@@ -250,23 +250,6 @@ epics:
           - Feature parity matrix documented
           - Web alternatives identified for key features
           - Limitations clearly documented
-      - id: 20-3
-        title: Cyclist launcher with integrated Claude Code
-        jira_key: MSSCI-11529
-        description: |
-          Create a launcher mode where Cyclist web spawns Claude Code
-          as a subprocess (like Electron mode), giving full control
-          over OTEL config and permission modes.
-
-          Would enable web mode to have same capabilities as Electron.
-        points: 3
-        priority: P2
-        status: backlog
-        repos: pennyfarthing
-        acceptance_criteria:
-          - Web server can spawn Claude Code subprocess
-          - OTEL automatically configured
-          - WebSocket bridges subprocess I/O to browser
   - id: epic-22
     title: Verbose Mode - Tool Visibility & Intervention (Carryover)
     description: |
