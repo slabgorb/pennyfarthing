@@ -153,53 +153,49 @@ function updateUsageMeter(usageStats) {
   // Check if we have real data (planType is set when data is fetched)
   const hasData = usageStats.planType && usageStats.planType !== 'unknown';
 
-  // Update 5-hour usage
+  // Update 5-hour usage (shows USED percentage to match Claude /config)
   const usage5hr = document.querySelector('#stats-strip .usage-5hr');
   if (usage5hr) {
     const valueSpan = usage5hr.querySelector('.usage-value');
+    const used5hr = usageStats.fiveHourPercent || 0;
     if (valueSpan) {
       if (hasData) {
-        // Calculate remaining percentage (100 - used)
-        const remaining5hr = Math.max(0, 100 - (usageStats.fiveHourPercent || 0));
-        valueSpan.textContent = `${Math.round(remaining5hr)}%`;
+        valueSpan.textContent = `${Math.round(used5hr)}%`;
       } else {
-        // No data available yet
         valueSpan.textContent = '—%';
       }
     }
     // Update tooltip with reset time
     if (usageStats.fiveHourResetAt) {
-      usage5hr.title = `5-hour block: Resets in ${formatResetTime(usageStats.fiveHourResetAt)}`;
+      usage5hr.title = `5-hour block: ${Math.round(used5hr)}% used, resets in ${formatResetTime(usageStats.fiveHourResetAt)}`;
     } else if (!hasData) {
       usage5hr.title = '5-hour block: Loading...';
     }
-    // Update level class (safe if no data)
-    const remaining5hr = hasData ? Math.max(0, 100 - (usageStats.fiveHourPercent || 0)) : 100;
+    // Update level class based on used percentage (higher = more danger)
+    const remaining5hr = hasData ? Math.max(0, 100 - used5hr) : 100;
     updateUsageLevel(usage5hr, remaining5hr);
   }
 
-  // Update weekly usage
+  // Update weekly usage (shows USED percentage to match Claude /config)
   const usageWeekly = document.querySelector('#stats-strip .usage-weekly');
   if (usageWeekly) {
     const valueSpan = usageWeekly.querySelector('.usage-value');
+    const usedWeekly = usageStats.weeklyPercent || 0;
     if (valueSpan) {
       if (hasData) {
-        // Calculate remaining percentage (100 - used)
-        const remainingWeekly = Math.max(0, 100 - (usageStats.weeklyPercent || 0));
-        valueSpan.textContent = `${Math.round(remainingWeekly)}%`;
+        valueSpan.textContent = `${Math.round(usedWeekly)}%`;
       } else {
-        // No data available yet
         valueSpan.textContent = '—%';
       }
     }
     // Update tooltip with reset time
     if (usageStats.weeklyResetAt) {
-      usageWeekly.title = `Weekly: Resets in ${formatResetTime(usageStats.weeklyResetAt)}`;
+      usageWeekly.title = `Weekly: ${Math.round(usedWeekly)}% used, resets in ${formatResetTime(usageStats.weeklyResetAt)}`;
     } else if (!hasData) {
       usageWeekly.title = 'Weekly: Loading...';
     }
-    // Update level class (safe if no data)
-    const remainingWeekly = hasData ? Math.max(0, 100 - (usageStats.weeklyPercent || 0)) : 100;
+    // Update level class based on used percentage (higher = more danger)
+    const remainingWeekly = hasData ? Math.max(0, 100 - usedWeekly) : 100;
     updateUsageLevel(usageWeekly, remainingWeekly);
   }
 }

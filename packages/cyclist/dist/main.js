@@ -23,7 +23,9 @@ import { getVerboseMode, setVerboseMode } from './settings-store.js';
 // Re-export project directory functions for external consumers
 export { getProjectDirectory, setProjectDirectory, isValidProjectDirectory };
 import * as fs from 'fs';
-import { execSync } from 'child_process';
+import { exec, execSync } from 'child_process';
+import { promisify } from 'util';
+const execAsync = promisify(exec);
 // Calculate __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -567,21 +569,30 @@ export const USAGE_POLL_INTERVAL_MS = 60000;
 let usagePollTimer = null;
 /**
  * Max tokens for rate limit calculation (Claude Max plan)
- * This is the token limit per 5-hour block
+ * Empirically derived: ~217M tokens per 5-hour block based on Claude /config display
  */
-const MAX_TOKENS_PER_BLOCK = 185_707_244;
+const MAX_TOKENS_PER_BLOCK = 217_000_000;
 /**
  * Fetch usage stats from ccusage CLI
  * Uses local JSONL files to calculate 5-hour and weekly usage
  */
 async function fetchUsageFromCcusage() {
     try {
-        // Run ccusage blocks --json to get 5-hour block data
-        const output = execSync('npx ccusage@latest blocks --json --offline 2>/dev/null', {
+        // Run ccusage blocks --json asynchronously to avoid blocking main process
+        // Use shell: true and explicit PATH to handle Electron's limited environment
+        const { stdout: output } = await execAsync('npx ccusage@latest blocks --json --offline', {
             encoding: 'utf-8',
             timeout: 30000,
-            stdio: ['pipe', 'pipe', 'pipe'],
+            shell: '/bin/zsh',
+            env: {
+                ...process.env,
+                PATH: `${process.env.PATH || ''}:/usr/local/bin:/opt/homebrew/bin:${process.env.HOME}/.nvm/versions/node/v20.18.0/bin`,
+            },
         });
+        if (!output || !output.trim()) {
+            console.warn('[UsageStats] Empty output from ccusage');
+            return null;
+        }
         const data = JSON.parse(output);
         const blocks = data.blocks || [];
         // Find the active block (current 5-hour window)
@@ -604,8 +615,8 @@ async function fetchUsageFromCcusage() {
                 weeklyTokens += block.totalTokens || 0;
             }
         }
-        // Weekly limit is roughly 33.6 blocks worth (7 days * 24 hours / 5 hours per block)
-        const weeklyMaxTokens = MAX_TOKENS_PER_BLOCK * 33.6;
+        // Weekly limit empirically derived: ~2.85B tokens based on Claude /config display
+        const weeklyMaxTokens = 2_850_000_000;
         const weeklyPercent = Math.round((weeklyTokens / weeklyMaxTokens) * 100);
         // Weekly reset is end of current week (Sunday midnight UTC)
         const daysUntilSunday = (7 - now.getUTCDay()) % 7 || 7;
@@ -630,18 +641,30 @@ async function fetchUsageFromCcusage() {
  * Uses ccusage CLI to read local JSONL files for usage data
  */
 export function startUsagePolling(_projectDir) {
-    // Initial fetch
-    fetchUsageFromCcusage().then((stats) => {
+    // Initial fetch with error handling
+    fetchUsageFromCcusage()
+        .then((stats) => {
         if (stats) {
             updateUsageStats(stats);
             console.log('[UsageStats] Initial fetch:', stats.fiveHourPercent + '% (5hr),', stats.weeklyPercent + '% (weekly)');
         }
+        else {
+            console.log('[UsageStats] Initial fetch: no data available');
+        }
+    })
+        .catch((err) => {
+        console.warn('[UsageStats] Initial fetch failed:', err?.message || err);
     });
-    // Set up polling interval
+    // Set up polling interval with error handling
     usagePollTimer = setInterval(async () => {
-        const stats = await fetchUsageFromCcusage();
-        if (stats) {
-            updateUsageStats(stats);
+        try {
+            const stats = await fetchUsageFromCcusage();
+            if (stats) {
+                updateUsageStats(stats);
+            }
+        }
+        catch (err) {
+            console.warn('[UsageStats] Poll failed:', err?.message || err);
         }
     }, USAGE_POLL_INTERVAL_MS);
     console.log('[UsageStats] Polling started (every', USAGE_POLL_INTERVAL_MS / 1000, 's)');
