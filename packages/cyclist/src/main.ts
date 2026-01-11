@@ -599,18 +599,23 @@ let contextPollTimer: NodeJS.Timeout | null = null;
 /**
  * Start polling context usage
  * Calls getContextUsage periodically and broadcasts changes
+ * @param projectDir - The project directory
+ * @param getSessionId - Optional function to get current session ID (for session-specific context)
  */
-export function startContextPolling(projectDir: string): () => void {
-  // Initial fetch
-  const initialContext = getContextUsage(projectDir);
+export function startContextPolling(projectDir: string, getSessionId?: () => string | null): () => void {
+  // Initial fetch (may not have session ID yet)
+  const sessionId = getSessionId?.() ?? undefined;
+  const initialContext = getContextUsage(projectDir, sessionId);
   updateContextState(initialContext);
 
   // Set up polling
   contextPollTimer = setInterval(() => {
-    const context = getContextUsage(projectDir);
+    // Get session ID each poll - it may become available after first message
+    const currentSessionId = getSessionId?.() ?? undefined;
+    const context = getContextUsage(projectDir, currentSessionId);
     const changed = updateContextState(context);
     if (changed) {
-      console.log('Context updated:', context.percent, '%');
+      console.log('Context updated:', context.percent, '%', currentSessionId ? `(session: ${currentSessionId.slice(0, 8)}...)` : '');
     }
   }, CONTEXT_POLL_INTERVAL_MS);
 
@@ -819,8 +824,15 @@ export function startProjectWatchers(): void {
     });
     console.log('Agent change watcher started for:', projectDir);
 
-    // Start context polling (B-19)
-    startContextPolling(projectDir);
+    // Start context polling (B-19) with session ID for session-specific tracking (17-7)
+    startContextPolling(projectDir, () => {
+      try {
+        return getClaudeService().getSessionId();
+      } catch {
+        // ClaudeService may not be initialized yet
+        return null;
+      }
+    });
   }
 }
 

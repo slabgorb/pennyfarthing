@@ -3,9 +3,29 @@
 # Returns: percentage and recommendation for handoff
 #
 # Usage:
-#   ./check-context.sh          # Output env vars
-#   ./check-context.sh --human  # Human-readable output
-#   eval $(./check-context.sh)  # Load vars into shell
+#   ./check-context.sh                    # Output env vars (most recent transcript)
+#   ./check-context.sh --human            # Human-readable output
+#   ./check-context.sh --session <id>     # Check specific session transcript
+#   SESSION_ID=<id> ./check-context.sh    # Alternative: session via env var
+#   eval $(./check-context.sh)            # Load vars into shell
+
+# Parse command line arguments
+HUMAN_MODE=false
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --human)
+            HUMAN_MODE=true
+            shift
+            ;;
+        --session)
+            SESSION_ID="$2"
+            shift 2
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
 
 # Derive Claude project path from current directory
 # Claude Code stores transcripts at ~/.claude/projects/<path-with-dashes>
@@ -51,16 +71,30 @@ eval "$CONFIG" 2>/dev/null || {
     MAX_TOKENS=$DEFAULT_MAX_TOKENS
 }
 
-# Find most recent transcript (current session)
-TRANSCRIPT=$(ls -t "$CLAUDE_PROJECT_PATH"/*.jsonl 2>/dev/null | grep -v "agent-" | head -1)
-
-if [ -z "$TRANSCRIPT" ]; then
-    if [ "$1" = "--human" ]; then
-        echo "⚠️  Context: unknown (no transcript found)"
-    else
-        echo "CONTEXT_ERROR=no_transcript"
+# Find transcript - either specific session or most recent
+if [ -n "$SESSION_ID" ]; then
+    # Session-specific: look for transcript with matching session ID
+    TRANSCRIPT="$CLAUDE_PROJECT_PATH/${SESSION_ID}.jsonl"
+    if [ ! -f "$TRANSCRIPT" ]; then
+        if [ "$HUMAN_MODE" = "true" ]; then
+            echo "⚠️  Context: unknown (session transcript not found: $SESSION_ID)"
+        else
+            echo "CONTEXT_ERROR=session_not_found"
+            echo "CONTEXT_SESSION=$SESSION_ID"
+        fi
+        exit 1
     fi
-    exit 1
+else
+    # Default: find most recent transcript (current session)
+    TRANSCRIPT=$(ls -t "$CLAUDE_PROJECT_PATH"/*.jsonl 2>/dev/null | grep -v "agent-" | head -1)
+    if [ -z "$TRANSCRIPT" ]; then
+        if [ "$HUMAN_MODE" = "true" ]; then
+            echo "⚠️  Context: unknown (no transcript found)"
+        else
+            echo "CONTEXT_ERROR=no_transcript"
+        fi
+        exit 1
+    fi
 fi
 
 # Parse last message for usage data
@@ -101,7 +135,7 @@ for line in reversed(lines):
         continue
 " 2>/dev/null)
 
-if [ "$1" = "--human" ]; then
+if [ "$HUMAN_MODE" = "true" ]; then
     eval "$RESULT"
     if [ "$CONTEXT_STATUS" = "HIGH" ]; then
         echo "⚠️  Context: ${CONTEXT_PERCENT}% (${CONTEXT_TOKENS} tokens) - AUTO-HANDOFF"
