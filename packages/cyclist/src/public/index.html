@@ -65,23 +65,6 @@
           <span class="toolbar-spacer"></span>
           <button type="button" class="mode-btn" data-control="plan-mode" title="Cycle permission mode: Manual → Plan → Accept → Danger">MANUAL</button>
         </div>
-        <!-- B-22: Stats Strip - compact stats display in prompt bar -->
-        <div id="stats-strip">
-          <span class="model-badge" data-stat="strip-model">—</span>
-          <span class="token-stats" title="Session totals (cumulative)">
-            <span class="stats-label">Session:</span>
-            <span class="token-in" data-stat="strip-input">↓ —</span>
-            <span class="token-out" data-stat="strip-output">↑ —</span>
-          </span>
-          <span class="context-stats" title="Current context window">
-            <span class="stats-label">Context:</span>
-            <span class="context-tokens" data-stat="strip-context-tokens">—</span>
-          </span>
-          <div class="context-mini">
-            <div class="context-mini-fill"></div>
-            <span class="context-mini-label" data-stat="strip-context">—%</span>
-          </div>
-        </div>
         <div id="editor-row">
           <div id="editor">
             <!-- TipTap editor will be mounted here -->
@@ -108,6 +91,23 @@
             <button id="clear-btn" class="clear-btn" title="Clear session and start fresh">
               <span class="clear-icon">⟳</span>
             </button>
+          </div>
+        </div>
+        <!-- B-22: Stats Strip - compact stats display below editor -->
+        <div id="stats-strip">
+          <span class="model-badge" data-stat="strip-model">—</span>
+          <span class="token-stats" title="Session totals (cumulative)">
+            <span class="stats-label">Session:</span>
+            <span class="token-in" data-stat="strip-input">↓ —</span>
+            <span class="token-out" data-stat="strip-output">↑ —</span>
+          </span>
+          <span class="context-stats" title="Current context window">
+            <span class="stats-label">Context:</span>
+            <span class="context-tokens" data-stat="strip-context-tokens">—</span>
+          </span>
+          <div class="context-mini">
+            <div class="context-mini-fill"></div>
+            <span class="context-mini-label" data-stat="strip-context">—%</span>
           </div>
         </div>
       </div>
@@ -272,6 +272,27 @@
     </div>
   </div>
 
+  <!-- 22-4: Dangerous Path Approval Modal -->
+  <div id="dangerous-path-modal" class="dangerous-path-modal hidden" tabindex="-1" aria-hidden="true">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Sensitive Path Detected</h3>
+        <span class="category-indicator">Unknown</span>
+      </div>
+      <div class="path-warning">
+        <span class="warning-icon">⚠️</span>
+        <span class="warning-text">Claude wants to modify a sensitive file:</span>
+      </div>
+      <div class="path-display">.env</div>
+      <div class="modal-actions">
+        <button class="approve-btn" data-action="approve" title="Allow this operation (Enter)">Allow</button>
+        <button class="always-allow-btn" data-action="always-allow" title="Allow and remember for this session">Always Allow</button>
+        <button class="reject-btn" data-action="reject" title="Block this operation (Esc)">Block</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Web adapter: provides window.electronAPI in browser mode (no-op in Electron) -->
   <script src="/js/web-adapter.js"></script>
   <!-- Livereload: auto-refresh in dev mode -->
@@ -284,6 +305,8 @@
   <script type="module" src="/js/components/ToolActivityBar.js"></script>
   <!-- 22-3: Bash Command Approval Modal -->
   <script type="module" src="/js/components/ApprovalModal.js"></script>
+  <!-- 22-4: Dangerous Path Approval Modal -->
+  <script type="module" src="/js/components/DangerousPathModal.js"></script>
   <script type="module" src="/js/portrait.js"></script>
   <script src="/js/stats-strip.js"></script>
   <script type="module" src="/js/persona.js"></script>

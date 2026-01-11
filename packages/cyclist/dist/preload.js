@@ -113,10 +113,19 @@ function createElectronAPI() {
                 },
                 sendApprovalResponse: (response) => ipcRenderer.invoke('bash:approval-response', response),
             },
-            // Settings API (22-3, 22-5)
+            // Dangerous path approval API (22-4)
+            path: {
+                onApprovalRequest: (callback) => {
+                    ipcRenderer.on('path:approval-request', callback);
+                },
+                sendApprovalResponse: (response) => ipcRenderer.invoke('path:approval-response', response),
+            },
+            // Settings API (22-3, 22-4, 22-5)
             settings: {
                 getBashApprovalGate: () => ipcRenderer.invoke('settings:getBashApprovalGate'),
                 setBashApprovalGate: (enabled) => ipcRenderer.invoke('settings:setBashApprovalGate', enabled),
+                getDangerousPathGate: () => ipcRenderer.invoke('settings:getDangerousPathGate'),
+                setDangerousPathGate: (enabled) => ipcRenderer.invoke('settings:setDangerousPathGate', enabled),
                 getVerboseMode: () => ipcRenderer.invoke('settings:getVerboseMode'),
                 setVerboseMode: (enabled) => ipcRenderer.invoke('settings:setVerboseMode', enabled),
                 onVerboseModeChange: (callback) => {
@@ -186,10 +195,19 @@ function createElectronAPI() {
                 },
                 sendApprovalResponse: (_response) => Promise.resolve(),
             },
-            // Settings API (22-3, 22-5) - test stub
+            // Dangerous path approval API (22-4) - test stub
+            path: {
+                onApprovalRequest: (_callback) => {
+                    // No-op in test environment
+                },
+                sendApprovalResponse: (_response) => Promise.resolve(),
+            },
+            // Settings API (22-3, 22-4, 22-5) - test stub
             settings: {
                 getBashApprovalGate: () => Promise.resolve(false),
                 setBashApprovalGate: (_enabled) => Promise.resolve(),
+                getDangerousPathGate: () => Promise.resolve(true),
+                setDangerousPathGate: (_enabled) => Promise.resolve(),
                 getVerboseMode: () => Promise.resolve(false),
                 setVerboseMode: (_enabled) => Promise.resolve(false),
                 onVerboseModeChange: (_callback) => {

@@ -111,3 +111,78 @@ export function getVerboseMode(): boolean {
 export function setVerboseMode(enabled: boolean): void {
   verboseModeEnabled = enabled;
 }
+
+// =============================================================================
+// Dangerous Path Detection (Story 22-4)
+// =============================================================================
+
+// In-memory state for dangerous path detection
+let dangerousPathGateEnabled = true; // Enabled by default for safety
+let pathAllowlist: string[] = [];
+
+/**
+ * Get the current state of the dangerous path gate
+ * When enabled, modifications to sensitive paths require approval
+ * @returns true if dangerous path gate is enabled, false otherwise
+ */
+export function getDangerousPathGate(): boolean {
+  return dangerousPathGateEnabled;
+}
+
+/**
+ * Set the state of the dangerous path gate
+ * @param enabled - true to enable dangerous path detection, false to disable
+ */
+export function setDangerousPathGate(enabled: boolean): void {
+  dangerousPathGateEnabled = enabled;
+}
+
+/**
+ * Get all paths in the path allowlist
+ * @returns Array of path patterns
+ */
+export function getPathAllowlist(): string[] {
+  return [...pathAllowlist];
+}
+
+/**
+ * Add a path to the allowlist
+ * @param path - Path or glob pattern to allow
+ */
+export function addToPathAllowlist(path: string): void {
+  if (!pathAllowlist.includes(path)) {
+    pathAllowlist.push(path);
+  }
+}
+
+/**
+ * Check if a path matches any pattern in the path allowlist
+ * @param path - The path to check
+ * @returns true if path matches an allowlisted pattern
+ */
+export function isPathAllowlisted(path: string): boolean {
+  return pathAllowlist.some((pattern) => matchPathPattern(pattern, path));
+}
+
+/**
+ * Clear all paths from the path allowlist
+ */
+export function clearPathAllowlist(): void {
+  pathAllowlist = [];
+}
+
+/**
+ * Simple path pattern matching
+ * Supports '*' as wildcard for any characters
+ * @param pattern - Glob pattern
+ * @param path - Path to match against
+ * @returns true if path matches pattern
+ */
+function matchPathPattern(pattern: string, path: string): boolean {
+  // Escape regex special chars except *
+  const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&');
+  // Convert * to regex .*
+  const regexStr = escaped.replace(/\*/g, '.*');
+  const regex = new RegExp(`^${regexStr}$`);
+  return regex.test(path);
+}
