@@ -374,10 +374,13 @@ epics:
           Show appropriate action button for each.
         points: 3
         priority: P1
-        status: in_progress
+        status: done
         started: 2026-01-11
+        completed: 2026-01-11
         assigned_to: Keith Avery
         repos: cyclist
+        pr: "#173"
+        pr_link: https://github.com/1898andCo/pennyfarthing/pull/173
         acceptance_criteria:
           - Detects "invoke X" patterns
           - Detects "ready for X" patterns
@@ -395,7 +398,9 @@ epics:
           Always show "Yes" and "No" buttons for these.
         points: 2
         priority: P1
-        status: backlog
+        status: in_progress
+        started: 2026-01-11
+        assigned_to: Keith Avery
         repos: cyclist
         acceptance_criteria:
           - Detects confirmation question patterns
