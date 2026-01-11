@@ -6,8 +6,8 @@ sprint:
   velocity_target: 30
 summary:
   total_points: 76
-  completed_points: 32
-  remaining_points: 44
+  completed_points: 35
+  remaining_points: 41
   notes: |
     Sprint 8 focus: State reconciliation, skill discovery, smart question detection, Cyclist command integration.
 
@@ -471,7 +471,7 @@ epics:
       in Cyclist, with dedicated IPC handlers for clean architecture.
       Priority commands: /status (usage limits), /compact, /rewind, /doctor.
     points: 29
-    completed_points: 3
+    completed_points: 6
     priority: P1
     marker: strategic
     repos: cyclist
@@ -536,7 +536,10 @@ epics:
           expose via preload, handle in main.ts.
         points: 3
         priority: P1
-        status: backlog
+        status: done
+        started: 2026-01-11
+        completed: 2026-01-11
+        assigned_to: Keith Avery
         repos: cyclist
         acceptance_criteria:
           - IPC channels defined as constants
