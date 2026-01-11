@@ -449,6 +449,7 @@ epics:
         started: 2026-01-11
         completed: 2026-01-11
         assigned_to: Keith Avery
+        pr: "#180"
         pr_link: https://github.com/1898andCo/pennyfarthing/pull/180
         repos: cyclist
         acceptance_criteria:
