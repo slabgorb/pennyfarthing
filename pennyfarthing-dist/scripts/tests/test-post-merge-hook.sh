@@ -76,7 +76,7 @@ test_hook_is_executable() {
 
 # Test: init.ts references post-merge hook installation
 test_init_installs_hook() {
-    local init_file="$PROJECT_ROOT/src/cli/commands/init.ts"
+    local init_file="$PROJECT_ROOT/packages/core/src/cli/commands/init.ts"
 
     if [[ ! -f "$init_file" ]]; then
         fail "init.ts installs post-merge hook" "file exists" "file not found"
