@@ -8,6 +8,19 @@
 import { highlightCode } from './syntax-highlighter.js';
 
 /**
+ * Strip CYCLIST structured markers from text before rendering.
+ * These markers are used for machine parsing (quick actions) but should
+ * be invisible to users.
+ * @param {string} text - Text that may contain CYCLIST markers
+ * @returns {string} Text with markers removed
+ */
+export function stripMarkers(text) {
+  if (!text) return text;
+  // Remove CYCLIST markers: <!-- CYCLIST:TYPE:value -->
+  return text.replace(/<!--\s*CYCLIST:\w+:[^>]+?\s*-->/gi, '').trim();
+}
+
+/**
  * Escape HTML special characters
  * @param {string} text
  * @returns {string}
@@ -157,10 +170,14 @@ function parseMarkdownTables(text) {
 export function parseMarkdown(markdown) {
   if (!markdown) return '';
 
+  // Strip CYCLIST structured markers BEFORE escaping HTML
+  // These are for quick-actions parsing, not display
+  const cleaned = stripMarkers(markdown);
+
   // SECURITY: Escape HTML special characters FIRST to prevent XSS
   // This ensures any <script>, <img onerror>, etc. are neutralized before processing
   // Markdown syntax chars (*, #, `, -) are NOT escaped, so regexes still work
-  let html = escapeHtml(markdown);
+  let html = escapeHtml(cleaned);
 
   // Code blocks with syntax highlighting (must be first to avoid conflicts)
   // Content is already escaped, apply highlighting then wrap
@@ -226,4 +243,5 @@ export function parseMarkdown(markdown) {
 export default {
   parseMarkdown,
   escapeHtml,
+  stripMarkers,
 };
