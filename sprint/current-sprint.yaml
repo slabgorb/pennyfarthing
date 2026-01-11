@@ -839,11 +839,12 @@ epics:
 
 '
     points: 12
-    completed_points: 10
+    completed_points: 12
     priority: P2
     marker: tooling
     repos: pennyfarthing
-    status: in_progress
+    status: done
+    completed: 2026-01-10
     stories:
       - id: 21-1
         jira: MSSCI-11496
@@ -886,6 +887,7 @@ epics:
           - --skip-check flag bypasses checks when needed
           - Works with justfile recipes if available
       - id: 21-2
+        jira: MSSCI-11497
         title: /prime command with agent-session hooks
         description: 'Create a /prime command that loads project context quickly:
 
@@ -922,6 +924,7 @@ epics:
           - Reduces agent cold-start overhead
           - Does not load unnecessary files
       - id: 21-3
+        jira: MSSCI-11498
         title: mermaid skill documentation
         description: 'Create a mermaid skill with reference documentation for diagram
 
@@ -964,6 +967,7 @@ epics:
           - ER diagram template with schema example
           - Agents can reference skill for diagram generation
       - id: 21-4
+        jira: MSSCI-11499
         title: /run-ci thin wrapper command
         description: 'Create a /run-ci command that detects and runs the project''s CI
 
@@ -1001,6 +1005,7 @@ epics:
           - Provides clear output of what's running
           - Fallback to npm scripts if no CI config found
       - id: 21-5
+        jira: MSSCI-11500
         title: changelog skill for release workflow
         description: 'Create a changelog skill with patterns for maintaining changelogs.
 
@@ -1041,6 +1046,7 @@ epics:
           - /release command references changelog skill
           - Works with semantic versioning
       - id: 21-6
+        jira: MSSCI-11501
         title: /help command for Pennyfarthing
         description: 'Create a /help command that provides contextual help for Pennyfarthing:
 
