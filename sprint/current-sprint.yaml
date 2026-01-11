@@ -6,8 +6,8 @@ sprint:
   velocity_target: 30
 summary:
   total_points: 30
-  completed_points: 12
-  remaining_points: 18
+  completed_points: 14
+  remaining_points: 16
   notes: |
     Sprint 8 focus: State reconciliation, skill discovery, Cyclist web mode parity.
 
@@ -192,12 +192,13 @@ epics:
           - Identifies unused skills
   - id: epic-20
     title: Cyclist Web Mode Improvements
+    jira_key: MSSCI-11526
     description: |
       Improve Cyclist web mode UX to match Electron mode capabilities.
       Currently, web mode requires manual OTEL configuration to get
       token stats, and some features only work in Electron.
     points: 8
-    completed_points: 3
+    completed_points: 5
     priority: P2
     marker: quick-win
     repos: pennyfarthing
@@ -205,6 +206,7 @@ epics:
     stories:
       - id: 20-1
         title: Auto-configure OTEL for web mode
+        jira_key: MSSCI-11527
         description: |
           Make token stats work automatically in web mode without
           requiring manual OTEL environment variables.
@@ -228,6 +230,7 @@ epics:
           - Documentation for manual setup as fallback
       - id: 20-2
         title: Web mode feature parity audit
+        jira_key: MSSCI-11528
         description: |
           Audit all Electron-only features and create plan to support
           them in web mode or document limitations.
@@ -238,7 +241,10 @@ epics:
           - Native file dialogs
         points: 2
         priority: P2
-        status: backlog
+        status: done
+        started: 2026-01-11
+        completed: 2026-01-11
+        assigned_to: Keith Avery
         repos: pennyfarthing
         acceptance_criteria:
           - Feature parity matrix documented
@@ -246,6 +252,7 @@ epics:
           - Limitations clearly documented
       - id: 20-3
         title: Cyclist launcher with integrated Claude Code
+        jira_key: MSSCI-11529
         description: |
           Create a launcher mode where Cyclist web spawns Claude Code
           as a subprocess (like Electron mode), giving full control

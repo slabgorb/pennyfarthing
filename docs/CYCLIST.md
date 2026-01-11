@@ -327,7 +327,7 @@ export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
 ### High memory usage
 
 The Electron process includes Chromium overhead. For lighter usage:
-- Use standalone mode: `pnpm run dev:server` (browser-based)
+- Use standalone mode: `pnpm run dev:server` (browser-based) - see [Web Mode Guide](../packages/cyclist/docs/WEB-MODE.md)
 - Close unused tabs in the tab panel
 
 ### Hot reload not working
@@ -356,4 +356,5 @@ pnpm test -- --watch
 - [User Guide](USER-GUIDE.md) - Complete Pennyfarthing documentation
 - [Personas](PERSONAS.md) - Theme customization and OCEAN profiles
 - [Architecture](ARCHITECTURE.md) - System design principles
+- [Web Mode Guide](../packages/cyclist/docs/WEB-MODE.md) - Browser-based usage and feature parity
 - [Quick Action Setup](../packages/cyclist/docs/QUICK-ACTION-SETUP.md) - Finder integration
