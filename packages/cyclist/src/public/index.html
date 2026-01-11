@@ -293,6 +293,45 @@
     </div>
   </div>
 
+  <!-- 22-6: Tool Execution Audit Log Modal -->
+  <div id="audit-log-modal" class="audit-log-modal hidden" tabindex="-1" aria-hidden="true">
+    <div class="modal-overlay" data-action="close"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Tool Execution Log</h3>
+        <div class="modal-controls">
+          <select id="audit-log-filter" title="Filter by tool type">
+            <option value="">All Tools</option>
+          </select>
+          <button class="icon-btn" data-action="refresh" title="Refresh">⟳</button>
+          <button class="icon-btn" data-action="export-json" title="Export JSON">JSON</button>
+          <button class="icon-btn" data-action="export-csv" title="Export CSV">CSV</button>
+          <button class="icon-btn danger" data-action="clear" title="Clear log">Clear</button>
+          <button class="close-btn" data-action="close" title="Close (Esc)">&times;</button>
+        </div>
+      </div>
+      <div id="audit-log-stats" class="audit-log-stats"></div>
+      <div class="audit-log-table-wrapper">
+        <table class="audit-log-table">
+          <thead>
+            <tr>
+              <th class="col-timestamp">Time</th>
+              <th class="col-tool">Tool</th>
+              <th class="col-input">Input</th>
+              <th class="col-duration">Duration</th>
+              <th class="col-status">Status</th>
+            </tr>
+          </thead>
+          <tbody id="audit-log-tbody">
+            <tr class="empty-row">
+              <td colspan="5" class="empty-message">No tool executions recorded yet</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <!-- Web adapter: provides window.electronAPI in browser mode (no-op in Electron) -->
   <script src="/js/web-adapter.js"></script>
   <!-- Livereload: auto-refresh in dev mode -->
@@ -307,6 +346,15 @@
   <script type="module" src="/js/components/ApprovalModal.js"></script>
   <!-- 22-4: Dangerous Path Approval Modal -->
   <script type="module" src="/js/components/DangerousPathModal.js"></script>
+  <!-- 22-6: Tool Execution Audit Log -->
+  <script type="module" src="/js/components/AuditLogViewer.js"></script>
+  <script type="module">
+    // Wire up audit log modal to menu event
+    import { showAuditLogModal } from '/js/components/AuditLogViewer.js';
+    if (window.electronAPI?.auditLog?.onShow) {
+      window.electronAPI.auditLog.onShow(showAuditLogModal);
+    }
+  </script>
   <script type="module" src="/js/portrait.js"></script>
   <script src="/js/stats-strip.js"></script>
   <script type="module" src="/js/persona.js"></script>

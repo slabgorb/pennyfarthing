@@ -15,7 +15,20 @@ import { dirname, join, basename } from 'path';
 import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
 import { getStoryInfo, getGitInfo } from './server.js';
 import { parseToolStats, ToolStats, createEmptyStats } from './tool-stats.js';
-import { getTokenStats, setTokenStatsCallback, TokenStats, aggregateTokenStats, resetTokenStats, resetEventStore } from './otlp-receiver.js';
+import {
+  getTokenStats,
+  setTokenStatsCallback,
+  TokenStats,
+  aggregateTokenStats,
+  resetTokenStats,
+  resetEventStore,
+  getToolEvents,
+  getToolEventsFiltered,
+  getToolTypes,
+  exportAuditLogAsJSON,
+  exportAuditLogAsCSV,
+  getAuditLogStats,
+} from './otlp-receiver.js';
 import { ClaudeService, SDKMessage } from './claude-service.js';
 import { isTodoWriteMessage, extractTodos, type TodoItem } from './todos.js';
 import { listDirectory as listDir, type DirectoryListing } from './file-browser.js';
@@ -126,6 +139,18 @@ export const IPC_SETTINGS_CHANNELS = {
 } as const;
 
 /**
+ * IPC channel names for audit log (22-6)
+ */
+export const IPC_AUDIT_LOG_CHANNELS = {
+  GET_ENTRIES: 'auditLog:getEntries',
+  GET_TYPES: 'auditLog:getTypes',
+  EXPORT: 'auditLog:export',
+  GET_STATS: 'auditLog:getStats',
+  CLEAR: 'auditLog:clear',
+  ENTRY: 'auditLog:entry',
+} as const;
+
+/**
  * IPC channel names for file browser (E8-3)
  */
 export const IPC_FILE_BROWSER_CHANNELS = {
@@ -228,6 +253,22 @@ export function buildWorkflowMenu(): { label: string; submenu: unknown[] } {
   return {
     label: 'Workflows',
     submenu,
+  };
+}
+
+/**
+ * Build Tools menu with Execution Log (Story 22-6)
+ */
+export function buildToolsMenu(): { label: string; submenu: unknown[] } {
+  return {
+    label: 'Tools',
+    submenu: [
+      {
+        label: 'Execution Log',
+        accelerator: 'CmdOrCtrl+Shift+L',
+        click: () => broadcastToRenderer('tools:showAuditLog', null),
+      },
+    ],
   };
 }
 
@@ -1027,6 +1068,52 @@ export function setupSettingsIPCHandlers(ipcMain: {
 }
 
 // =============================================================================
+// Audit Log IPC Handlers (22-6)
+// =============================================================================
+
+/**
+ * Set up IPC handlers for audit log
+ * 22-6: Handles audit log get/filter/export/clear
+ */
+export function setupAuditLogIPCHandlers(ipcMain: {
+  handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
+}): void {
+  // Get all entries (optionally filtered)
+  ipcMain.handle(IPC_AUDIT_LOG_CHANNELS.GET_ENTRIES, async (_event: unknown, ...args: unknown[]) => {
+    const toolType = args[0] as string | undefined;
+    return getToolEventsFiltered(toolType);
+  });
+
+  // Get unique tool types
+  ipcMain.handle(IPC_AUDIT_LOG_CHANNELS.GET_TYPES, async () => {
+    return getToolTypes();
+  });
+
+  // Export as JSON or CSV
+  ipcMain.handle(IPC_AUDIT_LOG_CHANNELS.EXPORT, async (_event: unknown, ...args: unknown[]) => {
+    const format = args[0] as 'json' | 'csv';
+    const toolType = args[1] as string | undefined;
+    if (format === 'csv') {
+      return exportAuditLogAsCSV(toolType);
+    }
+    return exportAuditLogAsJSON(toolType);
+  });
+
+  // Get stats summary
+  ipcMain.handle(IPC_AUDIT_LOG_CHANNELS.GET_STATS, async () => {
+    return getAuditLogStats();
+  });
+
+  // Clear audit log (reuses existing resetEventStore)
+  ipcMain.handle(IPC_AUDIT_LOG_CHANNELS.CLEAR, async () => {
+    resetEventStore();
+    return true;
+  });
+
+  console.log('Audit log IPC handlers registered');
+}
+
+// =============================================================================
 // Session Persistence (E7-3: AC4)
 // =============================================================================
 
@@ -1216,6 +1303,7 @@ if (isElectron) {
   setupClaudeIPCHandlers(ipcMain);
   setupFileBrowserIPCHandlers(ipcMain);
   setupSettingsIPCHandlers(ipcMain);
+  setupAuditLogIPCHandlers(ipcMain);
 
   /**
    * Kill any orphaned Claude CLI processes from previous Cyclist sessions
@@ -1326,6 +1414,7 @@ if (isElectron) {
         { role: 'fileMenu' },
         { role: 'editMenu' },
         buildViewMenu() as Electron.MenuItemConstructorOptions,
+        buildToolsMenu() as Electron.MenuItemConstructorOptions,
         buildAgentMenu() as Electron.MenuItemConstructorOptions,
         buildWorkflowMenu() as Electron.MenuItemConstructorOptions,
         { role: 'windowMenu' },

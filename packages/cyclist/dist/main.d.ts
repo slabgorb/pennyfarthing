@@ -71,6 +71,17 @@ export declare const IPC_SETTINGS_CHANNELS: {
     readonly VERBOSE_MODE_UPDATE: "settings:verboseModeUpdate";
 };
 /**
+ * IPC channel names for audit log (22-6)
+ */
+export declare const IPC_AUDIT_LOG_CHANNELS: {
+    readonly GET_ENTRIES: "auditLog:getEntries";
+    readonly GET_TYPES: "auditLog:getTypes";
+    readonly EXPORT: "auditLog:export";
+    readonly GET_STATS: "auditLog:getStats";
+    readonly CLEAR: "auditLog:clear";
+    readonly ENTRY: "auditLog:entry";
+};
+/**
  * IPC channel names for file browser (E8-3)
  */
 export declare const IPC_FILE_BROWSER_CHANNELS: {
@@ -121,6 +132,13 @@ export declare function buildAgentMenu(): {
  * Build Electron menu for workflows
  */
 export declare function buildWorkflowMenu(): {
+    label: string;
+    submenu: unknown[];
+};
+/**
+ * Build Tools menu with Execution Log (Story 22-6)
+ */
+export declare function buildToolsMenu(): {
     label: string;
     submenu: unknown[];
 };
@@ -317,6 +335,13 @@ export declare function setupFileBrowserIPCHandlers(ipcMain: {
  * 22-5: Handles verbose mode setting get/set
  */
 export declare function setupSettingsIPCHandlers(ipcMain: {
+    handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
+}): void;
+/**
+ * Set up IPC handlers for audit log
+ * 22-6: Handles audit log get/filter/export/clear
+ */
+export declare function setupAuditLogIPCHandlers(ipcMain: {
     handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
 }): void;
 /**

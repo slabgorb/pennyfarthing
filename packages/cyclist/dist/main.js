@@ -13,7 +13,7 @@ import { dirname, join, basename } from 'path';
 import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
 import { getStoryInfo, getGitInfo } from './server.js';
 import { parseToolStats, createEmptyStats } from './tool-stats.js';
-import { getTokenStats, setTokenStatsCallback, aggregateTokenStats, resetTokenStats, resetEventStore } from './otlp-receiver.js';
+import { getTokenStats, setTokenStatsCallback, aggregateTokenStats, resetTokenStats, resetEventStore, getToolEventsFiltered, getToolTypes, exportAuditLogAsJSON, exportAuditLogAsCSV, getAuditLogStats, } from './otlp-receiver.js';
 import { ClaudeService } from './claude-service.js';
 import { isTodoWriteMessage, extractTodos } from './todos.js';
 import { listDirectory as listDir } from './file-browser.js';
@@ -107,6 +107,17 @@ export const IPC_SETTINGS_CHANNELS = {
     VERBOSE_MODE_UPDATE: 'settings:verboseModeUpdate',
 };
 /**
+ * IPC channel names for audit log (22-6)
+ */
+export const IPC_AUDIT_LOG_CHANNELS = {
+    GET_ENTRIES: 'auditLog:getEntries',
+    GET_TYPES: 'auditLog:getTypes',
+    EXPORT: 'auditLog:export',
+    GET_STATS: 'auditLog:getStats',
+    CLEAR: 'auditLog:clear',
+    ENTRY: 'auditLog:entry',
+};
+/**
  * IPC channel names for file browser (E8-3)
  */
 export const IPC_FILE_BROWSER_CHANNELS = {
@@ -175,6 +186,21 @@ export function buildWorkflowMenu() {
     return {
         label: 'Workflows',
         submenu,
+    };
+}
+/**
+ * Build Tools menu with Execution Log (Story 22-6)
+ */
+export function buildToolsMenu() {
+    return {
+        label: 'Tools',
+        submenu: [
+            {
+                label: 'Execution Log',
+                accelerator: 'CmdOrCtrl+Shift+L',
+                click: () => broadcastToRenderer('tools:showAuditLog', null),
+            },
+        ],
     };
 }
 /**
@@ -864,6 +890,43 @@ export function setupSettingsIPCHandlers(ipcMain) {
     console.log('Settings IPC handlers registered');
 }
 // =============================================================================
+// Audit Log IPC Handlers (22-6)
+// =============================================================================
+/**
+ * Set up IPC handlers for audit log
+ * 22-6: Handles audit log get/filter/export/clear
+ */
+export function setupAuditLogIPCHandlers(ipcMain) {
+    // Get all entries (optionally filtered)
+    ipcMain.handle(IPC_AUDIT_LOG_CHANNELS.GET_ENTRIES, async (_event, ...args) => {
+        const toolType = args[0];
+        return getToolEventsFiltered(toolType);
+    });
+    // Get unique tool types
+    ipcMain.handle(IPC_AUDIT_LOG_CHANNELS.GET_TYPES, async () => {
+        return getToolTypes();
+    });
+    // Export as JSON or CSV
+    ipcMain.handle(IPC_AUDIT_LOG_CHANNELS.EXPORT, async (_event, ...args) => {
+        const format = args[0];
+        const toolType = args[1];
+        if (format === 'csv') {
+            return exportAuditLogAsCSV(toolType);
+        }
+        return exportAuditLogAsJSON(toolType);
+    });
+    // Get stats summary
+    ipcMain.handle(IPC_AUDIT_LOG_CHANNELS.GET_STATS, async () => {
+        return getAuditLogStats();
+    });
+    // Clear audit log (reuses existing resetEventStore)
+    ipcMain.handle(IPC_AUDIT_LOG_CHANNELS.CLEAR, async () => {
+        resetEventStore();
+        return true;
+    });
+    console.log('Audit log IPC handlers registered');
+}
+// =============================================================================
 // Session Persistence (E7-3: AC4)
 // =============================================================================
 // Session ID file path (stored in project directory)
@@ -1040,6 +1103,7 @@ if (isElectron) {
     setupClaudeIPCHandlers(ipcMain);
     setupFileBrowserIPCHandlers(ipcMain);
     setupSettingsIPCHandlers(ipcMain);
+    setupAuditLogIPCHandlers(ipcMain);
     /**
      * Kill any orphaned Claude CLI processes from previous Cyclist sessions
      * B-24: Prevents duplicate message handling from zombie processes
@@ -1142,6 +1206,7 @@ if (isElectron) {
                 { role: 'fileMenu' },
                 { role: 'editMenu' },
                 buildViewMenu(),
+                buildToolsMenu(),
                 buildAgentMenu(),
                 buildWorkflowMenu(),
                 { role: 'windowMenu' },

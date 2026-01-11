@@ -132,6 +132,20 @@ function createElectronAPI() {
                     ipcRenderer.on('settings:verboseModeUpdate', callback);
                 },
             },
+            // Audit Log API (22-6)
+            auditLog: {
+                getEntries: (toolType) => ipcRenderer.invoke('auditLog:getEntries', toolType),
+                getTypes: () => ipcRenderer.invoke('auditLog:getTypes'),
+                export: (format, toolType) => ipcRenderer.invoke('auditLog:export', format, toolType),
+                getStats: () => ipcRenderer.invoke('auditLog:getStats'),
+                clear: () => ipcRenderer.invoke('auditLog:clear'),
+                onEntry: (callback) => {
+                    ipcRenderer.on('auditLog:entry', (_event, entry) => callback(entry));
+                },
+                onShow: (callback) => {
+                    ipcRenderer.on('tools:showAuditLog', () => callback());
+                },
+            },
         };
     }
     else {
@@ -211,6 +225,20 @@ function createElectronAPI() {
                 getVerboseMode: () => Promise.resolve(false),
                 setVerboseMode: (_enabled) => Promise.resolve(false),
                 onVerboseModeChange: (_callback) => {
+                    // No-op in test environment
+                },
+            },
+            // Audit Log API (22-6) - test stub
+            auditLog: {
+                getEntries: (_toolType) => Promise.resolve([]),
+                getTypes: () => Promise.resolve([]),
+                export: (_format, _toolType) => Promise.resolve(''),
+                getStats: () => Promise.resolve({ total: 0, byType: {}, successCount: 0, errorCount: 0 }),
+                clear: () => Promise.resolve(true),
+                onEntry: (_callback) => {
+                    // No-op in test environment
+                },
+                onShow: (_callback) => {
                     // No-op in test environment
                 },
             },

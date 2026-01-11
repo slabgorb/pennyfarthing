@@ -222,6 +222,94 @@ export function resetEventStore() {
     toolEvents = [];
     promptEvents = [];
 }
+// =============================================================================
+// Audit Log Functions (Story 22-6)
+// =============================================================================
+/**
+ * Get tool events filtered by tool type
+ * @param toolType - Optional tool name to filter by (e.g., 'Bash', 'Read', 'Write')
+ * @returns Filtered array of tool events
+ */
+export function getToolEventsFiltered(toolType) {
+    if (!toolType)
+        return getToolEvents();
+    return toolEvents.filter(e => e.toolName === toolType);
+}
+/**
+ * Get unique tool types from all recorded events
+ * @returns Array of unique tool names
+ */
+export function getToolTypes() {
+    const types = new Set(toolEvents.map(e => e.toolName));
+    return Array.from(types).sort();
+}
+/**
+ * Export audit log as JSON string
+ * @param toolType - Optional filter by tool type
+ * @returns JSON string of tool events
+ */
+export function exportAuditLogAsJSON(toolType) {
+    const events = getToolEventsFiltered(toolType);
+    return JSON.stringify(events, null, 2);
+}
+/**
+ * Export audit log as CSV string
+ * @param toolType - Optional filter by tool type
+ * @returns CSV string of tool events
+ */
+export function exportAuditLogAsCSV(toolType) {
+    const events = getToolEventsFiltered(toolType);
+    // CSV header
+    const header = 'timestamp,toolName,input,durationMs,success,error';
+    // Escape CSV field (handle commas, quotes, newlines)
+    const escapeCSV = (value) => {
+        if (value === undefined || value === null)
+            return '';
+        const str = String(value);
+        // If contains comma, quote, or newline, wrap in quotes and escape internal quotes
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+    };
+    // Format each event as CSV row
+    const rows = events.map(e => {
+        const timestamp = new Date(e.timestamp).toISOString();
+        return [
+            escapeCSV(timestamp),
+            escapeCSV(e.toolName),
+            escapeCSV(e.input?.substring(0, 200)), // Truncate long inputs
+            escapeCSV(e.durationMs),
+            escapeCSV(e.success),
+            escapeCSV(e.error),
+        ].join(',');
+    });
+    return [header, ...rows].join('\n');
+}
+/**
+ * Get audit log statistics
+ * @returns Summary statistics of tool events
+ */
+export function getAuditLogStats() {
+    const byType = {};
+    let successCount = 0;
+    let errorCount = 0;
+    for (const event of toolEvents) {
+        byType[event.toolName] = (byType[event.toolName] || 0) + 1;
+        if (event.success) {
+            successCount++;
+        }
+        else {
+            errorCount++;
+        }
+    }
+    return {
+        total: toolEvents.length,
+        byType,
+        successCount,
+        errorCount,
+    };
+}
 /**
  * Process raw log events and store them appropriately
  * Called by the /v1/logs endpoint
