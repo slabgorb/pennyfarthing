@@ -60,8 +60,9 @@ epics:
           - Auto-fix or warn user before proceeding
         points: 3
         priority: P1
-        status: in_progress
+        status: done
         started: 2026-01-11
+        completed: 2026-01-11
         assigned_to: Keith Avery
         repos: pennyfarthing
         acceptance_criteria:
@@ -77,10 +78,12 @@ epics:
           - Next session loads and validates checkpoint
         points: 2
         priority: P2
-        status: backlog
+        status: in_progress
+        started: 2026-01-11
+        assigned_to: Keith Avery
         repos: pennyfarthing
         acceptance_criteria:
-          - .session/checkpoint.yaml written on exit
+          - Session checkpoint written to .session/checkpoints.log on exit
           - New session validates against current git state
           - Warns if state changed between sessions
   - id: epic-9
