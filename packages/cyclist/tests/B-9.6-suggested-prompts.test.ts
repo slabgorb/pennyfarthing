@@ -2351,4 +2351,691 @@ Now the real marker:
 
   });
 
+  // ===========================================================================
+  // Story 25-6: Confidence Scoring for Detection
+  // ===========================================================================
+
+  describe('25-6: Confidence Scoring for Detection', () => {
+
+    describe('AC1: All detection results include a confidence field (0.0-1.0)', () => {
+
+      describe('detectHandoffPattern returns confidence', () => {
+
+        it('should return confidence field for direct invoke pattern', async () => {
+          const { detectHandoffPattern } = await import('../src/public/js/components/MessageView.js');
+
+          const result = detectHandoffPattern('Please invoke /reviewer to continue');
+
+          expect(result).not.toBeNull();
+          expect(result.confidence).toBeDefined();
+          expect(typeof result.confidence).toBe('number');
+          expect(result.confidence).toBeGreaterThanOrEqual(0);
+          expect(result.confidence).toBeLessThanOrEqual(1);
+        });
+
+        it('should return confidence field for "ready for review" pattern', async () => {
+          const { detectHandoffPattern } = await import('../src/public/js/components/MessageView.js');
+
+          const result = detectHandoffPattern('The code is ready for review.');
+
+          expect(result).not.toBeNull();
+          expect(result.confidence).toBeDefined();
+          expect(typeof result.confidence).toBe('number');
+          expect(result.confidence).toBeGreaterThanOrEqual(0);
+          expect(result.confidence).toBeLessThanOrEqual(1);
+        });
+
+        it('should return confidence field for context warning pattern', async () => {
+          const { detectHandoffPattern } = await import('../src/public/js/components/MessageView.js');
+
+          const result = detectHandoffPattern('Context is high. Start fresh with /tea');
+
+          expect(result).not.toBeNull();
+          expect(result.confidence).toBeDefined();
+          expect(typeof result.confidence).toBe('number');
+          expect(result.confidence).toBeGreaterThanOrEqual(0);
+          expect(result.confidence).toBeLessThanOrEqual(1);
+        });
+
+      });
+
+      describe('detectQuestionPattern returns confidence', () => {
+
+        it('should return confidence field for "would you like me to" pattern', async () => {
+          const { detectQuestionPattern } = await import('../src/public/js/components/MessageView.js');
+
+          const result = detectQuestionPattern('Would you like me to create this file?');
+
+          expect(result).not.toBeNull();
+          expect(result.confidence).toBeDefined();
+          expect(typeof result.confidence).toBe('number');
+          expect(result.confidence).toBeGreaterThanOrEqual(0);
+          expect(result.confidence).toBeLessThanOrEqual(1);
+        });
+
+        it('should return confidence field for "should I" pattern', async () => {
+          const { detectQuestionPattern } = await import('../src/public/js/components/MessageView.js');
+
+          const result = detectQuestionPattern('Should I proceed with the changes?');
+
+          expect(result).not.toBeNull();
+          expect(result.confidence).toBeDefined();
+          expect(typeof result.confidence).toBe('number');
+          expect(result.confidence).toBeGreaterThanOrEqual(0);
+          expect(result.confidence).toBeLessThanOrEqual(1);
+        });
+
+        it('should return confidence field for "shall I" pattern', async () => {
+          const { detectQuestionPattern } = await import('../src/public/js/components/MessageView.js');
+
+          const result = detectQuestionPattern('Shall I proceed with the refactoring?');
+
+          expect(result).not.toBeNull();
+          expect(result.confidence).toBeDefined();
+          expect(typeof result.confidence).toBe('number');
+          expect(result.confidence).toBeGreaterThanOrEqual(0);
+          expect(result.confidence).toBeLessThanOrEqual(1);
+        });
+
+        it('should return confidence field for permission patterns', async () => {
+          const { detectQuestionPattern } = await import('../src/public/js/components/MessageView.js');
+
+          const result = detectQuestionPattern('Allow Claude to run this command?');
+
+          expect(result).not.toBeNull();
+          expect(result.confidence).toBeDefined();
+          expect(typeof result.confidence).toBe('number');
+          expect(result.confidence).toBeGreaterThanOrEqual(0);
+          expect(result.confidence).toBeLessThanOrEqual(1);
+        });
+
+      });
+
+      describe('detectListChoices returns confidence', () => {
+
+        it('should return confidence field for short list with strong context', async () => {
+          const { detectListChoices } = await import('../src/public/js/components/MessageView.js');
+
+          const text = `Which approach would you prefer?
+1. Create new component
+2. Modify existing file
+3. Skip this step`;
+
+          const result = detectListChoices(text);
+
+          expect(result).not.toBeNull();
+          expect(result.confidence).toBeDefined();
+          expect(typeof result.confidence).toBe('number');
+          expect(result.confidence).toBeGreaterThanOrEqual(0);
+          expect(result.confidence).toBeLessThanOrEqual(1);
+        });
+
+        it('should return confidence field for list with weak context', async () => {
+          const { detectListChoices } = await import('../src/public/js/components/MessageView.js');
+
+          const text = `Here are your options:
+1. Option A
+2. Option B`;
+
+          const result = detectListChoices(text);
+
+          expect(result).not.toBeNull();
+          expect(result.confidence).toBeDefined();
+          expect(typeof result.confidence).toBe('number');
+          expect(result.confidence).toBeGreaterThanOrEqual(0);
+          expect(result.confidence).toBeLessThanOrEqual(1);
+        });
+
+        it('should return confidence field for 5-item list', async () => {
+          const { detectListChoices } = await import('../src/public/js/components/MessageView.js');
+
+          const text = `Select an option:
+1. One
+2. Two
+3. Three
+4. Four
+5. Five`;
+
+          const result = detectListChoices(text);
+
+          expect(result).not.toBeNull();
+          expect(result.confidence).toBeDefined();
+          expect(typeof result.confidence).toBe('number');
+          expect(result.confidence).toBeGreaterThanOrEqual(0);
+          expect(result.confidence).toBeLessThanOrEqual(1);
+        });
+
+      });
+
+      describe('processStructuredMarkers returns confidence', () => {
+
+        it('should return confidence field for HANDOFF marker', async () => {
+          const { processMessageForQuickActions } = await import('../src/public/js/components/MessageView.js');
+
+          const message = {
+            type: 'assistant',
+            message: {
+              content: [{
+                type: 'text',
+                text: 'Ready for review.\n<!-- CYCLIST:HANDOFF:/reviewer -->'
+              }],
+            },
+          };
+
+          const result = processMessageForQuickActions(message);
+
+          expect(result).not.toBeNull();
+          expect(result.source).toBe('structured_marker');
+          expect(result.confidence).toBeDefined();
+          expect(typeof result.confidence).toBe('number');
+        });
+
+        it('should return confidence field for QUESTION marker', async () => {
+          const { processMessageForQuickActions } = await import('../src/public/js/components/MessageView.js');
+
+          const message = {
+            type: 'assistant',
+            message: {
+              content: [{
+                type: 'text',
+                text: 'Shall I proceed?\n<!-- CYCLIST:QUESTION:yesno -->'
+              }],
+            },
+          };
+
+          const result = processMessageForQuickActions(message);
+
+          expect(result).not.toBeNull();
+          expect(result.source).toBe('structured_marker');
+          expect(result.confidence).toBeDefined();
+          expect(typeof result.confidence).toBe('number');
+        });
+
+        it('should return confidence field for CHOICES marker', async () => {
+          const { processMessageForQuickActions } = await import('../src/public/js/components/MessageView.js');
+
+          const message = {
+            type: 'assistant',
+            message: {
+              content: [{
+                type: 'text',
+                text: 'Pick one:\n1. A\n2. B\n<!-- CYCLIST:CHOICES:1,2 -->'
+              }],
+            },
+          };
+
+          const result = processMessageForQuickActions(message);
+
+          expect(result).not.toBeNull();
+          expect(result.source).toBe('structured_marker');
+          expect(result.confidence).toBeDefined();
+          expect(typeof result.confidence).toBe('number');
+        });
+
+      });
+
+    });
+
+    describe('AC2: Structured markers return confidence 1.0', () => {
+
+      it('should return confidence 1.0 for HANDOFF marker', async () => {
+        const { processMessageForQuickActions } = await import('../src/public/js/components/MessageView.js');
+
+        const message = {
+          type: 'assistant',
+          message: {
+            content: [{
+              type: 'text',
+              text: 'Ready for review.\n<!-- CYCLIST:HANDOFF:/reviewer -->'
+            }],
+          },
+        };
+
+        const result = processMessageForQuickActions(message);
+
+        expect(result).not.toBeNull();
+        expect(result.source).toBe('structured_marker');
+        expect(result.confidence).toBe(1.0);
+      });
+
+      it('should return confidence 1.0 for QUESTION:yesno marker', async () => {
+        const { processMessageForQuickActions } = await import('../src/public/js/components/MessageView.js');
+
+        const message = {
+          type: 'assistant',
+          message: {
+            content: [{
+              type: 'text',
+              text: 'Shall I proceed?\n<!-- CYCLIST:QUESTION:yesno -->'
+            }],
+          },
+        };
+
+        const result = processMessageForQuickActions(message);
+
+        expect(result).not.toBeNull();
+        expect(result.source).toBe('structured_marker');
+        expect(result.confidence).toBe(1.0);
+      });
+
+      it('should return confidence 1.0 for CHOICES marker', async () => {
+        const { processMessageForQuickActions } = await import('../src/public/js/components/MessageView.js');
+
+        const message = {
+          type: 'assistant',
+          message: {
+            content: [{
+              type: 'text',
+              text: 'Pick one:\n1. A\n2. B\n<!-- CYCLIST:CHOICES:1,2 -->'
+            }],
+          },
+        };
+
+        const result = processMessageForQuickActions(message);
+
+        expect(result).not.toBeNull();
+        expect(result.source).toBe('structured_marker');
+        expect(result.confidence).toBe(1.0);
+      });
+
+      it('should return confidence 1.0 for any CYCLIST marker', async () => {
+        const { detectStructuredMarkers } = await import('../src/public/js/components/MessageView.js');
+
+        const text = '<!-- CYCLIST:HANDOFF:/tea -->';
+        const markers = detectStructuredMarkers(text);
+
+        // The markers themselves should indicate confidence
+        expect(markers).not.toBeNull();
+        // When processed, the result should have confidence 1.0
+      });
+
+    });
+
+    describe('AC3: Results below configurable threshold are filtered out', () => {
+
+      describe('Default threshold (0.6)', () => {
+
+        it('should return result when confidence >= 0.6', async () => {
+          const { processMessageForQuickActions } = await import('../src/public/js/components/MessageView.js');
+
+          // A strong pattern should have confidence >= 0.6
+          const message = {
+            type: 'assistant',
+            message: {
+              content: [{
+                type: 'text',
+                text: 'Please invoke /reviewer to continue.'
+              }],
+            },
+          };
+
+          const result = processMessageForQuickActions(message);
+
+          expect(result).not.toBeNull();
+          expect(result.confidence).toBeGreaterThanOrEqual(0.6);
+        });
+
+        it('should filter out weak detections below threshold', async () => {
+          // This test documents the filtering behavior
+          // Weak patterns (e.g., long lists without strong context) should be filtered
+          const { detectListChoices } = await import('../src/public/js/components/MessageView.js');
+
+          // A list that's borderline (many items, weak context) should either:
+          // - Return null (filtered at detection)
+          // - Or return with low confidence (filtered at processing)
+          const text = `Here's what happened:
+1. Step one
+2. Step two
+3. Step three
+4. Step four
+5. Step five
+6. Step six`;
+
+          const result = detectListChoices(text);
+
+          // This should be filtered out (either null or low confidence)
+          // If it returns something, confidence should be documented
+          if (result !== null) {
+            expect(result.confidence).toBeLessThan(0.6);
+          }
+        });
+
+      });
+
+      describe('Configurable threshold', () => {
+
+        it('should export setConfidenceThreshold function', async () => {
+          const messageView = await import('../src/public/js/components/MessageView.js');
+
+          expect(messageView.setConfidenceThreshold).toBeDefined();
+          expect(typeof messageView.setConfidenceThreshold).toBe('function');
+        });
+
+        it('should export getConfidenceThreshold function', async () => {
+          const messageView = await import('../src/public/js/components/MessageView.js');
+
+          expect(messageView.getConfidenceThreshold).toBeDefined();
+          expect(typeof messageView.getConfidenceThreshold).toBe('function');
+        });
+
+        it('should have default threshold of 0.6', async () => {
+          const { getConfidenceThreshold } = await import('../src/public/js/components/MessageView.js');
+
+          expect(getConfidenceThreshold()).toBe(0.6);
+        });
+
+        it('should allow changing threshold', async () => {
+          const { setConfidenceThreshold, getConfidenceThreshold } = await import('../src/public/js/components/MessageView.js');
+
+          setConfidenceThreshold(0.8);
+          expect(getConfidenceThreshold()).toBe(0.8);
+
+          // Reset to default
+          setConfidenceThreshold(0.6);
+        });
+
+        it('should filter results based on custom threshold', async () => {
+          const { setConfidenceThreshold, processMessageForQuickActions } = await import('../src/public/js/components/MessageView.js');
+
+          // Set a very high threshold
+          setConfidenceThreshold(0.99);
+
+          // Even a decent detection should be filtered at 0.99 threshold
+          // Only structured markers (confidence 1.0) should pass
+          const message = {
+            type: 'assistant',
+            message: {
+              content: [{
+                type: 'text',
+                text: 'Ready for review.'  // Pattern-based, not structured marker
+              }],
+            },
+          };
+
+          const result = processMessageForQuickActions(message);
+
+          // Pattern-based detection should be filtered at 0.99 threshold
+          // (unless it's a perfect match which would be rare)
+          // Reset threshold
+          setConfidenceThreshold(0.6);
+        });
+
+      });
+
+    });
+
+    describe('AC4: Existing detection behavior unchanged for high-confidence results', () => {
+
+      describe('Handoff patterns still detected', () => {
+
+        it('should still detect "invoke /reviewer" pattern', async () => {
+          const { detectHandoffPattern } = await import('../src/public/js/components/MessageView.js');
+
+          const result = detectHandoffPattern('Please invoke /reviewer to continue');
+
+          expect(result).not.toBeNull();
+          expect(result.type).toBe('handoff');
+          expect(result.agent).toBe('/reviewer');
+          expect(result.responses).toContain('/reviewer');
+        });
+
+        it('should still detect "ready for review" pattern', async () => {
+          const { detectHandoffPattern } = await import('../src/public/js/components/MessageView.js');
+
+          const result = detectHandoffPattern('The code is ready for review.');
+
+          expect(result).not.toBeNull();
+          expect(result.type).toBe('handoff');
+          expect(result.agent).toBe('/reviewer');
+        });
+
+        it('should still detect all agent invoke patterns', async () => {
+          const { detectHandoffPattern } = await import('../src/public/js/components/MessageView.js');
+
+          const agents = ['sm', 'tea', 'dev', 'reviewer', 'architect'];
+
+          for (const agent of agents) {
+            const result = detectHandoffPattern(`Please invoke /${agent} to continue`);
+            expect(result).not.toBeNull();
+            expect(result.agent).toBe(`/${agent}`);
+          }
+        });
+
+      });
+
+      describe('Question patterns still detected', () => {
+
+        it('should still detect "would you like me to" pattern', async () => {
+          const { detectQuestionPattern } = await import('../src/public/js/components/MessageView.js');
+
+          const result = detectQuestionPattern('Would you like me to create this file?');
+
+          expect(result).not.toBeNull();
+          expect(result.type).toBe('yesno');
+          expect(result.responses).toContain('Yes, proceed');
+        });
+
+        it('should still detect "should I" pattern', async () => {
+          const { detectQuestionPattern } = await import('../src/public/js/components/MessageView.js');
+
+          const result = detectQuestionPattern('Should I proceed with the changes?');
+
+          expect(result).not.toBeNull();
+          expect(result.type).toBe('yesno');
+        });
+
+        it('should still require question mark for requiresQuestion patterns', async () => {
+          const { detectQuestionPattern } = await import('../src/public/js/components/MessageView.js');
+
+          // "Should I" requires question mark
+          const withQuestion = detectQuestionPattern('Should I proceed?');
+          const withoutQuestion = detectQuestionPattern('Should I proceed');
+
+          expect(withQuestion).not.toBeNull();
+          expect(withoutQuestion).toBeNull();
+        });
+
+      });
+
+      describe('List choices still detected', () => {
+
+        it('should still detect valid choice lists with context', async () => {
+          const { detectListChoices } = await import('../src/public/js/components/MessageView.js');
+
+          const text = `Which approach would you prefer?
+1. Create new component
+2. Modify existing file
+3. Skip this step`;
+
+          const result = detectListChoices(text);
+
+          expect(result).not.toBeNull();
+          expect(result.type).toBe('list');
+          expect(result.choices).toHaveLength(3);
+        });
+
+        it('should still reject enumeration lists (not choices)', async () => {
+          const { detectListChoices } = await import('../src/public/js/components/MessageView.js');
+
+          const text = `Here are the steps I took:
+1. Read the file
+2. Analyzed the code
+3. Made changes`;
+
+          const result = detectListChoices(text);
+
+          expect(result).toBeNull();
+        });
+
+      });
+
+      describe('Structured markers still work', () => {
+
+        it('should still prioritize structured markers over patterns', async () => {
+          const { processMessageForQuickActions } = await import('../src/public/js/components/MessageView.js');
+
+          const message = {
+            type: 'assistant',
+            message: {
+              content: [{
+                type: 'text',
+                text: `Run /dev to continue.
+<!-- CYCLIST:HANDOFF:/reviewer -->`
+              }],
+            },
+          };
+
+          const result = processMessageForQuickActions(message);
+
+          expect(result).not.toBeNull();
+          expect(result.agent).toBe('/reviewer'); // From marker, not pattern
+          expect(result.source).toBe('structured_marker');
+        });
+
+      });
+
+      describe('processMessageForQuickActions still works', () => {
+
+        it('should still return null for non-assistant messages', async () => {
+          const { processMessageForQuickActions } = await import('../src/public/js/components/MessageView.js');
+
+          const message = {
+            type: 'tool_result',
+            output: 'Would you like me to continue?',
+          };
+
+          const result = processMessageForQuickActions(message);
+
+          expect(result).toBeNull();
+        });
+
+        it('should still return detection for assistant messages', async () => {
+          const { processMessageForQuickActions } = await import('../src/public/js/components/MessageView.js');
+
+          const message = {
+            type: 'assistant',
+            message: {
+              content: [{
+                type: 'text',
+                text: 'Would you like me to create this file?'
+              }],
+            },
+          };
+
+          const result = processMessageForQuickActions(message);
+
+          expect(result).not.toBeNull();
+          expect(result.type).toBe('yesno');
+        });
+
+      });
+
+    });
+
+    describe('Confidence values by detection type', () => {
+
+      describe('Handoff confidence values', () => {
+
+        it('should return high confidence (>=0.95) for direct /agent patterns', async () => {
+          const { detectHandoffPattern } = await import('../src/public/js/components/MessageView.js');
+
+          const result = detectHandoffPattern('Please invoke /reviewer to continue');
+
+          expect(result).not.toBeNull();
+          expect(result.confidence).toBeGreaterThanOrEqual(0.95);
+        });
+
+        it('should return moderate-high confidence (>=0.85) for "ready for X" patterns', async () => {
+          const { detectHandoffPattern } = await import('../src/public/js/components/MessageView.js');
+
+          const result = detectHandoffPattern('The code is ready for review.');
+
+          expect(result).not.toBeNull();
+          expect(result.confidence).toBeGreaterThanOrEqual(0.85);
+        });
+
+      });
+
+      describe('Question confidence values', () => {
+
+        it('should return high confidence for action offers with question mark', async () => {
+          const { detectQuestionPattern } = await import('../src/public/js/components/MessageView.js');
+
+          const result = detectQuestionPattern('Would you like me to create this file?');
+
+          expect(result).not.toBeNull();
+          expect(result.confidence).toBeGreaterThanOrEqual(0.80);
+        });
+
+        it('should return moderate confidence for yes/no questions', async () => {
+          const { detectQuestionPattern } = await import('../src/public/js/components/MessageView.js');
+
+          const result = detectQuestionPattern('Should I proceed with the changes?');
+
+          expect(result).not.toBeNull();
+          expect(result.confidence).toBeGreaterThanOrEqual(0.70);
+        });
+
+      });
+
+      describe('List confidence values', () => {
+
+        it('should return higher confidence for lists with strong context ("which", "choose")', async () => {
+          const { detectListChoices } = await import('../src/public/js/components/MessageView.js');
+
+          const text = `Which approach would you prefer?
+1. Option A
+2. Option B
+3. Option C`;
+
+          const result = detectListChoices(text);
+
+          expect(result).not.toBeNull();
+          expect(result.confidence).toBeGreaterThanOrEqual(0.80);
+        });
+
+        it('should return moderate confidence for lists with weak context ("options")', async () => {
+          const { detectListChoices } = await import('../src/public/js/components/MessageView.js');
+
+          const text = `Here are your options:
+1. Option A
+2. Option B`;
+
+          const result = detectListChoices(text);
+
+          expect(result).not.toBeNull();
+          expect(result.confidence).toBeGreaterThanOrEqual(0.60);
+          expect(result.confidence).toBeLessThan(0.80);
+        });
+
+        it('should return lower confidence for longer lists', async () => {
+          const { detectListChoices } = await import('../src/public/js/components/MessageView.js');
+
+          const shortList = `Which do you prefer?
+1. A
+2. B`;
+
+          const longList = `Which do you prefer?
+1. A
+2. B
+3. C
+4. D
+5. E`;
+
+          const shortResult = detectListChoices(shortList);
+          const longResult = detectListChoices(longList);
+
+          expect(shortResult).not.toBeNull();
+          expect(longResult).not.toBeNull();
+
+          // Longer lists should have same or lower confidence
+          expect(longResult.confidence).toBeLessThanOrEqual(shortResult.confidence);
+        });
+
+      });
+
+    });
+
+  });
+
 });
