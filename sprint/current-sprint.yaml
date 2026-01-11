@@ -4,11 +4,10 @@ sprint:
   planned_start: 2026-01-12
   status: active
   velocity_target: 30
-
 summary:
   total_points: 30
-  completed_points: 6
-  remaining_points: 24
+  completed_points: 9
+  remaining_points: 21
   notes: |
     Sprint 8 focus: State reconciliation, skill discovery, Cyclist web mode parity.
 
@@ -17,7 +16,6 @@ summary:
     - Epic 9 (Skill Discovery) - 13 pts - P2
     - Epic 20 (Cyclist Web Mode) - 8 pts - P2
     - Epic 22 carryover (22-6) - 1 pt - P3
-
 epics:
   - id: epic-8
     title: Automatic State Reconciliation
@@ -53,7 +51,6 @@ epics:
           - Detects story ID from branch name pattern
           - Updates sprint YAML automatically
           - Logs reconciliation to .session/
-
       - id: 8-2
         title: Startup drift detection
         description: |
@@ -71,7 +68,6 @@ epics:
           - workflow-status-check detects merged-but-not-closed
           - Clear report of drifted stories
           - Option to auto-reconcile
-
       - id: 8-3
         title: Session boundary breadcrumbs
         description: |
@@ -87,7 +83,6 @@ epics:
           - .session/checkpoint.yaml written on exit
           - New session validates against current git state
           - Warns if state changed between sessions
-
   - id: epic-9
     title: Skill Discovery & Documentation Hub
     jira_key: MSSCI-11512
@@ -96,7 +91,7 @@ epics:
       prerequisites, anti-patterns). Enable agents to discover and suggest
       relevant skills based on task context.
     points: 13
-    completed_points: 2
+    completed_points: 5
     priority: P2
     marker: strategic
     repos: pennyfarthing
@@ -121,7 +116,6 @@ epics:
           - skill-registry.yaml schema defined
           - All 18 skills cataloged with metadata
           - Schema validates existing skills
-
       - id: 9-2
         title: Build skill search utility
         jira_key: MSSCI-11516
@@ -132,13 +126,15 @@ epics:
           - Output formatted for agent consumption
         points: 3
         priority: P1
-        status: backlog
+        status: done
+        started: 2026-01-11
+        completed: 2026-01-11
+        assigned_to: Keith Avery
         repos: pennyfarthing
         acceptance_criteria:
           - scripts/utils/skill-search.sh functional
           - Supports tag and keyword search
           - JSON output for agent parsing
-
       - id: 9-3
         title: Add skill suggestions to agents
         jira_key: MSSCI-11518
@@ -155,7 +151,6 @@ epics:
           - Agents suggest skills when relevant
           - Suggestions based on task analysis
           - Non-intrusive presentation
-
       - id: 9-4
         title: Create skill documentation generator
         jira_key: MSSCI-11521
@@ -172,7 +167,6 @@ epics:
           - docs/SKILLS.md auto-generated
           - Includes all skill metadata
           - Examples and usage patterns included
-
       - id: 9-5
         title: Add skill usage analytics
         jira_key: MSSCI-11523
@@ -189,7 +183,6 @@ epics:
           - Skill usage logged to .session/
           - Weekly usage report available
           - Identifies unused skills
-
   - id: epic-20
     title: Cyclist Web Mode Improvements
     description: |
@@ -223,7 +216,6 @@ epics:
           - Token stats appear in web mode without manual OTEL config
           - Clear error message if OTEL not configured
           - Documentation for manual setup as fallback
-
       - id: 20-2
         title: Web mode feature parity audit
         description: |
@@ -242,7 +234,6 @@ epics:
           - Feature parity matrix documented
           - Web alternatives identified for key features
           - Limitations clearly documented
-
       - id: 20-3
         title: Cyclist launcher with integrated Claude Code
         description: |
@@ -259,7 +250,6 @@ epics:
           - Web server can spawn Claude Code subprocess
           - OTEL automatically configured
           - WebSocket bridges subprocess I/O to browser
-
   - id: epic-22
     title: Verbose Mode - Tool Visibility & Intervention (Carryover)
     description: |
