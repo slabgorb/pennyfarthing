@@ -1,0 +1,315 @@
+# Pennyfarthing Skill Registry
+# Central metadata for all built-in skills
+# Schema: skill-registry.schema.json
+
+version: "1.0.0"
+
+skills:
+  agentic-patterns:
+    name: agentic-patterns
+    description: Core reasoning patterns for building effective LLM agents
+    category: ai-llm
+    tags: [reasoning, patterns, agents, llm]
+    version: "1.0.0"
+    prerequisites: []
+    examples:
+      - context: Designing agent behavior
+        invocation: /agentic-patterns
+      - context: Debugging agent failures
+        invocation: /agentic-patterns troubleshooting
+    anti_patterns:
+      - Don't apply patterns mechanically without understanding context
+    related_skills: [context-engineering]
+    keywords: [react, reflection, planning, tool-use, chain-of-thought]
+
+  changelog:
+    name: changelog
+    description: Maintain changelogs following Keep a Changelog format with conventional commits
+    category: documentation
+    tags: [changelog, releases, versioning]
+    version: "1.0.0"
+    prerequisites: []
+    examples:
+      - context: Creating release notes
+        invocation: /changelog
+      - context: Auto-generating from commits
+        invocation: /changelog generate
+    anti_patterns:
+      - Don't manually edit CHANGELOG.md entries after generation
+    related_skills: []
+    keywords: [keepachangelog, conventional-commits, semver, release-notes]
+
+  code-review:
+    name: code-review
+    description: Code review checklists and patterns for quality assurance
+    category: development
+    tags: [review, quality, checklist]
+    version: "1.0.0"
+    prerequisites: []
+    examples:
+      - context: Self-review before commit
+        invocation: /code-review
+      - context: Reviewing a PR
+        invocation: /code-review pr-checklist
+    anti_patterns:
+      - Don't skip security considerations in review
+      - Don't approve without running tests
+    related_skills: [testing, dev-patterns]
+    keywords: [pr, pull-request, quality, linting, security]
+
+  context-engineering:
+    name: context-engineering
+    description: Strategies for managing context windows in long-running agent sessions
+    category: ai-llm
+    tags: [context, optimization, agents]
+    version: "1.0.0"
+    prerequisites: []
+    examples:
+      - context: Approaching context limits
+        invocation: /context-engineering
+      - context: Designing subagent prompts
+        invocation: /context-engineering subagent-design
+    anti_patterns:
+      - Don't load unnecessary context upfront
+      - Don't repeat large code blocks in prompts
+    related_skills: [agentic-patterns]
+    keywords: [context-window, tokens, summarization, lazy-loading]
+
+  cyclist:
+    name: cyclist
+    description: Launch Cyclist visual terminal for Claude Code monitoring
+    category: tools
+    tags: [visual, monitoring, terminal]
+    version: "1.0.0"
+    prerequisites: []
+    examples:
+      - context: Starting visual monitor
+        invocation: /cyclist
+      - context: Debugging sessions
+        invocation: /cyclist debug
+    anti_patterns:
+      - Don't run Cyclist in headless environments
+    related_skills: []
+    keywords: [tui, terminal, visualization, dashboard]
+
+  dev-patterns:
+    name: dev-patterns
+    description: Common development patterns, fixes, and gotchas
+    category: development
+    tags: [patterns, debugging, implementation]
+    version: "1.0.0"
+    prerequisites: []
+    examples:
+      - context: Implementing features
+        invocation: /dev-patterns
+      - context: Avoiding known pitfalls
+        invocation: /dev-patterns gotchas
+    anti_patterns:
+      - Don't apply patterns from other frameworks blindly
+    related_skills: [code-review, testing]
+    keywords: [implementation, debugging, fixes, best-practices]
+
+  finalize-run:
+    name: finalize-run
+    description: Validate and save benchmark run results - single exit point for all runs
+    category: benchmarking
+    tags: [benchmark, validation, results]
+    version: "1.0.0"
+    prerequisites: [judge]
+    examples:
+      - context: Completing a benchmark run
+        invocation: /finalize-run
+    anti_patterns:
+      - Never save results without passing through this skill
+    related_skills: [judge, persona-benchmark]
+    keywords: [benchmark, save, validate, guardrail]
+
+  jira:
+    name: jira
+    description: Jira CLI commands for sprint management
+    category: project-management
+    tags: [jira, issues, sprint]
+    version: "1.0.0"
+    prerequisites: []
+    examples:
+      - context: Viewing sprint issues
+        invocation: /jira sprint
+      - context: Assigning issues
+        invocation: /jira assign ISSUE-123
+    anti_patterns:
+      - Don't bypass Jira for sprint tracking
+    related_skills: [sprint-context, story-management]
+    keywords: [atlassian, issues, tickets, backlog]
+
+  judge:
+    name: judge
+    description: Evaluate agent responses using standardized rubrics
+    category: benchmarking
+    tags: [evaluation, rubrics, scoring]
+    version: "1.0.0"
+    prerequisites: []
+    examples:
+      - context: Evaluating agent response
+        invocation: /judge evaluate
+      - context: Running benchmark comparison
+        invocation: /judge compare
+    anti_patterns:
+      - Don't modify rubrics during a benchmark run
+    related_skills: [finalize-run, persona-benchmark]
+    keywords: [evaluation, scoring, metrics, grading]
+
+  just:
+    name: just
+    description: Run just recipes for project tasks like dev servers, tests, and databases
+    category: tools
+    tags: [tasks, runner, automation]
+    version: "1.0.0"
+    prerequisites: []
+    examples:
+      - context: Starting dev servers
+        invocation: /just dev
+      - context: Running database tasks
+        invocation: /just db-reset
+    anti_patterns:
+      - Don't create complex recipes - keep them simple and composable
+    related_skills: [testing]
+    keywords: [justfile, make, tasks, automation, command-runner]
+
+  mermaid:
+    name: mermaid
+    description: Generate diagrams using Mermaid syntax for documentation
+    category: tools
+    tags: [diagrams, visualization, documentation]
+    version: "1.0.0"
+    prerequisites: []
+    examples:
+      - context: Creating architecture diagrams
+        invocation: /mermaid architecture
+      - context: Sequence diagrams
+        invocation: /mermaid sequence
+    anti_patterns:
+      - Don't create overly complex diagrams - split into multiple if needed
+    related_skills: [changelog]
+    keywords: [flowchart, sequence, er-diagram, gantt, class-diagram]
+
+  persona-benchmark:
+    name: persona-benchmark
+    description: Run benchmarks to compare persona effectiveness
+    category: benchmarking
+    tags: [benchmark, personas, comparison]
+    version: "1.0.0"
+    prerequisites: [judge]
+    examples:
+      - context: Testing persona on code review
+        invocation: /persona-benchmark cr-001 discworld
+      - context: Testing tech writer persona
+        invocation: /persona-benchmark tw-001 literary-classics
+    anti_patterns:
+      - Don't compare results across different rubric versions
+    related_skills: [judge, finalize-run, theme]
+    keywords: [benchmark, comparison, personas, testing]
+
+  sprint-context:
+    name: sprint-context
+    description: Sprint status, backlog, and story management context
+    category: project-management
+    tags: [sprint, status, backlog]
+    version: "1.0.0"
+    prerequisites: []
+    examples:
+      - context: Checking sprint status
+        invocation: /sprint-context
+      - context: Finding available stories
+        invocation: /sprint-context available
+    anti_patterns:
+      - Don't manually edit sprint YAML - use skills
+    related_skills: [story-management, jira]
+    keywords: [sprint, backlog, velocity, kanban]
+
+  story-management:
+    name: story-management
+    description: Story creation, sizing, and sprint workflow patterns
+    category: project-management
+    tags: [stories, sizing, workflow]
+    version: "1.0.0"
+    prerequisites: []
+    examples:
+      - context: Creating new stories
+        invocation: /story-management create
+      - context: Sizing stories
+        invocation: /story-management size
+    anti_patterns:
+      - Don't create stories without acceptance criteria
+    related_skills: [sprint-context, jira]
+    keywords: [user-stories, estimation, points, acceptance-criteria]
+
+  testing:
+    name: testing
+    description: Test commands and TDD workflow patterns
+    category: development
+    tags: [tdd, testing, quality]
+    version: "1.0.0"
+    prerequisites: []
+    examples:
+      - context: Running project tests
+        invocation: /testing
+      - context: Debugging test failures
+        invocation: /testing troubleshoot
+    anti_patterns:
+      - Don't run tests directly - use testing-runner subagent
+      - Don't skip RED phase in TDD workflow
+    related_skills: [dev-patterns, code-review]
+    keywords: [jest, vitest, pytest, unit-test, integration, tdd, red-green]
+
+  theme:
+    name: theme
+    description: Manage persona themes - list, show, and set active theme
+    category: theming
+    tags: [personas, themes, customization]
+    version: "1.0.0"
+    prerequisites: []
+    examples:
+      - context: Listing available themes
+        invocation: /list-themes
+      - context: Showing current theme
+        invocation: /show-theme
+      - context: Setting active theme
+        invocation: /set-theme discworld
+    anti_patterns:
+      - Don't edit persona-config.local.yaml directly - use skill
+    related_skills: [theme-creation]
+    keywords: [personas, characters, discworld, literary-classics]
+
+  theme-creation:
+    name: theme-creation
+    description: Create custom persona themes with AI-driven generation
+    category: theming
+    tags: [personas, themes, creation]
+    version: "1.0.0"
+    prerequisites: [theme]
+    examples:
+      - context: Creating new theme
+        invocation: /theme-maker
+      - context: Interactive theme wizard
+        invocation: /create-theme
+    anti_patterns:
+      - Don't create incomplete themes missing required agents
+    related_skills: [theme]
+    keywords: [personas, custom, generation, wizard]
+
+  yq:
+    name: yq
+    description: YAML processor for reading, modifying, and querying YAML files
+    category: tools
+    tags: [yaml, processing, cli]
+    version: "1.0.0"
+    prerequisites: []
+    examples:
+      - context: Reading YAML values
+        invocation: /yq read
+      - context: Modifying YAML files
+        invocation: /yq modify
+    anti_patterns:
+      - Don't use complex expressions without testing first
+    related_skills: [just]
+    keywords: [yaml, jq, parsing, query, mikefarah]

@@ -81,7 +81,7 @@ If the epic is in backlog:
 
 1. **Extract** the epic block from `sprint/backlog.yaml`
 2. **Add** the epic to `sprint/current-sprint.yaml` under the active work section
-3. **Update** the epic status from `backlog` to `in-sprint`
+3. **Update** the epic status from `backlog` or `planned` to `in-progress`
 4. **Remove** the epic from `sprint/backlog.yaml`
 
 **Format for current-sprint.yaml:**
@@ -90,7 +90,7 @@ If the epic is in backlog:
 # [Description]
 epic-N:
   name: "[Epic Name]"
-  status: in-sprint
+  status: in-progress
   points: [N]
   priority: [High|Medium|Low]
   repos: [api|ui|both]
@@ -139,7 +139,7 @@ Next steps:
 # → Checking epic-5 location...
 # → Epic epic-5 found in backlog
 # → Moving epic-5 to current sprint...
-# → Updating status to in-sprint...
+# → Updating status to in-progress...
 # → Invoking SM for epic-tech-context...
 # → [SM generates technical context]
 # → ✅ Epic epic-5 is ready for development
