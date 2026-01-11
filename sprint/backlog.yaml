@@ -507,7 +507,107 @@ backlog:
             - Analytics viewable in diagnostics
             - Data informs future improvements
 
-    - id: epic-26
+    - id: epic-27
+      title: "Skill Frontmatter Enhancement"
+      description: |
+        Improve skill discoverability by enhancing SKILL.md frontmatter per
+        Anthropic's official guidance. Follow-on to Epic 9's infrastructure work.
+        Inspired by patterns from Superpowers framework and anthropics/skills repo.
+      points: 10
+      priority: P2
+      marker: "strategic"
+      repos: pennyfarthing
+      status: planned
+      stories:
+        - id: "27-1"
+          title: "Enhance skill descriptions with 'when to use' context"
+          description: |
+            Update all SKILL.md frontmatter descriptions to include explicit
+            "when to use" context per Anthropic's skill-creator guidance.
+            Description is the PRIMARY trigger mechanism - must include both
+            what the skill does AND specific contexts for when to use it.
+          points: 2
+          priority: P1
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - All 18 skills have enhanced descriptions
+            - Descriptions include numbered use cases
+            - Descriptions under 1024 char limit
+            - Skills trigger appropriately in testing
+
+        - id: "27-2"
+          title: "Add allowed-tools to context-sensitive skills"
+          description: |
+            Add allowed-tools frontmatter to skills that should have limited
+            tool access for safety and context efficiency.
+            - mermaid: Read, Write, Edit only
+            - yq: Bash, Read only
+            - jira: Bash only (jira CLI)
+          points: 1
+          priority: P2
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - allowed-tools added to appropriate skills
+            - Skills function correctly with limited tools
+            - Documented which skills have restrictions
+
+        - id: "27-3"
+          title: "Progressive disclosure for large skills"
+          description: |
+            Split large skills (>500 lines) into SKILL.md + references/ pattern.
+            - testing skill: split Go/Node patterns to references/
+            - dev-patterns: split to references/ by category
+            Keep SKILL.md as overview, load references as needed.
+          points: 2
+          priority: P2
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Large skills restructured to references/ pattern
+            - SKILL.md under 500 lines
+            - References loaded on demand
+            - No functionality regression
+
+        - id: "27-4"
+          title: "Create systematic-debugging skill"
+          description: |
+            New skill for structured debugging methodology, inspired by
+            Superpowers framework patterns:
+            - Root cause tracing methodology
+            - Condition-based waiting patterns
+            - Defense in depth strategies
+            - Test pollution detection script
+          points: 3
+          priority: P1
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - SKILL.md with debugging methodology
+            - scripts/find-polluter.sh for test pollution
+            - references/ for detailed patterns
+            - Added to skill-registry.yaml
+
+        - id: "27-5"
+          title: "Add severity levels to Reviewer agent"
+          description: |
+            Enhance Reviewer agent output with categorized issue severity:
+            - Critical: Must fix before merge (security, data loss, crash)
+            - Important: Should fix (bugs, performance, maintainability)
+            - Suggestions: Nice to have (style, minor improvements)
+            Pattern from Superpowers code-reviewer agent.
+          points: 2
+          priority: P2
+          status: backlog
+          repos: pennyfarthing
+          acceptance_criteria:
+            - Reviewer categorizes issues by severity
+            - Critical issues block approval
+            - Important issues require acknowledgment
+            - Suggestions are advisory only
+
+    - id: epic-28
       title: "Image Paste & Screenshot Support"
       description: |
         Enable users to share images with Claude through Cyclist via clipboard
@@ -520,7 +620,7 @@ backlog:
       repos: cyclist
       status: planned
       stories:
-        - id: "26-1"
+        - id: "28-1"
           title: "Clipboard image paste"
           description: |
             Cmd+V pastes images from clipboard into input area.
@@ -538,7 +638,7 @@ backlog:
             - Works with images copied from browser
             - Visual feedback on successful paste
 
-        - id: "26-2"
+        - id: "28-2"
           title: "Clipboard file paste"
           description: |
             Cmd+V pastes image files copied from Finder/Explorer.
@@ -554,7 +654,7 @@ backlog:
             - Supports PNG, JPG, GIF, WebP
             - Graceful error for unsupported formats
 
-        - id: "26-3"
+        - id: "28-3"
           title: "Image preview before send"
           description: |
             Show thumbnail preview of attached images before sending.
@@ -572,7 +672,7 @@ backlog:
             - Appropriate label shown
             - Preview doesn't obstruct input
 
-        - id: "26-4"
+        - id: "28-4"
           title: "Base64 encoding for Claude API"
           description: |
             Properly encode images for Claude's vision API.
@@ -590,7 +690,7 @@ backlog:
             - Image appears in conversation context
             - Works in both Electron and web modes
 
-        - id: "26-5"
+        - id: "28-5"
           title: "Image size validation & resize"
           description: |
             Validate image size and optionally resize large images.
@@ -608,7 +708,7 @@ backlog:
             - Optional auto-resize to fit limits
             - File size shown in preview tooltip
 
-        - id: "26-6"
+        - id: "28-6"
           title: "Multiple image support"
           description: |
             Allow attaching multiple images to a single message.
@@ -625,6 +725,91 @@ backlog:
             - All thumbnails visible
             - Individual remove works
             - Clear all option available
+
+    - id: epic-29
+      title: "Wire Up Orphaned Code"
+      description: |
+        Integrate existing but orphaned modules that were written for previous
+        stories but never connected to the main application. These modules have
+        tests and are feature-complete, just need wiring into the message handler
+        and UI components. Discovered during dead code audit.
+      points: 8
+      priority: P2
+      marker: "quick-win"
+      repos: cyclist
+      status: planned
+      stories:
+        - id: "29-1"
+          title: "Integrate approval-gate.ts"
+          description: |
+            Wire up the Bash approval gate module (from Story 22-3).
+            - Import into message handler
+            - Call interceptBashToolUse() before executing Bash tools
+            - Surface approval UI in renderer
+            - Module: src/approval-gate.ts (142 lines, tested)
+          points: 2
+          priority: P1
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - approval-gate.ts imported and called
+            - Bash commands trigger approval flow
+            - UI shows approval prompt
+            - Existing tests pass
+
+        - id: "29-2"
+          title: "Integrate dangerous-path.ts"
+          description: |
+            Wire up the dangerous path detection module (from Story 22-4).
+            - Import into message handler
+            - Call interceptDangerousPath() for file operations
+            - Surface path approval UI in renderer
+            - Module: src/dangerous-path.ts (~1000 lines, 104 tests)
+          points: 3
+          priority: P1
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - dangerous-path.ts imported and called
+            - Dangerous paths trigger approval flow
+            - UI shows path warning with details
+            - Existing 104 tests pass
+
+        - id: "29-3"
+          title: "Integrate context-meter.ts"
+          description: |
+            Wire up the context meter module for stats strip display.
+            - Import into stats strip component
+            - Call calculateContextPercentage() with token data
+            - Display context level with color coding
+            - Module: src/context-meter.ts (75 lines)
+          points: 1
+          priority: P2
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - context-meter.ts imported in stats strip
+            - Context % displayed with visual indicator
+            - Color coding matches context level
+            - Tooltip shows detailed breakdown
+
+        - id: "29-4"
+          title: "Integrate otel-status.ts"
+          description: |
+            Wire up OTEL connection status module (from Story 20-1).
+            - Import into stats strip or status bar
+            - Call getOtelConnectionStatus() to check connection
+            - Display connection indicator
+            - Module: src/otel-status.ts (59 lines)
+          points: 2
+          priority: P2
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - otel-status.ts imported and used
+            - OTEL status indicator visible
+            - Clear message when not connected
+            - Status updates on connection change
 
 # =============================================================================
 # MOVED TO SPRINT 8
@@ -655,13 +840,17 @@ backlog:
 # =============================================================================
 # BACKLOG SUMMARY
 # =============================================================================
-# Remaining backlog: 84 pts
+# Remaining backlog: 102 pts
 #   - Epic 7-6: CI integration (2 pts)
 #   - Epic 23: Cyclist Command Integration (29 pts)
 #   - Epic 24: Configuration & Theme Switcher (21 pts)
 #   - Epic 25: Smart Question Detection (18 pts)
-#   - Epic 26: Image Paste & Screenshot Support (14 pts) - NEW
+#   - Epic 27: Skill Frontmatter Enhancement (10 pts)
+#   - Epic 28: Image Paste & Screenshot Support (14 pts)
+#   - Epic 29: Wire Up Orphaned Code (8 pts) - NEW (dead code audit)
 # Active in Sprint 8: 30 pts
+#
+# Note: Epic 26 is "Symlink Permission Fix" in current-sprint.yaml (2 pts)
 #
 # Priority Legend:
 # - P0: Critical, do first
