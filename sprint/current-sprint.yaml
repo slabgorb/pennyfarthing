@@ -427,6 +427,8 @@ epics:
         started: 2026-01-11
         completed: 2026-01-11
         assigned_to: Keith Avery
+        pr: "#177"
+        pr_link: https://github.com/1898andCo/pennyfarthing/pull/177
         acceptance_criteria:
           - Marker format defined and documented
           - Key agents emit markers for questions
