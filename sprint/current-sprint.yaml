@@ -7,8 +7,8 @@ sprint:
 
 summary:
   total_points: 30
-  completed_points: 4
-  remaining_points: 26
+  completed_points: 6
+  remaining_points: 24
   notes: |
     Sprint 8 focus: State reconciliation, skill discovery, Cyclist web mode parity.
 
@@ -94,7 +94,7 @@ epics:
       prerequisites, anti-patterns). Enable agents to discover and suggest
       relevant skills based on task context.
     points: 13
-    completed_points: 0
+    completed_points: 2
     priority: P2
     marker: strategic
     repos: pennyfarthing
@@ -110,8 +110,9 @@ epics:
           - Usage statistics fields
         points: 2
         priority: P1
-        status: in_progress
+        status: done
         started: 2026-01-11
+        completed: 2026-01-11
         assigned_to: Keith Avery
         repos: pennyfarthing
         acceptance_criteria:
