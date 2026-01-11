@@ -582,13 +582,11 @@ export function startUsagePolling(_projectDir) {
         // For now, just rebroadcast current stats
         broadcastToRenderer(IPC_DATA_CHANNELS.USAGE_STATS_UPDATE, currentUsageStats);
     }, USAGE_POLL_INTERVAL_MS);
-    console.log('Usage polling started (every', USAGE_POLL_INTERVAL_MS / 1000, 's)');
     // Return cleanup function
     return () => {
         if (usagePollTimer) {
             clearInterval(usagePollTimer);
             usagePollTimer = null;
-            console.log('Usage polling stopped');
         }
     };
 }
