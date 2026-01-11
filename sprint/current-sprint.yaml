@@ -6,679 +6,883 @@ sprint:
   velocity_target: 30
 summary:
   total_points: 76
-  completed_points: 35
-  remaining_points: 41
-  notes: |
-    Sprint 8 focus: State reconciliation, skill discovery, smart question detection, Cyclist command integration.
+  completed_points: 38
+  remaining_points: 38
+  notes: 'Sprint 8 focus: State reconciliation, skill discovery, smart question detection,
+    Cyclist command integration.
+
 
     EPICS:
+
     - Epic 8 (State Reconciliation) - 8 pts - P1 - DONE
+
     - Epic 9 (Skill Discovery) - 13 pts - P2 - DONE
+
     - Epic 20 (Cyclist Web Mode) - 5 pts - P2 - DONE
+
     - Epic 22 carryover (22-6) - 1 pt - P3 - DONE
+
     - Epic 23 (Cyclist Command Integration) - 29 pts - P1 (23-1 done)
+
     - Epic 25 (Smart Question Detection) - 18 pts - P1 (25-1 done, 16 remaining)
+
     - Epic 26 (Symlink Permission Fix) - 2 pts - P1
+
+    '
 epics:
-  - id: epic-8
-    title: Automatic State Reconciliation
-    description: |
-      Eliminate drift between git state and sprint YAML by automating
-      state synchronization. Work happens across multiple sessions and
-      PRs get merged outside the workflow - the framework should detect
-      and reconcile this automatically.
-    points: 8
-    completed_points: 8
+- id: epic-8
+  title: Automatic State Reconciliation
+  description: 'Eliminate drift between git state and sprint YAML by automating
+
+    state synchronization. Work happens across multiple sessions and
+
+    PRs get merged outside the workflow - the framework should detect
+
+    and reconcile this automatically.
+
+    '
+  points: 8
+  completed_points: 8
+  priority: P1
+  marker: high-priority
+  repos: pennyfarthing
+  status: done
+  stories:
+  - id: 8-1
+    title: Git hook for PR merge detection
+    description: 'Post-merge hook that detects when PRs merge to develop/main.
+
+      - Parse PR title/branch for story ID (e.g., feat/5-2-*)
+
+      - Auto-update sprint YAML status to ''done''
+
+      - Add completed date
+
+      - Works even when merge happens outside workflow
+
+      '
+    points: 3
     priority: P1
-    marker: high-priority
-    repos: pennyfarthing
     status: done
-    stories:
-      - id: 8-1
-        title: Git hook for PR merge detection
-        description: |
-          Post-merge hook that detects when PRs merge to develop/main.
-          - Parse PR title/branch for story ID (e.g., feat/5-2-*)
-          - Auto-update sprint YAML status to 'done'
-          - Add completed date
-          - Works even when merge happens outside workflow
-        points: 3
-        priority: P1
-        status: done
-        started: 2026-01-11
-        completed: 2026-01-11
-        assigned_to: Keith Avery
-        repos: pennyfarthing
-        acceptance_criteria:
-          - Hook installed via pennyfarthing setup
-          - Detects story ID from branch name pattern
-          - Updates sprint YAML automatically
-          - Logs reconciliation to .session/
-      - id: 8-2
-        title: Startup drift detection
-        description: |
-          On agent activation, detect drift between git and YAML state.
-          - Compare merged PRs vs sprint YAML status
-          - Identify stories marked in-progress but already merged
-          - Auto-fix or warn user before proceeding
-        points: 3
-        priority: P1
-        status: done
-        started: 2026-01-11
-        completed: 2026-01-11
-        assigned_to: Keith Avery
-        repos: pennyfarthing
-        acceptance_criteria:
-          - workflow-status-check detects merged-but-not-closed
-          - Clear report of drifted stories
-          - Option to auto-reconcile
-      - id: 8-3
-        title: Session boundary breadcrumbs
-        description: |
-          Better markers for cross-session continuity.
-          - Write checkpoint on session end
-          - Include last agent, story, phase, git SHA
-          - Next session loads and validates checkpoint
-        points: 2
-        priority: P2
-        status: done
-        started: 2026-01-11
-        completed: 2026-01-11
-        assigned_to: Keith Avery
-        repos: pennyfarthing
-        acceptance_criteria:
-          - Session checkpoint written to .session/checkpoints.log on exit
-          - New session validates against current git state
-          - Warns if state changed between sessions
-  - id: epic-9
-    title: Skill Discovery & Documentation Hub
-    jira_key: MSSCI-11512
-    description: |
-      Create interactive skill registry with rich metadata (tags, examples,
-      prerequisites, anti-patterns). Enable agents to discover and suggest
-      relevant skills based on task context.
-    points: 13
-    completed_points: 13
-    priority: P2
-    marker: strategic
+    started: 2026-01-11
+    completed: 2026-01-11
+    assigned_to: Keith Avery
     repos: pennyfarthing
-    status: done
-    stories:
-      - id: 9-1
-        title: Create skill registry schema
-        jira_key: MSSCI-11515
-        description: |
-          Define structured schema for skill metadata.
-          - Tags, prerequisites, examples, anti-patterns
-          - Version and compatibility info
-          - Usage statistics fields
-        points: 2
-        priority: P1
-        status: done
-        started: 2026-01-11
-        completed: 2026-01-11
-        assigned_to: Keith Avery
-        repos: pennyfarthing
-        acceptance_criteria:
-          - skill-registry.yaml schema defined
-          - All 18 skills cataloged with metadata
-          - Schema validates existing skills
-      - id: 9-2
-        title: Build skill search utility
-        jira_key: MSSCI-11516
-        description: |
-          Script to search skills by tag, name, or description.
-          - Fuzzy matching support
-          - Tag-based filtering
-          - Output formatted for agent consumption
-        points: 3
-        priority: P1
-        status: done
-        started: 2026-01-11
-        completed: 2026-01-11
-        assigned_to: Keith Avery
-        repos: pennyfarthing
-        acceptance_criteria:
-          - scripts/utils/skill-search.sh functional
-          - Supports tag and keyword search
-          - JSON output for agent parsing
-      - id: 9-3
-        title: Add skill suggestions to agents
-        jira_key: MSSCI-11518
-        description: |
-          Agents suggest relevant skills based on task context.
-          - Analyze task keywords
-          - Match against skill registry
-          - Present top 3 suggestions
-        points: 3
-        priority: P2
-        status: done
-        started: 2026-01-11
-        completed: 2026-01-11
-        assigned_to: Keith Avery
-        repos: pennyfarthing
-        acceptance_criteria:
-          - Agents suggest skills when relevant
-          - Suggestions based on task analysis
-          - Non-intrusive presentation
-      - id: 9-4
-        title: Create skill documentation generator
-        jira_key: MSSCI-11521
-        description: |
-          Generate unified skill documentation from registry.
-          - Markdown output for docs/
-          - Include examples and anti-patterns
-          - Auto-update on skill changes
-        points: 3
-        priority: P2
-        status: done
-        started: 2026-01-11
-        completed: 2026-01-11
-        assigned_to: Keith Avery
-        repos: pennyfarthing
-        acceptance_criteria:
-          - docs/SKILLS.md auto-generated
-          - Includes all skill metadata
-          - Examples and usage patterns included
-      - id: 9-5
-        title: Add skill usage analytics
-        jira_key: MSSCI-11523
-        description: |
-          Track which skills are used and how often.
-          - Log skill invocations
-          - Generate usage reports
-          - Identify underutilized skills
-        points: 2
-        priority: P2
-        status: done
-        started: 2026-01-11
-        completed: 2026-01-11
-        assigned_to: Keith Avery
-        repos: pennyfarthing
-        acceptance_criteria:
-          - Skill usage logged to .session/
-          - Weekly usage report available
-          - Identifies unused skills
-        pr: "#168"
-  - id: epic-20
-    title: Cyclist Web Mode Improvements
-    jira_key: MSSCI-11526
-    description: |
-      Improve Cyclist web mode UX to match Electron mode capabilities.
-      Currently, web mode requires manual OTEL configuration to get
-      token stats, and some features only work in Electron.
-    points: 5
-    completed_points: 5
-    priority: P2
-    marker: quick-win
-    repos: pennyfarthing
-    status: done
-    stories:
-      - id: 20-1
-        title: Auto-configure OTEL for web mode
-        jira_key: MSSCI-11527
-        description: |
-          Make token stats work automatically in web mode without
-          requiring manual OTEL environment variables.
+    acceptance_criteria:
+    - Hook installed via pennyfarthing setup
+    - Detects story ID from branch name pattern
+    - Updates sprint YAML automatically
+    - Logs reconciliation to .session/
+  - id: 8-2
+    title: Startup drift detection
+    description: 'On agent activation, detect drift between git and YAML state.
 
-          Options to explore:
-          - Port file: Cyclist writes port to .cyclist-port, hooks read it
-          - Browser launch: Cyclist spawns Claude Code subprocess like Electron
-          - Documentation: Clear setup instructions in UI when stats unavailable
+      - Compare merged PRs vs sprint YAML status
 
-          Current workaround: `just claude-with-cyclist` launcher script
-        points: 3
-        priority: P1
-        status: done
-        started: 2026-01-11
-        completed: 2026-01-11
-        assigned_to: Keith Avery
-        repos: pennyfarthing
-        acceptance_criteria:
-          - Token stats appear in web mode without manual OTEL config
-          - Clear error message if OTEL not configured
-          - Documentation for manual setup as fallback
-      - id: 20-2
-        title: Web mode feature parity audit
-        jira_key: MSSCI-11528
-        description: |
-          Audit all Electron-only features and create plan to support
-          them in web mode or document limitations.
+      - Identify stories marked in-progress but already merged
 
-          Known gaps:
-          - Agent menu (Electron menu bar)
-          - Permission mode toggle (requires PTY control)
-          - Native file dialogs
-        points: 2
-        priority: P2
-        status: done
-        started: 2026-01-11
-        completed: 2026-01-11
-        assigned_to: Keith Avery
-        repos: pennyfarthing
-        acceptance_criteria:
-          - Feature parity matrix documented
-          - Web alternatives identified for key features
-          - Limitations clearly documented
-  - id: epic-22
-    title: Verbose Mode - Tool Visibility & Intervention (Carryover)
-    description: |
-      Carryover from Sprint 7. One remaining story for audit logging.
-    points: 1
-    completed_points: 1
-    priority: P3
-    marker: safety
-    repos: cyclist
-    status: planned
-    stories:
-      - id: 22-6
-        title: Tool execution audit log
-        description: |
-          Maintain a session-scoped audit log of all tool executions for
-          review and debugging. Complements the real-time activity bar.
+      - Auto-fix or warn user before proceeding
 
-          Features:
-          - Log all tool_use and tool_result events
-          - Include timestamps, duration, success/failure
-          - Filterable by tool type
-          - Exportable as JSON/CSV
-          - Accessible via menu: Tools > Execution Log
-
-          Implementation:
-          - Extend existing tool-stats.ts
-          - Add structured event logging
-          - Create simple log viewer panel
-        points: 1
-        priority: P3
-        status: done
-        started: 2026-01-11
-        completed: 2026-01-11
-        assigned_to: Keith Avery
-        repos: cyclist
-        acceptance_criteria:
-          - All tool executions logged with metadata
-          - Log viewer accessible from menu
-          - Filter by tool type
-          - Export to JSON
-          - Log clears on session reset
-  - id: epic-25
-    title: Smart Question Detection & Quick Actions
-    jira_key: MSSCI-11530
-    description: |
-      Improve Cyclist's ability to detect when Claude is asking questions
-      or prompting for action. Reduce false positives (enumerations mistaken
-      for questions), catch handoff prompts, and add "yes, proceed" buttons.
-      Two-pronged approach: better parsing AND easier-to-parse Claude output.
-    points: 18
-    completed_points: 8
+      '
+    points: 3
     priority: P1
-    marker: ux
-    repos: cyclist, pennyfarthing
-    status: in_progress
-    stories:
-      - id: 25-1
-        title: Audit Current Quick Actions Detection
-        jira_key: MSSCI-11531
-        description: |
-          Review and document current detection patterns in quick-actions.js.
-          Identify false positive patterns (enumerations, lists that aren't choices).
-          Catalog missed patterns (handoffs, confirmations, proceed prompts).
-        points: 2
-        priority: P1
-        status: done
-        started: 2026-01-11
-        completed: 2026-01-11
-        assigned_to: Keith Avery
-        repos: cyclist
-        pr: 169
-        pr_link: https://github.com/1898andCo/pennyfarthing/pull/169
-        acceptance_criteria:
-          - Document all current detection patterns
-          - List of false positive examples
-          - List of missed pattern examples
-          - Recommendations for fixes
-      - id: 25-2
-        title: Fix Enumeration False Positives
-        jira_key: MSSCI-11532
-        description: |
-          Stop detecting numbered lists as choices when they're just enumerations.
-          Heuristics:
-          - Check if list items are actionable (verbs vs nouns)
-          - Check for question context before list
-          - Check list length (>5 items likely enumeration)
-          - Check for "here are" / "the following" prefixes
-        points: 3
-        priority: P1
-        status: done
-        started: 2026-01-11
-        completed: 2026-01-11
-        assigned_to: Keith Avery
-        repos: cyclist
-        pr: 171
-        pr_link: https://github.com/your-org/cyclist/pull/171
-        acceptance_criteria:
-          - Numbered lists without question context ignored
-          - '"Here are the files" type lists not shown as choices'
-          - Long lists (>5) treated as enumeration by default
-          - Reduces false positive rate significantly
-      - id: 25-3
-        title: Detect Handoff & Action Prompts
-        jira_key: MSSCI-11533
-        description: |
-          Detect agent handoff and action prompts like:
-          - "invoke /reviewer to continue"
-          - "run /dev to implement"
-          - "use /sm to finish"
-          - "shall I proceed with..."
-          - "ready for review"
-          Show appropriate action button for each.
-        points: 3
-        priority: P1
-        status: done
-        started: 2026-01-11
-        completed: 2026-01-11
-        assigned_to: Keith Avery
-        repos: cyclist
-        pr: "#173"
-        pr_link: https://github.com/1898andCo/pennyfarthing/pull/173
-        acceptance_criteria:
-          - Detects "invoke X" patterns
-          - Detects "ready for X" patterns
-          - Shows button to invoke the suggested command
-          - Works for all Pennyfarthing agents
-      - id: 25-4
-        title: Universal 'Yes, Proceed' Button
-        jira_key: MSSCI-11534
-        description: |
-          Add smart "Yes, proceed" detection for general confirmations:
-          - "shall I..." / "should I..."
-          - "would you like me to..."
-          - "do you want me to..."
-          - "ready to..." / "proceed with..."
-          Always show "Yes" and "No" buttons for these.
-        points: 2
-        priority: P1
-        status: done
-        started: 2026-01-11
-        completed: 2026-01-11
-        assigned_to: Keith Avery
-        repos: cyclist
-        pr: "#175"
-        pr_link: https://github.com/1898andCo/pennyfarthing/pull/175
-        acceptance_criteria:
-          - Detects confirmation question patterns
-          - Shows Yes/No buttons
-          - '"Yes" sends affirmative response'
-          - Works even without numbered options
-      - id: 25-5
-        title: Structured Output Markers (Claude-side)
-        jira_key: MSSCI-11537
-        description: |
-          Add optional markers in Pennyfarthing agent output to make
-          parsing easier. Agents can emit structured hints:
-          - <!-- QUESTION: yes/no --> for confirmations
-          - <!-- CHOICES: 1,2,3 --> for numbered choices
-          - <!-- HANDOFF: /reviewer --> for handoffs
-          Cyclist detects these for guaranteed accurate parsing.
-        points: 3
-        priority: P2
-        status: done
-        repos: pennyfarthing, cyclist
-        started: 2026-01-11
-        completed: 2026-01-11
-        assigned_to: Keith Avery
-        pr: "#177"
-        pr_link: https://github.com/1898andCo/pennyfarthing/pull/177
-        acceptance_criteria:
-          - Marker format defined and documented
-          - Key agents emit markers for questions
-          - Cyclist parses markers with 100% accuracy
-          - Markers hidden from user display
-      - id: 25-6
-        title: Confidence Scoring for Detection
-        jira_key: MSSCI-11535
-        description: |
-          Add confidence scores to quick action detection:
-          - High confidence: show buttons prominently
-          - Medium confidence: show buttons subtly
-          - Low confidence: don't show buttons
-          Tunable thresholds in settings.
-        points: 2
-        priority: P2
-        status: done
-        started: 2026-01-11
-        completed: 2026-01-11
-        assigned_to: Keith Avery
-        pr: "#180"
-        pr_link: https://github.com/1898andCo/pennyfarthing/pull/180
-        repos: cyclist
-        acceptance_criteria:
-          - Detection returns confidence score
-          - UI varies by confidence level
-          - Threshold configurable in settings
-          - Reduces noise from uncertain detections
-      - id: 25-7
-        title: Quick Action Analytics
-        jira_key: MSSCI-11536
-        description: |
-          Track quick action usage to improve detection:
-          - Log when buttons shown vs clicked
-          - Track false positive dismissals
-          - Identify patterns that need tuning
-          Report in diagnostics panel.
-        points: 3
-        priority: P3
-        status: backlog
-        repos: cyclist
-        acceptance_criteria:
-          - Usage logged to session
-          - False positive tracking
-          - Analytics viewable in diagnostics
-  - id: epic-23
-    title: Cyclist Claude Code Command Integration
-    description: |
-      Expose high-value Claude Code commands through intuitive GUI elements
-      in Cyclist, with dedicated IPC handlers for clean architecture.
-      Priority commands: /status (usage limits), /compact, /rewind, /doctor.
-    points: 29
-    completed_points: 6
-    priority: P1
-    marker: strategic
-    repos: cyclist
-    status: in-progress
-    plan_file: ~/.claude/plans/staged-stirring-newt.md
-    stories:
-      - id: 23-1
-        title: Usage Limits in Stats Strip
-        jira_key: MSSCI-11538
-        description: |
-          Display remaining Claude credits in the stats strip:
-          - 5-hour block remaining (as %)
-          - Weekly remaining (as %)
-          - Reset timestamps on hover
-          Color coding: Green (>50%), Yellow (25-50%), Red (<25%)
-          Remove token display (in/out counts) - replaced by usage limits.
-        points: 3
-        priority: P0
-        status: done
-        started: 2026-01-11
-        completed: 2026-01-11
-        assigned_to: Keith Avery
-        repos: cyclist
-        pr: "#170"
-        pr_link: https://github.com/1898andCo/pennyfarthing/pull/170
-        acceptance_criteria:
-          - 5-hour block % displayed in stats strip
-          - Weekly % displayed in stats strip
-          - Color coding reflects remaining capacity
-          - Hover shows reset timestamp
-          - Polls periodically to stay current
-          - Works with Pro and Max plans
-          - Token display (in/out counts) removed from stats strip
-      - id: 23-2
-        title: Fix Clear to Reset All Session State
-        description: |
-          Current clear button leaves stale data in:
-          - Changed files panel (not cleared)
-          - Diffs panel (not cleared)
-          - Agent panel / agent selection (shows stale agent)
-        points: 2
-        priority: P1
-        status: done
-        started: 2026-01-11
-        completed: 2026-01-11
-        assigned_to: Keith Avery
-        repos: cyclist
-        pr: 172
-        pr_link: https://github.com/1898andCo/pennyfarthing/pull/172
-        acceptance_criteria:
-          - Clear resets changed files panel to empty
-          - Clear resets diffs panel to empty
-          - Clear resets agent panel (no agent selected)
-          - Clear resets context % to 0 or "—"
-          - Clear resets token counts to 0 or "—"
-        archived: 2026-01-11
-      - id: 23-3
-        title: Command Abstraction Layer (IPC)
-        description: |
-          Create dedicated IPC handlers for Claude Code commands
-          rather than PTY injection. Define IPC_COMMAND_CHANNELS,
-          expose via preload, handle in main.ts.
-        points: 3
-        priority: P1
-        status: done
-        started: 2026-01-11
-        completed: 2026-01-11
-        assigned_to: Keith Avery
-        repos: cyclist
-        acceptance_criteria:
-          - IPC channels defined as constants
-          - Handlers registered in setupCommandIPCHandlers()
-          - Preload exposes command API
-          - Commands execute in Claude PTY session
-          - Results broadcast back to renderer
-      - id: 23-4
-        title: Compact Button with Context Awareness
-        description: |
-          Add compact button that appears contextually when context > 50%.
-          Always accessible via keyboard shortcut (Cmd+Shift+K).
-        points: 3
-        priority: P1
-        status: backlog
-        repos: cyclist
-        acceptance_criteria:
-          - Compact button appears when context > 50%
-          - Cmd+Shift+K triggers compact from anywhere
-          - After compact, context % updates
-          - Works in both Electron and web modes
-      - id: 23-5
-        title: Keyboard Shortcuts System
-        description: |
-          Global keyboard shortcuts for common commands.
-          Cmd+Shift+K (Compact), Cmd+Shift+D (Doctor), Cmd+Shift+P (Palette).
-        points: 2
-        priority: P2
-        status: backlog
-        repos: cyclist
-        acceptance_criteria:
-          - Shortcuts work when app is focused
-          - Shortcuts shown in Electron menu
-          - No conflicts with system shortcuts
-      - id: 23-6
-        title: Command Palette (Cmd+Shift+P)
-        description: |
-          VS Code-style searchable command palette.
-          Fuzzy search all Claude Code commands + Pennyfarthing skills.
-          Recent commands at top, keyboard navigation.
-        points: 5
-        priority: P2
-        status: backlog
-        repos: cyclist
-        acceptance_criteria:
-          - Cmd+Shift+P opens palette
-          - Fuzzy search filters commands
-          - Arrow keys navigate, Enter executes
-          - Escape closes palette
-          - Recent commands appear first
-      - id: 23-7
-        title: Doctor Diagnostics Panel
-        description: |
-          Visual health check dashboard instead of raw /doctor output.
-          Green/Yellow/Red status indicators, actionable suggestions.
-        points: 3
-        priority: P2
-        status: backlog
-        repos: cyclist
-        acceptance_criteria:
-          - Doctor accessible from menu and shortcut
-          - Parses /doctor output into structured data
-          - Visual indicators for each health check
-          - Shows suggestions for failed checks
-      - id: 23-8
-        title: Rewind Timeline MVP
-        description: |
-          Visual timeline of conversation checkpoints for time travel.
-          Timeline bar with checkpoint markers, hover to preview,
-          click to rewind with confirmation.
-        points: 5
-        priority: P2
-        status: backlog
-        repos: cyclist
-        acceptance_criteria:
-          - Timeline shows available checkpoints
-          - Checkpoints have timestamps and summaries
-          - Clicking checkpoint shows preview
-          - Confirm before rewinding
-          - After rewind, UI updates to new state
-      - id: 23-9
-        title: Rewind Preview & Confirmation
-        description: |
-          Enhanced rewind with preview before committing.
-          Shows what will be lost, diff between states,
-          option to bookmark before rewinding.
-        points: 3
-        priority: P3
-        status: backlog
-        depends_on: 23-8
-        repos: cyclist
-        acceptance_criteria:
-          - Preview modal shows checkpoint content
-          - Shows what messages will be lost
-          - Can cancel without changes
-          - Optional bookmark creation
-  - id: epic-26
-    title: Symlink Permission Fix for Claude Code
-    description: |
-      Claude Code's permission system doesn't follow symlinks. When
-      .claude/commands symlinks to pennyfarthing-dist/commands, granting
-      permission on the symlink path fails. Need to either restructure
-      or work around this limitation.
+    status: done
+    started: 2026-01-11
+    completed: 2026-01-11
+    assigned_to: Keith Avery
+    repos: pennyfarthing
+    acceptance_criteria:
+    - workflow-status-check detects merged-but-not-closed
+    - Clear report of drifted stories
+    - Option to auto-reconcile
+  - id: 8-3
+    title: Session boundary breadcrumbs
+    description: 'Better markers for cross-session continuity.
+
+      - Write checkpoint on session end
+
+      - Include last agent, story, phase, git SHA
+
+      - Next session loads and validates checkpoint
+
+      '
     points: 2
-    completed_points: 0
-    priority: P1
-    marker: bug
+    priority: P2
+    status: done
+    started: 2026-01-11
+    completed: 2026-01-11
+    assigned_to: Keith Avery
     repos: pennyfarthing
-    status: in_progress
-    stories:
-      - id: 26-1
-        title: Fix symlink permission issue for .claude directory
-        description: |
-          Problem: Claude Code permission prompts use symlink paths like
-          .claude/commands/close-epic.md but permission grants don't resolve
-          through symlinks. User can't grant permission.
+    acceptance_criteria:
+    - Session checkpoint written to .session/checkpoints.log on exit
+    - New session validates against current git state
+    - Warns if state changed between sessions
+- id: epic-9
+  title: Skill Discovery & Documentation Hub
+  jira_key: MSSCI-11512
+  description: 'Create interactive skill registry with rich metadata (tags, examples,
 
-          Options to explore:
-          1. Replace symlinks with copies during init
-          2. Use pennyfarthing-dist/ paths in permission prompts
-          3. Add .claude/commands to .claudeignore and use direct paths
-          4. Restructure to avoid symlinks for editable content
+    prerequisites, anti-patterns). Enable agents to discover and suggest
 
-          Current workaround: Write to pennyfarthing-dist/ directly
-        points: 2
-        priority: P1
-        status: backlog
-        repos: pennyfarthing
-        acceptance_criteria:
-          - Permission prompts work for all .claude/ paths
-          - Init/update commands handle the fix
-          - No manual workarounds needed
+    relevant skills based on task context.
+
+    '
+  points: 13
+  completed_points: 13
+  priority: P2
+  marker: strategic
+  repos: pennyfarthing
+  status: done
+  stories:
+  - id: 9-1
+    title: Create skill registry schema
+    jira_key: MSSCI-11515
+    description: 'Define structured schema for skill metadata.
+
+      - Tags, prerequisites, examples, anti-patterns
+
+      - Version and compatibility info
+
+      - Usage statistics fields
+
+      '
+    points: 2
+    priority: P1
+    status: done
+    started: 2026-01-11
+    completed: 2026-01-11
+    assigned_to: Keith Avery
+    repos: pennyfarthing
+    acceptance_criteria:
+    - skill-registry.yaml schema defined
+    - All 18 skills cataloged with metadata
+    - Schema validates existing skills
+  - id: 9-2
+    title: Build skill search utility
+    jira_key: MSSCI-11516
+    description: 'Script to search skills by tag, name, or description.
+
+      - Fuzzy matching support
+
+      - Tag-based filtering
+
+      - Output formatted for agent consumption
+
+      '
+    points: 3
+    priority: P1
+    status: done
+    started: 2026-01-11
+    completed: 2026-01-11
+    assigned_to: Keith Avery
+    repos: pennyfarthing
+    acceptance_criteria:
+    - scripts/utils/skill-search.sh functional
+    - Supports tag and keyword search
+    - JSON output for agent parsing
+  - id: 9-3
+    title: Add skill suggestions to agents
+    jira_key: MSSCI-11518
+    description: 'Agents suggest relevant skills based on task context.
+
+      - Analyze task keywords
+
+      - Match against skill registry
+
+      - Present top 3 suggestions
+
+      '
+    points: 3
+    priority: P2
+    status: done
+    started: 2026-01-11
+    completed: 2026-01-11
+    assigned_to: Keith Avery
+    repos: pennyfarthing
+    acceptance_criteria:
+    - Agents suggest skills when relevant
+    - Suggestions based on task analysis
+    - Non-intrusive presentation
+  - id: 9-4
+    title: Create skill documentation generator
+    jira_key: MSSCI-11521
+    description: 'Generate unified skill documentation from registry.
+
+      - Markdown output for docs/
+
+      - Include examples and anti-patterns
+
+      - Auto-update on skill changes
+
+      '
+    points: 3
+    priority: P2
+    status: done
+    started: 2026-01-11
+    completed: 2026-01-11
+    assigned_to: Keith Avery
+    repos: pennyfarthing
+    acceptance_criteria:
+    - docs/SKILLS.md auto-generated
+    - Includes all skill metadata
+    - Examples and usage patterns included
+  - id: 9-5
+    title: Add skill usage analytics
+    jira_key: MSSCI-11523
+    description: 'Track which skills are used and how often.
+
+      - Log skill invocations
+
+      - Generate usage reports
+
+      - Identify underutilized skills
+
+      '
+    points: 2
+    priority: P2
+    status: done
+    started: 2026-01-11
+    completed: 2026-01-11
+    assigned_to: Keith Avery
+    repos: pennyfarthing
+    acceptance_criteria:
+    - Skill usage logged to .session/
+    - Weekly usage report available
+    - Identifies unused skills
+    pr: '#168'
+- id: epic-20
+  title: Cyclist Web Mode Improvements
+  jira_key: MSSCI-11526
+  description: 'Improve Cyclist web mode UX to match Electron mode capabilities.
+
+    Currently, web mode requires manual OTEL configuration to get
+
+    token stats, and some features only work in Electron.
+
+    '
+  points: 5
+  completed_points: 5
+  priority: P2
+  marker: quick-win
+  repos: pennyfarthing
+  status: done
+  stories:
+  - id: 20-1
+    title: Auto-configure OTEL for web mode
+    jira_key: MSSCI-11527
+    description: 'Make token stats work automatically in web mode without
+
+      requiring manual OTEL environment variables.
+
+
+      Options to explore:
+
+      - Port file: Cyclist writes port to .cyclist-port, hooks read it
+
+      - Browser launch: Cyclist spawns Claude Code subprocess like Electron
+
+      - Documentation: Clear setup instructions in UI when stats unavailable
+
+
+      Current workaround: `just claude-with-cyclist` launcher script
+
+      '
+    points: 3
+    priority: P1
+    status: done
+    started: 2026-01-11
+    completed: 2026-01-11
+    assigned_to: Keith Avery
+    repos: pennyfarthing
+    acceptance_criteria:
+    - Token stats appear in web mode without manual OTEL config
+    - Clear error message if OTEL not configured
+    - Documentation for manual setup as fallback
+  - id: 20-2
+    title: Web mode feature parity audit
+    jira_key: MSSCI-11528
+    description: 'Audit all Electron-only features and create plan to support
+
+      them in web mode or document limitations.
+
+
+      Known gaps:
+
+      - Agent menu (Electron menu bar)
+
+      - Permission mode toggle (requires PTY control)
+
+      - Native file dialogs
+
+      '
+    points: 2
+    priority: P2
+    status: done
+    started: 2026-01-11
+    completed: 2026-01-11
+    assigned_to: Keith Avery
+    repos: pennyfarthing
+    acceptance_criteria:
+    - Feature parity matrix documented
+    - Web alternatives identified for key features
+    - Limitations clearly documented
+- id: epic-22
+  title: Verbose Mode - Tool Visibility & Intervention (Carryover)
+  description: 'Carryover from Sprint 7. One remaining story for audit logging.
+
+    '
+  points: 1
+  completed_points: 1
+  priority: P3
+  marker: safety
+  repos: cyclist
+  status: planned
+  stories:
+  - id: 22-6
+    title: Tool execution audit log
+    description: 'Maintain a session-scoped audit log of all tool executions for
+
+      review and debugging. Complements the real-time activity bar.
+
+
+      Features:
+
+      - Log all tool_use and tool_result events
+
+      - Include timestamps, duration, success/failure
+
+      - Filterable by tool type
+
+      - Exportable as JSON/CSV
+
+      - Accessible via menu: Tools > Execution Log
+
+
+      Implementation:
+
+      - Extend existing tool-stats.ts
+
+      - Add structured event logging
+
+      - Create simple log viewer panel
+
+      '
+    points: 1
+    priority: P3
+    status: done
+    started: 2026-01-11
+    completed: 2026-01-11
+    assigned_to: Keith Avery
+    repos: cyclist
+    acceptance_criteria:
+    - All tool executions logged with metadata
+    - Log viewer accessible from menu
+    - Filter by tool type
+    - Export to JSON
+    - Log clears on session reset
+- id: epic-25
+  title: Smart Question Detection & Quick Actions
+  jira_key: MSSCI-11530
+  description: 'Improve Cyclist''s ability to detect when Claude is asking questions
+
+    or prompting for action. Reduce false positives (enumerations mistaken
+
+    for questions), catch handoff prompts, and add "yes, proceed" buttons.
+
+    Two-pronged approach: better parsing AND easier-to-parse Claude output.
+
+    '
+  points: 18
+  completed_points: 8
+  priority: P1
+  marker: ux
+  repos: cyclist, pennyfarthing
+  status: in_progress
+  stories:
+  - id: 25-1
+    title: Audit Current Quick Actions Detection
+    jira_key: MSSCI-11531
+    description: 'Review and document current detection patterns in quick-actions.js.
+
+      Identify false positive patterns (enumerations, lists that aren''t choices).
+
+      Catalog missed patterns (handoffs, confirmations, proceed prompts).
+
+      '
+    points: 2
+    priority: P1
+    status: done
+    started: 2026-01-11
+    completed: 2026-01-11
+    assigned_to: Keith Avery
+    repos: cyclist
+    pr: 169
+    pr_link: https://github.com/1898andCo/pennyfarthing/pull/169
+    acceptance_criteria:
+    - Document all current detection patterns
+    - List of false positive examples
+    - List of missed pattern examples
+    - Recommendations for fixes
+  - id: 25-2
+    title: Fix Enumeration False Positives
+    jira_key: MSSCI-11532
+    description: 'Stop detecting numbered lists as choices when they''re just enumerations.
+
+      Heuristics:
+
+      - Check if list items are actionable (verbs vs nouns)
+
+      - Check for question context before list
+
+      - Check list length (>5 items likely enumeration)
+
+      - Check for "here are" / "the following" prefixes
+
+      '
+    points: 3
+    priority: P1
+    status: done
+    started: 2026-01-11
+    completed: 2026-01-11
+    assigned_to: Keith Avery
+    repos: cyclist
+    pr: 171
+    pr_link: https://github.com/your-org/cyclist/pull/171
+    acceptance_criteria:
+    - Numbered lists without question context ignored
+    - '"Here are the files" type lists not shown as choices'
+    - Long lists (>5) treated as enumeration by default
+    - Reduces false positive rate significantly
+  - id: 25-3
+    title: Detect Handoff & Action Prompts
+    jira_key: MSSCI-11533
+    description: 'Detect agent handoff and action prompts like:
+
+      - "invoke /reviewer to continue"
+
+      - "run /dev to implement"
+
+      - "use /sm to finish"
+
+      - "shall I proceed with..."
+
+      - "ready for review"
+
+      Show appropriate action button for each.
+
+      '
+    points: 3
+    priority: P1
+    status: done
+    started: 2026-01-11
+    completed: 2026-01-11
+    assigned_to: Keith Avery
+    repos: cyclist
+    pr: '#173'
+    pr_link: https://github.com/1898andCo/pennyfarthing/pull/173
+    acceptance_criteria:
+    - Detects "invoke X" patterns
+    - Detects "ready for X" patterns
+    - Shows button to invoke the suggested command
+    - Works for all Pennyfarthing agents
+  - id: 25-4
+    title: Universal 'Yes, Proceed' Button
+    jira_key: MSSCI-11534
+    description: 'Add smart "Yes, proceed" detection for general confirmations:
+
+      - "shall I..." / "should I..."
+
+      - "would you like me to..."
+
+      - "do you want me to..."
+
+      - "ready to..." / "proceed with..."
+
+      Always show "Yes" and "No" buttons for these.
+
+      '
+    points: 2
+    priority: P1
+    status: done
+    started: 2026-01-11
+    completed: 2026-01-11
+    assigned_to: Keith Avery
+    repos: cyclist
+    pr: '#175'
+    pr_link: https://github.com/1898andCo/pennyfarthing/pull/175
+    acceptance_criteria:
+    - Detects confirmation question patterns
+    - Shows Yes/No buttons
+    - '"Yes" sends affirmative response'
+    - Works even without numbered options
+  - id: 25-5
+    title: Structured Output Markers (Claude-side)
+    jira_key: MSSCI-11537
+    description: 'Add optional markers in Pennyfarthing agent output to make
+
+      parsing easier. Agents can emit structured hints:
+
+      - <!-- QUESTION: yes/no --> for confirmations
+
+      - <!-- CHOICES: 1,2,3 --> for numbered choices
+
+      - <!-- HANDOFF: /reviewer --> for handoffs
+
+      Cyclist detects these for guaranteed accurate parsing.
+
+      '
+    points: 3
+    priority: P2
+    status: done
+    repos: pennyfarthing, cyclist
+    started: 2026-01-11
+    completed: 2026-01-11
+    assigned_to: Keith Avery
+    pr: '#177'
+    pr_link: https://github.com/1898andCo/pennyfarthing/pull/177
+    acceptance_criteria:
+    - Marker format defined and documented
+    - Key agents emit markers for questions
+    - Cyclist parses markers with 100% accuracy
+    - Markers hidden from user display
+  - id: 25-6
+    title: Confidence Scoring for Detection
+    jira_key: MSSCI-11535
+    description: 'Add confidence scores to quick action detection:
+
+      - High confidence: show buttons prominently
+
+      - Medium confidence: show buttons subtly
+
+      - Low confidence: don''t show buttons
+
+      Tunable thresholds in settings.
+
+      '
+    points: 2
+    priority: P2
+    status: done
+    started: 2026-01-11
+    completed: 2026-01-11
+    assigned_to: Keith Avery
+    pr: '#180'
+    pr_link: https://github.com/1898andCo/pennyfarthing/pull/180
+    repos: cyclist
+    acceptance_criteria:
+    - Detection returns confidence score
+    - UI varies by confidence level
+    - Threshold configurable in settings
+    - Reduces noise from uncertain detections
+  - id: 25-7
+    title: Quick Action Analytics
+    jira_key: MSSCI-11536
+    description: 'Track quick action usage to improve detection:
+
+      - Log when buttons shown vs clicked
+
+      - Track false positive dismissals
+
+      - Identify patterns that need tuning
+
+      Report in diagnostics panel.
+
+      '
+    points: 3
+    priority: P3
+    status: backlog
+    repos: cyclist
+    acceptance_criteria:
+    - Usage logged to session
+    - False positive tracking
+    - Analytics viewable in diagnostics
+- id: epic-23
+  title: Cyclist Claude Code Command Integration
+  description: 'Expose high-value Claude Code commands through intuitive GUI elements
+
+    in Cyclist, with dedicated IPC handlers for clean architecture.
+
+    Priority commands: /status (usage limits), /compact, /rewind, /doctor.
+
+    '
+  points: 29
+  completed_points: 6
+  priority: P1
+  marker: strategic
+  repos: cyclist
+  status: in-progress
+  plan_file: ~/.claude/plans/staged-stirring-newt.md
+  stories:
+  - id: 23-1
+    title: Usage Limits in Stats Strip
+    jira_key: MSSCI-11538
+    description: 'Display remaining Claude credits in the stats strip:
+
+      - 5-hour block remaining (as %)
+
+      - Weekly remaining (as %)
+
+      - Reset timestamps on hover
+
+      Color coding: Green (>50%), Yellow (25-50%), Red (<25%)
+
+      Remove token display (in/out counts) - replaced by usage limits.
+
+      '
+    points: 3
+    priority: P0
+    status: done
+    started: 2026-01-11
+    completed: 2026-01-11
+    assigned_to: Keith Avery
+    repos: cyclist
+    pr: '#170'
+    pr_link: https://github.com/1898andCo/pennyfarthing/pull/170
+    acceptance_criteria:
+    - 5-hour block % displayed in stats strip
+    - Weekly % displayed in stats strip
+    - Color coding reflects remaining capacity
+    - Hover shows reset timestamp
+    - Polls periodically to stay current
+    - Works with Pro and Max plans
+    - Token display (in/out counts) removed from stats strip
+  - id: 23-2
+    title: Fix Clear to Reset All Session State
+    description: 'Current clear button leaves stale data in:
+
+      - Changed files panel (not cleared)
+
+      - Diffs panel (not cleared)
+
+      - Agent panel / agent selection (shows stale agent)
+
+      '
+    points: 2
+    priority: P1
+    status: done
+    started: 2026-01-11
+    completed: 2026-01-11
+    assigned_to: Keith Avery
+    repos: cyclist
+    pr: 172
+    pr_link: https://github.com/1898andCo/pennyfarthing/pull/172
+    acceptance_criteria:
+    - Clear resets changed files panel to empty
+    - Clear resets diffs panel to empty
+    - Clear resets agent panel (no agent selected)
+    - Clear resets context % to 0 or "—"
+    - Clear resets token counts to 0 or "—"
+    archived: 2026-01-11
+  - id: 23-3
+    title: Command Abstraction Layer (IPC)
+    description: 'Create dedicated IPC handlers for Claude Code commands
+
+      rather than PTY injection. Define IPC_COMMAND_CHANNELS,
+
+      expose via preload, handle in main.ts.
+
+      '
+    points: 3
+    priority: P1
+    status: done
+    started: 2026-01-11
+    completed: 2026-01-11
+    assigned_to: Keith Avery
+    repos: cyclist
+    acceptance_criteria:
+    - IPC channels defined as constants
+    - Handlers registered in setupCommandIPCHandlers()
+    - Preload exposes command API
+    - Commands execute in Claude PTY session
+    - Results broadcast back to renderer
+  - id: 23-4
+    title: Compact Button with Context Awareness
+    description: 'Add compact button that appears contextually when context > 50%.
+
+      Always accessible via keyboard shortcut (Cmd+Shift+K).
+
+      '
+    points: 3
+    priority: P1
+    status: backlog
+    repos: cyclist
+    acceptance_criteria:
+    - Compact button appears when context > 50%
+    - Cmd+Shift+K triggers compact from anywhere
+    - After compact, context % updates
+    - Works in both Electron and web modes
+  - id: 23-5
+    title: Keyboard Shortcuts System
+    description: 'Global keyboard shortcuts for common commands.
+
+      Cmd+Shift+K (Compact), Cmd+Shift+D (Doctor), Cmd+Shift+P (Palette).
+
+      '
+    points: 2
+    priority: P2
+    status: backlog
+    repos: cyclist
+    acceptance_criteria:
+    - Shortcuts work when app is focused
+    - Shortcuts shown in Electron menu
+    - No conflicts with system shortcuts
+  - id: 23-6
+    title: Command Palette (Cmd+Shift+P)
+    description: 'VS Code-style searchable command palette.
+
+      Fuzzy search all Claude Code commands + Pennyfarthing skills.
+
+      Recent commands at top, keyboard navigation.
+
+      '
+    points: 5
+    priority: P2
+    status: backlog
+    repos: cyclist
+    acceptance_criteria:
+    - Cmd+Shift+P opens palette
+    - Fuzzy search filters commands
+    - Arrow keys navigate, Enter executes
+    - Escape closes palette
+    - Recent commands appear first
+  - id: 23-7
+    title: Doctor Diagnostics Panel
+    description: 'Visual health check dashboard instead of raw /doctor output.
+
+      Green/Yellow/Red status indicators, actionable suggestions.
+
+      '
+    points: 3
+    priority: P2
+    status: backlog
+    repos: cyclist
+    acceptance_criteria:
+    - Doctor accessible from menu and shortcut
+    - Parses /doctor output into structured data
+    - Visual indicators for each health check
+    - Shows suggestions for failed checks
+  - id: 23-8
+    title: Rewind Timeline MVP
+    description: 'Visual timeline of conversation checkpoints for time travel.
+
+      Timeline bar with checkpoint markers, hover to preview,
+
+      click to rewind with confirmation.
+
+      '
+    points: 5
+    priority: P2
+    status: backlog
+    repos: cyclist
+    acceptance_criteria:
+    - Timeline shows available checkpoints
+    - Checkpoints have timestamps and summaries
+    - Clicking checkpoint shows preview
+    - Confirm before rewinding
+    - After rewind, UI updates to new state
+  - id: 23-9
+    title: Rewind Preview & Confirmation
+    description: 'Enhanced rewind with preview before committing.
+
+      Shows what will be lost, diff between states,
+
+      option to bookmark before rewinding.
+
+      '
+    points: 3
+    priority: P3
+    status: backlog
+    depends_on: 23-8
+    repos: cyclist
+    acceptance_criteria:
+    - Preview modal shows checkpoint content
+    - Shows what messages will be lost
+    - Can cancel without changes
+    - Optional bookmark creation
+- id: epic-26
+  title: Symlink Permission Fix for Claude Code
+  description: 'Claude Code''s permission system doesn''t follow symlinks. When
+
+    .claude/commands symlinks to pennyfarthing-dist/commands, granting
+
+    permission on the symlink path fails. Need to either restructure
+
+    or work around this limitation.
+
+    '
+  points: 2
+  completed_points: 0
+  priority: P1
+  marker: bug
+  repos: pennyfarthing
+  status: in_progress
+  stories:
+  - id: 26-1
+    title: Fix symlink permission issue for .claude directory
+    description: 'Problem: Claude Code permission prompts use symlink paths like
+
+      .claude/commands/close-epic.md but permission grants don''t resolve
+
+      through symlinks. User can''t grant permission.
+
+
+      Options to explore:
+
+      1. Replace symlinks with copies during init
+
+      2. Use pennyfarthing-dist/ paths in permission prompts
+
+      3. Add .claude/commands to .claudeignore and use direct paths
+
+      4. Restructure to avoid symlinks for editable content
+
+
+      Current workaround: Write to pennyfarthing-dist/ directly
+
+      '
+    points: 2
+    priority: P1
+    status: backlog
+    repos: pennyfarthing
+    acceptance_criteria:
+    - Permission prompts work for all .claude/ paths
+    - Init/update commands handle the fix
+    - No manual workarounds needed
+- id: epic-27
+  title: Cyclist UX Polish
+  description: 'Small, focused UX improvements for Cyclist that don''t fit larger
+    epics.
+
+    Quality-of-life fixes for editor behavior, panel interactions, and
+
+    file navigation.
+
+    '
+  points: 3
+  completed_points: 3
+  priority: P2
+  marker: polish
+  repos: cyclist
+  status: in_progress
+  stories:
+  - id: 27-1
+    title: UX Fixes - Editor and Panel Behavior
+    jira_key: MSSCI-11541
+    description: "Four targeted UX fixes:\n1. Rich text editor assumes whole text\
+      \ is a list - should allow\n   adding lists within normal text\n2. AC list pops\
+      \ up on refresh even when user collapsed it -\n   should remember collapsed\
+      \ state\n3. Diffs should auto-open when changed file is clicked\n4. Path in\
+      \ diff file panel should be clickable to open in $EDITOR\n"
+    points: 3
+    priority: P2
+    status: done
+    pr_link: https://github.com/1898andCo/pennyfarthing/pull/182
+    started: 2026-01-11
+    assigned_to: Keith Avery
+    repos: cyclist
+    acceptance_criteria:
+    - Rich text editor allows mixed content (paragraphs + lists)
+    - AC list collapse state persists across refreshes
+    - Clicking changed file in diff panel auto-expands the diff
+    - File path in diff panel opens file in $EDITOR when clicked
+    completed: '2026-01-11'
+    pr: '#182'
