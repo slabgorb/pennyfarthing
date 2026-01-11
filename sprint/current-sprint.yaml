@@ -310,7 +310,7 @@ epics:
       for questions), catch handoff prompts, and add "yes, proceed" buttons.
       Two-pronged approach: better parsing AND easier-to-parse Claude output.
     points: 18
-    completed_points: 2
+    completed_points: 8
     priority: P1
     marker: ux
     repos: cyclist, pennyfarthing
@@ -398,10 +398,13 @@ epics:
           Always show "Yes" and "No" buttons for these.
         points: 2
         priority: P1
-        status: in_progress
+        status: done
         started: 2026-01-11
+        completed: 2026-01-11
         assigned_to: Keith Avery
         repos: cyclist
+        pr: "#175"
+        pr_link: https://github.com/1898andCo/pennyfarthing/pull/175
         acceptance_criteria:
           - Detects confirmation question patterns
           - Shows Yes/No buttons
