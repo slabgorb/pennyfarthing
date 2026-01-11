@@ -422,10 +422,13 @@ epics:
           Cyclist detects these for guaranteed accurate parsing.
         points: 3
         priority: P2
-        status: in_progress
+        status: done
         repos: pennyfarthing, cyclist
         started: 2026-01-11
+        completed: 2026-01-11
         assigned_to: Keith Avery
+        pr: "#177"
+        pr_link: https://github.com/1898andCo/pennyfarthing/pull/177
         acceptance_criteria:
           - Marker format defined and documented
           - Key agents emit markers for questions
