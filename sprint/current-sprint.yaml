@@ -349,8 +349,13 @@ epics:
           - Check for "here are" / "the following" prefixes
         points: 3
         priority: P1
-        status: backlog
+        status: done
+        started: 2026-01-11
+        completed: 2026-01-11
+        assigned_to: Keith Avery
         repos: cyclist
+        pr: 171
+        pr_link: https://github.com/your-org/cyclist/pull/171
         acceptance_criteria:
           - Numbered lists without question context ignored
           - "Here are the files" type lists not shown as choices
@@ -369,7 +374,9 @@ epics:
           Show appropriate action button for each.
         points: 3
         priority: P1
-        status: backlog
+        status: in_progress
+        started: 2026-01-11
+        assigned_to: Keith Avery
         repos: cyclist
         acceptance_criteria:
           - Detects "invoke X" patterns

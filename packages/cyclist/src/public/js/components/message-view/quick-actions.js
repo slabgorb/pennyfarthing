@@ -22,6 +22,67 @@ import { insertAndSubmit } from '../../editor.js';
  * - responses: button labels to show
  * - requiresQuestion: if true, the paragraph must end with "?"
  */
+/**
+ * All Pennyfarthing agents that can be invoked
+ */
+const ALL_AGENTS = [
+  'sm', 'tea', 'dev', 'reviewer', 'architect',
+  'pm', 'tech-writer', 'ux-designer', 'devops', 'orchestrator'
+];
+
+/**
+ * Maps workflow phase keywords to their corresponding agent commands.
+ * Used to detect "ready for X" patterns and suggest the right agent.
+ */
+export const PHASE_TO_AGENT = {
+  'review': '/reviewer',
+  'code review': '/reviewer',
+  'testing': '/tea',
+  'tests': '/tea',
+  'test': '/tea',
+  'implementation': '/dev',
+  'implement': '/dev',
+  'development': '/dev',
+  'develop': '/dev',
+  'green phase': '/dev',
+  'red phase': '/tea',
+  'finish': '/sm',
+  'completion': '/sm',
+  'complete': '/sm',
+  'architecture': '/architect',
+  'design': '/architect',
+  'planning': '/pm',
+  'documentation': '/tech-writer',
+  'docs': '/tech-writer',
+  'ux': '/ux-designer',
+  'ui': '/ux-designer',
+  'deployment': '/devops',
+  'infrastructure': '/devops',
+};
+
+/**
+ * Patterns for detecting handoff prompts from agents.
+ * Each pattern matches a specific way Claude might suggest invoking an agent.
+ */
+export const HANDOFF_PATTERNS = [
+  // Direct command patterns: "invoke /reviewer", "run /dev", etc.
+  // Capture the agent name with or without slash
+  {
+    pattern: /(?:invoke|run|use|start|switch\s+to)\s+(?:\*\*)?[`]?\/?(orchestrator|tech-writer|ux-designer|architect|reviewer|devops|tea|dev|sm|pm)[`]?(?:\*\*)?/i,
+    type: 'direct',
+  },
+  // "ready for review" → /reviewer
+  {
+    pattern: /ready\s+for\s+(review|code\s+review|testing|tests|test|implementation|implement|development|develop|green\s+phase|red\s+phase|finish|completion|complete|architecture|design|planning|documentation|docs|ux|ui|deployment|infrastructure)/i,
+    type: 'phase',
+  },
+  // Context high warning patterns: "Start fresh with /tea", "new session with /dev"
+  {
+    pattern: /(?:start\s+(?:fresh|a\s+new\s+session)|new\s+session)\s+with\s+(?:\*\*)?[`]?\/?(orchestrator|tech-writer|ux-designer|architect|reviewer|devops|tea|dev|sm|pm)[`]?(?:\*\*)?/i,
+    type: 'context',
+  },
+];
+
 export const QUESTION_PATTERNS = [
   // Direct action offers - these imply readiness to proceed
   { pattern: /would you like me to/i, responses: ['Yes, proceed', 'No'], requiresQuestion: false },
@@ -137,6 +198,58 @@ export function detectQuestionPattern(text) {
   }
 
   return null;
+}
+
+/**
+ * Detect handoff patterns in text.
+ * Looks for agent invocation prompts like "invoke /reviewer" or "ready for review".
+ * Only checks the LAST PARAGRAPH to avoid false positives from explanatory text.
+ * @param {string} text - Text to analyze
+ * @returns {Object|null} Detection result with type, agent, and responses, or null
+ */
+export function detectHandoffPattern(text) {
+  if (!text) return null;
+
+  // Remove code blocks first - we don't want to detect patterns inside code
+  const withoutCode = text.replace(/```[\s\S]*?```/g, '');
+  if (!withoutCode.trim()) return null;
+
+  // Focus on the last paragraph where handoff suggestions typically appear
+  const lastParagraph = getLastParagraph(withoutCode);
+  if (!lastParagraph) return null;
+
+  // Track all matches and take the last one (most recent/relevant)
+  let lastMatch = null;
+
+  for (const { pattern, type } of HANDOFF_PATTERNS) {
+    // Reset regex for global matching
+    const regex = new RegExp(pattern.source, pattern.flags + (pattern.flags.includes('g') ? '' : 'g'));
+    let match;
+
+    while ((match = regex.exec(lastParagraph)) !== null) {
+      const captured = match[1].toLowerCase();
+
+      if (type === 'direct' || type === 'context') {
+        // Direct agent mention - normalize to /agent format
+        const agent = `/${captured}`;
+        lastMatch = { agent, index: match.index };
+      } else if (type === 'phase') {
+        // Phase keyword - map to agent
+        const agent = PHASE_TO_AGENT[captured];
+        if (agent) {
+          lastMatch = { agent, index: match.index };
+        }
+      }
+    }
+  }
+
+  if (!lastMatch) return null;
+
+  return {
+    type: 'handoff',
+    agent: lastMatch.agent,
+    responses: [lastMatch.agent, 'Not yet'],
+  };
 }
 
 /**
@@ -267,11 +380,19 @@ export function detectListChoices(text) {
 
 /**
  * Render quick action buttons HTML
- * @param {Object} result - Detection result from detectQuestionPattern or detectListChoices
+ * @param {Object} result - Detection result from detectQuestionPattern, detectHandoffPattern, or detectListChoices
  * @returns {string} HTML string for buttons
  */
 export function renderQuickActions(result) {
   if (!result) return '';
+
+  if (result.type === 'handoff') {
+    const buttons = result.responses.map(response =>
+      `<button class="quick-action-btn" data-response="${escapeHtml(response)}">${escapeHtml(response)}</button>`
+    ).join('\n');
+
+    return `<div class="quick-actions-container">\n${buttons}\n</div>`;
+  }
 
   if (result.type === 'yesno') {
     const buttons = result.responses.map(response =>
@@ -378,7 +499,12 @@ export function processMessageForQuickActions(message) {
 
   if (!textContent) return null;
 
-  // Check for list choices first (higher priority)
+  // Check for handoff patterns FIRST (highest priority)
+  // This ensures agent invocations take precedence over other patterns
+  const handoffResult = detectHandoffPattern(textContent);
+  if (handoffResult) return handoffResult;
+
+  // Check for list choices
   const listResult = detectListChoices(textContent);
   if (listResult) return listResult;
 
@@ -391,9 +517,12 @@ export function processMessageForQuickActions(message) {
 
 export default {
   QUESTION_PATTERNS,
+  HANDOFF_PATTERNS,
+  PHASE_TO_AGENT,
   stripMarkdown,
   truncateText,
   detectQuestionPattern,
+  detectHandoffPattern,
   detectListChoices,
   renderQuickActions,
   clearQuickActions,
