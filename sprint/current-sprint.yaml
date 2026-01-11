@@ -196,7 +196,7 @@ epics:
       Currently, web mode requires manual OTEL configuration to get
       token stats, and some features only work in Electron.
     points: 8
-    completed_points: 0
+    completed_points: 3
     priority: P2
     marker: quick-win
     repos: pennyfarthing
@@ -216,8 +216,9 @@ epics:
           Current workaround: `just claude-with-cyclist` launcher script
         points: 3
         priority: P1
-        status: in_progress
+        status: done
         started: 2026-01-11
+        completed: 2026-01-11
         assigned_to: Keith Avery
         repos: pennyfarthing
         acceptance_criteria:
