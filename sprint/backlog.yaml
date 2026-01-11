@@ -1,6 +1,5 @@
 # Pennyfarthing Backlog
 # Future epics and stories not yet committed to a sprint
-# Epic 2 & 4 moved to Sprint 2 (current-sprint.yaml)
 
 backlog:
   epics:
@@ -14,246 +13,14 @@ backlog:
       priority: P1
       marker: "high-priority"
       repos: pennyfarthing
-      stories:
-        - id: "3-1"
-          title: "Implement context usage tracking hook"
-          description: |
-            Create a hook that tracks context usage during agent sessions.
-            - Hook into tool calls to estimate token usage
-            - Store running total in session file
-            - Provide API for agents to query usage
-          points: 3
-          priority: P1
-          status: done
-          completed: 2026-01-01
-          notes: "Already implemented via check-context.sh reading Claude transcript"
-          repos: pennyfarthing
-          acceptance_criteria:
-            - Hook tracks approximate token usage per session
-            - Usage available via check-context.sh
-            - Persists across tool calls within session
-
-        - id: "3-2"
-          title: "Add automatic warning at 70% threshold"
-          description: |
-            Trigger automatic warning when context reaches 70%.
-            - Inject warning into agent context
-            - Suggest handoff or session split
-            - Log warning to session file
-          points: 3
-          priority: P1
-          status: done
-          started: 2026-01-01
-          completed: 2026-01-01
-          repos: pennyfarthing
-          acceptance_criteria:
-            - Warning appears when 70% threshold crossed
-            - Warning includes actionable suggestions
-            - Works with all tactical agents
-
-        - id: "3-3"
-          title: "Implement circuit breaker at 85% threshold"
-          description: |
-            Hard stop at 85% to prevent context overflow.
-            - Force handoff or session end at 85%
-            - Save checkpoint before circuit break
-            - Provide recovery path for user
-          points: 3
-          priority: P1
-          repos: pennyfarthing
-          acceptance_criteria:
-            - Circuit breaker triggers at 85%
-            - Checkpoint saved before break
-            - Clear instructions for resumption
-
-        - id: "3-4"
-          title: "Add session continuation workflow"
-          description: |
-            Enable seamless session continuation after break.
-            - /continue-session command
-            - Load checkpoint and context summary
-            - Resume from last known good state
-          points: 2
-          priority: P2
-          repos: pennyfarthing
-          acceptance_criteria:
-            - /continue-session loads previous checkpoint
-            - Context summary provided for new session
-            - Workflow continues without lost work
-
-        - id: "3-5"
-          title: "Add context usage to statusline"
-          description: |
-            Show context usage in Claude Code statusline.
-            - Display percentage in status bar
-            - Color code (green/yellow/red)
-            - Update in real-time
-          points: 2
-          priority: P2
-          status: done
-          completed: 2026-01-01
-          repos: pennyfarthing
-          acceptance_criteria:
-            - Statusline shows context percentage
-            - Color reflects threshold status
-            - Updates during session
-
-    - id: epic-9
-      title: "Skill Discovery & Documentation Hub"
-      description: |
-        Create interactive skill registry with rich metadata (tags, examples,
-        prerequisites, anti-patterns). Enable agents to discover and suggest
-        relevant skills based on task context.
-      points: 13
-      priority: P2
-      marker: "strategic"
-      repos: pennyfarthing
-      stories:
-        - id: "9-1"
-          title: "Create skill registry schema"
-          description: |
-            Define structured schema for skill metadata.
-            - Tags, prerequisites, examples, anti-patterns
-            - Version and compatibility info
-            - Usage statistics fields
-          points: 2
-          priority: P1
-          repos: pennyfarthing
-          acceptance_criteria:
-            - skill-registry.yaml schema defined
-            - All 12 skills cataloged with metadata
-            - Schema validates existing skills
-
-        - id: "9-2"
-          title: "Build skill search utility"
-          description: |
-            Script to search skills by tag, name, or description.
-            - Fuzzy matching support
-            - Tag-based filtering
-            - Output formatted for agent consumption
-          points: 3
-          priority: P1
-          repos: pennyfarthing
-          acceptance_criteria:
-            - scripts/utils/skill-search.sh functional
-            - Supports tag and keyword search
-            - JSON output for agent parsing
-
-        - id: "9-3"
-          title: "Add skill suggestions to agents"
-          description: |
-            Agents suggest relevant skills based on task context.
-            - Analyze task keywords
-            - Match against skill registry
-            - Present top 3 suggestions
-          points: 3
-          priority: P2
-          repos: pennyfarthing
-          acceptance_criteria:
-            - Agents suggest skills when relevant
-            - Suggestions based on task analysis
-            - Non-intrusive presentation
-
-        - id: "9-4"
-          title: "Create skill documentation generator"
-          description: |
-            Generate unified skill documentation from registry.
-            - Markdown output for docs/
-            - Include examples and anti-patterns
-            - Auto-update on skill changes
-          points: 3
-          priority: P2
-          repos: pennyfarthing
-          acceptance_criteria:
-            - docs/SKILLS.md auto-generated
-            - Includes all skill metadata
-            - Examples and usage patterns included
-
-        - id: "9-5"
-          title: "Add skill usage analytics"
-          description: |
-            Track which skills are used and how often.
-            - Log skill invocations
-            - Generate usage reports
-            - Identify underutilized skills
-          points: 2
-          priority: P2
-          repos: pennyfarthing
-          acceptance_criteria:
-            - Skill usage logged to .session/
-            - Weekly usage report available
-            - Identifies unused skills
-
-    - id: epic-10
-      title: "Multi-Agent Choreography Patterns"
-      description: |
-        Build library of proven coordination patterns (fan-out/fan-in,
-        sequential, conditional routing, approval gates). Document real
-        examples from Pennyfarthing's own workflows.
-      points: 8
-      priority: P2
-      marker: "quick-win"
-      repos: pennyfarthing
-      stories:
-        - id: "10-1"
-          title: "Document TDD flow pattern"
-          description: |
-            Document the SM → TEA → Dev → Reviewer pattern.
-            - State machine diagram
-            - Handoff triggers
-            - Error recovery paths
-          points: 2
-          priority: P1
-          repos: pennyfarthing
-          acceptance_criteria:
-            - Pattern documented in guides/
-            - Includes state diagram
-            - Error scenarios covered
-
-        - id: "10-2"
-          title: "Document helper delegation pattern"
-          description: |
-            Document Opus → Haiku delegation pattern.
-            - When to delegate
-            - Prompt construction
-            - Result handling
-          points: 2
-          priority: P1
-          repos: pennyfarthing
-          acceptance_criteria:
-            - Pattern documented with examples
-            - Clear delegation criteria
-            - Anti-patterns identified
-
-        - id: "10-3"
-          title: "Create fan-out/fan-in pattern"
-          description: |
-            Document parallel agent execution pattern.
-            - Spawning multiple agents
-            - Collecting results
-            - Merging outputs
-          points: 2
-          priority: P2
-          repos: pennyfarthing
-          acceptance_criteria:
-            - Pattern documented with example
-            - Shows Task tool parallelism
-            - Result aggregation covered
-
-        - id: "10-4"
-          title: "Create approval gates pattern"
-          description: |
-            Document human-in-the-loop approval pattern.
-            - When to pause for approval
-            - Approval mechanisms (plan mode, AskUserQuestion)
-            - Resumption after approval
-          points: 2
-          priority: P2
-          repos: pennyfarthing
-          acceptance_criteria:
-            - Pattern documented with examples
-            - Different approval types covered
-            - Integration with TDD flow shown
+      status: complete
+      notes: |
+        All stories completed across Sprints 3, 6, and 7.
+        - 3-1: Context usage tracking (done Sprint 3)
+        - 3-2: 70% threshold warning (done Sprint 3)
+        - 3-3: 85% circuit breaker (done Sprint 6)
+        - 3-4: Session continuation workflow (done Sprint 6)
+        - 3-5: Context in statusline (done Sprint 7)
 
     - id: epic-7
       title: "Agent Performance Benchmarking Suite"
@@ -265,82 +32,11 @@ backlog:
       priority: P2
       marker: "strategic"
       repos: pennyfarthing
+      status: partial
+      notes: |
+        Stories 7-1 through 7-5 completed in Sprint 7.
+        Remaining: 7-6 (CI integration, 2 pts)
       stories:
-        - id: "7-1"
-          title: "Create benchmark runner framework"
-          description: |
-            Build reusable framework for running benchmarks.
-            - Load test cases from YAML
-            - Execute against agents
-            - Collect metrics
-          points: 3
-          priority: P1
-          repos: pennyfarthing
-          acceptance_criteria:
-            - scripts/benchmark-runner.sh functional
-            - Loads benchmarks/*.yaml test cases
-            - Outputs structured results
-
-        - id: "7-2"
-          title: "Add token usage metrics"
-          description: |
-            Track token usage per agent/command.
-            - Input tokens
-            - Output tokens
-            - Total cost estimate
-          points: 2
-          priority: P1
-          repos: pennyfarthing
-          acceptance_criteria:
-            - Token usage tracked per benchmark
-            - Cost calculated from usage
-            - Comparison across runs
-
-        - id: "7-3"
-          title: "Add latency metrics"
-          description: |
-            Track response time per agent operation.
-            - Time to first response
-            - Total completion time
-            - Tool call latency
-          points: 2
-          priority: P2
-          repos: pennyfarthing
-          acceptance_criteria:
-            - Latency tracked per benchmark
-            - Breakdown by phase
-            - Historical comparison
-
-        - id: "7-4"
-          title: "Add success rate tracking"
-          description: |
-            Track agent success/failure rates.
-            - Task completion percentage
-            - Error categorization
-            - Retry success rates
-          points: 2
-          priority: P2
-          repos: pennyfarthing
-          acceptance_criteria:
-            - Success/failure logged per run
-            - Error types categorized
-            - Trends over time
-
-        - id: "7-5"
-          title: "Create benchmark dashboard"
-          description: |
-            Generate HTML/Markdown performance reports.
-            - Summary statistics
-            - Trend charts
-            - Regression alerts
-          points: 2
-          priority: P2
-          repos: pennyfarthing
-          acceptance_criteria:
-            - benchmarks/reports/ generated
-            - Includes charts and trends
-            - Alerts on regressions
-
         - id: "7-6"
           title: "Add CI integration"
           description: |
@@ -350,162 +46,46 @@ backlog:
             - Publish reports
           points: 2
           priority: P2
+          status: backlog
           repos: pennyfarthing
           acceptance_criteria:
             - .github/workflows/benchmark.yml
             - Runs on PR merge
             - Reports published to repo
 
-    - id: epic-8
-      title: "Automatic State Reconciliation"
-      description: |
-        Eliminate drift between git state and sprint YAML by automating
-        state synchronization. Work happens across multiple sessions and
-        PRs get merged outside the workflow - the framework should detect
-        and reconcile this automatically, not rely on users running commands.
-      points: 8
-      priority: P1
-      marker: "high-priority"
-      repos: pennyfarthing
-      stories:
-        - id: "8-1"
-          title: "Git hook for PR merge detection"
-          description: |
-            Post-merge hook that detects when PRs merge to develop/main.
-            - Parse PR title/branch for story ID (e.g., feat/5-2-*)
-            - Auto-update sprint YAML status to 'done'
-            - Add completed date
-            - Works even when merge happens outside workflow
-          points: 3
-          priority: P1
-          repos: pennyfarthing
-          acceptance_criteria:
-            - Hook installed via pennyfarthing setup
-            - Detects story ID from branch name pattern
-            - Updates sprint YAML automatically
-            - Logs reconciliation to .session/
+# =============================================================================
+# MOVED TO SPRINT 8
+# =============================================================================
+# The following epics have been moved to Sprint 8:
+# - Epic 8: Automatic State Reconciliation (8 pts)
+# - Epic 9: Skill Discovery & Documentation Hub (13 pts)
+# - Epic 20: Cyclist Web Mode Improvements (8 pts)
+# - Epic 22-6: Tool execution audit log carryover (1 pt)
 
-        - id: "8-2"
-          title: "Startup drift detection"
-          description: |
-            On agent activation, detect drift between git and YAML state.
-            - Compare merged PRs vs sprint YAML status
-            - Identify stories marked in-progress but already merged
-            - Auto-fix or warn user before proceeding
-          points: 3
-          priority: P1
-          repos: pennyfarthing
-          acceptance_criteria:
-            - workflow-status-check detects merged-but-not-closed
-            - Clear report of drifted stories
-            - Option to auto-reconcile
-
-        - id: "8-3"
-          title: "Session boundary breadcrumbs"
-          description: |
-            Better markers for cross-session continuity.
-            - Write checkpoint on session end
-            - Include last agent, story, phase, git SHA
-            - Next session loads and validates checkpoint
-          points: 2
-          priority: P2
-          repos: pennyfarthing
-          acceptance_criteria:
-            - .session/checkpoint.yaml written on exit
-            - New session validates against current git state
-            - Warns if state changed between sessions
-
-    - id: epic-20
-      title: "Cyclist Web Mode Improvements"
-      description: |
-        Improve Cyclist web mode UX to match Electron mode capabilities.
-        Currently, web mode requires manual OTEL configuration to get
-        token stats, and some features only work in Electron.
-      points: 8
-      priority: P2
-      marker: "quick-win"
-      repos: cyclist
-      stories:
-        - id: "20-1"
-          title: "Auto-configure OTEL for web mode"
-          description: |
-            Make token stats work automatically in web mode without
-            requiring manual OTEL environment variables.
-
-            Options to explore:
-            - Port file: Cyclist writes port to .cyclist-port, hooks read it
-            - Browser launch: Cyclist spawns Claude Code subprocess like Electron
-            - Documentation: Clear setup instructions in UI when stats unavailable
-
-            Current workaround: `just claude-with-cyclist` launcher script
-          points: 3
-          priority: P1
-          repos: cyclist
-          acceptance_criteria:
-            - Token stats appear in web mode without manual OTEL config
-            - Clear error message if OTEL not configured
-            - Documentation for manual setup as fallback
-
-        - id: "20-2"
-          title: "Web mode feature parity audit"
-          description: |
-            Audit all Electron-only features and create plan to support
-            them in web mode or document limitations.
-
-            Known gaps:
-            - Agent menu (Electron menu bar)
-            - Permission mode toggle (requires PTY control)
-            - Native file dialogs
-          points: 2
-          priority: P2
-          repos: cyclist
-          acceptance_criteria:
-            - Feature parity matrix documented
-            - Web alternatives identified for key features
-            - Limitations clearly documented
-
-        - id: "20-3"
-          title: "Cyclist launcher with integrated Claude Code"
-          description: |
-            Create a launcher mode where Cyclist web spawns Claude Code
-            as a subprocess (like Electron mode), giving full control
-            over OTEL config and permission modes.
-
-            Would enable web mode to have same capabilities as Electron.
-          points: 3
-          priority: P2
-          repos: cyclist
-          acceptance_criteria:
-            - Web server can spawn Claude Code subprocess
-            - OTEL automatically configured
-            - WebSocket bridges subprocess I/O to browser
-
-# Summary
-# Remaining backlog: 55 points across 6 epics
-#
-# Completed Epics (for reference):
+# =============================================================================
+# COMPLETED EPICS (for reference)
+# =============================================================================
 # - Epic 2: Core Agent Framework (Sprint 2)
+# - Epic 3: Context Management (Sprints 3, 6, 7) - COMPLETE
 # - Epic 4: Configuration & Permissions (Sprint 2)
 # - Epic 5: Theme Commands (Sprint 2)
 # - Epic 6: Interactive Theme Wizard (Sprint 3)
-#
-# Backlog Epics:
-# - Epic 3: Context Management (5 pts remaining, 8 done) - P1
-# - Epic 7: Benchmarking Suite (13 pts) - P2
-# - Epic 8: State Reconciliation (8 pts) - P1
-# - Epic 9: Skill Discovery (13 pts) - P2
-# - Epic 10: Choreography Patterns (8 pts) - P2
-#
-# In Sprint 4:
-# - Epic 11: OCEAN Chernoff Faces (31 pts) - P2 strategic
-#
-# Recommended Next: Epic 8 (State Reconciliation) or Epic 3 (Context Management)
+# - Epic 10: Choreography Patterns (Sprint 6) - COMPLETE
+# - Epic 11: OCEAN Chernoff Faces (Sprint 4) - COMPLETE
+# - Epic 12: Scientific Benchmarking Migration (Sprint 5) - COMPLETE
+# - Epic 17: Cyclist UX (Sprint 7) - COMPLETE
+# - Epic 18: Monorepo Consolidation (Sprint 7) - COMPLETE
+# - Epic 19: Rich Telemetry (Sprint 7) - COMPLETE
+# - Epic 21: Command & Skill Expansion (Sprint 7) - COMPLETE
+# - Epic 22: Verbose Mode (Sprint 7) - 15/16 pts, 22-6 carried to Sprint 8
+
+# =============================================================================
+# BACKLOG SUMMARY
+# =============================================================================
+# Remaining backlog: 2 pts (Epic 7-6 only)
+# Active in Sprint 8: 30 pts
 #
 # Priority Legend:
-# - P1: High priority, next sprint candidates
-# - P2: Medium priority, future sprints
-#
-# Marker Legend:
-# - high-priority: Critical for production readiness
-# - quick-win: Low effort, high value
-# - strategic: Long-term value, larger investment
+# - P1: High priority, immediate attention
+# - P2: Medium priority, planned work
+# - P3: Low priority, nice to have

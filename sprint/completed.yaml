@@ -698,10 +698,265 @@ sprint_7_completed:
 # CUMULATIVE METRICS
 # =============================================================================
 
+    # Epic 7 - Benchmarking (additional)
+    - id: "7-1"
+      epic: epic-7
+      jira: MSSCI-11390
+      title: "Create benchmark runner framework"
+      points: 3
+      status: done
+      started: 2026-01-10
+      completed: 2026-01-10
+      repos: pennyfarthing
+
+    - id: "7-4"
+      epic: epic-7
+      jira: MSSCI-11389
+      title: "Aggregate Job-Fair Results into Benchmark Statistics"
+      points: 3
+      status: done
+      completed: 2026-01-10
+      repos: pennyfarthing
+
+    - id: "7-5"
+      epic: epic-7
+      title: "Add persona differential dimensions to benchmarking"
+      points: 3
+      status: done
+      completed: 2026-01-10
+      repos: pennyfarthing
+
+    # Epic 19 - Rich Agent Telemetry (additional)
+    - id: "19-3"
+      epic: epic-19
+      jira: MSSCI-11428
+      title: "Implement span hierarchy builder"
+      points: 3
+      status: done
+      started: 2026-01-09
+      completed: 2026-01-09
+      repos: cyclist
+      pr: "https://github.com/1898andCo/pennyfarthing/pull/126"
+
+    - id: "19-4"
+      epic: epic-19
+      jira: MSSCI-11429
+      title: "Add Pennyfarthing agent context to telemetry"
+      points: 3
+      status: done
+      started: 2026-01-09
+      completed: 2026-01-09
+      repos: pennyfarthing, cyclist
+      pr: "https://github.com/1898andCo/pennyfarthing/pull/127"
+
+    - id: "19-5"
+      epic: epic-19
+      jira: MSSCI-11430
+      title: "Add story context to telemetry"
+      points: 2
+      status: done
+      started: 2026-01-09
+      completed: 2026-01-10
+      repos: pennyfarthing, cyclist
+      pr: "https://github.com/1898andCo/pennyfarthing/pull/128"
+
+    - id: "19-6"
+      epic: epic-19
+      jira: MSSCI-11431
+      title: "Track TDD phase transitions"
+      points: 3
+      status: done
+      started: 2026-01-10
+      completed: 2026-01-10
+      repos: cyclist
+      pr: "#129"
+
+    - id: "19-7"
+      epic: epic-19
+      jira: MSSCI-11432
+      title: "Create telemetry dashboard API"
+      points: 3
+      status: done
+      started: 2026-01-10
+      completed: 2026-01-10
+      repos: cyclist
+
+    - id: "19-8"
+      epic: epic-19
+      jira: MSSCI-11433
+      title: "Add OTEL export to external backends"
+      points: 2
+      status: done
+      started: 2026-01-10
+      completed: 2026-01-10
+      repos: cyclist
+      pr: "https://github.com/1898andCo/pennyfarthing/pull/152"
+
+    - id: "19-9"
+      epic: epic-19
+      jira: MSSCI-11434
+      title: "Create agent evaluation tool with performance metrics"
+      points: 5
+      status: done
+      started: 2026-01-10
+      completed: 2026-01-10
+      repos: pennyfarthing, cyclist
+      pr: "https://github.com/1898andCo/pennyfarthing/pull/130"
+
+    # Epic 21 - Command & Skill Expansion
+    - id: "21-1"
+      epic: epic-21
+      jira: MSSCI-11496
+      title: "/check command with dev-handoff integration"
+      points: 3
+      status: done
+      started: 2026-01-10
+      completed: 2026-01-10
+      repos: pennyfarthing
+
+    - id: "21-2"
+      epic: epic-21
+      jira: MSSCI-11497
+      title: "/prime command with agent-session hooks"
+      points: 2
+      status: done
+      started: 2026-01-10
+      completed: 2026-01-10
+      repos: pennyfarthing
+
+    - id: "21-3"
+      epic: epic-21
+      jira: MSSCI-11498
+      title: "mermaid skill documentation"
+      points: 2
+      status: done
+      started: 2026-01-10
+      completed: 2026-01-10
+      repos: pennyfarthing
+      pr: "#144"
+
+    - id: "21-4"
+      epic: epic-21
+      jira: MSSCI-11499
+      title: "/run-ci thin wrapper command"
+      points: 2
+      status: done
+      started: 2026-01-10
+      completed: 2026-01-10
+      repos: pennyfarthing
+
+    - id: "21-5"
+      epic: epic-21
+      jira: MSSCI-11500
+      title: "changelog skill for release workflow"
+      points: 1
+      status: done
+      started: 2026-01-10
+      completed: 2026-01-10
+      repos: pennyfarthing
+
+    - id: "21-6"
+      epic: epic-21
+      jira: MSSCI-11501
+      title: "/help command for Pennyfarthing"
+      points: 2
+      status: done
+      started: 2026-01-10
+      completed: 2026-01-10
+      repos: pennyfarthing
+      pr: "#136"
+
+    # Epic 22 - Verbose Mode
+    - id: "22-1"
+      epic: epic-22
+      title: "Tool Activity Bar component"
+      points: 3
+      status: done
+      started: 2026-01-10
+      completed: 2026-01-10
+      repos: cyclist
+
+    - id: "22-2"
+      epic: epic-22
+      title: "Abort button for running operations"
+      points: 2
+      status: done
+      started: 2026-01-10
+      completed: 2026-01-10
+      repos: cyclist
+
+    - id: "22-3"
+      epic: epic-22
+      title: "Bash command approval gate"
+      points: 3
+      status: done
+      started: 2026-01-10
+      completed: 2026-01-10
+      repos: cyclist
+
+    - id: "22-4"
+      epic: epic-22
+      title: "Dangerous path detection"
+      points: 2
+      status: done
+      started: 2026-01-10
+      completed: 2026-01-10
+      repos: cyclist
+      pr: "https://github.com/1898andCo/pennyfarthing/pull/153"
+
+    - id: "22-5"
+      epic: epic-22
+      title: "Verbose mode setting with expanded tool blocks"
+      points: 2
+      status: done
+      started: 2026-01-10
+      completed: 2026-01-10
+      repos: cyclist
+
+    - id: "22-7"
+      epic: epic-22
+      title: "Fix token count accuracy and UI improvements"
+      points: 3
+      status: done
+      started: 2026-01-10
+      completed: 2026-01-10
+      repos: cyclist, pennyfarthing
+
+# =============================================================================
+# SPRINT 7 FINAL - Benchmark, Monorepo, Telemetry
+# =============================================================================
+
+sprint_7:
+  number: 7
+  goal: "Benchmark framework expansion, monorepo consolidation, rich agent telemetry"
+  planned_start: 2026-01-06
+  completed: 2026-01-11
+  status: complete
+  total_points: 112
+  completed_points: 111
+  velocity_target: 100
+  notes: |
+    Sprint 7 was the largest sprint to date, successfully completing 111/112 points.
+    Story 22-6 (1 pt) carried to Sprint 8 as low priority.
+
+    Major accomplishments:
+    - Epic 17: Cyclist UX overhaul (24 pts)
+    - Epic 18: Monorepo consolidation with pnpm workspaces (21 pts)
+    - Epic 19: Rich OTEL telemetry integration (26 pts)
+    - Epic 21: Command & skill expansion (12 pts)
+    - Epic 22: Verbose mode with tool visibility (15/16 pts)
+    - Epic 7: Benchmarking framework (16 pts)
+
+  # All stories archived in sprint_7_completed section above
+
+# =============================================================================
+# CUMULATIVE METRICS
+# =============================================================================
+
 cumulative:
-  sprints_completed: 5
-  total_points_delivered: 129  # 116 + 13 (Sprint 6)
-  total_stories_completed: 63  # 57 + 6 (Sprint 6)
-  average_velocity: 25.8  # 129 / 5
+  sprints_completed: 7
+  total_points_delivered: 316  # 205 + 111 (Sprint 7 final)
+  total_stories_completed: 123  # 93 + 30 (Sprint 7 stories)
+  average_velocity: 45.1  # 316 / 7
   velocity_target: 20
-  performance: "129%"  # 25.8/20
+  performance: "226%"  # 45.1/20
