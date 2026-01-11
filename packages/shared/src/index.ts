@@ -23,3 +23,12 @@ export {
   type SearchOptions,
   type SkillResult,
 } from './skill-search.js';
+
+export {
+  suggestSkills,
+  suggestFromSession,
+  suggestFromKeywords,
+  type SuggestOptions,
+  type SkillSuggestion,
+  type SessionContext,
+} from './skill-suggest.js';
