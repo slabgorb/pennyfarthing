@@ -53,6 +53,460 @@ backlog:
             - Runs on PR merge
             - Reports published to repo
 
+    - id: epic-23
+      title: "Cyclist Claude Code Command Integration"
+      description: |
+        Expose high-value Claude Code commands through intuitive GUI elements
+        in Cyclist, with dedicated IPC handlers for clean architecture.
+        Priority commands: /status (usage limits), /compact, /rewind, /doctor.
+      points: 29
+      priority: P1
+      marker: "strategic"
+      repos: cyclist
+      status: planned
+      plan_file: ~/.claude/plans/staged-stirring-newt.md
+      stories:
+        - id: "23-1"
+          title: "Usage Limits in Stats Strip"
+          description: |
+            Display remaining Claude credits in the stats strip:
+            - 5-hour block remaining (as %)
+            - Weekly remaining (as %)
+            - Reset timestamps on hover
+            Color coding: Green (>50%), Yellow (25-50%), Red (<25%)
+          points: 3
+          priority: P0
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - 5-hour block % displayed in stats strip
+            - Weekly % displayed in stats strip
+            - Color coding reflects remaining capacity
+            - Hover shows reset timestamp
+            - Polls periodically to stay current
+            - Works with Pro and Max plans
+
+        - id: "23-2"
+          title: "Fix Clear to Reset All Session State"
+          description: |
+            Current clear button leaves stale data in:
+            - Changed files panel (not cleared)
+            - Diffs panel (not cleared)
+            - Agent panel / agent selection (shows stale agent)
+          points: 2
+          priority: P1
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Clear resets changed files panel to empty
+            - Clear resets diffs panel to empty
+            - Clear resets agent panel (no agent selected)
+            - Clear resets context % to 0 or "—"
+            - Clear resets token counts to 0 or "—"
+
+        - id: "23-3"
+          title: "Command Abstraction Layer (IPC)"
+          description: |
+            Create dedicated IPC handlers for Claude Code commands
+            rather than PTY injection. Define IPC_COMMAND_CHANNELS,
+            expose via preload, handle in main.ts.
+          points: 3
+          priority: P1
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - IPC channels defined as constants
+            - Handlers registered in setupCommandIPCHandlers()
+            - Preload exposes command API
+            - Commands execute in Claude PTY session
+            - Results broadcast back to renderer
+
+        - id: "23-4"
+          title: "Compact Button with Context Awareness"
+          description: |
+            Add compact button that appears contextually when context > 50%.
+            Always accessible via keyboard shortcut (Cmd+Shift+K).
+          points: 3
+          priority: P1
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Compact button appears when context > 50%
+            - Cmd+Shift+K triggers compact from anywhere
+            - After compact, context % updates
+            - Works in both Electron and web modes
+
+        - id: "23-5"
+          title: "Keyboard Shortcuts System"
+          description: |
+            Global keyboard shortcuts for common commands.
+            Cmd+Shift+K (Compact), Cmd+Shift+D (Doctor), Cmd+Shift+P (Palette).
+          points: 2
+          priority: P2
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Shortcuts work when app is focused
+            - Shortcuts shown in Electron menu
+            - No conflicts with system shortcuts
+
+        - id: "23-6"
+          title: "Command Palette (Cmd+Shift+P)"
+          description: |
+            VS Code-style searchable command palette.
+            Fuzzy search all Claude Code commands + Pennyfarthing skills.
+            Recent commands at top, keyboard navigation.
+          points: 5
+          priority: P2
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Cmd+Shift+P opens palette
+            - Fuzzy search filters commands
+            - Arrow keys navigate, Enter executes
+            - Escape closes palette
+            - Recent commands appear first
+
+        - id: "23-7"
+          title: "Doctor Diagnostics Panel"
+          description: |
+            Visual health check dashboard instead of raw /doctor output.
+            Green/Yellow/Red status indicators, actionable suggestions.
+          points: 3
+          priority: P2
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Doctor accessible from menu and shortcut
+            - Parses /doctor output into structured data
+            - Visual indicators for each health check
+            - Shows suggestions for failed checks
+
+        - id: "23-8"
+          title: "Rewind Timeline MVP"
+          description: |
+            Visual timeline of conversation checkpoints for time travel.
+            Timeline bar with checkpoint markers, hover to preview,
+            click to rewind with confirmation.
+          points: 5
+          priority: P2
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Timeline shows available checkpoints
+            - Checkpoints have timestamps and summaries
+            - Clicking checkpoint shows preview
+            - Confirm before rewinding
+            - After rewind, UI updates to new state
+
+        - id: "23-9"
+          title: "Rewind Preview & Confirmation"
+          description: |
+            Enhanced rewind with preview before committing.
+            Shows what will be lost, diff between states,
+            option to bookmark before rewinding.
+          points: 3
+          priority: P3
+          status: backlog
+          depends_on: "23-8"
+          repos: cyclist
+          acceptance_criteria:
+            - Preview modal shows checkpoint content
+            - Shows what messages will be lost
+            - Can cancel without changes
+            - Optional bookmark creation
+
+    - id: epic-24
+      title: "Configuration & Theme Switcher Panels"
+      description: |
+        Full settings hub in Cyclist covering Pennyfarthing, Claude Code,
+        and Cyclist preferences. Rich theme browser with search, OCEAN
+        profiles, character previews, and favorites.
+      points: 21
+      priority: P2
+      marker: "ux"
+      repos: cyclist, pennyfarthing
+      status: planned
+      stories:
+        - id: "24-1"
+          title: "Settings Panel Infrastructure"
+          description: |
+            Create tabbed settings panel accessible from menu (Cmd+,).
+            Tabs: Pennyfarthing, Claude Code, Cyclist, Themes.
+            Persistent state, apply/cancel buttons.
+          points: 3
+          priority: P1
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Settings panel opens from menu and Cmd+,
+            - Tabbed interface with 4 sections
+            - Changes apply on save, cancel discards
+            - Panel remembers last active tab
+
+        - id: "24-2"
+          title: "Pennyfarthing Settings Section"
+          description: |
+            Settings for Pennyfarthing configuration:
+            - Current theme display
+            - Sprint settings (velocity target, etc.)
+            - Session preferences
+            - Sidecar memory options
+          points: 2
+          priority: P1
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Displays current theme with preview
+            - Editable sprint settings
+            - Settings persist to persona-config.yaml
+
+        - id: "24-3"
+          title: "Claude Code Settings Section"
+          description: |
+            Expose key Claude Code /config options:
+            - Model selection (if applicable)
+            - Permission defaults
+            - Auto-compact threshold
+            - Verbose mode toggle
+          points: 2
+          priority: P2
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Key Claude Code settings exposed
+            - Changes apply to Claude session
+            - Reflects current /config state
+
+        - id: "24-4"
+          title: "Cyclist Preferences Section"
+          description: |
+            Cyclist-specific preferences:
+            - UI layout options
+            - Panel visibility defaults
+            - Keyboard shortcut customization
+            - Stats strip configuration
+          points: 2
+          priority: P2
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Cyclist prefs editable in panel
+            - Persist to settings-store
+            - Apply immediately or on save
+
+        - id: "24-5"
+          title: "Theme Browser with Search"
+          description: |
+            Full theme browser panel with:
+            - Grid of all 96+ themes
+            - Search by name, tags, characters
+            - Filter by OCEAN traits
+            - Sort by name, popularity, recent
+          points: 5
+          priority: P1
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Shows all available themes in grid
+            - Search filters themes in real-time
+            - OCEAN trait filtering works
+            - Themes load from pennyfarthing-dist/personas/themes/
+
+        - id: "24-6"
+          title: "Theme Preview with Portraits"
+          description: |
+            Rich theme preview on hover/select:
+            - All 10 agent portraits for theme
+            - Character names and roles
+            - OCEAN spider chart
+            - Theme description and tags
+          points: 3
+          priority: P1
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Preview shows all agent portraits
+            - OCEAN chart rendered
+            - Character quotes displayed
+            - Can select theme from preview
+
+        - id: "24-7"
+          title: "Theme Favorites"
+          description: |
+            Favorite themes for quick access:
+            - Star/heart to favorite a theme
+            - Favorites section at top of browser
+            - Persist to localStorage/settings
+          points: 2
+          priority: P2
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Can favorite/unfavorite themes
+            - Favorites appear at top
+            - Persist across sessions
+
+        - id: "24-8"
+          title: "Quick Theme Switcher"
+          description: |
+            Fast theme switching from menu bar:
+            - Menu item shows current theme
+            - Submenu with favorites + recent
+            - "Browse All..." opens full browser
+            - Keyboard shortcut (Cmd+Shift+T)
+          points: 2
+          priority: P2
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Theme submenu in View menu
+            - Shows favorites and recent
+            - Keyboard shortcut works
+            - Theme changes immediately
+
+    - id: epic-25
+      title: "Smart Question Detection & Quick Actions"
+      description: |
+        Improve Cyclist's ability to detect when Claude is asking questions
+        or prompting for action. Reduce false positives (enumerations mistaken
+        for questions), catch handoff prompts, and add "yes, proceed" buttons.
+        Two-pronged approach: better parsing AND easier-to-parse Claude output.
+      points: 18
+      priority: P1
+      marker: "ux"
+      repos: cyclist, pennyfarthing
+      status: planned
+      stories:
+        - id: "25-1"
+          title: "Audit Current Quick Actions Detection"
+          description: |
+            Review and document current detection patterns in quick-actions.js.
+            Identify false positive patterns (enumerations, lists that aren't choices).
+            Catalog missed patterns (handoffs, confirmations, proceed prompts).
+          points: 2
+          priority: P1
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Document all current detection patterns
+            - List of false positive examples
+            - List of missed pattern examples
+            - Recommendations for fixes
+
+        - id: "25-2"
+          title: "Fix Enumeration False Positives"
+          description: |
+            Stop detecting numbered lists as choices when they're just enumerations.
+            Heuristics:
+            - Check if list items are actionable (verbs vs nouns)
+            - Check for question context before list
+            - Check list length (>5 items likely enumeration)
+            - Check for "here are" / "the following" prefixes
+          points: 3
+          priority: P1
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Numbered lists without question context ignored
+            - "Here are the files" type lists not shown as choices
+            - Long lists (>5) treated as enumeration by default
+            - Reduces false positive rate significantly
+
+        - id: "25-3"
+          title: "Detect Handoff & Action Prompts"
+          description: |
+            Detect agent handoff and action prompts like:
+            - "invoke /reviewer to continue"
+            - "run /dev to implement"
+            - "use /sm to finish"
+            - "shall I proceed with..."
+            - "ready for review"
+            Show appropriate action button for each.
+          points: 3
+          priority: P1
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Detects "invoke X" patterns
+            - Detects "ready for X" patterns
+            - Shows button to invoke the suggested command
+            - Works for all Pennyfarthing agents
+
+        - id: "25-4"
+          title: "Universal 'Yes, Proceed' Button"
+          description: |
+            Add smart "Yes, proceed" detection for general confirmations:
+            - "shall I..." / "should I..."
+            - "would you like me to..."
+            - "do you want me to..."
+            - "ready to..." / "proceed with..."
+            Always show "Yes" and "No" buttons for these.
+          points: 2
+          priority: P1
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Detects confirmation question patterns
+            - Shows Yes/No buttons
+            - "Yes" sends affirmative response
+            - Works even without numbered options
+
+        - id: "25-5"
+          title: "Structured Output Markers (Claude-side)"
+          description: |
+            Add optional markers in Pennyfarthing agent output to make
+            parsing easier. Agents can emit structured hints:
+            - <!-- QUESTION: yes/no --> for confirmations
+            - <!-- CHOICES: 1,2,3 --> for numbered choices
+            - <!-- HANDOFF: /reviewer --> for handoffs
+            Cyclist detects these for guaranteed accurate parsing.
+          points: 3
+          priority: P2
+          status: backlog
+          repos: pennyfarthing, cyclist
+          acceptance_criteria:
+            - Marker format defined and documented
+            - Key agents emit markers for questions
+            - Cyclist parses markers with 100% accuracy
+            - Markers hidden from user display
+
+        - id: "25-6"
+          title: "Confidence Scoring for Detection"
+          description: |
+            Add confidence scores to quick action detection:
+            - High confidence: show buttons prominently
+            - Medium confidence: show buttons subtly
+            - Low confidence: don't show buttons
+            Tunable thresholds in settings.
+          points: 2
+          priority: P2
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Detection returns confidence score
+            - UI varies by confidence level
+            - Threshold configurable in settings
+            - Reduces noise from uncertain detections
+
+        - id: "25-7"
+          title: "Quick Action Analytics"
+          description: |
+            Track quick action usage to improve detection:
+            - Log when buttons shown vs clicked
+            - Track false positive dismissals
+            - Identify patterns that need tuning
+            Report in diagnostics panel.
+          points: 3
+          priority: P3
+          status: backlog
+          repos: cyclist
+          acceptance_criteria:
+            - Usage logged to session
+            - False positive tracking
+            - Analytics viewable in diagnostics
+            - Data informs future improvements
+
 # =============================================================================
 # MOVED TO SPRINT 8
 # =============================================================================
@@ -82,10 +536,15 @@ backlog:
 # =============================================================================
 # BACKLOG SUMMARY
 # =============================================================================
-# Remaining backlog: 2 pts (Epic 7-6 only)
+# Remaining backlog: 70 pts
+#   - Epic 7-6: CI integration (2 pts)
+#   - Epic 23: Cyclist Command Integration (29 pts)
+#   - Epic 24: Configuration & Theme Switcher (21 pts)
+#   - Epic 25: Smart Question Detection (18 pts) - NEW
 # Active in Sprint 8: 30 pts
 #
 # Priority Legend:
+# - P0: Critical, do first
 # - P1: High priority, immediate attention
 # - P2: Medium priority, planned work
 # - P3: Low priority, nice to have
