@@ -13,7 +13,7 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
 import { execSync } from 'child_process';
-import { existsSync, readFileSync, mkdirSync, writeFileSync, rmSync } from 'fs';
+import { existsSync, readFileSync, mkdirSync, writeFileSync, rmSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { tmpdir } from 'os';
 import { fileURLToPath } from 'url';
@@ -440,7 +440,6 @@ skills:
       }
 
       // Try to get file stats - executable bit
-      const { statSync } = require('fs');
       const stats = statSync(GENERATOR_SCRIPT);
       const isExecutable = (stats.mode & parseInt('111', 8)) !== 0;
 

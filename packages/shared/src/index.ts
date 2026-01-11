@@ -32,3 +32,9 @@ export {
   type SkillSuggestion,
   type SessionContext,
 } from './skill-suggest.js';
+
+export {
+  generateSkillDocs,
+  type GeneratorOptions,
+  type GeneratorResult,
+} from './generate-skill-docs.js';
