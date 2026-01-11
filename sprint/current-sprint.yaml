@@ -6,8 +6,8 @@ sprint:
   velocity_target: 100
 summary:
   total_points: 109
-  completed_points: 71
-  remaining_points: 38
+  completed_points: 73
+  remaining_points: 36
   notes: 'Sprint 7 focus: Benchmark framework, monorepo, telemetry.
 
 
@@ -42,7 +42,7 @@ summary:
 
     BACKLOG:
 
-    - Epic 19: Rich telemetry - 19-8 (2 pts remaining)
+    - Epic 19: Rich telemetry - COMPLETE (26 pts)
 
     - Epic 21: Command & Skill Expansion - 21-4 (2 pts remaining)
 
@@ -322,12 +322,13 @@ epics:
 
 '
     points: 26
-    completed_points: 15
+    completed_points: 26
     priority: P2
     marker: observability
     repos: pennyfarthing, cyclist
-    status: in_progress
+    status: done
     started: 2026-01-08
+    completed: 2026-01-10
     stories:
       - id: 19-1
         jira: MSSCI-11426
