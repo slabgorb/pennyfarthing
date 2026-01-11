@@ -329,8 +329,9 @@ export function renderDiff(container, diffData) {
   filePathLink.title = 'Click to open in editor';
   filePathLink.addEventListener('click', (e) => {
     e.preventDefault();
-    if (window.electron?.fileBrowser?.openInEditor) {
-      window.electron.fileBrowser.openInEditor(diffData.filePath);
+    // 27-1: Fix API path - use electronAPI not electron
+    if (window.electronAPI?.fileBrowser?.openInEditor) {
+      window.electronAPI.fileBrowser.openInEditor(diffData.filePath);
     }
   });
 

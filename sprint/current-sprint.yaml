@@ -445,7 +445,12 @@ epics:
           Tunable thresholds in settings.
         points: 2
         priority: P2
-        status: backlog
+        status: done
+        started: 2026-01-11
+        completed: 2026-01-11
+        assigned_to: Keith Avery
+        pr: "#180"
+        pr_link: https://github.com/1898andCo/pennyfarthing/pull/180
         repos: cyclist
         acceptance_criteria:
           - Detection returns confidence score
