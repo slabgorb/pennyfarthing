@@ -1,7 +1,14 @@
 /**
  * Stats Strip - Compact stats display in prompt bar (B-22)
  * Shows model badge, context meter, and usage limits (23-1)
+ * 23-4: Adds compact button with context awareness
  */
+
+/**
+ * 23-4: Threshold at which compact button becomes visible
+ * Button appears when context usage >= 50%
+ */
+const COMPACT_THRESHOLD = 50;
 
 /**
  * Format token count for display
@@ -36,6 +43,55 @@ function updateContextLevel(contextMini, percent) {
     contextMini.classList.add('level-warning');
   } else {
     contextMini.classList.add('level-safe');
+  }
+}
+
+/**
+ * 23-4: Update compact button visibility based on context percentage
+ * Shows button when context >= COMPACT_THRESHOLD (50%)
+ * @param {number} percent - Context usage percentage
+ */
+function updateCompactButtonVisibility(percent) {
+  const compactBtn = document.querySelector('#stats-strip .compact-btn');
+  if (!compactBtn) return;
+
+  if (percent >= COMPACT_THRESHOLD) {
+    compactBtn.classList.remove('hidden');
+  } else {
+    compactBtn.classList.add('hidden');
+  }
+}
+
+/**
+ * 23-4: Execute the /compact command via IPC
+ * Called when compact button is clicked or keyboard shortcut is pressed
+ */
+async function executeCompact() {
+  const compactBtn = document.querySelector('#stats-strip .compact-btn');
+
+  // Check if command API is available
+  if (!window.electronAPI?.command?.execute) {
+    console.warn('[StatsStrip] Command API not available for compact');
+    return;
+  }
+
+  // Show loading state
+  if (compactBtn) {
+    compactBtn.classList.add('loading');
+    compactBtn.disabled = true;
+  }
+
+  try {
+    await window.electronAPI.command.execute('/compact');
+    console.log('[StatsStrip] Compact command executed');
+  } catch (err) {
+    console.error('[StatsStrip] Failed to execute compact:', err);
+  } finally {
+    // Remove loading state
+    if (compactBtn) {
+      compactBtn.classList.remove('loading');
+      compactBtn.disabled = false;
+    }
   }
 }
 
@@ -137,6 +193,9 @@ function updateContextMeter(percent, tokens) {
   }
 
   updateContextLevel(contextMini, percent);
+
+  // 23-4: Update compact button visibility based on context threshold
+  updateCompactButtonVisibility(percent);
 }
 
 /**
@@ -284,6 +343,12 @@ async function initStatsStrip() {
     }
   }
 
+  // 23-4: Set up compact button click handler
+  const compactBtn = document.querySelector('#stats-strip .compact-btn');
+  if (compactBtn) {
+    compactBtn.addEventListener('click', executeCompact);
+  }
+
   console.log('[StatsStrip] IPC connected');
 }
 
@@ -295,3 +360,6 @@ window.initStatsStrip = initStatsStrip;
 window.updateStripStat = updateStripStat;
 window.updateContextMeter = updateContextMeter;
 window.updateUsageMeter = updateUsageMeter;
+// 23-4: Export compact button functions
+window.updateCompactButtonVisibility = updateCompactButtonVisibility;
+window.executeCompact = executeCompact;
