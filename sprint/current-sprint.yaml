@@ -5,18 +5,19 @@ sprint:
   status: active
   velocity_target: 30
 summary:
-  total_points: 45
-  completed_points: 14
-  remaining_points: 31
+  total_points: 47
+  completed_points: 31
+  remaining_points: 16
   notes: |
     Sprint 8 focus: State reconciliation, skill discovery, smart question detection.
 
     EPICS:
     - Epic 8 (State Reconciliation) - 8 pts - P1 - DONE
-    - Epic 9 (Skill Discovery) - 13 pts - P2
+    - Epic 9 (Skill Discovery) - 13 pts - P2 - DONE
     - Epic 20 (Cyclist Web Mode) - 5 pts - P2 - DONE
     - Epic 22 carryover (22-6) - 1 pt - P3 - DONE
-    - Epic 25 (Smart Question Detection) - 18 pts - P1
+    - Epic 25 (Smart Question Detection) - 18 pts - P1 (2 done, 16 remaining)
+    - Epic 26 (Symlink Permission Fix) - 2 pts - P1
 epics:
   - id: epic-8
     title: Automatic State Reconciliation
@@ -96,11 +97,11 @@ epics:
       prerequisites, anti-patterns). Enable agents to discover and suggest
       relevant skills based on task context.
     points: 13
-    completed_points: 11
+    completed_points: 13
     priority: P2
     marker: strategic
     repos: pennyfarthing
-    status: in-progress
+    status: done
     stories:
       - id: 9-1
         title: Create skill registry schema
@@ -308,11 +309,11 @@ epics:
       for questions), catch handoff prompts, and add "yes, proceed" buttons.
       Two-pronged approach: better parsing AND easier-to-parse Claude output.
     points: 18
-    completed_points: 0
+    completed_points: 2
     priority: P1
     marker: ux
     repos: cyclist, pennyfarthing
-    status: planned
+    status: in_progress
     stories:
       - id: 25-1
         title: Audit Current Quick Actions Detection
@@ -323,10 +324,13 @@ epics:
           Catalog missed patterns (handoffs, confirmations, proceed prompts).
         points: 2
         priority: P1
-        status: in_progress
+        status: done
         started: 2026-01-11
+        completed: 2026-01-11
         assigned_to: Keith Avery
         repos: cyclist
+        pr: 169
+        pr_link: https://github.com/1898andCo/pennyfarthing/pull/169
         acceptance_criteria:
           - Document all current detection patterns
           - List of false positive examples
@@ -444,3 +448,39 @@ epics:
           - Usage logged to session
           - False positive tracking
           - Analytics viewable in diagnostics
+  - id: epic-26
+    title: Symlink Permission Fix for Claude Code
+    description: |
+      Claude Code's permission system doesn't follow symlinks. When
+      .claude/commands symlinks to pennyfarthing-dist/commands, granting
+      permission on the symlink path fails. Need to either restructure
+      or work around this limitation.
+    points: 2
+    completed_points: 0
+    priority: P1
+    marker: bug
+    repos: pennyfarthing
+    status: in_progress
+    stories:
+      - id: 26-1
+        title: Fix symlink permission issue for .claude directory
+        description: |
+          Problem: Claude Code permission prompts use symlink paths like
+          .claude/commands/close-epic.md but permission grants don't resolve
+          through symlinks. User can't grant permission.
+
+          Options to explore:
+          1. Replace symlinks with copies during init
+          2. Use pennyfarthing-dist/ paths in permission prompts
+          3. Add .claude/commands to .claudeignore and use direct paths
+          4. Restructure to avoid symlinks for editable content
+
+          Current workaround: Write to pennyfarthing-dist/ directly
+        points: 2
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Permission prompts work for all .claude/ paths
+          - Init/update commands handle the fix
+          - No manual workarounds needed

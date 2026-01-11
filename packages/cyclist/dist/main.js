@@ -487,17 +487,22 @@ let contextPollTimer = null;
 /**
  * Start polling context usage
  * Calls getContextUsage periodically and broadcasts changes
+ * @param projectDir - The project directory
+ * @param getSessionId - Optional function to get current session ID (for session-specific context)
  */
-export function startContextPolling(projectDir) {
-    // Initial fetch
-    const initialContext = getContextUsage(projectDir);
+export function startContextPolling(projectDir, getSessionId) {
+    // Initial fetch (may not have session ID yet)
+    const sessionId = getSessionId?.() ?? undefined;
+    const initialContext = getContextUsage(projectDir, sessionId);
     updateContextState(initialContext);
     // Set up polling
     contextPollTimer = setInterval(() => {
-        const context = getContextUsage(projectDir);
+        // Get session ID each poll - it may become available after first message
+        const currentSessionId = getSessionId?.() ?? undefined;
+        const context = getContextUsage(projectDir, currentSessionId);
         const changed = updateContextState(context);
         if (changed) {
-            console.log('Context updated:', context.percent, '%');
+            console.log('Context updated:', context.percent, '%', currentSessionId ? `(session: ${currentSessionId.slice(0, 8)}...)` : '');
         }
     }, CONTEXT_POLL_INTERVAL_MS);
     console.log('Context polling started (every', CONTEXT_POLL_INTERVAL_MS / 1000, 's)');
@@ -752,8 +757,16 @@ export function startProjectWatchers() {
             }
         });
         console.log('Agent change watcher started for:', projectDir);
-        // Start context polling (B-19)
-        startContextPolling(projectDir);
+        // Start context polling (B-19) with session ID for session-specific tracking (17-7)
+        startContextPolling(projectDir, () => {
+            try {
+                return getClaudeService().getSessionId();
+            }
+            catch {
+                // ClaudeService may not be initialized yet
+                return null;
+            }
+        });
         // Start usage polling (23-1)
         startUsagePolling(projectDir);
     }

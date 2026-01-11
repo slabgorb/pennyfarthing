@@ -961,3 +961,42 @@ When a subagent failure can't be recovered:
 **State detection:** Agents read session file on activation
 **Handoffs:** Agents send helpers to update session file
 **Finish:** SM handles when status = `approved`
+
+---
+
+## Dogfooding: Known Issues When Working on Pennyfarthing
+
+When working on the Pennyfarthing framework itself, be aware of these quirks:
+
+### Symlink Permission Issue (Epic 26)
+
+**Problem:** Claude Code's permission system doesn't follow symlinks. The `.claude/` directory contains symlinks to `pennyfarthing-dist/`:
+
+```
+.claude/commands → pennyfarthing-dist/commands
+.claude/agents → pennyfarthing-dist/agents
+.claude/skills → pennyfarthing-dist/skills
+```
+
+When Claude Code prompts for permission to write to `.claude/commands/foo.md`, the permission grant **fails silently** because the actual file is at `pennyfarthing-dist/commands/foo.md`.
+
+**Workaround:** Write directly to `pennyfarthing-dist/` instead of `.claude/`:
+
+```bash
+# WRONG - permission will fail
+Write to: .claude/commands/close-epic.md
+
+# CORRECT - works because it's the real path
+Write to: pennyfarthing-dist/commands/close-epic.md
+```
+
+**Status:** Tracked in Epic 26-1. Future fix may replace symlinks with copies during `pennyfarthing init`.
+
+### Self-Referential Context
+
+When agents work on Pennyfarthing itself:
+- Agent definitions you're reading are the same ones you're modifying
+- Changes to `tactical-agent-behavior.md` affect how you behave
+- Test carefully - breaking changes can break the workflow mid-session
+
+**Best practice:** Complete and commit agent/guide changes before testing them in a new session.
