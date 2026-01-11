@@ -99,6 +99,9 @@ export const IPC_DATA_CHANNELS = {
   CONTEXT_UPDATE: 'context:update',
   // Tool events (changed files, diffs)
   TOOL_EVENTS_UPDATE: 'toolEvents:update',
+  // 23-1: Usage limits stats
+  USAGE_STATS_GET: 'usageStats:get',
+  USAGE_STATS_UPDATE: 'usageStats:update',
 } as const;
 
 /**
@@ -319,6 +322,7 @@ export function getDataChannels(): string[] {
     IPC_DATA_CHANNELS.TOKEN_STATS_GET,
     IPC_DATA_CHANNELS.TODOS_GET,
     IPC_DATA_CHANNELS.CONTEXT_GET,
+    IPC_DATA_CHANNELS.USAGE_STATS_GET, // 23-1
   ];
 }
 
@@ -632,6 +636,103 @@ export function startContextPolling(projectDir: string, getSessionId?: () => str
 }
 
 // =============================================================================
+// Usage Stats State (23-1)
+// =============================================================================
+
+/**
+ * Usage stats structure - tracks Claude API usage limits
+ */
+export interface UsageStats {
+  fiveHourPercent: number;
+  weeklyPercent: number;
+  fiveHourResetAt: string | null;
+  weeklyResetAt: string | null;
+  planType: 'pro' | 'max' | 'unknown';
+}
+
+/**
+ * Current usage stats state
+ */
+let currentUsageStats: UsageStats = {
+  fiveHourPercent: 0,
+  weeklyPercent: 0,
+  fiveHourResetAt: null,
+  weeklyResetAt: null,
+  planType: 'unknown',
+};
+
+/**
+ * Get current usage stats (for testing and IPC)
+ */
+export function getUsageStats(): UsageStats {
+  return { ...currentUsageStats };
+}
+
+/**
+ * Update usage stats state and broadcast if changed
+ */
+export function updateUsageStats(stats: UsageStats): boolean {
+  if (
+    currentUsageStats.fiveHourPercent === stats.fiveHourPercent &&
+    currentUsageStats.weeklyPercent === stats.weeklyPercent
+  ) {
+    return false;
+  }
+  currentUsageStats = { ...stats };
+  broadcastToRenderer(IPC_DATA_CHANNELS.USAGE_STATS_UPDATE, currentUsageStats);
+  return true;
+}
+
+/**
+ * Reset usage stats to default values
+ */
+export function resetUsageStats(): void {
+  currentUsageStats = {
+    fiveHourPercent: 0,
+    weeklyPercent: 0,
+    fiveHourResetAt: null,
+    weeklyResetAt: null,
+    planType: 'unknown',
+  };
+  broadcastToRenderer(IPC_DATA_CHANNELS.USAGE_STATS_UPDATE, currentUsageStats);
+}
+
+/**
+ * Usage polling interval in milliseconds
+ * 60 seconds is reasonable for usage data that changes slowly
+ */
+export const USAGE_POLL_INTERVAL_MS = 60000;
+
+/**
+ * Timer reference for usage polling
+ */
+let usagePollTimer: NodeJS.Timeout | null = null;
+
+/**
+ * Start polling usage stats
+ * Calls /status periodically and parses output for usage limits
+ *
+ * TODO: Implement actual /status parsing when format is determined.
+ * Until then, UI shows placeholder values (—%).
+ */
+export function startUsagePolling(_projectDir: string): () => void {
+  // Set up polling interval
+  // When /status parsing is implemented, this will fetch and broadcast real data
+  usagePollTimer = setInterval(() => {
+    // TODO: Call /status, parse output, and update usage stats
+    // For now, polling is set up but no data is broadcast until real integration
+  }, USAGE_POLL_INTERVAL_MS);
+
+  // Return cleanup function
+  return () => {
+    if (usagePollTimer) {
+      clearInterval(usagePollTimer);
+      usagePollTimer = null;
+    }
+  };
+}
+
+// =============================================================================
 // Server Control (B-2.1)
 // =============================================================================
 
@@ -786,6 +887,11 @@ export function setupDataIPCHandlers(ipcMain: {
     return getContext();
   });
 
+  // Usage stats handler - returns current usage limits (23-1)
+  ipcMain.handle(IPC_DATA_CHANNELS.USAGE_STATS_GET, async () => {
+    return getUsageStats();
+  });
+
   console.log('Data IPC handlers registered:', getDataChannels());
 }
 
@@ -833,6 +939,9 @@ export function startProjectWatchers(): void {
         return null;
       }
     });
+
+    // Start usage polling (23-1)
+    startUsagePolling(projectDir);
   }
 }
 

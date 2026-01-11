@@ -36,6 +36,8 @@ export declare const IPC_DATA_CHANNELS: {
     readonly CONTEXT_GET: "context:get";
     readonly CONTEXT_UPDATE: "context:update";
     readonly TOOL_EVENTS_UPDATE: "toolEvents:update";
+    readonly USAGE_STATS_GET: "usageStats:get";
+    readonly USAGE_STATS_UPDATE: "usageStats:update";
 };
 /**
  * IPC channel names for Claude SDK communication (E7-3)
@@ -242,6 +244,41 @@ export declare const CONTEXT_POLL_INTERVAL_MS = 15000;
  * @param getSessionId - Optional function to get current session ID (for session-specific context)
  */
 export declare function startContextPolling(projectDir: string, getSessionId?: () => string | null): () => void;
+/**
+ * Usage stats structure - tracks Claude API usage limits
+ */
+export interface UsageStats {
+    fiveHourPercent: number;
+    weeklyPercent: number;
+    fiveHourResetAt: string | null;
+    weeklyResetAt: string | null;
+    planType: 'pro' | 'max' | 'unknown';
+}
+/**
+ * Get current usage stats (for testing and IPC)
+ */
+export declare function getUsageStats(): UsageStats;
+/**
+ * Update usage stats state and broadcast if changed
+ */
+export declare function updateUsageStats(stats: UsageStats): boolean;
+/**
+ * Reset usage stats to default values
+ */
+export declare function resetUsageStats(): void;
+/**
+ * Usage polling interval in milliseconds
+ * 60 seconds is reasonable for usage data that changes slowly
+ */
+export declare const USAGE_POLL_INTERVAL_MS = 60000;
+/**
+ * Start polling usage stats
+ * Calls /status periodically and parses output for usage limits
+ *
+ * TODO: Implement actual /status parsing when format is determined.
+ * Until then, UI shows placeholder values (—%).
+ */
+export declare function startUsagePolling(_projectDir: string): () => void;
 /**
  * Server startup configuration
  * In Electron mode, server can be disabled since we use IPC

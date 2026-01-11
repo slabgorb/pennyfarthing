@@ -5,18 +5,19 @@ sprint:
   status: active
   velocity_target: 30
 summary:
-  total_points: 47
-  completed_points: 31
-  remaining_points: 16
+  total_points: 76
+  completed_points: 32
+  remaining_points: 44
   notes: |
-    Sprint 8 focus: State reconciliation, skill discovery, smart question detection.
+    Sprint 8 focus: State reconciliation, skill discovery, smart question detection, Cyclist command integration.
 
     EPICS:
     - Epic 8 (State Reconciliation) - 8 pts - P1 - DONE
     - Epic 9 (Skill Discovery) - 13 pts - P2 - DONE
     - Epic 20 (Cyclist Web Mode) - 5 pts - P2 - DONE
     - Epic 22 carryover (22-6) - 1 pt - P3 - DONE
-    - Epic 25 (Smart Question Detection) - 18 pts - P1 (2 done, 16 remaining)
+    - Epic 23 (Cyclist Command Integration) - 29 pts - P1 (23-1 done)
+    - Epic 25 (Smart Question Detection) - 18 pts - P1 (25-1 done, 16 remaining)
     - Epic 26 (Symlink Permission Fix) - 2 pts - P1
 epics:
   - id: epic-8
@@ -198,6 +199,7 @@ epics:
           - Skill usage logged to .session/
           - Weekly usage report available
           - Identifies unused skills
+        pr: "#168"
   - id: epic-20
     title: Cyclist Web Mode Improvements
     jira_key: MSSCI-11526
@@ -447,6 +449,169 @@ epics:
           - Usage logged to session
           - False positive tracking
           - Analytics viewable in diagnostics
+  - id: epic-23
+    title: Cyclist Claude Code Command Integration
+    description: |
+      Expose high-value Claude Code commands through intuitive GUI elements
+      in Cyclist, with dedicated IPC handlers for clean architecture.
+      Priority commands: /status (usage limits), /compact, /rewind, /doctor.
+    points: 29
+    completed_points: 3
+    priority: P1
+    marker: strategic
+    repos: cyclist
+    status: in-progress
+    plan_file: ~/.claude/plans/staged-stirring-newt.md
+    stories:
+      - id: 23-1
+        title: Usage Limits in Stats Strip
+        jira_key: MSSCI-11538
+        description: |
+          Display remaining Claude credits in the stats strip:
+          - 5-hour block remaining (as %)
+          - Weekly remaining (as %)
+          - Reset timestamps on hover
+          Color coding: Green (>50%), Yellow (25-50%), Red (<25%)
+          Remove token display (in/out counts) - replaced by usage limits.
+        points: 3
+        priority: P0
+        status: done
+        started: 2026-01-11
+        completed: 2026-01-11
+        assigned_to: Keith Avery
+        repos: cyclist
+        pr: "#170"
+        pr_link: https://github.com/1898andCo/pennyfarthing/pull/170
+        acceptance_criteria:
+          - 5-hour block % displayed in stats strip
+          - Weekly % displayed in stats strip
+          - Color coding reflects remaining capacity
+          - Hover shows reset timestamp
+          - Polls periodically to stay current
+          - Works with Pro and Max plans
+          - Token display (in/out counts) removed from stats strip
+      - id: 23-2
+        title: Fix Clear to Reset All Session State
+        description: |
+          Current clear button leaves stale data in:
+          - Changed files panel (not cleared)
+          - Diffs panel (not cleared)
+          - Agent panel / agent selection (shows stale agent)
+        points: 2
+        priority: P1
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Clear resets changed files panel to empty
+          - Clear resets diffs panel to empty
+          - Clear resets agent panel (no agent selected)
+          - Clear resets context % to 0 or "—"
+          - Clear resets token counts to 0 or "—"
+      - id: 23-3
+        title: Command Abstraction Layer (IPC)
+        description: |
+          Create dedicated IPC handlers for Claude Code commands
+          rather than PTY injection. Define IPC_COMMAND_CHANNELS,
+          expose via preload, handle in main.ts.
+        points: 3
+        priority: P1
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - IPC channels defined as constants
+          - Handlers registered in setupCommandIPCHandlers()
+          - Preload exposes command API
+          - Commands execute in Claude PTY session
+          - Results broadcast back to renderer
+      - id: 23-4
+        title: Compact Button with Context Awareness
+        description: |
+          Add compact button that appears contextually when context > 50%.
+          Always accessible via keyboard shortcut (Cmd+Shift+K).
+        points: 3
+        priority: P1
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Compact button appears when context > 50%
+          - Cmd+Shift+K triggers compact from anywhere
+          - After compact, context % updates
+          - Works in both Electron and web modes
+      - id: 23-5
+        title: Keyboard Shortcuts System
+        description: |
+          Global keyboard shortcuts for common commands.
+          Cmd+Shift+K (Compact), Cmd+Shift+D (Doctor), Cmd+Shift+P (Palette).
+        points: 2
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Shortcuts work when app is focused
+          - Shortcuts shown in Electron menu
+          - No conflicts with system shortcuts
+      - id: 23-6
+        title: Command Palette (Cmd+Shift+P)
+        description: |
+          VS Code-style searchable command palette.
+          Fuzzy search all Claude Code commands + Pennyfarthing skills.
+          Recent commands at top, keyboard navigation.
+        points: 5
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Cmd+Shift+P opens palette
+          - Fuzzy search filters commands
+          - Arrow keys navigate, Enter executes
+          - Escape closes palette
+          - Recent commands appear first
+      - id: 23-7
+        title: Doctor Diagnostics Panel
+        description: |
+          Visual health check dashboard instead of raw /doctor output.
+          Green/Yellow/Red status indicators, actionable suggestions.
+        points: 3
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Doctor accessible from menu and shortcut
+          - Parses /doctor output into structured data
+          - Visual indicators for each health check
+          - Shows suggestions for failed checks
+      - id: 23-8
+        title: Rewind Timeline MVP
+        description: |
+          Visual timeline of conversation checkpoints for time travel.
+          Timeline bar with checkpoint markers, hover to preview,
+          click to rewind with confirmation.
+        points: 5
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Timeline shows available checkpoints
+          - Checkpoints have timestamps and summaries
+          - Clicking checkpoint shows preview
+          - Confirm before rewinding
+          - After rewind, UI updates to new state
+      - id: 23-9
+        title: Rewind Preview & Confirmation
+        description: |
+          Enhanced rewind with preview before committing.
+          Shows what will be lost, diff between states,
+          option to bookmark before rewinding.
+        points: 3
+        priority: P3
+        status: backlog
+        depends_on: 23-8
+        repos: cyclist
+        acceptance_criteria:
+          - Preview modal shows checkpoint content
+          - Shows what messages will be lost
+          - Can cancel without changes
+          - Optional bookmark creation
   - id: epic-26
     title: Symlink Permission Fix for Claude Code
     description: |
