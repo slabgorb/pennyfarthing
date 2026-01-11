@@ -173,6 +173,15 @@ export function clearContent() {
 }
 
 /**
+ * Reset diff panel state for session clear (23-2)
+ * Clears content and resets count badge
+ */
+export function resetState() {
+  clearContent();
+  console.log('[DiffPanel] State reset');
+}
+
+/**
  * Show the panel with content (auto-expands if collapsed)
  * @param {HTMLElement|string} content - Content to render
  */
@@ -305,6 +314,7 @@ export default {
   getContentElement,
   setContent,
   clearContent,
+  resetState,
   showDiff,
   setWidth,
   getCurrentWidth,

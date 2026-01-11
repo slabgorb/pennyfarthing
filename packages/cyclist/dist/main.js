@@ -888,11 +888,14 @@ export function setupClaudeIPCHandlers(ipcMain) {
         resetEventStore(); // Clear tool events (changed files, diffs)
         resetToolStats();
         resetContext(); // Clear context percentage
+        resetUsageStats(); // Clear usage stats (23-2)
         // Broadcast zeroed stats to update UI immediately
         broadcastToRenderer(IPC_DATA_CHANNELS.TOKEN_STATS_UPDATE, getTokenStats());
         broadcastToRenderer(IPC_DATA_CHANNELS.TOOL_STATS_UPDATE, createEmptyStats());
         broadcastToRenderer(IPC_DATA_CHANNELS.TOOL_EVENTS_UPDATE, []);
-        console.log('Session cleared: tokens, todos, tool events, tool stats, context');
+        broadcastToRenderer(IPC_DATA_CHANNELS.CONTEXT_UPDATE, { percent: 0, contextWindow: 0 }); // (23-2)
+        broadcastToRenderer(IPC_DATA_CHANNELS.PERSONA_UPDATE, null); // Clear persona (23-2)
+        console.log('Session cleared: tokens, todos, tool events, tool stats, context, usage, persona');
         return true;
     });
     console.log('Claude SDK IPC handlers registered');
