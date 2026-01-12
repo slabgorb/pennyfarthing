@@ -159,11 +159,13 @@ epics:
           - Keyboard navigation support
         points: 5
         priority: P1
-        status: in_progress
+        status: done
         started: 2026-01-12
+        completed: 2026-01-12
         assigned_to: Keith Avery
         repos: cyclist
         branch: feat/24-5-theme-browser-search
+        pr: "#197"
         acceptance_criteria:
           - Theme browser displays all themes in grid/list view
           - Search box filters themes by name (fuzzy match)
