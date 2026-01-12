@@ -356,6 +356,29 @@ html, body {
   outline-offset: 1px;
 }
 
+/* 28-5: Image Size Validation Styles */
+.image-preview-item-warning {
+  border-color: var(--status-working);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.image-preview-label-warning {
+  color: var(--status-working);
+}
+
+.image-preview-error {
+  padding: 0.5rem 0.75rem;
+  color: var(--status-error);
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.image-preview-error::before {
+  content: '⚠';
+}
+
 /* Rich Text Editor */
 #editor-wrapper {
   border-top: 1px solid var(--border);

@@ -935,7 +935,9 @@ epics:
           - Show file size in preview
         points: 2
         priority: P2
-        status: backlog
+        status: in_progress
+        started: 2026-01-12
+        assigned_to: Keith Avery
         repos: cyclist
         acceptance_criteria:
           - Warning for images > 5MB

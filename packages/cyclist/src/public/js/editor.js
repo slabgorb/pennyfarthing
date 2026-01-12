@@ -9,7 +9,7 @@
 import { addMessage, showThinking, scrollToBottom, onResponseSubmitted } from './components/MessageView.js';
 
 // Import from modules
-import { EDITOR_CONTAINER_ID, EDITOR_OPTIONS, SUPPORTED_IMAGE_TYPES } from './editor/constants.js';
+import { EDITOR_CONTAINER_ID, EDITOR_OPTIONS, SUPPORTED_IMAGE_TYPES, IMAGE_WARN_SIZE_BYTES, IMAGE_MAX_SIZE_BYTES } from './editor/constants.js';
 import { jsonToMarkdown } from './editor/markdown.js';
 import { initToolbar, updateToolbarState } from './editor/toolbar.js';
 import {
@@ -49,11 +49,12 @@ import {
   hideImagePreview,
   updateImagePreview,
   isPreviewVisible,
-  setOnImageRemoved
+  setOnImageRemoved,
+  showImageSizeError
 } from './editor/image-preview.js';
 
 // Re-export constants for external consumers
-export { EDITOR_CONTAINER_ID, EDITOR_OPTIONS, EDITOR_EXTENSIONS, SUPPORTED_IMAGE_TYPES, IMAGE_PREVIEW_SIZE } from './editor/constants.js';
+export { EDITOR_CONTAINER_ID, EDITOR_OPTIONS, EDITOR_EXTENSIONS, SUPPORTED_IMAGE_TYPES, IMAGE_PREVIEW_SIZE, IMAGE_WARN_SIZE_BYTES, IMAGE_MAX_SIZE_BYTES } from './editor/constants.js';
 export { MESSAGE_QUEUE_KEY, MAX_QUEUE_SIZE } from './editor/constants.js';
 
 // Re-export tab completion for external consumers
@@ -160,6 +161,25 @@ export async function handleImagePaste(clipboardData) {
 
   if (!imageFile) return false;
 
+  // Size validation (Story 28-5)
+  const fileSizeBytes = imageFile.size;
+
+  // Block images over 20MB
+  if (fileSizeBytes > IMAGE_MAX_SIZE_BYTES) {
+    const sizeMB = (fileSizeBytes / (1024 * 1024)).toFixed(1);
+    console.warn(`Image too large: ${sizeMB}MB (max: 20MB)`);
+    // Show error to user via preview module
+    showImageSizeError(`Image too large (${sizeMB}MB). Maximum size is 20MB.`);
+    return false;
+  }
+
+  // Warn for images over 5MB but allow
+  const isLargeImage = fileSizeBytes > IMAGE_WARN_SIZE_BYTES;
+  if (isLargeImage) {
+    const sizeMB = (fileSizeBytes / (1024 * 1024)).toFixed(1);
+    console.log(`Large image detected: ${sizeMB}MB`);
+  }
+
   // Convert to base64 data URL
   let dataUrl;
   try {
@@ -172,11 +192,13 @@ export async function handleImagePaste(clipboardData) {
   // Generate filename
   const filename = imageFile.name || generateImageFilename(imageFile.type);
 
-  // Add to pending images
+  // Add to pending images (28-5: include size for preview tooltip)
   const imageData = {
     dataUrl,
     mimeType: imageFile.type,
     filename,
+    sizeBytes: fileSizeBytes,
+    isLarge: isLargeImage,
   };
 
   pendingImages.push(imageData);
