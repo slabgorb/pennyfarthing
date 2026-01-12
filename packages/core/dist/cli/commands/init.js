@@ -59,12 +59,12 @@ export async function initCommand(projectName, options) {
     logger.info('Creating directories...');
     const directories = [
         '.claude',
-        '.claude/project/agents',
         '.claude/project/commands',
         '.claude/project/skills',
         '.claude/project/docs',
         '.claude/project/hooks',
         'sprint',
+        'sprint/sidecars',
         '.session'
     ];
     for (const dir of directories) {
@@ -133,7 +133,7 @@ export async function initCommand(projectName, options) {
     logger.info('Creating agent sidecars...');
     const sidecarTemplatesPath = join(assetsPath, 'templates/sidecar');
     for (const agent of CORE_AGENTS) {
-        const sidecarDir = join(projectRoot, `.claude/project/agents/${agent}-sidecar`);
+        const sidecarDir = join(projectRoot, `sprint/sidecars/${agent}`);
         if (!pathExists(sidecarDir)) {
             ensureDir(sidecarDir, { dryRun });
             // Create standard sidecar files using templates
@@ -154,7 +154,7 @@ export async function initCommand(projectName, options) {
                     writeFileSync(filePath, content, 'utf8');
                 }
             }
-            logger.created(`.claude/project/agents/${agent}-sidecar/`);
+            logger.created(`sprint/sidecars/${agent}/`);
         }
     }
     // 9. Install git hooks

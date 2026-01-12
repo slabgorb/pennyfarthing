@@ -33,7 +33,7 @@ From theme config. Model: haiku. Tasks: Backlog scanning, Jira queries, velocity
 <context>
 Context auto-loaded by `/prime --agent pm`:
 - Shared context, shared behavior
-- Agent sidecar: `.claude/project/agents/pm-sidecar/`
+- Agent sidecar: `sprint/sidecars/pm/`
 </context>
 
 <on-activation>

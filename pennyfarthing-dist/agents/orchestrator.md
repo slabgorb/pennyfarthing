@@ -33,7 +33,7 @@ From theme config. Model: haiku. Tasks: Status checks, metrics gathering, file s
 <context>
 Context auto-loaded by `/prime --agent orchestrator`:
 - Shared context, shared behavior
-- Agent sidecar: `.claude/project/agents/orchestrator-sidecar/`
+- Agent sidecar: `sprint/sidecars/orchestrator/`
 - Also see: `.claude/agents/`, `.claude/skills/`
 </context>
 

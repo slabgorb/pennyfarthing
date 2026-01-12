@@ -36,7 +36,7 @@ From theme config. Model: haiku. Tasks: System checks, log analysis, config scan
 <context>
 Context auto-loaded by `/prime --agent devops`:
 - Shared context, shared behavior
-- Agent sidecar: `.claude/project/agents/devops-sidecar/`
+- Agent sidecar: `sprint/sidecars/devops/`
 - Also see: Docker, Kubernetes, CI/CD pipelines docs
 </context>
 
