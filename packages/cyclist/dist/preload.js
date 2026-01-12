@@ -132,7 +132,7 @@ function createElectronAPI() {
                 },
                 sendApprovalResponse: (response) => ipcRenderer.invoke('path:approval-response', response),
             },
-            // Settings API (22-3, 22-4, 22-5)
+            // Settings API (22-3, 22-4, 22-5, 24-1)
             settings: {
                 getBashApprovalGate: () => ipcRenderer.invoke('settings:getBashApprovalGate'),
                 setBashApprovalGate: (enabled) => ipcRenderer.invoke('settings:setBashApprovalGate', enabled),
@@ -143,6 +143,17 @@ function createElectronAPI() {
                 onVerboseModeChange: (callback) => {
                     ipcRenderer.on('settings:verboseModeUpdate', callback);
                 },
+                // 24-1: Settings panel infrastructure
+                get: () => ipcRenderer.invoke('settings:get'),
+                save: (settings) => ipcRenderer.invoke('settings:save', settings),
+                openWindow: () => ipcRenderer.invoke('settings:openWindow'),
+                onChanged: (callback) => {
+                    ipcRenderer.on('settings:changed', (_event, settings) => callback(settings));
+                },
+                // 24-2: Pennyfarthing settings section
+                getAvailableThemes: () => ipcRenderer.invoke('settings:getAvailableThemes'),
+                // 24-5: Theme browser with metadata
+                getThemeMetadata: () => ipcRenderer.invoke('settings:getThemeMetadata'),
             },
             // Audit Log API (22-6)
             auditLog: {
@@ -240,7 +251,7 @@ function createElectronAPI() {
                 },
                 sendApprovalResponse: (_response) => Promise.resolve(),
             },
-            // Settings API (22-3, 22-4, 22-5) - test stub
+            // Settings API (22-3, 22-4, 22-5, 24-1) - test stub
             settings: {
                 getBashApprovalGate: () => Promise.resolve(false),
                 setBashApprovalGate: (_enabled) => Promise.resolve(),
@@ -251,6 +262,31 @@ function createElectronAPI() {
                 onVerboseModeChange: (_callback) => {
                     // No-op in test environment
                 },
+                // 24-1: Settings panel infrastructure - test stub
+                get: () => Promise.resolve({
+                    workflow: { auto_handoff: false, handoff_confirm: true },
+                    display: { show_flow: true, show_ocean: false, sidebar_width: 300 },
+                    notifications: { phase_change: true, sound: false },
+                    pennyfarthing: { theme: 'alice-in-wonderland' },
+                }),
+                save: (_settings) => Promise.resolve({
+                    workflow: { auto_handoff: false, handoff_confirm: true },
+                    display: { show_flow: true, show_ocean: false, sidebar_width: 300 },
+                    notifications: { phase_change: true, sound: false },
+                    pennyfarthing: { theme: 'alice-in-wonderland' },
+                }),
+                openWindow: () => Promise.resolve(),
+                onChanged: (_callback) => {
+                    // No-op in test environment
+                },
+                // 24-2: Pennyfarthing settings section - test stub
+                getAvailableThemes: () => Promise.resolve(['alice-in-wonderland', 'a-team', 'star-trek']),
+                // 24-5: Theme browser with metadata - test stub
+                getThemeMetadata: () => Promise.resolve([
+                    { id: 'alice-in-wonderland', name: 'Alice in Wonderland', description: 'Characters from Wonderland', source: 'Lewis Carroll', tier: 'S', category: 'Literature', agentCount: 10 },
+                    { id: 'a-team', name: 'A-Team', description: 'The A-Team crew', source: 'TV Series', tier: 'A', category: 'TV Series', agentCount: 10 },
+                    { id: 'star-trek', name: 'Star Trek', description: 'Star Trek characters', source: 'TV Series', tier: 'A', category: 'TV Series', agentCount: 10 },
+                ]),
             },
             // Audit Log API (22-6) - test stub
             auditLog: {

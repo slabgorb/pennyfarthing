@@ -13,6 +13,7 @@ import { ClaudeService, SDKMessage } from './claude-service.js';
 import { type TodoItem } from './todos.js';
 import { getProjectDirectory, setProjectDirectory, isValidProjectDirectory } from './paths.js';
 import { ContextInfo } from './api/context.js';
+import { type CyclistSettings } from './settings.js';
 export { getProjectDirectory, setProjectDirectory, isValidProjectDirectory };
 /**
  * IPC channel names for sidebar data communication (B-2)
@@ -65,12 +66,18 @@ export declare const IPC_DIFF_CHANNELS: {
     readonly DIFF_UPDATE: "diff:update";
 };
 /**
- * IPC channel names for settings (22-5)
+ * IPC channel names for settings (22-5, 24-1)
  */
 export declare const IPC_SETTINGS_CHANNELS: {
     readonly VERBOSE_MODE_GET: "settings:getVerboseMode";
     readonly VERBOSE_MODE_SET: "settings:setVerboseMode";
     readonly VERBOSE_MODE_UPDATE: "settings:verboseModeUpdate";
+    readonly GET: "settings:get";
+    readonly SAVE: "settings:save";
+    readonly CHANGED: "settings:changed";
+    readonly OPEN_WINDOW: "settings:openWindow";
+    readonly GET_AVAILABLE_THEMES: "settings:getAvailableThemes";
+    readonly GET_THEME_METADATA: "settings:getThemeMetadata";
 };
 /**
  * IPC channel names for audit log (22-6)
@@ -386,8 +393,109 @@ export declare function setupFileBrowserIPCHandlers(ipcMain: {
     handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
 }): void;
 /**
+ * Flag indicating if settings have been initialized
+ */
+export declare let isSettingsInitialized: boolean;
+/**
+ * Handle settings:get IPC call
+ * Returns current settings
+ */
+export declare function handleSettingsGet(): Promise<CyclistSettings>;
+/**
+ * Handle settings:save IPC call
+ * Saves settings and returns updated settings
+ * Also writes theme to persona-config.local.yaml for Pennyfarthing compatibility (24-2)
+ */
+export declare function handleSettingsSave(settings: Partial<CyclistSettings>): Promise<CyclistSettings>;
+/**
+ * Get available themes from pennyfarthing-dist/personas/themes (24-2)
+ * Returns sorted list of theme names
+ */
+export declare function getAvailableThemes(): Promise<string[]>;
+/**
+ * Theme metadata interface for theme browser
+ */
+export interface ThemeMetadata {
+    id: string;
+    name: string;
+    description: string;
+    source: string;
+    tier: 'S' | 'A' | 'B' | 'U';
+    category: string;
+    agentCount: number;
+}
+/**
+ * Agent data within a theme (24-6)
+ */
+export interface ThemeAgent {
+    character: string;
+    quote?: string;
+    style?: string;
+    role?: string;
+}
+/**
+ * Extended theme metadata including agent mappings (24-6)
+ */
+export interface ThemeMetadataWithAgents extends ThemeMetadata {
+    agents: {
+        sm?: ThemeAgent;
+        tea?: ThemeAgent;
+        dev?: ThemeAgent;
+        reviewer?: ThemeAgent;
+        architect?: ThemeAgent;
+        pm?: ThemeAgent;
+        orchestrator?: ThemeAgent;
+        'tech-writer'?: ThemeAgent;
+        'ux-designer'?: ThemeAgent;
+        devops?: ThemeAgent;
+    };
+}
+/**
+ * Category mapping for known themes (24-5)
+ * Maps theme IDs or source patterns to categories
+ */
+export declare const CATEGORY_MAP: Record<string, string>;
+/**
+ * Derive category from theme ID and source (24-5)
+ * Uses CATEGORY_MAP for known themes, falls back to pattern matching
+ */
+export declare function deriveCategory(themeId: string, source: string): string;
+/**
+ * Get cached theme metadata
+ */
+export declare function getThemeMetadataCache(): ThemeMetadata[] | null;
+/**
+ * Load theme metadata from YAML files (24-5)
+ * Parses all theme files and extracts metadata for the browser
+ */
+export declare function loadThemeMetadata(): Promise<ThemeMetadata[]>;
+/**
+ * Load theme metadata including agent character mappings (24-6)
+ * Extended version of loadThemeMetadata for the preview panel
+ */
+export declare function loadThemeMetadataWithAgents(): Promise<ThemeMetadataWithAgents[]>;
+/**
+ * Register settings keyboard shortcut
+ * Called during app initialization
+ */
+export declare function registerSettingsShortcut(): void;
+/**
+ * Get the menu template for testing
+ * Returns the full menu structure including settings
+ */
+export declare function getMenuTemplate(): Array<{
+    role?: string;
+    label?: string;
+    submenu?: Array<{
+        label?: string;
+        accelerator?: string;
+        click?: () => void;
+    }>;
+}>;
+/**
  * Set up IPC handlers for settings
  * 22-5: Handles verbose mode setting get/set
+ * 24-1: Handles full settings panel infrastructure
  */
 export declare function setupSettingsIPCHandlers(ipcMain: {
     handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;

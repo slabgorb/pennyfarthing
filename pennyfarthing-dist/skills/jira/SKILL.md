@@ -152,33 +152,72 @@ jira issue list --jql "project=MSSCI AND summary~'feedback rules'" --plain
 
 ## Project Scripts
 
-The project has helper scripts for common Jira operations:
+The project has helper scripts for common Jira operations. All scripts are invoked via `run.sh`:
+
+```bash
+# Pattern: ./.claude/scripts/run.sh <script-name> [args]
+# Or if scripts are in PATH: ./scripts/run.sh <script-name> [args]
+```
+
+### Sync Epic to Jira
+
+Syncs all stories in an epic to Jira. Shows status, optionally transitions issues and syncs story points.
+
+```bash
+# Show sync status for epic 24
+./.claude/scripts/run.sh jira-sync.sh 24
+
+# Dry run - show what would happen without making changes
+./.claude/scripts/run.sh jira-sync.sh 24 --dry-run
+
+# Sync status (transition issues to match Conductor status)
+./.claude/scripts/run.sh jira-sync.sh 24 --transition
+
+# Sync both status and story points
+./.claude/scripts/run.sh jira-sync.sh 24 --transition --points
+```
+
+### Sync Single Story
+
+Syncs a single story to Jira with more detailed output.
+
+```bash
+# Show story status in Jira
+./.claude/scripts/run.sh jira-sync-story.sh 24-1
+
+# Transition to match Conductor status
+./.claude/scripts/run.sh jira-sync-story.sh 24-1 --transition
+
+# Sync story points
+./.claude/scripts/run.sh jira-sync-story.sh 24-1 --points
+
+# Add a comment
+./.claude/scripts/run.sh jira-sync-story.sh 24-1 --comment "Started development"
+```
 
 ### Claim a Story
 
+Check availability and claim a Jira story for work.
+
 ```bash
 # Check if story is available
-./scripts/jira-claim-story.sh MSSCI-10988
+./.claude/scripts/run.sh jira-claim-story.sh MSSCI-10988
 
 # Claim the story (assign to self + move to In Progress)
-./scripts/jira-claim-story.sh MSSCI-10988 --claim
+./.claude/scripts/run.sh jira-claim-story.sh MSSCI-10988 --claim
 
 # Using story key format
-./scripts/jira-claim-story.sh 35-4-checklist-configuration-ui --claim
+./.claude/scripts/run.sh jira-claim-story.sh 35-4 --claim
 ```
 
-### Sync Sprint to Jira
+### Script Summary
 
-```bash
-# Sync an epic to Jira
-./scripts/sync-epic-to-jira.sh 35
-
-# Sync with comments
-./scripts/sync-epic-to-jira.sh 35 --with-comments
-
-# Dry run
-./scripts/sync-epic-to-jira.sh 35 --dry-run
-```
+| Script | Purpose |
+|--------|---------|
+| `jira-sync.sh` | Sync all stories in an epic to Jira |
+| `jira-sync-story.sh` | Sync a single story to Jira |
+| `jira-claim-story.sh` | Claim a story (assign + move to In Progress) |
+| `sync-epic-to-jira.sh` | Alias for `jira-sync.sh` |
 
 ## GitHub to Jira User Mapping
 

@@ -70,8 +70,11 @@ To change the active theme:
 |----------|---------|
 | `pennyfarthing-dist/personas/themes/` | Built-in themes (96+) |
 | `.claude/pennyfarthing/themes/` | User-created custom themes |
-| `.claude/persona-config.local.yaml` | Local theme selection (gitignored) |
+| `.pennyfarthing/config.local.yaml` | Local config (agent-writable, dogfooding) |
+| `.claude/persona-config.local.yaml` | Legacy local theme selection (gitignored) |
 | `.claude/persona-config.yaml` | Shared theme selection (committed) |
+
+**Config Priority:** `.pennyfarthing/` > `.claude/...local.yaml` > `.claude/...yaml`
 
 ## Theme Structure
 

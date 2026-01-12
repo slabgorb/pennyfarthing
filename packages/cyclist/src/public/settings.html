@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyclist Settings</title>
+  <link rel="stylesheet" href="settings.css">
+  <link rel="stylesheet" href="css/theme-browser.css">
+</head>
+<body>
+  <div class="settings-container">
+    <h1>Settings</h1>
+
+    <form id="settings-form">
+      <!-- Workflow Section -->
+      <section class="settings-section" data-section="workflow">
+        <h2>Workflow</h2>
+
+        <div class="setting-item">
+          <label class="setting-label" for="auto_handoff">
+            <input type="checkbox" id="auto_handoff" name="auto_handoff">
+            <span>Auto Handoff</span>
+          </label>
+          <p class="setting-description">Automatically trigger next agent when phase completes</p>
+        </div>
+
+        <div class="setting-item">
+          <label class="setting-label" for="handoff_confirm">
+            <input type="checkbox" id="handoff_confirm" name="handoff_confirm" checked>
+            <span>Confirm Handoff</span>
+          </label>
+          <p class="setting-description">Show confirmation dialog before handoff</p>
+        </div>
+      </section>
+
+      <!-- Display Section -->
+      <section class="settings-section" data-section="display">
+        <h2>Display</h2>
+
+        <div class="setting-item">
+          <label class="setting-label" for="show_flow">
+            <input type="checkbox" id="show_flow" name="show_flow" checked>
+            <span>Show TDD Flow</span>
+          </label>
+          <p class="setting-description">Show TDD flow indicator in sidebar</p>
+        </div>
+
+        <div class="setting-item">
+          <label class="setting-label" for="show_ocean">
+            <input type="checkbox" id="show_ocean" name="show_ocean">
+            <span>Show OCEAN Bars</span>
+          </label>
+          <p class="setting-description">Show OCEAN personality bars for agents</p>
+        </div>
+
+        <div class="setting-item">
+          <label class="setting-label" for="sidebar_width">
+            <span>Sidebar Width</span>
+          </label>
+          <div class="setting-input">
+            <input type="number" id="sidebar_width" name="sidebar_width" value="300" min="200" max="500" step="10">
+            <span class="input-suffix">px</span>
+          </div>
+          <p class="setting-description">Width of the sidebar in pixels</p>
+        </div>
+      </section>
+
+      <!-- Notifications Section -->
+      <section class="settings-section" data-section="notifications">
+        <h2>Notifications</h2>
+
+        <div class="setting-item">
+          <label class="setting-label" for="phase_change">
+            <input type="checkbox" id="phase_change" name="phase_change" checked>
+            <span>Phase Change Notifications</span>
+          </label>
+          <p class="setting-description">Show desktop notification when agent changes</p>
+        </div>
+
+        <div class="setting-item">
+          <label class="setting-label" for="sound">
+            <input type="checkbox" id="sound" name="sound">
+            <span>Sound Effects</span>
+          </label>
+          <p class="setting-description">Play audio feedback for events</p>
+        </div>
+      </section>
+
+      <!-- Pennyfarthing Section -->
+      <section class="settings-section" data-section="pennyfarthing">
+        <h2>Pennyfarthing</h2>
+
+        <div class="setting-item">
+          <label class="setting-label">
+            <span>Agent Theme</span>
+          </label>
+          <div id="theme-browser-container" class="theme-browser-container">
+            <!-- Populated dynamically by settings-ui.js via ThemeBrowser component -->
+          </div>
+          <input type="hidden" id="theme" name="theme" value="alice-in-wonderland">
+          <p class="setting-description">Character theme for agent personas (requires agent restart)</p>
+        </div>
+      </section>
+
+      <!-- Button Row -->
+      <div class="button-row">
+        <button type="button" class="btn cancel-btn" id="cancel-btn">Cancel</button>
+        <button type="submit" class="btn save-btn" id="save-btn">Save</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="js/settings-ui.js" type="module"></script>
+</body>
+</html>

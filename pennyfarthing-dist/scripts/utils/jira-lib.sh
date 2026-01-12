@@ -338,6 +338,68 @@ sync_story_points() {
 }
 
 #############################################
+# Status Mapping
+#############################################
+
+# map_status_to_jira CONDUCTOR_STATUS
+# Map Conductor status to Jira status name
+# Returns: Jira status string
+map_status_to_jira() {
+    local conductor_status="$1"
+
+    case "$conductor_status" in
+        backlog|todo)
+            echo "To Do"
+            ;;
+        in-progress|in_progress|active)
+            echo "In Progress"
+            ;;
+        review|in-review|in_review)
+            echo "In Review"
+            ;;
+        done|completed|closed)
+            echo "Done"
+            ;;
+        blocked)
+            echo "Blocked"
+            ;;
+        *)
+            # Default to To Do for unknown statuses
+            echo "To Do"
+            ;;
+    esac
+}
+
+# map_jira_to_status JIRA_STATUS
+# Map Jira status to Conductor status name
+# Returns: Conductor status string
+map_jira_to_status() {
+    local jira_status="$1"
+
+    case "$jira_status" in
+        "To Do"|"Open"|"Backlog")
+            echo "backlog"
+            ;;
+        "In Progress"|"Active")
+            echo "in-progress"
+            ;;
+        "In Review"|"Review")
+            echo "review"
+            ;;
+        "Done"|"Closed"|"Resolved")
+            echo "done"
+            ;;
+        "Blocked")
+            echo "blocked"
+            ;;
+        *)
+            # Default to backlog for unknown statuses
+            echo "backlog"
+            ;;
+    esac
+}
+
+#############################################
 # Helper Functions
 #############################################
 

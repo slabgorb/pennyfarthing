@@ -87,4 +87,24 @@ export declare function isPathAllowlisted(path: string): boolean;
  * Clear all paths from the path allowlist
  */
 export declare function clearPathAllowlist(): void;
+/**
+ * Sync in-memory settings store with file-based settings
+ * Called when file-based settings are loaded/changed to update runtime state
+ * @param fileSettings - Settings loaded from file
+ */
+export declare function syncWithFileSettings(fileSettings: {
+    workflow?: {
+        auto_handoff?: boolean;
+        handoff_confirm?: boolean;
+    };
+    display?: {
+        show_flow?: boolean;
+        show_ocean?: boolean;
+        sidebar_width?: number;
+    };
+    notifications?: {
+        phase_change?: boolean;
+        sound?: boolean;
+    };
+}): void;
 //# sourceMappingURL=settings-store.d.ts.map

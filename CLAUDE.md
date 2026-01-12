@@ -44,7 +44,8 @@ packages/cyclist/        # Cyclist visual terminal (monorepo package)
 └── package.json         # Cyclist-specific dependencies
 
 .claude/                 # Project's own Pennyfarthing setup (symlinks to pennyfarthing-dist/)
-sprint/                  # Sprint tracking (current-sprint.yaml, archive/, context/)
+sprint/                  # Sprint tracking (current-sprint.yaml, archive/, context/, sidecars/)
+├── sidecars/            # Agent learning files (patterns, gotchas, decisions per agent)
 .session/                # Active work sessions ({story-id}-session.md)
 ```
 

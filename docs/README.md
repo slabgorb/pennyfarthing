@@ -17,6 +17,15 @@ Complete documentation for the Pennyfarthing agent orchestration framework.
 | [Configuration](CONFIGURATION.md) | Configuration reference |
 | [Skills](SKILLS.md) | Skills reference |
 | [Benchmarking](BENCHMARKING.md) | Scientific persona evaluation |
+| [Troubleshooting](TROUBLESHOOTING.md) | Error diagnosis and recovery |
+| [Cyclist Guide](CYCLIST-GUIDE.md) | Visual terminal user guide |
+| [Cyclist Reference](CYCLIST.md) | Cyclist architecture and IPC |
+| [Debugging Sessions](DEBUGGING-SESSIONS.md) | Debug Claude Code sessions |
+| [Shell Productivity](SHELL-PRODUCTIVITY.md) | Shell aliases and productivity tips |
+| [Custom Agents](CUSTOM-AGENTS.md) | Create project-specific agents |
+| [CI/CD Integration](CI-CD-INTEGRATION.md) | CI pipelines and git hooks |
+| [Team Workflow](TEAM-WORKFLOW.md) | Multi-developer coordination |
+| [Jira Integration](JIRA-INTEGRATION.md) | Jira CLI and sprint sync |
 
 ## What is Pennyfarthing?
 

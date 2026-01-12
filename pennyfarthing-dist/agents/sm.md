@@ -41,7 +41,7 @@ From theme config. Model: haiku. Tasks: Status checks, backlog scans, file summa
 <context>
 Context auto-loaded by `/prime --agent sm`:
 - Shared context, shared behavior, tactical guide
-- Agent sidecar: `.claude/project/agents/sm-sidecar/`
+- Agent sidecar: `sprint/sidecars/sm/`
 </context>
 
 <reasoning-mode>

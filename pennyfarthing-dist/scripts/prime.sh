@@ -108,7 +108,7 @@ fi
 
 # 5. Agent sidecar (if --agent provided)
 if [[ -n "$AGENT_NAME" ]]; then
-    SIDECAR_DIR="$PROJECT_ROOT/.claude/project/agents/${AGENT_NAME}-sidecar"
+    SIDECAR_DIR="$PROJECT_ROOT/sprint/sidecars/${AGENT_NAME}"
     if [[ -d "$SIDECAR_DIR" ]]; then
         for pattern_file in "$SIDECAR_DIR"/*.md; do
             if [[ -f "$pattern_file" ]]; then
