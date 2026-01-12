@@ -1,19 +1,17 @@
 /**
  * ClaudeService - Programmatic interface to Claude Code CLI
  *
- * Uses Claude Code in programmatic mode (`claude -p --output-format stream-json`)
- * via node-pty for proper TTY support. Claude CLI requires a TTY to produce
- * stream-json output - see GitHub issue #9026 and #771.
+ * Uses Claude Code in programmatic mode with `--input-format stream-json` and
+ * `--output-format stream-json` via child_process.spawn with stdin pipe.
  *
  * Does NOT require an Anthropic API key - uses the user's existing Claude Code
  * installation and authentication.
  *
  * @see sprint/adr/002-programmatic-mode-migration.md
  * @see .claude/project/agents/dev-sidecar/decisions.md
- * @see https://github.com/anthropics/claude-code/issues/9026 (TTY requirement bug)
- * @see https://github.com/anthropics/claude-code/issues/771 (Node.js spawn fix)
+ * @see https://github.com/anthropics/claude-code/issues/1072 (stdin pipe requirement)
  */
-import type { IPty } from 'node-pty';
+import { type ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
 /**
  * Permission modes for Claude Code
@@ -264,35 +262,32 @@ export interface SDKPartialAssistantMessage {
  */
 export type SDKMessage = SDKSystemMessage | SDKAssistantMessage | SDKUserMessage | SDKToolUseMessage | SDKToolResultMessage | SDKResultMessage | SDKErrorMessage | SDKPartialAssistantMessage;
 /**
+ * Image data from clipboard paste (28-1)
+ */
+export interface PastedImage {
+    dataUrl: string;
+    mimeType: string;
+    filename: string;
+}
+/**
  * Options for spawning Claude Code subprocess
+ * 28-1: Added images support
  */
 export interface ClaudeSpawnOptions {
     cwd?: string;
     env?: NodeJS.ProcessEnv;
-}
-/**
- * PTY spawn options for node-pty
- */
-export interface PtySpawnOptions {
-    name?: string;
-    cols?: number;
-    rows?: number;
-    cwd?: string;
-    env?: {
-        [key: string]: string | undefined;
-    };
+    /** 28-1: Images to include with the prompt */
+    images?: PastedImage[];
 }
 /**
  * Spawner function type for dependency injection (enables testing)
- * Uses node-pty for proper TTY support required by Claude CLI
+ * Returns a ChildProcess-like object with stdin, stdout, stderr streams
  */
-export type ClaudeSpawner = (command: string, args: string[], options: PtySpawnOptions) => IPty;
-/**
- * ClaudeService - Wrapper for Claude Code CLI programmatic mode
- *
- * Uses node-pty for TTY support with NDJSON streaming for programmatic control
- * of Claude Code without requiring an Anthropic API key.
- */
+export type ClaudeSpawner = (command: string, args: string[], options: {
+    cwd: string;
+    env: NodeJS.ProcessEnv;
+    stdio: ['pipe', 'pipe', 'pipe'];
+}) => ChildProcess;
 /**
  * Mode state for UI synchronization
  * B-10: Track both active (last query) and pending (user selected) modes
@@ -302,26 +297,32 @@ export interface ModeState {
     pendingMode: PermissionMode;
     hasPendingChange: boolean;
 }
+/**
+ * ClaudeService - Wrapper for Claude Code CLI programmatic mode
+ *
+ * Uses child_process with stdin pipe for NDJSON streaming programmatic control
+ * of Claude Code without requiring an Anthropic API key.
+ */
 export declare class ClaudeService extends EventEmitter {
     private sessionId;
     private pendingMode;
     private activeMode;
     private currentProcess;
     private interrupted;
-    private spawner;
     private defaultCwd?;
+    private spawner;
     constructor(options?: {
-        spawner?: ClaudeSpawner;
         cwd?: string;
+        spawner?: ClaudeSpawner;
     });
     /**
      * Send a message to Claude and receive streaming responses
      *
-     * Uses node-pty for TTY support - Claude CLI requires a TTY to produce
-     * stream-json output (GitHub issues #9026 and #771).
+     * Uses child_process.spawn with stdin pipe and --input-format stream-json.
+     * This enables sending images and works reliably without TTY requirements.
      *
      * @param prompt - The prompt to send to Claude
-     * @param options - Optional spawn options (cwd, env)
+     * @param options - Optional spawn options (cwd, env, images)
      * @returns AsyncIterable of SDK messages
      */
     sendMessage(prompt: string, options?: ClaudeSpawnOptions): AsyncIterable<SDKMessage>;
@@ -384,16 +385,13 @@ export declare class ClaudeService extends EventEmitter {
      */
     clearSession(): void;
     /**
-     * Build CLI arguments for claude command
-     *
-     * NOTE: --verbose is REQUIRED when using -p with --output-format stream-json
-     * Without it, Claude CLI produces no output.
+     * Build CLI arguments for stream-json input/output mode
      */
     private buildArgs;
     /**
-     * Build spawn options for node-pty including OTEL environment variables
+     * Build stream-json user message with image content blocks (28-1)
+     * Format: {"type":"user","message":{"role":"user","content":[{text},{image}...]}}
      */
-    private buildSpawnOptions;
+    private buildStreamJsonUserMessage;
 }
-export type { IPty };
 //# sourceMappingURL=claude-service.d.ts.map

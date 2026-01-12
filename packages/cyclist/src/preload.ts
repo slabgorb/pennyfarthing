@@ -28,15 +28,24 @@ export interface ElectronDataAPI {
 }
 
 /**
+ * Image data for clipboard paste (28-1)
+ */
+export interface PastedImage {
+  dataUrl: string;
+  mimeType: string;
+  filename: string;
+}
+
+/**
  * Claude API interface for SDK integration (E7-3)
  * Provides methods for sending prompts and receiving streamed messages
  */
 export interface ElectronClaudeAPI {
   /**
-   * Send a prompt to ClaudeService
+   * Send a prompt to ClaudeService (28-1: with optional images)
    * Returns when the query starts (messages stream via onMessage)
    */
-  send: (prompt: string) => Promise<void>;
+  send: (prompt: string, images?: PastedImage[]) => Promise<void>;
 
   /**
    * Abort the current Claude query
@@ -358,9 +367,10 @@ function createElectronAPI(): ElectronAPI {
       context: createDataAPI(ipcRenderer, 'context:get', 'context:update'),
       // Usage Stats API (23-1)
       usageStats: createDataAPI(ipcRenderer, 'usageStats:get', 'usageStats:update'),
-      // Claude SDK API (E7-3)
+      // Claude SDK API (E7-3, 28-1: images support)
       claude: {
-        send: (prompt: string) => ipcRenderer.invoke('claude:send', prompt),
+        send: (prompt: string, images?: Array<{ dataUrl: string; mimeType: string; filename: string }>) =>
+          ipcRenderer.invoke('claude:send', prompt, images || []),
         abort: () => ipcRenderer.invoke('claude:abort'),
         clear: () => ipcRenderer.invoke('claude:clear'),
         setMode: (mode: 'default' | 'plan' | 'acceptEdits' | 'dangerouslySkipPermissions') => ipcRenderer.invoke('claude:setMode', mode),

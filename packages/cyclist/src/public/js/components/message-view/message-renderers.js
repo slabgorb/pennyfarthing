@@ -314,12 +314,12 @@ export function renderErrorMessage(message) {
 
 /**
  * Render a user message (from the editor input)
- * @param {Object} message - Message with content property
+ * @param {Object} message - Message with content property and optional images
  * @returns {string} HTML string
  */
 export function renderUserMessage(message) {
   // Distinguish between editor input and SDK tool_result messages
-  // Editor sends: {type: 'user', content: 'string'}
+  // Editor sends: {type: 'user', content: 'string', images?: [...]}
   // SDK sends: {type: 'user', message: {content: [{type: 'tool_result', ...}]}}
 
   // If it's an SDK tool_result message, don't render it
@@ -328,15 +328,24 @@ export function renderUserMessage(message) {
     return '';
   }
 
-  const { content } = message;
+  const { content, images } = message;
 
   // Only render if we have string content from the editor
   if (typeof content !== 'string' || !content.trim()) {
     return '';
   }
 
+  // Build image thumbnails HTML (28-1)
+  let imagesHtml = '';
+  if (images && images.length > 0) {
+    const thumbnails = images.map((img) =>
+      `<img src="${img.dataUrl}" alt="${img.filename || 'pasted image'}" class="user-message-image" />`
+    ).join('');
+    imagesHtml = `<div class="user-message-images">${thumbnails}</div>`;
+  }
+
   // User messages are already plain text/markdown from the editor
-  return `<div class="message message-user">${parseMarkdown(content)}</div>`;
+  return `<div class="message message-user">${parseMarkdown(content)}${imagesHtml}</div>`;
 }
 
 export default {

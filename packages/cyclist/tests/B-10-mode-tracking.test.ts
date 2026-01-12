@@ -16,7 +16,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { IPty } from 'node-pty';
+import type { ChildProcess } from 'child_process';
+import { EventEmitter, Readable, Writable } from 'stream';
 
 import {
   ClaudeService,
@@ -26,62 +27,71 @@ import {
 } from '../src/claude-service.js';
 
 /**
- * Create a mock IPty process that emits NDJSON messages
+ * Create a mock ChildProcess that emits NDJSON messages on stdout
  */
-function createMockPty(messages: SDKMessage[], exitCode = 0): IPty {
-  let dataCallback: ((data: string) => void) | null = null;
-  let exitCallback: ((exit: { exitCode: number; signal: number }) => void) | null = null;
+function createMockChildProcess(messages: SDKMessage[], exitCode = 0): ChildProcess {
+  const emitter = new EventEmitter();
 
-  const mockPty: IPty = {
+  // Create mock stdin stream
+  const stdinData: string[] = [];
+  const mockStdin = new Writable({
+    write(chunk, _encoding, callback) {
+      stdinData.push(chunk.toString());
+      callback();
+    },
+  });
+
+  // Create mock stdout stream that will emit messages
+  const mockStdout = new Readable({ read() {} });
+
+  // Create mock stderr stream
+  const mockStderr = new Readable({ read() {} });
+
+  const mockProcess = Object.assign(emitter, {
     pid: 12345,
-    cols: 120,
-    rows: 30,
-    process: 'claude',
-    handleFlowControl: false,
-
-    onData: vi.fn((callback: (data: string) => void) => {
-      dataCallback = callback;
-      return { dispose: vi.fn() };
+    stdin: mockStdin,
+    stdout: mockStdout,
+    stderr: mockStderr,
+    stdio: [mockStdin, mockStdout, mockStderr, null, null] as ChildProcess['stdio'],
+    connected: true,
+    killed: false,
+    exitCode: null,
+    signalCode: null,
+    spawnargs: ['claude'],
+    spawnfile: 'claude',
+    kill: vi.fn((signal?: NodeJS.Signals | number): boolean => {
+      mockProcess.killed = true;
+      setImmediate(() => {
+        emitter.emit('close', signal ? 1 : 0, signal || null);
+      });
+      return true;
     }),
-
-    onExit: vi.fn((callback: (exit: { exitCode: number; signal: number }) => void) => {
-      exitCallback = callback;
-      return { dispose: vi.fn() };
-    }),
-
-    write: vi.fn(),
-    resize: vi.fn(),
-    clear: vi.fn(),
-    pause: vi.fn(),
-    resume: vi.fn(),
-
-    kill: vi.fn((signal?: string) => {
-      if (exitCallback) {
-        exitCallback({ exitCode: signal ? 1 : 0, signal: signal ? 15 : 0 });
-      }
-    }),
-  };
+    send: vi.fn(),
+    disconnect: vi.fn(),
+    unref: vi.fn(),
+    ref: vi.fn(),
+    [Symbol.dispose]: vi.fn(),
+  }) as unknown as ChildProcess;
 
   // Emit messages asynchronously to simulate streaming
   setImmediate(() => {
-    if (dataCallback) {
-      for (const msg of messages) {
-        dataCallback(JSON.stringify(msg) + '\n');
-      }
+    for (const msg of messages) {
+      mockStdout.push(JSON.stringify(msg) + '\n');
     }
-    if (exitCallback) {
-      exitCallback({ exitCode, signal: 0 });
-    }
+    // Signal end of stdout
+    mockStdout.push(null);
+    // Emit close event
+    emitter.emit('close', exitCode, null);
   });
 
-  return mockPty;
+  return mockProcess;
 }
 
 /**
- * Create a mock spawner that returns a mock PTY process
+ * Create a mock spawner that returns a mock ChildProcess with given messages
  */
 function createMockSpawner(messages: SDKMessage[], exitCode = 0): ClaudeSpawner {
-  return vi.fn(() => createMockPty(messages, exitCode));
+  return vi.fn(() => createMockChildProcess(messages, exitCode));
 }
 
 // Sample messages for testing

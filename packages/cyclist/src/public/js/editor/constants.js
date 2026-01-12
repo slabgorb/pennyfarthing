@@ -30,3 +30,18 @@ export const HISTORY_KEY = 'cyclist-command-history';
 
 /** Maximum number of commands to store in history */
 export const MAX_HISTORY = 100;
+
+// ============================================================================
+// Image Paste Constants (Story 28-1)
+// ============================================================================
+
+/** Supported image MIME types for clipboard paste */
+export const SUPPORTED_IMAGE_TYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/gif',
+  'image/webp',
+];
+
+/** Size in pixels for image preview thumbnails */
+export const IMAGE_PREVIEW_SIZE = 64;

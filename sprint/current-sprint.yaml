@@ -5,9 +5,9 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 14
-  completed_points: 0
-  remaining_points: 14
+  total_points: 76
+  completed_points: 38
+  remaining_points: 38
   notes: |
     Sprint 9 focus: Add multimodal image paste support.
 
@@ -481,7 +481,7 @@ epics:
       in Cyclist, with dedicated IPC handlers for clean architecture.
       Priority commands: /status (usage limits), /compact, /rewind, /doctor.
     points: 29
-    completed_points: 8
+    completed_points: 9
     priority: P1
     marker: strategic
     repos: cyclist
@@ -567,9 +567,13 @@ epics:
           Always accessible via keyboard shortcut (Cmd+Shift+K).
         points: 3
         priority: P1
-        status: wontfix
+        status: done
+        started: 2026-01-11
+        completed: 2026-01-11
+        assigned_to: Keith Avery
         repos: cyclist
-        wontfix_reason: Epic closed - polish, not substance.
+        pr: "#184"
+        pr_link: https://github.com/1898andCo/pennyfarthing/pull/184
         acceptance_criteria:
           - Compact button appears when context > 50%
           - Cmd+Shift+K triggers compact from anywhere
@@ -848,8 +852,15 @@ epics:
           - Show visual feedback when image detected
         points: 3
         priority: P1
-        status: backlog
+        status: approved
+        started: 2026-01-11
+        completed: 2026-01-12
+        assigned_to: Keith Avery
         repos: cyclist
+        pr: "#185"
+        pr_link: https://github.com/1898andCo/pennyfarthing/pull/185
+        reviewed_by: The Merovingian
+        reviewed_date: 2026-01-12
         acceptance_criteria:
           - Cmd+V pastes clipboard images
           - Works with OS screenshot tools
