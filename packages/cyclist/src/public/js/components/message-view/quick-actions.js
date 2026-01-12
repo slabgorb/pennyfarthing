@@ -13,24 +13,6 @@ import { insertAndSubmit } from '../../editor.js';
 // =============================================================================
 
 /**
- * Question patterns for detecting actionable questions from Claude.
- * These patterns are checked against the LAST PARAGRAPH of the message
- * to avoid false positives from explanatory text.
- *
- * Each pattern has:
- * - pattern: regex to match
- * - responses: button labels to show
- * - requiresQuestion: if true, the paragraph must end with "?"
- */
-/**
- * All Pennyfarthing agents that can be invoked
- */
-const ALL_AGENTS = [
-  'sm', 'tea', 'dev', 'reviewer', 'architect',
-  'pm', 'tech-writer', 'ux-designer', 'devops', 'orchestrator'
-];
-
-/**
  * Maps workflow phase keywords to their corresponding agent commands.
  * Used to detect "ready for X" patterns and suggest the right agent.
  */
@@ -122,9 +104,6 @@ let quickActionsVisible = false;
 
 /** Auto-submit enabled (stretch goal) */
 let autoSubmitEnabled = false;
-
-/** Confidence threshold for filtering low-confidence detections (default 0.6) */
-let confidenceThreshold = 0.6;
 
 // =============================================================================
 // Text Processing Utilities
@@ -595,22 +574,6 @@ export function getAutoSubmit() {
 }
 
 /**
- * Set confidence threshold for filtering detections
- * @param {number} threshold - Value between 0.0 and 1.0
- */
-export function setConfidenceThreshold(threshold) {
-  confidenceThreshold = threshold;
-}
-
-/**
- * Get current confidence threshold
- * @returns {number} Current threshold (default 0.6)
- */
-export function getConfidenceThreshold() {
-  return confidenceThreshold;
-}
-
-/**
  * Called when a response is submitted to clear quick actions
  */
 export function onResponseSubmitted() {
@@ -619,6 +582,14 @@ export function onResponseSubmitted() {
 
 /**
  * Process a message to determine if quick actions should be shown
+ *
+ * NOTE: This function now ONLY uses structured CYCLIST markers for detection.
+ * Pattern-based detection (handoff patterns, list choices, yes/no questions)
+ * has been disabled to eliminate false positives during streaming.
+ *
+ * Markers are 100% reliable - agents emit them intentionally at turn completion.
+ * Pattern detection was causing flakiness because it ran on incomplete streaming text.
+ *
  * @param {Object} message - SDK message object
  * @returns {Object|null} Detection result or null
  */
@@ -637,34 +608,22 @@ export function processMessageForQuickActions(message) {
 
   if (!textContent) return null;
 
-  // Helper to check if result meets confidence threshold
-  const meetsThreshold = (result) => {
-    if (!result) return false;
-    // Results without confidence (shouldn't happen) pass through
-    if (result.confidence === undefined) return true;
-    return result.confidence >= confidenceThreshold;
-  };
-
-  // Priority 1: Check for structured markers (100% accuracy)
-  // These take precedence over all pattern-based detection
+  // MARKERS ONLY: Check for structured CYCLIST markers (100% accuracy)
+  // Pattern-based detection disabled to prevent false positives during streaming
   const markers = detectStructuredMarkers(textContent);
   if (markers) {
     const markerResult = processStructuredMarkers(markers);
-    if (markerResult && meetsThreshold(markerResult)) return markerResult;
+    // Markers always have confidence 1.0, no threshold check needed
+    if (markerResult) return markerResult;
   }
 
-  // Priority 2: Check for handoff patterns
-  // This ensures agent invocations take precedence over other patterns
-  const handoffResult = detectHandoffPattern(textContent);
-  if (handoffResult && meetsThreshold(handoffResult)) return handoffResult;
-
-  // Priority 3: Check for list choices
-  const listResult = detectListChoices(textContent);
-  if (listResult && meetsThreshold(listResult)) return listResult;
-
-  // Priority 4: Check for yes/no questions
-  const questionResult = detectQuestionPattern(textContent);
-  if (questionResult && meetsThreshold(questionResult)) return questionResult;
+  // Pattern-based detection disabled (caused streaming flakiness):
+  // - detectHandoffPattern() - "ready for review", "invoke /agent" etc.
+  // - detectListChoices() - numbered option lists
+  // - detectQuestionPattern() - "shall I", "would you like" etc.
+  //
+  // To re-enable, uncomment these blocks. But ensure processing happens
+  // only on complete messages (onComplete), not during streaming (onMessage).
 
   return null;
 }
@@ -686,8 +645,6 @@ export default {
   getQuickActionsVisible,
   setAutoSubmit,
   getAutoSubmit,
-  setConfidenceThreshold,
-  getConfidenceThreshold,
   onResponseSubmitted,
   processMessageForQuickActions,
 };
