@@ -5,15 +5,16 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 76
+  total_points: 78
   completed_points: 38
-  remaining_points: 38
+  remaining_points: 40
   notes: |
     Sprint 9 focus: Add multimodal image paste support.
 
     EPICS:
     - Epic 29 (Wire Up Orphaned Code) - 0/8 pts - CLOSED (all wontfix - flawed premise)
     - Epic 28 (Image Paste & Screenshot) - 14 pts - P1
+    - Epic 30 (Developer Workflow Documentation) - 2 pts - P3
 
     BACKLOG (future sprints):
     - Epic 27 (Skill Frontmatter Enhancement) - 10 pts
@@ -975,3 +976,41 @@ epics:
           - All thumbnails visible
           - Individual remove works
           - Clear all option available
+  - id: epic-30
+    title: Developer Workflow Documentation
+    description: |
+      Document advanced developer workflows, environment setup, and tooling
+      configurations that improve productivity with Claude Code and Pennyfarthing.
+      These are opt-in patterns for power users.
+    points: 2
+    completed_points: 0
+    priority: P3
+    marker: docs
+    repos: pennyfarthing
+    status: planned
+    stories:
+      - id: 30-1
+        title: Multi-account Claude Code setup guide
+        description: |
+          Document the symlink-based multi-account setup for developers who have
+          multiple Claude Max Pro accounts (e.g., personal + work, or multiple clients).
+
+          Cover:
+          - Problem: Claude Code stores all data in ~/.claude regardless of account
+          - Solution: Separate directories with symlink switching
+          - Setup: Directory structure, shell functions, startup notification
+          - Usage: Daily workflow, switching accounts, checking stats per account
+          - ccusage: How to run usage reports per account
+
+          Include the shell functions for ~/.zshrc and explain the conditional
+          startup message that only shows for configured users.
+        points: 2
+        priority: P3
+        status: planned
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Guide covers problem and solution clearly
+          - Shell setup code provided and explained
+          - Daily workflow documented step-by-step
+          - ccusage per-account usage documented
+          - Conditional startup logic explained
