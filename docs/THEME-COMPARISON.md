@@ -158,7 +158,6 @@ Each theme rated Low (L), Medium (M), or High (H) on each trait:
 |-------|---|---|---|---|---|-------|
 | `mass-effect` | H | H | M | H | M | Galactic commanders |
 | `portal` | H | L | M | L | L | Sardonic scientists |
-| `baldurs-gate` | H | M | M | M | M | D&D adventurers |
 | `disco-elysium` | H | L | M | L | H | Chaotic detectives |
 
 ### OCEAN Quick Filters

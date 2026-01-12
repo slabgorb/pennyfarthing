@@ -362,8 +362,18 @@ export declare function startProjectWatchers(): void;
  */
 export declare function getClaudeService(): ClaudeService;
 /**
+ * Image data from clipboard paste (28-1)
+ * Matches the format from editor.js pendingImages
+ */
+export interface PastedImage {
+    dataUrl: string;
+    mimeType: string;
+    filename: string;
+}
+/**
  * Set up IPC handlers for Claude SDK communication
  * E7-3: Handles claude:send and streams responses to renderer
+ * 28-1: Adds image support via stream-json input
  */
 export declare function setupClaudeIPCHandlers(ipcMain: {
     handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;

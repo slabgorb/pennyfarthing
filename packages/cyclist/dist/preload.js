@@ -70,9 +70,9 @@ function createElectronAPI() {
             context: createDataAPI(ipcRenderer, 'context:get', 'context:update'),
             // Usage Stats API (23-1)
             usageStats: createDataAPI(ipcRenderer, 'usageStats:get', 'usageStats:update'),
-            // Claude SDK API (E7-3)
+            // Claude SDK API (E7-3, 28-1: images support)
             claude: {
-                send: (prompt) => ipcRenderer.invoke('claude:send', prompt),
+                send: (prompt, images) => ipcRenderer.invoke('claude:send', prompt, images || []),
                 abort: () => ipcRenderer.invoke('claude:abort'),
                 clear: () => ipcRenderer.invoke('claude:clear'),
                 setMode: (mode) => ipcRenderer.invoke('claude:setMode', mode),

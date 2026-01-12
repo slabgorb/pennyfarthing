@@ -891,13 +891,18 @@ export function getClaudeService() {
 /**
  * Set up IPC handlers for Claude SDK communication
  * E7-3: Handles claude:send and streams responses to renderer
+ * 28-1: Adds image support via stream-json input
  */
 export function setupClaudeIPCHandlers(ipcMain) {
     ipcMain.handle(IPC_CLAUDE_CHANNELS.CLAUDE_SEND, async (_event, ...args) => {
         const prompt = args[0];
+        const images = args[1] || [];
         const service = getClaudeService();
+        if (images.length > 0) {
+            console.log(`[main] Processing ${images.length} pasted image(s) via stream-json`);
+        }
         try {
-            for await (const message of service.sendMessage(prompt)) {
+            for await (const message of service.sendMessage(prompt, { images })) {
                 broadcastToRenderer(IPC_CLAUDE_CHANNELS.CLAUDE_MESSAGE, message);
                 // Update stats from SDK message (model info, etc.)
                 updateStatsFromSDK(message);

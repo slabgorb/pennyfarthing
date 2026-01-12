@@ -9,7 +9,7 @@
 import { addMessage, showThinking, scrollToBottom, onResponseSubmitted } from './components/MessageView.js';
 
 // Import from modules
-import { EDITOR_CONTAINER_ID, EDITOR_OPTIONS } from './editor/constants.js';
+import { EDITOR_CONTAINER_ID, EDITOR_OPTIONS, SUPPORTED_IMAGE_TYPES } from './editor/constants.js';
 import { jsonToMarkdown } from './editor/markdown.js';
 import { initToolbar, updateToolbarState } from './editor/toolbar.js';
 import {
@@ -44,9 +44,16 @@ import {
   saveMessageQueue,
   processNextInQueue
 } from './editor/message-queue.js';
+import {
+  showImagePreview,
+  hideImagePreview,
+  updateImagePreview,
+  isPreviewVisible,
+  setOnImageRemoved
+} from './editor/image-preview.js';
 
 // Re-export constants for external consumers
-export { EDITOR_CONTAINER_ID, EDITOR_OPTIONS, EDITOR_EXTENSIONS } from './editor/constants.js';
+export { EDITOR_CONTAINER_ID, EDITOR_OPTIONS, EDITOR_EXTENSIONS, SUPPORTED_IMAGE_TYPES, IMAGE_PREVIEW_SIZE } from './editor/constants.js';
 export { MESSAGE_QUEUE_KEY, MAX_QUEUE_SIZE } from './editor/constants.js';
 
 // Re-export tab completion for external consumers
@@ -83,6 +90,164 @@ let onSubmitCallback = null;
 
 /** Flag to prevent duplicate sends while processing */
 let isSubmitting = false;
+
+/** Pending images waiting to be sent (Story 28-1) */
+let pendingImages = [];
+
+// ============================================================================
+// Image Paste Handling (Story 28-1)
+// ============================================================================
+
+/**
+ * Check if clipboard data contains image data
+ * @param {DataTransfer} clipboardData - Clipboard data from paste event
+ * @returns {boolean}
+ */
+export function isImageClipboardData(clipboardData) {
+  if (!clipboardData) return false;
+
+  // Check items array
+  if (clipboardData.items) {
+    for (const item of clipboardData.items) {
+      if (item.type && SUPPORTED_IMAGE_TYPES.includes(item.type)) {
+        return true;
+      }
+    }
+  }
+
+  // Check files array (some browsers use this instead)
+  if (clipboardData.files && clipboardData.files.length > 0) {
+    for (const file of clipboardData.files) {
+      if (file.type && SUPPORTED_IMAGE_TYPES.includes(file.type)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Handle image paste from clipboard
+ * @param {DataTransfer} clipboardData - Clipboard data from paste event
+ * @returns {Promise<boolean>} True if image was handled, false otherwise
+ */
+export async function handleImagePaste(clipboardData) {
+  if (!clipboardData) return false;
+
+  // Find image item
+  let imageFile = null;
+
+  // Check items array first (preferred)
+  if (clipboardData.items) {
+    for (const item of clipboardData.items) {
+      if (item.type && SUPPORTED_IMAGE_TYPES.includes(item.type)) {
+        imageFile = item.getAsFile();
+        break;
+      }
+    }
+  }
+
+  // Fallback to files array
+  if (!imageFile && clipboardData.files && clipboardData.files.length > 0) {
+    for (const file of clipboardData.files) {
+      if (file.type && SUPPORTED_IMAGE_TYPES.includes(file.type)) {
+        imageFile = file;
+        break;
+      }
+    }
+  }
+
+  if (!imageFile) return false;
+
+  // Convert to base64 data URL
+  let dataUrl;
+  try {
+    dataUrl = await fileToDataUrl(imageFile);
+  } catch (error) {
+    console.error('Failed to read image from clipboard:', error);
+    return false;
+  }
+
+  // Generate filename
+  const filename = imageFile.name || generateImageFilename(imageFile.type);
+
+  // Add to pending images
+  const imageData = {
+    dataUrl,
+    mimeType: imageFile.type,
+    filename,
+  };
+
+  pendingImages.push(imageData);
+
+  // Update preview
+  updateImagePreview(pendingImages);
+
+  return true;
+}
+
+/**
+ * Get all pending images
+ * @returns {Array<{dataUrl: string, mimeType: string, filename: string}>}
+ */
+export function getPendingImages() {
+  return [...pendingImages];
+}
+
+/**
+ * Remove a pending image by index
+ * @param {number} index
+ */
+export function removePendingImage(index) {
+  if (index >= 0 && index < pendingImages.length) {
+    pendingImages.splice(index, 1);
+    updateImagePreview(pendingImages);
+  }
+}
+
+/**
+ * Clear all pending images
+ */
+export function clearPendingImages() {
+  pendingImages = [];
+  updateImagePreview([]);
+}
+
+/**
+ * Get editor payload including images
+ * @returns {{markdown: string, images: Array}}
+ */
+export function getEditorPayload() {
+  return {
+    markdown: getEditorMarkdown(),
+    images: [...pendingImages],
+  };
+}
+
+/**
+ * Convert File to base64 data URL
+ * @param {File} file
+ * @returns {Promise<string>}
+ */
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Generate filename for pasted images without names
+ * @param {string} mimeType
+ * @returns {string}
+ */
+function generateImageFilename(mimeType) {
+  const ext = mimeType.split('/')[1] || 'png';
+  return `Pasted Image.${ext}`;
+}
 
 // ============================================================================
 // Public API
@@ -125,11 +290,14 @@ export function setEditorContent(html) {
 }
 
 /**
- * Clear all editor content
+ * Clear all editor content and pending images
  */
 export function clearEditor() {
-  if (!editorInstance) return;
-  editorInstance.commands.clearContent();
+  if (editorInstance) {
+    editorInstance.commands.clearContent();
+  }
+  // Always clear pending images, even if editor is not initialized
+  clearPendingImages();
 }
 
 /**
@@ -215,6 +383,14 @@ export async function createEditor() {
       autofocus: EDITOR_OPTIONS.autofocus,
       editorProps: {
         ...EDITOR_OPTIONS.editorProps,
+        // Handle paste events for image clipboard data (Story 28-1)
+        handlePaste: (view, event) => {
+          if (isImageClipboardData(event.clipboardData)) {
+            handleImagePaste(event.clipboardData);
+            return true; // Prevent default paste - we handled the image
+          }
+          return false; // Let TipTap handle text/HTML paste
+        },
         handleKeyDown: (view, event) => {
           // Tab key - trigger or select completion
           if (event.key === 'Tab' && !event.shiftKey && !event.ctrlKey && !event.altKey) {
@@ -325,6 +501,11 @@ export async function createEditor() {
       submit: submitEditorContent
     });
 
+    // Set up image removal callback (Story 28-1)
+    setOnImageRemoved((index) => {
+      removePendingImage(index);
+    });
+
     // Focus the editor
     editorInstance.commands.focus();
 
@@ -385,23 +566,30 @@ function submitEditorContent() {
   addToHistory(markdown);
   resetHistoryNavigation();
 
-  // Add user message to the view
+  // Capture images before clearing (28-1)
+  const images = [...pendingImages];
+
+  // Add user message to the view (28-1: include images for display)
   addMessage({
     type: 'user',
     content: markdown,
+    images: images,
   });
 
   // Show thinking indicator
   showThinking();
   scrollToBottom();
 
-  // Send to Claude SDK via IPC
+  // Send to Claude SDK via IPC (28-1: include images)
   if (typeof window !== 'undefined' && window.electronAPI?.claude?.send) {
-    console.log('Sending to Claude SDK:', markdown.substring(0, 50) + '...');
-    window.electronAPI.claude.send(markdown);
+    console.log('Sending to Claude SDK:', markdown.substring(0, 50) + '...', images.length ? `(${images.length} images)` : '');
+    window.electronAPI.claude.send(markdown, images);
   } else if (onSubmitCallback) {
     onSubmitCallback(markdown);
   }
+
+  // Clear pending images after submit (28-1)
+  clearPendingImages();
 
   // Clear editor after submit
   clearEditor();

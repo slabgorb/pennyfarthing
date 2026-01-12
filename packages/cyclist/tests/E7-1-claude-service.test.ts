@@ -2,10 +2,10 @@
  * E7-1: SDK Integration Tests
  *
  * These tests verify the acceptance criteria for Claude Agent SDK integration.
- * Uses mock PTY spawner to test without actually calling Claude Code CLI.
+ * Uses mock spawner to test without actually calling Claude Code CLI.
  *
- * Note: ClaudeService now uses node-pty for TTY support (required by Claude CLI).
- * See GitHub issues #9026 and #771.
+ * Note: ClaudeService uses child_process.spawn with stdin pipe for stream-json input.
+ * This enables image support and eliminates TTY requirements.
  *
  * Acceptance Criteria:
  * - AC1: ClaudeService can send prompts and receive streaming responses
@@ -15,7 +15,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import type { IPty } from 'node-pty';
+import type { ChildProcess } from 'child_process';
+import { EventEmitter, Readable, Writable } from 'stream';
 
 import {
   ClaudeService,
@@ -25,63 +26,72 @@ import {
 } from '../src/claude-service.js';
 
 /**
- * Create a mock IPty process that emits NDJSON messages
- * IPty interface requires onData, onExit, kill, pid, etc.
+ * Create a mock ChildProcess that emits NDJSON messages on stdout
+ * ChildProcess interface requires stdin, stdout, stderr, kill, pid, etc.
  */
-function createMockPty(messages: SDKMessage[], exitCode = 0): IPty {
-  let dataCallback: ((data: string) => void) | null = null;
-  let exitCallback: ((exit: { exitCode: number; signal: number }) => void) | null = null;
+function createMockChildProcess(messages: SDKMessage[], exitCode = 0): ChildProcess {
+  const emitter = new EventEmitter();
 
-  const mockPty: IPty = {
+  // Create mock stdin stream
+  const stdinData: string[] = [];
+  const mockStdin = new Writable({
+    write(chunk, _encoding, callback) {
+      stdinData.push(chunk.toString());
+      callback();
+    },
+  });
+
+  // Create mock stdout stream that will emit messages
+  const mockStdout = new Readable({ read() {} });
+
+  // Create mock stderr stream
+  const mockStderr = new Readable({ read() {} });
+
+  const mockProcess = Object.assign(emitter, {
     pid: 12345,
-    cols: 120,
-    rows: 30,
-    process: 'claude',
-    handleFlowControl: false,
-
-    onData: vi.fn((callback: (data: string) => void) => {
-      dataCallback = callback;
-      return { dispose: vi.fn() };
+    stdin: mockStdin,
+    stdout: mockStdout,
+    stderr: mockStderr,
+    stdio: [mockStdin, mockStdout, mockStderr, null, null] as ChildProcess['stdio'],
+    connected: true,
+    killed: false,
+    exitCode: null,
+    signalCode: null,
+    spawnargs: ['claude'],
+    spawnfile: 'claude',
+    kill: vi.fn((signal?: NodeJS.Signals | number): boolean => {
+      mockProcess.killed = true;
+      setImmediate(() => {
+        emitter.emit('close', signal ? 1 : 0, signal || null);
+      });
+      return true;
     }),
-
-    onExit: vi.fn((callback: (exit: { exitCode: number; signal: number }) => void) => {
-      exitCallback = callback;
-      return { dispose: vi.fn() };
-    }),
-
-    write: vi.fn(),
-    resize: vi.fn(),
-    clear: vi.fn(),
-    pause: vi.fn(),
-    resume: vi.fn(),
-
-    kill: vi.fn((signal?: string) => {
-      if (exitCallback) {
-        exitCallback({ exitCode: signal ? 1 : 0, signal: signal ? 15 : 0 });
-      }
-    }),
-  };
+    send: vi.fn(),
+    disconnect: vi.fn(),
+    unref: vi.fn(),
+    ref: vi.fn(),
+    [Symbol.dispose]: vi.fn(),
+  }) as unknown as ChildProcess;
 
   // Emit messages asynchronously to simulate streaming
   setImmediate(() => {
-    if (dataCallback) {
-      for (const msg of messages) {
-        dataCallback(JSON.stringify(msg) + '\n');
-      }
+    for (const msg of messages) {
+      mockStdout.push(JSON.stringify(msg) + '\n');
     }
-    if (exitCallback) {
-      exitCallback({ exitCode, signal: 0 });
-    }
+    // Signal end of stdout
+    mockStdout.push(null);
+    // Emit close event
+    emitter.emit('close', exitCode, null);
   });
 
-  return mockPty;
+  return mockProcess;
 }
 
 /**
- * Create a mock spawner that returns a mock PTY process with given messages
+ * Create a mock spawner that returns a mock ChildProcess with given messages
  */
 function createMockSpawner(messages: SDKMessage[], exitCode = 0): ClaudeSpawner {
-  return vi.fn(() => createMockPty(messages, exitCode));
+  return vi.fn(() => createMockChildProcess(messages, exitCode));
 }
 
 // Sample messages for testing
@@ -192,9 +202,10 @@ describe('E7-1: SDK Integration', () => {
         // Just iterate
       }
 
+      // 28-1: New implementation uses --input-format stream-json and sends prompt via stdin
       expect(mockSpawner).toHaveBeenCalledWith(
         'claude',
-        expect.arrayContaining(['-p', 'Test prompt', '--output-format', 'stream-json']),
+        expect.arrayContaining(['-p', '--input-format', 'stream-json', '--output-format', 'stream-json']),
         expect.any(Object)
       );
     });
@@ -377,38 +388,8 @@ describe('E7-1: SDK Integration', () => {
   describe('Error handling', () => {
 
     it('should handle process errors gracefully', async () => {
-      // Create a mock PTY that exits with an error code
-      const mockSpawner: ClaudeSpawner = vi.fn(() => {
-        let exitCallback: ((exit: { exitCode: number; signal: number }) => void) | null = null;
-
-        const mockPty: IPty = {
-          pid: 12345,
-          cols: 120,
-          rows: 30,
-          process: 'claude',
-          handleFlowControl: false,
-          onData: vi.fn(() => ({ dispose: vi.fn() })),
-          onExit: vi.fn((callback) => {
-            exitCallback = callback;
-            return { dispose: vi.fn() };
-          }),
-          write: vi.fn(),
-          resize: vi.fn(),
-          clear: vi.fn(),
-          pause: vi.fn(),
-          resume: vi.fn(),
-          kill: vi.fn(),
-        };
-
-        // Simulate immediate error exit
-        setImmediate(() => {
-          if (exitCallback) {
-            exitCallback({ exitCode: 127, signal: 0 }); // 127 = command not found
-          }
-        });
-
-        return mockPty;
-      });
+      // 28-1: Use mock that exits with error code immediately (no messages)
+      const mockSpawner = createMockSpawner([], 127); // 127 = command not found
 
       const service = new ClaudeService({ spawner: mockSpawner });
 

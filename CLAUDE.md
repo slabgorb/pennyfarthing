@@ -38,6 +38,11 @@ src/                     # TypeScript CLI source
 │   ├── commands/        # init, update, doctor, uninstall, version
 │   └── utils/           # logger, prompts, manifest, files
 
+packages/cyclist/        # Cyclist visual terminal (monorepo package)
+├── src/public/js/       # Frontend JavaScript components
+├── tests/               # Vitest tests (B-*.test.ts naming)
+└── package.json         # Cyclist-specific dependencies
+
 .claude/                 # Project's own Pennyfarthing setup (symlinks to pennyfarthing-dist/)
 sprint/                  # Sprint tracking (current-sprint.yaml, archive/, context/)
 .session/                # Active work sessions ({story-id}-session.md)
