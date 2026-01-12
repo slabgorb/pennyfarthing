@@ -4,11 +4,10 @@ sprint:
   planned_start: 2026-01-11
   status: active
   velocity_target: 22
-
 summary:
   total_points: 45
-  completed_points: 14
-  remaining_points: 31
+  completed_points: 17
+  remaining_points: 28
   notes: |
     Sprint 9 focus: Multimodal image paste and Cyclist settings/UX.
 
@@ -26,11 +25,9 @@ summary:
     - Epic 25 (Smart Question Detection) - 12/15 pts - DONE
     - Epic 26 (Dogfooding Audit) - 5/5 pts - DONE
     - Epic 29 (Wire Up Orphaned Code) - 0/8 pts - CLOSED (flawed premise)
-
 # =============================================================================
 # ACTIVE EPICS
 # =============================================================================
-
 epics:
   - id: epic-24
     title: Configuration & Theme Switcher Panels
@@ -96,7 +93,6 @@ epics:
           - Original file view shows pre-edit content
           - Changed file view shows current content
           - Keyboard navigation works (arrows or j/k)
-
   - id: epic-30
     title: Developer Workflow Documentation
     description: |
@@ -104,11 +100,11 @@ epics:
       configurations that improve productivity with Claude Code and Pennyfarthing.
       These are opt-in patterns for power users.
     points: 5
-    completed_points: 0
+    completed_points: 3
     priority: P3
     marker: docs
     repos: pennyfarthing
-    status: planned
+    status: in_progress
     stories:
       - id: 30-1
         title: Multi-account Claude Code setup guide
@@ -164,10 +160,12 @@ epics:
           - Support multi-repo via repos.yaml
         points: 3
         priority: P2
-        status: in_progress
+        status: done
+        completed: 2026-01-12
         started: 2026-01-12
         assigned_to: Keith Avery
         repos: pennyfarthing
+        pr: "#195"
         acceptance_criteria:
           - /chore, /ux, /doc commands implemented
           - Creates branch, commits, merges, pushes in one command
@@ -175,11 +173,9 @@ epics:
           - Optional custom message via argument
           - Logs to sprint chores section
           - Works across configured repos
-
 # =============================================================================
 # COMPLETED EPICS (Sprint 9)
 # =============================================================================
-
 completed_epics:
   - id: epic-28
     title: Image Paste & Screenshot Support
@@ -231,7 +227,6 @@ completed_epics:
         status: done
         completed: 2026-01-12
         pr: "#188"
-
   - id: epic-8
     title: Automatic State Reconciliation
     points: 8
@@ -251,7 +246,6 @@ completed_epics:
         title: Session boundary breadcrumbs
         points: 2
         status: done
-
   - id: epic-9
     title: Skill Discovery & Documentation Hub
     jira_key: MSSCI-11512
@@ -281,7 +275,6 @@ completed_epics:
         points: 2
         status: done
         pr: "#168"
-
   - id: epic-20
     title: Cyclist Web Mode Improvements
     jira_key: MSSCI-11526
@@ -298,7 +291,6 @@ completed_epics:
         title: Web mode feature parity audit
         points: 2
         status: done
-
   - id: epic-22
     title: Verbose Mode - Tool Visibility & Intervention (Carryover)
     points: 1
@@ -310,7 +302,6 @@ completed_epics:
         title: Tool execution audit log
         points: 1
         status: done
-
   - id: epic-23
     title: Cyclist Claude Code Command Integration
     points: 11
@@ -358,7 +349,6 @@ completed_epics:
         title: Rewind Preview & Confirmation
         points: 3
         status: wontfix
-
   - id: epic-25
     title: Smart Question Detection & Quick Actions
     jira_key: MSSCI-11530
@@ -401,7 +391,6 @@ completed_epics:
         title: Quick Action Analytics
         points: 3
         status: wontfix
-
   - id: epic-26
     title: Dogfooding Audit & Installation Parity
     points: 5
@@ -414,7 +403,6 @@ completed_epics:
         points: 5
         status: done
         pr: "#183"
-
   - id: epic-29
     title: Wire Up Orphaned Code
     points: 8
