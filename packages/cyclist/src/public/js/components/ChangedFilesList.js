@@ -6,13 +6,37 @@
  *
  * Master-detail pattern: this is the master list,
  * DiffPanel is the detail view.
+ *
+ * 24-3: Now integrates with DiffHistoryManager for multi-edit navigation.
  */
 
 import * as DiffViewer from './DiffViewer.js';
 import * as DiffPanel from '../diff-panel.js';
+import {
+  createFileHistory,
+  addDiffToHistory,
+  getCurrentDiff,
+  navigatePrevious,
+  navigateNext,
+  hasPrevious,
+  hasNext,
+  getPositionIndicator,
+  getCombinedDiff,
+} from './DiffHistoryManager.js';
 
 let container = null;
 let selectedFilePath = null;
+
+// 24-3: Track file histories for navigation
+const fileHistories = new Map();
+let currentViewMode = 'partial'; // 'partial' or 'combined'
+
+// Navigation UI elements
+let navBar = null;
+let prevBtn = null;
+let nextBtn = null;
+let indicatorEl = null;
+let viewBtns = null;
 
 /**
  * Get filename from full path
@@ -88,6 +112,58 @@ function render() {
 }
 
 /**
+ * 24-3: Update navigation UI based on current file history
+ */
+function updateNavigationUI() {
+  if (!navBar || !selectedFilePath) {
+    if (navBar) navBar.classList.remove('visible');
+    return;
+  }
+
+  const history = fileHistories.get(selectedFilePath);
+  if (!history || history.diffs.length <= 1) {
+    // Hide nav bar for single edits
+    navBar.classList.remove('visible');
+    return;
+  }
+
+  // Show nav bar for multiple edits
+  navBar.classList.add('visible');
+
+  // Update buttons
+  if (prevBtn) prevBtn.disabled = !hasPrevious(history);
+  if (nextBtn) nextBtn.disabled = !hasNext(history);
+
+  // Update indicator
+  if (indicatorEl) indicatorEl.textContent = getPositionIndicator(history);
+}
+
+/**
+ * 24-3: Render the current diff based on view mode
+ */
+function renderCurrentDiff() {
+  if (!selectedFilePath) return;
+
+  const history = fileHistories.get(selectedFilePath);
+  if (!history || history.diffs.length === 0) return;
+
+  const contentEl = DiffPanel.getContentElement();
+  if (!contentEl) return;
+
+  if (currentViewMode === 'combined' && history.diffs.length > 1) {
+    // Show combined diff (original -> current)
+    const combinedDiff = getCombinedDiff(history);
+    DiffViewer.renderDiff(contentEl, combinedDiff);
+  } else {
+    // Show current partial diff
+    const currentDiff = getCurrentDiff(history);
+    DiffViewer.renderDiff(contentEl, currentDiff);
+  }
+
+  updateNavigationUI();
+}
+
+/**
  * Select a file and show its diff
  * @param {string} filePath - Path to select
  * @param {Object} options - Selection options
@@ -98,16 +174,12 @@ export function selectFile(filePath, { focus = false, autoExpand = false } = {})
   selectedFilePath = filePath;
   render();
 
-  // Show diff for this file
-  const diffs = DiffViewer.getDiffs().filter(d => d.filePath === filePath);
-  if (diffs.length > 0) {
-    // Show most recent diff for this file
-    const mostRecent = diffs[diffs.length - 1];
-    DiffViewer.renderDiff(DiffPanel.getContentElement(), mostRecent);
-    // Auto-expand if requested (27-1: auto-expand on user file click)
-    if (autoExpand && DiffPanel.isCollapsed()) {
-      DiffPanel.expand();
-    }
+  // 24-3: Render using history manager
+  renderCurrentDiff();
+
+  // Auto-expand if requested (27-1: auto-expand on user file click)
+  if (autoExpand && DiffPanel.isCollapsed()) {
+    DiffPanel.expand();
   }
 
   // Only focus when explicitly requested (user interaction)
@@ -189,9 +261,18 @@ function handleKeydown(e) {
 
 /**
  * Handle new diff added - auto-select and render
+ * 24-3: Now tracks file history for navigation
  * @param {Object} diffData - The diff data that was added
  */
 export function handleDiffAdded(diffData) {
+  // 24-3: Add to file history
+  let history = fileHistories.get(diffData.filePath);
+  if (!history) {
+    history = createFileHistory(diffData.filePath);
+    fileHistories.set(diffData.filePath, history);
+  }
+  addDiffToHistory(history, diffData);
+
   // Always select the newly changed file
   selectFile(diffData.filePath);
 }
@@ -224,10 +305,68 @@ export function handleDiffsRemoved(removedPaths) {
 
 /**
  * Clear all changes and reset state
+ * 24-3: Also clears file histories
  */
 export function clear() {
   selectedFilePath = null;
+  fileHistories.clear();
+  currentViewMode = 'partial';
+  if (navBar) navBar.classList.remove('visible');
   render();
+}
+
+/**
+ * 24-3: Handle navigation button clicks
+ */
+function handleNavPrev() {
+  if (!selectedFilePath) return;
+  const history = fileHistories.get(selectedFilePath);
+  if (history && navigatePrevious(history)) {
+    renderCurrentDiff();
+  }
+}
+
+function handleNavNext() {
+  if (!selectedFilePath) return;
+  const history = fileHistories.get(selectedFilePath);
+  if (history && navigateNext(history)) {
+    renderCurrentDiff();
+  }
+}
+
+function handleViewModeChange(mode) {
+  currentViewMode = mode;
+  // Update button states
+  if (viewBtns) {
+    viewBtns.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.mode === mode);
+    });
+  }
+  renderCurrentDiff();
+}
+
+/**
+ * 24-3: Handle keyboard navigation for diffs
+ */
+function handleDiffKeydown(e) {
+  if (!selectedFilePath) return;
+  const history = fileHistories.get(selectedFilePath);
+  if (!history || history.diffs.length <= 1) return;
+
+  // Only handle arrow keys when not in an input
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+  if (e.key === 'ArrowLeft' || e.key === 'k') {
+    if (navigatePrevious(history)) {
+      e.preventDefault();
+      renderCurrentDiff();
+    }
+  } else if (e.key === 'ArrowRight' || e.key === 'j') {
+    if (navigateNext(history)) {
+      e.preventDefault();
+      renderCurrentDiff();
+    }
+  }
 }
 
 /**
@@ -240,6 +379,13 @@ export function init() {
     return;
   }
 
+  // 24-3: Get navigation UI elements
+  navBar = document.getElementById('diff-nav-bar');
+  prevBtn = document.getElementById('diff-nav-prev');
+  nextBtn = document.getElementById('diff-nav-next');
+  indicatorEl = document.getElementById('diff-nav-indicator');
+  viewBtns = document.querySelectorAll('.diff-view-btn');
+
   // Set up accessibility attributes
   container.setAttribute('role', 'listbox');
   container.setAttribute('aria-label', 'Changed files');
@@ -248,10 +394,24 @@ export function init() {
   container.addEventListener('click', handleClick);
   container.addEventListener('keydown', handleKeydown);
 
+  // 24-3: Navigation button listeners
+  if (prevBtn) prevBtn.addEventListener('click', handleNavPrev);
+  if (nextBtn) nextBtn.addEventListener('click', handleNavNext);
+
+  // 24-3: View mode button listeners
+  if (viewBtns) {
+    viewBtns.forEach(btn => {
+      btn.addEventListener('click', () => handleViewModeChange(btn.dataset.mode));
+    });
+  }
+
+  // 24-3: Global keyboard navigation for diffs (left/right arrows, j/k)
+  document.addEventListener('keydown', handleDiffKeydown);
+
   // Initial render
   render();
 
-  console.log('[ChangedFilesList] Initialized');
+  console.log('[ChangedFilesList] Initialized with diff history navigation');
 }
 
 export default {
