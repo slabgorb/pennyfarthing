@@ -132,7 +132,7 @@ function createElectronAPI() {
                 },
                 sendApprovalResponse: (response) => ipcRenderer.invoke('path:approval-response', response),
             },
-            // Settings API (22-3, 22-4, 22-5)
+            // Settings API (22-3, 22-4, 22-5, 24-1)
             settings: {
                 getBashApprovalGate: () => ipcRenderer.invoke('settings:getBashApprovalGate'),
                 setBashApprovalGate: (enabled) => ipcRenderer.invoke('settings:setBashApprovalGate', enabled),
@@ -142,6 +142,13 @@ function createElectronAPI() {
                 setVerboseMode: (enabled) => ipcRenderer.invoke('settings:setVerboseMode', enabled),
                 onVerboseModeChange: (callback) => {
                     ipcRenderer.on('settings:verboseModeUpdate', callback);
+                },
+                // 24-1: Settings panel infrastructure
+                get: () => ipcRenderer.invoke('settings:get'),
+                save: (settings) => ipcRenderer.invoke('settings:save', settings),
+                openWindow: () => ipcRenderer.invoke('settings:openWindow'),
+                onChanged: (callback) => {
+                    ipcRenderer.on('settings:changed', (_event, settings) => callback(settings));
                 },
             },
             // Audit Log API (22-6)
@@ -240,7 +247,7 @@ function createElectronAPI() {
                 },
                 sendApprovalResponse: (_response) => Promise.resolve(),
             },
-            // Settings API (22-3, 22-4, 22-5) - test stub
+            // Settings API (22-3, 22-4, 22-5, 24-1) - test stub
             settings: {
                 getBashApprovalGate: () => Promise.resolve(false),
                 setBashApprovalGate: (_enabled) => Promise.resolve(),
@@ -249,6 +256,21 @@ function createElectronAPI() {
                 getVerboseMode: () => Promise.resolve(false),
                 setVerboseMode: (_enabled) => Promise.resolve(false),
                 onVerboseModeChange: (_callback) => {
+                    // No-op in test environment
+                },
+                // 24-1: Settings panel infrastructure - test stub
+                get: () => Promise.resolve({
+                    workflow: { auto_handoff: false, handoff_confirm: true },
+                    display: { show_flow: true, show_ocean: false, sidebar_width: 300 },
+                    notifications: { phase_change: true, sound: false },
+                }),
+                save: (_settings) => Promise.resolve({
+                    workflow: { auto_handoff: false, handoff_confirm: true },
+                    display: { show_flow: true, show_ocean: false, sidebar_width: 300 },
+                    notifications: { phase_change: true, sound: false },
+                }),
+                openWindow: () => Promise.resolve(),
+                onChanged: (_callback) => {
                     // No-op in test environment
                 },
             },

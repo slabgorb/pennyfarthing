@@ -13,6 +13,7 @@ import { ClaudeService, SDKMessage } from './claude-service.js';
 import { type TodoItem } from './todos.js';
 import { getProjectDirectory, setProjectDirectory, isValidProjectDirectory } from './paths.js';
 import { ContextInfo } from './api/context.js';
+import { type CyclistSettings } from './settings.js';
 export { getProjectDirectory, setProjectDirectory, isValidProjectDirectory };
 /**
  * IPC channel names for sidebar data communication (B-2)
@@ -65,12 +66,16 @@ export declare const IPC_DIFF_CHANNELS: {
     readonly DIFF_UPDATE: "diff:update";
 };
 /**
- * IPC channel names for settings (22-5)
+ * IPC channel names for settings (22-5, 24-1)
  */
 export declare const IPC_SETTINGS_CHANNELS: {
     readonly VERBOSE_MODE_GET: "settings:getVerboseMode";
     readonly VERBOSE_MODE_SET: "settings:setVerboseMode";
     readonly VERBOSE_MODE_UPDATE: "settings:verboseModeUpdate";
+    readonly GET: "settings:get";
+    readonly SAVE: "settings:save";
+    readonly CHANGED: "settings:changed";
+    readonly OPEN_WINDOW: "settings:openWindow";
 };
 /**
  * IPC channel names for audit log (22-6)
@@ -386,8 +391,41 @@ export declare function setupFileBrowserIPCHandlers(ipcMain: {
     handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
 }): void;
 /**
+ * Flag indicating if settings have been initialized
+ */
+export declare let isSettingsInitialized: boolean;
+/**
+ * Handle settings:get IPC call
+ * Returns current settings
+ */
+export declare function handleSettingsGet(): Promise<CyclistSettings>;
+/**
+ * Handle settings:save IPC call
+ * Saves settings and returns updated settings
+ */
+export declare function handleSettingsSave(settings: Partial<CyclistSettings>): Promise<CyclistSettings>;
+/**
+ * Register settings keyboard shortcut
+ * Called during app initialization
+ */
+export declare function registerSettingsShortcut(): void;
+/**
+ * Get the menu template for testing
+ * Returns the full menu structure including settings
+ */
+export declare function getMenuTemplate(): Array<{
+    role?: string;
+    label?: string;
+    submenu?: Array<{
+        label?: string;
+        accelerator?: string;
+        click?: () => void;
+    }>;
+}>;
+/**
  * Set up IPC handlers for settings
  * 22-5: Handles verbose mode setting get/set
+ * 24-1: Handles full settings panel infrastructure
  */
 export declare function setupSettingsIPCHandlers(ipcMain: {
     handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
