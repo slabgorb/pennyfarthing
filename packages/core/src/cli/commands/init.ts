@@ -95,12 +95,12 @@ export async function initCommand(
   logger.info('Creating directories...');
   const directories = [
     '.claude',
-    '.claude/project/agents',
     '.claude/project/commands',
     '.claude/project/skills',
     '.claude/project/docs',
     '.claude/project/hooks',
     'sprint',
+    'sprint/sidecars',
     '.session'
   ];
 
@@ -181,7 +181,7 @@ export async function initCommand(
   const sidecarTemplatesPath = join(assetsPath, 'templates/sidecar');
 
   for (const agent of CORE_AGENTS) {
-    const sidecarDir = join(projectRoot, `.claude/project/agents/${agent}-sidecar`);
+    const sidecarDir = join(projectRoot, `sprint/sidecars/${agent}`);
     if (!pathExists(sidecarDir)) {
       ensureDir(sidecarDir, { dryRun });
 
@@ -205,7 +205,7 @@ export async function initCommand(
           writeFileSync(filePath, content, 'utf8');
         }
       }
-      logger.created(`.claude/project/agents/${agent}-sidecar/`);
+      logger.created(`sprint/sidecars/${agent}/`);
     }
   }
 
