@@ -20,7 +20,7 @@ body {
 /* Container */
 .settings-container {
   padding: 20px;
-  max-width: 420px;
+  max-width: 900px;  /* Widened for theme browser with preview panel (24-6) */
   margin: 0 auto;
 }
 
