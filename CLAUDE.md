@@ -27,10 +27,10 @@ npm run lint      # ESLint (requires separate install)
 ```
 pennyfarthing-dist/      # Single source of truth for all definitions
 ├── agents/              # 10 main agents + 13 official subagents (consolidated)
-├── commands/            # 25 slash commands
+├── commands/            # 41 slash commands
 ├── guides/              # Behavior guides
 ├── skills/              # 11 knowledge domains
-├── personas/            # Themed agent personas (96+ themes)
+├── personas/            # Themed agent personas (101 themes)
 └── scripts/             # Utility scripts
 
 src/                     # TypeScript CLI source

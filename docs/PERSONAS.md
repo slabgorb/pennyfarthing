@@ -19,7 +19,7 @@ attributes:                # How agents behave
 
 ## Available Themes
 
-Pennyfarthing includes **91 persona themes** across diverse universes. Below are the core themes - for the complete list with OCEAN personality analysis, see [THEME-COMPARISON.md](THEME-COMPARISON.md).
+Pennyfarthing includes **101 persona themes** across diverse universes. Below are the core themes - for the complete list with OCEAN personality analysis, see [THEME-COMPARISON.md](THEME-COMPARISON.md).
 
 ### Discworld (Default)
 
