@@ -42,7 +42,7 @@ From theme config. Model: haiku. Tasks: Doc scanning, format checking
 <context>
 Context auto-loaded by `/prime --agent tech-writer`:
 - Shared context, shared behavior
-- Agent sidecar: `.claude/project/agents/tech-writer-sidecar/`
+- Agent sidecar: `sprint/sidecars/tech-writer/`
 - Also see: `API/docs/`, `UI/docs/`
 </context>
 

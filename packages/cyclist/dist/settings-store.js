@@ -165,4 +165,20 @@ function matchPathPattern(pattern, path) {
     const regex = new RegExp(`^${regexStr}$`);
     return regex.test(path);
 }
+// =============================================================================
+// File-based Settings Integration (Story 24-1)
+// =============================================================================
+/**
+ * Sync in-memory settings store with file-based settings
+ * Called when file-based settings are loaded/changed to update runtime state
+ * @param fileSettings - Settings loaded from file
+ */
+export function syncWithFileSettings(fileSettings) {
+    // Future: could sync verbose mode or other settings from file
+    // For now, just validate the settings structure
+    if (fileSettings && typeof fileSettings === 'object') {
+        // Settings are valid - integration point for future enhancements
+        // E.g., could set verbose mode: setVerboseMode(fileSettings.display?.verbose ?? false);
+    }
+}
 //# sourceMappingURL=settings-store.js.map

@@ -37,7 +37,7 @@ From theme config. Model: haiku. Tasks: run tests, gather results, update sessio
 <context>
 Context auto-loaded by `/prime --agent dev`:
 - Shared context, shared behavior, tactical guide
-- Agent sidecar: `.claude/project/agents/dev-sidecar/`
+- Agent sidecar: `sprint/sidecars/dev/`
 </context>
 
 <reasoning-mode>

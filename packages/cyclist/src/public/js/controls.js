@@ -11,6 +11,8 @@
 
 import { resetState as resetFilePanel } from './file-panel.js';
 import { resetState as resetDiffPanel } from './diff-panel.js';
+import { clear as clearChangedFiles } from './components/ChangedFilesList.js';
+import { clearDiffs } from './components/DiffViewer.js';
 
 /**
  * Mode cycle order
@@ -111,6 +113,10 @@ async function clearSession(event) {
     // Reset panel states (23-2)
     resetFilePanel();
     resetDiffPanel();
+
+    // 24-4: Clear changed files list and diff data
+    clearChangedFiles();
+    clearDiffs();
 
     // Clear agent panel persona display (23-2 fix: use correct IDs)
     const nameEl = document.getElementById('character-name');

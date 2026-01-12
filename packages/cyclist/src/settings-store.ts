@@ -186,3 +186,25 @@ function matchPathPattern(pattern: string, path: string): boolean {
   const regex = new RegExp(`^${regexStr}$`);
   return regex.test(path);
 }
+
+// =============================================================================
+// File-based Settings Integration (Story 24-1)
+// =============================================================================
+
+/**
+ * Sync in-memory settings store with file-based settings
+ * Called when file-based settings are loaded/changed to update runtime state
+ * @param fileSettings - Settings loaded from file
+ */
+export function syncWithFileSettings(fileSettings: {
+  workflow?: { auto_handoff?: boolean; handoff_confirm?: boolean };
+  display?: { show_flow?: boolean; show_ocean?: boolean; sidebar_width?: number };
+  notifications?: { phase_change?: boolean; sound?: boolean };
+}): void {
+  // Future: could sync verbose mode or other settings from file
+  // For now, just validate the settings structure
+  if (fileSettings && typeof fileSettings === 'object') {
+    // Settings are valid - integration point for future enhancements
+    // E.g., could set verbose mode: setVerboseMode(fileSettings.display?.verbose ?? false);
+  }
+}

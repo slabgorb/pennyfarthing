@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync, symlinkSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, symlinkSync, copyFileSync, readdirSync } from 'fs';
 import { join, relative } from 'path';
 import fsExtra from 'fs-extra';
 
@@ -27,7 +27,7 @@ import {
   removeSymlinkOrDirectory
 } from '../utils/symlinks.js';
 import { findNodeModulesPath } from '../utils/node-modules.js';
-import { DIRECTORY_SYMLINKS } from '../utils/constants.js';
+import { DIRECTORY_SYMLINKS, CORE_AGENTS } from '../utils/constants.js';
 
 interface UpdateOptions {
   force?: boolean;
@@ -212,11 +212,14 @@ async function migrateToSymlinkMode(
   const projectSkillsDir = join(projectRoot, '.claude/project/skills');
   createSkillsDirectory(projectRoot, builtInSkillsPath, projectSkillsDir, dryRun || false);
 
-  // 5. Update settings.local.json paths
+  // 5. Migrate persona config to .pennyfarthing/
+  await migratePersonaConfig(projectRoot, { dryRun });
+
+  // 6. Update settings.local.json paths
   const assetsPath = getAssetsPath();
   await mergeSettingsHooks(projectRoot, assetsPath, { dryRun });
 
-  // 6. Write new manifest
+  // 7. Write new manifest
   logger.newline();
   logger.info('Updating manifest...');
 
@@ -313,6 +316,12 @@ async function updateSymlinkMode(
     }
   }
 
+  // Migrate sidecars from old location to new location
+  await migrateSidecars(projectRoot, { dryRun });
+
+  // Migrate persona config to .pennyfarthing/ directory
+  await migratePersonaConfig(projectRoot, { dryRun });
+
   // Update settings
   const assetsPath = getAssetsPath();
   await mergeSettingsHooks(projectRoot, assetsPath, { dryRun });
@@ -328,6 +337,127 @@ async function updateSymlinkMode(
 
   writeManifest(projectRoot, newManifest, { dryRun });
   logger.updated('.claude/manifest.json');
+}
+
+/**
+ * Migrate sidecars from .claude/project/agents/{agent}-sidecar/ to sprint/sidecars/{agent}/
+ * Preserves user content while moving to new location
+ */
+async function migrateSidecars(
+  projectRoot: string,
+  options: { dryRun?: boolean }
+): Promise<void> {
+  const dryRun = options.dryRun;
+  let migrated = 0;
+
+  // Ensure new sidecars directory exists
+  const newSidecarsDir = join(projectRoot, 'sprint/sidecars');
+  if (!pathExists(newSidecarsDir)) {
+    if (!dryRun) {
+      ensureDirSync(newSidecarsDir);
+    }
+  }
+
+  for (const agent of CORE_AGENTS) {
+    const oldDir = join(projectRoot, `.claude/project/agents/${agent}-sidecar`);
+    const newDir = join(projectRoot, `sprint/sidecars/${agent}`);
+
+    // Skip if old directory doesn't exist
+    if (!pathExists(oldDir)) {
+      continue;
+    }
+
+    // Create new directory if needed
+    if (!pathExists(newDir)) {
+      if (!dryRun) {
+        ensureDirSync(newDir);
+      }
+    }
+
+    // Copy each .md file from old to new (don't overwrite existing)
+    try {
+      const files = readdirSync(oldDir);
+      for (const file of files) {
+        if (!file.endsWith('.md')) continue;
+
+        const oldPath = join(oldDir, file);
+        const newPath = join(newDir, file);
+
+        // Don't overwrite if new file already exists
+        if (pathExists(newPath)) {
+          continue;
+        }
+
+        if (!dryRun) {
+          copyFileSync(oldPath, newPath);
+        }
+        migrated++;
+      }
+    } catch {
+      // Ignore errors reading old directory
+    }
+  }
+
+  if (migrated > 0) {
+    logger.info(`Migrated ${migrated} sidecar files to sprint/sidecars/`);
+  }
+}
+
+/**
+ * Migrate persona config from .claude/persona-config.local.yaml to .pennyfarthing/config.local.yaml
+ * The new location is agent-writable and better suited for dogfooding
+ */
+async function migratePersonaConfig(
+  projectRoot: string,
+  options: { dryRun?: boolean }
+): Promise<void> {
+  const dryRun = options.dryRun;
+
+  const oldConfigPath = join(projectRoot, '.claude/persona-config.local.yaml');
+  const newConfigDir = join(projectRoot, '.pennyfarthing');
+  const newConfigPath = join(newConfigDir, 'config.local.yaml');
+
+  // Skip if old config doesn't exist
+  if (!existsSync(oldConfigPath)) {
+    return;
+  }
+
+  // Skip if new config already exists (already migrated)
+  if (existsSync(newConfigPath)) {
+    // Remove old config if new one exists
+    if (!dryRun) {
+      removeSync(oldConfigPath);
+    }
+    logger.info('Removed legacy .claude/persona-config.local.yaml (already migrated)');
+    return;
+  }
+
+  // Ensure new directory exists
+  if (!existsSync(newConfigDir)) {
+    if (!dryRun) {
+      ensureDirSync(newConfigDir);
+    }
+    logger.created('.pennyfarthing/');
+  }
+
+  // Read old config content
+  const oldContent = readFileSync(oldConfigPath, 'utf8');
+
+  // Write to new location with updated header
+  if (!dryRun) {
+    const header = '# Pennyfarthing Local Configuration\n# This file is gitignored - your personal preferences\n# Agents can write to this file during dogfooding\n\n';
+
+    // Parse and re-write to ensure clean format
+    // If it starts with a comment, strip old comments and add new header
+    const lines = oldContent.split('\n');
+    const contentLines = lines.filter(line => !line.startsWith('#') || line.trim() === '');
+    const cleanContent = contentLines.join('\n').trim();
+
+    writeFileSync(newConfigPath, header + cleanContent + '\n', 'utf8');
+    removeSync(oldConfigPath);
+  }
+
+  logger.info('Migrated persona config to .pennyfarthing/config.local.yaml');
 }
 
 async function checkForUpdates(

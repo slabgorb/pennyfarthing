@@ -132,15 +132,16 @@ html, body {
   position: absolute;
   left: 0;
   top: 50px;
-  width: 20px;
-  height: 60px;
+  width: 32px;
+  height: 80px;
   padding: 0;
+  padding-top: 20px;  /* Room for badge at top */
   border: none;
   border-radius: 0 4px 4px 0;
   background: var(--bg-tertiary, #252540);
   color: var(--text-secondary, #888);
   cursor: pointer;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 1px;
   z-index: 10;
@@ -172,16 +173,17 @@ html, body {
 .panel-count-badge {
   display: none;
   position: absolute;
-  top: 4px;
-  right: -4px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  font-size: 10px;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 11px;
   font-weight: bold;
   color: #fff;
   background: var(--accent, #6366f1);
-  border-radius: 8px;
+  border-radius: 9px;
   align-items: center;
   justify-content: center;
 }
@@ -238,6 +240,7 @@ html, body {
   flex-direction: column;
   min-width: var(--sidebar-width);  /* Match sidebar width to allow panels to expand */
   overflow: hidden;  /* 17-2: Constrain children to prevent layout blowout */
+  margin-left: 36px;  /* Room for collapsed panel expand buttons (32px + 4px gap) */
 }
 
 /* Message View - Claude SDK output display */
@@ -1078,7 +1081,7 @@ html, body {
 
 .message-assistant p {
   margin: 0.75rem 0;        /* B-15: Increased from 0.5rem */
-  max-width: 72ch;          /* B-15: Optimal reading width */
+  max-width: min(72ch, 100%);  /* Responsive: 72ch max but shrinks to fit container */
 }
 
 /* B-15: Typography hierarchy for headers */
@@ -2304,6 +2307,77 @@ html, body {
   color: var(--text-primary, #fff);
 }
 
+/* 24-3: Diff history navigation bar */
+.diff-nav-bar {
+  display: none;  /* Hidden by default, shown when file has multiple edits */
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--bg-tertiary, #252540);
+  border-bottom: 1px solid var(--border-color, #333);
+  font-size: 12px;
+}
+
+.diff-nav-bar.visible {
+  display: flex;
+}
+
+.diff-nav-btn {
+  padding: 4px 8px;
+  border: 1px solid var(--border-color, #444);
+  border-radius: 4px;
+  background: var(--bg-secondary, #1a1a2e);
+  color: var(--text-primary, #fff);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  min-width: 28px;
+}
+
+.diff-nav-btn:hover:not(:disabled) {
+  background: var(--accent, #6366f1);
+  border-color: var(--accent, #6366f1);
+}
+
+.diff-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.diff-nav-indicator {
+  color: var(--text-secondary, #888);
+  font-size: 11px;
+  min-width: 70px;
+  text-align: center;
+}
+
+.diff-view-modes {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+}
+
+.diff-view-btn {
+  padding: 3px 8px;
+  border: 1px solid var(--border-color, #444);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.diff-view-btn:hover {
+  color: var(--text-primary, #fff);
+  border-color: var(--text-secondary, #888);
+}
+
+.diff-view-btn.active {
+  background: var(--accent, #6366f1);
+  border-color: var(--accent, #6366f1);
+  color: #fff;
+}
+
 .diff-panel-content {
   flex: 1;
   overflow: auto;  /* Allow both horizontal and vertical scrolling */
@@ -2319,16 +2393,17 @@ html, body {
 .diff-panel-expand-btn {
   position: absolute;
   left: 0;
-  top: 118px;  /* Below FILES button (50px + 60px + 8px gap) */
-  width: 20px;
-  height: 60px;
+  top: 138px;  /* Below FILES button (50px + 80px + 8px gap) */
+  width: 32px;
+  height: 80px;
   padding: 0;
+  padding-top: 20px;  /* Room for badge at top */
   border: none;
   border-radius: 0 4px 4px 0;
   background: var(--bg-tertiary, #252540);
   color: var(--text-secondary, #888);
   cursor: pointer;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 1px;
   z-index: 10;

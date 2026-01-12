@@ -1,7 +1,6 @@
 import { readFileSync, readdirSync, existsSync, writeFileSync, mkdirSync, copyFileSync } from 'fs';
-import { join, basename } from 'path';
+import { join, basename, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 import { homedir } from 'os';
 import YAML from 'yaml';
 
@@ -77,15 +76,35 @@ export function getUserCustomThemesDir(): string {
 }
 
 /**
- * Get the current theme from persona-config.yaml
- * Checks local config first (.local.yaml), then falls back to shared config
+ * Get the path to the .pennyfarthing local config (preferred for dogfooding)
+ */
+export function getPennyfarthingConfigPath(projectRoot: string): string {
+  return join(projectRoot, '.pennyfarthing/config.local.yaml');
+}
+
+/**
+ * Get the current theme from config files
+ * Priority: .pennyfarthing/config.local.yaml > .claude/persona-config.local.yaml > .claude/persona-config.yaml
  */
 export function getCurrentTheme(projectRoot?: string): string | null {
   const root = projectRoot || process.cwd();
-  const localConfigPath = join(root, '.claude/persona-config.local.yaml');
-  const sharedConfigPath = join(root, '.claude/persona-config.yaml');
 
-  // Check local config first (user preference)
+  // Priority 1: .pennyfarthing/config.local.yaml (dogfooding/agent-writable)
+  const pennyfarthingConfigPath = getPennyfarthingConfigPath(root);
+  if (existsSync(pennyfarthingConfigPath)) {
+    try {
+      const content = readFileSync(pennyfarthingConfigPath, 'utf8');
+      const config = YAML.parse(content);
+      if (config?.theme) {
+        return config.theme;
+      }
+    } catch {
+      // Fall through to next option
+    }
+  }
+
+  // Priority 2: .claude/persona-config.local.yaml (legacy local)
+  const localConfigPath = join(root, '.claude/persona-config.local.yaml');
   if (existsSync(localConfigPath)) {
     try {
       const content = readFileSync(localConfigPath, 'utf8');
@@ -98,7 +117,8 @@ export function getCurrentTheme(projectRoot?: string): string | null {
     }
   }
 
-  // Fall back to shared config (project default)
+  // Priority 3: .claude/persona-config.yaml (project default)
+  const sharedConfigPath = join(root, '.claude/persona-config.yaml');
   if (existsSync(sharedConfigPath)) {
     try {
       const content = readFileSync(sharedConfigPath, 'utf8');
@@ -223,14 +243,17 @@ export function getAgentSamples(theme: ThemeInfo): string {
 }
 
 export interface SetThemeOptions {
-  /** If true, write to shared config instead of local config */
+  /** If true, write to shared config (.claude/persona-config.yaml) instead of local */
   global?: boolean;
+  /** If true, write to legacy .claude/persona-config.local.yaml instead of .pennyfarthing/ */
+  legacy?: boolean;
 }
 
 /**
- * Set the active theme in persona-config.yaml
- * By default writes to local config (.local.yaml) for user isolation
- * Use { global: true } to write to shared config (project default)
+ * Set the active theme
+ * By default writes to .pennyfarthing/config.local.yaml (agent-writable, dogfooding-friendly)
+ * Use { legacy: true } to write to .claude/persona-config.local.yaml
+ * Use { global: true } to write to .claude/persona-config.yaml (project default)
  * Returns the ThemeInfo if successful, throws if theme not found
  */
 export function setTheme(themeName: string, projectRoot: string, options: SetThemeOptions = {}): ThemeInfo {
@@ -242,13 +265,25 @@ export function setTheme(themeName: string, projectRoot: string, options: SetThe
     throw new Error(`Theme '${themeName}' not found. Available themes: ${available}`);
   }
 
-  const configDir = join(projectRoot, '.claude');
-  // Write to local config by default, shared config if global option is set
-  const configPath = options.global
-    ? join(configDir, 'persona-config.yaml')
-    : join(configDir, 'persona-config.local.yaml');
+  let configPath: string;
+  let header: string;
 
-  // Ensure .claude directory exists
+  if (options.global) {
+    // Project default - shared with team
+    configPath = join(projectRoot, '.claude/persona-config.yaml');
+    header = '# Pennyfarthing Persona Configuration (Project Default)\n\n';
+  } else if (options.legacy) {
+    // Legacy local config location
+    configPath = join(projectRoot, '.claude/persona-config.local.yaml');
+    header = '# Pennyfarthing Persona Configuration (Local User Preference)\n# This file is gitignored - your personal theme choice\n\n';
+  } else {
+    // Default: .pennyfarthing/ directory (agent-writable, dogfooding-friendly)
+    configPath = getPennyfarthingConfigPath(projectRoot);
+    header = '# Pennyfarthing Local Configuration\n# This file is gitignored - your personal preferences\n# Agents can write to this file during dogfooding\n\n';
+  }
+
+  // Ensure parent directory exists
+  const configDir = dirname(configPath);
   if (!existsSync(configDir)) {
     mkdirSync(configDir, { recursive: true });
   }
@@ -269,9 +304,6 @@ export function setTheme(themeName: string, projectRoot: string, options: SetThe
   config.theme = themeName;
 
   // Write back with comment header
-  const header = options.global
-    ? '# Pennyfarthing Persona Configuration (Project Default)\n\n'
-    : '# Pennyfarthing Persona Configuration (Local User Preference)\n# This file is gitignored - your personal theme choice\n\n';
   const yamlContent = YAML.stringify(config);
   writeFileSync(configPath, header + yamlContent, 'utf8');
 

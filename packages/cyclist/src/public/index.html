@@ -28,6 +28,16 @@
         <span class="diff-panel-count" id="diff-panel-count"></span>
         <button class="diff-panel-collapse-btn" id="diff-panel-collapse" title="Collapse panel">◀</button>
       </div>
+      <!-- 24-3: Diff history navigation controls -->
+      <div class="diff-nav-bar" id="diff-nav-bar">
+        <button class="diff-nav-btn" id="diff-nav-prev" title="Previous edit (←)" disabled>&lt;</button>
+        <span class="diff-nav-indicator" id="diff-nav-indicator">Edit 1 of 1</span>
+        <button class="diff-nav-btn" id="diff-nav-next" title="Next edit (→)" disabled>&gt;</button>
+        <div class="diff-view-modes">
+          <button class="diff-view-btn active" data-mode="partial" title="Show individual edit">Partial</button>
+          <button class="diff-view-btn" data-mode="combined" title="Show all changes combined">Combined</button>
+        </div>
+      </div>
       <div class="diff-panel-content" id="diff-panel-content">
         <!-- Diff content rendered here -->
       </div>

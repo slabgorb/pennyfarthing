@@ -102,8 +102,13 @@ output_persona() {
   local theme=""
   local theme_file=""
 
-  # Check for local config first, then default
-  if [ -f "$PROJECT_ROOT/.claude/persona-config.local.yaml" ]; then
+  # Check for config files in priority order:
+  # 1. .pennyfarthing/config.local.yaml (agent-writable, dogfooding-friendly)
+  # 2. .claude/persona-config.local.yaml (legacy local)
+  # 3. .claude/persona-config.yaml (project default)
+  if [ -f "$PROJECT_ROOT/.pennyfarthing/config.local.yaml" ]; then
+    config_file="$PROJECT_ROOT/.pennyfarthing/config.local.yaml"
+  elif [ -f "$PROJECT_ROOT/.claude/persona-config.local.yaml" ]; then
     config_file="$PROJECT_ROOT/.claude/persona-config.local.yaml"
   elif [ -f "$PROJECT_ROOT/.claude/persona-config.yaml" ]; then
     config_file="$PROJECT_ROOT/.claude/persona-config.yaml"

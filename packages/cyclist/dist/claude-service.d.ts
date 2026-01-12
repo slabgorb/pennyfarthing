@@ -311,15 +311,35 @@ export declare class ClaudeService extends EventEmitter {
     private interrupted;
     private defaultCwd?;
     private spawner;
+    private stdoutBuffer;
+    private messageQueue;
+    private messageResolvers;
+    private processExited;
+    private processError;
     constructor(options?: {
         cwd?: string;
         spawner?: ClaudeSpawner;
     });
     /**
+     * Ensure a Claude process is running, spawning one if needed.
+     * Reuses existing process to preserve background Task agents.
+     */
+    private ensureProcess;
+    /**
+     * Handle an incoming message from Claude stdout.
+     * Routes to waiting resolvers or queues for later.
+     */
+    private handleIncomingMessage;
+    /**
+     * Wait for the next message from Claude.
+     * Returns null if process exits or is interrupted.
+     */
+    private waitForMessage;
+    /**
      * Send a message to Claude and receive streaming responses
      *
-     * Uses child_process.spawn with stdin pipe and --input-format stream-json.
-     * This enables sending images and works reliably without TTY requirements.
+     * Uses a persistent Claude process to support background Task agents.
+     * The process stays alive between messages; only killed on explicit reset.
      *
      * @param prompt - The prompt to send to Claude
      * @param options - Optional spawn options (cwd, env, images)
@@ -366,11 +386,13 @@ export declare class ClaudeService extends EventEmitter {
     /**
      * Abort the running process completely (kill it)
      * Unlike interrupt(), this fully terminates the subprocess
+     * Background agent fix: Clear process state properly
      */
     abort(): void;
     /**
-     * Reset the session (clear session ID)
+     * Reset the session (clear session ID and kill process)
      * B-10: Also clears activeMode since no query has run in new session
+     * Background agent fix: Kill process to start fresh
      */
     resetSession(): void;
     /**
