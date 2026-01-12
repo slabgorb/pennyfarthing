@@ -354,7 +354,10 @@ Shall I proceed?
       expect(result.source).toBe('structured_marker');
     });
 
-    it('should fall back to pattern detection when no markers present', async () => {
+    // SKIPPED: Pattern-based fallback disabled in favor of markers-only detection
+    // See quick-actions-fix session for rationale: pattern detection caused flakiness
+    // during streaming because it ran on incomplete text fragments.
+    it.skip('should fall back to pattern detection when no markers present (disabled)', async () => {
       const { processMessageForQuickActions } = await getMessageView();
 
       const message = createAssistantMessage('Please invoke /reviewer to continue.');
@@ -365,6 +368,18 @@ Shall I proceed?
       expect(result.type).toBe('handoff');
       expect(result.agent).toBe('/reviewer');
       expect(result.source).not.toBe('structured_marker');
+    });
+
+    it('should return null when no markers present (markers-only mode)', async () => {
+      const { processMessageForQuickActions } = await getMessageView();
+
+      // Without markers, processMessageForQuickActions now returns null
+      const message = createAssistantMessage('Please invoke /reviewer to continue.');
+
+      const result = processMessageForQuickActions(message);
+
+      // Pattern-based detection is disabled, so no marker = no result
+      expect(result).toBeNull();
     });
 
   });

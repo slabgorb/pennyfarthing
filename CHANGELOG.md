@@ -11,6 +11,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [6.3.0] - 2026-01-12
+
+### Configuration & Theme Management
+
+This release delivers the Cyclist settings panel with theme management, along with showcase improvements for theme discovery.
+
+### Added
+
+#### Epic 24: Configuration & Theme Switcher Panels
+- **Settings Panel Infrastructure** (24-1) - New settings window with section-based navigation
+- **Theme Selector** (24-2) - Browse and switch themes from Cyclist settings
+- **Diff History Navigation** (24-3) - Navigate through diff history with keyboard shortcuts
+- **Theme Browser with Search** (24-5) - Searchable theme browser with filtering
+- **Theme Preview Panel** (24-6) - Preview theme personas before switching
+
+#### Epic 30: Developer Workflow Documentation
+- **Quick Commit Command** (30-2) - `/chore` command for small commits without ceremony
+
+#### Showcase Improvements
+- **Theme Tiers Page** - Quality tier breakdown for all themes
+- **OCEAN Analysis Page** - Personality profile visualization across themes
+
+#### Persona Optimization
+- **Mad Max Theme** - Optimized based on job fair benchmark results
+
+### Fixed
+- **Quick Actions** - Disable pattern detection for markers-only quick actions
+- **ESM Settings** - Resolve require error in settings window
+- **Diff Panel** - Fix state management and Combined view indicator
+- **Keybinds** - Ignore j/k navigation in contenteditable elements
+- **Diff History** - Wire DiffHistoryManager into diff panel UI
+- **Button Layout** - Fix expand button layout and message margins
+- **Agent Sidecars** - Move outside .claude/ for dogfooding compatibility
+- **Settings Debug** - Add debugging and use centralized paths
+- **Process Persistence** - Keep Claude process alive for background agents
+
+---
+
 ## [6.2.0] - 2026-01-12
 
 ### Sprint 9: Multimodal Images & Smart Detection

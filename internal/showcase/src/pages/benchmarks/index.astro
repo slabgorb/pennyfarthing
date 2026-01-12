@@ -1,304 +1,508 @@
 ---
 /**
- * Benchmarks Page
+ * Benchmarks Page - Theme Performance Tiers
  *
- * Pre-rendered benchmark reports showing persona performance across scenarios.
- * Data loaded at build time from internal/results/benchmarks/
+ * Displays theme rankings based on combined tactical team performance
+ * (Dev + Reviewer + TEA). Data loaded from theme-tiers.json.
  */
 import Base from '../../layouts/Base.astro';
-import CharacterTooltip from '../../components/CharacterTooltip.astro';
-import {
-  loadBenchmarkSummaries,
-  groupByScenario,
-  groupByRole,
-  calculateRoleLeaderboard,
-  type BenchmarkSummary,
-  type RoleLeaderboard
-} from '../../lib/benchmark-loader';
 import { loadThemes } from '../../lib/loader';
-import type { Agent, Theme } from '../../lib/types';
+import type { Theme } from '../../lib/types';
 
-// Load all benchmark data at build time
-const summaries = await loadBenchmarkSummaries();
-const byScenario = groupByScenario(summaries);
-const byRole = groupByRole(summaries);
+// Load theme-tiers.json at build time
+import tiersData from '../../../public/theme-tiers.json';
 
-// Load theme data for character tooltips
+// Load theme data for linking
 const themes = await loadThemes();
+const themeMap = new Map(themes.map(t => [t.id, t]));
 
-// Build lookup map: "theme:role" -> { agent, themeId, themeName }
-type AgentLookup = { agent: Agent; themeId: string; themeName: string };
-const agentLookup = new Map<string, AgentLookup>();
-for (const theme of themes) {
-  for (const agent of theme.agents) {
-    const key = `${theme.id}:${agent.role}`;
-    agentLookup.set(key, {
-      agent,
-      themeId: theme.id,
-      themeName: theme.metadata.name
-    });
-  }
+// Helper to get theme link
+function getThemeLink(themeId: string): string {
+  return `/themes/${themeId}`;
 }
 
-// Helper to get agent info for tooltip
-function getAgentInfo(themeId: string, role: string): AgentLookup | undefined {
-  return agentLookup.get(`${themeId}:${role}`);
-}
-
-// Calculate leaderboards for each role
-const roleLeaderboards: Record<string, RoleLeaderboard[]> = {};
-for (const [role, roleSummaries] of Object.entries(byRole)) {
-  roleLeaderboards[role] = calculateRoleLeaderboard(roleSummaries);
-}
-
-// Get unique roles and scenarios for display
-const roles = Object.keys(byRole).sort();
-const scenarios = Object.keys(byScenario).sort();
-
-// Format role name for display
-function formatRole(role: string): string {
-  const roleNames: Record<string, string> = {
-    'dev': 'Developer',
-    'tea': 'Test Engineer',
-    'reviewer': 'Code Reviewer',
-    'sm': 'Scrum Master',
-    'architect': 'Architect',
-    'devops': 'DevOps',
-    'pm': 'Product Manager',
-    'tech-writer': 'Tech Writer',
-    'ux-designer': 'UX Designer',
-    'orchestrator': 'Orchestrator'
-  };
-  return roleNames[role] || role;
-}
-
-// Format delta with sign and color class
-function formatDelta(delta: number | undefined): { text: string; class: string } {
-  if (delta === undefined) return { text: 'N/A', class: 'text-stone-500' };
+// Helper to format delta with sign and color
+function formatDelta(delta: number | undefined): { text: string; colorClass: string } {
+  if (delta === undefined) return { text: '—', colorClass: 'text-stone-500' };
   const sign = delta >= 0 ? '+' : '';
   const colorClass = delta >= 0 ? 'text-green-400' : 'text-red-400';
-  return { text: `${sign}${delta.toFixed(1)}`, class: colorClass };
+  return { text: `${sign}${delta.toFixed(1)}`, colorClass };
 }
+
+// Tier badge colors
+const tierColors: Record<string, string> = {
+  'S': 'bg-amber-500 text-stone-900',
+  'A': 'bg-purple-500 text-white',
+  'B': 'bg-blue-500 text-white',
+  'C': 'bg-green-600 text-white',
+  'D': 'bg-red-600 text-white',
+  'U': 'bg-stone-600 text-stone-300'
+};
+
+const tierDescriptions: Record<string, string> = {
+  'S': 'Elite tactical teams with exceptional combined performance',
+  'A': 'Excellent teams with consistent multi-role excellence',
+  'B': 'Strong teams with specific strengths',
+  'C': 'Good teams with notable gaps',
+  'D': 'Below average tactical performance',
+  'U': 'No benchmark data available'
+};
+
+// Count themes per tier
+const tierCounts = {
+  S: tiersData.tiers.S.length,
+  A: tiersData.tiers.A.length,
+  B: tiersData.tiers.B.length,
+  C: tiersData.tiers.C.length,
+  D: tiersData.tiers.D.length,
+  U: tiersData.tiers.U.length
+};
+
+const totalBenchmarked = tierCounts.S + tierCounts.A + tierCounts.B + tierCounts.C + tierCounts.D;
 ---
 
-<Base title="Benchmarks | Pennyfarthing" description="Persona agent performance benchmarks comparing themed agents against control baselines.">
+<Base title="Theme Tiers | Pennyfarthing" description="Theme performance rankings based on tactical team benchmarks - Dev, Reviewer, and TEA combined scores.">
   <div class="max-w-6xl mx-auto">
-    <h1 class="text-4xl font-bold text-amber-100 mb-4">Performance Benchmarks</h1>
+    <h1 class="text-4xl font-bold text-amber-100 mb-4">Theme Performance Tiers</h1>
     <p class="text-stone-300 mb-8">
-      Comparing persona agents against control baselines across {scenarios.length} scenarios.
-      Scores range from 0-100, with delta showing improvement over control.
+      Rankings based on <strong class="text-amber-200">combined tactical team performance</strong> — how well Dev, Reviewer, and TEA work together.
     </p>
 
-    <!-- Methodology Section -->
+    <!-- Methodology Card -->
     <section class="bg-stone-800 border border-stone-700 rounded-lg p-6 mb-8">
-      <h2 class="text-xl font-semibold text-amber-100 mb-3">How Benchmarks Work</h2>
-      <p class="text-stone-300 mb-4">
-        Each persona agent is evaluated on standardized scenarios and scored by an independent judge.
-        The delta shows how much a persona improves (or regresses) compared to a control agent without personality.
-      </p>
-      <ul class="text-stone-400 space-y-1 text-sm">
-        <li><strong class="text-amber-200">Score:</strong> 0-100 scale based on task completion, quality, and persona adherence</li>
-        <li><strong class="text-amber-200">Delta vs Control:</strong> Positive means persona outperforms baseline</li>
-        <li><strong class="text-amber-200">OCEAN:</strong> Big Five personality traits (Openness, Conscientiousness, Extraversion, Agreeableness, Neuroticism)</li>
-      </ul>
-      <p class="text-amber-500 text-sm mt-3">
-        <a href="https://github.com/1898andCo/pennyfarthing#benchmarks" class="underline hover:text-amber-400">
-          Learn more about our methodology
-        </a>
-      </p>
-    </section>
-
-    <!-- Role Leaderboards Section -->
-    <section class="mb-12">
-      <h2 class="text-2xl font-bold text-amber-100 mb-6">Leaderboard by Role</h2>
-      <p class="text-stone-300 mb-4">
-        Top performing themes for each agent role, ranked by average score across all scenarios.
-      </p>
-
-      <div class="grid gap-6 md:grid-cols-2">
-        {roles.map(role => {
-          const leaderboard = roleLeaderboards[role]?.slice(0, 5) || [];
-          return (
-            <div class="bg-stone-800 border border-stone-700 rounded-lg shadow-md p-4">
-              <h3 class="text-lg font-semibold text-amber-100 mb-3 border-b border-stone-600 pb-2">
-                {formatRole(role)}
-              </h3>
-              {leaderboard.length > 0 ? (
-                <table class="w-full text-sm">
-                  <thead>
-                    <tr class="text-stone-400 text-left">
-                      <th class="pb-2">#</th>
-                      <th class="pb-2">Theme</th>
-                      <th class="pb-2">Persona</th>
-                      <th class="pb-2 text-right">Mean Score</th>
-                      <th class="pb-2 text-right">Delta</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {leaderboard.map((entry, i) => {
-                      const delta = formatDelta(entry.averageDelta);
-                      return (
-                        <tr class="border-t border-stone-700">
-                          <td class="py-2 text-stone-500">{i + 1}</td>
-                          <td class="py-2 font-medium text-stone-200">{entry.theme}</td>
-                          <td class="py-2 text-amber-200">{entry.persona || '—'}</td>
-                          <td class="py-2 text-right text-stone-300">{entry.averageScore.toFixed(1)}</td>
-                          <td class={`py-2 text-right ${delta.class}`}>{delta.text}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              ) : (
-                <p class="text-stone-500 text-sm">No benchmark data for this role</p>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </section>
-
-    <!-- Scenario Performance Section -->
-    <section class="mb-12">
-      <h2 class="text-2xl font-bold text-amber-100 mb-6">Performance by Scenario</h2>
-      <p class="text-stone-300 mb-4">
-        How personas performed on each benchmark scenario. Click a scenario to see detailed results.
-      </p>
-
-      <div class="space-y-4">
-        {scenarios.map(scenario => {
-          const scenarioData = byScenario[scenario] || [];
-          const avgScore = scenarioData.length > 0
-            ? scenarioData.reduce((sum, s) => sum + s.statistics.mean, 0) / scenarioData.length
-            : 0;
-          const bestPerformer = scenarioData.sort((a, b) => b.statistics.mean - a.statistics.mean)[0];
-
-          // Get control baseline (same for all entries in scenario)
-          const controlMean = scenarioData.find(s => s.baselineComparison)?.baselineComparison?.controlMean;
-
-          // Calculate average delta vs control
-          const deltas = scenarioData
-            .filter(s => s.baselineComparison?.delta !== undefined)
-            .map(s => s.baselineComparison!.delta);
-          const avgDelta = deltas.length > 0
-            ? deltas.reduce((a, b) => a + b, 0) / deltas.length
-            : undefined;
-          const avgDeltaFormatted = formatDelta(avgDelta);
-
-          return (
-            <details class="bg-stone-800 border border-stone-700 rounded-lg shadow-md">
-              <summary class="p-4 cursor-pointer hover:bg-stone-700 flex items-center justify-between">
-                <div>
-                  <span class="font-semibold text-stone-200">{scenario}</span>
-                  <span class="text-stone-500 ml-2 text-sm">({scenarioData.length} themes tested)</span>
-                </div>
-                <div class="text-right flex items-center gap-3">
-                  {controlMean !== undefined && (
-                    <span class="text-stone-500">Control: {controlMean.toFixed(1)}</span>
-                  )}
-                  <span class="text-stone-400">Avg: {avgScore.toFixed(1)}</span>
-                  {avgDelta !== undefined && (
-                    <span class={avgDeltaFormatted.class}>vs Control: {avgDeltaFormatted.text}</span>
-                  )}
-                  {bestPerformer && (
-                    <span class="text-green-400">Best: {bestPerformer.agent.theme} ({bestPerformer.statistics.mean.toFixed(1)})</span>
-                  )}
-                </div>
-              </summary>
-              <div class="p-4 border-t border-stone-700">
-                <table class="w-full text-sm">
-                  <thead>
-                    <tr class="text-stone-400 text-left border-b border-stone-600">
-                      <th class="pb-2">Theme</th>
-                      <th class="pb-2">Character</th>
-                      <th class="pb-2">Role</th>
-                      <th class="pb-2 text-right">Score</th>
-                      <th class="pb-2 text-right">Control</th>
-                      <th class="pb-2 text-right">Delta</th>
-                      <th class="pb-2 text-right">Runs</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {scenarioData.sort((a, b) => b.statistics.mean - a.statistics.mean).map(summary => {
-                      const delta = formatDelta(summary.baselineComparison?.delta);
-                      const agentInfo = getAgentInfo(summary.agent.theme, summary.agent.role);
-                      return (
-                        <tr class="border-t border-stone-700">
-                          <td class="py-2 font-medium text-stone-200">{summary.agent.theme}</td>
-                          <td class="py-2 text-amber-200">
-                            {agentInfo ? (
-                              <CharacterTooltip
-                                agent={agentInfo.agent}
-                                themeId={agentInfo.themeId}
-                                themeName={agentInfo.themeName}
-                              >
-                                {summary.agent.character || '—'}
-                              </CharacterTooltip>
-                            ) : (
-                              summary.agent.character || '—'
-                            )}
-                          </td>
-                          <td class="py-2 text-stone-400">{summary.agent.role}</td>
-                          <td class="py-2 text-right text-stone-300">{summary.statistics.mean.toFixed(1)}</td>
-                          <td class="py-2 text-right text-stone-500">
-                            {summary.baselineComparison?.controlMean?.toFixed(1) || 'N/A'}
-                          </td>
-                          <td class={`py-2 text-right ${delta.class}`}>{delta.text}</td>
-                          <td class="py-2 text-right text-stone-500">{summary.statistics.n}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </details>
-          );
-        })}
-      </div>
-    </section>
-
-    <!-- OCEAN Correlation Section -->
-    <section class="mb-12">
-      <h2 class="text-2xl font-bold text-amber-100 mb-6">OCEAN Personality Correlations</h2>
-      <p class="text-stone-300 mb-4">
-        Exploring how Big Five personality traits correlate with benchmark performance.
-        OCEAN profiles shape agent behavior and task approach.
-      </p>
-
-      <div class="bg-stone-800 border border-stone-700 rounded-lg p-6">
-        <div class="grid gap-4 md:grid-cols-5 text-center">
-          <div class="bg-stone-700 rounded-lg p-4 shadow-sm">
-            <div class="text-2xl font-bold text-purple-400">O</div>
-            <div class="text-sm text-stone-300">Openness</div>
-            <div class="text-xs text-stone-500 mt-1">Creativity, curiosity</div>
-          </div>
-          <div class="bg-stone-700 rounded-lg p-4 shadow-sm">
-            <div class="text-2xl font-bold text-blue-400">C</div>
-            <div class="text-sm text-stone-300">Conscientiousness</div>
-            <div class="text-xs text-stone-500 mt-1">Organization, diligence</div>
-          </div>
-          <div class="bg-stone-700 rounded-lg p-4 shadow-sm">
-            <div class="text-2xl font-bold text-green-400">E</div>
-            <div class="text-sm text-stone-300">Extraversion</div>
-            <div class="text-xs text-stone-500 mt-1">Assertiveness, energy</div>
-          </div>
-          <div class="bg-stone-700 rounded-lg p-4 shadow-sm">
-            <div class="text-2xl font-bold text-yellow-400">A</div>
-            <div class="text-sm text-stone-300">Agreeableness</div>
-            <div class="text-xs text-stone-500 mt-1">Cooperation, trust</div>
-          </div>
-          <div class="bg-stone-700 rounded-lg p-4 shadow-sm">
-            <div class="text-2xl font-bold text-red-400">N</div>
-            <div class="text-sm text-stone-300">Neuroticism</div>
-            <div class="text-xs text-stone-500 mt-1">Emotional sensitivity</div>
+      <h2 class="text-xl font-semibold text-amber-100 mb-3">How Tiers Work</h2>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <h3 class="text-amber-200 font-medium mb-2">Team Delta Scoring</h3>
+          <p class="text-stone-300 text-sm mb-3">
+            <strong>Team Delta</strong> = Dev Delta + Reviewer Delta + TEA Delta
+          </p>
+          <p class="text-stone-400 text-sm">
+            Each role is compared against a control baseline. Higher team delta means better combined tactical performance.
+          </p>
+          <div class="mt-3 text-xs text-stone-500">
+            <div>Dev baseline: {tiersData.metadata.baselines.dev}</div>
+            <div>Reviewer baseline: {tiersData.metadata.baselines.reviewer}</div>
+            <div>TEA baseline: {tiersData.metadata.baselines.tea}</div>
           </div>
         </div>
-        <p class="text-stone-400 text-sm mt-4 text-center">
-          Each persona has unique OCEAN scores (1-5 scale) that influence their problem-solving approach.
-          <a href="/compare" class="text-amber-500 underline hover:text-amber-400 ml-1">
-            Compare personas by personality
-          </a>
-        </p>
+        <div>
+          <h3 class="text-amber-200 font-medium mb-2">Why Team Performance?</h3>
+          <p class="text-stone-400 text-sm">
+            Themes are typically used as a complete team, not mixed-and-matched. This ranking focuses on the <strong class="text-stone-300">tactical agents</strong> that do implementation work: Dev writes code, Reviewer reviews it, TEA tests it.
+          </p>
+          <p class="text-stone-500 text-xs mt-2">
+            SM (Scrum Master) excluded — it's strategic/coordination, not tactical.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tier Overview Cards -->
+    <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
+      {Object.entries(tierCounts).map(([tier, count]) => (
+        <a href={`#tier-${tier}`} class="bg-stone-800 border border-stone-700 rounded-lg p-4 text-center hover:border-amber-500 transition-colors">
+          <div class={`inline-block px-3 py-1 rounded-full text-sm font-bold mb-2 ${tierColors[tier]}`}>
+            {tier}
+          </div>
+          <div class="text-2xl font-bold text-stone-200">{count}</div>
+          <div class="text-xs text-stone-500">{tiersData.metadata.tierCriteria[tier as keyof typeof tiersData.metadata.tierCriteria].label}</div>
+        </a>
+      ))}
+    </section>
+
+    <!-- S-Tier Section -->
+    <section id="tier-S" class="mb-10">
+      <div class="flex items-center gap-3 mb-4">
+        <span class={`px-4 py-2 rounded-lg text-lg font-bold ${tierColors['S']}`}>S-Tier</span>
+        <span class="text-stone-400">Elite Teams — Delta +35 or higher</span>
+      </div>
+      <p class="text-stone-400 text-sm mb-4">{tierDescriptions['S']}</p>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-stone-400 text-left border-b border-stone-700">
+              <th class="pb-3 pr-4">Theme</th>
+              <th class="pb-3 px-2 text-center">Dev</th>
+              <th class="pb-3 px-2 text-center">Rev</th>
+              <th class="pb-3 px-2 text-center">TEA</th>
+              <th class="pb-3 px-2 text-right">Team Delta</th>
+              <th class="pb-3 pl-4">Standout</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tiersData.tiers.S.map((entry) => {
+              const devDelta = formatDelta(entry.dev?.delta);
+              const revDelta = formatDelta(entry.reviewer?.delta);
+              const teaDelta = formatDelta(entry.tea?.delta);
+              return (
+                <tr class="border-t border-stone-700/50 hover:bg-stone-700/30">
+                  <td class="py-3 pr-4">
+                    <a href={getThemeLink(entry.theme)} class="font-semibold text-amber-200 hover:text-amber-100">
+                      {entry.theme}
+                    </a>
+                  </td>
+                  <td class="py-3 px-2 text-center">
+                    <span class="text-stone-300">{entry.dev?.score?.toFixed(1) || '—'}</span>
+                    <span class={`text-xs ml-1 ${devDelta.colorClass}`}>({devDelta.text})</span>
+                  </td>
+                  <td class="py-3 px-2 text-center">
+                    <span class="text-stone-300">{entry.reviewer?.score?.toFixed(1) || '—'}</span>
+                    <span class={`text-xs ml-1 ${revDelta.colorClass}`}>({revDelta.text})</span>
+                  </td>
+                  <td class="py-3 px-2 text-center">
+                    <span class="text-stone-300">{entry.tea?.score?.toFixed(1) || '—'}</span>
+                    <span class={`text-xs ml-1 ${teaDelta.colorClass}`}>({teaDelta.text})</span>
+                  </td>
+                  <td class="py-3 px-2 text-right">
+                    <span class="text-lg font-bold text-green-400">+{entry.teamDelta.toFixed(1)}</span>
+                  </td>
+                  <td class="py-3 pl-4 text-stone-400 text-xs italic">{entry.standout}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- A-Tier Section -->
+    <section id="tier-A" class="mb-10">
+      <div class="flex items-center gap-3 mb-4">
+        <span class={`px-4 py-2 rounded-lg text-lg font-bold ${tierColors['A']}`}>A-Tier</span>
+        <span class="text-stone-400">Excellent Teams — Delta +25 to +34.99</span>
+      </div>
+      <p class="text-stone-400 text-sm mb-4">{tierDescriptions['A']}</p>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-stone-400 text-left border-b border-stone-700">
+              <th class="pb-3 pr-4">Theme</th>
+              <th class="pb-3 px-2 text-center">Dev</th>
+              <th class="pb-3 px-2 text-center">Rev</th>
+              <th class="pb-3 px-2 text-center">TEA</th>
+              <th class="pb-3 px-2 text-right">Team Delta</th>
+              <th class="pb-3 pl-4">Standout</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tiersData.tiers.A.map((entry) => {
+              const devDelta = formatDelta(entry.dev?.delta);
+              const revDelta = formatDelta(entry.reviewer?.delta);
+              const teaDelta = formatDelta(entry.tea?.delta);
+              return (
+                <tr class="border-t border-stone-700/50 hover:bg-stone-700/30">
+                  <td class="py-3 pr-4">
+                    <a href={getThemeLink(entry.theme)} class="font-semibold text-purple-300 hover:text-purple-200">
+                      {entry.theme}
+                    </a>
+                  </td>
+                  <td class="py-3 px-2 text-center">
+                    <span class="text-stone-300">{entry.dev?.score?.toFixed(1) || '—'}</span>
+                    <span class={`text-xs ml-1 ${devDelta.colorClass}`}>({devDelta.text})</span>
+                  </td>
+                  <td class="py-3 px-2 text-center">
+                    <span class="text-stone-300">{entry.reviewer?.score?.toFixed(1) || '—'}</span>
+                    <span class={`text-xs ml-1 ${revDelta.colorClass}`}>({revDelta.text})</span>
+                  </td>
+                  <td class="py-3 px-2 text-center">
+                    <span class="text-stone-300">{entry.tea?.score?.toFixed(1) || '—'}</span>
+                    <span class={`text-xs ml-1 ${teaDelta.colorClass}`}>({teaDelta.text})</span>
+                  </td>
+                  <td class="py-3 px-2 text-right">
+                    <span class="font-bold text-green-400">+{entry.teamDelta.toFixed(1)}</span>
+                  </td>
+                  <td class="py-3 pl-4 text-stone-400 text-xs italic">{entry.standout}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- B-Tier Section -->
+    <section id="tier-B" class="mb-10">
+      <div class="flex items-center gap-3 mb-4">
+        <span class={`px-4 py-2 rounded-lg text-lg font-bold ${tierColors['B']}`}>B-Tier</span>
+        <span class="text-stone-400">Strong Teams — Delta +15 to +24.99</span>
+      </div>
+      <p class="text-stone-400 text-sm mb-4">{tierDescriptions['B']}</p>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-stone-400 text-left border-b border-stone-700">
+              <th class="pb-3 pr-4">Theme</th>
+              <th class="pb-3 px-2 text-center">Dev</th>
+              <th class="pb-3 px-2 text-center">Rev</th>
+              <th class="pb-3 px-2 text-center">TEA</th>
+              <th class="pb-3 px-2 text-right">Team Delta</th>
+              <th class="pb-3 pl-4">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tiersData.tiers.B.map((entry) => {
+              const devDelta = formatDelta(entry.dev?.delta);
+              const revDelta = formatDelta(entry.reviewer?.delta);
+              const teaDelta = formatDelta(entry.tea?.delta);
+              return (
+                <tr class="border-t border-stone-700/50 hover:bg-stone-700/30">
+                  <td class="py-3 pr-4">
+                    <a href={getThemeLink(entry.theme)} class="font-semibold text-blue-300 hover:text-blue-200">
+                      {entry.theme}
+                    </a>
+                  </td>
+                  <td class="py-3 px-2 text-center">
+                    <span class="text-stone-300">{entry.dev?.score?.toFixed(1) || '—'}</span>
+                    <span class={`text-xs ml-1 ${devDelta.colorClass}`}>({devDelta.text})</span>
+                  </td>
+                  <td class="py-3 px-2 text-center">
+                    <span class="text-stone-300">{entry.reviewer?.score?.toFixed(1) || '—'}</span>
+                    <span class={`text-xs ml-1 ${revDelta.colorClass}`}>({revDelta.text})</span>
+                  </td>
+                  <td class="py-3 px-2 text-center">
+                    <span class="text-stone-300">{entry.tea?.score?.toFixed(1) || '—'}</span>
+                    <span class={`text-xs ml-1 ${teaDelta.colorClass}`}>({teaDelta.text})</span>
+                  </td>
+                  <td class="py-3 px-2 text-right">
+                    <span class="font-bold text-green-400">+{entry.teamDelta.toFixed(1)}</span>
+                  </td>
+                  <td class="py-3 pl-4 text-stone-400 text-xs italic">{entry.standout}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- C-Tier Section -->
+    <section id="tier-C" class="mb-10">
+      <div class="flex items-center gap-3 mb-4">
+        <span class={`px-4 py-2 rounded-lg text-lg font-bold ${tierColors['C']}`}>C-Tier</span>
+        <span class="text-stone-400">Good Teams — Delta +5 to +14.99</span>
+      </div>
+      <p class="text-stone-400 text-sm mb-4">{tierDescriptions['C']}</p>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-stone-400 text-left border-b border-stone-700">
+              <th class="pb-3 pr-4">Theme</th>
+              <th class="pb-3 px-2 text-right">Team Delta</th>
+              <th class="pb-3 pl-4">Weakness</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tiersData.tiers.C.map((entry) => (
+              <tr class="border-t border-stone-700/50 hover:bg-stone-700/30">
+                <td class="py-2 pr-4">
+                  <a href={getThemeLink(entry.theme)} class="font-medium text-green-300 hover:text-green-200">
+                    {entry.theme}
+                  </a>
+                  {entry.optimized && <span class="ml-2 text-xs text-amber-500">optimized</span>}
+                </td>
+                <td class="py-2 px-2 text-right">
+                  <span class="text-yellow-400">+{entry.teamDelta.toFixed(1)}</span>
+                </td>
+                <td class="py-2 pl-4 text-stone-500 text-xs">{entry.standout}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- D-Tier Section -->
+    <section id="tier-D" class="mb-10">
+      <div class="flex items-center gap-3 mb-4">
+        <span class={`px-4 py-2 rounded-lg text-lg font-bold ${tierColors['D']}`}>D-Tier</span>
+        <span class="text-stone-400">Below Average — Delta below +5</span>
+      </div>
+      <p class="text-stone-400 text-sm mb-4">{tierDescriptions['D']}</p>
+
+      <div class="grid md:grid-cols-2 gap-4">
+        {tiersData.tiers.D.map((entry) => (
+          <div class="bg-stone-800/50 border border-stone-700 rounded-lg p-4">
+            <a href={getThemeLink(entry.theme)} class="font-medium text-red-300 hover:text-red-200">
+              {entry.theme}
+            </a>
+            <span class={`ml-3 ${entry.teamDelta >= 0 ? 'text-yellow-400' : 'text-red-400'}`}>
+              {entry.teamDelta >= 0 ? '+' : ''}{entry.teamDelta.toFixed(1)}
+            </span>
+            <p class="text-stone-500 text-xs mt-1">{entry.standout}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- U-Tier Section (Collapsed) -->
+    <section id="tier-U" class="mb-10">
+      <details class="bg-stone-800 border border-stone-700 rounded-lg">
+        <summary class="p-4 cursor-pointer hover:bg-stone-700/50 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class={`px-4 py-2 rounded-lg text-lg font-bold ${tierColors['U']}`}>U-Tier</span>
+            <span class="text-stone-400">Unbenchmarked — {tiersData.tiers.U.length} themes</span>
+          </div>
+          <span class="text-stone-500 text-sm">Click to expand</span>
+        </summary>
+        <div class="p-4 border-t border-stone-700">
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 text-sm">
+            {tiersData.tiers.U.map((entry) => (
+              <div class="flex items-center gap-2">
+                <a href={getThemeLink(entry.theme)} class="text-stone-400 hover:text-stone-300">
+                  {entry.theme}
+                </a>
+                <span class="text-stone-600 text-xs">({entry.source})</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- Role Leaders Section -->
+    <section class="mb-10">
+      <h2 class="text-2xl font-bold text-amber-100 mb-6">Role-by-Role Leaders</h2>
+
+      <div class="grid md:grid-cols-3 gap-6">
+        <!-- Best Dev -->
+        <div class="bg-stone-800 border border-stone-700 rounded-lg p-4">
+          <h3 class="text-lg font-semibold text-amber-100 mb-3 border-b border-stone-600 pb-2">
+            Best Dev (Implementation)
+          </h3>
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-stone-500">
+                <th class="text-left pb-2">Theme</th>
+                <th class="text-right pb-2">Score</th>
+                <th class="text-right pb-2">Delta</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tiersData.roleLeaders.dev.map((entry, i) => (
+                <tr class="border-t border-stone-700/50">
+                  <td class="py-2">
+                    <span class="text-stone-500 mr-2">{i + 1}.</span>
+                    <a href={getThemeLink(entry.theme)} class="text-stone-300 hover:text-amber-200">
+                      {entry.theme}
+                    </a>
+                  </td>
+                  <td class="py-2 text-right text-stone-400">{entry.score.toFixed(1)}</td>
+                  <td class="py-2 text-right text-green-400">+{entry.delta.toFixed(1)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Best Reviewer -->
+        <div class="bg-stone-800 border border-stone-700 rounded-lg p-4">
+          <h3 class="text-lg font-semibold text-amber-100 mb-3 border-b border-stone-600 pb-2">
+            Best Reviewer (Code Review)
+          </h3>
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-stone-500">
+                <th class="text-left pb-2">Theme</th>
+                <th class="text-right pb-2">Score</th>
+                <th class="text-right pb-2">Delta</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tiersData.roleLeaders.reviewer.map((entry, i) => (
+                <tr class="border-t border-stone-700/50">
+                  <td class="py-2">
+                    <span class="text-stone-500 mr-2">{i + 1}.</span>
+                    <a href={getThemeLink(entry.theme)} class="text-stone-300 hover:text-amber-200">
+                      {entry.theme}
+                    </a>
+                  </td>
+                  <td class="py-2 text-right text-stone-400">{entry.score.toFixed(1)}</td>
+                  <td class="py-2 text-right text-green-400">+{entry.delta.toFixed(1)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Best TEA -->
+        <div class="bg-stone-800 border border-stone-700 rounded-lg p-4">
+          <h3 class="text-lg font-semibold text-amber-100 mb-3 border-b border-stone-600 pb-2">
+            Best TEA (Testing)
+          </h3>
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-stone-500">
+                <th class="text-left pb-2">Theme</th>
+                <th class="text-right pb-2">Score</th>
+                <th class="text-right pb-2">Delta</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tiersData.roleLeaders.tea.map((entry, i) => (
+                <tr class="border-t border-stone-700/50">
+                  <td class="py-2">
+                    <span class="text-stone-500 mr-2">{i + 1}.</span>
+                    <a href={getThemeLink(entry.theme)} class="text-stone-300 hover:text-amber-200">
+                      {entry.theme}
+                    </a>
+                  </td>
+                  <td class="py-2 text-right text-stone-400">{entry.score.toFixed(1)}</td>
+                  <td class="py-2 text-right text-green-400">+{entry.delta.toFixed(1)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- OCEAN Correlations Section -->
+    <section class="mb-10">
+      <h2 class="text-2xl font-bold text-amber-100 mb-6">OCEAN Personality Correlations</h2>
+
+      <div class="bg-stone-800 border border-stone-700 rounded-lg p-6 mb-6">
+        <h3 class="text-lg font-semibold text-amber-200 mb-4">Key Findings</h3>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {tiersData.oceanCorrelations.findings.map((f) => (
+            <div class="bg-stone-700/50 rounded-lg p-3">
+              <div class="flex items-center gap-2 mb-1">
+                <span class={`font-bold ${
+                  f.trait === 'O' ? 'text-purple-400' :
+                  f.trait === 'C' ? 'text-blue-400' :
+                  f.trait === 'E' ? 'text-green-400' :
+                  f.trait === 'A' ? 'text-yellow-400' :
+                  'text-red-400'
+                }`}>{f.trait}</span>
+                <span class="text-stone-300 text-sm">{f.finding}</span>
+              </div>
+              <p class="text-stone-500 text-xs">{f.implication}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div class="bg-stone-800 border border-stone-700 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-amber-200 mb-4">Ideal OCEAN Profiles by Role</h3>
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Object.entries(tiersData.oceanCorrelations.idealProfiles).map(([role, profile]) => (
+            <div class="bg-stone-700/50 rounded-lg p-4">
+              <h4 class="font-semibold text-stone-200 mb-2 uppercase text-sm">{role}</h4>
+              <div class="flex gap-1 mb-2">
+                <span class={`px-2 py-0.5 rounded text-xs font-mono ${profile.O === 'H' ? 'bg-purple-500/30 text-purple-300' : profile.O === 'L' ? 'bg-purple-500/10 text-purple-500' : 'bg-purple-500/20 text-purple-400'}`}>O:{profile.O}</span>
+                <span class={`px-2 py-0.5 rounded text-xs font-mono ${profile.C === 'H' ? 'bg-blue-500/30 text-blue-300' : profile.C === 'L' ? 'bg-blue-500/10 text-blue-500' : 'bg-blue-500/20 text-blue-400'}`}>C:{profile.C}</span>
+                <span class={`px-2 py-0.5 rounded text-xs font-mono ${profile.E === 'H' ? 'bg-green-500/30 text-green-300' : profile.E === 'L' ? 'bg-green-500/10 text-green-500' : 'bg-green-500/20 text-green-400'}`}>E:{profile.E}</span>
+                <span class={`px-2 py-0.5 rounded text-xs font-mono ${profile.A === 'H' ? 'bg-yellow-500/30 text-yellow-300' : profile.A === 'L' ? 'bg-yellow-500/10 text-yellow-500' : 'bg-yellow-500/20 text-yellow-400'}`}>A:{profile.A}</span>
+                <span class={`px-2 py-0.5 rounded text-xs font-mono ${profile.N === 'H' ? 'bg-red-500/30 text-red-300' : profile.N === 'L' ? 'bg-red-500/10 text-red-500' : 'bg-red-500/20 text-red-400'}`}>N:{profile.N}</span>
+              </div>
+              <p class="text-stone-500 text-xs">{profile.description}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
 
@@ -307,24 +511,25 @@ function formatDelta(delta: number | undefined): { text: string; class: string }
       <h2 class="text-xl font-semibold text-amber-100 mb-4">Benchmark Summary</h2>
       <div class="grid gap-4 md:grid-cols-4 text-center">
         <div>
-          <div class="text-3xl font-bold text-amber-100">{summaries.length}</div>
-          <div class="text-stone-400 text-sm">Total Evaluations</div>
+          <div class="text-3xl font-bold text-amber-100">{totalBenchmarked}</div>
+          <div class="text-stone-400 text-sm">Themes Benchmarked</div>
         </div>
         <div>
-          <div class="text-3xl font-bold text-amber-100">{scenarios.length}</div>
-          <div class="text-stone-400 text-sm">Scenarios</div>
+          <div class="text-3xl font-bold text-amber-100">{tiersData.tiers.U.length}</div>
+          <div class="text-stone-400 text-sm">Awaiting Benchmarks</div>
         </div>
         <div>
-          <div class="text-3xl font-bold text-amber-100">{roles.length}</div>
-          <div class="text-stone-400 text-sm">Agent Roles</div>
+          <div class="text-3xl font-bold text-green-400">{tierCounts.S + tierCounts.A}</div>
+          <div class="text-stone-400 text-sm">S/A Tier (Recommended)</div>
         </div>
         <div>
-          <div class="text-3xl font-bold text-amber-100">
-            {new Set(summaries.map(s => s.agent.theme)).size}
-          </div>
-          <div class="text-stone-400 text-sm">Themes Tested</div>
+          <div class="text-3xl font-bold text-amber-100">3</div>
+          <div class="text-stone-400 text-sm">Roles Evaluated</div>
         </div>
       </div>
+      <p class="text-stone-500 text-xs mt-4 text-center">
+        Data from job fair benchmarks (Jan 4-12, 2026). See <a href="https://github.com/1898andCo/pennyfarthing/blob/main/docs/THEME-TIERS.md" class="text-amber-500 hover:text-amber-400">THEME-TIERS.md</a> for full methodology.
+      </p>
     </section>
   </div>
 </Base>
