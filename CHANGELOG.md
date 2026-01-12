@@ -11,6 +11,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [6.2.0] - 2026-01-12
+
+### Sprint 9: Multimodal Images & Smart Detection
+
+This release delivers multimodal image support for Cyclist, intelligent question detection with confidence scoring, and robust session management with structured output markers.
+
+### Added
+
+#### Epic 28: Image Paste & Screenshot Support (14 pts)
+- **Clipboard Image Paste** (28-1) - Paste images directly into Cyclist editor from clipboard
+  - Supports PNG, JPEG, GIF, WebP formats
+  - Automatic base64 encoding for Claude API
+  - Preview thumbnail with remove button
+- **Image Size Validation** (28-5) - Validate and warn on large images
+  - Block images over 20MB
+  - Warning indicator for images over 5MB
+  - Tooltip showing file size
+- **Multiple Image Support** (28-6) - Attach multiple images to a single message
+  - Flex-wrap thumbnail grid
+  - Individual remove buttons with correct index handling
+  - "Clear All" button when 2+ images attached
+
+#### Epic 25: Smart Question Detection (13 pts)
+- **Universal Yes/Proceed Detection** (25-4) - Detect common confirmation prompts
+- **Handoff and Action Prompts** (25-3) - Recognize agent transitions and suggested actions
+- **Structured Output Markers** (25-5) - Machine-readable markers for quick-action UI
+  - `<!-- CYCLIST:YES_NO:... -->` for confirmations
+  - `<!-- CYCLIST:HANDOFF:... -->` for agent transitions
+  - `<!-- CYCLIST:ACTION:... -->` for clickable actions
+- **Confidence Scoring** (25-6) - Score detection patterns for accuracy
+  - High/medium/low confidence levels
+  - Threshold-based filtering
+
+#### Epic 23: Cyclist Command Integration (8 pts)
+- **Command Abstraction Layer** (23-2) - IPC bridge for Claude Code commands
+- **Clear Session Reset** (23-2) - Full state reset including tool events and context
+- **Compact Button** (23-4) - Context-aware UI for space-constrained displays
+
+#### Epic 8: State Reconciliation (8 pts)
+- **Git Hook PR Detection** - Automatic PR state tracking
+- **Startup Drift Detection** (8-2) - Detect session/reality mismatches on launch
+- **Session Boundary Breadcrumbs** (8-3) - Track context across session boundaries
+
+#### Epic 9: Skill Discovery & Documentation (13 pts)
+- **Skill Registry Schema** (9-1) - YAML-based skill metadata catalog
+- **Skill Search Utility** (9-2) - Find skills by keyword and category
+- **Skill Documentation Generator** (9-3) - Auto-generate skill docs from schema
+- **Skill Usage Analytics** (9-4) - Track skill invocation patterns
+
+#### Other Enhancements
+- **OTEL Web Mode** (20-1) - Auto-configure telemetry for web environments
+- **Tool Execution Audit Log** (22-1) - Track all tool executions for debugging
+- **Usage Limits Display** - Real-time usage stats via ccusage integration
+
+### Fixed
+- **Dogfood Structure Migration** (26-1) - Align .claude/ with fresh init structure
+- **UX Polish** (27-1) - Editor focus, diff panel scroll behavior
+- **Markdown Parser** - Strip CYCLIST markers before HTML escape
+- **Usage Display Accuracy** - Correct polling and display logic
+- **Clear State Reset** - Properly reset all session state on /clear
+- **Diff Panel Scroll** - Enable horizontal scroll for long lines
+
+### Summary
+| Metric | Value |
+|--------|-------|
+| Stories Completed | 28 |
+| Points Delivered | 38 |
+| Sprint Velocity Target | 22 pts |
+| Actual Delivery | 173% of target |
+
+---
+
 ## [6.1.0] - 2026-01-10
 
 ### Rich Telemetry, Tool Visibility & Command Expansion
