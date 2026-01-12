@@ -1,34 +1,16 @@
 # Pennyfarthing Backlog
 # Future epics and stories not yet committed to a sprint
+# Updated: 2026-01-11
 
 backlog:
   epics:
-    - id: epic-3
-      title: "Automatic Context Management & Circuit Breaker"
-      description: |
-        Implement automatic context monitoring that detects when agents
-        approach 70% threshold and triggers handoffs or session continuation.
-        Add circuit breaker pattern to prevent runaway context usage.
-      points: 13
-      priority: P1
-      marker: "high-priority"
-      repos: pennyfarthing
-      status: complete
-      notes: |
-        All stories completed across Sprints 3, 6, and 7.
-        - 3-1: Context usage tracking (done Sprint 3)
-        - 3-2: 70% threshold warning (done Sprint 3)
-        - 3-3: 85% circuit breaker (done Sprint 6)
-        - 3-4: Session continuation workflow (done Sprint 6)
-        - 3-5: Context in statusline (done Sprint 7)
-
     - id: epic-7
       title: "Agent Performance Benchmarking Suite"
       description: |
         Expand benchmarks/ with comprehensive performance testing.
         Measure token usage, latency, success rates, cost per agent.
         Generate performance regression reports.
-      points: 13
+      points: 2
       priority: P2
       marker: "strategic"
       repos: pennyfarthing
@@ -53,168 +35,43 @@ backlog:
             - Runs on PR merge
             - Reports published to repo
 
-    - id: epic-23
-      title: "Cyclist Claude Code Command Integration"
+    - id: epic-27
+      title: "Skill Frontmatter Enhancement"
       description: |
-        Expose high-value Claude Code commands through intuitive GUI elements
-        in Cyclist, with dedicated IPC handlers for clean architecture.
-        Priority commands: /status (usage limits), /compact, /rewind, /doctor.
-      points: 29
-      priority: P1
+        Improve skill discoverability by enhancing SKILL.md frontmatter per
+        Anthropic's official guidance. Follow-on to Epic 9's infrastructure work.
+        Inspired by patterns from Superpowers framework and anthropics/skills repo.
+      points: 10
+      priority: P3
       marker: "strategic"
-      repos: cyclist
-      status: planned
-      plan_file: ~/.claude/plans/staged-stirring-newt.md
+      repos: pennyfarthing
+      status: backlog
       stories:
-        - id: "23-1"
-          title: "Usage Limits in Stats Strip"
-          description: |
-            Display remaining Claude credits in the stats strip:
-            - 5-hour block remaining (as %)
-            - Weekly remaining (as %)
-            - Reset timestamps on hover
-            Color coding: Green (>50%), Yellow (25-50%), Red (<25%)
-          points: 3
-          priority: P0
-          status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - 5-hour block % displayed in stats strip
-            - Weekly % displayed in stats strip
-            - Color coding reflects remaining capacity
-            - Hover shows reset timestamp
-            - Polls periodically to stay current
-            - Works with Pro and Max plans
-
-        - id: "23-2"
-          title: "Fix Clear to Reset All Session State"
-          description: |
-            Current clear button leaves stale data in:
-            - Changed files panel (not cleared)
-            - Diffs panel (not cleared)
-            - Agent panel / agent selection (shows stale agent)
+        - id: "27-1"
+          title: "Enhance skill descriptions with 'when to use' context"
           points: 2
           priority: P1
           status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Clear resets changed files panel to empty
-            - Clear resets diffs panel to empty
-            - Clear resets agent panel (no agent selected)
-            - Clear resets context % to 0 or "—"
-            - Clear resets token counts to 0 or "—"
-
-        - id: "23-3"
-          title: "Command Abstraction Layer (IPC)"
-          description: |
-            Create dedicated IPC handlers for Claude Code commands
-            rather than PTY injection. Define IPC_COMMAND_CHANNELS,
-            expose via preload, handle in main.ts.
-          points: 3
-          priority: P1
+        - id: "27-2"
+          title: "Add allowed-tools to context-sensitive skills"
+          points: 1
+          priority: P2
           status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - IPC channels defined as constants
-            - Handlers registered in setupCommandIPCHandlers()
-            - Preload exposes command API
-            - Commands execute in Claude PTY session
-            - Results broadcast back to renderer
-
-        - id: "23-4"
-          title: "Compact Button with Context Awareness"
-          description: |
-            Add compact button that appears contextually when context > 50%.
-            Always accessible via keyboard shortcut (Cmd+Shift+K).
-          points: 3
-          priority: P1
-          status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Compact button appears when context > 50%
-            - Cmd+Shift+K triggers compact from anywhere
-            - After compact, context % updates
-            - Works in both Electron and web modes
-
-        - id: "23-5"
-          title: "Keyboard Shortcuts System"
-          description: |
-            Global keyboard shortcuts for common commands.
-            Cmd+Shift+K (Compact), Cmd+Shift+D (Doctor), Cmd+Shift+P (Palette).
+        - id: "27-3"
+          title: "Progressive disclosure for large skills"
           points: 2
           priority: P2
           status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Shortcuts work when app is focused
-            - Shortcuts shown in Electron menu
-            - No conflicts with system shortcuts
-
-        - id: "23-6"
-          title: "Command Palette (Cmd+Shift+P)"
-          description: |
-            VS Code-style searchable command palette.
-            Fuzzy search all Claude Code commands + Pennyfarthing skills.
-            Recent commands at top, keyboard navigation.
-          points: 5
-          priority: P2
-          status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Cmd+Shift+P opens palette
-            - Fuzzy search filters commands
-            - Arrow keys navigate, Enter executes
-            - Escape closes palette
-            - Recent commands appear first
-
-        - id: "23-7"
-          title: "Doctor Diagnostics Panel"
-          description: |
-            Visual health check dashboard instead of raw /doctor output.
-            Green/Yellow/Red status indicators, actionable suggestions.
+        - id: "27-4"
+          title: "Create systematic-debugging skill"
           points: 3
+          priority: P1
+          status: backlog
+        - id: "27-5"
+          title: "Add severity levels to Reviewer agent"
+          points: 2
           priority: P2
           status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Doctor accessible from menu and shortcut
-            - Parses /doctor output into structured data
-            - Visual indicators for each health check
-            - Shows suggestions for failed checks
-
-        - id: "23-8"
-          title: "Rewind Timeline MVP"
-          description: |
-            Visual timeline of conversation checkpoints for time travel.
-            Timeline bar with checkpoint markers, hover to preview,
-            click to rewind with confirmation.
-          points: 5
-          priority: P2
-          status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Timeline shows available checkpoints
-            - Checkpoints have timestamps and summaries
-            - Clicking checkpoint shows preview
-            - Confirm before rewinding
-            - After rewind, UI updates to new state
-
-        - id: "23-9"
-          title: "Rewind Preview & Confirmation"
-          description: |
-            Enhanced rewind with preview before committing.
-            Shows what will be lost, diff between states,
-            option to bookmark before rewinding.
-          points: 3
-          priority: P3
-          status: backlog
-          depends_on: "23-8"
-          repos: cyclist
-          acceptance_criteria:
-            - Preview modal shows checkpoint content
-            - Shows what messages will be lost
-            - Can cancel without changes
-            - Optional bookmark creation
 
     - id: epic-24
       title: "Configuration & Theme Switcher Panels"
@@ -223,637 +80,75 @@ backlog:
         and Cyclist preferences. Rich theme browser with search, OCEAN
         profiles, character previews, and favorites.
       points: 21
-      priority: P2
+      priority: P4
       marker: "ux"
       repos: cyclist, pennyfarthing
-      status: planned
+      status: backlog
+      notes: |
+        Lower priority - may be cut like Epic 23's polish stories.
       stories:
         - id: "24-1"
           title: "Settings Panel Infrastructure"
-          description: |
-            Create tabbed settings panel accessible from menu (Cmd+,).
-            Tabs: Pennyfarthing, Claude Code, Cyclist, Themes.
-            Persistent state, apply/cancel buttons.
           points: 3
           priority: P1
           status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Settings panel opens from menu and Cmd+,
-            - Tabbed interface with 4 sections
-            - Changes apply on save, cancel discards
-            - Panel remembers last active tab
-
         - id: "24-2"
           title: "Pennyfarthing Settings Section"
-          description: |
-            Settings for Pennyfarthing configuration:
-            - Current theme display
-            - Sprint settings (velocity target, etc.)
-            - Session preferences
-            - Sidecar memory options
           points: 2
           priority: P1
           status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Displays current theme with preview
-            - Editable sprint settings
-            - Settings persist to persona-config.yaml
-
         - id: "24-3"
           title: "Claude Code Settings Section"
-          description: |
-            Expose key Claude Code /config options:
-            - Model selection (if applicable)
-            - Permission defaults
-            - Auto-compact threshold
-            - Verbose mode toggle
           points: 2
           priority: P2
           status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Key Claude Code settings exposed
-            - Changes apply to Claude session
-            - Reflects current /config state
-
         - id: "24-4"
           title: "Cyclist Preferences Section"
-          description: |
-            Cyclist-specific preferences:
-            - UI layout options
-            - Panel visibility defaults
-            - Keyboard shortcut customization
-            - Stats strip configuration
           points: 2
           priority: P2
           status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Cyclist prefs editable in panel
-            - Persist to settings-store
-            - Apply immediately or on save
-
         - id: "24-5"
           title: "Theme Browser with Search"
-          description: |
-            Full theme browser panel with:
-            - Grid of all 96+ themes
-            - Search by name, tags, characters
-            - Filter by OCEAN traits
-            - Sort by name, popularity, recent
           points: 5
           priority: P1
           status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Shows all available themes in grid
-            - Search filters themes in real-time
-            - OCEAN trait filtering works
-            - Themes load from pennyfarthing-dist/personas/themes/
-
         - id: "24-6"
           title: "Theme Preview with Portraits"
-          description: |
-            Rich theme preview on hover/select:
-            - All 10 agent portraits for theme
-            - Character names and roles
-            - OCEAN spider chart
-            - Theme description and tags
           points: 3
           priority: P1
           status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Preview shows all agent portraits
-            - OCEAN chart rendered
-            - Character quotes displayed
-            - Can select theme from preview
-
         - id: "24-7"
           title: "Theme Favorites"
-          description: |
-            Favorite themes for quick access:
-            - Star/heart to favorite a theme
-            - Favorites section at top of browser
-            - Persist to localStorage/settings
           points: 2
           priority: P2
           status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Can favorite/unfavorite themes
-            - Favorites appear at top
-            - Persist across sessions
-
         - id: "24-8"
           title: "Quick Theme Switcher"
-          description: |
-            Fast theme switching from menu bar:
-            - Menu item shows current theme
-            - Submenu with favorites + recent
-            - "Browse All..." opens full browser
-            - Keyboard shortcut (Cmd+Shift+T)
           points: 2
           priority: P2
           status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Theme submenu in View menu
-            - Shows favorites and recent
-            - Keyboard shortcut works
-            - Theme changes immediately
-
-    - id: epic-25
-      title: "Smart Question Detection & Quick Actions"
-      description: |
-        Improve Cyclist's ability to detect when Claude is asking questions
-        or prompting for action. Reduce false positives (enumerations mistaken
-        for questions), catch handoff prompts, and add "yes, proceed" buttons.
-        Two-pronged approach: better parsing AND easier-to-parse Claude output.
-      points: 18
-      priority: P1
-      marker: "ux"
-      repos: cyclist, pennyfarthing
-      status: planned
-      stories:
-        - id: "25-1"
-          title: "Audit Current Quick Actions Detection"
-          description: |
-            Review and document current detection patterns in quick-actions.js.
-            Identify false positive patterns (enumerations, lists that aren't choices).
-            Catalog missed patterns (handoffs, confirmations, proceed prompts).
-          points: 2
-          priority: P1
-          status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Document all current detection patterns
-            - List of false positive examples
-            - List of missed pattern examples
-            - Recommendations for fixes
-
-        - id: "25-2"
-          title: "Fix Enumeration False Positives"
-          description: |
-            Stop detecting numbered lists as choices when they're just enumerations.
-            Heuristics:
-            - Check if list items are actionable (verbs vs nouns)
-            - Check for question context before list
-            - Check list length (>5 items likely enumeration)
-            - Check for "here are" / "the following" prefixes
-          points: 3
-          priority: P1
-          status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Numbered lists without question context ignored
-            - "Here are the files" type lists not shown as choices
-            - Long lists (>5) treated as enumeration by default
-            - Reduces false positive rate significantly
-
-        - id: "25-3"
-          title: "Detect Handoff & Action Prompts"
-          description: |
-            Detect agent handoff and action prompts like:
-            - "invoke /reviewer to continue"
-            - "run /dev to implement"
-            - "use /sm to finish"
-            - "shall I proceed with..."
-            - "ready for review"
-            Show appropriate action button for each.
-          points: 3
-          priority: P1
-          status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Detects "invoke X" patterns
-            - Detects "ready for X" patterns
-            - Shows button to invoke the suggested command
-            - Works for all Pennyfarthing agents
-
-        - id: "25-4"
-          title: "Universal 'Yes, Proceed' Button"
-          description: |
-            Add smart "Yes, proceed" detection for general confirmations:
-            - "shall I..." / "should I..."
-            - "would you like me to..."
-            - "do you want me to..."
-            - "ready to..." / "proceed with..."
-            Always show "Yes" and "No" buttons for these.
-          points: 2
-          priority: P1
-          status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Detects confirmation question patterns
-            - Shows Yes/No buttons
-            - "Yes" sends affirmative response
-            - Works even without numbered options
-
-        - id: "25-5"
-          title: "Structured Output Markers (Claude-side)"
-          description: |
-            Add optional markers in Pennyfarthing agent output to make
-            parsing easier. Agents can emit structured hints:
-            - <!-- QUESTION: yes/no --> for confirmations
-            - <!-- CHOICES: 1,2,3 --> for numbered choices
-            - <!-- HANDOFF: /reviewer --> for handoffs
-            Cyclist detects these for guaranteed accurate parsing.
-          points: 3
-          priority: P2
-          status: backlog
-          repos: pennyfarthing, cyclist
-          acceptance_criteria:
-            - Marker format defined and documented
-            - Key agents emit markers for questions
-            - Cyclist parses markers with 100% accuracy
-            - Markers hidden from user display
-
-        - id: "25-6"
-          title: "Confidence Scoring for Detection"
-          description: |
-            Add confidence scores to quick action detection:
-            - High confidence: show buttons prominently
-            - Medium confidence: show buttons subtly
-            - Low confidence: don't show buttons
-            Tunable thresholds in settings.
-          points: 2
-          priority: P2
-          status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Detection returns confidence score
-            - UI varies by confidence level
-            - Threshold configurable in settings
-            - Reduces noise from uncertain detections
-
-        - id: "25-7"
-          title: "Quick Action Analytics"
-          description: |
-            Track quick action usage to improve detection:
-            - Log when buttons shown vs clicked
-            - Track false positive dismissals
-            - Identify patterns that need tuning
-            Report in diagnostics panel.
-          points: 3
-          priority: P3
-          status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Usage logged to session
-            - False positive tracking
-            - Analytics viewable in diagnostics
-            - Data informs future improvements
-
-    - id: epic-27
-      title: "Skill Frontmatter Enhancement"
-      description: |
-        Improve skill discoverability by enhancing SKILL.md frontmatter per
-        Anthropic's official guidance. Follow-on to Epic 9's infrastructure work.
-        Inspired by patterns from Superpowers framework and anthropics/skills repo.
-      points: 10
-      priority: P2
-      marker: "strategic"
-      repos: pennyfarthing
-      status: planned
-      stories:
-        - id: "27-1"
-          title: "Enhance skill descriptions with 'when to use' context"
-          description: |
-            Update all SKILL.md frontmatter descriptions to include explicit
-            "when to use" context per Anthropic's skill-creator guidance.
-            Description is the PRIMARY trigger mechanism - must include both
-            what the skill does AND specific contexts for when to use it.
-          points: 2
-          priority: P1
-          status: backlog
-          repos: pennyfarthing
-          acceptance_criteria:
-            - All 18 skills have enhanced descriptions
-            - Descriptions include numbered use cases
-            - Descriptions under 1024 char limit
-            - Skills trigger appropriately in testing
-
-        - id: "27-2"
-          title: "Add allowed-tools to context-sensitive skills"
-          description: |
-            Add allowed-tools frontmatter to skills that should have limited
-            tool access for safety and context efficiency.
-            - mermaid: Read, Write, Edit only
-            - yq: Bash, Read only
-            - jira: Bash only (jira CLI)
-          points: 1
-          priority: P2
-          status: backlog
-          repos: pennyfarthing
-          acceptance_criteria:
-            - allowed-tools added to appropriate skills
-            - Skills function correctly with limited tools
-            - Documented which skills have restrictions
-
-        - id: "27-3"
-          title: "Progressive disclosure for large skills"
-          description: |
-            Split large skills (>500 lines) into SKILL.md + references/ pattern.
-            - testing skill: split Go/Node patterns to references/
-            - dev-patterns: split to references/ by category
-            Keep SKILL.md as overview, load references as needed.
-          points: 2
-          priority: P2
-          status: backlog
-          repos: pennyfarthing
-          acceptance_criteria:
-            - Large skills restructured to references/ pattern
-            - SKILL.md under 500 lines
-            - References loaded on demand
-            - No functionality regression
-
-        - id: "27-4"
-          title: "Create systematic-debugging skill"
-          description: |
-            New skill for structured debugging methodology, inspired by
-            Superpowers framework patterns:
-            - Root cause tracing methodology
-            - Condition-based waiting patterns
-            - Defense in depth strategies
-            - Test pollution detection script
-          points: 3
-          priority: P1
-          status: backlog
-          repos: pennyfarthing
-          acceptance_criteria:
-            - SKILL.md with debugging methodology
-            - scripts/find-polluter.sh for test pollution
-            - references/ for detailed patterns
-            - Added to skill-registry.yaml
-
-        - id: "27-5"
-          title: "Add severity levels to Reviewer agent"
-          description: |
-            Enhance Reviewer agent output with categorized issue severity:
-            - Critical: Must fix before merge (security, data loss, crash)
-            - Important: Should fix (bugs, performance, maintainability)
-            - Suggestions: Nice to have (style, minor improvements)
-            Pattern from Superpowers code-reviewer agent.
-          points: 2
-          priority: P2
-          status: backlog
-          repos: pennyfarthing
-          acceptance_criteria:
-            - Reviewer categorizes issues by severity
-            - Critical issues block approval
-            - Important issues require acknowledgment
-            - Suggestions are advisory only
-
-    - id: epic-28
-      title: "Image Paste & Screenshot Support"
-      description: |
-        Enable users to share images with Claude through Cyclist via clipboard
-        paste. Supports pasting screenshots (Cmd+Shift+4, etc.), copied images,
-        and files copied from Finder/Explorer. Images are properly encoded for
-        Claude's multimodal vision capabilities.
-      points: 14
-      priority: P2
-      marker: "strategic"
-      repos: cyclist
-      status: planned
-      stories:
-        - id: "28-1"
-          title: "Clipboard image paste"
-          description: |
-            Cmd+V pastes images from clipboard into input area.
-            - Screenshots from OS tools (Cmd+Shift+4, Snipping Tool)
-            - Images copied from browsers or other apps
-            - Detect image data in clipboard on paste event
-            - Show visual feedback when image detected
-          points: 3
-          priority: P1
-          status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Cmd+V pastes clipboard images
-            - Works with OS screenshot tools
-            - Works with images copied from browser
-            - Visual feedback on successful paste
-
-        - id: "28-2"
-          title: "Clipboard file paste"
-          description: |
-            Cmd+V pastes image files copied from Finder/Explorer.
-            - Detect file references in clipboard
-            - Read file contents and convert to image data
-            - Support common formats: PNG, JPG, GIF, WebP
-          points: 2
-          priority: P1
-          status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Paste files copied from Finder/Explorer
-            - Supports PNG, JPG, GIF, WebP
-            - Graceful error for unsupported formats
-
-        - id: "28-3"
-          title: "Image preview before send"
-          description: |
-            Show thumbnail preview of attached images before sending.
-            - Thumbnail appears above/beside input field
-            - Click X to remove image
-            - Shows filename or "Screenshot" label
-            - Preview scales to reasonable size
-          points: 2
-          priority: P1
-          status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Thumbnail preview displayed
-            - Remove button (X) works
-            - Appropriate label shown
-            - Preview doesn't obstruct input
-
-        - id: "28-4"
-          title: "Base64 encoding for Claude API"
-          description: |
-            Properly encode images for Claude's vision API.
-            - Convert image to base64 data URL
-            - Include correct MIME type
-            - Inject into Claude Code message format
-            - Handle PTY integration for image data
-          points: 3
-          priority: P1
-          status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Images encoded as base64 with MIME type
-            - Claude receives and processes image
-            - Image appears in conversation context
-            - Works in both Electron and web modes
-
-        - id: "28-5"
-          title: "Image size validation & resize"
-          description: |
-            Validate image size and optionally resize large images.
-            - Warn if image exceeds recommended size (5MB)
-            - Block if image exceeds max size (20MB)
-            - Option to auto-resize large images
-            - Show file size in preview
-          points: 2
-          priority: P2
-          status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Warning for images > 5MB
-            - Block images > 20MB with clear message
-            - Optional auto-resize to fit limits
-            - File size shown in preview tooltip
-
-        - id: "28-6"
-          title: "Multiple image support"
-          description: |
-            Allow attaching multiple images to a single message.
-            - Paste additional images to add to queue
-            - Show all thumbnails in preview area
-            - Remove individual images
-            - Clear all button
-          points: 2
-          priority: P2
-          status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - Multiple images can be attached
-            - All thumbnails visible
-            - Individual remove works
-            - Clear all option available
-
-    - id: epic-29
-      title: "Wire Up Orphaned Code"
-      description: |
-        Integrate existing but orphaned modules that were written for previous
-        stories but never connected to the main application. These modules have
-        tests and are feature-complete, just need wiring into the message handler
-        and UI components. Discovered during dead code audit.
-      points: 8
-      priority: P2
-      marker: "quick-win"
-      repos: cyclist
-      status: planned
-      stories:
-        - id: "29-1"
-          title: "Integrate approval-gate.ts"
-          description: |
-            Wire up the Bash approval gate module (from Story 22-3).
-            - Import into message handler
-            - Call interceptBashToolUse() before executing Bash tools
-            - Surface approval UI in renderer
-            - Module: src/approval-gate.ts (142 lines, tested)
-          points: 2
-          priority: P1
-          status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - approval-gate.ts imported and called
-            - Bash commands trigger approval flow
-            - UI shows approval prompt
-            - Existing tests pass
-
-        - id: "29-2"
-          title: "Integrate dangerous-path.ts"
-          description: |
-            Wire up the dangerous path detection module (from Story 22-4).
-            - Import into message handler
-            - Call interceptDangerousPath() for file operations
-            - Surface path approval UI in renderer
-            - Module: src/dangerous-path.ts (~1000 lines, 104 tests)
-          points: 3
-          priority: P1
-          status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - dangerous-path.ts imported and called
-            - Dangerous paths trigger approval flow
-            - UI shows path warning with details
-            - Existing 104 tests pass
-
-        - id: "29-3"
-          title: "Integrate context-meter.ts"
-          description: |
-            Wire up the context meter module for stats strip display.
-            - Import into stats strip component
-            - Call calculateContextPercentage() with token data
-            - Display context level with color coding
-            - Module: src/context-meter.ts (75 lines)
-          points: 1
-          priority: P2
-          status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - context-meter.ts imported in stats strip
-            - Context % displayed with visual indicator
-            - Color coding matches context level
-            - Tooltip shows detailed breakdown
-
-        - id: "29-4"
-          title: "Integrate otel-status.ts"
-          description: |
-            Wire up OTEL connection status module (from Story 20-1).
-            - Import into stats strip or status bar
-            - Call getOtelConnectionStatus() to check connection
-            - Display connection indicator
-            - Module: src/otel-status.ts (59 lines)
-          points: 2
-          priority: P2
-          status: backlog
-          repos: cyclist
-          acceptance_criteria:
-            - otel-status.ts imported and used
-            - OTEL status indicator visible
-            - Clear message when not connected
-            - Status updates on connection change
 
 # =============================================================================
-# MOVED TO SPRINT 8
+# IN SPRINT 9
 # =============================================================================
-# The following epics have been moved to Sprint 8:
-# - Epic 8: Automatic State Reconciliation (8 pts)
-# - Epic 9: Skill Discovery & Documentation Hub (13 pts)
-# - Epic 20: Cyclist Web Mode Improvements (8 pts)
-# - Epic 22-6: Tool execution audit log carryover (1 pt)
+# - Epic 29: Wire Up Orphaned Code (8 pts) - IN PROGRESS
+# - Epic 28: Image Paste & Screenshot Support (14 pts) - PLANNED
 
 # =============================================================================
-# COMPLETED EPICS (for reference)
+# COMPLETED/CLOSED EPICS (removed from backlog)
 # =============================================================================
-# - Epic 2: Core Agent Framework (Sprint 2)
-# - Epic 3: Context Management (Sprints 3, 6, 7) - COMPLETE
-# - Epic 4: Configuration & Permissions (Sprint 2)
-# - Epic 5: Theme Commands (Sprint 2)
-# - Epic 6: Interactive Theme Wizard (Sprint 3)
-# - Epic 10: Choreography Patterns (Sprint 6) - COMPLETE
-# - Epic 11: OCEAN Chernoff Faces (Sprint 4) - COMPLETE
-# - Epic 12: Scientific Benchmarking Migration (Sprint 5) - COMPLETE
-# - Epic 17: Cyclist UX (Sprint 7) - COMPLETE
-# - Epic 18: Monorepo Consolidation (Sprint 7) - COMPLETE
-# - Epic 19: Rich Telemetry (Sprint 7) - COMPLETE
-# - Epic 21: Command & Skill Expansion (Sprint 7) - COMPLETE
-# - Epic 22: Verbose Mode (Sprint 7) - 15/16 pts, 22-6 carried to Sprint 8
+# - Epic 3: Context Management - COMPLETE (Sprints 3, 6, 7)
+# - Epic 23: Cyclist Command Integration - CLOSED (Sprint 8, 8/29 pts delivered, rest wontfix)
+# - Epic 25: Smart Question Detection - COMPLETE (Sprint 8, 12/15 pts, 25-7 wontfix)
 
 # =============================================================================
 # BACKLOG SUMMARY
 # =============================================================================
-# Remaining backlog: 102 pts
+# Remaining backlog: 33 pts
 #   - Epic 7-6: CI integration (2 pts)
-#   - Epic 23: Cyclist Command Integration (29 pts)
-#   - Epic 24: Configuration & Theme Switcher (21 pts)
-#   - Epic 25: Smart Question Detection (18 pts)
 #   - Epic 27: Skill Frontmatter Enhancement (10 pts)
-#   - Epic 28: Image Paste & Screenshot Support (14 pts)
-#   - Epic 29: Wire Up Orphaned Code (8 pts) - NEW (dead code audit)
-# Active in Sprint 8: 30 pts
+#   - Epic 24: Configuration & Theme Switcher (21 pts)
 #
-# Note: Epic 26 is "Symlink Permission Fix" in current-sprint.yaml (2 pts)
-#
-# Priority Legend:
-# - P0: Critical, do first
-# - P1: High priority, immediate attention
-# - P2: Medium priority, planned work
-# - P3: Low priority, nice to have
+# Active in Sprint 9: 22 pts
+#   - Epic 29: Wire Up Orphaned Code (8 pts)
+#   - Epic 28: Image Paste & Screenshot (14 pts)

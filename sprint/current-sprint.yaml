@@ -1,24 +1,23 @@
 sprint:
-  number: 8
-  goal: Eliminate state drift and enhance skill discovery for production resilience
-  planned_start: 2026-01-12
+  number: 9
+  goal: Wire up orphaned code and add multimodal image support
+  planned_start: 2026-01-11
   status: active
-  velocity_target: 30
+  velocity_target: 22
 summary:
-  total_points: 76
-  completed_points: 35
-  remaining_points: 41
+  total_points: 14
+  completed_points: 0
+  remaining_points: 14
   notes: |
-    Sprint 8 focus: State reconciliation, skill discovery, smart question detection, Cyclist command integration.
+    Sprint 9 focus: Add multimodal image paste support.
 
     EPICS:
-    - Epic 8 (State Reconciliation) - 8 pts - P1 - DONE
-    - Epic 9 (Skill Discovery) - 13 pts - P2 - DONE
-    - Epic 20 (Cyclist Web Mode) - 5 pts - P2 - DONE
-    - Epic 22 carryover (22-6) - 1 pt - P3 - DONE
-    - Epic 23 (Cyclist Command Integration) - 29 pts - P1 (23-1 done)
-    - Epic 25 (Smart Question Detection) - 15 pts - P1 - DONE (25-7 wontfix)
-    - Epic 26 (Dogfooding Audit & Installation Parity) - 5 pts - P1 - DONE
+    - Epic 29 (Wire Up Orphaned Code) - 0/8 pts - CLOSED (all wontfix - flawed premise)
+    - Epic 28 (Image Paste & Screenshot) - 14 pts - P1
+
+    BACKLOG (future sprints):
+    - Epic 27 (Skill Frontmatter Enhancement) - 10 pts
+    - Epic 24 (Configuration & Theme Switcher) - 21 pts
 epics:
   - id: epic-8
     title: Automatic State Reconciliation
@@ -482,12 +481,15 @@ epics:
       in Cyclist, with dedicated IPC handlers for clean architecture.
       Priority commands: /status (usage limits), /compact, /rewind, /doctor.
     points: 29
-    completed_points: 6
+    completed_points: 8
     priority: P1
     marker: strategic
     repos: cyclist
-    status: in-progress
-    plan_file: ~/.claude/plans/staged-stirring-newt.md
+    status: done
+    completed: 2026-01-11
+    notes: |
+      Closed early - remaining stories (compact button, diagnostics panel, rewind)
+      are polish, not substance. Core value (usage limits, clear fix, IPC layer) delivered.
     stories:
       - id: 23-1
         title: Usage Limits in Stats Strip
@@ -565,8 +567,9 @@ epics:
           Always accessible via keyboard shortcut (Cmd+Shift+K).
         points: 3
         priority: P1
-        status: backlog
+        status: wontfix
         repos: cyclist
+        wontfix_reason: Epic closed - polish, not substance.
         acceptance_criteria:
           - Compact button appears when context > 50%
           - Cmd+Shift+K triggers compact from anywhere
@@ -579,8 +582,11 @@ epics:
           Cmd+Shift+K (Compact), Cmd+Shift+D (Doctor), Cmd+Shift+P (Palette).
         points: 2
         priority: P2
-        status: backlog
+        status: wontfix
         repos: cyclist
+        wontfix_reason: |
+          Three-finger keybinds are awkward. These commands are accessible enough
+          via slash commands - keyboard shortcuts don't add enough value.
         acceptance_criteria:
           - Shortcuts work when app is focused
           - Shortcuts shown in Electron menu
@@ -610,8 +616,9 @@ epics:
           Green/Yellow/Red status indicators, actionable suggestions.
         points: 3
         priority: P2
-        status: backlog
+        status: wontfix
         repos: cyclist
+        wontfix_reason: Epic closed - polish, not substance.
         acceptance_criteria:
           - Doctor accessible from menu and shortcut
           - Parses /doctor output into structured data
@@ -625,8 +632,9 @@ epics:
           click to rewind with confirmation.
         points: 5
         priority: P2
-        status: backlog
+        status: wontfix
         repos: cyclist
+        wontfix_reason: Epic closed - polish, not substance.
         acceptance_criteria:
           - Timeline shows available checkpoints
           - Checkpoints have timestamps and summaries
@@ -641,9 +649,10 @@ epics:
           option to bookmark before rewinding.
         points: 3
         priority: P3
-        status: backlog
+        status: wontfix
         depends_on: 23-8
         repos: cyclist
+        wontfix_reason: Epic closed - polish, not substance.
         acceptance_criteria:
           - Preview modal shows checkpoint content
           - Shows what messages will be lost
@@ -711,3 +720,221 @@ epics:
           - Init/update produce identical working setup
           - No manual workarounds needed
           - Differences documented if intentional
+  - id: epic-29
+    title: Wire Up Orphaned Code
+    description: |
+      Integrate existing but orphaned modules that were written for previous
+      stories but never connected to the main application. These modules have
+      tests and are feature-complete, just need wiring into the message handler
+      and UI components. Discovered during dead code audit.
+    points: 8
+    completed_points: 0
+    priority: P1
+    marker: quick-win
+    repos: cyclist
+    status: done
+    completed: 2026-01-11
+    notes: |
+      Epic premise was flawed. All stories wontfix:
+      - 29-1, 29-2: Can't intercept tool execution (architectural limitation)
+      - 29-3: Already implemented differently (dead code)
+      - 29-4: Not worth pursuing alone
+    stories:
+      - id: 29-1
+        title: Integrate approval-gate.ts
+        description: |
+          Wire up the Bash approval gate module (from Story 22-3).
+          - Import into message handler
+          - Call interceptBashToolUse() before executing Bash tools
+          - Surface approval UI in renderer
+          - Module: src/approval-gate.ts (142 lines, tested)
+        points: 2
+        priority: P1
+        status: wontfix
+        repos: cyclist
+        wontfix_reason: |
+          Architectural limitation: Claude Code CLI executes tools internally.
+          By the time Cyclist sees tool_use messages via --print-json stream,
+          the command has already executed. Cannot intercept/pause execution.
+          Module tests pass in isolation but integration is not feasible.
+        acceptance_criteria:
+          - approval-gate.ts imported and called
+          - Bash commands trigger approval flow
+          - UI shows approval prompt
+          - Existing tests pass
+      - id: 29-2
+        title: Integrate dangerous-path.ts
+        description: |
+          Wire up the dangerous path detection module (from Story 22-4).
+          - Import into message handler
+          - Call interceptDangerousPath() for file operations
+          - Surface path approval UI in renderer
+          - Module: src/dangerous-path.ts (~1000 lines, 104 tests)
+        points: 3
+        priority: P1
+        status: wontfix
+        repos: cyclist
+        wontfix_reason: |
+          Same architectural limitation as 29-1. Claude Code executes Write/Edit
+          tools internally before Cyclist sees the tool_use message in the stream.
+          Cannot intercept file operations to request approval.
+        acceptance_criteria:
+          - dangerous-path.ts imported and called
+          - Dangerous paths trigger approval flow
+          - UI shows path warning with details
+          - Existing 104 tests pass
+      - id: 29-3
+        title: Integrate context-meter.ts
+        description: |
+          Wire up the context meter module for stats strip display.
+          - Import into stats strip component
+          - Call calculateContextPercentage() with token data
+          - Display context level with color coding
+          - Module: src/context-meter.ts (75 lines)
+        points: 1
+        priority: P2
+        status: wontfix
+        repos: cyclist
+        wontfix_reason: |
+          Redundant - context meter already implemented inline in main.ts with
+          polling via check-context.sh. This module is dead code, not missing integration.
+        acceptance_criteria:
+          - context-meter.ts imported in stats strip
+          - Context % displayed with visual indicator
+          - Color coding matches context level
+          - Tooltip shows detailed breakdown
+      - id: 29-4
+        title: Integrate otel-status.ts
+        description: |
+          Wire up OTEL connection status module (from Story 20-1).
+          - Import into stats strip or status bar
+          - Call getOtelConnectionStatus() to check connection
+          - Display connection indicator
+          - Module: src/otel-status.ts (59 lines)
+        points: 2
+        priority: P2
+        status: wontfix
+        repos: cyclist
+        wontfix_reason: |
+          Not worth pursuing alone. Epic 29 premise was flawed - these modules
+          are either architecturally incompatible (29-1, 29-2) or redundant (29-3).
+          OTEL status indicator is nice-to-have but not valuable without the epic context.
+        acceptance_criteria:
+          - otel-status.ts imported and used
+          - OTEL status indicator visible
+          - Clear message when not connected
+          - Status updates on connection change
+  - id: epic-28
+    title: Image Paste & Screenshot Support
+    description: |
+      Enable users to share images with Claude through Cyclist via clipboard
+      paste. Supports pasting screenshots (Cmd+Shift+4, etc.), copied images,
+      and files copied from Finder/Explorer. Images are properly encoded for
+      Claude's multimodal vision capabilities.
+    points: 14
+    completed_points: 0
+    priority: P2
+    marker: strategic
+    repos: cyclist
+    status: planned
+    stories:
+      - id: 28-1
+        title: Clipboard image paste
+        description: |
+          Cmd+V pastes images from clipboard into input area.
+          - Screenshots from OS tools (Cmd+Shift+4, Snipping Tool)
+          - Images copied from browsers or other apps
+          - Detect image data in clipboard on paste event
+          - Show visual feedback when image detected
+        points: 3
+        priority: P1
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Cmd+V pastes clipboard images
+          - Works with OS screenshot tools
+          - Works with images copied from browser
+          - Visual feedback on successful paste
+      - id: 28-2
+        title: Clipboard file paste
+        description: |
+          Cmd+V pastes image files copied from Finder/Explorer.
+          - Detect file references in clipboard
+          - Read file contents and convert to image data
+          - Support common formats: PNG, JPG, GIF, WebP
+        points: 2
+        priority: P1
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Paste files copied from Finder/Explorer
+          - Supports PNG, JPG, GIF, WebP
+          - Graceful error for unsupported formats
+      - id: 28-3
+        title: Image preview before send
+        description: |
+          Show thumbnail preview of attached images before sending.
+          - Thumbnail appears above/beside input field
+          - Click X to remove image
+          - Shows filename or "Screenshot" label
+          - Preview scales to reasonable size
+        points: 2
+        priority: P1
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Thumbnail preview displayed
+          - Remove button (X) works
+          - Appropriate label shown
+          - Preview doesn't obstruct input
+      - id: 28-4
+        title: Base64 encoding for Claude API
+        description: |
+          Properly encode images for Claude's vision API.
+          - Convert image to base64 data URL
+          - Include correct MIME type
+          - Inject into Claude Code message format
+          - Handle PTY integration for image data
+        points: 3
+        priority: P1
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Images encoded as base64 with MIME type
+          - Claude receives and processes image
+          - Image appears in conversation context
+          - Works in both Electron and web modes
+      - id: 28-5
+        title: Image size validation & resize
+        description: |
+          Validate image size and optionally resize large images.
+          - Warn if image exceeds recommended size (5MB)
+          - Block if image exceeds max size (20MB)
+          - Option to auto-resize large images
+          - Show file size in preview
+        points: 2
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Warning for images > 5MB
+          - Block images > 20MB with clear message
+          - Optional auto-resize to fit limits
+          - File size shown in preview tooltip
+      - id: 28-6
+        title: Multiple image support
+        description: |
+          Allow attaching multiple images to a single message.
+          - Paste additional images to add to queue
+          - Show all thumbnails in preview area
+          - Remove individual images
+          - Clear all button
+        points: 2
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Multiple images can be attached
+          - All thumbnails visible
+          - Individual remove works
+          - Clear all option available
