@@ -56,3 +56,51 @@ File panel in Cyclist: "FILES" label appears when panel collapses.
 ---
 
 *Add design patterns discovered during UX work below*
+
+---
+
+## Cyclist Layout Architecture
+
+**Key files:**
+- `packages/cyclist/src/public/index.html` - Main HTML structure
+- `packages/cyclist/src/public/styles.css` - All styling (2400+ lines)
+
+### Main Layout Structure
+```
+#app-container (flex row)
+├── #file-panel.file-panel (.collapsed when hidden)
+├── .resize-handle#file-panel-resize
+├── #diff-panel.diff-panel (.collapsed when hidden)
+├── .resize-handle#diff-panel-resize
+├── .file-panel-expand-btn (position: absolute, left: 0, top: 50px)
+├── .diff-panel-expand-btn (position: absolute, left: 0, top: 118px)
+├── #main-content (flex: 1, flex-direction: column)
+│   ├── #message-view (flex: 1, padding: 1rem)
+│   ├── #tool-activity-bar
+│   ├── #quick-actions
+│   ├── #image-preview
+│   └── #editor-wrapper
+└── #sidebar (right panel with persona, story info)
+```
+
+### Key CSS Locations
+| Element | Line | Notes |
+|---------|------|-------|
+| `.file-panel` | ~45 | Left file tree panel |
+| `.file-panel.collapsed` | ~58 | width: 0, opacity: 0 |
+| `.file-panel-expand-btn` | ~131 | Absolute positioned expand button |
+| `#main-content` | ~235 | flex: 1, min-width: var(--sidebar-width) |
+| `#message-view` | ~1010 | flex: 1, padding: 1rem, overflow-y: auto |
+| `.message-assistant p` | ~1081 | max-width: 72ch (reading width constraint) |
+| `.diff-panel` | ~2235 | Left diff panel (below file panel) |
+| `.diff-panel-expand-btn` | ~2319 | Absolute positioned expand button |
+
+### Panel Collapse Behavior
+- Expand buttons use `position: absolute; left: 0`
+- When panels collapse, buttons become visible via `opacity: 1`
+- Badge counts on expand buttons: `.panel-count-badge`
+
+### Message Width Constraint
+- `.message-assistant p { max-width: 72ch }` limits paragraph width
+- Good for readability but wastes space when panels collapsed
+- Solution: Use `max-width: min(72ch, 100%)` for responsive behavior
