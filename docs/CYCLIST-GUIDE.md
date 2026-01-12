@@ -1,0 +1,527 @@
+# Cyclist Terminal Guide
+
+Complete guide to using Cyclist, the visual terminal for Claude Code with Pennyfarthing integration.
+
+## What is Cyclist?
+
+Cyclist is a desktop application that wraps Claude Code in a visual interface with:
+
+- **Real-time agent personas** - See which character is active with portrait and personality
+- **Session statistics** - Token usage, tool calls, context percentage
+- **Story tracking** - Workflow progress through SM → TEA → Dev → Reviewer
+- **Quick actions** - Smart buttons for common responses
+- **Rich text editor** - Formatted input with markdown support
+
+## Getting Started
+
+### Installation
+
+```bash
+# From the monorepo
+cd packages/cyclist
+pnpm install
+pnpm run build:electron
+```
+
+Build outputs go to `packages/cyclist/release/`:
+- **macOS**: `Cyclist-{version}.dmg`
+- **Windows**: `Cyclist Setup {version}.exe`
+- **Linux**: `Cyclist-{version}.AppImage`
+
+### Starting Cyclist
+
+**Option 1: Launch with project folder**
+```bash
+open -a Cyclist --args --project-dir=/path/to/project
+```
+
+**Option 2: Folder picker**
+Launch Cyclist without arguments and select your project folder.
+
+**Option 3: Finder Quick Action (macOS)**
+Right-click a folder → "Open in Cyclist"
+
+See [Quick Action Setup](#finder-quick-action-macos) for configuration.
+
+### Development Mode
+
+```bash
+# Hot reload mode
+pnpm run dev
+
+# Single run (no hot reload)
+pnpm run dev:once
+
+# Web mode (browser-based)
+pnpm run dev:server
+# Then open http://localhost:1898
+```
+
+## Interface Overview
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Menu Bar: Agents | Workflows | View | Help                    │
+├──────────────┬──────────────────────────────────────────────────┤
+│              │                                                  │
+│   Sidebar    │              Message View                        │
+│              │                                                  │
+│  ┌────────┐  │  Claude's responses with syntax highlighting     │
+│  │Portrait│  │  and rendered markdown                           │
+│  │        │  │                                                  │
+│  └────────┘  │                                                  │
+│              │                                                  │
+│  Character   │                                                  │
+│  Name        │                                                  │
+│  Role        ├──────────────────────────────────────────────────┤
+│  Quote       │              Tab Panel                           │
+│              │  Diffs | Files | Browser | Audit Log             │
+│  ──────────  │                                                  │
+│              │                                                  │
+│  Story       │                                                  │
+│  Progress    ├──────────────────────────────────────────────────┤
+│  Phase       │         Quick Actions                            │
+│              │  [Yes] [No] [Option 1] [Option 2]                │
+│  ──────────  ├──────────────────────────────────────────────────┤
+│              │                                                  │
+│  Git Status  │         Rich Text Editor                         │
+│  Branch      │  Formatting toolbar | Input area                 │
+│              │                                                  │
+│  ──────────  │  ─────────────────────────────────────────────── │
+│              │  Stats: tokens | context | tools                 │
+│  Tasks       │                                                  │
+│  [ ] Todo 1  │                                                  │
+│  [✓] Todo 2  │                                                  │
+│              │                                                  │
+└──────────────┴──────────────────────────────────────────────────┘
+```
+
+## Sidebar Sections
+
+### Persona Section
+
+Displays the active agent's character from your selected theme.
+
+**Elements:**
+- **Portrait** - Woodcut-style character image
+- **Name** - Character name (e.g., "Father Mulcahy")
+- **Role** - Agent type (e.g., "Tech Writer")
+- **Quote** - Character's signature line
+- **Activity** - Current helper tasks and tool usage
+
+The persona updates automatically when you invoke different agents (`/sm`, `/dev`, `/tea`, etc.).
+
+### Story Section
+
+Tracks workflow progress for the active story.
+
+**Elements:**
+- **Story ID/Title** - From session file (e.g., "30-4: Troubleshooting guide")
+- **Phase Indicator** - Current workflow phase with highlight
+- **Workflow Steps** - Visual progression: SM → TEA → Dev → Reviewer
+- **Acceptance Criteria** - Checklist from story definition
+- **Sprint Progress** - Points completed vs total
+
+### Git Section
+
+Shows repository state at a glance.
+
+**Elements:**
+- **Branch** - Current branch name
+- **Status** - Clean or dirty indicator
+- **Sync** - Ahead/behind remote counts
+
+### Tasks Section
+
+Collapsible view of the todo list from `TodoWrite` tool.
+
+**Elements:**
+- **Progress** - "3/5 completed"
+- **Status Icons**:
+  - ⬜ Pending
+  - 🔄 In progress
+  - ✅ Completed
+- **Task Names** - From todo list content
+
+## Quick Actions
+
+Cyclist automatically detects interactive patterns in Claude's responses and shows action buttons.
+
+### Action Types
+
+#### Yes/No Questions
+
+When Claude asks a yes/no question:
+```
+Would you like me to proceed with the implementation?
+```
+
+Buttons appear: `[Yes, proceed]` `[No]`
+
+#### Numbered Choices
+
+When Claude presents options:
+```
+Which approach do you prefer?
+
+1. Simple implementation
+2. Full-featured solution
+3. Minimal changes
+```
+
+Buttons appear: `[1]` `[2]` `[3]`
+
+#### Agent Handoffs
+
+When ready to switch agents:
+```
+Ready to hand off to the Caterpillar for test writing.
+
+Invoke /tea to begin the RED phase.
+```
+
+Button appears: `[/tea]`
+
+#### Permission Prompts
+
+When Claude needs permission:
+```
+Allow Bash to run: npm install
+```
+
+Buttons appear: `[Yes]` `[No]`
+
+### Detection Patterns
+
+Quick actions are detected from these patterns:
+
+| Pattern | Example | Buttons |
+|---------|---------|---------|
+| "Would you like me to" | "Would you like me to proceed?" | Yes, No |
+| "Shall I proceed/continue" | "Shall I continue?" | Yes, No |
+| "Should I" | "Should I create the file?" | Yes, No |
+| "Ready to proceed" | "Ready to proceed with testing" | Yes, Hold on |
+| "Invoke /agent" | "Invoke /dev to implement" | /dev |
+| Numbered list (1. 2. 3.) | Option list with choice context | 1, 2, 3 |
+
+### Confidence Threshold
+
+Quick actions use a confidence threshold (default: 0.6) to avoid false positives. Patterns with higher confidence appear more reliably:
+
+- **1.0** - Explicit markers (`<!-- CYCLIST:TYPE:value -->`)
+- **0.98** - Direct agent invocation
+- **0.85** - Clear yes/no questions
+- **0.70** - Numbered lists with context
+
+### Explicit Markers (For Agents)
+
+Agents can emit HTML comment markers for 100% accurate detection:
+
+```html
+<!-- CYCLIST:HANDOFF:/tea -->
+<!-- CYCLIST:QUESTION:yesno -->
+<!-- CYCLIST:CHOICES:1,2,3 -->
+```
+
+These are invisible to users but guarantee button rendering.
+
+## Tab Panel
+
+### Diffs Tab
+
+Shows file changes with syntax highlighting.
+
+**Features:**
+- **Split view** - Original vs modified
+- **Navigation** - Previous/next edit (j/k keys)
+- **View modes**:
+  - Partial - Single diff between states
+  - Combined - All changes original → current
+  - Original - Pre-edit state
+  - Current - Post-edit state
+- **Position indicator** - "Edit 2 of 5"
+
+**Keyboard shortcuts:**
+| Key | Action |
+|-----|--------|
+| j or ↓ | Next edit |
+| k or ↑ | Previous edit |
+| Home | First edit |
+| End | Last edit |
+
+### Files Tab
+
+Browse project files without leaving Cyclist.
+
+**Features:**
+- Directory tree navigation
+- File preview with syntax highlighting
+- Open in external editor (Electron mode)
+
+### Browser Tab
+
+Embedded web browser for documentation reference.
+
+### Audit Log Tab
+
+Complete record of tool executions in the session.
+
+**Columns:**
+- **Timestamp** - When the tool ran
+- **Tool** - Tool name (Bash, Edit, Read, etc.)
+- **Input** - Command or parameters (truncated, hover for full)
+- **Duration** - Execution time
+- **Status** - ✓ success or ✗ failed
+
+**Features:**
+- Filter by tool type
+- Export to JSON or CSV
+- Statistics summary
+- Clear log with confirmation
+
+## Stats Strip
+
+Compact statistics in the prompt bar area.
+
+**Metrics:**
+- **Tokens** - Input/output token counts
+- **Context** - Usage percentage (warning at 70%, critical at 85%)
+- **Tools** - Number of tool calls
+- **Model** - Active model name
+- **Cost** - Estimated USD cost
+
+## Rich Text Editor
+
+TipTap-based editor with formatting support.
+
+### Toolbar
+
+| Button | Action |
+|--------|--------|
+| B | Bold |
+| I | Italic |
+| `</>` | Code block |
+| Link | Insert hyperlink |
+
+### Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| Cmd/Ctrl+Enter | Send prompt |
+| Escape | Stop Claude |
+| Cmd/Ctrl+B | Bold |
+| Cmd/Ctrl+I | Italic |
+| Cmd/Ctrl+Shift+C | Code block |
+
+## Menus
+
+### Agents Menu
+
+Launch agents directly from the menu.
+
+**Tactical Agents:**
+- SM (Scrum Master)
+- TEA (Test Engineer)
+- Dev (Developer)
+- Reviewer
+
+**Strategic Agents:**
+- PM (Product Manager)
+- Architect
+- DevOps
+- Tech Writer
+- UX Designer
+
+### Workflows Menu
+
+- **New Work** - Start a new story (`/new-work`)
+- **Continue Session** - Resume previous work (`/continue-session`)
+- **Sprint Context** - View sprint status (`/sprint-context`)
+- **Work** - Smart work entry (`/work`)
+
+### View Menu
+
+- Toggle sidebar
+- Toggle stats strip
+- Reset layout
+
+## Configuration
+
+### User Settings
+
+Located at `~/.cyclist/settings.yaml`:
+
+```yaml
+workflow:
+  auto_handoff: false      # Auto-proceed on handoffs
+  handoff_confirm: true    # Confirm before handoffs
+
+display:
+  show_flow: true          # Show workflow visualization
+  show_ocean: false        # Show OCEAN personality scores
+  sidebar_width: 300       # Sidebar width in pixels
+
+notifications:
+  phase_change: true       # Notify on phase changes
+  sound: false             # Play sounds
+```
+
+### Project Settings
+
+Override user settings per-project in `.claude/cyclist.local.yaml`:
+
+```yaml
+display:
+  show_ocean: true         # Show OCEAN for this project
+```
+
+## Environment Variables
+
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `CYCLIST_COMMAND` | Claude CLI path | `claude` |
+| `CYCLIST_PROJECT_DIR` | Project directory | Folder picker |
+| `CYCLIST_THEME` | Theme override | From config |
+| `CYCLIST_ACTIVE` | Running in Cyclist | Unset |
+| `PORT` | Server port | 1898 |
+
+## Web Mode
+
+Run Cyclist in a browser instead of Electron for lighter resource usage.
+
+```bash
+# Start server
+pnpm run dev:server
+
+# Open browser
+open http://localhost:1898
+```
+
+**Benefits:**
+- ~200MB less RAM (no Chromium overhead)
+- Remote access capable
+- Docker/container support
+
+**Limitations:**
+- No native menus (use slash commands)
+- No external editor integration
+- Manual process cleanup
+
+See `packages/cyclist/docs/WEB-MODE.md` for details.
+
+## Finder Quick Action (macOS)
+
+Add "Open in Cyclist" to Finder's right-click menu.
+
+### Setup
+
+1. Open **Automator.app**
+2. Create **New Document** → **Quick Action**
+3. Configure:
+   - Workflow receives: **folders**
+   - In: **Finder.app**
+4. Add **Run Shell Script** action:
+   ```bash
+   for f in "$@"
+   do
+     open -a Cyclist --args --project-dir="$f"
+   done
+   ```
+5. Save as "Open in Cyclist"
+
+The action saves to `~/Library/Services/`.
+
+### Troubleshooting
+
+**Action not appearing:**
+- Hold Option + right-click Finder in Dock → Relaunch
+
+**Permission denied:**
+- Install Cyclist to /Applications: `pnpm run install:app`
+
+## Session Replay
+
+### Diff History Navigation
+
+When Claude edits files, Cyclist tracks the history for each file.
+
+**Navigate edits:**
+```
+File: src/utils/helper.ts
+Edit 2 of 5                    [◀] [▶]
+```
+
+**View modes:**
+- **Partial** - One edit at a time
+- **Combined** - All edits merged
+- **Original** - Before any edits
+- **Current** - After all edits
+
+### Audit Log Export
+
+Export session activity for analysis.
+
+1. Open Audit Log tab
+2. Click **Export** dropdown
+3. Choose format:
+   - **JSON** - Structured data
+   - **CSV** - Spreadsheet compatible
+
+**Export includes:**
+- All tool executions
+- Timestamps and durations
+- Success/failure status
+- Input parameters
+
+## Troubleshooting
+
+### Persona not loading
+
+1. Check `.session/agents/` directory exists
+2. Verify `agent-session.sh` is writing agent files
+3. Confirm theme YAML path is correct
+
+### Portrait not showing
+
+1. Verify portrait in `pennyfarthing-dist/personas/sprites/{theme}/`
+2. Check OCEAN-slug filename matches character
+3. Confirm `@pennyfarthing/shared` resolver works
+
+### High memory usage
+
+- Use web mode: `pnpm run dev:server`
+- Close unused tabs
+- Electron includes ~200MB Chromium overhead
+
+### Hot reload not working
+
+1. Use `pnpm run dev` (not `dev:once`)
+2. Check `electron-reload` is installed
+3. Verify TypeScript is compiling to `dist/`
+
+### Quick actions not appearing
+
+1. Check confidence threshold (default 0.6)
+2. Verify pattern matches expected format
+3. Look for false positive prevention keywords
+
+## OpenTelemetry Integration
+
+Cyclist receives telemetry on port 4318.
+
+```bash
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+```
+
+**Metrics captured:**
+- Token usage (input/output/cache)
+- API request timings
+- Tool call events with duration
+- Context percentage
+- Cost calculations
+
+## See Also
+
+- [Cyclist Technical Reference](CYCLIST.md) - Architecture and IPC details
+- [Personas](PERSONAS.md) - Theme customization
+- [User Guide](USER-GUIDE.md) - Complete Pennyfarthing documentation
