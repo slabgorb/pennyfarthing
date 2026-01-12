@@ -2,7 +2,7 @@
 
 How to choose a theme based on personality dimensions and team fit.
 
-> **91 themes available** - All themes include OCEAN (Big Five) personality profiles, Chernoff face visualizations, and spider charts. This guide covers personality theory and highlights selected themes. Run `pennyfarthing theme list` to see all available themes.
+> **101 themes available** - All themes include OCEAN (Big Five) personality profiles, Chernoff face visualizations, and spider charts. This guide covers personality theory and highlights selected themes. Run `pennyfarthing theme list` to see all available themes.
 
 ## Personality Dimensions
 
@@ -93,7 +93,7 @@ Each theme rated Low (L), Medium (M), or High (H) on each trait:
 | **Ted Lasso** | H | M | H | H | L | Unconventional optimists, supportive, emotionally stable |
 | **The Expanse** | M | H | L | L | M | Pragmatic realists, terse, skeptical, competent |
 
-### All 63 Themes by Category
+### Themes by Category (OCEAN Profiled Subset)
 
 #### Sci-Fi TV
 | Theme | O | C | E | A | N | Notes |
