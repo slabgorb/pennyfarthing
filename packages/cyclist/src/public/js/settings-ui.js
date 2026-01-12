@@ -1,12 +1,19 @@
 /**
- * Settings UI Module (Story 24-1)
+ * Settings UI Module (Story 24-1, 24-5)
  *
  * Handles the settings form UI logic including:
  * - Loading settings into form fields
  * - Extracting values from form fields
  * - Form submission handling
  * - Communication with main process via IPC
+ * - Theme browser initialization (24-5)
  */
+
+import {
+  renderThemeBrowser,
+  filterThemesBySearch,
+  filterThemesByCategory,
+} from './components/ThemeBrowser.js';
 
 /**
  * @typedef {Object} CyclistSettings
@@ -23,6 +30,16 @@
  * @property {Object} pennyfarthing
  * @property {string} pennyfarthing.theme
  */
+
+// Module-level state for theme browser
+let themeBrowserState = {
+  themes: [],
+  filteredThemes: [],
+  searchQuery: '',
+  selectedCategory: 'All',
+  selectedThemeId: null,
+  isLoading: true,
+};
 
 /**
  * Load settings values into form fields
@@ -70,10 +87,16 @@ export function loadFormValues(settings) {
     sound.checked = settings.notifications?.sound ?? false;
   }
 
-  // Pennyfarthing settings
+  // Pennyfarthing settings - update hidden input and browser state
   const theme = form.querySelector('#theme');
+  const themeId = settings.pennyfarthing?.theme ?? 'alice-in-wonderland';
   if (theme) {
-    theme.value = settings.pennyfarthing?.theme ?? 'alice-in-wonderland';
+    theme.value = themeId;
+  }
+
+  // Update browser state if themes are loaded
+  if (themeBrowserState.themes.length > 0) {
+    setInitialTheme(themeId);
   }
 }
 
@@ -102,7 +125,7 @@ export function getFormValues() {
       sound: form.querySelector('#sound')?.checked ?? false,
     },
     pennyfarthing: {
-      theme: form.querySelector('#theme')?.value ?? 'alice-in-wonderland',
+      theme: getSelectedTheme(),
     },
   };
 }
@@ -133,52 +156,115 @@ function getDefaultSettings() {
 }
 
 /**
- * Format theme name from kebab-case to Title Case
- * @param {string} theme - Theme name in kebab-case (e.g., "alice-in-wonderland")
- * @returns {string} Formatted theme name (e.g., "Alice In Wonderland")
+ * Get currently selected theme from browser or hidden input
+ * @returns {string} Selected theme ID
  */
-function formatThemeName(theme) {
-  return theme
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+export function getSelectedTheme() {
+  // First check browser state
+  if (themeBrowserState.selectedThemeId) {
+    return themeBrowserState.selectedThemeId;
+  }
+  // Fall back to hidden input
+  const themeInput = document.getElementById('theme');
+  return themeInput?.value ?? 'alice-in-wonderland';
 }
 
 /**
- * Load available themes into the theme dropdown
+ * Set the initial theme in the browser (highlight current selection)
+ * @param {string} themeId - Theme ID to select
  */
-async function loadThemeOptions() {
-  const select = document.getElementById('theme');
-  if (!select) return;
+export function setInitialTheme(themeId) {
+  themeBrowserState.selectedThemeId = themeId;
 
-  // Clear existing options
-  select.innerHTML = '';
-
-  // Get themes from main process
-  if (window.electronAPI?.settings?.getAvailableThemes) {
-    try {
-      const themes = await window.electronAPI.settings.getAvailableThemes();
-      themes.forEach(theme => {
-        const option = document.createElement('option');
-        option.value = theme;
-        option.textContent = formatThemeName(theme);
-        select.appendChild(option);
-      });
-    } catch (err) {
-      console.error('Failed to load themes:', err);
-      // Add default theme as fallback
-      const option = document.createElement('option');
-      option.value = 'alice-in-wonderland';
-      option.textContent = 'Alice In Wonderland';
-      select.appendChild(option);
-    }
-  } else {
-    // No IPC available (testing or web mode) - add default
-    const option = document.createElement('option');
-    option.value = 'alice-in-wonderland';
-    option.textContent = 'Alice In Wonderland';
-    select.appendChild(option);
+  // Update hidden input
+  const themeInput = document.getElementById('theme');
+  if (themeInput) {
+    themeInput.value = themeId;
   }
+
+  // Re-render if container exists
+  const container = document.getElementById('theme-browser-container');
+  if (container && themeBrowserState.themes.length > 0) {
+    renderThemeBrowserUI(container);
+  }
+}
+
+/**
+ * Load theme metadata from main process (24-5)
+ * @returns {Promise<Array>} Theme metadata array
+ */
+export async function loadThemeMetadata() {
+  if (window.electronAPI?.settings?.getThemeMetadata) {
+    try {
+      const themes = await window.electronAPI.settings.getThemeMetadata();
+      return themes;
+    } catch (err) {
+      console.error('Failed to load theme metadata:', err);
+      return [];
+    }
+  }
+  return [];
+}
+
+/**
+ * Render the theme browser UI
+ * @param {HTMLElement} container - Container element
+ */
+function renderThemeBrowserUI(container) {
+  renderThemeBrowser(container, themeBrowserState, {
+    onSelect: (themeId) => {
+      themeBrowserState.selectedThemeId = themeId;
+      // Update hidden input for form submission
+      const themeInput = document.getElementById('theme');
+      if (themeInput) {
+        themeInput.value = themeId;
+      }
+      // Re-render to show selection
+      renderThemeBrowserUI(container);
+    },
+    onApply: (themeId) => {
+      // Apply is handled by form submission, but we can update state
+      themeBrowserState.selectedThemeId = themeId;
+      const themeInput = document.getElementById('theme');
+      if (themeInput) {
+        themeInput.value = themeId;
+      }
+    },
+    onCancel: () => {
+      // Cancel closes the settings window
+      window.close();
+    },
+  });
+}
+
+/**
+ * Initialize the theme browser (24-5)
+ * Replaces the old dropdown with a searchable browser
+ */
+export async function initThemeBrowser() {
+  const container = document.getElementById('theme-browser-container');
+  if (!container) return;
+
+  // Show loading state
+  themeBrowserState.isLoading = true;
+  renderThemeBrowserUI(container);
+
+  // Load theme metadata
+  const themes = await loadThemeMetadata();
+
+  // Update state
+  themeBrowserState.themes = themes;
+  themeBrowserState.filteredThemes = themes;
+  themeBrowserState.isLoading = false;
+
+  // Get current theme from hidden input
+  const themeInput = document.getElementById('theme');
+  if (themeInput?.value) {
+    themeBrowserState.selectedThemeId = themeInput.value;
+  }
+
+  // Render browser
+  renderThemeBrowserUI(container);
 }
 
 /**
@@ -224,8 +310,8 @@ export async function initSettingsUI() {
     cancelBtn.addEventListener('click', handleCancel);
   }
 
-  // Load available themes into dropdown first
-  await loadThemeOptions();
+  // Initialize theme browser (24-5) instead of dropdown
+  await initThemeBrowser();
 
   // Load current settings from main process
   if (window.electronAPI?.settings?.get) {
