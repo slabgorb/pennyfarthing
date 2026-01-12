@@ -876,7 +876,10 @@ epics:
           - Support common formats: PNG, JPG, GIF, WebP
         points: 2
         priority: P1
-        status: backlog
+        status: done
+        completed: 2026-01-12
+        delivered_in: 28-1
+        notes: Implemented as part of 28-1 (clipboardData.files handling)
         repos: cyclist
         acceptance_criteria:
           - Paste files copied from Finder/Explorer
@@ -892,7 +895,10 @@ epics:
           - Preview scales to reasonable size
         points: 2
         priority: P1
-        status: backlog
+        status: done
+        completed: 2026-01-12
+        delivered_in: 28-1
+        notes: Implemented as part of 28-1 (image-preview.js module)
         repos: cyclist
         acceptance_criteria:
           - Thumbnail preview displayed
@@ -909,7 +915,10 @@ epics:
           - Handle PTY integration for image data
         points: 3
         priority: P1
-        status: backlog
+        status: done
+        completed: 2026-01-12
+        delivered_in: 28-1
+        notes: Implemented as part of 28-1 (buildStreamJsonUserMessage, --input-format stream-json)
         repos: cyclist
         acceptance_criteria:
           - Images encoded as base64 with MIME type
