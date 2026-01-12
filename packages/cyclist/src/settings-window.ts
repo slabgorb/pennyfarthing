@@ -6,17 +6,13 @@
  */
 
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-// Get directory name for ES module
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { getPublicDir } from './paths.js';
 
 // =============================================================================
 // Constants
 // =============================================================================
 
-export const SETTINGS_HTML_PATH = path.join(__dirname, 'public', 'settings.html');
+export const SETTINGS_HTML_PATH = path.join(getPublicDir(), 'settings.html');
 
 // =============================================================================
 // Window Configuration
@@ -90,7 +86,10 @@ export function isSettingsWindowOpen(): boolean {
  * Creates an actual BrowserWindow in Electron context
  */
 export function openSettingsWindow(parentWindow?: unknown): void {
+  console.log('[Settings] openSettingsWindow called, path:', SETTINGS_HTML_PATH);
+
   if (settingsWindowOpen) {
+    console.log('[Settings] Window already open, focusing');
     // Window already open - focus it
     if (settingsWindowRef && typeof (settingsWindowRef as { focus: () => void }).focus === 'function') {
       (settingsWindowRef as { focus: () => void }).focus();
@@ -102,9 +101,11 @@ export function openSettingsWindow(parentWindow?: unknown): void {
   try {
     // Dynamic import to avoid issues in non-Electron context
     const { BrowserWindow } = require('electron');
+    console.log('[Settings] BrowserWindow imported, mainWindowRef:', !!mainWindowRef);
 
     const parent = parentWindow || mainWindowRef;
     const config = getWindowConfig();
+    console.log('[Settings] Creating window with config:', JSON.stringify(config));
 
     const settingsWindow = new BrowserWindow({
       ...config,
@@ -112,11 +113,13 @@ export function openSettingsWindow(parentWindow?: unknown): void {
       show: false, // Don't show until ready
     });
 
+    console.log('[Settings] Loading HTML from:', SETTINGS_HTML_PATH);
     // Load the settings HTML
     settingsWindow.loadFile(SETTINGS_HTML_PATH);
 
     // Show when ready
     settingsWindow.once('ready-to-show', () => {
+      console.log('[Settings] Window ready, showing');
       settingsWindow.show();
     });
 
@@ -128,8 +131,10 @@ export function openSettingsWindow(parentWindow?: unknown): void {
 
     settingsWindowRef = settingsWindow;
     settingsWindowOpen = true;
-  } catch {
+    console.log('[Settings] Window created successfully');
+  } catch (error) {
     // Not in Electron context (testing) - just update state
+    console.error('[Settings] Error creating window:', error);
     settingsWindowOpen = true;
   }
 }
