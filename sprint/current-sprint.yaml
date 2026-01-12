@@ -205,7 +205,9 @@ epics:
           startup message that only shows for configured users.
         points: 2
         priority: P3
-        status: planned
+        status: in_progress
+        started: 2026-01-12
+        assigned_to: Keith Avery
         repos: pennyfarthing
         acceptance_criteria:
           - Guide covers problem and solution clearly
