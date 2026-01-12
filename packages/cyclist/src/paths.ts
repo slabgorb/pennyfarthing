@@ -143,6 +143,12 @@ export function getPortraitsDir(): string | null {
   return null;
 }
 
+// Get the dist directory (where compiled JS files live)
+// Used for preload scripts and other assets that are compiled alongside main code
+export function getDistDir(): string {
+  return __dirname;
+}
+
 // Singleton instances for commonly used paths
 export const publicDir = getPublicDir();
 export const nodeModulesDir = getNodeModulesDir();
