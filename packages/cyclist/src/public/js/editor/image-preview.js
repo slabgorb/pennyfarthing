@@ -1,6 +1,7 @@
 /**
- * Image Preview module for clipboard paste (Story 28-1)
+ * Image Preview module for clipboard paste (Story 28-1, 28-6)
  * Displays thumbnail preview of pasted images before sending
+ * Supports multiple images with individual remove and clear all (Story 28-6)
  */
 
 import { IMAGE_PREVIEW_SIZE } from './constants.js';
@@ -17,6 +18,9 @@ let currentImages = [];
 
 /** Callback when image is removed */
 let onImageRemovedCallback = null;
+
+/** Callback when all images are cleared (Story 28-6) */
+let onClearAllCallback = null;
 
 /** DOM element references (set during runtime) */
 let thumbnailElement = null;
@@ -131,6 +135,23 @@ export function handleRemoveClick(index) {
 }
 
 /**
+ * Set callback for when all images are cleared (Story 28-6)
+ * @param {Function} callback - Called when Clear All is clicked
+ */
+export function setOnClearAll(callback) {
+  onClearAllCallback = callback;
+}
+
+/**
+ * Handle Clear All button click (Story 28-6)
+ */
+export function handleClearAllClick() {
+  if (onClearAllCallback) {
+    onClearAllCallback();
+  }
+}
+
+/**
  * Show image size error message (Story 28-5)
  * Displays a temporary error message when image exceeds max size
  * @param {string} message - Error message to display
@@ -189,7 +210,7 @@ function getPreviewContainer() {
 }
 
 /**
- * Render the preview UI
+ * Render the preview UI (Story 28-6: supports multiple images)
  * @param {Array} images
  */
 function renderPreview(images) {
@@ -201,51 +222,78 @@ function renderPreview(images) {
   thumbnailElement = null;
   labelElement = null;
 
-  // Show first image (single image support for 28-1, multiple in 28-6)
-  const image = images[0];
-  if (!image) return;
+  if (images.length === 0) return;
 
-  // Create thumbnail
-  const thumbnail = document.createElement('img');
-  thumbnail.className = 'image-preview-thumbnail';
-  thumbnail.src = image.dataUrl;
-  thumbnail.alt = image.filename || 'Pasted image';
-  thumbnail.style.maxWidth = `${IMAGE_PREVIEW_SIZE}px`;
-  thumbnail.style.maxHeight = `${IMAGE_PREVIEW_SIZE}px`;
-  thumbnailElement = thumbnail;
+  // Create wrapper for all preview items (Story 28-6)
+  const itemsWrapper = document.createElement('div');
+  itemsWrapper.className = 'image-preview-items';
 
-  // Create label with file size (Story 28-5)
-  const label = document.createElement('span');
-  label.className = 'image-preview-label';
-  const filename = image.filename || 'Pasted Image';
-  const sizeText = image.sizeBytes ? ` (${formatFileSize(image.sizeBytes)})` : '';
-  label.textContent = filename + sizeText;
-  labelElement = label;
+  // Render each image (Story 28-6: loop over all images)
+  images.forEach((image, index) => {
+    // Create thumbnail
+    const thumbnail = document.createElement('img');
+    thumbnail.className = 'image-preview-thumbnail';
+    thumbnail.src = image.dataUrl;
+    thumbnail.alt = image.filename || 'Pasted image';
+    thumbnail.style.maxWidth = `${IMAGE_PREVIEW_SIZE}px`;
+    thumbnail.style.maxHeight = `${IMAGE_PREVIEW_SIZE}px`;
 
-  // Add warning class if large image (Story 28-5)
-  if (image.isLarge) {
-    label.classList.add('image-preview-label-warning');
-    label.title = 'Large image - may take longer to process';
+    // Store reference to first thumbnail for backward compatibility
+    if (index === 0) {
+      thumbnailElement = thumbnail;
+    }
+
+    // Create label with file size (Story 28-5)
+    const label = document.createElement('span');
+    label.className = 'image-preview-label';
+    const filename = image.filename || 'Pasted Image';
+    const sizeText = image.sizeBytes ? ` (${formatFileSize(image.sizeBytes)})` : '';
+    label.textContent = filename + sizeText;
+
+    // Store reference to first label for backward compatibility
+    if (index === 0) {
+      labelElement = label;
+    }
+
+    // Add warning class if large image (Story 28-5)
+    if (image.isLarge) {
+      label.classList.add('image-preview-label-warning');
+      label.title = 'Large image - may take longer to process';
+    }
+
+    // Create remove button with index-aware handler (Story 28-6)
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'image-preview-remove';
+    removeBtn.setAttribute('aria-label', `Remove image ${index + 1}`);
+    removeBtn.setAttribute('data-action', 'remove');
+    removeBtn.setAttribute('data-index', index.toString());
+    removeBtn.textContent = '×';
+    removeBtn.addEventListener('click', () => handleRemoveClick(index));
+
+    // Assemble preview item
+    const wrapper = document.createElement('div');
+    wrapper.className = 'image-preview-item';
+    // Add warning border for large images (Story 28-5)
+    if (image.isLarge) {
+      wrapper.classList.add('image-preview-item-warning');
+    }
+    wrapper.appendChild(thumbnail);
+    wrapper.appendChild(label);
+    wrapper.appendChild(removeBtn);
+
+    itemsWrapper.appendChild(wrapper);
+  });
+
+  container.appendChild(itemsWrapper);
+
+  // Add Clear All button when 2+ images (Story 28-6)
+  if (images.length >= 2) {
+    const clearAllBtn = document.createElement('button');
+    clearAllBtn.className = 'image-preview-clear-all';
+    clearAllBtn.setAttribute('aria-label', 'Clear all images');
+    clearAllBtn.setAttribute('data-action', 'clear-all');
+    clearAllBtn.textContent = 'Clear All';
+    clearAllBtn.addEventListener('click', () => handleClearAllClick());
+    container.appendChild(clearAllBtn);
   }
-
-  // Create remove button
-  const removeBtn = document.createElement('button');
-  removeBtn.className = 'image-preview-remove';
-  removeBtn.setAttribute('aria-label', 'Remove image');
-  removeBtn.setAttribute('data-action', 'remove');
-  removeBtn.textContent = '×';
-  removeBtn.addEventListener('click', () => handleRemoveClick(0));
-
-  // Assemble preview
-  const wrapper = document.createElement('div');
-  wrapper.className = 'image-preview-item';
-  // Add warning border for large images (Story 28-5)
-  if (image.isLarge) {
-    wrapper.classList.add('image-preview-item-warning');
-  }
-  wrapper.appendChild(thumbnail);
-  wrapper.appendChild(label);
-  wrapper.appendChild(removeBtn);
-
-  container.appendChild(wrapper);
 }
