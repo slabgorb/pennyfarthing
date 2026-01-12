@@ -21,7 +21,7 @@ import { getProjectDirectory, setProjectDirectory, isValidProjectDirectory, pars
 import { getContextUsage } from './api/context.js';
 import { getVerboseMode, setVerboseMode } from './settings-store.js';
 import { getCurrentSettings, saveUserSettings, } from './settings.js';
-import { openSettingsWindow, setMainWindowRef } from './settings-window.js';
+import { openSettingsWindow, setMainWindowRef, setBrowserWindowRef } from './settings-window.js';
 // Re-export project directory functions for external consumers
 export { getProjectDirectory, setProjectDirectory, isValidProjectDirectory };
 import * as fs from 'fs';
@@ -1363,6 +1363,8 @@ if (isElectron) {
     // Dynamic imports to avoid errors in Node test environment
     const { app, BrowserWindow, ipcMain, dialog, Menu } = await import('electron');
     const { createTerminalServer } = await import('./server.js');
+    // Pass BrowserWindow to settings-window module (ESM-compatible, avoids require())
+    setBrowserWindowRef(BrowserWindow);
     // Suppress error dialogs - log to console instead
     process.on('uncaughtException', (error) => {
         console.error('Uncaught exception:', error.message);

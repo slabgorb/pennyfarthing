@@ -28,6 +28,11 @@ export declare function getWindowConfig(): SettingsWindowConfig;
  */
 export declare function setMainWindowRef(windowRef: unknown): void;
 /**
+ * Set the BrowserWindow constructor reference (called by main.ts on startup)
+ * This avoids the need for dynamic require() which doesn't work in ESM
+ */
+export declare function setBrowserWindowRef(browserWindowConstructor: unknown): void;
+/**
  * Check if the settings window is currently open
  */
 export declare function isSettingsWindowOpen(): boolean;

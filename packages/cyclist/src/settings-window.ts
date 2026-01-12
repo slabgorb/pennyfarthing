@@ -67,11 +67,22 @@ let settingsWindowRef: unknown = null;
 // Reference to main window for modal parent
 let mainWindowRef: unknown = null;
 
+// Reference to BrowserWindow constructor (passed from main.ts to avoid ESM require issues)
+let BrowserWindowRef: unknown = null;
+
 /**
  * Set the main window reference (called by main.ts on startup)
  */
 export function setMainWindowRef(windowRef: unknown): void {
   mainWindowRef = windowRef;
+}
+
+/**
+ * Set the BrowserWindow constructor reference (called by main.ts on startup)
+ * This avoids the need for dynamic require() which doesn't work in ESM
+ */
+export function setBrowserWindowRef(browserWindowConstructor: unknown): void {
+  BrowserWindowRef = browserWindowConstructor;
 }
 
 /**
@@ -99,9 +110,12 @@ export function openSettingsWindow(parentWindow?: unknown): void {
 
   // Try to create actual Electron window
   try {
-    // Dynamic import to avoid issues in non-Electron context
-    const { BrowserWindow } = require('electron');
-    console.log('[Settings] BrowserWindow imported, mainWindowRef:', !!mainWindowRef);
+    // Use the BrowserWindow constructor passed from main.ts (ESM-compatible)
+    if (!BrowserWindowRef) {
+      throw new Error('BrowserWindow not initialized - call setBrowserWindowRef first');
+    }
+    const BrowserWindow = BrowserWindowRef as typeof Electron.BrowserWindow;
+    console.log('[Settings] Using BrowserWindow from ref, mainWindowRef:', !!mainWindowRef);
 
     const parent = parentWindow || mainWindowRef;
     const config = getWindowConfig();
