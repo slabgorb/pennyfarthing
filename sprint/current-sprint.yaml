@@ -852,9 +852,10 @@ epics:
           - Show visual feedback when image detected
         points: 3
         priority: P1
-        status: approved
+        status: done
         started: 2026-01-11
         completed: 2026-01-12
+        merged: 2026-01-12
         assigned_to: Keith Avery
         repos: cyclist
         pr: "#185"
