@@ -18,8 +18,8 @@ When we benchmark a themed agent (e.g., `discworld:reviewer`), we compare it aga
 | **A** | Excellent - High scores (85+) or large baseline improvements (20+) | 13 |
 | **B** | Good - Solid scores (80+) or meaningful baseline beats (10-20) | 15 |
 | **C** | Average - Moderate baseline improvements (5-10) | 22 |
-| **F** | Benchmarked - Has data but minimal numeric results | 11 |
-| **U** | Unknown - No benchmark data yet | 35 |
+| **F** | Benchmarked - Has data but minimal numeric results | 90 |
+| **U** | Unknown - No benchmark data yet | 6 |
 
 ## S-Tier (Elite Performers)
 
@@ -39,7 +39,6 @@ Themes with high absolute scores or significant baseline improvements.
 
 | Theme | Best Score | vs Control | Why It Beats Baseline |
 |-------|------------|------------|----------------------|
-| **futurama** | 92.5 | +14.5 | Leela's decisiveness, Professor's edge case creativity |
 | **shakespeare** | 92.5 | +14.5 | Prospero's wisdom (SM), Hamlet's thorough analysis (TEA) |
 | **the-matrix** | 92.5 | +14.5 | Morpheus's clarity of vision for team leadership |
 | **dickens** | 92.5 | +14.5 | Micawber's optimism inspires teams |
@@ -124,45 +123,18 @@ Themes that have been benchmarked but lack complete numeric results.
 
 ## U-Tier (Awaiting Benchmarks)
 
-No benchmark data available. These themes use default character assignments and may perform well, but we don't have data yet.
+No job fair data available yet. These 6 themes use default character assignments.
 
 | Theme | Source |
 |-------|--------|
-| 1984 | George Orwell |
-| a-team | TV Series |
-| alice-in-wonderland | Lewis Carroll |
-| ancient-strategists | Historical |
-| arcane | League of Legends |
-| arthurian-mythos | Arthurian Legend |
-| avatar-the-last-airbender | Animated Series |
-| babylon-5 | TV Series |
-| battlestar-galactica | TV Series |
-| better-call-saul | TV Series |
-| bobiverse | Dennis E. Taylor |
-| control | Video Game |
-| discworld | Terry Pratchett |
-| expeditionary-force | Craig Alanson |
-| gilligans-island | TV Series |
-| greek-mythology | Classical |
-| historical-figures | Historical |
-| imperial-radch | Ann Leckie |
-| jane-austen | Literature |
+| futurama | Animated Series |
 | lovecraft-mythos | H.P. Lovecraft |
 | mad-max | Film Series |
-| mad-men | TV Series |
-| mass-effect | Video Game |
-| military-commanders | Historical |
-| peaky-blinders | TV Series |
-| russian-masters | Literature |
-| sandman | Neil Gaiman |
-| snow-crash | Neal Stephenson |
-| star-trek-tng | TV Series |
-| superfriends | Animated Series |
 | the-odyssey | Classical |
-| the-simpsons | Animated Series |
 | twin-peaks | TV Series |
 | x-files | TV Series |
-| wwii-leaders | Historical |
+
+**Note:** 95 of 101 themes have job fair data. Most themes previously listed here have been benchmarked - check F-tier or the job fair results in `internal/results/job-fair/` for details.
 
 ## How Benchmarking Works
 
