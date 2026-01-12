@@ -331,6 +331,13 @@ export class ClaudeService extends EventEmitter {
   private defaultCwd?: string;
   private spawner: ClaudeSpawner;
 
+  // Persistent process state for background agent support
+  private stdoutBuffer = '';
+  private messageQueue: SDKMessage[] = [];
+  private messageResolvers: Array<(msg: SDKMessage | null) => void> = [];
+  private processExited = false;
+  private processError: Error | null = null;
+
   constructor(options?: { cwd?: string; spawner?: ClaudeSpawner }) {
     super();
     this.defaultCwd = options?.cwd;
@@ -338,35 +345,27 @@ export class ClaudeService extends EventEmitter {
   }
 
   /**
-   * Send a message to Claude and receive streaming responses
-   *
-   * Uses child_process.spawn with stdin pipe and --input-format stream-json.
-   * This enables sending images and works reliably without TTY requirements.
-   *
-   * @param prompt - The prompt to send to Claude
-   * @param options - Optional spawn options (cwd, env, images)
-   * @returns AsyncIterable of SDK messages
+   * Ensure a Claude process is running, spawning one if needed.
+   * Reuses existing process to preserve background Task agents.
    */
-  async *sendMessage(prompt: string, options?: ClaudeSpawnOptions): AsyncIterable<SDKMessage> {
-    // CRITICAL: Kill any existing process before starting a new one
-    // This prevents duplicate Claude instances responding to the same conversation
-    if (this.currentProcess) {
-      console.log('[ClaudeService] Killing existing process before starting new one');
-      this.currentProcess.kill();
-      this.currentProcess = null;
+  private ensureProcess(options?: ClaudeSpawnOptions): ChildProcess {
+    if (this.currentProcess && !this.processExited) {
+      console.log('[ClaudeService] Reusing existing Claude process');
+      return this.currentProcess;
     }
+
+    // Reset state for new process
+    this.stdoutBuffer = '';
+    this.messageQueue = [];
+    this.messageResolvers = [];
+    this.processExited = false;
+    this.processError = null;
 
     const args = this.buildArgs();
     const cwd = options?.cwd ?? this.defaultCwd ?? process.cwd();
-    const env = { ...process.env, ...options?.env };
+    const env = { ...process.env, ...options?.env, CYCLIST: '1' };
 
-    // B-10: Update activeMode to match pendingMode at query start
-    this.activeMode = this.pendingMode;
-
-    // Reset interrupted flag for new message
-    this.interrupted = false;
-
-    console.log('[ClaudeService] Spawning child process');
+    console.log('[ClaudeService] Spawning new Claude process (persistent mode)');
     const proc = this.spawner('claude', args, {
       cwd,
       env,
@@ -374,57 +373,18 @@ export class ClaudeService extends EventEmitter {
     });
     this.currentProcess = proc;
 
-    // Build and write the user message to stdin, then close it
-    const userMessage = this.buildStreamJsonUserMessage(prompt, options?.images ?? []);
-    console.log('[ClaudeService] Writing stream-json user message to stdin');
-    proc.stdin?.write(userMessage + '\n');
-    proc.stdin?.end();
-    console.log('[ClaudeService] Closed stdin');
-
-    // Buffer for incomplete JSON lines
-    let buffer = '';
-
-    // Create a promise-based message queue
-    const messageQueue: SDKMessage[] = [];
-    let resolveNext: ((value: IteratorResult<SDKMessage>) => void) | null = null;
-    let done = false;
-    let error: Error | null = null;
-
-    const pushMessage = (msg: SDKMessage) => {
-      // Capture session ID from system/init message
-      if ((msg.type === 'system' || msg.type === 'result') && 'session_id' in msg && msg.session_id) {
-        this.sessionId = msg.session_id;
-      }
-
-      if (resolveNext) {
-        resolveNext({ value: msg, done: false });
-        resolveNext = null;
-      } else {
-        messageQueue.push(msg);
-      }
-    };
-
-    const finish = (err?: Error) => {
-      done = true;
-      error = err ?? null;
-      if (resolveNext) {
-        resolveNext({ value: undefined as unknown as SDKMessage, done: true });
-        resolveNext = null;
-      }
-    };
-
-    // Parse NDJSON from stdout
+    // Set up persistent stdout handler
     proc.stdout?.on('data', (data: Buffer) => {
-      buffer += data.toString();
-      const lines = buffer.split('\n');
-      buffer = lines.pop() ?? '';
+      this.stdoutBuffer += data.toString();
+      const lines = this.stdoutBuffer.split('\n');
+      this.stdoutBuffer = lines.pop() ?? '';
 
       for (const line of lines) {
         if (!line.trim()) continue;
         if (!line.startsWith('{')) continue;
         try {
           const msg = JSON.parse(line) as SDKMessage;
-          pushMessage(msg);
+          this.handleIncomingMessage(msg);
         } catch {
           if (line.length > 10) {
             console.warn('[ClaudeService] Skipping malformed JSON:', line.substring(0, 100));
@@ -438,63 +398,132 @@ export class ClaudeService extends EventEmitter {
       console.error('[ClaudeService] stderr:', data.toString());
     });
 
-    // Handle process exit
+    // Handle process exit (should only happen on reset or error)
     proc.on('close', (exitCode) => {
+      console.log(`[ClaudeService] Process exited with code ${exitCode}`);
+      this.processExited = true;
+
+      // Track non-zero exit as an error if we haven't received any messages
+      if (exitCode !== 0 && exitCode !== null && this.messageQueue.length === 0) {
+        this.processError = new Error(`Claude process exited with code ${exitCode}`);
+      }
+
       // Flush remaining buffer
-      if (buffer.trim() && buffer.startsWith('{')) {
+      if (this.stdoutBuffer.trim() && this.stdoutBuffer.startsWith('{')) {
         try {
-          const msg = JSON.parse(buffer) as SDKMessage;
-          pushMessage(msg);
+          const msg = JSON.parse(this.stdoutBuffer) as SDKMessage;
+          this.handleIncomingMessage(msg);
         } catch {
           // Ignore incomplete JSON
         }
       }
 
-      if (exitCode !== 0 && exitCode !== null && messageQueue.length === 0) {
-        finish(new Error(`Claude process exited with code ${exitCode}`));
-      } else {
-        finish();
+      // Resolve any waiting message requests with null
+      for (const resolve of this.messageResolvers) {
+        resolve(null);
       }
+      this.messageResolvers = [];
       this.currentProcess = null;
     });
 
     proc.on('error', (err) => {
       console.error('[ClaudeService] Process error:', err);
-      finish(err);
+      this.processError = err;
+      this.processExited = true;
+      for (const resolve of this.messageResolvers) {
+        resolve(null);
+      }
+      this.messageResolvers = [];
     });
 
-    const self = this;
+    return proc;
+  }
 
-    // Yield messages as they arrive
-    while (!done || messageQueue.length > 0) {
-      if (self.interrupted) {
+  /**
+   * Handle an incoming message from Claude stdout.
+   * Routes to waiting resolvers or queues for later.
+   */
+  private handleIncomingMessage(msg: SDKMessage): void {
+    // Capture session ID from system/init or result message
+    if ((msg.type === 'system' || msg.type === 'result') && 'session_id' in msg && msg.session_id) {
+      this.sessionId = msg.session_id;
+    }
+
+    // If someone is waiting for a message, give it to them
+    const resolver = this.messageResolvers.shift();
+    if (resolver) {
+      resolver(msg);
+    } else {
+      // Otherwise queue it
+      this.messageQueue.push(msg);
+    }
+  }
+
+  /**
+   * Wait for the next message from Claude.
+   * Returns null if process exits or is interrupted.
+   */
+  private waitForMessage(): Promise<SDKMessage | null> {
+    // Check queue first
+    if (this.messageQueue.length > 0) {
+      return Promise.resolve(this.messageQueue.shift()!);
+    }
+
+    // If process has exited, return null
+    if (this.processExited) {
+      return Promise.resolve(null);
+    }
+
+    // Wait for next message
+    return new Promise((resolve) => {
+      this.messageResolvers.push(resolve);
+    });
+  }
+
+  /**
+   * Send a message to Claude and receive streaming responses
+   *
+   * Uses a persistent Claude process to support background Task agents.
+   * The process stays alive between messages; only killed on explicit reset.
+   *
+   * @param prompt - The prompt to send to Claude
+   * @param options - Optional spawn options (cwd, env, images)
+   * @returns AsyncIterable of SDK messages
+   */
+  async *sendMessage(prompt: string, options?: ClaudeSpawnOptions): AsyncIterable<SDKMessage> {
+    // Ensure we have a running process (reuses existing or spawns new)
+    const proc = this.ensureProcess(options);
+
+    // B-10: Update activeMode to match pendingMode at query start
+    this.activeMode = this.pendingMode;
+
+    // Reset interrupted flag for new message
+    this.interrupted = false;
+
+    // Build and write the user message to stdin (DO NOT close stdin!)
+    const userMessage = this.buildStreamJsonUserMessage(prompt, options?.images ?? []);
+    console.log('[ClaudeService] Writing stream-json user message to stdin (persistent mode)');
+    proc.stdin?.write(userMessage + '\n');
+    // NOTE: We intentionally do NOT call proc.stdin.end() to keep the process alive
+
+    // Yield messages until we get a 'result' message (turn complete)
+    while (!this.interrupted && !this.processExited) {
+      const msg = await this.waitForMessage();
+
+      if (msg === null) {
+        // Process exited or interrupted
+        if (this.processError && !this.interrupted) {
+          throw this.processError;
+        }
         break;
       }
 
-      if (messageQueue.length > 0) {
-        yield messageQueue.shift()!;
-      } else if (!done) {
-        const msg = await new Promise<SDKMessage | null>((resolve) => {
-          const onInterrupt = () => resolve(null);
-          self.once('interrupted', onInterrupt);
+      yield msg;
 
-          resolveNext = (result) => {
-            self.removeListener('interrupted', onInterrupt);
-            if (result.done || self.interrupted) {
-              resolve(null);
-            } else {
-              resolve(result.value);
-            }
-          };
-        });
-
-        if (msg === null) {
-          if (error && !self.interrupted) {
-            throw error;
-          }
-          break;
-        }
-        yield msg;
+      // 'result' message marks end of turn - stop yielding but keep process alive
+      if (msg.type === 'result') {
+        console.log('[ClaudeService] Turn complete (result message received), process stays alive');
+        break;
       }
     }
   }
@@ -577,22 +606,44 @@ export class ClaudeService extends EventEmitter {
   /**
    * Abort the running process completely (kill it)
    * Unlike interrupt(), this fully terminates the subprocess
+   * Background agent fix: Clear process state properly
    */
   abort(): void {
     if (this.currentProcess) {
+      console.log('[ClaudeService] Aborting process');
       this.currentProcess.kill();
       this.currentProcess = null;
     }
+    this.processExited = true;
+    // Clear any pending message resolvers
+    for (const resolve of this.messageResolvers) {
+      resolve(null);
+    }
+    this.messageResolvers = [];
     this.interrupt(); // Also set interrupted flag and emit event
   }
 
   /**
-   * Reset the session (clear session ID)
+   * Reset the session (clear session ID and kill process)
    * B-10: Also clears activeMode since no query has run in new session
+   * Background agent fix: Kill process to start fresh
    */
   resetSession(): void {
+    // Kill the persistent process - next sendMessage will spawn fresh
+    if (this.currentProcess) {
+      console.log('[ClaudeService] Killing process on session reset');
+      this.currentProcess.kill();
+      this.currentProcess = null;
+    }
+    this.processExited = true;
     this.sessionId = null;
     this.activeMode = undefined;
+    // Clear any pending message resolvers
+    for (const resolve of this.messageResolvers) {
+      resolve(null);
+    }
+    this.messageResolvers = [];
+    this.messageQueue = [];
   }
 
   /**
