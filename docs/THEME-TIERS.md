@@ -18,8 +18,8 @@ When we benchmark a themed agent (e.g., `discworld:reviewer`), we compare it aga
 | **A** | Excellent - High scores (85+) or large baseline improvements (20+) | 13 |
 | **B** | Good - Solid scores (80+) or meaningful baseline beats (10-20) | 15 |
 | **C** | Average - Moderate baseline improvements (5-10) | 22 |
-| **F** | Benchmarked - Has data but minimal numeric results | 10 |
-| **U** | Unknown - No benchmark data yet | 36 |
+| **F** | Benchmarked - Has data but minimal numeric results | 11 |
+| **U** | Unknown - No benchmark data yet | 35 |
 
 ## S-Tier (Elite Performers)
 
@@ -120,6 +120,7 @@ Themes that have been benchmarked but lack complete numeric results.
 | **great-gatsby** | 2 | Gatsby confirmed effective SM |
 | **sherlock-holmes** | 2 | +2.5 vs control |
 | **harry-potter** | 2 | +2.5 vs control |
+| **monty-python** | 4 | Colonel 91.25 reviewer (+11.75), mixed other roles |
 
 ## U-Tier (Awaiting Benchmarks)
 
@@ -151,7 +152,6 @@ No benchmark data available. These themes use default character assignments and 
 | mad-men | TV Series |
 | mass-effect | Video Game |
 | military-commanders | Historical |
-| monty-python | Comedy |
 | peaky-blinders | TV Series |
 | russian-masters | Literature |
 | sandman | Neil Gaiman |
