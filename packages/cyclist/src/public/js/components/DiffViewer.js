@@ -6,6 +6,7 @@
  */
 
 import DiffPanel from '../diff-panel.js';
+import FilePanel from '../file-panel.js';
 
 // =============================================================================
 // Tool Detection
@@ -78,12 +79,40 @@ const diffs = [];
 // Callback for when a diff is added (used by ChangedFilesList)
 let onDiffAddedCallback = null;
 
+// Callback for when diffs are removed (used by ChangedFilesList)
+let onDiffsRemovedCallback = null;
+
 /**
  * Set callback for when diff is added
  * @param {Function} callback - Function to call with diffData
  */
 export function setOnDiffAdded(callback) {
   onDiffAddedCallback = callback;
+}
+
+/**
+ * Set callback for when diffs are removed
+ * @param {Function} callback - Function to call with array of removed file paths
+ */
+export function setOnDiffsRemoved(callback) {
+  onDiffsRemovedCallback = callback;
+}
+
+/**
+ * Get count of unique files with diffs
+ * @returns {number} Number of unique file paths
+ */
+function getUniqueFileCount() {
+  const uniquePaths = new Set(diffs.map(d => d.filePath));
+  return uniquePaths.size;
+}
+
+/**
+ * Update all count badges (diff panel and file panel)
+ */
+function updateCountBadges() {
+  DiffPanel.setDiffCount(diffs.length);
+  FilePanel.setFileCount(getUniqueFileCount());
 }
 
 /**
@@ -94,8 +123,8 @@ export function handleDiffUpdate(diffData) {
   // Add to diffs list
   diffs.push(diffData);
 
-  // Update diff count badge
-  DiffPanel.setDiffCount(diffs.length);
+  // Update count badges on both panels
+  updateCountBadges();
 
   // Notify listeners (ChangedFilesList will handle selection and rendering)
   if (onDiffAddedCallback) {
@@ -117,6 +146,45 @@ export function getDiffs() {
 export function clearDiffs() {
   diffs.length = 0;
   DiffPanel.clearContent();
+  updateCountBadges();
+}
+
+/**
+ * Remove diffs for specific file paths (e.g., after git commit)
+ * @param {string[]} filePaths - Array of file paths to remove
+ * @returns {number} Number of diffs removed
+ */
+export function removeDiffsForFiles(filePaths) {
+  if (!filePaths || filePaths.length === 0) return 0;
+
+  const pathSet = new Set(filePaths);
+  const initialLength = diffs.length;
+  const removedPaths = [];
+
+  // Filter out diffs for committed files
+  for (let i = diffs.length - 1; i >= 0; i--) {
+    if (pathSet.has(diffs[i].filePath)) {
+      removedPaths.push(diffs[i].filePath);
+      diffs.splice(i, 1);
+    }
+  }
+
+  const removed = initialLength - diffs.length;
+
+  // Update count badges on both panels
+  updateCountBadges();
+
+  // Clear content if no diffs remain
+  if (diffs.length === 0) {
+    DiffPanel.clearContent();
+  }
+
+  // Notify listeners
+  if (removed > 0 && onDiffsRemovedCallback) {
+    onDiffsRemovedCallback(removedPaths);
+  }
+
+  return removed;
 }
 
 // =============================================================================
@@ -261,8 +329,9 @@ export function renderDiff(container, diffData) {
   filePathLink.title = 'Click to open in editor';
   filePathLink.addEventListener('click', (e) => {
     e.preventDefault();
-    if (window.electron?.fileBrowser?.openInEditor) {
-      window.electron.fileBrowser.openInEditor(diffData.filePath);
+    // 27-1: Fix API path - use electronAPI not electron
+    if (window.electronAPI?.fileBrowser?.openInEditor) {
+      window.electronAPI.fileBrowser.openInEditor(diffData.filePath);
     }
   });
 
@@ -334,7 +403,9 @@ export default {
   handleDiffUpdate,
   getDiffs,
   clearDiffs,
+  removeDiffsForFiles,
   setOnDiffAdded,
+  setOnDiffsRemoved,
   computeDiff,
   getFileExtension,
   getLanguageClass,

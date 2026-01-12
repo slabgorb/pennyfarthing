@@ -1,7 +1,14 @@
 /**
  * Stats Strip - Compact stats display in prompt bar (B-22)
- * Shows model badge, token counts, and context meter
+ * Shows model badge, context meter, and usage limits (23-1)
+ * 23-4: Adds compact button with context awareness
  */
+
+/**
+ * 23-4: Threshold at which compact button becomes visible
+ * Button appears when context usage >= 50%
+ */
+const COMPACT_THRESHOLD = 50;
 
 /**
  * Format token count for display
@@ -40,6 +47,106 @@ function updateContextLevel(contextMini, percent) {
 }
 
 /**
+ * 23-4: Update compact button visibility based on context percentage
+ * Shows button when context >= COMPACT_THRESHOLD (50%)
+ * @param {number} percent - Context usage percentage
+ */
+function updateCompactButtonVisibility(percent) {
+  const compactBtn = document.querySelector('#stats-strip .compact-btn');
+  if (!compactBtn) return;
+
+  if (percent >= COMPACT_THRESHOLD) {
+    compactBtn.classList.remove('hidden');
+  } else {
+    compactBtn.classList.add('hidden');
+  }
+}
+
+/**
+ * 23-4: Execute the /compact command via IPC
+ * Called when compact button is clicked or keyboard shortcut is pressed
+ */
+async function executeCompact() {
+  const compactBtn = document.querySelector('#stats-strip .compact-btn');
+
+  // Check if command API is available
+  if (!window.electronAPI?.command?.execute) {
+    console.warn('[StatsStrip] Command API not available for compact');
+    return;
+  }
+
+  // Show loading state
+  if (compactBtn) {
+    compactBtn.classList.add('loading');
+    compactBtn.disabled = true;
+  }
+
+  try {
+    await window.electronAPI.command.execute('/compact');
+    console.log('[StatsStrip] Compact command executed');
+  } catch (err) {
+    console.error('[StatsStrip] Failed to execute compact:', err);
+  } finally {
+    // Remove loading state
+    if (compactBtn) {
+      compactBtn.classList.remove('loading');
+      compactBtn.disabled = false;
+    }
+  }
+}
+
+/**
+ * Update usage level class based on remaining percentage (23-1)
+ * Note: Usage shows remaining capacity, so higher is better
+ * @param {HTMLElement} element - The usage element
+ * @param {number} percent - Remaining usage percentage (higher = more remaining)
+ */
+function updateUsageLevel(element, percent) {
+  if (!element) return;
+
+  // Remove all level classes
+  element.classList.remove('usage-safe', 'usage-warning', 'usage-danger');
+
+  // Add appropriate level class based on remaining percentage
+  // Green (>50%), Yellow (25-50%), Red (<25%)
+  if (percent > 50) {
+    element.classList.add('usage-safe');
+  } else if (percent > 25) {
+    element.classList.add('usage-warning');
+  } else {
+    element.classList.add('usage-danger');
+  }
+}
+
+/**
+ * Format relative time until reset (23-1)
+ * @param {string|Date} resetAt - ISO timestamp or Date
+ * @returns {string} - Formatted string (e.g., "2h 34m", "5d 3h")
+ */
+function formatResetTime(resetAt) {
+  if (!resetAt) return 'Unknown';
+
+  const reset = new Date(resetAt);
+  const now = new Date();
+  const diffMs = reset.getTime() - now.getTime();
+
+  if (diffMs <= 0) return 'Resetting...';
+
+  const hours = Math.floor(diffMs / (1000 * 60 * 60));
+  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+  const days = Math.floor(hours / 24);
+  const remainingHours = hours % 24;
+
+  if (days > 0) {
+    return `${days}d ${remainingHours}h`;
+  }
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes}m`;
+}
+
+/**
  * Update a stats strip element with visual feedback
  * @param {string} dataStat - The data-stat attribute value
  * @param {string} value - The new value to display
@@ -65,8 +172,9 @@ function updateStripStat(dataStat, value) {
 /**
  * Update context meter fill width and level
  * @param {number} percent - Context usage percentage (0-100)
+ * @param {number} [tokens] - Context token count (optional)
  */
-function updateContextMeter(percent) {
+function updateContextMeter(percent, tokens) {
   const contextMini = document.querySelector('#stats-strip .context-mini');
   const fill = document.querySelector('#stats-strip .context-mini-fill');
   const label = document.querySelector('#stats-strip .context-mini-label');
@@ -79,7 +187,76 @@ function updateContextMeter(percent) {
     label.textContent = `${percent}%`;
   }
 
+  // Update context tokens display (ground truth from transcript)
+  if (tokens !== undefined && tokens !== null) {
+    updateStripStat('strip-context-tokens', formatTokenCount(tokens));
+  }
+
   updateContextLevel(contextMini, percent);
+
+  // 23-4: Update compact button visibility based on context threshold
+  updateCompactButtonVisibility(percent);
+}
+
+/**
+ * Update usage meter display (23-1)
+ * @param {Object} usageStats - Usage stats object
+ * @param {number} usageStats.fiveHourPercent - 5-hour remaining percentage
+ * @param {number} usageStats.weeklyPercent - Weekly remaining percentage
+ * @param {string} usageStats.fiveHourResetAt - ISO timestamp for 5-hour reset
+ * @param {string} usageStats.weeklyResetAt - ISO timestamp for weekly reset
+ */
+function updateUsageMeter(usageStats) {
+  if (!usageStats) return;
+
+  // Check if we have real data (planType is set when data is fetched)
+  const hasData = usageStats.planType && usageStats.planType !== 'unknown';
+
+  // Update 5-hour usage (shows USED percentage to match Claude /config)
+  const usage5hr = document.querySelector('#stats-strip .usage-5hr');
+  if (usage5hr) {
+    const valueSpan = usage5hr.querySelector('.usage-value');
+    const used5hr = usageStats.fiveHourPercent || 0;
+    if (valueSpan) {
+      if (hasData) {
+        valueSpan.textContent = `${Math.round(used5hr)}%`;
+      } else {
+        valueSpan.textContent = '—%';
+      }
+    }
+    // Update tooltip with reset time
+    if (usageStats.fiveHourResetAt) {
+      usage5hr.title = `5-hour block: ${Math.round(used5hr)}% used, resets in ${formatResetTime(usageStats.fiveHourResetAt)}`;
+    } else if (!hasData) {
+      usage5hr.title = '5-hour block: Loading...';
+    }
+    // Update level class based on used percentage (higher = more danger)
+    const remaining5hr = hasData ? Math.max(0, 100 - used5hr) : 100;
+    updateUsageLevel(usage5hr, remaining5hr);
+  }
+
+  // Update weekly usage (shows USED percentage to match Claude /config)
+  const usageWeekly = document.querySelector('#stats-strip .usage-weekly');
+  if (usageWeekly) {
+    const valueSpan = usageWeekly.querySelector('.usage-value');
+    const usedWeekly = usageStats.weeklyPercent || 0;
+    if (valueSpan) {
+      if (hasData) {
+        valueSpan.textContent = `${Math.round(usedWeekly)}%`;
+      } else {
+        valueSpan.textContent = '—%';
+      }
+    }
+    // Update tooltip with reset time
+    if (usageStats.weeklyResetAt) {
+      usageWeekly.title = `Weekly: ${Math.round(usedWeekly)}% used, resets in ${formatResetTime(usageStats.weeklyResetAt)}`;
+    } else if (!hasData) {
+      usageWeekly.title = 'Weekly: Loading...';
+    }
+    // Update level class based on used percentage (higher = more danger)
+    const remainingWeekly = hasData ? Math.max(0, 100 - usedWeekly) : 100;
+    updateUsageLevel(usageWeekly, remainingWeekly);
+  }
 }
 
 /**
@@ -115,36 +292,17 @@ async function initStatsStrip() {
     // Don't update context from stats channel - it's always '—'
   });
 
-  // Token stats subscription
-  if (window.electronAPI?.tokenStats) {
-    // Get initial token stats
-    try {
-      const tokenStats = await window.electronAPI.tokenStats.get();
-      if (tokenStats) {
-        updateStripStat('strip-input', '↓ ' + formatTokenCount(tokenStats.inputTokens));
-        updateStripStat('strip-output', '↑ ' + formatTokenCount(tokenStats.outputTokens));
-      }
-    } catch (err) {
-      console.error('[StatsStrip] Failed to get initial token stats:', err);
-    }
-
-    // Subscribe to token stats updates
-    window.electronAPI.tokenStats.onUpdate((_event, tokenStats) => {
-      if (tokenStats) {
-        updateStripStat('strip-input', '↓ ' + formatTokenCount(tokenStats.inputTokens));
-        updateStripStat('strip-output', '↑ ' + formatTokenCount(tokenStats.outputTokens));
-      }
-    });
-  }
+  // 23-1: Token stats subscription removed - replaced by usage limits
 
   // Context usage - subscribe to main process polling updates (B-19)
+  // Context data includes both percent and tokens (ground truth from transcript)
   if (window.electronAPI?.context) {
     // Get initial context via IPC
     if (window.electronAPI.context.get) {
       try {
         const ctx = await window.electronAPI.context.get();
         if (ctx && ctx.percent !== null && ctx.percent !== undefined) {
-          updateContextMeter(ctx.percent);
+          updateContextMeter(ctx.percent, ctx.tokens);
         }
       } catch (err) {
         // Silent fail - context is optional
@@ -155,10 +313,40 @@ async function initStatsStrip() {
     if (window.electronAPI.context.onUpdate) {
       window.electronAPI.context.onUpdate((_event, ctx) => {
         if (ctx && ctx.percent !== null && ctx.percent !== undefined) {
-          updateContextMeter(ctx.percent);
+          updateContextMeter(ctx.percent, ctx.tokens);
         }
       });
     }
+  }
+
+  // 23-1: Usage stats subscription
+  if (window.electronAPI?.usageStats) {
+    // Get initial usage stats via IPC
+    if (window.electronAPI.usageStats.get) {
+      try {
+        const usage = await window.electronAPI.usageStats.get();
+        if (usage) {
+          updateUsageMeter(usage);
+        }
+      } catch (err) {
+        console.error('[StatsStrip] Failed to get initial usage stats:', err);
+      }
+    }
+
+    // Subscribe to usage stats updates from main process polling
+    if (window.electronAPI.usageStats.onUpdate) {
+      window.electronAPI.usageStats.onUpdate((_event, usage) => {
+        if (usage) {
+          updateUsageMeter(usage);
+        }
+      });
+    }
+  }
+
+  // 23-4: Set up compact button click handler
+  const compactBtn = document.querySelector('#stats-strip .compact-btn');
+  if (compactBtn) {
+    compactBtn.addEventListener('click', executeCompact);
   }
 
   console.log('[StatsStrip] IPC connected');
@@ -171,3 +359,7 @@ initStatsStrip();
 window.initStatsStrip = initStatsStrip;
 window.updateStripStat = updateStripStat;
 window.updateContextMeter = updateContextMeter;
+window.updateUsageMeter = updateUsageMeter;
+// 23-4: Export compact button functions
+window.updateCompactButtonVisibility = updateCompactButtonVisibility;
+window.executeCompact = executeCompact;

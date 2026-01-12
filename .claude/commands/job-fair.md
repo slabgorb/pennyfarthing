@@ -1,0 +1,1 @@
+../../pennyfarthing-dist/commands/job-fair.md

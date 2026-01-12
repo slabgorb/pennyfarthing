@@ -20,6 +20,7 @@ import {
 import { updateActivity, clearActivity } from './activity.js';
 import { resetSubmitting, setProcessing, processNextInQueue, setOnQueueChange, clearMessageQueue, loadMessageQueue, getMessageQueue, removeFromQueue } from './editor.js';
 import { handleAbort } from './components/ToolActivityBar.js';
+import { handleMessage as handleGitCommitMessage } from './git-commit-detector.js';
 
 // 22-5: Track verbose mode state
 let verboseModeEnabled = false;
@@ -75,6 +76,9 @@ function initMessageView() {
       console.log('[MessageView] SDK message:', message.type);
       addMessage(message);
       updateActivity(message);
+
+      // 22-7: Detect git commits and remove committed files from diff list
+      handleGitCommitMessage(message);
 
       // B-9.6: Process assistant messages for quick actions
       if (message.type === 'assistant') {

@@ -6,6 +6,33 @@
 const STORY_POLL_INTERVAL = 10000; // 10 seconds
 const GIT_POLL_INTERVAL = 5000;    // 5 seconds
 
+// localStorage key for AC panel collapse state (27-1)
+const AC_COLLAPSED_KEY = 'cyclist-ac-collapsed';
+
+/**
+ * Get AC panel collapsed state from localStorage
+ * @returns {boolean} True if collapsed, false if expanded (default: false)
+ */
+function getAcCollapsed() {
+  try {
+    return localStorage.getItem(AC_COLLAPSED_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Save AC panel collapsed state to localStorage
+ * @param {boolean} collapsed - Whether panel is collapsed
+ */
+function setAcCollapsed(collapsed) {
+  try {
+    localStorage.setItem(AC_COLLAPSED_KEY, String(collapsed));
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
 let storyPollTimer = null;
 let gitPollTimer = null;
 
@@ -229,8 +256,11 @@ function updateAcceptanceCriteria(criteria) {
     </div>`
   ).join('');
 
-  // Auto-expand if there are items, collapse if empty
-  if (criteria.length > 0) {
+  // Respect saved collapse state (27-1: persist collapse preference)
+  // Only apply saved state, don't auto-expand
+  if (getAcCollapsed()) {
+    acSection.classList.add('collapsed');
+  } else {
     acSection.classList.remove('collapsed');
   }
 }
@@ -343,13 +373,14 @@ async function initStoryGit() {
   startStoryPolling();
   startGitPolling();
 
-  // Set up AC section collapse toggle handler
+  // Set up AC section collapse toggle handler (27-1: persist state)
   const acHeader = document.querySelector('#ac-section .section-header');
   if (acHeader) {
     acHeader.addEventListener('click', () => {
       const acSection = document.getElementById('ac-section');
       if (acSection) {
-        acSection.classList.toggle('collapsed');
+        const isCollapsed = acSection.classList.toggle('collapsed');
+        setAcCollapsed(isCollapsed);
       }
     });
   }

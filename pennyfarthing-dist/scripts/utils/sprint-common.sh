@@ -177,3 +177,110 @@ log_reconciliation() {
 
     echo "[$timestamp] Story $story_id: $message" >> "$log_file"
 }
+
+# detect_drift
+# Detect stories that have been merged but not marked as done in YAML or Jira
+# Scans git log for recent merges (past 7 days) and compares against YAML/Jira status
+# Returns: list of drifted stories in "story_id:yaml_status:jira_status" format
+# A story is "drifted" when its branch was merged but YAML or Jira still shows in_progress
+detect_drift() {
+    local drifted=()
+
+    # Get recently merged branches (past 7 days)
+    # Look for feat/X-Y-* pattern in merge commit messages
+    local merged_branches
+    merged_branches=$(git log --merges --oneline --since="7 days ago" develop 2>/dev/null | \
+        grep -oE 'feat/[0-9]+-[0-9]+[^[:space:]]*' | sort -u)
+
+    for branch in $merged_branches; do
+        # Use extract_story_id to parse branch name
+        local story_id
+        story_id=$(extract_story_id "$branch")
+
+        if [[ -n "$story_id" ]]; then
+            # Check current status in YAML via get_story_field
+            local yaml_status
+            yaml_status=$(get_story_field "$story_id" "status")
+
+            # Get Jira key and check Jira status
+            local jira_key jira_status
+            jira_key=$(get_story_field "$story_id" "jira")
+            jira_status="unknown"
+
+            if [[ -n "$jira_key" && "$jira_key" != "null" ]]; then
+                # Query Jira for current status
+                jira_status=$(jira issue view "$jira_key" --raw 2>/dev/null | \
+                    jq -r '.fields.status.name // "unknown"' 2>/dev/null || echo "unknown")
+            fi
+
+            # Story is drifted if merged but YAML status is not "done" and not "backlog"
+            # OR if Jira status is not "Done" (case-insensitive check)
+            local yaml_drifted=false
+            local jira_drifted=false
+
+            if [[ "$yaml_status" != "done" && "$yaml_status" != "backlog" && "$yaml_status" != "null" ]]; then
+                yaml_drifted=true
+            fi
+
+            # Check Jira drift - status should be "Done" for merged stories
+            if [[ "$jira_status" != "unknown" && "$jira_status" != "Done" && "$jira_status" != "Closed" ]]; then
+                jira_drifted=true
+            fi
+
+            # Report if either YAML or Jira is drifted
+            if [[ "$yaml_drifted" == "true" || "$jira_drifted" == "true" ]]; then
+                drifted+=("$story_id:$yaml_status:$jira_status")
+            fi
+        fi
+    done
+
+    # Output drifted stories (one per line)
+    printf '%s\n' "${drifted[@]}" 2>/dev/null || true
+}
+
+# reconcile_drift STORY_ID
+# Auto-reconcile a drifted story by updating YAML status to done and Jira to Done
+# Logs the reconciliation event
+# Arguments:
+#   STORY_ID - Story identifier (e.g., "8-1")
+reconcile_drift() {
+    local story_id="$1"
+
+    if [[ -z "$story_id" ]]; then
+        echo "Error: story_id required" >&2
+        return 1
+    fi
+
+    local yaml_updated=false
+    local jira_updated=false
+    local messages=()
+
+    # Update YAML status to done
+    update_story_status "$story_id" "done"
+    if [[ $? -eq 0 ]]; then
+        yaml_updated=true
+        messages+=("YAML status updated to done")
+    fi
+
+    # Get Jira key and transition to Done
+    local jira_key
+    jira_key=$(get_story_field "$story_id" "jira")
+
+    if [[ -n "$jira_key" && "$jira_key" != "null" ]]; then
+        # Try to transition Jira to Done
+        if jira issue move "$jira_key" "Done" 2>/dev/null; then
+            jira_updated=true
+            messages+=("Jira $jira_key transitioned to Done")
+        else
+            messages+=("Jira $jira_key transition failed (may need manual update)")
+        fi
+    fi
+
+    # Log the reconciliation event
+    if [[ "$yaml_updated" == "true" || "$jira_updated" == "true" ]]; then
+        log_reconciliation "$story_id" "Auto-reconciled: ${messages[*]}"
+        return 0
+    else
+        return 1
+    fi
+}

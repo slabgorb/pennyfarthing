@@ -1,54 +1,45 @@
 /**
  * ClaudeService - Programmatic interface to Claude Code CLI
  *
- * Uses Claude Code in programmatic mode (`claude -p --output-format stream-json`)
- * via node-pty for proper TTY support. Claude CLI requires a TTY to produce
- * stream-json output - see GitHub issue #9026 and #771.
+ * Uses Claude Code in programmatic mode with `--input-format stream-json` and
+ * `--output-format stream-json` via child_process.spawn with stdin pipe.
  *
  * Does NOT require an Anthropic API key - uses the user's existing Claude Code
  * installation and authentication.
  *
  * @see sprint/adr/002-programmatic-mode-migration.md
  * @see .claude/project/agents/dev-sidecar/decisions.md
- * @see https://github.com/anthropics/claude-code/issues/9026 (TTY requirement bug)
- * @see https://github.com/anthropics/claude-code/issues/771 (Node.js spawn fix)
+ * @see https://github.com/anthropics/claude-code/issues/1072 (stdin pipe requirement)
  */
-import * as pty from 'node-pty';
+import { spawn } from 'child_process';
 import { EventEmitter } from 'events';
 /**
- * Default spawner using node-pty
- * Claude CLI requires a TTY to produce stream-json output
+ * ClaudeService - Wrapper for Claude Code CLI programmatic mode
+ *
+ * Uses child_process with stdin pipe for NDJSON streaming programmatic control
+ * of Claude Code without requiring an Anthropic API key.
  */
-const defaultSpawner = (command, args, options) => {
-    return pty.spawn(command, args, {
-        name: options.name ?? 'xterm-256color',
-        cols: options.cols ?? 120,
-        rows: options.rows ?? 30,
-        cwd: options.cwd,
-        env: options.env,
-    });
-};
 export class ClaudeService extends EventEmitter {
     sessionId = null;
     pendingMode = 'acceptEdits';
     activeMode = undefined;
     currentProcess = null;
     interrupted = false;
-    spawner;
     defaultCwd;
+    spawner;
     constructor(options) {
         super();
-        this.spawner = options?.spawner ?? defaultSpawner;
         this.defaultCwd = options?.cwd;
+        this.spawner = options?.spawner ?? spawn;
     }
     /**
      * Send a message to Claude and receive streaming responses
      *
-     * Uses node-pty for TTY support - Claude CLI requires a TTY to produce
-     * stream-json output (GitHub issues #9026 and #771).
+     * Uses child_process.spawn with stdin pipe and --input-format stream-json.
+     * This enables sending images and works reliably without TTY requirements.
      *
      * @param prompt - The prompt to send to Claude
-     * @param options - Optional spawn options (cwd, env)
+     * @param options - Optional spawn options (cwd, env, images)
      * @returns AsyncIterable of SDK messages
      */
     async *sendMessage(prompt, options) {
@@ -59,14 +50,26 @@ export class ClaudeService extends EventEmitter {
             this.currentProcess.kill();
             this.currentProcess = null;
         }
-        const args = this.buildArgs(prompt);
-        const spawnOptions = this.buildSpawnOptions(options);
+        const args = this.buildArgs();
+        const cwd = options?.cwd ?? this.defaultCwd ?? process.cwd();
+        const env = { ...process.env, ...options?.env };
         // B-10: Update activeMode to match pendingMode at query start
         this.activeMode = this.pendingMode;
         // Reset interrupted flag for new message
         this.interrupted = false;
-        const proc = this.spawner('claude', args, spawnOptions);
+        console.log('[ClaudeService] Spawning child process');
+        const proc = this.spawner('claude', args, {
+            cwd,
+            env,
+            stdio: ['pipe', 'pipe', 'pipe'],
+        });
         this.currentProcess = proc;
+        // Build and write the user message to stdin, then close it
+        const userMessage = this.buildStreamJsonUserMessage(prompt, options?.images ?? []);
+        console.log('[ClaudeService] Writing stream-json user message to stdin');
+        proc.stdin?.write(userMessage + '\n');
+        proc.stdin?.end();
+        console.log('[ClaudeService] Closed stdin');
         // Buffer for incomplete JSON lines
         let buffer = '';
         // Create a promise-based message queue
@@ -91,57 +94,48 @@ export class ClaudeService extends EventEmitter {
             done = true;
             error = err ?? null;
             if (resolveNext) {
-                if (err) {
-                    // Don't reject, just mark done - error is captured
-                }
                 resolveNext({ value: undefined, done: true });
                 resolveNext = null;
             }
         };
-        // Handle PTY data - parse NDJSON
-        // node-pty combines stdout/stderr into a single stream
-        proc.onData((data) => {
-            buffer += data;
+        // Parse NDJSON from stdout
+        proc.stdout?.on('data', (data) => {
+            buffer += data.toString();
             const lines = buffer.split('\n');
-            buffer = lines.pop() ?? ''; // Keep incomplete line in buffer
+            buffer = lines.pop() ?? '';
             for (const line of lines) {
                 if (!line.trim())
                     continue;
-                // Skip ANSI escape sequences and non-JSON lines
-                // PTY may include terminal control characters
-                const cleanLine = line.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '').trim();
-                if (!cleanLine.startsWith('{'))
+                if (!line.startsWith('{'))
                     continue;
                 try {
-                    const msg = JSON.parse(cleanLine);
+                    const msg = JSON.parse(line);
                     pushMessage(msg);
                 }
                 catch {
-                    // Skip malformed JSON lines (may include terminal formatting)
-                    if (cleanLine.length > 10) {
-                        console.warn('[ClaudeService] Skipping malformed JSON:', cleanLine.substring(0, 100));
+                    if (line.length > 10) {
+                        console.warn('[ClaudeService] Skipping malformed JSON:', line.substring(0, 100));
                     }
                 }
             }
         });
-        // Handle PTY exit
-        proc.onExit(({ exitCode, signal }) => {
-            // Flush any remaining buffer
-            if (buffer.trim()) {
-                const cleanBuffer = buffer.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '').trim();
-                if (cleanBuffer.startsWith('{')) {
-                    try {
-                        const msg = JSON.parse(cleanBuffer);
-                        pushMessage(msg);
-                    }
-                    catch {
-                        // Ignore incomplete JSON at end
-                    }
+        // Log stderr for debugging
+        proc.stderr?.on('data', (data) => {
+            console.error('[ClaudeService] stderr:', data.toString());
+        });
+        // Handle process exit
+        proc.on('close', (exitCode) => {
+            // Flush remaining buffer
+            if (buffer.trim() && buffer.startsWith('{')) {
+                try {
+                    const msg = JSON.parse(buffer);
+                    pushMessage(msg);
+                }
+                catch {
+                    // Ignore incomplete JSON
                 }
             }
-            // Only error on non-zero exit if we got no messages and no signal
-            // Exit code 1 can happen normally when process is terminated
-            if (exitCode !== 0 && exitCode !== null && signal === 0 && messageQueue.length === 0) {
+            if (exitCode !== 0 && exitCode !== null && messageQueue.length === 0) {
                 finish(new Error(`Claude process exited with code ${exitCode}`));
             }
             else {
@@ -149,11 +143,13 @@ export class ClaudeService extends EventEmitter {
             }
             this.currentProcess = null;
         });
-        // Expose resolveNext so interrupt() can break the wait
+        proc.on('error', (err) => {
+            console.error('[ClaudeService] Process error:', err);
+            finish(err);
+        });
         const self = this;
         // Yield messages as they arrive
         while (!done || messageQueue.length > 0) {
-            // Check if interrupted
             if (self.interrupted) {
                 break;
             }
@@ -161,7 +157,6 @@ export class ClaudeService extends EventEmitter {
                 yield messageQueue.shift();
             }
             else if (!done) {
-                // Wait for next message or interrupt
                 const msg = await new Promise((resolve) => {
                     const onInterrupt = () => resolve(null);
                     self.once('interrupted', onInterrupt);
@@ -175,7 +170,6 @@ export class ClaudeService extends EventEmitter {
                         }
                     };
                 });
-                // Check if we got a null (done or interrupted)
                 if (msg === null) {
                     if (error && !self.interrupted) {
                         throw error;
@@ -247,8 +241,8 @@ export class ClaudeService extends EventEmitter {
     interrupt() {
         this.interrupted = true;
         if (this.currentProcess) {
-            // Send Escape character to interrupt current turn
-            this.currentProcess.write('\x1b');
+            // Send SIGINT to interrupt current turn
+            this.currentProcess.kill('SIGINT');
         }
         // Emit event to break any waiting promises
         this.emit('interrupted');
@@ -288,16 +282,14 @@ export class ClaudeService extends EventEmitter {
         this.resetSession();
     }
     /**
-     * Build CLI arguments for claude command
-     *
-     * NOTE: --verbose is REQUIRED when using -p with --output-format stream-json
-     * Without it, Claude CLI produces no output.
+     * Build CLI arguments for stream-json input/output mode
      */
-    buildArgs(prompt) {
+    buildArgs() {
         const args = [
-            '-p', prompt,
+            '-p', // Print mode (non-interactive)
+            '--input-format', 'stream-json',
             '--output-format', 'stream-json',
-            '--verbose', // REQUIRED for stream-json with -p flag
+            '--verbose',
         ];
         // Set permission mode based on user selection
         if (this.pendingMode === 'dangerouslySkipPermissions') {
@@ -313,21 +305,36 @@ export class ClaudeService extends EventEmitter {
         return args;
     }
     /**
-     * Build spawn options for node-pty including OTEL environment variables
+     * Build stream-json user message with image content blocks (28-1)
+     * Format: {"type":"user","message":{"role":"user","content":[{text},{image}...]}}
      */
-    buildSpawnOptions(options) {
-        // Preserve OTEL environment variables from parent process
-        const env = {
-            ...process.env,
-            ...options?.env,
+    buildStreamJsonUserMessage(prompt, images) {
+        // Build content array: text first, then images
+        // (Claude API requires text before images)
+        const content = [];
+        // Add text prompt
+        content.push({ type: 'text', text: prompt });
+        // Add images
+        for (const image of images) {
+            // Extract base64 data from data URL (remove "data:image/png;base64," prefix)
+            const base64Data = image.dataUrl.replace(/^data:image\/[^;]+;base64,/, '');
+            content.push({
+                type: 'image',
+                source: {
+                    type: 'base64',
+                    media_type: image.mimeType,
+                    data: base64Data,
+                },
+            });
+        }
+        const message = {
+            type: 'user',
+            message: {
+                role: 'user',
+                content,
+            },
         };
-        return {
-            name: 'xterm-256color',
-            cols: 120,
-            rows: 30,
-            cwd: options?.cwd ?? this.defaultCwd ?? process.cwd(),
-            env,
-        };
+        return JSON.stringify(message);
     }
 }
 //# sourceMappingURL=claude-service.js.map

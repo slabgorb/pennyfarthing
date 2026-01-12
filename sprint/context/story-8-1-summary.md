@@ -2,7 +2,7 @@
 
 **Epic:** 8 - Automatic State Reconciliation
 **Points:** 3 | **Priority:** P1
-**Completed:** 2026-01-04
+**Completed:** 2026-01-11 (test fix merged; implementation completed 2026-01-04)
 
 ## What Was Built
 
@@ -30,7 +30,7 @@ Implemented a post-merge git hook that automatically detects when feature branch
 |------|--------|
 | `pennyfarthing-dist/scripts/hooks/post-merge.sh` | New (166 lines) - Git hook implementation |
 | `pennyfarthing-dist/scripts/utils/sprint-common.sh` | Added 73 lines - extract_story_id(), update_story_status(), log_reconciliation() |
-| `src/cli/commands/init.ts` | Added 64 lines - installGitHooks() function |
+| `packages/core/src/cli/commands/init.ts` | Added 64 lines - installGitHooks() function |
 | `dist/cli/commands/init.js` | Compiled output |
 
 ## Lessons for Future Work
@@ -40,3 +40,5 @@ Implemented a post-merge git hook that automatically detects when feature branch
 2. For yq operations, success exit code doesn't mean the target was found - consider adding verification when precise feedback is needed.
 
 3. The 5-minute window for detecting merges via `git log --since` is arbitrary but works for typical workflows. Edge cases with long merge operations may miss detection.
+
+4. **2026-01-11 Note:** Story was already implemented but left in backlog. Test file had stale path (`src/cli/` instead of `packages/core/src/cli/`) after monorepo restructure. Fixed test path, all 12 tests now pass.

@@ -1,13 +1,16 @@
 /**
- * E6-3: Token Display UI Tests
+ * E6-3: Token Display Tests (Backend IPC Infrastructure)
  *
- * These tests verify the acceptance criteria for displaying real token usage
- * from OTLP metrics. Updated for B-22 to check stats-strip instead of sidebar.
+ * These tests verify the OTLP token stats backend infrastructure.
  *
- * Acceptance Criteria:
- * - AC1: Stats strip shows input tokens (↓) from OTLP data
- * - AC2: Stats strip shows output tokens (↑) from OTLP data
- * - AC3: Updates in real-time as Claude processes requests
+ * NOTE: Story 23-1 removed the UI token display from stats-strip in favor of
+ * usage limits display. The UI tests (AC1, AC2) are now obsolete.
+ * Backend IPC channels remain for potential sidebar/modal usage.
+ *
+ * Acceptance Criteria (updated for 23-1):
+ * - AC1: [DEPRECATED by 23-1] Stats strip no longer shows input tokens
+ * - AC2: [DEPRECATED by 23-1] Stats strip no longer shows output tokens
+ * - AC3: Backend IPC updates still work for token stats
  * - AC4: Old message counting code removed
  * - AC5: Token counts reset on new session
  */
@@ -33,7 +36,9 @@ describe('E6-3: Token Display UI', () => {
     document = window.document;
   });
 
-  describe('AC1: Stats strip shows input tokens from OTLP data', () => {
+  // AC1 & AC2: DEPRECATED by 23-1 - Token display removed from stats strip
+  // Usage limits now shown instead. See 23-1-usage-limits.test.ts for replacement tests.
+  describe.skip('AC1: Stats strip shows input tokens from OTLP data (DEPRECATED by 23-1)', () => {
 
     it('should have input tokens display element in stats strip', () => {
       const inputTokens = document.querySelector('#stats-strip [data-stat="strip-input"]');
@@ -54,7 +59,7 @@ describe('E6-3: Token Display UI', () => {
 
   });
 
-  describe('AC2: Stats strip shows output tokens from OTLP data', () => {
+  describe.skip('AC2: Stats strip shows output tokens from OTLP data (DEPRECATED by 23-1)', () => {
 
     it('should have output tokens display element in stats strip', () => {
       const outputTokens = document.querySelector('#stats-strip [data-stat="strip-output"]');
@@ -250,7 +255,8 @@ describe('E6-3: Token Display UI', () => {
       expect(statsStrip).not.toBeNull();
     });
 
-    it('should have token stats elements within stats strip', () => {
+    // DEPRECATED by 23-1: Token display replaced by usage limits
+    it.skip('should have token stats elements within stats strip (DEPRECATED by 23-1)', () => {
       const statsStrip = document.querySelector('#stats-strip');
       const inputTokens = statsStrip?.querySelector('[data-stat="strip-input"]');
       const outputTokens = statsStrip?.querySelector('[data-stat="strip-output"]');

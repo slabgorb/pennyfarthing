@@ -4,8 +4,8 @@
  * Tests verify the wiring of rich text editor to ClaudeService via IPC,
  * replacing the PTY input path.
  *
- * Note: ClaudeService now uses node-pty for TTY support (required by Claude CLI).
- * See GitHub issues #9026 and #771.
+ * Note: ClaudeService uses child_process.spawn with stdin pipe for stream-json input.
+ * This enables image support and eliminates TTY requirements.
  *
  * Acceptance Criteria:
  * - AC1: Editor submits directly to SDK (no PTY)
@@ -15,7 +15,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import type { IPty } from 'node-pty';
+import type { ChildProcess } from 'child_process';
+import { EventEmitter, Readable, Writable } from 'stream';
 import {
   SDKMessage,
   SDKSystemMessage,
@@ -56,60 +57,69 @@ const sampleResultMessage: SDKResultMessage = {
 };
 
 /**
- * Create a mock IPty process that emits NDJSON messages
- * IPty interface requires onData, onExit, kill, pid, etc.
+ * Create a mock ChildProcess that emits NDJSON messages on stdout
+ * ChildProcess interface requires stdin, stdout, stderr, kill, pid, etc.
  */
-function createMockPty(messages: SDKMessage[], exitCode = 0): IPty {
-  let dataCallback: ((data: string) => void) | null = null;
-  let exitCallback: ((exit: { exitCode: number; signal: number }) => void) | null = null;
+function createMockChildProcess(messages: SDKMessage[], exitCode = 0): ChildProcess {
+  const emitter = new EventEmitter();
 
-  const mockPty: IPty = {
+  // Create mock stdin stream
+  const stdinData: string[] = [];
+  const mockStdin = new Writable({
+    write(chunk, _encoding, callback) {
+      stdinData.push(chunk.toString());
+      callback();
+    },
+  });
+
+  // Create mock stdout stream that will emit messages
+  const mockStdout = new Readable({ read() {} });
+
+  // Create mock stderr stream
+  const mockStderr = new Readable({ read() {} });
+
+  const mockProcess = Object.assign(emitter, {
     pid: 12345,
-    cols: 120,
-    rows: 30,
-    process: 'claude',
-    handleFlowControl: false,
-
-    onData: vi.fn((callback: (data: string) => void) => {
-      dataCallback = callback;
-      return { dispose: vi.fn() };
+    stdin: mockStdin,
+    stdout: mockStdout,
+    stderr: mockStderr,
+    stdio: [mockStdin, mockStdout, mockStderr, null, null] as ChildProcess['stdio'],
+    connected: true,
+    killed: false,
+    exitCode: null,
+    signalCode: null,
+    spawnargs: ['claude'],
+    spawnfile: 'claude',
+    kill: vi.fn((signal?: NodeJS.Signals | number): boolean => {
+      mockProcess.killed = true;
+      setImmediate(() => {
+        emitter.emit('close', signal ? 1 : 0, signal || null);
+      });
+      return true;
     }),
-
-    onExit: vi.fn((callback: (exit: { exitCode: number; signal: number }) => void) => {
-      exitCallback = callback;
-      return { dispose: vi.fn() };
-    }),
-
-    write: vi.fn(),
-    resize: vi.fn(),
-    clear: vi.fn(),
-    pause: vi.fn(),
-    resume: vi.fn(),
-
-    kill: vi.fn((signal?: string) => {
-      if (exitCallback) {
-        exitCallback({ exitCode: signal ? 1 : 0, signal: signal ? 15 : 0 });
-      }
-    }),
-  };
+    send: vi.fn(),
+    disconnect: vi.fn(),
+    unref: vi.fn(),
+    ref: vi.fn(),
+    [Symbol.dispose]: vi.fn(),
+  }) as unknown as ChildProcess;
 
   // Emit messages asynchronously to simulate streaming
   setImmediate(() => {
-    if (dataCallback) {
-      for (const msg of messages) {
-        dataCallback(JSON.stringify(msg) + '\n');
-      }
+    for (const msg of messages) {
+      mockStdout.push(JSON.stringify(msg) + '\n');
     }
-    if (exitCallback) {
-      exitCallback({ exitCode, signal: 0 });
-    }
+    // Signal end of stdout
+    mockStdout.push(null);
+    // Emit close event
+    emitter.emit('close', exitCode, null);
   });
 
-  return mockPty;
+  return mockProcess;
 }
 
 function createMockSpawner(messages: SDKMessage[], exitCode = 0): ClaudeSpawner {
-  return vi.fn(() => createMockPty(messages, exitCode));
+  return vi.fn(() => createMockChildProcess(messages, exitCode));
 }
 
 // =============================================================================
@@ -380,7 +390,7 @@ describe('E7-3: Input Integration', () => {
       let spawnArgs: string[] = [];
       const mockSpawner2: ClaudeSpawner = vi.fn((_cmd, args) => {
         spawnArgs = args || [];
-        return createMockPty(messages2 as SDKMessage[]);
+        return createMockChildProcess(messages2 as SDKMessage[]);
       });
 
       // Replace spawner for second query
@@ -401,7 +411,7 @@ describe('E7-3: Input Integration', () => {
       let capturedArgs: string[] = [];
       const mockSpawner: ClaudeSpawner = vi.fn((_cmd, args) => {
         capturedArgs = args || [];
-        return createMockPty(messages);
+        return createMockChildProcess(messages);
       });
 
       const service = new ClaudeService({ spawner: mockSpawner });
@@ -423,7 +433,7 @@ describe('E7-3: Input Integration', () => {
       let capturedArgs: string[] = [];
       const mockSpawner: ClaudeSpawner = vi.fn((_cmd, args) => {
         capturedArgs = args || [];
-        return createMockPty(messages);
+        return createMockChildProcess(messages);
       });
 
       const service = new ClaudeService({ spawner: mockSpawner });
@@ -491,7 +501,7 @@ describe('E7-3: Input Integration', () => {
         let capturedArgs: string[] = [];
         const mockSpawner: ClaudeSpawner = vi.fn((_cmd, args) => {
           capturedArgs = args || [];
-          return createMockPty(messages as SDKMessage[]);
+          return createMockChildProcess(messages as SDKMessage[]);
         });
 
         const service = new ClaudeService({ spawner: mockSpawner });
@@ -527,7 +537,7 @@ describe('E7-3: Input Integration', () => {
         let capturedArgs: string[] = [];
         const mockSpawner: ClaudeSpawner = vi.fn((_cmd, args) => {
           capturedArgs = args || [];
-          return createMockPty(messages);
+          return createMockChildProcess(messages);
         });
 
         const service = new ClaudeService({ spawner: mockSpawner });

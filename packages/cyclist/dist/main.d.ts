@@ -36,6 +36,8 @@ export declare const IPC_DATA_CHANNELS: {
     readonly CONTEXT_GET: "context:get";
     readonly CONTEXT_UPDATE: "context:update";
     readonly TOOL_EVENTS_UPDATE: "toolEvents:update";
+    readonly USAGE_STATS_GET: "usageStats:get";
+    readonly USAGE_STATS_UPDATE: "usageStats:update";
 };
 /**
  * IPC channel names for Claude SDK communication (E7-3)
@@ -71,12 +73,32 @@ export declare const IPC_SETTINGS_CHANNELS: {
     readonly VERBOSE_MODE_UPDATE: "settings:verboseModeUpdate";
 };
 /**
+ * IPC channel names for audit log (22-6)
+ */
+export declare const IPC_AUDIT_LOG_CHANNELS: {
+    readonly GET_ENTRIES: "auditLog:getEntries";
+    readonly GET_TYPES: "auditLog:getTypes";
+    readonly EXPORT: "auditLog:export";
+    readonly GET_STATS: "auditLog:getStats";
+    readonly CLEAR: "auditLog:clear";
+    readonly ENTRY: "auditLog:entry";
+};
+/**
  * IPC channel names for file browser (E8-3)
  */
 export declare const IPC_FILE_BROWSER_CHANNELS: {
     readonly LIST_DIRECTORY: "file-browser:list-directory";
     readonly OPEN_FILE: "file-browser:open-file";
     readonly OPEN_IN_EDITOR: "file-browser:open-in-editor";
+};
+/**
+ * IPC channel names for command execution (23-3)
+ * Used to execute Claude Code commands via IPC rather than PTY injection
+ */
+export declare const IPC_COMMAND_CHANNELS: {
+    readonly EXECUTE: "command:execute";
+    readonly RESULT: "command:result";
+    readonly ERROR: "command:error";
 };
 /**
  * Agent definition for Electron menu
@@ -121,6 +143,13 @@ export declare function buildAgentMenu(): {
  * Build Electron menu for workflows
  */
 export declare function buildWorkflowMenu(): {
+    label: string;
+    submenu: unknown[];
+};
+/**
+ * Build Tools menu with Execution Log (Story 22-6)
+ */
+export declare function buildToolsMenu(): {
     label: string;
     submenu: unknown[];
 };
@@ -220,8 +249,42 @@ export declare const CONTEXT_POLL_INTERVAL_MS = 15000;
 /**
  * Start polling context usage
  * Calls getContextUsage periodically and broadcasts changes
+ * @param projectDir - The project directory
+ * @param getSessionId - Optional function to get current session ID (for session-specific context)
  */
-export declare function startContextPolling(projectDir: string): () => void;
+export declare function startContextPolling(projectDir: string, getSessionId?: () => string | null): () => void;
+/**
+ * Usage stats structure - tracks Claude API usage limits
+ */
+export interface UsageStats {
+    fiveHourPercent: number;
+    weeklyPercent: number;
+    fiveHourResetAt: string | null;
+    weeklyResetAt: string | null;
+    planType: 'pro' | 'max' | 'unknown';
+}
+/**
+ * Get current usage stats (for testing and IPC)
+ */
+export declare function getUsageStats(): UsageStats;
+/**
+ * Update usage stats state and broadcast if changed
+ */
+export declare function updateUsageStats(stats: UsageStats): boolean;
+/**
+ * Reset usage stats to default values
+ */
+export declare function resetUsageStats(): void;
+/**
+ * Usage polling interval in milliseconds
+ * 60 seconds is reasonable for usage data that changes slowly
+ */
+export declare const USAGE_POLL_INTERVAL_MS = 60000;
+/**
+ * Start polling usage stats
+ * Uses ccusage CLI to read local JSONL files for usage data
+ */
+export declare function startUsagePolling(_projectDir: string): () => void;
 /**
  * Server startup configuration
  * In Electron mode, server can be disabled since we use IPC
@@ -299,8 +362,18 @@ export declare function startProjectWatchers(): void;
  */
 export declare function getClaudeService(): ClaudeService;
 /**
+ * Image data from clipboard paste (28-1)
+ * Matches the format from editor.js pendingImages
+ */
+export interface PastedImage {
+    dataUrl: string;
+    mimeType: string;
+    filename: string;
+}
+/**
  * Set up IPC handlers for Claude SDK communication
  * E7-3: Handles claude:send and streams responses to renderer
+ * 28-1: Adds image support via stream-json input
  */
 export declare function setupClaudeIPCHandlers(ipcMain: {
     handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
@@ -317,6 +390,25 @@ export declare function setupFileBrowserIPCHandlers(ipcMain: {
  * 22-5: Handles verbose mode setting get/set
  */
 export declare function setupSettingsIPCHandlers(ipcMain: {
+    handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
+}): void;
+/**
+ * Set up IPC handlers for audit log
+ * 22-6: Handles audit log get/filter/export/clear
+ */
+export declare function setupAuditLogIPCHandlers(ipcMain: {
+    handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
+}): void;
+/**
+ * Get list of registered command channels (for testing)
+ * 23-3: Allows tests to verify channel registration
+ */
+export declare function getCommandChannels(): string[];
+/**
+ * Set up IPC handlers for command execution
+ * 23-3: Handles Claude Code command execution via IPC
+ */
+export declare function setupCommandIPCHandlers(ipcMain: {
     handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
 }): void;
 /**

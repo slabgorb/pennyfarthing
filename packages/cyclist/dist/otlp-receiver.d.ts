@@ -109,6 +109,39 @@ export declare function getPromptEvents(): ParsedPromptEvent[];
  */
 export declare function resetEventStore(): void;
 /**
+ * Get tool events filtered by tool type
+ * @param toolType - Optional tool name to filter by (e.g., 'Bash', 'Read', 'Write')
+ * @returns Filtered array of tool events
+ */
+export declare function getToolEventsFiltered(toolType?: string): ToolEvent[];
+/**
+ * Get unique tool types from all recorded events
+ * @returns Array of unique tool names
+ */
+export declare function getToolTypes(): string[];
+/**
+ * Export audit log as JSON string
+ * @param toolType - Optional filter by tool type
+ * @returns JSON string of tool events
+ */
+export declare function exportAuditLogAsJSON(toolType?: string): string;
+/**
+ * Export audit log as CSV string
+ * @param toolType - Optional filter by tool type
+ * @returns CSV string of tool events
+ */
+export declare function exportAuditLogAsCSV(toolType?: string): string;
+/**
+ * Get audit log statistics
+ * @returns Summary statistics of tool events
+ */
+export declare function getAuditLogStats(): {
+    total: number;
+    byType: Record<string, number>;
+    successCount: number;
+    errorCount: number;
+};
+/**
  * Process raw log events and store them appropriately
  * Called by the /v1/logs endpoint
  */
