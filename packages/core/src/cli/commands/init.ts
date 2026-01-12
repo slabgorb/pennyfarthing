@@ -99,6 +99,7 @@ export async function initCommand(
     '.claude/project/skills',
     '.claude/project/docs',
     '.claude/project/hooks',
+    '.pennyfarthing',
     'sprint',
     'sprint/sidecars',
     '.session'
@@ -596,7 +597,8 @@ async function updateGitignore(
     '.session/*',
     '!.session/.gitkeep',
     '.claude/settings.local.json',
-    '.claude/persona-config.local.yaml'
+    '.claude/persona-config.local.yaml',
+    '.pennyfarthing/config.local.yaml'
   ];
 
   let content = '';
