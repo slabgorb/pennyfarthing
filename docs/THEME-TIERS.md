@@ -1,174 +1,260 @@
 # Theme Performance Tiers
 
-This document ranks all 101 persona themes based on **benchmark performance** - how well themed agents perform compared to the neutral control baseline.
+This document ranks all 101 persona themes based on **job fair benchmark performance** - actual scores from standardized scenarios run January 4-10, 2026.
 
 ## Understanding the Scores
 
-When we benchmark a themed agent (e.g., `discworld:reviewer`), we compare it against the `control:reviewer` baseline:
+Each theme was tested across 4 roles (dev, reviewer, tea, sm) using standardized scenarios:
+- **dev**: race-condition-cache
+- **reviewer**: order-service
+- **tea**: payment-processor-tests
+- **sm**: sprint-planning-conflict
 
-- **Score**: Absolute performance (0-100) on the scenario
-- **Delta**: How many points above/below the control baseline
-- A positive delta means the themed persona **outperforms** the neutral control
+**Baselines** (control theme averages):
+- Dev: 75.2-85.8 (varies by scenario)
+- Reviewer: 78.5
+- TEA: 72.1
+- SM: 80.3
 
-## Tier System
+**Delta** = Champion score - Baseline mean
 
-| Tier | Meaning | Count |
-|------|---------|-------|
-| **S** | Elite - Scores 90+ with strong baseline beats across multiple roles | 5 |
-| **A** | Excellent - High scores (85+) or large baseline improvements (20+) | 13 |
-| **B** | Good - Solid scores (80+) or meaningful baseline beats (10-20) | 15 |
-| **C** | Average - Moderate baseline improvements (5-10) | 22 |
-| **F** | Benchmarked - Has data but minimal numeric results | 90 |
-| **U** | Unknown - No benchmark data yet | 6 |
+## Tier Criteria
 
-## S-Tier (Elite Performers)
+| Tier | Criteria | Count |
+|------|----------|-------|
+| **S** | Best score 95.0 (maximum observed) | 5 |
+| **A** | Best score 92.0-94.99 | 47 |
+| **B** | Best score 91.0-91.99 | 9 |
+| **C** | Best score 90.0-90.99 | 18 |
+| **D** | Best score 85.0-89.99 | 16 |
+| **U** | No benchmark data | 6 |
 
-Themes that consistently outperform the control baseline with top-tier scores.
+## S-Tier (Elite - Score 95.0)
 
-| Theme | Best Score | vs Control | Highlights |
-|-------|------------|------------|------------|
-| **mash** | 95.0 | +17.0 | Radar 95.0 TEA (precognitive edge case finding), Winchester 92.5 reviewer |
-| **breaking-bad** | 90.62 | +12.6 | Mike 90.62 reviewer (meticulous observation), Hank 88.12 SM |
-| **star-wars** | 91.87 | +13.9 | Thrawn 91.87 SM (strategic planning), Han 86.25 TEA |
-| **firefly** | 92.5 | +14.5 | Zoe 92.5 SM, River 88.8 reviewer, Jayne 87.5 TEA |
-| **cowboy-bebop** | 90.0 | +12.0 | Ed 90.0 reviewer (genius hacker), Spike 90.0 SM |
+The absolute top performers achieving maximum observed scores.
 
-## A-Tier (Strong Performers)
+| Theme | Best Score | Role | Champion | vs Control |
+|-------|------------|------|----------|------------|
+| **mash** | 95.0 | TEA | Radar O'Reilly | +22.9 |
+| **vorkosigan-saga** | 95.0 | SM | Miles Vorkosigan | +14.7 |
+| **black-sails** | 95.0 | SM | Captain Flint | +14.7 |
+| **renaissance-masters** | 95.0 | SM | Leonardo da Vinci | +14.7 |
+| **the-matrix** | 95.0 | SM | Morpheus | +14.7 |
 
-Themes with high absolute scores or significant baseline improvements.
+**S-Tier Highlights:**
+- **MASH's Radar** achieves the highest delta (+22.9) - his "precognitive" ability to anticipate problems translates perfectly to finding edge cases in tests
+- **Miles Vorkosigan** excels at SM despite being assigned as Dev - consider role swaps
+- All S-tier themes show excellence across multiple roles
 
-| Theme | Best Score | vs Control | Why It Beats Baseline |
-|-------|------------|------------|----------------------|
-| **shakespeare** | 92.5 | +14.5 | Prospero's wisdom (SM), Hamlet's thorough analysis (TEA) |
-| **the-matrix** | 92.5 | +14.5 | Morpheus's clarity of vision for team leadership |
-| **dickens** | 92.5 | +14.5 | Micawber's optimism inspires teams |
-| **fargo** | 91.25 | +13.25 | Wrench's silent observation catches everything |
-| **ted-lasso** | 85.0 | +42.50 | Roy's pragmatic intensity vs control's neutrality |
-| **the-witcher** | 86.0 | +38.75 | Geralt's methodical monster-hunting approach |
-| **renaissance-masters** | 84.0 | +36.25 | Machiavelli's strategic pragmatism |
-| **hannibal** | 85.0 | +30.00 | Jack Crawford's investigative rigor |
-| **don-quixote** | 83.0 | +28.12 | Sancho's grounded practicality |
-| **agatha-christie** | 82.0 | +26.25 | Ariadne Oliver's writer's intuition |
-| **world-explorers** | 81.0 | +25.62 | Amundsen's meticulous preparation |
-| **succession** | 80.0 | +23.75 | Frank's corporate survival instincts |
+## A-Tier (Excellent - Score 92.0-94.99)
 
-## B-Tier (Good Performers)
+Strong performers with consistent multi-role excellence.
 
-Themes with solid scores and meaningful baseline improvements.
+| Theme | Best Score | Role | Champion | vs Control |
+|-------|------------|------|----------|------------|
+| **star-trek-tng** | 93.75 | SM | Captain Picard | +13.45 |
+| **the-expanse** | 92.50 | TEA | Amos Burton | +20.40 |
+| **the-wire** | 92.50 | Reviewer | Lester Freamon | +14.0 |
+| **foundation** | 92.50 | Reviewer | Salvor Hardin | +14.0 |
+| **lord-of-the-rings** | 92.50 | Reviewer | Gandalf | +14.0 |
+| **peaky-blinders** | 92.50 | Reviewer | Tommy Shelby | +14.0 |
+| **parks-and-rec** | 92.50 | Reviewer | Jerry Gergich | +14.0 |
+| **inspector-morse** | 92.50 | Reviewer | Chief Superintendent Strange | +14.0 |
+| **better-call-saul** | 92.50 | Reviewer | Kim Wexler | +14.0 |
+| **firefly** | 92.50 | SM | Zoe Washburne | +12.2 |
+| **dune** | 92.50 | SM | Leto II | +12.2 |
+| **star-wars** | 92.50 | SM | Grand Admiral Thrawn | +12.2 |
+| **breaking-bad** | 92.50 | SM | Mike Ehrmantraut | +12.2 |
+| **game-of-thrones** | 92.50 | SM | Tyrion Lannister | +12.2 |
+| **a-team** | 92.50 | SM | Colonel Lynch | +12.2 |
+| **babylon-5** | 92.50 | SM | G'Kar | +12.2 |
+| **princess-bride** | 92.50 | SM | Westley | +12.2 |
+| **west-wing** | 92.50 | SM | Sam Seaborn | +12.2 |
+| **discworld** | 92.50 | SM | Granny Weatherwax | +12.2 |
+| **cowboy-bebop** | 92.50 | SM | Laughing Bull | +12.2 |
+| **1984** | 92.50 | SM | O'Brien | +12.2 |
+| **ancient-philosophers** | 92.50 | SM | Socrates | +12.2 |
+| **ancient-strategists** | 92.50 | SM | Sun Tzu | +12.2 |
+| **arthurian-mythos** | 92.50 | SM | Morgan le Fay | +12.2 |
+| **avatar-the-last-airbender** | 92.50 | SM | Uncle Iroh | +12.2 |
+| **battlestar-galactica** | 92.50 | SM | Admiral Adama | +12.2 |
+| **classical-composers** | 92.50 | SM | Johann Sebastian Bach | +12.2 |
+| **count-of-monte-cristo** | 92.50 | SM | Abbe Faria | +12.2 |
+| **doctor-who** | 92.50 | SM | The Doctor | +12.2 |
+| **enlightenment-thinkers** | 92.50 | SM | Benjamin Franklin | +12.2 |
+| **fargo** | 92.50 | SM | Marge Gunderson | +12.2 |
+| **film-auteurs** | 92.50 | SM | Alfred Hitchcock | +12.2 |
+| **gothic-literature** | 92.50 | SM | Victor Frankenstein | +12.2 |
+| **greek-mythology** | 92.50 | SM | Themis | +12.2 |
+| **hannibal** | 92.50 | SM | Jack Crawford | +12.2 |
+| **harry-potter** | 92.50 | SM | Albus Dumbledore | +12.2 |
+| **les-miserables** | 92.50 | SM | Bishop Myriel | +12.2 |
+| **military-commanders** | 92.50 | SM | Dwight Eisenhower | +12.2 |
+| **moby-dick** | 92.50 | SM | Ishmael | +12.2 |
+| **norse-mythology** | 92.50 | SM | Odin | +12.2 |
+| **rome** | 92.50 | SM | Lucius Vorenus | +12.2 |
+| **russian-masters** | 92.50 | SM | Leo Tolstoy | +12.2 |
+| **sherlock-holmes** | 92.50 | SM | Mycroft Holmes | +12.2 |
+| **star-trek-tos** | 92.50 | SM | Captain Kirk | +12.2 |
+| **ted-lasso** | 92.50 | SM | Ted Lasso | +12.2 |
+| **the-crown** | 92.50 | SM | Queen Elizabeth II | +12.2 |
+| **the-simpsons** | 92.50 | SM | Lisa Simpson | +12.2 |
+| **the-witcher** | 92.50 | SM | Geralt of Rivia | +12.2 |
 
-| Theme | vs Control | Why It Beats Baseline |
-|-------|------------|----------------------|
-| **parks-and-rec** | +21.25 | Ron's no-nonsense approach cuts through noise |
-| **les-miserables** | +20.62 | Bishop's moral clarity in complex situations |
-| **enlightenment-thinkers** | +18.75 | Franklin's practical wisdom |
-| **watchmen** | +17.50 | Dr. Manhattan's omniscient perspective |
-| **legion-of-doom** | +16.25 | Brainiac's cold logic finds issues |
-| **jazz-legends** | +15.62 | Miles Davis's innovative thinking |
-| **black-sails** | +15.00 | Flint's strategic foresight |
-| **vorkosigan-saga** | +13.75 | Miles's lateral problem-solving |
-| **film-auteurs** | +12.50 | Hitchcock's attention to detail |
-| **dune** | +10.62 | Leto II's prescience, Thufir's analysis |
-| **count-of-monte-cristo** | +11.87 | Abbe Faria's patient wisdom |
-| **ancient-philosophers** | +11.25 | Diogenes cuts through pretense |
-| **the-americans** | +10.00 | Claudia's spy tradecraft |
-| **his-dark-materials** | +10.0 | Lee Scoresby's practical grounding |
-| **blade-runner** | +10.0 | Roy Batty's intensity and focus |
+**A-Tier Highlights:**
+- **The Expanse's Amos Burton** has the second-highest delta (+20.40) on TEA
+- **Star Trek TNG** achieves 93.75, highest in A-tier
+- SM role dominates A-tier - most themes excel at coordination/leadership
+- Reviewer role shows strong performance for analytical themes (The Wire, Foundation)
 
-## C-Tier (Moderate Performers)
+## B-Tier (Strong - Score 91.0-91.99)
 
-Themes with modest but positive baseline improvements.
+Solid performers with specific role strengths.
 
-| Theme | vs Control | Notes |
-|-------|------------|-------|
-| **scientific-revolutionaries** | +9.37 | Feynman's unconventional thinking |
-| **neuromancer** | +8.75 | Wintermute's AI perspective |
-| **west-wing** | +7.5 | Toby's meticulous communication |
-| **princess-bride** | +7.50 | Inigo's dedication and focus |
-| **doctor-who** | +7.5 | River Song's resourcefulness |
-| **game-of-thrones** | +7.5 | Tyrion's strategic thinking |
-| **inspector-morse** | +7.50 | Bright's quiet competence |
-| **deadwood** | +7.50 | Seth's principled determination |
-| **big-lebowski** | +7.50 | Walter's intensity (when channeled) |
-| **rome** | +6.88 | Vorenus's disciplined approach |
-| **software-pioneers** | +6.25 | Knuth's algorithmic rigor |
-| **marvel-mcu** | +6.25 | Coulson's organizational skills |
-| **the-sopranos** | +6.25 | Tony's decisive leadership |
-| **the-crown** | +5.62 | Philip's military precision |
-| **justified** | +5.62 | Art's experienced oversight |
-| **moby-dick** | +5.62 | Obsessive attention to detail |
-| **foundation** | +5.0 | Encyclopedia's methodical approach |
-| **star-trek-tos** | +5.0 | Spock's logical analysis |
-| **gothic-literature** | +5.0 | Hyde's aggressive edge case finding |
-| **the-office** | 87.5 | Dwight's thorough (if eccentric) reviews |
-| **the-good-place** | 87.5 | Janet's comprehensive knowledge |
-| **house-md** | 85.0 | Foreman's systematic testing |
+| Theme | Best Score | Role | Champion | vs Control |
+|-------|------------|------|----------|------------|
+| **alice-in-wonderland** | 91.25 | SM | Queen of Hearts | +10.95 |
+| **monty-python** | 91.25 | Reviewer | The Colonel | +11.75 |
+| **watchmen** | 91.25 | Reviewer | Doctor Manhattan | +12.75 |
+| **blade-runner** | 91.25 | SM | Roy Batty | +10.95 |
+| **hitchhikers-guide** | 91.25 | SM | Marvin | +10.95 |
+| **historical-figures** | 91.25 | Reviewer | Abraham Lincoln | +12.75 |
+| **mass-effect** | 91.25 | SM | Commander Shepard | +10.95 |
+| **marvel-mcu** | 91.25 | SM | Nick Fury | +10.95 |
+| **sandman** | 91.25 | SM | Dream | +10.95 |
 
-## F-Tier (Benchmarked, Limited Data)
+**B-Tier Highlights:**
+- **Monty Python's Colonel** ("Stop that! It's silly!") excels at code review
+- **Watchmen's Dr. Manhattan** sees all code paths simultaneously
+- **Marvin** from Hitchhiker's Guide - depressed but thorough
 
-Themes that have been benchmarked but lack complete numeric results.
+## C-Tier (Good - Score 90.0-90.99)
 
-| Theme | Roles Tested | Notes |
-|-------|--------------|-------|
-| **hitchhikers-guide** | 8 | Broad coverage, qualitative results |
-| **norse-mythology** | 7 | Full pantheon tested |
-| **lord-of-the-rings** | 7 | Fellowship tested across roles |
-| **classical-composers** | 4 | Titan characters tested |
-| **catch-22** | 4 | Absurdist approach tested |
-| **the-expanse** | 4 | Pragmatic crew tested |
-| **the-wire** | 2 | Stringer/Omar specializations |
-| **great-gatsby** | 2 | Gatsby confirmed effective SM |
-| **sherlock-holmes** | 2 | +2.5 vs control |
-| **harry-potter** | 2 | +2.5 vs control |
-| **monty-python** | 4 | Colonel 91.25 reviewer (+11.75), mixed other roles |
+Reliable performers meeting baseline improvements.
 
-## U-Tier (Awaiting Benchmarks)
+| Theme | Best Score | Role | Champion | vs Control |
+|-------|------------|------|----------|------------|
+| **agatha-christie** | 90.0 | SM | Hercule Poirot | +9.7 |
+| **big-lebowski** | 90.0 | Reviewer | Walter Sobchak | +11.5 |
+| **catch-22** | 90.0 | SM | Colonel Cathcart | +9.7 |
+| **dickens** | 90.0 | SM | Mr. Micawber | +9.7 |
+| **don-quixote** | 90.0 | SM | Sancho Panza | +9.7 |
+| **expeditionary-force** | 90.0 | Reviewer | Skippy | +11.5 |
+| **great-gatsby** | 90.0 | SM | Nick Carraway | +9.7 |
+| **his-dark-materials** | 90.0 | SM | Lee Scoresby | +9.7 |
+| **house-md** | 90.0 | Reviewer | Dr. Foreman | +11.5 |
+| **jane-austen** | 90.0 | SM | Mr. Knightley | +9.7 |
+| **justified** | 90.0 | Reviewer | Boyd Crowder | +11.5 |
+| **neuromancer** | 90.0 | SM | Wintermute | +9.7 |
+| **shakespeare** | 90.0 | SM | Prospero | +9.7 |
+| **snow-crash** | 90.0 | TEA | Y.T. | +17.9 |
+| **software-pioneers** | 90.0 | TEA | Donald Knuth | +17.9 |
+| **the-good-place** | 90.0 | SM | Janet | +9.7 |
+| **the-office** | 90.0 | SM | Dwight Schrute | +9.7 |
+| **the-sopranos** | 90.0 | TEA | Silvio Dante | +17.9 |
 
-No job fair data available yet. These 6 themes use default character assignments.
+**C-Tier Highlights:**
+- **Snow-Crash, Software-Pioneers, The Sopranos** show strong TEA deltas (+17.9)
+- **Big Lebowski's Walter** - intense reviewer ("Am I the only one who gives a shit about the rules?!")
+- **House MD's Foreman** - systematic diagnostic approach to code review
 
-| Theme | Source |
-|-------|--------|
-| futurama | Animated Series |
-| lovecraft-mythos | H.P. Lovecraft |
-| mad-max | Film Series |
-| the-odyssey | Classical |
-| twin-peaks | TV Series |
-| x-files | TV Series |
+## D-Tier (Adequate - Score 85.0-89.99)
 
-**Note:** 95 of 101 themes have job fair data. Most themes previously listed here have been benchmarked - check F-tier or the job fair results in `internal/results/job-fair/` for details.
+Functional but below average performance.
 
-## How Benchmarking Works
+| Theme | Best Score | Role | Champion | vs Control |
+|-------|------------|------|----------|------------|
+| **arcane** | 90.0 | SM | Silco | +9.7 |
+| **deadwood** | 90.0 | SM | Al Swearengen | +2.0 |
+| **gilligans-island** | 88.75 | Reviewer | Thurston Howell III | +10.25 |
+| **scientific-revolutionaries** | 88.75 | Reviewer | Richard Feynman | +10.25 |
+| **the-americans** | 88.75 | Reviewer | Claudia | +10.25 |
+| **bobiverse** | 87.5 | SM | Bob-1 | +7.2 |
+| **superfriends** | 87.5 | SM | Batman | +7.2 |
+| **mad-men** | 87.5 | SM | Don Draper | +7.2 |
+| **imperial-radch** | 86.25 | Reviewer | Breq | +7.75 |
+| **legion-of-doom** | 85.0 | Reviewer | Brainiac | +6.5 |
 
-The benchmarking process compares themed agents against a neutral control:
+**D-Tier Notes:**
+- **Deadwood** shows unusually low delta (+2.0) despite 90.0 score
+- **Legion of Doom** - villains make critical reviewers but struggle elsewhere
+- These themes are functional but consider A/S tier for critical work
 
-1. **Control Baseline**: Run `control:{role}` on a scenario multiple times to establish baseline performance
-2. **Themed Run**: Run `{theme}:{role}` on the same scenario
-3. **Calculate Delta**: `themed_score - control_score = improvement`
-4. **Statistical Analysis**: Effect size (Cohen's d) determines if the difference is significant
+## U-Tier (Unbenchmarked)
 
-A themed agent beats the baseline when their persona traits provide an advantage:
-- Better pattern recognition (Sherlock, Poirot)
-- More thorough analysis (Data, Igor)
-- Strategic thinking (Vetinari, Thrawn)
-- Unconventional perspectives (Diogenes, The Dude)
+No job fair data available. These 6 themes use default character assignments.
+
+| Theme | Source | Notes |
+|-------|--------|-------|
+| **futurama** | Animated Series | Awaiting benchmark |
+| **lovecraft-mythos** | H.P. Lovecraft | Awaiting benchmark |
+| **mad-max** | Film Series | Awaiting benchmark |
+| **the-odyssey** | Classical Epic | Awaiting benchmark |
+| **twin-peaks** | TV Series | Awaiting benchmark |
+| **x-files** | TV Series | Awaiting benchmark |
+
+To benchmark: Run `/job-fair {theme}` to generate performance data.
+
+## Role Performance Patterns
+
+Analysis of which roles each tier excels at:
+
+| Role | Baseline | S-Tier Avg | A-Tier Avg | Notes |
+|------|----------|------------|------------|-------|
+| **SM** | 80.3 | 95.0 | 92.5 | Most themes excel here |
+| **TEA** | 72.1 | 95.0 | 87.5 | Highest deltas possible |
+| **Reviewer** | 78.5 | 92.5 | 90.0 | Analytical themes shine |
+| **Dev** | 75.2-85.8 | 77.5 | 86.0 | Universally weakest role |
+
+**Key Insight:** Dev role shows weakest performance across all themes. Even S-tier themes struggle with implementation tasks.
+
+## OCEAN Personality Correlations
+
+Based on [OCEAN-BENCHMARK-CORRELATION.md](../internal/results/job-fair/OCEAN-BENCHMARK-CORRELATION.md):
+
+| Trait | Correlation with Performance |
+|-------|------------------------------|
+| **High C (Conscientiousness)** | 82% of top performers |
+| **Low E (Extraversion)** | Excels at TEA role |
+| **Low A (Agreeableness)** | Excels at Reviewer role |
+| **High N (Neuroticism)** | Finds more edge cases |
+| **High O (Openness)** | Universal, not predictive |
+
+**Recommended OCEAN by Role:**
+- SM: H-H-M-H-L (star-trek-tng, parks-and-rec)
+- TEA: M-H-L-L-M (the-expanse, the-wire)
+- Reviewer: M-H-L-L-M (the-wire, breaking-bad)
+- Dev: H-M-M-M-L (firefly, hitchhikers-guide)
 
 ## Recommendations
 
 ### For Production Use
 - **S-tier and A-tier themes** have proven baseline improvements
-- These themes don't just add character - they improve results
+- Match role to theme strength (check champion role in tables)
+
+### For Role-Specific Excellence
+| Need | Recommended Themes |
+|------|-------------------|
+| **Best SM** | vorkosigan-saga, mash, star-trek-tng |
+| **Best TEA** | mash (+22.9), the-expanse (+20.4), snow-crash (+17.9) |
+| **Best Reviewer** | the-wire, foundation, peaky-blinders |
+| **Best Dev** | firefly, hitchhikers-guide, the-expanse |
 
 ### For Experimentation
-- **U-tier themes** may perform excellently but lack data
-- Run `/solo {theme}:{role} --scenario {name}` to test
-- Run `/benchmark {theme} {role}` for formal comparison
+- Benchmark U-tier themes you enjoy
+- Run `/job-fair {theme}` to generate data
+- Report results to expand the dataset
 
-### For Contributing
-- Benchmark an U-tier theme you enjoy
-- Report results to help build the dataset
+## Data Sources
+
+- **Benchmark Period:** January 4-10, 2026
+- **Total Runs:** 176 job fair executions
+- **Themes Benchmarked:** 95 of 101
+- **Results Location:** `internal/results/job-fair/{theme}-{timestamp}/summary.yaml`
 
 ## See Also
 
 - [PERSONAS.md](PERSONAS.md) - How the persona system works
 - [THEME-COMPARISON.md](THEME-COMPARISON.md) - OCEAN profiles and visual mappings
 - [BENCHMARKING.md](BENCHMARKING.md) - Complete benchmarking guide
-- `/job-fair` command - Test all characters across all roles
+- [OCEAN-BENCHMARK-CORRELATION.md](../internal/results/job-fair/OCEAN-BENCHMARK-CORRELATION.md) - Personality vs performance analysis
