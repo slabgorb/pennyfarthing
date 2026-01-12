@@ -341,7 +341,13 @@ Please invoke /reviewer to continue.`;
 
   describe('Integration: Handoff detection in message processing', () => {
 
-    it('should prioritize handoff patterns over yes/no questions', async () => {
+    // NOTE: Pattern-based detection has been disabled in processMessageForQuickActions()
+    // in favor of markers-only detection. These tests are skipped but the underlying
+    // detectHandoffPattern() function still works (tested above).
+    // See quick-actions-fix session for rationale.
+
+    // SKIPPED: Pattern-based detection disabled
+    it.skip('should prioritize handoff patterns over yes/no questions (pattern-based - disabled)', async () => {
       const { processMessageForQuickActions } = await getMessageView();
 
       const message = createAssistantMessage('Would you like me to invoke /reviewer for code review?');
@@ -353,7 +359,8 @@ Please invoke /reviewer to continue.`;
       expect(result.agent).toBe('/reviewer');
     });
 
-    it('should prioritize handoff patterns over list choices', async () => {
+    // SKIPPED: Pattern-based detection disabled
+    it.skip('should prioritize handoff patterns over list choices (pattern-based - disabled)', async () => {
       const { processMessageForQuickActions } = await getMessageView();
 
       const message = createAssistantMessage(`Here are your options:
@@ -368,7 +375,8 @@ Ready for review. Please invoke /reviewer.`);
       expect(result.type).toBe('handoff');
     });
 
-    it('should detect handoff in SDK message format', async () => {
+    // SKIPPED: Pattern-based detection disabled
+    it.skip('should detect handoff in SDK message format (pattern-based - disabled)', async () => {
       const { processMessageForQuickActions } = await getMessageView();
 
       const message = createAssistantMessage([
@@ -381,6 +389,22 @@ Ready for review. Please invoke /reviewer.`);
       expect(result).not.toBeNull();
       expect(result.type).toBe('handoff');
       expect(result.agent).toBe('/dev');
+    });
+
+    it('should detect handoff with structured marker', async () => {
+      const { processMessageForQuickActions } = await getMessageView();
+
+      const message = createAssistantMessage([
+        'Implementation complete.',
+        '\n\n<!-- CYCLIST:HANDOFF:/reviewer -->'
+      ]);
+
+      const result = processMessageForQuickActions(message);
+
+      expect(result).not.toBeNull();
+      expect(result.type).toBe('handoff');
+      expect(result.agent).toBe('/reviewer');
+      expect(result.source).toBe('structured_marker');
     });
 
   });

@@ -255,7 +255,9 @@ Ready to proceed with the PR?`;
       expect(result.type).toBe('yesno');
     });
 
-    it('should work with processMessageForQuickActions for plain confirmations', async () => {
+    // SKIPPED: Pattern-based detection disabled in favor of markers-only
+    // See quick-actions-fix session for rationale
+    it.skip('should work with processMessageForQuickActions for plain confirmations (pattern-based - disabled)', async () => {
       const { processMessageForQuickActions } = await getMessageView();
 
       const message = createAssistantMessage('I found the bug. Shall I fix it?');
@@ -264,6 +266,19 @@ Ready to proceed with the PR?`;
 
       expect(result).not.toBeNull();
       expect(result.type).toBe('yesno');
+    });
+
+    it('should work with processMessageForQuickActions using CYCLIST markers', async () => {
+      const { processMessageForQuickActions } = await getMessageView();
+
+      // With markers-only detection, agents must emit explicit markers
+      const message = createAssistantMessage('I found the bug. Shall I fix it?\n<!-- CYCLIST:QUESTION:yesno -->');
+
+      const result = processMessageForQuickActions(message);
+
+      expect(result).not.toBeNull();
+      expect(result.type).toBe('yesno');
+      expect(result.source).toBe('structured_marker');
     });
 
   });
