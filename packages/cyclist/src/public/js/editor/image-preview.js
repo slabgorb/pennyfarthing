@@ -130,6 +130,51 @@ export function handleRemoveClick(index) {
   }
 }
 
+/**
+ * Show image size error message (Story 28-5)
+ * Displays a temporary error message when image exceeds max size
+ * @param {string} message - Error message to display
+ */
+export function showImageSizeError(message) {
+  if (typeof document === 'undefined') return;
+
+  const container = getPreviewContainer();
+  if (!container) return;
+
+  // Clear any existing content
+  container.innerHTML = '';
+  container.classList.remove('hidden');
+  container.setAttribute('aria-hidden', 'false');
+
+  // Create error message
+  const errorDiv = document.createElement('div');
+  errorDiv.className = 'image-preview-error';
+  errorDiv.textContent = message;
+
+  container.appendChild(errorDiv);
+
+  // Auto-hide after 3 seconds
+  setTimeout(() => {
+    if (container.querySelector('.image-preview-error')) {
+      container.classList.add('hidden');
+      container.setAttribute('aria-hidden', 'true');
+      container.innerHTML = '';
+    }
+  }, 3000);
+}
+
+/**
+ * Format file size for display (Story 28-5)
+ * @param {number} bytes - Size in bytes
+ * @returns {string} Formatted size string (e.g., "2.3 MB")
+ */
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 B';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 // ============================================================================
 // Private Helpers
 // ============================================================================
@@ -169,11 +214,19 @@ function renderPreview(images) {
   thumbnail.style.maxHeight = `${IMAGE_PREVIEW_SIZE}px`;
   thumbnailElement = thumbnail;
 
-  // Create label
+  // Create label with file size (Story 28-5)
   const label = document.createElement('span');
   label.className = 'image-preview-label';
-  label.textContent = image.filename || 'Pasted Image';
+  const filename = image.filename || 'Pasted Image';
+  const sizeText = image.sizeBytes ? ` (${formatFileSize(image.sizeBytes)})` : '';
+  label.textContent = filename + sizeText;
   labelElement = label;
+
+  // Add warning class if large image (Story 28-5)
+  if (image.isLarge) {
+    label.classList.add('image-preview-label-warning');
+    label.title = 'Large image - may take longer to process';
+  }
 
   // Create remove button
   const removeBtn = document.createElement('button');
@@ -186,6 +239,10 @@ function renderPreview(images) {
   // Assemble preview
   const wrapper = document.createElement('div');
   wrapper.className = 'image-preview-item';
+  // Add warning border for large images (Story 28-5)
+  if (image.isLarge) {
+    wrapper.classList.add('image-preview-item-warning');
+  }
   wrapper.appendChild(thumbnail);
   wrapper.appendChild(label);
   wrapper.appendChild(removeBtn);
