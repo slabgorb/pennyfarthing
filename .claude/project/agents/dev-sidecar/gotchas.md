@@ -159,3 +159,61 @@ return content.some(block => block.type === 'tool_use' && block.name === 'TodoWr
 **Discovered:** 2026-01-09 (Story 17-5)
 
 ---
+
+### Background Task Agents Dying in Cyclist
+
+**Situation:** Running background Task agents (e.g., job fairs, parallel work) via Cyclist GUI.
+
+**Problem:** Background agents die with `[Request interrupted by user]` when you send any follow-up message. The agents appear to start but never complete.
+
+**Root Cause:** `ClaudeService.sendMessage()` was killing the existing Claude process before spawning a new one for each message:
+```typescript
+// OLD (broken) - killed background agents
+if (this.currentProcess) {
+  this.currentProcess.kill();  // Kills all child processes including Task agents!
+  this.currentProcess = null;
+}
+const proc = spawn('claude', args);
+proc.stdin?.write(message);
+proc.stdin?.end();  // Closes stdin, signals "done"
+```
+
+Background Task agents are **children of the Claude process**. When Cyclist killed the parent to send a new message, all background agents died with it.
+
+**Solution:** Persistent process model - keep one Claude process alive for the session:
+```typescript
+// NEW (fixed) - reuses process, background agents survive
+private ensureProcess(): ChildProcess {
+  if (this.currentProcess && !this.processExited) {
+    return this.currentProcess;  // Reuse existing!
+  }
+  // Only spawn if no process exists
+  const proc = spawn('claude', args);
+  // Set up handlers once
+  return proc;
+}
+
+async *sendMessage(prompt: string) {
+  const proc = this.ensureProcess();
+  proc.stdin?.write(message);  // Write without closing
+  // Yield until 'result' message marks end of turn
+  while (!this.processExited) {
+    const msg = await this.waitForMessage();
+    yield msg;
+    if (msg.type === 'result') break;  // Turn complete, process stays alive
+  }
+}
+```
+
+**Key insight:** The `result` message from Claude marks end of turn, NOT process exit. Process only dies on explicit `resetSession()` or `abort()`.
+
+**Prevention:**
+1. Never kill the Claude process between messages
+2. Use `result` message type to detect turn boundaries
+3. Only spawn new process after explicit session reset
+
+**Testing:** Mock must emit messages on EACH stdin write (not just first), and must NOT auto-close the process.
+
+**Discovered:** 2026-01-12 (Orchestrator debugging session)
+
+---

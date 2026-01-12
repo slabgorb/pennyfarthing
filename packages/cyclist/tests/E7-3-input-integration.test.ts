@@ -59,21 +59,43 @@ const sampleResultMessage: SDKResultMessage = {
 /**
  * Create a mock ChildProcess that emits NDJSON messages on stdout
  * ChildProcess interface requires stdin, stdout, stderr, kill, pid, etc.
+ *
+ * Updated for persistent process model: Process stays alive until kill() is called.
+ * Messages are emitted on EACH stdin write to support multi-turn conversations.
+ * Exception: If exitCode != 0 and no messages, simulates immediate failure.
  */
 function createMockChildProcess(messages: SDKMessage[], exitCode = 0): ChildProcess {
   const emitter = new EventEmitter();
 
-  // Create mock stdin stream
+  // Create mock stdin stream that triggers message emission when written to
   const stdinData: string[] = [];
+  const mockStdout = new Readable({ read() {} });
+
   const mockStdin = new Writable({
     write(chunk, _encoding, callback) {
       stdinData.push(chunk.toString());
+      // Emit messages EACH time stdin is written to (simulates Claude responding to each prompt)
+      setImmediate(() => {
+        // If this is an error simulation (non-zero exit), emit close after messages
+        if (exitCode !== 0) {
+          for (const msg of messages) {
+            mockStdout.push(JSON.stringify(msg) + '\n');
+          }
+          // Emit close with error code after a tick
+          setImmediate(() => {
+            mockStdout.push(null);
+            emitter.emit('close', exitCode, null);
+          });
+          return;
+        }
+        for (const msg of messages) {
+          mockStdout.push(JSON.stringify(msg) + '\n');
+        }
+        // NOTE: Do NOT push null or emit close - persistent process stays alive
+      });
       callback();
     },
   });
-
-  // Create mock stdout stream that will emit messages
-  const mockStdout = new Readable({ read() {} });
 
   // Create mock stderr stream
   const mockStderr = new Readable({ read() {} });
@@ -92,6 +114,8 @@ function createMockChildProcess(messages: SDKMessage[], exitCode = 0): ChildProc
     spawnfile: 'claude',
     kill: vi.fn((signal?: NodeJS.Signals | number): boolean => {
       mockProcess.killed = true;
+      // Push null to end stdout stream
+      mockStdout.push(null);
       setImmediate(() => {
         emitter.emit('close', signal ? 1 : 0, signal || null);
       });
@@ -103,17 +127,6 @@ function createMockChildProcess(messages: SDKMessage[], exitCode = 0): ChildProc
     ref: vi.fn(),
     [Symbol.dispose]: vi.fn(),
   }) as unknown as ChildProcess;
-
-  // Emit messages asynchronously to simulate streaming
-  setImmediate(() => {
-    for (const msg of messages) {
-      mockStdout.push(JSON.stringify(msg) + '\n');
-    }
-    // Signal end of stdout
-    mockStdout.push(null);
-    // Emit close event
-    emitter.emit('close', exitCode, null);
-  });
 
   return mockProcess;
 }
@@ -367,7 +380,7 @@ describe('E7-3: Input Integration', () => {
       expect(service.getSessionId()).toBe('test-session-e73-001');
     });
 
-    it('should reuse session ID for subsequent messages', async () => {
+    it('should reuse persistent process for subsequent messages', async () => {
       // First query
       const messages1 = [sampleSystemMessage, sampleAssistantMessage, sampleResultMessage];
       const mockSpawner1 = createMockSpawner(messages1);
@@ -380,29 +393,19 @@ describe('E7-3: Input Integration', () => {
       const capturedSessionId = service.getSessionId();
       expect(capturedSessionId).toBe('test-session-e73-001');
 
-      // Second query should pass --resume with session ID
-      // We need to verify the spawner is called with the resume argument
-      const messages2 = [
-        { ...sampleAssistantMessage, message: { content: [{ type: 'text', text: 'Follow-up response' }] } },
-        sampleResultMessage,
-      ];
+      // Clear the mock to track if second query spawns a new process
+      mockSpawner1.mockClear();
 
-      let spawnArgs: string[] = [];
-      const mockSpawner2: ClaudeSpawner = vi.fn((_cmd, args) => {
-        spawnArgs = args || [];
-        return createMockChildProcess(messages2 as SDKMessage[]);
-      });
-
-      // Replace spawner for second query
-      (service as any).spawner = mockSpawner2;
-
+      // Second query should reuse existing process (persistent mode)
       for await (const _msg of service.sendMessage('follow-up message')) {
         // consume
       }
 
-      // Verify --resume flag was passed
-      expect(spawnArgs).toContain('--resume');
-      expect(spawnArgs).toContain(capturedSessionId);
+      // Verify spawner was NOT called again (process reused)
+      expect(mockSpawner1).not.toHaveBeenCalled();
+
+      // Session ID should persist
+      expect(service.getSessionId()).toBe(capturedSessionId);
     });
 
     it('should pass session ID via --resume flag to CLI', async () => {
@@ -589,14 +592,14 @@ describe('E7-3: Input Integration', () => {
       store.clearMessages();
     });
 
-    it('should handle multiple turns in sequence', async () => {
+    it('should handle multiple turns in sequence with persistent process', async () => {
       const store = await import('../src/public/js/message-store.js');
       store.clearMessages();
 
-      // Turn 1
-      const messages1 = [sampleSystemMessage, sampleAssistantMessage, sampleResultMessage];
-      const mockSpawner1 = createMockSpawner(messages1);
-      const service = new ClaudeService({ spawner: mockSpawner1 });
+      // Turn 1 and Turn 2 use the same messages (persistent process emits same response each turn)
+      const messages = [sampleSystemMessage, sampleAssistantMessage, sampleResultMessage];
+      const mockSpawner = createMockSpawner(messages);
+      const service = new ClaudeService({ spawner: mockSpawner });
 
       for await (const msg of service.sendMessage('turn 1')) {
         store.addMessage(msg);
@@ -605,29 +608,17 @@ describe('E7-3: Input Integration', () => {
       expect(store.getMessages().length).toBe(3);
       expect(service.getSessionId()).toBe('test-session-e73-001');
 
-      // Turn 2 - should reuse session
-      const messages2: SDKMessage[] = [
-        {
-          type: 'assistant',
-          message: { content: [{ type: 'text', text: 'Turn 2 response' }] },
-        },
-        {
-          type: 'result',
-          usage: { input_tokens: 200, output_tokens: 30 },
-          cost_usd: 0.0015,
-          duration_ms: 1500,
-          session_id: 'test-session-e73-001',
-        },
-      ];
-
-      (service as any).spawner = createMockSpawner(messages2);
-
+      // Turn 2 - reuses persistent process (same messages emitted)
       for await (const msg of service.sendMessage('turn 2')) {
         store.addMessage(msg);
       }
 
-      expect(store.getMessages().length).toBe(5);
+      // With persistent process, turn 2 emits same 3 messages = 6 total
+      expect(store.getMessages().length).toBe(6);
       expect(service.getSessionId()).toBe('test-session-e73-001');
+
+      // Verify spawner was only called once (persistent process reused)
+      expect(mockSpawner).toHaveBeenCalledTimes(1);
 
       store.clearMessages();
     });
