@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cyclist Settings</title>
   <link rel="stylesheet" href="settings.css">
+  <link rel="stylesheet" href="css/theme-browser.css">
 </head>
 <body>
   <div class="settings-container">
@@ -90,14 +91,13 @@
         <h2>Pennyfarthing</h2>
 
         <div class="setting-item">
-          <label class="setting-label" for="theme">
+          <label class="setting-label">
             <span>Agent Theme</span>
           </label>
-          <div class="setting-input">
-            <select id="theme" name="theme">
-              <!-- Populated dynamically by settings-ui.js -->
-            </select>
+          <div id="theme-browser-container" class="theme-browser-container">
+            <!-- Populated dynamically by settings-ui.js via ThemeBrowser component -->
           </div>
+          <input type="hidden" id="theme" name="theme" value="alice-in-wonderland">
           <p class="setting-description">Character theme for agent personas (requires agent restart)</p>
         </div>
       </section>

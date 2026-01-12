@@ -1,0 +1,299 @@
+/**
+ * Theme Browser Styles (Story 24-5)
+ *
+ * Styles for the searchable, filterable theme browser component.
+ */
+
+/* =============================================================================
+   Browser Container
+   ============================================================================= */
+
+.theme-browser-header {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+  background: var(--header-bg, #f5f5f5);
+}
+
+.theme-browser-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  min-height: 300px;
+  max-height: 400px;
+}
+
+.theme-browser-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--border-color, #e0e0e0);
+  background: var(--footer-bg, #f5f5f5);
+}
+
+/* =============================================================================
+   Search and Filter Controls
+   ============================================================================= */
+
+.theme-search-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--input-border, #ccc);
+  border-radius: 4px;
+  font-size: 14px;
+  background: var(--input-bg, #fff);
+  color: var(--input-color, #333);
+}
+
+.theme-search-input:focus {
+  outline: none;
+  border-color: var(--accent-color, #0066cc);
+  box-shadow: 0 0 0 2px var(--accent-shadow, rgba(0, 102, 204, 0.2));
+}
+
+.theme-search-input::placeholder {
+  color: var(--placeholder-color, #999);
+}
+
+.theme-category-filter {
+  padding: 8px 12px;
+  border: 1px solid var(--input-border, #ccc);
+  border-radius: 4px;
+  font-size: 14px;
+  background: var(--input-bg, #fff);
+  color: var(--input-color, #333);
+  min-width: 150px;
+}
+
+.theme-category-filter:focus {
+  outline: none;
+  border-color: var(--accent-color, #0066cc);
+}
+
+/* =============================================================================
+   Theme Grid
+   ============================================================================= */
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+/* =============================================================================
+   Theme Card
+   ============================================================================= */
+
+.theme-card {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  border: 2px solid var(--card-border, #e0e0e0);
+  border-radius: 8px;
+  background: var(--card-bg, #fff);
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.theme-card:hover {
+  border-color: var(--card-hover-border, #b0b0b0);
+  box-shadow: 0 2px 8px var(--card-hover-shadow, rgba(0, 0, 0, 0.1));
+}
+
+.theme-card:focus {
+  outline: none;
+  border-color: var(--accent-color, #0066cc);
+  box-shadow: 0 0 0 3px var(--accent-shadow, rgba(0, 102, 204, 0.3));
+}
+
+.theme-card.selected {
+  border-color: var(--selected-border, #0066cc);
+  background: var(--selected-bg, #e6f2ff);
+  box-shadow: 0 0 0 3px var(--selected-shadow, rgba(0, 102, 204, 0.2));
+}
+
+.theme-card.selected:hover {
+  border-color: var(--selected-border, #0066cc);
+}
+
+/* =============================================================================
+   Card Content
+   ============================================================================= */
+
+.theme-card-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--card-name-color, #333);
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+
+.theme-card-description {
+  font-size: 12px;
+  color: var(--card-desc-color, #666);
+  line-height: 1.4;
+  flex: 1;
+  margin-bottom: 8px;
+}
+
+.theme-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  padding-top: 8px;
+  border-top: 1px solid var(--card-divider, #eee);
+}
+
+.theme-card-category {
+  color: var(--card-category-color, #888);
+  background: var(--card-category-bg, #f0f0f0);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.theme-card-tier {
+  font-weight: 500;
+}
+
+/* =============================================================================
+   Tier Colors
+   ============================================================================= */
+
+.tier-s .theme-card-tier {
+  color: var(--tier-s-color, #ffd700);
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
+.tier-s {
+  border-left: 3px solid var(--tier-s-color, #ffd700);
+}
+
+.tier-a .theme-card-tier {
+  color: var(--tier-a-color, #c0c0c0);
+}
+
+.tier-a {
+  border-left: 3px solid var(--tier-a-color, #c0c0c0);
+}
+
+.tier-b .theme-card-tier {
+  color: var(--tier-b-color, #cd7f32);
+}
+
+.tier-b {
+  border-left: 3px solid var(--tier-b-color, #cd7f32);
+}
+
+.tier-u .theme-card-tier {
+  color: var(--tier-u-color, #888);
+}
+
+.tier-u {
+  border-left: 3px solid var(--tier-u-color, #888);
+}
+
+/* =============================================================================
+   Loading and Empty States
+   ============================================================================= */
+
+.theme-browser-loading,
+.theme-browser-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: var(--empty-color, #888);
+  font-size: 14px;
+}
+
+.theme-browser-loading {
+  font-style: italic;
+}
+
+/* =============================================================================
+   Buttons
+   ============================================================================= */
+
+.theme-browser-apply,
+.theme-browser-cancel {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.theme-browser-cancel {
+  background: var(--cancel-bg, #f0f0f0);
+  border: 1px solid var(--cancel-border, #ccc);
+  color: var(--cancel-color, #333);
+}
+
+.theme-browser-cancel:hover {
+  background: var(--cancel-hover-bg, #e0e0e0);
+}
+
+.theme-browser-apply {
+  background: var(--apply-bg, #0066cc);
+  border: 1px solid var(--apply-border, #0055aa);
+  color: var(--apply-color, #fff);
+}
+
+.theme-browser-apply:hover:not(:disabled) {
+  background: var(--apply-hover-bg, #0055aa);
+}
+
+.theme-browser-apply:disabled {
+  background: var(--apply-disabled-bg, #ccc);
+  border-color: var(--apply-disabled-border, #bbb);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* =============================================================================
+   Dark Mode Support (via CSS variables)
+   ============================================================================= */
+
+@media (prefers-color-scheme: dark) {
+  .theme-browser-header,
+  .theme-browser-footer {
+    --header-bg: #2a2a2a;
+    --footer-bg: #2a2a2a;
+    --border-color: #444;
+  }
+
+  .theme-search-input,
+  .theme-category-filter {
+    --input-bg: #333;
+    --input-border: #555;
+    --input-color: #eee;
+    --placeholder-color: #777;
+  }
+
+  .theme-card {
+    --card-bg: #2a2a2a;
+    --card-border: #444;
+    --card-hover-border: #666;
+    --card-hover-shadow: rgba(0, 0, 0, 0.3);
+    --card-name-color: #eee;
+    --card-desc-color: #aaa;
+    --card-category-bg: #444;
+    --card-category-color: #aaa;
+    --card-divider: #444;
+  }
+
+  .theme-card.selected {
+    --selected-bg: #1a3a5a;
+    --selected-border: #4499dd;
+  }
+
+  .theme-browser-cancel {
+    --cancel-bg: #444;
+    --cancel-border: #555;
+    --cancel-color: #eee;
+    --cancel-hover-bg: #555;
+  }
+}

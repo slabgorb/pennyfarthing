@@ -152,6 +152,8 @@ function createElectronAPI() {
                 },
                 // 24-2: Pennyfarthing settings section
                 getAvailableThemes: () => ipcRenderer.invoke('settings:getAvailableThemes'),
+                // 24-5: Theme browser with metadata
+                getThemeMetadata: () => ipcRenderer.invoke('settings:getThemeMetadata'),
             },
             // Audit Log API (22-6)
             auditLog: {
@@ -279,6 +281,12 @@ function createElectronAPI() {
                 },
                 // 24-2: Pennyfarthing settings section - test stub
                 getAvailableThemes: () => Promise.resolve(['alice-in-wonderland', 'a-team', 'star-trek']),
+                // 24-5: Theme browser with metadata - test stub
+                getThemeMetadata: () => Promise.resolve([
+                    { id: 'alice-in-wonderland', name: 'Alice in Wonderland', description: 'Characters from Wonderland', source: 'Lewis Carroll', tier: 'S', category: 'Literature', agentCount: 10 },
+                    { id: 'a-team', name: 'A-Team', description: 'The A-Team crew', source: 'TV Series', tier: 'A', category: 'TV Series', agentCount: 10 },
+                    { id: 'star-trek', name: 'Star Trek', description: 'Star Trek characters', source: 'TV Series', tier: 'A', category: 'TV Series', agentCount: 10 },
+                ]),
             },
             // Audit Log API (22-6) - test stub
             auditLog: {

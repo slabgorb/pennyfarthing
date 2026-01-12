@@ -77,6 +77,7 @@ export declare const IPC_SETTINGS_CHANNELS: {
     readonly CHANGED: "settings:changed";
     readonly OPEN_WINDOW: "settings:openWindow";
     readonly GET_AVAILABLE_THEMES: "settings:getAvailableThemes";
+    readonly GET_THEME_METADATA: "settings:getThemeMetadata";
 };
 /**
  * IPC channel names for audit log (22-6)
@@ -411,6 +412,37 @@ export declare function handleSettingsSave(settings: Partial<CyclistSettings>): 
  * Returns sorted list of theme names
  */
 export declare function getAvailableThemes(): Promise<string[]>;
+/**
+ * Theme metadata interface for theme browser
+ */
+export interface ThemeMetadata {
+    id: string;
+    name: string;
+    description: string;
+    source: string;
+    tier: 'S' | 'A' | 'B' | 'U';
+    category: string;
+    agentCount: number;
+}
+/**
+ * Category mapping for known themes (24-5)
+ * Maps theme IDs or source patterns to categories
+ */
+export declare const CATEGORY_MAP: Record<string, string>;
+/**
+ * Derive category from theme ID and source (24-5)
+ * Uses CATEGORY_MAP for known themes, falls back to pattern matching
+ */
+export declare function deriveCategory(themeId: string, source: string): string;
+/**
+ * Get cached theme metadata
+ */
+export declare function getThemeMetadataCache(): ThemeMetadata[] | null;
+/**
+ * Load theme metadata from YAML files (24-5)
+ * Parses all theme files and extracts metadata for the browser
+ */
+export declare function loadThemeMetadata(): Promise<ThemeMetadata[]>;
 /**
  * Register settings keyboard shortcut
  * Called during app initialization
