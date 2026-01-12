@@ -83,10 +83,12 @@ epics:
           - Compute combined diff on demand
         points: 5
         priority: P2
-        status: in_progress
+        status: done
         started: 2026-01-12
+        completed: 2026-01-12
         assigned_to: Keith Avery
         repos: cyclist
+        pr: "#194"
         acceptance_criteria:
           - Navigate between partial diffs with < > arrows
           - Shows "Edit N of M" indicator
