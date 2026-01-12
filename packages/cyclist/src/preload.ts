@@ -225,8 +225,9 @@ export interface ElectronAuditLogAPI {
 }
 
 /**
- * Settings API interface (22-3, 22-4, 22-5)
- * Provides access to Cyclist settings including approval gate, dangerous path gate, and verbose mode
+ * Settings API interface (22-3, 22-4, 22-5, 24-1)
+ * Provides access to Cyclist settings including approval gate, dangerous path gate, verbose mode,
+ * and full settings panel infrastructure
  */
 export interface ElectronSettingsAPI {
   /**
@@ -263,6 +264,28 @@ export interface ElectronSettingsAPI {
    * Subscribe to verbose mode changes (22-5)
    */
   onVerboseModeChange: (callback: (event: unknown, enabled: boolean) => void) => void;
+
+  // 24-1: Settings panel infrastructure
+
+  /**
+   * Get all current settings (24-1)
+   */
+  get: () => Promise<unknown>;
+
+  /**
+   * Save settings (24-1)
+   */
+  save: (settings: unknown) => Promise<unknown>;
+
+  /**
+   * Open settings window (24-1)
+   */
+  openWindow: () => Promise<void>;
+
+  /**
+   * Subscribe to settings changes (24-1)
+   */
+  onChanged: (callback: (settings: unknown) => void) => void;
 }
 
 /**
@@ -432,7 +455,7 @@ function createElectronAPI(): ElectronAPI {
         sendApprovalResponse: (response: { toolId: string; approved: boolean; alwaysAllow: boolean }) =>
           ipcRenderer.invoke('path:approval-response', response),
       },
-      // Settings API (22-3, 22-4, 22-5)
+      // Settings API (22-3, 22-4, 22-5, 24-1)
       settings: {
         getBashApprovalGate: () => ipcRenderer.invoke('settings:getBashApprovalGate') as Promise<boolean>,
         setBashApprovalGate: (enabled: boolean) => ipcRenderer.invoke('settings:setBashApprovalGate', enabled),
@@ -442,6 +465,13 @@ function createElectronAPI(): ElectronAPI {
         setVerboseMode: (enabled: boolean) => ipcRenderer.invoke('settings:setVerboseMode', enabled) as Promise<boolean>,
         onVerboseModeChange: (callback: (event: unknown, enabled: boolean) => void) => {
           ipcRenderer.on('settings:verboseModeUpdate', callback);
+        },
+        // 24-1: Settings panel infrastructure
+        get: () => ipcRenderer.invoke('settings:get'),
+        save: (settings: unknown) => ipcRenderer.invoke('settings:save', settings),
+        openWindow: () => ipcRenderer.invoke('settings:openWindow'),
+        onChanged: (callback: (settings: unknown) => void) => {
+          ipcRenderer.on('settings:changed', (_event: unknown, settings: unknown) => callback(settings));
         },
       },
       // Audit Log API (22-6)
@@ -541,7 +571,7 @@ function createElectronAPI(): ElectronAPI {
         sendApprovalResponse: (_response: { toolId: string; approved: boolean; alwaysAllow: boolean }) =>
           Promise.resolve(),
       },
-      // Settings API (22-3, 22-4, 22-5) - test stub
+      // Settings API (22-3, 22-4, 22-5, 24-1) - test stub
       settings: {
         getBashApprovalGate: () => Promise.resolve(false),
         setBashApprovalGate: (_enabled: boolean) => Promise.resolve(),
@@ -550,6 +580,21 @@ function createElectronAPI(): ElectronAPI {
         getVerboseMode: () => Promise.resolve(false),
         setVerboseMode: (_enabled: boolean) => Promise.resolve(false),
         onVerboseModeChange: (_callback: (event: unknown, enabled: boolean) => void) => {
+          // No-op in test environment
+        },
+        // 24-1: Settings panel infrastructure - test stub
+        get: () => Promise.resolve({
+          workflow: { auto_handoff: false, handoff_confirm: true },
+          display: { show_flow: true, show_ocean: false, sidebar_width: 300 },
+          notifications: { phase_change: true, sound: false },
+        }),
+        save: (_settings: unknown) => Promise.resolve({
+          workflow: { auto_handoff: false, handoff_confirm: true },
+          display: { show_flow: true, show_ocean: false, sidebar_width: 300 },
+          notifications: { phase_change: true, sound: false },
+        }),
+        openWindow: () => Promise.resolve(),
+        onChanged: (_callback: (settings: unknown) => void) => {
           // No-op in test environment
         },
       },

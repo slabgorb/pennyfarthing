@@ -39,7 +39,16 @@ import {
   parseProjectDirArg,
 } from './paths.js';
 import { getContextUsage, ContextInfo } from './api/context.js';
-import { getVerboseMode, setVerboseMode } from './settings-store.js';
+import { getVerboseMode, setVerboseMode, syncWithFileSettings } from './settings-store.js';
+import {
+  initializeSettings,
+  getCurrentSettings,
+  saveUserSettings,
+  watchAllSettings,
+  stopWatchingSettings,
+  type CyclistSettings,
+} from './settings.js';
+import { openSettingsWindow, setMainWindowRef } from './settings-window.js';
 
 // Re-export project directory functions for external consumers
 export { getProjectDirectory, setProjectDirectory, isValidProjectDirectory };
@@ -136,12 +145,17 @@ export const IPC_DIFF_CHANNELS = {
 } as const;
 
 /**
- * IPC channel names for settings (22-5)
+ * IPC channel names for settings (22-5, 24-1)
  */
 export const IPC_SETTINGS_CHANNELS = {
   VERBOSE_MODE_GET: 'settings:getVerboseMode',
   VERBOSE_MODE_SET: 'settings:setVerboseMode',
   VERBOSE_MODE_UPDATE: 'settings:verboseModeUpdate',
+  // 24-1: Settings panel infrastructure
+  GET: 'settings:get',
+  SAVE: 'settings:save',
+  CHANGED: 'settings:changed',
+  OPEN_WINDOW: 'settings:openWindow',
 } as const;
 
 /**
@@ -1296,9 +1310,63 @@ export function setupFileBrowserIPCHandlers(ipcMain: {
 // Settings IPC Handlers (22-5)
 // =============================================================================
 
+// =============================================================================
+// Settings State (24-1)
+// =============================================================================
+
+/**
+ * Flag indicating if settings have been initialized
+ */
+export let isSettingsInitialized = false;
+
+/**
+ * Handle settings:get IPC call
+ * Returns current settings
+ */
+export async function handleSettingsGet(): Promise<CyclistSettings> {
+  return getCurrentSettings();
+}
+
+/**
+ * Handle settings:save IPC call
+ * Saves settings and returns updated settings
+ */
+export async function handleSettingsSave(settings: Partial<CyclistSettings>): Promise<CyclistSettings> {
+  saveUserSettings(settings);
+  return getCurrentSettings();
+}
+
+/**
+ * Register settings keyboard shortcut
+ * Called during app initialization
+ */
+export function registerSettingsShortcut(): void {
+  // Shortcut is handled via menu accelerator, not global shortcut
+  // This function exists for test compatibility
+}
+
+/**
+ * Get the menu template for testing
+ * Returns the full menu structure including settings
+ */
+export function getMenuTemplate(): Array<{ role?: string; label?: string; submenu?: Array<{ label?: string; accelerator?: string; click?: () => void }> }> {
+  return [
+    {
+      role: 'appMenu',
+      label: 'Cyclist',
+      submenu: [
+        { label: 'About Cyclist' },
+        { label: 'Settings...', accelerator: 'CmdOrCtrl+,' },
+        { label: 'Quit Cyclist' },
+      ],
+    },
+  ];
+}
+
 /**
  * Set up IPC handlers for settings
  * 22-5: Handles verbose mode setting get/set
+ * 24-1: Handles full settings panel infrastructure
  */
 export function setupSettingsIPCHandlers(ipcMain: {
   handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
@@ -1314,6 +1382,24 @@ export function setupSettingsIPCHandlers(ipcMain: {
     setVerboseMode(enabled);
     broadcastToRenderer(IPC_SETTINGS_CHANNELS.VERBOSE_MODE_UPDATE, enabled);
     return enabled;
+  });
+
+  // 24-1: Get all settings
+  ipcMain.handle(IPC_SETTINGS_CHANNELS.GET, async () => {
+    return handleSettingsGet();
+  });
+
+  // 24-1: Save settings
+  ipcMain.handle(IPC_SETTINGS_CHANNELS.SAVE, async (_event: unknown, ...args: unknown[]) => {
+    const settings = args[0] as Partial<CyclistSettings>;
+    const updated = await handleSettingsSave(settings);
+    broadcastToRenderer(IPC_SETTINGS_CHANNELS.CHANGED, updated);
+    return updated;
+  });
+
+  // 24-1: Open settings window
+  ipcMain.handle(IPC_SETTINGS_CHANNELS.OPEN_WINDOW, async () => {
+    openSettingsWindow();
   });
 
   console.log('Settings IPC handlers registered');
@@ -1557,6 +1643,9 @@ if (isElectron) {
 
     // Set main window for data broadcasts
     setMainWindow(mainWindow);
+
+    // 24-1: Set main window reference for settings modal parent
+    setMainWindowRef(mainWindow);
   }
 
   /**
@@ -1715,8 +1804,24 @@ if (isElectron) {
       // Use standard macOS menu roles instead of reconstructing existing menu
       // (reconstructing fails on nested submenus like Window)
       // 22-5: Custom View menu with Verbose Mode toggle
+      // 24-1: Custom app menu with Settings
       const menuTemplate: Electron.MenuItemConstructorOptions[] = [
-        { role: 'appMenu' },
+        {
+          label: 'Cyclist',
+          submenu: [
+            { role: 'about' },
+            { type: 'separator' },
+            { label: 'Settings...', accelerator: 'CmdOrCtrl+,', click: () => openSettingsWindow() },
+            { type: 'separator' },
+            { role: 'services' },
+            { type: 'separator' },
+            { role: 'hide' },
+            { role: 'hideOthers' },
+            { role: 'unhide' },
+            { type: 'separator' },
+            { role: 'quit' },
+          ],
+        },
         { role: 'fileMenu' },
         { role: 'editMenu' },
         buildViewMenu() as Electron.MenuItemConstructorOptions,
