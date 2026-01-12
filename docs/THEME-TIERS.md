@@ -100,9 +100,10 @@ Solid tactical teams with specific strengths.
 
 Functional tactical teams with notable gaps.
 
-| Theme | Team Delta | Weakness |
-|-------|------------|----------|
-| **agatha-christie** | +14.4 | Dev underperforms |
+| Theme | Dev | Rev | TEA | Team Delta | Weakness |
+|-------|-----|-----|-----|------------|----------|
+| **mad-max** ★ | 66.25 (-11.25) | 91.25 (+12.75) | 80.0 (+7.9) | **+9.4** | Dev weak, elite Review |
+| **agatha-christie** | - | - | - | +14.4 | Dev underperforms |
 | **doctor-who** | +12.9 | Inconsistent Dev |
 | **sherlock-holmes** | +14.4 | Great review, weak TEA |
 | **ted-lasso** | +14.4 | Enthusiasm doesn't compile |
@@ -117,6 +118,7 @@ Functional tactical teams with notable gaps.
 - These themes have personality but not tactical excellence
 - Often strong at one role while weak at others
 - Consider for non-critical work or specific role needs
+- ★ **mad-max** is optimized (job fair 2026-01-12): roles reassigned for +17.5 point improvement vs original
 
 ## D-Tier (Below Average - Delta below +5)
 
@@ -141,7 +143,6 @@ No tactical team data available.
 |-------|--------|
 | **futurama** | Animated Series |
 | **lovecraft-mythos** | H.P. Lovecraft |
-| **mad-max** | Film Series |
 | **the-odyssey** | Classical Epic |
 | **twin-peaks** | TV Series |
 | **x-files** | TV Series |
@@ -210,10 +211,15 @@ Based on [OCEAN-BENCHMARK-CORRELATION.md](../internal/results/job-fair/OCEAN-BEN
 
 ## Data Sources
 
-- **Benchmark Period:** January 4-10, 2026
+- **Benchmark Period:** January 4-12, 2026
 - **Scoring Method:** Sum of tactical role deltas (Dev + Rev + TEA)
 - **Baselines:** Dev 77.5, Reviewer 78.5, TEA 72.1
 - **Results Location:** `internal/results/job-fair/{theme}-{timestamp}/summary.yaml`
+
+### Recently Benchmarked
+| Theme | Date | Runs | Notes |
+|-------|------|------|-------|
+| mad-max | 2026-01-12 | 88 | Optimized after job fair (80 + 8 validation) |
 
 ## See Also
 
