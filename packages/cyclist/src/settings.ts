@@ -33,10 +33,15 @@ export interface NotificationSettings {
   sound: boolean;
 }
 
+export interface PennyfarthingSettings {
+  theme: string;
+}
+
 export interface CyclistSettings {
   workflow: WorkflowSettings;
   display: DisplaySettings;
   notifications: NotificationSettings;
+  pennyfarthing: PennyfarthingSettings;
 }
 
 // Partial settings for merging
@@ -44,6 +49,7 @@ export type PartialSettings = {
   workflow?: Partial<WorkflowSettings>;
   display?: Partial<DisplaySettings>;
   notifications?: Partial<NotificationSettings>;
+  pennyfarthing?: Partial<PennyfarthingSettings>;
 };
 
 // =============================================================================
@@ -71,6 +77,9 @@ const DEFAULT_SETTINGS: CyclistSettings = {
   notifications: {
     phase_change: true,
     sound: false,
+  },
+  pennyfarthing: {
+    theme: 'alice-in-wonderland',
   },
 };
 
@@ -170,6 +179,13 @@ export function validateSettings(settings: unknown): boolean {
   if (typeof notifications.phase_change !== 'boolean') return false;
   if (typeof notifications.sound !== 'boolean') return false;
 
+  // Check pennyfarthing section
+  if (typeof s.pennyfarthing !== 'object' || s.pennyfarthing === null) {
+    return false;
+  }
+  const pennyfarthing = s.pennyfarthing as Record<string, unknown>;
+  if (typeof pennyfarthing.theme !== 'string') return false;
+
   return true;
 }
 
@@ -211,6 +227,12 @@ export function mergeSettings(base: CyclistSettings, override: PartialSettings):
     }
     if (typeof override.notifications.sound === 'boolean') {
       result.notifications.sound = override.notifications.sound;
+    }
+  }
+
+  if (override.pennyfarthing) {
+    if (typeof override.pennyfarthing.theme === 'string') {
+      result.pennyfarthing.theme = override.pennyfarthing.theme;
     }
   }
 

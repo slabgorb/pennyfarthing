@@ -76,6 +76,7 @@ export declare const IPC_SETTINGS_CHANNELS: {
     readonly SAVE: "settings:save";
     readonly CHANGED: "settings:changed";
     readonly OPEN_WINDOW: "settings:openWindow";
+    readonly GET_AVAILABLE_THEMES: "settings:getAvailableThemes";
 };
 /**
  * IPC channel names for audit log (22-6)
@@ -402,8 +403,14 @@ export declare function handleSettingsGet(): Promise<CyclistSettings>;
 /**
  * Handle settings:save IPC call
  * Saves settings and returns updated settings
+ * Also writes theme to persona-config.local.yaml for Pennyfarthing compatibility (24-2)
  */
 export declare function handleSettingsSave(settings: Partial<CyclistSettings>): Promise<CyclistSettings>;
+/**
+ * Get available themes from pennyfarthing-dist/personas/themes (24-2)
+ * Returns sorted list of theme names
+ */
+export declare function getAvailableThemes(): Promise<string[]>;
 /**
  * Register settings keyboard shortcut
  * Called during app initialization

@@ -976,6 +976,66 @@ epics:
           - All thumbnails visible
           - Individual remove works
           - Clear all option available
+  - id: epic-24
+    title: Configuration & Theme Switcher Panels
+    description: |
+      Full settings hub in Cyclist covering Pennyfarthing, Claude Code,
+      and Cyclist preferences. Rich theme browser with search, OCEAN
+      profiles, character previews, and favorites.
+    points: 21
+    completed_points: 5
+    priority: P1
+    marker: ux
+    repos: cyclist
+    status: in_progress
+    stories:
+      - id: 24-1
+        title: Settings Panel Infrastructure
+        description: |
+          Build settings panel with three sections: Workflow, Display, Notifications.
+          File persistence to ~/.cyclist/settings.yaml with project overrides from
+          .claude/cyclist.local.yaml. File watching for live reload.
+        points: 3
+        priority: P1
+        status: done
+        started: 2026-01-11
+        completed: 2026-01-12
+        assigned_to: Keith Avery
+        repos: cyclist
+        pr: "#191"
+        pr_link: https://github.com/1898andCo/pennyfarthing/pull/191
+        reviewed_by: The Merovingian
+        reviewed_date: 2026-01-12
+        acceptance_criteria:
+          - Settings modal opens via Cmd+, or Cyclist menu
+          - Three sections: Workflow, Display, Notifications
+          - File persistence to ~/.cyclist/settings.yaml
+          - Project overrides from .claude/cyclist.local.yaml
+          - File watching for live reload
+      - id: 24-2
+        title: Pennyfarthing Settings Section
+        description: |
+          Add Pennyfarthing settings section to the settings panel.
+          Theme dropdown lists all 101 available themes with formatted names.
+          Changing theme saves to both ~/.cyclist/settings.yaml and
+          .claude/persona-config.local.yaml for Pennyfarthing compatibility.
+        points: 2
+        priority: P1
+        status: done
+        started: 2026-01-12
+        completed: 2026-01-12
+        assigned_to: Keith Avery
+        repos: cyclist
+        pr: "#192"
+        pr_link: https://github.com/1898andCo/pennyfarthing/pull/192
+        jira_key: MSSCI-11550
+        acceptance_criteria:
+          - Settings panel shows "Pennyfarthing" section
+          - Theme dropdown lists all available themes (101)
+          - Current theme is pre-selected in dropdown
+          - Changing theme saves to ~/.cyclist/settings.yaml
+          - Changing theme also updates .claude/persona-config.local.yaml
+          - Theme names display formatted (kebab-case → Title Case)
   - id: epic-30
     title: Developer Workflow Documentation
     description: |

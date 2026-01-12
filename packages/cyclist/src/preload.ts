@@ -286,6 +286,13 @@ export interface ElectronSettingsAPI {
    * Subscribe to settings changes (24-1)
    */
   onChanged: (callback: (settings: unknown) => void) => void;
+
+  // 24-2: Pennyfarthing settings section
+
+  /**
+   * Get available themes from pennyfarthing-dist (24-2)
+   */
+  getAvailableThemes: () => Promise<string[]>;
 }
 
 /**
@@ -473,6 +480,8 @@ function createElectronAPI(): ElectronAPI {
         onChanged: (callback: (settings: unknown) => void) => {
           ipcRenderer.on('settings:changed', (_event: unknown, settings: unknown) => callback(settings));
         },
+        // 24-2: Pennyfarthing settings section
+        getAvailableThemes: () => ipcRenderer.invoke('settings:getAvailableThemes') as Promise<string[]>,
       },
       // Audit Log API (22-6)
       auditLog: {
@@ -587,16 +596,20 @@ function createElectronAPI(): ElectronAPI {
           workflow: { auto_handoff: false, handoff_confirm: true },
           display: { show_flow: true, show_ocean: false, sidebar_width: 300 },
           notifications: { phase_change: true, sound: false },
+          pennyfarthing: { theme: 'alice-in-wonderland' },
         }),
         save: (_settings: unknown) => Promise.resolve({
           workflow: { auto_handoff: false, handoff_confirm: true },
           display: { show_flow: true, show_ocean: false, sidebar_width: 300 },
           notifications: { phase_change: true, sound: false },
+          pennyfarthing: { theme: 'alice-in-wonderland' },
         }),
         openWindow: () => Promise.resolve(),
         onChanged: (_callback: (settings: unknown) => void) => {
           // No-op in test environment
         },
+        // 24-2: Pennyfarthing settings section - test stub
+        getAvailableThemes: () => Promise.resolve(['alice-in-wonderland', 'a-team', 'star-trek']),
       },
       // Audit Log API (22-6) - test stub
       auditLog: {

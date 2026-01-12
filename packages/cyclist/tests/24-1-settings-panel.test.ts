@@ -39,6 +39,9 @@ interface CyclistSettings {
     phase_change: boolean;
     sound: boolean;
   };
+  pennyfarthing: {
+    theme: string;
+  };
 }
 
 // Default settings for reference
@@ -55,6 +58,9 @@ const DEFAULT_SETTINGS: CyclistSettings = {
   notifications: {
     phase_change: true,
     sound: false,
+  },
+  pennyfarthing: {
+    theme: 'alice-in-wonderland',
   },
 };
 

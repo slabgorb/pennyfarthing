@@ -150,6 +150,8 @@ function createElectronAPI() {
                 onChanged: (callback) => {
                     ipcRenderer.on('settings:changed', (_event, settings) => callback(settings));
                 },
+                // 24-2: Pennyfarthing settings section
+                getAvailableThemes: () => ipcRenderer.invoke('settings:getAvailableThemes'),
             },
             // Audit Log API (22-6)
             auditLog: {
@@ -263,16 +265,20 @@ function createElectronAPI() {
                     workflow: { auto_handoff: false, handoff_confirm: true },
                     display: { show_flow: true, show_ocean: false, sidebar_width: 300 },
                     notifications: { phase_change: true, sound: false },
+                    pennyfarthing: { theme: 'alice-in-wonderland' },
                 }),
                 save: (_settings) => Promise.resolve({
                     workflow: { auto_handoff: false, handoff_confirm: true },
                     display: { show_flow: true, show_ocean: false, sidebar_width: 300 },
                     notifications: { phase_change: true, sound: false },
+                    pennyfarthing: { theme: 'alice-in-wonderland' },
                 }),
                 openWindow: () => Promise.resolve(),
                 onChanged: (_callback) => {
                     // No-op in test environment
                 },
+                // 24-2: Pennyfarthing settings section - test stub
+                getAvailableThemes: () => Promise.resolve(['alice-in-wonderland', 'a-team', 'star-trek']),
             },
             // Audit Log API (22-6) - test stub
             auditLog: {

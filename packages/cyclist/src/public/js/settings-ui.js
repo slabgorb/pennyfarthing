@@ -20,6 +20,8 @@
  * @property {Object} notifications
  * @property {boolean} notifications.phase_change
  * @property {boolean} notifications.sound
+ * @property {Object} pennyfarthing
+ * @property {string} pennyfarthing.theme
  */
 
 /**
@@ -67,6 +69,12 @@ export function loadFormValues(settings) {
   if (sound) {
     sound.checked = settings.notifications?.sound ?? false;
   }
+
+  // Pennyfarthing settings
+  const theme = form.querySelector('#theme');
+  if (theme) {
+    theme.value = settings.pennyfarthing?.theme ?? 'alice-in-wonderland';
+  }
 }
 
 /**
@@ -93,6 +101,9 @@ export function getFormValues() {
       phase_change: form.querySelector('#phase_change')?.checked ?? true,
       sound: form.querySelector('#sound')?.checked ?? false,
     },
+    pennyfarthing: {
+      theme: form.querySelector('#theme')?.value ?? 'alice-in-wonderland',
+    },
   };
 }
 
@@ -115,7 +126,59 @@ function getDefaultSettings() {
       phase_change: true,
       sound: false,
     },
+    pennyfarthing: {
+      theme: 'alice-in-wonderland',
+    },
   };
+}
+
+/**
+ * Format theme name from kebab-case to Title Case
+ * @param {string} theme - Theme name in kebab-case (e.g., "alice-in-wonderland")
+ * @returns {string} Formatted theme name (e.g., "Alice In Wonderland")
+ */
+function formatThemeName(theme) {
+  return theme
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+/**
+ * Load available themes into the theme dropdown
+ */
+async function loadThemeOptions() {
+  const select = document.getElementById('theme');
+  if (!select) return;
+
+  // Clear existing options
+  select.innerHTML = '';
+
+  // Get themes from main process
+  if (window.electronAPI?.settings?.getAvailableThemes) {
+    try {
+      const themes = await window.electronAPI.settings.getAvailableThemes();
+      themes.forEach(theme => {
+        const option = document.createElement('option');
+        option.value = theme;
+        option.textContent = formatThemeName(theme);
+        select.appendChild(option);
+      });
+    } catch (err) {
+      console.error('Failed to load themes:', err);
+      // Add default theme as fallback
+      const option = document.createElement('option');
+      option.value = 'alice-in-wonderland';
+      option.textContent = 'Alice In Wonderland';
+      select.appendChild(option);
+    }
+  } else {
+    // No IPC available (testing or web mode) - add default
+    const option = document.createElement('option');
+    option.value = 'alice-in-wonderland';
+    option.textContent = 'Alice In Wonderland';
+    select.appendChild(option);
+  }
 }
 
 /**
@@ -160,6 +223,9 @@ export async function initSettingsUI() {
   if (cancelBtn) {
     cancelBtn.addEventListener('click', handleCancel);
   }
+
+  // Load available themes into dropdown first
+  await loadThemeOptions();
 
   // Load current settings from main process
   if (window.electronAPI?.settings?.get) {
