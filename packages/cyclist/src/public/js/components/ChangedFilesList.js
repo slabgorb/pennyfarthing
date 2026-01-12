@@ -113,6 +113,7 @@ function render() {
 
 /**
  * 24-3: Update navigation UI based on current file history
+ * 24-4: Handle combined mode - show "All X edits" with disabled arrows
  */
 function updateNavigationUI() {
   if (!navBar || !selectedFilePath) {
@@ -130,12 +131,18 @@ function updateNavigationUI() {
   // Show nav bar for multiple edits
   navBar.classList.add('visible');
 
-  // Update buttons
-  if (prevBtn) prevBtn.disabled = !hasPrevious(history);
-  if (nextBtn) nextBtn.disabled = !hasNext(history);
-
-  // Update indicator
-  if (indicatorEl) indicatorEl.textContent = getPositionIndicator(history);
+  // 24-4: Handle combined mode differently
+  if (currentViewMode === 'combined') {
+    // In combined mode, all edits are shown at once - disable navigation
+    if (prevBtn) prevBtn.disabled = true;
+    if (nextBtn) nextBtn.disabled = true;
+    if (indicatorEl) indicatorEl.textContent = `All ${history.diffs.length} edits`;
+  } else {
+    // Partial mode - show navigation position
+    if (prevBtn) prevBtn.disabled = !hasPrevious(history);
+    if (nextBtn) nextBtn.disabled = !hasNext(history);
+    if (indicatorEl) indicatorEl.textContent = getPositionIndicator(history);
+  }
 }
 
 /**
@@ -280,9 +287,15 @@ export function handleDiffAdded(diffData) {
 /**
  * Handle diffs removed (e.g., after git commit)
  * Re-renders the list and adjusts selection if needed
+ * 24-4: Also clears file histories for removed paths
  * @param {string[]} removedPaths - Array of file paths that were removed
  */
 export function handleDiffsRemoved(removedPaths) {
+  // 24-4: Clear file histories for removed paths
+  for (const path of removedPaths) {
+    fileHistories.delete(path);
+  }
+
   // Check if currently selected file was removed
   if (selectedFilePath && removedPaths.includes(selectedFilePath)) {
     // Get remaining files
@@ -293,8 +306,9 @@ export function handleDiffsRemoved(removedPaths) {
       // Select the first remaining file
       selectFile(remainingPaths[0]);
     } else {
-      // No files left, clear selection
+      // No files left, clear selection and hide nav bar
       selectedFilePath = null;
+      if (navBar) navBar.classList.remove('visible');
       DiffPanel.clearContent();
     }
   }
@@ -346,30 +360,6 @@ function handleViewModeChange(mode) {
 }
 
 /**
- * 24-3: Handle keyboard navigation for diffs
- */
-function handleDiffKeydown(e) {
-  if (!selectedFilePath) return;
-  const history = fileHistories.get(selectedFilePath);
-  if (!history || history.diffs.length <= 1) return;
-
-  // Only handle arrow keys when not in an input or contenteditable
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
-
-  if (e.key === 'ArrowLeft' || e.key === 'k') {
-    if (navigatePrevious(history)) {
-      e.preventDefault();
-      renderCurrentDiff();
-    }
-  } else if (e.key === 'ArrowRight' || e.key === 'j') {
-    if (navigateNext(history)) {
-      e.preventDefault();
-      renderCurrentDiff();
-    }
-  }
-}
-
-/**
  * Initialize the component
  */
 export function init() {
@@ -405,12 +395,10 @@ export function init() {
     });
   }
 
-  // 24-3: Global keyboard navigation for diffs (left/right arrows, j/k)
-  document.addEventListener('keydown', handleDiffKeydown);
-
   // Initial render
   render();
 
+  // 24-4: Removed global j/k keyboard navigation - was interfering with text input
   console.log('[ChangedFilesList] Initialized with diff history navigation');
 }
 

@@ -94,33 +94,38 @@ epics:
           - Changed file view shows current content
           - Keyboard navigation works (arrows or j/k)
       - id: 24-4
-        title: Fix diff navigation indicator in Combined view mode
+        title: Fix diff panel state management and Combined view indicator
         description: |
-          UX bug from 24-3: When "Combined" view is active, the navigation
-          indicator still shows "Edit 1 of 3" with active arrows, which is
-          confusing. In Combined mode, ALL edits are displayed at once.
+          UX bugs and regressions in the diff panel from 24-3:
 
-          Current behavior (broken):
-          - Combined mode active
-          - Shows "Edit 1 of 3" with clickable < > arrows
-          - User thinks they're only seeing 1 edit
+          1. Combined mode indicator confusion:
+             - Shows "Edit 1 of 3" with clickable arrows in Combined mode
+             - Should show "All edits" or similar with arrows disabled
+             - User thinks they're only seeing 1 edit
 
-          Expected behavior:
-          - Combined mode active
-          - Shows "3 of 3" or "All edits"
-          - Navigation arrows disabled or hidden
-          - Clear visual indication that all edits are shown
+          2. File list not clearing when not dirty (REGRESSION):
+             - When working tree is clean, file list should be empty
+             - Currently retains stale file entries
+
+          3. Clear button not clearing file list:
+             - Clicking Clear should reset the changed files panel
+             - Currently files persist after Clear
 
           Location: packages/cyclist/src/public/js/components/ChangedFilesList.js
-        points: 1
+        points: 2
         priority: P2
-        status: planned
+        status: in_progress
+        started: 2026-01-12
+        assigned_to: Keith Avery
         repos: cyclist
         acceptance_criteria:
-          - In Combined mode, indicator shows total count (e.g., "3 of 3" or "All")
+          - In Combined mode, indicator shows "All edits" or total count
           - In Combined mode, navigation arrows are disabled or hidden
           - In Partial mode, current behavior preserved (1 of 3, 2 of 3, etc.)
           - Visual state clearly distinguishes Combined vs Partial mode
+          - File list clears when git status shows no dirty files
+          - File list clears when Clear button is clicked
+          - No stale file entries persist after state changes
   - id: epic-30
     title: Developer Workflow Documentation
     description: |
