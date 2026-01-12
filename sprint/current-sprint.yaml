@@ -128,6 +128,51 @@ epics:
           - File list clears when git status shows no dirty files
           - File list clears when Clear button is clicked
           - No stale file entries persist after state changes
+      - id: 24-4b
+        title: Fix settings window ESM require error
+        description: |
+          Settings window fails to open with "require is not defined" error.
+          Line 103 in settings-window.ts uses CommonJS require() which doesn't
+          work in ES modules. Need to pass BrowserWindow from main.ts where
+          it's already imported, rather than dynamic require.
+        points: 1
+        priority: P0
+        status: done
+        completed: 2026-01-12
+        repos: cyclist
+        acceptance_criteria:
+          - Settings window opens without error
+          - Cmd+, keyboard shortcut works
+          - Settings can be viewed and saved
+      - id: 24-5
+        title: Theme Browser with Search
+        description: |
+          Replace the simple theme dropdown in settings with a rich theme browser.
+          Users can search themes by name, filter by category (TV, Film, Literature,
+          etc.), and see theme metadata before selecting.
+
+          Features:
+          - Grid/list view of all 101 themes
+          - Search box with fuzzy matching
+          - Category filter dropdown
+          - Theme cards showing name, description, category, tier
+          - Keyboard navigation support
+        points: 5
+        priority: P1
+        status: in_progress
+        started: 2026-01-12
+        assigned_to: Keith Avery
+        repos: cyclist
+        branch: feat/24-5-theme-browser-search
+        acceptance_criteria:
+          - Theme browser displays all themes in grid/list view
+          - Search box filters themes by name (fuzzy match)
+          - Category filter dropdown narrows results
+          - Each theme card shows name, description, category, tier
+          - Clicking a theme selects it with visual highlight
+          - Apply button saves selection and closes browser
+          - Browser integrates with existing settings panel
+          - Keyboard navigation works (arrow keys, Enter to select)
   - id: epic-30
     title: Developer Workflow Documentation
     description: |
