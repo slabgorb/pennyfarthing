@@ -24,6 +24,7 @@ export declare function resetProjectDirectory(): void;
 export declare function getPublicDir(): string;
 export declare function getNodeModulesDir(): string;
 export declare function getPortraitsDir(): string | null;
+export declare function getDistDir(): string;
 export declare const publicDir: string;
 export declare const nodeModulesDir: string;
 export declare const portraitsDir: string | null;

@@ -6,7 +6,7 @@
  */
 
 import path from 'path';
-import { getPublicDir } from './paths.js';
+import { getPublicDir, getDistDir } from './paths.js';
 
 // =============================================================================
 // Constants
@@ -46,7 +46,7 @@ export function getWindowConfig(): SettingsWindowConfig {
     maximizable: false,
     title: 'Cyclist Settings',
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(getDistDir(), 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
     },
