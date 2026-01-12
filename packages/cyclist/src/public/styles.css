@@ -291,14 +291,26 @@ html, body {
 }
 
 /* 28-1: Image Preview for Clipboard Paste */
+/* 28-6: Multiple image support */
 .image-preview {
   padding: 0.5rem 0.75rem;
   background: var(--bg-secondary);
   border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .image-preview.hidden {
   display: none;
+}
+
+/* 28-6: Container for multiple preview items */
+.image-preview-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-start;
 }
 
 .image-preview-item {
@@ -377,6 +389,30 @@ html, body {
 
 .image-preview-error::before {
   content: '⚠';
+}
+
+/* 28-6: Clear All button */
+.image-preview-clear-all {
+  align-self: flex-start;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.image-preview-clear-all:hover {
+  background: var(--danger, #dc3545);
+  border-color: var(--danger, #dc3545);
+  color: #fff;
+}
+
+.image-preview-clear-all:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 /* Rich Text Editor */

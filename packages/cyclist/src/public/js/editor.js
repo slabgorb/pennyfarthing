@@ -50,6 +50,7 @@ import {
   updateImagePreview,
   isPreviewVisible,
   setOnImageRemoved,
+  setOnClearAll,
   showImageSizeError
 } from './editor/image-preview.js';
 
@@ -526,6 +527,11 @@ export async function createEditor() {
     // Set up image removal callback (Story 28-1)
     setOnImageRemoved((index) => {
       removePendingImage(index);
+    });
+
+    // Set up clear all callback (Story 28-6)
+    setOnClearAll(() => {
+      clearPendingImages();
     });
 
     // Focus the editor
