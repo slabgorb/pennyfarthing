@@ -5,9 +5,9 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 45
+  total_points: 46
   completed_points: 17
-  remaining_points: 28
+  remaining_points: 29
   notes: |
     Sprint 9 focus: Multimodal image paste and Cyclist settings/UX.
 
@@ -35,7 +35,7 @@ epics:
       Full settings hub in Cyclist covering Pennyfarthing, Claude Code,
       and Cyclist preferences. Rich theme browser with search, OCEAN
       profiles, character previews, and favorites.
-    points: 26
+    points: 27
     completed_points: 5
     priority: P1
     marker: ux
@@ -93,6 +93,34 @@ epics:
           - Original file view shows pre-edit content
           - Changed file view shows current content
           - Keyboard navigation works (arrows or j/k)
+      - id: 24-4
+        title: Fix diff navigation indicator in Combined view mode
+        description: |
+          UX bug from 24-3: When "Combined" view is active, the navigation
+          indicator still shows "Edit 1 of 3" with active arrows, which is
+          confusing. In Combined mode, ALL edits are displayed at once.
+
+          Current behavior (broken):
+          - Combined mode active
+          - Shows "Edit 1 of 3" with clickable < > arrows
+          - User thinks they're only seeing 1 edit
+
+          Expected behavior:
+          - Combined mode active
+          - Shows "3 of 3" or "All edits"
+          - Navigation arrows disabled or hidden
+          - Clear visual indication that all edits are shown
+
+          Location: packages/cyclist/src/public/js/components/ChangedFilesList.js
+        points: 1
+        priority: P2
+        status: planned
+        repos: cyclist
+        acceptance_criteria:
+          - In Combined mode, indicator shows total count (e.g., "3 of 3" or "All")
+          - In Combined mode, navigation arrows are disabled or hidden
+          - In Partial mode, current behavior preserved (1 of 3, 2 of 3, etc.)
+          - Visual state clearly distinguishes Combined vs Partial mode
   - id: epic-30
     title: Developer Workflow Documentation
     description: |
