@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 90
-  completed_points: 78
-  remaining_points: 12
+  completed_points: 81
+  remaining_points: 9
   notes: |
     Sprint 9 focus: Multimodal image paste and Cyclist settings/UX.
 
@@ -42,7 +42,7 @@ epics:
       and Cyclist preferences. Rich theme browser with search, OCEAN
       profiles, character previews, and favorites.
     points: 28
-    completed_points: 18
+    completed_points: 21
     priority: P1
     marker: ux
     repos: cyclist
@@ -195,11 +195,14 @@ epics:
           - "Try it" button to temporarily apply theme for the session
         points: 3
         priority: P2
-        status: in_progress
+        status: done
         started: 2026-01-12
+        completed: 2026-01-12
         assigned_to: Keith Avery
         repos: cyclist
         branch: feat/24-6-theme-preview-panel
+        pr: "#198"
+        summary_written: true
         acceptance_criteria:
           - Hovering/selecting a theme shows detailed preview panel
           - Preview lists all agent character mappings (SM, TEA, Dev, Reviewer, etc.)
