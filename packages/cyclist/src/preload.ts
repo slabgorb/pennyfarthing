@@ -28,15 +28,24 @@ export interface ElectronDataAPI {
 }
 
 /**
+ * Image data for clipboard paste (28-1)
+ */
+export interface PastedImage {
+  dataUrl: string;
+  mimeType: string;
+  filename: string;
+}
+
+/**
  * Claude API interface for SDK integration (E7-3)
  * Provides methods for sending prompts and receiving streamed messages
  */
 export interface ElectronClaudeAPI {
   /**
-   * Send a prompt to ClaudeService
+   * Send a prompt to ClaudeService (28-1: with optional images)
    * Returns when the query starts (messages stream via onMessage)
    */
-  send: (prompt: string) => Promise<void>;
+  send: (prompt: string, images?: PastedImage[]) => Promise<void>;
 
   /**
    * Abort the current Claude query
@@ -135,6 +144,28 @@ export interface ElectronFileBrowserAPI {
 }
 
 /**
+ * Command API interface (23-3)
+ * Provides IPC channels for Claude Code command execution
+ */
+export interface ElectronCommandAPI {
+  /**
+   * Execute a Claude Code command (e.g., '/compact', '/doctor')
+   * @param command - The command to execute
+   */
+  execute: (command: string) => Promise<void>;
+
+  /**
+   * Subscribe to command result events
+   */
+  onResult: (callback: (result: unknown) => void) => void;
+
+  /**
+   * Subscribe to command error events
+   */
+  onError: (callback: (error: string) => void) => void;
+}
+
+/**
  * Bash Approval API interface (22-3)
  * Provides IPC channels for Bash command approval workflow
  */
@@ -153,8 +184,49 @@ export interface ElectronBashAPI {
 }
 
 /**
- * Settings API interface (22-3, 22-5)
- * Provides access to Cyclist settings including approval gate and verbose mode
+ * Audit Log API interface (22-6)
+ * Provides access to tool execution audit log
+ */
+export interface ElectronAuditLogAPI {
+  /**
+   * Get all entries, optionally filtered by tool type
+   */
+  getEntries: (toolType?: string) => Promise<unknown[]>;
+
+  /**
+   * Get unique tool types in the log
+   */
+  getTypes: () => Promise<string[]>;
+
+  /**
+   * Export log as JSON or CSV
+   */
+  export: (format: 'json' | 'csv', toolType?: string) => Promise<string>;
+
+  /**
+   * Get stats summary
+   */
+  getStats: () => Promise<{ total: number; byType: Record<string, number>; successCount: number; errorCount: number }>;
+
+  /**
+   * Clear the audit log
+   */
+  clear: () => Promise<boolean>;
+
+  /**
+   * Subscribe to new entry events
+   */
+  onEntry: (callback: (entry: unknown) => void) => void;
+
+  /**
+   * Subscribe to show audit log event (from menu)
+   */
+  onShow: (callback: () => void) => void;
+}
+
+/**
+ * Settings API interface (22-3, 22-4, 22-5)
+ * Provides access to Cyclist settings including approval gate, dangerous path gate, and verbose mode
  */
 export interface ElectronSettingsAPI {
   /**
@@ -166,6 +238,16 @@ export interface ElectronSettingsAPI {
    * Set the state of the Bash approval gate
    */
   setBashApprovalGate: (enabled: boolean) => Promise<void>;
+
+  /**
+   * Get the current state of the dangerous path gate (22-4)
+   */
+  getDangerousPathGate: () => Promise<boolean>;
+
+  /**
+   * Set the state of the dangerous path gate (22-4)
+   */
+  setDangerousPathGate: (enabled: boolean) => Promise<void>;
 
   /**
    * Get the current state of verbose mode (22-5)
@@ -183,6 +265,24 @@ export interface ElectronSettingsAPI {
   onVerboseModeChange: (callback: (event: unknown, enabled: boolean) => void) => void;
 }
 
+/**
+ * Path Approval API interface (22-4)
+ * Provides IPC channels for dangerous path approval workflow
+ */
+export interface ElectronPathAPI {
+  /**
+   * Subscribe to approval request events from main process
+   * Triggered when a dangerous path operation needs user approval
+   */
+  onApprovalRequest: (callback: (event: unknown, data: { path: string; toolId: string; category: string }) => void) => void;
+
+  /**
+   * Send approval response back to main process
+   * @param response - Approval decision
+   */
+  sendApprovalResponse: (response: { toolId: string; approved: boolean; alwaysAllow: boolean }) => Promise<void>;
+}
+
 export interface ElectronAPI {
   stats: ElectronDataAPI;
   persona: ElectronDataAPI;
@@ -192,12 +292,16 @@ export interface ElectronAPI {
   tokenStats: ElectronDataAPI;
   todos: ElectronDataAPI; // B-17: Todo visualizer
   context: ElectronDataAPI; // B-19: Context usage progress bar
+  usageStats: ElectronDataAPI; // 23-1: Usage limits
   claude: ElectronClaudeAPI;
   agent: ElectronAgentAPI; // B-23: Agent launcher
   diff: ElectronDiffAPI; // E8-2: Diff viewer
   fileBrowser: ElectronFileBrowserAPI; // E8-3: File browser
+  command: ElectronCommandAPI; // 23-3: Command execution
   bash: ElectronBashAPI; // 22-3: Bash approval gate
-  settings: ElectronSettingsAPI; // 22-3: Settings API
+  path: ElectronPathAPI; // 22-4: Dangerous path approval gate
+  settings: ElectronSettingsAPI; // 22-3, 22-4: Settings API
+  auditLog: ElectronAuditLogAPI; // 22-6: Audit log
 }
 
 // Check if we're running in Electron (has contextBridge available)
@@ -261,9 +365,12 @@ function createElectronAPI(): ElectronAPI {
       todos: createDataAPI(ipcRenderer, 'todos:get', 'todos:update'),
       // Context API (B-19)
       context: createDataAPI(ipcRenderer, 'context:get', 'context:update'),
-      // Claude SDK API (E7-3)
+      // Usage Stats API (23-1)
+      usageStats: createDataAPI(ipcRenderer, 'usageStats:get', 'usageStats:update'),
+      // Claude SDK API (E7-3, 28-1: images support)
       claude: {
-        send: (prompt: string) => ipcRenderer.invoke('claude:send', prompt),
+        send: (prompt: string, images?: Array<{ dataUrl: string; mimeType: string; filename: string }>) =>
+          ipcRenderer.invoke('claude:send', prompt, images || []),
         abort: () => ipcRenderer.invoke('claude:abort'),
         clear: () => ipcRenderer.invoke('claude:clear'),
         setMode: (mode: 'default' | 'plan' | 'acceptEdits' | 'dangerouslySkipPermissions') => ipcRenderer.invoke('claude:setMode', mode),
@@ -299,6 +406,16 @@ function createElectronAPI(): ElectronAPI {
           ipcRenderer.on('file-browser:file-opened', callback);
         },
       },
+      // Command API (23-3)
+      command: {
+        execute: (command: string) => ipcRenderer.invoke('command:execute', command),
+        onResult: (callback: (result: unknown) => void) => {
+          ipcRenderer.on('command:result', (_event: unknown, result: unknown) => callback(result));
+        },
+        onError: (callback: (error: string) => void) => {
+          ipcRenderer.on('command:error', (_event: unknown, error: unknown) => callback(error as string));
+        },
+      },
       // Bash approval API (22-3)
       bash: {
         onApprovalRequest: (callback: (event: unknown, data: { command: string; toolId: string }) => void) => {
@@ -307,14 +424,38 @@ function createElectronAPI(): ElectronAPI {
         sendApprovalResponse: (response: { toolId: string; approved: boolean; alwaysAllow: boolean }) =>
           ipcRenderer.invoke('bash:approval-response', response),
       },
-      // Settings API (22-3, 22-5)
+      // Dangerous path approval API (22-4)
+      path: {
+        onApprovalRequest: (callback: (event: unknown, data: { path: string; toolId: string; category: string }) => void) => {
+          ipcRenderer.on('path:approval-request', callback);
+        },
+        sendApprovalResponse: (response: { toolId: string; approved: boolean; alwaysAllow: boolean }) =>
+          ipcRenderer.invoke('path:approval-response', response),
+      },
+      // Settings API (22-3, 22-4, 22-5)
       settings: {
         getBashApprovalGate: () => ipcRenderer.invoke('settings:getBashApprovalGate') as Promise<boolean>,
         setBashApprovalGate: (enabled: boolean) => ipcRenderer.invoke('settings:setBashApprovalGate', enabled),
+        getDangerousPathGate: () => ipcRenderer.invoke('settings:getDangerousPathGate') as Promise<boolean>,
+        setDangerousPathGate: (enabled: boolean) => ipcRenderer.invoke('settings:setDangerousPathGate', enabled),
         getVerboseMode: () => ipcRenderer.invoke('settings:getVerboseMode') as Promise<boolean>,
         setVerboseMode: (enabled: boolean) => ipcRenderer.invoke('settings:setVerboseMode', enabled) as Promise<boolean>,
         onVerboseModeChange: (callback: (event: unknown, enabled: boolean) => void) => {
           ipcRenderer.on('settings:verboseModeUpdate', callback);
+        },
+      },
+      // Audit Log API (22-6)
+      auditLog: {
+        getEntries: (toolType?: string) => ipcRenderer.invoke('auditLog:getEntries', toolType) as Promise<unknown[]>,
+        getTypes: () => ipcRenderer.invoke('auditLog:getTypes') as Promise<string[]>,
+        export: (format: 'json' | 'csv', toolType?: string) => ipcRenderer.invoke('auditLog:export', format, toolType) as Promise<string>,
+        getStats: () => ipcRenderer.invoke('auditLog:getStats') as Promise<{ total: number; byType: Record<string, number>; successCount: number; errorCount: number }>,
+        clear: () => ipcRenderer.invoke('auditLog:clear') as Promise<boolean>,
+        onEntry: (callback: (entry: unknown) => void) => {
+          ipcRenderer.on('auditLog:entry', (_event: unknown, entry: unknown) => callback(entry));
+        },
+        onShow: (callback: () => void) => {
+          ipcRenderer.on('tools:showAuditLog', () => callback());
         },
       },
     };
@@ -334,6 +475,8 @@ function createElectronAPI(): ElectronAPI {
       todos: createDataAPI(null, 'todos:get', 'todos:update'),
       // Context API (B-19) - test stub
       context: createDataAPI(null, 'context:get', 'context:update'),
+      // Usage Stats API (23-1) - test stub
+      usageStats: createDataAPI(null, 'usageStats:get', 'usageStats:update'),
       // Claude SDK API (E7-3) - test stub
       claude: {
         send: (_prompt: string) => Promise.resolve(),
@@ -372,6 +515,16 @@ function createElectronAPI(): ElectronAPI {
           // No-op in test environment
         },
       },
+      // Command API (23-3) - test stub
+      command: {
+        execute: (_command: string) => Promise.resolve(),
+        onResult: (_callback: (result: unknown) => void) => {
+          // No-op in test environment
+        },
+        onError: (_callback: (error: string) => void) => {
+          // No-op in test environment
+        },
+      },
       // Bash approval API (22-3) - test stub
       bash: {
         onApprovalRequest: (_callback: (event: unknown, data: { command: string; toolId: string }) => void) => {
@@ -380,13 +533,37 @@ function createElectronAPI(): ElectronAPI {
         sendApprovalResponse: (_response: { toolId: string; approved: boolean; alwaysAllow: boolean }) =>
           Promise.resolve(),
       },
-      // Settings API (22-3, 22-5) - test stub
+      // Dangerous path approval API (22-4) - test stub
+      path: {
+        onApprovalRequest: (_callback: (event: unknown, data: { path: string; toolId: string; category: string }) => void) => {
+          // No-op in test environment
+        },
+        sendApprovalResponse: (_response: { toolId: string; approved: boolean; alwaysAllow: boolean }) =>
+          Promise.resolve(),
+      },
+      // Settings API (22-3, 22-4, 22-5) - test stub
       settings: {
         getBashApprovalGate: () => Promise.resolve(false),
         setBashApprovalGate: (_enabled: boolean) => Promise.resolve(),
+        getDangerousPathGate: () => Promise.resolve(true),
+        setDangerousPathGate: (_enabled: boolean) => Promise.resolve(),
         getVerboseMode: () => Promise.resolve(false),
         setVerboseMode: (_enabled: boolean) => Promise.resolve(false),
         onVerboseModeChange: (_callback: (event: unknown, enabled: boolean) => void) => {
+          // No-op in test environment
+        },
+      },
+      // Audit Log API (22-6) - test stub
+      auditLog: {
+        getEntries: (_toolType?: string) => Promise.resolve([]),
+        getTypes: () => Promise.resolve([]),
+        export: (_format: 'json' | 'csv', _toolType?: string) => Promise.resolve(''),
+        getStats: () => Promise.resolve({ total: 0, byType: {}, successCount: 0, errorCount: 0 }),
+        clear: () => Promise.resolve(true),
+        onEntry: (_callback: (entry: unknown) => void) => {
+          // No-op in test environment
+        },
+        onShow: (_callback: () => void) => {
           // No-op in test environment
         },
       },

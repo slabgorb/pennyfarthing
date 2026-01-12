@@ -52,18 +52,18 @@ describe('B-22: Prompt Bar Stats Display', () => {
       expect(statsStrip).not.toBeNull();
     });
 
-    it('should position stats-strip between toolbar and editor', () => {
-      // Stats strip should come after toolbar in DOM order
-      // B-20: editor is now wrapped in #editor-row with controls
+    it('should position stats-strip after editor-row (below editor)', () => {
+      // Stats strip comes after editor-row in DOM order (below the editor visually)
+      // Layout: toolbar -> editor-row -> stats-strip
       const editorWrapper = document.querySelector('#editor-wrapper');
       const children = Array.from(editorWrapper?.children || []);
       const toolbarIndex = children.findIndex(el => el.id === 'editor-toolbar');
-      const statsStripIndex = children.findIndex(el => el.id === 'stats-strip');
       const editorRowIndex = children.findIndex(el => el.id === 'editor-row');
+      const statsStripIndex = children.findIndex(el => el.id === 'stats-strip');
 
       expect(toolbarIndex).toBeGreaterThanOrEqual(0);
-      expect(statsStripIndex).toBeGreaterThan(toolbarIndex);
-      expect(editorRowIndex).toBeGreaterThan(statsStripIndex);
+      expect(editorRowIndex).toBeGreaterThan(toolbarIndex);
+      expect(statsStripIndex).toBeGreaterThan(editorRowIndex);
     });
 
     it('should have model-badge element', () => {
@@ -71,19 +71,15 @@ describe('B-22: Prompt Bar Stats Display', () => {
       expect(modelBadge).not.toBeNull();
     });
 
-    it('should have token-stats container', () => {
-      const tokenStats = document.querySelector('#stats-strip .token-stats');
-      expect(tokenStats).not.toBeNull();
+    // 23-1: Token stats replaced by usage limits
+    it('should have usage-5hr element for 5-hour usage', () => {
+      const usage5hr = document.querySelector('#stats-strip .usage-5hr');
+      expect(usage5hr).not.toBeNull();
     });
 
-    it('should have token-in element for input tokens', () => {
-      const tokenIn = document.querySelector('#stats-strip .token-in');
-      expect(tokenIn).not.toBeNull();
-    });
-
-    it('should have token-out element for output tokens', () => {
-      const tokenOut = document.querySelector('#stats-strip .token-out');
-      expect(tokenOut).not.toBeNull();
+    it('should have usage-weekly element for weekly usage', () => {
+      const usageWeekly = document.querySelector('#stats-strip .usage-weekly');
+      expect(usageWeekly).not.toBeNull();
     });
 
     it('should have context-mini meter element', () => {
@@ -123,35 +119,36 @@ describe('B-22: Prompt Bar Stats Display', () => {
 
   });
 
-  describe('AC3: Token counts format correctly (k/M suffixes) and update on each message', () => {
+  // 23-1: AC3 updated - Token counts replaced by usage limits
+  describe('AC3: Usage limits display correctly and update periodically (23-1)', () => {
 
-    it('should have data-stat attribute on token-in for updates', () => {
-      const tokenIn = document.querySelector('#stats-strip .token-in');
-      expect(tokenIn?.getAttribute('data-stat')).toBe('strip-input');
+    it('should have data-stat attribute on usage-5hr for updates', () => {
+      const usage5hr = document.querySelector('#stats-strip .usage-5hr');
+      expect(usage5hr?.getAttribute('data-stat')).toBe('strip-usage-5hr');
     });
 
-    it('should have data-stat attribute on token-out for updates', () => {
-      const tokenOut = document.querySelector('#stats-strip .token-out');
-      expect(tokenOut?.getAttribute('data-stat')).toBe('strip-output');
+    it('should have data-stat attribute on usage-weekly for updates', () => {
+      const usageWeekly = document.querySelector('#stats-strip .usage-weekly');
+      expect(usageWeekly?.getAttribute('data-stat')).toBe('strip-usage-weekly');
     });
 
-    it('should show arrow indicators for token direction', () => {
+    it('should show usage labels', () => {
       const statsStrip = document.querySelector('#stats-strip');
-      const text = statsStrip?.textContent || '';
-      // Should have down arrow for input and up arrow for output
-      expect(text).toMatch(/[↓↑]/);
+      const text = statsStrip?.textContent?.toLowerCase() || '';
+      // Should have 5hr and week labels
+      expect(text).toMatch(/5.?hr|week/i);
     });
 
-    it('should display placeholder values initially', () => {
-      const tokenIn = document.querySelector('#stats-strip .token-in');
-      const tokenOut = document.querySelector('#stats-strip .token-out');
+    it('should display placeholder percentage values initially', () => {
+      const usage5hr = document.querySelector('#stats-strip .usage-5hr');
+      const usageWeekly = document.querySelector('#stats-strip .usage-weekly');
 
-      const inText = tokenIn?.textContent || '';
-      const outText = tokenOut?.textContent || '';
+      const hr5Text = usage5hr?.textContent || '';
+      const weeklyText = usageWeekly?.textContent || '';
 
-      // Should show placeholder (dash, 0, or formatted number)
-      expect(inText.includes('—') || inText.includes('0') || /\d/.test(inText)).toBe(true);
-      expect(outText.includes('—') || outText.includes('0') || /\d/.test(outText)).toBe(true);
+      // Should show placeholder (dash) or percentage
+      expect(hr5Text.includes('—') || hr5Text.includes('%')).toBe(true);
+      expect(weeklyText.includes('—') || weeklyText.includes('%')).toBe(true);
     });
 
   });
@@ -212,12 +209,13 @@ describe('B-22: Prompt Bar Stats Display', () => {
       expect(css).toMatch(/\.model-badge[^}]*border-radius/);
     });
 
-    it('should have CSS for token-stats styling', () => {
-      expect(css).toMatch(/\.token-stats\s*\{/);
+    // 23-1: Token stats replaced by usage limits
+    it('should have CSS for usage stats styling', () => {
+      expect(css).toMatch(/\.usage-5hr[^{]*\{|\.usage-weekly[^{]*\{/);
     });
 
-    it('should use monospace font for token counts', () => {
-      expect(css).toMatch(/(\.token-stats|\.token-in|\.token-out)[^}]*font-family[^}]*mono/);
+    it('should use monospace font for usage stats', () => {
+      expect(css).toMatch(/(\.usage-5hr|\.usage-weekly)[^}]*font-family[^}]*mono/);
     });
 
     it('should have CSS for context-mini meter styling', () => {

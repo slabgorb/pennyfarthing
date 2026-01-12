@@ -61,9 +61,9 @@ describe('E1-3: Sidebar Layout', () => {
     });
 
     it('should have fixed size styling for portrait', () => {
-      // Portrait is 100x100 to match actual image dimensions
-      expect(css).toMatch(/#portrait[^}]*width:\s*100px/);
-      expect(css).toMatch(/#portrait[^}]*height:\s*100px/);
+      // Portrait is 128x128 for balanced display alongside identity info
+      expect(css).toMatch(/#portrait[^}]*width:\s*128px/);
+      expect(css).toMatch(/#portrait[^}]*height:\s*128px/);
     });
 
     it('should have placeholder content in portrait section', () => {
@@ -86,9 +86,12 @@ describe('E1-3: Sidebar Layout', () => {
       expect(modelBadge).not.toBeNull();
     });
 
-    it('should have token stats in stats strip', () => {
-      const tokenStats = document.querySelector('#stats-strip .token-stats');
-      expect(tokenStats).not.toBeNull();
+    // 23-1: Token stats replaced by usage limits
+    it('should have usage stats in stats strip', () => {
+      const usage5hr = document.querySelector('#stats-strip .usage-5hr');
+      const usageWeekly = document.querySelector('#stats-strip .usage-weekly');
+      expect(usage5hr).not.toBeNull();
+      expect(usageWeekly).not.toBeNull();
     });
 
     it('should have context meter in stats strip', () => {

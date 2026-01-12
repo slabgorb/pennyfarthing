@@ -30,3 +30,28 @@ export const HISTORY_KEY = 'cyclist-command-history';
 
 /** Maximum number of commands to store in history */
 export const MAX_HISTORY = 100;
+
+// ============================================================================
+// Image Paste Constants (Story 28-1)
+// ============================================================================
+
+/** Supported image MIME types for clipboard paste */
+export const SUPPORTED_IMAGE_TYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/gif',
+  'image/webp',
+];
+
+/** Size in pixels for image preview thumbnails */
+export const IMAGE_PREVIEW_SIZE = 64;
+
+// ============================================================================
+// Image Size Limits (Story 28-5)
+// ============================================================================
+
+/** Warning threshold for large images (5MB) - show warning but allow */
+export const IMAGE_WARN_SIZE_BYTES = 5 * 1024 * 1024;
+
+/** Maximum allowed image size (20MB) - block paste */
+export const IMAGE_MAX_SIZE_BYTES = 20 * 1024 * 1024;

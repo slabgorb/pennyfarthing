@@ -15,6 +15,11 @@ theme:
   user_title: Team Member
   portrait_style: ", mockumentary style, fluorescent lighting, beige cubicle backdrop, confessional interview framing"
   tier: C
+  dimensions:
+    tone: comedic
+    era: contemporary
+    genre: drama
+    energy: measured
 
 agents:
   orchestrator:

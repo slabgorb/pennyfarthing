@@ -34,8 +34,8 @@
     </div>
     <div class="resize-handle" id="diff-panel-resize" title="Drag to resize"></div>
     <!-- Toggle buttons visible when panels are collapsed -->
-    <button class="file-panel-expand-btn" id="file-panel-expand" title="Show changed files"><span class="expand-label">CHANGED</span></button>
-    <button class="diff-panel-expand-btn" id="diff-panel-expand" title="Show diffs"><span class="expand-label">DIFFS</span></button>
+    <button class="file-panel-expand-btn" id="file-panel-expand" title="Show changed files"><span class="expand-label">CHANGED</span><span class="panel-count-badge" id="file-panel-count"></span></button>
+    <button class="diff-panel-expand-btn" id="diff-panel-expand" title="Show diffs"><span class="expand-label">DIFFS</span><span class="panel-count-badge" id="diff-panel-count"></span></button>
     <div id="main-content">
       <main id="message-view">
         <!-- MessageView will be mounted here -->
@@ -50,6 +50,8 @@
       </div>
       <!-- Quick action buttons for suggested prompts (B-9.6) -->
       <div id="quick-actions"></div>
+      <!-- 28-1: Image preview for clipboard paste -->
+      <div id="image-preview" class="image-preview hidden" aria-hidden="true"></div>
       <div id="editor-wrapper">
         <div id="editor-toolbar">
           <button type="button" class="toolbar-btn" data-action="bold" title="Bold (Ctrl+B)"><strong>B</strong></button>
@@ -64,18 +66,6 @@
           <button type="button" class="toolbar-btn" data-action="codeBlock" title="Code Block">{ }</button>
           <span class="toolbar-spacer"></span>
           <button type="button" class="mode-btn" data-control="plan-mode" title="Cycle permission mode: Manual → Plan → Accept → Danger">MANUAL</button>
-        </div>
-        <!-- B-22: Stats Strip - compact stats display in prompt bar -->
-        <div id="stats-strip">
-          <span class="model-badge" data-stat="strip-model">—</span>
-          <span class="token-stats">
-            <span class="token-in" data-stat="strip-input">↓ —</span>
-            <span class="token-out" data-stat="strip-output">↑ —</span>
-          </span>
-          <div class="context-mini">
-            <div class="context-mini-fill"></div>
-            <span class="context-mini-label" data-stat="strip-context">—%</span>
-          </div>
         </div>
         <div id="editor-row">
           <div id="editor">
@@ -105,32 +95,64 @@
             </button>
           </div>
         </div>
+        <!-- B-22: Stats Strip - compact stats display below editor -->
+        <!-- 23-1: Token display removed, usage limits added -->
+        <div id="stats-strip">
+          <span class="model-badge" data-stat="strip-model">—</span>
+          <span class="context-stats" title="Current context window">
+            <span class="stats-label">Context:</span>
+            <span class="context-tokens" data-stat="strip-context-tokens">—</span>
+          </span>
+          <div class="context-mini">
+            <div class="context-mini-fill"></div>
+            <span class="context-mini-label" data-stat="strip-context">—%</span>
+          </div>
+          <!-- 23-4: Compact button - appears when context > 50% -->
+          <button type="button" class="compact-btn hidden" title="Compact context (Cmd+Shift+K)" aria-label="Compact context to reduce usage">Compact</button>
+          <!-- 23-1: Usage limits display -->
+          <span class="usage-5hr usage-safe" data-stat="strip-usage-5hr" title="5-hour window usage">
+            <span class="usage-label">Window:</span>
+            <span class="usage-value">—%</span>
+          </span>
+          <span class="usage-weekly usage-safe" data-stat="strip-usage-weekly" title="Weekly usage">
+            <span class="usage-label">Week:</span>
+            <span class="usage-value">—%</span>
+          </span>
+        </div>
       </div>
     </div>
     <aside id="sidebar">
       <!-- Persona Section -->
       <div id="persona-section" class="persona-section">
         <div id="project-name" class="project-name"></div>
-        <div class="persona-header">
+        <!-- Character name above portrait -->
+        <div id="character-name" class="character-name">Loading...</div>
+        <!-- Portrait with role/OCEAN beside it -->
+        <div class="portrait-row">
           <div id="portrait">
             <img src="" alt="Character portrait" style="display: none;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <!-- B-20: SVG silhouette instead of "?" -->
             <div class="portrait-placeholder" style="display: flex;">
               <svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
               </svg>
             </div>
           </div>
-          <div id="persona-info" class="persona-info">
-            <div id="character-name" class="character-name">Loading...</div>
+          <div class="portrait-details">
             <div id="character-role" class="character-role"></div>
-            <div id="character-quote" class="character-quote"></div>
+            <div id="ocean-scores" class="ocean-scores">
+              <div class="ocean-row" data-trait="O"><span class="trait-label">O</span><span class="trait-value"></span></div>
+              <div class="ocean-row" data-trait="C"><span class="trait-label">C</span><span class="trait-value"></span></div>
+              <div class="ocean-row" data-trait="E"><span class="trait-label">E</span><span class="trait-value"></span></div>
+              <div class="ocean-row" data-trait="A"><span class="trait-label">A</span><span class="trait-value"></span></div>
+              <div class="ocean-row" data-trait="N"><span class="trait-label">N</span><span class="trait-value"></span></div>
+            </div>
           </div>
         </div>
+        <!-- Theme centered under portrait -->
         <div id="theme-name" class="theme-name"></div>
+        <div id="benchmark-score" class="benchmark-score"></div>
         <div id="helper-line" class="activity-line"></div>
         <div id="helper-task-line" class="activity-line"></div>
-        <div id="tool-use-line" class="activity-line"></div>
       </div>
 
       <!-- Story Section (B-13: Enhanced) -->
@@ -259,6 +281,66 @@
     </div>
   </div>
 
+  <!-- 22-4: Dangerous Path Approval Modal -->
+  <div id="dangerous-path-modal" class="dangerous-path-modal hidden" tabindex="-1" aria-hidden="true">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Sensitive Path Detected</h3>
+        <span class="category-indicator">Unknown</span>
+      </div>
+      <div class="path-warning">
+        <span class="warning-icon">⚠️</span>
+        <span class="warning-text">Claude wants to modify a sensitive file:</span>
+      </div>
+      <div class="path-display">.env</div>
+      <div class="modal-actions">
+        <button class="approve-btn" data-action="approve" title="Allow this operation (Enter)">Allow</button>
+        <button class="always-allow-btn" data-action="always-allow" title="Allow and remember for this session">Always Allow</button>
+        <button class="reject-btn" data-action="reject" title="Block this operation (Esc)">Block</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 22-6: Tool Execution Audit Log Modal -->
+  <div id="audit-log-modal" class="audit-log-modal hidden" tabindex="-1" aria-hidden="true">
+    <div class="modal-overlay" data-action="close"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Tool Execution Log</h3>
+        <div class="modal-controls">
+          <select id="audit-log-filter" title="Filter by tool type">
+            <option value="">All Tools</option>
+          </select>
+          <button class="icon-btn" data-action="refresh" title="Refresh">⟳</button>
+          <button class="icon-btn" data-action="export-json" title="Export JSON">JSON</button>
+          <button class="icon-btn" data-action="export-csv" title="Export CSV">CSV</button>
+          <button class="icon-btn danger" data-action="clear" title="Clear log">Clear</button>
+          <button class="close-btn" data-action="close" title="Close (Esc)">&times;</button>
+        </div>
+      </div>
+      <div id="audit-log-stats" class="audit-log-stats"></div>
+      <div class="audit-log-table-wrapper">
+        <table class="audit-log-table">
+          <thead>
+            <tr>
+              <th class="col-timestamp">Time</th>
+              <th class="col-tool">Tool</th>
+              <th class="col-input">Input</th>
+              <th class="col-duration">Duration</th>
+              <th class="col-status">Status</th>
+            </tr>
+          </thead>
+          <tbody id="audit-log-tbody">
+            <tr class="empty-row">
+              <td colspan="5" class="empty-message">No tool executions recorded yet</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <!-- Web adapter: provides window.electronAPI in browser mode (no-op in Electron) -->
   <script src="/js/web-adapter.js"></script>
   <!-- Livereload: auto-refresh in dev mode -->
@@ -271,6 +353,17 @@
   <script type="module" src="/js/components/ToolActivityBar.js"></script>
   <!-- 22-3: Bash Command Approval Modal -->
   <script type="module" src="/js/components/ApprovalModal.js"></script>
+  <!-- 22-4: Dangerous Path Approval Modal -->
+  <script type="module" src="/js/components/DangerousPathModal.js"></script>
+  <!-- 22-6: Tool Execution Audit Log -->
+  <script type="module" src="/js/components/AuditLogViewer.js"></script>
+  <script type="module">
+    // Wire up audit log modal to menu event
+    import { showAuditLogModal } from '/js/components/AuditLogViewer.js';
+    if (window.electronAPI?.auditLog?.onShow) {
+      window.electronAPI.auditLog.onShow(showAuditLogModal);
+    }
+  </script>
   <script type="module" src="/js/portrait.js"></script>
   <script src="/js/stats-strip.js"></script>
   <script type="module" src="/js/persona.js"></script>
@@ -286,6 +379,7 @@
     import * as DiffViewer from '/js/components/DiffViewer.js';
     ChangedFilesList.init();
     DiffViewer.setOnDiffAdded(ChangedFilesList.handleDiffAdded);
+    DiffViewer.setOnDiffsRemoved(ChangedFilesList.handleDiffsRemoved);
   </script>
   <!-- Files tab will be added on demand, not on startup -->
   <script type="module" src="/js/controls.js"></script>

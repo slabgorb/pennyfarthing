@@ -113,10 +113,10 @@ describe('E1-4: Character Portrait Display', () => {
       expect(css).toMatch(/#portrait[^}]*object-fit\s*:\s*(cover|contain)/);
     });
 
-    it('should have fixed 100x100 size for portrait container', () => {
-      // Portrait is 100x100 to match actual image dimensions
-      expect(css).toMatch(/#portrait[^}]*width:\s*100px/);
-      expect(css).toMatch(/#portrait[^}]*height:\s*100px/);
+    it('should have fixed 128x128 size for portrait container', () => {
+      // Portrait is 128x128 for balanced display alongside identity info
+      expect(css).toMatch(/#portrait[^}]*width:\s*128px/);
+      expect(css).toMatch(/#portrait[^}]*height:\s*128px/);
     });
 
     it('should have overflow hidden to clip oversized images', () => {

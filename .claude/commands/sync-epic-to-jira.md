@@ -1,0 +1,1 @@
+../../pennyfarthing-dist/commands/sync-epic-to-jira.md

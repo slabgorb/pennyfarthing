@@ -68,9 +68,11 @@ function createElectronAPI() {
             todos: createDataAPI(ipcRenderer, 'todos:get', 'todos:update'),
             // Context API (B-19)
             context: createDataAPI(ipcRenderer, 'context:get', 'context:update'),
-            // Claude SDK API (E7-3)
+            // Usage Stats API (23-1)
+            usageStats: createDataAPI(ipcRenderer, 'usageStats:get', 'usageStats:update'),
+            // Claude SDK API (E7-3, 28-1: images support)
             claude: {
-                send: (prompt) => ipcRenderer.invoke('claude:send', prompt),
+                send: (prompt, images) => ipcRenderer.invoke('claude:send', prompt, images || []),
                 abort: () => ipcRenderer.invoke('claude:abort'),
                 clear: () => ipcRenderer.invoke('claude:clear'),
                 setMode: (mode) => ipcRenderer.invoke('claude:setMode', mode),
@@ -106,6 +108,16 @@ function createElectronAPI() {
                     ipcRenderer.on('file-browser:file-opened', callback);
                 },
             },
+            // Command API (23-3)
+            command: {
+                execute: (command) => ipcRenderer.invoke('command:execute', command),
+                onResult: (callback) => {
+                    ipcRenderer.on('command:result', (_event, result) => callback(result));
+                },
+                onError: (callback) => {
+                    ipcRenderer.on('command:error', (_event, error) => callback(error));
+                },
+            },
             // Bash approval API (22-3)
             bash: {
                 onApprovalRequest: (callback) => {
@@ -113,14 +125,37 @@ function createElectronAPI() {
                 },
                 sendApprovalResponse: (response) => ipcRenderer.invoke('bash:approval-response', response),
             },
-            // Settings API (22-3, 22-5)
+            // Dangerous path approval API (22-4)
+            path: {
+                onApprovalRequest: (callback) => {
+                    ipcRenderer.on('path:approval-request', callback);
+                },
+                sendApprovalResponse: (response) => ipcRenderer.invoke('path:approval-response', response),
+            },
+            // Settings API (22-3, 22-4, 22-5)
             settings: {
                 getBashApprovalGate: () => ipcRenderer.invoke('settings:getBashApprovalGate'),
                 setBashApprovalGate: (enabled) => ipcRenderer.invoke('settings:setBashApprovalGate', enabled),
+                getDangerousPathGate: () => ipcRenderer.invoke('settings:getDangerousPathGate'),
+                setDangerousPathGate: (enabled) => ipcRenderer.invoke('settings:setDangerousPathGate', enabled),
                 getVerboseMode: () => ipcRenderer.invoke('settings:getVerboseMode'),
                 setVerboseMode: (enabled) => ipcRenderer.invoke('settings:setVerboseMode', enabled),
                 onVerboseModeChange: (callback) => {
                     ipcRenderer.on('settings:verboseModeUpdate', callback);
+                },
+            },
+            // Audit Log API (22-6)
+            auditLog: {
+                getEntries: (toolType) => ipcRenderer.invoke('auditLog:getEntries', toolType),
+                getTypes: () => ipcRenderer.invoke('auditLog:getTypes'),
+                export: (format, toolType) => ipcRenderer.invoke('auditLog:export', format, toolType),
+                getStats: () => ipcRenderer.invoke('auditLog:getStats'),
+                clear: () => ipcRenderer.invoke('auditLog:clear'),
+                onEntry: (callback) => {
+                    ipcRenderer.on('auditLog:entry', (_event, entry) => callback(entry));
+                },
+                onShow: (callback) => {
+                    ipcRenderer.on('tools:showAuditLog', () => callback());
                 },
             },
         };
@@ -141,6 +176,8 @@ function createElectronAPI() {
             todos: createDataAPI(null, 'todos:get', 'todos:update'),
             // Context API (B-19) - test stub
             context: createDataAPI(null, 'context:get', 'context:update'),
+            // Usage Stats API (23-1) - test stub
+            usageStats: createDataAPI(null, 'usageStats:get', 'usageStats:update'),
             // Claude SDK API (E7-3) - test stub
             claude: {
                 send: (_prompt) => Promise.resolve(),
@@ -179,6 +216,16 @@ function createElectronAPI() {
                     // No-op in test environment
                 },
             },
+            // Command API (23-3) - test stub
+            command: {
+                execute: (_command) => Promise.resolve(),
+                onResult: (_callback) => {
+                    // No-op in test environment
+                },
+                onError: (_callback) => {
+                    // No-op in test environment
+                },
+            },
             // Bash approval API (22-3) - test stub
             bash: {
                 onApprovalRequest: (_callback) => {
@@ -186,13 +233,36 @@ function createElectronAPI() {
                 },
                 sendApprovalResponse: (_response) => Promise.resolve(),
             },
-            // Settings API (22-3, 22-5) - test stub
+            // Dangerous path approval API (22-4) - test stub
+            path: {
+                onApprovalRequest: (_callback) => {
+                    // No-op in test environment
+                },
+                sendApprovalResponse: (_response) => Promise.resolve(),
+            },
+            // Settings API (22-3, 22-4, 22-5) - test stub
             settings: {
                 getBashApprovalGate: () => Promise.resolve(false),
                 setBashApprovalGate: (_enabled) => Promise.resolve(),
+                getDangerousPathGate: () => Promise.resolve(true),
+                setDangerousPathGate: (_enabled) => Promise.resolve(),
                 getVerboseMode: () => Promise.resolve(false),
                 setVerboseMode: (_enabled) => Promise.resolve(false),
                 onVerboseModeChange: (_callback) => {
+                    // No-op in test environment
+                },
+            },
+            // Audit Log API (22-6) - test stub
+            auditLog: {
+                getEntries: (_toolType) => Promise.resolve([]),
+                getTypes: () => Promise.resolve([]),
+                export: (_format, _toolType) => Promise.resolve(''),
+                getStats: () => Promise.resolve({ total: 0, byType: {}, successCount: 0, errorCount: 0 }),
+                clear: () => Promise.resolve(true),
+                onEntry: (_callback) => {
+                    // No-op in test environment
+                },
+                onShow: (_callback) => {
                     // No-op in test environment
                 },
             },

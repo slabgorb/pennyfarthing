@@ -13,7 +13,7 @@ import { dirname, join, basename } from 'path';
 import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
 import { getStoryInfo, getGitInfo } from './server.js';
 import { parseToolStats, createEmptyStats } from './tool-stats.js';
-import { getTokenStats, setTokenStatsCallback, aggregateTokenStats, resetTokenStats, resetEventStore } from './otlp-receiver.js';
+import { getTokenStats, setTokenStatsCallback, aggregateTokenStats, resetTokenStats, resetEventStore, getToolEventsFiltered, getToolTypes, exportAuditLogAsJSON, exportAuditLogAsCSV, getAuditLogStats, } from './otlp-receiver.js';
 import { ClaudeService } from './claude-service.js';
 import { isTodoWriteMessage, extractTodos } from './todos.js';
 import { listDirectory as listDir } from './file-browser.js';
@@ -23,7 +23,9 @@ import { getVerboseMode, setVerboseMode } from './settings-store.js';
 // Re-export project directory functions for external consumers
 export { getProjectDirectory, setProjectDirectory, isValidProjectDirectory };
 import * as fs from 'fs';
-import { execSync } from 'child_process';
+import { exec, execSync } from 'child_process';
+import { promisify } from 'util';
+const execAsync = promisify(exec);
 // Calculate __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -72,6 +74,9 @@ export const IPC_DATA_CHANNELS = {
     CONTEXT_UPDATE: 'context:update',
     // Tool events (changed files, diffs)
     TOOL_EVENTS_UPDATE: 'toolEvents:update',
+    // 23-1: Usage limits stats
+    USAGE_STATS_GET: 'usageStats:get',
+    USAGE_STATS_UPDATE: 'usageStats:update',
 };
 /**
  * IPC channel names for Claude SDK communication (E7-3)
@@ -107,12 +112,32 @@ export const IPC_SETTINGS_CHANNELS = {
     VERBOSE_MODE_UPDATE: 'settings:verboseModeUpdate',
 };
 /**
+ * IPC channel names for audit log (22-6)
+ */
+export const IPC_AUDIT_LOG_CHANNELS = {
+    GET_ENTRIES: 'auditLog:getEntries',
+    GET_TYPES: 'auditLog:getTypes',
+    EXPORT: 'auditLog:export',
+    GET_STATS: 'auditLog:getStats',
+    CLEAR: 'auditLog:clear',
+    ENTRY: 'auditLog:entry',
+};
+/**
  * IPC channel names for file browser (E8-3)
  */
 export const IPC_FILE_BROWSER_CHANNELS = {
     LIST_DIRECTORY: 'file-browser:list-directory',
     OPEN_FILE: 'file-browser:open-file',
     OPEN_IN_EDITOR: 'file-browser:open-in-editor',
+};
+/**
+ * IPC channel names for command execution (23-3)
+ * Used to execute Claude Code commands via IPC rather than PTY injection
+ */
+export const IPC_COMMAND_CHANNELS = {
+    EXECUTE: 'command:execute',
+    RESULT: 'command:result',
+    ERROR: 'command:error',
 };
 /**
  * Pennyfarthing agent definitions for menu
@@ -178,6 +203,21 @@ export function buildWorkflowMenu() {
     };
 }
 /**
+ * Build Tools menu with Execution Log (Story 22-6)
+ */
+export function buildToolsMenu() {
+    return {
+        label: 'Tools',
+        submenu: [
+            {
+                label: 'Execution Log',
+                accelerator: 'CmdOrCtrl+Shift+L',
+                click: () => broadcastToRenderer('tools:showAuditLog', null),
+            },
+        ],
+    };
+}
+/**
  * Build custom View menu with Verbose Mode toggle (Story 22-5)
  * Includes standard view items plus custom Cyclist options
  */
@@ -223,6 +263,7 @@ export function getDataChannels() {
         IPC_DATA_CHANNELS.TOKEN_STATS_GET,
         IPC_DATA_CHANNELS.TODOS_GET,
         IPC_DATA_CHANNELS.CONTEXT_GET,
+        IPC_DATA_CHANNELS.USAGE_STATS_GET, // 23-1
     ];
 }
 // Stats state managed by main process
@@ -457,17 +498,22 @@ let contextPollTimer = null;
 /**
  * Start polling context usage
  * Calls getContextUsage periodically and broadcasts changes
+ * @param projectDir - The project directory
+ * @param getSessionId - Optional function to get current session ID (for session-specific context)
  */
-export function startContextPolling(projectDir) {
-    // Initial fetch
-    const initialContext = getContextUsage(projectDir);
+export function startContextPolling(projectDir, getSessionId) {
+    // Initial fetch (may not have session ID yet)
+    const sessionId = getSessionId?.() ?? undefined;
+    const initialContext = getContextUsage(projectDir, sessionId);
     updateContextState(initialContext);
     // Set up polling
     contextPollTimer = setInterval(() => {
-        const context = getContextUsage(projectDir);
+        // Get session ID each poll - it may become available after first message
+        const currentSessionId = getSessionId?.() ?? undefined;
+        const context = getContextUsage(projectDir, currentSessionId);
         const changed = updateContextState(context);
         if (changed) {
-            console.log('Context updated:', context.percent, '%');
+            console.log('Context updated:', context.percent, '%', currentSessionId ? `(session: ${currentSessionId.slice(0, 8)}...)` : '');
         }
     }, CONTEXT_POLL_INTERVAL_MS);
     console.log('Context polling started (every', CONTEXT_POLL_INTERVAL_MS / 1000, 's)');
@@ -477,6 +523,166 @@ export function startContextPolling(projectDir) {
             clearInterval(contextPollTimer);
             contextPollTimer = null;
             console.log('Context polling stopped');
+        }
+    };
+}
+/**
+ * Current usage stats state
+ */
+let currentUsageStats = {
+    fiveHourPercent: 0,
+    weeklyPercent: 0,
+    fiveHourResetAt: null,
+    weeklyResetAt: null,
+    planType: 'unknown',
+};
+/**
+ * Get current usage stats (for testing and IPC)
+ */
+export function getUsageStats() {
+    return { ...currentUsageStats };
+}
+/**
+ * Update usage stats state and broadcast if changed
+ */
+export function updateUsageStats(stats) {
+    if (currentUsageStats.fiveHourPercent === stats.fiveHourPercent &&
+        currentUsageStats.weeklyPercent === stats.weeklyPercent) {
+        return false;
+    }
+    currentUsageStats = { ...stats };
+    broadcastToRenderer(IPC_DATA_CHANNELS.USAGE_STATS_UPDATE, currentUsageStats);
+    return true;
+}
+/**
+ * Reset usage stats to default values
+ */
+export function resetUsageStats() {
+    currentUsageStats = {
+        fiveHourPercent: 0,
+        weeklyPercent: 0,
+        fiveHourResetAt: null,
+        weeklyResetAt: null,
+        planType: 'unknown',
+    };
+    broadcastToRenderer(IPC_DATA_CHANNELS.USAGE_STATS_UPDATE, currentUsageStats);
+}
+/**
+ * Usage polling interval in milliseconds
+ * 60 seconds is reasonable for usage data that changes slowly
+ */
+export const USAGE_POLL_INTERVAL_MS = 60000;
+/**
+ * Timer reference for usage polling
+ */
+let usagePollTimer = null;
+/**
+ * Max tokens for rate limit calculation (Claude Max plan)
+ * Empirically derived: ~217M tokens per 5-hour block based on Claude /config display
+ */
+const MAX_TOKENS_PER_BLOCK = 217_000_000;
+/**
+ * Fetch usage stats from ccusage CLI
+ * Uses local JSONL files to calculate 5-hour and weekly usage
+ */
+async function fetchUsageFromCcusage() {
+    try {
+        // Run ccusage blocks --json asynchronously to avoid blocking main process
+        // Use shell: true and explicit PATH to handle Electron's limited environment
+        const { stdout: output } = await execAsync('npx ccusage@latest blocks --json --offline', {
+            encoding: 'utf-8',
+            timeout: 30000,
+            shell: '/bin/zsh',
+            env: {
+                ...process.env,
+                PATH: `${process.env.PATH || ''}:/usr/local/bin:/opt/homebrew/bin:${process.env.HOME}/.nvm/versions/node/v20.18.0/bin`,
+            },
+        });
+        if (!output || !output.trim()) {
+            console.warn('[UsageStats] Empty output from ccusage');
+            return null;
+        }
+        const data = JSON.parse(output);
+        const blocks = data.blocks || [];
+        // Find the active block (current 5-hour window)
+        const activeBlock = blocks.find((b) => b.isActive);
+        // Calculate 5-hour percentage from active block
+        let fiveHourPercent = 0;
+        let fiveHourResetAt = null;
+        if (activeBlock) {
+            fiveHourPercent = Math.round((activeBlock.totalTokens / MAX_TOKENS_PER_BLOCK) * 100);
+            fiveHourResetAt = activeBlock.endTime || null;
+        }
+        // Calculate weekly usage from last 7 days of blocks
+        const now = new Date();
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        // Sum tokens from blocks in the last 7 days
+        let weeklyTokens = 0;
+        for (const block of blocks) {
+            const blockStart = new Date(block.startTime);
+            if (blockStart >= weekAgo) {
+                weeklyTokens += block.totalTokens || 0;
+            }
+        }
+        // Weekly limit empirically derived: ~2.85B tokens based on Claude /config display
+        const weeklyMaxTokens = 2_850_000_000;
+        const weeklyPercent = Math.round((weeklyTokens / weeklyMaxTokens) * 100);
+        // Weekly reset is end of current week (Sunday midnight UTC)
+        const daysUntilSunday = (7 - now.getUTCDay()) % 7 || 7;
+        const weeklyReset = new Date(now);
+        weeklyReset.setUTCDate(weeklyReset.getUTCDate() + daysUntilSunday);
+        weeklyReset.setUTCHours(0, 0, 0, 0);
+        return {
+            fiveHourPercent: Math.min(fiveHourPercent, 100),
+            weeklyPercent: Math.min(weeklyPercent, 100),
+            fiveHourResetAt,
+            weeklyResetAt: weeklyReset.toISOString(),
+            planType: 'max',
+        };
+    }
+    catch (error) {
+        console.warn('[UsageStats] Failed to fetch from ccusage:', error);
+        return null;
+    }
+}
+/**
+ * Start polling usage stats
+ * Uses ccusage CLI to read local JSONL files for usage data
+ */
+export function startUsagePolling(_projectDir) {
+    // Initial fetch with error handling
+    fetchUsageFromCcusage()
+        .then((stats) => {
+        if (stats) {
+            updateUsageStats(stats);
+            console.log('[UsageStats] Initial fetch:', stats.fiveHourPercent + '% (5hr),', stats.weeklyPercent + '% (weekly)');
+        }
+        else {
+            console.log('[UsageStats] Initial fetch: no data available');
+        }
+    })
+        .catch((err) => {
+        console.warn('[UsageStats] Initial fetch failed:', err?.message || err);
+    });
+    // Set up polling interval with error handling
+    usagePollTimer = setInterval(async () => {
+        try {
+            const stats = await fetchUsageFromCcusage();
+            if (stats) {
+                updateUsageStats(stats);
+            }
+        }
+        catch (err) {
+            console.warn('[UsageStats] Poll failed:', err?.message || err);
+        }
+    }, USAGE_POLL_INTERVAL_MS);
+    console.log('[UsageStats] Polling started (every', USAGE_POLL_INTERVAL_MS / 1000, 's)');
+    // Return cleanup function
+    return () => {
+        if (usagePollTimer) {
+            clearInterval(usagePollTimer);
+            usagePollTimer = null;
+            console.log('[UsageStats] Polling stopped');
         }
     };
 }
@@ -613,6 +819,10 @@ export function setupDataIPCHandlers(ipcMain) {
     ipcMain.handle(IPC_DATA_CHANNELS.CONTEXT_GET, async () => {
         return getContext();
     });
+    // Usage stats handler - returns current usage limits (23-1)
+    ipcMain.handle(IPC_DATA_CHANNELS.USAGE_STATS_GET, async () => {
+        return getUsageStats();
+    });
     console.log('Data IPC handlers registered:', getDataChannels());
 }
 /**
@@ -646,8 +856,18 @@ export function startProjectWatchers() {
             }
         });
         console.log('Agent change watcher started for:', projectDir);
-        // Start context polling (B-19)
-        startContextPolling(projectDir);
+        // Start context polling (B-19) with session ID for session-specific tracking (17-7)
+        startContextPolling(projectDir, () => {
+            try {
+                return getClaudeService().getSessionId();
+            }
+            catch {
+                // ClaudeService may not be initialized yet
+                return null;
+            }
+        });
+        // Start usage polling (23-1)
+        startUsagePolling(projectDir);
     }
 }
 // =============================================================================
@@ -671,13 +891,18 @@ export function getClaudeService() {
 /**
  * Set up IPC handlers for Claude SDK communication
  * E7-3: Handles claude:send and streams responses to renderer
+ * 28-1: Adds image support via stream-json input
  */
 export function setupClaudeIPCHandlers(ipcMain) {
     ipcMain.handle(IPC_CLAUDE_CHANNELS.CLAUDE_SEND, async (_event, ...args) => {
         const prompt = args[0];
+        const images = args[1] || [];
         const service = getClaudeService();
+        if (images.length > 0) {
+            console.log(`[main] Processing ${images.length} pasted image(s) via stream-json`);
+        }
         try {
-            for await (const message of service.sendMessage(prompt)) {
+            for await (const message of service.sendMessage(prompt, { images })) {
                 broadcastToRenderer(IPC_CLAUDE_CHANNELS.CLAUDE_MESSAGE, message);
                 // Update stats from SDK message (model info, etc.)
                 updateStatsFromSDK(message);
@@ -767,11 +992,14 @@ export function setupClaudeIPCHandlers(ipcMain) {
         resetEventStore(); // Clear tool events (changed files, diffs)
         resetToolStats();
         resetContext(); // Clear context percentage
+        resetUsageStats(); // Clear usage stats (23-2)
         // Broadcast zeroed stats to update UI immediately
         broadcastToRenderer(IPC_DATA_CHANNELS.TOKEN_STATS_UPDATE, getTokenStats());
         broadcastToRenderer(IPC_DATA_CHANNELS.TOOL_STATS_UPDATE, createEmptyStats());
         broadcastToRenderer(IPC_DATA_CHANNELS.TOOL_EVENTS_UPDATE, []);
-        console.log('Session cleared: tokens, todos, tool events, tool stats, context');
+        broadcastToRenderer(IPC_DATA_CHANNELS.CONTEXT_UPDATE, { percent: 0, contextWindow: 0 }); // (23-2)
+        broadcastToRenderer(IPC_DATA_CHANNELS.PERSONA_UPDATE, null); // Clear persona (23-2)
+        console.log('Session cleared: tokens, todos, tool events, tool stats, context, usage, persona');
         return true;
     });
     console.log('Claude SDK IPC handlers registered');
@@ -862,6 +1090,87 @@ export function setupSettingsIPCHandlers(ipcMain) {
         return enabled;
     });
     console.log('Settings IPC handlers registered');
+}
+// =============================================================================
+// Audit Log IPC Handlers (22-6)
+// =============================================================================
+/**
+ * Set up IPC handlers for audit log
+ * 22-6: Handles audit log get/filter/export/clear
+ */
+export function setupAuditLogIPCHandlers(ipcMain) {
+    // Get all entries (optionally filtered)
+    ipcMain.handle(IPC_AUDIT_LOG_CHANNELS.GET_ENTRIES, async (_event, ...args) => {
+        const toolType = args[0];
+        return getToolEventsFiltered(toolType);
+    });
+    // Get unique tool types
+    ipcMain.handle(IPC_AUDIT_LOG_CHANNELS.GET_TYPES, async () => {
+        return getToolTypes();
+    });
+    // Export as JSON or CSV
+    ipcMain.handle(IPC_AUDIT_LOG_CHANNELS.EXPORT, async (_event, ...args) => {
+        const format = args[0];
+        const toolType = args[1];
+        if (format === 'csv') {
+            return exportAuditLogAsCSV(toolType);
+        }
+        return exportAuditLogAsJSON(toolType);
+    });
+    // Get stats summary
+    ipcMain.handle(IPC_AUDIT_LOG_CHANNELS.GET_STATS, async () => {
+        return getAuditLogStats();
+    });
+    // Clear audit log (reuses existing resetEventStore)
+    ipcMain.handle(IPC_AUDIT_LOG_CHANNELS.CLEAR, async () => {
+        resetEventStore();
+        return true;
+    });
+    console.log('Audit log IPC handlers registered');
+}
+// =============================================================================
+// Command IPC Handlers (23-3)
+// =============================================================================
+// Track registered command channels for testing
+// Initialized with known channels so getCommandChannels() works before setupCommandIPCHandlers()
+let registeredCommandChannels = [IPC_COMMAND_CHANNELS.EXECUTE];
+/**
+ * Get list of registered command channels (for testing)
+ * 23-3: Allows tests to verify channel registration
+ */
+export function getCommandChannels() {
+    return [...registeredCommandChannels];
+}
+/**
+ * Set up IPC handlers for command execution
+ * 23-3: Handles Claude Code command execution via IPC
+ */
+export function setupCommandIPCHandlers(ipcMain) {
+    // Execute command in Claude PTY session
+    ipcMain.handle(IPC_COMMAND_CHANNELS.EXECUTE, async (_event, ...args) => {
+        const command = args[0];
+        // Get the Claude service singleton
+        const service = getClaudeService();
+        if (!service) {
+            broadcastToRenderer(IPC_COMMAND_CHANNELS.ERROR, 'Claude service not initialized');
+            throw new Error('Claude service not initialized');
+        }
+        try {
+            // Send command to Claude and stream results
+            // The command will be executed in the PTY session
+            for await (const message of service.sendMessage(command)) {
+                broadcastToRenderer(IPC_COMMAND_CHANNELS.RESULT, message);
+            }
+        }
+        catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            broadcastToRenderer(IPC_COMMAND_CHANNELS.ERROR, message);
+            throw error;
+        }
+    });
+    // Track registered channels
+    registeredCommandChannels = [IPC_COMMAND_CHANNELS.EXECUTE];
+    console.log('Command IPC handlers registered');
 }
 // =============================================================================
 // Session Persistence (E7-3: AC4)
@@ -1040,6 +1349,8 @@ if (isElectron) {
     setupClaudeIPCHandlers(ipcMain);
     setupFileBrowserIPCHandlers(ipcMain);
     setupSettingsIPCHandlers(ipcMain);
+    setupAuditLogIPCHandlers(ipcMain);
+    setupCommandIPCHandlers(ipcMain); // 23-3: Command execution
     /**
      * Kill any orphaned Claude CLI processes from previous Cyclist sessions
      * B-24: Prevents duplicate message handling from zombie processes
@@ -1142,6 +1453,7 @@ if (isElectron) {
                 { role: 'fileMenu' },
                 { role: 'editMenu' },
                 buildViewMenu(),
+                buildToolsMenu(),
                 buildAgentMenu(),
                 buildWorkflowMenu(),
                 { role: 'windowMenu' },

@@ -157,6 +157,11 @@ $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 
 **If > 70%:** Tell user: "Context high. Start fresh session with `/reviewer`"
 
+**Handoff Marker:** Include at end of handoff message:
+```
+<!-- CYCLIST:HANDOFF:/reviewer -->
+```
+
 ## Handoff Subagent
 
 After writing assessment, spawn helper to handle bookkeeping:

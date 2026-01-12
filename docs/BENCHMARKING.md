@@ -34,11 +34,13 @@ Run a single agent on a scenario.
 /solo discworld:reviewer --scenario order-service
 /solo ted-lasso:sm --scenario sprint-planning-conflict --runs 4
 /solo control:dev --scenario tdd-shopping-cart --no-judge
+/solo shakespeare:prospero --as dev --scenario django-10554
 ```
 
 **Arguments:**
 - `theme:agent` - Persona and role (e.g., `discworld:reviewer`)
 - `--scenario <name>` - Scenario from `scenarios/` directory
+- `--as <role>` - (Optional) Cross-role testing: run character as different role
 - `--runs N` - Number of runs (default: 1, max: 20)
 - `--no-judge` - Skip evaluation, return raw response
 
@@ -73,11 +75,13 @@ Compare a persona's performance against the control baseline.
 ```bash
 /benchmark discworld reviewer --scenario order-service
 /benchmark the-expanse sm --scenario sprint-planning-conflict --runs 8
+/benchmark shakespeare prospero --as dev --scenario django-10554
 ```
 
 **Arguments:**
 - `theme` - Persona theme (e.g., `discworld`, `the-expanse`)
-- `agent` - Role to benchmark
+- `agent` - Role to benchmark (or character name if using `--as`)
+- `--as <role>` - (Optional) Cross-role testing: run any character as any role
 - `--scenario <name>` - (Optional) Scenario name, or choose interactively
 - `--runs N` - Number of runs (default: 4)
 
@@ -176,7 +180,7 @@ If the confidence interval doesn't include 0, the difference is statistically si
 ## Results Structure
 
 ```
-results/
+internal/results/
 ├── solo/                    # Single runs (not benchmarking)
 │   └── {timestamp}-{theme}-{role}.json
 ├── baselines/               # Control baselines
@@ -186,13 +190,16 @@ results/
 │           │   ├── run_1.json
 │           │   └── judge_1.json
 │           └── summary.yaml
-└── benchmarks/              # Persona comparisons
-    └── {scenario}/
-        └── {theme}-{role}/
-            ├── runs/
-            │   ├── run_1.json
-            │   └── judge_1.json
-            └── summary.yaml
+├── benchmarks/              # Persona comparisons
+│   └── {scenario}/
+│       └── {theme}-{role}/
+│           ├── runs/
+│           │   ├── run_1.json
+│           │   └── judge_1.json
+│           └── summary.yaml
+└── job-fair/                # Job fair results
+    └── {theme}-{timestamp}/
+        └── report.md
 ```
 
 ### Summary.yaml Format
@@ -265,7 +272,10 @@ const correlation = calculateOceanCorrelation('order-service', 'reviewer');
 # 3. Benchmark another persona
 /benchmark the-expanse reviewer --scenario order-service --runs 4
 
-# 4. View results
+# 4. Cross-role benchmark (character in different role)
+/benchmark shakespeare prospero --as dev --scenario django-10554 --runs 4
+
+# 5. View results
 cat internal/results/benchmarks/order-service/discworld-reviewer/summary.yaml
 ```
 

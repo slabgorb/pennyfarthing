@@ -92,8 +92,9 @@ function render() {
  * @param {string} filePath - Path to select
  * @param {Object} options - Selection options
  * @param {boolean} options.focus - Whether to focus the selected item (default: false)
+ * @param {boolean} options.autoExpand - Whether to auto-expand collapsed panel (default: true for user clicks)
  */
-export function selectFile(filePath, { focus = false } = {}) {
+export function selectFile(filePath, { focus = false, autoExpand = false } = {}) {
   selectedFilePath = filePath;
   render();
 
@@ -103,7 +104,10 @@ export function selectFile(filePath, { focus = false } = {}) {
     // Show most recent diff for this file
     const mostRecent = diffs[diffs.length - 1];
     DiffViewer.renderDiff(DiffPanel.getContentElement(), mostRecent);
-    DiffPanel.expand();
+    // Auto-expand if requested (27-1: auto-expand on user file click)
+    if (autoExpand && DiffPanel.isCollapsed()) {
+      DiffPanel.expand();
+    }
   }
 
   // Only focus when explicitly requested (user interaction)
@@ -130,7 +134,8 @@ export function getSelectedFile() {
 function handleClick(e) {
   const item = e.target.closest('.changed-file-item');
   if (item) {
-    selectFile(item.dataset.filepath, { focus: true });
+    // 27-1: Auto-expand diff panel when user clicks a file
+    selectFile(item.dataset.filepath, { focus: true, autoExpand: true });
   }
 }
 
@@ -160,9 +165,9 @@ function handleKeydown(e) {
     case 'Enter':
     case ' ':
       e.preventDefault();
-      // Already selected, just ensure diff is shown
+      // Already selected, ensure diff is shown and panel is expanded (27-1)
       if (selectedFilePath) {
-        selectFile(selectedFilePath, { focus: true });
+        selectFile(selectedFilePath, { focus: true, autoExpand: true });
       }
       return;
     case 'Home':
@@ -189,6 +194,32 @@ function handleKeydown(e) {
 export function handleDiffAdded(diffData) {
   // Always select the newly changed file
   selectFile(diffData.filePath);
+}
+
+/**
+ * Handle diffs removed (e.g., after git commit)
+ * Re-renders the list and adjusts selection if needed
+ * @param {string[]} removedPaths - Array of file paths that were removed
+ */
+export function handleDiffsRemoved(removedPaths) {
+  // Check if currently selected file was removed
+  if (selectedFilePath && removedPaths.includes(selectedFilePath)) {
+    // Get remaining files
+    const fileChanges = getFileChanges();
+    const remainingPaths = Object.keys(fileChanges);
+
+    if (remainingPaths.length > 0) {
+      // Select the first remaining file
+      selectFile(remainingPaths[0]);
+    } else {
+      // No files left, clear selection
+      selectedFilePath = null;
+      DiffPanel.clearContent();
+    }
+  }
+
+  // Re-render the list
+  render();
 }
 
 /**
@@ -228,6 +259,7 @@ export default {
   selectFile,
   getSelectedFile,
   handleDiffAdded,
+  handleDiffsRemoved,
   clear,
   render,
 };
