@@ -5,14 +5,11 @@
  * The window loads settings.html and allows users to configure Cyclist preferences.
  */
 import path from 'path';
-import { fileURLToPath } from 'url';
-// Get directory name for ES module
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { getPublicDir } from './paths.js';
 // =============================================================================
 // Constants
 // =============================================================================
-export const SETTINGS_HTML_PATH = path.join(__dirname, 'public', 'settings.html');
+export const SETTINGS_HTML_PATH = path.join(getPublicDir(), 'settings.html');
 /**
  * Get the window configuration for the settings window
  */
@@ -59,7 +56,9 @@ export function isSettingsWindowOpen() {
  * Creates an actual BrowserWindow in Electron context
  */
 export function openSettingsWindow(parentWindow) {
+    console.log('[Settings] openSettingsWindow called, path:', SETTINGS_HTML_PATH);
     if (settingsWindowOpen) {
+        console.log('[Settings] Window already open, focusing');
         // Window already open - focus it
         if (settingsWindowRef && typeof settingsWindowRef.focus === 'function') {
             settingsWindowRef.focus();
@@ -70,17 +69,21 @@ export function openSettingsWindow(parentWindow) {
     try {
         // Dynamic import to avoid issues in non-Electron context
         const { BrowserWindow } = require('electron');
+        console.log('[Settings] BrowserWindow imported, mainWindowRef:', !!mainWindowRef);
         const parent = parentWindow || mainWindowRef;
         const config = getWindowConfig();
+        console.log('[Settings] Creating window with config:', JSON.stringify(config));
         const settingsWindow = new BrowserWindow({
             ...config,
             parent: parent,
             show: false, // Don't show until ready
         });
+        console.log('[Settings] Loading HTML from:', SETTINGS_HTML_PATH);
         // Load the settings HTML
         settingsWindow.loadFile(SETTINGS_HTML_PATH);
         // Show when ready
         settingsWindow.once('ready-to-show', () => {
+            console.log('[Settings] Window ready, showing');
             settingsWindow.show();
         });
         // Clean up on close
@@ -90,9 +93,11 @@ export function openSettingsWindow(parentWindow) {
         });
         settingsWindowRef = settingsWindow;
         settingsWindowOpen = true;
+        console.log('[Settings] Window created successfully');
     }
-    catch {
+    catch (error) {
         // Not in Electron context (testing) - just update state
+        console.error('[Settings] Error creating window:', error);
         settingsWindowOpen = true;
     }
 }
