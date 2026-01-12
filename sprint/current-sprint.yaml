@@ -5,15 +5,15 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 46
-  completed_points: 19
-  remaining_points: 27
+  total_points: 90
+  completed_points: 78
+  remaining_points: 12
   notes: |
     Sprint 9 focus: Multimodal image paste and Cyclist settings/UX.
 
     ACTIVE EPICS:
-    - Epic 24 (Configuration & Theme Switcher) - 5/26 pts - IN PROGRESS
-    - Epic 30 (Developer Workflow Documentation) - 0/5 pts - PLANNED
+    - Epic 24 (Configuration & Theme Switcher) - 18/28 pts - IN PROGRESS
+    - Epic 30 (Developer Workflow Documentation) - 3/5 pts - IN PROGRESS
 
     COMPLETED THIS SPRINT:
     - Epic 28 (Image Paste & Screenshot) - 14/14 pts - DONE
@@ -25,6 +25,12 @@ summary:
     - Epic 25 (Smart Question Detection) - 12/15 pts - DONE
     - Epic 26 (Dogfooding Audit) - 5/5 pts - DONE
     - Epic 29 (Wire Up Orphaned Code) - 0/8 pts - CLOSED (flawed premise)
+
+    NEW STORIES (2026-01-12):
+    - 24-6: Theme Preview Panel (3 pts) - P2
+    - 24-7: Theme Favorites (2 pts) - P2
+    - 24-8: OCEAN Profile Visualization (3 pts) - P3
+    - 24-9: Quick Theme Switcher (2 pts) - P3
 # =============================================================================
 # ACTIVE EPICS
 # =============================================================================
@@ -35,8 +41,8 @@ epics:
       Full settings hub in Cyclist covering Pennyfarthing, Claude Code,
       and Cyclist preferences. Rich theme browser with search, OCEAN
       profiles, character previews, and favorites.
-    points: 27
-    completed_points: 7
+    points: 28
+    completed_points: 18
     priority: P1
     marker: ux
     repos: cyclist
@@ -175,6 +181,98 @@ epics:
           - Apply button saves selection and closes browser
           - Browser integrates with existing settings panel
           - Keyboard navigation works (arrow keys, Enter to select)
+      - id: 24-6
+        title: Theme Preview Panel
+        description: |
+          Add a preview panel to the theme browser that shows detailed information
+          about the currently hovered/selected theme without leaving the browser.
+
+          Features:
+          - Side panel or expanded card showing theme details
+          - List all agent characters with their roles (SM, TEA, Dev, etc.)
+          - Show character quotes and personality traits
+          - Preview the theme's color scheme or mood
+          - "Try it" button to temporarily apply theme for the session
+        points: 3
+        priority: P2
+        status: in_progress
+        started: 2026-01-12
+        assigned_to: Keith Avery
+        repos: cyclist
+        branch: feat/24-6-theme-preview-panel
+        acceptance_criteria:
+          - Hovering/selecting a theme shows detailed preview panel
+          - Preview lists all agent character mappings (SM, TEA, Dev, Reviewer, etc.)
+          - Character quotes visible in preview
+          - Theme category and tier prominently displayed
+          - Preview updates instantly on selection change
+      - id: 24-7
+        title: Theme Favorites
+        description: |
+          Allow users to mark themes as favorites for quick access. Favorites
+          appear at the top of the theme browser and persist across sessions.
+
+          Features:
+          - Heart/star icon on each theme card to toggle favorite
+          - Favorites section at top of browser (collapsible)
+          - Persist favorites to settings file
+          - Show favorite count badge if favorites exist
+        points: 2
+        priority: P2
+        status: planned
+        repos: cyclist
+        acceptance_criteria:
+          - Each theme card has a favorite toggle icon
+          - Clicking icon adds/removes from favorites
+          - Favorites section appears at top of browser when favorites exist
+          - Favorites persist across app restarts
+          - Favorites stored in settings YAML
+      - id: 24-8
+        title: OCEAN Profile Visualization
+        description: |
+          When "Show OCEAN Bars" is enabled in settings, display personality
+          profile bars for the active agent in the sidebar. OCEAN = Openness,
+          Conscientiousness, Extraversion, Agreeableness, Neuroticism.
+
+          Features:
+          - Compact bar chart showing 5 OCEAN dimensions
+          - Values pulled from theme persona definitions
+          - Tooltip on hover explaining each dimension
+          - Animated transitions when agent changes
+        points: 3
+        priority: P3
+        status: planned
+        repos: cyclist
+        acceptance_criteria:
+          - OCEAN bars render in sidebar when setting enabled
+          - Shows 5 dimensions with appropriate labels
+          - Values reflect current active agent's persona
+          - Bars update when agent changes (with animation)
+          - Hover tooltip explains each OCEAN dimension
+      - id: 24-9
+        title: Quick Theme Switcher
+        description: |
+          Add a keyboard shortcut (Cmd+T or Cmd+Shift+T) to open a minimal
+          theme quick-switcher overlay. Similar to VS Code's command palette
+          but filtered to themes only.
+
+          Features:
+          - Fuzzy search themes by typing
+          - Recent themes shown first
+          - Arrow keys to navigate, Enter to select
+          - Escape to close
+          - Shows current theme highlighted
+        points: 2
+        priority: P3
+        status: planned
+        repos: cyclist
+        acceptance_criteria:
+          - Keyboard shortcut opens quick switcher overlay
+          - Fuzzy search filters themes as you type
+          - Recent/favorite themes appear first
+          - Arrow key navigation works
+          - Enter applies theme and closes switcher
+          - Escape closes without changing theme
   - id: epic-30
     title: Developer Workflow Documentation
     description: |
@@ -188,6 +286,8 @@ epics:
     marker: docs
     repos: pennyfarthing
     status: in_progress
+    notes: |
+      30-2 completed. 30-1 remains (2 pts).
     stories:
       - id: 30-1
         title: Multi-account Claude Code setup guide

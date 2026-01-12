@@ -1413,6 +1413,78 @@ export async function loadThemeMetadata() {
         return themeMetadataCache;
     }
 }
+// Theme metadata with agents cache (24-6)
+let themeMetadataWithAgentsCache = null;
+/**
+ * Load theme metadata including agent character mappings (24-6)
+ * Extended version of loadThemeMetadata for the preview panel
+ */
+export async function loadThemeMetadataWithAgents() {
+    // Return cache if available
+    if (themeMetadataWithAgentsCache) {
+        return themeMetadataWithAgentsCache;
+    }
+    const projectDir = getProjectDirectory();
+    if (!projectDir) {
+        themeMetadataWithAgentsCache = [];
+        return themeMetadataWithAgentsCache;
+    }
+    const metadata = [];
+    try {
+        const themesDir = join(projectDir, 'pennyfarthing-dist', 'personas', 'themes');
+        const files = fs.readdirSync(themesDir).filter(f => f.endsWith('.yaml')).sort();
+        // Dynamic import of yaml (already available in project)
+        const { default: yaml } = await import('yaml');
+        for (const file of files) {
+            try {
+                const filePath = join(themesDir, file);
+                const content = fs.readFileSync(filePath, 'utf-8');
+                const parsed = yaml.parse(content);
+                if (parsed?.theme) {
+                    const themeId = file.replace('.yaml', '');
+                    const theme = parsed.theme;
+                    const rawAgents = parsed.agents || {};
+                    const agentCount = Object.keys(rawAgents).length;
+                    // Extract agent data for preview panel
+                    const agents = {};
+                    const coreRoles = ['sm', 'tea', 'dev', 'reviewer', 'architect', 'pm', 'orchestrator', 'tech-writer', 'ux-designer', 'devops'];
+                    for (const role of coreRoles) {
+                        const rawAgent = rawAgents[role];
+                        if (rawAgent) {
+                            agents[role] = {
+                                character: rawAgent.character || '',
+                                quote: rawAgent.quote || '',
+                                style: rawAgent.style || '',
+                                role: rawAgent.role || '',
+                            };
+                        }
+                    }
+                    metadata.push({
+                        id: themeId,
+                        name: theme.name || themeId,
+                        description: theme.description || '',
+                        source: theme.source || '',
+                        tier: theme.tier || 'U',
+                        category: deriveCategory(themeId, theme.source || ''),
+                        agentCount,
+                        agents,
+                    });
+                }
+            }
+            catch (fileErr) {
+                console.error(`Failed to parse theme file ${file}:`, fileErr);
+            }
+        }
+        // Cache the results
+        themeMetadataWithAgentsCache = metadata;
+        return metadata;
+    }
+    catch (err) {
+        console.error('Failed to load theme metadata with agents:', err);
+        themeMetadataWithAgentsCache = [];
+        return themeMetadataWithAgentsCache;
+    }
+}
 /**
  * Register settings keyboard shortcut
  * Called during app initialization

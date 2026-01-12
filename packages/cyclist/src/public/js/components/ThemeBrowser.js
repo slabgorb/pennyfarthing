@@ -58,6 +58,7 @@ export class ThemeBrowser {
       searchQuery: '',
       selectedCategory: 'All',
       selectedThemeId: config.initialThemeId || null,
+      selectedThemeData: null,  // Full theme data for preview panel (24-6)
       isLoading: true,
       focusIndex: 0,
     };
@@ -97,6 +98,8 @@ export class ThemeBrowser {
     renderThemeBrowser(this.container, this.state, {
       onSelect: (themeId) => {
         this.state.selectedThemeId = themeId;
+        // Find full theme data for preview panel (24-6)
+        this.state.selectedThemeData = this.state.themes.find(t => t.id === themeId) || null;
         this.config.onSelect?.(themeId);
         this.render();
       },
@@ -354,13 +357,22 @@ export function renderThemeBrowser(container, state, config) {
 
   container.appendChild(header);
 
-  // Grid content
-  const gridContainer = doc.createElement('div');
-  gridContainer.className = 'theme-browser-content';
-  renderThemeGrid(gridContainer, state);
+  // Content area with grid and preview panel side by side
+  const contentArea = doc.createElement('div');
+  contentArea.className = 'theme-browser-content';
 
-  // Add click handlers to cards
-  gridContainer.querySelectorAll('.theme-card').forEach(card => {
+  // Grid container (left side)
+  const gridWrapper = doc.createElement('div');
+  gridWrapper.className = 'theme-grid-wrapper';
+  renderThemeGrid(gridWrapper, state);
+  contentArea.appendChild(gridWrapper);
+
+  // Preview panel (right side) - Story 24-6
+  const previewPanel = renderPreviewPanel(doc, state.selectedThemeData);
+  contentArea.appendChild(previewPanel);
+
+  // Add click handlers to cards (in grid wrapper)
+  gridWrapper.querySelectorAll('.theme-card').forEach(card => {
     card.addEventListener('click', () => {
       const themeId = card.dataset.themeId;
       config.onSelect?.(themeId);
@@ -376,7 +388,7 @@ export function renderThemeBrowser(container, state, config) {
     });
   });
 
-  container.appendChild(gridContainer);
+  container.appendChild(contentArea);
 
   // Footer with buttons
   const footer = doc.createElement('div');
@@ -406,8 +418,8 @@ export function renderThemeBrowser(container, state, config) {
   container.appendChild(footer);
 
   // Add keyboard navigation to the grid
-  gridContainer.addEventListener('keydown', (e) => {
-    const cards = Array.from(gridContainer.querySelectorAll('.theme-card'));
+  gridWrapper.addEventListener('keydown', (e) => {
+    const cards = Array.from(gridWrapper.querySelectorAll('.theme-card'));
     const currentIndex = cards.findIndex(c => c === doc.activeElement);
 
     if (currentIndex === -1) return;
@@ -504,4 +516,112 @@ export function focusFirstCard(container) {
   if (firstCard) {
     firstCard.focus();
   }
+}
+
+// =============================================================================
+// Preview Panel Rendering (Story 24-6)
+// =============================================================================
+
+/**
+ * Render the preview panel for the selected theme
+ * Shows agent character mappings, quotes, and full metadata
+ * @param {Document} doc - Document object
+ * @param {Object|null} theme - Selected theme with full agent data
+ * @returns {HTMLElement} Preview panel element
+ */
+export function renderPreviewPanel(doc, theme) {
+  const panel = doc.createElement('div');
+  panel.className = 'theme-preview-panel';
+
+  // Add tier class if theme is selected
+  if (theme?.tier) {
+    panel.classList.add(`tier-${theme.tier.toLowerCase()}`);
+  }
+
+  // Empty state - no theme selected
+  if (!theme) {
+    const emptyEl = doc.createElement('div');
+    emptyEl.className = 'theme-preview-empty';
+    emptyEl.textContent = 'Select a theme to preview';
+    panel.appendChild(emptyEl);
+    return panel;
+  }
+
+  // Content wrapper
+  const content = doc.createElement('div');
+  content.className = 'theme-preview-content';
+
+  // Title
+  const titleEl = doc.createElement('h3');
+  titleEl.className = 'preview-title';
+  titleEl.textContent = theme.name;
+  content.appendChild(titleEl);
+
+  // Meta (category and tier)
+  const metaEl = doc.createElement('div');
+  metaEl.className = 'preview-meta';
+  metaEl.textContent = `${theme.category} • Tier ${theme.tier}`;
+  content.appendChild(metaEl);
+
+  // Full description
+  const descEl = doc.createElement('p');
+  descEl.className = 'preview-description';
+  descEl.textContent = theme.description;
+  content.appendChild(descEl);
+
+  // Agents section
+  if (theme.agents) {
+    const agentsSection = doc.createElement('div');
+    agentsSection.className = 'preview-agents';
+
+    const agentsTitle = doc.createElement('h4');
+    agentsTitle.textContent = 'Agent Characters';
+    agentsSection.appendChild(agentsTitle);
+
+    // Core agent roles in display order
+    const coreRoles = ['sm', 'tea', 'dev', 'reviewer', 'architect', 'pm', 'orchestrator', 'tech-writer', 'ux-designer', 'devops'];
+
+    for (const role of coreRoles) {
+      const agent = theme.agents[role];
+      if (agent?.character) {
+        const agentEl = doc.createElement('div');
+        agentEl.className = 'preview-agent';
+
+        const roleEl = doc.createElement('span');
+        roleEl.className = 'preview-agent-role';
+        // Format role labels: SM and TEA stay uppercase, others use title case
+        const formatRoleLabel = (r) => {
+          if (r === 'sm' || r === 'tea') return r.toUpperCase();
+          return r.split('-').map(word =>
+            word.charAt(0).toUpperCase() + word.slice(1)
+          ).join(' ');
+        };
+        roleEl.textContent = formatRoleLabel(role);
+        agentEl.appendChild(roleEl);
+
+        const charEl = doc.createElement('span');
+        charEl.className = 'preview-agent-character';
+        charEl.textContent = agent.character;
+        agentEl.appendChild(charEl);
+
+        agentsSection.appendChild(agentEl);
+      }
+    }
+
+    content.appendChild(agentsSection);
+
+    // Quote from SM agent (or first available)
+    const smQuote = theme.agents.sm?.quote ||
+                    theme.agents.tea?.quote ||
+                    theme.agents.dev?.quote;
+    if (smQuote) {
+      const quoteEl = doc.createElement('blockquote');
+      quoteEl.className = 'preview-quote';
+      quoteEl.textContent = `"${smQuote}"`;
+      content.appendChild(quoteEl);
+    }
+  }
+
+  panel.appendChild(content);
+  return panel;
 }
