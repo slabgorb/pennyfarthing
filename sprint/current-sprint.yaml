@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 46
-  completed_points: 17
-  remaining_points: 29
+  completed_points: 19
+  remaining_points: 27
   notes: |
     Sprint 9 focus: Multimodal image paste and Cyclist settings/UX.
 
@@ -36,7 +36,7 @@ epics:
       and Cyclist preferences. Rich theme browser with search, OCEAN
       profiles, character previews, and favorites.
     points: 27
-    completed_points: 5
+    completed_points: 7
     priority: P1
     marker: ux
     repos: cyclist
@@ -114,10 +114,12 @@ epics:
           Location: packages/cyclist/src/public/js/components/ChangedFilesList.js
         points: 2
         priority: P2
-        status: in_progress
+        status: done
         started: 2026-01-12
+        completed: 2026-01-12
         assigned_to: Keith Avery
         repos: cyclist
+        pr: "#196"
         acceptance_criteria:
           - In Combined mode, indicator shows "All edits" or total count
           - In Combined mode, navigation arrows are disabled or hidden
