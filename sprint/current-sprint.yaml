@@ -961,10 +961,15 @@ epics:
           - Clear all button
         points: 2
         priority: P2
-        status: in_progress
+        status: done
         started: 2026-01-12
+        completed: 2026-01-12
         assigned_to: Keith Avery
         repos: cyclist
+        pr: "#188"
+        pr_link: https://github.com/1898andCo/pennyfarthing/pull/188
+        reviewed_by: The Merovingian
+        reviewed_date: 2026-01-12
         acceptance_criteria:
           - Multiple images can be attached
           - All thumbnails visible
