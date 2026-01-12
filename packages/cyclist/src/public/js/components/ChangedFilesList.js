@@ -353,8 +353,8 @@ function handleDiffKeydown(e) {
   const history = fileHistories.get(selectedFilePath);
   if (!history || history.diffs.length <= 1) return;
 
-  // Only handle arrow keys when not in an input
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  // Only handle arrow keys when not in an input or contenteditable
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
 
   if (e.key === 'ArrowLeft' || e.key === 'k') {
     if (navigatePrevious(history)) {
