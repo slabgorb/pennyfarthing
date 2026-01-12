@@ -20,15 +20,20 @@ export interface NotificationSettings {
     phase_change: boolean;
     sound: boolean;
 }
+export interface PennyfarthingSettings {
+    theme: string;
+}
 export interface CyclistSettings {
     workflow: WorkflowSettings;
     display: DisplaySettings;
     notifications: NotificationSettings;
+    pennyfarthing: PennyfarthingSettings;
 }
 export type PartialSettings = {
     workflow?: Partial<WorkflowSettings>;
     display?: Partial<DisplaySettings>;
     notifications?: Partial<NotificationSettings>;
+    pennyfarthing?: Partial<PennyfarthingSettings>;
 };
 export declare const USER_SETTINGS_DIR: string;
 export declare const USER_SETTINGS_FILE: string;

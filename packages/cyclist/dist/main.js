@@ -117,6 +117,8 @@ export const IPC_SETTINGS_CHANNELS = {
     SAVE: 'settings:save',
     CHANGED: 'settings:changed',
     OPEN_WINDOW: 'settings:openWindow',
+    // 24-2: Pennyfarthing settings section
+    GET_AVAILABLE_THEMES: 'settings:getAvailableThemes',
 };
 /**
  * IPC channel names for audit log (22-6)
@@ -1097,10 +1099,44 @@ export async function handleSettingsGet() {
 /**
  * Handle settings:save IPC call
  * Saves settings and returns updated settings
+ * Also writes theme to persona-config.local.yaml for Pennyfarthing compatibility (24-2)
  */
 export async function handleSettingsSave(settings) {
     saveUserSettings(settings);
+    // 24-2: Dual-write theme to persona-config.local.yaml for Pennyfarthing compatibility
+    const projectDir = getProjectDirectory();
+    if (settings.pennyfarthing?.theme && projectDir) {
+        try {
+            const personaConfigPath = join(projectDir, '.claude', 'persona-config.local.yaml');
+            fs.writeFileSync(personaConfigPath, `theme: "${settings.pennyfarthing.theme}"\n`, 'utf-8');
+        }
+        catch (err) {
+            console.error('Failed to write persona-config.local.yaml:', err);
+        }
+    }
     return getCurrentSettings();
+}
+/**
+ * Get available themes from pennyfarthing-dist/personas/themes (24-2)
+ * Returns sorted list of theme names
+ */
+export async function getAvailableThemes() {
+    const projectDir = getProjectDirectory();
+    if (!projectDir) {
+        return ['alice-in-wonderland']; // Default fallback
+    }
+    try {
+        const themesDir = join(projectDir, 'pennyfarthing-dist', 'personas', 'themes');
+        const files = fs.readdirSync(themesDir);
+        return files
+            .filter(f => f.endsWith('.yaml'))
+            .map(f => f.replace('.yaml', ''))
+            .sort();
+    }
+    catch (err) {
+        console.error('Failed to read themes directory:', err);
+        return ['alice-in-wonderland']; // Default fallback
+    }
 }
 /**
  * Register settings keyboard shortcut
@@ -1158,6 +1194,10 @@ export function setupSettingsIPCHandlers(ipcMain) {
     // 24-1: Open settings window
     ipcMain.handle(IPC_SETTINGS_CHANNELS.OPEN_WINDOW, async () => {
         openSettingsWindow();
+    });
+    // 24-2: Get available themes
+    ipcMain.handle(IPC_SETTINGS_CHANNELS.GET_AVAILABLE_THEMES, async () => {
+        return getAvailableThemes();
     });
     console.log('Settings IPC handlers registered');
 }

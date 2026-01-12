@@ -1,0 +1,40 @@
+{
+  "run_id": "5ca4c26e",
+  "spec": "alice-in-wonderland:White Knight",
+  "theme": "alice-in-wonderland",
+  "agent": "White Knight",
+  "character": "The White Knight",
+  "character_slug": "the-white-knight",
+  "source_role": "devops",
+  "effective_role": "reviewer",
+  "cross_role": true,
+  "scenario": "graphql-api-review",
+  "timestamp": "2026-01-12T11:45:01Z",
+  "response": "*adjusts helmet, steadies self on horse*\n\nIt's my own invention! Well, no actually, this API is quite the opposite - it's a collection of catastrophes waiting to happen. You see, the reason is... *nearly falls off horse* ...where was I? Ah yes, the security review!\n\n## Critical Issues\n\n### 1. SQL Injection Everywhere (Critical)\n**Location:** Every single resolver using string interpolation\n**Attack:**\n```graphql\nquery { user(id: \"1; DROP TABLE users; --\") { id } }\n```\n**Fix:** Use parameterized queries: `pool.query('SELECT * FROM users WHERE id = $1', [id])`\n\n### 2. Sensitive Data Exposure in Schema (Critical)\n**Location:** `User` type exposes `password`, `ssn`, `resetToken`, `apiKey`; `CreditCard` exposes `number`, `cvv`; `PaymentDetails` has `fullCardNumber`\n**Attack:** Simple query retrieves all secrets:\n```graphql\nquery { users { password ssn creditCards { number cvv } } }\n```\n**Fix:** Never expose sensitive fields. Create separate internal types.\n\n### 3. No Authorization Checks (Critical)\n**Location:** `Query.adminStats`, `Mutation.deleteUser`, `Mutation.updateUser`, `Mutation.processRefund`\n**Attack:** Any user can delete users, view admin stats, or process refunds\n**Fix:** Check `context.user.role` in every resolver.\n\n## High Severity\n\n### 4. N+1 Query Problem\n**Location:** All nested resolvers (User.orders, Order.items, etc.)\n**Fix:** Implement DataLoader for batching.\n\n### 5. No Query Depth/Complexity Limits\n**Attack:**\n```graphql\nquery { users { orders { user { orders { user { orders { user { ... } } } } } } } }\n```\n**Fix:** Add `graphql-depth-limit` and `graphql-query-complexity`.\n\n### 6. Password Reset Token in Logs (High)\n**Location:** `resetPassword` mutation logs token to console\n**Fix:** Never log secrets. Send via secure email only.\n\n### 7. Weak Reset Token (High)\n**Location:** `Math.random().toString(36).substring(7)`\n**Fix:** Use `crypto.randomBytes(32).toString('hex')`\n\n## Medium Severity\n\n### 8. Introspection Enabled in Production\n**Location:** `introspection: true`\n**Fix:** Disable in production environments.\n\n### 9. Stack Traces in Error Responses\n**Location:** `formatError` includes stacktrace\n**Fix:** Strip in production.\n\n### 10. Subscription Authorization Missing\n**Location:** All subscriptions accept any connection\n**Fix:** Validate auth in subscription `subscribe` functions.\n\n### 11. Passwords Stored Plaintext\n**Location:** `createUser`, `updatePassword`\n**Fix:** Hash with bcrypt before storage.\n\nThe great art of building systems is to keep your balance properly - same with security! This API has fallen off its horse entirely. I'll see you safe to the end of the pipeline, but this needs a complete rewrite with parameterized queries, proper authorization middleware, field-level permissions, and sensitive data handling.\n\n*topples sideways but maintains grip on keyboard*\n",
+  "response_length": 2848,
+  "input_tokens": 2,
+  "output_tokens": 774,
+  "model_usage": {
+    "claude-haiku-4-5-20251001": {
+      "inputTokens": 3,
+      "outputTokens": 197,
+      "cacheReadInputTokens": 13420,
+      "cacheCreationInputTokens": 0,
+      "webSearchRequests": 0,
+      "costUSD": 0.00233,
+      "contextWindow": 200000,
+      "maxOutputTokens": 64000
+    },
+    "claude-opus-4-5-20251101": {
+      "inputTokens": 8,
+      "outputTokens": 1073,
+      "cacheReadInputTokens": 19112,
+      "cacheCreationInputTokens": 7096,
+      "webSearchRequests": 0,
+      "costUSD": 0.08077100000000001,
+      "contextWindow": 200000,
+      "maxOutputTokens": 64000
+    }
+  },
+  "cost_usd": 0.08310100000000001
+}

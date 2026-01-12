@@ -34,6 +34,9 @@ const DEFAULT_SETTINGS = {
         phase_change: true,
         sound: false,
     },
+    pennyfarthing: {
+        theme: 'alice-in-wonderland',
+    },
 };
 /**
  * Get a copy of the default settings
@@ -125,6 +128,13 @@ export function validateSettings(settings) {
         return false;
     if (typeof notifications.sound !== 'boolean')
         return false;
+    // Check pennyfarthing section
+    if (typeof s.pennyfarthing !== 'object' || s.pennyfarthing === null) {
+        return false;
+    }
+    const pennyfarthing = s.pennyfarthing;
+    if (typeof pennyfarthing.theme !== 'string')
+        return false;
     return true;
 }
 // =============================================================================
@@ -161,6 +171,11 @@ export function mergeSettings(base, override) {
         }
         if (typeof override.notifications.sound === 'boolean') {
             result.notifications.sound = override.notifications.sound;
+        }
+    }
+    if (override.pennyfarthing) {
+        if (typeof override.pennyfarthing.theme === 'string') {
+            result.pennyfarthing.theme = override.pennyfarthing.theme;
         }
     }
     return result;
