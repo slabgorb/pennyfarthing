@@ -38,8 +38,12 @@ export declare function getProjectCustomThemesDir(projectRoot: string): string;
  */
 export declare function getUserCustomThemesDir(): string;
 /**
- * Get the current theme from persona-config.yaml
- * Checks local config first (.local.yaml), then falls back to shared config
+ * Get the path to the .pennyfarthing local config (preferred for dogfooding)
+ */
+export declare function getPennyfarthingConfigPath(projectRoot: string): string;
+/**
+ * Get the current theme from config files
+ * Priority: .pennyfarthing/config.local.yaml > .claude/persona-config.local.yaml > .claude/persona-config.yaml
  */
 export declare function getCurrentTheme(projectRoot?: string): string | null;
 /**
@@ -55,13 +59,16 @@ export declare function getThemes(projectRoot?: string): ThemeInfo[];
  */
 export declare function getAgentSamples(theme: ThemeInfo): string;
 export interface SetThemeOptions {
-    /** If true, write to shared config instead of local config */
+    /** If true, write to shared config (.claude/persona-config.yaml) instead of local */
     global?: boolean;
+    /** If true, write to legacy .claude/persona-config.local.yaml instead of .pennyfarthing/ */
+    legacy?: boolean;
 }
 /**
- * Set the active theme in persona-config.yaml
- * By default writes to local config (.local.yaml) for user isolation
- * Use { global: true } to write to shared config (project default)
+ * Set the active theme
+ * By default writes to .pennyfarthing/config.local.yaml (agent-writable, dogfooding-friendly)
+ * Use { legacy: true } to write to .claude/persona-config.local.yaml
+ * Use { global: true } to write to .claude/persona-config.yaml (project default)
  * Returns the ThemeInfo if successful, throws if theme not found
  */
 export declare function setTheme(themeName: string, projectRoot: string, options?: SetThemeOptions): ThemeInfo;

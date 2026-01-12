@@ -63,6 +63,7 @@ export async function initCommand(projectName, options) {
         '.claude/project/skills',
         '.claude/project/docs',
         '.claude/project/hooks',
+        '.pennyfarthing',
         'sprint',
         'sprint/sidecars',
         '.session'
@@ -481,7 +482,8 @@ async function updateGitignore(projectRoot, options) {
         '.session/*',
         '!.session/.gitkeep',
         '.claude/settings.local.json',
-        '.claude/persona-config.local.yaml'
+        '.claude/persona-config.local.yaml',
+        '.pennyfarthing/config.local.yaml'
     ];
     let content = '';
     if (pathExists(gitignorePath)) {

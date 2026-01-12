@@ -4,6 +4,9 @@
 .claude/persona-config.yaml
 .claude/persona-config.local.yaml
 
+# Pennyfarthing local config (agent-writable, dogfooding)
+.pennyfarthing/config.local.yaml
+
 # Session files (runtime state)
 .session/*
 !.session/.gitkeep
