@@ -164,7 +164,9 @@ epics:
           - Support multi-repo via repos.yaml
         points: 3
         priority: P2
-        status: planned
+        status: in_progress
+        started: 2026-01-12
+        assigned_to: Keith Avery
         repos: pennyfarthing
         acceptance_criteria:
           - /chore, /ux, /doc commands implemented
