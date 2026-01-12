@@ -1,0 +1,87 @@
+theme: mad-max
+timestamp: 2026-01-12T06:06:50Z
+runs_per_combo: 2
+
+baselines:
+  dev: 77.50
+  reviewer: 79.50
+  tea: 82.35
+  sm: 87.20
+
+characters:
+  max:
+    native_role: dev
+    character: Max Rockatansky
+    scores:
+      dev: [52.5, 70.0]
+      reviewer: [90.0, 90.0]
+      tea: [72.5, 65.0]
+      sm: [82.5, 90.0]
+    averages:
+      dev: 61.25
+      reviewer: 90.0
+      tea: 68.75
+      sm: 86.25
+
+  joe:
+    native_role: reviewer
+    character: Immortan Joe
+    scores:
+      dev: [65.0, 72.5]
+      reviewer: [92.5, 90.0]
+      tea: [67.5, 67.5]
+      sm: [87.5, 77.5]
+    averages:
+      dev: 68.75
+      reviewer: 91.25
+      tea: 67.5
+      sm: 82.5
+
+  mechanic:
+    native_role: tea
+    character: The Organic Mechanic
+    scores:
+      dev: [62.5, 70.0]
+      reviewer: [90.0, 85.0]
+      tea: [65.0, 67.5]
+      sm: [90.0, 90.0]
+    averages:
+      dev: 66.25
+      reviewer: 87.5
+      tea: 66.25
+      sm: 90.0
+
+  furiosa:
+    native_role: sm
+    character: Imperator Furiosa
+    scores:
+      dev: [62.5, 62.5]
+      reviewer: [92.5, 85.0]
+      tea: [70.0, 80.0]
+      sm: [90.0, 90.0]
+    averages:
+      dev: 62.5
+      reviewer: 88.75
+      tea: 75.0
+      sm: 90.0
+
+champions:
+  dev: joe  # 68.75
+  reviewer: joe  # 91.25 (native)
+  tea: furiosa  # 75.0
+  sm: mechanic  # 90.0 (tie with furiosa, mechanic is cross-role discovery)
+
+hidden_talents:
+  - character: Max Rockatansky
+    native: dev
+    discovered: reviewer
+    native_score: 61.25
+    discovered_score: 90.0
+    delta: +28.75
+
+  - character: The Organic Mechanic  
+    native: tea
+    discovered: sm
+    native_score: 66.25
+    discovered_score: 90.0
+    delta: +23.75
