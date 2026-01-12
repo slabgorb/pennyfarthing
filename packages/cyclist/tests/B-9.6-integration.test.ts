@@ -23,7 +23,9 @@ describe('B-9.6: Quick Actions Integration', () => {
       expect(typeof messageView.processMessageForQuickActions).toBe('function');
     });
 
-    it('should detect questions in assistant messages', async () => {
+    // SKIPPED: Pattern-based detection disabled in favor of markers-only
+    // See quick-actions-fix session for rationale
+    it.skip('should detect questions in assistant messages (pattern-based - disabled)', async () => {
       const { processMessageForQuickActions } = await getMessageView();
 
       const message = createAssistantMessage('Would you like me to create this file?');
@@ -34,7 +36,8 @@ describe('B-9.6: Quick Actions Integration', () => {
       expect(result.type).toBe('yesno');
     });
 
-    it('should detect list choices in assistant messages', async () => {
+    // SKIPPED: Pattern-based detection disabled in favor of markers-only
+    it.skip('should detect list choices in assistant messages (pattern-based - disabled)', async () => {
       const { processMessageForQuickActions } = await getMessageView();
 
       const message = createAssistantMessage(`Here are your options:
@@ -59,7 +62,8 @@ describe('B-9.6: Quick Actions Integration', () => {
       expect(result).toBeNull();
     });
 
-    it('should prioritize list choices over yes/no when both present', async () => {
+    // SKIPPED: Pattern-based detection disabled in favor of markers-only
+    it.skip('should prioritize list choices over yes/no when both present (pattern-based - disabled)', async () => {
       const { processMessageForQuickActions } = await getMessageView();
 
       const message = createAssistantMessage(`Would you like me to proceed? Here are your options:
@@ -75,12 +79,12 @@ describe('B-9.6: Quick Actions Integration', () => {
 
   });
 
-  describe('Priority order: markers > handoff > list > question', () => {
+  describe('Priority order: markers-only (pattern detection disabled)', () => {
 
-    it('should prioritize structured markers over all patterns', async () => {
+    it('should detect structured markers in messages', async () => {
       const { processMessageForQuickActions } = await getMessageView();
 
-      // Has pattern detection AND marker - marker wins
+      // Marker detection still works - this is the only detection now
       const message = createAssistantMessage(`Run /dev to continue.
 <!-- CYCLIST:HANDOFF:/reviewer -->`);
 
@@ -91,7 +95,8 @@ describe('B-9.6: Quick Actions Integration', () => {
       expect(result.source).toBe('structured_marker');
     });
 
-    it('should prioritize handoff over list choices', async () => {
+    // SKIPPED: Pattern-based detection disabled - no longer have handoff vs list priority
+    it.skip('should prioritize handoff over list choices (pattern-based - disabled)', async () => {
       const { processMessageForQuickActions } = await getMessageView();
 
       const message = createAssistantMessage(`Which option?
@@ -106,7 +111,8 @@ Please invoke /reviewer to continue.`);
       expect(result.type).toBe('handoff');
     });
 
-    it('should prioritize list choices over yes/no questions', async () => {
+    // SKIPPED: Pattern-based detection disabled
+    it.skip('should prioritize list choices over yes/no questions (pattern-based - disabled)', async () => {
       const { processMessageForQuickActions } = await getMessageView();
 
       const message = createAssistantMessage(`Would you like to proceed?
@@ -123,7 +129,8 @@ Please invoke /reviewer to continue.`);
 
   describe('Multi-content message handling', () => {
 
-    it('should handle messages with multiple text content blocks', async () => {
+    // SKIPPED: Pattern-based detection disabled in favor of markers-only
+    it.skip('should handle messages with multiple text content blocks (pattern-based - disabled)', async () => {
       const { processMessageForQuickActions } = await getMessageView();
 
       const message = createAssistantMessage([
@@ -137,7 +144,8 @@ Please invoke /reviewer to continue.`);
       expect(result.type).toBe('yesno');
     });
 
-    it('should concatenate content blocks for analysis', async () => {
+    // SKIPPED: Pattern-based detection disabled in favor of markers-only
+    it.skip('should concatenate content blocks for analysis (pattern-based - disabled)', async () => {
       const { processMessageForQuickActions } = await getMessageView();
 
       const message = createAssistantMessage([
@@ -150,6 +158,21 @@ Please invoke /reviewer to continue.`);
 
       expect(result).not.toBeNull();
       expect(result.type).toBe('list');
+    });
+
+    it('should handle multi-content messages with markers', async () => {
+      const { processMessageForQuickActions } = await getMessageView();
+
+      const message = createAssistantMessage([
+        'Implementation complete.',
+        '\n\n<!-- CYCLIST:HANDOFF:/reviewer -->'
+      ]);
+
+      const result = processMessageForQuickActions(message);
+
+      expect(result).not.toBeNull();
+      expect(result.type).toBe('handoff');
+      expect(result.agent).toBe('/reviewer');
     });
 
   });

@@ -71,6 +71,10 @@ function initMessageView() {
 
   // Connect to Claude SDK events (Electron mode)
   if (window.electronAPI?.claude) {
+    // Track the last assistant message for processing on completion
+    // This prevents quick action detection during streaming (partial text)
+    let lastAssistantMessage = null;
+
     // Handle streaming messages from Claude SDK
     window.electronAPI.claude.onMessage((message) => {
       console.log('[MessageView] SDK message:', message.type);
@@ -80,12 +84,10 @@ function initMessageView() {
       // 22-7: Detect git commits and remove committed files from diff list
       handleGitCommitMessage(message);
 
-      // B-9.6: Process assistant messages for quick actions
+      // Track assistant messages for quick action processing on completion
+      // DON'T process here - streaming messages have incomplete text
       if (message.type === 'assistant') {
-        const quickActionResult = processMessageForQuickActions(message);
-        if (quickActionResult) {
-          showQuickActions(quickActionResult);
-        }
+        lastAssistantMessage = message;
       }
     });
 
@@ -97,6 +99,16 @@ function initMessageView() {
       resetSubmitting(); // Allow new submissions
       setProcessing(false); // 17-1: Mark processing complete
       processNextInQueue(); // 17-1: Send next queued message if any
+
+      // Process quick actions ONLY on completion (markers-only detection)
+      // This ensures we analyze the complete message, not streaming fragments
+      if (lastAssistantMessage) {
+        const quickActionResult = processMessageForQuickActions(lastAssistantMessage);
+        if (quickActionResult) {
+          showQuickActions(quickActionResult);
+        }
+        lastAssistantMessage = null; // Reset for next turn
+      }
     });
 
     window.electronAPI.claude.onError((error) => {
