@@ -38,6 +38,7 @@ If `--bump` specified, delegates to `deploy.sh` which also:
 - Bumps VERSION file
 - Commits version change
 - Creates annotated git tag
+- Creates GitHub release from the tag (requires `gh` CLI)
 </workflow>
 
 <when-to-use>
