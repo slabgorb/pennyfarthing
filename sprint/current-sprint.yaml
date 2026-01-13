@@ -1,21 +1,127 @@
 sprint:
   number: 10
-  goal: TBD
+  goal: Lay foundation for customizable workflows
   planned_start: 2026-01-13
-  status: planning
+  status: active
   velocity_target: 22
 summary:
-  total_points: 0
+  total_points: 15
   completed_points: 0
-  remaining_points: 0
+  remaining_points: 15
   notes: |
-    Sprint 10 - Ready for planning.
+    Sprint 10 focus: Customizable Workflow Engine (Epic 31)
 
-    Previous sprint (9) delivered 109 points across 11 epics.
+    Establishes YAML-based workflow definitions, replacing hardcoded TDD flow.
+    Unblocks Epic 32 (BMAD compatibility) for Sprint 11.
 # =============================================================================
 # ACTIVE EPICS
 # =============================================================================
-epics: []
+epics:
+  - id: epic-31
+    title: Customizable Workflow Engine
+    description: |
+      Infrastructure for user-defined workflows. Replace hardcoded TDD flow
+      (SM → TEA → Dev → Reviewer) with configurable YAML-based workflows.
+      Users can define custom agent sequences, routing rules, and gates.
+    points: 15
+    completed_points: 0
+    priority: P1
+    marker: strategic
+    repos: pennyfarthing
+    status: in_progress
+    stories:
+      - id: 31-1
+        title: Workflow definition schema (YAML spec)
+        description: |
+          Define the YAML schema for workflows:
+          - Workflow name, description, triggers
+          - Phase definitions (agent, input, output, gates)
+          - Routing rules (tags, story type, points)
+        points: 3
+        priority: P0
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Schema documented in pennyfarthing-dist/guides/
+          - Supports workflow name, description, version
+          - Supports phase definitions with agent, input, output, gate
+          - Supports trigger rules (tags, type, points)
+          - Example workflows validate against schema
+      - id: 31-2
+        title: Workflow loader and validator
+        description: |
+          Load workflow definitions from .claude/workflows/*.yaml
+          Validate against schema, report errors clearly.
+        points: 3
+        priority: P0
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Loads all YAML files from .claude/workflows/
+          - Validates each against schema
+          - Clear error messages for invalid workflows
+          - Returns structured workflow objects
+          - Unit tests for loader and validator
+      - id: 31-3
+        title: Story-to-workflow routing engine
+        description: |
+          Route stories to appropriate workflow based on:
+          - Explicit workflow tag on story
+          - Story type (bug, feature, chore, docs)
+          - Default workflow fallback
+        points: 3
+        priority: P0
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Stories with workflow tag use specified workflow
+          - Story type mapping to workflows configurable
+          - Default workflow when no match
+          - Routing decision logged for debugging
+      - id: 31-4
+        title: Migrate TDD flow to workflow definition
+        description: |
+          Convert current hardcoded SM → TEA → Dev → Reviewer flow
+          to a workflow YAML file. Ensure backward compatibility.
+        points: 2
+        priority: P0
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - tdd.yaml workflow in pennyfarthing-dist/workflows/
+          - Defines SM → TEA → Dev → Reviewer → SM phases
+          - Scale routing (1-2 pts skip TEA) preserved
+          - Existing /new-work behavior unchanged
+      - id: 31-5
+        title: /workflow skill for listing and switching
+        description: |
+          Skill to list available workflows, show current workflow,
+          and manually switch workflows mid-session if needed.
+        points: 2
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - /workflow lists all available workflows
+          - /workflow show displays current workflow details
+          - /workflow set <name> switches active workflow
+          - Shows workflow phases and current position
+      - id: 31-6
+        title: Session file workflow tracking
+        description: |
+          Update session file format to track:
+          - Active workflow name
+          - Current phase in workflow
+          - Phase history and transitions
+        points: 2
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Session files include workflow section
+          - Tracks workflow name and current phase
+          - Records phase transitions with timestamps
+          - workflow-status-check reads workflow state
 # =============================================================================
 # COMPLETED EPICS (Sprint 10)
 # =============================================================================
