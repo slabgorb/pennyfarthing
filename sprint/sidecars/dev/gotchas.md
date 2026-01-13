@@ -217,3 +217,40 @@ async *sendMessage(prompt: string) {
 **Discovered:** 2026-01-12 (Orchestrator debugging session)
 
 ---
+
+### Tool Execution Log Shows 0 Entries in Cyclist
+
+**Situation:** Cyclist's Tool Execution Log panel shows "0 total, 0 success" despite tool calls happening.
+
+**Problem:** The OTEL telemetry pipeline was never wired up:
+1. `writePortFile()` function existed in `server.ts` but was never called
+2. Without `.cyclist-port` file, `session-start.sh` couldn't set `OTEL_EXPORTER_OTLP_ENDPOINT`
+3. Claude Code didn't know where to send telemetry
+
+**Root Cause:** Story 20-1 implemented the port file functions and the hook logic, but missed the critical integration step of actually calling `writePortFile()` when the server starts.
+
+**The telemetry flow requires:**
+```
+Cyclist starts
+  → writePortFile() writes .cyclist-port
+  → Claude Code session starts
+  → session-start.sh reads .cyclist-port
+  → Sets OTEL_EXPORTER_OTLP_ENDPOINT in CLAUDE_ENV_FILE
+  → Claude Code sends telemetry to /v1/logs
+  → OTLP receiver records tool events
+  → Tool Execution Log shows entries
+```
+
+**Fix:**
+1. In `main.ts` `startServer()`, call `writePortFile(projectDir, actualPort)` after server.listen succeeds
+2. In `main.ts` `stopServer()`, call `cleanupPortFile(projectDir)` before server.close
+3. In `session-start.sh`, add OTEL auto-config that reads `.cyclist-port` and writes env vars to `CLAUDE_ENV_FILE`
+
+**Prevention:**
+- When implementing multi-component features, trace the full data flow end-to-end
+- Functions that exist but aren't called are easy to miss in code review
+- Test the feature manually, not just the unit tests
+
+**Discovered:** 2026-01-13 (Bug fix session)
+
+---
