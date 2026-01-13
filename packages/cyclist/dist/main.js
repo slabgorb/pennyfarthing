@@ -284,7 +284,7 @@ export function getDataChannels() {
     ];
 }
 // Stats state managed by main process
-let currentStats = {
+const currentStats = {
     model: '—',
     status: '—',
     mode: '—',
@@ -1096,7 +1096,7 @@ export function setupFileBrowserIPCHandlers(ipcMain) {
 /**
  * Flag indicating if settings have been initialized
  */
-export let isSettingsInitialized = false;
+export const isSettingsInitialized = false;
 /**
  * Handle settings:get IPC call
  * Returns current settings

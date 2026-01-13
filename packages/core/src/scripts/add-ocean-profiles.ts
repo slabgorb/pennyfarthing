@@ -6,10 +6,9 @@
  * Run after defining profiles in the OCEAN_PROFILES constant below.
  */
 
-import { readFileSync, writeFileSync, readdirSync } from 'fs';
-import { join, basename, dirname } from 'path';
+import { readFileSync, writeFileSync } from 'fs';
+import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import { findMonorepoRoot } from '../cli/utils/files.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -19,8 +18,8 @@ const __dirname = dirname(__filename);
 const projectRoot = findMonorepoRoot(__dirname);
 const THEMES_DIR = join(projectRoot, 'pennyfarthing-dist', 'personas', 'themes');
 
-const AGENTS = ['orchestrator', 'sm', 'tea', 'dev', 'reviewer', 'architect', 'pm', 'tech-writer', 'ux-designer', 'devops'] as const;
-type Agent = typeof AGENTS[number];
+const _AGENTS = ['orchestrator', 'sm', 'tea', 'dev', 'reviewer', 'architect', 'pm', 'tech-writer', 'ux-designer', 'devops'] as const;
+type Agent = typeof _AGENTS[number];
 
 interface OceanScore {
   O: number;

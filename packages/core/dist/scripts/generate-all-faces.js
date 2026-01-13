@@ -181,8 +181,8 @@ Background colors indicate agent role.
 ---
 
 `;
-// Generate image tag with character name caption
-function imgWithName(src, characterName, agentRole) {
+// Generate image tag with character name caption (reserved for future use)
+function _imgWithName(src, characterName, agentRole) {
     const safeName = escapeForMarkdown(characterName);
     return `${imgTag(src, characterName)}<br/>**${safeName}**<br/><small>${agentRole}</small>`;
 }
@@ -212,8 +212,8 @@ ${LEGEND}`;
     writeFileSync(join(facesDir, 'team-photos.md'), md);
     console.log('Generated team-photos.md');
 }
-// Generate image tag with character name for role gallery (theme name in header, character name below)
-function imgWithCharacter(src, theme, agent) {
+// Generate image tag with character name for role gallery (reserved for future use)
+function _imgWithCharacter(src, theme, agent) {
     const charName = getCharacterName(theme, agent);
     const safeName = escapeForMarkdown(charName);
     return `${imgTag(src, charName)}<br/>**${safeName}**`;

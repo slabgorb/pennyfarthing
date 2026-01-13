@@ -31,7 +31,7 @@ const EXPECTED_DISTRIBUTION = {
     medium: 4,
     hard: 3,
 };
-let scenarios = new Map();
+const scenarios = new Map();
 let scenarioFiles = [];
 // ============================================================================
 // Setup: Load all scenario files
@@ -142,7 +142,7 @@ describe('AC2: Each scenario has 4-8 baseline_issues with error_type tags', { sk
 describe('AC3: Mix of single-type and mixed-type scenarios', { skip: 'Story 14-4 not implemented' }, () => {
     it('should have at least 3 single-type scenarios (all issues same error_type)', () => {
         let singleTypeCount = 0;
-        for (const [file, scenario] of scenarios) {
+        for (const [_file, scenario] of scenarios) {
             const issues = scenario.baseline_issues || {};
             const allIssues = [
                 ...(issues.critical || []),
@@ -159,7 +159,7 @@ describe('AC3: Mix of single-type and mixed-type scenarios', { skip: 'Story 14-4
     });
     it('should have at least 3 mixed-type scenarios (multiple error_types)', () => {
         let mixedTypeCount = 0;
-        for (const [file, scenario] of scenarios) {
+        for (const [_file, scenario] of scenarios) {
             const issues = scenario.baseline_issues || {};
             const allIssues = [
                 ...(issues.critical || []),

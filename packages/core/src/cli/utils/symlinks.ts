@@ -1,4 +1,4 @@
-import { readdirSync, unlinkSync, symlinkSync, statSync } from 'fs';
+import { readdirSync, unlinkSync, symlinkSync } from 'fs';
 import { join, relative, dirname } from 'path';
 import fsExtra from 'fs-extra';
 

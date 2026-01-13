@@ -116,7 +116,7 @@ const FACE_DIMS = {
  */
 export function generateAsciiFromFeatures(features: AsciiFaceFeatures): string {
   const dims = FACE_DIMS[features.faceWidth];
-  const { outer, inner, pad } = dims;
+  const { outer: _outer, inner, pad } = dims;
   const { borderTL, borderTR, borderBL, borderBR, borderH, borderV } = features;
 
   // Helper to center content in a field

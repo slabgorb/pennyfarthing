@@ -17,11 +17,15 @@
     "docs": "./scripts/utils/generate-skill-docs.sh",
     "dev": "pnpm -r --parallel dev",
     "test": "pnpm -r test",
-    "lint": "pnpm -r lint",
+    "lint": "eslint 'packages/*/src/**/*.ts' --max-warnings 0",
     "clean": "pnpm -r clean"
   },
   "devDependencies": {
-    "typescript": "^5.3.3"
+    "@eslint/js": "^9.39.2",
+    "eslint": "^9.39.2",
+    "globals": "^17.0.0",
+    "typescript": "^5.3.3",
+    "typescript-eslint": "^8.53.0"
   },
   "engines": {
     "node": ">=18.0.0"

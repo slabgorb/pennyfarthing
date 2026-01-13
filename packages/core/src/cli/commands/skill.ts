@@ -1,5 +1,5 @@
-import { existsSync, readdirSync, readlinkSync, unlinkSync, symlinkSync, writeFileSync, mkdirSync } from 'fs';
-import { join, relative, dirname, basename } from 'path';
+import { readdirSync, readlinkSync, unlinkSync, symlinkSync, writeFileSync } from 'fs';
+import { join, relative, dirname } from 'path';
 import fsExtra from 'fs-extra';
 
 const { ensureDirSync, removeSync } = fsExtra;

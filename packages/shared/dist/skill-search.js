@@ -25,7 +25,6 @@ function parseRegistryYaml(content) {
     const result = { version: '', skills: {} };
     const lines = content.split('\n');
     let currentSkillKey = null;
-    let currentField = null;
     let currentArrayField = null;
     let insideExamples = false;
     for (const line of lines) {
@@ -61,7 +60,6 @@ function parseRegistryYaml(content) {
                 related_skills: [],
                 keywords: []
             };
-            currentField = null;
             currentArrayField = null;
             insideExamples = false;
             continue;

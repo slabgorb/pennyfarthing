@@ -17,7 +17,7 @@
  * @see otlp-receiver.ts for event sources
  */
 
-import type { AgentSpan, ToolSpan, PromptEvent, SpanStatus } from './telemetry-types.js';
+import type { AgentSpan, ToolSpan, PromptEvent } from './telemetry-types.js';
 import type { ToolEvent, ParsedPromptEvent } from './otlp-receiver.js';
 import { getAgentContext } from './agent-context.js';
 import { getStoryContext } from './story-context.js';

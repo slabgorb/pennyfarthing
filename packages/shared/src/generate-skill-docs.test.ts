@@ -10,7 +10,7 @@
  * Run with: npm test -- packages/shared/src/generate-skill-docs.test.ts
  */
 
-import { describe, it, beforeEach, afterEach } from 'node:test';
+import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { execSync } from 'child_process';
 import { existsSync, readFileSync, mkdirSync, writeFileSync, rmSync, statSync } from 'fs';
@@ -21,8 +21,6 @@ import { fileURLToPath } from 'url';
 // Import the generator function - this doesn't exist yet, tests should fail (RED)
 import {
   generateSkillDocs,
-  type GeneratorOptions,
-  type GeneratorResult,
 } from './generate-skill-docs.js';
 
 // Paths
@@ -365,7 +363,7 @@ skills:
 
       // Find positions of category headings
       const content = result.content.toLowerCase();
-      const aiIndex = content.indexOf('ai') > -1 ? content.indexOf('ai') : Infinity;
+      const _aiIndex = content.indexOf('ai') > -1 ? content.indexOf('ai') : Infinity;
       const devIndex = content.indexOf('development');
       const toolsIndex = content.indexOf('tools');
 
@@ -596,8 +594,8 @@ skills:
           }
         );
         assert.fail('Should have thrown for missing registry');
-      } catch (error: any) {
-        assert.ok(error.status !== 0, 'Should exit with non-zero status on error');
+      } catch (error) {
+        assert.ok((error as { status?: number }).status !== 0, 'Should exit with non-zero status on error');
       }
     });
   });

@@ -22,7 +22,6 @@ import {
   aggregateTokenStats,
   resetTokenStats,
   resetEventStore,
-  getToolEvents,
   getToolEventsFiltered,
   getToolTypes,
   exportAuditLogAsJSON,
@@ -31,7 +30,7 @@ import {
 } from './otlp-receiver.js';
 import { ClaudeService, SDKMessage } from './claude-service.js';
 import { isTodoWriteMessage, extractTodos, type TodoItem } from './todos.js';
-import { listDirectory as listDir, type DirectoryListing } from './file-browser.js';
+import { listDirectory as listDir } from './file-browser.js';
 import {
   getProjectDirectory,
   setProjectDirectory,
@@ -39,13 +38,10 @@ import {
   parseProjectDirArg,
 } from './paths.js';
 import { getContextUsage, ContextInfo } from './api/context.js';
-import { getVerboseMode, setVerboseMode, syncWithFileSettings } from './settings-store.js';
+import { getVerboseMode, setVerboseMode } from './settings-store.js';
 import {
-  initializeSettings,
   getCurrentSettings,
   saveUserSettings,
-  watchAllSettings,
-  stopWatchingSettings,
   type CyclistSettings,
 } from './settings.js';
 import { openSettingsWindow, setMainWindowRef, setBrowserWindowRef } from './settings-window.js';
@@ -380,7 +376,7 @@ export interface StatsState {
 }
 
 // Stats state managed by main process
-let currentStats: StatsState = {
+const currentStats: StatsState = {
   model: '—',
   status: '—',
   mode: '—',
@@ -1327,7 +1323,7 @@ export function setupFileBrowserIPCHandlers(ipcMain: {
 /**
  * Flag indicating if settings have been initialized
  */
-export let isSettingsInitialized = false;
+export const isSettingsInitialized = false;
 
 /**
  * Handle settings:get IPC call

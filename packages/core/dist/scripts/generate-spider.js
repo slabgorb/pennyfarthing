@@ -253,8 +253,8 @@ const TEAM_AGENTS = [
     'ux-designer',
     'devops',
 ];
-// Human-readable agent names for legend
-const AGENT_DISPLAY_NAMES = {
+// Human-readable agent names for legend (reserved for future use)
+const _AGENT_DISPLAY_NAMES = {
     orchestrator: 'Orch',
     sm: 'SM',
     tea: 'TEA',

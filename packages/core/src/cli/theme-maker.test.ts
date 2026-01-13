@@ -10,7 +10,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { existsSync, readFileSync, mkdirSync, rmSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { validateThemeName, getProjectCustomThemesDir, validateThemeSchema } from './utils/themes.js';
@@ -325,7 +325,7 @@ describe('Theme Schema Validation (Story 6-2)', () => {
 
     it('should reject theme missing agents section', () => {
       const theme = createValidTheme();
-      delete (theme as any).agents;
+      delete (theme as unknown as Record<string, unknown>).agents;
       const result = validateThemeSchema(theme);
       assert.strictEqual(result.valid, false);
       assert.ok(result.errors?.some(e => e.includes('agents')));

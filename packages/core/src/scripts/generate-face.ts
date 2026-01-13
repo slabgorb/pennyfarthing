@@ -153,7 +153,7 @@ export function generateSvgFromParams(params: FaceParams, backgroundColor?: stri
     pupilRadius,
     faceWidth,
     faceHeight,
-    cornerRadius,
+    cornerRadius: _cornerRadius,
     mouthWidth,
     mouthCurve,
     eyebrowAngle,

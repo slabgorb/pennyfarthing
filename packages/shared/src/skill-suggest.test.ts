@@ -18,7 +18,6 @@ import {
   suggestFromSession,
   suggestFromKeywords,
   type SuggestOptions,
-  type SkillSuggestion,
   type SessionContext,
 } from './skill-suggest.js';
 
