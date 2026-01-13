@@ -175,6 +175,12 @@ function createElectronAPI() {
                     ipcRenderer.on('theme:showQuickSwitcher', () => callback());
                 },
             },
+            // Tools API (tool panel toggle)
+            tools: {
+                onTogglePanel: (callback) => {
+                    ipcRenderer.on('tools:toggleToolPanel', () => callback());
+                },
+            },
         };
     }
     else {
@@ -311,6 +317,12 @@ function createElectronAPI() {
             // Theme API (24-9) - test stub
             theme: {
                 onShowQuickSwitcher: (_callback) => {
+                    // No-op in test environment
+                },
+            },
+            // Tools API - test stub
+            tools: {
+                onTogglePanel: (_callback) => {
                     // No-op in test environment
                 },
             },
