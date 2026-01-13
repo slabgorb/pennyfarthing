@@ -21,8 +21,8 @@ import {
   type BmadStory,
   type BmadTask,
   type BmadAcceptanceCriteria,
-  type ParseResult,
-  type ParseError,
+  type ParseResult as _ParseResult,
+  type ParseError as _ParseError,
 } from './story-parser.js';
 
 // =============================================================================
