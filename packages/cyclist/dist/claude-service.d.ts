@@ -316,9 +316,12 @@ export declare class ClaudeService extends EventEmitter {
     private messageResolvers;
     private processExited;
     private processError;
+    /** Default environment variables to pass to spawned Claude process */
+    private defaultEnv?;
     constructor(options?: {
         cwd?: string;
         spawner?: ClaudeSpawner;
+        env?: Record<string, string>;
     });
     /**
      * Ensure a Claude process is running, spawning one if needed.

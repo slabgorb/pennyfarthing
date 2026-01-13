@@ -33,10 +33,13 @@ export class ClaudeService extends EventEmitter {
     messageResolvers = [];
     processExited = false;
     processError = null;
+    /** Default environment variables to pass to spawned Claude process */
+    defaultEnv;
     constructor(options) {
         super();
         this.defaultCwd = options?.cwd;
         this.spawner = options?.spawner ?? spawn;
+        this.defaultEnv = options?.env;
     }
     /**
      * Ensure a Claude process is running, spawning one if needed.
@@ -55,7 +58,7 @@ export class ClaudeService extends EventEmitter {
         this.processError = null;
         const args = this.buildArgs();
         const cwd = options?.cwd ?? this.defaultCwd ?? process.cwd();
-        const env = { ...process.env, ...options?.env, CYCLIST: '1' };
+        const env = { ...process.env, ...this.defaultEnv, ...options?.env, CYCLIST: '1' };
         console.log('[ClaudeService] Spawning new Claude process (persistent mode)');
         const proc = this.spawner('claude', args, {
             cwd,

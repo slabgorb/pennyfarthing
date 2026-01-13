@@ -29,6 +29,15 @@ let onTokenStatsUpdate = null;
 export function setTokenStatsCallback(callback) {
     onTokenStatsUpdate = callback;
 }
+// Callback for when tool events are recorded (set by main.ts for IPC broadcast)
+let onToolEventRecorded = null;
+/**
+ * Register callback for tool event recording
+ * Called by main.ts to wire up IPC broadcast to renderer
+ */
+export function setToolEventCallback(callback) {
+    onToolEventRecorded = callback;
+}
 /**
  * Parse OTLP JSON payload and extract token usage metrics
  */
@@ -192,10 +201,14 @@ export function parseOTLPLogs(body) {
     return events;
 }
 /**
- * Record a tool event to session storage
+ * Record a tool event to session storage and notify listeners
  */
 export function recordToolEvent(event) {
     toolEvents.push(event);
+    // Broadcast to renderer if callback registered
+    if (onToolEventRecorded) {
+        onToolEventRecorded(event);
+    }
 }
 /**
  * Record a prompt event to session storage

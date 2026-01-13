@@ -103,6 +103,17 @@ export function setTokenStatsCallback(callback: (stats: TokenStats) => void): vo
   onTokenStatsUpdate = callback;
 }
 
+// Callback for when tool events are recorded (set by main.ts for IPC broadcast)
+let onToolEventRecorded: ((event: ToolEvent) => void) | null = null;
+
+/**
+ * Register callback for tool event recording
+ * Called by main.ts to wire up IPC broadcast to renderer
+ */
+export function setToolEventCallback(callback: (event: ToolEvent) => void): void {
+  onToolEventRecorded = callback;
+}
+
 // OTLP JSON structure types
 interface OTLPAttribute {
   key: string;
@@ -348,10 +359,14 @@ export function parseOTLPLogs(body: unknown): RawLogEvent[] {
 }
 
 /**
- * Record a tool event to session storage
+ * Record a tool event to session storage and notify listeners
  */
 export function recordToolEvent(event: ToolEvent): void {
   toolEvents.push(event);
+  // Broadcast to renderer if callback registered
+  if (onToolEventRecorded) {
+    onToolEventRecorded(event);
+  }
 }
 
 /**

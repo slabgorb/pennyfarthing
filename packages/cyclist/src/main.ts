@@ -13,12 +13,14 @@ import { Server } from 'http';
 import { fileURLToPath } from 'url';
 import { dirname, join, basename } from 'path';
 import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
-import { getStoryInfo, getGitInfo, writePortFile, cleanupPortFile } from './server.js';
+import { getStoryInfo, getGitInfo, writePortFile, cleanupPortFile, getOtelConfig } from './server.js';
 import { parseToolStats, ToolStats, createEmptyStats } from './tool-stats.js';
 import {
   getTokenStats,
   setTokenStatsCallback,
+  setToolEventCallback,
   TokenStats,
+  ToolEvent,
   aggregateTokenStats,
   resetTokenStats,
   resetEventStore,
@@ -1052,6 +1054,13 @@ export function startProjectWatchers(): void {
   });
   console.log('Token stats callback registered for OTLP broadcasts');
 
+  // Register tool event callback for audit log real-time updates
+  setToolEventCallback((event: ToolEvent) => {
+    broadcastToRenderer(IPC_AUDIT_LOG_CHANNELS.ENTRY, event);
+    console.log(`Tool event broadcast: ${event.toolName}`);
+  });
+  console.log('Tool event callback registered for audit log broadcasts');
+
   // Start watching for agent changes
   if (detectPennyfarthingProject(projectDir)) {
     const sessionId = process.env.CYCLIST_SESSION_ID;
@@ -1094,7 +1103,17 @@ export function getClaudeService(): ClaudeService {
   if (!claudeServiceInstance) {
     const projectDir = getProjectDirectory();
     if (!projectDir) throw new Error('Cannot create ClaudeService: no project directory set');
-    claudeServiceInstance = new ClaudeService({ cwd: projectDir });
+    // Get OTEL config to enable telemetry streaming to Cyclist
+    const otelConfig = getOtelConfig(projectDir);
+    claudeServiceInstance = new ClaudeService({
+      cwd: projectDir,
+      env: otelConfig ?? undefined,
+    });
+    if (otelConfig) {
+      console.log('[ClaudeService] OTEL config enabled:', otelConfig.OTEL_EXPORTER_OTLP_ENDPOINT);
+    } else {
+      console.warn('[ClaudeService] OTEL config not available - tool events will not stream');
+    }
   }
   return claudeServiceInstance;
 }
