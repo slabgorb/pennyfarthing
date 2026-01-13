@@ -9,7 +9,7 @@ Add this block BEFORE `<agent-activation>`:
 ```markdown
 <persona-loading agent="{agent-name}">
 Load this agent's persona before activation:
-1. Read `.claude/persona-config.local.yaml` (if exists) or `.claude/persona-config.yaml`
+1. Read `.pennyfarthing/config.local.yaml`
 2. Get `theme` value (e.g., "discworld")
 3. Read `pennyfarthing-dist/personas/themes/{theme}.yaml` (or `.claude/personas/themes/`)
 4. Extract `agents.{agent-name}` section (character, style, helper, etc.)

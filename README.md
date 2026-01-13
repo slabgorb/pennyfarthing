@@ -187,7 +187,7 @@ See [Theme Comparison Guide](docs/THEME-COMPARISON.md) for personality analysis,
 
 Create custom themes with `/theme-maker`.
 
-Configure in `.claude/persona-config.yaml`:
+Configure in `.pennyfarthing/config.local.yaml`:
 ```yaml
 theme: star-trek-tos
 ```

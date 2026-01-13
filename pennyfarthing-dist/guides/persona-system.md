@@ -6,7 +6,7 @@ The Pennyfarthing persona system allows you to customize agent personalities thr
 
 ### Change Theme
 
-Edit `.claude/persona-config.local.yaml`:
+Edit `.pennyfarthing/config.local.yaml`:
 
 ```yaml
 theme: star-trek  # 102 themes available!
@@ -46,7 +46,7 @@ overrides:
 
 ## Configuration File
 
-**Location:** `.claude/persona-config.local.yaml` (local, not tracked in git)
+**Location:** `.pennyfarthing/config.local.yaml` (local, not tracked in git)
 
 ```yaml
 # Base theme (102 themes available - see /list-themes)
@@ -277,7 +277,7 @@ For individual agent customization without a full theme.
 
 | File | Purpose |
 |------|---------|
-| `.claude/persona-config.local.yaml` | Active configuration (local, not tracked) |
+| `.pennyfarthing/config.local.yaml` | Active configuration (local, not tracked) |
 | `pennyfarthing-dist/personas/attributes.yaml` | Attribute definitions |
 | `pennyfarthing-dist/personas/themes/*.yaml` | 102 theme definitions |
 | `.claude/project/personas/*.yaml` | Custom project personas |
