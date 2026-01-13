@@ -40,6 +40,14 @@ let gitPollTimer = null;
 let themeAgentsCache = null;
 
 /**
+ * Get the cached theme agents mapping
+ * @returns {Object|null} Agent-to-character mapping or null if not loaded
+ */
+export function getThemeAgents() {
+  return themeAgentsCache;
+}
+
+/**
  * Fetch and cache theme agents mapping
  */
 async function loadThemeAgents() {
