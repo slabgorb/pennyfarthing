@@ -11,10 +11,11 @@ summary:
   notes: |
     Sprint 10 focus: Three strategic epics
     - Epic 31: Customizable Workflow Engine (15 pts)
-    - Epic 32: BMAD 6.0 Compatibility (15 pts)
+    - Epic 32: BMAD Artifact Compatibility (11 pts) - REVISED
     - Epic 33: Runtime Permission Management (12 pts)
 
-    Epic 32 depends on Epic 31 completion.
+    Epic 32 revised to focus on artifact interoperability (import/export)
+    rather than workflow engine compatibility. No dependency on Epic 31.
 # =============================================================================
 # ACTIVE EPICS
 # =============================================================================
@@ -31,6 +32,7 @@ epics:
     marker: strategic
     repos: pennyfarthing
     status: in_progress
+    jira: MSSCI-11599
     stories:
       - id: 31-1
         title: Workflow definition schema (YAML spec)
@@ -46,6 +48,7 @@ epics:
         completed: 2026-01-13
         assigned_to: Keith Avery
         repos: pennyfarthing
+        jira: MSSCI-11606
         acceptance_criteria:
           - Schema documented in pennyfarthing-dist/guides/
           - Supports workflow name, description, version
@@ -64,6 +67,7 @@ epics:
         completed: 2026-01-13
         assigned_to: Keith Avery
         repos: pennyfarthing
+        jira: MSSCI-11607
         acceptance_criteria:
           - Loads all YAML files from .claude/workflows/
           - Validates each against schema
@@ -81,6 +85,7 @@ epics:
         priority: P0
         status: backlog
         repos: pennyfarthing
+        jira: MSSCI-11608
         acceptance_criteria:
           - Stories with workflow tag use specified workflow
           - Story type mapping to workflows configurable
@@ -95,6 +100,7 @@ epics:
         priority: P0
         status: backlog
         repos: pennyfarthing
+        jira: MSSCI-11603
         acceptance_criteria:
           - tdd.yaml workflow in pennyfarthing-dist/workflows/
           - Defines SM → TEA → Dev → Reviewer → SM phases
@@ -109,6 +115,7 @@ epics:
         priority: P1
         status: backlog
         repos: pennyfarthing
+        jira: MSSCI-11609
         acceptance_criteria:
           - /workflow lists all available workflows
           - /workflow show displays current workflow details
@@ -125,6 +132,7 @@ epics:
         priority: P1
         status: backlog
         repos: pennyfarthing
+        jira: MSSCI-11610
         acceptance_criteria:
           - Session files include workflow section
           - Tracks workflow name and current phase
@@ -162,124 +170,118 @@ epics:
           - Records phase transitions with timestamps
           - workflow-status-check reads workflow state
   - id: epic-32
-    title: BMAD 6.0 Compatibility
+    title: BMAD Artifact Compatibility
     description: |
-      Implement BMAD 6.0 methodology compatibility. Import BMAD workflow
-      definitions, provide built-in BMAD-style workflows for debugging,
-      documentation, devops, and planning use cases.
-    points: 15
+      Enable Pennyfarthing to work with BMAD-generated planning artifacts
+      and produce outputs BMAD tooling can consume. Focus on artifact
+      interoperability: import BMAD stories/epics, work in our TDD flow,
+      export results back to BMAD format.
+    points: 11
     completed_points: 0
     priority: P1
     marker: strategic
     repos: pennyfarthing
     status: backlog
-    depends_on: epic-31
     stories:
       - id: 32-1
-        title: Research BMAD 6.0 schema and agents
+        title: Document BMAD artifact formats
         description: |
-          Analyze BMAD-METHOD repo structure:
-          - Agent definitions and roles
-          - Workflow schemas
-          - Configuration patterns
-          Document mapping to Pennyfarthing concepts.
-        points: 2
+          Document all BMAD artifact formats for reference:
+          - Story file format (template.md structure)
+          - Epics+stories format (epics-template.md)
+          - Sprint-status.yaml schema
+          - Project-context.md structure
+          Create sprint/context/bmad-formats.md reference.
+        points: 1
         priority: P0
         status: backlog
         repos: pennyfarthing
         acceptance_criteria:
-          - BMAD repo analyzed and documented
-          - Agent role mapping to Pennyfarthing agents
-          - Workflow schema differences identified
-          - Compatibility approach documented
+          - BMAD story format documented with examples
+          - BMAD epics format documented
+          - Sprint-status schema documented
+          - Project-context structure documented
+          - Reference saved to sprint/context/
       - id: 32-2
-        title: BMAD workflow import/mapping
+        title: BMAD story file parser
         description: |
-          Parse BMAD workflow definitions and convert to
-          Pennyfarthing workflow YAML format.
-        points: 3
+          Parse BMAD story files and convert to Pennyfarthing session format.
+          Handle: Status, Story (user story), Acceptance Criteria, Tasks/Subtasks,
+          Dev Notes, Dev Agent Record, File List sections.
+        points: 2
         priority: P0
         status: backlog
         repos: pennyfarthing
         acceptance_criteria:
-          - BMAD workflow parser implemented
-          - Converts to Pennyfarthing workflow format
-          - Handles agent name mapping
-          - Unit tests for conversion
+          - Parses BMAD story markdown format
+          - Extracts status, ACs, tasks, dev notes
+          - Converts to Pennyfarthing session structure
+          - Preserves task checkbox state
+          - Unit tests for parser
       - id: 32-3
-        title: Debugging workflow (BMAD-style)
+        title: BMAD epics+stories importer
         description: |
-          Built-in workflow for bug investigation:
-          Debugger → Dev → Reviewer
-          Focus on root cause analysis before fix.
+          Import BMAD epics.md file into Pennyfarthing sprint YAML.
+          Map epic/story structure, preserve BDD acceptance criteria,
+          handle story numbering (N.M format).
         points: 2
-        priority: P1
+        priority: P0
         status: backlog
         repos: pennyfarthing
         acceptance_criteria:
-          - debugging.yaml workflow defined
-          - Uses TEA in debugger mode for root cause
-          - Dev implements fix after analysis
-          - Workflow validates against schema
+          - Parses BMAD epics.md format
+          - Creates epic entries in sprint YAML
+          - Preserves Given/When/Then ACs
+          - Maps N.M story IDs to our format
+          - Handles requirements coverage map
       - id: 32-4
-        title: Documentation workflow
+        title: BMAD project-context reader
         description: |
-          Built-in workflow for docs:
-          Tech-Writer → Reviewer
-          Optimized for README, guides, API docs.
+          Load BMAD project-context.md as shared agent context.
+          Extract: Technology Stack, Critical Implementation Rules,
+          and any AI agent guidance sections.
         points: 2
         priority: P1
         status: backlog
         repos: pennyfarthing
         acceptance_criteria:
-          - docs.yaml workflow defined
-          - Tech-Writer agent for content
-          - Reviewer for technical accuracy
-          - Skips TEA/Dev phases
+          - Detects project-context.md in project
+          - Parses technology stack section
+          - Extracts implementation rules
+          - Integrates with agent context loading
+          - Works alongside our CLAUDE.md
       - id: 32-5
-        title: DevOps workflow
+        title: Session to BMAD story exporter
         description: |
-          Built-in workflow for infrastructure:
-          DevOps → Reviewer
-          CI/CD, deployment, infrastructure as code.
+          Export completed Pennyfarthing session back to BMAD story format.
+          Populate: Dev Agent Record, File List, Completion Notes,
+          Status updates, Task checkboxes.
         points: 2
         priority: P1
         status: backlog
         repos: pennyfarthing
         acceptance_criteria:
-          - devops.yaml workflow defined
-          - DevOps agent for infra work
-          - Appropriate gates for deployment safety
-          - Workflow validates against schema
+          - Exports session to BMAD story format
+          - Populates Dev Agent Record section
+          - Updates File List with changed files
+          - Marks completed tasks with [x]
+          - Sets appropriate status (review/done)
       - id: 32-6
-        title: Planning workflow
+        title: Sprint to BMAD status sync
         description: |
-          Built-in workflow for strategic work:
-          PM → Architect → SM
-          Epic definition, roadmap, sprint planning.
-        points: 2
-        priority: P1
-        status: backlog
-        repos: pennyfarthing
-        acceptance_criteria:
-          - planning.yaml workflow defined
-          - PM → Architect → SM flow
-          - No code phases (TEA/Dev)
-          - Produces planning artifacts
-      - id: 32-7
-        title: BMAD export (Pennyfarthing → BMAD format)
-        description: |
-          Export Pennyfarthing workflows to BMAD format
-          for interoperability with BMAD tooling.
+          Bidirectional sync between Pennyfarthing sprint YAML and
+          BMAD sprint-status.yaml. Keep both in sync for teams
+          using both tools.
         points: 2
         priority: P2
         status: backlog
         repos: pennyfarthing
         acceptance_criteria:
-          - Export function for workflows
-          - Outputs BMAD-compatible format
-          - Handles Pennyfarthing-specific features gracefully
-          - Round-trip test (import → export)
+          - Reads BMAD sprint-status.yaml
+          - Updates our sprint YAML from BMAD status
+          - Exports our status to BMAD format
+          - Handles status mapping (ready-for-dev, in-progress, review, done)
+          - Conflict detection when both changed
 
   - id: epic-33
     title: Runtime Permission Management
