@@ -11,6 +11,72 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [6.4.0] - 2026-01-13
+
+### Sprint 10: Customizable Workflow Engine & BMAD Integration
+
+This release delivers a flexible workflow definition system, BMAD artifact parsers, and significant Cyclist developer experience improvements.
+
+### Added
+
+#### Epic 31: Customizable Workflow Engine
+- **Workflow Definition Schema** (31-1) - YAML-based workflow definitions with states, transitions, and agents
+- **Workflow Loader** (31-2) - Load and validate workflow definitions at runtime
+- **Story-to-Workflow Routing** (31-3) - Route stories to appropriate workflows based on type
+- **TDD Flow Migration** (31-4) - Migrate built-in TDD flow to workflow definition
+- **`/workflow` Skill** (31-5) - List available workflows, show current, switch mid-session
+- **Workflow Session Tracking** (31-6) - Track current workflow in session files
+- **Generic Handoff Subagent** (31-7) - Workflow-driven handoff subagent for any transition
+- **Turn Optimization Patterns** (31-9) - Documentation for reducing agent turns
+
+#### Epic 32: BMAD Format Interoperability
+- **BMAD Formats Documentation** (32-1) - Document BMAD artifact formats (stories, epics, context)
+- **BMAD Story Parser** (32-2) - Parse BMAD story files into Pennyfarthing format
+- **BMAD Epics Parser** (32-3) - Parse BMAD epics files
+- **BMAD Context Reader** (32-4) - Parse BMAD project-context.md files
+
+#### Epic 33: Skill & Permission Management
+- **`/permissions` Skill** (33-2) - View and manage runtime permission grants
+
+#### Epic 34: Cyclist Developer Experience
+- **First-Run Setup** (34-1) - Documentation and tooling for first-time Cyclist setup
+- **`cyclist-doctor` Command** (34-2) - Health check command for Cyclist installation
+- **Port Conflict Detection** (34-3) - Detect and message when port 3456 is in use
+- **Upgrade Path Handling** (34-4) - Smooth upgrades between Cyclist versions
+- **Team Validation Checklist** (34-5) - Checklist for validating Cyclist on team machines
+
+#### Cyclist Enhancements
+- **Horizontal Tab Bar** - Replace vertical panel buttons with horizontal tabs
+- **Slash Command Popup** - Show command suggestions immediately on "/" at start
+- **Tool Panel** - Vertical panel for tool execution log
+- **Quick Action Button Labels** - Improved button labels for quick actions
+- **Typeahead Filtering** - Better filtering as user types
+- **Inline Queue** - Inject buttons in queue UI
+
+#### Release Automation
+- **GitHub Release Creation** - `/release --bump` now creates GitHub releases via `gh` CLI
+
+### Fixed
+- **Portrait Slugs** - Correct O'Brien and all-stars portrait slugs
+- **Sprite Paths** - Update showcase portrait paths for multi-resolution images
+- **OTEL Config** - Full OTEL config for Claude Code telemetry
+- **Theme Config Path** - Support `.pennyfarthing/config.local.yaml`
+
+### Changed
+- **Config Directory** - Theme config moved to `.pennyfarthing/config.local.yaml`
+- **ESLint Config** - Added ESLint configuration and cleaned up lint warnings
+
+### Summary
+| Metric | Value |
+|--------|-------|
+| Stories Completed | 20+ |
+| Epics Delivered | 4 (Epic 31, 32, 33, 34) |
+| New Skills | 2 (`/workflow`, `/permissions`) |
+| New Commands | 1 (`cyclist-doctor`) |
+| Themes | 102 |
+
+---
+
 ## [6.3.0] - 2026-01-12
 
 ### Configuration & Theme Management
@@ -1075,7 +1141,10 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v6.1.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v6.4.0...HEAD
+[6.4.0]: https://github.com/1898andCo/pennyfarthing/compare/v6.3.0...v6.4.0
+[6.3.0]: https://github.com/1898andCo/pennyfarthing/compare/v6.2.0...v6.3.0
+[6.2.0]: https://github.com/1898andCo/pennyfarthing/compare/v6.1.0...v6.2.0
 [6.1.0]: https://github.com/1898andCo/pennyfarthing/compare/v6.0.4...v6.1.0
 [6.0.4]: https://github.com/1898andCo/pennyfarthing/compare/v6.0.3...v6.0.4
 [6.0.3]: https://github.com/1898andCo/pennyfarthing/compare/v6.0.0...v6.0.3
