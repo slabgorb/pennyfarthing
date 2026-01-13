@@ -208,7 +208,7 @@ Run `/list-themes` to see all 97 available themes.
 
 Check your current theme:
 ```bash
-cat .claude/persona-config.yaml
+cat .pennyfarthing/config.local.yaml
 ```
 
 </themes>
