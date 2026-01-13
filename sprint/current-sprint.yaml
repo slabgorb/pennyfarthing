@@ -5,9 +5,9 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 47
+  total_points: 49
   completed_points: 11
-  remaining_points: 36
+  remaining_points: 38
   notes: |
     Sprint 10 focus: Three strategic epics
     - Epic 31: Customizable Workflow Engine (15 pts)
@@ -26,7 +26,7 @@ epics:
       Infrastructure for user-defined workflows. Replace hardcoded TDD flow
       (SM → TEA → Dev → Reviewer) with configurable YAML-based workflows.
       Users can define custom agent sequences, routing rules, and gates.
-    points: 20
+    points: 22
     completed_points: 9
     priority: P1
     marker: strategic
@@ -174,6 +174,30 @@ epics:
           - Unit tests for handoff logic
           - Records phase transitions with timestamps
           - workflow-status-check reads workflow state
+      - id: 31-8
+        title: Eliminate redundant test runs in subagents
+        description: |
+          Multiple subagents independently run the full test suite during
+          a single TDD cycle, wasting ~110 seconds per story:
+          - reviewer-preflight runs tests (~36s)
+          - dev-handoff runs tests again (~36s)
+          - reviewer-handoff-approve runs tests again (~36s)
+
+          Each subagent defensively re-verifies tests "just in case" but
+          the result is redundant work. Solutions:
+          - Cache test results in session file with timestamp
+          - Skip test run if recent result exists (< 5 min old)
+          - Or consolidate: only one subagent runs tests per phase
+        points: 2
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Test suite runs only once per TDD phase (not per subagent)
+          - Session file caches last test result with timestamp
+          - Subagents check cache before running tests
+          - Cache invalidated on code changes (git diff check)
+          - Total TDD cycle time reduced by ~70 seconds
   - id: epic-32
     title: BMAD Artifact Compatibility
     description: |
