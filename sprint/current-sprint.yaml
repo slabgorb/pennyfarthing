@@ -392,6 +392,7 @@ epics:
         completed: 2026-01-13
         assigned_to: Keith Avery
         repos: pennyfarthing
+        pr: 231
         acceptance_criteria:
           - /permissions lists active grants
           - /permissions grant <tool> adds permission
