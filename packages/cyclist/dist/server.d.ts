@@ -23,11 +23,26 @@ export declare function cleanupPortFile(projectDir: string): void;
  */
 export declare function readPortFile(projectDir: string): number | null;
 /**
- * Get OTEL configuration environment variables based on port file.
- * Returns null if no valid port file exists.
+ * OTEL configuration type for Claude Code telemetry
+ * Extends Record<string, string> for compatibility with process.env spreading
  */
-export declare function getOtelConfig(projectDir: string): {
+export interface OtelConfig extends Record<string, string> {
+    CLAUDE_CODE_ENABLE_TELEMETRY: string;
+    OTEL_LOGS_EXPORTER: string;
+    OTEL_METRICS_EXPORTER: string;
     OTEL_EXPORTER_OTLP_PROTOCOL: string;
     OTEL_EXPORTER_OTLP_ENDPOINT: string;
-} | null;
+}
+/**
+ * Get OTEL configuration environment variables based on port file.
+ * Returns null if no valid port file exists.
+ *
+ * Claude Code requires explicit opt-in for telemetry:
+ * - CLAUDE_CODE_ENABLE_TELEMETRY=1 to enable telemetry
+ * - OTEL_LOGS_EXPORTER=otlp to export tool events
+ * - OTEL_METRICS_EXPORTER=otlp to export token metrics
+ *
+ * @see https://code.claude.com/docs/en/monitoring-usage
+ */
+export declare function getOtelConfig(projectDir: string): OtelConfig | null;
 //# sourceMappingURL=server.d.ts.map

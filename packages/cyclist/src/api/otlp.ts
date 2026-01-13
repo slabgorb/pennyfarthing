@@ -36,6 +36,11 @@ export function createOTLPRouter(): Router {
       // Parse OTLP logs payload into raw events
       const rawEvents = parseOTLPLogs(req.body);
 
+      // DEBUG: Log raw events to understand structure
+      if (rawEvents.length > 0) {
+        console.log('[OTLP DEBUG] Raw events:', JSON.stringify(rawEvents, null, 2));
+      }
+
       // Process and store tool/prompt events
       if (rawEvents.length > 0) {
         processLogEvents(rawEvents);

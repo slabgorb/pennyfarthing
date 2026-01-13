@@ -503,17 +503,44 @@ export function getAuditLogStats(): {
 /**
  * Process raw log events and store them appropriately
  * Called by the /v1/logs endpoint
+ *
+ * Actual Claude Code OTEL format (discovered via debug):
+ * - tool_name (not tool.name)
+ * - success as string "true"/"false" (not boolean)
+ * - duration_ms (not tool.duration_ms)
+ * - tool_parameters as JSON string (not tool.input)
  */
 export function processLogEvents(rawEvents: RawLogEvent[]): void {
   for (const event of rawEvents) {
     if (event.name === 'claude_code.tool_result') {
+      // Parse tool_parameters JSON to extract input
+      let input: string | undefined;
+      const toolParams = event.attributes['tool_parameters'] as string | undefined;
+      if (toolParams) {
+        try {
+          const params = JSON.parse(toolParams);
+          // Use description if available, otherwise full_command or first param value
+          input = params.description || params.full_command || params.file_path || params.command || params.pattern || Object.values(params)[0] as string;
+        } catch {
+          input = toolParams; // Use raw string if not valid JSON
+        }
+      }
+
+      // Parse duration_ms - could be string or number
+      const rawDuration = event.attributes['duration_ms'];
+      const durationMs = typeof rawDuration === 'string' ? parseInt(rawDuration, 10) : rawDuration as number | undefined;
+
+      // Parse success - comes as string "true"/"false"
+      const rawSuccess = event.attributes['success'];
+      const success = rawSuccess === 'true' || rawSuccess === true;
+
       const toolEvent: ToolEvent = {
-        toolName: event.attributes['tool.name'] as string || 'unknown',
-        input: event.attributes['tool.input'] as string | undefined,
-        output: event.attributes['tool.output'] as string | undefined,
-        durationMs: event.attributes['tool.duration_ms'] as number | undefined,
-        success: event.attributes['tool.success'] as boolean ?? true,
-        error: event.attributes['tool.error'] as string | undefined,
+        toolName: event.attributes['tool_name'] as string || 'unknown',
+        input,
+        output: event.attributes['tool_output'] as string | undefined,
+        durationMs: isNaN(durationMs as number) ? undefined : durationMs,
+        success,
+        error: event.attributes['error'] as string | undefined,
         timestamp: event.timestamp,
         traceId: event.traceId,
         spanId: event.spanId,
