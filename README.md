@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v6.0.4** | *The outer loop goes once, the inner loop goes many times.*
+**v6.4.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px" margin="10px">
 
@@ -8,19 +8,19 @@ A Claude Code agent orchestration framework with TDD workflow and themed persona
 
 ---
 
-### 🎭 [**Browse 91 Themes in the Interactive Showcase →**](https://animated-meme-3e4494y.pages.github.io/)
+### [**Browse 102 Themes in the Interactive Showcase**](https://animated-meme-3e4494y.pages.github.io/)
 
-Explore all themes with OCEAN spider charts, Chernoff faces, and 910 character profiles.
+Explore all themes with OCEAN spider charts, Chernoff faces, and 1020 character profiles.
 
 ---
 
 ## Features
 
-- **10 Agents + 13 Subagents** - Strategic (PM, Architect) and tactical (SM, TEA, Dev, Reviewer) agents with official Haiku-based subagents for mechanical tasks
+- **24 Agents** - Strategic (PM, Architect) and tactical (SM, TEA, Dev, Reviewer) agents with official Haiku-based subagents for mechanical tasks
 - **Automatic Handoffs** - Context-aware agent transitions via official subagent format
-- **94 Persona Themes** - Star Trek, Breaking Bad, Dune, The Office, Game of Thrones, Arthurian Mythos, and more with OCEAN personality profiles
-- **13 Skills** - Reusable knowledge domains (testing, code-review, judge, jira, etc.)
-- **28 Slash Commands** - Entry points for agent activation, benchmarking, and workflows
+- **102 Persona Themes** - Star Trek, Breaking Bad, Dune, The Office, Game of Thrones, Arthurian Mythos, and more with OCEAN personality profiles
+- **20 Skills** - Reusable knowledge domains (testing, code-review, judge, jira, etc.)
+- **43 Slash Commands** - Entry points for agent activation, benchmarking, and workflows
 - **Scientific Benchmarking** - Evaluate personas against standardized scenarios with statistical analysis
 - **CLI Tool** - `pennyfarthing init`, `update`, `doctor`, `uninstall`, `theme`
 
@@ -166,7 +166,7 @@ your-project/
     └── {story-id}-session.md       # Active work session
 ```
 
-## Available Themes (94 total)
+## Available Themes (102 total)
 
 | Category | Themes |
 |----------|--------|
@@ -181,7 +181,7 @@ your-project/
 | **Classic** | `princess-bride`, `a-team`, `mash`, `west-wing` |
 | **Minimal** | `control`, `minimalist` |
 
-All 94 themes include OCEAN (Big Five) personality profiles and Chernoff face visualizations.
+All 102 themes include OCEAN (Big Five) personality profiles and Chernoff face visualizations.
 
 See [Theme Comparison Guide](docs/THEME-COMPARISON.md) for personality analysis, OCEAN profiles, and help choosing between themes.
 
@@ -247,6 +247,13 @@ pennyfarthing uninstall --all
 
 Archived sprint data (`sprint/archive/`, `sprint/context/`) is always preserved.
 
+## What's New in v6.4
+
+- **102 Themes** - 11 new themes added since v6.0
+- **20 Skills** - Expanded knowledge domains
+- **43 Commands** - More workflow entry points
+- **Sprint 10** - Customizable workflows and runtime permissions
+
 ## What's New in v6.0
 
 - **Monorepo Architecture** - Restructured as pnpm workspace
@@ -256,10 +263,9 @@ Archived sprint data (`sprint/archive/`, `sprint/context/`) is always preserved.
 - **Cyclist Integration** - Full GUI support with persona sidebar
   - Portrait resolver works across all install scenarios
   - Real-time agent display with OCEAN-slugged filenames
-- **3 New Themes** - Arthurian Mythos, Greek Mythology, Lovecraft Mythos
+- **New Themes** - Arthurian Mythos, Greek Mythology, Lovecraft Mythos
   - 30 new characters with full OCEAN profiles
   - Woodcut-style portraits for all characters
-- **94 Total Themes** - Up from 91
 
 ## What's New in v5.x
 

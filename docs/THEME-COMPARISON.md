@@ -2,7 +2,7 @@
 
 How to choose a theme based on personality dimensions and team fit.
 
-> **101 themes available** - All themes include OCEAN (Big Five) personality profiles, Chernoff face visualizations, and spider charts. This guide covers personality theory and highlights selected themes. Run `pennyfarthing theme list` to see all available themes.
+> **102 themes available** - All themes include OCEAN (Big Five) personality profiles, Chernoff face visualizations, and spider charts. This guide covers personality theory and highlights selected themes. Run `/list-themes` to see all available themes.
 
 ## Personality Dimensions
 
