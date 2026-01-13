@@ -254,3 +254,50 @@ Cyclist starts
 **Discovered:** 2026-01-13 (Bug fix session)
 
 ---
+
+### Claude Code OTEL Telemetry Not Sending Events
+
+**Situation:** Tool panel shows no events even though OTEL endpoint is configured and callback is wired.
+
+**Problem:** Claude Code's telemetry is **opt-in**. Setting just the endpoint isn't enough.
+
+**Root Cause:** `getOtelConfig()` only returned:
+```typescript
+{
+  OTEL_EXPORTER_OTLP_PROTOCOL: 'http/json',
+  OTEL_EXPORTER_OTLP_ENDPOINT: `http://localhost:${port}`,
+}
+```
+
+But Claude Code requires explicit enable flags per the [monitoring docs](https://code.claude.com/docs/en/monitoring-usage):
+
+**Required env vars:**
+```bash
+CLAUDE_CODE_ENABLE_TELEMETRY=1   # Enable telemetry (opt-in)
+OTEL_LOGS_EXPORTER=otlp          # Export tool events via OTLP
+OTEL_METRICS_EXPORTER=otlp       # Export token metrics via OTLP
+OTEL_EXPORTER_OTLP_PROTOCOL=http/json
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:${port}
+```
+
+**Fix:** Updated `server.ts` `getOtelConfig()` to return all required vars:
+```typescript
+return {
+  CLAUDE_CODE_ENABLE_TELEMETRY: '1',
+  OTEL_LOGS_EXPORTER: 'otlp',
+  OTEL_METRICS_EXPORTER: 'otlp',
+  OTEL_EXPORTER_OTLP_PROTOCOL: 'http/json',
+  OTEL_EXPORTER_OTLP_ENDPOINT: `http://localhost:${port}`,
+};
+```
+
+**Prevention:**
+- Read the official docs for any external service integration
+- "Opt-in" means explicit enable flag, not just "configure endpoint"
+- When debugging data flow, check if data is being SENT before checking if it's being RECEIVED
+
+**See also:** `docs/tool-panel-data-flow.md` for full architecture diagram
+
+**Discovered:** 2026-01-13
+
+---
