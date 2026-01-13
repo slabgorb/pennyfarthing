@@ -92,7 +92,7 @@ function OverlaySpiderChart({ characters, size = 250 }: { characters: Character[
 // Small portrait for chips
 function ChipPortrait({ themeId, slug, emoji, name }: { themeId?: string; slug?: string; emoji?: string; name: string }) {
   const [imgError, setImgError] = useState(false);
-  const portraitPath = themeId && slug ? `/portraits/${themeId}/${slug}.png` : null;
+  const portraitPath = themeId && slug ? `/portraits/${themeId}/small/${slug}.png` : null;
 
   if (!portraitPath || imgError) {
     return (
