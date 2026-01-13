@@ -21,6 +21,24 @@ Read the testing skill at .claude/skills/testing/SKILL.md for test commands.
 - All tests now passing: {TEST_COUNT} tests
 - PR #{PR_NUMBER} created: {PR_URL}
 
+## Turn Efficiency
+
+**Batch pre-flight checks** to minimize API round-trips:
+
+```bash
+# EFFICIENT: Run all pre-flight checks in single command
+grep -q "## Dev Assessment" $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md && \
+git status --porcelain && \
+git log origin/{BRANCH}..HEAD --oneline && \
+gh pr view {PR_NUMBER} --json state
+```
+
+**Batch git operations:**
+```bash
+# EFFICIENT: Commit and push in one command
+git add . && git commit -m "feat(X-Y): implement feature" && git push -u origin $(git branch --show-current)
+```
+
 ## Execute Handoff Checklist
 
 ### Pre-Flight Verification
