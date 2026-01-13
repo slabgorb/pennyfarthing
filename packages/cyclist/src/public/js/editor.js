@@ -25,6 +25,7 @@ import {
   getSlashPrefix,
   showCompletionPopup,
   closeCompletionPopup,
+  updateCompletions,
   navigateCompletion,
   selectCompletion,
   getCompletionState
@@ -504,6 +505,18 @@ export async function createEditor() {
         const text = editor.getText();
         if (text === '/' && !isCompletionVisible()) {
           showCompletionPopup('/');
+        }
+
+        // Update completion popup as user types (filter commands)
+        if (isCompletionVisible()) {
+          const prefixInfo = getSlashPrefix();
+          if (prefixInfo) {
+            // Update filtering as user types more characters
+            updateCompletions(prefixInfo.prefix);
+          } else {
+            // User deleted the "/" or moved cursor away - close popup
+            closeCompletionPopup();
+          }
         }
       },
     });
