@@ -22,8 +22,8 @@ import { fileURLToPath } from 'node:url';
 import {
   loadWorkflowFile,
   loadWorkflowsFromDir,
-  type WorkflowLoadResult,
-  type WorkflowLoadResults
+  type WorkflowLoadResult as _WorkflowLoadResult,
+  type WorkflowLoadResults as _WorkflowLoadResults
 } from './workflow-loader.js';
 
 // Get directory for test fixtures

@@ -17,8 +17,8 @@ import { parse as parseYaml } from 'yaml';
 import {
   validateWorkflow,
   type WorkflowDefinition,
-  type WorkflowValidationError,
-  type WorkflowValidationResult
+  type WorkflowValidationError as _WorkflowValidationError,
+  type WorkflowValidationResult as _WorkflowValidationResult
 } from './workflow-schema.js';
 
 /**
