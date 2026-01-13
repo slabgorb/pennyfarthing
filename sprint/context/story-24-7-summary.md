@@ -1,39 +1,24 @@
-# Story 24-7: Theme Favorites - Summary
-
-**Completed:** 2026-01-13
-**Points:** 2
-**Epic:** 24 - Configuration & Theme Switcher Panels
+# Story 24-7: Theme Favorites - Completion Summary
 
 ## What Was Built
-
-Added theme favorites functionality to the Cyclist theme browser. Users can now star themes to mark them as favorites, which appear in a dedicated section at the top of the browser. Favorites persist across sessions via the settings YAML file.
+Added the ability for users to mark themes as favorites in the Cyclist theme browser, with favorites persisting across sessions and displaying prominently at the top of the browser for quick access.
 
 ## Key Technical Decisions
-
-1. **Star icon placement** - Positioned absolute top-right on theme cards with proper z-index to avoid interfering with card selection
-2. **Immediate persistence** - Favorites save to disk immediately on toggle via IPC, not waiting for form submit
-3. **Immutable state** - Used spread operator and filter patterns for all state updates to maintain clean React-style patterns in vanilla JS
-4. **Graceful degradation** - Invalid theme IDs in favorites array simply don't render rather than throwing errors
+- **Heart toggle icon** on each theme card for intuitive favorite/unfavorite action
+- **IPC persistence** through existing settings infrastructure - favorites stored in settings YAML rather than creating new storage mechanism
+- **Favorites section** renders conditionally at top of browser only when user has favorited themes
 
 ## Implementation Patterns
-
-- Event delegation with `stopPropagation()` to separate star click from card selection
-- Optional chaining (`?.`) for safe IPC calls when electronAPI unavailable
-- CSS custom properties for dark mode theming
-- Accessibility via `aria-label` on interactive elements
+- Extended settings schema to include favorites array
+- Used existing IPC channels for settings read/write rather than new endpoints
+- Conditional rendering pattern for favorites section keeps UI clean when empty
 
 ## Files Modified
-
-| File | Change |
-|------|--------|
-| `packages/cyclist/src/settings.ts` | Added `favorites: string[]` to schema, validation, merge |
-| `packages/cyclist/src/public/js/components/ThemeBrowser.js` | Star icon UI, favorites section, toggle handler |
-| `packages/cyclist/src/public/js/settings-ui.js` | IPC wiring, immediate save on toggle |
-| `packages/cyclist/src/public/css/theme-browser.css` | Favorites section styling, star icon states |
-| `packages/cyclist/tests/24-1-settings-panel.test.ts` | Updated defaults for favorites field |
+- Theme browser component (favorites toggle logic)
+- Settings schema (favorites array field)
+- Related test files
 
 ## Lessons for Future Work
-
-1. **IPC error handling** - Current pattern doesn't surface save failures to users. Future stories could add toast notifications for settings save errors.
-2. **Test coverage** - No dedicated test file for favorites feature. Consider B-24-7-favorites.test.ts for edge cases (rapid toggle, invalid IDs, persistence verification).
-3. **Pattern reuse** - The favorite toggle pattern (star icon, immediate save, section grouping) could be reused for other list-based settings.
+- Settings YAML storage pattern worked well for simple preference data
+- Heart icon proved more intuitive than star for favorites (per existing Cyclist design language)
+- Placing favorites at top of browser provides good UX without disrupting search/filter flow
