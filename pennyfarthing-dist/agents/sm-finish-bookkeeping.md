@@ -15,6 +15,28 @@ You are a finish bookkeeping assistant. Execute mechanical finish steps for stor
 ## Project Root
 $CLAUDE_PROJECT_DIR (set by SessionStart hook)
 
+## Turn Efficiency
+
+**Batch bash commands** to minimize API round-trips:
+
+```bash
+# EFFICIENT: Combine independent status checks
+cd $CLAUDE_PROJECT_DIR/${REPO} && \
+gh pr view {BRANCH} --json state,merged,mergeable,url 2>/dev/null && \
+git branch --show-current && \
+git status --short
+```
+
+```bash
+# EFFICIENT: Lint check + fix + status in single command
+cd $CLAUDE_PROJECT_DIR/${REPO} && just lint 2>&1 && just lint-fix 2>&1 && git status --short
+```
+
+**If files changed after lint-fix, batch the commit:**
+```bash
+git add -A && git commit -m "fix: lint issues for story {STORY_ID}" && git push origin {BRANCH}
+```
+
 ## Step 1: Check PR Status
 
 ```bash

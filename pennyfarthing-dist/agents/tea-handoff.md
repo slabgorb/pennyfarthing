@@ -22,6 +22,17 @@ Read the testing skill at .claude/skills/testing/SKILL.md for test commands.
 - Test count: {FAILING_COUNT} failing (RED), {PASSING_COUNT} passing
 - Commit: {COMMIT_SHA} {COMMIT_MESSAGE}
 
+## Turn Efficiency
+
+**Batch pre-flight checks** to minimize API round-trips:
+
+```bash
+# EFFICIENT: Verify TEA assessment and git state in single command
+grep -q "## TEA Assessment" $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md && \
+cd $CLAUDE_PROJECT_DIR/${REPO} && \
+git log -1 --oneline
+```
+
 ## Execute Handoff Checklist
 
 ### Pre-Flight Verification

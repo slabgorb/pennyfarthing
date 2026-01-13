@@ -22,6 +22,24 @@ You are a story setup assistant. Execute these mechanical steps for story {STORY
 ## Project Root
 $CLAUDE_PROJECT_DIR (set by SessionStart hook)
 
+## Turn Efficiency
+
+**Batch git operations** when creating branches in multiple repos:
+
+```bash
+# EFFICIENT: Create branches in both repos with single command (for multi-repo projects)
+cd $CLAUDE_PROJECT_DIR/api && git checkout -b feat/{STORY_ID}-{SLUG} && \
+cd $CLAUDE_PROJECT_DIR/ui && git checkout -b feat/{STORY_ID}-{SLUG}
+```
+
+**Combine setup verification:**
+```bash
+# EFFICIENT: Verify setup in single command
+ls -la $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md && \
+git -C $CLAUDE_PROJECT_DIR/api branch --show-current && \
+git -C $CLAUDE_PROJECT_DIR/ui branch --show-current
+```
+
 ## Step 1: Claim in Jira
 ```bash
 ./scripts/run.sh jira-claim-story.sh {JIRA_KEY} --claim
