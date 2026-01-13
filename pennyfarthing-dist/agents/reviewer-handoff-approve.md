@@ -35,8 +35,32 @@ You are a workflow handoff assistant. Complete the handoff for story {STORY_ID}.
 2. Verify the Reviewer Assessment says "APPROVED"
 3. Update status from `review` to `approved`
 4. Mark the Reviewer workflow checkbox as complete
-5. Add session log entry for today's review
-6. Report completion status
+5. **Update Workflow Tracking section for phase transition:**
+   - Update `**Phase:**` from `review` to `approved`
+   - Update `**Phase Started:**` to current ISO 8601 timestamp
+   - Update Phase History table:
+     - Set review row's Ended to current timestamp and calculate Duration
+     - Add new row for `approved` with Started = current timestamp
+6. Add session log entry for today's review
+7. Report completion status
+
+### Phase Transition Update
+
+```bash
+# Get current timestamp
+NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+# Extract review start time for duration calculation
+REVIEW_STARTED=$(grep "^\*\*Phase Started:\*\*" "$SESSION_FILE" | head -1 | sed 's/\*\*Phase Started:\*\* //' | xargs)
+```
+
+Update `## Workflow Tracking` to:
+```markdown
+**Phase:** approved
+**Phase Started:** {NOW}
+```
+
+And update Phase History table to record review completion and approved start.
 
 ## Error Recovery
 

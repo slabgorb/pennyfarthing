@@ -32,6 +32,18 @@ For each session file found, extract:
 - Branch (from `**Branch:**` line)
 - Jira key (from `**Jira:**` line)
 - Started date (from `**Started:**` line)
+- Workflow (from `**Workflow:**` line in Workflow Tracking section)
+- Phase Started (from `**Phase Started:**` line - ISO 8601 timestamp)
+
+**Workflow field extraction:**
+```bash
+# Extract workflow name (defaults to "tdd" if not found for backward compatibility)
+WORKFLOW=$(grep "^\*\*Workflow:\*\*" "$SESSION_FILE" | head -1 | sed 's/\*\*Workflow:\*\* //' | xargs)
+[ -z "$WORKFLOW" ] && WORKFLOW="tdd"
+
+# Extract phase started timestamp
+PHASE_STARTED=$(grep "^\*\*Phase Started:\*\*" "$SESSION_FILE" | head -1 | sed 's/\*\*Phase Started:\*\* //' | xargs)
+```
 
 For worktree detection, check INSIDE the session file:
 ```bash
@@ -219,9 +231,9 @@ Stories with `status: done` are DONE - do not list them as in-progress even if t
 | ✗ MISSING | Run `/start-epic` to generate epic technical context |
 
 ### Active Work Sessions (Your Work)
-| Story | Title | Phase | Status | Repos | Days Active |
-|-------|-------|-------|--------|-------|-------------|
-| 32-8 | Threat Hunt Summary | tea | in-progress | both | 1 |
+| Story | Title | Workflow | Phase | Phase Started | Status | Repos |
+|-------|-------|----------|-------|---------------|--------|-------|
+| 32-8 | Threat Hunt Summary | tdd | tea | 2026-01-13T14:30:00Z | in-progress | both |
 
 ### Colleague Work (DO NOT OFFER)
 | Story | Title | Jira | Assignee | Status |

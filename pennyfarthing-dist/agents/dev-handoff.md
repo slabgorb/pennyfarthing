@@ -72,12 +72,36 @@ Run these checks and STOP if any fail:
 1. Read current session file
 2. Update status from `in-progress` to `review`
 3. Mark Dev workflow checkbox as complete
-4. Add "Reviewer Handoff" section with:
+4. **Update Workflow Tracking section for phase transition:**
+   - Update `**Phase:**` from `dev` to `review`
+   - Update `**Phase Started:**` to current ISO 8601 timestamp
+   - Update Phase History table:
+     - Set dev row's Ended to current timestamp and calculate Duration
+     - Add new row for `review` with Started = current timestamp
+5. Add "Reviewer Handoff" section with:
    - Repo, branch, PR link
    - Key files to review (from git diff --stat)
    - What was implemented summary
-5. Add session log entry for implementation completion
-6. Report: "Ready for Reviewer. PR #{PR_NUMBER} is up."
+6. Add session log entry for implementation completion
+7. Report: "Ready for Reviewer. PR #{PR_NUMBER} is up."
+
+### Phase Transition Update
+
+```bash
+# Get current timestamp
+NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+# Extract dev start time for duration calculation
+DEV_STARTED=$(grep "^\*\*Phase Started:\*\*" "$SESSION_FILE" | head -1 | sed 's/\*\*Phase Started:\*\* //' | xargs)
+```
+
+Update `## Workflow Tracking` to:
+```markdown
+**Phase:** review
+**Phase Started:** {NOW}
+```
+
+And update Phase History table to record dev completion and review start.
 
 ## Error Recovery
 

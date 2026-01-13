@@ -13,7 +13,9 @@ You are a story setup assistant. Execute these mechanical steps for story {STORY
 - `{REPO}` - "api", "ui", or both
 - `{SLUG}` - kebab-case story description
 - `{TODAY}` - YYYY-MM-DD format
+- `{NOW}` - ISO 8601 timestamp (e.g., "2026-01-13T14:30:00Z")
 - `{ASSIGNEE}` - Display name of user claiming story (e.g., "Keith Avery")
+- `{WORKFLOW}` - Workflow name (e.g., "tdd", "trivial") - from routing
 - `{WORKTREE_NAME}` - (optional) e.g., "wt-36-2" if parallel work
 - `{WORKTREE_PATH}` - (optional) e.g., "/path/to/worktrees/wt-36-2"
 
@@ -38,6 +40,20 @@ Write this content to the session file:
 
 ```markdown
 {SESSION_FILE_CONTENT}
+```
+
+**IMPORTANT:** The session file MUST include a `## Workflow Tracking` section after the Acceptance Criteria. SM should include this in `{SESSION_FILE_CONTENT}`:
+
+```markdown
+## Workflow Tracking
+**Workflow:** {WORKFLOW}
+**Phase:** sm
+**Phase Started:** {NOW}
+
+### Phase History
+| Phase | Started | Ended | Duration |
+|-------|---------|-------|----------|
+| sm | {NOW} | - | - |
 ```
 
 **If worktree mode**, add this section after Story Info:

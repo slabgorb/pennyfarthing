@@ -19,11 +19,40 @@ You are a workflow handoff assistant. Complete the handoff for story {STORY_ID}.
 - Feature branch: {BRANCH_NAME}
 - Jira: {JIRA_KEY} claimed
 
+## Placeholders
+- `{NOW}` - ISO 8601 timestamp (e.g., "2026-01-13T14:30:00Z")
+- `{NEXT_PHASE}` - Next phase name (e.g., "tea" or "dev" for trivial stories)
+
 ## Execute Handoff Checklist
 
 1. Verify session file exists with story context
 2. Verify acceptance criteria are defined
 3. Verify feature branches created
 4. Verify Jira story claimed (if applicable)
-5. Update session file workflow section to show handoff to TEA
-6. Report status summary
+5. **Update Workflow Tracking section:**
+   - Update `**Phase:**` from `sm` to `{NEXT_PHASE}`
+   - Update `**Phase Started:**` to `{NOW}`
+   - Update Phase History table:
+     - Set sm row's Ended to `{NOW}` and calculate Duration
+     - Add new row for `{NEXT_PHASE}` with Started = `{NOW}`
+6. Update session file workflow checkboxes to show handoff
+7. Report status summary
+
+### Phase Transition Update
+
+Edit the `## Workflow Tracking` section:
+
+```markdown
+## Workflow Tracking
+**Workflow:** {WORKFLOW}
+**Phase:** {NEXT_PHASE}
+**Phase Started:** {NOW}
+
+### Phase History
+| Phase | Started | Ended | Duration |
+|-------|---------|-------|----------|
+| sm | {SM_STARTED} | {NOW} | {DURATION} |
+| {NEXT_PHASE} | {NOW} | - | - |
+```
+
+**Duration calculation:** Subtract sm Started from {NOW}, format as `Xm` or `Xh Ym`.
