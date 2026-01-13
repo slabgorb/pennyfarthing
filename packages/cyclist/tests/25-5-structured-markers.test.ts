@@ -459,8 +459,9 @@ Shall I proceed?
 
       const html = renderQuickActions(result);
 
-      expect(html).toContain('1.');
-      expect(html).toContain('2.');
+      // List buttons show just the text (no number prefix), number is in data-response
+      expect(html).toContain('First option');
+      expect(html).toContain('Second option');
       expect(html).toContain('data-response="1"');
       expect(html).toContain('data-response="2"');
     });
