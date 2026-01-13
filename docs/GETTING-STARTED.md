@@ -18,17 +18,19 @@ Get up and running with Pennyfarthing in under 5 minutes.
 
 ```bash
 cd your-project
-npm install --save-dev pennyfarthing
+npm install --save-dev @pennyfarthing/core
 ```
+
+> **Note:** The package was renamed from `pennyfarthing` to `@pennyfarthing/core` in v6.0.
 
 ### Step 2: Initialize Your Project
 
 ```bash
-pennyfarthing init
+npx pennyfarthing init
 ```
 
 This creates symlinks (no file copying):
-- `.claude/pennyfarthing/` → `node_modules/pennyfarthing/pennyfarthing-dist/`
+- `.claude/pennyfarthing/` → `node_modules/@pennyfarthing/core/pennyfarthing-dist/`
 - `.claude/agents/`, `commands/`, `skills/`, `personas/` → symlinks
 - `.claude/project/` - Your customizations (not a symlink)
 - `scripts/` → symlink to pennyfarthing scripts
@@ -38,10 +40,10 @@ This creates symlinks (no file copying):
 ### Step 3: Verify Installation
 
 ```bash
-pennyfarthing doctor
+npx pennyfarthing doctor
 ```
 
-All checks should pass. If not, run `pennyfarthing doctor --fix`.
+All checks should pass. If not, run `npx pennyfarthing doctor --fix`.
 
 ## Configuration
 
@@ -74,7 +76,7 @@ just test   # Run tests
 In Claude Code:
 
 ```
-/list-themes       # Browse 90+ available themes
+/list-themes       # Browse 102 available themes
 /set-theme         # Interactive theme selector
 /show-theme        # Preview current or any theme
 ```
@@ -89,7 +91,7 @@ pennyfarthing theme set discworld
 Or edit `.claude/persona-config.yaml` directly:
 
 ```yaml
-theme: discworld    # 91 themes available - see THEME-COMPARISON.md
+theme: discworld    # 102 themes available - see THEME-COMPARISON.md
 ```
 
 ## Your First Work Session
@@ -133,9 +135,9 @@ The SM (Scrum Master) agent activates and guides you through:
 ## Updating
 
 ```bash
-# v4.0+: Update via npm
-npm update pennyfarthing
-pennyfarthing doctor
+# v6.0+: Update via npm (scoped package)
+npm update @pennyfarthing/core
+npx pennyfarthing doctor
 ```
 
 ## Troubleshooting
@@ -143,15 +145,15 @@ pennyfarthing doctor
 ### "no such file or directory" errors
 
 ```bash
-pennyfarthing doctor --fix
+npx pennyfarthing doctor --fix
 ```
 
 ### Fresh reinstall
 
 ```bash
-pennyfarthing uninstall
-npm install --save-dev pennyfarthing
-pennyfarthing init
+npx pennyfarthing uninstall
+npm install --save-dev @pennyfarthing/core
+npx pennyfarthing init
 ```
 
 ## Scientific Benchmarking (Optional)
@@ -172,7 +174,7 @@ See [BENCHMARKING.md](BENCHMARKING.md) for complete guide.
 
 ## Showcase Website
 
-Browse all 91 themes and 910 character profiles at the interactive showcase:
+Browse all 102 themes and 1020 character profiles at the interactive showcase:
 
 ```bash
 # Build and serve locally
