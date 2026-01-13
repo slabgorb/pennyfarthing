@@ -497,8 +497,14 @@ export async function createEditor() {
           return false;
         },
       },
-      onTransaction: () => {
+      onTransaction: ({ editor }) => {
         updateToolbarState();
+
+        // Auto-show completion popup when "/" is typed at start of message (B-9.5 enhancement)
+        const text = editor.getText();
+        if (text === '/' && !isCompletionVisible()) {
+          showCompletionPopup('/');
+        }
       },
     });
 
