@@ -216,8 +216,11 @@ epics:
           - Show favorite count badge if favorites exist
         points: 2
         priority: P2
-        status: planned
+        status: in_progress
+        started: 2026-01-13
+        assigned_to: Keith Avery
         repos: cyclist
+        branch: feat/24-7-theme-favorites
         acceptance_criteria:
           - Each theme card has a favorite toggle icon
           - Clicking icon adds/removes from favorites

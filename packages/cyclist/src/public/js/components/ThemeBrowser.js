@@ -36,6 +36,11 @@ export const TIER_LABELS = {
  */
 const MAX_DESCRIPTION_LENGTH = 100;
 
+/**
+ * CSS class for favorite icon
+ */
+export const FAVORITE_ICON_CLASS = 'theme-card-favorite';
+
 // =============================================================================
 // ThemeBrowser Class
 // =============================================================================
@@ -55,6 +60,7 @@ export class ThemeBrowser {
     this.state = {
       themes: [],
       filteredThemes: [],
+      favorites: config.favorites || [],  // Theme IDs marked as favorites (24-7)
       searchQuery: '',
       selectedCategory: 'All',
       selectedThemeId: config.initialThemeId || null,
@@ -108,6 +114,19 @@ export class ThemeBrowser {
       },
       onCancel: () => {
         this.config.onCancel?.();
+      },
+      onFavoriteToggle: (themeId, isFavorite) => {
+        // Update local state
+        if (isFavorite) {
+          if (!this.state.favorites.includes(themeId)) {
+            this.state.favorites = [...this.state.favorites, themeId];
+          }
+        } else {
+          this.state.favorites = this.state.favorites.filter(id => id !== themeId);
+        }
+        // Notify parent
+        this.config.onFavoriteToggle?.(themeId, isFavorite);
+        this.render();
       },
     });
   }
@@ -194,9 +213,10 @@ function truncateText(text, maxLength) {
  * @param {Object} theme - Theme metadata
  * @param {Document} doc - Document object (for creating elements)
  * @param {boolean} isSelected - Whether this card is selected
+ * @param {boolean} isFavorite - Whether this card is favorited (24-7)
  * @returns {HTMLElement} Theme card element
  */
-export function createThemeCard(theme, doc, isSelected = false) {
+export function createThemeCard(theme, doc, isSelected = false, isFavorite = false) {
   const card = doc.createElement('div');
   card.className = `theme-card tier-${theme.tier.toLowerCase()}`;
   card.dataset.themeId = theme.id;
@@ -205,6 +225,17 @@ export function createThemeCard(theme, doc, isSelected = false) {
   if (isSelected) {
     card.classList.add(THEME_CARD_SELECTED_CLASS);
   }
+
+  // Favorite icon (24-7) - positioned top-right
+  const favoriteBtn = doc.createElement('button');
+  favoriteBtn.type = 'button';
+  favoriteBtn.className = FAVORITE_ICON_CLASS;
+  if (isFavorite) {
+    favoriteBtn.classList.add('is-favorite');
+  }
+  favoriteBtn.setAttribute('aria-label', isFavorite ? 'Remove from favorites' : 'Add to favorites');
+  favoriteBtn.innerHTML = isFavorite ? '★' : '☆';
+  card.appendChild(favoriteBtn);
 
   // Name
   const nameEl = doc.createElement('div');
@@ -248,10 +279,12 @@ export function createThemeCard(theme, doc, isSelected = false) {
  */
 export function renderThemeGrid(container, state) {
   container.innerHTML = '';
+  const doc = container.ownerDocument;
+  const favorites = state.favorites || [];
 
   // Loading state
   if (state.isLoading) {
-    const loading = container.ownerDocument.createElement('div');
+    const loading = doc.createElement('div');
     loading.className = 'theme-browser-loading';
     loading.textContent = 'Loading themes...';
     container.appendChild(loading);
@@ -260,25 +293,63 @@ export function renderThemeGrid(container, state) {
 
   // Empty state
   if (!state.filteredThemes || state.filteredThemes.length === 0) {
-    const empty = container.ownerDocument.createElement('div');
+    const empty = doc.createElement('div');
     empty.className = 'theme-browser-empty';
     empty.textContent = 'No themes found';
     container.appendChild(empty);
     return;
   }
 
-  // Grid container
-  const grid = container.ownerDocument.createElement('div');
-  grid.className = 'theme-grid';
+  // Split themes into favorites and non-favorites (24-7)
+  const favoriteThemes = state.filteredThemes.filter(t => favorites.includes(t.id));
+  const otherThemes = state.filteredThemes.filter(t => !favorites.includes(t.id));
 
-  // Render each theme card
-  state.filteredThemes.forEach(theme => {
-    const isSelected = theme.id === state.selectedThemeId;
-    const card = createThemeCard(theme, container.ownerDocument, isSelected);
-    grid.appendChild(card);
-  });
+  // Favorites section (24-7) - only show if there are favorites
+  if (favoriteThemes.length > 0) {
+    const favoritesSection = doc.createElement('div');
+    favoritesSection.className = 'theme-favorites-section';
 
-  container.appendChild(grid);
+    const favoritesHeader = doc.createElement('div');
+    favoritesHeader.className = 'theme-favorites-header';
+    favoritesHeader.innerHTML = `<span class="favorites-icon">★</span> Favorites <span class="favorites-count">(${favoriteThemes.length})</span>`;
+    favoritesSection.appendChild(favoritesHeader);
+
+    const favoritesGrid = doc.createElement('div');
+    favoritesGrid.className = 'theme-grid theme-favorites-grid';
+
+    favoriteThemes.forEach(theme => {
+      const isSelected = theme.id === state.selectedThemeId;
+      const card = createThemeCard(theme, doc, isSelected, true);
+      favoritesGrid.appendChild(card);
+    });
+
+    favoritesSection.appendChild(favoritesGrid);
+    container.appendChild(favoritesSection);
+  }
+
+  // All themes section header (only show if there are favorites to separate from)
+  if (favoriteThemes.length > 0 && otherThemes.length > 0) {
+    const allHeader = doc.createElement('div');
+    allHeader.className = 'theme-all-header';
+    allHeader.textContent = 'All Themes';
+    container.appendChild(allHeader);
+  }
+
+  // Grid container for non-favorite themes
+  if (otherThemes.length > 0) {
+    const grid = doc.createElement('div');
+    grid.className = 'theme-grid';
+
+    otherThemes.forEach(theme => {
+      const isSelected = theme.id === state.selectedThemeId;
+      const card = createThemeCard(theme, doc, isSelected, false);
+      grid.appendChild(card);
+    });
+
+    container.appendChild(grid);
+  } else if (favoriteThemes.length === 0) {
+    // No favorites and no other themes - empty state already handled above
+  }
 }
 
 // =============================================================================
@@ -373,7 +444,20 @@ export function renderThemeBrowser(container, state, config) {
 
   // Add click handlers to cards (in grid wrapper)
   gridWrapper.querySelectorAll('.theme-card').forEach(card => {
-    card.addEventListener('click', () => {
+    // Favorite button click handler (24-7)
+    const favoriteBtn = card.querySelector(`.${FAVORITE_ICON_CLASS}`);
+    if (favoriteBtn) {
+      favoriteBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent card selection
+        const themeId = card.dataset.themeId;
+        const isFavorite = favoriteBtn.classList.contains('is-favorite');
+        config.onFavoriteToggle?.(themeId, !isFavorite);
+      });
+    }
+
+    card.addEventListener('click', (e) => {
+      // Skip if clicking the favorite button (handled above)
+      if (e.target.closest(`.${FAVORITE_ICON_CLASS}`)) return;
       const themeId = card.dataset.themeId;
       config.onSelect?.(themeId);
     });

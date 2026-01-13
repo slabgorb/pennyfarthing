@@ -35,6 +35,7 @@ import {
 let themeBrowserState = {
   themes: [],
   filteredThemes: [],
+  favorites: [],  // Theme IDs marked as favorites (24-7)
   searchQuery: '',
   selectedCategory: 'All',
   selectedThemeId: null,
@@ -94,6 +95,10 @@ export function loadFormValues(settings) {
     theme.value = themeId;
   }
 
+  // Load favorites from settings (24-7)
+  const favorites = settings.pennyfarthing?.favorites ?? [];
+  themeBrowserState.favorites = favorites;
+
   // Update browser state if themes are loaded
   if (themeBrowserState.themes.length > 0) {
     setInitialTheme(themeId);
@@ -126,6 +131,7 @@ export function getFormValues() {
     },
     pennyfarthing: {
       theme: getSelectedTheme(),
+      favorites: themeBrowserState.favorites || [],
     },
   };
 }
@@ -151,6 +157,7 @@ function getDefaultSettings() {
     },
     pennyfarthing: {
       theme: 'alice-in-wonderland',
+      favorites: [],
     },
   };
 }
@@ -214,6 +221,8 @@ function renderThemeBrowserUI(container) {
   renderThemeBrowser(container, themeBrowserState, {
     onSelect: (themeId) => {
       themeBrowserState.selectedThemeId = themeId;
+      // Find full theme data for preview panel
+      themeBrowserState.selectedThemeData = themeBrowserState.themes.find(t => t.id === themeId) || null;
       // Update hidden input for form submission
       const themeInput = document.getElementById('theme');
       if (themeInput) {
@@ -233,6 +242,25 @@ function renderThemeBrowserUI(container) {
     onCancel: () => {
       // Cancel closes the settings window
       window.close();
+    },
+    onFavoriteToggle: async (themeId, isFavorite) => {
+      // Update local state (24-7)
+      if (isFavorite) {
+        if (!themeBrowserState.favorites.includes(themeId)) {
+          themeBrowserState.favorites = [...themeBrowserState.favorites, themeId];
+        }
+      } else {
+        themeBrowserState.favorites = themeBrowserState.favorites.filter(id => id !== themeId);
+      }
+
+      // Save immediately via IPC so favorites persist
+      if (window.electronAPI?.settings?.save) {
+        const currentSettings = getFormValues();
+        await window.electronAPI.settings.save(currentSettings);
+      }
+
+      // Re-render to show updated state
+      renderThemeBrowserUI(container);
     },
   });
 }

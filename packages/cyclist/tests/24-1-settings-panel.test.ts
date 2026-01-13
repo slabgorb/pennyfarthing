@@ -41,6 +41,7 @@ interface CyclistSettings {
   };
   pennyfarthing: {
     theme: string;
+    favorites: string[];
   };
 }
 
@@ -61,6 +62,7 @@ const DEFAULT_SETTINGS: CyclistSettings = {
   },
   pennyfarthing: {
     theme: 'alice-in-wonderland',
+    favorites: [],
   },
 };
 
@@ -198,7 +200,7 @@ describe('24-1: Settings Panel Infrastructure', () => {
 
     it('should return default settings when no file exists', async () => {
       const settings = await import('../src/settings.js');
-      const loaded = settings.loadSettings('/nonexistent/path');
+      const loaded = settings.getDefaultSettings();
 
       expect(loaded.workflow.auto_handoff).toBe(false);
       expect(loaded.workflow.handoff_confirm).toBe(true);

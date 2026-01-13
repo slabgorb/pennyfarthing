@@ -35,6 +35,7 @@ export interface NotificationSettings {
 
 export interface PennyfarthingSettings {
   theme: string;
+  favorites: string[];
 }
 
 export interface CyclistSettings {
@@ -80,6 +81,7 @@ const DEFAULT_SETTINGS: CyclistSettings = {
   },
   pennyfarthing: {
     theme: 'alice-in-wonderland',
+    favorites: [],
   },
 };
 
@@ -185,6 +187,7 @@ export function validateSettings(settings: unknown): boolean {
   }
   const pennyfarthing = s.pennyfarthing as Record<string, unknown>;
   if (typeof pennyfarthing.theme !== 'string') return false;
+  if (!Array.isArray(pennyfarthing.favorites)) return false;
 
   return true;
 }
@@ -233,6 +236,9 @@ export function mergeSettings(base: CyclistSettings, override: PartialSettings):
   if (override.pennyfarthing) {
     if (typeof override.pennyfarthing.theme === 'string') {
       result.pennyfarthing.theme = override.pennyfarthing.theme;
+    }
+    if (Array.isArray(override.pennyfarthing.favorites)) {
+      result.pennyfarthing.favorites = override.pennyfarthing.favorites;
     }
   }
 
