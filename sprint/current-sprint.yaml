@@ -171,7 +171,9 @@ epics:
           - Reports next agent from workflow
         points: 5
         priority: P1
-        status: backlog
+        status: in_progress
+        started: 2026-01-13
+        assigned_to: Keith Avery
         depends_on: [31-3, 31-6]
         repos: pennyfarthing
         acceptance_criteria:
