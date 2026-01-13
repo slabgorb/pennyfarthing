@@ -27,7 +27,7 @@ import { existsSync } from 'node:fs';
 import {
   routeStoryToWorkflow,
   type StoryMetadata,
-  type RoutingResult
+  type RoutingResult as _RoutingResult
 } from './workflow-router.js';
 
 // Import types from loader (already implemented in 31-2)
