@@ -169,6 +169,12 @@ function createElectronAPI() {
                     ipcRenderer.on('tools:showAuditLog', () => callback());
                 },
             },
+            // Theme API (24-9)
+            theme: {
+                onShowQuickSwitcher: (callback) => {
+                    ipcRenderer.on('theme:showQuickSwitcher', () => callback());
+                },
+            },
         };
     }
     else {
@@ -299,6 +305,12 @@ function createElectronAPI() {
                     // No-op in test environment
                 },
                 onShow: (_callback) => {
+                    // No-op in test environment
+                },
+            },
+            // Theme API (24-9) - test stub
+            theme: {
+                onShowQuickSwitcher: (_callback) => {
                     // No-op in test environment
                 },
             },

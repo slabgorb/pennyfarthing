@@ -221,6 +221,12 @@ export function buildToolsMenu() {
         label: 'Tools',
         submenu: [
             {
+                label: 'Quick Theme Switcher',
+                accelerator: 'CmdOrCtrl+K',
+                click: () => broadcastToRenderer('theme:showQuickSwitcher', null),
+            },
+            { type: 'separator' },
+            {
                 label: 'Execution Log',
                 accelerator: 'CmdOrCtrl+Shift+L',
                 click: () => broadcastToRenderer('tools:showAuditLog', null),

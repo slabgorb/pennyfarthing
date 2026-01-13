@@ -328,6 +328,17 @@ export interface ElectronPathAPI {
   sendApprovalResponse: (response: { toolId: string; approved: boolean; alwaysAllow: boolean }) => Promise<void>;
 }
 
+/**
+ * Theme API interface (24-9)
+ * Provides IPC channels for quick theme switcher
+ */
+export interface ElectronThemeAPI {
+  /**
+   * Subscribe to show quick switcher event from menu
+   */
+  onShowQuickSwitcher: (callback: () => void) => void;
+}
+
 export interface ElectronAPI {
   stats: ElectronDataAPI;
   persona: ElectronDataAPI;
@@ -347,6 +358,7 @@ export interface ElectronAPI {
   path: ElectronPathAPI; // 22-4: Dangerous path approval gate
   settings: ElectronSettingsAPI; // 22-3, 22-4: Settings API
   auditLog: ElectronAuditLogAPI; // 22-6: Audit log
+  theme: ElectronThemeAPI; // 24-9: Quick theme switcher
 }
 
 // Check if we're running in Electron (has contextBridge available)
@@ -522,6 +534,12 @@ function createElectronAPI(): ElectronAPI {
           ipcRenderer.on('tools:showAuditLog', () => callback());
         },
       },
+      // Theme API (24-9)
+      theme: {
+        onShowQuickSwitcher: (callback: () => void) => {
+          ipcRenderer.on('theme:showQuickSwitcher', () => callback());
+        },
+      },
     };
   } else {
     // Running in Node (tests) - return testable structure
@@ -653,6 +671,12 @@ function createElectronAPI(): ElectronAPI {
           // No-op in test environment
         },
         onShow: (_callback: () => void) => {
+          // No-op in test environment
+        },
+      },
+      // Theme API (24-9) - test stub
+      theme: {
+        onShowQuickSwitcher: (_callback: () => void) => {
           // No-op in test environment
         },
       },
