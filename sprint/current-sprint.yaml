@@ -5,20 +5,17 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 68
-  completed_points: 25
-  remaining_points: 43
+  total_points: 57
+  completed_points: 27
+  remaining_points: 30
   notes: |
-    Sprint 10 focus: Three strategic epics + tech debt
-    - Epic 31: Customizable Workflow Engine (22 pts)
+    Sprint 10 focus: Three strategic epics
+    - Epic 31: Customizable Workflow Engine (15 pts)
     - Epic 32: BMAD Artifact Compatibility (11 pts) - REVISED
     - Epic 33: Runtime Permission Management (12 pts)
-    - Epic 35: Cyclist Code Cleanup (11 pts) - NEW tech debt
 
     Epic 32 revised to focus on artifact interoperability (import/export)
     rather than workflow engine compatibility. No dependency on Epic 31.
-
-    Epic 35 added from architectural review - DRY violations and orphaned code.
 # =============================================================================
 # ACTIVE EPICS
 # =============================================================================
@@ -356,7 +353,7 @@ epics:
       Currently permissions must be pre-configured; agents can't request
       spot permissions for tools like WebFetch when needed.
     points: 12
-    completed_points: 3
+    completed_points: 5
     priority: P1
     marker: ux
     repos: pennyfarthing, cyclist
@@ -388,8 +385,9 @@ epics:
           - Show permission history
         points: 2
         priority: P0
-        status: in_progress
+        status: done
         started: 2026-01-13
+        completed: 2026-01-13
         assigned_to: Keith Avery
         repos: pennyfarthing
         acceptance_criteria:
@@ -565,114 +563,13 @@ epics:
           - Show clear message with actual URL
         points: 1
         priority: P2
-        status: done
-        started: 2026-01-13
-        completed: 2026-01-13
-        assigned_to: Michael Pursifull
+        status: backlog
         repos: pennyfarthing
         jira: MSSCI-11621
-        pr: 230
         acceptance_criteria:
           - Startup logs show actual port used
           - .cyclist-port file written to project dir
           - Message shows correct localhost URL
-
-  - id: epic-35
-    title: Cyclist Code Cleanup
-    description: |
-      Technical debt cleanup in the Cyclist visual terminal codebase.
-      Consolidate duplicate code, remove orphaned components, and
-      improve maintainability. Identified via architectural review.
-    points: 11
-    completed_points: 0
-    priority: P2
-    marker: tech-debt
-    repos: pennyfarthing
-    status: backlog
-    stories:
-      - id: 35-1
-        title: Extract log formatting utilities
-        description: |
-          AuditLogViewer.js and ToolLogViewer.js both define identical
-          utility functions: escapeHtml(), formatTimestamp(), formatDuration(),
-          truncate(), getToolTypes(). Extract to shared module.
-        points: 2
-        priority: P1
-        status: backlog
-        repos: pennyfarthing
-        acceptance_criteria:
-          - Create src/public/js/utils/log-formatting.js
-          - Move escapeHtml, formatTimestamp, formatDuration, truncate functions
-          - Update AuditLogViewer.js to import from shared module
-          - Update ToolLogViewer.js to import from shared module
-          - No functional changes to either component
-          - Tests pass (manual verification in Cyclist)
-      - id: 35-2
-        title: Create modal base utility
-        description: |
-          ApprovalModal, DangerousPathModal, and AuditLogViewer all implement
-          similar show/hide/isVisible patterns with DOM classList manipulation
-          and keyboard event handling. Extract to reusable utility.
-        points: 3
-        priority: P1
-        status: backlog
-        repos: pennyfarthing
-        acceptance_criteria:
-          - Create src/public/js/utils/modal-base.js
-          - Provide createModalController(elementId) factory function
-          - Returns {show, hide, isVisible, onKeydown} interface
-          - Handles Escape key and click-outside dismissal
-          - Refactor ApprovalModal.js to use modal-base
-          - Refactor DangerousPathModal.js to use modal-base
-          - Refactor AuditLogViewer.js modal code to use modal-base
-          - All modals function identically to before
-      - id: 35-3
-        title: Consolidate log viewer filter/export logic
-        description: |
-          AuditLogViewer.js and ToolLogViewer.js have duplicate filter
-          dropdown rendering and export (JSON/CSV) logic. Consider
-          consolidating into LogViewerBase class or shared utilities.
-        points: 3
-        priority: P1
-        status: backlog
-        repos: pennyfarthing
-        acceptance_criteria:
-          - Create src/public/js/utils/log-viewer-base.js
-          - Extract setFilter/getFilter/renderFilterDropdown pattern
-          - Extract exportJSON/exportCSV pattern
-          - Both viewers use shared implementation
-          - Filter and export functionality unchanged
-          - Consider if viewers should merge into single component
-      - id: 35-4
-        title: Resolve QuickThemeSwitcher status
-        description: |
-          QuickThemeSwitcher.js (441 lines) is fully implemented but
-          disabled in index.html since Story 24-9. Either activate by
-          uncommenting the HTML, or formally deprecate and remove.
-        points: 2
-        priority: P2
-        status: backlog
-        repos: pennyfarthing
-        acceptance_criteria:
-          - Investigate why QuickThemeSwitcher was disabled (Story 24-9)
-          - If functional - uncomment index.html lines 425-430
-          - If not ready - document blockers in code comment
-          - If deprecated - remove QuickThemeSwitcher.js entirely
-          - Update ThemeBrowser.js if QuickThemeSwitcher removed
-          - Document decision in commit message
-      - id: 35-5
-        title: Remove deprecated FileBrowser
-        description: |
-          FileBrowser.js (523 lines) is deprecated. Remove the file
-          and any references to it in the codebase.
-        points: 1
-        priority: P2
-        status: backlog
-        repos: pennyfarthing
-        acceptance_criteria:
-          - Delete FileBrowser.js
-          - Remove any imports/references to FileBrowser
-          - Verify no runtime errors after removal
 
 # =============================================================================
 # COMPLETED EPICS (Sprint 10)
