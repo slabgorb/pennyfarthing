@@ -18,7 +18,6 @@ import {
   validateWorkflow,
   type WorkflowDefinition,
   type WorkflowValidationError,
-  type WorkflowValidationResult
 } from './workflow-schema.js';
 
 /**
