@@ -837,7 +837,7 @@ Test project.
             const result = parseBmadContext(context);
             assert.strictEqual(result.success, true);
             // Should still parse rules even without bold
-            assert.ok(result.context?.implementationRules.length >= 2);
+            assert.ok(result.context && result.context.implementationRules.length >= 2);
         });
         it('should handle markdown code blocks in content', () => {
             const context = `# Project Context
