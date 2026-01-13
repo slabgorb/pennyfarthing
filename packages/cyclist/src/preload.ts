@@ -339,6 +339,17 @@ export interface ElectronThemeAPI {
   onShowQuickSwitcher: (callback: () => void) => void;
 }
 
+/**
+ * Tools API interface
+ * Provides IPC channels for tool panel toggle
+ */
+export interface ElectronToolsAPI {
+  /**
+   * Subscribe to toggle panel event from menu
+   */
+  onTogglePanel: (callback: () => void) => void;
+}
+
 export interface ElectronAPI {
   stats: ElectronDataAPI;
   persona: ElectronDataAPI;
@@ -359,6 +370,7 @@ export interface ElectronAPI {
   settings: ElectronSettingsAPI; // 22-3, 22-4: Settings API
   auditLog: ElectronAuditLogAPI; // 22-6: Audit log
   theme: ElectronThemeAPI; // 24-9: Quick theme switcher
+  tools: ElectronToolsAPI; // Tool panel toggle
 }
 
 // Check if we're running in Electron (has contextBridge available)
@@ -540,6 +552,12 @@ function createElectronAPI(): ElectronAPI {
           ipcRenderer.on('theme:showQuickSwitcher', () => callback());
         },
       },
+      // Tools API (tool panel toggle)
+      tools: {
+        onTogglePanel: (callback: () => void) => {
+          ipcRenderer.on('tools:toggleToolPanel', () => callback());
+        },
+      },
     };
   } else {
     // Running in Node (tests) - return testable structure
@@ -677,6 +695,12 @@ function createElectronAPI(): ElectronAPI {
       // Theme API (24-9) - test stub
       theme: {
         onShowQuickSwitcher: (_callback: () => void) => {
+          // No-op in test environment
+        },
+      },
+      // Tools API - test stub
+      tools: {
+        onTogglePanel: (_callback: () => void) => {
           // No-op in test environment
         },
       },

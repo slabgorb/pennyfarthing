@@ -13,7 +13,7 @@ import { Server } from 'http';
 import { fileURLToPath } from 'url';
 import { dirname, join, basename } from 'path';
 import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
-import { getStoryInfo, getGitInfo } from './server.js';
+import { getStoryInfo, getGitInfo, writePortFile, cleanupPortFile } from './server.js';
 import { parseToolStats, ToolStats, createEmptyStats } from './tool-stats.js';
 import {
   getTokenStats,
@@ -288,6 +288,7 @@ export function buildWorkflowMenu(): { label: string; submenu: unknown[] } {
 
 /**
  * Build Tools menu with Execution Log (Story 22-6)
+ * Updated: toggles tool panel instead of showing modal
  */
 export function buildToolsMenu(): { label: string; submenu: unknown[] } {
   return {
@@ -303,7 +304,7 @@ export function buildToolsMenu(): { label: string; submenu: unknown[] } {
       {
         label: 'Execution Log',
         accelerator: 'CmdOrCtrl+Shift+L',
-        click: () => broadcastToRenderer('tools:showAuditLog', null),
+        click: () => broadcastToRenderer('tools:toggleToolPanel', null),
       },
     ],
   };
@@ -2142,6 +2143,12 @@ if (isElectron) {
         server = createTerminalServer();
         server.listen(actualPort, () => {
           console.log(`Cyclist server running at http://localhost:${actualPort}`);
+          // Write port file for OTEL auto-configuration (Story 20-1)
+          const projectDir = getProjectDirectory();
+          if (projectDir) {
+            writePortFile(projectDir, actualPort);
+            console.log(`[OTEL] Wrote .cyclist-port file to ${projectDir}`);
+          }
           resolve();
         });
         server.on('error', reject);
@@ -2156,6 +2163,12 @@ if (isElectron) {
    */
   function stopServer(): Promise<void> {
     return new Promise((resolve) => {
+      // Clean up port file before stopping (Story 20-1)
+      const projectDir = getProjectDirectory();
+      if (projectDir) {
+        cleanupPortFile(projectDir);
+        console.log('[OTEL] Cleaned up .cyclist-port file');
+      }
       if (server) {
         server.close(() => {
           console.log('Cyclist server stopped');
