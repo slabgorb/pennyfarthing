@@ -1,9 +1,10 @@
 /**
- * BMAD Module - Story 32-2
+ * BMAD Module - Stories 32-2, 32-3
  *
  * Utilities for parsing and working with BMAD artifacts.
  */
 
+// Story parser (32-2)
 export {
   parseBmadStory,
   type BmadStory,
@@ -12,3 +13,17 @@ export {
   type ParseResult,
   type ParseError,
 } from './story-parser.js';
+
+// Epics parser (32-3)
+export {
+  parseBmadEpics,
+  convertStoryId,
+  isValidStoryId,
+  parseStoryId,
+  type BmadEpic,
+  type BmadEpicStory,
+  type BmadEpicsFile,
+  type BmadRequirement,
+  type EpicsParseResult,
+  type EpicsParseError,
+} from './epics-parser.js';
