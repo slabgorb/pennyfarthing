@@ -22,7 +22,6 @@ import {
   type BmadProjectContext,
   type TechnologyStack,
   type ImplementationRule,
-  type ContextParseResult,
   type ContextParseError,
   type ExternalDependency,
 } from './context-reader.js';
