@@ -173,7 +173,7 @@ if (dist) {
 
 ```bash
 # Check current theme config
-cat .claude/persona-config.local.yaml
+yq 'theme' .pennyfarthing/config.local.yaml
 
 # Check if theme file exists
 ls pennyfarthing-dist/personas/themes/

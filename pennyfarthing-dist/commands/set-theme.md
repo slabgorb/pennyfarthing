@@ -24,7 +24,7 @@ Change the active persona theme for all agents.
    ```
    If not found, show error and list available themes.
 
-3. Set the theme by editing `.claude/persona-config.yaml`:
+3. Set the theme by editing `.pennyfarthing/config.local.yaml`:
    - Change the `theme:` line to the new theme name
    - Use the Edit tool to replace `theme: <old>` with `theme: <new>`
 
