@@ -52,7 +52,42 @@ Run these checks and STOP if any fail:
 
 1. **Quality gate checks pass (/check):**
 
-   Run the quality gate script:
+   **Story 31-8: Check test cache before running quality gates.**
+
+   First, check if valid cached test results exist:
+   ```bash
+   SESSION_FILE="$CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md"
+   CURRENT_SHA=$(git rev-parse HEAD)
+
+   # Check for valid test cache
+   if grep -q "^## Test Cache" "$SESSION_FILE" 2>/dev/null; then
+       CACHE_SHA=$(grep "| Git SHA |" "$SESSION_FILE" | sed 's/.*| //' | sed 's/ |$//' | xargs)
+       CACHE_RESULT=$(grep "| Result |" "$SESSION_FILE" | sed 's/.*| //' | sed 's/ |$//' | xargs)
+       CACHE_TIME=$(grep "| Last Run |" "$SESSION_FILE" | sed 's/.*| //' | sed 's/ |$//' | xargs)
+
+       if [[ "$CACHE_SHA" == "$CURRENT_SHA" ]]; then
+           # Check cache age (5 min limit)
+           CACHE_EPOCH=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$CACHE_TIME" +%s 2>/dev/null || date -d "$CACHE_TIME" +%s 2>/dev/null || echo 0)
+           NOW_EPOCH=$(date +%s)
+           AGE_MINUTES=$(( (NOW_EPOCH - CACHE_EPOCH) / 60 ))
+
+           if [[ $AGE_MINUTES -lt 5 ]]; then
+               echo "✓ Using cached test result: $CACHE_RESULT (${AGE_MINUTES}m old)"
+               if [[ "$CACHE_RESULT" == "GREEN" ]]; then
+                   echo "✓ Tests passed (cached) - skipping redundant run"
+                   # Skip to lint/typecheck only (tests already verified)
+                   USE_CACHED_TESTS=true
+               elif [[ "$CACHE_RESULT" == "RED" ]]; then
+                   echo "✗ Cached tests show failures - STOP"
+                   # Report failure without re-running
+               fi
+           fi
+       fi
+   fi
+   ```
+
+   **If cache is valid and GREEN:** Skip test execution, run only lint/typecheck.
+   **If cache is invalid/missing:** Run full quality gate script:
    ```bash
    $CLAUDE_PROJECT_DIR/.claude/scripts/check.sh
    ```

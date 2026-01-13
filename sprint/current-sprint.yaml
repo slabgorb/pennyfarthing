@@ -205,7 +205,9 @@ epics:
           - Or consolidate: only one subagent runs tests per phase
         points: 2
         priority: P1
-        status: backlog
+        status: in_progress
+        started: 2026-01-13
+        assigned_to: Keith Avery
         repos: pennyfarthing
         jira: MSSCI-11625
         acceptance_criteria:
