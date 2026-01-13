@@ -2,17 +2,15 @@ sprint:
   number: 9
   goal: Multimodal image support and Cyclist UX improvements
   planned_start: 2026-01-11
-  status: active
+  completed: 2026-01-13
+  status: completed
   velocity_target: 22
 summary:
   total_points: 109
-  completed_points: 103
-  remaining_points: 6
+  completed_points: 109
+  remaining_points: 0
   notes: |
     Sprint 9 focus: Multimodal image paste and Cyclist settings/UX.
-
-    ACTIVE EPICS:
-    - Epic 24 (Configuration & Theme Switcher) - 21/28 pts - IN PROGRESS
 
     COMPLETED THIS SPRINT:
     - Epic 30 (Developer Workflow Documentation) - 24/24 pts - DONE
@@ -36,11 +34,12 @@ epics:
       and Cyclist preferences. Rich theme browser with search, OCEAN
       profiles, character previews, and favorites.
     points: 28
-    completed_points: 24
+    completed_points: 28
     priority: P1
     marker: ux
     repos: cyclist
-    status: in_progress
+    status: done
+    completed: 2026-01-13
     stories:
       - id: 24-1
         title: Settings Panel Infrastructure
