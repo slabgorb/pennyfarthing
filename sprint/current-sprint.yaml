@@ -215,7 +215,9 @@ epics:
           Dev Notes, Dev Agent Record, File List sections.
         points: 2
         priority: P0
-        status: backlog
+        status: in_progress
+        started: 2026-01-13
+        assigned_to: Keith Avery
         repos: pennyfarthing
         acceptance_criteria:
           - Parses BMAD story markdown format
