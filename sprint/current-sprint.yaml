@@ -5,9 +5,9 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 42
+  total_points: 47
   completed_points: 3
-  remaining_points: 39
+  remaining_points: 44
   notes: |
     Sprint 10 focus: Three strategic epics
     - Epic 31: Customizable Workflow Engine (15 pts)
@@ -25,7 +25,7 @@ epics:
       Infrastructure for user-defined workflows. Replace hardcoded TDD flow
       (SM → TEA → Dev → Reviewer) with configurable YAML-based workflows.
       Users can define custom agent sequences, routing rules, and gates.
-    points: 15
+    points: 20
     completed_points: 0
     priority: P1
     marker: strategic
@@ -59,7 +59,9 @@ epics:
           Validate against schema, report errors clearly.
         points: 3
         priority: P0
-        status: backlog
+        status: in_progress
+        started: 2026-01-13
+        assigned_to: Keith Avery
         repos: pennyfarthing
         acceptance_criteria:
           - Loads all YAML files from .claude/workflows/
@@ -125,6 +127,37 @@ epics:
         acceptance_criteria:
           - Session files include workflow section
           - Tracks workflow name and current phase
+          - Records phase transitions with timestamps
+          - workflow-status-check reads workflow state
+      - id: 31-7
+        title: Generic workflow-driven handoff subagent
+        description: |
+          Replace hardcoded handoff subagents (sm-handoff, tea-handoff,
+          dev-handoff, reviewer-handoff-*) with a single generic handoff
+          that reads phase requirements from workflow definition.
+
+          Current pain: 5 separate handoff files with duplicated logic,
+          hardcoded agent names, fixed section names to grep for.
+
+          Solution: One handoff subagent that:
+          - Reads current phase from session file
+          - Looks up gate requirements from workflow definition
+          - Runs appropriate checks based on gate type
+          - Updates session with standard format
+          - Reports next agent from workflow
+        points: 5
+        priority: P1
+        status: backlog
+        depends_on: [31-3, 31-6]
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Single generic-handoff.md replaces 5 specific handoff files
+          - Reads gate type from workflow (tests_pass, tests_fail, approval, manual)
+          - Runs gate-specific checks (test runner for tests_*, PR check for approval)
+          - Updates session file workflow section with phase transition
+          - Determines next agent from workflow phases array
+          - Backward compatible with existing TDD flow
+          - Unit tests for handoff logic
           - Records phase transitions with timestamps
           - workflow-status-check reads workflow state
   - id: epic-32
