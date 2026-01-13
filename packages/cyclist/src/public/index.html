@@ -43,9 +43,48 @@
       </div>
     </div>
     <div class="resize-handle" id="diff-panel-resize" title="Drag to resize"></div>
+    <!-- Tool Panel (collapsible, resizable) - tool execution log -->
+    <div id="tool-panel" class="tool-panel collapsed">
+      <div class="tool-panel-header">
+        <span class="tool-panel-title">Tools</span>
+        <span class="tool-panel-count" id="tool-panel-count"></span>
+        <div class="tool-panel-controls">
+          <select id="tool-filter" title="Filter by tool type">
+            <option value="">All</option>
+          </select>
+          <button class="icon-btn" data-action="export-json" title="Export JSON">JSON</button>
+          <button class="icon-btn" data-action="export-csv" title="Export CSV">CSV</button>
+          <button class="icon-btn danger" data-action="clear" title="Clear log">Clear</button>
+        </div>
+        <button class="tool-panel-collapse-btn" id="tool-panel-collapse" title="Collapse">◀</button>
+      </div>
+      <div class="tool-panel-content" id="tool-panel-content">
+        <div class="tool-log-stats" id="tool-log-stats"></div>
+        <div class="tool-log-table-wrapper">
+          <table class="tool-log-table">
+            <thead>
+              <tr>
+                <th class="col-timestamp">Time</th>
+                <th class="col-tool">Tool</th>
+                <th class="col-input">Input</th>
+                <th class="col-duration">Duration</th>
+                <th class="col-status">Status</th>
+              </tr>
+            </thead>
+            <tbody id="tool-log-tbody">
+              <tr class="empty-row">
+                <td colspan="5" class="empty-message">No tool executions recorded yet</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="resize-handle" id="tool-panel-resize" title="Drag to resize"></div>
     <!-- Toggle buttons visible when panels are collapsed -->
     <button class="file-panel-expand-btn" id="file-panel-expand" title="Show changed files"><span class="expand-label">CHANGED</span><span class="panel-count-badge" id="file-panel-count"></span></button>
     <button class="diff-panel-expand-btn" id="diff-panel-expand" title="Show diffs"><span class="expand-label">DIFFS</span><span class="panel-count-badge" id="diff-panel-count"></span></button>
+    <button class="tool-panel-expand-btn" id="tool-panel-expand" title="Show tool log"><span class="expand-label">TOOLS</span><span class="panel-count-badge" id="tool-panel-expand-count"></span></button>
     <div id="main-content">
       <main id="message-view">
         <!-- MessageView will be mounted here -->
@@ -365,10 +404,10 @@
   <script type="module" src="/js/components/ApprovalModal.js"></script>
   <!-- 22-4: Dangerous Path Approval Modal -->
   <script type="module" src="/js/components/DangerousPathModal.js"></script>
-  <!-- 22-6: Tool Execution Audit Log -->
+  <!-- 22-6: Tool Execution Audit Log (modal kept for backwards compatibility) -->
   <script type="module" src="/js/components/AuditLogViewer.js"></script>
   <script type="module">
-    // Wire up audit log modal to menu event
+    // Wire up audit log modal to menu event (legacy)
     import { showAuditLogModal } from '/js/components/AuditLogViewer.js';
     if (window.electronAPI?.auditLog?.onShow) {
       window.electronAPI.auditLog.onShow(showAuditLogModal);
@@ -396,6 +435,19 @@
     ChangedFilesList.init();
     DiffViewer.setOnDiffAdded(ChangedFilesList.handleDiffAdded);
     DiffViewer.setOnDiffsRemoved(ChangedFilesList.handleDiffsRemoved);
+  </script>
+  <!-- Tool Panel and Log Viewer -->
+  <script type="module" src="/js/tool-panel.js"></script>
+  <script type="module" src="/js/components/ToolLogViewer.js"></script>
+  <script type="module">
+    // Wire up tool panel toggle to menu event
+    import * as ToolPanel from '/js/tool-panel.js';
+    // Listen for menu toggle event
+    if (window.electronAPI?.tools?.onTogglePanel) {
+      window.electronAPI.tools.onTogglePanel(() => {
+        ToolPanel.toggle();
+      });
+    }
   </script>
   <!-- Files tab will be added on demand, not on startup -->
   <script type="module" src="/js/controls.js"></script>

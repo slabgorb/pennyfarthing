@@ -155,6 +155,7 @@ export declare function buildWorkflowMenu(): {
 };
 /**
  * Build Tools menu with Execution Log (Story 22-6)
+ * Updated: toggles tool panel instead of showing modal
  */
 export declare function buildToolsMenu(): {
     label: string;
