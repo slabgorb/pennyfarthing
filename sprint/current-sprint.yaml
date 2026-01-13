@@ -563,11 +563,13 @@ epics:
           - Show clear message with actual URL
         points: 1
         priority: P2
-        status: in_progress
+        status: done
         started: 2026-01-13
+        completed: 2026-01-13
         assigned_to: Michael Pursifull
         repos: pennyfarthing
         jira: MSSCI-11621
+        pr: 230
         acceptance_criteria:
           - Startup logs show actual port used
           - .cyclist-port file written to project dir
