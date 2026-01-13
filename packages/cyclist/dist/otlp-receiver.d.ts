@@ -149,6 +149,12 @@ export declare function getAuditLogStats(): {
 /**
  * Process raw log events and store them appropriately
  * Called by the /v1/logs endpoint
+ *
+ * Actual Claude Code OTEL format (discovered via debug):
+ * - tool_name (not tool.name)
+ * - success as string "true"/"false" (not boolean)
+ * - duration_ms (not tool.duration_ms)
+ * - tool_parameters as JSON string (not tool.input)
  */
 export declare function processLogEvents(rawEvents: RawLogEvent[]): void;
 export {};

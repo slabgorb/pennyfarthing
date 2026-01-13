@@ -43,9 +43,15 @@ import {
  *
  * Each logRecord has:
  * - body: { stringValue: "event_name" }
- * - attributes: key-value pairs
+ * - attributes: key-value pairs (actual Claude Code format)
  * - timeUnixNano: timestamp
  * - traceId, spanId: for correlation
+ *
+ * ACTUAL Claude Code attribute format (discovered via debug):
+ * - tool_name (not tool.name)
+ * - success as string "true"/"false" (not boolean)
+ * - duration_ms as string (not tool.duration_ms as int)
+ * - tool_parameters as JSON string (not tool.input)
  */
 
 const toolResultEvent = {
@@ -57,11 +63,11 @@ const toolResultEvent = {
         traceId: 'abc123def456',
         spanId: 'span789',
         attributes: [
-          { key: 'tool.name', value: { stringValue: 'Read' } },
-          { key: 'tool.input', value: { stringValue: '/path/to/file.ts' } },
-          { key: 'tool.output', value: { stringValue: 'file contents here...' } },
-          { key: 'tool.duration_ms', value: { intValue: 42 } },
-          { key: 'tool.success', value: { boolValue: true } },
+          { key: 'tool_name', value: { stringValue: 'Read' } },
+          { key: 'tool_parameters', value: { stringValue: '{"file_path":"/path/to/file.ts"}' } },
+          { key: 'tool_output', value: { stringValue: 'file contents here...' } },
+          { key: 'duration_ms', value: { stringValue: '42' } },
+          { key: 'success', value: { stringValue: 'true' } },
         ],
       }],
     }],
@@ -94,11 +100,11 @@ const toolErrorEvent = {
         traceId: 'error-trace',
         spanId: 'error-span',
         attributes: [
-          { key: 'tool.name', value: { stringValue: 'Bash' } },
-          { key: 'tool.input', value: { stringValue: 'rm -rf /' } },
-          { key: 'tool.success', value: { boolValue: false } },
-          { key: 'tool.error', value: { stringValue: 'Permission denied' } },
-          { key: 'tool.duration_ms', value: { intValue: 5 } },
+          { key: 'tool_name', value: { stringValue: 'Bash' } },
+          { key: 'tool_parameters', value: { stringValue: '{"command":"rm -rf /"}' } },
+          { key: 'success', value: { stringValue: 'false' } },
+          { key: 'error', value: { stringValue: 'Permission denied' } },
+          { key: 'duration_ms', value: { stringValue: '5' } },
         ],
       }],
     }],
@@ -115,11 +121,11 @@ const multipleToolEvents = {
           traceId: 'trace-multi',
           spanId: 'span-1',
           attributes: [
-            { key: 'tool.name', value: { stringValue: 'Glob' } },
-            { key: 'tool.input', value: { stringValue: '**/*.ts' } },
-            { key: 'tool.output', value: { stringValue: 'src/index.ts\nsrc/types.ts' } },
-            { key: 'tool.duration_ms', value: { intValue: 15 } },
-            { key: 'tool.success', value: { boolValue: true } },
+            { key: 'tool_name', value: { stringValue: 'Glob' } },
+            { key: 'tool_parameters', value: { stringValue: '{"pattern":"**/*.ts"}' } },
+            { key: 'tool_output', value: { stringValue: 'src/index.ts\nsrc/types.ts' } },
+            { key: 'duration_ms', value: { stringValue: '15' } },
+            { key: 'success', value: { stringValue: 'true' } },
           ],
         },
         {
@@ -128,11 +134,11 @@ const multipleToolEvents = {
           traceId: 'trace-multi',
           spanId: 'span-2',
           attributes: [
-            { key: 'tool.name', value: { stringValue: 'Read' } },
-            { key: 'tool.input', value: { stringValue: 'src/index.ts' } },
-            { key: 'tool.output', value: { stringValue: 'export const foo = 1;' } },
-            { key: 'tool.duration_ms', value: { intValue: 8 } },
-            { key: 'tool.success', value: { boolValue: true } },
+            { key: 'tool_name', value: { stringValue: 'Read' } },
+            { key: 'tool_parameters', value: { stringValue: '{"file_path":"src/index.ts"}' } },
+            { key: 'tool_output', value: { stringValue: 'export const foo = 1;' } },
+            { key: 'duration_ms', value: { stringValue: '8' } },
+            { key: 'success', value: { stringValue: 'true' } },
           ],
         },
       ],
@@ -177,9 +183,9 @@ const mixedEvents = {
           traceId: 'mixed-trace',
           spanId: 'tool-span',
           attributes: [
-            { key: 'tool.name', value: { stringValue: 'Grep' } },
-            { key: 'tool.input', value: { stringValue: 'TODO' } },
-            { key: 'tool.success', value: { boolValue: true } },
+            { key: 'tool_name', value: { stringValue: 'Grep' } },
+            { key: 'tool_parameters', value: { stringValue: '{"pattern":"TODO"}' } },
+            { key: 'success', value: { stringValue: 'true' } },
           ],
         },
       ],
@@ -319,7 +325,7 @@ describe('Story 19-1: OTLP Tool Events', () => {
       resetEventStore();
     });
 
-    it('should extract tool.name attribute', async () => {
+    it('should extract tool_name attribute', async () => {
       await request(app)
         .post('/v1/logs')
         .send(toolResultEvent)
@@ -329,17 +335,18 @@ describe('Story 19-1: OTLP Tool Events', () => {
       expect(events[0].toolName).toBe('Read');
     });
 
-    it('should extract tool.input attribute', async () => {
+    it('should extract input from tool_parameters JSON', async () => {
       await request(app)
         .post('/v1/logs')
         .send(toolResultEvent)
         .set('Content-Type', 'application/json');
 
       const events = getToolEvents();
+      // Input is extracted from tool_parameters JSON, prefers file_path key
       expect(events[0].input).toBe('/path/to/file.ts');
     });
 
-    it('should extract tool.output attribute', async () => {
+    it('should extract tool_output attribute', async () => {
       await request(app)
         .post('/v1/logs')
         .send(toolResultEvent)
@@ -349,7 +356,7 @@ describe('Story 19-1: OTLP Tool Events', () => {
       expect(events[0].output).toBe('file contents here...');
     });
 
-    it('should extract tool.success attribute', async () => {
+    it('should extract success attribute (string to boolean)', async () => {
       await request(app)
         .post('/v1/logs')
         .send(toolResultEvent)
@@ -359,7 +366,7 @@ describe('Story 19-1: OTLP Tool Events', () => {
       expect(events[0].success).toBe(true);
     });
 
-    it('should extract tool.error when present', async () => {
+    it('should extract error when present', async () => {
       await request(app)
         .post('/v1/logs')
         .send(toolErrorEvent)
@@ -378,8 +385,8 @@ describe('Story 19-1: OTLP Tool Events', () => {
               timeUnixNano: '1704844800000000000',
               body: { stringValue: 'claude_code.tool_result' },
               attributes: [
-                { key: 'tool.name', value: { stringValue: 'Write' } },
-                { key: 'tool.success', value: { boolValue: true } },
+                { key: 'tool_name', value: { stringValue: 'Write' } },
+                { key: 'success', value: { stringValue: 'true' } },
               ],
             }],
           }],
@@ -405,7 +412,7 @@ describe('Story 19-1: OTLP Tool Events', () => {
       resetEventStore();
     });
 
-    it('should extract tool.duration_ms attribute', async () => {
+    it('should extract duration_ms attribute (string to number)', async () => {
       await request(app)
         .post('/v1/logs')
         .send(toolResultEvent)

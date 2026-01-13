@@ -107,6 +107,13 @@ export function readPortFile(projectDir) {
 /**
  * Get OTEL configuration environment variables based on port file.
  * Returns null if no valid port file exists.
+ *
+ * Claude Code requires explicit opt-in for telemetry:
+ * - CLAUDE_CODE_ENABLE_TELEMETRY=1 to enable telemetry
+ * - OTEL_LOGS_EXPORTER=otlp to export tool events
+ * - OTEL_METRICS_EXPORTER=otlp to export token metrics
+ *
+ * @see https://code.claude.com/docs/en/monitoring-usage
  */
 export function getOtelConfig(projectDir) {
     const port = readPortFile(projectDir);
@@ -114,6 +121,12 @@ export function getOtelConfig(projectDir) {
         return null;
     }
     return {
+        // Enable telemetry (opt-in required)
+        CLAUDE_CODE_ENABLE_TELEMETRY: '1',
+        // Configure exporters for logs (tool events) and metrics (tokens)
+        OTEL_LOGS_EXPORTER: 'otlp',
+        OTEL_METRICS_EXPORTER: 'otlp',
+        // HTTP/JSON protocol for Cyclist's Express server
         OTEL_EXPORTER_OTLP_PROTOCOL: 'http/json',
         OTEL_EXPORTER_OTLP_ENDPOINT: `http://localhost:${port}`,
     };
