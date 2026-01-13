@@ -1,7 +1,7 @@
 /**
- * BMAD Module - Stories 32-2, 32-3, 32-4
+ * BMAD Module - Stories 32-2, 32-3, 32-4, 32-5
  *
- * Utilities for parsing and working with BMAD artifacts.
+ * Utilities for parsing, importing, and exporting BMAD artifacts.
  */
 
 // Story parser (32-2)
@@ -39,3 +39,14 @@ export {
   type ContextParseResult,
   type ContextParseError,
 } from './context-reader.js';
+
+// Story exporter (32-5)
+export {
+  exportToBmadStory,
+  type SessionData,
+  type AcceptanceCriterion,
+  type Task,
+  type ExportResult,
+  type ExportError,
+  type ExportOptions,
+} from './story-exporter.js';
