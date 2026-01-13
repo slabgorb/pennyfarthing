@@ -26,7 +26,7 @@ epics:
       Infrastructure for user-defined workflows. Replace hardcoded TDD flow
       (SM → TEA → Dev → Reviewer) with configurable YAML-based workflows.
       Users can define custom agent sequences, routing rules, and gates.
-    points: 22
+    points: 25
     completed_points: 18
     priority: P1
     marker: strategic
@@ -214,6 +214,38 @@ epics:
           - Subagents check cache before running tests
           - Cache invalidated on code changes (git diff check)
           - Total TDD cycle time reduced by ~70 seconds
+      - id: 31-9
+        title: Turn optimization - reduce API round-trips
+        description: |
+          Reduce the number of API turns (round-trips) during TDD workflow by:
+
+          1. **Batching Bash commands**: Combine independent commands with &&
+             - `git status && git branch` instead of separate calls
+             - `git add . && git commit -m "msg" && git push` in one turn
+
+          2. **Parallel tool calls**: Use more aggressive parallelization
+             - Read multiple files in single turn
+             - Spawn independent subagents in parallel
+
+          3. **Smarter file operations**:
+             - Grep instead of Read+search (grep reads internally)
+             - Glob with brace expansion `{pat1,pat2}` instead of multiple globs
+
+          4. **Compound subagents**: Create subagents that do multiple steps
+             - Combine status-check + file-read into single spawn
+             - Merge preflight checks into handoff subagents
+
+          Target: Reduce average turns per story from ~50 to ~30 (40% reduction)
+        points: 3
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Document turn-efficient patterns in dev-patterns skill
+          - Update subagent prompts to batch bash commands
+          - Audit main agents for sequential-to-parallel opportunities
+          - Add guidance for compound subagent creation
+          - Measure before/after turn counts on sample story
   - id: epic-32
     title: BMAD Artifact Compatibility
     description: |
