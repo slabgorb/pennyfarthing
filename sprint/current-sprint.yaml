@@ -5,9 +5,9 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 49
+  total_points: 57
   completed_points: 21
-  remaining_points: 28
+  remaining_points: 36
   notes: |
     Sprint 10 focus: Three strategic epics
     - Epic 31: Customizable Workflow Engine (15 pts)
@@ -437,6 +437,114 @@ epics:
           - Workflow start checks required permissions
           - Prompts for missing permissions
           - Cached grants skip prompts
+
+  - id: epic-34
+    title: Cyclist Developer Experience
+    description: |
+      First-time Cyclist users can set up and run the app without tribal
+      knowledge or debugging mysterious failures. Focus on documentation,
+      tooling, and "works on my machine" fixes.
+
+      Covers three installation scenarios:
+      1. Fresh system - never had Cyclist installed
+      2. Upgrade path - previous version installed
+      3. Clean checkout - fresh clone, existing system deps
+    points: 8
+    completed_points: 0
+    priority: P2
+    marker: dx
+    repos: pennyfarthing
+    status: in_progress
+    jira: MSSCI-11618
+    stories:
+      - id: 34-1
+        title: Fresh install documentation and tooling
+        description: |
+          Documentation and tooling for fresh Cyclist installation.
+          Focused on users who have never installed Cyclist before.
+
+          Prototype files:
+          - packages/cyclist/README.md (setup guide)
+          - packages/cyclist/scripts/install-app.sh (macOS install)
+          - packages/cyclist/scripts/install-cli.sh (CLI wrapper)
+          - justfile cyclist-setup recipe
+        points: 2
+        priority: P1
+        status: in_progress
+        started: 2026-01-13
+        repos: pennyfarthing
+        jira: MSSCI-11619
+        acceptance_criteria:
+          - README documents all prerequisites (pnpm, Python 3, Xcode tools, just)
+          - just cyclist-setup handles fresh clone scenario
+          - install-app.sh works for fresh install (replaces existing if present)
+          - install-cli.sh works for fresh install
+          - Troubleshooting section covers fresh install failures
+      - id: 34-4
+        title: Upgrade path handling
+        description: |
+          Handle users upgrading from previous Cyclist versions.
+          Clean stale artifacts, warn about location changes, document process.
+        points: 2
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        jira: MSSCI-11622
+        acceptance_criteria:
+          - README documents upgrade path (when to rebuild, clean artifacts)
+          - just cyclist-setup cleans stale artifacts before rebuilding
+          - install-cli.sh warns if replacing CLI pointing to different location
+          - Troubleshooting section for upgrade-specific issues
+      - id: 34-5
+        title: Team validation checklist
+        description: |
+          Create validation checklist for distributed testing across team.
+          Different team members have different system configurations
+          (fresh vs upgraded, with/without just, different macOS versions).
+        points: 1
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        jira: MSSCI-11623
+        acceptance_criteria:
+          - Validation checklist markdown file created
+          - Documents test scenarios (fresh, upgrade, clean checkout)
+          - Lists system configurations needed for testing
+          - Instructions for team members to report results
+      - id: 34-2
+        title: Cyclist health check command
+        description: |
+          Add a diagnostic command that validates Cyclist setup:
+          - Checks node-pty native module status
+          - Verifies workspace dependencies resolved
+          - Tests pennyfarthing-dist symlink resolution
+          - Reports actionable fix commands
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        jira: MSSCI-11620
+        acceptance_criteria:
+          - just cyclist-doctor validates setup
+          - Clear error messages with fix commands
+          - Checks native module, deps, symlinks
+          - Exit code indicates pass/fail
+      - id: 34-3
+        title: Port conflict detection and messaging
+        description: |
+          Improve UX when default port 1898 is in use:
+          - Log which port was actually used
+          - Write .cyclist-port file for OTEL integration
+          - Show clear message with actual URL
+        points: 1
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        jira: MSSCI-11621
+        acceptance_criteria:
+          - Startup logs show actual port used
+          - .cyclist-port file written to project dir
+          - Message shows correct localhost URL
 
 # =============================================================================
 # COMPLETED EPICS (Sprint 10)
