@@ -30,8 +30,8 @@ npm-debug.log*
 # TypeScript
 *.tsbuildinfo
 
-# Package lock (use package-lock.json if preferred)
-# package-lock.json
+# Package lock (project uses pnpm - ignore npm lockfile)
+package-lock.json
 
 # Benchmark scratch files
 .scratch/
