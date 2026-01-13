@@ -136,8 +136,14 @@ export function isCollapsed() {
  * @param {number} count - Number of diffs
  */
 export function setDiffCount(count) {
-  if (!countBadge) return;
-  countBadge.textContent = count > 0 ? count : '';
+  if (countBadge) {
+    countBadge.textContent = count > 0 ? count : '';
+  }
+
+  // Update PanelManager badge count (tab bar reads from this)
+  if (window.panelBadgeCounts?.setDiffCount) {
+    window.panelBadgeCounts.setDiffCount(count);
+  }
 }
 
 /**

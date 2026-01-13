@@ -8,6 +8,17 @@
 </head>
 <body>
   <div id="container">
+    <!-- Horizontal Tab Bar for panel navigation (tabs rendered dynamically by tab-bar.js) -->
+    <div id="tab-bar" class="tab-bar" role="tablist">
+      <div class="tab-bar-left">
+        <!-- Tabs will be rendered here by tab-bar.js based on PanelManager registry -->
+      </div>
+      <div class="tab-bar-right">
+        <span class="model-indicator" id="tab-model-indicator">—</span>
+      </div>
+    </div>
+    <!-- Content area: panels + main content + sidebar -->
+    <div id="content-area" class="content-area">
     <!-- Left file panel (collapsible, resizable) - shows changed files -->
     <div id="file-panel" class="file-panel collapsed">
       <div class="file-panel-header">
@@ -81,10 +92,7 @@
       </div>
     </div>
     <div class="resize-handle" id="tool-panel-resize" title="Drag to resize"></div>
-    <!-- Toggle buttons visible when panels are collapsed -->
-    <button class="file-panel-expand-btn" id="file-panel-expand" title="Show changed files"><span class="expand-label">CHANGED</span><span class="panel-count-badge" id="file-panel-count"></span></button>
-    <button class="diff-panel-expand-btn" id="diff-panel-expand" title="Show diffs"><span class="expand-label">DIFFS</span><span class="panel-count-badge" id="diff-panel-count"></span></button>
-    <button class="tool-panel-expand-btn" id="tool-panel-expand" title="Show tool log"><span class="expand-label">TOOLS</span><span class="panel-count-badge" id="tool-panel-expand-count"></span></button>
+    <!-- Panel expand buttons removed - now using horizontal tab bar at top -->
     <div id="main-content">
       <main id="message-view">
         <!-- MessageView will be mounted here -->
@@ -270,6 +278,7 @@
         <div id="todo-list" class="section-content"></div>
       </section>
     </aside>
+    </div><!-- /content-area -->
   </div>
 
   <!-- Persona Popup Modal (17-4) -->
@@ -446,6 +455,64 @@
     if (window.electronAPI?.tools?.onTogglePanel) {
       window.electronAPI.tools.onTogglePanel(() => {
         ToolPanel.toggle();
+      });
+    }
+  </script>
+  <!-- Panel Manager and Tab Bar -->
+  <script type="module" src="/js/panel-manager.js"></script>
+  <script type="module" src="/js/tab-bar.js"></script>
+  <script type="module">
+    // Register panels with PanelManager
+    import PanelManager from '/js/panel-manager.js';
+
+    // Track badge counts (updated by panel modules)
+    let fileBadgeCount = 0;
+    let diffBadgeCount = 0;
+    let toolBadgeCount = 0;
+
+    // Expose setters for panel modules to call
+    window.panelBadgeCounts = {
+      setFileCount: (n) => { fileBadgeCount = n; },
+      setDiffCount: (n) => { diffBadgeCount = n; },
+      setToolCount: (n) => { toolBadgeCount = n; },
+    };
+
+    // Register file panel
+    const filePanel = document.getElementById('file-panel');
+    if (filePanel) {
+      PanelManager.register({
+        id: 'file-panel',
+        label: 'CHANGED',
+        shortcut: '1',
+        order: 1,
+        element: filePanel,
+        getBadgeCount: () => fileBadgeCount,
+      });
+    }
+
+    // Register diff panel
+    const diffPanel = document.getElementById('diff-panel');
+    if (diffPanel) {
+      PanelManager.register({
+        id: 'diff-panel',
+        label: 'DIFFS',
+        shortcut: '2',
+        order: 2,
+        element: diffPanel,
+        getBadgeCount: () => diffBadgeCount,
+      });
+    }
+
+    // Register tool panel
+    const toolPanel = document.getElementById('tool-panel');
+    if (toolPanel) {
+      PanelManager.register({
+        id: 'tool-panel',
+        label: 'TOOLS',
+        shortcut: '3',
+        order: 3,
+        element: toolPanel,
+        getBadgeCount: () => toolBadgeCount,
       });
     }
   </script>

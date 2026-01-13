@@ -144,6 +144,11 @@ export function setToolCount(count) {
     expandCountBadge.textContent = count > 0 ? count : '';
     expandCountBadge.style.display = count > 0 ? 'inline-flex' : 'none';
   }
+
+  // Update PanelManager badge count (tab bar reads from this)
+  if (window.panelBadgeCounts?.setToolCount) {
+    window.panelBadgeCounts.setToolCount(count);
+  }
 }
 
 /**

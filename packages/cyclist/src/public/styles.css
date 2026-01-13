@@ -33,8 +33,114 @@ html, body {
 
 #container {
   display: flex;
+  flex-direction: column;
   height: 100vh;
   width: 100vw;
+}
+
+/* =============================================================================
+ * Horizontal Tab Bar (replaces vertical panel buttons)
+ * ============================================================================= */
+
+.tab-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  padding: 0 12px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+.tab-bar-left {
+  display: flex;
+  gap: 4px;
+}
+
+.tab-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-bottom: -1px; /* Overlap border */
+}
+
+.tab-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tab-btn:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.tab-btn[aria-pressed="true"] {
+  color: var(--text-primary);
+  border-bottom-color: var(--accent);
+}
+
+.tab-badge {
+  display: none;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background: var(--accent);
+  border-radius: 9px;
+  font-size: 10px;
+  font-weight: bold;
+  color: #fff;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-badge:not(:empty) {
+  display: inline-flex;
+}
+
+/* Pulse animation for new items */
+@keyframes badge-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.tab-badge.pulse {
+  animation: badge-pulse 0.3s ease;
+}
+
+.model-indicator {
+  padding: 4px 10px;
+  background: var(--bg-tertiary, #252540);
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: monospace;
+  color: var(--text-secondary);
+}
+
+/* Content area wrapper for panels + main content */
+.content-area {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
 }
 
 /* =============================================================================
@@ -127,8 +233,10 @@ html, body {
   display: none;
 }
 
-/* Expand button (visible when panel is collapsed) */
+/* DEPRECATED: Vertical expand buttons replaced by horizontal tab bar
+ * Keeping styles for backwards compatibility during transition */
 .file-panel-expand-btn {
+  display: none !important; /* Hidden - using tab bar now */
   position: absolute;
   left: 0;
   top: 50px;
@@ -240,7 +348,7 @@ html, body {
   flex-direction: column;
   min-width: var(--sidebar-width);  /* Match sidebar width to allow panels to expand */
   overflow: hidden;  /* 17-2: Constrain children to prevent layout blowout */
-  margin-left: 36px;  /* Room for collapsed panel expand buttons (32px + 4px gap) */
+  /* margin-left removed - now using horizontal tab bar instead of vertical expand buttons */
 }
 
 /* Message View - Claude SDK output display */
@@ -2389,8 +2497,9 @@ html, body {
   display: none;
 }
 
-/* Expand button (visible when panel is collapsed) */
+/* DEPRECATED: Vertical expand buttons replaced by horizontal tab bar */
 .diff-panel-expand-btn {
+  display: none !important; /* Hidden - using tab bar now */
   position: absolute;
   left: 0;
   top: 138px;  /* Below FILES button (50px + 80px + 8px gap) */
@@ -3757,8 +3866,9 @@ html, body {
   display: none;
 }
 
-/* Expand button (visible when panel is collapsed) */
+/* DEPRECATED: Vertical expand buttons replaced by horizontal tab bar */
 .tool-panel-expand-btn {
+  display: none !important; /* Hidden - using tab bar now */
   position: absolute;
   left: 0;
   top: 226px;  /* Below DIFFS button (138px + 80px + 8px gap) */
