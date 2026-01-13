@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 49
-  completed_points: 15
-  remaining_points: 34
+  completed_points: 17
+  remaining_points: 32
   notes: |
     Sprint 10 focus: Three strategic epics
     - Epic 31: Customizable Workflow Engine (15 pts)
@@ -212,7 +212,7 @@ epics:
       interoperability: import BMAD stories/epics, work in our TDD flow,
       export results back to BMAD format.
     points: 11
-    completed_points: 3
+    completed_points: 5
     priority: P1
     marker: strategic
     repos: pennyfarthing
@@ -268,10 +268,13 @@ epics:
           handle story numbering (N.M format).
         points: 2
         priority: P0
-        status: in_progress
+        status: done
         started: 2026-01-13
+        completed: 2026-01-13
         assigned_to: Keith Avery
         repos: pennyfarthing
+        pr: 218
+        jira: MSSCI-11095
         acceptance_criteria:
           - Parses BMAD epics.md format
           - Creates epic entries in sprint YAML
