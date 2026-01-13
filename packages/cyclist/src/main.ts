@@ -293,12 +293,13 @@ export function buildToolsMenu(): { label: string; submenu: unknown[] } {
   return {
     label: 'Tools',
     submenu: [
-      {
-        label: 'Quick Theme Switcher',
-        accelerator: 'CmdOrCtrl+K',
-        click: () => broadcastToRenderer('theme:showQuickSwitcher', null),
-      },
-      { type: 'separator' },
+      // 24-9: Quick Theme Switcher - DISABLED until functionality is ready
+      // {
+      //   label: 'Quick Theme Switcher',
+      //   accelerator: 'CmdOrCtrl+K',
+      //   click: () => broadcastToRenderer('theme:showQuickSwitcher', null),
+      // },
+      // { type: 'separator' },
       {
         label: 'Execution Log',
         accelerator: 'CmdOrCtrl+Shift+L',
