@@ -38,9 +38,33 @@ You are a workflow handoff assistant. Complete the handoff for story {STORY_ID}.
 1. Read the current session file
 2. Verify the Reviewer Assessment says "REJECTED"
 3. Keep status as `review` (Dev will fix and re-submit)
-4. Update the Workflow section to show routing back to Dev
-5. Add session log entry for today's review with rejection reason
-6. Report: "Routed back to Dev for fixes. {N} issues to address."
+4. **Update Workflow Tracking section for phase transition back to dev:**
+   - Update `**Phase:**` from `review` to `dev`
+   - Update `**Phase Started:**` to current ISO 8601 timestamp
+   - Update Phase History table:
+     - Set review row's Ended to current timestamp and calculate Duration
+     - Add new row for `dev` (revision cycle) with Started = current timestamp
+5. Update the Workflow section to show routing back to Dev
+6. Add session log entry for today's review with rejection reason
+7. Report: "Routed back to Dev for fixes. {N} issues to address."
+
+### Phase Transition Update (Rejection Cycle)
+
+```bash
+# Get current timestamp
+NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+# Extract review start time for duration calculation
+REVIEW_STARTED=$(grep "^\*\*Phase Started:\*\*" "$SESSION_FILE" | head -1 | sed 's/\*\*Phase Started:\*\* //' | xargs)
+```
+
+Update `## Workflow Tracking` to:
+```markdown
+**Phase:** dev
+**Phase Started:** {NOW}
+```
+
+And update Phase History table to record review completion and dev restart (revision cycle).
 
 ## Error Recovery
 

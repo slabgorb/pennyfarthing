@@ -493,9 +493,48 @@ ui_port: 5175
 
 **Always check the session file for:**
 - `Phase:` field to determine whose turn it is (sm, tea, dev, review, approved)
+- `Workflow:` field to know which workflow is active (tdd, trivial, etc.)
+- `Phase Started:` field for when the current phase began (ISO 8601)
 - `Repos:` field to know which subrepos to work in
 - `Feature Branch:` field for branch names
 - `worktree:` field if working in a worktree (use `path:` for commands)
+
+## Workflow Tracking Section
+
+Every session file includes a `## Workflow Tracking` section that tracks workflow state and phase history:
+
+```markdown
+## Workflow Tracking
+**Workflow:** tdd
+**Phase:** dev
+**Phase Started:** 2026-01-13T14:30:00Z
+
+### Phase History
+| Phase | Started | Ended | Duration |
+|-------|---------|-------|----------|
+| sm | 2026-01-13T14:00:00Z | 2026-01-13T14:15:00Z | 15m |
+| tea | 2026-01-13T14:15:00Z | 2026-01-13T14:30:00Z | 15m |
+| dev | 2026-01-13T14:30:00Z | - | - |
+```
+
+**Field extraction (grep-friendly):**
+```bash
+# Extract workflow name (defaults to "tdd" if missing for backward compatibility)
+WORKFLOW=$(grep "^\*\*Workflow:\*\*" "$SESSION_FILE" | head -1 | sed 's/\*\*Workflow:\*\* //' | xargs)
+[ -z "$WORKFLOW" ] && WORKFLOW="tdd"
+
+# Extract current phase
+PHASE=$(grep "^\*\*Phase:\*\*" "$SESSION_FILE" | head -1 | sed 's/\*\*Phase:\*\* //' | xargs)
+
+# Extract phase started timestamp
+PHASE_STARTED=$(grep "^\*\*Phase Started:\*\*" "$SESSION_FILE" | head -1 | sed 's/\*\*Phase Started:\*\* //' | xargs)
+```
+
+**On phase transition:** Handoff subagents update this section:
+1. Set previous phase's Ended timestamp and calculate Duration
+2. Update `**Phase:**` to new phase name
+3. Update `**Phase Started:**` to current timestamp
+4. Add new row to Phase History table
 
 ## Phase Assessment Templates (MANDATORY)
 
