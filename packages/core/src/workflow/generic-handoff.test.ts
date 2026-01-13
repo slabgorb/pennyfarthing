@@ -20,12 +20,12 @@
 
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
-import { mkdirSync, _writeFileSync, rmSync, existsSync, _readFileSync } from 'node:fs';
+import { mkdirSync, rmSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // Import types from existing modules
-import type { WorkflowDefinition, _WorkflowPhase } from './workflow-schema.js';
+import type { WorkflowDefinition } from './workflow-schema.js';
 
 // Import the generic handoff functions that Dev will implement
 import {
@@ -33,10 +33,7 @@ import {
   getNextPhase,
   checkGate,
   formatPhaseTransition,
-  calculateDuration,
-  type _HandoffContext,
-  type _HandoffResult,
-  type _GateCheckResult
+  calculateDuration
 } from './generic-handoff.js';
 
 // Get directory for test fixtures
