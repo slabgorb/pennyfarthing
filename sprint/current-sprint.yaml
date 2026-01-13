@@ -268,11 +268,10 @@ epics:
           - Shows current theme highlighted
         points: 2
         priority: P3
-        status: in_progress
-        started: 2026-01-13
-        assigned_to: Keith Avery
+        status: done
+        completed: 2026-01-13
         repos: cyclist
-        branch: feat/24-9-quick-theme-switcher
+        pr: "#205"
         acceptance_criteria:
           - Keyboard shortcut opens quick switcher overlay
           - Fuzzy search filters themes as you type
