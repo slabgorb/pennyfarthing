@@ -1,5 +1,5 @@
 /**
- * BMAD Module - Stories 32-2, 32-3
+ * BMAD Module - Stories 32-2, 32-3, 32-4
  *
  * Utilities for parsing and working with BMAD artifacts.
  */
@@ -27,3 +27,15 @@ export {
   type EpicsParseResult,
   type EpicsParseError,
 } from './epics-parser.js';
+
+// Context reader (32-4)
+export {
+  parseBmadContext,
+  type BmadProjectContext,
+  type TechnologyStack,
+  type ImplementationRule,
+  type AiAgentGuidance,
+  type ExternalDependency,
+  type ContextParseResult,
+  type ContextParseError,
+} from './context-reader.js';
