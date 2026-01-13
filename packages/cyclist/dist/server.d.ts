@@ -8,6 +8,12 @@ export type { GitInfo } from './api/index.js';
 export declare const app: Express;
 export declare function createTerminalServer(): Server;
 /**
+ * Find an available port starting from the given port.
+ * Tries ports sequentially until one is available or maxAttempts reached.
+ * Used by both Electron mode and standalone server mode.
+ */
+export declare function findAvailablePort(startPort: number, maxAttempts?: number): Promise<number>;
+/**
  * Write the server port to a .cyclist-port file for auto-discovery.
  * Called when Cyclist server starts to enable hook-based OTEL configuration.
  */

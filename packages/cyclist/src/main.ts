@@ -13,7 +13,7 @@ import { Server } from 'http';
 import { fileURLToPath } from 'url';
 import { dirname, join, basename } from 'path';
 import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
-import { getStoryInfo, getGitInfo, writePortFile, cleanupPortFile, getOtelConfig } from './server.js';
+import { getStoryInfo, getGitInfo, writePortFile, cleanupPortFile, getOtelConfig, findAvailablePort } from './server.js';
 import { parseToolStats, ToolStats, createEmptyStats } from './tool-stats.js';
 import {
   getTokenStats,
@@ -2097,30 +2097,7 @@ if (isElectron) {
   const DEFAULT_PORT = parseInt(process.env.PORT || '1898', 10);
   let actualPort = DEFAULT_PORT;
 
-  /**
-   * Find an available port starting from the given port
-   */
-  async function findAvailablePort(startPort: number, maxAttempts = 10): Promise<number> {
-    const net = await import('net');
-
-    for (let port = startPort; port < startPort + maxAttempts; port++) {
-      const available = await new Promise<boolean>((resolve) => {
-        const server = net.createServer();
-        server.once('error', () => resolve(false));
-        server.once('listening', () => {
-          server.close();
-          resolve(true);
-        });
-        server.listen(port);
-      });
-
-      if (available) {
-        return port;
-      }
-    }
-
-    throw new Error(`No available port found in range ${startPort}-${startPort + maxAttempts - 1}`);
-  }
+  // findAvailablePort imported from server.ts (Story 34-3)
 
   /**
    * Create the main application window

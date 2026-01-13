@@ -560,7 +560,9 @@ epics:
           - Show clear message with actual URL
         points: 1
         priority: P2
-        status: backlog
+        status: in_progress
+        started: 2026-01-13
+        assigned_to: Michael Pursifull
         repos: pennyfarthing
         jira: MSSCI-11621
         acceptance_criteria:
