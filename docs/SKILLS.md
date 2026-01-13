@@ -260,7 +260,7 @@ Manage persona themes - list, show, and set active theme
 - Setting active theme: `/set-theme discworld`
 
 **Anti-patterns:**
-- Don't edit persona-config.local.yaml directly - use skill
+- Don't edit config.local.yaml directly - use skill
 
 **Related:** [theme-creation](#theme-creation)
 

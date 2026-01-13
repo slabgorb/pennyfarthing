@@ -130,7 +130,7 @@ npm run lint      # ESLint
 
 ## Persona System
 
-Configured in `.claude/persona-config.local.yaml`. Current theme provides character mappings for each agent with style attributes.
+Configured in `.pennyfarthing/config.local.yaml`. Current theme provides character mappings for each agent with style attributes.
 
 **102 themes available** across categories:
 - **TV Series:** `mash`, `star-trek`, `the-office`, `breaking-bad`, `game-of-thrones`, etc.

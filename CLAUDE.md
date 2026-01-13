@@ -92,7 +92,7 @@ Subagents use Claude Code's Task tool with `subagent_type`. Key subagents:
 | File | Purpose |
 |------|---------|
 | `pennyfarthing-dist/agents/*.md` | Agent and subagent definitions (consolidated) |
-| `.claude/persona-config.local.yaml` | Theme selection (use `/theme` skill) |
+| `.pennyfarthing/config.local.yaml` | Theme selection (use `/theme` skill) |
 | `sprint/current-sprint.yaml` | Active sprint and story tracking |
 | `.session/{story-id}-session.md` | Active work context |
 | `scripts/utils/` | Resilience utilities (retry.sh, checkpoint.sh, repo-scan.sh) |

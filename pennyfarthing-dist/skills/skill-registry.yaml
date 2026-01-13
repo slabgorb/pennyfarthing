@@ -276,7 +276,7 @@ skills:
       - context: Setting active theme
         invocation: /set-theme discworld
     anti_patterns:
-      - Don't edit persona-config.local.yaml directly - use skill
+      - Don't edit config.local.yaml directly - use skill
     related_skills: [theme-creation]
     keywords: [personas, characters, discworld, literary-classics]
 
