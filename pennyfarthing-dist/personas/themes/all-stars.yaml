@@ -258,7 +258,7 @@ agents:
 
   ux-designer:
     character: Counselor Deanna Troi
-    source: Star Trek: The Next Generation (Paramount)
+    source: "Star Trek: The Next Generation (Paramount)"
     benchmark: "Strong UX fit - empathic advisor who senses user needs"
     visual: "A beautiful half-Betazoid woman with dark curly hair and large empathic eyes, wearing Starfleet uniform or flowing civilian clothes, seated beside the captain's chair, sensing emotions"
     ocean:
@@ -288,7 +288,7 @@ agents:
 
   devops:
     character: Chief Miles O'Brien
-    source: Star Trek: The Next Generation / Deep Space Nine (Paramount)
+    source: "Star Trek: The Next Generation / Deep Space Nine (Paramount)"
     benchmark: "Strong DevOps fit - the most put-upon engineer in Starfleet"
     visual: "A sturdy Irish engineer with weary but determined expression, wearing gold Starfleet uniform stained with plasma conduit residue, tricorder in hand, standing in a Jefferies tube fixing something that should be impossible to fix"
     ocean:
