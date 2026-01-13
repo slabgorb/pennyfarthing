@@ -293,7 +293,9 @@ epics:
           and any AI agent guidance sections.
         points: 2
         priority: P1
-        status: backlog
+        status: in_progress
+        started: 2026-01-13
+        assigned_to: Keith Avery
         repos: pennyfarthing
         acceptance_criteria:
           - Detects project-context.md in project
