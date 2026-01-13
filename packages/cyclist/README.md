@@ -115,6 +115,37 @@ just cyclist-install-app  # Copy to /Applications
 just cyclist-install-cli  # Create `cyclist` CLI command
 ```
 
+## Upgrading Cyclist
+
+When upgrading from a previous version or after pulling changes:
+
+```bash
+# Standard upgrade path
+git pull
+just cyclist-setup        # Cleans artifacts, reinstalls deps, rebuilds
+just cyclist-doctor --fix # Diagnose and auto-fix issues
+just cyclist-install      # Reinstall app and CLI
+```
+
+### When to Rebuild
+
+A full rebuild is needed after:
+
+- **Node.js upgrade** - Native modules must be recompiled for new Node ABI
+- **After git pull** - Source changes require fresh build
+- **pnpm update** - Dependency changes may affect workspace symlinks
+- **Switching branches** - Different branches may have incompatible artifacts
+
+### Quick Diagnostic
+
+If Cyclist fails to start after an upgrade:
+
+```bash
+just cyclist-doctor --fix
+```
+
+This checks prerequisites, validates builds, and auto-repairs common issues like broken symlinks or missing native modules.
+
 ## Troubleshooting
 
 ### "just: command not found"

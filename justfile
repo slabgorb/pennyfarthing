@@ -77,19 +77,22 @@ cyclist-rebuild:
 cyclist-doctor *args:
     cd packages/cyclist && ./scripts/cyclist-doctor.sh {{args}}
 
-# First-time Cyclist setup (install deps, rebuild native modules, build)
+# First-time Cyclist setup (clean, install deps, rebuild native modules, build)
 cyclist-setup:
     #!/usr/bin/env bash
     set -euo pipefail
     echo "🚴 Setting up Cyclist..."
     echo ""
-    echo "Step 1/3: Installing dependencies..."
+    echo "Step 1/4: Cleaning stale artifacts..."
+    just cyclist-clean
+    echo ""
+    echo "Step 2/4: Installing dependencies..."
     pnpm install
     echo ""
-    echo "Step 2/3: Rebuilding native modules (node-pty)..."
+    echo "Step 3/4: Rebuilding native modules (node-pty)..."
     cd packages/cyclist && npx electron-rebuild
     echo ""
-    echo "Step 3/3: Building TypeScript..."
+    echo "Step 4/4: Building TypeScript..."
     npm run build
     echo ""
     echo "✓ Cyclist setup complete!"
