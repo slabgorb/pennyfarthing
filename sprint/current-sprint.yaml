@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 57
-  completed_points: 32
-  remaining_points: 25
+  completed_points: 33
+  remaining_points: 24
   notes: |
     Sprint 10 focus: Three strategic epics
     - Epic 31: Customizable Workflow Engine (15 pts)
@@ -457,7 +457,7 @@ epics:
       2. Upgrade path - previous version installed
       3. Clean checkout - fresh clone, existing system deps
     points: 8
-    completed_points: 4
+    completed_points: 7
     priority: P2
     marker: dx
     repos: pennyfarthing
@@ -515,9 +515,10 @@ epics:
           (fresh vs upgraded, with/without just, different macOS versions).
         points: 1
         priority: P2
-        status: in_progress
+        status: done
         started: 2026-01-13
-        assigned_to: Keith Avery
+        completed: 2026-01-13
+        pr: 232
         repos: pennyfarthing
         jira: MSSCI-11623
         acceptance_criteria:
