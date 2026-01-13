@@ -43,7 +43,8 @@ import {
   removeFromQueue,
   loadMessageQueue,
   saveMessageQueue,
-  processNextInQueue
+  processNextInQueue,
+  injectMessage
 } from './editor/message-queue.js';
 import {
   showImagePreview,
@@ -75,7 +76,8 @@ export {
   removeFromQueue,
   loadMessageQueue,
   saveMessageQueue,
-  processNextInQueue
+  processNextInQueue,
+  injectMessage
 } from './editor/message-queue.js';
 
 // Re-export markdown for external consumers

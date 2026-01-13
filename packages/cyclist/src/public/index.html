@@ -109,6 +109,14 @@
       <div id="quick-actions"></div>
       <!-- 28-1: Image preview for clipboard paste -->
       <div id="image-preview" class="image-preview hidden" aria-hidden="true"></div>
+      <!-- Inline message queue (replaces dropdown pill) -->
+      <div id="queue-inline" class="queue-inline" style="display: none;">
+        <div class="queue-inline-header">
+          <span class="queue-inline-title">Queued</span>
+          <button class="queue-clear-btn" title="Clear all">Clear</button>
+        </div>
+        <ul class="queue-inline-list"></ul>
+      </div>
       <div id="editor-wrapper">
         <div id="editor-toolbar">
           <button type="button" class="toolbar-btn" data-action="bold" title="Bold (Ctrl+B)"><strong>B</strong></button>
@@ -130,20 +138,6 @@
           </div>
           <!-- B-20: Control buttons moved from sidebar -->
           <div id="editor-controls">
-            <!-- 17-1: Message queue indicator with dropdown -->
-            <div id="queue-indicator" class="queue-indicator" style="display: none;">
-              <button class="queue-toggle" title="View queued messages">
-                <span class="queue-count">0</span>
-                <span class="queue-label">queued</span>
-              </button>
-              <div id="queue-dropdown" class="queue-dropdown" style="display: none;">
-                <div class="queue-header">
-                  <span>Queued Messages</span>
-                  <button class="queue-clear-btn" title="Clear all">Clear All</button>
-                </div>
-                <ul class="queue-list"></ul>
-              </div>
-            </div>
             <button id="stop-btn" class="stop-btn" disabled title="Stop Claude (Esc)">
               <span class="stop-icon">■</span>
             </button>
