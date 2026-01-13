@@ -72,6 +72,11 @@ cyclist-clean:
 cyclist-rebuild:
     cd packages/cyclist && npx electron-rebuild
 
+# Run Cyclist health check to diagnose setup issues
+# Usage: just cyclist-doctor [--fix]
+cyclist-doctor *args:
+    cd packages/cyclist && ./scripts/cyclist-doctor.sh {{args}}
+
 # First-time Cyclist setup (install deps, rebuild native modules, build)
 cyclist-setup:
     #!/usr/bin/env bash
