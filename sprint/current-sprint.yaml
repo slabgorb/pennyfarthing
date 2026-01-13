@@ -514,7 +514,9 @@ epics:
           (fresh vs upgraded, with/without just, different macOS versions).
         points: 1
         priority: P2
-        status: backlog
+        status: in_progress
+        started: 2026-01-13
+        assigned_to: Keith Avery
         repos: pennyfarthing
         jira: MSSCI-11623
         acceptance_criteria:
