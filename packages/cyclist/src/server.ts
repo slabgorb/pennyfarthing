@@ -24,7 +24,6 @@ import {
   createEvaluationRouter,
   createBenchmarkRouter,
   initTokenStatsBroadcast,
-  broadcastStats,
 } from './api/index.js';
 
 // WebSocket setup

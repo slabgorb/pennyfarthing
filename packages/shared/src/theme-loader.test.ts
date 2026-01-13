@@ -4,8 +4,6 @@ import {
   loadTheme,
   listThemes,
   getAgentPersona,
-  type Theme,
-  type ThemeAgent,
 } from './theme-loader.js';
 
 describe('theme-loader', () => {

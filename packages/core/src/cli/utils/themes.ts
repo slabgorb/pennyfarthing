@@ -1,5 +1,5 @@
-import { readFileSync, readdirSync, existsSync, writeFileSync, mkdirSync, copyFileSync } from 'fs';
-import { join, basename, dirname } from 'path';
+import { readFileSync, readdirSync, existsSync, writeFileSync, mkdirSync } from 'fs';
+import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { homedir } from 'os';
 import YAML from 'yaml';

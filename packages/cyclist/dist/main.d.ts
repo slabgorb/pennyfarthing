@@ -395,7 +395,7 @@ export declare function setupFileBrowserIPCHandlers(ipcMain: {
 /**
  * Flag indicating if settings have been initialized
  */
-export declare let isSettingsInitialized: boolean;
+export declare const isSettingsInitialized = false;
 /**
  * Handle settings:get IPC call
  * Returns current settings

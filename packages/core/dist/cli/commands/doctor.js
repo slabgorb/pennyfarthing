@@ -321,8 +321,6 @@ function checkBenchmarkPermissions(projectRoot) {
     try {
         const settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
         const permissions = settings.permissions?.allow || [];
-        // Check for required benchmark permissions
-        const hasClaudeBash = permissions.some((p) => p === 'Bash(claude:*)' || p === 'Bash' && permissions.includes('Bash(claude:*)'));
         // Check if Bash(claude:*) specifically exists (needed for subagents)
         const hasExplicitClaudeBash = permissions.includes('Bash(claude:*)');
         if (!hasExplicitClaudeBash) {
@@ -433,7 +431,7 @@ function checkSessionStartHooks(projectRoot, installationType) {
             detail: undefined
         };
     }
-    catch (error) {
+    catch {
         return {
             name: 'settings/session-start-hook',
             status: 'warn',

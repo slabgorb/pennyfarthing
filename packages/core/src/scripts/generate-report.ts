@@ -19,7 +19,7 @@ const __dirname = dirname(__filename);
 // Find monorepo root by walking up from current directory
 const projectRoot = findMonorepoRoot(__dirname);
 const themesDir = join(projectRoot, 'pennyfarthing-dist', 'personas', 'themes');
-const facesDir = join(projectRoot, 'pennyfarthing-dist', 'personas', 'faces');
+const _facesDir = join(projectRoot, 'pennyfarthing-dist', 'personas', 'faces');
 
 // ============================================================================
 // Types
