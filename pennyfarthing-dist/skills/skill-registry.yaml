@@ -192,6 +192,26 @@ skills:
     related_skills: [changelog]
     keywords: [flowchart, sequence, er-diagram, gantt, class-diagram]
 
+  permissions:
+    name: permissions
+    description: Manage runtime permission grants - list, grant, and revoke tool access
+    category: project-management
+    tags: [permissions, security, tools]
+    version: "1.0.0"
+    prerequisites: []
+    examples:
+      - context: Viewing active grants
+        invocation: /permissions
+      - context: Granting WebFetch access
+        invocation: /permissions grant WebFetch "*.github.com"
+      - context: Revoking tool access
+        invocation: /permissions revoke Bash
+    anti_patterns:
+      - Don't manually edit settings.local.json permissions - use skill
+      - Don't grant overly broad scope patterns
+    related_skills: [sprint-context]
+    keywords: [grants, scopes, tools, runtime, security]
+
   persona-benchmark:
     name: persona-benchmark
     description: Run benchmarks to compare persona effectiveness

@@ -353,11 +353,11 @@ epics:
       Currently permissions must be pre-configured; agents can't request
       spot permissions for tools like WebFetch when needed.
     points: 12
-    completed_points: 0
+    completed_points: 3
     priority: P1
     marker: ux
     repos: pennyfarthing, cyclist
-    status: backlog
+    status: in_progress
     stories:
       - id: 33-1
         title: Permission request protocol
@@ -368,7 +368,8 @@ epics:
           - Temporary vs persistent grants
         points: 3
         priority: P0
-        status: backlog
+        status: done
+        completed: 2026-01-13
         repos: pennyfarthing
         acceptance_criteria:
           - Permission request schema defined
@@ -384,7 +385,9 @@ epics:
           - Show permission history
         points: 2
         priority: P0
-        status: backlog
+        status: in_progress
+        started: 2026-01-13
+        assigned_to: Keith Avery
         repos: pennyfarthing
         acceptance_criteria:
           - /permissions lists active grants
