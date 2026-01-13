@@ -83,7 +83,9 @@ epics:
           - Default workflow fallback
         points: 3
         priority: P0
-        status: backlog
+        status: in_progress
+        started: 2026-01-13
+        assigned_to: Keith Avery
         repos: pennyfarthing
         jira: MSSCI-11608
         acceptance_criteria:
