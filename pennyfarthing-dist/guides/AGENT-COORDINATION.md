@@ -2,9 +2,9 @@
 
 ## Overview
 
-This document describes how Pennyfarthing agents are coordinated across the `API` and `UI` repositories.
+This document describes how Pennyfarthing agents are coordinated. The framework supports both single-repo and multi-repo projects.
 
-**Key Principle:** Single entry point (`/new-work`), state detection via session files, handoffs via Haiku subagents.
+**Key Principle:** Single entry point (`/new-work` or `/work`), state detection via session files, handoffs via Haiku subagents.
 
 ## The TDD Flow
 
@@ -17,7 +17,7 @@ This document describes how Pennyfarthing agents are coordinated across the `API
                  subagent handoffs
 ```
 
-**Entry point:** `/new-work` only
+**Entry points:** `/new-work` (new story) or `/work` (smart resume/start)
 **State detection:** Agents read session file on activation
 **Handoffs:** Agents spawn Haiku subagents to update session file
 **Finish:** SM handles when status = `approved`
@@ -60,49 +60,47 @@ Support Agents
 
 ```
 /$CLAUDE_PROJECT_DIR/
-├── .claude/                              # Base coordination directory
-│   ├── core/                           # Core agent system
-│   │   ├── agents/                     # Single source of truth
-│   │   │   ├── orchestrator.md         # Master orchestrator
-│   │   │   ├── pm.md                  # Product Manager
-│   │   │   ├── sm.md                  # Scrum Master
-│   │   │   ├── architect.md           # System Architect
-│   │   │   ├── dev.md                 # Developer
-│   │   │   ├── tea.md                 # Test Engineer
-│   │   │   ├── tech-writer.md         # Technical Writer
-│   │   │   └── ux-designer.md         # UX Designer
-│   │   ├── agent-scopes.yaml          # Scope configuration
-│   │   └── AGENT-COORDINATION.md      # This file
+├── .claude/                              # Pennyfarthing coordination directory
+│   ├── agents/                         # Agent definitions (symlinks to pennyfarthing-dist)
+│   │   ├── orchestrator.md             # Master orchestrator
+│   │   ├── pm.md                       # Product Manager
+│   │   ├── sm.md                       # Scrum Master (+ sm-*.md subagents)
+│   │   ├── architect.md                # System Architect
+│   │   ├── dev.md                      # Developer (+ dev-handoff.md)
+│   │   ├── tea.md                      # Test Engineer (+ tea-handoff.md)
+│   │   ├── reviewer.md                 # Code Reviewer (+ reviewer-*.md subagents)
+│   │   ├── tech-writer.md              # Technical Writer
+│   │   ├── ux-designer.md              # UX Designer
+│   │   └── devops.md                   # DevOps Engineer
 │   │
-│   ├── sprint/                         # Unified sprint tracking
-│   │   ├── sprint-status.yaml         # All stories, both repos
-│   │   └── README.md                  # Sprint tracking guide
+│   ├── commands/                       # 42 slash commands (symlinks)
+│   ├── guides/                         # Behavior guides (symlinks)
+│   ├── skills/                         # 18+ knowledge domain skills (symlinks)
+│   ├── scripts/                        # Utility scripts (symlinks)
 │   │
-│   ├── active/                         # Current work sessions
-│   │   └── {story-id}-session.md      # Session files (one per story)
+│   ├── project/                        # Project-specific overrides
+│   │   ├── agents/                     # Agent sidecars (patterns, gotchas, decisions)
+│   │   └── commands/                   # Custom project commands
 │   │
-│   ├── docs/                           # Project-wide documentation
-│   ├── scripts/                        # Utility scripts
-│   └── templates/                      # Templates
+│   ├── persona-config.local.yaml       # Theme selection (local only)
+│   └── CLAUDE.md                       # Project instructions
 │
-├── API/                      # API repository
-│   ├── .claude/
-│   │   ├── context.md                 # API-specific context (~30 lines)
-│   │   └── project/                       # API-specific Pennyfarthing metadata
-│   └── docs/
-│       ├── epics.md                   # API epic definitions
-│       ├── architecture.md            # API architecture
-│       ├── api-reference.md           # API documentation
-│       └── data-models.md             # Data models
+├── .session/                           # Active work sessions
+│   └── {story-id}-session.md           # Session files (one per story)
 │
-├── UI/                       # UI repository
-│   ├── .claude/
-│   │   ├── context.md                 # UI-specific context (~30 lines)
-│   │   └── project/                       # UI-specific Pennyfarthing metadata
-│   └── docs/
-│       ├── design-system.md           # Design system
-│       └── components.md              # Component library
+├── sprint/                             # Sprint tracking
+│   ├── current-sprint.yaml             # Active sprint and stories
+│   ├── context/                        # Epic technical context
+│   ├── archive/                        # Completed sprints
+│   └── sidecars/                       # Agent learning files
 │
+└── pennyfarthing-dist/                 # Source of truth (if Pennyfarthing project itself)
+    ├── agents/                         # 10 main agents + 14 subagents
+    ├── commands/                       # 42 slash commands
+    ├── guides/                         # Behavior guides and patterns
+    ├── skills/                         # Knowledge domain skills
+    ├── personas/themes/                # 102 themed personas
+    └── scripts/                        # Utility scripts
 ```
 
 ## Agent Types
@@ -442,32 +440,47 @@ Dev Agent Example (API story):
 - Manual handoff documentation
 - No subagent extraction
 
-### Current Architecture (December 2025)
-- Single entry point: `/new-work`
-- State detection via session file
+### Current Architecture (January 2026)
+- Smart entry point: `/work` (resumes or starts new)
+- Alternative: `/new-work` (explicitly start new story)
+- State detection via session file in `.session/`
 - Handoffs via Haiku subagents in `.claude/agents/`
 - SM handles finish-story when status = `approved`
+- 102 themed personas for agent personality
 
 ### Directory Structure
 ```
-.claude/agents/          # Agent definitions
-.claude/agents/       # Handoff subagent prompts
-.claude/guides/agent-scopes.yaml  # Scope configuration
-.session/               # Session files
+.claude/agents/             # Agent definitions (symlinked)
+.claude/commands/           # 42 slash commands
+.claude/skills/             # 18+ knowledge domain skills
+.session/                   # Session files
 sprint/                     # Sprint tracking
 ```
 
 ### Commands Reference
 ```bash
-/new-work      # Start new story (only entry point)
-/sm            # Scrum Master (also handles finish-story)
-/tea           # Test Engineer
-/dev           # Developer
-/reviewer      # Code review
+# Entry points
+/work          # Smart entry - resume or start new
+/new-work      # Explicitly start new story
+
+# TDD Flow agents
+/sm            # Scrum Master (setup + finish)
+/tea           # Test Engineer (RED phase)
+/dev           # Developer (GREEN phase)
+/reviewer      # Code Reviewer
+
+# Support agents
 /architect     # Architecture design
 /tech-writer   # Documentation
+/ux-designer   # UI/UX design
+/devops        # Infrastructure
+
+# Utility
+/check         # Run quality gates before handoff
+/chore         # Quick commit for small changes
+/release       # Merge develop to main
 ```
 
 ---
 
-**Single entry point. State detection. Subagent handoffs.**
+**Smart entry. State detection. Subagent handoffs. Themed personas.**
