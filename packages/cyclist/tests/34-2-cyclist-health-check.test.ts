@@ -20,8 +20,8 @@ const MONOREPO_ROOT = join(CYCLIST_ROOT, '..', '..');
 
 describe('34-2: Cyclist health check command', () => {
 
-  describe('doctor.sh script basics', () => {
-    const scriptPath = join(CYCLIST_ROOT, 'scripts', 'doctor.sh');
+  describe('cyclist-doctor.sh script basics', () => {
+    const scriptPath = join(CYCLIST_ROOT, 'scripts', 'cyclist-doctor.sh');
 
     it('should exist', () => {
       expect(existsSync(scriptPath)).toBe(true);
@@ -45,7 +45,7 @@ describe('34-2: Cyclist health check command', () => {
   });
 
   describe('--help flag support', () => {
-    const scriptPath = join(CYCLIST_ROOT, 'scripts', 'doctor.sh');
+    const scriptPath = join(CYCLIST_ROOT, 'scripts', 'cyclist-doctor.sh');
 
     it('should have show_help function', () => {
       const content = readFileSync(scriptPath, 'utf-8');
@@ -69,7 +69,7 @@ describe('34-2: Cyclist health check command', () => {
   });
 
   describe('--fix flag support', () => {
-    const scriptPath = join(CYCLIST_ROOT, 'scripts', 'doctor.sh');
+    const scriptPath = join(CYCLIST_ROOT, 'scripts', 'cyclist-doctor.sh');
 
     it('should handle --fix flag', () => {
       const content = readFileSync(scriptPath, 'utf-8');
@@ -90,7 +90,7 @@ describe('34-2: Cyclist health check command', () => {
   });
 
   describe('system prerequisite checks', () => {
-    const scriptPath = join(CYCLIST_ROOT, 'scripts', 'doctor.sh');
+    const scriptPath = join(CYCLIST_ROOT, 'scripts', 'cyclist-doctor.sh');
 
     it('should check Node.js version', () => {
       const content = readFileSync(scriptPath, 'utf-8');
@@ -139,7 +139,7 @@ describe('34-2: Cyclist health check command', () => {
   });
 
   describe('build state checks', () => {
-    const scriptPath = join(CYCLIST_ROOT, 'scripts', 'doctor.sh');
+    const scriptPath = join(CYCLIST_ROOT, 'scripts', 'cyclist-doctor.sh');
 
     it('should check for dist/server.js', () => {
       const content = readFileSync(scriptPath, 'utf-8');
@@ -158,7 +158,7 @@ describe('34-2: Cyclist health check command', () => {
   });
 
   describe('node-pty native module checks', () => {
-    const scriptPath = join(CYCLIST_ROOT, 'scripts', 'doctor.sh');
+    const scriptPath = join(CYCLIST_ROOT, 'scripts', 'cyclist-doctor.sh');
 
     it('should check for node-pty prebuild', () => {
       const content = readFileSync(scriptPath, 'utf-8');
@@ -184,7 +184,7 @@ describe('34-2: Cyclist health check command', () => {
   });
 
   describe('Electron compatibility check', () => {
-    const scriptPath = join(CYCLIST_ROOT, 'scripts', 'doctor.sh');
+    const scriptPath = join(CYCLIST_ROOT, 'scripts', 'cyclist-doctor.sh');
 
     it('should check Electron version', () => {
       const content = readFileSync(scriptPath, 'utf-8');
@@ -199,7 +199,7 @@ describe('34-2: Cyclist health check command', () => {
   });
 
   describe('workspace dependency checks', () => {
-    const scriptPath = join(CYCLIST_ROOT, 'scripts', 'doctor.sh');
+    const scriptPath = join(CYCLIST_ROOT, 'scripts', 'cyclist-doctor.sh');
 
     it('should check @pennyfarthing/core symlink', () => {
       const content = readFileSync(scriptPath, 'utf-8');
@@ -224,7 +224,7 @@ describe('34-2: Cyclist health check command', () => {
   });
 
   describe('port 1898 availability check', () => {
-    const scriptPath = join(CYCLIST_ROOT, 'scripts', 'doctor.sh');
+    const scriptPath = join(CYCLIST_ROOT, 'scripts', 'cyclist-doctor.sh');
 
     it('should check port 1898', () => {
       const content = readFileSync(scriptPath, 'utf-8');
@@ -244,7 +244,7 @@ describe('34-2: Cyclist health check command', () => {
   });
 
   describe('output formatting', () => {
-    const scriptPath = join(CYCLIST_ROOT, 'scripts', 'doctor.sh');
+    const scriptPath = join(CYCLIST_ROOT, 'scripts', 'cyclist-doctor.sh');
 
     it('should define color codes', () => {
       const content = readFileSync(scriptPath, 'utf-8');
@@ -284,7 +284,7 @@ describe('34-2: Cyclist health check command', () => {
   });
 
   describe('exit code handling', () => {
-    const scriptPath = join(CYCLIST_ROOT, 'scripts', 'doctor.sh');
+    const scriptPath = join(CYCLIST_ROOT, 'scripts', 'cyclist-doctor.sh');
 
     it('should track failure count', () => {
       const content = readFileSync(scriptPath, 'utf-8');
@@ -314,13 +314,15 @@ describe('34-2: Cyclist health check command', () => {
 
     it('should have cyclist-doctor recipe', () => {
       const content = readFileSync(justfilePath, 'utf-8');
-      expect(content).toMatch(/^cyclist-doctor:/m);
+      // Recipe may have arguments like "cyclist-doctor *args:"
+      expect(content).toMatch(/^cyclist-doctor[^:]*:/m);
     });
 
-    it('cyclist-doctor should run scripts/doctor.sh', () => {
+    it('cyclist-doctor should run scripts/cyclist-doctor.sh', () => {
       const content = readFileSync(justfilePath, 'utf-8');
-      const doctorSection = content.match(/cyclist-doctor:[\s\S]*?(?=\n[a-z]+-|\n#|$)/);
-      expect(doctorSection?.[0]).toMatch(/doctor\.sh|scripts\/doctor/);
+      // Match recipe with optional args, capture until next recipe or comment
+      const doctorSection = content.match(/cyclist-doctor[^:]*:[\s\S]*?(?=\n[a-z]+-|\n#|$)/);
+      expect(doctorSection?.[0]).toMatch(/cyclist-doctor\.sh|scripts\/cyclist-doctor/);
     });
   });
 });

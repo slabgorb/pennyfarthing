@@ -521,6 +521,9 @@ epics:
           - Verifies workspace dependencies resolved
           - Tests pennyfarthing-dist symlink resolution
           - Reports actionable fix commands
+
+          Implementation: Bash script (scripts/doctor.sh) for consistency
+          with other install scripts and to avoid Node.js chicken-and-egg.
         points: 2
         priority: P2
         status: in_progress
@@ -528,10 +531,18 @@ epics:
         repos: pennyfarthing
         jira: MSSCI-11620
         acceptance_criteria:
-          - just cyclist-doctor validates setup
-          - Clear error messages with fix commands
-          - Checks native module, deps, symlinks
-          - Exit code indicates pass/fail
+          - just cyclist-doctor runs scripts/doctor.sh
+          - Checks system prereqs (Node >= 18, pnpm, Python 3, Xcode tools, just)
+          - Checks build state (dist/server.js, dist/main.js exist)
+          - Checks node-pty prebuild exists for current platform
+          - Checks node-pty loadable (require succeeds)
+          - Checks Electron version compatibility with node-pty
+          - Checks workspace deps (@pennyfarthing/core, @pennyfarthing/shared symlinks valid)
+          - Checks port 1898 availability (warns if in use)
+          - Each failure shows specific fix command
+          - Supports --fix flag to auto-run fix commands
+          - Exit 0 if all pass, exit 1 if any fail
+          - Output colorized (green=pass, red=fail, yellow=warn)
       - id: 34-3
         title: Port conflict detection and messaging
         description: |
