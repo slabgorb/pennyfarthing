@@ -59,17 +59,29 @@ export function detectPennyfarthingProject(projectDir) {
     return false;
 }
 /**
- * Loads theme configuration from persona-config.yaml
- * Prefers .local.yaml variant if it exists
+ * Loads theme configuration from config files
+ * Checks multiple locations in priority order:
+ * 1. .pennyfarthing/config.local.yaml (new preferred location)
+ * 2. .claude/persona-config.local.yaml (legacy local)
+ * 3. .claude/persona-config.yaml (legacy default)
  * @param projectDir - The project directory
  * @returns Theme config or null if not found/invalid
  */
 export function loadThemeConfig(projectDir) {
-    const localPath = join(projectDir, '.claude', 'persona-config.local.yaml');
-    const defaultPath = join(projectDir, '.claude', 'persona-config.yaml');
-    // Prefer local config
-    const configPath = existsSync(localPath) ? localPath : defaultPath;
-    if (!existsSync(configPath)) {
+    const possiblePaths = [
+        join(projectDir, '.pennyfarthing', 'config.local.yaml'), // New preferred location
+        join(projectDir, '.claude', 'persona-config.local.yaml'), // Legacy local
+        join(projectDir, '.claude', 'persona-config.yaml'), // Legacy default
+    ];
+    // Find first existing config file
+    let configPath = null;
+    for (const path of possiblePaths) {
+        if (existsSync(path)) {
+            configPath = path;
+            break;
+        }
+    }
+    if (!configPath) {
         return null;
     }
     try {
