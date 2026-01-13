@@ -15,7 +15,8 @@ set -euo pipefail
 # 4. Merge develop to main
 # 5. Tag the release on main
 # 6. Push everything (develop, main, tags)
-# 7. Return to develop
+# 7. Create GitHub release from tag
+# 8. Return to develop
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
@@ -221,6 +222,7 @@ if $DRY_RUN; then
     log_dry "git checkout main && git merge develop"
     log_dry "git tag -a $TAG_NAME -m 'Release $NEW_VERSION'"
     log_dry "git push origin develop main --tags"
+    log_dry "gh release create $TAG_NAME --title 'Release $NEW_VERSION' --notes-from-tag --verify-tag"
     log_dry "git checkout develop"
 else
     log_info "Merging develop to main..."
@@ -246,7 +248,20 @@ else
     log_info "Pushing tags..."
     git -C "$PROJECT_ROOT" push origin --tags
 
-    # Step 7: Return to develop
+    # Step 7: Create GitHub release
+    log_info "Creating GitHub release..."
+    if command -v gh &> /dev/null; then
+        gh release create "$TAG_NAME" \
+            --title "Release $NEW_VERSION" \
+            --notes-from-tag \
+            --verify-tag
+        log_info "GitHub release created: $TAG_NAME"
+    else
+        log_warn "gh CLI not installed - skipping GitHub release creation"
+        log_warn "Create release manually at: https://github.com/1898andCo/pennyfarthing/releases/new"
+    fi
+
+    # Step 8: Return to develop
     log_info "Returning to develop..."
     git -C "$PROJECT_ROOT" checkout develop
 fi
@@ -257,11 +272,13 @@ if $DRY_RUN; then
     echo ""
     echo "  Would release version: $NEW_VERSION"
     echo "  Would create tag: $TAG_NAME"
+    echo "  Would create GitHub release: $TAG_NAME"
 else
     log_info "Deploy complete!"
     echo ""
     echo "  Version: $NEW_VERSION"
     echo "  Tag: $TAG_NAME"
+    echo "  GitHub release: https://github.com/1898andCo/pennyfarthing/releases/tag/$TAG_NAME"
     echo "  Branches pushed: develop, main"
 fi
 echo ""
