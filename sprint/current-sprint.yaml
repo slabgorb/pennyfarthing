@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 109
-  completed_points: 100
-  remaining_points: 9
+  completed_points: 103
+  remaining_points: 6
   notes: |
     Sprint 9 focus: Multimodal image paste and Cyclist settings/UX.
 
@@ -36,7 +36,7 @@ epics:
       and Cyclist preferences. Rich theme browser with search, OCEAN
       profiles, character previews, and favorites.
     points: 28
-    completed_points: 21
+    completed_points: 24
     priority: P1
     marker: ux
     repos: cyclist
@@ -216,11 +216,13 @@ epics:
           - Show favorite count badge if favorites exist
         points: 2
         priority: P2
-        status: in_progress
+        status: done
         started: 2026-01-13
+        completed: 2026-01-13
         assigned_to: Keith Avery
         repos: cyclist
         branch: feat/24-7-theme-favorites
+        pr: "#204"
         acceptance_criteria:
           - Each theme card has a favorite toggle icon
           - Clicking icon adds/removes from favorites
@@ -241,8 +243,10 @@ epics:
           - Animated transitions when agent changes
         points: 3
         priority: P3
-        status: planned
+        status: done
         repos: cyclist
+        completed: 2026-01-13
+        notes: Implemented as numerical display in persona panel (not bars)
         acceptance_criteria:
           - OCEAN bars render in sidebar when setting enabled
           - Shows 5 dimensions with appropriate labels
@@ -264,8 +268,11 @@ epics:
           - Shows current theme highlighted
         points: 2
         priority: P3
-        status: planned
+        status: in_progress
+        started: 2026-01-13
+        assigned_to: Keith Avery
         repos: cyclist
+        branch: feat/24-9-quick-theme-switcher
         acceptance_criteria:
           - Keyboard shortcut opens quick switcher overlay
           - Fuzzy search filters themes as you type
