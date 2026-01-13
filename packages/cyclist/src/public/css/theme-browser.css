@@ -446,3 +446,105 @@
 .theme-preview-panel.tier-u {
   border-left-color: var(--tier-u-color, #888);
 }
+
+/* =============================================================================
+   Favorites Section (Story 24-7)
+   ============================================================================= */
+
+.theme-favorites-section {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+}
+
+.theme-favorites-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--favorites-header-color, #333);
+}
+
+.favorites-icon {
+  color: var(--favorites-star-color, #ffc107);
+  font-size: 16px;
+}
+
+.favorites-count {
+  font-weight: 400;
+  color: var(--favorites-count-color, #666);
+  font-size: 12px;
+}
+
+.theme-all-header {
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--all-header-color, #333);
+}
+
+/* Favorite button on card */
+.theme-card-favorite {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--favorite-inactive-color, #ccc);
+  transition: color 0.15s ease, transform 0.1s ease;
+  z-index: 1;
+}
+
+.theme-card-favorite:hover {
+  color: var(--favorite-hover-color, #ffc107);
+  transform: scale(1.15);
+}
+
+.theme-card-favorite.is-favorite {
+  color: var(--favorite-active-color, #ffc107);
+}
+
+.theme-card-favorite:focus {
+  outline: none;
+}
+
+/* Card needs relative positioning for absolute favorite button */
+.theme-card {
+  position: relative;
+}
+
+/* Adjust card name to not overlap favorite button */
+.theme-card-name {
+  padding-right: 28px;
+}
+
+/* Dark mode support for favorites */
+@media (prefers-color-scheme: dark) {
+  .theme-favorites-section {
+    --border-color: #444;
+  }
+
+  .theme-favorites-header,
+  .theme-all-header {
+    --favorites-header-color: #eee;
+    --all-header-color: #eee;
+  }
+
+  .favorites-count {
+    --favorites-count-color: #aaa;
+  }
+
+  .theme-card-favorite {
+    --favorite-inactive-color: #555;
+    --favorite-hover-color: #ffc107;
+    --favorite-active-color: #ffc107;
+  }
+}
