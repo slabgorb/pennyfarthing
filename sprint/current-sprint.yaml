@@ -489,7 +489,8 @@ epics:
           Clean stale artifacts, warn about location changes, document process.
         points: 2
         priority: P1
-        status: backlog
+        status: in_progress
+        started: 2026-01-13
         repos: pennyfarthing
         jira: MSSCI-11622
         acceptance_criteria:

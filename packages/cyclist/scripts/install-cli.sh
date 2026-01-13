@@ -24,6 +24,19 @@ if [[ ! -f "$CYCLIST_DIR/dist/server.js" ]]; then
     exit 1
 fi
 
+# Check if existing CLI points to a different location
+if [[ -f "$CLI_PATH" ]]; then
+    EXISTING_PATH=$(grep "^CYCLIST_ROOT=" "$CLI_PATH" 2>/dev/null | cut -d'"' -f2 || echo "")
+    if [[ -n "$EXISTING_PATH" && "$EXISTING_PATH" != "$CYCLIST_DIR" ]]; then
+        log_warn "Existing CLI points to different location:"
+        log_warn "  Current:  $EXISTING_PATH"
+        log_warn "  New:      $CYCLIST_DIR"
+        log_warn "Replacing with new location. Remove old installation if needed:"
+        log_warn "  sudo rm $CLI_PATH"
+        echo ""
+    fi
+fi
+
 # Create /usr/local/bin if needed
 if [[ ! -d "/usr/local/bin" ]]; then
     log_info "Creating /usr/local/bin (may require sudo)"
