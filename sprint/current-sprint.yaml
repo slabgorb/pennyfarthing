@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 47
-  completed_points: 3
-  remaining_points: 44
+  completed_points: 6
+  remaining_points: 41
   notes: |
     Sprint 10 focus: Three strategic epics
     - Epic 31: Customizable Workflow Engine (15 pts)
@@ -59,8 +59,9 @@ epics:
           Validate against schema, report errors clearly.
         points: 3
         priority: P0
-        status: in_progress
+        status: done
         started: 2026-01-13
+        completed: 2026-01-13
         assigned_to: Keith Avery
         repos: pennyfarthing
         acceptance_criteria:
