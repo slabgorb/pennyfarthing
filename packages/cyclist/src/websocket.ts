@@ -6,7 +6,7 @@ import { getPersonaClients, broadcastPersona } from './api/persona.js';
 import { getTokenStatsClients } from './api/token-stats.js';
 import { getTokenStats } from './otlp-receiver.js';
 import { detectPennyfarthingProject, getCurrentPersona, watchAgentChanges } from './pennyfarthing.js';
-import { ClaudeService, type SDKMessage, type PermissionMode } from './claude-service.js';
+import { ClaudeService, type PermissionMode } from './claude-service.js';
 import { publicDir } from './paths.js';
 
 // WebSocket message types for Claude communication

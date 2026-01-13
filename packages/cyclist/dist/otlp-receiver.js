@@ -29,6 +29,15 @@ let onTokenStatsUpdate = null;
 export function setTokenStatsCallback(callback) {
     onTokenStatsUpdate = callback;
 }
+// Callback for when tool events are recorded (set by main.ts for IPC broadcast)
+let onToolEventRecorded = null;
+/**
+ * Register callback for tool event recording
+ * Called by main.ts to wire up IPC broadcast to renderer
+ */
+export function setToolEventCallback(callback) {
+    onToolEventRecorded = callback;
+}
 /**
  * Parse OTLP JSON payload and extract token usage metrics
  */
@@ -192,10 +201,14 @@ export function parseOTLPLogs(body) {
     return events;
 }
 /**
- * Record a tool event to session storage
+ * Record a tool event to session storage and notify listeners
  */
 export function recordToolEvent(event) {
     toolEvents.push(event);
+    // Broadcast to renderer if callback registered
+    if (onToolEventRecorded) {
+        onToolEventRecorded(event);
+    }
 }
 /**
  * Record a prompt event to session storage
@@ -313,17 +326,42 @@ export function getAuditLogStats() {
 /**
  * Process raw log events and store them appropriately
  * Called by the /v1/logs endpoint
+ *
+ * Actual Claude Code OTEL format (discovered via debug):
+ * - tool_name (not tool.name)
+ * - success as string "true"/"false" (not boolean)
+ * - duration_ms (not tool.duration_ms)
+ * - tool_parameters as JSON string (not tool.input)
  */
 export function processLogEvents(rawEvents) {
     for (const event of rawEvents) {
         if (event.name === 'claude_code.tool_result') {
+            // Parse tool_parameters JSON to extract input
+            let input;
+            const toolParams = event.attributes['tool_parameters'];
+            if (toolParams) {
+                try {
+                    const params = JSON.parse(toolParams);
+                    // Use description if available, otherwise full_command or first param value
+                    input = params.description || params.full_command || params.file_path || params.command || params.pattern || Object.values(params)[0];
+                }
+                catch {
+                    input = toolParams; // Use raw string if not valid JSON
+                }
+            }
+            // Parse duration_ms - could be string or number
+            const rawDuration = event.attributes['duration_ms'];
+            const durationMs = typeof rawDuration === 'string' ? parseInt(rawDuration, 10) : rawDuration;
+            // Parse success - comes as string "true"/"false"
+            const rawSuccess = event.attributes['success'];
+            const success = rawSuccess === 'true' || rawSuccess === true;
             const toolEvent = {
-                toolName: event.attributes['tool.name'] || 'unknown',
-                input: event.attributes['tool.input'],
-                output: event.attributes['tool.output'],
-                durationMs: event.attributes['tool.duration_ms'],
-                success: event.attributes['tool.success'] ?? true,
-                error: event.attributes['tool.error'],
+                toolName: event.attributes['tool_name'] || 'unknown',
+                input,
+                output: event.attributes['tool_output'],
+                durationMs: isNaN(durationMs) ? undefined : durationMs,
+                success,
+                error: event.attributes['error'],
                 timestamp: event.timestamp,
                 traceId: event.traceId,
                 spanId: event.spanId,

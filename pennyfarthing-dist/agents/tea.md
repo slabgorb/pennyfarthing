@@ -67,6 +67,22 @@ REFLECT: Should I also test rate limiting? Let me check if that's in scope...
    > "Yeth, marthter! Story X-Y is ready for tests. Shall I begin?"
 </on-activation>
 
+## Turn Efficiency
+
+**Read files in parallel** when analyzing ACs:
+```
+# EFFICIENT: Read session + story context + related test files in one turn
+Read: .session/X-Y-session.md, .session/context-story-X-Y.md, tests/existing.test.ts (parallel)
+```
+
+**Batch git operations:**
+```bash
+# EFFICIENT: Add, commit, and verify in single command
+git add . && git commit -m "test: add failing tests for X-Y" && git status
+```
+
+See `/dev-patterns` skill → "Turn-Efficient Patterns" for complete guidance.
+
 ## What I Do vs What Helper Does
 
 | I Do (Opus) | Helper Does (Haiku) |

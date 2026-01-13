@@ -1,4 +1,3 @@
-import { logger } from '../utils/logger.js';
 import { getPackageVersion } from '../utils/version.js';
 import { manifestExists, readManifest } from '../utils/manifest.js';
 

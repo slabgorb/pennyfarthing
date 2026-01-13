@@ -69,6 +69,11 @@ export type PartialTokenStats = Partial<Omit<TokenStats, 'lastUpdated' | 'totalC
  */
 export declare function setTokenStatsCallback(callback: (stats: TokenStats) => void): void;
 /**
+ * Register callback for tool event recording
+ * Called by main.ts to wire up IPC broadcast to renderer
+ */
+export declare function setToolEventCallback(callback: (event: ToolEvent) => void): void;
+/**
  * Parse OTLP JSON payload and extract token usage metrics
  */
 export declare function parseOTLPMetrics(body: unknown): PartialTokenStats;
@@ -89,7 +94,7 @@ export declare function resetTokenStats(): void;
  */
 export declare function parseOTLPLogs(body: unknown): RawLogEvent[];
 /**
- * Record a tool event to session storage
+ * Record a tool event to session storage and notify listeners
  */
 export declare function recordToolEvent(event: ToolEvent): void;
 /**
@@ -144,6 +149,12 @@ export declare function getAuditLogStats(): {
 /**
  * Process raw log events and store them appropriately
  * Called by the /v1/logs endpoint
+ *
+ * Actual Claude Code OTEL format (discovered via debug):
+ * - tool_name (not tool.name)
+ * - success as string "true"/"false" (not boolean)
+ * - duration_ms (not tool.duration_ms)
+ * - tool_parameters as JSON string (not tool.input)
  */
 export declare function processLogEvents(rawEvents: RawLogEvent[]): void;
 export {};

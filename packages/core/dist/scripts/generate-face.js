@@ -109,7 +109,7 @@ export function oceanToParams(ocean) {
  * @param backgroundColor - Optional background color (hex string)
  */
 export function generateSvgFromParams(params, backgroundColor) {
-    const { eyeRadius, pupilRadius, faceWidth, faceHeight, cornerRadius, mouthWidth, mouthCurve, eyebrowAngle, strokeWidth, } = params;
+    const { eyeRadius, pupilRadius, faceWidth, faceHeight, cornerRadius: _cornerRadius, mouthWidth, mouthCurve, eyebrowAngle, strokeWidth, } = params;
     // ViewBox is 200x200, center at 100,100
     const cx = 100;
     const cy = 100;

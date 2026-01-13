@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync, symlinkSync } from 'fs';
-import { join, basename, relative } from 'path';
+import { join, relative, basename } from 'path';
 import fsExtra from 'fs-extra';
 const { ensureDirSync, removeSync } = fsExtra;
 import { logger } from '../utils/logger.js';
@@ -279,7 +279,7 @@ function getInstalledSkillNames(projectRoot) {
     if (!pathExists(skillsDir)) {
         return [];
     }
-    const { readdirSync, statSync, lstatSync } = require('fs');
+    const { readdirSync, statSync } = require('fs');
     try {
         const entries = readdirSync(skillsDir);
         return entries.filter((entry) => {
@@ -343,7 +343,7 @@ async function mergeSettingsLocalJson(projectRoot, assetsPath, options) {
     try {
         existingSettings = JSON.parse(readFileSync(settingsPath, 'utf8'));
     }
-    catch (error) {
+    catch {
         logger.warning('Could not parse existing settings.local.json, skipping merge');
         return;
     }

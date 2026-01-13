@@ -30,7 +30,7 @@ ls pennyfarthing-dist/personas/themes/*.yaml | xargs -I{} basename {} .yaml | so
 To show the current theme:
 
 ```bash
-cat .claude/persona-config.local.yaml 2>/dev/null || cat .claude/persona-config.yaml 2>/dev/null || echo "No theme configured"
+cat .pennyfarthing/config.local.yaml 2>/dev/null || echo "No theme configured"
 ```
 
 ## Show Theme Details
@@ -39,8 +39,7 @@ To display a theme's agent mappings:
 
 ```bash
 # Show current theme
-THEME=$(cat .claude/persona-config.local.yaml 2>/dev/null | grep "^theme:" | cut -d'"' -f2)
-[ -z "$THEME" ] && THEME=$(cat .claude/persona-config.yaml 2>/dev/null | grep "^theme:" | cut -d'"' -f2)
+THEME=$(cat .pennyfarthing/config.local.yaml 2>/dev/null | grep "^theme:" | cut -d'"' -f2)
 cat pennyfarthing-dist/personas/themes/${THEME}.yaml
 ```
 
@@ -59,7 +58,7 @@ To change the active theme:
    ls pennyfarthing-dist/personas/themes/<name>.yaml
    ```
 
-2. Update the config file (`.claude/persona-config.local.yaml` or `.claude/persona-config.yaml`):
+2. Update `.pennyfarthing/config.local.yaml`:
    - Edit the `theme:` line to the new theme name
 
 3. Start a new agent session to use the new theme
@@ -70,11 +69,7 @@ To change the active theme:
 |----------|---------|
 | `pennyfarthing-dist/personas/themes/` | Built-in themes (96+) |
 | `.claude/pennyfarthing/themes/` | User-created custom themes |
-| `.pennyfarthing/config.local.yaml` | Local config (agent-writable, dogfooding) |
-| `.claude/persona-config.local.yaml` | Legacy local theme selection (gitignored) |
-| `.claude/persona-config.yaml` | Shared theme selection (committed) |
-
-**Config Priority:** `.pennyfarthing/` > `.claude/...local.yaml` > `.claude/...yaml`
+| `.pennyfarthing/config.local.yaml` | Theme selection (agent-writable, gitignored) |
 
 ## Theme Structure
 

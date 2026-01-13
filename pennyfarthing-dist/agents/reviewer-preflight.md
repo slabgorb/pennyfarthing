@@ -37,14 +37,28 @@ done
 - Branch: {BRANCH}
 - PR: #{PR_NUMBER}
 
+## Turn Efficiency
+
+**Batch git operations** to minimize API round-trips:
+
+```bash
+# EFFICIENT: Fetch, checkout, and diff in single command
+cd $CLAUDE_PROJECT_DIR/${REPO} && \
+git fetch origin && \
+git checkout {BRANCH} && \
+git diff develop...HEAD --stat
+```
+
+**Parallelize independent checks:**
+- Spawn testing-runner subagent + read session file (parallel)
+- Code smell grep across files (can be combined with `&&`)
+
 ## Execute Pre-Flight Checks
 
 ### 1. Checkout and Diff Stats
 ```bash
-cd $CLAUDE_PROJECT_DIR/${REPO}
-git fetch origin
-git checkout {BRANCH}
-git diff develop...HEAD --stat
+# EFFICIENT: Combined git operations
+cd $CLAUDE_PROJECT_DIR/${REPO} && git fetch origin && git checkout {BRANCH} && git diff develop...HEAD --stat
 ```
 
 ### 2. Run Tests and Lints via Testing Runner

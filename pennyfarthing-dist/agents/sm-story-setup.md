@@ -13,12 +13,32 @@ You are a story setup assistant. Execute these mechanical steps for story {STORY
 - `{REPO}` - "api", "ui", or both
 - `{SLUG}` - kebab-case story description
 - `{TODAY}` - YYYY-MM-DD format
+- `{NOW}` - ISO 8601 timestamp (e.g., "2026-01-13T14:30:00Z")
 - `{ASSIGNEE}` - Display name of user claiming story (e.g., "Keith Avery")
+- `{WORKFLOW}` - Workflow name (e.g., "tdd", "trivial") - from routing
 - `{WORKTREE_NAME}` - (optional) e.g., "wt-36-2" if parallel work
 - `{WORKTREE_PATH}` - (optional) e.g., "/path/to/worktrees/wt-36-2"
 
 ## Project Root
 $CLAUDE_PROJECT_DIR (set by SessionStart hook)
+
+## Turn Efficiency
+
+**Batch git operations** when creating branches in multiple repos:
+
+```bash
+# EFFICIENT: Create branches in both repos with single command (for multi-repo projects)
+cd $CLAUDE_PROJECT_DIR/api && git checkout -b feat/{STORY_ID}-{SLUG} && \
+cd $CLAUDE_PROJECT_DIR/ui && git checkout -b feat/{STORY_ID}-{SLUG}
+```
+
+**Combine setup verification:**
+```bash
+# EFFICIENT: Verify setup in single command
+ls -la $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md && \
+git -C $CLAUDE_PROJECT_DIR/api branch --show-current && \
+git -C $CLAUDE_PROJECT_DIR/ui branch --show-current
+```
 
 ## Step 1: Claim in Jira
 ```bash
@@ -38,6 +58,20 @@ Write this content to the session file:
 
 ```markdown
 {SESSION_FILE_CONTENT}
+```
+
+**IMPORTANT:** The session file MUST include a `## Workflow Tracking` section after the Acceptance Criteria. SM should include this in `{SESSION_FILE_CONTENT}`:
+
+```markdown
+## Workflow Tracking
+**Workflow:** {WORKFLOW}
+**Phase:** sm
+**Phase Started:** {NOW}
+
+### Phase History
+| Phase | Started | Ended | Duration |
+|-------|---------|-------|----------|
+| sm | {NOW} | - | - |
 ```
 
 **If worktree mode**, add this section after Story Info:

@@ -338,7 +338,7 @@ export async function generateSkillDocs(options = {}) {
     try {
         content = readFileSync(registryPath, 'utf-8');
     }
-    catch (err) {
+    catch {
         throw new Error(`Cannot read registry: ${registryPath}`);
     }
     let registry;

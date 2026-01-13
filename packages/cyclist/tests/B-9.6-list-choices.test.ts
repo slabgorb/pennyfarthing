@@ -100,10 +100,11 @@ describe('B-9.6: List Choices Detection', () => {
 
       const html = renderQuickActions(result);
 
-      expect(html).toContain('1.');
-      expect(html).toContain('2.');
-      expect(html).toContain('Create new');
-      expect(html).toContain('Modify exi');
+      // List buttons show just the text (no number prefix), number is in data-response
+      expect(html).toContain('Create new component');
+      expect(html).toContain('Modify existing file');
+      expect(html).toContain('data-response="1"');
+      expect(html).toContain('data-response="2"');
     });
 
     it('should truncate long option text to ~20 chars', async () => {

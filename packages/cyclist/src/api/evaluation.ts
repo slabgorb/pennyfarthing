@@ -8,7 +8,6 @@
 import { Router } from 'express';
 import {
   getEvaluation,
-  getEvaluationHistory,
   detectTrend,
   generateRecommendations,
 } from '../agent-evaluation.js';

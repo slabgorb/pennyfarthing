@@ -168,8 +168,8 @@ const IMG_SIZE = 100;
 function imgTag(src, alt) {
     return `<img src="${src}" alt="${escapeForAttr(alt)}" width="${IMG_SIZE}" height="${IMG_SIZE}">`;
 }
-// Generate role color legend markdown
-function generateRoleColorLegend() {
+// Generate role color legend markdown (reserved for future use)
+function _generateRoleColorLegend() {
     const roleOrder = [
         ['orchestrator', 'Orchestrator'],
         ['sm', 'Scrum Master'],
@@ -222,8 +222,8 @@ Each role has a consistent color across all charts. **Bold** = tactical (emphasi
 ---
 
 `;
-// Generate image tag with character name caption
-function imgWithName(src, characterName, agentRole) {
+// Generate image tag with character name caption (reserved for future use)
+function _imgWithName(src, characterName, agentRole) {
     const safeName = escapeForMarkdown(characterName);
     return `${imgTag(src, characterName)}<br/>**${safeName}**<br/><small>${agentRole}</small>`;
 }
@@ -262,8 +262,8 @@ ${LEGEND}`;
     writeFileSync(join(spidersDir, 'team-spiders.md'), md);
     console.log('Generated team-spiders.md');
 }
-// Generate image tag with character name for role gallery
-function imgWithCharacter(src, theme, agent) {
+// Generate image tag with character name for role gallery (reserved for future use)
+function _imgWithCharacter(src, theme, agent) {
     const charName = getCharacterName(theme, agent);
     const safeName = escapeForMarkdown(charName);
     return `${imgTag(src, charName)}<br/>**${safeName}**`;

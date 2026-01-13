@@ -22,6 +22,17 @@ Read the testing skill at .claude/skills/testing/SKILL.md for test commands.
 - Test count: {FAILING_COUNT} failing (RED), {PASSING_COUNT} passing
 - Commit: {COMMIT_SHA} {COMMIT_MESSAGE}
 
+## Turn Efficiency
+
+**Batch pre-flight checks** to minimize API round-trips:
+
+```bash
+# EFFICIENT: Verify TEA assessment and git state in single command
+grep -q "## TEA Assessment" $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md && \
+cd $CLAUDE_PROJECT_DIR/${REPO} && \
+git log -1 --oneline
+```
+
 ## Execute Handoff Checklist
 
 ### Pre-Flight Verification
@@ -84,11 +95,37 @@ Read the testing skill at .claude/skills/testing/SKILL.md for test commands.
    - Tests Written: count breakdown (failing/passing)
    - Status: RED (ready for Dev)
 3. Mark TEA workflow checkbox as complete
-4. Add session log entry with:
+4. **Update Workflow Tracking section for phase transition:**
+   - Update `**Phase:**` from `tea` to `dev`
+   - Update `**Phase Started:**` to current ISO 8601 timestamp
+   - Update Phase History table:
+     - Set tea row's Ended to current timestamp and calculate Duration
+     - Add new row for `dev` with Started = current timestamp
+5. Add session log entry with:
    - Test commit SHA and message
    - Test results breakdown
    - Handoff note to Dev
-5. Report: "Tests are RED. Ready for Dev to make them GREEN."
+6. Report: "Tests are RED. Ready for Dev to make them GREEN."
+
+### Phase Transition Update
+
+Edit the `## Workflow Tracking` section:
+
+```bash
+# Get current timestamp
+NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+# Extract tea start time for duration calculation
+TEA_STARTED=$(grep "^\*\*Phase Started:\*\*" "$SESSION_FILE" | head -1 | sed 's/\*\*Phase Started:\*\* //' | xargs)
+```
+
+Update to:
+```markdown
+**Phase:** dev
+**Phase Started:** {NOW}
+```
+
+And update Phase History table to record tea completion and dev start.
 
 ## Error Recovery
 

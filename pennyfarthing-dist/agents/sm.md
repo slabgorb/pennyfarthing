@@ -381,6 +381,30 @@ Helper does:
 | `sm-handoff` | Handoff bookkeeping to TEA | After story setup complete |
 | `testing-runner` | Run tests | When verification needed |
 
+## Turn Efficiency
+
+**Parallelize independent operations** to minimize API round-trips:
+
+| Parallel Safe | Not Parallel |
+|---------------|--------------|
+| Read multiple files (parallel Read tools) | Write depends on read result |
+| Status check + backlog scan | Session write depends on context |
+| Git checks across repos | Handoff after assessment written |
+
+**Spawn subagents in parallel** when independent:
+```yaml
+# EFFICIENT: If doing both status check AND backlog research
+# spawn both in same turn when results don't depend on each other
+```
+
+**Batch bash commands:**
+```bash
+# EFFICIENT: Combine git operations
+git status && git branch --show-current && git log -1 --oneline
+```
+
+See `/dev-patterns` skill → "Turn-Efficient Patterns" for complete guidance.
+
 ## What I Do vs What Helper Does
 
 | I Do (Opus) | Helper Does (Haiku) |

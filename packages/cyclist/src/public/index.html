@@ -8,6 +8,17 @@
 </head>
 <body>
   <div id="container">
+    <!-- Horizontal Tab Bar for panel navigation (tabs rendered dynamically by tab-bar.js) -->
+    <div id="tab-bar" class="tab-bar" role="tablist">
+      <div class="tab-bar-left">
+        <!-- Tabs will be rendered here by tab-bar.js based on PanelManager registry -->
+      </div>
+      <div class="tab-bar-right">
+        <span class="model-indicator" id="tab-model-indicator">—</span>
+      </div>
+    </div>
+    <!-- Content area: panels + main content + sidebar -->
+    <div id="content-area" class="content-area">
     <!-- Left file panel (collapsible, resizable) - shows changed files -->
     <div id="file-panel" class="file-panel collapsed">
       <div class="file-panel-header">
@@ -43,9 +54,45 @@
       </div>
     </div>
     <div class="resize-handle" id="diff-panel-resize" title="Drag to resize"></div>
-    <!-- Toggle buttons visible when panels are collapsed -->
-    <button class="file-panel-expand-btn" id="file-panel-expand" title="Show changed files"><span class="expand-label">CHANGED</span><span class="panel-count-badge" id="file-panel-count"></span></button>
-    <button class="diff-panel-expand-btn" id="diff-panel-expand" title="Show diffs"><span class="expand-label">DIFFS</span><span class="panel-count-badge" id="diff-panel-count"></span></button>
+    <!-- Tool Panel (collapsible, resizable) - tool execution log -->
+    <div id="tool-panel" class="tool-panel collapsed">
+      <div class="tool-panel-header">
+        <span class="tool-panel-title">Tools</span>
+        <span class="tool-panel-count" id="tool-panel-count"></span>
+        <div class="tool-panel-controls">
+          <select id="tool-filter" title="Filter by tool type">
+            <option value="">All</option>
+          </select>
+          <button class="icon-btn" data-action="export-json" title="Export JSON">JSON</button>
+          <button class="icon-btn" data-action="export-csv" title="Export CSV">CSV</button>
+          <button class="icon-btn danger" data-action="clear" title="Clear log">Clear</button>
+        </div>
+        <button class="tool-panel-collapse-btn" id="tool-panel-collapse" title="Collapse">◀</button>
+      </div>
+      <div class="tool-panel-content" id="tool-panel-content">
+        <div class="tool-log-stats" id="tool-log-stats"></div>
+        <div class="tool-log-table-wrapper">
+          <table class="tool-log-table">
+            <thead>
+              <tr>
+                <th class="col-timestamp">Time</th>
+                <th class="col-tool">Tool</th>
+                <th class="col-input">Input</th>
+                <th class="col-duration">Duration</th>
+                <th class="col-status">Status</th>
+              </tr>
+            </thead>
+            <tbody id="tool-log-tbody">
+              <tr class="empty-row">
+                <td colspan="5" class="empty-message">No tool executions recorded yet</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="resize-handle" id="tool-panel-resize" title="Drag to resize"></div>
+    <!-- Panel expand buttons removed - now using horizontal tab bar at top -->
     <div id="main-content">
       <main id="message-view">
         <!-- MessageView will be mounted here -->
@@ -62,6 +109,14 @@
       <div id="quick-actions"></div>
       <!-- 28-1: Image preview for clipboard paste -->
       <div id="image-preview" class="image-preview hidden" aria-hidden="true"></div>
+      <!-- Inline message queue (replaces dropdown pill) -->
+      <div id="queue-inline" class="queue-inline" style="display: none;">
+        <div class="queue-inline-header">
+          <span class="queue-inline-title">Queued</span>
+          <button class="queue-clear-btn" title="Clear all">Clear</button>
+        </div>
+        <ul class="queue-inline-list"></ul>
+      </div>
       <div id="editor-wrapper">
         <div id="editor-toolbar">
           <button type="button" class="toolbar-btn" data-action="bold" title="Bold (Ctrl+B)"><strong>B</strong></button>
@@ -83,20 +138,6 @@
           </div>
           <!-- B-20: Control buttons moved from sidebar -->
           <div id="editor-controls">
-            <!-- 17-1: Message queue indicator with dropdown -->
-            <div id="queue-indicator" class="queue-indicator" style="display: none;">
-              <button class="queue-toggle" title="View queued messages">
-                <span class="queue-count">0</span>
-                <span class="queue-label">queued</span>
-              </button>
-              <div id="queue-dropdown" class="queue-dropdown" style="display: none;">
-                <div class="queue-header">
-                  <span>Queued Messages</span>
-                  <button class="queue-clear-btn" title="Clear all">Clear All</button>
-                </div>
-                <ul class="queue-list"></ul>
-              </div>
-            </div>
             <button id="stop-btn" class="stop-btn" disabled title="Stop Claude (Esc)">
               <span class="stop-icon">■</span>
             </button>
@@ -231,6 +272,7 @@
         <div id="todo-list" class="section-content"></div>
       </section>
     </aside>
+    </div><!-- /content-area -->
   </div>
 
   <!-- Persona Popup Modal (17-4) -->
@@ -365,15 +407,21 @@
   <script type="module" src="/js/components/ApprovalModal.js"></script>
   <!-- 22-4: Dangerous Path Approval Modal -->
   <script type="module" src="/js/components/DangerousPathModal.js"></script>
-  <!-- 22-6: Tool Execution Audit Log -->
+  <!-- 22-6: Tool Execution Audit Log (modal kept for backwards compatibility) -->
   <script type="module" src="/js/components/AuditLogViewer.js"></script>
   <script type="module">
-    // Wire up audit log modal to menu event
+    // Wire up audit log modal to menu event (legacy)
     import { showAuditLogModal } from '/js/components/AuditLogViewer.js';
     if (window.electronAPI?.auditLog?.onShow) {
       window.electronAPI.auditLog.onShow(showAuditLogModal);
     }
   </script>
+  <!-- 24-9: Quick Theme Switcher - DISABLED until functionality is ready
+  <script type="module">
+    import { init } from '/js/components/QuickThemeSwitcher.js';
+    init();
+  </script>
+  -->
   <script type="module" src="/js/portrait.js"></script>
   <script src="/js/stats-strip.js"></script>
   <script type="module" src="/js/persona.js"></script>
@@ -390,6 +438,77 @@
     ChangedFilesList.init();
     DiffViewer.setOnDiffAdded(ChangedFilesList.handleDiffAdded);
     DiffViewer.setOnDiffsRemoved(ChangedFilesList.handleDiffsRemoved);
+  </script>
+  <!-- Tool Panel and Log Viewer -->
+  <script type="module" src="/js/tool-panel.js"></script>
+  <script type="module" src="/js/components/ToolLogViewer.js"></script>
+  <script type="module">
+    // Wire up tool panel toggle to menu event
+    import * as ToolPanel from '/js/tool-panel.js';
+    // Listen for menu toggle event
+    if (window.electronAPI?.tools?.onTogglePanel) {
+      window.electronAPI.tools.onTogglePanel(() => {
+        ToolPanel.toggle();
+      });
+    }
+  </script>
+  <!-- Panel Manager and Tab Bar -->
+  <script type="module" src="/js/panel-manager.js"></script>
+  <script type="module" src="/js/tab-bar.js"></script>
+  <script type="module">
+    // Register panels with PanelManager
+    import PanelManager from '/js/panel-manager.js';
+
+    // Track badge counts (updated by panel modules)
+    let fileBadgeCount = 0;
+    let diffBadgeCount = 0;
+    let toolBadgeCount = 0;
+
+    // Expose setters for panel modules to call
+    window.panelBadgeCounts = {
+      setFileCount: (n) => { fileBadgeCount = n; },
+      setDiffCount: (n) => { diffBadgeCount = n; },
+      setToolCount: (n) => { toolBadgeCount = n; },
+    };
+
+    // Register file panel
+    const filePanel = document.getElementById('file-panel');
+    if (filePanel) {
+      PanelManager.register({
+        id: 'file-panel',
+        label: 'CHANGED',
+        shortcut: '1',
+        order: 1,
+        element: filePanel,
+        getBadgeCount: () => fileBadgeCount,
+      });
+    }
+
+    // Register diff panel
+    const diffPanel = document.getElementById('diff-panel');
+    if (diffPanel) {
+      PanelManager.register({
+        id: 'diff-panel',
+        label: 'DIFFS',
+        shortcut: '2',
+        order: 2,
+        element: diffPanel,
+        getBadgeCount: () => diffBadgeCount,
+      });
+    }
+
+    // Register tool panel
+    const toolPanel = document.getElementById('tool-panel');
+    if (toolPanel) {
+      PanelManager.register({
+        id: 'tool-panel',
+        label: 'TOOLS',
+        shortcut: '3',
+        order: 3,
+        element: toolPanel,
+        getBadgeCount: () => toolBadgeCount,
+      });
+    }
   </script>
   <!-- Files tab will be added on demand, not on startup -->
   <script type="module" src="/js/controls.js"></script>

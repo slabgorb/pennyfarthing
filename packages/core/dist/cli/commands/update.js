@@ -438,7 +438,7 @@ async function mergeSettingsHooks(projectRoot, assetsPath, options) {
     try {
         existingSettings = JSON.parse(readFileSync(settingsPath, 'utf8'));
     }
-    catch (error) {
+    catch {
         logger.warning('Could not parse existing settings.local.json, skipping merge');
         return false;
     }

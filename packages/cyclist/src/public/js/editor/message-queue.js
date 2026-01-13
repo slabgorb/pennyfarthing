@@ -189,3 +189,41 @@ export function processNextInQueue() {
     if (submitFn) submitFn();
   }
 }
+
+/**
+ * Inject a queued message immediately (abort current + send)
+ * @param {number} index - Index of message to inject
+ * @returns {Promise<boolean>} True if message was injected
+ */
+export async function injectMessage(index) {
+  if (index < 0 || index >= messageQueue.length) {
+    return false;
+  }
+
+  // Get the message before removing
+  const message = messageQueue[index];
+  if (!message) return false;
+
+  // Remove from queue
+  messageQueue.splice(index, 1);
+  saveMessageQueue();
+  notifyQueueChange();
+
+  // Abort Claude if processing
+  if (processingState && window.electronAPI?.claude?.abort) {
+    console.log('[MessageQueue] Aborting Claude for injection');
+    await window.electronAPI.claude.abort();
+    // Brief delay to let abort complete
+    await new Promise(resolve => setTimeout(resolve, 50));
+  }
+
+  // Reset processing state
+  processingState = false;
+
+  // Inject and submit
+  if (clearEditorFn) clearEditorFn();
+  if (insertContentFn) insertContentFn(message);
+  if (submitFn) submitFn();
+
+  return true;
+}

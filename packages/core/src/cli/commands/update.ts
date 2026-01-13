@@ -4,7 +4,6 @@ import fsExtra from 'fs-extra';
 
 const { ensureDirSync, removeSync } = fsExtra;
 import { logger } from '../utils/logger.js';
-import { prompts, confirm } from '../utils/prompts.js';
 import {
   manifestExists,
   readManifest,
@@ -572,7 +571,7 @@ async function mergeSettingsHooks(
   let existingSettings: Record<string, unknown>;
   try {
     existingSettings = JSON.parse(readFileSync(settingsPath, 'utf8'));
-  } catch (error) {
+  } catch {
     logger.warning('Could not parse existing settings.local.json, skipping merge');
     return false;
   }

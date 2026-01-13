@@ -14,7 +14,7 @@
  * Run with: npm test
  */
 
-import { describe, it, before, skip } from 'node:test';
+import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';

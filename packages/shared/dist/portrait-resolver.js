@@ -80,10 +80,27 @@ export function resolvePortraitPath(theme, agent) {
         return null;
     }
     // Look for portrait file matching the agent
+    // Portraits are in size subdirectories: large/, medium/, small/, original/
     // Portraits follow pattern: {shortName}-{ocean}.png
     // Agent names in tests may be short names (sm, tea, dev) or need mapping
     try {
-        const files = readdirSync(portraitsThemeDir);
+        // Check size subdirectories in preference order
+        const sizeDirectories = ['large', 'medium', 'small', 'original'];
+        let files = [];
+        let searchDir = portraitsThemeDir;
+        for (const sizeDir of sizeDirectories) {
+            const sizedPath = join(portraitsThemeDir, sizeDir);
+            if (existsSync(sizedPath)) {
+                files = readdirSync(sizedPath);
+                searchDir = sizedPath;
+                break;
+            }
+        }
+        // Fallback to root directory if no size subdirectories
+        if (files.length === 0) {
+            files = readdirSync(portraitsThemeDir);
+            searchDir = portraitsThemeDir;
+        }
         // Map agent names to portrait file prefixes based on theme conventions
         // For most themes, portrait names use character short names
         // We need to find a file that contains the agent name or its mapping
@@ -105,7 +122,7 @@ export function resolvePortraitPath(theme, agent) {
             for (const prefix of possiblePrefixes) {
                 if (file.toLowerCase().startsWith(prefix.toLowerCase()) &&
                     (file.endsWith('.png') || file.endsWith('.jpg'))) {
-                    return join(portraitsThemeDir, file);
+                    return join(searchDir, file);
                 }
             }
         }

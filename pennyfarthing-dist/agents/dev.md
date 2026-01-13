@@ -82,6 +82,30 @@ Task tool:
 ```
 </on-activation>
 
+## Turn Efficiency
+
+**Read files in parallel** when understanding test expectations:
+```
+# EFFICIENT: Read session + test files + implementation targets in one turn
+Read: .session/X-Y-session.md, tests/feature.test.ts, src/feature.ts (parallel)
+```
+
+**Batch git + PR operations:**
+```bash
+# EFFICIENT: Commit, push, and create PR info in single command
+git add . && git commit -m "feat(X-Y): implement feature" && git push -u origin $(git branch --show-current)
+```
+
+**After push, batch PR creation + verification:**
+```bash
+# Create PR (one command)
+gh pr create --title "..." --body "..." --base develop
+# Then check status
+gh pr view --json number,url
+```
+
+See `/dev-patterns` skill → "Turn-Efficient Patterns" for complete guidance.
+
 ## What I Do vs What Helper Does
 
 | I Do (Opus) | Helper Does (Haiku) |

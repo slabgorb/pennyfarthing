@@ -217,3 +217,87 @@ async *sendMessage(prompt: string) {
 **Discovered:** 2026-01-12 (Orchestrator debugging session)
 
 ---
+
+### Tool Execution Log Shows 0 Entries in Cyclist
+
+**Situation:** Cyclist's Tool Execution Log panel shows "0 total, 0 success" despite tool calls happening.
+
+**Problem:** The OTEL telemetry pipeline was never wired up:
+1. `writePortFile()` function existed in `server.ts` but was never called
+2. Without `.cyclist-port` file, `session-start.sh` couldn't set `OTEL_EXPORTER_OTLP_ENDPOINT`
+3. Claude Code didn't know where to send telemetry
+
+**Root Cause:** Story 20-1 implemented the port file functions and the hook logic, but missed the critical integration step of actually calling `writePortFile()` when the server starts.
+
+**The telemetry flow requires:**
+```
+Cyclist starts
+  → writePortFile() writes .cyclist-port
+  → Claude Code session starts
+  → session-start.sh reads .cyclist-port
+  → Sets OTEL_EXPORTER_OTLP_ENDPOINT in CLAUDE_ENV_FILE
+  → Claude Code sends telemetry to /v1/logs
+  → OTLP receiver records tool events
+  → Tool Execution Log shows entries
+```
+
+**Fix:**
+1. In `main.ts` `startServer()`, call `writePortFile(projectDir, actualPort)` after server.listen succeeds
+2. In `main.ts` `stopServer()`, call `cleanupPortFile(projectDir)` before server.close
+3. In `session-start.sh`, add OTEL auto-config that reads `.cyclist-port` and writes env vars to `CLAUDE_ENV_FILE`
+
+**Prevention:**
+- When implementing multi-component features, trace the full data flow end-to-end
+- Functions that exist but aren't called are easy to miss in code review
+- Test the feature manually, not just the unit tests
+
+**Discovered:** 2026-01-13 (Bug fix session)
+
+---
+
+### Claude Code OTEL Telemetry Not Sending Events
+
+**Situation:** Tool panel shows no events even though OTEL endpoint is configured and callback is wired.
+
+**Problem:** Claude Code's telemetry is **opt-in**. Setting just the endpoint isn't enough.
+
+**Root Cause:** `getOtelConfig()` only returned:
+```typescript
+{
+  OTEL_EXPORTER_OTLP_PROTOCOL: 'http/json',
+  OTEL_EXPORTER_OTLP_ENDPOINT: `http://localhost:${port}`,
+}
+```
+
+But Claude Code requires explicit enable flags per the [monitoring docs](https://code.claude.com/docs/en/monitoring-usage):
+
+**Required env vars:**
+```bash
+CLAUDE_CODE_ENABLE_TELEMETRY=1   # Enable telemetry (opt-in)
+OTEL_LOGS_EXPORTER=otlp          # Export tool events via OTLP
+OTEL_METRICS_EXPORTER=otlp       # Export token metrics via OTLP
+OTEL_EXPORTER_OTLP_PROTOCOL=http/json
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:${port}
+```
+
+**Fix:** Updated `server.ts` `getOtelConfig()` to return all required vars:
+```typescript
+return {
+  CLAUDE_CODE_ENABLE_TELEMETRY: '1',
+  OTEL_LOGS_EXPORTER: 'otlp',
+  OTEL_METRICS_EXPORTER: 'otlp',
+  OTEL_EXPORTER_OTLP_PROTOCOL: 'http/json',
+  OTEL_EXPORTER_OTLP_ENDPOINT: `http://localhost:${port}`,
+};
+```
+
+**Prevention:**
+- Read the official docs for any external service integration
+- "Opt-in" means explicit enable flag, not just "configure endpoint"
+- When debugging data flow, check if data is being SENT before checking if it's being RECEIVED
+
+**See also:** `docs/tool-panel-data-flow.md` for full architecture diagram
+
+**Discovered:** 2026-01-13
+
+---

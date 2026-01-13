@@ -2,6 +2,12 @@
  * Portrait management for sidebar
  * Handles loading, swapping, and fallback for character portraits
  * Supports theme-specific portrait directories with fallback chain
+ *
+ * Multi-resolution support:
+ * - small/  (64x64)   - For thumbnails, cards, lists
+ * - medium/ (128x128) - For sidebar portrait display
+ * - large/  (256x256) - For popup/modal display
+ * - original/ (512x512) - Full resolution
  */
 
 // Get portrait elements
@@ -14,34 +20,71 @@ let currentRole = null;
 // Track current portrait theme (persona theme, not UI theme)
 let currentPortraitTheme = null;
 
+// Portrait size constants
+const PORTRAIT_SIZES = {
+  small: 'small',    // 64x64 - thumbnails, cards
+  medium: 'medium',  // 128x128 - sidebar
+  large: 'large',    // 256x256 - modals
+  original: 'original' // 512x512 - full res
+};
+
+// Default size for sidebar portrait
+const DEFAULT_PORTRAIT_SIZE = PORTRAIT_SIZES.medium;
+
 /**
- * Extract role from a portrait path
- * @param {string} path - Portrait path like "/portraits/moby-dick/dev.png"
- * @returns {string|null} The role (e.g., "dev") or null if not extractable
+ * Extract slug from a portrait path
+ * Handles both old format: /portraits/theme/slug.png
+ * And new format: /portraits/theme/size/slug.png
+ * @param {string} path - Portrait path
+ * @returns {string|null} The slug (e.g., "yoda-54242") or null if not extractable
  */
-function extractRoleFromPath(path) {
+function extractSlugFromPath(path) {
   if (!path) return null;
-  const match = path.match(/\/portraits\/[^/]+\/([^/]+)\.png$/);
+  // Try new format first: /portraits/theme/size/slug.png
+  let match = path.match(/\/portraits\/[^/]+\/(?:small|medium|large|original)\/([^/]+)\.png$/);
+  if (match) return match[1];
+  // Fall back to old format: /portraits/theme/slug.png
+  match = path.match(/\/portraits\/[^/]+\/([^/]+)\.png$/);
   return match ? match[1] : null;
+}
+
+// Alias for backwards compatibility
+function extractRoleFromPath(path) {
+  return extractSlugFromPath(path);
 }
 
 /**
  * Extract theme from a portrait path
- * @param {string} path - Portrait path like "/portraits/moby-dick/dev.png"
+ * Handles both old format: /portraits/theme/slug.png
+ * And new format: /portraits/theme/size/slug.png
+ * @param {string} path - Portrait path
  * @returns {string|null} The theme (e.g., "moby-dick") or null if not extractable
  */
 function extractThemeFromPath(path) {
   if (!path) return null;
-  const match = path.match(/\/portraits\/([^/]+)\/[^/]+\.png$/);
+  // Both formats have theme as first segment after /portraits/
+  const match = path.match(/\/portraits\/([^/]+)\//);
   return match ? match[1] : null;
+}
+
+/**
+ * Build portrait path with size subdirectory
+ * @param {string} theme - Theme name (e.g., "discworld")
+ * @param {string} slug - Character slug (e.g., "granny-35211")
+ * @param {string} size - Size variant (small|medium|large|original)
+ * @returns {string} Full path like "/portraits/discworld/medium/granny-35211.png"
+ */
+function buildPortraitPath(theme, slug, size = DEFAULT_PORTRAIT_SIZE) {
+  return `/portraits/${theme}/${size}/${slug}.png`;
 }
 
 /**
  * Load portrait with theme-specific path and fallback chain
  * @param {string} slug - The character slug (e.g., "yoda-54242", "death-55231")
  * @param {string} theme - The portrait theme (e.g., "star-wars", "discworld")
+ * @param {string} size - The size variant (small|medium|large|original), defaults to medium
  */
-function loadPortraitWithTheme(slug, theme) {
+function loadPortraitWithTheme(slug, theme, size = DEFAULT_PORTRAIT_SIZE) {
   if (!portraitImg || !slug) return;
 
   // Store current slug and theme for future reloads
@@ -55,14 +98,14 @@ function loadPortraitWithTheme(slug, theme) {
     portraitPlaceholder.style.display = 'none';
   }
 
-  // Build primary path using slug
-  const primaryPath = `/portraits/${currentPortraitTheme}/${slug}.png`;
+  // Build primary path using size-aware helper
+  const primaryPath = buildPortraitPath(currentPortraitTheme, slug, size);
 
   // Set up fallback chain via error handler
   const handleError = () => {
     if (currentPortraitTheme !== 'discworld') {
-      // Try discworld fallback
-      const fallbackPath = `/portraits/discworld/${slug}.png`;
+      // Try discworld fallback (same size)
+      const fallbackPath = buildPortraitPath('discworld', slug, size);
       portraitImg.src = fallbackPath;
       // Update theme to discworld so subsequent errors show placeholder
       currentPortraitTheme = 'discworld';
@@ -201,3 +244,5 @@ window.setPortrait = setPortrait;
 window.loadPortrait = loadPortrait;
 window.loadPortraitWithTheme = loadPortraitWithTheme;
 window.reloadPortraitWithTheme = reloadPortraitWithTheme;
+window.buildPortraitPath = buildPortraitPath;
+window.PORTRAIT_SIZES = PORTRAIT_SIZES;

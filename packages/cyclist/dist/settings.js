@@ -36,6 +36,7 @@ const DEFAULT_SETTINGS = {
     },
     pennyfarthing: {
         theme: 'alice-in-wonderland',
+        favorites: [],
     },
 };
 /**
@@ -135,6 +136,8 @@ export function validateSettings(settings) {
     const pennyfarthing = s.pennyfarthing;
     if (typeof pennyfarthing.theme !== 'string')
         return false;
+    if (!Array.isArray(pennyfarthing.favorites))
+        return false;
     return true;
 }
 // =============================================================================
@@ -176,6 +179,9 @@ export function mergeSettings(base, override) {
     if (override.pennyfarthing) {
         if (typeof override.pennyfarthing.theme === 'string') {
             result.pennyfarthing.theme = override.pennyfarthing.theme;
+        }
+        if (Array.isArray(override.pennyfarthing.favorites)) {
+            result.pennyfarthing.favorites = override.pennyfarthing.favorites;
         }
     }
     return result;

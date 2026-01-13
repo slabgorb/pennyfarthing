@@ -22,6 +22,7 @@ export interface NotificationSettings {
 }
 export interface PennyfarthingSettings {
     theme: string;
+    favorites: string[];
 }
 export interface CyclistSettings {
     workflow: WorkflowSettings;

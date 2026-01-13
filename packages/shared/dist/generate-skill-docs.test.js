@@ -268,7 +268,7 @@ skills:
             });
             // Find positions of category headings
             const content = result.content.toLowerCase();
-            const aiIndex = content.indexOf('ai') > -1 ? content.indexOf('ai') : Infinity;
+            const _aiIndex = content.indexOf('ai') > -1 ? content.indexOf('ai') : Infinity;
             const devIndex = content.indexOf('development');
             const toolsIndex = content.indexOf('tools');
             // AI/LLM should come before Development alphabetically

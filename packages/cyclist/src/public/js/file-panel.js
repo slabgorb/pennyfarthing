@@ -123,9 +123,15 @@ function toggle() {
  * @param {number} count - Number of changed files
  */
 export function setFileCount(count) {
-  if (!countBadge) return;
-  countBadge.textContent = count > 0 ? count : '';
-  countBadge.style.display = count > 0 ? 'inline-flex' : 'none';
+  if (countBadge) {
+    countBadge.textContent = count > 0 ? count : '';
+    countBadge.style.display = count > 0 ? 'inline-flex' : 'none';
+  }
+
+  // Update PanelManager badge count (tab bar reads from this)
+  if (window.panelBadgeCounts?.setFileCount) {
+    window.panelBadgeCounts.setFileCount(count);
+  }
 }
 
 /**
@@ -263,7 +269,15 @@ export default {
   getCurrentWidth,
   setFileCount,
   resetState,
+  isCollapsed,
 };
+
+/**
+ * Check if panel is collapsed
+ */
+export function isCollapsed() {
+  return panel ? panel.classList.contains('collapsed') : true;
+}
 
 // Auto-initialize on DOM ready
 if (typeof document !== 'undefined') {

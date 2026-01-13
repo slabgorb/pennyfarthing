@@ -6,17 +6,15 @@ import fsExtra from 'fs-extra';
 const { removeSync, ensureDirSync } = fsExtra;
 import { logger } from '../utils/logger.js';
 import {
-  manifestExists,
   readManifest
 } from '../utils/manifest.js';
 import {
   pathExists,
   isDirectory,
   isSymlink,
-  hashFile,
   fileMatchesHash
 } from '../utils/files.js';
-import { getPackageVersion, getAssetsPath } from '../utils/version.js';
+import { getPackageVersion } from '../utils/version.js';
 import { findNodeModulesPath } from '../utils/node-modules.js';
 import { ALL_SYMLINKS, CORE_AGENTS } from '../utils/constants.js';
 
@@ -388,11 +386,6 @@ function checkBenchmarkPermissions(projectRoot: string): CheckResult {
     const settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
     const permissions = settings.permissions?.allow || [];
 
-    // Check for required benchmark permissions
-    const hasClaudeBash = permissions.some((p: string) =>
-      p === 'Bash(claude:*)' || p === 'Bash' && permissions.includes('Bash(claude:*)')
-    );
-
     // Check if Bash(claude:*) specifically exists (needed for subagents)
     const hasExplicitClaudeBash = permissions.includes('Bash(claude:*)');
 
@@ -518,7 +511,7 @@ function checkSessionStartHooks(projectRoot: string, installationType: string): 
       status: 'pass',
       detail: undefined
     };
-  } catch (error) {
+  } catch {
     return {
       name: 'settings/session-start-hook',
       status: 'warn',
