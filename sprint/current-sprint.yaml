@@ -176,6 +176,7 @@ epics:
         assigned_to: Keith Avery
         depends_on: [31-3, 31-6]
         repos: pennyfarthing
+        jira: MSSCI-11624
         acceptance_criteria:
           - Single generic-handoff.md replaces 5 specific handoff files
           - Reads gate type from workflow (tests_pass, tests_fail, approval, manual)
@@ -204,6 +205,7 @@ epics:
         priority: P1
         status: backlog
         repos: pennyfarthing
+        jira: MSSCI-11625
         acceptance_criteria:
           - Test suite runs only once per TDD phase (not per subagent)
           - Session file caches last test result with timestamp
@@ -223,6 +225,7 @@ epics:
     marker: strategic
     repos: pennyfarthing
     status: in_progress
+    jira: MSSCI-11626
     stories:
       - id: 32-1
         title: Document BMAD artifact formats
@@ -240,6 +243,7 @@ epics:
         completed: 2026-01-13
         assigned_to: Keith Avery
         repos: pennyfarthing
+        jira: MSSCI-11627
         acceptance_criteria:
           - BMAD story format documented with examples
           - BMAD epics format documented
@@ -300,6 +304,7 @@ epics:
         completed: 2026-01-13
         assigned_to: Keith Avery
         repos: pennyfarthing
+        jira: MSSCI-11628
         acceptance_criteria:
           - Detects project-context.md in project
           - Parses technology stack section
@@ -316,6 +321,7 @@ epics:
         priority: P1
         status: backlog
         repos: pennyfarthing
+        jira: MSSCI-11629
         acceptance_criteria:
           - Exports session to BMAD story format
           - Populates Dev Agent Record section
@@ -332,6 +338,7 @@ epics:
         priority: P2
         status: backlog
         repos: pennyfarthing
+        jira: MSSCI-11630
         acceptance_criteria:
           - Reads BMAD sprint-status.yaml
           - Updates our sprint YAML from BMAD status
