@@ -170,8 +170,16 @@ Agents invoke skills based on task:
 |-------|-------------|
 | `/sprint-context` | Sprint status, backlog, story context |
 | `/testing` | Running tests, TDD workflow |
-| `/dev-patterns` | Implementation patterns |
-| `/code-review` | Review checklist |
+| `/dev-patterns` | Implementation patterns, common fixes |
+| `/code-review` | Review checklists and patterns |
+| `/story-management` | Story creation, sizing, sprint workflow |
+| `/just` | Run just recipes for project tasks |
+| `/jira` | Jira CLI commands for sprint management |
+| `/theme` | Manage persona themes |
+| `/mermaid` | Generate diagrams in markdown |
+| `/changelog` | Maintain changelogs, auto-generate release notes |
+
+See `/help` or the `pennyfarthing-dist/skills/` directory for all available skills.
 
 ---
 
