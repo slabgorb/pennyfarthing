@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 57
-  completed_points: 33
-  remaining_points: 24
+  completed_points: 34
+  remaining_points: 23
   notes: |
     Sprint 10 focus: Three strategic epics
     - Epic 31: Customizable Workflow Engine (15 pts)
@@ -489,11 +489,11 @@ epics:
       2. Upgrade path - previous version installed
       3. Clean checkout - fresh clone, existing system deps
     points: 8
-    completed_points: 7
+    completed_points: 8
     priority: P2
     marker: dx
     repos: pennyfarthing
-    status: in_progress
+    status: done
     jira: MSSCI-11618
     stories:
       - id: 34-1
@@ -599,7 +599,10 @@ epics:
           - Show clear message with actual URL
         points: 1
         priority: P2
-        status: backlog
+        status: done
+        started: 2026-01-13
+        completed: 2026-01-13
+        pr: 230
         repos: pennyfarthing
         jira: MSSCI-11621
         acceptance_criteria:
