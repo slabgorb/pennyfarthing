@@ -40,6 +40,25 @@
 
 Claude Code discovers commands via the `.claude/commands/` directory, not `pennyfarthing-dist/`.
 
+## Jira Sync Gotchas
+
+### Manual Issue Creation Creates Duplicates
+**Problem:** Using `jira issue create` manually for epics/stories creates duplicates and messy state
+**Cause:** Didn't read the jira skill first; didn't know about `jira-sync.sh`
+**Solution:** ALWAYS read `.claude/skills/jira/SKILL.md` before ANY Jira operations. Use the provided scripts:
+- `jira-sync.sh <epic>` - Sync all stories in an epic
+- `jira-sync-story.sh <story>` - Sync a single story
+- Use `--dry-run` first to preview changes
+
+### Wrong Field Name for Jira Key
+**Problem:** Sync script says "Not synced to Jira - skipping"
+**Cause:** Used `jira_key:` instead of `jira:` in sprint YAML
+**Solution:** The field is `jira:` (not `jira_key:`) for both epics and stories
+
+### Canceled vs Cancelled
+**Problem:** `jira issue move` fails with "invalid transition state"
+**Solution:** Use American spelling: "Canceled" not "Cancelled"
+
 ---
 
 *Add story management gotchas discovered during coordination below*

@@ -70,7 +70,6 @@ function parseRegistryYaml(content: string): RawRegistry {
   const lines = content.split('\n');
 
   let currentSkillKey: string | null = null;
-  let currentField: string | null = null;
   let currentArrayField: string | null = null;
   let insideExamples = false;
 
@@ -111,7 +110,6 @@ function parseRegistryYaml(content: string): RawRegistry {
         related_skills: [],
         keywords: []
       };
-      currentField = null;
       currentArrayField = null;
       insideExamples = false;
       continue;

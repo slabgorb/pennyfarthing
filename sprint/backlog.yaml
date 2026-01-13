@@ -1,40 +1,238 @@
 # Pennyfarthing Backlog
 # Future epics and stories not yet committed to a sprint
-# Updated: 2026-01-11
+# Updated: 2026-01-13
 
 backlog:
   epics:
-    - id: epic-7
-      title: "Agent Performance Benchmarking Suite"
+    # =========================================================================
+    # STRATEGIC - Workflow & Compatibility
+    # =========================================================================
+    - id: epic-31
+      title: "Customizable Workflow Engine"
       description: |
-        Expand benchmarks/ with comprehensive performance testing.
-        Measure token usage, latency, success rates, cost per agent.
-        Generate performance regression reports.
-      points: 2
-      priority: P2
+        Infrastructure for user-defined workflows. Replace hardcoded TDD flow
+        (SM → TEA → Dev → Reviewer) with configurable YAML-based workflows.
+        Users can define custom agent sequences, routing rules, and gates.
+      points: 15
+      priority: P1
       marker: "strategic"
       repos: pennyfarthing
-      status: partial
-      notes: |
-        Stories 7-1 through 7-5 completed in Sprint 7.
-        Remaining: 7-6 (CI integration, 2 pts)
+      status: backlog
       stories:
-        - id: "7-6"
-          title: "Add CI integration"
+        - id: "31-1"
+          title: "Workflow definition schema (YAML spec)"
           description: |
-            Run benchmarks in CI pipeline.
-            - GitHub Actions workflow
-            - Fail on regression
-            - Publish reports
+            Define the YAML schema for workflows:
+            - Workflow name, description, triggers
+            - Phase definitions (agent, input, output, gates)
+            - Routing rules (tags, story type, points)
+          points: 3
+          priority: P0
+          status: backlog
+          repos: pennyfarthing
+        - id: "31-2"
+          title: "Workflow loader and validator"
+          description: |
+            Load workflow definitions from .claude/workflows/*.yaml
+            Validate against schema, report errors clearly.
+          points: 3
+          priority: P0
+          status: backlog
+          repos: pennyfarthing
+        - id: "31-3"
+          title: "Story-to-workflow routing engine"
+          description: |
+            Route stories to appropriate workflow based on:
+            - Explicit workflow tag on story
+            - Story type (bug, feature, chore, docs)
+            - Default workflow fallback
+          points: 3
+          priority: P0
+          status: backlog
+          repos: pennyfarthing
+        - id: "31-4"
+          title: "Migrate TDD flow to workflow definition"
+          description: |
+            Convert current hardcoded SM → TEA → Dev → Reviewer flow
+            to a workflow YAML file. Ensure backward compatibility.
+          points: 2
+          priority: P0
+          status: backlog
+          repos: pennyfarthing
+        - id: "31-5"
+          title: "/workflow skill for listing and switching"
+          description: |
+            Skill to list available workflows, show current workflow,
+            and manually switch workflows mid-session if needed.
+          points: 2
+          priority: P1
+          status: backlog
+          repos: pennyfarthing
+        - id: "31-6"
+          title: "Session file workflow tracking"
+          description: |
+            Update session file format to track:
+            - Active workflow name
+            - Current phase in workflow
+            - Phase history and transitions
+          points: 2
+          priority: P1
+          status: backlog
+          repos: pennyfarthing
+
+    - id: epic-32
+      title: "BMAD 6.0 Compatibility"
+      description: |
+        Implement BMAD 6.0 methodology compatibility. Import BMAD workflow
+        definitions, provide built-in BMAD-style workflows for debugging,
+        documentation, devops, and planning use cases.
+      points: 15
+      priority: P1
+      marker: "strategic"
+      repos: pennyfarthing
+      status: backlog
+      depends_on: epic-31
+      stories:
+        - id: "32-1"
+          title: "Research BMAD 6.0 schema and agents"
+          description: |
+            Analyze BMAD-METHOD repo structure:
+            - Agent definitions and roles
+            - Workflow schemas
+            - Configuration patterns
+            Document mapping to Pennyfarthing concepts.
+          points: 2
+          priority: P0
+          status: backlog
+          repos: pennyfarthing
+        - id: "32-2"
+          title: "BMAD workflow import/mapping"
+          description: |
+            Parse BMAD workflow definitions and convert to
+            Pennyfarthing workflow YAML format.
+          points: 3
+          priority: P0
+          status: backlog
+          repos: pennyfarthing
+        - id: "32-3"
+          title: "Debugging workflow (BMAD-style)"
+          description: |
+            Built-in workflow for bug investigation:
+            Debugger → Dev → Reviewer
+            Focus on root cause analysis before fix.
+          points: 2
+          priority: P1
+          status: backlog
+          repos: pennyfarthing
+        - id: "32-4"
+          title: "Documentation workflow"
+          description: |
+            Built-in workflow for docs:
+            Tech-Writer → Reviewer
+            Optimized for README, guides, API docs.
+          points: 2
+          priority: P1
+          status: backlog
+          repos: pennyfarthing
+        - id: "32-5"
+          title: "DevOps workflow"
+          description: |
+            Built-in workflow for infrastructure:
+            DevOps → Reviewer
+            CI/CD, deployment, infrastructure as code.
+          points: 2
+          priority: P1
+          status: backlog
+          repos: pennyfarthing
+        - id: "32-6"
+          title: "Planning workflow"
+          description: |
+            Built-in workflow for strategic work:
+            PM → Architect → SM
+            Epic definition, roadmap, sprint planning.
+          points: 2
+          priority: P1
+          status: backlog
+          repos: pennyfarthing
+        - id: "32-7"
+          title: "BMAD export (Pennyfarthing → BMAD format)"
+          description: |
+            Export Pennyfarthing workflows to BMAD format
+            for interoperability with BMAD tooling.
           points: 2
           priority: P2
           status: backlog
           repos: pennyfarthing
-          acceptance_criteria:
-            - .github/workflows/benchmark.yml
-            - Runs on PR merge
-            - Reports published to repo
 
+    - id: epic-33
+      title: "Runtime Permission Management"
+      description: |
+        Allow agents to request and manage tool permissions at runtime.
+        Currently permissions must be pre-configured; agents can't request
+        spot permissions for tools like WebFetch when needed.
+      points: 12
+      priority: P1
+      marker: "ux"
+      repos: pennyfarthing, cyclist
+      status: backlog
+      stories:
+        - id: "33-1"
+          title: "Permission request protocol"
+          description: |
+            Define how agents request permissions:
+            - Structured permission request format
+            - User prompt/approval flow
+            - Temporary vs persistent grants
+          points: 3
+          priority: P0
+          status: backlog
+          repos: pennyfarthing
+        - id: "33-2"
+          title: "/permissions skill"
+          description: |
+            Skill to view and manage permissions:
+            - List current permissions
+            - Grant/revoke tool access
+            - Show permission history
+          points: 2
+          priority: P0
+          status: backlog
+          repos: pennyfarthing
+        - id: "33-3"
+          title: "Cyclist permission UI"
+          description: |
+            Visual permission management in Cyclist:
+            - Permission request modal
+            - Quick approve/deny buttons
+            - Permission status indicator
+          points: 3
+          priority: P1
+          status: backlog
+          repos: cyclist
+        - id: "33-4"
+          title: "Spot permission grants"
+          description: |
+            Allow one-time permission grants:
+            - "Allow once" option
+            - "Allow for this session"
+            - "Always allow"
+          points: 2
+          priority: P1
+          status: backlog
+          repos: pennyfarthing, cyclist
+        - id: "33-5"
+          title: "Permission presets by workflow"
+          description: |
+            Workflows can declare required permissions.
+            Auto-prompt for missing permissions on workflow start.
+          points: 2
+          priority: P2
+          status: backlog
+          repos: pennyfarthing
+
+    # =========================================================================
+    # CLEANUP - Remaining from previous sprints
+    # =========================================================================
     - id: epic-27
       title: "Skill Frontmatter Enhancement"
       description: |
@@ -73,82 +271,31 @@ backlog:
           priority: P2
           status: backlog
 
-    - id: epic-24
-      title: "Configuration & Theme Switcher Panels"
-      description: |
-        Full settings hub in Cyclist covering Pennyfarthing, Claude Code,
-        and Cyclist preferences. Rich theme browser with search, OCEAN
-        profiles, character previews, and favorites.
-      points: 21
-      priority: P4
-      marker: "ux"
-      repos: cyclist, pennyfarthing
-      status: backlog
-      notes: |
-        Lower priority - may be cut like Epic 23's polish stories.
-      stories:
-        - id: "24-1"
-          title: "Settings Panel Infrastructure"
-          points: 3
-          priority: P1
-          status: backlog
-        - id: "24-2"
-          title: "Pennyfarthing Settings Section"
-          points: 2
-          priority: P1
-          status: backlog
-        - id: "24-3"
-          title: "Claude Code Settings Section"
-          points: 2
-          priority: P2
-          status: backlog
-        - id: "24-4"
-          title: "Cyclist Preferences Section"
-          points: 2
-          priority: P2
-          status: backlog
-        - id: "24-5"
-          title: "Theme Browser with Search"
-          points: 5
-          priority: P1
-          status: backlog
-        - id: "24-6"
-          title: "Theme Preview with Portraits"
-          points: 3
-          priority: P1
-          status: backlog
-        - id: "24-7"
-          title: "Theme Favorites"
-          points: 2
-          priority: P2
-          status: backlog
-        - id: "24-8"
-          title: "Quick Theme Switcher"
-          points: 2
-          priority: P2
-          status: backlog
-
-# =============================================================================
-# IN SPRINT 9
-# =============================================================================
-# - Epic 29: Wire Up Orphaned Code (8 pts) - IN PROGRESS
-# - Epic 28: Image Paste & Screenshot Support (14 pts) - PLANNED
-
 # =============================================================================
 # COMPLETED/CLOSED EPICS (removed from backlog)
 # =============================================================================
 # - Epic 3: Context Management - COMPLETE (Sprints 3, 6, 7)
-# - Epic 23: Cyclist Command Integration - CLOSED (Sprint 8, 8/29 pts delivered, rest wontfix)
-# - Epic 25: Smart Question Detection - COMPLETE (Sprint 8, 12/15 pts, 25-7 wontfix)
+# - Epic 8: Automatic State Reconciliation - COMPLETE (Sprint 9)
+# - Epic 9: Skill Discovery & Documentation Hub - COMPLETE (Sprint 9)
+# - Epic 20: Cyclist Web Mode Improvements - COMPLETE (Sprint 9)
+# - Epic 22: Verbose Mode - COMPLETE (Sprint 9)
+# - Epic 23: Cyclist Command Integration - CLOSED (Sprint 9)
+# - Epic 24: Configuration & Theme Switcher - COMPLETE (Sprint 9)
+# - Epic 25: Smart Question Detection - COMPLETE (Sprint 9)
+# - Epic 26: Dogfooding Audit - COMPLETE (Sprint 9)
+# - Epic 28: Image Paste & Screenshot - COMPLETE (Sprint 9)
+# - Epic 29: Wire Up Orphaned Code - CLOSED (Sprint 9, flawed premise)
+# - Epic 30: Developer Workflow Documentation - COMPLETE (Sprint 9)
 
 # =============================================================================
 # BACKLOG SUMMARY
 # =============================================================================
-# Remaining backlog: 33 pts
-#   - Epic 7-6: CI integration (2 pts)
-#   - Epic 27: Skill Frontmatter Enhancement (10 pts)
-#   - Epic 24: Configuration & Theme Switcher (21 pts)
+# Strategic (P1):
+#   - Epic 31: Customizable Workflow Engine (15 pts)
+#   - Epic 32: BMAD 6.0 Compatibility (15 pts) - depends on Epic 31
+#   - Epic 33: Runtime Permission Management (12 pts)
 #
-# Active in Sprint 9: 22 pts
-#   - Epic 29: Wire Up Orphaned Code (8 pts)
-#   - Epic 28: Image Paste & Screenshot (14 pts)
+# Cleanup (P3):
+#   - Epic 27: Skill Frontmatter Enhancement (10 pts)
+#
+# Total Backlog: 52 pts

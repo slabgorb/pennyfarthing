@@ -392,7 +392,7 @@ export async function aggregateByDimension(dimension, resultsDir, themesDir = DE
     const values = [];
     for (const [value, themes] of themesByValue) {
         const roleScores = new Map();
-        let totalScores = [];
+        const totalScores = [];
         for (const theme of themes) {
             const scores = themeScores.get(theme);
             if (!scores)

@@ -14,7 +14,7 @@ const __dirname = dirname(__filename);
 // Find monorepo root by walking up from current directory
 const projectRoot = findMonorepoRoot(__dirname);
 const THEMES_DIR = join(projectRoot, 'pennyfarthing-dist', 'personas', 'themes');
-const AGENTS = ['orchestrator', 'sm', 'tea', 'dev', 'reviewer', 'architect', 'pm', 'tech-writer', 'ux-designer', 'devops'];
+const _AGENTS = ['orchestrator', 'sm', 'tea', 'dev', 'reviewer', 'architect', 'pm', 'tech-writer', 'ux-designer', 'devops'];
 // OCEAN profiles to add - define scores and rationale comments
 const OCEAN_PROFILES = {
     'agatha-christie': {

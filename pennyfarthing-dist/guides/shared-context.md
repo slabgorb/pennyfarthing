@@ -9,23 +9,29 @@ Loaded automatically by `/prime --agent <name>` on agent activation.
 ## Project Info
 
 **Project:** Pennyfarthing - Claude Code agent orchestration framework
-**Version:** 4.0.0
-**Type:** ES module with TypeScript
+**Version:** 6.3.0
+**Type:** ES module with TypeScript (pnpm monorepo)
 **Node:** >=18.0.0
 
 ### Directory Structure
 
 ```
 pennyfarthing-dist/      # Single source of truth for all definitions
-├── agents/              # Agent definitions
-├── commands/            # Slash commands
-├── guides/              # Behavior guides
-├── skills/              # Knowledge domains
-├── personas/            # Theme files
+├── agents/              # 10 main agents + 14 official subagents
+├── commands/            # 42 slash commands
+├── guides/              # Behavior guides and patterns
+├── skills/              # 18+ knowledge domain skills
+├── personas/            # 102 themed agent personas
+│   └── themes/          # Theme YAML files
 └── scripts/             # Utility scripts
 
-src/                     # TypeScript CLI source
-sprint/                  # Sprint tracking
+packages/                # Monorepo packages
+├── core/                # CLI commands (init, update, doctor)
+├── cyclist/             # Visual terminal (Electron/Express)
+└── shared/              # Shared utilities (skill search, etc.)
+
+src/                     # Main TypeScript source
+sprint/                  # Sprint tracking (current-sprint.yaml)
 .session/                # Active work sessions
 .claude/                 # Project's Pennyfarthing setup (symlinks)
 ```
@@ -124,9 +130,17 @@ npm run lint      # ESLint
 
 ## Persona System
 
-Configured in `.claude/persona-config.yaml`. Current theme provides character mappings for each agent with style attributes.
+Configured in `.pennyfarthing/config.local.yaml`. Current theme provides character mappings for each agent with style attributes.
 
-Themes available: `star-trek-tos`, `star-trek`, `discworld`, `shakespeare`, `jane-austen`, `literary-classics`, `minimalist`, `rome`
+**102 themes available** across categories:
+- **TV Series:** `mash`, `star-trek`, `the-office`, `breaking-bad`, `game-of-thrones`, etc.
+- **Film:** `princess-bride`, `lord-of-the-rings`, `matrix`, `pulp-fiction`, etc.
+- **Literature:** `alice-in-wonderland`, `discworld`, `shakespeare`, `jane-austen`, etc.
+- **Anime:** `one-piece`, `naruto`, `dragon-ball-z`, `death-note`, etc.
+- **Games:** `zelda`, `final-fantasy`, `mass-effect`, `portal`, etc.
+- **History/Mythology:** `greek-mythology`, `norse-mythology`, `ancient-rome`, etc.
+
+Use `/list-themes` to see all available themes, `/show-theme <name>` for details.
 
 ---
 

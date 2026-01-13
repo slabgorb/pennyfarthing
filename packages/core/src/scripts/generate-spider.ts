@@ -303,8 +303,8 @@ const TEAM_AGENTS = [
   'devops',
 ];
 
-// Human-readable agent names for legend
-const AGENT_DISPLAY_NAMES: Record<string, string> = {
+// Human-readable agent names for legend (reserved for future use)
+const _AGENT_DISPLAY_NAMES: Record<string, string> = {
   orchestrator: 'Orch',
   sm: 'SM',
   tea: 'TEA',

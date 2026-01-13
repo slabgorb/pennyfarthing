@@ -1,4 +1,4 @@
-import { readFileSync, rmSync, statSync, readdirSync } from 'fs';
+import { rmSync, statSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { logger } from '../utils/logger.js';
 import { pathExists } from '../utils/files.js';

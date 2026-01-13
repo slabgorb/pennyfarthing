@@ -54,7 +54,7 @@ interface PortraitCellProps {
 }
 
 function PortraitCell({ theme, role, agent }: PortraitCellProps) {
-  const spritePath = agent ? `/sprites/${theme.id}/${agent.slug}.png` : `/sprites/${theme.id}/${role}.png`;
+  const spritePath = agent ? `/sprites/${theme.id}/small/${agent.slug}.png` : `/sprites/${theme.id}/small/${role}.png`;
   const firstName = agent?.character?.split(" ")[0] || role;
 
   return (

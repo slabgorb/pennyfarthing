@@ -13,16 +13,17 @@ import { Server } from 'http';
 import { fileURLToPath } from 'url';
 import { dirname, join, basename } from 'path';
 import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
-import { getStoryInfo, getGitInfo } from './server.js';
+import { getStoryInfo, getGitInfo, writePortFile, cleanupPortFile, getOtelConfig, findAvailablePort } from './server.js';
 import { parseToolStats, ToolStats, createEmptyStats } from './tool-stats.js';
 import {
   getTokenStats,
   setTokenStatsCallback,
+  setToolEventCallback,
   TokenStats,
+  ToolEvent,
   aggregateTokenStats,
   resetTokenStats,
   resetEventStore,
-  getToolEvents,
   getToolEventsFiltered,
   getToolTypes,
   exportAuditLogAsJSON,
@@ -31,7 +32,7 @@ import {
 } from './otlp-receiver.js';
 import { ClaudeService, SDKMessage } from './claude-service.js';
 import { isTodoWriteMessage, extractTodos, type TodoItem } from './todos.js';
-import { listDirectory as listDir, type DirectoryListing } from './file-browser.js';
+import { listDirectory as listDir } from './file-browser.js';
 import {
   getProjectDirectory,
   setProjectDirectory,
@@ -39,13 +40,10 @@ import {
   parseProjectDirArg,
 } from './paths.js';
 import { getContextUsage, ContextInfo } from './api/context.js';
-import { getVerboseMode, setVerboseMode, syncWithFileSettings } from './settings-store.js';
+import { getVerboseMode, setVerboseMode } from './settings-store.js';
 import {
-  initializeSettings,
   getCurrentSettings,
   saveUserSettings,
-  watchAllSettings,
-  stopWatchingSettings,
   type CyclistSettings,
 } from './settings.js';
 import { openSettingsWindow, setMainWindowRef, setBrowserWindowRef } from './settings-window.js';
@@ -292,15 +290,23 @@ export function buildWorkflowMenu(): { label: string; submenu: unknown[] } {
 
 /**
  * Build Tools menu with Execution Log (Story 22-6)
+ * Updated: toggles tool panel instead of showing modal
  */
 export function buildToolsMenu(): { label: string; submenu: unknown[] } {
   return {
     label: 'Tools',
     submenu: [
+      // 24-9: Quick Theme Switcher - DISABLED until functionality is ready
+      // {
+      //   label: 'Quick Theme Switcher',
+      //   accelerator: 'CmdOrCtrl+K',
+      //   click: () => broadcastToRenderer('theme:showQuickSwitcher', null),
+      // },
+      // { type: 'separator' },
       {
         label: 'Execution Log',
         accelerator: 'CmdOrCtrl+Shift+L',
-        click: () => broadcastToRenderer('tools:showAuditLog', null),
+        click: () => broadcastToRenderer('tools:toggleToolPanel', null),
       },
     ],
   };
@@ -374,7 +380,7 @@ export interface StatsState {
 }
 
 // Stats state managed by main process
-let currentStats: StatsState = {
+const currentStats: StatsState = {
   model: '—',
   status: '—',
   mode: '—',
@@ -1048,6 +1054,13 @@ export function startProjectWatchers(): void {
   });
   console.log('Token stats callback registered for OTLP broadcasts');
 
+  // Register tool event callback for audit log real-time updates
+  setToolEventCallback((event: ToolEvent) => {
+    broadcastToRenderer(IPC_AUDIT_LOG_CHANNELS.ENTRY, event);
+    console.log(`Tool event broadcast: ${event.toolName}`);
+  });
+  console.log('Tool event callback registered for audit log broadcasts');
+
   // Start watching for agent changes
   if (detectPennyfarthingProject(projectDir)) {
     const sessionId = process.env.CYCLIST_SESSION_ID;
@@ -1090,7 +1103,17 @@ export function getClaudeService(): ClaudeService {
   if (!claudeServiceInstance) {
     const projectDir = getProjectDirectory();
     if (!projectDir) throw new Error('Cannot create ClaudeService: no project directory set');
-    claudeServiceInstance = new ClaudeService({ cwd: projectDir });
+    // Get OTEL config to enable telemetry streaming to Cyclist
+    const otelConfig = getOtelConfig(projectDir);
+    claudeServiceInstance = new ClaudeService({
+      cwd: projectDir,
+      env: otelConfig ?? undefined,
+    });
+    if (otelConfig) {
+      console.log('[ClaudeService] OTEL config enabled:', otelConfig.OTEL_EXPORTER_OTLP_ENDPOINT);
+    } else {
+      console.warn('[ClaudeService] OTEL config not available - tool events will not stream');
+    }
   }
   return claudeServiceInstance;
 }
@@ -1321,7 +1344,7 @@ export function setupFileBrowserIPCHandlers(ipcMain: {
 /**
  * Flag indicating if settings have been initialized
  */
-export let isSettingsInitialized = false;
+export const isSettingsInitialized = false;
 
 /**
  * Handle settings:get IPC call
@@ -2074,30 +2097,7 @@ if (isElectron) {
   const DEFAULT_PORT = parseInt(process.env.PORT || '1898', 10);
   let actualPort = DEFAULT_PORT;
 
-  /**
-   * Find an available port starting from the given port
-   */
-  async function findAvailablePort(startPort: number, maxAttempts = 10): Promise<number> {
-    const net = await import('net');
-
-    for (let port = startPort; port < startPort + maxAttempts; port++) {
-      const available = await new Promise<boolean>((resolve) => {
-        const server = net.createServer();
-        server.once('error', () => resolve(false));
-        server.once('listening', () => {
-          server.close();
-          resolve(true);
-        });
-        server.listen(port);
-      });
-
-      if (available) {
-        return port;
-      }
-    }
-
-    throw new Error(`No available port found in range ${startPort}-${startPort + maxAttempts - 1}`);
-  }
+  // findAvailablePort imported from server.ts (Story 34-3)
 
   /**
    * Create the main application window
@@ -2139,6 +2139,12 @@ if (isElectron) {
         server = createTerminalServer();
         server.listen(actualPort, () => {
           console.log(`Cyclist server running at http://localhost:${actualPort}`);
+          // Write port file for OTEL auto-configuration (Story 20-1)
+          const projectDir = getProjectDirectory();
+          if (projectDir) {
+            writePortFile(projectDir, actualPort);
+            console.log(`[OTEL] Wrote .cyclist-port file to ${projectDir}`);
+          }
           resolve();
         });
         server.on('error', reject);
@@ -2153,6 +2159,12 @@ if (isElectron) {
    */
   function stopServer(): Promise<void> {
     return new Promise((resolve) => {
+      // Clean up port file before stopping (Story 20-1)
+      const projectDir = getProjectDirectory();
+      if (projectDir) {
+        cleanupPortFile(projectDir);
+        console.log('[OTEL] Cleaned up .cyclist-port file');
+      }
       if (server) {
         server.close(() => {
           console.log('Cyclist server stopped');

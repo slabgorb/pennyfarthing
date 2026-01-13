@@ -1,11 +1,11 @@
-import { existsSync, readdirSync, readlinkSync, unlinkSync, symlinkSync, writeFileSync } from 'fs';
-import { join, relative, dirname, basename } from 'path';
+import { readdirSync, readlinkSync, unlinkSync, symlinkSync, writeFileSync } from 'fs';
+import { join, relative, dirname } from 'path';
 import fsExtra from 'fs-extra';
 
 const { ensureDirSync } = fsExtra;
 import { logger } from '../utils/logger.js';
 import { confirm } from '../utils/prompts.js';
-import { pathExists, isSymlink, isDirectory } from '../utils/files.js';
+import { pathExists, isSymlink } from '../utils/files.js';
 import { manifestExists } from '../utils/manifest.js';
 
 /**

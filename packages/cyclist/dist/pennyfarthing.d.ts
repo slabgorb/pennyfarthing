@@ -59,8 +59,11 @@ interface ThemeConfig {
  */
 export declare function detectPennyfarthingProject(projectDir: string): boolean;
 /**
- * Loads theme configuration from persona-config.yaml
- * Prefers .local.yaml variant if it exists
+ * Loads theme configuration from config files
+ * Checks multiple locations in priority order:
+ * 1. .pennyfarthing/config.local.yaml (new preferred location)
+ * 2. .claude/persona-config.local.yaml (legacy local)
+ * 3. .claude/persona-config.yaml (legacy default)
  * @param projectDir - The project directory
  * @returns Theme config or null if not found/invalid
  */

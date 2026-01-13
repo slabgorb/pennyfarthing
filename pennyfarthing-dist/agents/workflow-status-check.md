@@ -11,16 +11,27 @@ Universal entry point telling each agent: what work exists, what phase, and whet
 ## Project Root
 $CLAUDE_PROJECT_DIR (set by SessionStart hook)
 
+## Turn Efficiency
+
+**Batch bash commands** to minimize API round-trips:
+
+```bash
+# EFFICIENT: Combine independent status checks in single command
+ls -la .session/*-session.md 2>/dev/null && \
+git status --porcelain && \
+git branch --show-current && \
+grep -E "status: (in_progress|backlog|done)" $CLAUDE_PROJECT_DIR/sprint/current-sprint.yaml | sort | uniq -c
+```
+
+**Parallelize independent operations** by invoking multiple tools in same turn:
+- Read session file + Glob for epic contexts (parallel)
+- Git status checks across repos (parallel if independent)
+
 ## Step 1: Scan Session Files
 
 ```bash
-# List all session files (named after story IDs)
-ls -la .session/*-session.md 2>/dev/null
-
-# For each session file, read and extract info
-for f in .session/*-session.md; do
-    [ -f "$f" ] && head -50 "$f"
-done
+# EFFICIENT: List and preview all session files in one command
+ls -la .session/*-session.md 2>/dev/null && for f in .session/*-session.md; do [ -f "$f" ] && head -50 "$f"; done
 ```
 
 For each session file found, extract:
@@ -32,6 +43,18 @@ For each session file found, extract:
 - Branch (from `**Branch:**` line)
 - Jira key (from `**Jira:**` line)
 - Started date (from `**Started:**` line)
+- Workflow (from `**Workflow:**` line in Workflow Tracking section)
+- Phase Started (from `**Phase Started:**` line - ISO 8601 timestamp)
+
+**Workflow field extraction:**
+```bash
+# Extract workflow name (defaults to "tdd" if not found for backward compatibility)
+WORKFLOW=$(grep "^\*\*Workflow:\*\*" "$SESSION_FILE" | head -1 | sed 's/\*\*Workflow:\*\* //' | xargs)
+[ -z "$WORKFLOW" ] && WORKFLOW="tdd"
+
+# Extract phase started timestamp
+PHASE_STARTED=$(grep "^\*\*Phase Started:\*\*" "$SESSION_FILE" | head -1 | sed 's/\*\*Phase Started:\*\* //' | xargs)
+```
 
 For worktree detection, check INSIDE the session file:
 ```bash
@@ -219,9 +242,9 @@ Stories with `status: done` are DONE - do not list them as in-progress even if t
 | ✗ MISSING | Run `/start-epic` to generate epic technical context |
 
 ### Active Work Sessions (Your Work)
-| Story | Title | Phase | Status | Repos | Days Active |
-|-------|-------|-------|--------|-------|-------------|
-| 32-8 | Threat Hunt Summary | tea | in-progress | both | 1 |
+| Story | Title | Workflow | Phase | Phase Started | Status | Repos |
+|-------|-------|----------|-------|---------------|--------|-------|
+| 32-8 | Threat Hunt Summary | tdd | tea | 2026-01-13T14:30:00Z | in-progress | both |
 
 ### Colleague Work (DO NOT OFFER)
 | Story | Title | Jira | Assignee | Status |

@@ -12,7 +12,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { join, dirname } from 'path';
+import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { findMonorepoRoot } from '../cli/utils/files.js';
 
@@ -20,7 +20,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Find monorepo root by walking up from current directory
-const projectRoot = findMonorepoRoot(__dirname);
+const _projectRoot = findMonorepoRoot(__dirname);
 
 // ============================================================================
 // AC1: scripts/generate-face.ts functional

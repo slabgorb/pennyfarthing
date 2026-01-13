@@ -10,7 +10,6 @@ import { getTDDMetrics } from '../tdd-metrics.js';
 import { getSpanHierarchy } from '../span-hierarchy.js';
 import { getTokenStatsByAgent } from '../agent-context.js';
 import { getTokenStatsByStory } from '../story-context.js';
-import type { AgentSpan, ToolSpan } from '../telemetry-types.js';
 
 /**
  * Create telemetry API router
@@ -56,7 +55,7 @@ export function createTelemetryRouter(): Router {
     // Calculate session stats from spans
     let totalInputTokens = 0;
     let totalOutputTokens = 0;
-    let totalCacheRead = 0;
+    const totalCacheRead = 0;
     let totalCost = 0;
     let spanCount = 0;
     let minStartTime = Infinity;

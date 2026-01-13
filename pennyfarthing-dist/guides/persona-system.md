@@ -6,13 +6,25 @@ The Pennyfarthing persona system allows you to customize agent personalities thr
 
 ### Change Theme
 
-Edit `.claude/persona-config.yaml`:
+Edit `.pennyfarthing/config.local.yaml`:
 
 ```yaml
-theme: star-trek  # Options: discworld, star-trek, minimalist
+theme: star-trek  # 102 themes available!
+```
+
+Or use the `/set-theme` command:
+```bash
+/set-theme star-trek
 ```
 
 Restart your Claude session. All agents now use Star Trek characters.
+
+### Discover Themes
+
+```bash
+/list-themes              # See all 102 themes
+/show-theme alice-in-wonderland  # See theme details
+```
 
 ### Adjust Personality Attributes
 
@@ -34,11 +46,11 @@ overrides:
 
 ## Configuration File
 
-**Location:** `.claude/persona-config.yaml`
+**Location:** `.pennyfarthing/config.local.yaml` (local, not tracked in git)
 
 ```yaml
-# Base theme
-theme: discworld       # discworld | star-trek | minimalist | custom path
+# Base theme (102 themes available - see /list-themes)
+theme: discworld       # See categories below
 
 # Personality modifiers
 attributes:
@@ -55,47 +67,53 @@ overrides: {}
 
 ## Available Themes
 
-### Discworld (Default)
+**102 themes available** across categories. Use `/list-themes` to see all, `/show-theme <name>` for details.
 
-Characters from Terry Pratchett's Discworld series.
+### Theme Categories
 
-| Agent | Character | Style |
-|-------|-----------|-------|
-| Orchestrator | DEATH | Speaks in capitals, sees the pattern |
-| SM | Captain Carrot | Supportive, honest, by the book |
-| TEA | Igor | Precise, thorough, "Yeth, marthter" |
-| Dev | Ponder Stibbons | Methodical, references Hex |
-| Reviewer | Granny Weatherwax | Uncompromising, demands excellence |
-| Architect | Leonard of Quirm | Brilliant, innovative designs |
-| PM | Lord Vetinari | Calm, calculating, sees everything |
-| Tech Writer | Sacharissa Cripslock | Clear, investigative |
-| UX Designer | Adora Belle Dearheart | Direct, user-focused |
-| DevOps | Lu-Tze | Calm, preventive, sweeps floors |
+| Category | Examples | Count |
+|----------|----------|-------|
+| **TV Series** | `mash`, `star-trek`, `the-office`, `breaking-bad`, `game-of-thrones`, `firefly` | 30+ |
+| **Film** | `princess-bride`, `lord-of-the-rings`, `matrix`, `pulp-fiction`, `avengers` | 20+ |
+| **Literature** | `alice-in-wonderland`, `discworld`, `shakespeare`, `jane-austen`, `sherlock` | 15+ |
+| **Anime** | `one-piece`, `naruto`, `dragon-ball-z`, `death-note`, `cowboy-bebop` | 10+ |
+| **Games** | `zelda`, `final-fantasy`, `mass-effect`, `portal`, `elder-scrolls` | 10+ |
+| **History/Myth** | `greek-mythology`, `norse-mythology`, `ancient-rome`, `arthurian` | 8+ |
+| **Other** | `minimalist`, `sesame-street`, `muppets`, `parks-and-rec` | 10+ |
 
-### Star Trek
+### Theme Tiers
 
-Characters from Star Trek: The Next Generation.
+Themes are rated by persona quality:
 
-| Agent | Character | Style |
-|-------|-----------|-------|
-| Orchestrator | Q | Omniscient observer |
-| SM | Captain Picard | "Make it so" |
-| TEA | Data | Precise, analytical |
-| Dev | Geordi La Forge | Creative problem solver |
-| Reviewer | Spock | Logical analysis |
-| Architect | Data (design mode) | Systematic approaches |
-| PM | Admiral Janeway | Determined strategist |
-| Tech Writer | Dr. Crusher | Clear explanations |
-| UX Designer | Counselor Troi | Empathetic design |
-| DevOps | Chief O'Brien | Practical operations |
+| Tier | Description | Examples |
+|------|-------------|----------|
+| **S** | Top-tier, highly refined | `alice-in-wonderland`, `star-trek`, `discworld` |
+| **A** | Excellent quality | `princess-bride`, `office`, `mash` |
+| **B** | Good quality | `matrix`, `avengers` |
+| **U** | Unrated/new | Recently added themes |
 
-### Minimalist
+### Featured Themes
 
-Professional mode with no character personas.
+**Discworld** - Terry Pratchett characters
+- SM: Captain Carrot (supportive, by the book)
+- TEA: Igor (precise, thorough)
+- Dev: Ponder Stibbons (methodical)
+- Reviewer: Granny Weatherwax (uncompromising)
 
-| Agent | Character | Style |
-|-------|-----------|-------|
-| All | Role Name Only | Direct, professional |
+**Star Trek** - The Next Generation crew
+- SM: Captain Picard ("Make it so")
+- TEA: Data (precise, analytical)
+- Dev: Geordi La Forge (creative problem solver)
+- Reviewer: Spock (logical analysis)
+
+**Alice in Wonderland** - Carroll's classic
+- SM: The White Rabbit (time-conscious)
+- TEA: The Caterpillar (methodical questioning)
+- Dev: The Mad Hatter (creative solutions)
+- Reviewer: The Queen of Hearts (exacting standards)
+
+**Minimalist** - Professional mode
+- All agents: Role name only, no personas
 
 ---
 
@@ -259,7 +277,18 @@ For individual agent customization without a full theme.
 
 | File | Purpose |
 |------|---------|
-| `.claude/persona-config.yaml` | Active configuration |
-| `.claude/personas/attributes.yaml` | Attribute definitions |
-| `.claude/personas/themes/*.yaml` | Theme definitions |
-| `.claude/personas/custom/*.yaml` | Custom personas |
+| `.pennyfarthing/config.local.yaml` | Active configuration (local, not tracked) |
+| `pennyfarthing-dist/personas/attributes.yaml` | Attribute definitions |
+| `pennyfarthing-dist/personas/themes/*.yaml` | 102 theme definitions |
+| `.claude/project/personas/*.yaml` | Custom project personas |
+
+## Theme Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/list-themes` | List all 102 available themes |
+| `/show-theme <name>` | Show theme details and characters |
+| `/set-theme <name>` | Set the active theme |
+| `/theme-maker` | Interactive wizard to create custom themes |
+| `/create-theme` | Create a new custom theme |
+| `/job-fair` | Discover which characters excel at each role |

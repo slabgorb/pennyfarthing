@@ -72,6 +72,35 @@ cyclist-clean:
 cyclist-rebuild:
     cd packages/cyclist && npx electron-rebuild
 
+# Run Cyclist health check to diagnose setup issues
+# Usage: just cyclist-doctor [--fix]
+cyclist-doctor *args:
+    cd packages/cyclist && ./scripts/cyclist-doctor.sh {{args}}
+
+# First-time Cyclist setup (clean, install deps, rebuild native modules, build)
+cyclist-setup:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "🚴 Setting up Cyclist..."
+    echo ""
+    echo "Step 1/4: Cleaning stale artifacts..."
+    just cyclist-clean
+    echo ""
+    echo "Step 2/4: Installing dependencies..."
+    pnpm install
+    echo ""
+    echo "Step 3/4: Rebuilding native modules (node-pty)..."
+    cd packages/cyclist && npx electron-rebuild
+    echo ""
+    echo "Step 4/4: Building TypeScript..."
+    npm run build
+    echo ""
+    echo "✓ Cyclist setup complete!"
+    echo ""
+    echo "Next steps:"
+    echo "  just cyclist-electron    # Run Electron app"
+    echo "  just cyclist-web /path   # Run web mode"
+
 # Install Cyclist.app to /Applications (macOS)
 cyclist-install-app:
     cd packages/cyclist && ./scripts/install-app.sh

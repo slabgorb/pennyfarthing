@@ -89,7 +89,6 @@ export function copyDirectory(
   options?: { dryRun?: boolean }
 ): string[] {
   const files = getAllFiles(source);
-  const copied: string[] = [];
 
   if (!options?.dryRun) {
     ensureDirSync(dest);

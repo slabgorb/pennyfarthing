@@ -21,7 +21,6 @@ import { join } from 'path';
 import { searchSkills } from './skill-search.js';
 // Path to the shell wrapper for integration tests
 const WRAPPER_PATH = join(import.meta.dirname, 'skill-search.sh');
-const REGISTRY_PATH = join(import.meta.dirname, '../../pennyfarthing-dist/skills/skill-registry.yaml');
 describe('Story 9-2: Skill Search Utility', () => {
     describe('searchSkills() - Core Function', () => {
         describe('AC1: Script is functional', () => {

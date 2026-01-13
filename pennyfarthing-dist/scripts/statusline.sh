@@ -2,9 +2,6 @@
 # Claude Code statusline - fixed-width segments
 # Format: [ROLE] Theme | repo | branch | model [progress] pct%
 
-# Skip statusbar when running inside Cyclist (sidebar provides the same info)
-[[ -n "$CYCLIST_ACTIVE" ]] && exit 0
-
 input=$(cat)
 
 # Validate JSON

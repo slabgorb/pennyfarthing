@@ -74,7 +74,6 @@ export function getAllFiles(dirPath, basePath) {
  */
 export function copyDirectory(source, dest, options) {
     const files = getAllFiles(source);
-    const copied = [];
     if (!options?.dryRun) {
         ensureDirSync(dest);
         copySync(source, dest, { overwrite: true });

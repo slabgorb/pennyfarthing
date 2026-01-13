@@ -129,7 +129,7 @@ Instructions for loading the agent's character from the theme system.
 ```xml
 <persona-loading agent="dev">
 Load this agent's persona before activation:
-1. Read `.claude/persona-config.local.yaml` (if exists) or `.claude/persona-config.yaml`
+1. Read `.pennyfarthing/config.local.yaml`
 2. Get `theme` value (default: "discworld")
 3. Read `.claude/personas/themes/{theme}.yaml`
 4. Extract `agents.{agent}` section (character, style, helper, etc.)

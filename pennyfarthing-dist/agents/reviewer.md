@@ -104,6 +104,28 @@ Task tool:
 ```
 </on-activation>
 
+## Turn Efficiency
+
+**Read multiple files in parallel** when analyzing:
+```
+# EFFICIENT: Read session + PR diff + related source in one turn
+Read: .session/X-Y-session.md, src/feature.ts, src/feature.test.ts (parallel)
+```
+
+**Batch git operations:**
+```bash
+# EFFICIENT: Fetch, checkout, and get diff stats in single command
+cd $CLAUDE_PROJECT_DIR && git fetch origin && git checkout {BRANCH} && git diff develop...HEAD --stat
+```
+
+**Combine diff reading:**
+```bash
+# EFFICIENT: Get both stat and content in single command
+git diff develop...HEAD --stat && git diff develop...HEAD -- "*.go" "*.ts" "*.tsx"
+```
+
+See `/dev-patterns` skill → "Turn-Efficient Patterns" for complete guidance.
+
 ## What I Do vs What Helper Does
 
 | I Do (Opus) | Helper Does (Haiku) |

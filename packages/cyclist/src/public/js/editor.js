@@ -25,6 +25,7 @@ import {
   getSlashPrefix,
   showCompletionPopup,
   closeCompletionPopup,
+  updateCompletions,
   navigateCompletion,
   selectCompletion,
   getCompletionState
@@ -42,7 +43,8 @@ import {
   removeFromQueue,
   loadMessageQueue,
   saveMessageQueue,
-  processNextInQueue
+  processNextInQueue,
+  injectMessage
 } from './editor/message-queue.js';
 import {
   showImagePreview,
@@ -74,7 +76,8 @@ export {
   removeFromQueue,
   loadMessageQueue,
   saveMessageQueue,
-  processNextInQueue
+  processNextInQueue,
+  injectMessage
 } from './editor/message-queue.js';
 
 // Re-export markdown for external consumers
@@ -497,8 +500,26 @@ export async function createEditor() {
           return false;
         },
       },
-      onTransaction: () => {
+      onTransaction: ({ editor }) => {
         updateToolbarState();
+
+        // Auto-show completion popup when "/" is typed at start of message (B-9.5 enhancement)
+        const text = editor.getText();
+        if (text === '/' && !isCompletionVisible()) {
+          showCompletionPopup('/');
+        }
+
+        // Update completion popup as user types (filter commands)
+        if (isCompletionVisible()) {
+          const prefixInfo = getSlashPrefix();
+          if (prefixInfo) {
+            // Update filtering as user types more characters
+            updateCompletions(prefixInfo.prefix);
+          } else {
+            // User deleted the "/" or moved cursor away - close popup
+            closeCompletionPopup();
+          }
+        }
       },
     });
 

@@ -80,6 +80,19 @@ if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
 export PROJECT_ROOT="$CLAUDE_PROJECT_DIR"
 export SESSION_ID="$session_id"
 EOF
+
+    # Auto-configure OTEL if Cyclist is running (Story 20-1)
+    PORT_FILE="$CLAUDE_PROJECT_DIR/.cyclist-port"
+    if [[ -f "$PORT_FILE" ]]; then
+        CYCLIST_PORT=$(cat "$PORT_FILE" 2>/dev/null)
+        if [[ "$CYCLIST_PORT" =~ ^[0-9]+$ ]]; then
+            cat >> "$CLAUDE_ENV_FILE" << EOF
+# OTEL auto-configuration for Cyclist (Story 20-1)
+export OTEL_EXPORTER_OTLP_PROTOCOL="http/json"
+export OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:$CYCLIST_PORT"
+EOF
+        fi
+    fi
 fi
 
 exit 0

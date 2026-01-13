@@ -209,13 +209,17 @@ async function showPersonaPopup() {
     }
   }
 
-  // Update portrait
+  // Update portrait (use large size for popup - 256x256)
   const portraitContainer = popup.querySelector('.popup-portrait');
   if (portraitContainer && persona.slug && persona.theme) {
     const img = portraitContainer.querySelector('img');
     const placeholder = portraitContainer.querySelector('.portrait-placeholder');
     if (img) {
-      img.src = `/portraits/${persona.theme}/${persona.slug}.png`;
+      // Use buildPortraitPath if available (from portrait.js), otherwise build directly
+      const portraitPath = window.buildPortraitPath
+        ? window.buildPortraitPath(persona.theme, persona.slug, 'large')
+        : `/portraits/${persona.theme}/large/${persona.slug}.png`;
+      img.src = portraitPath;
       img.style.display = 'block';
       img.onerror = () => {
         img.style.display = 'none';

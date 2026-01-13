@@ -18,7 +18,6 @@ import assert from 'node:assert';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { findMonorepoRoot } from './utils/files.js';
-import { execSync } from 'node:child_process';
 
 const __dirname = import.meta.dirname;
 const PROJECT_ROOT = findMonorepoRoot(__dirname);

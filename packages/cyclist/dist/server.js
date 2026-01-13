@@ -56,17 +56,62 @@ export function createTerminalServer() {
     return server;
 }
 // Start server only when run directly (not imported for tests)
-const PORT = process.env.PORT || 1898;
+const DEFAULT_PORT = parseInt(process.env.PORT || '1898', 10);
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-    const server = createTerminalServer();
-    server.listen(PORT, () => {
-        console.log(`Cyclist running at http://localhost:${PORT}`);
-    });
+    (async () => {
+        const server = createTerminalServer();
+        const projectDir = getProjectDir();
+        // Find available port (Story 34-3)
+        const actualPort = await findAvailablePort(DEFAULT_PORT);
+        if (actualPort !== DEFAULT_PORT) {
+            console.log(`Port ${DEFAULT_PORT} in use, using ${actualPort} instead`);
+        }
+        server.listen(actualPort, () => {
+            console.log(`Cyclist running at http://localhost:${actualPort}`);
+            // Write port file for OTEL auto-configuration (Story 20-1)
+            writePortFile(projectDir, actualPort);
+            console.log(`[OTEL] Wrote .cyclist-port file to ${projectDir}`);
+        });
+        // Cleanup port file on shutdown
+        process.on('SIGINT', () => {
+            cleanupPortFile(projectDir);
+            console.log('[OTEL] Cleaned up .cyclist-port file');
+            process.exit(0);
+        });
+        process.on('SIGTERM', () => {
+            cleanupPortFile(projectDir);
+            process.exit(0);
+        });
+    })();
 }
 // ============================================================================
 // Port File Discovery Pattern (Story 20-1)
+// Port Conflict Detection (Story 34-3)
 // ============================================================================
 const PORT_FILE_NAME = '.cyclist-port';
+/**
+ * Find an available port starting from the given port.
+ * Tries ports sequentially until one is available or maxAttempts reached.
+ * Used by both Electron mode and standalone server mode.
+ */
+export async function findAvailablePort(startPort, maxAttempts = 10) {
+    const net = await import('net');
+    for (let port = startPort; port < startPort + maxAttempts; port++) {
+        const available = await new Promise((resolve) => {
+            const testServer = net.createServer();
+            testServer.once('error', () => resolve(false));
+            testServer.once('listening', () => {
+                testServer.close();
+                resolve(true);
+            });
+            testServer.listen(port);
+        });
+        if (available) {
+            return port;
+        }
+    }
+    throw new Error(`No available port found in range ${startPort}-${startPort + maxAttempts - 1}`);
+}
 /**
  * Write the server port to a .cyclist-port file for auto-discovery.
  * Called when Cyclist server starts to enable hook-based OTEL configuration.
@@ -107,6 +152,13 @@ export function readPortFile(projectDir) {
 /**
  * Get OTEL configuration environment variables based on port file.
  * Returns null if no valid port file exists.
+ *
+ * Claude Code requires explicit opt-in for telemetry:
+ * - CLAUDE_CODE_ENABLE_TELEMETRY=1 to enable telemetry
+ * - OTEL_LOGS_EXPORTER=otlp to export tool events
+ * - OTEL_METRICS_EXPORTER=otlp to export token metrics
+ *
+ * @see https://code.claude.com/docs/en/monitoring-usage
  */
 export function getOtelConfig(projectDir) {
     const port = readPortFile(projectDir);
@@ -114,6 +166,12 @@ export function getOtelConfig(projectDir) {
         return null;
     }
     return {
+        // Enable telemetry (opt-in required)
+        CLAUDE_CODE_ENABLE_TELEMETRY: '1',
+        // Configure exporters for logs (tool events) and metrics (tokens)
+        OTEL_LOGS_EXPORTER: 'otlp',
+        OTEL_METRICS_EXPORTER: 'otlp',
+        // HTTP/JSON protocol for Cyclist's Express server
         OTEL_EXPORTER_OTLP_PROTOCOL: 'http/json',
         OTEL_EXPORTER_OTLP_ENDPOINT: `http://localhost:${port}`,
     };

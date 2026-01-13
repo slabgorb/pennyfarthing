@@ -17,7 +17,7 @@ import { findMonorepoRoot } from '../cli/utils/files.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 // Find monorepo root by walking up from current directory
-const projectRoot = findMonorepoRoot(__dirname);
+const _projectRoot = findMonorepoRoot(__dirname);
 // ============================================================================
 // AC1: scripts/generate-face.ts functional
 // ============================================================================

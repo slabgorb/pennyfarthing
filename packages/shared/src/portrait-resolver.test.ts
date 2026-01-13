@@ -1,12 +1,10 @@
-import { describe, it, beforeEach, afterEach, mock } from 'node:test';
+import { describe, it, afterEach } from 'node:test';
 import assert from 'node:assert';
 import path from 'node:path';
-import fs from 'node:fs';
 import {
   resolvePennyfarthingDist,
   resolvePortraitPath,
   getPortraitPaths,
-  type PortraitPaths,
 } from './portrait-resolver.js';
 
 describe('portrait-resolver', () => {

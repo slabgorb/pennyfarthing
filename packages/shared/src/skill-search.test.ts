@@ -13,23 +13,20 @@
  * Run with: npm test -- scripts/utils/skill-search.test.ts
  */
 
-import { describe, it, beforeEach, afterEach } from 'node:test';
+import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { execSync, exec } from 'child_process';
-import { existsSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'fs';
+import { execSync } from 'child_process';
+import { existsSync } from 'fs';
 import { join } from 'path';
-import { tmpdir } from 'os';
 
 // Import functions to test - these don't exist yet, tests should fail
 import {
   searchSkills,
-  type SearchOptions,
   type SkillResult
 } from './skill-search.js';
 
 // Path to the shell wrapper for integration tests
 const WRAPPER_PATH = join(import.meta.dirname, 'skill-search.sh');
-const REGISTRY_PATH = join(import.meta.dirname, '../../pennyfarthing-dist/skills/skill-registry.yaml');
 
 describe('Story 9-2: Skill Search Utility', () => {
 

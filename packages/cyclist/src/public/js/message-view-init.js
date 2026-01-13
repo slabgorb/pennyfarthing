@@ -18,7 +18,7 @@ import {
   setVerboseMode as setMessageViewVerboseMode
 } from './components/MessageView.js';
 import { updateActivity, clearActivity } from './activity.js';
-import { resetSubmitting, setProcessing, processNextInQueue, setOnQueueChange, clearMessageQueue, loadMessageQueue, getMessageQueue, removeFromQueue } from './editor.js';
+import { resetSubmitting, setProcessing, processNextInQueue, setOnQueueChange, clearMessageQueue, loadMessageQueue, getMessageQueue, removeFromQueue, injectMessage } from './editor.js';
 import { handleAbort } from './components/ToolActivityBar.js';
 import { handleMessage as handleGitCommitMessage } from './git-commit-detector.js';
 
@@ -169,79 +169,42 @@ function initMessageView() {
     });
   }
 
-  // 17-1: Wire up message queue indicator with dropdown
-  const queueIndicator = document.getElementById('queue-indicator');
-  const queueToggle = queueIndicator?.querySelector('.queue-toggle');
-  const queueCount = queueIndicator?.querySelector('.queue-count');
-  const queueDropdown = document.getElementById('queue-dropdown');
-  const queueList = queueDropdown?.querySelector('.queue-list');
-  const queueClearBtn = queueDropdown?.querySelector('.queue-clear-btn');
+  // Inline message queue (replaces dropdown pill)
+  const queueInline = document.getElementById('queue-inline');
+  const queueInlineList = queueInline?.querySelector('.queue-inline-list');
+  const queueClearBtn = queueInline?.querySelector('.queue-clear-btn');
 
   /**
-   * Render the queue list items
+   * Render the inline queue list items with inject buttons
    */
-  function renderQueueList() {
-    if (!queueList) return;
+  function renderInlineQueueList() {
+    if (!queueInlineList) return;
     const messages = getMessageQueue();
 
     if (messages.length === 0) {
-      queueList.innerHTML = '<li class="queue-empty">No messages queued</li>';
+      queueInlineList.innerHTML = '';
       return;
     }
 
-    queueList.innerHTML = messages.map((msg, i) => `
-      <li class="queue-item" data-index="${i}">
-        <span class="queue-item-number">${i + 1}</span>
-        <span class="queue-item-text" title="${msg.replace(/"/g, '&quot;')}">${msg}</span>
-        <button class="queue-item-remove" data-index="${i}" title="Remove">✕</button>
+    queueInlineList.innerHTML = messages.map((msg, i) => `
+      <li class="queue-inline-item" data-index="${i}">
+        <button class="queue-inject-btn" data-index="${i}" title="Stop Claude and send this message">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
+        <span class="queue-inline-text" title="${msg.replace(/"/g, '&quot;')}">${msg}</span>
+        <button class="queue-inline-remove" data-index="${i}" title="Remove">✕</button>
       </li>
     `).join('');
   }
 
-  /**
-   * Toggle dropdown visibility
-   */
-  function toggleDropdown() {
-    if (!queueDropdown) return;
-    const isVisible = queueDropdown.style.display !== 'none';
-    queueDropdown.style.display = isVisible ? 'none' : 'block';
-    if (!isVisible) {
-      renderQueueList();
-    }
-  }
-
-  /**
-   * Close dropdown
-   */
-  function closeDropdown() {
-    if (queueDropdown) {
-      queueDropdown.style.display = 'none';
-    }
-  }
-
-  if (queueIndicator && queueCount) {
-    // Update indicator when queue changes
+  if (queueInline) {
+    // Update inline queue when queue changes
     setOnQueueChange((count) => {
-      queueCount.textContent = count;
-      queueIndicator.style.display = count > 0 ? 'flex' : 'none';
-      // Re-render list if dropdown is open
-      if (queueDropdown?.style.display !== 'none') {
-        renderQueueList();
-      }
-      // Close dropdown if queue becomes empty
-      if (count === 0) {
-        closeDropdown();
-      }
+      queueInline.style.display = count > 0 ? 'block' : 'none';
+      renderInlineQueueList();
     });
-
-    // Toggle dropdown on click
-    if (queueToggle) {
-      queueToggle.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        toggleDropdown();
-      });
-    }
 
     // Wire up clear button
     if (queueClearBtn) {
@@ -249,14 +212,22 @@ function initMessageView() {
         e.preventDefault();
         e.stopPropagation();
         clearMessageQueue();
-        closeDropdown();
       });
     }
 
-    // Wire up individual remove buttons via event delegation
-    if (queueList) {
-      queueList.addEventListener('click', (e) => {
-        const removeBtn = e.target.closest('.queue-item-remove');
+    // Wire up inject and remove buttons via event delegation
+    if (queueInlineList) {
+      queueInlineList.addEventListener('click', async (e) => {
+        const injectBtn = e.target.closest('.queue-inject-btn');
+        if (injectBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          const index = parseInt(injectBtn.dataset.index, 10);
+          await injectMessage(index);
+          return;
+        }
+
+        const removeBtn = e.target.closest('.queue-inline-remove');
         if (removeBtn) {
           e.preventDefault();
           e.stopPropagation();
@@ -265,14 +236,6 @@ function initMessageView() {
         }
       });
     }
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', (e) => {
-      if (queueDropdown?.style.display !== 'none' &&
-          !queueIndicator.contains(e.target)) {
-        closeDropdown();
-      }
-    });
 
     // Load any persisted queue from localStorage
     loadMessageQueue();
