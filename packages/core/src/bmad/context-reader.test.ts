@@ -1004,7 +1004,7 @@ Test project.
 
       assert.strictEqual(result.success, true);
       // Should still parse rules even without bold
-      assert.ok(result.context?.implementationRules.length >= 2);
+      assert.ok(result.context && result.context.implementationRules.length >= 2);
     });
 
     it('should handle markdown code blocks in content', () => {
