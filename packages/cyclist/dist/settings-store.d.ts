@@ -2,10 +2,11 @@
  * Settings Store for Cyclist
  *
  * Provides persistent storage for application settings including
- * the Bash approval gate feature (Story 22-3) and verbose mode (Story 22-5).
+ * the Bash approval gate feature (Story 22-3), verbose mode (Story 22-5),
+ * and permission grants (Story 33-4).
  *
- * Settings are stored in memory for the session with optional
- * file persistence for future enhancement.
+ * Settings are stored in memory for the session with file persistence
+ * for grants that should survive restart.
  */
 /**
  * Get the current state of the Bash approval gate
@@ -107,4 +108,74 @@ export declare function syncWithFileSettings(fileSettings: {
         sound?: boolean;
     };
 }): void;
+/**
+ * Grant type enum for permission scopes
+ */
+export declare const GrantType: {
+    readonly ONCE: "once";
+    readonly SESSION: "session";
+    readonly ALWAYS: "always";
+};
+export type GrantTypeValue = (typeof GrantType)[keyof typeof GrantType];
+/**
+ * Permission grant structure
+ */
+export interface PermissionGrant {
+    tool: string;
+    scope: string;
+    grant_type: GrantTypeValue;
+    granted_at: string;
+}
+/**
+ * Add a permission grant
+ * @param grant - The grant to add
+ */
+export declare function addGrant(grant: PermissionGrant): void;
+/**
+ * Check if a grant exists for the given tool and command
+ * Auto-revokes 'once' grants after checking
+ * @param tool - The tool name (e.g., 'Bash')
+ * @param command - The command to check
+ * @returns true if grant exists
+ */
+export declare function checkGrant(tool: string, command: string): boolean;
+/**
+ * Get all grants (session + persisted)
+ * @returns Array of all grants
+ */
+export declare function getGrants(): PermissionGrant[];
+/**
+ * Get only session grants (memory-only, non-persisted)
+ * @returns Array of session grants
+ */
+export declare function getSessionGrants(): PermissionGrant[];
+/**
+ * Get only persisted grants (always grants)
+ * @returns Array of persisted grants
+ */
+export declare function getPersistedGrants(): PermissionGrant[];
+/**
+ * Remove a specific grant
+ * @param grant - The grant to remove
+ */
+export declare function removeGrant(grant: PermissionGrant): void;
+/**
+ * Clear all grants (both session and persisted)
+ */
+export declare function clearAllGrants(): void;
+/**
+ * Clear session grants only (once + session, not always)
+ * Called on application exit
+ */
+export declare function clearSessionGrants(): void;
+/**
+ * Persist an always grant to settings file
+ * @param grant - The grant to persist
+ */
+export declare function persistAlwaysGrant(grant: PermissionGrant): void;
+/**
+ * Load persisted grants from settings file
+ * Called on application startup
+ */
+export declare function loadPersistedGrants(): void;
 //# sourceMappingURL=settings-store.d.ts.map

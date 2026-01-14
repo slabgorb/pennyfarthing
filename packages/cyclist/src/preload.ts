@@ -178,9 +178,9 @@ export interface ElectronBashAPI {
 
   /**
    * Send approval response back to main process
-   * @param response - Approval decision
+   * @param response - Approval decision with optional grantScope (33-4)
    */
-  sendApprovalResponse: (response: { toolId: string; approved: boolean; alwaysAllow: boolean }) => Promise<void>;
+  sendApprovalResponse: (response: { toolId: string; approved: boolean; grantScope?: 'once' | 'session' | 'always' }) => Promise<void>;
 }
 
 /**
@@ -323,9 +323,9 @@ export interface ElectronPathAPI {
 
   /**
    * Send approval response back to main process
-   * @param response - Approval decision
+   * @param response - Approval decision with optional grantScope (33-4)
    */
-  sendApprovalResponse: (response: { toolId: string; approved: boolean; alwaysAllow: boolean }) => Promise<void>;
+  sendApprovalResponse: (response: { toolId: string; approved: boolean; grantScope?: 'once' | 'session' | 'always' }) => Promise<void>;
 }
 
 /**
@@ -485,20 +485,20 @@ function createElectronAPI(): ElectronAPI {
           ipcRenderer.on('command:error', (_event: unknown, error: unknown) => callback(error as string));
         },
       },
-      // Bash approval API (22-3)
+      // Bash approval API (22-3, 33-4)
       bash: {
         onApprovalRequest: (callback: (event: unknown, data: { command: string; toolId: string }) => void) => {
           ipcRenderer.on('bash:approval-request', callback);
         },
-        sendApprovalResponse: (response: { toolId: string; approved: boolean; alwaysAllow: boolean }) =>
+        sendApprovalResponse: (response: { toolId: string; approved: boolean; grantScope?: 'once' | 'session' | 'always' }) =>
           ipcRenderer.invoke('bash:approval-response', response),
       },
-      // Dangerous path approval API (22-4)
+      // Dangerous path approval API (22-4, 33-4)
       path: {
         onApprovalRequest: (callback: (event: unknown, data: { path: string; toolId: string; category: string }) => void) => {
           ipcRenderer.on('path:approval-request', callback);
         },
-        sendApprovalResponse: (response: { toolId: string; approved: boolean; alwaysAllow: boolean }) =>
+        sendApprovalResponse: (response: { toolId: string; approved: boolean; grantScope?: 'once' | 'session' | 'always' }) =>
           ipcRenderer.invoke('path:approval-response', response),
       },
       // Settings API (22-3, 22-4, 22-5, 24-1)
@@ -625,20 +625,20 @@ function createElectronAPI(): ElectronAPI {
           // No-op in test environment
         },
       },
-      // Bash approval API (22-3) - test stub
+      // Bash approval API (22-3, 33-4) - test stub
       bash: {
         onApprovalRequest: (_callback: (event: unknown, data: { command: string; toolId: string }) => void) => {
           // No-op in test environment
         },
-        sendApprovalResponse: (_response: { toolId: string; approved: boolean; alwaysAllow: boolean }) =>
+        sendApprovalResponse: (_response: { toolId: string; approved: boolean; grantScope?: 'once' | 'session' | 'always' }) =>
           Promise.resolve(),
       },
-      // Dangerous path approval API (22-4) - test stub
+      // Dangerous path approval API (22-4, 33-4) - test stub
       path: {
         onApprovalRequest: (_callback: (event: unknown, data: { path: string; toolId: string; category: string }) => void) => {
           // No-op in test environment
         },
-        sendApprovalResponse: (_response: { toolId: string; approved: boolean; alwaysAllow: boolean }) =>
+        sendApprovalResponse: (_response: { toolId: string; approved: boolean; grantScope?: 'once' | 'session' | 'always' }) =>
           Promise.resolve(),
       },
       // Settings API (22-3, 22-4, 22-5, 24-1) - test stub
