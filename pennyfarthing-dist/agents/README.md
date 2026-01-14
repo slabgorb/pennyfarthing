@@ -30,17 +30,25 @@ Focus on specific repo(s), implement/test/document features.
 Lightweight subagents for mechanical tasks. Invoked via `Task tool` with `subagent_type`.
 
 - **`workflow-status-check.md`** - Detect workflow state
-- **`sm-work-research.md`** - Research stories and context
+- **`generic-sm-setup.md`** - Research OR setup mode (Story 31-11)
+- **`generic-sm-finish.md`** - Preflight OR execute phase (Story 31-11)
+- **`generic-handoff.md`** - Workflow-driven handoff (Stories 31-7, 31-10)
 - **`sm-file-summary.md`** - Summarize file changes
-- **`sm-story-setup.md`** - Claim Jira, write session, create branches
-- **`sm-handoff.md`** - Handoff bookkeeping to TEA
-- **`sm-finish-bookkeeping.md`** - Archive session, update sprint
-- **`sm-finish-execution.md`** - Execute finish workflow
-- **`generic-handoff.md`** - Workflow-driven handoff (replaces tea/dev/reviewer handoffs)
 - **`reviewer-preflight.md`** - Gather review data
 - **`testing-runner.md`** - Execute tests, report results
 
-### Deprecated Handoffs (replaced by generic-handoff)
+### Deprecated Subagents (Story 31-11)
+SM subagents consolidated into generic versions:
+
+- `sm-work-research.md` → use `generic-sm-setup` with MODE=research
+- `sm-story-setup.md` → use `generic-sm-setup` with MODE=setup
+- `sm-finish-bookkeeping.md` → use `generic-sm-finish` with PHASE=preflight
+- `sm-finish-execution.md` → use `generic-sm-finish` with PHASE=execute
+- `sm-handoff.md` → use `generic-handoff` with CURRENT_PHASE=setup
+
+### Removed Files (Story 31-11)
+Deprecated handoff files removed from repository:
+
 - `tea-handoff.md` - Now use `generic-handoff` with CURRENT_PHASE=red
 - `dev-handoff.md` - Now use `generic-handoff` with CURRENT_PHASE=green
 - `reviewer-handoff-approve.md` - Now use `generic-handoff` with VERDICT=approved
@@ -107,22 +115,21 @@ Each agent file contains:
 ├── tech-writer.md             # Technical Writer
 ├── ux-designer.md             # UX Designer
 │
-│ # Official Subagents (10 active + 4 deprecated)
+│ # Official Subagents (7 active)
 ├── workflow-status-check.md   # Detect workflow state
-├── sm-work-research.md        # Research stories
+├── generic-sm-setup.md        # Research or setup mode (Story 31-11)
+├── generic-sm-finish.md       # Preflight or execute (Story 31-11)
+├── generic-handoff.md         # Workflow-driven handoff (Stories 31-7, 31-10)
 ├── sm-file-summary.md         # Summarize files
-├── sm-story-setup.md          # Story setup
-├── sm-handoff.md              # SM handoff
-├── sm-finish-bookkeeping.md   # Archive session
-├── sm-finish-execution.md     # Execute finish
-├── generic-handoff.md         # Workflow-driven handoff (Story 31-10)
 ├── reviewer-preflight.md      # Review prep
 ├── testing-runner.md          # Run tests
-│ # Deprecated (replaced by generic-handoff)
-├── tea-handoff.md             # Use generic-handoff CURRENT_PHASE=red
-├── dev-handoff.md             # Use generic-handoff CURRENT_PHASE=green
-├── reviewer-handoff-approve.md # Use generic-handoff VERDICT=approved
-└── reviewer-handoff-reject.md  # Use generic-handoff VERDICT=rejected
+│
+│ # Deprecated SM subagents (use generic versions above)
+├── sm-work-research.md        # → generic-sm-setup MODE=research
+├── sm-story-setup.md          # → generic-sm-setup MODE=setup
+├── sm-handoff.md              # → generic-handoff CURRENT_PHASE=setup
+├── sm-finish-bookkeeping.md   # → generic-sm-finish PHASE=preflight
+└── sm-finish-execution.md     # → generic-sm-finish PHASE=execute
 ```
 
 ## Context Budget

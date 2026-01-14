@@ -279,11 +279,14 @@ epics:
           this story activates it via self-contained markdown subagent.
         points: 3
         priority: P1
-        status: in_progress
+        status: done
         started: 2026-01-14
+        completed: 2026-01-14
         assigned_to: Keith Avery
         depends_on: [31-7]
         repos: pennyfarthing
+        jira: MSSCI-11615
+        pr: 237
         acceptance_criteria:
           - generic-handoff.md subagent created in pennyfarthing-dist/agents/
           - Main agents updated to use generic-handoff subagent_type
@@ -424,7 +427,6 @@ epics:
           - Exports our status to BMAD format
           - Handles status mapping (ready-for-dev, in-progress, review, done)
           - Conflict detection when both changed
-
   - id: epic-33
     title: Runtime Permission Management
     description: |
@@ -521,7 +523,6 @@ epics:
           - Workflow start checks required permissions
           - Prompts for missing permissions
           - Cached grants skip prompts
-
   - id: epic-34
     title: Cyclist Developer Experience
     description: |
@@ -654,7 +655,6 @@ epics:
           - Startup logs show actual port used
           - .cyclist-port file written to project dir
           - Message shows correct localhost URL
-
 # =============================================================================
 # COMPLETED EPICS (Sprint 10)
 # =============================================================================
