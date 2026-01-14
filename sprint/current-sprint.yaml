@@ -483,8 +483,9 @@ epics:
           - Background tasks should not modify shared state concurrently
         points: 3
         priority: P1
-        status: in_progress
+        status: done
         started: 2026-01-14
+        completed: 2026-01-14
         assigned_to: Keith Avery
         repos: pennyfarthing
         jira: MSSCI-11686
