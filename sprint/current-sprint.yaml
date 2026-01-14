@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 69
-  completed_points: 44
-  remaining_points: 25
+  completed_points: 47
+  remaining_points: 22
   notes: |
     Sprint 10 focus: Three strategic epics
     - Epic 31: Customizable Workflow Engine (15 pts)
@@ -687,8 +687,11 @@ epics:
           - Permission status indicator
         points: 3
         priority: P1
-        status: backlog
+        status: done
         repos: cyclist
+        started: 2026-01-14
+        completed: 2026-01-14
+        assigned_to: Keith Avery
         acceptance_criteria:
           - Modal displays on permission request
           - One-click approve/deny
