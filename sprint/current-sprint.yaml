@@ -5,9 +5,9 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 60
+  total_points: 63
   completed_points: 37
-  remaining_points: 23
+  remaining_points: 26
   notes: |
     Sprint 10 focus: Three strategic epics
     - Epic 31: Customizable Workflow Engine (15 pts)
@@ -26,7 +26,7 @@ epics:
       Infrastructure for user-defined workflows. Replace hardcoded TDD flow
       (SM → TEA → Dev → Reviewer) with configurable YAML-based workflows.
       Users can define custom agent sequences, routing rules, and gates.
-    points: 31
+    points: 34
     completed_points: 28
     priority: P1
     marker: strategic
@@ -343,6 +343,7 @@ epics:
         started: 2026-01-14
         assigned_to: Keith Avery
         repos: pennyfarthing
+        jira: MSSCI-11684
         acceptance_criteria:
           - generic-sm-setup.md created combining setup + research
           - generic-sm-finish.md created combining bookkeeping + execution
@@ -352,7 +353,7 @@ epics:
           - Deprecated handoff files removed (tea-handoff, dev-handoff, reviewer-handoff-*)
           - Both new-work and finish-story flows work end-to-end
       - id: 31-12
-        title: Remove deprecated SM subagent files
+        title: Remove deprecated SM subagent files and fix workflow enforcement
         description: |
           Follow-up to Story 31-11. Now that generic-sm-setup and generic-sm-finish
           are in use, remove the deprecated individual subagent files:
@@ -362,9 +363,9 @@ epics:
           - sm-work-research.md (replaced by generic-sm-setup MODE=research)
           - sm-finish-bookkeeping.md (replaced by generic-sm-finish PHASE=preflight)
           - sm-finish-execution.md (replaced by generic-sm-finish PHASE=execute)
-          - sm-handoff.md (replaced by generic-handoff CURRENT_PHASE=setup)
 
           **Keep separate:**
+          - sm-handoff.md (still needed for SM→TEA with Jira/branch setup)
           - sm-file-summary.md (different concern - file reading, not workflow)
 
           **Also update:**
@@ -372,21 +373,88 @@ epics:
           - README to remove deprecated entries
           - Any documentation referencing old subagent names
 
-          This is a cleanup story - the deprecated files are already unused but
-          still present in the codebase.
-        points: 1
+          **Fix workflow enforcement (discovered during testing):**
+          The /new-work flow doesn't enforce the proper sequence - SM can skip
+          steps and jump straight to coding. Fix by:
+
+          1. Update sm.md workflow examples to use consolidated subagents
+             (replace sm-finish-bookkeeping, sm-finish-execution, sm-work-research,
+             sm-story-setup with generic-sm-setup and generic-sm-finish)
+
+          2. Add explicit gates/checkpoints before coding:
+             - GATE: Session file must exist at .session/{story-id}-session.md
+             - GATE: Jira must be claimed (or explicitly skipped)
+             - GATE: Branch must be created
+
+          3. Update /new-work command to be more prescriptive with explicit
+             subagent call sequence, not just "follow sm.md"
+
+          This is a cleanup story that grew scope after discovering the
+          workflow wasn't being enforced properly.
+        points: 2
         priority: P2
-        status: backlog
+        status: in_progress
+        started: 2026-01-14
+        assigned_to: Keith Avery
         repos: pennyfarthing
+        jira: MSSCI-11682
         acceptance_criteria:
           - sm-story-setup.md deleted
           - sm-work-research.md deleted
           - sm-finish-bookkeeping.md deleted
           - sm-finish-execution.md deleted
-          - sm-handoff.md deleted
+          - sm-handoff.md retained (still needed for SM→TEA with Jira/branch setup)
           - sm-file-summary.md retained (still in use)
-          - SM agent references cleaned up
+          - SM agent deprecated section cleaned up (remove sm-handoff reference)
+          - SM agent workflow examples updated to use consolidated subagents
+          - SM agent has explicit gates before coding (session file, Jira, branch)
+          - /new-work command updated with explicit subagent call sequence
           - README deprecation notices removed
+      - id: 31-13
+        title: Context-aware handoffs with auto-compaction
+        description: |
+          When an agent invokes the handoff subagent, make intelligent decisions
+          based on context usage and user settings:
+
+          **Low context (< 50%):**
+          - If 'auto handoff' setting enabled: Handoff immediately
+          - Otherwise: Offer handoff to user
+
+          **High context (> 50%):**
+          - If 'auto handoff' setting enabled: Run 'compact' action, then
+            invoke the new agent and prime them (resets context window)
+          - Otherwise: Offer handoff with context warning
+
+          **Implementation:**
+          1. Add context threshold check to generic-handoff subagent
+          2. Add 'auto_handoff' setting to workflow config or project settings
+          3. Integrate with Claude Code's /compact action for context reset
+          4. After compact, auto-invoke next agent with /prime to reload context
+          5. Track context percentage in session file for visibility
+          6. Update Cyclist settings UI: Replace two checkboxes with radio button
+             group for handoff mode (auto/manual)
+          7. Verify auto_handoff setting is read and respected by generic-handoff
+
+          This ensures smooth handoffs when context is low, and graceful
+          context management when approaching limits.
+        points: 3
+        priority: P1
+        status: backlog
+        repos: pennyfarthing, cyclist
+        jira: MSSCI-11683
+        acceptance_criteria:
+          - generic-handoff checks context percentage before handoff
+          - Context < 50% with auto_handoff: Immediate handoff
+          - Context < 50% without auto_handoff: Offer handoff
+          - Context > 50% with auto_handoff: Compact then invoke+prime new agent
+          - Context > 50% without auto_handoff: Offer handoff with warning
+          - auto_handoff setting configurable in workflow or project config
+          - Session file tracks context percentage at handoff points
+          - Works with all workflow types (TDD, trivial, custom)
+          - Cyclist settings UI uses radio button group for handoff mode (not checkboxes)
+          - Radio options: "Auto handoff" / "Manual handoff (ask first)"
+          - Setting persists and is correctly read by generic-handoff subagent
+          - End-to-end test: change setting, trigger handoff, verify behavior matches
   - id: epic-32
     title: BMAD Artifact Compatibility
     description: |

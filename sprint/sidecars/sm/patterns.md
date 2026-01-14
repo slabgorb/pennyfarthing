@@ -37,9 +37,10 @@
 
 ### When to Spawn Helpers
 - Status checks → `workflow-status-check`
-- Backlog research → `sm-work-research`
-- Story setup → `sm-story-setup`
-- Finish bookkeeping → `sm-finish-bookkeeping`
+- Backlog research → `generic-sm-setup MODE=research`
+- Story setup → `generic-sm-setup MODE=setup`
+- Finish preflight → `generic-sm-finish PHASE=preflight`
+- Finish execute → `generic-sm-finish PHASE=execute`
 
 ---
 

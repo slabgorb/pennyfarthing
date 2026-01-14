@@ -16,10 +16,83 @@ This finds the project root and loads your persona. Adopt the character shown in
 The blessed path for starting development work. Loads SM persona and coordinates story selection and TDD flow setup.
 </purpose>
 
+<critical-reminder>
+**SM does NOT code.** SM coordinates story setup and hands off to Dev or TEA.
+Even trivial 1-2 point stories require handoff - SM creates context, Dev implements.
+</critical-reminder>
+
 <on-invoke>
-After loading persona, follow the SM agent workflow:
-1. Load and follow `.claude/agents/sm.md`
-2. Run workflow status check, then proceed based on state
+After loading persona, execute this sequence in order:
+
+## Step 1: Status Check (REQUIRED)
+```yaml
+Task tool:
+  subagent_type: "workflow-status-check"
+  prompt: |
+    CALLING_AGENT: SM
+```
+
+Based on result:
+- `FINISH_STATE` → Go to Finish Flow
+- `NEW_WORK_STATE` → Continue to Step 2
+- `IN_PROGRESS_STATE` → Report status, ask user what to do
+
+## Step 2: Research Backlog
+```yaml
+Task tool:
+  subagent_type: "generic-sm-setup"
+  prompt: |
+    MODE: research
+```
+
+Present available stories to user, get selection.
+
+## Step 3: File Summary
+```yaml
+Task tool:
+  subagent_type: "sm-file-summary"
+  prompt: |
+    STORY_ID: {selected-story}
+    FILE_LIST: |
+      {relevant files}
+```
+
+## Step 4: Write Story Context (SM does this directly)
+Write `.session/context-story-{X-Y}.md` with:
+- Story overview, technical approach, files to modify, ACs
+
+## Step 5: Story Setup
+```yaml
+Task tool:
+  subagent_type: "generic-sm-setup"
+  prompt: |
+    MODE: setup
+    STORY_ID: {value}
+    JIRA_KEY: {value}
+    REPOS: {value}
+    SLUG: {value}
+    ASSIGNEE: {user name}
+    SESSION_CONTENT: |
+      {session file content}
+```
+
+## Step 6: Handoff
+```yaml
+Task tool:
+  subagent_type: "sm-handoff"
+  prompt: |
+    STORY_ID: {value}
+    REPOS: {value}
+    TITLE: {value}
+    AC_COUNT: {value}
+    BRANCH_NAME: {value}
+    JIRA_KEY: {value}
+```
+
+## Step 7: Invoke Next Agent
+After handoff complete:
+- Trivial (1-2 pts): Invoke `/dev`
+- Standard (3+ pts): Invoke `/tea`
 </on-invoke>
 
 <workflow-states>
@@ -27,18 +100,18 @@ After loading persona, follow the SM agent workflow:
 |-------|--------|
 | MISSING_EPIC_CONTEXT | Prompt user to run `/start-epic` first |
 | FINISH_STATE | SM handles finish flow (archive, Jira, cleanup) |
-| NEW_WORK_STATE | Research → present stories → create context → setup |
+| NEW_WORK_STATE | Research → present stories → create context → setup → handoff |
 </workflow-states>
 
-<workflow-steps>
-1. Status check subagent scans `.session/` and git
-2. Research subagent scans backlog, checks Jira
-3. SM presents stories, user selects
-4. File summary subagent reads relevant files
-5. SM creates technical context
-6. Story setup subagent creates branches, session file
-7. Handoff to TEA (or Dev for trivial 1-2 pt stories)
-</workflow-steps>
+<gates>
+**Before handoff, verify:**
+- [ ] Session file exists at `.session/{story-id}-session.md`
+- [ ] Story context written with ACs
+- [ ] Jira claimed (or explicitly skipped)
+- [ ] Branch created
+
+Do NOT proceed to coding. Always hand off.
+</gates>
 
 <tdd-flow>
 | Points | Route |
@@ -50,5 +123,5 @@ After loading persona, follow the SM agent workflow:
 
 <reference>
 - **SM Agent:** `.claude/agents/sm.md`
-- **Subagents:** `workflow-status-check.md`, `sm-work-research.md`, `sm-file-summary.md`, `sm-story-setup.md`
+- **Subagents:** `workflow-status-check`, `generic-sm-setup`, `generic-sm-finish`, `sm-file-summary`, `sm-handoff`
 </reference>

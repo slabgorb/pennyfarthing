@@ -74,11 +74,12 @@ sprint/                  # Sprint tracking (current-sprint.yaml, archive/, conte
 
 Subagents use Claude Code's Task tool with `subagent_type`. Key subagents:
 - `workflow-status-check` - Detect current workflow state
-- `sm-story-setup` - Claim Jira, create branches, write session
-- `sm-finish-bookkeeping` / `sm-finish-execution` - Archive and cleanup
+- `generic-sm-setup` - Research backlog (MODE=research) or setup story (MODE=setup)
+- `generic-sm-finish` - Preflight checks (PHASE=preflight) or execute finish (PHASE=execute)
+- `sm-handoff` - SM→TEA/Dev handoff with Jira/branch verification
 - `testing-runner` - Config-driven test execution
-- `tea-handoff`, `dev-handoff` - Phase transitions
-- `reviewer-preflight`, `reviewer-handoff-approve/reject` - Review workflow
+- `generic-handoff` - Workflow-driven phase transitions (TEA/Dev/Reviewer)
+- `reviewer-preflight` - Gather review data before critical analysis
 
 ### Handoff Protocol
 
