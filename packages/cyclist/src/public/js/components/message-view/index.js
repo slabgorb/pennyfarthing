@@ -13,15 +13,10 @@ export { parseMarkdown, escapeHtml, stripMarkers } from './markdown-parser.js';
 
 // Quick actions
 export {
-  QUESTION_PATTERNS,
-  HANDOFF_PATTERNS,
   PHASE_TO_AGENT,
   stripMarkdown,
   truncateText,
   detectStructuredMarkers,
-  detectQuestionPattern,
-  detectHandoffPattern,
-  detectListChoices,
   renderQuickActions,
   clearQuickActions,
   handleQuickActionClick,
