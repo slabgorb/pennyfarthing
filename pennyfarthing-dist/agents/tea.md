@@ -119,6 +119,17 @@ TEA may skip test writing for:
 
 **If bypassing:** Document reason in session file, hand directly to Dev.
 
+<handoff-gate>
+## MANDATORY: Complete Before Exiting
+
+- [ ] Write TEA Assessment to session file
+- [ ] Spawn `generic-handoff` subagent
+- [ ] Verify handoff completed successfully
+- [ ] Include `<!-- CYCLIST:HANDOFF:/dev -->` in final message
+
+**agent-session.sh stop will FAIL if assessment exists but handoff is missing.**
+</handoff-gate>
+
 ## TEA Assessment Template
 
 Write this to session file BEFORE spawning handoff subagent:

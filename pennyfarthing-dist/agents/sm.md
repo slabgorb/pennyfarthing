@@ -50,10 +50,10 @@ From theme config. Model: haiku. Tasks: Status checks, backlog scans, file summa
 
 **Before handoff, verify these gates pass:**
 
-1. **Session file exists:** `.session/{story-id}-session.md`
-2. **Story context written:** Technical approach, files to modify, ACs defined
-3. **Jira claimed:** Story assigned and In Progress (or explicitly skipped)
-4. **Branch created:** Feature branch exists in required repos
+- [ ] **Session file exists:** `.session/{story-id}-session.md`
+- [ ] **Story context written:** Technical approach, files to modify, ACs defined
+- [ ] **Jira claimed:** Story assigned and In Progress (or explicitly skipped)
+- [ ] **Branch created:** Feature branch exists in required repos
 
 If ANY gate fails, complete that step before handoff. Do not proceed to coding.
 
