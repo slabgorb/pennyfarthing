@@ -603,9 +603,13 @@ epics:
           Status updates, Task checkboxes.
         points: 2
         priority: P1
-        status: backlog
+        status: done
         repos: pennyfarthing
         jira: MSSCI-11629
+        started: 2026-01-13
+        completed: 2026-01-13
+        assigned_to: Keith Avery
+        pr: 234
         acceptance_criteria:
           - Exports session to BMAD story format
           - Populates Dev Agent Record section
