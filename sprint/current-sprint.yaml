@@ -1296,8 +1296,11 @@ epics:
           - Store correlation map for enrichment phase
         points: 3
         priority: P1
-        status: backlog
+        status: in_progress
         repos: cyclist
+        jira: MSSCI-11688
+        started: 2026-01-14
+        assigned_to: Keith Avery
         acceptance_criteria:
           - OTEL spans intercepted before export
           - Tool name and ID extracted from span attributes
