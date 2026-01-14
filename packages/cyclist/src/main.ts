@@ -1356,24 +1356,28 @@ export async function handleSettingsGet(): Promise<CyclistSettings> {
 
 /**
  * Handle settings:save IPC call
- * Saves settings and returns updated settings
+ * Saves settings and returns result with success flag
  * Also writes theme to persona-config.local.yaml for Pennyfarthing compatibility (24-2)
  */
-export async function handleSettingsSave(settings: Partial<CyclistSettings>): Promise<CyclistSettings> {
-  saveUserSettings(settings);
+export async function handleSettingsSave(settings: Partial<CyclistSettings>): Promise<{ success: boolean; settings?: CyclistSettings }> {
+  try {
+    saveUserSettings(settings);
 
-  // 24-2: Dual-write theme to persona-config.local.yaml for Pennyfarthing compatibility
-  const projectDir = getProjectDirectory();
-  if (settings.pennyfarthing?.theme && projectDir) {
-    try {
-      const personaConfigPath = join(projectDir, '.claude', 'persona-config.local.yaml');
-      fs.writeFileSync(personaConfigPath, `theme: "${settings.pennyfarthing.theme}"\n`, 'utf-8');
-    } catch (err) {
-      console.error('Failed to write persona-config.local.yaml:', err);
+    // 24-2: Dual-write theme to persona-config.local.yaml for Pennyfarthing compatibility
+    const projectDir = getProjectDirectory();
+    if (settings.pennyfarthing?.theme && projectDir) {
+      try {
+        const personaConfigPath = join(projectDir, '.claude', 'persona-config.local.yaml');
+        fs.writeFileSync(personaConfigPath, `theme: "${settings.pennyfarthing.theme}"\n`, 'utf-8');
+      } catch (err) {
+        console.error('Failed to write persona-config.local.yaml:', err);
+      }
     }
-  }
 
-  return getCurrentSettings();
+    return { success: true, settings: getCurrentSettings() };
+  } catch {
+    return { success: false };
+  }
 }
 
 /**

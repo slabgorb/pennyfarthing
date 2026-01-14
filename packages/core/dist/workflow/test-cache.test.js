@@ -362,8 +362,8 @@ describe('Test Cache (31-8)', () => {
     });
     describe('shouldSkipTests() - Convenience function for subagents', () => {
         it('should return skip=true for valid cache', () => {
-            const now = new Date('2026-01-13T21:16:00Z');
-            const result = shouldSkipTests(SESSION_WITH_CACHE, 'abc1234def5678', 5);
+            const _now = new Date('2026-01-13T21:16:00Z');
+            const _result = shouldSkipTests(SESSION_WITH_CACHE, 'abc1234def5678', 5);
             // Note: This test depends on the current time, so we use a mock
             // For the implementation, we'll need to check if the validation
             // passes with default time handling
