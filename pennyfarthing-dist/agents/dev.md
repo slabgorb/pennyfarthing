@@ -188,21 +188,32 @@ $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 
 ## Handoff Subagent
 
-After writing assessment, spawn helper to handle bookkeeping:
+After writing assessment, spawn helper to handle bookkeeping.
+
+**First, read workflow from session file:**
+```bash
+grep "^\*\*Workflow:\*\*" .session/{STORY_ID}-session.md | sed 's/\*\*Workflow:\*\* //'
+```
+
+Then spawn with detected workflow (tdd, trivial, etc.):
 
 ```yaml
 Task tool:
   subagent_type: "generic-handoff"
   prompt: |
     STORY_ID: {value}
-    WORKFLOW: tdd
-    CURRENT_PHASE: green
+    WORKFLOW: {workflow from session}  # e.g., "tdd" or "trivial"
+    CURRENT_PHASE: green               # or "implement" for trivial workflow
     REPOS: {value}
     ASSESSMENT_SECTION: Dev Assessment
     TEST_RESULT: GREEN
     PR_NUMBER: {value}
     BRANCH: {value}
 ```
+
+**Phase name varies by workflow:**
+- TDD workflow: `green` phase
+- Trivial workflow: `implement` phase
 
 Helper will:
 1. Verify quality gates pass (uses test cache from Story 31-8)

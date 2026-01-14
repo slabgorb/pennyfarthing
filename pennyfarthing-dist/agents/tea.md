@@ -141,14 +141,21 @@ Write this to session file BEFORE spawning handoff subagent:
 
 ## Handoff Subagent
 
-After writing assessment, spawn Helper to handle bookkeeping:
+After writing assessment, spawn Helper to handle bookkeeping.
+
+**First, read workflow from session file:**
+```bash
+grep "^\*\*Workflow:\*\*" .session/{STORY_ID}-session.md | sed 's/\*\*Workflow:\*\* //'
+```
+
+Then spawn with detected workflow:
 
 ```yaml
 Task tool:
   subagent_type: "generic-handoff"
   prompt: |
     STORY_ID: {value}
-    WORKFLOW: tdd
+    WORKFLOW: {workflow from session}  # e.g., "tdd"
     CURRENT_PHASE: red
     REPOS: {value}
     ASSESSMENT_SECTION: TEA Assessment
@@ -156,6 +163,8 @@ Task tool:
 ```
 
 Helper will use workflow definition to determine next phase (green) and agent (Dev).
+
+**Note:** TEA is only invoked in TDD workflow (trivial workflow skips TEA).
 
 ## Context-Aware Handoff
 
