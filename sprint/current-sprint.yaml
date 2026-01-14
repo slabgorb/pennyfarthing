@@ -440,7 +440,8 @@ epics:
           context management when approaching limits.
         points: 3
         priority: P1
-        status: backlog
+        status: done
+        completed: 2026-01-14
         repos: pennyfarthing, cyclist
         jira: MSSCI-11683
         acceptance_criteria:
