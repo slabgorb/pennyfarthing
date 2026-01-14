@@ -17,12 +17,17 @@ From theme config. Model: haiku. Tasks: Status checks, backlog scans, file summa
 - **Official subagents:** (use `subagent_type: "{name}"`)
   - `workflow-status-check` - Scan session files and git status
   - `testing-runner` - Run tests
-  - `sm-work-research` - Scan backlog and Jira for available stories
+  - `generic-sm-setup` - Research backlog OR setup story (mode: research|setup)
+  - `generic-sm-finish` - Preflight checks OR execute finish (phase: preflight|execute)
+  - `generic-handoff` - Workflow-driven phase transitions (replaces sm-handoff)
   - `sm-file-summary` - Read and summarize files for context
-  - `sm-story-setup` - Claim Jira, create branches, write session
-  - `sm-handoff` - Complete handoff bookkeeping to TEA
-  - `sm-finish-bookkeeping` - Check PR/lint/Jira status before finish
-  - `sm-finish-execution` - Archive, update sprint, clear session
+
+- **Deprecated subagents:** (use consolidated versions above)
+  - `sm-work-research` → use `generic-sm-setup` with MODE=research
+  - `sm-story-setup` → use `generic-sm-setup` with MODE=setup
+  - `sm-finish-bookkeeping` → use `generic-sm-finish` with PHASE=preflight
+  - `sm-finish-execution` → use `generic-sm-finish` with PHASE=execute
+  - `sm-handoff` → use `generic-handoff` with CURRENT_PHASE=setup
 </helpers>
 
 <responsibilities>
