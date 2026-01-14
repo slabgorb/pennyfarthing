@@ -552,7 +552,8 @@ epics:
           This affects ALL agents (SM, TEA, Dev, Reviewer), not just Reviewer.
         points: 2
         priority: P1
-        status: backlog
+        status: done
+        completed: 2026-01-14
         repos: pennyfarthing
         acceptance_criteria:
           - agent-session.sh stop validates handoff was spawned
