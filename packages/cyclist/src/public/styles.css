@@ -65,6 +65,43 @@ html, body {
   gap: 8px;
 }
 
+/* 33-3: Permission status indicator */
+.permission-status {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  font-size: 11px;
+  color: #ef4444;
+  transition: all 0.2s ease;
+}
+
+.permission-status.hidden {
+  display: none;
+}
+
+.permission-status:empty {
+  display: none;
+}
+
+.permission-status.pulse {
+  animation: permission-pulse 2s ease-in-out infinite;
+}
+
+@keyframes permission-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.permission-badge,
+.permission-count {
+  font-weight: 600;
+  min-width: 16px;
+  text-align: center;
+}
+
 .tab-btn {
   display: inline-flex;
   align-items: center;
@@ -3295,6 +3332,41 @@ html, body {
 #approval-modal .safety-indicator.safety-danger {
   background: rgba(220, 53, 69, 0.2);
   color: #dc3545;
+}
+
+/* 33-3: Tool name display */
+#approval-modal .tool-name {
+  color: var(--accent, #4f46e5);
+  font-weight: 600;
+}
+
+/* 33-3: Reason display */
+#approval-modal .reason-display {
+  color: var(--text-secondary, #a1a1aa);
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+  font-style: italic;
+}
+
+#approval-modal .reason-display:empty {
+  display: none;
+}
+
+/* 33-3: Context display (for non-Bash tools) */
+#approval-modal .context-display {
+  background: var(--bg-secondary, #252525);
+  border: 1px solid var(--border, #333);
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-size: 0.85rem;
+  color: var(--text-primary, #fff);
+  word-break: break-all;
+}
+
+#approval-modal .context-display:empty {
+  display: none;
 }
 
 /* Command display - syntax highlighting */

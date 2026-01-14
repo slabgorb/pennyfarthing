@@ -132,6 +132,13 @@ function createElectronAPI() {
                 },
                 sendApprovalResponse: (response) => ipcRenderer.invoke('path:approval-response', response),
             },
+            // Generic permission API (33-3)
+            permission: {
+                onRequest: (callback) => {
+                    ipcRenderer.on('permission:request', callback);
+                },
+                sendResponse: (response) => ipcRenderer.invoke('permission:response', response),
+            },
             // Settings API (22-3, 22-4, 22-5, 24-1)
             settings: {
                 getBashApprovalGate: () => ipcRenderer.invoke('settings:getBashApprovalGate'),
@@ -262,6 +269,13 @@ function createElectronAPI() {
                     // No-op in test environment
                 },
                 sendApprovalResponse: (_response) => Promise.resolve(),
+            },
+            // Generic permission API (33-3) - test stub
+            permission: {
+                onRequest: (_callback) => {
+                    // No-op in test environment
+                },
+                sendResponse: (_response) => Promise.resolve(),
             },
             // Settings API (22-3, 22-4, 22-5, 24-1) - test stub
             settings: {
