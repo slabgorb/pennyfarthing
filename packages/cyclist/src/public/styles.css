@@ -640,6 +640,103 @@ html, body {
   border-color: #8b5cf6;
 }
 
+/* 35-1: Handoff Toggle - Beautiful switch with sliding thumb */
+.handoff-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.1875rem 0.5rem 0.1875rem 0.25rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.handoff-toggle:hover {
+  border-color: var(--accent);
+  background: var(--bg-tertiary, var(--bg-secondary));
+}
+
+.handoff-toggle:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.handoff-toggle:active {
+  transform: scale(0.98);
+}
+
+/* The track (pill background) */
+.handoff-track {
+  position: relative;
+  width: 28px;
+  height: 16px;
+  background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+  border-radius: 8px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* The sliding thumb */
+.handoff-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(135deg, #fff 0%, #e5e7eb 100%);
+  border-radius: 50%;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+/* The label text */
+.handoff-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+  min-width: 42px;
+}
+
+/* AUTO state - vibrant green with glowing effects */
+.handoff-toggle.auto-enabled .handoff-track {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.1),
+    0 0 12px rgba(16, 185, 129, 0.4);
+}
+
+.handoff-toggle.auto-enabled .handoff-thumb {
+  left: 14px;
+  background: linear-gradient(135deg, #fff 0%, #d1fae5 100%);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.2),
+    0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+.handoff-toggle.auto-enabled .handoff-label {
+  color: #10b981;
+  font-weight: 700;
+}
+
+.handoff-toggle.auto-enabled:hover .handoff-track {
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.1),
+    0 0 16px rgba(16, 185, 129, 0.5);
+}
+
+/* MANUAL state styling */
+.handoff-toggle.manual-enabled .handoff-label {
+  color: var(--text-secondary);
+}
+
 /* B-22: Stats Strip - compact stats display below editor */
 /* B-20: Increased font sizes for readability */
 #stats-strip {
