@@ -18,6 +18,24 @@ Note: Jira key is resolved automatically via jira-sync-story.sh from sprint YAML
 ## Project Root
 $CLAUDE_PROJECT_DIR (set by SessionStart hook)
 
+## Turn Efficiency
+
+**Batch archive operations** to minimize API round-trips:
+
+```bash
+# EFFICIENT: Archive, update YAML, and commit in batched operations
+mv $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md {ARCHIVE_PATH} && \
+mv $CLAUDE_PROJECT_DIR/.session/context-story-{STORY_ID}.md $CLAUDE_PROJECT_DIR/sprint/archive/ 2>/dev/null; \
+echo "Archives moved"
+```
+
+**Combine git operations:**
+```bash
+# EFFICIENT: Stage and commit all archive changes in single command
+git add sprint/archive/ sprint/context/ sprint/current-sprint.yaml .session/ && \
+git commit -m "chore({STORY_ID}): archive completed story and update sprint status"
+```
+
 ## Step 1: Archive Session File
 
 Archive path format: `sprint/archive/story-{STORY_ID}-{YYYYMMDD}.md`

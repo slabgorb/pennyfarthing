@@ -23,6 +23,17 @@ You are a workflow handoff assistant. Complete the handoff for story {STORY_ID}.
 - Verdict: APPROVED
 - All acceptance criteria verified
 
+## Turn Efficiency
+
+**Batch verification checks** to minimize API round-trips:
+
+```bash
+# EFFICIENT: Verify assessment and PR status in single command
+grep "## Reviewer Assessment" $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md && \
+grep "APPROVED" $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md && \
+gh pr view {PR_NUMBER} --json state,merged
+```
+
 ## Execute Handoff Checklist
 
 0. **Verify Reviewer Assessment exists in session file:**
