@@ -205,11 +205,13 @@ epics:
           - Or consolidate: only one subagent runs tests per phase
         points: 2
         priority: P1
-        status: in_progress
+        status: done
         started: 2026-01-13
+        completed: 2026-01-13
         assigned_to: Keith Avery
         repos: pennyfarthing
         jira: MSSCI-11625
+        pr: 235
         acceptance_criteria:
           - Test suite runs only once per TDD phase (not per subagent)
           - Session file caches last test result with timestamp
@@ -240,7 +242,9 @@ epics:
           Target: Reduce average turns per story from ~50 to ~30 (40% reduction)
         points: 3
         priority: P1
-        status: backlog
+        status: in_progress
+        started: 2026-01-13
+        assigned_to: Keith Avery
         repos: pennyfarthing
         acceptance_criteria:
           - Document turn-efficient patterns in dev-patterns skill

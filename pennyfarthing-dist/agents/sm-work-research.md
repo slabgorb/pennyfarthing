@@ -27,20 +27,24 @@ Extract all stories with `status: backlog` or `status: ready`:
 
 **Filter OUT stories that have `assigned_to:` set** - these are already claimed by another developer.
 
-## Step 2: Check Jira Status
+## Step 2: Check Jira Status (Batch Query)
 
-For each story with a Jira key:
+Collect all Jira keys from Step 1, then fetch status in a single query:
+
 ```bash
-jira issue view {JIRA_KEY} --raw 2>/dev/null | jq -r '{
-  key: .key,
-  status: .fields.status.name,
-  assignee: (.fields.assignee.displayName // "Unassigned")
-}'
+# Build comma-separated list of keys from stories with jira: field
+# Example: MSSCI-11629, MSSCI-11630, MSSCI-11611
+
+jira issue list --jql "project = MSSCI AND key in (KEY1, KEY2, KEY3)" --plain --no-truncate 2>/dev/null
 ```
+
+**Output columns:** TYPE, KEY, SUMMARY, STATUS, ASSIGNEE, REPORTER, PRIORITY, RESOLUTION, CREATED, UPDATED, LABELS
+
+Parse the STATUS and ASSIGNEE columns for each key.
 
 **Filter OUT stories that are:**
 - Status: "In Progress" or "Done" in Jira
-- Assignee: Anyone other than "Unassigned" or the current user
+- Assignee: Anyone other than empty or the current user
 
 **Note:** A story should be skipped if EITHER:
 - Sprint YAML has `assigned_to:` set, OR

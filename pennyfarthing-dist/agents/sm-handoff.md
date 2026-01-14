@@ -23,6 +23,18 @@ You are a workflow handoff assistant. Complete the handoff for story {STORY_ID}.
 - `{NOW}` - ISO 8601 timestamp (e.g., "2026-01-13T14:30:00Z")
 - `{NEXT_PHASE}` - Next phase name (e.g., "tea" or "dev" for trivial stories)
 
+## Turn Efficiency
+
+**Batch verification checks** to minimize API round-trips:
+
+```bash
+# EFFICIENT: Verify all prerequisites in single command
+ls -la $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md && \
+grep -c "^- \[" $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md && \
+git -C $CLAUDE_PROJECT_DIR branch --show-current && \
+jira issue view {JIRA_KEY} --plain 2>/dev/null | head -3
+```
+
 ## Execute Handoff Checklist
 
 1. Verify session file exists with story context

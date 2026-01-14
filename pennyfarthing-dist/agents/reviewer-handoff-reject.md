@@ -27,6 +27,17 @@ You are a workflow handoff assistant. Complete the handoff for story {STORY_ID}.
 - Issues: {CRITICAL_COUNT} critical, {MAJOR_COUNT} major, {MINOR_COUNT} minor
 - Details documented in session file by Reviewer
 
+## Turn Efficiency
+
+**Batch verification checks** to minimize API round-trips:
+
+```bash
+# EFFICIENT: Verify assessment and rejection in single command
+grep "## Reviewer Assessment" $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md && \
+grep "REJECTED" $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md && \
+grep -c "Critical\|Major\|Minor" $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md
+```
+
 ## Execute Handoff Checklist
 
 0. **Verify Reviewer Assessment exists in session file:**
