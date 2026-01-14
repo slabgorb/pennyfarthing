@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 57
-  completed_points: 34
-  remaining_points: 23
+  completed_points: 37
+  remaining_points: 20
   notes: |
     Sprint 10 focus: Three strategic epics
     - Epic 31: Customizable Workflow Engine (15 pts)
@@ -27,7 +27,7 @@ epics:
       (SM → TEA → Dev → Reviewer) with configurable YAML-based workflows.
       Users can define custom agent sequences, routing rules, and gates.
     points: 25
-    completed_points: 18
+    completed_points: 21
     priority: P1
     marker: strategic
     repos: pennyfarthing
@@ -242,10 +242,12 @@ epics:
           Target: Reduce average turns per story from ~50 to ~30 (40% reduction)
         points: 3
         priority: P1
-        status: in_progress
+        status: done
         started: 2026-01-13
+        completed: 2026-01-13
         assigned_to: Keith Avery
         repos: pennyfarthing
+        pr: 236
         acceptance_criteria:
           - Document turn-efficient patterns in dev-patterns skill
           - Update subagent prompts to batch bash commands
