@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 69
-  completed_points: 49
-  remaining_points: 20
+  completed_points: 51
+  remaining_points: 18
   notes: |
     Sprint 10 focus: Three strategic epics
     - Epic 31: Customizable Workflow Engine (15 pts)
@@ -709,11 +709,12 @@ epics:
       Currently permissions must be pre-configured; agents can't request
       spot permissions for tools like WebFetch when needed.
     points: 12
-    completed_points: 5
+    completed_points: 7
     priority: P1
     marker: ux
     repos: pennyfarthing, cyclist
     status: in_progress
+    jira: MSSCI-11705
     stories:
       - id: 33-1
         title: Permission request protocol
@@ -727,6 +728,7 @@ epics:
         status: done
         completed: 2026-01-13
         repos: pennyfarthing
+        jira: MSSCI-11706
         acceptance_criteria:
           - Permission request schema defined
           - Protocol documented in guides/
@@ -747,6 +749,7 @@ epics:
         assigned_to: Keith Avery
         repos: pennyfarthing
         pr: 231
+        jira: MSSCI-11707
         acceptance_criteria:
           - /permissions lists active grants
           - /permissions grant <tool> adds permission
@@ -766,6 +769,7 @@ epics:
         started: 2026-01-14
         completed: 2026-01-14
         assigned_to: Keith Avery
+        jira: MSSCI-11708
         acceptance_criteria:
           - Modal displays on permission request
           - One-click approve/deny
@@ -785,7 +789,7 @@ epics:
         completed: 2026-01-14
         assigned_to: Keith Avery
         repos: pennyfarthing, cyclist
-        jira: MSSCI-11686
+        jira: MSSCI-11709
         pr: 242
         acceptance_criteria:
           - Three grant scopes implemented
@@ -801,11 +805,32 @@ epics:
         priority: P2
         status: backlog
         repos: pennyfarthing
+        jira: MSSCI-11710
         acceptance_criteria:
           - Workflow schema supports permissions field
           - Workflow start checks required permissions
           - Prompts for missing permissions
           - Cached grants skip prompts
+      - id: 33-6
+        title: Display permission denials in Cyclist result messages
+        description: |
+          Surface permission denials in Cyclist UI so users understand
+          why operations failed and how to grant permissions.
+        points: 2
+        priority: P1
+        status: done
+        started: 2026-01-14
+        completed: 2026-01-14
+        assigned_to: Keith Avery
+        repos: cyclist
+        pr: 250
+        jira: MSSCI-11711
+        acceptance_criteria:
+          - Result messages display permission_denials when present
+          - Shows tool name and truncated target for each denial
+          - Help text explains how to grant permission
+          - Styled with warning colors (red/orange border)
+          - Test coverage for denial rendering
   - id: epic-34
     title: Cyclist Developer Experience
     description: |

@@ -324,15 +324,21 @@ Then read user's handoff mode preference from Cyclist settings:
 # Cyclist settings file location
 SETTINGS_FILE="$CLAUDE_PROJECT_DIR/.pennyfarthing/cyclist.yaml"
 
-# Extract auto_handoff (defaults to 'false' if not found)
-AUTO_HANDOFF=$(grep -E "auto_handoff:" "$SETTINGS_FILE" 2>/dev/null | sed 's/.*auto_handoff:\s*//' | tr -d "'" | tr -d '"' | xargs)
-AUTO_HANDOFF="${AUTO_HANDOFF:-false}"
+# Read handoff_mode (new format), fall back to auto_handoff (legacy format)
+HANDOFF_MODE="manual"
 
-# Convert to handoff mode
-if [ "$AUTO_HANDOFF" = "true" ]; then
-    HANDOFF_MODE="auto"
-else
-    HANDOFF_MODE="manual"
+if [ -f "$SETTINGS_FILE" ]; then
+    # Try new format first: handoff_mode: auto|manual
+    MODE=$(grep -E "handoff_mode:" "$SETTINGS_FILE" 2>/dev/null | head -1 | sed 's/.*handoff_mode:\s*//' | tr -d "'" | tr -d '"' | xargs)
+    if [ "$MODE" = "auto" ] || [ "$MODE" = "manual" ]; then
+        HANDOFF_MODE="$MODE"
+    else
+        # Fall back to legacy format: auto_handoff: true|false
+        AUTO_HANDOFF=$(grep -E "auto_handoff:" "$SETTINGS_FILE" 2>/dev/null | head -1 | sed 's/.*auto_handoff:\s*//' | tr -d "'" | tr -d '"' | xargs)
+        if [ "$AUTO_HANDOFF" = "true" ]; then
+            HANDOFF_MODE="auto"
+        fi
+    fi
 fi
 ```
 

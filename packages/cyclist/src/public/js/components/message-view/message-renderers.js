@@ -281,18 +281,40 @@ export function renderSystemMessage(message) {
  * @returns {string} HTML string
  */
 export function renderResultMessage(message) {
-  const { usage, cost_usd, duration_ms, num_turns } = message;
+  const { usage, cost_usd, duration_ms, num_turns, permission_denials } = message;
 
   const turnsDisplay = num_turns !== undefined ? formatTurnCount(num_turns) : '';
   const durationDisplay = duration_ms !== undefined ? formatDuration(duration_ms) : '';
 
-  return `<div class="message message-result">
+  // Build permission denials section if any tools were blocked
+  let permissionDenialsHtml = '';
+  if (permission_denials && permission_denials.length > 0) {
+    const denialItems = permission_denials.map((denial) => {
+      const toolName = escapeHtml(denial.tool_name || 'Unknown');
+      const input = denial.tool_input || {};
+      // Extract the relevant path/target from the tool input
+      const target = input.file_path || input.url || input.command || JSON.stringify(input);
+      return `<li><strong>${toolName}</strong>: ${escapeHtml(String(target).substring(0, 100))}</li>`;
+    }).join('');
+
+    permissionDenialsHtml = `
+  <div class="result-permission-denials">
+    <div class="permission-denials-header">⚠️ Permission Denied</div>
+    <ul class="permission-denials-list">${denialItems}</ul>
+    <div class="permission-denials-help">
+      To grant permission, add to <code>.claude/settings.local.json</code> under <code>permissions.allow</code>,
+      or use <code>/permissions grant &lt;Tool&gt; "&lt;scope&gt;"</code>
+    </div>
+  </div>`;
+  }
+
+  return `<div class="message message-result${permission_denials?.length ? ' has-denials' : ''}">
   <div class="result-stats">
     ${usage ? `<span class="result-tokens">Tokens: ${usage.input_tokens} in / ${usage.output_tokens} out</span>` : ''}
     ${cost_usd !== undefined ? `<span class="result-cost">Cost: $${cost_usd.toFixed(4)}</span>` : ''}
     ${turnsDisplay ? `<span class="result-turns">${escapeHtml(turnsDisplay)}</span>` : ''}
     ${durationDisplay ? `<span class="result-duration">${escapeHtml(durationDisplay)}</span>` : ''}
-  </div>
+  </div>${permissionDenialsHtml}
 </div>`;
 }
 
