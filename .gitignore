@@ -54,4 +54,5 @@ internal/showcase/dist/
 # Git worktrees
 worktrees/
 .cyclist-port
+.cyclist-pid
 .pennyfarthing/cyclist.yaml
