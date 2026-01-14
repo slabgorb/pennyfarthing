@@ -5,9 +5,9 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 57
+  total_points: 60
   completed_points: 37
-  remaining_points: 20
+  remaining_points: 23
   notes: |
     Sprint 10 focus: Three strategic epics
     - Epic 31: Customizable Workflow Engine (15 pts)
@@ -26,7 +26,7 @@ epics:
       Infrastructure for user-defined workflows. Replace hardcoded TDD flow
       (SM → TEA → Dev → Reviewer) with configurable YAML-based workflows.
       Users can define custom agent sequences, routing rules, and gates.
-    points: 25
+    points: 28
     completed_points: 21
     priority: P1
     marker: strategic
@@ -254,6 +254,36 @@ epics:
           - Audit main agents for sequential-to-parallel opportunities
           - Add guidance for compound subagent creation
           - Measure before/after turn counts on sample story
+      - id: 31-10
+        title: Activate workflow-driven handoffs
+        description: |
+          Wire the generic-handoff.ts logic into the agent system by:
+
+          1. Creating generic-handoff.md subagent definition that:
+             - Calls generic-handoff.ts functions via Bash/Node
+             - Replaces hardcoded handoff subagents
+
+          2. Updating main agents (sm, tea, dev, reviewer) to:
+             - Use generic-handoff subagent_type instead of specific ones
+             - Pass workflow phase context to handoff
+
+          3. Deprecating old handoffs:
+             - tea-handoff.md, dev-handoff.md, sm-handoff.md
+             - reviewer-handoff-approve.md, reviewer-handoff-reject.md
+
+          The TypeScript logic exists (Story 31-7), this activates it.
+        points: 3
+        priority: P1
+        status: backlog
+        depends_on: [31-7]
+        repos: pennyfarthing
+        acceptance_criteria:
+          - generic-handoff.md subagent created in pennyfarthing-dist/agents/
+          - Main agents updated to use generic-handoff subagent_type
+          - Handoff reads workflow phase from session file
+          - Handoff determines next agent from workflow definition
+          - Old specific handoff files deprecated (moved to archive or removed)
+          - TDD and trivial workflows both work end-to-end
   - id: epic-32
     title: BMAD Artifact Compatibility
     description: |
