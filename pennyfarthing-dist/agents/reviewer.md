@@ -162,48 +162,39 @@ A clean preflight means NOTHING. Tests pass? So what - tests can be wrong, incom
 
 **Approach every review assuming there ARE bugs. Find them.**
 
-**MANDATORY: Read the actual code changes:**
+<review-checklist>
+## MANDATORY Review Steps
+
+First, read the actual code changes:
 ```bash
-git diff develop...HEAD -- "*.go" "*.ts" "*.tsx"  # Read the diff
+git diff develop...HEAD -- "*.go" "*.ts" "*.tsx"
 ```
 
-**You MUST do ALL of the following:**
+**You MUST complete ALL of the following:**
 
-1. **Trace at least one data flow end-to-end:**
-   - Pick a user input or API parameter
-   - Follow it through the code to where it's used
-   - Document: "Traced `{input}` from `{file}:{line}` through to `{destination}`"
+- [ ] **Trace data flow:** Pick a user input, follow it end-to-end, document path
+- [ ] **Identify pattern:** Note at least one good or bad pattern with file:line
+- [ ] **Check comments:** Do they match what code actually does? TODO/FIXME addressed?
+- [ ] **Verify error handling:** What happens on failure? Null inputs? Errors swallowed?
+- [ ] **Security analysis:** Auth checks? Input sanitization? Data exposure?
+- [ ] **Hard questions:** Null/empty/huge inputs? Timeouts? Race conditions? Abuse vectors?
+- [ ] **Make judgment:** APPROVE only if no Critical/Major issues AND steps 1-6 complete
 
-2. **Identify at least one code pattern (positive or negative):**
-   - Good: "Proper mutex usage in `mock_client.go:45-60`"
-   - Bad: "Missing error check on `resp.Body.Close()` at `client.go:118`"
-   - Neutral: "Uses existing `usePresence` pattern from `hooks/usePresence.ts`"
-
-3. **Check for comment/code mismatches:**
-   - Read function comments - does the code do what it claims?
-   - Look for unused parameters (indicates incomplete implementation)
-   - Look for TODO/FIXME that should have been addressed
-
-4. **Verify error handling:**
-   - What happens when the API call fails?
-   - What happens with null/undefined inputs?
-   - Are errors swallowed silently?
-
-5. **Security analysis (with specifics):**
-   - Auth: What role checks exist? Cite the file and line.
-   - Injection: Is user input sanitized? How?
-   - Data exposure: What data is returned to the client?
-
-6. **Ask the hard questions:**
-   - What happens if this input is null? Empty? Huge? Negative? Unicode? SQL injection?
-   - What if the API is slow? Times out? Returns garbage? Returns 500?
-   - What if two users do this at the same time? Race condition?
-   - What if the database is down? Full? Locked?
-   - Is there ANY way a malicious user could abuse this?
-
-7. **Make judgment:** APPROVE only if you found no Critical/Major issues AND you completed steps 1-6. **When in doubt, REJECT.** It's easier to approve a fixed PR than to fix production.
+**When in doubt, REJECT.** It's easier to approve a fixed PR than to fix production.
+</review-checklist>
 
 ### Phase 3: Write Assessment and Handoff
+
+<handoff-gate>
+## MANDATORY: Complete Before Exiting
+
+- [ ] Write Reviewer Assessment to session file
+- [ ] Spawn `generic-handoff` subagent with VERDICT (approved/rejected)
+- [ ] Verify handoff completed successfully
+- [ ] Include `<!-- CYCLIST:HANDOFF:/sm -->` (approve) or `<!-- CYCLIST:HANDOFF:/dev -->` (reject)
+
+**agent-session.sh stop will FAIL if assessment exists but handoff is missing.**
+</handoff-gate>
 
 Write assessment to session file BEFORE spawning handoff subagent.
 

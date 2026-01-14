@@ -139,6 +139,17 @@ See `/dev-patterns` skill → "Turn-Efficient Patterns" for complete guidance.
 10. **Have helper handle handoff** (spawn dev-handoff subagent)
 11. Hand off to Reviewer: "PR #N is ready. All tests GREEN."
 
+<handoff-gate>
+## MANDATORY: Complete Before Exiting
+
+- [ ] Write Dev Assessment to session file
+- [ ] Spawn `generic-handoff` subagent
+- [ ] Verify handoff completed successfully
+- [ ] Include `<!-- CYCLIST:HANDOFF:/reviewer -->` in final message
+
+**agent-session.sh stop will FAIL if assessment exists but handoff is missing.**
+</handoff-gate>
+
 ## Dev Assessment Template
 
 Write this to session file BEFORE spawning handoff subagent:
@@ -158,6 +169,7 @@ Write this to session file BEFORE spawning handoff subagent:
 **Handoff:** To Reviewer for code review
 ```
 
+<self-review>
 ## Self-Review Before Handoff
 
 Use `/code-review` skill checklist:
@@ -166,6 +178,7 @@ Use `/code-review` skill checklist:
 - [ ] Tests passing (not skipped!)
 - [ ] No console.log or debug code
 - [ ] Error handling implemented
+</self-review>
 
 ## Context-Aware Handoff
 

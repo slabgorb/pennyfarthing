@@ -301,3 +301,25 @@ return {
 **Discovered:** 2026-01-13
 
 ---
+
+### .claude/scripts/ and pennyfarthing-dist/scripts/ Are Hard-Linked
+
+**Situation:** Editing scripts in `pennyfarthing-dist/scripts/` expecting to need to sync to `.claude/scripts/`.
+
+**Problem:** `cp` reports "files are identical" - they're the same file via hard link.
+
+**Root Cause:** In the pennyfarthing repo (dogfooding mode), `.claude/scripts/` and `pennyfarthing-dist/scripts/` point to the same inodes. macOS `cp` detects this and refuses to copy.
+
+**Implication:** Edits to either location automatically appear in both. No manual sync needed.
+
+**Verification:**
+```bash
+ls -i pennyfarthing-dist/scripts/agent-session.sh .claude/scripts/agent-session.sh
+# Same inode number = hard link
+```
+
+**Prevention:** Don't waste time on sync steps for these files. Edit either location.
+
+**Discovered:** 2026-01-14 (Story 31-16)
+
+---

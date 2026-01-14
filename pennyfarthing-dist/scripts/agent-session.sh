@@ -243,8 +243,76 @@ case "$1" in
       echo "Usage: agent-session.sh stop [session-id]" >&2
       exit 1
     fi
-    # Clear the agent file for this session
+
+    # Get current agent for this session
     AGENT_FILE=$(get_agent_file "$session_id")
+    CURRENT_AGENT=""
+    if [ -f "$AGENT_FILE" ]; then
+      CURRENT_AGENT=$(cat "$AGENT_FILE")
+    fi
+
+    # Validate handoff was spawned (Story 31-16: Enforce handoff subagent spawning)
+    # Only check for agents that require handoff (tea, dev, reviewer)
+    if [[ "$CURRENT_AGENT" =~ ^(tea|dev|reviewer)$ ]]; then
+      # Find active session file
+      SESSION_DIR="$PROJECT_ROOT/.session"
+      ACTIVE_SESSION=$(find "$SESSION_DIR" -maxdepth 1 -name "*-session.md" -type f ! -name "context-*" 2>/dev/null | head -1)
+
+      if [ -n "$ACTIVE_SESSION" ] && [ -f "$ACTIVE_SESSION" ]; then
+        # Map agent to expected assessment section
+        case "$CURRENT_AGENT" in
+          tea) EXPECTED_SECTION="TEA Assessment" ;;
+          dev) EXPECTED_SECTION="Dev Assessment" ;;
+          reviewer) EXPECTED_SECTION="Reviewer Assessment" ;;
+        esac
+
+        # Check if assessment exists
+        HAS_ASSESSMENT=$(grep -q "## $EXPECTED_SECTION" "$ACTIVE_SESSION" 2>/dev/null && echo "yes" || echo "no")
+
+        # Check if handoff was recorded in Handoff History table
+        # Table format: | From | To | Phase | Gate | Timestamp |
+        # Agent must appear in "From" column (first data column) to indicate they completed handoff
+        HAS_HANDOFF="no"
+
+        # Check for agent in "From" column (starts with "| agent |")
+        # Case-insensitive match for the agent name at start of row
+        if grep -Ei "^\| *$CURRENT_AGENT *\|" "$ACTIVE_SESSION" 2>/dev/null; then
+          HAS_HANDOFF="yes"
+        fi
+
+        # Also check for CYCLIST:HANDOFF marker (generic-handoff output)
+        if [ "$HAS_HANDOFF" = "no" ] && grep -q "CYCLIST:HANDOFF" "$ACTIVE_SESSION" 2>/dev/null; then
+          HAS_HANDOFF="yes"
+        fi
+
+        # Warn if assessment exists but handoff is missing
+        if [ "$HAS_ASSESSMENT" = "yes" ] && [ "$HAS_HANDOFF" = "no" ]; then
+          echo "" >&2
+          echo "WARNING: Handoff subagent was not spawned!" >&2
+          echo "" >&2
+          echo "  Agent: $CURRENT_AGENT" >&2
+          echo "  Assessment: Found ($EXPECTED_SECTION)" >&2
+          echo "  Handoff: NOT FOUND" >&2
+          echo "" >&2
+          echo "  You MUST spawn generic-handoff before stopping:" >&2
+          echo "" >&2
+          echo "    Task tool:" >&2
+          echo "      subagent_type: \"generic-handoff\"" >&2
+          echo "      prompt: |" >&2
+          echo "        STORY_ID: {story-id}" >&2
+          echo "        WORKFLOW: {workflow}" >&2
+          echo "        CURRENT_PHASE: {phase}" >&2
+          echo "        ..." >&2
+          echo "" >&2
+          echo "  Session: $(basename "$ACTIVE_SESSION")" >&2
+          echo "" >&2
+          # Exit non-zero to signal incomplete handoff
+          exit 1
+        fi
+      fi
+    fi
+
+    # Clear the agent file for this session
     rm -f "$AGENT_FILE" 2>/dev/null
     echo "Agent session closed: $session_id"
     ;;
