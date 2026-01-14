@@ -272,6 +272,17 @@ Returns JSON with next phase name, agent, and gate type.
 3. Mark current workflow checkbox as complete
 4. Update status based on transition (see gate-specific sections above)
 5. Add gate-specific handoff sections (see above)
+6. Add or update `## Handoff History` section (tracks context at each handoff):
+
+```markdown
+## Handoff History
+
+| Phase | Agent | Timestamp | Context % | Mode |
+|-------|-------|-----------|-----------|------|
+| {CURRENT_PHASE} | {CURRENT_AGENT} | {NOW} | {CONTEXT_PERCENT}% | {HANDOFF_MODE} |
+```
+
+If section already exists, append row to the table.
 
 ### Phase Transition Timestamps
 
@@ -294,7 +305,48 @@ Or use format-transition to get the full markdown:
   --ended-at "$NOW"
 ```
 
-## Step 6: Report Result
+## Step 6: Check Context Usage and Determine Handoff Behavior
+
+After gate passes, check context usage to determine how to proceed:
+
+```bash
+# Run context check script
+CONTEXT_OUTPUT=$($CLAUDE_PROJECT_DIR/.claude/scripts/check-context.sh 2>/dev/null)
+eval "$CONTEXT_OUTPUT"
+
+# CONTEXT_PERCENT and CONTEXT_STATUS are now set
+# CONTEXT_STATUS will be "OK" (<70%) or "HIGH" (>=70%)
+```
+
+Then read user's handoff mode preference from Cyclist settings:
+
+```bash
+# Check for Cyclist settings file
+SETTINGS_FILE="$HOME/.cyclist/settings.yaml"
+if [ ! -f "$SETTINGS_FILE" ]; then
+    SETTINGS_FILE="$CLAUDE_PROJECT_DIR/.claude/cyclist.local.yaml"
+fi
+
+# Extract handoff_mode (defaults to 'manual' if not found)
+HANDOFF_MODE=$(grep -E "handoff_mode:" "$SETTINGS_FILE" 2>/dev/null | sed 's/.*handoff_mode:\s*//' | tr -d "'" | tr -d '"' | xargs)
+HANDOFF_MODE="${HANDOFF_MODE:-manual}"
+```
+
+### Handoff Decision Matrix
+
+| Context | Mode | Action |
+|---------|------|--------|
+| OK (<70%) | auto | Invoke next agent directly |
+| OK (<70%) | manual | Report ready, user invokes next agent |
+| HIGH (>=70%) | auto | Report: "Context high. Start fresh with /{next_agent}" |
+| HIGH (>=70%) | manual | Report: "Context high. Start fresh with /{next_agent}" |
+
+**Include in report:**
+- Context percentage and token count
+- Handoff mode setting
+- Whether direct invocation is recommended
+
+## Step 7: Report Result
 
 ```
 HANDOFF COMPLETE
@@ -303,6 +355,10 @@ From: {CURRENT_PHASE} ({CURRENT_AGENT})
 To: {NEXT_PHASE} ({NEXT_AGENT})
 Gate: {GATE_TYPE} - PASSED
 Workflow: {WORKFLOW}
+
+Context: {CONTEXT_PERCENT}% ({CONTEXT_TOKENS} tokens)
+Handoff Mode: {HANDOFF_MODE}
+Action: {INVOKE_DIRECTLY | USER_INVOKE | FRESH_SESSION}
 
 Ready for {NEXT_AGENT}.
 ```
