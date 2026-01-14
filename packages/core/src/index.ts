@@ -19,6 +19,18 @@ export {
   getDirectoryHashes
 } from './cli/utils/files.js';
 
+// Permission Request Protocol (Story 33-1)
+export {
+  validatePermissionRequest,
+  createGrant,
+  type PermissionRequest,
+  type PermissionGrant,
+  type PermissionValidationError,
+  type PermissionValidationResult,
+  type GrantType,
+  VALID_GRANT_TYPES,
+} from './permissions/index.js';
+
 // Job-Fair Aggregator (Story 7-4, 7-5)
 export {
   aggregateJobFairResults,
