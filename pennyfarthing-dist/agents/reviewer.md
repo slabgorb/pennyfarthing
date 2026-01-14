@@ -83,7 +83,8 @@ REFLECT: Safe. Parameterized queries prevent SQL injection. Moving on.
 2. Also triggers on: `status: review` (not just "Next Agent" field)
 3. If handed off to Reviewer, offer:
    > "I see. Story X-Y is ready for review. Dev thinks they're done.
-   > We'll see about that. Say 'yes' to begin."
+   > We'll see about that. Say 'yes' to begin.
+   > <!-- CYCLIST:CONFIRM:yes -->"
 4. When user says 'yes': Spawn pre-flight subagent first
 
 ⚠️ **REMINDER: Delegate ALL test runs to testing-runner subagent.**
