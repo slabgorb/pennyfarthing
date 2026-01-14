@@ -4,11 +4,25 @@ import { parse as parseYaml } from 'yaml';
 // Parse session file for story info
 export function parseSessionFile(content) {
     const result = {};
-    // Extract story ID and title from header: # Story 15-3: Title or # Story E1-1: Title
-    const headerMatch = content.match(/^#\s*Story\s+([\w-]+):\s*(.+)$/m);
+    // Extract story ID and title from header
+    // Formats supported:
+    //   # Story 15-3: Title (colon separator)
+    //   # Story 15-3 Session (with "Session" suffix)
+    const headerMatch = content.match(/^#\s*Story\s+([\w-]+):\s*(.+)$/m) ||
+        content.match(/^#\s*Story\s+([\w-]+)\s+Session$/m);
     if (headerMatch) {
         result.id = headerMatch[1];
-        result.title = headerMatch[2].trim();
+        // For "Session" format, try to get title from **Title:** field
+        if (headerMatch[2]) {
+            result.title = headerMatch[2].trim();
+        }
+        else {
+            // Look for **Title:** field in Story Details section
+            const titleMatch = content.match(/\*\*Title:\*\*\s*(.+)$/m);
+            if (titleMatch) {
+                result.title = titleMatch[1].trim();
+            }
+        }
     }
     // Extract phase: **Phase:** dev or **Phase:** TEA (RED complete) -> Dev (GREEN)
     // Also check table format: | Phase | dev |
@@ -82,8 +96,24 @@ export function parseAcceptanceCriteria(content) {
     return criteria.length > 0 ? criteria : null;
 }
 // Parse workflow progress checkboxes into structured data
-export function parseWorkflowProgress(content) {
-    // Look for workflow progress section
+// If projectDir is provided, reads dynamic phases from workflow YAML
+// Otherwise falls back to hardcoded TDD flow for backward compatibility
+export function parseWorkflowProgress(content, projectDir) {
+    // Try to extract workflow name from session content
+    // Workflow names can contain hyphens (e.g., docs-only, custom-flow)
+    const workflowMatch = content.match(/\*\*Workflow:\*\*\s*([\w-]+)/i);
+    const workflowName = workflowMatch?.[1]?.toLowerCase();
+    // Try to extract current phase from session content
+    const phaseMatch = content.match(/\*\*Phase:\*\*\s*(\w+)/i);
+    const currentPhase = phaseMatch?.[1]?.toLowerCase();
+    // If projectDir provided and workflow specified, use dynamic phases
+    if (projectDir && workflowName) {
+        const phases = getWorkflowPhases(workflowName, projectDir);
+        if (phases) {
+            return buildWorkflowWithStatus(phases, content, currentPhase);
+        }
+    }
+    // Fall back to checkbox-based parsing for backward compatibility
     const workflowSection = content.match(/## Workflow Progress\n([\s\S]*?)(?=\n##|\n$|$)/);
     if (!workflowSection) {
         return null;
@@ -138,12 +168,62 @@ export function parseWorkflowProgress(content) {
             status = 'pending';
         }
         workflow.push({
+            name: agent, // Use agent as name for backward compat
             agent,
             label: agentLabels[agent],
             status
         });
     }
     return workflow;
+}
+// Build workflow phases with status based on session content
+function buildWorkflowWithStatus(phases, content, currentPhase) {
+    // Parse Phase History table to determine which phases are complete
+    const completedPhases = new Set();
+    const historyMatch = content.match(/### Phase History\n[\s\S]*?\|[\s\S]*?\|[\s\S]*?\|([\s\S]*?)(?=\n##|\n$|$)/);
+    if (historyMatch) {
+        // Parse table rows to find completed phases (those with end time)
+        const rows = historyMatch[1].split('\n').filter(line => line.includes('|'));
+        for (const row of rows) {
+            const cols = row.split('|').map(c => c.trim());
+            // Format: | phase | started | ended | duration |
+            if (cols.length >= 4) {
+                const phaseName = cols[1]?.toLowerCase();
+                const ended = cols[3];
+                // Phase is complete if it has an end time (not '-' or empty)
+                if (phaseName && ended && ended !== '-' && ended !== '') {
+                    completedPhases.add(phaseName);
+                }
+            }
+        }
+    }
+    // Find current phase index
+    let currentPhaseIndex = -1;
+    if (currentPhase) {
+        // Try to match by phase name first, then by agent name
+        currentPhaseIndex = phases.findIndex(p => p.name.toLowerCase() === currentPhase || p.agent.toLowerCase() === currentPhase);
+    }
+    // Build workflow with status
+    return phases.map((phase, index) => {
+        let status;
+        if (completedPhases.has(phase.name.toLowerCase())) {
+            status = 'done';
+        }
+        else if (index === currentPhaseIndex) {
+            status = 'current';
+        }
+        else if (currentPhaseIndex >= 0 && index < currentPhaseIndex) {
+            // Phases before current are done (even if not in history table)
+            status = 'done';
+        }
+        else {
+            status = 'pending';
+        }
+        return {
+            ...phase,
+            status
+        };
+    });
 }
 // Parse sprint YAML for progress
 export function parseSprintYaml(content) {
@@ -161,6 +241,31 @@ export function parseSprintYaml(content) {
         // Malformed YAML
     }
     return null;
+}
+// Get workflow phases from workflow YAML definition
+export function getWorkflowPhases(workflowName, projectDir) {
+    try {
+        // Look for workflow YAML in .claude/workflows/
+        const workflowPath = join(projectDir, '.claude', 'workflows', `${workflowName}.yaml`);
+        if (!existsSync(workflowPath)) {
+            return null;
+        }
+        const content = readFileSync(workflowPath, 'utf-8');
+        const data = parseYaml(content);
+        if (!data?.phases || !Array.isArray(data.phases)) {
+            return null;
+        }
+        // Map phases to WorkflowPhase objects (without status - that's determined at runtime)
+        return data.phases.map((phase) => ({
+            name: phase.name,
+            agent: phase.agent,
+            label: phase.label || phase.name, // Default label to name if not provided
+        }));
+    }
+    catch {
+        // Malformed YAML or read error
+        return null;
+    }
 }
 // Get story info from session files
 export function getStoryInfo(projectDir) {
