@@ -308,36 +308,50 @@ TaskOutput tool:
 
 ### Tracking Background Tasks in Session Files
 
-When spawning background tasks, record them in the session file:
+Use the background task tracking utilities to manage session file entries:
 
-```markdown
-## Background Tasks
+```bash
+source $CLAUDE_PROJECT_DIR/scripts/utils/background-tasks.sh
+SESSION_FILE="$CLAUDE_PROJECT_DIR/.session/${STORY_ID}-session.md"
 
-| Task ID | Type | Started | Status |
-|---------|------|---------|--------|
-| abc123 | testing-runner | 14:30 | running |
+# After spawning, record the task:
+bg_task_add "$SESSION_FILE" "$TASK_ID" "testing-runner" "Background test run"
+
+# After checking TaskOutput, update status:
+bg_task_update "$SESSION_FILE" "$TASK_ID" "completed"  # or "error"
+
+# Clean up finished tasks:
+bg_task_cleanup "$SESSION_FILE"
 ```
 
-Update status when checking results:
-- `running` → `completed` or `error`
-- Remove completed tasks after processing results
+**Available functions:**
+| Function | Purpose |
+|----------|---------|
+| `bg_task_add` | Record new background task |
+| `bg_task_update` | Update task status (running/completed/error) |
+| `bg_task_cleanup` | Remove completed and errored tasks |
+| `bg_task_list` | Show all running tasks |
+| `bg_task_check` | Return 0 if any tasks running |
+| `bg_task_summary` | Print counts by status |
 
 ### Background Execution Constraints
 
 1. **No concurrent state mutation** - Don't have multiple background tasks writing to the same file
 2. **Independent operations only** - Each background task should be self-contained
 3. **Check before proceeding** - If you need the result, wait for it with `block: true`
-4. **Clean up tracking** - Remove completed tasks from session file
+4. **Clean up tracking** - Use `bg_task_cleanup` after processing results
 
 ### Example: Background Tests While Coding
 
-```
-1. Spawn testing-runner with run_in_background: true
-2. Continue writing code
-3. Periodically check TaskOutput with block: false
-4. When tests complete, handle results
-5. If RED: stop and fix
-6. If GREEN: continue with confidence
+```bash
+# 1. Spawn testing-runner with run_in_background: true
+# 2. Record: bg_task_add "$SESSION_FILE" "$TASK_ID" "testing-runner" "Tests while coding"
+# 3. Continue writing code
+# 4. Periodically check TaskOutput with block: false
+# 5. When complete: bg_task_update "$SESSION_FILE" "$TASK_ID" "completed"
+# 6. Cleanup: bg_task_cleanup "$SESSION_FILE"
+# 7. If RED: stop and fix
+# 8. If GREEN: continue with confidence
 ```
 
 ## Quick Reference

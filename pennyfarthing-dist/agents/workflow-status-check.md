@@ -168,6 +168,35 @@ done
 - Current user's name → YOUR work, can continue
 - Someone else's name → **COLLEAGUE'S WORK - DO NOT OFFER**
 
+## Step 2.7: Check Background Tasks
+
+**Detect any running background tasks in session files.**
+
+```bash
+source $CLAUDE_PROJECT_DIR/scripts/utils/background-tasks.sh
+
+# Check each session file for active background tasks
+for session_file in .session/*-session.md; do
+    [ -f "$session_file" ] || continue
+
+    if bg_task_check "$session_file"; then
+        STORY_ID=$(basename "$session_file" | sed 's/-session.md//')
+        echo "BACKGROUND_TASKS: $STORY_ID"
+        bg_task_list "$session_file"
+    fi
+done
+```
+
+**If background tasks found:**
+- Report which session has active background tasks
+- Warn that results should be checked before proceeding
+- Include in status output under "Background Tasks" section
+
+**Background Task Status Values:**
+- `running` - Task still executing, check with TaskOutput
+- `completed` - Task finished, safe to cleanup
+- `error` - Task failed, may need investigation
+
 ## Step 3: Determine Workflow State
 
 **First, check the sprint YAML for ground truth:**
@@ -252,6 +281,13 @@ Stories with `status: done` are DONE - do not list them as in-progress even if t
 | 7-2 | Job-Fair Role-Selective | MSSCI-11387 | Michael Pursifull | In Progress |
 
 *Stories assigned to colleagues in Jira are excluded from work options.*
+
+### Background Tasks
+| Story | Task ID | Type | Started | Status |
+|-------|---------|------|---------|--------|
+| 31-14 | abc123 | testing-runner | 14:30 | running |
+
+*If any tasks show "running", check results with TaskOutput before proceeding.*
 
 ### Git State
 | Repo | Type | Branch | Uncommitted | Ahead of Origin |

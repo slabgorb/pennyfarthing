@@ -386,7 +386,8 @@ describe('Test Cache (31-8)', () => {
             assert.ok(withCache, 'Test setup: cache should parse');
             // The shouldSkipTests function will return cachedResult only if valid
             // Since we can't mock time easily, we verify the function signature
-            const result = shouldSkipTests(SESSION_WITH_CACHE, 'abc1234def5678', 1000);
+            // Use very high max age (1 year in minutes) to ensure cache is always valid
+            const result = shouldSkipTests(SESSION_WITH_CACHE, 'abc1234def5678', 525600);
             // With a very high max age, the cache should be valid
             assert.strictEqual(result.skip, true);
             assert.strictEqual(result.cachedResult, 'GREEN');
