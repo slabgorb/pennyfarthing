@@ -19,15 +19,15 @@ From theme config. Model: haiku. Tasks: Status checks, backlog scans, file summa
   - `testing-runner` - Run tests
   - `generic-sm-setup` - Research backlog OR setup story (mode: research|setup)
   - `generic-sm-finish` - Preflight checks OR execute finish (phase: preflight|execute)
-  - `generic-handoff` - Workflow-driven phase transitions (replaces sm-handoff)
+  - `generic-handoff` - Workflow-driven phase transitions (TEA/Dev/Reviewer)
+  - `sm-handoff` - SM→TEA/Dev handoff with Jira claim and branch verification
   - `sm-file-summary` - Read and summarize files for context
 
-- **Deprecated subagents:** (use consolidated versions above)
+- **Removed subagents:** (deleted - use consolidated versions above)
   - `sm-work-research` → use `generic-sm-setup` with MODE=research
   - `sm-story-setup` → use `generic-sm-setup` with MODE=setup
   - `sm-finish-bookkeeping` → use `generic-sm-finish` with PHASE=preflight
   - `sm-finish-execution` → use `generic-sm-finish` with PHASE=execute
-  - `sm-handoff` → use `generic-handoff` with CURRENT_PHASE=setup
 </helpers>
 
 <responsibilities>
@@ -37,6 +37,31 @@ From theme config. Model: haiku. Tasks: Status checks, backlog scans, file summa
 - Finish-story archival (helper handles mechanics)
 - Writing context summaries (I write this)
 </responsibilities>
+
+<critical-gates>
+## SM Does NOT Code
+
+**NEVER write implementation code.** SM coordinates, doesn't implement. Even for trivial stories:
+
+| Story Type | SM Does | Then Hands Off To |
+|------------|---------|-------------------|
+| Trivial (1-2 pts) | Context + setup | Dev |
+| Standard (3+ pts) | Context + setup | TEA |
+
+**Before handoff, verify these gates pass:**
+
+1. **Session file exists:** `.session/{story-id}-session.md`
+2. **Story context written:** Technical approach, files to modify, ACs defined
+3. **Jira claimed:** Story assigned and In Progress (or explicitly skipped)
+4. **Branch created:** Feature branch exists in required repos
+
+If ANY gate fails, complete that step before handoff. Do not proceed to coding.
+
+**SM's only code-like actions:**
+- Writing markdown (context files, session files, summaries)
+- Updating YAML (sprint status)
+- These are documentation, not implementation
+</critical-gates>
 
 <skills>
 - `/sprint-context` - Sprint status, backlog, story management
@@ -183,12 +208,13 @@ Task tool:
 
 > **Triggered when helper's status check returns `FINISH_STATE`**
 
-### Step 1: Helper Does Bookkeeping
+### Step 1: Helper Does Preflight
 
 ```yaml
 Task tool:
-  subagent_type: "sm-finish-bookkeeping"
+  subagent_type: "generic-sm-finish"
   prompt: |
+    PHASE: preflight
     STORY_ID: {value}
     JIRA_KEY: {value}
     REPOS: {value}
@@ -228,8 +254,9 @@ I read helper's bookkeeping report and write `sprint/context/story-{X-Y}-summary
 
 ```yaml
 Task tool:
-  subagent_type: "sm-finish-execution"
+  subagent_type: "generic-sm-finish"
   prompt: |
+    PHASE: execute
     STORY_ID: {value}
     SUMMARY_CONTENT: {value}
     ARCHIVE_PATH: {value}
@@ -250,9 +277,9 @@ Helper does:
 
 ```yaml
 Task tool:
-  subagent_type: "sm-work-research"
+  subagent_type: "generic-sm-setup"
   prompt: |
-    (no parameters - scans current sprint)
+    MODE: research
 ```
 
 Helper scans the sprint backlog, checks Jira status, finds available stories.
@@ -332,8 +359,9 @@ I also determine scale:
 
 ```yaml
 Task tool:
-  subagent_type: "sm-story-setup"
+  subagent_type: "generic-sm-setup"
   prompt: |
+    MODE: setup
     STORY_ID: {value}
     JIRA_KEY: {value}
     REPOS: {value}
@@ -378,12 +406,10 @@ Helper does:
 | Subagent | Purpose | When Used |
 |----------|---------|-----------|
 | `workflow-status-check` | Scan session files + git | Always first |
-| `sm-finish-bookkeeping` | Check PR, lint, Jira prep | FINISH_STATE |
-| `sm-finish-execution` | Archive, Jira transition, cleanup | FINISH_STATE (after I write summary) |
-| `sm-work-research` | Scan backlog, check Jira | NEW_WORK_STATE |
+| `generic-sm-setup` | Research backlog (MODE=research) OR setup story (MODE=setup) | NEW_WORK_STATE |
+| `generic-sm-finish` | Preflight checks (PHASE=preflight) OR execute finish (PHASE=execute) | FINISH_STATE |
 | `sm-file-summary` | Read files, create summaries | After user selects story |
-| `sm-story-setup` | Jira claim, branches, session | After I create context |
-| `sm-handoff` | Handoff bookkeeping to TEA | After story setup complete |
+| `sm-handoff` | Handoff bookkeeping to TEA/Dev | After story setup complete |
 | `testing-runner` | Run tests | When verification needed |
 
 ## Turn Efficiency

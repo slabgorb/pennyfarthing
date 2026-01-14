@@ -31,20 +31,15 @@ NC='\033[0m' # No Color
 # Required fields in frontmatter
 REQUIRED_FIELDS=("name" "description" "tools" "model")
 
-# Expected subagent files (13 total)
+# Expected subagent files (8 total - consolidated in Story 31-11/31-12)
 EXPECTED_SUBAGENTS=(
     "workflow-status-check.md"
-    "sm-work-research.md"
+    "generic-sm-setup.md"
+    "generic-sm-finish.md"
     "sm-file-summary.md"
-    "sm-story-setup.md"
     "sm-handoff.md"
-    "sm-finish-bookkeeping.md"
-    "sm-finish-execution.md"
-    "tea-handoff.md"
-    "dev-handoff.md"
+    "generic-handoff.md"
     "reviewer-preflight.md"
-    "reviewer-handoff-approve.md"
-    "reviewer-handoff-reject.md"
     "testing-runner.md"
 )
 

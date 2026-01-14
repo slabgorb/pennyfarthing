@@ -108,35 +108,29 @@ flowchart TB
 
     subgraph "Haiku Subagents (Mechanical)"
         WSC["workflow-status-check"]
-        SWR["sm-work-research"]
+        GSS["generic-sm-setup"]
+        GSF["generic-sm-finish"]
         SFS["sm-file-summary"]
-        SSS["sm-story-setup"]
-        SFB["sm-finish-bookkeeping"]
-        SFE["sm-finish-execution"]
-        TH["tea-handoff"]
+        SMH["sm-handoff"]
+        GH["generic-handoff"]
         TR["testing-runner"]
-        DH["dev-handoff"]
         RP["reviewer-preflight"]
-        RHA["reviewer-handoff-approve"]
-        RHR["reviewer-handoff-reject"]
     end
 
     SM --> WSC
-    SM --> SWR
+    SM --> GSS
+    SM --> GSF
     SM --> SFS
-    SM --> SSS
-    SM --> SFB
-    SM --> SFE
+    SM --> SMH
 
-    TEA_A --> TH
+    TEA_A --> GH
     TEA_A --> TR
 
-    DEV_A --> DH
+    DEV_A --> GH
     DEV_A --> TR
 
     REV_A --> RP
-    REV_A --> RHA
-    REV_A --> RHR
+    REV_A --> GH
     REV_A --> TR
 
     style SM fill:#9c27b0,color:white
@@ -159,19 +153,19 @@ flowchart TB
     end
 
     subgraph "NEW_WORK Flow"
-        N1[sm-work-research<br/>Scan backlog] --> N2[SM presents options]
+        N1[generic-sm-setup MODE=research<br/>Scan backlog] --> N2[SM presents options]
         N2 --> N3[User selects story]
         N3 --> N4[sm-file-summary<br/>Read relevant files]
         N4 --> N5[SM writes context doc]
-        N5 --> N6[sm-story-setup<br/>Jira + branches + session]
+        N5 --> N6[generic-sm-setup MODE=setup<br/>Jira + branches + session]
         N6 --> N7{Story Size?}
         N7 -->|"1-2 pts<br/>trivial"| N8[Handoff to Dev]
         N7 -->|"3+ pts"| N9[Handoff to TEA]
     end
 
     subgraph "FINISH Flow"
-        F1[sm-finish-bookkeeping<br/>Check PR, lint, Jira] --> F2[SM writes summary]
-        F2 --> F3[sm-finish-execution<br/>Archive + Jira Done]
+        F1[generic-sm-finish PHASE=preflight<br/>Check PR, lint, Jira] --> F2[SM writes summary]
+        F2 --> F3[generic-sm-finish PHASE=execute<br/>Archive + Jira Done]
         F3 --> F4[Story Complete]
     end
 
@@ -214,14 +208,14 @@ sequenceDiagram
         U->>SM: /new-work
         SM->>SMH: workflow-status-check
         SMH-->>SM: NEW_WORK_STATE
-        SM->>SMH: sm-work-research
+        SM->>SMH: generic-sm-setup MODE=research
         SMH-->>SM: Available stories
         SM->>U: Present options
         U->>SM: Select story
         SM->>SMH: sm-file-summary
         SMH-->>SM: File summaries
         SM->>SF: Write context doc
-        SM->>SMH: sm-story-setup
+        SM->>SMH: generic-sm-setup MODE=setup
         SMH->>SF: Write session file
         SMH->>GIT: Create branches
         SMH-->>SM: Setup complete
@@ -236,8 +230,8 @@ sequenceDiagram
         TEA->>TEAH: testing-runner
         TEAH-->>TEA: Tests RED (expected)
         TEA->>SF: Write TEA Assessment
-        TEA->>TEAH: tea-handoff
-        TEAH->>SF: Update Phase: dev
+        TEA->>TEAH: generic-handoff CURRENT_PHASE=red
+        TEAH->>SF: Update Phase: green
         TEAH-->>TEA: Handoff complete
     end
 
@@ -251,7 +245,7 @@ sequenceDiagram
         DEVH-->>DEV: Tests GREEN
         DEV->>GIT: Create PR
         DEV->>SF: Write Dev Assessment
-        DEV->>DEVH: dev-handoff
+        DEV->>DEVH: generic-handoff CURRENT_PHASE=green
         DEVH->>SF: Update Phase: review
         DEVH-->>DEV: Handoff complete
     end
@@ -265,13 +259,13 @@ sequenceDiagram
         REV->>REV: Review code
         alt Approved
             REV->>SF: Write Reviewer Assessment (APPROVED)
-            REV->>REVH: reviewer-handoff-approve
+            REV->>REVH: generic-handoff VERDICT=approved
             REVH->>SF: Update Phase: approved
             REVH-->>REV: Ready for SM finish
         else Rejected
             REV->>SF: Write Reviewer Assessment (REJECTED)
-            REV->>REVH: reviewer-handoff-reject
-            REVH->>SF: Update Phase: dev (back)
+            REV->>REVH: generic-handoff VERDICT=rejected
+            REVH->>SF: Update Phase: implement (back)
             REVH-->>REV: Routed back to Dev
             REV->>DEV: Issues to fix
         end
@@ -283,10 +277,10 @@ sequenceDiagram
         REV->>SM: Handoff (or user invokes /sm)
         SM->>SMH: workflow-status-check
         SMH-->>SM: FINISH_STATE
-        SM->>SMH: sm-finish-bookkeeping
+        SM->>SMH: generic-sm-finish PHASE=preflight
         SMH-->>SM: PR merged, ready
         SM->>SF: Write summary
-        SM->>SMH: sm-finish-execution
+        SM->>SMH: generic-sm-finish PHASE=execute
         SMH->>SF: Archive session
         SMH-->>SM: Story complete
         SM->>U: Done!
@@ -427,17 +421,13 @@ Quick reference for all official subagents.
 | Subagent | Purpose | Called By |
 |----------|---------|-----------|
 | `workflow-status-check` | Detect workflow state | SM, all agents |
-| `sm-work-research` | Scan backlog for stories | SM |
+| `generic-sm-setup` | Research backlog (MODE=research) or setup story (MODE=setup) | SM |
+| `generic-sm-finish` | Preflight checks (PHASE=preflight) or execute finish (PHASE=execute) | SM |
 | `sm-file-summary` | Summarize files for context | SM |
-| `sm-story-setup` | Jira claim, branches, session | SM |
-| `sm-finish-bookkeeping` | Pre-finish verification | SM |
-| `sm-finish-execution` | Archive and cleanup | SM |
+| `sm-handoff` | SM → TEA/Dev handoff with Jira/branch verification | SM |
 | `testing-runner` | Run tests in any repo | TEA, Dev, Reviewer |
-| `tea-handoff` | TEA → Dev transition | TEA |
-| `dev-handoff` | Dev → Reviewer transition | Dev |
+| `generic-handoff` | Workflow-driven phase transitions | TEA, Dev, Reviewer |
 | `reviewer-preflight` | Gather PR data before review | Reviewer |
-| `reviewer-handoff-approve` | Reviewer → SM (approved) | Reviewer |
-| `reviewer-handoff-reject` | Reviewer → Dev (rejected) | Reviewer |
 
 ---
 

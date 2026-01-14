@@ -35,20 +35,29 @@ git -C $CLAUDE_PROJECT_DIR branch --show-current && \
 jira issue view {JIRA_KEY} --plain 2>/dev/null | head -3
 ```
 
+## CRITICAL: Do NOT Mark ACs Complete
+
+**NEVER mark acceptance criteria as complete.** This subagent only:
+1. Verifies prerequisites exist
+2. Updates the Workflow Tracking section for phase transition
+
+Acceptance criteria are marked complete ONLY by the agent that actually does the work,
+after verifying the work is done. SM-handoff is a bookkeeping subagent - it records
+transitions, it does not claim work was completed.
+
 ## Execute Handoff Checklist
 
 1. Verify session file exists with story context
-2. Verify acceptance criteria are defined
+2. Verify acceptance criteria are defined (count them, don't mark them)
 3. Verify feature branches created
 4. Verify Jira story claimed (if applicable)
-5. **Update Workflow Tracking section:**
-   - Update `**Phase:**` from `sm` to `{NEXT_PHASE}`
+5. **Update Workflow Tracking section ONLY:**
+   - Update `**Phase:**` from `setup` to `{NEXT_PHASE}`
    - Update `**Phase Started:**` to `{NOW}`
    - Update Phase History table:
-     - Set sm row's Ended to `{NOW}` and calculate Duration
+     - Set setup row's Ended to `{NOW}` and calculate Duration
      - Add new row for `{NEXT_PHASE}` with Started = `{NOW}`
-6. Update session file workflow checkboxes to show handoff
-7. Report status summary
+6. Report status summary (do NOT modify acceptance criteria checkboxes)
 
 ### Phase Transition Update
 

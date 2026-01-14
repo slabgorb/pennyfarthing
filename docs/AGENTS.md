@@ -148,12 +148,10 @@ Invoked via `Task tool` with `subagent_type: "{name}"`:
 | Subagent | Purpose |
 |----------|---------|
 | `workflow-status-check` | Detect current state |
-| `sm-work-research` | Research backlog |
-| `sm-story-setup` | Setup story session |
+| `generic-sm-setup` | Research backlog (MODE=research) or setup story (MODE=setup) |
+| `generic-sm-finish` | Preflight checks (PHASE=preflight) or execute finish (PHASE=execute) |
 | `sm-file-summary` | Summarize changes |
-| `sm-handoff` | Handoff bookkeeping to TEA |
-| `sm-finish-bookkeeping` | Archive and cleanup |
-| `sm-finish-execution` | Execute finish workflow |
+| `sm-handoff` | Handoff bookkeeping to TEA/Dev |
 | `testing-runner` | Run tests |
 
 ### Discworld Persona

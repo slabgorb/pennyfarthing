@@ -66,5 +66,5 @@ Coordinator who manages story flow from backlog through completion, handling dec
 - **Agent:** `.claude/agents/sm.md`
 - **Sidecar:** `.claude/project/agents/sm-sidecar/`
 - **Skills:** `/sprint-context`, `/story-management`
-- **Subagents:** `workflow-status-check.md`, `sm-work-research.md`, `sm-file-summary.md`, `sm-story-setup.md`, `sm-finish-bookkeeping.md`, `sm-finish-execution.md`
+- **Subagents:** `workflow-status-check`, `generic-sm-setup`, `generic-sm-finish`, `sm-file-summary`, `sm-handoff`
 </reference>

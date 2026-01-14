@@ -293,11 +293,11 @@ Handoffs are automated via Haiku subagents in `.claude/agents/`.
 ```
 SM → TEA → Dev → Reviewer → SM
 │      │     │        │       │
-│      │     │        │       └── sm-finish-execution.md
-│      │     │        └── reviewer-handoff-approve.md / reject.md
-│      │     └── dev-handoff.md
-│      └── tea-handoff.md
-└── sm-story-setup.md
+│      │     │        │       └── generic-sm-finish PHASE=execute
+│      │     │        └── generic-handoff VERDICT=approved/rejected
+│      │     └── generic-handoff CURRENT_PHASE=green
+│      └── generic-handoff CURRENT_PHASE=red
+└── generic-sm-setup MODE=setup + sm-handoff
 ```
 
 ### Complete Subagent Inventory
@@ -305,57 +305,51 @@ SM → TEA → Dev → Reviewer → SM
 | Subagent File | Purpose | Model |
 |--------------|---------|-------|
 | **SM Subagents** | | |
-| `sm-story-setup.md` | Claim Jira, write session file, create branches | haiku |
-| `sm-handoff.md` | General SM handoff coordination | haiku |
-| `sm-work-research.md` | Research stories and context | haiku |
+| `generic-sm-setup.md` | Research backlog (MODE=research) or setup story (MODE=setup) | haiku |
+| `generic-sm-finish.md` | Preflight checks (PHASE=preflight) or execute finish (PHASE=execute) | haiku |
+| `sm-handoff.md` | SM → TEA/Dev handoff with Jira/branch verification | haiku |
 | `sm-file-summary.md` | Summarize file changes for commits | haiku |
-| `sm-finish-bookkeeping.md` | Archive session, update sprint YAML | haiku |
-| `sm-finish-execution.md` | Execute finish-story workflow | haiku |
-| **TEA Subagents** | | |
-| `tea-handoff.md` | Update session after tests written (RED) | haiku |
+| **Shared Subagents** | | |
+| `generic-handoff.md` | Workflow-driven phase transitions (TEA, Dev, Reviewer) | haiku |
 | `testing-runner.md` | Run tests and report results | haiku |
-| **Dev Subagents** | | |
-| `dev-handoff.md` | Update session after PR created (GREEN) | haiku |
 | **Reviewer Subagents** | | |
 | `reviewer-preflight.md` | Pre-flight checks before review | haiku |
-| `reviewer-handoff-approve.md` | Mark approved, route to SM | haiku |
-| `reviewer-handoff-reject.md` | Route back to Dev with issues | haiku |
 | **Utility Subagents** | | |
 | `workflow-status-check.md` | Check workflow status across repos | haiku |
 
 ### SM → TEA (Story Setup)
 **Trigger:** User selects story via `/new-work`
-**Subagent:** `sm-story-setup.md`
+**Subagent:** `generic-sm-setup MODE=setup` then `sm-handoff`
 **Action:** Claim Jira, write session file, create branches
 **Handoff phrase:** "TEA, Story X-Y needs tests. Write failing tests for these ACs."
 
 ### TEA → Dev (Tests Written)
 **Trigger:** TEA completes failing tests
-**Subagent:** `tea-handoff.md`
-**Action:** Update session file, mark TEA checkbox done
+**Subagent:** `generic-handoff CURRENT_PHASE=red`
+**Action:** Update session file, transition to green phase
 **Handoff phrase:** "Dev, tests are RED and ready. Make them GREEN."
 
 ### Dev → Reviewer (Implementation Complete)
 **Trigger:** Dev creates PR with passing tests
-**Subagent:** `dev-handoff.md`
-**Action:** Update session file, mark Dev checkbox done
+**Subagent:** `generic-handoff CURRENT_PHASE=green`
+**Action:** Update session file, transition to review phase
 **Handoff phrase:** "Reviewer, PR #N is ready. All tests GREEN."
 
 ### Reviewer → SM (Approved)
 **Trigger:** Reviewer approves PR
-**Subagent:** `reviewer-handoff-approve.md`
-**Action:** Update status to `approved`, mark Reviewer checkbox done
+**Subagent:** `generic-handoff VERDICT=approved`
+**Action:** Update status to `approved`, transition to finish phase
 **Handoff phrase:** "SM, Story X-Y approved. Run finish-story."
 
 ### Reviewer → Dev (Rejected)
 **Trigger:** Reviewer finds issues
-**Subagent:** `reviewer-handoff-reject.md`
-**Action:** Update session with issues, route back to Dev
+**Subagent:** `generic-handoff VERDICT=rejected`
+**Action:** Update session with issues, route back to implement phase
 **Handoff phrase:** "Dev, {N} issues found. See assessment for details."
 
 ### SM → Done (Finish)
 **Trigger:** Status = `approved`
-**Subagent:** `finish-work-teardown.md`
+**Subagent:** `generic-sm-finish PHASE=execute`
 **Action:** Archive session, create summary, update sprint YAML, sync Jira
 
 ## Support Agent Handoffs
