@@ -327,6 +327,74 @@ Task tool:
 4. Combine related subagent work
 5. Use brace expansion in Glob patterns
 6. Spawn independent subagents in parallel
+7. Run tests in background while continuing work
+
+### Background Subagent Execution
+
+Run slow operations in background to continue working:
+
+```yaml
+# Spawn tests in background
+Task tool:
+  subagent_type: "testing-runner"
+  run_in_background: true
+  prompt: |
+    REPOS: all
+    CONTEXT: Background test run
+    RUN_ID: bg-001
+    SKIP_CACHE_WRITE: true
+```
+
+**Check status without blocking:**
+```yaml
+TaskOutput tool:
+  task_id: {task_id}
+  block: false
+  timeout: 1000
+```
+
+**When to use background execution:**
+- Test runs while writing more code
+- Multiple independent file searches
+- Parallel exploration of code paths
+- Long-running git operations
+
+**When NOT to use:**
+- Operations where next steps depend on the result
+- Operations that modify shared state
+- Before commit (need to verify GREEN)
+- During handoff (need synchronous verification)
+
+### Background Task Tracking
+
+Record background tasks in session file:
+
+```markdown
+## Background Tasks
+
+| Task ID | Type | Started | Status |
+|---------|------|---------|--------|
+| abc123 | testing-runner | 14:30 | running |
+```
+
+**Lifecycle:**
+1. Spawn with `run_in_background: true`
+2. Record task_id in session file
+3. Continue other work
+4. Periodically check `TaskOutput` with `block: false`
+5. When complete, process results and remove from table
+
+### Example: Background Tests While Implementing
+
+```
+Turn 1: Spawn testing-runner in background, continue editing
+Turn 2: Make code changes
+Turn 3: Check TaskOutput (still running), continue editing
+Turn 4: Make more changes
+Turn 5: Check TaskOutput (complete, GREEN), proceed to commit
+```
+
+This pattern saves turns by overlapping test execution with implementation work.
 
 ## Project Customization
 
