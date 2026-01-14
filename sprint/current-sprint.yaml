@@ -26,8 +26,8 @@ epics:
       Infrastructure for user-defined workflows. Replace hardcoded TDD flow
       (SM → TEA → Dev → Reviewer) with configurable YAML-based workflows.
       Users can define custom agent sequences, routing rules, and gates.
-    points: 28
-    completed_points: 21
+    points: 31
+    completed_points: 28
     priority: P1
     marker: strategic
     repos: pennyfarthing
@@ -294,6 +294,63 @@ epics:
           - Handoff determines next agent from workflow definition
           - Old specific handoff files deprecated (moved to archive or removed)
           - TDD and trivial workflows both work end-to-end
+      - id: 31-11
+        title: Consolidate SM bookkeeping subagents
+        description: |
+          Apply the same consolidation pattern from Story 31-10 to SM's
+          bookkeeping subagents. Currently SM has 6 separate subagents:
+
+          - sm-finish-bookkeeping - Check PR, lint, Jira prep
+          - sm-finish-execution - Archive, Jira transition, cleanup
+          - sm-story-setup - Jira claim, branches, session write
+          - sm-work-research - Scan backlog, check Jira
+          - sm-file-summary - Read and summarize files
+          - sm-handoff - Handoff bookkeeping to TEA
+
+          These could be consolidated into fewer, more generic subagents:
+
+          1. **generic-sm-setup** - Combines story-setup + work-research
+             - Scan backlog OR setup specific story based on params
+             - Handles Jira operations (claim, status check)
+             - Creates branches and session files
+
+          2. **generic-sm-finish** - Combines finish-bookkeeping + finish-execution
+             - Pre-flight checks (PR, lint, Jira)
+             - Archive and cleanup
+             - Single subagent with phase parameter
+
+          3. **sm-handoff → generic-handoff** - Fold into existing generic-handoff
+             - SM→TEA is just another phase transition (setup→red)
+             - Gate type: manual (always passes after setup complete)
+             - Unifies all handoffs under single subagent
+
+          4. Keep sm-file-summary separate (different concern - file reading)
+
+          5. **Remove deprecated handoff files from 31-10**
+             - tea-handoff.md, dev-handoff.md
+             - reviewer-handoff-approve.md, reviewer-handoff-reject.md
+             - These were deprecated but not removed; now delete them
+
+          Benefits:
+          - Fewer subagent files to maintain (6 → 3, plus remove 4 deprecated)
+          - Consistent parameter patterns
+          - All handoffs unified under generic-handoff
+          - Easier to extend for new workflows
+        points: 3
+        priority: P1
+        status: done
+        completed: 2026-01-14
+        started: 2026-01-14
+        assigned_to: Keith Avery
+        repos: pennyfarthing
+        acceptance_criteria:
+          - generic-sm-setup.md created combining setup + research
+          - generic-sm-finish.md created combining bookkeeping + execution
+          - sm-handoff folded into generic-handoff with setup phase support
+          - SM agent updated to use consolidated subagents
+          - Old SM subagent files deprecated in README
+          - Deprecated handoff files removed (tea-handoff, dev-handoff, reviewer-handoff-*)
+          - Both new-work and finish-story flows work end-to-end
   - id: epic-32
     title: BMAD Artifact Compatibility
     description: |
