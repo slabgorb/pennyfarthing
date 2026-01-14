@@ -59,6 +59,24 @@ Claude Code discovers commands via the `.claude/commands/` directory, not `penny
 **Problem:** `jira issue move` fails with "invalid transition state"
 **Solution:** Use American spelling: "Canceled" not "Cancelled"
 
+## Handoff Marker Gotchas
+
+### Missing Cyclist Handoff Prompt
+**Problem:** After handoff subagent completes, user doesn't see the quick-action button to invoke next agent
+**Cause:** Subagent output didn't include the Cyclist marker
+**Solution:** Handoff subagents MUST emit `<!-- CYCLIST:HANDOFF:/agent -->` in their final output
+
+This HTML comment is parsed by Cyclist's `quick-actions.js` to show the handoff button. Without it, the user has to manually type `/tea` or `/dev`.
+
+**Format:**
+```
+<!-- CYCLIST:HANDOFF:/tea -->
+```
+
+**Files that need it:**
+- `sm-handoff.md` - SM→TEA/Dev transitions
+- `generic-handoff.md` - TEA→Dev→Reviewer→SM transitions
+
 ---
 
 *Add story management gotchas discovered during coordination below*

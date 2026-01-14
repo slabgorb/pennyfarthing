@@ -118,19 +118,26 @@ function createElectronAPI() {
                     ipcRenderer.on('command:error', (_event, error) => callback(error));
                 },
             },
-            // Bash approval API (22-3)
+            // Bash approval API (22-3, 33-4)
             bash: {
                 onApprovalRequest: (callback) => {
                     ipcRenderer.on('bash:approval-request', callback);
                 },
                 sendApprovalResponse: (response) => ipcRenderer.invoke('bash:approval-response', response),
             },
-            // Dangerous path approval API (22-4)
+            // Dangerous path approval API (22-4, 33-4)
             path: {
                 onApprovalRequest: (callback) => {
                     ipcRenderer.on('path:approval-request', callback);
                 },
                 sendApprovalResponse: (response) => ipcRenderer.invoke('path:approval-response', response),
+            },
+            // Generic permission API (33-3)
+            permission: {
+                onRequest: (callback) => {
+                    ipcRenderer.on('permission:request', callback);
+                },
+                sendResponse: (response) => ipcRenderer.invoke('permission:response', response),
             },
             // Settings API (22-3, 22-4, 22-5, 24-1)
             settings: {
@@ -249,19 +256,26 @@ function createElectronAPI() {
                     // No-op in test environment
                 },
             },
-            // Bash approval API (22-3) - test stub
+            // Bash approval API (22-3, 33-4) - test stub
             bash: {
                 onApprovalRequest: (_callback) => {
                     // No-op in test environment
                 },
                 sendApprovalResponse: (_response) => Promise.resolve(),
             },
-            // Dangerous path approval API (22-4) - test stub
+            // Dangerous path approval API (22-4, 33-4) - test stub
             path: {
                 onApprovalRequest: (_callback) => {
                     // No-op in test environment
                 },
                 sendApprovalResponse: (_response) => Promise.resolve(),
+            },
+            // Generic permission API (33-3) - test stub
+            permission: {
+                onRequest: (_callback) => {
+                    // No-op in test environment
+                },
+                sendResponse: (_response) => Promise.resolve(),
             },
             // Settings API (22-3, 22-4, 22-5, 24-1) - test stub
             settings: {

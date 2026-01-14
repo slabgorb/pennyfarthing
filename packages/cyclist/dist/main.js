@@ -19,7 +19,7 @@ import { isTodoWriteMessage, extractTodos } from './todos.js';
 import { listDirectory as listDir } from './file-browser.js';
 import { getProjectDirectory, setProjectDirectory, isValidProjectDirectory, parseProjectDirArg, } from './paths.js';
 import { getContextUsage } from './api/context.js';
-import { getVerboseMode, setVerboseMode } from './settings-store.js';
+import { getVerboseMode, setVerboseMode, loadPersistedGrants } from './settings-store.js';
 import { getCurrentSettings, saveUserSettings, } from './settings.js';
 import { openSettingsWindow, setMainWindowRef, setBrowserWindowRef } from './settings-window.js';
 // Re-export project directory functions for external consumers
@@ -1924,6 +1924,8 @@ if (isElectron) {
                 break;
             }
             console.log('[Cyclist] Using Pennyfarthing project:', projectDir);
+            // 33-4: Load persisted permission grants from settings
+            loadPersistedGrants();
             // B-24: Kill any orphaned Claude processes from crashed sessions
             cleanupStaleProcesses();
             await startServer();
