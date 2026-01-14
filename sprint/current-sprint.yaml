@@ -351,6 +351,42 @@ epics:
           - Old SM subagent files deprecated in README
           - Deprecated handoff files removed (tea-handoff, dev-handoff, reviewer-handoff-*)
           - Both new-work and finish-story flows work end-to-end
+      - id: 31-12
+        title: Remove deprecated SM subagent files
+        description: |
+          Follow-up to Story 31-11. Now that generic-sm-setup and generic-sm-finish
+          are in use, remove the deprecated individual subagent files:
+
+          **Files to delete:**
+          - sm-story-setup.md (replaced by generic-sm-setup MODE=setup)
+          - sm-work-research.md (replaced by generic-sm-setup MODE=research)
+          - sm-finish-bookkeeping.md (replaced by generic-sm-finish PHASE=preflight)
+          - sm-finish-execution.md (replaced by generic-sm-finish PHASE=execute)
+          - sm-handoff.md (replaced by generic-handoff CURRENT_PHASE=setup)
+
+          **Keep separate:**
+          - sm-file-summary.md (different concern - file reading, not workflow)
+
+          **Also update:**
+          - SM agent to remove deprecated subagent references
+          - README to remove deprecated entries
+          - Any documentation referencing old subagent names
+
+          This is a cleanup story - the deprecated files are already unused but
+          still present in the codebase.
+        points: 1
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - sm-story-setup.md deleted
+          - sm-work-research.md deleted
+          - sm-finish-bookkeeping.md deleted
+          - sm-finish-execution.md deleted
+          - sm-handoff.md deleted
+          - sm-file-summary.md retained (still in use)
+          - SM agent references cleaned up
+          - README deprecation notices removed
   - id: epic-32
     title: BMAD Artifact Compatibility
     description: |
