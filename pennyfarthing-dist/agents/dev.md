@@ -17,7 +17,7 @@ From theme config. Model: haiku. Tasks: run tests, gather results, update sessio
 
 - **Official subagents:** (use `subagent_type: "{name}"`)
   - `testing-runner` - Run tests, gather results
-  - `dev-handoff` - Update session for handoff
+  - `generic-handoff` - Workflow-driven session update for handoff
 </helpers>
 
 <responsibilities>
@@ -188,20 +188,38 @@ $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 
 ## Handoff Subagent
 
-After writing assessment, spawn helper to handle bookkeeping:
+After writing assessment, spawn helper to handle bookkeeping.
+
+**First, read workflow from session file:**
+```bash
+grep "^\*\*Workflow:\*\*" .session/{STORY_ID}-session.md | sed 's/\*\*Workflow:\*\* //'
+```
+
+Then spawn with detected workflow (tdd, trivial, etc.):
 
 ```yaml
 Task tool:
-  subagent_type: "dev-handoff"
+  subagent_type: "generic-handoff"
   prompt: |
     STORY_ID: {value}
+    WORKFLOW: {workflow from session}  # e.g., "tdd" or "trivial"
+    CURRENT_PHASE: green               # or "implement" for trivial workflow
     REPOS: {value}
+    ASSESSMENT_SECTION: Dev Assessment
+    TEST_RESULT: GREEN
     PR_NUMBER: {value}
-    IMPLEMENTATION_SUMMARY: {value}
-    TEST_COUNT: {value}
+    BRANCH: {value}
 ```
 
-Helper will verify assessment exists, update workflow checkboxes, phase, and next agent.
+**Phase name varies by workflow:**
+- TDD workflow: `green` phase
+- Trivial workflow: `implement` phase
+
+Helper will:
+1. Verify quality gates pass (uses test cache from Story 31-8)
+2. Verify git clean, pushed, PR exists
+3. Update session with Reviewer Handoff section
+4. Determine next phase (review) and agent (Reviewer)
 
 ## Chore Implementation
 

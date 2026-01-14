@@ -257,24 +257,31 @@ epics:
       - id: 31-10
         title: Activate workflow-driven handoffs
         description: |
-          Wire the generic-handoff.ts logic into the agent system by:
+          Activate workflow-driven handoffs in the agent system by:
 
           1. Creating generic-handoff.md subagent definition that:
-             - Calls generic-handoff.ts functions via Bash/Node
+             - Implements workflow-driven logic (self-contained for Haiku)
              - Replaces hardcoded handoff subagents
+             - Note: TS in packages/core/ exists for programmatic use;
+               markdown is standalone for subagent portability
 
-          2. Updating main agents (sm, tea, dev, reviewer) to:
+          2. Updating main agents (tea, dev, reviewer) to:
              - Use generic-handoff subagent_type instead of specific ones
+             - Read workflow name from session file (not hardcoded)
              - Pass workflow phase context to handoff
 
           3. Deprecating old handoffs:
-             - tea-handoff.md, dev-handoff.md, sm-handoff.md
+             - tea-handoff.md, dev-handoff.md
              - reviewer-handoff-approve.md, reviewer-handoff-reject.md
+             - Note: sm-handoff.md retained for SM→TEA transition
 
-          The TypeScript logic exists (Story 31-7), this activates it.
+          The TypeScript logic (Story 31-7) provides programmatic API;
+          this story activates it via self-contained markdown subagent.
         points: 3
         priority: P1
-        status: backlog
+        status: in_progress
+        started: 2026-01-14
+        assigned_to: Keith Avery
         depends_on: [31-7]
         repos: pennyfarthing
         acceptance_criteria:
