@@ -200,9 +200,15 @@ Task tool:
     REPOS: {value}
     ASSESSMENT_SECTION: Dev Assessment
     TEST_RESULT: GREEN
+    PR_NUMBER: {value}
+    BRANCH: {value}
 ```
 
-Helper will use workflow definition to determine next phase (review) and agent (Reviewer).
+Helper will:
+1. Verify quality gates pass (uses test cache from Story 31-8)
+2. Verify git clean, pushed, PR exists
+3. Update session with Reviewer Handoff section
+4. Determine next phase (review) and agent (Reviewer)
 
 ## Chore Implementation
 
