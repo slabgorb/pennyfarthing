@@ -271,7 +271,14 @@ $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 <!-- CYCLIST:HANDOFF:/dev -->  # For rejections
 ```
 
-Handoff subagent (generic - handles both approve and reject):
+Handoff subagent (generic - handles both approve and reject).
+
+**First, read workflow from session file:**
+```bash
+grep "^\*\*Workflow:\*\*" .session/{STORY_ID}-session.md | sed 's/\*\*Workflow:\*\* //'
+```
+
+Then spawn with detected workflow:
 
 ```yaml
 # Approval
@@ -279,7 +286,7 @@ Task tool:
   subagent_type: "generic-handoff"
   prompt: |
     STORY_ID: {value}
-    WORKFLOW: tdd
+    WORKFLOW: {workflow from session}  # e.g., "tdd" or "trivial"
     CURRENT_PHASE: review
     REPOS: {value}
     ASSESSMENT_SECTION: Reviewer Assessment
@@ -290,12 +297,14 @@ Task tool:
   subagent_type: "generic-handoff"
   prompt: |
     STORY_ID: {value}
-    WORKFLOW: tdd
+    WORKFLOW: {workflow from session}  # e.g., "tdd" or "trivial"
     CURRENT_PHASE: review
     REPOS: {value}
     ASSESSMENT_SECTION: Reviewer Assessment
     VERDICT: rejected
 ```
+
+**Note:** Both TDD and trivial workflows have a `review` phase with the same name.
 
 ## Communication Style
 

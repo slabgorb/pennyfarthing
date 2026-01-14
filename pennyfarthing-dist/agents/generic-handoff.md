@@ -23,19 +23,29 @@ You are a workflow-driven handoff assistant. Complete the handoff for story {STO
 
 ## Workflow-Driven Logic
 
-This handoff reads the workflow definition to determine:
-1. What gate type to check (tests_fail, tests_pass, approval, manual)
-2. What the next phase is
-3. Which agent handles the next phase
+This handoff uses the CLI wrapper (`scripts/generic-handoff-cli.sh`) which calls the
+TypeScript implementation in `packages/core/src/workflow/generic-handoff.ts`.
 
-### Step 1: Load Workflow Definition
+**Key operations:**
+1. Check gate conditions: `./scripts/generic-handoff-cli.sh check-gate`
+2. Find next phase: `./scripts/generic-handoff-cli.sh next-phase`
+3. Format transitions: `./scripts/generic-handoff-cli.sh format-transition`
+
+**Gate types:**
+- `tests_fail` - Tests must be RED (TEA → Dev)
+- `tests_pass` - Tests must be GREEN (Dev → Reviewer)
+- `approval` - Requires APPROVED or REJECTED verdict (Reviewer → SM/Dev)
+- `manual` - No checks required, always passes (SM setup/finish)
+- `(none)` - Phases without gates are treated as `manual` (always pass)
+
+### Step 1: Find Current Phase and Gate Type
 
 ```bash
-WORKFLOW_FILE="$CLAUDE_PROJECT_DIR/pennyfarthing-dist/workflows/{WORKFLOW}.yaml"
-cat "$WORKFLOW_FILE"
+# Get current phase details including gate type
+./scripts/generic-handoff-cli.sh find-phase --workflow {WORKFLOW} --phase {CURRENT_PHASE}
 ```
 
-Parse the phases array to find current phase and its gate type.
+Returns JSON with phase name, agent, and gate type (or null if no gate).
 
 ### Step 2: Verify Assessment Exists
 
@@ -231,15 +241,17 @@ No automated checks required. Always passes.
 
 ## Step 4: Determine Next Phase
 
-From the workflow phases array, find the phase after CURRENT_PHASE.
-
-**For rejection (VERDICT=rejected):**
-Search backwards for the most recent phase with `tests_pass` gate - that's where Dev returns.
+Use the CLI to find the next phase:
 
 ```bash
-# Parse workflow YAML to find next phase
-# If rejected, find previous tests_pass phase
+# Normal progression (forward)
+./scripts/generic-handoff-cli.sh next-phase --workflow {WORKFLOW} --phase {CURRENT_PHASE}
+
+# Rejection (loop back to previous tests_pass phase)
+./scripts/generic-handoff-cli.sh next-phase --workflow {WORKFLOW} --phase {CURRENT_PHASE} --verdict rejected
 ```
+
+Returns JSON with next phase name, agent, and gate type.
 
 ## Step 5: Update Session File
 
@@ -267,11 +279,19 @@ Search backwards for the most recent phase with `tests_pass` gate - that's where
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 PHASE_STARTED=$(grep "^\*\*Phase Started:\*\*" "$SESSION_FILE" | head -1 | sed 's/\*\*Phase Started:\*\* //' | xargs)
 
-# Calculate duration
-START_EPOCH=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$PHASE_STARTED" +%s 2>/dev/null || date -d "$PHASE_STARTED" +%s 2>/dev/null || echo 0)
-NOW_EPOCH=$(date +%s)
-DURATION_MIN=$(( (NOW_EPOCH - START_EPOCH) / 60 ))
-DURATION="${DURATION_MIN}m"
+# Calculate duration using CLI
+DURATION=$(./scripts/generic-handoff-cli.sh calculate-duration --started-at "$PHASE_STARTED" --ended-at "$NOW")
+```
+
+Or use format-transition to get the full markdown:
+
+```bash
+./scripts/generic-handoff-cli.sh format-transition \
+  --workflow {WORKFLOW} \
+  --from {CURRENT_PHASE} \
+  --to {NEXT_PHASE} \
+  --started-at "$PHASE_STARTED" \
+  --ended-at "$NOW"
 ```
 
 ## Step 6: Report Result
@@ -349,12 +369,16 @@ Recommended fix: [what calling agent should do]
 
 **Never silently fail.** Always report what happened.
 
-## Mapping: Old Handoffs → Generic
+## Mapping: Deprecated Handoffs → Generic
+
+These handoffs are replaced by generic-handoff:
 
 | Old Subagent | CURRENT_PHASE | ASSESSMENT_SECTION | Gate | Key Checks |
 |--------------|---------------|-------------------|------|------------|
 | tea-handoff | red | TEA Assessment | tests_fail | Tests committed, tests RED |
-| dev-handoff | green | Dev Assessment | tests_pass | Quality gates, git clean, pushed, PR exists |
+| dev-handoff | green/implement | Dev Assessment | tests_pass | Quality gates, git clean, pushed, PR exists |
 | reviewer-handoff-approve | review | Reviewer Assessment | approval | Verdict = APPROVED |
 | reviewer-handoff-reject | review | Reviewer Assessment | approval | Verdict = REJECTED |
-| sm-handoff | setup | (none) | manual | None |
+
+**Note:** `sm-handoff` is NOT deprecated. It handles the SM→TEA transition which has
+special setup requirements (Jira claim, branch creation) not covered by generic-handoff.
