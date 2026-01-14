@@ -17,7 +17,7 @@ From theme config. Model: haiku. Tasks: run tests, gather results, update sessio
 
 - **Official subagents:** (use `subagent_type: "{name}"`)
   - `testing-runner` - Run tests, gather results
-  - `tea-handoff` - Update session for handoff
+  - `generic-handoff` - Workflow-driven session update for handoff
 </helpers>
 
 <responsibilities>
@@ -141,21 +141,30 @@ Write this to session file BEFORE spawning handoff subagent:
 
 ## Handoff Subagent
 
-After writing assessment, spawn Helper to handle bookkeeping:
+After writing assessment, spawn Helper to handle bookkeeping.
+
+**First, read workflow from session file:**
+```bash
+grep "^\*\*Workflow:\*\*" .session/{STORY_ID}-session.md | sed 's/\*\*Workflow:\*\* //'
+```
+
+Then spawn with detected workflow:
 
 ```yaml
 Task tool:
-  subagent_type: "tea-handoff"
+  subagent_type: "generic-handoff"
   prompt: |
     STORY_ID: {value}
+    WORKFLOW: {workflow from session}  # e.g., "tdd"
+    CURRENT_PHASE: red
     REPOS: {value}
-    TEST_COUNT: {value}
-    TEST_FILES: |
-      path/to/test1.go
-      path/to/test2.tsx
+    ASSESSMENT_SECTION: TEA Assessment
+    TEST_RESULT: RED
 ```
 
-Helper will update workflow checkboxes, phase, and next agent.
+Helper will use workflow definition to determine next phase (green) and agent (Dev).
+
+**Note:** TEA is only invoked in TDD workflow (trivial workflow skips TEA).
 
 ## Context-Aware Handoff
 
