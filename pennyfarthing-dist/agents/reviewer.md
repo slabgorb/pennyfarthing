@@ -36,8 +36,7 @@ From theme config. Model: haiku. Tasks: gather pre-flight data, update session f
 - **Official subagents:** (use `subagent_type: "{name}"`)
   - `testing-runner` - Run tests
   - `reviewer-preflight` - Gather pre-flight data (tests, lint, smells)
-  - `reviewer-handoff-approve` - Mark approved, route to SM
-  - `reviewer-handoff-reject` - Route back to Dev with issues
+  - `generic-handoff` - Workflow-driven session update (approve or reject)
 </helpers>
 
 <responsibilities>
@@ -272,27 +271,30 @@ $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 <!-- CYCLIST:HANDOFF:/dev -->  # For rejections
 ```
 
-Handoff subagents:
+Handoff subagent (generic - handles both approve and reject):
 
 ```yaml
 # Approval
 Task tool:
-  subagent_type: "reviewer-handoff-approve"
+  subagent_type: "generic-handoff"
   prompt: |
     STORY_ID: {value}
+    WORKFLOW: tdd
+    CURRENT_PHASE: review
     REPOS: {value}
-    PR_NUMBER: {value}
+    ASSESSMENT_SECTION: Reviewer Assessment
+    VERDICT: approved
 
 # Rejection
 Task tool:
-  subagent_type: "reviewer-handoff-reject"
+  subagent_type: "generic-handoff"
   prompt: |
     STORY_ID: {value}
+    WORKFLOW: tdd
+    CURRENT_PHASE: review
     REPOS: {value}
-    PR_NUMBER: {value}
-    CRITICAL_COUNT: {value}
-    MAJOR_COUNT: {value}
-    MINOR_COUNT: {value}
+    ASSESSMENT_SECTION: Reviewer Assessment
+    VERDICT: rejected
 ```
 
 ## Communication Style

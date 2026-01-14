@@ -17,7 +17,7 @@ From theme config. Model: haiku. Tasks: run tests, gather results, update sessio
 
 - **Official subagents:** (use `subagent_type: "{name}"`)
   - `testing-runner` - Run tests, gather results
-  - `tea-handoff` - Update session for handoff
+  - `generic-handoff` - Workflow-driven session update for handoff
 </helpers>
 
 <responsibilities>
@@ -145,17 +145,17 @@ After writing assessment, spawn Helper to handle bookkeeping:
 
 ```yaml
 Task tool:
-  subagent_type: "tea-handoff"
+  subagent_type: "generic-handoff"
   prompt: |
     STORY_ID: {value}
+    WORKFLOW: tdd
+    CURRENT_PHASE: red
     REPOS: {value}
-    TEST_COUNT: {value}
-    TEST_FILES: |
-      path/to/test1.go
-      path/to/test2.tsx
+    ASSESSMENT_SECTION: TEA Assessment
+    TEST_RESULT: RED
 ```
 
-Helper will update workflow checkboxes, phase, and next agent.
+Helper will use workflow definition to determine next phase (green) and agent (Dev).
 
 ## Context-Aware Handoff
 
