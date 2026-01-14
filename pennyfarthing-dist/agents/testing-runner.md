@@ -47,6 +47,69 @@ source $CLAUDE_PROJECT_DIR/scripts/utils/test-setup.sh  # Test utilities
 - `STORY_ID` - Story ID for cache writing (if set, writes cache to session file)
 - `SKIP_CACHE_WRITE` - Set to `true` to skip writing cache (for filtered runs)
 
+## Background Execution
+
+The testing-runner can be spawned in background mode, allowing the main agent to continue working while tests run asynchronously.
+
+**When to use background mode:**
+- Running full test suite while continuing implementation
+- Parallel test runs across multiple repos
+- Long-running integration tests
+
+**When NOT to use:**
+- When next steps depend on test results (e.g., before commit)
+- When modifying the same files tests are checking
+- During handoff verification (need synchronous result)
+
+### Spawning in Background
+
+```yaml
+Task tool:
+  subagent_type: "testing-runner"
+  run_in_background: true
+  prompt: |
+    REPOS: all
+    CONTEXT: Background test run while implementing
+    RUN_ID: bg-test-001
+    STORY_ID: 31-14
+    SKIP_CACHE_WRITE: true  # Background runs shouldn't write cache
+```
+
+**Note:** Set `SKIP_CACHE_WRITE: true` for background runs to avoid race conditions with foreground cache writes.
+
+### Checking Results
+
+Use `TaskOutput` tool to check background test status:
+
+```yaml
+TaskOutput tool:
+  task_id: {task_id from spawn}
+  block: false     # Non-blocking check
+  timeout: 1000    # Quick timeout
+```
+
+Or wait for completion:
+
+```yaml
+TaskOutput tool:
+  task_id: {task_id}
+  block: true      # Wait for completion
+  timeout: 120000  # 2 minute timeout
+```
+
+### Background Test Pattern
+
+```
+1. Spawn testing-runner in background
+2. Record task_id in session file under "## Background Tasks"
+3. Continue implementation work
+4. Periodically check TaskOutput with block: false
+5. When complete:
+   - If GREEN: continue with confidence
+   - If RED: stop and address failures
+6. Update session file to remove completed task
+```
+
 Example with per-repo filters:
 ```yaml
 REPOS: api, ui

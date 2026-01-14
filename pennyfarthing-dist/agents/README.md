@@ -261,6 +261,85 @@ All agent commands in `.claude/commands/` have been standardized to use `$CLAUDE
 - Script execution
 - File path references
 
+## Background Subagent Execution
+
+Subagents can run in background using Claude Code's `run_in_background` parameter. This allows the main agent to continue working while slow operations complete asynchronously.
+
+### When to Use Background Execution
+
+**Good candidates:**
+- Test runs (via `testing-runner`) while writing more code
+- Multiple independent file searches
+- Long-running git operations (fetch, clone)
+- Parallel exploration of code paths
+
+**When NOT to use:**
+- Operations where subsequent work depends on the result
+- Operations that modify shared state (session file, git working tree)
+- Sequential workflows (must complete phase A before phase B)
+
+### Spawning Background Subagents
+
+```yaml
+Task tool:
+  subagent_type: "testing-runner"
+  run_in_background: true
+  prompt: |
+    REPOS: all
+    CONTEXT: Background test run while implementing
+    RUN_ID: bg-test-001
+```
+
+### Checking Background Task Status
+
+Use the `TaskOutput` tool to check on background tasks:
+
+```yaml
+TaskOutput tool:
+  task_id: {task_id from spawn}
+  block: false          # Non-blocking check
+  timeout: 1000         # Quick timeout for status check
+```
+
+**Status values:**
+- `running` - Task still executing
+- `completed` - Task finished, results available
+- `error` - Task failed
+
+### Tracking Background Tasks in Session Files
+
+When spawning background tasks, record them in the session file:
+
+```markdown
+## Background Tasks
+
+| Task ID | Type | Started | Status |
+|---------|------|---------|--------|
+| abc123 | testing-runner | 14:30 | running |
+```
+
+Update status when checking results:
+- `running` → `completed` or `error`
+- Remove completed tasks after processing results
+
+### Background Execution Constraints
+
+1. **No concurrent state mutation** - Don't have multiple background tasks writing to the same file
+2. **Independent operations only** - Each background task should be self-contained
+3. **Check before proceeding** - If you need the result, wait for it with `block: true`
+4. **Clean up tracking** - Remove completed tasks from session file
+
+### Example: Background Tests While Coding
+
+```
+1. Spawn testing-runner with run_in_background: true
+2. Continue writing code
+3. Periodically check TaskOutput with block: false
+4. When tests complete, handle results
+5. If RED: stop and fix
+6. If GREEN: continue with confidence
+```
+
 ## Quick Reference
 
 ```bash
@@ -279,4 +358,4 @@ cat .claude/agents/pm.md
 
 ---
 
-**Your coordinated Pennyfarthing agent system is ready!** 🎯
+**Your coordinated Pennyfarthing agent system is ready!**
