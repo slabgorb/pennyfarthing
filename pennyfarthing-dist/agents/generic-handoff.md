@@ -321,15 +321,19 @@ eval "$CONTEXT_OUTPUT"
 Then read user's handoff mode preference from Cyclist settings:
 
 ```bash
-# Check for Cyclist settings file
-SETTINGS_FILE="$HOME/.cyclist/settings.yaml"
-if [ ! -f "$SETTINGS_FILE" ]; then
-    SETTINGS_FILE="$CLAUDE_PROJECT_DIR/.claude/cyclist.local.yaml"
-fi
+# Cyclist settings file location
+SETTINGS_FILE="$CLAUDE_PROJECT_DIR/.pennyfarthing/cyclist.yaml"
 
-# Extract handoff_mode (defaults to 'manual' if not found)
-HANDOFF_MODE=$(grep -E "handoff_mode:" "$SETTINGS_FILE" 2>/dev/null | sed 's/.*handoff_mode:\s*//' | tr -d "'" | tr -d '"' | xargs)
-HANDOFF_MODE="${HANDOFF_MODE:-manual}"
+# Extract auto_handoff (defaults to 'false' if not found)
+AUTO_HANDOFF=$(grep -E "auto_handoff:" "$SETTINGS_FILE" 2>/dev/null | sed 's/.*auto_handoff:\s*//' | tr -d "'" | tr -d '"' | xargs)
+AUTO_HANDOFF="${AUTO_HANDOFF:-false}"
+
+# Convert to handoff mode
+if [ "$AUTO_HANDOFF" = "true" ]; then
+    HANDOFF_MODE="auto"
+else
+    HANDOFF_MODE="manual"
+fi
 ```
 
 ### Handoff Decision Matrix
@@ -361,7 +365,17 @@ Handoff Mode: {HANDOFF_MODE}
 Action: {INVOKE_DIRECTLY | USER_INVOKE | FRESH_SESSION}
 
 Ready for {NEXT_AGENT}.
+
+<!-- CYCLIST:HANDOFF:/{NEXT_AGENT_COMMAND} -->
 ```
+
+**CRITICAL:** The `<!-- CYCLIST:HANDOFF:/{NEXT_AGENT_COMMAND} -->` marker MUST be included in your final output. This is parsed by Cyclist to show the handoff prompt button to the user.
+
+Map `{NEXT_AGENT}` to command:
+- TEA → `/tea`
+- Dev → `/dev`
+- Reviewer → `/reviewer`
+- SM → `/sm`
 
 ## Turn Efficiency
 
