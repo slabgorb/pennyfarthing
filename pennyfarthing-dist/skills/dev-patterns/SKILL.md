@@ -367,22 +367,39 @@ TaskOutput tool:
 
 ### Background Task Tracking
 
-Record background tasks in session file:
+Use the background task tracking utilities to manage session file entries:
 
-```markdown
-## Background Tasks
+```bash
+source $CLAUDE_PROJECT_DIR/scripts/utils/background-tasks.sh
+SESSION_FILE="$CLAUDE_PROJECT_DIR/.session/${STORY_ID}-session.md"
 
-| Task ID | Type | Started | Status |
-|---------|------|---------|--------|
-| abc123 | testing-runner | 14:30 | running |
+# After spawning background task, record it:
+bg_task_add "$SESSION_FILE" "$TASK_ID" "testing-runner" "Background test run"
+
+# After checking TaskOutput, update status:
+bg_task_update "$SESSION_FILE" "$TASK_ID" "completed"  # or "error"
+
+# Clean up finished tasks:
+bg_task_cleanup "$SESSION_FILE"
 ```
+
+**Available functions:**
+| Function | Purpose |
+|----------|---------|
+| `bg_task_add` | Record new background task |
+| `bg_task_update` | Update task status (running/completed/error) |
+| `bg_task_cleanup` | Remove completed and errored tasks |
+| `bg_task_list` | Show all running tasks |
+| `bg_task_check` | Return 0 if any tasks running (for conditionals) |
+| `bg_task_summary` | Print counts by status |
 
 **Lifecycle:**
 1. Spawn with `run_in_background: true`
-2. Record task_id in session file
+2. Record: `bg_task_add "$SESSION_FILE" "$TASK_ID" "type" "description"`
 3. Continue other work
 4. Periodically check `TaskOutput` with `block: false`
-5. When complete, process results and remove from table
+5. Update: `bg_task_update "$SESSION_FILE" "$TASK_ID" "completed"`
+6. Cleanup: `bg_task_cleanup "$SESSION_FILE"`
 
 ### Example: Background Tests While Implementing
 

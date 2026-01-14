@@ -99,16 +99,30 @@ TaskOutput tool:
 
 ### Background Test Pattern
 
+**Use the background task tracking utilities:**
+
+```bash
+source $CLAUDE_PROJECT_DIR/scripts/utils/background-tasks.sh
+SESSION_FILE="$CLAUDE_PROJECT_DIR/.session/${STORY_ID}-session.md"
 ```
-1. Spawn testing-runner in background
-2. Record task_id in session file under "## Background Tasks"
+
+**Pattern:**
+1. Spawn testing-runner with `run_in_background: true`
+2. Record task: `bg_task_add "$SESSION_FILE" "$TASK_ID" "testing-runner" "Background test run"`
 3. Continue implementation work
-4. Periodically check TaskOutput with block: false
+4. Periodically check TaskOutput with `block: false`
 5. When complete:
+   - Update: `bg_task_update "$SESSION_FILE" "$TASK_ID" "completed"` (or "error")
+   - Cleanup: `bg_task_cleanup "$SESSION_FILE"`
    - If GREEN: continue with confidence
    - If RED: stop and address failures
-6. Update session file to remove completed task
-```
+
+**Available functions:**
+- `bg_task_add <session_file> <task_id> <type> <description>` - Record new task
+- `bg_task_update <session_file> <task_id> <status>` - Update status (running/completed/error)
+- `bg_task_cleanup <session_file>` - Remove completed/errored tasks
+- `bg_task_list <session_file>` - Show active tasks
+- `bg_task_check <session_file>` - Return 0 if any running tasks exist
 
 Example with per-repo filters:
 ```yaml
