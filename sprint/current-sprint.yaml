@@ -703,11 +703,13 @@ epics:
           - "Always allow"
         points: 2
         priority: P1
-        status: in_progress
+        status: done
         started: 2026-01-14
+        completed: 2026-01-14
         assigned_to: Keith Avery
         repos: pennyfarthing, cyclist
         jira: MSSCI-11686
+        pr: 242
         acceptance_criteria:
           - Three grant scopes implemented
           - UI reflects scope selection

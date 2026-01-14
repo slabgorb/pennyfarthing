@@ -131,6 +131,7 @@
           <button type="button" class="toolbar-btn" data-action="codeBlock" title="Code Block">{ }</button>
           <span class="toolbar-spacer"></span>
           <button type="button" class="mode-btn" data-control="plan-mode" title="Cycle permission mode: Manual → Plan → Accept → Danger">MANUAL</button>
+          <button type="button" class="handoff-btn" data-control="handoff-mode" title="Toggle auto-handoff: Auto handoff to next agent">AUTO</button>
         </div>
         <div id="editor-row">
           <div id="editor">
@@ -174,7 +175,7 @@
     </div>
     <aside id="sidebar">
       <!-- Persona Section -->
-      <div id="persona-section" class="persona-section">
+      <div id="persona-section" class="persona-section" data-action="theme-picker">
         <div id="project-name" class="project-name"></div>
         <!-- Character name above portrait -->
         <div id="character-name" class="character-name">Loading...</div>
@@ -204,6 +205,18 @@
         <div id="benchmark-score" class="benchmark-score"></div>
         <div id="helper-line" class="activity-line"></div>
         <div id="helper-task-line" class="activity-line"></div>
+      </div>
+
+      <!-- Theme Picker (35-1: Contextual settings) -->
+      <div id="theme-picker" class="theme-picker" style="display: none;">
+        <div class="theme-picker-header">
+          <span class="theme-picker-title">Select Theme</span>
+          <button class="theme-picker-close" data-action="close">&times;</button>
+        </div>
+        <div class="recent-themes">
+          <!-- Recent themes populated dynamically -->
+        </div>
+        <button class="browse-all-themes" data-action="browse-all">Browse all themes...</button>
       </div>
 
       <!-- Story Section (B-13: Enhanced) -->
@@ -424,6 +437,8 @@
   -->
   <script type="module" src="/js/portrait.js"></script>
   <script src="/js/stats-strip.js"></script>
+  <!-- 35-1: ThemePicker for contextual theme selection -->
+  <script type="module" src="/js/components/ThemePicker.js"></script>
   <script type="module" src="/js/persona.js"></script>
   <script type="module" src="/js/story.js"></script>
   <script type="module" src="/js/todos.js"></script>

@@ -12,28 +12,7 @@
     <h1>Settings</h1>
 
     <form id="settings-form">
-      <!-- Workflow Section -->
-      <section class="settings-section" data-section="workflow">
-        <h2>Workflow</h2>
-
-        <div class="setting-item" id="handoff-mode-group">
-          <fieldset class="handoff-mode-fieldset">
-            <legend class="setting-label">Handoff Mode</legend>
-            <div class="radio-group">
-              <label class="radio-label">
-                <input type="radio" name="handoff_mode" value="auto" id="handoff_mode_auto">
-                <span>Auto handoff</span>
-              </label>
-              <p class="radio-description">Automatically trigger next agent when phase completes</p>
-              <label class="radio-label">
-                <input type="radio" name="handoff_mode" value="manual" id="handoff_mode_manual" checked>
-                <span>Manual handoff (ask first)</span>
-              </label>
-              <p class="radio-description">Show confirmation before handoff</p>
-            </div>
-          </fieldset>
-        </div>
-      </section>
+      <!-- 35-1: Workflow section removed - handoff toggle now in editor toolbar -->
 
       <!-- Display Section -->
       <section class="settings-section" data-section="display">
@@ -88,21 +67,7 @@
         </div>
       </section>
 
-      <!-- Pennyfarthing Section -->
-      <section class="settings-section" data-section="pennyfarthing">
-        <h2>Pennyfarthing</h2>
-
-        <div class="setting-item">
-          <label class="setting-label">
-            <span>Agent Theme</span>
-          </label>
-          <div id="theme-browser-container" class="theme-browser-container">
-            <!-- Populated dynamically by settings-ui.js via ThemeBrowser component -->
-          </div>
-          <input type="hidden" id="theme" name="theme" value="alice-in-wonderland">
-          <p class="setting-description">Character theme for agent personas (requires agent restart)</p>
-        </div>
-      </section>
+      <!-- 35-1: Pennyfarthing/Theme section removed - theme picker now in persona area -->
 
       <!-- Button Row -->
       <div class="button-row">

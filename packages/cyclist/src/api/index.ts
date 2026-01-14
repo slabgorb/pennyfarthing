@@ -17,3 +17,5 @@ export type { ModeInfo } from './mode.js';
 export { createTelemetryRouter } from './telemetry.js';
 export { createEvaluationRouter } from './evaluation.js';
 export { createBenchmarkRouter } from './benchmark.js';
+// 35-1: Settings API for contextual settings
+export { createSettingsRouter } from './settings.js';

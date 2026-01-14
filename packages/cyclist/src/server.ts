@@ -23,6 +23,7 @@ import {
   createTelemetryRouter,
   createEvaluationRouter,
   createBenchmarkRouter,
+  createSettingsRouter,
   initTokenStatsBroadcast,
 } from './api/index.js';
 
@@ -76,6 +77,8 @@ app.use('/api/mode', createModeRouter());
 app.use('/api/telemetry', createTelemetryRouter());
 app.use('/api/evaluation', createEvaluationRouter());
 app.use('/api/benchmark', createBenchmarkRouter(getProjectDir));
+// 35-1: Settings API for contextual settings
+app.use('/api/settings', createSettingsRouter());
 app.use('/v1', createOTLPRouter());
 
 // Initialize token stats WebSocket broadcast callback
