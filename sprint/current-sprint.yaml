@@ -485,6 +485,7 @@ epics:
         priority: P1
         status: backlog
         repos: pennyfarthing
+        jira: MSSCI-11686
         acceptance_criteria:
           - Subagent prompts support background execution flag
           - Session file tracks active background task IDs
