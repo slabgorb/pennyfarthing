@@ -77,3 +77,29 @@ Edit the `## Workflow Tracking` section:
 ```
 
 **Duration calculation:** Subtract sm Started from {NOW}, format as `Xm` or `Xh Ym`.
+
+## Step 7: Emit Cyclist Handoff Marker
+
+**CRITICAL:** Your final output MUST include this marker for Cyclist to show the handoff prompt:
+
+```
+<!-- CYCLIST:HANDOFF:/{NEXT_AGENT} -->
+```
+
+Where `{NEXT_AGENT}` is:
+- `tea` for standard stories (3+ points)
+- `dev` for trivial stories (1-2 points)
+
+This marker is parsed by Cyclist's quick-actions system to present a handoff button to the user. Without it, the user won't see the prompt to invoke the next agent.
+
+**Example final output:**
+```
+## Handoff Complete
+
+Story 35-1 ready for TEA phase.
+- Session file updated
+- Branch verified
+- Jira claimed
+
+<!-- CYCLIST:HANDOFF:/tea -->
+```

@@ -6,7 +6,7 @@ import { existsSync, writeFileSync, unlinkSync, readFileSync } from 'fs';
 // Path resolution
 import { publicDir, nodeModulesDir, portraitsDir, getProjectDirectory } from './paths.js';
 // API routers
-import { createStatsRouter, createPortraitRouter, createPersonaRouter, createGitRouter, createOTLPRouter, createStoryRouter, createFileBrowserRouter, createTokenStatsRouter, createContextRouter, createThemeAgentsRouter, createModeRouter, createTelemetryRouter, createEvaluationRouter, createBenchmarkRouter, initTokenStatsBroadcast, } from './api/index.js';
+import { createStatsRouter, createPortraitRouter, createPersonaRouter, createGitRouter, createOTLPRouter, createStoryRouter, createFileBrowserRouter, createTokenStatsRouter, createContextRouter, createThemeAgentsRouter, createModeRouter, createTelemetryRouter, createEvaluationRouter, createBenchmarkRouter, createSettingsRouter, initTokenStatsBroadcast, } from './api/index.js';
 // WebSocket setup
 import { setupWebSocketServers } from './websocket.js';
 // Re-exports for main.ts and tests
@@ -46,6 +46,8 @@ app.use('/api/mode', createModeRouter());
 app.use('/api/telemetry', createTelemetryRouter());
 app.use('/api/evaluation', createEvaluationRouter());
 app.use('/api/benchmark', createBenchmarkRouter(getProjectDir));
+// 35-1: Settings API for contextual settings
+app.use('/api/settings', createSettingsRouter());
 app.use('/v1', createOTLPRouter());
 // Initialize token stats WebSocket broadcast callback
 initTokenStatsBroadcast();
