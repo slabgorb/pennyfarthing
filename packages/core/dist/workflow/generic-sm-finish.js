@@ -55,7 +55,7 @@ function parseAcceptanceCriteria(content) {
  * @returns Preflight result with status and issues
  */
 export async function preflightCheck(params) {
-    const { storyId, repos, branch, jiraKey, projectRoot, _mockPrStatus } = params;
+    const { storyId, repos, jiraKey, projectRoot, _mockPrStatus } = params;
     const issues = [];
     const warnings = [];
     // Initialize PR status based on repos
@@ -117,7 +117,7 @@ function formatDateForFilename() {
  * @returns Execute result with completion flags
  */
 export async function executeFinish(params) {
-    const { storyId, storyTitle, sessionDir, archiveDir, contextDir, summaryContent } = params;
+    const { storyId, sessionDir, archiveDir, contextDir, summaryContent } = params;
     const sessionPath = join(sessionDir, `${storyId}-session.md`);
     const dateStr = formatDateForFilename();
     const archivePath = join(archiveDir, `story-${storyId}-${dateStr}.md`);

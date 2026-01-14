@@ -171,4 +171,67 @@ export declare function formatPhaseTransition(params: PhaseTransitionParams): st
  * @returns Formatted duration string (e.g., "30m", "2h 30m", "45s")
  */
 export declare function calculateDuration(startedAt: string, endedAt: string): string;
+/**
+ * Handoff mode type - auto triggers immediately, manual prompts first
+ */
+export type HandoffMode = 'auto' | 'manual';
+/**
+ * Handoff behavior based on mode
+ */
+export interface HandoffBehavior {
+    /** What action to take */
+    action: 'immediate' | 'prompt';
+    /** Whether user confirmation is required */
+    requiresConfirmation: boolean;
+    /** Message to show user (for prompt action) */
+    message?: string;
+}
+/**
+ * Entry for handoff history tracking
+ */
+export interface HandoffHistoryEntry {
+    phase: string;
+    agent: string;
+    timestamp: string;
+    handoffMode: HandoffMode;
+}
+/**
+ * Read handoff mode from Cyclist settings file
+ * Returns 'manual' as default if file doesn't exist or is invalid
+ *
+ * @param settingsPath - Path to the settings file (JSON or YAML)
+ * @returns The handoff mode setting
+ */
+export declare function readHandoffMode(settingsPath: string): HandoffMode;
+/**
+ * Parse handoff mode from JSON string
+ * Handles both new format (handoff_mode) and legacy format (auto_handoff boolean)
+ *
+ * @param jsonContent - JSON string containing settings
+ * @returns The handoff mode setting
+ */
+export declare function parseHandoffModeFromJson(jsonContent: string): HandoffMode;
+/**
+ * Parse handoff mode from YAML string
+ * Handles both new format (handoff_mode) and legacy format (auto_handoff boolean)
+ *
+ * @param yamlContent - YAML string containing settings
+ * @returns The handoff mode setting
+ */
+export declare function parseHandoffModeFromYaml(yamlContent: string): HandoffMode;
+/**
+ * Get handoff behavior based on mode
+ *
+ * @param mode - The handoff mode setting
+ * @returns Behavior configuration for the mode
+ */
+export declare function getHandoffBehavior(mode: HandoffMode): HandoffBehavior;
+/**
+ * Format handoff history entry for session file
+ * Creates a markdown section with table row for the handoff
+ *
+ * @param entry - Handoff history entry to format
+ * @returns Markdown string for the handoff history section
+ */
+export declare function formatHandoffHistory(entry: HandoffHistoryEntry): string;
 //# sourceMappingURL=generic-handoff.d.ts.map

@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 63
-  completed_points: 37
-  remaining_points: 26
+  completed_points: 39
+  remaining_points: 24
   notes: |
     Sprint 10 focus: Three strategic epics
     - Epic 31: Customizable Workflow Engine (15 pts)
@@ -27,7 +27,7 @@ epics:
       (SM → TEA → Dev → Reviewer) with configurable YAML-based workflows.
       Users can define custom agent sequences, routing rules, and gates.
     points: 34
-    completed_points: 28
+    completed_points: 30
     priority: P1
     marker: strategic
     repos: pennyfarthing
@@ -393,8 +393,9 @@ epics:
           workflow wasn't being enforced properly.
         points: 2
         priority: P2
-        status: in_progress
+        status: done
         started: 2026-01-14
+        completed: 2026-01-14
         assigned_to: Keith Avery
         repos: pennyfarthing
         jira: MSSCI-11682
@@ -439,7 +440,8 @@ epics:
           context management when approaching limits.
         points: 3
         priority: P1
-        status: backlog
+        status: done
+        completed: 2026-01-14
         repos: pennyfarthing, cyclist
         jira: MSSCI-11683
         acceptance_criteria:

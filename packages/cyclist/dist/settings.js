@@ -22,8 +22,7 @@ export const PROJECT_SETTINGS_FILE = '.claude/cyclist.local.yaml';
 // =============================================================================
 const DEFAULT_SETTINGS = {
     workflow: {
-        auto_handoff: false,
-        handoff_confirm: true,
+        handoff_mode: 'manual',
     },
     display: {
         show_flow: true,
@@ -105,10 +104,10 @@ export function validateSettings(settings) {
         return false;
     }
     const workflow = s.workflow;
-    if (typeof workflow.auto_handoff !== 'boolean')
+    // handoff_mode must be 'auto' or 'manual'
+    if (workflow.handoff_mode !== 'auto' && workflow.handoff_mode !== 'manual') {
         return false;
-    if (typeof workflow.handoff_confirm !== 'boolean')
-        return false;
+    }
     // Check display section
     if (typeof s.display !== 'object' || s.display === null) {
         return false;
@@ -141,6 +140,46 @@ export function validateSettings(settings) {
     return true;
 }
 // =============================================================================
+// Settings Migration (31-13)
+// =============================================================================
+/**
+ * Migrate legacy settings (auto_handoff + handoff_confirm) to new format (handoff_mode)
+ * Story 31-13: Context-aware handoffs with auto-compaction
+ *
+ * Migration logic:
+ * - auto_handoff: true → handoff_mode: 'auto'
+ * - auto_handoff: false → handoff_mode: 'manual'
+ *
+ * @param settings - Parsed settings (may be legacy or new format)
+ * @returns Settings in new format with handoff_mode
+ */
+export function migrateSettings(settings) {
+    const result = getDefaultSettings();
+    // Handle workflow migration
+    if (settings.workflow) {
+        const workflow = settings.workflow;
+        // Check for new format first
+        if (workflow.handoff_mode === 'auto' || workflow.handoff_mode === 'manual') {
+            result.workflow.handoff_mode = workflow.handoff_mode;
+        }
+        // Migrate from legacy format
+        else if ('auto_handoff' in workflow) {
+            result.workflow.handoff_mode = workflow.auto_handoff === true ? 'auto' : 'manual';
+        }
+    }
+    // Merge other sections normally
+    if (settings.display) {
+        result.display = { ...result.display, ...settings.display };
+    }
+    if (settings.notifications) {
+        result.notifications = { ...result.notifications, ...settings.notifications };
+    }
+    if (settings.pennyfarthing) {
+        result.pennyfarthing = { ...result.pennyfarthing, ...settings.pennyfarthing };
+    }
+    return result;
+}
+// =============================================================================
 // Settings Merging
 // =============================================================================
 /**
@@ -150,11 +189,8 @@ export function validateSettings(settings) {
 export function mergeSettings(base, override) {
     const result = JSON.parse(JSON.stringify(base));
     if (override.workflow) {
-        if (typeof override.workflow.auto_handoff === 'boolean') {
-            result.workflow.auto_handoff = override.workflow.auto_handoff;
-        }
-        if (typeof override.workflow.handoff_confirm === 'boolean') {
-            result.workflow.handoff_confirm = override.workflow.handoff_confirm;
+        if (override.workflow.handoff_mode === 'auto' || override.workflow.handoff_mode === 'manual') {
+            result.workflow.handoff_mode = override.workflow.handoff_mode;
         }
     }
     if (override.display) {
