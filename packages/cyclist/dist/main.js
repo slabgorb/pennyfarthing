@@ -11,7 +11,7 @@
 import { fileURLToPath } from 'url';
 import { dirname, join, basename } from 'path';
 import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
-import { getStoryInfo, getGitInfo, writePortFile, cleanupPortFile, getOtelConfig, findAvailablePort } from './server.js';
+import { getStoryInfo, getGitInfo, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig, findAvailablePort } from './server.js';
 import { parseToolStats, createEmptyStats } from './tool-stats.js';
 import { getTokenStats, setTokenStatsCallback, setToolEventCallback, aggregateTokenStats, resetTokenStats, resetEventStore, getToolEventsFiltered, getToolTypes, exportAuditLogAsJSON, exportAuditLogAsCSV, getAuditLogStats, } from './otlp-receiver.js';
 import { ClaudeService } from './claude-service.js';
@@ -25,7 +25,7 @@ import { openSettingsWindow, setMainWindowRef, setBrowserWindowRef } from './set
 // Re-export project directory functions for external consumers
 export { getProjectDirectory, setProjectDirectory, isValidProjectDirectory };
 import * as fs from 'fs';
-import { exec, execSync } from 'child_process';
+import { exec } from 'child_process';
 import { promisify } from 'util';
 const execAsync = promisify(exec);
 // Calculate __dirname for ES modules
@@ -914,6 +914,11 @@ export function getClaudeService() {
         claudeServiceInstance = new ClaudeService({
             cwd: projectDir,
             env: otelConfig ?? undefined,
+        });
+        // B-24 fix: Track Claude process PID for targeted cleanup
+        claudeServiceInstance.on('process-spawned', (pid) => {
+            writePidFile(projectDir, pid);
+            console.log(`[ClaudeService] Wrote PID file: ${pid}`);
         });
         if (otelConfig) {
             console.log('[ClaudeService] OTEL config enabled:', otelConfig.OTEL_EXPORTER_OTLP_ENDPOINT);
@@ -1839,18 +1844,31 @@ if (isElectron) {
     setupAuditLogIPCHandlers(ipcMain);
     setupCommandIPCHandlers(ipcMain); // 23-3: Command execution
     /**
-     * Kill any orphaned Claude CLI processes from previous Cyclist sessions
-     * B-24: Prevents duplicate message handling from zombie processes
+     * Kill orphaned Claude CLI process from previous Cyclist session in THIS project.
+     * B-24 fix: Only kills the specific PID from .cyclist-pid, not all Claude processes.
+     * This prevents disrupting other running Cyclist sessions.
      */
     function cleanupStaleProcesses() {
-        try {
-            // Kill any orphaned claude processes that were spawned with stream-json output
-            execSync('pkill -f "claude.*--output-format stream-json"', { stdio: 'ignore' });
-            console.log('[Cyclist] Cleaned up stale Claude processes');
+        const projectDir = getProjectDirectory();
+        if (!projectDir)
+            return;
+        const stalePid = readPidFile(projectDir);
+        if (!stalePid) {
+            // No PID file means no stale process to clean up
+            return;
         }
-        catch {
-            // pkill returns non-zero if no processes found - that's expected and fine
+        // Check if the process is still running
+        if (isProcessRunning(stalePid)) {
+            try {
+                process.kill(stalePid, 'SIGTERM');
+                console.log(`[Cyclist] Cleaned up stale Claude process (PID: ${stalePid})`);
+            }
+            catch (err) {
+                console.warn(`[Cyclist] Failed to kill stale process ${stalePid}:`, err);
+            }
         }
+        // Clean up the stale PID file
+        cleanupPidFile(projectDir);
     }
     /**
      * Show folder picker dialog
@@ -1989,6 +2007,12 @@ if (isElectron) {
         // B-24: Abort any running Claude CLI process
         if (claudeServiceInstance) {
             claudeServiceInstance.abort();
+        }
+        // B-24 fix: Clean up PID file on graceful shutdown
+        const projectDir = getProjectDirectory();
+        if (projectDir) {
+            cleanupPidFile(projectDir);
+            console.log('[Cyclist] Cleaned up PID file');
         }
         await stopServer();
     });
