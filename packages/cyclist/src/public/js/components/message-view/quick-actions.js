@@ -43,59 +43,6 @@ export const PHASE_TO_AGENT = {
   'infrastructure': '/devops',
 };
 
-/**
- * Patterns for detecting handoff prompts from agents.
- * Each pattern matches a specific way Claude might suggest invoking an agent.
- */
-export const HANDOFF_PATTERNS = [
-  // Direct command patterns: "invoke /reviewer", "run /dev", etc.
-  // Capture the agent name with or without slash
-  {
-    pattern: /(?:invoke|run|use|start|switch\s+to)\s+(?:\*\*)?[`]?\/?(orchestrator|tech-writer|ux-designer|architect|reviewer|devops|tea|dev|sm|pm)[`]?(?:\*\*)?/i,
-    type: 'direct',
-  },
-  // "ready for review" → /reviewer
-  {
-    pattern: /ready\s+for\s+(review|code\s+review|testing|tests|test|implementation|implement|development|develop|green\s+phase|red\s+phase|finish|completion|complete|architecture|design|planning|documentation|docs|ux|ui|deployment|infrastructure)/i,
-    type: 'phase',
-  },
-  // Context high warning patterns: "Start fresh with /tea", "new session with /dev"
-  {
-    pattern: /(?:start\s+(?:fresh|a\s+new\s+session)|new\s+session)\s+with\s+(?:\*\*)?[`]?\/?(orchestrator|tech-writer|ux-designer|architect|reviewer|devops|tea|dev|sm|pm)[`]?(?:\*\*)?/i,
-    type: 'context',
-  },
-];
-
-export const QUESTION_PATTERNS = [
-  // Direct action offers - these imply readiness to proceed (high confidence 0.85)
-  { pattern: /would you like me to/i, responses: ['Yes, proceed', 'No'], requiresQuestion: false, confidence: 0.85 },
-  { pattern: /shall i (proceed|continue|go ahead|start|begin)/i, responses: ['Yes, proceed', 'No'], requiresQuestion: false, confidence: 0.85 },
-  // "ready to proceed" - action-oriented with specific responses
-  { pattern: /ready to proceed/i, responses: ['Yes, proceed', 'Hold on'], requiresQuestion: false, confidence: 0.85 },
-  // "ready to X" - for other actions
-  { pattern: /ready to (continue|start|begin|go)/i, responses: ['Yes', 'No'], requiresQuestion: false, confidence: 0.80 },
-  { pattern: /want me to (proceed|continue|go ahead|start|begin)/i, responses: ['Yes, proceed', 'No'], requiresQuestion: false, confidence: 0.85 },
-
-  // Yes/No questions - require actual question mark (moderate confidence 0.75-0.80)
-  { pattern: /should i\b/i, responses: ['Yes', 'No'], requiresQuestion: true, confidence: 0.80 },
-  { pattern: /do you want/i, responses: ['Yes', 'No'], requiresQuestion: true, confidence: 0.80 },
-  { pattern: /shall i\b/i, responses: ['Yes', 'No'], requiresQuestion: true, confidence: 0.80 },
-  // Universal confirmation patterns (Story 25-4)
-  // NOTE: "Can I" removed - too broad, causes false positives (see test B-9.6 line 125)
-  { pattern: /may i\b/i, responses: ['Yes', 'No'], requiresQuestion: true, confidence: 0.75 },
-  { pattern: /is it (okay|ok) (to|if)/i, responses: ['Yes', 'No'], requiresQuestion: true, confidence: 0.75 },
-  { pattern: /are you ready for me to/i, responses: ['Yes', 'No'], requiresQuestion: true, confidence: 0.80 },
-
-  // Permission prompts (tool approval) - these are actual permission requests (high confidence 0.85)
-  { pattern: /allow.*to\s+(run|execute)/i, responses: ['Yes', 'No'], requiresQuestion: false, confidence: 0.85 },
-  { pattern: /allow.*to\s+read/i, responses: ['Yes', 'No'], requiresQuestion: false, confidence: 0.85 },
-  { pattern: /allow.*to\s+write/i, responses: ['Yes', 'No'], requiresQuestion: false, confidence: 0.85 },
-  { pattern: /allow.*to\s+edit/i, responses: ['Yes', 'No'], requiresQuestion: false, confidence: 0.85 },
-];
-
-
-
-
 // =============================================================================
 // State
 // =============================================================================
@@ -171,28 +118,6 @@ function getAgentDisplayName(agentCmd) {
   };
 
   return friendlyNames[role] || agentCmd;
-}
-
-/**
- * Extract the last meaningful paragraph from text.
- * Skips empty lines and code blocks.
- * @param {string} text - Full message text
- * @returns {string} Last paragraph
- */
-function getLastParagraph(text) {
-  if (!text) return '';
-
-  // Remove code blocks first
-  const withoutCode = text.replace(/```[\s\S]*?```/g, '');
-
-  // Split into paragraphs (double newline or end of text)
-  const paragraphs = withoutCode
-    .split(/\n\s*\n/)
-    .map(p => p.trim())
-    .filter(p => p.length > 0);
-
-  // Return last non-empty paragraph, or full text if no splits
-  return paragraphs.length > 0 ? paragraphs[paragraphs.length - 1] : withoutCode.trim();
 }
 
 // =============================================================================
@@ -342,228 +267,13 @@ function processStructuredMarkers(markers, fullText = '') {
   return null;
 }
 
-/**
- * Detect yes/no question patterns in text.
- * Only checks the LAST PARAGRAPH to avoid false positives from explanatory text.
- * @param {string} text - Text to analyze
- * @returns {Object|null} Detection result with type and responses, or null
- */
-export function detectQuestionPattern(text) {
-  if (!text) return null;
-
-  // Focus on the last paragraph where actual questions appear
-  const lastParagraph = getLastParagraph(text);
-  if (!lastParagraph) return null;
-
-  const endsWithQuestion = lastParagraph.trimEnd().endsWith('?');
-
-  for (const { pattern, responses, requiresQuestion, confidence } of QUESTION_PATTERNS) {
-    if (pattern.test(lastParagraph)) {
-      // If pattern requires a question mark, check for it
-      if (requiresQuestion && !endsWithQuestion) {
-        continue;
-      }
-      return { type: 'yesno', responses, confidence };
-    }
-  }
-
-  return null;
-}
-
-/**
- * Detect handoff patterns in text.
- * Looks for agent invocation prompts like "invoke /reviewer" or "ready for review".
- * Only checks the LAST PARAGRAPH to avoid false positives from explanatory text.
- * @param {string} text - Text to analyze
- * @returns {Object|null} Detection result with type, agent, and responses, or null
- */
-export function detectHandoffPattern(text) {
-  if (!text) return null;
-
-  // Remove code blocks first - we don't want to detect patterns inside code
-  const withoutCode = text.replace(/```[\s\S]*?```/g, '');
-  if (!withoutCode.trim()) return null;
-
-  // Focus on the last paragraph where handoff suggestions typically appear
-  const lastParagraph = getLastParagraph(withoutCode);
-  if (!lastParagraph) return null;
-
-  // Track all matches and take the last one (most recent/relevant)
-  let lastMatch = null;
-
-  for (const { pattern, type } of HANDOFF_PATTERNS) {
-    // Reset regex for global matching
-    const regex = new RegExp(pattern.source, pattern.flags + (pattern.flags.includes('g') ? '' : 'g'));
-    let match;
-
-    while ((match = regex.exec(lastParagraph)) !== null) {
-      const captured = match[1].toLowerCase();
-
-      if (type === 'direct' || type === 'context') {
-        // Direct agent mention - normalize to /agent format
-        // Direct patterns have highest confidence (0.98)
-        const agent = `/${captured}`;
-        lastMatch = { agent, index: match.index, confidence: 0.98 };
-      } else if (type === 'phase') {
-        // Phase keyword - map to agent
-        // Phase patterns have slightly lower confidence (0.90)
-        const agent = PHASE_TO_AGENT[captured];
-        if (agent) {
-          lastMatch = { agent, index: match.index, confidence: 0.90 };
-        }
-      }
-    }
-  }
-
-  if (!lastMatch) return null;
-
-  return {
-    type: 'handoff',
-    agent: lastMatch.agent,
-    responses: [lastMatch.agent, 'Not yet'],
-    confidence: lastMatch.confidence,
-  };
-}
-
-/**
- * Detect numbered list choice patterns in text
- * Looks for sequential numbered options starting from 1
- * @param {string} text - Text to analyze
- * @returns {Object|null} Detection result with type and choices, or null
- */
-export function detectListChoices(text) {
-  if (!text) return null;
-
-  // Skip if text is inside a code block
-  if (text.includes('```')) {
-    // Remove code blocks before checking
-    const withoutCode = text.replace(/```[\s\S]*?```/g, '');
-    if (!withoutCode.trim()) return null;
-    text = withoutCode;
-  }
-
-  // Patterns for numbered lists: "1. text", "1) text", "**1.** text"
-  const patterns = [
-    /^\s*(\d+)\.\s+(.+)$/gm,           // "1. Option text"
-    /^\s*(\d+)\)\s+(.+)$/gm,           // "1) Option text"
-    /\*\*(\d+)[\.\)]\*\*\s*(.+)/gm,    // "**1.** Option text"
-  ];
-
-  let choices = [];
-
-  for (const pattern of patterns) {
-    // Reset lastIndex for global regex
-    pattern.lastIndex = 0;
-    let match;
-    const tempChoices = [];
-
-    while ((match = pattern.exec(text)) !== null) {
-      const num = parseInt(match[1], 10);
-      const optionText = match[2].trim();
-      tempChoices.push({ number: num, text: optionText });
-    }
-
-    // Check if we found more choices than before
-    if (tempChoices.length > choices.length) {
-      choices = tempChoices;
-    }
-  }
-
-  // Must have at least 2 choices
-  if (choices.length < 2) return null;
-
-  // Sort by number
-  choices.sort((a, b) => a.number - b.number);
-
-  // Must start from 1 and be sequential
-  if (choices[0].number !== 1) return null;
-
-  // Verify sequential
-  for (let i = 0; i < choices.length; i++) {
-    if (choices[i].number !== i + 1) return null;
-  }
-
-  // Filter out documentation/description lists (not user choices)
-  const notChoiceIndicators = [
-    // Past tense - things already done
-    'read', 'analyzed', 'made', 'wrote', 'created', 'added', 'removed', 'fixed',
-    'updated', 'changed', 'modified', 'implemented', 'completed', 'finished',
-    'found', 'discovered', 'identified', 'checked', 'verified', 'confirmed',
-    // Present continuous - things being described
-    'reading', 'analyzing', 'making', 'writing', 'creating', 'adding',
-    // Descriptive patterns - explaining what something does/is
-    'the', 'this', 'a', 'an', 'it', 'when', 'if', 'for', 'with',
-    // File/code references
-    'src/', './', '../', 'file:', 'line',
-  ];
-
-  // Check first word of first few items
-  for (let i = 0; i < Math.min(choices.length, 3); i++) {
-    const firstWord = choices[i].text.toLowerCase().split(/\s+/)[0];
-    // Don't filter out single-letter choices (e.g., "A", "B", "C")
-    if (firstWord.length > 1 && notChoiceIndicators.includes(firstWord)) {
-      return null;
-    }
-    // Also reject if it looks like a file path
-    if (choices[i].text.match(/^[a-zA-Z0-9_\-./]+\.(js|ts|md|json|yaml|go|py|sh)$/)) {
-      return null;
-    }
-  }
-
-  // Require a "choice" context - look for indicators that these ARE choices
-  const textLower = text.toLowerCase();
-
-  // Strong indicators - explicit choice language
-  const strongChoiceIndicators = [
-    'which', 'choose', 'select', 'pick', 'prefer',
-  ];
-
-  // Weak indicators - might be choice context, but also common in documentation
-  const weakChoiceIndicators = [
-    'option', 'would you like', 'do you want', 'should i', 'approach',
-    'alternative', 'either', 'or we could',
-  ];
-
-  const hasStrongContext = strongChoiceIndicators.some(indicator =>
-    textLower.includes(indicator)
-  );
-
-  const hasWeakContext = weakChoiceIndicators.some(indicator =>
-    textLower.includes(indicator)
-  );
-
-  // For long lists (>5 items), require strong choice indicators
-  // Long lists are more likely to be documentation/enumeration
-  if (choices.length > 5) {
-    if (!hasStrongContext) {
-      return null;
-    }
-  } else {
-    // For shorter lists, weak context is sufficient
-    if (!hasStrongContext && !hasWeakContext) {
-      return null;
-    }
-  }
-
-  // Calculate confidence based on context strength and list length
-  // Strong context: 0.90 base, weak context: 0.70 base
-  // Longer lists decrease confidence slightly
-  let baseConfidence = hasStrongContext ? 0.90 : 0.70;
-
-  // Decrease confidence for longer lists (each item after 3 reduces by 0.03)
-  const lengthPenalty = Math.max(0, (choices.length - 3) * 0.03);
-  const confidence = Math.max(0.60, baseConfidence - lengthPenalty);
-
-  return { type: 'list', choices, confidence };
-}
-
 // =============================================================================
 // Rendering Functions
 // =============================================================================
 
 /**
  * Render quick action buttons HTML
- * @param {Object} result - Detection result from detectQuestionPattern, detectHandoffPattern, or detectListChoices
+ * @param {Object} result - Detection result from processStructuredMarkers
  * @returns {string} HTML string for buttons
  */
 export function renderQuickActions(result) {
@@ -668,14 +378,8 @@ export function onResponseSubmitted() {
 }
 
 /**
- * Process a message to determine if quick actions should be shown
- *
- * NOTE: This function now ONLY uses structured CYCLIST markers for detection.
- * Pattern-based detection (handoff patterns, list choices, yes/no questions)
- * has been disabled to eliminate false positives during streaming.
- *
- * Markers are 100% reliable - agents emit them intentionally at turn completion.
- * Pattern detection was causing flakiness because it ran on incomplete streaming text.
+ * Process a message to determine if quick actions should be shown.
+ * Uses structured CYCLIST markers for 100% reliable detection.
  *
  * @param {Object} message - SDK message object
  * @returns {Object|null} Detection result or null
@@ -695,37 +399,22 @@ export function processMessageForQuickActions(message) {
 
   if (!textContent) return null;
 
-  // MARKERS ONLY: Check for structured CYCLIST markers (100% accuracy)
-  // Pattern-based detection disabled to prevent false positives during streaming
+  // Check for structured CYCLIST markers (100% accuracy)
   const markers = detectStructuredMarkers(textContent);
   if (markers) {
     // Pass full text so CHOICES markers can extract actual option labels
     const markerResult = processStructuredMarkers(markers, textContent);
-    // Markers always have confidence 1.0, no threshold check needed
     if (markerResult) return markerResult;
   }
-
-  // Pattern-based detection disabled (caused streaming flakiness):
-  // - detectHandoffPattern() - "ready for review", "invoke /agent" etc.
-  // - detectListChoices() - numbered option lists
-  // - detectQuestionPattern() - "shall I", "would you like" etc.
-  //
-  // To re-enable, uncomment these blocks. But ensure processing happens
-  // only on complete messages (onComplete), not during streaming (onMessage).
 
   return null;
 }
 
 export default {
-  QUESTION_PATTERNS,
-  HANDOFF_PATTERNS,
   PHASE_TO_AGENT,
   stripMarkdown,
   truncateText,
   detectStructuredMarkers,
-  detectQuestionPattern,
-  detectHandoffPattern,
-  detectListChoices,
   renderQuickActions,
   clearQuickActions,
   handleQuickActionClick,
