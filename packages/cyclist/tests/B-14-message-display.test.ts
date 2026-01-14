@@ -484,4 +484,98 @@ describe('B-14: Enhanced Message Display', () => {
 
   });
 
+  describe('Permission denials display', () => {
+
+    const resultWithDenials = {
+      type: 'result',
+      usage: { input_tokens: 100, output_tokens: 50 },
+      cost_usd: 0.01,
+      duration_ms: 1000,
+      num_turns: 1,
+      permission_denials: [
+        {
+          tool_name: 'Write',
+          tool_use_id: 'toolu_123',
+          tool_input: { file_path: '/etc/test.txt', content: 'hello' },
+        },
+      ],
+    };
+
+    const resultWithMultipleDenials = {
+      type: 'result',
+      usage: { input_tokens: 100, output_tokens: 50 },
+      cost_usd: 0.01,
+      duration_ms: 1000,
+      num_turns: 2,
+      permission_denials: [
+        {
+          tool_name: 'Write',
+          tool_use_id: 'toolu_123',
+          tool_input: { file_path: '/etc/passwd', content: 'bad' },
+        },
+        {
+          tool_name: 'WebFetch',
+          tool_use_id: 'toolu_456',
+          tool_input: { url: 'https://evil.com', prompt: 'fetch' },
+        },
+      ],
+    };
+
+    const resultNoDenials = {
+      type: 'result',
+      usage: { input_tokens: 100, output_tokens: 50 },
+      cost_usd: 0.01,
+      duration_ms: 1000,
+      permission_denials: [],
+    };
+
+    it('should display permission denials when present', async () => {
+      const messageView = await import('../src/public/js/components/MessageView.js');
+
+      const html = messageView.renderResultMessage(resultWithDenials);
+
+      expect(html).toContain('Permission Denied');
+      expect(html).toContain('Write');
+      expect(html).toContain('/etc/test.txt');
+    });
+
+    it('should add has-denials class when denials present', async () => {
+      const messageView = await import('../src/public/js/components/MessageView.js');
+
+      const html = messageView.renderResultMessage(resultWithDenials);
+
+      expect(html).toContain('has-denials');
+    });
+
+    it('should show multiple denials', async () => {
+      const messageView = await import('../src/public/js/components/MessageView.js');
+
+      const html = messageView.renderResultMessage(resultWithMultipleDenials);
+
+      expect(html).toContain('Write');
+      expect(html).toContain('WebFetch');
+      expect(html).toContain('/etc/passwd');
+      expect(html).toContain('https://evil.com');
+    });
+
+    it('should not show denials section when empty array', async () => {
+      const messageView = await import('../src/public/js/components/MessageView.js');
+
+      const html = messageView.renderResultMessage(resultNoDenials);
+
+      expect(html).not.toContain('Permission Denied');
+      expect(html).not.toContain('has-denials');
+    });
+
+    it('should show help text for granting permissions', async () => {
+      const messageView = await import('../src/public/js/components/MessageView.js');
+
+      const html = messageView.renderResultMessage(resultWithDenials);
+
+      expect(html).toContain('settings.local.json');
+      expect(html).toContain('/permissions grant');
+    });
+
+  });
+
 });

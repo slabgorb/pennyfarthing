@@ -1485,6 +1485,49 @@ html, body {
   border-left: 3px solid var(--accent);
 }
 
+.message-result.has-denials {
+  border-left-color: var(--status-error, #e53e3e);
+}
+
+/* Permission denials display */
+.result-permission-denials {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(229, 62, 62, 0.1);
+  border-radius: 4px;
+  border: 1px solid rgba(229, 62, 62, 0.3);
+}
+
+.permission-denials-header {
+  font-weight: 600;
+  color: var(--status-error, #e53e3e);
+  margin-bottom: 0.5rem;
+}
+
+.permission-denials-list {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+}
+
+.permission-denials-list li {
+  margin: 0.25rem 0;
+}
+
+.permission-denials-help {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+.permission-denials-help code {
+  background: var(--bg-secondary);
+  padding: 0.1rem 0.3rem;
+  border-radius: 2px;
+  font-size: 0.65rem;
+}
+
 /* B-14: Init message styling */
 .init-model {
   font-weight: 600;

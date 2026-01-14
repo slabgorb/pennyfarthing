@@ -360,15 +360,15 @@ describe('24-1: Settings Panel Infrastructure', () => {
       expect(settingsHtml).toContain('id="settings-form"');
     });
 
-    it('should have workflow section in settings UI', async () => {
-      const htmlResponse = await request(app).get('/settings.html');
-      const settingsHtml = htmlResponse.text;
+    it('should have workflow toggle in editor toolbar (moved from settings in 35-1)', async () => {
+      // Story 35-1 moved handoff toggle from settings.html to index.html editor toolbar
+      const htmlResponse = await request(app).get('/');
+      const indexHtml = htmlResponse.text;
 
-      expect(settingsHtml).toContain('workflow');
-      // Updated in Story 31-13: handoff_mode radio group replaces checkboxes
-      expect(settingsHtml).toContain('handoff_mode');
-      expect(settingsHtml).toContain('Auto handoff');
-      expect(settingsHtml).toContain('Manual handoff');
+      // Handoff toggle now in editor toolbar
+      expect(indexHtml).toContain('handoff-toggle');
+      expect(indexHtml).toContain('data-control="handoff-mode"');
+      expect(indexHtml).toContain('MANUAL');
     });
 
     it('should have display section in settings UI', async () => {

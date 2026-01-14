@@ -2,13 +2,14 @@
  * 31-13: Context-aware handoffs with auto-compaction
  *
  * Tests for handoff mode settings: replacing two checkboxes (auto_handoff,
- * handoff_confirm) with a single radio group (handoff_mode: 'auto' | 'manual').
+ * handoff_confirm) with a single handoff_mode: 'auto' | 'manual'.
  *
- * Written in RED phase - tests should fail until Dev implements functionality.
+ * NOTE: Story 35-1 moved the handoff toggle from settings.html to the
+ * editor toolbar in index.html. AC9/AC10 UI tests updated accordingly.
  *
  * Acceptance Criteria tested:
- * - AC9: Cyclist settings UI uses radio button group for handoff mode (not checkboxes)
- * - AC10: Radio options: "Auto handoff" / "Manual handoff (ask first)"
+ * - AC9: Cyclist UI has handoff mode toggle (now in editor toolbar, not settings)
+ * - AC10: Toggle shows current mode (AUTO/MANUAL)
  * - AC11: Setting persists and is correctly read by generic-handoff subagent
  * - AC12: End-to-end test: change setting, trigger handoff, verify behavior matches
  *
@@ -73,23 +74,28 @@ interface LegacyCyclistSettings {
 
 describe('31-13: Context-aware handoffs - Handoff Mode Settings', () => {
   let settingsHtml: string;
+  let indexHtml: string;
   let document: Document;
 
   beforeAll(async () => {
-    // Fetch settings HTML
-    const response = await request(app).get('/settings.html');
-    settingsHtml = response.text;
+    // Fetch settings HTML (for legacy checkbox removal verification)
+    const settingsResponse = await request(app).get('/settings.html');
+    settingsHtml = settingsResponse.text;
+
+    // Fetch index HTML (where handoff toggle now lives per 35-1)
+    const indexResponse = await request(app).get('/');
+    indexHtml = indexResponse.text;
 
     // Parse HTML with happy-dom
     const window = new Window();
-    window.document.write(settingsHtml);
+    window.document.write(indexHtml);
     document = window.document;
   });
 
   // ==========================================================================
-  // AC9: Cyclist settings UI uses radio button group for handoff mode
+  // AC9: Cyclist UI has handoff mode toggle (moved to editor toolbar in 35-1)
   // ==========================================================================
-  describe('AC9: Radio button group for handoff mode', () => {
+  describe('AC9: Handoff mode toggle in editor toolbar', () => {
 
     it('should NOT have auto_handoff checkbox in settings HTML', async () => {
       // Old checkbox should be removed
@@ -103,62 +109,42 @@ describe('31-13: Context-aware handoffs - Handoff Mode Settings', () => {
       expect(settingsHtml).not.toContain('name="handoff_confirm"');
     });
 
-    it('should have radio inputs with name="handoff_mode"', async () => {
-      expect(settingsHtml).toContain('name="handoff_mode"');
-      expect(settingsHtml).toContain('type="radio"');
+    it('should have handoff toggle button in index.html', async () => {
+      expect(indexHtml).toContain('handoff-toggle');
+      expect(indexHtml).toContain('data-control="handoff-mode"');
     });
 
-    it('should have exactly two radio options for handoff_mode', async () => {
-      // Count radio inputs with name="handoff_mode"
-      const radioMatches = settingsHtml.match(/name="handoff_mode"/g);
-      expect(radioMatches).toHaveLength(2);
+    it('should have handoff toggle with track and thumb elements', async () => {
+      expect(indexHtml).toContain('handoff-track');
+      expect(indexHtml).toContain('handoff-thumb');
     });
 
-    it('should have radio option with value="auto"', async () => {
-      expect(settingsHtml).toMatch(/name="handoff_mode"[^>]*value="auto"/);
+    it('should have handoff label element', async () => {
+      expect(indexHtml).toContain('handoff-label');
     });
 
-    it('should have radio option with value="manual"', async () => {
-      expect(settingsHtml).toMatch(/name="handoff_mode"[^>]*value="manual"/);
-    });
-
-    it('should have "manual" as the default selected option', async () => {
-      // The manual option should have checked attribute by default
-      expect(settingsHtml).toMatch(/value="manual"[^>]*checked/);
-    });
-
-    it('should group radio buttons in a fieldset or div with appropriate structure', async () => {
-      // Should have proper semantic grouping
-      expect(settingsHtml).toMatch(/(<fieldset|<div)[^>]*handoff[-_]?mode/i);
+    it('should show MANUAL as default label text', async () => {
+      // Default state is MANUAL
+      expect(indexHtml).toMatch(/handoff-label[^>]*>MANUAL</);
     });
 
   });
 
   // ==========================================================================
-  // AC10: Radio options: "Auto handoff" / "Manual handoff (ask first)"
+  // AC10: Toggle shows current mode (AUTO/MANUAL)
   // ==========================================================================
-  describe('AC10: Radio option labels', () => {
+  describe('AC10: Toggle mode labels', () => {
 
-    it('should have label text "Auto handoff" for auto option', async () => {
-      // Label should contain "Auto handoff" text near the auto radio
-      expect(settingsHtml).toMatch(/Auto\s*handoff/i);
+    it('should have title attribute explaining the toggle', async () => {
+      expect(indexHtml).toMatch(/title="[^"]*handoff/i);
     });
 
-    it('should have label text containing "Manual" for manual option', async () => {
-      expect(settingsHtml).toMatch(/Manual\s*handoff/i);
+    it('should reference auto handoff in toggle title', async () => {
+      expect(indexHtml).toMatch(/title="[^"]*[Aa]uto\s*handoff/);
     });
 
-    it('should have "(ask first)" or similar clarification for manual option', async () => {
-      // Manual option should have clarifying text
-      expect(settingsHtml).toMatch(/ask\s*first|\(manual\)|confirm/i);
-    });
-
-    it('should have labels associated with radio inputs via for/id or wrapping', async () => {
-      // Either <label for="..."> or <label><input>...</label> structure
-      const hasForAttribute = settingsHtml.match(/for=["']handoff_mode/);
-      const hasWrappingLabel = settingsHtml.match(/<label[^>]*>[\s\S]*?<input[^>]*name="handoff_mode"/);
-
-      expect(hasForAttribute || hasWrappingLabel).toBeTruthy();
+    it('should have MANUAL text visible in default state', async () => {
+      expect(indexHtml).toContain('MANUAL');
     });
 
   });
