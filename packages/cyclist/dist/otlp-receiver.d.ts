@@ -14,10 +14,6 @@ export interface ToolEvent {
     toolName: string;
     /** Tool input (file path, command, pattern, etc.) */
     input?: string;
-    /** File path for Read/Write/Edit tools */
-    filePath?: string;
-    /** Search pattern for Grep/Glob tools */
-    pattern?: string;
     /** Tool output (file contents, command output, etc.) */
     output?: string;
     /** Tool execution duration in milliseconds */
