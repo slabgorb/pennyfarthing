@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 69
-  completed_points: 47
-  remaining_points: 22
+  completed_points: 49
+  remaining_points: 20
   notes: |
     Sprint 10 focus: Three strategic epics
     - Epic 31: Customizable Workflow Engine (15 pts)
@@ -568,11 +568,11 @@ epics:
       interoperability: import BMAD stories/epics, work in our TDD flow,
       export results back to BMAD format.
     points: 11
-    completed_points: 5
+    completed_points: 11
     priority: P1
     marker: strategic
     repos: pennyfarthing
-    status: in_progress
+    status: done
     jira: MSSCI-11626
     stories:
       - id: 32-1
@@ -688,11 +688,13 @@ epics:
           using both tools.
         points: 2
         priority: P2
-        status: in_progress
+        status: done
         started: 2026-01-14
+        completed: 2026-01-14
         assigned_to: Keith Avery
         repos: pennyfarthing
         jira: MSSCI-11630
+        pr: 243
         acceptance_criteria:
           - Reads BMAD sprint-status.yaml
           - Updates our sprint YAML from BMAD status
@@ -940,7 +942,8 @@ epics:
     description: |
       Surface settings and controls where they're used instead of burying
       them in popup dialogs. Reduce friction by putting options in context.
-    points: 5
+      Fix existing UI bugs and add user-requested customization features.
+    points: 27
     completed_points: 3
     priority: P2
     marker: ux
@@ -993,6 +996,384 @@ epics:
           - Full path visible on hover (tooltip)
           - Updates correctly when directory context changes
           - Styled consistently with existing status bar elements
+      - id: 35-3
+        title: Workflow phase visualization
+        description: |
+          Visual representation of current workflow showing all phases,
+          current position, and progress. Integrates with custom workflow
+          system from Epic 31.
+
+          Implementation:
+          - Read workflow definition to get phase list
+          - Display phases as connected steps/nodes
+          - Highlight current phase, show completed phases
+          - Update in real-time as agent progresses
+          - Support both TDD and custom workflows
+        points: 3
+        priority: P1
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Workflow phases displayed visually (stepper/breadcrumb style)
+          - Current phase highlighted distinctly
+          - Completed phases marked with checkmark or similar
+          - Phase names from workflow definition (not hardcoded)
+          - Updates when phase changes (via IPC or polling)
+          - Works with TDD, trivial, and custom workflows
+      - id: 35-4
+        title: Three-way mode switch (Plan/Manual/Accept)
+        description: |
+          Replace cycling mode button with intuitive three-way toggle.
+          Currently cyclePermissionMode() cycles through modes but UI
+          is just a button that changes text - not intuitive.
+
+          Implementation:
+          - Create segmented control component (like iOS)
+          - Three segments: PLAN | MANUAL | ACCEPT
+          - Visual indication of current mode
+          - Click segment to switch directly (no cycling)
+          - Keyboard shortcuts for each mode
+        points: 2
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Segmented control replaces cycling button
+          - Three modes clearly labeled and clickable
+          - Current mode visually distinct (highlighted segment)
+          - Direct selection (click PLAN goes to plan, not cycle)
+          - Keyboard shortcuts work (p=plan, m=manual, a=accept)
+          - Mode persists correctly via IPC
+      - id: 35-5
+        title: Collapsible portrait panel
+        description: |
+          Allow users to collapse the portrait/persona sidebar to
+          maximize workspace. Useful when screen space is limited
+          or user wants to focus on terminal output.
+
+          Implementation:
+          - Add collapse/expand toggle to portrait panel header
+          - Collapsed state shows minimal indicator (small icon or nothing)
+          - Expand restores full portrait and persona info
+          - Persist collapse state in localStorage
+          - Smooth animation for collapse/expand transition
+        points: 2
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Toggle button to collapse/expand portrait panel
+          - Collapsed state minimizes to icon or hides completely
+          - Expanded state shows full portrait and persona info
+          - Collapse state persisted across sessions
+          - Smooth CSS transition animation
+          - Keyboard shortcut to toggle (e.g., Ctrl+B)
+      - id: 35-6
+        title: Font face selector
+        description: |
+          Let users choose terminal and UI font faces. Currently no
+          font customization exists - fonts are hardcoded in CSS.
+
+          Implementation:
+          - Add font selector to settings panel
+          - Separate options for terminal font and UI font
+          - List of monospace fonts for terminal (system + web fonts)
+          - Preview font before applying
+          - Save preference and apply on startup
+        points: 2
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Font selector in settings panel
+          - Separate terminal and UI font options
+          - Dropdown with available monospace fonts
+          - Font preview in settings before applying
+          - Font preference saved and restored on startup
+          - Terminal (xterm.js) respects font setting
+      - id: 35-7
+        title: Custom styling themes
+        description: |
+          Expand beyond dark/light to support custom color themes.
+          Currently only 2 hardcoded themes in theme.js with fixed
+          color palettes.
+
+          Implementation:
+          - Define theme schema (colors, terminal palette)
+          - Load themes from JSON files or config
+          - Theme browser in settings to preview and select
+          - Support importing custom themes
+          - Export current theme for sharing
+        points: 3
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Theme schema documented (JSON format)
+          - At least 4 built-in themes (dark, light, + 2 new)
+          - Theme browser shows preview of each theme
+          - Custom themes can be imported from JSON
+          - Current theme can be exported to JSON
+          - Terminal colors update with theme
+      - id: 35-8
+        title: Fix theme switcher
+        description: |
+          ThemePicker (persona theme, not color theme) has multiple bugs
+          making it difficult to use:
+
+          Bugs to fix:
+          - Recent themes not persisted between sessions
+          - Async loading issues cause empty state
+          - Persona click handler conflicts (popup vs picker)
+          - loadThemeMetadata() fails silently if IPC unavailable
+          - Event handler removal assumes listeners exist
+
+          This is the persona/character theme switcher (alice-in-wonderland,
+          discworld, etc), not the color theme (dark/light).
+        points: 2
+        priority: P1
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Recent themes persisted in localStorage
+          - Async loading shows loading state, handles errors
+          - Click handler consistently opens picker (no conflicts)
+          - Graceful fallback when IPC unavailable
+          - No console errors during normal operation
+          - Theme switch actually updates persona display
+      - id: 35-9
+        title: Settings panel fixes and expansion
+        description: |
+          Fix existing bugs and expand settings functionality:
+
+          Bugs to fix:
+          - Settings store lazy-loading can fail silently
+          - Theme browser async issues during initial load
+          - localStorage vs IPC sync conflicts
+          - Form state management issues (selectedThemeData unused)
+          - window.close() fails in non-Electron context
+
+          Expansion:
+          - Add validation for all settings values
+          - Show confirmation before discarding unsaved changes
+          - Group settings into logical tabs/sections
+          - Add reset to defaults option
+        points: 3
+        priority: P1
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Settings store initialization errors handled gracefully
+          - Theme browser shows loading state during async load
+          - No sync conflicts between localStorage and IPC
+          - Unsaved changes warning before close
+          - Settings validation with error messages
+          - Reset to defaults button works
+          - Settings organized into logical sections
+      - id: 35-10
+        title: Line numbers in file diffs
+        description: |
+          Add line numbers to diff panel for easy reference and
+          navigation. Currently diffs show content but no line numbers,
+          making it hard to reference specific lines.
+
+          Implementation:
+          - Add line number gutter to diff view
+          - Show both old and new line numbers for changes
+          - Style consistently with terminal line numbers
+          - Support clicking line number to copy reference
+        points: 1
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Line numbers displayed in diff gutter
+          - Both old (removed) and new (added) line numbers shown
+          - Line numbers styled consistently with diff colors
+          - Click line number copies "file:line" to clipboard
+          - Works for all diff types (add, remove, modify)
+      - id: 35-11
+        title: Clickable file paths in diff view
+        description: |
+          File paths in diff panel should be clickable to open the
+          file in the OS default editor/viewer. Reduces friction
+          when user wants to edit a file shown in diff.
+
+          Implementation:
+          - Make file path header clickable
+          - Use Electron shell.openPath() to open in default app
+          - Visual indication that path is clickable (underline, cursor)
+          - Handle missing files gracefully (show error toast)
+        points: 1
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - File path in diff header is clickable
+          - Click opens file in OS default application
+          - Cursor changes to pointer on hover
+          - Path underlined or styled to indicate clickable
+          - Error toast if file no longer exists
+          - Works on macOS (shell.openPath)
+      - id: 35-12
+        title: Skill invocations panel
+        description: |
+          Add a vertical panel showing skill invocations during the session.
+          Skills (/commit, /review-pr, /workflow, etc.) are invoked frequently
+          but currently there's no dedicated UI to see which skills were called.
+
+          Implementation:
+          - New collapsible panel (similar to file/diff/tool panels)
+          - List skill invocations chronologically
+          - Show: skill name, timestamp, status (running/complete/error)
+          - Expandable to show skill arguments and output summary
+          - Clear button to reset list
+          - Filter/search within invocations
+        points: 3
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Dedicated panel for skill invocations
+          - Shows skill name and invocation time
+          - Status indicator (running spinner, checkmark, error icon)
+          - Expandable rows to show arguments and result summary
+          - Panel is collapsible and resizable
+          - Persists collapse state in localStorage
+          - Clear button to reset invocation history
+          - Works with all skill types (built-in and custom)
+  - id: epic-36
+    title: OTEL Tool Call Enrichment
+    description: |
+      Enrich OpenTelemetry data with contextual information from Claude tool calls.
+      OTEL spans from Claude Code contain basic timing info, but we have much richer
+      data available: file paths for Read/Edit, command output for Bash, search
+      results for Grep/Glob, etc. Correlate and enrich spans in real-time.
+    points: 15
+    completed_points: 0
+    priority: P2
+    marker: observability
+    repos: cyclist, pennyfarthing
+    status: backlog
+    stories:
+      - id: 36-1
+        title: OTEL span interception and correlation
+        description: |
+          Intercept OTEL spans from Claude Code and correlate with tool call data.
+          Claude emits spans for each tool call; we need to match these with our
+          richer tool call context.
+
+          Implementation:
+          - Hook into OTEL span export pipeline
+          - Extract span attributes (tool name, tool_use_id)
+          - Match with corresponding tool call from Claude message stream
+          - Store correlation map for enrichment phase
+        points: 3
+        priority: P1
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - OTEL spans intercepted before export
+          - Tool name and ID extracted from span attributes
+          - Correlation with Claude tool_use messages established
+          - Correlation map persists for session duration
+          - Works with all tool types (Bash, Read, Edit, Grep, etc.)
+      - id: 36-2
+        title: Read/Edit tool enrichment
+        description: |
+          Enrich Read and Edit tool spans with file context:
+          - File path (already in span, but validate)
+          - File size, line count
+          - For Edit: old/new content diff summary
+          - Language detection from extension
+          - Git status of file (modified, new, etc.)
+        points: 2
+        priority: P1
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Read spans include file size and line count
+          - Edit spans include diff summary (lines added/removed)
+          - Language detected from file extension
+          - Git status included when in git repo
+          - Enrichment happens before span export
+      - id: 36-3
+        title: Bash tool enrichment
+        description: |
+          Enrich Bash tool spans with command execution context:
+          - Command executed (sanitized for secrets)
+          - Exit code
+          - Output summary (first/last N lines, truncation indicator)
+          - Duration breakdown (queue time vs execution time)
+          - Working directory
+        points: 2
+        priority: P1
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Command included in span (secrets redacted)
+          - Exit code captured
+          - Output summary (first 5 lines, last 5 lines if truncated)
+          - Execution duration accurate
+          - Working directory included
+      - id: 36-4
+        title: Search tool enrichment (Grep/Glob)
+        description: |
+          Enrich Grep and Glob spans with search context:
+          - Pattern searched
+          - Number of matches found
+          - Files matched (list or count)
+          - Search scope (path, file types)
+          - Whether results were truncated
+        points: 2
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Search pattern included in span
+          - Match count accurate
+          - File list or count included
+          - Scope (path, glob pattern) included
+          - Truncation flag when results limited
+      - id: 36-5
+        title: Task/subagent enrichment
+        description: |
+          Enrich Task tool spans with subagent context:
+          - Subagent type spawned
+          - Prompt summary (first N chars)
+          - Result summary
+          - Turn count within subagent
+          - Background vs foreground execution
+        points: 2
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Subagent type in span attributes
+          - Prompt summary (first 200 chars)
+          - Result summary when complete
+          - Turn count tracked
+          - Background flag included
+      - id: 36-6
+        title: Enriched span export and visualization
+        description: |
+          Export enriched spans and visualize in Cyclist UI:
+          - Custom OTEL exporter that adds enrichments
+          - Timeline view showing enriched tool calls
+          - Expandable details for each span
+          - Filter by tool type, status, duration
+          - Export to JSON for external analysis
+        points: 4
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Custom exporter adds enrichment attributes
+          - Timeline visualization in Cyclist UI
+          - Expandable span details show all enrichments
+          - Filter controls for tool type and status
+          - JSON export includes all enriched data
+          - Works with existing OTEL collectors (optional forwarding)
 # =============================================================================
 # COMPLETED EPICS (Sprint 10)
 # =============================================================================
