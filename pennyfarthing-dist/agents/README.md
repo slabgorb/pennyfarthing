@@ -36,12 +36,15 @@ Lightweight subagents for mechanical tasks. Invoked via `Task tool` with `subage
 - **`sm-handoff.md`** - Handoff bookkeeping to TEA
 - **`sm-finish-bookkeeping.md`** - Archive session, update sprint
 - **`sm-finish-execution.md`** - Execute finish workflow
-- **`tea-handoff.md`** - Update session after tests (RED)
-- **`dev-handoff.md`** - Update session after PR (GREEN)
+- **`generic-handoff.md`** - Workflow-driven handoff (replaces tea/dev/reviewer handoffs)
 - **`reviewer-preflight.md`** - Gather review data
-- **`reviewer-handoff-approve.md`** - Approve and route to SM
-- **`reviewer-handoff-reject.md`** - Reject and route to Dev
 - **`testing-runner.md`** - Execute tests, report results
+
+### Deprecated Handoffs (replaced by generic-handoff)
+- `tea-handoff.md` - Now use `generic-handoff` with CURRENT_PHASE=red
+- `dev-handoff.md` - Now use `generic-handoff` with CURRENT_PHASE=green
+- `reviewer-handoff-approve.md` - Now use `generic-handoff` with VERDICT=approved
+- `reviewer-handoff-reject.md` - Now use `generic-handoff` with VERDICT=rejected
 
 ## Context Loading
 
@@ -104,7 +107,7 @@ Each agent file contains:
 ├── tech-writer.md             # Technical Writer
 ├── ux-designer.md             # UX Designer
 │
-│ # Official Subagents (13)
+│ # Official Subagents (10 active + 4 deprecated)
 ├── workflow-status-check.md   # Detect workflow state
 ├── sm-work-research.md        # Research stories
 ├── sm-file-summary.md         # Summarize files
@@ -112,12 +115,14 @@ Each agent file contains:
 ├── sm-handoff.md              # SM handoff
 ├── sm-finish-bookkeeping.md   # Archive session
 ├── sm-finish-execution.md     # Execute finish
-├── tea-handoff.md             # TEA handoff
-├── dev-handoff.md             # Dev handoff
+├── generic-handoff.md         # Workflow-driven handoff (Story 31-10)
 ├── reviewer-preflight.md      # Review prep
-├── reviewer-handoff-approve.md # Approve PR
-├── reviewer-handoff-reject.md  # Reject PR
-└── testing-runner.md          # Run tests
+├── testing-runner.md          # Run tests
+│ # Deprecated (replaced by generic-handoff)
+├── tea-handoff.md             # Use generic-handoff CURRENT_PHASE=red
+├── dev-handoff.md             # Use generic-handoff CURRENT_PHASE=green
+├── reviewer-handoff-approve.md # Use generic-handoff VERDICT=approved
+└── reviewer-handoff-reject.md  # Use generic-handoff VERDICT=rejected
 ```
 
 ## Context Budget
