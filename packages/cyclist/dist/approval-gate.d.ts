@@ -12,6 +12,7 @@
  * 4. Wait for user response (approve/reject/always-allow)
  * 5. Continue execution or inject rejection error
  */
+import { type GrantTypeValue } from './settings-store.js';
 /**
  * SDK tool_result error message format
  */
@@ -36,9 +37,9 @@ export declare function requestApproval(command: string, toolId: string): Promis
  *
  * @param toolId - The tool_use_id to resolve
  * @param approved - true if approved, false if rejected
- * @param alwaysAllow - true if user clicked "Always Allow"
+ * @param grantScope - Grant scope: 'once', 'session', or 'always'
  */
-export declare function resolveApproval(toolId: string, approved: boolean, alwaysAllow?: boolean): void;
+export declare function resolveApproval(toolId: string, approved: boolean, grantScope?: GrantTypeValue): void;
 /**
  * Create a tool_result error message for rejected commands
  *

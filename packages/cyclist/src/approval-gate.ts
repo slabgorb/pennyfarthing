@@ -13,7 +13,7 @@
  * 5. Continue execution or inject rejection error
  */
 
-import { getBashApprovalGate, isAllowlisted, addToAllowlist, extractPattern } from './settings-store.js';
+import { getBashApprovalGate, isAllowlisted, addToAllowlist, extractPattern, addGrant, checkGrant, type GrantTypeValue } from './settings-store.js';
 
 /**
  * Pending approval requests, keyed by tool_id
@@ -54,15 +54,25 @@ export function requestApproval(command: string, toolId: string): Promise<boolea
  *
  * @param toolId - The tool_use_id to resolve
  * @param approved - true if approved, false if rejected
- * @param alwaysAllow - true if user clicked "Always Allow"
+ * @param grantScope - Grant scope: 'once', 'session', or 'always'
  */
-export function resolveApproval(toolId: string, approved: boolean, alwaysAllow = false): void {
+export function resolveApproval(toolId: string, approved: boolean, grantScope?: GrantTypeValue): void {
   const pending = pendingApprovals.get(toolId);
   if (pending) {
-    // If always-allow, add pattern to allowlist
-    if (alwaysAllow && approved) {
+    // Add grant based on scope
+    if (approved && grantScope) {
       const pattern = extractPattern(pending.command);
-      addToAllowlist(pattern);
+      addGrant({
+        tool: 'Bash',
+        scope: pattern,
+        grant_type: grantScope,
+        granted_at: new Date().toISOString(),
+      });
+
+      // For backwards compatibility, also add to allowlist for 'always' grants
+      if (grantScope === 'always') {
+        addToAllowlist(pattern);
+      }
     }
 
     pending.resolve(approved);
@@ -114,6 +124,11 @@ export function interceptBashToolUse(message: {
 
   // Check if command is allowlisted
   if (isAllowlisted(command)) {
+    return result;
+  }
+
+  // Check if command matches an existing grant (this also auto-revokes 'once' grants)
+  if (checkGrant('Bash', command)) {
     return result;
   }
 

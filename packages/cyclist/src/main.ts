@@ -40,7 +40,7 @@ import {
   parseProjectDirArg,
 } from './paths.js';
 import { getContextUsage, ContextInfo } from './api/context.js';
-import { getVerboseMode, setVerboseMode } from './settings-store.js';
+import { getVerboseMode, setVerboseMode, loadPersistedGrants } from './settings-store.js';
 import {
   getCurrentSettings,
   saveUserSettings,
@@ -2279,6 +2279,9 @@ if (isElectron) {
       }
 
       console.log('[Cyclist] Using Pennyfarthing project:', projectDir);
+
+      // 33-4: Load persisted permission grants from settings
+      loadPersistedGrants();
 
       // B-24: Kill any orphaned Claude processes from crashed sessions
       cleanupStaleProcesses();

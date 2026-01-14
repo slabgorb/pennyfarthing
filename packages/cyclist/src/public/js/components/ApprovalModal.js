@@ -1,8 +1,9 @@
 /**
- * Approval Modal Component (Story 22-3)
+ * Approval Modal Component (Story 22-3, 33-4)
  *
  * Displays a modal for approving/rejecting Bash commands.
  * Shows the command with syntax highlighting and safety indicators.
+ * Supports three grant scopes: once, session, always (Story 33-4).
  *
  * Exports:
  * - showApprovalModal(command, toolId) - Show modal with command
@@ -10,8 +11,10 @@
  * - isModalVisible() - Check if modal is visible
  * - isBashCommand(message) - Check if message is Bash tool_use
  * - shouldRequestApproval(message) - Check if approval needed
- * - handleApprove() - Handle approve button click
+ * - handleApprove() - Handle approve button click (legacy)
  * - handleReject() - Handle reject button click
+ * - handleAllowOnce() - Handle allow-once button click (33-4)
+ * - handleAllowSession() - Handle allow-session button click (33-4)
  * - handleAlwaysAllow() - Handle always-allow button click
  * - highlightBashSyntax(command) - Syntax highlight command
  * - getCommandSafetyLevel(command) - Get safety classification
@@ -272,14 +275,13 @@ export function getCommandSafetyLevel(command) {
 }
 
 /**
- * Handle approve button click
+ * Handle approve button click (legacy - approves without grant)
  */
 export function handleApprove() {
   if (responseCallback) {
     responseCallback({
       toolId: currentToolId,
       approved: true,
-      alwaysAllow: false,
     });
   }
   hideApprovalModal();
@@ -293,7 +295,36 @@ export function handleReject() {
     responseCallback({
       toolId: currentToolId,
       approved: false,
-      alwaysAllow: false,
+    });
+  }
+  hideApprovalModal();
+}
+
+/**
+ * Handle allow-once button click
+ * Grants permission for a single use, auto-revoked after use
+ */
+export function handleAllowOnce() {
+  if (responseCallback) {
+    responseCallback({
+      toolId: currentToolId,
+      approved: true,
+      grantScope: 'once',
+    });
+  }
+  hideApprovalModal();
+}
+
+/**
+ * Handle allow-session button click
+ * Grants permission for the current session, cleared on exit
+ */
+export function handleAllowSession() {
+  if (responseCallback) {
+    responseCallback({
+      toolId: currentToolId,
+      approved: true,
+      grantScope: 'session',
     });
   }
   hideApprovalModal();
@@ -301,13 +332,14 @@ export function handleReject() {
 
 /**
  * Handle always-allow button click
+ * Grants persistent permission, survives restart
  */
 export function handleAlwaysAllow() {
   if (responseCallback) {
     responseCallback({
       toolId: currentToolId,
       approved: true,
-      alwaysAllow: true,
+      grantScope: 'always',
     });
   }
   hideApprovalModal();
@@ -327,9 +359,10 @@ export function setResponseCallback(callback) {
  */
 export function getKeyboardShortcuts() {
   return {
-    approve: 'Enter',
+    allowOnce: 'Enter',   // Enter for quick single-use approval
+    allowSession: 's',    // 's' for session
+    alwaysAllow: 'a',     // 'a' for always
     reject: 'Escape',
-    alwaysAllow: 'a',
   };
 }
 
@@ -342,12 +375,15 @@ function handleKeydown(event) {
 
   const shortcuts = getKeyboardShortcuts();
 
-  if (event.key === shortcuts.approve) {
+  if (event.key === shortcuts.allowOnce) {
     event.preventDefault();
-    handleApprove();
+    handleAllowOnce();
   } else if (event.key === shortcuts.reject) {
     event.preventDefault();
     handleReject();
+  } else if (event.key.toLowerCase() === shortcuts.allowSession) {
+    event.preventDefault();
+    handleAllowSession();
   } else if (event.key.toLowerCase() === shortcuts.alwaysAllow) {
     event.preventDefault();
     handleAlwaysAllow();
