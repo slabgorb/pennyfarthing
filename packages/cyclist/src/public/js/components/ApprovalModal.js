@@ -1,15 +1,18 @@
 /**
- * Approval Modal Component (Story 22-3, 33-4)
+ * Approval Modal Component (Story 22-3, 33-4, 33-3)
  *
- * Displays a modal for approving/rejecting Bash commands.
- * Shows the command with syntax highlighting and safety indicators.
+ * Displays a modal for approving/rejecting tool permissions.
+ * Shows the tool name, context, and safety indicators.
  * Supports three grant scopes: once, session, always (Story 33-4).
+ * Supports any tool type, not just Bash (Story 33-3).
  *
  * Exports:
- * - showApprovalModal(command, toolId) - Show modal with command
+ * - showApprovalModal(command, toolId) - Show modal with command (legacy Bash)
+ * - showPermissionModal(toolName, toolId, context, reason?) - Show modal for any tool (33-3)
  * - hideApprovalModal() - Hide modal
  * - isModalVisible() - Check if modal is visible
  * - isBashCommand(message) - Check if message is Bash tool_use
+ * - isToolUseMessage(message) - Check if message is any tool_use (33-3)
  * - shouldRequestApproval(message) - Check if approval needed
  * - handleApprove() - Handle approve button click (legacy)
  * - handleReject() - Handle reject button click
@@ -17,16 +20,26 @@
  * - handleAllowSession() - Handle allow-session button click (33-4)
  * - handleAlwaysAllow() - Handle always-allow button click
  * - highlightBashSyntax(command) - Syntax highlight command
- * - getCommandSafetyLevel(command) - Get safety classification
+ * - getCommandSafetyLevel(command) - Get safety classification for Bash
+ * - getToolSafetyLevel(toolName, context) - Get safety classification for any tool (33-3)
  * - getDisplayedCommand() - Get currently displayed command
+ * - getDisplayedToolName() - Get currently displayed tool name (33-3)
+ * - getDisplayedReason() - Get currently displayed reason (33-3)
+ * - getDisplayedContext() - Get currently displayed context (33-3)
  * - setResponseCallback(callback) - Set IPC response callback
  * - getKeyboardShortcuts() - Get keyboard shortcuts
+ * - getPendingCount() - Get pending permission request count (33-3)
+ * - updateStatusIndicator() - Update UI status indicator (33-3)
  */
 
 // Module state
 let modalVisible = false;
 let currentCommand = '';
 let currentToolId = '';
+let currentToolName = '';
+let currentReason = '';
+let currentContext = {};
+let pendingCount = 0;
 let responseCallback = null;
 
 // Settings store - dynamically loaded to support both Node.js (tests) and browser environments
@@ -83,6 +96,9 @@ export function hideApprovalModal() {
   modalVisible = false;
   currentCommand = '';
   currentToolId = '';
+  currentToolName = '';
+  currentReason = '';
+  currentContext = {};
 
   const modal = document.getElementById('approval-modal');
   if (modal) {
@@ -107,6 +123,221 @@ export function isModalVisible() {
 export function isBashCommand(message) {
   if (!message) return false;
   return message.type === 'tool_use' && message.tool_name === 'Bash';
+}
+
+/**
+ * Check if a message is any tool_use (Story 33-3)
+ * @param {object} message - SDK message object
+ * @returns {boolean}
+ */
+export function isToolUseMessage(message) {
+  if (!message) return false;
+  return message.type === 'tool_use' && typeof message.tool_name === 'string';
+}
+
+/**
+ * Show the permission modal for any tool type (Story 33-3)
+ * @param {string} toolName - The tool name (Bash, WebFetch, Edit, Write, etc.)
+ * @param {string} toolId - The tool_use_id
+ * @param {object} context - Tool-specific context (command, url, file_path, etc.)
+ * @param {string} [reason] - Optional reason for the permission request
+ */
+export function showPermissionModal(toolName, toolId, context, reason = '') {
+  currentToolName = toolName;
+  currentToolId = toolId;
+  currentContext = context || {};
+  currentReason = reason || '';
+  modalVisible = true;
+
+  // For backward compatibility, also set currentCommand for Bash
+  if (toolName === 'Bash' && context?.command) {
+    currentCommand = context.command;
+  } else {
+    currentCommand = formatContextForDisplay(toolName, context);
+  }
+
+  const modal = document.getElementById('approval-modal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+
+    // Update tool name display
+    const toolNameEl = modal.querySelector('.tool-name');
+    if (toolNameEl) {
+      toolNameEl.textContent = toolName;
+    }
+
+    // Update reason display
+    const reasonEl = modal.querySelector('.reason-display');
+    if (reasonEl) {
+      reasonEl.textContent = reason || '';
+    }
+
+    // Update context display
+    const contextEl = modal.querySelector('.context-display');
+    if (contextEl) {
+      if (toolName === 'Bash' && context?.command) {
+        contextEl.innerHTML = highlightBashSyntax(context.command);
+      } else {
+        contextEl.textContent = formatContextForDisplay(toolName, context);
+      }
+    }
+
+    // Also update command-display for backward compatibility
+    const commandDisplay = modal.querySelector('.command-display');
+    if (commandDisplay) {
+      if (toolName === 'Bash' && context?.command) {
+        commandDisplay.innerHTML = highlightBashSyntax(context.command);
+      } else {
+        commandDisplay.textContent = formatContextForDisplay(toolName, context);
+      }
+    }
+
+    // Update safety indicator
+    const safetyIndicator = modal.querySelector('.safety-indicator');
+    if (safetyIndicator) {
+      const level = getToolSafetyLevel(toolName, context);
+      safetyIndicator.className = `safety-indicator safety-${level}`;
+      safetyIndicator.textContent = level.charAt(0).toUpperCase() + level.slice(1);
+    }
+
+    // Focus the modal for keyboard events
+    modal.focus();
+  }
+}
+
+/**
+ * Format context for display based on tool type
+ * @param {string} toolName - Tool name
+ * @param {object} context - Tool context
+ * @returns {string}
+ */
+function formatContextForDisplay(toolName, context) {
+  if (!context) return '';
+
+  switch (toolName) {
+    case 'Bash':
+      return context.command || '';
+    case 'WebFetch':
+      return context.url || '';
+    case 'Edit':
+    case 'Write':
+    case 'Read':
+      return context.file_path || '';
+    default:
+      // For unknown tools, show JSON
+      return JSON.stringify(context, null, 2);
+  }
+}
+
+/**
+ * Get the currently displayed tool name (Story 33-3)
+ * @returns {string}
+ */
+export function getDisplayedToolName() {
+  return currentToolName;
+}
+
+/**
+ * Get the currently displayed reason (Story 33-3)
+ * @returns {string}
+ */
+export function getDisplayedReason() {
+  return currentReason;
+}
+
+/**
+ * Get the currently displayed context (Story 33-3)
+ * @returns {string}
+ */
+export function getDisplayedContext() {
+  return formatContextForDisplay(currentToolName, currentContext);
+}
+
+/**
+ * Get safety level for any tool type (Story 33-3)
+ * @param {string} toolName - Tool name
+ * @param {object} context - Tool context
+ * @returns {'safe' | 'caution' | 'danger'}
+ */
+export function getToolSafetyLevel(toolName, context) {
+  if (!toolName) return 'safe';
+
+  switch (toolName) {
+    case 'Bash':
+      return getCommandSafetyLevel(context?.command || '');
+
+    case 'WebFetch': {
+      // Safe for known domains
+      const url = context?.url || '';
+      const safeDomains = [
+        'github.com',
+        'npmjs.com',
+        'docs.python.org',
+        'developer.mozilla.org',
+        'stackoverflow.com',
+        'api.github.com',
+      ];
+      try {
+        const hostname = new URL(url).hostname;
+        if (safeDomains.some(d => hostname.includes(d))) {
+          return 'safe';
+        }
+      } catch {
+        // Invalid URL
+      }
+      return 'caution';
+    }
+
+    case 'Edit':
+    case 'Write':
+      // File modifications are always caution
+      return 'caution';
+
+    case 'Read':
+    case 'Glob':
+    case 'Grep':
+      // Read-only operations are safe
+      return 'safe';
+
+    default:
+      // Unknown tools default to caution
+      return 'caution';
+  }
+}
+
+/**
+ * Get pending permission request count (Story 33-3)
+ * @returns {number}
+ */
+export function getPendingCount() {
+  return pendingCount;
+}
+
+/**
+ * Update the status indicator in the UI (Story 33-3)
+ * @param {number} [count] - Optional count to set, otherwise uses internal state
+ */
+export function updateStatusIndicator(count) {
+  if (typeof count === 'number') {
+    pendingCount = count;
+  }
+
+  const statusEl = document.querySelector('.permission-status, #permission-status');
+  if (statusEl) {
+    const badge = statusEl.querySelector('.permission-badge, .permission-count');
+    if (badge) {
+      badge.textContent = pendingCount.toString();
+    }
+
+    if (pendingCount > 0) {
+      statusEl.classList.remove('hidden');
+      statusEl.classList.add('pulse');
+    } else {
+      statusEl.classList.add('hidden');
+      statusEl.classList.remove('pulse');
+    }
+  }
 }
 
 /**

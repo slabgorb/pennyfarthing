@@ -134,8 +134,8 @@ export declare function addGrant(grant: PermissionGrant): void;
 /**
  * Check if a grant exists for the given tool and command
  * Auto-revokes 'once' grants after checking
- * @param tool - The tool name (e.g., 'Bash')
- * @param command - The command to check
+ * @param tool - The tool name (e.g., 'Bash', 'WebFetch')
+ * @param command - The command/URL/path to check
  * @returns true if grant exists
  */
 export declare function checkGrant(tool: string, command: string): boolean;

@@ -230,13 +230,26 @@ export function addGrant(grant) {
 /**
  * Check if a grant exists for the given tool and command
  * Auto-revokes 'once' grants after checking
- * @param tool - The tool name (e.g., 'Bash')
- * @param command - The command to check
+ * @param tool - The tool name (e.g., 'Bash', 'WebFetch')
+ * @param command - The command/URL/path to check
  * @returns true if grant exists
  */
 export function checkGrant(tool, command) {
+    // Use appropriate matching based on tool type
+    const matchScope = (scope, value) => {
+        // For WebFetch, use domain matching for URLs
+        if (tool === 'WebFetch' && (value.startsWith('http://') || value.startsWith('https://'))) {
+            return matchDomainPattern(scope, value);
+        }
+        // For file tools, use path matching
+        if ((tool === 'Edit' || tool === 'Write' || tool === 'Read') && value.startsWith('/')) {
+            return matchPathPattern(scope, value);
+        }
+        // Default: glob pattern matching
+        return matchGlobPattern(scope, value);
+    };
     // Check session grants first
-    const sessionIndex = sessionGrants.findIndex((g) => g.tool === tool && matchGlobPattern(g.scope, command));
+    const sessionIndex = sessionGrants.findIndex((g) => g.tool === tool && matchScope(g.scope, command));
     if (sessionIndex !== -1) {
         const grant = sessionGrants[sessionIndex];
         if (grant.grant_type === 'once') {
@@ -246,8 +259,32 @@ export function checkGrant(tool, command) {
         return true;
     }
     // Check persisted grants
-    const persistedMatch = persistedGrants.find((g) => g.tool === tool && matchGlobPattern(g.scope, command));
+    const persistedMatch = persistedGrants.find((g) => g.tool === tool && matchScope(g.scope, command));
     return !!persistedMatch;
+}
+/**
+ * Match a domain pattern against a URL (Story 33-3)
+ * Supports patterns like '*.github.com' to match 'github.com', 'api.github.com', etc.
+ * @param pattern - Domain pattern (e.g., '*.github.com')
+ * @param url - URL to match against
+ * @returns true if URL matches pattern
+ */
+function matchDomainPattern(pattern, url) {
+    try {
+        const urlObj = new URL(url);
+        const hostname = urlObj.hostname;
+        // If pattern starts with '*.' it matches the domain and all subdomains
+        if (pattern.startsWith('*.')) {
+            const baseDomain = pattern.slice(2); // Remove '*.'
+            return hostname === baseDomain || hostname.endsWith('.' + baseDomain);
+        }
+        // Exact domain match
+        return hostname === pattern;
+    }
+    catch {
+        // Invalid URL, fall back to glob matching
+        return matchGlobPattern(pattern, url);
+    }
 }
 /**
  * Get all grants (session + persisted)

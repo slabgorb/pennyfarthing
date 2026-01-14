@@ -1,16 +1,18 @@
 /**
- * Approval Gate for Bash Commands (Story 22-3)
+ * Approval Gate for Tool Permissions (Story 22-3, 33-3)
  *
- * Main process module that intercepts Bash tool_use messages and
+ * Main process module that intercepts tool_use messages and
  * requests user approval before execution. Works with ApprovalModal.js
  * in the renderer process via IPC.
  *
  * Flow:
- * 1. Claude emits Bash tool_use message
+ * 1. Claude emits tool_use message (Bash, WebFetch, Edit, Write, etc.)
  * 2. This module intercepts and checks settings
  * 3. If gate enabled and not allowlisted, request approval via IPC
  * 4. Wait for user response (approve/reject/always-allow)
  * 5. Continue execution or inject rejection error
+ *
+ * Story 33-3: Added generic interceptToolUse for any tool type.
  */
 import { type GrantTypeValue } from './settings-store.js';
 /**
@@ -65,6 +67,32 @@ export declare function interceptBashToolUse(message: {
     command: string;
     toolId: string;
 };
+/**
+ * Generic tool_use message type
+ */
+export interface ToolUseMessage {
+    type: string;
+    tool_name?: string;
+    tool_id?: string;
+    input?: Record<string, unknown>;
+}
+/**
+ * Result from interceptToolUse
+ */
+export interface InterceptResult {
+    toolName: string;
+    toolId: string;
+    context: Record<string, unknown>;
+    shouldApprove: boolean;
+}
+/**
+ * Check if a tool_use message needs approval (Story 33-3)
+ * Works with any tool type, not just Bash.
+ *
+ * @param message - The SDK message to check
+ * @returns InterceptResult with tool info and shouldApprove flag
+ */
+export declare function interceptToolUse(message: ToolUseMessage): InterceptResult;
 /**
  * Get the number of pending approval requests
  * Useful for testing and debugging
