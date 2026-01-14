@@ -133,7 +133,7 @@ describe('35-1: Contextual Settings Placement', () => {
 
     it('should have handoff button with appropriate class', async () => {
       // Button should have styling class
-      expect(indexHtml).toMatch(/class="[^"]*handoff-btn[^"]*"/);
+      expect(indexHtml).toMatch(/class="[^"]*handoff-toggle[^"]*"/);
     });
 
     it('should have handoff button title explaining the toggle', async () => {

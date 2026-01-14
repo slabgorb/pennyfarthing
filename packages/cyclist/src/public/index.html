@@ -131,7 +131,12 @@
           <button type="button" class="toolbar-btn" data-action="codeBlock" title="Code Block">{ }</button>
           <span class="toolbar-spacer"></span>
           <button type="button" class="mode-btn" data-control="plan-mode" title="Cycle permission mode: Manual → Plan → Accept → Danger">MANUAL</button>
-          <button type="button" class="handoff-btn" data-control="handoff-mode" title="Toggle auto-handoff: Auto handoff to next agent">AUTO</button>
+          <button type="button" class="handoff-toggle" data-control="handoff-mode" title="Toggle auto-handoff: Auto handoff to next agent">
+            <span class="handoff-track">
+              <span class="handoff-thumb"></span>
+            </span>
+            <span class="handoff-label">MANUAL</span>
+          </button>
         </div>
         <div id="editor-row">
           <div id="editor">

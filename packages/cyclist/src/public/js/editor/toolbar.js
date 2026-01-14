@@ -152,8 +152,11 @@ export function updateHandoffState(mode) {
   }
   if (!handoffButton) return;
 
-  // Update button text
-  handoffButton.textContent = mode === 'auto' ? 'AUTO' : 'MANUAL';
+  // Update label text
+  const label = handoffButton.querySelector('.handoff-label');
+  if (label) {
+    label.textContent = mode === 'auto' ? 'AUTO' : 'MANUAL';
+  }
 
   // Update button class for styling
   if (mode === 'auto') {
