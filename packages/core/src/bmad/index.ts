@@ -1,5 +1,5 @@
 /**
- * BMAD Module - Stories 32-2, 32-3, 32-4, 32-5
+ * BMAD Module - Stories 32-2, 32-3, 32-4, 32-5, 32-6
  *
  * Utilities for parsing, importing, and exporting BMAD artifacts.
  */
@@ -50,3 +50,40 @@ export {
   type ExportError,
   type ExportOptions,
 } from './story-exporter.js';
+
+// Status sync (32-6)
+export {
+  // Story ID conversion
+  bmadIdToPenny,
+  pennyIdToBmad,
+  isValidBmadStoryId,
+  isValidPennyStoryId,
+  // Status mapping
+  mapBmadToPennyStatus,
+  mapPennyToBmadStatus,
+  // Parse, Import, Export
+  parseBmadSprintStatus,
+  convertBmadStoryToPenny,
+  importFromBmadStatus,
+  convertPennyStoryToBmad,
+  exportToSprintStatus,
+  // Conflict detection
+  detectConflicts,
+  // Types - BMAD
+  type BmadStatus,
+  type BmadSprintInfo,
+  type BmadStoryStatus,
+  type BmadMetrics,
+  type BmadSprintStatus,
+  // Types - Pennyfarthing
+  type PennyStatus,
+  type PennyStoryStatus,
+  type PennySprintSummary,
+  // Types - Results
+  type SyncError,
+  type ParseResult as StatusParseResult,
+  type ExportResult as StatusExportResult,
+  type Conflict,
+  type ConflictResult,
+  type ImportResult,
+} from './status-sync.js';

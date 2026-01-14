@@ -21,7 +21,7 @@ const VALID_CACHE_SECTION = `## Test Cache
 
 | Field | Value |
 |-------|-------|
-| Last Run | 2026-01-13T21:15:00Z |
+| Last Run | 2026-01-14T09:00:00Z |
 | Git SHA | abc1234def5678 |
 | Result | GREEN |
 | Pass | 78 |
@@ -32,7 +32,7 @@ const CACHE_WITH_SKIPS = `## Test Cache
 
 | Field | Value |
 |-------|-------|
-| Last Run | 2026-01-13T21:15:00Z |
+| Last Run | 2026-01-14T09:00:00Z |
 | Git SHA | abc1234def5678 |
 | Result | YELLOW |
 | Pass | 75 |
@@ -44,7 +44,7 @@ const CACHE_WITH_FAILURES = `## Test Cache
 
 | Field | Value |
 |-------|-------|
-| Last Run | 2026-01-13T21:15:00Z |
+| Last Run | 2026-01-14T09:00:00Z |
 | Git SHA | abc1234def5678 |
 | Result | RED |
 | Pass | 70 |
@@ -89,7 +89,7 @@ describe('Test Cache (31-8)', () => {
         it('should parse valid cache section with all required fields', () => {
             const entry = parseTestCache(SESSION_WITH_CACHE);
             assert.ok(entry, 'Should parse cache entry');
-            assert.strictEqual(entry.lastRun, '2026-01-13T21:15:00Z');
+            assert.strictEqual(entry.lastRun, '2026-01-14T09:00:00Z');
             assert.strictEqual(entry.gitSha, 'abc1234def5678');
             assert.strictEqual(entry.result, 'GREEN');
             assert.strictEqual(entry.passCount, 78);
@@ -120,7 +120,7 @@ describe('Test Cache (31-8)', () => {
 
 | Field | Value |
 |-------|-------|
-| Last Run | 2026-01-13T21:15:00Z |
+| Last Run | 2026-01-14T09:00:00Z |
 `; // Missing required fields
             const entry = parseTestCache(malformed);
             assert.strictEqual(entry, null);
@@ -130,7 +130,7 @@ describe('Test Cache (31-8)', () => {
 
 | Field | Value |
 |-------|-------|
-| Last Run | 2026-01-13T21:15:00Z |
+| Last Run | 2026-01-14T09:00:00Z |
 | Git SHA | abc1234 |
 | Result | INVALID |
 | Pass | 78 |
@@ -145,7 +145,7 @@ describe('Test Cache (31-8)', () => {
 
 | Field | Value |
 |-------|-------|
-| LAST RUN | 2026-01-13T21:15:00Z |
+| LAST RUN | 2026-01-14T09:00:00Z |
 | Git Sha | abc1234 |
 | result | green |
 | PASS | 78 |
@@ -161,7 +161,7 @@ describe('Test Cache (31-8)', () => {
 
 | Field | Value |
 |-------|-------|
-| Last Run | 2026-01-13T21:15:00Z |
+| Last Run | 2026-01-14T09:00:00Z |
 | Git SHA | abc1234 |
 | Result | GREEN |
 | Pass | 78 |
@@ -172,7 +172,7 @@ describe('Test Cache (31-8)', () => {
 
 | Field | Value |
 |-------|-------|
-| Last Run | 2026-01-13T21:15:00Z |
+| Last Run | 2026-01-14T09:00:00Z |
 | Git SHA | abc1234 |
 | Result | GREEN |
 | Pass | 78 |
@@ -189,7 +189,7 @@ describe('Test Cache (31-8)', () => {
     });
     describe('validateTestCache() - Validate cache freshness', () => {
         it('should return valid for fresh cache with matching SHA', () => {
-            const now = new Date('2026-01-13T21:16:00Z'); // 1 minute after cache
+            const now = new Date('2026-01-14T09:01:00Z'); // 1 minute after cache
             const result = validateTestCache(SESSION_WITH_CACHE, {
                 currentGitSha: 'abc1234def5678',
                 currentTime: now
@@ -208,14 +208,14 @@ describe('Test Cache (31-8)', () => {
         it('should return invalid when git SHA differs', () => {
             const result = validateTestCache(SESSION_WITH_CACHE, {
                 currentGitSha: 'different1234567',
-                currentTime: new Date('2026-01-13T21:16:00Z')
+                currentTime: new Date('2026-01-14T09:01:00Z')
             });
             assert.strictEqual(result.valid, false);
             assert.ok(result.reason.includes('Code changed'));
             assert.ok(result.entry, 'Should still return the entry');
         });
         it('should return invalid when cache is too old', () => {
-            const now = new Date('2026-01-13T21:30:00Z'); // 15 minutes after cache
+            const now = new Date('2026-01-14T09:15:00Z'); // 15 minutes after cache
             const result = validateTestCache(SESSION_WITH_CACHE, {
                 currentGitSha: 'abc1234def5678',
                 currentTime: now,
@@ -225,7 +225,7 @@ describe('Test Cache (31-8)', () => {
             assert.ok(result.reason.includes('Cache too old'));
         });
         it('should use default max age when not specified', () => {
-            const now = new Date('2026-01-13T21:19:00Z'); // 4 minutes after cache
+            const now = new Date('2026-01-14T09:04:00Z'); // 4 minutes after cache
             const result = validateTestCache(SESSION_WITH_CACHE, {
                 currentGitSha: 'abc1234def5678',
                 currentTime: now
@@ -233,7 +233,7 @@ describe('Test Cache (31-8)', () => {
             assert.strictEqual(result.valid, true); // 4min < 5min default
         });
         it('should allow custom max age', () => {
-            const now = new Date('2026-01-13T21:25:00Z'); // 10 minutes after cache
+            const now = new Date('2026-01-14T09:10:00Z'); // 10 minutes after cache
             const resultDefault = validateTestCache(SESSION_WITH_CACHE, {
                 currentGitSha: 'abc1234def5678',
                 currentTime: now,
@@ -269,7 +269,7 @@ describe('Test Cache (31-8)', () => {
     describe('formatTestCache() - Format cache for session file', () => {
         it('should format basic cache entry', () => {
             const entry = {
-                lastRun: '2026-01-13T21:15:00Z',
+                lastRun: '2026-01-14T09:00:00Z',
                 gitSha: 'abc1234def5678',
                 result: 'GREEN',
                 passCount: 78,
@@ -278,7 +278,7 @@ describe('Test Cache (31-8)', () => {
             };
             const formatted = formatTestCache(entry);
             assert.ok(formatted.includes('## Test Cache'));
-            assert.ok(formatted.includes('| Last Run | 2026-01-13T21:15:00Z |'));
+            assert.ok(formatted.includes('| Last Run | 2026-01-14T09:00:00Z |'));
             assert.ok(formatted.includes('| Git SHA | abc1234def5678 |'));
             assert.ok(formatted.includes('| Result | GREEN |'));
             assert.ok(formatted.includes('| Pass | 78 |'));
@@ -287,7 +287,7 @@ describe('Test Cache (31-8)', () => {
         });
         it('should include skip count when present', () => {
             const entry = {
-                lastRun: '2026-01-13T21:15:00Z',
+                lastRun: '2026-01-14T09:00:00Z',
                 gitSha: 'abc1234def5678',
                 result: 'YELLOW',
                 passCount: 75,
@@ -300,7 +300,7 @@ describe('Test Cache (31-8)', () => {
         });
         it('should not include skip row when skipCount is undefined', () => {
             const entry = {
-                lastRun: '2026-01-13T21:15:00Z',
+                lastRun: '2026-01-14T09:00:00Z',
                 gitSha: 'abc1234',
                 result: 'GREEN',
                 passCount: 78,
@@ -312,7 +312,7 @@ describe('Test Cache (31-8)', () => {
         });
         it('should produce valid markdown table', () => {
             const entry = {
-                lastRun: '2026-01-13T21:15:00Z',
+                lastRun: '2026-01-14T09:00:00Z',
                 gitSha: 'abc1234',
                 result: 'RED',
                 passCount: 70,
@@ -330,12 +330,12 @@ describe('Test Cache (31-8)', () => {
     });
     describe('createTestCacheEntry() - Create entry from results', () => {
         it('should create GREEN entry when no failures', () => {
-            const entry = createTestCacheEntry({ passCount: 78, failCount: 0, durationSeconds: 36 }, 'abc1234', new Date('2026-01-13T21:15:00Z'));
+            const entry = createTestCacheEntry({ passCount: 78, failCount: 0, durationSeconds: 36 }, 'abc1234', new Date('2026-01-14T09:00:00Z'));
             assert.strictEqual(entry.result, 'GREEN');
             assert.strictEqual(entry.passCount, 78);
             assert.strictEqual(entry.failCount, 0);
             assert.strictEqual(entry.gitSha, 'abc1234');
-            assert.strictEqual(entry.lastRun, '2026-01-13T21:15:00.000Z');
+            assert.strictEqual(entry.lastRun, '2026-01-14T09:00:00.000Z');
         });
         it('should create RED entry when failures exist', () => {
             const entry = createTestCacheEntry({ passCount: 70, failCount: 8, durationSeconds: 42 }, 'def5678');
@@ -362,7 +362,7 @@ describe('Test Cache (31-8)', () => {
     });
     describe('shouldSkipTests() - Convenience function for subagents', () => {
         it('should return skip=true for valid cache', () => {
-            const _now = new Date('2026-01-13T21:16:00Z');
+            const _now = new Date('2026-01-14T09:01:00Z');
             const _result = shouldSkipTests(SESSION_WITH_CACHE, 'abc1234def5678', 5);
             // Note: This test depends on the current time, so we use a mock
             // For the implementation, we'll need to check if the validation
@@ -400,7 +400,7 @@ describe('Test Cache (31-8)', () => {
     describe('Round-trip: format and parse', () => {
         it('should parse what was formatted', () => {
             const original = {
-                lastRun: '2026-01-13T21:15:00Z',
+                lastRun: '2026-01-14T09:00:00Z',
                 gitSha: 'abc1234def5678',
                 result: 'GREEN',
                 passCount: 78,
@@ -419,7 +419,7 @@ describe('Test Cache (31-8)', () => {
         });
         it('should handle skip count in round-trip', () => {
             const original = {
-                lastRun: '2026-01-13T21:15:00Z',
+                lastRun: '2026-01-14T09:00:00Z',
                 gitSha: 'abc1234def5678',
                 result: 'YELLOW',
                 passCount: 75,
