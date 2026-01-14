@@ -5,9 +5,9 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 63
+  total_points: 66
   completed_points: 39
-  remaining_points: 24
+  remaining_points: 27
   notes: |
     Sprint 10 focus: Three strategic epics
     - Epic 31: Customizable Workflow Engine (15 pts)
@@ -26,7 +26,7 @@ epics:
       Infrastructure for user-defined workflows. Replace hardcoded TDD flow
       (SM → TEA → Dev → Reviewer) with configurable YAML-based workflows.
       Users can define custom agent sequences, routing rules, and gates.
-    points: 34
+    points: 37
     completed_points: 30
     priority: P1
     marker: strategic
@@ -457,6 +457,41 @@ epics:
           - Radio options: "Auto handoff" / "Manual handoff (ask first)"
           - Setting persists and is correctly read by generic-handoff subagent
           - End-to-end test: change setting, trigger handoff, verify behavior matches
+      - id: 31-14
+        title: Run subagents in background for parallel work
+        description: |
+          Enable subagents to run in background using Claude Code's Task tool
+          `run_in_background` parameter. This allows the main agent to continue
+          working while slow operations complete asynchronously.
+
+          **Use cases:**
+          - Run tests in background while writing more code
+          - Parallel exploration of multiple code paths
+          - Long-running git operations (fetch, clone)
+          - Multiple independent file searches
+
+          **Implementation:**
+          1. Add `background: true` option to subagent spawning patterns
+          2. Track background task IDs in session file
+          3. Provide status check mechanism (TaskOutput tool)
+          4. Handle completion notifications gracefully
+          5. Update agent guidance for when to use background vs foreground
+
+          **Constraints:**
+          - Only independent operations should run in background
+          - Operations with dependencies must wait for results
+          - Background tasks should not modify shared state concurrently
+        points: 3
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Subagent prompts support background execution flag
+          - Session file tracks active background task IDs
+          - Agents can check background task status via TaskOutput
+          - Dev-patterns skill documents when to use background execution
+          - At least one subagent (testing-runner) updated to support background mode
+          - Main agents can spawn tests in background while continuing work
   - id: epic-32
     title: BMAD Artifact Compatibility
     description: |
