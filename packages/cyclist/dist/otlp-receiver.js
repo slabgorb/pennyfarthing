@@ -273,7 +273,7 @@ export function exportAuditLogAsJSON(toolType) {
 export function exportAuditLogAsCSV(toolType) {
     const events = getToolEventsFiltered(toolType);
     // CSV header
-    const header = 'timestamp,toolName,input,durationMs,success,error';
+    const header = 'timestamp,toolName,filePath,pattern,input,durationMs,success,error';
     // Escape CSV field (handle commas, quotes, newlines)
     const escapeCSV = (value) => {
         if (value === undefined || value === null)
@@ -291,6 +291,8 @@ export function exportAuditLogAsCSV(toolType) {
         return [
             escapeCSV(timestamp),
             escapeCSV(e.toolName),
+            escapeCSV(e.filePath),
+            escapeCSV(e.pattern),
             escapeCSV(e.input?.substring(0, 200)), // Truncate long inputs
             escapeCSV(e.durationMs),
             escapeCSV(e.success),
@@ -336,12 +338,18 @@ export function getAuditLogStats() {
 export function processLogEvents(rawEvents) {
     for (const event of rawEvents) {
         if (event.name === 'claude_code.tool_result') {
-            // Parse tool_parameters JSON to extract input
+            // Parse tool_parameters JSON to extract input, file_path, and pattern
             let input;
+            let filePath;
+            let pattern;
             const toolParams = event.attributes['tool_parameters'];
             if (toolParams) {
                 try {
                     const params = JSON.parse(toolParams);
+                    // Extract file_path for Read/Write/Edit tools
+                    filePath = params.file_path;
+                    // Extract pattern for Grep/Glob tools
+                    pattern = params.pattern;
                     // Use description if available, otherwise full_command or first param value
                     input = params.description || params.full_command || params.file_path || params.command || params.pattern || Object.values(params)[0];
                 }
@@ -358,6 +366,8 @@ export function processLogEvents(rawEvents) {
             const toolEvent = {
                 toolName: event.attributes['tool_name'] || 'unknown',
                 input,
+                filePath,
+                pattern,
                 output: event.attributes['tool_output'],
                 durationMs: isNaN(durationMs) ? undefined : durationMs,
                 success,

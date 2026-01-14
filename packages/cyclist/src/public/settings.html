@@ -16,20 +16,22 @@
       <section class="settings-section" data-section="workflow">
         <h2>Workflow</h2>
 
-        <div class="setting-item">
-          <label class="setting-label" for="auto_handoff">
-            <input type="checkbox" id="auto_handoff" name="auto_handoff">
-            <span>Auto Handoff</span>
-          </label>
-          <p class="setting-description">Automatically trigger next agent when phase completes</p>
-        </div>
-
-        <div class="setting-item">
-          <label class="setting-label" for="handoff_confirm">
-            <input type="checkbox" id="handoff_confirm" name="handoff_confirm" checked>
-            <span>Confirm Handoff</span>
-          </label>
-          <p class="setting-description">Show confirmation dialog before handoff</p>
+        <div class="setting-item" id="handoff-mode-group">
+          <fieldset class="handoff-mode-fieldset">
+            <legend class="setting-label">Handoff Mode</legend>
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="radio" name="handoff_mode" value="auto" id="handoff_mode_auto">
+                <span>Auto handoff</span>
+              </label>
+              <p class="radio-description">Automatically trigger next agent when phase completes</p>
+              <label class="radio-label">
+                <input type="radio" name="handoff_mode" value="manual" id="handoff_mode_manual" checked>
+                <span>Manual handoff (ask first)</span>
+              </label>
+              <p class="radio-description">Show confirmation before handoff</p>
+            </div>
+          </fieldset>
         </div>
       </section>
 

@@ -404,10 +404,13 @@ export declare const isSettingsInitialized = false;
 export declare function handleSettingsGet(): Promise<CyclistSettings>;
 /**
  * Handle settings:save IPC call
- * Saves settings and returns updated settings
+ * Saves settings and returns result with success flag
  * Also writes theme to persona-config.local.yaml for Pennyfarthing compatibility (24-2)
  */
-export declare function handleSettingsSave(settings: Partial<CyclistSettings>): Promise<CyclistSettings>;
+export declare function handleSettingsSave(settings: Partial<CyclistSettings>): Promise<{
+    success: boolean;
+    settings?: CyclistSettings;
+}>;
 /**
  * Get available themes from pennyfarthing-dist/personas/themes (24-2)
  * Returns sorted list of theme names

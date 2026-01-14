@@ -25,10 +25,10 @@ import os from 'os';
 import { app } from '../src/server.js';
 
 // Settings type definition (should match src/settings.ts)
+// Updated in Story 31-13: handoff_mode replaces auto_handoff + handoff_confirm
 interface CyclistSettings {
   workflow: {
-    auto_handoff: boolean;
-    handoff_confirm: boolean;
+    handoff_mode: 'auto' | 'manual';
   };
   display: {
     show_flow: boolean;
@@ -46,10 +46,10 @@ interface CyclistSettings {
 }
 
 // Default settings for reference
+// Updated in Story 31-13: handoff_mode replaces auto_handoff + handoff_confirm
 const DEFAULT_SETTINGS: CyclistSettings = {
   workflow: {
-    auto_handoff: false,
-    handoff_confirm: true,
+    handoff_mode: 'manual',
   },
   display: {
     show_flow: true,
@@ -202,8 +202,8 @@ describe('24-1: Settings Panel Infrastructure', () => {
       const settings = await import('../src/settings.js');
       const loaded = settings.getDefaultSettings();
 
-      expect(loaded.workflow.auto_handoff).toBe(false);
-      expect(loaded.workflow.handoff_confirm).toBe(true);
+      // Updated in Story 31-13: handoff_mode replaces auto_handoff + handoff_confirm
+      expect(loaded.workflow.handoff_mode).toBe('manual');
       expect(loaded.display.show_flow).toBe(true);
       expect(loaded.display.sidebar_width).toBe(300);
     });
@@ -228,7 +228,8 @@ describe('24-1: Settings Panel Infrastructure', () => {
 
       const yaml = settings.serializeSettings(DEFAULT_SETTINGS);
       expect(yaml).toContain('workflow:');
-      expect(yaml).toContain('auto_handoff: false');
+      // Updated in Story 31-13: handoff_mode replaces auto_handoff
+      expect(yaml).toContain('handoff_mode: manual');
       expect(yaml).toContain('display:');
       expect(yaml).toContain('notifications:');
     });
@@ -282,7 +283,8 @@ describe('24-1: Settings Panel Infrastructure', () => {
       expect(merged.display.show_ocean).toBe(true);
       // Other settings should be preserved
       expect(merged.display.show_flow).toBe(true);
-      expect(merged.workflow.auto_handoff).toBe(false);
+      // Updated in Story 31-13: handoff_mode replaces auto_handoff
+      expect(merged.workflow.handoff_mode).toBe('manual');
     });
 
     it('should load project settings when projectDir is provided', async () => {
@@ -363,8 +365,10 @@ describe('24-1: Settings Panel Infrastructure', () => {
       const settingsHtml = htmlResponse.text;
 
       expect(settingsHtml).toContain('workflow');
-      expect(settingsHtml).toContain('auto_handoff');
-      expect(settingsHtml).toContain('handoff_confirm');
+      // Updated in Story 31-13: handoff_mode radio group replaces checkboxes
+      expect(settingsHtml).toContain('handoff_mode');
+      expect(settingsHtml).toContain('Auto handoff');
+      expect(settingsHtml).toContain('Manual handoff');
     });
 
     it('should have display section in settings UI', async () => {

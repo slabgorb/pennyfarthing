@@ -18,8 +18,7 @@ import {
 /**
  * @typedef {Object} CyclistSettings
  * @property {Object} workflow
- * @property {boolean} workflow.auto_handoff
- * @property {boolean} workflow.handoff_confirm
+ * @property {'auto' | 'manual'} workflow.handoff_mode
  * @property {Object} display
  * @property {boolean} display.show_flow
  * @property {boolean} display.show_ocean
@@ -50,15 +49,13 @@ export function loadFormValues(settings) {
   const form = document.getElementById('settings-form');
   if (!form) return;
 
-  // Workflow settings
-  const autoHandoff = form.querySelector('#auto_handoff');
-  if (autoHandoff) {
-    autoHandoff.checked = settings.workflow?.auto_handoff ?? false;
-  }
-
-  const handoffConfirm = form.querySelector('#handoff_confirm');
-  if (handoffConfirm) {
-    handoffConfirm.checked = settings.workflow?.handoff_confirm ?? true;
+  // Workflow settings - radio buttons for handoff_mode
+  const handoffMode = settings.workflow?.handoff_mode ?? 'manual';
+  const autoRadio = form.querySelector('#handoff_mode_auto');
+  const manualRadio = form.querySelector('#handoff_mode_manual');
+  if (autoRadio && manualRadio) {
+    autoRadio.checked = handoffMode === 'auto';
+    manualRadio.checked = handoffMode === 'manual';
   }
 
   // Display settings
@@ -115,10 +112,13 @@ export function getFormValues() {
     return getDefaultSettings();
   }
 
+  // Get handoff_mode from radio buttons
+  const autoRadio = form.querySelector('#handoff_mode_auto');
+  const handoffMode = autoRadio?.checked ? 'auto' : 'manual';
+
   return {
     workflow: {
-      auto_handoff: form.querySelector('#auto_handoff')?.checked ?? false,
-      handoff_confirm: form.querySelector('#handoff_confirm')?.checked ?? true,
+      handoff_mode: handoffMode,
     },
     display: {
       show_flow: form.querySelector('#show_flow')?.checked ?? true,
@@ -140,11 +140,11 @@ export function getFormValues() {
  * Get default settings
  * @returns {CyclistSettings} Default settings
  */
-function getDefaultSettings() {
+// Export getDefaultSettings so tests can access it
+export function getDefaultSettings() {
   return {
     workflow: {
-      auto_handoff: false,
-      handoff_confirm: true,
+      handoff_mode: 'manual',
     },
     display: {
       show_flow: true,
