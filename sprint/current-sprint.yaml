@@ -5,9 +5,9 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 66
-  completed_points: 39
-  remaining_points: 27
+  total_points: 69
+  completed_points: 44
+  remaining_points: 25
   notes: |
     Sprint 10 focus: Three strategic epics
     - Epic 31: Customizable Workflow Engine (15 pts)
@@ -861,6 +861,64 @@ epics:
           - Startup logs show actual port used
           - .cyclist-port file written to project dir
           - Message shows correct localhost URL
+  - id: epic-35
+    title: Cyclist UI/UX Improvements
+    description: |
+      Surface settings and controls where they're used instead of burying
+      them in popup dialogs. Reduce friction by putting options in context.
+    points: 5
+    completed_points: 3
+    priority: P2
+    marker: ux
+    repos: cyclist
+    status: in_progress
+    stories:
+      - id: 35-1
+        title: Contextual settings placement
+        description: |
+          Move settings from popup dialogs to contextual locations:
+          - Theme chooser → Profile/persona click (not Menu → Settings)
+          - Auto-handoff toggle → Editor toolbar (not Settings dialog)
+          - Settings dialog simplified to rarely-used options only
+
+          Pattern: Put controls where the action happens, not buried in menus.
+        points: 3
+        priority: P2
+        status: done
+        started: 2026-01-14
+        completed: 2026-01-14
+        assigned_to: Keith Avery
+        repos: cyclist
+        pr: 244
+        acceptance_criteria:
+          - Theme chooser accessible from profile/persona area click
+          - Auto-handoff toggle visible in editor toolbar
+          - Settings dialog simplified (only rarely-used options remain)
+          - Settings persist correctly from new locations
+      - id: 35-2
+        title: Display current directory in status bar
+        description: |
+          Show the current working directory in the bottom status bar.
+          Users need to know which project/directory they're working in,
+          especially when switching between multiple projects.
+
+          Implementation:
+          - Add directory display to existing stats-strip or create new status element
+          - Show absolute path, truncated if too long (ellipsis in middle)
+          - Update when project changes (if applicable)
+          - Tooltip shows full path on hover
+
+          Pattern: Critical context visible at all times, not hidden in menus.
+        points: 2
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Current directory displayed in bottom status bar
+          - Path truncated with ellipsis if too long (e.g., ~/.../project-name)
+          - Full path visible on hover (tooltip)
+          - Updates correctly when directory context changes
+          - Styled consistently with existing status bar elements
 # =============================================================================
 # COMPLETED EPICS (Sprint 10)
 # =============================================================================
