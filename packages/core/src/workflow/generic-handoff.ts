@@ -383,7 +383,6 @@ export interface HandoffHistoryEntry {
 export function readHandoffMode(settingsPath: string): HandoffMode {
   try {
     // Check for fs module availability (may not be available in all contexts)
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const fs = require('fs');
     if (!fs.existsSync(settingsPath)) {
       return 'manual';
