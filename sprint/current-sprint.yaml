@@ -496,6 +496,70 @@ epics:
           - Dev-patterns skill documents when to use background execution
           - At least one subagent (testing-runner) updated to support background mode
           - Main agents can spawn tests in background while continuing work
+      - id: 31-15
+        title: Background task completion notifications in Cyclist
+        description: |
+          Add UI notifications when background subagents complete in Cyclist.
+          Currently, background tasks run silently - the agent must poll with
+          TaskOutput to check results. Users have no visibility into completion.
+
+          **Implementation:**
+          1. Track background task IDs in main process when spawned
+          2. Emit IPC event when background task completes
+          3. Add notification/toast component to Cyclist UI
+          4. Show "Background task X completed" with result summary
+          5. Optional: Badge indicator for pending background results
+
+          **UI Options:**
+          - Toast notification (auto-dismiss after N seconds)
+          - Badge on Tool Log panel tab
+          - Extend Tool Activity Bar with background task section
+        points: 3
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Cyclist tracks background task IDs from Task tool
+          - UI notification appears when background task completes
+          - Notification shows task type and success/failure status
+          - User can click notification to see full result
+          - Works with testing-runner and other background subagents
+      - id: 31-16
+        title: Enforce handoff subagent spawning for all agents
+        description: |
+          Bug discovered during 31-14: Agents write assessments to session file
+          but skip spawning the generic-handoff subagent. This has happened
+          multiple times - both Reviewer and Dev missed handoffs.
+
+          **Problem:** Handoff is documented but not enforced. Agents complete
+          their work, write to session, and stop - forgetting the handoff step.
+
+          **Solution:** Make handoff impossible to skip by:
+
+          1. **Modify agent-session.sh stop** to check for handoff:
+             - Before stopping, verify session file has handoff entry for current phase
+             - If missing, warn and prompt agent to spawn handoff first
+             - Or: auto-spawn handoff if assessment section exists
+
+          2. **Add pre-stop gate in each agent .md file:**
+             - Checklist item: "Spawned generic-handoff subagent"
+             - Make it a MUST before agent-session.sh stop
+
+          3. **Alternative: Combine assessment + handoff:**
+             - Single subagent that writes assessment AND does handoff
+             - Eliminates the gap where agent forgets step 2
+
+          This affects ALL agents (SM, TEA, Dev, Reviewer), not just Reviewer.
+        points: 2
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - agent-session.sh stop validates handoff was spawned
+          - Clear error message if handoff missing
+          - All agent .md files have explicit handoff checklist
+          - Cannot complete phase without handoff (enforced, not just documented)
+          - Works for approve, reject, and pass-through handoffs
   - id: epic-32
     title: BMAD Artifact Compatibility
     description: |
