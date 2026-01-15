@@ -160,6 +160,7 @@ export declare function setMainWindow(window: {
     webContents: {
         send: (channel: string, data: unknown) => void;
         isDestroyed: () => boolean;
+        executeJavaScript: (code: string) => Promise<unknown>;
     };
 } | null): void;
 /**
@@ -168,6 +169,13 @@ export declare function setMainWindow(window: {
  * @param data - The data to send
  */
 export declare function broadcastToRenderer(channel: string, data: unknown): void;
+/**
+ * Apply font settings directly to main window via executeJavaScript
+ * 35-6: This is the reliable way to apply CSS variable changes in Electron
+ * Uses webContents.executeJavaScript to set CSS custom properties on :root
+ * @param settings - CyclistSettings object containing display.font_ui and display.font_mono
+ */
+export declare function applyFontSettingsToMainWindow(settings: CyclistSettings): void;
 /**
  * Set up IPC handlers for sidebar data communication
  * Called after app is ready in Electron
