@@ -458,7 +458,7 @@ export function startContextPolling(projectDir: string, getSessionId?: () => str
 
 // =============================================================================
 // Re-export usage stats from dedicated module
-export { UsageStats, getUsageStats, USAGE_POLL_INTERVAL_MS } from './usage-stats.js';
+export { UsageStats, getUsageStats, USAGE_POLL_INTERVAL_MS, startUsagePolling } from './usage-stats.js';
 import {
   getUsageStats,
   updateUsageStats as updateUsageStatsInternal,
