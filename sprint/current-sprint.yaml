@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 69
-  completed_points: 61
-  remaining_points: 8
+  completed_points: 63
+  remaining_points: 6
   notes: |
     Sprint 10 focus: Three strategic epics
     - Epic 31: Customizable Workflow Engine (15 pts) - 33/37 pts completed
@@ -1298,7 +1298,7 @@ epics:
       data available: file paths for Read/Edit, command output for Bash, search
       results for Grep/Glob, etc. Correlate and enrich spans in real-time.
     points: 15
-    completed_points: 5
+    completed_points: 7
     priority: P2
     marker: observability
     repos: cyclist, pennyfarthing
@@ -1461,10 +1461,12 @@ epics:
         points: 2
         priority: P1
         type: bug
-        status: in_progress
+        status: done
         repos: cyclist
         started: 2026-01-15
+        completed: 2026-01-15
         assigned_to: Keith Avery
+        pr: 258
         acceptance_criteria:
           - processLogEvents() calls correlateSpan() for each tool span
           - Read tool spans get file size, line count, language, git status
