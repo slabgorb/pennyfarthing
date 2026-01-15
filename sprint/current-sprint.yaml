@@ -1183,7 +1183,9 @@ epics:
           - Working directory
         points: 2
         priority: P1
-        status: backlog
+        status: in_progress
+        started: 2026-01-15
+        assigned_to: Keith Avery
         depends_on: [36-10]
         repos: cyclist
         jira: MSSCI-11735
@@ -1254,6 +1256,37 @@ epics:
           - Filter controls for tool type and status
           - JSON export includes all enriched data
           - Works with existing OTEL collectors (optional forwarding)
+      - id: 36-11
+        title: Validate 36-2 Read/Edit enrichment after 36-10 race fix
+        description: |
+          Story 36-2 (Read/Edit enrichment) was completed before the 36-10 race
+          condition fix. The 36-10 fix changed how consumePendingToolInput() matches
+          spans - now uses file_path instead of FIFO-only matching.
+
+          This followup validates that 36-2's enrichment still works correctly
+          and benefits from the improved correlation accuracy.
+
+          **Validation scope:**
+          1. Run existing 36-2 tests - verify they pass
+          2. Manual verification in Cyclist:
+             - Read tool shows file size, line count, language
+             - Edit tool shows diff summary (lines added/removed)
+             - Concurrent Read/Edit operations get correct metadata
+          3. Review 36-10 changes for any 36-2 compatibility issues
+          4. Update tests if needed for new correlation behavior
+
+          **Expected outcome:** 36-2 enrichment should be MORE reliable after
+          36-10 fix, not broken. This story confirms that assumption.
+        points: 1
+        priority: P1
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - 36-2 test suite passes (packages/cyclist/tests/36-2-file-enrichment.test.ts)
+          - Manual verification: Read shows size/lines/language in Cyclist
+          - Manual verification: Edit shows diff summary in Cyclist
+          - Concurrent Read/Edit operations enriched correctly
+          - No regressions from 36-10 correlation changes
 # =============================================================================
 # COMPLETED EPICS (Sprint 10)
 # =============================================================================

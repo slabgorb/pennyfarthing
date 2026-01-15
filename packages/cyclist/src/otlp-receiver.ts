@@ -13,7 +13,13 @@ import { aggregateTokensForStory, resetStoryTokenStats } from './story-context.j
 // Story 36-7: Import span correlation and enrichment modules
 // Story 36-8: Added consumePendingToolInput for Claude message stream correlation
 import { correlateSpan, resetCorrelations, consumePendingToolInput, type MessageContext } from './span-correlation.js';
-import { enrichReadSpan, enrichEditSpan, type DiffSummary } from './file-enrichment.js';
+import {
+  enrichReadSpan,
+  enrichEditSpan,
+  enrichBashSpan,
+  type DiffSummary,
+  type OutputSummary,
+} from './file-enrichment.js';
 
 // Story 36-10: Debug flag for OTEL capture
 // Toggle via: setOtelDebug(true) or env OTEL_DEBUG=true or just cyclist-electron true
@@ -75,6 +81,15 @@ export interface ToolEvent {
   // Story 36-10: File path from pending input for UI display
   /** Resolved file path for Read/Edit tools */
   filePath?: string;
+  // Story 36-3: Bash tool enrichment fields
+  /** Command executed (secrets redacted) */
+  command?: string;
+  /** Exit code from command execution */
+  exitCode?: number | null;
+  /** Output summary with first/last lines */
+  outputSummary?: OutputSummary;
+  /** Working directory where command was executed */
+  workingDirectory?: string;
 }
 
 /**
@@ -772,7 +787,7 @@ export async function processLogEvents(rawEvents: RawLogEvent[]): Promise<void> 
         toolEvent.traceId = correlationId;
         toolEvent.spanId = correlationId;
 
-        // Enrich Read/Edit spans - await to include enrichment data in toolEvent
+        // Enrich Read/Edit/Bash spans - await to include enrichment data in toolEvent
         try {
           if (toolName === 'Read') {
             const enrichment = await enrichReadSpan(correlationId);
@@ -789,6 +804,20 @@ export async function processLogEvents(rawEvents: RawLogEvent[]): Promise<void> 
               toolEvent.language = enrichment.language;
               toolEvent.gitStatus = enrichment.gitStatus;
               toolEvent.diff = enrichment.diff;
+            }
+          } else if (toolName === 'Bash') {
+            // Story 36-3: Bash tool enrichment
+            const enrichment = enrichBashSpan(correlationId, {
+              output: toolEvent.output,
+              error: toolEvent.error,
+              success: toolEvent.success,
+              durationMs: toolEvent.durationMs,
+            });
+            if (!enrichment.error && !enrichment.skipped) {
+              toolEvent.command = enrichment.command;
+              toolEvent.exitCode = enrichment.exitCode;
+              toolEvent.outputSummary = enrichment.outputSummary;
+              toolEvent.workingDirectory = enrichment.workingDirectory;
             }
           }
         } catch { /* ignore enrichment errors */ }
