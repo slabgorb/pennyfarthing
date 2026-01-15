@@ -437,6 +437,120 @@ export function extractExitCode(
 }
 
 // =============================================================================
+// Search Enrichment Utilities (Story 36-4)
+// =============================================================================
+
+/**
+ * Extract match count from search tool output
+ * Counts non-empty lines in the output
+ * @param output - Search tool output string
+ * @returns Number of matches (lines)
+ */
+export function extractMatchCount(output: string | undefined): number {
+  if (!output) return 0;
+
+  const lines = output.split('\n').filter((line) => line.trim() !== '');
+  return lines.length;
+}
+
+/**
+ * Extract file path from a grep content line
+ * Handles format: filepath:line:content
+ * @param line - Line from grep output
+ * @returns File path or the whole line if no colon pattern
+ */
+function extractFilePathFromLine(line: string): string {
+  // Grep content mode: filepath:line:content
+  // Need to handle paths that may contain colons (e.g., Windows paths)
+  // Pattern: split on : and take first part, but validate it looks like a path
+  const colonIndex = line.indexOf(':');
+  if (colonIndex > 0) {
+    const potential = line.substring(0, colonIndex);
+    // Check if what follows the first colon is a number (line number)
+    const afterColon = line.substring(colonIndex + 1);
+    const lineNumMatch = afterColon.match(/^(\d+):/);
+    if (lineNumMatch) {
+      // This is filepath:linenum:content format
+      return potential;
+    }
+  }
+  // No colon or not in expected format - return whole line (files_with_matches mode)
+  return line.trim();
+}
+
+/**
+ * Extract unique file count from search output
+ * Handles both grep content mode (filepath:line:content) and files_with_matches mode
+ * @param output - Search tool output string
+ * @returns Number of unique files
+ */
+export function extractFileCount(output: string | undefined): number {
+  if (!output) return 0;
+
+  const lines = output.split('\n').filter((line) => line.trim() !== '');
+  const uniqueFiles = new Set<string>();
+
+  for (const line of lines) {
+    const filePath = extractFilePathFromLine(line);
+    if (filePath) {
+      uniqueFiles.add(filePath);
+    }
+  }
+
+  return uniqueFiles.size;
+}
+
+/**
+ * Extract list of files from search output
+ * Returns unique file paths from grep/glob output
+ * @param output - Search tool output string
+ * @returns Array of unique file paths
+ */
+export function extractFileList(output: string | undefined): string[] {
+  if (!output) return [];
+
+  const lines = output.split('\n').filter((line) => line.trim() !== '');
+  const uniqueFiles = new Set<string>();
+
+  for (const line of lines) {
+    const filePath = extractFilePathFromLine(line);
+    if (filePath) {
+      uniqueFiles.add(filePath);
+    }
+  }
+
+  return Array.from(uniqueFiles);
+}
+
+/**
+ * Patterns indicating output was truncated
+ */
+const TRUNCATION_PATTERNS: RegExp[] = [
+  /truncated/i,
+  /output too large/i,
+  /\[\d+ more results? not shown\]/i,
+  /first \d+ lines shown/i,
+  /results? limited/i,
+];
+
+/**
+ * Detect if search output was truncated
+ * @param output - Search tool output string
+ * @returns True if truncation indicators found
+ */
+export function detectTruncation(output: string | undefined): boolean {
+  if (!output) return false;
+
+  for (const pattern of TRUNCATION_PATTERNS) {
+    if (pattern.test(output)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// =============================================================================
 // Span Enrichment Functions
 // =============================================================================
 
