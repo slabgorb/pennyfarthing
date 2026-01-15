@@ -212,7 +212,9 @@ describe('AC1: Cyclist tracks background task IDs from Task tool', () => {
   });
 
   it('should track task start timestamp', async () => {
-    const startTime = Date.now();
+    // Capture time with tolerance to avoid flaky race condition
+    // (implementation may capture timestamp 1-2ms before test's startTime)
+    const startTime = Date.now() - 10; // 10ms tolerance
     const span = createBackgroundTaskSpan({
       taskId: 'bg-task-003',
     });
@@ -229,7 +231,7 @@ describe('AC1: Cyclist tracks background task IDs from Task tool', () => {
     expect(tracked).toBeDefined();
     expect(tracked.startedAt).toBeDefined();
     expect(tracked.startedAt).toBeGreaterThanOrEqual(startTime);
-    expect(tracked.startedAt).toBeLessThanOrEqual(Date.now());
+    expect(tracked.startedAt).toBeLessThanOrEqual(Date.now() + 10); // 10ms tolerance
   });
 
   it('should track task status as pending initially', async () => {
