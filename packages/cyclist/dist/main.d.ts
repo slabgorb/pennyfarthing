@@ -109,7 +109,7 @@ export declare const CONTEXT_POLL_INTERVAL_MS = 15000;
  * @param getSessionId - Optional function to get current session ID (for session-specific context)
  */
 export declare function startContextPolling(projectDir: string, getSessionId?: () => string | null): () => void;
-export { UsageStats, getUsageStats, USAGE_POLL_INTERVAL_MS } from './usage-stats.js';
+export { UsageStats, getUsageStats, USAGE_POLL_INTERVAL_MS, startUsagePolling } from './usage-stats.js';
 /**
  * Server startup configuration
  * In Electron mode, server can be disabled since we use IPC

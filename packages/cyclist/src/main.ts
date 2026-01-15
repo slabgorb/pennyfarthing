@@ -51,6 +51,16 @@ import {
   type CyclistSettings,
 } from './settings.js';
 import { openSettingsWindow, setMainWindowRef, setBrowserWindowRef } from './settings-window.js';
+import {
+  IPC_DATA_CHANNELS,
+  IPC_CLAUDE_CHANNELS,
+  IPC_DIFF_CHANNELS,
+  IPC_SETTINGS_CHANNELS,
+  IPC_AUDIT_LOG_CHANNELS,
+  IPC_FILE_BROWSER_CHANNELS,
+  IPC_COMMAND_CHANNELS,
+  IPC_BACKGROUND_TASK_CHANNELS,
+} from './ipc-channels.js';
 
 // Re-export project directory functions for external consumers
 export { getProjectDirectory, setProjectDirectory, isValidProjectDirectory };
