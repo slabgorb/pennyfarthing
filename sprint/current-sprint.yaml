@@ -28,7 +28,7 @@ epics:
       Infrastructure for user-defined workflows. Replace hardcoded TDD flow
       (SM → TEA → Dev → Reviewer) with configurable YAML-based workflows.
       Users can define custom agent sequences, routing rules, and gates.
-    points: 38
+    points: 37
     completed_points: 30
     priority: P1
     marker: strategic
@@ -456,7 +456,7 @@ epics:
           - Session file tracks context percentage at handoff points
           - Works with all workflow types (TDD, trivial, custom)
           - Cyclist settings UI uses radio button group for handoff mode (not checkboxes)
-          - 'Radio options: "Auto handoff" or "Manual handoff (ask first)"'
+          - Radio options: "Auto handoff" / "Manual handoff (ask first)"
           - Setting persists and is correctly read by generic-handoff subagent
           - End-to-end test: change setting, trigger handoff, verify behavior matches
       - id: 31-14
@@ -563,35 +563,6 @@ epics:
           - All agent .md files have explicit handoff checklist
           - Cannot complete phase without handoff (enforced, not just documented)
           - Works for approve, reject, and pass-through handoffs
-      - id: 31-17
-        title: "Bug: Trivial workflow shows 'review' phase in session file"
-        description: |
-          **Symptom:** When using trivial workflow, the generic-handoff subagent
-          writes "review" as the next phase in the session file, even though
-          trivial workflow should go directly to "done" (no Reviewer).
-
-          **Evidence from Story 35-13:**
-          - Session file shows `**Workflow:** trivial`
-          - Phase History shows: setup → dev → review
-          - Should show: setup → implement → done
-          - The actual routing may be correct, but the displayed phase name is wrong
-
-          **Root cause hypothesis:**
-          - generic-handoff may be hardcoding "review" as next phase
-          - Or it's reading from TDD workflow instead of trivial workflow
-          - Phase name mapping may be incorrect for trivial workflow
-
-          **Impact:** UX confusion - users see "review" phase for trivial stories
-          when there should be no review. Minor issue but misleading.
-        points: 1
-        priority: P2
-        status: backlog
-        repos: pennyfarthing
-        acceptance_criteria:
-          - Trivial workflow shows correct phase names (setup → implement → done)
-          - generic-handoff reads phase names from workflow definition
-          - Session file reflects actual workflow phases, not TDD phases
-          - No "review" phase appears for trivial stories
   - id: epic-33
     title: Runtime Permission Management
     description: |
@@ -727,7 +698,7 @@ epics:
       Surface settings and controls where they're used instead of burying
       them in popup dialogs. Reduce friction by putting options in context.
       Fix existing UI bugs and add user-requested customization features.
-    points: 30
+    points: 29
     completed_points: 11
     priority: P2
     marker: ux
@@ -858,13 +829,11 @@ epics:
           - Smooth animation for collapse/expand transition
         points: 2
         priority: P2
-        status: done
+        status: in_progress
         started: 2026-01-15
-        completed: 2026-01-15
         assigned_to: Keith Avery
         repos: cyclist
         jira: MSSCI-11720
-        pr: 262
         acceptance_criteria:
           - Toggle button to collapse/expand portrait panel
           - Collapsed state minimizes to icon or hides completely
@@ -1037,13 +1006,9 @@ epics:
           - Handle missing files gracefully (show error toast)
         points: 1
         priority: P2
-        status: done
-        started: 2026-01-15
-        completed: 2026-01-15
-        assigned_to: Keith Avery
+        status: backlog
         repos: cyclist
         jira: MSSCI-11726
-        pr: 270
         acceptance_criteria:
           - File path in diff header is clickable
           - Click opens file in OS default application
@@ -1101,12 +1066,8 @@ epics:
           resetting to defaults on every launch.
         points: 2
         priority: P2
-        status: done
-        started: 2026-01-15
-        completed: 2026-01-15
-        assigned_to: Keith Avery
+        status: backlog
         repos: cyclist
-        jira: MSSCI-11722
         acceptance_criteria:
           - Window size restored on launch
           - Window position restored on launch
@@ -1116,37 +1077,6 @@ epics:
           - Handles missing monitor gracefully (falls back to primary)
           - Handles out-of-bounds position (recenters if off-screen)
           - Works on macOS (primary target)
-      - id: 35-14
-        title: Stop button working state indicator
-        description: |
-          Add visual indicator to stop button when agent is working. Currently
-          the portrait panel shows a pulsing/glowing effect during work, but
-          if the panel is collapsed (35-5), there's no visible indication of
-          working state.
-
-          The stop button is the perfect place to show this because:
-          1. It's always visible regardless of panel state
-          2. It signals the button is active and can be clicked
-          3. It provides feedback that work is in progress
-
-          Implementation:
-          - Apply same pulsing/glowing animation used on portrait panel
-          - Activate when status changes to 'working'/'streaming'
-          - Deactivate when status changes to 'idle'/'ready'
-          - Use CSS animation for performance (not JS intervals)
-          - Consider subtle glow vs prominent pulse based on UX preference
-        points: 1
-        priority: P2
-        status: backlog
-        repos: cyclist
-        acceptance_criteria:
-          - Stop button shows visual indicator when agent is working
-          - Animation matches or complements portrait panel style
-          - Indicator activates on working/streaming status
-          - Indicator deactivates on idle/ready status
-          - Works when portrait panel is collapsed
-          - CSS-based animation (performant)
-          - Accessible (not solely relying on color)
   - id: epic-36
     title: OTEL Tool Call Enrichment
     description: |
@@ -1155,7 +1085,7 @@ epics:
       data available: file paths for Read/Edit, command output for Bash, search
       results for Grep/Glob, etc. Correlate and enrich spans in real-time.
     points: 15
-    completed_points: 11
+    completed_points: 7
     priority: P2
     marker: observability
     repos: cyclist, pennyfarthing
@@ -1250,50 +1180,6 @@ epics:
           - Edit tool shows diff summary in Cyclist
           - Debug logging removed from otlp-receiver.ts and main.ts
           - Tests updated to reflect new correlation approach
-      - id: 36-10
-        title: "Bug: OTEL enrichment intermittent - race condition in tool correlation"
-        description: |
-          **Symptom:** Read tool enrichment works sometimes but not always.
-          Story 36-9 fixed the missing trace/span ID issue, but enrichment
-          is still intermittent.
-
-          **Suspected cause:** Race condition between Claude message stream
-          (which captures tool_use events) and OTEL logs (which trigger
-          enrichment). If the OTEL log arrives before the tool_use event
-          is captured, `consumePendingToolInput()` returns undefined and
-          enrichment is skipped.
-
-          **Evidence from Cyclist UI:**
-          - Read at 07:55:37 (1.3s duration) - NO enrichment
-          - Reads at 07:55:45 (0ms duration) - ENRICHED (markdown, size, lines)
-          - Read at 07:56:15 (134ms) - ENRICHED (yaml, 49.6KB, 1219 lines)
-          - Bash/Glob tools - no enrichment (expected, not implemented yet)
-
-          **Areas to investigate:**
-          1. Timing between `storePendingToolInput()` in main.ts and
-             `consumePendingToolInput()` in otlp-receiver.ts
-          2. FIFO queue matching - may match wrong tool if multiple
-             tools of same type in flight
-          3. 5-second timeout cleanup - may be too aggressive
-          4. Event ordering in SSE stream vs OTEL export timing
-          5. Why slow Read (1.3s) missed enrichment but fast ones got it
-
-          **Impact:** P0 - Unreliable enrichment defeats the purpose of
-          the entire Epic 36 feature. Blocks dependent stories.
-        points: 2
-        priority: P0
-        status: done
-        started: 2026-01-15
-        completed: 2026-01-15
-        assigned_to: Keith Avery
-        repos: cyclist
-        pr: 265
-        blocks: [36-3, 36-4, 36-5, 36-6]
-        acceptance_criteria:
-          - Enrichment works reliably for all Read/Edit tool calls
-          - Race condition identified and fixed
-          - Test added to verify timing edge cases
-          - Manual verification shows consistent enrichment
       - id: 36-3
         title: Bash tool enrichment
         description: |
@@ -1305,13 +1191,9 @@ epics:
           - Working directory
         points: 2
         priority: P1
-        status: done
-        started: 2026-01-15
-        completed: 2026-01-15
-        assigned_to: Keith Avery
-        depends_on: [36-10]
+        status: backlog
+        depends_on: [36-9]
         repos: cyclist
-        pr: 267
         jira: MSSCI-11735
         acceptance_criteria:
           - Command included in span (secrets redacted)
@@ -1380,41 +1262,6 @@ epics:
           - Filter controls for tool type and status
           - JSON export includes all enriched data
           - Works with existing OTEL collectors (optional forwarding)
-      - id: 36-11
-        title: Validate 36-2 Read/Edit enrichment after 36-10 race fix
-        description: |
-          Story 36-2 (Read/Edit enrichment) was completed before the 36-10 race
-          condition fix. The 36-10 fix changed how consumePendingToolInput() matches
-          spans - now uses file_path instead of FIFO-only matching.
-
-          This followup validates that 36-2's enrichment still works correctly
-          and benefits from the improved correlation accuracy.
-
-          **Validation scope:**
-          1. Run existing 36-2 tests - verify they pass
-          2. Manual verification in Cyclist:
-             - Read tool shows file size, line count, language
-             - Edit tool shows diff summary (lines added/removed)
-             - Concurrent Read/Edit operations get correct metadata
-          3. Review 36-10 changes for any 36-2 compatibility issues
-          4. Update tests if needed for new correlation behavior
-
-          **Expected outcome:** 36-2 enrichment should be MORE reliable after
-          36-10 fix, not broken. This story confirms that assumption.
-        points: 1
-        priority: P1
-        status: done
-        started: 2026-01-15
-        completed: 2026-01-15
-        assigned_to: Keith Avery
-        repos: cyclist
-        pr: 269
-        acceptance_criteria:
-          - 36-2 test suite passes (packages/cyclist/tests/36-2-file-enrichment.test.ts)
-          - Manual verification: Read shows size/lines/language in Cyclist
-          - Manual verification: Edit shows diff summary in Cyclist
-          - Concurrent Read/Edit operations enriched correctly
-          - No regressions from 36-10 correlation changes
 # =============================================================================
 # COMPLETED EPICS (Sprint 10)
 # =============================================================================
