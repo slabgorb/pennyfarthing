@@ -157,6 +157,46 @@ input[type="number"]:focus {
   background-color: #005a9e;
 }
 
+/* =============================================================================
+   Font Selector (Story 35-6)
+   ============================================================================= */
+
+.font-setting {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.font-select {
+  flex: 1;
+  min-width: 150px;
+  padding: 6px 8px;
+  font-size: 14px;
+  background-color: #3c3c3c;
+  border: 1px solid #555555;
+  border-radius: 4px;
+  color: #cccccc;
+  cursor: pointer;
+}
+
+.font-select:focus {
+  outline: none;
+  border-color: #007acc;
+}
+
+.font-preview {
+  padding: 6px 12px;
+  background-color: #2d2d2d;
+  border: 1px solid #3c3c3c;
+  border-radius: 4px;
+  color: #e0e0e0;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.font-preview.mono {
+  font-family: 'SF Mono', Monaco, monospace;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
