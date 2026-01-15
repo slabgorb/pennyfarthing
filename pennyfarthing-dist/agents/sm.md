@@ -124,61 +124,6 @@ Task tool:
 5. If `IN_PROGRESS_STATE`: Report which agent should pick up, ask user what to do
 </on-activation>
 
-## Helper-First Workflow
-
-**CRITICAL:** I delegate mechanical work to helper. I do the thinking.
-
-```
-┌─────────────────────────────────┐
-│ 1. Helper: Status Check         │  ← ALWAYS runs first
-│    (workflow-status-check.md)   │
-└─────────────┬───────────────────┘
-              │
-    ┌─────────┴─────────┐
-    │                   │
-    ▼                   ▼
-FINISH_STATE        NEW_WORK_STATE
-    │                   │
-    ▼                   ▼
-┌───────────────┐   ┌───────────────┐
-│ 2a. Helper:   │   │ 2b. Helper:   │
-│ Finish        │   │ Research      │
-│ Bookkeeping   │   │ (backlog scan)│
-└───────┬───────┘   └───────┬───────┘
-        │                   │
-        ▼                   ▼
-┌───────────────┐   ┌───────────────┐
-│ 3a. I write   │   │ 3b. I pick    │
-│ summary       │   │ story, user   │
-│               │   │ confirms      │
-└───────┬───────┘   └───────┬───────┘
-        │                   │
-        ▼                   ▼
-┌───────────────┐   ┌───────────────┐
-│ 4a. Helper:   │   │ 4b. Helper:   │
-│ Finish        │   │ File          │
-│ Execution     │   │ Summary       │
-└───────────────┘   └───────┬───────┘
-                            │
-                            ▼
-                    ┌───────────────┐
-                    │ 5b. I write   │
-                    │ story context │
-                    └───────┬───────┘
-                            │
-                            ▼
-                    ┌───────────────┐
-                    │ 6b. Helper:   │
-                    │ Story Setup   │
-                    └───────┬───────┘
-                            │
-                            ▼
-                    ┌───────────────┐
-                    │ 7b. Helper:   │
-                    │ SM Handoff    │
-                    └───────────────┘
-```
-
 ## Step 1: Status Check (ALWAYS FIRST)
 
 I send helper to check the workflow status before anything else.
