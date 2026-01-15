@@ -4,12 +4,9 @@
  * These tests verify the OTLP token stats backend infrastructure.
  *
  * NOTE: Story 23-1 removed the UI token display from stats-strip in favor of
- * usage limits display. The UI tests (AC1, AC2) are now obsolete.
- * Backend IPC channels remain for potential sidebar/modal usage.
+ * usage limits display. Backend IPC channels remain for potential usage.
  *
- * Acceptance Criteria (updated for 23-1):
- * - AC1: [DEPRECATED by 23-1] Stats strip no longer shows input tokens
- * - AC2: [DEPRECATED by 23-1] Stats strip no longer shows output tokens
+ * Acceptance Criteria:
  * - AC3: Backend IPC updates still work for token stats
  * - AC4: Old message counting code removed
  * - AC5: Token counts reset on new session
@@ -34,50 +31,6 @@ describe('E6-3: Token Display UI', () => {
     const window = new Window();
     window.document.write(html);
     document = window.document;
-  });
-
-  // AC1 & AC2: DEPRECATED by 23-1 - Token display removed from stats strip
-  // Usage limits now shown instead. See 23-1-usage-limits.test.ts for replacement tests.
-  describe.skip('AC1: Stats strip shows input tokens from OTLP data (DEPRECATED by 23-1)', () => {
-
-    it('should have input tokens display element in stats strip', () => {
-      const inputTokens = document.querySelector('#stats-strip [data-stat="strip-input"]');
-      expect(inputTokens).not.toBeNull();
-    });
-
-    it('should have ↓ indicator for input tokens', () => {
-      const tokenIn = document.querySelector('#stats-strip .token-in');
-      expect(tokenIn?.textContent).toContain('↓');
-    });
-
-    it('should display placeholder value initially', () => {
-      const inputTokens = document.querySelector('#stats-strip [data-stat="strip-input"]');
-      const text = inputTokens?.textContent || '';
-      // Should have placeholder (dash or contain arrow with dash)
-      expect(text.includes('—') || text.includes('0')).toBe(true);
-    });
-
-  });
-
-  describe.skip('AC2: Stats strip shows output tokens from OTLP data (DEPRECATED by 23-1)', () => {
-
-    it('should have output tokens display element in stats strip', () => {
-      const outputTokens = document.querySelector('#stats-strip [data-stat="strip-output"]');
-      expect(outputTokens).not.toBeNull();
-    });
-
-    it('should have ↑ indicator for output tokens', () => {
-      const tokenOut = document.querySelector('#stats-strip .token-out');
-      expect(tokenOut?.textContent).toContain('↑');
-    });
-
-    it('should display placeholder value initially', () => {
-      const outputTokens = document.querySelector('#stats-strip [data-stat="strip-output"]');
-      const text = outputTokens?.textContent || '';
-      // Should have placeholder (dash or contain arrow with dash)
-      expect(text.includes('—') || text.includes('0')).toBe(true);
-    });
-
   });
 
   describe('AC3: Updates in real-time - IPC Channel Infrastructure', () => {
@@ -253,16 +206,6 @@ describe('E6-3: Token Display UI', () => {
     it('should have stats strip in editor wrapper', () => {
       const statsStrip = document.querySelector('#stats-strip');
       expect(statsStrip).not.toBeNull();
-    });
-
-    // DEPRECATED by 23-1: Token display replaced by usage limits
-    it.skip('should have token stats elements within stats strip (DEPRECATED by 23-1)', () => {
-      const statsStrip = document.querySelector('#stats-strip');
-      const inputTokens = statsStrip?.querySelector('[data-stat="strip-input"]');
-      const outputTokens = statsStrip?.querySelector('[data-stat="strip-output"]');
-
-      expect(inputTokens).not.toBeNull();
-      expect(outputTokens).not.toBeNull();
     });
 
   });
