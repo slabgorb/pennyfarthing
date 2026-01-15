@@ -12,7 +12,7 @@ import { aggregateTokensForStory, resetStoryTokenStats } from './story-context.j
 // Story 36-7: Import span correlation and enrichment modules
 // Story 36-8: Added consumePendingToolInput for Claude message stream correlation
 import { correlateSpan, resetCorrelations, consumePendingToolInput } from './span-correlation.js';
-import { enrichReadSpan, enrichEditSpan } from './file-enrichment.js';
+import { enrichReadSpan, enrichEditSpan, enrichBashSpan, } from './file-enrichment.js';
 // Story 36-10: Debug flag for OTEL capture
 // Toggle via: setOtelDebug(true) or env OTEL_DEBUG=true or just cyclist-electron true
 let otelDebugEnabled = process.env.OTEL_DEBUG === 'true';
@@ -541,7 +541,7 @@ export async function processLogEvents(rawEvents) {
                 // Update toolEvent with correlation ID for downstream use
                 toolEvent.traceId = correlationId;
                 toolEvent.spanId = correlationId;
-                // Enrich Read/Edit spans - await to include enrichment data in toolEvent
+                // Enrich Read/Edit/Bash spans - await to include enrichment data in toolEvent
                 try {
                     if (toolName === 'Read') {
                         const enrichment = await enrichReadSpan(correlationId);
@@ -559,6 +559,21 @@ export async function processLogEvents(rawEvents) {
                             toolEvent.language = enrichment.language;
                             toolEvent.gitStatus = enrichment.gitStatus;
                             toolEvent.diff = enrichment.diff;
+                        }
+                    }
+                    else if (toolName === 'Bash') {
+                        // Story 36-3: Bash tool enrichment
+                        const enrichment = enrichBashSpan(correlationId, {
+                            output: toolEvent.output,
+                            error: toolEvent.error,
+                            success: toolEvent.success,
+                            durationMs: toolEvent.durationMs,
+                        });
+                        if (!enrichment.error && !enrichment.skipped) {
+                            toolEvent.command = enrichment.command;
+                            toolEvent.exitCode = enrichment.exitCode;
+                            toolEvent.outputSummary = enrichment.outputSummary;
+                            toolEvent.workingDirectory = enrichment.workingDirectory;
                         }
                     }
                 }

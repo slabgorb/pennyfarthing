@@ -1,7 +1,7 @@
 /**
- * File Enrichment Module - Story 36-2
+ * File Enrichment Module - Story 36-2, 36-3
  *
- * Enriches Read and Edit tool spans with file context metadata.
+ * Enriches Read, Edit, and Bash tool spans with context metadata.
  * Builds on span-correlation foundation from Story 36-1.
  *
  * Features:
@@ -9,6 +9,7 @@
  * - Diff summary (lines added/removed) for Edit spans
  * - Language detection from file extension
  * - Git status integration (clean/modified/new/untracked)
+ * - Bash: command (redacted), exit code, output summary, working directory
  */
 
 import { stat, readFile } from 'fs/promises';
@@ -77,10 +78,52 @@ export interface EditEnrichment extends BaseEnrichment {
   diff: DiffSummary;
 }
 
+// =============================================================================
+// Bash Enrichment Types (Story 36-3)
+// =============================================================================
+
+/**
+ * Output summary for Bash commands
+ */
+export interface OutputSummary {
+  /** First N lines of output */
+  firstLines: string[];
+  /** Last N lines of output (if truncated) */
+  lastLines: string[];
+  /** Total number of lines in output */
+  totalLines: number;
+  /** Whether output was truncated */
+  truncated: boolean;
+}
+
+/**
+ * Enrichment result for Bash spans
+ */
+export interface BashEnrichment {
+  /** Span ID that was enriched */
+  spanId: string;
+  /** Tool name */
+  toolName: 'Bash';
+  /** Command executed (secrets redacted) */
+  command: string;
+  /** Exit code from command execution */
+  exitCode: number | null;
+  /** Output summary with first/last lines */
+  outputSummary: OutputSummary;
+  /** Working directory where command was executed */
+  workingDirectory: string;
+  /** Execution duration in milliseconds */
+  durationMs: number;
+  /** Whether enrichment was skipped (already enriched) */
+  skipped?: boolean;
+  /** Error message if enrichment failed */
+  error?: string;
+}
+
 /**
  * Union type for all enrichment results
  */
-export type EnrichmentResult = FileEnrichment | EditEnrichment;
+export type EnrichmentResult = FileEnrichment | EditEnrichment | BashEnrichment;
 
 // =============================================================================
 // Language Detection
@@ -263,6 +306,123 @@ export async function getGitStatus(
   } catch {
     return null;
   }
+}
+
+// =============================================================================
+// Bash Utilities (Story 36-3)
+// =============================================================================
+
+/**
+ * Patterns that indicate sensitive data in commands
+ * Each pattern is a regex that matches the sensitive portion
+ */
+const SECRET_PATTERNS: RegExp[] = [
+  // Key-value patterns (password=xxx, token=xxx, etc.)
+  /\b(password|passwd|pwd|secret|token|api[_-]?key|auth[_-]?token|access[_-]?token|bearer|credential|private[_-]?key)\s*[=:]\s*['"]?[^\s'"]+['"]?/gi,
+  // AWS credentials
+  /\b(AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY|AWS_SESSION_TOKEN)\s*=\s*['"]?[^\s'"]+['"]?/gi,
+  // Base64 encoded strings (likely tokens) - 40+ chars
+  /\b[A-Za-z0-9+/]{40,}={0,2}\b/g,
+  // GitHub tokens
+  /\b(gh[pousr]_[A-Za-z0-9_]{36,})\b/g,
+  // Generic API keys (long hex or alphanumeric strings after key/token keywords)
+  /\b(key|token|secret)\s*[=:]\s*['"]?[a-zA-Z0-9_-]{20,}['"]?/gi,
+];
+
+/**
+ * Redact secrets from a command string
+ * @param command - The raw command string
+ * @returns Command with secrets replaced by [REDACTED]
+ */
+export function redactSecrets(command: string): string {
+  if (!command) return '';
+
+  let redacted = command;
+  for (const pattern of SECRET_PATTERNS) {
+    // Reset lastIndex for global patterns
+    pattern.lastIndex = 0;
+    redacted = redacted.replace(pattern, (match) => {
+      // For key=value patterns, preserve the key name
+      const keyMatch = match.match(/^(\w+)\s*[=:]/);
+      if (keyMatch) {
+        return `${keyMatch[1]}=[REDACTED]`;
+      }
+      return '[REDACTED]';
+    });
+  }
+
+  return redacted;
+}
+
+/** Number of lines to show at start of output */
+const OUTPUT_HEAD_LINES = 5;
+/** Number of lines to show at end of output */
+const OUTPUT_TAIL_LINES = 5;
+
+/**
+ * Create an output summary from command output
+ * @param output - The full command output
+ * @returns Summary with first/last lines and truncation info
+ */
+export function createOutputSummary(output: string | undefined): OutputSummary {
+  if (output === undefined) {
+    return {
+      firstLines: [],
+      lastLines: [],
+      totalLines: 0,
+      truncated: false,
+    };
+  }
+
+  const lines = output.split('\n');
+  const totalLines = lines.length;
+
+  // If output fits within head + tail, no truncation needed
+  if (totalLines <= OUTPUT_HEAD_LINES + OUTPUT_TAIL_LINES) {
+    return {
+      firstLines: lines,
+      lastLines: [],
+      totalLines,
+      truncated: false,
+    };
+  }
+
+  // Truncated output: show first N and last N lines
+  return {
+    firstLines: lines.slice(0, OUTPUT_HEAD_LINES),
+    lastLines: lines.slice(-OUTPUT_TAIL_LINES),
+    totalLines,
+    truncated: true,
+  };
+}
+
+/**
+ * Extract exit code from command output or error
+ * Bash exit codes are in the output format or error message
+ * @param output - Command output string
+ * @param error - Error message if command failed
+ * @param success - Whether command succeeded
+ * @returns Exit code (0 for success, extracted code or 1 for failure)
+ */
+export function extractExitCode(
+  output: string | undefined,
+  error: string | undefined,
+  success: boolean
+): number | null {
+  // Success means exit code 0
+  if (success) return 0;
+
+  // Try to extract exit code from error message
+  // Common pattern: "Exit code N" or "exit code: N" or "exited with N"
+  if (error) {
+    const exitMatch = error.match(/exit(?:ed)?(?:\s+(?:code|with))?\s*[:\s]?\s*(\d+)/i);
+    if (exitMatch) {
+      return parseInt(exitMatch[1], 10);
+    }
+  }
+
+  // Default to 1 for failure without specific code
+  return 1;
 }
 
 // =============================================================================
@@ -462,5 +622,104 @@ export async function enrichEditSpan(spanId: string): Promise<EditEnrichment> {
     language,
     gitStatus,
     diff,
+  };
+}
+
+/**
+ * Context from OTEL event needed for Bash enrichment
+ * This data is not in the correlation map but comes from the event
+ */
+export interface BashEventContext {
+  /** Command output (may be truncated) */
+  output?: string;
+  /** Error message if command failed */
+  error?: string;
+  /** Whether command succeeded */
+  success: boolean;
+  /** Execution duration in milliseconds */
+  durationMs?: number;
+}
+
+/**
+ * Enrich a Bash span with command execution context
+ * @param spanId - The span ID to enrich
+ * @param eventContext - Additional context from OTEL event
+ * @returns Enrichment result with command context
+ */
+export function enrichBashSpan(
+  spanId: string,
+  eventContext: BashEventContext
+): BashEnrichment {
+  const correlation = getCorrelation(spanId);
+
+  // Handle non-existent span
+  if (!correlation) {
+    return {
+      spanId,
+      toolName: 'Bash',
+      command: '',
+      exitCode: null,
+      outputSummary: { firstLines: [], lastLines: [], totalLines: 0, truncated: false },
+      workingDirectory: '',
+      durationMs: 0,
+      error: 'Span not found',
+    };
+  }
+
+  // Skip if already enriched
+  if (correlation.enriched) {
+    return {
+      spanId,
+      toolName: 'Bash',
+      command: '',
+      exitCode: null,
+      outputSummary: { firstLines: [], lastLines: [], totalLines: 0, truncated: false },
+      workingDirectory: '',
+      durationMs: 0,
+      skipped: true,
+    };
+  }
+
+  // Check for message context
+  if (!correlation.messageContext) {
+    return {
+      spanId,
+      toolName: 'Bash',
+      command: '',
+      exitCode: null,
+      outputSummary: { firstLines: [], lastLines: [], totalLines: 0, truncated: false },
+      workingDirectory: '',
+      durationMs: 0,
+      error: 'No message context available',
+    };
+  }
+
+  const input = correlation.messageContext.input || {};
+
+  // Extract command from input
+  const rawCommand = (input.command as string) || '';
+  const command = redactSecrets(rawCommand);
+
+  // Extract working directory if available (Claude Code may include cwd)
+  // Default to process.cwd() if not specified
+  const workingDirectory = (input.cwd as string) || process.cwd();
+
+  // Extract exit code from event context
+  const exitCode = extractExitCode(eventContext.output, eventContext.error, eventContext.success);
+
+  // Create output summary
+  const outputSummary = createOutputSummary(eventContext.output);
+
+  // Mark as enriched
+  markSpanEnriched(spanId);
+
+  return {
+    spanId,
+    toolName: 'Bash',
+    command,
+    exitCode,
+    outputSummary,
+    workingDirectory,
+    durationMs: eventContext.durationMs || 0,
   };
 }
