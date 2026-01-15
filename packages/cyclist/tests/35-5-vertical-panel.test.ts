@@ -541,45 +541,16 @@ describe('35-5: Vertical Panel', () => {
   });
 
   // =============================================================================
-  // AC11: Safety - restore mechanism
+  // AC11: Safety - restore mechanism (REMOVED per user request)
   // =============================================================================
 
-  describe('AC11: Panel safety - restore mechanism', () => {
+  describe('AC11: Panel behavior', () => {
 
-    it('should have restore panels button or mechanism in HTML', () => {
-      const restoreBtn = document.querySelector('#restore-panels-btn, .restore-panels, [data-action="restore-panels"]');
-      // Either the button exists or there's another safety mechanism
-      // Check CSS for an empty-state or all-collapsed state
-      const hasRestoreMechanism = restoreBtn !== null ||
-        css.includes('restore-panels') ||
-        css.includes('all-collapsed');
-
-      expect(hasRestoreMechanism).toBe(true);
-    });
-
-    it('should have safety mechanism in vertical-panel.js or panel-manager.js', () => {
-      // Check vertical-panel for prevention of collapsing last panel
-      let hasRestoreMechanism = false;
-
-      if (fs.existsSync(VERTICAL_PANEL_PATH)) {
-        const content = fs.readFileSync(VERTICAL_PANEL_PATH, 'utf-8');
-        hasRestoreMechanism = content.includes('restore') ||
-          content.includes('safety') ||
-          content.includes('last') ||
-          content.includes('prevent');
-      }
-
-      // Or check panel-manager
-      const panelManagerPath = path.join(JS_DIR, 'panel-manager.js');
-      if (fs.existsSync(panelManagerPath)) {
-        const content = fs.readFileSync(panelManagerPath, 'utf-8');
-        hasRestoreMechanism = hasRestoreMechanism ||
-          content.includes('restore') ||
-          content.includes('safety') ||
-          content.includes('closeAll');
-      }
-
-      expect(hasRestoreMechanism).toBe(true);
+    it('should allow all panels to be collapsed independently', () => {
+      // 35-5: No safety mechanism - user can collapse all panels if they want
+      // Panels are restored via tab bar clicks
+      const tabBar = document.querySelector('#tab-bar');
+      expect(tabBar).not.toBeNull();
     });
 
   });

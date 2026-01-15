@@ -151,13 +151,6 @@ export class VerticalPanel {
   collapse() {
     if (!this.collapsible || this._collapsed) return;
 
-    // Safety check - prevent collapsing if this would leave no panels visible
-    if (this._shouldPreventCollapse()) {
-      console.log(`[VerticalPanel:${this.id}] Collapse prevented - last visible panel`);
-      this._showRestoreButton();
-      return;
-    }
-
     this._collapsed = true;
     this.element.classList.add('collapsed');
     this.saveState();
@@ -411,48 +404,6 @@ export class VerticalPanel {
     }
   }
 
-  /**
-   * Check if collapsing this panel would leave no panels visible
-   * @returns {boolean}
-   */
-  _shouldPreventCollapse() {
-    // Get all vertical panels
-    const allPanels = document.querySelectorAll('.vertical-panel');
-    let visibleCount = 0;
-
-    allPanels.forEach(panel => {
-      if (!panel.classList.contains('collapsed')) {
-        visibleCount++;
-      }
-    });
-
-    // Prevent collapse if this is the last visible panel
-    return visibleCount <= 1;
-  }
-
-  /**
-   * Show restore button when all panels would be collapsed
-   */
-  _showRestoreButton() {
-    let restoreBtn = document.getElementById('restore-panels-btn');
-    if (!restoreBtn) {
-      restoreBtn = document.createElement('button');
-      restoreBtn.id = 'restore-panels-btn';
-      restoreBtn.className = 'restore-panels';
-      restoreBtn.textContent = 'Restore Panels';
-      restoreBtn.setAttribute('data-action', 'restore-panels');
-      restoreBtn.addEventListener('click', () => {
-        // Restore all panels to default state
-        const allPanels = document.querySelectorAll('.vertical-panel');
-        allPanels.forEach(panel => {
-          panel.classList.remove('collapsed');
-        });
-        restoreBtn.style.display = 'none';
-      });
-      document.body.appendChild(restoreBtn);
-    }
-    restoreBtn.style.display = 'block';
-  }
 }
 
 /**

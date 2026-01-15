@@ -4536,37 +4536,3 @@ html, body {
   color: var(--text-primary, #fff);
 }
 
-/* Restore panels button (safety mechanism) */
-.restore-panels,
-#restore-panels-btn {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 9999;
-  padding: 12px 24px;
-  background: var(--accent, #6366f1);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.restore-panels:hover,
-#restore-panels-btn:hover {
-  transform: translateX(-50%) translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-}
-
-/* All panels collapsed state */
-.content-area.all-collapsed {
-  background: var(--bg-primary);
-}
-
-.content-area.all-collapsed .restore-panels {
-  display: block;
-}
