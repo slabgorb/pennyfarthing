@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 69
-  completed_points: 54
-  remaining_points: 15
+  completed_points: 56
+  remaining_points: 13
   notes: |
     Sprint 10 focus: Three strategic epics
     - Epic 31: Customizable Workflow Engine (15 pts)
@@ -1276,7 +1276,7 @@ epics:
       data available: file paths for Read/Edit, command output for Bash, search
       results for Grep/Glob, etc. Correlate and enrich spans in real-time.
     points: 15
-    completed_points: 3
+    completed_points: 5
     priority: P2
     marker: observability
     repos: cyclist, pennyfarthing
@@ -1320,8 +1320,11 @@ epics:
           - Git status of file (modified, new, etc.)
         points: 2
         priority: P1
-        status: backlog
+        status: done
+        completed: 2026-01-15
         repos: cyclist
+        jira: MSSCI-11688
+        pr: 253
         acceptance_criteria:
           - Read spans include file size and line count
           - Edit spans include diff summary (lines added/removed)
