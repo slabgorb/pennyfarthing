@@ -688,33 +688,42 @@ export async function processLogEvents(rawEvents: RawLogEvent[]): Promise<void> 
 
       // Story 36-7: Correlate span and enrich Read/Edit tools
       // Story 36-8: Get tool input from Claude message stream instead of OTEL params
-      if (event.spanId && event.traceId) {
-        // Story 36-8: Look up tool input captured from Claude tool_use message
-        // OTEL spans don't include file_path, but Claude messages do
-        const pendingInput = consumePendingToolInput(toolName);
-        const toolInput = pendingInput?.input;
+      // Story 36-9: Claude Code OTEL logs don't include traceId/spanId at logRecord level,
+      // so we use the pending tool input's toolId as the correlation key instead
+      const pendingInput = consumePendingToolInput(toolName);
+      const toolInput = pendingInput?.input;
+
+      // Only correlate and enrich if we have a pending input (from Claude message stream)
+      if (pendingInput) {
+        // Use toolId as the correlation key since OTEL spanId is unavailable
+        const correlationId = pendingInput.toolId;
 
         // Create correlation with message context
         const messageContext: MessageContext = {
-          messageId: pendingInput?.toolId || event.spanId,
+          messageId: correlationId,
           toolName,
           input: toolInput,
         };
 
-        correlateSpan(event.spanId, {
-          traceId: event.traceId,
-          spanId: event.spanId,
+        // Use toolId as spanId for correlation map (synthetic, but consistent)
+        correlateSpan(correlationId, {
+          traceId: correlationId, // Synthetic traceId from toolId
+          spanId: correlationId,  // Synthetic spanId from toolId
           toolName,
-          toolUseId: pendingInput?.toolId, // Story 36-8: Link to Claude tool_use_id
+          toolUseId: correlationId,
           timestamp: event.timestamp,
           enriched: false,
           messageContext,
         });
 
+        // Update toolEvent with correlation ID for downstream use
+        toolEvent.traceId = correlationId;
+        toolEvent.spanId = correlationId;
+
         // Enrich Read/Edit spans - await to include enrichment data in toolEvent
         try {
           if (toolName === 'Read') {
-            const enrichment = await enrichReadSpan(event.spanId);
+            const enrichment = await enrichReadSpan(correlationId);
             if (!enrichment.error && !enrichment.skipped) {
               toolEvent.fileSize = enrichment.fileSize;
               toolEvent.lineCount = enrichment.lineCount;
@@ -722,7 +731,7 @@ export async function processLogEvents(rawEvents: RawLogEvent[]): Promise<void> 
               toolEvent.gitStatus = enrichment.gitStatus;
             }
           } else if (toolName === 'Edit') {
-            const enrichment = await enrichEditSpan(event.spanId);
+            const enrichment = await enrichEditSpan(correlationId);
             if (!enrichment.error && !enrichment.skipped) {
               toolEvent.fileSize = enrichment.fileSize;
               toolEvent.language = enrichment.language;
