@@ -208,12 +208,13 @@ describe('35-1: Contextual Settings Placement', () => {
       expect(settingsHtml).toContain('id="sound"');
     });
 
-    it('should have only Display and Notifications sections', async () => {
-      // Count remaining sections
+    it('should have Display, Fonts, and Notifications sections', async () => {
+      // Count remaining sections (35-6 added Fonts section)
       const sectionMatches = settingsHtml.match(/data-section="/g);
-      expect(sectionMatches).toHaveLength(2);
+      expect(sectionMatches).toHaveLength(3);
 
       expect(settingsHtml).toContain('data-section="display"');
+      expect(settingsHtml).toContain('data-section="fonts"');
       expect(settingsHtml).toContain('data-section="notifications"');
     });
 

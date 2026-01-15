@@ -28,6 +28,8 @@ const DEFAULT_SETTINGS = {
         show_flow: true,
         show_ocean: false,
         sidebar_width: 300,
+        font_ui: 'system-ui',
+        font_mono: 'SF Mono',
     },
     notifications: {
         phase_change: true,
@@ -119,6 +121,11 @@ export function validateSettings(settings) {
         return false;
     if (typeof display.sidebar_width !== 'number')
         return false;
+    // Font settings are optional for backwards compatibility
+    if (display.font_ui !== undefined && typeof display.font_ui !== 'string')
+        return false;
+    if (display.font_mono !== undefined && typeof display.font_mono !== 'string')
+        return false;
     // Check notifications section
     if (typeof s.notifications !== 'object' || s.notifications === null) {
         return false;
@@ -202,6 +209,12 @@ export function mergeSettings(base, override) {
         }
         if (typeof override.display.sidebar_width === 'number') {
             result.display.sidebar_width = override.display.sidebar_width;
+        }
+        if (typeof override.display.font_ui === 'string') {
+            result.display.font_ui = override.display.font_ui;
+        }
+        if (typeof override.display.font_mono === 'string') {
+            result.display.font_mono = override.display.font_mono;
         }
     }
     if (override.notifications) {

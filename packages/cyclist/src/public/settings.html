@@ -46,6 +46,52 @@
         </div>
       </section>
 
+      <!-- Fonts Section (Story 35-6) -->
+      <section class="settings-section" data-section="fonts">
+        <h2>Fonts</h2>
+
+        <div class="setting-item">
+          <label class="setting-label" for="font_ui">
+            <span>UI Font</span>
+          </label>
+          <div class="setting-input font-setting">
+            <select id="font_ui" name="font_ui" class="font-select">
+              <option value="system-ui">System Default</option>
+              <option value="-apple-system">Apple System</option>
+              <option value="Segoe UI">Segoe UI</option>
+              <option value="Roboto">Roboto</option>
+              <option value="Ubuntu">Ubuntu</option>
+              <option value="Helvetica Neue">Helvetica Neue</option>
+              <option value="Arial">Arial</option>
+            </select>
+            <span class="font-preview" id="font_ui_preview">AaBbCc 123</span>
+          </div>
+          <p class="setting-description">Font for UI elements like labels and buttons</p>
+        </div>
+
+        <div class="setting-item">
+          <label class="setting-label" for="font_mono">
+            <span>Monospace Font</span>
+          </label>
+          <div class="setting-input font-setting">
+            <select id="font_mono" name="font_mono" class="font-select">
+              <option value="SF Mono">SF Mono</option>
+              <option value="Monaco">Monaco</option>
+              <option value="Menlo">Menlo</option>
+              <option value="Consolas">Consolas</option>
+              <option value="Fira Code">Fira Code</option>
+              <option value="JetBrains Mono">JetBrains Mono</option>
+              <option value="Source Code Pro">Source Code Pro</option>
+              <option value="IBM Plex Mono">IBM Plex Mono</option>
+              <option value="Cascadia Code">Cascadia Code</option>
+              <option value="Courier New">Courier New</option>
+            </select>
+            <span class="font-preview mono" id="font_mono_preview">AaBbCc 123 {}</span>
+          </div>
+          <p class="setting-description">Font for code, diffs, and terminal output</p>
+        </div>
+      </section>
+
       <!-- Notifications Section -->
       <section class="settings-section" data-section="notifications">
         <h2>Notifications</h2>

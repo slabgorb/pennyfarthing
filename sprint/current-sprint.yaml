@@ -137,7 +137,9 @@ epics:
           - Save preference and apply on startup
         points: 2
         priority: P2
-        status: backlog
+        status: in_progress
+        started: 2026-01-15
+        assigned_to: Keith Avery
         repos: cyclist
         jira: MSSCI-11721
         acceptance_criteria:
