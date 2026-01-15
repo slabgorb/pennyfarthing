@@ -377,6 +377,27 @@ export interface ElectronToolsAPI {
   onTogglePanel: (callback: () => void) => void;
 }
 
+/**
+ * Background Task API interface (31-15)
+ * Provides IPC channels for background task completion notifications
+ */
+export interface ElectronBackgroundTaskAPI {
+  /**
+   * Subscribe to background task completion events
+   * Triggered when a Task with run_in_background: true completes
+   */
+  onCompleted: (callback: (event: unknown, task: {
+    taskId: string;
+    description: string;
+    subagentType: string;
+    startedAt: number;
+    status: 'pending' | 'completed';
+    success?: boolean;
+    output?: string;
+    error?: string;
+  }) => void) => void;
+}
+
 export interface ElectronAPI {
   stats: ElectronDataAPI;
   persona: ElectronDataAPI;
@@ -400,6 +421,7 @@ export interface ElectronAPI {
   auditLog: ElectronAuditLogAPI; // 22-6: Audit log
   theme: ElectronThemeAPI; // 24-9: Quick theme switcher
   tools: ElectronToolsAPI; // Tool panel toggle
+  backgroundTask: ElectronBackgroundTaskAPI; // 31-15: Background task notifications
 }
 
 // Check if we're running in Electron (has contextBridge available)
@@ -597,6 +619,21 @@ function createElectronAPI(): ElectronAPI {
           ipcRenderer.on('tools:toggleToolPanel', () => callback());
         },
       },
+      // Background Task API (31-15)
+      backgroundTask: {
+        onCompleted: (callback: (event: unknown, task: {
+          taskId: string;
+          description: string;
+          subagentType: string;
+          startedAt: number;
+          status: 'pending' | 'completed';
+          success?: boolean;
+          output?: string;
+          error?: string;
+        }) => void) => {
+          ipcRenderer.on('backgroundTask:completed', callback);
+        },
+      },
     };
   } else {
     // Running in Node (tests) - return testable structure
@@ -750,6 +787,21 @@ function createElectronAPI(): ElectronAPI {
       // Tools API - test stub
       tools: {
         onTogglePanel: (_callback: () => void) => {
+          // No-op in test environment
+        },
+      },
+      // Background Task API (31-15) - test stub
+      backgroundTask: {
+        onCompleted: (_callback: (event: unknown, task: {
+          taskId: string;
+          description: string;
+          subagentType: string;
+          startedAt: number;
+          status: 'pending' | 'completed';
+          success?: boolean;
+          output?: string;
+          error?: string;
+        }) => void) => {
           // No-op in test environment
         },
       },

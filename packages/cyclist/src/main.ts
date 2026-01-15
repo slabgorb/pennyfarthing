@@ -31,6 +31,8 @@ import {
   getAuditLogStats,
   getUserEmail,
   setUserEmailCallback,
+  setBackgroundTaskCallback,
+  BackgroundTask,
 } from './otlp-receiver.js';
 import { ClaudeService, SDKMessage } from './claude-service.js';
 import { isTodoWriteMessage, extractTodos, type TodoItem } from './todos.js';
@@ -103,6 +105,7 @@ import {
   IPC_AUDIT_LOG_CHANNELS,
   IPC_FILE_BROWSER_CHANNELS,
   IPC_COMMAND_CHANNELS,
+  IPC_BACKGROUND_TASK_CHANNELS,
 } from './ipc-channels.js';
 
 // Re-export menu builders from dedicated module
@@ -686,6 +689,13 @@ export function startProjectWatchers(): void {
     console.log(`User email discovered: ${email}`);
   });
   console.log('User email callback registered for OTLP broadcasts');
+
+  // 31-15: Register background task completion callback
+  setBackgroundTaskCallback((task: BackgroundTask) => {
+    broadcastToRenderer(IPC_BACKGROUND_TASK_CHANNELS.TASK_COMPLETED, task);
+    console.log(`Background task completed: ${task.subagentType} (${task.success ? 'success' : 'failed'})`);
+  });
+  console.log('Background task callback registered for OTLP broadcasts');
 
   // Start watching for agent changes
   if (detectPennyfarthingProject(projectDir)) {

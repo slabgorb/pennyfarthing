@@ -13,7 +13,7 @@ import { dirname, join, basename } from 'path';
 import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
 import { getStoryInfo, getGitInfo, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig, findAvailablePort } from './server.js';
 import { parseToolStats, createEmptyStats } from './tool-stats.js';
-import { getTokenStats, setTokenStatsCallback, setToolEventCallback, aggregateTokenStats, resetTokenStats, resetEventStore, getToolEventsFiltered, getToolTypes, exportAuditLogAsJSON, exportAuditLogAsCSV, getAuditLogStats, getUserEmail, setUserEmailCallback, } from './otlp-receiver.js';
+import { getTokenStats, setTokenStatsCallback, setToolEventCallback, aggregateTokenStats, resetTokenStats, resetEventStore, getToolEventsFiltered, getToolTypes, exportAuditLogAsJSON, exportAuditLogAsCSV, getAuditLogStats, getUserEmail, setUserEmailCallback, setBackgroundTaskCallback, } from './otlp-receiver.js';
 import { ClaudeService } from './claude-service.js';
 import { isTodoWriteMessage, extractTodos } from './todos.js';
 import { listDirectory as listDir } from './file-browser.js';
@@ -50,7 +50,7 @@ catch {
 }
 // Re-export IPC channels from dedicated module
 export { IPC_DATA_CHANNELS, IPC_CLAUDE_CHANNELS, IPC_AGENT_CHANNELS, IPC_DIFF_CHANNELS, IPC_SETTINGS_CHANNELS, IPC_AUDIT_LOG_CHANNELS, IPC_FILE_BROWSER_CHANNELS, IPC_COMMAND_CHANNELS, IPC_BACKGROUND_TASK_CHANNELS, } from './ipc-channels.js';
-import { IPC_DATA_CHANNELS, IPC_CLAUDE_CHANNELS, IPC_DIFF_CHANNELS, IPC_SETTINGS_CHANNELS, IPC_AUDIT_LOG_CHANNELS, IPC_FILE_BROWSER_CHANNELS, IPC_COMMAND_CHANNELS, } from './ipc-channels.js';
+import { IPC_DATA_CHANNELS, IPC_CLAUDE_CHANNELS, IPC_DIFF_CHANNELS, IPC_SETTINGS_CHANNELS, IPC_AUDIT_LOG_CHANNELS, IPC_FILE_BROWSER_CHANNELS, IPC_COMMAND_CHANNELS, IPC_BACKGROUND_TASK_CHANNELS, } from './ipc-channels.js';
 // Re-export menu builders from dedicated module
 export { AGENT_DEFINITIONS, WORKFLOW_DEFINITIONS, buildAgentMenu, buildWorkflowMenu, buildToolsMenu, buildViewMenu, getMenuTemplate, } from './menu-builder.js';
 import { buildAgentMenu, buildWorkflowMenu, buildToolsMenu, buildViewMenu, } from './menu-builder.js';
@@ -527,6 +527,12 @@ export function startProjectWatchers() {
         console.log(`User email discovered: ${email}`);
     });
     console.log('User email callback registered for OTLP broadcasts');
+    // 31-15: Register background task completion callback
+    setBackgroundTaskCallback((task) => {
+        broadcastToRenderer(IPC_BACKGROUND_TASK_CHANNELS.TASK_COMPLETED, task);
+        console.log(`Background task completed: ${task.subagentType} (${task.success ? 'success' : 'failed'})`);
+    });
+    console.log('Background task callback registered for OTLP broadcasts');
     // Start watching for agent changes
     if (detectPennyfarthingProject(projectDir)) {
         const sessionId = process.env.CYCLIST_SESSION_ID;

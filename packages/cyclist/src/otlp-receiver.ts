@@ -69,6 +69,58 @@ interface RawLogEvent {
 let toolEvents: ToolEvent[] = [];
 let promptEvents: ParsedPromptEvent[] = [];
 
+// =============================================================================
+// Background Task Tracking (Story 31-15)
+// =============================================================================
+
+/**
+ * Background task data tracked from Task tool spans
+ */
+export interface BackgroundTask {
+  taskId: string;
+  description: string;
+  subagentType: string;
+  startedAt: number;
+  status: 'pending' | 'completed';
+  success?: boolean;
+  output?: string;
+  error?: string;
+}
+
+// Background task store
+let backgroundTasks: BackgroundTask[] = [];
+
+// Callback for task completion notifications
+let onBackgroundTaskComplete: ((task: BackgroundTask) => void) | null = null;
+
+/**
+ * Register callback for background task completion
+ */
+export function setBackgroundTaskCallback(callback: (task: BackgroundTask) => void): void {
+  onBackgroundTaskComplete = callback;
+}
+
+/**
+ * Track a new background task
+ */
+export function trackBackgroundTask(task: Omit<BackgroundTask, 'status'>): void {
+  backgroundTasks.push({ ...task, status: 'pending' });
+}
+
+/**
+ * Get all tracked background tasks
+ */
+export function getBackgroundTasks(): BackgroundTask[] {
+  return [...backgroundTasks];
+}
+
+/**
+ * Reset background task store
+ */
+export function resetBackgroundTasks(): void {
+  backgroundTasks = [];
+}
+
 // 35-2: User info extracted from OTEL spans
 let userEmail: string | null = null;
 
@@ -564,10 +616,52 @@ export function processLogEvents(rawEvents: RawLogEvent[]): void {
       const rawSuccess = event.attributes['success'];
       const success = rawSuccess === 'true' || rawSuccess === true;
 
+      const toolName = event.attributes['tool_name'] as string || 'unknown';
+
+      // 31-15: Track background Task spans
+      if (toolName === 'Task' && toolParams) {
+        try {
+          const params = JSON.parse(toolParams);
+          if (params.run_in_background === true) {
+            const taskId = event.attributes['task_id'] as string;
+            if (taskId) {
+              trackBackgroundTask({
+                taskId,
+                description: params.description || '',
+                subagentType: params.subagent_type || '',
+                startedAt: event.timestamp,
+              });
+            }
+          }
+        } catch { /* ignore parse errors */ }
+      }
+
+      // 31-15: Handle TaskOutput completion
+      if (toolName === 'TaskOutput') {
+        try {
+          const params = toolParams ? JSON.parse(toolParams) : {};
+          const taskId = params.task_id || event.attributes['task_id'] as string;
+          const taskStatus = event.attributes['task_status'] as string;
+          if (taskId && taskStatus === 'completed') {
+            const task = backgroundTasks.find(t => t.taskId === taskId);
+            if (task) {
+              task.status = 'completed';
+              task.success = success;
+              // Truncate output to avoid memory bloat
+              const rawOutput = event.attributes['tool_output'] as string;
+              task.output = rawOutput?.substring(0, 2000);
+              if (onBackgroundTaskComplete) {
+                onBackgroundTaskComplete({ ...task });
+              }
+            }
+          }
+        } catch { /* ignore parse errors */ }
+      }
+
       const toolEvent: ToolEvent = {
-        toolName: event.attributes['tool_name'] as string || 'unknown',
-        input,
-        output: event.attributes['tool_output'] as string | undefined,
+        toolName,
+        input: input?.substring(0, 500),
+        output: (event.attributes['tool_output'] as string)?.substring(0, 2000),
         durationMs: isNaN(durationMs as number) ? undefined : durationMs,
         success,
         error: event.attributes['error'] as string | undefined,

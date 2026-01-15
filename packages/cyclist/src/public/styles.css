@@ -4276,3 +4276,64 @@ html, body {
   color: var(--text-secondary);
   font-style: italic;
 }
+
+/* =============================================================================
+ * 31-15: Background Task Notifications
+ * ============================================================================= */
+
+.background-task-notification {
+  margin: 0.5rem 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border-left: 3px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.background-task-notification.notification-success {
+  border-left-color: var(--status-ready);
+}
+
+.background-task-notification.notification-error {
+  border-left-color: var(--status-error);
+}
+
+.background-task-notification details summary {
+  cursor: pointer;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.background-task-notification .task-status {
+  font-weight: 600;
+}
+
+.background-task-notification.notification-success .task-status {
+  color: var(--status-ready);
+}
+
+.background-task-notification.notification-error .task-status {
+  color: var(--status-error);
+}
+
+.background-task-notification .task-type {
+  color: var(--accent);
+  font-family: monospace;
+  font-size: 0.8rem;
+}
+
+.background-task-notification .task-description {
+  color: var(--text-secondary);
+}
+
+.background-task-notification .background-task-output {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: var(--bg-terminal);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  max-height: 200px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
