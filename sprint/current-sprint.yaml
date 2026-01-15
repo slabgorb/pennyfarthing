@@ -1033,7 +1033,7 @@ epics:
       data available: file paths for Read/Edit, command output for Bash, search
       results for Grep/Glob, etc. Correlate and enrich spans in real-time.
     points: 15
-    completed_points: 7
+    completed_points: 9
     priority: P2
     marker: observability
     repos: cyclist, pennyfarthing
@@ -1128,6 +1128,50 @@ epics:
           - Edit tool shows diff summary in Cyclist
           - Debug logging removed from otlp-receiver.ts and main.ts
           - Tests updated to reflect new correlation approach
+      - id: 36-10
+        title: "Bug: OTEL enrichment intermittent - race condition in tool correlation"
+        description: |
+          **Symptom:** Read tool enrichment works sometimes but not always.
+          Story 36-9 fixed the missing trace/span ID issue, but enrichment
+          is still intermittent.
+
+          **Suspected cause:** Race condition between Claude message stream
+          (which captures tool_use events) and OTEL logs (which trigger
+          enrichment). If the OTEL log arrives before the tool_use event
+          is captured, `consumePendingToolInput()` returns undefined and
+          enrichment is skipped.
+
+          **Evidence from Cyclist UI:**
+          - Read at 07:55:37 (1.3s duration) - NO enrichment
+          - Reads at 07:55:45 (0ms duration) - ENRICHED (markdown, size, lines)
+          - Read at 07:56:15 (134ms) - ENRICHED (yaml, 49.6KB, 1219 lines)
+          - Bash/Glob tools - no enrichment (expected, not implemented yet)
+
+          **Areas to investigate:**
+          1. Timing between `storePendingToolInput()` in main.ts and
+             `consumePendingToolInput()` in otlp-receiver.ts
+          2. FIFO queue matching - may match wrong tool if multiple
+             tools of same type in flight
+          3. 5-second timeout cleanup - may be too aggressive
+          4. Event ordering in SSE stream vs OTEL export timing
+          5. Why slow Read (1.3s) missed enrichment but fast ones got it
+
+          **Impact:** P0 - Unreliable enrichment defeats the purpose of
+          the entire Epic 36 feature. Blocks dependent stories.
+        points: 2
+        priority: P0
+        status: done
+        started: 2026-01-15
+        completed: 2026-01-15
+        assigned_to: Keith Avery
+        repos: cyclist
+        pr: 265
+        blocks: [36-3, 36-4, 36-5, 36-6]
+        acceptance_criteria:
+          - Enrichment works reliably for all Read/Edit tool calls
+          - Race condition identified and fixed
+          - Test added to verify timing edge cases
+          - Manual verification shows consistent enrichment
       - id: 36-3
         title: Bash tool enrichment
         description: |
@@ -1140,7 +1184,7 @@ epics:
         points: 2
         priority: P1
         status: backlog
-        depends_on: [36-9]
+        depends_on: [36-10]
         repos: cyclist
         jira: MSSCI-11735
         acceptance_criteria:
