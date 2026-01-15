@@ -1,5 +1,6 @@
 /**
  * Story 36-2: Read/Edit Tool Enrichment Tests
+ * Story 36-11: Added Write tool enrichment
  *
  * SKIPPED: ESM module mocking limitation
  * vi.mock('fs/promises') doesn't work with ESM when imported at module level.
@@ -16,6 +17,7 @@
  * 3. Language detected from file extension
  * 4. Git status included when in git repo
  * 5. Enrichment happens before span export
+ * 6. Write spans include file size and line count (Story 36-11)
  *
  * API Documentation (see src/file-enrichment.ts for implementation):
  *
@@ -23,7 +25,8 @@
  *   - DiffSummary: { added: number, removed: number }
  *   - FileEnrichment: { spanId, toolName: 'Read', language, gitStatus, fileSize?, lineCount? }
  *   - EditEnrichment: { spanId, toolName: 'Edit', language, gitStatus, fileSize?, diff }
- *   - EnrichmentResult: FileEnrichment | EditEnrichment
+ *   - WriteEnrichment: { spanId, toolName: 'Write', language, gitStatus, fileSize?, lineCount? }
+ *   - EnrichmentResult: FileEnrichment | EditEnrichment | WriteEnrichment | BashEnrichment
  *
  * Functions:
  *   - detectLanguage(filePath: string): string
@@ -33,6 +36,7 @@
  *   - getGitStatus(filePath: string): Promise<'clean' | 'modified' | 'new' | 'untracked' | null>
  *   - enrichReadSpan(spanId: string): Promise<FileEnrichment>
  *   - enrichEditSpan(spanId: string): Promise<EditEnrichment>
+ *   - enrichWriteSpan(spanId: string): Promise<WriteEnrichment>
  */
 
 import { describe, it, expect } from 'vitest';
@@ -169,6 +173,13 @@ describe('Story 36-2: File Enrichment (pure functions only)', () => {
  * AC5: Enrichment happens before span export
  *   - enrichReadSpan looks up span from correlation store
  *   - enrichEditSpan looks up span and calculates diff
+ *   - enrichWriteSpan looks up span and gets file metadata (Story 36-11)
  *   - Marks span as enriched after processing
  *   - Returns enrichment result with all metadata
+ *
+ * AC6: Write spans include file size and line count (Story 36-11)
+ *   - enrichWriteSpan returns file size after write
+ *   - enrichWriteSpan returns line count after write
+ *   - Language detected from file extension
+ *   - Git status shows 'new' for new files, 'modified' for overwrites
  */

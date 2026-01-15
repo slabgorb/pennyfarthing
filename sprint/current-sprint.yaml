@@ -1397,7 +1397,9 @@ epics:
           36-10 fix, not broken. This story confirms that assumption.
         points: 1
         priority: P1
-        status: backlog
+        status: in_progress
+        started: 2026-01-15
+        assigned_to: Keith Avery
         repos: cyclist
         acceptance_criteria:
           - 36-2 test suite passes (packages/cyclist/tests/36-2-file-enrichment.test.ts)

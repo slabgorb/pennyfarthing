@@ -58,6 +58,16 @@ export interface EditEnrichment extends BaseEnrichment {
     diff: DiffSummary;
 }
 /**
+ * Enrichment result for Write spans
+ */
+export interface WriteEnrichment extends BaseEnrichment {
+    toolName: 'Write';
+    /** File size in bytes (after write) */
+    fileSize?: number;
+    /** Number of lines written */
+    lineCount?: number;
+}
+/**
  * Output summary for Bash commands
  */
 export interface OutputSummary {
@@ -96,7 +106,7 @@ export interface BashEnrichment {
 /**
  * Union type for all enrichment results
  */
-export type EnrichmentResult = FileEnrichment | EditEnrichment | BashEnrichment;
+export type EnrichmentResult = FileEnrichment | EditEnrichment | WriteEnrichment | BashEnrichment;
 /**
  * Detect programming language from file extension
  * @param filePath - Path to the file
@@ -162,6 +172,13 @@ export declare function enrichReadSpan(spanId: string): Promise<FileEnrichment>;
  * @returns Enrichment result with diff summary
  */
 export declare function enrichEditSpan(spanId: string): Promise<EditEnrichment>;
+/**
+ * Enrich a Write span with file metadata
+ * Write creates new files or overwrites existing, so we get metadata after the write
+ * @param spanId - The span ID to enrich
+ * @returns Enrichment result with file metadata
+ */
+export declare function enrichWriteSpan(spanId: string): Promise<WriteEnrichment>;
 /**
  * Context from OTEL event needed for Bash enrichment
  * This data is not in the correlation map but comes from the event
