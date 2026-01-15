@@ -26,7 +26,7 @@ export interface StoryInfo {
     branch: string | null;
     criteria: CriteriaItem[] | null;
 }
-export declare function parseSessionFile(content: string): Partial<StoryInfo>;
+export declare function parseSessionFile(content: string, projectDir?: string): Partial<StoryInfo>;
 export declare function parseAcceptanceCriteria(content: string): CriteriaItem[] | null;
 export declare function parseWorkflowProgress(content: string, projectDir?: string): WorkflowPhase[] | null;
 export declare function parseSprintYaml(content: string): StoryInfo['sprint'] | null;
