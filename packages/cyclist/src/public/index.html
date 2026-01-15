@@ -97,6 +97,8 @@
     </div>
     <div class="resize-handle" id="tool-panel-resize" title="Drag to resize"></div>
     <!-- Panel expand buttons removed - now using horizontal tab bar at top -->
+    <!-- 35-5: Message panel wrapper for collapsible message view -->
+    <div id="message-panel" class="vertical-panel position-center">
     <div id="main-content">
       <main id="message-view">
         <!-- MessageView will be mounted here -->
@@ -189,7 +191,10 @@
         </div>
       </div>
     </div>
-    <aside id="sidebar">
+    </div><!-- /message-panel -->
+    <!-- 35-5: Sidebar as vertical panel with collapse button -->
+    <aside id="sidebar" class="vertical-panel position-right">
+      <button class="panel-collapse-btn" id="sidebar-collapse-btn" data-action="collapse" title="Collapse sidebar">▶</button>
       <!-- Persona Section -->
       <div id="persona-section" class="persona-section" data-action="theme-picker">
         <div id="project-name" class="project-name"></div>
@@ -424,6 +429,9 @@
     </div>
   </div>
 
+  <!-- 35-5: Restore panels button (safety mechanism when all collapsed) -->
+  <button id="restore-panels-btn" class="restore-panels" data-action="restore-panels" style="display: none;">Restore Panels</button>
+
   <!-- Web adapter: provides window.electronAPI in browser mode (no-op in Electron) -->
   <script src="/js/web-adapter.js"></script>
   <!-- Livereload: auto-refresh in dev mode -->
@@ -485,6 +493,11 @@
       });
     }
   </script>
+  <!-- 35-5: Vertical Panel base class -->
+  <script type="module" src="/js/vertical-panel.js"></script>
+  <!-- 35-5: Sidebar and Message panels -->
+  <script type="module" src="/js/sidebar-panel.js"></script>
+  <script type="module" src="/js/message-panel.js"></script>
   <!-- Panel Manager and Tab Bar -->
   <script type="module" src="/js/panel-manager.js"></script>
   <script type="module" src="/js/tab-bar.js"></script>
