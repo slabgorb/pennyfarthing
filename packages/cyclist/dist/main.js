@@ -16,6 +16,8 @@ import { parseToolStats, createEmptyStats } from './tool-stats.js';
 import { getTokenStats, setTokenStatsCallback, setToolEventCallback, aggregateTokenStats, resetTokenStats, resetEventStore, getToolEventsFiltered, getToolTypes, exportAuditLogAsJSON, exportAuditLogAsCSV, getAuditLogStats, getUserEmail, setUserEmailCallback, setBackgroundTaskCallback, } from './otlp-receiver.js';
 import { ClaudeService } from './claude-service.js';
 import { isTodoWriteMessage, extractTodos } from './todos.js';
+// Story 36-8: Import for capturing tool inputs for OTEL enrichment
+import { storePendingToolInput } from './span-correlation.js';
 import { listDirectory as listDir } from './file-browser.js';
 import { getProjectDirectory, setProjectDirectory, isValidProjectDirectory, parseProjectDirArg, } from './paths.js';
 import { getContextUsage } from './api/context.js';
@@ -627,6 +629,11 @@ export function setupClaudeIPCHandlers(ipcMain) {
                     if (content && Array.isArray(content)) {
                         for (const block of content) {
                             if (block.type === 'tool_use') {
+                                // Story 36-8: Capture ALL tool inputs for OTEL enrichment correlation
+                                // OTEL spans don't include file_path, so we capture it here from Claude message stream
+                                if (block.id && block.name && block.input) {
+                                    storePendingToolInput(block.id, block.name, block.input);
+                                }
                                 if (block.name === 'Edit') {
                                     const input = block.input;
                                     broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, {

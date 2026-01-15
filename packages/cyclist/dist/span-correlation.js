@@ -19,6 +19,61 @@
  * Maintains insertion order via Map semantics
  */
 let correlationMap = new Map();
+/**
+ * Queue of pending tool inputs, ordered by arrival time
+ * We use a queue because tool_use arrives before tool_result/OTEL span
+ */
+let pendingToolInputs = [];
+/** Max age for pending inputs (5 seconds) - after this, discard */
+const PENDING_INPUT_MAX_AGE_MS = 5000;
+/**
+ * Store a tool input from Claude message stream for later OTEL correlation
+ * @param toolId - Claude tool_use_id
+ * @param toolName - Tool name (Read, Edit, etc.)
+ * @param input - Tool input parameters
+ */
+export function storePendingToolInput(toolId, toolName, input) {
+    // Clean up old entries first
+    const now = Date.now();
+    pendingToolInputs = pendingToolInputs.filter(p => now - p.timestamp < PENDING_INPUT_MAX_AGE_MS);
+    pendingToolInputs.push({
+        toolId,
+        toolName,
+        input,
+        timestamp: now,
+    });
+}
+/**
+ * Find and consume a pending tool input matching the given tool name
+ * Returns the oldest matching entry (FIFO) and removes it from the queue
+ * @param toolName - Tool name to match
+ * @returns Matching pending input, or undefined if none found
+ */
+export function consumePendingToolInput(toolName) {
+    // Clean up old entries first
+    const now = Date.now();
+    pendingToolInputs = pendingToolInputs.filter(p => now - p.timestamp < PENDING_INPUT_MAX_AGE_MS);
+    // Find oldest matching entry
+    const index = pendingToolInputs.findIndex(p => p.toolName === toolName);
+    if (index === -1) {
+        return undefined;
+    }
+    // Remove and return
+    const [match] = pendingToolInputs.splice(index, 1);
+    return match;
+}
+/**
+ * Get all pending tool inputs (for debugging)
+ */
+export function getPendingToolInputs() {
+    return [...pendingToolInputs];
+}
+/**
+ * Clear all pending tool inputs (for testing/reset)
+ */
+export function clearPendingToolInputs() {
+    pendingToolInputs = [];
+}
 // =============================================================================
 // Core Correlation Functions
 // =============================================================================
@@ -59,6 +114,7 @@ export function hasCorrelation(spanId) {
  */
 export function resetCorrelations() {
     correlationMap = new Map();
+    pendingToolInputs = []; // Story 36-8: Also clear pending tool inputs
 }
 /**
  * Remove a single correlation by span ID
