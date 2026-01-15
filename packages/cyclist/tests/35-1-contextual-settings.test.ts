@@ -120,15 +120,15 @@ describe('35-1: Contextual Settings Placement', () => {
       expect(indexHtml).toContain('data-control="handoff-mode"');
     });
 
-    it('should have handoff toggle button after mode button', async () => {
-      // Should appear after the plan-mode button
-      const toolbarHtml = indexHtml.match(/<div id="editor-toolbar"[^>]*>([\s\S]*?)<\/div>/)?.[1] || '';
-      const planModeIndex = toolbarHtml.indexOf('data-control="plan-mode"');
-      const handoffIndex = toolbarHtml.indexOf('data-control="handoff-mode"');
+    it('should have handoff toggle button after mode switch', async () => {
+      // Should appear after the mode-switch segmented control (35-4)
+      // Use the full HTML since toolbar contains nested divs
+      const modeSwitchIndex = indexHtml.indexOf('data-control="mode-switch"');
+      const handoffIndex = indexHtml.indexOf('data-control="handoff-mode"');
 
-      expect(planModeIndex).toBeGreaterThan(-1);
+      expect(modeSwitchIndex).toBeGreaterThan(-1);
       expect(handoffIndex).toBeGreaterThan(-1);
-      expect(handoffIndex).toBeGreaterThan(planModeIndex);
+      expect(handoffIndex).toBeGreaterThan(modeSwitchIndex);
     });
 
     it('should have handoff button with appropriate class', async () => {
