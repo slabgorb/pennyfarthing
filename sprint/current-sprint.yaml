@@ -28,7 +28,7 @@ epics:
       Infrastructure for user-defined workflows. Replace hardcoded TDD flow
       (SM → TEA → Dev → Reviewer) with configurable YAML-based workflows.
       Users can define custom agent sequences, routing rules, and gates.
-    points: 37
+    points: 38
     completed_points: 30
     priority: P1
     marker: strategic
@@ -563,6 +563,35 @@ epics:
           - All agent .md files have explicit handoff checklist
           - Cannot complete phase without handoff (enforced, not just documented)
           - Works for approve, reject, and pass-through handoffs
+      - id: 31-17
+        title: "Bug: Trivial workflow shows 'review' phase in session file"
+        description: |
+          **Symptom:** When using trivial workflow, the generic-handoff subagent
+          writes "review" as the next phase in the session file, even though
+          trivial workflow should go directly to "done" (no Reviewer).
+
+          **Evidence from Story 35-13:**
+          - Session file shows `**Workflow:** trivial`
+          - Phase History shows: setup → dev → review
+          - Should show: setup → implement → done
+          - The actual routing may be correct, but the displayed phase name is wrong
+
+          **Root cause hypothesis:**
+          - generic-handoff may be hardcoding "review" as next phase
+          - Or it's reading from TDD workflow instead of trivial workflow
+          - Phase name mapping may be incorrect for trivial workflow
+
+          **Impact:** UX confusion - users see "review" phase for trivial stories
+          when there should be no review. Minor issue but misleading.
+        points: 1
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Trivial workflow shows correct phase names (setup → implement → done)
+          - generic-handoff reads phase names from workflow definition
+          - Session file reflects actual workflow phases, not TDD phases
+          - No "review" phase appears for trivial stories
   - id: epic-33
     title: Runtime Permission Management
     description: |
@@ -698,7 +727,7 @@ epics:
       Surface settings and controls where they're used instead of burying
       them in popup dialogs. Reduce friction by putting options in context.
       Fix existing UI bugs and add user-requested customization features.
-    points: 27
+    points: 30
     completed_points: 11
     priority: P2
     marker: ux
@@ -1066,8 +1095,9 @@ epics:
           resetting to defaults on every launch.
         points: 2
         priority: P2
-        status: in_progress
+        status: done
         started: 2026-01-15
+        completed: 2026-01-15
         assigned_to: Keith Avery
         repos: cyclist
         jira: MSSCI-11722
@@ -1080,6 +1110,37 @@ epics:
           - Handles missing monitor gracefully (falls back to primary)
           - Handles out-of-bounds position (recenters if off-screen)
           - Works on macOS (primary target)
+      - id: 35-14
+        title: Stop button working state indicator
+        description: |
+          Add visual indicator to stop button when agent is working. Currently
+          the portrait panel shows a pulsing/glowing effect during work, but
+          if the panel is collapsed (35-5), there's no visible indication of
+          working state.
+
+          The stop button is the perfect place to show this because:
+          1. It's always visible regardless of panel state
+          2. It signals the button is active and can be clicked
+          3. It provides feedback that work is in progress
+
+          Implementation:
+          - Apply same pulsing/glowing animation used on portrait panel
+          - Activate when status changes to 'working'/'streaming'
+          - Deactivate when status changes to 'idle'/'ready'
+          - Use CSS animation for performance (not JS intervals)
+          - Consider subtle glow vs prominent pulse based on UX preference
+        points: 1
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Stop button shows visual indicator when agent is working
+          - Animation matches or complements portrait panel style
+          - Indicator activates on working/streaming status
+          - Indicator deactivates on idle/ready status
+          - Works when portrait panel is collapsed
+          - CSS-based animation (performant)
+          - Accessible (not solely relying on color)
   - id: epic-36
     title: OTEL Tool Call Enrichment
     description: |
