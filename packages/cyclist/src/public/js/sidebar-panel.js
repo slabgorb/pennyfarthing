@@ -9,7 +9,7 @@
  * - Integrates with PanelManager for tab bar display
  */
 
-import { VerticalPanel } from '/js/vertical-panel.js';
+import { VerticalPanel } from './vertical-panel.js';
 
 const STORAGE_KEY = 'cyclist-sidebar-panel';
 
