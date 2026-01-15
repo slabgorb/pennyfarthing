@@ -891,8 +891,9 @@ epics:
           - CSS custom properties for all themeable values
         points: 5
         priority: P2
-        status: in_progress
+        status: done
         started: 2026-01-15
+        completed: 2026-01-15
         assigned_to: Keith Avery
         repos: cyclist
         jira: MSSCI-11722
