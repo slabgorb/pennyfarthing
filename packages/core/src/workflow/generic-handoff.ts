@@ -1,16 +1,14 @@
 /**
  * Generic Workflow-Driven Handoff
  *
- * Story 31-7: Replace 5 hardcoded handoff files with one generic handoff
- * that reads phase requirements from workflow definitions.
+ * Replaces hardcoded handoff files with workflow-driven logic.
+ * Reads phase requirements from workflow definitions.
  *
- * This module provides functions to:
+ * Provides functions to:
  * - Find current phase in a workflow
  * - Determine next phase (forward or rejection loop)
  * - Check gate conditions based on gate type
  * - Format session file updates for phase transitions
- *
- * TODO: Dev will implement the logic to pass the tests
  */
 
 import type { WorkflowDefinition, WorkflowPhase } from './workflow-schema.js';

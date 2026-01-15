@@ -1,13 +1,9 @@
 /**
  * Generic SM Setup - Combines story-setup + work-research
  *
- * Story 31-11: Consolidate SM bookkeeping subagents
- *
- * This module provides two modes:
+ * Provides two modes:
  * 1. Research mode: Scan backlog, batch Jira query, recommend stories
  * 2. Setup mode: Claim Jira, create branches, write session file
- *
- * TODO: Dev will implement the logic to pass the tests
  */
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
