@@ -77,9 +77,22 @@ git add -A && git commit -m "fix: lint issues for story {STORY_ID}" && git push 
 
 ## Step 3: Check Jira Status (if JIRA_KEY provided)
 
-**Skip this step if `{JIRA_KEY}` is not provided or empty.** Many workflows don't use Jira.
+**Skip this step if `{JIRA_KEY}` is not provided, empty, or invalid format.**
 
-If JIRA_KEY is provided:
+**IMPORTANT: Validate JIRA_KEY format before using:**
+- Valid format: `MSSCI-NNNNN` (project prefix, dash, 4-5 digit number)
+- Invalid examples: `MSSCI-36` (too short - that's an epic number, not an issue key)
+- If format invalid, treat as missing and skip Jira ops
+
+```bash
+# Validate format: must be MSSCI- followed by 4-5 digits
+if [[ ! "{JIRA_KEY}" =~ ^MSSCI-[0-9]{4,5}$ ]]; then
+  echo "JIRA_KEY '{JIRA_KEY}' appears invalid (expected MSSCI-NNNNN format). Skipping Jira ops."
+  # Set jira_skipped: true in report
+fi
+```
+
+If JIRA_KEY is valid:
 ```bash
 jira issue view {JIRA_KEY} --plain 2>/dev/null | grep -E "Status:|Assignee:"
 ```

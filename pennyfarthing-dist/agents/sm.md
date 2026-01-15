@@ -210,13 +210,19 @@ Task tool:
 
 ### Step 1: Helper Does Preflight
 
+**IMPORTANT: Get JIRA_KEY correctly:**
+1. Look in session file for `Jira:` field (e.g., `Jira: MSSCI-11735`)
+2. OR look in sprint YAML under the story's `jira:` field
+3. **NEVER construct from epic number** - `36` is NOT `MSSCI-36`
+4. If no Jira key found, omit JIRA_KEY entirely (don't pass empty or made-up value)
+
 ```yaml
 Task tool:
   subagent_type: "generic-sm-finish"
   prompt: |
     PHASE: preflight
     STORY_ID: {value}
-    JIRA_KEY: {value}
+    JIRA_KEY: {value from session/YAML jira field, or omit if not found}
     REPOS: {value}
     BRANCH: {value}
 ```
