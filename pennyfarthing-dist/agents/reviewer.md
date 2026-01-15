@@ -251,11 +251,11 @@ Then check context usage:
 $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
-**If < 70%:** Invoke next agent directly:
+**If < 60%:** Invoke next agent directly:
 - APPROVED: Invoke `/sm` to finish story
 - REJECTED: Invoke `/dev` for fixes
 
-**If > 70%:** Tell user: "Context high. Start fresh with `/sm` (approve) or `/dev` (reject)"
+**If > 60%:** Tell user: "Context high. Start fresh with `/sm` (approve) or `/dev` (reject)"
 
 **Handoff Marker:** Include at end of handoff message:
 ```

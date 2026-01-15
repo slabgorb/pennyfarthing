@@ -468,8 +468,8 @@ $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 
 | Context | Action |
 |---------|--------|
-| < 70% | Invoke `/tea` directly (or `/dev` for trivial stories) |
-| > 70% | Tell user: "Context high. Start fresh with `/tea`" (or `/dev`) |
+| < 60% | Invoke `/tea` directly (or `/dev` for trivial stories) |
+| > 60% | Tell user: "Context high. Start fresh with `/tea`" (or `/dev`) |
 
 **Handoff Marker:** Include at end of handoff message:
 ```
@@ -481,8 +481,8 @@ $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 
 | Context | Action |
 |---------|--------|
-| < 70% | Ask user: "Start another story?" - if yes, begin new work flow |
-| > 70% | Tell user: "Context high. Start fresh with `/new-work` for next story" |
+| < 60% | Ask user: "Start another story?" - if yes, begin new work flow |
+| > 60% | Tell user: "Context high. Start fresh with `/new-work` for next story" |
 
 <exit>
 To exit SM mode: "Exit SM" or "Switch to [other agent]"

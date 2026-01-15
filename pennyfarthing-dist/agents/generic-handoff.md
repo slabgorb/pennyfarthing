@@ -315,7 +315,7 @@ CONTEXT_OUTPUT=$($CLAUDE_PROJECT_DIR/.claude/scripts/check-context.sh 2>/dev/nul
 eval "$CONTEXT_OUTPUT"
 
 # CONTEXT_PERCENT and CONTEXT_STATUS are now set
-# CONTEXT_STATUS will be "OK" (<70%) or "HIGH" (>=70%)
+# CONTEXT_STATUS will be "OK" (<60%) or "HIGH" (>=60%)
 ```
 
 Then read user's handoff mode preference from Cyclist settings:
@@ -346,10 +346,10 @@ fi
 
 | Context | Mode | Action |
 |---------|------|--------|
-| OK (<70%) | auto | Invoke next agent directly |
-| OK (<70%) | manual | Report ready, user invokes next agent |
-| HIGH (>=70%) | auto | Report: "Context high. Start fresh with /{next_agent}" |
-| HIGH (>=70%) | manual | Report: "Context high. Start fresh with /{next_agent}" |
+| OK (<60%) | auto | Invoke next agent directly |
+| OK (<60%) | manual | Report ready, user invokes next agent |
+| HIGH (>=60%) | auto | Report: "Context high. Start fresh with /{next_agent}" |
+| HIGH (>=60%) | manual | Report: "Context high. Start fresh with /{next_agent}" |
 
 **Include in report:**
 - Context percentage and token count

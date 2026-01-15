@@ -187,9 +187,9 @@ Then check context usage:
 $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
-**If < 70%:** Invoke `/dev` directly to continue the flow
+**If < 60%:** Invoke `/dev` directly to continue the flow
 
-**If > 70%:** Tell user: "Context high. Start fresh session with `/dev`"
+**If > 60%:** Tell user: "Context high. Start fresh session with `/dev`"
 
 **Handoff Marker:** Include at end of handoff message:
 ```

@@ -34,7 +34,7 @@ PROJECT_DIR="${PROJECT_ROOT:-$(pwd)}"
 CLAUDE_PROJECT_PATH="$HOME/.claude/projects/$(echo "$PROJECT_DIR" | tr '/' '-')"
 
 # Default thresholds (can be overridden by settings.local.json)
-DEFAULT_WARNING_THRESHOLD=70
+DEFAULT_WARNING_THRESHOLD=60
 DEFAULT_CRITICAL_THRESHOLD=85
 DEFAULT_MAX_TOKENS=200000
 
