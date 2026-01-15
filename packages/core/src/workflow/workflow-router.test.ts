@@ -23,7 +23,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { existsSync } from 'node:fs';
 
-// Import the router function that Dev will implement
+// Import the router function
 import {
   routeStoryToWorkflow,
   type StoryMetadata,

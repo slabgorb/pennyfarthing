@@ -22,7 +22,7 @@ import assert from 'node:assert';
 import { mkdirSync, rmSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-// Import the generic handoff functions that Dev will implement
+// Import the generic handoff functions
 import { findCurrentPhase, getNextPhase, checkGate, formatPhaseTransition, calculateDuration } from './generic-handoff.js';
 // Get directory for test fixtures
 const __dirname = dirname(fileURLToPath(import.meta.url));

@@ -30,13 +30,13 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const TEST_DIR = join(__dirname, '__test_sm_subagents__');
 
-// Import the generic-sm-setup module that Dev will implement
+// Import the generic-sm-setup module
 import {
   researchBacklog,
   setupStory
 } from './generic-sm-setup.js';
 
-// Import the generic-sm-finish module that Dev will implement
+// Import the generic-sm-finish module
 import {
   preflightCheck,
   executeFinish

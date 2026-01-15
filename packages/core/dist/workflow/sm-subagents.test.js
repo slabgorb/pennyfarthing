@@ -27,9 +27,9 @@ import { fileURLToPath } from 'node:url';
 // Get directory for test fixtures
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const TEST_DIR = join(__dirname, '__test_sm_subagents__');
-// Import the generic-sm-setup module that Dev will implement
+// Import the generic-sm-setup module
 import { researchBacklog, setupStory } from './generic-sm-setup.js';
-// Import the generic-sm-finish module that Dev will implement
+// Import the generic-sm-finish module
 import { preflightCheck, executeFinish } from './generic-sm-finish.js';
 // Import extended generic-handoff for setup phase
 import { findCurrentPhase, getNextPhase, checkGate } from './generic-handoff.js';

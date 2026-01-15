@@ -12,8 +12,7 @@
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-// Import the validator function that Dev will implement
-// This import will fail until 31-2 implements the module
+// Import the validator function
 import { validateWorkflow } from './workflow-schema.js';
 describe('Workflow Schema Validation (31-1)', () => {
     describe('Valid workflows', () => {
