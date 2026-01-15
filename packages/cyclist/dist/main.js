@@ -22,6 +22,7 @@ import { getContextUsage } from './api/context.js';
 import { getVerboseMode, setVerboseMode, loadPersistedGrants } from './settings-store.js';
 import { getCurrentSettings, saveUserSettings, } from './settings.js';
 import { openSettingsWindow, setMainWindowRef, setBrowserWindowRef } from './settings-window.js';
+import { IPC_DATA_CHANNELS, IPC_CLAUDE_CHANNELS, IPC_DIFF_CHANNELS, IPC_SETTINGS_CHANNELS, IPC_AUDIT_LOG_CHANNELS, IPC_FILE_BROWSER_CHANNELS, IPC_COMMAND_CHANNELS, IPC_BACKGROUND_TASK_CHANNELS, } from './ipc-channels.js';
 // Re-export project directory functions for external consumers
 export { getProjectDirectory, setProjectDirectory, isValidProjectDirectory };
 import * as fs from 'fs';
@@ -330,7 +331,7 @@ export function startContextPolling(projectDir, getSessionId) {
 }
 // =============================================================================
 // Re-export usage stats from dedicated module
-export { getUsageStats, USAGE_POLL_INTERVAL_MS } from './usage-stats.js';
+export { getUsageStats, USAGE_POLL_INTERVAL_MS, startUsagePolling } from './usage-stats.js';
 import { getUsageStats, resetUsageStats as resetUsageStatsInternal, startUsagePolling as startUsagePollingInternal, } from './usage-stats.js';
 // Wrapper functions that include broadcast
 function resetUsageStats() {
