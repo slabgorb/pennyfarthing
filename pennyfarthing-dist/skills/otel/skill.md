@@ -38,7 +38,7 @@ tail -f /tmp/otel-capture.jsonl | jq .
 
 ## Status
 
-**NEEDS DATA CAPTURE** - This skill requires live OTEL capture to document actual format.
+**WORKING** - Stories 36-9, 36-10, 36-2, and 36-3 have established working enrichment patterns.
 
 ## Known Facts (Verified)
 
@@ -61,7 +61,7 @@ interface LogRecord {
 
 - `traceId` - NOT in logRecord (Story 36-9 confirmed)
 - `spanId` - NOT in logRecord (Story 36-9 confirmed)
-- `tool_use_id` - Status UNKNOWN - need to verify
+- `tool_use_id` - NOT in OTEL attributes; use Claude message stream `block.id` instead
 
 ### Event Types Observed
 
@@ -71,64 +71,118 @@ interface LogRecord {
 | `claude_code.user_prompt` | User prompt submitted |
 | `claude_code.api_request` | API request made |
 
-### Tool Result Attributes (NEEDS VERIFICATION)
+### Tool Result Attributes (VERIFIED)
 
 ```
 tool_name: string           // e.g., "Read", "Edit", "Bash"
-tool_parameters: string     // JSON string - WHAT'S INSIDE?
-tool_output: string         // Tool output (truncated)
-duration_ms: string|number  // Execution time
+tool_parameters: string     // JSON string with tool-specific input
+tool_output: string         // Tool output (truncated to ~2000 chars)
+duration_ms: string|number  // Execution time in milliseconds
 success: string             // "true" or "false" as string
 error?: string              // Error message if failed
 ```
 
-## UNKNOWN - Need to Capture
+### tool_parameters Format by Tool (VERIFIED)
 
-1. **Does `tool_parameters` contain `file_path`?**
-   - We assume yes, but need verification
-   - If not, how do we correlate Read/Edit to specific files?
+**Read:**
+```json
+{ "file_path": "/absolute/path/to/file.ts" }
+```
 
-2. **Is there a `tool_use_id` in attributes?**
-   - This would solve correlation with message stream
-   - Claude message stream has `block.id` - does OTEL have matching ID?
+**Edit:**
+```json
+{
+  "file_path": "/absolute/path/to/file.ts",
+  "old_string": "text to replace",
+  "new_string": "replacement text"
+}
+```
 
-3. **What's the exact format of `tool_parameters` for each tool?**
-   - Read: `{ file_path: string, ... }` ?
-   - Edit: `{ file_path: string, old_string: string, new_string: string }` ?
-   - Bash: `{ command: string, ... }` ?
+**Bash:**
+```json
+{
+  "command": "git status",
+  "description": "Check git status",
+  "timeout": 120000,
+  "run_in_background": false
+}
+```
 
-4. **Timing relationship between events?**
-   - Does OTEL arrive before or after message stream tool_use?
-   - Is it consistent or variable?
+## Correlation Strategy (WORKING)
 
-## Correlation Strategy (Current)
+Story 36-10 solved the correlation problem:
 
 1. Claude message stream provides `tool_use` with `block.id`, `block.name`, `block.input`
-2. Store in FIFO queue keyed by `toolName`
-3. When OTEL arrives, match by `toolName` and consume from queue
+2. Store in pending queue via `storePendingToolInput(toolId, toolName, input)`
+3. When OTEL arrives, match via `consumePendingToolInput(toolName, parsedToolParams)`
+4. **Key fix:** For Read/Edit, match on `file_path` first for precise correlation
+5. Fall back to FIFO by toolName for tools without file_path (e.g., Bash)
+6. Use `block.id` (toolId) as synthetic spanId for correlation map
 
-**Problem:** FIFO by toolName alone is unreliable when:
-- Multiple tools of same type in flight
-- OTEL arrives before message stream
-- Order not guaranteed
+**Why this works:**
+- Claude message stream arrives BEFORE OTEL tool_result
+- file_path matching handles concurrent Read/Edit operations correctly
+- FIFO fallback works for Bash since commands are typically sequential
+
+## Enrichment Pipeline
+
+```
+Claude Message Stream           OTEL Logs
+       |                             |
+  tool_use event               tool_result event
+       |                             |
+storePendingToolInput()        consumePendingToolInput()
+       |                             |
+       +-----> Correlation <---------+
+                    |
+             enrichXxxSpan()
+                    |
+            ToolEvent with metadata
+                    |
+              Broadcast to UI
+```
+
+### Implemented Enrichments
+
+| Tool | Enrichment Function | Data Added |
+|------|---------------------|------------|
+| Read | `enrichReadSpan()` | fileSize, lineCount, language, gitStatus |
+| Edit | `enrichEditSpan()` | fileSize, language, gitStatus, diff (added/removed) |
+| Bash | `enrichBashSpan()` | command (redacted), exitCode, outputSummary, workingDirectory |
+
+### Secret Redaction (Bash)
+
+Commands are redacted before storage:
+- `password=xxx` → `password=[REDACTED]`
+- `token=xxx` → `token=[REDACTED]`
+- AWS credentials → `AWS_SECRET_ACCESS_KEY=[REDACTED]`
+- GitHub tokens (ghp_xxx) → `[REDACTED]`
+- Long base64 strings (40+ chars) → `[REDACTED]`
 
 ## Files to Reference
 
 | File | Purpose |
 |------|---------|
-| `packages/cyclist/src/otlp-receiver.ts` | OTEL parsing and processing |
-| `packages/cyclist/src/span-correlation.ts` | Pending tool input queue |
+| `packages/cyclist/src/otlp-receiver.ts` | OTEL parsing, enrichment integration |
+| `packages/cyclist/src/span-correlation.ts` | Pending tool input queue, correlation map |
+| `packages/cyclist/src/file-enrichment.ts` | Enrichment functions (Read, Edit, Bash) |
 | `packages/cyclist/src/main.ts:820-824` | Message stream tool_use capture |
 
 ## API
 
 ```typescript
-// Enable/disable at runtime
+// Enable/disable debug at runtime
 import { setOtelDebug, isOtelDebugEnabled } from './otlp-receiver.js';
 
 setOtelDebug(true);   // Start capturing
 setOtelDebug(false);  // Stop capturing
 isOtelDebugEnabled(); // Check status
+
+// Enrichment functions
+import { enrichReadSpan, enrichEditSpan, enrichBashSpan } from './file-enrichment.js';
+
+// Correlation
+import { storePendingToolInput, consumePendingToolInput } from './span-correlation.js';
 ```
 
 ## Captured Data Format
@@ -149,10 +203,20 @@ Each line in `/tmp/otel-capture.jsonl` contains:
 }
 ```
 
-## Next Steps
+## Related Stories
 
-1. Run `just cyclist-electron true`
-2. Perform Read/Edit/Bash operations in Claude Code
-3. Analyze `/tmp/otel-capture.jsonl`
-4. Update this skill with ground truth
-5. Fix correlation based on actual data
+| Story | Title | Status |
+|-------|-------|--------|
+| 36-1 | OTEL span interception and correlation | DONE |
+| 36-2 | Read/Edit tool enrichment | DONE |
+| 36-3 | Bash tool enrichment | DONE |
+| 36-4 | Search tool enrichment (Grep/Glob) | Backlog |
+| 36-5 | Task/subagent enrichment | Backlog |
+| 36-9 | Bug: missing trace/span IDs | DONE |
+| 36-10 | Bug: race condition in correlation | DONE |
+
+## Next Steps (Remaining Work)
+
+1. **36-4:** Add Grep/Glob enrichment (pattern, match count, file list)
+2. **36-5:** Add Task enrichment (subagent type, prompt summary, turn count)
+3. **36-6:** Export enriched spans to UI visualization
