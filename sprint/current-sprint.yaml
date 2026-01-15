@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 52
-  completed_points: 1
-  remaining_points: 51
+  completed_points: 11
+  remaining_points: 41
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - Epic 31: Customizable Workflow Engine (4 pts remaining)
@@ -374,11 +374,11 @@ epics:
       Clean up stale TODOs, fix flaky tests, remove deprecated code paths,
       and address known bugs that slipped through previous sprints.
     points: 24
-    completed_points: 0
+    completed_points: 10
     priority: P2
     marker: maintenance
     repos: pennyfarthing, cyclist
-    status: backlog
+    status: in_progress
     stories:
       - id: 37-1
         title: Clean up stale TODO comments in packages/core
@@ -393,7 +393,8 @@ epics:
           These are misleading - the logic IS implemented. Clean them up.
         points: 1
         priority: P2
-        status: backlog
+        status: done
+        completed: 2026-01-15
         repos: pennyfarthing
         acceptance_criteria:
           - All stale TODO comments removed from packages/core/src/workflow/
@@ -434,7 +435,8 @@ epics:
           Also clean up related deprecated token display code in E6-3 tests.
         points: 2
         priority: P2
-        status: backlog
+        status: done
+        completed: 2026-01-15
         repos: cyclist
         acceptance_criteria:
           - Deprecated /ws terminal WebSocket code removed
@@ -454,7 +456,8 @@ epics:
           Either fix and unskip, or delete if feature was abandoned.
         points: 3
         priority: P2
-        status: backlog
+        status: done
+        completed: 2026-01-15
         repos: cyclist
         acceptance_criteria:
           - Each skipped suite evaluated (fix or delete)
@@ -471,7 +474,8 @@ epics:
           file contents. Implement proper file reading.
         points: 2
         priority: P1
-        status: backlog
+        status: done
+        completed: 2026-01-15
         repos: cyclist
         acceptance_criteria:
           - File reading implemented in agent-evaluation.ts
@@ -558,9 +562,15 @@ epics:
 
           The shell arithmetic parsing is broken. Fix the script to produce
           clean output: "Cleaned up 3 completed, 2 errored tasks"
+
+          RESOLUTION: Duplicate of fix applied in story 31-14 (PR #246).
+          The _count_matches() helper was added during 31-14 review cycle
+          to handle grep -c exit code correctly. Manual testing confirms
+          all output is clean.
         points: 1
         priority: P2
-        status: backlog
+        status: done
+        completed: 2026-01-15
         repos: pennyfarthing
         acceptance_criteria:
           - bg_task_cleanup() outputs clean single-line summary
