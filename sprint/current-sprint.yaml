@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 69
-  completed_points: 51
-  remaining_points: 18
+  completed_points: 54
+  remaining_points: 15
   notes: |
     Sprint 10 focus: Three strategic epics
     - Epic 31: Customizable Workflow Engine (15 pts)
@@ -1276,11 +1276,11 @@ epics:
       data available: file paths for Read/Edit, command output for Bash, search
       results for Grep/Glob, etc. Correlate and enrich spans in real-time.
     points: 15
-    completed_points: 0
+    completed_points: 3
     priority: P2
     marker: observability
     repos: cyclist, pennyfarthing
-    status: backlog
+    status: in_progress
     stories:
       - id: 36-1
         title: OTEL span interception and correlation
@@ -1296,11 +1296,13 @@ epics:
           - Store correlation map for enrichment phase
         points: 3
         priority: P1
-        status: in_progress
+        status: done
+        completed: 2026-01-14
         repos: cyclist
         jira: MSSCI-11688
         started: 2026-01-14
         assigned_to: Keith Avery
+        pr: 251
         acceptance_criteria:
           - OTEL spans intercepted before export
           - Tool name and ID extracted from span attributes
