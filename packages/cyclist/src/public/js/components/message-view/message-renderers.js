@@ -370,6 +370,32 @@ export function renderUserMessage(message) {
   return `<div class="message message-user">${parseMarkdown(content)}${imagesHtml}</div>`;
 }
 
+// =============================================================================
+// Background Task Notification (31-15)
+// =============================================================================
+
+/**
+ * Render a background task completion notification
+ * @param {object} task - Background task data
+ * @returns {string} HTML string
+ */
+export function renderBackgroundTaskNotification(task) {
+  const statusClass = task.success ? 'notification-success' : 'notification-error';
+  const statusText = task.success ? 'Completed' : 'Failed';
+  const outputHtml = task.output ? `<pre class="background-task-output">${escapeHtml(task.output)}</pre>` : '';
+
+  return `<div class="background-task-notification ${statusClass}" data-task-id="${escapeHtml(task.taskId)}">
+    <details>
+      <summary>
+        <span class="task-status">${statusText}</span>
+        <span class="task-type">${escapeHtml(task.subagentType)}</span>
+        <span class="task-description">${escapeHtml(task.description)}</span>
+      </summary>
+      ${outputHtml}
+    </details>
+  </div>`;
+}
+
 export default {
   // Formatters
   formatModelName,
@@ -392,4 +418,5 @@ export default {
   renderResultMessage,
   renderErrorMessage,
   renderUserMessage,
+  renderBackgroundTaskNotification,
 };

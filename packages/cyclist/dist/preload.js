@@ -190,6 +190,12 @@ function createElectronAPI() {
                     ipcRenderer.on('tools:toggleToolPanel', () => callback());
                 },
             },
+            // Background Task API (31-15)
+            backgroundTask: {
+                onCompleted: (callback) => {
+                    ipcRenderer.on('backgroundTask:completed', callback);
+                },
+            },
         };
     }
     else {
@@ -341,6 +347,12 @@ function createElectronAPI() {
             // Tools API - test stub
             tools: {
                 onTogglePanel: (_callback) => {
+                    // No-op in test environment
+                },
+            },
+            // Background Task API (31-15) - test stub
+            backgroundTask: {
+                onCompleted: (_callback) => {
                     // No-op in test environment
                 },
             },

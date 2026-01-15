@@ -11,6 +11,34 @@ import { aggregateTokensForStory, resetStoryTokenStats } from './story-context.j
 // Session event stores (in-memory)
 let toolEvents = [];
 let promptEvents = [];
+// Background task store
+let backgroundTasks = [];
+// Callback for task completion notifications
+let onBackgroundTaskComplete = null;
+/**
+ * Register callback for background task completion
+ */
+export function setBackgroundTaskCallback(callback) {
+    onBackgroundTaskComplete = callback;
+}
+/**
+ * Track a new background task
+ */
+export function trackBackgroundTask(task) {
+    backgroundTasks.push({ ...task, status: 'pending' });
+}
+/**
+ * Get all tracked background tasks
+ */
+export function getBackgroundTasks() {
+    return [...backgroundTasks];
+}
+/**
+ * Reset background task store
+ */
+export function resetBackgroundTasks() {
+    backgroundTasks = [];
+}
 // 35-2: User info extracted from OTEL spans
 let userEmail = null;
 // Session token state (in-memory)
@@ -380,10 +408,51 @@ export function processLogEvents(rawEvents) {
             // Parse success - comes as string "true"/"false"
             const rawSuccess = event.attributes['success'];
             const success = rawSuccess === 'true' || rawSuccess === true;
+            const toolName = event.attributes['tool_name'] || 'unknown';
+            // 31-15: Track background Task spans
+            if (toolName === 'Task' && toolParams) {
+                try {
+                    const params = JSON.parse(toolParams);
+                    if (params.run_in_background === true) {
+                        const taskId = event.attributes['task_id'];
+                        if (taskId) {
+                            trackBackgroundTask({
+                                taskId,
+                                description: params.description || '',
+                                subagentType: params.subagent_type || '',
+                                startedAt: event.timestamp,
+                            });
+                        }
+                    }
+                }
+                catch { /* ignore parse errors */ }
+            }
+            // 31-15: Handle TaskOutput completion
+            if (toolName === 'TaskOutput') {
+                try {
+                    const params = toolParams ? JSON.parse(toolParams) : {};
+                    const taskId = params.task_id || event.attributes['task_id'];
+                    const taskStatus = event.attributes['task_status'];
+                    if (taskId && taskStatus === 'completed') {
+                        const task = backgroundTasks.find(t => t.taskId === taskId);
+                        if (task) {
+                            task.status = 'completed';
+                            task.success = success;
+                            // Truncate output to avoid memory bloat
+                            const rawOutput = event.attributes['tool_output'];
+                            task.output = rawOutput?.substring(0, 2000);
+                            if (onBackgroundTaskComplete) {
+                                onBackgroundTaskComplete({ ...task });
+                            }
+                        }
+                    }
+                }
+                catch { /* ignore parse errors */ }
+            }
             const toolEvent = {
-                toolName: event.attributes['tool_name'] || 'unknown',
-                input,
-                output: event.attributes['tool_output'],
+                toolName,
+                input: input?.substring(0, 500),
+                output: event.attributes['tool_output']?.substring(0, 2000),
                 durationMs: isNaN(durationMs) ? undefined : durationMs,
                 success,
                 error: event.attributes['error'],

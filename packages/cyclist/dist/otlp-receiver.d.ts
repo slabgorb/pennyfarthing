@@ -54,6 +54,35 @@ interface RawLogEvent {
     spanId?: string;
     attributes: Record<string, string | number | boolean | undefined>;
 }
+/**
+ * Background task data tracked from Task tool spans
+ */
+export interface BackgroundTask {
+    taskId: string;
+    description: string;
+    subagentType: string;
+    startedAt: number;
+    status: 'pending' | 'completed';
+    success?: boolean;
+    output?: string;
+    error?: string;
+}
+/**
+ * Register callback for background task completion
+ */
+export declare function setBackgroundTaskCallback(callback: (task: BackgroundTask) => void): void;
+/**
+ * Track a new background task
+ */
+export declare function trackBackgroundTask(task: Omit<BackgroundTask, 'status'>): void;
+/**
+ * Get all tracked background tasks
+ */
+export declare function getBackgroundTasks(): BackgroundTask[];
+/**
+ * Reset background task store
+ */
+export declare function resetBackgroundTasks(): void;
 export interface TokenStats {
     inputTokens: number;
     outputTokens: number;
