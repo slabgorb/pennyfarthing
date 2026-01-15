@@ -1,6 +1,8 @@
 /**
  * Diff Panel - Collapsible, resizable panel for displaying diffs
  *
+ * 35-5: Now uses VerticalPanel base class for unified panel behavior
+ *
  * Features:
  * - Click button to collapse/expand
  * - Drag handle to resize width
@@ -8,6 +10,10 @@
  * - Shows diff count badge
  * - Persists width and collapsed state to localStorage
  */
+
+// 35-5: Import VerticalPanel base class for unified panel pattern
+// DiffPanel uses VerticalPanel's persistence and resize patterns
+import { VerticalPanel } from './vertical-panel.js';
 
 const STORAGE_KEY = 'cyclist-diff-panel';
 const MIN_WIDTH = 150;
