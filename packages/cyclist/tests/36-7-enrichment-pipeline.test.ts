@@ -18,6 +18,7 @@ import {
   getAllCorrelations,
   resetCorrelations,
   getCorrelation,
+  storePendingToolInput,  // Story 36-8: Import for new correlation mechanism
 } from '../src/span-correlation.js';
 import { mkdir, writeFile, rm } from 'fs/promises';
 import { join } from 'path';
@@ -29,6 +30,10 @@ import { tmpdir } from 'os';
 
 /**
  * Create a mock OTLP tool_result event
+ *
+ * Story 36-8: Also stores the tool input as a pending input (simulating
+ * what main.ts does when it receives a tool_use message from Claude).
+ * OTEL events don't include file_path; it must come from the message stream.
  */
 function createToolResultEvent(
   toolName: string,
@@ -40,13 +45,22 @@ function createToolResultEvent(
     durationMs?: number;
   } = {}
 ) {
+  const spanId = options.spanId ?? `span-${Math.random().toString(36).substr(2, 9)}`;
+  const toolId = `tool-${spanId}`; // Generate a mock tool_id
+
+  // Story 36-8: Store the tool input as pending (simulating Claude message stream)
+  // This must be called before processLogEvents() to correlate properly
+  storePendingToolInput(toolId, toolName, toolParameters);
+
   return {
     name: 'claude_code.tool_result',
     timestamp: Date.now(),
     traceId: options.traceId ?? 'test-trace-id',
-    spanId: options.spanId ?? `span-${Math.random().toString(36).substr(2, 9)}`,
+    spanId,
     attributes: {
       tool_name: toolName,
+      // Note: OTEL tool_parameters does NOT contain file_path in real data
+      // The pending tool input stored above provides the file_path
       tool_parameters: JSON.stringify(toolParameters),
       success: String(options.success ?? true),
       duration_ms: String(options.durationMs ?? 100),

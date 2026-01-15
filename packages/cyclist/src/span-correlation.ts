@@ -65,6 +65,100 @@ export type CorrelationContext = SpanCorrelation;
 let correlationMap: Map<string, SpanCorrelation> = new Map();
 
 // =============================================================================
+// Pending Tool Input Storage (Story 36-8)
+// =============================================================================
+//
+// Tool inputs arrive from Claude message stream BEFORE OTEL spans arrive.
+// We store them here temporarily, then match when OTEL event comes in.
+// Correlation is by tool name + timing (OTEL has no tool_id).
+
+/**
+ * Pending tool input waiting for OTEL correlation
+ */
+export interface PendingToolInput {
+  /** Claude tool_use ID */
+  toolId: string;
+  /** Tool name (Read, Edit, etc.) */
+  toolName: string;
+  /** Tool input parameters with file_path, etc. */
+  input: Record<string, unknown>;
+  /** Timestamp when tool_use was received */
+  timestamp: number;
+}
+
+/**
+ * Queue of pending tool inputs, ordered by arrival time
+ * We use a queue because tool_use arrives before tool_result/OTEL span
+ */
+let pendingToolInputs: PendingToolInput[] = [];
+
+/** Max age for pending inputs (5 seconds) - after this, discard */
+const PENDING_INPUT_MAX_AGE_MS = 5000;
+
+/**
+ * Store a tool input from Claude message stream for later OTEL correlation
+ * @param toolId - Claude tool_use_id
+ * @param toolName - Tool name (Read, Edit, etc.)
+ * @param input - Tool input parameters
+ */
+export function storePendingToolInput(
+  toolId: string,
+  toolName: string,
+  input: Record<string, unknown>
+): void {
+  // Clean up old entries first
+  const now = Date.now();
+  pendingToolInputs = pendingToolInputs.filter(
+    p => now - p.timestamp < PENDING_INPUT_MAX_AGE_MS
+  );
+
+  pendingToolInputs.push({
+    toolId,
+    toolName,
+    input,
+    timestamp: now,
+  });
+}
+
+/**
+ * Find and consume a pending tool input matching the given tool name
+ * Returns the oldest matching entry (FIFO) and removes it from the queue
+ * @param toolName - Tool name to match
+ * @returns Matching pending input, or undefined if none found
+ */
+export function consumePendingToolInput(toolName: string): PendingToolInput | undefined {
+  // Clean up old entries first
+  const now = Date.now();
+  pendingToolInputs = pendingToolInputs.filter(
+    p => now - p.timestamp < PENDING_INPUT_MAX_AGE_MS
+  );
+
+  // Find oldest matching entry
+  const index = pendingToolInputs.findIndex(p => p.toolName === toolName);
+  if (index === -1) {
+    return undefined;
+  }
+
+  // Remove and return
+  const [match] = pendingToolInputs.splice(index, 1);
+  return match;
+}
+
+/**
+ * Get all pending tool inputs (for debugging)
+ */
+export function getPendingToolInputs(): PendingToolInput[] {
+  return [...pendingToolInputs];
+}
+
+/**
+ * Clear all pending tool inputs (for testing/reset)
+ */
+export function clearPendingToolInputs(): void {
+  pendingToolInputs = [];
+}
+
+// =============================================================================
 // Core Correlation Functions
 // =============================================================================
 
@@ -109,6 +203,7 @@ export function hasCorrelation(spanId: string): boolean {
  */
 export function resetCorrelations(): void {
   correlationMap = new Map();
+  pendingToolInputs = []; // Story 36-8: Also clear pending tool inputs
 }
 
 /**

@@ -10,7 +10,8 @@
 import { aggregateTokensForAgent, resetAgentTokenStats } from './agent-context.js';
 import { aggregateTokensForStory, resetStoryTokenStats } from './story-context.js';
 // Story 36-7: Import span correlation and enrichment modules
-import { correlateSpan, resetCorrelations, type MessageContext } from './span-correlation.js';
+// Story 36-8: Added consumePendingToolInput for Claude message stream correlation
+import { correlateSpan, resetCorrelations, consumePendingToolInput, type MessageContext } from './span-correlation.js';
 import { enrichReadSpan, enrichEditSpan, type DiffSummary } from './file-enrichment.js';
 
 // =============================================================================
@@ -686,18 +687,16 @@ export async function processLogEvents(rawEvents: RawLogEvent[]): Promise<void> 
       };
 
       // Story 36-7: Correlate span and enrich Read/Edit tools
+      // Story 36-8: Get tool input from Claude message stream instead of OTEL params
       if (event.spanId && event.traceId) {
-        // Parse full tool parameters for enrichment context
-        let toolInput: Record<string, unknown> | undefined;
-        if (toolParams) {
-          try {
-            toolInput = JSON.parse(toolParams);
-          } catch { /* ignore parse errors */ }
-        }
+        // Story 36-8: Look up tool input captured from Claude tool_use message
+        // OTEL spans don't include file_path, but Claude messages do
+        const pendingInput = consumePendingToolInput(toolName);
+        const toolInput = pendingInput?.input;
 
         // Create correlation with message context
         const messageContext: MessageContext = {
-          messageId: event.spanId, // Use spanId as message ID proxy
+          messageId: pendingInput?.toolId || event.spanId,
           toolName,
           input: toolInput,
         };
@@ -706,6 +705,7 @@ export async function processLogEvents(rawEvents: RawLogEvent[]): Promise<void> 
           traceId: event.traceId,
           spanId: event.spanId,
           toolName,
+          toolUseId: pendingInput?.toolId, // Story 36-8: Link to Claude tool_use_id
           timestamp: event.timestamp,
           enriched: false,
           messageContext,

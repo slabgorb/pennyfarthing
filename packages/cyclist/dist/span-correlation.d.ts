@@ -47,6 +47,41 @@ export interface SpanCorrelation {
  */
 export type CorrelationContext = SpanCorrelation;
 /**
+ * Pending tool input waiting for OTEL correlation
+ */
+export interface PendingToolInput {
+    /** Claude tool_use ID */
+    toolId: string;
+    /** Tool name (Read, Edit, etc.) */
+    toolName: string;
+    /** Tool input parameters with file_path, etc. */
+    input: Record<string, unknown>;
+    /** Timestamp when tool_use was received */
+    timestamp: number;
+}
+/**
+ * Store a tool input from Claude message stream for later OTEL correlation
+ * @param toolId - Claude tool_use_id
+ * @param toolName - Tool name (Read, Edit, etc.)
+ * @param input - Tool input parameters
+ */
+export declare function storePendingToolInput(toolId: string, toolName: string, input: Record<string, unknown>): void;
+/**
+ * Find and consume a pending tool input matching the given tool name
+ * Returns the oldest matching entry (FIFO) and removes it from the queue
+ * @param toolName - Tool name to match
+ * @returns Matching pending input, or undefined if none found
+ */
+export declare function consumePendingToolInput(toolName: string): PendingToolInput | undefined;
+/**
+ * Get all pending tool inputs (for debugging)
+ */
+export declare function getPendingToolInputs(): PendingToolInput[];
+/**
+ * Clear all pending tool inputs (for testing/reset)
+ */
+export declare function clearPendingToolInputs(): void;
+/**
  * Store a span correlation in the map
  * @param spanId - The OTEL span ID to use as key
  * @param context - The correlation context to store
