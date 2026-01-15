@@ -1087,6 +1087,44 @@ epics:
           - Language detected from file extension
           - Git status included when in git repo
           - Enrichment happens before span export
+      - id: 36-9
+        title: "Bug: OTEL enrichment blocked by missing trace/span IDs"
+        description: |
+          **Root cause identified:** The enrichment code at otlp-receiver.ts:698
+          has a guard `if (event.spanId && event.traceId)` that always fails
+          because Claude Code's OTEL logs don't include traceId/spanId at the
+          logRecord level.
+
+          **Investigation findings:**
+          - Round 1: Debug logging showed `spanId=undefined traceId=undefined`
+          - Round 2: Raw logRecord keys confirmed NO traceId/spanId fields:
+            `['timeUnixNano', 'observedTimeUnixNano', 'body', 'attributes', 'droppedAttributesCount']`
+          - OTEL spec says these should be top-level fields, but Claude Code
+            simply doesn't include them in its log export
+
+          **Impact:** Story 36-2 (Read/Edit enrichment) is marked done but
+          enrichment never runs. This blocks 36-3 (Bash enrichment) which uses
+          the same correlation mechanism.
+
+          **Fix required:**
+          1. Remove the guard that requires OTEL trace/span IDs
+          2. Use the pending tool input's toolId as correlation key (Story 36-8
+             already captures tool_use from Claude message stream)
+          3. Generate synthetic spanIds for correlation if needed
+          4. Remove debug logging added during investigation
+        points: 2
+        priority: P0
+        status: ready
+        repos: cyclist
+        jira: MSSCI-11731
+        blocks: [36-3, 36-4, 36-5, 36-6]
+        acceptance_criteria:
+          - Enrichment runs without requiring OTEL traceId/spanId
+          - Correlation uses Claude tool_use_id from message stream
+          - Read tool shows file size, line count, language in Cyclist
+          - Edit tool shows diff summary in Cyclist
+          - Debug logging removed from otlp-receiver.ts and main.ts
+          - Tests updated to reflect new correlation approach
       - id: 36-3
         title: Bash tool enrichment
         description: |
@@ -1099,8 +1137,9 @@ epics:
         points: 2
         priority: P1
         status: backlog
+        depends_on: [36-9]
         repos: cyclist
-        jira: MSSCI-11731
+        jira: MSSCI-11735
         acceptance_criteria:
           - Command included in span (secrets redacted)
           - Exit code captured

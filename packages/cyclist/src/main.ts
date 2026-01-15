@@ -817,7 +817,8 @@ export function setupClaudeIPCHandlers(ipcMain: {
             for (const block of content) {
               if (block.type === 'tool_use') {
                 // Story 36-8: Capture ALL tool inputs for OTEL enrichment correlation
-                // OTEL spans don't include file_path, so we capture it here from Claude message stream
+                // Story 36-9: This is the primary correlation mechanism since Claude Code
+                // OTEL logs don't include traceId/spanId at logRecord level
                 if (block.id && block.name && block.input) {
                   storePendingToolInput(block.id, block.name, block.input);
                 }
