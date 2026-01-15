@@ -2824,6 +2824,19 @@ html, body {
   text-decoration-style: solid;
 }
 
+/* 35-11: Error state when file cannot be opened */
+.diff-file-header .file-path-link.file-path-error {
+  color: var(--error, #ef4444);
+  text-decoration-color: var(--error, #ef4444);
+  animation: shake 0.3s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
 .diff-line {
   display: flex;
   white-space: pre;
