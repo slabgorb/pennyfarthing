@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 69
-  completed_points: 56
-  remaining_points: 13
+  completed_points: 58
+  remaining_points: 11
   notes: |
     Sprint 10 focus: Three strategic epics
     - Epic 31: Customizable Workflow Engine (15 pts)
@@ -970,7 +970,7 @@ epics:
       them in popup dialogs. Reduce friction by putting options in context.
       Fix existing UI bugs and add user-requested customization features.
     points: 27
-    completed_points: 3
+    completed_points: 5
     priority: P2
     marker: ux
     repos: cyclist
@@ -1016,8 +1016,9 @@ epics:
           Pattern: Critical context visible at all times, not hidden in menus.
         points: 2
         priority: P2
-        status: in_progress
+        status: done
         started: 2026-01-15
+        completed: 2026-01-15
         assigned_to: Keith Avery
         repos: cyclist
         jira: MSSCI-11717
