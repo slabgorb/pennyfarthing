@@ -5,15 +5,16 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 28
-  completed_points: 0
-  remaining_points: 28
+  total_points: 52
+  completed_points: 3
+  remaining_points: 49
   notes: |
     Sprint 11 - Carried over from Sprint 10:
     - Epic 31: Customizable Workflow Engine (7 pts remaining)
     - Epic 33: Runtime Permission Management (5 pts remaining)
     - Epic 35: Cyclist UI/UX Improvements (16 pts remaining)
     - Epic 36: OTEL Tool Call Enrichment (6 pts remaining)
+    - Epic 37: Technical Debt Cleanup (24 pts, 3 done)
 
     Sprint 10 closed with 54 pts completed (245% of velocity target).
 # =============================================================================
@@ -364,3 +365,177 @@ epics:
           - Filter controls for tool type and status
           - JSON export includes all enriched data
           - Works with existing OTEL collectors (optional forwarding)
+  - id: epic-37
+    title: Technical Debt Cleanup
+    description: |
+      Address accumulated technical debt across the codebase. Stale TODOs,
+      deprecated code, flaky tests, skipped test suites, and broken features.
+      Systematic cleanup to improve maintainability and reliability.
+    points: 24
+    completed_points: 3
+    priority: P2
+    marker: tech-debt
+    repos: pennyfarthing, cyclist
+    status: in_progress
+    stories:
+      - id: 37-1
+        title: Clean up stale TODO comments
+        description: |
+          Remove or address TODO comments that reference completed work.
+          Many TODOs in workflow/ files reference work that's done.
+        points: 1
+        priority: P2
+        status: done
+        repos: pennyfarthing
+        acceptance_criteria:
+          - All stale TODOs removed or converted to actionable issues
+          - Remaining TODOs reference actual pending work
+      - id: 37-2
+        title: Fix flaky timestamp test
+        description: |
+          Background task notification test has race condition.
+          Timestamp assertion fails intermittently due to timing.
+        points: 1
+        priority: P1
+        status: done
+        repos: cyclist
+        acceptance_criteria:
+          - Test passes consistently (10+ runs)
+          - No timing-dependent assertions
+      - id: 37-3
+        title: Remove deprecated theme field handling
+        description: |
+          Code still handles old 'theme' field that was replaced by 'persona'.
+          Clean up backward compatibility code that's no longer needed.
+        points: 1
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Deprecated field handling removed
+          - No runtime warnings for old format
+      - id: 37-4
+        title: Fix skipped test suites
+        description: |
+          Multiple test files have describe.skip blocks that should either
+          be enabled or removed entirely.
+        points: 2
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - All skipped tests either enabled or removed
+          - No describe.skip or it.skip in codebase
+      - id: 37-5
+        title: Fix persona component async issues
+        description: |
+          PersonaComponent has async loading bugs causing empty states.
+          Proper loading states and error handling needed.
+        points: 2
+        priority: P1
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Loading states shown during async operations
+          - Errors handled gracefully with user feedback
+          - No empty states due to timing issues
+      - id: 37-6
+        title: Fix settings panel form state
+        description: |
+          Settings panel has unused selectedThemeData and form state issues.
+          Clean up state management and remove dead code.
+        points: 2
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Unused state variables removed
+          - Form state properly managed
+          - No dead code in settings components
+      - id: 37-7
+        title: Fix ThemePicker event handler cleanup
+        description: |
+          ThemePicker assumes event listeners exist when removing them.
+          Add proper guards for listener removal.
+        points: 1
+        priority: P2
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Event listener removal guarded
+          - No errors on component unmount
+      - id: 37-8
+        title: Fix batch-jira.sh error handling
+        description: |
+          batch-jira.sh has TODO for proper error handling.
+          Add retry logic and meaningful error messages.
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Proper error handling with retries
+          - Meaningful error messages
+          - Graceful degradation on Jira unavailable
+      - id: 37-9
+        title: Fix spawn-agent.sh Claude model detection
+        description: |
+          spawn-agent.sh has hardcoded model detection that may break.
+          Use proper Claude API version detection.
+        points: 1
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Dynamic model detection
+          - Fallback for unknown models
+      - id: 37-10
+        title: Fix worktree-setup.sh parallel creation
+        description: |
+          worktree-setup.sh has TODO for parallel worktree creation.
+          Implement or remove the TODO.
+        points: 2
+        priority: P3
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Parallel creation implemented or TODO removed
+          - No stale TODOs in script
+      - id: 37-11
+        title: Fix agent-context.sh lazy loading
+        description: |
+          agent-context.sh mentions lazy loading that may not work.
+          Verify and fix context loading behavior.
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Lazy loading verified working
+          - Context loaded only when needed
+      - id: 37-12
+        title: Fix localStorage vs IPC sync in settings
+        description: |
+          Settings have localStorage vs IPC sync conflicts.
+          Establish single source of truth.
+        points: 3
+        priority: P1
+        status: backlog
+        repos: cyclist
+        acceptance_criteria:
+          - Single source of truth for settings
+          - No sync conflicts
+          - Clear precedence rules documented
+      - id: 37-13
+        title: Add missing test coverage for workflow router
+        description: |
+          Workflow router has limited test coverage.
+          Add tests for edge cases and error paths.
+        points: 3
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Edge cases tested
+          - Error paths tested
+          - Coverage improved to 80%+
