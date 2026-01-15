@@ -106,12 +106,9 @@ export function updateStory(story) {
     }
   }
 
+  // Hide phase element - info is now shown in workflow indicator
   if (phaseEl) {
-    if (story.phase) {
-      phaseEl.textContent = `Phase: ${story.phase}`;
-    } else {
-      phaseEl.textContent = 'Phase: -';
-    }
+    phaseEl.style.display = 'none';
   }
 
   if (story.sprint && progressFill && sprintPoints) {
@@ -197,15 +194,9 @@ function updateStoryDetails(story) {
 
   detailsEl.style.display = 'block';
 
-  // Update next agent (resolve role names to character names)
+  // Hide next-agent element - info is now shown in workflow indicator
   if (nextAgentEl) {
-    if (story.nextAgent) {
-      const displayName = resolveAgentNames(story.nextAgent);
-      nextAgentEl.textContent = `→ ${displayName}`;
-      nextAgentEl.style.display = 'block';
-    } else {
-      nextAgentEl.style.display = 'none';
-    }
+    nextAgentEl.style.display = 'none';
   }
 
   // Update PR link
