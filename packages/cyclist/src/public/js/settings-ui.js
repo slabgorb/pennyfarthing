@@ -23,12 +23,46 @@ import {
  * @property {boolean} display.show_flow
  * @property {boolean} display.show_ocean
  * @property {number} display.sidebar_width
+ * @property {string} display.font_ui
+ * @property {string} display.font_mono
  * @property {Object} notifications
  * @property {boolean} notifications.phase_change
  * @property {boolean} notifications.sound
  * @property {Object} pennyfarthing
  * @property {string} pennyfarthing.theme
  */
+
+// =============================================================================
+// Font Preview (Story 35-6)
+// =============================================================================
+
+/**
+ * Update font preview when selection changes
+ * @param {string} selectId - ID of the font select element
+ */
+function updateFontPreview(selectId) {
+  const select = document.getElementById(selectId);
+  const preview = document.getElementById(`${selectId}_preview`);
+  if (select && preview) {
+    const fontValue = select.value;
+    preview.style.fontFamily = `"${fontValue}", ${selectId === 'font_mono' ? 'monospace' : 'sans-serif'}`;
+  }
+}
+
+/**
+ * Initialize font select change listeners
+ */
+function initFontPreviews() {
+  const fontUiSelect = document.getElementById('font_ui');
+  const fontMonoSelect = document.getElementById('font_mono');
+
+  if (fontUiSelect) {
+    fontUiSelect.addEventListener('change', () => updateFontPreview('font_ui'));
+  }
+  if (fontMonoSelect) {
+    fontMonoSelect.addEventListener('change', () => updateFontPreview('font_mono'));
+  }
+}
 
 // Module-level state for theme browser
 let themeBrowserState = {
@@ -72,6 +106,19 @@ export function loadFormValues(settings) {
   const sidebarWidth = form.querySelector('#sidebar_width');
   if (sidebarWidth) {
     sidebarWidth.value = settings.display?.sidebar_width ?? 300;
+  }
+
+  // Font settings (35-6)
+  const fontUi = form.querySelector('#font_ui');
+  if (fontUi) {
+    fontUi.value = settings.display?.font_ui ?? 'system-ui';
+    updateFontPreview('font_ui');
+  }
+
+  const fontMono = form.querySelector('#font_mono');
+  if (fontMono) {
+    fontMono.value = settings.display?.font_mono ?? 'SF Mono';
+    updateFontPreview('font_mono');
   }
 
   // Notifications settings
@@ -124,6 +171,8 @@ export function getFormValues() {
       show_flow: form.querySelector('#show_flow')?.checked ?? true,
       show_ocean: form.querySelector('#show_ocean')?.checked ?? false,
       sidebar_width: parseInt(form.querySelector('#sidebar_width')?.value ?? '300', 10),
+      font_ui: form.querySelector('#font_ui')?.value ?? 'system-ui',
+      font_mono: form.querySelector('#font_mono')?.value ?? 'SF Mono',
     },
     notifications: {
       phase_change: form.querySelector('#phase_change')?.checked ?? true,
@@ -150,6 +199,8 @@ export function getDefaultSettings() {
       show_flow: true,
       show_ocean: false,
       sidebar_width: 300,
+      font_ui: 'system-ui',
+      font_mono: 'SF Mono',
     },
     notifications: {
       phase_change: true,
@@ -337,6 +388,9 @@ export async function initSettingsUI() {
   if (cancelBtn) {
     cancelBtn.addEventListener('click', handleCancel);
   }
+
+  // Initialize font preview listeners (35-6)
+  initFontPreviews();
 
   // Initialize theme browser (24-5) instead of dropdown
   await initThemeBrowser();

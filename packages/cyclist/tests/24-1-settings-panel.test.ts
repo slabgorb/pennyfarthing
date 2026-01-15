@@ -26,6 +26,7 @@ import { app } from '../src/server.js';
 
 // Settings type definition (should match src/settings.ts)
 // Updated in Story 31-13: handoff_mode replaces auto_handoff + handoff_confirm
+// Updated in Story 35-6: font_ui and font_mono added
 interface CyclistSettings {
   workflow: {
     handoff_mode: 'auto' | 'manual';
@@ -34,6 +35,8 @@ interface CyclistSettings {
     show_flow: boolean;
     show_ocean: boolean;
     sidebar_width: number;
+    font_ui: string;
+    font_mono: string;
   };
   notifications: {
     phase_change: boolean;
@@ -47,6 +50,7 @@ interface CyclistSettings {
 
 // Default settings for reference
 // Updated in Story 31-13: handoff_mode replaces auto_handoff + handoff_confirm
+// Updated in Story 35-6: font_ui and font_mono added
 const DEFAULT_SETTINGS: CyclistSettings = {
   workflow: {
     handoff_mode: 'manual',
@@ -55,6 +59,8 @@ const DEFAULT_SETTINGS: CyclistSettings = {
     show_flow: true,
     show_ocean: false,
     sidebar_width: 300,
+    font_ui: 'system-ui',
+    font_mono: 'SF Mono',
   },
   notifications: {
     phase_change: true,
