@@ -332,16 +332,25 @@ export function renderDiff(container, diffData) {
   filePathLink.className = 'file-path file-path-link';
   filePathLink.href = '#';
   filePathLink.textContent = diffData.filePath;
-  filePathLink.title = 'Click to open in editor';
+  filePathLink.title = 'Click to open in default application';
   filePathLink.addEventListener('click', async (e) => {
     e.preventDefault();
     // 35-11: Open file in OS default application
     if (window.electronAPI?.fileBrowser?.openFile) {
       try {
-        await window.electronAPI.fileBrowser.openFile(diffData.filePath);
+        const result = await window.electronAPI.fileBrowser.openFile(diffData.filePath);
+        if (result && !result.success) {
+          console.error(`[DiffViewer] Failed to open file: ${diffData.filePath}`, result.error);
+          filePathLink.title = `Failed to open: ${result.error || 'file may no longer exist'}`;
+          filePathLink.classList.add('file-path-error');
+          // Remove error state after 3 seconds
+          setTimeout(() => filePathLink.classList.remove('file-path-error'), 3000);
+        }
       } catch (err) {
         console.error(`[DiffViewer] Failed to open file: ${diffData.filePath}`, err);
         filePathLink.title = 'Failed to open file - it may no longer exist';
+        filePathLink.classList.add('file-path-error');
+        setTimeout(() => filePathLink.classList.remove('file-path-error'), 3000);
       }
     }
   });

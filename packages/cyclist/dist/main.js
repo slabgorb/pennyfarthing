@@ -727,14 +727,26 @@ export function setupFileBrowserIPCHandlers(ipcMain) {
         }
         return listDir(dirPath, projectDir);
     });
-    // Open file handler - broadcasts file open event (for E8-4 integration)
+    // Open file handler - opens file in OS default application (Story 35-11)
     ipcMain.handle(IPC_FILE_BROWSER_CHANNELS.OPEN_FILE, async (_event, ...args) => {
         const filePath = args[0];
-        // For E8-3: Just log the file open request
-        // E8-4 will add actual file viewer tab creation
-        console.log('[FileBrowser] Open file requested:', filePath);
-        broadcastToRenderer('file-browser:file-opened', { path: filePath });
-        return true;
+        console.log('[FileBrowser] Opening file in OS default app:', filePath);
+        try {
+            const { shell } = require('electron');
+            const result = await shell.openPath(filePath);
+            if (result) {
+                // shell.openPath returns empty string on success, error message on failure
+                console.error('[FileBrowser] Failed to open file:', result);
+                throw new Error(result);
+            }
+            broadcastToRenderer('file-browser:file-opened', { path: filePath });
+            return { success: true };
+        }
+        catch (err) {
+            const message = err instanceof Error ? err.message : 'Unknown error';
+            console.error('[FileBrowser] Error opening file:', message);
+            return { success: false, error: message };
+        }
     });
     // Open in external editor handler - opens file in user's $EDITOR
     ipcMain.handle(IPC_FILE_BROWSER_CHANNELS.OPEN_IN_EDITOR, async (_event, ...args) => {
