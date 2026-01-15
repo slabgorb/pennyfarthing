@@ -456,7 +456,7 @@ epics:
           - Session file tracks context percentage at handoff points
           - Works with all workflow types (TDD, trivial, custom)
           - Cyclist settings UI uses radio button group for handoff mode (not checkboxes)
-          - Radio options: "Auto handoff" / "Manual handoff (ask first)"
+          - 'Radio options: "Auto handoff" or "Manual handoff (ask first)"'
           - Setting persists and is correctly read by generic-handoff subagent
           - End-to-end test: change setting, trigger handoff, verify behavior matches
       - id: 31-14
@@ -1051,7 +1051,7 @@ epics:
       data available: file paths for Read/Edit, command output for Bash, search
       results for Grep/Glob, etc. Correlate and enrich spans in real-time.
     points: 15
-    completed_points: 9
+    completed_points: 11
     priority: P2
     marker: observability
     repos: cyclist, pennyfarthing
@@ -1201,11 +1201,13 @@ epics:
           - Working directory
         points: 2
         priority: P1
-        status: in_progress
+        status: done
         started: 2026-01-15
+        completed: 2026-01-15
         assigned_to: Keith Avery
         depends_on: [36-10]
         repos: cyclist
+        pr: 267
         jira: MSSCI-11735
         acceptance_criteria:
           - Command included in span (secrets redacted)
