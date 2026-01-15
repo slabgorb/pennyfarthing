@@ -44,16 +44,31 @@ export function storePendingToolInput(toolId, toolName, input) {
     });
 }
 /**
- * Find and consume a pending tool input matching the given tool name
- * Returns the oldest matching entry (FIFO) and removes it from the queue
+ * Find and consume a pending tool input matching the given tool name and input
+ *
+ * Story 36-10: Enhanced matching to fix race condition when multiple tools of
+ * same type are in flight. For Read/Edit tools, matches on file_path for precision.
+ * Falls back to tool name only if no file_path match found.
+ *
  * @param toolName - Tool name to match
+ * @param toolInput - Optional parsed tool_parameters from OTEL for precise matching
  * @returns Matching pending input, or undefined if none found
  */
-export function consumePendingToolInput(toolName) {
+export function consumePendingToolInput(toolName, toolInput) {
     // Clean up old entries first
     const now = Date.now();
     pendingToolInputs = pendingToolInputs.filter(p => now - p.timestamp < PENDING_INPUT_MAX_AGE_MS);
-    // Find oldest matching entry
+    // Extract file_path from OTEL input for precise matching (Read/Edit tools)
+    const filePath = toolInput?.file_path;
+    // Try precise match first: toolName + file_path
+    if (filePath) {
+        const preciseIndex = pendingToolInputs.findIndex(p => p.toolName === toolName && p.input.file_path === filePath);
+        if (preciseIndex !== -1) {
+            const [match] = pendingToolInputs.splice(preciseIndex, 1);
+            return match;
+        }
+    }
+    // Fallback: match by tool name only (FIFO for tools without file_path)
     const index = pendingToolInputs.findIndex(p => p.toolName === toolName);
     if (index === -1) {
         return undefined;

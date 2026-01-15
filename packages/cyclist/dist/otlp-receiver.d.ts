@@ -7,6 +7,10 @@
  * Story 19-5: Extended with per-story token aggregation.
  */
 import { type DiffSummary } from './file-enrichment.js';
+/** Enable/disable OTEL debug logging at runtime */
+export declare function setOtelDebug(enabled: boolean): void;
+/** Check if OTEL debug is enabled */
+export declare function isOtelDebugEnabled(): boolean;
 /**
  * Parsed tool execution event from OTLP logs
  */
@@ -39,6 +43,8 @@ export interface ToolEvent {
     gitStatus?: 'clean' | 'modified' | 'new' | 'untracked' | null;
     /** Diff summary for Edit operations */
     diff?: DiffSummary;
+    /** Resolved file path for Read/Edit tools */
+    filePath?: string;
 }
 /**
  * Parsed user prompt event from OTLP logs

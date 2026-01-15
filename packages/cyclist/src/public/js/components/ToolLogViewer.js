@@ -91,16 +91,32 @@ function formatFileSize(bytes) {
 }
 
 /**
- * Format enrichment data for display (Story 36-7)
+ * Extract filename from path
+ * @param {string} path - Full file path
+ * @returns {string} Just the filename
+ */
+function extractFilename(path) {
+  if (!path) return '';
+  const parts = path.split('/');
+  return parts[parts.length - 1] || path;
+}
+
+/**
+ * Format enrichment data for display (Story 36-7, 36-10)
+ * Shows filename, size, and line count - language omitted (user can infer from extension)
  * @param {object} entry - Tool event entry with enrichment fields
  * @returns {string} HTML string for enrichment info
  */
 function formatEnrichment(entry) {
   const parts = [];
 
-  // Language badge
-  if (entry.language && entry.language !== 'unknown') {
-    parts.push(`<span class="enrichment-lang">${escapeHtml(entry.language)}</span>`);
+  // Filename from filePath field (Story 36-10: now properly propagated from correlation)
+  const filePath = entry.filePath;
+  if (filePath && (entry.fileSize !== undefined || entry.lineCount !== undefined)) {
+    const filename = extractFilename(filePath);
+    if (filename) {
+      parts.push(`<span class="enrichment-file" title="${escapeHtml(filePath)}">${escapeHtml(filename)}</span>`);
+    }
   }
 
   // File size

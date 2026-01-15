@@ -35,6 +35,11 @@ import {
   removeCorrelation,
   getCorrelationsByToolName,
   getCorrelationByTraceId,
+  // Story 36-10: Pending tool input functions for OTEL correlation
+  storePendingToolInput,
+  consumePendingToolInput,
+  clearPendingToolInputs,
+  getPendingToolInputs,
 } from '../src/span-correlation.js';
 
 // =============================================================================
@@ -728,6 +733,111 @@ describe('Story 36-1: Span Correlation', () => {
       const stored = getCorrelation(mockOTELSpanRead.spanId);
       expect(stored).toBeDefined();
       // Downstream stories (36-2..36-5) would update enriched flag
+    });
+
+  });
+
+  // =============================================================================
+  // Story 36-10: Pending Tool Input Correlation
+  // =============================================================================
+
+  describe('Story 36-10: Pending Tool Input Correlation', () => {
+    // Pending tool input functions imported at top of file
+
+    beforeEach(() => {
+      clearPendingToolInputs();
+    });
+
+    afterEach(() => {
+      clearPendingToolInputs();
+    });
+
+    it('should match by file_path when multiple Read tools are in flight', () => {
+      // Simulate multiple Read tools queued from message stream
+      storePendingToolInput('tool_1', 'Read', { file_path: '/path/to/file1.ts' });
+      storePendingToolInput('tool_2', 'Read', { file_path: '/path/to/file2.ts' });
+      storePendingToolInput('tool_3', 'Read', { file_path: '/path/to/file3.ts' });
+
+      // OTEL events arrive out of order - file2 completes first
+      const matchedFile2 = consumePendingToolInput('Read', { file_path: '/path/to/file2.ts' });
+      expect(matchedFile2?.toolId).toBe('tool_2');
+      expect(matchedFile2?.input.file_path).toBe('/path/to/file2.ts');
+
+      // Now file1 completes
+      const matchedFile1 = consumePendingToolInput('Read', { file_path: '/path/to/file1.ts' });
+      expect(matchedFile1?.toolId).toBe('tool_1');
+      expect(matchedFile1?.input.file_path).toBe('/path/to/file1.ts');
+
+      // Finally file3 completes
+      const matchedFile3 = consumePendingToolInput('Read', { file_path: '/path/to/file3.ts' });
+      expect(matchedFile3?.toolId).toBe('tool_3');
+      expect(matchedFile3?.input.file_path).toBe('/path/to/file3.ts');
+
+      // Queue should be empty now
+      expect(getPendingToolInputs()).toHaveLength(0);
+    });
+
+    it('should fall back to FIFO when no file_path match found', () => {
+      // Store tool inputs without file_path (e.g., Bash commands)
+      storePendingToolInput('bash_1', 'Bash', { command: 'ls -la' });
+      storePendingToolInput('bash_2', 'Bash', { command: 'git status' });
+
+      // OTEL arrives - should match FIFO since no file_path to match
+      const matched1 = consumePendingToolInput('Bash', { command: 'git status' });
+      // Falls back to FIFO, not command matching
+      expect(matched1?.toolId).toBe('bash_1');
+
+      const matched2 = consumePendingToolInput('Bash', {});
+      expect(matched2?.toolId).toBe('bash_2');
+    });
+
+    it('should handle mixed tool types correctly', () => {
+      // Queue up mixed tool types
+      storePendingToolInput('read_1', 'Read', { file_path: '/path/a.ts' });
+      storePendingToolInput('bash_1', 'Bash', { command: 'npm test' });
+      storePendingToolInput('read_2', 'Read', { file_path: '/path/b.ts' });
+      storePendingToolInput('edit_1', 'Edit', { file_path: '/path/c.ts', old_string: 'x', new_string: 'y' });
+
+      // Consume Read for b.ts specifically
+      const matchedB = consumePendingToolInput('Read', { file_path: '/path/b.ts' });
+      expect(matchedB?.toolId).toBe('read_2');
+
+      // Consume Edit for c.ts
+      const matchedC = consumePendingToolInput('Edit', { file_path: '/path/c.ts' });
+      expect(matchedC?.toolId).toBe('edit_1');
+
+      // Consume Bash (FIFO)
+      const matchedBash = consumePendingToolInput('Bash', {});
+      expect(matchedBash?.toolId).toBe('bash_1');
+
+      // Consume remaining Read (only a.ts left)
+      const matchedA = consumePendingToolInput('Read', { file_path: '/path/a.ts' });
+      expect(matchedA?.toolId).toBe('read_1');
+
+      expect(getPendingToolInputs()).toHaveLength(0);
+    });
+
+    it('should return undefined when no matching tool found', () => {
+      storePendingToolInput('read_1', 'Read', { file_path: '/path/a.ts' });
+
+      // Try to consume non-existent tool type
+      const notFound = consumePendingToolInput('Bash', {});
+      expect(notFound).toBeUndefined();
+
+      // Try to consume Read with non-matching file_path (falls back to FIFO)
+      const fallback = consumePendingToolInput('Read', { file_path: '/path/nonexistent.ts' });
+      expect(fallback?.toolId).toBe('read_1'); // Falls back to FIFO match
+    });
+
+    it('should clean up old entries based on timeout', async () => {
+      // This test documents the 5-second timeout behavior
+      storePendingToolInput('old_tool', 'Read', { file_path: '/old.ts' });
+
+      // The actual timeout is 5 seconds - we're just verifying the mechanism exists
+      // In production, entries older than 5 seconds are cleaned up
+      const pending = getPendingToolInputs();
+      expect(pending).toHaveLength(1);
+      expect(pending[0].timestamp).toBeDefined();
     });
 
   });

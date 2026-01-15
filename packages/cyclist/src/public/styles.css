@@ -4328,8 +4328,9 @@ html, body {
   background: var(--bg-tertiary, rgba(255,255,255,0.05));
 }
 
-.tool-log-table .enrichment-lang {
-  color: var(--syntax-keyword, #c586c0);
+.tool-log-table .enrichment-file {
+  color: var(--text-primary);
+  font-weight: 500;
 }
 
 .tool-log-table .enrichment-size {
