@@ -5,6 +5,8 @@
  * Loads settings from IPC (Electron) or REST API (browser).
  */
 
+console.log('[FontSettings] Module loaded');
+
 /**
  * Apply font settings to the document
  * @param {Object} settings - CyclistSettings object
@@ -40,32 +42,50 @@ export async function initFontSettings() {
     // Try IPC first (Electron)
     if (window.electronAPI?.settings?.get) {
       settings = await window.electronAPI.settings.get();
+      console.log('[FontSettings] Loaded via IPC:', settings?.display?.font_ui, settings?.display?.font_mono);
     } else {
       // Fall back to REST API
       const response = await fetch('/api/settings');
       if (response.ok) {
         settings = await response.json();
+        console.log('[FontSettings] Loaded via REST:', settings?.display?.font_ui, settings?.display?.font_mono);
       }
     }
 
     if (settings) {
       applyFontSettings(settings);
+      console.log('[FontSettings] Applied fonts');
     }
 
     // Listen for settings changes
     if (window.electronAPI?.settings?.onChanged) {
-      window.electronAPI.settings.onChanged(applyFontSettings);
+      window.electronAPI.settings.onChanged((newSettings) => {
+        console.log('[FontSettings] Settings changed:', newSettings?.display?.font_ui, newSettings?.display?.font_mono);
+        applyFontSettings(newSettings);
+      });
     }
   } catch (err) {
-    console.warn('Failed to load font settings:', err);
+    console.warn('[FontSettings] Failed to load:', err);
   }
 }
 
 // Auto-initialize when DOM is ready
+// Note: ES modules are deferred, so DOMContentLoaded may have already fired.
+// We also need to wait for window.electronAPI to be available (from preload).
 if (typeof document !== 'undefined') {
+  // Function to check and initialize
+  const tryInit = () => {
+    if (window.electronAPI?.settings?.get) {
+      initFontSettings();
+    } else {
+      // electronAPI not ready yet, try again shortly
+      setTimeout(tryInit, 10);
+    }
+  };
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initFontSettings);
+    document.addEventListener('DOMContentLoaded', tryInit);
   } else {
-    initFontSettings();
+    tryInit();
   }
 }

@@ -50,6 +50,7 @@ import { getVerboseMode, setVerboseMode, loadPersistedGrants } from './settings-
 import {
   getCurrentSettings,
   saveUserSettings,
+  initializeSettings,
   type CyclistSettings,
 } from './settings.js';
 import { openSettingsWindow, setMainWindowRef, setBrowserWindowRef } from './settings-window.js';
@@ -540,13 +541,26 @@ parseProjectDirArg();
 // =============================================================================
 
 // Reference to main window for broadcasting data updates
-let dataWindowRef: { webContents: { send: (channel: string, data: unknown) => void; isDestroyed: () => boolean } } | null = null;
+// 35-6: Extended type to include executeJavaScript for font settings
+let dataWindowRef: {
+  webContents: {
+    send: (channel: string, data: unknown) => void;
+    isDestroyed: () => boolean;
+    executeJavaScript: (code: string) => Promise<unknown>;
+  }
+} | null = null;
 
 /**
  * Set the main window reference for data broadcasts
  * Called when window is created in Electron runtime
  */
-export function setMainWindow(window: { webContents: { send: (channel: string, data: unknown) => void; isDestroyed: () => boolean } } | null): void {
+export function setMainWindow(window: {
+  webContents: {
+    send: (channel: string, data: unknown) => void;
+    isDestroyed: () => boolean;
+    executeJavaScript: (code: string) => Promise<unknown>;
+  }
+} | null): void {
   dataWindowRef = window;
 }
 
@@ -560,6 +574,35 @@ export function broadcastToRenderer(channel: string, data: unknown): void {
   if (dataWindowRef && !dataWindowRef.webContents.isDestroyed()) {
     dataWindowRef.webContents.send(channel, data);
   }
+}
+
+/**
+ * Apply font settings directly to main window via executeJavaScript
+ * 35-6: This is the reliable way to apply CSS variable changes in Electron
+ * Uses webContents.executeJavaScript to set CSS custom properties on :root
+ * @param settings - CyclistSettings object containing display.font_ui and display.font_mono
+ */
+export function applyFontSettingsToMainWindow(settings: CyclistSettings): void {
+  if (!dataWindowRef || dataWindowRef.webContents.isDestroyed()) {
+    return;
+  }
+
+  const fontUi = settings.display?.font_ui;
+  const fontMono = settings.display?.font_mono;
+
+  // Build the JavaScript to execute in renderer
+  const jsCode = `
+    (function() {
+      const root = document.documentElement;
+      ${fontUi ? `root.style.setProperty('--font-ui', '"${fontUi}", system-ui, -apple-system, sans-serif');` : ''}
+      ${fontMono ? `root.style.setProperty('--font-mono', '"${fontMono}", Monaco, "Courier New", monospace');` : ''}
+      console.log('[FontSettings] Applied via executeJavaScript:', '${fontUi || 'default'}', '${fontMono || 'default'}');
+    })();
+  `;
+
+  dataWindowRef.webContents.executeJavaScript(jsCode).catch((err) => {
+    console.error('[FontSettings] Failed to apply fonts:', err);
+  });
 }
 
 /**
@@ -1079,9 +1122,14 @@ export function setupSettingsIPCHandlers(ipcMain: {
   // 24-1: Save settings
   ipcMain.handle(IPC_SETTINGS_CHANNELS.SAVE, async (_event: unknown, ...args: unknown[]) => {
     const settings = args[0] as Partial<CyclistSettings>;
-    const updated = await handleSettingsSave(settings);
-    broadcastToRenderer(IPC_SETTINGS_CHANNELS.CHANGED, updated);
-    return updated;
+    const result = await handleSettingsSave(settings);
+    // Broadcast the settings object, not the result wrapper
+    if (result.success && result.settings) {
+      broadcastToRenderer(IPC_SETTINGS_CHANNELS.CHANGED, result.settings);
+      // 35-6: Directly apply font settings via executeJavaScript for immediate effect
+      applyFontSettingsToMainWindow(result.settings);
+    }
+    return result;
   });
 
   // 24-1: Open settings window
@@ -1328,20 +1376,26 @@ if (isElectron) {
     // Story 35-13: Register window state manager to auto-save on resize/move/close
     mainWindowState.manage(mainWindow);
 
+    // Set main window for data broadcasts (must be before did-finish-load handler)
+    setMainWindow(mainWindow);
+
+    // 24-1: Set main window reference for settings modal parent
+    setMainWindowRef(mainWindow);
+
     // Load the Express server URL (using the actual port found)
     mainWindow.loadURL(`http://localhost:${actualPort}`);
+
+    // 35-6: Apply font settings after page loads
+    mainWindow.webContents.on('did-finish-load', () => {
+      const settings = getCurrentSettings();
+      applyFontSettingsToMainWindow(settings);
+    });
 
     // Handle window closed
     mainWindow.on('closed', () => {
       mainWindow = null;
       setMainWindow(null);
     });
-
-    // Set main window for data broadcasts
-    setMainWindow(mainWindow);
-
-    // 24-1: Set main window reference for settings modal parent
-    setMainWindowRef(mainWindow);
   }
 
   /**
@@ -1513,6 +1567,11 @@ if (isElectron) {
       }
 
       console.log('[Cyclist] Using Pennyfarthing project:', projectDir);
+
+      // 35-6: Initialize settings BEFORE window loads so font settings are available
+      // This must happen before createWindow() so the renderer can fetch settings immediately
+      initializeSettings(projectDir);
+      console.log('[Cyclist] Settings initialized');
 
       // 33-4: Load persisted permission grants from settings
       loadPersistedGrants();
