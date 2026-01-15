@@ -1,7 +1,7 @@
 /**
- * File Enrichment Module - Story 36-2
+ * File Enrichment Module - Story 36-2, 36-3
  *
- * Enriches Read and Edit tool spans with file context metadata.
+ * Enriches Read, Edit, and Bash tool spans with context metadata.
  * Builds on span-correlation foundation from Story 36-1.
  *
  * Features:
@@ -9,6 +9,7 @@
  * - Diff summary (lines added/removed) for Edit spans
  * - Language detection from file extension
  * - Git status integration (clean/modified/new/untracked)
+ * - Bash: command (redacted), exit code, output summary, working directory
  */
 /**
  * Diff summary for Edit operations
@@ -57,9 +58,45 @@ export interface EditEnrichment extends BaseEnrichment {
     diff: DiffSummary;
 }
 /**
+ * Output summary for Bash commands
+ */
+export interface OutputSummary {
+    /** First N lines of output */
+    firstLines: string[];
+    /** Last N lines of output (if truncated) */
+    lastLines: string[];
+    /** Total number of lines in output */
+    totalLines: number;
+    /** Whether output was truncated */
+    truncated: boolean;
+}
+/**
+ * Enrichment result for Bash spans
+ */
+export interface BashEnrichment {
+    /** Span ID that was enriched */
+    spanId: string;
+    /** Tool name */
+    toolName: 'Bash';
+    /** Command executed (secrets redacted) */
+    command: string;
+    /** Exit code from command execution */
+    exitCode: number | null;
+    /** Output summary with first/last lines */
+    outputSummary: OutputSummary;
+    /** Working directory where command was executed */
+    workingDirectory: string;
+    /** Execution duration in milliseconds */
+    durationMs: number;
+    /** Whether enrichment was skipped (already enriched) */
+    skipped?: boolean;
+    /** Error message if enrichment failed */
+    error?: string;
+}
+/**
  * Union type for all enrichment results
  */
-export type EnrichmentResult = FileEnrichment | EditEnrichment;
+export type EnrichmentResult = FileEnrichment | EditEnrichment | BashEnrichment;
 /**
  * Detect programming language from file extension
  * @param filePath - Path to the file
@@ -93,6 +130,27 @@ export declare function getLineCount(filePath: string): Promise<number>;
  */
 export declare function getGitStatus(filePath: string): Promise<'clean' | 'modified' | 'new' | 'untracked' | null>;
 /**
+ * Redact secrets from a command string
+ * @param command - The raw command string
+ * @returns Command with secrets replaced by [REDACTED]
+ */
+export declare function redactSecrets(command: string): string;
+/**
+ * Create an output summary from command output
+ * @param output - The full command output
+ * @returns Summary with first/last lines and truncation info
+ */
+export declare function createOutputSummary(output: string | undefined): OutputSummary;
+/**
+ * Extract exit code from command output or error
+ * Bash exit codes are in the output format or error message
+ * @param output - Command output string
+ * @param error - Error message if command failed
+ * @param success - Whether command succeeded
+ * @returns Exit code (0 for success, extracted code or 1 for failure)
+ */
+export declare function extractExitCode(output: string | undefined, error: string | undefined, success: boolean): number | null;
+/**
  * Enrich a Read span with file metadata
  * @param spanId - The span ID to enrich
  * @returns Enrichment result with file metadata
@@ -104,5 +162,26 @@ export declare function enrichReadSpan(spanId: string): Promise<FileEnrichment>;
  * @returns Enrichment result with diff summary
  */
 export declare function enrichEditSpan(spanId: string): Promise<EditEnrichment>;
+/**
+ * Context from OTEL event needed for Bash enrichment
+ * This data is not in the correlation map but comes from the event
+ */
+export interface BashEventContext {
+    /** Command output (may be truncated) */
+    output?: string;
+    /** Error message if command failed */
+    error?: string;
+    /** Whether command succeeded */
+    success: boolean;
+    /** Execution duration in milliseconds */
+    durationMs?: number;
+}
+/**
+ * Enrich a Bash span with command execution context
+ * @param spanId - The span ID to enrich
+ * @param eventContext - Additional context from OTEL event
+ * @returns Enrichment result with command context
+ */
+export declare function enrichBashSpan(spanId: string, eventContext: BashEventContext): BashEnrichment;
 export {};
 //# sourceMappingURL=file-enrichment.d.ts.map

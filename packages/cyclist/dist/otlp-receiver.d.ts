@@ -6,7 +6,7 @@
  * Story 19-4: Extended with per-agent token aggregation.
  * Story 19-5: Extended with per-story token aggregation.
  */
-import { type DiffSummary } from './file-enrichment.js';
+import { type DiffSummary, type OutputSummary } from './file-enrichment.js';
 /** Enable/disable OTEL debug logging at runtime */
 export declare function setOtelDebug(enabled: boolean): void;
 /** Check if OTEL debug is enabled */
@@ -45,6 +45,14 @@ export interface ToolEvent {
     diff?: DiffSummary;
     /** Resolved file path for Read/Edit tools */
     filePath?: string;
+    /** Command executed (secrets redacted) */
+    command?: string;
+    /** Exit code from command execution */
+    exitCode?: number | null;
+    /** Output summary with first/last lines */
+    outputSummary?: OutputSummary;
+    /** Working directory where command was executed */
+    workingDirectory?: string;
 }
 /**
  * Parsed user prompt event from OTLP logs
