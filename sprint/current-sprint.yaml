@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 70
-  completed_points: 11
-  remaining_points: 59
+  completed_points: 14
+  remaining_points: 56
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - Epic 31: Customizable Workflow Engine (4 pts remaining)
@@ -855,8 +855,9 @@ epics:
           Update sm.md with workflow routing logic.
         points: 3
         priority: P1
-        status: in_progress
+        status: done
         started: 2026-01-15
+        completed: 2026-01-15
         assigned_to: Keith Avery
         repos: pennyfarthing
         workflow: tdd
