@@ -10,7 +10,7 @@
  * - Safety: Cannot be collapsed if it's the last visible panel
  */
 
-import { VerticalPanel } from '/js/vertical-panel.js';
+import { VerticalPanel } from './vertical-panel.js';
 
 const STORAGE_KEY = 'cyclist-message-panel';
 
