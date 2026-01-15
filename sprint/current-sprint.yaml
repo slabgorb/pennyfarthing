@@ -1016,7 +1016,9 @@ epics:
           Pattern: Critical context visible at all times, not hidden in menus.
         points: 2
         priority: P2
-        status: backlog
+        status: in_progress
+        started: 2026-01-15
+        assigned_to: Keith Avery
         repos: cyclist
         jira: MSSCI-11717
         acceptance_criteria:

@@ -786,6 +786,24 @@ html, body {
   font-size: 0.8125rem;
 }
 
+/* 35-2: User email display in stats strip */
+.user-email {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-email:empty {
+  display: none;
+}
+
+.user-email.updated {
+  animation: pulse 0.5s ease-out;
+}
+
 .model-badge {
   display: inline-flex;
   align-items: center;

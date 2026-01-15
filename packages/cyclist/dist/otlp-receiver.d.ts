@@ -74,6 +74,15 @@ export declare function setTokenStatsCallback(callback: (stats: TokenStats) => v
  */
 export declare function setToolEventCallback(callback: (event: ToolEvent) => void): void;
 /**
+ * Register callback for user email updates
+ * Called by main.ts to wire up IPC broadcast
+ */
+export declare function setUserEmailCallback(callback: (email: string) => void): void;
+/**
+ * Get the current user email (extracted from OTEL spans)
+ */
+export declare function getUserEmail(): string | null;
+/**
  * Parse OTLP JSON payload and extract token usage metrics
  */
 export declare function parseOTLPMetrics(body: unknown): PartialTokenStats;

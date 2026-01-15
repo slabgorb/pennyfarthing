@@ -199,6 +199,27 @@ function updateContextMeter(percent, tokens) {
 }
 
 /**
+ * 35-2: Update user email display
+ * @param {string} email - User email address
+ */
+function updateUserEmail(email) {
+  const element = document.querySelector('#stats-strip .user-email');
+  if (!element) return;
+
+  const oldValue = element.textContent;
+  if (oldValue !== email) {
+    element.textContent = email;
+    element.title = `Authenticated as: ${email}`;
+
+    // Add pulse animation
+    element.classList.add('updated');
+    setTimeout(() => {
+      element.classList.remove('updated');
+    }, 500);
+  }
+}
+
+/**
  * Update usage meter display (23-1)
  * @param {Object} usageStats - Usage stats object
  * @param {number} usageStats.fiveHourPercent - 5-hour remaining percentage
@@ -349,6 +370,30 @@ async function initStatsStrip() {
     compactBtn.addEventListener('click', executeCompact);
   }
 
+  // 35-2: Project info subscription (user email from OTEL)
+  if (window.electronAPI?.projectInfo) {
+    // Get initial project info
+    if (window.electronAPI.projectInfo.get) {
+      try {
+        const info = await window.electronAPI.projectInfo.get();
+        if (info?.userEmail) {
+          updateUserEmail(info.userEmail);
+        }
+      } catch (err) {
+        // Silent fail - email is optional
+      }
+    }
+
+    // Subscribe to project info updates (fires when email is discovered from OTEL)
+    if (window.electronAPI.projectInfo.onUpdate) {
+      window.electronAPI.projectInfo.onUpdate((_event, info) => {
+        if (info?.userEmail) {
+          updateUserEmail(info.userEmail);
+        }
+      });
+    }
+  }
+
   console.log('[StatsStrip] IPC connected');
 }
 
@@ -362,4 +407,6 @@ window.updateContextMeter = updateContextMeter;
 window.updateUsageMeter = updateUsageMeter;
 // 23-4: Export compact button functions
 window.updateCompactButtonVisibility = updateCompactButtonVisibility;
+// 35-2: Export user email function
+window.updateUserEmail = updateUserEmail;
 window.executeCompact = executeCompact;

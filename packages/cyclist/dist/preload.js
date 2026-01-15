@@ -70,6 +70,8 @@ function createElectronAPI() {
             context: createDataAPI(ipcRenderer, 'context:get', 'context:update'),
             // Usage Stats API (23-1)
             usageStats: createDataAPI(ipcRenderer, 'usageStats:get', 'usageStats:update'),
+            // 35-2: Project Info API (directory and user email)
+            projectInfo: createDataAPI(ipcRenderer, 'projectInfo:get', 'projectInfo:update'),
             // Claude SDK API (E7-3, 28-1: images support)
             claude: {
                 send: (prompt, images) => ipcRenderer.invoke('claude:send', prompt, images || []),
@@ -208,6 +210,8 @@ function createElectronAPI() {
             context: createDataAPI(null, 'context:get', 'context:update'),
             // Usage Stats API (23-1) - test stub
             usageStats: createDataAPI(null, 'usageStats:get', 'usageStats:update'),
+            // 35-2: Project Info API - test stub
+            projectInfo: createDataAPI(null, 'projectInfo:get', 'projectInfo:update'),
             // Claude SDK API (E7-3) - test stub
             claude: {
                 send: (_prompt) => Promise.resolve(),

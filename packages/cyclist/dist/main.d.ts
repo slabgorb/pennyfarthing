@@ -39,6 +39,8 @@ export declare const IPC_DATA_CHANNELS: {
     readonly TOOL_EVENTS_UPDATE: "toolEvents:update";
     readonly USAGE_STATS_GET: "usageStats:get";
     readonly USAGE_STATS_UPDATE: "usageStats:update";
+    readonly PROJECT_INFO_GET: "projectInfo:get";
+    readonly PROJECT_INFO_UPDATE: "projectInfo:update";
 };
 /**
  * IPC channel names for Claude SDK communication (E7-3)
