@@ -1,13 +1,9 @@
 /**
  * Generic SM Finish - Combines finish-bookkeeping + finish-execution
  *
- * Story 31-11: Consolidate SM bookkeeping subagents
- *
- * This module provides two phases:
+ * Provides two phases:
  * 1. Preflight: PR check, lint fix, Jira status → JSON report
  * 2. Execute: Archive, Jira transition, cleanup → completion flags
- *
- * TODO: Dev will implement the logic to pass the tests
  */
 /**
  * Issue found during preflight

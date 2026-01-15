@@ -1,19 +1,15 @@
 /**
  * Workflow Router
  *
- * Story 31-3: Route stories to appropriate workflows
+ * Routes stories to appropriate workflows based on explicit tags,
+ * trigger rules, and defaults.
  *
- * This module provides the routing engine that matches stories to workflows
- * based on explicit tags, trigger rules, and defaults.
- *
- * Priority algorithm (from schema guide):
+ * Priority algorithm:
  * 1. Explicit workflow: tag on story
  * 2. Trigger tag match (story tags intersect workflow trigger tags)
  * 3. Type match (story type in workflow trigger types)
  * 4. Points match (story points within workflow trigger range)
  * 5. Default workflow fallback
- *
- * TODO: Dev will implement the routing logic
  */
 import type { WorkflowDefinition } from './workflow-loader.js';
 /**
