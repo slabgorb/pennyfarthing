@@ -13,7 +13,7 @@ import { dirname, join, basename } from 'path';
 import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
 import { getStoryInfo, getGitInfo, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig, findAvailablePort } from './server.js';
 import { parseToolStats, createEmptyStats } from './tool-stats.js';
-import { getTokenStats, setTokenStatsCallback, setToolEventCallback, aggregateTokenStats, resetTokenStats, resetEventStore, getToolEventsFiltered, getToolTypes, exportAuditLogAsJSON, exportAuditLogAsCSV, getAuditLogStats, } from './otlp-receiver.js';
+import { getTokenStats, setTokenStatsCallback, setToolEventCallback, aggregateTokenStats, resetTokenStats, resetEventStore, getToolEventsFiltered, getToolTypes, exportAuditLogAsJSON, exportAuditLogAsCSV, getAuditLogStats, getUserEmail, setUserEmailCallback, } from './otlp-receiver.js';
 import { ClaudeService } from './claude-service.js';
 import { isTodoWriteMessage, extractTodos } from './todos.js';
 import { listDirectory as listDir } from './file-browser.js';
@@ -79,6 +79,9 @@ export const IPC_DATA_CHANNELS = {
     // 23-1: Usage limits stats
     USAGE_STATS_GET: 'usageStats:get',
     USAGE_STATS_UPDATE: 'usageStats:update',
+    // 35-2: Project info (directory and user email)
+    PROJECT_INFO_GET: 'projectInfo:get',
+    PROJECT_INFO_UPDATE: 'projectInfo:update',
 };
 /**
  * IPC channel names for Claude SDK communication (E7-3)
@@ -283,6 +286,7 @@ export function getDataChannels() {
         IPC_DATA_CHANNELS.TODOS_GET,
         IPC_DATA_CHANNELS.CONTEXT_GET,
         IPC_DATA_CHANNELS.USAGE_STATS_GET, // 23-1
+        IPC_DATA_CHANNELS.PROJECT_INFO_GET, // 35-2
     ];
 }
 // Stats state managed by main process
@@ -842,6 +846,13 @@ export function setupDataIPCHandlers(ipcMain) {
     ipcMain.handle(IPC_DATA_CHANNELS.USAGE_STATS_GET, async () => {
         return getUsageStats();
     });
+    // 35-2: Project info handler - returns directory and user email
+    ipcMain.handle(IPC_DATA_CHANNELS.PROJECT_INFO_GET, async () => {
+        return {
+            directory: getProjectDirectory(),
+            userEmail: getUserEmail(),
+        };
+    });
     console.log('Data IPC handlers registered:', getDataChannels());
 }
 /**
@@ -870,6 +881,15 @@ export function startProjectWatchers() {
         console.log(`Tool event broadcast: ${event.toolName}`);
     });
     console.log('Tool event callback registered for audit log broadcasts');
+    // 35-2: Register user email callback for project info updates
+    setUserEmailCallback((email) => {
+        broadcastToRenderer(IPC_DATA_CHANNELS.PROJECT_INFO_UPDATE, {
+            directory: getProjectDirectory(),
+            userEmail: email,
+        });
+        console.log(`User email discovered: ${email}`);
+    });
+    console.log('User email callback registered for OTLP broadcasts');
     // Start watching for agent changes
     if (detectPennyfarthingProject(projectDir)) {
         const sessionId = process.env.CYCLIST_SESSION_ID;

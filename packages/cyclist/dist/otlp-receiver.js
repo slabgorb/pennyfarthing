@@ -11,6 +11,8 @@ import { aggregateTokensForStory, resetStoryTokenStats } from './story-context.j
 // Session event stores (in-memory)
 let toolEvents = [];
 let promptEvents = [];
+// 35-2: User info extracted from OTEL spans
+let userEmail = null;
 // Session token state (in-memory)
 let sessionTokens = {
     inputTokens: 0,
@@ -37,6 +39,21 @@ let onToolEventRecorded = null;
  */
 export function setToolEventCallback(callback) {
     onToolEventRecorded = callback;
+}
+// 35-2: Callback for when user email is discovered
+let onUserEmailUpdate = null;
+/**
+ * Register callback for user email updates
+ * Called by main.ts to wire up IPC broadcast
+ */
+export function setUserEmailCallback(callback) {
+    onUserEmailUpdate = callback;
+}
+/**
+ * Get the current user email (extracted from OTEL spans)
+ */
+export function getUserEmail() {
+    return userEmail;
 }
 /**
  * Parse OTLP JSON payload and extract token usage metrics
@@ -234,6 +251,7 @@ export function getPromptEvents() {
 export function resetEventStore() {
     toolEvents = [];
     promptEvents = [];
+    userEmail = null; // 35-2: Reset user email on session reset
 }
 // =============================================================================
 // Audit Log Functions (Story 22-6)
@@ -335,6 +353,13 @@ export function getAuditLogStats() {
  */
 export function processLogEvents(rawEvents) {
     for (const event of rawEvents) {
+        // 35-2: Extract user.email from any event that has it (only store once)
+        if (!userEmail && event.attributes['user.email']) {
+            userEmail = event.attributes['user.email'];
+            if (onUserEmailUpdate) {
+                onUserEmailUpdate(userEmail);
+            }
+        }
         if (event.name === 'claude_code.tool_result') {
             // Parse tool_parameters JSON to extract input
             let input;

@@ -69,6 +69,9 @@ interface RawLogEvent {
 let toolEvents: ToolEvent[] = [];
 let promptEvents: ParsedPromptEvent[] = [];
 
+// 35-2: User info extracted from OTEL spans
+let userEmail: string | null = null;
+
 // Token stats interface
 export interface TokenStats {
   inputTokens: number;
@@ -112,6 +115,24 @@ let onToolEventRecorded: ((event: ToolEvent) => void) | null = null;
  */
 export function setToolEventCallback(callback: (event: ToolEvent) => void): void {
   onToolEventRecorded = callback;
+}
+
+// 35-2: Callback for when user email is discovered
+let onUserEmailUpdate: ((email: string) => void) | null = null;
+
+/**
+ * Register callback for user email updates
+ * Called by main.ts to wire up IPC broadcast
+ */
+export function setUserEmailCallback(callback: (email: string) => void): void {
+  onUserEmailUpdate = callback;
+}
+
+/**
+ * Get the current user email (extracted from OTEL spans)
+ */
+export function getUserEmail(): string | null {
+  return userEmail;
 }
 
 // OTLP JSON structure types
@@ -396,6 +417,7 @@ export function getPromptEvents(): ParsedPromptEvent[] {
 export function resetEventStore(): void {
   toolEvents = [];
   promptEvents = [];
+  userEmail = null; // 35-2: Reset user email on session reset
 }
 
 // =============================================================================
@@ -512,6 +534,14 @@ export function getAuditLogStats(): {
  */
 export function processLogEvents(rawEvents: RawLogEvent[]): void {
   for (const event of rawEvents) {
+    // 35-2: Extract user.email from any event that has it (only store once)
+    if (!userEmail && event.attributes['user.email']) {
+      userEmail = event.attributes['user.email'] as string;
+      if (onUserEmailUpdate) {
+        onUserEmailUpdate(userEmail);
+      }
+    }
+
     if (event.name === 'claude_code.tool_result') {
       // Parse tool_parameters JSON to extract input
       let input: string | undefined;

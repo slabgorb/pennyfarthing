@@ -29,6 +29,8 @@ import {
   exportAuditLogAsJSON,
   exportAuditLogAsCSV,
   getAuditLogStats,
+  getUserEmail,
+  setUserEmailCallback,
 } from './otlp-receiver.js';
 import { ClaudeService, SDKMessage } from './claude-service.js';
 import { isTodoWriteMessage, extractTodos, type TodoItem } from './todos.js';
@@ -112,6 +114,9 @@ export const IPC_DATA_CHANNELS = {
   // 23-1: Usage limits stats
   USAGE_STATS_GET: 'usageStats:get',
   USAGE_STATS_UPDATE: 'usageStats:update',
+  // 35-2: Project info (directory and user email)
+  PROJECT_INFO_GET: 'projectInfo:get',
+  PROJECT_INFO_UPDATE: 'projectInfo:update',
 } as const;
 
 /**
@@ -360,6 +365,7 @@ export function getDataChannels(): string[] {
     IPC_DATA_CHANNELS.TODOS_GET,
     IPC_DATA_CHANNELS.CONTEXT_GET,
     IPC_DATA_CHANNELS.USAGE_STATS_GET, // 23-1
+    IPC_DATA_CHANNELS.PROJECT_INFO_GET, // 35-2
   ];
 }
 
@@ -1028,6 +1034,14 @@ export function setupDataIPCHandlers(ipcMain: {
     return getUsageStats();
   });
 
+  // 35-2: Project info handler - returns directory and user email
+  ipcMain.handle(IPC_DATA_CHANNELS.PROJECT_INFO_GET, async () => {
+    return {
+      directory: getProjectDirectory(),
+      userEmail: getUserEmail(),
+    };
+  });
+
   console.log('Data IPC handlers registered:', getDataChannels());
 }
 
@@ -1060,6 +1074,16 @@ export function startProjectWatchers(): void {
     console.log(`Tool event broadcast: ${event.toolName}`);
   });
   console.log('Tool event callback registered for audit log broadcasts');
+
+  // 35-2: Register user email callback for project info updates
+  setUserEmailCallback((email: string) => {
+    broadcastToRenderer(IPC_DATA_CHANNELS.PROJECT_INFO_UPDATE, {
+      directory: getProjectDirectory(),
+      userEmail: email,
+    });
+    console.log(`User email discovered: ${email}`);
+  });
+  console.log('User email callback registered for OTLP broadcasts');
 
   // Start watching for agent changes
   if (detectPennyfarthingProject(projectDir)) {
