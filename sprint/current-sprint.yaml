@@ -636,6 +636,39 @@ epics:
           - Quote displays in italic, muted style
           - persona-info container groups name and role
           - All 15-3 tests unskipped and passing
+      - id: 37-14
+        title: "Bug: Handoff buttons show hardcoded theme characters"
+        description: |
+          Quick action handoff buttons in Cyclist show character names from a
+          hardcoded theme (The Expanse) instead of the currently active theme.
+
+          Root cause: `getAgentDisplayName()` in quick-actions.js calls
+          `getThemeAgents()` which returns null when the theme cache hasn't
+          been populated. The fallback returns generic role names like
+          "Scrum Master" but somewhere the test fixtures or UI are showing
+          Expanse characters.
+
+          Files affected:
+          - packages/cyclist/src/public/js/components/message-view/quick-actions.js
+          - packages/cyclist/src/public/js/story.js (themeAgentsCache)
+
+          The theme cache may not be loaded when quick actions render, or
+          the cache may be stale after theme switch.
+
+          Fix options:
+          1. Ensure theme cache loads before first handoff button renders
+          2. Add fallback that fetches theme on-demand if cache is null
+          3. Subscribe to theme change events and refresh cache
+        points: 2
+        priority: P1
+        status: backlog
+        repos: cyclist
+        workflow: trivial
+        acceptance_criteria:
+          - Handoff buttons show character names from current theme
+          - Buttons update when theme is switched
+          - No hardcoded theme references in production code
+          - Works on initial load (theme cache populated before needed)
   - id: epic-38
     title: Agent File Modernization
     description: |
@@ -822,7 +855,9 @@ epics:
           Update sm.md with workflow routing logic.
         points: 3
         priority: P1
-        status: backlog
+        status: in_progress
+        started: 2026-01-15
+        assigned_to: Keith Avery
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria:

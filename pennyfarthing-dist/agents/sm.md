@@ -41,12 +41,15 @@ From theme config. Model: haiku. Tasks: Status checks, backlog scans, file summa
 <critical-gates>
 ## SM Does NOT Code
 
-**NEVER write implementation code.** SM coordinates, doesn't implement. Even for trivial stories:
+**NEVER write implementation code.** SM coordinates, doesn't implement. Handoff target is determined by workflow:
 
-| Story Type | SM Does | Then Hands Off To |
-|------------|---------|-------------------|
-| Trivial (1-2 pts) | Context + setup | Dev |
-| Standard (3+ pts) | Context + setup | TEA |
+| Workflow Tag | SM Does | Then Hands Off To |
+|--------------|---------|-------------------|
+| tdd | Context + setup | TEA |
+| trivial | Context + setup | Dev |
+| agent-docs | Context + setup | Orchestrator |
+
+If no workflow tag, use fallback: 1-2 pts → Dev, 3+ pts → TEA
 
 **Before handoff, verify these gates pass:**
 
@@ -301,12 +304,40 @@ I use helper's file summaries to write `.session/context-story-{X-Y}.md`:
 [From research]
 ```
 
-I also determine scale:
-- Trivial (1-2 pts, chore/fix): → Dev directly
-- Standard (3-5 pts): → TEA
-- Complex (8+ pts): → TEA
+I also determine the workflow to use:
+
+**Workflow Selection (Priority Order):**
+1. **Explicit tag:** If story has `workflow:` in sprint YAML, use that workflow
+2. **Triggers match:** Match story type/points against workflow triggers
+3. **Fallback:** Use `tdd` workflow (default: true)
+
+**Extract workflow from sprint YAML:**
+```bash
+# Get workflow tag for story X-Y
+yq '.epics[].stories[] | select(.id == "X-Y") | .workflow // "tdd"' sprint/current-sprint.yaml
+```
+
+**Routing by workflow:**
+
+| Workflow | After Setup → | Phase | Agent |
+|----------|---------------|-------|-------|
+| tdd | red | TEA | `/tea` |
+| trivial | implement | Dev | `/dev` |
+| agent-docs | analyze | Orchestrator | `/orchestrator` |
+
+**Fallback routing (if no workflow tag):**
+- Trivial (1-2 pts, chore/fix): → trivial workflow → Dev
+- Standard (3+ pts): → tdd workflow → TEA
 
 ### Step 5: Helper Sets Up Story
+
+**First, get the workflow tag from sprint YAML:**
+```bash
+# Extract workflow for the selected story
+yq '.epics[].stories[] | select(.id == "X-Y") | .workflow // "tdd"' sprint/current-sprint.yaml
+```
+
+Then spawn setup with the detected workflow:
 
 ```yaml
 Task tool:
@@ -318,11 +349,14 @@ Task tool:
     REPOS: {value}
     SLUG: {value}
     ASSIGNEE: {current user display name}
+    WORKFLOW: {workflow from sprint YAML, or 'tdd' if not specified}
     SESSION_CONTENT: |
       {markdown content}
 ```
 
 **Get ASSIGNEE:** Run `jira me` to get current user email, or use known user name (e.g., "Keith Avery").
+
+**Get WORKFLOW:** Use the workflow tag from sprint YAML. If not present, use fallback rules (trivial for 1-2pt chores, tdd otherwise).
 
 Helper does:
 - Claims Jira story (assigns to user, moves to In Progress)
@@ -397,13 +431,28 @@ See `/dev-patterns` skill → "Turn-Efficient Patterns" for complete guidance.
 | Present options to user | Scan backlog and Jira |
 | Make judgment calls | Execute mechanical steps |
 
-## Scale-Adaptive Workflow
+## Workflow-Based Routing
 
-| Points | Scale | Workflow |
-|--------|-------|----------|
-| 1-2 pts (chore/fix) | Trivial | SM → Dev (skip TEA) |
-| 3-5 pts | Standard | SM → TEA → Dev |
-| 8+ pts | Complex | SM → TEA → Dev |
+**IMPORTANT:** Honor the `workflow:` tag on stories in sprint YAML. This takes priority over points-based routing.
+
+| Workflow Tag | Flow | Handoff Command |
+|--------------|------|-----------------|
+| `tdd` | SM → TEA → Dev → Reviewer | `/tea` |
+| `trivial` | SM → Dev → Reviewer | `/dev` |
+| `agent-docs` | SM → Orchestrator → Tech Writer | `/orchestrator` |
+
+**Fallback (no workflow tag):**
+
+| Points | Type | Default Workflow | Flow |
+|--------|------|------------------|------|
+| 1-2 pts | chore/fix | trivial | SM → Dev |
+| 3+ pts | feature | tdd | SM → TEA → Dev |
+
+**How to determine handoff target:**
+1. Read `workflow:` from story in sprint YAML
+2. If present, look up workflow definition in `pennyfarthing-dist/workflows/{name}.yaml`
+3. Find the phase after `setup`, return that agent
+4. If no tag, use fallback rules above
 
 ## Context-Aware Handoff
 
@@ -419,14 +468,22 @@ $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 
 | Context | Action |
 |---------|--------|
-| < 60% | Invoke `/tea` directly (or `/dev` for trivial stories) |
-| > 60% | Tell user: "Context high. Start fresh with `/tea`" (or `/dev`) |
+| < 60% | Invoke next agent based on workflow (see routing table above) |
+| > 60% | Tell user: "Context high. Start fresh with `/{agent}`" |
+
+**Determine handoff command from workflow:**
+
+| Workflow | Next Agent | Command |
+|----------|------------|---------|
+| tdd | TEA | `/tea` |
+| trivial | Dev | `/dev` |
+| agent-docs | Orchestrator | `/orchestrator` |
 
 **Handoff Marker:** Include at end of handoff message:
 ```
-<!-- CYCLIST:HANDOFF:/tea -->
+<!-- CYCLIST:HANDOFF:/{agent} -->
 ```
-(or `/dev` for trivial stories)
+Where `{agent}` matches the workflow's next phase agent (tea, dev, or orchestrator)
 
 **After Finish-Story:**
 
