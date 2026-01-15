@@ -327,11 +327,16 @@ export function renderDiff(container, diffData) {
   filePathLink.href = '#';
   filePathLink.textContent = diffData.filePath;
   filePathLink.title = 'Click to open in editor';
-  filePathLink.addEventListener('click', (e) => {
+  filePathLink.addEventListener('click', async (e) => {
     e.preventDefault();
-    // 27-1: Fix API path - use electronAPI not electron
-    if (window.electronAPI?.fileBrowser?.openInEditor) {
-      window.electronAPI.fileBrowser.openInEditor(diffData.filePath);
+    // 35-11: Open file in OS default application
+    if (window.electronAPI?.fileBrowser?.openFile) {
+      try {
+        await window.electronAPI.fileBrowser.openFile(diffData.filePath);
+      } catch (err) {
+        console.error(`[DiffViewer] Failed to open file: ${diffData.filePath}`, err);
+        filePathLink.title = 'Failed to open file - it may no longer exist';
+      }
     }
   });
 

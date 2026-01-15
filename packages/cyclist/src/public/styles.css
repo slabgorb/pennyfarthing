@@ -2732,14 +2732,17 @@ html, body {
 }
 
 .diff-file-header .file-path-link {
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
   cursor: pointer;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.15s ease, text-decoration 0.15s ease;
 }
 
 .diff-file-header .file-path-link:hover {
   opacity: 0.8;
   text-decoration: underline;
+  text-decoration-style: solid;
 }
 
 .diff-line {
