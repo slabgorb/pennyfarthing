@@ -5,16 +5,17 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 52
+  total_points: 67
   completed_points: 11
-  remaining_points: 41
+  remaining_points: 56
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - Epic 31: Customizable Workflow Engine (4 pts remaining)
     - Epic 33: Runtime Permission Management (2 pts remaining)
     - Epic 35: Cyclist UI/UX Improvements (13 pts remaining)
     - Epic 36: OTEL Tool Call Enrichment (8 pts remaining)
-    - Epic 37: Technical Debt & Bug Fixes (24 pts - NEW)
+    - Epic 37: Technical Debt & Bug Fixes (14 pts remaining)
+    - Epic 38: Agent File Modernization (15 pts - NEW)
 
     Sprint 10 closed with 54 pts completed (245% of velocity target).
 # =============================================================================
@@ -631,3 +632,161 @@ epics:
           - Quote displays in italic, muted style
           - persona-info container groups name and role
           - All 15-3 tests unskipped and passing
+  - id: epic-38
+    title: Agent File Modernization
+    description: |
+      Modernize non-TDD agent files to support custom workflow integration.
+      Currently SM, TEA, Dev, Reviewer are production-quality with subagent
+      delegation, turn efficiency, and handoff gates. Non-TDD agents (PM,
+      Architect, DevOps, Tech Writer, UX Designer, Orchestrator) are generic
+      templates disconnected from actual workflows.
+
+      With Epic 31's custom workflow engine, these agents will participate
+      in user-defined flows. They need the same patterns as TDD agents.
+    points: 15
+    completed_points: 0
+    priority: P2
+    marker: infrastructure
+    repos: pennyfarthing
+    status: backlog
+    stories:
+      - id: 38-1
+        title: Fix stale references in agent files
+        description: |
+          Quick fixes for incorrect/stale content identified in audit:
+          - README.md:71,361 - Wrong path to agent-scopes.yaml
+          - README.md:250-251 - Contradictory WRONG example
+          - orchestrator.md:96-108 - Hardcoded Discworld character table
+          - sm-handoff.md:10-11 - Hardcoded character names
+          - reviewer-preflight.md:111 - Wrong subagent_type (general-purpose → testing-runner)
+        points: 1
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - All path references correct
+          - No hardcoded theme character names
+          - reviewer-preflight uses testing-runner subagent
+          - README examples are consistent
+      - id: 38-2
+        title: Add status tags to agent files
+        description: |
+          Add <status> tags to clearly signal agent maturity:
+          - <status>production</status> for TDD agents (sm, tea, dev, reviewer)
+          - <status>experimental</status> for non-TDD agents
+          - Update README with "Production Agents" and "Experimental Agents" sections
+        points: 1
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - All 10 main agents have <status> tag
+          - README documents production vs experimental
+          - Users know which agents are battle-tested
+      - id: 38-3
+        title: Modernize PM agent for custom workflows
+        description: |
+          Update pm.md to support custom workflow participation:
+          - Add <reasoning-mode> section
+          - Add Turn Efficiency patterns
+          - Add subagent delegation guidance
+          - Connect to sprint system properly
+          - Remove generic PM tutorial content
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - PM has reasoning-mode section
+          - PM has turn efficiency guidance
+          - PM can delegate to subagents
+          - PM integrates with sprint/current-sprint.yaml
+      - id: 38-4
+        title: Modernize Architect agent for custom workflows
+        description: |
+          Update architect.md to support custom workflow participation:
+          - Add <reasoning-mode> section
+          - Add Turn Efficiency patterns
+          - Add subagent delegation (can spawn testing-runner for build verification)
+          - Define clear handoff gates to Dev/TEA
+          - Remove generic architecture tutorial content
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Architect has reasoning-mode section
+          - Architect has turn efficiency guidance
+          - Architect can spawn testing-runner
+          - Clear handoff protocol to implementation agents
+      - id: 38-5
+        title: Modernize DevOps agent for custom workflows
+        description: |
+          Update devops.md to support custom workflow participation:
+          - Add <reasoning-mode> section
+          - Add Turn Efficiency patterns
+          - Add subagent delegation (testing-runner for CI verification)
+          - Trim generic CI/CD tutorial (372 lines → ~200)
+          - Focus on Pennyfarthing-specific deployment patterns
+        points: 3
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - DevOps has reasoning-mode section
+          - DevOps has turn efficiency guidance
+          - DevOps can spawn testing-runner
+          - File trimmed to ~200 lines
+          - Content is Pennyfarthing-specific
+      - id: 38-6
+        title: Modernize Tech Writer agent for custom workflows
+        description: |
+          Update tech-writer.md to support custom workflow participation:
+          - Add <reasoning-mode> section
+          - Add Turn Efficiency patterns
+          - Define documentation review workflow
+          - Connect to changelog/release process
+        points: 2
+        priority: P3
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Tech Writer has reasoning-mode section
+          - Tech Writer has turn efficiency guidance
+          - Clear workflow for documentation stories
+          - Integrates with /changelog skill
+      - id: 38-7
+        title: Modernize UX Designer agent for custom workflows
+        description: |
+          Update ux-designer.md to support custom workflow participation:
+          - Add <reasoning-mode> section
+          - Add Turn Efficiency patterns
+          - Define design review workflow
+          - Connect to Cyclist UI development
+        points: 2
+        priority: P3
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - UX Designer has reasoning-mode section
+          - UX Designer has turn efficiency guidance
+          - Clear workflow for UI/UX stories
+          - Handoff protocol to Dev defined
+      - id: 38-8
+        title: Modernize Orchestrator agent
+        description: |
+          Update orchestrator.md to be the meta-agent it claims to be:
+          - Add <reasoning-mode> section
+          - Add Turn Efficiency patterns
+          - Define process improvement workflow
+          - Add agent file audit capabilities
+          - Remove hardcoded character references
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        acceptance_criteria:
+          - Orchestrator has reasoning-mode section
+          - Orchestrator has turn efficiency guidance
+          - Can audit and update agent files
+          - No hardcoded theme references
