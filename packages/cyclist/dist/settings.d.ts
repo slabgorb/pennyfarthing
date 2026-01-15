@@ -18,6 +18,8 @@ export interface DisplaySettings {
     show_flow: boolean;
     show_ocean: boolean;
     sidebar_width: number;
+    font_ui: string;
+    font_mono: string;
 }
 export interface NotificationSettings {
     phase_change: boolean;
