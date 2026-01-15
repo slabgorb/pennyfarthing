@@ -7,6 +7,8 @@ import { existsSync, writeFileSync, unlinkSync, readFileSync } from 'fs';
 import { publicDir, nodeModulesDir, portraitsDir, getProjectDirectory } from './paths.js';
 // API routers
 import { createStatsRouter, createPortraitRouter, createPersonaRouter, createGitRouter, createOTLPRouter, createStoryRouter, createFileBrowserRouter, createTokenStatsRouter, createContextRouter, createThemeAgentsRouter, createModeRouter, createTelemetryRouter, createEvaluationRouter, createBenchmarkRouter, createSettingsRouter, initTokenStatsBroadcast, } from './api/index.js';
+// Settings initialization (35-6: required for font settings persistence)
+import { initializeSettings } from './settings.js';
 // WebSocket setup
 import { setupWebSocketServers } from './websocket.js';
 // Re-exports for main.ts and tests
@@ -32,6 +34,9 @@ app.get('/', (_req, res) => {
 function getProjectDir() {
     return getProjectDirectory() || process.cwd();
 }
+// Initialize settings from file (35-6: required for font settings persistence)
+// Must happen before settings router is used
+initializeSettings(getProjectDir());
 // Mount API routers
 app.use('/api/stats', createStatsRouter());
 app.use('/api/portrait', createPortraitRouter());
