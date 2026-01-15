@@ -8,6 +8,9 @@
  */
 import { aggregateTokensForAgent, resetAgentTokenStats } from './agent-context.js';
 import { aggregateTokensForStory, resetStoryTokenStats } from './story-context.js';
+// Story 36-7: Import span correlation and enrichment modules
+import { correlateSpan, resetCorrelations } from './span-correlation.js';
+import { enrichReadSpan, enrichEditSpan } from './file-enrichment.js';
 // Session event stores (in-memory)
 let toolEvents = [];
 let promptEvents = [];
@@ -280,6 +283,7 @@ export function resetEventStore() {
     toolEvents = [];
     promptEvents = [];
     userEmail = null; // 35-2: Reset user email on session reset
+    resetCorrelations(); // 36-7: Reset span correlations on session reset
 }
 // =============================================================================
 // Audit Log Functions (Story 22-6)
@@ -379,7 +383,7 @@ export function getAuditLogStats() {
  * - duration_ms (not tool.duration_ms)
  * - tool_parameters as JSON string (not tool.input)
  */
-export function processLogEvents(rawEvents) {
+export async function processLogEvents(rawEvents) {
     for (const event of rawEvents) {
         // 35-2: Extract user.email from any event that has it (only store once)
         if (!userEmail && event.attributes['user.email']) {
@@ -460,6 +464,53 @@ export function processLogEvents(rawEvents) {
                 traceId: event.traceId,
                 spanId: event.spanId,
             };
+            // Story 36-7: Correlate span and enrich Read/Edit tools
+            if (event.spanId && event.traceId) {
+                // Parse full tool parameters for enrichment context
+                let toolInput;
+                if (toolParams) {
+                    try {
+                        toolInput = JSON.parse(toolParams);
+                    }
+                    catch { /* ignore parse errors */ }
+                }
+                // Create correlation with message context
+                const messageContext = {
+                    messageId: event.spanId, // Use spanId as message ID proxy
+                    toolName,
+                    input: toolInput,
+                };
+                correlateSpan(event.spanId, {
+                    traceId: event.traceId,
+                    spanId: event.spanId,
+                    toolName,
+                    timestamp: event.timestamp,
+                    enriched: false,
+                    messageContext,
+                });
+                // Enrich Read/Edit spans - await to include enrichment data in toolEvent
+                try {
+                    if (toolName === 'Read') {
+                        const enrichment = await enrichReadSpan(event.spanId);
+                        if (!enrichment.error && !enrichment.skipped) {
+                            toolEvent.fileSize = enrichment.fileSize;
+                            toolEvent.lineCount = enrichment.lineCount;
+                            toolEvent.language = enrichment.language;
+                            toolEvent.gitStatus = enrichment.gitStatus;
+                        }
+                    }
+                    else if (toolName === 'Edit') {
+                        const enrichment = await enrichEditSpan(event.spanId);
+                        if (!enrichment.error && !enrichment.skipped) {
+                            toolEvent.fileSize = enrichment.fileSize;
+                            toolEvent.language = enrichment.language;
+                            toolEvent.gitStatus = enrichment.gitStatus;
+                            toolEvent.diff = enrichment.diff;
+                        }
+                    }
+                }
+                catch { /* ignore enrichment errors */ }
+            }
             recordToolEvent(toolEvent);
         }
         else if (event.name === 'claude_code.user_prompt') {

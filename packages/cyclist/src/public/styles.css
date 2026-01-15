@@ -4277,6 +4277,64 @@ html, body {
   font-style: italic;
 }
 
+/* Story 36-7: Enrichment data display */
+.tool-log-table .input-with-enrichment {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.tool-log-table .input-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tool-log-table .enrichment-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+}
+
+.tool-log-table .enrichment-row span {
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  background: var(--bg-tertiary, rgba(255,255,255,0.05));
+}
+
+.tool-log-table .enrichment-lang {
+  color: var(--syntax-keyword, #c586c0);
+}
+
+.tool-log-table .enrichment-size {
+  color: var(--text-secondary);
+}
+
+.tool-log-table .enrichment-lines {
+  color: var(--text-secondary);
+}
+
+.tool-log-table .enrichment-diff {
+  color: var(--syntax-string, #ce9178);
+}
+
+.tool-log-table .enrichment-git {
+  font-weight: 500;
+}
+
+.tool-log-table .git-modified {
+  color: var(--status-warning, #e0a400);
+}
+
+.tool-log-table .git-new {
+  color: var(--status-ready, #3fb950);
+}
+
+.tool-log-table .git-untracked {
+  color: var(--text-secondary);
+}
+
 /* =============================================================================
  * 31-15: Background Task Notifications
  * ============================================================================= */

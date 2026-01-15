@@ -6,6 +6,7 @@
  * Story 19-4: Extended with per-agent token aggregation.
  * Story 19-5: Extended with per-story token aggregation.
  */
+import { type DiffSummary } from './file-enrichment.js';
 /**
  * Parsed tool execution event from OTLP logs
  */
@@ -28,6 +29,16 @@ export interface ToolEvent {
     traceId?: string;
     /** Span ID for correlation */
     spanId?: string;
+    /** File size in bytes (Read/Edit tools) */
+    fileSize?: number;
+    /** Line count (Read tool) */
+    lineCount?: number;
+    /** Detected programming language */
+    language?: string;
+    /** Git status of the file */
+    gitStatus?: 'clean' | 'modified' | 'new' | 'untracked' | null;
+    /** Diff summary for Edit operations */
+    diff?: DiffSummary;
 }
 /**
  * Parsed user prompt event from OTLP logs
@@ -194,6 +205,6 @@ export declare function getAuditLogStats(): {
  * - duration_ms (not tool.duration_ms)
  * - tool_parameters as JSON string (not tool.input)
  */
-export declare function processLogEvents(rawEvents: RawLogEvent[]): void;
+export declare function processLogEvents(rawEvents: RawLogEvent[]): Promise<void>;
 export {};
 //# sourceMappingURL=otlp-receiver.d.ts.map

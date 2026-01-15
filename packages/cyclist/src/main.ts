@@ -55,10 +55,6 @@ import { openSettingsWindow, setMainWindowRef, setBrowserWindowRef } from './set
 // Re-export project directory functions for external consumers
 export { getProjectDirectory, setProjectDirectory, isValidProjectDirectory };
 import * as fs from 'fs';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
-const execAsync = promisify(exec);
 
 // Calculate __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -96,17 +92,6 @@ export {
   IPC_COMMAND_CHANNELS,
   IPC_BACKGROUND_TASK_CHANNELS,
 } from './ipc-channels.js';
-import {
-  IPC_DATA_CHANNELS,
-  IPC_CLAUDE_CHANNELS,
-  IPC_AGENT_CHANNELS,
-  IPC_DIFF_CHANNELS,
-  IPC_SETTINGS_CHANNELS,
-  IPC_AUDIT_LOG_CHANNELS,
-  IPC_FILE_BROWSER_CHANNELS,
-  IPC_COMMAND_CHANNELS,
-  IPC_BACKGROUND_TASK_CHANNELS,
-} from './ipc-channels.js';
 
 // Re-export menu builders from dedicated module
 export {
@@ -125,7 +110,6 @@ import {
   buildWorkflowMenu,
   buildToolsMenu,
   buildViewMenu,
-  setBroadcastFunction,
 } from './menu-builder.js';
 
 /**
@@ -461,16 +445,11 @@ export function startContextPolling(projectDir: string, getSessionId?: () => str
 export { UsageStats, getUsageStats, USAGE_POLL_INTERVAL_MS, startUsagePolling } from './usage-stats.js';
 import {
   getUsageStats,
-  updateUsageStats as updateUsageStatsInternal,
   resetUsageStats as resetUsageStatsInternal,
   startUsagePolling as startUsagePollingInternal,
 } from './usage-stats.js';
 
 // Wrapper functions that include broadcast
-function updateUsageStats(stats: import('./usage-stats.js').UsageStats): boolean {
-  return updateUsageStatsInternal(stats, (s) => broadcastToRenderer(IPC_DATA_CHANNELS.USAGE_STATS_UPDATE, s));
-}
-
 function resetUsageStats(): void {
   resetUsageStatsInternal((s) => broadcastToRenderer(IPC_DATA_CHANNELS.USAGE_STATS_UPDATE, s));
 }
