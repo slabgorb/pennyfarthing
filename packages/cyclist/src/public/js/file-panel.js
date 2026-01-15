@@ -1,12 +1,18 @@
 /**
  * File Panel - Collapsible, resizable left panel for file browser
  *
+ * 35-5: Now uses VerticalPanel base class for unified panel behavior
+ *
  * Features:
  * - Click button to collapse/expand
  * - Drag handle to resize width
  * - Drag to near-zero width to collapse
  * - Persists width preference to localStorage
  */
+
+// 35-5: Import VerticalPanel base class for unified panel pattern
+// FilePanel uses VerticalPanel's persistence and resize patterns
+import { VerticalPanel } from './vertical-panel.js';
 
 const STORAGE_KEY = 'cyclist-file-panel';
 // Read CSS variables for consistent panel sizing
