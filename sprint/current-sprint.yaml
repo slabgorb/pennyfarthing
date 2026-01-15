@@ -868,28 +868,46 @@ epics:
       - id: 35-7
         title: Custom styling themes
         description: |
-          Expand beyond dark/light to support custom color themes.
-          Currently only 2 hardcoded themes in theme.js with fixed
-          color palettes.
+          Full custom theme system replacing hardcoded dark/light themes.
+          Users can create, edit, import, and share complete visual themes.
 
-          Implementation:
-          - Define theme schema (colors, terminal palette)
+          Scope (expanded):
+          - Define comprehensive theme schema (UI colors, terminal palette,
+            syntax highlighting, panel borders, accent colors)
+          - Theme editor UI for creating/modifying themes in-app
+          - Live preview while editing theme colors
           - Load themes from JSON files or config
           - Theme browser in settings to preview and select
-          - Support importing custom themes
+          - Built-in theme gallery with variety of styles
+          - Support importing custom themes from JSON/URL
           - Export current theme for sharing
-        points: 3
+          - Theme inheritance (extend existing theme, override specific colors)
+          - CSS variable integration for instant theme switching
+
+          Implementation:
+          - Theme schema with validation
+          - ThemeEditor component with color pickers
+          - Theme persistence to localStorage and optional file export
+          - CSS custom properties for all themeable values
+        points: 5
         priority: P2
-        status: backlog
+        status: in_progress
+        started: 2026-01-15
+        assigned_to: Keith Avery
         repos: cyclist
         jira: MSSCI-11722
         acceptance_criteria:
-          - Theme schema documented (JSON format)
-          - At least 4 built-in themes (dark, light, + 2 new)
+          - Theme schema documented (JSON format with all color categories)
+          - Theme editor UI with color pickers for each theme property
+          - Live preview updates as colors are changed
+          - At least 6 built-in themes (dark, light, solarized, monokai, nord, dracula)
           - Theme browser shows preview of each theme
-          - Custom themes can be imported from JSON
-          - Current theme can be exported to JSON
+          - Custom themes can be created from scratch or by extending existing
+          - Themes can be imported from JSON file or URL
+          - Current theme can be exported to JSON for sharing
           - Terminal colors update with theme
+          - Syntax highlighting colors configurable per theme
+          - Theme changes apply instantly without page reload
       - id: 35-8
         title: Fix theme switcher
         description: |
