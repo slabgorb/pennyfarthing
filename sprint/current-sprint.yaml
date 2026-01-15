@@ -975,6 +975,7 @@ epics:
     marker: ux
     repos: cyclist
     status: in_progress
+    jira: MSSCI-11715
     stories:
       - id: 35-1
         title: Contextual settings placement
@@ -993,6 +994,7 @@ epics:
         assigned_to: Keith Avery
         repos: cyclist
         pr: 244
+        jira: MSSCI-11716
         acceptance_criteria:
           - Theme chooser accessible from profile/persona area click
           - Auto-handoff toggle visible in editor toolbar
@@ -1016,6 +1018,7 @@ epics:
         priority: P2
         status: backlog
         repos: cyclist
+        jira: MSSCI-11717
         acceptance_criteria:
           - Current directory displayed in bottom status bar
           - Path truncated with ellipsis if too long (e.g., ~/.../project-name)
@@ -1039,6 +1042,7 @@ epics:
         priority: P1
         status: backlog
         repos: cyclist
+        jira: MSSCI-11718
         acceptance_criteria:
           - Workflow phases displayed visually (stepper/breadcrumb style)
           - Current phase highlighted distinctly
@@ -1063,6 +1067,7 @@ epics:
         priority: P2
         status: backlog
         repos: cyclist
+        jira: MSSCI-11719
         acceptance_criteria:
           - Segmented control replaces cycling button
           - Three modes clearly labeled and clickable
@@ -1087,6 +1092,7 @@ epics:
         priority: P2
         status: backlog
         repos: cyclist
+        jira: MSSCI-11720
         acceptance_criteria:
           - Toggle button to collapse/expand portrait panel
           - Collapsed state minimizes to icon or hides completely
@@ -1110,6 +1116,7 @@ epics:
         priority: P2
         status: backlog
         repos: cyclist
+        jira: MSSCI-11721
         acceptance_criteria:
           - Font selector in settings panel
           - Separate terminal and UI font options
@@ -1134,6 +1141,7 @@ epics:
         priority: P2
         status: backlog
         repos: cyclist
+        jira: MSSCI-11722
         acceptance_criteria:
           - Theme schema documented (JSON format)
           - At least 4 built-in themes (dark, light, + 2 new)
@@ -1160,6 +1168,7 @@ epics:
         priority: P1
         status: backlog
         repos: cyclist
+        jira: MSSCI-11723
         acceptance_criteria:
           - Recent themes persisted in localStorage
           - Async loading shows loading state, handles errors
@@ -1188,6 +1197,7 @@ epics:
         priority: P1
         status: backlog
         repos: cyclist
+        jira: MSSCI-11724
         acceptance_criteria:
           - Settings store initialization errors handled gracefully
           - Theme browser shows loading state during async load
@@ -1212,6 +1222,7 @@ epics:
         priority: P2
         status: backlog
         repos: cyclist
+        jira: MSSCI-11725
         acceptance_criteria:
           - Line numbers displayed in diff gutter
           - Both old (removed) and new (added) line numbers shown
@@ -1234,6 +1245,7 @@ epics:
         priority: P2
         status: backlog
         repos: cyclist
+        jira: MSSCI-11726
         acceptance_criteria:
           - File path in diff header is clickable
           - Click opens file in OS default application
@@ -1259,6 +1271,7 @@ epics:
         priority: P2
         status: backlog
         repos: cyclist
+        jira: MSSCI-11727
         acceptance_criteria:
           - Dedicated panel for skill invocations
           - Shows skill name and invocation time
@@ -1281,6 +1294,7 @@ epics:
     marker: observability
     repos: cyclist, pennyfarthing
     status: in_progress
+    jira: MSSCI-11728
     stories:
       - id: 36-1
         title: OTEL span interception and correlation
@@ -1299,7 +1313,7 @@ epics:
         status: done
         completed: 2026-01-14
         repos: cyclist
-        jira: MSSCI-11688
+        jira: MSSCI-11729
         started: 2026-01-14
         assigned_to: Keith Avery
         pr: 251
@@ -1323,7 +1337,7 @@ epics:
         status: done
         completed: 2026-01-15
         repos: cyclist
-        jira: MSSCI-11688
+        jira: MSSCI-11730
         pr: 253
         acceptance_criteria:
           - Read spans include file size and line count
@@ -1344,6 +1358,7 @@ epics:
         priority: P1
         status: backlog
         repos: cyclist
+        jira: MSSCI-11731
         acceptance_criteria:
           - Command included in span (secrets redacted)
           - Exit code captured
@@ -1363,6 +1378,7 @@ epics:
         priority: P2
         status: backlog
         repos: cyclist
+        jira: MSSCI-11732
         acceptance_criteria:
           - Search pattern included in span
           - Match count accurate
@@ -1382,6 +1398,7 @@ epics:
         priority: P2
         status: backlog
         repos: cyclist
+        jira: MSSCI-11733
         acceptance_criteria:
           - Subagent type in span attributes
           - Prompt summary (first 200 chars)
@@ -1401,6 +1418,7 @@ epics:
         priority: P2
         status: backlog
         repos: cyclist
+        jira: MSSCI-11734
         acceptance_criteria:
           - Custom exporter adds enrichment attributes
           - Timeline visualization in Cyclist UI
