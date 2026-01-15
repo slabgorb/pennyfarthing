@@ -27,6 +27,9 @@ import {
   initTokenStatsBroadcast,
 } from './api/index.js';
 
+// Settings initialization (35-6: required for font settings persistence)
+import { initializeSettings } from './settings.js';
+
 // WebSocket setup
 import { setupWebSocketServers } from './websocket.js';
 
@@ -62,6 +65,10 @@ app.get('/', (_req, res) => {
 function getProjectDir(): string {
   return getProjectDirectory() || process.cwd();
 }
+
+// Initialize settings from file (35-6: required for font settings persistence)
+// Must happen before settings router is used
+initializeSettings(getProjectDir());
 
 // Mount API routers
 app.use('/api/stats', createStatsRouter());
