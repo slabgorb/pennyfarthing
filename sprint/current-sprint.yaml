@@ -5,9 +5,9 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 67
+  total_points: 70
   completed_points: 11
-  remaining_points: 56
+  remaining_points: 59
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - Epic 31: Customizable Workflow Engine (4 pts remaining)
@@ -15,7 +15,10 @@ summary:
     - Epic 35: Cyclist UI/UX Improvements (13 pts remaining)
     - Epic 36: OTEL Tool Call Enrichment (8 pts remaining)
     - Epic 37: Technical Debt & Bug Fixes (14 pts remaining)
-    - Epic 38: Agent File Modernization (15 pts - NEW)
+    - Epic 38: Agent File Modernization (18 pts - NEW)
+
+    Stories now have `workflow:` tags indicating which workflow to use.
+    SM will route to appropriate workflow (tdd, trivial, agent-docs).
 
     Sprint 10 closed with 54 pts completed (245% of velocity target).
 # =============================================================================
@@ -643,7 +646,10 @@ epics:
 
       With Epic 31's custom workflow engine, these agents will participate
       in user-defined flows. They need the same patterns as TDD agents.
-    points: 15
+
+      Includes workflow routing: SM reads `workflow:` tag from stories and
+      follows the appropriate workflow definition.
+    points: 18
     completed_points: 0
     priority: P2
     marker: infrastructure
@@ -663,6 +669,7 @@ epics:
         priority: P1
         status: backlog
         repos: pennyfarthing
+        workflow: trivial
         acceptance_criteria:
           - All path references correct
           - No hardcoded theme character names
@@ -679,6 +686,7 @@ epics:
         priority: P2
         status: backlog
         repos: pennyfarthing
+        workflow: trivial
         acceptance_criteria:
           - All 10 main agents have <status> tag
           - README documents production vs experimental
@@ -696,6 +704,7 @@ epics:
         priority: P2
         status: backlog
         repos: pennyfarthing
+        workflow: agent-docs
         acceptance_criteria:
           - PM has reasoning-mode section
           - PM has turn efficiency guidance
@@ -714,6 +723,7 @@ epics:
         priority: P2
         status: backlog
         repos: pennyfarthing
+        workflow: agent-docs
         acceptance_criteria:
           - Architect has reasoning-mode section
           - Architect has turn efficiency guidance
@@ -732,6 +742,7 @@ epics:
         priority: P2
         status: backlog
         repos: pennyfarthing
+        workflow: agent-docs
         acceptance_criteria:
           - DevOps has reasoning-mode section
           - DevOps has turn efficiency guidance
@@ -750,6 +761,7 @@ epics:
         priority: P3
         status: backlog
         repos: pennyfarthing
+        workflow: agent-docs
         acceptance_criteria:
           - Tech Writer has reasoning-mode section
           - Tech Writer has turn efficiency guidance
@@ -767,6 +779,7 @@ epics:
         priority: P3
         status: backlog
         repos: pennyfarthing
+        workflow: agent-docs
         acceptance_criteria:
           - UX Designer has reasoning-mode section
           - UX Designer has turn efficiency guidance
@@ -785,8 +798,35 @@ epics:
         priority: P2
         status: backlog
         repos: pennyfarthing
+        workflow: agent-docs
         acceptance_criteria:
           - Orchestrator has reasoning-mode section
           - Orchestrator has turn efficiency guidance
           - Can audit and update agent files
           - No hardcoded theme references
+      - id: 38-9
+        title: SM workflow routing from story tags
+        description: |
+          Update SM to read and honor the `workflow:` tag on stories:
+
+          1. When SM picks up a story, read the `workflow:` field
+          2. Load the corresponding workflow definition from workflows/*.yaml
+          3. Follow that workflow's phase sequence instead of assuming TDD
+
+          Fallback behavior:
+          - If no workflow tag: Use triggers from workflow definitions to auto-select
+          - If workflow not found: Warn and fall back to tdd.yaml
+          - Points-based routing still applies (1-2 pts → trivial unless overridden)
+
+          Update sm.md with workflow routing logic.
+        points: 3
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - SM reads workflow tag from story in sprint YAML
+          - SM loads correct workflow definition
+          - SM follows workflow's phase sequence
+          - Fallback to TDD if no tag or unknown workflow
+          - Session file records which workflow is active
