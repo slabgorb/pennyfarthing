@@ -123,10 +123,13 @@ All acceptance criteria verified:
 
 All 2492 tests passing. Build compiles successfully.
 
+## Final Bug Fix (2026-01-15)
+
+After initial completion, discovered `#message-view` container was using a hardcoded font-family instead of `var(--font-ui)`. Fixed in commit `ce616fb5` - fonts now apply correctly to the message view alongside all other UI elements.
+
 ## Merge & Deploy
 
-- **PR:** https://github.com/1898andCo/pennyfarthing/pull/276
-- **Status:** Merged to develop
+- **Branch:** feat/35-6-font-face-selector
 - **Epic:** Epic 35 - Cyclist UI/UX Improvements
 - **Points:** 2 (Trivial)
 - **Completed:** 2026-01-15
