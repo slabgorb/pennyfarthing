@@ -4,7 +4,7 @@
  * Architecture:
  * - Panels register themselves with the manager
  * - Tab bar reads from manager to render tabs
- * - Manager handles mutual exclusion (one panel open at a time)
+ * - 35-5: Multiple panels can be open simultaneously (no mutual exclusion)
  * - Supports different display modes (overlay, push, side-by-side)
  * - Persists state to localStorage
  *
@@ -157,7 +157,8 @@ export function getPanel(panelId) {
 }
 
 /**
- * Open a panel (closes any other open panel first)
+ * Open a panel
+ * 35-5: Changed to allow multiple panels open simultaneously (no mutual exclusion)
  */
 export function open(panelId) {
   const panel = state.panels.get(panelId);
@@ -166,15 +167,12 @@ export function open(panelId) {
     return;
   }
 
-  // Close currently open panel if different
-  if (state.activePanel && state.activePanel !== panelId) {
-    close(state.activePanel);
-  }
+  // 35-5: Removed mutual exclusion - all panels can be open simultaneously
+  // Each panel manages its own collapsed state independently
 
   // Open the requested panel
   panel.isOpen = true;
   panel.element.classList.remove('collapsed');
-  state.activePanel = panelId;
 
   // Call panel's onOpen hook
   panel.onOpen();

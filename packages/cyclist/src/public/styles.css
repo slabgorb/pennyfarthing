@@ -4420,3 +4420,119 @@ html, body {
   overflow-y: auto;
   white-space: pre-wrap;
 }
+
+/* =============================================================================
+ * 35-5: Unified Vertical Panel Styles
+ * ============================================================================= */
+
+/* Base vertical panel class */
+.vertical-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-secondary, #1a1a2e);
+  transition: width 0.2s ease, min-width 0.2s ease, opacity 0.2s ease, flex 0.2s ease;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* Collapsed state for vertical panels */
+.vertical-panel.collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+  flex: 0 0 0 !important;
+  border: none;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Position-specific styles */
+.vertical-panel.position-left {
+  border-right: 1px solid var(--border, #333);
+}
+
+.vertical-panel.position-right {
+  border-left: 1px solid var(--border, #333);
+}
+
+.vertical-panel.position-center {
+  flex: 1;
+  min-width: 400px;
+  border-left: none;
+  border-right: none;
+}
+
+/* Sidebar-specific vertical panel styles */
+#sidebar.vertical-panel {
+  width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
+  position: relative;
+}
+
+#sidebar.vertical-panel.collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+}
+
+/* Sidebar collapse button */
+#sidebar .panel-collapse-btn,
+#sidebar-collapse-btn {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: var(--bg-tertiary, #252540);
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 10px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+#sidebar .panel-collapse-btn:hover,
+#sidebar-collapse-btn:hover {
+  background: var(--accent, #6366f1);
+  color: var(--text-primary, #fff);
+}
+
+/* Message panel styles */
+#message-panel.vertical-panel {
+  flex: 1;
+  min-width: 400px;
+}
+
+#message-panel.vertical-panel.collapsed {
+  flex: 0 0 0 !important;
+  min-width: 0 !important;
+}
+
+/* Generic panel collapse button */
+.vertical-panel .panel-collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 12px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.vertical-panel .panel-collapse-btn:hover {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.1));
+  color: var(--text-primary, #fff);
+}
+
