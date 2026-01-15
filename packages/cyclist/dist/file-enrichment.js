@@ -464,6 +464,73 @@ export async function enrichEditSpan(spanId) {
     };
 }
 /**
+ * Enrich a Write span with file metadata
+ * Write creates new files or overwrites existing, so we get metadata after the write
+ * @param spanId - The span ID to enrich
+ * @returns Enrichment result with file metadata
+ */
+export async function enrichWriteSpan(spanId) {
+    const correlation = getCorrelation(spanId);
+    // Handle non-existent span
+    if (!correlation) {
+        return {
+            spanId,
+            toolName: 'Write',
+            language: 'unknown',
+            gitStatus: null,
+            error: 'Span not found',
+        };
+    }
+    // Skip if already enriched
+    if (correlation.enriched) {
+        return {
+            spanId,
+            toolName: 'Write',
+            language: 'unknown',
+            gitStatus: null,
+            skipped: true,
+        };
+    }
+    // Check for message context
+    if (!correlation.messageContext) {
+        return {
+            spanId,
+            toolName: 'Write',
+            language: 'unknown',
+            gitStatus: null,
+            error: 'No message context available',
+        };
+    }
+    // Get file path from input
+    const filePath = getFilePathFromSpan(correlation);
+    if (!filePath) {
+        return {
+            spanId,
+            toolName: 'Write',
+            language: 'unknown',
+            gitStatus: null,
+            error: 'No file path in input',
+        };
+    }
+    // Gather file metadata (after write has completed)
+    const [fileSize, lineCount, gitStatus] = await Promise.all([
+        getFileSize(filePath),
+        getLineCount(filePath),
+        getGitStatus(filePath),
+    ]);
+    const language = detectLanguage(filePath);
+    // Mark as enriched
+    markSpanEnriched(spanId);
+    return {
+        spanId,
+        toolName: 'Write',
+        fileSize,
+        lineCount,
+        language,
+        gitStatus,
+    };
+}
+/**
  * Enrich a Bash span with command execution context
  * @param spanId - The span ID to enrich
  * @param eventContext - Additional context from OTEL event

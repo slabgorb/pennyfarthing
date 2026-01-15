@@ -16,6 +16,7 @@ import { correlateSpan, resetCorrelations, consumePendingToolInput, type Message
 import {
   enrichReadSpan,
   enrichEditSpan,
+  enrichWriteSpan,
   enrichBashSpan,
   type DiffSummary,
   type OutputSummary,
@@ -804,6 +805,15 @@ export async function processLogEvents(rawEvents: RawLogEvent[]): Promise<void> 
               toolEvent.language = enrichment.language;
               toolEvent.gitStatus = enrichment.gitStatus;
               toolEvent.diff = enrichment.diff;
+            }
+          } else if (toolName === 'Write') {
+            // Story 36-11: Write tool enrichment
+            const enrichment = await enrichWriteSpan(correlationId);
+            if (!enrichment.error && !enrichment.skipped) {
+              toolEvent.fileSize = enrichment.fileSize;
+              toolEvent.lineCount = enrichment.lineCount;
+              toolEvent.language = enrichment.language;
+              toolEvent.gitStatus = enrichment.gitStatus;
             }
           } else if (toolName === 'Bash') {
             // Story 36-3: Bash tool enrichment

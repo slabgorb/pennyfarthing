@@ -12,7 +12,7 @@ import { aggregateTokensForStory, resetStoryTokenStats } from './story-context.j
 // Story 36-7: Import span correlation and enrichment modules
 // Story 36-8: Added consumePendingToolInput for Claude message stream correlation
 import { correlateSpan, resetCorrelations, consumePendingToolInput } from './span-correlation.js';
-import { enrichReadSpan, enrichEditSpan, enrichBashSpan, } from './file-enrichment.js';
+import { enrichReadSpan, enrichEditSpan, enrichWriteSpan, enrichBashSpan, } from './file-enrichment.js';
 // Story 36-10: Debug flag for OTEL capture
 // Toggle via: setOtelDebug(true) or env OTEL_DEBUG=true or just cyclist-electron true
 let otelDebugEnabled = process.env.OTEL_DEBUG === 'true';
@@ -559,6 +559,16 @@ export async function processLogEvents(rawEvents) {
                             toolEvent.language = enrichment.language;
                             toolEvent.gitStatus = enrichment.gitStatus;
                             toolEvent.diff = enrichment.diff;
+                        }
+                    }
+                    else if (toolName === 'Write') {
+                        // Story 36-11: Write tool enrichment
+                        const enrichment = await enrichWriteSpan(correlationId);
+                        if (!enrichment.error && !enrichment.skipped) {
+                            toolEvent.fileSize = enrichment.fileSize;
+                            toolEvent.lineCount = enrichment.lineCount;
+                            toolEvent.language = enrichment.language;
+                            toolEvent.gitStatus = enrichment.gitStatus;
                         }
                     }
                     else if (toolName === 'Bash') {
