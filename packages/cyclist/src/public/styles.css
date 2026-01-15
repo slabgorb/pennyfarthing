@@ -1356,7 +1356,7 @@ html, body {
   border-radius: 8px;
   padding: 1rem;
   overflow-y: auto;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--font-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif);
   font-size: 1rem;          /* B-15: Increased from 0.875rem for readability */
   line-height: 1.6;         /* B-15: Increased from 1.5 for better spacing */
 }
