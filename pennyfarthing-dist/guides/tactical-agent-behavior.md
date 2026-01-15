@@ -823,10 +823,10 @@ Address the issue and send your helper again.
 
 ```bash
 eval $(./scripts/run.sh check-context.sh)
-# Returns: HANDOFF_MODE=auto (<70%) or HANDOFF_MODE=ask (>70%)
+# Returns: HANDOFF_MODE=auto (<60%) or HANDOFF_MODE=ask (>60%)
 ```
 
-### If HANDOFF_MODE=auto (< 70% context)
+### If HANDOFF_MODE=auto (< 60% context)
 
 **Use the Skill tool to invoke the next agent directly.** Do not wait for user input.
 
@@ -849,7 +849,7 @@ eval $(./scripts/run.sh check-context.sh)
 6. Reviewer activates automatically, continues work
 ```
 
-### If HANDOFF_MODE=ask (> 70% context)
+### If HANDOFF_MODE=ask (> 60% context)
 
 **Do not auto-invoke.** Tell the user to start a fresh session:
 

@@ -306,8 +306,8 @@ $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 
 | Context | Action |
 |---------|--------|
-| < 70% | Invoke next agent directly |
-| > 70% | Tell user to start fresh session |
+| < 60% | Invoke next agent directly |
+| > 60% | Tell user to start fresh session |
 
 This prevents context overflow mid-flow.
 

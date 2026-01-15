@@ -391,8 +391,8 @@ After gate passage, check context usage before invoking next agent:
 $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 
 # Routing decision:
-# If < 70%: Invoke next agent directly in this session
-# If > 70%: Tell user to start fresh session with next agent
+# If < 60%: Invoke next agent directly in this session
+# If > 60%: Tell user to start fresh session with next agent
 ```
 
 This prevents context overflow in long sessions by creating natural break points.
