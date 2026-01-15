@@ -1053,6 +1053,21 @@ html, body {
   display: inline-flex;
 }
 
+/* Imminent state - red when auto-compact is approaching (>= 65%) */
+.compact-btn.imminent {
+  background: #dc2626;
+  animation: pulse-warning 1.5s ease-in-out infinite;
+}
+
+.compact-btn.imminent:hover {
+  background: #b91c1c;
+}
+
+@keyframes pulse-warning {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
 /* B-20: Editor row with controls on right */
 #editor-row {
   display: flex;

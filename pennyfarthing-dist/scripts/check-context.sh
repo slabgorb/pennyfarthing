@@ -34,6 +34,7 @@ PROJECT_DIR="${PROJECT_ROOT:-$(pwd)}"
 CLAUDE_PROJECT_PATH="$HOME/.claude/projects/$(echo "$PROJECT_DIR" | tr '/' '-')"
 
 # Default thresholds (can be overridden by settings.local.json)
+DEFAULT_IMMINENT_THRESHOLD=65
 DEFAULT_WARNING_THRESHOLD=60
 DEFAULT_CRITICAL_THRESHOLD=85
 DEFAULT_MAX_TOKENS=200000
@@ -44,6 +45,7 @@ CONFIG=$(python3 -c "
 import json
 import sys
 
+imminent_threshold = $DEFAULT_IMMINENT_THRESHOLD
 warning_threshold = $DEFAULT_WARNING_THRESHOLD
 critical_threshold = $DEFAULT_CRITICAL_THRESHOLD
 max_tokens = $DEFAULT_MAX_TOKENS
@@ -53,12 +55,14 @@ try:
         settings = json.load(f)
         if 'context_budget' in settings:
             cb = settings['context_budget']
+            imminent_threshold = cb.get('imminent_threshold', imminent_threshold)
             warning_threshold = cb.get('warning_threshold', warning_threshold)
             critical_threshold = cb.get('critical_threshold', critical_threshold)
             max_tokens = cb.get('max_tokens', max_tokens)
 except:
     pass
 
+print(f'IMMINENT_THRESHOLD={imminent_threshold}')
 print(f'WARNING_THRESHOLD={warning_threshold}')
 print(f'CRITICAL_THRESHOLD={critical_threshold}')
 print(f'MAX_TOKENS={max_tokens}')
@@ -66,6 +70,7 @@ print(f'MAX_TOKENS={max_tokens}')
 
 # Apply config or use defaults
 eval "$CONFIG" 2>/dev/null || {
+    IMMINENT_THRESHOLD=$DEFAULT_IMMINENT_THRESHOLD
     WARNING_THRESHOLD=$DEFAULT_WARNING_THRESHOLD
     CRITICAL_THRESHOLD=$DEFAULT_CRITICAL_THRESHOLD
     MAX_TOKENS=$DEFAULT_MAX_TOKENS

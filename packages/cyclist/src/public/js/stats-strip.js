@@ -11,6 +11,12 @@
 const COMPACT_THRESHOLD = 50;
 
 /**
+ * Threshold at which compact button turns red (imminent auto-compact)
+ * Claude auto-compacts around 70-80%, so warn at 65%
+ */
+const COMPACT_IMMINENT_THRESHOLD = 65;
+
+/**
  * Format token count for display
  * @param {number} n - Token count
  * @returns {string} - Formatted string (e.g., "1.2k", "45k", "1.5M")
@@ -47,8 +53,9 @@ function updateContextLevel(contextMini, percent) {
 }
 
 /**
- * 23-4: Update compact button visibility based on context percentage
+ * 23-4: Update compact button visibility and urgency based on context percentage
  * Shows button when context >= COMPACT_THRESHOLD (50%)
+ * Turns red when context >= COMPACT_IMMINENT_THRESHOLD (65%) to warn of imminent auto-compact
  * @param {number} percent - Context usage percentage
  */
 function updateCompactButtonVisibility(percent) {
@@ -57,8 +64,16 @@ function updateCompactButtonVisibility(percent) {
 
   if (percent >= COMPACT_THRESHOLD) {
     compactBtn.classList.remove('hidden');
+
+    // Turn red when approaching auto-compact threshold
+    if (percent >= COMPACT_IMMINENT_THRESHOLD) {
+      compactBtn.classList.add('imminent');
+    } else {
+      compactBtn.classList.remove('imminent');
+    }
   } else {
     compactBtn.classList.add('hidden');
+    compactBtn.classList.remove('imminent');
   }
 }
 
