@@ -555,7 +555,7 @@ epics:
         status: backlog
         repos: cyclist
         acceptance_criteria:
-          - @vitest/coverage-v8 installed as dev dependency
+          - "@vitest/coverage-v8 installed as dev dependency"
           - Coverage report generates successfully
           - Coverage thresholds configured (warn at <70%, fail at <50%)
           - CI runs coverage on PR
