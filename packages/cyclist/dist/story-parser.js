@@ -2,7 +2,8 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 import { parse as parseYaml } from 'yaml';
 // Parse session file for story info
-export function parseSessionFile(content) {
+// projectDir is optional but required for dynamic workflow phase detection
+export function parseSessionFile(content, projectDir) {
     const result = {};
     // Extract story ID and title from header
     // Formats supported:
@@ -69,8 +70,8 @@ export function parseSessionFile(content) {
     if (prMatch) {
         result.pr = prMatch[1];
     }
-    // Parse workflow progress from checkboxes
-    result.workflow = parseWorkflowProgress(content);
+    // Parse workflow progress (uses projectDir for dynamic YAML-based phases)
+    result.workflow = parseWorkflowProgress(content, projectDir);
     // Parse acceptance criteria checkboxes
     result.criteria = parseAcceptanceCriteria(content);
     return result;
@@ -243,20 +244,33 @@ export function parseSprintYaml(content) {
     return null;
 }
 // Get workflow phases from workflow YAML definition
+// Checks multiple locations: .claude/workflows/, pennyfarthing-dist/workflows/
 export function getWorkflowPhases(workflowName, projectDir) {
     try {
-        // Look for workflow YAML in .claude/workflows/
-        const workflowPath = join(projectDir, '.claude', 'workflows', `${workflowName}.yaml`);
-        if (!existsSync(workflowPath)) {
+        // Look for workflow YAML in multiple locations (in priority order)
+        const searchPaths = [
+            join(projectDir, '.claude', 'workflows', `${workflowName}.yaml`),
+            join(projectDir, 'pennyfarthing-dist', 'workflows', `${workflowName}.yaml`),
+        ];
+        let workflowPath = null;
+        for (const path of searchPaths) {
+            if (existsSync(path)) {
+                workflowPath = path;
+                break;
+            }
+        }
+        if (!workflowPath) {
             return null;
         }
         const content = readFileSync(workflowPath, 'utf-8');
         const data = parseYaml(content);
-        if (!data?.phases || !Array.isArray(data.phases)) {
+        // Support both flat structure (phases:) and nested structure (workflow.phases:)
+        const phases = data?.workflow?.phases || data?.phases;
+        if (!phases || !Array.isArray(phases)) {
             return null;
         }
         // Map phases to WorkflowPhase objects (without status - that's determined at runtime)
-        return data.phases.map((phase) => ({
+        return phases.map((phase) => ({
             name: phase.name,
             agent: phase.agent,
             label: phase.label || phase.name, // Default label to name if not provided
@@ -311,7 +325,7 @@ export function getStoryInfo(projectDir) {
         }
         const sessionPath = join(sessionDir, sessionFile);
         const sessionContent = readFileSync(sessionPath, 'utf-8');
-        const storyInfo = parseSessionFile(sessionContent);
+        const storyInfo = parseSessionFile(sessionContent, projectDir);
         // Get sprint progress
         const sprintPath = join(projectDir, 'sprint', 'current-sprint.yaml');
         let sprint = null;
