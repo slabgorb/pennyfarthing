@@ -8,6 +8,7 @@
  * Pattern: In-memory state management following tdd-metrics.ts
  */
 
+import { readFileSync, existsSync } from 'fs';
 import type {
   AgentSpan,
   ToolSpan,
@@ -476,8 +477,7 @@ export function generateRecommendations(evaluation: AgentEvaluation): string[] {
  * @returns Array of baselines
  */
 export function loadJobFairBaselines(path: string): JobFairBaseline[] {
-  // For now, return mock data
-  // In future, this would read from file system
+  // Mock data for testing
   if (path.startsWith('mock://')) {
     return [
       {
@@ -503,8 +503,57 @@ export function loadJobFairBaselines(path: string): JobFairBaseline[] {
     ];
   }
 
-  // TODO: Implement file reading
-  return [];
+  // Read baselines from file
+  if (!existsSync(path)) {
+    console.warn(`Baselines file not found: ${path}`);
+    return [];
+  }
+
+  try {
+    const content = readFileSync(path, 'utf-8');
+    const data = JSON.parse(content);
+
+    // Validate structure - expect array of baselines
+    if (!Array.isArray(data)) {
+      console.warn(`Baselines file must contain an array: ${path}`);
+      return [];
+    }
+
+    // Validate each baseline has required fields
+    const validated: JobFairBaseline[] = [];
+    for (const item of data) {
+      if (isValidBaseline(item)) {
+        validated.push(item);
+      } else {
+        console.warn(`Invalid baseline entry skipped:`, item);
+      }
+    }
+
+    return validated;
+  } catch (error) {
+    console.warn(`Failed to load baselines from ${path}:`, error);
+    return [];
+  }
+}
+
+/**
+ * Validate a baseline object has required fields
+ */
+function isValidBaseline(obj: unknown): obj is JobFairBaseline {
+  if (typeof obj !== 'object' || obj === null) return false;
+
+  const b = obj as Record<string, unknown>;
+  if (typeof b.persona !== 'string') return false;
+  if (typeof b.agentRole !== 'string') return false;
+  if (typeof b.taskType !== 'string') return false;
+
+  const metrics = b.metrics as Record<string, unknown> | undefined;
+  if (typeof metrics !== 'object' || metrics === null) return false;
+  if (typeof metrics.averageTokens !== 'number') return false;
+  if (typeof metrics.averageTimeMs !== 'number') return false;
+  if (typeof metrics.completionRate !== 'number') return false;
+
+  return true;
 }
 
 /**
