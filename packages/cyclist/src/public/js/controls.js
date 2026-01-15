@@ -1,7 +1,8 @@
 /**
  * Controls Module - Permission mode toggle via IPC
  *
- * Cycles through Claude permission modes:
+ * 35-4: Three-way mode switch (segmented control)
+ * Direct selection of Claude permission modes:
  * - default (MANUAL): Ask permission for everything
  * - plan (PLAN): Read-only planning mode
  * - acceptEdits (ACCEPT): Auto-accept file edits
@@ -15,9 +16,9 @@ import { clear as clearChangedFiles } from './components/ChangedFilesList.js';
 import { clearDiffs } from './components/DiffViewer.js';
 
 /**
- * Mode cycle order
+ * Valid modes for the segmented control
  */
-const MODE_CYCLE = ['default', 'plan', 'acceptEdits'];
+const VALID_MODES = ['default', 'plan', 'acceptEdits'];
 
 /**
  * Current mode state
@@ -25,54 +26,53 @@ const MODE_CYCLE = ['default', 'plan', 'acceptEdits'];
 let currentMode = 'default';
 
 /**
- * Mode display configuration
+ * Update the mode switch display (segmented control)
+ * 35-4: Updates which segment is active based on current mode
  */
-const MODE_DISPLAY = {
-  'default': { label: 'MANUAL', className: null },
-  'plan': { label: 'PLAN', className: 'mode-plan' },
-  'acceptEdits': { label: 'ACCEPT', className: 'mode-accept' }
-};
+function updateModeSwitchDisplay() {
+  const modeSwitch = document.querySelector('[data-control="mode-switch"]');
+  if (!modeSwitch) return;
 
-/**
- * Update the mode button display
- */
-function updateModeButtonDisplay() {
-  const modeBtn = document.querySelector('[data-control="plan-mode"]');
-  if (!modeBtn) return;
-
-  const display = MODE_DISPLAY[currentMode] || { label: currentMode.toUpperCase(), className: null };
-
-  modeBtn.textContent = display.label;
-  modeBtn.classList.remove('mode-accept', 'mode-plan');
-  if (display.className) {
-    modeBtn.classList.add(display.className);
-  }
+  const segments = modeSwitch.querySelectorAll('.mode-switch-segment');
+  segments.forEach(segment => {
+    const segmentMode = segment.dataset.mode;
+    const isActive = segmentMode === currentMode;
+    segment.classList.toggle('active', isActive);
+    segment.setAttribute('aria-checked', isActive ? 'true' : 'false');
+  });
 }
 
 /**
- * Cycle to the next permission mode
+ * Set permission mode directly (no cycling)
+ * 35-4: Direct mode selection from segmented control
  */
-async function cyclePermissionMode(event) {
-  event.preventDefault();
-  event.stopPropagation();
+async function setPermissionMode(newMode, event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
 
-  console.log('Mode button clicked, current mode:', currentMode);
-
-  if (!window.electronAPI?.claude?.setMode) {
-    console.warn('Claude API not available - cannot toggle mode');
+  if (!VALID_MODES.includes(newMode)) {
+    console.warn('Invalid mode:', newMode);
     return;
   }
 
-  const currentIndex = MODE_CYCLE.indexOf(currentMode);
-  const nextIndex = (currentIndex + 1) % MODE_CYCLE.length;
-  const newMode = MODE_CYCLE[nextIndex];
+  if (newMode === currentMode) {
+    console.log('Mode already set to:', newMode);
+    return;
+  }
 
   console.log('Switching to mode:', newMode);
+
+  if (!window.electronAPI?.claude?.setMode) {
+    console.warn('Claude API not available - cannot set mode');
+    return;
+  }
 
   try {
     await window.electronAPI.claude.setMode(newMode);
     currentMode = newMode;
-    updateModeButtonDisplay();
+    updateModeSwitchDisplay();
     console.log('Mode set successfully:', newMode);
   } catch (error) {
     console.error('Failed to set permission mode:', error);
@@ -157,12 +157,19 @@ function handleCompactShortcut(event) {
 function initControls() {
   console.log('Initializing controls...');
 
-  const modeBtn = document.querySelector('[data-control="plan-mode"]');
-  if (modeBtn) {
-    console.log('Found mode button, attaching click handler');
-    modeBtn.addEventListener('click', cyclePermissionMode);
+  // 35-4: Mode switch (segmented control) - attach click handlers to each segment
+  const modeSwitch = document.querySelector('[data-control="mode-switch"]');
+  if (modeSwitch) {
+    const segments = modeSwitch.querySelectorAll('.mode-switch-segment');
+    console.log(`Found mode switch with ${segments.length} segments`);
+    segments.forEach(segment => {
+      segment.addEventListener('click', (event) => {
+        const mode = segment.dataset.mode;
+        setPermissionMode(mode, event);
+      });
+    });
   } else {
-    console.error('Mode button not found!');
+    console.error('Mode switch not found!');
   }
 
   // Clear button handler
@@ -187,7 +194,7 @@ function initControls() {
       .then(mode => {
         console.log('Initial mode from backend:', mode);
         currentMode = mode;
-        updateModeButtonDisplay();
+        updateModeSwitchDisplay();
       })
       .catch(err => console.error('Failed to get initial mode:', err));
   }
