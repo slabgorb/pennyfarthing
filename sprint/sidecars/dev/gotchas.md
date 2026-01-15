@@ -323,3 +323,34 @@ ls -i pennyfarthing-dist/scripts/agent-session.sh .claude/scripts/agent-session.
 **Discovered:** 2026-01-14 (Story 31-16)
 
 ---
+
+### Asking Permission to Handoff Instead of Following the Action
+
+**Situation:** Dev completes work, spawns handoff subagent, then asks "Shall I proceed with the handoff to Reviewer?" even when handoff returns `Action: INVOKE_DIRECTLY`.
+
+**Problem:** The handoff subagent already checked context AND user's handoff mode preference. It returned an explicit `Action` field telling the agent what to do. Asking permission ignores this.
+
+**Root Cause:** Agent ignored the `Action` field in handoff output and asked permission anyway.
+
+**Handoff returns one of three Actions:**
+
+| Action | Meaning |
+|--------|---------|
+| `INVOKE_DIRECTLY` | Auto-handoff enabled + context OK → invoke next agent immediately |
+| `USER_INVOKE` | Manual handoff mode → tell user to invoke next agent |
+| `FRESH_SESSION` | Context too high → tell user to start fresh session |
+
+**Correct behavior:**
+1. Write assessment to session file
+2. Spawn `generic-handoff` subagent for bookkeeping
+3. **Read the `Action` field from handoff output**
+4. Follow that action exactly - no asking permission!
+
+**Prevention:**
+- The handoff subagent reads `.pennyfarthing/cyclist.yaml` for `handoff_mode: auto|manual`
+- When Action is `INVOKE_DIRECTLY`, the agent MUST immediately invoke the next agent
+- The `<!-- CYCLIST:HANDOFF:/reviewer -->` marker is for Cyclist UI, but the agent must still invoke the skill
+
+**Discovered:** 2026-01-15 (Story 35-11)
+
+---

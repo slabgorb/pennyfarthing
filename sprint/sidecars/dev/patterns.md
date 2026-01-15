@@ -84,4 +84,25 @@ Used in: File panel expand button (`packages/cyclist/src/public/`)
 
 ---
 
+---
+
+## Cyclist Notification Pattern
+
+The message view in Cyclist serves as the notification system. Don't add toast notifications or separate notification UI - errors and status messages should go to console.error/console.log. The message stream IS the user's feedback channel.
+
+```javascript
+// Good: Log to console, update tooltip for context
+catch (err) {
+  console.error(`[Component] Failed to do thing: ${path}`, err);
+  element.title = 'Operation failed - see console for details';
+}
+
+// Bad: Don't add toast/notification UI
+showToast('Error: operation failed');  // Unnecessary layer
+```
+
+Used in: DiffViewer file path click handler (35-11)
+
+---
+
 *Add implementation patterns discovered during development below*

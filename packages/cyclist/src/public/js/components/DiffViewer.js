@@ -276,12 +276,17 @@ export function getLanguageClass(ext) {
 
 /**
  * Create a unified diff line DOM element
- * @param {Object} line - Diff line { type, line }
+ * @param {Object} line - Diff line { type, line, lineNumber }
  * @returns {HTMLElement} Diff line element
  */
 export function createDiffLineElement(line) {
   const el = document.createElement('div');
   el.className = `diff-line ${line.type}`;
+
+  // Line number gutter (story 35-10)
+  const lineNum = document.createElement('span');
+  lineNum.className = 'diff-line-number';
+  lineNum.textContent = line.lineNumber != null ? String(line.lineNumber) : '';
 
   const prefix = document.createElement('span');
   prefix.className = 'diff-line-prefix';
@@ -299,6 +304,7 @@ export function createDiffLineElement(line) {
   content.className = 'diff-line-content';
   content.textContent = line.line;
 
+  el.appendChild(lineNum);
   el.appendChild(prefix);
   el.appendChild(content);
 

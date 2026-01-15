@@ -240,6 +240,61 @@ Which approach do you prefer?
 
 ---
 
+## Handoff Action Protocol
+
+When handing off to the next agent in a workflow, the `generic-handoff` subagent determines
+what action to take based on context usage AND the user's handoff mode preference.
+
+### Handoff Mode Setting
+
+The user's preference is stored in `.pennyfarthing/cyclist.yaml`:
+
+```yaml
+handoff_mode: auto   # or "manual"
+```
+
+The handoff subagent reads this setting and returns an `Action` field.
+
+### Action Values
+
+| Action | Meaning | What to Do |
+|--------|---------|------------|
+| `INVOKE_DIRECTLY` | Auto mode + context OK | **Immediately invoke next agent** - do NOT ask permission |
+| `USER_INVOKE` | Manual mode | Tell user: "Ready for {Agent}. Invoke `/{agent}` when ready." |
+| `FRESH_SESSION` | Context too high (>70%) | Tell user: "Context high. Start fresh session with `/{agent}`" |
+
+### CRITICAL: Follow the Action
+
+When handoff returns `Action: INVOKE_DIRECTLY`:
+- **DO** immediately use the Skill tool to invoke the next agent
+- **DO NOT** ask "Shall I proceed?" or "Ready to hand off?"
+- **DO NOT** wait for user confirmation
+
+Asking permission when auto-handoff is enabled defeats the purpose of the setting.
+
+### Example Flow
+
+```
+1. Agent completes work
+2. Agent writes assessment to session file
+3. Agent spawns generic-handoff subagent
+4. Subagent returns: "Action: INVOKE_DIRECTLY"
+5. Agent IMMEDIATELY invokes: Skill tool with skill: "{next-agent}"
+```
+
+### Handoff Marker
+
+Always include the Cyclist marker at the end of handoff messages:
+
+```html
+<!-- CYCLIST:HANDOFF:/{next-agent} -->
+```
+
+This enables quick-action buttons in the Cyclist UI, but the agent must still
+invoke the skill when Action is `INVOKE_DIRECTLY`.
+
+---
+
 ## Exit Protocol
 
 Before exiting or switching agents:

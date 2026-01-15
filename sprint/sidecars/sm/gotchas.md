@@ -77,6 +77,16 @@ This HTML comment is parsed by Cyclist's `quick-actions.js` to show the handoff 
 - `sm-handoff.md` - SM→TEA/Dev transitions
 - `generic-handoff.md` - TEA→Dev→Reviewer→SM transitions
 
+### Skill Not Discovered for CLI Commands
+**Problem:** Jira assign command failed with "400 Bad Request", wasted time troubleshooting
+**Cause:** `/jira` skill wasn't listed in SM agent's `<skills>` section, so it wasn't loaded
+**Solution:**
+1. When a CLI command fails, ALWAYS check if there's a skill for that tool (`/jira`, `/just`, etc.)
+2. Skills must be listed in the agent's `<skills>` section to be auto-discovered
+3. Added `/jira` to SM agent skills (2026-01-15)
+
+**Broader lesson:** If you're doing operations with a CLI tool and hit errors, invoke the relevant skill BEFORE troubleshooting manually.
+
 ---
 
 *Add story management gotchas discovered during coordination below*

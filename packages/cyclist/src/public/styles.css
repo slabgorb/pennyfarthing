@@ -2833,6 +2833,16 @@ html, body {
   min-width: 100%;  /* At minimum fill the container */
 }
 
+.diff-line-number {
+  width: 4ch;
+  text-align: right;
+  color: inherit;
+  opacity: 0.7;
+  user-select: none;
+  flex-shrink: 0;
+  padding-right: 0.5rem;
+}
+
 .diff-line-prefix {
   width: 1.5rem;
   text-align: center;
