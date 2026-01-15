@@ -27,7 +27,7 @@ import { fileURLToPath } from 'node:url';
 // Import types from existing modules
 import type { WorkflowDefinition } from './workflow-schema.js';
 
-// Import the generic handoff functions that Dev will implement
+// Import the generic handoff functions
 import {
   findCurrentPhase,
   getNextPhase,
