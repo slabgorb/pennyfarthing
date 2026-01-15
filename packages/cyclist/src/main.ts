@@ -1267,8 +1267,10 @@ const isElectron = typeof process !== 'undefined' &&
 
 if (isElectron) {
   // Dynamic imports to avoid errors in Node test environment
-  const { app, BrowserWindow, ipcMain, dialog, Menu } = await import('electron');
+  const { app, BrowserWindow, ipcMain, dialog, Menu, screen } = await import('electron');
   const { createTerminalServer } = await import('./server.js');
+  // Story 35-13: Window state persistence
+  const windowStateKeeper = (await import('electron-window-state')).default;
 
   // Pass BrowserWindow to settings-window module (ESM-compatible, avoids require())
   setBrowserWindowRef(BrowserWindow);
@@ -1293,9 +1295,26 @@ if (isElectron) {
 
   /**
    * Create the main application window
+   * Story 35-13: Uses electron-window-state for window bounds persistence
    */
   function createWindow(): void {
-    mainWindow = new BrowserWindow(windowConfig);
+    // Story 35-13: Load saved window state (size, position, maximized)
+    const mainWindowState = windowStateKeeper({
+      defaultWidth: windowConfig.width,
+      defaultHeight: windowConfig.height,
+    });
+
+    // Create window with persisted bounds (or defaults on first run)
+    mainWindow = new BrowserWindow({
+      ...windowConfig,
+      x: mainWindowState.x,
+      y: mainWindowState.y,
+      width: mainWindowState.width,
+      height: mainWindowState.height,
+    });
+
+    // Story 35-13: Register window state manager to auto-save on resize/move/close
+    mainWindowState.manage(mainWindow);
 
     // Load the Express server URL (using the actual port found)
     mainWindow.loadURL(`http://localhost:${actualPort}`);

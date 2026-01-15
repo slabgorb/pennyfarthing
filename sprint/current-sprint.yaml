@@ -891,8 +891,9 @@ epics:
           - CSS custom properties for all themeable values
         points: 5
         priority: P2
-        status: in_progress
+        status: done
         started: 2026-01-15
+        completed: 2026-01-15
         assigned_to: Keith Avery
         repos: cyclist
         jira: MSSCI-11722
@@ -1043,6 +1044,42 @@ epics:
           - Persists collapse state in localStorage
           - Clear button to reset invocation history
           - Works with all skill types (built-in and custom)
+      - id: 35-13
+        title: Window state persistence
+        description: |
+          Remember and restore Electron window state across sessions:
+          - Window size (width, height)
+          - Window position (x, y coordinates)
+          - Screen/monitor placement (for multi-monitor setups)
+          - Panel layout (collapsed/expanded states, sizes)
+          - Maximized/fullscreen state
+
+          Implementation:
+          - Use electron-window-state or custom persistence to localStorage/file
+          - Save state on window resize, move, and before close
+          - Restore state on app launch
+          - Handle edge cases: monitor disconnected, resolution changed
+          - Validate restored bounds are within visible screen area
+          - Default to centered on primary display if invalid
+
+          This improves UX by remembering user's preferred layout instead of
+          resetting to defaults on every launch.
+        points: 2
+        priority: P2
+        status: in_progress
+        started: 2026-01-15
+        assigned_to: Keith Avery
+        repos: cyclist
+        jira: MSSCI-11722
+        acceptance_criteria:
+          - Window size restored on launch
+          - Window position restored on launch
+          - Panel collapse states restored (portrait, diff, tool panels)
+          - Panel sizes/widths restored
+          - Maximized state restored correctly
+          - Handles missing monitor gracefully (falls back to primary)
+          - Handles out-of-bounds position (recenters if off-screen)
+          - Works on macOS (primary target)
   - id: epic-36
     title: OTEL Tool Call Enrichment
     description: |
