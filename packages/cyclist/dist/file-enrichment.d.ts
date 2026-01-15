@@ -161,6 +161,33 @@ export declare function createOutputSummary(output: string | undefined): OutputS
  */
 export declare function extractExitCode(output: string | undefined, error: string | undefined, success: boolean): number | null;
 /**
+ * Extract match count from search tool output
+ * Counts non-empty lines in the output
+ * @param output - Search tool output string
+ * @returns Number of matches (lines)
+ */
+export declare function extractMatchCount(output: string | undefined): number;
+/**
+ * Extract unique file count from search output
+ * Handles both grep content mode (filepath:line:content) and files_with_matches mode
+ * @param output - Search tool output string
+ * @returns Number of unique files
+ */
+export declare function extractFileCount(output: string | undefined): number;
+/**
+ * Extract list of files from search output
+ * Returns unique file paths from grep/glob output
+ * @param output - Search tool output string
+ * @returns Array of unique file paths
+ */
+export declare function extractFileList(output: string | undefined): string[];
+/**
+ * Detect if search output was truncated
+ * @param output - Search tool output string
+ * @returns True if truncation indicators found
+ */
+export declare function detectTruncation(output: string | undefined): boolean;
+/**
  * Enrich a Read span with file metadata
  * @param spanId - The span ID to enrich
  * @returns Enrichment result with file metadata
