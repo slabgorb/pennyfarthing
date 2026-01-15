@@ -858,11 +858,13 @@ epics:
           - Smooth animation for collapse/expand transition
         points: 2
         priority: P2
-        status: in_progress
+        status: done
         started: 2026-01-15
+        completed: 2026-01-15
         assigned_to: Keith Avery
         repos: cyclist
         jira: MSSCI-11720
+        pr: 262
         acceptance_criteria:
           - Toggle button to collapse/expand portrait panel
           - Collapsed state minimizes to icon or hides completely
@@ -1401,10 +1403,12 @@ epics:
           36-10 fix, not broken. This story confirms that assumption.
         points: 1
         priority: P1
-        status: in_progress
+        status: done
         started: 2026-01-15
+        completed: 2026-01-15
         assigned_to: Keith Avery
         repos: cyclist
+        pr: 269
         acceptance_criteria:
           - 36-2 test suite passes (packages/cyclist/tests/36-2-file-enrichment.test.ts)
           - Manual verification: Read shows size/lines/language in Cyclist
