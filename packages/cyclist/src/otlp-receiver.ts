@@ -7,12 +7,33 @@
  * Story 19-5: Extended with per-story token aggregation.
  */
 
+import { appendFileSync } from 'fs';
 import { aggregateTokensForAgent, resetAgentTokenStats } from './agent-context.js';
 import { aggregateTokensForStory, resetStoryTokenStats } from './story-context.js';
 // Story 36-7: Import span correlation and enrichment modules
 // Story 36-8: Added consumePendingToolInput for Claude message stream correlation
 import { correlateSpan, resetCorrelations, consumePendingToolInput, type MessageContext } from './span-correlation.js';
 import { enrichReadSpan, enrichEditSpan, type DiffSummary } from './file-enrichment.js';
+
+// Story 36-10: Debug flag for OTEL capture
+// Toggle via: setOtelDebug(true) or env OTEL_DEBUG=true or just cyclist-electron true
+let otelDebugEnabled = process.env.OTEL_DEBUG === 'true';
+const OTEL_CAPTURE_FILE = '/tmp/otel-capture.jsonl';
+
+/** Enable/disable OTEL debug logging at runtime */
+export function setOtelDebug(enabled: boolean): void {
+  otelDebugEnabled = enabled;
+  if (enabled) {
+    console.log(`[OTEL] Debug logging enabled. Capturing to ${OTEL_CAPTURE_FILE}`);
+  } else {
+    console.log('[OTEL] Debug logging disabled');
+  }
+}
+
+/** Check if OTEL debug is enabled */
+export function isOtelDebugEnabled(): boolean {
+  return otelDebugEnabled;
+}
 
 // =============================================================================
 // Tool Event Types (Story 19-1)
@@ -51,6 +72,9 @@ export interface ToolEvent {
   gitStatus?: 'clean' | 'modified' | 'new' | 'untracked' | null;
   /** Diff summary for Edit operations */
   diff?: DiffSummary;
+  // Story 36-10: File path from pending input for UI display
+  /** Resolved file path for Read/Edit tools */
+  filePath?: string;
 }
 
 /**
@@ -410,6 +434,22 @@ export function parseOTLPLogs(body: unknown): RawLogEvent[] {
           const eventName = logRecord.body?.stringValue;
           if (!eventName) continue;
 
+          // Story 36-10: Capture raw OTEL data for skill documentation
+          if (otelDebugEnabled) {
+            const capture = {
+              timestamp: new Date().toISOString(),
+              eventName,
+              logRecordKeys: Object.keys(logRecord),
+              traceId: logRecord.traceId,
+              spanId: logRecord.spanId,
+              attributes: logRecord.attributes,
+            };
+            console.log('[OTEL-CAPTURE]', JSON.stringify(capture));
+            try {
+              appendFileSync(OTEL_CAPTURE_FILE, JSON.stringify(capture) + '\n');
+            } catch { /* ignore file write errors */ }
+          }
+
           // Convert nanoseconds to milliseconds
           const timestamp = logRecord.timeUnixNano
             ? Math.floor(Number(logRecord.timeUnixNano) / 1_000_000)
@@ -690,8 +730,20 @@ export async function processLogEvents(rawEvents: RawLogEvent[]): Promise<void> 
       // Story 36-8: Get tool input from Claude message stream instead of OTEL params
       // Story 36-9: Claude Code OTEL logs don't include traceId/spanId at logRecord level,
       // so we use the pending tool input's toolId as the correlation key instead
-      const pendingInput = consumePendingToolInput(toolName);
+      // Story 36-10: Pass parsed tool_parameters for precise file_path matching
+      let parsedToolParams: Record<string, unknown> | undefined;
+      if (toolParams) {
+        try {
+          parsedToolParams = JSON.parse(toolParams);
+        } catch { /* ignore parse errors */ }
+      }
+      const pendingInput = consumePendingToolInput(toolName, parsedToolParams);
       const toolInput = pendingInput?.input;
+
+      // Story 36-10: Add file_path to toolEvent for UI display (Read/Edit tools)
+      if (toolInput?.file_path) {
+        toolEvent.filePath = toolInput.file_path as string;
+      }
 
       // Only correlate and enrich if we have a pending input (from Claude message stream)
       if (pendingInput) {

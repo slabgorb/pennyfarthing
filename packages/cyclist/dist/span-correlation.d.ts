@@ -67,12 +67,17 @@ export interface PendingToolInput {
  */
 export declare function storePendingToolInput(toolId: string, toolName: string, input: Record<string, unknown>): void;
 /**
- * Find and consume a pending tool input matching the given tool name
- * Returns the oldest matching entry (FIFO) and removes it from the queue
+ * Find and consume a pending tool input matching the given tool name and input
+ *
+ * Story 36-10: Enhanced matching to fix race condition when multiple tools of
+ * same type are in flight. For Read/Edit tools, matches on file_path for precision.
+ * Falls back to tool name only if no file_path match found.
+ *
  * @param toolName - Tool name to match
+ * @param toolInput - Optional parsed tool_parameters from OTEL for precise matching
  * @returns Matching pending input, or undefined if none found
  */
-export declare function consumePendingToolInput(toolName: string): PendingToolInput | undefined;
+export declare function consumePendingToolInput(toolName: string, toolInput?: Record<string, unknown>): PendingToolInput | undefined;
 /**
  * Get all pending tool inputs (for debugging)
  */
