@@ -741,7 +741,9 @@ epics:
           - reviewer-preflight.md:111 - Wrong subagent_type (general-purpose → testing-runner)
         points: 1
         priority: P1
-        status: backlog
+        status: in_progress
+        started: 2026-01-15
+        assigned_to: Keith Avery
         repos: pennyfarthing
         workflow: trivial
         acceptance_criteria:
