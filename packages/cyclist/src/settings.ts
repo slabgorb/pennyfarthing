@@ -67,6 +67,7 @@ export type PartialSettings = {
 export const USER_SETTINGS_DIR = path.join(os.homedir(), '.cyclist');
 export const USER_SETTINGS_FILE = path.join(USER_SETTINGS_DIR, 'settings.yaml');
 export const PROJECT_SETTINGS_FILE = '.claude/cyclist.local.yaml';
+export const GRANTS_FILE = path.join(os.homedir(), '.cyclist', 'grants.json');
 
 // =============================================================================
 // Default Settings
@@ -108,6 +109,9 @@ let currentSettings: CyclistSettings = getDefaultSettings();
 let projectOverridesApplied = false;
 let fileWatcher: fs.FSWatcher | null = null;
 let projectWatcher: fs.FSWatcher | null = null;
+
+// Settings change callbacks (AC5)
+const settingsChangeCallbacks: Array<(settings: CyclistSettings) => void> = [];
 
 // =============================================================================
 // Directory Management
@@ -156,6 +160,7 @@ export function serializeSettings(settings: CyclistSettings): string {
 
 /**
  * Validate settings object structure
+ * AC6: Enhanced validation with range checks and non-empty string validation
  */
 export function validateSettings(settings: unknown): boolean {
   if (typeof settings !== 'object' || settings === null) {
@@ -182,9 +187,15 @@ export function validateSettings(settings: unknown): boolean {
   if (typeof display.show_flow !== 'boolean') return false;
   if (typeof display.show_ocean !== 'boolean') return false;
   if (typeof display.sidebar_width !== 'number') return false;
-  // Font settings are optional for backwards compatibility
-  if (display.font_ui !== undefined && typeof display.font_ui !== 'string') return false;
-  if (display.font_mono !== undefined && typeof display.font_mono !== 'string') return false;
+  // AC6: Validate sidebar_width range (200-500)
+  if (display.sidebar_width < 200 || display.sidebar_width > 500) return false;
+  // AC6: Font settings must be non-empty strings if present
+  if (display.font_ui !== undefined) {
+    if (typeof display.font_ui !== 'string' || display.font_ui === '') return false;
+  }
+  if (display.font_mono !== undefined) {
+    if (typeof display.font_mono !== 'string' || display.font_mono === '') return false;
+  }
 
   // Check notifications section
   if (typeof s.notifications !== 'object' || s.notifications === null) {
@@ -199,7 +210,8 @@ export function validateSettings(settings: unknown): boolean {
     return false;
   }
   const pennyfarthing = s.pennyfarthing as Record<string, unknown>;
-  if (typeof pennyfarthing.theme !== 'string') return false;
+  // AC6: Theme must be a non-empty string
+  if (typeof pennyfarthing.theme !== 'string' || pennyfarthing.theme === '') return false;
   if (!Array.isArray(pennyfarthing.favorites)) return false;
 
   return true;
@@ -387,6 +399,10 @@ export function saveUserSettings(settings: Partial<CyclistSettings>): boolean {
 
     fs.writeFileSync(USER_SETTINGS_FILE, yaml, 'utf-8');
     currentSettings = merged;
+
+    // AC5: Notify registered callbacks of settings change
+    notifySettingsChange(merged);
+
     return true;
   } catch {
     return false;
@@ -496,4 +512,153 @@ export function getCurrentSettings(): CyclistSettings {
  */
 export function hasProjectOverrides(): boolean {
   return projectOverridesApplied;
+}
+
+// =============================================================================
+// Settings Change Callbacks (AC5)
+// =============================================================================
+
+/**
+ * Register a callback to be notified when settings change
+ * Returns an unsubscribe function
+ * AC5: Supports testable state flows
+ */
+export function onSettingsChange(callback: (settings: CyclistSettings) => void): () => void {
+  settingsChangeCallbacks.push(callback);
+  return () => {
+    const index = settingsChangeCallbacks.indexOf(callback);
+    if (index !== -1) {
+      settingsChangeCallbacks.splice(index, 1);
+    }
+  };
+}
+
+/**
+ * Notify all registered callbacks of a settings change
+ * Called internally when settings are updated
+ */
+function notifySettingsChange(settings: CyclistSettings): void {
+  for (const callback of settingsChangeCallbacks) {
+    try {
+      callback(settings);
+    } catch (err) {
+      console.error('Settings change callback error:', err);
+    }
+  }
+}
+
+// =============================================================================
+// Grant Types and Validation (AC1, AC6)
+// =============================================================================
+
+/**
+ * Grant type enum for permission scopes
+ */
+export const GrantType = {
+  ONCE: 'once',
+  SESSION: 'session',
+  ALWAYS: 'always',
+} as const;
+
+export type GrantTypeValue = (typeof GrantType)[keyof typeof GrantType];
+
+/**
+ * Permission grant structure
+ */
+export interface PermissionGrant {
+  tool: string;
+  scope: string;
+  grant_type: GrantTypeValue;
+  granted_at: string;
+}
+
+/**
+ * Validate a permission grant object
+ * AC6: Validates grant_type enum, non-empty tool and scope
+ */
+export function validateGrant(grant: unknown): boolean {
+  if (typeof grant !== 'object' || grant === null) {
+    return false;
+  }
+
+  const g = grant as Record<string, unknown>;
+
+  // Tool must be non-empty string
+  if (typeof g.tool !== 'string' || g.tool === '') {
+    return false;
+  }
+
+  // Scope must be non-empty string
+  if (typeof g.scope !== 'string' || g.scope === '') {
+    return false;
+  }
+
+  // grant_type must be one of the valid types
+  if (g.grant_type !== 'once' && g.grant_type !== 'session' && g.grant_type !== 'always') {
+    return false;
+  }
+
+  // granted_at must be a string (ISO date)
+  if (typeof g.granted_at !== 'string') {
+    return false;
+  }
+
+  return true;
+}
+
+// =============================================================================
+// Grant File I/O (AC1)
+// =============================================================================
+
+/**
+ * Load grants from the grants file
+ * AC1: settings.ts is single source of truth for file-based settings
+ * Returns empty array if file doesn't exist or is corrupted
+ */
+export function loadGrants(): PermissionGrant[] {
+  try {
+    ensureSettingsDir();
+
+    if (!fs.existsSync(GRANTS_FILE)) {
+      return [];
+    }
+
+    const content = fs.readFileSync(GRANTS_FILE, 'utf-8');
+    const data = JSON.parse(content);
+
+    if (!data || !Array.isArray(data.grants)) {
+      return [];
+    }
+
+    // Filter to only valid grants (type 'always' for persistence)
+    return data.grants.filter(
+      (g: unknown) => validateGrant(g) && (g as PermissionGrant).grant_type === 'always'
+    );
+  } catch {
+    // Corrupted file or parse error - return empty array
+    return [];
+  }
+}
+
+/**
+ * Save grants to the grants file
+ * AC1: settings.ts is single source of truth for file-based settings
+ * Returns true on success, false on failure
+ */
+export function saveGrants(grants: PermissionGrant[]): boolean {
+  try {
+    ensureSettingsDir();
+
+    // Only persist 'always' grants
+    const persistGrants = grants.filter((g) => g.grant_type === 'always');
+
+    const data = {
+      grants: persistGrants,
+    };
+
+    fs.writeFileSync(GRANTS_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    return true;
+  } catch {
+    return false;
+  }
 }

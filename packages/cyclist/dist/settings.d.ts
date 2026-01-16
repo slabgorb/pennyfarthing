@@ -44,6 +44,7 @@ export type PartialSettings = {
 export declare const USER_SETTINGS_DIR: string;
 export declare const USER_SETTINGS_FILE: string;
 export declare const PROJECT_SETTINGS_FILE = ".claude/cyclist.local.yaml";
+export declare const GRANTS_FILE: string;
 /**
  * Get a copy of the default settings
  */
@@ -63,6 +64,7 @@ export declare function parseSettings(yamlContent: string): PartialSettings;
 export declare function serializeSettings(settings: CyclistSettings): string;
 /**
  * Validate settings object structure
+ * AC6: Enhanced validation with range checks and non-empty string validation
  */
 export declare function validateSettings(settings: unknown): boolean;
 /**
@@ -123,4 +125,45 @@ export declare function getCurrentSettings(): CyclistSettings;
  * Check if project overrides are currently applied
  */
 export declare function hasProjectOverrides(): boolean;
+/**
+ * Register a callback to be notified when settings change
+ * Returns an unsubscribe function
+ * AC5: Supports testable state flows
+ */
+export declare function onSettingsChange(callback: (settings: CyclistSettings) => void): () => void;
+/**
+ * Grant type enum for permission scopes
+ */
+export declare const GrantType: {
+    readonly ONCE: "once";
+    readonly SESSION: "session";
+    readonly ALWAYS: "always";
+};
+export type GrantTypeValue = (typeof GrantType)[keyof typeof GrantType];
+/**
+ * Permission grant structure
+ */
+export interface PermissionGrant {
+    tool: string;
+    scope: string;
+    grant_type: GrantTypeValue;
+    granted_at: string;
+}
+/**
+ * Validate a permission grant object
+ * AC6: Validates grant_type enum, non-empty tool and scope
+ */
+export declare function validateGrant(grant: unknown): boolean;
+/**
+ * Load grants from the grants file
+ * AC1: settings.ts is single source of truth for file-based settings
+ * Returns empty array if file doesn't exist or is corrupted
+ */
+export declare function loadGrants(): PermissionGrant[];
+/**
+ * Save grants to the grants file
+ * AC1: settings.ts is single source of truth for file-based settings
+ * Returns true on success, false on failure
+ */
+export declare function saveGrants(grants: PermissionGrant[]): boolean;
 //# sourceMappingURL=settings.d.ts.map
