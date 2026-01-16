@@ -310,6 +310,7 @@ epics:
         priority: P1
         status: backlog
         repos: cyclist
+        workflow: bdd
         jira: MSSCI-11723
         acceptance_criteria:
           - Recent themes persisted in localStorage
@@ -337,8 +338,11 @@ epics:
           - Add reset to defaults option
         points: 3
         priority: P1
-        status: backlog
+        status: in_progress
         repos: cyclist
+        workflow: bdd
+        assigned_to: Keith Avery
+        started: 2026-01-16
         jira: MSSCI-11724
         acceptance_criteria:
           - Settings store initialization errors handled gracefully
@@ -390,6 +394,7 @@ epics:
         priority: P2
         status: backlog
         repos: cyclist
+        workflow: bdd
         jira: MSSCI-11727
         acceptance_criteria:
           - Dedicated panel for skill invocations
