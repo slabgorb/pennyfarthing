@@ -1327,7 +1327,7 @@ const isElectron = typeof process !== 'undefined' &&
 
 if (isElectron) {
   // Dynamic imports to avoid errors in Node test environment
-  const { app, BrowserWindow, ipcMain, dialog, Menu, screen } = await import('electron');
+  const { app, BrowserWindow, ipcMain, dialog, Menu } = await import('electron');
   const { createTerminalServer } = await import('./server.js');
   // Story 35-13: Window state persistence
   const windowStateKeeper = (await import('electron-window-state')).default;
