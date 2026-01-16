@@ -49,16 +49,26 @@ export function getThemeAgents() {
 
 /**
  * Fetch and cache theme agents mapping
+ * @returns {Promise<Object|null>} The agent mapping or null
  */
-async function loadThemeAgents() {
+export async function loadThemeAgents() {
   try {
     const response = await fetch('/api/theme-agents');
     if (response.ok) {
       themeAgentsCache = await response.json();
+      return themeAgentsCache;
     }
   } catch (err) {
     // Silent fail - name resolution is optional
   }
+  return null;
+}
+
+/**
+ * Clear the theme agents cache (call after theme change)
+ */
+export function clearThemeAgentsCache() {
+  themeAgentsCache = null;
 }
 
 /**
@@ -390,4 +400,13 @@ async function initStoryGit() {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
   initStoryGit();
+});
+
+// Listen for persona theme changes and reload the agent cache
+window.addEventListener('themechange', (e) => {
+  // Only reload if this is a persona theme change (not just color theme)
+  if (e.detail?.themeId || e.detail?.personaTheme) {
+    clearThemeAgentsCache();
+    loadThemeAgents();
+  }
 });
