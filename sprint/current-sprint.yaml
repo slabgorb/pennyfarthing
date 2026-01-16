@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 72
-  completed_points: 17
-  remaining_points: 55
+  completed_points: 19
+  remaining_points: 53
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - Epic 31: Customizable Workflow Engine (4 pts remaining)
@@ -540,7 +540,7 @@ epics:
       Clean up stale TODOs, fix flaky tests, remove deprecated code paths,
       and address known bugs that slipped through previous sprints.
     points: 26
-    completed_points: 17
+    completed_points: 19
     priority: P2
     marker: maintenance
     repos: pennyfarthing, cyclist
@@ -700,8 +700,13 @@ epics:
           Fix to return full persona data as expected by UI.
         points: 2
         priority: P2
-        status: backlog
+        status: done
         repos: cyclist
+        workflow: trivial
+        assigned_to: Keith Avery
+        started: 2026-01-16
+        completed: 2026-01-16
+        pr: 288
         acceptance_criteria:
           - Persona IPC returns character, role, displayName fields
           - B-2.1-ipc-wiring tests unskipped and passing
