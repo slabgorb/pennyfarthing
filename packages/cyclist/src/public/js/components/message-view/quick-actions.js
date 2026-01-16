@@ -7,7 +7,7 @@
 
 import { escapeHtml } from './markdown-parser.js';
 import { insertAndSubmit } from '../../editor.js';
-import { getThemeAgents } from '../../story.js';
+import { getThemeAgents, loadThemeAgents } from '../../story.js';
 
 // =============================================================================
 // Constants
@@ -87,6 +87,20 @@ export function truncateText(text, maxLen) {
   return text.slice(0, maxLen).trimEnd() + '...';
 }
 
+// Fallback role names (used when theme cache not available)
+const FRIENDLY_ROLE_NAMES = {
+  'sm': 'Scrum Master',
+  'tea': 'Test Engineer',
+  'dev': 'Developer',
+  'reviewer': 'Reviewer',
+  'architect': 'Architect',
+  'pm': 'Product Manager',
+  'orchestrator': 'Orchestrator',
+  'tech-writer': 'Tech Writer',
+  'ux-designer': 'UX Designer',
+  'devops': 'DevOps',
+};
+
 /**
  * Get the character name for an agent command from the current theme.
  * Falls back to a friendly role name if theme data isn't available.
@@ -103,21 +117,12 @@ function getAgentDisplayName(agentCmd) {
     return themeAgents[role].shortName || themeAgents[role].character || agentCmd;
   }
 
-  // Fallback to friendly role names
-  const friendlyNames = {
-    'sm': 'Scrum Master',
-    'tea': 'Test Engineer',
-    'dev': 'Developer',
-    'reviewer': 'Reviewer',
-    'architect': 'Architect',
-    'pm': 'Product Manager',
-    'orchestrator': 'Orchestrator',
-    'tech-writer': 'Tech Writer',
-    'ux-designer': 'UX Designer',
-    'devops': 'DevOps',
-  };
+  // If cache is null, trigger a load for next time (fire-and-forget)
+  if (!themeAgents) {
+    loadThemeAgents().catch(() => {}); // Silent fail, will use fallback
+  }
 
-  return friendlyNames[role] || agentCmd;
+  return FRIENDLY_ROLE_NAMES[role] || agentCmd;
 }
 
 // =============================================================================
