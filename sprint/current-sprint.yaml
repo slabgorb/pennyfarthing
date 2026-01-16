@@ -5,9 +5,9 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 77
+  total_points: 85
   completed_points: 21
-  remaining_points: 56
+  remaining_points: 64
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - Epic 31: Customizable Workflow Engine (4 pts remaining)
@@ -539,7 +539,7 @@ epics:
       Consolidate technical debt accumulated during rapid feature development.
       Clean up stale TODOs, fix flaky tests, remove deprecated code paths,
       and address known bugs that slipped through previous sprints.
-    points: 26
+    points: 29
     completed_points: 19
     priority: P2
     marker: maintenance
@@ -879,6 +879,47 @@ epics:
           - Custom workflows display their defined phases
           - Phase status (done/current/pending) updates correctly
           - Works when switching between stories with different workflows
+      - id: 37-16
+        title: "Bug: Agent high-context circuit breaker not triggering"
+        description: |
+          The agent high-context circuit breaker is supposed to warn/stop agents
+          when context usage gets too high, preventing unexpected context limit
+          errors. Currently it appears to not be working.
+
+          Investigation needed:
+          1. Where is the circuit breaker implemented?
+             - check-context.sh script?
+             - Agent file instructions?
+             - Cyclist context monitoring?
+          2. What threshold should trigger it? (60%? 80%?)
+          3. Is it being called but failing silently?
+          4. Is the context percentage calculation accurate?
+
+          Possible locations:
+          - pennyfarthing-dist/scripts/check-context.sh
+          - Agent handoff sections (check before handoff)
+          - Cyclist context progress monitoring
+          - packages/cyclist/src/public/js/context.js
+
+          Expected behavior:
+          - At 60% context: Warning displayed, suggest wrapping up
+          - At 80% context: Strong warning, recommend clearing
+          - At 90% context: Circuit breaker triggers, auto-save state
+
+          Current behavior:
+          - Agents run until they hit hard context limits unexpectedly
+        points: 3
+        priority: P1
+        status: backlog
+        repos: pennyfarthing, cyclist
+        workflow: tdd
+        acceptance_criteria:
+          - Root cause identified (why circuit breaker doesn't trigger)
+          - Circuit breaker fires at configured threshold
+          - Warning displayed to user when threshold approached
+          - Agent behavior changes appropriately at each threshold
+          - Context percentage calculation verified accurate
+          - Works in both Cyclist and raw Claude Code modes
   - id: epic-38
     title: Agent File Modernization
     description: |
@@ -893,7 +934,7 @@ epics:
 
       Includes workflow routing: SM reads `workflow:` tag from stories and
       follows the appropriate workflow definition.
-    points: 25
+    points: 30
     completed_points: 5
     priority: P2
     marker: infrastructure
@@ -1194,3 +1235,48 @@ epics:
           - Agent files reference shared behavior instead of duplicating
           - Agent-specific variations remain in agent files
           - No functionality lost in consolidation
+      - id: 38-13
+        title: Auto-mode context clear and agent reload on handoff
+        description: |
+          In auto mode, when context usage is too high (>60%) at handoff time,
+          the agent currently tells the user to "start fresh with /agent".
+          This breaks the automated flow.
+
+          Implement automated context clearing:
+          1. Agent detects high context on handoff (existing check)
+          2. Agent emits a CYCLIST:CONTEXT_CLEAR marker or IPC signal
+          3. Cyclist intercepts this signal
+          4. Cyclist clears the Claude Code session (/clear or restart)
+          5. Cyclist automatically loads the next agent (e.g., /tea, /dev)
+          6. Work continues seamlessly in auto mode
+
+          This requires coordination between:
+          - Agent handoff logic (emit signal with next agent info)
+          - Cyclist main process (intercept signal, execute clear)
+          - Cyclist session management (reload agent after clear)
+
+          The marker format could be:
+          ```
+          <!-- CYCLIST:CONTEXT_CLEAR:NEXT_AGENT:/tea -->
+          ```
+
+          Or an IPC event from the agent output parser.
+
+          Files affected:
+          - pennyfarthing-dist/agents/*.md (handoff logic updates)
+          - packages/cyclist/src/public/js/output-parser.js (detect marker)
+          - packages/cyclist/src/main/ipc/ (new handler for context clear)
+          - packages/cyclist/src/main/terminal.ts (execute clear + reload)
+        points: 5
+        priority: P1
+        status: backlog
+        repos: pennyfarthing, cyclist
+        workflow: tdd
+        acceptance_criteria:
+          - Agent emits context-clear signal when auto mode + high context
+          - Cyclist detects the signal from agent output
+          - Cyclist clears the Claude Code session automatically
+          - Cyclist loads the specified next agent after clear
+          - Auto mode workflow continues without user intervention
+          - Works for all handoff transitions (SM→TEA, TEA→Dev, Dev→Rev, etc.)
+          - Manual mode ignores this and behaves as before (user prompt)
