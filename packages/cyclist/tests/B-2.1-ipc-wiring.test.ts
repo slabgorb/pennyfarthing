@@ -154,9 +154,9 @@ describe('B-2.1: IPC Data Wiring', () => {
       expect(persona).not.toBeNull();
     });
 
-    // SKIPPED: Requires real Pennyfarthing project with active session
-    // Without project dir, handler returns fallback { projectName } only
-    it.skip('should return persona with character and role fields', async () => {
+    // Story 37-8: Handler now returns complete fallback object with all fields
+    // even without active session, so sidebar can render gracefully
+    it('should return persona with character and role fields', async () => {
       const main = await import('../src/main.js');
 
       let personaHandler: ((event: unknown) => Promise<unknown>) | null = null;
@@ -171,21 +171,16 @@ describe('B-2.1: IPC Data Wiring', () => {
       main.setupDataIPCHandlers(mockIpcMain);
       const persona = await personaHandler?.({}) as Record<string, unknown> | null;
 
-      // When running in test environment without an active session,
-      // persona only returns projectName. Full persona with character/role/theme
-      // requires an active agent session file in .session/agents/
+      // Handler returns complete object with all expected fields
+      // Fields are null when no active session, but always present
       expect(persona).toHaveProperty('projectName');
-      // Character, role, theme are present only with active session
-      // The handler gracefully returns minimal data when no session
+      expect(persona).toHaveProperty('character');
+      expect(persona).toHaveProperty('role');
+      expect(persona).toHaveProperty('theme');
     });
 
-    // SKIPPED: Requires real Pennyfarthing project with active session
-    it.skip('should return persona with character and role (active session required)', async () => {
-      // This would test full persona data, but requires active session
-    });
-
-    // SKIPPED: Requires real Pennyfarthing project with active session
-    it.skip('should return persona with displayName for sidebar', async () => {
+    // Story 37-8: Verify all persona fields are present in fallback response
+    it('should return persona with all expected fields for UI rendering', async () => {
       const main = await import('../src/main.js');
 
       let personaHandler: ((event: unknown) => Promise<unknown>) | null = null;
@@ -200,9 +195,38 @@ describe('B-2.1: IPC Data Wiring', () => {
       main.setupDataIPCHandlers(mockIpcMain);
       const persona = await personaHandler?.({}) as Record<string, unknown> | null;
 
-      // displayName is what shows in the sidebar
+      // All fields the sidebar expects should be present
+      expect(persona).toHaveProperty('projectName');
+      expect(persona).toHaveProperty('displayName');
+      expect(persona).toHaveProperty('roleDescription');
+      expect(persona).toHaveProperty('style');
+      expect(persona).toHaveProperty('slug');
+      expect(persona).toHaveProperty('quote');
+      expect(persona).toHaveProperty('helper');
+      expect(persona).toHaveProperty('ocean');
+    });
+
+    // Story 37-8: displayName always returns a string for sidebar display
+    it('should return persona with displayName for sidebar', async () => {
+      const main = await import('../src/main.js');
+
+      let personaHandler: ((event: unknown) => Promise<unknown>) | null = null;
+      const mockIpcMain = {
+        handle: (channel: string, handler: (event: unknown) => Promise<unknown>) => {
+          if (channel === 'persona:get') {
+            personaHandler = handler;
+          }
+        }
+      };
+
+      main.setupDataIPCHandlers(mockIpcMain);
+      const persona = await personaHandler?.({}) as Record<string, unknown> | null;
+
+      // displayName is what shows in the sidebar - always a string
       expect(persona).toHaveProperty('displayName');
       expect(typeof persona?.displayName).toBe('string');
+      // When no persona, displayName falls back to projectName
+      expect(persona?.displayName).toBeTruthy();
     });
 
   });
