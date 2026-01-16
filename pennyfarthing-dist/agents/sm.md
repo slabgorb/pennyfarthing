@@ -6,6 +6,8 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 **Fallback if not loaded:** Supportive, honest, by the book
 </persona>
 
+<status>production</status>
+
 <role>
 **Primary:** Invoked via `/new-work` or SM activation for TDD flow (**SM** → TEA → Dev → Reviewer)
 **Finish:** SM handles finish-story automatically when status = `approved`

@@ -6,6 +6,28 @@ This directory contains the **single source of truth** for all Pennyfarthing age
 
 **See:** `../ AGENT-COORDINATION.md` for complete architecture documentation.
 
+## Agent Maturity
+
+Agents are marked with `<status>` tags indicating their maturity level:
+
+### Production Agents
+These agents follow the TDD workflow and are battle-tested:
+- **SM** - Scrum Master (story coordination, session management)
+- **TEA** - Test Engineer/Architect (test writing, TDD guidance)
+- **Dev** - Developer (implementation, making tests pass)
+- **Reviewer** - Code Reviewer (adversarial review, quality gates)
+
+### Experimental Agents
+These agents are available but not yet modernized to the same standard:
+- **Orchestrator** - Meta operations, process improvement
+- **PM** - Product Manager (planning, prioritization)
+- **Architect** - System Architect (design decisions)
+- **DevOps** - DevOps Engineer (infrastructure, deployment)
+- **Tech Writer** - Technical Writer (documentation)
+- **UX Designer** - UX Designer (UI design, accessibility)
+
+> **Tip:** Start with production agents for core development work. Experimental agents may have less consistent behavior or missing features.
+
 ## Agent Hierarchy
 
 ### Strategic Agents (Full Scope)
