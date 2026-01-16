@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 70
-  completed_points: 11
-  remaining_points: 59
+  completed_points: 14
+  remaining_points: 56
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - Epic 31: Customizable Workflow Engine (4 pts remaining)
@@ -379,7 +379,7 @@ epics:
       Clean up stale TODOs, fix flaky tests, remove deprecated code paths,
       and address known bugs that slipped through previous sprints.
     points: 24
-    completed_points: 10
+    completed_points: 13
     priority: P2
     marker: maintenance
     repos: pennyfarthing, cyclist
@@ -498,7 +498,10 @@ epics:
           Either fix the fallback or remove the dead code.
         points: 3
         priority: P2
-        status: backlog
+        status: done
+        started: 2026-01-15
+        completed: 2026-01-15
+        assigned_to: Keith Avery
         repos: cyclist
         acceptance_criteria:
           - Pattern-based detection works as fallback when markers absent
