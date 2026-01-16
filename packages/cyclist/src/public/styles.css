@@ -25,7 +25,7 @@
 
 html, body {
   height: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--font-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif);
   background: var(--bg-primary);
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
@@ -63,6 +63,43 @@ html, body {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/* 33-3: Permission status indicator */
+.permission-status {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  font-size: 11px;
+  color: #ef4444;
+  transition: all 0.2s ease;
+}
+
+.permission-status.hidden {
+  display: none;
+}
+
+.permission-status:empty {
+  display: none;
+}
+
+.permission-status.pulse {
+  animation: permission-pulse 2s ease-in-out infinite;
+}
+
+@keyframes permission-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.permission-badge,
+.permission-count {
+  font-weight: 600;
+  min-width: 16px;
+  text-align: center;
 }
 
 .tab-btn {
@@ -640,6 +677,167 @@ html, body {
   border-color: #8b5cf6;
 }
 
+/* 35-4: Three-way mode switch (segmented control) */
+.mode-switch {
+  display: inline-flex;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.mode-switch-segment {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-secondary);
+  transition: all 0.15s ease;
+}
+
+.mode-switch-segment:hover:not(.active) {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.mode-switch-segment:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* Active segment - MANUAL (default/neutral) */
+.mode-switch-segment.active[data-mode="default"] {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Active segment - PLAN (teal) */
+.mode-switch-segment.active[data-mode="plan"] {
+  background: #14b8a6;
+  color: white;
+  box-shadow: 0 1px 2px rgba(20, 184, 166, 0.3);
+}
+
+/* Active segment - ACCEPT (purple) */
+.mode-switch-segment.active[data-mode="acceptEdits"] {
+  background: #8b5cf6;
+  color: white;
+  box-shadow: 0 1px 2px rgba(139, 92, 246, 0.3);
+}
+
+/* Keyboard hint styling */
+.mode-switch-segment::after {
+  content: attr(data-shortcut);
+  display: none;
+  margin-left: 0.25rem;
+  opacity: 0.6;
+  font-size: 0.65rem;
+}
+
+/* 35-1: Handoff Toggle - Beautiful switch with sliding thumb */
+.handoff-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.1875rem 0.5rem 0.1875rem 0.25rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.handoff-toggle:hover {
+  border-color: var(--accent);
+  background: var(--bg-tertiary, var(--bg-secondary));
+}
+
+.handoff-toggle:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.handoff-toggle:active {
+  transform: scale(0.98);
+}
+
+/* The track (pill background) */
+.handoff-track {
+  position: relative;
+  width: 28px;
+  height: 16px;
+  background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+  border-radius: 8px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* The sliding thumb */
+.handoff-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(135deg, #fff 0%, #e5e7eb 100%);
+  border-radius: 50%;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+/* The label text */
+.handoff-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+  min-width: 42px;
+}
+
+/* AUTO state - vibrant green with glowing effects */
+.handoff-toggle.auto-enabled .handoff-track {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.1),
+    0 0 12px rgba(16, 185, 129, 0.4);
+}
+
+.handoff-toggle.auto-enabled .handoff-thumb {
+  left: 14px;
+  background: linear-gradient(135deg, #fff 0%, #d1fae5 100%);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.2),
+    0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+.handoff-toggle.auto-enabled .handoff-label {
+  color: #10b981;
+  font-weight: 700;
+}
+
+.handoff-toggle.auto-enabled:hover .handoff-track {
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.1),
+    0 0 16px rgba(16, 185, 129, 0.5);
+}
+
+/* MANUAL state styling */
+.handoff-toggle.manual-enabled .handoff-label {
+  color: var(--text-secondary);
+}
+
 /* B-22: Stats Strip - compact stats display below editor */
 /* B-20: Increased font sizes for readability */
 #stats-strip {
@@ -650,6 +848,24 @@ html, body {
   background: var(--bg-secondary);
   border-top: 1px solid var(--border);
   font-size: 0.8125rem;
+}
+
+/* 35-2: User email display in stats strip */
+.user-email {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-email:empty {
+  display: none;
+}
+
+.user-email.updated {
+  animation: pulse 0.5s ease-out;
 }
 
 .model-badge {
@@ -678,7 +894,7 @@ html, body {
   display: flex;
   align-items: center;
   gap: 0.375rem;
-  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
   color: var(--text-secondary);
 }
 
@@ -744,7 +960,7 @@ html, body {
   gap: 0.25rem;
   padding: 0.125rem 0.375rem;
   border-radius: 4px;
-  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
   font-size: 0.75rem;
   cursor: help;
   transition: background-color 0.2s ease, color 0.2s ease;
@@ -799,7 +1015,7 @@ html, body {
   justify-content: center;
   padding: 0.125rem 0.5rem;
   border-radius: 4px;
-  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
   font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -837,6 +1053,21 @@ html, body {
   display: inline-flex;
 }
 
+/* Imminent state - red when auto-compact is approaching (>= 65%) */
+.compact-btn.imminent {
+  background: #dc2626;
+  animation: pulse-warning 1.5s ease-in-out infinite;
+}
+
+.compact-btn.imminent:hover {
+  background: #b91c1c;
+}
+
+@keyframes pulse-warning {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
 /* B-20: Editor row with controls on right */
 #editor-row {
   display: flex;
@@ -872,7 +1103,7 @@ html, body {
 #editor .ProseMirror {
   height: 100%;
   outline: none;
-  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
   font-size: 0.95rem;
   line-height: 1.5;
   color: var(--text-primary);
@@ -979,7 +1210,7 @@ html, body {
 }
 
 .completion-name {
-  font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
   font-weight: 500;
   font-size: 0.9rem;
 }
@@ -1125,7 +1356,7 @@ html, body {
   border-radius: 8px;
   padding: 1rem;
   overflow-y: auto;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--font-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif);
   font-size: 1rem;          /* B-15: Increased from 0.875rem for readability */
   line-height: 1.6;         /* B-15: Increased from 1.5 for better spacing */
 }
@@ -1226,7 +1457,7 @@ html, body {
   padding: 0.2rem 0.4rem;
   border-radius: 4px;
   font-size: 0.9em;
-  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
   border: 1px solid var(--border);  /* B-15: Added border for visibility */
 }
 
@@ -1349,6 +1580,49 @@ html, body {
   font-size: 0.75rem;
   color: var(--text-secondary);
   border-left: 3px solid var(--accent);
+}
+
+.message-result.has-denials {
+  border-left-color: var(--status-error, #e53e3e);
+}
+
+/* Permission denials display */
+.result-permission-denials {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(229, 62, 62, 0.1);
+  border-radius: 4px;
+  border: 1px solid rgba(229, 62, 62, 0.3);
+}
+
+.permission-denials-header {
+  font-weight: 600;
+  color: var(--status-error, #e53e3e);
+  margin-bottom: 0.5rem;
+}
+
+.permission-denials-list {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+}
+
+.permission-denials-list li {
+  margin: 0.25rem 0;
+}
+
+.permission-denials-help {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+.permission-denials-help code {
+  background: var(--bg-secondary);
+  padding: 0.1rem 0.3rem;
+  border-radius: 2px;
+  font-size: 0.65rem;
 }
 
 /* B-14: Init message styling */
@@ -1654,8 +1928,8 @@ html, body {
 
 #story-title,
 .story-title {
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-size: 0.95rem;
+  font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 0.375rem;
   line-height: 1.25;
@@ -1854,7 +2128,7 @@ html, body {
 #git-branch,
 .git-branch {
   font-size: 0.9rem;
-  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
   color: var(--text-primary);
   flex: 1;
   min-width: 0;
@@ -2517,7 +2791,7 @@ html, body {
 .diff-viewer {
   display: block;  /* Block layout to allow natural content flow */
   min-width: max-content;  /* Expand to fit widest line */
-  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
   font-size: 13px;
   line-height: 1.4;
   background: var(--bg-terminal);
@@ -2537,14 +2811,30 @@ html, body {
 }
 
 .diff-file-header .file-path-link {
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
   cursor: pointer;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.15s ease, text-decoration 0.15s ease;
 }
 
 .diff-file-header .file-path-link:hover {
   opacity: 0.8;
   text-decoration: underline;
+  text-decoration-style: solid;
+}
+
+/* 35-11: Error state when file cannot be opened */
+.diff-file-header .file-path-link.file-path-error {
+  color: var(--error, #ef4444);
+  text-decoration-color: var(--error, #ef4444);
+  animation: shake 0.3s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
 }
 
 .diff-line {
@@ -2554,6 +2844,16 @@ html, body {
   padding: 0 0.5rem;
   width: max-content;  /* Prevent wrapping, expand to content width */
   min-width: 100%;  /* At minimum fill the container */
+}
+
+.diff-line-number {
+  width: 4ch;
+  text-align: right;
+  color: inherit;
+  opacity: 0.7;
+  user-select: none;
+  flex-shrink: 0;
+  padding-right: 0.5rem;
 }
 
 .diff-line-prefix {
@@ -2638,7 +2938,7 @@ html, body {
 }
 
 .file-tree {
-  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
   font-size: 13px;
   line-height: 1.4;
 }
@@ -2748,7 +3048,7 @@ html, body {
  * ============================================================================= */
 
 .changed-files-list {
-  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
   font-size: 13px;
   height: 100%;
   overflow-y: auto;
@@ -3080,7 +3380,7 @@ html, body {
 #tool-activity-bar .tool-param {
   flex: 1;
   font-size: 0.85rem;
-  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
   color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3090,7 +3390,7 @@ html, body {
 /* Elapsed time - monospace for alignment */
 #tool-activity-bar .elapsed-time {
   font-size: 0.85rem;
-  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
   color: var(--text-secondary);
   min-width: 4ch;
   text-align: right;
@@ -3200,6 +3500,41 @@ html, body {
   color: #dc3545;
 }
 
+/* 33-3: Tool name display */
+#approval-modal .tool-name {
+  color: var(--accent, #4f46e5);
+  font-weight: 600;
+}
+
+/* 33-3: Reason display */
+#approval-modal .reason-display {
+  color: var(--text-secondary, #a1a1aa);
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+  font-style: italic;
+}
+
+#approval-modal .reason-display:empty {
+  display: none;
+}
+
+/* 33-3: Context display (for non-Bash tools) */
+#approval-modal .context-display {
+  background: var(--bg-secondary, #252525);
+  border: 1px solid var(--border, #333);
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+  font-size: 0.85rem;
+  color: var(--text-primary, #fff);
+  word-break: break-all;
+}
+
+#approval-modal .context-display:empty {
+  display: none;
+}
+
 /* Command display - syntax highlighting */
 #approval-modal .command-display {
   background: var(--bg-secondary, #252525);
@@ -3207,7 +3542,7 @@ html, body {
   border-radius: 4px;
   padding: 1rem;
   margin-bottom: 1.5rem;
-  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
   font-size: 0.9rem;
   line-height: 1.5;
   color: var(--text-primary, #fff);
@@ -3408,7 +3743,7 @@ html, body {
   border-radius: 4px;
   padding: 0.75rem 1rem;
   margin-bottom: 1.5rem;
-  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
   font-size: 0.95rem;
   color: var(--status-error, #f85149);
   word-break: break-all;
@@ -3639,7 +3974,7 @@ html, body {
 
 .audit-log-table .col-timestamp {
   width: 80px;
-  font-family: 'Monaco', 'Consolas', monospace;
+  font-family: var(--font-mono, Monaco, Consolas, monospace);
   font-size: 0.75rem;
   color: var(--text-secondary);
 }
@@ -3653,14 +3988,14 @@ html, body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: 'Monaco', 'Consolas', monospace;
+  font-family: var(--font-mono, Monaco, Consolas, monospace);
   font-size: 0.75rem;
 }
 
 .audit-log-table .col-duration {
   width: 70px;
   text-align: right;
-  font-family: 'Monaco', 'Consolas', monospace;
+  font-family: var(--font-mono, Monaco, Consolas, monospace);
   font-size: 0.75rem;
 }
 
@@ -3943,7 +4278,7 @@ html, body {
 
 .tool-log-table .col-timestamp {
   width: 60px;
-  font-family: 'Monaco', 'Consolas', monospace;
+  font-family: var(--font-mono, Monaco, Consolas, monospace);
   font-size: 0.65rem;
   color: var(--text-secondary);
 }
@@ -3957,14 +4292,14 @@ html, body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: 'Monaco', 'Consolas', monospace;
+  font-family: var(--font-mono, Monaco, Consolas, monospace);
   font-size: 0.65rem;
 }
 
 .tool-log-table .col-duration {
   width: 50px;
   text-align: right;
-  font-family: 'Monaco', 'Consolas', monospace;
+  font-family: var(--font-mono, Monaco, Consolas, monospace);
   font-size: 0.65rem;
 }
 
@@ -3979,3 +4314,239 @@ html, body {
   color: var(--text-secondary);
   font-style: italic;
 }
+
+/* Story 36-7: Enrichment data display */
+.tool-log-table .input-with-enrichment {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.tool-log-table .input-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tool-log-table .enrichment-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+}
+
+.tool-log-table .enrichment-row span {
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  background: var(--bg-tertiary, rgba(255,255,255,0.05));
+}
+
+.tool-log-table .enrichment-file {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.tool-log-table .enrichment-size {
+  color: var(--text-secondary);
+}
+
+.tool-log-table .enrichment-lines {
+  color: var(--text-secondary);
+}
+
+.tool-log-table .enrichment-diff {
+  color: var(--syntax-string, #ce9178);
+}
+
+.tool-log-table .enrichment-git {
+  font-weight: 500;
+}
+
+.tool-log-table .git-modified {
+  color: var(--status-warning, #e0a400);
+}
+
+.tool-log-table .git-new {
+  color: var(--status-ready, #3fb950);
+}
+
+.tool-log-table .git-untracked {
+  color: var(--text-secondary);
+}
+
+/* =============================================================================
+ * 31-15: Background Task Notifications
+ * ============================================================================= */
+
+.background-task-notification {
+  margin: 0.5rem 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border-left: 3px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.background-task-notification.notification-success {
+  border-left-color: var(--status-ready);
+}
+
+.background-task-notification.notification-error {
+  border-left-color: var(--status-error);
+}
+
+.background-task-notification details summary {
+  cursor: pointer;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.background-task-notification .task-status {
+  font-weight: 600;
+}
+
+.background-task-notification.notification-success .task-status {
+  color: var(--status-ready);
+}
+
+.background-task-notification.notification-error .task-status {
+  color: var(--status-error);
+}
+
+.background-task-notification .task-type {
+  color: var(--accent);
+  font-family: monospace;
+  font-size: 0.8rem;
+}
+
+.background-task-notification .task-description {
+  color: var(--text-secondary);
+}
+
+.background-task-notification .background-task-output {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: var(--bg-terminal);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  max-height: 200px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
+/* =============================================================================
+ * 35-5: Unified Vertical Panel Styles
+ * ============================================================================= */
+
+/* Base vertical panel class */
+.vertical-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-secondary, #1a1a2e);
+  transition: width 0.2s ease, min-width 0.2s ease, opacity 0.2s ease, flex 0.2s ease;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* Collapsed state for vertical panels */
+.vertical-panel.collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+  flex: 0 0 0 !important;
+  border: none;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Position-specific styles */
+.vertical-panel.position-left {
+  border-right: 1px solid var(--border, #333);
+}
+
+.vertical-panel.position-right {
+  border-left: 1px solid var(--border, #333);
+}
+
+.vertical-panel.position-center {
+  flex: 1;
+  min-width: 400px;
+  border-left: none;
+  border-right: none;
+}
+
+/* Sidebar-specific vertical panel styles */
+#sidebar.vertical-panel {
+  width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
+  position: relative;
+}
+
+#sidebar.vertical-panel.collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+}
+
+/* Sidebar collapse button */
+#sidebar .panel-collapse-btn,
+#sidebar-collapse-btn {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: var(--bg-tertiary, #252540);
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 10px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+#sidebar .panel-collapse-btn:hover,
+#sidebar-collapse-btn:hover {
+  background: var(--accent, #6366f1);
+  color: var(--text-primary, #fff);
+}
+
+/* Message panel styles */
+#message-panel.vertical-panel {
+  flex: 1;
+  min-width: 400px;
+}
+
+#message-panel.vertical-panel.collapsed {
+  flex: 0 0 0 !important;
+  min-width: 0 !important;
+}
+
+/* Generic panel collapse button */
+.vertical-panel .panel-collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 12px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.vertical-panel .panel-collapse-btn:hover {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.1));
+  color: var(--text-primary, #fff);
+}
+

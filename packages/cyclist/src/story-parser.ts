@@ -2,12 +2,16 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 import { parse as parseYaml } from 'yaml';
 
-// Workflow step status for TDD flow visualization
-export interface WorkflowStep {
-  agent: string;       // 'sm' | 'tea' | 'dev' | 'reviewer'
+// Workflow phase with status - used for both dynamic YAML phases and legacy TDD flow
+export interface WorkflowPhase {
+  name: string;        // Phase name (e.g., 'setup', 'red', 'green', or agent name for legacy)
+  agent: string;       // Agent that handles this phase
   label: string;       // Display label
   status: 'done' | 'current' | 'pending';
 }
+
+// Legacy alias for backward compatibility (StoryInfo.workflow uses this)
+export type WorkflowStep = WorkflowPhase;
 
 // Acceptance criteria item
 export interface CriteriaItem {
@@ -35,14 +39,28 @@ export interface StoryInfo {
 }
 
 // Parse session file for story info
-export function parseSessionFile(content: string): Partial<StoryInfo> {
+// projectDir is optional but required for dynamic workflow phase detection
+export function parseSessionFile(content: string, projectDir?: string): Partial<StoryInfo> {
   const result: Partial<StoryInfo> = {};
 
-  // Extract story ID and title from header: # Story 15-3: Title or # Story E1-1: Title
-  const headerMatch = content.match(/^#\s*Story\s+([\w-]+):\s*(.+)$/m);
+  // Extract story ID and title from header
+  // Formats supported:
+  //   # Story 15-3: Title (colon separator)
+  //   # Story 15-3 Session (with "Session" suffix)
+  const headerMatch = content.match(/^#\s*Story\s+([\w-]+):\s*(.+)$/m) ||
+                      content.match(/^#\s*Story\s+([\w-]+)\s+Session$/m);
   if (headerMatch) {
     result.id = headerMatch[1];
-    result.title = headerMatch[2].trim();
+    // For "Session" format, try to get title from **Title:** field
+    if (headerMatch[2]) {
+      result.title = headerMatch[2].trim();
+    } else {
+      // Look for **Title:** field in Story Details section
+      const titleMatch = content.match(/\*\*Title:\*\*\s*(.+)$/m);
+      if (titleMatch) {
+        result.title = titleMatch[1].trim();
+      }
+    }
   }
 
   // Extract phase: **Phase:** dev or **Phase:** TEA (RED complete) -> Dev (GREEN)
@@ -95,8 +113,8 @@ export function parseSessionFile(content: string): Partial<StoryInfo> {
     result.pr = prMatch[1];
   }
 
-  // Parse workflow progress from checkboxes
-  result.workflow = parseWorkflowProgress(content);
+  // Parse workflow progress (uses projectDir for dynamic YAML-based phases)
+  result.workflow = parseWorkflowProgress(content, projectDir);
 
   // Parse acceptance criteria checkboxes
   result.criteria = parseAcceptanceCriteria(content);
@@ -129,8 +147,27 @@ export function parseAcceptanceCriteria(content: string): CriteriaItem[] | null 
 }
 
 // Parse workflow progress checkboxes into structured data
-export function parseWorkflowProgress(content: string): WorkflowStep[] | null {
-  // Look for workflow progress section
+// If projectDir is provided, reads dynamic phases from workflow YAML
+// Otherwise falls back to hardcoded TDD flow for backward compatibility
+export function parseWorkflowProgress(content: string, projectDir?: string): WorkflowPhase[] | null {
+  // Try to extract workflow name from session content
+  // Workflow names can contain hyphens (e.g., docs-only, custom-flow)
+  const workflowMatch = content.match(/\*\*Workflow:\*\*\s*([\w-]+)/i);
+  const workflowName = workflowMatch?.[1]?.toLowerCase();
+
+  // Try to extract current phase from session content
+  const phaseMatch = content.match(/\*\*Phase:\*\*\s*(\w+)/i);
+  const currentPhase = phaseMatch?.[1]?.toLowerCase();
+
+  // If projectDir provided and workflow specified, use dynamic phases
+  if (projectDir && workflowName) {
+    const phases = getWorkflowPhases(workflowName, projectDir);
+    if (phases) {
+      return buildWorkflowWithStatus(phases, content, currentPhase);
+    }
+  }
+
+  // Fall back to checkbox-based parsing for backward compatibility
   const workflowSection = content.match(/## Workflow Progress\n([\s\S]*?)(?=\n##|\n$|$)/);
   if (!workflowSection) {
     return null;
@@ -173,7 +210,7 @@ export function parseWorkflowProgress(content: string): WorkflowStep[] | null {
   }
 
   // Build workflow array with current agent detection
-  const workflow: WorkflowStep[] = [];
+  const workflow: WorkflowPhase[] = [];
   let foundCurrent = false;
 
   for (const agent of agentOrder) {
@@ -190,6 +227,7 @@ export function parseWorkflowProgress(content: string): WorkflowStep[] | null {
     }
 
     workflow.push({
+      name: agent,  // Use agent as name for backward compat
       agent,
       label: agentLabels[agent],
       status
@@ -197,6 +235,64 @@ export function parseWorkflowProgress(content: string): WorkflowStep[] | null {
   }
 
   return workflow;
+}
+
+// Build workflow phases with status based on session content
+function buildWorkflowWithStatus(
+  phases: Omit<WorkflowPhase, 'status'>[],
+  content: string,
+  currentPhase?: string
+): WorkflowPhase[] {
+  // Parse Phase History table to determine which phases are complete
+  const completedPhases = new Set<string>();
+  const historyMatch = content.match(/### Phase History\n[\s\S]*?\|[\s\S]*?\|[\s\S]*?\|([\s\S]*?)(?=\n##|\n$|$)/);
+
+  if (historyMatch) {
+    // Parse table rows to find completed phases (those with end time)
+    const rows = historyMatch[1].split('\n').filter(line => line.includes('|'));
+    for (const row of rows) {
+      const cols = row.split('|').map(c => c.trim());
+      // Format: | phase | started | ended | duration |
+      if (cols.length >= 4) {
+        const phaseName = cols[1]?.toLowerCase();
+        const ended = cols[3];
+        // Phase is complete if it has an end time (not '-' or empty)
+        if (phaseName && ended && ended !== '-' && ended !== '') {
+          completedPhases.add(phaseName);
+        }
+      }
+    }
+  }
+
+  // Find current phase index
+  let currentPhaseIndex = -1;
+  if (currentPhase) {
+    // Try to match by phase name first, then by agent name
+    currentPhaseIndex = phases.findIndex(
+      p => p.name.toLowerCase() === currentPhase || p.agent.toLowerCase() === currentPhase
+    );
+  }
+
+  // Build workflow with status
+  return phases.map((phase, index) => {
+    let status: 'done' | 'current' | 'pending';
+
+    if (completedPhases.has(phase.name.toLowerCase())) {
+      status = 'done';
+    } else if (index === currentPhaseIndex) {
+      status = 'current';
+    } else if (currentPhaseIndex >= 0 && index < currentPhaseIndex) {
+      // Phases before current are done (even if not in history table)
+      status = 'done';
+    } else {
+      status = 'pending';
+    }
+
+    return {
+      ...phase,
+      status
+    };
+  });
 }
 
 // Parse sprint YAML for progress
@@ -214,6 +310,49 @@ export function parseSprintYaml(content: string): StoryInfo['sprint'] | null {
     // Malformed YAML
   }
   return null;
+}
+
+// Get workflow phases from workflow YAML definition
+// Checks multiple locations: .claude/workflows/, pennyfarthing-dist/workflows/
+export function getWorkflowPhases(workflowName: string, projectDir: string): Omit<WorkflowPhase, 'status'>[] | null {
+  try {
+    // Look for workflow YAML in multiple locations (in priority order)
+    const searchPaths = [
+      join(projectDir, '.claude', 'workflows', `${workflowName}.yaml`),
+      join(projectDir, 'pennyfarthing-dist', 'workflows', `${workflowName}.yaml`),
+    ];
+
+    let workflowPath: string | null = null;
+    for (const path of searchPaths) {
+      if (existsSync(path)) {
+        workflowPath = path;
+        break;
+      }
+    }
+
+    if (!workflowPath) {
+      return null;
+    }
+
+    const content = readFileSync(workflowPath, 'utf-8');
+    const data = parseYaml(content);
+
+    // Support both flat structure (phases:) and nested structure (workflow.phases:)
+    const phases = data?.workflow?.phases || data?.phases;
+    if (!phases || !Array.isArray(phases)) {
+      return null;
+    }
+
+    // Map phases to WorkflowPhase objects (without status - that's determined at runtime)
+    return phases.map((phase: { name: string; agent: string; label?: string }) => ({
+      name: phase.name,
+      agent: phase.agent,
+      label: phase.label || phase.name,  // Default label to name if not provided
+    }));
+  } catch {
+    // Malformed YAML or read error
+    return null;
+  }
 }
 
 // Get story info from session files
@@ -263,7 +402,7 @@ export function getStoryInfo(projectDir: string): StoryInfo {
     }
     const sessionPath = join(sessionDir, sessionFile);
     const sessionContent = readFileSync(sessionPath, 'utf-8');
-    const storyInfo = parseSessionFile(sessionContent);
+    const storyInfo = parseSessionFile(sessionContent, projectDir);
 
     // Get sprint progress
     const sprintPath = join(projectDir, 'sprint', 'current-sprint.yaml');

@@ -18,14 +18,21 @@ import { parse, stringify } from 'yaml';
 // =============================================================================
 
 export interface WorkflowSettings {
-  auto_handoff: boolean;
-  handoff_confirm: boolean;
+  handoff_mode: 'auto' | 'manual';
+}
+
+// Legacy settings format for migration
+export interface LegacyWorkflowSettings {
+  auto_handoff?: boolean;
+  handoff_confirm?: boolean;
 }
 
 export interface DisplaySettings {
   show_flow: boolean;
   show_ocean: boolean;
   sidebar_width: number;
+  font_ui: string;
+  font_mono: string;
 }
 
 export interface NotificationSettings {
@@ -67,13 +74,14 @@ export const PROJECT_SETTINGS_FILE = '.claude/cyclist.local.yaml';
 
 const DEFAULT_SETTINGS: CyclistSettings = {
   workflow: {
-    auto_handoff: false,
-    handoff_confirm: true,
+    handoff_mode: 'manual',
   },
   display: {
     show_flow: true,
     show_ocean: false,
     sidebar_width: 300,
+    font_ui: 'system-ui',
+    font_mono: 'SF Mono',
   },
   notifications: {
     phase_change: true,
@@ -161,8 +169,10 @@ export function validateSettings(settings: unknown): boolean {
     return false;
   }
   const workflow = s.workflow as Record<string, unknown>;
-  if (typeof workflow.auto_handoff !== 'boolean') return false;
-  if (typeof workflow.handoff_confirm !== 'boolean') return false;
+  // handoff_mode must be 'auto' or 'manual'
+  if (workflow.handoff_mode !== 'auto' && workflow.handoff_mode !== 'manual') {
+    return false;
+  }
 
   // Check display section
   if (typeof s.display !== 'object' || s.display === null) {
@@ -172,6 +182,9 @@ export function validateSettings(settings: unknown): boolean {
   if (typeof display.show_flow !== 'boolean') return false;
   if (typeof display.show_ocean !== 'boolean') return false;
   if (typeof display.sidebar_width !== 'number') return false;
+  // Font settings are optional for backwards compatibility
+  if (display.font_ui !== undefined && typeof display.font_ui !== 'string') return false;
+  if (display.font_mono !== undefined && typeof display.font_mono !== 'string') return false;
 
   // Check notifications section
   if (typeof s.notifications !== 'object' || s.notifications === null) {
@@ -193,6 +206,52 @@ export function validateSettings(settings: unknown): boolean {
 }
 
 // =============================================================================
+// Settings Migration (31-13)
+// =============================================================================
+
+/**
+ * Migrate legacy settings (auto_handoff + handoff_confirm) to new format (handoff_mode)
+ * Story 31-13: Context-aware handoffs with auto-compaction
+ *
+ * Migration logic:
+ * - auto_handoff: true → handoff_mode: 'auto'
+ * - auto_handoff: false → handoff_mode: 'manual'
+ *
+ * @param settings - Parsed settings (may be legacy or new format)
+ * @returns Settings in new format with handoff_mode
+ */
+export function migrateSettings(settings: PartialSettings): CyclistSettings {
+  const result = getDefaultSettings();
+
+  // Handle workflow migration
+  if (settings.workflow) {
+    const workflow = settings.workflow as Record<string, unknown>;
+
+    // Check for new format first
+    if (workflow.handoff_mode === 'auto' || workflow.handoff_mode === 'manual') {
+      result.workflow.handoff_mode = workflow.handoff_mode;
+    }
+    // Migrate from legacy format
+    else if ('auto_handoff' in workflow) {
+      result.workflow.handoff_mode = workflow.auto_handoff === true ? 'auto' : 'manual';
+    }
+  }
+
+  // Merge other sections normally
+  if (settings.display) {
+    result.display = { ...result.display, ...settings.display };
+  }
+  if (settings.notifications) {
+    result.notifications = { ...result.notifications, ...settings.notifications };
+  }
+  if (settings.pennyfarthing) {
+    result.pennyfarthing = { ...result.pennyfarthing, ...settings.pennyfarthing };
+  }
+
+  return result;
+}
+
+// =============================================================================
 // Settings Merging
 // =============================================================================
 
@@ -204,11 +263,8 @@ export function mergeSettings(base: CyclistSettings, override: PartialSettings):
   const result: CyclistSettings = JSON.parse(JSON.stringify(base));
 
   if (override.workflow) {
-    if (typeof override.workflow.auto_handoff === 'boolean') {
-      result.workflow.auto_handoff = override.workflow.auto_handoff;
-    }
-    if (typeof override.workflow.handoff_confirm === 'boolean') {
-      result.workflow.handoff_confirm = override.workflow.handoff_confirm;
+    if (override.workflow.handoff_mode === 'auto' || override.workflow.handoff_mode === 'manual') {
+      result.workflow.handoff_mode = override.workflow.handoff_mode;
     }
   }
 
@@ -221,6 +277,12 @@ export function mergeSettings(base: CyclistSettings, override: PartialSettings):
     }
     if (typeof override.display.sidebar_width === 'number') {
       result.display.sidebar_width = override.display.sidebar_width;
+    }
+    if (typeof override.display.font_ui === 'string') {
+      result.display.font_ui = override.display.font_ui;
+    }
+    if (typeof override.display.font_mono === 'string') {
+      result.display.font_mono = override.display.font_mono;
     }
   }
 

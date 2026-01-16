@@ -13,7 +13,7 @@ import { Server } from 'http';
 import { fileURLToPath } from 'url';
 import { dirname, join, basename } from 'path';
 import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
-import { getStoryInfo, getGitInfo, writePortFile, cleanupPortFile, getOtelConfig, findAvailablePort } from './server.js';
+import { getStoryInfo, getGitInfo, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig, findAvailablePort } from './server.js';
 import { parseToolStats, ToolStats, createEmptyStats } from './tool-stats.js';
 import {
   getTokenStats,
@@ -29,9 +29,15 @@ import {
   exportAuditLogAsJSON,
   exportAuditLogAsCSV,
   getAuditLogStats,
+  getUserEmail,
+  setUserEmailCallback,
+  setBackgroundTaskCallback,
+  BackgroundTask,
 } from './otlp-receiver.js';
 import { ClaudeService, SDKMessage } from './claude-service.js';
 import { isTodoWriteMessage, extractTodos, type TodoItem } from './todos.js';
+// Story 36-8: Import for capturing tool inputs for OTEL enrichment
+import { storePendingToolInput } from './span-correlation.js';
 import { listDirectory as listDir } from './file-browser.js';
 import {
   getProjectDirectory,
@@ -40,21 +46,28 @@ import {
   parseProjectDirArg,
 } from './paths.js';
 import { getContextUsage, ContextInfo } from './api/context.js';
-import { getVerboseMode, setVerboseMode } from './settings-store.js';
+import { getVerboseMode, setVerboseMode, loadPersistedGrants } from './settings-store.js';
 import {
   getCurrentSettings,
   saveUserSettings,
+  initializeSettings,
   type CyclistSettings,
 } from './settings.js';
 import { openSettingsWindow, setMainWindowRef, setBrowserWindowRef } from './settings-window.js';
+import {
+  IPC_DATA_CHANNELS,
+  IPC_CLAUDE_CHANNELS,
+  IPC_DIFF_CHANNELS,
+  IPC_SETTINGS_CHANNELS,
+  IPC_AUDIT_LOG_CHANNELS,
+  IPC_FILE_BROWSER_CHANNELS,
+  IPC_COMMAND_CHANNELS,
+  IPC_BACKGROUND_TASK_CHANNELS,
+} from './ipc-channels.js';
 
 // Re-export project directory functions for external consumers
 export { getProjectDirectory, setProjectDirectory, isValidProjectDirectory };
 import * as fs from 'fs';
-import { exec, execSync } from 'child_process';
-import { promisify } from 'util';
-
-const execAsync = promisify(exec);
 
 // Calculate __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -80,270 +93,37 @@ try {
   // Not in development or module not available
 }
 
-// =============================================================================
-// IPC Channel Constants (Testable Exports)
-// =============================================================================
+// Re-export IPC channels from dedicated module
+export {
+  IPC_DATA_CHANNELS,
+  IPC_CLAUDE_CHANNELS,
+  IPC_AGENT_CHANNELS,
+  IPC_DIFF_CHANNELS,
+  IPC_SETTINGS_CHANNELS,
+  IPC_AUDIT_LOG_CHANNELS,
+  IPC_FILE_BROWSER_CHANNELS,
+  IPC_COMMAND_CHANNELS,
+  IPC_BACKGROUND_TASK_CHANNELS,
+} from './ipc-channels.js';
 
-/**
- * IPC channel names for sidebar data communication (B-2)
- * Used by preload script to expose data APIs to renderer
- */
-export const IPC_DATA_CHANNELS = {
-  STATS_GET: 'stats:get',
-  STATS_UPDATE: 'stats:update',
-  PERSONA_GET: 'persona:get',
-  PERSONA_UPDATE: 'persona:update',
-  STORY_GET: 'story:get',
-  STORY_UPDATE: 'story:update',
-  GIT_GET: 'git:get',
-  GIT_UPDATE: 'git:update',
-  TOOL_STATS_GET: 'toolStats:get',
-  TOOL_STATS_UPDATE: 'toolStats:update',
-  TOKEN_STATS_GET: 'tokenStats:get',
-  TOKEN_STATS_UPDATE: 'tokenStats:update',
-  // B-17: Todo visualizer
-  TODOS_GET: 'todos:get',
-  TODOS_UPDATE: 'todos:update',
-  // B-19: Context usage progress bar
-  CONTEXT_GET: 'context:get',
-  CONTEXT_UPDATE: 'context:update',
-  // Tool events (changed files, diffs)
-  TOOL_EVENTS_UPDATE: 'toolEvents:update',
-  // 23-1: Usage limits stats
-  USAGE_STATS_GET: 'usageStats:get',
-  USAGE_STATS_UPDATE: 'usageStats:update',
-} as const;
-
-/**
- * IPC channel names for Claude SDK communication (E7-3)
- */
-export const IPC_CLAUDE_CHANNELS = {
-  CLAUDE_SEND: 'claude:send',
-  CLAUDE_MESSAGE: 'claude:message',
-  CLAUDE_COMPLETE: 'claude:complete',
-  CLAUDE_ERROR: 'claude:error',
-  CLAUDE_SET_MODE: 'claude:setMode',
-  CLAUDE_GET_MODE: 'claude:getMode',
-  CLAUDE_ABORT: 'claude:abort',
-  CLAUDE_CLEAR: 'claude:clear',
-} as const;
-
-/**
- * IPC channel names for agent launcher (B-23)
- */
-export const IPC_AGENT_CHANNELS = {
-  AGENT_LAUNCH: 'agent:launch',
-} as const;
-
-/**
- * IPC channel names for diff viewer (E8-2)
- */
-export const IPC_DIFF_CHANNELS = {
-  DIFF_UPDATE: 'diff:update',
-} as const;
-
-/**
- * IPC channel names for settings (22-5, 24-1)
- */
-export const IPC_SETTINGS_CHANNELS = {
-  VERBOSE_MODE_GET: 'settings:getVerboseMode',
-  VERBOSE_MODE_SET: 'settings:setVerboseMode',
-  VERBOSE_MODE_UPDATE: 'settings:verboseModeUpdate',
-  // 24-1: Settings panel infrastructure
-  GET: 'settings:get',
-  SAVE: 'settings:save',
-  CHANGED: 'settings:changed',
-  OPEN_WINDOW: 'settings:openWindow',
-  // 24-2: Pennyfarthing settings section
-  GET_AVAILABLE_THEMES: 'settings:getAvailableThemes',
-  // 24-5: Theme browser with metadata
-  GET_THEME_METADATA: 'settings:getThemeMetadata',
-} as const;
-
-/**
- * IPC channel names for audit log (22-6)
- */
-export const IPC_AUDIT_LOG_CHANNELS = {
-  GET_ENTRIES: 'auditLog:getEntries',
-  GET_TYPES: 'auditLog:getTypes',
-  EXPORT: 'auditLog:export',
-  GET_STATS: 'auditLog:getStats',
-  CLEAR: 'auditLog:clear',
-  ENTRY: 'auditLog:entry',
-} as const;
-
-/**
- * IPC channel names for file browser (E8-3)
- */
-export const IPC_FILE_BROWSER_CHANNELS = {
-  LIST_DIRECTORY: 'file-browser:list-directory',
-  OPEN_FILE: 'file-browser:open-file',
-  OPEN_IN_EDITOR: 'file-browser:open-in-editor',
-} as const;
-
-/**
- * IPC channel names for command execution (23-3)
- * Used to execute Claude Code commands via IPC rather than PTY injection
- */
-export const IPC_COMMAND_CHANNELS = {
-  EXECUTE: 'command:execute',
-  RESULT: 'command:result',
-  ERROR: 'command:error',
-} as const;
-
-// =============================================================================
-// Agent & Workflow Definitions (B-23)
-// =============================================================================
-
-/**
- * Agent definition for Electron menu
- */
-export interface AgentDefinition {
-  id: string;
-  label: string;
-  command: string;
-  category: 'tactical' | 'strategic';
-  accelerator?: string;
-  description?: string;
-}
-
-/**
- * Workflow definition for Electron menu
- */
-export interface WorkflowDefinition {
-  id: string;
-  label: string;
-  command: string;
-  accelerator?: string;
-  description?: string;
-}
-
-/**
- * Pennyfarthing agent definitions for menu
- * Tactical agents follow the TDD flow: SM → TEA → Dev → Reviewer
- * Strategic agents handle architecture and planning
- */
-export const AGENT_DEFINITIONS: AgentDefinition[] = [
-  // Tactical agents (TDD flow)
-  { id: 'sm', label: 'SM (Scrum Master)', command: '/sm', category: 'tactical', accelerator: 'CmdOrCtrl+Shift+S', description: 'Story coordination and sprint management' },
-  { id: 'tea', label: 'TEA (Test Engineer)', command: '/tea', category: 'tactical', accelerator: 'CmdOrCtrl+Shift+T', description: 'Test planning and TDD' },
-  { id: 'dev', label: 'Dev (Developer)', command: '/dev', category: 'tactical', accelerator: 'CmdOrCtrl+Shift+D', description: 'Feature implementation' },
-  { id: 'reviewer', label: 'Reviewer', command: '/reviewer', category: 'tactical', accelerator: 'CmdOrCtrl+Shift+R', description: 'Code review' },
-  // Strategic agents
-  { id: 'architect', label: 'Architect', command: '/architect', category: 'strategic', accelerator: 'CmdOrCtrl+Shift+A', description: 'System design and architecture' },
-  { id: 'pm', label: 'PM (Product Manager)', command: '/pm', category: 'strategic', accelerator: 'CmdOrCtrl+Shift+P', description: 'Product strategy and prioritization' },
-  { id: 'orchestrator', label: 'Orchestrator', command: '/orchestrator', category: 'strategic', description: 'Meta coordination of agents' },
-];
-
-/**
- * Pennyfarthing workflow definitions for menu
- */
-export const WORKFLOW_DEFINITIONS: WorkflowDefinition[] = [
-  { id: 'new-work', label: 'New Work', command: '/new-work', accelerator: 'CmdOrCtrl+Shift+N', description: 'Start a new story from backlog' },
-  { id: 'work', label: 'Resume Work', command: '/work', accelerator: 'CmdOrCtrl+Shift+W', description: 'Resume current work session' },
-  { id: 'benchmark', label: 'Benchmark', command: '/benchmark', description: 'Run agent benchmarks' },
-];
-
-/**
- * Build Electron menu for agents
- * Groups agents by category with separator between tactical and strategic
- */
-export function buildAgentMenu(): { label: string; submenu: unknown[] } {
-  const tacticalAgents = AGENT_DEFINITIONS.filter(a => a.category === 'tactical');
-  const strategicAgents = AGENT_DEFINITIONS.filter(a => a.category === 'strategic');
-
-  const submenu: unknown[] = [
-    ...tacticalAgents.map(agent => ({
-      label: agent.label,
-      accelerator: agent.accelerator,
-      click: () => broadcastToRenderer(IPC_AGENT_CHANNELS.AGENT_LAUNCH, agent.command),
-    })),
-    { type: 'separator' },
-    ...strategicAgents.map(agent => ({
-      label: agent.label,
-      accelerator: agent.accelerator,
-      click: () => broadcastToRenderer(IPC_AGENT_CHANNELS.AGENT_LAUNCH, agent.command),
-    })),
-  ];
-
-  return {
-    label: 'Agents',
-    submenu,
-  };
-}
-
-/**
- * Build Electron menu for workflows
- */
-export function buildWorkflowMenu(): { label: string; submenu: unknown[] } {
-  const submenu = WORKFLOW_DEFINITIONS.map(workflow => ({
-    label: workflow.label,
-    accelerator: workflow.accelerator,
-    click: () => broadcastToRenderer(IPC_AGENT_CHANNELS.AGENT_LAUNCH, workflow.command),
-  }));
-
-  return {
-    label: 'Workflows',
-    submenu,
-  };
-}
-
-/**
- * Build Tools menu with Execution Log (Story 22-6)
- * Updated: toggles tool panel instead of showing modal
- */
-export function buildToolsMenu(): { label: string; submenu: unknown[] } {
-  return {
-    label: 'Tools',
-    submenu: [
-      // 24-9: Quick Theme Switcher - DISABLED until functionality is ready
-      // {
-      //   label: 'Quick Theme Switcher',
-      //   accelerator: 'CmdOrCtrl+K',
-      //   click: () => broadcastToRenderer('theme:showQuickSwitcher', null),
-      // },
-      // { type: 'separator' },
-      {
-        label: 'Execution Log',
-        accelerator: 'CmdOrCtrl+Shift+L',
-        click: () => broadcastToRenderer('tools:toggleToolPanel', null),
-      },
-    ],
-  };
-}
-
-/**
- * Build custom View menu with Verbose Mode toggle (Story 22-5)
- * Includes standard view items plus custom Cyclist options
- */
-export function buildViewMenu(): { label: string; submenu: unknown[] } {
-  return {
-    label: 'View',
-    submenu: [
-      { role: 'reload' },
-      { role: 'forceReload' },
-      { role: 'toggleDevTools' },
-      { type: 'separator' },
-      { role: 'resetZoom' },
-      { role: 'zoomIn' },
-      { role: 'zoomOut' },
-      { type: 'separator' },
-      { role: 'togglefullscreen' },
-      { type: 'separator' },
-      {
-        id: 'verbose-mode',
-        label: 'Verbose Mode',
-        type: 'checkbox',
-        checked: getVerboseMode(),
-        accelerator: 'CmdOrCtrl+Shift+V',
-        click: (menuItem: { checked: boolean }) => {
-          setVerboseMode(menuItem.checked);
-          broadcastToRenderer(IPC_SETTINGS_CHANNELS.VERBOSE_MODE_UPDATE, menuItem.checked);
-        },
-      },
-    ],
-  };
-}
+// Re-export menu builders from dedicated module
+export {
+  AgentDefinition,
+  WorkflowDefinition,
+  AGENT_DEFINITIONS,
+  WORKFLOW_DEFINITIONS,
+  buildAgentMenu,
+  buildWorkflowMenu,
+  buildToolsMenu,
+  buildViewMenu,
+  getMenuTemplate,
+} from './menu-builder.js';
+import {
+  buildAgentMenu,
+  buildWorkflowMenu,
+  buildToolsMenu,
+  buildViewMenu,
+} from './menu-builder.js';
 
 /**
  * Get list of registered data IPC channels (for testing)
@@ -360,6 +140,7 @@ export function getDataChannels(): string[] {
     IPC_DATA_CHANNELS.TODOS_GET,
     IPC_DATA_CHANNELS.CONTEXT_GET,
     IPC_DATA_CHANNELS.USAGE_STATS_GET, // 23-1
+    IPC_DATA_CHANNELS.PROJECT_INFO_GET, // 35-2
   ];
 }
 
@@ -673,199 +454,21 @@ export function startContextPolling(projectDir: string, getSessionId?: () => str
 }
 
 // =============================================================================
-// Usage Stats State (23-1)
-// =============================================================================
+// Re-export usage stats from dedicated module
+export { UsageStats, getUsageStats, USAGE_POLL_INTERVAL_MS, startUsagePolling } from './usage-stats.js';
+import {
+  getUsageStats,
+  resetUsageStats as resetUsageStatsInternal,
+  startUsagePolling as startUsagePollingInternal,
+} from './usage-stats.js';
 
-/**
- * Usage stats structure - tracks Claude API usage limits
- */
-export interface UsageStats {
-  fiveHourPercent: number;
-  weeklyPercent: number;
-  fiveHourResetAt: string | null;
-  weeklyResetAt: string | null;
-  planType: 'pro' | 'max' | 'unknown';
+// Wrapper functions that include broadcast
+function resetUsageStats(): void {
+  resetUsageStatsInternal((s) => broadcastToRenderer(IPC_DATA_CHANNELS.USAGE_STATS_UPDATE, s));
 }
 
-/**
- * Current usage stats state
- */
-let currentUsageStats: UsageStats = {
-  fiveHourPercent: 0,
-  weeklyPercent: 0,
-  fiveHourResetAt: null,
-  weeklyResetAt: null,
-  planType: 'unknown',
-};
-
-/**
- * Get current usage stats (for testing and IPC)
- */
-export function getUsageStats(): UsageStats {
-  return { ...currentUsageStats };
-}
-
-/**
- * Update usage stats state and broadcast if changed
- */
-export function updateUsageStats(stats: UsageStats): boolean {
-  if (
-    currentUsageStats.fiveHourPercent === stats.fiveHourPercent &&
-    currentUsageStats.weeklyPercent === stats.weeklyPercent
-  ) {
-    return false;
-  }
-  currentUsageStats = { ...stats };
-  broadcastToRenderer(IPC_DATA_CHANNELS.USAGE_STATS_UPDATE, currentUsageStats);
-  return true;
-}
-
-/**
- * Reset usage stats to default values
- */
-export function resetUsageStats(): void {
-  currentUsageStats = {
-    fiveHourPercent: 0,
-    weeklyPercent: 0,
-    fiveHourResetAt: null,
-    weeklyResetAt: null,
-    planType: 'unknown',
-  };
-  broadcastToRenderer(IPC_DATA_CHANNELS.USAGE_STATS_UPDATE, currentUsageStats);
-}
-
-/**
- * Usage polling interval in milliseconds
- * 60 seconds is reasonable for usage data that changes slowly
- */
-export const USAGE_POLL_INTERVAL_MS = 60000;
-
-/**
- * Timer reference for usage polling
- */
-let usagePollTimer: NodeJS.Timeout | null = null;
-
-/**
- * Max tokens for rate limit calculation (Claude Max plan)
- * Empirically derived: ~217M tokens per 5-hour block based on Claude /config display
- */
-const MAX_TOKENS_PER_BLOCK = 217_000_000;
-
-/**
- * Fetch usage stats from ccusage CLI
- * Uses local JSONL files to calculate 5-hour and weekly usage
- */
-async function fetchUsageFromCcusage(): Promise<UsageStats | null> {
-  try {
-    // Run ccusage blocks --json asynchronously to avoid blocking main process
-    // Use shell: true and explicit PATH to handle Electron's limited environment
-    const { stdout: output } = await execAsync('npx ccusage@latest blocks --json --offline', {
-      encoding: 'utf-8',
-      timeout: 30000,
-      shell: '/bin/zsh',
-      env: {
-        ...process.env,
-        PATH: `${process.env.PATH || ''}:/usr/local/bin:/opt/homebrew/bin:${process.env.HOME}/.nvm/versions/node/v20.18.0/bin`,
-      },
-    });
-
-    if (!output || !output.trim()) {
-      console.warn('[UsageStats] Empty output from ccusage');
-      return null;
-    }
-
-    const data = JSON.parse(output);
-    const blocks = data.blocks || [];
-
-    // Find the active block (current 5-hour window)
-    const activeBlock = blocks.find((b: { isActive?: boolean }) => b.isActive);
-
-    // Calculate 5-hour percentage from active block
-    let fiveHourPercent = 0;
-    let fiveHourResetAt: string | null = null;
-
-    if (activeBlock) {
-      fiveHourPercent = Math.round((activeBlock.totalTokens / MAX_TOKENS_PER_BLOCK) * 100);
-      fiveHourResetAt = activeBlock.endTime || null;
-    }
-
-    // Calculate weekly usage from last 7 days of blocks
-    const now = new Date();
-    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-    // Sum tokens from blocks in the last 7 days
-    let weeklyTokens = 0;
-    for (const block of blocks) {
-      const blockStart = new Date(block.startTime);
-      if (blockStart >= weekAgo) {
-        weeklyTokens += block.totalTokens || 0;
-      }
-    }
-
-    // Weekly limit empirically derived: ~2.85B tokens based on Claude /config display
-    const weeklyMaxTokens = 2_850_000_000;
-    const weeklyPercent = Math.round((weeklyTokens / weeklyMaxTokens) * 100);
-
-    // Weekly reset is end of current week (Sunday midnight UTC)
-    const daysUntilSunday = (7 - now.getUTCDay()) % 7 || 7;
-    const weeklyReset = new Date(now);
-    weeklyReset.setUTCDate(weeklyReset.getUTCDate() + daysUntilSunday);
-    weeklyReset.setUTCHours(0, 0, 0, 0);
-
-    return {
-      fiveHourPercent: Math.min(fiveHourPercent, 100),
-      weeklyPercent: Math.min(weeklyPercent, 100),
-      fiveHourResetAt,
-      weeklyResetAt: weeklyReset.toISOString(),
-      planType: 'max',
-    };
-  } catch (error) {
-    console.warn('[UsageStats] Failed to fetch from ccusage:', error);
-    return null;
-  }
-}
-
-/**
- * Start polling usage stats
- * Uses ccusage CLI to read local JSONL files for usage data
- */
-export function startUsagePolling(_projectDir: string): () => void {
-  // Initial fetch with error handling
-  fetchUsageFromCcusage()
-    .then((stats) => {
-      if (stats) {
-        updateUsageStats(stats);
-        console.log('[UsageStats] Initial fetch:', stats.fiveHourPercent + '% (5hr),', stats.weeklyPercent + '% (weekly)');
-      } else {
-        console.log('[UsageStats] Initial fetch: no data available');
-      }
-    })
-    .catch((err) => {
-      console.warn('[UsageStats] Initial fetch failed:', err?.message || err);
-    });
-
-  // Set up polling interval with error handling
-  usagePollTimer = setInterval(async () => {
-    try {
-      const stats = await fetchUsageFromCcusage();
-      if (stats) {
-        updateUsageStats(stats);
-      }
-    } catch (err) {
-      console.warn('[UsageStats] Poll failed:', (err as Error)?.message || err);
-    }
-  }, USAGE_POLL_INTERVAL_MS);
-
-  console.log('[UsageStats] Polling started (every', USAGE_POLL_INTERVAL_MS / 1000, 's)');
-
-  // Return cleanup function
-  return () => {
-    if (usagePollTimer) {
-      clearInterval(usagePollTimer);
-      usagePollTimer = null;
-      console.log('[UsageStats] Polling stopped');
-    }
-  };
+function startUsagePolling(projectDir: string): () => void {
+  return startUsagePollingInternal(projectDir, (s) => broadcastToRenderer(IPC_DATA_CHANNELS.USAGE_STATS_UPDATE, s));
 }
 
 // =============================================================================
@@ -938,13 +541,26 @@ parseProjectDirArg();
 // =============================================================================
 
 // Reference to main window for broadcasting data updates
-let dataWindowRef: { webContents: { send: (channel: string, data: unknown) => void; isDestroyed: () => boolean } } | null = null;
+// 35-6: Extended type to include executeJavaScript for font settings
+let dataWindowRef: {
+  webContents: {
+    send: (channel: string, data: unknown) => void;
+    isDestroyed: () => boolean;
+    executeJavaScript: (code: string) => Promise<unknown>;
+  }
+} | null = null;
 
 /**
  * Set the main window reference for data broadcasts
  * Called when window is created in Electron runtime
  */
-export function setMainWindow(window: { webContents: { send: (channel: string, data: unknown) => void; isDestroyed: () => boolean } } | null): void {
+export function setMainWindow(window: {
+  webContents: {
+    send: (channel: string, data: unknown) => void;
+    isDestroyed: () => boolean;
+    executeJavaScript: (code: string) => Promise<unknown>;
+  }
+} | null): void {
   dataWindowRef = window;
 }
 
@@ -961,6 +577,35 @@ export function broadcastToRenderer(channel: string, data: unknown): void {
 }
 
 /**
+ * Apply font settings directly to main window via executeJavaScript
+ * 35-6: This is the reliable way to apply CSS variable changes in Electron
+ * Uses webContents.executeJavaScript to set CSS custom properties on :root
+ * @param settings - CyclistSettings object containing display.font_ui and display.font_mono
+ */
+export function applyFontSettingsToMainWindow(settings: CyclistSettings): void {
+  if (!dataWindowRef || dataWindowRef.webContents.isDestroyed()) {
+    return;
+  }
+
+  const fontUi = settings.display?.font_ui;
+  const fontMono = settings.display?.font_mono;
+
+  // Build the JavaScript to execute in renderer
+  const jsCode = `
+    (function() {
+      const root = document.documentElement;
+      ${fontUi ? `root.style.setProperty('--font-ui', '"${fontUi}", system-ui, -apple-system, sans-serif');` : ''}
+      ${fontMono ? `root.style.setProperty('--font-mono', '"${fontMono}", Monaco, "Courier New", monospace');` : ''}
+      console.log('[FontSettings] Applied via executeJavaScript:', '${fontUi || 'default'}', '${fontMono || 'default'}');
+    })();
+  `;
+
+  dataWindowRef.webContents.executeJavaScript(jsCode).catch((err) => {
+    console.error('[FontSettings] Failed to apply fonts:', err);
+  });
+}
+
+/**
  * Set up IPC handlers for sidebar data communication
  * Called after app is ready in Electron
  * B-2.1: Handlers now wired to real data sources
@@ -974,16 +619,60 @@ export function setupDataIPCHandlers(ipcMain: {
     return currentStats;
   });
 
-  // Persona handler - returns current persona from pennyfarthing (B-2.1)
+  // Persona handler - returns current persona from pennyfarthing (B-2.1, 37-8)
+  // Returns complete persona object with all fields the sidebar expects.
+  // When no active session/theme, returns null for persona-specific fields
+  // but always provides displayName (uses projectName as fallback).
   ipcMain.handle(IPC_DATA_CHANNELS.PERSONA_GET, async () => {
     const projectDir = getProjectDirectory();
-    if (!projectDir) return { projectName: 'No Project' };
+    if (!projectDir) {
+      return {
+        projectName: 'No Project',
+        character: null,
+        displayName: 'No Project',
+        role: null,
+        roleDescription: null,
+        style: null,
+        theme: null,
+        slug: null,
+        quote: null,
+        helper: null,
+        ocean: null,
+      };
+    }
     const projectName = basename(projectDir);
     if (!detectPennyfarthingProject(projectDir)) {
-      return { projectName };
+      return {
+        projectName,
+        character: null,
+        displayName: projectName,
+        role: null,
+        roleDescription: null,
+        style: null,
+        theme: null,
+        slug: null,
+        quote: null,
+        helper: null,
+        ocean: null,
+      };
     }
     const sessionId = process.env.CYCLIST_SESSION_ID;
     const persona = getCurrentPersona(projectDir, sessionId);
+    if (!persona) {
+      return {
+        projectName,
+        character: null,
+        displayName: projectName,
+        role: null,
+        roleDescription: null,
+        style: null,
+        theme: null,
+        slug: null,
+        quote: null,
+        helper: null,
+        ocean: null,
+      };
+    }
     return { ...persona, projectName };
   });
 
@@ -1028,6 +717,14 @@ export function setupDataIPCHandlers(ipcMain: {
     return getUsageStats();
   });
 
+  // 35-2: Project info handler - returns directory and user email
+  ipcMain.handle(IPC_DATA_CHANNELS.PROJECT_INFO_GET, async () => {
+    return {
+      directory: getProjectDirectory(),
+      userEmail: getUserEmail(),
+    };
+  });
+
   console.log('Data IPC handlers registered:', getDataChannels());
 }
 
@@ -1060,6 +757,23 @@ export function startProjectWatchers(): void {
     console.log(`Tool event broadcast: ${event.toolName}`);
   });
   console.log('Tool event callback registered for audit log broadcasts');
+
+  // 35-2: Register user email callback for project info updates
+  setUserEmailCallback((email: string) => {
+    broadcastToRenderer(IPC_DATA_CHANNELS.PROJECT_INFO_UPDATE, {
+      directory: getProjectDirectory(),
+      userEmail: email,
+    });
+    console.log(`User email discovered: ${email}`);
+  });
+  console.log('User email callback registered for OTLP broadcasts');
+
+  // 31-15: Register background task completion callback
+  setBackgroundTaskCallback((task: BackgroundTask) => {
+    broadcastToRenderer(IPC_BACKGROUND_TASK_CHANNELS.TASK_COMPLETED, task);
+    console.log(`Background task completed: ${task.subagentType} (${task.success ? 'success' : 'failed'})`);
+  });
+  console.log('Background task callback registered for OTLP broadcasts');
 
   // Start watching for agent changes
   if (detectPennyfarthingProject(projectDir)) {
@@ -1109,6 +823,13 @@ export function getClaudeService(): ClaudeService {
       cwd: projectDir,
       env: otelConfig ?? undefined,
     });
+
+    // B-24 fix: Track Claude process PID for targeted cleanup
+    claudeServiceInstance.on('process-spawned', (pid: number) => {
+      writePidFile(projectDir, pid);
+      console.log(`[ClaudeService] Wrote PID file: ${pid}`);
+    });
+
     if (otelConfig) {
       console.log('[ClaudeService] OTEL config enabled:', otelConfig.OTEL_EXPORTER_OTLP_ENDPOINT);
     } else {
@@ -1182,6 +903,13 @@ export function setupClaudeIPCHandlers(ipcMain: {
           if (content && Array.isArray(content)) {
             for (const block of content) {
               if (block.type === 'tool_use') {
+                // Story 36-8: Capture ALL tool inputs for OTEL enrichment correlation
+                // Story 36-9: This is the primary correlation mechanism since Claude Code
+                // OTEL logs don't include traceId/spanId at logRecord level
+                if (block.id && block.name && block.input) {
+                  storePendingToolInput(block.id, block.name, block.input);
+                }
+
                 if (block.name === 'Edit') {
                   const input = block.input as { file_path: string; old_string: string; new_string: string };
                   broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, {
@@ -1282,14 +1010,26 @@ export function setupFileBrowserIPCHandlers(ipcMain: {
     return listDir(dirPath, projectDir);
   });
 
-  // Open file handler - broadcasts file open event (for E8-4 integration)
+  // Open file handler - opens file in OS default application (Story 35-11)
   ipcMain.handle(IPC_FILE_BROWSER_CHANNELS.OPEN_FILE, async (_event: unknown, ...args: unknown[]) => {
     const filePath = args[0] as string;
-    // For E8-3: Just log the file open request
-    // E8-4 will add actual file viewer tab creation
-    console.log('[FileBrowser] Open file requested:', filePath);
-    broadcastToRenderer('file-browser:file-opened', { path: filePath });
-    return true;
+    console.log('[FileBrowser] Opening file in OS default app:', filePath);
+
+    try {
+      const { shell } = require('electron');
+      const result = await shell.openPath(filePath);
+      if (result) {
+        // shell.openPath returns empty string on success, error message on failure
+        console.error('[FileBrowser] Failed to open file:', result);
+        throw new Error(result);
+      }
+      broadcastToRenderer('file-browser:file-opened', { path: filePath });
+      return { success: true };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      console.error('[FileBrowser] Error opening file:', message);
+      return { success: false, error: message };
+    }
   });
 
   // Open in external editor handler - opens file in user's $EDITOR
@@ -1356,495 +1096,46 @@ export async function handleSettingsGet(): Promise<CyclistSettings> {
 
 /**
  * Handle settings:save IPC call
- * Saves settings and returns updated settings
+ * Saves settings and returns result with success flag
  * Also writes theme to persona-config.local.yaml for Pennyfarthing compatibility (24-2)
  */
-export async function handleSettingsSave(settings: Partial<CyclistSettings>): Promise<CyclistSettings> {
-  saveUserSettings(settings);
-
-  // 24-2: Dual-write theme to persona-config.local.yaml for Pennyfarthing compatibility
-  const projectDir = getProjectDirectory();
-  if (settings.pennyfarthing?.theme && projectDir) {
-    try {
-      const personaConfigPath = join(projectDir, '.claude', 'persona-config.local.yaml');
-      fs.writeFileSync(personaConfigPath, `theme: "${settings.pennyfarthing.theme}"\n`, 'utf-8');
-    } catch (err) {
-      console.error('Failed to write persona-config.local.yaml:', err);
-    }
-  }
-
-  return getCurrentSettings();
-}
-
-/**
- * Get available themes from pennyfarthing-dist/personas/themes (24-2)
- * Returns sorted list of theme names
- */
-export async function getAvailableThemes(): Promise<string[]> {
-  const projectDir = getProjectDirectory();
-  if (!projectDir) {
-    return ['alice-in-wonderland']; // Default fallback
-  }
-
+export async function handleSettingsSave(settings: Partial<CyclistSettings>): Promise<{ success: boolean; settings?: CyclistSettings }> {
   try {
-    const themesDir = join(projectDir, 'pennyfarthing-dist', 'personas', 'themes');
-    const files = fs.readdirSync(themesDir);
-    return files
-      .filter(f => f.endsWith('.yaml'))
-      .map(f => f.replace('.yaml', ''))
-      .sort();
-  } catch (err) {
-    console.error('Failed to read themes directory:', err);
-    return ['alice-in-wonderland']; // Default fallback
-  }
-}
+    saveUserSettings(settings);
 
-// =============================================================================
-// Theme Metadata (24-5)
-// =============================================================================
-
-/**
- * Theme metadata interface for theme browser
- */
-export interface ThemeMetadata {
-  id: string;
-  name: string;
-  description: string;
-  source: string;
-  tier: 'S' | 'A' | 'B' | 'U';
-  category: string;
-  agentCount: number;
-}
-
-/**
- * Agent data within a theme (24-6)
- */
-export interface ThemeAgent {
-  character: string;
-  quote?: string;
-  style?: string;
-  role?: string;
-}
-
-/**
- * Extended theme metadata including agent mappings (24-6)
- */
-export interface ThemeMetadataWithAgents extends ThemeMetadata {
-  agents: {
-    sm?: ThemeAgent;
-    tea?: ThemeAgent;
-    dev?: ThemeAgent;
-    reviewer?: ThemeAgent;
-    architect?: ThemeAgent;
-    pm?: ThemeAgent;
-    orchestrator?: ThemeAgent;
-    'tech-writer'?: ThemeAgent;
-    'ux-designer'?: ThemeAgent;
-    devops?: ThemeAgent;
-  };
-}
-
-/**
- * Category mapping for known themes (24-5)
- * Maps theme IDs or source patterns to categories
- */
-export const CATEGORY_MAP: Record<string, string> = {
-  // TV Series
-  'star-trek-tos': 'TV Series',
-  'star-trek-tng': 'TV Series',
-  'star-trek-ds9': 'TV Series',
-  'star-trek-voyager': 'TV Series',
-  'breaking-bad': 'TV Series',
-  'the-office': 'TV Series',
-  'the-wire': 'TV Series',
-  'game-of-thrones': 'TV Series',
-  'ted-lasso': 'TV Series',
-  'parks-and-recreation': 'TV Series',
-  'friends': 'TV Series',
-  'seinfeld': 'TV Series',
-  'mad-men': 'TV Series',
-  'the-sopranos': 'TV Series',
-  'arrested-development': 'TV Series',
-  'schitts-creek': 'TV Series',
-  'brooklyn-nine-nine': 'TV Series',
-  'firefly': 'TV Series',
-  'battlestar-galactica': 'TV Series',
-  'doctor-who': 'TV Series',
-  'stranger-things': 'TV Series',
-  'the-good-place': 'TV Series',
-  'its-always-sunny': 'TV Series',
-  'downton-abbey': 'TV Series',
-  'the-crown': 'TV Series',
-  'succession': 'TV Series',
-  'the-simpsons': 'TV Series',
-  'futurama': 'TV Series',
-  'arcane': 'TV Series',
-  'avatar-the-last-airbender': 'TV Series',
-  'severance': 'TV Series',
-  'the-west-wing': 'TV Series',
-  'lost': 'TV Series',
-  'the-x-files': 'TV Series',
-  'twin-peaks': 'TV Series',
-  'the-twilight-zone': 'TV Series',
-  'mash': 'TV Series',
-  'a-team': 'TV Series',
-  // Literature
-  'alice-in-wonderland': 'Literature',
-  'lord-of-the-rings': 'Literature',
-  'discworld': 'Literature',
-  'hitchhikers-guide': 'Literature',
-  'dune': 'Literature',
-  'pride-and-prejudice': 'Literature',
-  'sherlock-holmes': 'Literature',
-  'harry-potter': 'Literature',
-  'narnia': 'Literature',
-  'foundation': 'Literature',
-  'wheel-of-time': 'Literature',
-  'stormlight-archive': 'Literature',
-  'mistborn': 'Literature',
-  'good-omens': 'Literature',
-  'american-gods': 'Literature',
-  'the-expanse': 'Literature',
-  'enders-game': 'Literature',
-  'three-body-problem': 'Literature',
-  'hyperion': 'Literature',
-  '1984': 'Literature',
-  'brave-new-world': 'Literature',
-  'frankenstein': 'Literature',
-  'dracula': 'Literature',
-  'moby-dick': 'Literature',
-  'odyssey': 'Literature',
-  'iliad': 'Literature',
-  'don-quixote': 'Literature',
-  'count-of-monte-cristo': 'Literature',
-  'les-miserables': 'Literature',
-  'great-gatsby': 'Literature',
-  'winnie-the-pooh': 'Literature',
-  'peter-pan': 'Literature',
-  'wizard-of-oz': 'Literature',
-  // Film
-  'star-wars': 'Film',
-  'matrix': 'Film',
-  'inception': 'Film',
-  'pulp-fiction': 'Film',
-  'godfather': 'Film',
-  'shawshank-redemption': 'Film',
-  'fight-club': 'Film',
-  'blade-runner': 'Film',
-  'back-to-the-future': 'Film',
-  'jurassic-park': 'Film',
-  'indiana-jones': 'Film',
-  'marvel-avengers': 'Film',
-  'guardians-of-the-galaxy': 'Film',
-  'pirates-of-the-caribbean': 'Film',
-  'princess-bride': 'Film',
-  'monty-python': 'Film',
-  'ghostbusters': 'Film',
-  'men-in-black': 'Film',
-  'ocean-eleven': 'Film',
-  'big-lebowski': 'Film',
-  'grand-budapest-hotel': 'Film',
-  'kill-bill': 'Film',
-  'john-wick': 'Film',
-  'die-hard': 'Film',
-  'terminator': 'Film',
-  'alien': 'Film',
-  'predator': 'Film',
-  'mad-max': 'Film',
-  'studio-ghibli': 'Film',
-  'pixar': 'Film',
-  'disney-classics': 'Film',
-  'interstellar': 'Film',
-  'arrival': 'Film',
-  'her': 'Film',
-  'ex-machina': 'Film',
-  // Mythology
-  'greek-mythology': 'Mythology',
-  'norse-mythology': 'Mythology',
-  'egyptian-mythology': 'Mythology',
-  'celtic-mythology': 'Mythology',
-  'japanese-mythology': 'Mythology',
-  'hindu-mythology': 'Mythology',
-  'arthurian-legend': 'Mythology',
-  // Games
-  'zelda': 'Games',
-  'mario': 'Games',
-  'final-fantasy': 'Games',
-  'mass-effect': 'Games',
-  'bioshock': 'Games',
-  'portal': 'Games',
-  'half-life': 'Games',
-  'halo': 'Games',
-  'overwatch': 'Games',
-  'world-of-warcraft': 'Games',
-  'elder-scrolls': 'Games',
-  'fallout': 'Games',
-  'cyberpunk': 'Games',
-  'witcher': 'Games',
-  'red-dead-redemption': 'Games',
-  'last-of-us': 'Games',
-  'god-of-war': 'Games',
-  'dark-souls': 'Games',
-  'elden-ring': 'Games',
-  'pokemon': 'Games',
-  'animal-crossing': 'Games',
-  'minecraft': 'Games',
-  // History
-  'ancient-rome': 'History',
-  'ancient-greece': 'History',
-  'ancient-egypt': 'History',
-  'renaissance': 'History',
-  'victorian-era': 'History',
-  'wild-west': 'History',
-  'world-war-2': 'History',
-  'cold-war': 'History',
-  'founding-fathers': 'History',
-  // Music
-  'classical-composers': 'Music',
-  'jazz-legends': 'Music',
-  'rock-legends': 'Music',
-  'beatles': 'Music',
-  'queen': 'Music',
-  // Science
-  'scientists': 'Science',
-  'space-exploration': 'Science',
-};
-
-/**
- * Derive category from theme ID and source (24-5)
- * Uses CATEGORY_MAP for known themes, falls back to pattern matching
- */
-export function deriveCategory(themeId: string, source: string): string {
-  // Check explicit mapping first
-  if (CATEGORY_MAP[themeId]) {
-    return CATEGORY_MAP[themeId];
-  }
-
-  // Pattern matching on source text
-  const sourceLower = source.toLowerCase();
-
-  if (sourceLower.includes('tv series') || sourceLower.includes('tv show') ||
-      sourceLower.includes('amc') || sourceLower.includes('hbo') ||
-      sourceLower.includes('netflix') || sourceLower.includes('bbc')) {
-    return 'TV Series';
-  }
-
-  if (sourceLower.includes('film') || sourceLower.includes('movie') ||
-      sourceLower.includes('cinema') || sourceLower.includes('disney') ||
-      sourceLower.includes('pixar') || sourceLower.includes('studio ghibli')) {
-    return 'Film';
-  }
-
-  if (sourceLower.includes('mythology') || sourceLower.includes('myth') ||
-      sourceLower.includes('legend') || sourceLower.includes('folklore')) {
-    return 'Mythology';
-  }
-
-  if (sourceLower.includes('novel') || sourceLower.includes('book') ||
-      sourceLower.includes(' by ') || sourceLower.includes('author') ||
-      sourceLower.includes('literary') || sourceLower.includes('classic')) {
-    return 'Literature';
-  }
-
-  if (sourceLower.includes('game') || sourceLower.includes('video game') ||
-      sourceLower.includes('nintendo') || sourceLower.includes('playstation') ||
-      sourceLower.includes('xbox')) {
-    return 'Games';
-  }
-
-  if (sourceLower.includes('history') || sourceLower.includes('historical') ||
-      sourceLower.includes('century') || sourceLower.includes('ancient') ||
-      sourceLower.includes('era')) {
-    return 'History';
-  }
-
-  if (sourceLower.includes('music') || sourceLower.includes('composer') ||
-      sourceLower.includes('band') || sourceLower.includes('musician')) {
-    return 'Music';
-  }
-
-  return 'Other';
-}
-
-// Theme metadata cache
-let themeMetadataCache: ThemeMetadata[] | null = null;
-
-/**
- * Get cached theme metadata
- */
-export function getThemeMetadataCache(): ThemeMetadata[] | null {
-  return themeMetadataCache;
-}
-
-/**
- * Load theme metadata from YAML files (24-5)
- * Parses all theme files and extracts metadata for the browser
- */
-export async function loadThemeMetadata(): Promise<ThemeMetadata[]> {
-  // Return cache if available
-  if (themeMetadataCache) {
-    return themeMetadataCache;
-  }
-
-  const projectDir = getProjectDirectory();
-  if (!projectDir) {
-    themeMetadataCache = [];
-    return themeMetadataCache;
-  }
-
-  const metadata: ThemeMetadata[] = [];
-
-  try {
-    const themesDir = join(projectDir, 'pennyfarthing-dist', 'personas', 'themes');
-    const files = fs.readdirSync(themesDir).filter(f => f.endsWith('.yaml')).sort();
-
-    // Dynamic import of yaml (already available in project)
-    const { default: yaml } = await import('yaml');
-
-    for (const file of files) {
+    // 24-2: Dual-write theme to persona-config.local.yaml for Pennyfarthing compatibility
+    const projectDir = getProjectDirectory();
+    if (settings.pennyfarthing?.theme && projectDir) {
       try {
-        const filePath = join(themesDir, file);
-        const content = fs.readFileSync(filePath, 'utf-8');
-        const parsed = yaml.parse(content);
-
-        if (parsed?.theme) {
-          const themeId = file.replace('.yaml', '');
-          const theme = parsed.theme;
-          const agentCount = parsed.agents ? Object.keys(parsed.agents).length : 0;
-
-          metadata.push({
-            id: themeId,
-            name: theme.name || themeId,
-            description: theme.description || '',
-            source: theme.source || '',
-            tier: (theme.tier as 'S' | 'A' | 'B' | 'U') || 'U',
-            category: deriveCategory(themeId, theme.source || ''),
-            agentCount,
-          });
-        }
-      } catch (fileErr) {
-        console.error(`Failed to parse theme file ${file}:`, fileErr);
+        const personaConfigPath = join(projectDir, '.claude', 'persona-config.local.yaml');
+        fs.writeFileSync(personaConfigPath, `theme: "${settings.pennyfarthing.theme}"\n`, 'utf-8');
+      } catch (err) {
+        console.error('Failed to write persona-config.local.yaml:', err);
       }
     }
 
-    // Cache the results
-    themeMetadataCache = metadata;
-    return metadata;
-  } catch (err) {
-    console.error('Failed to load theme metadata:', err);
-    themeMetadataCache = [];
-    return themeMetadataCache;
+    return { success: true, settings: getCurrentSettings() };
+  } catch {
+    return { success: false };
   }
 }
 
-// Theme metadata with agents cache (24-6)
-let themeMetadataWithAgentsCache: ThemeMetadataWithAgents[] | null = null;
+// Re-export theme metadata from dedicated module
+export {
+  ThemeMetadata,
+  ThemeAgent,
+  ThemeMetadataWithAgents,
+  CATEGORY_MAP,
+  deriveCategory,
+  getThemeMetadataCache,
+  getAvailableThemes,
+  loadThemeMetadata,
+  loadThemeMetadataWithAgents,
+} from './theme-metadata.js';
+import { getAvailableThemes, loadThemeMetadata } from './theme-metadata.js';
 
-/**
- * Load theme metadata including agent character mappings (24-6)
- * Extended version of loadThemeMetadata for the preview panel
- */
-export async function loadThemeMetadataWithAgents(): Promise<ThemeMetadataWithAgents[]> {
-  // Return cache if available
-  if (themeMetadataWithAgentsCache) {
-    return themeMetadataWithAgentsCache;
-  }
-
-  const projectDir = getProjectDirectory();
-  if (!projectDir) {
-    themeMetadataWithAgentsCache = [];
-    return themeMetadataWithAgentsCache;
-  }
-
-  const metadata: ThemeMetadataWithAgents[] = [];
-
-  try {
-    const themesDir = join(projectDir, 'pennyfarthing-dist', 'personas', 'themes');
-    const files = fs.readdirSync(themesDir).filter(f => f.endsWith('.yaml')).sort();
-
-    // Dynamic import of yaml (already available in project)
-    const { default: yaml } = await import('yaml');
-
-    for (const file of files) {
-      try {
-        const filePath = join(themesDir, file);
-        const content = fs.readFileSync(filePath, 'utf-8');
-        const parsed = yaml.parse(content);
-
-        if (parsed?.theme) {
-          const themeId = file.replace('.yaml', '');
-          const theme = parsed.theme;
-          const rawAgents = parsed.agents || {};
-          const agentCount = Object.keys(rawAgents).length;
-
-          // Extract agent data for preview panel
-          const agents: ThemeMetadataWithAgents['agents'] = {};
-          const coreRoles = ['sm', 'tea', 'dev', 'reviewer', 'architect', 'pm', 'orchestrator', 'tech-writer', 'ux-designer', 'devops'];
-
-          for (const role of coreRoles) {
-            const rawAgent = rawAgents[role];
-            if (rawAgent) {
-              agents[role as keyof typeof agents] = {
-                character: rawAgent.character || '',
-                quote: rawAgent.quote || '',
-                style: rawAgent.style || '',
-                role: rawAgent.role || '',
-              };
-            }
-          }
-
-          metadata.push({
-            id: themeId,
-            name: theme.name || themeId,
-            description: theme.description || '',
-            source: theme.source || '',
-            tier: (theme.tier as 'S' | 'A' | 'B' | 'U') || 'U',
-            category: deriveCategory(themeId, theme.source || ''),
-            agentCount,
-            agents,
-          });
-        }
-      } catch (fileErr) {
-        console.error(`Failed to parse theme file ${file}:`, fileErr);
-      }
-    }
-
-    // Cache the results
-    themeMetadataWithAgentsCache = metadata;
-    return metadata;
-  } catch (err) {
-    console.error('Failed to load theme metadata with agents:', err);
-    themeMetadataWithAgentsCache = [];
-    return themeMetadataWithAgentsCache;
-  }
-}
-
-/**
- * Register settings keyboard shortcut
- * Called during app initialization
- */
-export function registerSettingsShortcut(): void {
-  // Shortcut is handled via menu accelerator, not global shortcut
-  // This function exists for test compatibility
-}
-
-/**
- * Get the menu template for testing
- * Returns the full menu structure including settings
- */
-export function getMenuTemplate(): Array<{ role?: string; label?: string; submenu?: Array<{ label?: string; accelerator?: string; click?: () => void }> }> {
-  return [
-    {
-      role: 'appMenu',
-      label: 'Cyclist',
-      submenu: [
-        { label: 'About Cyclist' },
-        { label: 'Settings...', accelerator: 'CmdOrCtrl+,' },
-        { label: 'Quit Cyclist' },
-      ],
-    },
-  ];
-}
+// Re-export from menu-builder
+export { registerSettingsShortcut } from './menu-builder.js';
 
 /**
  * Set up IPC handlers for settings
@@ -1875,9 +1166,14 @@ export function setupSettingsIPCHandlers(ipcMain: {
   // 24-1: Save settings
   ipcMain.handle(IPC_SETTINGS_CHANNELS.SAVE, async (_event: unknown, ...args: unknown[]) => {
     const settings = args[0] as Partial<CyclistSettings>;
-    const updated = await handleSettingsSave(settings);
-    broadcastToRenderer(IPC_SETTINGS_CHANNELS.CHANGED, updated);
-    return updated;
+    const result = await handleSettingsSave(settings);
+    // Broadcast the settings object, not the result wrapper
+    if (result.success && result.settings) {
+      broadcastToRenderer(IPC_SETTINGS_CHANNELS.CHANGED, result.settings);
+      // 35-6: Directly apply font settings via executeJavaScript for immediate effect
+      applyFontSettingsToMainWindow(result.settings);
+    }
+    return result;
   });
 
   // 24-1: Open settings window
@@ -2077,6 +1373,8 @@ if (isElectron) {
   // Dynamic imports to avoid errors in Node test environment
   const { app, BrowserWindow, ipcMain, dialog, Menu } = await import('electron');
   const { createTerminalServer } = await import('./server.js');
+  // Story 35-13: Window state persistence
+  const windowStateKeeper = (await import('electron-window-state')).default;
 
   // Pass BrowserWindow to settings-window module (ESM-compatible, avoids require())
   setBrowserWindowRef(BrowserWindow);
@@ -2101,24 +1399,47 @@ if (isElectron) {
 
   /**
    * Create the main application window
+   * Story 35-13: Uses electron-window-state for window bounds persistence
    */
   function createWindow(): void {
-    mainWindow = new BrowserWindow(windowConfig);
+    // Story 35-13: Load saved window state (size, position, maximized)
+    const mainWindowState = windowStateKeeper({
+      defaultWidth: windowConfig.width,
+      defaultHeight: windowConfig.height,
+    });
+
+    // Create window with persisted bounds (or defaults on first run)
+    mainWindow = new BrowserWindow({
+      ...windowConfig,
+      x: mainWindowState.x,
+      y: mainWindowState.y,
+      width: mainWindowState.width,
+      height: mainWindowState.height,
+    });
+
+    // Story 35-13: Register window state manager to auto-save on resize/move/close
+    mainWindowState.manage(mainWindow);
+
+    // Set main window for data broadcasts (must be before did-finish-load handler)
+    setMainWindow(mainWindow);
+
+    // 24-1: Set main window reference for settings modal parent
+    setMainWindowRef(mainWindow);
 
     // Load the Express server URL (using the actual port found)
     mainWindow.loadURL(`http://localhost:${actualPort}`);
+
+    // 35-6: Apply font settings after page loads
+    mainWindow.webContents.on('did-finish-load', () => {
+      const settings = getCurrentSettings();
+      applyFontSettingsToMainWindow(settings);
+    });
 
     // Handle window closed
     mainWindow.on('closed', () => {
       mainWindow = null;
       setMainWindow(null);
     });
-
-    // Set main window for data broadcasts
-    setMainWindow(mainWindow);
-
-    // 24-1: Set main window reference for settings modal parent
-    setMainWindowRef(mainWindow);
   }
 
   /**
@@ -2186,17 +1507,32 @@ if (isElectron) {
   setupCommandIPCHandlers(ipcMain); // 23-3: Command execution
 
   /**
-   * Kill any orphaned Claude CLI processes from previous Cyclist sessions
-   * B-24: Prevents duplicate message handling from zombie processes
+   * Kill orphaned Claude CLI process from previous Cyclist session in THIS project.
+   * B-24 fix: Only kills the specific PID from .cyclist-pid, not all Claude processes.
+   * This prevents disrupting other running Cyclist sessions.
    */
   function cleanupStaleProcesses(): void {
-    try {
-      // Kill any orphaned claude processes that were spawned with stream-json output
-      execSync('pkill -f "claude.*--output-format stream-json"', { stdio: 'ignore' });
-      console.log('[Cyclist] Cleaned up stale Claude processes');
-    } catch {
-      // pkill returns non-zero if no processes found - that's expected and fine
+    const projectDir = getProjectDirectory();
+    if (!projectDir) return;
+
+    const stalePid = readPidFile(projectDir);
+    if (!stalePid) {
+      // No PID file means no stale process to clean up
+      return;
     }
+
+    // Check if the process is still running
+    if (isProcessRunning(stalePid)) {
+      try {
+        process.kill(stalePid, 'SIGTERM');
+        console.log(`[Cyclist] Cleaned up stale Claude process (PID: ${stalePid})`);
+      } catch (err) {
+        console.warn(`[Cyclist] Failed to kill stale process ${stalePid}:`, err);
+      }
+    }
+
+    // Clean up the stale PID file
+    cleanupPidFile(projectDir);
   }
 
   /**
@@ -2276,6 +1612,14 @@ if (isElectron) {
 
       console.log('[Cyclist] Using Pennyfarthing project:', projectDir);
 
+      // 35-6: Initialize settings BEFORE window loads so font settings are available
+      // This must happen before createWindow() so the renderer can fetch settings immediately
+      initializeSettings(projectDir);
+      console.log('[Cyclist] Settings initialized');
+
+      // 33-4: Load persisted permission grants from settings
+      loadPersistedGrants();
+
       // B-24: Kill any orphaned Claude processes from crashed sessions
       cleanupStaleProcesses();
 
@@ -2344,6 +1688,12 @@ if (isElectron) {
     // B-24: Abort any running Claude CLI process
     if (claudeServiceInstance) {
       claudeServiceInstance.abort();
+    }
+    // B-24 fix: Clean up PID file on graceful shutdown
+    const projectDir = getProjectDirectory();
+    if (projectDir) {
+      cleanupPidFile(projectDir);
+      console.log('[Cyclist] Cleaned up PID file');
     }
     await stopServer();
   });

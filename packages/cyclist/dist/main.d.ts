@@ -15,160 +15,8 @@ import { getProjectDirectory, setProjectDirectory, isValidProjectDirectory } fro
 import { ContextInfo } from './api/context.js';
 import { type CyclistSettings } from './settings.js';
 export { getProjectDirectory, setProjectDirectory, isValidProjectDirectory };
-/**
- * IPC channel names for sidebar data communication (B-2)
- * Used by preload script to expose data APIs to renderer
- */
-export declare const IPC_DATA_CHANNELS: {
-    readonly STATS_GET: "stats:get";
-    readonly STATS_UPDATE: "stats:update";
-    readonly PERSONA_GET: "persona:get";
-    readonly PERSONA_UPDATE: "persona:update";
-    readonly STORY_GET: "story:get";
-    readonly STORY_UPDATE: "story:update";
-    readonly GIT_GET: "git:get";
-    readonly GIT_UPDATE: "git:update";
-    readonly TOOL_STATS_GET: "toolStats:get";
-    readonly TOOL_STATS_UPDATE: "toolStats:update";
-    readonly TOKEN_STATS_GET: "tokenStats:get";
-    readonly TOKEN_STATS_UPDATE: "tokenStats:update";
-    readonly TODOS_GET: "todos:get";
-    readonly TODOS_UPDATE: "todos:update";
-    readonly CONTEXT_GET: "context:get";
-    readonly CONTEXT_UPDATE: "context:update";
-    readonly TOOL_EVENTS_UPDATE: "toolEvents:update";
-    readonly USAGE_STATS_GET: "usageStats:get";
-    readonly USAGE_STATS_UPDATE: "usageStats:update";
-};
-/**
- * IPC channel names for Claude SDK communication (E7-3)
- */
-export declare const IPC_CLAUDE_CHANNELS: {
-    readonly CLAUDE_SEND: "claude:send";
-    readonly CLAUDE_MESSAGE: "claude:message";
-    readonly CLAUDE_COMPLETE: "claude:complete";
-    readonly CLAUDE_ERROR: "claude:error";
-    readonly CLAUDE_SET_MODE: "claude:setMode";
-    readonly CLAUDE_GET_MODE: "claude:getMode";
-    readonly CLAUDE_ABORT: "claude:abort";
-    readonly CLAUDE_CLEAR: "claude:clear";
-};
-/**
- * IPC channel names for agent launcher (B-23)
- */
-export declare const IPC_AGENT_CHANNELS: {
-    readonly AGENT_LAUNCH: "agent:launch";
-};
-/**
- * IPC channel names for diff viewer (E8-2)
- */
-export declare const IPC_DIFF_CHANNELS: {
-    readonly DIFF_UPDATE: "diff:update";
-};
-/**
- * IPC channel names for settings (22-5, 24-1)
- */
-export declare const IPC_SETTINGS_CHANNELS: {
-    readonly VERBOSE_MODE_GET: "settings:getVerboseMode";
-    readonly VERBOSE_MODE_SET: "settings:setVerboseMode";
-    readonly VERBOSE_MODE_UPDATE: "settings:verboseModeUpdate";
-    readonly GET: "settings:get";
-    readonly SAVE: "settings:save";
-    readonly CHANGED: "settings:changed";
-    readonly OPEN_WINDOW: "settings:openWindow";
-    readonly GET_AVAILABLE_THEMES: "settings:getAvailableThemes";
-    readonly GET_THEME_METADATA: "settings:getThemeMetadata";
-};
-/**
- * IPC channel names for audit log (22-6)
- */
-export declare const IPC_AUDIT_LOG_CHANNELS: {
-    readonly GET_ENTRIES: "auditLog:getEntries";
-    readonly GET_TYPES: "auditLog:getTypes";
-    readonly EXPORT: "auditLog:export";
-    readonly GET_STATS: "auditLog:getStats";
-    readonly CLEAR: "auditLog:clear";
-    readonly ENTRY: "auditLog:entry";
-};
-/**
- * IPC channel names for file browser (E8-3)
- */
-export declare const IPC_FILE_BROWSER_CHANNELS: {
-    readonly LIST_DIRECTORY: "file-browser:list-directory";
-    readonly OPEN_FILE: "file-browser:open-file";
-    readonly OPEN_IN_EDITOR: "file-browser:open-in-editor";
-};
-/**
- * IPC channel names for command execution (23-3)
- * Used to execute Claude Code commands via IPC rather than PTY injection
- */
-export declare const IPC_COMMAND_CHANNELS: {
-    readonly EXECUTE: "command:execute";
-    readonly RESULT: "command:result";
-    readonly ERROR: "command:error";
-};
-/**
- * Agent definition for Electron menu
- */
-export interface AgentDefinition {
-    id: string;
-    label: string;
-    command: string;
-    category: 'tactical' | 'strategic';
-    accelerator?: string;
-    description?: string;
-}
-/**
- * Workflow definition for Electron menu
- */
-export interface WorkflowDefinition {
-    id: string;
-    label: string;
-    command: string;
-    accelerator?: string;
-    description?: string;
-}
-/**
- * Pennyfarthing agent definitions for menu
- * Tactical agents follow the TDD flow: SM → TEA → Dev → Reviewer
- * Strategic agents handle architecture and planning
- */
-export declare const AGENT_DEFINITIONS: AgentDefinition[];
-/**
- * Pennyfarthing workflow definitions for menu
- */
-export declare const WORKFLOW_DEFINITIONS: WorkflowDefinition[];
-/**
- * Build Electron menu for agents
- * Groups agents by category with separator between tactical and strategic
- */
-export declare function buildAgentMenu(): {
-    label: string;
-    submenu: unknown[];
-};
-/**
- * Build Electron menu for workflows
- */
-export declare function buildWorkflowMenu(): {
-    label: string;
-    submenu: unknown[];
-};
-/**
- * Build Tools menu with Execution Log (Story 22-6)
- * Updated: toggles tool panel instead of showing modal
- */
-export declare function buildToolsMenu(): {
-    label: string;
-    submenu: unknown[];
-};
-/**
- * Build custom View menu with Verbose Mode toggle (Story 22-5)
- * Includes standard view items plus custom Cyclist options
- */
-export declare function buildViewMenu(): {
-    label: string;
-    submenu: unknown[];
-};
+export { IPC_DATA_CHANNELS, IPC_CLAUDE_CHANNELS, IPC_AGENT_CHANNELS, IPC_DIFF_CHANNELS, IPC_SETTINGS_CHANNELS, IPC_AUDIT_LOG_CHANNELS, IPC_FILE_BROWSER_CHANNELS, IPC_COMMAND_CHANNELS, IPC_BACKGROUND_TASK_CHANNELS, } from './ipc-channels.js';
+export { AgentDefinition, WorkflowDefinition, AGENT_DEFINITIONS, WORKFLOW_DEFINITIONS, buildAgentMenu, buildWorkflowMenu, buildToolsMenu, buildViewMenu, getMenuTemplate, } from './menu-builder.js';
 /**
  * Get list of registered data IPC channels (for testing)
  * Returns the data channels that setupDataIPCHandlers will register
@@ -261,38 +109,7 @@ export declare const CONTEXT_POLL_INTERVAL_MS = 15000;
  * @param getSessionId - Optional function to get current session ID (for session-specific context)
  */
 export declare function startContextPolling(projectDir: string, getSessionId?: () => string | null): () => void;
-/**
- * Usage stats structure - tracks Claude API usage limits
- */
-export interface UsageStats {
-    fiveHourPercent: number;
-    weeklyPercent: number;
-    fiveHourResetAt: string | null;
-    weeklyResetAt: string | null;
-    planType: 'pro' | 'max' | 'unknown';
-}
-/**
- * Get current usage stats (for testing and IPC)
- */
-export declare function getUsageStats(): UsageStats;
-/**
- * Update usage stats state and broadcast if changed
- */
-export declare function updateUsageStats(stats: UsageStats): boolean;
-/**
- * Reset usage stats to default values
- */
-export declare function resetUsageStats(): void;
-/**
- * Usage polling interval in milliseconds
- * 60 seconds is reasonable for usage data that changes slowly
- */
-export declare const USAGE_POLL_INTERVAL_MS = 60000;
-/**
- * Start polling usage stats
- * Uses ccusage CLI to read local JSONL files for usage data
- */
-export declare function startUsagePolling(_projectDir: string): () => void;
+export { UsageStats, getUsageStats, USAGE_POLL_INTERVAL_MS, startUsagePolling } from './usage-stats.js';
 /**
  * Server startup configuration
  * In Electron mode, server can be disabled since we use IPC
@@ -343,6 +160,7 @@ export declare function setMainWindow(window: {
     webContents: {
         send: (channel: string, data: unknown) => void;
         isDestroyed: () => boolean;
+        executeJavaScript: (code: string) => Promise<unknown>;
     };
 } | null): void;
 /**
@@ -351,6 +169,13 @@ export declare function setMainWindow(window: {
  * @param data - The data to send
  */
 export declare function broadcastToRenderer(channel: string, data: unknown): void;
+/**
+ * Apply font settings directly to main window via executeJavaScript
+ * 35-6: This is the reliable way to apply CSS variable changes in Electron
+ * Uses webContents.executeJavaScript to set CSS custom properties on :root
+ * @param settings - CyclistSettings object containing display.font_ui and display.font_mono
+ */
+export declare function applyFontSettingsToMainWindow(settings: CyclistSettings): void;
 /**
  * Set up IPC handlers for sidebar data communication
  * Called after app is ready in Electron
@@ -404,95 +229,15 @@ export declare const isSettingsInitialized = false;
 export declare function handleSettingsGet(): Promise<CyclistSettings>;
 /**
  * Handle settings:save IPC call
- * Saves settings and returns updated settings
+ * Saves settings and returns result with success flag
  * Also writes theme to persona-config.local.yaml for Pennyfarthing compatibility (24-2)
  */
-export declare function handleSettingsSave(settings: Partial<CyclistSettings>): Promise<CyclistSettings>;
-/**
- * Get available themes from pennyfarthing-dist/personas/themes (24-2)
- * Returns sorted list of theme names
- */
-export declare function getAvailableThemes(): Promise<string[]>;
-/**
- * Theme metadata interface for theme browser
- */
-export interface ThemeMetadata {
-    id: string;
-    name: string;
-    description: string;
-    source: string;
-    tier: 'S' | 'A' | 'B' | 'U';
-    category: string;
-    agentCount: number;
-}
-/**
- * Agent data within a theme (24-6)
- */
-export interface ThemeAgent {
-    character: string;
-    quote?: string;
-    style?: string;
-    role?: string;
-}
-/**
- * Extended theme metadata including agent mappings (24-6)
- */
-export interface ThemeMetadataWithAgents extends ThemeMetadata {
-    agents: {
-        sm?: ThemeAgent;
-        tea?: ThemeAgent;
-        dev?: ThemeAgent;
-        reviewer?: ThemeAgent;
-        architect?: ThemeAgent;
-        pm?: ThemeAgent;
-        orchestrator?: ThemeAgent;
-        'tech-writer'?: ThemeAgent;
-        'ux-designer'?: ThemeAgent;
-        devops?: ThemeAgent;
-    };
-}
-/**
- * Category mapping for known themes (24-5)
- * Maps theme IDs or source patterns to categories
- */
-export declare const CATEGORY_MAP: Record<string, string>;
-/**
- * Derive category from theme ID and source (24-5)
- * Uses CATEGORY_MAP for known themes, falls back to pattern matching
- */
-export declare function deriveCategory(themeId: string, source: string): string;
-/**
- * Get cached theme metadata
- */
-export declare function getThemeMetadataCache(): ThemeMetadata[] | null;
-/**
- * Load theme metadata from YAML files (24-5)
- * Parses all theme files and extracts metadata for the browser
- */
-export declare function loadThemeMetadata(): Promise<ThemeMetadata[]>;
-/**
- * Load theme metadata including agent character mappings (24-6)
- * Extended version of loadThemeMetadata for the preview panel
- */
-export declare function loadThemeMetadataWithAgents(): Promise<ThemeMetadataWithAgents[]>;
-/**
- * Register settings keyboard shortcut
- * Called during app initialization
- */
-export declare function registerSettingsShortcut(): void;
-/**
- * Get the menu template for testing
- * Returns the full menu structure including settings
- */
-export declare function getMenuTemplate(): Array<{
-    role?: string;
-    label?: string;
-    submenu?: Array<{
-        label?: string;
-        accelerator?: string;
-        click?: () => void;
-    }>;
+export declare function handleSettingsSave(settings: Partial<CyclistSettings>): Promise<{
+    success: boolean;
+    settings?: CyclistSettings;
 }>;
+export { ThemeMetadata, ThemeAgent, ThemeMetadataWithAgents, CATEGORY_MAP, deriveCategory, getThemeMetadataCache, getAvailableThemes, loadThemeMetadata, loadThemeMetadataWithAgents, } from './theme-metadata.js';
+export { registerSettingsShortcut } from './menu-builder.js';
 /**
  * Set up IPC handlers for settings
  * 22-5: Handles verbose mode setting get/set

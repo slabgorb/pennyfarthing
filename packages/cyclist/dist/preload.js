@@ -70,6 +70,8 @@ function createElectronAPI() {
             context: createDataAPI(ipcRenderer, 'context:get', 'context:update'),
             // Usage Stats API (23-1)
             usageStats: createDataAPI(ipcRenderer, 'usageStats:get', 'usageStats:update'),
+            // 35-2: Project Info API (directory and user email)
+            projectInfo: createDataAPI(ipcRenderer, 'projectInfo:get', 'projectInfo:update'),
             // Claude SDK API (E7-3, 28-1: images support)
             claude: {
                 send: (prompt, images) => ipcRenderer.invoke('claude:send', prompt, images || []),
@@ -118,19 +120,26 @@ function createElectronAPI() {
                     ipcRenderer.on('command:error', (_event, error) => callback(error));
                 },
             },
-            // Bash approval API (22-3)
+            // Bash approval API (22-3, 33-4)
             bash: {
                 onApprovalRequest: (callback) => {
                     ipcRenderer.on('bash:approval-request', callback);
                 },
                 sendApprovalResponse: (response) => ipcRenderer.invoke('bash:approval-response', response),
             },
-            // Dangerous path approval API (22-4)
+            // Dangerous path approval API (22-4, 33-4)
             path: {
                 onApprovalRequest: (callback) => {
                     ipcRenderer.on('path:approval-request', callback);
                 },
                 sendApprovalResponse: (response) => ipcRenderer.invoke('path:approval-response', response),
+            },
+            // Generic permission API (33-3)
+            permission: {
+                onRequest: (callback) => {
+                    ipcRenderer.on('permission:request', callback);
+                },
+                sendResponse: (response) => ipcRenderer.invoke('permission:response', response),
             },
             // Settings API (22-3, 22-4, 22-5, 24-1)
             settings: {
@@ -181,6 +190,12 @@ function createElectronAPI() {
                     ipcRenderer.on('tools:toggleToolPanel', () => callback());
                 },
             },
+            // Background Task API (31-15)
+            backgroundTask: {
+                onCompleted: (callback) => {
+                    ipcRenderer.on('backgroundTask:completed', callback);
+                },
+            },
         };
     }
     else {
@@ -201,6 +216,8 @@ function createElectronAPI() {
             context: createDataAPI(null, 'context:get', 'context:update'),
             // Usage Stats API (23-1) - test stub
             usageStats: createDataAPI(null, 'usageStats:get', 'usageStats:update'),
+            // 35-2: Project Info API - test stub
+            projectInfo: createDataAPI(null, 'projectInfo:get', 'projectInfo:update'),
             // Claude SDK API (E7-3) - test stub
             claude: {
                 send: (_prompt) => Promise.resolve(),
@@ -249,19 +266,26 @@ function createElectronAPI() {
                     // No-op in test environment
                 },
             },
-            // Bash approval API (22-3) - test stub
+            // Bash approval API (22-3, 33-4) - test stub
             bash: {
                 onApprovalRequest: (_callback) => {
                     // No-op in test environment
                 },
                 sendApprovalResponse: (_response) => Promise.resolve(),
             },
-            // Dangerous path approval API (22-4) - test stub
+            // Dangerous path approval API (22-4, 33-4) - test stub
             path: {
                 onApprovalRequest: (_callback) => {
                     // No-op in test environment
                 },
                 sendApprovalResponse: (_response) => Promise.resolve(),
+            },
+            // Generic permission API (33-3) - test stub
+            permission: {
+                onRequest: (_callback) => {
+                    // No-op in test environment
+                },
+                sendResponse: (_response) => Promise.resolve(),
             },
             // Settings API (22-3, 22-4, 22-5, 24-1) - test stub
             settings: {
@@ -323,6 +347,12 @@ function createElectronAPI() {
             // Tools API - test stub
             tools: {
                 onTogglePanel: (_callback) => {
+                    // No-op in test environment
+                },
+            },
+            // Background Task API (31-15) - test stub
+            backgroundTask: {
+                onCompleted: (_callback) => {
                     // No-op in test environment
                 },
             },

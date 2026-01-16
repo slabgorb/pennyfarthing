@@ -123,9 +123,13 @@ describe('Story 15-3: Sidebar Sections UI', () => {
       expect(workflowProgress).not.toBeNull();
     });
 
-    it('should have workflow steps for SM, TEA, Dev, Reviewer', () => {
-      const steps = document.querySelectorAll('.workflow-step');
-      expect(steps.length).toBe(4);
+    // 37-15: Workflow steps are now rendered dynamically based on active workflow
+    // The container is present but empty until workflow data is provided via JS
+    it('should have workflow-progress container for dynamic step rendering', () => {
+      const workflowProgress = document.querySelector('#workflow-progress');
+      expect(workflowProgress).not.toBeNull();
+      // Steps are rendered dynamically by story.js when workflow data exists
+      // No hardcoded steps should be present in initial HTML
     });
 
   });

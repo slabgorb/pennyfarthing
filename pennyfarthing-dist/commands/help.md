@@ -68,7 +68,7 @@ SM → TEA → Dev → Reviewer → SM (finish)
 
 <agents>
 
-## All Agents (10)
+## All Agents (24)
 
 ### TDD Workflow Agents
 
@@ -94,7 +94,7 @@ SM → TEA → Dev → Reviewer → SM (finish)
 
 <commands>
 
-## All Commands (39)
+## All Commands (43)
 
 ### TDD Workflow (7)
 | Command | Description |
@@ -177,7 +177,7 @@ SM → TEA → Dev → Reviewer → SM (finish)
 
 ## Themes
 
-Pennyfarthing agents adopt personas from themed character sets. There are **97 themes** available.
+Pennyfarthing agents adopt personas from themed character sets. There are **102 themes** available.
 
 ### Popular Themes
 
@@ -192,7 +192,7 @@ Pennyfarthing agents adopt personas from themed character sets. There are **97 t
 | `breaking-bad` | Breaking Bad characters |
 | `battlestar-galactica` | Battlestar Galactica characters |
 
-Run `/list-themes` to see all 97 available themes.
+Run `/list-themes` to see all 102 available themes.
 
 ### Theme Commands
 

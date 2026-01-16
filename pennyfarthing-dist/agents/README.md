@@ -6,6 +6,28 @@ This directory contains the **single source of truth** for all Pennyfarthing age
 
 **See:** `../ AGENT-COORDINATION.md` for complete architecture documentation.
 
+## Agent Maturity
+
+Agents are marked with `<status>` tags indicating their maturity level:
+
+### Production Agents
+These agents follow the TDD workflow and are battle-tested:
+- **SM** - Scrum Master (story coordination, session management)
+- **TEA** - Test Engineer/Architect (test writing, TDD guidance)
+- **Dev** - Developer (implementation, making tests pass)
+- **Reviewer** - Code Reviewer (adversarial review, quality gates)
+
+### Experimental Agents
+These agents are available but not yet modernized to the same standard:
+- **Orchestrator** - Meta operations, process improvement
+- **PM** - Product Manager (planning, prioritization)
+- **Architect** - System Architect (design decisions)
+- **DevOps** - DevOps Engineer (infrastructure, deployment)
+- **Tech Writer** - Technical Writer (documentation)
+- **UX Designer** - UX Designer (UI design, accessibility)
+
+> **Tip:** Start with production agents for core development work. Experimental agents may have less consistent behavior or missing features.
+
 ## Agent Hierarchy
 
 ### Strategic Agents (Full Scope)
@@ -30,18 +52,28 @@ Focus on specific repo(s), implement/test/document features.
 Lightweight subagents for mechanical tasks. Invoked via `Task tool` with `subagent_type`.
 
 - **`workflow-status-check.md`** - Detect workflow state
-- **`sm-work-research.md`** - Research stories and context
+- **`generic-sm-setup.md`** - Research OR setup mode (Story 31-11)
+- **`generic-sm-finish.md`** - Preflight OR execute phase (Story 31-11)
+- **`generic-handoff.md`** - Workflow-driven handoff (Stories 31-7, 31-10)
+- **`sm-handoff.md`** - SM→TEA/Dev handoff with Jira/branch verification
 - **`sm-file-summary.md`** - Summarize file changes
-- **`sm-story-setup.md`** - Claim Jira, write session, create branches
-- **`sm-handoff.md`** - Handoff bookkeeping to TEA
-- **`sm-finish-bookkeeping.md`** - Archive session, update sprint
-- **`sm-finish-execution.md`** - Execute finish workflow
-- **`tea-handoff.md`** - Update session after tests (RED)
-- **`dev-handoff.md`** - Update session after PR (GREEN)
 - **`reviewer-preflight.md`** - Gather review data
-- **`reviewer-handoff-approve.md`** - Approve and route to SM
-- **`reviewer-handoff-reject.md`** - Reject and route to Dev
 - **`testing-runner.md`** - Execute tests, report results
+
+### Removed Files (Stories 31-11, 31-12)
+These files have been deleted and replaced by consolidated versions:
+
+**SM Subagents (Story 31-12):**
+- `sm-work-research.md` → use `generic-sm-setup` with MODE=research
+- `sm-story-setup.md` → use `generic-sm-setup` with MODE=setup
+- `sm-finish-bookkeeping.md` → use `generic-sm-finish` with PHASE=preflight
+- `sm-finish-execution.md` → use `generic-sm-finish` with PHASE=execute
+
+**Handoff Subagents (Story 31-11):**
+- `tea-handoff.md` → use `generic-handoff` with CURRENT_PHASE=red
+- `dev-handoff.md` → use `generic-handoff` with CURRENT_PHASE=green
+- `reviewer-handoff-approve.md` → use `generic-handoff` with VERDICT=approved
+- `reviewer-handoff-reject.md` → use `generic-handoff` with VERDICT=rejected
 
 ## Context Loading
 
@@ -58,7 +90,7 @@ Agents load context based on their type:
 - Active work
 - Target repo context only (based on story)
 
-**Configuration:** `../agent-scopes.yaml`
+**Configuration:** `.claude/project/docs/agent-scopes.yaml`
 
 ## Usage
 
@@ -104,19 +136,14 @@ Each agent file contains:
 ├── tech-writer.md             # Technical Writer
 ├── ux-designer.md             # UX Designer
 │
-│ # Official Subagents (13)
+│ # Official Subagents (8 active)
 ├── workflow-status-check.md   # Detect workflow state
-├── sm-work-research.md        # Research stories
+├── generic-sm-setup.md        # Research or setup mode (Story 31-11)
+├── generic-sm-finish.md       # Preflight or execute (Story 31-11)
+├── generic-handoff.md         # Workflow-driven handoff (Stories 31-7, 31-10)
+├── sm-handoff.md              # SM→TEA/Dev handoff with Jira/branch
 ├── sm-file-summary.md         # Summarize files
-├── sm-story-setup.md          # Story setup
-├── sm-handoff.md              # SM handoff
-├── sm-finish-bookkeeping.md   # Archive session
-├── sm-finish-execution.md     # Execute finish
-├── tea-handoff.md             # TEA handoff
-├── dev-handoff.md             # Dev handoff
 ├── reviewer-preflight.md      # Review prep
-├── reviewer-handoff-approve.md # Approve PR
-├── reviewer-handoff-reject.md  # Reject PR
 └── testing-runner.md          # Run tests
 ```
 
@@ -238,11 +265,11 @@ To add a new agent:
 $CLAUDE_PROJECT_DIR/scripts/agent-session.sh start "Agent Name"
 $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md
 
-# ❌ WRONG - Don't use git rev-parse
+# ❌ WRONG - Don't use git rev-parse (unreliable in agent context)
 $(git rev-parse --show-toplevel)/scripts/agent-session.sh
 
-# ❌ WRONG - Don't hardcode paths
-$CLAUDE_PROJECT_DIR/scripts/agent-session.sh
+# ❌ WRONG - Don't hardcode absolute paths
+/Users/someone/project/scripts/agent-session.sh
 ```
 
 ### Why $CLAUDE_PROJECT_DIR?
@@ -256,11 +283,104 @@ All agent commands in `.claude/commands/` have been standardized to use `$CLAUDE
 - Script execution
 - File path references
 
+## Background Subagent Execution
+
+Subagents can run in background using Claude Code's `run_in_background` parameter. This allows the main agent to continue working while slow operations complete asynchronously.
+
+### When to Use Background Execution
+
+**Good candidates:**
+- Test runs (via `testing-runner`) while writing more code
+- Multiple independent file searches
+- Long-running git operations (fetch, clone)
+- Parallel exploration of code paths
+
+**When NOT to use:**
+- Operations where subsequent work depends on the result
+- Operations that modify shared state (session file, git working tree)
+- Sequential workflows (must complete phase A before phase B)
+
+### Spawning Background Subagents
+
+```yaml
+Task tool:
+  subagent_type: "testing-runner"
+  run_in_background: true
+  prompt: |
+    REPOS: all
+    CONTEXT: Background test run while implementing
+    RUN_ID: bg-test-001
+```
+
+### Checking Background Task Status
+
+Use the `TaskOutput` tool to check on background tasks:
+
+```yaml
+TaskOutput tool:
+  task_id: {task_id from spawn}
+  block: false          # Non-blocking check
+  timeout: 1000         # Quick timeout for status check
+```
+
+**Status values:**
+- `running` - Task still executing
+- `completed` - Task finished, results available
+- `error` - Task failed
+
+### Tracking Background Tasks in Session Files
+
+Use the background task tracking utilities to manage session file entries:
+
+```bash
+source $CLAUDE_PROJECT_DIR/scripts/utils/background-tasks.sh
+SESSION_FILE="$CLAUDE_PROJECT_DIR/.session/${STORY_ID}-session.md"
+
+# After spawning, record the task:
+bg_task_add "$SESSION_FILE" "$TASK_ID" "testing-runner" "Background test run"
+
+# After checking TaskOutput, update status:
+bg_task_update "$SESSION_FILE" "$TASK_ID" "completed"  # or "error"
+
+# Clean up finished tasks:
+bg_task_cleanup "$SESSION_FILE"
+```
+
+**Available functions:**
+| Function | Purpose |
+|----------|---------|
+| `bg_task_add` | Record new background task |
+| `bg_task_update` | Update task status (running/completed/error) |
+| `bg_task_cleanup` | Remove completed and errored tasks |
+| `bg_task_list` | Show all running tasks |
+| `bg_task_check` | Return 0 if any tasks running |
+| `bg_task_summary` | Print counts by status |
+
+### Background Execution Constraints
+
+1. **No concurrent state mutation** - Don't have multiple background tasks writing to the same file
+2. **Independent operations only** - Each background task should be self-contained
+3. **Check before proceeding** - If you need the result, wait for it with `block: true`
+4. **Clean up tracking** - Use `bg_task_cleanup` after processing results
+
+### Example: Background Tests While Coding
+
+```bash
+# 1. Spawn testing-runner with run_in_background: true
+# 2. Record: bg_task_add "$SESSION_FILE" "$TASK_ID" "testing-runner" "Tests while coding"
+# 3. Continue writing code
+# 4. Periodically check TaskOutput with block: false
+# 5. When complete: bg_task_update "$SESSION_FILE" "$TASK_ID" "completed"
+# 6. Cleanup: bg_task_cleanup "$SESSION_FILE"
+# 7. If RED: stop and fix
+# 8. If GREEN: continue with confidence
+```
+
 ## Quick Reference
 
 ```bash
 # View agent scope configuration
-cat .claude/guides/agent-scopes.yaml
+cat .claude/project/docs/agent-scopes.yaml
 
 # List all agents
 ls .claude/agents/
@@ -274,4 +394,4 @@ cat .claude/agents/pm.md
 
 ---
 
-**Your coordinated Pennyfarthing agent system is ready!** 🎯
+**Your coordinated Pennyfarthing agent system is ready!**

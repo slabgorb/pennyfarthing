@@ -17,6 +17,7 @@ import {
   setQuickActionsVisible,
   setVerboseMode as setMessageViewVerboseMode
 } from './components/MessageView.js';
+import { renderBackgroundTaskNotification } from './components/message-view/message-renderers.js';
 import { updateActivity, clearActivity } from './activity.js';
 import { resetSubmitting, setProcessing, processNextInQueue, setOnQueueChange, clearMessageQueue, loadMessageQueue, getMessageQueue, removeFromQueue, injectMessage } from './editor.js';
 import { handleAbort } from './components/ToolActivityBar.js';
@@ -126,6 +127,23 @@ function initMessageView() {
     console.log('[MessageView] Connected to Claude SDK events');
   } else {
     console.log('[MessageView] Claude SDK not available (standalone mode)');
+  }
+
+  // 31-15: Background task completion notifications
+  if (window.electronAPI?.backgroundTask) {
+    window.electronAPI.backgroundTask.onCompleted((_event, task) => {
+      console.log('[MessageView] Background task completed:', task.subagentType, task.success ? 'success' : 'failed');
+      const messageView = document.getElementById('message-view');
+      if (messageView) {
+        const notificationHtml = renderBackgroundTaskNotification(task);
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = notificationHtml;
+        messageView.appendChild(wrapper.firstElementChild);
+        // Auto-scroll to show notification
+        messageView.scrollTop = messageView.scrollHeight;
+      }
+    });
+    console.log('[MessageView] Connected to background task notifications');
   }
 
   // Wire up stop button and escape key

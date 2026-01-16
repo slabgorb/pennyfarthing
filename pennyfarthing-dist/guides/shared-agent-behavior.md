@@ -240,6 +240,141 @@ Which approach do you prefer?
 
 ---
 
+## Handoff Action Protocol
+
+When handing off to the next agent in a workflow, the `generic-handoff` subagent determines
+what action to take based on context usage AND the user's handoff mode preference.
+
+### Handoff Mode Setting
+
+The user's preference is stored in `.pennyfarthing/cyclist.yaml`:
+
+```yaml
+handoff_mode: auto   # or "manual"
+```
+
+The handoff subagent reads this setting and returns an `Action` field.
+
+### Action Values
+
+| Action | Meaning | What to Do |
+|--------|---------|------------|
+| `INVOKE_DIRECTLY` | Auto mode + context OK | **Immediately invoke next agent** - do NOT ask permission |
+| `USER_INVOKE` | Manual mode | Tell user: "Ready for {Agent}. Invoke `/{agent}` when ready." |
+| `FRESH_SESSION` | Context too high (>70%) | Tell user: "Context high. Start fresh session with `/{agent}`" |
+
+### CRITICAL: Follow the Action
+
+When handoff returns `Action: INVOKE_DIRECTLY`:
+- **DO** immediately use the Skill tool to invoke the next agent
+- **DO NOT** ask "Shall I proceed?" or "Ready to hand off?"
+- **DO NOT** wait for user confirmation
+
+Asking permission when auto-handoff is enabled defeats the purpose of the setting.
+
+### Example Flow
+
+```
+1. Agent completes work
+2. Agent writes assessment to session file
+3. Agent spawns generic-handoff subagent
+4. Subagent returns: "Action: INVOKE_DIRECTLY"
+5. Agent IMMEDIATELY invokes: Skill tool with skill: "{next-agent}"
+```
+
+### Handoff Marker
+
+Always include the Cyclist marker at the end of handoff messages:
+
+```html
+<!-- CYCLIST:HANDOFF:/{next-agent} -->
+```
+
+This enables quick-action buttons in the Cyclist UI, but the agent must still
+invoke the skill when Action is `INVOKE_DIRECTLY`.
+
+---
+
+## Turn Efficiency Protocol
+
+Minimize API round-trips by parallelizing independent operations and batching commands.
+
+### Core Principles
+
+1. **Parallelize file reads** - Read multiple independent files in one turn
+2. **Batch bash commands** - Combine git/shell operations with `&&`
+3. **Spawn subagents in parallel** - When results don't depend on each other
+
+### Examples
+
+**File reads:**
+```
+# EFFICIENT: Read session + context + related files in one turn
+Read: .session/X-Y-session.md, .session/context-story-X-Y.md, src/feature.ts (parallel)
+```
+
+**Bash batching:**
+```bash
+# EFFICIENT: Combine git operations
+git status && git branch --show-current && git log -1 --oneline
+
+# EFFICIENT: Commit, push, and verify in single command
+git add . && git commit -m "feat(X-Y): implement feature" && git push -u origin $(git branch --show-current)
+```
+
+**Subagent parallelism:**
+```yaml
+# EFFICIENT: If doing both status check AND backlog research
+# spawn both in same turn when results don't depend on each other
+```
+
+See `/dev-patterns` skill → "Turn-Efficient Patterns" for complete guidance.
+
+**Note:** Individual agents may include agent-specific examples beyond these core patterns.
+
+---
+
+## Test Delegation Protocol
+
+**NEVER run tests directly.** Always delegate to the `testing-runner` subagent.
+
+### Why Delegate?
+
+- Consistent test execution across all agents
+- Proper result caching (Story 31-8)
+- Standardized output format for handoff
+- Supports multi-repo test orchestration
+
+### Invocation Template
+
+```yaml
+Task tool:
+  subagent_type: "testing-runner"
+  prompt: |
+    REPOS: all | repo1,repo2
+    CONTEXT: why running tests
+    RUN_ID: unique-id
+    # Optional - omit to run all tests:
+    FILTER: pattern  # global filter
+    FILTERS:         # or per-repo filters
+      repo1: pattern1
+      repo2: pattern2
+```
+
+### What NOT to Do
+
+```bash
+# WRONG - Never run these directly
+just test
+go test ./...
+npm test
+pytest
+```
+
+Always spawn `testing-runner` instead.
+
+---
+
 ## Exit Protocol
 
 Before exiting or switching agents:

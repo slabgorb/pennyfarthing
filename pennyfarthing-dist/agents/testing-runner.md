@@ -44,6 +44,85 @@ source $CLAUDE_PROJECT_DIR/scripts/utils/test-setup.sh  # Test utilities
 **Optional:**
 - `FILTER` - Global filter applied to all repos (if no per-repo filter)
 - `FILTERS` - Per-repo filters (YAML map format)
+- `STORY_ID` - Story ID for cache writing (if set, writes cache to session file)
+- `SKIP_CACHE_WRITE` - Set to `true` to skip writing cache (for filtered runs)
+
+## Background Execution
+
+The testing-runner can be spawned in background mode, allowing the main agent to continue working while tests run asynchronously.
+
+**When to use background mode:**
+- Running full test suite while continuing implementation
+- Parallel test runs across multiple repos
+- Long-running integration tests
+
+**When NOT to use:**
+- When next steps depend on test results (e.g., before commit)
+- When modifying the same files tests are checking
+- During handoff verification (need synchronous result)
+
+### Spawning in Background
+
+```yaml
+Task tool:
+  subagent_type: "testing-runner"
+  run_in_background: true
+  prompt: |
+    REPOS: all
+    CONTEXT: Background test run while implementing
+    RUN_ID: bg-test-001
+    STORY_ID: 31-14
+    SKIP_CACHE_WRITE: true  # Background runs shouldn't write cache
+```
+
+**Note:** Set `SKIP_CACHE_WRITE: true` for background runs to avoid race conditions with foreground cache writes.
+
+### Checking Results
+
+Use `TaskOutput` tool to check background test status:
+
+```yaml
+TaskOutput tool:
+  task_id: {task_id from spawn}
+  block: false     # Non-blocking check
+  timeout: 1000    # Quick timeout
+```
+
+Or wait for completion:
+
+```yaml
+TaskOutput tool:
+  task_id: {task_id}
+  block: true      # Wait for completion
+  timeout: 120000  # 2 minute timeout
+```
+
+### Background Test Pattern
+
+**Use the background task tracking utilities:**
+
+```bash
+source $CLAUDE_PROJECT_DIR/scripts/utils/background-tasks.sh
+SESSION_FILE="$CLAUDE_PROJECT_DIR/.session/${STORY_ID}-session.md"
+```
+
+**Pattern:**
+1. Spawn testing-runner with `run_in_background: true`
+2. Record task: `bg_task_add "$SESSION_FILE" "$TASK_ID" "testing-runner" "Background test run"`
+3. Continue implementation work
+4. Periodically check TaskOutput with `block: false`
+5. When complete:
+   - Update: `bg_task_update "$SESSION_FILE" "$TASK_ID" "completed"` (or "error")
+   - Cleanup: `bg_task_cleanup "$SESSION_FILE"`
+   - If GREEN: continue with confidence
+   - If RED: stop and address failures
+
+**Available functions:**
+- `bg_task_add <session_file> <task_id> <type> <description>` - Record new task
+- `bg_task_update <session_file> <task_id> <status>` - Update status (running/completed/error)
+- `bg_task_cleanup <session_file>` - Remove completed/errored tasks
+- `bg_task_list <session_file>` - Show active tasks
+- `bg_task_check <session_file>` - Return 0 if any running tasks exist
 
 Example with per-repo filters:
 ```yaml
@@ -236,6 +315,75 @@ Log format varies by language/framework - check the log files directly.
 ### Log Files
 Listed per repo tested.
 ```
+
+## Write Test Cache to Session File
+
+**Story 31-8:** After running tests, write results to session file cache so other subagents can skip redundant test runs.
+
+**When to write cache:**
+- `STORY_ID` is provided (identifies session file)
+- `SKIP_CACHE_WRITE` is not `true`
+- Not a filtered run (filtered runs don't represent full test state)
+
+**Cache format in session file:**
+```markdown
+## Test Cache
+
+| Field | Value |
+|-------|-------|
+| Last Run | {ISO 8601 timestamp} |
+| Git SHA | {current git SHA} |
+| Result | {GREEN/RED/YELLOW} |
+| Pass | {pass count} |
+| Fail | {fail count} |
+| Skip | {skip count} |
+| Duration | {seconds}s |
+```
+
+**Cache write procedure:**
+
+```bash
+# Get current git SHA and timestamp
+GIT_SHA=$(git rev-parse HEAD)
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+# Build cache section (use results from test run)
+CACHE_SECTION="## Test Cache
+
+| Field | Value |
+|-------|-------|
+| Last Run | $TIMESTAMP |
+| Git SHA | $GIT_SHA |
+| Result | $RESULT |
+| Pass | $PASS_COUNT |
+| Fail | $FAIL_COUNT |
+| Skip | $SKIP_COUNT |
+| Duration | ${DURATION}s |"
+
+# Session file path
+SESSION_FILE="$CLAUDE_PROJECT_DIR/.session/${STORY_ID}-session.md"
+
+# Check if Test Cache section exists
+if grep -q "^## Test Cache" "$SESSION_FILE" 2>/dev/null; then
+    # Replace existing cache section
+    # Use Edit tool to replace from "## Test Cache" to next "## " section
+    echo "Updating existing cache in session file"
+else
+    # Append cache section before "## Workflow Tracking" if present
+    # Otherwise append to end of file
+    echo "Adding new cache section to session file"
+fi
+```
+
+**Use Edit tool** to update session file - do not use bash string manipulation on markdown files.
+
+**Cache validation by other subagents:**
+Other subagents (reviewer-preflight, dev-handoff) check cache before running tests:
+1. Parse `## Test Cache` section from session file
+2. Verify `Git SHA` matches current HEAD
+3. Verify `Last Run` is less than 5 minutes old
+4. If valid: skip test run, use cached `Result`
+5. If invalid: run tests and update cache
 
 ## Cleanup
 

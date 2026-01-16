@@ -31,8 +31,8 @@ Complete documentation for the Pennyfarthing agent orchestration framework.
 
 Pennyfarthing is a shared agent orchestration framework for Claude Code projects. It provides:
 
-- **Agent System** - Coordinated multi-agent workflows for TDD development
-- **101 Persona Themes** - Character personalities with OCEAN profiles (Discworld, Star Trek, The Expanse, etc.)
+- **Agent System** - 24 coordinated agents for multi-agent TDD development
+- **102 Persona Themes** - Character personalities with OCEAN profiles (Discworld, Star Trek, The Expanse, etc.)
 - **Subagent Handoffs** - Automated state transitions between agents
 - **Slash Commands** - Entry points for agent activation
 - **Skills** - Project-agnostic knowledge domains
@@ -44,14 +44,14 @@ Pennyfarthing is a shared agent orchestration framework for Claude Code projects
 ```bash
 cd your-project
 
-# Install as dev dependency
-npm install --save-dev pennyfarthing
+# Install as dev dependency (scoped package as of v6.0)
+npm install --save-dev @pennyfarthing/core
 
 # Initialize (creates symlinks)
-pennyfarthing init
+npx pennyfarthing init
 
 # Verify installation
-pennyfarthing doctor
+npx pennyfarthing doctor
 
 # Start working (in Claude Code)
 /new-work
@@ -75,10 +75,10 @@ pennyfarthing doctor
 
 | Command | Purpose |
 |---------|---------|
-| `pennyfarthing init` | Initialize in a project |
-| `npm update pennyfarthing` | Update to latest version |
-| `pennyfarthing doctor` | Check installation health |
-| `pennyfarthing version` | Show version info |
+| `npx pennyfarthing init` | Initialize in a project |
+| `npm update @pennyfarthing/core` | Update to latest version |
+| `npx pennyfarthing doctor` | Check installation health |
+| `npx pennyfarthing version` | Show version info |
 
 ## Getting Help
 

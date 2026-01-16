@@ -237,9 +237,9 @@ describe('B-2: IPC Data Channels', () => {
       // All data channels should follow {domain}:{action} pattern
       const channels = main.IPC_DATA_CHANNELS;
 
-      // Updated to include toolEvents and usageStats domains
+      // Updated to include toolEvents, usageStats, and projectInfo domains
       expect(Object.values(channels).every((ch: string) =>
-        ch.match(/^(stats|persona|story|git|toolStats|tokenStats|todos|context|toolEvents|usageStats):(get|update)$/)
+        ch.match(/^(stats|persona|story|git|toolStats|tokenStats|todos|context|toolEvents|usageStats|projectInfo):(get|update)$/)
       )).toBe(true);
     });
 

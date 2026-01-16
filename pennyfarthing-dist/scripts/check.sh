@@ -12,6 +12,7 @@
 #   --repo REPO        Run checks in specific repo subdirectory
 #   --no-lint          Skip lint check
 #   --no-typecheck     Skip type check
+#   --fast             Skip slow packages (cyclist/Electron) for rapid iteration
 #
 # Runs lint, type check, and tests. Reports pass/fail status.
 # Returns exit code 0 on all passing, non-zero on any failure.
@@ -25,6 +26,7 @@ TEST_FILTER=""
 TARGET_REPO=""
 NO_LINT=false
 NO_TYPECHECK=false
+FAST_MODE=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -52,9 +54,13 @@ while [[ $# -gt 0 ]]; do
             NO_TYPECHECK=true
             shift
             ;;
+        --fast)
+            FAST_MODE=true
+            shift
+            ;;
         *)
             echo "Unknown option: $1"
-            echo "Usage: check.sh [--skip-check] [--tests-only] [--filter PATTERN] [--repo REPO] [--no-lint] [--no-typecheck]"
+            echo "Usage: check.sh [--skip-check] [--tests-only] [--filter PATTERN] [--repo REPO] [--no-lint] [--no-typecheck] [--fast]"
             exit 1
             ;;
     esac
@@ -259,6 +265,9 @@ if [[ -n "$TARGET_REPO" ]]; then
     echo "Repo: $TARGET_REPO"
 fi
 echo "Working dir: $WORKING_DIR"
+if $FAST_MODE; then
+    echo -e "${YELLOW}Mode: FAST (skipping slow packages)${NC}"
+fi
 
 PROJECT_TYPE=$(detect_project_type)
 
@@ -403,15 +412,29 @@ elif has_just_recipe "test"; then
     fi
 elif [[ "$PROJECT_TYPE" == "node" ]] && has_npm_script "test"; then
     TESTS_RAN=true
-    TEST_CMD="npm test"
+    # Check for pnpm workspace (monorepo)
+    if [[ -f "pnpm-workspace.yaml" ]] && command -v pnpm &>/dev/null; then
+        if $FAST_MODE; then
+            # Skip slow packages (cyclist has Electron dependencies)
+            TEST_CMD="pnpm -r --filter '!@pennyfarthing/cyclist' test"
+            TEST_LABEL="pnpm test (fast mode - skipping cyclist)"
+        else
+            TEST_CMD="pnpm -r test"
+            TEST_LABEL="pnpm test"
+        fi
+    else
+        TEST_CMD="npm test"
+        TEST_LABEL="npm test"
+    fi
     if [[ -n "$TEST_FILTER" ]]; then
-        # Pass filter to npm test (vitest/jest use -t for pattern)
-        TEST_CMD="npm test -- -t \"$TEST_FILTER\""
+        # Pass filter to test runner (vitest/jest use -t for pattern)
+        TEST_CMD="$TEST_CMD -- -t \"$TEST_FILTER\""
+        TEST_LABEL="$TEST_LABEL -t $TEST_FILTER"
     fi
     if eval "$TEST_CMD" >/dev/null 2>&1; then
-        pass "Tests (npm test${TEST_FILTER:+ -t $TEST_FILTER})"
+        pass "Tests ($TEST_LABEL)"
     else
-        fail "Tests (npm test${TEST_FILTER:+ -t $TEST_FILTER})"
+        fail "Tests ($TEST_LABEL)"
     fi
 elif [[ "$PROJECT_TYPE" == "go" ]]; then
     TESTS_RAN=true

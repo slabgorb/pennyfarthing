@@ -379,10 +379,10 @@ describe('22-3: Bash Command Approval Gate', () => {
       approvalModal.showApprovalModal('npm install', toolId);
       approvalModal.handleApprove();
 
+      // Legacy handleApprove returns simple approval without grant scope
       expect(mockSendResponse).toHaveBeenCalledWith({
         toolId: toolId,
         approved: true,
-        alwaysAllow: false,
       });
     });
 
@@ -397,10 +397,10 @@ describe('22-3: Bash Command Approval Gate', () => {
     it('should have keyboard shortcut Enter to approve', async () => {
       const approvalModal = await import('../src/public/js/components/ApprovalModal.js');
 
-      // Modal should handle Enter key as approval
+      // Modal should handle Enter key as allow-once (33-4 update)
       expect(approvalModal.getKeyboardShortcuts).toBeDefined();
       const shortcuts = approvalModal.getKeyboardShortcuts();
-      expect(shortcuts.approve).toBe('Enter');
+      expect(shortcuts.allowOnce).toBe('Enter');
     });
 
   });
@@ -451,7 +451,6 @@ describe('22-3: Bash Command Approval Gate', () => {
       expect(mockSendResponse).toHaveBeenCalledWith({
         toolId: toolId,
         approved: false,
-        alwaysAllow: false,
       });
     });
 
@@ -512,7 +511,7 @@ describe('22-3: Bash Command Approval Gate', () => {
       expect(approvalModal.isModalVisible()).toBe(false);
     });
 
-    it('should return alwaysAllow: true in response', async () => {
+    it('should return grantScope: always in response', async () => {
       const approvalModal = await import('../src/public/js/components/ApprovalModal.js');
 
       const mockSendResponse = vi.fn();
@@ -522,10 +521,11 @@ describe('22-3: Bash Command Approval Gate', () => {
       approvalModal.showApprovalModal('git status', toolId);
       approvalModal.handleAlwaysAllow();
 
+      // Updated for 33-4: grantScope replaces alwaysAllow boolean
       expect(mockSendResponse).toHaveBeenCalledWith({
         toolId: toolId,
         approved: true,
-        alwaysAllow: true,
+        grantScope: 'always',
       });
     });
 

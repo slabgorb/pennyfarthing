@@ -721,52 +721,50 @@ describe('B-24-5: Theme Browser with Search', () => {
   });
 
   // ===========================================================================
-  // AC7: Browser integrates with existing settings panel
+  // AC7: Browser integrates with persona area (moved from settings in 35-1)
   // ===========================================================================
-  describe('AC7: Browser integrates with existing settings panel', () => {
+  describe('AC7: Browser integrates with persona area', () => {
 
-    it('should have theme browser container in settings.html', async () => {
+    // Story 35-1 moved theme selection from settings.html to persona area.
+    // Theme browser is now accessed via ThemePicker component clicking persona.
+
+    it('should have ThemeBrowser component available for import', async () => {
+      const themeBrowser = await import('../src/public/js/components/ThemeBrowser.js');
+      expect(themeBrowser.ThemeBrowser).toBeDefined();
+      expect(themeBrowser.createThemeBrowser).toBeDefined();
+    });
+
+    it('should have ThemePicker that opens ThemeBrowser', async () => {
+      const themePicker = await import('../src/public/js/components/ThemePicker.js');
+      expect(themePicker.init).toBeDefined();
+      expect(themePicker.show).toBeDefined();
+    });
+
+    it('should NOT have theme browser in settings.html (moved to persona area)', async () => {
       const request = (await import('supertest')).default;
       const { app } = await import('../src/server.js');
 
       const response = await request(app).get('/settings.html');
 
-      expect(response.text).toContain('theme-browser-container');
-    });
-
-    it('should export initThemeBrowser from settings-ui.js', async () => {
-      const settingsUI = await import('../src/public/js/settings-ui.js');
-      expect(settingsUI.initThemeBrowser).toBeDefined();
-      expect(typeof settingsUI.initThemeBrowser).toBe('function');
-    });
-
-    it('should replace theme dropdown with browser container', async () => {
-      const request = (await import('supertest')).default;
-      const { app } = await import('../src/server.js');
-
-      const response = await request(app).get('/settings.html');
-
-      // Should NOT have the old theme dropdown
+      // Theme browser moved out of settings panel per 35-1
+      expect(response.text).not.toContain('theme-browser-container');
       expect(response.text).not.toMatch(/<select[^>]*id="theme-select"/);
-      // Should have the new browser container
-      expect(response.text).toContain('theme-browser-container');
     });
 
-    it('should load theme metadata on settings page load', async () => {
-      const settingsUI = await import('../src/public/js/settings-ui.js');
-      expect(settingsUI.loadThemeMetadata).toBeDefined();
+    it('should have persona container in index.html for theme picker', async () => {
+      const request = (await import('supertest')).default;
+      const { app } = await import('../src/server.js');
+
+      const response = await request(app).get('/');
+
+      // Persona area exists and can host theme picker
+      expect(response.text).toContain('persona');
     });
 
-    it('should apply selected theme when settings are saved', async () => {
-      const settingsUI = await import('../src/public/js/settings-ui.js');
-      expect(settingsUI.getSelectedTheme).toBeDefined();
-      expect(typeof settingsUI.getSelectedTheme).toBe('function');
-    });
-
-    it('should highlight current theme on settings load', async () => {
-      const settingsUI = await import('../src/public/js/settings-ui.js');
-      expect(settingsUI.setInitialTheme).toBeDefined();
-      expect(typeof settingsUI.setInitialTheme).toBe('function');
+    it('should export filterThemesBySearch for QuickThemeSwitcher', async () => {
+      const themeBrowser = await import('../src/public/js/components/ThemeBrowser.js');
+      expect(themeBrowser.filterThemesBySearch).toBeDefined();
+      expect(typeof themeBrowser.filterThemesBySearch).toBe('function');
     });
 
   });

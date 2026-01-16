@@ -154,12 +154,10 @@ Error handling is centralized in the calling agent (see `tactical-agent-behavior
 | Subagent | Purpose |
 |----------|---------|
 | `workflow-status-check` | Detect workflow state |
-| `sm-work-research` | Research stories and context |
+| `generic-sm-setup` | Research backlog (MODE=research) or setup story (MODE=setup) |
+| `generic-sm-finish` | Preflight checks (PHASE=preflight) or execute finish (PHASE=execute) |
 | `sm-file-summary` | Summarize file changes |
-| `sm-story-setup` | Claim Jira, write session, create branches |
 | `sm-handoff` | Handoff bookkeeping when SM work done |
-| `sm-finish-bookkeeping` | Archive session, update sprint |
-| `sm-finish-execution` | Execute finish workflow |
 
 ### TEA Subagents
 

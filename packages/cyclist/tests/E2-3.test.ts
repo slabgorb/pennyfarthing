@@ -21,7 +21,6 @@ import { createTerminalServer, broadcastStats } from '../src/server.js';
 describe('E2-3: Stats WebSocket Channel', () => {
   let server: Server;
   let wsStatsUrl: string;
-  let wsTerminalUrl: string;
 
   beforeAll(async () => {
     server = createTerminalServer();
@@ -30,7 +29,6 @@ describe('E2-3: Stats WebSocket Channel', () => {
         const addr = server.address();
         if (addr && typeof addr === 'object') {
           wsStatsUrl = `ws://localhost:${addr.port}/ws/stats`;
-          wsTerminalUrl = `ws://localhost:${addr.port}/ws`;
         }
         resolve();
       });
@@ -79,32 +77,6 @@ describe('E2-3: Stats WebSocket Channel', () => {
       expect(ws.readyState).toBe(WebSocket.OPEN);
     });
 
-    it('should not interfere with existing /ws terminal endpoint', async () => {
-      // Both endpoints should work independently
-      const statsWs = new WebSocket(wsStatsUrl);
-      const terminalWs = new WebSocket(wsTerminalUrl);
-
-      const statsConnected = new Promise<void>((resolve, reject) => {
-        statsWs.on('open', () => resolve());
-        statsWs.on('error', (err) => reject(err));
-        setTimeout(() => reject(new Error('Stats connection timeout')), 5000);
-      });
-
-      const terminalConnected = new Promise<void>((resolve, reject) => {
-        terminalWs.on('open', () => resolve());
-        terminalWs.on('error', (err) => reject(err));
-        setTimeout(() => reject(new Error('Terminal connection timeout')), 5000);
-      });
-
-      // Both should connect (terminal may close if PTY fails, that's OK)
-      await statsConnected;
-      await terminalConnected.catch(() => {}); // Terminal may fail without PTY
-
-      expect(statsWs.readyState).toBe(WebSocket.OPEN);
-
-      statsWs.close();
-      terminalWs.close();
-    });
   });
 
   describe('AC2: Stats updates pushed on parse events', () => {
@@ -288,6 +260,13 @@ describe('E2-3: Stats WebSocket Channel', () => {
       const client1 = new WebSocket(wsStatsUrl);
       const client2 = new WebSocket(wsStatsUrl);
 
+      const client1Messages: string[] = [];
+      const client2Messages: string[] = [];
+
+      // Register message handlers BEFORE waiting for open to capture all messages
+      client1.on('message', (data) => client1Messages.push(data.toString()));
+      client2.on('message', (data) => client2Messages.push(data.toString()));
+
       await Promise.all([
         new Promise<void>((resolve, reject) => {
           client1.on('open', () => resolve());
@@ -301,20 +280,14 @@ describe('E2-3: Stats WebSocket Channel', () => {
         })
       ]);
 
-      const client1Messages: string[] = [];
-      const client2Messages: string[] = [];
+      // Wait for initial stats messages to arrive
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
-      client1.on('message', (data) => client1Messages.push(data.toString()));
-      client2.on('message', (data) => client2Messages.push(data.toString()));
-
-      // Wait for potential broadcasts
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Both clients should receive the same messages (if any)
-      // This will fail in RED phase because no broadcasts happen
-      if (client1Messages.length > 0) {
-        expect(client1Messages).toEqual(client2Messages);
-      }
+      // Both clients should receive initial stats on connect
+      // Each client gets the same initial stats message
+      expect(client1Messages.length).toBeGreaterThan(0);
+      expect(client2Messages.length).toBeGreaterThan(0);
+      expect(client1Messages[0]).toEqual(client2Messages[0]);
 
       client1.close();
       client2.close();

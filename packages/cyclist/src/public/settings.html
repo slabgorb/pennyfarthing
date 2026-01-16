@@ -12,26 +12,7 @@
     <h1>Settings</h1>
 
     <form id="settings-form">
-      <!-- Workflow Section -->
-      <section class="settings-section" data-section="workflow">
-        <h2>Workflow</h2>
-
-        <div class="setting-item">
-          <label class="setting-label" for="auto_handoff">
-            <input type="checkbox" id="auto_handoff" name="auto_handoff">
-            <span>Auto Handoff</span>
-          </label>
-          <p class="setting-description">Automatically trigger next agent when phase completes</p>
-        </div>
-
-        <div class="setting-item">
-          <label class="setting-label" for="handoff_confirm">
-            <input type="checkbox" id="handoff_confirm" name="handoff_confirm" checked>
-            <span>Confirm Handoff</span>
-          </label>
-          <p class="setting-description">Show confirmation dialog before handoff</p>
-        </div>
-      </section>
+      <!-- 35-1: Workflow section removed - handoff toggle now in editor toolbar -->
 
       <!-- Display Section -->
       <section class="settings-section" data-section="display">
@@ -65,6 +46,52 @@
         </div>
       </section>
 
+      <!-- Fonts Section (Story 35-6) -->
+      <section class="settings-section" data-section="fonts">
+        <h2>Fonts</h2>
+
+        <div class="setting-item">
+          <label class="setting-label" for="font_ui">
+            <span>UI Font</span>
+          </label>
+          <div class="setting-input font-setting">
+            <select id="font_ui" name="font_ui" class="font-select">
+              <option value="system-ui">System Default</option>
+              <option value="-apple-system">Apple System</option>
+              <option value="Segoe UI">Segoe UI</option>
+              <option value="Roboto">Roboto</option>
+              <option value="Ubuntu">Ubuntu</option>
+              <option value="Helvetica Neue">Helvetica Neue</option>
+              <option value="Arial">Arial</option>
+            </select>
+            <span class="font-preview" id="font_ui_preview">AaBbCc 123</span>
+          </div>
+          <p class="setting-description">Font for UI elements like labels and buttons</p>
+        </div>
+
+        <div class="setting-item">
+          <label class="setting-label" for="font_mono">
+            <span>Monospace Font</span>
+          </label>
+          <div class="setting-input font-setting">
+            <select id="font_mono" name="font_mono" class="font-select">
+              <option value="SF Mono">SF Mono</option>
+              <option value="Monaco">Monaco</option>
+              <option value="Menlo">Menlo</option>
+              <option value="Consolas">Consolas</option>
+              <option value="Fira Code">Fira Code</option>
+              <option value="JetBrains Mono">JetBrains Mono</option>
+              <option value="Source Code Pro">Source Code Pro</option>
+              <option value="IBM Plex Mono">IBM Plex Mono</option>
+              <option value="Cascadia Code">Cascadia Code</option>
+              <option value="Courier New">Courier New</option>
+            </select>
+            <span class="font-preview mono" id="font_mono_preview">AaBbCc 123 {}</span>
+          </div>
+          <p class="setting-description">Font for code, diffs, and terminal output</p>
+        </div>
+      </section>
+
       <!-- Notifications Section -->
       <section class="settings-section" data-section="notifications">
         <h2>Notifications</h2>
@@ -86,21 +113,7 @@
         </div>
       </section>
 
-      <!-- Pennyfarthing Section -->
-      <section class="settings-section" data-section="pennyfarthing">
-        <h2>Pennyfarthing</h2>
-
-        <div class="setting-item">
-          <label class="setting-label">
-            <span>Agent Theme</span>
-          </label>
-          <div id="theme-browser-container" class="theme-browser-container">
-            <!-- Populated dynamically by settings-ui.js via ThemeBrowser component -->
-          </div>
-          <input type="hidden" id="theme" name="theme" value="alice-in-wonderland">
-          <p class="setting-description">Character theme for agent personas (requires agent restart)</p>
-        </div>
-      </section>
+      <!-- 35-1: Pennyfarthing/Theme section removed - theme picker now in persona area -->
 
       <!-- Button Row -->
       <div class="button-row">

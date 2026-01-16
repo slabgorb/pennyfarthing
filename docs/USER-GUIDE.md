@@ -2,7 +2,7 @@
 
 Complete guide to using Pennyfarthing, a Claude Code agent framework with TDD workflow and persona system.
 
-**Version:** 5.1.1
+**Version:** 6.4.0
 
 ---
 
@@ -27,11 +27,11 @@ Complete guide to using Pennyfarthing, a Claude Code agent framework with TDD wo
 
 Pennyfarthing is a shared agent orchestration framework for Claude Code projects. It provides:
 
-- **Agent System** - Coordinated multi-agent workflows for TDD development
-- **Persona System** - 63 themed character personalities (Discworld, Star Trek, The Expanse, etc.)
+- **Agent System** - 24 coordinated agents for multi-agent TDD development
+- **Persona System** - 102 themed character personalities (Discworld, Star Trek, The Expanse, etc.)
 - **Subagent Handoffs** - Automated state transitions between agents
-- **Slash Commands** - Entry points for agent activation
-- **Skills** - Project-agnostic knowledge domains
+- **Slash Commands** - 43 entry points for agent activation and workflows
+- **Skills** - 20 project-agnostic knowledge domains
 - **Sprint Management** - Story tracking and workflow coordination
 - **Scientific Benchmarking** - TRAIL framework for evaluating code review effectiveness
 - **Showcase Website** - Interactive theme gallery with OCEAN personality visualizations
@@ -57,12 +57,14 @@ Strategic planning happens occasionally. Tactical execution (story implementatio
 ### Install via NPM
 
 ```bash
-# Install as dev dependency (recommended)
-npm install --save-dev pennyfarthing
+# Install as dev dependency (recommended) - scoped package as of v6.0
+npm install --save-dev @pennyfarthing/core
 
 # Or install globally (still works, but project install preferred)
-npm install -g pennyfarthing
+npm install -g @pennyfarthing/core
 ```
+
+> **Note:** The package was renamed from `pennyfarthing` to `@pennyfarthing/core` in v6.0. If upgrading from v5.x, uninstall the old package first: `npm uninstall pennyfarthing`
 
 ### Initialize a Project
 
@@ -70,35 +72,35 @@ npm install -g pennyfarthing
 cd your-project
 
 # Install the package first
-npm install --save-dev pennyfarthing
+npm install --save-dev @pennyfarthing/core
 
 # Initialize with project name
-pennyfarthing init my-project
+npx pennyfarthing init my-project
 
 # Or let it detect from directory name
-pennyfarthing init
+npx pennyfarthing init
 ```
 
-The init command (v4.0+):
+The init command:
 1. Creates `.claude/` directory structure
-2. Symlinks to `node_modules/pennyfarthing/pennyfarthing-dist/` (no file copying)
+2. Symlinks to `node_modules/@pennyfarthing/core/pennyfarthing-dist/` (no file copying)
 3. Creates project-specific directories for customization
 4. Sets up agent sidecars for project knowledge
 5. Configures session hooks for environment setup
 
-### Migrating from 3.x
+### Migrating from 5.x
 
-The v4.0 release changes from copying files to symlinking:
+The v6.0 release renamed the package to `@pennyfarthing/core`:
 
 ```bash
-# Remove old copied files
-pennyfarthing uninstall
+# Remove old package
+npm uninstall pennyfarthing
 
-# Install package
-npm install --save-dev pennyfarthing
+# Install new scoped package
+npm install --save-dev @pennyfarthing/core
 
-# Re-initialize with symlinks
-pennyfarthing init
+# Re-initialize
+npx pennyfarthing init
 ```
 
 Your `.claude/project/` customizations are preserved.
@@ -151,7 +153,7 @@ just test
 
 **`.claude/persona-config.yaml`** - Choose a theme:
 ```yaml
-theme: discworld  # 91 themes available - see THEME-COMPARISON.md for full list
+theme: discworld  # 102 themes available - see THEME-COMPARISON.md for full list
 attributes:
   verbosity: medium
   formality: casual
@@ -220,18 +222,18 @@ pennyfarthing init --skip-templates   # Skip template generation
 Update Pennyfarthing to the latest version.
 
 ```bash
-# v4.0+: Use npm to update (symlinks point to node_modules)
-npm update pennyfarthing
+# v6.0+: Use npm to update (scoped package)
+npm update @pennyfarthing/core
 
 # Or check current version
-pennyfarthing version
+npx pennyfarthing version
 ```
 
-**Behavior (v4.0+):**
+**Behavior:**
 - Symlinks automatically point to updated package
 - No file copying or overwriting needed
 - `.claude/project/` customizations always preserved
-- Run `pennyfarthing doctor` after major version updates
+- Run `npx pennyfarthing doctor` after major version updates
 
 ### `pennyfarthing doctor`
 
@@ -512,7 +514,7 @@ Pennyfarthing includes several persona themes that give agents distinct personal
 
 ### Available Themes
 
-Pennyfarthing includes **91 persona themes** across diverse universes:
+Pennyfarthing includes **102 persona themes** across diverse universes:
 
 | Category | Examples |
 |----------|----------|

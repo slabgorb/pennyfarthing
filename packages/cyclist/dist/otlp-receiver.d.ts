@@ -6,6 +6,11 @@
  * Story 19-4: Extended with per-agent token aggregation.
  * Story 19-5: Extended with per-story token aggregation.
  */
+import { type DiffSummary, type OutputSummary } from './file-enrichment.js';
+/** Enable/disable OTEL debug logging at runtime */
+export declare function setOtelDebug(enabled: boolean): void;
+/** Check if OTEL debug is enabled */
+export declare function isOtelDebugEnabled(): boolean;
 /**
  * Parsed tool execution event from OTLP logs
  */
@@ -28,6 +33,26 @@ export interface ToolEvent {
     traceId?: string;
     /** Span ID for correlation */
     spanId?: string;
+    /** File size in bytes (Read/Edit tools) */
+    fileSize?: number;
+    /** Line count (Read tool) */
+    lineCount?: number;
+    /** Detected programming language */
+    language?: string;
+    /** Git status of the file */
+    gitStatus?: 'clean' | 'modified' | 'new' | 'untracked' | null;
+    /** Diff summary for Edit operations */
+    diff?: DiffSummary;
+    /** Resolved file path for Read/Edit tools */
+    filePath?: string;
+    /** Command executed (secrets redacted) */
+    command?: string;
+    /** Exit code from command execution */
+    exitCode?: number | null;
+    /** Output summary with first/last lines */
+    outputSummary?: OutputSummary;
+    /** Working directory where command was executed */
+    workingDirectory?: string;
 }
 /**
  * Parsed user prompt event from OTLP logs
@@ -54,6 +79,35 @@ interface RawLogEvent {
     spanId?: string;
     attributes: Record<string, string | number | boolean | undefined>;
 }
+/**
+ * Background task data tracked from Task tool spans
+ */
+export interface BackgroundTask {
+    taskId: string;
+    description: string;
+    subagentType: string;
+    startedAt: number;
+    status: 'pending' | 'completed';
+    success?: boolean;
+    output?: string;
+    error?: string;
+}
+/**
+ * Register callback for background task completion
+ */
+export declare function setBackgroundTaskCallback(callback: (task: BackgroundTask) => void): void;
+/**
+ * Track a new background task
+ */
+export declare function trackBackgroundTask(task: Omit<BackgroundTask, 'status'>): void;
+/**
+ * Get all tracked background tasks
+ */
+export declare function getBackgroundTasks(): BackgroundTask[];
+/**
+ * Reset background task store
+ */
+export declare function resetBackgroundTasks(): void;
 export interface TokenStats {
     inputTokens: number;
     outputTokens: number;
@@ -73,6 +127,15 @@ export declare function setTokenStatsCallback(callback: (stats: TokenStats) => v
  * Called by main.ts to wire up IPC broadcast to renderer
  */
 export declare function setToolEventCallback(callback: (event: ToolEvent) => void): void;
+/**
+ * Register callback for user email updates
+ * Called by main.ts to wire up IPC broadcast
+ */
+export declare function setUserEmailCallback(callback: (email: string) => void): void;
+/**
+ * Get the current user email (extracted from OTEL spans)
+ */
+export declare function getUserEmail(): string | null;
 /**
  * Parse OTLP JSON payload and extract token usage metrics
  */
@@ -156,6 +219,6 @@ export declare function getAuditLogStats(): {
  * - duration_ms (not tool.duration_ms)
  * - tool_parameters as JSON string (not tool.input)
  */
-export declare function processLogEvents(rawEvents: RawLogEvent[]): void;
+export declare function processLogEvents(rawEvents: RawLogEvent[]): Promise<void>;
 export {};
 //# sourceMappingURL=otlp-receiver.d.ts.map

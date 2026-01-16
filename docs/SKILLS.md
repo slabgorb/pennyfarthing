@@ -19,6 +19,7 @@ This document is auto-generated from `skill-registry.yaml`. Do not edit manually
   - [changelog](#changelog)
 - [Project Management](#project-management)
   - [jira](#jira)
+  - [permissions](#permissions)
   - [sprint-context](#sprint-context)
   - [story-management](#story-management)
 - [Theming](#theming)
@@ -209,6 +210,25 @@ Jira CLI commands for sprint management
 - Don't bypass Jira for sprint tracking
 
 **Related:** [sprint-context](#sprint-context), [story-management](#story-management)
+
+### permissions
+
+Manage runtime permission grants - list, grant, and revoke tool access
+
+**Tags:** permissions, security, tools
+
+**Keywords:** grants, scopes, tools, runtime, security
+
+**Examples:**
+- Viewing active grants: `/permissions`
+- Granting WebFetch access: `/permissions grant WebFetch "*.github.com`
+- Revoking tool access: `/permissions revoke Bash`
+
+**Anti-patterns:**
+- Don't manually edit settings.local.json permissions - use skill
+- Don't grant overly broad scope patterns
+
+**Related:** [sprint-context](#sprint-context)
 
 ### sprint-context
 

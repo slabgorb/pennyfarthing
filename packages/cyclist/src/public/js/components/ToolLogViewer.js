@@ -79,6 +79,73 @@ function truncate(str, maxLen = 50) {
 }
 
 /**
+ * Format file size for display (Story 36-7)
+ * @param {number} bytes - File size in bytes
+ * @returns {string}
+ */
+function formatFileSize(bytes) {
+  if (bytes === undefined || bytes === null) return '';
+  if (bytes < 1024) return `${bytes}B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+}
+
+/**
+ * Extract filename from path
+ * @param {string} path - Full file path
+ * @returns {string} Just the filename
+ */
+function extractFilename(path) {
+  if (!path) return '';
+  const parts = path.split('/');
+  return parts[parts.length - 1] || path;
+}
+
+/**
+ * Format enrichment data for display (Story 36-7, 36-10)
+ * Shows filename, size, and line count - language omitted (user can infer from extension)
+ * @param {object} entry - Tool event entry with enrichment fields
+ * @returns {string} HTML string for enrichment info
+ */
+function formatEnrichment(entry) {
+  const parts = [];
+
+  // Filename from filePath field (Story 36-10: now properly propagated from correlation)
+  const filePath = entry.filePath;
+  if (filePath && (entry.fileSize !== undefined || entry.lineCount !== undefined)) {
+    const filename = extractFilename(filePath);
+    if (filename) {
+      parts.push(`<span class="enrichment-file" title="${escapeHtml(filePath)}">${escapeHtml(filename)}</span>`);
+    }
+  }
+
+  // File size
+  if (entry.fileSize !== undefined) {
+    parts.push(`<span class="enrichment-size">${formatFileSize(entry.fileSize)}</span>`);
+  }
+
+  // Line count (Read only)
+  if (entry.lineCount !== undefined) {
+    parts.push(`<span class="enrichment-lines">${entry.lineCount} lines</span>`);
+  }
+
+  // Diff summary (Edit only)
+  if (entry.diff) {
+    const { added, removed } = entry.diff;
+    if (added > 0 || removed > 0) {
+      parts.push(`<span class="enrichment-diff">+${added}/-${removed}</span>`);
+    }
+  }
+
+  // Git status
+  if (entry.gitStatus && entry.gitStatus !== 'clean') {
+    parts.push(`<span class="enrichment-git git-${entry.gitStatus}">${entry.gitStatus}</span>`);
+  }
+
+  return parts.length > 0 ? parts.join(' ') : '';
+}
+
+/**
  * Get unique tool types from entries
  * @returns {string[]}
  */
@@ -160,18 +227,29 @@ function renderTable() {
   }
 
   // Render entries in reverse chronological order
-  tbody.innerHTML = [...filtered].reverse().map(entry => `
+  // Story 36-7: Include enrichment data for Read/Edit tools
+  tbody.innerHTML = [...filtered].reverse().map(entry => {
+    const enrichment = formatEnrichment(entry);
+    const inputCell = enrichment
+      ? `<div class="input-with-enrichment">
+           <div class="input-text" title="${escapeHtml(entry.input || '')}">${escapeHtml(truncate(entry.input, 60))}</div>
+           <div class="enrichment-row">${enrichment}</div>
+         </div>`
+      : escapeHtml(truncate(entry.input, 60));
+
+    return `
     <tr class="${entry.success ? '' : 'error-row'}">
       <td class="col-timestamp">${formatTimestamp(entry.timestamp)}</td>
       <td class="col-tool"><span class="tool-badge tool-${entry.toolName.toLowerCase()}">${escapeHtml(entry.toolName)}</span></td>
-      <td class="col-input" title="${escapeHtml(entry.input || '')}">${escapeHtml(truncate(entry.input, 60))}</td>
+      <td class="col-input" title="${escapeHtml(entry.input || '')}">${inputCell}</td>
       <td class="col-duration">${formatDuration(entry.durationMs)}</td>
       <td class="col-status">${entry.success
         ? '<span class="status-success">✓</span>'
         : `<span class="status-error" title="${escapeHtml(entry.error || 'Failed')}">✗</span>`
       }</td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
 }
 
 /**

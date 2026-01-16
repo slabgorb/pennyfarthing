@@ -327,6 +327,91 @@ Task tool:
 4. Combine related subagent work
 5. Use brace expansion in Glob patterns
 6. Spawn independent subagents in parallel
+7. Run tests in background while continuing work
+
+### Background Subagent Execution
+
+Run slow operations in background to continue working:
+
+```yaml
+# Spawn tests in background
+Task tool:
+  subagent_type: "testing-runner"
+  run_in_background: true
+  prompt: |
+    REPOS: all
+    CONTEXT: Background test run
+    RUN_ID: bg-001
+    SKIP_CACHE_WRITE: true
+```
+
+**Check status without blocking:**
+```yaml
+TaskOutput tool:
+  task_id: {task_id}
+  block: false
+  timeout: 1000
+```
+
+**When to use background execution:**
+- Test runs while writing more code
+- Multiple independent file searches
+- Parallel exploration of code paths
+- Long-running git operations
+
+**When NOT to use:**
+- Operations where next steps depend on the result
+- Operations that modify shared state
+- Before commit (need to verify GREEN)
+- During handoff (need synchronous verification)
+
+### Background Task Tracking
+
+Use the background task tracking utilities to manage session file entries:
+
+```bash
+source $CLAUDE_PROJECT_DIR/scripts/utils/background-tasks.sh
+SESSION_FILE="$CLAUDE_PROJECT_DIR/.session/${STORY_ID}-session.md"
+
+# After spawning background task, record it:
+bg_task_add "$SESSION_FILE" "$TASK_ID" "testing-runner" "Background test run"
+
+# After checking TaskOutput, update status:
+bg_task_update "$SESSION_FILE" "$TASK_ID" "completed"  # or "error"
+
+# Clean up finished tasks:
+bg_task_cleanup "$SESSION_FILE"
+```
+
+**Available functions:**
+| Function | Purpose |
+|----------|---------|
+| `bg_task_add` | Record new background task |
+| `bg_task_update` | Update task status (running/completed/error) |
+| `bg_task_cleanup` | Remove completed and errored tasks |
+| `bg_task_list` | Show all running tasks |
+| `bg_task_check` | Return 0 if any tasks running (for conditionals) |
+| `bg_task_summary` | Print counts by status |
+
+**Lifecycle:**
+1. Spawn with `run_in_background: true`
+2. Record: `bg_task_add "$SESSION_FILE" "$TASK_ID" "type" "description"`
+3. Continue other work
+4. Periodically check `TaskOutput` with `block: false`
+5. Update: `bg_task_update "$SESSION_FILE" "$TASK_ID" "completed"`
+6. Cleanup: `bg_task_cleanup "$SESSION_FILE"`
+
+### Example: Background Tests While Implementing
+
+```
+Turn 1: Spawn testing-runner in background, continue editing
+Turn 2: Make code changes
+Turn 3: Check TaskOutput (still running), continue editing
+Turn 4: Make more changes
+Turn 5: Check TaskOutput (complete, GREEN), proceed to commit
+```
+
+This pattern saves turns by overlapping test execution with implementation work.
 
 ## Project Customization
 

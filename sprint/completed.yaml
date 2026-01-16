@@ -953,6 +953,293 @@ sprint_7:
 # CUMULATIVE METRICS
 # =============================================================================
 
+# =============================================================================
+# SPRINT 10 - Completed Epics
+# =============================================================================
+
+sprint_10_completed:
+  note: "Sprint 10 completed epics moved from current-sprint.yaml"
+
+  epics:
+    - id: epic-32
+      title: BMAD Artifact Compatibility
+      description: |
+        Enable Pennyfarthing to work with BMAD-generated planning artifacts
+        and produce outputs BMAD tooling can consume. Focus on artifact
+        interoperability: import BMAD stories/epics, work in our TDD flow,
+        export results back to BMAD format.
+      points: 11
+      completed_points: 11
+      priority: P1
+      marker: strategic
+      repos: pennyfarthing
+      status: done
+      jira: MSSCI-11626
+      stories:
+        - id: 32-1
+          title: Document BMAD artifact formats
+          description: |
+            Document all BMAD artifact formats for reference:
+            - Story file format (template.md structure)
+            - Epics+stories format (epics-template.md)
+            - Sprint-status.yaml schema
+            - Project-context.md structure
+            Create sprint/context/bmad-formats.md reference.
+          points: 1
+          priority: P0
+          status: done
+          started: 2026-01-13
+          completed: 2026-01-13
+          assigned_to: Keith Avery
+          repos: pennyfarthing
+          jira: MSSCI-11627
+          acceptance_criteria:
+            - BMAD story format documented with examples
+            - BMAD epics format documented
+            - Sprint-status schema documented
+            - Project-context structure documented
+            - Reference saved to sprint/context/
+        - id: 32-2
+          title: BMAD story file parser
+          description: |
+            Parse BMAD story files and convert to Pennyfarthing session format.
+            Handle: Status, Story (user story), Acceptance Criteria, Tasks/Subtasks,
+            Dev Notes, Dev Agent Record, File List sections.
+          points: 2
+          priority: P0
+          status: done
+          started: 2026-01-13
+          completed: 2026-01-13
+          assigned_to: Keith Avery
+          repos: pennyfarthing
+          jira: MSSCI-11095
+          acceptance_criteria:
+            - Parses BMAD story markdown format
+            - Extracts status, ACs, tasks, dev notes
+            - Converts to Pennyfarthing session structure
+            - Preserves task checkbox state
+            - Unit tests for parser
+        - id: 32-3
+          title: BMAD epics+stories importer
+          description: |
+            Import BMAD epics.md file into Pennyfarthing sprint YAML.
+            Map epic/story structure, preserve BDD acceptance criteria,
+            handle story numbering (N.M format).
+          points: 2
+          priority: P0
+          status: done
+          started: 2026-01-13
+          completed: 2026-01-13
+          assigned_to: Keith Avery
+          repos: pennyfarthing
+          pr: 218
+          jira: MSSCI-11095
+          acceptance_criteria:
+            - Parses BMAD epics.md format
+            - Creates epic entries in sprint YAML
+            - Preserves Given/When/Then ACs
+            - Maps N.M story IDs to our format
+            - Handles requirements coverage map
+        - id: 32-4
+          title: BMAD project-context reader
+          description: |
+            Load BMAD project-context.md as shared agent context.
+            Extract: Technology Stack, Critical Implementation Rules,
+            and any AI agent guidance sections.
+          points: 2
+          priority: P1
+          status: done
+          started: 2026-01-13
+          completed: 2026-01-13
+          assigned_to: Keith Avery
+          repos: pennyfarthing
+          jira: MSSCI-11628
+          acceptance_criteria:
+            - Detects project-context.md in project
+            - Parses technology stack section
+            - Extracts implementation rules
+            - Integrates with agent context loading
+            - Works alongside our CLAUDE.md
+        - id: 32-5
+          title: Session to BMAD story exporter
+          description: |
+            Export completed Pennyfarthing session back to BMAD story format.
+            Populate: Dev Agent Record, File List, Completion Notes,
+            Status updates, Task checkboxes.
+          points: 2
+          priority: P1
+          status: done
+          repos: pennyfarthing
+          jira: MSSCI-11629
+          started: 2026-01-13
+          completed: 2026-01-13
+          assigned_to: Keith Avery
+          pr: 234
+          acceptance_criteria:
+            - Exports session to BMAD story format
+            - Populates Dev Agent Record section
+            - Updates File List with changed files
+            - Marks completed tasks with [x]
+            - Sets appropriate status (review/done)
+        - id: 32-6
+          title: Sprint to BMAD status sync
+          description: |
+            Bidirectional sync between Pennyfarthing sprint YAML and
+            BMAD sprint-status.yaml. Keep both in sync for teams
+            using both tools.
+          points: 2
+          priority: P2
+          status: done
+          started: 2026-01-14
+          completed: 2026-01-14
+          assigned_to: Keith Avery
+          repos: pennyfarthing
+          jira: MSSCI-11630
+          pr: 243
+          acceptance_criteria:
+            - Reads BMAD sprint-status.yaml
+            - Updates our sprint YAML from BMAD status
+            - Exports our status to BMAD format
+            - Handles status mapping (ready-for-dev, in-progress, review, done)
+            - Conflict detection when both changed
+
+    - id: epic-34
+      title: Cyclist Developer Experience
+      description: |
+        First-time Cyclist users can set up and run the app without tribal
+        knowledge or debugging mysterious failures. Focus on documentation,
+        tooling, and "works on my machine" fixes.
+
+        Covers three installation scenarios:
+        1. Fresh system - never had Cyclist installed
+        2. Upgrade path - previous version installed
+        3. Clean checkout - fresh clone, existing system deps
+      points: 8
+      completed_points: 8
+      priority: P2
+      marker: dx
+      repos: pennyfarthing
+      status: done
+      jira: MSSCI-11618
+      stories:
+        - id: 34-1
+          title: Fresh install documentation and tooling
+          description: |
+            Documentation and tooling for fresh Cyclist installation.
+            Focused on users who have never installed Cyclist before.
+
+            Prototype files:
+            - packages/cyclist/README.md (setup guide)
+            - packages/cyclist/scripts/install-app.sh (macOS install)
+            - packages/cyclist/scripts/install-cli.sh (CLI wrapper)
+            - justfile cyclist-setup recipe
+          points: 2
+          priority: P1
+          status: done
+          started: 2026-01-13
+          completed: 2026-01-13
+          pr: 224
+          repos: pennyfarthing
+          jira: MSSCI-11619
+          acceptance_criteria:
+            - README documents all prerequisites (pnpm, Python 3, Xcode tools, just)
+            - just cyclist-setup handles fresh clone scenario
+            - install-app.sh works for fresh install (replaces existing if present)
+            - install-cli.sh works for fresh install
+            - Troubleshooting section covers fresh install failures
+        - id: 34-4
+          title: Upgrade path handling
+          description: |
+            Handle users upgrading from previous Cyclist versions.
+            Clean stale artifacts, warn about location changes, document process.
+          points: 2
+          priority: P1
+          status: done
+          started: 2026-01-13
+          completed: 2026-01-13
+          pr: 226
+          repos: pennyfarthing
+          jira: MSSCI-11622
+          acceptance_criteria:
+            - README documents upgrade path (when to rebuild, clean artifacts)
+            - just cyclist-setup cleans stale artifacts before rebuilding
+            - install-cli.sh warns if replacing CLI pointing to different location
+            - Troubleshooting section for upgrade-specific issues
+        - id: 34-5
+          title: Team validation checklist
+          description: |
+            Create validation checklist for distributed testing across team.
+            Different team members have different system configurations
+            (fresh vs upgraded, with/without just, different macOS versions).
+          points: 1
+          priority: P2
+          status: done
+          started: 2026-01-13
+          completed: 2026-01-13
+          pr: 232
+          repos: pennyfarthing
+          jira: MSSCI-11623
+          acceptance_criteria:
+            - Validation checklist markdown file created
+            - Documents test scenarios (fresh, upgrade, clean checkout)
+            - Lists system configurations needed for testing
+            - Instructions for team members to report results
+        - id: 34-2
+          title: Cyclist health check command
+          description: |
+            Add a diagnostic command that validates Cyclist setup:
+            - Checks node-pty native module status
+            - Verifies workspace dependencies resolved
+            - Tests pennyfarthing-dist symlink resolution
+            - Reports actionable fix commands
+
+            Implementation: Bash script (scripts/cyclist-doctor.sh) for consistency
+            with other install scripts and to avoid Node.js chicken-and-egg.
+          points: 2
+          priority: P2
+          status: done
+          started: 2026-01-13
+          completed: 2026-01-13
+          pr: 225
+          repos: pennyfarthing
+          jira: MSSCI-11620
+          acceptance_criteria:
+            - just cyclist-doctor runs scripts/doctor.sh
+            - Checks system prereqs (Node >= 18, pnpm, Python 3, Xcode tools, just)
+            - Checks build state (dist/server.js, dist/main.js exist)
+            - Checks node-pty prebuild exists for current platform
+            - Checks node-pty loadable (require succeeds)
+            - Checks Electron version compatibility with node-pty
+            - Checks workspace deps (@pennyfarthing/core, @pennyfarthing/shared symlinks valid)
+            - Checks port 1898 availability (warns if in use)
+            - Each failure shows specific fix command
+            - Supports --fix flag to auto-run fix commands
+            - Exit 0 if all pass, exit 1 if any fail
+            - Output colorized (green=pass, red=fail, yellow=warn)
+        - id: 34-3
+          title: Port conflict detection and messaging
+          description: |
+            Improve UX when default port 1898 is in use:
+            - Log which port was actually used
+            - Write .cyclist-port file for OTEL integration
+            - Show clear message with actual URL
+          points: 1
+          priority: P2
+          status: done
+          started: 2026-01-13
+          completed: 2026-01-13
+          pr: 230
+          repos: pennyfarthing
+          jira: MSSCI-11621
+          acceptance_criteria:
+            - Startup logs show actual port used
+            - .cyclist-port file written to project dir
+            - Message shows correct localhost URL
+
+# =============================================================================
+# CUMULATIVE METRICS
+# =============================================================================
+
 cumulative:
   sprints_completed: 7
   total_points_delivered: 316  # 205 + 111 (Sprint 7 final)

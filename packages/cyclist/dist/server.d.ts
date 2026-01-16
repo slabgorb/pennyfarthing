@@ -29,6 +29,26 @@ export declare function cleanupPortFile(projectDir: string): void;
  */
 export declare function readPortFile(projectDir: string): number | null;
 /**
+ * Write the Claude process PID to .cyclist-pid file.
+ * Used to track which Claude process belongs to this Cyclist instance.
+ */
+export declare function writePidFile(projectDir: string, pid: number): void;
+/**
+ * Remove the .cyclist-pid file during shutdown.
+ * Prevents stale PID files from causing incorrect process termination.
+ */
+export declare function cleanupPidFile(projectDir: string): void;
+/**
+ * Read the PID from .cyclist-pid file.
+ * Returns null if file doesn't exist, is empty, or contains invalid content.
+ */
+export declare function readPidFile(projectDir: string): number | null;
+/**
+ * Check if a process with the given PID is still running.
+ * Returns true if process exists, false otherwise.
+ */
+export declare function isProcessRunning(pid: number): boolean;
+/**
  * OTEL configuration type for Claude Code telemetry
  * Extends Record<string, string> for compatibility with process.env spreading
  */

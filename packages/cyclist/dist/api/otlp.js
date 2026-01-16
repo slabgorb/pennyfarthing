@@ -22,17 +22,14 @@ export function createOTLPRouter() {
     });
     // OTLP Logs/Events Receiver - POST endpoint for OpenTelemetry events
     // Story 19-1: Parse tool and prompt events from Claude Code
-    router.post('/logs', (req, res) => {
+    // Story 36-7: Made async to support span enrichment
+    router.post('/logs', async (req, res) => {
         try {
             // Parse OTLP logs payload into raw events
             const rawEvents = parseOTLPLogs(req.body);
-            // DEBUG: Log raw events to understand structure
+            // Process and store tool/prompt events (async for enrichment)
             if (rawEvents.length > 0) {
-                console.log('[OTLP DEBUG] Raw events:', JSON.stringify(rawEvents, null, 2));
-            }
-            // Process and store tool/prompt events
-            if (rawEvents.length > 0) {
-                processLogEvents(rawEvents);
+                await processLogEvents(rawEvents);
                 console.log(`[OTLP] Processed ${rawEvents.length} log event(s)`);
             }
             res.status(200).send();
