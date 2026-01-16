@@ -5,9 +5,9 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 70
-  completed_points: 16
-  remaining_points: 54
+  total_points: 72
+  completed_points: 17
+  remaining_points: 55
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - Epic 31: Customizable Workflow Engine (4 pts remaining)
@@ -15,7 +15,7 @@ summary:
     - Epic 35: Cyclist UI/UX Improvements (13 pts remaining)
     - Epic 36: OTEL Tool Call Enrichment (8 pts remaining)
     - Epic 37: Technical Debt & Bug Fixes (14 pts remaining)
-    - Epic 38: Agent File Modernization (18 pts - NEW)
+    - Epic 38: Agent File Modernization (20 pts)
 
     Stories now have `workflow:` tags indicating which workflow to use.
     SM will route to appropriate workflow (tdd, trivial, agent-docs).
@@ -888,12 +888,12 @@ epics:
 
       Includes workflow routing: SM reads `workflow:` tag from stories and
       follows the appropriate workflow definition.
-    points: 18
-    completed_points: 0
+    points: 20
+    completed_points: 3
     priority: P2
     marker: infrastructure
     repos: pennyfarthing
-    status: backlog
+    status: in_progress
     stories:
       - id: 38-1
         title: Fix stale references in agent files
@@ -926,8 +926,9 @@ epics:
           - Update README with "Production Agents" and "Experimental Agents" sections
         points: 1
         priority: P2
-        status: in_progress
+        status: done
         started: 2026-01-16
+        completed: 2026-01-16
         assigned_to: Keith Avery
         repos: pennyfarthing
         workflow: trivial
