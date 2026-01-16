@@ -292,33 +292,41 @@ epics:
           - Font preference saved and restored on startup
           - Terminal (xterm.js) respects font setting
       - id: 35-8
-        title: Fix theme switcher
+        title: Rethink theme switcher for settings panel integration
         description: |
-          ThemePicker (persona theme, not color theme) has multiple bugs
-          making it difficult to use:
+          Redesign the persona theme switcher to integrate properly with the
+          settings panel architecture. This is a behavioral rethink, not just
+          bug fixes.
 
-          Bugs to fix:
+          The current ThemePicker is a standalone component with issues. The
+          new approach should:
+          - Integrate with settings panel state management (35-9 patterns)
+          - Use consistent async loading patterns across settings
+          - Unify theme selection UX between quick-picker and settings browser
+          - Share persistence layer with other settings (no separate localStorage)
+
+          Original bugs to address:
           - Recent themes not persisted between sessions
           - Async loading issues cause empty state
           - Persona click handler conflicts (popup vs picker)
           - loadThemeMetadata() fails silently if IPC unavailable
-          - Event handler removal assumes listeners exist
 
           This is the persona/character theme switcher (alice-in-wonderland,
           discworld, etc), not the color theme (dark/light).
-        points: 2
+        points: 3
         priority: P1
         status: backlog
         repos: cyclist
         workflow: bdd
         jira: MSSCI-11723
+        workflow: bdd
         acceptance_criteria:
-          - Recent themes persisted in localStorage
-          - Async loading shows loading state, handles errors
-          - Click handler consistently opens picker (no conflicts)
-          - Graceful fallback when IPC unavailable
-          - No console errors during normal operation
-          - Theme switch actually updates persona display
+          - Given I click the persona section, When the theme picker opens, Then I see my recent themes at the top
+          - Given I select a theme, When the picker closes, Then the persona display updates immediately
+          - Given IPC is unavailable, When the picker loads, Then it falls back to HTTP gracefully with loading state
+          - Given I have unsaved theme changes in settings, When I try to close, Then I see a confirmation prompt
+          - Given I change theme in quick-picker, When I open settings panel, Then settings reflects the current theme
+          - Given settings panel is open to themes, When I select a theme, Then quick-picker recent list updates
       - id: 35-9
         title: Settings panel fixes and expansion
         description: |
@@ -1305,3 +1313,332 @@ epics:
           - Auto mode workflow continues without user intervention
           - Works for all handoff transitions (SM→TEA, TEA→Dev, Dev→Rev, etc.)
           - Manual mode ignores this and behaves as before (user prompt)
+
+# =============================================================================
+# BACKLOG EPICS (Future Sprints)
+# =============================================================================
+
+  - id: epic-39
+    title: Quality Assurance Oversight Capabilities
+    description: |
+      Add BMAD TEA-style quality oversight capabilities to Pennyfarthing.
+      Rather than replacing our TEA (who writes tests), extend our quality
+      gates with test quality scoring, risk-based prioritization, coverage
+      traceability, NFR assessment, and release gate decisions.
+
+      Design Decision: Extend Reviewer rather than create new agent.
+      Rationale: Reviewer already has adversarial mindset, issue categorization,
+      and gate decisions. Adding test review is natural extension.
+
+      Inspired by BMAD 6.0 gap analysis - their TEA (Murat) is a Quality
+      Architect providing oversight, not a Test Engineer writing tests.
+    points: 23
+    completed_points: 0
+    priority: P2
+    marker: quality
+    repos: pennyfarthing
+    status: backlog
+    stories:
+      - id: 39-1
+        title: Test quality review with 0-100 scoring
+        description: |
+          Add `/test-review` skill that Reviewer can invoke to assess test
+          quality with 0-100 scoring.
+
+          Scoring dimensions (from BMAD):
+          - Determinism (no flaky patterns)
+          - Isolation (no shared state between tests)
+          - Explicit assertions (no implicit pass)
+          - Meaningful coverage (tests prove functionality)
+          - Pattern compliance (follows project patterns)
+
+          Score included in Reviewer Assessment. Threshold configurable
+          (warn < 70, block < 50).
+        points: 5
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Reviewer can invoke /test-review during review phase
+          - Scoring produces 0-100 with breakdown by dimension
+          - Critical violations flagged (shared state, implicit pass)
+          - Score included in Reviewer Assessment
+          - Threshold configurable (warn < 70, block < 50)
+      - id: 39-2
+        title: Test quality knowledge base
+        description: |
+          Create testing knowledge base skill with indexed patterns for
+          test review.
+
+          Categories:
+          - Fixture patterns (setup/teardown, composition)
+          - Flakiness patterns (timing, network, state)
+          - Coverage patterns (boundary, equivalence, error paths)
+          - Anti-patterns (god fixtures, test-only code in production)
+        points: 3
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - /testing skill extended with knowledge base fragments
+          - Fragments indexed and searchable
+          - Reviewer cites knowledge base in assessments
+          - Patterns documented with good/bad examples
+      - id: 39-3
+        title: Risk-based test prioritization
+        description: |
+          Add risk assessment to TEA workflow for prioritizing test coverage.
+
+          Risk formula: Probability x Impact
+          - P0 (Critical): Auth, payments, data integrity
+          - P1 (High): Core features, integrations
+          - P2 (Medium): Secondary features
+          - P3 (Low): Edge cases, UI polish
+
+          TEA focuses test writing on P0-P1 first.
+        points: 3
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - TEA produces risk assessment before writing tests
+          - Risk levels documented in session file
+          - P0-P1 must have tests; P2-P3 optional for time constraints
+          - Reviewer verifies risk coverage alignment
+      - id: 39-4
+        title: Coverage traceability
+        description: |
+          Add `/trace` skill for mapping requirements to test coverage.
+
+          Two-phase workflow (from BMAD):
+          1. Traceability phase: Build matrix of ACs to test files
+          2. Gate phase: Decide PASS/CONCERNS/FAIL based on coverage
+
+          Output: Coverage matrix showing which ACs have tests, which don't.
+        points: 5
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - /trace produces AC-to-test mapping
+          - Matrix shows coverage status per AC
+          - Gap analysis identifies untested requirements
+          - Gate decision with justification
+          - Can run incrementally (per story) or comprehensively (per epic)
+      - id: 39-5
+        title: NFR assessment skill
+        description: |
+          Add `/nfr-assess` skill for non-functional requirements review.
+
+          NFR categories:
+          - Performance (response time, throughput)
+          - Security (auth, encryption, audit)
+          - Reliability (error handling, recovery)
+          - Scalability (concurrent users, data volume)
+        points: 3
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - /nfr-assess prompts for relevant NFR categories
+          - Assessment documents current state vs requirements
+          - Gaps flagged with severity
+          - Can run pre-implementation or pre-release
+      - id: 39-6
+        title: Release gate integration
+        description: |
+          Integrate QA checks into release workflow.
+
+          Gate outcomes:
+          - PASS: All quality checks pass, ready to release
+          - CONCERNS: Minor issues noted, release with acknowledgment
+          - FAIL: Critical issues, block release
+          - WAIVED: Issues acknowledged, proceeding anyway (documented)
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - /release command checks QA gate status
+          - Gate status persisted in session/sprint files
+          - WAIVED requires explicit justification
+          - Release blocked on FAIL unless --force
+      - id: 39-7
+        title: Reviewer multi-phase review mode
+        description: |
+          Enable Reviewer to operate in extended mode for larger stories/epics.
+
+          Standard review: Single pass code review (current behavior)
+          Extended review: Code review + test review + NFR check
+
+          SM can request extended review for P0/P1 priority stories or
+          stories touching critical paths (auth, payments, data).
+        points: 2
+        priority: P3
+        status: backlog
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - Reviewer supports standard and extended modes
+          - SM can request extended review in handoff
+          - Extended mode runs test-review and nfr-assess automatically
+          - Session file tracks which review mode was used
+
+  - id: epic-40
+    title: Scale Adaptation and Brownfield Support
+    description: |
+      Adopt BMAD's scale-adaptive approach and add brownfield codebase discovery.
+
+      Scale Levels (from BMAD):
+      - Level 0: Bug fixes (1 story, minimal overhead)
+      - Level 1: Small features (1-10 stories, quick-spec)
+      - Level 2: Dashboards/admin panels (5-15 stories, PRD-based)
+      - Level 3: Platforms/complex systems (12-40 stories, full workflow)
+      - Level 4: Enterprise (40+ stories, governance)
+
+      Current Pennyfarthing only has trivial (1-2 pts) and TDD (3+ pts).
+      This epic adds upward scaling for larger initiatives and brownfield
+      analysis for existing codebases.
+
+      Inspired by BMAD 6.0 gap analysis.
+    points: 17
+    completed_points: 0
+    priority: P2
+    marker: infrastructure
+    repos: pennyfarthing
+    status: backlog
+    stories:
+      - id: 40-1
+        title: Define scale levels
+        description: |
+          Create `scale-levels.yaml` defining our level system with workflow
+          mappings.
+
+          Levels map to workflows and requirements:
+          - Level 0 (Bug Fix): trivial workflow, skip TEA/architecture
+          - Level 1 (Small Feature): TDD workflow, skip architecture
+          - Level 2 (Feature Set): TDD workflow, requires architecture-review
+          - Level 3 (Platform): TDD workflow, requires architecture + design
+          - Level 4 (Enterprise): enterprise workflow, full governance
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - Scale levels defined in YAML
+          - Mapping to workflows and requirements
+          - SM detects level from epic story count
+          - Level documented in session file
+      - id: 40-2
+        title: Quick-spec workflow
+        description: |
+          Add `quick-spec.yaml` workflow for Level 0-1 work.
+
+          Flow: SM (with inline spec) -> Dev -> Reviewer -> SM
+
+          The spec is written inline by SM (not a separate phase). Dev
+          implements based on spec. No TEA phase for simple work.
+        points: 3
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - quick-spec workflow defined
+          - SM writes brief spec inline during setup
+          - Dev receives spec with story
+          - No separate architecture/TEA phases
+          - Works for bug fixes and small features
+      - id: 40-3
+        title: Enterprise workflow hooks
+        description: |
+          Add hooks for enterprise-level work (Level 4).
+
+          Enterprise additions:
+          - Compliance checklist requirement
+          - Audit trail for all decisions
+          - Sign-off gates between phases
+          - Extended Reviewer checklist (security focus)
+        points: 3
+        priority: P3
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Enterprise workflow defined
+          - Compliance checklist template
+          - Audit trail captured in session
+          - Sign-off gates configurable
+          - Works for regulated/compliance scenarios
+      - id: 40-4
+        title: Brownfield discovery command
+        description: |
+          Add `/document-project` command to analyze existing codebases.
+
+          Discovery outputs:
+          - Tech stack detection (languages, frameworks, databases)
+          - Testing framework detection (existing tests, patterns)
+          - Code structure analysis (directories, modules)
+          - Convention detection (naming, patterns in use)
+          - Dependency analysis (package.json, go.mod, etc.)
+        points: 5
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - /document-project scans codebase
+          - Generates project-context.md with findings
+          - Detects tech stack automatically
+          - Identifies existing test coverage
+          - Documents conventions for agents to follow
+          - Works on any codebase (not just Pennyfarthing projects)
+      - id: 40-5
+        title: Brownfield convention adoption
+        description: |
+          Agents read `project-context.md` and follow existing conventions.
+
+          When context file exists:
+          - TEA uses existing test patterns
+          - Dev follows existing code style
+          - Reviewer checks against existing conventions
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - Agents load project-context.md on activation
+          - Follow existing patterns mode enabled
+          - Can ask user to improve or follow existing
+          - Conventions respected in generated code
+      - id: 40-6
+        title: PRD import support
+        description: |
+          Parse and import BMAD-format PRD files.
+
+          If project-context.md or PRD exists in BMAD format:
+          - Extract functional requirements
+          - Extract non-functional requirements
+          - Map to stories/ACs
+          - Link to existing architecture docs
+
+          Note: Some BMAD interop work may already exist.
+        points: 2
+        priority: P3
+        status: backlog
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - /import-prd command or auto-detection
+          - BMAD PRD format parsed correctly
+          - FRs/NFRs extracted and usable
+          - Links to architecture preserved
+          - Works with existing BMAD to Pennyfarthing migration
