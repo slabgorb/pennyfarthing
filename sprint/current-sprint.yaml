@@ -127,6 +127,143 @@ epics:
     status: in_progress
     jira: MSSCI-11715
     stories:
+      - id: 35-1
+        title: Contextual settings placement
+        description: |
+          Move settings from popup dialogs to contextual locations:
+          - Theme chooser → Profile/persona click (not Menu → Settings)
+          - Auto-handoff toggle → Editor toolbar (not Settings dialog)
+          - Settings dialog simplified to rarely-used options only
+
+          Pattern: Put controls where the action happens, not buried in menus.
+        points: 3
+        priority: P2
+        status: done
+        started: 2026-01-14
+        completed: 2026-01-14
+        assigned_to: Keith Avery
+        repos: cyclist
+        pr: 244
+        jira: MSSCI-11716
+        acceptance_criteria:
+          - Theme chooser accessible from profile/persona area click
+          - Auto-handoff toggle visible in editor toolbar
+          - Settings dialog simplified (only rarely-used options remain)
+          - Settings persist correctly from new locations
+      - id: 35-2
+        title: Display current directory in status bar
+        description: |
+          Show the current working directory in the bottom status bar.
+          Users need to know which project/directory they're working in,
+          especially when switching between multiple projects.
+
+          Implementation:
+          - Add directory display to existing stats-strip or create new status element
+          - Show absolute path, truncated if too long (ellipsis in middle)
+          - Update when project changes (if applicable)
+          - Tooltip shows full path on hover
+
+          Pattern: Critical context visible at all times, not hidden in menus.
+        points: 2
+        priority: P2
+        status: done
+        started: 2026-01-15
+        completed: 2026-01-15
+        assigned_to: Keith Avery
+        repos: cyclist
+        jira: MSSCI-11717
+        acceptance_criteria:
+          - Current directory displayed in bottom status bar
+          - Path truncated with ellipsis if too long (e.g., ~/.../project-name)
+          - Full path visible on hover (tooltip)
+          - Updates correctly when directory context changes
+          - Styled consistently with existing status bar elements
+      - id: 35-3
+        title: Workflow phase visualization
+        description: |
+          Visual representation of current workflow showing all phases,
+          current position, and progress. Integrates with custom workflow
+          system from Epic 31.
+
+          Implementation:
+          - Read workflow definition to get phase list
+          - Display phases as connected steps/nodes
+          - Highlight current phase, show completed phases
+          - Update in real-time as agent progresses
+          - Support both TDD and custom workflows
+        points: 3
+        priority: P1
+        status: done
+        repos: cyclist
+        jira: MSSCI-11718
+        started: 2026-01-14
+        completed: 2026-01-15
+        assigned_to: Keith Avery
+        pr: 249
+        acceptance_criteria:
+          - Workflow phases displayed visually (stepper/breadcrumb style)
+          - Current phase highlighted distinctly
+          - Completed phases marked with checkmark or similar
+          - Phase names from workflow definition (not hardcoded)
+          - Updates when phase changes (via IPC or polling)
+          - Works with TDD, trivial, and custom workflows
+      - id: 35-4
+        title: Three-way mode switch (Plan/Manual/Accept)
+        description: |
+          Replace cycling mode button with intuitive three-way toggle.
+          Currently cyclePermissionMode() cycles through modes but UI
+          is just a button that changes text - not intuitive.
+
+          Implementation:
+          - Create segmented control component (like iOS)
+          - Three segments: PLAN | MANUAL | ACCEPT
+          - Visual indication of current mode
+          - Click segment to switch directly (no cycling)
+          - Keyboard shortcuts for each mode
+        points: 2
+        priority: P2
+        status: done
+        started: 2026-01-15
+        completed: 2026-01-15
+        assigned_to: Keith Avery
+        repos: cyclist
+        jira: MSSCI-11719
+        acceptance_criteria:
+          - Segmented control replaces cycling button
+          - Three modes clearly labeled and clickable
+          - Current mode visually distinct (highlighted segment)
+          - Direct selection (click PLAN goes to plan, not cycle)
+          - Keyboard shortcuts work (p=plan, m=manual, a=accept)
+          - Mode persists correctly via IPC
+      - id: 35-5
+        title: Collapsible portrait panel
+        description: |
+          Allow users to collapse the portrait/persona sidebar to
+          maximize workspace. Useful when screen space is limited
+          or user wants to focus on terminal output.
+
+          Implementation:
+          - Add collapse/expand toggle to portrait panel header
+          - Collapsed state shows minimal indicator (small icon or nothing)
+          - Expand restores full portrait and persona info
+          - Persist collapse state in localStorage
+          - Smooth animation for collapse/expand transition
+        points: 2
+        priority: P2
+        status: done
+        started: 2026-01-15
+        completed: 2026-01-15
+        assigned_to: Keith Avery
+        repos: cyclist
+        jira: MSSCI-11720
+        pr: 262
+        acceptance_criteria:
+          - Toggle button to collapse/expand portrait panel
+          - Collapsed state minimizes to icon or hides completely
+          - Expanded state shows full portrait and persona info
+          - Collapse state persisted across sessions
+          - Smooth CSS transition animation
+          - Keyboard shortcut to toggle (e.g., Ctrl+B)
       - id: 35-6
         title: Font face selector
         description: |
@@ -331,6 +468,30 @@ epics:
           - Output summary (first 5 lines, last 5 lines if truncated)
           - Execution duration accurate
           - Working directory included
+      - id: 36-4
+        title: Search tool enrichment (Grep/Glob)
+        description: |
+          Enrich Grep and Glob spans with search context:
+          - Pattern searched
+          - Number of matches found
+          - Files matched (list or count)
+          - Search scope (path, file types)
+          - Whether results were truncated
+        points: 2
+        priority: P2
+        status: done
+        started: 2026-01-15
+        completed: 2026-01-15
+        assigned_to: Keith Avery
+        repos: cyclist
+        jira: MSSCI-11732
+        pr: 271
+        acceptance_criteria:
+          - Search pattern included in span
+          - Match count accurate
+          - File list or count included
+          - Scope (path, glob pattern) included
+          - Truncation flag when results limited
       - id: 36-5
         title: Task/subagent enrichment
         description: |
@@ -741,8 +902,9 @@ epics:
           - reviewer-preflight.md:111 - Wrong subagent_type (general-purpose → testing-runner)
         points: 1
         priority: P1
-        status: in_progress
+        status: done
         started: 2026-01-15
+        completed: 2026-01-15
         assigned_to: Keith Avery
         repos: pennyfarthing
         workflow: trivial
