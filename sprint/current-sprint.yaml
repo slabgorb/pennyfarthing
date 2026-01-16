@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 85
-  completed_points: 21
-  remaining_points: 64
+  completed_points: 24
+  remaining_points: 61
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - Epic 31: Customizable Workflow Engine (4 pts remaining)
@@ -910,11 +910,13 @@ epics:
           - Agents run until they hit hard context limits unexpectedly
         points: 3
         priority: P1
-        status: in_progress
+        status: done
         started: 2026-01-16
+        completed: 2026-01-16
         assigned_to: Keith Avery
         repos: pennyfarthing, cyclist
         workflow: tdd
+        pr: 291
         acceptance_criteria:
           - Root cause identified (why circuit breaker doesn't trigger)
           - Circuit breaker fires at configured threshold
