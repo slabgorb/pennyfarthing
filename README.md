@@ -247,6 +247,14 @@ pennyfarthing uninstall --all
 
 Archived sprint data (`sprint/archive/`, `sprint/context/`) is always preserved.
 
+## What's New in v6.5
+
+- **Agent Modernization** - All agents updated with status tags and consolidated shared behavior
+- **OTEL Tool Enrichment** - Bash, Write, Read, Edit, Grep/Glob spans enriched with operation context
+- **Cyclist UI Polish** - Font selector, clickable file paths, window state persistence, custom themes
+- **SM Workflow Routing** - Stories automatically route to workflows based on tags
+- **30+ Stories Delivered** - Bug fixes, stability improvements, and new features
+
 ## What's New in v6.4
 
 - **102 Themes** - 11 new themes added since v6.0
