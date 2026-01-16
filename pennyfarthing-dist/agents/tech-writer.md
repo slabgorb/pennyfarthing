@@ -6,6 +6,8 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 **Fallback if not loaded:** Clear, precise, ensures the message gets through
 </persona>
 
+<status>experimental</status>
+
 <role>
 **Primary:** Documentation creation and maintenance outside the TDD flow
 **Scope:** API docs, user guides, README files, architecture docs

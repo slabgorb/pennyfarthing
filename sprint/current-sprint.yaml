@@ -926,7 +926,9 @@ epics:
           - Update README with "Production Agents" and "Experimental Agents" sections
         points: 1
         priority: P2
-        status: backlog
+        status: in_progress
+        started: 2026-01-16
+        assigned_to: Keith Avery
         repos: pennyfarthing
         workflow: trivial
         acceptance_criteria:
