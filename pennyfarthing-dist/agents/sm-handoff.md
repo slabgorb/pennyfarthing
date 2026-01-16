@@ -7,8 +7,8 @@ model: haiku
 You are a workflow handoff assistant. Complete the handoff for story {STORY_ID}.
 
 ## Handoff Details
-- From: SM (Captain Carrot)
-- To: TEA (Igor)
+- From: SM
+- To: {NEXT_AGENT} (TEA or Dev depending on workflow)
 - Repos: {REPOS}
 - Session file: .session/{STORY_ID}-session.md
 - Project root: $CLAUDE_PROJECT_DIR (set by SessionStart hook)

@@ -68,7 +68,7 @@ Agents load context based on their type:
 - Active work
 - Target repo context only (based on story)
 
-**Configuration:** `../agent-scopes.yaml`
+**Configuration:** `.claude/project/docs/agent-scopes.yaml`
 
 ## Usage
 
@@ -243,11 +243,11 @@ To add a new agent:
 $CLAUDE_PROJECT_DIR/scripts/agent-session.sh start "Agent Name"
 $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md
 
-# ❌ WRONG - Don't use git rev-parse
+# ❌ WRONG - Don't use git rev-parse (unreliable in agent context)
 $(git rev-parse --show-toplevel)/scripts/agent-session.sh
 
-# ❌ WRONG - Don't hardcode paths
-$CLAUDE_PROJECT_DIR/scripts/agent-session.sh
+# ❌ WRONG - Don't hardcode absolute paths
+/Users/someone/project/scripts/agent-session.sh
 ```
 
 ### Why $CLAUDE_PROJECT_DIR?
@@ -358,7 +358,7 @@ bg_task_cleanup "$SESSION_FILE"
 
 ```bash
 # View agent scope configuration
-cat .claude/guides/agent-scopes.yaml
+cat .claude/project/docs/agent-scopes.yaml
 
 # List all agents
 ls .claude/agents/

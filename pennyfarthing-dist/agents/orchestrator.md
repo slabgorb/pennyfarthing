@@ -97,14 +97,14 @@ DO NOT USE ME FOR:
 
 | Agent | Role | When Active |
 |-------|------|-------------|
-| SM (Carrot) | Story coordination | `/new-work`, finish-story |
-| TEA (Igor) | Test writing | TDD flow, after SM |
-| Dev (Ponder) | Implementation | TDD flow, after TEA |
-| Reviewer (Granny) | Code review | TDD flow, after Dev |
-| Architect (Leonard) | System design | On request |
-| PM (Vetinari) | Strategy | Sprint planning |
-| DevOps (Lu-Tze) | Infrastructure | On request |
-| Tech Writer (Sacharissa) | Documentation | On request |
+| SM | Story coordination | `/new-work`, finish-story |
+| TEA | Test writing | TDD flow, after SM |
+| Dev | Implementation | TDD flow, after TEA |
+| Reviewer | Code review | TDD flow, after Dev |
+| Architect | System design | On request |
+| PM | Strategy | Sprint planning |
+| DevOps | Infrastructure | On request |
+| Tech Writer | Documentation | On request |
 | UX Designer | UI design | On request |
 
 <handoffs>

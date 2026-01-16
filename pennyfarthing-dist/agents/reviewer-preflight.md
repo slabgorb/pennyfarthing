@@ -109,7 +109,7 @@ fi
 
 Spawn a testing-runner subagent with:
 ```yaml
-subagent_type: "general-purpose"
+subagent_type: "testing-runner"
 model: "haiku"
 description: "run tests"
 prompt: |
