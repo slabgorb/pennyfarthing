@@ -346,11 +346,12 @@ epics:
           - Add reset to defaults option
         points: 3
         priority: P1
-        status: in_progress
+        status: done
         repos: cyclist
         workflow: bdd
         assigned_to: Keith Avery
         started: 2026-01-16
+        completed: 2026-01-16
         jira: MSSCI-11724
         acceptance_criteria:
           - Settings store initialization errors handled gracefully
