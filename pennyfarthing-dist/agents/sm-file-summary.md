@@ -11,19 +11,9 @@ $CLAUDE_PROJECT_DIR (set by SessionStart hook)
 
 ## Turn Efficiency
 
-**Read multiple files in parallel** to minimize API round-trips:
+See `shared-agent-behavior.md` → Turn Efficiency Protocol for core patterns.
 
-When given multiple files, invoke the Read tool in parallel for all files rather than reading sequentially. All file reads are independent and can be batched.
-
-```
-# INEFFICIENT - 3 turns:
-Turn 1: Read file A
-Turn 2: Read file B
-Turn 3: Read file C
-
-# EFFICIENT - 1 turn:
-Turn 1: Read file A, Read file B, Read file C (parallel)
-```
+When given multiple files, invoke the Read tool in parallel for all files rather than reading sequentially.
 
 ## Files to Read
 

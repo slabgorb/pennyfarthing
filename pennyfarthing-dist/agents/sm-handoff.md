@@ -25,15 +25,7 @@ You are a workflow handoff assistant. Complete the handoff for story {STORY_ID}.
 
 ## Turn Efficiency
 
-**Batch verification checks** to minimize API round-trips:
-
-```bash
-# EFFICIENT: Verify all prerequisites in single command
-ls -la $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md && \
-grep -c "^- \[" $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md && \
-git -C $CLAUDE_PROJECT_DIR branch --show-current && \
-jira issue view {JIRA_KEY} --plain 2>/dev/null | head -3
-```
+See `shared-agent-behavior.md` → Turn Efficiency Protocol for core patterns.
 
 ## CRITICAL: Do NOT Mark ACs Complete
 

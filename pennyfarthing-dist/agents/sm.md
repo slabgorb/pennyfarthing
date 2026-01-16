@@ -98,21 +98,7 @@ REFLECT: I should clarify AC4 with the user before proceeding.
 - When writing context: Think through technical implications
 - When delegating to helper: Be explicit about what I expect back
 
-⚠️ **REMINDER: Delegate ALL test runs to testing-runner subagent.**
-Never run `just test`, `go test`, or `npm test` directly. Always spawn:
-```yaml
-Task tool:
-  subagent_type: "testing-runner"
-  prompt: |
-    REPOS: all | repo1,repo2
-    CONTEXT: why running tests
-    RUN_ID: unique-id
-    # Optional - omit to run all tests:
-    FILTER: pattern  # global filter
-    FILTERS:         # or per-repo filters
-      repo1: pattern1
-      repo2: pattern2
-```
+**Test & Turn Efficiency:** See `shared-agent-behavior.md` → Test Delegation Protocol, Turn Efficiency Protocol
 </reasoning-mode>
 
 <on-activation>
@@ -398,30 +384,6 @@ Helper does:
 | `sm-file-summary` | Read files, create summaries | After user selects story |
 | `sm-handoff` | Handoff bookkeeping to TEA/Dev | After story setup complete |
 | `testing-runner` | Run tests | When verification needed |
-
-## Turn Efficiency
-
-**Parallelize independent operations** to minimize API round-trips:
-
-| Parallel Safe | Not Parallel |
-|---------------|--------------|
-| Read multiple files (parallel Read tools) | Write depends on read result |
-| Status check + backlog scan | Session write depends on context |
-| Git checks across repos | Handoff after assessment written |
-
-**Spawn subagents in parallel** when independent:
-```yaml
-# EFFICIENT: If doing both status check AND backlog research
-# spawn both in same turn when results don't depend on each other
-```
-
-**Batch bash commands:**
-```bash
-# EFFICIENT: Combine git operations
-git status && git branch --show-current && git log -1 --oneline
-```
-
-See `/dev-patterns` skill → "Turn-Efficient Patterns" for complete guidance.
 
 ## What I Do vs What Helper Does
 

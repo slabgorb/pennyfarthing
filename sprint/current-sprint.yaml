@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 77
-  completed_points: 19
-  remaining_points: 58
+  completed_points: 21
+  remaining_points: 56
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - Epic 31: Customizable Workflow Engine (4 pts remaining)
@@ -894,7 +894,7 @@ epics:
       Includes workflow routing: SM reads `workflow:` tag from stories and
       follows the appropriate workflow definition.
     points: 25
-    completed_points: 3
+    completed_points: 5
     priority: P2
     marker: infrastructure
     repos: pennyfarthing
@@ -1154,3 +1154,43 @@ epics:
           - Trivial workflow shows 4 steps: SM → Dev → Rev → SM
           - Finish step shows SM agent with appropriate label
           - Current phase highlighting works for finish step
+      - id: 38-12
+        title: Consolidate duplicated instructions to shared-agent-behavior.md
+        description: |
+          Multiple agent files contain identical or near-identical content that
+          should live in shared-agent-behavior.md instead:
+
+          **Turn Efficiency section** - Duplicated in 12 files:
+          - Main agents: sm.md, tea.md, dev.md, reviewer.md
+          - Subagents: sm-handoff.md, sm-file-summary.md, generic-sm-setup.md,
+            generic-sm-finish.md, generic-handoff.md, reviewer-preflight.md,
+            workflow-status-check.md
+
+          **testing-runner delegation reminder** - Identical in 3 files:
+          - sm.md, dev.md, reviewer.md all have the same warning block
+
+          **reasoning-mode section** - Near-identical in 4 main agents:
+          - sm.md, tea.md, dev.md, reviewer.md (already in shared-agent-behavior.md
+            but agents have their own copies with minor variations)
+
+          Implementation:
+          1. Move Turn Efficiency content to shared-agent-behavior.md
+          2. Move testing-runner reminder to shared-agent-behavior.md
+          3. Remove duplicated sections from individual agent files
+          4. Add reference to shared behavior where content was removed
+          5. Keep agent-specific variations inline (e.g., SM-specific reasoning)
+        points: 2
+        priority: P2
+        status: done
+        started: 2026-01-16
+        completed: 2026-01-16
+        assigned_to: Keith Avery
+        repos: pennyfarthing
+        workflow: trivial
+        pr: 289
+        acceptance_criteria:
+          - Turn Efficiency section exists only in shared-agent-behavior.md
+          - testing-runner reminder exists only in shared-agent-behavior.md
+          - Agent files reference shared behavior instead of duplicating
+          - Agent-specific variations remain in agent files
+          - No functionality lost in consolidation

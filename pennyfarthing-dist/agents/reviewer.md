@@ -89,44 +89,8 @@ REFLECT: Safe. Parameterized queries prevent SQL injection. Moving on.
    > <!-- CYCLIST:CONFIRM:yes -->"
 4. When user says 'yes': Spawn pre-flight subagent first
 
-⚠️ **REMINDER: Delegate ALL test runs to testing-runner subagent.**
-Never run `just test`, `go test`, or `npm test` directly. Always spawn:
-```yaml
-Task tool:
-  subagent_type: "testing-runner"
-  prompt: |
-    REPOS: all | repo1,repo2
-    CONTEXT: why running tests
-    RUN_ID: unique-id
-    # Optional - omit to run all tests:
-    FILTER: pattern  # global filter
-    FILTERS:         # or per-repo filters
-      repo1: pattern1
-      repo2: pattern2
-```
+**Test & Turn Efficiency:** See `shared-agent-behavior.md` → Test Delegation Protocol, Turn Efficiency Protocol
 </on-activation>
-
-## Turn Efficiency
-
-**Read multiple files in parallel** when analyzing:
-```
-# EFFICIENT: Read session + PR diff + related source in one turn
-Read: .session/X-Y-session.md, src/feature.ts, src/feature.test.ts (parallel)
-```
-
-**Batch git operations:**
-```bash
-# EFFICIENT: Fetch, checkout, and get diff stats in single command
-cd $CLAUDE_PROJECT_DIR && git fetch origin && git checkout {BRANCH} && git diff develop...HEAD --stat
-```
-
-**Combine diff reading:**
-```bash
-# EFFICIENT: Get both stat and content in single command
-git diff develop...HEAD --stat && git diff develop...HEAD -- "*.go" "*.ts" "*.tsx"
-```
-
-See `/dev-patterns` skill → "Turn-Efficient Patterns" for complete guidance.
 
 ## What I Do vs What Helper Does
 

@@ -39,19 +39,7 @@ done
 
 ## Turn Efficiency
 
-**Batch git operations** to minimize API round-trips:
-
-```bash
-# EFFICIENT: Fetch, checkout, and diff in single command
-cd $CLAUDE_PROJECT_DIR/${REPO} && \
-git fetch origin && \
-git checkout {BRANCH} && \
-git diff develop...HEAD --stat
-```
-
-**Parallelize independent checks:**
-- Spawn testing-runner subagent + read session file (parallel)
-- Code smell grep across files (can be combined with `&&`)
+See `shared-agent-behavior.md` → Turn Efficiency Protocol for core patterns.
 
 ## Execute Pre-Flight Checks
 

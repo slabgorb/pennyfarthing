@@ -295,6 +295,86 @@ invoke the skill when Action is `INVOKE_DIRECTLY`.
 
 ---
 
+## Turn Efficiency Protocol
+
+Minimize API round-trips by parallelizing independent operations and batching commands.
+
+### Core Principles
+
+1. **Parallelize file reads** - Read multiple independent files in one turn
+2. **Batch bash commands** - Combine git/shell operations with `&&`
+3. **Spawn subagents in parallel** - When results don't depend on each other
+
+### Examples
+
+**File reads:**
+```
+# EFFICIENT: Read session + context + related files in one turn
+Read: .session/X-Y-session.md, .session/context-story-X-Y.md, src/feature.ts (parallel)
+```
+
+**Bash batching:**
+```bash
+# EFFICIENT: Combine git operations
+git status && git branch --show-current && git log -1 --oneline
+
+# EFFICIENT: Commit, push, and verify in single command
+git add . && git commit -m "feat(X-Y): implement feature" && git push -u origin $(git branch --show-current)
+```
+
+**Subagent parallelism:**
+```yaml
+# EFFICIENT: If doing both status check AND backlog research
+# spawn both in same turn when results don't depend on each other
+```
+
+See `/dev-patterns` skill → "Turn-Efficient Patterns" for complete guidance.
+
+**Note:** Individual agents may include agent-specific examples beyond these core patterns.
+
+---
+
+## Test Delegation Protocol
+
+**NEVER run tests directly.** Always delegate to the `testing-runner` subagent.
+
+### Why Delegate?
+
+- Consistent test execution across all agents
+- Proper result caching (Story 31-8)
+- Standardized output format for handoff
+- Supports multi-repo test orchestration
+
+### Invocation Template
+
+```yaml
+Task tool:
+  subagent_type: "testing-runner"
+  prompt: |
+    REPOS: all | repo1,repo2
+    CONTEXT: why running tests
+    RUN_ID: unique-id
+    # Optional - omit to run all tests:
+    FILTER: pattern  # global filter
+    FILTERS:         # or per-repo filters
+      repo1: pattern1
+      repo2: pattern2
+```
+
+### What NOT to Do
+
+```bash
+# WRONG - Never run these directly
+just test
+go test ./...
+npm test
+pytest
+```
+
+Always spawn `testing-runner` instead.
+
+---
+
 ## Exit Protocol
 
 Before exiting or switching agents:

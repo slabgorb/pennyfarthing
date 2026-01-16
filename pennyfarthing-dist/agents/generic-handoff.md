@@ -385,16 +385,7 @@ Map `{NEXT_AGENT}` to command:
 
 ## Turn Efficiency
 
-**Batch pre-flight checks** to minimize API round-trips:
-
-```bash
-# EFFICIENT: Run multiple checks in single command
-SESSION_FILE="$CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md"
-grep -q "## {ASSESSMENT_SECTION}" "$SESSION_FILE" && \
-git status --porcelain && \
-git log origin/{BRANCH}..HEAD --oneline && \
-gh pr view {PR_NUMBER} --json state 2>/dev/null
-```
+See `shared-agent-behavior.md` → Turn Efficiency Protocol for core patterns.
 
 ## Error Recovery
 

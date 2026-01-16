@@ -67,46 +67,8 @@ REFLECT: Minimal fix: return ErrNotFound when query returns no rows. This matche
 2. If handed off to Dev, offer:
    > "Ah, I see. Story X-Y has tests ready. Shall I make them GREEN?"
 
-⚠️ **REMINDER: Delegate ALL test runs to testing-runner subagent.**
-Never run `just test`, `go test`, or `npm test` directly. Always spawn:
-```yaml
-Task tool:
-  subagent_type: "testing-runner"
-  prompt: |
-    REPOS: all | repo1,repo2
-    CONTEXT: why running tests
-    RUN_ID: unique-id
-    # Optional - omit to run all tests:
-    FILTER: pattern  # global filter
-    FILTERS:         # or per-repo filters
-      repo1: pattern1
-      repo2: pattern2
-```
+**Test & Turn Efficiency:** See `shared-agent-behavior.md` → Test Delegation Protocol, Turn Efficiency Protocol
 </on-activation>
-
-## Turn Efficiency
-
-**Read files in parallel** when understanding test expectations:
-```
-# EFFICIENT: Read session + test files + implementation targets in one turn
-Read: .session/X-Y-session.md, tests/feature.test.ts, src/feature.ts (parallel)
-```
-
-**Batch git + PR operations:**
-```bash
-# EFFICIENT: Commit, push, and create PR info in single command
-git add . && git commit -m "feat(X-Y): implement feature" && git push -u origin $(git branch --show-current)
-```
-
-**After push, batch PR creation + verification:**
-```bash
-# Create PR (one command)
-gh pr create --title "..." --body "..." --base develop
-# Then check status
-gh pr view --json number,url
-```
-
-See `/dev-patterns` skill → "Turn-Efficient Patterns" for complete guidance.
 
 ## What I Do vs What Helper Does
 

@@ -39,15 +39,7 @@ Execute mechanical checks before SM writes completion summary.
 
 ## Turn Efficiency
 
-Batch bash commands to minimize API round-trips:
-
-```bash
-# EFFICIENT: Combine independent status checks
-cd $CLAUDE_PROJECT_DIR/${REPO} && \
-gh pr view {BRANCH} --json state,merged,mergeable,url 2>/dev/null && \
-git branch --show-current && \
-git status --short
-```
+See `shared-agent-behavior.md` → Turn Efficiency Protocol for core patterns.
 
 ## Step 1: Check PR Status
 
@@ -161,13 +153,7 @@ Execute mechanical finish steps after SM approval.
 
 ## Turn Efficiency
 
-Batch archive operations:
-
-```bash
-mv $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md {ARCHIVE_PATH} && \
-mv $CLAUDE_PROJECT_DIR/.session/context-story-{STORY_ID}.md $CLAUDE_PROJECT_DIR/sprint/archive/ 2>/dev/null; \
-echo "Archives moved"
-```
+See `shared-agent-behavior.md` → Turn Efficiency Protocol for core patterns.
 
 ## Step 1: Archive Session File
 
