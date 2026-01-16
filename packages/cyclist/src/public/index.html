@@ -244,27 +244,9 @@
         <h3>Current Story</h3>
         <div id="story-title" class="story-title">No active story</div>
         <div id="story-phase" class="story-phase">Phase: -</div>
-        <!-- B-13: Workflow Progress Visualization -->
+        <!-- B-13/37-15: Workflow Progress Visualization (populated dynamically by story.js) -->
         <div id="workflow-progress" class="workflow-progress" style="display: none;">
-          <div class="workflow-step" data-agent="sm">
-            <span class="workflow-icon">○</span>
-            <span class="workflow-label">SM</span>
-          </div>
-          <span class="workflow-arrow">→</span>
-          <div class="workflow-step" data-agent="tea">
-            <span class="workflow-icon">○</span>
-            <span class="workflow-label">TEA</span>
-          </div>
-          <span class="workflow-arrow">→</span>
-          <div class="workflow-step" data-agent="dev">
-            <span class="workflow-icon">○</span>
-            <span class="workflow-label">Dev</span>
-          </div>
-          <span class="workflow-arrow">→</span>
-          <div class="workflow-step" data-agent="reviewer">
-            <span class="workflow-icon">○</span>
-            <span class="workflow-label">Rev</span>
-          </div>
+          <!-- Workflow steps rendered dynamically based on active workflow -->
         </div>
         <!-- B-13: Next Agent & PR Info -->
         <div id="story-details" class="story-details" style="display: none;">
