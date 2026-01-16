@@ -619,16 +619,60 @@ export function setupDataIPCHandlers(ipcMain: {
     return currentStats;
   });
 
-  // Persona handler - returns current persona from pennyfarthing (B-2.1)
+  // Persona handler - returns current persona from pennyfarthing (B-2.1, 37-8)
+  // Returns complete persona object with all fields the sidebar expects.
+  // When no active session/theme, returns null for persona-specific fields
+  // but always provides displayName (uses projectName as fallback).
   ipcMain.handle(IPC_DATA_CHANNELS.PERSONA_GET, async () => {
     const projectDir = getProjectDirectory();
-    if (!projectDir) return { projectName: 'No Project' };
+    if (!projectDir) {
+      return {
+        projectName: 'No Project',
+        character: null,
+        displayName: 'No Project',
+        role: null,
+        roleDescription: null,
+        style: null,
+        theme: null,
+        slug: null,
+        quote: null,
+        helper: null,
+        ocean: null,
+      };
+    }
     const projectName = basename(projectDir);
     if (!detectPennyfarthingProject(projectDir)) {
-      return { projectName };
+      return {
+        projectName,
+        character: null,
+        displayName: projectName,
+        role: null,
+        roleDescription: null,
+        style: null,
+        theme: null,
+        slug: null,
+        quote: null,
+        helper: null,
+        ocean: null,
+      };
     }
     const sessionId = process.env.CYCLIST_SESSION_ID;
     const persona = getCurrentPersona(projectDir, sessionId);
+    if (!persona) {
+      return {
+        projectName,
+        character: null,
+        displayName: projectName,
+        role: null,
+        roleDescription: null,
+        style: null,
+        theme: null,
+        slug: null,
+        quote: null,
+        helper: null,
+        ocean: null,
+      };
+    }
     return { ...persona, projectName };
   });
 
