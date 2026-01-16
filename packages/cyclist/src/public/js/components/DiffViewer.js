@@ -335,15 +335,18 @@ export function renderDiff(container, diffData) {
   filePathLink.title = 'Click to open in default application';
   filePathLink.addEventListener('click', async (e) => {
     e.preventDefault();
-    // 35-11: Open file in OS default application
+    console.log(`[DiffViewer] Click handler fired for: ${diffData.filePath}`);
+
+    // 35-11: Check if electronAPI.fileBrowser exists
     if (window.electronAPI?.fileBrowser?.openFile) {
+      console.log(`[DiffViewer] electronAPI.fileBrowser.openFile available, calling...`);
       try {
         const result = await window.electronAPI.fileBrowser.openFile(diffData.filePath);
+        console.log(`[DiffViewer] openFile result:`, result);
         if (result && !result.success) {
           console.error(`[DiffViewer] Failed to open file: ${diffData.filePath}`, result.error);
           filePathLink.title = `Failed to open: ${result.error || 'file may no longer exist'}`;
           filePathLink.classList.add('file-path-error');
-          // Remove error state after 3 seconds
           setTimeout(() => filePathLink.classList.remove('file-path-error'), 3000);
         }
       } catch (err) {
@@ -352,6 +355,11 @@ export function renderDiff(container, diffData) {
         filePathLink.classList.add('file-path-error');
         setTimeout(() => filePathLink.classList.remove('file-path-error'), 3000);
       }
+    } else {
+      // 35-11 FIX: Add else branch to show when API is missing
+      console.error(`[DiffViewer] electronAPI.fileBrowser.openFile is not available`);
+      filePathLink.title = 'Cannot open file - API not available';
+      filePathLink.classList.add('file-path-error');
     }
   });
 
