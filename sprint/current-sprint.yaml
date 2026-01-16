@@ -362,9 +362,13 @@ epics:
           - Handle missing files gracefully (show error toast)
         points: 1
         priority: P2
-        status: backlog
+        status: done
         repos: cyclist
         jira: MSSCI-11726
+        assigned_to: Keith Avery
+        started: 2026-01-16
+        completed: 2026-01-16
+        pr: 292
         acceptance_criteria:
           - File path in diff header is clickable
           - Click opens file in OS default application
