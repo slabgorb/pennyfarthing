@@ -19,6 +19,8 @@
           <span class="permission-badge">0</span>
         </span>
         <span class="model-indicator" id="tab-model-indicator">—</span>
+        <!-- 35-9: Settings trigger button -->
+        <button class="settings-trigger" id="settings-trigger" title="Settings (⚙️)" aria-label="Open settings">⚙️</button>
       </div>
     </div>
     <!-- Content area: panels + main content + sidebar -->
@@ -290,6 +292,148 @@
     </div><!-- /content-area -->
   </div>
 
+  <!-- 35-9: Settings Panel (slide-in from right) -->
+  <div id="settings-panel" class="settings-panel" aria-hidden="true" aria-busy="false" aria-labelledby="settings-title">
+    <div class="settings-panel-header settings-header">
+      <span class="settings-title" id="settings-title">⚙️ Settings</span>
+      <button class="settings-close close-btn" aria-label="Close settings">&times;</button>
+    </div>
+
+    <!-- Loading State -->
+    <div class="settings-loading hidden" aria-live="polite">
+      <div class="skeleton skeleton-text"></div>
+      <div class="skeleton skeleton-text"></div>
+      <div class="skeleton skeleton-text"></div>
+      <span class="loading-text">Loading settings...</span>
+    </div>
+
+    <!-- Error State -->
+    <div class="settings-error error-banner hidden" aria-live="assertive">
+      <span class="error-icon">⚠️</span>
+      <span class="error-text">Failed to load settings</span>
+      <div class="error-actions">
+        <button class="retry-btn settings-retry">Retry</button>
+        <button class="use-defaults-btn" data-action="use-defaults">Continue with Defaults</button>
+      </div>
+    </div>
+
+    <!-- Settings Form -->
+    <form class="settings-form" aria-describedby="loading-message">
+      <!-- Display Section -->
+      <section class="settings-section" data-section="display">
+        <div class="section-header">
+          <span class="section-icon">📂</span>
+          <span class="section-title">Display</span>
+        </div>
+        <div class="section-content">
+          <div class="setting-item">
+            <label for="show_flow">
+              <input type="checkbox" id="show_flow" name="show_flow">
+              Show TDD Flow
+            </label>
+          </div>
+          <div class="setting-item">
+            <label for="show_ocean">
+              <input type="checkbox" id="show_ocean" name="show_ocean">
+              Show OCEAN Bars
+            </label>
+          </div>
+          <div class="setting-item">
+            <label for="sidebar_width">Sidebar Width</label>
+            <div class="input-with-unit">
+              <input type="number" id="sidebar_width" name="sidebar_width" min="200" max="500" step="10" value="300" aria-invalid="false" aria-describedby="">
+              <span class="unit">px</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Fonts Section -->
+      <section class="settings-section" data-section="fonts">
+        <div class="section-header">
+          <span class="section-icon">🔤</span>
+          <span class="section-title">Fonts</span>
+        </div>
+        <div class="section-content">
+          <div class="setting-item">
+            <label for="font_ui">UI Font</label>
+            <select id="font_ui" name="font_ui">
+              <option value="system-ui">System UI</option>
+              <option value="Inter">Inter</option>
+              <option value="Roboto">Roboto</option>
+              <option value="Helvetica">Helvetica</option>
+            </select>
+          </div>
+          <div class="setting-item">
+            <label for="font_mono">Monospace Font</label>
+            <select id="font_mono" name="font_mono">
+              <option value="SF Mono">SF Mono</option>
+              <option value="JetBrains Mono">JetBrains Mono</option>
+              <option value="Fira Code">Fira Code</option>
+              <option value="Consolas">Consolas</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Notifications Section -->
+      <section class="settings-section" data-section="notifications">
+        <div class="section-header">
+          <span class="section-icon">🔔</span>
+          <span class="section-title">Notifications</span>
+        </div>
+        <div class="section-content">
+          <div class="setting-item">
+            <label for="phase_change">
+              <input type="checkbox" id="phase_change" name="phase_change">
+              Phase Change Notifications
+            </label>
+          </div>
+          <div class="setting-item">
+            <label for="sound">
+              <input type="checkbox" id="sound" name="sound">
+              Sound Effects
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- Advanced Section -->
+      <section class="settings-section" data-section="advanced">
+        <div class="section-header">
+          <span class="section-icon">🔧</span>
+          <span class="section-title">Advanced</span>
+        </div>
+        <div class="section-content">
+          <div class="setting-item">
+            <button type="button" class="reset-btn" data-action="reset">↺ Reset to Defaults</button>
+            <p class="setting-help">Restore all settings to their original values.</p>
+          </div>
+        </div>
+      </section>
+    </form>
+
+    <!-- Panel Footer -->
+    <div class="settings-panel-footer">
+      <button type="button" class="cancel-btn" data-action="cancel">Cancel</button>
+      <button type="button" class="save-btn settings-save" data-action="save" disabled>Save Changes</button>
+    </div>
+  </div>
+
+  <!-- 35-9: Confirm Dialog -->
+  <div id="confirm-dialog" class="confirm-dialog unsaved-changes hidden" role="dialog" aria-modal="true" aria-labelledby="dialog-title" tabindex="-1">
+    <div class="dialog-overlay"></div>
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h3 class="dialog-title" id="dialog-title">Confirm</h3>
+      </div>
+      <div class="dialog-body">
+        <p class="dialog-message" id="dialog-message"></p>
+      </div>
+      <div class="dialog-footer"></div>
+    </div>
+  </div>
+
   <!-- Persona Popup Modal (17-4) -->
   <div class="persona-popup-backdrop" id="persona-popup-backdrop" style="display: none;"></div>
   <div class="persona-popup" id="persona-popup" tabindex="-1" style="display: none;">
@@ -445,6 +589,8 @@
   <script src="/js/stats-strip.js"></script>
   <!-- 35-1: ThemePicker for contextual theme selection -->
   <script type="module" src="/js/components/ThemePicker.js"></script>
+  <!-- 35-9: Settings Panel -->
+  <script type="module" src="/js/components/SettingsPanel.js"></script>
   <script type="module" src="/js/persona.js"></script>
   <script type="module" src="/js/story.js"></script>
   <script type="module" src="/js/todos.js"></script>
