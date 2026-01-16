@@ -67,7 +67,7 @@ From theme config. Model: haiku. Tasks: Mechanical work delegated to subagents
 <context>
 Context auto-loaded by `/prime --agent my-agent`:
 - Shared context, shared behavior
-- Agent sidecar: `sprint/sidecars/my-agent/`
+- Agent sidecar: `.pennyfarthing/sidecars/my-agent/`
 </context>
 
 <on-activation>
@@ -161,7 +161,7 @@ From theme config. Model: haiku. Tasks: Mechanical work
 <context>
 Context auto-loaded by `/prime --agent my-agent`:
 - Shared context, shared behavior
-- Agent sidecar: `sprint/sidecars/my-agent/`
+- Agent sidecar: `.pennyfarthing/sidecars/my-agent/`
 </context>
 
 <on-activation>
@@ -457,7 +457,7 @@ From theme config. Model: haiku. Tasks: Dependency scanning, SAST analysis
 <context>
 Context auto-loaded by `/prime --agent security-auditor`:
 - Shared context, shared behavior
-- Agent sidecar: `sprint/sidecars/security-auditor/`
+- Agent sidecar: `.pennyfarthing/sidecars/security-auditor/`
 </context>
 
 <on-activation>

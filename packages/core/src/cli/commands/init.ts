@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, symlinkSync } from 'fs';
+import { readFileSync, writeFileSync, symlinkSync, readdirSync, statSync } from 'fs';
 import { join, relative, basename } from 'path';
 import fsExtra from 'fs-extra';
 
@@ -100,7 +100,7 @@ export async function initCommand(
     '.claude/project/hooks',
     '.pennyfarthing',
     'sprint',
-    'sprint/sidecars',
+    '.pennyfarthing/sidecars',
     '.session'
   ];
 
@@ -181,7 +181,7 @@ export async function initCommand(
   const sidecarTemplatesPath = join(assetsPath, 'templates/sidecar');
 
   for (const agent of CORE_AGENTS) {
-    const sidecarDir = join(projectRoot, `sprint/sidecars/${agent}`);
+    const sidecarDir = join(projectRoot, `.pennyfarthing/sidecars/${agent}`);
     if (!pathExists(sidecarDir)) {
       ensureDir(sidecarDir, { dryRun });
 
@@ -205,7 +205,7 @@ export async function initCommand(
           writeFileSync(filePath, content, 'utf8');
         }
       }
-      logger.created(`sprint/sidecars/${agent}/`);
+      logger.created(`.pennyfarthing/sidecars/${agent}/`);
     }
   }
 
@@ -363,8 +363,6 @@ function getInstalledSkillNames(projectRoot: string): string[] {
   if (!pathExists(skillsDir)) {
     return [];
   }
-
-  const { readdirSync, statSync } = require('fs');
 
   try {
     const entries = readdirSync(skillsDir);

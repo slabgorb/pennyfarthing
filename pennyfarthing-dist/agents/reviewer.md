@@ -58,7 +58,7 @@ From theme config. Model: haiku. Tasks: gather pre-flight data, update session f
 <context>
 Context auto-loaded by `/prime --agent reviewer`:
 - Shared context, shared behavior, tactical guide
-- Agent sidecar: `sprint/sidecars/reviewer/`
+- Agent sidecar: `.pennyfarthing/sidecars/reviewer/`
 </context>
 
 <reasoning-mode>

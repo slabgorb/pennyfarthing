@@ -76,7 +76,7 @@ If ANY gate fails, complete that step before handoff. Do not proceed to coding.
 <context>
 Context auto-loaded by `/prime --agent sm`:
 - Shared context, shared behavior, tactical guide
-- Agent sidecar: `sprint/sidecars/sm/`
+- Agent sidecar: `.pennyfarthing/sidecars/sm/`
 </context>
 
 <reasoning-mode>

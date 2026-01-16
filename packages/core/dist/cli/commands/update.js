@@ -254,24 +254,28 @@ async function updateSymlinkMode(projectRoot, nodeModulesPath, manifest, version
     logger.updated('.claude/manifest.json');
 }
 /**
- * Migrate sidecars from .claude/project/agents/{agent}-sidecar/ to sprint/sidecars/{agent}/
+ * Migrate sidecars from .claude/project/agents/{agent}-sidecar/ to .pennyfarthing/sidecars/{agent}/
+ * Also migrates from old sprint/sidecars/ location
  * Preserves user content while moving to new location
  */
 async function migrateSidecars(projectRoot, options) {
     const dryRun = options.dryRun;
     let migrated = 0;
     // Ensure new sidecars directory exists
-    const newSidecarsDir = join(projectRoot, 'sprint/sidecars');
+    const newSidecarsDir = join(projectRoot, '.pennyfarthing/sidecars');
     if (!pathExists(newSidecarsDir)) {
         if (!dryRun) {
             ensureDirSync(newSidecarsDir);
         }
     }
     for (const agent of CORE_AGENTS) {
-        const oldDir = join(projectRoot, `.claude/project/agents/${agent}-sidecar`);
-        const newDir = join(projectRoot, `sprint/sidecars/${agent}`);
-        // Skip if old directory doesn't exist
-        if (!pathExists(oldDir)) {
+        // Check both legacy locations
+        const legacyDir1 = join(projectRoot, `.claude/project/agents/${agent}-sidecar`);
+        const legacyDir2 = join(projectRoot, `sprint/sidecars/${agent}`);
+        const oldDir = pathExists(legacyDir1) ? legacyDir1 : (pathExists(legacyDir2) ? legacyDir2 : null);
+        const newDir = join(projectRoot, `.pennyfarthing/sidecars/${agent}`);
+        // Skip if no legacy directory found
+        if (!oldDir) {
             continue;
         }
         // Create new directory if needed
@@ -303,7 +307,30 @@ async function migrateSidecars(projectRoot, options) {
         }
     }
     if (migrated > 0) {
-        logger.info(`Migrated ${migrated} sidecar files to sprint/sidecars/`);
+        logger.info(`Migrated ${migrated} sidecar files to .pennyfarthing/sidecars/`);
+    }
+    // Clean up old sprint/sidecars directory if it exists and is now empty or fully migrated
+    const oldSprintSidecars = join(projectRoot, 'sprint/sidecars');
+    if (pathExists(oldSprintSidecars)) {
+        try {
+            const remaining = readdirSync(oldSprintSidecars);
+            // Check if all remaining items are agent directories that have been migrated
+            const allMigrated = remaining.every(item => {
+                const itemPath = join(oldSprintSidecars, item);
+                if (!isDirectory(itemPath))
+                    return false;
+                // Check if this agent's sidecar now exists in new location
+                const newAgentDir = join(projectRoot, `.pennyfarthing/sidecars/${item}`);
+                return pathExists(newAgentDir);
+            });
+            if (allMigrated && !dryRun) {
+                removeSync(oldSprintSidecars);
+                logger.info('Removed legacy sprint/sidecars/ directory');
+            }
+        }
+        catch {
+            // Ignore cleanup errors
+        }
     }
 }
 /**

@@ -10,6 +10,7 @@
  * - Check gate conditions based on gate type
  * - Format session file updates for phase transitions
  */
+import { existsSync, readFileSync } from 'fs';
 /**
  * Find a phase by name in a workflow definition
  *
@@ -231,12 +232,10 @@ export function calculateDuration(startedAt, endedAt) {
  */
 export function readHandoffMode(settingsPath) {
     try {
-        // Check for fs module availability (may not be available in all contexts)
-        const fs = require('fs');
-        if (!fs.existsSync(settingsPath)) {
+        if (!existsSync(settingsPath)) {
             return 'manual';
         }
-        const content = fs.readFileSync(settingsPath, 'utf-8');
+        const content = readFileSync(settingsPath, 'utf-8');
         // Try JSON first, then YAML
         if (settingsPath.endsWith('.json') || content.trim().startsWith('{')) {
             return parseHandoffModeFromJson(content);

@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, symlinkSync } from 'fs';
+import { readFileSync, writeFileSync, symlinkSync, readdirSync, statSync } from 'fs';
 import { join, relative, basename } from 'path';
 import fsExtra from 'fs-extra';
 const { ensureDirSync, removeSync } = fsExtra;
@@ -65,7 +65,7 @@ export async function initCommand(projectName, options) {
         '.claude/project/hooks',
         '.pennyfarthing',
         'sprint',
-        'sprint/sidecars',
+        '.pennyfarthing/sidecars',
         '.session'
     ];
     for (const dir of directories) {
@@ -134,7 +134,7 @@ export async function initCommand(projectName, options) {
     logger.info('Creating agent sidecars...');
     const sidecarTemplatesPath = join(assetsPath, 'templates/sidecar');
     for (const agent of CORE_AGENTS) {
-        const sidecarDir = join(projectRoot, `sprint/sidecars/${agent}`);
+        const sidecarDir = join(projectRoot, `.pennyfarthing/sidecars/${agent}`);
         if (!pathExists(sidecarDir)) {
             ensureDir(sidecarDir, { dryRun });
             // Create standard sidecar files using templates
@@ -155,7 +155,7 @@ export async function initCommand(projectName, options) {
                     writeFileSync(filePath, content, 'utf8');
                 }
             }
-            logger.created(`sprint/sidecars/${agent}/`);
+            logger.created(`.pennyfarthing/sidecars/${agent}/`);
         }
     }
     // 9. Install git hooks
@@ -279,7 +279,6 @@ function getInstalledSkillNames(projectRoot) {
     if (!pathExists(skillsDir)) {
         return [];
     }
-    const { readdirSync, statSync } = require('fs');
     try {
         const entries = readdirSync(skillsDir);
         return entries.filter((entry) => {
