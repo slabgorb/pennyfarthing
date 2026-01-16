@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [6.5.0] - 2026-01-16
+
+*No unreleased changes*
+
+---
+
 ## [6.4.0] - 2026-01-13
 
 ### Sprint 10: Customizable Workflow Engine & BMAD Integration
@@ -1141,7 +1147,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v6.4.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v6.5.0...HEAD
+[6.5.0]: https://github.com/1898andCo/pennyfarthing/compare/v6.4.0...v6.5.0
 [6.4.0]: https://github.com/1898andCo/pennyfarthing/compare/v6.3.0...v6.4.0
 [6.3.0]: https://github.com/1898andCo/pennyfarthing/compare/v6.2.0...v6.3.0
 [6.2.0]: https://github.com/1898andCo/pennyfarthing/compare/v6.1.0...v6.2.0
