@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 85
-  completed_points: 24
-  remaining_points: 61
+  completed_points: 33
+  remaining_points: 52
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - Epic 31: Customizable Workflow Engine (4 pts remaining)
@@ -939,7 +939,7 @@ epics:
       Includes workflow routing: SM reads `workflow:` tag from stories and
       follows the appropriate workflow definition.
     points: 30
-    completed_points: 5
+    completed_points: 14
     priority: P2
     marker: infrastructure
     repos: pennyfarthing
@@ -997,11 +997,13 @@ epics:
           - Remove generic PM tutorial content
         points: 2
         priority: P2
-        status: in_progress
+        status: done
         repos: pennyfarthing
         workflow: agent-docs
         assigned_to: Keith Avery
         started: 2026-01-16
+        completed: 2026-01-16
+        pr: 290
         acceptance_criteria:
           - PM has reasoning-mode section
           - PM has turn efficiency guidance
@@ -1018,11 +1020,13 @@ epics:
           - Remove generic architecture tutorial content
         points: 2
         priority: P2
-        status: in_progress
+        status: done
         repos: pennyfarthing
         workflow: agent-docs
         assigned_to: Keith Avery
         started: 2026-01-16
+        completed: 2026-01-16
+        pr: 290
         acceptance_criteria:
           - Architect has reasoning-mode section
           - Architect has turn efficiency guidance
@@ -1039,11 +1043,13 @@ epics:
           - Focus on Pennyfarthing-specific deployment patterns
         points: 3
         priority: P2
-        status: in_progress
+        status: done
         repos: pennyfarthing
         workflow: agent-docs
         assigned_to: Keith Avery
         started: 2026-01-16
+        completed: 2026-01-16
+        pr: 290
         acceptance_criteria:
           - DevOps has reasoning-mode section
           - DevOps has turn efficiency guidance
@@ -1097,11 +1103,13 @@ epics:
           - Remove hardcoded character references
         points: 2
         priority: P2
-        status: in_progress
+        status: done
         repos: pennyfarthing
         workflow: agent-docs
         assigned_to: Keith Avery
         started: 2026-01-16
+        completed: 2026-01-16
+        pr: 290
         acceptance_criteria:
           - Orchestrator has reasoning-mode section
           - Orchestrator has turn efficiency guidance
