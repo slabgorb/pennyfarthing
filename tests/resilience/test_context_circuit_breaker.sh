@@ -20,6 +20,8 @@ fail() { echo -e "${RED}FAIL${NC}: $1"; TESTS_FAILED=$((TESTS_FAILED + 1)); }
 
 CIRCUIT_BREAKER_HOOK="$PROJECT_ROOT/pennyfarthing-dist/scripts/hooks/context-circuit-breaker.sh"
 SETTINGS_TEMPLATE="$PROJECT_ROOT/pennyfarthing-dist/templates/settings.local.json.template"
+SETTINGS_LOCAL="$PROJECT_ROOT/.claude/settings.local.json"
+PENNYFARTHING_CONFIG="$PROJECT_ROOT/.pennyfarthing/config.local.yaml"
 
 # ============================================================================
 # AC1: Circuit breaker triggers at 85% context usage
@@ -222,6 +224,50 @@ test_message_shows_percentage() {
 }
 
 # ============================================================================
+# AC4: Project settings have circuit breaker enabled (Story 37-16)
+# ============================================================================
+
+# Test: Circuit breaker hook registered in PROJECT settings (not just template)
+test_hook_registered_in_project_settings() {
+    TESTS_RUN=$((TESTS_RUN + 1))
+    if [[ -f "$SETTINGS_LOCAL" ]] && grep -q 'context-circuit-breaker.sh' "$SETTINGS_LOCAL"; then
+        pass "Hook registered in project settings.local.json"
+    else
+        fail "Hook NOT registered in project .claude/settings.local.json (only in template)"
+    fi
+}
+
+# Test: Project has context_budget in .pennyfarthing/config.local.yaml
+test_project_has_context_budget() {
+    TESTS_RUN=$((TESTS_RUN + 1))
+    if [[ -f "$PENNYFARTHING_CONFIG" ]] && grep -q 'context_budget' "$PENNYFARTHING_CONFIG"; then
+        pass "Project has context_budget in .pennyfarthing/config.local.yaml"
+    else
+        fail "Project missing context_budget in .pennyfarthing/config.local.yaml"
+    fi
+}
+
+# Test: Project context_budget has critical_threshold defined
+test_project_has_critical_threshold() {
+    TESTS_RUN=$((TESTS_RUN + 1))
+    if [[ -f "$PENNYFARTHING_CONFIG" ]] && grep -q 'critical_threshold' "$PENNYFARTHING_CONFIG"; then
+        pass "Project has critical_threshold in .pennyfarthing/config.local.yaml"
+    else
+        fail "Project missing critical_threshold in .pennyfarthing/config.local.yaml"
+    fi
+}
+
+# Test: Circuit breaker hook has correct matcher in project settings
+test_hook_has_correct_matcher_in_project() {
+    TESTS_RUN=$((TESTS_RUN + 1))
+    if [[ -f "$SETTINGS_LOCAL" ]] && grep -B5 'context-circuit-breaker.sh' "$SETTINGS_LOCAL" | grep -q 'Edit|Write|Bash|Task'; then
+        pass "Hook has Edit|Write|Bash|Task matcher in project settings"
+    else
+        fail "Hook missing or has wrong matcher in project settings"
+    fi
+}
+
+# ============================================================================
 # Edge Case Tests
 # ============================================================================
 
@@ -280,6 +326,13 @@ main() {
     test_message_mentions_session_update
     test_message_mentions_commit
     test_message_shows_percentage
+
+    echo ""
+    echo "--- AC4: Project Settings Have Circuit Breaker (Story 37-16) ---"
+    test_hook_registered_in_project_settings
+    test_project_has_context_budget
+    test_project_has_critical_threshold
+    test_hook_has_correct_matcher_in_project
 
     echo ""
     echo "--- Edge Cases ---"

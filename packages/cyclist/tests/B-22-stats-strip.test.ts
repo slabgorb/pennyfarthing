@@ -249,6 +249,57 @@ describe('B-22: Prompt Bar Stats Display', () => {
 
   });
 
+  // Story 37-16: UI threshold alignment with backend circuit breaker
+  describe('AC6: Context thresholds align with backend circuit breaker (37-16)', () => {
+
+    it('should use 70% as warning threshold (matching backend warning_threshold)', async () => {
+      // stats-strip.js should have warning level trigger at 70%
+      // Backend check-context.sh uses warning_threshold=70 (from template context_budget)
+      const { readFileSync } = await import('fs');
+      const { join, dirname } = await import('path');
+      const { fileURLToPath } = await import('url');
+      const __dirname = dirname(fileURLToPath(import.meta.url));
+      const statsStripPath = join(__dirname, '../src/public/js/stats-strip.js');
+      const content = readFileSync(statsStripPath, 'utf-8');
+
+      // Check that warning level triggers at 70 (not 50 as before)
+      // Code structure: "} else if (percent >= 70) {" followed by warning class
+      expect(content).toMatch(/percent\s*>=\s*70\s*\)/);
+      expect(content).toMatch(/level-warning/);
+    });
+
+    it('should use 85% as danger/critical threshold (matching backend critical_threshold)', async () => {
+      // stats-strip.js should have danger level trigger at 85%
+      // Backend context-circuit-breaker.sh blocks at 85% (CRITICAL_THRESHOLD)
+      const { readFileSync } = await import('fs');
+      const { join, dirname } = await import('path');
+      const { fileURLToPath } = await import('url');
+      const __dirname = dirname(fileURLToPath(import.meta.url));
+      const statsStripPath = join(__dirname, '../src/public/js/stats-strip.js');
+      const content = readFileSync(statsStripPath, 'utf-8');
+
+      // Check that danger level triggers at 85 (not 80 as before)
+      // Code structure: "} else if (percent >= 85) {" followed by danger class
+      expect(content).toMatch(/percent\s*>=\s*85\s*\)/);
+      expect(content).toMatch(/level-danger/);
+    });
+
+    it('should use 70% for compact button imminent state (matching warning threshold)', async () => {
+      // COMPACT_IMMINENT_THRESHOLD should align with warning threshold (70%)
+      // Current: 65%, should be 70% to match when user gets warned
+      const { readFileSync } = await import('fs');
+      const { join, dirname } = await import('path');
+      const { fileURLToPath } = await import('url');
+      const __dirname = dirname(fileURLToPath(import.meta.url));
+      const statsStripPath = join(__dirname, '../src/public/js/stats-strip.js');
+      const content = readFileSync(statsStripPath, 'utf-8');
+
+      // COMPACT_IMMINENT_THRESHOLD should be 70
+      expect(content).toMatch(/COMPACT_IMMINENT_THRESHOLD\s*=\s*70/);
+    });
+
+  });
+
   describe('IPC Integration', () => {
 
     it('should reuse existing stats:update channel for model', async () => {
