@@ -2,6 +2,49 @@
 
 Lessons learned from debugging sessions. Check here before investigating issues.
 
+## Pennyfarthing Installation
+
+### Installing in Projects
+
+**Always use GitHub install, not npm link or local path:**
+
+```bash
+# CORRECT - installs from GitHub with pennyfarthing-dist/ included
+npm install github:1898andCo/pennyfarthing
+
+# WRONG - npm link doesn't work (package not published to npm registry)
+npm link pennyfarthing  # Error: 404 Not Found
+
+# WRONG - local path install may not include dist directory
+npm install ~/Projects/Pennyfarthing  # May get stale/incomplete version
+```
+
+### Why GitHub Install?
+
+The `pennyfarthing-dist/` directory contains pre-built assets (agents, commands, guides, skills, etc.) that are committed to the repo but not generated during npm install. The GitHub install gets the full repo including this dist directory.
+
+### Symlink Structure
+
+After install, `.claude/` contains symlinks to `node_modules/pennyfarthing/pennyfarthing-dist/`:
+- `agents/`, `commands/`, `guides/`, `personas/`, `scripts/`, `skills/`
+
+If symlinks are broken (commands not showing), reinstall from GitHub.
+
+### v6.5 pennyfarthing-dist Only Has READMEs (Bug 37-17)
+
+The develop branch on GitHub has `pennyfarthing-dist/` but directories only contain README placeholders. The actual content (agents, commands, guides, skills, etc.) exists locally but hasn't been pushed.
+
+**Workaround until fixed:**
+```bash
+# Copy ALL dist contents from local Pennyfarthing source
+for dir in agents commands guides skills scripts personas workflows templates faces; do
+  cp -r ~/Projects/Pennyfarthing/pennyfarthing-dist/$dir/* \
+    node_modules/pennyfarthing/pennyfarthing-dist/$dir/ 2>/dev/null
+done
+```
+
+This is tracked in story 37-17. The fix needs to commit the actual content (not just READMEs) to GitHub.
+
 ## Cyclist Font Settings (Story 35-6)
 
 ### The Problem

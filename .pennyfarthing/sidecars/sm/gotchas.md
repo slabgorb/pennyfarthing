@@ -87,6 +87,15 @@ This HTML comment is parsed by Cyclist's `quick-actions.js` to show the handoff 
 
 **Broader lesson:** If you're doing operations with a CLI tool and hit errors, invoke the relevant skill BEFORE troubleshooting manually.
 
+## Installation Gotchas
+
+### Package Not on npm
+**Problem:** Looking for `npm install pennyfarthing` or checking npmjs.com
+**Reality:** Pennyfarthing is installed from GitHub, not npm registry
+**Solution:** Install via: `npm install github:1898andCo/pennyfarthing`
+
+The CLI still expects `node_modules/pennyfarthing/pennyfarthing-dist/` structure, which GitHub installs create correctly.
+
 ---
 
 *Add story management gotchas discovered during coordination below*
