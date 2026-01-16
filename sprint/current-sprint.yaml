@@ -379,7 +379,7 @@ epics:
       Clean up stale TODOs, fix flaky tests, remove deprecated code paths,
       and address known bugs that slipped through previous sprints.
     points: 24
-    completed_points: 13
+    completed_points: 15
     priority: P2
     marker: maintenance
     repos: pennyfarthing, cyclist
@@ -664,8 +664,9 @@ epics:
           3. Subscribe to theme change events and refresh cache
         points: 2
         priority: P1
-        status: in_progress
+        status: done
         started: 2026-01-15
+        completed: 2026-01-15
         repos: cyclist
         workflow: trivial
         assigned_to: Keith Avery
