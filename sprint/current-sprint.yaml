@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 70
-  completed_points: 14
-  remaining_points: 56
+  completed_points: 16
+  remaining_points: 54
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - Epic 31: Customizable Workflow Engine (4 pts remaining)
@@ -540,7 +540,7 @@ epics:
       Clean up stale TODOs, fix flaky tests, remove deprecated code paths,
       and address known bugs that slipped through previous sprints.
     points: 26
-    completed_points: 15
+    completed_points: 17
     priority: P2
     marker: maintenance
     repos: pennyfarthing, cyclist
@@ -861,11 +861,13 @@ epics:
           not hardcoded HTML template.
         points: 2
         priority: P2
-        status: in_progress
+        status: done
         repos: cyclist
         workflow: trivial
         assigned_to: Keith Avery
         started: 2026-01-16
+        completed: 2026-01-16
+        pr: 286
         acceptance_criteria:
           - Workflow indicator shows phases from active workflow definition
           - Trivial workflow shows only SM → Dev phases
