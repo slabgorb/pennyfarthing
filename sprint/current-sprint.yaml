@@ -378,7 +378,7 @@ epics:
       Consolidate technical debt accumulated during rapid feature development.
       Clean up stale TODOs, fix flaky tests, remove deprecated code paths,
       and address known bugs that slipped through previous sprints.
-    points: 24
+    points: 26
     completed_points: 15
     priority: P2
     marker: maintenance
@@ -675,6 +675,40 @@ epics:
           - Buttons update when theme is switched
           - No hardcoded theme references in production code
           - Works on initial load (theme cache populated before needed)
+      - id: 37-15
+        title: "Bug: Workflow indicator shows hardcoded TDD phases"
+        description: |
+          The workflow progress indicator in Cyclist sidebar always shows the
+          hardcoded TDD workflow phases (SM → TEA → Dev → Reviewer) regardless
+          of which workflow is actually active for the current story.
+
+          When using trivial workflow (SM → Dev) or custom workflows, the
+          indicator still displays all 4 TDD phases instead of the actual
+          workflow steps.
+
+          Root cause: updateWorkflowProgress() in story.js renders workflow
+          steps based on data-agent attributes in HTML, but the HTML template
+          has hardcoded TDD phases. The workflow data from IPC should drive
+          which phases are displayed.
+
+          Files affected:
+          - packages/cyclist/src/public/js/story.js (updateWorkflowProgress)
+          - packages/cyclist/src/public/index.html (workflow-progress element)
+          - packages/cyclist/src/main/ipc/story.ts (workflow data source)
+
+          Fix: Dynamic workflow rendering based on active workflow definition,
+          not hardcoded HTML template.
+        points: 2
+        priority: P2
+        status: backlog
+        repos: cyclist
+        workflow: trivial
+        acceptance_criteria:
+          - Workflow indicator shows phases from active workflow definition
+          - Trivial workflow shows only SM → Dev phases
+          - Custom workflows display their defined phases
+          - Phase status (done/current/pending) updates correctly
+          - Works when switching between stories with different workflows
   - id: epic-38
     title: Agent File Modernization
     description: |
