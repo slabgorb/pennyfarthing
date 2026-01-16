@@ -910,7 +910,9 @@ epics:
           - Agents run until they hit hard context limits unexpectedly
         points: 3
         priority: P1
-        status: backlog
+        status: in_progress
+        started: 2026-01-16
+        assigned_to: Keith Avery
         repos: pennyfarthing, cyclist
         workflow: tdd
         acceptance_criteria:

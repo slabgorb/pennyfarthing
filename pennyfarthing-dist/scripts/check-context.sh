@@ -39,7 +39,8 @@ DEFAULT_WARNING_THRESHOLD=60
 DEFAULT_CRITICAL_THRESHOLD=85
 DEFAULT_MAX_TOKENS=200000
 
-# Load thresholds from settings.local.json if available
+# Load thresholds from .pennyfarthing/config.local.yaml (preferred) or settings.local.json (fallback)
+PENNYFARTHING_CONFIG="${CLAUDE_PROJECT_DIR:-$PROJECT_DIR}/.pennyfarthing/config.local.yaml"
 SETTINGS_FILE="${CLAUDE_PROJECT_DIR:-$PROJECT_DIR}/.claude/settings.local.json"
 CONFIG=$(python3 -c "
 import json
@@ -50,17 +51,30 @@ warning_threshold = $DEFAULT_WARNING_THRESHOLD
 critical_threshold = $DEFAULT_CRITICAL_THRESHOLD
 max_tokens = $DEFAULT_MAX_TOKENS
 
+# First try .pennyfarthing/config.local.yaml (preferred location)
 try:
-    with open('$SETTINGS_FILE', 'r') as f:
-        settings = json.load(f)
-        if 'context_budget' in settings:
-            cb = settings['context_budget']
+    import yaml
+    with open('$PENNYFARTHING_CONFIG', 'r') as f:
+        config = yaml.safe_load(f)
+        if config and 'context_budget' in config:
+            cb = config['context_budget']
             imminent_threshold = cb.get('imminent_threshold', imminent_threshold)
             warning_threshold = cb.get('warning_threshold', warning_threshold)
             critical_threshold = cb.get('critical_threshold', critical_threshold)
             max_tokens = cb.get('max_tokens', max_tokens)
 except:
-    pass
+    # Fallback to settings.local.json (legacy location)
+    try:
+        with open('$SETTINGS_FILE', 'r') as f:
+            settings = json.load(f)
+            if 'context_budget' in settings:
+                cb = settings['context_budget']
+                imminent_threshold = cb.get('imminent_threshold', imminent_threshold)
+                warning_threshold = cb.get('warning_threshold', warning_threshold)
+                critical_threshold = cb.get('critical_threshold', critical_threshold)
+                max_tokens = cb.get('max_tokens', max_tokens)
+    except:
+        pass
 
 print(f'IMMINENT_THRESHOLD={imminent_threshold}')
 print(f'WARNING_THRESHOLD={warning_threshold}')

@@ -119,7 +119,26 @@ See `shared-agent-behavior.md` → Turn Efficiency Protocol for core patterns.
 
 Path: `.session/{STORY_ID}-session.md`
 
+**CRITICAL:** Session file header MUST use this exact format for Cyclist to detect it:
 ```markdown
+# Story {STORY_ID}: {TITLE}
+```
+
+Do NOT use formats like `# Story {ID} Session: Title` - the parser only recognizes:
+- `# Story ID: Title` (colon separator)
+- `# Story ID Session` (no title in header)
+
+Full session file structure:
+```markdown
+# Story {STORY_ID}: {TITLE}
+
+## Story Details
+- **ID:** {STORY_ID}
+- **Title:** {TITLE}
+- **Points:** {POINTS}
+- **Workflow:** {WORKFLOW}
+...
+
 {SESSION_FILE_CONTENT}
 ```
 
