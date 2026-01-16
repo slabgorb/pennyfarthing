@@ -861,9 +861,11 @@ epics:
           not hardcoded HTML template.
         points: 2
         priority: P2
-        status: backlog
+        status: in_progress
         repos: cyclist
         workflow: trivial
+        assigned_to: Keith Avery
+        started: 2026-01-16
         acceptance_criteria:
           - Workflow indicator shows phases from active workflow definition
           - Trivial workflow shows only SM → Dev phases

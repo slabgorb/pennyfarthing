@@ -139,8 +139,24 @@ export function updateStory(story) {
 }
 
 /**
- * B-13: Update workflow progress visualization
- * @param {Array|null} workflow - Array of workflow steps
+ * Get default display label for an agent
+ * @param {string} agent - Agent name (sm, tea, dev, reviewer)
+ * @returns {string} Display label
+ */
+function getDefaultLabel(agent) {
+  const labels = {
+    sm: 'SM',
+    tea: 'TEA',
+    dev: 'Dev',
+    reviewer: 'Rev'
+  };
+  return labels[agent] || agent.charAt(0).toUpperCase() + agent.slice(1);
+}
+
+/**
+ * B-13/37-15: Update workflow progress visualization
+ * Dynamically renders workflow steps based on active workflow definition.
+ * @param {Array|null} workflow - Array of workflow steps with {agent, label, status}
  */
 function updateWorkflowProgress(workflow) {
   const workflowEl = document.getElementById('workflow-progress');
@@ -153,35 +169,58 @@ function updateWorkflowProgress(workflow) {
 
   workflowEl.style.display = 'flex';
 
-  // Update each workflow step
-  for (const step of workflow) {
-    const stepEl = workflowEl.querySelector(`[data-agent="${step.agent}"]`);
-    if (!stepEl) continue;
+  // Clear existing content and rebuild from workflow data
+  workflowEl.innerHTML = '';
 
-    const iconEl = stepEl.querySelector('.workflow-icon');
-    if (iconEl) {
-      // Set icon based on status
-      switch (step.status) {
-        case 'done':
-          iconEl.textContent = '✓';
-          iconEl.className = 'workflow-icon status-done';
-          break;
-        case 'current':
-          iconEl.textContent = '●';
-          iconEl.className = 'workflow-icon status-current';
-          break;
-        case 'pending':
-        default:
-          iconEl.textContent = '○';
-          iconEl.className = 'workflow-icon status-pending';
-          break;
-      }
+  // Filter to unique agents (skip duplicate 'sm' at start/end of workflow)
+  // Workflow phases like 'setup' and 'finish' both have agent 'sm'
+  const seenAgents = new Set();
+  const uniqueSteps = workflow.filter(step => {
+    if (seenAgents.has(step.agent)) return false;
+    seenAgents.add(step.agent);
+    return true;
+  });
+
+  // Build workflow steps dynamically
+  uniqueSteps.forEach((step, index) => {
+    // Add arrow before step (except first)
+    if (index > 0) {
+      const arrow = document.createElement('span');
+      arrow.className = 'workflow-arrow';
+      arrow.textContent = '→';
+      workflowEl.appendChild(arrow);
     }
 
-    // Update step container class for styling
+    // Create step container
+    const stepEl = document.createElement('div');
     stepEl.className = `workflow-step status-${step.status}`;
     stepEl.setAttribute('data-agent', step.agent);
-  }
+
+    // Create icon
+    const iconEl = document.createElement('span');
+    iconEl.className = `workflow-icon status-${step.status}`;
+    switch (step.status) {
+      case 'done':
+        iconEl.textContent = '✓';
+        break;
+      case 'current':
+        iconEl.textContent = '●';
+        break;
+      case 'pending':
+      default:
+        iconEl.textContent = '○';
+        break;
+    }
+    stepEl.appendChild(iconEl);
+
+    // Create label - use step.label if available, else derive from agent
+    const labelEl = document.createElement('span');
+    labelEl.className = 'workflow-label';
+    labelEl.textContent = step.label || getDefaultLabel(step.agent);
+    stepEl.appendChild(labelEl);
+
+    workflowEl.appendChild(stepEl);
+  });
 }
 
 /**
