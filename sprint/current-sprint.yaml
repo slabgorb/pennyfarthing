@@ -993,9 +993,11 @@ epics:
           - Remove generic PM tutorial content
         points: 2
         priority: P2
-        status: backlog
+        status: in_progress
         repos: pennyfarthing
         workflow: agent-docs
+        assigned_to: Keith Avery
+        started: 2026-01-16
         acceptance_criteria:
           - PM has reasoning-mode section
           - PM has turn efficiency guidance
@@ -1012,9 +1014,11 @@ epics:
           - Remove generic architecture tutorial content
         points: 2
         priority: P2
-        status: backlog
+        status: in_progress
         repos: pennyfarthing
         workflow: agent-docs
+        assigned_to: Keith Avery
+        started: 2026-01-16
         acceptance_criteria:
           - Architect has reasoning-mode section
           - Architect has turn efficiency guidance
@@ -1031,9 +1035,11 @@ epics:
           - Focus on Pennyfarthing-specific deployment patterns
         points: 3
         priority: P2
-        status: backlog
+        status: in_progress
         repos: pennyfarthing
         workflow: agent-docs
+        assigned_to: Keith Avery
+        started: 2026-01-16
         acceptance_criteria:
           - DevOps has reasoning-mode section
           - DevOps has turn efficiency guidance
@@ -1087,9 +1093,11 @@ epics:
           - Remove hardcoded character references
         points: 2
         priority: P2
-        status: backlog
+        status: in_progress
         repos: pennyfarthing
         workflow: agent-docs
+        assigned_to: Keith Avery
+        started: 2026-01-16
         acceptance_criteria:
           - Orchestrator has reasoning-mode section
           - Orchestrator has turn efficiency guidance
