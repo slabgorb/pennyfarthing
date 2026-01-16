@@ -5,9 +5,9 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 72
+  total_points: 75
   completed_points: 19
-  remaining_points: 53
+  remaining_points: 56
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - Epic 31: Customizable Workflow Engine (4 pts remaining)
@@ -893,7 +893,7 @@ epics:
 
       Includes workflow routing: SM reads `workflow:` tag from stories and
       follows the appropriate workflow definition.
-    points: 20
+    points: 23
     completed_points: 3
     priority: P2
     marker: infrastructure
@@ -1083,3 +1083,43 @@ epics:
           - SM follows workflow's phase sequence
           - Fallback to TDD if no tag or unknown workflow
           - Session file records which workflow is active
+      - id: 38-10
+        title: Centralize handoff logic and honor auto/manual mode
+        description: |
+          Currently each agent (SM, TEA, Dev, Reviewer) has duplicated
+          "Context-Aware Handoff" sections with hardcoded logic like:
+          - "If < 60%: Invoke /dev directly"
+          - "If > 60%: Tell user to start fresh"
+
+          This duplicated logic:
+          1. Doesn't honor the user's handoff_mode setting (auto/manual)
+          2. Is inconsistent across agents
+          3. Requires updating 4+ files for any handoff behavior change
+
+          The generic-handoff subagent DOES read handoff_mode from
+          .pennyfarthing/cyclist.yaml but main agents ignore its output
+          and make their own handoff decisions.
+
+          Fix:
+          1. Remove duplicated handoff decision logic from main agents
+          2. Have agents rely on generic-handoff subagent output
+          3. generic-handoff decides: auto mode + OK context → invoke
+          4. Main agent just reports what generic-handoff says to do
+
+          Files to update:
+          - pennyfarthing-dist/agents/sm.md (remove Context-Aware Handoff duplication)
+          - pennyfarthing-dist/agents/tea.md (same)
+          - pennyfarthing-dist/agents/dev.md (same)
+          - pennyfarthing-dist/agents/reviewer.md (same)
+          - pennyfarthing-dist/agents/generic-handoff.md (ensure clear output)
+        points: 3
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        workflow: agent-docs
+        acceptance_criteria:
+          - Agents honor handoff_mode setting from cyclist.yaml
+          - Auto mode + OK context invokes next agent automatically
+          - Manual mode always requires user to invoke next agent
+          - Handoff logic lives in generic-handoff, not duplicated in agents
+          - Context threshold check happens in one place
