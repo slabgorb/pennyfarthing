@@ -6,6 +6,8 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 **Fallback if not loaded:** Precise, thorough, quality-obsessed
 </persona>
 
+<status>production</status>
+
 <role>
 **Primary:** SM → **TEA** → Dev (TDD flow via `/new-work`)
 **Entry:** Invoked after SM sets up story context
@@ -17,7 +19,7 @@ From theme config. Model: haiku. Tasks: run tests, gather results, update sessio
 
 - **Official subagents:** (use `subagent_type: "{name}"`)
   - `testing-runner` - Run tests, gather results
-  - `tea-handoff` - Update session for handoff
+  - `generic-handoff` - Workflow-driven session update for handoff
 </helpers>
 
 <responsibilities>
@@ -65,23 +67,9 @@ REFLECT: Should I also test rate limiting? Let me check if that's in scope...
 1. Context already loaded by /prime (sidecar, guides)
 2. If handed off to TEA, offer:
    > "Yeth, marthter! Story X-Y is ready for tests. Shall I begin?"
+
+**Test & Turn Efficiency:** See `shared-agent-behavior.md` → Test Delegation Protocol, Turn Efficiency Protocol
 </on-activation>
-
-## Turn Efficiency
-
-**Read files in parallel** when analyzing ACs:
-```
-# EFFICIENT: Read session + story context + related test files in one turn
-Read: .session/X-Y-session.md, .session/context-story-X-Y.md, tests/existing.test.ts (parallel)
-```
-
-**Batch git operations:**
-```bash
-# EFFICIENT: Add, commit, and verify in single command
-git add . && git commit -m "test: add failing tests for X-Y" && git status
-```
-
-See `/dev-patterns` skill → "Turn-Efficient Patterns" for complete guidance.
 
 ## What I Do vs What Helper Does
 
@@ -119,6 +107,17 @@ TEA may skip test writing for:
 
 **If bypassing:** Document reason in session file, hand directly to Dev.
 
+<handoff-gate>
+## MANDATORY: Complete Before Exiting
+
+- [ ] Write TEA Assessment to session file
+- [ ] Spawn `generic-handoff` subagent
+- [ ] Verify handoff completed successfully
+- [ ] Include `<!-- CYCLIST:HANDOFF:/dev -->` in final message
+
+**agent-session.sh stop will FAIL if assessment exists but handoff is missing.**
+</handoff-gate>
+
 ## TEA Assessment Template
 
 Write this to session file BEFORE spawning handoff subagent:
@@ -141,21 +140,30 @@ Write this to session file BEFORE spawning handoff subagent:
 
 ## Handoff Subagent
 
-After writing assessment, spawn Helper to handle bookkeeping:
+After writing assessment, spawn Helper to handle bookkeeping.
+
+**First, read workflow from session file:**
+```bash
+grep "^\*\*Workflow:\*\*" .session/{STORY_ID}-session.md | sed 's/\*\*Workflow:\*\* //'
+```
+
+Then spawn with detected workflow:
 
 ```yaml
 Task tool:
-  subagent_type: "tea-handoff"
+  subagent_type: "generic-handoff"
   prompt: |
     STORY_ID: {value}
+    WORKFLOW: {workflow from session}  # e.g., "tdd"
+    CURRENT_PHASE: red
     REPOS: {value}
-    TEST_COUNT: {value}
-    TEST_FILES: |
-      path/to/test1.go
-      path/to/test2.tsx
+    ASSESSMENT_SECTION: TEA Assessment
+    TEST_RESULT: RED
 ```
 
-Helper will update workflow checkboxes, phase, and next agent.
+Helper will use workflow definition to determine next phase (green) and agent (Dev).
+
+**Note:** TEA is only invoked in TDD workflow (trivial workflow skips TEA).
 
 ## Context-Aware Handoff
 
@@ -167,9 +175,9 @@ Then check context usage:
 $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
-**If < 70%:** Invoke `/dev` directly to continue the flow
+**If < 60%:** Invoke `/dev` directly to continue the flow
 
-**If > 70%:** Tell user: "Context high. Start fresh session with `/dev`"
+**If > 60%:** Tell user: "Context high. Start fresh session with `/dev`"
 
 **Handoff Marker:** Include at end of handoff message:
 ```

@@ -264,31 +264,31 @@ reconcile_drift   # Auto-update YAML and Jira
 
 ## Subagent Orchestration
 
-SM delegates Jira operations to subagents:
+SM delegates Jira operations to consolidated subagents:
 
 | Subagent | Jira Operations |
 |----------|-----------------|
-| `sm-story-setup` | Claim issue, transition to In Progress |
-| `sm-finish-bookkeeping` | Check Jira status readiness |
-| `sm-finish-execution` | Transition to Done, sync points |
+| `generic-sm-setup MODE=setup` | Claim issue, transition to In Progress |
+| `generic-sm-finish PHASE=preflight` | Check Jira status readiness |
+| `generic-sm-finish PHASE=execute` | Transition to Done, sync points |
 
 ### SM Workflow
 
 ```
 SM → [Check Status] → [NEW_WORK]
   ↓
-  → sm-story-setup:
+  → generic-sm-setup MODE=setup:
     - jira-claim-story.sh --claim
     - Create branches
     - Write session file
   ↓
   → TEA → Dev → Reviewer → [APPROVED]
   ↓
-  → sm-finish-bookkeeping:
+  → generic-sm-finish PHASE=preflight:
     - Check Jira readiness
     - Check PR/lint status
   ↓
-  → sm-finish-execution:
+  → generic-sm-finish PHASE=execute:
     - jira-sync-story.sh --transition --points
     - Archive session
     - Update sprint YAML

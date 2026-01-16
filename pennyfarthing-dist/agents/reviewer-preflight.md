@@ -39,19 +39,7 @@ done
 
 ## Turn Efficiency
 
-**Batch git operations** to minimize API round-trips:
-
-```bash
-# EFFICIENT: Fetch, checkout, and diff in single command
-cd $CLAUDE_PROJECT_DIR/${REPO} && \
-git fetch origin && \
-git checkout {BRANCH} && \
-git diff develop...HEAD --stat
-```
-
-**Parallelize independent checks:**
-- Spawn testing-runner subagent + read session file (parallel)
-- Code smell grep across files (can be combined with `&&`)
+See `shared-agent-behavior.md` → Turn Efficiency Protocol for core patterns.
 
 ## Execute Pre-Flight Checks
 
@@ -61,13 +49,55 @@ git diff develop...HEAD --stat
 cd $CLAUDE_PROJECT_DIR/${REPO} && git fetch origin && git checkout {BRANCH} && git diff develop...HEAD --stat
 ```
 
-### 2. Run Tests and Lints via Testing Runner
+### 2. Check Test Cache (Story 31-8)
+
+**Before spawning testing-runner, check if valid cached results exist.**
+
+```bash
+# Read session file and check for valid cache
+SESSION_FILE="$CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md"
+CURRENT_SHA=$(git rev-parse HEAD)
+
+# Check if Test Cache section exists
+if grep -q "^## Test Cache" "$SESSION_FILE" 2>/dev/null; then
+    CACHE_SHA=$(grep "| Git SHA |" "$SESSION_FILE" | sed 's/.*| //' | sed 's/ |$//' | xargs)
+    CACHE_RESULT=$(grep "| Result |" "$SESSION_FILE" | sed 's/.*| //' | sed 's/ |$//' | xargs)
+    CACHE_TIME=$(grep "| Last Run |" "$SESSION_FILE" | sed 's/.*| //' | sed 's/ |$//' | xargs)
+
+    # Validate: SHA must match current HEAD
+    if [[ "$CACHE_SHA" == "$CURRENT_SHA" ]]; then
+        echo "✓ Cache SHA matches current HEAD"
+
+        # Validate: Cache must be less than 5 minutes old
+        # (Use date command appropriate for your OS)
+        CACHE_EPOCH=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$CACHE_TIME" +%s 2>/dev/null || date -d "$CACHE_TIME" +%s 2>/dev/null || echo 0)
+        NOW_EPOCH=$(date +%s)
+        AGE_MINUTES=$(( (NOW_EPOCH - CACHE_EPOCH) / 60 ))
+
+        if [[ $AGE_MINUTES -lt 5 ]]; then
+            echo "✓ Using cached test result: $CACHE_RESULT (${AGE_MINUTES}m old)"
+            # SKIP testing-runner spawn - use cached result in preflight report
+            USE_CACHED_TESTS=true
+        else
+            echo "⚠ Cache too old (${AGE_MINUTES}m), running fresh tests"
+        fi
+    else
+        echo "⚠ Cache SHA mismatch, running fresh tests"
+    fi
+fi
+```
+
+**Decision:**
+- If `USE_CACHED_TESTS=true`: Skip step 3, use cached result in output
+- Otherwise: Proceed to step 3 (spawn testing-runner)
+
+### 3. Run Tests and Lints via Testing Runner
 
 **DELEGATE TO TESTING-RUNNER SUBAGENT:**
 
 Spawn a testing-runner subagent with:
 ```yaml
-subagent_type: "general-purpose"
+subagent_type: "testing-runner"
 model: "haiku"
 description: "run tests"
 prompt: |

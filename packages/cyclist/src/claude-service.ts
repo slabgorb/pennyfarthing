@@ -377,6 +377,11 @@ export class ClaudeService extends EventEmitter {
     });
     this.currentProcess = proc;
 
+    // Emit process-spawned event with PID for tracking (B-24 fix)
+    if (proc.pid) {
+      this.emit('process-spawned', proc.pid);
+    }
+
     // Set up persistent stdout handler
     proc.stdout?.on('data', (data: Buffer) => {
       this.stdoutBuffer += data.toString();

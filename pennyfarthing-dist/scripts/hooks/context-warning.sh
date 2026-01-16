@@ -3,7 +3,7 @@
 # Called by Claude Code before tool calls (PreToolUse)
 #
 # Input: JSON via stdin with tool_name, tool_input
-# Output: Warning message to stdout if context > 70%
+# Output: Warning message to stdout if context > 60%
 # Always exits 0 (warning only, never blocks)
 
 # Read and discard stdin (required by hook protocol)
@@ -28,7 +28,7 @@ if [[ -z "$CONTEXT_PERCENT" ]] || [[ "$CONTEXT_PERCENT" == "null" ]]; then
 fi
 
 # Load thresholds from settings (defaults match check-context.sh)
-WARNING_THRESHOLD="${WARNING_THRESHOLD:-70}"
+WARNING_THRESHOLD="${WARNING_THRESHOLD:-60}"
 CRITICAL_THRESHOLD="${CRITICAL_THRESHOLD:-85}"
 
 # Output warning if above threshold

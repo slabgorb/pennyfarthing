@@ -31,9 +31,10 @@ Opus Agent (strategic)
     └── Delegates mechanical work via Task tool
             │
             ├── workflow-status-check (state detection)
-            ├── sm-story-setup (branch/session creation)
-            ├── tea-handoff (RED verification, session update)
-            ├── dev-handoff (GREEN verification, PR check)
+            ├── generic-sm-setup (research backlog or setup story)
+            ├── generic-sm-finish (preflight checks or execute finish)
+            ├── sm-handoff (SM→TEA/Dev with Jira/branch verification)
+            ├── generic-handoff (TEA/Dev/Reviewer phase transitions)
             ├── reviewer-preflight (test/lint data gathering)
             └── testing-runner (test execution)
 ```
@@ -88,17 +89,15 @@ The key insight: **Make critical behaviors AUTOMATIC via subagent delegation** r
 ├───────────────────┼────────────────────────┼────────────────────────────┤
 │ State Detection   │ workflow-status-check  │ Scan files, report state   │
 ├───────────────────┼────────────────────────┼────────────────────────────┤
-│ Setup/Init        │ sm-story-setup         │ Create branches, sessions  │
+│ Setup/Init        │ generic-sm-setup       │ Research or setup (MODE)   │
+│                   │ sm-handoff             │ SM→TEA/Dev with Jira/branch│
 ├───────────────────┼────────────────────────┼────────────────────────────┤
-│ Phase Handoff     │ tea-handoff            │ Verify RED, update session │
-│                   │ dev-handoff            │ Verify GREEN, check PR     │
-│                   │ reviewer-handoff-*     │ Route based on verdict     │
+│ Phase Handoff     │ generic-handoff        │ TEA/Dev/Reviewer transitions│
 ├───────────────────┼────────────────────────┼────────────────────────────┤
 │ Verification      │ reviewer-preflight     │ Gather facts before review │
 │                   │ testing-runner         │ Execute tests, report      │
 ├───────────────────┼────────────────────────┼────────────────────────────┤
-│ Finish/Cleanup    │ sm-finish-bookkeeping  │ Archive, update sprint     │
-│                   │ sm-finish-execution    │ Git operations, PR merge   │
+│ Finish/Cleanup    │ generic-sm-finish      │ Preflight or execute (PHASE)│
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -283,11 +282,11 @@ The Opus agent reads this report and decides next steps—it doesn't re-execute 
 | Scenario | Subagent | Why |
 |----------|----------|-----|
 | Determining workflow state | `workflow-status-check` | Scanning files is mechanical |
-| Creating branches/sessions | `sm-story-setup` | Git operations are deterministic |
+| Creating branches/sessions | `generic-sm-setup MODE=setup` | Git operations are deterministic |
 | Verifying test state | `testing-runner` | Test execution is mechanical |
-| Updating session files | `*-handoff` | State updates must be reliable |
+| Updating session files | `generic-handoff` | State updates must be reliable |
 | Gathering review data | `reviewer-preflight` | Fact-finding, not judgment |
-| Sprint file updates | `sm-finish-*` | Archiving is mechanical |
+| Sprint file updates | `generic-sm-finish` | Archiving is mechanical |
 
 ### Don't Delegate When:
 
@@ -319,7 +318,7 @@ Is the task...
 
 ### Subagent Retry Pattern
 
-From `agents/sm-story-setup.md:102-110`:
+From `agents/generic-sm-setup.md` (Error Recovery section):
 
 ```
 1. Log the failure: Note which step failed and why
@@ -346,9 +345,9 @@ Recommended fix: [what calling agent should do]
 
 | Failure | Subagent | Fix |
 |---------|----------|-----|
-| Jira claim failed | sm-story-setup | Choose different story |
-| Tests all GREEN | tea-handoff | TEA must verify tests are correct |
-| PR not found | dev-handoff | Verify PR was created |
+| Jira claim failed | generic-sm-setup | Choose different story |
+| Tests all GREEN | generic-handoff | TEA must verify tests are correct |
+| PR not found | generic-handoff | Verify PR was created |
 | Session file missing | any handoff | Check path, may need recreation |
 | Git command failed | any | Check for uncommitted changes |
 
@@ -374,8 +373,9 @@ Burns context, may skip steps, prone to errors.
 **Correct:**
 ```yaml
 Task tool:
-  subagent_type: "sm-story-setup"
+  subagent_type: "generic-sm-setup"
   prompt: |
+    MODE: setup
     STORY_ID: 5-2
     [other placeholders]
 ```
@@ -464,12 +464,12 @@ If edit fails:
 
 ### Subagent Definitions
 - State Detection: `agents/workflow-status-check.md`
-- Story Setup: `agents/sm-story-setup.md`
-- TEA Handoff: `agents/tea-handoff.md`
-- Dev Handoff: `agents/dev-handoff.md`
+- SM Setup/Research: `agents/generic-sm-setup.md`
+- SM Finish: `agents/generic-sm-finish.md`
+- SM Handoff: `agents/sm-handoff.md`
+- Phase Transitions: `agents/generic-handoff.md`
 - Reviewer Preflight: `agents/reviewer-preflight.md`
 - Testing Runner: `agents/testing-runner.md`
-- Finish Workflow: `agents/sm-finish-bookkeeping.md`, `agents/sm-finish-execution.md`
 
 ### Agent Definitions (Opus)
 - SM: `agents/sm.md`

@@ -16,7 +16,7 @@ import assert from 'node:assert';
 import { mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-// Import the loader functions that Dev will implement
+// Import the loader functions
 import { loadWorkflowFile, loadWorkflowsFromDir } from './workflow-loader.js';
 // Get directory for test fixtures
 const __dirname = dirname(fileURLToPath(import.meta.url));

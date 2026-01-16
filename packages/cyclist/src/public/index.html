@@ -14,6 +14,10 @@
         <!-- Tabs will be rendered here by tab-bar.js based on PanelManager registry -->
       </div>
       <div class="tab-bar-right">
+        <!-- 33-3: Permission status indicator -->
+        <span class="permission-status hidden" id="permission-status" data-testid="permission-status">
+          <span class="permission-badge">0</span>
+        </span>
         <span class="model-indicator" id="tab-model-indicator">—</span>
       </div>
     </div>
@@ -93,6 +97,8 @@
     </div>
     <div class="resize-handle" id="tool-panel-resize" title="Drag to resize"></div>
     <!-- Panel expand buttons removed - now using horizontal tab bar at top -->
+    <!-- 35-5: Message panel wrapper for collapsible message view -->
+    <div id="message-panel" class="vertical-panel position-center">
     <div id="main-content">
       <main id="message-view">
         <!-- MessageView will be mounted here -->
@@ -130,7 +136,18 @@
           <button type="button" class="toolbar-btn" data-action="blockquote" title="Quote">"</button>
           <button type="button" class="toolbar-btn" data-action="codeBlock" title="Code Block">{ }</button>
           <span class="toolbar-spacer"></span>
-          <button type="button" class="mode-btn" data-control="plan-mode" title="Cycle permission mode: Manual → Plan → Accept → Danger">MANUAL</button>
+          <!-- 35-4: Three-way mode switch (segmented control) -->
+          <div class="mode-switch" data-control="mode-switch" role="radiogroup" aria-label="Permission mode">
+            <button type="button" class="mode-switch-segment" data-mode="plan" role="radio" aria-checked="false" title="Plan mode (P) - Read-only planning">PLAN</button>
+            <button type="button" class="mode-switch-segment active" data-mode="default" role="radio" aria-checked="true" title="Manual mode (M) - Ask permission for everything">MANUAL</button>
+            <button type="button" class="mode-switch-segment" data-mode="acceptEdits" role="radio" aria-checked="false" title="Accept mode (A) - Auto-accept file edits">ACCEPT</button>
+          </div>
+          <button type="button" class="handoff-toggle" data-control="handoff-mode" title="Toggle auto-handoff: Auto handoff to next agent">
+            <span class="handoff-track">
+              <span class="handoff-thumb"></span>
+            </span>
+            <span class="handoff-label">MANUAL</span>
+          </button>
         </div>
         <div id="editor-row">
           <div id="editor">
@@ -148,7 +165,9 @@
         </div>
         <!-- B-22: Stats Strip - compact stats display below editor -->
         <!-- 23-1: Token display removed, usage limits added -->
+        <!-- 35-2: User email display -->
         <div id="stats-strip">
+          <span class="user-email" data-stat="strip-user-email" title="Authenticated user"></span>
           <span class="model-badge" data-stat="strip-model">—</span>
           <span class="context-stats" title="Current context window">
             <span class="stats-label">Context:</span>
@@ -172,9 +191,11 @@
         </div>
       </div>
     </div>
-    <aside id="sidebar">
+    </div><!-- /message-panel -->
+    <!-- 35-5: Sidebar as vertical panel (collapse via tab bar, not inline button) -->
+    <aside id="sidebar" class="vertical-panel position-right">
       <!-- Persona Section -->
-      <div id="persona-section" class="persona-section">
+      <div id="persona-section" class="persona-section" data-action="theme-picker">
         <div id="project-name" class="project-name"></div>
         <!-- Character name above portrait -->
         <div id="character-name" class="character-name">Loading...</div>
@@ -206,32 +227,26 @@
         <div id="helper-task-line" class="activity-line"></div>
       </div>
 
+      <!-- Theme Picker (35-1: Contextual settings) -->
+      <div id="theme-picker" class="theme-picker" style="display: none;">
+        <div class="theme-picker-header">
+          <span class="theme-picker-title">Select Theme</span>
+          <button class="theme-picker-close" data-action="close">&times;</button>
+        </div>
+        <div class="recent-themes">
+          <!-- Recent themes populated dynamically -->
+        </div>
+        <button class="browse-all-themes" data-action="browse-all">Browse all themes...</button>
+      </div>
+
       <!-- Story Section (B-13: Enhanced) -->
       <div id="story-section" class="story-section">
         <h3>Current Story</h3>
         <div id="story-title" class="story-title">No active story</div>
         <div id="story-phase" class="story-phase">Phase: -</div>
-        <!-- B-13: Workflow Progress Visualization -->
+        <!-- B-13/37-15: Workflow Progress Visualization (populated dynamically by story.js) -->
         <div id="workflow-progress" class="workflow-progress" style="display: none;">
-          <div class="workflow-step" data-agent="sm">
-            <span class="workflow-icon">○</span>
-            <span class="workflow-label">SM</span>
-          </div>
-          <span class="workflow-arrow">→</span>
-          <div class="workflow-step" data-agent="tea">
-            <span class="workflow-icon">○</span>
-            <span class="workflow-label">TEA</span>
-          </div>
-          <span class="workflow-arrow">→</span>
-          <div class="workflow-step" data-agent="dev">
-            <span class="workflow-icon">○</span>
-            <span class="workflow-label">Dev</span>
-          </div>
-          <span class="workflow-arrow">→</span>
-          <div class="workflow-step" data-agent="reviewer">
-            <span class="workflow-icon">○</span>
-            <span class="workflow-label">Rev</span>
-          </div>
+          <!-- Workflow steps rendered dynamically based on active workflow -->
         </div>
         <!-- B-13: Next Agent & PR Info -->
         <div id="story-details" class="story-details" style="display: none;">
@@ -316,14 +331,16 @@
     </div>
   </div>
 
-  <!-- 22-3: Bash Command Approval Modal -->
+  <!-- 22-3, 33-3: Tool Permission Approval Modal -->
   <div id="approval-modal" class="approval-modal hidden" tabindex="-1" aria-hidden="true">
     <div class="modal-overlay"></div>
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Approve Command?</h3>
+        <h3>Approve <span class="tool-name">Bash</span>?</h3>
         <span class="safety-indicator">Safe</span>
       </div>
+      <div class="reason-display"></div>
+      <div class="context-display"></div>
       <div class="command-display"></div>
       <div class="modal-actions">
         <button class="approve-btn" data-action="approve" title="Approve and execute (Enter)">Approve</button>
@@ -399,6 +416,8 @@
   <script src="/js/livereload.js"></script>
   <!-- Theme management: applyTheme, loadTheme, getCurrentTheme -->
   <script src="/js/theme.js"></script>
+  <!-- Font settings: apply user font preferences (35-6) -->
+  <script type="module" src="/js/font-settings.js"></script>
   <!-- MessageView: SDK message display -->
   <script type="module" src="/js/message-view-init.js"></script>
   <!-- 22-1: Tool Activity Bar - prominent tool execution display -->
@@ -424,6 +443,8 @@
   -->
   <script type="module" src="/js/portrait.js"></script>
   <script src="/js/stats-strip.js"></script>
+  <!-- 35-1: ThemePicker for contextual theme selection -->
+  <script type="module" src="/js/components/ThemePicker.js"></script>
   <script type="module" src="/js/persona.js"></script>
   <script type="module" src="/js/story.js"></script>
   <script type="module" src="/js/todos.js"></script>
@@ -452,6 +473,11 @@
       });
     }
   </script>
+  <!-- 35-5: Vertical Panel base class -->
+  <script type="module" src="/js/vertical-panel.js"></script>
+  <!-- 35-5: Sidebar and Message panels -->
+  <script type="module" src="/js/sidebar-panel.js"></script>
+  <script type="module" src="/js/message-panel.js"></script>
   <!-- Panel Manager and Tab Bar -->
   <script type="module" src="/js/panel-manager.js"></script>
   <script type="module" src="/js/tab-bar.js"></script>

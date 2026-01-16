@@ -8,13 +8,18 @@
  * - Settings merging (project overrides user)
  */
 export interface WorkflowSettings {
-    auto_handoff: boolean;
-    handoff_confirm: boolean;
+    handoff_mode: 'auto' | 'manual';
+}
+export interface LegacyWorkflowSettings {
+    auto_handoff?: boolean;
+    handoff_confirm?: boolean;
 }
 export interface DisplaySettings {
     show_flow: boolean;
     show_ocean: boolean;
     sidebar_width: number;
+    font_ui: string;
+    font_mono: string;
 }
 export interface NotificationSettings {
     phase_change: boolean;
@@ -60,6 +65,18 @@ export declare function serializeSettings(settings: CyclistSettings): string;
  * Validate settings object structure
  */
 export declare function validateSettings(settings: unknown): boolean;
+/**
+ * Migrate legacy settings (auto_handoff + handoff_confirm) to new format (handoff_mode)
+ * Story 31-13: Context-aware handoffs with auto-compaction
+ *
+ * Migration logic:
+ * - auto_handoff: true → handoff_mode: 'auto'
+ * - auto_handoff: false → handoff_mode: 'manual'
+ *
+ * @param settings - Parsed settings (may be legacy or new format)
+ * @returns Settings in new format with handoff_mode
+ */
+export declare function migrateSettings(settings: PartialSettings): CyclistSettings;
 /**
  * Deep merge settings objects
  * Override values take precedence over base values

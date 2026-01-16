@@ -1,16 +1,14 @@
 /**
  * Generic Workflow-Driven Handoff
  *
- * Story 31-7: Replace 5 hardcoded handoff files with one generic handoff
- * that reads phase requirements from workflow definitions.
+ * Replaces hardcoded handoff files with workflow-driven logic.
+ * Reads phase requirements from workflow definitions.
  *
- * This module provides functions to:
+ * Provides functions to:
  * - Find current phase in a workflow
  * - Determine next phase (forward or rejection loop)
  * - Check gate conditions based on gate type
  * - Format session file updates for phase transitions
- *
- * TODO: Dev will implement the logic to pass the tests
  */
 /**
  * Find a phase by name in a workflow definition
@@ -223,5 +221,139 @@ export function calculateDuration(startedAt, endedAt) {
         return `${diffHours}h`;
     }
     return `${diffHours}h ${remainingMinutes}m`;
+}
+/**
+ * Read handoff mode from Cyclist settings file
+ * Returns 'manual' as default if file doesn't exist or is invalid
+ *
+ * @param settingsPath - Path to the settings file (JSON or YAML)
+ * @returns The handoff mode setting
+ */
+export function readHandoffMode(settingsPath) {
+    try {
+        // Check for fs module availability (may not be available in all contexts)
+        const fs = require('fs');
+        if (!fs.existsSync(settingsPath)) {
+            return 'manual';
+        }
+        const content = fs.readFileSync(settingsPath, 'utf-8');
+        // Try JSON first, then YAML
+        if (settingsPath.endsWith('.json') || content.trim().startsWith('{')) {
+            return parseHandoffModeFromJson(content);
+        }
+        else {
+            return parseHandoffModeFromYaml(content);
+        }
+    }
+    catch {
+        return 'manual';
+    }
+}
+/**
+ * Parse handoff mode from JSON string
+ * Handles both new format (handoff_mode) and legacy format (auto_handoff boolean)
+ *
+ * @param jsonContent - JSON string containing settings
+ * @returns The handoff mode setting
+ */
+export function parseHandoffModeFromJson(jsonContent) {
+    try {
+        const parsed = JSON.parse(jsonContent);
+        const workflow = parsed?.workflow;
+        if (!workflow) {
+            return 'manual';
+        }
+        // New format: handoff_mode
+        if (workflow.handoff_mode === 'auto' || workflow.handoff_mode === 'manual') {
+            return workflow.handoff_mode;
+        }
+        // Legacy format: auto_handoff boolean
+        if ('auto_handoff' in workflow) {
+            return workflow.auto_handoff === true ? 'auto' : 'manual';
+        }
+        return 'manual';
+    }
+    catch {
+        return 'manual';
+    }
+}
+/**
+ * Parse handoff mode from YAML string
+ * Handles both new format (handoff_mode) and legacy format (auto_handoff boolean)
+ *
+ * @param yamlContent - YAML string containing settings
+ * @returns The handoff mode setting
+ */
+export function parseHandoffModeFromYaml(yamlContent) {
+    try {
+        // Simple YAML parsing for handoff_mode - look for the pattern
+        // workflow:
+        //   handoff_mode: auto|manual
+        const lines = yamlContent.split('\n');
+        let inWorkflow = false;
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed === 'workflow:') {
+                inWorkflow = true;
+                continue;
+            }
+            if (inWorkflow) {
+                // Check for new format
+                const modeMatch = trimmed.match(/^handoff_mode:\s*['"]?(auto|manual)['"]?$/);
+                if (modeMatch) {
+                    return modeMatch[1];
+                }
+                // Check for legacy format
+                const autoMatch = trimmed.match(/^auto_handoff:\s*(true|false)$/i);
+                if (autoMatch) {
+                    return autoMatch[1].toLowerCase() === 'true' ? 'auto' : 'manual';
+                }
+                // Exit workflow section when we hit a non-indented line
+                if (!line.startsWith(' ') && !line.startsWith('\t') && trimmed !== '') {
+                    inWorkflow = false;
+                }
+            }
+        }
+        return 'manual';
+    }
+    catch {
+        return 'manual';
+    }
+}
+/**
+ * Get handoff behavior based on mode
+ *
+ * @param mode - The handoff mode setting
+ * @returns Behavior configuration for the mode
+ */
+export function getHandoffBehavior(mode) {
+    if (mode === 'auto') {
+        return {
+            action: 'immediate',
+            requiresConfirmation: false,
+        };
+    }
+    return {
+        action: 'prompt',
+        requiresConfirmation: true,
+        message: 'Ready for handoff. Confirm to proceed to next agent.',
+    };
+}
+/**
+ * Format handoff history entry for session file
+ * Creates a markdown section with table row for the handoff
+ *
+ * @param entry - Handoff history entry to format
+ * @returns Markdown string for the handoff history section
+ */
+export function formatHandoffHistory(entry) {
+    const lines = [
+        '## Handoff History',
+        '',
+        '| Phase | Agent | Timestamp | Mode |',
+        '|-------|-------|-----------|------|',
+        `| ${entry.phase} | ${entry.agent} | ${entry.timestamp} | ${entry.handoffMode} |`,
+    ];
+    return lines.join('\n');
 }
 //# sourceMappingURL=generic-handoff.js.map

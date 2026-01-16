@@ -276,12 +276,17 @@ export function getLanguageClass(ext) {
 
 /**
  * Create a unified diff line DOM element
- * @param {Object} line - Diff line { type, line }
+ * @param {Object} line - Diff line { type, line, lineNumber }
  * @returns {HTMLElement} Diff line element
  */
 export function createDiffLineElement(line) {
   const el = document.createElement('div');
   el.className = `diff-line ${line.type}`;
+
+  // Line number gutter (story 35-10)
+  const lineNum = document.createElement('span');
+  lineNum.className = 'diff-line-number';
+  lineNum.textContent = line.lineNumber != null ? String(line.lineNumber) : '';
 
   const prefix = document.createElement('span');
   prefix.className = 'diff-line-prefix';
@@ -299,6 +304,7 @@ export function createDiffLineElement(line) {
   content.className = 'diff-line-content';
   content.textContent = line.line;
 
+  el.appendChild(lineNum);
   el.appendChild(prefix);
   el.appendChild(content);
 
@@ -326,12 +332,34 @@ export function renderDiff(container, diffData) {
   filePathLink.className = 'file-path file-path-link';
   filePathLink.href = '#';
   filePathLink.textContent = diffData.filePath;
-  filePathLink.title = 'Click to open in editor';
-  filePathLink.addEventListener('click', (e) => {
+  filePathLink.title = 'Click to open in default application';
+  filePathLink.addEventListener('click', async (e) => {
     e.preventDefault();
-    // 27-1: Fix API path - use electronAPI not electron
-    if (window.electronAPI?.fileBrowser?.openInEditor) {
-      window.electronAPI.fileBrowser.openInEditor(diffData.filePath);
+    console.log(`[DiffViewer] Click handler fired for: ${diffData.filePath}`);
+
+    // 35-11: Check if electronAPI.fileBrowser exists
+    if (window.electronAPI?.fileBrowser?.openFile) {
+      console.log(`[DiffViewer] electronAPI.fileBrowser.openFile available, calling...`);
+      try {
+        const result = await window.electronAPI.fileBrowser.openFile(diffData.filePath);
+        console.log(`[DiffViewer] openFile result:`, result);
+        if (result && !result.success) {
+          console.error(`[DiffViewer] Failed to open file: ${diffData.filePath}`, result.error);
+          filePathLink.title = `Failed to open: ${result.error || 'file may no longer exist'}`;
+          filePathLink.classList.add('file-path-error');
+          setTimeout(() => filePathLink.classList.remove('file-path-error'), 3000);
+        }
+      } catch (err) {
+        console.error(`[DiffViewer] Failed to open file: ${diffData.filePath}`, err);
+        filePathLink.title = 'Failed to open file - it may no longer exist';
+        filePathLink.classList.add('file-path-error');
+        setTimeout(() => filePathLink.classList.remove('file-path-error'), 3000);
+      }
+    } else {
+      // 35-11 FIX: Add else branch to show when API is missing
+      console.error(`[DiffViewer] electronAPI.fileBrowser.openFile is not available`);
+      filePathLink.title = 'Cannot open file - API not available';
+      filePathLink.classList.add('file-path-error');
     }
   });
 

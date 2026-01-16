@@ -11,6 +11,13 @@
 const COMPACT_THRESHOLD = 50;
 
 /**
+ * Threshold at which compact button turns red (imminent auto-compact)
+ * Aligned with backend warning_threshold (70%) from context_budget
+ * Story 37-16: Circuit breaker triggers at 85%, warn at 70%
+ */
+const COMPACT_IMMINENT_THRESHOLD = 70;
+
+/**
  * Format token count for display
  * @param {number} n - Token count
  * @returns {string} - Formatted string (e.g., "1.2k", "45k", "1.5M")
@@ -35,11 +42,14 @@ function updateContextLevel(contextMini, percent) {
   contextMini.classList.remove('level-safe', 'level-warning', 'level-danger', 'level-critical');
 
   // Add appropriate level class based on percentage
+  // Story 37-16: Aligned with backend thresholds (warning=70%, critical=85%)
   if (percent >= 95) {
     contextMini.classList.add('level-critical');
-  } else if (percent >= 80) {
+  } else if (percent >= 85) {
+    // Circuit breaker triggers at 85% - show danger
     contextMini.classList.add('level-danger');
-  } else if (percent >= 50) {
+  } else if (percent >= 70) {
+    // Warning threshold from backend context_budget
     contextMini.classList.add('level-warning');
   } else {
     contextMini.classList.add('level-safe');
@@ -47,8 +57,9 @@ function updateContextLevel(contextMini, percent) {
 }
 
 /**
- * 23-4: Update compact button visibility based on context percentage
+ * 23-4: Update compact button visibility and urgency based on context percentage
  * Shows button when context >= COMPACT_THRESHOLD (50%)
+ * Turns red when context >= COMPACT_IMMINENT_THRESHOLD (65%) to warn of imminent auto-compact
  * @param {number} percent - Context usage percentage
  */
 function updateCompactButtonVisibility(percent) {
@@ -57,8 +68,16 @@ function updateCompactButtonVisibility(percent) {
 
   if (percent >= COMPACT_THRESHOLD) {
     compactBtn.classList.remove('hidden');
+
+    // Turn red when approaching auto-compact threshold
+    if (percent >= COMPACT_IMMINENT_THRESHOLD) {
+      compactBtn.classList.add('imminent');
+    } else {
+      compactBtn.classList.remove('imminent');
+    }
   } else {
     compactBtn.classList.add('hidden');
+    compactBtn.classList.remove('imminent');
   }
 }
 
@@ -196,6 +215,27 @@ function updateContextMeter(percent, tokens) {
 
   // 23-4: Update compact button visibility based on context threshold
   updateCompactButtonVisibility(percent);
+}
+
+/**
+ * 35-2: Update user email display
+ * @param {string} email - User email address
+ */
+function updateUserEmail(email) {
+  const element = document.querySelector('#stats-strip .user-email');
+  if (!element) return;
+
+  const oldValue = element.textContent;
+  if (oldValue !== email) {
+    element.textContent = email;
+    element.title = `Authenticated as: ${email}`;
+
+    // Add pulse animation
+    element.classList.add('updated');
+    setTimeout(() => {
+      element.classList.remove('updated');
+    }, 500);
+  }
 }
 
 /**
@@ -349,6 +389,30 @@ async function initStatsStrip() {
     compactBtn.addEventListener('click', executeCompact);
   }
 
+  // 35-2: Project info subscription (user email from OTEL)
+  if (window.electronAPI?.projectInfo) {
+    // Get initial project info
+    if (window.electronAPI.projectInfo.get) {
+      try {
+        const info = await window.electronAPI.projectInfo.get();
+        if (info?.userEmail) {
+          updateUserEmail(info.userEmail);
+        }
+      } catch (err) {
+        // Silent fail - email is optional
+      }
+    }
+
+    // Subscribe to project info updates (fires when email is discovered from OTEL)
+    if (window.electronAPI.projectInfo.onUpdate) {
+      window.electronAPI.projectInfo.onUpdate((_event, info) => {
+        if (info?.userEmail) {
+          updateUserEmail(info.userEmail);
+        }
+      });
+    }
+  }
+
   console.log('[StatsStrip] IPC connected');
 }
 
@@ -362,4 +426,6 @@ window.updateContextMeter = updateContextMeter;
 window.updateUsageMeter = updateUsageMeter;
 // 23-4: Export compact button functions
 window.updateCompactButtonVisibility = updateCompactButtonVisibility;
+// 35-2: Export user email function
+window.updateUserEmail = updateUserEmail;
 window.executeCompact = executeCompact;

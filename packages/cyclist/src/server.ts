@@ -23,8 +23,12 @@ import {
   createTelemetryRouter,
   createEvaluationRouter,
   createBenchmarkRouter,
+  createSettingsRouter,
   initTokenStatsBroadcast,
 } from './api/index.js';
+
+// Settings initialization (35-6: required for font settings persistence)
+import { initializeSettings } from './settings.js';
 
 // WebSocket setup
 import { setupWebSocketServers } from './websocket.js';
@@ -62,6 +66,10 @@ function getProjectDir(): string {
   return getProjectDirectory() || process.cwd();
 }
 
+// Initialize settings from file (35-6: required for font settings persistence)
+// Must happen before settings router is used
+initializeSettings(getProjectDir());
+
 // Mount API routers
 app.use('/api/stats', createStatsRouter());
 app.use('/api/portrait', createPortraitRouter());
@@ -76,6 +84,8 @@ app.use('/api/mode', createModeRouter());
 app.use('/api/telemetry', createTelemetryRouter());
 app.use('/api/evaluation', createEvaluationRouter());
 app.use('/api/benchmark', createBenchmarkRouter(getProjectDir));
+// 35-1: Settings API for contextual settings
+app.use('/api/settings', createSettingsRouter());
 app.use('/v1', createOTLPRouter());
 
 // Initialize token stats WebSocket broadcast callback
@@ -128,6 +138,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 // ============================================================================
 
 const PORT_FILE_NAME = '.cyclist-port';
+const PID_FILE_NAME = '.cyclist-pid';
 
 /**
  * Find an available port starting from the given port.
@@ -200,6 +211,71 @@ export function readPortFile(projectDir: string): number | null {
   }
 
   return port;
+}
+
+// ============================================================================
+// PID File Pattern (Story B-24 fix)
+// Tracks Claude CLI process PID to avoid killing other Cyclist sessions
+// ============================================================================
+
+/**
+ * Write the Claude process PID to .cyclist-pid file.
+ * Used to track which Claude process belongs to this Cyclist instance.
+ */
+export function writePidFile(projectDir: string, pid: number): void {
+  const pidFilePath = join(projectDir, PID_FILE_NAME);
+  writeFileSync(pidFilePath, String(pid));
+}
+
+/**
+ * Remove the .cyclist-pid file during shutdown.
+ * Prevents stale PID files from causing incorrect process termination.
+ */
+export function cleanupPidFile(projectDir: string): void {
+  const pidFilePath = join(projectDir, PID_FILE_NAME);
+  if (existsSync(pidFilePath)) {
+    unlinkSync(pidFilePath);
+  }
+}
+
+/**
+ * Read the PID from .cyclist-pid file.
+ * Returns null if file doesn't exist, is empty, or contains invalid content.
+ */
+export function readPidFile(projectDir: string): number | null {
+  const pidFilePath = join(projectDir, PID_FILE_NAME);
+
+  if (!existsSync(pidFilePath)) {
+    return null;
+  }
+
+  const content = readFileSync(pidFilePath, 'utf-8').trim();
+
+  if (!content) {
+    return null;
+  }
+
+  const pid = parseInt(content, 10);
+
+  if (isNaN(pid)) {
+    return null;
+  }
+
+  return pid;
+}
+
+/**
+ * Check if a process with the given PID is still running.
+ * Returns true if process exists, false otherwise.
+ */
+export function isProcessRunning(pid: number): boolean {
+  try {
+    // Sending signal 0 doesn't kill the process, just checks if it exists
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**

@@ -1,6 +1,6 @@
 # Role Spider Gallery
 
-Each agent role across all 91 themes. Vertical layout for easy visual comparison of how personality profiles vary.
+Each agent role across all 102 themes. Vertical layout for easy visual comparison of how personality profiles vary.
 
 ## Reading the Spider Charts
 

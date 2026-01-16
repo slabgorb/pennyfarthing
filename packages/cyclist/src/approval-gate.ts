@@ -1,19 +1,21 @@
 /**
- * Approval Gate for Bash Commands (Story 22-3)
+ * Approval Gate for Tool Permissions (Story 22-3, 33-3)
  *
- * Main process module that intercepts Bash tool_use messages and
+ * Main process module that intercepts tool_use messages and
  * requests user approval before execution. Works with ApprovalModal.js
  * in the renderer process via IPC.
  *
  * Flow:
- * 1. Claude emits Bash tool_use message
+ * 1. Claude emits tool_use message (Bash, WebFetch, Edit, Write, etc.)
  * 2. This module intercepts and checks settings
  * 3. If gate enabled and not allowlisted, request approval via IPC
  * 4. Wait for user response (approve/reject/always-allow)
  * 5. Continue execution or inject rejection error
+ *
+ * Story 33-3: Added generic interceptToolUse for any tool type.
  */
 
-import { getBashApprovalGate, isAllowlisted, addToAllowlist, extractPattern } from './settings-store.js';
+import { getBashApprovalGate, isAllowlisted, addToAllowlist, extractPattern, addGrant, checkGrant, type GrantTypeValue } from './settings-store.js';
 
 /**
  * Pending approval requests, keyed by tool_id
@@ -54,15 +56,25 @@ export function requestApproval(command: string, toolId: string): Promise<boolea
  *
  * @param toolId - The tool_use_id to resolve
  * @param approved - true if approved, false if rejected
- * @param alwaysAllow - true if user clicked "Always Allow"
+ * @param grantScope - Grant scope: 'once', 'session', or 'always'
  */
-export function resolveApproval(toolId: string, approved: boolean, alwaysAllow = false): void {
+export function resolveApproval(toolId: string, approved: boolean, grantScope?: GrantTypeValue): void {
   const pending = pendingApprovals.get(toolId);
   if (pending) {
-    // If always-allow, add pattern to allowlist
-    if (alwaysAllow && approved) {
+    // Add grant based on scope
+    if (approved && grantScope) {
       const pattern = extractPattern(pending.command);
-      addToAllowlist(pattern);
+      addGrant({
+        tool: 'Bash',
+        scope: pattern,
+        grant_type: grantScope,
+        granted_at: new Date().toISOString(),
+      });
+
+      // For backwards compatibility, also add to allowlist for 'always' grants
+      if (grantScope === 'always') {
+        addToAllowlist(pattern);
+      }
     }
 
     pending.resolve(approved);
@@ -117,12 +129,108 @@ export function interceptBashToolUse(message: {
     return result;
   }
 
+  // Check if command matches an existing grant (this also auto-revokes 'once' grants)
+  if (checkGrant('Bash', command)) {
+    return result;
+  }
+
   // Need approval
   return {
     shouldApprove: true,
     command,
     toolId,
   };
+}
+
+/**
+ * Generic tool_use message type
+ */
+export interface ToolUseMessage {
+  type: string;
+  tool_name?: string;
+  tool_id?: string;
+  input?: Record<string, unknown>;
+}
+
+/**
+ * Result from interceptToolUse
+ */
+export interface InterceptResult {
+  toolName: string;
+  toolId: string;
+  context: Record<string, unknown>;
+  shouldApprove: boolean;
+}
+
+/**
+ * Check if a tool_use message needs approval (Story 33-3)
+ * Works with any tool type, not just Bash.
+ *
+ * @param message - The SDK message to check
+ * @returns InterceptResult with tool info and shouldApprove flag
+ */
+export function interceptToolUse(message: ToolUseMessage): InterceptResult {
+  const result: InterceptResult = {
+    toolName: '',
+    toolId: '',
+    context: {},
+    shouldApprove: false,
+  };
+
+  // Check if this is a tool_use message
+  if (message.type !== 'tool_use' || !message.tool_name) {
+    return result;
+  }
+
+  const toolName = message.tool_name;
+  const toolId = message.tool_id || '';
+  const input = message.input || {};
+
+  result.toolName = toolName;
+  result.toolId = toolId;
+  result.context = input;
+
+  // Check if approval gate is enabled
+  if (!getBashApprovalGate()) {
+    return result;
+  }
+
+  // For Bash, use existing allowlist and grant checks
+  if (toolName === 'Bash') {
+    const command = (input.command as string) || '';
+    if (isAllowlisted(command) || checkGrant('Bash', command)) {
+      return result;
+    }
+  } else {
+    // For other tools, check grants by tool name and context
+    const scope = getToolScope(toolName, input);
+    if (checkGrant(toolName, scope)) {
+      return result;
+    }
+  }
+
+  // Need approval
+  result.shouldApprove = true;
+  return result;
+}
+
+/**
+ * Extract scope identifier from tool context
+ * Used for grant matching
+ */
+function getToolScope(toolName: string, input: Record<string, unknown>): string {
+  switch (toolName) {
+    case 'Bash':
+      return (input.command as string) || '';
+    case 'WebFetch':
+      return (input.url as string) || '';
+    case 'Edit':
+    case 'Write':
+    case 'Read':
+      return (input.file_path as string) || '';
+    default:
+      return JSON.stringify(input);
+  }
 }
 
 /**

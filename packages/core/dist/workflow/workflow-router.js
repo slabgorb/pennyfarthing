@@ -1,19 +1,15 @@
 /**
  * Workflow Router
  *
- * Story 31-3: Route stories to appropriate workflows
+ * Routes stories to appropriate workflows based on explicit tags,
+ * trigger rules, and defaults.
  *
- * This module provides the routing engine that matches stories to workflows
- * based on explicit tags, trigger rules, and defaults.
- *
- * Priority algorithm (from schema guide):
+ * Priority algorithm:
  * 1. Explicit workflow: tag on story
  * 2. Trigger tag match (story tags intersect workflow trigger tags)
  * 3. Type match (story type in workflow trigger types)
  * 4. Points match (story points within workflow trigger range)
  * 5. Default workflow fallback
- *
- * TODO: Dev will implement the routing logic
  */
 /**
  * Helper to check if a trigger's constraints are satisfied by a story
@@ -155,11 +151,19 @@ function findTriggerTagMatch(story, workflows) {
 }
 /**
  * Find workflow by type match (story.type in workflow.triggers.types)
+ *
+ * When multiple workflows match by type, prefer the one with more specific
+ * constraints (e.g., points ranges). This ensures that "refactor with 2 points"
+ * matches "trivial" (which has points.max: 2) rather than "agent-docs"
+ * (which has no points constraint).
  */
 function findTypeMatch(story, workflows) {
     if (!story.type) {
         return null;
     }
+    // Collect all type matches, sorted by specificity
+    // Specificity: workflows with points constraints > workflows without
+    const typeMatches = [];
     for (const workflow of workflows) {
         const triggerTypes = workflow.triggers?.types;
         if (!triggerTypes || triggerTypes.length === 0) {
@@ -168,12 +172,21 @@ function findTypeMatch(story, workflows) {
         if (triggerTypes.includes(story.type)) {
             // Verify all constraints are met (including points if specified)
             if (doesStoryMatchTrigger(story, workflow.triggers, 'type')) {
-                return {
-                    workflow,
-                    reason: `Matched type '${story.type}' to workflow '${workflow.name}'`
-                };
+                // Calculate specificity: workflows with points constraints are more specific
+                const hasPointsConstraint = workflow.triggers?.points !== undefined;
+                const specificity = hasPointsConstraint ? 1 : 0;
+                typeMatches.push({ workflow, specificity });
             }
         }
+    }
+    // Sort by specificity descending, then return the first match
+    if (typeMatches.length > 0) {
+        typeMatches.sort((a, b) => b.specificity - a.specificity);
+        const match = typeMatches[0];
+        return {
+            workflow: match.workflow,
+            reason: `Matched type '${story.type}' to workflow '${match.workflow.name}'`
+        };
     }
     return null;
 }

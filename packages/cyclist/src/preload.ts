@@ -178,9 +178,9 @@ export interface ElectronBashAPI {
 
   /**
    * Send approval response back to main process
-   * @param response - Approval decision
+   * @param response - Approval decision with optional grantScope (33-4)
    */
-  sendApprovalResponse: (response: { toolId: string; approved: boolean; alwaysAllow: boolean }) => Promise<void>;
+  sendApprovalResponse: (response: { toolId: string; approved: boolean; grantScope?: 'once' | 'session' | 'always' }) => Promise<void>;
 }
 
 /**
@@ -323,9 +323,36 @@ export interface ElectronPathAPI {
 
   /**
    * Send approval response back to main process
-   * @param response - Approval decision
+   * @param response - Approval decision with optional grantScope (33-4)
    */
-  sendApprovalResponse: (response: { toolId: string; approved: boolean; alwaysAllow: boolean }) => Promise<void>;
+  sendApprovalResponse: (response: { toolId: string; approved: boolean; grantScope?: 'once' | 'session' | 'always' }) => Promise<void>;
+}
+
+/**
+ * Permission API interface (33-3)
+ * Provides generic IPC channels for any tool permission approval
+ */
+export interface ElectronPermissionAPI {
+  /**
+   * Subscribe to permission request events from main process
+   * Triggered when any tool needs user approval
+   */
+  onRequest: (callback: (event: unknown, data: {
+    toolName: string;
+    toolId: string;
+    context: Record<string, unknown>;
+    reason?: string;
+  }) => void) => void;
+
+  /**
+   * Send permission response back to main process
+   * @param response - Approval decision with optional grantScope
+   */
+  sendResponse: (response: {
+    toolId: string;
+    approved: boolean;
+    grantScope?: 'once' | 'session' | 'always';
+  }) => Promise<void>;
 }
 
 /**
@@ -350,6 +377,27 @@ export interface ElectronToolsAPI {
   onTogglePanel: (callback: () => void) => void;
 }
 
+/**
+ * Background Task API interface (31-15)
+ * Provides IPC channels for background task completion notifications
+ */
+export interface ElectronBackgroundTaskAPI {
+  /**
+   * Subscribe to background task completion events
+   * Triggered when a Task with run_in_background: true completes
+   */
+  onCompleted: (callback: (event: unknown, task: {
+    taskId: string;
+    description: string;
+    subagentType: string;
+    startedAt: number;
+    status: 'pending' | 'completed';
+    success?: boolean;
+    output?: string;
+    error?: string;
+  }) => void) => void;
+}
+
 export interface ElectronAPI {
   stats: ElectronDataAPI;
   persona: ElectronDataAPI;
@@ -360,6 +408,7 @@ export interface ElectronAPI {
   todos: ElectronDataAPI; // B-17: Todo visualizer
   context: ElectronDataAPI; // B-19: Context usage progress bar
   usageStats: ElectronDataAPI; // 23-1: Usage limits
+  projectInfo: ElectronDataAPI; // 35-2: Project info (user email)
   claude: ElectronClaudeAPI;
   agent: ElectronAgentAPI; // B-23: Agent launcher
   diff: ElectronDiffAPI; // E8-2: Diff viewer
@@ -367,10 +416,12 @@ export interface ElectronAPI {
   command: ElectronCommandAPI; // 23-3: Command execution
   bash: ElectronBashAPI; // 22-3: Bash approval gate
   path: ElectronPathAPI; // 22-4: Dangerous path approval gate
+  permission: ElectronPermissionAPI; // 33-3: Generic permission approval
   settings: ElectronSettingsAPI; // 22-3, 22-4: Settings API
   auditLog: ElectronAuditLogAPI; // 22-6: Audit log
   theme: ElectronThemeAPI; // 24-9: Quick theme switcher
   tools: ElectronToolsAPI; // Tool panel toggle
+  backgroundTask: ElectronBackgroundTaskAPI; // 31-15: Background task notifications
 }
 
 // Check if we're running in Electron (has contextBridge available)
@@ -436,6 +487,8 @@ function createElectronAPI(): ElectronAPI {
       context: createDataAPI(ipcRenderer, 'context:get', 'context:update'),
       // Usage Stats API (23-1)
       usageStats: createDataAPI(ipcRenderer, 'usageStats:get', 'usageStats:update'),
+      // 35-2: Project Info API (directory and user email)
+      projectInfo: createDataAPI(ipcRenderer, 'projectInfo:get', 'projectInfo:update'),
       // Claude SDK API (E7-3, 28-1: images support)
       claude: {
         send: (prompt: string, images?: Array<{ dataUrl: string; mimeType: string; filename: string }>) =>
@@ -485,21 +538,29 @@ function createElectronAPI(): ElectronAPI {
           ipcRenderer.on('command:error', (_event: unknown, error: unknown) => callback(error as string));
         },
       },
-      // Bash approval API (22-3)
+      // Bash approval API (22-3, 33-4)
       bash: {
         onApprovalRequest: (callback: (event: unknown, data: { command: string; toolId: string }) => void) => {
           ipcRenderer.on('bash:approval-request', callback);
         },
-        sendApprovalResponse: (response: { toolId: string; approved: boolean; alwaysAllow: boolean }) =>
+        sendApprovalResponse: (response: { toolId: string; approved: boolean; grantScope?: 'once' | 'session' | 'always' }) =>
           ipcRenderer.invoke('bash:approval-response', response),
       },
-      // Dangerous path approval API (22-4)
+      // Dangerous path approval API (22-4, 33-4)
       path: {
         onApprovalRequest: (callback: (event: unknown, data: { path: string; toolId: string; category: string }) => void) => {
           ipcRenderer.on('path:approval-request', callback);
         },
-        sendApprovalResponse: (response: { toolId: string; approved: boolean; alwaysAllow: boolean }) =>
+        sendApprovalResponse: (response: { toolId: string; approved: boolean; grantScope?: 'once' | 'session' | 'always' }) =>
           ipcRenderer.invoke('path:approval-response', response),
+      },
+      // Generic permission API (33-3)
+      permission: {
+        onRequest: (callback: (event: unknown, data: { toolName: string; toolId: string; context: Record<string, unknown>; reason?: string }) => void) => {
+          ipcRenderer.on('permission:request', callback);
+        },
+        sendResponse: (response: { toolId: string; approved: boolean; grantScope?: 'once' | 'session' | 'always' }) =>
+          ipcRenderer.invoke('permission:response', response),
       },
       // Settings API (22-3, 22-4, 22-5, 24-1)
       settings: {
@@ -558,6 +619,21 @@ function createElectronAPI(): ElectronAPI {
           ipcRenderer.on('tools:toggleToolPanel', () => callback());
         },
       },
+      // Background Task API (31-15)
+      backgroundTask: {
+        onCompleted: (callback: (event: unknown, task: {
+          taskId: string;
+          description: string;
+          subagentType: string;
+          startedAt: number;
+          status: 'pending' | 'completed';
+          success?: boolean;
+          output?: string;
+          error?: string;
+        }) => void) => {
+          ipcRenderer.on('backgroundTask:completed', callback);
+        },
+      },
     };
   } else {
     // Running in Node (tests) - return testable structure
@@ -577,6 +653,8 @@ function createElectronAPI(): ElectronAPI {
       context: createDataAPI(null, 'context:get', 'context:update'),
       // Usage Stats API (23-1) - test stub
       usageStats: createDataAPI(null, 'usageStats:get', 'usageStats:update'),
+      // 35-2: Project Info API - test stub
+      projectInfo: createDataAPI(null, 'projectInfo:get', 'projectInfo:update'),
       // Claude SDK API (E7-3) - test stub
       claude: {
         send: (_prompt: string) => Promise.resolve(),
@@ -625,20 +703,28 @@ function createElectronAPI(): ElectronAPI {
           // No-op in test environment
         },
       },
-      // Bash approval API (22-3) - test stub
+      // Bash approval API (22-3, 33-4) - test stub
       bash: {
         onApprovalRequest: (_callback: (event: unknown, data: { command: string; toolId: string }) => void) => {
           // No-op in test environment
         },
-        sendApprovalResponse: (_response: { toolId: string; approved: boolean; alwaysAllow: boolean }) =>
+        sendApprovalResponse: (_response: { toolId: string; approved: boolean; grantScope?: 'once' | 'session' | 'always' }) =>
           Promise.resolve(),
       },
-      // Dangerous path approval API (22-4) - test stub
+      // Dangerous path approval API (22-4, 33-4) - test stub
       path: {
         onApprovalRequest: (_callback: (event: unknown, data: { path: string; toolId: string; category: string }) => void) => {
           // No-op in test environment
         },
-        sendApprovalResponse: (_response: { toolId: string; approved: boolean; alwaysAllow: boolean }) =>
+        sendApprovalResponse: (_response: { toolId: string; approved: boolean; grantScope?: 'once' | 'session' | 'always' }) =>
+          Promise.resolve(),
+      },
+      // Generic permission API (33-3) - test stub
+      permission: {
+        onRequest: (_callback: (event: unknown, data: { toolName: string; toolId: string; context: Record<string, unknown>; reason?: string }) => void) => {
+          // No-op in test environment
+        },
+        sendResponse: (_response: { toolId: string; approved: boolean; grantScope?: 'once' | 'session' | 'always' }) =>
           Promise.resolve(),
       },
       // Settings API (22-3, 22-4, 22-5, 24-1) - test stub
@@ -701,6 +787,21 @@ function createElectronAPI(): ElectronAPI {
       // Tools API - test stub
       tools: {
         onTogglePanel: (_callback: () => void) => {
+          // No-op in test environment
+        },
+      },
+      // Background Task API (31-15) - test stub
+      backgroundTask: {
+        onCompleted: (_callback: (event: unknown, task: {
+          taskId: string;
+          description: string;
+          subagentType: string;
+          startedAt: number;
+          status: 'pending' | 'completed';
+          success?: boolean;
+          output?: string;
+          error?: string;
+        }) => void) => {
           // No-op in test environment
         },
       },

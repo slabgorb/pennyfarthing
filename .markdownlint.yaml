@@ -1,0 +1,63 @@
+# Markdownlint config - Claude-friendly rules
+# Focus on catching real errors, not fighting Claude's style
+#
+# Run: npx markdownlint-cli --config .markdownlint.yaml <file>
+# Or:  markdownlint --config .markdownlint.yaml <file>
+
+# Disable rules that conflict with Claude's output style
+default: true
+
+# Line length - Claude uses variable line lengths for readability
+MD013: false
+
+# Inline HTML - We use custom XML-like tags for agent definitions
+# (<persona>, <role>, <context>, etc.)
+MD033: false
+
+# Bare URLs - Sometimes useful in quick notes
+MD034: false
+
+# First line heading - Not all files start with h1
+MD041: false
+
+# Trailing punctuation in headings - Allow colons
+MD026:
+  punctuation: ".,;:!"
+
+# Multiple headings with same content - Common in structured docs
+MD024: false
+
+# Code block style - Allow both fenced and indented
+MD046: false
+
+# Table column style - Claude doesn't perfectly align tables
+# This is the biggest conflict - disable entirely
+MD060: false
+
+# Blank lines around fences - Be lenient
+MD031: false
+
+# Blank lines around lists - Be lenient
+MD032: false
+
+# Unordered list style - Allow both - and *
+MD004: false
+
+# List indentation - Allow flexible indentation
+MD007: false
+
+# Heading style - Allow both ATX (#) and setext (===)
+MD003: false
+
+# Hard tabs - Allow (some files use them)
+MD010: false
+
+# Multiple blank lines - Sometimes used for visual separation
+MD012: false
+
+# Emphasis style - Allow both * and _
+MD049: false
+MD050: false
+
+# Link/image style - Allow both inline and reference
+MD054: false

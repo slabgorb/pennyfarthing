@@ -7,8 +7,40 @@
  * Story 19-5: Extended with per-story token aggregation.
  */
 
+import { appendFileSync } from 'fs';
 import { aggregateTokensForAgent, resetAgentTokenStats } from './agent-context.js';
 import { aggregateTokensForStory, resetStoryTokenStats } from './story-context.js';
+// Story 36-7: Import span correlation and enrichment modules
+// Story 36-8: Added consumePendingToolInput for Claude message stream correlation
+import { correlateSpan, resetCorrelations, consumePendingToolInput, type MessageContext } from './span-correlation.js';
+import {
+  enrichReadSpan,
+  enrichEditSpan,
+  enrichWriteSpan,
+  enrichBashSpan,
+  type DiffSummary,
+  type OutputSummary,
+} from './file-enrichment.js';
+
+// Story 36-10: Debug flag for OTEL capture
+// Toggle via: setOtelDebug(true) or env OTEL_DEBUG=true or just cyclist-electron true
+let otelDebugEnabled = process.env.OTEL_DEBUG === 'true';
+const OTEL_CAPTURE_FILE = '/tmp/otel-capture.jsonl';
+
+/** Enable/disable OTEL debug logging at runtime */
+export function setOtelDebug(enabled: boolean): void {
+  otelDebugEnabled = enabled;
+  if (enabled) {
+    console.log(`[OTEL] Debug logging enabled. Capturing to ${OTEL_CAPTURE_FILE}`);
+  } else {
+    console.log('[OTEL] Debug logging disabled');
+  }
+}
+
+/** Check if OTEL debug is enabled */
+export function isOtelDebugEnabled(): boolean {
+  return otelDebugEnabled;
+}
 
 // =============================================================================
 // Tool Event Types (Story 19-1)
@@ -36,6 +68,29 @@ export interface ToolEvent {
   traceId?: string;
   /** Span ID for correlation */
   spanId?: string;
+  // Story 36-7: Enrichment fields for Read/Edit tools
+  /** File size in bytes (Read/Edit tools) */
+  fileSize?: number;
+  /** Line count (Read tool) */
+  lineCount?: number;
+  /** Detected programming language */
+  language?: string;
+  /** Git status of the file */
+  gitStatus?: 'clean' | 'modified' | 'new' | 'untracked' | null;
+  /** Diff summary for Edit operations */
+  diff?: DiffSummary;
+  // Story 36-10: File path from pending input for UI display
+  /** Resolved file path for Read/Edit tools */
+  filePath?: string;
+  // Story 36-3: Bash tool enrichment fields
+  /** Command executed (secrets redacted) */
+  command?: string;
+  /** Exit code from command execution */
+  exitCode?: number | null;
+  /** Output summary with first/last lines */
+  outputSummary?: OutputSummary;
+  /** Working directory where command was executed */
+  workingDirectory?: string;
 }
 
 /**
@@ -68,6 +123,61 @@ interface RawLogEvent {
 // Session event stores (in-memory)
 let toolEvents: ToolEvent[] = [];
 let promptEvents: ParsedPromptEvent[] = [];
+
+// =============================================================================
+// Background Task Tracking (Story 31-15)
+// =============================================================================
+
+/**
+ * Background task data tracked from Task tool spans
+ */
+export interface BackgroundTask {
+  taskId: string;
+  description: string;
+  subagentType: string;
+  startedAt: number;
+  status: 'pending' | 'completed';
+  success?: boolean;
+  output?: string;
+  error?: string;
+}
+
+// Background task store
+let backgroundTasks: BackgroundTask[] = [];
+
+// Callback for task completion notifications
+let onBackgroundTaskComplete: ((task: BackgroundTask) => void) | null = null;
+
+/**
+ * Register callback for background task completion
+ */
+export function setBackgroundTaskCallback(callback: (task: BackgroundTask) => void): void {
+  onBackgroundTaskComplete = callback;
+}
+
+/**
+ * Track a new background task
+ */
+export function trackBackgroundTask(task: Omit<BackgroundTask, 'status'>): void {
+  backgroundTasks.push({ ...task, status: 'pending' });
+}
+
+/**
+ * Get all tracked background tasks
+ */
+export function getBackgroundTasks(): BackgroundTask[] {
+  return [...backgroundTasks];
+}
+
+/**
+ * Reset background task store
+ */
+export function resetBackgroundTasks(): void {
+  backgroundTasks = [];
+}
+
+// 35-2: User info extracted from OTEL spans
+let userEmail: string | null = null;
 
 // Token stats interface
 export interface TokenStats {
@@ -112,6 +222,24 @@ let onToolEventRecorded: ((event: ToolEvent) => void) | null = null;
  */
 export function setToolEventCallback(callback: (event: ToolEvent) => void): void {
   onToolEventRecorded = callback;
+}
+
+// 35-2: Callback for when user email is discovered
+let onUserEmailUpdate: ((email: string) => void) | null = null;
+
+/**
+ * Register callback for user email updates
+ * Called by main.ts to wire up IPC broadcast
+ */
+export function setUserEmailCallback(callback: (email: string) => void): void {
+  onUserEmailUpdate = callback;
+}
+
+/**
+ * Get the current user email (extracted from OTEL spans)
+ */
+export function getUserEmail(): string | null {
+  return userEmail;
 }
 
 // OTLP JSON structure types
@@ -322,6 +450,22 @@ export function parseOTLPLogs(body: unknown): RawLogEvent[] {
           const eventName = logRecord.body?.stringValue;
           if (!eventName) continue;
 
+          // Story 36-10: Capture raw OTEL data for skill documentation
+          if (otelDebugEnabled) {
+            const capture = {
+              timestamp: new Date().toISOString(),
+              eventName,
+              logRecordKeys: Object.keys(logRecord),
+              traceId: logRecord.traceId,
+              spanId: logRecord.spanId,
+              attributes: logRecord.attributes,
+            };
+            console.log('[OTEL-CAPTURE]', JSON.stringify(capture));
+            try {
+              appendFileSync(OTEL_CAPTURE_FILE, JSON.stringify(capture) + '\n');
+            } catch { /* ignore file write errors */ }
+          }
+
           // Convert nanoseconds to milliseconds
           const timestamp = logRecord.timeUnixNano
             ? Math.floor(Number(logRecord.timeUnixNano) / 1_000_000)
@@ -396,6 +540,8 @@ export function getPromptEvents(): ParsedPromptEvent[] {
 export function resetEventStore(): void {
   toolEvents = [];
   promptEvents = [];
+  userEmail = null; // 35-2: Reset user email on session reset
+  resetCorrelations(); // 36-7: Reset span correlations on session reset
 }
 
 // =============================================================================
@@ -510,8 +656,16 @@ export function getAuditLogStats(): {
  * - duration_ms (not tool.duration_ms)
  * - tool_parameters as JSON string (not tool.input)
  */
-export function processLogEvents(rawEvents: RawLogEvent[]): void {
+export async function processLogEvents(rawEvents: RawLogEvent[]): Promise<void> {
   for (const event of rawEvents) {
+    // 35-2: Extract user.email from any event that has it (only store once)
+    if (!userEmail && event.attributes['user.email']) {
+      userEmail = event.attributes['user.email'] as string;
+      if (onUserEmailUpdate) {
+        onUserEmailUpdate(userEmail);
+      }
+    }
+
     if (event.name === 'claude_code.tool_result') {
       // Parse tool_parameters JSON to extract input
       let input: string | undefined;
@@ -534,10 +688,52 @@ export function processLogEvents(rawEvents: RawLogEvent[]): void {
       const rawSuccess = event.attributes['success'];
       const success = rawSuccess === 'true' || rawSuccess === true;
 
+      const toolName = event.attributes['tool_name'] as string || 'unknown';
+
+      // 31-15: Track background Task spans
+      if (toolName === 'Task' && toolParams) {
+        try {
+          const params = JSON.parse(toolParams);
+          if (params.run_in_background === true) {
+            const taskId = event.attributes['task_id'] as string;
+            if (taskId) {
+              trackBackgroundTask({
+                taskId,
+                description: params.description || '',
+                subagentType: params.subagent_type || '',
+                startedAt: event.timestamp,
+              });
+            }
+          }
+        } catch { /* ignore parse errors */ }
+      }
+
+      // 31-15: Handle TaskOutput completion
+      if (toolName === 'TaskOutput') {
+        try {
+          const params = toolParams ? JSON.parse(toolParams) : {};
+          const taskId = params.task_id || event.attributes['task_id'] as string;
+          const taskStatus = event.attributes['task_status'] as string;
+          if (taskId && taskStatus === 'completed') {
+            const task = backgroundTasks.find(t => t.taskId === taskId);
+            if (task) {
+              task.status = 'completed';
+              task.success = success;
+              // Truncate output to avoid memory bloat
+              const rawOutput = event.attributes['tool_output'] as string;
+              task.output = rawOutput?.substring(0, 2000);
+              if (onBackgroundTaskComplete) {
+                onBackgroundTaskComplete({ ...task });
+              }
+            }
+          }
+        } catch { /* ignore parse errors */ }
+      }
+
       const toolEvent: ToolEvent = {
-        toolName: event.attributes['tool_name'] as string || 'unknown',
-        input,
-        output: event.attributes['tool_output'] as string | undefined,
+        toolName,
+        input: input?.substring(0, 500),
+        output: (event.attributes['tool_output'] as string)?.substring(0, 2000),
         durationMs: isNaN(durationMs as number) ? undefined : durationMs,
         success,
         error: event.attributes['error'] as string | undefined,
@@ -545,6 +741,98 @@ export function processLogEvents(rawEvents: RawLogEvent[]): void {
         traceId: event.traceId,
         spanId: event.spanId,
       };
+
+      // Story 36-7: Correlate span and enrich Read/Edit tools
+      // Story 36-8: Get tool input from Claude message stream instead of OTEL params
+      // Story 36-9: Claude Code OTEL logs don't include traceId/spanId at logRecord level,
+      // so we use the pending tool input's toolId as the correlation key instead
+      // Story 36-10: Pass parsed tool_parameters for precise file_path matching
+      let parsedToolParams: Record<string, unknown> | undefined;
+      if (toolParams) {
+        try {
+          parsedToolParams = JSON.parse(toolParams);
+        } catch { /* ignore parse errors */ }
+      }
+      const pendingInput = consumePendingToolInput(toolName, parsedToolParams);
+      const toolInput = pendingInput?.input;
+
+      // Story 36-10: Add file_path to toolEvent for UI display (Read/Edit tools)
+      if (toolInput?.file_path) {
+        toolEvent.filePath = toolInput.file_path as string;
+      }
+
+      // Only correlate and enrich if we have a pending input (from Claude message stream)
+      if (pendingInput) {
+        // Use toolId as the correlation key since OTEL spanId is unavailable
+        const correlationId = pendingInput.toolId;
+
+        // Create correlation with message context
+        const messageContext: MessageContext = {
+          messageId: correlationId,
+          toolName,
+          input: toolInput,
+        };
+
+        // Use toolId as spanId for correlation map (synthetic, but consistent)
+        correlateSpan(correlationId, {
+          traceId: correlationId, // Synthetic traceId from toolId
+          spanId: correlationId,  // Synthetic spanId from toolId
+          toolName,
+          toolUseId: correlationId,
+          timestamp: event.timestamp,
+          enriched: false,
+          messageContext,
+        });
+
+        // Update toolEvent with correlation ID for downstream use
+        toolEvent.traceId = correlationId;
+        toolEvent.spanId = correlationId;
+
+        // Enrich Read/Edit/Bash spans - await to include enrichment data in toolEvent
+        try {
+          if (toolName === 'Read') {
+            const enrichment = await enrichReadSpan(correlationId);
+            if (!enrichment.error && !enrichment.skipped) {
+              toolEvent.fileSize = enrichment.fileSize;
+              toolEvent.lineCount = enrichment.lineCount;
+              toolEvent.language = enrichment.language;
+              toolEvent.gitStatus = enrichment.gitStatus;
+            }
+          } else if (toolName === 'Edit') {
+            const enrichment = await enrichEditSpan(correlationId);
+            if (!enrichment.error && !enrichment.skipped) {
+              toolEvent.fileSize = enrichment.fileSize;
+              toolEvent.language = enrichment.language;
+              toolEvent.gitStatus = enrichment.gitStatus;
+              toolEvent.diff = enrichment.diff;
+            }
+          } else if (toolName === 'Write') {
+            // Story 36-11: Write tool enrichment
+            const enrichment = await enrichWriteSpan(correlationId);
+            if (!enrichment.error && !enrichment.skipped) {
+              toolEvent.fileSize = enrichment.fileSize;
+              toolEvent.lineCount = enrichment.lineCount;
+              toolEvent.language = enrichment.language;
+              toolEvent.gitStatus = enrichment.gitStatus;
+            }
+          } else if (toolName === 'Bash') {
+            // Story 36-3: Bash tool enrichment
+            const enrichment = enrichBashSpan(correlationId, {
+              output: toolEvent.output,
+              error: toolEvent.error,
+              success: toolEvent.success,
+              durationMs: toolEvent.durationMs,
+            });
+            if (!enrichment.error && !enrichment.skipped) {
+              toolEvent.command = enrichment.command;
+              toolEvent.exitCode = enrichment.exitCode;
+              toolEvent.outputSummary = enrichment.outputSummary;
+              toolEvent.workingDirectory = enrichment.workingDirectory;
+            }
+          }
+        } catch { /* ignore enrichment errors */ }
+      }
+
       recordToolEvent(toolEvent);
     } else if (event.name === 'claude_code.user_prompt') {
       const promptEvent: ParsedPromptEvent = {

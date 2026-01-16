@@ -59,6 +59,34 @@ Claude Code discovers commands via the `.claude/commands/` directory, not `penny
 **Problem:** `jira issue move` fails with "invalid transition state"
 **Solution:** Use American spelling: "Canceled" not "Cancelled"
 
+## Handoff Marker Gotchas
+
+### Missing Cyclist Handoff Prompt
+**Problem:** After handoff subagent completes, user doesn't see the quick-action button to invoke next agent
+**Cause:** Subagent output didn't include the Cyclist marker
+**Solution:** Handoff subagents MUST emit `<!-- CYCLIST:HANDOFF:/agent -->` in their final output
+
+This HTML comment is parsed by Cyclist's `quick-actions.js` to show the handoff button. Without it, the user has to manually type `/tea` or `/dev`.
+
+**Format:**
+```
+<!-- CYCLIST:HANDOFF:/tea -->
+```
+
+**Files that need it:**
+- `sm-handoff.md` - SM→TEA/Dev transitions
+- `generic-handoff.md` - TEA→Dev→Reviewer→SM transitions
+
+### Skill Not Discovered for CLI Commands
+**Problem:** Jira assign command failed with "400 Bad Request", wasted time troubleshooting
+**Cause:** `/jira` skill wasn't listed in SM agent's `<skills>` section, so it wasn't loaded
+**Solution:**
+1. When a CLI command fails, ALWAYS check if there's a skill for that tool (`/jira`, `/just`, etc.)
+2. Skills must be listed in the agent's `<skills>` section to be auto-discovered
+3. Added `/jira` to SM agent skills (2026-01-15)
+
+**Broader lesson:** If you're doing operations with a CLI tool and hit errors, invoke the relevant skill BEFORE troubleshooting manually.
+
 ---
 
 *Add story management gotchas discovered during coordination below*

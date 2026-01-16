@@ -18,18 +18,51 @@ import {
 /**
  * @typedef {Object} CyclistSettings
  * @property {Object} workflow
- * @property {boolean} workflow.auto_handoff
- * @property {boolean} workflow.handoff_confirm
+ * @property {'auto' | 'manual'} workflow.handoff_mode
  * @property {Object} display
  * @property {boolean} display.show_flow
  * @property {boolean} display.show_ocean
  * @property {number} display.sidebar_width
+ * @property {string} display.font_ui
+ * @property {string} display.font_mono
  * @property {Object} notifications
  * @property {boolean} notifications.phase_change
  * @property {boolean} notifications.sound
  * @property {Object} pennyfarthing
  * @property {string} pennyfarthing.theme
  */
+
+// =============================================================================
+// Font Preview (Story 35-6)
+// =============================================================================
+
+/**
+ * Update font preview when selection changes
+ * @param {string} selectId - ID of the font select element
+ */
+function updateFontPreview(selectId) {
+  const select = document.getElementById(selectId);
+  const preview = document.getElementById(`${selectId}_preview`);
+  if (select && preview) {
+    const fontValue = select.value;
+    preview.style.fontFamily = `"${fontValue}", ${selectId === 'font_mono' ? 'monospace' : 'sans-serif'}`;
+  }
+}
+
+/**
+ * Initialize font select change listeners
+ */
+function initFontPreviews() {
+  const fontUiSelect = document.getElementById('font_ui');
+  const fontMonoSelect = document.getElementById('font_mono');
+
+  if (fontUiSelect) {
+    fontUiSelect.addEventListener('change', () => updateFontPreview('font_ui'));
+  }
+  if (fontMonoSelect) {
+    fontMonoSelect.addEventListener('change', () => updateFontPreview('font_mono'));
+  }
+}
 
 // Module-level state for theme browser
 let themeBrowserState = {
@@ -50,15 +83,13 @@ export function loadFormValues(settings) {
   const form = document.getElementById('settings-form');
   if (!form) return;
 
-  // Workflow settings
-  const autoHandoff = form.querySelector('#auto_handoff');
-  if (autoHandoff) {
-    autoHandoff.checked = settings.workflow?.auto_handoff ?? false;
-  }
-
-  const handoffConfirm = form.querySelector('#handoff_confirm');
-  if (handoffConfirm) {
-    handoffConfirm.checked = settings.workflow?.handoff_confirm ?? true;
+  // Workflow settings - radio buttons for handoff_mode
+  const handoffMode = settings.workflow?.handoff_mode ?? 'manual';
+  const autoRadio = form.querySelector('#handoff_mode_auto');
+  const manualRadio = form.querySelector('#handoff_mode_manual');
+  if (autoRadio && manualRadio) {
+    autoRadio.checked = handoffMode === 'auto';
+    manualRadio.checked = handoffMode === 'manual';
   }
 
   // Display settings
@@ -75,6 +106,19 @@ export function loadFormValues(settings) {
   const sidebarWidth = form.querySelector('#sidebar_width');
   if (sidebarWidth) {
     sidebarWidth.value = settings.display?.sidebar_width ?? 300;
+  }
+
+  // Font settings (35-6)
+  const fontUi = form.querySelector('#font_ui');
+  if (fontUi) {
+    fontUi.value = settings.display?.font_ui ?? 'system-ui';
+    updateFontPreview('font_ui');
+  }
+
+  const fontMono = form.querySelector('#font_mono');
+  if (fontMono) {
+    fontMono.value = settings.display?.font_mono ?? 'SF Mono';
+    updateFontPreview('font_mono');
   }
 
   // Notifications settings
@@ -115,15 +159,20 @@ export function getFormValues() {
     return getDefaultSettings();
   }
 
+  // Get handoff_mode from radio buttons
+  const autoRadio = form.querySelector('#handoff_mode_auto');
+  const handoffMode = autoRadio?.checked ? 'auto' : 'manual';
+
   return {
     workflow: {
-      auto_handoff: form.querySelector('#auto_handoff')?.checked ?? false,
-      handoff_confirm: form.querySelector('#handoff_confirm')?.checked ?? true,
+      handoff_mode: handoffMode,
     },
     display: {
       show_flow: form.querySelector('#show_flow')?.checked ?? true,
       show_ocean: form.querySelector('#show_ocean')?.checked ?? false,
       sidebar_width: parseInt(form.querySelector('#sidebar_width')?.value ?? '300', 10),
+      font_ui: form.querySelector('#font_ui')?.value ?? 'system-ui',
+      font_mono: form.querySelector('#font_mono')?.value ?? 'SF Mono',
     },
     notifications: {
       phase_change: form.querySelector('#phase_change')?.checked ?? true,
@@ -140,16 +189,18 @@ export function getFormValues() {
  * Get default settings
  * @returns {CyclistSettings} Default settings
  */
-function getDefaultSettings() {
+// Export getDefaultSettings so tests can access it
+export function getDefaultSettings() {
   return {
     workflow: {
-      auto_handoff: false,
-      handoff_confirm: true,
+      handoff_mode: 'manual',
     },
     display: {
       show_flow: true,
       show_ocean: false,
       sidebar_width: 300,
+      font_ui: 'system-ui',
+      font_mono: 'SF Mono',
     },
     notifications: {
       phase_change: true,
@@ -337,6 +388,9 @@ export async function initSettingsUI() {
   if (cancelBtn) {
     cancelBtn.addEventListener('click', handleCancel);
   }
+
+  // Initialize font preview listeners (35-6)
+  initFontPreviews();
 
   // Initialize theme browser (24-5) instead of dropdown
   await initThemeBrowser();

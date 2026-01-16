@@ -980,6 +980,85 @@ describe('Story 19-9: Agent Evaluation Framework', () => {
       expect(comparison).toBeGreaterThan(0);
     });
 
+    it('should load baselines from JSON file', async () => {
+      // Create temp file with baselines
+      const { writeFileSync, unlinkSync } = await import('fs');
+      const { tmpdir } = await import('os');
+      const { join } = await import('path');
+
+      const tempPath = join(tmpdir(), 'test-baselines.json');
+      const testBaselines = [
+        {
+          persona: 'TestPersona',
+          agentRole: 'dev',
+          taskType: 'implementation',
+          metrics: {
+            averageTokens: 1000,
+            averageTimeMs: 10000,
+            completionRate: 0.85,
+          },
+        },
+      ];
+
+      writeFileSync(tempPath, JSON.stringify(testBaselines));
+
+      try {
+        const loaded = loadJobFairBaselines(tempPath);
+
+        expect(loaded.length).toBe(1);
+        expect(loaded[0].persona).toBe('TestPersona');
+        expect(loaded[0].agentRole).toBe('dev');
+        expect(loaded[0].metrics.averageTokens).toBe(1000);
+      } finally {
+        unlinkSync(tempPath);
+      }
+    });
+
+    it('should return empty array for missing file', () => {
+      const baselines = loadJobFairBaselines('/nonexistent/path/baselines.json');
+      expect(baselines).toEqual([]);
+    });
+
+    it('should skip invalid baseline entries', async () => {
+      const { writeFileSync, unlinkSync } = await import('fs');
+      const { tmpdir } = await import('os');
+      const { join } = await import('path');
+
+      const tempPath = join(tmpdir(), 'test-invalid-baselines.json');
+      const mixedData = [
+        { persona: 'Valid', agentRole: 'dev', taskType: 'impl', metrics: { averageTokens: 100, averageTimeMs: 1000, completionRate: 0.9 } },
+        { invalid: 'entry' },
+        { persona: 'MissingMetrics' },
+      ];
+
+      writeFileSync(tempPath, JSON.stringify(mixedData));
+
+      try {
+        const loaded = loadJobFairBaselines(tempPath);
+
+        expect(loaded.length).toBe(1);
+        expect(loaded[0].persona).toBe('Valid');
+      } finally {
+        unlinkSync(tempPath);
+      }
+    });
+
+    it('should return empty array for non-array JSON', async () => {
+      const { writeFileSync, unlinkSync } = await import('fs');
+      const { tmpdir } = await import('os');
+      const { join } = await import('path');
+
+      const tempPath = join(tmpdir(), 'test-object-baselines.json');
+      writeFileSync(tempPath, JSON.stringify({ not: 'an array' }));
+
+      try {
+        const loaded = loadJobFairBaselines(tempPath);
+        expect(loaded).toEqual([]);
+      } finally {
+        unlinkSync(tempPath);
+      }
+    });
+
   });
 
   // =============================================================================

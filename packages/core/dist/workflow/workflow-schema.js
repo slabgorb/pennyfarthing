@@ -1,11 +1,8 @@
 /**
  * Workflow Schema Validation
  *
- * Story 31-1: Define the YAML schema for workflow definitions
- * Story 31-2: Implement the loader and validator (TODO)
- *
- * This module defines the types and validation contract.
- * Dev will implement validateWorkflow() in story 31-2.
+ * Defines types and validation for workflow definitions.
+ * See pennyfarthing-dist/guides/workflow-schema.md for spec.
  */
 /**
  * Validates a workflow definition object
