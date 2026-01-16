@@ -104,11 +104,7 @@ Execute mechanical setup steps for story {STORY_ID}.
 
 ## Turn Efficiency
 
-Batch git operations when creating branches:
-
-```bash
-cd $CLAUDE_PROJECT_DIR && git checkout -b feat/{STORY_ID}-{SLUG}
-```
+See `shared-agent-behavior.md` → Turn Efficiency Protocol for core patterns.
 
 ## Step 1: Claim in Jira
 

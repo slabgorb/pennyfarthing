@@ -13,19 +13,7 @@ $CLAUDE_PROJECT_DIR (set by SessionStart hook)
 
 ## Turn Efficiency
 
-**Batch bash commands** to minimize API round-trips:
-
-```bash
-# EFFICIENT: Combine independent status checks in single command
-ls -la .session/*-session.md 2>/dev/null && \
-git status --porcelain && \
-git branch --show-current && \
-grep -E "status: (in_progress|backlog|done)" $CLAUDE_PROJECT_DIR/sprint/current-sprint.yaml | sort | uniq -c
-```
-
-**Parallelize independent operations** by invoking multiple tools in same turn:
-- Read session file + Glob for epic contexts (parallel)
-- Git status checks across repos (parallel if independent)
+See `shared-agent-behavior.md` → Turn Efficiency Protocol for core patterns.
 
 ## Step 1: Scan Session Files
 
