@@ -1,12 +1,12 @@
 /**
  * Settings Store for Cyclist
  *
- * Provides persistent storage for application settings including
+ * Provides runtime state management for application settings including
  * the Bash approval gate feature (Story 22-3), verbose mode (Story 22-5),
  * and permission grants (Story 33-4).
  *
- * Settings are stored in memory for the session with file persistence
- * for grants that should survive restart.
+ * AC2 (35-14): This module handles ONLY runtime state - no file I/O.
+ * File persistence is delegated to settings.ts via callbacks.
  */
 /**
  * Get the current state of the Bash approval gate
@@ -127,6 +127,18 @@ export interface PermissionGrant {
     granted_at: string;
 }
 /**
+ * Set the callback for persisting grants to file
+ * AC2: Delegates persistence to settings.ts
+ * @param callback - Function that persists grants and returns success boolean
+ */
+export declare function setGrantsPersistCallback(callback: (grants: PermissionGrant[]) => boolean): void;
+/**
+ * Initialize grants from pre-loaded data
+ * AC2: Accepts grants array from settings.ts instead of reading files directly
+ * @param grants - Array of grants to initialize with
+ */
+export declare function initializeGrants(grants: PermissionGrant[]): void;
+/**
  * Add a permission grant
  * @param grant - The grant to add
  */
@@ -175,7 +187,8 @@ export declare function clearSessionGrants(): void;
 export declare function persistAlwaysGrant(grant: PermissionGrant): void;
 /**
  * Load persisted grants from settings file
- * Called on application startup
+ * DEPRECATED: Use initializeGrants() with grants from settings.loadGrants() instead
+ * Kept for backward compatibility - calls initializeGrants with empty array
  */
 export declare function loadPersistedGrants(): void;
 //# sourceMappingURL=settings-store.d.ts.map

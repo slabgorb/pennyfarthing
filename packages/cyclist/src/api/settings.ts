@@ -13,6 +13,37 @@ import path from 'path';
 import { getCurrentSettings, saveUserSettings, type CyclistSettings } from '../settings.js';
 import { getProjectDirectory } from '../paths.js';
 
+// =============================================================================
+// Error Response Types (AC4)
+// =============================================================================
+
+/**
+ * Error codes for settings API responses
+ */
+export type ErrorCode = 'VALIDATION_ERROR' | 'FILE_ERROR' | 'PERMISSION_ERROR' | 'UNKNOWN_ERROR';
+
+/**
+ * Error response structure for consistent API error handling
+ * AC4: Consistent error handling with user feedback
+ */
+export interface ErrorResponse {
+  error: boolean;
+  code: ErrorCode;
+  message: string;
+}
+
+/**
+ * Create a consistent error response object
+ * AC4: Helper for consistent error formatting
+ */
+export function createErrorResponse(code: ErrorCode, message: string): ErrorResponse {
+  return {
+    error: true,
+    code,
+    message,
+  };
+}
+
 /**
  * Create the settings router
  */
@@ -21,6 +52,7 @@ export function createSettingsRouter(): Router {
 
   /**
    * GET / - Get current settings
+   * AC4: Returns consistent error format
    */
   router.get('/', (_req, res) => {
     try {
@@ -28,27 +60,72 @@ export function createSettingsRouter(): Router {
       res.json(settings);
     } catch (error) {
       console.error('[Settings API] Failed to get settings:', error);
-      res.status(500).json({ error: 'Failed to get settings' });
+      res.status(500).json(createErrorResponse('FILE_ERROR', 'Failed to load settings'));
     }
   });
 
   /**
    * PATCH / - Update partial settings
    * Accepts a partial settings object and merges with current settings
+   * AC4: Returns consistent error format with user-friendly messages
    */
   router.patch('/', async (req, res) => {
     try {
       const partialSettings = req.body as Partial<CyclistSettings>;
 
       if (!partialSettings || typeof partialSettings !== 'object') {
-        return res.status(400).json({ error: 'Invalid settings object' });
+        return res.status(400).json(createErrorResponse('VALIDATION_ERROR', 'Invalid settings object'));
+      }
+
+      // AC4: Validate specific field constraints before saving
+      if (partialSettings.display?.sidebar_width !== undefined) {
+        const width = partialSettings.display.sidebar_width;
+        if (typeof width !== 'number' || width < 200 || width > 500) {
+          return res.status(400).json(createErrorResponse(
+            'VALIDATION_ERROR',
+            'Sidebar width must be between 200 and 500'
+          ));
+        }
+      }
+
+      // Validate font settings are non-empty if provided
+      if (partialSettings.display?.font_ui !== undefined && partialSettings.display.font_ui === '') {
+        return res.status(400).json(createErrorResponse(
+          'VALIDATION_ERROR',
+          'Font UI must be a non-empty string'
+        ));
+      }
+      if (partialSettings.display?.font_mono !== undefined && partialSettings.display.font_mono === '') {
+        return res.status(400).json(createErrorResponse(
+          'VALIDATION_ERROR',
+          'Font Mono must be a non-empty string'
+        ));
+      }
+
+      // Validate theme is non-empty if provided
+      if (partialSettings.pennyfarthing?.theme !== undefined && partialSettings.pennyfarthing.theme === '') {
+        return res.status(400).json(createErrorResponse(
+          'VALIDATION_ERROR',
+          'Theme must be a non-empty string'
+        ));
+      }
+
+      // Validate handoff_mode enum
+      if (partialSettings.workflow?.handoff_mode !== undefined) {
+        const mode = partialSettings.workflow.handoff_mode;
+        if (mode !== 'auto' && mode !== 'manual') {
+          return res.status(400).json(createErrorResponse(
+            'VALIDATION_ERROR',
+            'Handoff mode must be "auto" or "manual"'
+          ));
+        }
       }
 
       // Save settings using the settings module
       const success = saveUserSettings(partialSettings);
 
       if (!success) {
-        return res.status(500).json({ error: 'Failed to save settings' });
+        return res.status(500).json(createErrorResponse('FILE_ERROR', 'Failed to save settings to file'));
       }
 
       // Dual-write theme to persona-config.local.yaml for Pennyfarthing compatibility (24-2)
@@ -65,7 +142,7 @@ export function createSettingsRouter(): Router {
       res.json(getCurrentSettings());
     } catch (error) {
       console.error('[Settings API] Failed to save settings:', error);
-      res.status(500).json({ error: 'Failed to save settings' });
+      res.status(500).json(createErrorResponse('UNKNOWN_ERROR', 'Failed to save settings'));
     }
   });
 

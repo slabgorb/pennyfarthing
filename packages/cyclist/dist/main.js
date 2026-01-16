@@ -21,8 +21,9 @@ import { storePendingToolInput } from './span-correlation.js';
 import { listDirectory as listDir } from './file-browser.js';
 import { getProjectDirectory, setProjectDirectory, isValidProjectDirectory, parseProjectDirArg, } from './paths.js';
 import { getContextUsage } from './api/context.js';
-import { getVerboseMode, setVerboseMode, loadPersistedGrants } from './settings-store.js';
-import { getCurrentSettings, saveUserSettings, initializeSettings, } from './settings.js';
+import { getVerboseMode, setVerboseMode } from './settings-store.js';
+import { getCurrentSettings, saveUserSettings, initializeSettings, loadGrants, saveGrants, } from './settings.js';
+import { initializeGrants, setGrantsPersistCallback } from './settings-store.js';
 import { openSettingsWindow, setMainWindowRef, setBrowserWindowRef } from './settings-window.js';
 import { IPC_DATA_CHANNELS, IPC_CLAUDE_CHANNELS, IPC_DIFF_CHANNELS, IPC_SETTINGS_CHANNELS, IPC_AUDIT_LOG_CHANNELS, IPC_FILE_BROWSER_CHANNELS, IPC_COMMAND_CHANNELS, IPC_BACKGROUND_TASK_CHANNELS, } from './ipc-channels.js';
 // Re-export project directory functions for external consumers
@@ -421,6 +422,31 @@ export function broadcastToRenderer(channel, data) {
     if (dataWindowRef && !dataWindowRef.webContents.isDestroyed()) {
         dataWindowRef.webContents.send(channel, data);
     }
+}
+/**
+ * Broadcast settings change to IPC listeners
+ * AC5: Propagates settings changes to renderer via IPC
+ * @param settings - The updated settings object
+ */
+export function broadcastSettingsChange(settings) {
+    broadcastToRenderer(IPC_SETTINGS_CHANNELS.CHANGED, settings);
+}
+/**
+ * Initialize app with proper orchestration
+ * AC5: Orchestrates startup sequence with clear initialization flow
+ * Order: 1. Settings 2. Grants 3. Store initialization
+ * @param projectDir - The project directory
+ */
+export function initializeApp(projectDir) {
+    // 1. Initialize file-based settings
+    const settings = initializeSettings(projectDir);
+    // 2. Load grants from file
+    const grants = loadGrants();
+    // 3. Initialize runtime store with grants
+    initializeGrants(grants);
+    // 4. Set up persistence callback so store changes write to file
+    setGrantsPersistCallback(saveGrants);
+    return settings;
 }
 /**
  * Apply font settings directly to main window via executeJavaScript
@@ -1328,12 +1354,11 @@ if (isElectron) {
                 break;
             }
             console.log('[Cyclist] Using Pennyfarthing project:', projectDir);
-            // 35-6: Initialize settings BEFORE window loads so font settings are available
-            // This must happen before createWindow() so the renderer can fetch settings immediately
-            initializeSettings(projectDir);
-            console.log('[Cyclist] Settings initialized');
-            // 33-4: Load persisted permission grants from settings
-            loadPersistedGrants();
+            // 35-14: Use initializeApp() for proper startup orchestration
+            // This initializes settings, loads grants from file, sets up runtime store and persistence callback
+            // Must happen before createWindow() so the renderer can fetch settings immediately
+            initializeApp(projectDir);
+            console.log('[Cyclist] App initialized (settings + grants)');
             // B-24: Kill any orphaned Claude processes from crashed sessions
             cleanupStaleProcesses();
             await startServer();

@@ -225,6 +225,22 @@ export const SettingsPanel = {
   },
 
   /**
+   * Check if settings are currently loading
+   * @returns {boolean}
+   */
+  isLoading() {
+    return isLoadingState;
+  },
+
+  /**
+   * Check if settings are currently being saved
+   * @returns {boolean}
+   */
+  isSaving() {
+    return isSavingState;
+  },
+
+  /**
    * Update the dirty indicator in the panel header
    */
   updateDirtyIndicator() {
@@ -280,15 +296,6 @@ export const SettingsPanel = {
   },
 
   /**
-   * Handle Escape key press
-   */
-  handleEscape() {
-    if (isOpen) {
-      this.handleClose();
-    }
-  },
-
-  /**
    * Handle keyboard events
    * @param {KeyboardEvent} event
    */
@@ -299,7 +306,7 @@ export const SettingsPanel = {
 
     if (event.key === 'Escape' && isOpen) {
       event.preventDefault();
-      this.handleEscape();
+      this.handleClose();
     }
   },
 

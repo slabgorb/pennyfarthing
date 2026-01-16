@@ -170,6 +170,19 @@ export declare function setMainWindow(window: {
  */
 export declare function broadcastToRenderer(channel: string, data: unknown): void;
 /**
+ * Broadcast settings change to IPC listeners
+ * AC5: Propagates settings changes to renderer via IPC
+ * @param settings - The updated settings object
+ */
+export declare function broadcastSettingsChange(settings: CyclistSettings): void;
+/**
+ * Initialize app with proper orchestration
+ * AC5: Orchestrates startup sequence with clear initialization flow
+ * Order: 1. Settings 2. Grants 3. Store initialization
+ * @param projectDir - The project directory
+ */
+export declare function initializeApp(projectDir?: string): CyclistSettings;
+/**
  * Apply font settings directly to main window via executeJavaScript
  * 35-6: This is the reliable way to apply CSS variable changes in Electron
  * Uses webContents.executeJavaScript to set CSS custom properties on :root

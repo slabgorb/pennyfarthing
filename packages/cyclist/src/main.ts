@@ -46,13 +46,16 @@ import {
   parseProjectDirArg,
 } from './paths.js';
 import { getContextUsage, ContextInfo } from './api/context.js';
-import { getVerboseMode, setVerboseMode, loadPersistedGrants } from './settings-store.js';
+import { getVerboseMode, setVerboseMode } from './settings-store.js';
 import {
   getCurrentSettings,
   saveUserSettings,
   initializeSettings,
+  loadGrants,
+  saveGrants,
   type CyclistSettings,
 } from './settings.js';
+import { initializeGrants, setGrantsPersistCallback } from './settings-store.js';
 import { openSettingsWindow, setMainWindowRef, setBrowserWindowRef } from './settings-window.js';
 import {
   IPC_DATA_CHANNELS,
@@ -574,6 +577,37 @@ export function broadcastToRenderer(channel: string, data: unknown): void {
   if (dataWindowRef && !dataWindowRef.webContents.isDestroyed()) {
     dataWindowRef.webContents.send(channel, data);
   }
+}
+
+/**
+ * Broadcast settings change to IPC listeners
+ * AC5: Propagates settings changes to renderer via IPC
+ * @param settings - The updated settings object
+ */
+export function broadcastSettingsChange(settings: CyclistSettings): void {
+  broadcastToRenderer(IPC_SETTINGS_CHANNELS.CHANGED, settings);
+}
+
+/**
+ * Initialize app with proper orchestration
+ * AC5: Orchestrates startup sequence with clear initialization flow
+ * Order: 1. Settings 2. Grants 3. Store initialization
+ * @param projectDir - The project directory
+ */
+export function initializeApp(projectDir?: string): CyclistSettings {
+  // 1. Initialize file-based settings
+  const settings = initializeSettings(projectDir);
+
+  // 2. Load grants from file
+  const grants = loadGrants();
+
+  // 3. Initialize runtime store with grants
+  initializeGrants(grants);
+
+  // 4. Set up persistence callback so store changes write to file
+  setGrantsPersistCallback(saveGrants);
+
+  return settings;
 }
 
 /**
@@ -1612,13 +1646,11 @@ if (isElectron) {
 
       console.log('[Cyclist] Using Pennyfarthing project:', projectDir);
 
-      // 35-6: Initialize settings BEFORE window loads so font settings are available
-      // This must happen before createWindow() so the renderer can fetch settings immediately
-      initializeSettings(projectDir);
-      console.log('[Cyclist] Settings initialized');
-
-      // 33-4: Load persisted permission grants from settings
-      loadPersistedGrants();
+      // 35-14: Use initializeApp() for proper startup orchestration
+      // This initializes settings, loads grants from file, sets up runtime store and persistence callback
+      // Must happen before createWindow() so the renderer can fetch settings immediately
+      initializeApp(projectDir);
+      console.log('[Cyclist] App initialized (settings + grants)');
 
       // B-24: Kill any orphaned Claude processes from crashed sessions
       cleanupStaleProcesses();

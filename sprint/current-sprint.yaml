@@ -291,6 +291,46 @@ epics:
           - Font preview in settings before applying
           - Font preference saved and restored on startup
           - Terminal (xterm.js) respects font setting
+      - id: 35-14
+        title: Settings architecture cleanup and consolidation
+        description: |
+          The settings stack has accumulated technical debt from multiple iterations
+          and needs comprehensive cleanup before adding theme switcher integration.
+
+          Current issues:
+          - settings-store.ts and settings.ts have overlapping responsibilities
+          - SettingsPanel.js has stale code from multiple refactors
+          - IPC/HTTP dual transport has inconsistent error handling
+          - Dead code and unused variables throughout
+          - Inconsistent state management patterns
+          - Test coverage gaps from rapid iteration
+
+          This story cleans up the foundation so 35-8 (theme switcher) can build
+          on solid architecture rather than patching broken patterns.
+
+          Scope:
+          1. Consolidate settings-store.ts and settings.ts responsibilities
+          2. Remove dead code from SettingsPanel.js and related components
+          3. Standardize IPC/HTTP transport error handling
+          4. Fix state management inconsistencies
+          5. Add missing test coverage for core paths
+        points: 3
+        priority: P1
+        status: in_progress
+        repos: cyclist
+        workflow: tdd
+        assigned_to: Keith Avery
+        started: 2026-01-16
+        blocked_by: []
+        blocks:
+          - 35-8
+        acceptance_criteria:
+          - settings.ts is single source of truth for file-based settings
+          - settings-store.ts only handles runtime state (grants, gates)
+          - No dead code or unused variables in settings components
+          - IPC/HTTP transport has consistent error handling with user feedback
+          - State flows are documented and testable
+          - Test coverage for settings load/save/validate paths
       - id: 35-8
         title: Rethink theme switcher for settings panel integration
         description: |
@@ -319,7 +359,8 @@ epics:
         repos: cyclist
         workflow: bdd
         jira: MSSCI-11723
-        workflow: bdd
+        blocked_by:
+          - 35-14
         acceptance_criteria:
           - Given I click the persona section, When the theme picker opens, Then I see my recent themes at the top
           - Given I select a theme, When the picker closes, Then the persona display updates immediately
@@ -937,10 +978,11 @@ epics:
           - .claude/ symlink targets
         points: 2
         priority: P1
-        status: in_progress
+        status: done
         repos: pennyfarthing
         workflow: trivial
         started: 2026-01-16
+        completed: 2026-01-16
         assigned_to: Keith Avery
         acceptance_criteria:
           - commands/ directory exists in pennyfarthing-dist/ OR symlinks updated

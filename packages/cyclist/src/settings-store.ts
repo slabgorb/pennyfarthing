@@ -1,23 +1,15 @@
 /**
  * Settings Store for Cyclist
  *
- * Provides persistent storage for application settings including
+ * Provides runtime state management for application settings including
  * the Bash approval gate feature (Story 22-3), verbose mode (Story 22-5),
  * and permission grants (Story 33-4).
  *
- * Settings are stored in memory for the session with file persistence
- * for grants that should survive restart.
+ * AC2 (35-14): This module handles ONLY runtime state - no file I/O.
+ * File persistence is delegated to settings.ts via callbacks.
  */
 
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
-
-// =============================================================================
-// Constants
-// =============================================================================
-
-const GRANTS_FILE = path.join(os.homedir(), '.cyclist', 'grants.json');
+// AC2: NO fs import - file I/O is handled by settings.ts
 
 // =============================================================================
 // In-Memory State
@@ -252,8 +244,37 @@ export interface PermissionGrant {
 // In-memory grant storage (session + once grants)
 let sessionGrants: PermissionGrant[] = [];
 
-// Persisted grants (always grants, stored in memory but synced to file)
+// Persisted grants (always grants, stored in memory but synced to file via callback)
 let persistedGrants: PermissionGrant[] = [];
+
+// AC2: Callback for persisting grants to file (delegated to settings.ts)
+let grantsPersistCallback: ((grants: PermissionGrant[]) => boolean) | null = null;
+
+/**
+ * Set the callback for persisting grants to file
+ * AC2: Delegates persistence to settings.ts
+ * @param callback - Function that persists grants and returns success boolean
+ */
+export function setGrantsPersistCallback(callback: (grants: PermissionGrant[]) => boolean): void {
+  grantsPersistCallback = callback;
+}
+
+/**
+ * Initialize grants from pre-loaded data
+ * AC2: Accepts grants array from settings.ts instead of reading files directly
+ * @param grants - Array of grants to initialize with
+ */
+export function initializeGrants(grants: PermissionGrant[]): void {
+  // Clear existing grants
+  persistedGrants = [];
+
+  // Only load 'always' grants (session/once grants are not persisted)
+  for (const grant of grants) {
+    if (grant.grant_type === 'always') {
+      persistedGrants.push(grant);
+    }
+  }
+}
 
 /**
  * Add a permission grant
@@ -264,8 +285,10 @@ export function addGrant(grant: PermissionGrant): void {
     // Always grants go to persisted storage
     if (!persistedGrants.some((g) => g.tool === grant.tool && g.scope === grant.scope)) {
       persistedGrants.push(grant);
-      // Persist to file immediately
-      saveGrantsToFile();
+      // AC2: Persist via callback instead of direct file I/O
+      if (grantsPersistCallback) {
+        grantsPersistCallback(persistedGrants);
+      }
     }
   } else {
     // Once and session grants go to session storage
@@ -385,9 +408,9 @@ export function removeGrant(grant: PermissionGrant): void {
     (g) => !(g.tool === grant.tool && g.scope === grant.scope && g.grant_type === grant.grant_type)
   );
 
-  // If we removed an always grant, update the file
-  if (hadPersistedGrant && grant.grant_type === 'always') {
-    saveGrantsToFile();
+  // AC2: If we removed an always grant, persist via callback
+  if (hadPersistedGrant && grant.grant_type === 'always' && grantsPersistCallback) {
+    grantsPersistCallback(persistedGrants);
   }
 }
 
@@ -398,9 +421,9 @@ export function clearAllGrants(): void {
   const hadPersistedGrants = persistedGrants.length > 0;
   sessionGrants = [];
   persistedGrants = [];
-  // Update file if we cleared any always grants
-  if (hadPersistedGrants) {
-    saveGrantsToFile();
+  // AC2: Persist via callback if we cleared any always grants
+  if (hadPersistedGrants && grantsPersistCallback) {
+    grantsPersistCallback(persistedGrants);
   }
 }
 
@@ -421,59 +444,21 @@ export function persistAlwaysGrant(grant: PermissionGrant): void {
     if (!persistedGrants.some((g) => g.tool === grant.tool && g.scope === grant.scope)) {
       persistedGrants.push(grant);
     }
-    // Write to grants.json
-    saveGrantsToFile();
+    // AC2: Persist via callback
+    if (grantsPersistCallback) {
+      grantsPersistCallback(persistedGrants);
+    }
   }
 }
 
 /**
  * Load persisted grants from settings file
- * Called on application startup
+ * DEPRECATED: Use initializeGrants() with grants from settings.loadGrants() instead
+ * Kept for backward compatibility - calls initializeGrants with empty array
  */
 export function loadPersistedGrants(): void {
-  try {
-    // Ensure directory exists
-    const dir = path.dirname(GRANTS_FILE);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-
-    // Read grants from file
-    if (fs.existsSync(GRANTS_FILE)) {
-      const content = fs.readFileSync(GRANTS_FILE, 'utf-8');
-      const data = JSON.parse(content);
-      if (Array.isArray(data.grants)) {
-        // Only load 'always' grants (session/once grants are not persisted)
-        persistedGrants = data.grants.filter(
-          (g: PermissionGrant) => g.grant_type === 'always'
-        );
-      }
-    }
-  } catch {
-    // If file doesn't exist or is invalid, start with empty grants
-    persistedGrants = [];
-  }
-}
-
-/**
- * Save always grants to file
- * Internal helper for persistence
- */
-function saveGrantsToFile(): void {
-  try {
-    // Ensure directory exists
-    const dir = path.dirname(GRANTS_FILE);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-
-    // Only persist 'always' grants
-    const data = {
-      grants: persistedGrants.filter((g) => g.grant_type === 'always'),
-    };
-
-    fs.writeFileSync(GRANTS_FILE, JSON.stringify(data, null, 2), 'utf-8');
-  } catch {
-    // Silently fail on write errors - grants still work in memory
-  }
+  // AC2: This function no longer does file I/O
+  // For backward compatibility, initialize with empty grants
+  // Callers should use: settingsStore.initializeGrants(settings.loadGrants())
+  initializeGrants([]);
 }
