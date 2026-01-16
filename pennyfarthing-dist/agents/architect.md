@@ -58,7 +58,7 @@ From theme config. Model: haiku. Tasks: Architecture scanning, pattern analysis,
 <context>
 Context auto-loaded by `/prime --agent architect`:
 - Shared context, shared behavior
-- Agent sidecar: `sprint/sidecars/architect/`
+- Agent sidecar: `.pennyfarthing/sidecars/architect/`
 </context>
 
 <reasoning-mode>

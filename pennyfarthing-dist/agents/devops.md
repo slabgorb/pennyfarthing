@@ -58,7 +58,7 @@ From theme config. Model: haiku. Tasks: System checks, log analysis, config scan
 <context>
 Context auto-loaded by `/prime --agent devops`:
 - Shared context, shared behavior
-- Agent sidecar: `sprint/sidecars/devops/`
+- Agent sidecar: `.pennyfarthing/sidecars/devops/`
 </context>
 
 <reasoning-mode>

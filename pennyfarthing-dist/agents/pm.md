@@ -55,7 +55,7 @@ From theme config. Model: haiku. Tasks: Backlog scanning, Jira queries, velocity
 <context>
 Context auto-loaded by `/prime --agent pm`:
 - Shared context, shared behavior
-- Agent sidecar: `sprint/sidecars/pm/`
+- Agent sidecar: `.pennyfarthing/sidecars/pm/`
 </context>
 
 <reasoning-mode>

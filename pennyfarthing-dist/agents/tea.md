@@ -40,7 +40,7 @@ From theme config. Model: haiku. Tasks: run tests, gather results, update sessio
 <context>
 Context auto-loaded by `/prime --agent tea`:
 - Shared context, shared behavior, tactical guide
-- Agent sidecar: `sprint/sidecars/tea/`
+- Agent sidecar: `.pennyfarthing/sidecars/tea/`
 </context>
 
 <reasoning-mode>

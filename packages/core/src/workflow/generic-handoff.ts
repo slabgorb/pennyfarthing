@@ -11,6 +11,7 @@
  * - Format session file updates for phase transitions
  */
 
+import { existsSync, readFileSync } from 'fs';
 import type { WorkflowDefinition, WorkflowPhase } from './workflow-schema.js';
 
 /**
@@ -380,12 +381,10 @@ export interface HandoffHistoryEntry {
  */
 export function readHandoffMode(settingsPath: string): HandoffMode {
   try {
-    // Check for fs module availability (may not be available in all contexts)
-    const fs = require('fs');
-    if (!fs.existsSync(settingsPath)) {
+    if (!existsSync(settingsPath)) {
       return 'manual';
     }
-    const content = fs.readFileSync(settingsPath, 'utf-8');
+    const content = readFileSync(settingsPath, 'utf-8');
 
     // Try JSON first, then YAML
     if (settingsPath.endsWith('.json') || content.trim().startsWith('{')) {

@@ -65,7 +65,7 @@ Do NOT use for:
 <context>
 Context auto-loaded by `/prime --agent orchestrator`:
 - Shared context, shared behavior
-- Agent sidecar: `sprint/sidecars/orchestrator/`
+- Agent sidecar: `.pennyfarthing/sidecars/orchestrator/`
 - Agent files: `pennyfarthing-dist/agents/`
 - Skill files: `pennyfarthing-dist/skills/`
 </context>
