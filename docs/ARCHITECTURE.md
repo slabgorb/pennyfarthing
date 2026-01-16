@@ -444,3 +444,58 @@ check_repo_pr pennyfarthing feature/my-branch
 ```
 
 Used by the `workflow-status-check.md` subagent for state detection
+
+## OpenTelemetry Integration (v6.5+)
+
+Pennyfarthing integrates with Claude Code's telemetry for observability and cost tracking.
+
+### OTEL Tool Enrichment
+
+Tool spans are enriched with operation-specific metadata:
+
+| Tool | Enriched Fields |
+|------|-----------------|
+| **Bash** | Command, working directory, exit code, duration |
+| **Read/Edit** | File path, line count, change type |
+| **Write** | File path, bytes written, file type |
+| **Grep/Glob** | Pattern, matches found, files searched |
+| **Task** | Subagent type, model, prompt summary |
+
+### Span Correlation
+
+OTEL spans are correlated to provide:
+- **Agent attribution** - Which agent made the tool call
+- **Story context** - Current story ID for cost attribution
+- **TDD phase** - RED/GREEN/REVIEW phase timing
+- **Session boundary** - Track work across sessions
+
+### Configuration
+
+Enable telemetry by setting the OTLP endpoint:
+
+```bash
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+```
+
+Cyclist's built-in OTLP receiver (port 4318) captures and displays this data in:
+- Stats strip (token counts, context %)
+- Audit log (tool execution history)
+- Cost calculator (USD estimates)
+
+### Telemetry Data Model
+
+```typescript
+interface ToolSpan {
+  name: string;           // Tool name (Bash, Read, etc.)
+  timestamp: number;      // Unix timestamp
+  duration_ms: number;    // Execution time
+  attributes: {
+    agent?: string;       // Active agent role
+    story_id?: string;    // Current story
+    tdd_phase?: string;   // RED/GREEN/REVIEW
+    // Tool-specific attributes...
+  };
+}
+```
+
+See `packages/cyclist/src/otlp-receiver.ts` for the full data model

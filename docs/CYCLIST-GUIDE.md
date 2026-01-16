@@ -233,6 +233,8 @@ Shows file changes with syntax highlighting.
 
 **Features:**
 - **Split view** - Original vs modified
+- **Line numbers** - Click-to-jump line numbers (v6.5+)
+- **Clickable file paths** - Click the file path header to open in your editor (v6.5+)
 - **Navigation** - Previous/next edit (j/k keys)
 - **View modes**:
   - Partial - Single diff between states
@@ -240,6 +242,15 @@ Shows file changes with syntax highlighting.
   - Original - Pre-edit state
   - Current - Post-edit state
 - **Position indicator** - "Edit 2 of 5"
+
+**Supported editors for clickable paths:**
+- VS Code (`code`)
+- Cursor (`cursor`)
+- Vim/Neovim (`vim`, `nvim`)
+- Emacs (`emacs`)
+- Sublime Text (`subl`)
+
+Set your preferred editor via `$EDITOR` environment variable.
 
 **Keyboard shortcuts:**
 | Key | Action |
@@ -344,6 +355,46 @@ Launch agents directly from the menu.
 - Toggle sidebar
 - Toggle stats strip
 - Reset layout
+
+## Settings Panel (v6.5+)
+
+Access settings via the menu bar or keyboard shortcut.
+
+### Font Settings
+
+Customize the Cyclist interface fonts:
+
+**Available Options:**
+- **Font Family** - Choose from system fonts (Monaco, SF Mono, Menlo, etc.)
+- **Font Size** - Adjust terminal and UI text size
+- **Line Height** - Control line spacing
+
+Settings are persisted per-user and applied immediately.
+
+### Window State Persistence
+
+Cyclist remembers your window configuration between sessions:
+
+- **Position** - Window location on screen
+- **Size** - Width and height
+- **State** - Maximized/normal state
+
+### Custom Themes
+
+Create custom CSS themes for Cyclist appearance (v6.5+):
+
+1. Create a CSS file in `~/.cyclist/themes/`
+2. Define CSS variables for colors and spacing
+3. Select the theme in Settings → Appearance
+
+Example `~/.cyclist/themes/dark-blue.css`:
+```css
+:root {
+  --bg-primary: #0a1628;
+  --text-primary: #e0e6ed;
+  --accent-color: #3b82f6;
+}
+```
 
 ## Configuration
 

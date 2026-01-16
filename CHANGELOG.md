@@ -13,7 +13,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [6.5.0] - 2026-01-16
 
-*No unreleased changes*
+### Sprint 11: Agent Modernization & Cyclist Polish
+
+This release delivers agent file modernization, OTEL tool enrichment, and significant Cyclist UI improvements including font customization and clickable file paths.
+
+### Added
+
+#### Epic 35: Cyclist UI Polish
+- **Font Face Selector** (35-6) - Choose fonts for the Cyclist interface via settings panel
+- **Clickable File Paths** (35-11) - File paths in diff view now open in your configured editor
+- **Window State Persistence** (35-13) - Remember window size and position across sessions
+- **Custom Styling Themes** (35-7) - CSS theming system for Cyclist appearance
+- **Unified Vertical Panel Pattern** (35-5) - Consistent panel behavior across all sidebars
+- **Line Numbers in Diffs** (35-10) - Show line numbers in file diff view
+- **Three-way Mode Switch** (35-4) - Replace cycling button with explicit mode selection
+- **User Email Display** (35-2) - Show authenticated user in status bar
+- **Compact Button Warning** (35-3) - Button turns red when auto-compact is imminent
+
+#### Epic 36: OTEL Tool Enrichment
+- **Bash Tool Spans** (36-3) - Enrich OTEL spans with bash command details
+- **Write Tool Spans** (36-11) - File write operations tracked in telemetry
+- **Search Tool Spans** (36-4) - Grep/Glob operations enriched with search context
+- **Read/Edit File Spans** (36-2) - File operations include path and content metadata
+- **Span Interception & Correlation** (36-1) - Unified OTEL span processing pipeline
+
+#### Epic 37: Bug Fixes & Stability
+- **Context Circuit Breaker** (37-16) - Enable circuit breaker and align UI thresholds
+- **Dynamic Workflow Indicator** (37-15) - Indicator updates based on active workflow
+- **Persona Object Fix** (37-8) - Return complete persona from IPC handler
+- **Handoff Theme Fix** (37-14) - Correct character names in handoff buttons
+- **Pattern Detection Cleanup** (37-6) - Remove dead pattern-based detection tests
+- **Test Suite Cleanup** (37-4) - Evaluate and clean up skipped test suites
+
+#### Epic 38: Agent File Modernization
+- **Status Tags** (38-2) - Add production/stable/experimental status to all agent files
+- **Agent Modernization** (38-3) - Update PM, Architect, DevOps, Orchestrator agents
+- **Shared Behavior Consolidation** (38-10) - Consolidate duplicated instructions to shared-agent-behavior.md
+- **SM Workflow Routing** (38-9) - Route stories to workflows based on story tags
+- **Stale Reference Cleanup** (38-1) - Fix stale references across agent files
+
+#### Other Enhancements
+- **Background Task Notifications** (31-15) - Notification when background tasks complete
+- **Permission Request Protocol** (33-1) - Structured permission request handling
+- **Job Fair Benchmarks** - Added Matrix theme optimization results
+
+### Fixed
+- OTEL race condition in tool correlation (36-10)
+- JIRA key format validation to prevent wrong ticket transitions
+- Redundant story card elements in Cyclist
+- OTEL enrichment blocked by missing trace/span IDs (36-9)
+- Flaky timestamp test in background notifications (37-2)
+
+### Summary
+| Metric | Value |
+|--------|-------|
+| Stories Completed | 30+ |
+| Epics Delivered | 4 (Epic 35, 36, 37, 38) |
+| Features | 29 |
+| Bug Fixes | 20+ |
+| Themes | 102 |
 
 ---
 

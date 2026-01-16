@@ -2,6 +2,30 @@
 
 Complete reference for all Pennyfarthing agents.
 
+## Agent Status Tags (v6.5+)
+
+All agent files now include a status tag indicating their maturity level:
+
+| Status | Description |
+|--------|-------------|
+| `<status>production</status>` | Battle-tested, stable API, used in primary TDD workflow |
+| `<status>stable</status>` | Well-tested, minor changes expected, safe for regular use |
+| `<status>experimental</status>` | Under development, API may change, use with awareness |
+
+**Production agents:** SM, TEA, Dev, Reviewer
+**Stable agents:** PM, Architect, DevOps, Orchestrator
+**Experimental agents:** Tech Writer, UX Designer
+
+## Shared Agent Behavior
+
+All agents inherit common behavior from `pennyfarthing-dist/guides/shared-agent-behavior.md` (v6.5+):
+
+- **Sidecar memory system** - Load patterns/gotchas/decisions on activation
+- **Confidence protocol** - HIGH/MEDIUM/LOW confidence assessment
+- **Handoff action protocol** - Auto vs manual handoff based on user preference
+- **Turn efficiency** - Parallel file reads, batched bash commands
+- **Test delegation** - Always use `testing-runner` subagent
+
 ## Agent Categories
 
 Agents are organized into three categories based on their scope and responsibilities.
