@@ -12,9 +12,10 @@ const COMPACT_THRESHOLD = 50;
 
 /**
  * Threshold at which compact button turns red (imminent auto-compact)
- * Claude auto-compacts around 70-80%, so warn at 65%
+ * Aligned with backend warning_threshold (70%) from context_budget
+ * Story 37-16: Circuit breaker triggers at 85%, warn at 70%
  */
-const COMPACT_IMMINENT_THRESHOLD = 65;
+const COMPACT_IMMINENT_THRESHOLD = 70;
 
 /**
  * Format token count for display
@@ -41,11 +42,14 @@ function updateContextLevel(contextMini, percent) {
   contextMini.classList.remove('level-safe', 'level-warning', 'level-danger', 'level-critical');
 
   // Add appropriate level class based on percentage
+  // Story 37-16: Aligned with backend thresholds (warning=70%, critical=85%)
   if (percent >= 95) {
     contextMini.classList.add('level-critical');
-  } else if (percent >= 80) {
+  } else if (percent >= 85) {
+    // Circuit breaker triggers at 85% - show danger
     contextMini.classList.add('level-danger');
-  } else if (percent >= 50) {
+  } else if (percent >= 70) {
+    // Warning threshold from backend context_budget
     contextMini.classList.add('level-warning');
   } else {
     contextMini.classList.add('level-safe');
