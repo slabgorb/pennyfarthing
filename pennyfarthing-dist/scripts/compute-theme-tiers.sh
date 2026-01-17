@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# compute-theme-tiers.sh - Compute tier rankings from benchmark results and update theme files
+# compute-theme-tiers.sh - Compute tier rankings from job-fair results and update theme files
 #
 # Usage: compute-theme-tiers.sh [--dry-run] [--verbose]
 #
-# Reads all summary.yaml files from internal/results/benchmarks/
-# Aggregates mean scores per theme across all scenarios
+# Reads all summary.yaml files from internal/results/job-fair/
+# For each theme, extracts all character×role scores from the matrix
+# Computes delta vs baseline for each role, then averages across all roles
 # Assigns tier based on overall performance vs control baseline
 #
 # Tier criteria (based on mean delta from control):
@@ -20,7 +21,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-BENCHMARKS_DIR="$PROJECT_ROOT/internal/results/benchmarks"
+JOB_FAIR_DIR="$PROJECT_ROOT/internal/results/job-fair"
 THEMES_DIR="$PROJECT_ROOT/pennyfarthing-dist/personas/themes"
 
 DRY_RUN=false
@@ -49,45 +50,102 @@ THEME_DATA=$(mktemp)
 THEME_AGG=$(mktemp)
 trap "rm -f $THEME_DATA $THEME_AGG" EXIT
 
-# Process all summary.yaml files - extract theme, mean score, and delta
-echo "Scanning benchmark results..."
+# Process all job-fair summary.yaml files
+# Extract theme name, compute mean score and delta vs baselines
+echo "Scanning job-fair results..."
 
-find "$BENCHMARKS_DIR" -name "summary.yaml" -type f | while read -r f; do
-    theme=$(yq '.agent.theme' "$f" 2>/dev/null | grep -v "^null$" || true)
-    mean=$(yq '.statistics.mean' "$f" 2>/dev/null | grep -v "^null$" || true)
-    delta=$(yq '.baseline_comparison.delta' "$f" 2>/dev/null | grep -v "^null$" || true)
-    if [[ -n "$theme" && -n "$mean" ]]; then
-        echo "$theme $mean ${delta:-0}"
-    fi
-done > "$THEME_DATA"
+find "$JOB_FAIR_DIR" -name "summary.yaml" -type f | while read -r f; do
+    theme=$(yq '.theme' "$f" 2>/dev/null | grep -v "^null$" || true)
+    [[ -z "$theme" ]] && continue
+
+    # Extract baselines as "role:mean" pairs
+    baselines=$(yq '.baselines | to_entries | .[] | .key + ":" + (.value.mean | tostring)' "$f" 2>/dev/null || true)
+    [[ -z "$baselines" ]] && continue
+
+    # Extract all matrix scores as "role:mean" pairs (flatten character dimension)
+    # Matrix format: character: { role: {mean: X, n: Y} }
+    scores=$(yq '.matrix | to_entries | .[] | .value | to_entries | .[] | .key + ":" + (.value.mean | tostring)' "$f" 2>/dev/null || true)
+    [[ -z "$scores" ]] && continue
+
+    # Use awk to compute per-role averages and deltas, then overall mean
+    echo "$theme" "$(echo "$baselines" | tr '\n' '|')" "$(echo "$scores" | tr '\n' '|')"
+done | awk '
+{
+    theme = $1
+
+    # Parse baselines (field 2)
+    n_base = split($2, base_pairs, "|")
+    for (i = 1; i <= n_base; i++) {
+        if (base_pairs[i] == "") continue
+        split(base_pairs[i], kv, ":")
+        baseline[kv[1]] = kv[2]
+    }
+
+    # Parse scores (field 3) and accumulate by role
+    delete role_sum
+    delete role_count
+    n_scores = split($3, score_pairs, "|")
+    for (i = 1; i <= n_scores; i++) {
+        if (score_pairs[i] == "") continue
+        split(score_pairs[i], kv, ":")
+        role = kv[1]
+        score = kv[2]
+        role_sum[role] += score
+        role_count[role]++
+    }
+
+    # Compute delta for each role, then average
+    total_delta = 0
+    total_score = 0
+    n_roles = 0
+    for (role in role_sum) {
+        role_mean = role_sum[role] / role_count[role]
+        if (role in baseline) {
+            delta = role_mean - baseline[role]
+            total_delta += delta
+            total_score += role_mean
+            n_roles++
+        }
+    }
+
+    if (n_roles > 0) {
+        mean_delta = total_delta / n_roles
+        mean_score = total_score / n_roles
+        print theme, n_scores, mean_score, mean_delta
+    }
+}
+' > "$THEME_DATA"
 
 summary_count=$(wc -l < "$THEME_DATA" | tr -d ' ')
-echo "Found $summary_count benchmark results"
+echo "Found $summary_count themes with job-fair results"
 echo ""
 
-# Aggregate by theme: calculate count, sum of scores, sum of deltas
+# Aggregate by theme (in case multiple job-fair runs exist for same theme)
+# Take the most recent (last) result for each theme
 awk '
 {
     theme = $1
-    score = $2
-    delta = $3
-    count[theme]++
-    sum_score[theme] += score
-    sum_delta[theme] += delta
+    n = $2
+    score = $3
+    delta = $4
+    # Keep last occurrence (most recent)
+    data[theme] = n "|" score "|" delta
 }
 END {
-    for (theme in count) {
-        mean_score = sum_score[theme] / count[theme]
-        mean_delta = sum_delta[theme] / count[theme]
+    for (theme in data) {
+        split(data[theme], parts, "|")
+        n = parts[1]
+        score = parts[2]
+        delta = parts[3]
 
         # Assign tier based on mean delta
-        if (mean_delta >= 10) tier = "S"
-        else if (mean_delta >= 0) tier = "A"
-        else if (mean_delta >= -10) tier = "B"
-        else if (mean_delta >= -20) tier = "C"
+        if (delta >= 10) tier = "S"
+        else if (delta >= 0) tier = "A"
+        else if (delta >= -10) tier = "B"
+        else if (delta >= -20) tier = "C"
         else tier = "D"
 
-        printf "%s|%d|%.2f|%.2f|%s\n", theme, count[theme], mean_score, mean_delta, tier
+        printf "%s|%d|%.2f|%.2f|%s\n", theme, n, score, delta, tier
     }
 }
 ' "$THEME_DATA" | sort -t'|' -k4 -rn > "$THEME_AGG"
