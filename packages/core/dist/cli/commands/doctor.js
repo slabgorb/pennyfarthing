@@ -268,10 +268,10 @@ function checkUserFiles(projectRoot) {
         status: pathExists(projectDir) ? 'pass' : 'warn',
         detail: pathExists(projectDir) ? undefined : 'Run init to create'
     });
-    // Check agent sidecars
-    const sidecarsDir = join(projectRoot, '.claude/project/agents');
+    // Check agent sidecars (now in .pennyfarthing/sidecars/)
+    const sidecarsDir = join(projectRoot, '.pennyfarthing/sidecars');
     if (pathExists(sidecarsDir)) {
-        const existingSidecars = CORE_AGENTS.filter(a => pathExists(join(sidecarsDir, `${a}-sidecar`)));
+        const existingSidecars = CORE_AGENTS.filter(a => pathExists(join(sidecarsDir, a)));
         results.push({
             name: 'project/sidecars',
             status: existingSidecars.length > 0 ? 'pass' : 'warn',
@@ -441,12 +441,12 @@ function checkSessionStartHooks(projectRoot, installationType) {
 }
 /**
  * Get the script base path based on installation type
- * - symlink mode: .claude/scripts/
- * - copy mode: .claude/pennyfarthing/scripts/
+ * - symlink mode: .pennyfarthing/scripts/
+ * - copy mode: .claude/pennyfarthing/scripts/ (legacy)
  */
 function getScriptBasePath(installationType) {
     return installationType === 'symlink'
-        ? '.claude/scripts'
+        ? '.pennyfarthing/scripts'
         : '.claude/pennyfarthing/scripts';
 }
 /**
@@ -514,10 +514,12 @@ function createSettingsLocalJson(projectRoot, installationType) {
                 'Bash(date:*)',
                 'Bash(mkdir:*)',
                 'Edit(.claude/**)',
+                'Edit(.pennyfarthing/**)',
                 'Edit(sprint/**)',
                 'Edit(.session/**)',
                 'Edit(results/**)',
                 'Write(.claude/**)',
+                'Write(.pennyfarthing/**)',
                 'Write(sprint/**)',
                 'Write(.session/**)',
                 'Write(results/**)',

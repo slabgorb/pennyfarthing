@@ -162,7 +162,7 @@ Run ALL checks and STOP if any fail:
 
    If cache valid and GREEN, skip test execution. Otherwise run full quality gate:
    ```bash
-   $CLAUDE_PROJECT_DIR/.claude/scripts/check.sh
+   $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh
    ```
    If exit code non-zero: **STOP** - "Quality checks failed. Dev must fix issues before handoff."
 
@@ -311,7 +311,7 @@ After gate passes, check context usage to determine how to proceed:
 
 ```bash
 # Run context check script
-CONTEXT_OUTPUT=$($CLAUDE_PROJECT_DIR/.claude/scripts/check-context.sh 2>/dev/null)
+CONTEXT_OUTPUT=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check-context.sh 2>/dev/null)
 eval "$CONTEXT_OUTPUT"
 
 # CONTEXT_PERCENT and CONTEXT_STATUS are now set

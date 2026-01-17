@@ -186,7 +186,7 @@ pennyfarthing init --skip-templates   # Skip template generation
 ```
 
 **What it creates:**
-- `.claude/agents/`, `commands/`, `skills/`, `personas/` → symlinks to `node_modules/pennyfarthing/pennyfarthing-dist/`
+- `.pennyfarthing/agents/`, `commands/`, `skills/`, `personas/` → symlinks to `node_modules/pennyfarthing/pennyfarthing-dist/`
 - `.claude/project/` - Project-specific customizations (you edit this)
 - `.pennyfarthing/` - Local config (gitignored)
 - `sprint/` - Sprint tracking
@@ -250,7 +250,7 @@ pennyfarthing uninstall --dry-run     # Preview what would be removed
 
 **What gets removed (default):**
 - `.claude/pennyfarthing/` (symlink to node_modules)
-- `.claude/agents/`, `.claude/commands/`, `.claude/skills/`, `.claude/personas/` (symlinks)
+- `.pennyfarthing/agents/`, `.claude/commands/`, `.claude/skills/`, `.pennyfarthing/personas/` (symlinks)
 - `.claude/manifest.json`, `.claude/settings.local.json`
 - `scripts/hooks/`, `scripts/utils/`
 
@@ -687,8 +687,8 @@ echo $SESSION_ID
 
 | Purpose | Location |
 |---------|----------|
-| Agent definitions | `.claude/agents/` (symlink) |
-| Official subagents | `.claude/agents/` (in same directory) |
+| Agent definitions | `.pennyfarthing/agents/` (symlink) |
+| Official subagents | `.pennyfarthing/agents/` (in same directory) |
 | Slash commands | `.claude/commands/` (symlink) |
 | Project docs | `.claude/project/docs/` |
 | Agent sidecars | `.claude/project/agents/` |

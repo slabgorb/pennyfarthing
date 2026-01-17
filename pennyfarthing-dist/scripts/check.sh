@@ -118,7 +118,7 @@ find_project_root() {
 PROJECT_ROOT="$(find_project_root)"
 
 # Load repo configuration if available (repo-utils.sh is zsh, call via zsh subshell)
-REPO_UTILS="$PROJECT_ROOT/.claude/scripts/repo-utils.sh"
+REPO_UTILS="$PROJECT_ROOT/.pennyfarthing/scripts/repo-utils.sh"
 REPO_CONFIG_AVAILABLE=false
 if [[ -f "$REPO_UTILS" ]] && command -v zsh &>/dev/null; then
     REPO_CONFIG_AVAILABLE=true

@@ -11,7 +11,7 @@ Add this block BEFORE `<agent-activation>`:
 Load this agent's persona before activation:
 1. Read `.pennyfarthing/config.local.yaml`
 2. Get `theme` value (e.g., "discworld")
-3. Read `pennyfarthing-dist/personas/themes/{theme}.yaml` (or `.claude/personas/themes/`)
+3. Read `pennyfarthing-dist/personas/themes/{theme}.yaml` (or `.pennyfarthing/personas/themes/`)
 4. Extract `agents.{agent-name}` section (character, style, helper, etc.)
 5. Apply `attributes` from config (verbosity, formality, humor, emoji_use)
 6. Store resolved persona for use during session

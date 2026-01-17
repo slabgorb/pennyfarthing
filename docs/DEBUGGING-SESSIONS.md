@@ -9,13 +9,13 @@ Guide for debugging Claude Code sessions when things go wrong, including verbose
 pennyfarthing doctor
 
 # Check context usage
-.claude/scripts/check-context.sh --human
+.pennyfarthing/scripts/check-context.sh --human
 
 # View recent logs
-source .claude/scripts/utils/logging.sh && log_list 20
+source .pennyfarthing/scripts/utils/logging.sh && log_list 20
 
 # List checkpoints
-source .claude/scripts/utils/checkpoint.sh && checkpoint_list
+source .pennyfarthing/scripts/utils/checkpoint.sh && checkpoint_list
 ```
 
 ## Verbose Mode
@@ -37,8 +37,8 @@ PENNYFARTHING_VERBOSE=true pennyfarthing doctor
 Most scripts support `--verbose`:
 
 ```bash
-.claude/scripts/agent-session.sh start dev --verbose
-.claude/scripts/check-context.sh --verbose
+.pennyfarthing/scripts/agent-session.sh start dev --verbose
+.pennyfarthing/scripts/check-context.sh --verbose
 ```
 
 ### Verbose Output Style
@@ -56,7 +56,7 @@ When verbose mode is enabled, output includes:
 
 ```bash
 # Human-readable output
-.claude/scripts/check-context.sh --human
+.pennyfarthing/scripts/check-context.sh --human
 
 # Example output:
 # ✅ Context: 65% (130000 tokens) - OK to continue
@@ -67,7 +67,7 @@ When verbose mode is enabled, output includes:
 
 ```bash
 # Load context variables
-eval $(.claude/scripts/check-context.sh)
+eval $(.pennyfarthing/scripts/check-context.sh)
 
 # Available variables:
 echo $CONTEXT_TOKENS    # 130000
@@ -79,7 +79,7 @@ echo $HANDOFF_MODE      # ask or auto
 ### Check Specific Session
 
 ```bash
-.claude/scripts/check-context.sh --session <session-id>
+.pennyfarthing/scripts/check-context.sh --session <session-id>
 ```
 
 ### Thresholds
@@ -109,7 +109,7 @@ Configured in `.claude/settings.local.json`:
 Pennyfarthing uses JSON-structured logs for machine-readable debugging.
 
 ```bash
-source .claude/scripts/utils/logging.sh
+source .pennyfarthing/scripts/utils/logging.sh
 
 # Write logs
 log_info "Starting workflow"
@@ -174,7 +174,7 @@ Console output uses colors:
 
 **Diagnosis:**
 ```bash
-.claude/scripts/check-context.sh --human
+.pennyfarthing/scripts/check-context.sh --human
 # Shows: ⚠️ Context: 87% (174000 tokens) - CRITICAL
 ```
 
@@ -252,7 +252,7 @@ Use absolute paths with `$CLAUDE_PROJECT_DIR`:
 ./scripts/my-hook.sh
 
 # CORRECT
-"$CLAUDE_PROJECT_DIR/.claude/scripts/my-hook.sh"
+"$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/my-hook.sh"
 ```
 
 ### Pattern: Symlink Target Missing
@@ -307,7 +307,7 @@ Write assessment BEFORE spawning handoff subagent:
 Save and restore session state across interruptions.
 
 ```bash
-source .claude/scripts/utils/checkpoint.sh
+source .pennyfarthing/scripts/utils/checkpoint.sh
 
 # Save checkpoint
 checkpoint_save "dev-phase" "implemented user auth, tests passing"
@@ -332,7 +332,7 @@ checkpoint_rotate 100    # Keep last 100 entries
 Automatically retry flaky operations.
 
 ```bash
-source .claude/scripts/utils/retry.sh
+source .pennyfarthing/scripts/utils/retry.sh
 
 # Retry up to 3 times with exponential backoff
 # Initial delay: 1s, max delay: 10s
@@ -353,7 +353,7 @@ retry_with_backoff 5 2 30 npm install
 Try primary command, fall back to alternative.
 
 ```bash
-source .claude/scripts/utils/retry.sh
+source .pennyfarthing/scripts/utils/retry.sh
 
 # Git pull with fallback
 command_with_fallback "git pull --ff-only" "git pull --no-rebase"
@@ -367,7 +367,7 @@ command_with_fallback "npm ci" "npm install"
 Prevent concurrent access corruption.
 
 ```bash
-source .claude/scripts/utils/file-lock.sh
+source .pennyfarthing/scripts/utils/file-lock.sh
 
 # Execute under lock
 with_lock ".session/state.json" exclusive update-state.sh
@@ -416,7 +416,7 @@ DO NOT attempt further tool calls
 
 1. **Save state immediately**
    ```bash
-   source .claude/scripts/utils/checkpoint.sh
+   source .pennyfarthing/scripts/utils/checkpoint.sh
    checkpoint_save "dev-phase" "implemented auth, need review"
    ```
 

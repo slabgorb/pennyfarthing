@@ -26,7 +26,7 @@ TEST_DIR=$(mktemp -d)
 trap "rm -rf $TEST_DIR" EXIT
 
 # Setup test project structure
-mkdir -p "$TEST_DIR/.claude/personas/themes"
+mkdir -p "$TEST_DIR/.pennyfarthing/personas/themes"
 mkdir -p "$TEST_DIR/.claude/pennyfarthing"
 mkdir -p "$TEST_DIR/scripts"
 
@@ -34,7 +34,7 @@ mkdir -p "$TEST_DIR/scripts"
 cp "$PROJECT_ROOT/scripts/agent-session.sh" "$TEST_DIR/scripts/"
 
 # Create minimal theme file
-cat > "$TEST_DIR/.claude/personas/themes/test-theme.yaml" << 'EOF'
+cat > "$TEST_DIR/.pennyfarthing/personas/themes/test-theme.yaml" << 'EOF'
 name: test-theme
 description: Test theme
 

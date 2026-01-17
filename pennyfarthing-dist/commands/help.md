@@ -247,7 +247,7 @@ Based on your current state, here's what you might need:
 - **Agent Definitions:** `pennyfarthing-dist/agents/*.md`
 - **Command Definitions:** `pennyfarthing-dist/commands/*.md`
 - **Theme Files:** `pennyfarthing-dist/personas/themes/*.yaml`
-- **Guides:** `.claude/guides/*.md`
+- **Guides:** `.pennyfarthing/guides/*.md`
 
 ## Getting More Help
 
