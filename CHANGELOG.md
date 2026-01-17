@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [7.0.2] - 2026-01-17
+
+### Fixed
+
+- **Subagent Compatibility** - Updated all agent definitions to use `subagent_type: "general-purpose"` with `model: "haiku"` for Claude Code compatibility. Custom subagent types were failing with "not available in this context" errors.
+- **Cyclist Project Detection** - Fixed `detectPennyfarthingProject()` to check `.pennyfarthing/` directory first, and updated Electron entry point configuration.
+
+### Changed
+
+- **Build Output** - Removed `dist/` directories from version control. Build output is now delivered via npm only.
+
+---
+
 ## [7.0.1] - 2026-01-17
 
 ### Fixed
