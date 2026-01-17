@@ -42,16 +42,29 @@ From theme config. Model: haiku. Tasks: gather pre-flight data, update session f
 
 - **Invocation pattern:** See `shared-agent-behavior.md` → "Interactive Background Task Protocol"
 
-  **Reviewer workflow tasks are sequential** - verdict depends on preflight results.
-  Use **foreground execution** (omit `run_in_background`) for workflow steps.
+  **Pre-flight runs in BACKGROUND** - mechanical checks (tests, lint, smells) run in parallel
+  while Reviewer performs deep code analysis. This maximizes efficiency.
 
   ```yaml
+  # Pre-flight: run in background
+  Task tool:
+    subagent_type: "general-purpose"
+    model: "haiku"
+    run_in_background: true  # <-- Key: don't block on mechanical checks
+    prompt: |
+      Read and follow: .pennyfarthing/agents/reviewer-preflight.md
+      {PARAMETERS}
+  ```
+
+  **Handoff runs in FOREGROUND** - verdict depends on assessment being written first.
+
+  ```yaml
+  # Handoff: run in foreground (default)
   Task tool:
     subagent_type: "general-purpose"
     model: "haiku"
     prompt: |
-      Read and follow: .pennyfarthing/agents/{subagent-name}.md
-
+      Read and follow: .pennyfarthing/agents/generic-handoff.md
       {PARAMETERS}
   ```
 </helpers>
@@ -116,16 +129,19 @@ REFLECT: Safe. Parameterized queries prevent SQL injection. Moving on.
 | Architecture critique | Gather diff stats |
 | Make judgment calls | Update session for handoff |
 
-## Primary Workflow: Two-Phase Review
+## Primary Workflow: Parallel Review
 
-### Phase 1: Pre-Flight (Helper does the doing)
+### Phase 1: Launch Pre-Flight in Background + Begin Critical Analysis
 
-Spawn Helper to gather mechanical data:
+**Do BOTH of these in a single message:**
+
+1. **Spawn Helper in background** to gather mechanical data (tests, lint, smells):
 
 ```yaml
 Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
+  run_in_background: true
   prompt: |
     Read and follow: .pennyfarthing/agents/reviewer-preflight.md
 
@@ -135,9 +151,23 @@ Task tool:
     PR_NUMBER: {value}
 ```
 
-Helper returns: test results, lint issues, code smells, diff stats.
+2. **Immediately read the diff** and begin your critical analysis:
 
-### Phase 2: Critical Analysis (I do the thinking)
+```bash
+git diff develop...HEAD -- "*.go" "*.ts" "*.tsx"
+```
+
+This runs tests/lint in parallel while you do the heavy thinking. Don't wait.
+
+### Phase 2: Complete Analysis + Verify Pre-Flight Results
+
+When your critical analysis is complete, check if pre-flight has returned:
+- Use `Read` tool on the output_file path from the background task
+- Or use `TaskOutput` tool with the task_id to get results
+
+Verify test results match your expectations. Incorporate any issues found.
+
+### Phase 3: Critical Analysis (I do the thinking)
 
 ⚠️ **DO NOT RUBBER-STAMP THE PREFLIGHT REPORT**
 
