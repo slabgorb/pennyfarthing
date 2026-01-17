@@ -29,6 +29,21 @@ export declare function cleanupPortFile(projectDir: string): void;
  */
 export declare function readPortFile(projectDir: string): number | null;
 /**
+ * Write the approval server port to .cyclist-approval-port file.
+ * Enables hook script to discover which port this instance is using.
+ */
+export declare function writeApprovalPortFile(projectDir: string, port: number): void;
+/**
+ * Remove the .cyclist-approval-port file during shutdown.
+ * Prevents stale port files from causing cross-instance interference.
+ */
+export declare function cleanupApprovalPortFile(projectDir: string): void;
+/**
+ * Read the approval server port from .cyclist-approval-port file.
+ * Returns null if file doesn't exist or contains invalid content.
+ */
+export declare function readApprovalPortFile(projectDir: string): number | null;
+/**
  * Write the Claude process PID to .cyclist-pid file.
  * Used to track which Claude process belongs to this Cyclist instance.
  */

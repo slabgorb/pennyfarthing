@@ -982,3 +982,34 @@ describe('Integration: Full approval flow', () => {
     settingsStore.setBashApprovalGate(false);
   });
 });
+
+// =============================================================================
+// Multi-Instance Port Isolation (33-7 fix: Round 2)
+// =============================================================================
+describe('Multi-Instance Port Isolation', () => {
+  it('should export writeApprovalPortFile and cleanupApprovalPortFile from server.ts', async () => {
+    const server = await import('../src/server.js');
+    expect(server.writeApprovalPortFile).toBeDefined();
+    expect(typeof server.writeApprovalPortFile).toBe('function');
+    expect(server.cleanupApprovalPortFile).toBeDefined();
+    expect(typeof server.cleanupApprovalPortFile).toBe('function');
+    expect(server.readApprovalPortFile).toBeDefined();
+    expect(typeof server.readApprovalPortFile).toBe('function');
+  });
+
+  it('should export getApprovalServerPort from main.ts', async () => {
+    const main = await import('../src/main.js');
+    expect(main.getApprovalServerPort).toBeDefined();
+    expect(typeof main.getApprovalServerPort).toBe('function');
+  });
+
+  it('startApprovalServer should be async and return Promise', async () => {
+    const main = await import('../src/main.js');
+    // Function signature changed from sync to async
+    expect(main.startApprovalServer).toBeDefined();
+    // The function should return a Promise (async function)
+    const result = main.startApprovalServer();
+    expect(result).toBeInstanceOf(Promise);
+    await result; // Clean up
+  });
+});

@@ -374,13 +374,19 @@ export declare function setupApprovalIPCHandlers(ipcMain: {
  */
 export declare function resolveHookApproval(toolId: string, approved: boolean, grantScope?: 'once' | 'session' | 'always'): void;
 /**
- * Start the approval hook server
+ * Start the approval hook server with dynamic port selection
+ * Uses findAvailablePort to avoid conflicts with other Cyclist instances
+ * Writes port to .cyclist-approval-port for hook discovery
  */
-export declare function startApprovalServer(): void;
+export declare function startApprovalServer(): Promise<void>;
 /**
- * Stop the approval hook server
+ * Stop the approval hook server and clean up port file
  */
 export declare function stopApprovalServer(): void;
+/**
+ * Get the current approval server port (for testing)
+ */
+export declare function getApprovalServerPort(): number | null;
 /**
  * Save session ID to file for persistence across app restarts
  * E7-3: Session persistence support
