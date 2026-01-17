@@ -370,6 +370,18 @@ export declare function setupApprovalIPCHandlers(ipcMain: {
     on?: (channel: string, handler: (event: unknown, ...args: unknown[]) => void) => void;
 }): void;
 /**
+ * Resolve a pending hook approval (called when user responds to modal)
+ */
+export declare function resolveHookApproval(toolId: string, approved: boolean, grantScope?: 'once' | 'session' | 'always'): void;
+/**
+ * Start the approval hook server
+ */
+export declare function startApprovalServer(): void;
+/**
+ * Stop the approval hook server
+ */
+export declare function stopApprovalServer(): void;
+/**
  * Save session ID to file for persistence across app restarts
  * E7-3: Session persistence support
  */

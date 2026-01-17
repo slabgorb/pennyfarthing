@@ -94,64 +94,72 @@ If fonts still don't work after settings change:
 
 ## Cyclist Approval Gate Architecture (Story 33-7)
 
-### The Core Architecture
+### The Correct Architecture (PreToolUse Hooks)
 
-Cyclist uses Claude Code CLI via `--input-format stream-json` and `--output-format stream-json`. This is an **observer pattern**:
+Claude Code has a **hooks system** that fires BEFORE tool execution. Cyclist uses this to actually control tool execution:
 
-1. Cyclist spawns Claude Code CLI as a subprocess
-2. Cyclist sends user messages via stdin
-3. Claude Code executes tools INTERNALLY and streams results back
-4. Cyclist OBSERVES the message stream (tool_use, tool_result, etc.)
+```
+Claude Code wants to run a tool
+    ↓
+PreToolUse hook fires → cyclist-pretooluse-hook.js
+    ↓
+Hook sends HTTP request to Cyclist (localhost:7432)
+    ↓
+Cyclist shows approval modal
+    ↓
+User clicks Allow/Deny
+    ↓
+Cyclist responds to HTTP request
+    ↓
+Hook returns JSON with permissionDecision: "allow" or "deny"
+    ↓
+Claude Code proceeds or blocks based on decision
+```
 
-**Cyclist does NOT control tool execution. Claude Code CLI does.**
-
-### What This Means for Approval Gates
-
-The approval gate system (story 22-3, 33-3, 33-7) provides:
-- A custom UI modal for reviewing commands
-- Grant management (once/session/always)
-- Pattern matching for allowlists
-
-But it works WITH Claude Code's built-in permission system, not INSTEAD of it:
-- Claude Code has `--permission-mode` (default, plan, acceptEdits, dangerouslySkipPermissions)
-- When Claude Code needs permission, IT pauses internally
-- Cyclist's role is to show a nicer UI and manage grants
+**This actually controls execution.** Unlike the old observer pattern.
 
 ### Key Files
 
 | File | Purpose |
 |------|---------|
-| `claude-service.ts:686-691` | Passes `--permission-mode` to CLI |
-| `approval-gate.ts` | Interception logic, pending approvals Map |
+| `src/hooks/cyclist-pretooluse-hook.js` | Script Claude Code calls before each tool |
+| `main.ts:startApprovalServer()` | HTTP server on port 7432 for hook communication |
+| `main.ts:resolveHookApproval()` | Resolves pending hook approvals |
 | `settings-store.ts` | Grant storage, allowlist management |
 | `ApprovalModal.js` | Renderer-side UI |
-| `preload.ts:586-590` | IPC bridge for bash approval |
 
-### IPC Channels
+### Installation
 
-| Channel | Direction | Purpose |
-|---------|-----------|---------|
-| `bash:approval-request` | main→renderer | Show modal |
-| `bash:approval-response` | renderer→main | User decision |
-| `permission-request` | main→renderer | Generic tool modal (33-3) |
-| `permission-response` | renderer→main | Generic response |
+Add to `~/.claude/settings.json` or project `.claude/settings.json`:
 
-### Common Confusion
+```json
+{
+  "hooks": {
+    "PreToolUse": [{
+      "matcher": "Bash",
+      "hooks": [{
+        "type": "command",
+        "command": "node /path/to/cyclist/src/hooks/cyclist-pretooluse-hook.js"
+      }]
+    }]
+  }
+}
+```
 
-**DON'T:** Try to "intercept" tool execution at line 1014 of main.ts. That code OBSERVES the message stream AFTER Claude Code has already decided to execute.
+### How It Works
 
-**DO:** Understand that `processToolUseWithApproval()` is meant to:
-1. Check if Cyclist's gate is enabled
-2. Check grants/allowlists
-3. Show modal if needed
-4. Track the pending approval
-5. The actual execution control is via Claude Code's permission mode
+1. **Hook receives tool info** via stdin (JSON with tool_name, tool_input, tool_use_id)
+2. **Hook sends HTTP POST** to `http://127.0.0.1:7432/approval-request`
+3. **Cyclist checks gate/grants** - if allowed, returns immediately
+4. **If approval needed**, Cyclist shows modal and HTTP request blocks
+5. **User decides**, Cyclist responds to HTTP with `{decision: "allow"|"deny"}`
+6. **Hook outputs JSON** with `permissionDecision` field
+7. **Claude Code** allows or blocks based on hook output
 
-### When the Gate Actually Works
+### What DOESN'T Work (The Old Pattern)
 
-The approval gate UI fires when:
-1. `bashApprovalGateEnabled` is true in settings-store
-2. Claude Code is in a permission mode that pauses (not `dangerouslySkipPermissions`)
-3. A tool_use message arrives that isn't allowlisted/granted
+The old pattern of observing `tool_use` messages in the stream at `main.ts:1014` does NOT control execution. By the time you see the message, Claude Code has already decided to execute. That code path still exists for UI updates (showing what tools ran) but doesn't gate anything.
 
-The modal shows, user responds, and Cyclist sends the approval response. But Claude Code's own permission system is what actually gates execution.
+### Key Insight
+
+Claude Code's PreToolUse hooks are the **only way** to actually control tool execution from an external process. The hook script runs synchronously - Claude Code waits for it to exit before proceeding.
