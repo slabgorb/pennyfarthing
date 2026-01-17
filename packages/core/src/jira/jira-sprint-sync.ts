@@ -503,13 +503,50 @@ export interface ImportMissingStoriesToYamlResult extends SprintSyncResult {
  * Extract all story IDs from sprint YAML file
  */
 export async function getYamlStoryIds(
-  _options: GetYamlStoryIdsOptions
+  options: GetYamlStoryIdsOptions
 ): Promise<GetYamlStoryIdsResult> {
-  // TODO: Implement in GREEN phase
-  return {
-    success: false,
-    error: 'Not yet implemented'
-  };
+  const { sprintPath } = options;
+
+  if (!existsSync(sprintPath)) {
+    return {
+      success: false,
+      error: `Sprint file not found: ${sprintPath}`
+    };
+  }
+
+  try {
+    const content = readFileSync(sprintPath, 'utf-8');
+    const yaml = parse(content) as {
+      epics?: Array<{
+        id: string;
+        stories?: Array<{ id: string }>;
+      }>;
+    };
+
+    const storyIds: string[] = [];
+
+    if (yaml.epics) {
+      for (const epic of yaml.epics) {
+        if (epic.stories) {
+          for (const story of epic.stories) {
+            if (story.id) {
+              storyIds.push(String(story.id));
+            }
+          }
+        }
+      }
+    }
+
+    return {
+      success: true,
+      storyIds
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: `Failed to parse sprint YAML: ${(err as Error).message}`
+    };
+  }
 }
 
 // ============================================
@@ -517,15 +554,49 @@ export async function getYamlStoryIds(
 // ============================================
 
 /**
+ * Extract story ID from Jira summary
+ * Handles formats like "47-1: Title", "Story 47-1: Title", etc.
+ */
+function extractStoryIdFromSummary(summary: string): string | null {
+  // Match patterns like "47-1:", "Story 47-1:", "31-5:" etc.
+  const match = summary.match(/(?:Story\s+)?(\d+-\d+):/i);
+  return match ? match[1] : null;
+}
+
+/**
  * Find stories that are in Jira but not in the sprint YAML
  */
 export async function findJiraOnlyStories(
-  _options: FindJiraOnlyStoriesOptions
+  options: FindJiraOnlyStoriesOptions
 ): Promise<FindJiraOnlyStoriesResult> {
-  // TODO: Implement in GREEN phase
+  const { jiraIssues, yamlStoryIds, filterLabel } = options;
+
+  const missingStories: MissingStory[] = [];
+
+  for (const issue of jiraIssues) {
+    // Filter by label if provided
+    if (filterLabel && (!issue.labels || !issue.labels.includes(filterLabel))) {
+      continue;
+    }
+
+    // Extract story ID from summary
+    const storyId = extractStoryIdFromSummary(issue.summary);
+    if (!storyId) {
+      continue;
+    }
+
+    // Check if this story is missing from YAML
+    if (!yamlStoryIds.includes(storyId)) {
+      missingStories.push({
+        ...issue,
+        storyId
+      });
+    }
+  }
+
   return {
-    success: false,
-    error: 'Not yet implemented'
+    success: true,
+    missingStories
   };
 }
 
@@ -537,12 +608,36 @@ export async function findJiraOnlyStories(
  * Generate a human-readable report of missing stories
  */
 export async function formatMissingStoriesReport(
-  _options: FormatMissingStoriesReportOptions
+  options: FormatMissingStoriesReportOptions
 ): Promise<FormatMissingStoriesReportResult> {
-  // TODO: Implement in GREEN phase
+  const { missingStories, jiraBaseUrl } = options;
+
+  if (missingStories.length === 0) {
+    return {
+      success: true,
+      report: '✓ All synced - 0 stories missing from sprint YAML'
+    };
+  }
+
+  const lines: string[] = [];
+  lines.push(`Found ${missingStories.length} stories in Jira but not in sprint YAML:\n`);
+
+  for (const story of missingStories) {
+    const title = story.summary.replace(/^\d+-\d+:\s*/, '').replace(/^Story\s+\d+-\d+:\s*/i, '');
+    let line = `  - ${story.storyId}: ${title}`;
+    line += ` [${story.key}]`;
+    line += ` (${story.status})`;
+
+    if (jiraBaseUrl) {
+      line += `\n    ${jiraBaseUrl}/browse/${story.key}`;
+    }
+
+    lines.push(line);
+  }
+
   return {
-    success: false,
-    error: 'Not yet implemented'
+    success: true,
+    report: lines.join('\n')
   };
 }
 
@@ -551,14 +646,103 @@ export async function formatMissingStoriesReport(
 // ============================================
 
 /**
+ * Map Jira status to YAML status
+ */
+function mapJiraStatusToYaml(jiraStatus: string): string {
+  const normalized = jiraStatus.toLowerCase();
+  if (normalized === 'done') {
+    return 'done';
+  }
+  if (normalized === 'in progress') {
+    return 'in_progress';
+  }
+  // To Do, Open, Backlog, etc. → backlog
+  return 'backlog';
+}
+
+/**
  * Import missing stories from Jira into sprint YAML
  */
 export async function importMissingStoriesToYaml(
-  _options: ImportMissingStoriesToYamlOptions
+  options: ImportMissingStoriesToYamlOptions
 ): Promise<ImportMissingStoriesToYamlResult> {
-  // TODO: Implement in GREEN phase
-  return {
-    success: false,
-    error: 'Not yet implemented'
-  };
+  const { sprintPath, missingStories, targetEpicId, dryRun = false } = options;
+
+  if (!existsSync(sprintPath)) {
+    return {
+      success: false,
+      error: `Sprint file not found: ${sprintPath}`
+    };
+  }
+
+  try {
+    const content = readFileSync(sprintPath, 'utf-8');
+    const yaml = parse(content) as {
+      sprint?: Record<string, unknown>;
+      epics?: Array<{
+        id: string;
+        title?: string;
+        stories?: Array<{
+          id: string;
+          title?: string;
+          status?: string;
+          jira?: string;
+          points?: number;
+        }>;
+      }>;
+    };
+
+    // Find target epic
+    const targetEpic = yaml.epics?.find(e => e.id === targetEpicId);
+    if (!targetEpic) {
+      return {
+        success: false,
+        error: `Target epic '${targetEpicId}' not found in sprint YAML`
+      };
+    }
+
+    // Dry run: just return what would be imported
+    if (dryRun) {
+      return {
+        success: true,
+        importedCount: missingStories.length,
+        wouldImport: missingStories
+      };
+    }
+
+    // Ensure stories array exists
+    if (!targetEpic.stories) {
+      targetEpic.stories = [];
+    }
+
+    // Add missing stories
+    for (const story of missingStories) {
+      const title = story.summary.replace(/^\d+-\d+:\s*/, '').replace(/^Story\s+\d+-\d+:\s*/i, '');
+      targetEpic.stories.push({
+        id: story.storyId,
+        title,
+        status: mapJiraStatusToYaml(story.status),
+        jira: story.key,
+        ...(story.points !== undefined && { points: story.points })
+      });
+    }
+
+    // Write back
+    const updatedContent = stringify(yaml, {
+      lineWidth: 0,
+      singleQuote: false
+    });
+
+    writeFileSync(sprintPath, updatedContent);
+
+    return {
+      success: true,
+      importedCount: missingStories.length
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: `Failed to update sprint YAML: ${(err as Error).message}`
+    };
+  }
 }
