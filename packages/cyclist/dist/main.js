@@ -1637,7 +1637,7 @@ if (isElectron) {
     setupCommandIPCHandlers(ipcMain); // 23-3: Command execution
     setupSkillIPCHandlers(ipcMain); // 35-12: Skill invocation tracking
     setupApprovalIPCHandlers(ipcMain); // 33-7: Approval gate wiring
-    startApprovalServer(); // 33-7: Start HTTP server for PreToolUse hook
+    // NOTE: startApprovalServer() moved to app.whenReady() - needs project directory
     /**
      * Kill orphaned Claude CLI process from previous Cyclist session in THIS project.
      * B-24 fix: Only kills the specific PID from .cyclist-pid, not all Claude processes.
@@ -1745,6 +1745,7 @@ if (isElectron) {
             // B-24: Kill any orphaned Claude processes from crashed sessions
             cleanupStaleProcesses();
             await startServer();
+            await startApprovalServer(); // 33-7: Start after project dir set
             createWindow();
             if (mainWindow && projectDir) {
                 mainWindow.setTitle(`Cyclist - ${basename(projectDir)}`);
