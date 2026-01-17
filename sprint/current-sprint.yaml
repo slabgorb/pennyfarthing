@@ -5,13 +5,13 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 88
+  total_points: 91
   completed_points: 36
-  remaining_points: 52
+  remaining_points: 55
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - Epic 31: Customizable Workflow Engine (4 pts remaining)
-    - Epic 33: Runtime Permission Management (2 pts remaining)
+    - Epic 33: Runtime Permission Management (5 pts remaining) - Added 33-6 wiring story
     - Epic 35: Cyclist UI/UX Improvements (13 pts remaining)
     - Epic 36: OTEL Tool Call Enrichment (4 pts remaining)
     - Epic 37: Technical Debt & Bug Fixes (16 pts remaining)
@@ -90,7 +90,7 @@ epics:
       Allow agents to request and manage tool permissions at runtime.
       Currently permissions must be pre-configured; agents can't request
       spot permissions for tools like WebFetch when needed.
-    points: 12
+    points: 15
     completed_points: 7
     priority: P1
     marker: ux
@@ -113,6 +113,37 @@ epics:
           - Workflow start checks required permissions
           - Prompts for missing permissions
           - Cached grants skip prompts
+      - id: 33-6
+        title: Wire approval gate into tool execution pipeline
+        description: |
+          The approval gate infrastructure exists but is never called:
+          - approval-gate.ts has interceptToolUse(), requestApproval()
+          - ApprovalModal.js has showPermissionModal()
+          - main.ts processes tool_use blocks but never checks approval
+
+          Wire the approval flow into main.ts:
+          1. Import approval-gate functions
+          2. Before processing tool_use, call interceptToolUse()
+          3. If shouldApprove, call requestApproval() (blocks until user responds)
+          4. IPC handler for approval-response from renderer
+          5. If rejected, inject rejection error and skip tool
+          6. If approved, continue normal execution
+
+          Architecture reference: Cline's stored resolver pattern - Promise resolver
+          stored in Map, UI sends response, resolver called to unblock.
+        points: 3
+        priority: P0
+        status: backlog
+        repos: cyclist
+        workflow: tdd
+        acceptance_criteria:
+          - Tool_use blocks check approval gate before processing
+          - Bash commands with gate enabled trigger approval modal
+          - User approval unblocks tool execution
+          - User rejection injects error response to Claude
+          - Grant scopes (once/session/always) persist correctly
+          - Dangerous paths trigger approval regardless of gate setting
+          - IPC channel handles approval request/response flow
   - id: epic-35
     title: Cyclist UI/UX Improvements
     description: |
