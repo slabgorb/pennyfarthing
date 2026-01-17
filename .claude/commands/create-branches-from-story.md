@@ -1,1 +1,0 @@
-../../pennyfarthing-dist/commands/create-branches-from-story.md
