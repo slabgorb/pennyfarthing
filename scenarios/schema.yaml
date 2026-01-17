@@ -189,9 +189,19 @@ schema:
         type: integer
         description: "Count of known issues to find"
 
+      severity_weights:
+        type: object
+        description: "Severity weights for detection scoring (v2)"
+        default:
+          critical: 15
+          high: 10
+          medium: 5
+          low: 2
+        note: "Used for weighted recall calculation"
+
       weights:
         type: object
-        description: "Severity weights for scoring"
+        description: "Legacy severity weights (deprecated, use severity_weights)"
         example:
           critical: 3
           high: 2
@@ -209,6 +219,57 @@ schema:
               id: string
               description: string
               points: integer
+
+  # ============================================================================
+  # Detection Scoring v2 (Precision/Recall)
+  # Replaces additive scoring with explicit precision/recall metrics
+  # ============================================================================
+
+  detection_scoring_v2:
+    type: object
+    description: "Precision/recall based detection scoring configuration"
+    schema:
+      severity_weights:
+        type: object
+        description: "Point values by severity for weighted recall"
+        default:
+          critical: 15
+          high: 10
+          medium: 5
+          low: 2
+
+      component_weights:
+        type: object
+        description: "How detection subtotal (50 pts) is allocated"
+        default:
+          recall: 30        # Weighted recall × 30 (coverage priority)
+          precision: 10     # Precision × 10 (penalize hallucinations)
+          novel_bonus: 10   # min(novel_valid × 3, 10) (reward thoroughness)
+
+      metrics_output:
+        type: object
+        description: "Metrics calculated and reported"
+        fields:
+          weighted_found: "Sum of (found_issues × severity_weight)"
+          weighted_total: "Sum of (all_baseline × severity_weight)"
+          recall: "weighted_found / weighted_total"
+          precision: "true_positives / (true_positives + false_positives)"
+          f2_score: "5 × (P × R) / (4P + R) - recall-biased harmonic mean"
+
+      rationale: |
+        This scoring system addresses several issues with the original additive approach:
+
+        1. **Explicit precision/recall trade-off**: Previously hidden, now visible
+        2. **Severity-weighted recall**: Critical issues matter more than low
+        3. **Novel findings preserved**: Bonus pool separate from precision calculation
+        4. **Transparent metrics**: All intermediate values reported for debugging
+
+        Design choices:
+        - Recall weighted 3x precision (30 vs 10 pts) because missing vulnerabilities
+          is typically worse than false positives in security review
+        - F2 score reported for reference but not used in final scoring to maintain
+          interpretability of component scores
+        - Novel bonus capped at 10 pts to prevent gaming via quantity over quality
 
   # ============================================================================
   # Persona Influence Areas
