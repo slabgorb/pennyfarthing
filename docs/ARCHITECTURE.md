@@ -307,11 +307,11 @@ stories:
 
 ### Loading Order
 
-1. Read `.claude/persona-config.yaml`
+1. Read `.pennyfarthing/config.local.yaml`
 2. Get theme (e.g., `discworld`)
 3. Load `personas/themes/{theme}.yaml`
 4. Extract agent section
-5. Apply attributes (verbosity, humor, etc.)
+5. Apply theme-specific persona
 
 ### Theme Structure
 
