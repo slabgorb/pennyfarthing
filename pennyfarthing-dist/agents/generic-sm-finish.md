@@ -214,14 +214,41 @@ git add sprint/archive/ sprint/context/ sprint/current-sprint.yaml .session/ && 
 git commit -m "chore({STORY_ID}): archive completed story and update sprint status"
 ```
 
-## Step 7: Optional Auto-PR
+## Step 7: Merge PR and Clean Up Branch
 
-If `{AUTO_PR}` = "true":
+If a PR exists for the feature branch:
+
+```bash
+# Merge the PR (squash merge to keep history clean)
+gh pr merge {PR_NUMBER} --squash --delete-branch 2>/dev/null || true
+```
+
+If no PR exists but on a feature branch:
+
+```bash
+# Just switch back to develop
+git checkout develop
+git pull origin develop
+```
+
+Always return to develop branch after finish:
+
+```bash
+# Ensure we're on develop
+git checkout develop 2>/dev/null || true
+
+# Delete local feature branch if it exists
+git branch -d {BRANCH} 2>/dev/null || true
+```
+
+## Step 8: Optional Auto-PR (for archive commit if needed)
+
+If `{AUTO_PR}` = "true" and archive commit is on a separate branch:
 ```bash
 gh pr create --base develop --title "chore: archive story {STORY_ID}" --body "Automated story completion"
 ```
 
-## Step 8: Output Completion Flags
+## Step 10: Output Completion Flags
 
 ```json
 {
@@ -231,7 +258,10 @@ gh pr create --base develop --title "chore: archive story {STORY_ID}" --body "Au
   "archive_path": "{ARCHIVE_PATH}",
   "summary_path": "sprint/context/story-{STORY_ID}-summary.md",
   "jira_synced": true,
-  "jira_skipped": false
+  "jira_skipped": false,
+  "pr_merged": true,
+  "branch_cleaned": true,
+  "current_branch": "develop"
 }
 ```
 
@@ -241,10 +271,15 @@ gh pr create --base develop --title "chore: archive story {STORY_ID}" --body "Au
   "success": true,
   "jira_synced": false,
   "jira_skipped": true,
+  "pr_merged": true,
+  "branch_cleaned": true,
+  "current_branch": "develop",
   ...
 }
 ```
 Note: `jira_skipped: true` with `success: true` is valid - story completes without Jira.
+
+**Branch cleanup is MANDATORY** - finish workflow must return to develop branch.
 
 ---
 
