@@ -43,11 +43,16 @@ When IN_PROGRESS_STATE, map the phase to the next agent:
 <on-invoke>
 **Step 1:** Run workflow status check
 
-```
+```yaml
 Task tool:
-  subagent_type: "workflow-status-check"
-  prompt: "Scan workflow state for /work command"
+  subagent_type: "general-purpose"
+  model: "haiku"
+  run_in_background: true
+  prompt: |
+    Read and follow: .pennyfarthing/agents/workflow-status-check.md
+    Scan workflow state for /work command
 ```
+Use `TaskOutput` with the returned task_id to get the result.
 
 **Step 2:** Present findings to user
 

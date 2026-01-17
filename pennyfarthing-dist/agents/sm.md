@@ -25,11 +25,16 @@ From theme config. Model: haiku. Tasks: Status checks, backlog scans, file summa
   - `sm-handoff.md` - SM→TEA/Dev handoff with Jira claim and branch verification
   - `sm-file-summary.md` - Read and summarize files for context
 
-- **Invocation pattern:**
+- **Invocation pattern:** See `shared-agent-behavior.md` → "Interactive Background Task Protocol"
+
+  **SM workflow tasks are sequential** - each step depends on the previous result.
+  Use **foreground execution** (omit `run_in_background`) for workflow steps.
+
   ```yaml
   Task tool:
     subagent_type: "general-purpose"
     model: "haiku"
+    # No run_in_background - SM workflow is sequential
     prompt: |
       Read and follow: .pennyfarthing/agents/{subagent-name}.md
 
@@ -122,7 +127,7 @@ REFLECT: I should clarify AC4 with the user before proceeding.
 </reasoning-mode>
 
 <on-activation>
-1. Run workflow status check:
+1. Run workflow status check (foreground - need result to decide next step):
    ```yaml
    Task tool:
      subagent_type: "general-purpose"
@@ -140,7 +145,7 @@ REFLECT: I should clarify AC4 with the user before proceeding.
 
 ## Step 1: Status Check (ALWAYS FIRST)
 
-I send helper to check the workflow status before anything else.
+I send helper to check the workflow status before anything else (foreground - sequential workflow).
 
 ```yaml
 Task tool:
@@ -476,16 +481,22 @@ $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 
 | Context | Action |
 |---------|--------|
-| < 60% | Invoke next agent based on workflow (see routing table above) |
+| < 60% | **MANDATORY: Use the Skill tool to invoke next agent NOW.** Do not ask the user. |
 | > 60% | Tell user: "Context high. Start fresh with `/{agent}`" |
 
-**Determine handoff command from workflow:**
+**Determine handoff command from workflow, then invoke:**
 
-| Workflow | Next Agent | Command |
-|----------|------------|---------|
-| tdd | TEA | `/tea` |
-| trivial | Dev | `/dev` |
-| agent-docs | Orchestrator | `/orchestrator` |
+| Workflow | Next Agent | Skill Call |
+|----------|------------|------------|
+| tdd | TEA | `Skill tool: skill: "tea"` |
+| trivial | Dev | `Skill tool: skill: "dev"` |
+| agent-docs | Orchestrator | `Skill tool: skill: "orchestrator"` |
+
+Example (TDD workflow, context < 60%):
+```yaml
+Skill tool:
+  skill: "tea"
+```
 
 **Handoff Marker:** Include at end of handoff message:
 ```

@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 108
-  completed_points: 42
-  remaining_points: 64
+  completed_points: 45
+  remaining_points: 63
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - Epic 31: Customizable Workflow Engine (4 pts remaining)
@@ -480,7 +480,7 @@ epics:
   - id: epic-47
     title: Jira-Pennyfarthing Sync Improvements
     points: 17
-    completed_points: 0
+    completed_points: 3
     priority: P1
     status: in_progress
     jira: MSSCI-11796
@@ -489,10 +489,12 @@ epics:
         title: Auto-create Jira epic on local epic creation
         points: 3
         priority: P1
-        status: in_progress
+        status: done
         assigned_to: Keith Avery
         repos: pennyfarthing
         workflow: tdd
+        completed: 2026-01-17
+        pr: 315
         acceptance_criteria:
           - SM setup detects new epic without jira field
           - Automatically creates Jira epic with matching title/description
@@ -503,9 +505,13 @@ epics:
         title: Sync sprint numbers with Jira sprint IDs
         points: 3
         priority: P1
-        status: backlog
+        status: done
+        assigned_to: Keith Avery
         repos: pennyfarthing
         workflow: tdd
+        completed: 2026-01-17
+        pr: 316
+        jira: MSSCI-11798
         acceptance_criteria:
           - Sprint YAML references Jira sprint ID (e.g., 275)
           - Status check queries Jira sprint for membership
