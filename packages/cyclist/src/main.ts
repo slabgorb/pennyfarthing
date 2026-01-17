@@ -56,6 +56,15 @@ import {
   type CyclistSettings,
 } from './settings.js';
 import { initializeGrants, setGrantsPersistCallback } from './settings-store.js';
+// Story 33-7: Import approval gate functions for tool execution pipeline
+import {
+  interceptToolUse,
+  requestApproval,
+  createRejectionError,
+  type ToolUseMessage,
+  type InterceptResult,
+  type SDKToolResultError,
+} from './approval-gate.js';
 import { openSettingsWindow, setMainWindowRef, setBrowserWindowRef } from './settings-window.js';
 import {
   IPC_DATA_CHANNELS,
@@ -1453,6 +1462,170 @@ export function setupCommandIPCHandlers(ipcMain: {
   registeredCommandChannels = [IPC_COMMAND_CHANNELS.EXECUTE];
 
   console.log('Command IPC handlers registered');
+}
+
+// =============================================================================
+// Story 33-7: Approval Gate Integration
+// =============================================================================
+
+/**
+ * Result from processToolUseWithApproval
+ */
+export interface ApprovalResult {
+  needsApproval: boolean;
+  passThrough: boolean;
+  approved?: boolean;
+  rejected?: boolean;
+  errorMessage?: SDKToolResultError;
+}
+
+// Dependency injection for testing
+let ipcSender: ((channel: string, data: unknown) => void) | null = null;
+let toolExecutor: ((message: ToolUseMessage) => void) | null = null;
+let errorInjector: ((error: SDKToolResultError) => void) | null = null;
+
+/**
+ * Set the IPC sender function (for testing)
+ */
+export function setIPCSender(sender: ((channel: string, data: unknown) => void) | null): void {
+  ipcSender = sender;
+}
+
+/**
+ * Set the tool executor function (for testing)
+ */
+export function setToolExecutor(executor: ((message: ToolUseMessage) => void) | null): void {
+  toolExecutor = executor;
+}
+
+/**
+ * Set the error injector function (for testing)
+ */
+export function setErrorInjector(injector: ((error: SDKToolResultError) => void) | null): void {
+  errorInjector = injector;
+}
+
+/**
+ * Send an approval request to the renderer via IPC
+ */
+export function sendApprovalRequest(toolId: string, toolName: string, context: Record<string, unknown>): void {
+  const sender = ipcSender || broadcastToRenderer;
+
+  sender('permission-request', {
+    toolId,
+    toolName,
+    context,
+  });
+}
+
+/**
+ * Handle permission response from renderer
+ * Called by IPC handler when user responds to approval modal
+ */
+export function handlePermissionResponse(response: {
+  toolId: string;
+  approved: boolean;
+  grantScope?: 'once' | 'session' | 'always';
+}): void {
+  // Import resolveApproval dynamically to avoid circular dependencies
+  import('./approval-gate.js').then(({ resolveApproval }) => {
+    resolveApproval(response.toolId, response.approved, response.grantScope);
+  });
+}
+
+/**
+ * Process a tool_use message with approval gate check
+ * This is the main integration point for story 33-7
+ *
+ * @param message - The tool_use message to process
+ * @returns ApprovalResult indicating whether approval is needed and outcome
+ */
+export async function processToolUseWithApproval(message: ToolUseMessage): Promise<ApprovalResult> {
+  // Check if this tool_use needs approval
+  const interceptResult = interceptToolUse(message);
+
+  // If gate is disabled or grant exists, pass through immediately
+  if (!interceptResult.shouldApprove) {
+    // Execute tool if executor is set
+    if (toolExecutor) {
+      toolExecutor(message);
+    }
+    return {
+      needsApproval: false,
+      passThrough: true,
+    };
+  }
+
+  // Need approval - send IPC request and wait for response
+  sendApprovalRequest(interceptResult.toolId, interceptResult.toolName, interceptResult.context);
+
+  // Get the command for Bash tools, or use context for other tools
+  const command = interceptResult.toolName === 'Bash'
+    ? (interceptResult.context.command as string) || ''
+    : JSON.stringify(interceptResult.context);
+
+  // Wait for user response
+  const approved = await requestApproval(command, interceptResult.toolId);
+
+  if (approved) {
+    // User approved - execute tool
+    if (toolExecutor) {
+      toolExecutor(message);
+    }
+    return {
+      needsApproval: true,
+      passThrough: true,
+      approved: true,
+    };
+  } else {
+    // User rejected - create and inject error
+    const errorMessage = createRejectionError(interceptResult.toolId);
+
+    if (errorInjector) {
+      errorInjector(errorMessage);
+    }
+
+    return {
+      needsApproval: true,
+      passThrough: false,
+      approved: false,
+      rejected: true,
+      errorMessage,
+    };
+  }
+}
+
+/**
+ * Set up IPC handlers for approval gate
+ * Story 33-7: Handles permission request/response flow
+ */
+export function setupApprovalIPCHandlers(ipcMain: {
+  handle?: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
+  on?: (channel: string, handler: (event: unknown, ...args: unknown[]) => void) => void;
+}): void {
+  // Handle permission response from renderer
+  if (ipcMain.on) {
+    ipcMain.on('permission-response', (_event: unknown, response: unknown) => {
+      handlePermissionResponse(response as {
+        toolId: string;
+        approved: boolean;
+        grantScope?: 'once' | 'session' | 'always';
+      });
+    });
+  }
+
+  if (ipcMain.handle) {
+    ipcMain.handle('permission-response', async (_event: unknown, response: unknown) => {
+      handlePermissionResponse(response as {
+        toolId: string;
+        approved: boolean;
+        grantScope?: 'once' | 'session' | 'always';
+      });
+      return { success: true };
+    });
+  }
+
+  console.log('Approval gate IPC handlers registered');
 }
 
 // =============================================================================
