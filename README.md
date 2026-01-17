@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v6.5.0** | *The outer loop goes once, the inner loop goes many times.*
+**v6.6.2** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px" margin="10px">
 
@@ -30,7 +30,7 @@ Explore all themes with OCEAN spider charts, Chernoff faces, and 1020 character 
 cd your-project
 
 # Install CLI (1.1 MB)
-npm install --save-dev pennyfarthing
+npm install --save-dev @pennyfarthing/core
 
 # Initialize (creates symlinks, no file copying)
 npx pennyfarthing init
@@ -147,11 +147,8 @@ After initialization:
 ```
 your-project/
 ├── .claude/
-│   ├── agents/               # → symlink to node_modules/pennyfarthing/pennyfarthing-dist/agents/
-│   ├── commands/             # → symlink to node_modules/pennyfarthing/pennyfarthing-dist/commands/
-│   ├── skills/               # → symlink to node_modules/pennyfarthing/pennyfarthing-dist/skills/
-│   ├── personas/             # → symlink to node_modules/pennyfarthing/pennyfarthing-dist/personas/
-│   ├── scripts/              # → symlink to node_modules/pennyfarthing/pennyfarthing-dist/scripts/
+│   ├── commands/             # → symlinks to @pennyfarthing/core commands
+│   ├── skills/               # → symlinks to @pennyfarthing/core skills
 │   ├── project/              # YOUR customizations
 │   │   ├── agents/*-sidecar/ # Agent memory/learnings
 │   │   ├── docs/             # shared-context.md
@@ -159,6 +156,11 @@ your-project/
 │   ├── manifest.json         # Installation manifest
 │   └── settings.local.json   # Claude Code settings
 ├── .pennyfarthing/
+│   ├── agents/               # → symlink to @pennyfarthing/core agents
+│   ├── guides/               # → symlink to @pennyfarthing/core guides
+│   ├── personas/             # → symlink to @pennyfarthing/core personas
+│   ├── scripts/              # → symlink to @pennyfarthing/core scripts
+│   ├── sidecars/             # Agent learning files
 │   └── config.local.yaml     # Theme selection (gitignored)
 ├── sprint/
 │   ├── current-sprint.yaml   # Active sprint
@@ -229,7 +231,7 @@ Override locally with `.claude/pennyfarthing/preferences.local.yaml` (gitignored
 
 ```bash
 # Update CLI
-npm update pennyfarthing
+npm update @pennyfarthing/core
 
 # Update visual terminal (if installed)
 npm update @pennyfarthing/cyclist
@@ -250,17 +252,18 @@ pennyfarthing uninstall --all
 
 Archived sprint data (`sprint/archive/`, `sprint/context/`) is always preserved.
 
-## What's New in v6.4
+## What's New in v6.6
 
-- **102 Themes** - 11 new themes added since v6.0
-- **20 Skills** - Expanded knowledge domains
-- **43 Commands** - More workflow entry points
-- **Sprint 10** - Customizable workflows and runtime permissions
+- **npm Registry Publishing** - Install directly from npm (no GitHub auth required)
+  - `@pennyfarthing/core` - CLI and agent framework
+  - `@pennyfarthing/cyclist` - Optional visual terminal with portraits
+- **Scoped Packages** - Both packages under `@pennyfarthing` org
+- **Public Access** - No npm tokens needed for installation
 
 ## What's New in v6.5
 
 - **Simplified Installation** - Two packages for different needs:
-  - `pennyfarthing` - CLI only (1.1 MB)
+  - `@pennyfarthing/core` - CLI only (1.1 MB)
   - `@pennyfarthing/cyclist` - Optional visual terminal with portraits (160 MB)
 - **Portrait Optimization** - Cyclist bundles only 128px and 256px portraits (saves 450MB)
 - **Agent Modernization** - All agents updated with status tags and consolidated shared behavior

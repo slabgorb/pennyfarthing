@@ -18,7 +18,7 @@ Get up and running with Pennyfarthing in under 5 minutes.
 
 ```bash
 cd your-project
-npm install --save-dev pennyfarthing
+npm install --save-dev @pennyfarthing/core
 ```
 
 **Optional:** For the Cyclist visual terminal with agent portraits:
@@ -34,9 +34,9 @@ npx pennyfarthing init
 ```
 
 This creates symlinks (no file copying):
-- `.pennyfarthing/agents/`, `commands/`, `skills/`, `personas/` → `node_modules/pennyfarthing/pennyfarthing-dist/`
+- `.pennyfarthing/agents/`, `guides/`, `personas/`, `scripts/` → `node_modules/@pennyfarthing/core/pennyfarthing-dist/`
+- `.claude/commands/`, `skills/` → symlinks to built-in commands and skills
 - `.claude/project/` - Your customizations (not a symlink)
-- `.pennyfarthing/` - Local config (gitignored)
 - `sprint/` - Sprint tracking
 - `.session/` - Work session files
 
@@ -138,7 +138,7 @@ The SM (Scrum Master) agent activates and guides you through:
 ## Updating
 
 ```bash
-npm update pennyfarthing
+npm update @pennyfarthing/core
 npx pennyfarthing doctor
 ```
 
@@ -154,7 +154,7 @@ npx pennyfarthing doctor --fix
 
 ```bash
 npx pennyfarthing uninstall
-npm install --save-dev pennyfarthing
+npm install --save-dev @pennyfarthing/core
 npx pennyfarthing init
 ```
 
