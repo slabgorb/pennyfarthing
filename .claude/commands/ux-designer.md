@@ -1,1 +1,0 @@
-../../pennyfarthing-dist/commands/ux-designer.md

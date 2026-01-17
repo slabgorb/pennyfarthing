@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [7.0.1] - 2026-01-17
+
+### Fixed
+
+- **Dogfood Doctor** - Updated `doctor-dogfood.sh` to check new directory structure (`.pennyfarthing/` for agents/guides/personas/scripts, `.claude/` for commands/skills only)
+- **Symlink Structure** - Converted `.claude/commands` and `.claude/skills` from directories to symlinks pointing to `pennyfarthing-dist/`
+- **Build Path** - Fixed doctor to check `packages/core/dist/` instead of root `dist/` for monorepo structure
+
+---
+
 ## [7.0.0] - 2026-01-17
 
 ### Major Release: npm Publishing & Directory Restructure
