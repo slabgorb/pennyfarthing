@@ -20,6 +20,21 @@ Cyclist is a visual terminal interface for Claude Code that displays:
 - Story/session progress tracking
 - Git status and context information
 
+## Quick Start (Recommended)
+
+Use `just` commands from the project root:
+
+```bash
+# Start Cyclist Electron (recommended)
+just cyclist-electron
+
+# Start Cyclist web server only (browser-based)
+just cyclist-web
+
+# Start Cyclist for a different project
+just cyclist-electron project_dir=/path/to/project
+```
+
 ## Environment Variables
 
 | Variable | Description | Default |
@@ -37,6 +52,20 @@ Cyclist is a visual terminal interface for Claude Code that displays:
 | `--project-dir=/path` | Specify project directory |
 
 ## Launch Commands
+
+### Using Just (Recommended)
+
+```bash
+# Electron mode (from any pennyfarthing project)
+just cyclist-electron
+
+# Web mode (browser-based)
+just cyclist-web
+
+# With explicit project directory
+just cyclist-electron project_dir=/path/to/project
+just cyclist-web project_dir=/path/to/project
+```
 
 ### Web Backend (Browser Mode)
 
@@ -62,19 +91,10 @@ cyclist /path/to/project
 
 # Direct launch via open
 open -a Cyclist --args --project-dir=/path/to/project
-```
 
-### Quick Launch Examples
-
-```bash
-# Web mode for current directory
-cd packages/cyclist && CYCLIST_PROJECT_DIR=$PWD npm start
-
-# Web mode on custom port
-cd packages/cyclist && PORT=3000 CYCLIST_PROJECT_DIR=/path npm start
-
-# Dev mode with hot reload
-cd packages/cyclist && CYCLIST_DEV_WEB=1 CYCLIST_PROJECT_DIR=/path npm run dev:server
+# Development (from packages/cyclist)
+cd packages/cyclist
+CYCLIST_PROJECT_DIR=/path/to/project npm run dev
 ```
 
 ## Port Auto-Discovery
@@ -91,27 +111,61 @@ From `packages/cyclist/`:
 |--------|-------------|
 | `npm start` | Run production server |
 | `npm run dev` | Electron dev mode with file watching |
+| `npm run dev:once` | Build and run Electron once (no watching) |
 | `npm run dev:web` | Web server with tsx watch |
 | `npm run dev:server` | Server-only with tsx watch |
 | `npm run build` | Compile TypeScript |
 
+## Just Commands Reference
+
+| Command | Description |
+|---------|-------------|
+| `just cyclist-electron` | Start Electron dev mode |
+| `just cyclist-web` | Start web server mode |
+| `just cyclist-build` | Build Cyclist TypeScript |
+| `just cyclist-rebuild` | Rebuild native modules (node-pty) |
+| `just cyclist-setup` | Full clean + install + rebuild + build |
+| `just cyclist-build-and-install` | Build and install Cyclist.app |
+| `just test-cyclist` | Run Cyclist tests |
+
 ## Requirements
 
-- Project must have `.claude/` directory (Pennyfarthing-enabled)
-- For Electron: Cyclist.app must be installed
+- Project must have `.pennyfarthing/` directory with config (Pennyfarthing-enabled)
+- For Electron: Cyclist.app must be installed, or run from source
 - For web: Run from `packages/cyclist/` directory
 
 ## Troubleshooting
 
+### Window not appearing (Electron)
+
+The `package.json` has `"main": "dist/server.js"` for npm module use. The `dev` scripts explicitly run `electron dist/main.js` to use the correct entry point. If you run `electron .` directly, it will run the web server instead of the Electron main process.
+
+**Fix:** Use `just cyclist-electron` or `npm run dev` which run `electron dist/main.js`.
+
 ### Server won't start
-- Ensure you're in the cyclist package directory
+
+- Ensure you're in the cyclist package directory (or use `just` commands)
 - Run `npm run build` first if dist/ is stale
 - Check console for port conflict messages
 
 ### No portraits showing
+
 - Verify `pennyfarthing-dist/personas/portraits/` exists
-- Check theme in `.claude/persona-config.yaml`
+- Check theme in `.pennyfarthing/config.local.yaml`
 
 ### "Not a Pennyfarthing project"
-- Ensure project has `.claude/` directory
+
+- Ensure project has `.pennyfarthing/` directory with `config.local.yaml` or agent symlinks
+- Or has `.claude/` directory with persona-config.yaml (legacy)
 - Run `pennyfarthing init` in the project first
+- Or set `CYCLIST_PROJECT_DIR` to point to a valid project
+
+### Native module issues (node-pty)
+
+```bash
+# Rebuild native modules for current Electron version
+just cyclist-rebuild
+
+# Or full setup from scratch
+just cyclist-setup
+```

@@ -96,6 +96,23 @@ function generateSlug(shortName: string, ocean: { O: number; C: number; E: numbe
  */
 export function detectPennyfarthingProject(projectDir: string): boolean {
   if (!projectDir) return false;
+
+  // Check for .pennyfarthing directory (new preferred location)
+  const pennyfarthingDir = join(projectDir, '.pennyfarthing');
+  if (existsSync(pennyfarthingDir)) {
+    // Check for config file
+    const configFile = join(pennyfarthingDir, 'config.local.yaml');
+    if (existsSync(configFile)) return true;
+
+    // Check for Pennyfarthing symlinks (agents, guides, personas, scripts)
+    const pennyfarthingDirs = ['agents', 'guides', 'personas', 'scripts'];
+    for (const dir of pennyfarthingDirs) {
+      const dirPath = join(pennyfarthingDir, dir);
+      if (existsSync(dirPath)) return true;
+    }
+  }
+
+  // Legacy: Check .claude directory
   const claudeDir = join(projectDir, '.claude');
   if (!existsSync(claudeDir)) return false;
 
@@ -105,8 +122,8 @@ export function detectPennyfarthingProject(projectDir: string): boolean {
   if (existsSync(personaConfig)) return true;
 
   // Also check for Pennyfarthing symlinks (agents, guides, personas, scripts)
-  const pennyfarthingDirs = ['agents', 'guides', 'personas', 'scripts'];
-  for (const dir of pennyfarthingDirs) {
+  const legacyDirs = ['agents', 'guides', 'personas', 'scripts'];
+  for (const dir of legacyDirs) {
     const dirPath = join(claudeDir, dir);
     if (existsSync(dirPath)) return true;
   }

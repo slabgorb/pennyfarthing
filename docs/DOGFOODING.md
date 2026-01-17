@@ -264,6 +264,40 @@ ln -sf ../../pennyfarthing-dist/scripts/hooks/post-merge.sh .git/hooks/post-merg
 ls -la .git/hooks/ | grep -v sample
 ```
 
+## Cyclist Development
+
+Cyclist is the visual terminal interface in `packages/cyclist/`. Use `just` commands for development:
+
+```bash
+# Start Cyclist Electron (recommended for development)
+just cyclist-electron
+
+# Start Cyclist web server only (no Electron, browser-based)
+just cyclist-web
+
+# Build and install Cyclist.app
+just cyclist-build-and-install
+
+# Run Cyclist tests
+just test-cyclist
+```
+
+### Troubleshooting
+
+**Window not appearing:** The `package.json` has `"main": "dist/server.js"` for npm module use. The `dev` scripts explicitly run `electron dist/main.js` to use the correct entry point. If you run `electron .` directly, it will run the web server instead of the Electron app.
+
+**Pennyfarthing project not detected:** Cyclist looks for `.pennyfarthing/config.local.yaml` or `.pennyfarthing/agents` etc. Make sure you're running from a Pennyfarthing-enabled project directory, or set `CYCLIST_PROJECT_DIR`:
+
+```bash
+CYCLIST_PROJECT_DIR=/path/to/project just cyclist-electron
+```
+
+**Native modules (node-pty) issues:**
+```bash
+just cyclist-rebuild   # Rebuild native modules for Electron
+just cyclist-setup     # Full clean + install + rebuild + build
+```
+
 ## Historical Note
 
 - **Prior to v4.0**: `.claude/pennyfarthing/` was a copy of `pennyfarthing-dist/`, requiring manual synchronization.
