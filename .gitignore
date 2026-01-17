@@ -30,6 +30,9 @@ npm-debug.log*
 # TypeScript
 *.tsbuildinfo
 
+# Build output (delivered via npm)
+dist/
+
 # Package lock (project uses pnpm - ignore npm lockfile)
 package-lock.json
 
@@ -49,10 +52,10 @@ __pycache__/
 .session/*
 !.session/.gitkeep
 .claude/settings.local.json
-internal/showcase/dist/
 
 # Git worktrees
 worktrees/
 .cyclist-port
 .cyclist-pid
 .pennyfarthing/cyclist.yaml
+.cyclist-approval-port

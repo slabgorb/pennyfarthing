@@ -13,8 +13,8 @@ cyclist-web project_dir=`pwd`:
 # Start Cyclist in Electron development mode
 # Usage: just cyclist-electron [otel_debug]
 # Set otel_debug=true to capture raw OTEL data to /tmp/otel-capture.jsonl
-cyclist-electron otel_debug="false":
-    cd packages/cyclist && OTEL_DEBUG={{otel_debug}} npm run dev
+cyclist-electron otel_debug="false" project_dir=`pwd`:
+    cd packages/cyclist && CYCLIST_PROJECT_DIR={{project_dir}} OTEL_DEBUG={{otel_debug}} npm run dev
 
 # Build all packages
 build:

@@ -17,12 +17,23 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 <helpers>
 From theme config. Model: haiku. Tasks: Status checks, metrics gathering, file scanning.
 
-- **Official subagents:** (use `subagent_type: "{name}"`)
-  - `workflow-status-check` - Scan session files and git status
-  - `testing-runner` - Run tests to verify changes
-  - `sm-file-summary` - Summarize agent files for audit
-  - `generic-handoff` - Update session for phase transitions
-  - `Explore` - Search for patterns across codebase
+- **Subagents:** (use `subagent_type: "general-purpose"` with `model: "haiku"`)
+  - `workflow-status-check.md` - Scan session files and git status
+  - `testing-runner.md` - Run tests to verify changes
+  - `sm-file-summary.md` - Summarize agent files for audit
+  - `generic-handoff.md` - Update session for phase transitions
+  - `Explore` - Search for patterns across codebase (Claude Code built-in)
+
+- **Invocation pattern:**
+  ```yaml
+  Task tool:
+    subagent_type: "general-purpose"
+    model: "haiku"
+    prompt: |
+      Read and follow: .pennyfarthing/agents/{subagent-name}.md
+
+      {PARAMETERS}
+  ```
 </helpers>
 
 <responsibilities>
@@ -238,8 +249,11 @@ REFLECT: I should follow this pattern for consistency
 Never run `just test`, `npm test`, etc. directly. Always spawn:
 ```yaml
 Task tool:
-  subagent_type: "testing-runner"
+  subagent_type: "general-purpose"
+  model: "haiku"
   prompt: |
+    Read and follow: .pennyfarthing/agents/testing-runner.md
+
     REPOS: pennyfarthing
     CONTEXT: Verify agent file changes don't break tests
     RUN_ID: orchestrator-verify
@@ -294,8 +308,11 @@ See `/dev-patterns` skill → "Turn-Efficient Patterns" for complete guidance.
 After completing file updates, spawn handoff helper:
 ```yaml
 Task tool:
-  subagent_type: "generic-handoff"
+  subagent_type: "general-purpose"
+  model: "haiku"
   prompt: |
+    Read and follow: .pennyfarthing/agents/generic-handoff.md
+
     STORY_ID: {value}
     WORKFLOW: agent-docs
     CURRENT_PHASE: implement

@@ -20,8 +20,8 @@
     "portraits/"
   ],
   "scripts": {
-    "dev": "npm run build && concurrently -k -n tsc,preload,electron -c blue,cyan,green \"tsc --watch --preserveWatchOutput\" \"tsc -p tsconfig.preload.json --watch --preserveWatchOutput\" \"electron .\"",
-    "dev:once": "npm run build && electron .",
+    "dev": "npm run build && concurrently -k -n tsc,preload,electron -c blue,cyan,green \"tsc --watch --preserveWatchOutput\" \"tsc -p tsconfig.preload.json --watch --preserveWatchOutput\" \"electron dist/main.js\"",
+    "dev:once": "npm run build && electron dist/main.js",
     "dev:web": "CYCLIST_DEV_WEB=1 CYCLIST_PROJECT_DIR=${CYCLIST_PROJECT_DIR:-$PWD} tsx watch src/server.ts",
     "dev:server": "tsx watch src/server.ts",
     "build": "npm run build:commands && tsc && tsc -p tsconfig.preload.json && npm run build:editor",
@@ -37,6 +37,8 @@
     "install:all": "npm run install:app && npm run install:cli"
   },
   "dependencies": {
+    "@pennyfarthing/core": "workspace:*",
+    "@pennyfarthing/shared": "workspace:*",
     "@tiptap/core": "^2.27.1",
     "@tiptap/extension-code-block": "^2.27.1",
     "@tiptap/starter-kit": "^2.27.1",
