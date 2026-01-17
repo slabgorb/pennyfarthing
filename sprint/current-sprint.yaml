@@ -21,7 +21,6 @@ summary:
     SM will route to appropriate workflow (tdd, trivial, agent-docs).
 
     Sprint 10 closed with 54 pts completed (245% of velocity target).
-
 epics:
   # ===========================================================================
   # EPIC 31: Customizable Workflow Engine
@@ -55,7 +54,6 @@ epics:
         acceptance_criteria:
           - Trivial workflow phase names match agent names
           - Session file shows correct phase/agent correlation
-
   # ===========================================================================
   # EPIC 33: Runtime Permission Management
   # ===========================================================================
@@ -95,7 +93,6 @@ epics:
           - User rejection injects error response to Claude
           - Grant scopes (once/session/always) persist correctly
           - IPC channel handles approval request/response flow
-
   # ===========================================================================
   # EPIC 35: Cyclist UI/UX Improvements
   # ===========================================================================
@@ -178,7 +175,6 @@ epics:
           - Given I select a theme, When the picker closes, Then the persona display updates immediately
           - Given IPC is unavailable, When the picker loads, Then it falls back to HTTP gracefully
           - Given I change theme in quick-picker, When I open settings panel, Then settings reflects current theme
-
   # ===========================================================================
   # EPIC 36: OTEL Tool Call Enrichment
   # ===========================================================================
@@ -225,7 +221,6 @@ epics:
           - Timeline visualization in Cyclist UI
           - Filter controls for tool type and status
           - JSON export includes all enriched data
-
   # ===========================================================================
   # EPIC 37: Technical Debt & Bug Fixes
   # ===========================================================================
@@ -345,7 +340,6 @@ epics:
         acceptance_criteria:
           - Doctor correctly identifies workspace symlinks
           - No false failures after successful pnpm install
-
   # ===========================================================================
   # EPIC 38: Agent File Modernization
   # ===========================================================================
