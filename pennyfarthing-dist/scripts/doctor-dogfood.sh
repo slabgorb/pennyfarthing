@@ -119,19 +119,64 @@ echo ""
 echo "Checking symlinks..."
 echo ""
 
-# Check .claude/pennyfarthing symlink
-if [[ -L ".claude/pennyfarthing" ]]; then
-    TARGET=$(readlink ".claude/pennyfarthing")
-    if [[ "$TARGET" == "../pennyfarthing-dist" ]]; then
-        ok ".claude/pennyfarthing -> ../pennyfarthing-dist"
+# Check .pennyfarthing/ symlinks (new structure)
+PENNYFARTHING_SYMLINKS=("agents" "guides" "personas" "scripts")
+for item in "${PENNYFARTHING_SYMLINKS[@]}"; do
+    link_path=".pennyfarthing/$item"
+    expected_target="../pennyfarthing-dist/$item"
+
+    if [[ -L "$link_path" ]]; then
+        actual_target=$(readlink "$link_path")
+        if [[ "$actual_target" == "$expected_target" ]]; then
+            ok ".pennyfarthing/$item -> $expected_target"
+        else
+            warn ".pennyfarthing/$item points to: $actual_target (expected $expected_target)"
+        fi
+    elif [[ -d "$link_path" ]]; then
+        fail ".pennyfarthing/$item is a directory, should be symlink"
+        if $FIX_MODE; then
+            rm -rf "$link_path"
+            ln -s "$expected_target" "$link_path"
+            fix ".pennyfarthing/$item symlink created"
+        fi
     else
-        fail ".claude/pennyfarthing points to wrong target: $TARGET"
+        fail ".pennyfarthing/$item missing"
+        if $FIX_MODE; then
+            mkdir -p .pennyfarthing
+            ln -s "$expected_target" "$link_path"
+            fix ".pennyfarthing/$item symlink created"
+        fi
     fi
-elif [[ -d ".claude/pennyfarthing" ]]; then
-    fail ".claude/pennyfarthing is a directory, should be symlink"
-else
-    fail ".claude/pennyfarthing missing"
-fi
+done
+
+# Check .claude/ symlinks (commands and skills only)
+CLAUDE_SYMLINKS=("commands" "skills")
+for item in "${CLAUDE_SYMLINKS[@]}"; do
+    link_path=".claude/$item"
+    expected_target="../pennyfarthing-dist/$item"
+
+    if [[ -L "$link_path" ]]; then
+        actual_target=$(readlink "$link_path")
+        if [[ "$actual_target" == "$expected_target" ]]; then
+            ok ".claude/$item -> $expected_target"
+        else
+            warn ".claude/$item points to: $actual_target (expected $expected_target)"
+        fi
+    elif [[ -d "$link_path" ]]; then
+        warn ".claude/$item is a directory, should be symlink to pennyfarthing-dist/$item"
+        if $FIX_MODE; then
+            rm -rf "$link_path"
+            ln -s "$expected_target" "$link_path"
+            fix ".claude/$item symlink created"
+        fi
+    else
+        fail ".claude/$item missing"
+        if $FIX_MODE; then
+            ln -s "$expected_target" "$link_path"
+            fix ".claude/$item symlink created"
+        fi
+    fi
+done
 
 # Check scripts directory/symlink
 if [[ -L "scripts" ]]; then
@@ -194,14 +239,15 @@ echo ""
 echo "Checking build..."
 echo ""
 
-# Check if dist/ is up to date
-if [[ -d "dist" ]]; then
+# Check if packages/core/dist/ is up to date (monorepo structure)
+CORE_DIST="packages/core/dist"
+if [[ -d "$CORE_DIST" ]]; then
     # Check if any src file is newer than its dist counterpart
     OUTDATED=false
-    for src_file in src/cli/commands/*.ts; do
+    for src_file in packages/core/src/cli/commands/*.ts; do
         if [[ -f "$src_file" ]]; then
             base=$(basename "$src_file" .ts)
-            dist_file="dist/cli/commands/${base}.js"
+            dist_file="${CORE_DIST}/cli/commands/${base}.js"
             if [[ -f "$dist_file" ]]; then
                 if [[ "$src_file" -nt "$dist_file" ]]; then
                     OUTDATED=true
@@ -212,19 +258,19 @@ if [[ -d "dist" ]]; then
     done
 
     if $OUTDATED; then
-        warn "dist/ may be outdated (run: npm run build)"
+        warn "packages/core/dist/ may be outdated (run: npm run build)"
         if $FIX_MODE; then
             npm run build >/dev/null 2>&1
-            fix "Rebuilt dist/"
+            fix "Rebuilt packages"
         fi
     else
-        ok "dist/ appears up to date"
+        ok "packages/core/dist/ appears up to date"
     fi
 else
-    fail "dist/ directory missing"
+    fail "packages/core/dist/ missing"
     if $FIX_MODE; then
         npm run build >/dev/null 2>&1
-        fix "Built dist/"
+        fix "Built packages"
     fi
 fi
 
@@ -260,30 +306,19 @@ echo ""
 echo "Checking file locations..."
 echo ""
 
-# Check for files that should be in pennyfarthing-dist but aren't
-# Only check directories that are NOT symlinks (symlink dirs are fine)
-MISPLACED=0
-
-# .claude/agents should be a symlink, not a real directory with files
-if [[ -d ".claude/agents" ]] && [[ ! -L ".claude/agents" ]]; then
-    warn ".pennyfarthing/agents/ is a directory, should be symlink to pennyfarthing/agents"
-    ((MISPLACED++))
+# Check .pennyfarthing/sidecars exists (user-specific, not symlinked)
+if [[ -d ".pennyfarthing/sidecars" ]]; then
+    SIDECAR_COUNT=$(find .pennyfarthing/sidecars -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ')
+    ok ".pennyfarthing/sidecars/ exists ($SIDECAR_COUNT agent sidecars)"
+else
+    warn ".pennyfarthing/sidecars/ missing (agent learning files)"
 fi
 
-# .claude/commands should be a symlink
-if [[ -d ".claude/commands" ]] && [[ ! -L ".claude/commands" ]]; then
-    warn ".claude/commands/ is a directory, should be symlink to pennyfarthing/commands"
-    ((MISPLACED++))
-fi
-
-# .claude/skills should be a symlink
-if [[ -d ".claude/skills" ]] && [[ ! -L ".claude/skills" ]]; then
-    warn ".claude/skills/ is a directory, should be symlink to pennyfarthing/skills"
-    ((MISPLACED++))
-fi
-
-if [[ $MISPLACED -eq 0 ]]; then
-    ok "All .claude/ directories properly symlinked"
+# Check .claude/project exists (project-specific customizations)
+if [[ -d ".claude/project" ]]; then
+    ok ".claude/project/ exists"
+else
+    warn ".claude/project/ missing"
 fi
 
 echo ""
