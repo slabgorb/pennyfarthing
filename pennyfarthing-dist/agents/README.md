@@ -56,11 +56,14 @@ Lightweight subagents for mechanical tasks. Invoked via `Task tool` with `subage
 Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
+  run_in_background: true   # For independent work; omit for sequential workflows
   prompt: |
     Read and follow: .pennyfarthing/agents/{subagent-name}.md
 
     {PARAMETERS}
 ```
+
+**See `shared-agent-behavior.md` → "Interactive Background Task Protocol"** for when to use background vs foreground execution.
 
 - **`workflow-status-check.md`** - Detect workflow state
 - **`generic-sm-setup.md`** - Research OR setup mode (Story 31-11)
@@ -296,51 +299,35 @@ All agent commands in `.claude/commands/` have been standardized to use `$CLAUDE
 
 ## Background Subagent Execution
 
-Subagents can run in background using Claude Code's `run_in_background` parameter. This allows the main agent to continue working while slow operations complete asynchronously.
+Subagents can run in background using Claude Code's `run_in_background` parameter. This allows the user to continue interacting while slow operations complete asynchronously.
+
+**IMPORTANT:** See `shared-agent-behavior.md` → "Interactive Background Task Protocol" for the authoritative guidance.
+
+### The Key Insight
+
+**Background + immediate blocking is an anti-pattern.** If you spawn with `run_in_background: true` then immediately call `TaskOutput` with `block: true`, you've blocked the conversation - the user can't interact.
 
 ### When to Use Background Execution
 
-**Good candidates:**
-- Test runs (via `testing-runner`) while writing more code
-- Multiple independent file searches
-- Long-running git operations (fetch, clone)
-- Parallel exploration of code paths
+**Good candidates (truly independent work):**
+- Test runs while writing more code
+- Multiple independent file explorations
+- Long-running builds while discussing next steps
+- Parallel searches where you don't need results immediately
 
-**When NOT to use:**
-- Operations where subsequent work depends on the result
-- Operations that modify shared state (session file, git working tree)
-- Sequential workflows (must complete phase A before phase B)
+**When NOT to use (sequential workflow):**
+- Status checks that determine your next action
+- Handoff operations that must complete before continuing
+- Any operation where you need the result to proceed
 
-### Spawning Background Subagents
+### Cyclist Integration
 
-```yaml
-Task tool:
-  subagent_type: "general-purpose"
-  model: "haiku"
-  run_in_background: true
-  prompt: |
-    Read and follow: .pennyfarthing/agents/testing-runner.md
+When running in Cyclist, background tasks are automatically tracked:
+- OTEL spans detect `run_in_background: true` Task calls
+- Completion notifications appear in MessageView
+- User can expand to see full output
 
-    REPOS: all
-    CONTEXT: Background test run while implementing
-    RUN_ID: bg-test-001
-```
-
-### Checking Background Task Status
-
-Use the `TaskOutput` tool to check on background tasks:
-
-```yaml
-TaskOutput tool:
-  task_id: {task_id from spawn}
-  block: false          # Non-blocking check
-  timeout: 1000         # Quick timeout for status check
-```
-
-**Status values:**
-- `running` - Task still executing
-- `completed` - Task finished, results available
-- `error` - Task failed
+**This means:** Fire the task, tell the user it's running, and keep working. Cyclist handles the notification when it finishes.
 
 ### Tracking Background Tasks in Session Files
 

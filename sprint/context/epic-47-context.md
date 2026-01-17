@@ -107,3 +107,79 @@ jira issue view MSSCI-123 --raw
 - Jira API rate limits on bulk operations
 - Sprint ID mismatches if Jira sprints renamed
 - Orphaned stories if epic deleted in one system but not other
+
+## Technical Insights Discovered
+
+### Background Task Pattern for Agent Workflows (from Story 47-2)
+
+During the 47-2 session, we identified a critical anti-pattern in background task usage that was documented across all agent files.
+
+#### The Anti-Pattern (DO NOT DO THIS)
+
+```yaml
+# WRONG - Spawns background then immediately blocks
+Task tool:
+  run_in_background: true
+  prompt: "Check workflow status..."
+# Then immediately:
+TaskOutput tool:
+  task_id: {id}
+  block: true    # ← Defeats the purpose of background execution!
+```
+
+**Why it's wrong:** If you spawn a background task then immediately block waiting for it, you've prevented the user from interacting with the conversation. The whole point of background execution is to enable concurrent work.
+
+#### The Correct Pattern
+
+**For sequential workflows (status checks, handoffs, phase transitions):**
+```yaml
+Task tool:
+  subagent_type: "general-purpose"
+  model: "haiku"
+  # NO run_in_background - workflow is sequential
+  prompt: |
+    Read and follow: .pennyfarthing/agents/workflow-status-check.md
+    ...
+```
+
+**For truly independent work (tests while coding, parallel searches):**
+```yaml
+Task tool:
+  subagent_type: "general-purpose"
+  model: "haiku"
+  run_in_background: true
+  prompt: |
+    Read and follow: .pennyfarthing/agents/testing-runner.md
+    ...
+# Continue working - Cyclist will notify when complete via OTEL
+```
+
+#### When to Use Each Pattern
+
+| Situation | Pattern | Rationale |
+|-----------|---------|-----------|
+| Status check before deciding what to do | **Foreground** | Need result to proceed |
+| Handoff between agents | **Foreground** | Sequential workflow step |
+| Finish-story preflight checks | **Foreground** | Must complete before execution |
+| Tests while writing more code | **Background + continue** | Independent work |
+| Multiple file explorations | **Background + continue** | Parallel independent searches |
+
+#### Cyclist's Background Task Notification System
+
+Cyclist has built-in support for background task completion notifications:
+
+1. **OTEL span detection** - The OTEL receiver intercepts Task tool spans and detects `run_in_background: true`
+2. **IPC channel** - Fires `backgroundTask:completed` when the task finishes
+3. **MessageView notification** - Cyclist UI shows expandable completion notification
+
+**This means:** Fire the background task, tell the user it's running, and keep working. Cyclist handles the notification automatically when it finishes.
+
+#### Documentation Updates
+
+All agent files were updated to clarify this pattern:
+- `shared-agent-behavior.md` - Added "Interactive Background Task Protocol" section
+- `README.md` (agents) - Updated background execution guidance
+- All 10 main agents (SM, TEA, Dev, Reviewer, Orchestrator, Architect, PM, DevOps, Tech Writer, UX Designer)
+- `generic-handoff.md` subagent
+
+**Commit:** `406d8ab0` - "docs: clarify background task pattern for interactive usage"

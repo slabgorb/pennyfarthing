@@ -21,7 +21,11 @@ From theme config. Model: haiku. Tasks: Backlog scanning, Jira queries, velocity
   - `workflow-status-check.md` - Scan sprint state and active sessions
   - `sm-file-summary.md` - Summarize files for context gathering
 
-- **Invocation pattern:**
+- **Invocation pattern:** See `shared-agent-behavior.md` → "Interactive Background Task Protocol"
+
+  **Most PM tasks are sequential** - prioritization depends on sprint analysis.
+  Use **foreground execution** for workflow steps. Use **background** for independent parallel exploration.
+
   ```yaml
   Task tool:
     subagent_type: "general-purpose"

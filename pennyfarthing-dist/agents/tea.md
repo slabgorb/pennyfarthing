@@ -21,7 +21,11 @@ From theme config. Model: haiku. Tasks: run tests, gather results, update sessio
   - `testing-runner.md` - Run tests, gather results
   - `generic-handoff.md` - Workflow-driven session update for handoff
 
-- **Invocation pattern:**
+- **Invocation pattern:** See `shared-agent-behavior.md` → "Interactive Background Task Protocol"
+
+  **TEA workflow tasks are sequential** - handoff depends on test results.
+  Use **foreground execution** (omit `run_in_background`) for workflow steps.
+
   ```yaml
   Task tool:
     subagent_type: "general-purpose"
@@ -189,7 +193,11 @@ Then check context usage:
 $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
-**If < 60%:** Invoke `/dev` directly to continue the flow
+**If < 60%:** **MANDATORY: Use the Skill tool to invoke `/dev` NOW.** Do not ask the user - just invoke it:
+```yaml
+Skill tool:
+  skill: "dev"
+```
 
 **If > 60%:** Tell user: "Context high. Start fresh session with `/dev`"
 

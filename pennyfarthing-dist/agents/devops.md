@@ -22,7 +22,11 @@ From theme config. Model: haiku. Tasks: System checks, log analysis, config scan
   - `testing-runner.md` - Verify CI pipeline and tests pass
   - `sm-file-summary.md` - Summarize configuration files
 
-- **Invocation pattern:**
+- **Invocation pattern:** See `shared-agent-behavior.md` → "Interactive Background Task Protocol"
+
+  **Most DevOps tasks are sequential** - deployments depend on verification.
+  Use **foreground execution** for workflow steps. Use **background** for independent parallel checks.
+
   ```yaml
   Task tool:
     subagent_type: "general-purpose"

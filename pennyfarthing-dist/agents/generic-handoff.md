@@ -101,7 +101,7 @@ Based on the gate type from the workflow, run the appropriate checks.
    fi
    ```
 
-   If no valid cache or TEST_RESULT not provided, delegate to testing-runner:
+   If no valid cache or TEST_RESULT not provided, delegate to testing-runner (foreground - need result for handoff):
    ```yaml
    Task tool:
      subagent_type: "general-purpose"

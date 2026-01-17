@@ -149,4 +149,49 @@ d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$
 
 ---
 
+## Pattern: Background Task Execution (Story 47-2)
+
+**Problem:** Background tasks spawned with `run_in_background: true` then immediately blocked with `TaskOutput(block: true)` defeat the purpose of background execution.
+
+```yaml
+# ANTI-PATTERN - DO NOT DO THIS
+Task tool:
+  run_in_background: true
+  prompt: "Check workflow status..."
+# Then immediately:
+TaskOutput tool:
+  task_id: {id}
+  block: true    # ← Defeats interactivity!
+```
+
+**Solution:** Use foreground for sequential workflows, background only for truly independent work.
+
+### When to Use Each Pattern
+
+| Situation | Pattern | Why |
+|-----------|---------|-----|
+| Status check before deciding next action | **Foreground** | Need result to proceed |
+| Handoff between agents | **Foreground** | Sequential workflow step |
+| Finish-story preflight checks | **Foreground** | Must complete before execution |
+| Tests while writing more code | **Background + continue** | Independent work |
+| Multiple parallel file explorations | **Background + continue** | Parallel independent searches |
+
+### Cyclist Notification System
+
+Background tasks don't require manual polling. Cyclist has built-in notification:
+
+1. **OTEL span detection** - Receiver intercepts Task spans, detects `run_in_background: true`
+2. **IPC channel** - Fires `backgroundTask:completed` when task finishes
+3. **MessageView notification** - UI shows expandable completion notification
+
+**Correct Usage:** Fire the background task, tell the user it's running, keep working. Cyclist notifies automatically when complete.
+
+### Documentation
+
+- Authoritative guidance: `shared-agent-behavior.md` → "Interactive Background Task Protocol"
+- All 10 main agents updated with this pattern
+- Commit: `406d8ab0`
+
+---
+
 *Add process patterns discovered during orchestration below*

@@ -40,7 +40,11 @@ From theme config. Model: haiku. Tasks: gather pre-flight data, update session f
   - `reviewer-preflight.md` - Gather pre-flight data (tests, lint, smells)
   - `generic-handoff.md` - Workflow-driven session update (approve or reject)
 
-- **Invocation pattern:**
+- **Invocation pattern:** See `shared-agent-behavior.md` → "Interactive Background Task Protocol"
+
+  **Reviewer workflow tasks are sequential** - verdict depends on preflight results.
+  Use **foreground execution** (omit `run_in_background`) for workflow steps.
+
   ```yaml
   Task tool:
     subagent_type: "general-purpose"
@@ -231,9 +235,17 @@ Then check context usage:
 $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
-**If < 60%:** Invoke next agent directly:
-- APPROVED: Invoke `/sm` to finish story
-- REJECTED: Invoke `/dev` for fixes
+**If < 60%:** **MANDATORY: Use the Skill tool to invoke the next agent NOW.** Do not ask the user - just invoke it:
+- APPROVED:
+  ```yaml
+  Skill tool:
+    skill: "sm"
+  ```
+- REJECTED:
+  ```yaml
+  Skill tool:
+    skill: "dev"
+  ```
 
 **If > 60%:** Tell user: "Context high. Start fresh with `/sm` (approve) or `/dev` (reject)"
 

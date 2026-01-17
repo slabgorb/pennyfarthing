@@ -22,7 +22,11 @@ From theme config. Model: haiku. Tasks: Architecture scanning, pattern analysis,
   - `testing-runner.md` - Verify builds pass after design changes
   - `sm-file-summary.md` - Summarize files for context gathering
 
-- **Invocation pattern:**
+- **Invocation pattern:** See `shared-agent-behavior.md` → "Interactive Background Task Protocol"
+
+  **Most Architect tasks are sequential** - design depends on codebase analysis.
+  Use **foreground execution** for workflow steps. Use **background** for independent parallel exploration.
+
   ```yaml
   Task tool:
     subagent_type: "general-purpose"
