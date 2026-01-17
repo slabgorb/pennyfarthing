@@ -55,12 +55,27 @@ If no workflow tag, use fallback: 1-2 pts → Dev, 3+ pts → TEA
 
 **Before handoff, verify these gates pass:**
 
+- [ ] **Epic context exists:** `sprint/context/context-epic-{N}.md` (warn if missing, create if needed)
 - [ ] **Session file exists:** `.session/{story-id}-session.md`
 - [ ] **Story context written:** Technical approach, files to modify, ACs defined
 - [ ] **Jira claimed:** Story assigned and In Progress (or explicitly skipped)
 - [ ] **Branch created:** Feature branch exists in required repos
 
 If ANY gate fails, complete that step before handoff. Do not proceed to coding.
+
+### Epic Context Gate
+
+Before starting any story, SM checks for epic technical context at `sprint/context/context-epic-{N}.md`.
+
+**If missing:**
+1. SM warns about missing epic context
+2. SM can create context using `createEpicContext()` helper or delegate to `generic-sm-setup` with MODE=epic-context
+3. Epic context template includes: overview, technical landscape, key files, patterns, dependencies
+
+**Why this matters:**
+- Ensures stories don't start without understanding the broader technical landscape
+- Reduces repeated context-gathering for each story in an epic
+- Maintains consistent preparation quality across stories
 
 **SM's only code-like actions:**
 - Writing markdown (context files, session files, summaries)

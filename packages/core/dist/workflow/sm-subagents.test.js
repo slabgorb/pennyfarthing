@@ -28,7 +28,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const TEST_DIR = join(__dirname, '__test_sm_subagents__');
 // Import the generic-sm-setup module
-import { researchBacklog, setupStory } from './generic-sm-setup.js';
+import { researchBacklog, setupStory, checkEpicContext, createEpicContext } from './generic-sm-setup.js';
 // Import the generic-sm-finish module
 import { preflightCheck, executeFinish } from './generic-sm-finish.js';
 // Import extended generic-handoff for setup phase
@@ -563,6 +563,164 @@ describe('Deprecated File Removal (31-11)', () => {
         for (const file of deprecatedFiles) {
             assert.ok(deprecatedFiles.includes(file), `${file} is marked for removal`);
         }
+    });
+});
+/**
+ * Story 38-10: SM Gate for Epic Technical Context
+ *
+ * Tests for the epic context gate that ensures stories don't start
+ * without understanding their epic's technical landscape.
+ */
+describe('Epic Context Gate (38-10)', () => {
+    beforeEach(() => {
+        if (existsSync(TEST_DIR)) {
+            rmSync(TEST_DIR, { recursive: true });
+        }
+        mkdirSync(TEST_DIR, { recursive: true });
+    });
+    afterEach(() => {
+        if (existsSync(TEST_DIR)) {
+            rmSync(TEST_DIR, { recursive: true });
+        }
+    });
+    describe('checkEpicContext() - Context validation', () => {
+        it('should return true when epic context file exists', async () => {
+            // AC1: SM checks for sprint/context/context-epic-{N}.md before story setup
+            const contextDir = join(TEST_DIR, 'sprint', 'context');
+            mkdirSync(contextDir, { recursive: true });
+            // Create epic context file
+            writeFileSync(join(contextDir, 'context-epic-38.md'), '# Epic 38 Context\n\nTechnical overview here.');
+            const result = await checkEpicContext({
+                epicId: 38,
+                contextDir
+            });
+            assert.strictEqual(result.exists, true, 'Should detect existing context');
+            assert.ok(result.path, 'Should return file path');
+        });
+        it('should return false with message when epic context missing', async () => {
+            // AC2: Missing epic context blocks story setup with clear message
+            const contextDir = join(TEST_DIR, 'sprint', 'context');
+            mkdirSync(contextDir, { recursive: true });
+            // No context file created
+            const result = await checkEpicContext({
+                epicId: 38,
+                contextDir
+            });
+            assert.strictEqual(result.exists, false, 'Should detect missing context');
+            assert.ok(result.message, 'Should provide a message');
+            assert.ok(result.message?.includes('38'), 'Message should reference epic ID');
+        });
+        it('should provide path hint for missing context', async () => {
+            // AC2: Missing epic context blocks with clear message showing expected path
+            const contextDir = join(TEST_DIR, 'sprint', 'context');
+            mkdirSync(contextDir, { recursive: true });
+            const result = await checkEpicContext({
+                epicId: 42,
+                contextDir
+            });
+            assert.strictEqual(result.exists, false);
+            assert.ok(result.expectedPath, 'Should provide expected path');
+            assert.ok(result.expectedPath?.includes('context-epic-42.md'), 'Expected path should include filename');
+        });
+    });
+    describe('createEpicContext() - Context creation', () => {
+        it('should create epic context file from template', async () => {
+            // AC3: SM can create epic context (researches epic, writes file)
+            const contextDir = join(TEST_DIR, 'sprint', 'context');
+            mkdirSync(contextDir, { recursive: true });
+            const result = await createEpicContext({
+                epicId: 38,
+                epicTitle: 'Agent File Modernization',
+                contextDir,
+                content: '## Technical Landscape\n\nThis epic modernizes agent files.'
+            });
+            assert.strictEqual(result.success, true, 'Creation should succeed');
+            assert.ok(result.path, 'Should return file path');
+            const filePath = join(contextDir, 'context-epic-38.md');
+            assert.ok(existsSync(filePath), 'File should exist');
+            const content = readFileSync(filePath, 'utf-8');
+            assert.ok(content.includes('Agent File Modernization'), 'Should include epic title');
+        });
+        it('should use template structure when creating context', async () => {
+            // AC4: Epic context template exists and is documented
+            const contextDir = join(TEST_DIR, 'sprint', 'context');
+            mkdirSync(contextDir, { recursive: true });
+            const result = await createEpicContext({
+                epicId: 38,
+                epicTitle: 'Agent File Modernization',
+                contextDir
+                // No content provided - should use template
+            });
+            assert.strictEqual(result.success, true);
+            const content = readFileSync(result.path, 'utf-8');
+            // Template should have standard sections
+            assert.ok(content.includes('# Epic 38'), 'Should have epic header');
+            assert.ok(content.includes('## Epic Overview') || content.includes('## Technical Landscape'), 'Should have overview section');
+        });
+        it('should not overwrite existing epic context', async () => {
+            // Safety check: don't clobber existing context
+            const contextDir = join(TEST_DIR, 'sprint', 'context');
+            mkdirSync(contextDir, { recursive: true });
+            // Create existing context
+            const existingContent = '# Existing Epic 38 Context\n\nValuable information here.';
+            writeFileSync(join(contextDir, 'context-epic-38.md'), existingContent);
+            const result = await createEpicContext({
+                epicId: 38,
+                epicTitle: 'New Title',
+                contextDir
+            });
+            assert.strictEqual(result.success, false, 'Should fail when file exists');
+            assert.ok(result.error?.includes('exists'), 'Error should mention existing file');
+            // Verify original content preserved
+            const content = readFileSync(join(contextDir, 'context-epic-38.md'), 'utf-8');
+            assert.ok(content.includes('Valuable information'), 'Original content should be preserved');
+        });
+    });
+    describe('setupStory() with epic context gate', () => {
+        it('should check epic context before setup when gate enabled', async () => {
+            // AC1: SM checks for context file before story setup
+            const sessionDir = join(TEST_DIR, '.session');
+            const contextDir = join(TEST_DIR, 'sprint', 'context');
+            mkdirSync(sessionDir, { recursive: true });
+            mkdirSync(contextDir, { recursive: true });
+            // No epic context file - should warn/block
+            const result = await setupStory({
+                storyId: '38-10',
+                title: 'SM gate for epic technical context',
+                points: 2,
+                epic: 38,
+                repos: 'pennyfarthing',
+                sessionDir,
+                workflow: 'tdd',
+                // New parameter to enable gate
+                checkEpicContext: true,
+                contextDir
+            });
+            // With gate enabled and no context, should warn (not hard fail initially)
+            assert.ok(result.warnings?.some((w) => w.includes('epic context')), 'Should warn about missing epic context');
+        });
+        it('should proceed when epic context exists', async () => {
+            // AC1: Gate passes when context file exists
+            const sessionDir = join(TEST_DIR, '.session');
+            const contextDir = join(TEST_DIR, 'sprint', 'context');
+            mkdirSync(sessionDir, { recursive: true });
+            mkdirSync(contextDir, { recursive: true });
+            // Create epic context
+            writeFileSync(join(contextDir, 'context-epic-38.md'), '# Epic 38\n\nContext here.');
+            const result = await setupStory({
+                storyId: '38-10-test',
+                title: 'SM gate for epic technical context',
+                points: 2,
+                epic: 38,
+                repos: 'pennyfarthing',
+                sessionDir,
+                workflow: 'tdd',
+                checkEpicContext: true,
+                contextDir
+            });
+            assert.strictEqual(result.success, true, 'Should succeed with context present');
+            assert.ok(!result.warnings?.some((w) => w.includes('epic context')), 'Should not warn when context exists');
+        });
     });
 });
 //# sourceMappingURL=sm-subagents.test.js.map
