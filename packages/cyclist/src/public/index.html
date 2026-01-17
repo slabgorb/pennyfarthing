@@ -98,6 +98,23 @@
       </div>
     </div>
     <div class="resize-handle" id="tool-panel-resize" title="Drag to resize"></div>
+    <!-- 35-12: Skill Panel (collapsible, resizable) - skill invocation log -->
+    <div id="skill-panel" class="skill-panel collapsed" role="region" aria-label="Skill invocations">
+      <div class="skill-panel-header">
+        <span class="skill-panel-title">Skills</span>
+        <span class="skill-panel-count" id="skill-panel-count"></span>
+        <div class="skill-panel-controls">
+          <button class="icon-btn danger" data-action="clear" title="Clear log">Clear</button>
+        </div>
+        <button class="skill-panel-collapse-btn" id="skill-panel-collapse" title="Collapse" aria-expanded="false">◀</button>
+      </div>
+      <div class="skill-panel-content" id="skill-panel-content">
+        <div class="skill-log-list" id="skill-log-list">
+          <!-- Skill entries rendered dynamically -->
+        </div>
+      </div>
+    </div>
+    <div class="resize-handle" id="skill-panel-resize" title="Drag to resize"></div>
     <!-- Panel expand buttons removed - now using horizontal tab bar at top -->
     <!-- 35-5: Message panel wrapper for collapsible message view -->
     <div id="message-panel" class="vertical-panel position-center">
@@ -619,6 +636,8 @@
       });
     }
   </script>
+  <!-- 35-12: Skill Panel -->
+  <script type="module" src="/js/skill-panel.js"></script>
   <!-- 35-5: Vertical Panel base class -->
   <script type="module" src="/js/vertical-panel.js"></script>
   <!-- 35-5: Sidebar and Message panels -->
@@ -635,12 +654,14 @@
     let fileBadgeCount = 0;
     let diffBadgeCount = 0;
     let toolBadgeCount = 0;
+    let skillBadgeCount = 0;
 
     // Expose setters for panel modules to call
     window.panelBadgeCounts = {
       setFileCount: (n) => { fileBadgeCount = n; },
       setDiffCount: (n) => { diffBadgeCount = n; },
       setToolCount: (n) => { toolBadgeCount = n; },
+      setSkillCount: (n) => { skillBadgeCount = n; },
     };
 
     // Register file panel
@@ -679,6 +700,19 @@
         order: 3,
         element: toolPanel,
         getBadgeCount: () => toolBadgeCount,
+      });
+    }
+
+    // 35-12: Register skill panel
+    const skillPanel = document.getElementById('skill-panel');
+    if (skillPanel) {
+      PanelManager.register({
+        id: 'skill-panel',
+        label: 'SKILLS',
+        shortcut: '4',
+        order: 4,
+        element: skillPanel,
+        getBadgeCount: () => skillBadgeCount,
       });
     }
   </script>
