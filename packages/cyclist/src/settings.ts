@@ -45,11 +45,20 @@ export interface PennyfarthingSettings {
   favorites: string[];
 }
 
+// Account-specific settings for usage tracking
+export interface AccountSettings {
+  billing_rollover_day: 'sunday' | 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday';
+}
+
+// Map of email to account settings, with optional 'default' key
+export type AccountsSettings = Record<string, AccountSettings>;
+
 export interface CyclistSettings {
   workflow: WorkflowSettings;
   display: DisplaySettings;
   notifications: NotificationSettings;
   pennyfarthing: PennyfarthingSettings;
+  accounts?: AccountsSettings;
 }
 
 // Partial settings for merging
@@ -58,6 +67,7 @@ export type PartialSettings = {
   display?: Partial<DisplaySettings>;
   notifications?: Partial<NotificationSettings>;
   pennyfarthing?: Partial<PennyfarthingSettings>;
+  accounts?: AccountsSettings;
 };
 
 // =============================================================================
@@ -314,6 +324,11 @@ export function mergeSettings(base: CyclistSettings, override: PartialSettings):
     if (Array.isArray(override.pennyfarthing.favorites)) {
       result.pennyfarthing.favorites = override.pennyfarthing.favorites;
     }
+  }
+
+  // Merge accounts settings (override replaces base entirely per-account)
+  if (override.accounts) {
+    result.accounts = { ...result.accounts, ...override.accounts };
   }
 
   return result;
@@ -661,4 +676,44 @@ export function saveGrants(grants: PermissionGrant[]): boolean {
   } catch {
     return false;
   }
+}
+
+// =============================================================================
+// Account Settings (Usage Tracking)
+// =============================================================================
+
+/** Valid day names for billing rollover */
+export type BillingDay = 'sunday' | 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday';
+
+/** Default billing rollover day */
+const DEFAULT_BILLING_ROLLOVER_DAY: BillingDay = 'friday';
+
+/**
+ * Get the billing rollover day for a specific user email
+ * Lookup priority:
+ * 1. Exact email match in accounts
+ * 2. 'default' key in accounts
+ * 3. Hardcoded default ('friday')
+ *
+ * @param email - User email address (from OTEL user.email attribute)
+ * @returns The billing rollover day for this account
+ */
+export function getBillingRolloverDay(email: string | null): BillingDay {
+  const accounts = currentSettings.accounts;
+
+  if (!accounts) {
+    return DEFAULT_BILLING_ROLLOVER_DAY;
+  }
+
+  // Try exact email match
+  if (email && accounts[email]?.billing_rollover_day) {
+    return accounts[email].billing_rollover_day;
+  }
+
+  // Try default account
+  if (accounts['default']?.billing_rollover_day) {
+    return accounts['default'].billing_rollover_day;
+  }
+
+  return DEFAULT_BILLING_ROLLOVER_DAY;
 }
