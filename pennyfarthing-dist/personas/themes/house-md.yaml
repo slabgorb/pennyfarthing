@@ -14,7 +14,7 @@ theme:
   character_immersion: high
   user_title: Patient
   portrait_style: ", medical book, anatomy chart, medical illustrations"
-  tier: U
+  tier: B
 
 agents:
   orchestrator:
