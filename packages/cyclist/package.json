@@ -16,7 +16,8 @@
   },
   "files": [
     "dist/",
-    "src/public/"
+    "src/public/",
+    "portraits/"
   ],
   "scripts": {
     "dev": "npm run build && concurrently -k -n tsc,preload,electron -c blue,cyan,green \"tsc --watch --preserveWatchOutput\" \"tsc -p tsconfig.preload.json --watch --preserveWatchOutput\" \"electron .\"",
@@ -30,6 +31,7 @@
     "start": "node dist/server.js",
     "test": "vitest run",
     "test:watch": "vitest",
+    "prepack": "./scripts/copy-portraits.sh",
     "install:app": "./scripts/install-app.sh",
     "install:cli": "./scripts/install-cli.sh",
     "install:all": "npm run install:app && npm run install:cli"
@@ -73,6 +75,7 @@
     "files": [
       "dist/**/*",
       "src/public/**/*",
+      "portraits/**/*",
       "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
       "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
       "!**/node_modules/.bin",
