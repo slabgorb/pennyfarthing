@@ -9,11 +9,11 @@
  * while the Electron-specific runtime code only executes in Electron context.
  */
 
-import { Server } from 'http';
+import { Server, createServer as createHttpServer, IncomingMessage, ServerResponse } from 'http';
 import { fileURLToPath } from 'url';
 import { dirname, join, basename } from 'path';
 import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
-import { getStoryInfo, getGitInfo, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig, findAvailablePort } from './server.js';
+import { getStoryInfo, getGitInfo, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig, findAvailablePort, writeApprovalPortFile, cleanupApprovalPortFile } from './server.js';
 import { parseToolStats, ToolStats, createEmptyStats } from './tool-stats.js';
 import {
   getTokenStats,
@@ -56,6 +56,14 @@ import {
   type CyclistSettings,
 } from './settings.js';
 import { initializeGrants, setGrantsPersistCallback } from './settings-store.js';
+// Story 33-7: Import approval gate functions for tool execution pipeline
+import {
+  interceptToolUse,
+  requestApproval,
+  createRejectionError,
+  type ToolUseMessage,
+  type SDKToolResultError,
+} from './approval-gate.js';
 import { openSettingsWindow, setMainWindowRef, setBrowserWindowRef } from './settings-window.js';
 import {
   IPC_DATA_CHANNELS,
@@ -1004,6 +1012,18 @@ export function setupClaudeIPCHandlers(ipcMain: {
           if (content && Array.isArray(content)) {
             for (const block of content) {
               if (block.type === 'tool_use') {
+                // Story 33-7: Wire approval gate into tool execution pipeline
+                // Check if this tool_use needs approval and trigger modal if so
+                const toolUseMessage = {
+                  type: 'tool_use' as const,
+                  tool_name: block.name,
+                  tool_id: block.id,
+                  input: block.input as Record<string, unknown>,
+                };
+                // Fire and forget - we observe the stream, we don't control execution
+                // This triggers the approval modal UI when gate is enabled
+                processToolUseWithApproval(toolUseMessage);
+
                 // Story 36-8: Capture ALL tool inputs for OTEL enrichment correlation
                 // Story 36-9: This is the primary correlation mechanism since Claude Code
                 // OTEL logs don't include traceId/spanId at logRecord level
@@ -1456,6 +1476,355 @@ export function setupCommandIPCHandlers(ipcMain: {
 }
 
 // =============================================================================
+// Story 33-7: Approval Gate Integration
+// =============================================================================
+
+/**
+ * Result from processToolUseWithApproval
+ */
+export interface ApprovalResult {
+  needsApproval: boolean;
+  passThrough: boolean;
+  approved?: boolean;
+  rejected?: boolean;
+  errorMessage?: SDKToolResultError;
+}
+
+// Dependency injection for testing
+let ipcSender: ((channel: string, data: unknown) => void) | null = null;
+let toolExecutor: ((message: ToolUseMessage) => void) | null = null;
+let errorInjector: ((error: SDKToolResultError) => void) | null = null;
+
+/**
+ * Set the IPC sender function (for testing)
+ */
+export function setIPCSender(sender: ((channel: string, data: unknown) => void) | null): void {
+  ipcSender = sender;
+}
+
+/**
+ * Set the tool executor function (for testing)
+ */
+export function setToolExecutor(executor: ((message: ToolUseMessage) => void) | null): void {
+  toolExecutor = executor;
+}
+
+/**
+ * Set the error injector function (for testing)
+ */
+export function setErrorInjector(injector: ((error: SDKToolResultError) => void) | null): void {
+  errorInjector = injector;
+}
+
+/**
+ * Send an approval request to the renderer via IPC
+ */
+export function sendApprovalRequest(toolId: string, toolName: string, context: Record<string, unknown>): void {
+  const sender = ipcSender || broadcastToRenderer;
+
+  sender('permission-request', {
+    toolId,
+    toolName,
+    context,
+  });
+}
+
+/**
+ * Handle permission response from renderer
+ * Called by IPC handler when user responds to approval modal
+ */
+export function handlePermissionResponse(response: {
+  toolId: string;
+  approved: boolean;
+  grantScope?: 'once' | 'session' | 'always';
+}): void {
+  // Story 33-7: First try to resolve hook approval (from PreToolUse hook)
+  // This is the path that actually controls tool execution
+  resolveHookApproval(response.toolId, response.approved, response.grantScope);
+
+  // Also resolve approval-gate.js pending approvals for backwards compatibility
+  // (This was the old observer-only path)
+  import('./approval-gate.js').then(({ resolveApproval }) => {
+    resolveApproval(response.toolId, response.approved, response.grantScope);
+  });
+}
+
+/**
+ * Process a tool_use message with approval gate check
+ * This is the main integration point for story 33-7
+ *
+ * @param message - The tool_use message to process
+ * @returns ApprovalResult indicating whether approval is needed and outcome
+ */
+export async function processToolUseWithApproval(message: ToolUseMessage): Promise<ApprovalResult> {
+  // Check if this tool_use needs approval
+  const interceptResult = interceptToolUse(message);
+
+  // If gate is disabled or grant exists, pass through immediately
+  if (!interceptResult.shouldApprove) {
+    // Execute tool if executor is set
+    if (toolExecutor) {
+      toolExecutor(message);
+    }
+    return {
+      needsApproval: false,
+      passThrough: true,
+    };
+  }
+
+  // Need approval - send IPC request and wait for response
+  sendApprovalRequest(interceptResult.toolId, interceptResult.toolName, interceptResult.context);
+
+  // Get the command for Bash tools, or use context for other tools
+  const command = interceptResult.toolName === 'Bash'
+    ? (interceptResult.context.command as string) || ''
+    : JSON.stringify(interceptResult.context);
+
+  // Wait for user response
+  const approved = await requestApproval(command, interceptResult.toolId);
+
+  if (approved) {
+    // User approved - execute tool
+    if (toolExecutor) {
+      toolExecutor(message);
+    }
+    return {
+      needsApproval: true,
+      passThrough: true,
+      approved: true,
+    };
+  } else {
+    // User rejected - create and inject error
+    const errorMessage = createRejectionError(interceptResult.toolId);
+
+    if (errorInjector) {
+      errorInjector(errorMessage);
+    }
+
+    return {
+      needsApproval: true,
+      passThrough: false,
+      approved: false,
+      rejected: true,
+      errorMessage,
+    };
+  }
+}
+
+/**
+ * Set up IPC handlers for approval gate
+ * Story 33-7: Handles permission request/response flow
+ */
+export function setupApprovalIPCHandlers(ipcMain: {
+  handle?: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
+  on?: (channel: string, handler: (event: unknown, ...args: unknown[]) => void) => void;
+}): void {
+  // Handle permission response from renderer
+  if (ipcMain.on) {
+    ipcMain.on('permission-response', (_event: unknown, response: unknown) => {
+      handlePermissionResponse(response as {
+        toolId: string;
+        approved: boolean;
+        grantScope?: 'once' | 'session' | 'always';
+      });
+    });
+  }
+
+  if (ipcMain.handle) {
+    ipcMain.handle('permission-response', async (_event: unknown, response: unknown) => {
+      handlePermissionResponse(response as {
+        toolId: string;
+        approved: boolean;
+        grantScope?: 'once' | 'session' | 'always';
+      });
+      return { success: true };
+    });
+  }
+
+  console.log('Approval gate IPC handlers registered');
+}
+
+// =============================================================================
+// Story 33-7: Approval Hook Server
+// =============================================================================
+// HTTP server that receives approval requests from the PreToolUse hook script.
+// The hook runs in Claude Code's process, sends requests here, we show modal,
+// user decides, we respond, hook tells Claude Code to allow/deny.
+//
+// Multi-instance support: Uses dynamic port selection with .cyclist-approval-port
+// discovery file to prevent cross-instance interference when multiple Cyclist
+// windows are open for different projects.
+
+const DEFAULT_APPROVAL_SERVER_PORT = 7432;
+let approvalServer: ReturnType<typeof createHttpServer> | null = null;
+let approvalServerPort: number | null = null;
+
+// Pending approval requests from hooks, keyed by toolId
+const pendingHookApprovals: Map<string, {
+  resolve: (response: { decision: string; reason: string }) => void;
+  toolName: string;
+  input: Record<string, unknown>;
+}> = new Map();
+
+/**
+ * Handle incoming approval request from hook script
+ */
+async function handleHookApprovalRequest(
+  toolName: string,
+  toolId: string,
+  input: Record<string, unknown>,
+): Promise<{ decision: string; reason: string }> {
+  // Check if gate is enabled
+  const { getBashApprovalGate, checkGrant, isAllowlisted } = await import('./settings-store.js');
+
+  if (!getBashApprovalGate()) {
+    return { decision: 'allow', reason: 'Approval gate disabled' };
+  }
+
+  // Check allowlist and grants
+  if (toolName === 'Bash') {
+    const command = (input.command as string) || '';
+    if (isAllowlisted(command) || checkGrant('Bash', command)) {
+      return { decision: 'allow', reason: 'Matched allowlist or existing grant' };
+    }
+  }
+
+  // Need user approval - send to renderer and wait
+  return new Promise((resolve) => {
+    pendingHookApprovals.set(toolId, { resolve, toolName, input });
+
+    // Send approval request to renderer
+    broadcastToRenderer('permission-request', {
+      toolId,
+      toolName,
+      context: input,
+      source: 'hook', // Indicate this came from hook, not observation
+    });
+  });
+}
+
+/**
+ * Resolve a pending hook approval (called when user responds to modal)
+ */
+export function resolveHookApproval(
+  toolId: string,
+  approved: boolean,
+  grantScope?: 'once' | 'session' | 'always',
+): void {
+  const pending = pendingHookApprovals.get(toolId);
+  if (pending) {
+    // Add grant if approved with scope
+    if (approved && grantScope && pending.toolName === 'Bash') {
+      import('./settings-store.js').then(({ addGrant, extractPattern }) => {
+        const command = (pending.input.command as string) || '';
+        const pattern = extractPattern(command);
+        addGrant({
+          tool: 'Bash',
+          scope: pattern,
+          grant_type: grantScope,
+          granted_at: new Date().toISOString(),
+        });
+      });
+    }
+
+    pending.resolve({
+      decision: approved ? 'allow' : 'deny',
+      reason: approved ? `Approved by user (${grantScope || 'once'})` : 'Rejected by user',
+    });
+    pendingHookApprovals.delete(toolId);
+  }
+}
+
+/**
+ * Start the approval hook server with dynamic port selection
+ * Uses findAvailablePort to avoid conflicts with other Cyclist instances
+ * Writes port to .cyclist-approval-port for hook discovery
+ */
+export async function startApprovalServer(): Promise<void> {
+  if (approvalServer) {
+    console.log('Approval server already running');
+    return;
+  }
+
+  const projectDir = getProjectDirectory();
+  if (!projectDir) {
+    console.warn('No project directory set, cannot start approval server');
+    return;
+  }
+
+  // Find an available port starting from default
+  try {
+    approvalServerPort = await findAvailablePort(DEFAULT_APPROVAL_SERVER_PORT);
+  } catch (error) {
+    console.error('Could not find available port for approval server:', error);
+    return;
+  }
+
+  approvalServer = createHttpServer(async (req: IncomingMessage, res: ServerResponse) => {
+    if (req.method === 'POST' && req.url === '/approval-request') {
+      let body = '';
+      req.on('data', (chunk) => { body += chunk; });
+      req.on('end', async () => {
+        try {
+          const data = JSON.parse(body);
+          const { toolName, toolId, input } = data;
+
+          const response = await handleHookApprovalRequest(toolName, toolId, input);
+
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(response));
+        } catch (error) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid request' }));
+        }
+      });
+    } else {
+      res.writeHead(404);
+      res.end('Not found');
+    }
+  });
+
+  approvalServer.listen(approvalServerPort, '127.0.0.1', () => {
+    console.log(`Approval hook server running on http://127.0.0.1:${approvalServerPort}`);
+    // Write port file for hook discovery
+    writeApprovalPortFile(projectDir, approvalServerPort!);
+    console.log(`[33-7] Wrote .cyclist-approval-port file to ${projectDir}`);
+  });
+
+  approvalServer.on('error', (err: NodeJS.ErrnoException) => {
+    console.error('Approval server error:', err);
+    approvalServerPort = null;
+  });
+}
+
+/**
+ * Stop the approval hook server and clean up port file
+ */
+export function stopApprovalServer(): void {
+  if (approvalServer) {
+    approvalServer.close();
+    approvalServer = null;
+    approvalServerPort = null;
+
+    // Clean up port file
+    const projectDir = getProjectDirectory();
+    if (projectDir) {
+      cleanupApprovalPortFile(projectDir);
+      console.log('[33-7] Cleaned up .cyclist-approval-port file');
+    }
+
+    console.log('Approval hook server stopped');
+  }
+}
+
+/**
+ * Get the current approval server port (for testing)
+ */
+export function getApprovalServerPort(): number | null {
+  return approvalServerPort;
+}
+
+// =============================================================================
 // Session Persistence (E7-3: AC4)
 // =============================================================================
 
@@ -1668,6 +2037,8 @@ if (isElectron) {
   setupAuditLogIPCHandlers(ipcMain);
   setupCommandIPCHandlers(ipcMain); // 23-3: Command execution
   setupSkillIPCHandlers(ipcMain); // 35-12: Skill invocation tracking
+  setupApprovalIPCHandlers(ipcMain); // 33-7: Approval gate wiring
+  // NOTE: startApprovalServer() moved to app.whenReady() - needs project directory
 
   /**
    * Kill orphaned Claude CLI process from previous Cyclist session in THIS project.
@@ -1785,6 +2156,7 @@ if (isElectron) {
       cleanupStaleProcesses();
 
       await startServer();
+      await startApprovalServer(); // 33-7: Start after project dir set
       createWindow();
       if (mainWindow && projectDir) {
         mainWindow.setTitle(`Cyclist - ${basename(projectDir)}`);

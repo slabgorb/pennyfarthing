@@ -152,6 +152,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 // ============================================================================
 
 const PORT_FILE_NAME = '.cyclist-port';
+const APPROVAL_PORT_FILE_NAME = '.cyclist-approval-port';
 const PID_FILE_NAME = '.cyclist-pid';
 
 /**
@@ -207,6 +208,57 @@ export function cleanupPortFile(projectDir: string): void {
  */
 export function readPortFile(projectDir: string): number | null {
   const portFilePath = join(projectDir, PORT_FILE_NAME);
+
+  if (!existsSync(portFilePath)) {
+    return null;
+  }
+
+  const content = readFileSync(portFilePath, 'utf-8').trim();
+
+  if (!content) {
+    return null;
+  }
+
+  const port = parseInt(content, 10);
+
+  if (isNaN(port)) {
+    return null;
+  }
+
+  return port;
+}
+
+// ============================================================================
+// Approval Port File Pattern (Story 33-7)
+// Enables multi-instance Cyclist with isolated approval servers
+// ============================================================================
+
+/**
+ * Write the approval server port to .cyclist-approval-port file.
+ * Enables hook script to discover which port this instance is using.
+ */
+export function writeApprovalPortFile(projectDir: string, port: number): void {
+  const portFilePath = join(projectDir, APPROVAL_PORT_FILE_NAME);
+  writeFileSync(portFilePath, String(port));
+}
+
+/**
+ * Remove the .cyclist-approval-port file during shutdown.
+ * Prevents stale port files from causing cross-instance interference.
+ */
+export function cleanupApprovalPortFile(projectDir: string): void {
+  const portFilePath = join(projectDir, APPROVAL_PORT_FILE_NAME);
+  if (existsSync(portFilePath)) {
+    unlinkSync(portFilePath);
+  }
+}
+
+/**
+ * Read the approval server port from .cyclist-approval-port file.
+ * Returns null if file doesn't exist or contains invalid content.
+ */
+export function readApprovalPortFile(projectDir: string): number | null {
+  const portFilePath = join(projectDir, APPROVAL_PORT_FILE_NAME);
 
   if (!existsSync(portFilePath)) {
     return null;
