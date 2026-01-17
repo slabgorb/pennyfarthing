@@ -1,235 +1,9 @@
 # Pennyfarthing Backlog
 # Future epics and stories not yet committed to a sprint
-# Updated: 2026-01-13
+# Updated: 2026-01-17
 
 backlog:
   epics:
-    # =========================================================================
-    # STRATEGIC - Workflow & Compatibility
-    # =========================================================================
-    - id: epic-31
-      title: "Customizable Workflow Engine"
-      description: |
-        Infrastructure for user-defined workflows. Replace hardcoded TDD flow
-        (SM → TEA → Dev → Reviewer) with configurable YAML-based workflows.
-        Users can define custom agent sequences, routing rules, and gates.
-      points: 15
-      priority: P1
-      marker: "strategic"
-      repos: pennyfarthing
-      status: backlog
-      stories:
-        - id: "31-1"
-          title: "Workflow definition schema (YAML spec)"
-          description: |
-            Define the YAML schema for workflows:
-            - Workflow name, description, triggers
-            - Phase definitions (agent, input, output, gates)
-            - Routing rules (tags, story type, points)
-          points: 3
-          priority: P0
-          status: backlog
-          repos: pennyfarthing
-        - id: "31-2"
-          title: "Workflow loader and validator"
-          description: |
-            Load workflow definitions from .claude/workflows/*.yaml
-            Validate against schema, report errors clearly.
-          points: 3
-          priority: P0
-          status: backlog
-          repos: pennyfarthing
-        - id: "31-3"
-          title: "Story-to-workflow routing engine"
-          description: |
-            Route stories to appropriate workflow based on:
-            - Explicit workflow tag on story
-            - Story type (bug, feature, chore, docs)
-            - Default workflow fallback
-          points: 3
-          priority: P0
-          status: backlog
-          repos: pennyfarthing
-        - id: "31-4"
-          title: "Migrate TDD flow to workflow definition"
-          description: |
-            Convert current hardcoded SM → TEA → Dev → Reviewer flow
-            to a workflow YAML file. Ensure backward compatibility.
-          points: 2
-          priority: P0
-          status: backlog
-          repos: pennyfarthing
-        - id: "31-5"
-          title: "/workflow skill for listing and switching"
-          description: |
-            Skill to list available workflows, show current workflow,
-            and manually switch workflows mid-session if needed.
-          points: 2
-          priority: P1
-          status: backlog
-          repos: pennyfarthing
-        - id: "31-6"
-          title: "Session file workflow tracking"
-          description: |
-            Update session file format to track:
-            - Active workflow name
-            - Current phase in workflow
-            - Phase history and transitions
-          points: 2
-          priority: P1
-          status: backlog
-          repos: pennyfarthing
-
-    - id: epic-32
-      title: "BMAD 6.0 Compatibility"
-      description: |
-        Implement BMAD 6.0 methodology compatibility. Import BMAD workflow
-        definitions, provide built-in BMAD-style workflows for debugging,
-        documentation, devops, and planning use cases.
-      points: 15
-      priority: P1
-      marker: "strategic"
-      repos: pennyfarthing
-      status: backlog
-      depends_on: epic-31
-      stories:
-        - id: "32-1"
-          title: "Research BMAD 6.0 schema and agents"
-          description: |
-            Analyze BMAD-METHOD repo structure:
-            - Agent definitions and roles
-            - Workflow schemas
-            - Configuration patterns
-            Document mapping to Pennyfarthing concepts.
-          points: 2
-          priority: P0
-          status: backlog
-          repos: pennyfarthing
-        - id: "32-2"
-          title: "BMAD workflow import/mapping"
-          description: |
-            Parse BMAD workflow definitions and convert to
-            Pennyfarthing workflow YAML format.
-          points: 3
-          priority: P0
-          status: backlog
-          repos: pennyfarthing
-        - id: "32-3"
-          title: "Debugging workflow (BMAD-style)"
-          description: |
-            Built-in workflow for bug investigation:
-            Debugger → Dev → Reviewer
-            Focus on root cause analysis before fix.
-          points: 2
-          priority: P1
-          status: backlog
-          repos: pennyfarthing
-        - id: "32-4"
-          title: "Documentation workflow"
-          description: |
-            Built-in workflow for docs:
-            Tech-Writer → Reviewer
-            Optimized for README, guides, API docs.
-          points: 2
-          priority: P1
-          status: backlog
-          repos: pennyfarthing
-        - id: "32-5"
-          title: "DevOps workflow"
-          description: |
-            Built-in workflow for infrastructure:
-            DevOps → Reviewer
-            CI/CD, deployment, infrastructure as code.
-          points: 2
-          priority: P1
-          status: backlog
-          repos: pennyfarthing
-        - id: "32-6"
-          title: "Planning workflow"
-          description: |
-            Built-in workflow for strategic work:
-            PM → Architect → SM
-            Epic definition, roadmap, sprint planning.
-          points: 2
-          priority: P1
-          status: backlog
-          repos: pennyfarthing
-        - id: "32-7"
-          title: "BMAD export (Pennyfarthing → BMAD format)"
-          description: |
-            Export Pennyfarthing workflows to BMAD format
-            for interoperability with BMAD tooling.
-          points: 2
-          priority: P2
-          status: backlog
-          repos: pennyfarthing
-
-    - id: epic-33
-      title: "Runtime Permission Management"
-      description: |
-        Allow agents to request and manage tool permissions at runtime.
-        Currently permissions must be pre-configured; agents can't request
-        spot permissions for tools like WebFetch when needed.
-      points: 12
-      priority: P1
-      marker: "ux"
-      repos: pennyfarthing, cyclist
-      status: backlog
-      stories:
-        - id: "33-1"
-          title: "Permission request protocol"
-          description: |
-            Define how agents request permissions:
-            - Structured permission request format
-            - User prompt/approval flow
-            - Temporary vs persistent grants
-          points: 3
-          priority: P0
-          status: backlog
-          repos: pennyfarthing
-        - id: "33-2"
-          title: "/permissions skill"
-          description: |
-            Skill to view and manage permissions:
-            - List current permissions
-            - Grant/revoke tool access
-            - Show permission history
-          points: 2
-          priority: P0
-          status: backlog
-          repos: pennyfarthing
-        - id: "33-3"
-          title: "Cyclist permission UI"
-          description: |
-            Visual permission management in Cyclist:
-            - Permission request modal
-            - Quick approve/deny buttons
-            - Permission status indicator
-          points: 3
-          priority: P1
-          status: backlog
-          repos: cyclist
-        - id: "33-4"
-          title: "Spot permission grants"
-          description: |
-            Allow one-time permission grants:
-            - "Allow once" option
-            - "Allow for this session"
-            - "Always allow"
-          points: 2
-          priority: P1
-          status: backlog
-          repos: pennyfarthing, cyclist
-        - id: "33-5"
-          title: "Permission presets by workflow"
-          description: |
-            Workflows can declare required permissions.
-            Auto-prompt for missing permissions on workflow start.
-          points: 2
-          priority: P2
-          status: backlog
-          repos: pennyfarthing
-
     # =========================================================================
     # BENCHMARK RELIABILITY - Scientific Evaluation
     # Research-backed improvements to agent benchmarking
@@ -617,6 +391,87 @@ backlog:
           title: "Add severity levels to Reviewer agent"
           points: 2
           priority: P2
+          status: backlog
+
+    # =========================================================================
+    # QUALITY & SCALE - Future Initiatives
+    # =========================================================================
+    - id: epic-39
+      title: Quality Assurance Oversight Capabilities
+      description: |
+        Add BMAD TEA-style quality oversight capabilities to Pennyfarthing.
+        Extend Reviewer with test quality scoring, risk-based prioritization,
+        coverage traceability, NFR assessment, and release gate decisions.
+      points: 23
+      priority: P2
+      marker: quality
+      repos: pennyfarthing
+      status: backlog
+      stories:
+        - id: 39-1
+          title: Test quality review with 0-100 scoring
+          points: 5
+          status: backlog
+        - id: 39-2
+          title: Test quality knowledge base
+          points: 3
+          status: backlog
+        - id: 39-3
+          title: Risk-based test prioritization
+          points: 3
+          status: backlog
+        - id: 39-4
+          title: Coverage traceability
+          points: 5
+          status: backlog
+        - id: 39-5
+          title: NFR assessment skill
+          points: 3
+          status: backlog
+        - id: 39-6
+          title: Release gate integration
+          points: 2
+          status: backlog
+        - id: 39-7
+          title: Reviewer multi-phase review mode
+          points: 2
+          status: backlog
+
+    - id: epic-40
+      title: Scale Adaptation and Brownfield Support
+      description: |
+        Adopt BMAD's scale-adaptive approach and add brownfield codebase discovery.
+        Add upward scaling for larger initiatives (Level 0-4) and brownfield
+        analysis for existing codebases.
+      points: 17
+      priority: P2
+      marker: infrastructure
+      repos: pennyfarthing
+      status: backlog
+      stories:
+        - id: 40-1
+          title: Define scale levels
+          points: 2
+          status: backlog
+        - id: 40-2
+          title: Quick-spec workflow
+          points: 3
+          status: backlog
+        - id: 40-3
+          title: Enterprise workflow hooks
+          points: 3
+          status: backlog
+        - id: 40-4
+          title: Brownfield discovery command
+          points: 5
+          status: backlog
+        - id: 40-5
+          title: Brownfield convention adoption
+          points: 2
+          status: backlog
+        - id: 40-6
+          title: PRD import support
+          points: 2
           status: backlog
 
 # =============================================================================
