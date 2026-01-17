@@ -8,6 +8,7 @@
  * This module exports testable functions and constants for unit testing,
  * while the Electron-specific runtime code only executes in Electron context.
  */
+import { createServer as createHttpServer } from 'http';
 import { fileURLToPath } from 'url';
 import { dirname, join, basename } from 'path';
 import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
@@ -1205,7 +1206,11 @@ export function sendApprovalRequest(toolId, toolName, context) {
  * Called by IPC handler when user responds to approval modal
  */
 export function handlePermissionResponse(response) {
-    // Import resolveApproval dynamically to avoid circular dependencies
+    // Story 33-7: First try to resolve hook approval (from PreToolUse hook)
+    // This is the path that actually controls tool execution
+    resolveHookApproval(response.toolId, response.approved, response.grantScope);
+    // Also resolve approval-gate.js pending approvals for backwards compatibility
+    // (This was the old observer-only path)
     import('./approval-gate.js').then(({ resolveApproval }) => {
         resolveApproval(response.toolId, response.approved, response.grantScope);
     });
@@ -1283,6 +1288,123 @@ export function setupApprovalIPCHandlers(ipcMain) {
         });
     }
     console.log('Approval gate IPC handlers registered');
+}
+// =============================================================================
+// Story 33-7: Approval Hook Server
+// =============================================================================
+// HTTP server that receives approval requests from the PreToolUse hook script.
+// The hook runs in Claude Code's process, sends requests here, we show modal,
+// user decides, we respond, hook tells Claude Code to allow/deny.
+const APPROVAL_SERVER_PORT = 7432;
+let approvalServer = null;
+// Pending approval requests from hooks, keyed by toolId
+const pendingHookApprovals = new Map();
+/**
+ * Handle incoming approval request from hook script
+ */
+async function handleHookApprovalRequest(toolName, toolId, input) {
+    // Check if gate is enabled
+    const { getBashApprovalGate, checkGrant, isAllowlisted } = await import('./settings-store.js');
+    if (!getBashApprovalGate()) {
+        return { decision: 'allow', reason: 'Approval gate disabled' };
+    }
+    // Check allowlist and grants
+    if (toolName === 'Bash') {
+        const command = input.command || '';
+        if (isAllowlisted(command) || checkGrant('Bash', command)) {
+            return { decision: 'allow', reason: 'Matched allowlist or existing grant' };
+        }
+    }
+    // Need user approval - send to renderer and wait
+    return new Promise((resolve) => {
+        pendingHookApprovals.set(toolId, { resolve, toolName, input });
+        // Send approval request to renderer
+        broadcastToRenderer('permission-request', {
+            toolId,
+            toolName,
+            context: input,
+            source: 'hook', // Indicate this came from hook, not observation
+        });
+    });
+}
+/**
+ * Resolve a pending hook approval (called when user responds to modal)
+ */
+export function resolveHookApproval(toolId, approved, grantScope) {
+    const pending = pendingHookApprovals.get(toolId);
+    if (pending) {
+        // Add grant if approved with scope
+        if (approved && grantScope && pending.toolName === 'Bash') {
+            import('./settings-store.js').then(({ addGrant, extractPattern }) => {
+                const command = pending.input.command || '';
+                const pattern = extractPattern(command);
+                addGrant({
+                    tool: 'Bash',
+                    scope: pattern,
+                    grant_type: grantScope,
+                    granted_at: new Date().toISOString(),
+                });
+            });
+        }
+        pending.resolve({
+            decision: approved ? 'allow' : 'deny',
+            reason: approved ? `Approved by user (${grantScope || 'once'})` : 'Rejected by user',
+        });
+        pendingHookApprovals.delete(toolId);
+    }
+}
+/**
+ * Start the approval hook server
+ */
+export function startApprovalServer() {
+    if (approvalServer) {
+        console.log('Approval server already running');
+        return;
+    }
+    approvalServer = createHttpServer(async (req, res) => {
+        if (req.method === 'POST' && req.url === '/approval-request') {
+            let body = '';
+            req.on('data', (chunk) => { body += chunk; });
+            req.on('end', async () => {
+                try {
+                    const data = JSON.parse(body);
+                    const { toolName, toolId, input } = data;
+                    const response = await handleHookApprovalRequest(toolName, toolId, input);
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify(response));
+                }
+                catch (error) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: 'Invalid request' }));
+                }
+            });
+        }
+        else {
+            res.writeHead(404);
+            res.end('Not found');
+        }
+    });
+    approvalServer.listen(APPROVAL_SERVER_PORT, '127.0.0.1', () => {
+        console.log(`Approval hook server running on http://127.0.0.1:${APPROVAL_SERVER_PORT}`);
+    });
+    approvalServer.on('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+            console.warn(`Approval server port ${APPROVAL_SERVER_PORT} in use, skipping`);
+        }
+        else {
+            console.error('Approval server error:', err);
+        }
+    });
+}
+/**
+ * Stop the approval hook server
+ */
+export function stopApprovalServer() {
+    if (approvalServer) {
+        approvalServer.close();
+        approvalServer = null;
+        console.log('Approval hook server stopped');
+    }
 }
 // =============================================================================
 // Session Persistence (E7-3: AC4)
@@ -1483,6 +1605,7 @@ if (isElectron) {
     setupCommandIPCHandlers(ipcMain); // 23-3: Command execution
     setupSkillIPCHandlers(ipcMain); // 35-12: Skill invocation tracking
     setupApprovalIPCHandlers(ipcMain); // 33-7: Approval gate wiring
+    startApprovalServer(); // 33-7: Start HTTP server for PreToolUse hook
     /**
      * Kill orphaned Claude CLI process from previous Cyclist session in THIS project.
      * B-24 fix: Only kills the specific PID from .cyclist-pid, not all Claude processes.
