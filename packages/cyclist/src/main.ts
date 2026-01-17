@@ -538,6 +538,7 @@ import {
   getUsageStats,
   resetUsageStats as resetUsageStatsInternal,
   startUsagePolling as startUsagePollingInternal,
+  setUserEmail as setUsageStatsUserEmail,
 } from './usage-stats.js';
 
 // Wrapper functions that include broadcast
@@ -869,6 +870,8 @@ export function startProjectWatchers(): void {
 
   // 35-2: Register user email callback for project info updates
   setUserEmailCallback((email: string) => {
+    // Update usage stats with user email for account-specific settings
+    setUsageStatsUserEmail(email);
     broadcastToRenderer(IPC_DATA_CHANNELS.PROJECT_INFO_UPDATE, {
       directory: getProjectDirectory(),
       userEmail: email,
