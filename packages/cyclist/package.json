@@ -1,11 +1,23 @@
 {
   "name": "@pennyfarthing/cyclist",
   "version": "6.1.0",
-  "description": "Desktop application for running Claude Code with visual terminal interface",
+  "description": "Visual terminal interface for Claude Code",
   "author": "1898andCo",
-  "private": true,
   "type": "module",
-  "main": "dist/main.js",
+  "main": "dist/server.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/1898andCo/pennyfarthing.git",
+    "directory": "packages/cyclist"
+  },
+  "homepage": "https://github.com/1898andCo/pennyfarthing#readme",
+  "bugs": {
+    "url": "https://github.com/1898andCo/pennyfarthing/issues"
+  },
+  "files": [
+    "dist/",
+    "src/public/"
+  ],
   "scripts": {
     "dev": "npm run build && concurrently -k -n tsc,preload,electron -c blue,cyan,green \"tsc --watch --preserveWatchOutput\" \"tsc -p tsconfig.preload.json --watch --preserveWatchOutput\" \"electron .\"",
     "dev:once": "npm run build && electron .",
@@ -18,14 +30,11 @@
     "start": "node dist/server.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "postinstall": "electron-rebuild",
     "install:app": "./scripts/install-app.sh",
     "install:cli": "./scripts/install-cli.sh",
     "install:all": "npm run install:app && npm run install:cli"
   },
   "dependencies": {
-    "@pennyfarthing/core": "workspace:^",
-    "@pennyfarthing/shared": "workspace:*",
     "@tiptap/core": "^2.27.1",
     "@tiptap/extension-code-block": "^2.27.1",
     "@tiptap/starter-kit": "^2.27.1",
