@@ -30,7 +30,13 @@ import {
   isStoryInJiraSprint,
   getSprintVelocityFromJira,
   validateSprintAlignment,
-  addJiraSprintIdToYaml
+  addJiraSprintIdToYaml,
+  // Story 47-3 imports
+  getYamlStoryIds,
+  findJiraOnlyStories,
+  formatMissingStoriesReport,
+  importMissingStoriesToYaml,
+  SprintIssue
 } from './jira-sprint-sync.js';
 
 describe('Jira Sprint Sync (47-2)', () => {
@@ -523,6 +529,473 @@ describe('Jira Sprint Sync (47-2)', () => {
       assert.strictEqual(membershipResult.success, true);
       assert.strictEqual(membershipResult.inSprint, false);
       // In real implementation, this would trigger a warning in SM setup
+    });
+  });
+});
+
+// ============================================
+// Story 47-3: Detect Jira-only stories missing from sprint YAML
+// ============================================
+//
+// Acceptance Criteria:
+// 1. Sync script queries Jira sprint for all pennyfarthing stories
+// 2. Compares against sprint YAML story list
+// 3. Reports stories in Jira but not in YAML
+// 4. Optionally imports missing stories to YAML
+
+describe('Jira-Only Story Detection (47-3)', () => {
+
+  beforeEach(() => {
+    if (existsSync(TEST_DIR)) {
+      rmSync(TEST_DIR, { recursive: true });
+    }
+    mkdirSync(TEST_DIR, { recursive: true });
+  });
+
+  afterEach(() => {
+    if (existsSync(TEST_DIR)) {
+      rmSync(TEST_DIR, { recursive: true });
+    }
+  });
+
+  // ============================================
+  // AC1 + AC2: Query Jira and compare against YAML
+  // ============================================
+  describe('getYamlStoryIds() - Extract story IDs from sprint YAML', () => {
+
+    it('should extract all story IDs from sprint YAML', async () => {
+      const sprintYaml = `sprint:
+  number: 11
+  status: active
+epics:
+  - id: epic-47
+    title: Jira Sync
+    stories:
+      - id: "47-1"
+        title: Auto-create Jira epic
+        status: done
+      - id: "47-2"
+        title: Sync sprint numbers
+        status: done
+      - id: "47-3"
+        title: Detect Jira-only stories
+        status: in_progress
+`;
+      const sprintPath = join(TEST_DIR, 'current-sprint.yaml');
+      writeFileSync(sprintPath, sprintYaml);
+
+      const result = await getYamlStoryIds({ sprintPath });
+
+      assert.strictEqual(result.success, true);
+      assert.ok(result.storyIds, 'Should return storyIds array');
+      assert.strictEqual(result.storyIds?.length, 3);
+      assert.ok(result.storyIds?.includes('47-1'));
+      assert.ok(result.storyIds?.includes('47-2'));
+      assert.ok(result.storyIds?.includes('47-3'));
+    });
+
+    it('should extract stories from multiple epics', async () => {
+      const sprintYaml = `sprint:
+  number: 11
+  status: active
+epics:
+  - id: epic-31
+    title: Workflow Engine
+    stories:
+      - id: "31-1"
+        status: done
+      - id: "31-2"
+        status: done
+  - id: epic-47
+    title: Jira Sync
+    stories:
+      - id: "47-1"
+        status: done
+`;
+      const sprintPath = join(TEST_DIR, 'current-sprint.yaml');
+      writeFileSync(sprintPath, sprintYaml);
+
+      const result = await getYamlStoryIds({ sprintPath });
+
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.storyIds?.length, 3);
+      assert.ok(result.storyIds?.includes('31-1'));
+      assert.ok(result.storyIds?.includes('31-2'));
+      assert.ok(result.storyIds?.includes('47-1'));
+    });
+
+    it('should return empty array for YAML with no stories', async () => {
+      const sprintYaml = `sprint:
+  number: 11
+  status: active
+epics: []
+`;
+      const sprintPath = join(TEST_DIR, 'current-sprint.yaml');
+      writeFileSync(sprintPath, sprintYaml);
+
+      const result = await getYamlStoryIds({ sprintPath });
+
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.storyIds?.length, 0);
+    });
+
+    it('should handle missing file gracefully', async () => {
+      const result = await getYamlStoryIds({
+        sprintPath: join(TEST_DIR, 'nonexistent.yaml')
+      });
+
+      assert.strictEqual(result.success, false);
+      assert.ok(result.error?.includes('not found') || result.error?.includes('ENOENT'));
+    });
+  });
+
+  describe('findJiraOnlyStories() - Compare Jira issues with YAML stories', () => {
+
+    it('should find stories in Jira but not in YAML', async () => {
+      const jiraIssues: SprintIssue[] = [
+        { key: 'MSSCI-11797', summary: '47-1: Auto-create Jira epic', status: 'Done' },
+        { key: 'MSSCI-11798', summary: '47-2: Sync sprint numbers', status: 'Done' },
+        { key: 'MSSCI-11800', summary: '47-4: Bidirectional sync', status: 'To Do' }  // Not in YAML!
+      ];
+      const yamlStoryIds = ['47-1', '47-2', '47-3'];
+
+      const result = await findJiraOnlyStories({
+        jiraIssues,
+        yamlStoryIds
+      });
+
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.missingStories?.length, 1);
+      assert.strictEqual(result.missingStories?.[0].key, 'MSSCI-11800');
+      assert.strictEqual(result.missingStories?.[0].storyId, '47-4');
+    });
+
+    it('should return empty when all Jira stories are in YAML', async () => {
+      const jiraIssues: SprintIssue[] = [
+        { key: 'MSSCI-11797', summary: '47-1: Auto-create Jira epic', status: 'Done' },
+        { key: 'MSSCI-11798', summary: '47-2: Sync sprint numbers', status: 'Done' }
+      ];
+      const yamlStoryIds = ['47-1', '47-2', '47-3'];
+
+      const result = await findJiraOnlyStories({
+        jiraIssues,
+        yamlStoryIds
+      });
+
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.missingStories?.length, 0);
+    });
+
+    it('should extract story ID from Jira summary format', async () => {
+      // Jira summaries often have format "47-1: Title" or "Story 47-1: Title"
+      const jiraIssues: SprintIssue[] = [
+        { key: 'MSSCI-100', summary: 'Story 31-5: New feature', status: 'In Progress' },
+        { key: 'MSSCI-101', summary: '31-6: Another feature', status: 'To Do' }
+      ];
+      const yamlStoryIds = ['31-1', '31-2'];
+
+      const result = await findJiraOnlyStories({
+        jiraIssues,
+        yamlStoryIds
+      });
+
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.missingStories?.length, 2);
+      assert.strictEqual(result.missingStories?.[0].storyId, '31-5');
+      assert.strictEqual(result.missingStories?.[1].storyId, '31-6');
+    });
+
+    it('should filter by pennyfarthing label when provided', async () => {
+      const jiraIssues: SprintIssue[] = [
+        { key: 'MSSCI-100', summary: '47-4: PF story', status: 'To Do', labels: ['pennyfarthing'] },
+        { key: 'MSSCI-101', summary: 'OTHER-1: Not PF', status: 'To Do', labels: ['other-project'] }
+      ];
+      const yamlStoryIds = ['47-1'];
+
+      const result = await findJiraOnlyStories({
+        jiraIssues,
+        yamlStoryIds,
+        filterLabel: 'pennyfarthing'
+      });
+
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.missingStories?.length, 1);
+      assert.strictEqual(result.missingStories?.[0].key, 'MSSCI-100');
+    });
+  });
+
+  // ============================================
+  // AC3: Report stories in Jira but not in YAML
+  // ============================================
+  describe('formatMissingStoriesReport() - Human-readable report', () => {
+
+    it('should format missing stories as readable report', async () => {
+      const missingStories = [
+        { key: 'MSSCI-11800', summary: '47-4: Bidirectional sync', status: 'To Do', storyId: '47-4' },
+        { key: 'MSSCI-11801', summary: '47-5: Retrofit epics', status: 'To Do', storyId: '47-5' }
+      ];
+
+      const result = await formatMissingStoriesReport({ missingStories });
+
+      assert.strictEqual(result.success, true);
+      assert.ok(result.report, 'Should have report string');
+      assert.ok(result.report?.includes('MSSCI-11800'));
+      assert.ok(result.report?.includes('47-4'));
+      assert.ok(result.report?.includes('Bidirectional sync'));
+      assert.ok(result.report?.includes('2 stories')); // Count in header
+    });
+
+    it('should return "no missing stories" message when empty', async () => {
+      const result = await formatMissingStoriesReport({ missingStories: [] });
+
+      assert.strictEqual(result.success, true);
+      assert.ok(result.report?.toLowerCase().includes('no missing') ||
+                result.report?.toLowerCase().includes('all synced') ||
+                result.report?.includes('0 stories'));
+    });
+
+    it('should include Jira URL in report', async () => {
+      const missingStories = [
+        { key: 'MSSCI-11800', summary: '47-4: Test', status: 'To Do', storyId: '47-4' }
+      ];
+
+      const result = await formatMissingStoriesReport({
+        missingStories,
+        jiraBaseUrl: 'https://1898andco.atlassian.net'
+      });
+
+      assert.strictEqual(result.success, true);
+      assert.ok(result.report?.includes('https://1898andco.atlassian.net/browse/MSSCI-11800'));
+    });
+  });
+
+  // ============================================
+  // AC4: Optionally import missing stories to YAML
+  // ============================================
+  describe('importMissingStoriesToYaml() - Add missing stories to sprint YAML', () => {
+
+    it('should add missing story to existing epic in YAML', async () => {
+      const sprintYaml = `sprint:
+  number: 11
+  status: active
+epics:
+  - id: epic-47
+    title: Jira Sync
+    stories:
+      - id: "47-1"
+        title: Auto-create Jira epic
+        status: done
+`;
+      const sprintPath = join(TEST_DIR, 'current-sprint.yaml');
+      writeFileSync(sprintPath, sprintYaml);
+
+      const missingStories = [
+        { key: 'MSSCI-11800', summary: '47-4: Bidirectional sync', status: 'To Do', storyId: '47-4', points: 4 }
+      ];
+
+      const result = await importMissingStoriesToYaml({
+        sprintPath,
+        missingStories,
+        targetEpicId: 'epic-47'
+      });
+
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.importedCount, 1);
+
+      // Verify the YAML was updated
+      const updatedContent = readFileSync(sprintPath, 'utf-8');
+      assert.ok(updatedContent.includes('47-4'));
+      assert.ok(updatedContent.includes('Bidirectional sync'));
+    });
+
+    it('should preserve existing story order and add new at end', async () => {
+      const sprintYaml = `sprint:
+  number: 11
+epics:
+  - id: epic-47
+    stories:
+      - id: "47-1"
+        status: done
+      - id: "47-2"
+        status: done
+`;
+      const sprintPath = join(TEST_DIR, 'current-sprint.yaml');
+      writeFileSync(sprintPath, sprintYaml);
+
+      const missingStories = [
+        { key: 'MSSCI-11800', summary: '47-4: New story', status: 'To Do', storyId: '47-4' }
+      ];
+
+      const result = await importMissingStoriesToYaml({
+        sprintPath,
+        missingStories,
+        targetEpicId: 'epic-47'
+      });
+
+      assert.strictEqual(result.success, true);
+
+      const updatedContent = readFileSync(sprintPath, 'utf-8');
+      const idx47_1 = updatedContent.indexOf('47-1');
+      const idx47_2 = updatedContent.indexOf('47-2');
+      const idx47_4 = updatedContent.indexOf('47-4');
+      assert.ok(idx47_1 < idx47_2, '47-1 should come before 47-2');
+      assert.ok(idx47_2 < idx47_4, '47-4 should come after 47-2');
+    });
+
+    it('should support dry-run mode that does not modify file', async () => {
+      const sprintYaml = `sprint:
+  number: 11
+epics:
+  - id: epic-47
+    stories:
+      - id: "47-1"
+        status: done
+`;
+      const sprintPath = join(TEST_DIR, 'current-sprint.yaml');
+      writeFileSync(sprintPath, sprintYaml);
+
+      const missingStories = [
+        { key: 'MSSCI-11800', summary: '47-4: New story', status: 'To Do', storyId: '47-4' }
+      ];
+
+      const result = await importMissingStoriesToYaml({
+        sprintPath,
+        missingStories,
+        targetEpicId: 'epic-47',
+        dryRun: true
+      });
+
+      assert.strictEqual(result.success, true);
+      assert.strictEqual(result.importedCount, 1);
+      assert.ok(result.wouldImport, 'Should indicate what would be imported');
+
+      // File should NOT be modified
+      const content = readFileSync(sprintPath, 'utf-8');
+      assert.ok(!content.includes('47-4'), 'File should not contain 47-4 in dry-run');
+    });
+
+    it('should fail if target epic does not exist', async () => {
+      const sprintYaml = `sprint:
+  number: 11
+epics:
+  - id: epic-31
+    stories:
+      - id: "31-1"
+        status: done
+`;
+      const sprintPath = join(TEST_DIR, 'current-sprint.yaml');
+      writeFileSync(sprintPath, sprintYaml);
+
+      const missingStories = [
+        { key: 'MSSCI-11800', summary: '47-4: New story', status: 'To Do', storyId: '47-4' }
+      ];
+
+      const result = await importMissingStoriesToYaml({
+        sprintPath,
+        missingStories,
+        targetEpicId: 'epic-47'  // Does not exist!
+      });
+
+      assert.strictEqual(result.success, false);
+      assert.ok(result.error?.includes('epic-47') || result.error?.includes('not found'));
+    });
+
+    it('should map Jira status to YAML status', async () => {
+      const sprintYaml = `sprint:
+  number: 11
+epics:
+  - id: epic-47
+    stories:
+      - id: "47-1"
+        status: done
+`;
+      const sprintPath = join(TEST_DIR, 'current-sprint.yaml');
+      writeFileSync(sprintPath, sprintYaml);
+
+      const missingStories = [
+        { key: 'MSSCI-100', summary: '47-2: Story', status: 'In Progress', storyId: '47-2' },
+        { key: 'MSSCI-101', summary: '47-3: Story', status: 'Done', storyId: '47-3' },
+        { key: 'MSSCI-102', summary: '47-4: Story', status: 'To Do', storyId: '47-4' }
+      ];
+
+      const result = await importMissingStoriesToYaml({
+        sprintPath,
+        missingStories,
+        targetEpicId: 'epic-47'
+      });
+
+      assert.strictEqual(result.success, true);
+
+      const content = readFileSync(sprintPath, 'utf-8');
+      assert.ok(content.includes('status: in_progress') || content.includes('status: in-progress'));
+      assert.ok(content.includes('status: done'));
+      assert.ok(content.includes('status: backlog') || content.includes('status: todo'));
+    });
+  });
+
+  // ============================================
+  // Integration: Full detection flow
+  // ============================================
+  describe('Integration: Detect and report Jira-only stories', () => {
+
+    it('should detect stories in Jira sprint but missing from YAML', async () => {
+      // Setup: YAML with stories 47-1, 47-2, 47-3
+      const sprintYaml = `sprint:
+  number: 11
+  jira_sprint_id: 275
+  status: active
+epics:
+  - id: epic-47
+    title: Jira Sync
+    stories:
+      - id: "47-1"
+        title: Auto-create Jira epic
+        jira: MSSCI-11797
+        status: done
+      - id: "47-2"
+        title: Sync sprint numbers
+        jira: MSSCI-11798
+        status: done
+      - id: "47-3"
+        title: Detect Jira-only stories
+        jira: MSSCI-11799
+        status: in_progress
+`;
+      const sprintPath = join(TEST_DIR, 'current-sprint.yaml');
+      writeFileSync(sprintPath, sprintYaml);
+
+      // Step 1: Get YAML story IDs
+      const yamlResult = await getYamlStoryIds({ sprintPath });
+      assert.strictEqual(yamlResult.success, true);
+      assert.strictEqual(yamlResult.storyIds?.length, 3);
+
+      // Step 2: Mock Jira sprint issues (includes 47-4 and 47-5 not in YAML)
+      const jiraIssues: SprintIssue[] = [
+        { key: 'MSSCI-11797', summary: '47-1: Auto-create Jira epic', status: 'Done', labels: ['pennyfarthing'] },
+        { key: 'MSSCI-11798', summary: '47-2: Sync sprint numbers', status: 'Done', labels: ['pennyfarthing'] },
+        { key: 'MSSCI-11799', summary: '47-3: Detect Jira-only stories', status: 'In Progress', labels: ['pennyfarthing'] },
+        { key: 'MSSCI-11800', summary: '47-4: Bidirectional sync', status: 'To Do', labels: ['pennyfarthing'] },
+        { key: 'MSSCI-11801', summary: '47-5: Retrofit epics', status: 'To Do', labels: ['pennyfarthing'] }
+      ];
+
+      // Step 3: Find Jira-only stories
+      const compareResult = await findJiraOnlyStories({
+        jiraIssues,
+        yamlStoryIds: yamlResult.storyIds!,
+        filterLabel: 'pennyfarthing'
+      });
+      assert.strictEqual(compareResult.success, true);
+      assert.strictEqual(compareResult.missingStories?.length, 2);
+
+      // Step 4: Generate report
+      const reportResult = await formatMissingStoriesReport({
+        missingStories: compareResult.missingStories!,
+        jiraBaseUrl: 'https://1898andco.atlassian.net'
+      });
+      assert.strictEqual(reportResult.success, true);
+      assert.ok(reportResult.report?.includes('47-4'));
+      assert.ok(reportResult.report?.includes('47-5'));
+      assert.ok(reportResult.report?.includes('2 stories'));
     });
   });
 });
