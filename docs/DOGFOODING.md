@@ -116,7 +116,7 @@ Step 1: Create in source - DONE!
          │  .claude/scripts is a direct symlink
          ▼
 ┌──────────────────────────────────────┐
-│ .claude/scripts/new.sh              │  <- Automatically available!
+│ .pennyfarthing/scripts/new.sh              │  <- Automatically available!
 │                                      │
 │   Single-hop symlink resolves        │
 └──────────────────────────────────────┘

@@ -21,16 +21,16 @@ Use the run-ci.sh script:
 
 ```bash
 # Run CI locally (auto-detects CI system)
-$CLAUDE_PROJECT_DIR/.claude/scripts/run-ci.sh
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/run-ci.sh
 
 # Show what CI system is detected without running
-$CLAUDE_PROJECT_DIR/.claude/scripts/run-ci.sh --detect-only
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/run-ci.sh --detect-only
 
 # Show what command would run without executing
-$CLAUDE_PROJECT_DIR/.claude/scripts/run-ci.sh --dry-run
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/run-ci.sh --dry-run
 
 # Show help
-$CLAUDE_PROJECT_DIR/.claude/scripts/run-ci.sh --help
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/run-ci.sh --help
 ```
 
 ## Options
@@ -111,6 +111,6 @@ If a required tool is not installed, the script will show a warning.
 </requirements>
 
 <reference>
-- **Script:** `.claude/scripts/run-ci.sh`
+- **Script:** `.pennyfarthing/scripts/run-ci.sh`
 - **Story:** 21-4 (Command & Skill Expansion)
 </reference>

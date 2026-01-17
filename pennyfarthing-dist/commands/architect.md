@@ -5,11 +5,11 @@ description: System Architect - Technical design and architecture
 <agent-activation>
 **FIRST:** Use Bash tool to run:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.claude/scripts/run.sh" agent-session.sh start "architect"
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" agent-session.sh start "architect"
 ```
 This finds the project root and loads your persona. Adopt the character shown in the output.
 
-Then load and follow `.claude/agents/architect.md`
+Then load and follow `.pennyfarthing/agents/architect.md`
 </agent-activation>
 
 <agent-exit>
@@ -55,7 +55,7 @@ Technical design and architecture decisions outside TDD flow; creates patterns a
 </responsibilities>
 
 <reference>
-- **Agent:** `.claude/agents/architect.md`
+- **Agent:** `.pennyfarthing/agents/architect.md`
 - **Sidecar:** `.claude/project/agents/architect-sidecar/`
 - **Skills:** `/architecture`
 - **Docs:** `API/docs/architecture.md`, `API/docs/api-reference.md`

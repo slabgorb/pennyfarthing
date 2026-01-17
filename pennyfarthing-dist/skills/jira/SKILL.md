@@ -155,7 +155,7 @@ jira issue list --jql "project=MSSCI AND summary~'feedback rules'" --plain
 The project has helper scripts for common Jira operations. All scripts are invoked via `run.sh`:
 
 ```bash
-# Pattern: ./.claude/scripts/run.sh <script-name> [args]
+# Pattern: ./.pennyfarthing/scripts/run.sh <script-name> [args]
 # Or if scripts are in PATH: ./scripts/run.sh <script-name> [args]
 ```
 
@@ -165,16 +165,16 @@ Syncs all stories in an epic to Jira. Shows status, optionally transitions issue
 
 ```bash
 # Show sync status for epic 24
-./.claude/scripts/run.sh jira-sync.sh 24
+./.pennyfarthing/scripts/run.sh jira-sync.sh 24
 
 # Dry run - show what would happen without making changes
-./.claude/scripts/run.sh jira-sync.sh 24 --dry-run
+./.pennyfarthing/scripts/run.sh jira-sync.sh 24 --dry-run
 
 # Sync status (transition issues to match Conductor status)
-./.claude/scripts/run.sh jira-sync.sh 24 --transition
+./.pennyfarthing/scripts/run.sh jira-sync.sh 24 --transition
 
 # Sync both status and story points
-./.claude/scripts/run.sh jira-sync.sh 24 --transition --points
+./.pennyfarthing/scripts/run.sh jira-sync.sh 24 --transition --points
 ```
 
 ### Sync Single Story
@@ -183,16 +183,16 @@ Syncs a single story to Jira with more detailed output.
 
 ```bash
 # Show story status in Jira
-./.claude/scripts/run.sh jira-sync-story.sh 24-1
+./.pennyfarthing/scripts/run.sh jira-sync-story.sh 24-1
 
 # Transition to match Conductor status
-./.claude/scripts/run.sh jira-sync-story.sh 24-1 --transition
+./.pennyfarthing/scripts/run.sh jira-sync-story.sh 24-1 --transition
 
 # Sync story points
-./.claude/scripts/run.sh jira-sync-story.sh 24-1 --points
+./.pennyfarthing/scripts/run.sh jira-sync-story.sh 24-1 --points
 
 # Add a comment
-./.claude/scripts/run.sh jira-sync-story.sh 24-1 --comment "Started development"
+./.pennyfarthing/scripts/run.sh jira-sync-story.sh 24-1 --comment "Started development"
 ```
 
 ### Claim a Story
@@ -201,13 +201,13 @@ Check availability and claim a Jira story for work.
 
 ```bash
 # Check if story is available
-./.claude/scripts/run.sh jira-claim-story.sh MSSCI-10988
+./.pennyfarthing/scripts/run.sh jira-claim-story.sh MSSCI-10988
 
 # Claim the story (assign to self + move to In Progress)
-./.claude/scripts/run.sh jira-claim-story.sh MSSCI-10988 --claim
+./.pennyfarthing/scripts/run.sh jira-claim-story.sh MSSCI-10988 --claim
 
 # Using story key format
-./.claude/scripts/run.sh jira-claim-story.sh 35-4 --claim
+./.pennyfarthing/scripts/run.sh jira-claim-story.sh 35-4 --claim
 ```
 
 ### Script Summary

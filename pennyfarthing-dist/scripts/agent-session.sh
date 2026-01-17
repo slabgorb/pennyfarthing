@@ -126,11 +126,11 @@ output_persona() {
 
   # Find theme file (check custom themes first, then built-in locations)
   # Custom themes: .claude/pennyfarthing/themes/
-  # Built-in: .claude/personas/themes/ and personas/themes/
+  # Built-in: .pennyfarthing/personas/themes/ and personas/themes/
   if [ -f "$PROJECT_ROOT/.claude/pennyfarthing/themes/${theme}.yaml" ]; then
     theme_file="$PROJECT_ROOT/.claude/pennyfarthing/themes/${theme}.yaml"
-  elif [ -f "$PROJECT_ROOT/.claude/personas/themes/${theme}.yaml" ]; then
-    theme_file="$PROJECT_ROOT/.claude/personas/themes/${theme}.yaml"
+  elif [ -f "$PROJECT_ROOT/.pennyfarthing/personas/themes/${theme}.yaml" ]; then
+    theme_file="$PROJECT_ROOT/.pennyfarthing/personas/themes/${theme}.yaml"
   elif [ -f "$PROJECT_ROOT/personas/themes/${theme}.yaml" ]; then
     theme_file="$PROJECT_ROOT/personas/themes/${theme}.yaml"
   else
@@ -232,8 +232,8 @@ case "$1" in
 
     # Auto-prime context after persona (reduces cold-start overhead)
     # Pass agent name so prime can load agent-specific sidecar
-    if [[ -f "$PROJECT_ROOT/.claude/scripts/prime.sh" ]]; then
-      "$PROJECT_ROOT/.claude/scripts/prime.sh" --quiet --agent "$2"
+    if [[ -f "$PROJECT_ROOT/.pennyfarthing/scripts/prime.sh" ]]; then
+      "$PROJECT_ROOT/.pennyfarthing/scripts/prime.sh" --quiet --agent "$2"
     fi
     ;;
   stop)

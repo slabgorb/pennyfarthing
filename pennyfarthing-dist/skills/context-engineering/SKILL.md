@@ -133,7 +133,7 @@ For long-running work, use external files:
    - What remains
    - Blockers encountered
 
-3. **Sidecar files:** `.claude/agents/{agent}-sidecar/`
+3. **Sidecar files:** `.pennyfarthing/agents/{agent}-sidecar/`
    - Patterns learned
    - Common fixes
    - Accumulated knowledge

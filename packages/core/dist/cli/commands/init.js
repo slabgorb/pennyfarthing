@@ -100,6 +100,15 @@ export async function initCommand(projectName, options) {
         }
         logger.info('Removed legacy .claude/pennyfarthing/ (migrating from copy mode)');
     }
+    // Remove legacy symlinks from .claude/ (now in .pennyfarthing/)
+    const legacyClaudeSymlinks = ['agents', 'guides', 'personas', 'scripts'];
+    for (const name of legacyClaudeSymlinks) {
+        const legacyPath = join(projectRoot, '.claude', name);
+        if (pathExists(legacyPath)) {
+            removeSymlinkOrDirectory(legacyPath, dryRun);
+            logger.info(`Removed legacy .claude/${name} (now in .pennyfarthing/)`);
+        }
+    }
     // Create symlinks pointing to node_modules (except commands and skills - handled separately)
     for (const { name, link } of DIRECTORY_SYMLINKS) {
         const linkPath = join(projectRoot, link);
@@ -398,33 +407,43 @@ async function mergeSettingsLocalJson(projectRoot, assetsPath, options) {
         logger.info('Added missing statusLine configuration');
     }
     else if (statusLine.command && typeof statusLine.command === 'string') {
-        // Migrate from any legacy path to new path (.claude/scripts/statusline.sh)
+        // Migrate from any legacy path to new path (.pennyfarthing/scripts/statusline.sh)
         const legacyPaths = [
             '.claude/core/statusline.sh',
             '.claude/statusline.sh',
             '.claude/pennyfarthing/statusline.sh', // Old copy-mode path (v4.0.0-4.0.3)
-            '.claude/pennyfarthing/scripts/statusline.sh' // Bug in template (fixed in v4.0.5)
+            '.claude/pennyfarthing/scripts/statusline.sh', // Bug in template (fixed in v4.0.5)
+            '.claude/scripts/statusline.sh' // Previous location (pre-v6.6)
         ];
         for (const legacyPath of legacyPaths) {
             if (statusLine.command.includes(legacyPath)) {
-                statusLine.command = statusLine.command.replace(legacyPath, '.claude/scripts/statusline.sh');
+                statusLine.command = statusLine.command.replace(legacyPath, '.pennyfarthing/scripts/statusline.sh');
                 modified = true;
                 logger.info(`Updated statusLine path from ${legacyPath} to new location`);
                 break;
             }
         }
     }
-    // Migrate hook paths from legacy .claude/pennyfarthing/scripts/ to .claude/scripts/
+    // Migrate hook paths from legacy locations to .pennyfarthing/scripts/
     const migrateHookPaths = (hookArray) => {
         let migrated = false;
+        const legacyScriptPaths = [
+            '.claude/pennyfarthing/scripts/',
+            '.claude/scripts/'
+        ];
         for (const entry of hookArray) {
             if (typeof entry === 'object' && entry !== null) {
                 const hookEntry = entry;
                 if (hookEntry.hooks) {
                     for (const h of hookEntry.hooks) {
-                        if (h.command && h.command.includes('.claude/pennyfarthing/scripts/')) {
-                            h.command = h.command.replace('.claude/pennyfarthing/scripts/', '.claude/scripts/');
-                            migrated = true;
+                        if (h.command) {
+                            for (const legacyPath of legacyScriptPaths) {
+                                if (h.command.includes(legacyPath)) {
+                                    h.command = h.command.replace(legacyPath, '.pennyfarthing/scripts/');
+                                    migrated = true;
+                                    break;
+                                }
+                            }
                         }
                     }
                 }

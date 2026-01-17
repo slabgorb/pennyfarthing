@@ -110,8 +110,8 @@ if [ -n "$config_file" ]; then
         theme_file=""
         if [ -f "$PROJECT_ROOT/.claude/pennyfarthing/themes/${theme}.yaml" ]; then
             theme_file="$PROJECT_ROOT/.claude/pennyfarthing/themes/${theme}.yaml"
-        elif [ -f "$PROJECT_ROOT/.claude/personas/themes/${theme}.yaml" ]; then
-            theme_file="$PROJECT_ROOT/.claude/personas/themes/${theme}.yaml"
+        elif [ -f "$PROJECT_ROOT/.pennyfarthing/personas/themes/${theme}.yaml" ]; then
+            theme_file="$PROJECT_ROOT/.pennyfarthing/personas/themes/${theme}.yaml"
         elif [ -f "$PROJECT_ROOT/personas/themes/${theme}.yaml" ]; then
             theme_file="$PROJECT_ROOT/personas/themes/${theme}.yaml"
         fi

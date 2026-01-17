@@ -266,7 +266,7 @@ MISPLACED=0
 
 # .claude/agents should be a symlink, not a real directory with files
 if [[ -d ".claude/agents" ]] && [[ ! -L ".claude/agents" ]]; then
-    warn ".claude/agents/ is a directory, should be symlink to pennyfarthing/agents"
+    warn ".pennyfarthing/agents/ is a directory, should be symlink to pennyfarthing/agents"
     ((MISPLACED++))
 fi
 

@@ -48,7 +48,7 @@ while [[ $# -gt 0 ]]; do
             echo "By default, only managed files are removed:"
             echo "  - .claude/core/"
             echo "  - .claude/skills/"
-            echo "  - .claude/personas/"
+            echo "  - .pennyfarthing/personas/"
             echo "  - .claude/manifest.json"
             echo "  - .claude/settings.local.json"
             echo "  - scripts/hooks/"

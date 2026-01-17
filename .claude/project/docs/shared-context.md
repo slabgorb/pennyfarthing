@@ -24,7 +24,7 @@ When working on pennyfarthing itself, remember:
 ## Architecture Principles
 
 ### Single Source of Truth
-All agent definitions live in `pennyfarthing-dist/agents/`. Projects access via symlinks in `.claude/agents/`.
+All agent definitions live in `pennyfarthing-dist/agents/`. Projects access via symlinks in `.pennyfarthing/agents/`.
 
 ### Context Budgeting
 Agents should load 500-800 lines max. Design for just-in-time loading.

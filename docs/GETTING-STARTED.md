@@ -34,7 +34,7 @@ npx pennyfarthing init
 ```
 
 This creates symlinks (no file copying):
-- `.claude/agents/`, `commands/`, `skills/`, `personas/` → `node_modules/pennyfarthing/pennyfarthing-dist/`
+- `.pennyfarthing/agents/`, `commands/`, `skills/`, `personas/` → `node_modules/pennyfarthing/pennyfarthing-dist/`
 - `.claude/project/` - Your customizations (not a symlink)
 - `.pennyfarthing/` - Local config (gitignored)
 - `sprint/` - Sprint tracking

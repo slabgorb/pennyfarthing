@@ -121,7 +121,7 @@ Each agent file contains:
 ## File Structure
 
 ```
-.claude/agents/
+.pennyfarthing/agents/
 ├── README.md                  # This file
 │
 │ # Main Agents (10)
@@ -208,7 +208,7 @@ Tech Writer → SM: Documentation needs
 
 To add a new agent:
 
-1. Create `.claude/agents/[name].md`
+1. Create `.pennyfarthing/agents/[name].md`
 2. Follow existing agent structure
 3. Add to `../agent-scopes.yaml`
 4. Update this README
@@ -383,10 +383,10 @@ bg_task_cleanup "$SESSION_FILE"
 cat .claude/project/docs/agent-scopes.yaml
 
 # List all agents
-ls .claude/agents/
+ls .pennyfarthing/agents/
 
 # View agent definition
-cat .claude/agents/pm.md
+cat .pennyfarthing/agents/pm.md
 
 # Activate agent
 @/pm
