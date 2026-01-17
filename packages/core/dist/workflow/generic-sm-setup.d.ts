@@ -36,6 +36,7 @@ export interface SetupResult {
     sessionFile?: string;
     branchName?: string;
     error?: string;
+    warnings?: string[];
 }
 export type GenericSmSetupResult = ResearchResult | SetupResult;
 /**
@@ -58,6 +59,41 @@ export interface SetupParams {
     assignee?: string;
     jiraKey?: string;
     acceptanceCriteria?: string[];
+    checkEpicContext?: boolean;
+    contextDir?: string;
+}
+/**
+ * Epic context check parameters
+ */
+export interface CheckEpicContextParams {
+    epicId: number;
+    contextDir: string;
+}
+/**
+ * Epic context check result
+ */
+export interface CheckEpicContextResult {
+    exists: boolean;
+    path?: string;
+    message?: string;
+    expectedPath?: string;
+}
+/**
+ * Epic context creation parameters
+ */
+export interface CreateEpicContextParams {
+    epicId: number;
+    epicTitle: string;
+    contextDir: string;
+    content?: string;
+}
+/**
+ * Epic context creation result
+ */
+export interface CreateEpicContextResult {
+    success: boolean;
+    path?: string;
+    error?: string;
 }
 /**
  * Research backlog for available stories
@@ -79,4 +115,24 @@ export declare function researchBacklog(params: ResearchParams): Promise<Researc
  * @returns Setup result with session file path and branch name
  */
 export declare function setupStory(params: SetupParams): Promise<SetupResult>;
+/**
+ * Check if epic context file exists
+ *
+ * Validates that sprint/context/context-epic-{N}.md exists before story setup.
+ * This ensures stories don't start without understanding their epic's technical landscape.
+ *
+ * @param params - Check parameters with epicId and contextDir
+ * @returns Result indicating if context exists, with path or message
+ */
+export declare function checkEpicContext(params: CheckEpicContextParams): Promise<CheckEpicContextResult>;
+/**
+ * Create epic context file from template
+ *
+ * Creates a new epic context file with standard sections.
+ * Will not overwrite existing files to preserve valuable context.
+ *
+ * @param params - Creation parameters with epicId, title, contextDir, and optional content
+ * @returns Result with success status and file path
+ */
+export declare function createEpicContext(params: CreateEpicContextParams): Promise<CreateEpicContextResult>;
 //# sourceMappingURL=generic-sm-setup.d.ts.map
