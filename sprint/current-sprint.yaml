@@ -5,9 +5,9 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 91
-  completed_points: 36
-  remaining_points: 55
+  total_points: 108
+  completed_points: 42
+  remaining_points: 64
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - Epic 31: Customizable Workflow Engine (4 pts remaining)
@@ -16,6 +16,7 @@ summary:
     - Epic 36: OTEL Tool Call Enrichment (4 pts remaining)
     - Epic 37: Technical Debt & Bug Fixes (16 pts remaining)
     - Epic 38: Agent File Modernization (16 pts remaining)
+    - Epic 47: Jira-Pennyfarthing Sync Improvements (13 pts - NEW)
 
     Stories now have `workflow:` tags indicating which workflow to use.
     SM will route to appropriate workflow (tdd, trivial, agent-docs).
@@ -28,23 +29,25 @@ epics:
   - id: epic-31
     title: Customizable Workflow Engine
     points: 37
-    completed_points: 30
+    completed_points: 33
     priority: P1
     status: in_progress
     jira: MSSCI-11599
     stories:
-      # Backlog
+      # Done
       - id: 31-15
         title: Background task completion notifications in Cyclist
         points: 3
         priority: P2
-        status: backlog
+        status: done
         repos: cyclist
+        pr: 257
         acceptance_criteria:
           - Cyclist tracks background task IDs from Task tool
           - UI notification appears when background task completes
           - Notification shows task type and success/failure status
           - User can click notification to see full result
+      # Backlog
       - id: 31-17
         title: "Bug: Trivial workflow phase naming inconsistency"
         points: 1
@@ -60,7 +63,7 @@ epics:
   - id: epic-33
     title: Runtime Permission Management
     points: 15
-    completed_points: 7
+    completed_points: 10
     priority: P1
     status: in_progress
     jira: MSSCI-11705
@@ -82,10 +85,11 @@ epics:
         title: Wire approval gate into tool execution pipeline
         points: 3
         priority: P0
-        status: in_progress
+        status: done
         assigned_to: Keith Avery
         repos: cyclist
         workflow: tdd
+        pr: 311
         acceptance_criteria:
           - Tool_use blocks check approval gate before processing
           - Bash commands with gate enabled trigger approval modal
@@ -175,6 +179,18 @@ epics:
           - Given I select a theme, When the picker closes, Then the persona display updates immediately
           - Given IPC is unavailable, When the picker loads, Then it falls back to HTTP gracefully
           - Given I change theme in quick-picker, When I open settings panel, Then settings reflects current theme
+      - id: 35-15
+        title: Collapsible Bash tool output in message stream
+        points: 2
+        priority: P1
+        status: backlog
+        repos: cyclist
+        workflow: tdd
+        acceptance_criteria:
+          - Bash tool results render in collapsible section
+          - Section shows command and exit code in header
+          - Collapsed by default, expandable on click
+          - Output preserves formatting and ANSI colors
   # ===========================================================================
   # EPIC 36: OTEL Tool Call Enrichment
   # ===========================================================================
@@ -230,6 +246,7 @@ epics:
     completed_points: 19
     priority: P2
     status: in_progress
+    jira: MSSCI-11794
     stories:
       # Done (trimmed)
       - id: 37-1
@@ -340,6 +357,18 @@ epics:
         acceptance_criteria:
           - Doctor correctly identifies workspace symlinks
           - No false failures after successful pnpm install
+      - id: 37-19
+        title: 'Bug: workflows directory not included in installation symlinks'
+        points: 1
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - DIRECTORY_SYMLINKS includes workflows entry
+          - MANAGED_PATHS includes .pennyfarthing/workflows
+          - pennyfarthing init creates workflows symlink
+          - pennyfarthing doctor checks workflows symlink
   # ===========================================================================
   # EPIC 38: Agent File Modernization
   # ===========================================================================
@@ -349,6 +378,7 @@ epics:
     completed_points: 14
     priority: P2
     status: in_progress
+    jira: MSSCI-11795
     stories:
       # Done (trimmed)
       - id: 38-1
@@ -444,3 +474,88 @@ epics:
           - Cyclist clears the Claude Code session automatically
           - Cyclist loads the specified next agent after clear
           - Auto mode workflow continues without user intervention
+  # ===========================================================================
+  # EPIC 47: Jira-Pennyfarthing Sync Improvements
+  # ===========================================================================
+  - id: epic-47
+    title: Jira-Pennyfarthing Sync Improvements
+    points: 17
+    completed_points: 0
+    priority: P1
+    status: in_progress
+    jira: MSSCI-11796
+    stories:
+      - id: 47-1
+        title: Auto-create Jira epic on local epic creation
+        points: 3
+        priority: P1
+        status: in_progress
+        assigned_to: Keith Avery
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - SM setup detects new epic without jira field
+          - Automatically creates Jira epic with matching title/description
+          - Updates sprint YAML with new Jira key
+          - Epic number derived from Jira ticket number
+        jira: MSSCI-11797
+      - id: 47-2
+        title: Sync sprint numbers with Jira sprint IDs
+        points: 3
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Sprint YAML references Jira sprint ID (e.g., 275)
+          - Status check queries Jira sprint for membership
+          - Sprint velocity pulls from Jira sprint metrics
+          - Local sprint number matches Jira sprint
+      - id: 47-3
+        title: Detect Jira-only stories missing from sprint YAML
+        points: 3
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Sync script queries Jira sprint for all pennyfarthing stories
+          - Compares against sprint YAML story list
+          - Reports stories in Jira but not in YAML
+          - Optionally imports missing stories to YAML
+      - id: 47-4
+        title: Bidirectional sync script for sprint YAML and Jira
+        points: 4
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Script syncs status changes both directions
+          - Points updated in Jira match sprint YAML
+          - New stories in either system detected
+          - Dry-run mode shows changes before applying
+      - id: 47-5
+        title: Retrofit historical epics with Jira links
+        points: 2
+        priority: P3
+        status: backlog
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - All epics in sprint archive have jira field populated
+          - Script to batch-add jira keys to historical epics
+          - Verify epic-to-Jira mapping is accurate
+          - Document any epics that have no Jira equivalent
+      - id: 47-6
+        title: Document Jira auto-creation for SM setup flow
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - generic-sm-setup.md documents epic jira check step
+          - jira skill references new epic creation capability
+          - CLAUDE.md mentions Jira sync improvements
+          - Agent sidecar captures Jira integration patterns
