@@ -62,7 +62,6 @@ import {
   requestApproval,
   createRejectionError,
   type ToolUseMessage,
-  type InterceptResult,
   type SDKToolResultError,
 } from './approval-gate.js';
 import { openSettingsWindow, setMainWindowRef, setBrowserWindowRef } from './settings-window.js';
