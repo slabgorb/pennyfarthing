@@ -92,8 +92,8 @@ The core activation sequence for every agent. The `CRITICAL="TRUE"` attribute si
 **Structure:**
 ```xml
 <agent-activation CRITICAL="TRUE">
-1. LOAD shared behavior from .claude/guides/shared-agent-behavior.md
-2. LOAD the FULL agent file from .claude/agents/{agent}.md
+1. LOAD shared behavior from .pennyfarthing/guides/shared-agent-behavior.md
+2. LOAD the FULL agent file from .pennyfarthing/agents/{agent}.md
 3. READ its entire contents
 4. LOAD SIDECAR MEMORY:
    ```bash
@@ -131,7 +131,7 @@ Instructions for loading the agent's character from the theme system.
 Load this agent's persona before activation:
 1. Read `.pennyfarthing/config.local.yaml`
 2. Get `theme` value (default: "discworld")
-3. Read `.claude/personas/themes/{theme}.yaml`
+3. Read `.pennyfarthing/personas/themes/{theme}.yaml`
 4. Extract `agents.{agent}` section (character, style, helper, etc.)
 5. Apply `attributes` from config (verbosity, formality, humor, emoji_use)
 </persona-loading>

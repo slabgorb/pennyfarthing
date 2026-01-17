@@ -5,11 +5,11 @@ description: DevOps Engineer - Infrastructure and deployment automation
 <agent-activation>
 **FIRST:** Use Bash tool to run:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.claude/scripts/run.sh" agent-session.sh start "devops"
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" agent-session.sh start "devops"
 ```
 This finds the project root and loads your persona. Adopt the character shown in the output.
 
-Then load and follow `.claude/agents/devops.md`
+Then load and follow `.pennyfarthing/agents/devops.md`
 </agent-activation>
 
 <agent-exit>
@@ -52,8 +52,8 @@ Infrastructure and deployment automation specialist who maintains CI/CD pipeline
 </responsibilities>
 
 <reference>
-- **Agent:** `.claude/agents/devops.md`
+- **Agent:** `.pennyfarthing/agents/devops.md`
 - **Sidecar:** `.claude/project/agents/devops-sidecar/`
 - **Skills:** `/just`
-- **Context:** `.claude/guides/shared-context.md`, architecture documentation
+- **Context:** `.pennyfarthing/guides/shared-context.md`, architecture documentation
 </reference>

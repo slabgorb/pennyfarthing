@@ -57,7 +57,7 @@ workflow:
 
   notes: |
     This workflow is for meta-work on the Pennyfarthing system itself:
-    - Updating agent definitions (.claude/agents/*.md)
+    - Updating agent definitions (.pennyfarthing/agents/*.md)
     - Creating or updating skills (.claude/skills/*/skill.md)
     - Process improvements and workflow refinements
     - Agent coordination documentation

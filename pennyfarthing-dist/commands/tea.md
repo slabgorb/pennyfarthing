@@ -5,11 +5,11 @@ description: Test Engineer/Architect - Test strategy and TDD
 <agent-activation>
 **FIRST:** Use Bash tool to run:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.claude/scripts/run.sh" agent-session.sh start "tea"
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" agent-session.sh start "tea"
 ```
 This finds the project root and loads your persona. Adopt the character shown in the output.
 
-Then load and follow `.claude/agents/tea.md`
+Then load and follow `.pennyfarthing/agents/tea.md`
 </agent-activation>
 
 <agent-exit>
@@ -55,7 +55,7 @@ Quality guardian who designs tests before implementation using TDD.
 </responsibilities>
 
 <reference>
-- **Agent:** `.claude/agents/tea.md`
+- **Agent:** `.pennyfarthing/agents/tea.md`
 - **Sidecar:** `.claude/project/agents/tea-sidecar/`
 - **Skills:** `/testing`
 - **Subagents:** `testing-runner.md`, `tea-handoff.md`

@@ -1,9 +1,54 @@
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { existsSync, statSync } from 'fs';
-import { resolvePennyfarthingDist, getPortraitPaths } from '@pennyfarthing/shared';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+/**
+ * Resolve the pennyfarthing-dist directory path
+ * Checks multiple locations in priority order
+ */
+function resolvePennyfarthingDist() {
+    // 1. PENNYFARTHING_DIST env var (explicit override)
+    const envPath = process.env.PENNYFARTHING_DIST;
+    if (envPath && existsSync(envPath)) {
+        return envPath;
+    }
+    // 2. Monorepo root (pennyfarthing-dist/ at repo root for dogfooding)
+    let currentDir = __dirname;
+    for (let i = 0; i < 10; i++) {
+        const monorepoPath = join(currentDir, 'pennyfarthing-dist');
+        if (existsSync(monorepoPath)) {
+            return monorepoPath;
+        }
+        const parentDir = dirname(currentDir);
+        if (parentDir === currentDir)
+            break;
+        currentDir = parentDir;
+    }
+    // 3. npm installed: node_modules/pennyfarthing/pennyfarthing-dist/
+    // From cyclist's perspective: ../../pennyfarthing/pennyfarthing-dist
+    const npmPath = join(__dirname, '..', '..', 'pennyfarthing', 'pennyfarthing-dist');
+    if (existsSync(npmPath)) {
+        return npmPath;
+    }
+    // 4. Scoped npm: node_modules/@pennyfarthing/core/pennyfarthing-dist/
+    const scopedPath = join(__dirname, '..', '..', '@pennyfarthing', 'core', 'pennyfarthing-dist');
+    if (existsSync(scopedPath)) {
+        return scopedPath;
+    }
+    return null;
+}
+/**
+ * Get all portrait-related paths for a resolved dist directory
+ */
+function getPortraitPaths(distPath) {
+    const normalizedPath = distPath.replace(/\/+$/, '');
+    return {
+        portraitsDir: join(normalizedPath, 'personas', 'portraits'),
+        themesDir: join(normalizedPath, 'personas'),
+        agentsDir: join(normalizedPath, 'agents'),
+    };
+}
 // =============================================================================
 // Project Directory Management (Single Source of Truth)
 // =============================================================================
@@ -105,15 +150,16 @@ export function getNodeModulesDir() {
     // Fallback to cwd for dev mode
     return join(process.cwd(), 'node_modules');
 }
-// Resolve portraits directory using @pennyfarthing/shared resolver
-// Handles multiple scenarios: monorepo dogfooding, npm install, packaged Electron
+// Resolve portraits directory
+// Handles multiple scenarios: npm installed Cyclist, monorepo dogfooding, packaged Electron
 export function getPortraitsDir() {
-    // Use shared resolver which checks:
-    // 1. PENNYFARTHING_DIST env var (explicit override)
-    // 2. Monorepo root (pennyfarthing-dist/ for dogfooding)
-    // 3. Sibling directory (for dev scenarios)
-    // 4. Scoped npm (@pennyfarthing/core/pennyfarthing-dist/)
-    // 5. Legacy npm (pennyfarthing/pennyfarthing-dist/)
+    // 1. Portraits bundled with Cyclist package (npm install @pennyfarthing/cyclist)
+    // From dist/ go up to package root, then into portraits/
+    const bundledPortraits = join(__dirname, '..', 'portraits');
+    if (existsSync(bundledPortraits)) {
+        return bundledPortraits;
+    }
+    // 2. Monorepo/pennyfarthing-dist (for dogfooding)
     const distPath = resolvePennyfarthingDist();
     if (distPath) {
         const paths = getPortraitPaths(distPath);
@@ -121,7 +167,7 @@ export function getPortraitsDir() {
             return paths.portraitsDir;
         }
     }
-    // Fallback: portraits in public dir (dev symlink)
+    // 3. Fallback: portraits in public dir (dev symlink)
     const publicDir = getPublicDir();
     const publicPortraits = join(publicDir, 'portraits');
     if (existsSync(publicPortraits)) {

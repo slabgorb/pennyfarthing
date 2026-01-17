@@ -41,6 +41,6 @@ fi
 # This gets injected into the prompt context
 cat <<EOF
 {
-  "addToPrompt": "<!-- AGENT-CONTEXT-REMINDER: You should be operating as the ${AGENT} agent. If you don't recall loading the ${AGENT} persona (likely due to compaction), run: $PROJECT_ROOT/.claude/scripts/agent-session.sh start \"${AGENT}\" \"${session_id}\" to reload your persona and context. -->"
+  "addToPrompt": "<!-- AGENT-CONTEXT-REMINDER: You should be operating as the ${AGENT} agent. If you don't recall loading the ${AGENT} persona (likely due to compaction), run: $PROJECT_ROOT/.pennyfarthing/scripts/agent-session.sh start \"${AGENT}\" \"${session_id}\" to reload your persona and context. -->"
 }
 EOF

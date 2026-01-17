@@ -168,11 +168,11 @@ For unfiltered runs, delegate to the `/check` command which runs all quality gat
 
 ```bash
 # Run checks in project root
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh
 
 # Run checks in a specific repo
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --repo api
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --repo ui
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh --repo api
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh --repo ui
 ```
 
 This runs:
@@ -188,14 +188,14 @@ For filtered test runs, use the `--filter` option:
 
 ```bash
 # Run only tests matching pattern
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --filter "TestUserLogin"
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh --filter "TestUserLogin"
 
 # Run only tests, skip lint and typecheck
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --tests-only --filter "TestUserLogin"
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh --tests-only --filter "TestUserLogin"
 
 # Run filtered tests in a specific repo
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --repo api --filter "TestUserLogin"
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --repo ui --tests-only --filter "login component"
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh --repo api --filter "TestUserLogin"
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh --repo ui --tests-only --filter "login component"
 ```
 
 The filter is passed to the underlying test runner:
@@ -209,8 +209,8 @@ To run checks across multiple repos, call check.sh multiple times:
 
 ```bash
 # Run all checks in both repos
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --repo api
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --repo ui
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh --repo api
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh --repo ui
 ```
 
 Or use the legacy per-repo approach below for complex filtering scenarios.

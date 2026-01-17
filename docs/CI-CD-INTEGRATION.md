@@ -202,7 +202,7 @@ Hooks are installed automatically by `pennyfarthing init`:
 pennyfarthing doctor --fix
 
 # Or install script
-.claude/scripts/install-git-hooks.sh
+.pennyfarthing/scripts/install-git-hooks.sh
 ```
 
 ## Quality Gate Automation
@@ -213,7 +213,7 @@ Comprehensive quality check before agent handoffs:
 
 ```bash
 # Usage
-.claude/scripts/check.sh [OPTIONS]
+.pennyfarthing/scripts/check.sh [OPTIONS]
 
 # Options
 --skip-check       # Emergency bypass
@@ -265,9 +265,9 @@ The script auto-detects project type:
 Auto-detects and runs appropriate CI:
 
 ```bash
-.claude/scripts/run-ci.sh              # Run detected CI
-.claude/scripts/run-ci.sh --detect-only # Show what would run
-.claude/scripts/run-ci.sh --dry-run     # Preview without executing
+.pennyfarthing/scripts/run-ci.sh              # Run detected CI
+.pennyfarthing/scripts/run-ci.sh --detect-only # Show what would run
+.pennyfarthing/scripts/run-ci.sh --dry-run     # Preview without executing
 ```
 
 ### Detection Priority
@@ -537,7 +537,7 @@ test:
 ### Run with Pennyfarthing detection
 
 ```bash
-.claude/scripts/run-ci.sh  # Auto-detects GitLab CI
+.pennyfarthing/scripts/run-ci.sh  # Auto-detects GitLab CI
 ```
 
 ## See Also

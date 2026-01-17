@@ -50,14 +50,31 @@ export function findCyclist(): string {
     return siblingCyclist;
   }
 
-  // 3. Relative to pennyfarthing install
-  const relativeCyclist = join(__dirname, '../../../cyclist');
-  if (existsSync(join(relativeCyclist, 'package.json'))) {
-    return relativeCyclist;
+  // 3. Relative to pennyfarthing install (monorepo structure)
+  // From packages/core/dist/cli/commands/ to packages/cyclist/
+  const searchPaths = [
+    join(__dirname, '../../../../cyclist'),      // packages/core/dist/cli/commands -> packages/cyclist
+    join(__dirname, '../../../../../packages/cyclist'),  // to root then packages/cyclist
+    join(__dirname, '../../../cyclist'),         // fallback
+  ];
+
+  for (const cyclistPath of searchPaths) {
+    if (existsSync(join(cyclistPath, 'package.json'))) {
+      return cyclistPath;
+    }
+  }
+
+  // 4. Check if cyclist is installed in project's node_modules
+  const projectCyclist = join(cwd, 'node_modules/@pennyfarthing/cyclist');
+  if (existsSync(join(projectCyclist, 'package.json'))) {
+    return projectCyclist;
   }
 
   throw new Error(
-    'Cyclist not found. Set CYCLIST_PATH environment variable or install cyclist at ../cyclist'
+    'Cyclist not found.\n\n' +
+    'To use the visual terminal, install the optional Cyclist package:\n\n' +
+    '  npm install @pennyfarthing/cyclist\n\n' +
+    'Then run: npx pennyfarthing cyclist'
   );
 }
 
@@ -115,14 +132,16 @@ export function resolveThemePath(theme: string, projectDir: string): string {
     return projectThemePath;
   }
 
-  // Fall back to node_modules (pennyfarthing-dist)
-  const nodeModulesPath = join(
-    projectDir,
+  // Fall back to node_modules (pennyfarthing-dist) - check both package names
+  const packagePaths = [
+    'node_modules/@pennyfarthing/core/pennyfarthing-dist/personas',
     'node_modules/pennyfarthing/pennyfarthing-dist/personas',
-    `${theme}.yaml`
-  );
-  if (existsSync(nodeModulesPath)) {
-    return nodeModulesPath;
+  ];
+  for (const pkgPath of packagePaths) {
+    const nodeModulesPath = join(projectDir, pkgPath, `${theme}.yaml`);
+    if (existsSync(nodeModulesPath)) {
+      return nodeModulesPath;
+    }
   }
 
   // Fall back to relative path from this module
@@ -181,8 +200,9 @@ export async function cyclistCommand(
   // Get spawn function (use provided mock or real spawn)
   const spawnFn = deps?.spawn ?? nodeSpawn;
 
-  // Spawn cyclist server
+  // Spawn cyclist server from cyclist directory (needed for pnpm module resolution)
   const child: ChildProcess = spawnFn('node', [serverPath], {
+    cwd: cyclistPath,
     env,
     stdio: 'inherit',
   });

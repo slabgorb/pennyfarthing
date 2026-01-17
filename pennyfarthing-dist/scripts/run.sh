@@ -38,14 +38,14 @@ shift
 
 # Handle different script locations
 # Priority 1: .claude/scripts (npm-installed or copy-mode symlink)
-# Priority 2: .claude/pennyfarthing/scripts (dogfooding - pennyfarthing repo itself)
+# Priority 2: .pennyfarthing/scripts (dogfooding - pennyfarthing repo itself)
 if [[ -d "$PROJECT_ROOT/.claude/scripts" ]]; then
     SCRIPTS_DIR="$PROJECT_ROOT/.claude/scripts"
-elif [[ -d "$PROJECT_ROOT/.claude/pennyfarthing/scripts" ]]; then
-    SCRIPTS_DIR="$PROJECT_ROOT/.claude/pennyfarthing/scripts"
+elif [[ -d "$PROJECT_ROOT/.pennyfarthing/scripts" ]]; then
+    SCRIPTS_DIR="$PROJECT_ROOT/.pennyfarthing/scripts"
 else
     echo "Error: No scripts directory found" >&2
-    echo "Expected: .claude/scripts or .claude/pennyfarthing/scripts" >&2
+    echo "Expected: .claude/scripts or .pennyfarthing/scripts" >&2
     exit 1
 fi
 

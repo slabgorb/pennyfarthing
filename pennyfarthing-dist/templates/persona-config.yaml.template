@@ -2,7 +2,7 @@
 # Controls agent personalities in Pennyfarthing
 #
 # Available themes: discworld, star-trek-tos, literary-classics, minimalist
-# See .claude/personas/themes/ for full list
+# See .pennyfarthing/personas/themes/ for full list
 
 # Base theme
 theme: discworld

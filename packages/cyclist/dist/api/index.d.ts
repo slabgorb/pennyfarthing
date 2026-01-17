@@ -15,6 +15,5 @@ export { createModeRouter, getModeInfo } from './mode.js';
 export type { ModeInfo } from './mode.js';
 export { createTelemetryRouter } from './telemetry.js';
 export { createEvaluationRouter } from './evaluation.js';
-export { createBenchmarkRouter } from './benchmark.js';
 export { createSettingsRouter } from './settings.js';
 //# sourceMappingURL=index.d.ts.map

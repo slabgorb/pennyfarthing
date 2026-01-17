@@ -6,9 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Pennyfarthing is a Claude Code agent orchestration framework with TDD workflow and themed personas. It coordinates multiple AI agents (SM, TEA, Dev, Reviewer) through story-driven development cycles.
 
-**Version:** 4.0.0
+**Version:** 6.6.0
 **Node:** >=18.0.0
-**Type:** ES module with TypeScript
+**Type:** ES module with TypeScript (pnpm monorepo)
 
 ## Build Commands
 
@@ -30,7 +30,7 @@ pennyfarthing-dist/      # Single source of truth for all definitions
 ├── commands/            # 41 slash commands
 ├── guides/              # Behavior guides
 ├── skills/              # 11 knowledge domains
-├── personas/            # Themed agent personas (101 themes)
+├── personas/            # Themed agent personas (102 themes)
 └── scripts/             # Utility scripts
 
 src/                     # TypeScript CLI source
@@ -43,10 +43,20 @@ packages/cyclist/        # Cyclist visual terminal (monorepo package)
 ├── tests/               # Vitest tests (B-*.test.ts naming)
 └── package.json         # Cyclist-specific dependencies
 
-.claude/                 # Project's own Pennyfarthing setup (symlinks to pennyfarthing-dist/)
+.claude/                 # Claude Code discovery (minimal)
+├── commands/            # → symlinks to pennyfarthing-dist/commands
+├── skills/              # → symlinks to pennyfarthing-dist/skills
+└── project/             # Project-specific customizations
+
+.pennyfarthing/          # Pennyfarthing content (main location)
+├── agents/              # → symlink to pennyfarthing-dist/agents
+├── guides/              # → symlink to pennyfarthing-dist/guides
+├── personas/            # → symlink to pennyfarthing-dist/personas
+├── scripts/             # → symlink to pennyfarthing-dist/scripts
+├── sidecars/            # Agent learning files (patterns, gotchas, decisions)
+└── config.local.yaml    # Theme configuration
+
 sprint/                  # Sprint tracking (current-sprint.yaml, archive/, context/)
-.pennyfarthing/          # Pennyfarthing runtime data
-├── sidecars/            # Agent learning files (patterns, gotchas, decisions per agent)
 .session/                # Active work sessions ({story-id}-session.md)
 ```
 
