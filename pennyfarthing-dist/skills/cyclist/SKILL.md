@@ -20,28 +20,42 @@ Cyclist is a visual terminal interface for Claude Code that displays:
 - Story/session progress tracking
 - Git status and context information
 
-## Quick Start (Recommended)
+## Quick Start
 
-Use `just` commands from the project root:
+Use `just cyclist` from the project root:
 
 ```bash
-# Start Cyclist Electron (recommended)
-just cyclist-electron
+# Electron with folder picker (default)
+just cyclist
 
-# Start Cyclist web server only (browser-based)
-just cyclist-web
+# Electron in current directory
+just cyclist here
 
-# Start Cyclist for a different project
-just cyclist-electron project_dir=/path/to/project
+# Electron in specific directory
+just cyclist dir=/path/to/project
+
+# Web dev mode (browser + hot reload)
+just cyclist web
+
+# Web server only (production)
+just cyclist server
+
+# Verbose/debug logging
+just cyclist verbose
+
+# Combine flags
+just cyclist here verbose
+just cyclist web dir=/path/to/project
 ```
 
 ## Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `CYCLIST_PROJECT_DIR` | Project directory path (required for web mode) | `$PWD` |
+| `CYCLIST_PROJECT_DIR` | Project directory path | auto (picker in Electron) |
 | `PORT` | Server port | `1898` |
 | `CYCLIST_SESSION_ID` | Session tracking ID | auto-generated |
+| `CYCLIST_VERBOSE` | Enable verbose logging | unset |
 | `CYCLIST_DEV_WEB` | Enable web dev mode (set to `1`) | unset |
 | `CYCLIST_THEME_PATH` | Custom theme file path | auto-detected |
 
@@ -51,59 +65,23 @@ just cyclist-electron project_dir=/path/to/project
 |------|-------------|
 | `--project-dir=/path` | Specify project directory |
 
-## Launch Commands
+## Just Commands Reference
 
-### Using Just (Recommended)
+| Command | Description |
+|---------|-------------|
+| `just cyclist` | Start Electron with folder picker |
+| `just cyclist here` | Start Electron in current directory |
+| `just cyclist dir=/path` | Start Electron in specific directory |
+| `just cyclist web` | Start web dev mode (browser + hot reload) |
+| `just cyclist server` | Start web server only (production) |
+| `just cyclist verbose` | Enable verbose/debug logging |
+| `just cyclist-build` | Build Cyclist TypeScript |
+| `just cyclist-rebuild` | Rebuild native modules (node-pty) |
+| `just cyclist-setup` | Full clean + install + rebuild + build |
+| `just cyclist-build-and-install` | Build and install Cyclist.app |
+| `just test-cyclist` | Run Cyclist tests |
 
-```bash
-# Electron mode (from any pennyfarthing project)
-just cyclist-electron
-
-# Web mode (browser-based)
-just cyclist-web
-
-# With explicit project directory
-just cyclist-electron project_dir=/path/to/project
-just cyclist-web project_dir=/path/to/project
-```
-
-### Web Backend (Browser Mode)
-
-Run from the **cyclist package directory**:
-
-```bash
-# Production mode
-cd packages/cyclist
-CYCLIST_PROJECT_DIR=/path/to/project npm start
-
-# Development mode with hot reload
-cd packages/cyclist
-CYCLIST_PROJECT_DIR=/path/to/project npm run dev:web
-```
-
-Opens at: http://localhost:1898 (or next available port)
-
-### Electron App
-
-```bash
-# Using CLI wrapper (if installed)
-cyclist /path/to/project
-
-# Direct launch via open
-open -a Cyclist --args --project-dir=/path/to/project
-
-# Development (from packages/cyclist)
-cd packages/cyclist
-CYCLIST_PROJECT_DIR=/path/to/project npm run dev
-```
-
-## Port Auto-Discovery
-
-The server automatically finds an available port starting from 1898:
-- Tries ports 1898, 1899, 1900... up to 10 attempts
-- Logs the actual port: `Cyclist running at http://localhost:{port}`
-
-## npm Scripts Reference
+## Direct npm Scripts
 
 From `packages/cyclist/`:
 
@@ -116,17 +94,11 @@ From `packages/cyclist/`:
 | `npm run dev:server` | Server-only with tsx watch |
 | `npm run build` | Compile TypeScript |
 
-## Just Commands Reference
+## Port Auto-Discovery
 
-| Command | Description |
-|---------|-------------|
-| `just cyclist-electron` | Start Electron dev mode |
-| `just cyclist-web` | Start web server mode |
-| `just cyclist-build` | Build Cyclist TypeScript |
-| `just cyclist-rebuild` | Rebuild native modules (node-pty) |
-| `just cyclist-setup` | Full clean + install + rebuild + build |
-| `just cyclist-build-and-install` | Build and install Cyclist.app |
-| `just test-cyclist` | Run Cyclist tests |
+The server automatically finds an available port starting from 1898:
+- Tries ports 1898, 1899, 1900... up to 10 attempts
+- Logs the actual port: `Cyclist running at http://localhost:{port}`
 
 ## Requirements
 
@@ -140,7 +112,7 @@ From `packages/cyclist/`:
 
 The `package.json` has `"main": "dist/server.js"` for npm module use. The `dev` scripts explicitly run `electron dist/main.js` to use the correct entry point. If you run `electron .` directly, it will run the web server instead of the Electron main process.
 
-**Fix:** Use `just cyclist-electron` or `npm run dev` which run `electron dist/main.js`.
+**Fix:** Use `just cyclist` which runs `electron dist/main.js`.
 
 ### Server won't start
 
@@ -168,4 +140,12 @@ just cyclist-rebuild
 
 # Or full setup from scratch
 just cyclist-setup
+```
+
+### Missing workspace dependencies
+
+If you see `Cannot find module '@pennyfarthing/core'`, the monorepo dependencies aren't built. The `just cyclist` command auto-detects this and builds them, but you can also run manually:
+
+```bash
+pnpm run build  # From project root
 ```

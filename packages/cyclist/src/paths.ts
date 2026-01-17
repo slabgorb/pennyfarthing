@@ -76,6 +76,9 @@ let projectDirFromArg: string | null = null;
 // Project directory selected via folder picker (set at runtime)
 let selectedProjectDir: string | null = null;
 
+// Track if we've already logged the project directory (avoid spam)
+let hasLoggedProjectDir = false;
+
 /**
  * Parse --project-dir argument from CLI
  * Used when launching via: open Cyclist.app --args --project-dir=/path
@@ -126,7 +129,10 @@ export function getProjectDirectory(): string | null {
   // Check environment variable (useful for web mode)
   const envDir = process.env.CYCLIST_PROJECT_DIR;
   if (envDir && isValidProjectDirectory(envDir)) {
-    console.log('[Cyclist] Project directory from env:', envDir);
+    if (!hasLoggedProjectDir) {
+      console.log('[Cyclist] Project directory from env:', envDir);
+      hasLoggedProjectDir = true;
+    }
     return envDir;
   }
 
@@ -145,6 +151,7 @@ export function getProjectDirectory(): string | null {
 export function resetProjectDirectory(): void {
   projectDirFromArg = null;
   selectedProjectDir = null;
+  hasLoggedProjectDir = false;
 }
 
 // Resolve public directory - works in dev, compiled, and packaged Electron modes

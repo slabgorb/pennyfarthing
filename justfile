@@ -4,17 +4,71 @@
 default:
     @just --list
 
-# Start Cyclist in web development mode (browser + hot reload)
-# Usage: just cyclist-web [project_dir]
-# Default project_dir is current directory
-cyclist-web project_dir=`pwd`:
-    cd packages/cyclist && CYCLIST_PROJECT_DIR={{project_dir}} npm run dev:web
+# =============================================================================
+# Cyclist - Main Command
+# =============================================================================
 
-# Start Cyclist in Electron development mode
-# Usage: just cyclist-electron [otel_debug]
-# Set otel_debug=true to capture raw OTEL data to /tmp/otel-capture.jsonl
-cyclist-electron otel_debug="false" project_dir=`pwd`:
-    cd packages/cyclist && CYCLIST_PROJECT_DIR={{project_dir}} OTEL_DEBUG={{otel_debug}} npm run dev
+# Start Cyclist (unified command)
+# Usage:
+#   just cyclist              # Electron + folder picker (default)
+#   just cyclist here         # Electron + current directory
+#   just cyclist dir=/path    # Electron + specific path
+#   just cyclist web          # Web dev mode (browser + hot reload)
+#   just cyclist server       # Web server only (no hot reload)
+#   just cyclist verbose      # Enable verbose/debug logging
+#
+# Combine flags: just cyclist here verbose
+#                just cyclist web dir=/path
+cyclist mode="electron" dir="" here="false" verbose="false":
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    # Build workspace dependencies if missing (dogfooding support)
+    if [[ ! -d packages/shared/dist ]] || [[ ! -d packages/core/dist ]]; then
+        echo "Building workspace dependencies..."
+        pnpm run build
+    fi
+
+    # Resolve directory: explicit dir > here flag > mode default
+    project_dir="{{dir}}"
+    if [[ -z "$project_dir" ]] && [[ "{{here}}" == "true" ]]; then
+        project_dir="$(pwd)"
+    fi
+
+    # Web/server modes require a directory (default to pwd)
+    if [[ -z "$project_dir" ]] && [[ "{{mode}}" != "electron" ]]; then
+        project_dir="$(pwd)"
+    fi
+
+    cd packages/cyclist
+
+    # Build environment
+    env_vars=""
+    [[ -n "$project_dir" ]] && env_vars="CYCLIST_PROJECT_DIR=$project_dir"
+    [[ "{{verbose}}" == "true" ]] && env_vars="$env_vars CYCLIST_VERBOSE=true"
+
+    case "{{mode}}" in
+        electron)
+            echo "Starting Cyclist (Electron)..."
+            [[ -n "$project_dir" ]] && echo "  Project: $project_dir" || echo "  Project: (folder picker)"
+            eval $env_vars npm run dev
+            ;;
+        web)
+            echo "Starting Cyclist (Web dev mode)..."
+            echo "  Project: $project_dir"
+            eval $env_vars npm run dev:web
+            ;;
+        server)
+            echo "Starting Cyclist (Web server)..."
+            echo "  Project: $project_dir"
+            eval $env_vars npm start
+            ;;
+        *)
+            echo "Unknown mode: {{mode}}"
+            echo "Use: electron, web, or server"
+            exit 1
+            ;;
+    esac
 
 # Build all packages
 build:
@@ -50,13 +104,17 @@ portraits-all:
 # Cyclist - Additional Commands
 # =============================================================================
 
-# Start Cyclist web server only (no Electron, for standalone mode)
-cyclist-server project_dir=`pwd`:
-    cd packages/cyclist && CYCLIST_PROJECT_DIR={{project_dir}} npm start
-
-# Build Cyclist TypeScript
+# Build Cyclist TypeScript (includes workspace dependencies)
 cyclist-build:
-    cd packages/cyclist && npm run build
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # Build workspace dependencies if missing
+    if [[ ! -d packages/shared/dist ]] || [[ ! -d packages/core/dist ]]; then
+        echo "Building workspace dependencies..."
+        pnpm run build
+    else
+        cd packages/cyclist && npm run build
+    fi
 
 # Build and package Cyclist Electron app for distribution
 cyclist-package:
@@ -100,8 +158,9 @@ cyclist-setup:
     echo "✓ Cyclist setup complete!"
     echo ""
     echo "Next steps:"
-    echo "  just cyclist-electron    # Run Electron app"
-    echo "  just cyclist-web /path   # Run web mode"
+    echo "  just cyclist           # Electron with folder picker"
+    echo "  just cyclist here      # Electron in current directory"
+    echo "  just cyclist web       # Web dev mode"
 
 # Install Cyclist.app to /Applications (macOS)
 cyclist-install-app:
@@ -135,18 +194,3 @@ claude-with-cyclist port="1898":
     OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:{{port}} \
     claude
 
-# Start Cyclist web + Claude Code with telemetry in split workflow
-# Run this, then open another terminal and run: just claude-with-cyclist
-cyclist-web-info project_dir=`pwd`:
-    #!/usr/bin/env bash
-    echo "🚴 Starting Cyclist web server..."
-    echo ""
-    echo "To get token stats, run Claude Code in another terminal with:"
-    echo "  just claude-with-cyclist"
-    echo ""
-    echo "Or manually:"
-    echo "  OTEL_EXPORTER_OTLP_PROTOCOL=http/json \\"
-    echo "  OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:1898 \\"
-    echo "  claude"
-    echo ""
-    cd packages/cyclist && CYCLIST_PROJECT_DIR={{project_dir}} npm start

@@ -266,21 +266,42 @@ ls -la .git/hooks/ | grep -v sample
 
 ## Cyclist Development
 
-Cyclist is the visual terminal interface in `packages/cyclist/`. Use `just` commands for development:
+Cyclist is the visual terminal interface in `packages/cyclist/`. Use `just cyclist` for development:
 
 ```bash
-# Start Cyclist Electron (recommended for development)
-just cyclist-electron
+# Start Cyclist (Electron with folder picker - default)
+just cyclist
 
-# Start Cyclist web server only (no Electron, browser-based)
-just cyclist-web
+# Start Cyclist in current directory
+just cyclist here
 
-# Build and install Cyclist.app
-just cyclist-build-and-install
+# Start Cyclist in specific directory
+just cyclist dir=/path/to/project
 
-# Run Cyclist tests
-just test-cyclist
+# Web dev mode (browser + hot reload)
+just cyclist web
+
+# Web server only (production mode)
+just cyclist server
+
+# Enable verbose/debug logging
+just cyclist verbose
+
+# Combine flags
+just cyclist here verbose
+just cyclist web dir=/path/to/project
 ```
+
+**Additional commands:**
+```bash
+just cyclist-setup          # First-time setup (clean, install, rebuild, build)
+just cyclist-build          # Build TypeScript only
+just cyclist-doctor         # Diagnose setup issues
+just test-cyclist           # Run tests
+just cyclist-build-and-install  # Build and install Cyclist.app
+```
+
+**Auto-build:** The `just cyclist` command automatically builds workspace dependencies (`@pennyfarthing/shared`, `@pennyfarthing/core`) if their `dist/` folders are missing. No manual build step needed when starting fresh.
 
 ### Troubleshooting
 
