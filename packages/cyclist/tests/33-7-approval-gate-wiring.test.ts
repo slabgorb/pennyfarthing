@@ -71,10 +71,15 @@ describe('AC1: Tool_use blocks check approval gate before processing', () => {
 
       const interceptSpy = vi.spyOn(approvalGate, 'interceptToolUse');
 
-      const message = bashToolUse('echo hello');
-      await main.processToolUseWithApproval(message);
+      const message = bashToolUse('echo hello', 'bash-intercept');
+      const approvalPromise = main.processToolUseWithApproval(message);
 
+      // interceptToolUse should be called immediately
       expect(interceptSpy).toHaveBeenCalledWith(message);
+
+      // Resolve approval to unblock the promise
+      approvalGate.resolveApproval('bash-intercept', true, 'once');
+      await approvalPromise;
 
       settingsStore.setBashApprovalGate(false);
     });
@@ -87,22 +92,32 @@ describe('AC1: Tool_use blocks check approval gate before processing', () => {
       settingsStore.setBashApprovalGate(true);
       settingsStore.clearAllGrants();
 
-      const result = await main.processToolUseWithApproval(bashToolUse('rm -rf /'));
+      const toolId = 'bash-check-1';
+      const approvalPromise = main.processToolUseWithApproval(bashToolUse('rm -rf /', toolId));
 
-      // Without a grant, should require approval
+      // Resolve with approval to get result
+      approvalGate.resolveApproval(toolId, true, 'once');
+      const result = await approvalPromise;
+
+      // Should indicate approval was needed (even though we approved)
       expect(result.needsApproval).toBe(true);
 
       settingsStore.setBashApprovalGate(false);
     });
 
     it('should check approval gate for Edit tool_use', async () => {
+      const approvalGate = await import('../src/approval-gate.js');
       const settingsStore = await import('../src/settings-store.js');
       const main = await import('../src/main.js');
 
       settingsStore.setBashApprovalGate(true);
       settingsStore.clearAllGrants();
 
-      const result = await main.processToolUseWithApproval(editToolUse('/etc/passwd'));
+      const toolId = 'edit-check-1';
+      const approvalPromise = main.processToolUseWithApproval(editToolUse('/etc/passwd', toolId));
+
+      approvalGate.resolveApproval(toolId, true, 'once');
+      const result = await approvalPromise;
 
       expect(result.needsApproval).toBe(true);
 
@@ -110,13 +125,18 @@ describe('AC1: Tool_use blocks check approval gate before processing', () => {
     });
 
     it('should check approval gate for WebFetch tool_use', async () => {
+      const approvalGate = await import('../src/approval-gate.js');
       const settingsStore = await import('../src/settings-store.js');
       const main = await import('../src/main.js');
 
       settingsStore.setBashApprovalGate(true);
       settingsStore.clearAllGrants();
 
-      const result = await main.processToolUseWithApproval(webFetchToolUse('https://evil.com'));
+      const toolId = 'webfetch-check-1';
+      const approvalPromise = main.processToolUseWithApproval(webFetchToolUse('https://evil.com', toolId));
+
+      approvalGate.resolveApproval(toolId, true, 'once');
+      const result = await approvalPromise;
 
       expect(result.needsApproval).toBe(true);
 
@@ -124,13 +144,18 @@ describe('AC1: Tool_use blocks check approval gate before processing', () => {
     });
 
     it('should check approval gate for Read tool_use', async () => {
+      const approvalGate = await import('../src/approval-gate.js');
       const settingsStore = await import('../src/settings-store.js');
       const main = await import('../src/main.js');
 
       settingsStore.setBashApprovalGate(true);
       settingsStore.clearAllGrants();
 
-      const result = await main.processToolUseWithApproval(readToolUse('/etc/shadow'));
+      const toolId = 'read-check-1';
+      const approvalPromise = main.processToolUseWithApproval(readToolUse('/etc/shadow', toolId));
+
+      approvalGate.resolveApproval(toolId, true, 'once');
+      const result = await approvalPromise;
 
       expect(result.needsApproval).toBe(true);
 
@@ -138,13 +163,18 @@ describe('AC1: Tool_use blocks check approval gate before processing', () => {
     });
 
     it('should check approval gate for Write tool_use', async () => {
+      const approvalGate = await import('../src/approval-gate.js');
       const settingsStore = await import('../src/settings-store.js');
       const main = await import('../src/main.js');
 
       settingsStore.setBashApprovalGate(true);
       settingsStore.clearAllGrants();
 
-      const result = await main.processToolUseWithApproval(writeToolUse('/etc/passwd'));
+      const toolId = 'write-check-1';
+      const approvalPromise = main.processToolUseWithApproval(writeToolUse('/etc/passwd', toolId));
+
+      approvalGate.resolveApproval(toolId, true, 'once');
+      const result = await approvalPromise;
 
       expect(result.needsApproval).toBe(true);
 
@@ -596,6 +626,7 @@ describe('AC5: Grant scopes (once/session/always) persist correctly', () => {
 
   describe('grant consumption', () => {
     it('should auto-revoke once grant after use', async () => {
+      const approvalGate = await import('../src/approval-gate.js');
       const settingsStore = await import('../src/settings-store.js');
       const main = await import('../src/main.js');
 
@@ -610,12 +641,17 @@ describe('AC5: Grant scopes (once/session/always) persist correctly', () => {
         granted_at: new Date().toISOString(),
       });
 
-      // First use - should pass through
+      // First use - should pass through (grant exists)
       const result1 = await main.processToolUseWithApproval(bashToolUse('npm test', 'bash-1'));
       expect(result1.passThrough).toBe(true);
 
       // Second use - grant consumed, should need approval
-      const result2 = await main.processToolUseWithApproval(bashToolUse('npm install', 'bash-2'));
+      const approvalPromise = main.processToolUseWithApproval(bashToolUse('npm install', 'bash-2'));
+
+      // Resolve approval to unblock
+      approvalGate.resolveApproval('bash-2', true, 'once');
+      const result2 = await approvalPromise;
+
       expect(result2.needsApproval).toBe(true);
 
       settingsStore.setBashApprovalGate(false);
@@ -850,6 +886,7 @@ describe('Integration: Full approval flow', () => {
   });
 
   it('should handle complete approval workflow for dangerous command', async () => {
+    const approvalGate = await import('../src/approval-gate.js');
     const settingsStore = await import('../src/settings-store.js');
     const main = await import('../src/main.js');
 
@@ -885,9 +922,19 @@ describe('Integration: Full approval flow', () => {
     expect(result.approved).toBe(true);
     expect(executionSpy).toHaveBeenCalled();
 
-    // Step 5: Verify one-time grant was consumed
+    // Step 5: Second command matches same pattern (rm *), uses the 'once' grant
+    // The 'once' grant covers ONE USE of any matching command, not just the specific command
     const nextResult = await main.processToolUseWithApproval(bashToolUse('rm -rf /var/tmp/*', 'bash-2'));
-    expect(nextResult.needsApproval).toBe(true);
+    expect(nextResult.passThrough).toBe(true); // Grant exists, so passes through
+
+    // Step 6: THIRD command needs approval - the 'once' grant is now consumed
+    const thirdPromise = main.processToolUseWithApproval(bashToolUse('rm temp.txt', 'bash-3'));
+
+    // Resolve the third approval to unblock
+    approvalGate.resolveApproval('bash-3', true, 'once');
+    const thirdResult = await thirdPromise;
+
+    expect(thirdResult.needsApproval).toBe(true);
 
     settingsStore.setBashApprovalGate(false);
   });

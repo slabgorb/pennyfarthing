@@ -80,11 +80,12 @@ epics:
           - Workflow start checks required permissions
           - Prompts for missing permissions
           - Cached grants skip prompts
-      - id: 33-6
+      - id: 33-7
         title: Wire approval gate into tool execution pipeline
         points: 3
         priority: P0
-        status: backlog
+        status: in_progress
+        assigned_to: Keith Avery
         repos: cyclist
         workflow: tdd
         acceptance_criteria:
