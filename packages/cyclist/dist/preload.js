@@ -196,6 +196,17 @@ function createElectronAPI() {
                     ipcRenderer.on('backgroundTask:completed', callback);
                 },
             },
+            // Skill API (35-12)
+            skill: {
+                getEntries: () => ipcRenderer.invoke('skill:get'),
+                clear: () => ipcRenderer.invoke('skill:clear'),
+                onStart: (callback) => {
+                    ipcRenderer.on('skill:start', callback);
+                },
+                onClear: (callback) => {
+                    ipcRenderer.on('skill:clear', () => callback());
+                },
+            },
         };
     }
     else {
@@ -353,6 +364,17 @@ function createElectronAPI() {
             // Background Task API (31-15) - test stub
             backgroundTask: {
                 onCompleted: (_callback) => {
+                    // No-op in test environment
+                },
+            },
+            // Skill API (35-12) - test stub
+            skill: {
+                getEntries: () => Promise.resolve([]),
+                clear: () => Promise.resolve(true),
+                onStart: (_callback) => {
+                    // No-op in test environment
+                },
+                onClear: (_callback) => {
                     // No-op in test environment
                 },
             },

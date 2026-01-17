@@ -104,4 +104,15 @@ export declare const IPC_COMMAND_CHANNELS: {
 export declare const IPC_BACKGROUND_TASK_CHANNELS: {
     readonly TASK_COMPLETED: "backgroundTask:completed";
 };
+/**
+ * IPC channel names for skill invocations (35-12)
+ * Used by skill panel to track skill execution
+ */
+export declare const IPC_SKILL_CHANNELS: {
+    readonly SKILL_START: "skill:start";
+    readonly SKILL_COMPLETE: "skill:complete";
+    readonly SKILL_ERROR: "skill:error";
+    readonly SKILL_GET: "skill:get";
+    readonly SKILL_CLEAR: "skill:clear";
+};
 //# sourceMappingURL=ipc-channels.d.ts.map

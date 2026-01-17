@@ -4375,6 +4375,249 @@ html, body {
 }
 
 /* =============================================================================
+ * 35-12: Skill Panel Styles
+ * Dedicated panel for skill invocations tracking
+ * Mirrors tool-panel styling but positioned as fourth panel
+ * ============================================================================= */
+
+.skill-panel {
+  display: flex;
+  flex-direction: column;
+  width: 350px;
+  min-width: var(--panel-min-width);
+  max-width: 50vw;
+  height: 100%;
+  background: var(--bg-secondary, #1a1a2e);
+  border-right: 1px solid var(--border, #333);
+  transition: width 0.2s ease, min-width 0.2s ease, opacity 0.2s ease;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.skill-panel.collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+  border-right: none;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.skill-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-tertiary, #252540);
+  border-bottom: 1px solid var(--border, #333);
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.skill-panel-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #888);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.skill-panel-count {
+  font-size: 11px;
+  color: var(--text-secondary, #888);
+  background: var(--bg-tertiary, #252540);
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.skill-panel-count:empty {
+  display: none;
+}
+
+.skill-panel-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.skill-panel-controls .icon-btn {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.skill-panel-controls .icon-btn:hover {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.skill-panel-controls .icon-btn.danger:hover {
+  background: var(--status-error);
+  border-color: var(--status-error);
+}
+
+.skill-panel-collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 12px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.skill-panel-collapse-btn:hover {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.1));
+  color: var(--text-primary, #fff);
+}
+
+.skill-panel-content {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Hide resize handle when skill panel is collapsed */
+.skill-panel.collapsed + .resize-handle {
+  display: none;
+}
+
+/* Skill log list */
+.skill-log-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+/* Skill entry */
+.skill-entry {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
+  transition: background 0.15s ease;
+}
+
+.skill-entry:hover {
+  background: var(--bg-tertiary);
+}
+
+.skill-entry.error {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.skill-entry.error:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.skill-entry-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  gap: 8px;
+}
+
+.skill-name {
+  font-family: var(--font-mono, Monaco, Consolas, monospace);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent, #6366f1);
+  flex: 1;
+}
+
+.skill-time {
+  font-family: var(--font-mono, Monaco, Consolas, monospace);
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.skill-status {
+  font-size: 12px;
+  width: 20px;
+  text-align: center;
+}
+
+.skill-status.status-running {
+  color: var(--accent, #6366f1);
+  animation: spin 1s linear infinite;
+}
+
+.skill-status.status-success {
+  color: var(--status-ready, #3fb950);
+}
+
+.skill-status.status-error {
+  color: var(--status-error, #ef4444);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Skill entry details (expandable) */
+.skill-entry-details {
+  display: none;
+  padding: 0 12px 12px 12px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  padding-top: 8px;
+}
+
+.skill-entry.expanded .skill-entry-details {
+  display: block;
+}
+
+.skill-entry-details > div {
+  margin-bottom: 4px;
+  font-family: var(--font-mono, Monaco, Consolas, monospace);
+}
+
+.skill-entry-details .detail-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.skill-entry-details .skill-args {
+  color: var(--text-primary);
+}
+
+.skill-entry-details .skill-result {
+  color: var(--status-ready, #3fb950);
+}
+
+.skill-entry-details .skill-error {
+  color: var(--status-error, #ef4444);
+}
+
+.skill-entry-details .skill-duration {
+  color: var(--text-secondary);
+}
+
+/* Empty state */
+.skill-empty-state {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--text-secondary);
+  font-style: italic;
+  font-size: 12px;
+}
+
+/* =============================================================================
  * 31-15: Background Task Notifications
  * ============================================================================= */
 

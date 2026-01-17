@@ -112,4 +112,15 @@ export const IPC_COMMAND_CHANNELS = {
 export const IPC_BACKGROUND_TASK_CHANNELS = {
     TASK_COMPLETED: 'backgroundTask:completed',
 };
+/**
+ * IPC channel names for skill invocations (35-12)
+ * Used by skill panel to track skill execution
+ */
+export const IPC_SKILL_CHANNELS = {
+    SKILL_START: 'skill:start',
+    SKILL_COMPLETE: 'skill:complete',
+    SKILL_ERROR: 'skill:error',
+    SKILL_GET: 'skill:get',
+    SKILL_CLEAR: 'skill:clear',
+};
 //# sourceMappingURL=ipc-channels.js.map

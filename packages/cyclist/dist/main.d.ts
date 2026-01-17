@@ -15,7 +15,7 @@ import { getProjectDirectory, setProjectDirectory, isValidProjectDirectory } fro
 import { ContextInfo } from './api/context.js';
 import { type CyclistSettings } from './settings.js';
 export { getProjectDirectory, setProjectDirectory, isValidProjectDirectory };
-export { IPC_DATA_CHANNELS, IPC_CLAUDE_CHANNELS, IPC_AGENT_CHANNELS, IPC_DIFF_CHANNELS, IPC_SETTINGS_CHANNELS, IPC_AUDIT_LOG_CHANNELS, IPC_FILE_BROWSER_CHANNELS, IPC_COMMAND_CHANNELS, IPC_BACKGROUND_TASK_CHANNELS, } from './ipc-channels.js';
+export { IPC_DATA_CHANNELS, IPC_CLAUDE_CHANNELS, IPC_AGENT_CHANNELS, IPC_DIFF_CHANNELS, IPC_SETTINGS_CHANNELS, IPC_AUDIT_LOG_CHANNELS, IPC_FILE_BROWSER_CHANNELS, IPC_COMMAND_CHANNELS, IPC_BACKGROUND_TASK_CHANNELS, IPC_SKILL_CHANNELS, } from './ipc-channels.js';
 export { AgentDefinition, WorkflowDefinition, AGENT_DEFINITIONS, WORKFLOW_DEFINITIONS, buildAgentMenu, buildWorkflowMenu, buildToolsMenu, buildViewMenu, getMenuTemplate, } from './menu-builder.js';
 /**
  * Get list of registered data IPC channels (for testing)
@@ -83,6 +83,38 @@ export declare function updateTodosState(todos: TodoItem[]): void;
  * Called when clearing session
  */
 export declare function resetTodos(): void;
+/**
+ * Skill entry data model - tracks skill invocations
+ */
+export interface SkillEntry {
+    id: string;
+    skill: string;
+    args?: string;
+    timestamp: number;
+    status: 'running' | 'completed' | 'error';
+    result?: string;
+    error?: string;
+    durationMs?: number;
+}
+/**
+ * Get current skill entries (for testing and IPC)
+ */
+export declare function getSkillEntries(): SkillEntry[];
+/**
+ * Handle a skill event (start, complete, error)
+ * Updates state and broadcasts to renderer
+ */
+export declare function handleSkillEvent(entry: SkillEntry): void;
+/**
+ * Clear all skill entries
+ * Called from IPC or when clearing session
+ */
+export declare function clearSkillEntries(): void;
+/**
+ * Reset skills to empty state
+ * Called when clearing session
+ */
+export declare function resetSkills(): void;
 /**
  * Get current context (for testing and IPC)
  */
@@ -264,6 +296,13 @@ export declare function setupSettingsIPCHandlers(ipcMain: {
  * 22-6: Handles audit log get/filter/export/clear
  */
 export declare function setupAuditLogIPCHandlers(ipcMain: {
+    handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
+}): void;
+/**
+ * Set up IPC handlers for skill panel
+ * 35-12: Handles skill invocation tracking via IPC
+ */
+export declare function setupSkillIPCHandlers(ipcMain: {
     handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
 }): void;
 /**

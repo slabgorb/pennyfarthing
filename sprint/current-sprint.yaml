@@ -316,11 +316,13 @@ epics:
           5. Add missing test coverage for core paths
         points: 3
         priority: P1
-        status: in_progress
+        status: done
         repos: cyclist
         workflow: tdd
         assigned_to: Keith Avery
         started: 2026-01-16
+        completed: 2026-01-16
+        pr: 304
         blocked_by: []
         blocks:
           - 35-8
@@ -446,10 +448,14 @@ epics:
           - Filter/search within invocations
         points: 3
         priority: P2
-        status: backlog
+        status: done
         repos: cyclist
         workflow: bdd
         jira: MSSCI-11727
+        assigned_to: Keith Avery
+        started: 2026-01-16
+        completed: 2026-01-16
+        pr: 305
         acceptance_criteria:
           - Dedicated panel for skill invocations
           - Shows skill name and invocation time
@@ -481,8 +487,9 @@ epics:
           resetting to defaults on every launch.
         points: 2
         priority: P2
-        status: backlog
+        status: done
         repos: cyclist
+        completed: 2026-01-16
         acceptance_criteria:
           - Window size restored on launch
           - Window position restored on launch

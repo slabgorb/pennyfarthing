@@ -398,6 +398,48 @@ export interface ElectronBackgroundTaskAPI {
   }) => void) => void;
 }
 
+/**
+ * Skill entry data model (35-12)
+ */
+export interface SkillEntry {
+  id: string;
+  skill: string;
+  args?: string;
+  timestamp: number;
+  status: 'running' | 'completed' | 'error';
+  result?: string;
+  error?: string;
+  durationMs?: number;
+}
+
+/**
+ * Skill API interface (35-12)
+ * Provides IPC channels for skill invocation tracking
+ */
+export interface ElectronSkillAPI {
+  /**
+   * Get all skill entries
+   */
+  getEntries: () => Promise<SkillEntry[]>;
+
+  /**
+   * Clear all skill entries
+   */
+  clear: () => Promise<boolean>;
+
+  /**
+   * Subscribe to skill start events
+   * Triggered when a Skill tool is invoked
+   */
+  onStart: (callback: (event: unknown, entry: SkillEntry) => void) => void;
+
+  /**
+   * Subscribe to skill clear events
+   * Triggered when skill log is cleared
+   */
+  onClear: (callback: () => void) => void;
+}
+
 export interface ElectronAPI {
   stats: ElectronDataAPI;
   persona: ElectronDataAPI;
@@ -422,6 +464,7 @@ export interface ElectronAPI {
   theme: ElectronThemeAPI; // 24-9: Quick theme switcher
   tools: ElectronToolsAPI; // Tool panel toggle
   backgroundTask: ElectronBackgroundTaskAPI; // 31-15: Background task notifications
+  skill: ElectronSkillAPI; // 35-12: Skill invocation tracking
 }
 
 // Check if we're running in Electron (has contextBridge available)
@@ -634,6 +677,17 @@ function createElectronAPI(): ElectronAPI {
           ipcRenderer.on('backgroundTask:completed', callback);
         },
       },
+      // Skill API (35-12)
+      skill: {
+        getEntries: () => ipcRenderer.invoke('skill:get') as Promise<SkillEntry[]>,
+        clear: () => ipcRenderer.invoke('skill:clear') as Promise<boolean>,
+        onStart: (callback: (event: unknown, entry: SkillEntry) => void) => {
+          ipcRenderer.on('skill:start', callback);
+        },
+        onClear: (callback: () => void) => {
+          ipcRenderer.on('skill:clear', () => callback());
+        },
+      },
     };
   } else {
     // Running in Node (tests) - return testable structure
@@ -802,6 +856,17 @@ function createElectronAPI(): ElectronAPI {
           output?: string;
           error?: string;
         }) => void) => {
+          // No-op in test environment
+        },
+      },
+      // Skill API (35-12) - test stub
+      skill: {
+        getEntries: () => Promise.resolve([]),
+        clear: () => Promise.resolve(true),
+        onStart: (_callback: (event: unknown, entry: SkillEntry) => void) => {
+          // No-op in test environment
+        },
+        onClear: (_callback: () => void) => {
           // No-op in test environment
         },
       },

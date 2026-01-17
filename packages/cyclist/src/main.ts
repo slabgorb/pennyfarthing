@@ -66,6 +66,7 @@ import {
   IPC_FILE_BROWSER_CHANNELS,
   IPC_COMMAND_CHANNELS,
   IPC_BACKGROUND_TASK_CHANNELS,
+  IPC_SKILL_CHANNELS,
 } from './ipc-channels.js';
 
 // Re-export project directory functions for external consumers
@@ -107,6 +108,7 @@ export {
   IPC_FILE_BROWSER_CHANNELS,
   IPC_COMMAND_CHANNELS,
   IPC_BACKGROUND_TASK_CHANNELS,
+  IPC_SKILL_CHANNELS,
 } from './ipc-channels.js';
 
 // Re-export menu builders from dedicated module
@@ -355,6 +357,71 @@ export function updateTodosState(todos: TodoItem[]): void {
 export function resetTodos(): void {
   currentTodos = [];
   broadcastToRenderer(IPC_DATA_CHANNELS.TODOS_UPDATE, currentTodos);
+}
+
+// =============================================================================
+// Skill State (35-12)
+// =============================================================================
+
+/**
+ * Skill entry data model - tracks skill invocations
+ */
+export interface SkillEntry {
+  id: string;
+  skill: string;
+  args?: string;
+  timestamp: number;
+  status: 'running' | 'completed' | 'error';
+  result?: string;
+  error?: string;
+  durationMs?: number;
+}
+
+/**
+ * Current skill invocations - updated when Skill tool is used
+ */
+let currentSkillEntries: SkillEntry[] = [];
+
+/**
+ * Get current skill entries (for testing and IPC)
+ */
+export function getSkillEntries(): SkillEntry[] {
+  return [...currentSkillEntries];
+}
+
+/**
+ * Handle a skill event (start, complete, error)
+ * Updates state and broadcasts to renderer
+ */
+export function handleSkillEvent(entry: SkillEntry): void {
+  const existingIndex = currentSkillEntries.findIndex((e) => e.id === entry.id);
+
+  if (existingIndex >= 0) {
+    // Update existing entry
+    currentSkillEntries[existingIndex] = { ...currentSkillEntries[existingIndex], ...entry };
+  } else {
+    // Add new entry at top (reverse chronological)
+    currentSkillEntries.unshift(entry);
+  }
+
+  broadcastToRenderer(IPC_SKILL_CHANNELS.SKILL_START, entry);
+}
+
+/**
+ * Clear all skill entries
+ * Called from IPC or when clearing session
+ */
+export function clearSkillEntries(): void {
+  currentSkillEntries = [];
+  broadcastToRenderer(IPC_SKILL_CHANNELS.SKILL_CLEAR, null);
+}
+
+/**
+ * Reset skills to empty state
+ * Called when clearing session
+ */
+export function resetSkills(): void {
+  currentSkillEntries = [];
 }
 
 // =============================================================================
@@ -965,6 +1032,41 @@ export function setupClaudeIPCHandlers(ipcMain: {
                     timestamp: Date.now(),
                     isNewFile: true,
                   });
+                } else if (block.name === 'Skill') {
+                  // 35-12: Track skill invocations
+                  const input = block.input as { skill: string; args?: string };
+                  handleSkillEvent({
+                    id: block.id || `skill-${Date.now()}`,
+                    skill: input.skill,
+                    args: input.args,
+                    timestamp: Date.now(),
+                    status: 'running',
+                  });
+                }
+              }
+            }
+          }
+        }
+
+        // 35-12: Check for tool_result blocks to update skill completion status
+        if (message.type === 'user') {
+          const userMsg = message as { message?: { content?: Array<{ type: string; tool_use_id?: string; content?: string; is_error?: boolean }> } };
+          const content = userMsg.message?.content;
+          if (content && Array.isArray(content)) {
+            for (const block of content) {
+              if (block.type === 'tool_result' && block.tool_use_id) {
+                // Find matching skill entry and update it
+                const existingEntry = currentSkillEntries.find((e) => e.id === block.tool_use_id);
+                if (existingEntry) {
+                  const startTime = existingEntry.timestamp;
+                  const durationMs = Date.now() - startTime;
+                  handleSkillEvent({
+                    ...existingEntry,
+                    status: block.is_error ? 'error' : 'completed',
+                    result: block.is_error ? undefined : (typeof block.content === 'string' ? block.content.slice(0, 200) : undefined),
+                    error: block.is_error ? (typeof block.content === 'string' ? block.content.slice(0, 200) : 'Unknown error') : undefined,
+                    durationMs,
+                  });
                 }
               }
             }
@@ -1008,6 +1110,7 @@ export function setupClaudeIPCHandlers(ipcMain: {
     resetTodos();
     resetEventStore(); // Clear tool events (changed files, diffs)
     resetToolStats();
+    resetSkills(); // 35-12: Clear skill invocations
     resetContext(); // Clear context percentage
     resetUsageStats(); // Clear usage stats (23-2)
     // Broadcast zeroed stats to update UI immediately
@@ -1275,6 +1378,31 @@ export function setupAuditLogIPCHandlers(ipcMain: {
 }
 
 // =============================================================================
+// Skill IPC Handlers (35-12)
+// =============================================================================
+
+/**
+ * Set up IPC handlers for skill panel
+ * 35-12: Handles skill invocation tracking via IPC
+ */
+export function setupSkillIPCHandlers(ipcMain: {
+  handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
+}): void {
+  // Get all skill entries
+  ipcMain.handle(IPC_SKILL_CHANNELS.SKILL_GET, async () => {
+    return getSkillEntries();
+  });
+
+  // Clear skill entries
+  ipcMain.handle(IPC_SKILL_CHANNELS.SKILL_CLEAR, async () => {
+    clearSkillEntries();
+    return true;
+  });
+
+  console.log('Skill IPC handlers registered');
+}
+
+// =============================================================================
 // Command IPC Handlers (23-3)
 // =============================================================================
 
@@ -1539,6 +1667,7 @@ if (isElectron) {
   setupSettingsIPCHandlers(ipcMain);
   setupAuditLogIPCHandlers(ipcMain);
   setupCommandIPCHandlers(ipcMain); // 23-3: Command execution
+  setupSkillIPCHandlers(ipcMain); // 35-12: Skill invocation tracking
 
   /**
    * Kill orphaned Claude CLI process from previous Cyclist session in THIS project.
