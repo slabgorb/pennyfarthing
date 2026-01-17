@@ -14,6 +14,7 @@ import { type TodoItem } from './todos.js';
 import { getProjectDirectory, setProjectDirectory, isValidProjectDirectory } from './paths.js';
 import { ContextInfo } from './api/context.js';
 import { type CyclistSettings } from './settings.js';
+import { type ToolUseMessage, type SDKToolResultError } from './approval-gate.js';
 export { getProjectDirectory, setProjectDirectory, isValidProjectDirectory };
 export { IPC_DATA_CHANNELS, IPC_CLAUDE_CHANNELS, IPC_AGENT_CHANNELS, IPC_DIFF_CHANNELS, IPC_SETTINGS_CHANNELS, IPC_AUDIT_LOG_CHANNELS, IPC_FILE_BROWSER_CHANNELS, IPC_COMMAND_CHANNELS, IPC_BACKGROUND_TASK_CHANNELS, IPC_SKILL_CHANNELS, } from './ipc-channels.js';
 export { AgentDefinition, WorkflowDefinition, AGENT_DEFINITIONS, WORKFLOW_DEFINITIONS, buildAgentMenu, buildWorkflowMenu, buildToolsMenu, buildViewMenu, getMenuTemplate, } from './menu-builder.js';
@@ -317,6 +318,75 @@ export declare function getCommandChannels(): string[];
 export declare function setupCommandIPCHandlers(ipcMain: {
     handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
 }): void;
+/**
+ * Result from processToolUseWithApproval
+ */
+export interface ApprovalResult {
+    needsApproval: boolean;
+    passThrough: boolean;
+    approved?: boolean;
+    rejected?: boolean;
+    errorMessage?: SDKToolResultError;
+}
+/**
+ * Set the IPC sender function (for testing)
+ */
+export declare function setIPCSender(sender: ((channel: string, data: unknown) => void) | null): void;
+/**
+ * Set the tool executor function (for testing)
+ */
+export declare function setToolExecutor(executor: ((message: ToolUseMessage) => void) | null): void;
+/**
+ * Set the error injector function (for testing)
+ */
+export declare function setErrorInjector(injector: ((error: SDKToolResultError) => void) | null): void;
+/**
+ * Send an approval request to the renderer via IPC
+ */
+export declare function sendApprovalRequest(toolId: string, toolName: string, context: Record<string, unknown>): void;
+/**
+ * Handle permission response from renderer
+ * Called by IPC handler when user responds to approval modal
+ */
+export declare function handlePermissionResponse(response: {
+    toolId: string;
+    approved: boolean;
+    grantScope?: 'once' | 'session' | 'always';
+}): void;
+/**
+ * Process a tool_use message with approval gate check
+ * This is the main integration point for story 33-7
+ *
+ * @param message - The tool_use message to process
+ * @returns ApprovalResult indicating whether approval is needed and outcome
+ */
+export declare function processToolUseWithApproval(message: ToolUseMessage): Promise<ApprovalResult>;
+/**
+ * Set up IPC handlers for approval gate
+ * Story 33-7: Handles permission request/response flow
+ */
+export declare function setupApprovalIPCHandlers(ipcMain: {
+    handle?: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
+    on?: (channel: string, handler: (event: unknown, ...args: unknown[]) => void) => void;
+}): void;
+/**
+ * Resolve a pending hook approval (called when user responds to modal)
+ */
+export declare function resolveHookApproval(toolId: string, approved: boolean, grantScope?: 'once' | 'session' | 'always'): void;
+/**
+ * Start the approval hook server with dynamic port selection
+ * Uses findAvailablePort to avoid conflicts with other Cyclist instances
+ * Writes port to .cyclist-approval-port for hook discovery
+ */
+export declare function startApprovalServer(): Promise<void>;
+/**
+ * Stop the approval hook server and clean up port file
+ */
+export declare function stopApprovalServer(): void;
+/**
+ * Get the current approval server port (for testing)
+ */
+export declare function getApprovalServerPort(): number | null;
 /**
  * Save session ID to file for persistence across app restarts
  * E7-3: Session persistence support
