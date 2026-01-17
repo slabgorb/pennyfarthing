@@ -1,1 +1,0 @@
-../../pennyfarthing-dist/commands/sync-work-with-sprint.md
