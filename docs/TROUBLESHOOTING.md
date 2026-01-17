@@ -28,8 +28,8 @@ git diff-index --quiet HEAD -- && echo "Clean" || echo "Dirty"
 
 **Solution:**
 ```bash
-# Install globally
-npm install -g pennyfarthing
+# Install globally (not recommended, prefer local install)
+npm install -g @pennyfarthing/core
 
 # Or use npx
 npx pennyfarthing doctor

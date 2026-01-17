@@ -58,7 +58,7 @@ Strategic planning happens occasionally. Tactical execution (story implementatio
 
 ```bash
 # Install as dev dependency (recommended)
-npm install --save-dev pennyfarthing
+npm install --save-dev @pennyfarthing/core
 ```
 
 **Optional:** For the Cyclist visual terminal with agent portraits:
@@ -73,7 +73,7 @@ npm install --save-dev @pennyfarthing/cyclist
 cd your-project
 
 # Install first
-npm install --save-dev pennyfarthing
+npm install --save-dev @pennyfarthing/core
 
 # Initialize with project name
 npx pennyfarthing init my-project
@@ -84,7 +84,7 @@ npx pennyfarthing init
 
 The init command:
 1. Creates `.claude/` directory structure
-2. Symlinks to `node_modules/pennyfarthing/pennyfarthing-dist/` (no file copying)
+2. Symlinks to `node_modules/@pennyfarthing/core/pennyfarthing-dist/` (no file copying)
 3. Creates `.pennyfarthing/` for local config (gitignored)
 4. Sets up agent sidecars for project knowledge
 5. Configures session hooks for environment setup
@@ -186,7 +186,7 @@ pennyfarthing init --skip-templates   # Skip template generation
 ```
 
 **What it creates:**
-- `.pennyfarthing/agents/`, `commands/`, `skills/`, `personas/` → symlinks to `node_modules/pennyfarthing/pennyfarthing-dist/`
+- `.pennyfarthing/agents/`, `commands/`, `skills/`, `personas/` → symlinks to `node_modules/@pennyfarthing/core/pennyfarthing-dist/`
 - `.claude/project/` - Project-specific customizations (you edit this)
 - `.pennyfarthing/` - Local config (gitignored)
 - `sprint/` - Sprint tracking
@@ -198,7 +198,7 @@ Update Pennyfarthing to the latest version.
 
 ```bash
 # Update via npm
-npm update pennyfarthing
+npm update @pennyfarthing/core
 
 # Or check current version
 npx pennyfarthing version
@@ -540,11 +540,11 @@ After initialization:
 ```
 your-project/
 ├── .claude/
-│   ├── agents/                  # → symlink to node_modules/pennyfarthing/pennyfarthing-dist/agents/
-│   ├── commands/                # → symlink to node_modules/pennyfarthing/pennyfarthing-dist/commands/
-│   ├── skills/                  # → symlink to node_modules/pennyfarthing/pennyfarthing-dist/skills/
-│   ├── personas/                # → symlink to node_modules/pennyfarthing/pennyfarthing-dist/personas/
-│   ├── scripts/                 # → symlink to node_modules/pennyfarthing/pennyfarthing-dist/scripts/
+│   ├── agents/                  # → symlink to node_modules/@pennyfarthing/core/pennyfarthing-dist/agents/
+│   ├── commands/                # → symlink to node_modules/@pennyfarthing/core/pennyfarthing-dist/commands/
+│   ├── skills/                  # → symlink to node_modules/@pennyfarthing/core/pennyfarthing-dist/skills/
+│   ├── personas/                # → symlink to node_modules/@pennyfarthing/core/pennyfarthing-dist/personas/
+│   ├── scripts/                 # → symlink to node_modules/@pennyfarthing/core/pennyfarthing-dist/scripts/
 │   ├── project/                 # Project-specific (YOU edit this)
 │   │   ├── agents/              # Agent sidecars
 │   │   │   ├── dev-sidecar/

@@ -65,7 +65,7 @@ The dogfood structure is **identical** to what `pennyfarthing init` creates, exc
 
 | Aspect | Dogfood | Fresh Install |
 |--------|---------|---------------|
-| Base path | `../pennyfarthing-dist/` | `../node_modules/pennyfarthing/pennyfarthing-dist/` |
+| Base path | `../pennyfarthing-dist/` | `../node_modules/@pennyfarthing/core/pennyfarthing-dist/` |
 | Source | Local development | npm package |
 
 The relative structure within `.claude/` is the same.
