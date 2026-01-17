@@ -96,9 +96,21 @@ REFLECT: Minimal fix: return ErrNotFound when query returns no rows. This matche
 **Output:** Passing tests, PR created (GREEN state)
 
 1. Read session file for test locations
-2. **Have helper verify RED state** (spawn testing-runner)
+2. **Have helper verify RED state** (spawn testing-runner):
+   ```yaml
+   Task tool:
+     subagent_type: "general-purpose"
+     model: "haiku"
+     prompt: |
+       Read and follow: .pennyfarthing/agents/testing-runner.md
+
+       REPOS: pennyfarthing
+       CONTEXT: Verify RED state for Story {STORY_ID}
+       RUN_ID: {STORY_ID}-red-verify
+       FILTER: {test-file-pattern}  # e.g., jira-epic-creation
+   ```
 3. Implement minimal code to pass first test
-4. Run tests locally - verify GREEN
+4. **Have helper verify GREEN state** (spawn testing-runner with same FILTER)
 5. Refactor if needed (keep GREEN)
 6. Repeat for remaining tests
 7. Commit and push:
