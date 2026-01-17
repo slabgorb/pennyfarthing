@@ -17,14 +17,14 @@ workflow:
     - name: design
       agent: ux-designer
       input: [session_file, story_context]
-      output: [ux_spec, wireframes, behavior_scenarios]
+      output: [design_spec, user_flows, wireframes, behavior_scenarios]
       gate:
         type: design_review
         condition: UX spec defines user flows and acceptance behaviors
 
     - name: red
       agent: tea
-      input: [ux_spec, behavior_scenarios, story_context]
+      input: [design_spec, behavior_scenarios, story_context]
       output: [failing_tests]
       gate:
         type: tests_fail
@@ -32,7 +32,7 @@ workflow:
 
     - name: green
       agent: dev
-      input: [failing_tests, ux_spec, story_context]
+      input: [failing_tests, design_spec, story_context]
       output: [implementation, passing_tests]
       gate:
         type: tests_pass
@@ -40,7 +40,7 @@ workflow:
 
     - name: review
       agent: reviewer
-      input: [implementation, passing_tests, ux_spec]
+      input: [implementation, passing_tests, design_spec]
       output: [approval]
       gate:
         type: approval
@@ -52,6 +52,7 @@ workflow:
       output: [archived_session, story_summary]
 
   triggers:
-    types: [ui, ux, behavior, component]
+    types: [ui, ux, behavior, component, settings, feature]
+    tags: [bdd, ux-first]
     points:
       min: 2

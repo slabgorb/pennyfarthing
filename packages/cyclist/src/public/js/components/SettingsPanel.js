@@ -1,13 +1,13 @@
 /**
- * Settings Panel Component (Story 35-9)
+ * Settings Panel Form Component (Story 35-9)
  *
- * Main settings panel with slide-in animation from right.
- * Handles loading states, error states, dirty tracking, and save/cancel.
+ * Settings form with loading states, error states, dirty tracking, and save/cancel.
+ * Now works as content inside a VerticalPanel (managed by settings-panel.js).
  *
  * Architecture:
  * - IPC primary, HTTP fallback (no localStorage)
- * - Vertical slide-in panel (320px fixed width)
  * - 4 sections: Display, Fonts, Notifications, Advanced
+ * - Visibility managed by VerticalPanel wrapper (settings-panel.js)
  *
  * Exports:
  * - SettingsPanel object with all methods
@@ -42,8 +42,7 @@ export const DEFAULT_SETTINGS = {
 // Minimum loading duration to prevent flash (ms)
 export const MIN_LOADING_DURATION = 150;
 
-// Module state
-let isOpen = false;
+// Module state (visibility now managed by VerticalPanel wrapper)
 let isDirtyState = false;
 let initialSettings = null;
 let currentSettings = null;
@@ -79,23 +78,17 @@ export function validateSidebarWidth(value) {
  */
 export const SettingsPanel = {
   /**
-   * Initialize the settings panel
-   * Sets up event listeners and keyboard handlers
+   * Initialize the settings panel form
+   * Sets up event listeners for form controls (visibility managed by VerticalPanel)
    */
   init() {
     const panel = document.getElementById('settings-panel');
     if (!panel) return;
 
-    // Wire up close button
-    const closeBtn = panel.querySelector('.settings-close');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', () => this.handleClose());
-    }
-
-    // Wire up cancel button
+    // Wire up cancel button (resets form to initial values)
     const cancelBtn = panel.querySelector('[data-action="cancel"]');
     if (cancelBtn) {
-      cancelBtn.addEventListener('click', () => this.handleClose());
+      cancelBtn.addEventListener('click', () => this.cancel());
     }
 
     // Wire up save button
@@ -121,15 +114,6 @@ export const SettingsPanel = {
     if (resetBtn) {
       resetBtn.addEventListener('click', () => this.showResetConfirmation());
     }
-
-    // Wire up gear trigger button
-    const triggerBtn = document.querySelector('.settings-trigger, #settings-trigger');
-    if (triggerBtn) {
-      triggerBtn.addEventListener('click', () => this.toggle());
-    }
-
-    // Setup keyboard listener
-    document.addEventListener('keydown', (e) => this.handleKeydown(e));
 
     // Wire up form inputs for dirty tracking
     this.setupDirtyTracking();
@@ -160,60 +144,14 @@ export const SettingsPanel = {
   },
 
   /**
-   * Open the settings panel
+   * Cancel changes and reset form to initial values
    */
-  async open() {
-    const panel = document.getElementById('settings-panel');
-    if (!panel || isOpen) return;
-
-    isOpen = true;
-    panel.classList.add('open');
-    panel.setAttribute('aria-hidden', 'false');
-
-    // Dispatch open event
-    panel.dispatchEvent(new CustomEvent('settings:open'));
-
-    // Load settings
-    await this.load();
-  },
-
-  /**
-   * Close the settings panel
-   */
-  close() {
-    const panel = document.getElementById('settings-panel');
-    if (!panel || !isOpen) return;
-
-    isOpen = false;
-    isDirtyState = false;
-    panel.classList.remove('open');
-    panel.setAttribute('aria-hidden', 'true');
-
-    // Reset state
-    initialSettings = null;
-    currentSettings = null;
-
-    // Dispatch close event
-    panel.dispatchEvent(new CustomEvent('settings:close'));
-  },
-
-  /**
-   * Toggle the settings panel open/closed
-   */
-  toggle() {
-    if (isOpen) {
-      this.handleClose();
-    } else {
-      this.open();
+  cancel() {
+    if (initialSettings) {
+      this.populateForm(initialSettings);
+      isDirtyState = false;
+      this.updateDirtyIndicator();
     }
-  },
-
-  /**
-   * Check if the panel is open
-   * @returns {boolean}
-   */
-  isOpen() {
-    return isOpen;
   },
 
   /**
@@ -265,48 +203,6 @@ export const SettingsPanel = {
     const panel = document.getElementById('settings-panel');
     if (panel) {
       panel.dispatchEvent(new CustomEvent('settings:dirty', { detail: { dirty: isDirtyState } }));
-    }
-  },
-
-  /**
-   * Handle close request (with dirty check)
-   */
-  async handleClose() {
-    if (isDirtyState) {
-      const { ConfirmDialog } = await import('./ConfirmDialog.js');
-      const result = await ConfirmDialog.show({
-        title: 'Unsaved Changes',
-        message: 'You have unsaved changes. Are you sure you want to close without saving?',
-        buttons: [
-          { label: "Don't Save", value: 'discard', variant: 'secondary' },
-          { label: 'Cancel', value: 'cancel', variant: 'secondary' },
-          { label: 'Save', value: 'save', variant: 'primary' },
-        ],
-      });
-
-      if (result === 'save') {
-        await this.saveAndClose();
-      } else if (result === 'discard') {
-        this.close();
-      }
-      // 'cancel' does nothing - stays open
-    } else {
-      this.close();
-    }
-  },
-
-  /**
-   * Handle keyboard events
-   * @param {KeyboardEvent} event
-   */
-  handleKeydown(event) {
-    // Skip if a modal dialog is open (let the dialog handle Escape instead)
-    const dialogOpen = document.querySelector('.confirm-dialog:not(.hidden)');
-    if (dialogOpen) return;
-
-    if (event.key === 'Escape' && isOpen) {
-      event.preventDefault();
-      this.handleClose();
     }
   },
 
@@ -595,9 +491,6 @@ export const SettingsPanel = {
         panel.dispatchEvent(new CustomEvent('settings:save', { detail: values }));
       }
 
-      // Close panel
-      this.close();
-
       return true;
     } catch (err) {
       console.error('Settings save failed:', err);
@@ -605,16 +498,6 @@ export const SettingsPanel = {
       return false;
     } finally {
       isSavingState = false;
-    }
-  },
-
-  /**
-   * Save and close the panel
-   */
-  async saveAndClose() {
-    const success = await this.save();
-    if (success) {
-      this.close();
     }
   },
 

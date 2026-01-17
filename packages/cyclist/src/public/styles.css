@@ -4799,50 +4799,24 @@ html, body {
  * ============================================================================= */
 
 /* Settings Trigger Button (in tab bar) */
-.settings-trigger {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary, #888);
-  cursor: pointer;
-  border-radius: 4px;
-  font-size: 16px;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.settings-trigger:hover {
-  background: var(--hover-bg, rgba(255, 255, 255, 0.1));
-  color: var(--text-primary, #fff);
-}
-
-.settings-trigger:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-/* Settings Panel - Slide-in from right */
-.settings-panel {
-  position: fixed;
-  top: 40px; /* Below tab bar */
-  right: 0;
+/* Settings Panel - Vertical Panel (35-9) */
+#settings-panel.vertical-panel {
   width: 320px;
-  height: calc(100vh - 40px);
+  min-width: 280px;
+  position: relative;
   background: var(--bg-secondary, #16213e);
-  border-left: 1px solid var(--border, #333);
+}
+
+#settings-panel.vertical-panel.collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+}
+
+.settings-panel-content {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  z-index: 200;
-  transform: translateX(100%);
-  transition: transform 200ms ease-out;
-}
-
-.settings-panel.open {
-  transform: translateX(0);
+  overflow-y: auto;
 }
 
 /* Settings Panel Header */
@@ -4859,27 +4833,6 @@ html, body {
 .settings-title {
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-primary, #fff);
-}
-
-.settings-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary, #888);
-  cursor: pointer;
-  border-radius: 4px;
-  font-size: 18px;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.settings-close:hover {
-  background: var(--hover-bg, rgba(255, 255, 255, 0.1));
   color: var(--text-primary, #fff);
 }
 
