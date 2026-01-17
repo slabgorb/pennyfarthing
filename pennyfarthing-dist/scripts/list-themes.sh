@@ -36,39 +36,38 @@ if [[ "${1:-}" == "--current-only" ]]; then
     exit 0
 fi
 
-# Collect themes into array
-themes=()
-for theme_file in "$THEMES_DIR"/*.yaml; do
-    [[ -f "$theme_file" ]] || continue
-    theme_name=$(basename "$theme_file" .yaml)
+# Extract all theme data in one grep + format with awk (fast path)
+# Single grep call across all files, awk handles formatting
+grep -H "^  tier:" "$THEMES_DIR"/*.yaml 2>/dev/null | \
+    sed 's|.*/||; s|\.yaml:.*tier:[[:space:]]*| |' | \
+    sort | \
+    awk -v current="$CURRENT_THEME" '
+    {
+        theme = $1
+        tier = $2 ? $2 : "U"
+        if (theme == current) {
+            themes[NR] = "*" theme " [" tier "]"
+        } else {
+            themes[NR] = theme " [" tier "]"
+        }
+        count++
+    }
+    END {
+        # Print header
+        print "**" count " themes available.** Current: **" (current ? current : "none") "**"
+        print ""
 
-    # Get tier from theme file
-    tier=$(grep -E "^  tier:" "$theme_file" 2>/dev/null | sed 's/.*tier:[[:space:]]*//' || echo "U")
-
-    if [[ "$theme_name" == "$CURRENT_THEME" ]]; then
-        themes+=("*${theme_name} [${tier}]")
-    else
-        themes+=("${theme_name} [${tier}]")
-    fi
-done
-
-# Print header
-echo "**${#themes[@]} themes available.** Current: **${CURRENT_THEME:-none}**"
-echo ""
-
-# Print in 3 columns
-col_width=28
-col_count=3
-i=0
-for theme in "${themes[@]}"; do
-    printf "%-${col_width}s" "$theme"
-    ((i++))
-    if (( i % col_count == 0 )); then
-        echo ""
-    fi
-done
-
-# Final newline if needed
-if (( i % col_count != 0 )); then
-    echo ""
-fi
+        # Print in 3 columns
+        col_width = 28
+        col = 0
+        for (i = 1; i <= count; i++) {
+            printf "%-" col_width "s", themes[i]
+            col++
+            if (col == 3) {
+                print ""
+                col = 0
+            }
+        }
+        if (col > 0) print ""
+    }
+'
