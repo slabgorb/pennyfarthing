@@ -7,10 +7,15 @@
  *
  * Flow:
  * 1. Claude Code calls this script with tool info via stdin (JSON)
- * 2. Script sends request to Cyclist's approval server (localhost:7432)
- * 3. Cyclist shows approval modal, user decides
- * 4. Script receives response, outputs JSON decision to stdout
- * 5. Claude Code proceeds or blocks based on decision
+ * 2. Script reads port from .cyclist-approval-port in project directory
+ * 3. Script sends request to Cyclist's approval server (localhost:PORT)
+ * 4. Cyclist shows approval modal, user decides
+ * 5. Script receives response, outputs JSON decision to stdout
+ * 6. Claude Code proceeds or blocks based on decision
+ *
+ * Multi-instance support: Each Cyclist instance writes its approval server port
+ * to .cyclist-approval-port in the project directory. This hook reads that file
+ * to connect to the correct instance, preventing cross-project interference.
  *
  * Install: Add to ~/.claude/settings.json or project .claude/settings.json:
  * {
@@ -24,10 +29,64 @@
  */
 
 const http = require('http');
+const fs = require('fs');
+const path = require('path');
 
-const CYCLIST_APPROVAL_PORT = 7432;
+const DEFAULT_APPROVAL_PORT = 7432;
 const CYCLIST_APPROVAL_HOST = '127.0.0.1';
 const TIMEOUT_MS = 120000; // 2 minutes for user to decide
+const APPROVAL_PORT_FILE = '.cyclist-approval-port';
+
+/**
+ * Find the project root by looking for .cyclist-approval-port or .claude directory
+ * Walks up from cwd until found or reaches filesystem root
+ */
+function findProjectRoot() {
+  let dir = process.cwd();
+  const root = path.parse(dir).root;
+
+  while (dir !== root) {
+    // Check for approval port file first (indicates Cyclist is running)
+    if (fs.existsSync(path.join(dir, APPROVAL_PORT_FILE))) {
+      return dir;
+    }
+    // Fall back to .claude directory as project marker
+    if (fs.existsSync(path.join(dir, '.claude'))) {
+      return dir;
+    }
+    dir = path.dirname(dir);
+  }
+
+  return null;
+}
+
+/**
+ * Read the approval server port from .cyclist-approval-port file
+ * Returns default port if file not found (Cyclist may not be running)
+ */
+function getApprovalPort() {
+  const projectRoot = findProjectRoot();
+  if (!projectRoot) {
+    return DEFAULT_APPROVAL_PORT;
+  }
+
+  const portFilePath = path.join(projectRoot, APPROVAL_PORT_FILE);
+  if (!fs.existsSync(portFilePath)) {
+    return DEFAULT_APPROVAL_PORT;
+  }
+
+  try {
+    const content = fs.readFileSync(portFilePath, 'utf-8').trim();
+    const port = parseInt(content, 10);
+    if (!isNaN(port) && port > 0 && port < 65536) {
+      return port;
+    }
+  } catch (e) {
+    // Fall through to default
+  }
+
+  return DEFAULT_APPROVAL_PORT;
+}
 
 /**
  * Read all stdin as JSON
@@ -54,10 +113,11 @@ async function readStdin() {
 async function requestApproval(toolData) {
   return new Promise((resolve, reject) => {
     const postData = JSON.stringify(toolData);
+    const port = getApprovalPort();
 
     const options = {
       hostname: CYCLIST_APPROVAL_HOST,
-      port: CYCLIST_APPROVAL_PORT,
+      port: port,
       path: '/approval-request',
       method: 'POST',
       headers: {

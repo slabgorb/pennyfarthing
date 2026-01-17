@@ -13,7 +13,7 @@ import { Server, createServer as createHttpServer, IncomingMessage, ServerRespon
 import { fileURLToPath } from 'url';
 import { dirname, join, basename } from 'path';
 import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
-import { getStoryInfo, getGitInfo, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig, findAvailablePort } from './server.js';
+import { getStoryInfo, getGitInfo, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig, findAvailablePort, writeApprovalPortFile, cleanupApprovalPortFile } from './server.js';
 import { parseToolStats, ToolStats, createEmptyStats } from './tool-stats.js';
 import {
   getTokenStats,
@@ -1650,9 +1650,14 @@ export function setupApprovalIPCHandlers(ipcMain: {
 // HTTP server that receives approval requests from the PreToolUse hook script.
 // The hook runs in Claude Code's process, sends requests here, we show modal,
 // user decides, we respond, hook tells Claude Code to allow/deny.
+//
+// Multi-instance support: Uses dynamic port selection with .cyclist-approval-port
+// discovery file to prevent cross-instance interference when multiple Cyclist
+// windows are open for different projects.
 
-const APPROVAL_SERVER_PORT = 7432;
+const DEFAULT_APPROVAL_SERVER_PORT = 7432;
 let approvalServer: ReturnType<typeof createHttpServer> | null = null;
+let approvalServerPort: number | null = null;
 
 // Pending approval requests from hooks, keyed by toolId
 const pendingHookApprovals: Map<string, {
@@ -1731,11 +1736,27 @@ export function resolveHookApproval(
 }
 
 /**
- * Start the approval hook server
+ * Start the approval hook server with dynamic port selection
+ * Uses findAvailablePort to avoid conflicts with other Cyclist instances
+ * Writes port to .cyclist-approval-port for hook discovery
  */
-export function startApprovalServer(): void {
+export async function startApprovalServer(): Promise<void> {
   if (approvalServer) {
     console.log('Approval server already running');
+    return;
+  }
+
+  const projectDir = getProjectDirectory();
+  if (!projectDir) {
+    console.warn('No project directory set, cannot start approval server');
+    return;
+  }
+
+  // Find an available port starting from default
+  try {
+    approvalServerPort = await findAvailablePort(DEFAULT_APPROVAL_SERVER_PORT);
+  } catch (error) {
+    console.error('Could not find available port for approval server:', error);
     return;
   }
 
@@ -1763,28 +1784,44 @@ export function startApprovalServer(): void {
     }
   });
 
-  approvalServer.listen(APPROVAL_SERVER_PORT, '127.0.0.1', () => {
-    console.log(`Approval hook server running on http://127.0.0.1:${APPROVAL_SERVER_PORT}`);
+  approvalServer.listen(approvalServerPort, '127.0.0.1', () => {
+    console.log(`Approval hook server running on http://127.0.0.1:${approvalServerPort}`);
+    // Write port file for hook discovery
+    writeApprovalPortFile(projectDir, approvalServerPort!);
+    console.log(`[33-7] Wrote .cyclist-approval-port file to ${projectDir}`);
   });
 
   approvalServer.on('error', (err: NodeJS.ErrnoException) => {
-    if (err.code === 'EADDRINUSE') {
-      console.warn(`Approval server port ${APPROVAL_SERVER_PORT} in use, skipping`);
-    } else {
-      console.error('Approval server error:', err);
-    }
+    console.error('Approval server error:', err);
+    approvalServerPort = null;
   });
 }
 
 /**
- * Stop the approval hook server
+ * Stop the approval hook server and clean up port file
  */
 export function stopApprovalServer(): void {
   if (approvalServer) {
     approvalServer.close();
     approvalServer = null;
+    approvalServerPort = null;
+
+    // Clean up port file
+    const projectDir = getProjectDirectory();
+    if (projectDir) {
+      cleanupApprovalPortFile(projectDir);
+      console.log('[33-7] Cleaned up .cyclist-approval-port file');
+    }
+
     console.log('Approval hook server stopped');
   }
+}
+
+/**
+ * Get the current approval server port (for testing)
+ */
+export function getApprovalServerPort(): number | null {
+  return approvalServerPort;
 }
 
 // =============================================================================
