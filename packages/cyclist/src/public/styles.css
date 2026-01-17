@@ -2259,6 +2259,22 @@ html, body {
   cursor: default;
 }
 
+/* Stop button throb - syncs with portrait thinking animation */
+.stop-btn:not(:disabled) {
+  animation: stop-btn-throb 1.5s ease-in-out infinite;
+}
+
+@keyframes stop-btn-throb {
+  0%, 100% {
+    box-shadow: 0 0 0 2px transparent;
+    background: var(--bg-primary);
+  }
+  50% {
+    box-shadow: 0 0 8px 2px #dc3545;
+    background: color-mix(in srgb, #dc3545 15%, var(--bg-primary));
+  }
+}
+
 .stop-icon {
   font-size: 1.25rem;
 }
