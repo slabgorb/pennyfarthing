@@ -14,7 +14,7 @@ theme:
   character_immersion: high
   user_title: Citizen
   portrait_style: ", painted oil texture, hextech blues and undercity greens, modern painterly animation"
-  tier: B
+  tier: A
 agents:
   orchestrator:
     character: Silco
