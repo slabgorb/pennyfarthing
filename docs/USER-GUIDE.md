@@ -2,7 +2,7 @@
 
 Complete guide to using Pennyfarthing, a Claude Code agent framework with TDD workflow and persona system.
 
-**Version:** 6.4.0
+**Version:** 7.0.0
 
 ---
 

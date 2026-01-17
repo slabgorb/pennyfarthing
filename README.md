@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v6.6.2** | *The outer loop goes once, the inner loop goes many times.*
+**v7.0.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px" margin="10px">
 
@@ -252,13 +252,18 @@ pennyfarthing uninstall --all
 
 Archived sprint data (`sprint/archive/`, `sprint/context/`) is always preserved.
 
-## What's New in v6.6
+## What's New in v7.0
 
-- **npm Registry Publishing** - Install directly from npm (no GitHub auth required)
-  - `@pennyfarthing/core` - CLI and agent framework
-  - `@pennyfarthing/cyclist` - Optional visual terminal with portraits
-- **Scoped Packages** - Both packages under `@pennyfarthing` org
-- **Public Access** - No npm tokens needed for installation
+- **BREAKING: Package Renamed** - `pennyfarthing` → `@pennyfarthing/core`
+- **BREAKING: Directory Restructure** - Content moved from `.claude/` to `.pennyfarthing/`
+- **Cyclist Split** - Visual terminal is now optional `@pennyfarthing/cyclist` (160MB → 1.1MB core)
+- **Customizable Workflow Engine** - YAML-based workflow definitions with story routing
+- **BMAD Interoperability** - Parse and export BMAD format stories and epics
+- **Runtime Permission Management** - Approval gates, spot grants, `/permissions` skill
+- **Enhanced OTEL** - Tool enrichment for Bash, Read, Edit, Write, Grep/Glob spans
+- **Agent Modernization** - All agents updated with status tags and shared behavior
+
+See [CHANGELOG.md](CHANGELOG.md) for full migration guide.
 
 ## What's New in v6.5
 
