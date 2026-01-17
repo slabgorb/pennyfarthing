@@ -78,7 +78,7 @@ export async function initCommand(projectName, options) {
     // 7. Find node_modules installation (required - copy mode removed in v4.0.4)
     const nodeModulesPath = findNodeModulesPath(projectRoot);
     if (!nodeModulesPath) {
-        logger.error('node_modules/pennyfarthing not found');
+        logger.error('@pennyfarthing/core (or pennyfarthing) not found');
         logger.error('');
         logger.error('Pennyfarthing requires npm installation:');
         logger.error('  npm install pennyfarthing');

@@ -25,7 +25,8 @@ export function getPackageVersion() {
     }
     // Fallback to package.json
     const packagePaths = [
-        join(__dirname, '../../../package.json'),
+        join(__dirname, '../../../../../package.json'), // From packages/core/dist/cli/utils/ in npm install
+        join(__dirname, '../../../package.json'), // From dist/cli/utils/ in local dev
         join(__dirname, '../../package.json')
     ];
     for (const packagePath of packagePaths) {
