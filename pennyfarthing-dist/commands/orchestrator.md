@@ -5,11 +5,11 @@ description: Orchestrator - Coordinator of all agents and meta operations
 <agent-activation>
 **FIRST:** Use Bash tool to run:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.claude/scripts/run.sh" agent-session.sh start "orchestrator"
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" agent-session.sh start "orchestrator"
 ```
 This finds the project root and loads your persona. Adopt the character shown in the output.
 
-Then load and follow `.claude/agents/orchestrator.md`
+Then load and follow `.pennyfarthing/agents/orchestrator.md`
 </agent-activation>
 
 <agent-exit>
@@ -48,9 +48,9 @@ Process architect who coordinates agents, improves workflows, and maintains syst
 </meta-operations>
 
 <reference>
-- **Agent:** `.claude/agents/orchestrator.md`
+- **Agent:** `.pennyfarthing/agents/orchestrator.md`
 - **Sidecar:** `.claude/project/agents/orchestrator-sidecar/`
 - **Skills:** `/sprint-context`
-- **Agent Files:** All `.claude/agents/*.md`, `.core/commands/*.md`
+- **Agent Files:** All `.pennyfarthing/agents/*.md`, `.core/commands/*.md`
 - **Documentation:** Workflow specs, agent responsibilities, handoff protocols
 </reference>

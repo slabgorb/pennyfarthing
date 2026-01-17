@@ -9,7 +9,7 @@ Add to your shell config (`~/.zshrc` or `~/.bashrc`):
 ```bash
 # Source all utilities
 source_pennyfarthing() {
-  local pf_scripts="$CLAUDE_PROJECT_DIR/.claude/scripts/utils"
+  local pf_scripts="$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/utils"
   [[ -d "$pf_scripts" ]] && {
     source "$pf_scripts/checkpoint.sh"
     source "$pf_scripts/retry.sh"
@@ -93,7 +93,7 @@ ccusage
 Save and restore session state.
 
 ```bash
-source .claude/scripts/utils/checkpoint.sh
+source .pennyfarthing/scripts/utils/checkpoint.sh
 
 # Save progress
 checkpoint_save "dev-phase" "implemented user auth"
@@ -115,22 +115,22 @@ checkpoint_clear         # Remove all
 
 ```bash
 # Human-readable context status
-.claude/scripts/check-context.sh --human
+.pennyfarthing/scripts/check-context.sh --human
 
 # Load into environment variables
-eval $(.claude/scripts/check-context.sh)
+eval $(.pennyfarthing/scripts/check-context.sh)
 echo "Context: $CONTEXT_PERCENT% ($CONTEXT_TOKENS tokens)"
 echo "Status: $CONTEXT_STATUS"
 
 # Check specific session
-.claude/scripts/check-context.sh --session <session-id>
+.pennyfarthing/scripts/check-context.sh --session <session-id>
 ```
 
 ### Quick Aliases
 
 ```bash
 # Context check alias
-alias ctx='.claude/scripts/check-context.sh --human'
+alias ctx='.pennyfarthing/scripts/check-context.sh --human'
 
 # Doctor alias
 alias pfd='pennyfarthing doctor'
@@ -142,7 +142,7 @@ alias pfdf='pennyfarthing doctor --fix'
 ### Retry with Backoff
 
 ```bash
-source .claude/scripts/utils/retry.sh
+source .pennyfarthing/scripts/utils/retry.sh
 
 # Retry up to 3 times, initial delay 1s, max 10s
 retry_with_backoff 3 1 10 curl -s https://api.example.com/health
@@ -157,7 +157,7 @@ command_with_fallback "git pull --ff-only" "git pull --no-rebase"
 ### File Locking
 
 ```bash
-source .claude/scripts/utils/file-lock.sh
+source .pennyfarthing/scripts/utils/file-lock.sh
 
 # Execute under lock
 with_lock ".session/state.json" exclusive update-state.sh
@@ -179,7 +179,7 @@ lock_cleanup
 ## Structured Logging
 
 ```bash
-source .claude/scripts/utils/logging.sh
+source .pennyfarthing/scripts/utils/logging.sh
 
 # Write logs
 log_info "Starting workflow"
@@ -336,10 +336,10 @@ jq -n \
 pennyfarthing doctor --fix
 
 # Context status
-.claude/scripts/check-context.sh --human
+.pennyfarthing/scripts/check-context.sh --human
 
 # Recent checkpoints
-source .claude/scripts/utils/checkpoint.sh && checkpoint_list
+source .pennyfarthing/scripts/utils/checkpoint.sh && checkpoint_list
 
 # Git state
 git diff-index --quiet HEAD -- && echo "Clean" || echo "Dirty"
@@ -356,7 +356,7 @@ find .claude -type l ! -exec test -e {} \; -print
 # Pennyfarthing shortcuts
 alias pf='pennyfarthing'
 alias pfd='pennyfarthing doctor'
-alias ctx='.claude/scripts/check-context.sh --human'
+alias ctx='.pennyfarthing/scripts/check-context.sh --human'
 
 # Git shortcuts for sessions
 alias gs='git status -s'
@@ -378,7 +378,7 @@ Always use absolute paths in hooks and scripts:
 ./scripts/my-hook.sh
 
 # CORRECT - always works
-"$CLAUDE_PROJECT_DIR/.claude/scripts/my-hook.sh"
+"$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/my-hook.sh"
 ```
 
 ### Git Lock Recovery
@@ -416,13 +416,13 @@ alias pfdf='pennyfarthing doctor --fix'
 
 # Context monitoring
 ctx() {
-  local script="${CLAUDE_PROJECT_DIR:-.}/.claude/scripts/check-context.sh"
+  local script="${CLAUDE_PROJECT_DIR:-.}/.pennyfarthing/scripts/check-context.sh"
   [[ -x "$script" ]] && "$script" --human || echo "Not in a Pennyfarthing project"
 }
 
 # Source utilities when in project
 pf-source() {
-  local utils="${CLAUDE_PROJECT_DIR:-.}/.claude/scripts/utils"
+  local utils="${CLAUDE_PROJECT_DIR:-.}/.pennyfarthing/scripts/utils"
   [[ -d "$utils" ]] && {
     source "$utils/checkpoint.sh"
     source "$utils/retry.sh"

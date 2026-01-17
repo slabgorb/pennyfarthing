@@ -66,7 +66,7 @@ Source the checkpoint utilities and restore:
 
 ```bash
 # Source checkpoint utilities
-source "${PROJECT_ROOT:-.}/.claude/scripts/utils/checkpoint.sh"
+source "${PROJECT_ROOT:-.}/.pennyfarthing/scripts/utils/checkpoint.sh"
 
 # Restore by label
 PHASE=$(checkpoint_restore "phase:${STORY_ID}")

@@ -7,10 +7,10 @@ This document describes the system design and architectural principles of Pennyf
 ### 1. Single Source of Truth
 
 All definitions live in one place (`pennyfarthing-dist/`), accessed via symlinks:
-- **Agent definitions:** `.claude/agents/` → `pennyfarthing/agents/`
-- **Official subagents:** `.claude/agents/` (same directory as agents)
+- **Agent definitions:** `.pennyfarthing/agents/` → `pennyfarthing/agents/`
+- **Official subagents:** `.pennyfarthing/agents/` (same directory as agents)
 - **Commands:** `.claude/commands/` → `pennyfarthing/commands/`
-- **Personas:** `.claude/personas/` → `pennyfarthing/personas/`
+- **Personas:** `.pennyfarthing/personas/` → `pennyfarthing/personas/`
 
 Projects consume these via symlinks, not copies. Updates propagate automatically.
 
@@ -59,18 +59,25 @@ pennyfarthing/
 
 After installation (in project):
 
-your-project/.claude/
-├── pennyfarthing/                  # Source (from pennyfarthing-dist/)
-│   ├── agents/                     # Agents + official subagents
-│   ├── commands/
-│   ├── guides/
-│   ├── skills/
-│   └── personas/
-├── agents/                         # → symlink to pennyfarthing/agents/
-├── commands/                       # → symlink to pennyfarthing/commands/
-├── skills/                         # → symlink to pennyfarthing/skills/
-├── personas/                       # → symlink to pennyfarthing/personas/
-└── project/                        # Project-specific (user-editable)
+your-project/
+├── .claude/                        # Claude Code discovery (minimal)
+│   ├── commands/                   # → symlinks to node_modules commands
+│   ├── skills/                     # → symlinks to node_modules skills
+│   ├── project/                    # Project-specific (user-editable)
+│   │   ├── commands/               # User's custom commands
+│   │   ├── skills/                 # User's custom skills
+│   │   └── docs/                   # Project documentation
+│   └── settings.local.json         # Claude Code settings
+│
+└── .pennyfarthing/                 # Pennyfarthing content
+    ├── agents/                     # → symlink to node_modules agents
+    ├── guides/                     # → symlink to node_modules guides
+    ├── personas/                   # → symlink to node_modules personas
+    ├── scripts/                    # → symlink to node_modules scripts
+    ├── sidecars/                   # Agent learning files
+    │   └── {agent}/                # patterns.md, gotchas.md, decisions.md
+    ├── config.local.yaml           # Theme configuration
+    └── cyclist.yaml                # Cyclist settings
 ```
 
 ## Agent Hierarchy
@@ -307,11 +314,11 @@ stories:
 
 ### Loading Order
 
-1. Read `.claude/persona-config.yaml`
+1. Read `.pennyfarthing/config.local.yaml`
 2. Get theme (e.g., `discworld`)
 3. Load `personas/themes/{theme}.yaml`
 4. Extract agent section
-5. Apply attributes (verbosity, humor, etc.)
+5. Apply theme-specific persona
 
 ### Theme Structure
 

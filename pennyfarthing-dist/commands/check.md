@@ -21,30 +21,30 @@ Use the check.sh script:
 
 ```bash
 # Run all checks (lint, typecheck, tests)
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh
 
 # Run checks in a specific repo subdirectory
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --repo api
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --repo ui
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh --repo api
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh --repo ui
 
 # Run only tests (skip lint and typecheck)
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --tests-only
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh --tests-only
 
 # Run tests with a filter pattern
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --filter "TestUserLogin"
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh --filter "TestUserLogin"
 
 # Run filtered tests in a specific repo
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --repo api --filter "TestUserLogin"
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh --repo api --filter "TestUserLogin"
 
 # Run only filtered tests (no lint/typecheck)
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --tests-only --filter "TestUserLogin"
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh --tests-only --filter "TestUserLogin"
 
 # Skip individual checks
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --no-lint
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --no-typecheck
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh --no-lint
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh --no-typecheck
 
 # Skip all checks (emergencies only)
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --skip-check
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh --skip-check
 ```
 
 ## Options

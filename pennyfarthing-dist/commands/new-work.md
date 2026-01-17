@@ -7,7 +7,7 @@ description: Start a new work session with Pennyfarthing
 <agent-activation>
 **FIRST:** Use Bash tool to run:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.claude/scripts/run.sh" agent-session.sh start "sm"
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" agent-session.sh start "sm"
 ```
 This finds the project root and loads your persona. Adopt the character shown in the output.
 </agent-activation>
@@ -122,6 +122,6 @@ Do NOT proceed to coding. Always hand off.
 </tdd-flow>
 
 <reference>
-- **SM Agent:** `.claude/agents/sm.md`
+- **SM Agent:** `.pennyfarthing/agents/sm.md`
 - **Subagents:** `workflow-status-check`, `generic-sm-setup`, `generic-sm-finish`, `sm-file-summary`, `sm-handoff`
 </reference>

@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v6.5.0** | *The outer loop goes once, the inner loop goes many times.*
+**v6.6.2** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px" margin="10px">
 
@@ -29,7 +29,7 @@ Explore all themes with OCEAN spider charts, Chernoff faces, and 1020 character 
 ```bash
 cd your-project
 
-# Install as dev dependency (scoped package)
+# Install CLI (1.1 MB)
 npm install --save-dev @pennyfarthing/core
 
 # Initialize (creates symlinks, no file copying)
@@ -42,7 +42,17 @@ npx pennyfarthing doctor
 /new-work
 ```
 
-> **Note:** The package was renamed from `pennyfarthing` to `@pennyfarthing/core` in v6.0. If upgrading, uninstall the old package first: `npm uninstall pennyfarthing`
+### Optional: Visual Terminal
+
+For the Cyclist visual terminal with agent portraits and rich UI:
+
+```bash
+# Install optional visual terminal (160 MB, includes portraits)
+npm install --save-dev @pennyfarthing/cyclist
+
+# Launch Cyclist
+npx pennyfarthing cyclist
+```
 
 ## The TDD Flow
 
@@ -61,17 +71,16 @@ npx pennyfarthing doctor
 
 Handoffs are automatic when context usage is below 70%. Above that threshold, agents recommend starting a fresh session.
 
-## Cyclist - Visual Desktop Interface
+## Cyclist - Visual Terminal
 
-Cyclist is the visual companion to Pennyfarthing - a desktop application that wraps Claude Code in a rich UI with real-time agent personas, session stats, and workflow visualization.
+Cyclist is the visual companion to Pennyfarthing - a rich UI that wraps Claude Code with real-time agent personas, session stats, and workflow visualization.
 
 ```bash
-# Run from monorepo (development)
-cd packages/cyclist
-pnpm run dev
+# Install (optional, 160 MB with portraits)
+npm install --save-dev @pennyfarthing/cyclist
 
-# Or build the distributable app
-pnpm run build:electron
+# Launch
+npx pennyfarthing cyclist
 ```
 
 ### Features
@@ -138,32 +147,27 @@ After initialization:
 ```
 your-project/
 ├── .claude/
-│   ├── pennyfarthing/        # Source files (managed)
-│   │   ├── agents/           # Agent definitions + official subagents
-│   │   ├── commands/         # Slash commands
-│   │   ├── guides/           # Behavior guides
-│   │   ├── skills/           # Knowledge domains
-│   │   └── personas/         # Theme files
-│   ├── agents/               # → symlink to pennyfarthing/agents/
-│   ├── commands/             # → symlink to pennyfarthing/commands/
-│   ├── skills/               # → symlink to pennyfarthing/skills/
-│   ├── personas/             # → symlink to pennyfarthing/personas/
+│   ├── commands/             # → symlinks to @pennyfarthing/core commands
+│   ├── skills/               # → symlinks to @pennyfarthing/core skills
 │   ├── project/              # YOUR customizations
 │   │   ├── agents/*-sidecar/ # Agent memory/learnings
 │   │   ├── docs/             # shared-context.md
 │   │   └── hooks/            # setup-env.sh
 │   ├── manifest.json         # Installation manifest
-│   ├── persona-config.yaml   # Theme selection
 │   └── settings.local.json   # Claude Code settings
-├── scripts/                  # → symlink to .claude/pennyfarthing/scripts/
-│   ├── hooks/                # Session hooks
-│   └── utils/                # Utility scripts
+├── .pennyfarthing/
+│   ├── agents/               # → symlink to @pennyfarthing/core agents
+│   ├── guides/               # → symlink to @pennyfarthing/core guides
+│   ├── personas/             # → symlink to @pennyfarthing/core personas
+│   ├── scripts/              # → symlink to @pennyfarthing/core scripts
+│   ├── sidecars/             # Agent learning files
+│   └── config.local.yaml     # Theme selection (gitignored)
 ├── sprint/
 │   ├── current-sprint.yaml   # Active sprint
 │   ├── archive/              # Completed sessions
 │   └── context/              # Story summaries
 └── .session/
-    └── {story-id}-session.md       # Active work session
+    └── {story-id}-session.md # Active work session
 ```
 
 ## Available Themes (102 total)
@@ -226,14 +230,15 @@ Override locally with `.claude/pennyfarthing/preferences.local.yaml` (gitignored
 ## Updating
 
 ```bash
-# v6.0+: Update via npm (scoped package)
+# Update CLI
 npm update @pennyfarthing/core
+
+# Update visual terminal (if installed)
+npm update @pennyfarthing/cyclist
 
 # Verify after update
 npx pennyfarthing doctor
 ```
-
-> **Migrating from v5.x?** Uninstall the old package first: `npm uninstall pennyfarthing && npm install --save-dev @pennyfarthing/core`
 
 ## Uninstalling
 
@@ -247,28 +252,27 @@ pennyfarthing uninstall --all
 
 Archived sprint data (`sprint/archive/`, `sprint/context/`) is always preserved.
 
+## What's New in v6.6
+
+- **npm Registry Publishing** - Install directly from npm (no GitHub auth required)
+  - `@pennyfarthing/core` - CLI and agent framework
+  - `@pennyfarthing/cyclist` - Optional visual terminal with portraits
+- **Scoped Packages** - Both packages under `@pennyfarthing` org
+- **Public Access** - No npm tokens needed for installation
+
 ## What's New in v6.5
 
+- **Simplified Installation** - Two packages for different needs:
+  - `@pennyfarthing/core` - CLI only (1.1 MB)
+  - `@pennyfarthing/cyclist` - Optional visual terminal with portraits (160 MB)
+- **Portrait Optimization** - Cyclist bundles only 128px and 256px portraits (saves 450MB)
 - **Agent Modernization** - All agents updated with status tags and consolidated shared behavior
 - **OTEL Tool Enrichment** - Bash, Write, Read, Edit, Grep/Glob spans enriched with operation context
-- **Cyclist UI Polish** - Font selector, clickable file paths, window state persistence, custom themes
-- **SM Workflow Routing** - Stories automatically route to workflows based on tags
-- **30+ Stories Delivered** - Bug fixes, stability improvements, and new features
-
-## What's New in v6.4
-
-- **102 Themes** - 11 new themes added since v6.0
-- **20 Skills** - Expanded knowledge domains
-- **43 Commands** - More workflow entry points
-- **Sprint 10** - Customizable workflows and runtime permissions
 
 ## What's New in v6.0
 
-- **Monorepo Architecture** - Restructured as pnpm workspace
-  - `@pennyfarthing/core` - Main framework package
-  - `@pennyfarthing/cyclist` - GUI companion (Electron)
-  - `@pennyfarthing/shared` - Cross-package utilities (portrait resolver)
-- **Cyclist Integration** - Full GUI support with persona sidebar
+- **Monorepo Architecture** - Restructured as pnpm workspace for development
+- **Cyclist Visual Terminal** - Full GUI support with persona sidebar
   - Portrait resolver works across all install scenarios
   - Real-time agent display with OCEAN-slugged filenames
 - **New Themes** - Arthurian Mythos, Greek Mythology, Lovecraft Mythos

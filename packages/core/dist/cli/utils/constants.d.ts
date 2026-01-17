@@ -9,20 +9,21 @@ export declare const CORE_AGENTS: readonly ["dev", "tea", "sm", "reviewer", "arc
 export type CoreAgent = typeof CORE_AGENTS[number];
 /**
  * Symlinks that point directly to node_modules directories
- * (not commands or skills - those use individual file symlinks)
+ * These go in .pennyfarthing/ to minimize interference with user's .claude/
+ * (commands and skills stay in .claude/ - required for Claude Code discovery)
  */
 export declare const DIRECTORY_SYMLINKS: readonly [{
     readonly name: "agents";
-    readonly link: ".claude/agents";
+    readonly link: ".pennyfarthing/agents";
 }, {
     readonly name: "guides";
-    readonly link: ".claude/guides";
+    readonly link: ".pennyfarthing/guides";
 }, {
     readonly name: "personas";
-    readonly link: ".claude/personas";
+    readonly link: ".pennyfarthing/personas";
 }, {
     readonly name: "scripts";
-    readonly link: ".claude/scripts";
+    readonly link: ".pennyfarthing/scripts";
 }];
 /**
  * All symlinks including commands and skills
@@ -30,16 +31,16 @@ export declare const DIRECTORY_SYMLINKS: readonly [{
  */
 export declare const ALL_SYMLINKS: readonly [{
     readonly name: "agents";
-    readonly link: ".claude/agents";
+    readonly link: ".pennyfarthing/agents";
 }, {
     readonly name: "guides";
-    readonly link: ".claude/guides";
+    readonly link: ".pennyfarthing/guides";
 }, {
     readonly name: "personas";
-    readonly link: ".claude/personas";
+    readonly link: ".pennyfarthing/personas";
 }, {
     readonly name: "scripts";
-    readonly link: ".claude/scripts";
+    readonly link: ".pennyfarthing/scripts";
 }, {
     readonly name: "commands";
     readonly link: ".claude/commands";
@@ -49,8 +50,9 @@ export declare const ALL_SYMLINKS: readonly [{
 }];
 /**
  * Paths managed by Pennyfarthing (used in manifest)
+ * Commands and skills in .claude/ (for discovery), rest in .pennyfarthing/
  */
-export declare const MANAGED_PATHS: readonly [".claude/agents", ".claude/commands", ".claude/guides", ".claude/skills", ".claude/personas", ".claude/scripts"];
+export declare const MANAGED_PATHS: readonly [".claude/commands", ".claude/skills", ".pennyfarthing/agents", ".pennyfarthing/guides", ".pennyfarthing/personas", ".pennyfarthing/scripts"];
 export type SymlinkDefinition = {
     readonly name: string;
     readonly link: string;

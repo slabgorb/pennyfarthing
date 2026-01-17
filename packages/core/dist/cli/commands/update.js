@@ -51,7 +51,7 @@ export async function updateCommand(options) {
             return;
         }
         else {
-            logger.error('Copy mode is deprecated and node_modules/pennyfarthing not found');
+            logger.error('Copy mode is deprecated and @pennyfarthing/core (or pennyfarthing) not found');
             logger.error('');
             logger.error('Please reinstall with npm:');
             logger.error('  npm install pennyfarthing');
@@ -61,7 +61,7 @@ export async function updateCommand(options) {
     }
     // Must have node_modules for symlink mode
     if (!nodeModulesPath) {
-        logger.error('node_modules/pennyfarthing not found');
+        logger.error('@pennyfarthing/core (or pennyfarthing) not found');
         logger.error('');
         logger.error('Please ensure pennyfarthing is installed:');
         logger.error('  npm install pennyfarthing');
