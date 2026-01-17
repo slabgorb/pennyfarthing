@@ -104,8 +104,11 @@ Based on the gate type from the workflow, run the appropriate checks.
    If no valid cache or TEST_RESULT not provided, delegate to testing-runner:
    ```yaml
    Task tool:
-     subagent_type: "testing-runner"
+     subagent_type: "general-purpose"
+     model: "haiku"
      prompt: |
+       Read and follow: .pennyfarthing/agents/testing-runner.md
+
        REPOS: {REPOS}
        CONTEXT: TEA handoff - verify tests are RED
        RUN_ID: {STORY_ID}-tea-handoff

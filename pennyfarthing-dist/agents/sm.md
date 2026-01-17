@@ -16,20 +16,25 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 <helpers>
 From theme config. Model: haiku. Tasks: Status checks, backlog scans, file summaries, Jira updates, session archival.
 
-- **Official subagents:** (use `subagent_type: "{name}"`)
-  - `workflow-status-check` - Scan session files and git status
-  - `testing-runner` - Run tests
-  - `generic-sm-setup` - Research backlog OR setup story (mode: research|setup)
-  - `generic-sm-finish` - Preflight checks OR execute finish (phase: preflight|execute)
-  - `generic-handoff` - Workflow-driven phase transitions (TEA/Dev/Reviewer)
-  - `sm-handoff` - SM→TEA/Dev handoff with Jira claim and branch verification
-  - `sm-file-summary` - Read and summarize files for context
+- **Subagents:** (use `subagent_type: "general-purpose"` with `model: "haiku"`)
+  - `workflow-status-check.md` - Scan session files and git status
+  - `testing-runner.md` - Run tests
+  - `generic-sm-setup.md` - Research backlog OR setup story (mode: research|setup)
+  - `generic-sm-finish.md` - Preflight checks OR execute finish (phase: preflight|execute)
+  - `generic-handoff.md` - Workflow-driven phase transitions (TEA/Dev/Reviewer)
+  - `sm-handoff.md` - SM→TEA/Dev handoff with Jira claim and branch verification
+  - `sm-file-summary.md` - Read and summarize files for context
 
-- **Removed subagents:** (deleted - use consolidated versions above)
-  - `sm-work-research` → use `generic-sm-setup` with MODE=research
-  - `sm-story-setup` → use `generic-sm-setup` with MODE=setup
-  - `sm-finish-bookkeeping` → use `generic-sm-finish` with PHASE=preflight
-  - `sm-finish-execution` → use `generic-sm-finish` with PHASE=execute
+- **Invocation pattern:**
+  ```yaml
+  Task tool:
+    subagent_type: "general-purpose"
+    model: "haiku"
+    prompt: |
+      Read and follow: .pennyfarthing/agents/{subagent-name}.md
+
+      {PARAMETERS}
+  ```
 </helpers>
 
 <responsibilities>
@@ -120,8 +125,11 @@ REFLECT: I should clarify AC4 with the user before proceeding.
 1. Run workflow status check:
    ```yaml
    Task tool:
-     subagent_type: "workflow-status-check"
+     subagent_type: "general-purpose"
+     model: "haiku"
      prompt: |
+       Read and follow: .pennyfarthing/agents/workflow-status-check.md
+
        CALLING_AGENT: SM
    ```
 2. Helper returns: `FINISH_STATE`, `NEW_WORK_STATE`, or `IN_PROGRESS_STATE`
@@ -136,8 +144,11 @@ I send helper to check the workflow status before anything else.
 
 ```yaml
 Task tool:
-  subagent_type: "workflow-status-check"
+  subagent_type: "general-purpose"
+  model: "haiku"
   prompt: |
+    Read and follow: .pennyfarthing/agents/workflow-status-check.md
+
     CALLING_AGENT: SM
 ```
 
@@ -169,8 +180,11 @@ Task tool:
 
 ```yaml
 Task tool:
-  subagent_type: "generic-sm-finish"
+  subagent_type: "general-purpose"
+  model: "haiku"
   prompt: |
+    Read and follow: .pennyfarthing/agents/generic-sm-finish.md
+
     PHASE: preflight
     STORY_ID: {value}
     JIRA_KEY: {value from session/YAML jira field, or omit if not found}
@@ -211,8 +225,11 @@ I read helper's bookkeeping report and write `sprint/context/story-{X-Y}-summary
 
 ```yaml
 Task tool:
-  subagent_type: "generic-sm-finish"
+  subagent_type: "general-purpose"
+  model: "haiku"
   prompt: |
+    Read and follow: .pennyfarthing/agents/generic-sm-finish.md
+
     PHASE: execute
     STORY_ID: {value}
     SUMMARY_CONTENT: {value}
@@ -234,8 +251,11 @@ Helper does:
 
 ```yaml
 Task tool:
-  subagent_type: "generic-sm-setup"
+  subagent_type: "general-purpose"
+  model: "haiku"
   prompt: |
+    Read and follow: .pennyfarthing/agents/generic-sm-setup.md
+
     MODE: research
 ```
 
@@ -261,8 +281,11 @@ I receive helper's research report and present to the user:
 
 ```yaml
 Task tool:
-  subagent_type: "sm-file-summary"
+  subagent_type: "general-purpose"
+  model: "haiku"
   prompt: |
+    Read and follow: .pennyfarthing/agents/sm-file-summary.md
+
     STORY_ID: {value}
     FILE_LIST: |
       path/to/file1.go
@@ -344,8 +367,11 @@ Then spawn setup with the detected workflow:
 
 ```yaml
 Task tool:
-  subagent_type: "generic-sm-setup"
+  subagent_type: "general-purpose"
+  model: "haiku"
   prompt: |
+    Read and follow: .pennyfarthing/agents/generic-sm-setup.md
+
     MODE: setup
     STORY_ID: {value}
     JIRA_KEY: {value}
@@ -373,8 +399,11 @@ After story setup, spawn Helper to update session file for handoff:
 
 ```yaml
 Task tool:
-  subagent_type: "sm-handoff"
+  subagent_type: "general-purpose"
+  model: "haiku"
   prompt: |
+    Read and follow: .pennyfarthing/agents/sm-handoff.md
+
     STORY_ID: {value}
     REPOS: {value}
     TITLE: {value}

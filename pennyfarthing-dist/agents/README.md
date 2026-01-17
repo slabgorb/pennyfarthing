@@ -49,7 +49,18 @@ Focus on specific repo(s), implement/test/document features.
 - **`ux-designer.md`** - UX Designer (UI design, UX)
 
 ### Official Subagents (Haiku-based)
-Lightweight subagents for mechanical tasks. Invoked via `Task tool` with `subagent_type`.
+Lightweight subagents for mechanical tasks. Invoked via `Task tool` with `subagent_type: "general-purpose"` and `model: "haiku"`.
+
+**Invocation pattern:**
+```yaml
+Task tool:
+  subagent_type: "general-purpose"
+  model: "haiku"
+  prompt: |
+    Read and follow: .pennyfarthing/agents/{subagent-name}.md
+
+    {PARAMETERS}
+```
 
 - **`workflow-status-check.md`** - Detect workflow state
 - **`generic-sm-setup.md`** - Research OR setup mode (Story 31-11)
@@ -304,9 +315,12 @@ Subagents can run in background using Claude Code's `run_in_background` paramete
 
 ```yaml
 Task tool:
-  subagent_type: "testing-runner"
+  subagent_type: "general-purpose"
+  model: "haiku"
   run_in_background: true
   prompt: |
+    Read and follow: .pennyfarthing/agents/testing-runner.md
+
     REPOS: all
     CONTEXT: Background test run while implementing
     RUN_ID: bg-test-001

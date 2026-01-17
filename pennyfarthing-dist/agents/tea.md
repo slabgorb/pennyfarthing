@@ -17,9 +17,20 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 <helpers>
 From theme config. Model: haiku. Tasks: run tests, gather results, update session for handoff
 
-- **Official subagents:** (use `subagent_type: "{name}"`)
-  - `testing-runner` - Run tests, gather results
-  - `generic-handoff` - Workflow-driven session update for handoff
+- **Subagents:** (use `subagent_type: "general-purpose"` with `model: "haiku"`)
+  - `testing-runner.md` - Run tests, gather results
+  - `generic-handoff.md` - Workflow-driven session update for handoff
+
+- **Invocation pattern:**
+  ```yaml
+  Task tool:
+    subagent_type: "general-purpose"
+    model: "haiku"
+    prompt: |
+      Read and follow: .pennyfarthing/agents/{subagent-name}.md
+
+      {PARAMETERS}
+  ```
 </helpers>
 
 <responsibilities>
@@ -151,8 +162,11 @@ Then spawn with detected workflow:
 
 ```yaml
 Task tool:
-  subagent_type: "generic-handoff"
+  subagent_type: "general-purpose"
+  model: "haiku"
   prompt: |
+    Read and follow: .pennyfarthing/agents/generic-handoff.md
+
     STORY_ID: {value}
     WORKFLOW: {workflow from session}  # e.g., "tdd"
     CURRENT_PHASE: red

@@ -97,58 +97,16 @@ fi
 
 Spawn a testing-runner subagent with:
 ```yaml
-subagent_type: "testing-runner"
-model: "haiku"
-description: "run tests"
-prompt: |
-  You are a testing runner for the Conductor project.
-  Run tests and report structured results.
+Task tool:
+  subagent_type: "general-purpose"
+  model: "haiku"
+  description: "run tests"
+  prompt: |
+    Read and follow: .pennyfarthing/agents/testing-runner.md
 
-  ## Skills Reference
-  Read the testing skill at .claude/skills/testing/SKILL.md for test commands.
-  For troubleshooting failures, see .claude/skills/testing/references/troubleshooting.md
-
-  ## Project Info
-  - Project root: $CLAUDE_PROJECT_DIR (set by SessionStart hook)
-  - Repo(s) to test: {REPO}
-  - Context: PR review pre-flight for Story {STORY_ID}
-  - Run ID: {STORY_ID}-review
-
-  ## Execute Tests and Lints
-
-  Use repo-utils.sh for dynamic repo handling:
-  ```bash
-  source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
-  RUN_ID="{STORY_ID}-review"
-
-  for repo in $(get_repo_names); do
-      repo_path=$(get_repo_path "$repo")
-      test_cmd=$(get_test_command "$repo")
-      lint_cmd=$(get_lint_command "$repo")
-
-      cd $CLAUDE_PROJECT_DIR/$repo_path
-
-      # Run tests
-      if [[ -n "$test_cmd" ]]; then
-          $test_cmd 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/test-{STORY_ID}-reviewer-verify.log
-      fi
-
-      # Run linter
-      if [[ -n "$lint_cmd" ]]; then
-          $lint_cmd 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/lint-{STORY_ID}-${repo}.log
-      fi
-  done
-  ```
-
-  ## Check for Forbidden Skip Patterns
-  ```bash
-  source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
-  for repo in $(get_repo_names); do
-      check_skip_violations "$repo"
-  done
-  ```
-
-  ## Output structured results per testing-runner.md format
+    REPOS: {REPOS}
+    CONTEXT: PR review pre-flight for Story {STORY_ID}
+    RUN_ID: {STORY_ID}-review
 ```
 
 If you cannot spawn a subagent, run the tests directly using the testing skill commands.
