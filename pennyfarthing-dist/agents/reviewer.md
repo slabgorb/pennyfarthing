@@ -35,10 +35,21 @@ A bug you miss ships to production. A security hole you miss gets exploited. An 
 <helpers>
 From theme config. Model: haiku. Tasks: gather pre-flight data, update session for approval/rejection
 
-- **Official subagents:** (use `subagent_type: "{name}"`)
-  - `testing-runner` - Run tests
-  - `reviewer-preflight` - Gather pre-flight data (tests, lint, smells)
-  - `generic-handoff` - Workflow-driven session update (approve or reject)
+- **Subagents:** (use `subagent_type: "general-purpose"` with `model: "haiku"`)
+  - `testing-runner.md` - Run tests
+  - `reviewer-preflight.md` - Gather pre-flight data (tests, lint, smells)
+  - `generic-handoff.md` - Workflow-driven session update (approve or reject)
+
+- **Invocation pattern:**
+  ```yaml
+  Task tool:
+    subagent_type: "general-purpose"
+    model: "haiku"
+    prompt: |
+      Read and follow: .pennyfarthing/agents/{subagent-name}.md
+
+      {PARAMETERS}
+  ```
 </helpers>
 
 <responsibilities>
@@ -109,8 +120,11 @@ Spawn Helper to gather mechanical data:
 
 ```yaml
 Task tool:
-  subagent_type: "reviewer-preflight"
+  subagent_type: "general-purpose"
+  model: "haiku"
   prompt: |
+    Read and follow: .pennyfarthing/agents/reviewer-preflight.md
+
     STORY_ID: {value}
     REPOS: {value}
     BRANCH: {value}
@@ -241,8 +255,11 @@ Then spawn with detected workflow:
 ```yaml
 # Approval
 Task tool:
-  subagent_type: "generic-handoff"
+  subagent_type: "general-purpose"
+  model: "haiku"
   prompt: |
+    Read and follow: .pennyfarthing/agents/generic-handoff.md
+
     STORY_ID: {value}
     WORKFLOW: {workflow from session}  # e.g., "tdd" or "trivial"
     CURRENT_PHASE: review
@@ -252,8 +269,11 @@ Task tool:
 
 # Rejection
 Task tool:
-  subagent_type: "generic-handoff"
+  subagent_type: "general-purpose"
+  model: "haiku"
   prompt: |
+    Read and follow: .pennyfarthing/agents/generic-handoff.md
+
     STORY_ID: {value}
     WORKFLOW: {workflow from session}  # e.g., "tdd" or "trivial"
     CURRENT_PHASE: review

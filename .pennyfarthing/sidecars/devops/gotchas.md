@@ -32,4 +32,33 @@ if ! git diff-index --quiet HEAD -- 2>/dev/null || \
 
 ---
 
+## Cyclist Electron Entry Point
+
+### Problem: Window not appearing when starting Cyclist Electron
+**Symptom:** Cyclist starts (taskbar icon appears) but no window shows. Logs show "Benchmark API enabled" but not "Using Pennyfarthing project".
+
+**Root Cause:** `package.json` has `"main": "dist/server.js"` for npm module use. When running `electron .`, it uses this entry point and runs the Express server instead of the Electron main process.
+
+**Solution:** The dev scripts must explicitly specify `electron dist/main.js`:
+```json
+"dev": "... electron dist/main.js",
+"dev:once": "npm run build && electron dist/main.js"
+```
+
+**Fixed in:** packages/cyclist/package.json (2026-01-17)
+
+---
+
+## Subagent Type Compatibility (OPEN ISSUE)
+
+### Problem: "The official subagent types aren't available in this context"
+**Symptom:** Agents fail when spawning subagents like `workflow-status-check`
+
+**Root Cause:** Claude Code's Task tool `subagent_type` only accepts built-in values (`Bash`, `general-purpose`, `Explore`, `Plan`). Pennyfarthing's custom subagent types aren't recognized.
+
+**Status:** Investigating - see `.session/fix-subagent-handoff.md`
+**Branch:** `fix/subagent-type-compatibility`
+
+---
+
 *Add infrastructure gotchas discovered during DevOps work below*

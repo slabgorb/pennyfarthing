@@ -65,9 +65,12 @@ The testing-runner can be spawned in background mode, allowing the main agent to
 
 ```yaml
 Task tool:
-  subagent_type: "testing-runner"
+  subagent_type: "general-purpose"
+  model: "haiku"
   run_in_background: true
   prompt: |
+    Read and follow: .pennyfarthing/agents/testing-runner.md
+
     REPOS: all
     CONTEXT: Background test run while implementing
     RUN_ID: bg-test-001

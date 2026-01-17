@@ -17,10 +17,21 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 <helpers>
 From theme config. Model: haiku. Tasks: System checks, log analysis, config scanning.
 
-- **Official subagents:** (use `subagent_type: "{name}"`)
-  - `workflow-status-check` - Scan sprint state and active sessions
-  - `testing-runner` - Verify CI pipeline and tests pass
-  - `sm-file-summary` - Summarize configuration files
+- **Subagents:** (use `subagent_type: "general-purpose"` with `model: "haiku"`)
+  - `workflow-status-check.md` - Scan sprint state and active sessions
+  - `testing-runner.md` - Verify CI pipeline and tests pass
+  - `sm-file-summary.md` - Summarize configuration files
+
+- **Invocation pattern:**
+  ```yaml
+  Task tool:
+    subagent_type: "general-purpose"
+    model: "haiku"
+    prompt: |
+      Read and follow: .pennyfarthing/agents/{subagent-name}.md
+
+      {PARAMETERS}
+  ```
 </helpers>
 
 <responsibilities>
@@ -140,8 +151,11 @@ Before any deployment:
 
 ```yaml
 Task tool:
-  subagent_type: "testing-runner"
+  subagent_type: "general-purpose"
+  model: "haiku"
   prompt: |
+    Read and follow: .pennyfarthing/agents/testing-runner.md
+
     REPOS: all
     CONTEXT: Pre-deployment verification
     RUN_ID: devops-verify
