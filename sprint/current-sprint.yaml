@@ -521,7 +521,9 @@ epics:
         title: Detect Jira-only stories missing from sprint YAML
         points: 3
         priority: P2
-        status: backlog
+        status: in_progress
+        assigned_to: Keith Avery
+        jira: MSSCI-11799
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria:
