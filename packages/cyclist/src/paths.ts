@@ -1,10 +1,70 @@
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { existsSync, statSync } from 'fs';
-import { resolvePennyfarthingDist, getPortraitPaths } from '@pennyfarthing/shared';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+// =============================================================================
+// Inlined from @pennyfarthing/shared (for standalone npm distribution)
+// =============================================================================
+
+interface PortraitPaths {
+  portraitsDir: string;
+  themesDir: string;
+  agentsDir: string;
+}
+
+/**
+ * Resolve the pennyfarthing-dist directory path
+ * Checks multiple locations in priority order
+ */
+function resolvePennyfarthingDist(): string | null {
+  // 1. PENNYFARTHING_DIST env var (explicit override)
+  const envPath = process.env.PENNYFARTHING_DIST;
+  if (envPath && existsSync(envPath)) {
+    return envPath;
+  }
+
+  // 2. Monorepo root (pennyfarthing-dist/ at repo root for dogfooding)
+  let currentDir = __dirname;
+  for (let i = 0; i < 10; i++) {
+    const monorepoPath = join(currentDir, 'pennyfarthing-dist');
+    if (existsSync(monorepoPath)) {
+      return monorepoPath;
+    }
+    const parentDir = dirname(currentDir);
+    if (parentDir === currentDir) break;
+    currentDir = parentDir;
+  }
+
+  // 3. npm installed: node_modules/pennyfarthing/pennyfarthing-dist/
+  // From cyclist's perspective: ../../pennyfarthing/pennyfarthing-dist
+  const npmPath = join(__dirname, '..', '..', 'pennyfarthing', 'pennyfarthing-dist');
+  if (existsSync(npmPath)) {
+    return npmPath;
+  }
+
+  // 4. Scoped npm: node_modules/@pennyfarthing/core/pennyfarthing-dist/
+  const scopedPath = join(__dirname, '..', '..', '@pennyfarthing', 'core', 'pennyfarthing-dist');
+  if (existsSync(scopedPath)) {
+    return scopedPath;
+  }
+
+  return null;
+}
+
+/**
+ * Get all portrait-related paths for a resolved dist directory
+ */
+function getPortraitPaths(distPath: string): PortraitPaths {
+  const normalizedPath = distPath.replace(/\/+$/, '');
+  return {
+    portraitsDir: join(normalizedPath, 'personas', 'portraits'),
+    themesDir: join(normalizedPath, 'personas'),
+    agentsDir: join(normalizedPath, 'agents'),
+  };
+}
 
 // =============================================================================
 // Project Directory Management (Single Source of Truth)

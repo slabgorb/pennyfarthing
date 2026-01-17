@@ -52,6 +52,8 @@ export function getPackageVersion(): string {
  */
 export function getAssetsPath(): string {
   const searchPaths = [
+    join(__dirname, '../../../../../pennyfarthing-dist'),  // From packages/core/dist/cli/utils/ to package root
+    join(__dirname, '../../../../pennyfarthing-dist'),
     join(__dirname, '../../../pennyfarthing-dist'),
     join(__dirname, '../../pennyfarthing-dist'),
     join(process.cwd(), 'pennyfarthing-dist')

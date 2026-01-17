@@ -1,9 +1,25 @@
 {
-  "name": "pennyfarthing-monorepo",
+  "name": "pennyfarthing",
   "version": "6.5.0",
-  "private": true,
-  "description": "Claude Code agent framework monorepo",
+  "description": "Claude Code agent framework with TDD workflow and persona system",
   "type": "module",
+  "bin": {
+    "pennyfarthing": "./packages/core/bin/pennyfarthing.js"
+  },
+  "files": [
+    "packages/core/bin/",
+    "packages/core/dist/",
+    "pennyfarthing-dist/agents/",
+    "pennyfarthing-dist/commands/",
+    "pennyfarthing-dist/guides/",
+    "pennyfarthing-dist/output-styles/",
+    "pennyfarthing-dist/personas/themes/",
+    "pennyfarthing-dist/scripts/",
+    "pennyfarthing-dist/skills/",
+    "pennyfarthing-dist/templates/",
+    "pennyfarthing-dist/workflows/",
+    "README.md"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/1898andCo/pennyfarthing.git"
@@ -19,6 +35,14 @@
     "test": "pnpm -r test",
     "lint": "eslint 'packages/*/src/**/*.ts' --max-warnings 0",
     "clean": "pnpm -r clean"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "fs-extra": "^11.2.0",
+    "inquirer": "^9.2.12",
+    "open": "^11.0.0",
+    "yaml": "^2.3.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",

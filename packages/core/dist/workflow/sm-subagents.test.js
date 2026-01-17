@@ -29,6 +29,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const TEST_DIR = join(__dirname, '__test_sm_subagents__');
 // Import the generic-sm-setup module
 import { researchBacklog, setupStory, checkEpicContext, createEpicContext } from './generic-sm-setup.js';
+// SetupParams interface now includes checkEpicContext and contextDir fields
 // Import the generic-sm-finish module
 import { preflightCheck, executeFinish } from './generic-sm-finish.js';
 // Import extended generic-handoff for setup phase
