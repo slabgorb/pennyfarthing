@@ -91,3 +91,67 @@ If fonts still don't work after settings change:
 | `font-settings.js` | Pull mechanism (unreliable) |
 | `settings.ts` | Settings schema and persistence |
 | `preload.ts:577` | Exposes `settings.get` to renderer |
+
+## Cyclist Approval Gate Architecture (Story 33-7)
+
+### The Core Architecture
+
+Cyclist uses Claude Code CLI via `--input-format stream-json` and `--output-format stream-json`. This is an **observer pattern**:
+
+1. Cyclist spawns Claude Code CLI as a subprocess
+2. Cyclist sends user messages via stdin
+3. Claude Code executes tools INTERNALLY and streams results back
+4. Cyclist OBSERVES the message stream (tool_use, tool_result, etc.)
+
+**Cyclist does NOT control tool execution. Claude Code CLI does.**
+
+### What This Means for Approval Gates
+
+The approval gate system (story 22-3, 33-3, 33-7) provides:
+- A custom UI modal for reviewing commands
+- Grant management (once/session/always)
+- Pattern matching for allowlists
+
+But it works WITH Claude Code's built-in permission system, not INSTEAD of it:
+- Claude Code has `--permission-mode` (default, plan, acceptEdits, dangerouslySkipPermissions)
+- When Claude Code needs permission, IT pauses internally
+- Cyclist's role is to show a nicer UI and manage grants
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `claude-service.ts:686-691` | Passes `--permission-mode` to CLI |
+| `approval-gate.ts` | Interception logic, pending approvals Map |
+| `settings-store.ts` | Grant storage, allowlist management |
+| `ApprovalModal.js` | Renderer-side UI |
+| `preload.ts:586-590` | IPC bridge for bash approval |
+
+### IPC Channels
+
+| Channel | Direction | Purpose |
+|---------|-----------|---------|
+| `bash:approval-request` | main→renderer | Show modal |
+| `bash:approval-response` | renderer→main | User decision |
+| `permission-request` | main→renderer | Generic tool modal (33-3) |
+| `permission-response` | renderer→main | Generic response |
+
+### Common Confusion
+
+**DON'T:** Try to "intercept" tool execution at line 1014 of main.ts. That code OBSERVES the message stream AFTER Claude Code has already decided to execute.
+
+**DO:** Understand that `processToolUseWithApproval()` is meant to:
+1. Check if Cyclist's gate is enabled
+2. Check grants/allowlists
+3. Show modal if needed
+4. Track the pending approval
+5. The actual execution control is via Claude Code's permission mode
+
+### When the Gate Actually Works
+
+The approval gate UI fires when:
+1. `bashApprovalGateEnabled` is true in settings-store
+2. Claude Code is in a permission mode that pauses (not `dangerouslySkipPermissions`)
+3. A tool_use message arrives that isn't allowlisted/granted
+
+The modal shows, user responds, and Cyclist sends the approval response. But Claude Code's own permission system is what actually gates execution.
