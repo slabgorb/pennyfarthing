@@ -61,4 +61,20 @@ if ! git diff-index --quiet HEAD -- 2>/dev/null || \
 
 ---
 
+## Monorepo Build Order (Dogfooding)
+
+### Problem: "Cannot find module '@pennyfarthing/core'"
+**Symptom:** `just cyclist` fails with TypeScript error:
+```
+error TS2307: Cannot find module '@pennyfarthing/core' or its corresponding type declarations.
+```
+
+**Root Cause:** pnpm monorepo workspace dependencies (`@pennyfarthing/shared`, `@pennyfarthing/core`) aren't built. Cyclist's build only compiles cyclist, not its workspace deps.
+
+**Solution:** The `just cyclist` command auto-detects missing deps and runs `pnpm run build` if needed. No manual intervention required.
+
+**Fixed in:** justfile (2026-01-17)
+
+---
+
 *Add infrastructure gotchas discovered during DevOps work below*
