@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Pennyfarthing is a Claude Code agent orchestration framework with TDD workflow and themed personas. It coordinates multiple AI agents (SM, TEA, Dev, Reviewer) through story-driven development cycles.
 
-**Version:** 6.6.0
+**Version:** 7.0.0
 **Node:** >=18.0.0
 **Type:** ES module with TypeScript (pnpm monorepo)
 
@@ -26,10 +26,10 @@ npm run lint      # ESLint (requires separate install)
 
 ```
 pennyfarthing-dist/      # Single source of truth for all definitions
-├── agents/              # 10 main agents + 13 official subagents (consolidated)
-├── commands/            # 41 slash commands
+├── agents/              # 10 main agents + 8 official subagents
+├── commands/            # 43 slash commands
 ├── guides/              # Behavior guides
-├── skills/              # 11 knowledge domains
+├── skills/              # 21 knowledge domains
 ├── personas/            # Themed agent personas (102 themes)
 └── scripts/             # Utility scripts
 
@@ -107,7 +107,7 @@ Subagents use Claude Code's Task tool with `subagent_type`. Key subagents:
 | `.pennyfarthing/config.local.yaml` | Theme selection (use `/theme` skill) |
 | `sprint/current-sprint.yaml` | Active sprint and story tracking |
 | `.session/{story-id}-session.md` | Active work context |
-| `scripts/utils/` | Resilience utilities (retry.sh, checkpoint.sh, repo-scan.sh) |
+| `pennyfarthing-dist/scripts/utils/` | Resilience utilities (retry.sh, checkpoint.sh, repo-scan.sh) |
 
 ## CLI Commands (for users)
 
