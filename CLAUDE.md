@@ -6,9 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Pennyfarthing is a Claude Code agent orchestration framework with TDD workflow and themed personas. It coordinates multiple AI agents (SM, TEA, Dev, Reviewer) through story-driven development cycles.
 
-**Version:** 4.0.0
+**Version:** 6.5.0
 **Node:** >=18.0.0
-**Type:** ES module with TypeScript
+**Type:** ES module with TypeScript (pnpm monorepo)
 
 ## Build Commands
 
@@ -30,7 +30,7 @@ pennyfarthing-dist/      # Single source of truth for all definitions
 ├── commands/            # 41 slash commands
 ├── guides/              # Behavior guides
 ├── skills/              # 11 knowledge domains
-├── personas/            # Themed agent personas (101 themes)
+├── personas/            # Themed agent personas (102 themes)
 └── scripts/             # Utility scripts
 
 src/                     # TypeScript CLI source
