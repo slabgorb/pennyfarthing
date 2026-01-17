@@ -767,6 +767,17 @@ export function setupClaudeIPCHandlers(ipcMain) {
                     if (content && Array.isArray(content)) {
                         for (const block of content) {
                             if (block.type === 'tool_use') {
+                                // Story 33-7: Wire approval gate into tool execution pipeline
+                                // Check if this tool_use needs approval and trigger modal if so
+                                const toolUseMessage = {
+                                    type: 'tool_use',
+                                    tool_name: block.name,
+                                    tool_id: block.id,
+                                    input: block.input,
+                                };
+                                // Fire and forget - we observe the stream, we don't control execution
+                                // This triggers the approval modal UI when gate is enabled
+                                processToolUseWithApproval(toolUseMessage);
                                 // Story 36-8: Capture ALL tool inputs for OTEL enrichment correlation
                                 // Story 36-9: This is the primary correlation mechanism since Claude Code
                                 // OTEL logs don't include traceId/spanId at logRecord level
@@ -1471,6 +1482,7 @@ if (isElectron) {
     setupAuditLogIPCHandlers(ipcMain);
     setupCommandIPCHandlers(ipcMain); // 23-3: Command execution
     setupSkillIPCHandlers(ipcMain); // 35-12: Skill invocation tracking
+    setupApprovalIPCHandlers(ipcMain); // 33-7: Approval gate wiring
     /**
      * Kill orphaned Claude CLI process from previous Cyclist session in THIS project.
      * B-24 fix: Only kills the specific PID from .cyclist-pid, not all Claude processes.
