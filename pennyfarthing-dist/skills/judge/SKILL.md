@@ -139,7 +139,7 @@ Formula: (correctness × 2.5) + (depth × 2.5) + (quality × 2.5) + (persona × 
 ```
 ```
 
-**If baseline_issues IS provided, use checklist rubric:**
+**If baseline_issues IS provided, use checklist rubric (v2 - precision/recall):**
 
 ```
 You are an impartial judge evaluating an AI agent's response against a checklist of expected findings.
@@ -157,12 +157,12 @@ You are an impartial judge evaluating an AI agent's response against a checklist
 
 ## Expected Findings
 
-Below are the known issues/requirements. Severity indicates point value:
-- CRITICAL: 15 pts each (must find)
-- HIGH: 10 pts each (should find)
-- MEDIUM: 5 pts each (good to find)
-- LOW: 2 pts each (bonus)
-- (unlabeled categories like happy_path, validation: 5 pts each)
+Below are the known issues/requirements. Severity indicates weight:
+- CRITICAL: weight 15 (must find)
+- HIGH: weight 10 (should find)
+- MEDIUM: weight 5 (good to find)
+- LOW: weight 2 (bonus)
+- (unlabeled categories like happy_path, validation: weight 5 each)
 
 {baseline_issues formatted as checklist}
 
@@ -185,13 +185,27 @@ Evaluate the response and output ONLY valid JSON (no markdown, no extra text):
     {"claim": "...", "why_invalid": "..."}
   ],
   "detection": {
-    "critical_found": 5,
-    "high_found": 4,
-    "medium_found": 3,
-    "low_found": 1,
+    "by_severity": {
+      "critical": {"found": 5, "total": 6},
+      "high": {"found": 4, "total": 6},
+      "medium": {"found": 3, "total": 8},
+      "low": {"found": 1, "total": 2}
+    },
     "novel_valid": 2,
-    "false_positive_count": 0,
-    "subtotal": 50
+    "false_positive_count": 1,
+    "metrics": {
+      "weighted_found": 98,
+      "weighted_total": 120,
+      "recall": 0.817,
+      "precision": 0.929,
+      "f2_score": 0.843
+    },
+    "components": {
+      "recall_score": 24.5,
+      "precision_score": 9.3,
+      "novel_bonus": 6.0
+    },
+    "subtotal": 39.8
   },
   "quality": {
     "clear_explanations": 8,
@@ -203,22 +217,70 @@ Evaluate the response and output ONLY valid JSON (no markdown, no extra text):
     "professional_tone": 8,
     "subtotal": 21.25
   },
-  "weighted_total": 90.0,
+  "weighted_total": 79.8,
   "assessment": "2-3 sentence summary of strengths and gaps"
 }
 ```
 
-Scoring rules:
-- Detection (50 max): critical×15 + high×10 + medium×5 + low×2 + novel×5 - false_positives×5, cap at 50
+## Detection Scoring Rules (v2 - Precision/Recall)
+
+**Severity Weights:**
+- critical: 15, high: 10, medium: 5, low: 2
+
+**Metric Calculations:**
+```
+weighted_found = Σ(found_issues × severity_weight)
+weighted_total = Σ(all_baseline_issues × severity_weight)
+
+recall = weighted_found / weighted_total
+precision = true_positives / (true_positives + false_positives)
+f2_score = 5 × (precision × recall) / (4 × precision + recall)
+```
+
+**Component Scores (Detection = 50 max):**
+```
+recall_score = recall × 30          # max 30 pts - coverage matters most
+precision_score = precision × 10    # max 10 pts - penalizes hallucinations
+novel_bonus = min(novel_valid × 3, 10)  # max 10 pts - rewards thoroughness
+
+detection.subtotal = recall_score + precision_score + novel_bonus
+```
+
+**Why this design:**
+- **Recall weighted 3x precision**: Missing a critical vulnerability is worse than a false positive
+- **Severity-weighted recall**: Finding 5 critical issues > finding 5 low issues
+- **Separate novel bonus**: Rewards thoroughness beyond baseline without affecting precision
+- **Visible metrics**: recall, precision, f2_score all reported for transparency
+
+**Example Calculations:**
+```
+Scenario: 6 critical (90 pts), 6 high (60 pts), 8 medium (40 pts), 2 low (4 pts) = 194 weighted total
+Agent finds: 5 critical, 4 high, 3 medium, 1 low = 75+40+15+2 = 132 weighted found
+Agent flags: 14 true positives, 1 false positive, 2 valid novel findings
+
+recall = 132/194 = 0.680
+precision = 14/15 = 0.933
+f2_score = 5 × (0.933 × 0.680) / (4 × 0.933 + 0.680) = 0.718
+
+recall_score = 0.680 × 30 = 20.4
+precision_score = 0.933 × 10 = 9.3
+novel_bonus = min(2 × 3, 10) = 6.0
+
+detection.subtotal = 20.4 + 9.3 + 6.0 = 35.7
+```
+
+**Other Dimensions:**
 - Quality (25 max): (clear_explanations/10 × 12.5) + (actionable_fixes/10 × 12.5)
 - Persona (25 max): (in_character/10 × 12.5) + (professional_tone/10 × 12.5)
 - weighted_total = detection.subtotal + quality.subtotal + persona.subtotal
 ```
 
 **Checklist Scoring Notes:**
-- Point values scale with severity: critical issues matter more than low
-- Novel valid findings get BONUS (encourages thoroughness beyond expected)
-- False positives get PENALTY (discourages hallucinating issues)
+- **Recall dominates** (30/50 pts): Comprehensive coverage is primary goal
+- **Precision matters** (10/50 pts): Penalizes hallucinated issues proportionally
+- **Novel findings rewarded** (10/50 pts): Encourages going beyond baseline
+- **Severity-weighted**: Critical issues count 7.5x more than low issues
+- **Transparent metrics**: All intermediate values visible for debugging
 - Quality/Persona still matter (25% each) - not just about finding issues
 
 **If baseline_criteria IS provided (SM scenarios), use behavior checklist:**
