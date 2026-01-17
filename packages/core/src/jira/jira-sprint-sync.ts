@@ -445,3 +445,120 @@ export async function validateSprintAlignment(
     };
   }
 }
+
+// ============================================
+// Story 47-3: Detect Jira-only stories missing from sprint YAML
+// ============================================
+
+// Types for 47-3
+
+export interface MissingStory extends SprintIssue {
+  storyId: string;
+}
+
+export interface GetYamlStoryIdsOptions {
+  sprintPath: string;
+}
+
+export interface GetYamlStoryIdsResult extends SprintSyncResult {
+  storyIds?: string[];
+}
+
+export interface FindJiraOnlyStoriesOptions {
+  jiraIssues: SprintIssue[];
+  yamlStoryIds: string[];
+  filterLabel?: string;
+}
+
+export interface FindJiraOnlyStoriesResult extends SprintSyncResult {
+  missingStories?: MissingStory[];
+}
+
+export interface FormatMissingStoriesReportOptions {
+  missingStories: MissingStory[];
+  jiraBaseUrl?: string;
+}
+
+export interface FormatMissingStoriesReportResult extends SprintSyncResult {
+  report?: string;
+}
+
+export interface ImportMissingStoriesToYamlOptions {
+  sprintPath: string;
+  missingStories: MissingStory[];
+  targetEpicId: string;
+  dryRun?: boolean;
+}
+
+export interface ImportMissingStoriesToYamlResult extends SprintSyncResult {
+  importedCount?: number;
+  wouldImport?: MissingStory[];
+}
+
+// ============================================
+// AC1 + AC2: Extract story IDs from sprint YAML
+// ============================================
+
+/**
+ * Extract all story IDs from sprint YAML file
+ */
+export async function getYamlStoryIds(
+  _options: GetYamlStoryIdsOptions
+): Promise<GetYamlStoryIdsResult> {
+  // TODO: Implement in GREEN phase
+  return {
+    success: false,
+    error: 'Not yet implemented'
+  };
+}
+
+// ============================================
+// AC2: Compare Jira issues with YAML stories
+// ============================================
+
+/**
+ * Find stories that are in Jira but not in the sprint YAML
+ */
+export async function findJiraOnlyStories(
+  _options: FindJiraOnlyStoriesOptions
+): Promise<FindJiraOnlyStoriesResult> {
+  // TODO: Implement in GREEN phase
+  return {
+    success: false,
+    error: 'Not yet implemented'
+  };
+}
+
+// ============================================
+// AC3: Format report of missing stories
+// ============================================
+
+/**
+ * Generate a human-readable report of missing stories
+ */
+export async function formatMissingStoriesReport(
+  _options: FormatMissingStoriesReportOptions
+): Promise<FormatMissingStoriesReportResult> {
+  // TODO: Implement in GREEN phase
+  return {
+    success: false,
+    error: 'Not yet implemented'
+  };
+}
+
+// ============================================
+// AC4: Import missing stories to YAML
+// ============================================
+
+/**
+ * Import missing stories from Jira into sprint YAML
+ */
+export async function importMissingStoriesToYaml(
+  _options: ImportMissingStoriesToYamlOptions
+): Promise<ImportMissingStoriesToYamlResult> {
+  // TODO: Implement in GREEN phase
+  return {
+    success: false,
+    error: 'Not yet implemented'
+  };
+}
