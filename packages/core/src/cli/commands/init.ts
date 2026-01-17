@@ -116,7 +116,7 @@ export async function initCommand(
   const nodeModulesPath = findNodeModulesPath(projectRoot);
 
   if (!nodeModulesPath) {
-    logger.error('node_modules/pennyfarthing not found');
+    logger.error('@pennyfarthing/core (or pennyfarthing) not found');
     logger.error('');
     logger.error('Pennyfarthing requires npm installation:');
     logger.error('  npm install pennyfarthing');

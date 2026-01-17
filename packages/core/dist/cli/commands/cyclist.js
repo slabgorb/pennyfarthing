@@ -102,10 +102,16 @@ export function resolveThemePath(theme, projectDir) {
     if (existsSync(projectThemePath)) {
         return projectThemePath;
     }
-    // Fall back to node_modules (pennyfarthing-dist)
-    const nodeModulesPath = join(projectDir, 'node_modules/pennyfarthing/pennyfarthing-dist/personas', `${theme}.yaml`);
-    if (existsSync(nodeModulesPath)) {
-        return nodeModulesPath;
+    // Fall back to node_modules (pennyfarthing-dist) - check both package names
+    const packagePaths = [
+        'node_modules/@pennyfarthing/core/pennyfarthing-dist/personas',
+        'node_modules/pennyfarthing/pennyfarthing-dist/personas',
+    ];
+    for (const pkgPath of packagePaths) {
+        const nodeModulesPath = join(projectDir, pkgPath, `${theme}.yaml`);
+        if (existsSync(nodeModulesPath)) {
+            return nodeModulesPath;
+        }
     }
     // Fall back to relative path from this module
     const relativePath = join(__dirname, '../../pennyfarthing-dist/personas', `${theme}.yaml`);

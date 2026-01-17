@@ -6,15 +6,25 @@ import { pathExists } from './files.js';
  * Returns the absolute path to pennyfarthing-dist/ or null if not found
  */
 export function findNodeModulesPath(projectRoot: string): string | null {
+  // Package locations to check (in priority order)
+  const packagePaths = [
+    '@pennyfarthing/core/pennyfarthing-dist',  // Scoped package (current)
+    'pennyfarthing/pennyfarthing-dist',         // Legacy unscoped package
+  ];
+
   // Check standard location first
-  const standard = join(projectRoot, 'node_modules/pennyfarthing/pennyfarthing-dist');
-  if (pathExists(standard)) return standard;
+  for (const pkgPath of packagePaths) {
+    const standard = join(projectRoot, 'node_modules', pkgPath);
+    if (pathExists(standard)) return standard;
+  }
 
   // Check hoisted locations (monorepo)
   let dir = dirname(projectRoot);
   while (dir !== '/' && dir !== dirname(dir)) {
-    const hoisted = join(dir, 'node_modules/pennyfarthing/pennyfarthing-dist');
-    if (pathExists(hoisted)) return hoisted;
+    for (const pkgPath of packagePaths) {
+      const hoisted = join(dir, 'node_modules', pkgPath);
+      if (pathExists(hoisted)) return hoisted;
+    }
     dir = dirname(dir);
   }
 
