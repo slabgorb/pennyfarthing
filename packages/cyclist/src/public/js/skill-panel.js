@@ -498,6 +498,29 @@ export function init() {
   // Render initial empty state
   renderEntries();
 
+  // Subscribe to skill events from main process via IPC
+  if (window.electronAPI?.skill?.onStart) {
+    window.electronAPI.skill.onStart((_event, entry) => {
+      console.log('[SkillPanel] Received skill event:', entry);
+      handleSkillEvent(entry);
+    });
+    console.log('[SkillPanel] Subscribed to skill events via IPC');
+  } else {
+    console.log('[SkillPanel] No electronAPI.skill available - running without IPC');
+  }
+
+  // Load any existing entries from main process
+  if (window.electronAPI?.skill?.getEntries) {
+    window.electronAPI.skill.getEntries().then((existingEntries) => {
+      if (existingEntries && existingEntries.length > 0) {
+        entries = existingEntries;
+        renderEntries();
+        setSkillCount(entries.length);
+        console.log('[SkillPanel] Loaded', existingEntries.length, 'existing entries');
+      }
+    });
+  }
+
   console.log('[SkillPanel] Initialized, collapsed:', state.collapsed, 'width:', state.width);
 }
 

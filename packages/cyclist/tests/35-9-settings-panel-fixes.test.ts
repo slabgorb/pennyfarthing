@@ -2,14 +2,15 @@
  * 35-9: Settings Panel Fixes and Expansion
  *
  * Tests for fixing settings panel bugs and adding new functionality:
- * - Vertical slide-in panel (not separate window)
+ * - Vertical panel (VerticalPanel architecture, toggled via tab bar)
  * - Loading states and error handling
  * - Dirty tracking with unsaved changes warning
  * - Validation for settings values
  * - Reset to defaults functionality
  * - IPC primary, HTTP fallback (no localStorage)
  *
- * Written in RED phase - tests should fail until Dev implements functionality.
+ * UPDATED: Converted from slide-in overlay to VerticalPanel architecture.
+ * Panel visibility is now managed by PanelManager/VerticalPanel, not SettingsPanel.js.
  *
  * Design Spec: .session/35-9-design-spec.md
  * 21 BDD Test Scenarios from UX Designer
@@ -95,60 +96,42 @@ describe('35-9: Settings Panel Fixes and Expansion', () => {
   });
 
   // ==========================================================================
-  // SCENARIO 1-3: Panel Open/Close
+  // SCENARIO 1-3: Panel Structure (VerticalPanel Architecture)
   // ==========================================================================
-  describe('Panel Open/Close', () => {
+  describe('Panel Structure (VerticalPanel)', () => {
 
-    // Scenario 1: Given settings panel closed, when user clicks gear icon, then panel slides in from right
+    // Panel uses VerticalPanel architecture - visibility managed by PanelManager
     it('should have settings panel container in index.html', () => {
       expect(html).toContain('id="settings-panel"');
     });
 
-    it('should have gear icon trigger button in toolbar', () => {
-      expect(html).toMatch(/class="[^"]*settings-trigger[^"]*"|id="settings-trigger"/);
+    it('should have vertical-panel class for VerticalPanel architecture', () => {
+      expect(html).toMatch(/id="settings-panel"[^>]*class="[^"]*vertical-panel/);
     });
 
-    it('should export SettingsPanel.open function', async () => {
-      const settingsPanel = await import('../src/public/js/components/SettingsPanel.js');
-      expect(settingsPanel.SettingsPanel).toBeDefined();
-      expect(settingsPanel.SettingsPanel.open).toBeDefined();
-      expect(typeof settingsPanel.SettingsPanel.open).toBe('function');
+    it('should have position-right class for right-side positioning', () => {
+      expect(html).toMatch(/id="settings-panel"[^>]*class="[^"]*position-right/);
     });
 
-    it('should have CSS for panel slide-in animation from right', () => {
-      expect(css).toMatch(/settings-panel[^{]*\{[^}]*transform.*translateX|right/);
-      expect(css).toMatch(/transition.*200ms|ease-out/);
+    it('should have settings-panel.js wrapper for VerticalPanel integration', async () => {
+      const settingsPanel = await import('../src/public/js/settings-panel.js');
+      expect(settingsPanel.init).toBeDefined();
+      expect(settingsPanel.expand).toBeDefined();
+      expect(settingsPanel.collapse).toBeDefined();
+      expect(settingsPanel.toggle).toBeDefined();
     });
 
-    it('should have panel width of 320px', () => {
+    it('should have CSS for panel width of 320px', () => {
       expect(css).toMatch(/settings-panel[^{]*\{[^}]*width:\s*320px/);
     });
 
-    // Scenario 2: Given settings panel open, when user clicks × button, then panel slides out
-    it('should have close button in settings panel header', () => {
-      expect(html).toMatch(/settings-panel[^]*class="[^"]*close-btn|settings-close/);
+    // Panel collapse button (replaces close button in overlay mode)
+    it('should have collapse button in settings panel header', () => {
+      expect(html).toMatch(/settings-panel[^]*class="[^"]*panel-collapse-btn/);
     });
 
-    it('should export SettingsPanel.close function', async () => {
-      const settingsPanel = await import('../src/public/js/components/SettingsPanel.js');
-      expect(settingsPanel.SettingsPanel.close).toBeDefined();
-      expect(typeof settingsPanel.SettingsPanel.close).toBe('function');
-    });
-
-    // Scenario 3: Given settings panel open, when user presses Escape, then panel closes (with dirty check)
-    // NOTE: handleEscape was consolidated into handleClose as part of story 35-14 dead code cleanup (AC3)
-    // Test now verifies the behavior (Escape closes panel) rather than implementation detail
-    it('should handle Escape key to close panel via handleClose', async () => {
-      const settingsPanel = await import('../src/public/js/components/SettingsPanel.js');
-      // handleClose is the consolidated method that handles closing (called by Escape listener)
-      expect(settingsPanel.SettingsPanel.close).toBeDefined();
-      expect(typeof settingsPanel.SettingsPanel.close).toBe('function');
-    });
-
-    it('should have keyboard event listener for Escape key', async () => {
-      const settingsPanel = await import('../src/public/js/components/SettingsPanel.js');
-      // SettingsPanel.init should register keyboard listener
-      expect(settingsPanel.SettingsPanel.init).toBeDefined();
+    it('should have VerticalPanel collapse/expand animation via CSS', () => {
+      expect(css).toMatch(/vertical-panel[^{]*\{[^}]*transition/);
     });
 
   });
@@ -239,18 +222,18 @@ describe('35-9: Settings Panel Fixes and Expansion', () => {
       expect(html).toMatch(/confirm-dialog|unsaved-changes/);
     });
 
-    // Scenario 9: Given dirty form, when user clicks Don't Save, then close panel without saving
+    // Scenario 9: Given dirty form, when user clicks Don't Save, then cancel changes
     it('should export ConfirmDialog options for Don\'t Save, Cancel, Save', async () => {
       const confirmDialog = await import('../src/public/js/components/ConfirmDialog.js');
       // Dialog should support multiple button configurations
       expect(confirmDialog.ConfirmDialog.show.length).toBeGreaterThanOrEqual(1);
     });
 
-    // Scenario 10: Given dirty form, when user clicks Save in dialog, then save and close panel
-    it('should export SettingsPanel.saveAndClose function', async () => {
+    // Scenario 10: Given dirty form, when user clicks Cancel, then reset to initial values
+    it('should export SettingsPanel.cancel function to reset form', async () => {
       const settingsPanel = await import('../src/public/js/components/SettingsPanel.js');
-      expect(settingsPanel.SettingsPanel.saveAndClose).toBeDefined();
-      expect(typeof settingsPanel.SettingsPanel.saveAndClose).toBe('function');
+      expect(settingsPanel.SettingsPanel.cancel).toBeDefined();
+      expect(typeof settingsPanel.SettingsPanel.cancel).toBe('function');
     });
 
   });
@@ -485,9 +468,16 @@ describe('35-9: Settings Panel Fixes and Expansion', () => {
   // ==========================================================================
   describe('Component Structure', () => {
 
-    it('should have SettingsPanel.js component file', async () => {
+    it('should have SettingsPanel.js form component file', async () => {
       const settingsPanel = await import('../src/public/js/components/SettingsPanel.js');
       expect(settingsPanel.SettingsPanel).toBeDefined();
+    });
+
+    it('should have settings-panel.js VerticalPanel wrapper', async () => {
+      const settingsPanelWrapper = await import('../src/public/js/settings-panel.js');
+      expect(settingsPanelWrapper.init).toBeDefined();
+      expect(settingsPanelWrapper.toggle).toBeDefined();
+      expect(settingsPanelWrapper.isCollapsed).toBeDefined();
     });
 
     it('should have SettingsForm.js component file', async () => {
@@ -510,22 +500,22 @@ describe('35-9: Settings Panel Fixes and Expansion', () => {
       expect(confirmDialog.ConfirmDialog).toBeDefined();
     });
 
-    it('should export SettingsPanel.init for initialization', async () => {
+    it('should export SettingsPanel.init for form initialization', async () => {
       const settingsPanel = await import('../src/public/js/components/SettingsPanel.js');
       expect(settingsPanel.SettingsPanel.init).toBeDefined();
       expect(typeof settingsPanel.SettingsPanel.init).toBe('function');
     });
 
-    it('should export SettingsPanel.toggle for open/close', async () => {
-      const settingsPanel = await import('../src/public/js/components/SettingsPanel.js');
-      expect(settingsPanel.SettingsPanel.toggle).toBeDefined();
-      expect(typeof settingsPanel.SettingsPanel.toggle).toBe('function');
+    it('should export settings-panel wrapper toggle for visibility', async () => {
+      const settingsPanelWrapper = await import('../src/public/js/settings-panel.js');
+      expect(settingsPanelWrapper.toggle).toBeDefined();
+      expect(typeof settingsPanelWrapper.toggle).toBe('function');
     });
 
-    it('should export SettingsPanel.isOpen for state check', async () => {
-      const settingsPanel = await import('../src/public/js/components/SettingsPanel.js');
-      expect(settingsPanel.SettingsPanel.isOpen).toBeDefined();
-      expect(typeof settingsPanel.SettingsPanel.isOpen).toBe('function');
+    it('should export settings-panel wrapper isCollapsed for state check', async () => {
+      const settingsPanelWrapper = await import('../src/public/js/settings-panel.js');
+      expect(settingsPanelWrapper.isCollapsed).toBeDefined();
+      expect(typeof settingsPanelWrapper.isCollapsed).toBe('function');
     });
 
   });
