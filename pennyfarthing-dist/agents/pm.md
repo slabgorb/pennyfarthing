@@ -17,9 +17,20 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 <helpers>
 From theme config. Model: haiku. Tasks: Backlog scanning, Jira queries, velocity calculation, status checks.
 
-- **Official subagents:** (use `subagent_type: "{name}"`)
-  - `workflow-status-check` - Scan sprint state and active sessions
-  - `sm-file-summary` - Summarize files for context gathering
+- **Subagents:** (use `subagent_type: "general-purpose"` with `model: "haiku"`)
+  - `workflow-status-check.md` - Scan sprint state and active sessions
+  - `sm-file-summary.md` - Summarize files for context gathering
+
+- **Invocation pattern:**
+  ```yaml
+  Task tool:
+    subagent_type: "general-purpose"
+    model: "haiku"
+    prompt: |
+      Read and follow: .pennyfarthing/agents/{subagent-name}.md
+
+      {PARAMETERS}
+  ```
 </helpers>
 
 <responsibilities>
