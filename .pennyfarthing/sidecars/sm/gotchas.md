@@ -117,3 +117,26 @@ Old-style IDs like `31-18` are **local sprint YAML placeholders** - they are NOT
 ---
 
 *Add story management gotchas discovered during coordination below*
+
+---
+
+## Subagent Data Freshness Gotchas
+
+### workflow-status-check returns stale epic context data
+**Date:** 2026-01-18
+**Problem:** The workflow-status-check subagent reads `.session/context-epic-*.md` files and reports cached/outdated story counts and sprint progress instead of querying actual sprint YAML.
+**Impact:** Presented user with old numbers (e.g., "8 backlog stories" when there were fewer)
+**Solution:** When presenting sprint status to user, SM should either:
+1. Read `sprint/current-sprint.yaml` directly for current numbers
+2. Verify subagent output against actual sprint file before presenting
+3. Be explicit about data source when presenting status
+
+**Lesson:** Never trust subagent-reported story counts without verification against `sprint/current-sprint.yaml`.
+
+### Sprint notes use stale shorthand epic numbers instead of MSSCI IDs
+**Date:** 2026-01-18
+**Problem:** Sprint notes section used "Epic 31", "Epic 35" shorthand with outdated remaining points, while the actual epic data uses MSSCI-XXXXX IDs with current points.
+**Cause:** Notes weren't updated when stories completed; shorthand numbers don't match actual epic IDs.
+**Solution:** Sprint notes should use MSSCI epic IDs (e.g., MSSCI-11599, MSSCI-11715) and remaining points should be calculated from `points - completed_points` in the epic definition.
+
+**Lesson:** Always use MSSCI IDs, never shorthand "Epic N" numbers. Keep notes in sync with actual epic data.
