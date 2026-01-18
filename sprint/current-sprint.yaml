@@ -534,11 +534,13 @@ epics:
         title: Bidirectional sync script for sprint YAML and Jira
         points: 4
         priority: P2
-        status: in_progress
+        status: done
         assigned_to: Keith Avery
         started: 2026-01-18T16:09:00Z
+        completed: 2026-01-18
         repos: pennyfarthing
         workflow: tdd
+        pr: 322
         acceptance_criteria:
           - Script syncs status changes both directions
           - Points updated in Jira match sprint YAML
