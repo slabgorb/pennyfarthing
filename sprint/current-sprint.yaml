@@ -61,7 +61,7 @@ epics:
         acceptance_criteria:
           - Trivial workflow phase names match agent names
           - Session file shows correct phase/agent correlation
-      - id: 31-18
+      - id: MSSCI-11914
         title: "Respect handoff mode preference (manual/auto)"
         points: 2
         priority: P2
@@ -234,7 +234,7 @@ epics:
           - Completed tasks expandable to show output
           - Dismiss button removes completed task from panel
           - Panel updates in real-time as tasks start/complete
-      - id: 35-17
+      - id: MSSCI-11917
         title: Resizable theme panel width
         points: 1
         priority: P3
