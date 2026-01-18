@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 116
-  completed_points: 76
-  remaining_points: 40
+  completed_points: 80
+  remaining_points: 36
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - MSSCI-11599: Customizable Workflow Engine (4 pts remaining)
@@ -267,9 +267,9 @@ epics:
     jira: MSSCI-11728
     title: "Epic: OTEL Tool Call Enrichment"
     points: 15
-    completed_points: 11
+    completed_points: 15
     priority: P2
-    status: in_progress
+    status: done
     stories:
       # Done (trimmed)
       - id: MSSCI-11731
@@ -302,11 +302,13 @@ epics:
         title: Enriched span export and visualization
         points: 4
         priority: P2
-        status: in_progress
+        status: done
         assigned_to: Keith Avery
         started: 2026-01-18T18:42:09Z
+        completed: 2026-01-18
         repos: cyclist
         workflow: tdd
+        pr: 340
         acceptance_criteria:
           - Custom exporter adds enrichment attributes
           - Timeline visualization in Cyclist UI
