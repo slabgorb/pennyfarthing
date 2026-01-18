@@ -215,7 +215,7 @@ Task tool:
 
     STORY_ID: {value}
     WORKFLOW: {workflow from session}  # e.g., "tdd" or "trivial"
-    CURRENT_PHASE: green               # or "implement" for trivial workflow
+    CURRENT_PHASE: green               # or "impl" for trivial workflow
     REPOS: {value}
     ASSESSMENT_SECTION: Dev Assessment
     TEST_RESULT: GREEN
@@ -225,7 +225,7 @@ Task tool:
 
 **Phase name varies by workflow:**
 - TDD workflow: `green` phase
-- Trivial workflow: `implement` phase
+- Trivial workflow: `impl` phase
 
 Helper will:
 1. Verify quality gates pass (uses test cache from Story 31-8)

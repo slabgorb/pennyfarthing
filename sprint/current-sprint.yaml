@@ -52,7 +52,9 @@ epics:
         title: "Bug: Trivial workflow phase naming inconsistency"
         points: 1
         priority: P2
-        status: backlog
+        status: in_progress
+        assigned_to: Keith Avery
+        started: 2026-01-18T12:30:00Z
         repos: pennyfarthing
         acceptance_criteria:
           - Trivial workflow phase names match agent names
