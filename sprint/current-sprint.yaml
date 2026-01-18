@@ -65,7 +65,9 @@ epics:
         title: "Respect handoff mode preference (manual/auto)"
         points: 2
         priority: P2
-        status: backlog
+        status: in_progress
+        assigned_to: Keith Avery
+        started: 2026-01-18T12:40:00Z
         workflow: trivial
         repos: pennyfarthing
         description: |

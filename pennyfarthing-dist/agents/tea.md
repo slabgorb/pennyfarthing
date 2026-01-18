@@ -182,23 +182,33 @@ Helper will use workflow definition to determine next phase (green) and agent (D
 
 After writing assessment, ALWAYS spawn handoff subagent to complete bookkeeping.
 
-Then check context usage:
+Then check context usage and handoff mode preference:
 
 ```bash
 $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
-**If < 60%:** **MANDATORY: Use the Skill tool to invoke `/dev` NOW.** Do not ask the user - just invoke it:
-```yaml
-Skill tool:
-  skill: "dev"
-```
+**Read handoff mode from Cyclist settings** (see `generic-handoff.md` for full implementation):
+- `~/.cyclist/settings.yaml` → `workflow.handoff_mode: auto|manual`
+- Default is `manual` if not set
 
-**If > 60%:** Tell user: "Context high. Start fresh session with `/dev`"
+**Handoff Decision Matrix:**
 
-**Handoff Marker:** Include at end of handoff message:
+| Context | Mode | Action |
+|---------|------|--------|
+| < 60% | auto | Invoke `/dev` directly via Skill tool |
+| < 60% | manual | Report ready, emit HANDOFF marker, wait for user |
+| >= 60% | auto | Emit CONTEXT_CLEAR marker (triggers auto-reload in Cyclist) |
+| >= 60% | manual | Tell user: "Context high. Start fresh session with `/dev`" |
+
+**Handoff Marker:** ALWAYS include at end of handoff message:
 ```
 <!-- CYCLIST:HANDOFF:/dev -->
+```
+
+**For high context + auto mode**, also include:
+```
+<!-- CYCLIST:CONTEXT_CLEAR:/dev -->
 ```
 
 <exit>
