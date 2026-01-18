@@ -335,9 +335,10 @@ export async function refreshPersona() {
   }
 }
 
-// Expose refreshPersona globally for SettingsPanel theme changes
+// Expose functions globally for cross-module access
 if (typeof window !== 'undefined') {
   window.refreshPersona = refreshPersona;
+  window.getCurrentAgentCommand = getCurrentAgentCommand;  // TirePump: used by stats-strip.js
 }
 
 // Initialize on page load (guard for test environments without DOM)

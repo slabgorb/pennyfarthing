@@ -144,3 +144,13 @@ Pennyfarthing integrates with Jira for sprint and story tracking. Key capabiliti
 - Scripts detect stories in Jira but missing from YAML
 
 See `pennyfarthing-dist/skills/jira/skill.md` for detailed CLI commands and workflows.
+
+## Cyclist Internal Codenames
+
+The Cyclist visual terminal uses bicycle-themed internal codenames:
+
+| Codename | Component | Description |
+|----------|-----------|-------------|
+| **WheelHub** | `packages/cyclist/src/server.ts` | Central coordination server - the hub where all communication converges (API, WebSocket, OTLP) |
+| **TirePump** | Context clearing system | The complete context clear-and-reload system - clears the session, resets stats, and reloads the current agent when context runs low |
+| **JobFair** | Character benchmarking | Discovers which theme characters excel at each role by running them against benchmarks - finds hidden talents across the cast |

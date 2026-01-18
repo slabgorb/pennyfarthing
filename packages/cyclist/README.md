@@ -239,6 +239,28 @@ Cyclist automatically finds the next available port (1899, 1900, etc.). Check co
 
 Wheelhub is implemented in `server.ts` and its supporting modules.
 
+### TirePump
+
+**TirePump** is Cyclist's context clearing system—reinflating the session when context runs low. Like pumping air back into a flat tire, it:
+
+- **Clears the Claude session** - Terminates the current Claude Code process cleanly
+- **Resets all stats** - Zeroes token counts, tool stats, context percentage
+- **Reloads the current agent** - Relaunches with the same agent command (e.g., `/dev`)
+- **Preserves workflow state** - Session files in `.session/` persist across reloads
+
+TirePump is triggered by the Compact button (appears at 50% context usage) or automatically at critical thresholds. Implementation spans `main.ts` (IPC handler), `stats-strip.js` (UI), and `preload.ts` (API bridge).
+
+### JobFair
+
+**JobFair** is Pennyfarthing's character benchmarking system—like a job fair where every character in a theme auditions for every role. It:
+
+- **Runs every character against benchmarks** - Tests all theme personas (e.g., Star Wars cast) on standardized scenarios
+- **Discovers hidden talents** - Finds which characters unexpectedly excel at roles outside their native assignment
+- **Produces talent matrices** - Shows performance scores for each character × role combination
+- **Guides theme configuration** - Helps optimize which character plays which agent role
+
+JobFair is invoked via `/job-fair <theme>` and uses `scripts/solo-runner.sh` to execute benchmark runs. Results are saved to `internal/results/job-fair/`.
+
 ### Directory Structure
 
 ```

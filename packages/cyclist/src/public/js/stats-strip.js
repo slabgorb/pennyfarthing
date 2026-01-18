@@ -2,6 +2,7 @@
  * Stats Strip - Compact stats display in prompt bar (B-22)
  * Shows model badge, context meter, and usage limits (23-1)
  * 23-4: Adds compact button with context awareness
+ * TirePump: Compact button triggers context clear and agent reload
  */
 
 /**
@@ -82,15 +83,23 @@ function updateCompactButtonVisibility(percent) {
 }
 
 /**
- * 23-4: Execute the /compact command via IPC
+ * TirePump: Execute context clear and agent reload
  * Called when compact button is clicked or keyboard shortcut is pressed
+ * Clears the Claude session and reloads the current agent
  */
 async function executeCompact() {
   const compactBtn = document.querySelector('#stats-strip .compact-btn');
 
-  // Check if command API is available
-  if (!window.electronAPI?.command?.execute) {
-    console.warn('[StatsStrip] Command API not available for compact');
+  // Get current agent command (e.g., '/dev', '/sm') via window global from persona.js
+  const agent = window.getCurrentAgentCommand?.();
+  if (!agent) {
+    console.warn('[TirePump] No current agent to reload');
+    return;
+  }
+
+  // Check if clearAndReload API is available
+  if (!window.electronAPI?.claude?.clearAndReload) {
+    console.warn('[TirePump] clearAndReload API not available');
     return;
   }
 
@@ -101,10 +110,11 @@ async function executeCompact() {
   }
 
   try {
-    await window.electronAPI.command.execute('/compact');
-    console.log('[StatsStrip] Compact command executed');
+    console.log(`[TirePump] Clearing context and reloading agent: ${agent}`);
+    await window.electronAPI.claude.clearAndReload(agent);
+    console.log('[TirePump] Context cleared and agent reload triggered');
   } catch (err) {
-    console.error('[StatsStrip] Failed to execute compact:', err);
+    console.error('[TirePump] Failed to clear and reload:', err);
   } finally {
     // Remove loading state
     if (compactBtn) {
