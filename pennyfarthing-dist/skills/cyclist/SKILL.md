@@ -43,9 +43,10 @@ just cyclist server
 # Verbose/debug logging
 just cyclist verbose
 
-# Combine flags
+# Combine flags (any order)
 just cyclist here verbose
 just cyclist web dir=/path/to/project
+just cyclist verbose here
 ```
 
 ## Environment Variables
@@ -67,6 +68,9 @@ just cyclist web dir=/path/to/project
 
 ## Just Commands Reference
 
+All Cyclist operations use a single `just cyclist` command:
+
+**Run modes:**
 | Command | Description |
 |---------|-------------|
 | `just cyclist` | Start Electron with folder picker |
@@ -75,11 +79,24 @@ just cyclist web dir=/path/to/project
 | `just cyclist web` | Start web dev mode (browser + hot reload) |
 | `just cyclist server` | Start web server only (production) |
 | `just cyclist verbose` | Enable verbose/debug logging |
-| `just cyclist-build` | Build Cyclist TypeScript |
-| `just cyclist-rebuild` | Rebuild native modules (node-pty) |
-| `just cyclist-setup` | Full clean + install + rebuild + build |
-| `just cyclist-build-and-install` | Build and install Cyclist.app |
+| `just cyclist here verbose` | Combine flags (any order) |
+
+**Maintenance:**
+| Command | Description |
+|---------|-------------|
+| `just cyclist setup` | First-time setup (clean, install, rebuild, build) |
+| `just cyclist doctor` | Diagnose setup issues (add `--fix` to auto-repair) |
+| `just cyclist build` | Build Cyclist TypeScript |
+| `just cyclist clean` | Remove dist/ |
+| `just cyclist rebuild` | Rebuild native modules (node-pty) |
+| `just cyclist package` | Build Electron app for distribution |
+| `just cyclist install` | Install app + CLI |
+
+**Testing:**
+| Command | Description |
+|---------|-------------|
 | `just test-cyclist` | Run Cyclist tests |
+| `just test-cyclist-watch` | Run tests in watch mode |
 
 ## Direct npm Scripts
 
