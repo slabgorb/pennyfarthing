@@ -91,6 +91,15 @@ export interface ToolEvent {
   outputSummary?: OutputSummary;
   /** Working directory where command was executed */
   workingDirectory?: string;
+  // Story 36-5: Task tool enrichment fields
+  /** Subagent type for Task tool (e.g., 'general-purpose', 'Explore') */
+  subagentType?: string;
+  /** Prompt summary - first 200 chars of task prompt */
+  promptSummary?: string;
+  /** Result summary when task completes (TaskOutput) */
+  resultSummary?: string;
+  /** Whether task runs in background */
+  isBackground?: boolean;
 }
 
 /**
@@ -846,6 +855,21 @@ export async function processLogEvents(rawEvents: RawLogEvent[]): Promise<void> 
             }
           }
         } catch { /* ignore enrichment errors */ }
+      }
+
+      // Story 36-5: Task tool enrichment (works without pendingInput)
+      if (toolName === 'Task' && parsedToolParams) {
+        toolEvent.subagentType = parsedToolParams.subagent_type as string | undefined;
+        toolEvent.promptSummary = (parsedToolParams.prompt as string)?.substring(0, 200);
+        toolEvent.isBackground = parsedToolParams.run_in_background === true;
+      }
+
+      // Story 36-5: TaskOutput result summary enrichment
+      if (toolName === 'TaskOutput') {
+        const rawOutput = event.attributes['tool_output'] as string;
+        if (rawOutput) {
+          toolEvent.resultSummary = rawOutput.substring(0, 200);
+        }
       }
 
       recordToolEvent(toolEvent);
