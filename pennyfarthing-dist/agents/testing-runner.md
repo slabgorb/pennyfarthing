@@ -321,72 +321,44 @@ Listed per repo tested.
 
 ## Write Test Cache to Session File
 
-**Story 31-8:** After running tests, write results to session file cache so other subagents can skip redundant test runs.
+After running tests, write results to the session file cache so other subagents can skip redundant test runs.
 
 **When to write cache:**
 - `STORY_ID` is provided (identifies session file)
 - `SKIP_CACHE_WRITE` is not `true`
 - Not a filtered run (filtered runs don't represent full test state)
 
-**Cache format in session file:**
-```markdown
-## Test Cache
-
-| Field | Value |
-|-------|-------|
-| Last Run | {ISO 8601 timestamp} |
-| Git SHA | {current git SHA} |
-| Result | {GREEN/RED/YELLOW} |
-| Pass | {pass count} |
-| Fail | {fail count} |
-| Skip | {skip count} |
-| Duration | {seconds}s |
-```
-
-**Cache write procedure:**
+**Write cache using the utility script:**
 
 ```bash
-# Get current git SHA and timestamp
-GIT_SHA=$(git rev-parse HEAD)
-TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+source $CLAUDE_PROJECT_DIR/scripts/utils/test-cache.sh
 
-# Build cache section (use results from test run)
-CACHE_SECTION="## Test Cache
-
-| Field | Value |
-|-------|-------|
-| Last Run | $TIMESTAMP |
-| Git SHA | $GIT_SHA |
-| Result | $RESULT |
-| Pass | $PASS_COUNT |
-| Fail | $FAIL_COUNT |
-| Skip | $SKIP_COUNT |
-| Duration | ${DURATION}s |"
-
-# Session file path
 SESSION_FILE="$CLAUDE_PROJECT_DIR/.session/${STORY_ID}-session.md"
 
-# Check if Test Cache section exists
-if grep -q "^## Test Cache" "$SESSION_FILE" 2>/dev/null; then
-    # Replace existing cache section
-    # Use Edit tool to replace from "## Test Cache" to next "## " section
-    echo "Updating existing cache in session file"
-else
-    # Append cache section before "## Workflow Tracking" if present
-    # Otherwise append to end of file
-    echo "Adding new cache section to session file"
-fi
+# After tests complete, write cache with results
+# test_cache_write <session_file> <result> <pass> <fail> <skip> <duration>
+test_cache_write "$SESSION_FILE" "$RESULT" "$PASS_COUNT" "$FAIL_COUNT" "$SKIP_COUNT" "${DURATION}s"
 ```
 
-**Use Edit tool** to update session file - do not use bash string manipulation on markdown files.
-
 **Cache validation by other subagents:**
-Other subagents (reviewer-preflight, dev-handoff) check cache before running tests:
-1. Parse `## Test Cache` section from session file
-2. Verify `Git SHA` matches current HEAD
-3. Verify `Last Run` is less than 5 minutes old
-4. If valid: skip test run, use cached `Result`
-5. If invalid: run tests and update cache
+
+Other subagents check cache before running tests:
+
+```bash
+source $CLAUDE_PROJECT_DIR/scripts/utils/test-cache.sh
+
+SESSION_FILE="$CLAUDE_PROJECT_DIR/.session/${STORY_ID}-session.md"
+
+if test_cache_valid "$SESSION_FILE"; then
+    CACHED_RESULT=$(test_cache_get "$SESSION_FILE" "result")
+    echo "Using cached test result: $CACHED_RESULT"
+    # Skip test run, use cached result
+else
+    # Run tests and update cache
+    # ... run tests ...
+    test_cache_write "$SESSION_FILE" "$RESULT" "$PASS" "$FAIL" "$SKIP" "$DURATION"
+fi
+```
 
 ## Cleanup
 
