@@ -6,17 +6,17 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 116
-  completed_points: 75
-  remaining_points: 41
+  completed_points: 76
+  remaining_points: 40
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
-    - Epic 31: Customizable Workflow Engine (4 pts remaining)
-    - Epic 33: Runtime Permission Management (5 pts remaining)
-    - Epic 35: Cyclist UI/UX Improvements (9 pts remaining)
-    - Epic 36: OTEL Tool Call Enrichment (4 pts remaining)
-    - Epic 37: Technical Debt & Bug Fixes (16 pts remaining)
-    - Epic 38: Agent File Modernization (16 pts remaining)
-    - Epic 47: Jira-Pennyfarthing Sync Improvements (13 pts - NEW)
+    - MSSCI-11599: Customizable Workflow Engine (4 pts remaining)
+    - MSSCI-11705: Runtime Permission Management (3 pts remaining)
+    - MSSCI-11715: Cyclist UI/UX Improvements (15 pts remaining)
+    - MSSCI-11728: OTEL Tool Call Enrichment (4 pts remaining)
+    - MSSCI-11794: Technical Debt & Bug Fixes (10 pts remaining)
+    - MSSCI-11795: Agent File Modernization (6 pts remaining)
+    - MSSCI-11796: Jira-Pennyfarthing Sync Improvements (9 pts remaining)
 
     Stories now have `workflow:` tags indicating which workflow to use.
     SM will route to appropriate workflow (tdd, trivial, agent-docs).
@@ -130,7 +130,7 @@ epics:
     type: epic
     title: "Epic: Cyclist UI/UX Improvements"
     points: 35
-    completed_points: 19
+    completed_points: 20
     priority: P2
     status: in_progress
     stories:
@@ -245,11 +245,13 @@ epics:
         title: Resizable theme panel width
         points: 1
         priority: P3
-        status: in_progress
+        status: done
         assigned_to: Keith Avery
         started: 2026-01-18T16:30:00Z
+        completed: 2026-01-18
         workflow: trivial
         repos: cyclist
+        pr: 335
         description: |
           Theme panel has fixed width that can blow out display. Add resize
           handle similar to other resizable panels in Cyclist.
@@ -374,8 +376,13 @@ epics:
         title: Clean up copy mode migration code
         points: 2
         priority: P3
-        status: backlog
+        status: done
+        assigned_to: Keith Avery
+        started: 2026-01-18T15:30:00Z
+        completed: 2026-01-18
+        workflow: trivial
         repos: pennyfarthing
+        pr: 337
         acceptance_criteria:
           - Copy mode migration code removed from update.ts
           - Clean error if copy mode manifest found
