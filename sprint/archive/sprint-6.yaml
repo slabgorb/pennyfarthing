@@ -25,8 +25,8 @@ epics:
   # =========================================================================
   # EPIC 13 - Pennyfarthing Showcase Website (37 pts total, 21 complete)
   # =========================================================================
-  - id: epic-13
-    title: "Pennyfarthing Showcase Website"
+  - id: MSSCI-11294
+    title: "MSSCI-11294: Pennyfarthing Showcase Website"
     description: |
       Interactive showcase website for browsing Pennyfarthing's 64 themes and 640 agent
       personas. Features OCEAN personality visualization with spider charts and Chernoff
@@ -273,8 +273,8 @@ epics:
   # =========================================================================
   # EPIC 15 - Cyclist-Pennyfarthing Integration (15 pts)
   # =========================================================================
-  - id: epic-15
-    title: "Cyclist-Pennyfarthing Integration"
+  - id: MSSCI-11347
+    title: "MSSCI-11347: Cyclist-Pennyfarthing Integration"
     description: |
       Integrate Cyclist (Claude REPL wrapper with sidebar UI) with Pennyfarthing's
       rich metadata system. Enables visual display of agent personas, session stats,
@@ -529,8 +529,8 @@ epics:
   # EPIC 16 - Persona Performance Analytics & Job-Fair Optimization (23 pts)
   # Retroactive epic capturing Michael Pursifull's benchmarking work
   # =========================================================================
-  - id: epic-16
-    title: "Persona Performance Analytics & Job-Fair Optimization"
+  - id: MSSCI-11357
+    title: "MSSCI-11357: Persona Performance Analytics & Job-Fair Optimization"
     description: |
       Cross-role persona benchmarking, job-fair character evaluation, and statistical
       analysis of persona performance across roles. Features: job-fair command, --as flag,

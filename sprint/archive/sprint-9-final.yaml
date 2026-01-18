@@ -27,8 +27,8 @@ summary:
 # ACTIVE EPICS
 # =============================================================================
 epics:
-  - id: epic-24
-    title: Configuration & Theme Switcher Panels
+  - id: MSSCI-11548
+    title: "MSSCI-11548: Configuration & Theme Switcher Panels"
     jira: MSSCI-11548
     description: |
       Full settings hub in Cyclist covering Pennyfarthing, Claude Code,
@@ -283,8 +283,8 @@ epics:
 # COMPLETED EPICS (Sprint 9)
 # =============================================================================
 completed_epics:
-  - id: epic-30
-    title: Developer Workflow Documentation
+  - id: MSSCI-11582
+    title: "MSSCI-11582: Developer Workflow Documentation"
     jira: MSSCI-11582
     points: 24
     completed_points: 24
@@ -405,8 +405,8 @@ completed_epics:
         title: Session boundary breadcrumbs
         points: 2
         status: done
-  - id: epic-9
-    title: Skill Discovery & Documentation Hub
+  - id: MSSCI-11513
+    title: "MSSCI-11513: Skill Discovery & Documentation Hub"
     jira: MSSCI-11513
     points: 13
     completed_points: 13
@@ -434,8 +434,8 @@ completed_epics:
         points: 2
         status: done
         pr: "#168"
-  - id: epic-20
-    title: Cyclist Web Mode Improvements
+  - id: MSSCI-11526
+    title: "MSSCI-11526: Cyclist Web Mode Improvements"
     jira: MSSCI-11526
     points: 5
     completed_points: 5
@@ -508,8 +508,8 @@ completed_epics:
         title: Rewind Preview & Confirmation
         points: 3
         status: wontfix
-  - id: epic-25
-    title: Smart Question Detection & Quick Actions
+  - id: MSSCI-11530
+    title: "MSSCI-11530: Smart Question Detection & Quick Actions"
     jira: MSSCI-11530
     points: 15
     completed_points: 12
