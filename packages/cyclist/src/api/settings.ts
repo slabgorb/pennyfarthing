@@ -11,7 +11,7 @@ import { Router } from 'express';
 import fs from 'fs';
 import path from 'path';
 import { parse } from 'yaml';
-import { getCurrentSettings, saveUserSettings, addToRecentThemes, type CyclistSettings } from '../settings.js';
+import { getCurrentSettings, saveUserSettings, addToRecentThemes, type CyclistSettings, type PartialSettings } from '../settings.js';
 import { getProjectDirectory } from '../paths.js';
 
 // =============================================================================
@@ -54,10 +54,29 @@ export function createSettingsRouter(): Router {
   /**
    * GET / - Get current settings
    * AC4: Returns consistent error format
+   * Theme is read from project-level config and merged with user settings
    */
   router.get('/', (_req, res) => {
     try {
       const settings = getCurrentSettings();
+
+      // Merge theme from project-level config (theme is project-level only)
+      const projectDir = getProjectDirectory();
+      if (projectDir) {
+        try {
+          const configPath = path.join(projectDir, '.pennyfarthing', 'config.local.yaml');
+          if (fs.existsSync(configPath)) {
+            const content = fs.readFileSync(configPath, 'utf-8');
+            const parsed = parse(content) as { theme?: string };
+            if (parsed?.theme) {
+              settings.pennyfarthing.theme = parsed.theme;
+            }
+          }
+        } catch {
+          // Ignore project config errors - use user-level or default
+        }
+      }
+
       res.json(settings);
     } catch (error) {
       console.error('[Settings API] Failed to get settings:', error);
@@ -133,27 +152,31 @@ export function createSettingsRouter(): Router {
       }
 
       // Story 35-8: Track theme changes in recentThemes
-      let settingsToSave = partialSettings;
+      // Theme is project-level only, so we track recent themes but don't save theme to user settings
+      let settingsToSave: PartialSettings = partialSettings;
       if (partialSettings.pennyfarthing?.theme) {
         const current = getCurrentSettings();
         const updated = addToRecentThemes(current, partialSettings.pennyfarthing.theme);
+        // Strip theme from user-level save - theme is project-level only
+        // Keep recentThemes and favorites in user settings
+        const { theme: _theme, ...pennyfarthingWithoutTheme } = partialSettings.pennyfarthing;
         settingsToSave = {
           ...partialSettings,
           pennyfarthing: {
-            ...partialSettings.pennyfarthing,
+            ...pennyfarthingWithoutTheme,
             recentThemes: updated.pennyfarthing.recentThemes,
           },
         };
       }
 
-      // Save settings using the settings module
-      const success = saveUserSettings(settingsToSave);
+      // Save settings using the settings module (theme excluded - it's project-level)
+      const success = saveUserSettings(settingsToSave as Partial<CyclistSettings>);
 
       if (!success) {
         return res.status(500).json(createErrorResponse('FILE_ERROR', 'Failed to save settings to file'));
       }
 
-      // Dual-write theme to .pennyfarthing/config.local.yaml for Pennyfarthing compatibility (24-2)
+      // Write theme to .pennyfarthing/config.local.yaml (project-level only)
       const projectDir = getProjectDirectory();
       if (partialSettings.pennyfarthing?.theme && projectDir) {
         try {
