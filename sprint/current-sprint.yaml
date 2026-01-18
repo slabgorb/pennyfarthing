@@ -111,42 +111,51 @@ epics:
       # Done (trimmed)
       - id: 35-1
         title: Contextual settings placement
+        jira: MSSCI-11716
         points: 3
         status: done
         pr: 244
       - id: 35-2
         title: Display current directory in status bar
+        jira: MSSCI-11717
         points: 2
         status: done
       - id: 35-3
         title: Workflow phase visualization
+        jira: MSSCI-11718
         points: 3
         status: done
         pr: 249
       - id: 35-4
         title: Three-way mode switch (Plan/Manual/Accept)
+        jira: MSSCI-11719
         points: 2
         status: done
       - id: 35-5
         title: Collapsible portrait panel
+        jira: MSSCI-11720
         points: 2
         status: done
         pr: 262
       - id: 35-6
         title: Font face selector
+        jira: MSSCI-11721
         points: 2
         status: done
       - id: 35-9
         title: Settings panel fixes and expansion
+        jira: MSSCI-11724
         points: 3
         status: done
       - id: 35-11
         title: Clickable file paths in diff view
+        jira: MSSCI-11726
         points: 1
         status: done
         pr: 292
       - id: 35-12
         title: Skill invocations panel
+        jira: MSSCI-11727
         points: 3
         status: done
         pr: 305
@@ -205,10 +214,12 @@ epics:
       # Done (trimmed)
       - id: 36-3
         title: Bash tool enrichment
+        jira: MSSCI-11731
         points: 2
         status: done
       - id: 36-4
         title: Search tool enrichment (Grep/Glob)
+        jira: MSSCI-11732
         points: 2
         status: done
         pr: 271

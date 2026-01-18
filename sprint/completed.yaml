@@ -353,6 +353,7 @@ sprint_5:
       stories:
         - id: "12-1"
           title: "Copy /solo command to Pennyfarthing"
+          jira: MSSCI-11426
           points: 3
           status: done
           completed: 2026-01-02
@@ -360,6 +361,7 @@ sprint_5:
 
         - id: "12-2"
           title: "Copy /judge skill to Pennyfarthing"
+          jira: MSSCI-11427
           points: 3
           status: done
           completed: 2026-01-02
@@ -367,6 +369,7 @@ sprint_5:
 
         - id: "12-3"
           title: "Copy /benchmark and /benchmark-control commands"
+          jira: MSSCI-11428
           points: 3
           status: done
           completed: 2026-01-02
@@ -374,6 +377,7 @@ sprint_5:
 
         - id: "12-4"
           title: "Copy scenarios library to Pennyfarthing"
+          jira: MSSCI-11429
           points: 2
           status: done
           completed: 2026-01-02
@@ -381,6 +385,7 @@ sprint_5:
 
         - id: "12-5"
           title: "Copy /finalize-run skill"
+          jira: MSSCI-11430
           points: 2
           status: done
           completed: 2026-01-02
@@ -388,6 +393,7 @@ sprint_5:
 
         - id: "12-6"
           title: "Update benchmark-integration.ts for local results"
+          jira: MSSCI-11431
           points: 2
           status: done
           completed: 2026-01-02
@@ -395,6 +401,7 @@ sprint_5:
 
         - id: "12-7"
           title: "Create benchmarking documentation"
+          jira: MSSCI-11432
           points: 2
           status: done
           completed: 2026-01-02
@@ -402,6 +409,7 @@ sprint_5:
 
         - id: "12-8"
           title: "End-to-end integration test"
+          jira: MSSCI-11433
           points: 1
           status: done
           completed: 2026-01-02
@@ -537,6 +545,7 @@ sprint_7_completed:
     - id: "17-1"
       epic: epic-17
       title: "Implement message input buffer for non-blocking input"
+      jira: MSSCI-11483
       points: 5
       status: done
       started: 2026-01-08
@@ -546,6 +555,7 @@ sprint_7_completed:
     - id: "17-2"
       epic: epic-17
       title: "Fix tab panel layout - expanded state hides main content"
+      jira: MSSCI-11484
       points: 3
       status: done
       started: 2026-01-08
@@ -555,6 +565,7 @@ sprint_7_completed:
     - id: "17-3"
       epic: epic-17
       title: "Cyclist UX bug cleanup batch"
+      jira: MSSCI-11485
       points: 3
       status: done
       started: 2026-01-08
@@ -631,6 +642,7 @@ sprint_7_completed:
     - id: "17-5"
       epic: epic-17
       title: "BUG: Changed Files panel not showing files"
+      jira: MSSCI-11486
       points: 2
       status: done
       started: 2026-01-09
@@ -640,6 +652,7 @@ sprint_7_completed:
     - id: "17-6"
       epic: epic-17
       title: "BUG: Context meter not wired to Electron polling"
+      jira: MSSCI-11487
       points: 2
       status: done
       started: 2026-01-09
@@ -649,6 +662,7 @@ sprint_7_completed:
     - id: "17-7"
       epic: epic-17
       title: "Session ID tracking for context and agent state"
+      jira: MSSCI-11488
       points: 3
       status: done
       started: 2026-01-09
@@ -679,6 +693,7 @@ sprint_7_completed:
     - id: "17-4"
       epic: epic-17
       title: "Popup profile view for persona details"
+      jira: MSSCI-11490
       points: 3
       status: done
       completed: 2026-01-09
@@ -688,6 +703,7 @@ sprint_7_completed:
     - id: "17-8"
       epic: epic-17
       title: "Fix story panel not loading in Electron (IPC vs HTTP mismatch)"
+      jira: MSSCI-11489
       points: 3
       status: done
       completed: 2026-01-09
