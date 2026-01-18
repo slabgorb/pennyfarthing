@@ -391,8 +391,13 @@ epics:
         title: Add test coverage tooling
         points: 2
         priority: P2
-        status: backlog
+        status: done
+        assigned_to: Keith Avery
+        started: 2026-01-18T15:50:00Z
+        completed: 2026-01-18
+        workflow: trivial
         repos: cyclist
+        pr: 338
         acceptance_criteria:
           - "@vitest/coverage-v8 installed"
           - Coverage report generates successfully
@@ -401,11 +406,13 @@ epics:
         title: Remove persona-config.local.yaml deprecation
         points: 1
         priority: P3
-        status: in_progress
+        status: done
         assigned_to: Keith Avery
         started: 2026-01-18T17:00:00Z
+        completed: 2026-01-18
         repos: pennyfarthing
         workflow: trivial
+        pr: 336
         acceptance_criteria:
           - Single source of truth for theme config
           - Old path not checked
