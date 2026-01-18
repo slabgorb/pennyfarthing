@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 108
-  completed_points: 48
-  remaining_points: 60
+  completed_points: 53
+  remaining_points: 55
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - Epic 31: Customizable Workflow Engine (4 pts remaining)
@@ -366,7 +366,7 @@ epics:
   - id: MSSCI-11795
     title: "MSSCI-11795: Agent File Modernization"
     points: 30
-    completed_points: 14
+    completed_points: 19
     priority: P2
     status: in_progress
     stories:
@@ -456,9 +456,12 @@ epics:
         title: Auto-mode context clear and agent reload on handoff
         points: 5
         priority: P1
-        status: backlog
+        status: done
+        assigned_to: Keith Avery
         repos: pennyfarthing, cyclist
         workflow: tdd
+        completed: 2026-01-18
+        pr: 319
         acceptance_criteria:
           - Agent emits context-clear signal when auto mode + high context
           - Cyclist clears the Claude Code session automatically
