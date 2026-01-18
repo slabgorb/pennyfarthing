@@ -26,6 +26,7 @@ import {
   initTokenStatsBroadcast,
   createBackgroundTasksRouter,
   initBackgroundTaskBroadcast,
+  createSpansRouter,
 } from './api/index.js';
 
 // Settings initialization (35-6: required for font settings persistence)
@@ -88,6 +89,8 @@ app.use('/api/evaluation', createEvaluationRouter());
 app.use('/api/settings', createSettingsRouter());
 // 35-16: Background tasks API
 app.use('/api/background-tasks', createBackgroundTasksRouter());
+// MSSCI-11734: Enriched spans API
+app.use('/api/spans', createSpansRouter());
 app.use('/v1', createOTLPRouter());
 
 // Initialize token stats WebSocket broadcast callback

@@ -21,3 +21,5 @@ export { createEvaluationRouter } from './evaluation.js';
 export { createSettingsRouter } from './settings.js';
 // 35-16: Background tasks API
 export { createBackgroundTasksRouter, getBackgroundTaskClients, broadcastBackgroundTaskEvent, initBackgroundTaskBroadcast } from './background-tasks.js';
+// MSSCI-11734: Enriched spans API
+export { createSpansRouter } from './spans.js';
