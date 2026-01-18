@@ -79,19 +79,18 @@ export function findCyclist(): string {
 }
 
 /**
- * Load theme configuration from persona-config.yaml
+ * Load theme configuration
  *
- * Prefers local config over shared config.
+ * Priority: .pennyfarthing/config.local.yaml > .claude/persona-config.yaml
  */
 export function loadThemeConfig(projectDir: string): ThemeConfig {
-  const claudeDir = join(projectDir, '.claude');
-  const localConfigPath = join(claudeDir, 'persona-config.local.yaml');
-  const sharedConfigPath = join(claudeDir, 'persona-config.yaml');
+  const pennyfarthingConfigPath = join(projectDir, '.pennyfarthing/config.local.yaml');
+  const sharedConfigPath = join(projectDir, '.claude/persona-config.yaml');
 
-  // Prefer local config
-  if (existsSync(localConfigPath)) {
+  // Priority 1: .pennyfarthing/config.local.yaml
+  if (existsSync(pennyfarthingConfigPath)) {
     try {
-      const content = readFileSync(localConfigPath, 'utf-8');
+      const content = readFileSync(pennyfarthingConfigPath, 'utf-8');
       const config = yamlParse(content) as { theme?: string };
       if (config?.theme) {
         return { theme: config.theme };
@@ -101,7 +100,7 @@ export function loadThemeConfig(projectDir: string): ThemeConfig {
     }
   }
 
-  // Try shared config
+  // Priority 2: .claude/persona-config.yaml (project default)
   if (existsSync(sharedConfigPath)) {
     try {
       const content = readFileSync(sharedConfigPath, 'utf-8');

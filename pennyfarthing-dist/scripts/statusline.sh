@@ -96,8 +96,8 @@ fi
 
 # Get character name from theme for current agent
 config_file=""
-if [ -f "$PROJECT_ROOT/.claude/persona-config.local.yaml" ]; then
-    config_file="$PROJECT_ROOT/.claude/persona-config.local.yaml"
+if [ -f "$PROJECT_ROOT/.pennyfarthing/config.local.yaml" ]; then
+    config_file="$PROJECT_ROOT/.pennyfarthing/config.local.yaml"
 elif [ -f "$PROJECT_ROOT/.claude/persona-config.yaml" ]; then
     config_file="$PROJECT_ROOT/.claude/persona-config.yaml"
 fi

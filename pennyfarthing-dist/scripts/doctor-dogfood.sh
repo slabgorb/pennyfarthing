@@ -354,13 +354,10 @@ else
     warn ".claude/settings.local.json missing"
 fi
 
-# Check persona config (priority: .pennyfarthing/ > .claude/local > .claude/shared)
+# Check persona config (priority: .pennyfarthing/ > .claude/shared)
 if [[ -f ".pennyfarthing/config.local.yaml" ]]; then
     THEME=$(grep "^theme:" ".pennyfarthing/config.local.yaml" | awk '{print $2}')
     ok "Theme: ${THEME:-unknown} (.pennyfarthing/)"
-elif [[ -f ".claude/persona-config.local.yaml" ]]; then
-    THEME=$(grep "^theme:" ".claude/persona-config.local.yaml" | awk '{print $2}')
-    ok "Theme: ${THEME:-unknown} (.claude/ local)"
 elif [[ -f ".claude/persona-config.yaml" ]]; then
     THEME=$(grep "^theme:" ".claude/persona-config.yaml" | awk '{print $2}')
     ok "Theme: ${THEME:-unknown} (.claude/ shared)"

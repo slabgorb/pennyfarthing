@@ -84,7 +84,7 @@ export function getPennyfarthingConfigPath(projectRoot: string): string {
 
 /**
  * Get the current theme from config files
- * Priority: .pennyfarthing/config.local.yaml > .claude/persona-config.local.yaml > .claude/persona-config.yaml
+ * Priority: .pennyfarthing/config.local.yaml > .claude/persona-config.yaml
  */
 export function getCurrentTheme(projectRoot?: string): string | null {
   const root = projectRoot || process.cwd();
@@ -103,21 +103,7 @@ export function getCurrentTheme(projectRoot?: string): string | null {
     }
   }
 
-  // Priority 2: .claude/persona-config.local.yaml (legacy local)
-  const localConfigPath = join(root, '.claude/persona-config.local.yaml');
-  if (existsSync(localConfigPath)) {
-    try {
-      const content = readFileSync(localConfigPath, 'utf8');
-      const config = YAML.parse(content);
-      if (config?.theme) {
-        return config.theme;
-      }
-    } catch {
-      // Fall through to shared config
-    }
-  }
-
-  // Priority 3: .claude/persona-config.yaml (project default)
+  // Priority 2: .claude/persona-config.yaml (project default)
   const sharedConfigPath = join(root, '.claude/persona-config.yaml');
   if (existsSync(sharedConfigPath)) {
     try {
@@ -245,14 +231,11 @@ export function getAgentSamples(theme: ThemeInfo): string {
 export interface SetThemeOptions {
   /** If true, write to shared config (.claude/persona-config.yaml) instead of local */
   global?: boolean;
-  /** If true, write to legacy .claude/persona-config.local.yaml instead of .pennyfarthing/ */
-  legacy?: boolean;
 }
 
 /**
  * Set the active theme
  * By default writes to .pennyfarthing/config.local.yaml (agent-writable, dogfooding-friendly)
- * Use { legacy: true } to write to .claude/persona-config.local.yaml
  * Use { global: true } to write to .claude/persona-config.yaml (project default)
  * Returns the ThemeInfo if successful, throws if theme not found
  */
@@ -272,10 +255,6 @@ export function setTheme(themeName: string, projectRoot: string, options: SetThe
     // Project default - shared with team
     configPath = join(projectRoot, '.claude/persona-config.yaml');
     header = '# Pennyfarthing Persona Configuration (Project Default)\n\n';
-  } else if (options.legacy) {
-    // Legacy local config location
-    configPath = join(projectRoot, '.claude/persona-config.local.yaml');
-    header = '# Pennyfarthing Persona Configuration (Local User Preference)\n# This file is gitignored - your personal theme choice\n\n';
   } else {
     // Default: .pennyfarthing/ directory (agent-writable, dogfooding-friendly)
     configPath = getPennyfarthingConfigPath(projectRoot);
