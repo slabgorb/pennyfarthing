@@ -5,14 +5,14 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 115
+  total_points: 116
   completed_points: 68
-  remaining_points: 47
+  remaining_points: 48
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - Epic 31: Customizable Workflow Engine (5 pts remaining)
     - Epic 33: Runtime Permission Management (5 pts remaining)
-    - Epic 35: Cyclist UI/UX Improvements (8 pts remaining)
+    - Epic 35: Cyclist UI/UX Improvements (9 pts remaining)
     - Epic 36: OTEL Tool Call Enrichment (4 pts remaining)
     - Epic 37: Technical Debt & Bug Fixes (16 pts remaining)
     - Epic 38: Agent File Modernization (16 pts remaining)
@@ -122,7 +122,7 @@ epics:
   - id: MSSCI-11715
     type: epic
     title: "Epic: Cyclist UI/UX Improvements"
-    points: 34
+    points: 35
     completed_points: 19
     priority: P2
     status: in_progress
@@ -235,6 +235,20 @@ epics:
           - Completed tasks expandable to show output
           - Dismiss button removes completed task from panel
           - Panel updates in real-time as tasks start/complete
+      - id: 35-17
+        title: Resizable theme panel width
+        points: 1
+        priority: P3
+        status: backlog
+        workflow: trivial
+        repos: cyclist
+        description: |
+          Theme panel has fixed width that can blow out display. Add resize
+          handle similar to other resizable panels in Cyclist.
+        acceptance_criteria:
+          - Theme panel has drag handle for width adjustment
+          - Width persists across sessions (localStorage or settings)
+          - Minimum/maximum width constraints prevent unusable sizes
   # ===========================================================================
   # EPIC 36: OTEL Tool Call Enrichment
   # ===========================================================================
