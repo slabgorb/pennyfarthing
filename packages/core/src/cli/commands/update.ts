@@ -22,8 +22,7 @@ import {
   createCommandsDirectory,
   createSkillsDirectory,
   needsCommandsMigration,
-  needsSkillsMigration,
-  removeSymlinkOrDirectory
+  needsSkillsMigration
 } from '../utils/symlinks.js';
 import { findNodeModulesPath } from '../utils/node-modules.js';
 import { DIRECTORY_SYMLINKS, CORE_AGENTS } from '../utils/constants.js';
@@ -84,20 +83,14 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
   // Always check and update settings (idempotent - only makes changes if needed)
   const assetsPath = getAssetsPath();
 
-  // Copy mode is deprecated - force migration
+  // Copy mode is no longer supported - require fresh install
   if (currentInstallType === 'copy') {
-    if (nodeModulesPath) {
-      logger.info('Migrating from deprecated copy mode to symlink mode...');
-      await migrateToSymlinkMode(projectRoot, nodeModulesPath, manifest.projectName, packageVersion, { dryRun });
-      return;
-    } else {
-      logger.error('Copy mode is deprecated and @pennyfarthing/core (or pennyfarthing) not found');
-      logger.error('');
-      logger.error('Please reinstall with npm:');
-      logger.error('  npm install pennyfarthing');
-      logger.error('  npx pennyfarthing init --force');
-      process.exit(1);
-    }
+    logger.error('Copy mode installations are no longer supported.');
+    logger.error('');
+    logger.error('Please reinstall with npm:');
+    logger.error('  npm install pennyfarthing');
+    logger.error('  npx pennyfarthing init --force');
+    process.exit(1);
   }
 
   // Must have node_modules for symlink mode
@@ -138,101 +131,6 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
   logger.info('Running health check...');
   const { doctorCommand } = await import('./doctor.js');
   await doctorCommand({ quiet: true });
-}
-
-/**
- * Migrate from copy mode to symlink mode
- */
-async function migrateToSymlinkMode(
-  projectRoot: string,
-  nodeModulesPath: string,
-  projectName: string,
-  version: string,
-  options: { dryRun?: boolean }
-): Promise<void> {
-  const dryRun = options.dryRun;
-
-  logger.newline();
-  logger.info('Migrating to symlink mode...');
-
-  if (dryRun) {
-    logger.info('Dry run mode - no changes will be made');
-  }
-
-  // 1. Remove old .claude/pennyfarthing/ directory
-  const pennyfarthingDir = join(projectRoot, '.claude/pennyfarthing');
-  if (pathExists(pennyfarthingDir)) {
-    if (!dryRun) {
-      removeSync(pennyfarthingDir);
-    }
-    logger.info('Removed .claude/pennyfarthing/ directory');
-  }
-
-  // 2. Ensure project/commands directory exists
-  const projectCommandsDir = join(projectRoot, '.claude/project/commands');
-  if (!pathExists(projectCommandsDir)) {
-    if (!dryRun) {
-      ensureDirSync(projectCommandsDir);
-    }
-    logger.created('.claude/project/commands/ (for user custom commands)');
-  }
-
-  // 3. Remove old symlinks and create new ones pointing to node_modules (except commands and skills)
-  logger.newline();
-  logger.info('Creating symlinks to node_modules...');
-
-  for (const { name, link } of DIRECTORY_SYMLINKS) {
-    const linkPath = join(projectRoot, link);
-    const targetPath = join(nodeModulesPath, name);
-
-    // Remove existing symlink or directory
-    removeSymlinkOrDirectory(linkPath, dryRun);
-
-    if (!dryRun) {
-      const relativeTarget = computeRelativeSymlink(linkPath, targetPath);
-      try {
-        symlinkSync(relativeTarget, linkPath);
-        logger.created(`${link} -> ${relativeTarget}`);
-      } catch (e) {
-        logger.warning(`Could not create symlink ${link}: ${e}`);
-      }
-    } else {
-      const relativeTarget = computeRelativeSymlink(linkPath, targetPath);
-      logger.created(`${link} -> ${relativeTarget}`);
-    }
-  }
-
-  // 4. Create commands directory with individual symlinks (allows user commands)
-  const builtInCommandsPath = join(nodeModulesPath, 'commands');
-  createCommandsDirectory(projectRoot, builtInCommandsPath, projectCommandsDir, dryRun || false);
-
-  // 4b. Create skills directory with individual symlinks (allows user skills)
-  const builtInSkillsPath = join(nodeModulesPath, 'skills');
-  const projectSkillsDir = join(projectRoot, '.claude/project/skills');
-  createSkillsDirectory(projectRoot, builtInSkillsPath, projectSkillsDir, dryRun || false);
-
-  // 5. Migrate persona config to .pennyfarthing/
-  await migratePersonaConfig(projectRoot, { dryRun });
-
-  // 6. Update settings.local.json paths
-  const assetsPath = getAssetsPath();
-  await mergeSettingsHooks(projectRoot, assetsPath, { dryRun });
-
-  // 7. Write new manifest
-  logger.newline();
-  logger.info('Updating manifest...');
-
-  const nodeModulesRelPath = relative(projectRoot, nodeModulesPath);
-  const newManifest = createManifest(projectName, version, {
-    nodeModulesPath: nodeModulesRelPath
-  });
-
-  writeManifest(projectRoot, newManifest, { dryRun });
-  logger.updated('.claude/manifest.json');
-
-  logger.newline();
-  logger.success(`Migrated to symlink mode (v${version})`);
-  logger.info('Git-tracked files reduced from ~120 to 6 symlinks');
 }
 
 /**
