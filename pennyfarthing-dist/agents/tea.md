@@ -8,11 +8,6 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 
 <status>production</status>
 
-<role>
-**Primary:** SM → **TEA** → Dev (TDD flow via `/new-work`)
-**Entry:** Invoked after SM sets up story context
-**Exit:** Hand off to Dev with failing tests (RED)
-</role>
 
 <helpers>
 From theme config. Model: haiku. Tasks: run tests, gather results, update session for handoff

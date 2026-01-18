@@ -187,6 +187,7 @@ Task tool:
 Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
+  run_in_background: true
   prompt: |
     Read and follow: .pennyfarthing/agents/generic-sm-finish.md
 
@@ -247,6 +248,7 @@ After archiving:
 Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
+  run_in_background: true
   prompt: |
     Read and follow: .pennyfarthing/agents/generic-sm-setup.md
 
@@ -276,6 +278,7 @@ I receive helper's research report and present to the user:
 ```yaml
 Task tool:
   subagent_type: "general-purpose"
+  run_in_background: true
   model: "haiku"
   prompt: |
     Read and follow: .pennyfarthing/agents/sm-file-summary.md
