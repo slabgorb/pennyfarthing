@@ -167,9 +167,11 @@ epics:
           async loading issues, persona click handler conflicts.
         points: 3
         priority: P1
-        status: backlog
+        status: in_progress
+        assigned_to: Keith Avery
         repos: cyclist
         workflow: bdd
+        started: 2026-01-18T11:04:14Z
         blocked_by:
           - 35-14
         acceptance_criteria:

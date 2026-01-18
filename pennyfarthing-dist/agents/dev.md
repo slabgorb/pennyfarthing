@@ -164,6 +164,7 @@ Write this to session file BEFORE spawning handoff subagent:
 ## Self-Review Before Handoff
 
 Use `/code-review` skill checklist:
+- [ ] Code is wired to the front end or other components (e.g., API routes)
 - [ ] Code follows project patterns
 - [ ] All acceptance criteria met
 - [ ] Tests passing (not skipped!)
