@@ -27,7 +27,8 @@ epics:
   # EPIC 31: Customizable Workflow Engine
   # ===========================================================================
   - id: MSSCI-11599
-    title: "MSSCI-11599: Customizable Workflow Engine"
+    type: epic
+    title: "Epic: Customizable Workflow Engine"
     points: 37
     completed_points: 33
     priority: P1
@@ -60,7 +61,8 @@ epics:
   # EPIC 33: Runtime Permission Management
   # ===========================================================================
   - id: MSSCI-11705
-    title: "MSSCI-11705: Runtime Permission Management"
+    type: epic
+    title: "Epic: Runtime Permission Management"
     points: 15
     completed_points: 10
     priority: P1
@@ -98,7 +100,8 @@ epics:
   # EPIC 35: Cyclist UI/UX Improvements
   # ===========================================================================
   - id: MSSCI-11715
-    title: "MSSCI-11715: Cyclist UI/UX Improvements"
+    type: epic
+    title: "Epic: Cyclist UI/UX Improvements"
     points: 29
     completed_points: 14
     priority: P2
@@ -190,7 +193,8 @@ epics:
   # EPIC 36: OTEL Tool Call Enrichment
   # ===========================================================================
   - id: MSSCI-11728
-    title: "MSSCI-11728: OTEL Tool Call Enrichment"
+    type: epic
+    title: "Epic: OTEL Tool Call Enrichment"
     points: 15
     completed_points: 11
     priority: P2
@@ -233,7 +237,8 @@ epics:
   # EPIC 37: Technical Debt & Bug Fixes
   # ===========================================================================
   - id: MSSCI-11794
-    title: "MSSCI-11794: Technical Debt & Bug Fixes"
+    type: epic
+    title: "Epic: Technical Debt & Bug Fixes"
     points: 32
     completed_points: 19
     priority: P2
@@ -364,7 +369,8 @@ epics:
   # EPIC 38: Agent File Modernization
   # ===========================================================================
   - id: MSSCI-11795
-    title: "MSSCI-11795: Agent File Modernization"
+    type: epic
+    title: "Epic: Agent File Modernization"
     points: 30
     completed_points: 19
     priority: P2
@@ -471,7 +477,8 @@ epics:
   # EPIC 47: Jira-Pennyfarthing Sync Improvements
   # ===========================================================================
   - id: MSSCI-11796
-    title: "MSSCI-11796: Jira-Pennyfarthing Sync Improvements"
+    type: epic
+    title: "Epic: Jira-Pennyfarthing Sync Improvements"
     points: 17
     completed_points: 6
     priority: P1
