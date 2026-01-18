@@ -245,7 +245,9 @@ epics:
         title: Resizable theme panel width
         points: 1
         priority: P3
-        status: backlog
+        status: in_progress
+        assigned_to: Keith Avery
+        started: 2026-01-18T16:30:00Z
         workflow: trivial
         repos: cyclist
         description: |

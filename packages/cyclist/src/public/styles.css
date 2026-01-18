@@ -4982,6 +4982,11 @@ html, body {
   min-width: 0 !important;
 }
 
+/* MSSCI-11917: Hide sidebar resize handle when collapsed */
+#sidebar-resize:has(+ #sidebar.collapsed) {
+  display: none;
+}
+
 /* Sidebar collapse button */
 #sidebar .panel-collapse-btn,
 #sidebar-collapse-btn {
