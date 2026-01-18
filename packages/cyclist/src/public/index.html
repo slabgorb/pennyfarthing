@@ -196,14 +196,14 @@
           </div>
           <!-- 23-4: Compact button - appears when context > 50% -->
           <button type="button" class="compact-btn hidden" title="Compact context (Cmd+Shift+K)" aria-label="Compact context to reduce usage">Compact</button>
-          <!-- 23-1: Usage limits display -->
-          <span class="usage-5hr usage-safe" data-stat="strip-usage-5hr" title="5-hour window usage">
+          <!-- 23-1: Usage limits display (hidden until data available) -->
+          <span class="usage-5hr usage-safe" data-stat="strip-usage-5hr" title="5-hour window usage" style="display: none;">
             <span class="usage-label">Window:</span>
-            <span class="usage-value">—%</span>
+            <span class="usage-value"></span>
           </span>
-          <span class="usage-weekly usage-safe" data-stat="strip-usage-weekly" title="Weekly usage">
+          <span class="usage-weekly usage-safe" data-stat="strip-usage-weekly" title="Weekly usage" style="display: none;">
             <span class="usage-label">Week:</span>
-            <span class="usage-value">—%</span>
+            <span class="usage-value"></span>
           </span>
         </div>
       </div>
