@@ -687,47 +687,47 @@ export class ClaudeService extends EventEmitter {
   }
 
   /**
+   * Clear the session and wait for process to fully exit
+   * MSSCI-11840: Async version that prevents race conditions when spawning new process
+   * @returns Promise that resolves when process has fully exited
+   */
+  clearSessionAsync(): Promise<void> {
+    return new Promise((resolve) => {
+      if (!this.currentProcess) {
+        // No process running, just clear state and resolve immediately
+        this.resetSession();
+        resolve();
+        return;
+      }
+
+      // Set up listener for process exit BEFORE killing
+      const proc = this.currentProcess;
+      const onExit = () => {
+        proc.removeListener('close', onExit);
+        proc.removeListener('error', onExit);
+        resolve();
+      };
+
+      proc.once('close', onExit);
+      proc.once('error', onExit);
+
+      // Now kill the process - resetSession will set currentProcess to null
+      this.resetSession();
+
+      // Safety timeout in case process doesn't exit cleanly
+      setTimeout(() => {
+        proc.removeListener('close', onExit);
+        proc.removeListener('error', onExit);
+        resolve();
+      }, 2000);
+    });
+  }
+
+  /**
    * Alias for resetSession - used by preload API
    */
   clear(): void {
     this.resetSession();
-  }
-
-  /**
-   * Clear the session and reload with a new agent (MSSCI-11840)
-   *
-   * Used for auto-mode context clearing when context is high.
-   * Clears the current session and sends the agent command to start fresh.
-   *
-   * @param agent - Agent command to load after clear (e.g., '/dev', '/tea')
-   * @param timeout - Timeout in ms for initial message (default 4000ms)
-   */
-  async clearAndReload(agent: string, timeout = 4000): Promise<void> {
-    console.log(`[ClaudeService] Clearing session and reloading with agent: ${agent}`);
-
-    // Clear the current session
-    this.clear();
-
-    // Format the agent command
-    const command = formatAgentCommand(agent);
-
-    // Send the agent command to start the new session with timeout
-    // We don't await the full response - just initiate the send
-    // The caller will handle the message stream
-    const sendPromise = (async () => {
-      for await (const _msg of this.sendMessage(command)) {
-        // We just need to initiate the message send
-        // The actual handling will be done by the UI layer
-        break;
-      }
-    })();
-
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error(`clearAndReload timed out after ${timeout}ms`)), timeout);
-    });
-
-    // Race between first message and timeout
-    await Promise.race([sendPromise, timeoutPromise]);
   }
 
   /**

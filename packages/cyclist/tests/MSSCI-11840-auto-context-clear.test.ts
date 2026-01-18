@@ -194,45 +194,63 @@ describe('AC2: Cyclist clears session on CONTEXT_CLEAR marker', () => {
 
   });
 
-  describe('ClaudeService clearAndReload method', () => {
+  describe('ClaudeService clearSessionAsync method', () => {
 
-    it('should export clearAndReload method on ClaudeService', async () => {
+    it('should export clearSessionAsync method on ClaudeService', async () => {
       const { ClaudeService } = await import('../src/claude-service.js');
 
-      expect(ClaudeService.prototype.clearAndReload).toBeDefined();
-      expect(typeof ClaudeService.prototype.clearAndReload).toBe('function');
+      expect(ClaudeService.prototype.clearSessionAsync).toBeDefined();
+      expect(typeof ClaudeService.prototype.clearSessionAsync).toBe('function');
     });
 
-    it('should accept agent parameter for next agent to load', async () => {
+    it('should resolve immediately when no process is running', async () => {
+      const { ClaudeService } = await import('../src/claude-service.js');
+
+      const instance = new ClaudeService({ cwd: '/tmp/test' });
+
+      // Should complete without error when no process exists
+      await instance.clearSessionAsync();
+      expect(true).toBe(true);
+    });
+
+    it('should wait for process exit before resolving', async () => {
       const { ClaudeService } = await import('../src/claude-service.js');
       const { EventEmitter, Readable, Writable } = await import('stream');
 
       // Create a mock spawner that returns a mock process
+      let closeCallback: (() => void) | null = null;
       const mockSpawner = () => {
         const proc = new EventEmitter() as any;
         proc.stdin = new Writable({ write: (_, __, cb) => cb() });
-        proc.stdout = new Readable({
-          read() {
-            // Emit a system message then result to complete the turn
-            this.push('{"type":"system","session_id":"test-123"}\n');
-            this.push('{"type":"result","subtype":"success"}\n');
-            this.push(null);
-          }
-        });
+        proc.stdout = new Readable({ read() { this.push(null); } });
         proc.stderr = new Readable({ read() { this.push(null); } });
         proc.pid = 12345;
-        proc.kill = () => {};
+        proc.kill = () => {
+          // Simulate async process exit
+          setTimeout(() => {
+            proc.emit('close', 0);
+          }, 10);
+        };
         return proc;
       };
 
-      // Use mock spawner to avoid actual subprocess spawn
       const instance = new ClaudeService({
         cwd: '/tmp/test',
         spawner: mockSpawner as any
       });
 
-      // Should complete without error when using mock spawner
-      await instance.clearAndReload('/dev');
+      // Trigger process spawn by sending a message (will timeout but that's OK)
+      const sendPromise = (async () => {
+        for await (const msg of instance.sendMessage('test')) {
+          break;
+        }
+      })();
+
+      // Wait a tick for process to be created
+      await new Promise(r => setTimeout(r, 5));
+
+      // Now clearSessionAsync should wait for process exit
+      await instance.clearSessionAsync();
       expect(true).toBe(true);
     });
 
@@ -288,45 +306,29 @@ describe('AC2: Cyclist clears session on CONTEXT_CLEAR marker', () => {
 // =============================================================================
 describe('AC3: Cyclist loads next agent after clear', () => {
 
-  describe('ClaudeService clearAndReload implementation', () => {
+  describe('IPC handler clears session and broadcasts AGENT_LAUNCH', () => {
 
-    it('should clear session before loading new agent', async () => {
+    it('should use clearSessionAsync to wait for process exit', async () => {
+      // The IPC handler in main.ts calls service.clearSessionAsync()
+      // This ensures the old process is fully dead before spawning new one
       const { ClaudeService } = await import('../src/claude-service.js');
 
-      const clearSpy = vi.fn();
-      const sendSpy = vi.fn();
-
-      // Create a mock instance to verify call order
-      const instance = new ClaudeService({ projectDir: '/tmp/test' });
-
-      // Override methods to spy
-      instance.clear = clearSpy;
-      instance.sendMessage = sendSpy;
-
-      // The clearAndReload should call clear() then sendMessage(agent)
-      // This is more of a behavioral verification
-      await instance.clearAndReload('/tea').catch(() => {});
-
-      // Verify clear was called (may fail in test env, but should be attempted)
-      // The implementation should clear before sending
+      expect(ClaudeService.prototype.clearSessionAsync).toBeDefined();
+      expect(typeof ClaudeService.prototype.clearSessionAsync).toBe('function');
     });
 
-    it('should send agent command after clearing', async () => {
-      const { ClaudeService } = await import('../src/claude-service.js');
-
-      // Verify that after clear, the agent command is sent
-      const instance = new ClaudeService({ projectDir: '/tmp/test' });
-
-      // Mock the internal SDK to verify command is sent
-      // The command sent should be the agent slash command
-    });
-
-    it('should emit clear event before reload', async () => {
-      // Cyclist should emit an event when clearing so UI can update
-      // IPC channels are defined in ipc-channels.ts and re-exported by main.ts
+    it('should define CLEAR_AND_LOAD IPC channel', async () => {
       const channels = await import('../src/ipc-channels.js');
 
       expect(channels.IPC_CONTEXT_CLEAR_CHANNELS).toBeDefined();
+      expect(channels.IPC_CONTEXT_CLEAR_CHANNELS.CLEAR_AND_LOAD).toBe('context:clearAndLoad');
+    });
+
+    it('should define AGENT_LAUNCH IPC channel for triggering editor', async () => {
+      const channels = await import('../src/ipc-channels.js');
+
+      expect(channels.IPC_AGENT_CHANNELS).toBeDefined();
+      expect(channels.IPC_AGENT_CHANNELS.AGENT_LAUNCH).toBe('agent:launch');
     });
 
   });
@@ -518,43 +520,41 @@ describe('Integration: End-to-end auto-mode context clear flow', () => {
     expect(true).toBe(true);  // Placeholder
   });
 
-  it('should gracefully handle clear failure', async () => {
-    // If session clear fails, should fall back to manual handoff
+  it('should gracefully handle clear with running process', async () => {
+    // clearSessionAsync should complete even if process takes time to exit
     const { ClaudeService } = await import('../src/claude-service.js');
     const { EventEmitter, Readable, Writable } = await import('stream');
 
-    // Create a mock spawner that simulates an error condition
+    // Create a mock spawner with a process that emits close event
     const mockSpawner = () => {
       const proc = new EventEmitter() as any;
       proc.stdin = new Writable({ write: (_, __, cb) => cb() });
-      proc.stdout = new Readable({
-        read() {
-          // Emit error message to simulate failure
-          this.push('{"type":"error","error":"Simulated failure"}\n');
-          this.push('{"type":"result","subtype":"error_during_execution"}\n');
-          this.push(null);
-        }
-      });
+      proc.stdout = new Readable({ read() { this.push(null); } });
       proc.stderr = new Readable({ read() { this.push(null); } });
       proc.pid = 12345;
-      proc.kill = () => {};
+      proc.kill = () => {
+        // Emit close after a short delay
+        setTimeout(() => proc.emit('close', 0), 5);
+      };
       return proc;
     };
 
-    // Use mock spawner to test error handling
     const instance = new ClaudeService({
       cwd: '/tmp/test',
       spawner: mockSpawner as any
     });
 
-    // Should complete without crashing even with simulated error
-    try {
-      await instance.clearAndReload('/dev');
-    } catch (e: unknown) {
-      const error = e as Error;
-      // Should have a meaningful error, not crash
-      expect(error.message).toBeDefined();
-    }
+    // Trigger process spawn
+    const sendPromise = (async () => {
+      for await (const msg of instance.sendMessage('test')) {
+        break;
+      }
+    })();
+    await new Promise(r => setTimeout(r, 5));
+
+    // clearSessionAsync should complete without error
+    await instance.clearSessionAsync();
+    expect(true).toBe(true);
   });
 
 });

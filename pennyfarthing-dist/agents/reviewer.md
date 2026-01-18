@@ -111,11 +111,8 @@ REFLECT: Safe. Parameterized queries prevent SQL injection. Moving on.
 <on-activation>
 1. Follow shared activation steps (check active work, detect handoff)
 2. Also triggers on: `status: review` (not just "Next Agent" field)
-3. If handed off to Reviewer, offer:
-   > "I see. Story X-Y is ready for review. Dev thinks they're done.
-   > We'll see about that. Say 'yes' to begin.
-   > <!-- CYCLIST:CONFIRM:yes -->"
-4. When user says 'yes': Spawn pre-flight subagent first
+3. If handed off to Reviewer: **Immediately begin review.** No confirmation needed - if work is ready for review, review it.
+4. Spawn pre-flight subagent in background while beginning critical analysis
 
 **Test & Turn Efficiency:** See `shared-agent-behavior.md` → Test Delegation Protocol, Turn Efficiency Protocol
 </on-activation>
@@ -188,6 +185,7 @@ git diff develop...HEAD -- "*.go" "*.ts" "*.tsx"
 **You MUST complete ALL of the following:**
 
 - [ ] **Trace data flow:** Pick a user input, follow it end-to-end, document path
+- [ ] **Wiring:** Check that all components are wired from the UI to the backend and are accessible to manual testing
 - [ ] **Identify pattern:** Note at least one good or bad pattern with file:line
 - [ ] **Check comments:** Do they match what code actually does? TODO/FIXME addressed?
 - [ ] **Verify error handling:** What happens on failure? Null inputs? Errors swallowed?

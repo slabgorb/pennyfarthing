@@ -1155,8 +1155,9 @@ export function setupClaudeIPCHandlers(ipcMain: {
     const service = getClaudeService();
     console.log(`[main] Context clear and reload: ${agent}`);
 
-    // Clear session state
-    service.clearSession();
+    // Clear session state and WAIT for process to fully exit
+    // This prevents race conditions where new process spawns before old one dies
+    await service.clearSessionAsync();
     clearSessionId();
     resetTokenStats();
     resetTodos();

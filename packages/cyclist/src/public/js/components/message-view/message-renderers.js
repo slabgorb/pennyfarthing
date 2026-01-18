@@ -15,6 +15,30 @@ import { getHelperName } from '../../persona.js';
 /** Length threshold for collapsible tool results */
 const COLLAPSIBLE_THRESHOLD = 500;
 
+/** Maximum command length before truncation in Bash result header */
+const MAX_COMMAND_LENGTH = 50;
+
+/** ANSI color code to CSS class mapping */
+const ANSI_COLOR_MAP = {
+  '30': 'ansi-black',
+  '31': 'ansi-red',
+  '32': 'ansi-green',
+  '33': 'ansi-yellow',
+  '34': 'ansi-blue',
+  '35': 'ansi-magenta',
+  '36': 'ansi-cyan',
+  '37': 'ansi-white',
+  '1': 'ansi-bold',
+  '90': 'ansi-bright-black',
+  '91': 'ansi-bright-red',
+  '92': 'ansi-bright-green',
+  '93': 'ansi-bright-yellow',
+  '94': 'ansi-bright-blue',
+  '95': 'ansi-bright-magenta',
+  '96': 'ansi-bright-cyan',
+  '97': 'ansi-bright-white',
+};
+
 /** Permission mode display labels */
 const PERMISSION_MODE_LABELS = {
   default: 'Default',
@@ -77,6 +101,91 @@ export function formatTurnCount(count) {
 export function formatDuration(ms) {
   if (ms === undefined || ms === null) return '';
   return `${(ms / 1000).toFixed(1)}s`;
+}
+
+// =============================================================================
+// Bash Tool Result Helpers (MSSCI-11851)
+// =============================================================================
+
+/**
+ * Truncate a command string for display in header
+ * @param {string} command - The command to truncate
+ * @param {number} [maxLength=50] - Maximum length before truncation
+ * @returns {string} Truncated command with ellipsis if needed
+ */
+export function truncateCommand(command, maxLength = MAX_COMMAND_LENGTH) {
+  if (!command) return '';
+  if (command.length <= maxLength) return command;
+  return command.substring(0, maxLength - 1) + '…';
+}
+
+/**
+ * Format an exit code with appropriate success/error styling
+ * @param {number} exitCode - The exit code to format
+ * @returns {string} HTML string with styled exit code badge
+ */
+export function formatExitCode(exitCode) {
+  const statusClass = exitCode === 0 ? 'exit-success' : 'exit-error';
+  return `<span class="bash-exit-code ${statusClass}">${exitCode}</span>`;
+}
+
+/**
+ * Convert ANSI escape codes to HTML spans with CSS classes
+ * @param {string} text - Text containing ANSI escape codes
+ * @returns {string} HTML string with ANSI codes converted to spans
+ */
+export function ansiToHtml(text) {
+  if (!text) return '';
+
+  // Match ANSI escape sequences: \x1b[Nm or \x1b[N;Nm etc.
+  const ansiPattern = /\x1b\[([0-9;]+)m/g;
+
+  let result = '';
+  let lastIndex = 0;
+  let openSpans = 0;
+  let match;
+
+  while ((match = ansiPattern.exec(text)) !== null) {
+    // Add text before this match
+    result += text.substring(lastIndex, match.index);
+    lastIndex = match.index + match[0].length;
+
+    const codes = match[1].split(';');
+
+    for (const code of codes) {
+      if (code === '0') {
+        // Reset - close all open spans
+        while (openSpans > 0) {
+          result += '</span>';
+          openSpans--;
+        }
+      } else if (ANSI_COLOR_MAP[code]) {
+        // Open a span with the appropriate class
+        result += `<span class="${ANSI_COLOR_MAP[code]}">`;
+        openSpans++;
+      }
+    }
+  }
+
+  // Add remaining text
+  result += text.substring(lastIndex);
+
+  // Close any remaining open spans
+  while (openSpans > 0) {
+    result += '</span>';
+    openSpans--;
+  }
+
+  return result;
+}
+
+/**
+ * Check if a tool result message is from a Bash tool
+ * @param {Object} message - The tool result message
+ * @returns {boolean} True if this is an enriched Bash tool result
+ */
+export function isBashToolResult(message) {
+  return message && message.tool_name === 'Bash';
 }
 
 // =============================================================================
@@ -212,11 +321,50 @@ export function isToolUseCollapsible(_message) {
 }
 
 /**
+ * Render a Bash tool result with collapsible output (MSSCI-11851)
+ * @param {Object} message - Enriched Bash tool result message
+ * @returns {string} HTML string
+ */
+export function renderBashToolResult(message) {
+  const { tool_id, output, is_error, bash_command, bash_exit_code } = message;
+  const errorClass = is_error ? ' error' : '';
+
+  // Format command for header (truncated)
+  const displayCommand = truncateCommand(bash_command);
+
+  // Format exit code with styling
+  const exitCodeHtml = formatExitCode(bash_exit_code);
+
+  // Convert ANSI codes in output, then escape any remaining HTML
+  // Note: We escape first, then apply ANSI conversion to avoid escaping our spans
+  const escapedOutput = escapeHtml(output);
+  const coloredOutput = ansiToHtml(escapedOutput);
+
+  // Add open attribute when verbose mode is enabled
+  const openAttr = verboseModeEnabled ? ' open' : '';
+
+  return `<div class="message message-tool-result message-bash-result${errorClass}" data-tool-id="${tool_id}">
+  <details class="bash-output collapsible"${openAttr}>
+    <summary class="bash-header">
+      <span class="bash-command">${escapeHtml(displayCommand)}</span>
+      ${exitCodeHtml}
+    </summary>
+    <pre class="bash-output-content"><code>${coloredOutput}</code></pre>
+  </details>
+</div>`;
+}
+
+/**
  * Render a tool result message with output
  * @param {Object} message - SDK tool result message
  * @returns {string} HTML string
  */
 export function renderToolResultMessage(message) {
+  // Delegate to specialized renderer for Bash results
+  if (isBashToolResult(message)) {
+    return renderBashToolResult(message);
+  }
+
   const { tool_id, output, is_error } = message;
   const isLong = output.length > COLLAPSIBLE_THRESHOLD;
   const errorClass = is_error ? ' error' : '';
@@ -402,6 +550,11 @@ export default {
   formatPermissionMode,
   formatTurnCount,
   formatDuration,
+  // Bash tool result helpers (MSSCI-11851)
+  truncateCommand,
+  formatExitCode,
+  ansiToHtml,
+  isBashToolResult,
   // Tool status
   getToolStatus,
   setToolStatus,
@@ -413,6 +566,7 @@ export default {
   renderTextMessage,
   renderToolUseMessage,
   isToolUseCollapsible,
+  renderBashToolResult,
   renderToolResultMessage,
   renderSystemMessage,
   renderResultMessage,
