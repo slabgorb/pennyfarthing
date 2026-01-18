@@ -54,6 +54,18 @@ export interface WorkflowTriggers {
 }
 
 /**
+ * Permission preset required by a workflow
+ */
+export interface WorkflowPermissionPreset {
+  /** Tool name (e.g., "Bash", "Read", "WebFetch") */
+  tool: string;
+  /** Scope pattern for the permission */
+  scope: string;
+  /** Human-readable reason shown when prompting for permission */
+  reason: string;
+}
+
+/**
  * Complete workflow definition
  */
 export interface WorkflowDefinition {
@@ -67,6 +79,8 @@ export interface WorkflowDefinition {
   phases: WorkflowPhase[];
   /** Rules for automatic workflow selection (optional) */
   triggers?: WorkflowTriggers;
+  /** Permission presets required by this workflow (optional) */
+  permissions?: WorkflowPermissionPreset[];
 }
 
 /**
@@ -254,6 +268,44 @@ export function validateWorkflow(input: unknown): WorkflowValidationResult {
     }
   }
 
+  // Validate permissions (optional, array of permission presets)
+  if ('permissions' in workflowObj && workflowObj.permissions !== undefined) {
+    if (!Array.isArray(workflowObj.permissions)) {
+      errors.push({ field: 'workflow.permissions', message: 'Permissions must be an array' });
+    } else {
+      const permissions = workflowObj.permissions as unknown[];
+      permissions.forEach((permission, index) => {
+        if (!permission || typeof permission !== 'object') {
+          errors.push({ field: `workflow.permissions[${index}]`, message: 'Permission must be an object' });
+          return;
+        }
+
+        const permObj = permission as Record<string, unknown>;
+
+        // tool (required, string)
+        if (!('tool' in permObj) || permObj.tool === undefined || permObj.tool === null) {
+          errors.push({ field: `workflow.permissions[${index}].tool`, message: 'Permission tool is required' });
+        } else if (typeof permObj.tool !== 'string') {
+          errors.push({ field: `workflow.permissions[${index}].tool`, message: 'Permission tool must be a string' });
+        }
+
+        // scope (required, string)
+        if (!('scope' in permObj) || permObj.scope === undefined || permObj.scope === null) {
+          errors.push({ field: `workflow.permissions[${index}].scope`, message: 'Permission scope is required' });
+        } else if (typeof permObj.scope !== 'string') {
+          errors.push({ field: `workflow.permissions[${index}].scope`, message: 'Permission scope must be a string' });
+        }
+
+        // reason (required, string)
+        if (!('reason' in permObj) || permObj.reason === undefined || permObj.reason === null) {
+          errors.push({ field: `workflow.permissions[${index}].reason`, message: 'Permission reason is required' });
+        } else if (typeof permObj.reason !== 'string') {
+          errors.push({ field: `workflow.permissions[${index}].reason`, message: 'Permission reason must be a string' });
+        }
+      });
+    }
+  }
+
   // If there are errors, return invalid result
   if (errors.length > 0) {
     return { valid: false, errors };
@@ -321,6 +373,16 @@ export function validateWorkflow(input: unknown): WorkflowValidationResult {
     }
 
     workflow.triggers = triggers;
+  }
+
+  // Build permissions array if present
+  if (workflowObj.permissions !== undefined) {
+    const permissionsArr = workflowObj.permissions as Record<string, unknown>[];
+    workflow.permissions = permissionsArr.map((perm): WorkflowPermissionPreset => ({
+      tool: perm.tool as string,
+      scope: perm.scope as string,
+      reason: perm.reason as string,
+    }));
   }
 
   return { valid: true, workflow };

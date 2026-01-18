@@ -5,5 +5,9 @@
     "rootDir": "src"
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "tests", "src/preload.ts", "src/editor-bundle.ts"]
+  "exclude": ["node_modules", "dist", "tests", "src/preload.ts", "src/editor-bundle.ts"],
+  "references": [
+    { "path": "../core" },
+    { "path": "../shared" }
+  ]
 }
