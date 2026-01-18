@@ -16,8 +16,8 @@ sprint_2:
   velocity_target: 20
 
   epics:
-    - id: epic-2
-      title: "Sprint Operations Polish"
+    - id: MSSCI-11142
+      title: "MSSCI-11142: Sprint Operations Polish"
       description: "Housekeeping improvements from Sprint 1 retrospective."
       points: 16
       priority: P1
@@ -71,8 +71,8 @@ sprint_2:
           status: done
           completed: 2025-12-28
 
-    - id: epic-4
-      title: "Configuration & Permissions Framework"
+    - id: MSSCI-11147
+      title: "MSSCI-11147: Configuration & Permissions Framework"
       points: 10
       priority: P1
       repos: pennyfarthing
@@ -120,8 +120,8 @@ sprint_2:
           completed: 2025-12-29
           pr: https://github.com/1898andCo/pennyfarthing/pull/21
 
-    - id: epic-5
-      title: "Theme Management CLI"
+    - id: MSSCI-11233
+      title: "MSSCI-11233: Theme Management CLI"
       points: 8
       priority: P2
       repos: pennyfarthing
@@ -167,8 +167,8 @@ sprint_3:
   velocity_target: 20
 
   epics:
-    - id: epic-6
-      title: "Interactive Theme Wizard"
+    - id: MSSCI-11196
+      title: "MSSCI-11196: Interactive Theme Wizard"
       points: 13
       priority: P2
       repos: pennyfarthing
@@ -207,8 +207,8 @@ sprint_3:
           completed: 2025-12-30
           pr: https://github.com/1898andCo/pennyfarthing/pull/25
 
-    - id: epic-3
-      title: "Context Management & Circuit Breaker"
+    - id: MSSCI-11203
+      title: "MSSCI-11203: Context Management & Circuit Breaker"
       points: 3
       priority: P1
       repos: pennyfarthing
@@ -234,8 +234,8 @@ sprint_4:
   velocity_target: 20
 
   epics:
-    - id: epic-11
-      title: "OCEAN Personality Visualization with Chernoff Faces"
+    - id: MSSCI-11269
+      title: "MSSCI-11269: OCEAN Personality Visualization with Chernoff Faces"
       points: 34
       priority: P2
       repos: pennyfarthing
@@ -344,8 +344,8 @@ sprint_5:
   velocity_target: 20
 
   epics:
-    - id: epic-12
-      title: "Scientific Benchmarking Migration (Phase 1)"
+    - id: MSSCI-11285
+      title: "MSSCI-11285: Scientific Benchmarking Migration (Phase 1)"
       points: 18
       priority: P1
       repos: pennyfarthing
@@ -961,8 +961,8 @@ sprint_10_completed:
   note: "Sprint 10 completed epics moved from current-sprint.yaml"
 
   epics:
-    - id: epic-32
-      title: BMAD Artifact Compatibility
+    - id: MSSCI-11626
+      title: "MSSCI-11626: BMAD Artifact Compatibility"
       description: |
         Enable Pennyfarthing to work with BMAD-generated planning artifacts
         and produce outputs BMAD tooling can consume. Focus on artifact
@@ -1103,8 +1103,8 @@ sprint_10_completed:
             - Handles status mapping (ready-for-dev, in-progress, review, done)
             - Conflict detection when both changed
 
-    - id: epic-34
-      title: Cyclist Developer Experience
+    - id: MSSCI-11618
+      title: "MSSCI-11618: Cyclist Developer Experience"
       description: |
         First-time Cyclist users can set up and run the app without tribal
         knowledge or debugging mysterious failures. Focus on documentation,
