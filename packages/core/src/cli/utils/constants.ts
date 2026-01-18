@@ -30,7 +30,8 @@ export const DIRECTORY_SYMLINKS = [
   { name: 'agents', link: '.pennyfarthing/agents' },
   { name: 'guides', link: '.pennyfarthing/guides' },
   { name: 'personas', link: '.pennyfarthing/personas' },
-  { name: 'scripts', link: '.pennyfarthing/scripts' }
+  { name: 'scripts', link: '.pennyfarthing/scripts' },
+  { name: 'workflows', link: '.pennyfarthing/workflows' }
 ] as const;
 
 /**
@@ -53,7 +54,8 @@ export const MANAGED_PATHS = [
   '.pennyfarthing/agents',
   '.pennyfarthing/guides',
   '.pennyfarthing/personas',
-  '.pennyfarthing/scripts'
+  '.pennyfarthing/scripts',
+  '.pennyfarthing/workflows'
 ] as const;
 
 export type SymlinkDefinition = {

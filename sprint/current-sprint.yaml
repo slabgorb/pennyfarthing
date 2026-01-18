@@ -181,11 +181,13 @@ epics:
         title: Collapsible Bash tool output in message stream
         points: 2
         priority: P1
-        status: in_progress
+        status: done
         assigned_to: Keith Avery
         repos: cyclist
         workflow: tdd
         started: 2026-01-18T07:30:00Z
+        completed: 2026-01-18
+        pr: 321
         acceptance_criteria:
           - Bash tool results render in collapsible section
           - Section shows command and exit code in header
@@ -359,9 +361,11 @@ epics:
         title: 'Bug: workflows directory not included in installation symlinks'
         points: 1
         priority: P2
-        status: backlog
+        status: done
+        assigned_to: Keith Avery
         repos: pennyfarthing
         workflow: trivial
+        completed: 2026-01-18
         acceptance_criteria:
           - DIRECTORY_SYMLINKS includes workflows entry
           - MANAGED_PATHS includes .pennyfarthing/workflows
@@ -443,9 +447,13 @@ epics:
         title: Centralize handoff logic and honor auto/manual mode
         points: 3
         priority: P1
-        status: backlog
+        status: done
+        assigned_to: Keith Avery
         repos: pennyfarthing
         workflow: agent-docs
+        completed: 2026-01-18
+        pr: 319
+        notes: Implemented as part of MSSCI-11840
         acceptance_criteria:
           - Agents honor handoff_mode setting from cyclist.yaml
           - Auto mode + OK context invokes next agent automatically
