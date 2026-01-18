@@ -98,22 +98,7 @@ The CLI still expects `node_modules/pennyfarthing/pennyfarthing-dist/` structure
 
 ---
 
-## ✈️ NEVER GUESS JIRA IDs ✈️
-
-```
-    ___________________________
-   |                           |
-   |  NEVER GUESS JIRA IDs!!   |
-   |___________________________|
-          \
-           \
-            \_____________
-             |  ______   |
-             | |      |  |====
-             | |______|  |
-             |___________|
-                /    \
-```
+## NEVER GUESS JIRA IDs
 
 **Problem:** Created stories with placeholder IDs like `31-18` or `35-17` instead of real Jira keys
 **Cause:** Guessed at ID format instead of creating in Jira first
