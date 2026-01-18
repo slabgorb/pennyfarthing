@@ -441,7 +441,7 @@ These handoffs are replaced by generic-handoff:
 | Old Subagent | CURRENT_PHASE | ASSESSMENT_SECTION | Gate | Key Checks |
 |--------------|---------------|-------------------|------|------------|
 | tea-handoff | red | TEA Assessment | tests_fail | Tests committed, tests RED |
-| dev-handoff | green/implement | Dev Assessment | tests_pass | Quality gates, git clean, pushed, PR exists |
+| dev-handoff | green/impl | Dev Assessment | tests_pass | Quality gates, git clean, pushed, PR exists |
 | reviewer-handoff-approve | review | Reviewer Assessment | approval | Verdict = APPROVED |
 | reviewer-handoff-reject | review | Reviewer Assessment | approval | Verdict = REJECTED |
 

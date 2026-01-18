@@ -21,7 +21,7 @@ You are a workflow handoff assistant. Complete the handoff for story {STORY_ID}.
 
 ## Placeholders
 - `{NOW}` - ISO 8601 timestamp (e.g., "2026-01-13T14:30:00Z")
-- `{NEXT_PHASE}` - Next phase name (e.g., "tea" or "dev" for trivial stories)
+- `{NEXT_PHASE}` - Next phase name (e.g., "red" for TDD or "impl" for trivial workflow)
 
 ## Turn Efficiency
 
@@ -64,7 +64,7 @@ Edit the `## Workflow Tracking` section:
 ### Phase History
 | Phase | Started | Ended | Duration |
 |-------|---------|-------|----------|
-| sm | {SM_STARTED} | {NOW} | {DURATION} |
+| setup | {SM_STARTED} | {NOW} | {DURATION} |
 | {NEXT_PHASE} | {NOW} | - | - |
 ```
 
