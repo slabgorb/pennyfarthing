@@ -131,10 +131,53 @@ export interface BashEnrichment {
   error?: string;
 }
 
+// =============================================================================
+// Task Enrichment Types (Story 36-4 / MSSCI-11733)
+// =============================================================================
+
+/**
+ * Context from OTEL event needed for Task enrichment
+ * This data is not in the correlation map but comes from the event
+ */
+export interface TaskEventContext {
+  /** Task result/output when complete */
+  result?: string;
+  /** Error message if task failed */
+  error?: string;
+  /** Whether task succeeded */
+  success: boolean;
+  /** Execution duration in milliseconds */
+  durationMs?: number;
+}
+
+/**
+ * Enrichment result for Task/subagent spans
+ */
+export interface TaskEnrichment {
+  /** Span ID that was enriched */
+  spanId: string;
+  /** Tool name */
+  toolName: 'Task';
+  /** Subagent type (general-purpose, Bash, Explore, Plan) */
+  subagentType: string;
+  /** Summary of prompt (first 200 chars) */
+  promptSummary: string;
+  /** Summary of result (first 500 chars) */
+  resultSummary: string;
+  /** Whether task ran in background */
+  background: boolean;
+  /** Execution duration in milliseconds */
+  durationMs: number;
+  /** Whether enrichment was skipped (already enriched) */
+  skipped?: boolean;
+  /** Error message if enrichment failed */
+  error?: string;
+}
+
 /**
  * Union type for all enrichment results
  */
-export type EnrichmentResult = FileEnrichment | EditEnrichment | WriteEnrichment | BashEnrichment;
+export type EnrichmentResult = FileEnrichment | EditEnrichment | WriteEnrichment | BashEnrichment | TaskEnrichment;
 
 // =============================================================================
 // Language Detection
@@ -317,6 +360,32 @@ export async function getGitStatus(
   } catch {
     return null;
   }
+}
+
+// =============================================================================
+// Text Summarization (Story 36-4 / MSSCI-11733)
+// =============================================================================
+
+/**
+ * Summarize text by truncating to max length with ellipsis
+ * Also collapses newlines to spaces for single-line summaries
+ * @param text - The text to summarize
+ * @param maxLength - Maximum length before truncation
+ * @returns Summarized text, possibly truncated with '...'
+ */
+export function summarizeText(text: string, maxLength: number): string {
+  if (!text) return '';
+
+  // Collapse newlines to spaces for single-line summary
+  const collapsed = text.replace(/\n/g, ' ');
+
+  // If under limit, return as-is
+  if (collapsed.length <= maxLength) {
+    return collapsed;
+  }
+
+  // Truncate and add ellipsis
+  return collapsed.slice(0, maxLength) + '...';
 }
 
 // =============================================================================
@@ -921,6 +990,98 @@ export function enrichBashSpan(
     exitCode,
     outputSummary,
     workingDirectory,
+    durationMs: eventContext.durationMs || 0,
+  };
+}
+
+// =============================================================================
+// Task/Subagent Enrichment (Story 36-4 / MSSCI-11733)
+// =============================================================================
+
+/** Max length for prompt summary */
+const PROMPT_SUMMARY_LENGTH = 200;
+/** Max length for result summary */
+const RESULT_SUMMARY_LENGTH = 500;
+
+/**
+ * Enrich a Task span with subagent execution context
+ * @param spanId - The span ID to enrich
+ * @param eventContext - Additional context from OTEL event
+ * @returns Enrichment result with subagent context
+ */
+export function enrichTaskSpan(
+  spanId: string,
+  eventContext: TaskEventContext
+): TaskEnrichment {
+  const correlation = getCorrelation(spanId);
+
+  // Handle non-existent span
+  if (!correlation) {
+    return {
+      spanId,
+      toolName: 'Task',
+      subagentType: 'unknown',
+      promptSummary: '',
+      resultSummary: '',
+      background: false,
+      durationMs: 0,
+      error: 'Span not found',
+    };
+  }
+
+  // Skip if already enriched
+  if (correlation.enriched) {
+    return {
+      spanId,
+      toolName: 'Task',
+      subagentType: 'unknown',
+      promptSummary: '',
+      resultSummary: '',
+      background: false,
+      durationMs: 0,
+      skipped: true,
+    };
+  }
+
+  // Check for message context
+  if (!correlation.messageContext) {
+    return {
+      spanId,
+      toolName: 'Task',
+      subagentType: 'unknown',
+      promptSummary: '',
+      resultSummary: '',
+      background: false,
+      durationMs: 0,
+      error: 'No message context available',
+    };
+  }
+
+  const input = correlation.messageContext.input || {};
+
+  // Extract subagent_type from input (AC1)
+  const subagentType = (input.subagent_type as string) || 'unknown';
+
+  // Extract and summarize prompt (AC2)
+  const prompt = (input.prompt as string) || '';
+  const promptSummary = summarizeText(prompt, PROMPT_SUMMARY_LENGTH);
+
+  // Summarize result from event context (AC3)
+  const resultSummary = summarizeText(eventContext.result || '', RESULT_SUMMARY_LENGTH);
+
+  // Extract background flag (AC4)
+  const background = Boolean(input.run_in_background);
+
+  // Mark as enriched
+  markSpanEnriched(spanId);
+
+  return {
+    spanId,
+    toolName: 'Task',
+    subagentType,
+    promptSummary,
+    resultSummary,
+    background,
     durationMs: eventContext.durationMs || 0,
   };
 }
