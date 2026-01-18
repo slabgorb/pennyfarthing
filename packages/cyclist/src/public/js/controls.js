@@ -204,6 +204,38 @@ function initControls() {
   console.log('[Controls] Compact keyboard shortcut registered (Cmd/Ctrl+Shift+K)');
 }
 
+// =============================================================================
+// Context Clear Indicators (MSSCI-11840)
+// =============================================================================
+
+/**
+ * Show an indicator that session is being cleared
+ * Called when CONTEXT_CLEAR marker is detected
+ */
+export function showClearingIndicator() {
+  console.log('[Controls] Showing clearing indicator');
+  // Could show a toast or overlay
+  // For now, just log - actual UI can be enhanced later
+}
+
+/**
+ * Show an indicator that agent is being reloaded
+ * Called after session clear completes
+ */
+export function showReloadingIndicator() {
+  console.log('[Controls] Showing reloading indicator');
+  // Could show a loading spinner or status message
+}
+
+/**
+ * Hide clearing/reloading indicators
+ * Called after reload completes
+ */
+export function hideClearingIndicator() {
+  console.log('[Controls] Hiding clearing indicator');
+  // Clear any UI indicators
+}
+
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initControls);

@@ -68,6 +68,7 @@ import { openSettingsWindow, setMainWindowRef, setBrowserWindowRef } from './set
 import {
   IPC_DATA_CHANNELS,
   IPC_CLAUDE_CHANNELS,
+  IPC_AGENT_CHANNELS,
   IPC_DIFF_CHANNELS,
   IPC_SETTINGS_CHANNELS,
   IPC_AUDIT_LOG_CHANNELS,
@@ -75,6 +76,7 @@ import {
   IPC_COMMAND_CHANNELS,
   IPC_BACKGROUND_TASK_CHANNELS,
   IPC_SKILL_CHANNELS,
+  IPC_CONTEXT_CLEAR_CHANNELS,
 } from './ipc-channels.js';
 
 // Re-export project directory functions for external consumers
@@ -117,6 +119,7 @@ export {
   IPC_COMMAND_CHANNELS,
   IPC_BACKGROUND_TASK_CHANNELS,
   IPC_SKILL_CHANNELS,
+  IPC_CONTEXT_CLEAR_CHANNELS,
 } from './ipc-channels.js';
 
 // Re-export menu builders from dedicated module
@@ -1143,6 +1146,37 @@ export function setupClaudeIPCHandlers(ipcMain: {
     broadcastToRenderer(IPC_DATA_CHANNELS.CONTEXT_UPDATE, { percent: 0, contextWindow: 0 }); // (23-2)
     broadcastToRenderer(IPC_DATA_CHANNELS.PERSONA_UPDATE, null); // Clear persona (23-2)
     console.log('Session cleared: tokens, todos, tool events, tool stats, context, usage, persona');
+    return true;
+  });
+
+  // Clear and reload handler - clears session and loads new agent (MSSCI-11840)
+  ipcMain.handle(IPC_CONTEXT_CLEAR_CHANNELS.CLEAR_AND_LOAD, async (_event: unknown, ...args: unknown[]) => {
+    const agent = args[0] as string;
+    const service = getClaudeService();
+    console.log(`[main] Context clear and reload: ${agent}`);
+
+    // Clear session state
+    service.clearSession();
+    clearSessionId();
+    resetTokenStats();
+    resetTodos();
+    resetEventStore();
+    resetToolStats();
+    resetSkills();
+    resetContext();
+    resetUsageStats();
+
+    // Broadcast zeroed stats to update UI immediately
+    broadcastToRenderer(IPC_DATA_CHANNELS.TOKEN_STATS_UPDATE, getTokenStats());
+    broadcastToRenderer(IPC_DATA_CHANNELS.TOOL_STATS_UPDATE, createEmptyStats());
+    broadcastToRenderer(IPC_DATA_CHANNELS.TOOL_EVENTS_UPDATE, []);
+    broadcastToRenderer(IPC_DATA_CHANNELS.CONTEXT_UPDATE, { percent: 0, contextWindow: 0 });
+    broadcastToRenderer(IPC_DATA_CHANNELS.PERSONA_UPDATE, null);
+
+    // Launch the new agent via the agent launch event
+    broadcastToRenderer(IPC_AGENT_CHANNELS.AGENT_LAUNCH, agent);
+
+    console.log(`Session cleared and agent launch triggered: ${agent}`);
     return true;
   });
 

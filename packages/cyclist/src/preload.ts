@@ -58,6 +58,12 @@ export interface ElectronClaudeAPI {
   clear: () => Promise<void>;
 
   /**
+   * Clear the session and reload with a new agent (MSSCI-11840)
+   * Used for auto-mode context clearing when context is high
+   */
+  clearAndReload: (agent: string) => Promise<void>;
+
+  /**
    * Set the permission mode for subsequent queries
    */
   setMode: (mode: 'default' | 'plan' | 'acceptEdits' | 'dangerouslySkipPermissions') => Promise<void>;
@@ -532,12 +538,13 @@ function createElectronAPI(): ElectronAPI {
       usageStats: createDataAPI(ipcRenderer, 'usageStats:get', 'usageStats:update'),
       // 35-2: Project Info API (directory and user email)
       projectInfo: createDataAPI(ipcRenderer, 'projectInfo:get', 'projectInfo:update'),
-      // Claude SDK API (E7-3, 28-1: images support)
+      // Claude SDK API (E7-3, 28-1: images support, MSSCI-11840: clearAndReload)
       claude: {
         send: (prompt: string, images?: Array<{ dataUrl: string; mimeType: string; filename: string }>) =>
           ipcRenderer.invoke('claude:send', prompt, images || []),
         abort: () => ipcRenderer.invoke('claude:abort'),
         clear: () => ipcRenderer.invoke('claude:clear'),
+        clearAndReload: (agent: string) => ipcRenderer.invoke('context:clearAndLoad', agent),
         setMode: (mode: 'default' | 'plan' | 'acceptEdits' | 'dangerouslySkipPermissions') => ipcRenderer.invoke('claude:setMode', mode),
         getMode: () => ipcRenderer.invoke('claude:getMode') as Promise<'default' | 'plan' | 'acceptEdits' | 'dangerouslySkipPermissions'>,
         onMessage: (callback: (message: unknown) => void) => {
@@ -709,11 +716,12 @@ function createElectronAPI(): ElectronAPI {
       usageStats: createDataAPI(null, 'usageStats:get', 'usageStats:update'),
       // 35-2: Project Info API - test stub
       projectInfo: createDataAPI(null, 'projectInfo:get', 'projectInfo:update'),
-      // Claude SDK API (E7-3) - test stub
+      // Claude SDK API (E7-3, MSSCI-11840) - test stub
       claude: {
         send: (_prompt: string) => Promise.resolve(),
         abort: () => Promise.resolve(),
         clear: () => Promise.resolve(),
+        clearAndReload: (_agent: string) => Promise.resolve(),
         setMode: (_mode: 'default' | 'plan' | 'acceptEdits' | 'dangerouslySkipPermissions') => Promise.resolve(),
         getMode: () => Promise.resolve('default' as const),
         onMessage: (_callback: (message: unknown) => void) => {

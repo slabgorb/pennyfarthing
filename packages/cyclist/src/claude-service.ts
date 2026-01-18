@@ -322,6 +322,20 @@ export interface ModeState {
  * Uses child_process with stdin pipe for NDJSON streaming programmatic control
  * of Claude Code without requiring an Anthropic API key.
  */
+/**
+ * Format an agent command for sending to Claude
+ * Normalizes agent names to ensure they have a leading slash
+ *
+ * @param agent - Agent name or command (e.g., 'dev' or '/dev')
+ * @returns Formatted agent command (e.g., '/dev')
+ */
+export function formatAgentCommand(agent: string): string {
+  if (agent.startsWith('/')) {
+    return agent;
+  }
+  return `/${agent}`;
+}
+
 export class ClaudeService extends EventEmitter {
   private sessionId: string | null = null;
   private pendingMode: PermissionMode = 'acceptEdits';
@@ -670,6 +684,50 @@ export class ClaudeService extends EventEmitter {
    */
   clearSession(): void {
     this.resetSession();
+  }
+
+  /**
+   * Alias for resetSession - used by preload API
+   */
+  clear(): void {
+    this.resetSession();
+  }
+
+  /**
+   * Clear the session and reload with a new agent (MSSCI-11840)
+   *
+   * Used for auto-mode context clearing when context is high.
+   * Clears the current session and sends the agent command to start fresh.
+   *
+   * @param agent - Agent command to load after clear (e.g., '/dev', '/tea')
+   * @param timeout - Timeout in ms for initial message (default 4000ms)
+   */
+  async clearAndReload(agent: string, timeout = 4000): Promise<void> {
+    console.log(`[ClaudeService] Clearing session and reloading with agent: ${agent}`);
+
+    // Clear the current session
+    this.clear();
+
+    // Format the agent command
+    const command = formatAgentCommand(agent);
+
+    // Send the agent command to start the new session with timeout
+    // We don't await the full response - just initiate the send
+    // The caller will handle the message stream
+    const sendPromise = (async () => {
+      for await (const _msg of this.sendMessage(command)) {
+        // We just need to initiate the message send
+        // The actual handling will be done by the UI layer
+        break;
+      }
+    })();
+
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error(`clearAndReload timed out after ${timeout}ms`)), timeout);
+    });
+
+    // Race between first message and timeout
+    await Promise.race([sendPromise, timeoutPromise]);
   }
 
   /**

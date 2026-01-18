@@ -717,3 +717,19 @@ export function getBillingRolloverDay(email: string | null): BillingDay {
 
   return DEFAULT_BILLING_ROLLOVER_DAY;
 }
+
+// =============================================================================
+// Auto Mode Detection (MSSCI-11840)
+// =============================================================================
+
+/**
+ * Check if auto mode is enabled in the provided settings
+ *
+ * Used to determine whether to emit CONTEXT_CLEAR markers on handoff.
+ *
+ * @param settings - Settings object with workflow section
+ * @returns true if handoff_mode is 'auto'
+ */
+export function isAutoModeEnabled(settings: Pick<CyclistSettings, 'workflow'>): boolean {
+  return settings.workflow?.handoff_mode === 'auto';
+}
