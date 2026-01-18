@@ -6,11 +6,11 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 113
-  completed_points: 67
-  remaining_points: 46
+  completed_points: 68
+  remaining_points: 45
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
-    - Epic 31: Customizable Workflow Engine (4 pts remaining)
+    - Epic 31: Customizable Workflow Engine (3 pts remaining)
     - Epic 33: Runtime Permission Management (5 pts remaining)
     - Epic 35: Cyclist UI/UX Improvements (8 pts remaining)
     - Epic 36: OTEL Tool Call Enrichment (4 pts remaining)
@@ -52,9 +52,11 @@ epics:
         title: "Bug: Trivial workflow phase naming inconsistency"
         points: 1
         priority: P2
-        status: in_progress
+        status: done
         assigned_to: Keith Avery
         started: 2026-01-18T12:30:00Z
+        completed: 2026-01-18T12:40:00Z
+        pr: 325
         repos: pennyfarthing
         acceptance_criteria:
           - Trivial workflow phase names match agent names
