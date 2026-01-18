@@ -133,3 +133,12 @@ export const IPC_SKILL_CHANNELS = {
   SKILL_GET: 'skill:get',
   SKILL_CLEAR: 'skill:clear',
 } as const;
+
+/**
+ * IPC channel names for context clear operations (MSSCI-11840)
+ * Used for auto-mode context clear and agent reload
+ */
+export const IPC_CONTEXT_CLEAR_CHANNELS = {
+  CLEAR: 'context:clear',
+  CLEAR_AND_LOAD: 'context:clearAndLoad',
+} as const;
