@@ -4,7 +4,8 @@ import { watch } from 'fs';
 import { getCurrentStats, getStatsClients } from './api/stats.js';
 import { getPersonaClients, broadcastPersona } from './api/persona.js';
 import { getTokenStatsClients } from './api/token-stats.js';
-import { getTokenStats } from './otlp-receiver.js';
+import { getBackgroundTaskClients } from './api/background-tasks.js';
+import { getTokenStats, getBackgroundTasks } from './otlp-receiver.js';
 import { detectPennyfarthingProject, getCurrentPersona, watchAgentChanges } from './pennyfarthing.js';
 import { ClaudeService, type PermissionMode } from './claude-service.js';
 import { publicDir } from './paths.js';
@@ -47,6 +48,9 @@ export function setupWebSocketServers(
   // WebSocket server for livereload at /ws/livereload (dev mode)
   const livereloadWss = new WebSocketServer({ noServer: true });
 
+  // WebSocket server for background tasks at /ws/background-tasks (Story 35-16)
+  const backgroundTasksWss = new WebSocketServer({ noServer: true });
+
   // Handle upgrade requests
   server.on('upgrade', (request, socket, head) => {
     const pathname = new URL(request.url || '', `http://${request.headers.host}`).pathname;
@@ -70,6 +74,10 @@ export function setupWebSocketServers(
     } else if (pathname === '/ws/livereload') {
       livereloadWss.handleUpgrade(request, socket, head, (ws) => {
         livereloadWss.emit('connection', ws, request);
+      });
+    } else if (pathname === '/ws/background-tasks') {
+      backgroundTasksWss.handleUpgrade(request, socket, head, (ws) => {
+        backgroundTasksWss.emit('connection', ws, request);
       });
     } else {
       // Reject connections to other paths
@@ -145,6 +153,29 @@ export function setupWebSocketServers(
     // Handle errors gracefully
     ws.on('error', () => {
       tokenStatsClients.delete(ws);
+    });
+  });
+
+  // Handle background tasks WebSocket connections (Story 35-16)
+  const backgroundTaskClients = getBackgroundTaskClients();
+  backgroundTasksWss.on('connection', (ws: WebSocket) => {
+    // Add client to broadcast set
+    backgroundTaskClients.add(ws);
+
+    // Send initial tasks on connection
+    const tasks = getBackgroundTasks();
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'init', tasks }));
+    }
+
+    // Remove client on disconnect
+    ws.on('close', () => {
+      backgroundTaskClients.delete(ws);
+    });
+
+    // Handle errors gracefully
+    ws.on('error', () => {
+      backgroundTaskClients.delete(ws);
     });
   });
 

@@ -227,12 +227,31 @@ Cyclist automatically finds the next available port (1899, 1900, etc.). Check co
 
 ## Architecture
 
+### Wheelhub
+
+**Wheelhub** is Cyclist's internal coordination server—the central hub where all communication converges. Like a bicycle wheel's hub, it remains stable while handling:
+
+- **API endpoints** - REST routes for stats, personas, git, stories, settings, etc.
+- **WebSocket servers** - Real-time communication with the terminal and UI
+- **OTLP receiver** - Telemetry ingestion from Claude Code
+- **Acceptance handling** - Processing user acceptance signals from the UI
+- **Cache invalidation** - Coordinating state refreshes across components
+
+Wheelhub is implemented in `server.ts` and its supporting modules.
+
+### Directory Structure
+
 ```
 src/
 ├── main.ts          # Electron main process
 ├── preload.ts       # Electron IPC bridge
-├── server.ts        # Express server
+├── server.ts        # Wheelhub - central coordination server
+├── websocket.ts     # WebSocket servers (terminal, stats)
 ├── api/             # REST API routes
+│   ├── index.ts     # Router exports
+│   ├── stats.ts     # Stats endpoints
+│   ├── persona.ts   # Persona/theme endpoints
+│   └── ...          # Other API modules
 └── public/          # Frontend assets
     ├── index.html
     ├── styles.css

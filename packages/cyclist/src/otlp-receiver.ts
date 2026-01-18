@@ -148,6 +148,9 @@ let backgroundTasks: BackgroundTask[] = [];
 // Callback for task completion notifications
 let onBackgroundTaskComplete: ((task: BackgroundTask) => void) | null = null;
 
+// Callback for task start notifications (Story 35-16)
+let onBackgroundTaskStart: ((task: BackgroundTask) => void) | null = null;
+
 /**
  * Register callback for background task completion
  */
@@ -156,10 +159,22 @@ export function setBackgroundTaskCallback(callback: (task: BackgroundTask) => vo
 }
 
 /**
+ * Register callback for background task start (Story 35-16)
+ */
+export function setBackgroundTaskStartCallback(callback: (task: BackgroundTask) => void): void {
+  onBackgroundTaskStart = callback;
+}
+
+/**
  * Track a new background task
  */
 export function trackBackgroundTask(task: Omit<BackgroundTask, 'status'>): void {
-  backgroundTasks.push({ ...task, status: 'pending' });
+  const newTask: BackgroundTask = { ...task, status: 'pending' };
+  backgroundTasks.push(newTask);
+  // Trigger start callback (Story 35-16)
+  if (onBackgroundTaskStart) {
+    onBackgroundTaskStart(newTask);
+  }
 }
 
 /**

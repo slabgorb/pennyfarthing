@@ -384,24 +384,35 @@ export interface ElectronToolsAPI {
 }
 
 /**
- * Background Task API interface (31-15)
- * Provides IPC channels for background task completion notifications
+ * Background Task type (35-16)
+ */
+interface BackgroundTaskData {
+  taskId: string;
+  description: string;
+  subagentType: string;
+  startedAt: number;
+  status: 'pending' | 'completed';
+  success?: boolean;
+  output?: string;
+  error?: string;
+}
+
+/**
+ * Background Task API interface (31-15, 35-16)
+ * Provides IPC channels for background task notifications
  */
 export interface ElectronBackgroundTaskAPI {
   /**
-   * Subscribe to background task completion events
+   * Subscribe to background task start events (35-16)
+   * Triggered when a Task with run_in_background: true is registered
+   */
+  onStarted: (callback: (event: unknown, task: BackgroundTaskData) => void) => void;
+
+  /**
+   * Subscribe to background task completion events (31-15)
    * Triggered when a Task with run_in_background: true completes
    */
-  onCompleted: (callback: (event: unknown, task: {
-    taskId: string;
-    description: string;
-    subagentType: string;
-    startedAt: number;
-    status: 'pending' | 'completed';
-    success?: boolean;
-    output?: string;
-    error?: string;
-  }) => void) => void;
+  onCompleted: (callback: (event: unknown, task: BackgroundTaskData) => void) => void;
 }
 
 /**
@@ -669,18 +680,12 @@ function createElectronAPI(): ElectronAPI {
           ipcRenderer.on('tools:toggleToolPanel', () => callback());
         },
       },
-      // Background Task API (31-15)
+      // Background Task API (31-15, 35-16)
       backgroundTask: {
-        onCompleted: (callback: (event: unknown, task: {
-          taskId: string;
-          description: string;
-          subagentType: string;
-          startedAt: number;
-          status: 'pending' | 'completed';
-          success?: boolean;
-          output?: string;
-          error?: string;
-        }) => void) => {
+        onStarted: (callback: (event: unknown, task: BackgroundTaskData) => void) => {
+          ipcRenderer.on('backgroundTask:started', callback);
+        },
+        onCompleted: (callback: (event: unknown, task: BackgroundTaskData) => void) => {
           ipcRenderer.on('backgroundTask:completed', callback);
         },
       },
@@ -852,18 +857,12 @@ function createElectronAPI(): ElectronAPI {
           // No-op in test environment
         },
       },
-      // Background Task API (31-15) - test stub
+      // Background Task API (31-15, 35-16) - test stub
       backgroundTask: {
-        onCompleted: (_callback: (event: unknown, task: {
-          taskId: string;
-          description: string;
-          subagentType: string;
-          startedAt: number;
-          status: 'pending' | 'completed';
-          success?: boolean;
-          output?: string;
-          error?: string;
-        }) => void) => {
+        onStarted: (_callback: (event: unknown, task: BackgroundTaskData) => void) => {
+          // No-op in test environment
+        },
+        onCompleted: (_callback: (event: unknown, task: BackgroundTaskData) => void) => {
           // No-op in test environment
         },
       },

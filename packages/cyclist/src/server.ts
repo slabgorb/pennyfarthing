@@ -24,6 +24,8 @@ import {
   createEvaluationRouter,
   createSettingsRouter,
   initTokenStatsBroadcast,
+  createBackgroundTasksRouter,
+  initBackgroundTaskBroadcast,
 } from './api/index.js';
 
 // Settings initialization (35-6: required for font settings persistence)
@@ -84,10 +86,15 @@ app.use('/api/telemetry', createTelemetryRouter());
 app.use('/api/evaluation', createEvaluationRouter());
 // 35-1: Settings API for contextual settings
 app.use('/api/settings', createSettingsRouter());
+// 35-16: Background tasks API
+app.use('/api/background-tasks', createBackgroundTasksRouter());
 app.use('/v1', createOTLPRouter());
 
 // Initialize token stats WebSocket broadcast callback
 initTokenStatsBroadcast();
+
+// 35-16: Initialize background task broadcast callback
+initBackgroundTaskBroadcast();
 
 // Pennyfarthing-only features (conditionally loaded)
 // Benchmark API requires @pennyfarthing/core which is only available in the monorepo
