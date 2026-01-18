@@ -29,7 +29,6 @@ summary:
 epics:
   - id: MSSCI-11548
     title: "MSSCI-11548: Configuration & Theme Switcher Panels"
-    jira: MSSCI-11548
     description: |
       Full settings hub in Cyclist covering Pennyfarthing, Claude Code,
       and Cyclist preferences. Rich theme browser with search, OCEAN
@@ -42,17 +41,15 @@ epics:
     status: done
     completed: 2026-01-13
     stories:
-      - id: 24-1
+      - id: MSSCI-11549
         title: Settings Panel Infrastructure
-        jira: MSSCI-11549
         points: 3
         priority: P1
         status: done
         completed: 2026-01-12
         pr: "#191"
-      - id: 24-2
+      - id: MSSCI-11550
         title: Pennyfarthing Settings Section
-        jira: MSSCI-11550
         points: 2
         priority: P1
         status: done
@@ -95,9 +92,8 @@ epics:
           - Original file view shows pre-edit content
           - Changed file view shows current content
           - Keyboard navigation works (arrows or j/k)
-      - id: 24-4
+      - id: MSSCI-11552
         title: Fix diff panel state management and Combined view indicator
-        jira: MSSCI-11552
         description: |
           UX bugs and regressions in the diff panel from 24-3:
 
@@ -131,9 +127,8 @@ epics:
           - File list clears when git status shows no dirty files
           - File list clears when Clear button is clicked
           - No stale file entries persist after state changes
-      - id: 24-4b
+      - id: MSSCI-11552
         title: Fix settings window ESM require error
-        jira: MSSCI-11552
         description: |
           Settings window fails to open with "require is not defined" error.
           Line 103 in settings-window.ts uses CommonJS require() which doesn't
@@ -148,9 +143,8 @@ epics:
           - Settings window opens without error
           - Cmd+, keyboard shortcut works
           - Settings can be viewed and saved
-      - id: 24-5
+      - id: MSSCI-11553
         title: Theme Browser with Search
-        jira: MSSCI-11553
         description: |
           Replace the simple theme dropdown in settings with a rich theme browser.
           Users can search themes by name, filter by category (TV, Film, Literature,
@@ -180,9 +174,8 @@ epics:
           - Apply button saves selection and closes browser
           - Browser integrates with existing settings panel
           - Keyboard navigation works (arrow keys, Enter to select)
-      - id: 24-6
+      - id: MSSCI-11554
         title: Theme Preview Panel
-        jira: MSSCI-11554
         description: |
           Add a preview panel to the theme browser that shows detailed information
           about the currently hovered/selected theme without leaving the browser.
@@ -209,9 +202,8 @@ epics:
           - Character quotes visible in preview
           - Theme category and tier prominently displayed
           - Preview updates instantly on selection change
-      - id: 24-7
+      - id: MSSCI-11555
         title: Theme Favorites
-        jira: MSSCI-11555
         description: |
           Allow users to mark themes as favorites for quick access. Favorites
           appear at the top of the theme browser and persist across sessions.
@@ -236,9 +228,8 @@ epics:
           - Favorites section appears at top of browser when favorites exist
           - Favorites persist across app restarts
           - Favorites stored in settings YAML
-      - id: 24-8
+      - id: MSSCI-11556
         title: OCEAN Profile Visualization
-        jira: MSSCI-11556
         description: |
           When "Show OCEAN Bars" is enabled in settings, display personality
           profile bars for the active agent in the sidebar. OCEAN = Openness,
@@ -293,7 +284,6 @@ epics:
 completed_epics:
   - id: MSSCI-11582
     title: "MSSCI-11582: Developer Workflow Documentation"
-    jira: MSSCI-11582
     points: 24
     completed_points: 24
     priority: P3
@@ -304,54 +294,43 @@ completed_epics:
     pr: "#199"
     notes: All 10 stories completed in single PR.
     stories:
-      - id: 30-1
+      - id: MSSCI-11583
         title: Multi-account Claude Code setup guide
-        jira: MSSCI-11583
         points: 2
         status: done
-      - id: 30-2
+      - id: MSSCI-11584
         title: Quick commit commands (/chore, /ux, /doc)
-        jira: MSSCI-11584
         points: 3
         status: done
-      - id: 30-3
+      - id: MSSCI-11585
         title: Shell productivity toolkit
-        jira: MSSCI-11585
         points: 2
         status: done
-      - id: 30-4
+      - id: MSSCI-11586
         title: Troubleshooting guide
-        jira: MSSCI-11586
         points: 3
         status: done
-      - id: 30-5
+      - id: MSSCI-11587
         title: Custom agent creation guide
-        jira: MSSCI-11587
         points: 3
         status: done
-      - id: 30-6
+      - id: MSSCI-11588
         title: CI/CD integration patterns
-        jira: MSSCI-11588
         points: 2
         status: done
-      - id: 30-7
+      - id: MSSCI-11589
         title: Team workflow guide
-        jira: MSSCI-11589
         points: 2
         status: done
-      - id: 30-8
+      - id: MSSCI-11590
         title: Cyclist terminal guide
-        jira: MSSCI-11590
         points: 3
         status: done
-      - id: 30-9
-        title: Jira integration setup
-        jira: MSSCI-11591
+      - id: MSSCI-11591
         points: 2
         status: done
-      - id: 30-10
+      - id: MSSCI-11592
         title: Debugging Claude Code sessions
-        jira: MSSCI-11592
         points: 2
         status: done
   - id: epic-28
@@ -368,44 +347,38 @@ completed_epics:
     status: done
     completed: 2026-01-12
     stories:
-      - id: 28-1
+      - id: MSSCI-11542
         title: Clipboard image paste
-        jira: MSSCI-11542
         points: 3
         status: done
         completed: 2026-01-12
         pr: "#185"
-      - id: 28-2
+      - id: MSSCI-11547
         title: Clipboard file paste
-        jira: MSSCI-11547
         points: 2
         status: done
         completed: 2026-01-12
         delivered_in: 28-1
-      - id: 28-3
+      - id: MSSCI-11543
         title: Image preview before send
-        jira: MSSCI-11543
         points: 2
         status: done
         completed: 2026-01-12
         delivered_in: 28-1
-      - id: 28-4
+      - id: MSSCI-11544
         title: Base64 encoding for Claude API
-        jira: MSSCI-11544
         points: 3
         status: done
         completed: 2026-01-12
         delivered_in: 28-1
-      - id: 28-5
+      - id: MSSCI-11545
         title: Image size validation & resize
-        jira: MSSCI-11545
         points: 2
         status: done
         completed: 2026-01-12
         pr: "#186"
-      - id: 28-6
+      - id: MSSCI-11546
         title: Multiple image support
-        jira: MSSCI-11546
         points: 2
         status: done
         completed: 2026-01-12
@@ -417,71 +390,59 @@ completed_epics:
     status: done
     completed: 2026-01-11
     stories:
-      - id: 8-1
+      - id: MSSCI-11509
         title: Git hook for PR merge detection
-        jira: MSSCI-11509
         points: 3
         status: done
-      - id: 8-2
+      - id: MSSCI-11510
         title: Startup drift detection
-        jira: MSSCI-11510
         points: 3
         status: done
-      - id: 8-3
+      - id: MSSCI-11511
         title: Session boundary breadcrumbs
-        jira: MSSCI-11511
         points: 2
         status: done
   - id: MSSCI-11513
     title: "MSSCI-11513: Skill Discovery & Documentation Hub"
-    jira: MSSCI-11513
     points: 13
     completed_points: 13
     status: done
     completed: 2026-01-11
     stories:
-      - id: 9-1
+      - id: MSSCI-11515
         title: Create skill registry schema
-        jira: MSSCI-11515
         points: 2
         status: done
-      - id: 9-2
+      - id: MSSCI-11516
         title: Build skill search utility
-        jira: MSSCI-11516
         points: 3
         status: done
-      - id: 9-3
+      - id: MSSCI-11518
         title: Add skill suggestions to agents
-        jira: MSSCI-11518
         points: 3
         status: done
-      - id: 9-4
+      - id: MSSCI-11521
         title: Create skill documentation generator
-        jira: MSSCI-11521
         points: 3
         status: done
-      - id: 9-5
+      - id: MSSCI-11523
         title: Add skill usage analytics
-        jira: MSSCI-11523
         points: 2
         status: done
         pr: "#168"
   - id: MSSCI-11526
     title: "MSSCI-11526: Cyclist Web Mode Improvements"
-    jira: MSSCI-11526
     points: 5
     completed_points: 5
     status: done
     completed: 2026-01-11
     stories:
-      - id: 20-1
+      - id: MSSCI-11527
         title: Auto-configure OTEL for web mode
-        jira: MSSCI-11527
         points: 3
         status: done
-      - id: 20-2
+      - id: MSSCI-11528
         title: Web mode feature parity audit
-        jira: MSSCI-11528
         points: 2
         status: done
   - id: epic-22
@@ -544,39 +505,33 @@ completed_epics:
         status: wontfix
   - id: MSSCI-11530
     title: "MSSCI-11530: Smart Question Detection & Quick Actions"
-    jira: MSSCI-11530
     points: 15
     completed_points: 12
     status: done
     completed: 2026-01-11
     stories:
-      - id: 25-1
+      - id: MSSCI-11531
         title: Audit Current Quick Actions Detection
-        jira: MSSCI-11531
         points: 2
         status: done
         pr: "#169"
-      - id: 25-2
+      - id: MSSCI-11532
         title: Fix Enumeration False Positives
-        jira: MSSCI-11532
         points: 3
         status: done
         pr: "#171"
-      - id: 25-3
+      - id: MSSCI-11533
         title: Detect Handoff & Action Prompts
-        jira: MSSCI-11533
         points: 3
         status: done
         pr: "#173"
-      - id: 25-4
+      - id: MSSCI-11534
         title: Universal 'Yes, Proceed' Button
-        jira: MSSCI-11534
         points: 2
         status: done
         pr: "#175"
-      - id: 25-5
+      - id: MSSCI-11538
         title: Structured Output Markers (Claude-side)
-        jira: MSSCI-11538
         points: 3
         status: done
         pr: "#177"
