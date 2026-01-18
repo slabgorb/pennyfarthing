@@ -10,7 +10,8 @@
 import { Router } from 'express';
 import fs from 'fs';
 import path from 'path';
-import { getCurrentSettings, saveUserSettings, type CyclistSettings } from '../settings.js';
+import { parse } from 'yaml';
+import { getCurrentSettings, saveUserSettings, addToRecentThemes, type CyclistSettings } from '../settings.js';
 import { getProjectDirectory } from '../paths.js';
 
 // =============================================================================
@@ -102,12 +103,22 @@ export function createSettingsRouter(): Router {
         ));
       }
 
-      // Validate theme is non-empty if provided
-      if (partialSettings.pennyfarthing?.theme !== undefined && partialSettings.pennyfarthing.theme === '') {
-        return res.status(400).json(createErrorResponse(
-          'VALIDATION_ERROR',
-          'Theme must be a non-empty string'
-        ));
+      // Validate theme is non-empty and matches slug pattern (35-8: prevent YAML injection)
+      if (partialSettings.pennyfarthing?.theme !== undefined) {
+        const theme = partialSettings.pennyfarthing.theme;
+        if (theme === '') {
+          return res.status(400).json(createErrorResponse(
+            'VALIDATION_ERROR',
+            'Theme must be a non-empty string'
+          ));
+        }
+        // Theme ID must be alphanumeric with hyphens only (slug format)
+        if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(theme)) {
+          return res.status(400).json(createErrorResponse(
+            'VALIDATION_ERROR',
+            'Theme must be a valid slug (lowercase alphanumeric with hyphens)'
+          ));
+        }
       }
 
       // Validate handoff_mode enum
@@ -121,21 +132,35 @@ export function createSettingsRouter(): Router {
         }
       }
 
+      // Story 35-8: Track theme changes in recentThemes
+      let settingsToSave = partialSettings;
+      if (partialSettings.pennyfarthing?.theme) {
+        const current = getCurrentSettings();
+        const updated = addToRecentThemes(current, partialSettings.pennyfarthing.theme);
+        settingsToSave = {
+          ...partialSettings,
+          pennyfarthing: {
+            ...partialSettings.pennyfarthing,
+            recentThemes: updated.pennyfarthing.recentThemes,
+          },
+        };
+      }
+
       // Save settings using the settings module
-      const success = saveUserSettings(partialSettings);
+      const success = saveUserSettings(settingsToSave);
 
       if (!success) {
         return res.status(500).json(createErrorResponse('FILE_ERROR', 'Failed to save settings to file'));
       }
 
-      // Dual-write theme to persona-config.local.yaml for Pennyfarthing compatibility (24-2)
+      // Dual-write theme to .pennyfarthing/config.local.yaml for Pennyfarthing compatibility (24-2)
       const projectDir = getProjectDirectory();
       if (partialSettings.pennyfarthing?.theme && projectDir) {
         try {
-          const personaConfigPath = path.join(projectDir, '.claude', 'persona-config.local.yaml');
-          fs.writeFileSync(personaConfigPath, `theme: "${partialSettings.pennyfarthing.theme}"\n`, 'utf-8');
+          const configPath = path.join(projectDir, '.pennyfarthing', 'config.local.yaml');
+          fs.writeFileSync(configPath, `theme: "${partialSettings.pennyfarthing.theme}"\n`, 'utf-8');
         } catch (err) {
-          console.error('[Settings API] Failed to write persona-config.local.yaml:', err);
+          console.error('[Settings API] Failed to write .pennyfarthing/config.local.yaml:', err);
         }
       }
 
@@ -148,6 +173,7 @@ export function createSettingsRouter(): Router {
 
   /**
    * GET /themes - Get available themes metadata
+   * Story 35-8: Returns id, name, and tier for each theme
    */
   router.get('/themes', async (_req, res) => {
     try {
@@ -162,10 +188,25 @@ export function createSettingsRouter(): Router {
       }
 
       const files = fs.readdirSync(themesDir).filter(f => f.endsWith('.yaml')).sort();
-      const themes = files.map(f => ({
-        id: f.replace('.yaml', ''),
-        name: f.replace('.yaml', '').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
-      }));
+      const themes = files.map(f => {
+        const id = f.replace('.yaml', '');
+        const name = id.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+        // Try to read tier from theme file
+        let tier = 'U'; // Default to Unbenchmarked
+        try {
+          const themePath = path.join(themesDir, f);
+          const content = fs.readFileSync(themePath, 'utf-8');
+          const parsed = parse(content) as { tier?: string };
+          if (parsed.tier && typeof parsed.tier === 'string') {
+            tier = parsed.tier.toUpperCase();
+          }
+        } catch {
+          // Ignore parse errors, use default tier
+        }
+
+        return { id, name, tier };
+      });
 
       res.json(themes);
     } catch (error) {

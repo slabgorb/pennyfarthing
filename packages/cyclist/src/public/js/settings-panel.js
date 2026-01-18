@@ -80,6 +80,11 @@ export function init() {
   // Initialize the settings form component
   if (SettingsForm) {
     SettingsForm.init();
+    // If panel starts expanded, load themes immediately
+    if (!settingsPanel.isCollapsed()) {
+      SettingsForm.load();
+      settingsPanel._settingsLoaded = true;
+    }
   }
 
   console.log('[SettingsPanel] Initialized');

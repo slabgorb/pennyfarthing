@@ -132,31 +132,14 @@ export function detectPennyfarthingProject(projectDir: string): boolean {
 }
 
 /**
- * Loads theme configuration from config files
- * Checks multiple locations in priority order:
- * 1. .pennyfarthing/config.local.yaml (new preferred location)
- * 2. .claude/persona-config.local.yaml (legacy local)
- * 3. .claude/persona-config.yaml (legacy default)
+ * Loads theme configuration from .pennyfarthing/config.local.yaml
  * @param projectDir - The project directory
  * @returns Theme config or null if not found/invalid
  */
 export function loadThemeConfig(projectDir: string): ThemeConfig | null {
-  const possiblePaths = [
-    join(projectDir, '.pennyfarthing', 'config.local.yaml'),  // New preferred location
-    join(projectDir, '.claude', 'persona-config.local.yaml'), // Legacy local
-    join(projectDir, '.claude', 'persona-config.yaml'),       // Legacy default
-  ];
+  const configPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
 
-  // Find first existing config file
-  let configPath: string | null = null;
-  for (const path of possiblePaths) {
-    if (existsSync(path)) {
-      configPath = path;
-      break;
-    }
-  }
-
-  if (!configPath) {
+  if (!existsSync(configPath)) {
     return null;
   }
 
