@@ -251,3 +251,78 @@ jira issue list --project MSSCI -q "labels = pennyfarthing"
 ```
 
 **Why it works:** Maintains audit trail of what was delivered while avoiding duplicate work.
+
+---
+
+### Auto-Creating Jira Epics During Setup
+
+**Context:** Starting with PR #315 (MSSCI-11841), SM setup automatically creates Jira epics when a local epic lacks a `jira` field.
+
+**Solution:** Use `jira-epic-creation.ts` module to detect and auto-create missing epics before story claim.
+
+**Implementation:**
+```typescript
+// packages/core/src/jira/jira-epic-creation.ts provides:
+// - createEpicInJira() - Create epic via Jira CLI with secure arg passing
+// - ensureEpicHasJiraKey() - Check existing or create new
+// - updateSprintYamlWithJiraKey() - Atomic YAML updates
+// - extractEpicNumberFromJiraKey() - Parse Jira key format
+// - checkEpicJiraRequired() - Detect missing jira field
+```
+
+**Workflow:**
+1. Extract epic number from story ID (e.g., "36-2" → "36")
+2. Check if epic has `jira` field in sprint YAML
+3. If missing or null, auto-create epic in Jira
+4. Update sprint YAML with new Jira key
+5. Continue with story claim
+
+**Why it works:**
+- Eliminates manual epic creation step
+- Ensures all stories can link to parent epic
+- Keeps sprint YAML and Jira in sync automatically
+- Prevents workflow blocking due to missing Jira setup
+
+**Integration with generic-sm-setup:**
+The epic check happens at Step 1 (before story claim) in `generic-sm-setup.md` MODE=setup flow. This ensures the epic exists in Jira before attempting to claim and link the story.
+
+---
+
+### Bidirectional Sprint/Story Sync with Jira
+
+**Context:** PR #322 (MSSCI-11842) added bidirectional sync between sprint YAML and Jira.
+
+**Solution:** Use `jira-bidirectional-sync.mjs` to sync status, points, and stories both directions.
+
+**Capabilities:**
+- Status sync: YAML ↔ Jira (backlog/in_progress/done ↔ To Do/In Progress/Done)
+- Story points: Update Jira with values from sprint YAML
+- New story detection: Find stories in one system missing from the other
+- Dry-run mode: Preview changes before applying
+
+**Usage:**
+```bash
+# Dry run - show what would change
+./.pennyfarthing/scripts/run.sh jira-bidirectional-sync.mjs --dry-run
+
+# Apply status changes
+./.pennyfarthing/scripts/run.sh jira-bidirectional-sync.mjs --sync-status
+
+# Apply point updates
+./.pennyfarthing/scripts/run.sh jira-bidirectional-sync.mjs --sync-points
+
+# Full sync
+./.pennyfarthing/scripts/run.sh jira-bidirectional-sync.mjs --sync-status --sync-points
+```
+
+**When to use:**
+- After bulk story completion (sprint close)
+- When Jira and YAML have diverged
+- Before sprint retrospective to ensure accurate metrics
+- When importing external Jira changes back to YAML
+
+**Why it works:**
+- Bidirectional ensures neither system is canonical (both can update)
+- Dry-run prevents accidental mass updates
+- Status mapping handles workflow differences
+- Point sync enables accurate velocity tracking in Jira

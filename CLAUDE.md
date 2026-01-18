@@ -121,3 +121,26 @@ pennyfarthing uninstall      # Remove from project
 ## Persona System
 
 Agents use themed personas for character and style. See `.claude/skills/theme/skill.md` for theme management.
+
+## Jira Integration
+
+Pennyfarthing integrates with Jira for sprint and story tracking. Key capabilities:
+
+### Epic Auto-Creation (PR #315)
+- SM setup automatically creates Jira epics when a local epic lacks a `jira` field
+- Epic creation uses `packages/core/src/jira/jira-epic-creation.ts`
+- Updates sprint YAML atomically with new Jira key
+- Enables seamless story workflow without manual Jira setup
+
+### Bidirectional Sync (PR #322)
+- `jira-bidirectional-sync.mjs` syncs status, points, and stories between sprint YAML and Jira
+- Dry-run mode shows changes before applying
+- Supports both YAML→Jira and Jira→YAML updates
+- Handles new stories, status transitions, and story point updates
+
+### Sprint Integration (PR #316, #317)
+- Sprint YAML references Jira sprint ID for membership queries
+- Status checks query Jira sprint for velocity metrics
+- Scripts detect stories in Jira but missing from YAML
+
+See `pennyfarthing-dist/skills/jira/skill.md` for detailed CLI commands and workflows.

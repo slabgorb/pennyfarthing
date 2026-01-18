@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 108
-  completed_points: 53
-  remaining_points: 55
+  completed_points: 62
+  remaining_points: 46
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - Epic 31: Customizable Workflow Engine (4 pts remaining)
@@ -244,7 +244,7 @@ epics:
     type: epic
     title: "Epic: Technical Debt & Bug Fixes"
     points: 32
-    completed_points: 19
+    completed_points: 22
     priority: P2
     status: in_progress
     stories:
@@ -351,9 +351,10 @@ epics:
         title: "Bug: cyclist-doctor reports false failures for workspace deps"
         points: 1
         priority: P2
-        status: backlog
+        status: done
         repos: cyclist
         workflow: trivial
+        completed: 2026-01-18
         acceptance_criteria:
           - Doctor correctly identifies workspace symlinks
           - No false failures after successful pnpm install
@@ -378,7 +379,7 @@ epics:
     type: epic
     title: "Epic: Agent File Modernization"
     points: 30
-    completed_points: 19
+    completed_points: 24
     priority: P2
     status: in_progress
     stories:
@@ -462,9 +463,10 @@ epics:
         title: "Bug: Workflow indicator missing finish step"
         points: 2
         priority: P2
-        status: backlog
+        status: done
         repos: cyclist
         workflow: trivial
+        completed: 2026-01-18
         acceptance_criteria:
           - Workflow indicator shows all phases including finish
           - TDD workflow shows 5 steps: SM → TEA → Dev → Rev → SM
@@ -490,7 +492,7 @@ epics:
     type: epic
     title: "Epic: Jira-Pennyfarthing Sync Improvements"
     points: 17
-    completed_points: 6
+    completed_points: 8
     priority: P1
     status: in_progress
     stories:
@@ -573,9 +575,10 @@ epics:
         title: Document Jira auto-creation for SM setup flow
         points: 2
         priority: P2
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: trivial
+        completed: 2026-01-18
         acceptance_criteria:
           - generic-sm-setup.md documents epic jira check step
           - jira skill references new epic creation capability
