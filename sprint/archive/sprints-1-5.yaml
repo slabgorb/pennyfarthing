@@ -1,0 +1,162 @@
+# Pennyfarthing Sprints 1-5 Archive (Pre-Jira Era)
+# Consolidated from individual sprint files
+# Total: 139 points, 63 stories
+
+sprints:
+  # ===========================================================================
+  # SPRINT 1 - Agentic Best Practices (Dec 22-23, 2025)
+  # ===========================================================================
+  - number: 1
+    goal: Agentic best practices implementation
+    dates: 2025-12-22 to 2025-12-23
+    points: 21
+    status: complete
+    epics:
+      - id: epic-1
+        title: Agentic Best Practices Implementation
+        jira: MSSCI-11116
+        points: 21
+        stories:
+          - { id: "1-1", title: "Expand agent command files with workflow context", points: 5 }
+          - { id: "1-2", title: "Complete strategic agent behavior guide", points: 3 }
+          - { id: "1-3", title: "Add resilience utilities (retry, checkpointing)", points: 5 }
+          - { id: "1-4a", title: "Split workflow-status-check.md subagent", points: 2 }
+          - { id: "1-4b", title: "Split testing-runner.md subagent", points: 2 }
+          - { id: "1-4c", title: "Add structured logging utility", points: 2 }
+          - { id: "1-4d", title: "Add session file locking", points: 2 }
+          - { id: "1-5", title: "Add epic tech context guardrail", points: 2 }
+    lessons:
+      - TDD flow (SM→TEA→Dev→Reviewer) works well
+      - Breaking large stories into sub-stories improves focus
+      - Haiku delegation preserves Opus context
+
+  # ===========================================================================
+  # SPRINT 2 - Sprint Operations Polish (Dec 24 - Jan 7)
+  # ===========================================================================
+  - number: 2
+    goal: Developer experience with automated workflows
+    dates: 2025-12-24 to 2026-01-07
+    points: 37
+    status: complete
+    epics:
+      - id: epic-2
+        title: Sprint Operations Polish
+        jira: MSSCI-11142
+        points: 16
+        stories:
+          - { id: "2-1", title: "Automate Jira sync in SM finish workflow", points: 3, pr: 9 }
+          - { id: "2-2", title: "Create sprint metrics script", points: 2 }
+          - { id: "2-3", title: "Add --auto-pr flag to finish-story flow", points: 2, pr: 14 }
+          - { id: "2-4", title: "Prune stale sidecar entries", points: 1, pr: 11 }
+          - { id: "2-5", title: "Migrate subagents to YAML frontmatter", points: 3 }
+          - { id: "2-6", title: "Create sidecar templates for dist", points: 2, pr: 16 }
+          - { id: "2-7", title: "Add user-customizable output styles", points: 3, pr: 17 }
+
+      - id: epic-4
+        title: Configuration & Permissions Framework
+        jira: MSSCI-11147
+        points: 13
+        stories:
+          - { id: "4-1", title: "Document permissions in settings.local.json", points: 2, pr: 10 }
+          - { id: "4-2", title: "Add context_budget configuration", points: 2, pr: 20 }
+          - { id: "4-3", title: "Create hooks configuration section", points: 2, pr: 22 }
+          - { id: "4-4", title: "Add agent-specific permission scopes", points: 2, pr: 23 }
+          - { id: "4-5", title: "Fix statusline.sh installation path bug", points: 2, pr: 17 }
+          - { id: "4-6", title: "Isolate scripts from project /scripts", points: 3, pr: 21 }
+
+      - id: epic-5
+        title: Theme Management CLI
+        jira: MSSCI-11233
+        points: 8
+        stories:
+          - { id: "5-1", title: "pennyfarthing theme list", points: 2, pr: 15 }
+          - { id: "5-2", title: "pennyfarthing theme set", points: 2 }
+          - { id: "5-3", title: "pennyfarthing theme create", points: 3 }
+          - { id: "5-4", title: "pennyfarthing theme show", points: 1 }
+
+  # ===========================================================================
+  # SPRINT 3 - Interactive Theme Wizard (Jan 8-21)
+  # ===========================================================================
+  - number: 3
+    goal: Interactive theme creation and context management
+    dates: 2026-01-08 to 2026-01-21
+    points: 24
+    status: complete
+    epics:
+      - id: epic-6
+        title: Interactive Theme Wizard
+        jira: MSSCI-11196
+        points: 13
+        stories:
+          - { id: "6-1", title: "/theme-maker command skeleton", points: 3 }
+          - { id: "6-2", title: "AI-Driven mode", points: 3 }
+          - { id: "6-3", title: "Guided mode", points: 3, pr: 24 }
+          - { id: "6-4", title: "Manual mode", points: 2, pr: 26 }
+          - { id: "6-5", title: "Version tracking and warnings", points: 2, pr: 25 }
+
+      - id: epic-3
+        title: Context Management & Circuit Breaker
+        jira: MSSCI-11203
+        points: 3
+        stories:
+          - { id: "3-2", title: "Automatic warning at 70% threshold", points: 3, pr: 20 }
+
+  # ===========================================================================
+  # SPRINT 4 - OCEAN Visualization (Jan 1)
+  # ===========================================================================
+  - number: 4
+    goal: OCEAN personality visualization with Chernoff faces
+    dates: 2026-01-01
+    points: 37
+    status: complete
+    velocity: 185%
+    epics:
+      - id: epic-11
+        title: OCEAN Personality Visualization with Chernoff Faces
+        jira: MSSCI-11269
+        points: 31
+        stories:
+          - { id: "11-1", title: "OCEAN → facial feature mapping spec", points: 2 }
+          - { id: "11-2", title: "OCEAN profiles for 10 anchor themes", points: 3, pr: 30 }
+          - { id: "11-3", title: "Chernoff face generator (OCEAN → SVG)", points: 5, pr: 31 }
+          - { id: "11-4", title: "Anchor theme faces + report", points: 2, pr: 32 }
+          - { id: "11-5", title: "OCEAN profiles for 53 remaining themes", points: 8, pr: 33 }
+          - { id: "11-6", title: "Full 630-face matrix with index", points: 3, pr: 35 }
+          - { id: "11-7", title: "Slice/report generator", points: 3, pr: 37 }
+          - { id: "11-8", title: "Benchmark integration", points: 5, pr: 39 }
+          - { id: "11-9", title: "/theme-maker OCEAN generation", points: 3, pr: 34 }
+          - { id: "11-10", title: "OCEAN spider chart generator", points: 3, pr: 36 }
+          - { id: "11-11", title: "Spider chart design tweaks", points: 1 }
+          - { id: "11-12", title: "Spider chart report generator", points: 2 }
+    bugs:
+      - { id: "BUG-1", title: "Statusline shows wrong agent with multiple sessions", points: 3 }
+    backlog_completed:
+      - { id: "BL-1", title: "Store theme preference in local settings", points: 3, pr: 40 }
+
+  # ===========================================================================
+  # SPRINT 5 - Scientific Benchmarking Migration (Jan 2)
+  # ===========================================================================
+  - number: 5
+    goal: Migrate benchmarking tools from Thunderdome
+    dates: 2026-01-02
+    points: 18
+    status: complete
+    epics:
+      - id: epic-12
+        title: Scientific Benchmarking Migration (Phase 1)
+        jira: MSSCI-11285
+        points: 18
+        stories:
+          - { id: "12-1", title: "Copy /solo command", points: 3, pr: 42 }
+          - { id: "12-2", title: "Copy /judge skill", points: 3, pr: 44 }
+          - { id: "12-3", title: "Copy /benchmark commands", points: 3, pr: 44 }
+          - { id: "12-4", title: "Copy scenarios library", points: 2, pr: 44 }
+          - { id: "12-5", title: "Copy /finalize-run skill", points: 2, pr: 44 }
+          - { id: "12-6", title: "Update benchmark-integration.ts", points: 2, pr: 44 }
+          - { id: "12-7", title: "Create benchmarking documentation", points: 2, pr: 44 }
+          - { id: "12-8", title: "End-to-end integration test", points: 1, pr: 44 }
+    deliverables:
+      - "/solo, /benchmark, /benchmark-control commands"
+      - "/judge, /finalize-run skills"
+      - "24 scenarios across 6 categories"
+      - "docs/BENCHMARKING.md"
