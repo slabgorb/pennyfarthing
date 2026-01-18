@@ -224,6 +224,18 @@ After archiving:
 2. Update sprint YAML (status: done, completed date)
 3. Remove the session file from `.session/`
 4. Commit the archive
+5. Merge PR and clean up branch:
+   ```bash
+   # If PR exists, squash merge and delete remote branch
+   gh pr merge {BRANCH} --squash --delete-branch 2>/dev/null || true
+
+   # Return to develop
+   git checkout develop
+   git pull origin develop
+
+   # Delete local feature branch
+   git branch -d {BRANCH} 2>/dev/null || true
+   ```
 
 ## Phase 1B: New Work Flow
 
