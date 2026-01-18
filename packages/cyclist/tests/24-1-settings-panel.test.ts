@@ -45,12 +45,14 @@ interface CyclistSettings {
   pennyfarthing: {
     theme: string;
     favorites: string[];
+    recentThemes: string[];
   };
 }
 
 // Default settings for reference
 // Updated in Story 31-13: handoff_mode replaces auto_handoff + handoff_confirm
 // Updated in Story 35-6: font_ui and font_mono added
+// Updated in Story 35-8: recentThemes added
 const DEFAULT_SETTINGS: CyclistSettings = {
   workflow: {
     handoff_mode: 'manual',
@@ -69,6 +71,7 @@ const DEFAULT_SETTINGS: CyclistSettings = {
   pennyfarthing: {
     theme: 'alice-in-wonderland',
     favorites: [],
+    recentThemes: [],
   },
 };
 
