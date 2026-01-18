@@ -6,11 +6,11 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 116
-  completed_points: 73
-  remaining_points: 43
+  completed_points: 75
+  remaining_points: 41
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
-    - Epic 31: Customizable Workflow Engine (5 pts remaining)
+    - Epic 31: Customizable Workflow Engine (4 pts remaining)
     - Epic 33: Runtime Permission Management (5 pts remaining)
     - Epic 35: Cyclist UI/UX Improvements (9 pts remaining)
     - Epic 36: OTEL Tool Call Enrichment (4 pts remaining)
@@ -30,7 +30,7 @@ epics:
     type: epic
     title: "Epic: Customizable Workflow Engine"
     points: 39
-    completed_points: 33
+    completed_points: 35
     priority: P1
     status: in_progress
     stories:
@@ -65,11 +65,13 @@ epics:
         title: "Respect handoff mode preference (manual/auto)"
         points: 2
         priority: P2
-        status: in_progress
+        status: done
         assigned_to: Keith Avery
         started: 2026-01-18T12:40:00Z
+        completed: 2026-01-18T13:25:00Z
         workflow: trivial
         repos: pennyfarthing
+        pr: 332
         description: |
           Agent docs currently mandate auto-invoke when context < 60%, ignoring
           user's handoff mode preference. Update agent files to check mode before
