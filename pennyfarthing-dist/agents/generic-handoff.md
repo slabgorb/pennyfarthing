@@ -330,13 +330,29 @@ fi
 |---------|------|--------|
 | OK (<60%) | auto | Invoke next agent directly |
 | OK (<60%) | manual | Report ready, user invokes next agent |
-| HIGH (>=60%) | auto | Report: "Context high. Start fresh with /{next_agent}" |
+| HIGH (>=60%) | auto | Emit CONTEXT_CLEAR marker (triggers auto-reload in Cyclist) |
 | HIGH (>=60%) | manual | Report: "Context high. Start fresh with /{next_agent}" |
 
 **Include in report:**
 - Context percentage and token count
 - Handoff mode setting
 - Whether direct invocation is recommended
+
+### CONTEXT_CLEAR Marker (MSSCI-11840)
+
+When context is HIGH (>=60%) and handoff_mode is "auto", emit both markers:
+
+```
+<!-- CYCLIST:HANDOFF:/{NEXT_AGENT_COMMAND} -->
+<!-- CYCLIST:CONTEXT_CLEAR:/{NEXT_AGENT_COMMAND} -->
+```
+
+The CONTEXT_CLEAR marker triggers Cyclist to automatically:
+1. Clear the current session
+2. Reload with the specified agent command
+
+**IMPORTANT:** The value after `CONTEXT_CLEAR:` MUST include the agent command (e.g., `/sm`, `/dev`).
+The marker format is `<!-- CYCLIST:CONTEXT_CLEAR:/agent -->` - both colons are required.
 
 ## Step 7: Report Result
 

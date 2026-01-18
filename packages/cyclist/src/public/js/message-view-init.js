@@ -14,10 +14,12 @@ import {
   renderQuickActions,
   clearQuickActions,
   handleQuickActionClick,
+  handleContextClearMarker,
   setQuickActionsVisible,
   setVerboseMode as setMessageViewVerboseMode
 } from './components/MessageView.js';
 import { renderBackgroundTaskNotification } from './components/message-view/message-renderers.js';
+import { enrichMessage } from './message-enrichment.js';
 import { updateActivity, clearActivity } from './activity.js';
 import { resetSubmitting, setProcessing, processNextInQueue, setOnQueueChange, clearMessageQueue, loadMessageQueue, getMessageQueue, removeFromQueue, injectMessage } from './editor.js';
 import { handleAbort } from './components/ToolActivityBar.js';
@@ -79,8 +81,12 @@ function initMessageView() {
     // Handle streaming messages from Claude SDK
     window.electronAPI.claude.onMessage((message) => {
       console.log('[MessageView] SDK message:', message.type);
-      addMessage(message);
-      updateActivity(message);
+
+      // MSSCI-11851: Enrich messages with tool metadata for specialized rendering
+      const enrichedMessage = enrichMessage(message);
+
+      addMessage(enrichedMessage);
+      updateActivity(enrichedMessage);
 
       // 22-7: Detect git commits and remove committed files from diff list
       handleGitCommitMessage(message);
@@ -106,7 +112,13 @@ function initMessageView() {
       if (lastAssistantMessage) {
         const quickActionResult = processMessageForQuickActions(lastAssistantMessage);
         if (quickActionResult) {
-          showQuickActions(quickActionResult);
+          // MSSCI-11840: Handle context_clear marker automatically
+          if (quickActionResult.type === 'context_clear') {
+            console.log('[MessageView] Auto-handling CONTEXT_CLEAR marker for:', quickActionResult.agent);
+            handleContextClearMarker(quickActionResult.agent);
+          } else {
+            showQuickActions(quickActionResult);
+          }
         }
         lastAssistantMessage = null; // Reset for next turn
       }

@@ -265,6 +265,16 @@ function processStructuredMarkers(markers, fullText = '') {
         source: 'structured_marker',
         confidence: 1.0,
       };
+
+    case 'context_clear':
+      // MSSCI-11840: Context clear marker triggers session clear and agent reload
+      // Value is the agent command to load after clear (e.g., '/sm')
+      return {
+        type: 'context_clear',
+        agent: primaryMarker.value,
+        source: 'structured_marker',
+        confidence: 1.0,
+      };
   }
 
   // Check if there's both a QUESTION:choice and CHOICES marker

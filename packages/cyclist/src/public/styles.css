@@ -1565,6 +1565,68 @@ html, body {
   border-left-color: var(--status-error);
 }
 
+/* MSSCI-11851: Bash tool result collapsible styling */
+.message-bash-result {
+  border-left-color: var(--status-working, #3182ce);
+}
+
+.message-bash-result .bash-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+
+.message-bash-result .bash-command {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.message-bash-result .bash-exit-code {
+  font-size: 0.75rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.message-bash-result .bash-exit-code.exit-success {
+  background: rgba(72, 187, 120, 0.2);
+  color: var(--status-ready, #48bb78);
+}
+
+.message-bash-result .bash-exit-code.exit-error {
+  background: rgba(229, 62, 62, 0.2);
+  color: var(--status-error, #e53e3e);
+}
+
+.message-bash-result .bash-output-content {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ANSI color classes for terminal output */
+.ansi-black { color: #1a1a1a; }
+.ansi-red { color: #e53e3e; }
+.ansi-green { color: #48bb78; }
+.ansi-yellow { color: #ecc94b; }
+.ansi-blue { color: #3182ce; }
+.ansi-magenta { color: #9f7aea; }
+.ansi-cyan { color: #38b2ac; }
+.ansi-white { color: #e2e8f0; }
+.ansi-bold { font-weight: 700; }
+.ansi-bright-black { color: #718096; }
+.ansi-bright-red { color: #fc8181; }
+.ansi-bright-green { color: #68d391; }
+.ansi-bright-yellow { color: #faf089; }
+.ansi-bright-blue { color: #63b3ed; }
+.ansi-bright-magenta { color: #b794f4; }
+.ansi-bright-cyan { color: #4fd1c5; }
+.ansi-bright-white { color: #f7fafc; }
+
 .message-error {
   border-left: 3px solid var(--status-error);
   color: var(--status-error);
