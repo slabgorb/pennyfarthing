@@ -34,7 +34,7 @@ epics:
     status: in_progress
     stories:
       # Done
-      - id: 31-15
+      - id: MSSCI-11845
         title: Background task completion notifications in Cyclist
         points: 3
         priority: P2
@@ -47,7 +47,7 @@ epics:
           - Notification shows task type and success/failure status
           - User can click notification to see full result
       # Backlog
-      - id: 31-17
+      - id: MSSCI-11846
         title: "Bug: Trivial workflow phase naming inconsistency"
         points: 1
         priority: P2
@@ -67,19 +67,18 @@ epics:
     status: in_progress
     stories:
       # Backlog
-      - id: 33-5
+      - id: MSSCI-11847
         title: Permission presets by workflow
         points: 2
         priority: P2
         status: backlog
         repos: pennyfarthing
-        jira: MSSCI-11710
         acceptance_criteria:
           - Workflow schema supports permissions field
           - Workflow start checks required permissions
           - Prompts for missing permissions
           - Cached grants skip prompts
-      - id: 33-7
+      - id: MSSCI-11848
         title: Wire approval gate into tool execution pipeline
         points: 3
         priority: P0
@@ -147,11 +146,11 @@ epics:
         points: 3
         status: done
         pr: 305
-      - id: 35-13
+      - id: MSSCI-11849
         title: Window state persistence
         points: 2
         status: done
-      - id: 35-14
+      - id: MSSCI-11850
         title: Settings architecture cleanup and consolidation
         points: 3
         status: done
@@ -175,7 +174,7 @@ epics:
           - Given I select a theme, When the picker closes, Then the persona display updates immediately
           - Given IPC is unavailable, When the picker loads, Then it falls back to HTTP gracefully
           - Given I change theme in quick-picker, When I open settings panel, Then settings reflects current theme
-      - id: 35-15
+      - id: MSSCI-11851
         title: Collapsible Bash tool output in message stream
         points: 2
         priority: P1
@@ -241,59 +240,59 @@ epics:
     status: in_progress
     stories:
       # Done (trimmed)
-      - id: 37-1
+      - id: MSSCI-11809
         title: Clean up stale TODO comments
         points: 1
         status: done
-      - id: 37-2
+      - id: MSSCI-11810
         title: Fix flaky timestamp test
         points: 1
         status: done
-      - id: 37-3
+      - id: MSSCI-11811
         title: Remove deprecated WebSocket terminal mode
         points: 2
         status: done
-      - id: 37-4
+      - id: MSSCI-11812
         title: Remove or fix skipped test suites
         points: 3
         status: done
-      - id: 37-5
+      - id: MSSCI-11813
         title: Implement agent-evaluation.ts file reading
         points: 2
         status: done
-      - id: 37-6
+      - id: MSSCI-11814
         title: Fix pattern-based question detection
         points: 3
         status: done
-      - id: 37-8
+      - id: MSSCI-11816
         title: Fix persona IPC handlers returning incomplete data
         points: 2
         status: done
         pr: 288
-      - id: 37-10
+      - id: MSSCI-11818
         title: Fix background task shell script arithmetic
         points: 1
         status: done
-      - id: 37-14
+      - id: MSSCI-11822
         title: "Bug: Handoff buttons show hardcoded theme characters"
         points: 2
         status: done
-      - id: 37-15
+      - id: MSSCI-11823
         title: "Bug: Workflow indicator shows hardcoded TDD phases"
         points: 2
         status: done
         pr: 286
-      - id: 37-16
+      - id: MSSCI-11824
         title: "Bug: Agent high-context circuit breaker not triggering"
         points: 3
         status: done
         pr: 291
-      - id: 37-17
+      - id: MSSCI-11825
         title: "Bug: pennyfarthing-dist missing commands and guides directories"
         points: 2
         status: done
       # Backlog
-      - id: 37-7
+      - id: MSSCI-11815
         title: Clean up copy mode migration code
         points: 2
         priority: P3
@@ -302,7 +301,7 @@ epics:
         acceptance_criteria:
           - Copy mode migration code removed from update.ts
           - Clean error if copy mode manifest found
-      - id: 37-9
+      - id: MSSCI-11817
         title: Add test coverage tooling
         points: 2
         priority: P2
@@ -312,7 +311,7 @@ epics:
           - "@vitest/coverage-v8 installed"
           - Coverage report generates successfully
           - CI runs coverage on PR
-      - id: 37-11
+      - id: MSSCI-11819
         title: Remove persona-config.local.yaml deprecation
         points: 1
         priority: P3
@@ -321,7 +320,7 @@ epics:
         acceptance_criteria:
           - Single source of truth for theme config
           - Old path not checked
-      - id: 37-12
+      - id: MSSCI-11820
         title: Audit and fix context.js script inclusion
         points: 2
         priority: P2
@@ -330,7 +329,7 @@ epics:
         acceptance_criteria:
           - Context progress feature fully implemented
           - Test unskipped and passing
-      - id: 37-13
+      - id: MSSCI-11821
         title: Fix 15-3 sidebar section styling tests
         points: 2
         priority: P2
@@ -339,7 +338,7 @@ epics:
         acceptance_criteria:
           - Persona section has character-quote element
           - All 15-3 tests unskipped and passing
-      - id: 37-18
+      - id: MSSCI-11826
         title: "Bug: cyclist-doctor reports false failures for workspace deps"
         points: 1
         priority: P2
@@ -349,7 +348,7 @@ epics:
         acceptance_criteria:
           - Doctor correctly identifies workspace symlinks
           - No false failures after successful pnpm install
-      - id: 37-19
+      - id: MSSCI-11827
         title: 'Bug: workflows directory not included in installation symlinks'
         points: 1
         priority: P2
@@ -372,45 +371,45 @@ epics:
     status: in_progress
     stories:
       # Done (trimmed)
-      - id: 38-1
+      - id: MSSCI-11828
         title: Fix stale references in agent files
         points: 1
         status: done
-      - id: 38-2
+      - id: MSSCI-11829
         title: Add status tags to agent files
         points: 1
         status: done
-      - id: 38-3
+      - id: MSSCI-11830
         title: Modernize PM agent for custom workflows
         points: 2
         status: done
         pr: 290
-      - id: 38-4
+      - id: MSSCI-11831
         title: Modernize Architect agent for custom workflows
         points: 2
         status: done
         pr: 290
-      - id: 38-5
+      - id: MSSCI-11832
         title: Modernize DevOps agent for custom workflows
         points: 3
         status: done
         pr: 290
-      - id: 38-8
+      - id: MSSCI-11835
         title: Modernize Orchestrator agent
         points: 2
         status: done
         pr: 290
-      - id: 38-9
+      - id: MSSCI-11836
         title: SM workflow routing from story tags
         points: 3
         status: done
-      - id: 38-12
+      - id: MSSCI-11839
         title: Consolidate duplicated instructions to shared-agent-behavior.md
         points: 2
         status: done
         pr: 289
       # Backlog
-      - id: 38-6
+      - id: MSSCI-11833
         title: Modernize Tech Writer agent for custom workflows
         points: 2
         priority: P3
@@ -421,7 +420,7 @@ epics:
           - Tech Writer has reasoning-mode section
           - Clear workflow for documentation stories
           - Integrates with /changelog skill
-      - id: 38-7
+      - id: MSSCI-11834
         title: Modernize UX Designer agent for custom workflows
         points: 2
         priority: P3
@@ -432,7 +431,7 @@ epics:
           - UX Designer has reasoning-mode section
           - Clear workflow for UI/UX stories
           - Handoff protocol to Dev defined
-      - id: 38-10
+      - id: MSSCI-11837
         title: Centralize handoff logic and honor auto/manual mode
         points: 3
         priority: P1
@@ -443,7 +442,7 @@ epics:
           - Agents honor handoff_mode setting from cyclist.yaml
           - Auto mode + OK context invokes next agent automatically
           - Handoff logic lives in generic-handoff, not duplicated
-      - id: 38-11
+      - id: MSSCI-11838
         title: "Bug: Workflow indicator missing finish step"
         points: 2
         priority: P2
@@ -453,7 +452,7 @@ epics:
         acceptance_criteria:
           - Workflow indicator shows all phases including finish
           - TDD workflow shows 5 steps: SM → TEA → Dev → Rev → SM
-      - id: 38-13
+      - id: MSSCI-11840
         title: Auto-mode context clear and agent reload on handoff
         points: 5
         priority: P1
@@ -475,7 +474,7 @@ epics:
     priority: P1
     status: in_progress
     stories:
-      - id: 47-1
+      - id: MSSCI-11841
         title: Auto-create Jira epic on local epic creation
         points: 3
         priority: P1
@@ -490,8 +489,7 @@ epics:
           - Automatically creates Jira epic with matching title/description
           - Updates sprint YAML with new Jira key
           - Epic number derived from Jira ticket number
-        jira: MSSCI-11797
-      - id: 47-2
+      - id: MSSCI-11798
         title: Sync sprint numbers with Jira sprint IDs
         points: 3
         priority: P1
@@ -501,7 +499,6 @@ epics:
         workflow: tdd
         completed: 2026-01-17
         pr: 316
-        jira: MSSCI-11798
         acceptance_criteria:
           - Sprint YAML references Jira sprint ID (e.g., 275)
           - Status check queries Jira sprint for membership
@@ -521,7 +518,7 @@ epics:
           - Compares against sprint YAML story list
           - Reports stories in Jira but not in YAML
           - Optionally imports missing stories to YAML
-      - id: 47-4
+      - id: MSSCI-11842
         title: Bidirectional sync script for sprint YAML and Jira
         points: 4
         priority: P2
@@ -533,7 +530,7 @@ epics:
           - Points updated in Jira match sprint YAML
           - New stories in either system detected
           - Dry-run mode shows changes before applying
-      - id: 47-5
+      - id: MSSCI-11843
         title: Retrofit historical epics with Jira links
         points: 2
         priority: P3
@@ -547,7 +544,7 @@ epics:
           - Script to batch-add jira keys to historical epics
           - Verify epic-to-Jira mapping is accurate
           - Document any epics that have no Jira equivalent
-      - id: 47-6
+      - id: MSSCI-11844
         title: Document Jira auto-creation for SM setup flow
         points: 2
         priority: P2
