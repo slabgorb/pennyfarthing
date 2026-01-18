@@ -255,47 +255,47 @@ function updateUsageMeter(usageStats) {
   // Update 5-hour usage (shows USED percentage to match Claude /config)
   const usage5hr = document.querySelector('#stats-strip .usage-5hr');
   if (usage5hr) {
-    const valueSpan = usage5hr.querySelector('.usage-value');
-    const used5hr = usageStats.fiveHourPercent || 0;
-    if (valueSpan) {
-      if (hasData) {
+    // Hide entirely when no data available
+    if (!hasData) {
+      usage5hr.style.display = 'none';
+    } else {
+      usage5hr.style.display = '';
+      const valueSpan = usage5hr.querySelector('.usage-value');
+      const used5hr = usageStats.fiveHourPercent || 0;
+      if (valueSpan) {
         valueSpan.textContent = `${Math.round(used5hr)}%`;
-      } else {
-        valueSpan.textContent = '—%';
       }
+      // Update tooltip with reset time
+      if (usageStats.fiveHourResetAt) {
+        usage5hr.title = `5-hour block: ${Math.round(used5hr)}% used, resets in ${formatResetTime(usageStats.fiveHourResetAt)}`;
+      }
+      // Update level class based on used percentage (higher = more danger)
+      const remaining5hr = Math.max(0, 100 - used5hr);
+      updateUsageLevel(usage5hr, remaining5hr);
     }
-    // Update tooltip with reset time
-    if (usageStats.fiveHourResetAt) {
-      usage5hr.title = `5-hour block: ${Math.round(used5hr)}% used, resets in ${formatResetTime(usageStats.fiveHourResetAt)}`;
-    } else if (!hasData) {
-      usage5hr.title = '5-hour block: Loading...';
-    }
-    // Update level class based on used percentage (higher = more danger)
-    const remaining5hr = hasData ? Math.max(0, 100 - used5hr) : 100;
-    updateUsageLevel(usage5hr, remaining5hr);
   }
 
   // Update weekly usage (shows USED percentage to match Claude /config)
   const usageWeekly = document.querySelector('#stats-strip .usage-weekly');
   if (usageWeekly) {
-    const valueSpan = usageWeekly.querySelector('.usage-value');
-    const usedWeekly = usageStats.weeklyPercent || 0;
-    if (valueSpan) {
-      if (hasData) {
+    // Hide entirely when no data available
+    if (!hasData) {
+      usageWeekly.style.display = 'none';
+    } else {
+      usageWeekly.style.display = '';
+      const valueSpan = usageWeekly.querySelector('.usage-value');
+      const usedWeekly = usageStats.weeklyPercent || 0;
+      if (valueSpan) {
         valueSpan.textContent = `${Math.round(usedWeekly)}%`;
-      } else {
-        valueSpan.textContent = '—%';
       }
+      // Update tooltip with reset time
+      if (usageStats.weeklyResetAt) {
+        usageWeekly.title = `Weekly: ${Math.round(usedWeekly)}% used, resets in ${formatResetTime(usageStats.weeklyResetAt)}`;
+      }
+      // Update level class based on used percentage (higher = more danger)
+      const remainingWeekly = Math.max(0, 100 - usedWeekly);
+      updateUsageLevel(usageWeekly, remainingWeekly);
     }
-    // Update tooltip with reset time
-    if (usageStats.weeklyResetAt) {
-      usageWeekly.title = `Weekly: ${Math.round(usedWeekly)}% used, resets in ${formatResetTime(usageStats.weeklyResetAt)}`;
-    } else if (!hasData) {
-      usageWeekly.title = 'Weekly: Loading...';
-    }
-    // Update level class based on used percentage (higher = more danger)
-    const remainingWeekly = hasData ? Math.max(0, 100 - usedWeekly) : 100;
-    updateUsageLevel(usageWeekly, remainingWeekly);
   }
 }
 
