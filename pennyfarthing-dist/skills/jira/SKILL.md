@@ -90,9 +90,19 @@ jira issue move MSSCI-10988 "Done" --project MSSCI
 
 ### Create Issues
 
+**IMPORTANT:** The `--no-input` flag alone may still hang waiting for stdin. Pipe empty input to prevent hangs:
+
 ```bash
+# Create a story (pipe to prevent stdin hang)
+echo "" | jira issue create \
+    -p MSSCI \
+    -t Story \
+    -s "Story Title" \
+    -l pennyfarthing \
+    --no-input
+
 # Create an epic
-jira issue create \
+echo "" | jira issue create \
     --project MSSCI \
     --type Epic \
     --summary "Epic Title" \
@@ -101,7 +111,7 @@ jira issue create \
     --no-input
 
 # Create a story under an epic (--parent links it to the epic)
-jira issue create \
+echo "" | jira issue create \
     -pMSSCI \
     -tStory \
     -s"Story Title" \
