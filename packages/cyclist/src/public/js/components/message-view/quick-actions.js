@@ -433,6 +433,11 @@ export function processMessageForQuickActions(message) {
     if (markerResult) return markerResult;
   }
 
+  // Check for context circuit breaker trigger
+  if (textContent.includes('CONTEXT CIRCUIT BREAKER TRIGGERED')) {
+    return { type: MARKER_TYPES.CONTEXT_CLEAR, agent: null };
+  }
+
   return null;
 }
 

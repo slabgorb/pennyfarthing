@@ -399,6 +399,15 @@ export function getCurrentTheme() {
 }
 
 /**
+ * Get the current agent role as a slash command
+ * @returns {string|null} Agent command like '/dev', '/sm', '/tea' or null
+ */
+export function getCurrentAgentCommand() {
+  const role = currentPersonaData?.role;
+  return role ? `/${role}` : null;
+}
+
+/**
  * Refresh persona display from server
  */
 export async function refreshPersona() {
