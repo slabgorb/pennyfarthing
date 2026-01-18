@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 116
-  completed_points: 71
-  remaining_points: 45
+  completed_points: 73
+  remaining_points: 43
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - Epic 31: Customizable Workflow Engine (5 pts remaining)
@@ -84,7 +84,7 @@ epics:
     type: epic
     title: "Epic: Runtime Permission Management"
     points: 15
-    completed_points: 10
+    completed_points: 12
     priority: P1
     status: in_progress
     stories:
@@ -93,13 +93,16 @@ epics:
         title: Permission presets by workflow
         points: 2
         priority: P2
-        status: backlog
+        status: done
         repos: pennyfarthing
         acceptance_criteria:
           - Workflow schema supports permissions field
           - Workflow start checks required permissions
           - Prompts for missing permissions
           - Cached grants skip prompts
+        completed: "2026-01-18"
+        pr: 330
+        assigned_to: Keith Avery
       - id: MSSCI-11848
         title: Wire approval gate into tool execution pipeline
         points: 3
