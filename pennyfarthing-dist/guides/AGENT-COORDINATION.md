@@ -82,7 +82,7 @@ Support Agents
 │   │   ├── agents/                     # Agent sidecars (patterns, gotchas, decisions)
 │   │   └── commands/                   # Custom project commands
 │   │
-│   ├── persona-config.local.yaml       # Theme selection (deprecated, use .pennyfarthing/)
+│   ├── persona-config.yaml             # Project default theme (shared with team)
 │   └── CLAUDE.md                       # Project instructions
 │
 ├── .session/                           # Active work sessions
