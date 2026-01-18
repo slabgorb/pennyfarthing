@@ -205,48 +205,25 @@ Helper checks PR status, auto-fixes lint issues, prepares Jira transition.
 - Jira ready for transition
 - Session content for archiving
 
-### Step 2: I Write Summary
+### Step 2: Archive Session File
 
-I read helper's bookkeeping report and write `sprint/context/story-{X-Y}-summary.md`:
+Copy the session file directly to the archive using the Jira key as the filename:
 
-```markdown
-## What Was Built
-[SM writes 2-3 sentences]
-
-## Key Technical Decisions
-[SM synthesizes from context file]
-
-## Implementation Patterns
-[SM identifies patterns for future reference]
-
-## Files Modified
-[From bookkeeping report]
-
-## Lessons for Future Work
-[SM captures insights]
+```bash
+cp .session/{STORY_ID}-session.md sprint/archive/{JIRA_KEY}-session.md
 ```
 
-### Step 3: Helper Executes Finish
+**Example:** `.session/47-5-session.md` → `sprint/archive/MSSCI-11800-session.md`
 
-```yaml
-Task tool:
-  subagent_type: "general-purpose"
-  model: "haiku"
-  prompt: |
-    Read and follow: .pennyfarthing/agents/generic-sm-finish.md
+No summary file is written. The session file itself serves as the historical record. Summaries and lessons learned are captured during sprint retrospectives instead.
 
-    PHASE: execute
-    STORY_ID: {value}
-    SUMMARY_CONTENT: {value}
-    ARCHIVE_PATH: {value}
-```
+### Step 3: Complete Finish Steps
 
-Helper does:
-- Archives session file to `sprint/archive/`
-- Writes summary to `sprint/context/`
-- Updates sprint YAML (status: done, completed date)
-- Transitions Jira to Done
-- Clears session file
+After archiving:
+1. Transition Jira to Done: `jira issue move {JIRA_KEY} "Done"`
+2. Update sprint YAML (status: done, completed date)
+3. Remove the session file from `.session/`
+4. Commit the archive
 
 ## Phase 1B: New Work Flow
 
@@ -429,7 +406,7 @@ Helper does:
 |----------|---------|-----------|
 | `workflow-status-check` | Scan session files + git | Always first |
 | `generic-sm-setup` | Research backlog (MODE=research) OR setup story (MODE=setup) | NEW_WORK_STATE |
-| `generic-sm-finish` | Preflight checks (PHASE=preflight) OR execute finish (PHASE=execute) | FINISH_STATE |
+| `generic-sm-finish` | Preflight checks (PHASE=preflight) | FINISH_STATE |
 | `sm-file-summary` | Read files, create summaries | After user selects story |
 | `sm-handoff` | Handoff bookkeeping to TEA/Dev | After story setup complete |
 | `testing-runner` | Run tests | When verification needed |
@@ -440,7 +417,7 @@ Helper does:
 |-------------|-------------------|
 | Decide what files to read | Read files and summarize |
 | Write story context | Write session file |
-| Write completion summary | Archive and update YAML |
+| Archive session, transition Jira | Run preflight checks |
 | Present options to user | Scan backlog and Jira |
 | Make judgment calls | Execute mechanical steps |
 
