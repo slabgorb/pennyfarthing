@@ -101,6 +101,24 @@ jira issue create \
     --no-input
 ```
 
+**Auto-creation during SM setup:**
+
+Starting with PR #315 (MSSCI-11841), SM setup automatically creates Jira epics when detecting a local epic without a `jira` field in the sprint YAML. This happens via the `jira-epic-creation.ts` module:
+
+```typescript
+// Automatically invoked during generic-sm-setup (MODE=setup)
+// 1. Detects epic missing Jira key
+// 2. Creates epic in Jira with matching title/description
+// 3. Updates sprint YAML with new Jira key
+// 4. Ensures story can be properly linked to epic
+```
+
+The auto-creation:
+- Uses the epic title and description from sprint YAML
+- Applies `pennyfarthing` label automatically
+- Updates sprint YAML atomically with the new Jira key
+- Enables seamless story creation without manual epic setup
+
 ### Link Issues (Parent-Child)
 
 **CRITICAL:** Argument order matters! First issue becomes the PARENT, second becomes the CHILD.
