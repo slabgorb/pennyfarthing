@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync, symlinkSync, copyFileSync, readdirSync } from 'fs';
+import { readFileSync, writeFileSync, symlinkSync, copyFileSync, readdirSync } from 'fs';
 import { join, relative } from 'path';
 import fsExtra from 'fs-extra';
 

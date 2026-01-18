@@ -264,6 +264,7 @@ epics:
   # ===========================================================================
   - id: MSSCI-11728
     type: epic
+    jira: MSSCI-11728
     title: "Epic: OTEL Tool Call Enrichment"
     points: 15
     completed_points: 11
@@ -301,8 +302,11 @@ epics:
         title: Enriched span export and visualization
         points: 4
         priority: P2
-        status: backlog
+        status: in_progress
+        assigned_to: Keith Avery
+        started: 2026-01-18T18:42:09Z
         repos: cyclist
+        workflow: tdd
         acceptance_criteria:
           - Custom exporter adds enrichment attributes
           - Timeline visualization in Cyclist UI
