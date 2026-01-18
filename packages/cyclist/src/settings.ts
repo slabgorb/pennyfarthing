@@ -43,6 +43,7 @@ export interface NotificationSettings {
 export interface PennyfarthingSettings {
   theme: string;
   favorites: string[];
+  recentThemes: string[];
 }
 
 // Account-specific settings for usage tracking
@@ -101,14 +102,49 @@ const DEFAULT_SETTINGS: CyclistSettings = {
   pennyfarthing: {
     theme: 'alice-in-wonderland',
     favorites: [],
+    recentThemes: [],
   },
 };
+
+/** Maximum number of recent themes to track (Story 35-8) */
+const MAX_RECENT_THEMES = 5;
 
 /**
  * Get a copy of the default settings
  */
 export function getDefaultSettings(): CyclistSettings {
   return JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+}
+
+/**
+ * Normalize settings to enforce constraints
+ * Story 35-8: Caps recentThemes to MAX_RECENT_THEMES entries
+ */
+export function normalizeSettings(settings: CyclistSettings): CyclistSettings {
+  const result = JSON.parse(JSON.stringify(settings)) as CyclistSettings;
+
+  // Cap recentThemes to MAX_RECENT_THEMES
+  if (result.pennyfarthing.recentThemes.length > MAX_RECENT_THEMES) {
+    result.pennyfarthing.recentThemes = result.pennyfarthing.recentThemes.slice(0, MAX_RECENT_THEMES);
+  }
+
+  return result;
+}
+
+/**
+ * Add a theme to recent themes list
+ * Story 35-8: Moves theme to front if already present, caps at MAX_RECENT_THEMES
+ */
+export function addToRecentThemes(settings: CyclistSettings, themeId: string): CyclistSettings {
+  const result = JSON.parse(JSON.stringify(settings)) as CyclistSettings;
+
+  // Remove if already in list (will be added to front)
+  const filtered = result.pennyfarthing.recentThemes.filter((t) => t !== themeId);
+
+  // Add to front and cap
+  result.pennyfarthing.recentThemes = [themeId, ...filtered].slice(0, MAX_RECENT_THEMES);
+
+  return result;
 }
 
 // =============================================================================
@@ -323,6 +359,9 @@ export function mergeSettings(base: CyclistSettings, override: PartialSettings):
     }
     if (Array.isArray(override.pennyfarthing.favorites)) {
       result.pennyfarthing.favorites = override.pennyfarthing.favorites;
+    }
+    if (Array.isArray(override.pennyfarthing.recentThemes)) {
+      result.pennyfarthing.recentThemes = override.pennyfarthing.recentThemes;
     }
   }
 

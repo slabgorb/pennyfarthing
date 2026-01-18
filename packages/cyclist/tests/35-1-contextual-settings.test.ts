@@ -66,32 +66,37 @@ describe('35-1: Contextual Settings Placement', () => {
       expect(themePicker).not.toBeNull();
     });
 
-    it('should have clickable persona section with theme-trigger attribute', async () => {
-      // Persona section should have data attribute indicating it triggers theme picker
-      expect(indexHtml).toMatch(/persona-section[^>]*data-action="theme-picker"/);
+    it('should have clickable persona section that shows detail popup', async () => {
+      // 35-8: Persona section click shows detail popup (theme changes via SettingsPanel)
+      // No longer triggers theme picker - just opens persona detail view
+      const personaSection = indexDocument.getElementById('persona-section');
+      expect(personaSection).not.toBeNull();
     });
 
-    it('should have ThemePicker.js component file', async () => {
-      // New component should be loaded
-      expect(indexHtml).toContain('ThemePicker');
+    // 35-8: ThemePicker.js removed - theme changes via SettingsPanel only
+    it('should have SettingsPanel for theme management', async () => {
+      // SettingsPanel handles all theme selection
+      expect(indexHtml).toContain('settings-panel.js');
     });
 
-    it('should export initThemePicker function from persona.js', async () => {
-      const persona = await import('../src/public/js/persona.js');
-      expect(persona.initThemePicker).toBeDefined();
-      expect(typeof persona.initThemePicker).toBe('function');
+    // 35-8: Theme picker functions removed from persona.js
+    // Theme changes now handled exclusively by SettingsPanel
+    it('should have SettingsPanel handle theme selection', async () => {
+      const settingsPanel = await import('../src/public/js/components/SettingsPanel.js');
+      expect(settingsPanel.selectTheme).toBeDefined();
+      expect(typeof settingsPanel.selectTheme).toBe('function');
     });
 
-    it('should export showThemePicker function from persona.js', async () => {
-      const persona = await import('../src/public/js/persona.js');
-      expect(persona.showThemePicker).toBeDefined();
-      expect(typeof persona.showThemePicker).toBe('function');
+    it('should have SettingsPanel show error on failure', async () => {
+      const settingsPanel = await import('../src/public/js/components/SettingsPanel.js');
+      expect(settingsPanel.showError).toBeDefined();
+      expect(typeof settingsPanel.showError).toBe('function');
     });
 
-    it('should export hideThemePicker function from persona.js', async () => {
-      const persona = await import('../src/public/js/persona.js');
-      expect(persona.hideThemePicker).toBeDefined();
-      expect(typeof persona.hideThemePicker).toBe('function');
+    it('should have SettingsPanel sort themes with recent at top', async () => {
+      const settingsPanel = await import('../src/public/js/components/SettingsPanel.js');
+      expect(settingsPanel.sortThemesWithRecent).toBeDefined();
+      expect(typeof settingsPanel.sortThemesWithRecent).toBe('function');
     });
 
     it('should have theme picker with recent themes section', async () => {
@@ -246,17 +251,20 @@ describe('35-1: Contextual Settings Placement', () => {
       expect(response.status).toBeLessThan(500);
     });
 
-    it('should export updateTheme function from persona.js', async () => {
-      const persona = await import('../src/public/js/persona.js');
-      expect(persona.updateTheme).toBeDefined();
-      expect(typeof persona.updateTheme).toBe('function');
+    // 35-8: updateTheme moved from persona.js to SettingsPanel.selectTheme
+    it('should have SettingsPanel.selectTheme call settings API', async () => {
+      const settingsPanel = await import('../src/public/js/components/SettingsPanel.js');
+      // selectTheme should use the standard settings persistence
+      expect(settingsPanel.selectTheme).toBeDefined();
+      // Function signature accepts theme ID
+      expect(settingsPanel.selectTheme.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('should have updateTheme call settings API', async () => {
-      // updateTheme should use the standard settings persistence
+    it('should have persona.refreshPersona for theme change updates', async () => {
       const persona = await import('../src/public/js/persona.js');
-      // Function signature should accept theme name
-      expect(persona.updateTheme.length).toBeGreaterThanOrEqual(1);
+      // Persona refresh is called by SettingsPanel after theme change
+      expect(persona.refreshPersona).toBeDefined();
+      expect(typeof persona.refreshPersona).toBe('function');
     });
 
     it('should have toolbar toggle persist via settings API', async () => {
@@ -282,24 +290,26 @@ describe('35-1: Contextual Settings Placement', () => {
 
   // ==========================================================================
   // Integration: Theme picker and settings coordination
+  // 35-8: Theme management consolidated to SettingsPanel
   // ==========================================================================
   describe('Integration: Theme picker workflow', () => {
 
-    it('should have persona.js import ThemePicker component', async () => {
-      const persona = await import('../src/public/js/persona.js');
-      // Should coordinate with ThemePicker
-      expect(persona.initThemePicker).toBeDefined();
+    it('should have SettingsPanel as single source for theme changes', async () => {
+      const settingsPanel = await import('../src/public/js/components/SettingsPanel.js');
+      // SettingsPanel handles all theme selection
+      expect(settingsPanel.selectTheme).toBeDefined();
+      expect(settingsPanel.load).toBeDefined();
     });
 
-    it('should load current theme from settings on init', async () => {
-      const persona = await import('../src/public/js/persona.js');
-      // Should have function to get current theme
-      expect(persona.getCurrentTheme).toBeDefined();
+    it('should have SettingsPanel load themes from API', async () => {
+      const settingsPanel = await import('../src/public/js/components/SettingsPanel.js');
+      // Should have load function to fetch themes
+      expect(settingsPanel.SettingsPanel?.load || settingsPanel.load).toBeDefined();
     });
 
-    it('should update persona display after theme change', async () => {
+    it('should update persona display after theme change via refreshPersona', async () => {
       const persona = await import('../src/public/js/persona.js');
-      // Should refresh persona after theme selection
+      // Should refresh persona after theme selection (called by SettingsPanel)
       expect(persona.refreshPersona).toBeDefined();
     });
 

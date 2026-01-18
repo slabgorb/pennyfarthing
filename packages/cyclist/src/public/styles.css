@@ -5376,6 +5376,159 @@ html, body {
 }
 
 /* =============================================================================
+ * 35-8: Theme Picker (in Settings Panel)
+ * ============================================================================= */
+
+/* Theme Picker Section */
+.theme-picker-section {
+  margin: 12px;
+  background: var(--bg-tertiary, #252540);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.theme-picker-section .section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+}
+
+.theme-picker-section .section-content {
+  padding: 0 12px 12px;
+}
+
+/* Theme Search Input */
+.theme-search {
+  margin-bottom: 12px;
+}
+
+#theme-search {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border, #3a3a4a);
+  border-radius: 4px;
+  background: var(--bg-primary, #1a1a2e);
+  color: var(--text-primary, #eee);
+  font-size: 13px;
+}
+
+#theme-search::placeholder {
+  color: var(--text-secondary, #888);
+}
+
+#theme-search:focus {
+  outline: none;
+  border-color: var(--accent, #6366f1);
+}
+
+/* Theme List Container */
+.theme-list {
+  max-height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Theme Card */
+.theme-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border, #3a3a4a);
+  border-radius: 6px;
+  background: var(--bg-primary, #1a1a2e);
+  color: var(--text-primary, #eee);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  text-align: left;
+}
+
+.theme-card:hover {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.05));
+  border-color: var(--text-secondary, #666);
+}
+
+.theme-card:focus {
+  outline: none;
+  border-color: var(--accent, #6366f1);
+}
+
+.theme-card.active {
+  border-color: var(--accent, #6366f1);
+  background: rgba(99, 102, 241, 0.15);
+}
+
+/* Tier Badge */
+.tier-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.tier-badge.tier-s {
+  background: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+}
+
+.tier-badge.tier-a {
+  background: rgba(192, 192, 192, 0.2);
+  color: #c0c0c0;
+}
+
+.tier-badge.tier-b {
+  background: rgba(205, 127, 50, 0.2);
+  color: #cd7f32;
+}
+
+.tier-badge.tier-c {
+  background: rgba(136, 136, 136, 0.15);
+  color: #888;
+}
+
+.tier-badge.tier-d {
+  background: rgba(136, 136, 136, 0.1);
+  color: #666;
+}
+
+.tier-badge.tier-u {
+  background: rgba(136, 136, 136, 0.1);
+  color: #666;
+}
+
+/* Theme Info */
+.theme-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.theme-info .theme-name {
+  font-size: 13px;
+  color: var(--text-primary, #eee);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Empty State */
+.theme-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-secondary, #888);
+  font-size: 13px;
+}
+
+/* =============================================================================
  * 35-9: Confirm Dialog
  * ============================================================================= */
 

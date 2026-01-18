@@ -1299,20 +1299,20 @@ export async function handleSettingsGet(): Promise<CyclistSettings> {
 /**
  * Handle settings:save IPC call
  * Saves settings and returns result with success flag
- * Also writes theme to persona-config.local.yaml for Pennyfarthing compatibility (24-2)
+ * Also writes theme to .pennyfarthing/config.local.yaml for Pennyfarthing compatibility (24-2)
  */
 export async function handleSettingsSave(settings: Partial<CyclistSettings>): Promise<{ success: boolean; settings?: CyclistSettings }> {
   try {
     saveUserSettings(settings);
 
-    // 24-2: Dual-write theme to persona-config.local.yaml for Pennyfarthing compatibility
+    // 24-2: Dual-write theme to .pennyfarthing/config.local.yaml for Pennyfarthing compatibility
     const projectDir = getProjectDirectory();
     if (settings.pennyfarthing?.theme && projectDir) {
       try {
-        const personaConfigPath = join(projectDir, '.claude', 'persona-config.local.yaml');
-        fs.writeFileSync(personaConfigPath, `theme: "${settings.pennyfarthing.theme}"\n`, 'utf-8');
+        const configPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
+        fs.writeFileSync(configPath, `theme: "${settings.pennyfarthing.theme}"\n`, 'utf-8');
       } catch (err) {
-        console.error('Failed to write persona-config.local.yaml:', err);
+        console.error('Failed to write .pennyfarthing/config.local.yaml:', err);
       }
     }
 
