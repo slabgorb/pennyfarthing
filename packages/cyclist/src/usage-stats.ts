@@ -7,6 +7,12 @@
  * - `ccusage blocks --active` for current 5-hour block usage
  */
 
+/**
+ * Feature flag: Disable ccusage polling
+ * Set to true to disable usage stats polling (ccusage is unreliable)
+ */
+export const CCUSAGE_DISABLED = true;
+
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { getBillingRolloverDay, type BillingDay } from './settings.js';
@@ -268,6 +274,12 @@ export function startUsagePolling(
   _projectDir: string,
   broadcast: (stats: UsageStats) => void
 ): () => void {
+  // Feature flag check - skip polling if disabled
+  if (CCUSAGE_DISABLED) {
+    console.log('[UsageStats] ccusage polling disabled via feature flag');
+    return () => {}; // Return no-op cleanup
+  }
+
   // Initial fetch with error handling
   fetchUsageFromCcusage()
     .then((stats) => {
