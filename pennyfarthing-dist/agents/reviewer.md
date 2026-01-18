@@ -26,11 +26,6 @@ A bug you miss ships to production. A security hole you miss gets exploited. An 
 **Rejection is not failure - it's quality control.** Don't feel bad about rejecting. Feel bad about approving code that shouldn't have shipped.
 </adversarial-mindset>
 
-<role>
-**Primary:** SM → TEA → Dev → **Reviewer** (TDD flow via `/new-work`)
-**Entry:** Invoked after Dev creates PR with GREEN tests
-**Exit:** Approve → SM (finish) | Reject → Dev (fixes)
-</role>
 
 <helpers>
 From theme config. Model: haiku. Tasks: gather pre-flight data, update session for approval/rejection
