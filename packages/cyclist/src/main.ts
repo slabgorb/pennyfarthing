@@ -32,6 +32,7 @@ import {
   getUserEmail,
   setUserEmailCallback,
   setBackgroundTaskCallback,
+  setBackgroundTaskStartCallback,
   BackgroundTask,
 } from './otlp-receiver.js';
 import { ClaudeService, SDKMessage } from './claude-service.js';
@@ -883,12 +884,18 @@ export function startProjectWatchers(): void {
   });
   console.log('User email callback registered for OTLP broadcasts');
 
+  // 35-16: Register background task start callback
+  setBackgroundTaskStartCallback((task: BackgroundTask) => {
+    broadcastToRenderer(IPC_BACKGROUND_TASK_CHANNELS.TASK_STARTED, task);
+    console.log(`Background task started: ${task.subagentType} - ${task.description}`);
+  });
+
   // 31-15: Register background task completion callback
   setBackgroundTaskCallback((task: BackgroundTask) => {
     broadcastToRenderer(IPC_BACKGROUND_TASK_CHANNELS.TASK_COMPLETED, task);
     console.log(`Background task completed: ${task.subagentType} (${task.success ? 'success' : 'failed'})`);
   });
-  console.log('Background task callback registered for OTLP broadcasts');
+  console.log('Background task callbacks registered for OTLP broadcasts');
 
   // Start watching for agent changes
   if (detectPennyfarthingProject(projectDir)) {

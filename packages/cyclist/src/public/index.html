@@ -303,6 +303,16 @@
         </div>
         <div id="todo-list" class="section-content"></div>
       </section>
+
+      <!-- 35-16: Background Tasks Section -->
+      <section id="background-tasks-section" class="background-tasks-section collapsed">
+        <div class="section-header" data-action="toggle-bg-tasks">
+          <span class="section-title">Background Tasks</span>
+          <span id="bg-tasks-count" class="bg-tasks-count" style="display: none;">(0)</span>
+          <button class="collapse-btn" aria-label="Toggle background tasks">▼</button>
+        </div>
+        <div id="background-tasks-container" class="section-content"></div>
+      </section>
     </aside>
     <!-- 35-9: Settings Panel (vertical panel on right, like sidebar) -->
     <aside id="settings-panel" class="vertical-panel position-right collapsed" aria-labelledby="settings-title" aria-busy="false">
@@ -610,6 +620,8 @@
   <script type="module" src="/js/persona.js"></script>
   <script type="module" src="/js/story.js"></script>
   <script type="module" src="/js/todos.js"></script>
+  <!-- 35-16: Background Tasks Panel -->
+  <script type="module" src="/js/components/BackgroundTasksPanel.js"></script>
   <script type="module" src="/js/diff-panel.js"></script>
   <script type="module" src="/js/components/DiffViewer.js"></script>
   <script type="module" src="/js/file-panel.js"></script>
