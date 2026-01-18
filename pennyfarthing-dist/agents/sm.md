@@ -463,20 +463,26 @@ Helper does:
 
 ALWAYS complete bookkeeping via helper subagent first.
 
-Then check context usage:
+Then check context usage and handoff mode preference:
 
 ```bash
 $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
-**After New Work Setup:**
+**Read handoff mode from Cyclist settings** (see `generic-handoff.md` for full implementation):
+- `~/.cyclist/settings.yaml` → `workflow.handoff_mode: auto|manual`
+- Default is `manual` if not set
 
-| Context | Action |
-|---------|--------|
-| < 60% | **MANDATORY: Use the Skill tool to invoke next agent NOW.** Do not ask the user. |
-| > 60% | Tell user: "Context high. Start fresh with `/{agent}`" |
+**After New Work Setup - Handoff Decision Matrix:**
 
-**Determine handoff command from workflow, then invoke:**
+| Context | Mode | Action |
+|---------|------|--------|
+| < 60% | auto | Invoke next agent directly via Skill tool |
+| < 60% | manual | Report ready, emit HANDOFF marker, wait for user |
+| >= 60% | auto | Emit CONTEXT_CLEAR marker (triggers auto-reload in Cyclist) |
+| >= 60% | manual | Tell user: "Context high. Start fresh with `/{agent}`" |
+
+**Determine handoff command from workflow:**
 
 | Workflow | Next Agent | Skill Call |
 |----------|------------|------------|
@@ -484,24 +490,23 @@ $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 | trivial | Dev | `Skill tool: skill: "dev"` |
 | agent-docs | Orchestrator | `Skill tool: skill: "orchestrator"` |
 
-Example (TDD workflow, context < 60%):
-```yaml
-Skill tool:
-  skill: "tea"
-```
-
-**Handoff Marker:** Include at end of handoff message:
+**Handoff Marker:** ALWAYS include at end of handoff message:
 ```
 <!-- CYCLIST:HANDOFF:/{agent} -->
 ```
 Where `{agent}` matches the workflow's next phase agent (tea, dev, or orchestrator)
+
+**For high context + auto mode**, also include:
+```
+<!-- CYCLIST:CONTEXT_CLEAR:/{agent} -->
+```
 
 **After Finish-Story:**
 
 | Context | Action |
 |---------|--------|
 | < 60% | Ask user: "Start another story?" - if yes, begin new work flow |
-| > 60% | Tell user: "Context high. Start fresh with `/new-work` for next story" |
+| >= 60% | Tell user: "Context high. Start fresh with `/new-work` for next story" |
 
 <exit>
 To exit SM mode: "Exit SM" or "Switch to [other agent]"

@@ -176,23 +176,33 @@ Use `/code-review` skill checklist:
 
 After writing assessment, ALWAYS spawn handoff subagent to complete bookkeeping.
 
-Then check context usage:
+Then check context usage and handoff mode preference:
 
 ```bash
 $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
-**If < 60%:** **MANDATORY: Use the Skill tool to invoke `/reviewer` NOW.** Do not ask the user - just invoke it:
-```yaml
-Skill tool:
-  skill: "reviewer"
-```
+**Read handoff mode from Cyclist settings** (see `generic-handoff.md` for full implementation):
+- `~/.cyclist/settings.yaml` → `workflow.handoff_mode: auto|manual`
+- Default is `manual` if not set
 
-**If > 60%:** Tell user: "Context high. Start fresh session with `/reviewer`"
+**Handoff Decision Matrix:**
 
-**Handoff Marker:** Include at end of handoff message:
+| Context | Mode | Action |
+|---------|------|--------|
+| < 60% | auto | Invoke `/reviewer` directly via Skill tool |
+| < 60% | manual | Report ready, emit HANDOFF marker, wait for user |
+| >= 60% | auto | Emit CONTEXT_CLEAR marker (triggers auto-reload in Cyclist) |
+| >= 60% | manual | Tell user: "Context high. Start fresh session with `/reviewer`" |
+
+**Handoff Marker:** ALWAYS include at end of handoff message:
 ```
 <!-- CYCLIST:HANDOFF:/reviewer -->
+```
+
+**For high context + auto mode**, also include:
+```
+<!-- CYCLIST:CONTEXT_CLEAR:/reviewer -->
 ```
 
 ## Handoff Subagent

@@ -252,30 +252,36 @@ Write assessment to session file BEFORE spawning handoff subagent.
 
 After writing assessment, ALWAYS spawn appropriate handoff subagent to complete bookkeeping.
 
-Then check context usage:
+Then check context usage and handoff mode preference:
 
 ```bash
 $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
-**If < 60%:** **MANDATORY: Use the Skill tool to invoke the next agent NOW.** Do not ask the user - just invoke it:
-- APPROVED:
-  ```yaml
-  Skill tool:
-    skill: "sm"
-  ```
-- REJECTED:
-  ```yaml
-  Skill tool:
-    skill: "dev"
-  ```
+**Read handoff mode from Cyclist settings** (see `generic-handoff.md` for full implementation):
+- `~/.cyclist/settings.yaml` → `workflow.handoff_mode: auto|manual`
+- Default is `manual` if not set
 
-**If > 60%:** Tell user: "Context high. Start fresh with `/sm` (approve) or `/dev` (reject)"
+**Handoff Decision Matrix:**
 
-**Handoff Marker:** Include at end of handoff message:
+| Context | Mode | Verdict | Action |
+|---------|------|---------|--------|
+| < 60% | auto | APPROVED | Invoke `/sm` directly via Skill tool |
+| < 60% | auto | REJECTED | Invoke `/dev` directly via Skill tool |
+| < 60% | manual | any | Report ready, emit HANDOFF marker, wait for user |
+| >= 60% | auto | any | Emit CONTEXT_CLEAR marker (triggers auto-reload in Cyclist) |
+| >= 60% | manual | any | Tell user: "Context high. Start fresh with `/sm` (approve) or `/dev` (reject)" |
+
+**Handoff Marker:** ALWAYS include at end of handoff message:
 ```
 <!-- CYCLIST:HANDOFF:/sm -->   # For approvals
 <!-- CYCLIST:HANDOFF:/dev -->  # For rejections
+```
+
+**For high context + auto mode**, also include:
+```
+<!-- CYCLIST:CONTEXT_CLEAR:/sm -->   # For approvals
+<!-- CYCLIST:CONTEXT_CLEAR:/dev -->  # For rejections
 ```
 
 Handoff subagent (generic - handles both approve and reject).
