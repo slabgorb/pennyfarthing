@@ -29,6 +29,7 @@ summary:
 epics:
   - id: epic-24
     title: Configuration & Theme Switcher Panels
+    jira: MSSCI-11548
     description: |
       Full settings hub in Cyclist covering Pennyfarthing, Claude Code,
       and Cyclist preferences. Rich theme browser with search, OCEAN
@@ -284,6 +285,7 @@ epics:
 completed_epics:
   - id: epic-30
     title: Developer Workflow Documentation
+    jira: MSSCI-11582
     points: 24
     completed_points: 24
     priority: P3
@@ -405,7 +407,7 @@ completed_epics:
         status: done
   - id: epic-9
     title: Skill Discovery & Documentation Hub
-    jira_key: MSSCI-11512
+    jira: MSSCI-11513
     points: 13
     completed_points: 13
     status: done
@@ -434,7 +436,7 @@ completed_epics:
         pr: "#168"
   - id: epic-20
     title: Cyclist Web Mode Improvements
-    jira_key: MSSCI-11526
+    jira: MSSCI-11526
     points: 5
     completed_points: 5
     status: done
@@ -508,7 +510,7 @@ completed_epics:
         status: wontfix
   - id: epic-25
     title: Smart Question Detection & Quick Actions
-    jira_key: MSSCI-11530
+    jira: MSSCI-11530
     points: 15
     completed_points: 12
     status: done

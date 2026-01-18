@@ -549,9 +549,11 @@ epics:
         title: Retrofit historical epics with Jira links
         points: 2
         priority: P3
-        status: backlog
+        status: in_progress
+        assigned_to: Keith Avery
         repos: pennyfarthing
         workflow: trivial
+        started: 2026-01-18T01:12:03Z
         acceptance_criteria:
           - All epics in sprint archive have jira field populated
           - Script to batch-add jira keys to historical epics
