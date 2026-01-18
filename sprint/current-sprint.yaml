@@ -6,13 +6,13 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 113
-  completed_points: 62
-  remaining_points: 51
+  completed_points: 67
+  remaining_points: 46
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - Epic 31: Customizable Workflow Engine (4 pts remaining)
     - Epic 33: Runtime Permission Management (5 pts remaining)
-    - Epic 35: Cyclist UI/UX Improvements (13 pts remaining)
+    - Epic 35: Cyclist UI/UX Improvements (8 pts remaining)
     - Epic 36: OTEL Tool Call Enrichment (4 pts remaining)
     - Epic 37: Technical Debt & Bug Fixes (16 pts remaining)
     - Epic 38: Agent File Modernization (16 pts remaining)
@@ -103,7 +103,7 @@ epics:
     type: epic
     title: "Epic: Cyclist UI/UX Improvements"
     points: 34
-    completed_points: 14
+    completed_points: 19
     priority: P2
     status: in_progress
     stories:
@@ -197,11 +197,13 @@ epics:
         title: Background tasks sidebar panel with real-time status
         points: 5
         priority: P1
-        status: in_progress
+        status: done
         assigned_to: Keith Avery
         repos: cyclist
         workflow: tdd
         started: 2026-01-18T11:16:40Z
+        completed: 2026-01-18T12:20:00Z
+        pr: 324
         acceptance_criteria:
           - GET /api/background-tasks returns list of tracked tasks
           - IPC broadcasts task start events (not just completion)
