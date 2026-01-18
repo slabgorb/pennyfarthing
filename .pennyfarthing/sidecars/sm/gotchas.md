@@ -98,4 +98,37 @@ The CLI still expects `node_modules/pennyfarthing/pennyfarthing-dist/` structure
 
 ---
 
+## ✈️ NEVER GUESS JIRA IDs ✈️
+
+```
+    ___________________________
+   |                           |
+   |  NEVER GUESS JIRA IDs!!   |
+   |___________________________|
+          \
+           \
+            \_____________
+             |  ______   |
+             | |      |  |====
+             | |______|  |
+             |___________|
+                /    \
+```
+
+**Problem:** Created stories with placeholder IDs like `31-18` or `35-17` instead of real Jira keys
+**Cause:** Guessed at ID format instead of creating in Jira first
+**Impact:** Invalid IDs in sprint YAML, confusion about what's real
+
+**SOLUTION - NEVER fabricate Jira IDs. Instead:**
+1. **Look it up** in `sprint/current-sprint.yaml` under the story's `id:` field
+2. **Query Jira** using `jira issue list` or `jira issue view`
+3. **Create new** using `jira issue create` (returns the real ID)
+4. **Ask the user** if you cannot determine the correct ID
+
+Old-style IDs like `31-18` are **local sprint YAML placeholders** - they are NOT valid Jira keys. Valid Jira keys follow the pattern `MSSCI-XXXXX`.
+
+**Learned:** 2026-01-18 (the hard way)
+
+---
+
 *Add story management gotchas discovered during coordination below*
