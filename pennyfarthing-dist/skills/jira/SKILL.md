@@ -9,6 +9,17 @@ description: Jira CLI commands for sprint management. Use when viewing, assignin
 
 This skill covers using `jira` (ankitpokhrel/jira) for Jira integration. The examples below use Conductor project settings - update PROJECT_KEY and PROJECT_LABEL for your project.
 
+## CRITICAL: Never Guess Jira IDs
+
+**NEVER fabricate or guess Jira ticket numbers.** If you need a Jira ID:
+
+1. **Look it up** in `sprint/current-sprint.yaml` under the story's `id:` field
+2. **Query Jira** using `jira issue list` or `jira issue view`
+3. **Create new** using `jira issue create` (returns the real ID)
+4. **Ask the user** if you cannot determine the correct ID
+
+Old-style IDs like `31-18` or `35-17` are **local sprint YAML placeholders** - they are NOT valid Jira keys. Valid Jira keys follow the pattern `MSSCI-XXXXX`.
+
 ## Prerequisites
 
 ```bash
