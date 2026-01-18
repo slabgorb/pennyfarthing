@@ -8,6 +8,7 @@ import { getTokenStats } from './otlp-receiver.js';
 import { detectPennyfarthingProject, getCurrentPersona, watchAgentChanges } from './pennyfarthing.js';
 import { ClaudeService, type PermissionMode } from './claude-service.js';
 import { publicDir } from './paths.js';
+import { getOtelConfig } from './server.js';
 
 // WebSocket message types for Claude communication
 interface ClaudeWebSocketMessage {
@@ -166,7 +167,8 @@ export function setupWebSocketServers(
 
     // Create a new ClaudeService instance for this connection
     const projectDir = getProjectDir();
-    const service = new ClaudeService({ cwd: projectDir });
+    const otelConfig = getOtelConfig(projectDir);
+    const service = new ClaudeService({ cwd: projectDir, env: otelConfig ?? undefined });
     claudeSessions.set(ws, service);
 
     // Handle incoming messages
