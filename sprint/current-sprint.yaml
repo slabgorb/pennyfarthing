@@ -281,8 +281,11 @@ epics:
         title: Task/subagent enrichment
         points: 2
         priority: P2
-        status: backlog
+        status: in_progress
+        workflow: tdd
         repos: cyclist
+        assigned_to: Keith Avery
+        started: 2026-01-18T14:00:00Z
         acceptance_criteria:
           - Subagent type in span attributes
           - Prompt summary (first 200 chars)
