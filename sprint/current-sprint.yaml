@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 116
-  completed_points: 68
-  remaining_points: 48
+  completed_points: 71
+  remaining_points: 45
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - Epic 31: Customizable Workflow Engine (5 pts remaining)
@@ -187,13 +187,12 @@ epics:
           async loading issues, persona click handler conflicts.
         points: 3
         priority: P1
-        status: in_progress
+        status: done
         assigned_to: Keith Avery
         repos: cyclist
         workflow: bdd
         started: 2026-01-18T11:04:14Z
-        blocked_by:
-          - 35-14
+        completed: 2026-01-18
         acceptance_criteria:
           - Given I click the persona section, When the theme picker opens, Then I see my recent themes at the top
           - Given I select a theme, When the picker closes, Then the persona display updates immediately
