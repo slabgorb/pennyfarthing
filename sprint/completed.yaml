@@ -351,65 +351,57 @@ sprint_5:
       repos: pennyfarthing
       jira: https://1898andco.atlassian.net/browse/MSSCI-11285
       stories:
-        - id: "12-1"
+        - id: MSSCI-11426
           title: "Copy /solo command to Pennyfarthing"
-          jira: MSSCI-11426
           points: 3
           status: done
           completed: 2026-01-02
           pr: https://github.com/1898andCo/pennyfarthing/pull/42
 
-        - id: "12-2"
+        - id: MSSCI-11427
           title: "Copy /judge skill to Pennyfarthing"
-          jira: MSSCI-11427
           points: 3
           status: done
           completed: 2026-01-02
           pr: https://github.com/1898andCo/pennyfarthing/pull/44
 
-        - id: "12-3"
+        - id: MSSCI-11428
           title: "Copy /benchmark and /benchmark-control commands"
-          jira: MSSCI-11428
           points: 3
           status: done
           completed: 2026-01-02
           pr: https://github.com/1898andCo/pennyfarthing/pull/44
 
-        - id: "12-4"
+        - id: MSSCI-11429
           title: "Copy scenarios library to Pennyfarthing"
-          jira: MSSCI-11429
           points: 2
           status: done
           completed: 2026-01-02
           pr: https://github.com/1898andCo/pennyfarthing/pull/44
 
-        - id: "12-5"
+        - id: MSSCI-11430
           title: "Copy /finalize-run skill"
-          jira: MSSCI-11430
           points: 2
           status: done
           completed: 2026-01-02
           pr: https://github.com/1898andCo/pennyfarthing/pull/44
 
-        - id: "12-6"
+        - id: MSSCI-11431
           title: "Update benchmark-integration.ts for local results"
-          jira: MSSCI-11431
           points: 2
           status: done
           completed: 2026-01-02
           pr: https://github.com/1898andCo/pennyfarthing/pull/44
 
-        - id: "12-7"
+        - id: MSSCI-11432
           title: "Create benchmarking documentation"
-          jira: MSSCI-11432
           points: 2
           status: done
           completed: 2026-01-02
           pr: https://github.com/1898andCo/pennyfarthing/pull/44
 
-        - id: "12-8"
+        - id: MSSCI-11433
           title: "End-to-end integration test"
-          jira: MSSCI-11433
           points: 1
           status: done
           completed: 2026-01-02
@@ -542,30 +534,27 @@ sprint_7_completed:
       pr: "https://github.com/1898andCo/pennyfarthing/pull/114"
 
     # Epic 17 - Cyclist UX Improvements
-    - id: "17-1"
+    - id: MSSCI-11483
       epic: epic-17
       title: "Implement message input buffer for non-blocking input"
-      jira: MSSCI-11483
       points: 5
       status: done
       started: 2026-01-08
       completed: 2026-01-08
       pr: "https://github.com/1898andCo/pennyfarthing-2/pull/112"
 
-    - id: "17-2"
+    - id: MSSCI-11484
       epic: epic-17
       title: "Fix tab panel layout - expanded state hides main content"
-      jira: MSSCI-11484
       points: 3
       status: done
       started: 2026-01-08
       completed: 2026-01-08
       pr: "https://github.com/keithavery/pennyfarthing/pull/103"
 
-    - id: "17-3"
+    - id: MSSCI-11485
       epic: epic-17
       title: "Cyclist UX bug cleanup batch"
-      jira: MSSCI-11485
       points: 3
       status: done
       started: 2026-01-08
@@ -639,7 +628,7 @@ sprint_7_completed:
       completed: 2026-01-09
       repos: pennyfarthing
 
-    - id: "17-5"
+    - id: MSSCI-11487
       epic: epic-17
       title: "BUG: Changed Files panel not showing files"
       jira: MSSCI-11486
@@ -649,7 +638,7 @@ sprint_7_completed:
       completed: 2026-01-09
       repos: cyclist
 
-    - id: "17-6"
+    - id: MSSCI-11488
       epic: epic-17
       title: "BUG: Context meter not wired to Electron polling"
       jira: MSSCI-11487
@@ -659,7 +648,7 @@ sprint_7_completed:
       completed: 2026-01-09
       repos: cyclist
 
-    - id: "17-7"
+    - id: MSSCI-11489
       epic: epic-17
       title: "Session ID tracking for context and agent state"
       jira: MSSCI-11488
@@ -690,7 +679,7 @@ sprint_7_completed:
       completed: 2026-01-09
       repos: pennyfarthing
 
-    - id: "17-4"
+    - id: MSSCI-11486
       epic: epic-17
       title: "Popup profile view for persona details"
       jira: MSSCI-11490
@@ -700,7 +689,7 @@ sprint_7_completed:
       repos: cyclist
       notes: "Completed via bug branch"
 
-    - id: "17-8"
+    - id: MSSCI-11490
       epic: epic-17
       title: "Fix story panel not loading in Electron (IPC vs HTTP mismatch)"
       jira: MSSCI-11489
@@ -820,9 +809,8 @@ sprint_7_completed:
       pr: "https://github.com/1898andCo/pennyfarthing/pull/130"
 
     # Epic 21 - Command & Skill Expansion
-    - id: "21-1"
+    - id: MSSCI-11496
       epic: epic-21
-      jira: MSSCI-11496
       title: "/check command with dev-handoff integration"
       points: 3
       status: done
@@ -830,9 +818,8 @@ sprint_7_completed:
       completed: 2026-01-10
       repos: pennyfarthing
 
-    - id: "21-2"
+    - id: MSSCI-11497
       epic: epic-21
-      jira: MSSCI-11497
       title: "/prime command with agent-session hooks"
       points: 2
       status: done
@@ -840,9 +827,8 @@ sprint_7_completed:
       completed: 2026-01-10
       repos: pennyfarthing
 
-    - id: "21-3"
+    - id: MSSCI-11498
       epic: epic-21
-      jira: MSSCI-11498
       title: "mermaid skill documentation"
       points: 2
       status: done
@@ -851,9 +837,8 @@ sprint_7_completed:
       repos: pennyfarthing
       pr: "#144"
 
-    - id: "21-4"
+    - id: MSSCI-11499
       epic: epic-21
-      jira: MSSCI-11499
       title: "/run-ci thin wrapper command"
       points: 2
       status: done
@@ -861,9 +846,8 @@ sprint_7_completed:
       completed: 2026-01-10
       repos: pennyfarthing
 
-    - id: "21-5"
+    - id: MSSCI-11500
       epic: epic-21
-      jira: MSSCI-11500
       title: "changelog skill for release workflow"
       points: 1
       status: done
@@ -871,9 +855,8 @@ sprint_7_completed:
       completed: 2026-01-10
       repos: pennyfarthing
 
-    - id: "21-6"
+    - id: MSSCI-11501
       epic: epic-21
-      jira: MSSCI-11501
       title: "/help command for Pennyfarthing"
       points: 2
       status: done
@@ -990,9 +973,8 @@ sprint_10_completed:
       marker: strategic
       repos: pennyfarthing
       status: done
-      jira: MSSCI-11626
       stories:
-        - id: 32-1
+        - id: MSSCI-11627
           title: Document BMAD artifact formats
           description: |
             Document all BMAD artifact formats for reference:
@@ -1056,7 +1038,7 @@ sprint_10_completed:
             - Preserves Given/When/Then ACs
             - Maps N.M story IDs to our format
             - Handles requirements coverage map
-        - id: 32-4
+        - id: MSSCI-11628
           title: BMAD project-context reader
           description: |
             Load BMAD project-context.md as shared agent context.
@@ -1069,14 +1051,13 @@ sprint_10_completed:
           completed: 2026-01-13
           assigned_to: Keith Avery
           repos: pennyfarthing
-          jira: MSSCI-11628
           acceptance_criteria:
             - Detects project-context.md in project
             - Parses technology stack section
             - Extracts implementation rules
             - Integrates with agent context loading
             - Works alongside our CLAUDE.md
-        - id: 32-5
+        - id: MSSCI-11629
           title: Session to BMAD story exporter
           description: |
             Export completed Pennyfarthing session back to BMAD story format.
@@ -1086,7 +1067,6 @@ sprint_10_completed:
           priority: P1
           status: done
           repos: pennyfarthing
-          jira: MSSCI-11629
           started: 2026-01-13
           completed: 2026-01-13
           assigned_to: Keith Avery
@@ -1097,7 +1077,7 @@ sprint_10_completed:
             - Updates File List with changed files
             - Marks completed tasks with [x]
             - Sets appropriate status (review/done)
-        - id: 32-6
+        - id: MSSCI-11630
           title: Sprint to BMAD status sync
           description: |
             Bidirectional sync between Pennyfarthing sprint YAML and
@@ -1110,7 +1090,6 @@ sprint_10_completed:
           completed: 2026-01-14
           assigned_to: Keith Avery
           repos: pennyfarthing
-          jira: MSSCI-11630
           pr: 243
           acceptance_criteria:
             - Reads BMAD sprint-status.yaml
@@ -1136,7 +1115,6 @@ sprint_10_completed:
       marker: dx
       repos: pennyfarthing
       status: done
-      jira: MSSCI-11618
       stories:
         - id: 34-1
           title: Fresh install documentation and tooling
