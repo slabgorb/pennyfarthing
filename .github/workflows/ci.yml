@@ -50,8 +50,8 @@ jobs:
         run: pnpm --filter @pennyfarthing/core test
         continue-on-error: true  # Some tests have pre-existing failures (Story 18-6)
 
-      - name: Run tests (cyclist)
-        run: pnpm --filter @pennyfarthing/cyclist test
+      - name: Run tests with coverage (cyclist)
+        run: pnpm --filter @pennyfarthing/cyclist test -- --coverage
         continue-on-error: true  # Vitest tests, may have environment issues in CI
 
   lint:
