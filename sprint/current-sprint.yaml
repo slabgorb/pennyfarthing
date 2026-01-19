@@ -937,7 +937,11 @@ epics:
           sections available on demand. Reduces token overhead.
         points: 2
         priority: P2
-        status: backlog
+        status: done
+        assigned_to: Keith Avery
+        started: 2026-01-19T12:50:00Z
+        completed: 2026-01-19
+        pr: 354
         repos: pennyfarthing
         workflow: trivial
         acceptance_criteria:
