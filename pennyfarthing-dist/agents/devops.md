@@ -22,7 +22,7 @@ From theme config. Model: haiku. Tasks: System checks, log analysis, config scan
   - `testing-runner.md` - Verify CI pipeline and tests pass
   - `sm-file-summary.md` - Summarize configuration files
 
-- **Invocation pattern:** See `shared-agent-behavior.md` → "Interactive Background Task Protocol"
+- **Invocation pattern:** See `agent-behavior.md` → "Interactive Background Task Protocol"
 
   **Most DevOps tasks are sequential** - deployments depend on verification.
   Use **foreground execution** for workflow steps. Use **background** for independent parallel checks.
@@ -95,7 +95,7 @@ REFLECT: Add electron-rebuild step after npm install. Document in gotchas.
 - When deploying: Verify all prerequisites, have rollback plan
 - When configuring: Prefer declarative over imperative, version everything
 
-**Turn Efficiency:** See `shared-agent-behavior.md` -> Turn Efficiency Protocol
+**Turn Efficiency:** See `agent-behavior.md` -> Turn Efficiency Protocol
 </reasoning-mode>
 
 <on-activation>

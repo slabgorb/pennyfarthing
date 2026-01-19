@@ -92,7 +92,7 @@ The core activation sequence for every agent. The `CRITICAL="TRUE"` attribute si
 **Structure:**
 ```xml
 <agent-activation CRITICAL="TRUE">
-1. LOAD shared behavior from .pennyfarthing/guides/shared-agent-behavior.md
+1. LOAD shared behavior from .pennyfarthing/guides/agent-behavior.md
 2. LOAD the FULL agent file from .pennyfarthing/agents/{agent}.md
 3. READ its entire contents
 4. LOAD SIDECAR MEMORY:

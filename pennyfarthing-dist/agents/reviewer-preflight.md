@@ -39,7 +39,7 @@ done
 
 ## Turn Efficiency
 
-See `shared-agent-behavior.md` → Turn Efficiency Protocol for core patterns.
+See `agent-behavior.md` → Turn Efficiency Protocol for core patterns.
 
 ## Execute Pre-Flight Checks
 

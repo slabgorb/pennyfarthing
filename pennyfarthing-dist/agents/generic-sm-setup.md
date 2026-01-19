@@ -104,7 +104,7 @@ Execute mechanical setup steps for story {STORY_ID}.
 
 ## Turn Efficiency
 
-See `shared-agent-behavior.md` → Turn Efficiency Protocol for core patterns.
+See `agent-behavior.md` → Turn Efficiency Protocol for core patterns.
 
 ## Step 1: Check Epic Jira Status
 

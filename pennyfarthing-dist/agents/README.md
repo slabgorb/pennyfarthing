@@ -63,7 +63,7 @@ Task tool:
     {PARAMETERS}
 ```
 
-**See `shared-agent-behavior.md` → "Interactive Background Task Protocol"** for when to use background vs foreground execution.
+**See `agent-behavior.md` → "Interactive Background Task Protocol"** for when to use background vs foreground execution.
 
 - **`workflow-status-check.md`** - Detect workflow state
 - **`generic-sm-setup.md`** - Research OR setup mode (Story 31-11)
@@ -301,7 +301,7 @@ All agent commands in `.claude/commands/` have been standardized to use `$CLAUDE
 
 Subagents can run in background using Claude Code's `run_in_background` parameter. This allows the user to continue interacting while slow operations complete asynchronously.
 
-**IMPORTANT:** See `shared-agent-behavior.md` → "Interactive Background Task Protocol" for the authoritative guidance.
+**IMPORTANT:** See `agent-behavior.md` → "Interactive Background Task Protocol" for the authoritative guidance.
 
 ### The Key Insight
 

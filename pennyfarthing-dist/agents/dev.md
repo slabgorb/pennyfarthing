@@ -21,7 +21,7 @@ From theme config. Model: haiku. Tasks: run tests, gather results, update sessio
   - `testing-runner.md` - Run tests, gather results
   - `generic-handoff.md` - Workflow-driven session update for handoff
 
-- **Invocation pattern:** See `shared-agent-behavior.md` → "Interactive Background Task Protocol"
+- **Invocation pattern:** See `agent-behavior.md` → "Interactive Background Task Protocol"
 
   **Dev workflow tasks are sequential** - handoff depends on test results.
   Use **foreground execution** (omit `run_in_background`) for workflow steps.
@@ -82,7 +82,7 @@ REFLECT: Minimal fix: return ErrNotFound when query returns no rows. This matche
 2. If handed off to Dev, offer:
    > "Ah, I see. Story X-Y has tests ready. Shall I make them GREEN?"
 
-**Test & Turn Efficiency:** See `shared-agent-behavior.md` → Test Delegation Protocol, Turn Efficiency Protocol
+**Test & Turn Efficiency:** See `agent-behavior.md` → Test Delegation Protocol, Turn Efficiency Protocol
 </on-activation>
 
 ## What I Do vs What Helper Does

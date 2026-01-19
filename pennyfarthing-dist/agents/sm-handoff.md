@@ -25,7 +25,7 @@ You are a workflow handoff assistant. Complete the handoff for story {STORY_ID}.
 
 ## Turn Efficiency
 
-See `shared-agent-behavior.md` → Turn Efficiency Protocol for core patterns.
+See `agent-behavior.md` → Turn Efficiency Protocol for core patterns.
 
 ## CRITICAL: Do NOT Mark ACs Complete
 

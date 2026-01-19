@@ -2,15 +2,12 @@
 # prime.sh - Load essential project context at agent activation
 # Usage: prime.sh [--minimal] [--full] [--quiet] [--agent <name>]
 #
-# Loads context in priority order:
-# 1. CLAUDE.md (project + user)
-# 2. Sprint summary (current-sprint.yaml key fields)
-# 3. Active session (.session/*-session.md)
-# 4. Agent sidecar (if --agent provided)
-# 5. Shared context (project info - all agents)
-# 6. Shared agent behavior (protocols - all agents)
-# 7. Tactical guide (for sm, tea, dev, reviewer)
-# 8. Domain docs (--full only)
+# Loads context in priority order (CLAUDE.md skipped - already in system prompt):
+# 1. Sprint summary (current-sprint.yaml key fields)
+# 2. Active session (.session/*-session.md)
+# 3. Agent sidecar (if --agent provided)
+# 4. Agent behavior guide (combined protocols for all agents)
+# 5. Domain docs (--full only)
 
 set -euo pipefail
 
@@ -33,7 +30,7 @@ while [[ $# -gt 0 ]]; do
         --agent) AGENT_NAME="$2"; shift 2 ;;
         -h|--help)
             echo "Usage: prime.sh [--minimal] [--full] [--quiet] [--agent <name>]"
-            echo "  --minimal      Load only CLAUDE.md files (fastest)"
+            echo "  --minimal      Skip all context (fastest)"
             echo "  --full         Include domain docs from .claude/project/"
             echo "  --quiet        Suppress section headers"
             echo "  --agent <name> Load agent's sidecar patterns"
@@ -51,24 +48,14 @@ print_header() {
     fi
 }
 
-# 1. Project CLAUDE.md (always loaded first)
-if [[ -f "$PROJECT_ROOT/CLAUDE.md" ]]; then
-    print_header "CLAUDE.md"
-    cat "$PROJECT_ROOT/CLAUDE.md"
-fi
-
-# 2. User CLAUDE.md (if exists)
-if [[ -f "$HOME/.claude/CLAUDE.md" ]]; then
-    print_header "~/.claude/CLAUDE.md"
-    cat "$HOME/.claude/CLAUDE.md"
-fi
+# CLAUDE.md is already loaded by Claude Code system prompt - skip it
 
 # Stop here for minimal mode
 if [[ "$MINIMAL" == "true" ]]; then
     exit 0
 fi
 
-# 3. Sprint summary (extract key info only, not full notes)
+# 1. Sprint summary (extract key info only, not full notes)
 if [[ -f "$PROJECT_ROOT/sprint/current-sprint.yaml" ]]; then
     print_header "Sprint Context"
 
@@ -87,7 +74,7 @@ if [[ -f "$PROJECT_ROOT/sprint/current-sprint.yaml" ]]; then
     fi
 fi
 
-# 4. Active session (if exists) - first 50 lines only
+# 2. Active session (if exists) - first 50 lines only
 SESSION_FILE=""
 if [[ -d "$PROJECT_ROOT/.session" ]]; then
     # Find a session file (typically only one active at a time)
@@ -106,7 +93,7 @@ if [[ -n "$SESSION_FILE" && -f "$SESSION_FILE" ]]; then
     fi
 fi
 
-# 5. Agent sidecar (if --agent provided)
+# 3. Agent sidecar (if --agent provided)
 if [[ -n "$AGENT_NAME" ]]; then
     SIDECAR_DIR="$PROJECT_ROOT/.pennyfarthing/sidecars/${AGENT_NAME}"
     if [[ -d "$SIDECAR_DIR" ]]; then
@@ -119,38 +106,16 @@ if [[ -n "$AGENT_NAME" ]]; then
     fi
 fi
 
-# 6. Shared context (project info - all agents get this)
+# 4. Agent behavior guide (combined protocols for all agents)
 if [[ -n "$AGENT_NAME" ]]; then
-    SHARED_CONTEXT="$PROJECT_ROOT/.pennyfarthing/guides/shared-context.md"
-    if [[ -f "$SHARED_CONTEXT" ]]; then
-        print_header "Shared Context"
-        cat "$SHARED_CONTEXT"
+    BEHAVIOR_GUIDE="$PROJECT_ROOT/.pennyfarthing/guides/agent-behavior.md"
+    if [[ -f "$BEHAVIOR_GUIDE" ]]; then
+        print_header "Agent Behavior Guide"
+        cat "$BEHAVIOR_GUIDE"
     fi
 fi
 
-# 7. Shared agent behavior (protocols - all agents get this)
-if [[ -n "$AGENT_NAME" ]]; then
-    SHARED_GUIDE="$PROJECT_ROOT/.pennyfarthing/guides/shared-agent-behavior.md"
-    if [[ -f "$SHARED_GUIDE" ]]; then
-        print_header "Shared Agent Behavior"
-        cat "$SHARED_GUIDE"
-    fi
-fi
-
-# 8. Tactical guide (for tactical agents: sm, tea, dev, reviewer)
-if [[ -n "$AGENT_NAME" ]]; then
-    case "$AGENT_NAME" in
-        sm|tea|dev|reviewer)
-            TACTICAL_GUIDE="$PROJECT_ROOT/.pennyfarthing/guides/tactical-agent-behavior.md"
-            if [[ -f "$TACTICAL_GUIDE" ]]; then
-                print_header "Tactical Agent Behavior"
-                cat "$TACTICAL_GUIDE"
-            fi
-            ;;
-    esac
-fi
-
-# 9. Domain docs (--full only)
+# 5. Domain docs (--full only)
 if [[ "$FULL" == "true" ]]; then
     for doc in "$PROJECT_ROOT/.claude/project"/CLAUDE-*.md; do
         if [[ -f "$doc" ]]; then

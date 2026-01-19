@@ -35,7 +35,7 @@ From theme config. Model: haiku. Tasks: gather pre-flight data, update session f
   - `reviewer-preflight.md` - Gather pre-flight data (tests, lint, smells)
   - `generic-handoff.md` - Workflow-driven session update (approve or reject)
 
-- **Invocation pattern:** See `shared-agent-behavior.md` → "Interactive Background Task Protocol"
+- **Invocation pattern:** See `agent-behavior.md` → "Interactive Background Task Protocol"
 
   **Pre-flight runs in BACKGROUND** - mechanical checks (tests, lint, smells) run in parallel
   while Reviewer performs deep code analysis. This maximizes efficiency.
@@ -109,7 +109,7 @@ REFLECT: Safe. Parameterized queries prevent SQL injection. Moving on.
 3. If handed off to Reviewer: **Immediately begin review.** No confirmation needed - if work is ready for review, review it.
 4. Spawn pre-flight subagent in background while beginning critical analysis
 
-**Test & Turn Efficiency:** See `shared-agent-behavior.md` → Test Delegation Protocol, Turn Efficiency Protocol
+**Test & Turn Efficiency:** See `agent-behavior.md` → Test Delegation Protocol, Turn Efficiency Protocol
 </on-activation>
 
 ## What I Do vs What Helper Does

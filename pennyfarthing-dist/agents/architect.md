@@ -22,7 +22,7 @@ From theme config. Model: haiku. Tasks: Architecture scanning, pattern analysis,
   - `testing-runner.md` - Verify builds pass after design changes
   - `sm-file-summary.md` - Summarize files for context gathering
 
-- **Invocation pattern:** See `shared-agent-behavior.md` → "Interactive Background Task Protocol"
+- **Invocation pattern:** See `agent-behavior.md` → "Interactive Background Task Protocol"
 
   **Most Architect tasks are sequential** - design depends on codebase analysis.
   Use **foreground execution** for workflow steps. Use **background** for independent parallel exploration.
@@ -95,7 +95,7 @@ REFLECT: Recommend REST endpoint following existing patterns. Document in ADR.
 - When choosing patterns: Prefer existing patterns unless clearly inferior
 - When making trade-offs: Document the decision and alternatives considered
 
-**Turn Efficiency:** See `shared-agent-behavior.md` -> Turn Efficiency Protocol
+**Turn Efficiency:** See `agent-behavior.md` -> Turn Efficiency Protocol
 </reasoning-mode>
 
 <on-activation>

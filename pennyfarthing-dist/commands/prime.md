@@ -57,9 +57,9 @@ Context is loaded in priority order:
 | 3 | Sprint summary | `sprint/current-sprint.yaml` (key fields only) |
 | 4 | Active session | `.session/*-session.md` (first 50 lines) |
 | 5 | Agent sidecar | `.pennyfarthing/sidecars/{agent}/*.md` (if `--agent` provided) |
-| 6 | Shared context | `.pennyfarthing/guides/shared-context.md` (project info - all agents) |
-| 7 | Shared behavior | `.pennyfarthing/guides/shared-agent-behavior.md` (protocols - all agents) |
-| 8 | Tactical guide | `.pennyfarthing/guides/tactical-agent-behavior.md` (for sm, tea, dev, reviewer only) |
+| 6 | Shared context | `.pennyfarthing/guides/agent-behavior.md` (project info - all agents) |
+| 7 | Shared behavior | `.pennyfarthing/guides/agent-behavior.md` (protocols - all agents) |
+| 8 | Tactical guide | `.pennyfarthing/guides/agent-behavior.md` (for sm, tea, dev, reviewer only) |
 
 ### Minimal Mode (`--minimal`)
 Only loads CLAUDE.md files (priority 1-2).
@@ -70,7 +70,7 @@ Adds domain documentation from `.claude/project/CLAUDE-*.md` files.
 ### Agent Sidecar (`--agent <name>`)
 When agent name is provided, loads the agent's project-specific patterns from their sidecar directory. This gives agents their learned patterns immediately on activation.
 
-### Shared Context (automatic for all agents)
+### Agent Behavior Guide (automatic for all agents)
 All agents receive the shared context guide which includes project info, directory structure, git strategy, sprint system overview, and build commands.
 
 ### Shared Behavior (automatic for all agents)
@@ -134,7 +134,7 @@ If context becomes stale mid-session, run `/prime` manually:
 - **Called by:** agent-session.sh on agent start (with `--agent` flag)
 - **Loads:** CLAUDE.md, sprint, session, sidecar, shared context, shared behavior, tactical guide
 - **Sidecar location:** `.pennyfarthing/sidecars/{agent}/*.md`
-- **Shared context:** `.pennyfarthing/guides/shared-context.md` (all agents)
-- **Shared behavior:** `.pennyfarthing/guides/shared-agent-behavior.md` (all agents)
-- **Tactical guide:** `.pennyfarthing/guides/tactical-agent-behavior.md` (sm, tea, dev, reviewer only)
+- **Shared context:** `.pennyfarthing/guides/agent-behavior.md` (all agents)
+- **Shared behavior:** `.pennyfarthing/guides/agent-behavior.md` (all agents)
+- **Tactical guide:** `.pennyfarthing/guides/agent-behavior.md` (sm, tea, dev, reviewer only)
 </reference>
