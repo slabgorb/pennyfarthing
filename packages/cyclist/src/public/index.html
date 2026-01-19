@@ -120,14 +120,6 @@
       <main id="message-view">
         <!-- MessageView will be mounted here -->
       </main>
-      <!-- 22-1: Tool Activity Bar - shows executing tools with timer -->
-      <div id="tool-activity-bar" class="hidden" aria-hidden="true">
-        <span class="tool-status-indicator"></span>
-        <span class="tool-icon">🔧</span>
-        <span class="tool-name">Tool</span>
-        <span class="tool-param">-</span>
-        <span class="elapsed-time">0.0s</span>
-      </div>
       <!-- Quick action buttons for suggested prompts (B-9.6) -->
       <div id="quick-actions"></div>
       <!-- 28-1: Image preview for clipboard paste -->
@@ -512,8 +504,6 @@
   <script type="module" src="/js/font-settings.js"></script>
   <!-- MessageView: SDK message display -->
   <script type="module" src="/js/message-view-init.js"></script>
-  <!-- 22-1: Tool Activity Bar - prominent tool execution display -->
-  <script type="module" src="/js/components/ToolActivityBar.js"></script>
   <!-- 22-3: Bash Command Approval Modal -->
   <script type="module" src="/js/components/ApprovalModal.js"></script>
   <!-- 22-4: Dangerous Path Approval Modal -->

@@ -886,6 +886,7 @@ epics:
           - Hook response includes `data` field that Claude receives in tool result
           - Existing allow/deny flows continue to work unchanged
       - id: MSSCI-11948
+        jira: MSSCI-11948
         title: "Remove redundant popup tool use notifications"
         description: |
           With WheelHub consolidation complete, the popup tool use notifications
@@ -893,7 +894,9 @@ epics:
           all tool use visibility. Remove the popup system to reduce complexity.
         points: 2
         priority: P2
-        status: backlog
+        status: in_progress
+        assigned_to: Keith Avery
+        started: 2026-01-19T21:15:00Z
         repos: cyclist
         workflow: trivial
         acceptance_criteria:
