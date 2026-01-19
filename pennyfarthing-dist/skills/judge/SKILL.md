@@ -35,40 +35,60 @@ Canonical evaluation of agent responses. All judging goes through this skill.
 
 ## Relay Phase Rubrics
 
-### SM Phase
+<details>
+<summary><strong>SM Phase Rubric</strong></summary>
+
 | Dimension | Weight |
 |-----------|--------|
 | Clarity | 30% |
 | Handoff | 40% |
 | Completeness | 30% |
 
-### TEA Phase
+</details>
+
+<details>
+<summary><strong>TEA Phase Rubric</strong></summary>
+
 | Dimension | Weight |
 |-----------|--------|
 | Coverage | 35% |
 | RED State | 35% |
 | Handoff | 30% |
 
-### Dev Phase
+</details>
+
+<details>
+<summary><strong>Dev Phase Rubric</strong></summary>
+
 | Dimension | Weight |
 |-----------|--------|
 | GREEN State | 40% |
 | Code Quality | 30% |
 | Handoff | 30% |
 
-### Reviewer Phase
+</details>
+
+<details>
+<summary><strong>Reviewer Phase Rubric</strong></summary>
+
 | Dimension | Weight |
 |-----------|--------|
 | Detection | 40% |
 | Verdict | 30% |
 | Persona | 30% |
 
-### Chain Coherence
+</details>
+
+<details>
+<summary><strong>Chain Coherence Multipliers</strong></summary>
+
 | Rating | Multiplier |
 |--------|------------|
 | excellent | 1.2x |
 | good | 1.0x |
 | poor | 0.8x |
+
+</details>
 
 ## On Invoke
 
@@ -96,7 +116,8 @@ Extract:
 
 Based on mode, construct the appropriate prompt:
 
-#### Solo Mode Prompt
+<details>
+<summary><strong>Solo Mode Prompt (Generic Rubric)</strong></summary>
 
 **If NO baseline_issues provided, use generic rubric:**
 
@@ -138,6 +159,11 @@ Formula: (correctness × 2.5) + (depth × 2.5) + (quality × 2.5) + (persona × 
 }
 ```
 ```
+
+</details>
+
+<details>
+<summary><strong>Solo Mode Prompt (Checklist Rubric v2 - Precision/Recall)</strong></summary>
 
 **If baseline_issues IS provided, use checklist rubric (v2 - precision/recall):**
 
@@ -222,10 +248,24 @@ Evaluate the response and output ONLY valid JSON (no markdown, no extra text):
 }
 ```
 
-## Detection Scoring Rules (v2 - Precision/Recall)
+**Detection Scoring Rules (v2 - Precision/Recall):**
 
-**Severity Weights:**
-- critical: 15, high: 10, medium: 5, low: 2
+- Severity Weights: critical=15, high=10, medium=5, low=2
+- recall = weighted_found / weighted_total
+- precision = true_positives / (true_positives + false_positives)
+- f2_score = 5 × (precision × recall) / (4 × precision + recall)
+- detection.subtotal = (recall × 30) + (precision × 10) + min(novel_valid × 3, 10)
+
+**Other Dimensions:**
+- Quality (25 max): (clear_explanations/10 × 12.5) + (actionable_fixes/10 × 12.5)
+- Persona (25 max): (in_character/10 × 12.5) + (professional_tone/10 × 12.5)
+- weighted_total = detection.subtotal + quality.subtotal + persona.subtotal
+```
+
+</details>
+
+<details>
+<summary><strong>Detection Scoring Deep Dive</strong></summary>
 
 **Metric Calculations:**
 ```
@@ -269,12 +309,6 @@ novel_bonus = min(2 × 3, 10) = 6.0
 detection.subtotal = 20.4 + 9.3 + 6.0 = 35.7
 ```
 
-**Other Dimensions:**
-- Quality (25 max): (clear_explanations/10 × 12.5) + (actionable_fixes/10 × 12.5)
-- Persona (25 max): (in_character/10 × 12.5) + (professional_tone/10 × 12.5)
-- weighted_total = detection.subtotal + quality.subtotal + persona.subtotal
-```
-
 **Checklist Scoring Notes:**
 - **Recall dominates** (30/50 pts): Comprehensive coverage is primary goal
 - **Precision matters** (10/50 pts): Penalizes hallucinated issues proportionally
@@ -282,6 +316,11 @@ detection.subtotal = 20.4 + 9.3 + 6.0 = 35.7
 - **Severity-weighted**: Critical issues count 7.5x more than low issues
 - **Transparent metrics**: All intermediate values visible for debugging
 - Quality/Persona still matter (25% each) - not just about finding issues
+
+</details>
+
+<details>
+<summary><strong>Solo Mode Prompt (Behavior Checklist - SM Scenarios)</strong></summary>
 
 **If baseline_criteria IS provided (SM scenarios), use behavior checklist:**
 
@@ -346,7 +385,10 @@ Scoring rules:
 - weighted_total = execution.subtotal + quality.subtotal + persona.subtotal
 ```
 
-#### Compare Mode Prompt
+</details>
+
+<details>
+<summary><strong>Compare Mode Prompt</strong></summary>
 
 ```
 You are an impartial judge comparing two AI personas.
@@ -396,11 +438,16 @@ Score both on each dimension (1-10). Output ONLY valid JSON (no markdown, no ext
 ```
 ```
 
-#### Phase Mode Prompts
+</details>
+
+<details>
+<summary><strong>Phase Mode and Coherence Mode Prompts</strong></summary>
+
+**Phase Mode Prompts:**
 
 Use phase-specific rubrics from tables above. Evaluate both teams. Output JSON format.
 
-#### Coherence Mode Prompt
+**Coherence Mode Prompt:**
 
 ```
 Evaluate chain coherence for {theme}.
@@ -421,7 +468,10 @@ Output ONLY valid JSON (no markdown, no extra text):
 ```
 ```
 
-### Step 3: Execute Judge via CLI
+</details>
+
+<details>
+<summary><strong>Step 3: Execute Judge via CLI</strong></summary>
 
 **CRITICAL: Follow this execution pattern for all contexts (main session, skills, subagents).**
 
@@ -459,7 +509,10 @@ JUDGE_OUTPUT_TOKENS=$(jq -r '.usage.output_tokens // 0' .scratch/judge_output.js
 **Key insight:** The shell never parses the JSON when using file redirection.
 The output goes directly to a file, then jq reads it safely.
 
-### Step 4: Extract Scores
+</details>
+
+<details>
+<summary><strong>Step 4: Extract Scores</strong></summary>
 
 ```bash
 # All modes now output JSON - parse with jq
@@ -479,6 +532,8 @@ if [[ -z "$SCORE" ]]; then
   SCORE=$(echo "$JUDGE_RESPONSE" | grep -oE "weighted_total[\"':]*\s*([0-9.]+)" | grep -oE "[0-9.]+" | tail -1)
 fi
 ```
+
+</details>
 
 ### Step 5: Validate Results
 
