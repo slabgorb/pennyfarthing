@@ -500,9 +500,10 @@ epics:
         title: "Bug: Fix existing broken tests"
         points: 2
         priority: P1
-        status: in_progress
+        status: done
         assigned_to: Keith Avery
         started: 2026-01-19T11:22:00Z
+        completed: 2026-01-19
         repos: cyclist
         workflow: trivial
         description: |
