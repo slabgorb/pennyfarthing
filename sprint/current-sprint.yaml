@@ -761,7 +761,7 @@ epics:
     type: epic
     title: "Epic: WheelHub Notification Consolidation"
     points: 20
-    completed_points: 5
+    completed_points: 10
     priority: P2
     status: in_progress
     stories:
@@ -851,7 +851,11 @@ epics:
           - Hook must serialize response data back to Claude's tool result
         points: 5
         priority: P1
-        status: backlog
+        status: done
+        assigned_to: Keith Avery
+        started: 2026-01-19T17:30:00Z
+        completed: 2026-01-19
+        pr: 353
         repos: cyclist
         workflow: tdd
         acceptance_criteria:

@@ -161,6 +161,7 @@ async function requestApproval(toolData) {
 
 /**
  * Output decision in Claude Code hook format
+ * MSSCI-11947: Extended to pass through data field as updatedInput for interactive tools
  */
 function outputDecision(decision, reason, updatedInput = null) {
   const output = {
@@ -180,6 +181,7 @@ function outputDecision(decision, reason, updatedInput = null) {
 
 /**
  * Main entry point
+ * MSSCI-11947: Extended to handle data field for interactive tools (AskUserQuestion, ExitPlanMode)
  */
 async function main() {
   try {
@@ -198,11 +200,16 @@ async function main() {
     });
 
     // Output decision
+    // MSSCI-11947: Pass through data field as updatedInput for interactive tools
     if (response.decision === 'allow') {
-      outputDecision('allow', response.reason || 'Approved by user');
+      // If response contains data, pass it as updatedInput so Claude receives it
+      const updatedInput = response.data || null;
+      outputDecision('allow', response.reason || 'Approved by user', updatedInput);
       process.exit(0);
     } else if (response.decision === 'deny') {
-      outputDecision('deny', response.reason || 'Rejected by user');
+      // Even denials can have data (e.g., ExitPlanMode rejection with feedback)
+      const updatedInput = response.data || null;
+      outputDecision('deny', response.reason || 'Rejected by user', updatedInput);
       process.exit(0);
     } else if (response.decision === 'ask') {
       // Fall through to Claude Code's built-in permission dialog
