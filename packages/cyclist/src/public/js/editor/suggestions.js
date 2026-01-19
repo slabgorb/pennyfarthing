@@ -5,7 +5,6 @@
  * Click to accept the suggestion into the editor.
  */
 
-import { DEFAULT_GHOST_TEXT } from './constants.js';
 
 // =============================================================================
 // State
@@ -107,7 +106,7 @@ function analyzeMessageContext(messages) {
 
 /**
  * Generate suggestion based on conversation context
- * @returns {string}
+ * @returns {string|null} Suggestion text, or null if no meaningful suggestion
  */
 function generateSuggestion() {
   const recentMessages = getRecentUserMessages();
@@ -117,11 +116,8 @@ function generateSuggestion() {
     return context.action;
   }
 
-  if (recentMessages.length > 0) {
-    return 'Continue with...';
-  }
-
-  return DEFAULT_GHOST_TEXT;
+  // No meaningful suggestion - don't show generic placeholder
+  return null;
 }
 
 /**
@@ -160,6 +156,12 @@ export function showGhostText() {
   }
 
   currentSuggestion = generateSuggestion();
+
+  // Don't show if no meaningful suggestion
+  if (!currentSuggestion) {
+    return;
+  }
+
   suggestionVisible = true;
 
   const popup = getPopupElement();
