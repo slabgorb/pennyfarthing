@@ -249,11 +249,11 @@ describe('B-19: Context Usage Progress Bar', () => {
       expect(typeof api.context.onUpdate).toBe('function');
     });
 
-    // SKIPPED: Context handling is done via context-meter.ts module,
-    // not a separate context.js script. The implementation uses TypeScript
-    // module imported in main.ts rather than a standalone browser script.
-    it.skip('should include context.js script in HTML', () => {
-      expect(html).toContain('context.js');
+    // Context handling is done via stats-strip.js which subscribes to
+    // electronAPI.context. The context-meter.ts module provides utility functions.
+    // Verify that stats-strip.js is included in the HTML.
+    it('should include stats-strip.js script in HTML', () => {
+      expect(html).toContain('stats-strip.js');
     });
 
   });

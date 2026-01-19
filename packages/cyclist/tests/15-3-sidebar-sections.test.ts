@@ -55,15 +55,14 @@ describe('Story 15-3: Sidebar Sections UI', () => {
       expect(characterRole).not.toBeNull();
     });
 
-    // SKIPPED: Design changed - character-quote moved to portrait tooltip instead
-    // These elements are no longer used in the main sidebar panel
-    it.skip('should have character-quote element for displaying quote', () => {
+    // MSSCI-11821: AC requires character-quote element in persona section
+    it('should have character-quote element for displaying quote', () => {
       const characterQuote = document.querySelector('#character-quote, .character-quote');
       expect(characterQuote).not.toBeNull();
     });
 
-    // SKIPPED: Design changed - persona-info container no longer used
-    it.skip('should have persona-info container grouping name and role', () => {
+    // MSSCI-11821: AC requires all 15-3 tests passing
+    it('should have persona-info container grouping name and role', () => {
       const personaInfo = document.querySelector('#persona-info, .persona-info');
       expect(personaInfo).not.toBeNull();
     });
@@ -74,8 +73,8 @@ describe('Story 15-3: Sidebar Sections UI', () => {
       expect(css).toMatch(/\.character-name\s*\{[^}]*(font-weight|font-size)[^}]*\}/);
     });
 
-    // SKIPPED: Design changed - character-quote styling moved to tooltip
-    it.skip('should have styling for character quote (italic, muted)', () => {
+    // MSSCI-11821: AC requires character-quote CSS styling
+    it('should have styling for character quote (italic, muted)', () => {
       expect(css).toContain('.character-quote');
       // Check that it's defined with some styling
       expect(css).toMatch(/\.character-quote\s*\{/);

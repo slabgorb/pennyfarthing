@@ -426,8 +426,12 @@ epics:
         title: Audit and fix context.js script inclusion
         points: 2
         priority: P2
-        status: backlog
+        status: done
         repos: cyclist
+        workflow: tdd
+        assigned_to: Keith Avery
+        started: 2026-01-18T12:00:00Z
+        completed: 2026-01-18
         acceptance_criteria:
           - Context progress feature fully implemented
           - Test unskipped and passing
@@ -435,8 +439,11 @@ epics:
         title: Fix 15-3 sidebar section styling tests
         points: 2
         priority: P2
-        status: backlog
+        status: in_progress
         repos: cyclist
+        assigned_to: Keith Avery
+        started: 2026-01-19T00:00:00Z
+        workflow: tdd
         acceptance_criteria:
           - Persona section has character-quote element
           - All 15-3 tests unskipped and passing

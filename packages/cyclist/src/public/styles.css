@@ -1348,6 +1348,21 @@ html, body {
   color: var(--accent);
 }
 
+/* MSSCI-11821: Character quote (italic, muted) */
+.character-quote {
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: 0.5rem;
+  padding: 0 0.5rem;
+  opacity: 0.8;
+}
+
+.character-quote:empty {
+  display: none;
+}
+
 /* MessageView container (replaces xterm terminal) */
 #message-view {
   flex: 1;
