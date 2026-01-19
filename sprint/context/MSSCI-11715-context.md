@@ -1,4 +1,4 @@
-# Epic 35: Cyclist UI/UX Improvements - Technical Context
+# MSSCI-11715: Cyclist UI/UX Improvements - Technical Context
 
 ## 1. Architecture Overview
 
