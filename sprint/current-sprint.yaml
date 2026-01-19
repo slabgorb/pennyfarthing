@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 143
-  completed_points: 141
-  remaining_points: 2
+  completed_points: 143
+  remaining_points: 0
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - MSSCI-11599: Customizable Workflow Engine (4 pts remaining)
@@ -503,7 +503,7 @@ epics:
     type: epic
     title: "Epic: Agent File Modernization"
     points: 30
-    completed_points: 26
+    completed_points: 28
     priority: P2
     status: in_progress
     stories:
@@ -565,7 +565,7 @@ epics:
         title: Modernize UX Designer agent for custom workflows
         points: 2
         priority: P3
-        status: in_progress
+        status: done
         assigned_to: Keith Avery
         started: 2026-01-19T00:00:00Z
         repos: pennyfarthing
@@ -574,6 +574,8 @@ epics:
           - UX Designer has reasoning-mode section
           - Clear workflow for UI/UX stories
           - Handoff protocol to Dev defined
+        completed: "2026-01-19"
+        pr: 348
       - id: MSSCI-11837
         title: Centralize handoff logic and honor auto/manual mode
         points: 3
