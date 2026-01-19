@@ -160,8 +160,8 @@ describe('MSSCI-11851: Collapsible Bash Output', () => {
 
       const html = renderers.renderBashToolResult(bashToolResultError);
 
-      // Should show exit code 1
-      expect(html).toContain('1');
+      // Should show error indicator (✗ symbol)
+      expect(html).toContain('✗');
       // Should have error styling class
       expect(html).toMatch(/class="[^"]*exit-error[^"]*"/);
     });
@@ -216,11 +216,11 @@ describe('MSSCI-11851: Collapsible Bash Output', () => {
 
       const successResult = renderers.formatExitCode(0);
       expect(successResult).toContain('exit-success');
-      expect(successResult).toContain('0');
+      expect(successResult).toContain('✓');
 
       const errorResult = renderers.formatExitCode(1);
       expect(errorResult).toContain('exit-error');
-      expect(errorResult).toContain('1');
+      expect(errorResult).toContain('✗');
     });
 
   });
@@ -476,7 +476,9 @@ describe('MSSCI-11851: Collapsible Bash Output', () => {
       // Should be enriched with Bash-specific properties
       expect(enriched.tool_name).toBe('Bash');
       expect(enriched.bash_command).toBe('echo hello');
-      expect(enriched.bash_exit_code).toBe(0);
+      // Success cases don't set bash_exit_code (it's only set for errors)
+      // The renderer handles undefined as success (shows ✓)
+      expect(enriched.bash_exit_code).toBeUndefined();
     });
 
     it('should set exit code to 1 for error results', async () => {

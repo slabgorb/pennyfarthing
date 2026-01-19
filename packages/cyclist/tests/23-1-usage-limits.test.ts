@@ -53,11 +53,11 @@ describe('23-1: Usage Limits in Stats Strip', () => {
       expect(usage5hr?.getAttribute('data-stat')).toBe('strip-usage-5hr');
     });
 
-    it('should display percentage value', () => {
-      const usage5hr = document.querySelector('#stats-strip .usage-5hr');
-      const text = usage5hr?.textContent || '';
-      // Should show percentage or placeholder
-      expect(text.includes('%') || text === '—' || text === '-').toBe(true);
+    it('should have usage value element ready for population', () => {
+      const usageValue = document.querySelector('#stats-strip .usage-5hr .usage-value');
+      // Element exists and is ready to be populated by JavaScript
+      // Starts empty (hidden) and gets populated when data arrives
+      expect(usageValue).not.toBeNull();
     });
 
     it('should have label indicating 5-hour period', () => {
@@ -81,11 +81,11 @@ describe('23-1: Usage Limits in Stats Strip', () => {
       expect(usageWeekly?.getAttribute('data-stat')).toBe('strip-usage-weekly');
     });
 
-    it('should display percentage value', () => {
-      const usageWeekly = document.querySelector('#stats-strip .usage-weekly');
-      const text = usageWeekly?.textContent || '';
-      // Should show percentage or placeholder
-      expect(text.includes('%') || text === '—' || text === '-').toBe(true);
+    it('should have usage value element ready for population', () => {
+      const usageValue = document.querySelector('#stats-strip .usage-weekly .usage-value');
+      // Element exists and is ready to be populated by JavaScript
+      // Starts empty (hidden) and gets populated when data arrives
+      expect(usageValue).not.toBeNull();
     });
 
     it('should have label indicating weekly period', () => {

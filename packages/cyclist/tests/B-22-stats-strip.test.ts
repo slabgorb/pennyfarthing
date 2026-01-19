@@ -139,16 +139,14 @@ describe('B-22: Prompt Bar Stats Display', () => {
       expect(text).toMatch(/5.?hr|week/i);
     });
 
-    it('should display placeholder percentage values initially', () => {
-      const usage5hr = document.querySelector('#stats-strip .usage-5hr');
-      const usageWeekly = document.querySelector('#stats-strip .usage-weekly');
+    it('should have usage value elements ready for population', () => {
+      const usage5hr = document.querySelector('#stats-strip .usage-5hr .usage-value');
+      const usageWeekly = document.querySelector('#stats-strip .usage-weekly .usage-value');
 
-      const hr5Text = usage5hr?.textContent || '';
-      const weeklyText = usageWeekly?.textContent || '';
-
-      // Should show placeholder (dash) or percentage
-      expect(hr5Text.includes('—') || hr5Text.includes('%')).toBe(true);
-      expect(weeklyText.includes('—') || weeklyText.includes('%')).toBe(true);
+      // Elements exist and are ready to be populated by JavaScript
+      // They start empty (hidden) and get populated when data arrives
+      expect(usage5hr).not.toBeNull();
+      expect(usageWeekly).not.toBeNull();
     });
 
   });
