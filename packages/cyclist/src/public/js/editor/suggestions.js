@@ -41,7 +41,7 @@ export function initSuggestions(editor) {
  * Check if suggestion pill is currently visible
  * @returns {boolean}
  */
-export function isGhostTextVisible() {
+export function isSuggestionVisible() {
   return suggestionVisible;
 }
 
@@ -49,7 +49,7 @@ export function isGhostTextVisible() {
  * Get the current suggestion text
  * @returns {string}
  */
-export function getCurrentGhostText() {
+export function getCurrentSuggestion() {
   return currentSuggestion;
 }
 
@@ -121,7 +121,7 @@ function generateSuggestion() {
 }
 
 /**
- * Get or create the suggestion popup element
+ * Get or create the suggestion pill container element
  * @returns {HTMLElement|null}
  */
 function getPopupElement() {
@@ -129,13 +129,20 @@ function getPopupElement() {
   if (typeof document === 'undefined') return null;
 
   popupElement = document.createElement('div');
-  popupElement.id = 'suggestion-popup';
-  popupElement.className = 'completion-popup suggestion-popup';
+  popupElement.id = 'suggestion-pills';
+  popupElement.className = 'suggestion-pills-container';
   popupElement.style.display = 'none';
 
-  const editorWrapper = document.getElementById('editor-wrapper');
-  if (editorWrapper) {
-    editorWrapper.appendChild(popupElement);
+  // Insert before editor-wrapper, after quick-actions
+  const quickActions = document.getElementById('quick-actions');
+  if (quickActions && quickActions.parentNode) {
+    quickActions.parentNode.insertBefore(popupElement, quickActions.nextSibling);
+  } else {
+    // Fallback: append to input-section
+    const inputSection = document.getElementById('input-section');
+    if (inputSection) {
+      inputSection.insertBefore(popupElement, inputSection.firstChild);
+    }
   }
 
   return popupElement;
@@ -144,7 +151,7 @@ function getPopupElement() {
 /**
  * Show suggestion pill above the editor
  */
-export function showGhostText() {
+export function showSuggestion() {
   if (!editorRef || suggestionVisible) {
     return;
   }
@@ -167,14 +174,16 @@ export function showGhostText() {
   const popup = getPopupElement();
   if (!popup) return;
 
-  popup.innerHTML = `<div class="completion-item selected">
-    <span class="completion-name">${currentSuggestion}</span>
-  </div>`;
-  popup.style.display = 'block';
+  // Render as a compact pill with Tab hint
+  popup.innerHTML = `<button class="suggestion-pill" type="button">
+    <span class="suggestion-pill-text">${currentSuggestion}</span>
+    <kbd class="suggestion-pill-hint">Tab</kbd>
+  </button>`;
+  popup.style.display = 'flex';
 
   // Add click handler
-  popup.querySelector('.completion-item').addEventListener('click', () => {
-    acceptGhostText();
+  popup.querySelector('.suggestion-pill').addEventListener('click', () => {
+    acceptSuggestion();
   });
 }
 
@@ -182,7 +191,7 @@ export function showGhostText() {
  * Accept the suggestion (insert into editor)
  * @returns {boolean} True if suggestion was accepted
  */
-export function acceptGhostText() {
+export function acceptSuggestion() {
   if (!editorRef || !suggestionVisible || !currentSuggestion) {
     return false;
   }
@@ -190,14 +199,14 @@ export function acceptGhostText() {
   editorRef.commands.setContent(`<p>${currentSuggestion}</p>`);
   editorRef.commands.focus('end');
 
-  clearGhostText();
+  clearSuggestion();
   return true;
 }
 
 /**
  * Clear/hide the suggestion pill
  */
-export function clearGhostText() {
+export function clearSuggestion() {
   suggestionVisible = false;
   currentSuggestion = '';
 
@@ -212,7 +221,7 @@ export function clearGhostText() {
  * @param {KeyboardEvent} event
  * @returns {boolean} True if event was handled
  */
-export function handleGhostTextKey(event) {
+export function handleSuggestionKey(event) {
   if (!suggestionVisible) {
     return false;
   }
@@ -220,13 +229,13 @@ export function handleGhostTextKey(event) {
   // Escape - hide suggestion
   if (event.key === 'Escape') {
     event.preventDefault();
-    clearGhostText();
+    clearSuggestion();
     return true;
   }
 
   // Any printable key - hide suggestion and let user type
   if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
-    clearGhostText();
+    clearSuggestion();
     return false;
   }
 

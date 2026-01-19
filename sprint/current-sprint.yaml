@@ -282,6 +282,25 @@ epics:
           - Exit code badge shows success (green) or error (red)
           - Output preserved with ANSI color support
           - Collapsed by default, expandable on click
+      - id: "35-12"
+        title: "Prompt suggestion pill instead of blocking bar"
+        points: 2
+        priority: P1
+        status: in_progress
+        assigned_to: Keith Avery
+        started: 2026-01-19T22:00:00Z
+        repos: cyclist
+        workflow: trivial
+        description: |
+          The QUEUED prompt suggestion bar (suggestions.js) displays as a full-width
+          purple bar that blocks the editor area. Change it to use the same pill
+          pattern as handoff prompts (quick-actions.js) - compact, non-blocking pills.
+        acceptance_criteria:
+          - Prompt suggestions render as compact pills like handoff buttons
+          - Pills positioned inline without blocking editor content
+          - Same styling pattern as quick-actions (flex container, pill buttons)
+          - Tab to accept, Escape to dismiss behavior preserved
+          - Multiple suggestions can display as separate pills
   # ===========================================================================
   # EPIC 36: OTEL Tool Call Enrichment
   # ===========================================================================

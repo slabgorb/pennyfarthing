@@ -57,9 +57,9 @@ import {
 } from './editor/image-preview.js';
 import {
   initSuggestions,
-  isGhostTextVisible,
-  showGhostText,
-  handleGhostTextKey
+  isSuggestionVisible,
+  showSuggestion,
+  handleSuggestionKey
 } from './editor/suggestions.js';
 
 // Re-export constants for external consumers
@@ -331,9 +331,9 @@ export function clearEditor() {
   // Always clear pending images, even if editor is not initialized
   clearPendingImages();
 
-  // Show ghost text after clearing (small delay for TipTap to settle)
+  // Show suggestion pill after clearing (small delay for TipTap to settle)
   setTimeout(() => {
-    showGhostText();
+    showSuggestion();
   }, 50);
 }
 
@@ -430,8 +430,8 @@ export async function createEditor() {
         },
         handleKeyDown: (view, event) => {
           // Suggestion pill handling - hide on typing, Escape to dismiss
-          if (isGhostTextVisible()) {
-            if (handleGhostTextKey(event)) {
+          if (isSuggestionVisible()) {
+            if (handleSuggestionKey(event)) {
               return true;
             }
           }
@@ -563,13 +563,13 @@ export async function createEditor() {
       submit: submitEditorContent
     });
 
-    // Initialize ghost text suggestions
+    // Initialize suggestion pills
     initSuggestions(editorInstance);
 
-    // Show ghost text on initial focus (if editor is empty)
+    // Show suggestion pill on initial focus (if editor is empty)
     setTimeout(() => {
       if (editorInstance && editorInstance.getText().trim() === '') {
-        showGhostText();
+        showSuggestion();
       }
     }, 100);
 
