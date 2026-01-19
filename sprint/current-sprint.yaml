@@ -259,6 +259,29 @@ epics:
           - Theme panel has drag handle for width adjustment
           - Width persists across sessions (localStorage or settings)
           - Minimum/maximum width constraints prevent unusable sizes
+      - id: MSSCI-11928
+        jira: MSSCI-11928
+        title: Persistent Bash output in message stream (not transient popup)
+        points: 3
+        priority: P1
+        status: done
+        assigned_to: Keith Avery
+        started: 2026-01-19T06:35:00Z
+        completed: 2026-01-19
+        repos: cyclist
+        workflow: tdd
+        pr: 346
+        description: |
+          MSSCI-11851 built the collapsible Bash renderer, but Bash results
+          only appear in a transient activity popup - they're not added to
+          the message stream. This story adds Bash tool_result messages to
+          MessageView so the collapsible renderer actually gets used.
+        acceptance_criteria:
+          - Bash tool_result messages added to message stream (not just popup)
+          - Collapsible section shows command in header
+          - Exit code badge shows success (green) or error (red)
+          - Output preserved with ANSI color support
+          - Collapsed by default, expandable on click
   # ===========================================================================
   # EPIC 36: OTEL Tool Call Enrichment
   # ===========================================================================
