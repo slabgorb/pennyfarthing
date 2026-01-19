@@ -394,6 +394,85 @@ backlog:
           status: backlog
 
     # =========================================================================
+    # INFRASTRUCTURE - Cyclist Architecture
+    # =========================================================================
+    - id: epic-48
+      title: "WheelHub Notification Consolidation"
+      description: |
+        Consolidate Cyclist's 7 organic notification mechanisms under the unified
+        WheelHub WebSocket architecture. Eliminates polling anti-patterns, unifies
+        reconnection strategy, and enables cross-tab state synchronization.
+
+        ADR-001 documents the architectural decision and rationale.
+        See: .claude/plans/crispy-stirring-frost.md for full analysis.
+      points: 13
+      priority: P2
+      marker: infrastructure
+      repos: cyclist
+      status: backlog
+      stories:
+        - id: "48-1"
+          title: "Story/Git WebSocket channels with file watchers"
+          description: |
+            Replace 10s/5s polling with WebSocket channels triggered by file watchers.
+            Hybrid approach: file watchers primary, optional git hooks for completeness.
+          points: 5
+          priority: P1
+          status: backlog
+          repos: cyclist
+          workflow: tdd
+          acceptance_criteria:
+            - /ws/story channel broadcasts on sprint/*.yaml changes
+            - /ws/git channel broadcasts on .git/HEAD and .git/index changes
+            - story.js uses WebSocket instead of setInterval polling
+            - Story panel updates within 2s of file change (not 10s)
+            - Git indicator updates within 2s of branch switch (not 5s)
+        - id: "48-2"
+          title: "Event-driven badge updates"
+          description: |
+            Replace 500ms setInterval badge polling with event-driven updates.
+            PanelManager emits badge-changed event when counts change.
+          points: 2
+          priority: P2
+          status: backlog
+          repos: cyclist
+          workflow: tdd
+          acceptance_criteria:
+            - PanelManager emits badge-changed event on count changes
+            - tab-bar.js subscribes to event instead of polling
+            - No 500ms setInterval in tab-bar.js
+            - Badges update immediately on change
+        - id: "48-3"
+          title: "Livereload pattern alignment"
+          description: |
+            Migrate livereload from exponential backoff to 2s fixed reconnection
+            to align with standard WheelHub pattern.
+          points: 1
+          priority: P3
+          status: backlog
+          repos: cyclist
+          workflow: trivial
+          acceptance_criteria:
+            - livereload.js uses 2s fixed reconnection
+            - Consistent with other WheelHub channels
+        - id: "48-4"
+          title: "LocalStorage cross-tab synchronization"
+          description: |
+            Create settings-sync.js module using BroadcastChannel API for
+            cross-tab localStorage synchronization. Centralizes localStorage
+            access across 16 files.
+          points: 5
+          priority: P2
+          status: backlog
+          repos: cyclist
+          workflow: tdd
+          acceptance_criteria:
+            - settings-sync.js module created with BroadcastChannel API
+            - Theme changes in Tab 1 reflect in Tab 2 immediately
+            - All localStorage access goes through settings-sync.js
+            - 16 existing files refactored to use new module
+
+    # =========================================================================
     # QUALITY & SCALE - Future Initiatives
     # =========================================================================
     - id: epic-39
@@ -506,10 +585,13 @@ backlog:
 #   - Epic 45: Gold Standard References (8 pts) - P2
 #   - Epic 46: Difficulty Profile Enhancement (5 pts) - P2
 #
+# Infrastructure (P2):
+#   - Epic 48: WheelHub Notification Consolidation (13 pts) - NEW
+#
 # Cleanup (P3):
 #   - Epic 27: Skill Frontmatter Enhancement (10 pts)
 #
-# Total Backlog: 96 pts
+# Total Backlog: 109 pts
 #
 # Benchmark Initiative Summary:
 #   Phase 1 (P1): Epics 41-43 = 21 pts (scoring + anchors + traps)
@@ -518,3 +600,8 @@ backlog:
 #     - Inter-judge Krippendorff's Alpha > 0.65
 #     - False positive detection < 10%
 #     - TEA variance CV < 15%
+#
+# WheelHub Consolidation (Epic 48) Summary:
+#   Consolidates 7 notification mechanisms under unified WebSocket architecture
+#   Stories: 48-1 (5pts), 48-2 (2pts), 48-3 (1pt), 48-4 (5pts)
+#   ADR: ADR-001-wheelhub-notification-consolidation
