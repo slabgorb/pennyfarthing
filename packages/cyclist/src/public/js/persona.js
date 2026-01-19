@@ -81,6 +81,7 @@ export function updatePersona(persona) {
   const nameEl = document.getElementById('character-name');
   const roleEl = document.getElementById('character-role');
   const benchmarkEl = document.getElementById('benchmark-score');
+  const quoteEl = document.getElementById('character-quote');
 
   // Project name at top (repo folder name)
   if (projectEl && persona.projectName) {
@@ -114,6 +115,11 @@ export function updatePersona(persona) {
     } else {
       benchmarkEl.textContent = '';
     }
+  }
+
+  // MSSCI-11821: Update character quote
+  if (quoteEl) {
+    quoteEl.textContent = persona.quote || '';
   }
 
   // Update portrait using the portrait module's function
