@@ -496,6 +496,23 @@ epics:
           - MANAGED_PATHS includes .pennyfarthing/workflows
           - pennyfarthing init creates workflows symlink
           - pennyfarthing doctor checks workflows symlink
+      - id: "48-1"
+        title: "Bug: Fix existing broken tests"
+        points: 2
+        priority: P1
+        status: in_progress
+        assigned_to: Keith Avery
+        started: 2026-01-19T11:22:00Z
+        repos: cyclist
+        workflow: trivial
+        description: |
+          Audit and fix all currently failing or skipped tests in the Cyclist
+          test suite. Ensure CI passes with no test failures.
+        acceptance_criteria:
+          - All existing test failures identified and fixed
+          - Previously skipped tests either fixed or removed with justification
+          - CI test suite passes with 0 failures
+          - No new test skips without documented reason
   # ===========================================================================
   # EPIC 38: Agent File Modernization
   # ===========================================================================

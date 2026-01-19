@@ -17,28 +17,28 @@ const MONOREPO_ROOT = join(CYCLIST_ROOT, '..', '..');
 
 describe('34-4: Upgrade path handling', () => {
 
-  describe('AC2: cyclist-setup cleans stale artifacts', () => {
+  describe('AC2: cyclist setup cleans stale artifacts', () => {
     const justfilePath = join(MONOREPO_ROOT, 'justfile');
 
-    it('should include cyclist-clean in cyclist-setup recipe', () => {
+    it('should include clean step in cyclist setup subcommand', () => {
       const content = readFileSync(justfilePath, 'utf-8');
-      // Extract the cyclist-setup recipe content
-      const setupMatch = content.match(/cyclist-setup:[\s\S]*?(?=\n[a-z]+-[a-z]+:|$)/);
+      // Extract the setup) case handler content
+      const setupMatch = content.match(/setup\)[\s\S]*?;;\s*$/m);
       expect(setupMatch).not.toBeNull();
-      const setupRecipe = setupMatch![0];
-      expect(setupRecipe).toMatch(/cyclist-clean|rm -rf.*dist/);
+      const setupHandler = setupMatch![0];
+      expect(setupHandler).toMatch(/rm -rf.*dist/);
     });
 
     it('should clean artifacts BEFORE installing dependencies', () => {
       const content = readFileSync(justfilePath, 'utf-8');
-      // Extract the cyclist-setup recipe
-      const setupMatch = content.match(/cyclist-setup:[\s\S]*?(?=\n[a-z]+-[a-z]+:|$)/);
+      // Extract the setup) case handler
+      const setupMatch = content.match(/setup\)[\s\S]*?;;\s*$/m);
       expect(setupMatch).not.toBeNull();
-      const setupRecipe = setupMatch![0];
+      const setupHandler = setupMatch![0];
 
       // Find positions of clean and pnpm install
-      const cleanIndex = setupRecipe.search(/cyclist-clean|rm -rf.*dist/);
-      const pnpmIndex = setupRecipe.search(/pnpm install/);
+      const cleanIndex = setupHandler.search(/rm -rf.*dist/);
+      const pnpmIndex = setupHandler.search(/pnpm install/);
 
       // Clean should come before pnpm install
       expect(cleanIndex).toBeGreaterThan(-1);
@@ -48,11 +48,11 @@ describe('34-4: Upgrade path handling', () => {
 
     it('should mention cleaning in setup output', () => {
       const content = readFileSync(justfilePath, 'utf-8');
-      const setupMatch = content.match(/cyclist-setup:[\s\S]*?(?=\n[a-z]+-[a-z]+:|$)/);
+      const setupMatch = content.match(/setup\)[\s\S]*?;;\s*$/m);
       expect(setupMatch).not.toBeNull();
-      const setupRecipe = setupMatch![0];
+      const setupHandler = setupMatch![0];
       // Should have a step mentioning cleaning or removing
-      expect(setupRecipe).toMatch(/[Cc]lean|[Rr]emov/);
+      expect(setupHandler).toMatch(/[Cc]lean|[Rr]emov/);
     });
   });
 

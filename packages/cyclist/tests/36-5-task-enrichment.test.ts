@@ -98,7 +98,7 @@ function createTaskOutputSpan(overrides: Partial<{
             }) } },
             { key: 'task_status', value: { stringValue: status } },
             { key: 'success', value: { stringValue: String(success) } },
-            { key: 'tool_output', value: { stringValue: overrides.output || 'Task completed successfully' } },
+            { key: 'tool_output', value: { stringValue: overrides.output !== undefined ? overrides.output : 'Task completed successfully' } },
             { key: 'duration_ms', value: { stringValue: '50' } },
           ],
         }],
