@@ -1,6 +1,6 @@
 sprint:
-  number: 11
-  goal: Complete Epic 31 workflow engine and Cyclist polish
+  number: 12
+  goal: WheelHub notification consolidation and continued polish
   planned_start: 2026-01-15
   status: active
   velocity_target: 22
@@ -721,7 +721,7 @@ epics:
         title: "Use enriched tool descriptions in collapsed headers instead of 'Tool Result'"
         points: 2
         priority: P1
-        status: in_progress
+        status: done
         assigned_to: Keith Avery
         started: 2026-01-19T08:02:00Z
         repos: cyclist
@@ -736,3 +736,120 @@ epics:
           - Task tool results show description in header
           - Grep/Glob show pattern or search summary
           - Falls back to "Tool Result" only if no description available
+  # ===========================================================================
+  # EPIC 48: WheelHub Notification Consolidation
+  # ===========================================================================
+  - id: MSSCI-11942
+    type: epic
+    title: "Epic: WheelHub Notification Consolidation"
+    points: 20
+    completed_points: 0
+    priority: P2
+    status: backlog
+    stories:
+      - id: MSSCI-11942-1
+        title: "Story/Git WebSocket channels with file watchers"
+        description: |
+          Replace 10s/5s polling with WebSocket channels triggered by file watchers.
+          Hybrid approach: file watchers primary, optional git hooks for completeness.
+        points: 5
+        priority: P1
+        status: backlog
+        repos: cyclist
+        workflow: tdd
+        acceptance_criteria:
+          - /ws/story channel broadcasts on sprint/*.yaml changes
+          - /ws/git channel broadcasts on .git/HEAD and .git/index changes
+          - story.js uses WebSocket instead of setInterval polling
+          - Story panel updates within 2s of file change (not 10s)
+          - Git indicator updates within 2s of branch switch (not 5s)
+      - id: MSSCI-11942-2
+        title: "Event-driven badge updates"
+        description: |
+          Replace 500ms setInterval badge polling with event-driven updates.
+          PanelManager emits badge-changed event when counts change.
+        points: 2
+        priority: P2
+        status: backlog
+        repos: cyclist
+        workflow: tdd
+        acceptance_criteria:
+          - PanelManager emits badge-changed event on count changes
+          - tab-bar.js subscribes to event instead of polling
+          - No 500ms setInterval in tab-bar.js
+          - Badges update immediately on change
+      - id: MSSCI-11942-3
+        title: "Livereload pattern alignment"
+        description: |
+          Migrate livereload from exponential backoff to 2s fixed reconnection
+          to align with standard WheelHub pattern.
+        points: 1
+        priority: P3
+        status: backlog
+        repos: cyclist
+        workflow: trivial
+        acceptance_criteria:
+          - livereload.js uses 2s fixed reconnection
+          - Consistent with other WheelHub channels
+      - id: MSSCI-11942-4
+        title: "LocalStorage cross-tab synchronization"
+        description: |
+          Create settings-sync.js module using BroadcastChannel API for
+          cross-tab localStorage synchronization. Centralizes localStorage
+          access across 16 files.
+        points: 5
+        priority: P2
+        status: backlog
+        repos: cyclist
+        workflow: tdd
+        acceptance_criteria:
+          - settings-sync.js module created with BroadcastChannel API
+          - Theme changes in Tab 1 reflect in Tab 2 immediately
+          - All localStorage access goes through settings-sync.js
+          - 16 existing files refactored to use new module
+      - id: MSSCI-11942-5
+        title: "Hook response data channel for interactive tools"
+        description: |
+          Extend PreToolUse hook responses to support returning user-provided data
+          (not just allow/deny) for AskUserQuestion and ExitPlanMode tools.
+
+          Current State:
+          - Claude Code (programmatic mode) invokes PreToolUse hook
+          - Hook POSTs to /approval-request → Cyclist shows modal → allow/deny
+          - Hook returns decision → Claude continues or blocks
+
+          Required Enhancement:
+          - AskUserQuestion needs to return selected answers/custom input
+          - ExitPlanMode needs to return plan approval status and feedback
+          - Hook response must include structured data payload, not just boolean
+
+          Design considerations:
+          - Extend /approval-request response schema with optional `data` field
+          - Modal UI must support form inputs (radio buttons, text fields, checkboxes)
+          - Hook must serialize response data back to Claude's tool result
+        points: 5
+        priority: P1
+        status: backlog
+        repos: cyclist
+        workflow: tdd
+        acceptance_criteria:
+          - /approval-request endpoint accepts and returns structured data payloads
+          - AskUserQuestion modal renders question options and captures user selection
+          - ExitPlanMode modal shows plan content and captures approval with optional feedback
+          - Hook response includes `data` field that Claude receives in tool result
+          - Existing allow/deny flows continue to work unchanged
+      - id: MSSCI-11942-6
+        title: "Remove redundant popup tool use notifications"
+        description: |
+          With WheelHub consolidation complete, the popup tool use notifications
+          are redundant. The approval modal and WebSocket channels now handle
+          all tool use visibility. Remove the popup system to reduce complexity.
+        points: 2
+        priority: P2
+        status: backlog
+        repos: cyclist
+        workflow: trivial
+        acceptance_criteria:
+          - Popup tool use notification code removed
+          - No visual regression in tool use visibility
+          - Approval modal remains the single source for tool interactions
