@@ -448,6 +448,10 @@ let currentContext: ContextInfo = {
   tokens: null,
   status: null,
   error: null,
+  baseline: null,
+  usableTokens: null,
+  usablePercent: null,
+  available: null,
 };
 
 /**
@@ -467,6 +471,10 @@ export function resetContext(): void {
     tokens: null,
     status: null,
     error: null,
+    baseline: null,
+    usableTokens: null,
+    usablePercent: null,
+    available: null,
   };
   broadcastToRenderer(IPC_DATA_CHANNELS.CONTEXT_UPDATE, currentContext);
 }
