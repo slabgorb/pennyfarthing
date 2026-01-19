@@ -154,3 +154,26 @@ The Cyclist visual terminal uses bicycle-themed internal codenames:
 | **WheelHub** | `packages/cyclist/src/server.ts` | Central coordination server - the hub where all communication converges (API, WebSocket, OTLP) |
 | **TirePump** | Context clearing system | The complete context clear-and-reload system - clears the session, resets stats, and reloads the current agent when context runs low |
 | **JobFair** | Character benchmarking | Discovers which theme characters excel at each role by running them against benchmarks - finds hidden talents across the cast |
+
+## Architecture Decision Records
+
+Key architectural decisions are documented in `docs/adr/`. Review these before making significant changes:
+
+| ADR | Decision | Impact |
+|-----|----------|--------|
+| [0005](docs/adr/0005-single-source-of-truth-symlinks.md) | Single Source of Truth via Symlinks | Never modify `.claude/` or `.pennyfarthing/` symlinked dirs |
+| [0006](docs/adr/0006-state-detection-pattern.md) | State Detection Pattern | Agents detect state from session files, not explicit commands |
+| [0007](docs/adr/0007-subagent-delegation-model.md) | Subagent Delegation (Opus/Haiku) | Use Haiku for mechanical tasks, Opus for reasoning |
+| [0008](docs/adr/0008-result-object-error-handling.md) | Result Object Error Handling | Return `{success, error}`, don't throw exceptions |
+| [0009](docs/adr/0009-session-file-coordination.md) | Session File Coordination | Write assessment BEFORE spawning handoff subagent |
+| [0010](docs/adr/0010-esm-module-requirements.md) | ESM Module Requirements | Always use `.js` extension in relative imports |
+
+## Critical Implementation Rules
+
+1. **Modify `pennyfarthing-dist/`**, not symlinked directories
+2. **Use `.js` extensions** in all relative TypeScript imports
+3. **Return result objects** `{success, data?, error?}` instead of throwing
+4. **Write assessment BEFORE handoff** in session files
+5. **Use Haiku for subagents** - never Opus for mechanical tasks
+6. **Commit `dist/`** alongside `src/` changes (tracked build output)
+7. **Detect state** from session files, never hardcode workflow state
