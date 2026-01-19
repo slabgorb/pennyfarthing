@@ -365,9 +365,12 @@ export function renderToolResultMessage(message) {
     return renderBashToolResult(message);
   }
 
-  const { tool_id, output, is_error } = message;
+  const { tool_id, tool_name, tool_summary, output, is_error } = message;
   const isLong = output.length > COLLAPSIBLE_THRESHOLD;
   const errorClass = is_error ? ' error' : '';
+
+  // Use tool_summary (e.g., "config.yaml"), fallback to tool_name, then shortened tool_id
+  const displayName = tool_summary || tool_name || tool_id?.substring(0, 8) || 'Tool';
 
   const content = `<pre><code>${escapeHtml(output)}</code></pre>`;
 
@@ -377,14 +380,14 @@ export function renderToolResultMessage(message) {
 
     return `<div class="message message-tool-result${errorClass}" data-tool-id="${tool_id}">
   <details class="tool-output collapsible"${openAttr}>
-    <summary>Result for ${escapeHtml(tool_id)}</summary>
+    <summary>${escapeHtml(displayName)}</summary>
     ${content}
   </details>
 </div>`;
   }
 
   return `<div class="message message-tool-result${errorClass}" data-tool-id="${tool_id}">
-  <div class="tool-result-header">Result for ${escapeHtml(tool_id)}</div>
+  <div class="tool-result-header">${escapeHtml(displayName)}</div>
   ${content}
 </div>`;
 }
