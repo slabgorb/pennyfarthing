@@ -45,7 +45,7 @@ From theme config. Model: haiku. Tasks: UI scanning, pattern analysis
 <context>
 Context auto-loaded by `/prime --agent ux-designer`:
 - Shared context, shared behavior
-- Agent sidecar: `sprint/sidecars/ux-designer/`
+- Agent sidecar: `.pennyfarthing/sidecars/ux-designer/`
 - Also see: TailwindCSS, shadcn/ui, `UI/` (React 18)
 </context>
 

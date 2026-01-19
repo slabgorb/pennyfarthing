@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync, symlinkSync, copyFileSync, readdirSync } from 'fs';
+import { readFileSync, writeFileSync, symlinkSync, copyFileSync, readdirSync } from 'fs';
 import { join, relative } from 'path';
 import fsExtra from 'fs-extra';
 
@@ -22,8 +22,7 @@ import {
   createCommandsDirectory,
   createSkillsDirectory,
   needsCommandsMigration,
-  needsSkillsMigration,
-  removeSymlinkOrDirectory
+  needsSkillsMigration
 } from '../utils/symlinks.js';
 import { findNodeModulesPath } from '../utils/node-modules.js';
 import { DIRECTORY_SYMLINKS, CORE_AGENTS } from '../utils/constants.js';
@@ -84,25 +83,19 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
   // Always check and update settings (idempotent - only makes changes if needed)
   const assetsPath = getAssetsPath();
 
-  // Copy mode is deprecated - force migration
+  // Copy mode is no longer supported - require fresh install
   if (currentInstallType === 'copy') {
-    if (nodeModulesPath) {
-      logger.info('Migrating from deprecated copy mode to symlink mode...');
-      await migrateToSymlinkMode(projectRoot, nodeModulesPath, manifest.projectName, packageVersion, { dryRun });
-      return;
-    } else {
-      logger.error('Copy mode is deprecated and node_modules/pennyfarthing not found');
-      logger.error('');
-      logger.error('Please reinstall with npm:');
-      logger.error('  npm install pennyfarthing');
-      logger.error('  npx pennyfarthing init --force');
-      process.exit(1);
-    }
+    logger.error('Copy mode installations are no longer supported.');
+    logger.error('');
+    logger.error('Please reinstall with npm:');
+    logger.error('  npm install pennyfarthing');
+    logger.error('  npx pennyfarthing init --force');
+    process.exit(1);
   }
 
   // Must have node_modules for symlink mode
   if (!nodeModulesPath) {
-    logger.error('node_modules/pennyfarthing not found');
+    logger.error('@pennyfarthing/core (or pennyfarthing) not found');
     logger.error('');
     logger.error('Please ensure pennyfarthing is installed:');
     logger.error('  npm install pennyfarthing');
@@ -138,101 +131,6 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
   logger.info('Running health check...');
   const { doctorCommand } = await import('./doctor.js');
   await doctorCommand({ quiet: true });
-}
-
-/**
- * Migrate from copy mode to symlink mode
- */
-async function migrateToSymlinkMode(
-  projectRoot: string,
-  nodeModulesPath: string,
-  projectName: string,
-  version: string,
-  options: { dryRun?: boolean }
-): Promise<void> {
-  const dryRun = options.dryRun;
-
-  logger.newline();
-  logger.info('Migrating to symlink mode...');
-
-  if (dryRun) {
-    logger.info('Dry run mode - no changes will be made');
-  }
-
-  // 1. Remove old .claude/pennyfarthing/ directory
-  const pennyfarthingDir = join(projectRoot, '.claude/pennyfarthing');
-  if (pathExists(pennyfarthingDir)) {
-    if (!dryRun) {
-      removeSync(pennyfarthingDir);
-    }
-    logger.info('Removed .claude/pennyfarthing/ directory');
-  }
-
-  // 2. Ensure project/commands directory exists
-  const projectCommandsDir = join(projectRoot, '.claude/project/commands');
-  if (!pathExists(projectCommandsDir)) {
-    if (!dryRun) {
-      ensureDirSync(projectCommandsDir);
-    }
-    logger.created('.claude/project/commands/ (for user custom commands)');
-  }
-
-  // 3. Remove old symlinks and create new ones pointing to node_modules (except commands and skills)
-  logger.newline();
-  logger.info('Creating symlinks to node_modules...');
-
-  for (const { name, link } of DIRECTORY_SYMLINKS) {
-    const linkPath = join(projectRoot, link);
-    const targetPath = join(nodeModulesPath, name);
-
-    // Remove existing symlink or directory
-    removeSymlinkOrDirectory(linkPath, dryRun);
-
-    if (!dryRun) {
-      const relativeTarget = computeRelativeSymlink(linkPath, targetPath);
-      try {
-        symlinkSync(relativeTarget, linkPath);
-        logger.created(`${link} -> ${relativeTarget}`);
-      } catch (e) {
-        logger.warning(`Could not create symlink ${link}: ${e}`);
-      }
-    } else {
-      const relativeTarget = computeRelativeSymlink(linkPath, targetPath);
-      logger.created(`${link} -> ${relativeTarget}`);
-    }
-  }
-
-  // 4. Create commands directory with individual symlinks (allows user commands)
-  const builtInCommandsPath = join(nodeModulesPath, 'commands');
-  createCommandsDirectory(projectRoot, builtInCommandsPath, projectCommandsDir, dryRun || false);
-
-  // 4b. Create skills directory with individual symlinks (allows user skills)
-  const builtInSkillsPath = join(nodeModulesPath, 'skills');
-  const projectSkillsDir = join(projectRoot, '.claude/project/skills');
-  createSkillsDirectory(projectRoot, builtInSkillsPath, projectSkillsDir, dryRun || false);
-
-  // 5. Migrate persona config to .pennyfarthing/
-  await migratePersonaConfig(projectRoot, { dryRun });
-
-  // 6. Update settings.local.json paths
-  const assetsPath = getAssetsPath();
-  await mergeSettingsHooks(projectRoot, assetsPath, { dryRun });
-
-  // 7. Write new manifest
-  logger.newline();
-  logger.info('Updating manifest...');
-
-  const nodeModulesRelPath = relative(projectRoot, nodeModulesPath);
-  const newManifest = createManifest(projectName, version, {
-    nodeModulesPath: nodeModulesRelPath
-  });
-
-  writeManifest(projectRoot, newManifest, { dryRun });
-  logger.updated('.claude/manifest.json');
-
-  logger.newline();
-  logger.success(`Migrated to symlink mode (v${version})`);
-  logger.info('Git-tracked files reduced from ~120 to 6 symlinks');
 }
 
 /**
@@ -318,9 +216,6 @@ async function updateSymlinkMode(
   // Migrate sidecars from old location to new location
   await migrateSidecars(projectRoot, { dryRun });
 
-  // Migrate persona config to .pennyfarthing/ directory
-  await migratePersonaConfig(projectRoot, { dryRun });
-
   // Update settings
   const assetsPath = getAssetsPath();
   await mergeSettingsHooks(projectRoot, assetsPath, { dryRun });
@@ -339,7 +234,8 @@ async function updateSymlinkMode(
 }
 
 /**
- * Migrate sidecars from .claude/project/agents/{agent}-sidecar/ to sprint/sidecars/{agent}/
+ * Migrate sidecars from .claude/project/agents/{agent}-sidecar/ to .pennyfarthing/sidecars/{agent}/
+ * Also migrates from old sprint/sidecars/ location
  * Preserves user content while moving to new location
  */
 async function migrateSidecars(
@@ -350,7 +246,7 @@ async function migrateSidecars(
   let migrated = 0;
 
   // Ensure new sidecars directory exists
-  const newSidecarsDir = join(projectRoot, 'sprint/sidecars');
+  const newSidecarsDir = join(projectRoot, '.pennyfarthing/sidecars');
   if (!pathExists(newSidecarsDir)) {
     if (!dryRun) {
       ensureDirSync(newSidecarsDir);
@@ -358,11 +254,14 @@ async function migrateSidecars(
   }
 
   for (const agent of CORE_AGENTS) {
-    const oldDir = join(projectRoot, `.claude/project/agents/${agent}-sidecar`);
-    const newDir = join(projectRoot, `sprint/sidecars/${agent}`);
+    // Check both legacy locations
+    const legacyDir1 = join(projectRoot, `.claude/project/agents/${agent}-sidecar`);
+    const legacyDir2 = join(projectRoot, `sprint/sidecars/${agent}`);
+    const oldDir = pathExists(legacyDir1) ? legacyDir1 : (pathExists(legacyDir2) ? legacyDir2 : null);
+    const newDir = join(projectRoot, `.pennyfarthing/sidecars/${agent}`);
 
-    // Skip if old directory doesn't exist
-    if (!pathExists(oldDir)) {
+    // Skip if no legacy directory found
+    if (!oldDir) {
       continue;
     }
 
@@ -398,65 +297,31 @@ async function migrateSidecars(
   }
 
   if (migrated > 0) {
-    logger.info(`Migrated ${migrated} sidecar files to sprint/sidecars/`);
-  }
-}
-
-/**
- * Migrate persona config from .claude/persona-config.local.yaml to .pennyfarthing/config.local.yaml
- * The new location is agent-writable and better suited for dogfooding
- */
-async function migratePersonaConfig(
-  projectRoot: string,
-  options: { dryRun?: boolean }
-): Promise<void> {
-  const dryRun = options.dryRun;
-
-  const oldConfigPath = join(projectRoot, '.claude/persona-config.local.yaml');
-  const newConfigDir = join(projectRoot, '.pennyfarthing');
-  const newConfigPath = join(newConfigDir, 'config.local.yaml');
-
-  // Skip if old config doesn't exist
-  if (!existsSync(oldConfigPath)) {
-    return;
+    logger.info(`Migrated ${migrated} sidecar files to .pennyfarthing/sidecars/`);
   }
 
-  // Skip if new config already exists (already migrated)
-  if (existsSync(newConfigPath)) {
-    // Remove old config if new one exists
-    if (!dryRun) {
-      removeSync(oldConfigPath);
+  // Clean up old sprint/sidecars directory if it exists and is now empty or fully migrated
+  const oldSprintSidecars = join(projectRoot, 'sprint/sidecars');
+  if (pathExists(oldSprintSidecars)) {
+    try {
+      const remaining = readdirSync(oldSprintSidecars);
+      // Check if all remaining items are agent directories that have been migrated
+      const allMigrated = remaining.every(item => {
+        const itemPath = join(oldSprintSidecars, item);
+        if (!isDirectory(itemPath)) return false;
+        // Check if this agent's sidecar now exists in new location
+        const newAgentDir = join(projectRoot, `.pennyfarthing/sidecars/${item}`);
+        return pathExists(newAgentDir);
+      });
+
+      if (allMigrated && !dryRun) {
+        removeSync(oldSprintSidecars);
+        logger.info('Removed legacy sprint/sidecars/ directory');
+      }
+    } catch {
+      // Ignore cleanup errors
     }
-    logger.info('Removed legacy .claude/persona-config.local.yaml (already migrated)');
-    return;
   }
-
-  // Ensure new directory exists
-  if (!existsSync(newConfigDir)) {
-    if (!dryRun) {
-      ensureDirSync(newConfigDir);
-    }
-    logger.created('.pennyfarthing/');
-  }
-
-  // Read old config content
-  const oldContent = readFileSync(oldConfigPath, 'utf8');
-
-  // Write to new location with updated header
-  if (!dryRun) {
-    const header = '# Pennyfarthing Local Configuration\n# This file is gitignored - your personal preferences\n# Agents can write to this file during dogfooding\n\n';
-
-    // Parse and re-write to ensure clean format
-    // If it starts with a comment, strip old comments and add new header
-    const lines = oldContent.split('\n');
-    const contentLines = lines.filter(line => !line.startsWith('#') || line.trim() === '');
-    const cleanContent = contentLines.join('\n').trim();
-
-    writeFileSync(newConfigPath, header + cleanContent + '\n', 'utf8');
-    removeSync(oldConfigPath);
-  }
-
-  logger.info('Migrated persona config to .pennyfarthing/config.local.yaml');
 }
 
 async function checkForUpdates(

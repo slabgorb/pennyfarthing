@@ -9,6 +9,17 @@ description: Jira CLI commands for sprint management. Use when viewing, assignin
 
 This skill covers using `jira` (ankitpokhrel/jira) for Jira integration. The examples below use Conductor project settings - update PROJECT_KEY and PROJECT_LABEL for your project.
 
+## CRITICAL: Never Guess Jira IDs
+
+**NEVER fabricate or guess Jira ticket numbers.** If you need a Jira ID:
+
+1. **Look it up** in `sprint/current-sprint.yaml` under the story's `id:` field
+2. **Query Jira** using `jira issue list` or `jira issue view`
+3. **Create new** using `jira issue create` (returns the real ID)
+4. **Ask the user** if you cannot determine the correct ID
+
+Old-style IDs like `31-18` or `35-17` are **local sprint YAML placeholders** - they are NOT valid Jira keys. Valid Jira keys follow the pattern `MSSCI-XXXXX`.
+
 ## Prerequisites
 
 ```bash
@@ -79,9 +90,19 @@ jira issue move MSSCI-10988 "Done" --project MSSCI
 
 ### Create Issues
 
+**IMPORTANT:** The `--no-input` flag alone may still hang waiting for stdin. Pipe empty input to prevent hangs:
+
 ```bash
+# Create a story (pipe to prevent stdin hang)
+echo "" | jira issue create \
+    -p MSSCI \
+    -t Story \
+    -s "Story Title" \
+    -l pennyfarthing \
+    --no-input
+
 # Create an epic
-jira issue create \
+echo "" | jira issue create \
     --project MSSCI \
     --type Epic \
     --summary "Epic Title" \
@@ -90,7 +111,7 @@ jira issue create \
     --no-input
 
 # Create a story under an epic (--parent links it to the epic)
-jira issue create \
+echo "" | jira issue create \
     -pMSSCI \
     -tStory \
     -s"Story Title" \
@@ -100,6 +121,24 @@ jira issue create \
     -l pennyfarthing \
     --no-input
 ```
+
+**Auto-creation during SM setup:**
+
+Starting with PR #315 (MSSCI-11841), SM setup automatically creates Jira epics when detecting a local epic without a `jira` field in the sprint YAML. This happens via the `jira-epic-creation.ts` module:
+
+```typescript
+// Automatically invoked during generic-sm-setup (MODE=setup)
+// 1. Detects epic missing Jira key
+// 2. Creates epic in Jira with matching title/description
+// 3. Updates sprint YAML with new Jira key
+// 4. Ensures story can be properly linked to epic
+```
+
+The auto-creation:
+- Uses the epic title and description from sprint YAML
+- Applies `pennyfarthing` label automatically
+- Updates sprint YAML atomically with the new Jira key
+- Enables seamless story creation without manual epic setup
 
 ### Link Issues (Parent-Child)
 
@@ -155,7 +194,7 @@ jira issue list --jql "project=MSSCI AND summary~'feedback rules'" --plain
 The project has helper scripts for common Jira operations. All scripts are invoked via `run.sh`:
 
 ```bash
-# Pattern: ./.claude/scripts/run.sh <script-name> [args]
+# Pattern: ./.pennyfarthing/scripts/run.sh <script-name> [args]
 # Or if scripts are in PATH: ./scripts/run.sh <script-name> [args]
 ```
 
@@ -165,16 +204,16 @@ Syncs all stories in an epic to Jira. Shows status, optionally transitions issue
 
 ```bash
 # Show sync status for epic 24
-./.claude/scripts/run.sh jira-sync.sh 24
+./.pennyfarthing/scripts/run.sh jira-sync.sh 24
 
 # Dry run - show what would happen without making changes
-./.claude/scripts/run.sh jira-sync.sh 24 --dry-run
+./.pennyfarthing/scripts/run.sh jira-sync.sh 24 --dry-run
 
 # Sync status (transition issues to match Conductor status)
-./.claude/scripts/run.sh jira-sync.sh 24 --transition
+./.pennyfarthing/scripts/run.sh jira-sync.sh 24 --transition
 
 # Sync both status and story points
-./.claude/scripts/run.sh jira-sync.sh 24 --transition --points
+./.pennyfarthing/scripts/run.sh jira-sync.sh 24 --transition --points
 ```
 
 ### Sync Single Story
@@ -183,16 +222,16 @@ Syncs a single story to Jira with more detailed output.
 
 ```bash
 # Show story status in Jira
-./.claude/scripts/run.sh jira-sync-story.sh 24-1
+./.pennyfarthing/scripts/run.sh jira-sync-story.sh 24-1
 
 # Transition to match Conductor status
-./.claude/scripts/run.sh jira-sync-story.sh 24-1 --transition
+./.pennyfarthing/scripts/run.sh jira-sync-story.sh 24-1 --transition
 
 # Sync story points
-./.claude/scripts/run.sh jira-sync-story.sh 24-1 --points
+./.pennyfarthing/scripts/run.sh jira-sync-story.sh 24-1 --points
 
 # Add a comment
-./.claude/scripts/run.sh jira-sync-story.sh 24-1 --comment "Started development"
+./.pennyfarthing/scripts/run.sh jira-sync-story.sh 24-1 --comment "Started development"
 ```
 
 ### Claim a Story
@@ -201,13 +240,13 @@ Check availability and claim a Jira story for work.
 
 ```bash
 # Check if story is available
-./.claude/scripts/run.sh jira-claim-story.sh MSSCI-10988
+./.pennyfarthing/scripts/run.sh jira-claim-story.sh MSSCI-10988
 
 # Claim the story (assign to self + move to In Progress)
-./.claude/scripts/run.sh jira-claim-story.sh MSSCI-10988 --claim
+./.pennyfarthing/scripts/run.sh jira-claim-story.sh MSSCI-10988 --claim
 
 # Using story key format
-./.claude/scripts/run.sh jira-claim-story.sh 35-4 --claim
+./.pennyfarthing/scripts/run.sh jira-claim-story.sh 35-4 --claim
 ```
 
 ### Script Summary

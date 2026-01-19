@@ -1,7 +1,7 @@
 /**
  * Persona Module - Electron IPC client for persona updates
  * Story 17-4: Added popup profile view for full persona details
- * Story 35-1: Added theme picker integration for contextual settings
+ * Story 35-8: Removed theme picker - theme changes now via SettingsPanel only
  */
 
 /** Module-level storage for helper name (used by activity.js and MessageView.js) */
@@ -9,9 +9,6 @@ let currentHelperName = null;
 
 /** Module-level storage for current persona data (for popup) */
 let currentPersonaData = null;
-
-/** ThemePicker module reference (lazy loaded) */
-let themePickerModule = null;
 
 /**
  * Get the current helper name for subagent display
@@ -307,95 +304,13 @@ function initPersonaPopup() {
   });
 }
 
-// =============================================================================
-// Theme Picker Functions (35-1)
-// =============================================================================
-
 /**
- * Initialize theme picker functionality
- * Sets up click handler on persona section to toggle theme picker
+ * Get the current agent role as a slash command
+ * @returns {string|null} Agent command like '/dev', '/sm', '/tea' or null
  */
-export async function initThemePicker() {
-  // Lazy load ThemePicker module
-  if (!themePickerModule) {
-    try {
-      themePickerModule = await import('./components/ThemePicker.js');
-    } catch (err) {
-      console.warn('[Persona] Failed to load ThemePicker module:', err);
-      return;
-    }
-  }
-
-  // Initialize the picker
-  await themePickerModule.init();
-
-  // Set current theme from persona data
-  if (currentPersonaData?.theme) {
-    themePickerModule.setCurrentTheme(currentPersonaData.theme);
-  }
-
-  console.log('[Persona] Theme picker initialized');
-}
-
-/**
- * Show the theme picker
- */
-export function showThemePicker() {
-  if (themePickerModule) {
-    themePickerModule.show();
-  }
-}
-
-/**
- * Hide the theme picker
- */
-export function hideThemePicker() {
-  if (themePickerModule) {
-    themePickerModule.hide();
-  }
-}
-
-/**
- * Update the current theme
- * @param {string} themeId - Theme ID to set
- */
-export async function updateTheme(themeId) {
-  try {
-    // Update via settings API
-    if (window.electronAPI?.settings?.save) {
-      await window.electronAPI.settings.save({ pennyfarthing: { theme: themeId } });
-    } else {
-      await fetch('/api/settings', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pennyfarthing: { theme: themeId } }),
-      });
-    }
-
-    // Update theme picker state
-    if (themePickerModule) {
-      themePickerModule.setCurrentTheme(themeId);
-    }
-
-    // Refresh persona display
-    await refreshPersona();
-
-    console.log('[Persona] Theme updated to:', themeId);
-  } catch (err) {
-    console.error('[Persona] Failed to update theme:', err);
-    throw err;
-  }
-}
-
-/**
- * Get the current theme ID
- * @returns {string|null} Current theme ID or null
- */
-export function getCurrentTheme() {
-  if (themePickerModule) {
-    return themePickerModule.getCurrentTheme();
-  }
-  return currentPersonaData?.theme || null;
+export function getCurrentAgentCommand() {
+  const role = currentPersonaData?.role;
+  return role ? `/${role}` : null;
 }
 
 /**
@@ -420,44 +335,17 @@ export async function refreshPersona() {
   }
 }
 
-// Expose refreshPersona globally for ThemePicker
+// Expose functions globally for cross-module access
 if (typeof window !== 'undefined') {
   window.refreshPersona = refreshPersona;
-}
-
-/**
- * Handle persona section click - toggle theme picker instead of popup
- * 35-1: Changed from popup to theme picker
- */
-function handlePersonaSectionClick(event) {
-  // Don't trigger if clicking on specific interactive elements
-  if (event.target.closest('.popup-close') ||
-      event.target.closest('.theme-picker') ||
-      event.target.closest('button')) {
-    return;
-  }
-
-  // Toggle theme picker
-  if (themePickerModule?.isVisible?.()) {
-    hideThemePicker();
-  } else {
-    showThemePicker();
-  }
+  window.getCurrentAgentCommand = getCurrentAgentCommand;  // TirePump: used by stats-strip.js
 }
 
 // Initialize on page load (guard for test environments without DOM)
 if (typeof document !== 'undefined') {
-  document.addEventListener('DOMContentLoaded', async () => {
+  document.addEventListener('DOMContentLoaded', () => {
     initPersona();
     initPersonaPopup();
-    await initThemePicker();
-
-    // 35-1: Override persona section click to show theme picker
-    const personaSection = document.getElementById('persona-section');
-    if (personaSection && personaSection.dataset.action === 'theme-picker') {
-      // Remove old click handler and add new one
-      personaSection.removeEventListener('click', showPersonaPopup);
-      personaSection.addEventListener('click', handlePersonaSectionClick);
-    }
+    // 35-8: Persona click shows detail popup only (theme changes via SettingsPanel)
   });
 }

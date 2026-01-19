@@ -542,7 +542,7 @@ Creates a complete theme file at `.claude/pennyfarthing/themes/{name}.yaml` with
 
 **What it does:**
 1. Validates theme exists
-2. Updates `.claude/persona-config.yaml`
+2. Updates `.pennyfarthing/config.local.yaml`
 3. Theme takes effect on next agent activation
 
 ### `/show-theme`

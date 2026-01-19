@@ -1,9 +1,9 @@
 /**
- * Tests for BL-1: Store theme preference in local settings
+ * Tests for theme configuration
  *
  * These tests verify:
- * - getCurrentTheme() checks local config first, falls back to shared
- * - setTheme() writes to local config by default
+ * - getCurrentTheme() checks .pennyfarthing/config.local.yaml first, falls back to shared
+ * - setTheme() writes to .pennyfarthing/config.local.yaml by default
  * - setTheme() with global option writes to shared config
  *
  * Run with: npm test
@@ -19,9 +19,10 @@ import { stringify as yamlStringify, parse as yamlParse } from 'yaml';
 // Import functions to test
 import { getCurrentTheme, setTheme } from './themes.js';
 
-describe('Theme Local Settings (BL-1)', () => {
+describe('Theme Configuration', () => {
   let testDir: string;
   let claudeDir: string;
+  let pennyfarthingDir: string;
   let themesDir: string;
 
   // Minimal valid theme for testing
@@ -45,8 +46,10 @@ describe('Theme Local Settings (BL-1)', () => {
     // Create a temporary project directory for each test
     testDir = join(tmpdir(), `pennyfarthing-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     claudeDir = join(testDir, '.claude');
+    pennyfarthingDir = join(testDir, '.pennyfarthing');
     themesDir = join(claudeDir, 'pennyfarthing/themes');
     mkdirSync(themesDir, { recursive: true });
+    mkdirSync(pennyfarthingDir, { recursive: true });
 
     // Create a test theme so setTheme can find it
     writeFileSync(join(themesDir, 'test-theme.yaml'), yamlStringify(testTheme));
@@ -59,14 +62,14 @@ describe('Theme Local Settings (BL-1)', () => {
     }
   });
 
-  describe('getCurrentTheme() local precedence', () => {
+  describe('getCurrentTheme() precedence', () => {
     it('should return local theme when both local and shared exist', () => {
       // Setup: local config with "star-trek", shared config with "discworld"
       const localConfig = { theme: 'star-trek' };
       const sharedConfig = { theme: 'discworld' };
 
       writeFileSync(
-        join(claudeDir, 'persona-config.local.yaml'),
+        join(pennyfarthingDir, 'config.local.yaml'),
         yamlStringify(localConfig)
       );
       writeFileSync(
@@ -77,7 +80,7 @@ describe('Theme Local Settings (BL-1)', () => {
       // Act
       const result = getCurrentTheme(testDir);
 
-      // Assert: should prefer local over shared
+      // Assert: should prefer .pennyfarthing/ over .claude/
       assert.strictEqual(result, 'star-trek', 'Should return local theme when both exist');
     });
 
@@ -98,7 +101,7 @@ describe('Theme Local Settings (BL-1)', () => {
     });
 
     it('should return null when neither local nor shared exist', () => {
-      // Setup: no config files (just empty .claude dir)
+      // Setup: no config files (just empty directories)
 
       // Act
       const result = getCurrentTheme(testDir);
@@ -113,7 +116,7 @@ describe('Theme Local Settings (BL-1)', () => {
       const sharedConfig = { theme: 'shakespeare' };
 
       writeFileSync(
-        join(claudeDir, 'persona-config.local.yaml'),
+        join(pennyfarthingDir, 'config.local.yaml'),
         yamlStringify(localConfig)
       );
       writeFileSync(
@@ -130,7 +133,7 @@ describe('Theme Local Settings (BL-1)', () => {
   });
 
   describe('setTheme() writes to local config', () => {
-    it('should write to local config file by default', () => {
+    it('should write to .pennyfarthing/config.local.yaml by default', () => {
       // Setup: create shared config with a different theme
       const sharedConfig = { theme: 'other-theme' };
       writeFileSync(
@@ -142,9 +145,9 @@ describe('Theme Local Settings (BL-1)', () => {
       setTheme('test-theme', testDir);
 
       // Assert: local config should exist with the new theme
-      const localPath = join(claudeDir, 'persona-config.local.yaml');
+      const localPath = join(pennyfarthingDir, 'config.local.yaml');
 
-      assert.ok(existsSync(localPath), 'setTheme should write to persona-config.local.yaml');
+      assert.ok(existsSync(localPath), 'setTheme should write to .pennyfarthing/config.local.yaml');
       const localContent = yamlParse(readFileSync(localPath, 'utf-8'));
       assert.strictEqual(localContent.theme, 'test-theme', 'Local config should have the theme');
     });
@@ -205,7 +208,7 @@ describe('Theme Local Settings (BL-1)', () => {
 
       // User A sets their local preference
       writeFileSync(
-        join(claudeDir, 'persona-config.local.yaml'),
+        join(pennyfarthingDir, 'config.local.yaml'),
         yamlStringify({ theme: 'star-trek' })
       );
 

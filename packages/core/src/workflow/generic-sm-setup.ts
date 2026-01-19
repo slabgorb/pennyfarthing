@@ -42,6 +42,7 @@ export interface SetupResult {
   sessionFile?: string;
   branchName?: string;
   error?: string;
+  warnings?: string[];
 }
 
 export type GenericSmSetupResult = ResearchResult | SetupResult;
@@ -67,6 +68,45 @@ export interface SetupParams {
   assignee?: string;
   jiraKey?: string;
   acceptanceCriteria?: string[];
+  checkEpicContext?: boolean;
+  contextDir?: string;
+}
+
+/**
+ * Epic context check parameters
+ */
+export interface CheckEpicContextParams {
+  epicId: number;
+  contextDir: string;
+}
+
+/**
+ * Epic context check result
+ */
+export interface CheckEpicContextResult {
+  exists: boolean;
+  path?: string;
+  message?: string;
+  expectedPath?: string;
+}
+
+/**
+ * Epic context creation parameters
+ */
+export interface CreateEpicContextParams {
+  epicId: number;
+  epicTitle: string;
+  contextDir: string;
+  content?: string;
+}
+
+/**
+ * Epic context creation result
+ */
+export interface CreateEpicContextResult {
+  success: boolean;
+  path?: string;
+  error?: string;
 }
 
 /**
@@ -281,8 +321,22 @@ export async function setupStory(params: SetupParams): Promise<SetupResult> {
     workflow,
     assignee,
     jiraKey,
-    acceptanceCriteria
+    acceptanceCriteria,
+    checkEpicContext: shouldCheckContext,
+    contextDir
   } = params;
+
+  // Collect warnings for non-blocking issues
+  const warnings: string[] = [];
+
+  // Check epic context if gate is enabled
+  if (shouldCheckContext && contextDir) {
+    const contextCheck = await checkEpicContext({ epicId: epic, contextDir });
+    if (!contextCheck.exists) {
+      // Warn but don't block (soft gate initially)
+      warnings.push(`Missing epic context: ${contextCheck.message}`);
+    }
+  }
 
   // Calculate branch name
   const slug = slugify(title);
@@ -352,12 +406,116 @@ export async function setupStory(params: SetupParams): Promise<SetupResult> {
     return {
       success: true,
       sessionFile: sessionPath,
-      branchName
+      branchName,
+      warnings
     };
   } catch (error) {
     return {
       success: false,
       error: `Failed to write session file: ${error}`
+    };
+  }
+}
+
+/**
+ * Check if epic context file exists
+ *
+ * Validates that sprint/context/context-epic-{N}.md exists before story setup.
+ * This ensures stories don't start without understanding their epic's technical landscape.
+ *
+ * @param params - Check parameters with epicId and contextDir
+ * @returns Result indicating if context exists, with path or message
+ */
+export async function checkEpicContext(params: CheckEpicContextParams): Promise<CheckEpicContextResult> {
+  const { epicId, contextDir } = params;
+
+  const filename = `context-epic-${epicId}.md`;
+  const expectedPath = join(contextDir, filename);
+
+  if (existsSync(expectedPath)) {
+    return {
+      exists: true,
+      path: expectedPath
+    };
+  }
+
+  return {
+    exists: false,
+    message: `Epic ${epicId} is missing technical context. Create ${filename} before starting stories.`,
+    expectedPath
+  };
+}
+
+/**
+ * Create epic context file from template
+ *
+ * Creates a new epic context file with standard sections.
+ * Will not overwrite existing files to preserve valuable context.
+ *
+ * @param params - Creation parameters with epicId, title, contextDir, and optional content
+ * @returns Result with success status and file path
+ */
+export async function createEpicContext(params: CreateEpicContextParams): Promise<CreateEpicContextResult> {
+  const { epicId, epicTitle, contextDir, content } = params;
+
+  const filename = `context-epic-${epicId}.md`;
+  const filePath = join(contextDir, filename);
+
+  // Don't overwrite existing context
+  if (existsSync(filePath)) {
+    return {
+      success: false,
+      error: `Epic context file already exists: ${filePath}`
+    };
+  }
+
+  // Build content from template or provided content
+  let fileContent: string;
+  if (content) {
+    // Use provided content with header
+    fileContent = `# Epic ${epicId}: ${epicTitle} - Technical Context\n\n${content}`;
+  } else {
+    // Use standard template
+    fileContent = `# Epic ${epicId}: ${epicTitle} - Technical Context
+
+## Epic Overview
+- Goal: [One sentence describing the epic goal]
+- Stories: [count] totaling [points] pts
+- Status: in_progress
+
+## Technical Landscape
+[2-3 paragraphs describing the technical domain, key challenges, and approach]
+
+## Key Files
+| File | Purpose |
+|------|---------|
+| path/to/file | Description |
+
+## Patterns & Conventions
+- Pattern 1: Description
+- Pattern 2: Description
+
+## Dependencies & Risks
+- Dependency: Description
+- Risk: Mitigation
+
+## Story Sequence
+| Story | Title | Depends On |
+|-------|-------|------------|
+| ${epicId}-1 | First story | None |
+`;
+  }
+
+  try {
+    writeFileSync(filePath, fileContent);
+    return {
+      success: true,
+      path: filePath
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: `Failed to create epic context: ${error}`
     };
   }
 }

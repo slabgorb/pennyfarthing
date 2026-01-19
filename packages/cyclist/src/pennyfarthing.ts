@@ -96,6 +96,23 @@ function generateSlug(shortName: string, ocean: { O: number; C: number; E: numbe
  */
 export function detectPennyfarthingProject(projectDir: string): boolean {
   if (!projectDir) return false;
+
+  // Check for .pennyfarthing directory (new preferred location)
+  const pennyfarthingDir = join(projectDir, '.pennyfarthing');
+  if (existsSync(pennyfarthingDir)) {
+    // Check for config file
+    const configFile = join(pennyfarthingDir, 'config.local.yaml');
+    if (existsSync(configFile)) return true;
+
+    // Check for Pennyfarthing symlinks (agents, guides, personas, scripts)
+    const pennyfarthingDirs = ['agents', 'guides', 'personas', 'scripts'];
+    for (const dir of pennyfarthingDirs) {
+      const dirPath = join(pennyfarthingDir, dir);
+      if (existsSync(dirPath)) return true;
+    }
+  }
+
+  // Legacy: Check .claude directory
   const claudeDir = join(projectDir, '.claude');
   if (!existsSync(claudeDir)) return false;
 
@@ -105,8 +122,8 @@ export function detectPennyfarthingProject(projectDir: string): boolean {
   if (existsSync(personaConfig)) return true;
 
   // Also check for Pennyfarthing symlinks (agents, guides, personas, scripts)
-  const pennyfarthingDirs = ['agents', 'guides', 'personas', 'scripts'];
-  for (const dir of pennyfarthingDirs) {
+  const legacyDirs = ['agents', 'guides', 'personas', 'scripts'];
+  for (const dir of legacyDirs) {
     const dirPath = join(claudeDir, dir);
     if (existsSync(dirPath)) return true;
   }
@@ -115,31 +132,14 @@ export function detectPennyfarthingProject(projectDir: string): boolean {
 }
 
 /**
- * Loads theme configuration from config files
- * Checks multiple locations in priority order:
- * 1. .pennyfarthing/config.local.yaml (new preferred location)
- * 2. .claude/persona-config.local.yaml (legacy local)
- * 3. .claude/persona-config.yaml (legacy default)
+ * Loads theme configuration from .pennyfarthing/config.local.yaml
  * @param projectDir - The project directory
  * @returns Theme config or null if not found/invalid
  */
 export function loadThemeConfig(projectDir: string): ThemeConfig | null {
-  const possiblePaths = [
-    join(projectDir, '.pennyfarthing', 'config.local.yaml'),  // New preferred location
-    join(projectDir, '.claude', 'persona-config.local.yaml'), // Legacy local
-    join(projectDir, '.claude', 'persona-config.yaml'),       // Legacy default
-  ];
+  const configPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
 
-  // Find first existing config file
-  let configPath: string | null = null;
-  for (const path of possiblePaths) {
-    if (existsSync(path)) {
-      configPath = path;
-      break;
-    }
-  }
-
-  if (!configPath) {
+  if (!existsSync(configPath)) {
     return null;
   }
 

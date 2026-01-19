@@ -1,14 +1,27 @@
 {
   "name": "@pennyfarthing/cyclist",
-  "version": "6.1.0",
-  "description": "Desktop application for running Claude Code with visual terminal interface",
+  "version": "7.0.2",
+  "description": "Visual terminal interface for Claude Code",
   "author": "1898andCo",
-  "private": true,
   "type": "module",
-  "main": "dist/main.js",
+  "main": "dist/server.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/1898andCo/pennyfarthing.git",
+    "directory": "packages/cyclist"
+  },
+  "homepage": "https://github.com/1898andCo/pennyfarthing#readme",
+  "bugs": {
+    "url": "https://github.com/1898andCo/pennyfarthing/issues"
+  },
+  "files": [
+    "dist/",
+    "src/public/",
+    "portraits/"
+  ],
   "scripts": {
-    "dev": "npm run build && concurrently -k -n tsc,preload,electron -c blue,cyan,green \"tsc --watch --preserveWatchOutput\" \"tsc -p tsconfig.preload.json --watch --preserveWatchOutput\" \"electron .\"",
-    "dev:once": "npm run build && electron .",
+    "dev": "npm run build && concurrently -k -n tsc,preload,electron -c blue,cyan,green \"tsc --watch --preserveWatchOutput\" \"tsc -p tsconfig.preload.json --watch --preserveWatchOutput\" \"electron dist/main.js\"",
+    "dev:once": "npm run build && electron dist/main.js",
     "dev:web": "CYCLIST_DEV_WEB=1 CYCLIST_PROJECT_DIR=${CYCLIST_PROJECT_DIR:-$PWD} tsx watch src/server.ts",
     "dev:server": "tsx watch src/server.ts",
     "build": "npm run build:commands && tsc && tsc -p tsconfig.preload.json && npm run build:editor",
@@ -18,13 +31,13 @@
     "start": "node dist/server.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "postinstall": "electron-rebuild",
+    "prepack": "./scripts/copy-portraits.sh",
     "install:app": "./scripts/install-app.sh",
     "install:cli": "./scripts/install-cli.sh",
     "install:all": "npm run install:app && npm run install:cli"
   },
   "dependencies": {
-    "@pennyfarthing/core": "workspace:^",
+    "@pennyfarthing/core": "workspace:*",
     "@pennyfarthing/shared": "workspace:*",
     "@tiptap/core": "^2.27.1",
     "@tiptap/extension-code-block": "^2.27.1",
@@ -38,6 +51,7 @@
   "devDependencies": {
     "@electron/rebuild": "^3.6.0",
     "@types/express": "^4.17.21",
+    "@types/jsdom": "^27.0.0",
     "@types/node": "^20.10.0",
     "@types/supertest": "^6.0.2",
     "@types/ws": "^8.5.10",
@@ -47,6 +61,7 @@
     "electron-reload": "^2.0.0-alpha.1",
     "esbuild": "^0.27.2",
     "happy-dom": "^20.0.11",
+    "jsdom": "^27.4.0",
     "supertest": "^6.3.3",
     "tsx": "^4.6.2",
     "typescript": "^5.3.2",
@@ -64,6 +79,7 @@
     "files": [
       "dist/**/*",
       "src/public/**/*",
+      "portraits/**/*",
       "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
       "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
       "!**/node_modules/.bin",

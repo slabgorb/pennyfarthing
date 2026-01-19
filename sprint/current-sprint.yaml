@@ -5,1065 +5,518 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 85
-  completed_points: 33
-  remaining_points: 52
+  total_points: 116
+  completed_points: 80
+  remaining_points: 36
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
-    - Epic 31: Customizable Workflow Engine (4 pts remaining)
-    - Epic 33: Runtime Permission Management (2 pts remaining)
-    - Epic 35: Cyclist UI/UX Improvements (13 pts remaining)
-    - Epic 36: OTEL Tool Call Enrichment (8 pts remaining)
-    - Epic 37: Technical Debt & Bug Fixes (14 pts remaining)
-    - Epic 38: Agent File Modernization (20 pts)
+    - MSSCI-11599: Customizable Workflow Engine (4 pts remaining)
+    - MSSCI-11705: Runtime Permission Management (3 pts remaining)
+    - MSSCI-11715: Cyclist UI/UX Improvements (15 pts remaining)
+    - MSSCI-11728: OTEL Tool Call Enrichment (4 pts remaining)
+    - MSSCI-11794: Technical Debt & Bug Fixes (10 pts remaining)
+    - MSSCI-11795: Agent File Modernization (6 pts remaining)
+    - MSSCI-11796: Jira-Pennyfarthing Sync Improvements (9 pts remaining)
 
     Stories now have `workflow:` tags indicating which workflow to use.
     SM will route to appropriate workflow (tdd, trivial, agent-docs).
 
     Sprint 10 closed with 54 pts completed (245% of velocity target).
-# =============================================================================
-# ACTIVE EPICS
-# =============================================================================
 epics:
-  - id: epic-31
-    title: Customizable Workflow Engine
-    description: |
-      Infrastructure for user-defined workflows. Replace hardcoded TDD flow
-      (SM → TEA → Dev → Reviewer) with configurable YAML-based workflows.
-      Users can define custom agent sequences, routing rules, and gates.
-    points: 37
-    completed_points: 30
+  # ===========================================================================
+  # EPIC 31: Customizable Workflow Engine
+  # ===========================================================================
+  - id: MSSCI-11599
+    type: epic
+    title: "Epic: Customizable Workflow Engine"
+    points: 39
+    completed_points: 35
     priority: P1
-    marker: strategic
-    repos: pennyfarthing
     status: in_progress
-    jira: MSSCI-11599
     stories:
-      - id: 31-15
+      # Done
+      - id: MSSCI-11845
         title: Background task completion notifications in Cyclist
-        description: |
-          Add UI notifications when background subagents complete in Cyclist.
-          Currently, background tasks run silently - the agent must poll with
-          TaskOutput to check results. Users have no visibility into completion.
-
-          Implementation:
-          1. Track background task IDs in main process when spawned
-          2. Emit IPC event when background task completes
-          3. Add notification/toast component to Cyclist UI
-          4. Show "Background task X completed" with result summary
-          5. Optional: Badge indicator for pending background results
-
-          UI Options:
-          - Toast notification (auto-dismiss after N seconds)
-          - Badge on Tool Log panel tab
-          - Extend Tool Activity Bar with background task section
         points: 3
         priority: P2
-        status: backlog
+        status: done
         repos: cyclist
+        pr: 257
         acceptance_criteria:
           - Cyclist tracks background task IDs from Task tool
           - UI notification appears when background task completes
           - Notification shows task type and success/failure status
           - User can click notification to see full result
-          - Works with testing-runner and other background subagents
-      - id: 31-17
+      # Backlog
+      - id: MSSCI-11846
         title: "Bug: Trivial workflow phase naming inconsistency"
-        description: |
-          The trivial workflow uses phase names that don't match the agent
-          it routes to. Phase is "implement" but agent is "dev". This causes
-          confusion in session file tracking and workflow visualization.
-
-          Fix: Rename trivial workflow phases to match agent names, or
-          add phase-to-agent mapping in workflow definition.
         points: 1
         priority: P2
-        status: backlog
+        status: done
+        assigned_to: Keith Avery
+        started: 2026-01-18T12:30:00Z
+        completed: 2026-01-18T12:40:00Z
+        pr: 325
         repos: pennyfarthing
         acceptance_criteria:
           - Trivial workflow phase names match agent names
           - Session file shows correct phase/agent correlation
-          - Workflow visualization displays correct agent names
-  - id: epic-33
-    title: Runtime Permission Management
-    description: |
-      Allow agents to request and manage tool permissions at runtime.
-      Currently permissions must be pre-configured; agents can't request
-      spot permissions for tools like WebFetch when needed.
-    points: 12
-    completed_points: 7
-    priority: P1
-    marker: ux
-    repos: pennyfarthing, cyclist
-    status: in_progress
-    jira: MSSCI-11705
-    stories:
-      - id: 33-5
-        title: Permission presets by workflow
-        description: |
-          Workflows can declare required permissions.
-          Auto-prompt for missing permissions on workflow start.
+      - id: MSSCI-11914
+        title: "Respect handoff mode preference (manual/auto)"
         points: 2
         priority: P2
-        status: backlog
+        status: done
+        assigned_to: Keith Avery
+        started: 2026-01-18T12:40:00Z
+        completed: 2026-01-18T13:25:00Z
+        workflow: trivial
         repos: pennyfarthing
-        jira: MSSCI-11710
+        pr: 332
+        description: |
+          Agent docs currently mandate auto-invoke when context < 60%, ignoring
+          user's handoff mode preference. Update agent files to check mode before
+          auto-invoking next agent.
+        acceptance_criteria:
+          - Agent handoff sections check handoff mode before auto-invoking
+          - Manual mode shows CYCLIST:HANDOFF marker but waits for user
+          - Auto mode continues current behavior (invoke when < 60%)
+          - Mode preference read from Cyclist settings or session flag
+  # ===========================================================================
+  # EPIC 33: Runtime Permission Management
+  # ===========================================================================
+  - id: MSSCI-11705
+    type: epic
+    title: "Epic: Runtime Permission Management"
+    points: 15
+    completed_points: 12
+    priority: P1
+    status: in_progress
+    stories:
+      # Backlog
+      - id: MSSCI-11847
+        title: Permission presets by workflow
+        points: 2
+        priority: P2
+        status: done
+        repos: pennyfarthing
         acceptance_criteria:
           - Workflow schema supports permissions field
           - Workflow start checks required permissions
           - Prompts for missing permissions
           - Cached grants skip prompts
-  - id: epic-35
-    title: Cyclist UI/UX Improvements
-    description: |
-      Surface settings and controls where they're used instead of burying
-      them in popup dialogs. Reduce friction by putting options in context.
-      Fix existing UI bugs and add user-requested customization features.
-    points: 29
-    completed_points: 13
+        completed: "2026-01-18"
+        pr: 330
+        assigned_to: Keith Avery
+      - id: MSSCI-11848
+        title: Wire approval gate into tool execution pipeline
+        points: 3
+        priority: P0
+        status: done
+        assigned_to: Keith Avery
+        repos: cyclist
+        workflow: tdd
+        pr: 311
+        acceptance_criteria:
+          - Tool_use blocks check approval gate before processing
+          - Bash commands with gate enabled trigger approval modal
+          - User approval unblocks tool execution
+          - User rejection injects error response to Claude
+          - Grant scopes (once/session/always) persist correctly
+          - IPC channel handles approval request/response flow
+  # ===========================================================================
+  # EPIC 35: Cyclist UI/UX Improvements
+  # ===========================================================================
+  - id: MSSCI-11715
+    type: epic
+    title: "Epic: Cyclist UI/UX Improvements"
+    points: 35
+    completed_points: 20
     priority: P2
-    marker: ux
-    repos: cyclist
     status: in_progress
-    jira: MSSCI-11715
     stories:
-      - id: 35-1
+      # Done (trimmed)
+      - id: MSSCI-11716
         title: Contextual settings placement
-        description: |
-          Move settings from popup dialogs to contextual locations:
-          - Theme chooser → Profile/persona click (not Menu → Settings)
-          - Auto-handoff toggle → Editor toolbar (not Settings dialog)
-          - Settings dialog simplified to rarely-used options only
-
-          Pattern: Put controls where the action happens, not buried in menus.
         points: 3
-        priority: P2
         status: done
-        started: 2026-01-14
-        completed: 2026-01-14
-        assigned_to: Keith Avery
-        repos: cyclist
         pr: 244
-        jira: MSSCI-11716
-        acceptance_criteria:
-          - Theme chooser accessible from profile/persona area click
-          - Auto-handoff toggle visible in editor toolbar
-          - Settings dialog simplified (only rarely-used options remain)
-          - Settings persist correctly from new locations
-      - id: 35-2
+      - id: MSSCI-11717
         title: Display current directory in status bar
-        description: |
-          Show the current working directory in the bottom status bar.
-          Users need to know which project/directory they're working in,
-          especially when switching between multiple projects.
-
-          Implementation:
-          - Add directory display to existing stats-strip or create new status element
-          - Show absolute path, truncated if too long (ellipsis in middle)
-          - Update when project changes (if applicable)
-          - Tooltip shows full path on hover
-
-          Pattern: Critical context visible at all times, not hidden in menus.
         points: 2
-        priority: P2
         status: done
-        started: 2026-01-15
-        completed: 2026-01-15
-        assigned_to: Keith Avery
-        repos: cyclist
-        jira: MSSCI-11717
-        acceptance_criteria:
-          - Current directory displayed in bottom status bar
-          - Path truncated with ellipsis if too long (e.g., ~/.../project-name)
-          - Full path visible on hover (tooltip)
-          - Updates correctly when directory context changes
-          - Styled consistently with existing status bar elements
-      - id: 35-3
+      - id: MSSCI-11718
         title: Workflow phase visualization
-        description: |
-          Visual representation of current workflow showing all phases,
-          current position, and progress. Integrates with custom workflow
-          system from Epic 31.
-
-          Implementation:
-          - Read workflow definition to get phase list
-          - Display phases as connected steps/nodes
-          - Highlight current phase, show completed phases
-          - Update in real-time as agent progresses
-          - Support both TDD and custom workflows
         points: 3
-        priority: P1
         status: done
-        repos: cyclist
-        jira: MSSCI-11718
-        started: 2026-01-14
-        completed: 2026-01-15
-        assigned_to: Keith Avery
         pr: 249
-        acceptance_criteria:
-          - Workflow phases displayed visually (stepper/breadcrumb style)
-          - Current phase highlighted distinctly
-          - Completed phases marked with checkmark or similar
-          - Phase names from workflow definition (not hardcoded)
-          - Updates when phase changes (via IPC or polling)
-          - Works with TDD, trivial, and custom workflows
-      - id: 35-4
+      - id: MSSCI-11719
         title: Three-way mode switch (Plan/Manual/Accept)
-        description: |
-          Replace cycling mode button with intuitive three-way toggle.
-          Currently cyclePermissionMode() cycles through modes but UI
-          is just a button that changes text - not intuitive.
-
-          Implementation:
-          - Create segmented control component (like iOS)
-          - Three segments: PLAN | MANUAL | ACCEPT
-          - Visual indication of current mode
-          - Click segment to switch directly (no cycling)
-          - Keyboard shortcuts for each mode
         points: 2
-        priority: P2
         status: done
-        started: 2026-01-15
-        completed: 2026-01-15
-        assigned_to: Keith Avery
-        repos: cyclist
-        jira: MSSCI-11719
-        acceptance_criteria:
-          - Segmented control replaces cycling button
-          - Three modes clearly labeled and clickable
-          - Current mode visually distinct (highlighted segment)
-          - Direct selection (click PLAN goes to plan, not cycle)
-          - Keyboard shortcuts work (p=plan, m=manual, a=accept)
-          - Mode persists correctly via IPC
-      - id: 35-5
+      - id: MSSCI-11720
         title: Collapsible portrait panel
-        description: |
-          Allow users to collapse the portrait/persona sidebar to
-          maximize workspace. Useful when screen space is limited
-          or user wants to focus on terminal output.
-
-          Implementation:
-          - Add collapse/expand toggle to portrait panel header
-          - Collapsed state shows minimal indicator (small icon or nothing)
-          - Expand restores full portrait and persona info
-          - Persist collapse state in localStorage
-          - Smooth animation for collapse/expand transition
         points: 2
-        priority: P2
         status: done
-        started: 2026-01-15
-        completed: 2026-01-15
-        assigned_to: Keith Avery
-        repos: cyclist
-        jira: MSSCI-11720
         pr: 262
-        acceptance_criteria:
-          - Toggle button to collapse/expand portrait panel
-          - Collapsed state minimizes to icon or hides completely
-          - Expanded state shows full portrait and persona info
-          - Collapse state persisted across sessions
-          - Smooth CSS transition animation
-          - Keyboard shortcut to toggle (e.g., Ctrl+B)
-      - id: 35-6
+      - id: MSSCI-11721
         title: Font face selector
-        description: |
-          Let users choose terminal and UI font faces. Currently no
-          font customization exists - fonts are hardcoded in CSS.
-
-          Implementation:
-          - Add font selector to settings panel
-          - Separate options for terminal font and UI font
-          - List of monospace fonts for terminal (system + web fonts)
-          - Preview font before applying
-          - Save preference and apply on startup
         points: 2
-        priority: P2
         status: done
-        started: 2026-01-15
-        completed: 2026-01-15
-        assigned_to: Keith Avery
-        repos: cyclist
-        jira: MSSCI-11721
-        acceptance_criteria:
-          - Font selector in settings panel
-          - Separate terminal and UI font options
-          - Dropdown with available monospace fonts
-          - Font preview in settings before applying
-          - Font preference saved and restored on startup
-          - Terminal (xterm.js) respects font setting
-      - id: 35-8
-        title: Fix theme switcher
-        description: |
-          ThemePicker (persona theme, not color theme) has multiple bugs
-          making it difficult to use:
-
-          Bugs to fix:
-          - Recent themes not persisted between sessions
-          - Async loading issues cause empty state
-          - Persona click handler conflicts (popup vs picker)
-          - loadThemeMetadata() fails silently if IPC unavailable
-          - Event handler removal assumes listeners exist
-
-          This is the persona/character theme switcher (alice-in-wonderland,
-          discworld, etc), not the color theme (dark/light).
-        points: 2
-        priority: P1
-        status: backlog
-        repos: cyclist
-        jira: MSSCI-11723
-        acceptance_criteria:
-          - Recent themes persisted in localStorage
-          - Async loading shows loading state, handles errors
-          - Click handler consistently opens picker (no conflicts)
-          - Graceful fallback when IPC unavailable
-          - No console errors during normal operation
-          - Theme switch actually updates persona display
-      - id: 35-9
+      - id: MSSCI-11724
         title: Settings panel fixes and expansion
-        description: |
-          Fix existing bugs and expand settings functionality:
-
-          Bugs to fix:
-          - Settings store lazy-loading can fail silently
-          - Theme browser async issues during initial load
-          - localStorage vs IPC sync conflicts
-          - Form state management issues (selectedThemeData unused)
-          - window.close() fails in non-Electron context
-
-          Expansion:
-          - Add validation for all settings values
-          - Show confirmation before discarding unsaved changes
-          - Group settings into logical tabs/sections
-          - Add reset to defaults option
         points: 3
-        priority: P1
-        status: backlog
-        repos: cyclist
-        jira: MSSCI-11724
-        acceptance_criteria:
-          - Settings store initialization errors handled gracefully
-          - Theme browser shows loading state during async load
-          - No sync conflicts between localStorage and IPC
-          - Unsaved changes warning before close
-          - Settings validation with error messages
-          - Reset to defaults button works
-          - Settings organized into logical sections
-      - id: 35-11
+        status: done
+      - id: MSSCI-11726
         title: Clickable file paths in diff view
-        description: |
-          File paths in diff panel should be clickable to open the
-          file in the OS default editor/viewer. Reduces friction
-          when user wants to edit a file shown in diff.
-
-          Implementation:
-          - Make file path header clickable
-          - Use Electron shell.openPath() to open in default app
-          - Visual indication that path is clickable (underline, cursor)
-          - Handle missing files gracefully (show error toast)
         points: 1
-        priority: P2
-        status: backlog
-        repos: cyclist
-        jira: MSSCI-11726
-        acceptance_criteria:
-          - File path in diff header is clickable
-          - Click opens file in OS default application
-          - Cursor changes to pointer on hover
-          - Path underlined or styled to indicate clickable
-          - Error toast if file no longer exists
-          - Works on macOS (shell.openPath)
-      - id: 35-12
+        status: done
+        pr: 292
+      - id: MSSCI-11727
         title: Skill invocations panel
-        description: |
-          Add a vertical panel showing skill invocations during the session.
-          Skills (/commit, /review-pr, /workflow, etc.) are invoked frequently
-          but currently there's no dedicated UI to see which skills were called.
-
-          Implementation:
-          - New collapsible panel (similar to file/diff/tool panels)
-          - List skill invocations chronologically
-          - Show: skill name, timestamp, status (running/complete/error)
-          - Expandable to show skill arguments and output summary
-          - Clear button to reset list
-          - Filter/search within invocations
         points: 3
-        priority: P2
-        status: backlog
-        repos: cyclist
-        jira: MSSCI-11727
-        acceptance_criteria:
-          - Dedicated panel for skill invocations
-          - Shows skill name and invocation time
-          - Status indicator (running spinner, checkmark, error icon)
-          - Expandable rows to show arguments and result summary
-          - Panel is collapsible and resizable
-          - Persists collapse state in localStorage
-          - Clear button to reset invocation history
-          - Works with all skill types (built-in and custom)
-      - id: 35-13
+        status: done
+        pr: 305
+      - id: MSSCI-11849
         title: Window state persistence
-        description: |
-          Remember and restore Electron window state across sessions:
-          - Window size (width, height)
-          - Window position (x, y coordinates)
-          - Screen/monitor placement (for multi-monitor setups)
-          - Panel layout (collapsed/expanded states, sizes)
-          - Maximized/fullscreen state
-
-          Implementation:
-          - Use electron-window-state or custom persistence to localStorage/file
-          - Save state on window resize, move, and before close
-          - Restore state on app launch
-          - Handle edge cases: monitor disconnected, resolution changed
-          - Validate restored bounds are within visible screen area
-          - Default to centered on primary display if invalid
-
-          This improves UX by remembering user's preferred layout instead of
-          resetting to defaults on every launch.
         points: 2
-        priority: P2
-        status: backlog
-        repos: cyclist
-        acceptance_criteria:
-          - Window size restored on launch
-          - Window position restored on launch
-          - Panel collapse states restored (portrait, diff, tool panels)
-          - Panel sizes/widths restored
-          - Maximized state restored correctly
-          - Handles missing monitor gracefully (falls back to primary)
-          - Handles out-of-bounds position (recenters if off-screen)
-          - Works on macOS (primary target)
-  - id: epic-36
-    title: OTEL Tool Call Enrichment
-    description: |
-      Enrich OpenTelemetry data with contextual information from Claude tool calls.
-      OTEL spans from Claude Code contain basic timing info, but we have much richer
-      data available: file paths for Read/Edit, command output for Bash, search
-      results for Grep/Glob, etc. Correlate and enrich spans in real-time.
-    points: 15
-    completed_points: 9
-    priority: P2
-    marker: observability
-    repos: cyclist, pennyfarthing
-    status: in_progress
-    jira: MSSCI-11728
-    stories:
-      - id: 36-3
-        title: Bash tool enrichment
+        status: done
+      - id: MSSCI-11850
+        title: Settings architecture cleanup and consolidation
+        points: 3
+        status: done
+        pr: 304
+      # Backlog
+      - id: MSSCI-11723
+        title: Rethink theme switcher for settings panel integration
         description: |
-          Enrich Bash tool spans with command execution context:
-          - Command executed (sanitized for secrets)
-          - Exit code
-          - Output summary (first/last N lines, truncation indicator)
-          - Duration breakdown (queue time vs execution time)
-          - Working directory
+          Redesign the persona theme switcher to integrate properly with the
+          settings panel architecture. Original bugs: Recent themes not persisted,
+          async loading issues, persona click handler conflicts.
+        points: 3
+        priority: P1
+        status: done
+        assigned_to: Keith Avery
+        repos: cyclist
+        workflow: bdd
+        started: 2026-01-18T11:04:14Z
+        completed: 2026-01-18
+        acceptance_criteria:
+          - Given I click the persona section, When the theme picker opens, Then I see my recent themes at the top
+          - Given I select a theme, When the picker closes, Then the persona display updates immediately
+          - Given IPC is unavailable, When the picker loads, Then it falls back to HTTP gracefully
+          - Given I change theme in quick-picker, When I open settings panel, Then settings reflects current theme
+      - id: MSSCI-11851
+        title: Collapsible Bash tool output in message stream
         points: 2
         priority: P1
-        status: backlog
+        status: done
+        assigned_to: Keith Avery
         repos: cyclist
-        jira: MSSCI-11735
+        workflow: tdd
+        started: 2026-01-18T07:30:00Z
+        completed: 2026-01-18
+        pr: 321
         acceptance_criteria:
-          - Command included in span (secrets redacted)
-          - Exit code captured
-          - Output summary (first 5 lines, last 5 lines if truncated)
-          - Execution duration accurate
-          - Working directory included
-      - id: 36-4
-        title: Search tool enrichment (Grep/Glob)
+          - Bash tool results render in collapsible section
+          - Section shows command and exit code in header
+          - Collapsed by default, expandable on click
+          - Output preserves formatting and ANSI colors
+      - id: MSSCI-11852
+        title: Background tasks sidebar panel with real-time status
+        points: 5
+        priority: P1
+        status: done
+        assigned_to: Keith Avery
+        repos: cyclist
+        workflow: tdd
+        started: 2026-01-18T11:16:40Z
+        completed: 2026-01-18T12:20:00Z
+        pr: 324
+        acceptance_criteria:
+          - GET /api/background-tasks returns list of tracked tasks
+          - IPC broadcasts task start events (not just completion)
+          - WebSocket /ws/background-tasks pushes real-time updates
+          - Sidebar panel shows running tasks with elapsed time
+          - Sidebar panel shows completed tasks with success/failure
+          - Completed tasks expandable to show output
+          - Dismiss button removes completed task from panel
+          - Panel updates in real-time as tasks start/complete
+      - id: MSSCI-11917
+        title: Resizable theme panel width
+        points: 1
+        priority: P3
+        status: done
+        assigned_to: Keith Avery
+        started: 2026-01-18T16:30:00Z
+        completed: 2026-01-18
+        workflow: trivial
+        repos: cyclist
+        pr: 335
         description: |
-          Enrich Grep and Glob spans with search context:
-          - Pattern searched
-          - Number of matches found
-          - Files matched (list or count)
-          - Search scope (path, file types)
-          - Whether results were truncated
+          Theme panel has fixed width that can blow out display. Add resize
+          handle similar to other resizable panels in Cyclist.
+        acceptance_criteria:
+          - Theme panel has drag handle for width adjustment
+          - Width persists across sessions (localStorage or settings)
+          - Minimum/maximum width constraints prevent unusable sizes
+  # ===========================================================================
+  # EPIC 36: OTEL Tool Call Enrichment
+  # ===========================================================================
+  - id: MSSCI-11728
+    type: epic
+    jira: MSSCI-11728
+    title: "Epic: OTEL Tool Call Enrichment"
+    points: 15
+    completed_points: 15
+    priority: P2
+    status: done
+    stories:
+      # Done (trimmed)
+      - id: MSSCI-11731
+        title: Bash tool enrichment
+        points: 2
+        status: done
+      - id: MSSCI-11732
+        title: Search tool enrichment (Grep/Glob)
+        points: 2
+        status: done
+        pr: 271
+      # Backlog
+      - id: MSSCI-11733
+        title: Task/subagent enrichment
         points: 2
         priority: P2
         status: done
-        started: 2026-01-15
-        completed: 2026-01-15
+        workflow: tdd
+        repos: cyclist
         assigned_to: Keith Avery
-        repos: cyclist
-        jira: MSSCI-11732
-        pr: 271
-        acceptance_criteria:
-          - Search pattern included in span
-          - Match count accurate
-          - File list or count included
-          - Scope (path, glob pattern) included
-          - Truncation flag when results limited
-      - id: 36-5
-        title: Task/subagent enrichment
-        description: |
-          Enrich Task tool spans with subagent context:
-          - Subagent type spawned
-          - Prompt summary (first N chars)
-          - Result summary
-          - Turn count within subagent
-          - Background vs foreground execution
-        points: 2
-        priority: P2
-        status: backlog
-        repos: cyclist
-        jira: MSSCI-11733
+        started: 2026-01-18T14:00:00Z
+        completed: 2026-01-18T14:20:00Z
+        pr: 333
         acceptance_criteria:
           - Subagent type in span attributes
           - Prompt summary (first 200 chars)
           - Result summary when complete
-          - Turn count tracked
           - Background flag included
-      - id: 36-6
+      - id: MSSCI-11734
         title: Enriched span export and visualization
-        description: |
-          Export enriched spans and visualize in Cyclist UI:
-          - Custom OTEL exporter that adds enrichments
-          - Timeline view showing enriched tool calls
-          - Expandable details for each span
-          - Filter by tool type, status, duration
-          - Export to JSON for external analysis
         points: 4
         priority: P2
-        status: backlog
+        status: done
+        assigned_to: Keith Avery
+        started: 2026-01-18T18:42:09Z
+        completed: 2026-01-18
         repos: cyclist
-        jira: MSSCI-11734
+        workflow: tdd
+        pr: 340
         acceptance_criteria:
           - Custom exporter adds enrichment attributes
           - Timeline visualization in Cyclist UI
-          - Expandable span details show all enrichments
           - Filter controls for tool type and status
           - JSON export includes all enriched data
-          - Works with existing OTEL collectors (optional forwarding)
-  - id: epic-37
-    title: Technical Debt & Bug Fixes
-    description: |
-      Consolidate technical debt accumulated during rapid feature development.
-      Clean up stale TODOs, fix flaky tests, remove deprecated code paths,
-      and address known bugs that slipped through previous sprints.
-    points: 29
-    completed_points: 19
+  # ===========================================================================
+  # EPIC 37: Technical Debt & Bug Fixes
+  # ===========================================================================
+  - id: MSSCI-11794
+    type: epic
+    jira: MSSCI-11794
+    title: "Epic: Technical Debt & Bug Fixes"
+    points: 32
+    completed_points: 22
     priority: P2
-    marker: maintenance
-    repos: pennyfarthing, cyclist
     status: in_progress
     stories:
-      - id: 37-1
-        title: Clean up stale TODO comments in packages/core
-        description: |
-          Multiple stale TODO comments remain from completed stories:
-          - workflow-schema.ts:5 - "Story 31-2: Implement the loader and validator (TODO)"
-          - workflow-router.ts:16 - "TODO: Dev will implement the routing logic"
-          - generic-handoff.ts:13 - "TODO: Dev will implement the logic"
-          - generic-sm-setup.ts:10 - "TODO: Dev will implement the logic"
-          - generic-sm-finish.ts:10 - "TODO: Dev will implement the logic"
-
-          These are misleading - the logic IS implemented. Clean them up.
+      # Done (trimmed)
+      - id: MSSCI-11809
+        title: Clean up stale TODO comments
         points: 1
-        priority: P2
         status: done
-        completed: 2026-01-15
-        repos: pennyfarthing
-        acceptance_criteria:
-          - All stale TODO comments removed from packages/core/src/workflow/
-          - Remaining TODOs are genuine future work items with issue references
-          - No "Dev will implement" comments in shipped code
-      - id: 37-2
-        title: Fix flaky timestamp test in 31-15-background-task-notifications
-        description: |
-          Test "should track task start timestamp" fails intermittently due to
-          timing race between `Date.now()` calls:
-          ```
-          expected 1768510218961 to be greater than or equal to 1768510218962
-          ```
-
-          The test captures `startTime = Date.now()` then asserts
-          `tracked.startedAt >= startTime`, but if the implementation captures
-          timestamp slightly before the test does, assertion fails.
-
-          Fix by using tolerance or capturing time AFTER creating the task.
+      - id: MSSCI-11810
+        title: Fix flaky timestamp test
         points: 1
-        priority: P1
         status: done
-        started: 2026-01-15
-        completed: 2026-01-15
-        assigned_to: Keith Avery
-        repos: cyclist
-        acceptance_criteria:
-          - Test passes consistently (run 100x without flake)
-          - Timing assertions use appropriate tolerance
-          - No race condition between test and implementation
-      - id: 37-3
+      - id: MSSCI-11811
         title: Remove deprecated WebSocket terminal mode
-        description: |
-          websocket.ts still has deprecated /ws terminal endpoint that just
-          closes connections with "Terminal mode deprecated" message.
-          This dead code should be removed entirely.
-
-          Also clean up related deprecated token display code in E6-3 tests.
         points: 2
-        priority: P2
         status: done
-        completed: 2026-01-15
-        repos: cyclist
-        acceptance_criteria:
-          - Deprecated /ws terminal WebSocket code removed
-          - Deprecated token display tests removed (not just skipped)
-          - E6-3-token-display.test.ts cleaned up or removed
-          - No "deprecated" warnings in normal operation
-      - id: 37-4
+      - id: MSSCI-11812
         title: Remove or fix skipped test suites
-        description: |
-          Multiple test files have entire describe blocks skipped:
-          - story-git.test.ts (11 tests) - Story 15-3: Sidebar Story/Git API
-          - B-13-story-details.test.ts - Enhanced Story Details Display
-          - B-21-story-section.test.ts - Story Section No Active Story State
-          - E2-4.test.ts - Live Stats UI
-          - pennyfarthing.test.ts - Pennyfarthing Metadata Module
-
-          Either fix and unskip, or delete if feature was abandoned.
         points: 3
-        priority: P2
         status: done
-        completed: 2026-01-15
-        repos: cyclist
-        acceptance_criteria:
-          - Each skipped suite evaluated (fix or delete)
-          - No describe.skip blocks remain without clear reason
-          - Test count doesn't decrease (either fix or remove stale tests)
-          - Documentation for any intentionally deferred tests
-      - id: 37-5
+      - id: MSSCI-11813
         title: Implement agent-evaluation.ts file reading
-        description: |
-          agent-evaluation.ts:506 has "TODO: Implement file reading" placeholder.
-          This breaks file-based evaluation scenarios in the benchmark system.
-
-          The function exists but returns empty/mock data instead of actual
-          file contents. Implement proper file reading.
         points: 2
-        priority: P1
         status: done
-        completed: 2026-01-15
-        repos: cyclist
-        acceptance_criteria:
-          - File reading implemented in agent-evaluation.ts
-          - Benchmark scenarios can read actual file contents
-          - Error handling for missing/unreadable files
-          - Tests cover file reading paths
-      - id: 37-6
-        title: Fix pattern-based question detection (B-9.6 tests)
-        description: |
-          B-9.6-integration.test.ts has 8 skipped tests for pattern-based
-          question detection, marked as "pattern-based - disabled".
-
-          These were disabled when structured markers (25-5) were added,
-          but pattern detection should still work as fallback.
-          Either fix the fallback or remove the dead code.
+      - id: MSSCI-11814
+        title: Fix pattern-based question detection
         points: 3
-        priority: P2
         status: done
-        started: 2026-01-15
-        completed: 2026-01-15
-        assigned_to: Keith Avery
-        repos: cyclist
-        acceptance_criteria:
-          - Pattern-based detection works as fallback when markers absent
-          - B-9.6 tests unskipped and passing
-          - Or: Pattern detection code removed if not needed
-          - Clear documentation of detection strategy
-      - id: 37-7
+      - id: MSSCI-11816
+        title: Fix persona IPC handlers returning incomplete data
+        points: 2
+        status: done
+        pr: 288
+      - id: MSSCI-11818
+        title: Fix background task shell script arithmetic
+        points: 1
+        status: done
+      - id: MSSCI-11822
+        title: "Bug: Handoff buttons show hardcoded theme characters"
+        points: 2
+        status: done
+      - id: MSSCI-11823
+        title: "Bug: Workflow indicator shows hardcoded TDD phases"
+        points: 2
+        status: done
+        pr: 286
+      - id: MSSCI-11824
+        title: "Bug: Agent high-context circuit breaker not triggering"
+        points: 3
+        status: done
+        pr: 291
+      - id: MSSCI-11825
+        title: "Bug: pennyfarthing-dist missing commands and guides directories"
+        points: 2
+        status: done
+      # Backlog
+      - id: MSSCI-11815
         title: Clean up copy mode migration code
-        description: |
-          CLI still has copy mode -> symlink migration code from v4.0.4.
-          This deprecated code path adds complexity but no one uses copy
-          mode anymore. Remove the migration path entirely.
-
-          Files affected:
-          - packages/core/src/cli/commands/update.ts
-          - packages/core/src/cli/utils/manifest.ts
         points: 2
         priority: P3
-        status: backlog
+        status: done
+        assigned_to: Keith Avery
+        started: 2026-01-18T15:30:00Z
+        completed: 2026-01-18
+        workflow: trivial
         repos: pennyfarthing
+        pr: 337
         acceptance_criteria:
           - Copy mode migration code removed from update.ts
-          - Manifest type simplified (no copy option)
-          - Doctor command doesn't check for copy mode
-          - Clean error if somehow copy mode manifest found
-      - id: 37-8
-        title: Fix persona IPC handlers returning incomplete data
-        description: |
-          B-2.1-ipc-wiring.test.ts has 3 skipped tests for persona data:
-          - "should return persona with character and role fields"
-          - "should return persona with character and role (active session required)"
-          - "should return persona with displayName for sidebar"
-
-          The IPC handlers exist but return incomplete persona objects.
-          Fix to return full persona data as expected by UI.
-        points: 2
-        priority: P2
-        status: done
-        repos: cyclist
-        workflow: trivial
-        assigned_to: Keith Avery
-        started: 2026-01-16
-        completed: 2026-01-16
-        pr: 288
-        acceptance_criteria:
-          - Persona IPC returns character, role, displayName fields
-          - B-2.1-ipc-wiring tests unskipped and passing
-          - Sidebar displays full persona info
-          - Theme switching updates all persona fields
-      - id: 37-9
+          - Clean error if copy mode manifest found
+      - id: MSSCI-11817
         title: Add test coverage tooling
-        description: |
-          `npm test -- --coverage` fails with missing @vitest/coverage-v8.
-          Coverage reporting should work to identify untested code paths.
-
-          Install coverage dependency and configure coverage thresholds.
         points: 2
         priority: P2
-        status: backlog
-        repos: cyclist
-        acceptance_criteria:
-          - "@vitest/coverage-v8 installed as dev dependency"
-          - Coverage report generates successfully
-          - Coverage thresholds configured (warn at <70%, fail at <50%)
-          - CI runs coverage on PR
-      - id: 37-10
-        title: Fix background task shell script arithmetic
-        description: |
-          background-tasks.sh has broken grep -c pattern causing output like:
-          "Cleaned up 0\n0 completed, 0\n0 errored tasks"
-
-          The shell arithmetic parsing is broken. Fix the script to produce
-          clean output: "Cleaned up 3 completed, 2 errored tasks"
-
-          RESOLUTION: Duplicate of fix applied in story 31-14 (PR #246).
-          The _count_matches() helper was added during 31-14 review cycle
-          to handle grep -c exit code correctly. Manual testing confirms
-          all output is clean.
-        points: 1
-        priority: P2
         status: done
-        completed: 2026-01-15
-        repos: pennyfarthing
+        assigned_to: Keith Avery
+        started: 2026-01-18T15:50:00Z
+        completed: 2026-01-18
+        workflow: trivial
+        repos: cyclist
+        pr: 338
         acceptance_criteria:
-          - bg_task_cleanup() outputs clean single-line summary
-          - bg_task_summary() outputs formatted task status
-          - All arithmetic operations work correctly
-          - Integration test for script output format
-      - id: 37-11
+          - "@vitest/coverage-v8 installed"
+          - Coverage report generates successfully
+          - CI runs coverage on PR
+      - id: MSSCI-11819
         title: Remove persona-config.local.yaml deprecation
-        description: |
-          AGENT-COORDINATION.md mentions persona-config.local.yaml as deprecated
-          but the file may still be checked by code. Either:
-          1. Remove all references to this deprecated path, OR
-          2. Add migration warning when found
-
-          Consolidate theme config to .pennyfarthing/config.local.yaml only.
         points: 1
         priority: P3
-        status: backlog
+        status: done
+        assigned_to: Keith Avery
+        started: 2026-01-18T17:00:00Z
+        completed: 2026-01-18
         repos: pennyfarthing
+        workflow: trivial
+        pr: 336
         acceptance_criteria:
           - Single source of truth for theme config
-          - Old persona-config.local.yaml path not checked
-          - Documentation updated to remove deprecated path
-          - Migration message if old file found
-      - id: 37-12
+          - Old path not checked
+      - id: MSSCI-11820
         title: Audit and fix context.js script inclusion
-        description: |
-          B-19-context-progress.test.ts:255 has skipped test:
-          "should include context.js script in HTML"
-
-          Context progress feature may be partially implemented.
-          Audit the feature and either complete or remove.
         points: 2
         priority: P2
         status: backlog
         repos: cyclist
         acceptance_criteria:
           - Context progress feature fully implemented
-          - context.js included in HTML when needed
           - Test unskipped and passing
-          - Or: Feature removed if not needed
-      - id: 37-13
+      - id: MSSCI-11821
         title: Fix 15-3 sidebar section styling tests
-        description: |
-          15-3-sidebar-sections.test.ts has 4 skipped tests for persona display:
-          - character-quote element
-          - persona-info container
-          - character quote styling (italic, muted)
-
-          These UI elements exist but tests are skipped. Fix the tests or
-          update the UI to match expected structure.
         points: 2
         priority: P2
         status: backlog
         repos: cyclist
         acceptance_criteria:
           - Persona section has character-quote element
-          - Quote displays in italic, muted style
-          - persona-info container groups name and role
           - All 15-3 tests unskipped and passing
-      - id: 37-14
-        title: "Bug: Handoff buttons show hardcoded theme characters"
-        description: |
-          Quick action handoff buttons in Cyclist show character names from a
-          hardcoded theme (The Expanse) instead of the currently active theme.
-
-          Root cause: `getAgentDisplayName()` in quick-actions.js calls
-          `getThemeAgents()` which returns null when the theme cache hasn't
-          been populated. The fallback returns generic role names like
-          "Scrum Master" but somewhere the test fixtures or UI are showing
-          Expanse characters.
-
-          Files affected:
-          - packages/cyclist/src/public/js/components/message-view/quick-actions.js
-          - packages/cyclist/src/public/js/story.js (themeAgentsCache)
-
-          The theme cache may not be loaded when quick actions render, or
-          the cache may be stale after theme switch.
-
-          Fix options:
-          1. Ensure theme cache loads before first handoff button renders
-          2. Add fallback that fetches theme on-demand if cache is null
-          3. Subscribe to theme change events and refresh cache
-        points: 2
-        priority: P1
-        status: done
-        started: 2026-01-15
-        completed: 2026-01-15
-        repos: cyclist
-        workflow: trivial
-        assigned_to: Keith Avery
-        acceptance_criteria:
-          - Handoff buttons show character names from current theme
-          - Buttons update when theme is switched
-          - No hardcoded theme references in production code
-          - Works on initial load (theme cache populated before needed)
-      - id: 37-15
-        title: "Bug: Workflow indicator shows hardcoded TDD phases"
-        description: |
-          The workflow progress indicator in Cyclist sidebar always shows the
-          hardcoded TDD workflow phases (SM → TEA → Dev → Reviewer) regardless
-          of which workflow is actually active for the current story.
-
-          When using trivial workflow (SM → Dev) or custom workflows, the
-          indicator still displays all 4 TDD phases instead of the actual
-          workflow steps.
-
-          Root cause: updateWorkflowProgress() in story.js renders workflow
-          steps based on data-agent attributes in HTML, but the HTML template
-          has hardcoded TDD phases. The workflow data from IPC should drive
-          which phases are displayed.
-
-          Files affected:
-          - packages/cyclist/src/public/js/story.js (updateWorkflowProgress)
-          - packages/cyclist/src/public/index.html (workflow-progress element)
-          - packages/cyclist/src/main/ipc/story.ts (workflow data source)
-
-          Fix: Dynamic workflow rendering based on active workflow definition,
-          not hardcoded HTML template.
-        points: 2
+      - id: MSSCI-11826
+        title: "Bug: cyclist-doctor reports false failures for workspace deps"
+        points: 1
         priority: P2
         status: done
         repos: cyclist
         workflow: trivial
-        assigned_to: Keith Avery
-        started: 2026-01-16
-        completed: 2026-01-16
-        pr: 286
+        completed: 2026-01-18
         acceptance_criteria:
-          - Workflow indicator shows phases from active workflow definition
-          - Trivial workflow shows only SM → Dev phases
-          - Custom workflows display their defined phases
-          - Phase status (done/current/pending) updates correctly
-          - Works when switching between stories with different workflows
-      - id: 37-16
-        title: "Bug: Agent high-context circuit breaker not triggering"
-        description: |
-          The agent high-context circuit breaker is supposed to warn/stop agents
-          when context usage gets too high, preventing unexpected context limit
-          errors. Currently it appears to not be working.
-
-          Investigation needed:
-          1. Where is the circuit breaker implemented?
-             - check-context.sh script?
-             - Agent file instructions?
-             - Cyclist context monitoring?
-          2. What threshold should trigger it? (60%? 80%?)
-          3. Is it being called but failing silently?
-          4. Is the context percentage calculation accurate?
-
-          Possible locations:
-          - pennyfarthing-dist/scripts/check-context.sh
-          - Agent handoff sections (check before handoff)
-          - Cyclist context progress monitoring
-          - packages/cyclist/src/public/js/context.js
-
-          Expected behavior:
-          - At 60% context: Warning displayed, suggest wrapping up
-          - At 80% context: Strong warning, recommend clearing
-          - At 90% context: Circuit breaker triggers, auto-save state
-
-          Current behavior:
-          - Agents run until they hit hard context limits unexpectedly
-        points: 3
-        priority: P1
+          - Doctor correctly identifies workspace symlinks
+          - No false failures after successful pnpm install
+      - id: MSSCI-11827
+        title: 'Bug: workflows directory not included in installation symlinks'
+        points: 1
+        priority: P2
         status: done
-        started: 2026-01-16
-        completed: 2026-01-16
         assigned_to: Keith Avery
-        repos: pennyfarthing, cyclist
-        workflow: tdd
-        pr: 291
+        repos: pennyfarthing
+        workflow: trivial
+        completed: 2026-01-18
         acceptance_criteria:
-          - Root cause identified (why circuit breaker doesn't trigger)
-          - Circuit breaker fires at configured threshold
-          - Warning displayed to user when threshold approached
-          - Agent behavior changes appropriately at each threshold
-          - Context percentage calculation verified accurate
-          - Works in both Cyclist and raw Claude Code modes
-  - id: epic-38
-    title: Agent File Modernization
-    description: |
-      Modernize non-TDD agent files to support custom workflow integration.
-      Currently SM, TEA, Dev, Reviewer are production-quality with subagent
-      delegation, turn efficiency, and handoff gates. Non-TDD agents (PM,
-      Architect, DevOps, Tech Writer, UX Designer, Orchestrator) are generic
-      templates disconnected from actual workflows.
-
-      With Epic 31's custom workflow engine, these agents will participate
-      in user-defined flows. They need the same patterns as TDD agents.
-
-      Includes workflow routing: SM reads `workflow:` tag from stories and
-      follows the appropriate workflow definition.
+          - DIRECTORY_SYMLINKS includes workflows entry
+          - MANAGED_PATHS includes .pennyfarthing/workflows
+          - pennyfarthing init creates workflows symlink
+          - pennyfarthing doctor checks workflows symlink
+  # ===========================================================================
+  # EPIC 38: Agent File Modernization
+  # ===========================================================================
+  - id: MSSCI-11795
+    type: epic
+    title: "Epic: Agent File Modernization"
     points: 30
-    completed_points: 14
+    completed_points: 24
     priority: P2
-    marker: infrastructure
-    repos: pennyfarthing
     status: in_progress
     stories:
-      - id: 38-1
+      # Done (trimmed)
+      - id: MSSCI-11828
         title: Fix stale references in agent files
-        description: |
-          Quick fixes for incorrect/stale content identified in audit:
-          - README.md:71,361 - Wrong path to agent-scopes.yaml
-          - README.md:250-251 - Contradictory WRONG example
-          - orchestrator.md:96-108 - Hardcoded Discworld character table
-          - sm-handoff.md:10-11 - Hardcoded character names
-          - reviewer-preflight.md:111 - Wrong subagent_type (general-purpose → testing-runner)
         points: 1
-        priority: P1
         status: done
-        started: 2026-01-15
-        completed: 2026-01-15
-        assigned_to: Keith Avery
-        repos: pennyfarthing
-        workflow: trivial
-        acceptance_criteria:
-          - All path references correct
-          - No hardcoded theme character names
-          - reviewer-preflight uses testing-runner subagent
-          - README examples are consistent
-      - id: 38-2
+      - id: MSSCI-11829
         title: Add status tags to agent files
-        description: |
-          Add <status> tags to clearly signal agent maturity:
-          - <status>production</status> for TDD agents (sm, tea, dev, reviewer)
-          - <status>experimental</status> for non-TDD agents
-          - Update README with "Production Agents" and "Experimental Agents" sections
         points: 1
-        priority: P2
         status: done
-        started: 2026-01-16
-        completed: 2026-01-16
-        assigned_to: Keith Avery
-        repos: pennyfarthing
-        workflow: trivial
-        acceptance_criteria:
-          - All 10 main agents have <status> tag
-          - README documents production vs experimental
-          - Users know which agents are battle-tested
-      - id: 38-3
+      - id: MSSCI-11830
         title: Modernize PM agent for custom workflows
-        description: |
-          Update pm.md to support custom workflow participation:
-          - Add <reasoning-mode> section
-          - Add Turn Efficiency patterns
-          - Add subagent delegation guidance
-          - Connect to sprint system properly
-          - Remove generic PM tutorial content
         points: 2
-        priority: P2
         status: done
-        repos: pennyfarthing
-        workflow: agent-docs
-        assigned_to: Keith Avery
-        started: 2026-01-16
-        completed: 2026-01-16
         pr: 290
-        acceptance_criteria:
-          - PM has reasoning-mode section
-          - PM has turn efficiency guidance
-          - PM can delegate to subagents
-          - PM integrates with sprint/current-sprint.yaml
-      - id: 38-4
+      - id: MSSCI-11831
         title: Modernize Architect agent for custom workflows
-        description: |
-          Update architect.md to support custom workflow participation:
-          - Add <reasoning-mode> section
-          - Add Turn Efficiency patterns
-          - Add subagent delegation (can spawn testing-runner for build verification)
-          - Define clear handoff gates to Dev/TEA
-          - Remove generic architecture tutorial content
         points: 2
-        priority: P2
         status: done
-        repos: pennyfarthing
-        workflow: agent-docs
-        assigned_to: Keith Avery
-        started: 2026-01-16
-        completed: 2026-01-16
         pr: 290
-        acceptance_criteria:
-          - Architect has reasoning-mode section
-          - Architect has turn efficiency guidance
-          - Architect can spawn testing-runner
-          - Clear handoff protocol to implementation agents
-      - id: 38-5
+      - id: MSSCI-11832
         title: Modernize DevOps agent for custom workflows
-        description: |
-          Update devops.md to support custom workflow participation:
-          - Add <reasoning-mode> section
-          - Add Turn Efficiency patterns
-          - Add subagent delegation (testing-runner for CI verification)
-          - Trim generic CI/CD tutorial (372 lines → ~200)
-          - Focus on Pennyfarthing-specific deployment patterns
         points: 3
-        priority: P2
         status: done
-        repos: pennyfarthing
-        workflow: agent-docs
-        assigned_to: Keith Avery
-        started: 2026-01-16
-        completed: 2026-01-16
         pr: 290
-        acceptance_criteria:
-          - DevOps has reasoning-mode section
-          - DevOps has turn efficiency guidance
-          - DevOps can spawn testing-runner
-          - File trimmed to ~200 lines
-          - Content is Pennyfarthing-specific
-      - id: 38-6
+      - id: MSSCI-11835
+        title: Modernize Orchestrator agent
+        points: 2
+        status: done
+        pr: 290
+      - id: MSSCI-11836
+        title: SM workflow routing from story tags
+        points: 3
+        status: done
+      - id: MSSCI-11839
+        title: Consolidate duplicated instructions to shared-agent-behavior.md
+        points: 2
+        status: done
+        pr: 289
+      # Backlog
+      - id: MSSCI-11833
         title: Modernize Tech Writer agent for custom workflows
-        description: |
-          Update tech-writer.md to support custom workflow participation:
-          - Add <reasoning-mode> section
-          - Add Turn Efficiency patterns
-          - Define documentation review workflow
-          - Connect to changelog/release process
         points: 2
         priority: P3
         status: backlog
@@ -1071,17 +524,10 @@ epics:
         workflow: agent-docs
         acceptance_criteria:
           - Tech Writer has reasoning-mode section
-          - Tech Writer has turn efficiency guidance
           - Clear workflow for documentation stories
           - Integrates with /changelog skill
-      - id: 38-7
+      - id: MSSCI-11834
         title: Modernize UX Designer agent for custom workflows
-        description: |
-          Update ux-designer.md to support custom workflow participation:
-          - Add <reasoning-mode> section
-          - Add Turn Efficiency patterns
-          - Define design review workflow
-          - Connect to Cyclist UI development
         points: 2
         priority: P3
         status: backlog
@@ -1089,214 +535,145 @@ epics:
         workflow: agent-docs
         acceptance_criteria:
           - UX Designer has reasoning-mode section
-          - UX Designer has turn efficiency guidance
           - Clear workflow for UI/UX stories
           - Handoff protocol to Dev defined
-      - id: 38-8
-        title: Modernize Orchestrator agent
-        description: |
-          Update orchestrator.md to be the meta-agent it claims to be:
-          - Add <reasoning-mode> section
-          - Add Turn Efficiency patterns
-          - Define process improvement workflow
-          - Add agent file audit capabilities
-          - Remove hardcoded character references
-        points: 2
-        priority: P2
-        status: done
-        repos: pennyfarthing
-        workflow: agent-docs
-        assigned_to: Keith Avery
-        started: 2026-01-16
-        completed: 2026-01-16
-        pr: 290
-        acceptance_criteria:
-          - Orchestrator has reasoning-mode section
-          - Orchestrator has turn efficiency guidance
-          - Can audit and update agent files
-          - No hardcoded theme references
-      - id: 38-9
-        title: SM workflow routing from story tags
-        description: |
-          Update SM to read and honor the `workflow:` tag on stories:
-
-          1. When SM picks up a story, read the `workflow:` field
-          2. Load the corresponding workflow definition from workflows/*.yaml
-          3. Follow that workflow's phase sequence instead of assuming TDD
-
-          Fallback behavior:
-          - If no workflow tag: Use triggers from workflow definitions to auto-select
-          - If workflow not found: Warn and fall back to tdd.yaml
-          - Points-based routing still applies (1-2 pts → trivial unless overridden)
-
-          Update sm.md with workflow routing logic.
-        points: 3
-        priority: P1
-        status: done
-        started: 2026-01-15
-        completed: 2026-01-15
-        assigned_to: Keith Avery
-        repos: pennyfarthing
-        workflow: tdd
-        acceptance_criteria:
-          - SM reads workflow tag from story in sprint YAML
-          - SM loads correct workflow definition
-          - SM follows workflow's phase sequence
-          - Fallback to TDD if no tag or unknown workflow
-          - Session file records which workflow is active
-      - id: 38-10
+      - id: MSSCI-11837
         title: Centralize handoff logic and honor auto/manual mode
-        description: |
-          Currently each agent (SM, TEA, Dev, Reviewer) has duplicated
-          "Context-Aware Handoff" sections with hardcoded logic like:
-          - "If < 60%: Invoke /dev directly"
-          - "If > 60%: Tell user to start fresh"
-
-          This duplicated logic:
-          1. Doesn't honor the user's handoff_mode setting (auto/manual)
-          2. Is inconsistent across agents
-          3. Requires updating 4+ files for any handoff behavior change
-
-          The generic-handoff subagent DOES read handoff_mode from
-          .pennyfarthing/cyclist.yaml but main agents ignore its output
-          and make their own handoff decisions.
-
-          Fix:
-          1. Remove duplicated handoff decision logic from main agents
-          2. Have agents rely on generic-handoff subagent output
-          3. generic-handoff decides: auto mode + OK context → invoke
-          4. Main agent just reports what generic-handoff says to do
-
-          Files to update:
-          - pennyfarthing-dist/agents/sm.md (remove Context-Aware Handoff duplication)
-          - pennyfarthing-dist/agents/tea.md (same)
-          - pennyfarthing-dist/agents/dev.md (same)
-          - pennyfarthing-dist/agents/reviewer.md (same)
-          - pennyfarthing-dist/agents/generic-handoff.md (ensure clear output)
         points: 3
         priority: P1
-        status: backlog
+        status: done
+        assigned_to: Keith Avery
         repos: pennyfarthing
         workflow: agent-docs
+        completed: 2026-01-18
+        pr: 319
+        notes: Implemented as part of MSSCI-11840
         acceptance_criteria:
           - Agents honor handoff_mode setting from cyclist.yaml
           - Auto mode + OK context invokes next agent automatically
-          - Manual mode always requires user to invoke next agent
-          - Handoff logic lives in generic-handoff, not duplicated in agents
-          - Context threshold check happens in one place
-      - id: 38-11
+          - Handoff logic lives in generic-handoff, not duplicated
+      - id: MSSCI-11838
         title: "Bug: Workflow indicator missing finish step"
-        description: |
-          The workflow progress indicator in Cyclist doesn't show the finish
-          step with SM. Workflows like TDD have 5 phases:
-            SM (setup) → TEA (red) → Dev (green) → Reviewer (review) → SM (finish)
-
-          But the indicator only shows 4 steps, omitting the final SM finish.
-          This makes it unclear that the cycle returns to SM for completion.
-
-          Root cause: story.js updateWorkflowProgress() may be filtering or
-          not rendering the finish phase, or the IPC data doesn't include it.
-
-          Files to check:
-          - packages/cyclist/src/public/js/story.js (updateWorkflowProgress)
-          - packages/cyclist/src/main/ipc/story.ts (workflow data source)
-          - pennyfarthing-dist/workflows/*.yaml (phase definitions)
-
-          The workflow YAML files correctly define finish phase with SM agent.
-          The UI rendering or data flow is the issue.
-        points: 2
-        priority: P2
-        status: backlog
-        repos: cyclist
-        workflow: trivial
-        acceptance_criteria:
-          - Workflow indicator shows all phases including finish
-          - TDD workflow shows 5 steps: SM → TEA → Dev → Rev → SM
-          - Trivial workflow shows 4 steps: SM → Dev → Rev → SM
-          - Finish step shows SM agent with appropriate label
-          - Current phase highlighting works for finish step
-      - id: 38-12
-        title: Consolidate duplicated instructions to shared-agent-behavior.md
-        description: |
-          Multiple agent files contain identical or near-identical content that
-          should live in shared-agent-behavior.md instead:
-
-          **Turn Efficiency section** - Duplicated in 12 files:
-          - Main agents: sm.md, tea.md, dev.md, reviewer.md
-          - Subagents: sm-handoff.md, sm-file-summary.md, generic-sm-setup.md,
-            generic-sm-finish.md, generic-handoff.md, reviewer-preflight.md,
-            workflow-status-check.md
-
-          **testing-runner delegation reminder** - Identical in 3 files:
-          - sm.md, dev.md, reviewer.md all have the same warning block
-
-          **reasoning-mode section** - Near-identical in 4 main agents:
-          - sm.md, tea.md, dev.md, reviewer.md (already in shared-agent-behavior.md
-            but agents have their own copies with minor variations)
-
-          Implementation:
-          1. Move Turn Efficiency content to shared-agent-behavior.md
-          2. Move testing-runner reminder to shared-agent-behavior.md
-          3. Remove duplicated sections from individual agent files
-          4. Add reference to shared behavior where content was removed
-          5. Keep agent-specific variations inline (e.g., SM-specific reasoning)
         points: 2
         priority: P2
         status: done
-        started: 2026-01-16
-        completed: 2026-01-16
-        assigned_to: Keith Avery
-        repos: pennyfarthing
+        repos: cyclist
         workflow: trivial
-        pr: 289
+        completed: 2026-01-18
         acceptance_criteria:
-          - Turn Efficiency section exists only in shared-agent-behavior.md
-          - testing-runner reminder exists only in shared-agent-behavior.md
-          - Agent files reference shared behavior instead of duplicating
-          - Agent-specific variations remain in agent files
-          - No functionality lost in consolidation
-      - id: 38-13
+          - Workflow indicator shows all phases including finish
+          - TDD workflow shows 5 steps: SM → TEA → Dev → Rev → SM
+      - id: MSSCI-11840
         title: Auto-mode context clear and agent reload on handoff
-        description: |
-          In auto mode, when context usage is too high (>60%) at handoff time,
-          the agent currently tells the user to "start fresh with /agent".
-          This breaks the automated flow.
-
-          Implement automated context clearing:
-          1. Agent detects high context on handoff (existing check)
-          2. Agent emits a CYCLIST:CONTEXT_CLEAR marker or IPC signal
-          3. Cyclist intercepts this signal
-          4. Cyclist clears the Claude Code session (/clear or restart)
-          5. Cyclist automatically loads the next agent (e.g., /tea, /dev)
-          6. Work continues seamlessly in auto mode
-
-          This requires coordination between:
-          - Agent handoff logic (emit signal with next agent info)
-          - Cyclist main process (intercept signal, execute clear)
-          - Cyclist session management (reload agent after clear)
-
-          The marker format could be:
-          ```
-          <!-- CYCLIST:CONTEXT_CLEAR:NEXT_AGENT:/tea -->
-          ```
-
-          Or an IPC event from the agent output parser.
-
-          Files affected:
-          - pennyfarthing-dist/agents/*.md (handoff logic updates)
-          - packages/cyclist/src/public/js/output-parser.js (detect marker)
-          - packages/cyclist/src/main/ipc/ (new handler for context clear)
-          - packages/cyclist/src/main/terminal.ts (execute clear + reload)
         points: 5
         priority: P1
-        status: backlog
+        status: done
+        assigned_to: Keith Avery
         repos: pennyfarthing, cyclist
         workflow: tdd
+        completed: 2026-01-18
+        pr: 319
         acceptance_criteria:
           - Agent emits context-clear signal when auto mode + high context
-          - Cyclist detects the signal from agent output
           - Cyclist clears the Claude Code session automatically
           - Cyclist loads the specified next agent after clear
           - Auto mode workflow continues without user intervention
-          - Works for all handoff transitions (SM→TEA, TEA→Dev, Dev→Rev, etc.)
-          - Manual mode ignores this and behaves as before (user prompt)
+  # ===========================================================================
+  # EPIC 47: Jira-Pennyfarthing Sync Improvements
+  # ===========================================================================
+  - id: MSSCI-11796
+    type: epic
+    title: "Epic: Jira-Pennyfarthing Sync Improvements"
+    points: 17
+    completed_points: 8
+    priority: P1
+    status: in_progress
+    stories:
+      - id: MSSCI-11841
+        title: Auto-create Jira epic on local epic creation
+        points: 3
+        priority: P1
+        status: done
+        assigned_to: Keith Avery
+        repos: pennyfarthing
+        workflow: tdd
+        completed: 2026-01-17
+        pr: 315
+        acceptance_criteria:
+          - SM setup detects new epic without jira field
+          - Automatically creates Jira epic with matching title/description
+          - Updates sprint YAML with new Jira key
+          - Epic number derived from Jira ticket number
+      - id: MSSCI-11798
+        title: Sync sprint numbers with Jira sprint IDs
+        points: 3
+        priority: P1
+        status: done
+        assigned_to: Keith Avery
+        repos: pennyfarthing
+        workflow: tdd
+        completed: 2026-01-17
+        pr: 316
+        acceptance_criteria:
+          - Sprint YAML references Jira sprint ID (e.g., 275)
+          - Status check queries Jira sprint for membership
+          - Sprint velocity pulls from Jira sprint metrics
+          - Local sprint number matches Jira sprint
+      - id: MSSCI-11799
+        points: 3
+        priority: P2
+        status: done
+        assigned_to: Keith Avery
+        repos: pennyfarthing
+        workflow: tdd
+        completed: 2026-01-17
+        pr: 317
+        acceptance_criteria:
+          - Sync script queries Jira sprint for all pennyfarthing stories
+          - Compares against sprint YAML story list
+          - Reports stories in Jira but not in YAML
+          - Optionally imports missing stories to YAML
+      - id: MSSCI-11842
+        title: Bidirectional sync script for sprint YAML and Jira
+        points: 4
+        priority: P2
+        status: done
+        assigned_to: Keith Avery
+        started: 2026-01-18T16:09:00Z
+        completed: 2026-01-18
+        repos: pennyfarthing
+        workflow: tdd
+        pr: 322
+        acceptance_criteria:
+          - Script syncs status changes both directions
+          - Points updated in Jira match sprint YAML
+          - New stories in either system detected
+          - Dry-run mode shows changes before applying
+      - id: MSSCI-11843
+        title: Retrofit historical epics with Jira links
+        points: 2
+        priority: P3
+        status: done
+        assigned_to: Keith Avery
+        repos: pennyfarthing
+        workflow: trivial
+        started: 2026-01-18T01:12:03Z
+        completed: 2026-01-18
+        acceptance_criteria:
+          - All epics in sprint archive have jira field populated
+          - Script to batch-add jira keys to historical epics
+          - Verify epic-to-Jira mapping is accurate
+          - Document any epics that have no Jira equivalent
+      - id: MSSCI-11844
+        title: Document Jira auto-creation for SM setup flow
+        points: 2
+        priority: P2
+        status: done
+        repos: pennyfarthing
+        workflow: trivial
+        completed: 2026-01-18
+        acceptance_criteria:
+          - generic-sm-setup.md documents epic jira check step
+          - jira skill references new epic creation capability
+          - CLAUDE.md mentions Jira sync improvements
+          - Agent sidecar captures Jira integration patterns

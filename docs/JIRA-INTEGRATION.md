@@ -187,16 +187,16 @@ The `jira-sync-story.sh` script handles transitions:
 
 ```bash
 # Sync status from sprint YAML to Jira
-.claude/scripts/run.sh jira-sync-story.sh 35-2-feature --transition
+.pennyfarthing/scripts/run.sh jira-sync-story.sh 35-2-feature --transition
 
 # Sync story points
-.claude/scripts/run.sh jira-sync-story.sh 35-2-feature --points
+.pennyfarthing/scripts/run.sh jira-sync-story.sh 35-2-feature --points
 
 # Add comment
-.claude/scripts/run.sh jira-sync-story.sh 35-2-feature --comment "Started dev"
+.pennyfarthing/scripts/run.sh jira-sync-story.sh 35-2-feature --comment "Started dev"
 
 # Full sync
-.claude/scripts/run.sh jira-sync-story.sh 35-2-feature --transition --points
+.pennyfarthing/scripts/run.sh jira-sync-story.sh 35-2-feature --transition --points
 ```
 
 ## Sprint Sync Process
@@ -233,10 +233,10 @@ Sync entire epic to Jira:
 
 ```bash
 # Create/update epic and all stories
-.claude/scripts/run.sh sync-epic-to-jira.sh 35
+.pennyfarthing/scripts/run.sh sync-epic-to-jira.sh 35
 
 # Dry run (preview without changes)
-DRY_RUN=true .claude/scripts/run.sh sync-epic-to-jira.sh 35
+DRY_RUN=true .pennyfarthing/scripts/run.sh sync-epic-to-jira.sh 35
 ```
 
 ## Drift Detection

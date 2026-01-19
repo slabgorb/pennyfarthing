@@ -17,9 +17,24 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 <helpers>
 From theme config. Model: haiku. Tasks: run tests, gather results, update session for handoff
 
-- **Official subagents:** (use `subagent_type: "{name}"`)
-  - `testing-runner` - Run tests, gather results
-  - `generic-handoff` - Workflow-driven session update for handoff
+- **Subagents:** (use `subagent_type: "general-purpose"` with `model: "haiku"`)
+  - `testing-runner.md` - Run tests, gather results
+  - `generic-handoff.md` - Workflow-driven session update for handoff
+
+- **Invocation pattern:** See `shared-agent-behavior.md` → "Interactive Background Task Protocol"
+
+  **Dev workflow tasks are sequential** - handoff depends on test results.
+  Use **foreground execution** (omit `run_in_background`) for workflow steps.
+
+  ```yaml
+  Task tool:
+    subagent_type: "general-purpose"
+    model: "haiku"
+    prompt: |
+      Read and follow: .pennyfarthing/agents/{subagent-name}.md
+
+      {PARAMETERS}
+  ```
 </helpers>
 
 <responsibilities>
@@ -39,7 +54,7 @@ From theme config. Model: haiku. Tasks: run tests, gather results, update sessio
 <context>
 Context auto-loaded by `/prime --agent dev`:
 - Shared context, shared behavior, tactical guide
-- Agent sidecar: `sprint/sidecars/dev/`
+- Agent sidecar: `.pennyfarthing/sidecars/dev/`
 </context>
 
 <reasoning-mode>
@@ -85,9 +100,21 @@ REFLECT: Minimal fix: return ErrNotFound when query returns no rows. This matche
 **Output:** Passing tests, PR created (GREEN state)
 
 1. Read session file for test locations
-2. **Have helper verify RED state** (spawn testing-runner)
+2. **Have helper verify RED state** (spawn testing-runner):
+   ```yaml
+   Task tool:
+     subagent_type: "general-purpose"
+     model: "haiku"
+     prompt: |
+       Read and follow: .pennyfarthing/agents/testing-runner.md
+
+       REPOS: pennyfarthing
+       CONTEXT: Verify RED state for Story {STORY_ID}
+       RUN_ID: {STORY_ID}-red-verify
+       FILTER: {test-file-pattern}  # e.g., jira-epic-creation
+   ```
 3. Implement minimal code to pass first test
-4. Run tests locally - verify GREEN
+4. **Have helper verify GREEN state** (spawn testing-runner with same FILTER)
 5. Refactor if needed (keep GREEN)
 6. Repeat for remaining tests
 7. Commit and push:
@@ -137,6 +164,7 @@ Write this to session file BEFORE spawning handoff subagent:
 ## Self-Review Before Handoff
 
 Use `/code-review` skill checklist:
+- [ ] Code is wired to the front end or other components (e.g., API routes)
 - [ ] Code follows project patterns
 - [ ] All acceptance criteria met
 - [ ] Tests passing (not skipped!)
@@ -148,19 +176,33 @@ Use `/code-review` skill checklist:
 
 After writing assessment, ALWAYS spawn handoff subagent to complete bookkeeping.
 
-Then check context usage:
+Then check context usage and handoff mode preference:
 
 ```bash
 $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
-**If < 60%:** Invoke `/reviewer` directly to continue the flow
+**Read handoff mode from Cyclist settings** (see `generic-handoff.md` for full implementation):
+- `~/.cyclist/settings.yaml` → `workflow.handoff_mode: auto|manual`
+- Default is `manual` if not set
 
-**If > 60%:** Tell user: "Context high. Start fresh session with `/reviewer`"
+**Handoff Decision Matrix:**
 
-**Handoff Marker:** Include at end of handoff message:
+| Context | Mode | Action |
+|---------|------|--------|
+| < 60% | auto | Invoke `/reviewer` directly via Skill tool |
+| < 60% | manual | Report ready, emit HANDOFF marker, wait for user |
+| >= 60% | auto | Emit CONTEXT_CLEAR marker (triggers auto-reload in Cyclist) |
+| >= 60% | manual | Tell user: "Context high. Start fresh session with `/reviewer`" |
+
+**Handoff Marker:** ALWAYS include at end of handoff message:
 ```
 <!-- CYCLIST:HANDOFF:/reviewer -->
+```
+
+**For high context + auto mode**, also include:
+```
+<!-- CYCLIST:CONTEXT_CLEAR:/reviewer -->
 ```
 
 ## Handoff Subagent
@@ -176,11 +218,14 @@ Then spawn with detected workflow (tdd, trivial, etc.):
 
 ```yaml
 Task tool:
-  subagent_type: "generic-handoff"
+  subagent_type: "general-purpose"
+  model: "haiku"
   prompt: |
+    Read and follow: .pennyfarthing/agents/generic-handoff.md
+
     STORY_ID: {value}
     WORKFLOW: {workflow from session}  # e.g., "tdd" or "trivial"
-    CURRENT_PHASE: green               # or "implement" for trivial workflow
+    CURRENT_PHASE: green               # or "impl" for trivial workflow
     REPOS: {value}
     ASSESSMENT_SECTION: Dev Assessment
     TEST_RESULT: GREEN
@@ -190,7 +235,7 @@ Task tool:
 
 **Phase name varies by workflow:**
 - TDD workflow: `green` phase
-- Trivial workflow: `implement` phase
+- Trivial workflow: `impl` phase
 
 Helper will:
 1. Verify quality gates pass (uses test cache from Story 31-8)

@@ -322,6 +322,20 @@ export interface ModeState {
  * Uses child_process with stdin pipe for NDJSON streaming programmatic control
  * of Claude Code without requiring an Anthropic API key.
  */
+/**
+ * Format an agent command for sending to Claude
+ * Normalizes agent names to ensure they have a leading slash
+ *
+ * @param agent - Agent name or command (e.g., 'dev' or '/dev')
+ * @returns Formatted agent command (e.g., '/dev')
+ */
+export function formatAgentCommand(agent: string): string {
+  if (agent.startsWith('/')) {
+    return agent;
+  }
+  return `/${agent}`;
+}
+
 export class ClaudeService extends EventEmitter {
   private sessionId: string | null = null;
   private pendingMode: PermissionMode = 'acceptEdits';
@@ -669,6 +683,50 @@ export class ClaudeService extends EventEmitter {
    * B-10: Also clears activeMode for consistent behavior with resetSession()
    */
   clearSession(): void {
+    this.resetSession();
+  }
+
+  /**
+   * Clear the session and wait for process to fully exit
+   * MSSCI-11840: Async version that prevents race conditions when spawning new process
+   * @returns Promise that resolves when process has fully exited
+   */
+  clearSessionAsync(): Promise<void> {
+    return new Promise((resolve) => {
+      if (!this.currentProcess) {
+        // No process running, just clear state and resolve immediately
+        this.resetSession();
+        resolve();
+        return;
+      }
+
+      // Set up listener for process exit BEFORE killing
+      const proc = this.currentProcess;
+      const onExit = () => {
+        proc.removeListener('close', onExit);
+        proc.removeListener('error', onExit);
+        resolve();
+      };
+
+      proc.once('close', onExit);
+      proc.once('error', onExit);
+
+      // Now kill the process - resetSession will set currentProcess to null
+      this.resetSession();
+
+      // Safety timeout in case process doesn't exit cleanly
+      setTimeout(() => {
+        proc.removeListener('close', onExit);
+        proc.removeListener('error', onExit);
+        resolve();
+      }, 2000);
+    });
+  }
+
+  /**
+   * Alias for resetSession - used by preload API
+   */
+  clear(): void {
     this.resetSession();
   }
 

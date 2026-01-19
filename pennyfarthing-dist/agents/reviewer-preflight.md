@@ -49,41 +49,21 @@ See `shared-agent-behavior.md` → Turn Efficiency Protocol for core patterns.
 cd $CLAUDE_PROJECT_DIR/${REPO} && git fetch origin && git checkout {BRANCH} && git diff develop...HEAD --stat
 ```
 
-### 2. Check Test Cache (Story 31-8)
+### 2. Check Test Cache
 
 **Before spawning testing-runner, check if valid cached results exist.**
 
 ```bash
-# Read session file and check for valid cache
+source $CLAUDE_PROJECT_DIR/scripts/utils/test-cache.sh
 SESSION_FILE="$CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md"
-CURRENT_SHA=$(git rev-parse HEAD)
 
-# Check if Test Cache section exists
-if grep -q "^## Test Cache" "$SESSION_FILE" 2>/dev/null; then
-    CACHE_SHA=$(grep "| Git SHA |" "$SESSION_FILE" | sed 's/.*| //' | sed 's/ |$//' | xargs)
-    CACHE_RESULT=$(grep "| Result |" "$SESSION_FILE" | sed 's/.*| //' | sed 's/ |$//' | xargs)
-    CACHE_TIME=$(grep "| Last Run |" "$SESSION_FILE" | sed 's/.*| //' | sed 's/ |$//' | xargs)
-
-    # Validate: SHA must match current HEAD
-    if [[ "$CACHE_SHA" == "$CURRENT_SHA" ]]; then
-        echo "✓ Cache SHA matches current HEAD"
-
-        # Validate: Cache must be less than 5 minutes old
-        # (Use date command appropriate for your OS)
-        CACHE_EPOCH=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$CACHE_TIME" +%s 2>/dev/null || date -d "$CACHE_TIME" +%s 2>/dev/null || echo 0)
-        NOW_EPOCH=$(date +%s)
-        AGE_MINUTES=$(( (NOW_EPOCH - CACHE_EPOCH) / 60 ))
-
-        if [[ $AGE_MINUTES -lt 5 ]]; then
-            echo "✓ Using cached test result: $CACHE_RESULT (${AGE_MINUTES}m old)"
-            # SKIP testing-runner spawn - use cached result in preflight report
-            USE_CACHED_TESTS=true
-        else
-            echo "⚠ Cache too old (${AGE_MINUTES}m), running fresh tests"
-        fi
-    else
-        echo "⚠ Cache SHA mismatch, running fresh tests"
-    fi
+USE_CACHED_TESTS=false
+if test_cache_valid "$SESSION_FILE"; then
+    CACHED_RESULT=$(test_cache_get "$SESSION_FILE" "result")
+    echo "✓ Using cached test result: $CACHED_RESULT"
+    USE_CACHED_TESTS=true
+else
+    echo "⚠ No valid cache, running fresh tests"
 fi
 ```
 
@@ -97,58 +77,16 @@ fi
 
 Spawn a testing-runner subagent with:
 ```yaml
-subagent_type: "testing-runner"
-model: "haiku"
-description: "run tests"
-prompt: |
-  You are a testing runner for the Conductor project.
-  Run tests and report structured results.
+Task tool:
+  subagent_type: "general-purpose"
+  model: "haiku"
+  description: "run tests"
+  prompt: |
+    Read and follow: .pennyfarthing/agents/testing-runner.md
 
-  ## Skills Reference
-  Read the testing skill at .claude/skills/testing/SKILL.md for test commands.
-  For troubleshooting failures, see .claude/skills/testing/references/troubleshooting.md
-
-  ## Project Info
-  - Project root: $CLAUDE_PROJECT_DIR (set by SessionStart hook)
-  - Repo(s) to test: {REPO}
-  - Context: PR review pre-flight for Story {STORY_ID}
-  - Run ID: {STORY_ID}-review
-
-  ## Execute Tests and Lints
-
-  Use repo-utils.sh for dynamic repo handling:
-  ```bash
-  source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
-  RUN_ID="{STORY_ID}-review"
-
-  for repo in $(get_repo_names); do
-      repo_path=$(get_repo_path "$repo")
-      test_cmd=$(get_test_command "$repo")
-      lint_cmd=$(get_lint_command "$repo")
-
-      cd $CLAUDE_PROJECT_DIR/$repo_path
-
-      # Run tests
-      if [[ -n "$test_cmd" ]]; then
-          $test_cmd 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/test-{STORY_ID}-reviewer-verify.log
-      fi
-
-      # Run linter
-      if [[ -n "$lint_cmd" ]]; then
-          $lint_cmd 2>&1 | tee $CLAUDE_PROJECT_DIR/.session/lint-{STORY_ID}-${repo}.log
-      fi
-  done
-  ```
-
-  ## Check for Forbidden Skip Patterns
-  ```bash
-  source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
-  for repo in $(get_repo_names); do
-      check_skip_violations "$repo"
-  done
-  ```
-
-  ## Output structured results per testing-runner.md format
+    REPOS: {REPOS}
+    CONTEXT: PR review pre-flight for Story {STORY_ID}
+    RUN_ID: {STORY_ID}-review
 ```
 
 If you cannot spawn a subagent, run the tests directly using the testing skill commands.

@@ -13,6 +13,7 @@ export { parseMarkdown, escapeHtml, stripMarkers } from './markdown-parser.js';
 
 // Quick actions
 export {
+  MARKER_TYPES,
   PHASE_TO_AGENT,
   stripMarkdown,
   truncateText,
@@ -20,6 +21,7 @@ export {
   renderQuickActions,
   clearQuickActions,
   handleQuickActionClick,
+  handleContextClearMarker,
   setQuickActionsVisible,
   getQuickActionsVisible,
   setAutoSubmit,

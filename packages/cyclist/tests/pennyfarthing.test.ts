@@ -6,7 +6,7 @@
  *
  * Acceptance Criteria:
  * - AC1: Detects Pennyfarthing project (.claude/ exists)
- * - AC2: Reads .claude/persona-config.yaml for theme name
+ * - AC2: Reads theme config (priority: .pennyfarthing/config.local.yaml > .claude/persona-config.yaml)
  * - AC3: Loads theme YAML and parses agent data
  * - AC4: Watches .session/agents/* for changes
  * - AC5: GET /api/persona returns {character, role, quote, ocean}
@@ -84,7 +84,7 @@ describe.skip('Story 15-2: Pennyfarthing Metadata Module', () => {
 
   });
 
-  describe('AC2: Reads .claude/persona-config.yaml for theme name', () => {
+  describe('AC2: Reads theme config for theme name', () => {
 
     it('should read theme from persona-config.yaml', () => {
       mockExistsSync.mockImplementation((path) => {
@@ -97,17 +97,17 @@ describe.skip('Story 15-2: Pennyfarthing Metadata Module', () => {
       expect(result).toEqual({ theme: 'enlightenment-thinkers' });
     });
 
-    it('should prefer persona-config.local.yaml over persona-config.yaml', () => {
+    it('should prefer .pennyfarthing/config.local.yaml over .claude/persona-config.yaml', () => {
       mockExistsSync.mockImplementation((path) => {
-        return String(path).includes('persona-config');
+        return String(path).includes('config.local.yaml') || String(path).includes('persona-config.yaml');
       });
       mockReadFileSync.mockReturnValue('theme: shakespeare\n');
 
       const result = loadThemeConfig('/path/to/project');
 
-      // Should check local first
+      // Should check .pennyfarthing/config.local.yaml first
       expect(mockExistsSync).toHaveBeenCalledWith(
-        expect.stringContaining('persona-config.local.yaml')
+        expect.stringContaining('.pennyfarthing/config.local.yaml')
       );
       expect(result).toEqual({ theme: 'shakespeare' });
     });

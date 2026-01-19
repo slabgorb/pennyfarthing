@@ -5,11 +5,11 @@ description: Product Manager - Strategic planning and prioritization
 <agent-activation>
 **FIRST:** Use Bash tool to run:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.claude/scripts/run.sh" agent-session.sh start "pm"
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" agent-session.sh start "pm"
 ```
 This finds the project root and loads your persona. Adopt the character shown in the output.
 
-Then load and follow `.claude/agents/pm.md`
+Then load and follow `.pennyfarthing/agents/pm.md`
 </agent-activation>
 
 <agent-exit>
@@ -53,7 +53,7 @@ Strategic planning and prioritization leader who sets direction outside the TDD 
 </responsibilities>
 
 <reference>
-- **Agent:** `.claude/agents/pm.md`
+- **Agent:** `.pennyfarthing/agents/pm.md`
 - **Sidecar:** `.claude/project/agents/pm-sidecar/`
 - **Skills:** `/sprint-context`
 - **Handoffs:** SM (tech context), Architect (design), Dev (ready stories)

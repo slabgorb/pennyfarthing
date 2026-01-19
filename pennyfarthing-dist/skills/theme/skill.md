@@ -58,10 +58,25 @@ To change the active theme:
    ls pennyfarthing-dist/personas/themes/<name>.yaml
    ```
 
-2. Update `.pennyfarthing/config.local.yaml`:
-   - Edit the `theme:` line to the new theme name
+2. Read current config:
+   ```bash
+   cat .pennyfarthing/config.local.yaml 2>/dev/null || echo "FILE_NOT_FOUND"
+   ```
 
-3. Start a new agent session to use the new theme
+3. Update `.pennyfarthing/config.local.yaml`:
+   - If file exists with `theme:` line: Use Edit tool to replace `theme: <old>` with `theme: <new>`
+   - If file missing or no theme line: Use Write tool to create:
+     ```yaml
+     # Pennyfarthing Local Configuration
+     theme: <name>
+     ```
+
+4. Verify the write succeeded:
+   ```bash
+   cat .pennyfarthing/config.local.yaml
+   ```
+
+5. Start a new agent session to use the new theme
 
 ## Theme File Locations
 

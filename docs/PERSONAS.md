@@ -7,7 +7,7 @@ The persona system allows agents to adopt themed character personalities while m
 Personas are organized into **themes** (character sets) and modified by **attributes** (behavior settings).
 
 ```yaml
-# .claude/persona-config.yaml
+# .pennyfarthing/config.local.yaml
 theme: discworld           # Which character set to use
 
 attributes:                # How agents behave
@@ -138,7 +138,7 @@ Controls visual expression.
 ### Basic Configuration
 
 ```yaml
-# .claude/persona-config.yaml
+# .pennyfarthing/config.local.yaml
 theme: discworld
 
 attributes:
@@ -181,7 +181,7 @@ All agents will use the new theme's characters.
 ## How Personas Load
 
 1. Command file triggers agent activation
-2. Agent reads `.claude/persona-config.yaml`
+2. Agent reads `.pennyfarthing/config.local.yaml`
 3. Gets theme value (e.g., `discworld`)
 4. Loads `personas/themes/{theme}.yaml`
 5. Extracts agent's character section

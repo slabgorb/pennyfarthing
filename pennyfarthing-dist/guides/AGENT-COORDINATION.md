@@ -25,9 +25,9 @@ This document describes how Pennyfarthing agents are coordinated. The framework 
 ## Architecture Principles
 
 ### 1. Single Source of Truth
-- **Agent definitions:** `.claude/agents/`
-- **Subagent prompts:** `.claude/agents/`
-- **Scope configuration:** `.claude/guides/agent-scopes.yaml`
+- **Agent definitions:** `.pennyfarthing/agents/`
+- **Subagent prompts:** `.pennyfarthing/agents/`
+- **Scope configuration:** `.pennyfarthing/guides/agent-scopes.yaml`
 - **Sprint tracking:** `sprint/current-sprint.yaml`
 - **Session state:** `.session/{STORY_ID}-session.md`
 
@@ -82,7 +82,7 @@ Support Agents
 │   │   ├── agents/                     # Agent sidecars (patterns, gotchas, decisions)
 │   │   └── commands/                   # Custom project commands
 │   │
-│   ├── persona-config.local.yaml       # Theme selection (deprecated, use .pennyfarthing/)
+│   ├── persona-config.yaml             # Project default theme (shared with team)
 │   └── CLAUDE.md                       # Project instructions
 │
 ├── .session/                           # Active work sessions
@@ -218,7 +218,7 @@ On Activation:
 
 ### Step 1: Load Agent Definition
 ```
-Read: .claude/agents/[agent].md
+Read: .pennyfarthing/agents/[agent].md
 Identify: Strategic or Tactical agent type
 ```
 
@@ -251,7 +251,7 @@ Ready: For user input
 ```
 User: @/pm
 
-1. Load PM agent definition (.claude/agents/pm.md)
+1. Load PM agent definition (.pennyfarthing/agents/pm.md)
 2. Load all strategic context:
    - Sprint status (full)
    - API context
@@ -269,7 +269,7 @@ User: @/pm
 ```
 User: @/dev
 
-1. Load Dev agent definition (.claude/agents/dev.md)
+1. Load Dev agent definition (.pennyfarthing/agents/dev.md)
 2. Load base context:
    - Sprint status (story section)
    - Active work
@@ -286,7 +286,7 @@ User: @/dev
 
 ## Agent Handoffs (TDD Flow)
 
-Handoffs are automated via Haiku subagents in `.claude/agents/`.
+Handoffs are automated via Haiku subagents in `.pennyfarthing/agents/`.
 
 ### The Flow
 
@@ -438,13 +438,13 @@ Dev Agent Example (API story):
 - Smart entry point: `/work` (resumes or starts new)
 - Alternative: `/new-work` (explicitly start new story)
 - State detection via session file in `.session/`
-- Handoffs via Haiku subagents in `.claude/agents/`
+- Handoffs via Haiku subagents in `.pennyfarthing/agents/`
 - SM handles finish-story when status = `approved`
 - 102 themed personas for agent personality
 
 ### Directory Structure
 ```
-.claude/agents/             # Agent definitions (symlinked)
+.pennyfarthing/agents/             # Agent definitions (symlinked)
 .claude/commands/           # 42 slash commands
 .claude/skills/             # 18+ knowledge domain skills
 .session/                   # Session files

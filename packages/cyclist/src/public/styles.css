@@ -1565,6 +1565,68 @@ html, body {
   border-left-color: var(--status-error);
 }
 
+/* MSSCI-11851: Bash tool result collapsible styling */
+.message-bash-result {
+  border-left-color: var(--status-working, #3182ce);
+}
+
+.message-bash-result .bash-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+
+.message-bash-result .bash-command {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.message-bash-result .bash-exit-code {
+  font-size: 0.75rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.message-bash-result .bash-exit-code.exit-success {
+  background: rgba(72, 187, 120, 0.2);
+  color: var(--status-ready, #48bb78);
+}
+
+.message-bash-result .bash-exit-code.exit-error {
+  background: rgba(229, 62, 62, 0.2);
+  color: var(--status-error, #e53e3e);
+}
+
+.message-bash-result .bash-output-content {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ANSI color classes for terminal output */
+.ansi-black { color: #1a1a1a; }
+.ansi-red { color: #e53e3e; }
+.ansi-green { color: #48bb78; }
+.ansi-yellow { color: #ecc94b; }
+.ansi-blue { color: #3182ce; }
+.ansi-magenta { color: #9f7aea; }
+.ansi-cyan { color: #38b2ac; }
+.ansi-white { color: #e2e8f0; }
+.ansi-bold { font-weight: 700; }
+.ansi-bright-black { color: #718096; }
+.ansi-bright-red { color: #fc8181; }
+.ansi-bright-green { color: #68d391; }
+.ansi-bright-yellow { color: #faf089; }
+.ansi-bright-blue { color: #63b3ed; }
+.ansi-bright-magenta { color: #b794f4; }
+.ansi-bright-cyan { color: #4fd1c5; }
+.ansi-bright-white { color: #f7fafc; }
+
 .message-error {
   border-left: 3px solid var(--status-error);
   color: var(--status-error);
@@ -2259,6 +2321,22 @@ html, body {
   cursor: default;
 }
 
+/* Stop button throb - syncs with portrait thinking animation */
+.stop-btn:not(:disabled) {
+  animation: stop-btn-throb 1.5s ease-in-out infinite;
+}
+
+@keyframes stop-btn-throb {
+  0%, 100% {
+    box-shadow: 0 0 0 2px transparent;
+    background: var(--bg-primary);
+  }
+  50% {
+    box-shadow: 0 0 8px 2px #dc3545;
+    background: color-mix(in srgb, #dc3545 15%, var(--bg-primary));
+  }
+}
+
 .stop-icon {
   font-size: 1.25rem;
 }
@@ -2495,6 +2573,178 @@ html, body {
 
 .todo-pending .todo-content {
   color: var(--text-secondary);
+}
+
+/* =============================================================================
+   35-16: Background Tasks Section
+   ============================================================================= */
+
+.background-tasks-section {
+  background: var(--bg-primary);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  border-left: 2px solid var(--accent-secondary, #8b5cf6);
+  margin-bottom: 0.5rem;
+}
+
+.background-tasks-section .section-header {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  gap: 0.5rem;
+}
+
+.background-tasks-section .section-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.background-tasks-section .bg-tasks-count {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-left: auto;
+}
+
+.background-tasks-section .collapse-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  transition: transform 0.2s ease;
+}
+
+.background-tasks-section.collapsed .collapse-btn {
+  transform: rotate(-90deg);
+}
+
+.background-tasks-section .section-content {
+  margin-top: 0.5rem;
+  overflow: hidden;
+  transition: max-height 0.2s ease, opacity 0.2s ease;
+  max-height: 500px;
+  opacity: 1;
+}
+
+.background-tasks-section.collapsed .section-content {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+}
+
+/* Background Task Cards */
+.background-tasks-panel .panel-header {
+  display: none; /* Header is in the section, not panel */
+}
+
+.tasks-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tasks-empty {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.task-card {
+  background: var(--bg-secondary, #1f1f23);
+  border-radius: 6px;
+  padding: 0.5rem;
+  border-left: 3px solid var(--text-secondary);
+}
+
+.task-card.task-pending {
+  border-left-color: var(--warning, #f59e0b);
+}
+
+.task-card.task-success {
+  border-left-color: var(--success, #10b981);
+}
+
+.task-card.task-error {
+  border-left-color: var(--error, #ef4444);
+}
+
+.task-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.task-status-icon {
+  font-size: 0.9rem;
+}
+
+.task-type {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary, #27272a);
+  padding: 0.125rem 0.375rem;
+  border-radius: 3px;
+}
+
+.task-dismiss {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.125rem 0.25rem;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.task-dismiss:hover {
+  opacity: 1;
+  color: var(--error, #ef4444);
+}
+
+.task-description {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.task-elapsed {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.task-elapsed.pending {
+  color: var(--warning, #f59e0b);
+}
+
+.task-output {
+  margin-top: 0.5rem;
+}
+
+.task-output summary {
+  font-size: 0.75rem;
+  color: var(--accent);
+  cursor: pointer;
+  user-select: none;
+}
+
+.task-output pre {
+  font-size: 0.75rem;
+  background: var(--bg-tertiary, #27272a);
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin-top: 0.25rem;
+  overflow-x: auto;
+  max-height: 200px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* =============================================================================
@@ -4375,6 +4625,249 @@ html, body {
 }
 
 /* =============================================================================
+ * 35-12: Skill Panel Styles
+ * Dedicated panel for skill invocations tracking
+ * Mirrors tool-panel styling but positioned as fourth panel
+ * ============================================================================= */
+
+.skill-panel {
+  display: flex;
+  flex-direction: column;
+  width: 350px;
+  min-width: var(--panel-min-width);
+  max-width: 50vw;
+  height: 100%;
+  background: var(--bg-secondary, #1a1a2e);
+  border-right: 1px solid var(--border, #333);
+  transition: width 0.2s ease, min-width 0.2s ease, opacity 0.2s ease;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.skill-panel.collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+  border-right: none;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.skill-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-tertiary, #252540);
+  border-bottom: 1px solid var(--border, #333);
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.skill-panel-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #888);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.skill-panel-count {
+  font-size: 11px;
+  color: var(--text-secondary, #888);
+  background: var(--bg-tertiary, #252540);
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.skill-panel-count:empty {
+  display: none;
+}
+
+.skill-panel-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.skill-panel-controls .icon-btn {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.skill-panel-controls .icon-btn:hover {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.skill-panel-controls .icon-btn.danger:hover {
+  background: var(--status-error);
+  border-color: var(--status-error);
+}
+
+.skill-panel-collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 12px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.skill-panel-collapse-btn:hover {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.1));
+  color: var(--text-primary, #fff);
+}
+
+.skill-panel-content {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Hide resize handle when skill panel is collapsed */
+.skill-panel.collapsed + .resize-handle {
+  display: none;
+}
+
+/* Skill log list */
+.skill-log-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+/* Skill entry */
+.skill-entry {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
+  transition: background 0.15s ease;
+}
+
+.skill-entry:hover {
+  background: var(--bg-tertiary);
+}
+
+.skill-entry.error {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.skill-entry.error:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.skill-entry-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  gap: 8px;
+}
+
+.skill-name {
+  font-family: var(--font-mono, Monaco, Consolas, monospace);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent, #6366f1);
+  flex: 1;
+}
+
+.skill-time {
+  font-family: var(--font-mono, Monaco, Consolas, monospace);
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.skill-status {
+  font-size: 12px;
+  width: 20px;
+  text-align: center;
+}
+
+.skill-status.status-running {
+  color: var(--accent, #6366f1);
+  animation: spin 1s linear infinite;
+}
+
+.skill-status.status-success {
+  color: var(--status-ready, #3fb950);
+}
+
+.skill-status.status-error {
+  color: var(--status-error, #ef4444);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Skill entry details (expandable) */
+.skill-entry-details {
+  display: none;
+  padding: 0 12px 12px 12px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  padding-top: 8px;
+}
+
+.skill-entry.expanded .skill-entry-details {
+  display: block;
+}
+
+.skill-entry-details > div {
+  margin-bottom: 4px;
+  font-family: var(--font-mono, Monaco, Consolas, monospace);
+}
+
+.skill-entry-details .detail-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.skill-entry-details .skill-args {
+  color: var(--text-primary);
+}
+
+.skill-entry-details .skill-result {
+  color: var(--status-ready, #3fb950);
+}
+
+.skill-entry-details .skill-error {
+  color: var(--status-error, #ef4444);
+}
+
+.skill-entry-details .skill-duration {
+  color: var(--text-secondary);
+}
+
+/* Empty state */
+.skill-empty-state {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--text-secondary);
+  font-style: italic;
+  font-size: 12px;
+}
+
+/* =============================================================================
  * 31-15: Background Task Notifications
  * ============================================================================= */
 
@@ -4489,6 +4982,11 @@ html, body {
   min-width: 0 !important;
 }
 
+/* MSSCI-11917: Hide sidebar resize handle when collapsed */
+#sidebar-resize:has(+ #sidebar.collapsed) {
+  display: none;
+}
+
 /* Sidebar collapse button */
 #sidebar .panel-collapse-btn,
 #sidebar-collapse-btn {
@@ -4550,3 +5048,692 @@ html, body {
   color: var(--text-primary, #fff);
 }
 
+
+/* =============================================================================
+ * 35-9: Settings Panel
+ * ============================================================================= */
+
+/* Settings Trigger Button (in tab bar) */
+/* Settings Panel - Vertical Panel (35-9) */
+#settings-panel.vertical-panel {
+  width: 320px;
+  min-width: 280px;
+  position: relative;
+  background: var(--bg-secondary, #16213e);
+}
+
+#settings-panel.vertical-panel.collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+}
+
+.settings-panel-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+/* Settings Panel Header */
+.settings-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-tertiary, #252540);
+  border-bottom: 1px solid var(--border, #333);
+  flex-shrink: 0;
+}
+
+.settings-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+}
+
+/* Loading State */
+.settings-loading {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  gap: 12px;
+}
+
+.settings-loading.hidden {
+  display: none;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-tertiary, #252540) 25%, var(--bg-secondary, #16213e) 50%, var(--bg-tertiary, #252540) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+.skeleton-text {
+  width: 100%;
+  height: 20px;
+}
+
+@keyframes skeleton-pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.loading-text {
+  font-size: 13px;
+  color: var(--text-secondary, #888);
+}
+
+/* Error State */
+.settings-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
+  gap: 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 4px;
+  margin: 16px;
+}
+
+.settings-error.hidden {
+  display: none;
+}
+
+.error-icon {
+  font-size: 24px;
+}
+
+.error-text {
+  font-size: 13px;
+  color: var(--text-primary, #fff);
+  text-align: center;
+}
+
+.error-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.retry-btn,
+.use-defaults-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.retry-btn {
+  background: var(--accent, #6366f1);
+  color: #fff;
+}
+
+.retry-btn:hover {
+  background: var(--accent-hover, #5558e3);
+}
+
+.use-defaults-btn {
+  background: var(--bg-tertiary, #252540);
+  color: var(--text-primary, #fff);
+}
+
+.use-defaults-btn:hover {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.1));
+}
+
+/* Settings Form */
+.settings-form {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.settings-form.hidden {
+  display: none;
+}
+
+/* Settings Sections */
+.settings-section {
+  margin-bottom: 16px;
+  background: var(--bg-tertiary, #252540);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.settings-section .section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.settings-section .section-header:hover {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.05));
+}
+
+.section-icon {
+  font-size: 16px;
+}
+
+.settings-section .section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+}
+
+.settings-section .section-content {
+  padding: 0 12px 12px;
+}
+
+.settings-section.collapsed .section-content {
+  display: none;
+}
+
+/* Setting Items */
+.setting-item {
+  margin-bottom: 12px;
+}
+
+.setting-item:last-child {
+  margin-bottom: 0;
+}
+
+.setting-item label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-primary, #fff);
+  cursor: pointer;
+}
+
+.setting-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent, #6366f1);
+}
+
+.setting-item input[type="number"],
+.setting-item select {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  border: 1px solid var(--border, #333);
+  border-radius: 4px;
+  background: var(--bg-primary, #1a1a2e);
+  color: var(--text-primary, #fff);
+  font-size: 13px;
+}
+
+.setting-item input[type="number"]:focus,
+.setting-item select:focus {
+  outline: none;
+  border-color: var(--accent, #6366f1);
+}
+
+.input-with-unit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.input-with-unit input {
+  flex: 1;
+  margin-top: 0 !important;
+}
+
+.input-with-unit .unit {
+  font-size: 12px;
+  color: var(--text-secondary, #888);
+}
+
+.setting-help {
+  font-size: 11px;
+  color: var(--text-secondary, #888);
+  margin-top: 4px;
+}
+
+/* Validation Errors */
+.setting-item input.has-error,
+.setting-item select.has-error {
+  border-color: var(--status-error, #ef4444);
+}
+
+.validation-error,
+.error-message {
+  display: block;
+  font-size: 11px;
+  color: var(--status-error, #ef4444);
+  margin-top: 4px;
+}
+
+/* Reset Button */
+.reset-btn {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border, #333);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-primary, #fff);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.reset-btn:hover {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.05));
+  border-color: var(--text-secondary, #888);
+}
+
+/* Settings Panel Footer */
+.settings-panel-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--bg-tertiary, #252540);
+  border-top: 1px solid var(--border, #333);
+  flex-shrink: 0;
+}
+
+.cancel-btn,
+.save-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.cancel-btn {
+  background: var(--bg-primary, #1a1a2e);
+  color: var(--text-primary, #fff);
+}
+
+.cancel-btn:hover {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.1));
+}
+
+.save-btn {
+  background: var(--accent, #6366f1);
+  color: #fff;
+}
+
+.save-btn:hover:not(:disabled) {
+  background: var(--accent-hover, #5558e3);
+}
+
+.save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* =============================================================================
+ * 35-8: Theme Picker (in Settings Panel)
+ * ============================================================================= */
+
+/* Theme Picker Section */
+.theme-picker-section {
+  margin: 12px;
+  background: var(--bg-tertiary, #252540);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.theme-picker-section .section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+}
+
+.theme-picker-section .section-content {
+  padding: 0 12px 12px;
+}
+
+/* Theme Search Input */
+.theme-search {
+  margin-bottom: 12px;
+}
+
+#theme-search {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border, #3a3a4a);
+  border-radius: 4px;
+  background: var(--bg-primary, #1a1a2e);
+  color: var(--text-primary, #eee);
+  font-size: 13px;
+}
+
+#theme-search::placeholder {
+  color: var(--text-secondary, #888);
+}
+
+#theme-search:focus {
+  outline: none;
+  border-color: var(--accent, #6366f1);
+}
+
+/* Theme List Container */
+.theme-list {
+  max-height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Theme Card */
+.theme-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border, #3a3a4a);
+  border-radius: 6px;
+  background: var(--bg-primary, #1a1a2e);
+  color: var(--text-primary, #eee);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  text-align: left;
+}
+
+.theme-card:hover {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.05));
+  border-color: var(--text-secondary, #666);
+}
+
+.theme-card:focus {
+  outline: none;
+  border-color: var(--accent, #6366f1);
+}
+
+.theme-card.active {
+  border-color: var(--accent, #6366f1);
+  background: rgba(99, 102, 241, 0.15);
+}
+
+/* Tier Badge */
+.tier-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.tier-badge.tier-s {
+  background: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+}
+
+.tier-badge.tier-a {
+  background: rgba(192, 192, 192, 0.2);
+  color: #c0c0c0;
+}
+
+.tier-badge.tier-b {
+  background: rgba(205, 127, 50, 0.2);
+  color: #cd7f32;
+}
+
+.tier-badge.tier-c {
+  background: rgba(136, 136, 136, 0.15);
+  color: #888;
+}
+
+.tier-badge.tier-d {
+  background: rgba(136, 136, 136, 0.1);
+  color: #666;
+}
+
+.tier-badge.tier-u {
+  background: rgba(136, 136, 136, 0.1);
+  color: #666;
+}
+
+/* Theme Info */
+.theme-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.theme-info .theme-name {
+  font-size: 13px;
+  color: var(--text-primary, #eee);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Empty State */
+.theme-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-secondary, #888);
+  font-size: 13px;
+}
+
+/* =============================================================================
+ * 35-9: Confirm Dialog
+ * ============================================================================= */
+
+.confirm-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirm-dialog.hidden {
+  display: none;
+}
+
+.dialog-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.dialog-content {
+  position: relative;
+  width: 400px;
+  max-width: 90%;
+  background: var(--bg-secondary, #16213e);
+  border: 1px solid var(--border, #333);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.dialog-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--border, #333);
+}
+
+.dialog-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+  margin: 0;
+}
+
+.dialog-body {
+  padding: 16px;
+}
+
+.dialog-message {
+  font-size: 14px;
+  color: var(--text-primary, #fff);
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border, #333);
+}
+
+.dialog-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.dialog-btn.primary {
+  background: var(--accent, #6366f1);
+  color: #fff;
+}
+
+.dialog-btn.primary:hover {
+  background: var(--accent-hover, #5558e3);
+}
+
+.dialog-btn.secondary {
+  background: var(--bg-tertiary, #252540);
+  color: var(--text-primary, #fff);
+}
+
+.dialog-btn.secondary:hover {
+  background: var(--hover-bg, rgba(255, 255, 255, 0.1));
+}
+
+.dialog-btn.danger {
+  background: var(--status-error, #ef4444);
+  color: #fff;
+}
+
+.dialog-btn.danger:hover {
+  background: #dc2626;
+}
+
+/* =============================================================================
+ * 35-9: Toast Notifications
+ * ============================================================================= */
+
+.toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 400;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--bg-secondary, #16213e);
+  border: 1px solid var(--border, #333);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transform: translateX(100%);
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.toast.hiding {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+.toast-icon {
+  font-size: 16px;
+}
+
+.toast-message {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-primary, #fff);
+}
+
+.toast-action {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  background: var(--accent, #6366f1);
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.toast-action:hover {
+  background: var(--accent-hover, #5558e3);
+}
+
+.toast-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  font-size: 14px;
+  transition: color 0.15s ease;
+}
+
+.toast-close:hover {
+  color: var(--text-primary, #fff);
+}
+
+/* Toast variants */
+.toast-info {
+  border-left: 3px solid var(--accent, #6366f1);
+}
+
+.toast-success {
+  border-left: 3px solid var(--status-ready, #22c55e);
+}
+
+.toast-error {
+  border-left: 3px solid var(--status-error, #ef4444);
+}
+
+.toast-warning {
+  border-left: 3px solid var(--status-working, #f59e0b);
+}

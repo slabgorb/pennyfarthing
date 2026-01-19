@@ -6,8 +6,8 @@ Complete reference for all Pennyfarthing configuration options.
 
 | File | Purpose | Location |
 |------|---------|----------|
+| `config.local.yaml` | Theme selection | `.pennyfarthing/` |
 | `repos.yaml` | Multi-repo configuration | `.claude/project/` |
-| `persona-config.yaml` | Theme and personality settings | `.claude/` |
 | `shared-context.md` | Project overview and structure | `.claude/project/docs/` |
 | `agent-scopes.yaml` | Agent scope configuration | `.claude/project/docs/` |
 | `setup-env.sh` | Environment variables | `.claude/project/hooks/` |
@@ -16,35 +16,22 @@ Complete reference for all Pennyfarthing configuration options.
 
 ---
 
-## persona-config.yaml
+## config.local.yaml
 
-Controls agent personalities and behavior.
+Controls theme selection (gitignored for per-developer preferences).
 
 ### Location
 
-`.claude/persona-config.yaml`
+`.pennyfarthing/config.local.yaml`
 
-### Full Example
+### Example
 
 ```yaml
-# Theme selection
+# Theme selection - 102 themes available
 theme: discworld
-
-# Personality attributes
-attributes:
-  verbosity: medium      # low | medium | high
-  formality: casual      # formal | casual | playful
-  humor: enabled         # enabled | disabled | subtle
-  emoji_use: minimal     # none | minimal | frequent
-
-# Per-agent overrides (optional)
-overrides:
-  reviewer:
-    humor: disabled
-    verbosity: high
-  dev:
-    verbosity: low
 ```
+
+See [THEME-COMPARISON.md](THEME-COMPARISON.md) for all available themes.
 
 ### Options
 

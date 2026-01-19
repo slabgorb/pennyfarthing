@@ -9,7 +9,7 @@ Loaded automatically by `/prime --agent <name>` on agent activation.
 ## Project Info
 
 **Project:** Pennyfarthing - Claude Code agent orchestration framework
-**Version:** 6.3.0
+**Version:** 7.0.0
 **Type:** ES module with TypeScript (pnpm monorepo)
 **Node:** >=18.0.0
 

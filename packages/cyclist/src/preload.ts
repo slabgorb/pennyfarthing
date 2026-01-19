@@ -58,6 +58,12 @@ export interface ElectronClaudeAPI {
   clear: () => Promise<void>;
 
   /**
+   * Clear the session and reload with a new agent (MSSCI-11840)
+   * Used for auto-mode context clearing when context is high
+   */
+  clearAndReload: (agent: string) => Promise<void>;
+
+  /**
    * Set the permission mode for subsequent queries
    */
   setMode: (mode: 'default' | 'plan' | 'acceptEdits' | 'dangerouslySkipPermissions') => Promise<void>;
@@ -378,24 +384,77 @@ export interface ElectronToolsAPI {
 }
 
 /**
- * Background Task API interface (31-15)
- * Provides IPC channels for background task completion notifications
+ * Background Task type (35-16)
+ */
+interface BackgroundTaskData {
+  taskId: string;
+  description: string;
+  subagentType: string;
+  startedAt: number;
+  status: 'pending' | 'completed';
+  success?: boolean;
+  output?: string;
+  error?: string;
+}
+
+/**
+ * Background Task API interface (31-15, 35-16)
+ * Provides IPC channels for background task notifications
  */
 export interface ElectronBackgroundTaskAPI {
   /**
-   * Subscribe to background task completion events
+   * Subscribe to background task start events (35-16)
+   * Triggered when a Task with run_in_background: true is registered
+   */
+  onStarted: (callback: (event: unknown, task: BackgroundTaskData) => void) => void;
+
+  /**
+   * Subscribe to background task completion events (31-15)
    * Triggered when a Task with run_in_background: true completes
    */
-  onCompleted: (callback: (event: unknown, task: {
-    taskId: string;
-    description: string;
-    subagentType: string;
-    startedAt: number;
-    status: 'pending' | 'completed';
-    success?: boolean;
-    output?: string;
-    error?: string;
-  }) => void) => void;
+  onCompleted: (callback: (event: unknown, task: BackgroundTaskData) => void) => void;
+}
+
+/**
+ * Skill entry data model (35-12)
+ */
+export interface SkillEntry {
+  id: string;
+  skill: string;
+  args?: string;
+  timestamp: number;
+  status: 'running' | 'completed' | 'error';
+  result?: string;
+  error?: string;
+  durationMs?: number;
+}
+
+/**
+ * Skill API interface (35-12)
+ * Provides IPC channels for skill invocation tracking
+ */
+export interface ElectronSkillAPI {
+  /**
+   * Get all skill entries
+   */
+  getEntries: () => Promise<SkillEntry[]>;
+
+  /**
+   * Clear all skill entries
+   */
+  clear: () => Promise<boolean>;
+
+  /**
+   * Subscribe to skill start events
+   * Triggered when a Skill tool is invoked
+   */
+  onStart: (callback: (event: unknown, entry: SkillEntry) => void) => void;
+
+  /**
+   * Subscribe to skill clear events
+   * Triggered when skill log is cleared
+   */
+  onClear: (callback: () => void) => void;
 }
 
 export interface ElectronAPI {
@@ -422,6 +481,7 @@ export interface ElectronAPI {
   theme: ElectronThemeAPI; // 24-9: Quick theme switcher
   tools: ElectronToolsAPI; // Tool panel toggle
   backgroundTask: ElectronBackgroundTaskAPI; // 31-15: Background task notifications
+  skill: ElectronSkillAPI; // 35-12: Skill invocation tracking
 }
 
 // Check if we're running in Electron (has contextBridge available)
@@ -489,12 +549,13 @@ function createElectronAPI(): ElectronAPI {
       usageStats: createDataAPI(ipcRenderer, 'usageStats:get', 'usageStats:update'),
       // 35-2: Project Info API (directory and user email)
       projectInfo: createDataAPI(ipcRenderer, 'projectInfo:get', 'projectInfo:update'),
-      // Claude SDK API (E7-3, 28-1: images support)
+      // Claude SDK API (E7-3, 28-1: images support, MSSCI-11840: clearAndReload)
       claude: {
         send: (prompt: string, images?: Array<{ dataUrl: string; mimeType: string; filename: string }>) =>
           ipcRenderer.invoke('claude:send', prompt, images || []),
         abort: () => ipcRenderer.invoke('claude:abort'),
         clear: () => ipcRenderer.invoke('claude:clear'),
+        clearAndReload: (agent: string) => ipcRenderer.invoke('context:clearAndLoad', agent),
         setMode: (mode: 'default' | 'plan' | 'acceptEdits' | 'dangerouslySkipPermissions') => ipcRenderer.invoke('claude:setMode', mode),
         getMode: () => ipcRenderer.invoke('claude:getMode') as Promise<'default' | 'plan' | 'acceptEdits' | 'dangerouslySkipPermissions'>,
         onMessage: (callback: (message: unknown) => void) => {
@@ -619,19 +680,24 @@ function createElectronAPI(): ElectronAPI {
           ipcRenderer.on('tools:toggleToolPanel', () => callback());
         },
       },
-      // Background Task API (31-15)
+      // Background Task API (31-15, 35-16)
       backgroundTask: {
-        onCompleted: (callback: (event: unknown, task: {
-          taskId: string;
-          description: string;
-          subagentType: string;
-          startedAt: number;
-          status: 'pending' | 'completed';
-          success?: boolean;
-          output?: string;
-          error?: string;
-        }) => void) => {
+        onStarted: (callback: (event: unknown, task: BackgroundTaskData) => void) => {
+          ipcRenderer.on('backgroundTask:started', callback);
+        },
+        onCompleted: (callback: (event: unknown, task: BackgroundTaskData) => void) => {
           ipcRenderer.on('backgroundTask:completed', callback);
+        },
+      },
+      // Skill API (35-12)
+      skill: {
+        getEntries: () => ipcRenderer.invoke('skill:get') as Promise<SkillEntry[]>,
+        clear: () => ipcRenderer.invoke('skill:clear') as Promise<boolean>,
+        onStart: (callback: (event: unknown, entry: SkillEntry) => void) => {
+          ipcRenderer.on('skill:start', callback);
+        },
+        onClear: (callback: () => void) => {
+          ipcRenderer.on('skill:clear', () => callback());
         },
       },
     };
@@ -655,11 +721,12 @@ function createElectronAPI(): ElectronAPI {
       usageStats: createDataAPI(null, 'usageStats:get', 'usageStats:update'),
       // 35-2: Project Info API - test stub
       projectInfo: createDataAPI(null, 'projectInfo:get', 'projectInfo:update'),
-      // Claude SDK API (E7-3) - test stub
+      // Claude SDK API (E7-3, MSSCI-11840) - test stub
       claude: {
         send: (_prompt: string) => Promise.resolve(),
         abort: () => Promise.resolve(),
         clear: () => Promise.resolve(),
+        clearAndReload: (_agent: string) => Promise.resolve(),
         setMode: (_mode: 'default' | 'plan' | 'acceptEdits' | 'dangerouslySkipPermissions') => Promise.resolve(),
         getMode: () => Promise.resolve('default' as const),
         onMessage: (_callback: (message: unknown) => void) => {
@@ -790,18 +857,23 @@ function createElectronAPI(): ElectronAPI {
           // No-op in test environment
         },
       },
-      // Background Task API (31-15) - test stub
+      // Background Task API (31-15, 35-16) - test stub
       backgroundTask: {
-        onCompleted: (_callback: (event: unknown, task: {
-          taskId: string;
-          description: string;
-          subagentType: string;
-          startedAt: number;
-          status: 'pending' | 'completed';
-          success?: boolean;
-          output?: string;
-          error?: string;
-        }) => void) => {
+        onStarted: (_callback: (event: unknown, task: BackgroundTaskData) => void) => {
+          // No-op in test environment
+        },
+        onCompleted: (_callback: (event: unknown, task: BackgroundTaskData) => void) => {
+          // No-op in test environment
+        },
+      },
+      // Skill API (35-12) - test stub
+      skill: {
+        getEntries: () => Promise.resolve([]),
+        clear: () => Promise.resolve(true),
+        onStart: (_callback: (event: unknown, entry: SkillEntry) => void) => {
+          // No-op in test environment
+        },
+        onClear: (_callback: () => void) => {
           // No-op in test environment
         },
       },

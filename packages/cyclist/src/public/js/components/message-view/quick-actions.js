@@ -14,6 +14,17 @@ import { getThemeAgents, loadThemeAgents } from '../../story.js';
 // =============================================================================
 
 /**
+ * Known marker types for CYCLIST structured markers (MSSCI-11840)
+ * Used by detectStructuredMarkers to classify marker types
+ */
+export const MARKER_TYPES = {
+  HANDOFF: 'handoff',
+  QUESTION: 'question',
+  CHOICES: 'choices',
+  CONTEXT_CLEAR: 'context_clear',
+};
+
+/**
  * Maps workflow phase keywords to their corresponding agent commands.
  * Used to detect "ready for X" patterns and suggest the right agent.
  */
@@ -254,6 +265,16 @@ function processStructuredMarkers(markers, fullText = '') {
         source: 'structured_marker',
         confidence: 1.0,
       };
+
+    case 'context_clear':
+      // MSSCI-11840: Context clear marker triggers session clear and agent reload
+      // Value is the agent command to load after clear (e.g., '/sm')
+      return {
+        type: 'context_clear',
+        agent: primaryMarker.value,
+        source: 'structured_marker',
+        confidence: 1.0,
+      };
   }
 
   // Check if there's both a QUESTION:choice and CHOICES marker
@@ -412,10 +433,37 @@ export function processMessageForQuickActions(message) {
     if (markerResult) return markerResult;
   }
 
+  // Check for context circuit breaker trigger
+  if (textContent.includes('CONTEXT CIRCUIT BREAKER TRIGGERED')) {
+    return { type: MARKER_TYPES.CONTEXT_CLEAR, agent: null };
+  }
+
   return null;
 }
 
+// =============================================================================
+// Context Clear Handling (MSSCI-11840)
+// =============================================================================
+
+/**
+ * Handle a CONTEXT_CLEAR marker by triggering session clear and agent reload
+ *
+ * @param {string} agent - Agent command to load after clear (e.g., '/dev')
+ * @param {Window} windowObj - Window object with electronAPI (for testability)
+ * @returns {Promise<void>}
+ */
+export async function handleContextClearMarker(agent, windowObj = window) {
+  if (!windowObj?.electronAPI?.claude?.clearAndReload) {
+    console.warn('[MessageView] clearAndReload API not available');
+    return;
+  }
+
+  console.log(`[MessageView] Handling CONTEXT_CLEAR marker for agent: ${agent}`);
+  await windowObj.electronAPI.claude.clearAndReload(agent);
+}
+
 export default {
+  MARKER_TYPES,
   PHASE_TO_AGENT,
   stripMarkdown,
   truncateText,
@@ -423,6 +471,7 @@ export default {
   renderQuickActions,
   clearQuickActions,
   handleQuickActionClick,
+  handleContextClearMarker,
   setQuickActionsVisible,
   getQuickActionsVisible,
   setAutoSubmit,

@@ -189,8 +189,13 @@ done
 
 **First, check the sprint YAML for ground truth:**
 ```bash
-# What does the YAML actually say?
+# What does the YAML actually say? (exclude epics, count only stories)
+# Epics have "type: epic" field, stories do not
 grep -E "status: (in_progress|backlog|done)" $CLAUDE_PROJECT_DIR/sprint/current-sprint.yaml | sort | uniq -c
+
+# To count ONLY stories (not epics), look for status lines NOT preceded by "type: epic"
+echo "=== Story counts (excluding epics) ==="
+grep -B1 "status: in_progress" $CLAUDE_PROJECT_DIR/sprint/current-sprint.yaml | grep -v "type: epic" | grep -c "status: in_progress" || echo "0"
 ```
 
 Apply these rules in order:
@@ -222,18 +227,22 @@ check_repo_pr "REPO_NAME" "BRANCH_NAME"
 
 For **NEW_WORK_STATE** - check sprint YAML for actual story statuses:
 ```bash
-# Count stories by status in current sprint
+# Count stories by status in current sprint (stories are nested under epics)
 echo "=== Sprint Story Status ==="
 grep -E "^\s+status:" $CLAUDE_PROJECT_DIR/sprint/current-sprint.yaml | sort | uniq -c
 
-# List any in_progress stories (these are ACTUALLY in progress)
-echo "=== In-Progress Stories ==="
-grep -B5 "status: in_progress" $CLAUDE_PROJECT_DIR/sprint/current-sprint.yaml | grep -E "(id:|title:|status:)"
+# List any in_progress STORIES (exclude epics which have "type: epic")
+# Stories don't have the type field, only epics do
+echo "=== In-Progress Stories (excluding epics) ==="
+# Find status: in_progress lines NOT immediately after type: epic
+awk '/type: epic/{epic=1; next} /status: in_progress/{if(!epic) print; epic=0} /^[^ ]/{epic=0}' $CLAUDE_PROJECT_DIR/sprint/current-sprint.yaml
 
-# Count backlog stories available
+# Count backlog stories available (stories are indented more than epics)
 echo "=== Backlog Available ==="
 grep -c "status: backlog" $CLAUDE_PROJECT_DIR/sprint/current-sprint.yaml 2>/dev/null || echo "0"
 ```
+
+**Note:** Epics now have `type: epic` field to distinguish them from stories. When counting in-progress work, filter out epics to avoid confusion.
 
 **IMPORTANT:** Only report a story as "in progress" if the YAML shows `status: in_progress`.
 Stories with `status: done` are DONE - do not list them as in-progress even if they appear in sprint history.

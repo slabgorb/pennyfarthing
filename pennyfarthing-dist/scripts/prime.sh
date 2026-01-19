@@ -108,7 +108,7 @@ fi
 
 # 5. Agent sidecar (if --agent provided)
 if [[ -n "$AGENT_NAME" ]]; then
-    SIDECAR_DIR="$PROJECT_ROOT/sprint/sidecars/${AGENT_NAME}"
+    SIDECAR_DIR="$PROJECT_ROOT/.pennyfarthing/sidecars/${AGENT_NAME}"
     if [[ -d "$SIDECAR_DIR" ]]; then
         for pattern_file in "$SIDECAR_DIR"/*.md; do
             if [[ -f "$pattern_file" ]]; then
@@ -121,7 +121,7 @@ fi
 
 # 6. Shared context (project info - all agents get this)
 if [[ -n "$AGENT_NAME" ]]; then
-    SHARED_CONTEXT="$PROJECT_ROOT/.claude/guides/shared-context.md"
+    SHARED_CONTEXT="$PROJECT_ROOT/.pennyfarthing/guides/shared-context.md"
     if [[ -f "$SHARED_CONTEXT" ]]; then
         print_header "Shared Context"
         cat "$SHARED_CONTEXT"
@@ -130,7 +130,7 @@ fi
 
 # 7. Shared agent behavior (protocols - all agents get this)
 if [[ -n "$AGENT_NAME" ]]; then
-    SHARED_GUIDE="$PROJECT_ROOT/.claude/guides/shared-agent-behavior.md"
+    SHARED_GUIDE="$PROJECT_ROOT/.pennyfarthing/guides/shared-agent-behavior.md"
     if [[ -f "$SHARED_GUIDE" ]]; then
         print_header "Shared Agent Behavior"
         cat "$SHARED_GUIDE"
@@ -141,7 +141,7 @@ fi
 if [[ -n "$AGENT_NAME" ]]; then
     case "$AGENT_NAME" in
         sm|tea|dev|reviewer)
-            TACTICAL_GUIDE="$PROJECT_ROOT/.claude/guides/tactical-agent-behavior.md"
+            TACTICAL_GUIDE="$PROJECT_ROOT/.pennyfarthing/guides/tactical-agent-behavior.md"
             if [[ -f "$TACTICAL_GUIDE" ]]; then
                 print_header "Tactical Agent Behavior"
                 cat "$TACTICAL_GUIDE"

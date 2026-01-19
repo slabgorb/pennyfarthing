@@ -8,18 +8,28 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 
 <status>production</status>
 
-<role>
-**Primary:** SM → **TEA** → Dev (TDD flow via `/new-work`)
-**Entry:** Invoked after SM sets up story context
-**Exit:** Hand off to Dev with failing tests (RED)
-</role>
 
 <helpers>
 From theme config. Model: haiku. Tasks: run tests, gather results, update session for handoff
 
-- **Official subagents:** (use `subagent_type: "{name}"`)
-  - `testing-runner` - Run tests, gather results
-  - `generic-handoff` - Workflow-driven session update for handoff
+- **Subagents:** (use `subagent_type: "general-purpose"` with `model: "haiku"`)
+  - `testing-runner.md` - Run tests, gather results
+  - `generic-handoff.md` - Workflow-driven session update for handoff
+
+- **Invocation pattern:** See `shared-agent-behavior.md` → "Interactive Background Task Protocol"
+
+  **TEA workflow tasks are sequential** - handoff depends on test results.
+  Use **foreground execution** (omit `run_in_background`) for workflow steps.
+
+  ```yaml
+  Task tool:
+    subagent_type: "general-purpose"
+    model: "haiku"
+    prompt: |
+      Read and follow: .pennyfarthing/agents/{subagent-name}.md
+
+      {PARAMETERS}
+  ```
 </helpers>
 
 <responsibilities>
@@ -40,7 +50,7 @@ From theme config. Model: haiku. Tasks: run tests, gather results, update sessio
 <context>
 Context auto-loaded by `/prime --agent tea`:
 - Shared context, shared behavior, tactical guide
-- Agent sidecar: `sprint/sidecars/tea/`
+- Agent sidecar: `.pennyfarthing/sidecars/tea/`
 </context>
 
 <reasoning-mode>
@@ -151,8 +161,11 @@ Then spawn with detected workflow:
 
 ```yaml
 Task tool:
-  subagent_type: "generic-handoff"
+  subagent_type: "general-purpose"
+  model: "haiku"
   prompt: |
+    Read and follow: .pennyfarthing/agents/generic-handoff.md
+
     STORY_ID: {value}
     WORKFLOW: {workflow from session}  # e.g., "tdd"
     CURRENT_PHASE: red
@@ -169,19 +182,33 @@ Helper will use workflow definition to determine next phase (green) and agent (D
 
 After writing assessment, ALWAYS spawn handoff subagent to complete bookkeeping.
 
-Then check context usage:
+Then check context usage and handoff mode preference:
 
 ```bash
 $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
-**If < 60%:** Invoke `/dev` directly to continue the flow
+**Read handoff mode from Cyclist settings** (see `generic-handoff.md` for full implementation):
+- `~/.cyclist/settings.yaml` → `workflow.handoff_mode: auto|manual`
+- Default is `manual` if not set
 
-**If > 60%:** Tell user: "Context high. Start fresh session with `/dev`"
+**Handoff Decision Matrix:**
 
-**Handoff Marker:** Include at end of handoff message:
+| Context | Mode | Action |
+|---------|------|--------|
+| < 60% | auto | Invoke `/dev` directly via Skill tool |
+| < 60% | manual | Report ready, emit HANDOFF marker, wait for user |
+| >= 60% | auto | Emit CONTEXT_CLEAR marker (triggers auto-reload in Cyclist) |
+| >= 60% | manual | Tell user: "Context high. Start fresh session with `/dev`" |
+
+**Handoff Marker:** ALWAYS include at end of handoff message:
 ```
 <!-- CYCLIST:HANDOFF:/dev -->
+```
+
+**For high context + auto mode**, also include:
+```
+<!-- CYCLIST:CONTEXT_CLEAR:/dev -->
 ```
 
 <exit>

@@ -178,11 +178,11 @@ describe('23-4: Compact Button with Context Awareness', () => {
       expect(content).toMatch(/electronAPI|window\.electronAPI/);
     });
 
-    it('should check for command API availability before use', async () => {
+    it('should check for clearAndReload API availability before use (TirePump)', async () => {
       const statsStripJs = await request(app).get('/js/stats-strip.js');
       const content = statsStripJs.text;
-      // Should have conditional check for command API
-      expect(content).toMatch(/electronAPI\.command|command\.execute/);
+      // TirePump: Should have conditional check for clearAndReload API
+      expect(content).toMatch(/electronAPI\.claude|clearAndReload/);
     });
 
     it('should not crash when electronAPI is undefined', async () => {

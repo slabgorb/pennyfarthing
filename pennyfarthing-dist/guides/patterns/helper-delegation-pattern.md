@@ -124,7 +124,7 @@ Task tool:
 Subagent definitions use placeholders that the calling agent fills:
 
 ```markdown
-# Subagent Definition (.claude/agents/tea-handoff.md)
+# Subagent Definition (.pennyfarthing/agents/tea-handoff.md)
 ---
 name: tea-handoff
 tools: Bash, Read, Edit, Grep

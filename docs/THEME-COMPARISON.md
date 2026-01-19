@@ -311,9 +311,11 @@ Disparate themes reveal personality preferences:
 To switch themes:
 
 ```yaml
-# .claude/persona-config.yaml
+# .pennyfarthing/config.local.yaml
 theme: the-expanse    # Change this value
 ```
+
+Or use the CLI: `pennyfarthing theme set the-expanse`
 
 All agents adopt new characters immediately. No restart required.
 

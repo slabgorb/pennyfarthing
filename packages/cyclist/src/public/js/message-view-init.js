@@ -14,14 +14,17 @@ import {
   renderQuickActions,
   clearQuickActions,
   handleQuickActionClick,
+  handleContextClearMarker,
   setQuickActionsVisible,
   setVerboseMode as setMessageViewVerboseMode
 } from './components/MessageView.js';
 import { renderBackgroundTaskNotification } from './components/message-view/message-renderers.js';
+import { enrichMessage } from './message-enrichment.js';
 import { updateActivity, clearActivity } from './activity.js';
 import { resetSubmitting, setProcessing, processNextInQueue, setOnQueueChange, clearMessageQueue, loadMessageQueue, getMessageQueue, removeFromQueue, injectMessage } from './editor.js';
 import { handleAbort } from './components/ToolActivityBar.js';
 import { handleMessage as handleGitCommitMessage } from './git-commit-detector.js';
+import { getCurrentAgentCommand } from './persona.js';
 
 // 22-5: Track verbose mode state
 let verboseModeEnabled = false;
@@ -79,8 +82,12 @@ function initMessageView() {
     // Handle streaming messages from Claude SDK
     window.electronAPI.claude.onMessage((message) => {
       console.log('[MessageView] SDK message:', message.type);
-      addMessage(message);
-      updateActivity(message);
+
+      // MSSCI-11851: Enrich messages with tool metadata for specialized rendering
+      const enrichedMessage = enrichMessage(message);
+
+      addMessage(enrichedMessage);
+      updateActivity(enrichedMessage);
 
       // 22-7: Detect git commits and remove committed files from diff list
       handleGitCommitMessage(message);
@@ -106,7 +113,17 @@ function initMessageView() {
       if (lastAssistantMessage) {
         const quickActionResult = processMessageForQuickActions(lastAssistantMessage);
         if (quickActionResult) {
-          showQuickActions(quickActionResult);
+          // MSSCI-11840: Handle context_clear marker automatically
+          if (quickActionResult.type === 'context_clear') {
+            // Use provided agent, or fall back to current agent (for circuit breaker)
+            const agent = quickActionResult.agent || getCurrentAgentCommand();
+            console.log('[MessageView] Auto-handling CONTEXT_CLEAR marker for:', agent);
+            if (agent) {
+              handleContextClearMarker(agent);
+            }
+          } else {
+            showQuickActions(quickActionResult);
+          }
         }
         lastAssistantMessage = null; // Reset for next turn
       }
@@ -118,6 +135,18 @@ function initMessageView() {
       clearActivity();
       resetSubmitting(); // Allow new submissions even on error
       setProcessing(false); // 17-1: Mark processing complete on error too
+
+      // Check for "Prompt is too long" error - auto-clear and reload current agent
+      const errorStr = typeof error === 'string' ? error : error?.message || '';
+      if (errorStr.includes('Prompt is too long')) {
+        console.log('[MessageView] Detected "Prompt is too long" error, triggering context clear');
+        const currentAgent = getCurrentAgentCommand();
+        if (currentAgent) {
+          handleContextClearMarker(currentAgent);
+          return; // Don't show error message, we're handling it
+        }
+      }
+
       addMessage({
         type: 'error',
         error: error,

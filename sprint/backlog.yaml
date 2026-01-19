@@ -1,232 +1,354 @@
 # Pennyfarthing Backlog
 # Future epics and stories not yet committed to a sprint
-# Updated: 2026-01-13
+# Updated: 2026-01-17
 
 backlog:
   epics:
     # =========================================================================
-    # STRATEGIC - Workflow & Compatibility
+    # BENCHMARK RELIABILITY - Scientific Evaluation
+    # Research-backed improvements to agent benchmarking
     # =========================================================================
-    - id: epic-31
-      title: "Customizable Workflow Engine"
+    - id: epic-41
+      title: "Precision/Recall Detection Scoring"
       description: |
-        Infrastructure for user-defined workflows. Replace hardcoded TDD flow
-        (SM → TEA → Dev → Reviewer) with configurable YAML-based workflows.
-        Users can define custom agent sequences, routing rules, and gates.
-      points: 15
+        Separate detection scoring into precision and recall components.
+        Current formula conflates finding issues with avoiding false positives.
+        New approach makes trade-offs explicit and measurable.
+
+        Research basis: HELM benchmark methodology (Stanford CRFM)
+      points: 8
       priority: P1
-      marker: "strategic"
+      marker: "benchmark"
       repos: pennyfarthing
       status: backlog
       stories:
-        - id: "31-1"
-          title: "Workflow definition schema (YAML spec)"
+        - id: "41-1"
+          title: "Update judge SKILL.md with precision/recall formula"
           description: |
-            Define the YAML schema for workflows:
-            - Workflow name, description, triggers
-            - Phase definitions (agent, input, output, gates)
-            - Routing rules (tags, story type, points)
+            Replace current detection formula:
+              detection = criticals×15 + highs×10 + mediums×5 + lows×2 + novel×5 - false_positives×5
+            With precision/recall:
+              precision (25 pts) = true_positives / (true_positives + false_positives) × 25
+              recall (25 pts) = true_positives / total_baseline_issues × 25
+            Update checklist rubric prompt and JSON output format.
           points: 3
           priority: P0
           status: backlog
           repos: pennyfarthing
-        - id: "31-2"
-          title: "Workflow loader and validator"
+        - id: "41-2"
+          title: "Update judge JSON output schema"
           description: |
-            Load workflow definitions from .claude/workflows/*.yaml
-            Validate against schema, report errors clearly.
-          points: 3
-          priority: P0
-          status: backlog
-          repos: pennyfarthing
-        - id: "31-3"
-          title: "Story-to-workflow routing engine"
-          description: |
-            Route stories to appropriate workflow based on:
-            - Explicit workflow tag on story
-            - Story type (bug, feature, chore, docs)
-            - Default workflow fallback
-          points: 3
-          priority: P0
-          status: backlog
-          repos: pennyfarthing
-        - id: "31-4"
-          title: "Migrate TDD flow to workflow definition"
-          description: |
-            Convert current hardcoded SM → TEA → Dev → Reviewer flow
-            to a workflow YAML file. Ensure backward compatibility.
+            New detection output format:
+            ```json
+            {
+              "detection": {
+                "true_positives": 8,
+                "false_positives": 1,
+                "total_baseline": 10,
+                "precision": 0.89,
+                "recall": 0.80,
+                "precision_score": 22.2,
+                "recall_score": 20.0,
+                "subtotal": 42.2
+              }
+            }
+            ```
           points: 2
           priority: P0
           status: backlog
           repos: pennyfarthing
-        - id: "31-5"
-          title: "/workflow skill for listing and switching"
+        - id: "41-3"
+          title: "Regression test: compare new vs old scores"
           description: |
-            Skill to list available workflows, show current workflow,
-            and manually switch workflows mid-session if needed.
-          points: 2
+            Run judge with both formulas on existing benchmark results.
+            Verify correlation > 0.9 to ensure new formula doesn't
+            dramatically alter rankings while adding precision/recall insight.
+          points: 3
           priority: P1
           status: backlog
           repos: pennyfarthing
-        - id: "31-6"
-          title: "Session file workflow tracking"
+
+    - id: epic-42
+      title: "Anchored Rubric Criteria"
+      description: |
+        Replace vague rubric criteria ("clear_explanations") with behavioral
+        anchors that define what each score level means concretely.
+
+        Research basis: 2025 research shows few-shot doesn't fix judge
+        self-inconsistency; explicit anchors reduce variance.
+      points: 6
+      priority: P1
+      marker: "benchmark"
+      repos: pennyfarthing
+      status: backlog
+      stories:
+        - id: "42-1"
+          title: "Create rubric-anchors.md with behavioral scales"
           description: |
-            Update session file format to track:
-            - Active workflow name
-            - Current phase in workflow
-            - Phase history and transitions
+            New file: pennyfarthing-dist/skills/judge/rubric-anchors.md
+            Define score anchors for each dimension:
+            - clear_explanations (1-10): what constitutes each level
+            - actionable_fixes (1-10): concrete examples per score
+            - in_character (1-10): persona consistency indicators
+          points: 3
+          priority: P0
+          status: backlog
+          repos: pennyfarthing
+        - id: "42-2"
+          title: "Reference anchors in judge prompts"
+          description: |
+            Update judge SKILL.md checklist prompt to include
+            anchor reference. Judge should consult anchors when
+            assigning quality/persona dimension scores.
+          points: 2
+          priority: P0
+          status: backlog
+          repos: pennyfarthing
+        - id: "42-3"
+          title: "Variance test: measure CV reduction"
+          description: |
+            Re-run TEA benchmarks with anchored rubric.
+            Target: CV reduction from 25-65% to < 15%.
+          points: 1
+          priority: P1
+          status: backlog
+          repos: pennyfarthing
+
+    - id: epic-43
+      title: "False Positive Traps (Red Herrings)"
+      description: |
+        Add intentional non-issues to scenarios to systematically measure
+        precision. Agents that flag red herrings as issues lose points;
+        agents that correctly identify them as non-issues get bonus.
+
+        Research basis: ARC-AGI distinguishes novel reasoning from
+        pattern matching; red herrings test true understanding.
+      points: 7
+      priority: P1
+      marker: "benchmark"
+      repos: pennyfarthing
+      status: backlog
+      stories:
+        - id: "43-1"
+          title: "Add red_herrings schema to scenarios"
+          description: |
+            New scenario field:
+            ```yaml
+            red_herrings:
+              - id: LOOKS_LIKE_SQLI_BUT_PARAMETERIZED
+                location: "line 45"
+                description: "Appears to be SQL injection but uses parameterized query"
+                trap_type: false_security_alarm
+            ```
+          points: 2
+          priority: P0
+          status: backlog
+          repos: pennyfarthing
+        - id: "43-2"
+          title: "Update judge for red herring detection"
+          description: |
+            Scoring for red herrings:
+            - Agent flags red herring as issue: -5 points (false positive)
+            - Agent correctly identifies as not-an-issue: +2 bonus
+            Add to judge checklist prompt and output format.
+          points: 2
+          priority: P0
+          status: backlog
+          repos: pennyfarthing
+        - id: "43-3"
+          title: "Pilot: Add red herrings to order-service scenario"
+          description: |
+            Add 2 red herrings to order-service.yaml:
+            1. Code that looks like SQL injection but is parameterized
+            2. "Missing" error handling that's actually handled upstream
+            Run benchmark to validate trap detection scoring.
+          points: 3
+          priority: P1
+          status: backlog
+          repos: pennyfarthing
+
+    - id: epic-44
+      title: "Multi-Judge Validation"
+      description: |
+        Measure judge reliability by running multiple judges with prompt
+        variations. Calculate Krippendorff's Alpha to quantify inter-rater
+        reliability. Flag results when Alpha < 0.65.
+
+        Research basis: Krippendorff's Alpha is standard for inter-rater
+        reliability; 2025 research recommends Gwet's AC2 for skewed data.
+      points: 10
+      priority: P2
+      marker: "benchmark"
+      repos: pennyfarthing
+      status: backlog
+      stories:
+        - id: "44-1"
+          title: "Add --multi-judge flag to /solo command"
+          description: |
+            New flag: `/solo theme:agent --scenario X --multi-judge`
+            Runs judge 3 times with prompt variations:
+            - "You are an impartial judge..."
+            - "As a neutral evaluator..."
+            - "Evaluate this response objectively..."
+          points: 3
+          priority: P0
+          status: backlog
+          repos: pennyfarthing
+        - id: "44-2"
+          title: "Implement Krippendorff's Alpha calculation"
+          description: |
+            Calculate alpha across dimension scores from multiple judges.
+            Return alpha value with interpretation:
+            - α > 0.80: excellent agreement
+            - α 0.65-0.80: acceptable
+            - α < 0.65: unreliable, flag for review
+          points: 3
+          priority: P0
+          status: backlog
+          repos: pennyfarthing
+        - id: "44-3"
+          title: "Update finalize-run for multi-judge storage"
+          description: |
+            New storage format in results:
+            ```yaml
+            judge:
+              mode: multi
+              iterations: 3
+              krippendorff_alpha: 0.72
+              scores_per_judge: [85, 82, 87]
+              final_score: 85  # median
+            ```
+          points: 2
+          priority: P0
+          status: backlog
+          repos: pennyfarthing
+        - id: "44-4"
+          title: "Multi-judge test on high-variance scenarios"
+          description: |
+            Run multi-judge on TEA scenarios with known high variance.
+            Validate that alpha calculation identifies unreliable judgments.
+            Document baseline alpha values per scenario.
           points: 2
           priority: P1
           status: backlog
           repos: pennyfarthing
 
-    - id: epic-32
-      title: "BMAD 6.0 Compatibility"
+    - id: epic-45
+      title: "Gold Standard References"
       description: |
-        Implement BMAD 6.0 methodology compatibility. Import BMAD workflow
-        definitions, provide built-in BMAD-style workflows for debugging,
-        documentation, devops, and planning use cases.
-      points: 15
-      priority: P1
-      marker: "strategic"
+        Add human-curated ideal responses to scenarios. Judge can use
+        these as calibration references to reduce variance and provide
+        consistent scoring anchored to known-good examples.
+
+        Research basis: HELM uses reference implementations for
+        calibration; MLPerf provides gold standards for comparison.
+      points: 8
+      priority: P2
+      marker: "benchmark"
       repos: pennyfarthing
       status: backlog
-      depends_on: epic-31
       stories:
-        - id: "32-1"
-          title: "Research BMAD 6.0 schema and agents"
+        - id: "45-1"
+          title: "Add gold_standard schema to scenarios"
           description: |
-            Analyze BMAD-METHOD repo structure:
-            - Agent definitions and roles
-            - Workflow schemas
-            - Configuration patterns
-            Document mapping to Pennyfarthing concepts.
+            New scenario field:
+            ```yaml
+            gold_standard:
+              exemplar_response: |
+                [Human-curated ideal response]
+              edge_case_guidance:
+                - situation: "Agent mentions deprecated API"
+                  ruling: "Acceptable if notes deprecation status"
+            ```
           points: 2
           priority: P0
           status: backlog
           repos: pennyfarthing
-        - id: "32-2"
-          title: "BMAD workflow import/mapping"
+        - id: "45-2"
+          title: "Update judge to use gold standard as calibration"
           description: |
-            Parse BMAD workflow definitions and convert to
-            Pennyfarthing workflow YAML format.
+            When gold_standard is present, judge prompt includes:
+            "Reference the exemplar response for calibration.
+            A response matching this quality = 90+ score."
+          points: 2
+          priority: P0
+          status: backlog
+          repos: pennyfarthing
+        - id: "45-3"
+          title: "Create gold standards for 5 high-variance scenarios"
+          description: |
+            Write exemplar responses for scenarios with highest
+            historical variance. Prioritize TEA scenarios where
+            CV was 25-65%.
           points: 3
-          priority: P0
-          status: backlog
-          repos: pennyfarthing
-        - id: "32-3"
-          title: "Debugging workflow (BMAD-style)"
-          description: |
-            Built-in workflow for bug investigation:
-            Debugger → Dev → Reviewer
-            Focus on root cause analysis before fix.
-          points: 2
           priority: P1
           status: backlog
           repos: pennyfarthing
-        - id: "32-4"
-          title: "Documentation workflow"
+        - id: "45-4"
+          title: "Variance comparison: with/without gold standard"
           description: |
-            Built-in workflow for docs:
-            Tech-Writer → Reviewer
-            Optimized for README, guides, API docs.
-          points: 2
+            A/B test: run same scenarios with and without gold standard.
+            Measure variance reduction. Target: 50% CV decrease.
+          points: 1
           priority: P1
-          status: backlog
-          repos: pennyfarthing
-        - id: "32-5"
-          title: "DevOps workflow"
-          description: |
-            Built-in workflow for infrastructure:
-            DevOps → Reviewer
-            CI/CD, deployment, infrastructure as code.
-          points: 2
-          priority: P1
-          status: backlog
-          repos: pennyfarthing
-        - id: "32-6"
-          title: "Planning workflow"
-          description: |
-            Built-in workflow for strategic work:
-            PM → Architect → SM
-            Epic definition, roadmap, sprint planning.
-          points: 2
-          priority: P1
-          status: backlog
-          repos: pennyfarthing
-        - id: "32-7"
-          title: "BMAD export (Pennyfarthing → BMAD format)"
-          description: |
-            Export Pennyfarthing workflows to BMAD format
-            for interoperability with BMAD tooling.
-          points: 2
-          priority: P2
           status: backlog
           repos: pennyfarthing
 
-    - id: epic-33
-      title: "Runtime Permission Management"
+    - id: epic-46
+      title: "Difficulty Profile Enhancement"
       description: |
-        Allow agents to request and manage tool permissions at runtime.
-        Currently permissions must be pre-configured; agents can't request
-        spot permissions for tools like WebFetch when needed.
-      points: 12
-      priority: P1
-      marker: "ux"
-      repos: pennyfarthing, cyclist
+        Replace single difficulty label with multi-dimensional profile
+        including percentile bands from empirical data. Enables better
+        scenario selection and more meaningful score interpretation.
+
+        Research basis: ARC-AGI separates difficulty dimensions;
+        percentile bands from MLPerf methodology.
+      points: 5
+      priority: P2
+      marker: "benchmark"
+      repos: pennyfarthing
       status: backlog
       stories:
-        - id: "33-1"
-          title: "Permission request protocol"
+        - id: "46-1"
+          title: "Add difficulty_profile schema to scenarios"
           description: |
-            Define how agents request permissions:
-            - Structured permission request format
-            - User prompt/approval flow
-            - Temporary vs persistent grants
-          points: 3
-          priority: P0
-          status: backlog
-          repos: pennyfarthing
-        - id: "33-2"
-          title: "/permissions skill"
-          description: |
-            Skill to view and manage permissions:
-            - List current permissions
-            - Grant/revoke tool access
-            - Show permission history
+            New scenario field:
+            ```yaml
+            difficulty_profile:
+              overall: medium
+              dimensions:
+                detection_challenge: high
+                reasoning_complexity: medium
+                domain_knowledge: low
+              percentile_bands:
+                p90: 92
+                p50: 78
+                p10: 65
+            ```
           points: 2
           priority: P0
           status: backlog
           repos: pennyfarthing
-        - id: "33-3"
-          title: "Cyclist permission UI"
+        - id: "46-2"
+          title: "Populate difficulty profiles from baseline data"
           description: |
-            Visual permission management in Cyclist:
-            - Permission request modal
-            - Quick approve/deny buttons
-            - Permission status indicator
-          points: 3
-          priority: P1
-          status: backlog
-          repos: cyclist
-        - id: "33-4"
-          title: "Spot permission grants"
-          description: |
-            Allow one-time permission grants:
-            - "Allow once" option
-            - "Allow for this session"
-            - "Always allow"
+            Use existing control baseline runs to populate
+            percentile_bands for all calibrated scenarios.
+            Document methodology for future calibration.
           points: 2
           priority: P1
           status: backlog
-          repos: pennyfarthing, cyclist
-        - id: "33-5"
-          title: "Permission presets by workflow"
+          repos: pennyfarthing
+        - id: "46-3"
+          title: "Update schema.yaml with new fields documentation"
           description: |
-            Workflows can declare required permissions.
-            Auto-prompt for missing permissions on workflow start.
-          points: 2
-          priority: P2
+            Document all new benchmark fields in schema.yaml:
+            - red_herrings
+            - gold_standard
+            - difficulty_profile
+            Include examples and validation rules.
+          points: 1
+          priority: P1
           status: backlog
           repos: pennyfarthing
 
@@ -271,6 +393,87 @@ backlog:
           priority: P2
           status: backlog
 
+    # =========================================================================
+    # QUALITY & SCALE - Future Initiatives
+    # =========================================================================
+    - id: epic-39
+      title: Quality Assurance Oversight Capabilities
+      description: |
+        Add BMAD TEA-style quality oversight capabilities to Pennyfarthing.
+        Extend Reviewer with test quality scoring, risk-based prioritization,
+        coverage traceability, NFR assessment, and release gate decisions.
+      points: 23
+      priority: P2
+      marker: quality
+      repos: pennyfarthing
+      status: backlog
+      stories:
+        - id: 39-1
+          title: Test quality review with 0-100 scoring
+          points: 5
+          status: backlog
+        - id: 39-2
+          title: Test quality knowledge base
+          points: 3
+          status: backlog
+        - id: 39-3
+          title: Risk-based test prioritization
+          points: 3
+          status: backlog
+        - id: 39-4
+          title: Coverage traceability
+          points: 5
+          status: backlog
+        - id: 39-5
+          title: NFR assessment skill
+          points: 3
+          status: backlog
+        - id: 39-6
+          title: Release gate integration
+          points: 2
+          status: backlog
+        - id: 39-7
+          title: Reviewer multi-phase review mode
+          points: 2
+          status: backlog
+
+    - id: epic-40
+      title: Scale Adaptation and Brownfield Support
+      description: |
+        Adopt BMAD's scale-adaptive approach and add brownfield codebase discovery.
+        Add upward scaling for larger initiatives (Level 0-4) and brownfield
+        analysis for existing codebases.
+      points: 17
+      priority: P2
+      marker: infrastructure
+      repos: pennyfarthing
+      status: backlog
+      stories:
+        - id: 40-1
+          title: Define scale levels
+          points: 2
+          status: backlog
+        - id: 40-2
+          title: Quick-spec workflow
+          points: 3
+          status: backlog
+        - id: 40-3
+          title: Enterprise workflow hooks
+          points: 3
+          status: backlog
+        - id: 40-4
+          title: Brownfield discovery command
+          points: 5
+          status: backlog
+        - id: 40-5
+          title: Brownfield convention adoption
+          points: 2
+          status: backlog
+        - id: 40-6
+          title: PRD import support
+          points: 2
+          status: backlog
+
 # =============================================================================
 # COMPLETED/CLOSED EPICS (removed from backlog)
 # =============================================================================
@@ -295,7 +498,23 @@ backlog:
 #   - Epic 32: BMAD 6.0 Compatibility (15 pts) - depends on Epic 31
 #   - Epic 33: Runtime Permission Management (12 pts)
 #
+# Benchmark Reliability (P1/P2):
+#   - Epic 41: Precision/Recall Detection Scoring (8 pts) - P1
+#   - Epic 42: Anchored Rubric Criteria (6 pts) - P1
+#   - Epic 43: False Positive Traps (7 pts) - P1
+#   - Epic 44: Multi-Judge Validation (10 pts) - P2
+#   - Epic 45: Gold Standard References (8 pts) - P2
+#   - Epic 46: Difficulty Profile Enhancement (5 pts) - P2
+#
 # Cleanup (P3):
 #   - Epic 27: Skill Frontmatter Enhancement (10 pts)
 #
-# Total Backlog: 52 pts
+# Total Backlog: 96 pts
+#
+# Benchmark Initiative Summary:
+#   Phase 1 (P1): Epics 41-43 = 21 pts (scoring + anchors + traps)
+#   Phase 2 (P2): Epics 44-46 = 23 pts (validation + references + calibration)
+#   Success Metrics:
+#     - Inter-judge Krippendorff's Alpha > 0.65
+#     - False positive detection < 10%
+#     - TEA variance CV < 15%

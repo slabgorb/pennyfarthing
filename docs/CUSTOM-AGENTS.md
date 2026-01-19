@@ -67,7 +67,7 @@ From theme config. Model: haiku. Tasks: Mechanical work delegated to subagents
 <context>
 Context auto-loaded by `/prime --agent my-agent`:
 - Shared context, shared behavior
-- Agent sidecar: `sprint/sidecars/my-agent/`
+- Agent sidecar: `.pennyfarthing/sidecars/my-agent/`
 </context>
 
 <on-activation>
@@ -161,7 +161,7 @@ From theme config. Model: haiku. Tasks: Mechanical work
 <context>
 Context auto-loaded by `/prime --agent my-agent`:
 - Shared context, shared behavior
-- Agent sidecar: `sprint/sidecars/my-agent/`
+- Agent sidecar: `.pennyfarthing/sidecars/my-agent/`
 </context>
 
 <on-activation>
@@ -210,11 +210,11 @@ description: My Agent - Brief role description
 <agent-activation>
 **FIRST:** Use Bash tool to run:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.claude/scripts/run.sh" agent-session.sh start "my-agent"
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" agent-session.sh start "my-agent"
 ```
 This finds the project root and loads your persona.
 
-Then load and follow `.claude/agents/my-agent.md`
+Then load and follow `.pennyfarthing/agents/my-agent.md`
 </agent-activation>
 
 <agent-exit>
@@ -247,7 +247,7 @@ One-line description of agent purpose
 </responsibilities>
 
 <reference>
-- **Agent:** `.claude/agents/my-agent.md`
+- **Agent:** `.pennyfarthing/agents/my-agent.md`
 - **Sidecar:** `.claude/project/agents/my-agent-sidecar/`
 - **Skills:** `/skill-name`
 - **Handoffs:** From X, To Y
@@ -372,7 +372,7 @@ my-agent:
 
 ```bash
 # Check agent file accessible
-ls -la .claude/agents/my-agent.md
+ls -la .pennyfarthing/agents/my-agent.md
 
 # Check command file accessible
 ls -la .claude/commands/my-agent.md
@@ -457,7 +457,7 @@ From theme config. Model: haiku. Tasks: Dependency scanning, SAST analysis
 <context>
 Context auto-loaded by `/prime --agent security-auditor`:
 - Shared context, shared behavior
-- Agent sidecar: `sprint/sidecars/security-auditor/`
+- Agent sidecar: `.pennyfarthing/sidecars/security-auditor/`
 </context>
 
 <on-activation>
@@ -545,10 +545,10 @@ description: Security Auditor - Code and dependency security auditing
 <agent-activation>
 **FIRST:** Use Bash tool to run:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.claude/scripts/run.sh" agent-session.sh start "security-auditor"
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" agent-session.sh start "security-auditor"
 ```
 
-Then load and follow `.claude/agents/security-auditor.md`
+Then load and follow `.pennyfarthing/agents/security-auditor.md`
 </agent-activation>
 
 <agent-exit>
@@ -579,7 +579,7 @@ Security-focused analyst who audits code, dependencies, and compliance
 </key-workflows>
 
 <reference>
-- **Agent:** `.claude/agents/security-auditor.md`
+- **Agent:** `.pennyfarthing/agents/security-auditor.md`
 - **Sidecar:** `.claude/project/agents/security-auditor-sidecar/`
 - **Skills:** `/dev-patterns`, `/code-review`
 </reference>

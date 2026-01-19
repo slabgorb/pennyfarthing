@@ -1,6 +1,6 @@
-# Pennyfarthing Dogfooding Architecture (v4.0+)
+# Pennyfarthing Dogfooding Architecture (v7.0+)
 
-Pennyfarthing uses itself for development - "eating your own dogfood." With v4.0's symlink-based installation, synchronization issues are eliminated.
+Pennyfarthing uses itself for development - "eating your own dogfood." With v7.0's restructured directory layout, there's clear separation between Claude Code discovery (`.claude/`) and Pennyfarthing content (`.pennyfarthing/`).
 
 ## Quick Start for New Developers
 
@@ -22,42 +22,50 @@ pnpm install
 ./pennyfarthing-dist/scripts/doctor-dogfood.sh --fix
 ```
 
-## The Structure (v4.0.4+)
+## The Structure (v7.0+)
 
-The dogfooding structure now matches exactly what `pennyfarthing init` creates:
+The v7.0 restructure separates concerns:
+- **`.claude/`** - Claude Code discovery (commands, skills, project customizations)
+- **`.pennyfarthing/`** - Pennyfarthing content (agents, guides, personas, scripts)
 
 ```
 pennyfarthing/
 ├── pennyfarthing-dist/          <- SOURCE OF TRUTH (distributable package)
-│   ├── agents/
-│   ├── commands/
-│   ├── scripts/
-│   ├── skills/
-│   └── ...
+│   ├── agents/                  # 10 main agents + 8 subagents
+│   ├── commands/                # 43 slash commands
+│   ├── guides/                  # Behavior guides
+│   ├── personas/                # 102 themed personas
+│   ├── scripts/                 # Utility scripts
+│   ├── skills/                  # 21 knowledge domains
+│   └── workflows/               # Workflow definitions
 │
-├── .claude/                      <- CLAUDE CODE INTEGRATION
-│   ├── agents -> ../pennyfarthing-dist/agents       (direct symlink)
-│   ├── guides -> ../pennyfarthing-dist/guides       (direct symlink)
-│   ├── personas -> ../pennyfarthing-dist/personas   (direct symlink)
-│   ├── scripts -> ../pennyfarthing-dist/scripts     (direct symlink)
-│   │
-│   ├── commands/                 <- DIRECTORY (not symlink!)
+├── .claude/                     <- CLAUDE CODE DISCOVERY
+│   ├── commands/                <- DIRECTORY (not symlink!)
 │   │   ├── dev.md -> ../../pennyfarthing-dist/commands/dev.md
 │   │   ├── sm.md -> ../../pennyfarthing-dist/commands/sm.md
 │   │   └── ... (individual file symlinks)
 │   │
-│   ├── skills/                   <- DIRECTORY (not symlink!)
+│   ├── skills/                  <- DIRECTORY (not symlink!)
 │   │   ├── testing -> ../../pennyfarthing-dist/skills/testing
 │   │   ├── changelog -> ../../pennyfarthing-dist/skills/changelog
 │   │   └── ... (individual folder symlinks)
 │   │
-│   └── project/                  <- Real directory (project-specific)
-│       ├── agents/               <- Agent sidecars
-│       ├── commands/             <- User commands (optional)
-│       └── skills/               <- User skills (optional)
+│   └── project/                 <- Real directory (project-specific)
+│       ├── agents/              <- Agent sidecars (patterns, gotchas, decisions)
+│       ├── commands/            <- User commands (optional)
+│       └── skills/              <- User skills (optional)
+│
+├── .pennyfarthing/              <- PENNYFARTHING CONTENT
+│   ├── agents -> ../pennyfarthing-dist/agents       (direct symlink)
+│   ├── guides -> ../pennyfarthing-dist/guides       (direct symlink)
+│   ├── personas -> ../pennyfarthing-dist/personas   (direct symlink)
+│   ├── scripts -> ../pennyfarthing-dist/scripts     (direct symlink)
+│   ├── workflows -> ../pennyfarthing-dist/workflows (direct symlink)
+│   ├── sidecars/                <- Agent learning files (real directory)
+│   └── config.local.yaml        <- Theme selection (gitignored)
 ```
 
-**Key insight:** The `.claude/commands/` and `.claude/skills/` directories allow adding user-specific commands/skills alongside built-ins without conflicts.
+**Key insight:** Commands and skills use individual symlinks in `.claude/` for Claude Code discovery, while bulk content lives in `.pennyfarthing/` for cleaner organization.
 
 ## Dogfood vs Fresh Install Parity
 
@@ -65,12 +73,12 @@ The dogfood structure is **identical** to what `pennyfarthing init` creates, exc
 
 | Aspect | Dogfood | Fresh Install |
 |--------|---------|---------------|
-| Base path | `../pennyfarthing-dist/` | `../node_modules/pennyfarthing/pennyfarthing-dist/` |
+| Base path | `../pennyfarthing-dist/` | `../node_modules/@pennyfarthing/core/pennyfarthing-dist/` |
 | Source | Local development | npm package |
 
-The relative structure within `.claude/` is the same.
+The relative structure within `.claude/` and `.pennyfarthing/` is the same.
 
-## Data Flow Diagram (v4.0.4+)
+## Data Flow Diagram (v7.0+)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -82,11 +90,11 @@ The relative structure within `.claude/` is the same.
 
 ┌──────────────────┐         ┌──────────────────┐         ┌──────────────────┐
 │ pennyfarthing-   │         │ .claude/         │         │ Other Projects   │
-│ dist/            │◀──LINK──│                  │         │ (npm install)    │
-│                  │         │ Direct symlinks  │         │                  │
-│ • Source of truth│         │ to source        │         │ • Symlink to     │
-│ • Edit here      │         │ (single hop)     │         │   node_modules/  │
-│ • Commit changes │         │                  │         │                  │
+│ dist/            │◀──LINK──│ (commands/skills)│         │ (npm install)    │
+│                  │         │                  │         │                  │
+│ • Source of truth│         │ .pennyfarthing/  │         │ • Symlink to     │
+│ • Edit here      │◀──LINK──│ (agents/guides/  │         │   node_modules/  │
+│ • Commit changes │         │  personas/scripts)         │   @pennyfarthing │
 └────────┬─────────┘         └──────────────────┘         └──────────────────┘
          │
          │ All symlinks resolve here (1 hop)
@@ -105,7 +113,7 @@ The relative structure within `.claude/` is the same.
 With symlinks, the old synchronization nightmare is gone:
 
 ```
-ADDING A NEW SCRIPT (v4.0+)
+ADDING A NEW SCRIPT (v7.0+)
 ═══════════════════════════
 
 Step 1: Create in source - DONE!
@@ -113,16 +121,16 @@ Step 1: Create in source - DONE!
 │ pennyfarthing-dist/scripts/new.sh   │  <- File created here
 └──────────────────────────────────────┘
          │
-         │  .claude/scripts is a direct symlink
+         │  .pennyfarthing/scripts is a direct symlink
          ▼
 ┌──────────────────────────────────────┐
-│ .claude/scripts/new.sh              │  <- Automatically available!
+│ .pennyfarthing/scripts/new.sh       │  <- Automatically available!
 │                                      │
 │   Single-hop symlink resolves        │
 └──────────────────────────────────────┘
 ```
 
-## Rules for Adding Files (v4.0+)
+## Rules for Adding Files (v7.0+)
 
 ### New Script
 
@@ -135,6 +143,7 @@ chmod +x pennyfarthing-dist/scripts/new-script.sh
 git add pennyfarthing-dist/scripts/new-script.sh
 
 # No copy step needed - symlinks handle everything
+# Available at: .pennyfarthing/scripts/new-script.sh
 ```
 
 ### New Agent
@@ -147,7 +156,7 @@ vim pennyfarthing-dist/agents/new-agent.md
 git add pennyfarthing-dist/agents/new-agent.md
 
 # Symlink resolves automatically:
-# .claude/agents -> ../pennyfarthing-dist/agents
+# .pennyfarthing/agents -> ../pennyfarthing-dist/agents
 ```
 
 ### New Command
@@ -181,30 +190,50 @@ git add pennyfarthing-dist/skills/new-skill/
 git add .claude/skills/new-skill
 ```
 
+### New Workflow
+
+```bash
+# 1. Create in source
+vim pennyfarthing-dist/workflows/new-workflow.yaml
+
+# 2. Commit
+git add pennyfarthing-dist/workflows/new-workflow.yaml
+
+# Symlink resolves automatically:
+# .pennyfarthing/workflows -> ../pennyfarthing-dist/workflows
+```
+
 ## Directory Purposes
 
 | Location | Purpose | Git Tracked |
 |----------|---------|-------------|
 | `pennyfarthing-dist/` | Source of truth | Yes |
-| `.claude/agents` | Symlink to source | Yes (symlink) |
-| `.claude/commands/` | Directory with file symlinks | Yes |
-| `.claude/skills/` | Directory with folder symlinks | Yes |
+| `.claude/commands/` | Command discovery (file symlinks) | Yes |
+| `.claude/skills/` | Skill discovery (folder symlinks) | Yes |
 | `.claude/project/` | Project-specific files | Yes |
+| `.pennyfarthing/agents` | Symlink to source | Yes (symlink) |
+| `.pennyfarthing/guides` | Symlink to source | Yes (symlink) |
+| `.pennyfarthing/personas` | Symlink to source | Yes (symlink) |
+| `.pennyfarthing/scripts` | Symlink to source | Yes (symlink) |
+| `.pennyfarthing/workflows` | Symlink to source | Yes (symlink) |
+| `.pennyfarthing/sidecars/` | Agent learning files | Yes |
+| `.pennyfarthing/config.local.yaml` | Theme selection | No (gitignored) |
 
-## Summary (v4.0.4+)
+## Summary (v7.0+)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     DOGFOODING GOLDEN RULE (v4.0.4+)            │
+│                     DOGFOODING GOLDEN RULE (v7.0+)              │
 │                                                                  │
 │   Edit files in pennyfarthing-dist/ only.                       │
 │   Symlinks handle everything else automatically.                 │
 │                                                                  │
 │   Source: pennyfarthing-dist/   (edit and commit here)          │
-│   Local:  .claude/* -> direct symlinks (single hop)             │
 │                                                                  │
-│   For commands/skills: add individual symlinks to the           │
-│   .claude/commands/ or .claude/skills/ directories.             │
+│   Discovery: .claude/commands/  (individual symlinks)           │
+│              .claude/skills/    (individual symlinks)           │
+│                                                                  │
+│   Content:   .pennyfarthing/*   (direct symlinks to source)     │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -235,10 +264,64 @@ ln -sf ../../pennyfarthing-dist/scripts/hooks/post-merge.sh .git/hooks/post-merg
 ls -la .git/hooks/ | grep -v sample
 ```
 
+## Cyclist Development
+
+Cyclist is the visual terminal interface in `packages/cyclist/`. Use `just cyclist` for development:
+
+```bash
+# Start Cyclist (Electron with folder picker - default)
+just cyclist
+
+# Start Cyclist in current directory
+just cyclist here
+
+# Start Cyclist in specific directory
+just cyclist dir=/path/to/project
+
+# Web dev mode (browser + hot reload)
+just cyclist web
+
+# Web server only (production mode)
+just cyclist server
+
+# Enable verbose/debug logging
+just cyclist verbose
+
+# Combine flags
+just cyclist here verbose
+just cyclist web dir=/path/to/project
+```
+
+**Additional commands:**
+```bash
+just cyclist-setup          # First-time setup (clean, install, rebuild, build)
+just cyclist-build          # Build TypeScript only
+just cyclist-doctor         # Diagnose setup issues
+just test-cyclist           # Run tests
+just cyclist-build-and-install  # Build and install Cyclist.app
+```
+
+**Auto-build:** The `just cyclist` command automatically builds workspace dependencies (`@pennyfarthing/shared`, `@pennyfarthing/core`) if their `dist/` folders are missing. No manual build step needed when starting fresh.
+
+### Troubleshooting
+
+**Window not appearing:** The `package.json` has `"main": "dist/server.js"` for npm module use. The `dev` scripts explicitly run `electron dist/main.js` to use the correct entry point. If you run `electron .` directly, it will run the web server instead of the Electron app.
+
+**Pennyfarthing project not detected:** Cyclist looks for `.pennyfarthing/config.local.yaml` or `.pennyfarthing/agents` etc. Make sure you're running from a Pennyfarthing-enabled project directory, or set `CYCLIST_PROJECT_DIR`:
+
+```bash
+CYCLIST_PROJECT_DIR=/path/to/project just cyclist-electron
+```
+
+**Native modules (node-pty) issues:**
+```bash
+just cyclist-rebuild   # Rebuild native modules for Electron
+just cyclist-setup     # Full clean + install + rebuild + build
+```
+
 ## Historical Note
 
-Prior to v4.0, `.claude/pennyfarthing/` was a copy of `pennyfarthing-dist/`, requiring manual synchronization.
-
-v4.0-v4.0.3 used chained symlinks (`.claude/pennyfarthing -> ../pennyfarthing-dist`, then `.claude/agents -> pennyfarthing/agents`). This caused permission issues with Claude Code which doesn't follow symlink chains.
-
-v4.0.4+ uses direct single-hop symlinks, matching what `pennyfarthing init` creates for external users.
+- **Prior to v4.0**: `.claude/pennyfarthing/` was a copy of `pennyfarthing-dist/`, requiring manual synchronization.
+- **v4.0-v4.0.3**: Used chained symlinks which caused permission issues with Claude Code.
+- **v4.0.4-v6.x**: Direct single-hop symlinks, all content in `.claude/`.
+- **v7.0+**: Split structure with `.claude/` for discovery and `.pennyfarthing/` for content.

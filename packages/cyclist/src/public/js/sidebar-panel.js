@@ -35,7 +35,7 @@ export function init() {
     position: 'right',
     resizable: true,
     collapsible: true,
-    label: 'Sidebar',
+    label: 'STORY INFO',
     shortcut: 'b',  // Cmd+B to toggle sidebar
     order: 5,
   });

@@ -96,6 +96,23 @@
       </div>
     </div>
     <div class="resize-handle" id="tool-panel-resize" title="Drag to resize"></div>
+    <!-- 35-12: Skill Panel (collapsible, resizable) - skill invocation log -->
+    <div id="skill-panel" class="skill-panel collapsed" role="region" aria-label="Skill invocations">
+      <div class="skill-panel-header">
+        <span class="skill-panel-title">Skills</span>
+        <span class="skill-panel-count" id="skill-panel-count"></span>
+        <div class="skill-panel-controls">
+          <button class="icon-btn danger" data-action="clear" title="Clear log">Clear</button>
+        </div>
+        <button class="skill-panel-collapse-btn" id="skill-panel-collapse" title="Collapse" aria-expanded="false">◀</button>
+      </div>
+      <div class="skill-panel-content" id="skill-panel-content">
+        <div class="skill-log-list" id="skill-log-list">
+          <!-- Skill entries rendered dynamically -->
+        </div>
+      </div>
+    </div>
+    <div class="resize-handle" id="skill-panel-resize" title="Drag to resize"></div>
     <!-- Panel expand buttons removed - now using horizontal tab bar at top -->
     <!-- 35-5: Message panel wrapper for collapsible message view -->
     <div id="message-panel" class="vertical-panel position-center">
@@ -179,23 +196,25 @@
           </div>
           <!-- 23-4: Compact button - appears when context > 50% -->
           <button type="button" class="compact-btn hidden" title="Compact context (Cmd+Shift+K)" aria-label="Compact context to reduce usage">Compact</button>
-          <!-- 23-1: Usage limits display -->
-          <span class="usage-5hr usage-safe" data-stat="strip-usage-5hr" title="5-hour window usage">
+          <!-- 23-1: Usage limits display (hidden until data available) -->
+          <span class="usage-5hr usage-safe" data-stat="strip-usage-5hr" title="5-hour window usage" style="display: none;">
             <span class="usage-label">Window:</span>
-            <span class="usage-value">—%</span>
+            <span class="usage-value"></span>
           </span>
-          <span class="usage-weekly usage-safe" data-stat="strip-usage-weekly" title="Weekly usage">
+          <span class="usage-weekly usage-safe" data-stat="strip-usage-weekly" title="Weekly usage" style="display: none;">
             <span class="usage-label">Week:</span>
-            <span class="usage-value">—%</span>
+            <span class="usage-value"></span>
           </span>
         </div>
       </div>
     </div>
     </div><!-- /message-panel -->
+    <!-- MSSCI-11917: Resize handle for sidebar (position-right, so handle is on left) -->
+    <div class="resize-handle" id="sidebar-resize" title="Drag to resize"></div>
     <!-- 35-5: Sidebar as vertical panel (collapse via tab bar, not inline button) -->
     <aside id="sidebar" class="vertical-panel position-right">
       <!-- Persona Section -->
-      <div id="persona-section" class="persona-section" data-action="theme-picker">
+      <div id="persona-section" class="persona-section">
         <div id="project-name" class="project-name"></div>
         <!-- Character name above portrait -->
         <div id="character-name" class="character-name">Loading...</div>
@@ -286,8 +305,76 @@
         </div>
         <div id="todo-list" class="section-content"></div>
       </section>
+
+      <!-- 35-16: Background Tasks Section -->
+      <section id="background-tasks-section" class="background-tasks-section collapsed">
+        <div class="section-header" data-action="toggle-bg-tasks">
+          <span class="section-title">Background Tasks</span>
+          <span id="bg-tasks-count" class="bg-tasks-count" style="display: none;">(0)</span>
+          <button class="collapse-btn" aria-label="Toggle background tasks">▼</button>
+        </div>
+        <div id="background-tasks-container" class="section-content"></div>
+      </section>
+    </aside>
+    <!-- 35-9: Settings Panel (vertical panel on right, like sidebar) -->
+    <aside id="settings-panel" class="vertical-panel position-right collapsed" aria-labelledby="settings-title" aria-busy="false">
+      <div class="settings-panel-header">
+        <span class="settings-title" id="settings-title">Settings</span>
+        <button class="panel-collapse-btn" data-action="collapse" title="Collapse panel">▶</button>
+      </div>
+
+      <div class="settings-panel-content">
+        <!-- Loading State -->
+        <div class="settings-loading hidden" aria-live="polite">
+          <div class="skeleton skeleton-text"></div>
+          <div class="skeleton skeleton-text"></div>
+          <div class="skeleton skeleton-text"></div>
+          <span class="loading-text">Loading themes...</span>
+        </div>
+
+        <!-- Error State -->
+        <div class="settings-error error-banner hidden" aria-live="assertive">
+          <span class="error-icon">⚠️</span>
+          <span class="error-text">Failed to load themes</span>
+          <div class="error-actions">
+            <button class="retry-btn settings-retry">Retry</button>
+          </div>
+        </div>
+
+        <!-- Theme Picker (35-8) -->
+        <section class="settings-section theme-picker-section" data-section="themes">
+          <div class="section-header">
+            <span class="section-icon">🎭</span>
+            <span class="section-title">Theme</span>
+          </div>
+          <div class="section-content">
+            <!-- Search/Filter -->
+            <div class="theme-search">
+              <input type="text" id="theme-search" placeholder="Search themes..." autocomplete="off">
+            </div>
+            <!-- Theme List (populated by JS) -->
+            <div class="theme-list" id="theme-list" role="listbox" aria-label="Available themes">
+              <!-- Theme cards will be rendered here -->
+            </div>
+          </div>
+        </section>
+      </div>
     </aside>
     </div><!-- /content-area -->
+  </div>
+
+  <!-- 35-9: Confirm Dialog -->
+  <div id="confirm-dialog" class="confirm-dialog unsaved-changes hidden" role="dialog" aria-modal="true" aria-labelledby="dialog-title" tabindex="-1">
+    <div class="dialog-overlay"></div>
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h3 class="dialog-title" id="dialog-title">Confirm</h3>
+      </div>
+      <div class="dialog-body">
+        <p class="dialog-message" id="dialog-message"></p>
+      </div>
+      <div class="dialog-footer"></div>
+    </div>
   </div>
 
   <!-- Persona Popup Modal (17-4) -->
@@ -435,19 +522,16 @@
       window.electronAPI.auditLog.onShow(showAuditLogModal);
     }
   </script>
-  <!-- 24-9: Quick Theme Switcher - DISABLED until functionality is ready
-  <script type="module">
-    import { init } from '/js/components/QuickThemeSwitcher.js';
-    init();
-  </script>
-  -->
   <script type="module" src="/js/portrait.js"></script>
   <script src="/js/stats-strip.js"></script>
-  <!-- 35-1: ThemePicker for contextual theme selection -->
-  <script type="module" src="/js/components/ThemePicker.js"></script>
+  <!-- 35-8: ThemePicker removed - theme changes now via SettingsPanel only -->
+  <!-- 35-9: Settings Panel (vertical panel wrapper + form component) -->
+  <script type="module" src="/js/settings-panel.js"></script>
   <script type="module" src="/js/persona.js"></script>
   <script type="module" src="/js/story.js"></script>
   <script type="module" src="/js/todos.js"></script>
+  <!-- 35-16: Background Tasks Panel -->
+  <script type="module" src="/js/components/BackgroundTasksPanel.js"></script>
   <script type="module" src="/js/diff-panel.js"></script>
   <script type="module" src="/js/components/DiffViewer.js"></script>
   <script type="module" src="/js/file-panel.js"></script>
@@ -473,6 +557,8 @@
       });
     }
   </script>
+  <!-- 35-12: Skill Panel -->
+  <script type="module" src="/js/skill-panel.js"></script>
   <!-- 35-5: Vertical Panel base class -->
   <script type="module" src="/js/vertical-panel.js"></script>
   <!-- 35-5: Sidebar and Message panels -->
@@ -489,12 +575,14 @@
     let fileBadgeCount = 0;
     let diffBadgeCount = 0;
     let toolBadgeCount = 0;
+    let skillBadgeCount = 0;
 
     // Expose setters for panel modules to call
     window.panelBadgeCounts = {
       setFileCount: (n) => { fileBadgeCount = n; },
       setDiffCount: (n) => { diffBadgeCount = n; },
       setToolCount: (n) => { toolBadgeCount = n; },
+      setSkillCount: (n) => { skillBadgeCount = n; },
     };
 
     // Register file panel
@@ -528,11 +616,24 @@
     if (toolPanel) {
       PanelManager.register({
         id: 'tool-panel',
-        label: 'TOOLS',
+        label: 'TOOL LOG',
         shortcut: '3',
         order: 3,
         element: toolPanel,
         getBadgeCount: () => toolBadgeCount,
+      });
+    }
+
+    // 35-12: Register skill panel
+    const skillPanel = document.getElementById('skill-panel');
+    if (skillPanel) {
+      PanelManager.register({
+        id: 'skill-panel',
+        label: 'SKILL LOG',
+        shortcut: '4',
+        order: 4,
+        element: skillPanel,
+        getBadgeCount: () => skillBadgeCount,
       });
     }
   </script>

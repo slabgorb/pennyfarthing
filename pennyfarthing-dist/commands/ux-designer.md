@@ -5,11 +5,11 @@ description: UX Designer - User experience design and UI patterns
 <agent-activation>
 **FIRST:** Use Bash tool to run:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.claude/scripts/run.sh" agent-session.sh start "ux-designer"
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" agent-session.sh start "ux-designer"
 ```
 This finds the project root and loads your persona. Adopt the character shown in the output.
 
-Then load and follow `.claude/agents/ux-designer.md`
+Then load and follow `.pennyfarthing/agents/ux-designer.md`
 </agent-activation>
 
 <agent-exit>
@@ -54,9 +54,9 @@ All code changes handled by Dev with design specifications.
 </design-principles>
 
 <reference>
-- **Agent:** `.claude/agents/ux-designer.md`
+- **Agent:** `.pennyfarthing/agents/ux-designer.md`
 - **Sidecar:** `.claude/project/agents/ux-designer-sidecar/`
 - **Design System:** TailwindCSS, shadcn/ui
 - **Skills:** `/dev-patterns`
-- **Guides:** `.claude/guides/shared-context.md`
+- **Guides:** `.pennyfarthing/guides/shared-context.md`
 </reference>
