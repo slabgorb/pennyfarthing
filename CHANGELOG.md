@@ -11,6 +11,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [7.1.0] - 2026-01-19
+
+### Cyclist Observability & Jira Integration
+
+This release delivers enriched OTEL span visualization, bidirectional Jira synchronization, and significant Cyclist UI improvements.
+
+### Added
+
+#### Epic 36: OTEL Span Enrichment (Continued)
+- **Enriched Span Export** (MSSCI-11734) - Export enriched OTEL spans with tool metadata
+  - SpanTimeline visualization component for span hierarchy
+  - REST API endpoints for span querying (`/api/spans`)
+  - Span filtering by type, time range, and attributes
+- **Task/Subagent Span Enrichment** (MSSCI-11733, 36-5) - Track subagent invocations in telemetry
+  - Parent-child span correlation for Task tool calls
+  - Subagent type and model tracking
+
+#### Epic 47: Jira Deep Integration
+- **Jira Epic Auto-Creation** (47-1) - SM setup creates Jira epics automatically when missing
+- **Jira Sprint Sync** (47-2) - Sync sprint membership and velocity metrics
+- **Jira-Only Story Detection** (47-3) - Detect stories in Jira but missing from sprint YAML
+- **Bidirectional Sync Script** (MSSCI-11842) - `jira-bidirectional-sync.mjs` syncs status, points, and stories
+
+#### Cyclist Enhancements
+- **Background Tasks Sidebar Panel** (35-16) - Real-time status for background agents
+- **Collapsible Bash Output** (MSSCI-11851) - Expandable tool output in message stream
+- **Resizable Sidebar Panel** (35-17) - Drag handle for sidebar width adjustment
+- **Theme Switcher Consolidation** (35-8) - Theme switching moved to SettingsPanel only
+- **Auto-Mode Context Clear** (MSSCI-11840) - Automatic reload on handoff when context high
+
+#### Workflow Improvements
+- **Permission Presets** (MSSCI-11847) - Pre-configured permission sets for workflows
+- **Handoff Mode Preference** (MSSCI-11914) - Honor `handoff_mode: auto|manual` setting
+- **Trivial Workflow Phase Naming** (31-17) - Correct phase names in SM handoff
+
+### Fixed
+- **Copy Mode Migration** - Removed deprecated copy mode migration code (MSSCI-11815)
+- **Theme Project-Level Only** - Themes now scoped to project, not global
+- **SM Finish Workflow** - Added PR merge and branch cleanup steps
+- **List Themes Performance** - Optimized from 1.27s to 0.19s (6.8x faster)
+- **Parallel Reviewer Pre-flight** - Enable parallel execution for faster reviews
+
+### Changed
+- **Persona Config Deprecation** - Removed `persona-config.local.yaml` deprecation warnings (MSSCI-11819)
+- **Session Archive Format** - Archives now use Jira key as filename
+
+### Summary
+| Metric | Value |
+|--------|-------|
+| Stories Completed | 15+ |
+| Features | 12 |
+| Bug Fixes | 8 |
+| Performance Improvements | 2 |
+
+---
+
 ## [7.0.2] - 2026-01-17
 
 ### Fixed
@@ -1371,7 +1427,10 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v7.0.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v7.1.0...HEAD
+[7.1.0]: https://github.com/1898andCo/pennyfarthing/compare/v7.0.2...v7.1.0
+[7.0.2]: https://github.com/1898andCo/pennyfarthing/compare/v7.0.1...v7.0.2
+[7.0.1]: https://github.com/1898andCo/pennyfarthing/compare/v7.0.0...v7.0.1
 [7.0.0]: https://github.com/1898andCo/pennyfarthing/compare/v6.5.0...v7.0.0
 [6.5.0]: https://github.com/1898andCo/pennyfarthing/compare/v6.4.0...v6.5.0
 [6.4.0]: https://github.com/1898andCo/pennyfarthing/compare/v6.3.0...v6.4.0
