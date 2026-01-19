@@ -22,7 +22,6 @@ import { renderBackgroundTaskNotification } from './components/message-view/mess
 import { enrichMessage } from './message-enrichment.js';
 import { updateActivity, clearActivity } from './activity.js';
 import { resetSubmitting, setProcessing, processNextInQueue, setOnQueueChange, clearMessageQueue, loadMessageQueue, getMessageQueue, removeFromQueue, injectMessage } from './editor.js';
-import { handleAbort } from './components/ToolActivityBar.js';
 import { handleMessage as handleGitCommitMessage } from './git-commit-detector.js';
 import { getCurrentAgentCommand } from './persona.js';
 
@@ -233,7 +232,6 @@ function initMessageView() {
       await window.electronAPI.claude.abort();
       hideThinking();
       clearActivity();
-      handleAbort(); // 22-2: Visual feedback on activity bar
     }
   }
 
