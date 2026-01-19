@@ -5,9 +5,9 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 116
-  completed_points: 82
-  remaining_points: 34
+  total_points: 143
+  completed_points: 139
+  remaining_points: 4
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - MSSCI-11599: Customizable Workflow Engine (4 pts remaining)
