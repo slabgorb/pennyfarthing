@@ -887,7 +887,7 @@ epics:
       Anthropic's official guidance. Follow-on to Epic 9's infrastructure work.
       Inspired by patterns from Superpowers framework and anthropics/skills repo.
     points: 10
-    completed_points: 0
+    completed_points: 2
     priority: P3
     status: in_progress
     repos: pennyfarthing
@@ -900,11 +900,13 @@ epics:
           Helps Claude Code select appropriate skills for user requests.
         points: 2
         priority: P1
-        status: in_progress
+        status: done
         assigned_to: Keith Avery
         started: 2026-01-19T12:00:00Z
+        completed: 2026-01-19
         repos: pennyfarthing
         workflow: trivial
+        pr: 352
         acceptance_criteria:
           - Skills have "when to use" section in description
           - Context helps Claude select skills appropriately
