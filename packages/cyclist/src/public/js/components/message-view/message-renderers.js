@@ -118,12 +118,14 @@ export function truncateCommand(command, maxLength = MAX_COMMAND_LENGTH) {
 
 /**
  * Format an exit code with appropriate success/error styling
- * @param {number} exitCode - The exit code to format
- * @returns {string} HTML string with styled exit code badge
+ * @param {number|undefined} exitCode - The exit code to format (undefined = success)
+ * @returns {string} HTML string with styled exit code badge (✓ for success, ✗ for error)
  */
 export function formatExitCode(exitCode) {
-  const statusClass = exitCode === 0 ? 'exit-success' : 'exit-error';
-  return `<span class="bash-exit-code ${statusClass}">${exitCode}</span>`;
+  if (exitCode === undefined || exitCode === 0) {
+    return '<span class="bash-exit-code exit-success">✓</span>';
+  }
+  return '<span class="bash-exit-code exit-error">✗</span>';
 }
 
 /**
@@ -402,7 +404,7 @@ function getToolResultDisplayName(message) {
  * @returns {string} HTML string
  */
 export function renderBashToolResult(message) {
-  const { tool_id, output, is_error, bash_exit_code } = message;
+  const { tool_id, output, is_error, bash_exit_code, elapsed_ms } = message;
   const errorClass = is_error ? ' error' : '';
 
   const headerText = getToolResultDisplayName(message);
@@ -413,6 +415,9 @@ export function renderBashToolResult(message) {
 
   // Format exit code with styling
   const exitCodeHtml = formatExitCode(bash_exit_code);
+
+  // Format elapsed time
+  const elapsedHtml = elapsed_ms !== undefined ? `<span class="bash-elapsed">${formatDuration(elapsed_ms)}</span>` : '';
 
   // Convert ANSI codes in output, then escape any remaining HTML
   // Note: We escape first, then apply ANSI conversion to avoid escaping our spans
@@ -426,7 +431,7 @@ export function renderBashToolResult(message) {
   <details class="bash-output collapsible"${openAttr}>
     <summary class="bash-header">
       <span class="bash-command">${escapeHtml(headerText)}</span>${summaryHtml}
-      ${exitCodeHtml}
+      ${elapsedHtml}${exitCodeHtml}
     </summary>
     <pre class="bash-output-content"><code>${coloredOutput}</code></pre>
   </details>

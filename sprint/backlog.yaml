@@ -471,6 +471,52 @@ backlog:
             - Theme changes in Tab 1 reflect in Tab 2 immediately
             - All localStorage access goes through settings-sync.js
             - 16 existing files refactored to use new module
+        - id: "48-5"
+          title: "Hook response data channel for interactive tools"
+          description: |
+            Extend PreToolUse hook responses to support returning user-provided data
+            (not just allow/deny) for AskUserQuestion and ExitPlanMode tools.
+
+            Current State:
+            - Claude Code (programmatic mode) invokes PreToolUse hook
+            - Hook POSTs to /approval-request → Cyclist shows modal → allow/deny
+            - Hook returns decision → Claude continues or blocks
+
+            Required Enhancement:
+            - AskUserQuestion needs to return selected answers/custom input
+            - ExitPlanMode needs to return plan approval status and feedback
+            - Hook response must include structured data payload, not just boolean
+
+            Design considerations:
+            - Extend /approval-request response schema with optional `data` field
+            - Modal UI must support form inputs (radio buttons, text fields, checkboxes)
+            - Hook must serialize response data back to Claude's tool result
+          points: 5
+          priority: P1
+          status: backlog
+          repos: cyclist
+          workflow: tdd
+          acceptance_criteria:
+            - /approval-request endpoint accepts and returns structured data payloads
+            - AskUserQuestion modal renders question options and captures user selection
+            - ExitPlanMode modal shows plan content and captures approval with optional feedback
+            - Hook response includes `data` field that Claude receives in tool result
+            - Existing allow/deny flows continue to work unchanged
+        - id: "48-6"
+          title: "Remove redundant popup tool use notifications"
+          description: |
+            With WheelHub consolidation complete, the popup tool use notifications
+            are redundant. The approval modal and WebSocket channels now handle
+            all tool use visibility. Remove the popup system to reduce complexity.
+          points: 2
+          priority: P2
+          status: backlog
+          repos: cyclist
+          workflow: trivial
+          acceptance_criteria:
+            - Popup tool use notification code removed
+            - No visual regression in tool use visibility
+            - Approval modal remains the single source for tool interactions
 
     # =========================================================================
     # QUALITY & SCALE - Future Initiatives
