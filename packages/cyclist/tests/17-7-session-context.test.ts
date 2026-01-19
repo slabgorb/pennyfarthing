@@ -94,7 +94,11 @@ echo "CONTEXT_STATUS=OK"
         tokens: 100000,
         status: 'OK',
         error: null,
-        sessionId: 'test-session-123', // New field
+        sessionId: 'test-session-123',
+        baseline: null,
+        usableTokens: null,
+        usablePercent: null,
+        available: null,
       };
 
       expect(info.sessionId).toBe('test-session-123');
