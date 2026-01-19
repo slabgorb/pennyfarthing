@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 116
-  completed_points: 80
-  remaining_points: 36
+  completed_points: 82
+  remaining_points: 34
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - MSSCI-11599: Customizable Workflow Engine (4 pts remaining)
@@ -345,7 +345,7 @@ epics:
     jira: MSSCI-11794
     title: "Epic: Technical Debt & Bug Fixes"
     points: 32
-    completed_points: 22
+    completed_points: 24
     priority: P2
     status: in_progress
     stories:
@@ -462,10 +462,11 @@ epics:
         title: Fix 15-3 sidebar section styling tests
         points: 2
         priority: P2
-        status: in_progress
+        status: done
         repos: cyclist
         assigned_to: Keith Avery
         started: 2026-01-19T00:00:00Z
+        completed: 2026-01-19
         workflow: tdd
         acceptance_criteria:
           - Persona section has character-quote element
