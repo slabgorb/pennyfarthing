@@ -1,6 +1,6 @@
 ---
-name: changelog-management
-description: Maintain changelogs following Keep a Changelog format. Parse git commits with conventional commits conventions and auto-generate release notes.
+name: changelog
+description: Maintain changelogs following Keep a Changelog format. Use when creating release notes, parsing conventional commits for changelog entries, auto-generating changelog sections from git history, or preparing CHANGELOG.md for releases.
 ---
 
 # Changelog Management Skill

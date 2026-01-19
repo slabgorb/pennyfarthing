@@ -1,6 +1,6 @@
 ---
 name: judge
-description: Evaluate agent responses using standardized rubrics. Invoke with mode and response data.
+description: Evaluate agent responses using standardized rubrics. Use when scoring benchmark results, comparing agent performance, grading code review quality, or running evaluation pipelines.
 ---
 
 # Judge Skill
