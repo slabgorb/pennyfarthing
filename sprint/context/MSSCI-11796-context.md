@@ -1,4 +1,4 @@
-# Epic 47: Jira-Pennyfarthing Sync Improvements - Technical Context
+# MSSCI-11796: Jira-Pennyfarthing Sync Improvements - Technical Context
 
 ## Overview
 

@@ -1,4 +1,4 @@
-# Epic 33: Runtime Permission Management - Technical Context
+# MSSCI-11705: Runtime Permission Management - Technical Context
 
 ## Epic Overview
 - **Points:** 12 (5 stories)
