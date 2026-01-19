@@ -277,7 +277,7 @@ case "$1" in
           HAS_HANDOFF="yes"
         fi
 
-        # Also check for CYCLIST:HANDOFF marker (generic-handoff output)
+        # Also check for CYCLIST:HANDOFF marker (handoff output)
         if [ "$HAS_HANDOFF" = "no" ] && grep -q "CYCLIST:HANDOFF" "$ACTIVE_SESSION" 2>/dev/null; then
           HAS_HANDOFF="yes"
         fi
@@ -291,10 +291,10 @@ case "$1" in
           echo "  Assessment: Found ($EXPECTED_SECTION)" >&2
           echo "  Handoff: NOT FOUND" >&2
           echo "" >&2
-          echo "  You MUST spawn generic-handoff before stopping:" >&2
+          echo "  You MUST spawn handoff before stopping:" >&2
           echo "" >&2
           echo "    Task tool:" >&2
-          echo "      subagent_type: \"generic-handoff\"" >&2
+          echo "      subagent_type: \"handoff\"" >&2
           echo "      prompt: |" >&2
           echo "        STORY_ID: {story-id}" >&2
           echo "        WORKFLOW: {workflow}" >&2

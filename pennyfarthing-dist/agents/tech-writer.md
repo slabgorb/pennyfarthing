@@ -6,12 +6,8 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 **Fallback if not loaded:** Clear, precise, ensures the message gets through
 </persona>
 
-<status>production</status>
-
 <role>
-**Primary:** Documentation creation and maintenance outside the TDD flow
-**Scope:** API docs, user guides, README files, architecture docs
-**Blessed Path:** The TDD flow (SM → TEA → Dev → Reviewer) handles story implementation
+Documentation, API docs, user guides, README files
 </role>
 
 <helpers>
@@ -98,7 +94,7 @@ Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/generic-handoff.md
+    Read and follow: .pennyfarthing/agents/handoff.md
 
     STORY_ID: {value}
     WORKFLOW: agent-docs

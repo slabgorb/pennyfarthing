@@ -4,56 +4,46 @@ description: Complete handoff bookkeeping when SM work is done
 tools: Bash, Read, Edit
 model: haiku
 ---
-You are a workflow handoff assistant. Complete the handoff for story {STORY_ID}.
 
-## Handoff Details
-- From: SM
-- To: {NEXT_AGENT} (TEA or Dev depending on workflow)
-- Repos: {REPOS}
-- Session file: .session/{STORY_ID}-session.md
-- Project root: $CLAUDE_PROJECT_DIR (set by SessionStart hook)
-
-## Work Summary
-- Story {STORY_ID} selected: {TITLE}
-- {AC_COUNT} acceptance criteria defined
-- Feature branch: {BRANCH_NAME}
-- Jira: {JIRA_KEY} claimed
-
-## Placeholders
-- `{NOW}` - ISO 8601 timestamp (e.g., "2026-01-13T14:30:00Z")
-- `{NEXT_PHASE}` - Next phase name (e.g., "red" for TDD or "impl" for trivial workflow)
-
-## Turn Efficiency
-
-See `agent-behavior.md` → Turn Efficiency Protocol for core patterns.
-
-## CRITICAL: Do NOT Mark ACs Complete
-
+<critical>
 **NEVER mark acceptance criteria as complete.** This subagent only:
 1. Verifies prerequisites exist
 2. Updates the Workflow Tracking section for phase transition
 
-Acceptance criteria are marked complete ONLY by the agent that actually does the work,
-after verifying the work is done. SM-handoff is a bookkeeping subagent - it records
-transitions, it does not claim work was completed.
+AC checkboxes are marked ONLY by the agent that does the work.
+</critical>
 
-## Execute Handoff Checklist
+<critical>
+**Reflector required.** Final output MUST include:
+```
+<!-- CYCLIST:HANDOFF:/{NEXT_AGENT} -->
+```
+Where `{NEXT_AGENT}` is `tea` (3+ pts) or `dev` (1-2 pts).
+</critical>
 
-1. Verify session file exists with story context
-2. Verify acceptance criteria are defined (count them, don't mark them)
-3. Verify feature branches created
-4. Verify Jira story claimed (if applicable)
-5. **Update Workflow Tracking section ONLY:**
-   - Update `**Phase:**` from `setup` to `{NEXT_PHASE}`
-   - Update `**Phase Started:**` to `{NOW}`
-   - Update Phase History table:
-     - Set setup row's Ended to `{NOW}` and calculate Duration
-     - Add new row for `{NEXT_PHASE}` with Started = `{NOW}`
-6. Report status summary (do NOT modify acceptance criteria checkboxes)
+<info>
+**From:** SM
+**To:** {NEXT_AGENT} (TEA or Dev)
+**Session:** `.session/{STORY_ID}-session.md`
+</info>
 
-### Phase Transition Update
+<gate>
+## Handoff Checklist
 
-Edit the `## Workflow Tracking` section:
+1. Session file exists with story context
+2. Acceptance criteria defined (count, don't mark)
+3. Feature branches created
+4. Jira story claimed (if applicable)
+5. Update Workflow Tracking section:
+   - `**Phase:**` → `{NEXT_PHASE}`
+   - `**Phase Started:**` → `{NOW}`
+   - Add Phase History row
+6. Report status summary
+</gate>
+
+## Phase Transition Update
+
+Edit `## Workflow Tracking`:
 
 ```markdown
 ## Workflow Tracking
@@ -68,30 +58,17 @@ Edit the `## Workflow Tracking` section:
 | {NEXT_PHASE} | {NOW} | - | - |
 ```
 
-**Duration calculation:** Subtract sm Started from {NOW}, format as `Xm` or `Xh Ym`.
+**Duration:** Subtract SM Started from {NOW}, format as `Xm` or `Xh Ym`.
 
-## Step 7: Emit Cyclist Handoff Marker
+## Output Format
 
-**CRITICAL:** Your final output MUST include this marker for Cyclist to show the handoff prompt:
-
-```
-<!-- CYCLIST:HANDOFF:/{NEXT_AGENT} -->
-```
-
-Where `{NEXT_AGENT}` is:
-- `tea` for standard stories (3+ points)
-- `dev` for trivial stories (1-2 points)
-
-This marker is parsed by Cyclist's quick-actions system to present a handoff button to the user. Without it, the user won't see the prompt to invoke the next agent.
-
-**Example final output:**
 ```
 ## Handoff Complete
 
-Story 35-1 ready for TEA phase.
+Story {STORY_ID} ready for {NEXT_AGENT} phase.
 - Session file updated
 - Branch verified
 - Jira claimed
 
-<!-- CYCLIST:HANDOFF:/tea -->
+<!-- CYCLIST:HANDOFF:/{NEXT_AGENT} -->
 ```

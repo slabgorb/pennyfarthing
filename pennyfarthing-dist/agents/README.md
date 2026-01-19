@@ -6,47 +6,20 @@ This directory contains the **single source of truth** for all Pennyfarthing age
 
 **See:** `../ AGENT-COORDINATION.md` for complete architecture documentation.
 
-## Agent Maturity
+## Main Agents
 
-Agents are marked with `<status>` tags indicating their maturity level:
-
-### Production Agents
-These agents follow the TDD workflow and are battle-tested:
-- **SM** - Scrum Master (story coordination, session management)
-- **TEA** - Test Engineer/Architect (test writing, TDD guidance)
-- **Dev** - Developer (implementation, making tests pass)
-- **Reviewer** - Code Reviewer (adversarial review, quality gates)
-
-### Experimental Agents
-These agents are available but not yet modernized to the same standard:
-- **Orchestrator** - Meta operations, process improvement
-- **PM** - Product Manager (planning, prioritization)
-- **Architect** - System Architect (design decisions)
-- **DevOps** - DevOps Engineer (infrastructure, deployment)
-- **Tech Writer** - Technical Writer (documentation)
-- **UX Designer** - UX Designer (UI design, accessibility)
-
-> **Tip:** Start with production agents for core development work. Experimental agents may have less consistent behavior or missing features.
-
-## Agent Hierarchy
-
-### Strategic Agents (Full Scope)
-Oversee both repos, make cross-repo decisions, coordinate work.
-
-- **`orchestrator.md`** - Master orchestrator
-- **`pm.md`** - Product Manager (planning, prioritization)
-- **`sm.md`** - Scrum Master (story creation, technical specs)
-- **`architect.md`** - System Architect (design decisions, patterns)
-- **`devops.md`** - DevOps Engineer (infrastructure, deployment)
-
-### Tactical Agents (Story-Scoped)
-Focus on specific repo(s), implement/test/document features.
-
-- **`dev.md`** - Developer (feature implementation)
-- **`tea.md`** - Test Engineer/Architect (testing, quality)
-- **`reviewer.md`** - Code Reviewer (adversarial review, quality gates)
-- **`tech-writer.md`** - Technical Writer (documentation)
-- **`ux-designer.md`** - UX Designer (UI design, UX)
+| Agent | Role |
+|-------|------|
+| **SM** | Story coordination, session management |
+| **TEA** | Test writing, TDD guidance |
+| **Dev** | Feature implementation |
+| **Reviewer** | Adversarial code review |
+| **Orchestrator** | Process improvement, meta-ops |
+| **PM** | Planning, prioritization |
+| **Architect** | System design, ADRs |
+| **DevOps** | Infrastructure, deployment |
+| **Tech Writer** | Documentation |
+| **UX Designer** | UI design, accessibility |
 
 ### Official Subagents (Haiku-based)
 Lightweight subagents for mechanical tasks. Invoked via `Task tool` with `subagent_type: "general-purpose"` and `model: "haiku"`.
@@ -66,9 +39,9 @@ Task tool:
 **See `agent-behavior.md` → "Interactive Background Task Protocol"** for when to use background vs foreground execution.
 
 - **`workflow-status-check.md`** - Detect workflow state
-- **`generic-sm-setup.md`** - Research OR setup mode (Story 31-11)
-- **`generic-sm-finish.md`** - Preflight OR execute phase (Story 31-11)
-- **`generic-handoff.md`** - Workflow-driven handoff (Stories 31-7, 31-10)
+- **`sm-setup.md`** - Research OR setup mode (Story 31-11)
+- **`sm-finish.md`** - Preflight OR execute phase (Story 31-11)
+- **`handoff.md`** - Workflow-driven handoff (Stories 31-7, 31-10)
 - **`sm-handoff.md`** - SM→TEA/Dev handoff with Jira/branch verification
 - **`sm-file-summary.md`** - Summarize file changes
 - **`reviewer-preflight.md`** - Gather review data
@@ -78,16 +51,16 @@ Task tool:
 These files have been deleted and replaced by consolidated versions:
 
 **SM Subagents (Story 31-12):**
-- `sm-work-research.md` → use `generic-sm-setup` with MODE=research
-- `sm-story-setup.md` → use `generic-sm-setup` with MODE=setup
-- `sm-finish-bookkeeping.md` → use `generic-sm-finish` with PHASE=preflight
-- `sm-finish-execution.md` → use `generic-sm-finish` with PHASE=execute
+- `sm-work-research.md` → use `sm-setup` with MODE=research
+- `sm-story-setup.md` → use `sm-setup` with MODE=setup
+- `sm-finish-bookkeeping.md` → use `sm-finish` with PHASE=preflight
+- `sm-finish-execution.md` → use `sm-finish` with PHASE=execute
 
 **Handoff Subagents (Story 31-11):**
-- `tea-handoff.md` → use `generic-handoff` with CURRENT_PHASE=red
-- `dev-handoff.md` → use `generic-handoff` with CURRENT_PHASE=green
-- `reviewer-handoff-approve.md` → use `generic-handoff` with VERDICT=approved
-- `reviewer-handoff-reject.md` → use `generic-handoff` with VERDICT=rejected
+- `tea-handoff.md` → use `handoff` with CURRENT_PHASE=red
+- `dev-handoff.md` → use `handoff` with CURRENT_PHASE=green
+- `reviewer-handoff-approve.md` → use `handoff` with VERDICT=approved
+- `reviewer-handoff-reject.md` → use `handoff` with VERDICT=rejected
 
 ## Context Loading
 
@@ -152,9 +125,9 @@ Each agent file contains:
 │
 │ # Official Subagents (8 active)
 ├── workflow-status-check.md   # Detect workflow state
-├── generic-sm-setup.md        # Research or setup mode (Story 31-11)
-├── generic-sm-finish.md       # Preflight or execute (Story 31-11)
-├── generic-handoff.md         # Workflow-driven handoff (Stories 31-7, 31-10)
+├── sm-setup.md        # Research or setup mode (Story 31-11)
+├── sm-finish.md       # Preflight or execute (Story 31-11)
+├── handoff.md         # Workflow-driven handoff (Stories 31-7, 31-10)
 ├── sm-handoff.md              # SM→TEA/Dev handoff with Jira/branch
 ├── sm-file-summary.md         # Summarize files
 ├── reviewer-preflight.md      # Review prep
@@ -180,53 +153,22 @@ Each agent is designed to work within **~500-800 line context budget**:
 - Target repo context: ~100 lines
 - **Total:** ~450-600 lines
 
-## Agent Coordination
-
-### TDD Flow Handoffs
+## Common Handoffs
 
 ```
-SM → TEA:      Story selected, write failing tests
-TEA → Dev:     Tests written (RED), make them pass
-Dev → Reviewer: Implementation done, review PR
-Reviewer → SM: Story approved, finish it
-Reviewer → Dev: Issues found, fix needed
-```
-
-### Strategic → Tactical Handoffs
-
-```
-PM → SM:     Epic needs stories
-SM → TEA:    Story ready for tests
-TEA → Dev:   Tests ready for implementation
-Dev → Reviewer: PR ready for review
-```
-
-### Strategic ↔ Strategic Coordination
-
-```
-PM ↔ Architect:  Need design decisions
-PM ↔ SM:         Story prioritization
-SM ↔ Architect:  Technical approach
-```
-
-### Tactical → Strategic Feedback
-
-```
-Dev → SM:         Story blocked or needs clarification
-TEA → SM:         Test coverage gaps identified
-Reviewer → SM:    Code quality concerns
-Tech Writer → SM: Documentation needs
+SM → TEA/Dev:    Story setup complete
+TEA → Dev:       Tests written
+Dev → Reviewer:  Implementation complete
+Reviewer → SM:   Story approved
+Reviewer → Dev:  Changes requested
 ```
 
 ## Creating New Agents
 
-To add a new agent:
-
 1. Create `.pennyfarthing/agents/[name].md`
 2. Follow existing agent structure
-3. Add to `../agent-scopes.yaml`
-4. Update this README
-5. Create command in `.claude/commands/[name].md`
+3. Update this README
+4. Create command in `.claude/commands/[name].md`
 
 ### Agent Template Structure
 
