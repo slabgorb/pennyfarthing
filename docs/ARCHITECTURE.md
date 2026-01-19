@@ -161,8 +161,8 @@ Error handling is centralized in the calling agent (see `tactical-agent-behavior
 | Subagent | Purpose |
 |----------|---------|
 | `workflow-status-check` | Detect workflow state |
-| `generic-sm-setup` | Research backlog (MODE=research) or setup story (MODE=setup) |
-| `generic-sm-finish` | Preflight checks (PHASE=preflight) or execute finish (PHASE=execute) |
+| `sm-setup` | Research backlog (MODE=research) or setup story (MODE=setup) |
+| `sm-finish` | Preflight checks (PHASE=preflight) or execute finish (PHASE=execute) |
 | `sm-file-summary` | Summarize file changes |
 | `sm-handoff` | Handoff bookkeeping when SM work done |
 

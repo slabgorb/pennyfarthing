@@ -13,7 +13,7 @@ import { Server, createServer as createHttpServer, IncomingMessage, ServerRespon
 import { fileURLToPath } from 'url';
 import { dirname, join, basename } from 'path';
 import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
-import { getStoryInfo, getGitInfo, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig, findAvailablePort, writeApprovalPortFile, cleanupApprovalPortFile } from './server.js';
+import { getStoryInfo, getGitInfo, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig, writeApprovalPortFile, cleanupApprovalPortFile } from './server.js';
 import { parseToolStats, ToolStats, createEmptyStats } from './tool-stats.js';
 import {
   getTokenStats,
@@ -1755,7 +1755,6 @@ export function setupApprovalIPCHandlers(ipcMain: {
 // discovery file to prevent cross-instance interference when multiple Cyclist
 // windows are open for different projects.
 
-const DEFAULT_APPROVAL_SERVER_PORT = 7432;
 let approvalServer: ReturnType<typeof createHttpServer> | null = null;
 let approvalServerPort: number | null = null;
 
@@ -1956,7 +1955,7 @@ export function deserializeApprovalData(data: string): Record<string, unknown> {
 
 /**
  * Start the approval hook server with dynamic port selection
- * Uses findAvailablePort to avoid conflicts with other Cyclist instances
+ * Uses port 0 to let OS assign an available port (avoids race conditions)
  * Writes port to .cyclist-approval-port for hook discovery
  */
 export async function startApprovalServer(): Promise<void> {
@@ -1968,14 +1967,6 @@ export async function startApprovalServer(): Promise<void> {
   const projectDir = getProjectDirectory();
   if (!projectDir) {
     console.warn('No project directory set, cannot start approval server');
-    return;
-  }
-
-  // Find an available port starting from default
-  try {
-    approvalServerPort = await findAvailablePort(DEFAULT_APPROVAL_SERVER_PORT);
-  } catch (error) {
-    console.error('Could not find available port for approval server:', error);
     return;
   }
 
@@ -2003,11 +1994,16 @@ export async function startApprovalServer(): Promise<void> {
     }
   });
 
-  approvalServer.listen(approvalServerPort, '127.0.0.1', () => {
-    console.log(`Approval hook server running on http://127.0.0.1:${approvalServerPort}`);
-    // Write port file for hook discovery
-    writeApprovalPortFile(projectDir, approvalServerPort!);
-    console.log(`[33-7] Wrote .cyclist-approval-port file to ${projectDir}`);
+  // Use port 0 to let OS assign an available port (avoids race conditions)
+  approvalServer.listen(0, '127.0.0.1', () => {
+    const addr = approvalServer!.address();
+    approvalServerPort = typeof addr === 'object' && addr ? addr.port : null;
+    if (approvalServerPort) {
+      console.log(`Approval hook server running on http://127.0.0.1:${approvalServerPort}`);
+      // Write port file for hook discovery
+      writeApprovalPortFile(projectDir, approvalServerPort);
+      console.log(`[33-7] Wrote .cyclist-approval-port file to ${projectDir}`);
+    }
   });
 
   approvalServer.on('error', (err: NodeJS.ErrnoException) => {
@@ -2196,20 +2192,18 @@ if (isElectron) {
    * Start the Express server on an available port
    */
   async function startServer(): Promise<void> {
-    // Find an available port
-    actualPort = await findAvailablePort(DEFAULT_PORT);
-    if (actualPort !== DEFAULT_PORT) {
-      console.log(`Port ${DEFAULT_PORT} in use, using ${actualPort} instead`);
-    }
-
-    // Store the port globally for OTEL config in spawnPTY
-    setActualPort(actualPort);
-
     return new Promise((resolve, reject) => {
       try {
         server = createTerminalServer();
-        server.listen(actualPort, () => {
+        // Use port 0 to let OS assign an available port (avoids race conditions)
+        server.listen(0, () => {
+          const addr = server!.address();
+          actualPort = typeof addr === 'object' && addr ? addr.port : DEFAULT_PORT;
           console.log(`Cyclist server running at http://localhost:${actualPort}`);
+
+          // Store the port globally for OTEL config in spawnPTY
+          setActualPort(actualPort);
+
           // Write port file for OTEL auto-configuration (Story 20-1)
           const projectDir = getProjectDirectory();
           if (projectDir) {

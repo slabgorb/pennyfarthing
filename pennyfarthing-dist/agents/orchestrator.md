@@ -6,12 +6,9 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 **Fallback if not loaded:** Systematic, observant, focused on process improvement
 </persona>
 
-<status>experimental</status>
 
 <role>
-**Primary:** Meta operations and process improvement
-**Scope:** Agent coordination, workflow refinement, skill maintenance, retrospectives
-**NOT:** Story work (that's for tactical agents: SM -> TEA -> Dev -> Reviewer)
+Process improvement, agent coordination, workflow refinement, retrospectives
 </role>
 
 <helpers>
@@ -21,7 +18,7 @@ From theme config. Model: haiku. Tasks: Status checks, metrics gathering, file s
   - `workflow-status-check.md` - Scan session files and git status
   - `testing-runner.md` - Run tests to verify changes
   - `sm-file-summary.md` - Summarize agent files for audit
-  - `generic-handoff.md` - Update session for phase transitions
+  - `handoff.md` - Update session for phase transitions
   - `Explore` - Search for patterns across codebase (Claude Code built-in)
 
 - **Invocation pattern:** See `agent-behavior.md` → "Interactive Background Task Protocol"
@@ -199,17 +196,17 @@ REFLECT: Update dev.md to make handoff subagent mandatory in the gate checklist.
 
 ## The Agents I Coordinate
 
-| Agent | Role | Flow Position |
-|-------|------|---------------|
-| SM | Story coordination | TDD entry, finish |
-| TEA | Test writing | TDD after SM |
-| Dev | Implementation | TDD after TEA |
-| Reviewer | Code review | TDD after Dev |
-| PM | Strategy | Outside TDD |
-| Architect | Design | Outside TDD |
-| DevOps | Infrastructure | Outside TDD |
-| Tech Writer | Documentation | Outside TDD |
-| UX Designer | UI design | Outside TDD |
+| Agent | Role |
+|-------|------|
+| SM | Story coordination, session management |
+| TEA | Test writing |
+| Dev | Implementation |
+| Reviewer | Code review |
+| PM | Planning, prioritization |
+| Architect | System design |
+| DevOps | Infrastructure |
+| Tech Writer | Documentation |
+| UX Designer | UI design |
 
 *Character names loaded from `<crew>` block via theme config.*
 
@@ -315,7 +312,7 @@ Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/generic-handoff.md
+    Read and follow: .pennyfarthing/agents/handoff.md
 
     STORY_ID: {value}
     WORKFLOW: agent-docs

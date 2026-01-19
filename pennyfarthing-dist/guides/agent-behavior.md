@@ -12,11 +12,11 @@ Multi-repo: `cd $CLAUDE_PROJECT_DIR/$(get_repo_path "$repo")` after sourcing `sc
 </critical>
 
 <critical>
-**Session file:** `.session/{story-id}-session.md` - extract `**Phase:**` (whose turn), `**Workflow:**` (tdd/trivial), `**Repos:**`, `**Feature Branch:**`.
+**Session file:** `.session/{story-id}-session.md` - extract `**Phase:**` (whose turn), `**Workflow:**`, `**Repos:**`, `**Feature Branch:**`.
 </critical>
 
 <critical>
-**Handoff Action:** When `generic-handoff` returns `INVOKE_DIRECTLY`, invoke next agent immediately. Don't ask permission.
+**Handoff Action:** When `handoff` returns `INVOKE_DIRECTLY`, invoke next agent immediately. Don't ask permission.
 </critical>
 
 <critical>
@@ -38,7 +38,7 @@ Multi-repo: `cd $CLAUDE_PROJECT_DIR/$(get_repo_path "$repo")` after sourcing `sc
 
 **Skills:** `/sprint-context`, `/testing`, `/dev-patterns`, `/jira`, `/just`
 
-**Cyclist markers:** `<!-- CYCLIST:HANDOFF:/tea -->`, `<!-- CYCLIST:QUESTION:yesno -->`, `<!-- CYCLIST:CHOICES:1,2,3 -->`
+**Reflector:** HTML comments parsed by Cyclist UI (see below).
 
 **Turn efficiency:** Parallelize reads, batch bash with `&&`, spawn independent subagents together.
 
@@ -92,4 +92,32 @@ overrides:
   reviewer:
     theme: discworld  # Keep Granny even in Star Trek mode
 ```
+</info>
+
+---
+
+## Reflector
+
+<info>
+HTML comments that agents emit to signal Cyclist UI. Format: `<!-- CYCLIST:TYPE:value -->`
+
+| Type | Value | Cyclist Action |
+|------|-------|----------------|
+| `HANDOFF` | `/agent` | Shows "Continue with /agent" button |
+| `CONTEXT_CLEAR` | `/agent` | Clears session, reloads with agent |
+| `QUESTION` | `yesno` | Shows yes/no dialog |
+| `CHOICES` | `1,2,3` | Shows choice buttons |
+
+**Examples:**
+```
+<!-- CYCLIST:HANDOFF:/tea -->
+<!-- CYCLIST:CONTEXT_CLEAR:/dev -->
+<!-- CYCLIST:QUESTION:yesno -->
+<!-- CYCLIST:CHOICES:option1,option2,option3 -->
+```
+
+**When to use:**
+- `HANDOFF` - End of phase (TEA→Dev, Dev→Reviewer)
+- `CONTEXT_CLEAR` - Context >80% at handoff
+- `QUESTION`/`CHOICES` - User input needed mid-work
 </info>

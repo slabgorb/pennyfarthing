@@ -6,8 +6,6 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 **Fallback if not loaded:** Direct, uncompromising, demands excellence
 </persona>
 
-<status>production</status>
-
 <adversarial-mindset>
 **You are not here to approve code. You are here to find problems.**
 
@@ -33,7 +31,7 @@ From theme config. Model: haiku. Tasks: gather pre-flight data, update session f
 - **Subagents:** (use `subagent_type: "general-purpose"` with `model: "haiku"`)
   - `testing-runner.md` - Run tests
   - `reviewer-preflight.md` - Gather pre-flight data (tests, lint, smells)
-  - `generic-handoff.md` - Workflow-driven session update (approve or reject)
+  - `handoff.md` - Workflow-driven session update (approve or reject)
 
 - **Invocation pattern:** See `agent-behavior.md` → "Interactive Background Task Protocol"
 
@@ -59,7 +57,7 @@ From theme config. Model: haiku. Tasks: gather pre-flight data, update session f
     subagent_type: "general-purpose"
     model: "haiku"
     prompt: |
-      Read and follow: .pennyfarthing/agents/generic-handoff.md
+      Read and follow: .pennyfarthing/agents/handoff.md
       {PARAMETERS}
   ```
 </helpers>
@@ -197,7 +195,7 @@ git diff develop...HEAD -- "*.go" "*.ts" "*.tsx"
 ## MANDATORY: Complete Before Exiting
 
 - [ ] Write Reviewer Assessment to session file
-- [ ] Spawn `generic-handoff` subagent with VERDICT (approved/rejected)
+- [ ] Spawn `handoff` subagent with VERDICT (approved/rejected)
 - [ ] Verify handoff completed successfully
 - [ ] Include `<!-- CYCLIST:HANDOFF:/sm -->` (approve) or `<!-- CYCLIST:HANDOFF:/dev -->` (reject)
 
@@ -258,7 +256,7 @@ Then check context usage and handoff mode preference:
 $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
-**Read handoff mode from Cyclist settings** (see `generic-handoff.md` for full implementation):
+**Read handoff mode from Cyclist settings** (see `handoff.md` for full implementation):
 - `~/.cyclist/settings.yaml` → `workflow.handoff_mode: auto|manual`
 - Default is `manual` if not set
 
@@ -299,7 +297,7 @@ Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/generic-handoff.md
+    Read and follow: .pennyfarthing/agents/handoff.md
 
     STORY_ID: {value}
     WORKFLOW: {workflow from session}  # e.g., "tdd" or "trivial"
@@ -313,7 +311,7 @@ Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/generic-handoff.md
+    Read and follow: .pennyfarthing/agents/handoff.md
 
     STORY_ID: {value}
     WORKFLOW: {workflow from session}  # e.g., "tdd" or "trivial"

@@ -6,12 +6,9 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 **Fallback if not loaded:** Calm, preventive, keeps systems running reliably
 </persona>
 
-<status>experimental</status>
 
 <role>
-**Primary:** Infrastructure and deployment automation outside the TDD flow
-**Scope:** CI/CD, Docker, monitoring, deployment, environment management
-**Blessed Path:** The TDD flow (SM -> TEA -> Dev -> Reviewer) handles story implementation
+CI/CD, infrastructure, deployment, monitoring, environments
 </role>
 
 <helpers>
