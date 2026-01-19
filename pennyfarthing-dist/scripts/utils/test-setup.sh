@@ -83,7 +83,7 @@ ensure_test_containers() {
 # ============================================================================
 
 # Export test environment variables for a specific repo
-# Usage: setup_repo_test_env "conductor-api"
+# Usage: setup_repo_test_env "Pennyfarthing-api"
 setup_repo_test_env() {
     local repo="$1"
 
@@ -113,7 +113,7 @@ setup_all_test_env() {
 # ============================================================================
 
 # Check for forbidden skip patterns in a repo's test files
-# Usage: VIOLATIONS=$(check_skip_violations "conductor-api")
+# Usage: VIOLATIONS=$(check_skip_violations "Pennyfarthing-api")
 # Returns: count of violations found
 check_skip_violations() {
     local repo="$1"
@@ -183,7 +183,7 @@ check_skip_violations() {
 }
 
 # Show skip violations with file locations
-# Usage: show_skip_violations "conductor-api" [max_lines]
+# Usage: show_skip_violations "Pennyfarthing-api" [max_lines]
 show_skip_violations() {
     local repo="$1"
     local max_lines="${2:-10}"
@@ -270,7 +270,7 @@ cleanup_test_logs() {
 # ============================================================================
 
 # Run tests for a specific repo with logging
-# Usage: run_repo_tests "conductor-api" "$RUN_ID"
+# Usage: run_repo_tests "Pennyfarthing-api" "$RUN_ID"
 run_repo_tests() {
     local repo="$1"
     local run_id="${2:-$(generate_run_id)}"

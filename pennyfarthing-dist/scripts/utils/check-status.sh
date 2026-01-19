@@ -186,14 +186,14 @@ echo "   Repos: $REPOS"
 # Check repos
 case "$REPOS" in
     api)
-        check_repo_status "$REPO_BASE/conductor-api" "conductor-api"
+        check_repo_status "$REPO_BASE/Pennyfarthing-api" "Pennyfarthing-api"
         ;;
     ui)
-        check_repo_status "$REPO_BASE/conductor-ui" "conductor-ui"
+        check_repo_status "$REPO_BASE/Pennyfarthing-ui" "Pennyfarthing-ui"
         ;;
     all)
-        check_repo_status "$REPO_BASE/conductor-api" "conductor-api"
-        check_repo_status "$REPO_BASE/conductor-ui" "conductor-ui"
+        check_repo_status "$REPO_BASE/Pennyfarthing-api" "Pennyfarthing-api"
+        check_repo_status "$REPO_BASE/Pennyfarthing-ui" "Pennyfarthing-ui"
         ;;
 esac
 

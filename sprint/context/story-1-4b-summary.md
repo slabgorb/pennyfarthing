@@ -6,7 +6,7 @@ Refactored the testing-runner.md subagent from 361 lines to 187 lines (48% reduc
 
 ## Key Technical Decisions
 
-1. **Config-driven architecture** - Instead of hardcoding test patterns for specific repos (conductor-api, conductor-ui), we created a YAML schema in `repos.yaml` that defines testing configuration per-repo. This makes the system extensible to any project structure.
+1. **Config-driven architecture** - Instead of hardcoding test patterns for specific repos (Pennyfarthing-api, Pennyfarthing-ui), we created a YAML schema in `repos.yaml` that defines testing configuration per-repo. This makes the system extensible to any project structure.
 
 2. **Parser fallback chain** - The config reader tries `yq` first (faster, simpler), falls back to `python3` with yaml module. This ensures the utilities work in different environments without requiring specific tools.
 

@@ -1,9 +1,9 @@
 ---
 name: sprint-context
-description: Sprint status, backlog, and story management for Conductor. Use when checking current sprint status, finding available stories, reviewing backlog, or understanding story context and history.
+description: Sprint status, backlog, and story management for Pennyfarthing. Use when checking current sprint status, finding available stories, reviewing backlog, or understanding story context and history.
 ---
 
-# Sprint Context Skill - Conductor Project
+# Sprint Context Skill - Pennyfarthing Project
 
 ## When to Use This Skill
 

@@ -1,13 +1,13 @@
 ---
 name: story-management
-description: Story creation, sizing, and sprint management patterns for Conductor. Use when creating stories, estimating work, or managing the sprint workflow.
+description: Story creation, sizing, and sprint management patterns for Pennyfarthing. Use when creating stories, estimating work, or managing the sprint workflow.
 ---
 
-# Story Management Skill - Conductor Project
+# Story Management Skill - Pennyfarthing Project
 
 ## Overview
 
-This skill covers story creation, sizing, and management patterns for the Conductor project sprint workflow.
+This skill covers story creation, sizing, and management patterns for the Pennyfarthing project sprint workflow.
 
 ## Story Sizing Guidelines
 
@@ -165,7 +165,7 @@ Based on story complexity, determine workflow depth:
 
 ## Story Key Format
 
-- **Conductor:** `epic-N`, `N-M` stories (e.g., `epic-35`, `35-4`)
+- **Pennyfarthing:** `epic-N`, `N-M` stories (e.g., `epic-35`, `35-4`)
 - **Siemulator:** `sim-epic-N`, `sim-N-M` stories (e.g., `sim-epic-10`, `sim-10-1`)
 
 ## Lessons Learned

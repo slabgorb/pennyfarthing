@@ -23,9 +23,9 @@
 #   skip_patterns: regex patterns that indicate skipped tests (policy violation)
 
 repos:
-  # Example: Conductor-style multi-repo project
-  # conductor-api:
-  #   path: conductor-api
+  # Example: Pennyfarthing-style multi-repo project
+  # Pennyfarthing-api:
+  #   path: Pennyfarthing-api
   #   type: api
   #   language: go
   #   test_command: "just test"
@@ -40,8 +40,8 @@ repos:
   #     - 'LocalStack'
   #     - 'not available'
   #
-  # conductor-ui:
-  #   path: conductor-ui
+  # Pennyfarthing-ui:
+  #   path: Pennyfarthing-ui
   #   type: ui
   #   language: typescript
   #   test_command: "npm run test -- --run"
@@ -97,9 +97,9 @@ testing:
 
   # Container health checks (name:port pairs)
   # containers:
-  #   - name: "conductor-test-db"
+  #   - name: "Pennyfarthing-test-db"
   #     port: 5433
-  #   - name: "conductor-test-mongo"
+  #   - name: "Pennyfarthing-test-mongo"
   #     port: 27018
 
   # Default skip patterns by language (can be overridden per-repo)
@@ -126,8 +126,8 @@ testing:
 # ============================================================================
 # If your scripts use $API_REPO/$UI_REPO, map them here
 # legacy_compat:
-#   api_repo: conductor-api
-#   ui_repo: conductor-ui
+#   api_repo: Pennyfarthing-api
+#   ui_repo: Pennyfarthing-ui
 
 # ============================================================================
 # Build Order
@@ -135,5 +135,5 @@ testing:
 # Optional explicit order (defaults to order defined above)
 # build_order:
 #   - shared-lib
-#   - conductor-api
-#   - conductor-ui
+#   - Pennyfarthing-api
+#   - Pennyfarthing-ui

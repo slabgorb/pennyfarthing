@@ -2,7 +2,7 @@
 
 ## Overview
 
-Epic 47 improves the bidirectional sync between Pennyfarthing's sprint YAML files and Jira. Currently, Jira keys are manually added to epics/stories, and sync is one-way (Conductor → Jira). This epic automates epic creation, sprint sync, and bidirectional status management.
+Epic 47 improves the bidirectional sync between Pennyfarthing's sprint YAML files and Jira. Currently, Jira keys are manually added to epics/stories, and sync is one-way (Pennyfarthing → Jira). This epic automates epic creation, sprint sync, and bidirectional status management.
 
 ## Technical Landscape
 
@@ -17,7 +17,7 @@ Epic 47 improves the bidirectional sync between Pennyfarthing's sprint YAML file
 **jira-sync.mjs** (`pennyfarthing-dist/scripts/utils/jira/jira-sync.mjs`)
 - Syncs existing epic stories to Jira (status, points)
 - Skips stories without `jira:` field
-- One-way: Conductor → Jira only
+- One-way: Pennyfarthing → Jira only
 - **Gap:** Cannot detect stories in Jira but not in YAML
 
 **generic-sm-setup.md** (`.pennyfarthing/agents/generic-sm-setup.md`)
