@@ -1,13 +1,13 @@
 sprint:
   number: 12
-  goal: WheelHub notification consolidation and continued polish
+  goal: WheelHub notification consolidation, skill frontmatter enhancement, and continued polish
   planned_start: 2026-01-15
   status: active
   velocity_target: 22
 summary:
-  total_points: 143
+  total_points: 153
   completed_points: 143
-  remaining_points: 0
+  remaining_points: 10
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - MSSCI-11599: Customizable Workflow Engine (4 pts remaining)
@@ -875,3 +875,96 @@ epics:
           - Popup tool use notification code removed
           - No visual regression in tool use visibility
           - Approval modal remains the single source for tool interactions
+  # ===========================================================================
+  # EPIC 49: Skill Frontmatter Enhancement
+  # ===========================================================================
+  - id: MSSCI-11952
+    type: epic
+    jira: MSSCI-11952
+    title: "Epic: Skill Frontmatter Enhancement"
+    description: |
+      Improve skill discoverability by enhancing SKILL.md frontmatter per
+      Anthropic's official guidance. Follow-on to Epic 9's infrastructure work.
+      Inspired by patterns from Superpowers framework and anthropics/skills repo.
+    points: 10
+    completed_points: 0
+    priority: P3
+    status: in_progress
+    repos: pennyfarthing
+    stories:
+      - id: MSSCI-11953
+        jira: MSSCI-11953
+        title: "Enhance skill descriptions with 'when to use' context"
+        description: |
+          Add explicit "when to use this skill" guidance to skill frontmatter.
+          Helps Claude Code select appropriate skills for user requests.
+        points: 2
+        priority: P1
+        status: in_progress
+        assigned_to: Keith Avery
+        started: 2026-01-19T12:00:00Z
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - Skills have "when to use" section in description
+          - Context helps Claude select skills appropriately
+          - Follows Anthropic skill documentation patterns
+      - id: MSSCI-11954
+        jira: MSSCI-11954
+        title: "Add allowed-tools to context-sensitive skills"
+        description: |
+          Some skills should only use specific tools. Add allowed-tools
+          frontmatter to restrict tool access where appropriate.
+        points: 1
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - Context-sensitive skills have allowed-tools list
+          - Tool restrictions documented in skill files
+      - id: MSSCI-11955
+        jira: MSSCI-11955
+        title: "Progressive disclosure for large skills"
+        description: |
+          Large skills should load minimal context initially, with deeper
+          sections available on demand. Reduces token overhead.
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - Large skills use progressive disclosure pattern
+          - Initial load is minimal, details available on demand
+          - Token overhead reduced for common operations
+      - id: MSSCI-11956
+        jira: MSSCI-11956
+        title: "Create systematic-debugging skill"
+        description: |
+          New skill for systematic debugging approach. Guides Claude through
+          structured debugging process: reproduce, isolate, hypothesize, test.
+        points: 3
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - systematic-debugging skill created
+          - Covers reproduce, isolate, hypothesize, test cycle
+          - Integrates with existing dev workflow
+      - id: MSSCI-11957
+        jira: MSSCI-11957
+        title: "Add severity levels to Reviewer agent"
+        description: |
+          Reviewer should categorize findings by severity (critical, high,
+          medium, low). Helps prioritize fixes and reduces noise.
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: agent-docs
+        acceptance_criteria:
+          - Reviewer categorizes findings by severity
+          - Critical/high/medium/low levels defined
+          - Output format includes severity tags

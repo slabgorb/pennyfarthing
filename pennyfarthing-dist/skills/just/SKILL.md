@@ -1,5 +1,5 @@
 ---
-name: just-runner
+name: just
 description: Run just recipes for project tasks. This skill should be used when starting dev servers, running tests, managing databases, checking project health, or writing new justfile recipes.
 ---
 

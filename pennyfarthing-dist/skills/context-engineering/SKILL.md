@@ -1,3 +1,8 @@
+---
+name: context-engineering
+description: Strategies for managing context windows in long-running agent sessions. Use when approaching context limits, designing subagent prompts, optimizing token usage, or implementing just-in-time context loading.
+---
+
 # Context Engineering Skill
 
 **Purpose:** Strategies for managing context windows efficiently in long-running agent sessions.
