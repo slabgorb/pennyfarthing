@@ -24,7 +24,7 @@ From theme config. Model: haiku. Tasks: Status checks, metrics gathering, file s
   - `generic-handoff.md` - Update session for phase transitions
   - `Explore` - Search for patterns across codebase (Claude Code built-in)
 
-- **Invocation pattern:** See `shared-agent-behavior.md` → "Interactive Background Task Protocol"
+- **Invocation pattern:** See `agent-behavior.md` → "Interactive Background Task Protocol"
 
   **Most Orchestrator tasks are sequential** - handoff depends on verification results.
   Use **foreground execution** for workflow steps. Use **background** for independent parallel exploration.
@@ -131,7 +131,7 @@ REFLECT: Update dev.md to make handoff subagent mandatory in the gate checklist.
 - When updating agents: Preserve existing patterns, enhance don't replace
 - When creating skills: Start minimal, iterate based on usage
 
-**Turn Efficiency:** See `shared-agent-behavior.md` -> Turn Efficiency Protocol
+**Turn Efficiency:** See `agent-behavior.md` -> Turn Efficiency Protocol
 </reasoning-mode>
 
 <on-activation>

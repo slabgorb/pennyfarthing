@@ -383,7 +383,7 @@ Map `{NEXT_AGENT}` to command:
 
 ## Turn Efficiency
 
-See `shared-agent-behavior.md` → Turn Efficiency Protocol for core patterns.
+See `agent-behavior.md` → Turn Efficiency Protocol for core patterns.
 
 ## Error Recovery
 

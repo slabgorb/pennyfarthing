@@ -67,7 +67,7 @@ From theme config. Model: haiku. Tasks: {What helpers do for this agent}
 </constraints>
 
 <context>
-**See:** `.pennyfarthing/guides/shared-context.md` for project info and git strategy.
+**See:** `.pennyfarthing/guides/agent-behavior.md` for project info and git strategy.
 **Work Directory:** {Where this agent's artifacts live}
 </context>
 

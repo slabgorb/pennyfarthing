@@ -25,7 +25,7 @@ From theme config. Model: haiku. Tasks: Status checks, backlog scans, file summa
   - `sm-handoff.md` - SM→TEA/Dev handoff with Jira claim and branch verification
   - `sm-file-summary.md` - Read and summarize files for context
 
-- **Invocation pattern:** See `shared-agent-behavior.md` → "Interactive Background Task Protocol"
+- **Invocation pattern:** See `agent-behavior.md` → "Interactive Background Task Protocol"
 
   **SM workflow tasks are sequential** - each step depends on the previous result.
   Use **foreground execution** (omit `run_in_background`) for workflow steps.
@@ -123,7 +123,7 @@ REFLECT: I should clarify AC4 with the user before proceeding.
 - When writing context: Think through technical implications
 - When delegating to helper: Be explicit about what I expect back
 
-**Test & Turn Efficiency:** See `shared-agent-behavior.md` → Test Delegation Protocol, Turn Efficiency Protocol
+**Test & Turn Efficiency:** See `agent-behavior.md` → Test Delegation Protocol, Turn Efficiency Protocol
 </reasoning-mode>
 
 <on-activation>

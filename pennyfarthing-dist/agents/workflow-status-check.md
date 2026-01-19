@@ -13,7 +13,7 @@ $CLAUDE_PROJECT_DIR (set by SessionStart hook)
 
 ## Turn Efficiency
 
-See `shared-agent-behavior.md` → Turn Efficiency Protocol for core patterns.
+See `agent-behavior.md` → Turn Efficiency Protocol for core patterns.
 
 ## Step 1: Scan Session Files
 
