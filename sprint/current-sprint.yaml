@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 153
-  completed_points: 143
-  remaining_points: 10
+  completed_points: 146
+  remaining_points: 7
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - MSSCI-11599: Customizable Workflow Engine (4 pts remaining)
@@ -912,9 +912,9 @@ epics:
       Anthropic's official guidance. Follow-on to Epic 9's infrastructure work.
       Inspired by patterns from Superpowers framework and anthropics/skills repo.
     points: 10
-    completed_points: 2
+    completed_points: 10
     priority: P3
-    status: in_progress
+    status: done
     repos: pennyfarthing
     stories:
       - id: MSSCI-11953
@@ -944,7 +944,11 @@ epics:
           frontmatter to restrict tool access where appropriate.
         points: 1
         priority: P2
-        status: backlog
+        status: done
+        assigned_to: Keith Avery
+        started: 2026-01-19T23:00:00Z
+        completed: 2026-01-19
+        pr: 357
         repos: pennyfarthing
         workflow: trivial
         acceptance_criteria:
@@ -995,7 +999,11 @@ epics:
           medium, low). Helps prioritize fixes and reduces noise.
         points: 2
         priority: P2
-        status: backlog
+        status: done
+        assigned_to: Keith Avery
+        started: 2026-01-19T23:30:00Z
+        completed: 2026-01-19
+        pr: 358
         repos: pennyfarthing
         workflow: agent-docs
         acceptance_criteria:
