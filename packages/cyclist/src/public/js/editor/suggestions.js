@@ -1,9 +1,8 @@
 /**
- * Ghost Text Suggestions Module
+ * Suggestion Pill Module
  *
- * Provides context-aware placeholder suggestions in the editor that can be
- * accepted with Tab or Space. Reads recent user messages from the DOM to
- * generate relevant follow-up prompts.
+ * Shows a clickable suggestion pill above the editor when empty.
+ * Click to accept the suggestion into the editor.
  */
 
 import { DEFAULT_GHOST_TEXT } from './constants.js';
@@ -12,14 +11,17 @@ import { DEFAULT_GHOST_TEXT } from './constants.js';
 // State
 // =============================================================================
 
-/** Current ghost text being displayed */
-let currentGhostText = '';
+/** Current suggestion text */
+let currentSuggestion = '';
 
-/** Whether ghost text is currently visible */
-let ghostTextVisible = false;
+/** Whether suggestion pill is visible */
+let suggestionVisible = false;
 
 /** Reference to the editor instance */
 let editorRef = null;
+
+/** The popup element */
+let popupElement = null;
 
 /** How many recent messages to consider */
 const RECENT_MESSAGE_COUNT = 5;
@@ -37,19 +39,19 @@ export function initSuggestions(editor) {
 }
 
 /**
- * Check if ghost text is currently visible
+ * Check if suggestion pill is currently visible
  * @returns {boolean}
  */
 export function isGhostTextVisible() {
-  return ghostTextVisible;
+  return suggestionVisible;
 }
 
 /**
- * Get the current ghost text
+ * Get the current suggestion text
  * @returns {string}
  */
 export function getCurrentGhostText() {
-  return currentGhostText;
+  return currentSuggestion;
 }
 
 /**
@@ -60,7 +62,6 @@ function getRecentUserMessages() {
   const messageElements = document.querySelectorAll('.message-user');
   const messages = [];
 
-  // Get the last N messages (they're in DOM order, so slice from end)
   const startIndex = Math.max(0, messageElements.length - RECENT_MESSAGE_COUNT);
   for (let i = messageElements.length - 1; i >= startIndex; i--) {
     const text = messageElements[i].textContent?.trim();
@@ -84,7 +85,6 @@ function analyzeMessageContext(messages) {
 
   const combined = messages.join(' ').toLowerCase();
 
-  // Detect common patterns
   const patterns = [
     { match: /test|spec|jest|vitest|mocha/, topic: 'testing', action: 'Continue with tests...' },
     { match: /bug|fix|error|issue|broken/, topic: 'debugging', action: 'What else needs fixing?' },
@@ -106,34 +106,50 @@ function analyzeMessageContext(messages) {
 }
 
 /**
- * Generate ghost text based on conversation context
+ * Generate suggestion based on conversation context
  * @returns {string}
  */
-function generateGhostText() {
+function generateSuggestion() {
   const recentMessages = getRecentUserMessages();
-
-  // Analyze what the user has been asking about
   const context = analyzeMessageContext(recentMessages);
 
   if (context) {
     return context.action;
   }
 
-  // Check if there's any conversation at all
   if (recentMessages.length > 0) {
-    // There's conversation but no clear pattern - suggest continuation
     return 'Continue with...';
   }
 
-  // No messages yet - use default
   return DEFAULT_GHOST_TEXT;
 }
 
 /**
- * Show ghost text in the editor
+ * Get or create the suggestion popup element
+ * @returns {HTMLElement|null}
+ */
+function getPopupElement() {
+  if (popupElement) return popupElement;
+  if (typeof document === 'undefined') return null;
+
+  popupElement = document.createElement('div');
+  popupElement.id = 'suggestion-popup';
+  popupElement.className = 'completion-popup suggestion-popup';
+  popupElement.style.display = 'none';
+
+  const editorWrapper = document.getElementById('editor-wrapper');
+  if (editorWrapper) {
+    editorWrapper.appendChild(popupElement);
+  }
+
+  return popupElement;
+}
+
+/**
+ * Show suggestion pill above the editor
  */
 export function showGhostText() {
-  if (!editorRef || ghostTextVisible) {
+  if (!editorRef || suggestionVisible) {
     return;
   }
 
@@ -143,76 +159,72 @@ export function showGhostText() {
     return;
   }
 
-  currentGhostText = generateGhostText();
-  ghostTextVisible = true;
+  currentSuggestion = generateSuggestion();
+  suggestionVisible = true;
 
-  // Insert ghost text with special class
-  editorRef.commands.setContent(`<p class="ghost-text">${currentGhostText}</p>`);
+  const popup = getPopupElement();
+  if (!popup) return;
+
+  popup.innerHTML = `<div class="completion-item selected">
+    <span class="completion-name">${currentSuggestion}</span>
+  </div>`;
+  popup.style.display = 'block';
+
+  // Add click handler
+  popup.querySelector('.completion-item').addEventListener('click', () => {
+    acceptGhostText();
+  });
 }
 
 /**
- * Accept the ghost text (convert to real text)
- * @returns {boolean} True if ghost text was accepted
+ * Accept the suggestion (insert into editor)
+ * @returns {boolean} True if suggestion was accepted
  */
 export function acceptGhostText() {
-  if (!editorRef || !ghostTextVisible || !currentGhostText) {
+  if (!editorRef || !suggestionVisible || !currentSuggestion) {
     return false;
   }
 
-  // Replace with actual text (no ghost class)
-  editorRef.commands.setContent(`<p>${currentGhostText}</p>`);
-
-  // Move cursor to end
+  editorRef.commands.setContent(`<p>${currentSuggestion}</p>`);
   editorRef.commands.focus('end');
 
-  ghostTextVisible = false;
-  currentGhostText = '';
-
+  clearGhostText();
   return true;
 }
 
 /**
- * Clear the ghost text (user started typing something else)
+ * Clear/hide the suggestion pill
  */
 export function clearGhostText() {
-  if (!editorRef || !ghostTextVisible) {
-    return;
-  }
+  suggestionVisible = false;
+  currentSuggestion = '';
 
-  editorRef.commands.clearContent();
-  ghostTextVisible = false;
-  currentGhostText = '';
+  const popup = getPopupElement();
+  if (popup) {
+    popup.style.display = 'none';
+  }
 }
 
 /**
- * Handle key events for ghost text
- * Call this from editor's handleKeyDown
+ * Handle key events for suggestion pill
  * @param {KeyboardEvent} event
  * @returns {boolean} True if event was handled
  */
 export function handleGhostTextKey(event) {
-  if (!ghostTextVisible) {
+  if (!suggestionVisible) {
     return false;
   }
 
-  // Tab or Space - accept ghost text
-  if (event.key === 'Tab' || event.key === ' ') {
-    event.preventDefault();
-    acceptGhostText();
-    return true;
-  }
-
-  // Escape - clear ghost text
+  // Escape - hide suggestion
   if (event.key === 'Escape') {
     event.preventDefault();
     clearGhostText();
     return true;
   }
 
-  // Any other printable key - clear and let user type
+  // Any printable key - hide suggestion and let user type
   if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
     clearGhostText();
-    // Return false to let the key be processed normally
     return false;
   }
 
@@ -223,6 +235,6 @@ export function handleGhostTextKey(event) {
  * Reset suggestions state (for testing)
  */
 export function resetSuggestions() {
-  currentGhostText = '';
-  ghostTextVisible = false;
+  currentSuggestion = '';
+  suggestionVisible = false;
 }
