@@ -12,9 +12,6 @@ import { getHelperName } from '../../persona.js';
 // Constants
 // =============================================================================
 
-/** Length threshold for collapsible tool results */
-const COLLAPSIBLE_THRESHOLD = 500;
-
 /** Maximum command length before truncation in Bash result header */
 const MAX_COMMAND_LENGTH = 50;
 
@@ -284,7 +281,6 @@ export function renderToolUseMessage(message) {
     return `<div class="message message-tool-use message-task${statusClass}" data-tool-id="${tool_id}">
   <div class="tool-header">
     <span class="tool-name helper-name">${escapeHtml(displayName)}</span>
-    <span class="tool-id">${escapeHtml(tool_id)}</span>
     <span class="tool-status"></span>
   </div>
   <details class="tool-input collapsible"${openAttr}>
@@ -300,7 +296,6 @@ export function renderToolUseMessage(message) {
   return `<div class="message message-tool-use${statusClass}" data-tool-id="${tool_id}">
   <div class="tool-header">
     <span class="tool-name">${escapeHtml(tool_name)}</span>
-    <span class="tool-id">${escapeHtml(tool_id)}</span>
     <span class="tool-status"></span>
   </div>
   <details class="tool-input collapsible"${openAttr}>
@@ -384,16 +379,33 @@ function truncate(str, maxLen) {
 }
 
 /**
+ * Get display name for a tool result - single source of truth
+ * @param {Object} message - Tool result message (enriched or not)
+ * @returns {string} Human-readable display name
+ */
+function getToolResultDisplayName(message) {
+  // Bash: prefer description, then command
+  if (message.bash_description) return message.bash_description;
+  if (message.bash_command) return truncateCommand(message.bash_command);
+
+  // Generic: prefer summary, then name
+  if (message.tool_summary) return message.tool_summary;
+  if (message.tool_name) return message.tool_name;
+
+  // Never show tool_id - use generic fallback
+  return 'Tool Result';
+}
+
+/**
  * Render a Bash tool result with collapsible output (MSSCI-11851)
  * @param {Object} message - Enriched Bash tool result message
  * @returns {string} HTML string
  */
 export function renderBashToolResult(message) {
-  const { tool_id, output, is_error, bash_command, bash_description, bash_exit_code } = message;
+  const { tool_id, output, is_error, bash_exit_code } = message;
   const errorClass = is_error ? ' error' : '';
 
-  // Use description if available, otherwise fall back to truncated command
-  const headerText = bash_description || truncateCommand(bash_command) || 'Bash';
+  const headerText = getToolResultDisplayName(message);
 
   // Generate output summary for the header
   const outputSummary = generateBashOutputSummary(output, is_error);
@@ -432,30 +444,17 @@ export function renderToolResultMessage(message) {
     return renderBashToolResult(message);
   }
 
-  const { tool_id, tool_name, tool_summary, output, is_error } = message;
-  const isLong = output.length > COLLAPSIBLE_THRESHOLD;
+  const { tool_id, output, is_error } = message;
   const errorClass = is_error ? ' error' : '';
-
-  // Use tool_summary (e.g., "config.yaml"), fallback to tool_name, then shortened tool_id
-  const displayName = tool_summary || tool_name || tool_id?.substring(0, 8) || 'Tool';
-
+  const displayName = getToolResultDisplayName(message);
   const content = `<pre><code>${escapeHtml(output)}</code></pre>`;
+  const openAttr = verboseModeEnabled ? ' open' : '';
 
-  if (isLong) {
-    // Add open attribute when verbose mode is enabled
-    const openAttr = verboseModeEnabled ? ' open' : '';
-
-    return `<div class="message message-tool-result${errorClass}" data-tool-id="${tool_id}">
+  return `<div class="message message-tool-result${errorClass}" data-tool-id="${tool_id}">
   <details class="tool-output collapsible"${openAttr}>
     <summary>${escapeHtml(displayName)}</summary>
     ${content}
   </details>
-</div>`;
-  }
-
-  return `<div class="message message-tool-result${errorClass}" data-tool-id="${tool_id}">
-  <div class="tool-result-header">${escapeHtml(displayName)}</div>
-  ${content}
 </div>`;
 }
 
