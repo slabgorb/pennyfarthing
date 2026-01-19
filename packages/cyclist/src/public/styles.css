@@ -1175,19 +1175,6 @@ html, body {
   opacity: 0.6;
 }
 
-/* Ghost text suggestions - Tab/Space to accept */
-#editor .ProseMirror .ghost-text {
-  color: var(--text-secondary);
-  font-style: italic;
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-/* Hide the default placeholder when ghost text is showing */
-#editor .ProseMirror p.ghost-text.is-editor-empty:first-child::before {
-  content: '';
-}
-
 /* B-9.5: Completion Popup */
 .completion-popup {
   position: absolute;

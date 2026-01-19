@@ -429,7 +429,7 @@ export async function createEditor() {
           return false; // Let TipTap handle text/HTML paste
         },
         handleKeyDown: (view, event) => {
-          // Ghost text handling - check first before other handlers
+          // Suggestion pill handling - hide on typing, Escape to dismiss
           if (isGhostTextVisible()) {
             if (handleGhostTextKey(event)) {
               return true;
