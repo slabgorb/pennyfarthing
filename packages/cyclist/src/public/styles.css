@@ -1165,7 +1165,7 @@ html, body {
   color: var(--text-secondary);
 }
 
-/* Editor placeholder */
+/* Editor placeholder (fallback when no ghost text) */
 #editor .ProseMirror p.is-editor-empty:first-child::before {
   content: 'Type your message... (Enter to send)';
   color: var(--text-secondary);
@@ -1173,6 +1173,19 @@ html, body {
   pointer-events: none;
   height: 0;
   opacity: 0.6;
+}
+
+/* Ghost text suggestions - Tab/Space to accept */
+#editor .ProseMirror .ghost-text {
+  color: var(--text-secondary);
+  font-style: italic;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Hide the default placeholder when ghost text is showing */
+#editor .ProseMirror p.ghost-text.is-editor-empty:first-child::before {
+  content: '';
 }
 
 /* B-9.5: Completion Popup */

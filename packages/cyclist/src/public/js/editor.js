@@ -55,6 +55,12 @@ import {
   setOnClearAll,
   showImageSizeError
 } from './editor/image-preview.js';
+import {
+  initSuggestions,
+  isGhostTextVisible,
+  showGhostText,
+  handleGhostTextKey
+} from './editor/suggestions.js';
 
 // Re-export constants for external consumers
 export { EDITOR_CONTAINER_ID, EDITOR_OPTIONS, EDITOR_EXTENSIONS, SUPPORTED_IMAGE_TYPES, IMAGE_PREVIEW_SIZE, IMAGE_WARN_SIZE_BYTES, IMAGE_MAX_SIZE_BYTES } from './editor/constants.js';
@@ -324,6 +330,11 @@ export function clearEditor() {
   }
   // Always clear pending images, even if editor is not initialized
   clearPendingImages();
+
+  // Show ghost text after clearing (small delay for TipTap to settle)
+  setTimeout(() => {
+    showGhostText();
+  }, 50);
 }
 
 /**
@@ -418,6 +429,13 @@ export async function createEditor() {
           return false; // Let TipTap handle text/HTML paste
         },
         handleKeyDown: (view, event) => {
+          // Ghost text handling - check first before other handlers
+          if (isGhostTextVisible()) {
+            if (handleGhostTextKey(event)) {
+              return true;
+            }
+          }
+
           // Tab key - trigger or select completion
           if (event.key === 'Tab' && !event.shiftKey && !event.ctrlKey && !event.altKey) {
             if (isCompletionVisible()) {
@@ -544,6 +562,16 @@ export async function createEditor() {
       insertContent: (text) => editorInstance?.commands.insertContent(text),
       submit: submitEditorContent
     });
+
+    // Initialize ghost text suggestions
+    initSuggestions(editorInstance);
+
+    // Show ghost text on initial focus (if editor is empty)
+    setTimeout(() => {
+      if (editorInstance && editorInstance.getText().trim() === '') {
+        showGhostText();
+      }
+    }, 100);
 
     // Set up image removal callback (Story 28-1)
     setOnImageRemoved((index) => {
