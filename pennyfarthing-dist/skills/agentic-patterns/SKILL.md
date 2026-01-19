@@ -1,6 +1,7 @@
 ---
 name: agentic-patterns
 description: Core reasoning patterns for building effective LLM agents. Use when designing agent behavior, debugging agent failures, improving agent reliability, or understanding ReAct/Plan-and-Execute patterns.
+allowed_tools: [Read, Glob, Grep, Task]
 ---
 
 # Agentic Patterns Skill

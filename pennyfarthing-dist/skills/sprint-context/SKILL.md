@@ -1,6 +1,7 @@
 ---
 name: sprint-context
 description: Sprint status, backlog, and story management for Pennyfarthing. Use when checking current sprint status, finding available stories, reviewing backlog, or understanding story context and history.
+allowed_tools: [Read, Glob, Grep, Bash, Task]
 ---
 
 # Sprint Context Skill - Pennyfarthing Project

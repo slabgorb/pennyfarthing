@@ -93,6 +93,11 @@
           "type": "array",
           "items": { "type": "string" },
           "description": "Additional searchable terms for discovery"
+        },
+        "allowed_tools": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Tools this skill is allowed to use. If omitted, all tools are allowed. Use to restrict read-only skills from writing."
         }
       },
       "required": ["name", "description", "category", "tags"],
