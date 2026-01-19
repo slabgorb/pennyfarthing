@@ -16,6 +16,7 @@ export const EDITOR_OPTIONS = {
     attributes: {
       class: 'prose prose-invert max-w-none focus:outline-none',
       spellcheck: 'true',
+      autocomplete: 'on',
     },
   },
 };
