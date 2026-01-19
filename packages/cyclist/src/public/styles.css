@@ -1599,6 +1599,11 @@ html, body {
   font-weight: 500;
 }
 
+.message-bash-result .bash-summary {
+  color: var(--text-secondary, #a0aec0);
+  font-weight: 400;
+}
+
 .message-bash-result .bash-exit-code {
   font-size: 0.75rem;
   padding: 0.1rem 0.4rem;
