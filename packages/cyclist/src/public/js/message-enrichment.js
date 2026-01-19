@@ -16,7 +16,7 @@
 
 /**
  * Cache of tool_use metadata keyed by tool_id
- * @type {Map<string, {tool_name: string, input: object}>}
+ * @type {Map<string, {tool_name: string, input: object, timestamp: number}>}
  */
 const toolUseCache = new Map();
 
@@ -36,51 +36,80 @@ function extractFilename(path) {
 }
 
 /**
+ * Truncate a string for display, adding ellipsis if needed
+ * @param {string} str - String to truncate
+ * @param {number} maxLen - Maximum length
+ * @returns {string} Truncated string
+ */
+function truncate(str, maxLen = 40) {
+  if (!str || str.length <= maxLen) return str || '';
+  return str.substring(0, maxLen - 1) + '…';
+}
+
+/**
  * Generate a human-readable summary for a tool invocation
+ * Shows tool name + key identifier for clear collapsed headers.
+ *
  * @param {string} toolName - Name of the tool
  * @param {object} input - Tool input parameters
- * @returns {string} Summary string for display
+ * @returns {string} Summary string for display (e.g., "Read sm.md", "Grep: pattern")
  */
 function generateToolSummary(toolName, input) {
   if (!input) return toolName;
 
   switch (toolName) {
-    case 'Read':
-      return extractFilename(input.file_path) || 'Read';
+    case 'Read': {
+      const filename = extractFilename(input.file_path);
+      return filename ? `Read ${filename}` : 'Read';
+    }
 
-    case 'Write':
-      return extractFilename(input.file_path) || 'Write';
+    case 'Write': {
+      const filename = extractFilename(input.file_path);
+      return filename ? `Write ${filename}` : 'Write';
+    }
 
-    case 'Edit':
-      return extractFilename(input.file_path) || 'Edit';
+    case 'Edit': {
+      const filename = extractFilename(input.file_path);
+      return filename ? `Edit ${filename}` : 'Edit';
+    }
 
     case 'Glob':
-      return input.pattern || 'Glob';
+      return input.pattern ? `Glob: ${truncate(input.pattern)}` : 'Glob';
 
     case 'Grep':
-      return input.pattern || 'Grep';
+      return input.pattern ? `Grep: ${truncate(input.pattern)}` : 'Grep';
 
     case 'Bash':
-      // Handled separately with bash_command
-      return input.command || 'Bash';
+      // Prefer description (human-readable), fall back to truncated command
+      if (input.description) return input.description;
+      return input.command ? truncate(input.command, 50) : 'Bash';
 
     case 'Task':
       return input.description || 'Task';
 
     case 'WebFetch':
-      return input.url ? new URL(input.url).hostname : 'WebFetch';
+      try {
+        return input.url ? `Fetch ${new URL(input.url).hostname}` : 'WebFetch';
+      } catch {
+        return 'WebFetch';
+      }
 
     case 'WebSearch':
-      return input.query || 'WebSearch';
+      return input.query ? `Search: ${truncate(input.query)}` : 'WebSearch';
 
     case 'TodoWrite':
-      return 'TodoWrite';
+      return 'Update todos';
 
     case 'AskUserQuestion':
-      return 'Question';
+      return 'Ask question';
 
-    case 'NotebookEdit':
-      return extractFilename(input.notebook_path) || 'NotebookEdit';
+    case 'NotebookEdit': {
+      const filename = extractFilename(input.notebook_path);
+      return filename ? `NotebookEdit ${filename}` : 'NotebookEdit';
+    }
+
+    case 'Skill':
+      return input.skill ? `Skill: ${input.skill}` : 'Skill';
 
     default:
       return toolName;
@@ -102,11 +131,28 @@ export function enrichMessage(message) {
     return message;
   }
 
-  // Cache tool_use messages
+  // Cache tool_use from assistant messages (SDK sends them embedded in content array)
+  // Format: {type: 'assistant', message: {content: [{type: 'tool_use', id, name, input}]}}
+  if (message.type === 'assistant' && Array.isArray(message.message?.content)) {
+    const timestamp = Date.now();
+    for (const item of message.message.content) {
+      if (item.type === 'tool_use' && item.id) {
+        toolUseCache.set(item.id, {
+          tool_name: item.name,
+          input: item.input || {},
+          timestamp,
+        });
+      }
+    }
+    return message;
+  }
+
+  // Cache standalone tool_use messages (normalized format)
   if (message.type === 'tool_use' && message.tool_id) {
     toolUseCache.set(message.tool_id, {
       tool_name: message.tool_name,
       input: message.input,
+      timestamp: Date.now(),
     });
     return message;
   }
@@ -120,19 +166,25 @@ export function enrichMessage(message) {
       return message;
     }
 
+    // Calculate elapsed time if we have a timestamp
+    const elapsed_ms = toolUseData.timestamp ? Date.now() - toolUseData.timestamp : undefined;
+
     // Create enriched copy with tool_name and summary
     const enriched = {
       ...message,
       tool_name: toolUseData.tool_name,
       tool_summary: generateToolSummary(toolUseData.tool_name, toolUseData.input),
+      elapsed_ms,
     };
 
     // Add Bash-specific enrichment
     if (toolUseData.tool_name === 'Bash') {
       enriched.bash_command = toolUseData.input?.command || '';
       enriched.bash_description = toolUseData.input?.description || '';
-      // Exit code: 0 for success, 1 for error
-      enriched.bash_exit_code = message.is_error ? 1 : 0;
+      // Only set exit code for errors (non-zero) - success needs no badge
+      if (message.is_error) {
+        enriched.bash_exit_code = 1;
+      }
     }
 
     return enriched;

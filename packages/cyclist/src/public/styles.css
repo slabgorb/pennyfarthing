@@ -1621,6 +1621,12 @@ html, body {
   color: var(--status-error, #e53e3e);
 }
 
+.message-bash-result .bash-elapsed {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #a0aec0);
+  margin-right: 0.5rem;
+}
+
 .message-bash-result .bash-output-content {
   margin-top: 0.5rem;
   font-size: 0.8rem;
