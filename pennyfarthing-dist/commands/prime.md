@@ -21,19 +21,19 @@ Use the prime.sh script:
 
 ```bash
 # Load all essential context (default)
-$CLAUDE_PROJECT_DIR/.claude/scripts/prime.sh
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/prime.sh
 
 # Minimal mode - CLAUDE.md only (fastest)
-$CLAUDE_PROJECT_DIR/.claude/scripts/prime.sh --minimal
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/prime.sh --minimal
 
 # Full mode - include domain docs
-$CLAUDE_PROJECT_DIR/.claude/scripts/prime.sh --full
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/prime.sh --full
 
 # Quiet mode - suppress headers (used by agent-session.sh)
-$CLAUDE_PROJECT_DIR/.claude/scripts/prime.sh --quiet
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/prime.sh --quiet
 
 # With agent sidecar loading
-$CLAUDE_PROJECT_DIR/.claude/scripts/prime.sh --agent reviewer
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/prime.sh --agent reviewer
 ```
 
 ## Options
@@ -56,10 +56,10 @@ Context is loaded in priority order:
 | 2 | User instructions | `~/.claude/CLAUDE.md` (if exists) |
 | 3 | Sprint summary | `sprint/current-sprint.yaml` (key fields only) |
 | 4 | Active session | `.session/*-session.md` (first 50 lines) |
-| 5 | Agent sidecar | `sprint/sidecars/{agent}/*.md` (if `--agent` provided) |
-| 6 | Shared context | `.claude/guides/shared-context.md` (project info - all agents) |
-| 7 | Shared behavior | `.claude/guides/shared-agent-behavior.md` (protocols - all agents) |
-| 8 | Tactical guide | `.claude/guides/tactical-agent-behavior.md` (for sm, tea, dev, reviewer only) |
+| 5 | Agent sidecar | `.pennyfarthing/sidecars/{agent}/*.md` (if `--agent` provided) |
+| 6 | Shared context | `.pennyfarthing/guides/shared-context.md` (project info - all agents) |
+| 7 | Shared behavior | `.pennyfarthing/guides/shared-agent-behavior.md` (protocols - all agents) |
+| 8 | Tactical guide | `.pennyfarthing/guides/tactical-agent-behavior.md` (for sm, tea, dev, reviewer only) |
 
 ### Minimal Mode (`--minimal`)
 Only loads CLAUDE.md files (priority 1-2).
@@ -130,11 +130,11 @@ If context becomes stale mid-session, run `/prime` manually:
 </integration>
 
 <reference>
-- **Script:** `.claude/scripts/prime.sh`
+- **Script:** `.pennyfarthing/scripts/prime.sh`
 - **Called by:** agent-session.sh on agent start (with `--agent` flag)
 - **Loads:** CLAUDE.md, sprint, session, sidecar, shared context, shared behavior, tactical guide
-- **Sidecar location:** `sprint/sidecars/{agent}/*.md`
-- **Shared context:** `.claude/guides/shared-context.md` (all agents)
-- **Shared behavior:** `.claude/guides/shared-agent-behavior.md` (all agents)
-- **Tactical guide:** `.claude/guides/tactical-agent-behavior.md` (sm, tea, dev, reviewer only)
+- **Sidecar location:** `.pennyfarthing/sidecars/{agent}/*.md`
+- **Shared context:** `.pennyfarthing/guides/shared-context.md` (all agents)
+- **Shared behavior:** `.pennyfarthing/guides/shared-agent-behavior.md` (all agents)
+- **Tactical guide:** `.pennyfarthing/guides/tactical-agent-behavior.md` (sm, tea, dev, reviewer only)
 </reference>

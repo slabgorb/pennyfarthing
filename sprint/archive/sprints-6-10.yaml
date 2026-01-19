@@ -1,0 +1,236 @@
+# Pennyfarthing Sprints 6-10 Archive (Jira Era)
+# Consolidated from individual sprint files
+# Total: 244 points across 5 sprints
+
+sprints:
+  # ===========================================================================
+  # SPRINT 6 - Showcase Website & Integration (Jan 2-3, 2026)
+  # ===========================================================================
+  - number: 6
+    goal: Launch showcase website, TRAIL-OCEAN research, Cyclist integration
+    dates: 2026-01-02 to 2026-01-03
+    points: 93
+    status: complete
+    epics:
+      - id: MSSCI-11294
+        title: Pennyfarthing Showcase Website
+        points: 34
+        stories: 14
+        deliverables:
+          - Astro + React + Tailwind site
+          - Theme gallery and detail pages
+          - OCEAN query builder
+          - Comparison overlays
+          - Benchmark reports
+
+      - id: MSSCI-11347
+        title: Cyclist-Pennyfarthing Integration
+        points: 17
+        stories: 8
+        deliverables:
+          - IPC for persona loading
+          - Sprint context display
+          - Handoff protocols
+
+      - id: MSSCI-11357
+        title: Persona Performance Analytics
+        points: 25
+        stories: 10
+        deliverables:
+          - Job-fair optimization
+          - Role-based benchmarking
+          - Michael Pursifull contrib
+
+      - id: epic-14
+        title: TRAIL-OCEAN Research
+        points: 14
+        stories: 6
+        note: Research correlations, no Jira epic
+
+      - id: epic-8
+        title: Automatic State Reconciliation
+        points: 3
+        stories: 2
+        note: Carried from earlier sprint
+
+  # ===========================================================================
+  # SPRINT 7 - Monorepo & Telemetry (Jan 4-5, 2026)
+  # ===========================================================================
+  - number: 7
+    goal: Monorepo consolidation and verbose mode
+    dates: 2026-01-04 to 2026-01-05
+    points: 28
+    status: complete
+    epics:
+      - id: epic-18
+        title: Monorepo Consolidation
+        points: 13
+        stories: 6
+        deliverables:
+          - pnpm workspace setup
+          - packages/core, packages/cyclist
+          - Shared utilities
+
+      - id: epic-19
+        title: Rich Agent Telemetry
+        points: 10
+        stories: 9
+        deliverables:
+          - Verbose mode toggle
+          - ReAct pattern logging
+          - Tool visibility
+
+      - id: epic-7
+        title: Core Benchmarking
+        points: 5
+        stories: 5
+
+  # ===========================================================================
+  # SPRINT 8 - Skill Discovery Hub (Jan 6-8, 2026)
+  # ===========================================================================
+  - number: 8
+    goal: Skill discovery and documentation portal
+    dates: 2026-01-06 to 2026-01-08
+    points: 18
+    status: complete
+    epics:
+      - id: MSSCI-11513
+        title: Skill Discovery & Documentation Hub
+        points: 18
+        stories: 9
+        deliverables:
+          - /skills search command
+          - Skill frontmatter parser
+          - Documentation index
+
+  # ===========================================================================
+  # SPRINT 9 - Cyclist Web Mode (Jan 9-12, 2026)
+  # ===========================================================================
+  - number: 9
+    goal: Cyclist web mode and configuration panels
+    dates: 2026-01-09 to 2026-01-12
+    points: 51
+    status: complete
+    epics:
+      - id: MSSCI-11548
+        title: Configuration & Theme Switcher Panels
+        points: 28
+        stories: 10
+        deliverables:
+          - Settings panel infrastructure
+          - Theme browser with search
+          - OCEAN visualization
+          - Quick theme switcher
+
+      - id: MSSCI-11582
+        title: Developer Workflow Documentation
+        points: 24
+        stories: 10
+        deliverables:
+          - Multi-account setup guide
+          - Quick commit commands
+          - Troubleshooting guide
+          - CI/CD patterns
+
+      - id: MSSCI-11526
+        title: Cyclist Web Mode Improvements
+        points: 9
+        stories: 5
+        deliverables:
+          - Browser-based terminal
+          - Session persistence
+
+      - id: MSSCI-11530
+        title: Smart Question Detection
+        points: 9
+        stories: 5
+        deliverables:
+          - Pattern-based detection
+          - Quick action buttons
+
+      - id: epic-28
+        title: Image Paste & Screenshot Support
+        points: 14
+        stories: 4
+        note: No Jira epic
+
+      - id: epic-29
+        title: Wire Up Orphaned Code
+        points: 8
+        stories: 4
+        note: No Jira epic
+
+  # ===========================================================================
+  # SPRINT 10 - Custom Workflows (Jan 13-15, 2026)
+  # ===========================================================================
+  - number: 10
+    goal: Customizable workflows and runtime permissions
+    dates: 2026-01-13 to 2026-01-15
+    points: 54
+    status: complete
+    velocity: 245%
+    epics:
+      - id: MSSCI-11599
+        title: Customizable Workflow Engine
+        points: 30
+        stories: 16
+        deliverables:
+          - Workflow YAML schema
+          - Loader and validator
+          - Story-to-workflow routing
+          - Phase transition engine
+
+      - id: MSSCI-11705
+        title: Runtime Permission Management
+        points: 7
+        stories: 6
+        deliverables:
+          - Permission grant model
+          - Approval gates
+          - Grant persistence
+
+      - id: MSSCI-11715
+        title: Cyclist UI/UX Improvements
+        points: 13
+        stories: 13
+        deliverables:
+          - Workflow phase indicator
+          - Settings panel polish
+          - Contextual settings
+
+      - id: MSSCI-11728
+        title: OTEL Tool Call Enrichment
+        points: 9
+        stories: 7
+        deliverables:
+          - Span correlation
+          - Bash/Search enrichment
+          - Export visualization
+
+      - id: MSSCI-11626
+        title: BMAD Artifact Compatibility
+        points: 11
+        stories: 4
+        deliverables:
+          - Artifact parsing
+          - Format conversion
+
+      - id: MSSCI-11618
+        title: Cyclist Developer Experience
+        points: 8
+        stories: 5
+        deliverables:
+          - cyclist-doctor command
+          - Installation validation
+
+# ===========================================================================
+# Epics Without Jira (Historical Reference)
+# ===========================================================================
+unlinked_epics:
+  - { id: epic-8, title: "Automatic State Reconciliation", sprint: 6, points: 3 }
+  - { id: epic-14, title: "TRAIL-Inspired OCEAN Correlation Research", sprint: 6, points: 14 }
+  - { id: epic-22, title: "Verbose Mode - Tool Visibility", sprint: 7, points: 7 }
+  - { id: epic-23, title: "Cyclist Claude Code Command Integration", sprint: 8, points: 9 }
+  - { id: epic-26, title: "Dogfooding Audit & Installation Parity", sprint: 9, points: 1 }
+  - { id: epic-28, title: "Image Paste & Screenshot Support", sprint: 9, points: 14 }
+  - { id: epic-29, title: "Wire Up Orphaned Code", sprint: 9, points: 8 }

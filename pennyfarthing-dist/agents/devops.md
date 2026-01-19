@@ -17,10 +17,25 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 <helpers>
 From theme config. Model: haiku. Tasks: System checks, log analysis, config scanning.
 
-- **Official subagents:** (use `subagent_type: "{name}"`)
-  - `workflow-status-check` - Scan sprint state and active sessions
-  - `testing-runner` - Verify CI pipeline and tests pass
-  - `sm-file-summary` - Summarize configuration files
+- **Subagents:** (use `subagent_type: "general-purpose"` with `model: "haiku"`)
+  - `workflow-status-check.md` - Scan sprint state and active sessions
+  - `testing-runner.md` - Verify CI pipeline and tests pass
+  - `sm-file-summary.md` - Summarize configuration files
+
+- **Invocation pattern:** See `shared-agent-behavior.md` → "Interactive Background Task Protocol"
+
+  **Most DevOps tasks are sequential** - deployments depend on verification.
+  Use **foreground execution** for workflow steps. Use **background** for independent parallel checks.
+
+  ```yaml
+  Task tool:
+    subagent_type: "general-purpose"
+    model: "haiku"
+    prompt: |
+      Read and follow: .pennyfarthing/agents/{subagent-name}.md
+
+      {PARAMETERS}
+  ```
 </helpers>
 
 <responsibilities>
@@ -58,7 +73,7 @@ From theme config. Model: haiku. Tasks: System checks, log analysis, config scan
 <context>
 Context auto-loaded by `/prime --agent devops`:
 - Shared context, shared behavior
-- Agent sidecar: `sprint/sidecars/devops/`
+- Agent sidecar: `.pennyfarthing/sidecars/devops/`
 </context>
 
 <reasoning-mode>
@@ -140,8 +155,11 @@ Before any deployment:
 
 ```yaml
 Task tool:
-  subagent_type: "testing-runner"
+  subagent_type: "general-purpose"
+  model: "haiku"
   prompt: |
+    Read and follow: .pennyfarthing/agents/testing-runner.md
+
     REPOS: all
     CONTEXT: Pre-deployment verification
     RUN_ID: devops-verify

@@ -23,13 +23,15 @@ export type CoreAgent = typeof CORE_AGENTS[number];
 
 /**
  * Symlinks that point directly to node_modules directories
- * (not commands or skills - those use individual file symlinks)
+ * These go in .pennyfarthing/ to minimize interference with user's .claude/
+ * (commands and skills stay in .claude/ - required for Claude Code discovery)
  */
 export const DIRECTORY_SYMLINKS = [
-  { name: 'agents', link: '.claude/agents' },
-  { name: 'guides', link: '.claude/guides' },
-  { name: 'personas', link: '.claude/personas' },
-  { name: 'scripts', link: '.claude/scripts' }
+  { name: 'agents', link: '.pennyfarthing/agents' },
+  { name: 'guides', link: '.pennyfarthing/guides' },
+  { name: 'personas', link: '.pennyfarthing/personas' },
+  { name: 'scripts', link: '.pennyfarthing/scripts' },
+  { name: 'workflows', link: '.pennyfarthing/workflows' }
 ] as const;
 
 /**
@@ -44,14 +46,16 @@ export const ALL_SYMLINKS = [
 
 /**
  * Paths managed by Pennyfarthing (used in manifest)
+ * Commands and skills in .claude/ (for discovery), rest in .pennyfarthing/
  */
 export const MANAGED_PATHS = [
-  '.claude/agents',
   '.claude/commands',
-  '.claude/guides',
   '.claude/skills',
-  '.claude/personas',
-  '.claude/scripts'
+  '.pennyfarthing/agents',
+  '.pennyfarthing/guides',
+  '.pennyfarthing/personas',
+  '.pennyfarthing/scripts',
+  '.pennyfarthing/workflows'
 ] as const;
 
 export type SymlinkDefinition = {

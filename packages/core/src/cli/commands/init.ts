@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, symlinkSync } from 'fs';
+import { readFileSync, writeFileSync, symlinkSync, readdirSync, statSync } from 'fs';
 import { join, relative, basename } from 'path';
 import fsExtra from 'fs-extra';
 
@@ -100,7 +100,7 @@ export async function initCommand(
     '.claude/project/hooks',
     '.pennyfarthing',
     'sprint',
-    'sprint/sidecars',
+    '.pennyfarthing/sidecars',
     '.session'
   ];
 
@@ -116,7 +116,7 @@ export async function initCommand(
   const nodeModulesPath = findNodeModulesPath(projectRoot);
 
   if (!nodeModulesPath) {
-    logger.error('node_modules/pennyfarthing not found');
+    logger.error('@pennyfarthing/core (or pennyfarthing) not found');
     logger.error('');
     logger.error('Pennyfarthing requires npm installation:');
     logger.error('  npm install pennyfarthing');
@@ -140,6 +140,16 @@ export async function initCommand(
       removeSync(legacyPennyfarthingDir);
     }
     logger.info('Removed legacy .claude/pennyfarthing/ (migrating from copy mode)');
+  }
+
+  // Remove legacy symlinks from .claude/ (now in .pennyfarthing/)
+  const legacyClaudeSymlinks = ['agents', 'guides', 'personas', 'scripts'];
+  for (const name of legacyClaudeSymlinks) {
+    const legacyPath = join(projectRoot, '.claude', name);
+    if (pathExists(legacyPath)) {
+      removeSymlinkOrDirectory(legacyPath, dryRun);
+      logger.info(`Removed legacy .claude/${name} (now in .pennyfarthing/)`);
+    }
   }
 
   // Create symlinks pointing to node_modules (except commands and skills - handled separately)
@@ -181,7 +191,7 @@ export async function initCommand(
   const sidecarTemplatesPath = join(assetsPath, 'templates/sidecar');
 
   for (const agent of CORE_AGENTS) {
-    const sidecarDir = join(projectRoot, `sprint/sidecars/${agent}`);
+    const sidecarDir = join(projectRoot, `.pennyfarthing/sidecars/${agent}`);
     if (!pathExists(sidecarDir)) {
       ensureDir(sidecarDir, { dryRun });
 
@@ -205,7 +215,7 @@ export async function initCommand(
           writeFileSync(filePath, content, 'utf8');
         }
       }
-      logger.created(`sprint/sidecars/${agent}/`);
+      logger.created(`.pennyfarthing/sidecars/${agent}/`);
     }
   }
 
@@ -364,8 +374,6 @@ function getInstalledSkillNames(projectRoot: string): string[] {
     return [];
   }
 
-  const { readdirSync, statSync } = require('fs');
-
   try {
     const entries = readdirSync(skillsDir);
     return entries.filter((entry: string) => {
@@ -499,18 +507,19 @@ async function mergeSettingsLocalJson(
     modified = true;
     logger.info('Added missing statusLine configuration');
   } else if (statusLine.command && typeof statusLine.command === 'string') {
-    // Migrate from any legacy path to new path (.claude/scripts/statusline.sh)
+    // Migrate from any legacy path to new path (.pennyfarthing/scripts/statusline.sh)
     const legacyPaths = [
       '.claude/core/statusline.sh',
       '.claude/statusline.sh',
       '.claude/pennyfarthing/statusline.sh',  // Old copy-mode path (v4.0.0-4.0.3)
-      '.claude/pennyfarthing/scripts/statusline.sh'  // Bug in template (fixed in v4.0.5)
+      '.claude/pennyfarthing/scripts/statusline.sh',  // Bug in template (fixed in v4.0.5)
+      '.claude/scripts/statusline.sh'  // Previous location (pre-v6.6)
     ];
     for (const legacyPath of legacyPaths) {
       if (statusLine.command.includes(legacyPath)) {
         statusLine.command = statusLine.command.replace(
           legacyPath,
-          '.claude/scripts/statusline.sh'
+          '.pennyfarthing/scripts/statusline.sh'
         );
         modified = true;
         logger.info(`Updated statusLine path from ${legacyPath} to new location`);
@@ -519,20 +528,26 @@ async function mergeSettingsLocalJson(
     }
   }
 
-  // Migrate hook paths from legacy .claude/pennyfarthing/scripts/ to .claude/scripts/
+  // Migrate hook paths from legacy locations to .pennyfarthing/scripts/
   const migrateHookPaths = (hookArray: unknown[]): boolean => {
     let migrated = false;
+    const legacyScriptPaths = [
+      '.claude/pennyfarthing/scripts/',
+      '.claude/scripts/'
+    ];
     for (const entry of hookArray) {
       if (typeof entry === 'object' && entry !== null) {
         const hookEntry = entry as { hooks?: Array<{ command?: string }> };
         if (hookEntry.hooks) {
           for (const h of hookEntry.hooks) {
-            if (h.command && h.command.includes('.claude/pennyfarthing/scripts/')) {
-              h.command = h.command.replace(
-                '.claude/pennyfarthing/scripts/',
-                '.claude/scripts/'
-              );
-              migrated = true;
+            if (h.command) {
+              for (const legacyPath of legacyScriptPaths) {
+                if (h.command.includes(legacyPath)) {
+                  h.command = h.command.replace(legacyPath, '.pennyfarthing/scripts/');
+                  migrated = true;
+                  break;
+                }
+              }
             }
           }
         }

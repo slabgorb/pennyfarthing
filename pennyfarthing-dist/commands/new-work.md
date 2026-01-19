@@ -7,7 +7,7 @@ description: Start a new work session with Pennyfarthing
 <agent-activation>
 **FIRST:** Use Bash tool to run:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.claude/scripts/run.sh" agent-session.sh start "sm"
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" agent-session.sh start "sm"
 ```
 This finds the project root and loads your persona. Adopt the character shown in the output.
 </agent-activation>
@@ -27,10 +27,14 @@ After loading persona, execute this sequence in order:
 ## Step 1: Status Check (REQUIRED)
 ```yaml
 Task tool:
-  subagent_type: "workflow-status-check"
+  subagent_type: "general-purpose"
+  model: "haiku"
+  run_in_background: true
   prompt: |
+    Read and follow: .pennyfarthing/agents/workflow-status-check.md
     CALLING_AGENT: SM
 ```
+Use `TaskOutput` with the returned task_id to get the result.
 
 Based on result:
 - `FINISH_STATE` → Go to Finish Flow
@@ -40,22 +44,30 @@ Based on result:
 ## Step 2: Research Backlog
 ```yaml
 Task tool:
-  subagent_type: "generic-sm-setup"
+  subagent_type: "general-purpose"
+  model: "haiku"
+  run_in_background: true
   prompt: |
+    Read and follow: .pennyfarthing/agents/generic-sm-setup.md
     MODE: research
 ```
+Use `TaskOutput` with the returned task_id to get the result.
 
 Present available stories to user, get selection.
 
 ## Step 3: File Summary
 ```yaml
 Task tool:
-  subagent_type: "sm-file-summary"
+  subagent_type: "general-purpose"
+  model: "haiku"
+  run_in_background: true
   prompt: |
+    Read and follow: .pennyfarthing/agents/sm-file-summary.md
     STORY_ID: {selected-story}
     FILE_LIST: |
       {relevant files}
 ```
+Use `TaskOutput` with the returned task_id to get the result.
 
 ## Step 4: Write Story Context (SM does this directly)
 Write `.session/context-story-{X-Y}.md` with:
@@ -64,8 +76,11 @@ Write `.session/context-story-{X-Y}.md` with:
 ## Step 5: Story Setup
 ```yaml
 Task tool:
-  subagent_type: "generic-sm-setup"
+  subagent_type: "general-purpose"
+  model: "haiku"
+  run_in_background: true
   prompt: |
+    Read and follow: .pennyfarthing/agents/generic-sm-setup.md
     MODE: setup
     STORY_ID: {value}
     JIRA_KEY: {value}
@@ -75,12 +90,16 @@ Task tool:
     SESSION_CONTENT: |
       {session file content}
 ```
+Use `TaskOutput` with the returned task_id to get the result.
 
 ## Step 6: Handoff
 ```yaml
 Task tool:
-  subagent_type: "sm-handoff"
+  subagent_type: "general-purpose"
+  model: "haiku"
+  run_in_background: true
   prompt: |
+    Read and follow: .pennyfarthing/agents/sm-handoff.md
     STORY_ID: {value}
     REPOS: {value}
     TITLE: {value}
@@ -88,11 +107,25 @@ Task tool:
     BRANCH_NAME: {value}
     JIRA_KEY: {value}
 ```
+Use `TaskOutput` with the returned task_id to get the result.
 
-## Step 7: Invoke Next Agent
-After handoff complete:
-- Trivial (1-2 pts): Invoke `/dev`
-- Standard (3+ pts): Invoke `/tea`
+## Step 7: Invoke Next Agent (MANDATORY)
+After handoff complete, check context with `check-context.sh --human`.
+
+**If < 60%:** Use the Skill tool NOW to invoke the next agent based on workflow:
+```yaml
+# For TDD workflow (3+ pts):
+Skill tool:
+  skill: "tea"
+
+# For Trivial workflow (1-2 pts):
+Skill tool:
+  skill: "dev"
+```
+
+**If > 60%:** Tell user: "Context high. Start fresh with `/tea` or `/dev`"
+
+Do NOT ask for permission - just invoke the Skill.
 </on-invoke>
 
 <workflow-states>
@@ -122,6 +155,6 @@ Do NOT proceed to coding. Always hand off.
 </tdd-flow>
 
 <reference>
-- **SM Agent:** `.claude/agents/sm.md`
+- **SM Agent:** `.pennyfarthing/agents/sm.md`
 - **Subagents:** `workflow-status-check`, `generic-sm-setup`, `generic-sm-finish`, `sm-file-summary`, `sm-handoff`
 </reference>

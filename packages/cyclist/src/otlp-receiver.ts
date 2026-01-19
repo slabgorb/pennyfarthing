@@ -91,6 +91,15 @@ export interface ToolEvent {
   outputSummary?: OutputSummary;
   /** Working directory where command was executed */
   workingDirectory?: string;
+  // Story 36-5: Task tool enrichment fields
+  /** Subagent type for Task tool (e.g., 'general-purpose', 'Explore') */
+  subagentType?: string;
+  /** Prompt summary - first 200 chars of task prompt */
+  promptSummary?: string;
+  /** Result summary when task completes (TaskOutput) */
+  resultSummary?: string;
+  /** Whether task runs in background */
+  isBackground?: boolean;
 }
 
 /**
@@ -148,6 +157,9 @@ let backgroundTasks: BackgroundTask[] = [];
 // Callback for task completion notifications
 let onBackgroundTaskComplete: ((task: BackgroundTask) => void) | null = null;
 
+// Callback for task start notifications (Story 35-16)
+let onBackgroundTaskStart: ((task: BackgroundTask) => void) | null = null;
+
 /**
  * Register callback for background task completion
  */
@@ -156,10 +168,22 @@ export function setBackgroundTaskCallback(callback: (task: BackgroundTask) => vo
 }
 
 /**
+ * Register callback for background task start (Story 35-16)
+ */
+export function setBackgroundTaskStartCallback(callback: (task: BackgroundTask) => void): void {
+  onBackgroundTaskStart = callback;
+}
+
+/**
  * Track a new background task
  */
 export function trackBackgroundTask(task: Omit<BackgroundTask, 'status'>): void {
-  backgroundTasks.push({ ...task, status: 'pending' });
+  const newTask: BackgroundTask = { ...task, status: 'pending' };
+  backgroundTasks.push(newTask);
+  // Trigger start callback (Story 35-16)
+  if (onBackgroundTaskStart) {
+    onBackgroundTaskStart(newTask);
+  }
 }
 
 /**
@@ -831,6 +855,21 @@ export async function processLogEvents(rawEvents: RawLogEvent[]): Promise<void> 
             }
           }
         } catch { /* ignore enrichment errors */ }
+      }
+
+      // Story 36-5: Task tool enrichment (works without pendingInput)
+      if (toolName === 'Task' && parsedToolParams) {
+        toolEvent.subagentType = parsedToolParams.subagent_type as string | undefined;
+        toolEvent.promptSummary = (parsedToolParams.prompt as string)?.substring(0, 200);
+        toolEvent.isBackground = parsedToolParams.run_in_background === true;
+      }
+
+      // Story 36-5: TaskOutput result summary enrichment
+      if (toolName === 'TaskOutput') {
+        const rawOutput = event.attributes['tool_output'] as string;
+        if (rawOutput) {
+          toolEvent.resultSummary = rawOutput.substring(0, 200);
+        }
       }
 
       recordToolEvent(toolEvent);

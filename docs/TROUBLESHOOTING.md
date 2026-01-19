@@ -9,10 +9,10 @@ Comprehensive troubleshooting for common errors and recovery procedures in Penny
 pennyfarthing doctor --fix
 
 # Check context usage
-.claude/scripts/check-context.sh --human
+.pennyfarthing/scripts/check-context.sh --human
 
 # List recent checkpoints
-source .claude/scripts/utils/checkpoint.sh && checkpoint_list
+source .pennyfarthing/scripts/utils/checkpoint.sh && checkpoint_list
 
 # Verify git state
 git diff-index --quiet HEAD -- && echo "Clean" || echo "Dirty"
@@ -28,8 +28,8 @@ git diff-index --quiet HEAD -- && echo "Clean" || echo "Dirty"
 
 **Solution:**
 ```bash
-# Install globally
-npm install -g pennyfarthing
+# Install globally (not recommended, prefer local install)
+npm install -g @pennyfarthing/core
 
 # Or use npx
 npx pennyfarthing doctor
@@ -70,7 +70,7 @@ pennyfarthing doctor --fix
 ./scripts/my-hook.sh
 
 # CORRECT
-"$CLAUDE_PROJECT_DIR/.claude/scripts/my-hook.sh"
+"$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/my-hook.sh"
 ```
 
 #### "Scripts path not found"
@@ -236,11 +236,11 @@ just test-setup
 **Solution:**
 ```bash
 # Check current usage
-.claude/scripts/check-context.sh --human
+.pennyfarthing/scripts/check-context.sh --human
 
 # If above 70%, proactively:
 # 1. Save checkpoint
-source .claude/scripts/utils/checkpoint.sh
+source .pennyfarthing/scripts/utils/checkpoint.sh
 checkpoint_save "dev-phase" "implemented user auth"
 
 # 2. Update session file with progress
@@ -320,7 +320,7 @@ message.type === 'tool_use'  // WRONG
 ### Retry with Backoff
 
 ```bash
-source .claude/scripts/utils/retry.sh
+source .pennyfarthing/scripts/utils/retry.sh
 
 # Retry up to 3 times with exponential backoff
 retry_with_backoff 3 1 10 curl -s https://api.example.com/health
@@ -329,7 +329,7 @@ retry_with_backoff 3 1 10 curl -s https://api.example.com/health
 ### Fallback Commands
 
 ```bash
-source .claude/scripts/utils/retry.sh
+source .pennyfarthing/scripts/utils/retry.sh
 
 # Try primary, fall back to alternative
 command_with_fallback "git pull --ff-only" "git pull --no-rebase"
@@ -338,7 +338,7 @@ command_with_fallback "git pull --ff-only" "git pull --no-rebase"
 ### Checkpoint System
 
 ```bash
-source .claude/scripts/utils/checkpoint.sh
+source .pennyfarthing/scripts/utils/checkpoint.sh
 
 # Save progress
 checkpoint_save "feature-auth" "completed login endpoint"
@@ -353,7 +353,7 @@ checkpoint_restore "feature-auth"
 ### File Locking
 
 ```bash
-source .claude/scripts/utils/file-lock.sh
+source .pennyfarthing/scripts/utils/file-lock.sh
 
 # Execute command under lock
 with_lock ".session/state.json" exclusive "update-state.sh"
@@ -376,7 +376,7 @@ PENNYFARTHING_VERBOSE=true pennyfarthing doctor
 
 Most scripts support `--verbose` flag:
 ```bash
-.claude/scripts/agent-session.sh start dev --verbose
+.pennyfarthing/scripts/agent-session.sh start dev --verbose
 ```
 
 ## Decision Tree

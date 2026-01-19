@@ -21,7 +21,11 @@ cd your-project
 npm install --save-dev @pennyfarthing/core
 ```
 
-> **Note:** The package was renamed from `pennyfarthing` to `@pennyfarthing/core` in v6.0.
+**Optional:** For the Cyclist visual terminal with agent portraits:
+
+```bash
+npm install --save-dev @pennyfarthing/cyclist
+```
 
 ### Step 2: Initialize Your Project
 
@@ -30,10 +34,9 @@ npx pennyfarthing init
 ```
 
 This creates symlinks (no file copying):
-- `.claude/pennyfarthing/` → `node_modules/@pennyfarthing/core/pennyfarthing-dist/`
-- `.claude/agents/`, `commands/`, `skills/`, `personas/` → symlinks
+- `.pennyfarthing/agents/`, `guides/`, `personas/`, `scripts/` → `node_modules/@pennyfarthing/core/pennyfarthing-dist/`
+- `.claude/commands/`, `skills/` → symlinks to built-in commands and skills
 - `.claude/project/` - Your customizations (not a symlink)
-- `scripts/` → symlink to pennyfarthing scripts
 - `sprint/` - Sprint tracking
 - `.session/` - Work session files
 
@@ -88,7 +91,7 @@ pennyfarthing theme list
 pennyfarthing theme set discworld
 ```
 
-Or edit `.claude/persona-config.yaml` directly:
+Or edit `.pennyfarthing/config.local.yaml` directly:
 
 ```yaml
 theme: discworld    # 102 themes available - see THEME-COMPARISON.md
@@ -135,7 +138,6 @@ The SM (Scrum Master) agent activates and guides you through:
 ## Updating
 
 ```bash
-# v6.0+: Update via npm (scoped package)
 npm update @pennyfarthing/core
 npx pennyfarthing doctor
 ```

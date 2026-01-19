@@ -9,11 +9,11 @@
  * while the Electron-specific runtime code only executes in Electron context.
  */
 
-import { Server } from 'http';
+import { Server, createServer as createHttpServer, IncomingMessage, ServerResponse } from 'http';
 import { fileURLToPath } from 'url';
 import { dirname, join, basename } from 'path';
 import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
-import { getStoryInfo, getGitInfo, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig, findAvailablePort } from './server.js';
+import { getStoryInfo, getGitInfo, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig, findAvailablePort, writeApprovalPortFile, cleanupApprovalPortFile } from './server.js';
 import { parseToolStats, ToolStats, createEmptyStats } from './tool-stats.js';
 import {
   getTokenStats,
@@ -32,6 +32,7 @@ import {
   getUserEmail,
   setUserEmailCallback,
   setBackgroundTaskCallback,
+  setBackgroundTaskStartCallback,
   BackgroundTask,
 } from './otlp-receiver.js';
 import { ClaudeService, SDKMessage } from './claude-service.js';
@@ -46,23 +47,37 @@ import {
   parseProjectDirArg,
 } from './paths.js';
 import { getContextUsage, ContextInfo } from './api/context.js';
-import { getVerboseMode, setVerboseMode, loadPersistedGrants } from './settings-store.js';
+import { getVerboseMode, setVerboseMode } from './settings-store.js';
 import {
   getCurrentSettings,
   saveUserSettings,
   initializeSettings,
+  loadGrants,
+  saveGrants,
   type CyclistSettings,
 } from './settings.js';
+import { initializeGrants, setGrantsPersistCallback } from './settings-store.js';
+// Story 33-7: Import approval gate functions for tool execution pipeline
+import {
+  interceptToolUse,
+  requestApproval,
+  createRejectionError,
+  type ToolUseMessage,
+  type SDKToolResultError,
+} from './approval-gate.js';
 import { openSettingsWindow, setMainWindowRef, setBrowserWindowRef } from './settings-window.js';
 import {
   IPC_DATA_CHANNELS,
   IPC_CLAUDE_CHANNELS,
+  IPC_AGENT_CHANNELS,
   IPC_DIFF_CHANNELS,
   IPC_SETTINGS_CHANNELS,
   IPC_AUDIT_LOG_CHANNELS,
   IPC_FILE_BROWSER_CHANNELS,
   IPC_COMMAND_CHANNELS,
   IPC_BACKGROUND_TASK_CHANNELS,
+  IPC_SKILL_CHANNELS,
+  IPC_CONTEXT_CLEAR_CHANNELS,
 } from './ipc-channels.js';
 
 // Re-export project directory functions for external consumers
@@ -104,6 +119,8 @@ export {
   IPC_FILE_BROWSER_CHANNELS,
   IPC_COMMAND_CHANNELS,
   IPC_BACKGROUND_TASK_CHANNELS,
+  IPC_SKILL_CHANNELS,
+  IPC_CONTEXT_CLEAR_CHANNELS,
 } from './ipc-channels.js';
 
 // Re-export menu builders from dedicated module
@@ -355,6 +372,71 @@ export function resetTodos(): void {
 }
 
 // =============================================================================
+// Skill State (35-12)
+// =============================================================================
+
+/**
+ * Skill entry data model - tracks skill invocations
+ */
+export interface SkillEntry {
+  id: string;
+  skill: string;
+  args?: string;
+  timestamp: number;
+  status: 'running' | 'completed' | 'error';
+  result?: string;
+  error?: string;
+  durationMs?: number;
+}
+
+/**
+ * Current skill invocations - updated when Skill tool is used
+ */
+let currentSkillEntries: SkillEntry[] = [];
+
+/**
+ * Get current skill entries (for testing and IPC)
+ */
+export function getSkillEntries(): SkillEntry[] {
+  return [...currentSkillEntries];
+}
+
+/**
+ * Handle a skill event (start, complete, error)
+ * Updates state and broadcasts to renderer
+ */
+export function handleSkillEvent(entry: SkillEntry): void {
+  const existingIndex = currentSkillEntries.findIndex((e) => e.id === entry.id);
+
+  if (existingIndex >= 0) {
+    // Update existing entry
+    currentSkillEntries[existingIndex] = { ...currentSkillEntries[existingIndex], ...entry };
+  } else {
+    // Add new entry at top (reverse chronological)
+    currentSkillEntries.unshift(entry);
+  }
+
+  broadcastToRenderer(IPC_SKILL_CHANNELS.SKILL_START, entry);
+}
+
+/**
+ * Clear all skill entries
+ * Called from IPC or when clearing session
+ */
+export function clearSkillEntries(): void {
+  currentSkillEntries = [];
+  broadcastToRenderer(IPC_SKILL_CHANNELS.SKILL_CLEAR, null);
+}
+
+/**
+ * Reset skills to empty state
+ * Called when clearing session
+ */
+export function resetSkills(): void {
+  currentSkillEntries = [];
+}
+
+// =============================================================================
 // Context State (B-19)
 // =============================================================================
 
@@ -460,6 +542,7 @@ import {
   getUsageStats,
   resetUsageStats as resetUsageStatsInternal,
   startUsagePolling as startUsagePollingInternal,
+  setUserEmail as setUsageStatsUserEmail,
 } from './usage-stats.js';
 
 // Wrapper functions that include broadcast
@@ -574,6 +657,37 @@ export function broadcastToRenderer(channel: string, data: unknown): void {
   if (dataWindowRef && !dataWindowRef.webContents.isDestroyed()) {
     dataWindowRef.webContents.send(channel, data);
   }
+}
+
+/**
+ * Broadcast settings change to IPC listeners
+ * AC5: Propagates settings changes to renderer via IPC
+ * @param settings - The updated settings object
+ */
+export function broadcastSettingsChange(settings: CyclistSettings): void {
+  broadcastToRenderer(IPC_SETTINGS_CHANNELS.CHANGED, settings);
+}
+
+/**
+ * Initialize app with proper orchestration
+ * AC5: Orchestrates startup sequence with clear initialization flow
+ * Order: 1. Settings 2. Grants 3. Store initialization
+ * @param projectDir - The project directory
+ */
+export function initializeApp(projectDir?: string): CyclistSettings {
+  // 1. Initialize file-based settings
+  const settings = initializeSettings(projectDir);
+
+  // 2. Load grants from file
+  const grants = loadGrants();
+
+  // 3. Initialize runtime store with grants
+  initializeGrants(grants);
+
+  // 4. Set up persistence callback so store changes write to file
+  setGrantsPersistCallback(saveGrants);
+
+  return settings;
 }
 
 /**
@@ -760,6 +874,8 @@ export function startProjectWatchers(): void {
 
   // 35-2: Register user email callback for project info updates
   setUserEmailCallback((email: string) => {
+    // Update usage stats with user email for account-specific settings
+    setUsageStatsUserEmail(email);
     broadcastToRenderer(IPC_DATA_CHANNELS.PROJECT_INFO_UPDATE, {
       directory: getProjectDirectory(),
       userEmail: email,
@@ -768,12 +884,18 @@ export function startProjectWatchers(): void {
   });
   console.log('User email callback registered for OTLP broadcasts');
 
+  // 35-16: Register background task start callback
+  setBackgroundTaskStartCallback((task: BackgroundTask) => {
+    broadcastToRenderer(IPC_BACKGROUND_TASK_CHANNELS.TASK_STARTED, task);
+    console.log(`Background task started: ${task.subagentType} - ${task.description}`);
+  });
+
   // 31-15: Register background task completion callback
   setBackgroundTaskCallback((task: BackgroundTask) => {
     broadcastToRenderer(IPC_BACKGROUND_TASK_CHANNELS.TASK_COMPLETED, task);
     console.log(`Background task completed: ${task.subagentType} (${task.success ? 'success' : 'failed'})`);
   });
-  console.log('Background task callback registered for OTLP broadcasts');
+  console.log('Background task callbacks registered for OTLP broadcasts');
 
   // Start watching for agent changes
   if (detectPennyfarthingProject(projectDir)) {
@@ -903,6 +1025,18 @@ export function setupClaudeIPCHandlers(ipcMain: {
           if (content && Array.isArray(content)) {
             for (const block of content) {
               if (block.type === 'tool_use') {
+                // Story 33-7: Wire approval gate into tool execution pipeline
+                // Check if this tool_use needs approval and trigger modal if so
+                const toolUseMessage = {
+                  type: 'tool_use' as const,
+                  tool_name: block.name,
+                  tool_id: block.id,
+                  input: block.input as Record<string, unknown>,
+                };
+                // Fire and forget - we observe the stream, we don't control execution
+                // This triggers the approval modal UI when gate is enabled
+                processToolUseWithApproval(toolUseMessage);
+
                 // Story 36-8: Capture ALL tool inputs for OTEL enrichment correlation
                 // Story 36-9: This is the primary correlation mechanism since Claude Code
                 // OTEL logs don't include traceId/spanId at logRecord level
@@ -930,6 +1064,41 @@ export function setupClaudeIPCHandlers(ipcMain: {
                     toolType: 'Write',
                     timestamp: Date.now(),
                     isNewFile: true,
+                  });
+                } else if (block.name === 'Skill') {
+                  // 35-12: Track skill invocations
+                  const input = block.input as { skill: string; args?: string };
+                  handleSkillEvent({
+                    id: block.id || `skill-${Date.now()}`,
+                    skill: input.skill,
+                    args: input.args,
+                    timestamp: Date.now(),
+                    status: 'running',
+                  });
+                }
+              }
+            }
+          }
+        }
+
+        // 35-12: Check for tool_result blocks to update skill completion status
+        if (message.type === 'user') {
+          const userMsg = message as { message?: { content?: Array<{ type: string; tool_use_id?: string; content?: string; is_error?: boolean }> } };
+          const content = userMsg.message?.content;
+          if (content && Array.isArray(content)) {
+            for (const block of content) {
+              if (block.type === 'tool_result' && block.tool_use_id) {
+                // Find matching skill entry and update it
+                const existingEntry = currentSkillEntries.find((e) => e.id === block.tool_use_id);
+                if (existingEntry) {
+                  const startTime = existingEntry.timestamp;
+                  const durationMs = Date.now() - startTime;
+                  handleSkillEvent({
+                    ...existingEntry,
+                    status: block.is_error ? 'error' : 'completed',
+                    result: block.is_error ? undefined : (typeof block.content === 'string' ? block.content.slice(0, 200) : undefined),
+                    error: block.is_error ? (typeof block.content === 'string' ? block.content.slice(0, 200) : 'Unknown error') : undefined,
+                    durationMs,
                   });
                 }
               }
@@ -974,6 +1143,7 @@ export function setupClaudeIPCHandlers(ipcMain: {
     resetTodos();
     resetEventStore(); // Clear tool events (changed files, diffs)
     resetToolStats();
+    resetSkills(); // 35-12: Clear skill invocations
     resetContext(); // Clear context percentage
     resetUsageStats(); // Clear usage stats (23-2)
     // Broadcast zeroed stats to update UI immediately
@@ -983,6 +1153,38 @@ export function setupClaudeIPCHandlers(ipcMain: {
     broadcastToRenderer(IPC_DATA_CHANNELS.CONTEXT_UPDATE, { percent: 0, contextWindow: 0 }); // (23-2)
     broadcastToRenderer(IPC_DATA_CHANNELS.PERSONA_UPDATE, null); // Clear persona (23-2)
     console.log('Session cleared: tokens, todos, tool events, tool stats, context, usage, persona');
+    return true;
+  });
+
+  // Clear and reload handler - clears session and loads new agent (MSSCI-11840)
+  ipcMain.handle(IPC_CONTEXT_CLEAR_CHANNELS.CLEAR_AND_LOAD, async (_event: unknown, ...args: unknown[]) => {
+    const agent = args[0] as string;
+    const service = getClaudeService();
+    console.log(`[main] Context clear and reload: ${agent}`);
+
+    // Clear session state and WAIT for process to fully exit
+    // This prevents race conditions where new process spawns before old one dies
+    await service.clearSessionAsync();
+    clearSessionId();
+    resetTokenStats();
+    resetTodos();
+    resetEventStore();
+    resetToolStats();
+    resetSkills();
+    resetContext();
+    resetUsageStats();
+
+    // Broadcast zeroed stats to update UI immediately
+    broadcastToRenderer(IPC_DATA_CHANNELS.TOKEN_STATS_UPDATE, getTokenStats());
+    broadcastToRenderer(IPC_DATA_CHANNELS.TOOL_STATS_UPDATE, createEmptyStats());
+    broadcastToRenderer(IPC_DATA_CHANNELS.TOOL_EVENTS_UPDATE, []);
+    broadcastToRenderer(IPC_DATA_CHANNELS.CONTEXT_UPDATE, { percent: 0, contextWindow: 0 });
+    broadcastToRenderer(IPC_DATA_CHANNELS.PERSONA_UPDATE, null);
+
+    // Launch the new agent via the agent launch event
+    broadcastToRenderer(IPC_AGENT_CHANNELS.AGENT_LAUNCH, agent);
+
+    console.log(`Session cleared and agent launch triggered: ${agent}`);
     return true;
   });
 
@@ -1097,20 +1299,20 @@ export async function handleSettingsGet(): Promise<CyclistSettings> {
 /**
  * Handle settings:save IPC call
  * Saves settings and returns result with success flag
- * Also writes theme to persona-config.local.yaml for Pennyfarthing compatibility (24-2)
+ * Also writes theme to .pennyfarthing/config.local.yaml for Pennyfarthing compatibility (24-2)
  */
 export async function handleSettingsSave(settings: Partial<CyclistSettings>): Promise<{ success: boolean; settings?: CyclistSettings }> {
   try {
     saveUserSettings(settings);
 
-    // 24-2: Dual-write theme to persona-config.local.yaml for Pennyfarthing compatibility
+    // 24-2: Dual-write theme to .pennyfarthing/config.local.yaml for Pennyfarthing compatibility
     const projectDir = getProjectDirectory();
     if (settings.pennyfarthing?.theme && projectDir) {
       try {
-        const personaConfigPath = join(projectDir, '.claude', 'persona-config.local.yaml');
-        fs.writeFileSync(personaConfigPath, `theme: "${settings.pennyfarthing.theme}"\n`, 'utf-8');
+        const configPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
+        fs.writeFileSync(configPath, `theme: "${settings.pennyfarthing.theme}"\n`, 'utf-8');
       } catch (err) {
-        console.error('Failed to write persona-config.local.yaml:', err);
+        console.error('Failed to write .pennyfarthing/config.local.yaml:', err);
       }
     }
 
@@ -1241,6 +1443,31 @@ export function setupAuditLogIPCHandlers(ipcMain: {
 }
 
 // =============================================================================
+// Skill IPC Handlers (35-12)
+// =============================================================================
+
+/**
+ * Set up IPC handlers for skill panel
+ * 35-12: Handles skill invocation tracking via IPC
+ */
+export function setupSkillIPCHandlers(ipcMain: {
+  handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
+}): void {
+  // Get all skill entries
+  ipcMain.handle(IPC_SKILL_CHANNELS.SKILL_GET, async () => {
+    return getSkillEntries();
+  });
+
+  // Clear skill entries
+  ipcMain.handle(IPC_SKILL_CHANNELS.SKILL_CLEAR, async () => {
+    clearSkillEntries();
+    return true;
+  });
+
+  console.log('Skill IPC handlers registered');
+}
+
+// =============================================================================
 // Command IPC Handlers (23-3)
 // =============================================================================
 
@@ -1291,6 +1518,355 @@ export function setupCommandIPCHandlers(ipcMain: {
   registeredCommandChannels = [IPC_COMMAND_CHANNELS.EXECUTE];
 
   console.log('Command IPC handlers registered');
+}
+
+// =============================================================================
+// Story 33-7: Approval Gate Integration
+// =============================================================================
+
+/**
+ * Result from processToolUseWithApproval
+ */
+export interface ApprovalResult {
+  needsApproval: boolean;
+  passThrough: boolean;
+  approved?: boolean;
+  rejected?: boolean;
+  errorMessage?: SDKToolResultError;
+}
+
+// Dependency injection for testing
+let ipcSender: ((channel: string, data: unknown) => void) | null = null;
+let toolExecutor: ((message: ToolUseMessage) => void) | null = null;
+let errorInjector: ((error: SDKToolResultError) => void) | null = null;
+
+/**
+ * Set the IPC sender function (for testing)
+ */
+export function setIPCSender(sender: ((channel: string, data: unknown) => void) | null): void {
+  ipcSender = sender;
+}
+
+/**
+ * Set the tool executor function (for testing)
+ */
+export function setToolExecutor(executor: ((message: ToolUseMessage) => void) | null): void {
+  toolExecutor = executor;
+}
+
+/**
+ * Set the error injector function (for testing)
+ */
+export function setErrorInjector(injector: ((error: SDKToolResultError) => void) | null): void {
+  errorInjector = injector;
+}
+
+/**
+ * Send an approval request to the renderer via IPC
+ */
+export function sendApprovalRequest(toolId: string, toolName: string, context: Record<string, unknown>): void {
+  const sender = ipcSender || broadcastToRenderer;
+
+  sender('permission-request', {
+    toolId,
+    toolName,
+    context,
+  });
+}
+
+/**
+ * Handle permission response from renderer
+ * Called by IPC handler when user responds to approval modal
+ */
+export function handlePermissionResponse(response: {
+  toolId: string;
+  approved: boolean;
+  grantScope?: 'once' | 'session' | 'always';
+}): void {
+  // Story 33-7: First try to resolve hook approval (from PreToolUse hook)
+  // This is the path that actually controls tool execution
+  resolveHookApproval(response.toolId, response.approved, response.grantScope);
+
+  // Also resolve approval-gate.js pending approvals for backwards compatibility
+  // (This was the old observer-only path)
+  import('./approval-gate.js').then(({ resolveApproval }) => {
+    resolveApproval(response.toolId, response.approved, response.grantScope);
+  });
+}
+
+/**
+ * Process a tool_use message with approval gate check
+ * This is the main integration point for story 33-7
+ *
+ * @param message - The tool_use message to process
+ * @returns ApprovalResult indicating whether approval is needed and outcome
+ */
+export async function processToolUseWithApproval(message: ToolUseMessage): Promise<ApprovalResult> {
+  // Check if this tool_use needs approval
+  const interceptResult = interceptToolUse(message);
+
+  // If gate is disabled or grant exists, pass through immediately
+  if (!interceptResult.shouldApprove) {
+    // Execute tool if executor is set
+    if (toolExecutor) {
+      toolExecutor(message);
+    }
+    return {
+      needsApproval: false,
+      passThrough: true,
+    };
+  }
+
+  // Need approval - send IPC request and wait for response
+  sendApprovalRequest(interceptResult.toolId, interceptResult.toolName, interceptResult.context);
+
+  // Get the command for Bash tools, or use context for other tools
+  const command = interceptResult.toolName === 'Bash'
+    ? (interceptResult.context.command as string) || ''
+    : JSON.stringify(interceptResult.context);
+
+  // Wait for user response
+  const approved = await requestApproval(command, interceptResult.toolId);
+
+  if (approved) {
+    // User approved - execute tool
+    if (toolExecutor) {
+      toolExecutor(message);
+    }
+    return {
+      needsApproval: true,
+      passThrough: true,
+      approved: true,
+    };
+  } else {
+    // User rejected - create and inject error
+    const errorMessage = createRejectionError(interceptResult.toolId);
+
+    if (errorInjector) {
+      errorInjector(errorMessage);
+    }
+
+    return {
+      needsApproval: true,
+      passThrough: false,
+      approved: false,
+      rejected: true,
+      errorMessage,
+    };
+  }
+}
+
+/**
+ * Set up IPC handlers for approval gate
+ * Story 33-7: Handles permission request/response flow
+ */
+export function setupApprovalIPCHandlers(ipcMain: {
+  handle?: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
+  on?: (channel: string, handler: (event: unknown, ...args: unknown[]) => void) => void;
+}): void {
+  // Handle permission response from renderer
+  if (ipcMain.on) {
+    ipcMain.on('permission-response', (_event: unknown, response: unknown) => {
+      handlePermissionResponse(response as {
+        toolId: string;
+        approved: boolean;
+        grantScope?: 'once' | 'session' | 'always';
+      });
+    });
+  }
+
+  if (ipcMain.handle) {
+    ipcMain.handle('permission-response', async (_event: unknown, response: unknown) => {
+      handlePermissionResponse(response as {
+        toolId: string;
+        approved: boolean;
+        grantScope?: 'once' | 'session' | 'always';
+      });
+      return { success: true };
+    });
+  }
+
+  console.log('Approval gate IPC handlers registered');
+}
+
+// =============================================================================
+// Story 33-7: Approval Hook Server
+// =============================================================================
+// HTTP server that receives approval requests from the PreToolUse hook script.
+// The hook runs in Claude Code's process, sends requests here, we show modal,
+// user decides, we respond, hook tells Claude Code to allow/deny.
+//
+// Multi-instance support: Uses dynamic port selection with .cyclist-approval-port
+// discovery file to prevent cross-instance interference when multiple Cyclist
+// windows are open for different projects.
+
+const DEFAULT_APPROVAL_SERVER_PORT = 7432;
+let approvalServer: ReturnType<typeof createHttpServer> | null = null;
+let approvalServerPort: number | null = null;
+
+// Pending approval requests from hooks, keyed by toolId
+const pendingHookApprovals: Map<string, {
+  resolve: (response: { decision: string; reason: string }) => void;
+  toolName: string;
+  input: Record<string, unknown>;
+}> = new Map();
+
+/**
+ * Handle incoming approval request from hook script
+ */
+async function handleHookApprovalRequest(
+  toolName: string,
+  toolId: string,
+  input: Record<string, unknown>,
+): Promise<{ decision: string; reason: string }> {
+  // Check if gate is enabled
+  const { getBashApprovalGate, checkGrant, isAllowlisted } = await import('./settings-store.js');
+
+  if (!getBashApprovalGate()) {
+    return { decision: 'allow', reason: 'Approval gate disabled' };
+  }
+
+  // Check allowlist and grants
+  if (toolName === 'Bash') {
+    const command = (input.command as string) || '';
+    if (isAllowlisted(command) || checkGrant('Bash', command)) {
+      return { decision: 'allow', reason: 'Matched allowlist or existing grant' };
+    }
+  }
+
+  // Need user approval - send to renderer and wait
+  return new Promise((resolve) => {
+    pendingHookApprovals.set(toolId, { resolve, toolName, input });
+
+    // Send approval request to renderer
+    broadcastToRenderer('permission-request', {
+      toolId,
+      toolName,
+      context: input,
+      source: 'hook', // Indicate this came from hook, not observation
+    });
+  });
+}
+
+/**
+ * Resolve a pending hook approval (called when user responds to modal)
+ */
+export function resolveHookApproval(
+  toolId: string,
+  approved: boolean,
+  grantScope?: 'once' | 'session' | 'always',
+): void {
+  const pending = pendingHookApprovals.get(toolId);
+  if (pending) {
+    // Add grant if approved with scope
+    if (approved && grantScope && pending.toolName === 'Bash') {
+      import('./settings-store.js').then(({ addGrant, extractPattern }) => {
+        const command = (pending.input.command as string) || '';
+        const pattern = extractPattern(command);
+        addGrant({
+          tool: 'Bash',
+          scope: pattern,
+          grant_type: grantScope,
+          granted_at: new Date().toISOString(),
+        });
+      });
+    }
+
+    pending.resolve({
+      decision: approved ? 'allow' : 'deny',
+      reason: approved ? `Approved by user (${grantScope || 'once'})` : 'Rejected by user',
+    });
+    pendingHookApprovals.delete(toolId);
+  }
+}
+
+/**
+ * Start the approval hook server with dynamic port selection
+ * Uses findAvailablePort to avoid conflicts with other Cyclist instances
+ * Writes port to .cyclist-approval-port for hook discovery
+ */
+export async function startApprovalServer(): Promise<void> {
+  if (approvalServer) {
+    console.log('Approval server already running');
+    return;
+  }
+
+  const projectDir = getProjectDirectory();
+  if (!projectDir) {
+    console.warn('No project directory set, cannot start approval server');
+    return;
+  }
+
+  // Find an available port starting from default
+  try {
+    approvalServerPort = await findAvailablePort(DEFAULT_APPROVAL_SERVER_PORT);
+  } catch (error) {
+    console.error('Could not find available port for approval server:', error);
+    return;
+  }
+
+  approvalServer = createHttpServer(async (req: IncomingMessage, res: ServerResponse) => {
+    if (req.method === 'POST' && req.url === '/approval-request') {
+      let body = '';
+      req.on('data', (chunk) => { body += chunk; });
+      req.on('end', async () => {
+        try {
+          const data = JSON.parse(body);
+          const { toolName, toolId, input } = data;
+
+          const response = await handleHookApprovalRequest(toolName, toolId, input);
+
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(response));
+        } catch {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid request' }));
+        }
+      });
+    } else {
+      res.writeHead(404);
+      res.end('Not found');
+    }
+  });
+
+  approvalServer.listen(approvalServerPort, '127.0.0.1', () => {
+    console.log(`Approval hook server running on http://127.0.0.1:${approvalServerPort}`);
+    // Write port file for hook discovery
+    writeApprovalPortFile(projectDir, approvalServerPort!);
+    console.log(`[33-7] Wrote .cyclist-approval-port file to ${projectDir}`);
+  });
+
+  approvalServer.on('error', (err: NodeJS.ErrnoException) => {
+    console.error('Approval server error:', err);
+    approvalServerPort = null;
+  });
+}
+
+/**
+ * Stop the approval hook server and clean up port file
+ */
+export function stopApprovalServer(): void {
+  if (approvalServer) {
+    approvalServer.close();
+    approvalServer = null;
+    approvalServerPort = null;
+
+    // Clean up port file
+    const projectDir = getProjectDirectory();
+    if (projectDir) {
+      cleanupApprovalPortFile(projectDir);
+      console.log('[33-7] Cleaned up .cyclist-approval-port file');
+    }
+
+    console.log('Approval hook server stopped');
+  }
+}
+
+/**
+ * Get the current approval server port (for testing)
+ */
+export function getApprovalServerPort(): number | null {
+  return approvalServerPort;
 }
 
 // =============================================================================
@@ -1505,6 +2081,9 @@ if (isElectron) {
   setupSettingsIPCHandlers(ipcMain);
   setupAuditLogIPCHandlers(ipcMain);
   setupCommandIPCHandlers(ipcMain); // 23-3: Command execution
+  setupSkillIPCHandlers(ipcMain); // 35-12: Skill invocation tracking
+  setupApprovalIPCHandlers(ipcMain); // 33-7: Approval gate wiring
+  // NOTE: startApprovalServer() moved to app.whenReady() - needs project directory
 
   /**
    * Kill orphaned Claude CLI process from previous Cyclist session in THIS project.
@@ -1612,18 +2191,17 @@ if (isElectron) {
 
       console.log('[Cyclist] Using Pennyfarthing project:', projectDir);
 
-      // 35-6: Initialize settings BEFORE window loads so font settings are available
-      // This must happen before createWindow() so the renderer can fetch settings immediately
-      initializeSettings(projectDir);
-      console.log('[Cyclist] Settings initialized');
-
-      // 33-4: Load persisted permission grants from settings
-      loadPersistedGrants();
+      // 35-14: Use initializeApp() for proper startup orchestration
+      // This initializes settings, loads grants from file, sets up runtime store and persistence callback
+      // Must happen before createWindow() so the renderer can fetch settings immediately
+      initializeApp(projectDir);
+      console.log('[Cyclist] App initialized (settings + grants)');
 
       // B-24: Kill any orphaned Claude processes from crashed sessions
       cleanupStaleProcesses();
 
       await startServer();
+      await startApprovalServer(); // 33-7: Start after project dir set
       createWindow();
       if (mainWindow && projectDir) {
         mainWindow.setTitle(`Cyclist - ${basename(projectDir)}`);

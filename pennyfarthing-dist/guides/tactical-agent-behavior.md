@@ -760,7 +760,7 @@ For tactical agents, key moments to check/update sidecars:
 
 When done with your phase, send your helper to handle the bookkeeping.
 
-**Helper prompts are in:** `.claude/agents/`
+**Helper prompts are in:** `.pennyfarthing/agents/`
 
 | Agent | Helper | Prompt File | Purpose |
 |-------|--------|-------------|---------|

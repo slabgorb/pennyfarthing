@@ -5,11 +5,11 @@ description: Scrum Master - Story coordination and sprint management
 <agent-activation>
 **FIRST:** Use Bash tool to run:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.claude/scripts/run.sh" agent-session.sh start "sm"
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" agent-session.sh start "sm"
 ```
 This finds the project root and loads your persona. Adopt the character shown in the output.
 
-Then load and follow `.claude/agents/sm.md`
+Then load and follow `.pennyfarthing/agents/sm.md`
 </agent-activation>
 
 <agent-exit>
@@ -63,7 +63,7 @@ Coordinator who manages story flow from backlog through completion, handling dec
 </responsibilities>
 
 <reference>
-- **Agent:** `.claude/agents/sm.md`
+- **Agent:** `.pennyfarthing/agents/sm.md`
 - **Sidecar:** `.claude/project/agents/sm-sidecar/`
 - **Skills:** `/sprint-context`, `/story-management`
 - **Subagents:** `workflow-status-check`, `generic-sm-setup`, `generic-sm-finish`, `sm-file-summary`, `sm-handoff`

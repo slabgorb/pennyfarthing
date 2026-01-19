@@ -320,32 +320,43 @@ check_workspace_deps() {
     log_info "Checking workspace dependencies..."
 
     local node_modules="$CYCLIST_DIR/node_modules/@pennyfarthing"
+    local initial_fail_count=$FAIL_COUNT
 
     # Check @pennyfarthing/core symlink
     local core_link="$node_modules/core"
-    if [[ -L "$core_link" ]]; then
-        if [[ -d "$core_link" ]]; then
-            log_pass "@pennyfarthing/core symlink valid"
-        else
-            log_fail "@pennyfarthing/core symlink broken" "pnpm install from monorepo root"
-        fi
+    if [[ ! -e "$node_modules" ]]; then
+        log_fail "@pennyfarthing scope directory not found" "pnpm install from monorepo root"
+    elif [[ ! -L "$core_link" ]] && [[ ! -e "$core_link" ]]; then
+        log_fail "@pennyfarthing/core not found (workspace symlink missing)" "pnpm install from monorepo root"
+    elif [[ -L "$core_link" ]] && [[ ! -e "$core_link" ]]; then
+        log_fail "@pennyfarthing/core symlink broken (target missing)" "Check packages/core exists"
+    elif [[ -L "$core_link" ]] && [[ -d "$core_link" ]]; then
+        log_pass "@pennyfarthing/core workspace symlink valid"
+    elif [[ ! -L "$core_link" ]] && [[ -d "$core_link" ]]; then
+        log_warn "@pennyfarthing/core is a directory (expected workspace symlink)"
     else
-        log_fail "@pennyfarthing/core not found" "pnpm install from monorepo root"
+        log_fail "@pennyfarthing/core exists but is not a directory" "pnpm install from monorepo root"
     fi
 
     # Check @pennyfarthing/shared symlink
     local shared_link="$node_modules/shared"
-    if [[ -L "$shared_link" ]]; then
-        if [[ -d "$shared_link" ]]; then
-            log_pass "@pennyfarthing/shared symlink valid"
-        else
-            log_fail "@pennyfarthing/shared symlink broken" "pnpm install from monorepo root"
-        fi
+    if [[ ! -e "$node_modules" ]]; then
+        # Already reported above, skip
+        true
+    elif [[ ! -L "$shared_link" ]] && [[ ! -e "$shared_link" ]]; then
+        log_fail "@pennyfarthing/shared not found (workspace symlink missing)" "pnpm install from monorepo root"
+    elif [[ -L "$shared_link" ]] && [[ ! -e "$shared_link" ]]; then
+        log_fail "@pennyfarthing/shared symlink broken (target missing)" "Check packages/shared exists"
+    elif [[ -L "$shared_link" ]] && [[ -d "$shared_link" ]]; then
+        log_pass "@pennyfarthing/shared workspace symlink valid"
+    elif [[ ! -L "$shared_link" ]] && [[ -d "$shared_link" ]]; then
+        log_warn "@pennyfarthing/shared is a directory (expected workspace symlink)"
     else
-        log_fail "@pennyfarthing/shared not found" "pnpm install from monorepo root"
+        log_fail "@pennyfarthing/shared exists but is not a directory" "pnpm install from monorepo root"
     fi
 
-    if [[ "$FIX_MODE" == true ]] && [[ $FAIL_COUNT -gt 0 ]]; then
+    # Only attempt fix if there were new failures in this check
+    if [[ "$FIX_MODE" == true ]] && [[ $FAIL_COUNT -gt $initial_fail_count ]]; then
         log_info "Attempting to fix workspace dependencies..."
         (cd "$MONOREPO_ROOT" && pnpm install) || true
     fi

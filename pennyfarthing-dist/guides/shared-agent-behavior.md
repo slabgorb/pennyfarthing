@@ -334,6 +334,83 @@ See `/dev-patterns` skill → "Turn-Efficient Patterns" for complete guidance.
 
 ---
 
+## Interactive Background Task Protocol
+
+When spawning background subagents, **do NOT block waiting for results** unless the next action depends on them. Cyclist provides real-time notifications when background tasks complete.
+
+### The Anti-Pattern (DO NOT DO THIS)
+
+```yaml
+# WRONG - Spawns background then immediately blocks
+Task tool:
+  run_in_background: true
+  prompt: ...
+
+# Then immediately:
+TaskOutput tool:
+  task_id: {id}
+  block: true    # ← Defeats the purpose of background!
+```
+
+This blocks the entire conversation while waiting - the user cannot interact.
+
+### The Correct Pattern: Fire and Continue
+
+**When the result is NOT needed immediately:**
+
+```yaml
+# 1. Spawn the background task
+Task tool:
+  subagent_type: "general-purpose"
+  model: "haiku"
+  run_in_background: true
+  prompt: |
+    Read and follow: .pennyfarthing/agents/testing-runner.md
+    REPOS: all
+```
+
+```markdown
+# 2. Tell the user and KEEP WORKING
+I've kicked off tests in the background. Cyclist will notify you when they complete.
+
+In the meantime, let me continue with [next task]...
+```
+
+**Cyclist automatically:**
+- Detects the background Task via OTEL spans
+- Tracks completion status
+- Shows expandable notification in MessageView when done
+- User can click to see full output
+
+### When to Use Each Pattern
+
+| Situation | Pattern | Rationale |
+|-----------|---------|-----------|
+| Status check before deciding what to do | **Foreground** (no `run_in_background`) | Need result to proceed |
+| Tests while writing more code | **Background + continue** | Independent work |
+| Multiple independent file searches | **Parallel background** | No dependencies |
+| Handoff preflight checks | **Foreground** | Sequential workflow |
+| Long lint/build while discussing | **Background + continue** | User can interact |
+
+### Checking Background Tasks (When Needed)
+
+If you DO need to check on a background task later:
+
+```yaml
+TaskOutput tool:
+  task_id: {id}
+  block: false     # Non-blocking check
+  timeout: 1000    # Quick timeout
+```
+
+This returns immediately with current status without blocking the conversation.
+
+### Key Insight
+
+The user wants to **interact while long-running processes execute**. Background tasks + Cyclist notifications enable this. Blocking defeats it.
+
+---
+
 ## Test Delegation Protocol
 
 **NEVER run tests directly.** Always delegate to the `testing-runner` subagent.

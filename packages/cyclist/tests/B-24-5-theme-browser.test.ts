@@ -725,8 +725,8 @@ describe('B-24-5: Theme Browser with Search', () => {
   // ===========================================================================
   describe('AC7: Browser integrates with persona area', () => {
 
-    // Story 35-1 moved theme selection from settings.html to persona area.
-    // Theme browser is now accessed via ThemePicker component clicking persona.
+    // 35-8: Theme selection consolidated to SettingsPanel only
+    // ThemePicker.js removed - SettingsPanel now handles all theme changes
 
     it('should have ThemeBrowser component available for import', async () => {
       const themeBrowser = await import('../src/public/js/components/ThemeBrowser.js');
@@ -734,10 +734,10 @@ describe('B-24-5: Theme Browser with Search', () => {
       expect(themeBrowser.createThemeBrowser).toBeDefined();
     });
 
-    it('should have ThemePicker that opens ThemeBrowser', async () => {
-      const themePicker = await import('../src/public/js/components/ThemePicker.js');
-      expect(themePicker.init).toBeDefined();
-      expect(themePicker.show).toBeDefined();
+    it('should have SettingsPanel that handles theme selection (35-8)', async () => {
+      const settingsPanel = await import('../src/public/js/components/SettingsPanel.js');
+      expect(settingsPanel.selectTheme).toBeDefined();
+      expect(settingsPanel.load).toBeDefined();
     });
 
     it('should NOT have theme browser in settings.html (moved to persona area)', async () => {
@@ -761,7 +761,7 @@ describe('B-24-5: Theme Browser with Search', () => {
       expect(response.text).toContain('persona');
     });
 
-    it('should export filterThemesBySearch for QuickThemeSwitcher', async () => {
+    it('should export filterThemesBySearch for SettingsPanel search', async () => {
       const themeBrowser = await import('../src/public/js/components/ThemeBrowser.js');
       expect(themeBrowser.filterThemesBySearch).toBeDefined();
       expect(typeof themeBrowser.filterThemesBySearch).toBe('function');

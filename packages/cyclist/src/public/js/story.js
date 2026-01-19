@@ -172,17 +172,12 @@ function updateWorkflowProgress(workflow) {
   // Clear existing content and rebuild from workflow data
   workflowEl.innerHTML = '';
 
-  // Filter to unique agents (skip duplicate 'sm' at start/end of workflow)
-  // Workflow phases like 'setup' and 'finish' both have agent 'sm'
-  const seenAgents = new Set();
-  const uniqueSteps = workflow.filter(step => {
-    if (seenAgents.has(step.agent)) return false;
-    seenAgents.add(step.agent);
-    return true;
-  });
+  // Show all workflow steps including both SM appearances (setup and finish)
+  // This displays the full TDD flow: SM → TEA → Dev → Rev → SM
+  const steps = workflow;
 
   // Build workflow steps dynamically
-  uniqueSteps.forEach((step, index) => {
+  steps.forEach((step, index) => {
     // Add arrow before step (except first)
     if (index > 0) {
       const arrow = document.createElement('span');

@@ -65,9 +65,12 @@ The testing-runner can be spawned in background mode, allowing the main agent to
 
 ```yaml
 Task tool:
-  subagent_type: "testing-runner"
+  subagent_type: "general-purpose"
+  model: "haiku"
   run_in_background: true
   prompt: |
+    Read and follow: .pennyfarthing/agents/testing-runner.md
+
     REPOS: all
     CONTEXT: Background test run while implementing
     RUN_ID: bg-test-001
@@ -168,11 +171,11 @@ For unfiltered runs, delegate to the `/check` command which runs all quality gat
 
 ```bash
 # Run checks in project root
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh
 
 # Run checks in a specific repo
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --repo api
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --repo ui
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh --repo api
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh --repo ui
 ```
 
 This runs:
@@ -188,14 +191,14 @@ For filtered test runs, use the `--filter` option:
 
 ```bash
 # Run only tests matching pattern
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --filter "TestUserLogin"
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh --filter "TestUserLogin"
 
 # Run only tests, skip lint and typecheck
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --tests-only --filter "TestUserLogin"
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh --tests-only --filter "TestUserLogin"
 
 # Run filtered tests in a specific repo
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --repo api --filter "TestUserLogin"
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --repo ui --tests-only --filter "login component"
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh --repo api --filter "TestUserLogin"
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh --repo ui --tests-only --filter "login component"
 ```
 
 The filter is passed to the underlying test runner:
@@ -209,8 +212,8 @@ To run checks across multiple repos, call check.sh multiple times:
 
 ```bash
 # Run all checks in both repos
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --repo api
-$CLAUDE_PROJECT_DIR/.claude/scripts/check.sh --repo ui
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh --repo api
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh --repo ui
 ```
 
 Or use the legacy per-repo approach below for complex filtering scenarios.
@@ -318,72 +321,44 @@ Listed per repo tested.
 
 ## Write Test Cache to Session File
 
-**Story 31-8:** After running tests, write results to session file cache so other subagents can skip redundant test runs.
+After running tests, write results to the session file cache so other subagents can skip redundant test runs.
 
 **When to write cache:**
 - `STORY_ID` is provided (identifies session file)
 - `SKIP_CACHE_WRITE` is not `true`
 - Not a filtered run (filtered runs don't represent full test state)
 
-**Cache format in session file:**
-```markdown
-## Test Cache
-
-| Field | Value |
-|-------|-------|
-| Last Run | {ISO 8601 timestamp} |
-| Git SHA | {current git SHA} |
-| Result | {GREEN/RED/YELLOW} |
-| Pass | {pass count} |
-| Fail | {fail count} |
-| Skip | {skip count} |
-| Duration | {seconds}s |
-```
-
-**Cache write procedure:**
+**Write cache using the utility script:**
 
 ```bash
-# Get current git SHA and timestamp
-GIT_SHA=$(git rev-parse HEAD)
-TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+source $CLAUDE_PROJECT_DIR/scripts/utils/test-cache.sh
 
-# Build cache section (use results from test run)
-CACHE_SECTION="## Test Cache
-
-| Field | Value |
-|-------|-------|
-| Last Run | $TIMESTAMP |
-| Git SHA | $GIT_SHA |
-| Result | $RESULT |
-| Pass | $PASS_COUNT |
-| Fail | $FAIL_COUNT |
-| Skip | $SKIP_COUNT |
-| Duration | ${DURATION}s |"
-
-# Session file path
 SESSION_FILE="$CLAUDE_PROJECT_DIR/.session/${STORY_ID}-session.md"
 
-# Check if Test Cache section exists
-if grep -q "^## Test Cache" "$SESSION_FILE" 2>/dev/null; then
-    # Replace existing cache section
-    # Use Edit tool to replace from "## Test Cache" to next "## " section
-    echo "Updating existing cache in session file"
-else
-    # Append cache section before "## Workflow Tracking" if present
-    # Otherwise append to end of file
-    echo "Adding new cache section to session file"
-fi
+# After tests complete, write cache with results
+# test_cache_write <session_file> <result> <pass> <fail> <skip> <duration>
+test_cache_write "$SESSION_FILE" "$RESULT" "$PASS_COUNT" "$FAIL_COUNT" "$SKIP_COUNT" "${DURATION}s"
 ```
 
-**Use Edit tool** to update session file - do not use bash string manipulation on markdown files.
-
 **Cache validation by other subagents:**
-Other subagents (reviewer-preflight, dev-handoff) check cache before running tests:
-1. Parse `## Test Cache` section from session file
-2. Verify `Git SHA` matches current HEAD
-3. Verify `Last Run` is less than 5 minutes old
-4. If valid: skip test run, use cached `Result`
-5. If invalid: run tests and update cache
+
+Other subagents check cache before running tests:
+
+```bash
+source $CLAUDE_PROJECT_DIR/scripts/utils/test-cache.sh
+
+SESSION_FILE="$CLAUDE_PROJECT_DIR/.session/${STORY_ID}-session.md"
+
+if test_cache_valid "$SESSION_FILE"; then
+    CACHED_RESULT=$(test_cache_get "$SESSION_FILE" "result")
+    echo "Using cached test result: $CACHED_RESULT"
+    # Skip test run, use cached result
+else
+    # Run tests and update cache
+    # ... run tests ...
+    test_cache_write "$SESSION_FILE" "$RESULT" "$PASS" "$FAIL" "$SKIP" "$DURATION"
+fi
+```
 
 ## Cleanup
 

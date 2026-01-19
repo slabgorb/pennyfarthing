@@ -7,7 +7,7 @@ description: Resume work or start new - smart entry point that picks up where yo
 <agent-activation>
 **FIRST:** Use Bash tool to run:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.claude/scripts/run.sh" agent-session.sh start "orchestrator"
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" agent-session.sh start "orchestrator"
 ```
 This finds the project root and loads your persona. Adopt the character shown in the output.
 </agent-activation>
@@ -43,11 +43,16 @@ When IN_PROGRESS_STATE, map the phase to the next agent:
 <on-invoke>
 **Step 1:** Run workflow status check
 
-```
+```yaml
 Task tool:
-  subagent_type: "workflow-status-check"
-  prompt: "Scan workflow state for /work command"
+  subagent_type: "general-purpose"
+  model: "haiku"
+  run_in_background: true
+  prompt: |
+    Read and follow: .pennyfarthing/agents/workflow-status-check.md
+    Scan workflow state for /work command
 ```
+Use `TaskOutput` with the returned task_id to get the result.
 
 **Step 2:** Present findings to user
 

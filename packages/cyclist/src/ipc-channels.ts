@@ -116,8 +116,30 @@ export const IPC_COMMAND_CHANNELS = {
 } as const;
 
 /**
- * IPC channel names for background task notifications (31-15)
+ * IPC channel names for background task notifications (31-15, 35-16)
  */
 export const IPC_BACKGROUND_TASK_CHANNELS = {
+  TASK_STARTED: 'backgroundTask:started',   // Story 35-16
   TASK_COMPLETED: 'backgroundTask:completed',
+} as const;
+
+/**
+ * IPC channel names for skill invocations (35-12)
+ * Used by skill panel to track skill execution
+ */
+export const IPC_SKILL_CHANNELS = {
+  SKILL_START: 'skill:start',
+  SKILL_COMPLETE: 'skill:complete',
+  SKILL_ERROR: 'skill:error',
+  SKILL_GET: 'skill:get',
+  SKILL_CLEAR: 'skill:clear',
+} as const;
+
+/**
+ * IPC channel names for context clear operations (MSSCI-11840)
+ * Used for auto-mode context clear and agent reload
+ */
+export const IPC_CONTEXT_CLEAR_CHANNELS = {
+  CLEAR: 'context:clear',
+  CLEAR_AND_LOAD: 'context:clearAndLoad',
 } as const;

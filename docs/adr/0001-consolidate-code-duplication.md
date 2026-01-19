@@ -235,7 +235,7 @@ Replace duplicated error recovery sections with:
 ```markdown
 ## Error Recovery
 
-**See:** `.claude/guides/handoff-error-recovery.md`
+**See:** `.pennyfarthing/guides/handoff-error-recovery.md`
 ```
 
 ## Consequences

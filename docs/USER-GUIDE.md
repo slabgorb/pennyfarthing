@@ -2,7 +2,7 @@
 
 Complete guide to using Pennyfarthing, a Claude Code agent framework with TDD workflow and persona system.
 
-**Version:** 6.4.0
+**Version:** 7.0.0
 
 ---
 
@@ -57,21 +57,22 @@ Strategic planning happens occasionally. Tactical execution (story implementatio
 ### Install via NPM
 
 ```bash
-# Install as dev dependency (recommended) - scoped package as of v6.0
+# Install as dev dependency (recommended)
 npm install --save-dev @pennyfarthing/core
-
-# Or install globally (still works, but project install preferred)
-npm install -g @pennyfarthing/core
 ```
 
-> **Note:** The package was renamed from `pennyfarthing` to `@pennyfarthing/core` in v6.0. If upgrading from v5.x, uninstall the old package first: `npm uninstall pennyfarthing`
+**Optional:** For the Cyclist visual terminal with agent portraits:
+
+```bash
+npm install --save-dev @pennyfarthing/cyclist
+```
 
 ### Initialize a Project
 
 ```bash
 cd your-project
 
-# Install the package first
+# Install first
 npm install --save-dev @pennyfarthing/core
 
 # Initialize with project name
@@ -84,26 +85,9 @@ npx pennyfarthing init
 The init command:
 1. Creates `.claude/` directory structure
 2. Symlinks to `node_modules/@pennyfarthing/core/pennyfarthing-dist/` (no file copying)
-3. Creates project-specific directories for customization
+3. Creates `.pennyfarthing/` for local config (gitignored)
 4. Sets up agent sidecars for project knowledge
 5. Configures session hooks for environment setup
-
-### Migrating from 5.x
-
-The v6.0 release renamed the package to `@pennyfarthing/core`:
-
-```bash
-# Remove old package
-npm uninstall pennyfarthing
-
-# Install new scoped package
-npm install --save-dev @pennyfarthing/core
-
-# Re-initialize
-npx pennyfarthing init
-```
-
-Your `.claude/project/` customizations are preserved.
 
 ### Verify Installation
 
@@ -151,14 +135,9 @@ just test
 ```
 ```
 
-**`.claude/persona-config.yaml`** - Choose a theme:
+**`.pennyfarthing/config.local.yaml`** - Choose a theme:
 ```yaml
 theme: discworld  # 102 themes available - see THEME-COMPARISON.md for full list
-attributes:
-  verbosity: medium
-  formality: casual
-  humor: enabled
-  emoji_use: minimal
 ```
 
 ### 2. Start Your First Work Session
@@ -206,14 +185,10 @@ pennyfarthing init --dry-run          # Preview changes
 pennyfarthing init --skip-templates   # Skip template generation
 ```
 
-**What it creates (v4.0+):**
-- `.claude/pennyfarthing/` → symlink to `node_modules/pennyfarthing/pennyfarthing-dist/`
-- `.claude/agents/` → symlink to `pennyfarthing/agents/`
-- `.claude/commands/` → symlink to `pennyfarthing/commands/`
-- `.claude/skills/` → symlink to `pennyfarthing/skills/`
-- `.claude/personas/` → symlink to `pennyfarthing/personas/`
+**What it creates:**
+- `.pennyfarthing/agents/`, `commands/`, `skills/`, `personas/` → symlinks to `node_modules/@pennyfarthing/core/pennyfarthing-dist/`
 - `.claude/project/` - Project-specific customizations (you edit this)
-- `scripts/` → symlink to `pennyfarthing/scripts/`
+- `.pennyfarthing/` - Local config (gitignored)
 - `sprint/` - Sprint tracking
 - `.session/` - Work session files
 
@@ -222,7 +197,7 @@ pennyfarthing init --skip-templates   # Skip template generation
 Update Pennyfarthing to the latest version.
 
 ```bash
-# v6.0+: Use npm to update (scoped package)
+# Update via npm
 npm update @pennyfarthing/core
 
 # Or check current version
@@ -275,13 +250,13 @@ pennyfarthing uninstall --dry-run     # Preview what would be removed
 
 **What gets removed (default):**
 - `.claude/pennyfarthing/` (symlink to node_modules)
-- `.claude/agents/`, `.claude/commands/`, `.claude/skills/`, `.claude/personas/` (symlinks)
+- `.pennyfarthing/agents/`, `.claude/commands/`, `.claude/skills/`, `.pennyfarthing/personas/` (symlinks)
 - `.claude/manifest.json`, `.claude/settings.local.json`
 - `scripts/hooks/`, `scripts/utils/`
 
 **With `--all`:**
 - `.claude/project/` (agent sidecars, custom docs)
-- `.claude/persona-config.yaml`
+- `.pennyfarthing/` (local config)
 - `.session/`
 - `sprint/current-sprint.yaml`
 
@@ -529,16 +504,20 @@ For the complete theme list with OCEAN personality profiles, see [THEME-COMPARIS
 
 ### Setting a Theme
 
-Edit `.claude/persona-config.yaml`:
+Edit `.pennyfarthing/config.local.yaml`:
 
 ```yaml
 theme: star-trek-tos
+```
 
-attributes:
-  verbosity: medium    # minimal, medium, high
-  formality: casual    # formal, casual
-  humor: enabled       # enabled, disabled
-  emoji_use: minimal   # none, minimal, moderate
+Or use the CLI/commands:
+
+```bash
+pennyfarthing theme set star-trek-tos
+```
+
+```
+/set-theme star-trek-tos
 ```
 
 ### Example: Star Trek TOS Theme
@@ -561,50 +540,30 @@ After initialization:
 ```
 your-project/
 ├── .claude/
-│   ├── pennyfarthing/           # Source files (managed by Pennyfarthing)
-│   │   ├── agents/              # Agent definitions
-│   │   ├── commands/            # Slash command definitions
-│   │   ├── guides/              # Behavior guides
-│   │   ├── skills/              # Knowledge domains
-│   │   ├── personas/            # Theme files
-│   │   └── statusline.sh        # Status bar script
-│   ├── agents/                  # → symlink to pennyfarthing/agents/
-│   ├── commands/                # → symlink to pennyfarthing/commands/
-│   ├── skills/                  # → symlink to pennyfarthing/skills/
-│   ├── personas/                # → symlink to pennyfarthing/personas/
+│   ├── agents/                  # → symlink to node_modules/@pennyfarthing/core/pennyfarthing-dist/agents/
+│   ├── commands/                # → symlink to node_modules/@pennyfarthing/core/pennyfarthing-dist/commands/
+│   ├── skills/                  # → symlink to node_modules/@pennyfarthing/core/pennyfarthing-dist/skills/
+│   ├── personas/                # → symlink to node_modules/@pennyfarthing/core/pennyfarthing-dist/personas/
+│   ├── scripts/                 # → symlink to node_modules/@pennyfarthing/core/pennyfarthing-dist/scripts/
 │   ├── project/                 # Project-specific (YOU edit this)
 │   │   ├── agents/              # Agent sidecars
 │   │   │   ├── dev-sidecar/
 │   │   │   ├── tea-sidecar/
 │   │   │   └── ...
 │   │   ├── docs/
-│   │   │   ├── shared-context.md
-│   │   │   └── agent-scopes.yaml
-│   │   ├── hooks/
-│   │   │   └── setup-env.sh
-│   │   └── skills/              # Project-specific skills
+│   │   │   └── shared-context.md
+│   │   └── hooks/
+│   │       └── setup-env.sh
 │   ├── manifest.json            # Installation manifest
-│   ├── persona-config.yaml      # Theme configuration
 │   └── settings.local.json      # Claude Code settings
-├── scripts/                      # → symlink to .claude/pennyfarthing/scripts/
-│   ├── hooks/                   # Session hooks
-│   │   ├── session-start.sh
-│   │   └── pre-edit-check.sh
-│   ├── utils/                   # Utility scripts
-│   │   ├── checkpoint.sh
-│   │   ├── file-lock.sh
-│   │   ├── logging.sh
-│   │   └── ...
-│   ├── agent-session.sh         # Agent session management
-│   └── uninstall.sh             # Uninstall script
+├── .pennyfarthing/
+│   └── config.local.yaml        # Theme selection (gitignored)
 ├── sprint/
 │   ├── current-sprint.yaml      # Active sprint
 │   ├── archive/                 # Completed sessions
 │   └── context/                 # Story summaries
 └── .session/
-    ├── {story-id}-session.md          # Active work session
-    ├── agents/                  # Agent session files
-    └── ...
+    └── {story-id}-session.md    # Active work session
 ```
 
 ---
@@ -728,14 +687,14 @@ echo $SESSION_ID
 
 | Purpose | Location |
 |---------|----------|
-| Agent definitions | `.claude/agents/` (symlink) |
-| Official subagents | `.claude/agents/` (in same directory) |
+| Agent definitions | `.pennyfarthing/agents/` (symlink) |
+| Official subagents | `.pennyfarthing/agents/` (in same directory) |
 | Slash commands | `.claude/commands/` (symlink) |
 | Project docs | `.claude/project/docs/` |
 | Agent sidecars | `.claude/project/agents/` |
 | Sprint data | `sprint/` |
 | Active session | `.session/{story-id}-session.md` |
-| Persona config | `.claude/persona-config.yaml` |
+| Theme config | `.pennyfarthing/config.local.yaml` |
 
 ### Environment Variables
 

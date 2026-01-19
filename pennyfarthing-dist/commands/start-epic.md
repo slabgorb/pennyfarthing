@@ -86,16 +86,28 @@ If the epic is in backlog:
 
 **Format for current-sprint.yaml:**
 ```yaml
-# Epic [N]: [Name] ([points] pts)
-# [Description]
-epic-N:
-  name: "[Epic Name]"
-  status: in-progress
-  points: [N]
-  priority: [High|Medium|Low]
-  repos: [api|ui|both]
-  stories:
-    # Stories will be added during tech context generation
+  # ===========================================================================
+  # EPIC [N]: [Name]
+  # ===========================================================================
+  - id: MSSCI-XXXXX
+    type: epic
+    title: "Epic: [Name]"
+    points: [total_pts]
+    completed_points: 0
+    priority: P1
+    status: in_progress
+    stories:
+      # Stories added during tech context generation
+      - id: MSSCI-XXXXX
+        title: "[Story title]"
+        points: [N]
+        priority: P2
+        status: backlog
+        repos: [cyclist|pennyfarthing|both]
+        workflow: [tdd|trivial|agent-docs]
+        acceptance_criteria:
+          - [AC 1]
+          - [AC 2]
 ```
 
 ### Step 4: Generate Epic Tech Context

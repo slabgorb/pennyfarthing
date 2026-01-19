@@ -14,7 +14,7 @@ workflow:
       agent: sm
       output: [session_file, branches]
 
-    - name: implement
+    - name: impl
       agent: dev
       input: [session_file]
       output: [implementation]

@@ -17,9 +17,24 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 <helpers>
 From theme config. Model: haiku. Tasks: Backlog scanning, Jira queries, velocity calculation, status checks.
 
-- **Official subagents:** (use `subagent_type: "{name}"`)
-  - `workflow-status-check` - Scan sprint state and active sessions
-  - `sm-file-summary` - Summarize files for context gathering
+- **Subagents:** (use `subagent_type: "general-purpose"` with `model: "haiku"`)
+  - `workflow-status-check.md` - Scan sprint state and active sessions
+  - `sm-file-summary.md` - Summarize files for context gathering
+
+- **Invocation pattern:** See `shared-agent-behavior.md` → "Interactive Background Task Protocol"
+
+  **Most PM tasks are sequential** - prioritization depends on sprint analysis.
+  Use **foreground execution** for workflow steps. Use **background** for independent parallel exploration.
+
+  ```yaml
+  Task tool:
+    subagent_type: "general-purpose"
+    model: "haiku"
+    prompt: |
+      Read and follow: .pennyfarthing/agents/{subagent-name}.md
+
+      {PARAMETERS}
+  ```
 </helpers>
 
 <responsibilities>
@@ -55,7 +70,7 @@ From theme config. Model: haiku. Tasks: Backlog scanning, Jira queries, velocity
 <context>
 Context auto-loaded by `/prime --agent pm`:
 - Shared context, shared behavior
-- Agent sidecar: `sprint/sidecars/pm/`
+- Agent sidecar: `.pennyfarthing/sidecars/pm/`
 </context>
 
 <reasoning-mode>

@@ -22,9 +22,11 @@ import {
   createModeRouter,
   createTelemetryRouter,
   createEvaluationRouter,
-  createBenchmarkRouter,
   createSettingsRouter,
   initTokenStatsBroadcast,
+  createBackgroundTasksRouter,
+  initBackgroundTaskBroadcast,
+  createSpansRouter,
 } from './api/index.js';
 
 // Settings initialization (35-6: required for font settings persistence)
@@ -83,13 +85,35 @@ app.use('/api/theme-agents', createThemeAgentsRouter(getProjectDir));
 app.use('/api/mode', createModeRouter());
 app.use('/api/telemetry', createTelemetryRouter());
 app.use('/api/evaluation', createEvaluationRouter());
-app.use('/api/benchmark', createBenchmarkRouter(getProjectDir));
 // 35-1: Settings API for contextual settings
 app.use('/api/settings', createSettingsRouter());
+// 35-16: Background tasks API
+app.use('/api/background-tasks', createBackgroundTasksRouter());
+// MSSCI-11734: Enriched spans API
+app.use('/api/spans', createSpansRouter());
 app.use('/v1', createOTLPRouter());
 
 // Initialize token stats WebSocket broadcast callback
 initTokenStatsBroadcast();
+
+// 35-16: Initialize background task broadcast callback
+initBackgroundTaskBroadcast();
+
+// Pennyfarthing-only features (conditionally loaded)
+// Benchmark API requires @pennyfarthing/core which is only available in the monorepo
+async function initPennyfarthingFeatures(): Promise<void> {
+  try {
+    const { createBenchmarkRouter } = await import('./api/benchmark.js');
+    app.use('/api/benchmark', createBenchmarkRouter(getProjectDir));
+    console.log('[Cyclist] Benchmark API enabled (pennyfarthing mode)');
+  } catch {
+    // @pennyfarthing/core not available - running as installed package
+    // Benchmark features disabled, which is expected
+  }
+}
+
+// Initialize pennyfarthing features (non-blocking)
+initPennyfarthingFeatures();
 
 // Create HTTP server with WebSocket support
 export function createTerminalServer(): Server {
@@ -138,6 +162,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 // ============================================================================
 
 const PORT_FILE_NAME = '.cyclist-port';
+const APPROVAL_PORT_FILE_NAME = '.cyclist-approval-port';
 const PID_FILE_NAME = '.cyclist-pid';
 
 /**
@@ -193,6 +218,57 @@ export function cleanupPortFile(projectDir: string): void {
  */
 export function readPortFile(projectDir: string): number | null {
   const portFilePath = join(projectDir, PORT_FILE_NAME);
+
+  if (!existsSync(portFilePath)) {
+    return null;
+  }
+
+  const content = readFileSync(portFilePath, 'utf-8').trim();
+
+  if (!content) {
+    return null;
+  }
+
+  const port = parseInt(content, 10);
+
+  if (isNaN(port)) {
+    return null;
+  }
+
+  return port;
+}
+
+// ============================================================================
+// Approval Port File Pattern (Story 33-7)
+// Enables multi-instance Cyclist with isolated approval servers
+// ============================================================================
+
+/**
+ * Write the approval server port to .cyclist-approval-port file.
+ * Enables hook script to discover which port this instance is using.
+ */
+export function writeApprovalPortFile(projectDir: string, port: number): void {
+  const portFilePath = join(projectDir, APPROVAL_PORT_FILE_NAME);
+  writeFileSync(portFilePath, String(port));
+}
+
+/**
+ * Remove the .cyclist-approval-port file during shutdown.
+ * Prevents stale port files from causing cross-instance interference.
+ */
+export function cleanupApprovalPortFile(projectDir: string): void {
+  const portFilePath = join(projectDir, APPROVAL_PORT_FILE_NAME);
+  if (existsSync(portFilePath)) {
+    unlinkSync(portFilePath);
+  }
+}
+
+/**
+ * Read the approval server port from .cyclist-approval-port file.
+ * Returns null if file doesn't exist or contains invalid content.
+ */
+export function readApprovalPortFile(projectDir: string): number | null {
+  const portFilePath = join(projectDir, APPROVAL_PORT_FILE_NAME);
 
   if (!existsSync(portFilePath)) {
     return null;

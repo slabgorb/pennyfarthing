@@ -11,6 +11,172 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [7.0.2] - 2026-01-17
+
+### Fixed
+
+- **Subagent Compatibility** - Updated all agent definitions to use `subagent_type: "general-purpose"` with `model: "haiku"` for Claude Code compatibility. Custom subagent types were failing with "not available in this context" errors.
+- **Cyclist Project Detection** - Fixed `detectPennyfarthingProject()` to check `.pennyfarthing/` directory first, and updated Electron entry point configuration.
+
+### Changed
+
+- **Build Output** - Removed `dist/` directories from version control. Build output is now delivered via npm only.
+
+---
+
+## [7.0.1] - 2026-01-17
+
+### Fixed
+
+- **Dogfood Doctor** - Updated `doctor-dogfood.sh` to check new directory structure (`.pennyfarthing/` for agents/guides/personas/scripts, `.claude/` for commands/skills only)
+- **Symlink Structure** - Converted `.claude/commands` and `.claude/skills` from directories to symlinks pointing to `pennyfarthing-dist/`
+- **Build Path** - Fixed doctor to check `packages/core/dist/` instead of root `dist/` for monorepo structure
+
+---
+
+## [7.0.0] - 2026-01-17
+
+### Major Release: npm Publishing & Directory Restructure
+
+This release marks Pennyfarthing's transition to npm public registry with a cleaner package structure and improved installation experience.
+
+### BREAKING CHANGES
+
+- **Package Renamed** - `pennyfarthing` → `@pennyfarthing/core`
+  - Update your `package.json`: `npm install --save-dev @pennyfarthing/core`
+  - CLI remains `npx pennyfarthing` (unchanged)
+- **Directory Restructure** - Content moved from `.claude/` to `.pennyfarthing/`
+  - Agents, guides, personas, and scripts now in `.pennyfarthing/`
+  - Commands and skills remain in `.claude/` for Claude Code discovery
+  - Run `pennyfarthing update` to migrate existing installations
+- **Cyclist Split Out** - Visual terminal is now a separate optional package
+  - Install with: `npm install --save-dev @pennyfarthing/cyclist`
+  - Reduces core package from 160MB to 1.1MB
+  - Portraits bundled only with Cyclist
+
+### Migration from 6.x
+
+```bash
+# Uninstall old package
+npm uninstall pennyfarthing
+
+# Install new scoped package
+npm install --save-dev @pennyfarthing/core
+
+# Update symlinks (handles .claude/ → .pennyfarthing/ migration)
+npx pennyfarthing update
+
+# Verify
+npx pennyfarthing doctor
+```
+
+### Added
+
+#### Epic 31: Customizable Workflow Engine
+- **Workflow Definition Schema** (31-1) - YAML-based workflow definitions with states, transitions, and agents
+- **Workflow Loader** (31-2) - Load and validate workflow definitions at runtime
+- **Story-to-Workflow Routing** (31-3) - Route stories to workflows based on `workflow:` tag
+- **TDD Flow Migration** (31-4) - Built-in TDD flow now uses workflow definition
+- **`/workflow` Skill** (31-5) - List workflows, show current, switch mid-session
+- **Session Tracking** (31-6) - Current workflow tracked in session files
+- **Generic Handoff Subagent** (31-7) - Workflow-driven handoffs for any transition
+- **Test Deduplication** (31-8) - Eliminate redundant test runs across subagents
+- **Turn Optimization** (31-9) - Patterns for reducing API round-trips
+- **Background Task Tracking** (31-14, 31-15) - Track and notify on background task completion
+
+#### Epic 32: BMAD Format Interoperability
+- **Story Parser** (32-2) - Parse BMAD story files into Pennyfarthing format
+- **Epics Parser** (32-3) - Parse BMAD epics files
+- **Context Reader** (32-4) - Parse BMAD project-context.md files
+- **Session Exporter** (32-5) - Export sessions back to BMAD format
+- **Sprint Sync** (32-6) - Sync sprint status with BMAD
+
+#### Epic 33: Runtime Permission Management
+- **Permission Request Protocol** (33-1) - Structured permission request handling
+- **`/permissions` Skill** (33-2) - View and manage runtime permission grants
+- **Generic Permission UI** (33-3) - Universal approval modal for any tool
+- **Spot Permission Grants** (33-4) - Once/session/always grant scopes
+- **Approval Gate Wiring** (33-7) - PreToolUse hook for actual tool execution control
+
+#### Epic 34: Cyclist Developer Experience
+- **First-Run Setup** (34-1) - Documentation and tooling for first-time setup
+- **`cyclist-doctor` Command** (34-2) - Health check for Cyclist installation
+- **Port Conflict Detection** (34-3) - Detect and message when port 3456 is in use
+- **Upgrade Path Handling** (34-4) - Smooth upgrades between Cyclist versions
+
+#### Epic 35: Cyclist UI/UX Improvements
+- **Settings Placement** (35-1) - Contextual settings with iOS-style toggles
+- **User Email Display** (35-2) - Show authenticated user in status bar
+- **Workflow Visualization** (35-3) - Dynamic workflow phase indicator
+- **Three-Way Mode Switch** (35-4) - Plan/Manual/Accept mode selector
+- **Collapsible Portrait Panel** (35-5) - Unified vertical panel pattern
+- **Font Face Selector** (35-6) - Choose fonts in settings panel
+- **Custom Styling Themes** (35-7) - CSS theming system for Cyclist
+- **Settings Panel Expansion** (35-9) - Additional settings and fixes
+- **Line Numbers in Diffs** (35-10) - Show line numbers in file diff view
+- **Clickable File Paths** (35-11) - Click file paths to open in editor
+- **Skill Invocations Panel** (35-12) - Track skill usage in session
+- **Window State Persistence** (35-13) - Remember window size/position
+- **Settings Architecture** (35-14) - VerticalPanel-based settings
+
+#### Epic 36: OTEL Tool Enrichment
+- **Span Interception** (36-1) - Unified OTEL span processing pipeline
+- **File Enrichment** (36-2) - Read/Edit spans include path and content
+- **Bash Enrichment** (36-3) - Bash spans include command details
+- **Search Enrichment** (36-4) - Grep/Glob spans include search context
+- **Write Enrichment** (36-11) - File write operations tracked
+
+#### Epic 38: Agent File Modernization
+- **Status Tags** (38-2) - Production/stable/experimental status on all agents
+- **Agent Modernization** (38-3, 38-4, 38-5, 38-8) - PM, Architect, DevOps, Orchestrator updated
+- **Workflow Routing** (38-9) - SM routes stories to workflows based on tags
+- **Shared Behavior** (38-10) - Consolidate duplicated instructions to shared-agent-behavior.md
+
+#### Other Features
+- **Precision/Recall Scoring** - Enhanced `/judge` skill with detection scoring v2
+- **Matrix Theme Optimization** - Job fair results with The Architect integration
+- **Horizontal Tab Bar** - Replace vertical panel buttons with tabs
+- **Slash Command Popup** - Show suggestions on "/" immediately
+- **Typeahead Filtering** - Better filtering as user types
+
+### Fixed
+
+#### Epic 37: Technical Debt & Bug Fixes
+- **37-1** - Clean up stale TODO comments
+- **37-2** - Fix flaky timestamp test in background notifications
+- **37-4** - Evaluate and clean up skipped test suites
+- **37-5** - Implement file reading in loadJobFairBaselines
+- **37-6** - Remove dead pattern-based detection tests
+- **37-8** - Return complete persona object from IPC handler
+- **37-14** - Fix handoff buttons showing wrong theme characters
+- **37-15** - Make workflow indicator dynamic based on active workflow
+- **37-16** - Enable context circuit breaker and align UI thresholds
+- **37-17** - Include pennyfarthing-dist markdown files in npm distribution
+
+#### Other Fixes
+- OTEL race condition in tool correlation (36-10)
+- OTEL enrichment blocked by missing trace/span IDs (36-9)
+- JIRA key format validation to prevent wrong ticket transitions
+- Redundant story card elements in Cyclist
+- Dynamic port for multi-instance isolation
+- O'Brien and all-stars portrait slugs
+
+### Changed
+- **Handoff Mode** - Agents honor `handoff_mode` setting (auto/manual) from cyclist.yaml
+- **Epic Context Gate** - SM workflow validates epic context before story selection
+- **Settings Panel** - Converted to VerticalPanel architecture
+
+### Summary
+| Metric | Value |
+|--------|-------|
+| Stories Completed | 50+ |
+| Epics Delivered | 7 (Epic 31, 32, 33, 34, 35, 36, 38) |
+| Bug Fixes | 25+ |
+| New Skills | 2 (`/workflow`, `/permissions`) |
+| Themes | 102 |
+
+---
+
 ## [6.5.0] - 2026-01-16
 
 ### Sprint 11: Agent Modernization & Cyclist Polish
@@ -1205,7 +1371,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v6.5.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v7.0.0...HEAD
+[7.0.0]: https://github.com/1898andCo/pennyfarthing/compare/v6.5.0...v7.0.0
 [6.5.0]: https://github.com/1898andCo/pennyfarthing/compare/v6.4.0...v6.5.0
 [6.4.0]: https://github.com/1898andCo/pennyfarthing/compare/v6.3.0...v6.4.0
 [6.3.0]: https://github.com/1898andCo/pennyfarthing/compare/v6.2.0...v6.3.0

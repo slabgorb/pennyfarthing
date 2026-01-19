@@ -5,11 +5,11 @@ description: Technical Writer - Documentation creation and maintenance
 <agent-activation>
 **FIRST:** Use Bash tool to run:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.claude/scripts/run.sh" agent-session.sh start "tech-writer"
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" agent-session.sh start "tech-writer"
 ```
 This finds the project root and loads your persona. Adopt the character shown in the output.
 
-Then load and follow `.claude/agents/tech-writer.md`
+Then load and follow `.pennyfarthing/agents/tech-writer.md`
 </agent-activation>
 
 <agent-exit>
@@ -46,7 +46,7 @@ Documentation specialist who creates and maintains clear, accurate technical doc
 </key-workflows>
 
 <reference>
-- **Agent:** `.claude/agents/tech-writer.md`
+- **Agent:** `.pennyfarthing/agents/tech-writer.md`
 - **Sidecar:** `.claude/project/agents/tech-writer-sidecar/`
 - **Skills:** `/architecture`, `/documentation-patterns`
 - **Docs Locations:** `API/docs/`, `UI/docs/`

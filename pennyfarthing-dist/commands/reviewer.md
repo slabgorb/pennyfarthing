@@ -5,11 +5,11 @@ description: Code Reviewer - Critical code review and quality enforcement
 <agent-activation>
 **FIRST:** Use Bash tool to run:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.claude/scripts/run.sh" agent-session.sh start "reviewer"
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" agent-session.sh start "reviewer"
 ```
 This finds the project root and loads your persona. Adopt the character shown in the output.
 
-Then load and follow `.claude/agents/reviewer.md`
+Then load and follow `.pennyfarthing/agents/reviewer.md`
 </agent-activation>
 
 <agent-exit>
@@ -57,7 +57,7 @@ Adversarial code reviewer who demands excellence and prevents flawed code from s
 </responsibilities>
 
 <reference>
-- **Agent:** `.claude/agents/reviewer.md`
+- **Agent:** `.pennyfarthing/agents/reviewer.md`
 - **Sidecar:** `.claude/project/agents/reviewer-sidecar/`
 - **Skills:** `/code-review`, `/testing`, `/architecture`
 - **Subagents:** `reviewer-preflight.md`, `reviewer-handoff-approve.md`, `reviewer-handoff-reject.md`

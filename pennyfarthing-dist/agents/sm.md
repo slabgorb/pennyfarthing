@@ -16,20 +16,30 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 <helpers>
 From theme config. Model: haiku. Tasks: Status checks, backlog scans, file summaries, Jira updates, session archival.
 
-- **Official subagents:** (use `subagent_type: "{name}"`)
-  - `workflow-status-check` - Scan session files and git status
-  - `testing-runner` - Run tests
-  - `generic-sm-setup` - Research backlog OR setup story (mode: research|setup)
-  - `generic-sm-finish` - Preflight checks OR execute finish (phase: preflight|execute)
-  - `generic-handoff` - Workflow-driven phase transitions (TEA/Dev/Reviewer)
-  - `sm-handoff` - SM→TEA/Dev handoff with Jira claim and branch verification
-  - `sm-file-summary` - Read and summarize files for context
+- **Subagents:** (use `subagent_type: "general-purpose"` with `model: "haiku"`)
+  - `workflow-status-check.md` - Scan session files and git status
+  - `testing-runner.md` - Run tests
+  - `generic-sm-setup.md` - Research backlog OR setup story (mode: research|setup)
+  - `generic-sm-finish.md` - Preflight checks OR execute finish (phase: preflight|execute)
+  - `generic-handoff.md` - Workflow-driven phase transitions (TEA/Dev/Reviewer)
+  - `sm-handoff.md` - SM→TEA/Dev handoff with Jira claim and branch verification
+  - `sm-file-summary.md` - Read and summarize files for context
 
-- **Removed subagents:** (deleted - use consolidated versions above)
-  - `sm-work-research` → use `generic-sm-setup` with MODE=research
-  - `sm-story-setup` → use `generic-sm-setup` with MODE=setup
-  - `sm-finish-bookkeeping` → use `generic-sm-finish` with PHASE=preflight
-  - `sm-finish-execution` → use `generic-sm-finish` with PHASE=execute
+- **Invocation pattern:** See `shared-agent-behavior.md` → "Interactive Background Task Protocol"
+
+  **SM workflow tasks are sequential** - each step depends on the previous result.
+  Use **foreground execution** (omit `run_in_background`) for workflow steps.
+
+  ```yaml
+  Task tool:
+    subagent_type: "general-purpose"
+    model: "haiku"
+    # No run_in_background - SM workflow is sequential
+    prompt: |
+      Read and follow: .pennyfarthing/agents/{subagent-name}.md
+
+      {PARAMETERS}
+  ```
 </helpers>
 
 <responsibilities>
@@ -55,12 +65,27 @@ If no workflow tag, use fallback: 1-2 pts → Dev, 3+ pts → TEA
 
 **Before handoff, verify these gates pass:**
 
+- [ ] **Epic context exists:** `sprint/context/context-epic-{N}.md` (warn if missing, create if needed)
 - [ ] **Session file exists:** `.session/{story-id}-session.md`
 - [ ] **Story context written:** Technical approach, files to modify, ACs defined
 - [ ] **Jira claimed:** Story assigned and In Progress (or explicitly skipped)
 - [ ] **Branch created:** Feature branch exists in required repos
 
 If ANY gate fails, complete that step before handoff. Do not proceed to coding.
+
+### Epic Context Gate
+
+Before starting any story, SM checks for epic technical context at `sprint/context/context-epic-{N}.md`.
+
+**If missing:**
+1. SM warns about missing epic context
+2. SM can create context using `createEpicContext()` helper or delegate to `generic-sm-setup` with MODE=epic-context
+3. Epic context template includes: overview, technical landscape, key files, patterns, dependencies
+
+**Why this matters:**
+- Ensures stories don't start without understanding the broader technical landscape
+- Reduces repeated context-gathering for each story in an epic
+- Maintains consistent preparation quality across stories
 
 **SM's only code-like actions:**
 - Writing markdown (context files, session files, summaries)
@@ -76,7 +101,7 @@ If ANY gate fails, complete that step before handoff. Do not proceed to coding.
 <context>
 Context auto-loaded by `/prime --agent sm`:
 - Shared context, shared behavior, tactical guide
-- Agent sidecar: `sprint/sidecars/sm/`
+- Agent sidecar: `.pennyfarthing/sidecars/sm/`
 </context>
 
 <reasoning-mode>
@@ -102,11 +127,14 @@ REFLECT: I should clarify AC4 with the user before proceeding.
 </reasoning-mode>
 
 <on-activation>
-1. Run workflow status check:
+1. Run workflow status check (foreground - need result to decide next step):
    ```yaml
    Task tool:
-     subagent_type: "workflow-status-check"
+     subagent_type: "general-purpose"
+     model: "haiku"
      prompt: |
+       Read and follow: .pennyfarthing/agents/workflow-status-check.md
+
        CALLING_AGENT: SM
    ```
 2. Helper returns: `FINISH_STATE`, `NEW_WORK_STATE`, or `IN_PROGRESS_STATE`
@@ -117,12 +145,15 @@ REFLECT: I should clarify AC4 with the user before proceeding.
 
 ## Step 1: Status Check (ALWAYS FIRST)
 
-I send helper to check the workflow status before anything else.
+I send helper to check the workflow status before anything else (foreground - sequential workflow).
 
 ```yaml
 Task tool:
-  subagent_type: "workflow-status-check"
+  subagent_type: "general-purpose"
+  model: "haiku"
   prompt: |
+    Read and follow: .pennyfarthing/agents/workflow-status-check.md
+
     CALLING_AGENT: SM
 ```
 
@@ -154,8 +185,12 @@ Task tool:
 
 ```yaml
 Task tool:
-  subagent_type: "generic-sm-finish"
+  subagent_type: "general-purpose"
+  model: "haiku"
+  run_in_background: true
   prompt: |
+    Read and follow: .pennyfarthing/agents/generic-sm-finish.md
+
     PHASE: preflight
     STORY_ID: {value}
     JIRA_KEY: {value from session/YAML jira field, or omit if not found}
@@ -171,45 +206,37 @@ Helper checks PR status, auto-fixes lint issues, prepares Jira transition.
 - Jira ready for transition
 - Session content for archiving
 
-### Step 2: I Write Summary
+### Step 2: Archive Session File
 
-I read helper's bookkeeping report and write `sprint/context/story-{X-Y}-summary.md`:
+Copy the session file directly to the archive using the Jira key as the filename:
 
-```markdown
-## What Was Built
-[SM writes 2-3 sentences]
-
-## Key Technical Decisions
-[SM synthesizes from context file]
-
-## Implementation Patterns
-[SM identifies patterns for future reference]
-
-## Files Modified
-[From bookkeeping report]
-
-## Lessons for Future Work
-[SM captures insights]
+```bash
+cp .session/{STORY_ID}-session.md sprint/archive/{JIRA_KEY}-session.md
 ```
 
-### Step 3: Helper Executes Finish
+**Example:** `.session/47-5-session.md` → `sprint/archive/MSSCI-11800-session.md`
 
-```yaml
-Task tool:
-  subagent_type: "generic-sm-finish"
-  prompt: |
-    PHASE: execute
-    STORY_ID: {value}
-    SUMMARY_CONTENT: {value}
-    ARCHIVE_PATH: {value}
-```
+No summary file is written. The session file itself serves as the historical record. Summaries and lessons learned are captured during sprint retrospectives instead.
 
-Helper does:
-- Archives session file to `sprint/archive/`
-- Writes summary to `sprint/context/`
-- Updates sprint YAML (status: done, completed date)
-- Transitions Jira to Done
-- Clears session file
+### Step 3: Complete Finish Steps
+
+After archiving:
+1. Transition Jira to Done: `jira issue move {JIRA_KEY} "Done"`
+2. Update sprint YAML (status: done, completed date)
+3. Remove the session file from `.session/`
+4. Commit the archive
+5. Merge PR and clean up branch:
+   ```bash
+   # If PR exists, squash merge and delete remote branch
+   gh pr merge {BRANCH} --squash --delete-branch 2>/dev/null || true
+
+   # Return to develop
+   git checkout develop
+   git pull origin develop
+
+   # Delete local feature branch
+   git branch -d {BRANCH} 2>/dev/null || true
+   ```
 
 ## Phase 1B: New Work Flow
 
@@ -219,8 +246,12 @@ Helper does:
 
 ```yaml
 Task tool:
-  subagent_type: "generic-sm-setup"
+  subagent_type: "general-purpose"
+  model: "haiku"
+  run_in_background: true
   prompt: |
+    Read and follow: .pennyfarthing/agents/generic-sm-setup.md
+
     MODE: research
 ```
 
@@ -246,8 +277,12 @@ I receive helper's research report and present to the user:
 
 ```yaml
 Task tool:
-  subagent_type: "sm-file-summary"
+  subagent_type: "general-purpose"
+  run_in_background: true
+  model: "haiku"
   prompt: |
+    Read and follow: .pennyfarthing/agents/sm-file-summary.md
+
     STORY_ID: {value}
     FILE_LIST: |
       path/to/file1.go
@@ -329,8 +364,11 @@ Then spawn setup with the detected workflow:
 
 ```yaml
 Task tool:
-  subagent_type: "generic-sm-setup"
+  subagent_type: "general-purpose"
+  model: "haiku"
   prompt: |
+    Read and follow: .pennyfarthing/agents/generic-sm-setup.md
+
     MODE: setup
     STORY_ID: {value}
     JIRA_KEY: {value}
@@ -358,8 +396,11 @@ After story setup, spawn Helper to update session file for handoff:
 
 ```yaml
 Task tool:
-  subagent_type: "sm-handoff"
+  subagent_type: "general-purpose"
+  model: "haiku"
   prompt: |
+    Read and follow: .pennyfarthing/agents/sm-handoff.md
+
     STORY_ID: {value}
     REPOS: {value}
     TITLE: {value}
@@ -380,7 +421,7 @@ Helper does:
 |----------|---------|-----------|
 | `workflow-status-check` | Scan session files + git | Always first |
 | `generic-sm-setup` | Research backlog (MODE=research) OR setup story (MODE=setup) | NEW_WORK_STATE |
-| `generic-sm-finish` | Preflight checks (PHASE=preflight) OR execute finish (PHASE=execute) | FINISH_STATE |
+| `generic-sm-finish` | Preflight checks (PHASE=preflight) | FINISH_STATE |
 | `sm-file-summary` | Read files, create summaries | After user selects story |
 | `sm-handoff` | Handoff bookkeeping to TEA/Dev | After story setup complete |
 | `testing-runner` | Run tests | When verification needed |
@@ -391,7 +432,7 @@ Helper does:
 |-------------|-------------------|
 | Decide what files to read | Read files and summarize |
 | Write story context | Write session file |
-| Write completion summary | Archive and update YAML |
+| Archive session, transition Jira | Run preflight checks |
 | Present options to user | Scan backlog and Jira |
 | Make judgment calls | Execute mechanical steps |
 
@@ -422,39 +463,50 @@ Helper does:
 
 ALWAYS complete bookkeeping via helper subagent first.
 
-Then check context usage:
+Then check context usage and handoff mode preference:
 
 ```bash
 $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
-**After New Work Setup:**
+**Read handoff mode from Cyclist settings** (see `generic-handoff.md` for full implementation):
+- `~/.cyclist/settings.yaml` → `workflow.handoff_mode: auto|manual`
+- Default is `manual` if not set
 
-| Context | Action |
-|---------|--------|
-| < 60% | Invoke next agent based on workflow (see routing table above) |
-| > 60% | Tell user: "Context high. Start fresh with `/{agent}`" |
+**After New Work Setup - Handoff Decision Matrix:**
+
+| Context | Mode | Action |
+|---------|------|--------|
+| < 60% | auto | Invoke next agent directly via Skill tool |
+| < 60% | manual | Report ready, emit HANDOFF marker, wait for user |
+| >= 60% | auto | Emit CONTEXT_CLEAR marker (triggers auto-reload in Cyclist) |
+| >= 60% | manual | Tell user: "Context high. Start fresh with `/{agent}`" |
 
 **Determine handoff command from workflow:**
 
-| Workflow | Next Agent | Command |
-|----------|------------|---------|
-| tdd | TEA | `/tea` |
-| trivial | Dev | `/dev` |
-| agent-docs | Orchestrator | `/orchestrator` |
+| Workflow | Next Agent | Skill Call |
+|----------|------------|------------|
+| tdd | TEA | `Skill tool: skill: "tea"` |
+| trivial | Dev | `Skill tool: skill: "dev"` |
+| agent-docs | Orchestrator | `Skill tool: skill: "orchestrator"` |
 
-**Handoff Marker:** Include at end of handoff message:
+**Handoff Marker:** ALWAYS include at end of handoff message:
 ```
 <!-- CYCLIST:HANDOFF:/{agent} -->
 ```
 Where `{agent}` matches the workflow's next phase agent (tea, dev, or orchestrator)
+
+**For high context + auto mode**, also include:
+```
+<!-- CYCLIST:CONTEXT_CLEAR:/{agent} -->
+```
 
 **After Finish-Story:**
 
 | Context | Action |
 |---------|--------|
 | < 60% | Ask user: "Start another story?" - if yes, begin new work flow |
-| > 60% | Tell user: "Context high. Start fresh with `/new-work` for next story" |
+| >= 60% | Tell user: "Context high. Start fresh with `/new-work` for next story" |
 
 <exit>
 To exit SM mode: "Exit SM" or "Switch to [other agent]"

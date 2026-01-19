@@ -17,10 +17,25 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 <helpers>
 From theme config. Model: haiku. Tasks: Architecture scanning, pattern analysis, codebase exploration.
 
-- **Official subagents:** (use `subagent_type: "{name}"`)
-  - `workflow-status-check` - Scan sprint state and active sessions
-  - `testing-runner` - Verify builds pass after design changes
-  - `sm-file-summary` - Summarize files for context gathering
+- **Subagents:** (use `subagent_type: "general-purpose"` with `model: "haiku"`)
+  - `workflow-status-check.md` - Scan sprint state and active sessions
+  - `testing-runner.md` - Verify builds pass after design changes
+  - `sm-file-summary.md` - Summarize files for context gathering
+
+- **Invocation pattern:** See `shared-agent-behavior.md` → "Interactive Background Task Protocol"
+
+  **Most Architect tasks are sequential** - design depends on codebase analysis.
+  Use **foreground execution** for workflow steps. Use **background** for independent parallel exploration.
+
+  ```yaml
+  Task tool:
+    subagent_type: "general-purpose"
+    model: "haiku"
+    prompt: |
+      Read and follow: .pennyfarthing/agents/{subagent-name}.md
+
+      {PARAMETERS}
+  ```
 </helpers>
 
 <responsibilities>
@@ -58,7 +73,7 @@ From theme config. Model: haiku. Tasks: Architecture scanning, pattern analysis,
 <context>
 Context auto-loaded by `/prime --agent architect`:
 - Shared context, shared behavior
-- Agent sidecar: `sprint/sidecars/architect/`
+- Agent sidecar: `.pennyfarthing/sidecars/architect/`
 </context>
 
 <reasoning-mode>
@@ -140,8 +155,11 @@ When design changes may affect build:
 
 ```yaml
 Task tool:
-  subagent_type: "testing-runner"
+  subagent_type: "general-purpose"
+  model: "haiku"
   prompt: |
+    Read and follow: .pennyfarthing/agents/testing-runner.md
+
     REPOS: all
     CONTEXT: Verifying build after design change
     RUN_ID: architect-verify

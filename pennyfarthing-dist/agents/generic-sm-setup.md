@@ -106,7 +106,37 @@ Execute mechanical setup steps for story {STORY_ID}.
 
 See `shared-agent-behavior.md` → Turn Efficiency Protocol for core patterns.
 
-## Step 1: Claim in Jira
+## Step 1: Check Epic Jira Status
+
+**CRITICAL:** Before claiming a story, verify the parent epic has a Jira key. If missing, create the epic in Jira first.
+
+```bash
+# Extract epic number from story ID (e.g., "36-2" → "36")
+EPIC_NUM=$(echo "{STORY_ID}" | cut -d'-' -f1)
+
+# Check if epic has jira field in sprint YAML
+EPIC_JIRA=$(yq eval ".epics[] | select(.id == \"epic-${EPIC_NUM}\" or .id == \"MSSCI-*\") | .jira" sprint/current-sprint.yaml)
+
+if [ -z "$EPIC_JIRA" ] || [ "$EPIC_JIRA" == "null" ]; then
+  echo "Epic ${EPIC_NUM} missing Jira key - auto-creating..."
+
+  # Auto-create epic in Jira (requires jira-epic-creation module)
+  # This will:
+  # 1. Create Jira epic with matching title/description
+  # 2. Update sprint YAML with new Jira key
+  # 3. Link story to epic automatically
+
+  # Implementation lives in packages/core/src/jira/jira-epic-creation.ts
+  # Called via Node.js script or integrated into workflow
+fi
+```
+
+**Exit codes:**
+- Epic has Jira key: Continue to story claim
+- Epic created successfully: Continue to story claim
+- Epic creation failed: STOP - manual intervention required
+
+## Step 2: Claim in Jira
 
 ```bash
 ./scripts/run.sh jira-claim-story.sh {JIRA_KEY} --claim
@@ -115,7 +145,7 @@ See `shared-agent-behavior.md` → Turn Efficiency Protocol for core patterns.
 - Exit 1: STOP - "Story assigned to someone else"
 - Exit 2: Continue (not synced to Jira)
 
-## Step 2: Write Session File
+## Step 3: Write Session File
 
 Path: `.session/{STORY_ID}-session.md`
 
@@ -156,7 +186,7 @@ Full session file structure:
 | setup | {NOW} | - | - |
 ```
 
-## Step 3: Create Branch
+## Step 4: Create Branch
 
 ```bash
 cd $CLAUDE_PROJECT_DIR && git checkout develop && git pull origin develop && \
@@ -168,18 +198,19 @@ For worktree mode:
 git worktree add {WORKTREE_PATH} -b feat/{STORY_ID}-{SLUG}
 ```
 
-## Step 4: Update Sprint YAML
+## Step 5: Update Sprint YAML
 
 ```bash
 # Add started and assigned_to fields to story in sprint YAML
 # Change status: backlog → status: in_progress
 ```
 
-## Step 5: Output Summary
+## Step 6: Output Summary
 
 ```markdown
 ## Setup Complete
 
+- [x] Epic Jira verified: {EPIC_JIRA_KEY}
 - [x] Jira claimed: {JIRA_KEY}
 - [x] Session file: `.session/{STORY_ID}-session.md`
 - [x] Branch: `feat/{STORY_ID}-{SLUG}`

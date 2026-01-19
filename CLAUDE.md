@@ -6,9 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Pennyfarthing is a Claude Code agent orchestration framework with TDD workflow and themed personas. It coordinates multiple AI agents (SM, TEA, Dev, Reviewer) through story-driven development cycles.
 
-**Version:** 4.0.0
+**Version:** 7.0.2
 **Node:** >=18.0.0
-**Type:** ES module with TypeScript
+**Type:** ES module with TypeScript (pnpm monorepo)
 
 ## Build Commands
 
@@ -26,11 +26,11 @@ npm run lint      # ESLint (requires separate install)
 
 ```
 pennyfarthing-dist/      # Single source of truth for all definitions
-├── agents/              # 10 main agents + 13 official subagents (consolidated)
-├── commands/            # 41 slash commands
+├── agents/              # 10 main agents + 8 official subagents
+├── commands/            # 43 slash commands
 ├── guides/              # Behavior guides
-├── skills/              # 11 knowledge domains
-├── personas/            # Themed agent personas (101 themes)
+├── skills/              # 21 knowledge domains
+├── personas/            # Themed agent personas (102 themes)
 └── scripts/             # Utility scripts
 
 src/                     # TypeScript CLI source
@@ -43,9 +43,20 @@ packages/cyclist/        # Cyclist visual terminal (monorepo package)
 ├── tests/               # Vitest tests (B-*.test.ts naming)
 └── package.json         # Cyclist-specific dependencies
 
-.claude/                 # Project's own Pennyfarthing setup (symlinks to pennyfarthing-dist/)
-sprint/                  # Sprint tracking (current-sprint.yaml, archive/, context/, sidecars/)
-├── sidecars/            # Agent learning files (patterns, gotchas, decisions per agent)
+.claude/                 # Claude Code discovery (minimal)
+├── commands/            # → symlinks to pennyfarthing-dist/commands
+├── skills/              # → symlinks to pennyfarthing-dist/skills
+└── project/             # Project-specific customizations
+
+.pennyfarthing/          # Pennyfarthing content (main location)
+├── agents/              # → symlink to pennyfarthing-dist/agents
+├── guides/              # → symlink to pennyfarthing-dist/guides
+├── personas/            # → symlink to pennyfarthing-dist/personas
+├── scripts/             # → symlink to pennyfarthing-dist/scripts
+├── sidecars/            # Agent learning files (patterns, gotchas, decisions)
+└── config.local.yaml    # Theme configuration
+
+sprint/                  # Sprint tracking (current-sprint.yaml, archive/, context/)
 .session/                # Active work sessions ({story-id}-session.md)
 ```
 
@@ -96,7 +107,7 @@ Subagents use Claude Code's Task tool with `subagent_type`. Key subagents:
 | `.pennyfarthing/config.local.yaml` | Theme selection (use `/theme` skill) |
 | `sprint/current-sprint.yaml` | Active sprint and story tracking |
 | `.session/{story-id}-session.md` | Active work context |
-| `scripts/utils/` | Resilience utilities (retry.sh, checkpoint.sh, repo-scan.sh) |
+| `pennyfarthing-dist/scripts/utils/` | Resilience utilities (retry.sh, checkpoint.sh, repo-scan.sh) |
 
 ## CLI Commands (for users)
 
@@ -110,3 +121,36 @@ pennyfarthing uninstall      # Remove from project
 ## Persona System
 
 Agents use themed personas for character and style. See `.claude/skills/theme/skill.md` for theme management.
+
+## Jira Integration
+
+Pennyfarthing integrates with Jira for sprint and story tracking. Key capabilities:
+
+### Epic Auto-Creation (PR #315)
+- SM setup automatically creates Jira epics when a local epic lacks a `jira` field
+- Epic creation uses `packages/core/src/jira/jira-epic-creation.ts`
+- Updates sprint YAML atomically with new Jira key
+- Enables seamless story workflow without manual Jira setup
+
+### Bidirectional Sync (PR #322)
+- `jira-bidirectional-sync.mjs` syncs status, points, and stories between sprint YAML and Jira
+- Dry-run mode shows changes before applying
+- Supports both YAML→Jira and Jira→YAML updates
+- Handles new stories, status transitions, and story point updates
+
+### Sprint Integration (PR #316, #317)
+- Sprint YAML references Jira sprint ID for membership queries
+- Status checks query Jira sprint for velocity metrics
+- Scripts detect stories in Jira but missing from YAML
+
+See `pennyfarthing-dist/skills/jira/skill.md` for detailed CLI commands and workflows.
+
+## Cyclist Internal Codenames
+
+The Cyclist visual terminal uses bicycle-themed internal codenames:
+
+| Codename | Component | Description |
+|----------|-----------|-------------|
+| **WheelHub** | `packages/cyclist/src/server.ts` | Central coordination server - the hub where all communication converges (API, WebSocket, OTLP) |
+| **TirePump** | Context clearing system | The complete context clear-and-reload system - clears the session, resets stats, and reloads the current agent when context runs low |
+| **JobFair** | Character benchmarking | Discovers which theme characters excel at each role by running them against benchmarks - finds hidden talents across the cast |

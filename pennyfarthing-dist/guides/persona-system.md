@@ -170,7 +170,7 @@ overrides:
 ```yaml
 overrides:
   dev:
-    custom: my-custom-dev.yaml  # In .claude/personas/custom/
+    custom: my-custom-dev.yaml  # In .pennyfarthing/personas/custom/
 ```
 
 ### Override Attributes for One Agent
@@ -189,7 +189,7 @@ overrides:
 
 1. Copy an existing theme as template:
    ```bash
-   cp .claude/personas/themes/discworld.yaml .claude/personas/themes/my-theme.yaml
+   cp .pennyfarthing/personas/themes/discworld.yaml .pennyfarthing/personas/themes/my-theme.yaml
    ```
 
 2. Edit the theme file with your characters
@@ -226,7 +226,7 @@ agents:
 
 For individual agent customization without a full theme.
 
-1. Create file in `.claude/personas/custom/`:
+1. Create file in `.pennyfarthing/personas/custom/`:
    ```yaml
    # my-custom-dev.yaml
    character: My Custom Character
@@ -250,7 +250,7 @@ For individual agent customization without a full theme.
 ## How It Works
 
 1. Agent activation reads `.claude/persona-config.yaml`
-2. Loads base theme from `.claude/personas/themes/{theme}.yaml`
+2. Loads base theme from `.pennyfarthing/personas/themes/{theme}.yaml`
 3. Checks for per-agent overrides
 4. Applies attribute modifiers
 5. Agent embodies the resulting persona

@@ -136,23 +136,26 @@ describe('Story 15-1: Cyclist Launcher Command', () => {
       assert.strictEqual(result.theme, 'enlightenment-thinkers', 'Should read theme from config');
     });
 
-    it('should prefer local config over shared config', () => {
-      // Follows existing pattern from themes.test.ts
+    it('should prefer .pennyfarthing/config.local.yaml over shared config', () => {
+      // .pennyfarthing/config.local.yaml takes precedence over .claude/persona-config.yaml
       const sharedConfig = { theme: 'discworld' };
       const localConfig = { theme: 'star-trek' };
+
+      const pennyfarthingDir = join(testDir, '.pennyfarthing');
+      mkdirSync(pennyfarthingDir, { recursive: true });
 
       writeFileSync(
         join(claudeDir, 'persona-config.yaml'),
         yamlStringify(sharedConfig)
       );
       writeFileSync(
-        join(claudeDir, 'persona-config.local.yaml'),
+        join(pennyfarthingDir, 'config.local.yaml'),
         yamlStringify(localConfig)
       );
 
       const result = loadThemeConfig(testDir);
 
-      assert.strictEqual(result.theme, 'star-trek', 'Should prefer local config');
+      assert.strictEqual(result.theme, 'star-trek', 'Should prefer .pennyfarthing/config.local.yaml');
     });
 
     it('should return default theme when no config exists', () => {

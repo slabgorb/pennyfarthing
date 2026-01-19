@@ -75,37 +75,30 @@ Based on the gate type from the workflow, run the appropriate checks.
 
 2. **Tests are RED (failing as expected):**
 
-   First check test cache (Story 31-8):
+   First check test cache:
    ```bash
+   source $CLAUDE_PROJECT_DIR/scripts/utils/test-cache.sh
    SESSION_FILE="$CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md"
-   CURRENT_SHA=$(cd $CLAUDE_PROJECT_DIR && git rev-parse HEAD)
 
-   if grep -q "^## Test Cache" "$SESSION_FILE" 2>/dev/null; then
-       CACHE_SHA=$(grep "| Git SHA |" "$SESSION_FILE" | sed 's/.*| //' | sed 's/ |$//' | xargs)
-       if [[ "$CACHE_SHA" == "$CURRENT_SHA" ]]; then
-           CACHE_RESULT=$(grep "| Result |" "$SESSION_FILE" | sed 's/.*| //' | sed 's/ |$//' | xargs)
-           CACHE_TIME=$(grep "| Last Run |" "$SESSION_FILE" | sed 's/.*| //' | sed 's/ |$//' | xargs)
-           CACHE_EPOCH=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$CACHE_TIME" +%s 2>/dev/null || date -d "$CACHE_TIME" +%s 2>/dev/null || echo 0)
-           NOW_EPOCH=$(date +%s)
-           AGE_MINUTES=$(( (NOW_EPOCH - CACHE_EPOCH) / 60 ))
-
-           if [[ $AGE_MINUTES -lt 5 ]]; then
-               echo "Using cached test result: $CACHE_RESULT (${AGE_MINUTES}m old)"
-               if [[ "$CACHE_RESULT" == "RED" ]]; then
-                   echo "✓ Tests are RED (cached) - ready for Dev"
-               else
-                   echo "✗ Tests are GREEN - should be RED. STOP."
-               fi
-           fi
+   if test_cache_valid "$SESSION_FILE"; then
+       CACHED_RESULT=$(test_cache_get "$SESSION_FILE" "result")
+       echo "Using cached test result: $CACHED_RESULT"
+       if [[ "$CACHED_RESULT" == "RED" ]]; then
+           echo "✓ Tests are RED (cached) - ready for Dev"
+       else
+           echo "✗ Tests are GREEN - should be RED. STOP."
        fi
    fi
    ```
 
-   If no valid cache or TEST_RESULT not provided, delegate to testing-runner:
+   If no valid cache or TEST_RESULT not provided, delegate to testing-runner (foreground - need result for handoff):
    ```yaml
    Task tool:
-     subagent_type: "testing-runner"
+     subagent_type: "general-purpose"
+     model: "haiku"
      prompt: |
+       Read and follow: .pennyfarthing/agents/testing-runner.md
+
        REPOS: {REPOS}
        CONTEXT: TEA handoff - verify tests are RED
        RUN_ID: {STORY_ID}-tea-handoff
@@ -130,39 +123,28 @@ Run ALL checks and STOP if any fail:
 
 1. **Quality gate checks pass:**
 
-   First check test cache (Story 31-8):
+   First check test cache:
    ```bash
+   source $CLAUDE_PROJECT_DIR/scripts/utils/test-cache.sh
    SESSION_FILE="$CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md"
-   CURRENT_SHA=$(cd $CLAUDE_PROJECT_DIR && git rev-parse HEAD)
 
    USE_CACHED_TESTS=false
-   if grep -q "^## Test Cache" "$SESSION_FILE" 2>/dev/null; then
-       CACHE_SHA=$(grep "| Git SHA |" "$SESSION_FILE" | sed 's/.*| //' | sed 's/ |$//' | xargs)
-       CACHE_RESULT=$(grep "| Result |" "$SESSION_FILE" | sed 's/.*| //' | sed 's/ |$//' | xargs)
-       CACHE_TIME=$(grep "| Last Run |" "$SESSION_FILE" | sed 's/.*| //' | sed 's/ |$//' | xargs)
-
-       if [[ "$CACHE_SHA" == "$CURRENT_SHA" ]]; then
-           CACHE_EPOCH=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$CACHE_TIME" +%s 2>/dev/null || date -d "$CACHE_TIME" +%s 2>/dev/null || echo 0)
-           NOW_EPOCH=$(date +%s)
-           AGE_MINUTES=$(( (NOW_EPOCH - CACHE_EPOCH) / 60 ))
-
-           if [[ $AGE_MINUTES -lt 5 ]]; then
-               echo "✓ Using cached test result: $CACHE_RESULT (${AGE_MINUTES}m old)"
-               if [[ "$CACHE_RESULT" == "GREEN" ]]; then
-                   echo "✓ Tests passed (cached) - skipping redundant run"
-                   USE_CACHED_TESTS=true
-               elif [[ "$CACHE_RESULT" == "RED" ]]; then
-                   echo "✗ Cached tests show failures - STOP"
-                   # Report failure, don't proceed
-               fi
-           fi
+   if test_cache_valid "$SESSION_FILE"; then
+       CACHED_RESULT=$(test_cache_get "$SESSION_FILE" "result")
+       echo "Using cached test result: $CACHED_RESULT"
+       if [[ "$CACHED_RESULT" == "GREEN" ]]; then
+           echo "✓ Tests passed (cached) - skipping redundant run"
+           USE_CACHED_TESTS=true
+       elif [[ "$CACHED_RESULT" == "RED" ]]; then
+           echo "✗ Cached tests show failures - STOP"
+           # Report failure, don't proceed
        fi
    fi
    ```
 
    If cache valid and GREEN, skip test execution. Otherwise run full quality gate:
    ```bash
-   $CLAUDE_PROJECT_DIR/.claude/scripts/check.sh
+   $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check.sh
    ```
    If exit code non-zero: **STOP** - "Quality checks failed. Dev must fix issues before handoff."
 
@@ -311,7 +293,7 @@ After gate passes, check context usage to determine how to proceed:
 
 ```bash
 # Run context check script
-CONTEXT_OUTPUT=$($CLAUDE_PROJECT_DIR/.claude/scripts/check-context.sh 2>/dev/null)
+CONTEXT_OUTPUT=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check-context.sh 2>/dev/null)
 eval "$CONTEXT_OUTPUT"
 
 # CONTEXT_PERCENT and CONTEXT_STATUS are now set
@@ -348,13 +330,29 @@ fi
 |---------|------|--------|
 | OK (<60%) | auto | Invoke next agent directly |
 | OK (<60%) | manual | Report ready, user invokes next agent |
-| HIGH (>=60%) | auto | Report: "Context high. Start fresh with /{next_agent}" |
+| HIGH (>=60%) | auto | Emit CONTEXT_CLEAR marker (triggers auto-reload in Cyclist) |
 | HIGH (>=60%) | manual | Report: "Context high. Start fresh with /{next_agent}" |
 
 **Include in report:**
 - Context percentage and token count
 - Handoff mode setting
 - Whether direct invocation is recommended
+
+### CONTEXT_CLEAR Marker (MSSCI-11840)
+
+When context is HIGH (>=60%) and handoff_mode is "auto", emit both markers:
+
+```
+<!-- CYCLIST:HANDOFF:/{NEXT_AGENT_COMMAND} -->
+<!-- CYCLIST:CONTEXT_CLEAR:/{NEXT_AGENT_COMMAND} -->
+```
+
+The CONTEXT_CLEAR marker triggers Cyclist to automatically:
+1. Clear the current session
+2. Reload with the specified agent command
+
+**IMPORTANT:** The value after `CONTEXT_CLEAR:` MUST include the agent command (e.g., `/sm`, `/dev`).
+The marker format is `<!-- CYCLIST:CONTEXT_CLEAR:/agent -->` - both colons are required.
 
 ## Step 7: Report Result
 
@@ -443,7 +441,7 @@ These handoffs are replaced by generic-handoff:
 | Old Subagent | CURRENT_PHASE | ASSESSMENT_SECTION | Gate | Key Checks |
 |--------------|---------------|-------------------|------|------------|
 | tea-handoff | red | TEA Assessment | tests_fail | Tests committed, tests RED |
-| dev-handoff | green/implement | Dev Assessment | tests_pass | Quality gates, git clean, pushed, PR exists |
+| dev-handoff | green/impl | Dev Assessment | tests_pass | Quality gates, git clean, pushed, PR exists |
 | reviewer-handoff-approve | review | Reviewer Assessment | approval | Verdict = APPROVED |
 | reviewer-handoff-reject | review | Reviewer Assessment | approval | Verdict = REJECTED |
 

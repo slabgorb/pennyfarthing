@@ -104,5 +104,5 @@ The CLI can auto-fix:
 - **CLI:** `pennyfarthing doctor`, `pennyfarthing update`
 - **Manifest:** `.claude/manifest.json` (tracks version and file hashes)
 - **Source:** `.claude/pennyfarthing/` (managed files)
-- **Symlinks:** `.claude/agents/`, `.claude/commands/`, etc.
+- **Symlinks:** `.pennyfarthing/agents/`, `.claude/commands/`, etc.
 </reference>
