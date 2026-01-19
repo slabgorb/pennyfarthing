@@ -550,7 +550,9 @@ epics:
         title: Modernize Tech Writer agent for custom workflows
         points: 2
         priority: P3
-        status: backlog
+        status: in_progress
+        assigned_to: Keith Avery
+        started: 2026-01-19T00:00:00Z
         repos: pennyfarthing
         workflow: agent-docs
         acceptance_criteria:
