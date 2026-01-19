@@ -21,6 +21,73 @@
 const toolUseCache = new Map();
 
 // =============================================================================
+// Helpers
+// =============================================================================
+
+/**
+ * Extract filename from a path
+ * @param {string} path - Full file path
+ * @returns {string} Just the filename
+ */
+function extractFilename(path) {
+  if (!path) return '';
+  const parts = path.split('/');
+  return parts[parts.length - 1] || path;
+}
+
+/**
+ * Generate a human-readable summary for a tool invocation
+ * @param {string} toolName - Name of the tool
+ * @param {object} input - Tool input parameters
+ * @returns {string} Summary string for display
+ */
+function generateToolSummary(toolName, input) {
+  if (!input) return toolName;
+
+  switch (toolName) {
+    case 'Read':
+      return extractFilename(input.file_path) || 'Read';
+
+    case 'Write':
+      return extractFilename(input.file_path) || 'Write';
+
+    case 'Edit':
+      return extractFilename(input.file_path) || 'Edit';
+
+    case 'Glob':
+      return input.pattern || 'Glob';
+
+    case 'Grep':
+      return input.pattern || 'Grep';
+
+    case 'Bash':
+      // Handled separately with bash_command
+      return input.command || 'Bash';
+
+    case 'Task':
+      return input.description || 'Task';
+
+    case 'WebFetch':
+      return input.url ? new URL(input.url).hostname : 'WebFetch';
+
+    case 'WebSearch':
+      return input.query || 'WebSearch';
+
+    case 'TodoWrite':
+      return 'TodoWrite';
+
+    case 'AskUserQuestion':
+      return 'Question';
+
+    case 'NotebookEdit':
+      return extractFilename(input.notebook_path) || 'NotebookEdit';
+
+    default:
+      return toolName;
+  }
+}
+
+// =============================================================================
 // Public API
 // =============================================================================
 
@@ -53,10 +120,11 @@ export function enrichMessage(message) {
       return message;
     }
 
-    // Create enriched copy with tool_name
+    // Create enriched copy with tool_name and summary
     const enriched = {
       ...message,
       tool_name: toolUseData.tool_name,
+      tool_summary: generateToolSummary(toolUseData.tool_name, toolUseData.input),
     };
 
     // Add Bash-specific enrichment
