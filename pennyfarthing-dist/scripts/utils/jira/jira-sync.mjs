@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * jira-sync.mjs - Sync Conductor Epic to Jira
+ * jira-sync.mjs - Sync Pennyfarthing Epic to Jira
  *
  * Usage: node jira-sync.mjs <epic_number> [--dry-run] [--transition] [--points]
  *
  * Options:
  *   --dry-run      Show what would be done without making changes
- *   --transition   Transition Jira issues to match Conductor status
- *   --points       Sync story points from Conductor to Jira
+ *   --transition   Transition Jira issues to match Pennyfarthing status
+ *   --points       Sync story points from Pennyfarthing to Jira
  */
 
 import {
@@ -154,7 +154,7 @@ for (const story of stories) {
   const targetStatus = mapStatusToJira(storyStatus);
 
   console.log(`  Jira Status: ${jiraStatus} (target: ${targetStatus})`);
-  if (storyPoints) console.log(`  Points: Conductor=${storyPoints}, Jira=${jiraPoints || 'unset'}`);
+  if (storyPoints) console.log(`  Points: Pennyfarthing=${storyPoints}, Jira=${jiraPoints || 'unset'}`);
 
   // Transition if requested
   if (doTransition) {

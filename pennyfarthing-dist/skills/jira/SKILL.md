@@ -7,7 +7,7 @@ description: Jira CLI commands for sprint management. Use when viewing, assignin
 
 ## Overview
 
-This skill covers using `jira` (ankitpokhrel/jira) for Jira integration. The examples below use Conductor project settings - update PROJECT_KEY and PROJECT_LABEL for your project.
+This skill covers using `jira` (ankitpokhrel/jira) for Jira integration. The examples below use Pennyfarthing project settings - update PROJECT_KEY and PROJECT_LABEL for your project.
 
 ## CRITICAL: Never Guess Jira IDs
 
@@ -40,12 +40,12 @@ Configure these in your project's `.claude/project/hooks/setup-env.sh`:
 
 ```bash
 export JIRA_PROJECT_KEY="MSSCI"    # Your Jira project key
-export PROJECT_LABEL="conductor"   # Label for filtering issues (defaults to PROJECT_NAME)
+export PROJECT_LABEL="Pennyfarthing"   # Label for filtering issues (defaults to PROJECT_NAME)
 ```
 
 The `PROJECT_LABEL` is used to tag Jira issues created by the sync scripts. If not set, it defaults to `PROJECT_NAME`.
 
-Example settings (Conductor project):
+Example settings (Pennyfarthing project):
 - **Project Key:** `MSSCI`
 - **Label:** `$PROJECT_LABEL` (or `$PROJECT_NAME` if not set)
 - **Config file:** `~/.config/.jira/.config.yml`
@@ -257,7 +257,7 @@ Syncs all stories in an epic to Jira. Shows status, optionally transitions issue
 # Dry run - show what would happen without making changes
 ./.pennyfarthing/scripts/run.sh jira-sync.sh 24 --dry-run
 
-# Sync status (transition issues to match Conductor status)
+# Sync status (transition issues to match Pennyfarthing status)
 ./.pennyfarthing/scripts/run.sh jira-sync.sh 24 --transition
 
 # Sync both status and story points
@@ -272,7 +272,7 @@ Syncs a single story to Jira with more detailed output.
 # Show story status in Jira
 ./.pennyfarthing/scripts/run.sh jira-sync-story.sh 24-1
 
-# Transition to match Conductor status
+# Transition to match Pennyfarthing status
 ./.pennyfarthing/scripts/run.sh jira-sync-story.sh 24-1 --transition
 
 # Sync story points

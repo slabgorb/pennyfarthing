@@ -34,8 +34,8 @@ Worktree info is stored INSIDE the session file, not in the filename.
 ```
 worktrees/
 └── wt-5-3a/
-    ├── conductor-api/    # API repo worktree
-    └── conductor-ui/     # UI repo worktree
+    ├── Pennyfarthing-api/    # API repo worktree
+    └── Pennyfarthing-ui/     # UI repo worktree
 ```
 
 ### Session File Format

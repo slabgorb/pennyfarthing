@@ -172,9 +172,9 @@ update_issue "MSSCI-10988" "New Title" "New Description"
 
 ## Status Transition Automation
 
-### Conductor-to-Jira Mapping
+### Pennyfarthing-to-Jira Mapping
 
-| Conductor Status | Jira Status |
+| Pennyfarthing Status | Jira Status |
 |------------------|-------------|
 | backlog | To Do |
 | in-progress | In Progress |
