@@ -16,7 +16,7 @@ export const EDITOR_OPTIONS = {
     attributes: {
       class: 'prose prose-invert max-w-none focus:outline-none',
       spellcheck: 'true',
-      autocomplete: 'on',
+      lang: 'en',
     },
   },
 };
@@ -58,9 +58,3 @@ export const IMAGE_WARN_SIZE_BYTES = 5 * 1024 * 1024;
 /** Maximum allowed image size (20MB) - block paste */
 export const IMAGE_MAX_SIZE_BYTES = 20 * 1024 * 1024;
 
-// ============================================================================
-// Ghost Text Suggestions
-// ============================================================================
-
-/** Default ghost text when no context available */
-export const DEFAULT_GHOST_TEXT = 'Ask Claude anything...';
