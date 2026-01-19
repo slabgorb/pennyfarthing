@@ -286,9 +286,11 @@ epics:
         title: "Prompt suggestion pill instead of blocking bar"
         points: 2
         priority: P1
-        status: in_progress
+        status: done
         assigned_to: Keith Avery
         started: 2026-01-19T22:00:00Z
+        completed: 2026-01-19
+        pr: 356
         repos: cyclist
         workflow: trivial
         description: |
