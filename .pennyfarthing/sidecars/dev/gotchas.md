@@ -92,6 +92,18 @@ If fonts still don't work after settings change:
 | `settings.ts` | Settings schema and persistence |
 | `preload.ts:577` | Exposes `settings.get` to renderer |
 
+## Remove Unused Code
+
+When code becomes unused (constants, functions, imports), **delete it immediately**. Don't ask, just remove it.
+
+## Tool IDs Are Useless to Humans
+
+**NEVER show raw `tool_id` / `toolu_*` values to users.** They are meaningless UUIDs.
+
+When displaying tool results, always show the **tool name** (Read, Bash, Edit, etc.), not the ID. This is why Cyclist's message enrichment system exists - it caches `tool_use` messages and enriches `tool_result` messages with the actual tool name.
+
+Before discarding any changes to message enrichment code, **ASK FIRST** - those changes are likely bug fixes to make tool results human-readable.
+
 ## Cyclist Approval Gate Architecture (Story 33-7)
 
 ### The Correct Architecture (PreToolUse Hooks)
