@@ -743,9 +743,9 @@ epics:
     type: epic
     title: "Epic: WheelHub Notification Consolidation"
     points: 20
-    completed_points: 0
+    completed_points: 5
     priority: P2
-    status: backlog
+    status: in_progress
     stories:
       - id: MSSCI-11943
         title: "Story/Git WebSocket channels with file watchers"
@@ -754,7 +754,11 @@ epics:
           Hybrid approach: file watchers primary, optional git hooks for completeness.
         points: 5
         priority: P1
-        status: backlog
+        status: done
+        assigned_to: Keith Avery
+        started: 2026-01-19T11:00:00Z
+        completed: 2026-01-19
+        pr: 350
         repos: cyclist
         workflow: tdd
         acceptance_criteria:
