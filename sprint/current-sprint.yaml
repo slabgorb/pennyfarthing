@@ -747,7 +747,7 @@ epics:
     priority: P2
     status: backlog
     stories:
-      - id: MSSCI-11942-1
+      - id: MSSCI-11943
         title: "Story/Git WebSocket channels with file watchers"
         description: |
           Replace 10s/5s polling with WebSocket channels triggered by file watchers.
@@ -763,7 +763,7 @@ epics:
           - story.js uses WebSocket instead of setInterval polling
           - Story panel updates within 2s of file change (not 10s)
           - Git indicator updates within 2s of branch switch (not 5s)
-      - id: MSSCI-11942-2
+      - id: MSSCI-11944
         title: "Event-driven badge updates"
         description: |
           Replace 500ms setInterval badge polling with event-driven updates.
@@ -778,7 +778,7 @@ epics:
           - tab-bar.js subscribes to event instead of polling
           - No 500ms setInterval in tab-bar.js
           - Badges update immediately on change
-      - id: MSSCI-11942-3
+      - id: MSSCI-11945
         title: "Livereload pattern alignment"
         description: |
           Migrate livereload from exponential backoff to 2s fixed reconnection
@@ -791,7 +791,7 @@ epics:
         acceptance_criteria:
           - livereload.js uses 2s fixed reconnection
           - Consistent with other WheelHub channels
-      - id: MSSCI-11942-4
+      - id: MSSCI-11946
         title: "LocalStorage cross-tab synchronization"
         description: |
           Create settings-sync.js module using BroadcastChannel API for
@@ -807,7 +807,7 @@ epics:
           - Theme changes in Tab 1 reflect in Tab 2 immediately
           - All localStorage access goes through settings-sync.js
           - 16 existing files refactored to use new module
-      - id: MSSCI-11942-5
+      - id: MSSCI-11947
         title: "Hook response data channel for interactive tools"
         description: |
           Extend PreToolUse hook responses to support returning user-provided data
@@ -838,7 +838,7 @@ epics:
           - ExitPlanMode modal shows plan content and captures approval with optional feedback
           - Hook response includes `data` field that Claude receives in tool result
           - Existing allow/deny flows continue to work unchanged
-      - id: MSSCI-11942-6
+      - id: MSSCI-11948
         title: "Remove redundant popup tool use notifications"
         description: |
           With WheelHub consolidation complete, the popup tool use notifications
