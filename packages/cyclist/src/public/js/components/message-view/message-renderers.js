@@ -321,16 +321,83 @@ export function isToolUseCollapsible(_message) {
 }
 
 /**
+ * Strip ANSI escape codes from a string
+ * @param {string} str - String with possible ANSI codes
+ * @returns {string} Clean string without ANSI codes
+ */
+function stripAnsi(str) {
+  if (!str) return '';
+  // eslint-disable-next-line no-control-regex
+  return str.replace(/\x1b\[[0-9;]*m/g, '');
+}
+
+/**
+ * Generate a concise output summary for Bash collapse header
+ * @param {string} output - Full command output
+ * @param {boolean} isError - Whether the command failed
+ * @returns {string} Short summary of output
+ */
+function generateBashOutputSummary(output, isError) {
+  if (!output || output.trim() === '') {
+    return isError ? 'failed' : 'done';
+  }
+
+  // Strip ANSI codes for clean summary text
+  const cleanOutput = stripAnsi(output);
+  const trimmed = cleanOutput.trim();
+  const lines = trimmed.split('\n').filter(l => l.trim());
+
+  // For errors, show first meaningful line
+  if (isError) {
+    const firstLine = lines[0] || 'failed';
+    return truncate(firstLine, 60);
+  }
+
+  // For success, try to extract something meaningful
+  // Check for common patterns
+  if (lines.length === 1) {
+    return truncate(lines[0], 60);
+  }
+
+  // For "No files found" or similar single-line messages
+  if (trimmed.length < 80) {
+    return trimmed.replace(/\n/g, ' ');
+  }
+
+  // For longer output, show count or first line
+  if (lines.length > 1) {
+    return `${lines.length} lines`;
+  }
+
+  return truncate(lines[0], 60);
+}
+
+/**
+ * Truncate string with ellipsis
+ * @param {string} str - String to truncate
+ * @param {number} maxLen - Max length
+ * @returns {string}
+ */
+function truncate(str, maxLen) {
+  if (!str || str.length <= maxLen) return str || '';
+  return str.substring(0, maxLen - 1) + '…';
+}
+
+/**
  * Render a Bash tool result with collapsible output (MSSCI-11851)
  * @param {Object} message - Enriched Bash tool result message
  * @returns {string} HTML string
  */
 export function renderBashToolResult(message) {
-  const { tool_id, output, is_error, bash_command, bash_exit_code } = message;
+  const { tool_id, output, is_error, bash_command, bash_description, bash_exit_code } = message;
   const errorClass = is_error ? ' error' : '';
 
-  // Format command for header (truncated)
-  const displayCommand = truncateCommand(bash_command);
+  // Use description if available, otherwise fall back to truncated command
+  const headerText = bash_description || truncateCommand(bash_command) || 'Bash';
+
+  // Generate output summary for the header
+  const outputSummary = generateBashOutputSummary(output, is_error);
+  const summaryHtml = outputSummary ? ` <span class="bash-summary">→ ${escapeHtml(outputSummary)}</span>` : '';
 
   // Format exit code with styling
   const exitCodeHtml = formatExitCode(bash_exit_code);
@@ -346,7 +413,7 @@ export function renderBashToolResult(message) {
   return `<div class="message message-tool-result message-bash-result${errorClass}" data-tool-id="${tool_id}">
   <details class="bash-output collapsible"${openAttr}>
     <summary class="bash-header">
-      <span class="bash-command">${escapeHtml(displayCommand)}</span>
+      <span class="bash-command">${escapeHtml(headerText)}</span>${summaryHtml}
       ${exitCodeHtml}
     </summary>
     <pre class="bash-output-content"><code>${coloredOutput}</code></pre>

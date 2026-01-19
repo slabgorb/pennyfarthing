@@ -130,6 +130,7 @@ export function enrichMessage(message) {
     // Add Bash-specific enrichment
     if (toolUseData.tool_name === 'Bash') {
       enriched.bash_command = toolUseData.input?.command || '';
+      enriched.bash_description = toolUseData.input?.description || '';
       // Exit code: 0 for success, 1 for error
       enriched.bash_exit_code = message.is_error ? 1 : 0;
     }
