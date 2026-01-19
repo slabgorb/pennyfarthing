@@ -1705,8 +1705,9 @@ let approvalServer: ReturnType<typeof createHttpServer> | null = null;
 let approvalServerPort: number | null = null;
 
 // Pending approval requests from hooks, keyed by toolId
+// MSSCI-11947: Extended to support data field for interactive tools
 const pendingHookApprovals: Map<string, {
-  resolve: (response: { decision: string; reason: string }) => void;
+  resolve: (response: { decision: string; reason: string; data?: Record<string, unknown> }) => void;
   toolName: string;
   input: Record<string, unknown>;
 }> = new Map();
@@ -1778,6 +1779,124 @@ export function resolveHookApproval(
     });
     pendingHookApprovals.delete(toolId);
   }
+}
+
+// =============================================================================
+// MSSCI-11947: Hook Response Data Channel
+// =============================================================================
+// Functions for handling interactive tools (AskUserQuestion, ExitPlanMode)
+// that need to return structured data back to Claude, not just allow/deny.
+
+/**
+ * Check if a tool_use is an interactive tool that needs data return
+ * MSSCI-11947: AC1 - Detect AskUserQuestion and ExitPlanMode
+ */
+export function isInteractiveToolUse(toolUse: { tool_name?: string; type?: string }): boolean {
+  const interactiveTools = ['AskUserQuestion', 'ExitPlanMode'];
+  return toolUse.type === 'tool_use' && interactiveTools.includes(toolUse.tool_name || '');
+}
+
+/**
+ * Process an interactive tool_use and wait for user response with data
+ * MSSCI-11947: AC1 - Handle interactive tool approval flow
+ */
+export function processInteractiveToolUse(toolUse: {
+  tool_name?: string;
+  tool_id?: string;
+  input?: Record<string, unknown>;
+}): Promise<{ decision: string; reason: string; data?: Record<string, unknown> }> {
+  const toolId = toolUse.tool_id || `interactive-${Date.now()}`;
+  const toolName = toolUse.tool_name || 'Unknown';
+  const input = toolUse.input || {};
+
+  return new Promise((resolve) => {
+    pendingHookApprovals.set(toolId, { resolve, toolName, input });
+
+    // Send approval request to renderer with full tool input
+    broadcastToRenderer('permission-request', {
+      toolId,
+      toolName,
+      context: input,
+      source: 'hook',
+    });
+  });
+}
+
+/**
+ * Resolve a pending hook approval with data (for interactive tools)
+ * MSSCI-11947: AC1 - Extended resolve that includes data field
+ */
+export function resolveHookApprovalWithData(
+  toolId: string,
+  approved: boolean,
+  grantScope?: 'once' | 'session' | 'always',
+  data?: Record<string, unknown>,
+): void {
+  const pending = pendingHookApprovals.get(toolId);
+  if (pending) {
+    // For interactive tools, we don't create grants (they're one-time responses)
+    pending.resolve({
+      decision: approved ? 'allow' : 'deny',
+      reason: approved ? `Approved by user (${grantScope || 'once'})` : 'Rejected by user',
+      data: data || {},
+    });
+    pendingHookApprovals.delete(toolId);
+  }
+}
+
+/**
+ * Format hook response with optional data field
+ * MSSCI-11947: AC4 - Format response for hook output
+ */
+export function formatHookResponseWithData(
+  decision: 'allow' | 'deny',
+  reason: string,
+  data?: Record<string, unknown>,
+): { decision: string; reason: string; data?: Record<string, unknown> } {
+  const response: { decision: string; reason: string; data?: Record<string, unknown> } = {
+    decision,
+    reason,
+  };
+  if (data !== undefined) {
+    response.data = data;
+  }
+  return response;
+}
+
+/**
+ * Format answers as updatedInput for AskUserQuestion
+ * MSSCI-11947: AC4 - Format for hook updatedInput
+ */
+export function formatUpdatedInputForAskUserQuestion(
+  answers: Record<string, string | string[]>,
+): { answers: Record<string, string | string[]> } {
+  return { answers };
+}
+
+/**
+ * Format plan response as updatedInput for ExitPlanMode
+ * MSSCI-11947: AC4 - Format for hook updatedInput
+ */
+export function formatUpdatedInputForExitPlanMode(
+  response: { approved: boolean; feedback?: string },
+): { approved: boolean; feedback?: string } {
+  return response;
+}
+
+/**
+ * Serialize approval data for transmission
+ * MSSCI-11947: AC1 - JSON serialization helper
+ */
+export function serializeApprovalData(data: Record<string, unknown>): string {
+  return JSON.stringify(data);
+}
+
+/**
+ * Deserialize approval data from transmission
+ * MSSCI-11947: AC1 - JSON deserialization helper
+ */
+export function deserializeApprovalData(data: string): Record<string, unknown> {
+  return JSON.parse(data);
 }
 
 /**
