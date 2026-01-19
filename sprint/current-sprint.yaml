@@ -6,8 +6,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 143
-  completed_points: 139
-  remaining_points: 4
+  completed_points: 141
+  remaining_points: 2
   notes: |
     Sprint 11 - Carried over from Sprint 10 + Tech Debt:
     - MSSCI-11599: Customizable Workflow Engine (4 pts remaining)
@@ -503,7 +503,7 @@ epics:
     type: epic
     title: "Epic: Agent File Modernization"
     points: 30
-    completed_points: 24
+    completed_points: 26
     priority: P2
     status: in_progress
     stories:
@@ -550,9 +550,11 @@ epics:
         title: Modernize Tech Writer agent for custom workflows
         points: 2
         priority: P3
-        status: in_progress
+        status: done
         assigned_to: Keith Avery
         started: 2026-01-19T00:00:00Z
+        completed: 2026-01-19
+        pr: 347
         repos: pennyfarthing
         workflow: agent-docs
         acceptance_criteria:
