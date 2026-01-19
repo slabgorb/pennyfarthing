@@ -29,11 +29,47 @@ import { getCurrentAgentCommand } from './persona.js';
 // 22-5: Track verbose mode state
 let verboseModeEnabled = false;
 
-// Wait for DOM to be ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initMessageView);
-} else {
-  initMessageView();
+/**
+ * MSSCI-11928: Extract tool_result blocks from SDK-wrapped user messages
+ *
+ * SDK sends tool results wrapped in user messages:
+ * {type: 'user', message: {content: [{type: 'tool_result', tool_use_id, content, is_error}]}}
+ *
+ * This extracts them as standalone tool_result messages for enrichment and rendering.
+ *
+ * @param {Object} message - The SDK message to check
+ * @returns {Array} Array of extracted tool_result objects, or empty array
+ */
+export function extractToolResultsFromUserMessage(message) {
+  // Only process user messages
+  if (message?.type !== 'user') {
+    return [];
+  }
+
+  // Check for SDK-wrapped content (editor user messages have content as string, not message.content)
+  const contentArray = message.message?.content;
+  if (!Array.isArray(contentArray)) {
+    return [];
+  }
+
+  // Extract all tool_result blocks
+  return contentArray
+    .filter(item => item.type === 'tool_result')
+    .map(item => ({
+      type: 'tool_result',
+      tool_id: item.tool_use_id,
+      output: item.content,
+      is_error: item.is_error ?? false,
+    }));
+}
+
+// Wait for DOM to be ready (skip in test environment)
+if (typeof document !== 'undefined' && document.getElementById('message-view')) {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMessageView);
+  } else {
+    initMessageView();
+  }
 }
 
 /**
@@ -82,6 +118,19 @@ function initMessageView() {
     // Handle streaming messages from Claude SDK
     window.electronAPI.claude.onMessage((message) => {
       console.log('[MessageView] SDK message:', message.type);
+
+      // MSSCI-11928: Check for SDK-wrapped tool_result in user messages
+      const extractedToolResults = extractToolResultsFromUserMessage(message);
+      if (extractedToolResults.length > 0) {
+        // Extract and render each tool_result as standalone message
+        console.log(`[MessageView] Extracting ${extractedToolResults.length} tool_result(s) from SDK user message`);
+        for (const toolResult of extractedToolResults) {
+          const enrichedResult = enrichMessage(toolResult);
+          addMessage(enrichedResult);
+          updateActivity(enrichedResult);
+        }
+        return; // Don't render the wrapper user message
+      }
 
       // MSSCI-11851: Enrich messages with tool metadata for specialized rendering
       const enrichedMessage = enrichMessage(message);
