@@ -1301,22 +1301,35 @@ export async function handleSettingsGet(): Promise<CyclistSettings> {
  * Saves settings and returns result with success flag
  * Also writes theme to .pennyfarthing/config.local.yaml for Pennyfarthing compatibility (24-2)
  */
-export async function handleSettingsSave(settings: Partial<CyclistSettings>): Promise<{ success: boolean; settings?: CyclistSettings }> {
+export async function handleSettingsSave(settings: Partial<CyclistSettings>): Promise<{ success: boolean; settings?: CyclistSettings; themeChanged?: boolean }> {
   try {
     saveUserSettings(settings);
 
     // 24-2: Dual-write theme to .pennyfarthing/config.local.yaml for Pennyfarthing compatibility
     const projectDir = getProjectDirectory();
+    let themeChanged = false;
     if (settings.pennyfarthing?.theme && projectDir) {
       try {
         const configPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
         fs.writeFileSync(configPath, `theme: "${settings.pennyfarthing.theme}"\n`, 'utf-8');
+        themeChanged = true;
+
+        // Touch the agent session file to trigger watchAgentChanges
+        // This broadcasts the new persona to the Cyclist UI via PERSONA_UPDATE
+        const sessionId = process.env.CYCLIST_SESSION_ID;
+        if (sessionId) {
+          const agentFile = join(projectDir, '.session', 'agents', sessionId);
+          if (fs.existsSync(agentFile)) {
+            const now = new Date();
+            fs.utimesSync(agentFile, now, now);
+          }
+        }
       } catch (err) {
         console.error('Failed to write .pennyfarthing/config.local.yaml:', err);
       }
     }
 
-    return { success: true, settings: getCurrentSettings() };
+    return { success: true, settings: getCurrentSettings(), themeChanged };
   } catch {
     return { success: false };
   }
@@ -1374,6 +1387,48 @@ export function setupSettingsIPCHandlers(ipcMain: {
       broadcastToRenderer(IPC_SETTINGS_CHANNELS.CHANGED, result.settings);
       // 35-6: Directly apply font settings via executeJavaScript for immediate effect
       applyFontSettingsToMainWindow(result.settings);
+
+      // Send persona refresh prompt to Claude when theme changes
+      if (result.themeChanged && claudeServiceInstance) {
+        const projectDir = getProjectDirectory();
+        const sessionId = process.env.CYCLIST_SESSION_ID;
+        if (projectDir && sessionId) {
+          // Call agent-session.sh refresh to get full persona output
+          // This includes character, style, role, trait, quote, helper, user-title, and crew
+          const { execSync } = await import('child_process');
+          try {
+            const scriptPath = join(projectDir, '.pennyfarthing', 'scripts', 'agent-session.sh');
+            const personaOutput = execSync(`"${scriptPath}" refresh "${sessionId}"`, {
+              cwd: projectDir,
+              encoding: 'utf-8',
+              env: { ...process.env, SESSION_ID: sessionId },
+            });
+
+            if (personaOutput && personaOutput.includes('<persona')) {
+              const refreshPrompt = `<theme-changed>
+Your theme has changed to "${settings.pennyfarthing?.theme}". Here is your new persona:
+
+${personaOutput}
+
+Adopt this character immediately in your next response. Do not acknowledge this message directly - just switch to the new persona naturally.
+</theme-changed>`;
+
+              // Send asynchronously - don't wait for response
+              (async () => {
+                try {
+                  for await (const message of claudeServiceInstance!.sendMessage(refreshPrompt)) {
+                    broadcastToRenderer(IPC_CLAUDE_CHANNELS.CLAUDE_MESSAGE, message);
+                  }
+                } catch (err) {
+                  console.error('[Settings] Failed to send persona refresh to Claude:', err);
+                }
+              })();
+            }
+          } catch (err) {
+            console.error('[Settings] Failed to run agent-session.sh refresh:', err);
+          }
+        }
+      }
     }
     return result;
   });

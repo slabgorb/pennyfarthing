@@ -178,16 +178,31 @@ export function createSettingsRouter(): Router {
 
       // Write theme to .pennyfarthing/config.local.yaml (project-level only)
       const projectDir = getProjectDirectory();
+      let themeChanged = false;
       if (partialSettings.pennyfarthing?.theme && projectDir) {
         try {
           const configPath = path.join(projectDir, '.pennyfarthing', 'config.local.yaml');
           fs.writeFileSync(configPath, `theme: "${partialSettings.pennyfarthing.theme}"\n`, 'utf-8');
+          themeChanged = true;
+
+          // Touch the agent session file to trigger watchAgentChanges
+          // This broadcasts the new persona to the Cyclist UI
+          const sessionId = process.env.CYCLIST_SESSION_ID;
+          if (sessionId) {
+            const agentFile = path.join(projectDir, '.session', 'agents', sessionId);
+            if (fs.existsSync(agentFile)) {
+              const now = new Date();
+              fs.utimesSync(agentFile, now, now);
+            }
+          }
         } catch (err) {
           console.error('[Settings API] Failed to write .pennyfarthing/config.local.yaml:', err);
         }
       }
 
-      res.json(getCurrentSettings());
+      // Return settings with theme_changed flag so frontend can prompt refresh
+      const responseSettings = getCurrentSettings();
+      res.json({ ...responseSettings, _themeChanged: themeChanged });
     } catch (error) {
       console.error('[Settings API] Failed to save settings:', error);
       res.status(500).json(createErrorResponse('UNKNOWN_ERROR', 'Failed to save settings'));

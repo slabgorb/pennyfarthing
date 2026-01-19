@@ -352,13 +352,38 @@ case "$1" in
       echo "No active sessions"
     fi
     ;;
+  refresh)
+    # Re-output persona for current agent (after theme change)
+    # Usage: agent-session.sh refresh [session-id]
+    session_id="${2:-$SESSION_ID}"
+    if [ -z "$session_id" ]; then
+      echo "Usage: agent-session.sh refresh [session-id]" >&2
+      exit 1
+    fi
+
+    AGENT_FILE=$(get_agent_file "$session_id")
+    if [ ! -f "$AGENT_FILE" ]; then
+      echo "No active session: $session_id" >&2
+      exit 1
+    fi
+
+    CURRENT_AGENT=$(cat "$AGENT_FILE")
+    echo "Refreshing persona for: $CURRENT_AGENT"
+
+    if is_character_voice_enabled; then
+      output_persona "$CURRENT_AGENT"
+    else
+      echo "Character voice disabled - no persona to refresh"
+    fi
+    ;;
   *)
-    echo "Usage: agent-session.sh <start|stop|stop-all|status|list> [args]" >&2
+    echo "Usage: agent-session.sh <start|stop|stop-all|status|list|refresh> [args]" >&2
     echo "  start \"agent\" \"session-id\"  - Register agent for session" >&2
     echo "  stop \"session-id\"            - Remove agent for session" >&2
     echo "  stop-all                      - Remove all agent sessions" >&2
     echo "  status                        - Get agent for session (reads JSON stdin)" >&2
     echo "  list                          - List all active sessions" >&2
+    echo "  refresh \"session-id\"         - Re-output persona after theme change" >&2
     exit 1
     ;;
 esac
