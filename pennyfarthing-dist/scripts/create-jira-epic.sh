@@ -1,0 +1,1 @@
+../skills/sprint/scripts/create-jira-epic.sh

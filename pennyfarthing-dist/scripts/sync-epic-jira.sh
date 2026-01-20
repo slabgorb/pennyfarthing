@@ -1,0 +1,1 @@
+../skills/sprint/scripts/sync-epic-jira.sh
