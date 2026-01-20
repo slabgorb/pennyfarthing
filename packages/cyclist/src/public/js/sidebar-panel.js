@@ -10,6 +10,8 @@
  */
 
 import { VerticalPanel } from './vertical-panel.js';
+// MSSCI-11946: settings-sync import for cross-tab persistence (via VerticalPanel)
+import { settingsSync } from './settings-sync.js';
 
 const STORAGE_KEY = 'cyclist-sidebar-panel';
 

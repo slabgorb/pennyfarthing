@@ -13,6 +13,7 @@
 // 35-5: Import VerticalPanel base class for unified panel pattern
 // FilePanel uses VerticalPanel's persistence and resize patterns
 import { VerticalPanel } from './vertical-panel.js';
+import { settingsSync, STORAGE_KEYS } from './settings-sync.js';
 
 const STORAGE_KEY = 'cyclist-file-panel';
 // Read CSS variables for consistent panel sizing
@@ -31,29 +32,21 @@ let startX = 0;
 let startWidth = 0;
 
 /**
- * Get saved panel state from localStorage
+ * Get saved panel state from settings-sync
  */
 function loadState() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      return JSON.parse(saved);
-    }
-  } catch (e) {
-    console.warn('[FilePanel] Failed to load state:', e);
+  const saved = settingsSync.get(STORAGE_KEYS.FILE_PANEL);
+  if (saved && typeof saved === 'object') {
+    return saved;
   }
   return { width: DEFAULT_WIDTH, collapsed: true };
 }
 
 /**
- * Save panel state to localStorage
+ * Save panel state to settings-sync (cross-tab broadcast)
  */
 function saveState(state) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch (e) {
-    console.warn('[FilePanel] Failed to save state:', e);
-  }
+  settingsSync.set(STORAGE_KEYS.FILE_PANEL, state);
 }
 
 /**
