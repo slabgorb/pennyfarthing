@@ -531,10 +531,36 @@ epics:
           - Graceful shutdown on extension deactivation
         points: 5
         priority: P0
-        status: backlog
+        status: done
+        completed: 2026-01-20
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
+      - id: MSSCI-12052
+        title: "Gearshift mode switch not functioning correctly"
+        description: |
+          The Gearshift strip (PLAN|MANUAL|ACCEPT|TURBO) has multiple bugs:
+          1. Visual display not updating when mode changes
+          2. Signals not being sent to Claude Code
+          3. Autohandoff setting not being applied
+
+          Expected behavior:
+          - PLAN: send /plan signal, light segment, autohandoff=false
+          - MANUAL: send manual mode signal, light segment, autohandoff=false
+          - ACCEPT: send accept mode signal, light segment, autohandoff=false
+          - TURBO: send accept mode, light segment, autohandoff=true
+        points: 3
+        priority: P1
+        status: in_progress
+        repos: cyclist
+        workflow: tdd
+        acceptance_criteria:
+          - Clicking each mode visually highlights the correct segment
+          - PLAN mode sends /plan signal to Claude
+          - MANUAL mode sends default permission mode to Claude
+          - ACCEPT mode sends acceptEdits mode to Claude
+          - TURBO mode sends acceptEdits + autohandoff=true to Claude
+          - Mode persists to settings correctly
       - id: MSSCI-12048
         jira: MSSCI-12048
         title: "Sidebar panel with agent status"
