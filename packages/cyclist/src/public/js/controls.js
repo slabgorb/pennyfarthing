@@ -24,12 +24,13 @@ const VALID_MODES = ['plan', 'manual', 'accept', 'turbo'];
 
 /**
  * Map our mode names to Claude Code's permission mode names
+ * Note: turbo = acceptEdits + auto_handoff (handled separately)
  */
 const MODE_TO_CLAUDE = {
   plan: 'plan',
   manual: 'default',
   accept: 'acceptEdits',
-  turbo: 'dangerouslySkipPermissions',
+  turbo: 'acceptEdits', // turbo uses acceptEdits, auto_handoff is separate setting
 };
 
 /**
@@ -56,6 +57,7 @@ function updateModeSwitchDisplay() {
 
 /**
  * Load permission mode from settings and sync with Claude Code
+ * Detects turbo mode from permission_mode=turbo OR (accept + handoff_mode=auto)
  */
 async function loadModeFromSettings() {
   try {
@@ -69,7 +71,14 @@ async function loadModeFromSettings() {
       }
     }
 
-    const mode = settings?.workflow?.permission_mode || 'manual';
+    let mode = settings?.workflow?.permission_mode || 'manual';
+    const handoffMode = settings?.workflow?.handoff_mode;
+
+    // Detect turbo: explicit turbo OR (accept + auto handoff)
+    if (mode === 'turbo' || (mode === 'accept' && handoffMode === 'auto')) {
+      mode = 'turbo';
+    }
+
     if (VALID_MODES.includes(mode)) {
       currentMode = mode;
       updateModeSwitchDisplay();
@@ -90,6 +99,7 @@ async function loadModeFromSettings() {
 /**
  * Set permission mode directly (no cycling)
  * Persists to settings and syncs with Claude Code
+ * Turbo mode = acceptEdits + auto_handoff enabled
  */
 async function setPermissionMode(newMode, event) {
   if (event) {
@@ -110,14 +120,23 @@ async function setPermissionMode(newMode, event) {
   console.log('Switching to mode:', newMode);
 
   try {
-    // Persist to settings first
+    // Build settings payload
+    // Turbo mode = acceptEdits + auto handoff
+    const settings = {
+      workflow: {
+        permission_mode: newMode,
+        handoff_mode: newMode === 'turbo' ? 'auto' : 'manual',
+      },
+    };
+
+    // Persist to settings
     if (window.electronAPI?.settings?.save) {
-      await window.electronAPI.settings.save({ workflow: { permission_mode: newMode } });
+      await window.electronAPI.settings.save(settings);
     } else {
       await fetch('/api/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ workflow: { permission_mode: newMode } }),
+        body: JSON.stringify(settings),
       });
     }
 
@@ -129,7 +148,7 @@ async function setPermissionMode(newMode, event) {
 
     currentMode = newMode;
     updateModeSwitchDisplay();
-    console.log('Mode set successfully:', newMode, '(Claude:', claudeMode + ')');
+    console.log('Mode set successfully:', newMode, '(Claude:', claudeMode + ', handoff:', settings.workflow.handoff_mode + ')');
   } catch (error) {
     console.error('Failed to set permission mode:', error);
   }

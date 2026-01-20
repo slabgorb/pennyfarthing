@@ -1,5 +1,6 @@
 workflow:
   handoff_mode: auto
+  permission_mode: turbo
 display:
   show_flow: true
   show_ocean: false
