@@ -1,0 +1,14 @@
+workflow:
+  handoff_mode: auto
+display:
+  show_flow: true
+  show_ocean: false
+  sidebar_width: 300
+  font_ui: system-ui
+  font_mono: SF Mono
+notifications:
+  phase_change: true
+  sound: false
+pennyfarthing:
+  favorites: []
+  recentThemes: []
