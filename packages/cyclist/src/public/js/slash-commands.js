@@ -134,10 +134,6 @@ export const SLASH_COMMANDS = [
     "description": "Switch Claude model"
   },
   {
-    "name": "/new-work",
-    "description": "Start a new work session with Pennyfarthing"
-  },
-  {
     "name": "/orchestrator",
     "description": "Orchestrator - Coordinator of all agents and meta operations"
   },
