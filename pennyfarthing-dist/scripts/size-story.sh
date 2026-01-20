@@ -1,0 +1,1 @@
+../skills/story/scripts/size-story.sh

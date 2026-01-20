@@ -1,5 +1,5 @@
 workflow:
-  handoff_mode: manual
+  handoff_mode: auto
 display:
   show_flow: true
   show_ocean: false
