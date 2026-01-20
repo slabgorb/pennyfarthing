@@ -6,9 +6,9 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 28
+  total_points: 43
   completed_points: 9
-  remaining_points: 19
+  remaining_points: 34
 epics:
   # ===========================================================================
   # EPIC 48: WheelHub Notification Consolidation (continued)
@@ -241,3 +241,129 @@ epics:
           - prd workflow with tri-modal support
           - Step files and templates included
           - Documentation for each workflow
+
+  # ===========================================================================
+  # EPIC 49: Cyclist VS Code Extension
+  # ===========================================================================
+  - id: MSSCI-12015
+    type: epic
+    jira: MSSCI-12015
+    title: "Epic: Cyclist VS Code Extension"
+    description: |
+      Port Cyclist visual terminal to a VS Code extension using hybrid architecture.
+      Services (OTLP, ClaudeService, TokenStats) run in extension host.
+      Frontend reused in webview via VSCodeAdapter.js (postMessage API).
+      WheelHub and Reflector features fully supported.
+    points: 15
+    completed_points: 0
+    priority: P2
+    status: backlog
+    stories:
+      - id: MSSCI-12016
+        jira: MSSCI-12016
+        title: "Extension scaffold"
+        description: |
+          Create packages/cyclist-vscode/ with basic VS Code extension structure.
+          Register cyclist.open command, create empty webview panel.
+        points: 2
+        priority: P2
+        status: backlog
+        repos: cyclist
+        workflow: trivial
+        acceptance_criteria:
+          - packages/cyclist-vscode/package.json with extension manifest
+          - cyclist.open command registered in contributes
+          - extension.ts with activate/deactivate lifecycle
+          - CyclistPanel.ts creates empty webview panel
+          - Extension loads in VS Code dev mode
+
+      - id: MSSCI-12017
+        jira: MSSCI-12017
+        title: "VSCodeAdapter.js"
+        description: |
+          Create webview adapter mirroring web-adapter.js using postMessage API.
+          Implements window.electronAPI interface for seamless frontend reuse.
+        points: 2
+        priority: P2
+        status: backlog
+        repos: cyclist
+        workflow: trivial
+        acceptance_criteria:
+          - media/js/vscode-adapter.js created
+          - Implements window.electronAPI interface matching preload.ts
+          - Claude channel with send, abort, onMessage, onComplete, onError
+          - Data channels for stats, persona, tokenStats, story, git
+          - Message listener infrastructure for extension→webview communication
+
+      - id: MSSCI-12018
+        jira: MSSCI-12018
+        title: "OTLP server extraction"
+        description: |
+          Extract OTLP receiver from WheelHub into standalone service.
+          Handle /v1/metrics and /v1/logs in extension host.
+        points: 3
+        priority: P2
+        status: backlog
+        repos: cyclist
+        workflow: tdd
+        acceptance_criteria:
+          - src/services/OTLPServer.ts handles /v1/metrics and /v1/logs
+          - Port file written to .cyclist-port for Claude Code discovery
+          - Dynamic port allocation avoids conflicts
+          - parseOTLPMetrics and parseOTLPLogs reused from cyclist
+          - Unit tests for OTLP parsing
+
+      - id: MSSCI-12019
+        jira: MSSCI-12019
+        title: "Service container"
+        description: |
+          Wire up ClaudeService, TokenStatsService, ToolEventService in extension host.
+          Dependency injection container for service lifecycle.
+        points: 2
+        priority: P2
+        status: backlog
+        repos: cyclist
+        workflow: trivial
+        acceptance_criteria:
+          - ServiceContainer.ts provides dependency injection
+          - ClaudeService wrapper spawns claude CLI in stream-json mode
+          - TokenStatsService aggregates metrics from OTLP
+          - ToolEventService parses and stores tool events
+          - Services emit events for webview broadcasting
+
+      - id: MSSCI-12020
+        jira: MSSCI-12020
+        title: "Port frontend to webview"
+        description: |
+          Copy Cyclist frontend files to media/ and adapt for VS Code webview CSP.
+          All resource URIs use webview.asWebviewUri().
+        points: 3
+        priority: P2
+        status: backlog
+        repos: cyclist
+        workflow: trivial
+        acceptance_criteria:
+          - All public/js/ files copied to media/js/
+          - styles.css copied to media/
+          - index.html modified with CSP meta tag and nonce
+          - Resource URIs use webview.asWebviewUri()
+          - TipTap bundle loads correctly in webview
+
+      - id: MSSCI-12021
+        jira: MSSCI-12021
+        title: "Message handler wiring"
+        description: |
+          Connect webview messages to extension host services.
+          Complete integration with Reflector quick-actions support.
+        points: 3
+        priority: P2
+        status: backlog
+        repos: cyclist
+        workflow: tdd
+        acceptance_criteria:
+          - claude:send routes to ClaudeService, streams responses back
+          - tokenStats:get/update routes to TokenStatsService
+          - persona:get/update routes to PersonaService (optional)
+          - Reflector quick-actions work (HANDOFF, QUESTION, CHOICES)
+          - CONTEXT_CLEAR routes to extension host for session reset
+          - Integration test verifies full message flow
