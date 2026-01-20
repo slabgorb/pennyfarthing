@@ -230,8 +230,13 @@ if (window.electronAPI) {
 
       setMode: async (mode) => {
         currentMode = mode;
-        if (claudeWs?.readyState === WebSocket.OPEN) {
-          claudeWs.send(JSON.stringify({ type: 'setMode', mode }));
+        try {
+          // Ensure connection before sending mode change
+          const ws = await ensureClaudeConnection();
+          ws.send(JSON.stringify({ type: 'setMode', mode }));
+          console.log('[WebAdapter] Mode set to:', mode);
+        } catch (err) {
+          console.warn('[WebAdapter] Failed to set mode, will apply on next connection:', err.message);
         }
       },
 

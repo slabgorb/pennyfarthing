@@ -537,6 +537,7 @@ epics:
         workflow: tdd
         acceptance_criteria: []
       - id: MSSCI-12052
+        jira: MSSCI-12088
         title: "Gearshift mode switch not functioning correctly"
         description: |
           The Gearshift strip (PLAN|MANUAL|ACCEPT|TURBO) has multiple bugs:
@@ -552,6 +553,7 @@ epics:
         points: 3
         priority: P1
         status: in_progress
+        assigned_to: Keith Avery
         repos: cyclist
         workflow: tdd
         acceptance_criteria:
