@@ -143,13 +143,57 @@ Projects can define custom workflows in `pennyfarthing-dist/workflows/`.
 - "No bugs"
 - "Good performance"
 
+---
+
+### `/story finish <story-id> [--dry-run]`
+
+Complete a story: archive session, merge PR, transition Jira, update sprint YAML.
+
+**Prerequisites:**
+- Session file exists at `.session/{story-id}-session.md`
+- PR is approved and mergeable
+- Reviewer has approved (phase: finish in session)
+
+**Run:**
+```bash
+.pennyfarthing/scripts/run.sh finish-story.sh <story-id> [--dry-run]
+```
+
+**Arguments:**
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `story-id` | Yes | Story ID (e.g., `MSSCI-12052`) |
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--dry-run` | Show what would be done without executing |
+
+**Examples:**
+```bash
+.pennyfarthing/scripts/run.sh finish-story.sh MSSCI-12052           # Finish story
+.pennyfarthing/scripts/run.sh finish-story.sh MSSCI-12052 --dry-run # Preview only
+```
+
+**What it does:**
+1. Archives session file to `sprint/archive/{jira-key}-session.md`
+2. Squash merges PR and deletes remote branch
+3. Transitions Jira issue to Done
+4. Updates sprint YAML (status: done, completed date, removes assigned_to)
+5. Deletes local feature branch
+6. Removes session file
+
+**Output:** Step-by-step progress with final summary and Jira link.
+
+---
+
 ## Related Commands
 
 | Command | Purpose |
 |---------|---------|
 | `/sprint work` | Start work on a story |
 | `/sprint backlog` | View available stories |
-| `/sprint archive` | Archive completed story |
+| `/story finish` | Complete and archive a story |
 | `/workflow` | View/set workflow definitions |
 
 ## File Locations
