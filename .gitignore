@@ -42,6 +42,10 @@ cart/
 benchmarks/cart/
 go.mod
 
+# Test output files
+*-test-output.txt
+test-output.txt
+
 
 # Python
 .venv/
