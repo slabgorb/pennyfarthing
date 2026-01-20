@@ -62,4 +62,5 @@ worktrees/
 .cyclist-port
 .cyclist-pid
 .pennyfarthing/cyclist.yaml
+.pennyfarthing/window-state.json
 .cyclist-approval-port
