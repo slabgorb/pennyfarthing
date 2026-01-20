@@ -190,8 +190,7 @@ jira issue assign MSSCI-10988 -u ""
 |------|----------|---------|
 | Sprint data | `sprint/current-sprint.yaml` | Yes (git) |
 | Session files | `.session/*.md` | Yes (git) |
-| Theme config | `.pennyfarthing/config.local.yaml` | No (gitignored) |
-| User settings | `~/.cyclist/settings.yaml` | No (local) |
+| Settings/Theme | `.pennyfarthing/config.local.yaml` | No (gitignored) |
 
 ### Sprint File Conflicts
 

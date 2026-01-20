@@ -1,11 +1,11 @@
 /**
  * Settings Module for Cyclist (Story 24-1)
  *
- * Provides file-based persistence for Cyclist settings with support for:
- * - User settings at ~/.cyclist/settings.yaml
- * - Project overrides at .claude/cyclist.local.yaml
- * - File watching for external edits
- * - Settings merging (project overrides user)
+ * Provides file-based persistence for Cyclist settings:
+ * - Project settings at .pennyfarthing/config.local.yaml
+ *
+ * DEPRECATED: ~/.cyclist/settings.yaml is no longer used.
+ * All settings are now project-local in .pennyfarthing/config.local.yaml
  */
 
 import fs from 'fs';
@@ -83,9 +83,13 @@ export type SettingsInput = PartialSettings & {
 // Constants
 // =============================================================================
 
+// DEPRECATED: User-level settings dir - kept for grants migration only
 export const USER_SETTINGS_DIR = path.join(os.homedir(), '.cyclist');
+// DEPRECATED: User-level settings file - no longer used
 export const USER_SETTINGS_FILE = path.join(USER_SETTINGS_DIR, 'settings.yaml');
-export const PROJECT_SETTINGS_FILE = '.claude/cyclist.local.yaml';
+// Primary settings file - all settings are project-local now
+export const PROJECT_SETTINGS_FILE = '.pennyfarthing/config.local.yaml';
+// Grants file - stays in ~/.cyclist for now (cross-project permissions)
 export const GRANTS_FILE = path.join(os.homedir(), '.cyclist', 'grants.json');
 
 // =============================================================================
@@ -161,8 +165,6 @@ export function addToRecentThemes(settings: CyclistSettings, themeId: string): C
 
 let currentSettings: CyclistSettings = getDefaultSettings();
 let projectOverridesApplied = false;
-let fileWatcher: fs.FSWatcher | null = null;
-let projectWatcher: fs.FSWatcher | null = null;
 
 // Settings change callbacks (AC5)
 const settingsChangeCallbacks: Array<(settings: CyclistSettings) => void> = [];
@@ -383,32 +385,19 @@ export function mergeSettings(base: CyclistSettings, override: PartialSettings):
 // =============================================================================
 
 /**
- * Load user settings from ~/.cyclist/settings.yaml
- * Returns default settings if file doesn't exist or is invalid
- * Note: theme is stripped - it's stored ONLY in .pennyfarthing/config.local.yaml
+ * DEPRECATED: Load user settings from ~/.cyclist/settings.yaml
+ * No longer used - all settings are now in .pennyfarthing/config.local.yaml
  */
 function loadUserSettingsFile(): PartialSettings {
-  try {
-    if (fs.existsSync(USER_SETTINGS_FILE)) {
-      const content = fs.readFileSync(USER_SETTINGS_FILE, 'utf-8');
-      const parsed = parseSettings(content);
-      // Strip theme - it's stored ONLY in .pennyfarthing/config.local.yaml
-      if (parsed.pennyfarthing) {
-        const { theme: _theme, ...pennyfarthingWithoutTheme } = parsed.pennyfarthing as Record<string, unknown>;
-        parsed.pennyfarthing = pennyfarthingWithoutTheme as Partial<PennyfarthingSettings>;
-      }
-      return parsed;
-    }
-  } catch {
-    // Error reading file - return empty
-  }
+  // DEPRECATED: User-level settings are no longer used
+  // Return empty to skip this tier of the merge
   return {};
 }
 
 /**
- * Load project settings from .claude/cyclist.local.yaml
+ * Load project settings from .pennyfarthing/config.local.yaml
  * Returns empty object if file doesn't exist or is invalid
- * Note: theme is stripped - it's stored ONLY in .pennyfarthing/config.local.yaml
+ * This is now the PRIMARY settings file (user-level settings deprecated)
  */
 export function loadProjectSettings(projectDir: string): PartialSettings {
   try {
@@ -416,11 +405,6 @@ export function loadProjectSettings(projectDir: string): PartialSettings {
     if (fs.existsSync(projectSettingsPath)) {
       const content = fs.readFileSync(projectSettingsPath, 'utf-8');
       const parsed = parseSettings(content);
-      // Strip theme - it's stored ONLY in .pennyfarthing/config.local.yaml
-      if (parsed.pennyfarthing) {
-        const { theme: _theme, ...pennyfarthingWithoutTheme } = parsed.pennyfarthing as Record<string, unknown>;
-        parsed.pennyfarthing = pennyfarthingWithoutTheme as Partial<PennyfarthingSettings>;
-      }
       return parsed;
     }
   } catch {
@@ -430,8 +414,9 @@ export function loadProjectSettings(projectDir: string): PartialSettings {
 }
 
 /**
- * Load settings with optional project directory for overrides
- * Merges: defaults <- user settings <- project overrides
+ * Load settings with optional project directory
+ * Merges: defaults <- project settings (.pennyfarthing/config.local.yaml)
+ * Note: User-level settings (~/.cyclist/settings.yaml) are deprecated
  */
 export function loadSettings(projectDir?: string): CyclistSettings {
   let settings = getDefaultSettings();
@@ -459,18 +444,34 @@ export function loadSettings(projectDir?: string): CyclistSettings {
 // =============================================================================
 
 /**
- * Save user settings to ~/.cyclist/settings.yaml
+ * Save settings to .pennyfarthing/config.local.yaml
+ * DEPRECATED name - use saveProjectSettings instead
  * Returns true on success, false on failure
  */
-export function saveUserSettings(settings: Partial<CyclistSettings>): boolean {
+export function saveUserSettings(settings: Partial<CyclistSettings>, projectDir?: string): boolean {
+  return saveProjectSettings(settings, projectDir);
+}
+
+/**
+ * Save settings to .pennyfarthing/config.local.yaml
+ * Returns true on success, false on failure
+ */
+export function saveProjectSettings(settings: Partial<CyclistSettings>, projectDir?: string): boolean {
   try {
-    ensureSettingsDir();
+    const dir = projectDir || process.cwd();
+    const settingsPath = path.join(dir, PROJECT_SETTINGS_FILE);
+    const settingsDir = path.dirname(settingsPath);
+
+    // Ensure .pennyfarthing directory exists
+    if (!fs.existsSync(settingsDir)) {
+      fs.mkdirSync(settingsDir, { recursive: true });
+    }
 
     // Merge with current settings to preserve any unset values
     const merged = mergeSettings(currentSettings, settings as PartialSettings);
     const yaml = serializeSettings(merged);
 
-    fs.writeFileSync(USER_SETTINGS_FILE, yaml, 'utf-8');
+    fs.writeFileSync(settingsPath, yaml, 'utf-8');
     currentSettings = merged;
 
     // AC5: Notify registered callbacks of settings change
@@ -479,85 +480,6 @@ export function saveUserSettings(settings: Partial<CyclistSettings>): boolean {
     return true;
   } catch {
     return false;
-  }
-}
-
-// =============================================================================
-// File Watching
-// =============================================================================
-
-/**
- * Watch a settings file for changes
- * Returns unsubscribe function
- */
-export function watchSettings(projectDir: string, onChange: (settings: CyclistSettings) => void): () => void {
-  // Watch user settings file
-  try {
-    ensureSettingsDir();
-
-    fileWatcher = fs.watch(USER_SETTINGS_DIR, (eventType, filename) => {
-      if (filename === 'settings.yaml') {
-        const newSettings = loadSettings(projectDir);
-        currentSettings = newSettings;
-        onChange(newSettings);
-      }
-    });
-  } catch {
-    // Failed to watch - continue without watching
-  }
-
-  // Return unsubscribe function
-  return () => {
-    if (fileWatcher) {
-      fileWatcher.close();
-      fileWatcher = null;
-    }
-  };
-}
-
-/**
- * Watch both user and project settings files
- * Returns unsubscribe function
- */
-export function watchAllSettings(projectDir: string, onChange: (settings: CyclistSettings) => void): () => void {
-  const unsubUser = watchSettings(projectDir, onChange);
-
-  // Watch project settings if directory exists
-  try {
-    const projectSettingsDir = path.join(projectDir, '.claude');
-    if (fs.existsSync(projectSettingsDir)) {
-      projectWatcher = fs.watch(projectSettingsDir, (eventType, filename) => {
-        if (filename === 'cyclist.local.yaml') {
-          const newSettings = loadSettings(projectDir);
-          currentSettings = newSettings;
-          onChange(newSettings);
-        }
-      });
-    }
-  } catch {
-    // Failed to watch project dir - continue without
-  }
-
-  return () => {
-    unsubUser();
-    if (projectWatcher) {
-      projectWatcher.close();
-      projectWatcher = null;
-    }
-  };
-}
-
-/**
- * Stop all file watchers
- */
-export function stopWatchingSettings(): void {
-  if (fileWatcher) {
-    fileWatcher.close();
-    fileWatcher = null;
-  }
-  if (projectWatcher) {
-    projectWatcher.close();
-    projectWatcher = null;
   }
 }
 
