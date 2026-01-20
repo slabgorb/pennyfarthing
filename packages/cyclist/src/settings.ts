@@ -454,6 +454,7 @@ export function saveUserSettings(settings: Partial<CyclistSettings>, projectDir?
 
 /**
  * Save settings to .pennyfarthing/config.local.yaml
+ * Uses read-modify-write to preserve theme and other fields not in CyclistSettings
  * Returns true on success, false on failure
  */
 export function saveProjectSettings(settings: Partial<CyclistSettings>, projectDir?: string): boolean {
@@ -467,9 +468,32 @@ export function saveProjectSettings(settings: Partial<CyclistSettings>, projectD
       fs.mkdirSync(settingsDir, { recursive: true });
     }
 
+    // Read existing file to preserve theme (which is NOT in CyclistSettings)
+    let existingTheme: string | undefined;
+    if (fs.existsSync(settingsPath)) {
+      try {
+        const existingContent = fs.readFileSync(settingsPath, 'utf-8');
+        const existingParsed = parse(existingContent) as Record<string, unknown>;
+        if (existingParsed?.theme && typeof existingParsed.theme === 'string') {
+          existingTheme = existingParsed.theme;
+        }
+      } catch {
+        // Ignore parse errors - proceed without preserving theme
+      }
+    }
+
     // Merge with current settings to preserve any unset values
     const merged = mergeSettings(currentSettings, settings as PartialSettings);
-    const yaml = serializeSettings(merged);
+
+    // Create output object with theme first (if present) for consistent YAML ordering
+    const output: Record<string, unknown> = {};
+    if (existingTheme) {
+      output.theme = existingTheme;
+    }
+    // Spread the merged settings
+    Object.assign(output, merged);
+
+    const yaml = stringify(output);
 
     fs.writeFileSync(settingsPath, yaml, 'utf-8');
     currentSettings = merged;

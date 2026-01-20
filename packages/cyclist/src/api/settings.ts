@@ -10,7 +10,7 @@
 import { Router } from 'express';
 import fs from 'fs';
 import path from 'path';
-import { parse } from 'yaml';
+import { parse, stringify } from 'yaml';
 import { getCurrentSettings, saveUserSettings, addToRecentThemes, type CyclistSettings, type PartialSettings, type SettingsInput } from '../settings.js';
 import { getProjectDirectory } from '../paths.js';
 
@@ -210,13 +210,31 @@ export function createSettingsRouter(): Router {
         return res.status(500).json(createErrorResponse('FILE_ERROR', 'Failed to save settings to file'));
       }
 
-      // Write theme to .pennyfarthing/config.local.yaml ONLY (single source of truth)
+      // Update theme in .pennyfarthing/config.local.yaml using read-modify-write
+      // This preserves other settings (like handoff_mode) in the same file
       const projectDir = getProjectDirectory();
       let themeChanged = false;
       if (theme && projectDir) {
         try {
           const configPath = path.join(projectDir, '.pennyfarthing', 'config.local.yaml');
-          fs.writeFileSync(configPath, `theme: "${theme}"\n`, 'utf-8');
+
+          // Read existing config to preserve other settings
+          let existingConfig: Record<string, unknown> = {};
+          if (fs.existsSync(configPath)) {
+            const existingContent = fs.readFileSync(configPath, 'utf-8');
+            const parsed = parse(existingContent);
+            if (parsed && typeof parsed === 'object') {
+              existingConfig = parsed as Record<string, unknown>;
+            }
+          }
+
+          // Update only the theme, preserving everything else
+          existingConfig.theme = theme;
+
+          // Write back with theme first for consistent ordering
+          const { theme: themeValue, ...rest } = existingConfig;
+          const ordered = { theme: themeValue, ...rest };
+          fs.writeFileSync(configPath, stringify(ordered), 'utf-8');
           themeChanged = true;
 
           // Touch the agent session file to trigger watchAgentChanges
