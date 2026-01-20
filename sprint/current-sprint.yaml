@@ -652,3 +652,26 @@ epics:
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
+      - id: MSSCI-12097
+        jira: MSSCI-12097
+        title: "VS Code Chat API integration for Claude conversations"
+        description: |
+          Integrate with VS Code's native Chat API to show Claude conversations:
+          - Register as a chat participant (@pennyfarthing)
+          - Receive messages from WheelHub /ws/messages channel
+          - Display in VS Code's native chat view alongside Copilot
+          - Support slash commands (/sm, /tea, /dev, /reviewer)
+          - Stream responses in real-time
+        points: 5
+        priority: P1
+        status: done
+        completed: "2026-01-20"
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - "@pennyfarthing appears in VS Code chat view"
+          - User can send messages via chat input
+          - Assistant responses stream in real-time from Claude
+          - Slash commands (/sm, /tea, etc.) invoke agent switches
+          - Tool use displays with collapsible details
+          - Works alongside GitHub Copilot Chat
