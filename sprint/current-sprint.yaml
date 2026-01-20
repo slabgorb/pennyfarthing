@@ -1,14 +1,14 @@
 sprint:
   number: 12
-  goal: Complete WheelHub notification consolidation
+  goal: Complete WheelHub consolidation and Stepped Workflow foundation
   start_date: 2026-01-20
   end_date: 2026-02-02
   status: active
   velocity_target: 22
 summary:
-  total_points: 11
+  total_points: 28
   completed_points: 9
-  remaining_points: 2
+  remaining_points: 19
 epics:
   # ===========================================================================
   # EPIC 48: WheelHub Notification Consolidation (continued)
@@ -95,3 +95,149 @@ epics:
           - Theme changes in Tab 1 reflect in Tab 2 immediately
           - All localStorage access goes through settings-sync.js
           - 16 existing files refactored to use new module
+
+  # ===========================================================================
+  # EPIC 47: Stepped Workflow Support (BMAD-Inspired)
+  # ===========================================================================
+  - id: epic-47
+    type: epic
+    title: "Epic: Stepped Workflow Support (BMAD-Inspired)"
+    description: |
+      Extend Pennyfarthing's workflow system to support BMAD-style stepped
+      workflows natively. Adds progressive disclosure, step-based execution,
+      user approval gates, tri-modal support, and cross-session resumability.
+
+      ADR: docs/adr/0005-bmad-workflow-import.md
+    points: 17
+    completed_points: 0
+    priority: P1
+    status: backlog
+    stories:
+      - id: 47-1
+        title: Workflow YAML schema extension (type: stepped)
+        description: |
+          Update workflow YAML schema to support type: stepped with new fields:
+          steps (path, pattern), modes, variables, gates, template.
+          Workflow loader detects type and routes to appropriate executor.
+        points: 2
+        priority: P0
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Workflow YAML supports type: stepped field
+          - New fields: steps.path, steps.pattern, modes, variables, gates, template
+          - Workflow loader detects type and routes appropriately
+          - Backward compatible with existing type: phased workflows
+      - id: 47-2
+        title: Step file parser and variable resolution
+        description: |
+          Create step file parser that extracts <step-meta> block, resolves
+          {variable} placeholders, and identifies gate markers. Variable
+          resolver with priority chain: Workflow → Session → Config → Env → Defaults.
+        points: 3
+        priority: P0
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Step file parser extracts <step-meta> block
+          - Variable placeholders {variable} resolved correctly
+          - Gate markers detected (<!-- GATE --> or from meta)
+          - Priority chain: Workflow → Session → Config → Env → Defaults
+      - id: 47-3
+        title: Session file state tracking for stepped workflows
+        description: |
+          Extend session file format with ## Workflow State section tracking:
+          workflow name, type, mode, current step, steps completed array,
+          timestamps. Session reader/writer for stepped workflow state.
+        points: 2
+        priority: P0
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Session file has ## Workflow State section
+          - Tracks: workflow, type, mode, current_step, steps_completed[]
+          - Session reader/writer for stepped state
+          - Compatible with existing session file format
+      - id: 47-4
+        title: "/workflow command updates (list, start, resume, status)"
+        description: |
+          Update /workflow skill with: list (show phased + stepped),
+          start <name> [--mode] (begin stepped workflow), resume [name]
+          (continue from last step), status (show current progress).
+        points: 3
+        priority: P0
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - /workflow list shows both phased and stepped workflows
+          - /workflow start <name> [--mode] begins stepped workflow
+          - /workflow resume [name] continues from last step
+          - /workflow status shows current progress
+      - id: 47-5
+        title: Gate detection and user approval flow
+        description: |
+          Gate detection from: gates.after_steps in workflow YAML, gate: true
+          in step meta, <!-- GATE --> marker in content. Gate UI displays
+          prompt, waits for user input, records decision in session.
+        points: 2
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Gates detected from workflow YAML gates.after_steps
+          - Gates detected from step meta gate: true
+          - Gates detected from <!-- GATE --> marker
+          - Gate pauses execution, displays prompt, records decision
+      - id: 47-6
+        title: Tri-modal support (create/validate/edit)
+        description: |
+          Mode selection at workflow start. Route to appropriate steps
+          directory based on mode (steps/, steps-v/, steps-e/). Track
+          mode in session state.
+        points: 2
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Mode selected at workflow start (create/validate/edit)
+          - Routes to correct steps directory based on mode
+          - Mode tracked in session state
+          - Default mode configurable in workflow YAML
+      - id: 47-7
+        title: BMAD workflow migration script
+        description: |
+          Create migrate-bmad-workflow.sh script to convert BMAD workflow
+          format to Pennyfarthing stepped format. Handle step files,
+          variable syntax, and mode directories.
+        points: 1
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - migrate-bmad-workflow.sh script created
+          - Converts BMAD workflow.md to Pennyfarthing workflow.yaml
+          - Handles step file conversion
+          - Converts variable syntax
+      - id: 47-8
+        title: Example stepped workflows (architecture, prd)
+        description: |
+          Create example stepped workflows demonstrating the feature:
+          architecture workflow with 8 steps and gates, prd workflow
+          with tri-modal support. Include step files and templates.
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - architecture workflow with 8 steps and gates
+          - prd workflow with tri-modal support
+          - Step files and templates included
+          - Documentation for each workflow
