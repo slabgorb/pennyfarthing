@@ -18,11 +18,34 @@ interface ClaudeWebSocketMessage {
 }
 
 // Stats data type
-interface StatsData {
+export interface StatsData {
   agent?: string;
   phase?: string;
+  persona?: {
+    character: string;
+    theme: string;
+    role: string;
+  };
+  context?: {
+    usablePercent: number;
+  };
+  sprint?: {
+    totalPoints: number;
+    completedPoints: number;
+    inProgressCount: number;
+  };
+  story?: {
+    id: string;
+    title: string;
+    phase: string;
+    branch: string;
+    points: number;
+  };
   [key: string]: unknown;
 }
+
+// Listener callback type for same-process subscribers
+export type StatsListener = (data: StatsData) => void;
 
 /**
  * Manages WebSocket channels and broadcasts for the WheelHub server.
@@ -34,12 +57,26 @@ export class WebSocketManager {
   // Registered channel paths
   private registeredChannels: Set<string> = new Set();
 
+  // Same-process listeners (for sidebar provider integration)
+  private statsListeners: Set<StatsListener> = new Set();
+
   constructor() {
     // Pre-register expected channels
     this.registerChannel('/ws/stats');
     this.registerChannel('/ws/story');
     this.registerChannel('/ws/claude');
     this.registerChannel('/ws/git');
+  }
+
+  /**
+   * Register a same-process listener for stats updates.
+   * Used by the sidebar provider to receive updates without WebSocket.
+   */
+  onStats(listener: StatsListener): () => void {
+    this.statsListeners.add(listener);
+    return () => {
+      this.statsListeners.delete(listener);
+    };
   }
 
   /**
@@ -142,9 +179,19 @@ export class WebSocketManager {
   }
 
   /**
-   * Broadcast stats update to all connected stats clients.
+   * Broadcast stats update to all connected stats clients and same-process listeners.
    */
   broadcastStats(data: StatsData): void {
+    // Notify same-process listeners (sidebar provider)
+    for (const listener of this.statsListeners) {
+      try {
+        listener(data);
+      } catch (err) {
+        console.error('[WebSocketManager] Error in stats listener:', err);
+      }
+    }
+
+    // Notify WebSocket clients
     const clients = this.channels.get('/ws/stats');
     if (!clients) return;
 

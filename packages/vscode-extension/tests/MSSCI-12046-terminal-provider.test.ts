@@ -31,6 +31,41 @@ const mockTerminal = {
   dispose: vi.fn(),
 };
 
+// Mock vscode.EventEmitter class
+class MockEventEmitter<T> {
+  private listeners: ((e: T) => void)[] = [];
+  fire = vi.fn((data?: T) => {
+    this.listeners.forEach((listener) => listener(data as T));
+  });
+  event = (listener: (e: T) => void) => {
+    this.listeners.push(listener);
+    return { dispose: () => {} };
+  };
+  dispose = vi.fn();
+}
+
+// Mock vscode.ThemeIcon class
+class MockThemeIcon {
+  constructor(public id: string) {}
+}
+
+// Mock vscode.TreeItem class
+class MockTreeItem {
+  label: string;
+  collapsibleState?: number;
+  constructor(label: string, collapsibleState?: number) {
+    this.label = label;
+    this.collapsibleState = collapsibleState;
+  }
+}
+
+// Mock TreeItemCollapsibleState enum
+const TreeItemCollapsibleState = {
+  None: 0,
+  Collapsed: 1,
+  Expanded: 2,
+};
+
 // Mock vscode.TerminalProfile class
 class MockTerminalProfile {
   options: any;
@@ -67,9 +102,12 @@ const mockVscode = {
     })),
     registerTerminalProfileProvider: vi.fn(() => ({ dispose: vi.fn() })),
     registerTerminalLinkProvider: vi.fn(() => ({ dispose: vi.fn() })),
+    registerTreeDataProvider: vi.fn(() => ({ dispose: vi.fn() })),
     createTerminal: vi.fn(() => mockTerminal),
     showInformationMessage: vi.fn(),
     showTextDocument: vi.fn(() => Promise.resolve()),
+    showQuickPick: vi.fn(),
+    activeTerminal: null,
   },
   workspace: {
     workspaceFolders: [mockWorkspaceFolder],
@@ -80,6 +118,7 @@ const mockVscode = {
   },
   Uri: {
     file: vi.fn((path: string) => ({ fsPath: path, scheme: 'file' })),
+    parse: vi.fn((url: string) => ({ toString: () => url })),
   },
   Range: vi.fn((startLine: number, startChar: number, endLine: number, endChar: number) => ({
     start: { line: startLine, character: startChar },
@@ -89,6 +128,13 @@ const mockVscode = {
   Selection: MockSelection,
   TerminalProfile: MockTerminalProfile,
   TerminalLink: vi.fn(),
+  EventEmitter: MockEventEmitter,
+  ThemeIcon: MockThemeIcon,
+  TreeItem: MockTreeItem,
+  TreeItemCollapsibleState,
+  env: {
+    openExternal: vi.fn(),
+  },
 };
 
 vi.mock('vscode', () => mockVscode);

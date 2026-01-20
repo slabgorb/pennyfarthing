@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Penny-farthing bicycle: large front wheel, small back wheel -->
+  <!-- Large front wheel -->
+  <circle cx="9" cy="12" r="7"/>
+  <!-- Spokes for large wheel -->
+  <line x1="9" y1="5" x2="9" y2="19"/>
+  <line x1="2" y1="12" x2="16" y2="12"/>
+  <line x1="4.05" y1="7.05" x2="13.95" y2="16.95"/>
+  <line x1="4.05" y1="16.95" x2="13.95" y2="7.05"/>
+  <!-- Small back wheel -->
+  <circle cx="20" cy="17" r="2.5"/>
+  <!-- Frame connecting wheels -->
+  <path d="M9 12 L18 16"/>
+  <!-- Seat -->
+  <path d="M7 8 L11 8"/>
+  <!-- Handlebar -->
+  <path d="M9 5 L7 4 M9 5 L11 4"/>
+</svg>
