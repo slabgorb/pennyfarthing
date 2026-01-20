@@ -32,7 +32,29 @@
         "command": "pennyfarthing.showStatus",
         "title": "Pennyfarthing: Show Status"
       }
-    ]
+    ],
+    "terminal": {
+      "profiles": {
+        "linux": [
+          {
+            "id": "pennyfarthing.claudeTerminal",
+            "title": "Pennyfarthing Claude"
+          }
+        ],
+        "osx": [
+          {
+            "id": "pennyfarthing.claudeTerminal",
+            "title": "Pennyfarthing Claude"
+          }
+        ],
+        "windows": [
+          {
+            "id": "pennyfarthing.claudeTerminal",
+            "title": "Pennyfarthing Claude"
+          }
+        ]
+      }
+    }
   },
   "scripts": {
     "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",

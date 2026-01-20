@@ -305,7 +305,8 @@ epics:
           - Add to monorepo as packages/vscode-extension
         points: 2
         priority: P0
-        status: backlog
+        status: done
+        completed: 2026-01-20
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
@@ -320,7 +321,8 @@ epics:
           - Provides terminal link detection for file paths
         points: 3
         priority: P0
-        status: backlog
+        status: in_progress
+        assigned_to: Keith Avery
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
