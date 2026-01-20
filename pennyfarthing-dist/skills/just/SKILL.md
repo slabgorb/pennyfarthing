@@ -1,160 +1,403 @@
 ---
 name: just
-description: Run just recipes for project tasks. This skill should be used when starting dev servers, running tests, managing databases, checking project health, or writing new justfile recipes.
+description: |
+  Run just recipes for project tasks. This skill should be used when starting dev servers,
+  running tests, managing Cyclist, generating portraits, or writing new justfile recipes.
+args: "[recipe] [args...]"
 ---
 
-# Just Command Runner Skill
+# /just - Project Task Runner
 
-## When to Use This Skill
+`just` is a command runner for project tasks. All commands run from the **project root**.
 
-- Starting/stopping development servers
-- Running tests
-- Managing databases (start, stop, reset, seed)
-- Checking service health/status
-- Writing new justfile recipes
+## Commands
 
-## Overview
+### `/just` or `/just --list`
 
-`just` is a command runner (like `make` but simpler). Commands run from the **project root** unless otherwise specified.
+List all available recipes.
 
-**Installation:** `brew install just` or `cargo install just`
-
-## Getting Help
-
+**Run:**
 ```bash
-just help      # Show categorized commands with descriptions
-just --list    # List all recipes without descriptions
-just --show <recipe>  # Show recipe definition
+just --list
 ```
 
-## Common Recipe Patterns
+**Output:** Recipe names with descriptions.
 
-### Development
+---
+
+### `/just build`
+
+Build all packages in the monorepo.
+
+**Run:**
 ```bash
-just dev           # Start development environment
-just dev-start     # Start all services
-just dev-stop      # Stop all services
-just dev-status    # Check service status
-just dev-logs      # Tail logs
+just build
 ```
 
-### Testing
+**What it does:** Runs `pnpm run build` to compile TypeScript across all packages.
+
+---
+
+### `/just test`
+
+Run tests for all packages.
+
+**Run:**
 ```bash
-just test          # Run all tests
-just test-setup    # Setup test infrastructure
-just test-api      # Backend tests only
-just test-ui       # Frontend tests only
+just test
 ```
 
-### Database
+**What it does:** Runs `pnpm test` which executes Node.js native test runner across the monorepo.
+
+---
+
+### `/just test-cyclist`
+
+Run tests for the Cyclist package only.
+
+**Run:**
 ```bash
-just db-start      # Start database services
-just db-stop       # Stop database services
-just db-reset      # Reset databases (DESTRUCTIVE)
-just db-seed       # Seed with test data
+just test-cyclist
 ```
 
-## Passing Arguments
+**What it does:** Runs `npm test` in `packages/cyclist/`.
 
-Just recipes accept arguments directly (NO `--` separator needed):
+---
+
+### `/just test-cyclist-watch`
+
+Run Cyclist tests in watch mode for TDD workflow.
+
+**Run:**
+```bash
+just test-cyclist-watch
+```
+
+**What it does:** Runs Vitest in watch mode, re-running tests on file changes.
+
+---
+
+### `/just install`
+
+Install dependencies for all packages.
+
+**Run:**
+```bash
+just install
+```
+
+**What it does:** Runs `pnpm install` to install dependencies across the monorepo.
+
+---
+
+## Cyclist Commands
+
+The `cyclist` recipe is the main entry point for Cyclist operations.
+
+### `/just cyclist` (default)
+
+Launch Cyclist in Electron mode with folder picker.
+
+**Run:**
+```bash
+just cyclist
+```
+
+**What it does:** Starts Cyclist Electron app, prompting to select a project directory.
+
+---
+
+### `/just cyclist here`
+
+Launch Cyclist for the current directory.
+
+**Run:**
+```bash
+just cyclist here
+```
+
+**What it does:** Starts Cyclist Electron app with `pwd` as the project directory.
+
+---
+
+### `/just cyclist web`
+
+Launch Cyclist in web dev mode with hot reload.
+
+**Run:**
+```bash
+just cyclist web
+```
+
+**What it does:** Starts the web server with Vite for browser-based development.
+
+---
+
+### `/just cyclist server`
+
+Start Cyclist web server only (no browser).
+
+**Run:**
+```bash
+just cyclist server
+```
+
+**What it does:** Starts the backend server for headless or remote access.
+
+---
+
+### `/just cyclist verbose`
+
+Enable debug logging for troubleshooting.
+
+**Run:**
+```bash
+just cyclist verbose
+```
+
+**Combine flags:**
+```bash
+just cyclist here verbose
+just cyclist web verbose
+```
+
+---
+
+### `/just cyclist dir=<path>`
+
+Launch Cyclist for a specific project directory.
+
+**Run:**
+```bash
+just cyclist dir=/path/to/project
+```
+
+**Arguments:**
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `dir=` | Yes | Absolute path to project directory |
+
+---
+
+### `/just cyclist setup`
+
+First-time setup for Cyclist development.
+
+**Run:**
+```bash
+just cyclist setup
+```
+
+**What it does:**
+1. Cleans stale artifacts (`rm -rf packages/cyclist/dist/`)
+2. Installs dependencies (`pnpm install`)
+3. Rebuilds native modules (`npx electron-rebuild`)
+4. Builds TypeScript (`pnpm run build`)
+
+---
+
+### `/just cyclist doctor`
+
+Diagnose Cyclist setup issues.
+
+**Run:**
+```bash
+just cyclist doctor
+just cyclist doctor --fix
+```
+
+**Arguments:**
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `--fix` | No | Auto-repair detected issues |
+
+**What it does:** Checks for common setup problems and optionally fixes them.
+
+---
+
+### `/just cyclist build`
+
+Build Cyclist TypeScript only.
+
+**Run:**
+```bash
+just cyclist build
+```
+
+**What it does:** Compiles TypeScript in `packages/cyclist/`. Builds workspace dependencies first if missing.
+
+---
+
+### `/just cyclist clean`
+
+Remove Cyclist build artifacts.
+
+**Run:**
+```bash
+just cyclist clean
+```
+
+**What it does:** Removes `packages/cyclist/dist/` directory.
+
+---
+
+### `/just cyclist rebuild`
+
+Rebuild native modules (node-pty) for Electron.
+
+**Run:**
+```bash
+just cyclist rebuild
+```
+
+**What it does:** Runs `npx electron-rebuild` in `packages/cyclist/`.
+
+**When needed:** After Node.js version changes or native module errors.
+
+---
+
+### `/just cyclist package`
+
+Build Cyclist Electron app for distribution.
+
+**Run:**
+```bash
+just cyclist package
+```
+
+**What it does:** Runs `npm run build:electron` to create distributable app.
+
+---
+
+### `/just cyclist install`
+
+Install Cyclist app and CLI.
+
+**Run:**
+```bash
+just cyclist install
+```
+
+**What it does:**
+1. Installs `Cyclist.app` to `/Applications`
+2. Installs `cyclist` CLI to `/usr/local/bin`
+
+---
+
+## Portrait Commands
+
+Generate AI portraits for persona themes.
+
+### `/just portraits <theme>`
+
+Generate portraits for a specific theme.
+
+**Run:**
+```bash
+just portraits arthurian-mythos
+```
+
+**Arguments:**
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `theme` | Yes | Theme name (e.g., `arthurian-mythos`, `the-expanse`) |
+
+---
+
+### `/just portraits-all`
+
+Generate portraits for all themes.
+
+**Run:**
+```bash
+just portraits-all
+```
+
+**Warning:** This is time-intensive. Generates portraits for all 102 themes.
+
+---
+
+### `/just portraits-preview <theme>`
+
+Preview portraits for a theme without saving.
+
+**Run:**
+```bash
+just portraits-preview arthurian-mythos
+```
+
+**Arguments:**
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `theme` | Yes | Theme name to preview |
+
+---
+
+## Passing Arguments to Recipes
+
+Just recipes accept arguments directly (no `--` separator needed):
 
 ```bash
 # Correct
-just test-api -run TestName ./...
-just build --release
+just test-cyclist --filter "B-001"
+just cyclist here verbose
 
 # WRONG - don't use --
-just test-api -- -run TestName
+just test-cyclist -- --filter "B-001"
 ```
 
-## Writing Custom Recipes
+---
 
-### Basic Recipe
+## Inspecting Recipes
 
-```just
-# Recipe with description (shows in `just --list`)
-hello:
-    echo "Hello, world!"
+### Show recipe definition
 
-# Private recipe (doesn't show in list)
-[private]
-_helper:
-    echo "I'm hidden"
+**Run:**
+```bash
+just --show <recipe>
 ```
 
-### Recipe with Arguments
-
-```just
-# Positional arguments
-greet name:
-    echo "Hello, {{name}}!"
-
-# With defaults
-greet name="World":
-    echo "Hello, {{name}}!"
-
-# Variadic arguments
-test *args:
-    go test {{args}}
+**Example:**
+```bash
+just --show cyclist
+# Shows the full recipe implementation
 ```
 
-### Multi-line Scripts
+---
 
-```just
-# Use shebang for complex scripts
-build:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    echo "Building..."
-    go build -o bin/app ./cmd/app
-    echo "Done!"
+## Quick Reference
+
+| Command | Description |
+|---------|-------------|
+| `just` | List available recipes |
+| `just build` | Build all packages |
+| `just test` | Run all tests |
+| `just test-cyclist` | Run Cyclist tests |
+| `just test-cyclist-watch` | Cyclist tests in watch mode |
+| `just install` | Install dependencies |
+| `just cyclist` | Electron + folder picker |
+| `just cyclist here` | Electron + current directory |
+| `just cyclist web` | Web dev mode |
+| `just cyclist server` | Web server only |
+| `just cyclist setup` | First-time setup |
+| `just cyclist doctor` | Diagnose issues |
+| `just cyclist build` | Build TypeScript |
+| `just cyclist clean` | Remove dist/ |
+| `just cyclist rebuild` | Rebuild native modules |
+| `just cyclist package` | Build Electron app |
+| `just cyclist install` | Install app + CLI |
+| `just portraits <theme>` | Generate theme portraits |
+| `just portraits-all` | Generate all portraits |
+| `just portraits-preview <theme>` | Preview portraits |
+
+## Dependencies
+
+```bash
+brew install just
+# or
+cargo install just
 ```
 
-### Variables and Interpolation
+## Reference
 
-```just
-# Set variables
-project := "myapp"
-version := `git describe --tags`
-
-# Use in recipes
-info:
-    echo "{{project}} version {{version}}"
-
-# Environment variables
-export DATABASE_URL := "postgres://localhost/dev"
-```
-
-### Dependencies
-
-```just
-# Run `setup` before `build`
-build: setup
-    go build ./...
-
-# Multiple dependencies
-deploy: build test
-    ./deploy.sh
-```
-
-### Conditionals
-
-```just
-# Platform-specific
-install:
-    {{ if os() == "macos" }} brew install foo {{ else }} apt install foo {{ endif }}
-```
-
-## Best Practices
-
-1. **Use `echo -e`** for colored output (not plain `echo`)
-2. **Use `#!/usr/bin/env bash`** shebang for multi-line scripts
-3. **Mark internal recipes as `[private]`**
-4. **Use `{{var}}`** for variable interpolation, not `$var`
-5. **Extract complex logic** to scripts in `scripts/` directory
-6. **Add descriptions** to all public recipes
-
-## Reference Documentation
-
-- **Justfile Syntax:** See `references/justfile-syntax.md`
 - **Official Docs:** https://just.systems/man/en/
