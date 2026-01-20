@@ -86,7 +86,8 @@ epics:
           access across 16 files.
         points: 5
         priority: P2
-        status: backlog
+        status: in_progress
+        assigned_to: Keith Avery
         repos: cyclist
         workflow: tdd
         acceptance_criteria:
