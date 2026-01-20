@@ -93,7 +93,7 @@ describe('AC2: TDD workflow defines correct phases', () => {
     const result = loadWorkflowFile(join(workflowsDir!, 'tdd.yaml'));
     assert.ok(result.success && result.workflow, 'Should load tdd.yaml');
 
-    assert.strictEqual(result.workflow!.phases.length, 5, 'TDD workflow should have 5 phases');
+    assert.strictEqual(result.workflow!.phases?.length, 5, 'TDD workflow should have 5 phases');
   });
 
   it('should define phases in order: setup(SM) → red(TEA) → green(Dev) → review(Reviewer) → finish(SM)', () => {
@@ -102,7 +102,7 @@ describe('AC2: TDD workflow defines correct phases', () => {
     const result = loadWorkflowFile(join(workflowsDir!, 'tdd.yaml'));
     assert.ok(result.success && result.workflow, 'Should load tdd.yaml');
 
-    const phases = result.workflow!.phases;
+    const phases = result.workflow!.phases!;
     const expectedFlow = [
       { name: 'setup', agent: 'sm' },
       { name: 'red', agent: 'tea' },
@@ -123,7 +123,7 @@ describe('AC2: TDD workflow defines correct phases', () => {
     const result = loadWorkflowFile(join(workflowsDir!, 'tdd.yaml'));
     assert.ok(result.success && result.workflow, 'Should load tdd.yaml');
 
-    const redPhase = result.workflow!.phases.find(p => p.name === 'red');
+    const redPhase = result.workflow!.phases?.find(p => p.name === 'red');
     assert.ok(redPhase, 'Should have RED phase');
     assert.ok(redPhase!.gate, 'RED phase should have a gate');
     assert.strictEqual(redPhase!.gate!.type, 'tests_fail', 'RED phase gate should be tests_fail');
@@ -135,7 +135,7 @@ describe('AC2: TDD workflow defines correct phases', () => {
     const result = loadWorkflowFile(join(workflowsDir!, 'tdd.yaml'));
     assert.ok(result.success && result.workflow, 'Should load tdd.yaml');
 
-    const greenPhase = result.workflow!.phases.find(p => p.name === 'green');
+    const greenPhase = result.workflow!.phases?.find(p => p.name === 'green');
     assert.ok(greenPhase, 'Should have GREEN phase');
     assert.ok(greenPhase!.gate, 'GREEN phase should have a gate');
     assert.strictEqual(greenPhase!.gate!.type, 'tests_pass', 'GREEN phase gate should be tests_pass');
@@ -147,7 +147,7 @@ describe('AC2: TDD workflow defines correct phases', () => {
     const result = loadWorkflowFile(join(workflowsDir!, 'tdd.yaml'));
     assert.ok(result.success && result.workflow, 'Should load tdd.yaml');
 
-    const reviewPhase = result.workflow!.phases.find(p => p.name === 'review');
+    const reviewPhase = result.workflow!.phases?.find(p => p.name === 'review');
     assert.ok(reviewPhase, 'Should have REVIEW phase');
     assert.ok(reviewPhase!.gate, 'REVIEW phase should have a gate');
     assert.strictEqual(reviewPhase!.gate!.type, 'approval', 'REVIEW phase gate should be approval');
@@ -248,7 +248,7 @@ describe('AC3: Scale-adaptive routing preserved', () => {
     const result = loadWorkflowFile(join(workflowsDir!, 'trivial.yaml'));
     assert.ok(result.success && result.workflow, 'Should load trivial.yaml');
 
-    const agents = result.workflow!.phases.map(p => p.agent);
+    const agents = result.workflow!.phases!.map(p => p.agent);
     assert.ok(!agents.includes('tea'), 'Trivial workflow should not include TEA agent');
   });
 
@@ -258,7 +258,7 @@ describe('AC3: Scale-adaptive routing preserved', () => {
     const result = loadWorkflowFile(join(workflowsDir!, 'trivial.yaml'));
     assert.ok(result.success && result.workflow, 'Should load trivial.yaml');
 
-    assert.strictEqual(result.workflow!.phases.length, 4, 'Trivial workflow should have 4 phases');
+    assert.strictEqual(result.workflow!.phases!.length, 4, 'Trivial workflow should have 4 phases');
 
     const expectedFlow = [
       { name: 'setup', agent: 'sm' },
@@ -268,7 +268,7 @@ describe('AC3: Scale-adaptive routing preserved', () => {
     ];
 
     expectedFlow.forEach((expected, i) => {
-      assert.strictEqual(result.workflow!.phases[i].agent, expected.agent,
+      assert.strictEqual(result.workflow!.phases![i].agent, expected.agent,
         `Phase ${i} agent should be "${expected.agent}"`);
     });
   });
@@ -410,19 +410,18 @@ describe('AC4: /new-work behavior regression tests', () => {
       '3-pt chore should fall back to tdd (exceeds trivial max)');
   });
 
-  it('story with no type falls back to default workflow', () => {
+  it('story with no type and no points falls back to default workflow', () => {
     assert.ok(workflowsDir, 'Could not find monorepo root');
     const { workflows } = loadWorkflowsFromDir(workflowsDir!);
 
     const story: StoryMetadata = {
-      id: 'default-1',
-      points: 5
-      // No type specified
+      id: 'default-1'
+      // No type, no points - should truly fall back to default
     };
 
     const result = routeStoryToWorkflow(story, workflows);
     assert.ok(result, 'Should route to a workflow');
-    assert.strictEqual(result.workflow.name, 'tdd', 'No type should fall back to tdd (default)');
+    assert.strictEqual(result.workflow.name, 'tdd', 'No type/points should fall back to tdd (default)');
   });
 
   it('tdd.yaml has default: true trigger', () => {

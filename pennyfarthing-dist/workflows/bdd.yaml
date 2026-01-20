@@ -52,7 +52,9 @@ workflow:
       output: [archived_session, story_summary]
 
   triggers:
-    types: [ui, ux, behavior, component, settings, feature]
+    # Note: 'feature' type intentionally omitted - TDD is default for features
+    # Use 'bdd' or 'ux-first' tag to explicitly request BDD workflow
+    types: [ui, ux, behavior, component, settings]
     tags: [bdd, ux-first]
     points:
       min: 2
