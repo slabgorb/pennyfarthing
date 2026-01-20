@@ -1,6 +1,7 @@
 ---
 name: dev-patterns
 description: Common development patterns, fixes, and gotchas. Use when implementing features, debugging issues, or avoiding known pitfalls.
+allowed_tools: [Read, Glob, Grep, Task]
 ---
 
 # Dev Patterns Skill
