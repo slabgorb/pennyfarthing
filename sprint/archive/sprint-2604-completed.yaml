@@ -440,3 +440,9 @@ completed:
     points: 2
     completed: 2026-01-20
     pr: 376
+  - id: MSSCI-12037
+    epic: MSSCI-11952
+    title: "Rewrite /just skill with prescriptive scripts"
+    points: 1
+    completed: 2026-01-20
+    pr: 377
