@@ -600,10 +600,11 @@ epics:
           Reuse stats-strip.js and persona.js logic.
         points: 3
         priority: P1
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: bdd
         acceptance_criteria: []
+        completed: "2026-01-20"
       - id: MSSCI-12049
         jira: MSSCI-12049
         title: "Reflector protocol adapter"
