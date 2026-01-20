@@ -27,12 +27,73 @@
     "workspaceContains:.claude"
   ],
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "pennyfarthing",
+          "title": "Pennyfarthing",
+          "icon": "resources/pennyfarthing.svg"
+        }
+      ]
+    },
+    "views": {
+      "pennyfarthing": [
+        {
+          "id": "pennyfarthing.agentStatus",
+          "name": "Agent Status",
+          "contextualTitle": "Pennyfarthing Agent Status"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "pennyfarthing.showStatus",
         "title": "Pennyfarthing: Show Status"
+      },
+      {
+        "command": "pennyfarthing.switchAgent",
+        "title": "Switch Agent",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "pennyfarthing.viewBacklog",
+        "title": "View Backlog",
+        "icon": "$(list-unordered)"
+      },
+      {
+        "command": "pennyfarthing.startWork",
+        "title": "Start Work",
+        "icon": "$(play)"
+      },
+      {
+        "command": "pennyfarthing.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "pennyfarthing.openJira",
+        "title": "Open in Jira"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "pennyfarthing.refresh",
+          "when": "view == pennyfarthing.agentStatus",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "pennyfarthing.switchAgent",
+          "when": "view == pennyfarthing.agentStatus && viewItem == agent"
+        },
+        {
+          "command": "pennyfarthing.openJira",
+          "when": "view == pennyfarthing.agentStatus && viewItem == story"
+        }
+      ]
+    },
     "terminal": {
       "profiles": {
         "linux": [
