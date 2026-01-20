@@ -25,6 +25,29 @@
 **Rationale:** Maintains momentum; avoids artificial wait
 **Constraint:** Only start P1 stories from next sprint; keep velocity attribution clean
 
+### DEC-SM-005: Team Sprint Alignment
+**Date:** January 2026
+**Problem:** Pennyfarthing sprints were independent; need alignment with larger team
+**Decision:** Adopt team sprint naming convention `TO Sprint YYWW` with Jira sprint ID
+**Format:** `name: "TO Sprint 2604"` + `jira_id: 276`
+**Rationale:** Sprints are timeboxed by team calendar, not by points completed
+
+### DEC-SM-006: No Velocity Targets
+**Date:** January 2026
+**Problem:** `velocity_target` field implied sprints end when points complete
+**Decision:** Remove `velocity_target` from sprint schema entirely
+**Rationale:** Sprints are timeboxed, not pointed. We do what we can in the sprint.
+
+### DEC-SM-007: Archive Completed Stories
+**Date:** January 2026
+**Problem:** current-sprint.yaml grew to 1000+ lines with done stories mixed in
+**Decision:** Move completed stories to `sprint/archive/sprint-{YYWW}-completed.yaml`
+**Structure:**
+  - `current-sprint.yaml` contains only active/backlog work
+  - Archive file preserves full story details with epic attribution
+  - Reference comment in current file points to archive location
+**Rationale:** Keeps working file lean and focused on remaining work
+
 ---
 
 *Add decisions made during story coordination below*
