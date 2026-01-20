@@ -165,8 +165,11 @@ export function createSettingsRouter(): Router {
       // Strip pennyfarthing from settings to save (we handle theme separately)
       const { pennyfarthing: _pf, ...settingsToSave } = partialSettings;
 
-      // Save settings using the settings module
-      const success = saveUserSettings(settingsToSave as Partial<CyclistSettings>);
+      // Get project directory FIRST - needed for both settings save and theme update
+      const projectDir = getProjectDirectory();
+
+      // Save settings using the settings module (pass projectDir to avoid cwd fallback)
+      const success = saveUserSettings(settingsToSave as Partial<CyclistSettings>, projectDir || undefined);
 
       if (!success) {
         return res.status(500).json(createErrorResponse('FILE_ERROR', 'Failed to save settings to file'));
@@ -174,7 +177,6 @@ export function createSettingsRouter(): Router {
 
       // Update theme in .pennyfarthing/config.local.yaml using read-modify-write
       // This preserves other settings (like handoff_mode) in the same file
-      const projectDir = getProjectDirectory();
       let themeChanged = false;
       if (theme && projectDir) {
         try {
