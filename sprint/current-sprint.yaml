@@ -180,3 +180,20 @@ epics:
           - /backlog skill removed
           - Symlink removed from .claude/skills/
           - /sprint backlog documented as replacement
+      - id: MSSCI-12039
+        title: "Consolidate /new-work into /sprint work with next argument"
+        description: |
+          Make /new-work an alias for /sprint work. Add 'next' argument to
+          auto-select highest priority story. Remove /sprint-context skill
+          (consolidated into /sprint). Update DOGFOODING.md with skill-with-scripts pattern.
+        points: 2
+        priority: P2
+        status: done
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - /new-work documented as alias for /sprint work
+          - check-story.sh supports 'next' argument
+          - /sprint-context skill removed
+          - DOGFOODING.md updated with skill scripts pattern
+        branch: feat/new-work-skill-with-parameters
