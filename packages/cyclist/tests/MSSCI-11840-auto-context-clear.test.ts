@@ -385,12 +385,12 @@ describe('AC4: Auto mode workflow continuation', () => {
       expect(typeof settings.isAutoModeEnabled).toBe('function');
     });
 
-    it('should return true when handoff_mode is auto', async () => {
+    it('should return true when permission_mode is turbo', async () => {
       const settings = await import('../src/settings.js');
 
-      // Mock settings with auto mode
+      // Mock settings with turbo mode (auto-handoff enabled)
       const mockSettings = {
-        workflow: { handoff_mode: 'auto' as const },
+        workflow: { permission_mode: 'turbo' as const },
       };
 
       const result = settings.isAutoModeEnabled(mockSettings);
@@ -398,11 +398,11 @@ describe('AC4: Auto mode workflow continuation', () => {
       expect(result).toBe(true);
     });
 
-    it('should return false when handoff_mode is manual', async () => {
+    it('should return false when permission_mode is not turbo', async () => {
       const settings = await import('../src/settings.js');
 
       const mockSettings = {
-        workflow: { handoff_mode: 'manual' as const },
+        workflow: { permission_mode: 'manual' as const },
       };
 
       const result = settings.isAutoModeEnabled(mockSettings);

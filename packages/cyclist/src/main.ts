@@ -701,32 +701,10 @@ export function initializeApp(projectDir?: string): CyclistSettings {
 }
 
 /**
- * Apply font settings directly to main window via executeJavaScript
- * 35-6: This is the reliable way to apply CSS variable changes in Electron
- * Uses webContents.executeJavaScript to set CSS custom properties on :root
- * @param settings - CyclistSettings object containing display.font_ui and display.font_mono
+ * Apply font settings to main window (stub - fonts not currently used)
  */
-export function applyFontSettingsToMainWindow(settings: CyclistSettings): void {
-  if (!dataWindowRef || dataWindowRef.webContents.isDestroyed()) {
-    return;
-  }
-
-  const fontUi = settings.display?.font_ui;
-  const fontMono = settings.display?.font_mono;
-
-  // Build the JavaScript to execute in renderer
-  const jsCode = `
-    (function() {
-      const root = document.documentElement;
-      ${fontUi ? `root.style.setProperty('--font-ui', '"${fontUi}", system-ui, -apple-system, sans-serif');` : ''}
-      ${fontMono ? `root.style.setProperty('--font-mono', '"${fontMono}", Monaco, "Courier New", monospace');` : ''}
-      console.log('[FontSettings] Applied via executeJavaScript:', '${fontUi || 'default'}', '${fontMono || 'default'}');
-    })();
-  `;
-
-  dataWindowRef.webContents.executeJavaScript(jsCode).catch((err) => {
-    console.error('[FontSettings] Failed to apply fonts:', err);
-  });
+export function applyFontSettingsToMainWindow(_settings: CyclistSettings): void {
+  // Font settings removed - function kept for API compatibility
 }
 
 /**
