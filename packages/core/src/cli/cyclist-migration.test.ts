@@ -155,9 +155,10 @@ describe('Story 11-3: Cyclist Migration into Monorepo', () => {
         assert.fail('packages/cyclist/src/paths.ts must exist first');
       }
       const content = readFileSync(pathsPath, 'utf-8');
-      // Should not contain the old hardcoded path logic
-      const hasOldPattern = content.includes("'pennyfarthing', 'pennyfarthing-dist'") ||
-                           content.includes('"pennyfarthing", "pennyfarthing-dist"');
+      // Should not contain the old hardcoded path logic (join calls, not comments)
+      // Old pattern was: join(..., 'pennyfarthing', 'pennyfarthing-dist')
+      const hasOldPattern = content.includes("join(__dirname, 'pennyfarthing', 'pennyfarthing-dist')") ||
+                           content.includes('join(__dirname, "pennyfarthing", "pennyfarthing-dist")');
       assert.ok(
         !hasOldPattern,
         'paths.ts should NOT have hardcoded pennyfarthing path - use shared resolver instead'
