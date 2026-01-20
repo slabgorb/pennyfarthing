@@ -217,21 +217,6 @@ epics:
           - /story skill created with prescriptive scripts
           - story-management skill removed or redirected
           - Scripts for common story operations
-      - id: MSSCI-12037
-        jira: MSSCI-12037
-        title: "Rewrite /just skill with prescriptive scripts"
-        description: |
-          Replace existing just skill with prescriptive version
-          following the /sprint pattern.
-        points: 1
-        priority: P2
-        status: in_progress
-        repos: pennyfarthing
-        workflow: trivial
-        acceptance_criteria:
-          - /just skill rewritten with prescriptive format
-          - Common just recipes documented
-        assigned_to: Keith Avery
       - id: MSSCI-12038
         jira: MSSCI-12038
         title: "Remove /backlog skill (consolidated into /sprint)"
