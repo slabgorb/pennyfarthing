@@ -56,7 +56,8 @@ epics:
           flow from task creation to panel display.
         points: 2
         priority: P1
-        status: in_progress
+        status: done
+        completed: 2026-01-20
         repos: cyclist
         workflow: tdd
         acceptance_criteria:
