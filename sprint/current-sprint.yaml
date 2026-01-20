@@ -552,8 +552,8 @@ epics:
           - TURBO: send accept mode, light segment, autohandoff=true
         points: 3
         priority: P1
-        status: in_progress
-        assigned_to: Keith Avery
+        status: done
+        completed: 2026-01-20
         repos: cyclist
         workflow: tdd
         acceptance_criteria:
