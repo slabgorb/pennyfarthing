@@ -5,9 +5,7 @@ sprint:
   start_date: 2026-01-20
   end_date: 2026-02-02
   status: active
-
 # Completed stories archived to: sprint/archive/sprint-2604-completed.yaml
-
 epics:
   # ===========================================================================
   # EPIC 48: WheelHub Notification Consolidation
@@ -79,7 +77,6 @@ epics:
           - Popup tool use notification code removed
           - No visual regression in tool use visibility
           - Approval modal remains the single source for tool interactions
-
   # ===========================================================================
   # EPIC 49: Skill Frontmatter Enhancement
   # ===========================================================================
@@ -198,3 +195,23 @@ epics:
           - /sprint-context skill removed
           - DOGFOODING.md updated with skill scripts pattern
         branch: feat/new-work-skill-with-parameters
+      - id: MSSCI-12043
+        jira: MSSCI-12043
+        title: "Add epic management commands to /sprint skill"
+        description: |
+          Extend /sprint skill with epic lifecycle commands:
+          - /sprint promote <epic-id> - Move epic from planning.yaml to current-sprint.yaml
+          - /sprint epic create - Create Jira epic with stories
+          - /sprint epic sync - Sync epic and stories to Jira
+          Scripts: promote-epic.sh, create-jira-epic.sh, sync-epic-jira.sh
+        points: 3
+        priority: P2
+        status: done
+        completed: 2026-01-20
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - /sprint promote moves epic from planning.yaml to current-sprint.yaml
+          - /sprint epic create creates Jira epic and child stories
+          - /sprint epic sync updates Jira from sprint YAML
+          - Scripts follow existing /sprint skill patterns
