@@ -329,12 +329,14 @@ export function parseSprintYaml(content: string): StoryInfo['sprint'] | null {
               const points = story?.points && typeof story.points === 'number' ? story.points : 0;
               const status = story?.status || 'backlog';
 
+              const done = status === 'done' || status === 'completed';
+              const todo = status === 'backlog' || status === 'ready' || status === null;
+
               if (status === 'in_progress') {
                 inProgressPoints += points;
-              } else if (status === 'backlog' || status === null) {
+              } else if (todo && !done) {
                 remainingPoints += points;
               }
-              // done stories are not counted (they're in the archive)
             }
           }
         }
