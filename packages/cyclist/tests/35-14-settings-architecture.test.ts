@@ -436,12 +436,13 @@ describe('AC6: Settings load/save/validate coverage', () => {
       expect(settings.validateSettings(emptyFontMono)).toBe(false);
     });
 
-    it('should validate theme is a non-empty string', async () => {
+    it('should not validate theme in CyclistSettings (theme is in config.local.yaml only)', async () => {
       const settings = await import('../src/settings.js');
 
-      const emptyTheme = { ...settings.getDefaultSettings() };
-      emptyTheme.pennyfarthing.theme = '';
-      expect(settings.validateSettings(emptyTheme)).toBe(false);
+      // Theme is stored in .pennyfarthing/config.local.yaml, not in CyclistSettings
+      // So validation should pass even without theme
+      const withoutTheme = { ...settings.getDefaultSettings() };
+      expect(settings.validateSettings(withoutTheme)).toBe(true);
     });
 
     it('should validate favorites is an array of strings', async () => {
