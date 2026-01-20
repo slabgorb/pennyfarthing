@@ -99,7 +99,7 @@ epics:
   # ===========================================================================
   # Stepped Workflow Support (BMAD-Inspired) - pending Jira
   # ===========================================================================
-  - id: epic-47
+  - id: MSSCI-12022
     type: epic
     jira: MSSCI-12022
     title: "Epic: Stepped Workflow Support (BMAD-Inspired)"
