@@ -8,6 +8,7 @@
  */
 
 import { validateTheme } from './theme-schema.js';
+import { settingsSync, STORAGE_KEYS } from './settings-sync.js';
 
 // =============================================================================
 // Built-in Themes
@@ -473,9 +474,6 @@ export const BUILT_IN_THEMES = {
 // State
 // =============================================================================
 
-const STORAGE_KEY = 'cyclist-color-theme';
-const CUSTOM_THEMES_KEY = 'cyclist-custom-themes';
-
 let currentTheme = darkTheme;
 let originalTheme = null; // For preview revert
 
@@ -541,17 +539,13 @@ export function getCurrentTheme() {
 // =============================================================================
 
 /**
- * Get all custom themes from localStorage
+ * Get all custom themes from settings-sync
  * @returns {object[]} Array of custom themes
  */
 export function getCustomThemes() {
-  try {
-    const stored = localStorage.getItem(CUSTOM_THEMES_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (e) {
-    console.warn('Could not load custom themes:', e);
+  const stored = settingsSync.get(STORAGE_KEYS.CUSTOM_THEMES);
+  if (stored && Array.isArray(stored)) {
+    return stored;
   }
   return [];
 }
@@ -567,27 +561,22 @@ export function getCustomTheme(id) {
 }
 
 /**
- * Save a custom theme to localStorage
+ * Save a custom theme to settings-sync (cross-tab broadcast)
  * @param {object} theme - Theme to save
  * @returns {boolean} True if saved successfully
  */
 export function saveCustomTheme(theme) {
-  try {
-    const themes = getCustomThemes();
-    const existingIndex = themes.findIndex(t => t.id === theme.id);
+  const themes = getCustomThemes();
+  const existingIndex = themes.findIndex(t => t.id === theme.id);
 
-    if (existingIndex >= 0) {
-      themes[existingIndex] = theme;
-    } else {
-      themes.push(theme);
-    }
-
-    localStorage.setItem(CUSTOM_THEMES_KEY, JSON.stringify(themes));
-    return true;
-  } catch (e) {
-    console.warn('Could not save custom theme:', e);
-    return false;
+  if (existingIndex >= 0) {
+    themes[existingIndex] = theme;
+  } else {
+    themes.push(theme);
   }
+
+  settingsSync.set(STORAGE_KEYS.CUSTOM_THEMES, themes);
+  return true;
 }
 
 /**
@@ -601,20 +590,15 @@ export function deleteCustomTheme(id) {
     return false;
   }
 
-  try {
-    const themes = getCustomThemes();
-    const filtered = themes.filter(t => t.id !== id);
+  const themes = getCustomThemes();
+  const filtered = themes.filter(t => t.id !== id);
 
-    if (filtered.length === themes.length) {
-      return false; // Not found
-    }
-
-    localStorage.setItem(CUSTOM_THEMES_KEY, JSON.stringify(filtered));
-    return true;
-  } catch (e) {
-    console.warn('Could not delete custom theme:', e);
-    return false;
+  if (filtered.length === themes.length) {
+    return false; // Not found
   }
+
+  settingsSync.set(STORAGE_KEYS.CUSTOM_THEMES, filtered);
+  return true;
 }
 
 // =============================================================================
@@ -747,12 +731,8 @@ export function applyTheme(theme, doc) {
     root.style.setProperty(`--syntax-${toKebabCase(key)}`, value);
   }
 
-  // Save preference
-  try {
-    localStorage.setItem(STORAGE_KEY, resolved.id);
-  } catch (e) {
-    console.warn('Could not save theme preference:', e);
-  }
+  // Save preference via settings-sync (cross-tab broadcast)
+  settingsSync.set(STORAGE_KEYS.COLOR_THEME, resolved.id);
 
   currentTheme = resolved;
 
@@ -819,17 +799,13 @@ export function revertThemePreview() {
  * Load saved theme on startup
  */
 export function loadSavedTheme() {
-  try {
-    const savedId = localStorage.getItem(STORAGE_KEY);
-    if (savedId) {
-      const theme = BUILT_IN_THEMES[savedId] || getCustomTheme(savedId);
-      if (theme) {
-        applyTheme(theme);
-        return;
-      }
+  const savedId = settingsSync.get(STORAGE_KEYS.COLOR_THEME);
+  if (savedId) {
+    const theme = BUILT_IN_THEMES[savedId] || getCustomTheme(savedId);
+    if (theme) {
+      applyTheme(theme);
+      return;
     }
-  } catch (e) {
-    console.warn('Could not load saved theme:', e);
   }
 
   // Fall back to dark theme

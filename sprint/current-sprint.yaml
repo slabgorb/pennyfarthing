@@ -7,8 +7,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 11
-  completed_points: 4
-  remaining_points: 7
+  completed_points: 9
+  remaining_points: 2
 epics:
   # ===========================================================================
   # EPIC 48: WheelHub Notification Consolidation (continued)
@@ -22,7 +22,7 @@ epics:
       event-driven WebSocket channels, standardize reconnection behavior,
       and add cross-tab synchronization.
     points: 11
-    completed_points: 4
+    completed_points: 9
     priority: P2
     status: in_progress
     stories:
@@ -86,7 +86,8 @@ epics:
           access across 16 files.
         points: 5
         priority: P2
-        status: backlog
+        status: done
+        completed: 2026-01-20
         repos: cyclist
         workflow: tdd
         acceptance_criteria:

@@ -4,6 +4,7 @@
  */
 
 import { MESSAGE_QUEUE_KEY, MAX_QUEUE_SIZE } from './constants.js';
+import { settingsSync } from '../settings-sync.js';
 
 // State
 let messageQueue = [];
@@ -80,34 +81,20 @@ function notifyQueueChange() {
 }
 
 /**
- * Save message queue to localStorage
+ * Save message queue to settings-sync (cross-tab broadcast)
  */
 export function saveMessageQueue() {
-  if (typeof localStorage === 'undefined') return;
-  try {
-    localStorage.setItem(MESSAGE_QUEUE_KEY, JSON.stringify(messageQueue));
-  } catch (e) {
-    console.warn('Failed to save message queue:', e);
-  }
+  settingsSync.set(MESSAGE_QUEUE_KEY, messageQueue);
 }
 
 /**
- * Load message queue from localStorage
+ * Load message queue from settings-sync
  */
 export function loadMessageQueue() {
-  if (typeof localStorage === 'undefined') return;
-  try {
-    const stored = localStorage.getItem(MESSAGE_QUEUE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed)) {
-        messageQueue = parsed;
-        notifyQueueChange();
-      }
-    }
-  } catch (e) {
-    console.warn('Failed to load message queue:', e);
-    messageQueue = [];
+  const stored = settingsSync.get(MESSAGE_QUEUE_KEY);
+  if (stored && Array.isArray(stored)) {
+    messageQueue = stored;
+    notifyQueueChange();
   }
 }
 

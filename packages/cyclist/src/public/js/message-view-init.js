@@ -24,6 +24,7 @@ import { updateActivity, clearActivity } from './activity.js';
 import { resetSubmitting, setProcessing, processNextInQueue, setOnQueueChange, clearMessageQueue, loadMessageQueue, getMessageQueue, removeFromQueue, injectMessage } from './editor.js';
 import { handleMessage as handleGitCommitMessage } from './git-commit-detector.js';
 import { getCurrentAgentCommand } from './persona.js';
+import { settingsSync, STORAGE_KEYS } from './settings-sync.js';
 
 // 22-5: Track verbose mode state
 let verboseModeEnabled = false;
@@ -79,8 +80,8 @@ function initMessageView() {
   const view = createMessageView('message-view');
   console.log('[MessageView] Initialized');
 
-  // Apply initial theme
-  const savedTheme = localStorage.getItem('theme') || 'dark';
+  // Apply initial theme (using settings-sync)
+  const savedTheme = settingsSync.get(STORAGE_KEYS.THEME, 'dark');
   applyTheme(savedTheme);
 
   // Listen for theme changes
