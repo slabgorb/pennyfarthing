@@ -1,7 +1,7 @@
 sprint:
   name: "TO Sprint 2604"
   jira_id: 276
-  goal: WheelHub notification consolidation, skill frontmatter enhancement, and continued polish
+  goal: WheelHub notification consolidation, skill frontmatter enhancement, and stepped workflow support (BMAD alignment)
   start_date: 2026-01-20
   end_date: 2026-02-02
   status: active
@@ -270,6 +270,200 @@ epics:
           - /sprint epic create creates Jira epic and child stories
           - /sprint epic sync updates Jira from sprint YAML
           - Scripts follow existing /sprint skill patterns
+  # ===========================================================================
+  # EPIC 51: Stepped Workflow Support (BMAD-Inspired)
+  # ===========================================================================
+  - id: MSSCI-12060
+    type: epic
+    title: "Epic: Stepped Workflow Support (BMAD-Inspired)"
+    description: |
+      Extend Pennyfarthing's native workflow system to support BMAD-style stepped
+      workflows with progressive disclosure, gates, and tri-modal execution.
+      Based on ADR-0005. Makes stepped workflows a first-class Pennyfarthing capability.
+    priority: P2
+    status: ready
+    repos: pennyfarthing
+    adr: docs/adr/0005-bmad-workflow-import.md
+    stories:
+      - id: MSSCI-12078
+        title: "Workflow YAML schema extension for type: stepped"
+        description: |
+          Extend workflow YAML schema to support:
+          - type: stepped | phased (phased default for backward compat)
+          - steps: { path, pattern }
+          - modes: { default, create, validate, edit }
+          - variables: object
+          - gates: { after_steps, gate_marker }
+          - template: string
+          Workflow loader detects type and routes to appropriate executor.
+        points: 2
+        priority: P0
+        status: ready
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Workflow YAML supports type field (stepped | phased)
+          - Steps configuration validates path and pattern
+          - Modes configuration supports tri-modal paths
+          - Existing phased workflows work unchanged
+        jira: MSSCI-12078
+      - id: MSSCI-12079
+        title: "Step file parser with <step-meta> extraction"
+        description: |
+          Create step file parser that:
+          - Extracts <step-meta> block (number, name, gate)
+          - Parses markdown content after meta
+          - Identifies gate markers (<!-- GATE --> or from meta)
+          - Returns structured step object
+        points: 2
+        priority: P0
+        status: ready
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Parser extracts step-meta YAML block
+          - Parser returns step number, name, gate flag
+          - Parser handles missing meta gracefully
+          - Gate detection from meta or marker
+        jira: MSSCI-12079
+      - id: MSSCI-12081
+        title: "Variable resolver with priority chain"
+        description: |
+          Create variable resolver that resolves {variable} placeholders
+          from multiple sources in priority order:
+          1. Workflow YAML variables
+          2. Session file values
+          3. .pennyfarthing/config.local.yaml
+          4. Environment/system (project_root, date)
+          5. Defaults (planning_artifacts, etc.)
+        points: 2
+        priority: P0
+        status: ready
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Resolves variables from workflow YAML
+          - Falls back through priority chain
+          - Standard variables documented and working
+          - Unresolved variables flagged with warning
+        jira: MSSCI-12081
+      - id: MSSCI-12082
+        title: "Session file stepped workflow state tracking"
+        description: |
+          Extend session file format to track stepped workflow state:
+          - Workflow name, type, mode
+          - Current step number
+          - Steps completed array
+          - Timestamps (started, last updated)
+          Session reader/writer for stepped workflow state.
+        points: 2
+        priority: P0
+        status: ready
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Session file has Workflow State section
+          - State tracks current step and completed steps
+          - State persists across session reloads
+          - Reader/writer handles missing state gracefully
+        jira: MSSCI-12082
+      - id: MSSCI-12083
+        title: "/workflow list command with type indicator"
+        description: |
+          Update /workflow list to show all workflows with type indicator:
+          - Display phased vs stepped workflows
+          - Show step count for stepped workflows
+          - Indicate available modes (create/validate/edit)
+        points: 1
+        priority: P1
+        status: ready
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - List shows workflow type (phased/stepped)
+          - Stepped workflows show step count
+          - Tri-modal workflows show available modes
+        jira: MSSCI-12083
+      - id: MSSCI-12084
+        title: "/workflow start and resume commands"
+        description: |
+          Implement workflow execution commands:
+          - /workflow start <name> [--mode create|validate|edit]
+          - /workflow resume [name] - continue from last step
+          - /workflow status - show current progress
+          Commands create/read session state and load appropriate step.
+        points: 3
+        priority: P1
+        status: ready
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - start creates session and loads step 1
+          - start --mode selects tri-modal path
+          - resume detects incomplete workflow and continues
+          - status shows step progress and completion %
+        jira: MSSCI-12084
+      - id: MSSCI-12085
+        title: "Gate detection and approval flow"
+        description: |
+          Implement gate handling:
+          - Detect gates from workflow.gates.after_steps
+          - Detect gates from step-meta gate: true
+          - Detect gates from <!-- GATE --> marker
+          - Display gate prompt from step file
+          - Wait for user [C]ontinue/[R]evise choice
+          - Record decision in session
+        points: 2
+        priority: P2
+        status: ready
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Gates detected from all three sources
+          - Gate prompt displayed to user
+          - User choice recorded in session
+          - Continue proceeds to next step
+        jira: MSSCI-12085
+      - id: MSSCI-12086
+        title: "Tri-modal support (create/validate/edit)"
+        description: |
+          Implement tri-modal workflow execution:
+          - Mode selection at workflow start (--mode flag)
+          - Route to appropriate steps directory based on mode
+          - Track mode in session state
+          - Default to create mode if not specified
+        points: 2
+        priority: P2
+        status: ready
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Mode selectable via --mode flag
+          - Steps loaded from mode-specific directory
+          - Mode tracked in session state
+          - Defaults to create mode
+        jira: MSSCI-12086
+      - id: MSSCI-12087
+        title: "Example: architecture stepped workflow"
+        description: |
+          Create example stepped workflow for architecture decisions:
+          - workflow.yaml with type: stepped
+          - 5-8 step files in steps/ directory
+          - Gates after key decision points
+          - Template for output document
+          Documents stepped workflow patterns for other workflows.
+        points: 1
+        priority: P2
+        status: ready
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - architecture.yaml created with stepped config
+          - Step files follow step-{nn}-*.md pattern
+          - Gates defined at appropriate checkpoints
+          - Workflow runs end-to-end successfully
+        jira: MSSCI-12087
+    jira: MSSCI-12077
   # ===========================================================================
   # EPIC 50: VS Code Extension for Pennyfarthing
   # ===========================================================================

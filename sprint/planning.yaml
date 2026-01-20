@@ -370,19 +370,7 @@ planning:
               status: planning
               repos: pennyfarthing
 
-    # =========================================================================
-    # VS CODE EXTENSION - Distribution Expansion
-    # Package Pennyfarthing as a VS Code extension for broader reach
-    # Total: 21 points across 1 epic
-    #
-    # Key Architectural Decisions:
-    #   - Extension activates Pennyfarthing in VS Code terminal context
-    #   - Reuses WheelHub WebSocket architecture for real-time updates
-    #   - Reflector protocol adapts to VS Code webview panels
-    #   - TirePump context management integrates with VS Code's workspace state
-    # =========================================================================
 
-    - name: "VS Code Extension"
       description: |
         Package Pennyfarthing as a VS Code extension for developers who prefer
         VS Code over standalone Cyclist or CLI. Leverages existing architecture
