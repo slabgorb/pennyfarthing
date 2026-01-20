@@ -29,7 +29,7 @@ echo "Sprint files found - ready to start epic"
 ## Usage
 
 Provide the epic ID when invoking this command:
-- `epic-5` - Conductor epic (format: `epic-N`)
+- `epic-5` - Pennyfarthing epic (format: `epic-N`)
 
 ## Workflow Steps
 

@@ -228,14 +228,14 @@ version: "1.0"
 # Backward compatibility - generates $API_REPO and $UI_REPO env vars
 # Set to null if you don't need legacy compatibility
 legacy_compat:
-  api_repo: "conductor-api"
-  ui_repo: "conductor-ui"
+  api_repo: "Pennyfarthing-api"
+  ui_repo: "Pennyfarthing-ui"
   create_symlinks: true
 
 # Repository definitions
 repos:
-  conductor-api:
-    path: "conductor-api"        # Relative to PROJECT_ROOT
+  Pennyfarthing-api:
+    path: "Pennyfarthing-api"        # Relative to PROJECT_ROOT
     type: api                    # api | ui | adapter | service | shared | lib
     language: go
     test_command: "just test"
@@ -243,8 +243,8 @@ repos:
     lint_command: "golangci-lint run"
     dependencies: []             # Other repos this depends on
 
-  conductor-ui:
-    path: "conductor-ui"
+  Pennyfarthing-ui:
+    path: "Pennyfarthing-ui"
     type: ui
     language: typescript
     test_command: "npm run test -- --run"
@@ -266,8 +266,8 @@ agent_config:
 
 # Build/test order (respects dependencies)
 build_order:
-  - conductor-api
-  - conductor-ui
+  - Pennyfarthing-api
+  - Pennyfarthing-ui
 ```
 
 ### Repo Types

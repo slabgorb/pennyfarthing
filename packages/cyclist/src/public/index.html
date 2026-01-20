@@ -58,61 +58,6 @@
       </div>
     </div>
     <div class="resize-handle" id="diff-panel-resize" title="Drag to resize"></div>
-    <!-- Tool Panel (collapsible, resizable) - tool execution log -->
-    <div id="tool-panel" class="tool-panel collapsed">
-      <div class="tool-panel-header">
-        <span class="tool-panel-title">Tools</span>
-        <span class="tool-panel-count" id="tool-panel-count"></span>
-        <div class="tool-panel-controls">
-          <select id="tool-filter" title="Filter by tool type">
-            <option value="">All</option>
-          </select>
-          <button class="icon-btn" data-action="export-json" title="Export JSON">JSON</button>
-          <button class="icon-btn" data-action="export-csv" title="Export CSV">CSV</button>
-          <button class="icon-btn danger" data-action="clear" title="Clear log">Clear</button>
-        </div>
-        <button class="tool-panel-collapse-btn" id="tool-panel-collapse" title="Collapse">◀</button>
-      </div>
-      <div class="tool-panel-content" id="tool-panel-content">
-        <div class="tool-log-stats" id="tool-log-stats"></div>
-        <div class="tool-log-table-wrapper">
-          <table class="tool-log-table">
-            <thead>
-              <tr>
-                <th class="col-timestamp">Time</th>
-                <th class="col-tool">Tool</th>
-                <th class="col-input">Input</th>
-                <th class="col-duration">Duration</th>
-                <th class="col-status">Status</th>
-              </tr>
-            </thead>
-            <tbody id="tool-log-tbody">
-              <tr class="empty-row">
-                <td colspan="5" class="empty-message">No tool executions recorded yet</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-    <div class="resize-handle" id="tool-panel-resize" title="Drag to resize"></div>
-    <!-- 35-12: Skill Panel (collapsible, resizable) - skill invocation log -->
-    <div id="skill-panel" class="skill-panel collapsed" role="region" aria-label="Skill invocations">
-      <div class="skill-panel-header">
-        <span class="skill-panel-title">Skills</span>
-        <span class="skill-panel-count" id="skill-panel-count"></span>
-        <div class="skill-panel-controls">
-          <button class="icon-btn danger" data-action="clear" title="Clear log">Clear</button>
-        </div>
-        <button class="skill-panel-collapse-btn" id="skill-panel-collapse" title="Collapse" aria-expanded="false">◀</button>
-      </div>
-      <div class="skill-panel-content" id="skill-panel-content">
-        <div class="skill-log-list" id="skill-log-list">
-          <!-- Skill entries rendered dynamically -->
-        </div>
-      </div>
-    </div>
-    <div class="resize-handle" id="skill-panel-resize" title="Drag to resize"></div>
     <!-- Panel expand buttons removed - now using horizontal tab bar at top -->
     <!-- 35-5: Message panel wrapper for collapsible message view -->
     <div id="message-panel" class="vertical-panel position-center">
@@ -120,14 +65,6 @@
       <main id="message-view">
         <!-- MessageView will be mounted here -->
       </main>
-      <!-- 22-1: Tool Activity Bar - shows executing tools with timer -->
-      <div id="tool-activity-bar" class="hidden" aria-hidden="true">
-        <span class="tool-status-indicator"></span>
-        <span class="tool-icon">🔧</span>
-        <span class="tool-name">Tool</span>
-        <span class="tool-param">-</span>
-        <span class="elapsed-time">0.0s</span>
-      </div>
       <!-- Quick action buttons for suggested prompts (B-9.6) -->
       <div id="quick-actions"></div>
       <!-- 28-1: Image preview for clipboard paste -->
@@ -216,7 +153,7 @@
       <!-- Persona Section -->
       <div id="persona-section" class="persona-section">
         <div id="project-name" class="project-name"></div>
-        <!-- Character name above portrait -->
+        <!-- Character name below project name, above portrait -->
         <div id="character-name" class="character-name">Loading...</div>
         <!-- Portrait with role/OCEAN beside it -->
         <div class="portrait-row">
@@ -242,6 +179,8 @@
         <!-- Theme centered under portrait -->
         <div id="theme-name" class="theme-name"></div>
         <div id="benchmark-score" class="benchmark-score"></div>
+        <!-- MSSCI-11821: Character quote display -->
+        <div id="character-quote" class="character-quote"></div>
         <div id="helper-line" class="activity-line"></div>
         <div id="helper-task-line" class="activity-line"></div>
       </div>
@@ -507,8 +446,6 @@
   <script type="module" src="/js/font-settings.js"></script>
   <!-- MessageView: SDK message display -->
   <script type="module" src="/js/message-view-init.js"></script>
-  <!-- 22-1: Tool Activity Bar - prominent tool execution display -->
-  <script type="module" src="/js/components/ToolActivityBar.js"></script>
   <!-- 22-3: Bash Command Approval Modal -->
   <script type="module" src="/js/components/ApprovalModal.js"></script>
   <!-- 22-4: Dangerous Path Approval Modal -->
@@ -544,21 +481,6 @@
     DiffViewer.setOnDiffAdded(ChangedFilesList.handleDiffAdded);
     DiffViewer.setOnDiffsRemoved(ChangedFilesList.handleDiffsRemoved);
   </script>
-  <!-- Tool Panel and Log Viewer -->
-  <script type="module" src="/js/tool-panel.js"></script>
-  <script type="module" src="/js/components/ToolLogViewer.js"></script>
-  <script type="module">
-    // Wire up tool panel toggle to menu event
-    import * as ToolPanel from '/js/tool-panel.js';
-    // Listen for menu toggle event
-    if (window.electronAPI?.tools?.onTogglePanel) {
-      window.electronAPI.tools.onTogglePanel(() => {
-        ToolPanel.toggle();
-      });
-    }
-  </script>
-  <!-- 35-12: Skill Panel -->
-  <script type="module" src="/js/skill-panel.js"></script>
   <!-- 35-5: Vertical Panel base class -->
   <script type="module" src="/js/vertical-panel.js"></script>
   <!-- 35-5: Sidebar and Message panels -->
@@ -574,15 +496,11 @@
     // Track badge counts (updated by panel modules)
     let fileBadgeCount = 0;
     let diffBadgeCount = 0;
-    let toolBadgeCount = 0;
-    let skillBadgeCount = 0;
 
     // Expose setters for panel modules to call
     window.panelBadgeCounts = {
       setFileCount: (n) => { fileBadgeCount = n; },
       setDiffCount: (n) => { diffBadgeCount = n; },
-      setToolCount: (n) => { toolBadgeCount = n; },
-      setSkillCount: (n) => { skillBadgeCount = n; },
     };
 
     // Register file panel
@@ -611,31 +529,6 @@
       });
     }
 
-    // Register tool panel
-    const toolPanel = document.getElementById('tool-panel');
-    if (toolPanel) {
-      PanelManager.register({
-        id: 'tool-panel',
-        label: 'TOOL LOG',
-        shortcut: '3',
-        order: 3,
-        element: toolPanel,
-        getBadgeCount: () => toolBadgeCount,
-      });
-    }
-
-    // 35-12: Register skill panel
-    const skillPanel = document.getElementById('skill-panel');
-    if (skillPanel) {
-      PanelManager.register({
-        id: 'skill-panel',
-        label: 'SKILL LOG',
-        shortcut: '4',
-        order: 4,
-        element: skillPanel,
-        getBadgeCount: () => skillBadgeCount,
-      });
-    }
   </script>
   <!-- Files tab will be added on demand, not on startup -->
   <script type="module" src="/js/controls.js"></script>

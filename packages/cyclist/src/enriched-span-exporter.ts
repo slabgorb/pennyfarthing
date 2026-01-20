@@ -81,6 +81,7 @@ export interface BashEnrichmentData {
  * Read tool enrichment
  */
 export interface ReadEnrichmentData {
+  filePath?: string;
   fileSize?: number;
   lineCount?: number;
   language?: string;
@@ -213,6 +214,7 @@ function buildEnrichmentData(event: ToolEvent): EnrichmentData {
 
     case 'Read':
       return {
+        filePath: event.filePath,
         fileSize: event.fileSize,
         lineCount: event.lineCount,
         language: event.language,

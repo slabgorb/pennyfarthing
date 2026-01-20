@@ -1,10 +1,22 @@
 /**
- * Story/Git Module - Electron IPC client for story and git status
+ * Story/Git Module - WebSocket + Electron IPC client for story and git status
+ * MSSCI-11943: WebSocket channels replace polling for real-time updates
  */
 
-// Polling intervals for periodic refresh
+// Polling intervals for periodic refresh (fallback only, not used for WebSocket)
 const STORY_POLL_INTERVAL = 10000; // 10 seconds
 const GIT_POLL_INTERVAL = 5000;    // 5 seconds
+
+// WebSocket reconnection settings (MSSCI-11943)
+const WS_RECONNECT_BASE_DELAY = 1000;  // 1 second
+const WS_RECONNECT_MAX_DELAY = 30000;  // 30 seconds
+const WS_RECONNECT_MULTIPLIER = 1.5;
+
+// WebSocket connections (MSSCI-11943)
+let storyWebSocket = null;
+let gitWebSocket = null;
+let storyReconnectDelay = WS_RECONNECT_BASE_DELAY;
+let gitReconnectDelay = WS_RECONNECT_BASE_DELAY;
 
 // localStorage key for AC panel collapse state (27-1)
 const AC_COLLAPSED_KEY = 'cyclist-ac-collapsed';
@@ -35,6 +47,8 @@ function setAcCollapsed(collapsed) {
 
 let storyPollTimer = null;
 let gitPollTimer = null;
+let storyReconnectTimer = null;
+let gitReconnectTimer = null;
 
 // Cache for theme agent-to-character mappings
 let themeAgentsCache = null;
@@ -364,7 +378,7 @@ async function refreshGit() {
 }
 
 /**
- * Start polling for story updates
+ * Start polling for story updates (fallback for when WebSocket is unavailable)
  */
 function startStoryPolling() {
   if (storyPollTimer) {
@@ -374,7 +388,7 @@ function startStoryPolling() {
 }
 
 /**
- * Start polling for git updates
+ * Start polling for git updates (fallback for when WebSocket is unavailable)
  */
 function startGitPolling() {
   if (gitPollTimer) {
@@ -384,37 +398,198 @@ function startGitPolling() {
 }
 
 /**
- * Initialize story/git via Electron IPC
+ * MSSCI-11943: Connect to story WebSocket channel
+ * Replaces polling with real-time updates triggered by file watchers.
+ * @returns {WebSocket|null} The WebSocket connection or null if failed
  */
-async function initStoryGit() {
-  // Check if Electron API is available
-  if (!window.electronAPI) {
-    console.warn('Electron API not available');
-    return;
+export function connectStoryWebSocket() {
+  // Clean up existing connection
+  if (storyWebSocket) {
+    storyWebSocket.close();
+    storyWebSocket = null;
   }
 
+  // Clear any pending reconnect
+  if (storyReconnectTimer) {
+    clearTimeout(storyReconnectTimer);
+    storyReconnectTimer = null;
+  }
+
+  // Determine WebSocket URL (same host as page)
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${protocol}//${window.location.host}/ws/story`;
+
+  try {
+    storyWebSocket = new WebSocket(wsUrl);
+
+    storyWebSocket.onopen = () => {
+      console.log('[Story] WebSocket connected');
+      // Reset reconnect delay on successful connection
+      storyReconnectDelay = WS_RECONNECT_BASE_DELAY;
+      // Stop polling since WebSocket is connected
+      if (storyPollTimer) {
+        clearInterval(storyPollTimer);
+        storyPollTimer = null;
+      }
+    };
+
+    storyWebSocket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        // Handle both init and update messages
+        if (data.type === 'init' || data.type === 'update' || data.id) {
+          updateStory(data);
+        }
+      } catch (err) {
+        console.error('[Story] Failed to parse WebSocket message:', err);
+      }
+    };
+
+    storyWebSocket.onerror = (err) => {
+      console.error('[Story] WebSocket error:', err);
+    };
+
+    storyWebSocket.onclose = () => {
+      console.log('[Story] WebSocket disconnected');
+      storyWebSocket = null;
+      // Schedule reconnection with exponential backoff
+      storyReconnectTimer = setTimeout(() => {
+        console.log(`[Story] Reconnecting (delay: ${storyReconnectDelay}ms)`);
+        connectStoryWebSocket();
+        // Increase delay for next attempt (with cap)
+        storyReconnectDelay = Math.min(
+          storyReconnectDelay * WS_RECONNECT_MULTIPLIER,
+          WS_RECONNECT_MAX_DELAY
+        );
+      }, storyReconnectDelay);
+    };
+
+    return storyWebSocket;
+  } catch (err) {
+    console.error('[Story] Failed to create WebSocket:', err);
+    // Fall back to polling
+    startStoryPolling();
+    return null;
+  }
+}
+
+/**
+ * MSSCI-11943: Connect to git WebSocket channel
+ * Replaces polling with real-time updates triggered by file watchers.
+ * @returns {WebSocket|null} The WebSocket connection or null if failed
+ */
+export function connectGitWebSocket() {
+  // Clean up existing connection
+  if (gitWebSocket) {
+    gitWebSocket.close();
+    gitWebSocket = null;
+  }
+
+  // Clear any pending reconnect
+  if (gitReconnectTimer) {
+    clearTimeout(gitReconnectTimer);
+    gitReconnectTimer = null;
+  }
+
+  // Determine WebSocket URL (same host as page)
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${protocol}//${window.location.host}/ws/git`;
+
+  try {
+    gitWebSocket = new WebSocket(wsUrl);
+
+    gitWebSocket.onopen = () => {
+      console.log('[Git] WebSocket connected');
+      // Reset reconnect delay on successful connection
+      gitReconnectDelay = WS_RECONNECT_BASE_DELAY;
+      // Stop polling since WebSocket is connected
+      if (gitPollTimer) {
+        clearInterval(gitPollTimer);
+        gitPollTimer = null;
+      }
+    };
+
+    gitWebSocket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        // Handle both init and update messages
+        if (data.type === 'init' || data.type === 'update' || data.branch !== undefined) {
+          updateGit(data);
+        }
+      } catch (err) {
+        console.error('[Git] Failed to parse WebSocket message:', err);
+      }
+    };
+
+    gitWebSocket.onerror = (err) => {
+      console.error('[Git] WebSocket error:', err);
+    };
+
+    gitWebSocket.onclose = () => {
+      console.log('[Git] WebSocket disconnected');
+      gitWebSocket = null;
+      // Schedule reconnection with exponential backoff
+      gitReconnectTimer = setTimeout(() => {
+        console.log(`[Git] Reconnecting (delay: ${gitReconnectDelay}ms)`);
+        connectGitWebSocket();
+        // Increase delay for next attempt (with cap)
+        gitReconnectDelay = Math.min(
+          gitReconnectDelay * WS_RECONNECT_MULTIPLIER,
+          WS_RECONNECT_MAX_DELAY
+        );
+      }, gitReconnectDelay);
+    };
+
+    return gitWebSocket;
+  } catch (err) {
+    console.error('[Git] Failed to create WebSocket:', err);
+    // Fall back to polling
+    startGitPolling();
+    return null;
+  }
+}
+
+/**
+ * Initialize story/git via WebSocket (web mode) or Electron IPC (Electron mode)
+ * MSSCI-11943: Prefer WebSocket for real-time updates, fall back to IPC + polling
+ */
+async function initStoryGit() {
   // Load theme agents for name resolution
   await loadThemeAgents();
 
-  // Get initial data
-  await Promise.all([refreshStory(), refreshGit()]);
+  // Check if we're in Electron mode with IPC available
+  const isElectronMode = !!window.electronAPI;
 
-  // Subscribe to updates from main process
-  if (window.electronAPI.story) {
-    window.electronAPI.story.onUpdate((_event, story) => {
-      updateStory(story);
-    });
+  if (isElectronMode) {
+    // Electron mode: Use IPC with polling fallback
+    // Get initial data
+    await Promise.all([refreshStory(), refreshGit()]);
+
+    // Subscribe to updates from main process
+    if (window.electronAPI.story) {
+      window.electronAPI.story.onUpdate((_event, story) => {
+        updateStory(story);
+      });
+    }
+
+    if (window.electronAPI.git) {
+      window.electronAPI.git.onUpdate((_event, git) => {
+        updateGit(git);
+      });
+    }
+
+    // Start polling for periodic refresh (file changes, etc.)
+    startStoryPolling();
+    startGitPolling();
+
+    console.log('Story/Git IPC connected');
+  } else {
+    // Web mode: Use WebSocket for real-time updates (MSSCI-11943)
+    connectStoryWebSocket();
+    connectGitWebSocket();
+
+    console.log('Story/Git WebSocket connected');
   }
-
-  if (window.electronAPI.git) {
-    window.electronAPI.git.onUpdate((_event, git) => {
-      updateGit(git);
-    });
-  }
-
-  // Start polling for periodic refresh (file changes, etc.)
-  startStoryPolling();
-  startGitPolling();
 
   // Set up AC section collapse toggle handler (27-1: persist state)
   const acHeader = document.querySelector('#ac-section .section-header');
@@ -427,8 +602,6 @@ async function initStoryGit() {
       }
     });
   }
-
-  console.log('Story/Git IPC connected');
 }
 
 // Initialize on page load

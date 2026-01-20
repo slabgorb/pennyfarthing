@@ -12,6 +12,14 @@ export interface ContextInfo {
   status: string | null;
   error: string | null;
   sessionId?: string;
+  /** System prompt overhead (first turn tokens) */
+  baseline: number | null;
+  /** Tokens used by conversation (total - baseline) */
+  usableTokens: number | null;
+  /** Conversation usage as % of available capacity */
+  usablePercent: number | null;
+  /** Available capacity (max - baseline) */
+  available: number | null;
 }
 
 /**
@@ -36,7 +44,7 @@ export function getContextUsage(projectDir: string, sessionId?: string): Context
   }
 
   if (!scriptPath) {
-    return { percent: null, tokens: null, status: null, error: 'check-context.sh not found' };
+    return { percent: null, tokens: null, status: null, error: 'check-context.sh not found', baseline: null, usableTokens: null, usablePercent: null, available: null };
   }
 
   try {
@@ -68,6 +76,10 @@ export function getContextUsage(projectDir: string, sessionId?: string): Context
       status: null,
       error: null,
       sessionId,
+      baseline: null,
+      usableTokens: null,
+      usablePercent: null,
+      available: null,
     };
 
     for (const line of output.split('\n')) {
@@ -85,6 +97,14 @@ export function getContextUsage(projectDir: string, sessionId?: string): Context
         } else {
           result.error = value;
         }
+      } else if (key === 'CONTEXT_BASELINE') {
+        result.baseline = parseInt(value, 10);
+      } else if (key === 'CONTEXT_USABLE_TOKENS') {
+        result.usableTokens = parseInt(value, 10);
+      } else if (key === 'CONTEXT_USABLE_PERCENT') {
+        result.usablePercent = parseInt(value, 10);
+      } else if (key === 'CONTEXT_AVAILABLE') {
+        result.available = parseInt(value, 10);
       }
     }
 
@@ -122,6 +142,10 @@ export function getContextUsage(projectDir: string, sessionId?: string): Context
       status: null,
       error: errMsg,
       sessionId,
+      baseline: null,
+      usableTokens: null,
+      usablePercent: null,
+      available: null,
     };
   }
 }

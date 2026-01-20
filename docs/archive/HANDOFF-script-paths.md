@@ -3,7 +3,7 @@
 ## Status: IN PROGRESS
 
 ## Context
-We're consolidating scripts across pennyfarthing, conductor, and siemulator. The goal is to have pennyfarthing manage all shared scripts and deploy them consistently.
+We're consolidating scripts across pennyfarthing, Pennyfarthing, and siemulator. The goal is to have pennyfarthing manage all shared scripts and deploy them consistently.
 
 ## What's Done
 
@@ -44,15 +44,15 @@ Updated all script references in `core/` files to use the `./scripts/run.sh <scr
 ### 2. Verify run.sh Handles Utils (COMPLETE)
 The `run.sh` script already correctly searches `scripts/`, `scripts/utils/`, and `scripts/hooks/`.
 
-### 3. Clean Up Conductor Duplicates (COMPLETE - 2025-12-23)
-Removed duplicate scripts from conductor/scripts/:
+### 3. Clean Up Pennyfarthing Duplicates (COMPLETE - 2025-12-23)
+Removed duplicate scripts from Pennyfarthing/scripts/:
 - `git-status-all.sh`, `jira-claim-story.sh`, `jira-lib.sh`, `jira-sync-story.sh`
 - `find-related-work.sh`, `check-status.sh`, `create-feature-branches.sh`
 
-Conductor-specific scripts preserved:
+Pennyfarthing-specific scripts preserved:
 - `build-all.sh`, `start-all.sh`, `dev-setup.sh`, etc. (~40 scripts)
 
-### 4. Reinstall Pennyfarthing in Conductor (COMPLETE - 2025-12-23)
+### 4. Reinstall Pennyfarthing in Pennyfarthing (COMPLETE - 2025-12-23)
 ```
 pennyfarthing uninstall --force
 pennyfarthing init --force
@@ -70,8 +70,8 @@ pennyfarthing doctor  # All checks passed
 
 All script path fixes have been applied:
 1. Core files use `./scripts/run.sh <script>` pattern
-2. run.sh deployed to conductor and siemulator
-3. Duplicate scripts removed from conductor
+2. run.sh deployed to Pennyfarthing and siemulator
+3. Duplicate scripts removed from Pennyfarthing
 4. All projects pass `pennyfarthing doctor`
 
 ## Key Insight

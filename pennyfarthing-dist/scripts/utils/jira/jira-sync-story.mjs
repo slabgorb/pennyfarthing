@@ -5,8 +5,8 @@
  * Usage: node jira-sync-story.mjs <story_key> [--transition] [--points] [--comment "message"]
  *
  * Options:
- *   --transition   Transition story to match Conductor status
- *   --points       Sync story points from Conductor to Jira
+ *   --transition   Transition story to match Pennyfarthing status
+ *   --points       Sync story points from Pennyfarthing to Jira
  *   --comment      Add a comment to the story
  */
 
@@ -93,8 +93,8 @@ if (!story) {
   process.exit(1);
 }
 
-// Get story details from Conductor
-const conductorStatus = story.status || 'backlog';
+// Get story details from Pennyfarthing
+const PennyfarthingStatus = story.status || 'backlog';
 const storyJira = story.jira;
 const storyBranch = story.branch;
 const storyPr = story.pr;
@@ -131,15 +131,15 @@ const jiraPoints = getStoryPoints(jiraKey, issueJson);
 console.log(`   Summary: ${jiraSummary}`);
 console.log(`   Jira Status: ${jiraStatus}`);
 console.log(`   Assignee: ${jiraAssignee}`);
-console.log(`   Conductor Status: ${conductorStatus}`);
-if (storyPoints) console.log(`   Conductor Points: ${storyPoints}`);
+console.log(`   Pennyfarthing Status: ${PennyfarthingStatus}`);
+if (storyPoints) console.log(`   Pennyfarthing Points: ${storyPoints}`);
 if (jiraPoints) console.log(`   Jira Points: ${jiraPoints}`);
 if (storyBranch) console.log(`   Branch: ${storyBranch}`);
 if (storyPr) console.log(`   PR: ${storyPr}`);
 console.log('');
 
-// Map Conductor status to target Jira status
-const targetJiraStatus = mapStatusToJira(conductorStatus);
+// Map Pennyfarthing status to target Jira status
+const targetJiraStatus = mapStatusToJira(PennyfarthingStatus);
 
 // Transition if requested
 if (doTransition) {
@@ -186,13 +186,13 @@ if (commentText) {
 if (doTransition && !commentText) {
   let autoComment = null;
 
-  if (conductorStatus === 'in-progress' && storyBranch) {
-    autoComment = `**Development Started**\n\nBranch: \`${storyBranch}\`\n\nSynced from Conductor`;
-  } else if (conductorStatus === 'review' && storyPr) {
-    autoComment = `**Ready for Review**\n\nPR: ${storyPr}\n\nSynced from Conductor`;
-  } else if (conductorStatus === 'done') {
+  if (PennyfarthingStatus === 'in-progress' && storyBranch) {
+    autoComment = `**Development Started**\n\nBranch: \`${storyBranch}\`\n\nSynced from Pennyfarthing`;
+  } else if (PennyfarthingStatus === 'review' && storyPr) {
+    autoComment = `**Ready for Review**\n\nPR: ${storyPr}\n\nSynced from Pennyfarthing`;
+  } else if (PennyfarthingStatus === 'done') {
     const today = new Date().toISOString().split('T')[0];
-    autoComment = `**Completed**\n\nSynced from Conductor on ${today}`;
+    autoComment = `**Completed**\n\nSynced from Pennyfarthing on ${today}`;
   }
 
   if (autoComment) {

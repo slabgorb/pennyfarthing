@@ -312,17 +312,17 @@ describe('34-2: Cyclist health check command', () => {
   describe('justfile integration', () => {
     const justfilePath = join(MONOREPO_ROOT, 'justfile');
 
-    it('should have cyclist-doctor recipe', () => {
+    it('should have cyclist recipe with doctor subcommand', () => {
       const content = readFileSync(justfilePath, 'utf-8');
-      // Recipe may have arguments like "cyclist-doctor *args:"
-      expect(content).toMatch(/^cyclist-doctor[^:]*:/m);
+      // Consolidated recipe: cyclist *args with doctor) case
+      expect(content).toMatch(/^cyclist \*args:/m);
+      expect(content).toMatch(/doctor\)/);
     });
 
-    it('cyclist-doctor should run scripts/cyclist-doctor.sh', () => {
+    it('cyclist doctor should run scripts/cyclist-doctor.sh', () => {
       const content = readFileSync(justfilePath, 'utf-8');
-      // Match recipe with optional args, capture until next recipe or comment
-      const doctorSection = content.match(/cyclist-doctor[^:]*:[\s\S]*?(?=\n[a-z]+-|\n#|$)/);
-      expect(doctorSection?.[0]).toMatch(/cyclist-doctor\.sh|scripts\/cyclist-doctor/);
+      // The doctor) case handler runs cyclist-doctor.sh
+      expect(content).toMatch(/doctor\)[\s\S]*?cyclist-doctor\.sh/);
     });
   });
 });

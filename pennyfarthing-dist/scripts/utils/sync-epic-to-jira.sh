@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Sync Conductor Epic to Jira MSSCI Project using jira
+# Sync Pennyfarthing Epic to Jira MSSCI Project using jira
 # Usage: ./scripts/sync-epic-to-jira.sh <epic_number> [--dry-run] [--with-comments]
 #
 # Prerequisites:

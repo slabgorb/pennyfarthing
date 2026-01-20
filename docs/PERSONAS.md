@@ -363,5 +363,4 @@ If working with a team, consider:
 
 - [THEME-COMPARISON.md](THEME-COMPARISON.md) - Complete theme list with OCEAN profiles and visual mappings
 - [OCEAN Benchmarking Guide](../pennyfarthing-dist/personas/OCEAN-BENCHMARKING.md) - Role recommendations, universe strengths
-- [OCEAN to Face Mapping](../pennyfarthing-dist/personas/OCEAN-TO-FACE.md) - Chernoff face visualization specification
 - [Showcase Website](SHOWCASE.md) - Interactive theme gallery

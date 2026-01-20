@@ -353,45 +353,10 @@ backlog:
           repos: pennyfarthing
 
     # =========================================================================
-    # CLEANUP - Remaining from previous sprints
+    # INFRASTRUCTURE - Cyclist Architecture
     # =========================================================================
-    - id: epic-27
-      title: "Skill Frontmatter Enhancement"
-      description: |
-        Improve skill discoverability by enhancing SKILL.md frontmatter per
-        Anthropic's official guidance. Follow-on to Epic 9's infrastructure work.
-        Inspired by patterns from Superpowers framework and anthropics/skills repo.
-      points: 10
-      priority: P3
-      marker: "strategic"
-      repos: pennyfarthing
-      status: backlog
-      stories:
-        - id: "27-1"
-          title: "Enhance skill descriptions with 'when to use' context"
-          points: 2
-          priority: P1
-          status: backlog
-        - id: "27-2"
-          title: "Add allowed-tools to context-sensitive skills"
-          points: 1
-          priority: P2
-          status: backlog
-        - id: "27-3"
-          title: "Progressive disclosure for large skills"
-          points: 2
-          priority: P2
-          status: backlog
-        - id: "27-4"
-          title: "Create systematic-debugging skill"
-          points: 3
-          priority: P1
-          status: backlog
-        - id: "27-5"
-          title: "Add severity levels to Reviewer agent"
-          points: 2
-          priority: P2
-          status: backlog
+    # MSSCI-11942: WheelHub Notification Consolidation - in Sprint 12
+    # Epic 27 (Skill Frontmatter Enhancement) - COMPLETED as MSSCI-11952 in Sprint 11
 
     # =========================================================================
     # QUALITY & SCALE - Future Initiatives
@@ -506,10 +471,10 @@ backlog:
 #   - Epic 45: Gold Standard References (8 pts) - P2
 #   - Epic 46: Difficulty Profile Enhancement (5 pts) - P2
 #
-# Cleanup (P3):
-#   - Epic 27: Skill Frontmatter Enhancement (10 pts)
+# Infrastructure (P2):
+#   - MSSCI-11942: WheelHub Notification Consolidation - MOVED TO SPRINT 12
 #
-# Total Backlog: 96 pts
+# Total Backlog: 99 pts (Epic 27 completed as MSSCI-11952)
 #
 # Benchmark Initiative Summary:
 #   Phase 1 (P1): Epics 41-43 = 21 pts (scoring + anchors + traps)
@@ -518,3 +483,6 @@ backlog:
 #     - Inter-judge Krippendorff's Alpha > 0.65
 #     - False positive detection < 10%
 #     - TEA variance CV < 15%
+#
+# WheelHub Consolidation (MSSCI-11942) - MOVED TO SPRINT 12
+#   See sprint/current-sprint.yaml for full epic details

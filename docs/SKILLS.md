@@ -14,6 +14,7 @@ This document is auto-generated from `skill-registry.yaml`. Do not edit manually
 - [Development](#development)
   - [code-review](#code-review)
   - [dev-patterns](#dev-patterns)
+  - [systematic-debugging](#systematic-debugging)
   - [testing](#testing)
 - [Documentation](#documentation)
   - [changelog](#changelog)
@@ -156,6 +157,24 @@ Common development patterns, fixes, and gotchas
 - Don't apply patterns from other frameworks blindly
 
 **Related:** [code-review](#code-review), [testing](#testing)
+
+### systematic-debugging
+
+Systematic debugging approach for isolating and fixing issues
+
+**Tags:** debugging, troubleshooting, root-cause
+
+**Keywords:** debugging, bisect, reproduce, isolate, root-cause, regression
+
+**Examples:**
+- Debugging test failures: `/systematic-debugging`
+- Investigating regressions: `/systematic-debugging bisect`
+
+**Anti-patterns:**
+- Don't jump to solutions without reproducing the issue first
+- Don't fix symptoms instead of root causes
+
+**Related:** [testing](#testing), [dev-patterns](#dev-patterns), [agentic-patterns](#agentic-patterns)
 
 ### testing
 

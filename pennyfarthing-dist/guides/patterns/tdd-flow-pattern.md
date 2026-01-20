@@ -142,13 +142,13 @@ The session file (`.session/{story-id}-session.md`) tracks state:
 
 | From | To | Trigger | Subagent |
 |------|-----|---------|----------|
-| setup | red | Story setup complete | `generic-sm-setup MODE=setup` + `sm-handoff` |
-| setup | implement | 1-2 pt story (skip TEA) | `generic-sm-setup MODE=setup` + `sm-handoff` |
-| red | green | Tests written, failing | `generic-handoff CURRENT_PHASE=red` |
-| green | review | PR created, tests pass | `generic-handoff CURRENT_PHASE=green` |
-| review | implement | Issues found | `generic-handoff VERDICT=rejected` |
-| review | approved | No blocking issues | `generic-handoff VERDICT=approved` |
-| approved | done | Story archived | `generic-sm-finish PHASE=execute` |
+| setup | red | Story setup complete | `sm-setup MODE=setup` + `sm-handoff` |
+| setup | implement | 1-2 pt story (skip TEA) | `sm-setup MODE=setup` + `sm-handoff` |
+| red | green | Tests written, failing | `handoff CURRENT_PHASE=red` |
+| green | review | PR created, tests pass | `handoff CURRENT_PHASE=green` |
+| review | implement | Issues found | `handoff VERDICT=rejected` |
+| review | approved | No blocking issues | `handoff VERDICT=approved` |
+| approved | done | Story archived | `sm-finish PHASE=execute` |
 
 ### Agent Responsibilities
 

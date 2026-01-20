@@ -541,7 +541,7 @@ run_tests_of_type() {
 # ============================================================================
 
 # Filter repos by a list (for story-scoped operations)
-# Usage: filter_repos "conductor-api,conductor-ui" or "all" or "api"
+# Usage: filter_repos "Pennyfarthing-api,Pennyfarthing-ui" or "all" or "api"
 filter_repos() {
     local filter="$1"
     load_repos_config
@@ -603,7 +603,7 @@ show_config() {
 # ============================================================================
 
 # Get test environment variables for a repo (as KEY=VALUE lines)
-# Usage: eval "$(get_test_env "conductor-api")"
+# Usage: eval "$(get_test_env "Pennyfarthing-api")"
 get_test_env() {
     local name="$1"
     load_repos_config

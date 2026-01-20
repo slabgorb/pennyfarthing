@@ -12,9 +12,6 @@ import { getHelperName } from '../../persona.js';
 // Constants
 // =============================================================================
 
-/** Length threshold for collapsible tool results */
-const COLLAPSIBLE_THRESHOLD = 500;
-
 /** Maximum command length before truncation in Bash result header */
 const MAX_COMMAND_LENGTH = 50;
 
@@ -121,12 +118,14 @@ export function truncateCommand(command, maxLength = MAX_COMMAND_LENGTH) {
 
 /**
  * Format an exit code with appropriate success/error styling
- * @param {number} exitCode - The exit code to format
- * @returns {string} HTML string with styled exit code badge
+ * @param {number|undefined} exitCode - The exit code to format (undefined = success)
+ * @returns {string} HTML string with styled exit code badge (✓ for success, ✗ for error)
  */
 export function formatExitCode(exitCode) {
-  const statusClass = exitCode === 0 ? 'exit-success' : 'exit-error';
-  return `<span class="bash-exit-code ${statusClass}">${exitCode}</span>`;
+  if (exitCode === undefined || exitCode === 0) {
+    return '<span class="bash-exit-code exit-success">✓</span>';
+  }
+  return '<span class="bash-exit-code exit-error">✗</span>';
 }
 
 /**
@@ -284,7 +283,6 @@ export function renderToolUseMessage(message) {
     return `<div class="message message-tool-use message-task${statusClass}" data-tool-id="${tool_id}">
   <div class="tool-header">
     <span class="tool-name helper-name">${escapeHtml(displayName)}</span>
-    <span class="tool-id">${escapeHtml(tool_id)}</span>
     <span class="tool-status"></span>
   </div>
   <details class="tool-input collapsible"${openAttr}>
@@ -300,7 +298,6 @@ export function renderToolUseMessage(message) {
   return `<div class="message message-tool-use${statusClass}" data-tool-id="${tool_id}">
   <div class="tool-header">
     <span class="tool-name">${escapeHtml(tool_name)}</span>
-    <span class="tool-id">${escapeHtml(tool_id)}</span>
     <span class="tool-status"></span>
   </div>
   <details class="tool-input collapsible"${openAttr}>
@@ -321,19 +318,106 @@ export function isToolUseCollapsible(_message) {
 }
 
 /**
+ * Strip ANSI escape codes from a string
+ * @param {string} str - String with possible ANSI codes
+ * @returns {string} Clean string without ANSI codes
+ */
+function stripAnsi(str) {
+  if (!str) return '';
+  // eslint-disable-next-line no-control-regex
+  return str.replace(/\x1b\[[0-9;]*m/g, '');
+}
+
+/**
+ * Generate a concise output summary for Bash collapse header
+ * @param {string} output - Full command output
+ * @param {boolean} isError - Whether the command failed
+ * @returns {string} Short summary of output
+ */
+function generateBashOutputSummary(output, isError) {
+  if (!output || output.trim() === '') {
+    return isError ? 'failed' : 'done';
+  }
+
+  // Strip ANSI codes for clean summary text
+  const cleanOutput = stripAnsi(output);
+  const trimmed = cleanOutput.trim();
+  const lines = trimmed.split('\n').filter(l => l.trim());
+
+  // For errors, show first meaningful line
+  if (isError) {
+    const firstLine = lines[0] || 'failed';
+    return truncate(firstLine, 60);
+  }
+
+  // For success, try to extract something meaningful
+  // Check for common patterns
+  if (lines.length === 1) {
+    return truncate(lines[0], 60);
+  }
+
+  // For "No files found" or similar single-line messages
+  if (trimmed.length < 80) {
+    return trimmed.replace(/\n/g, ' ');
+  }
+
+  // For longer output, show count or first line
+  if (lines.length > 1) {
+    return `${lines.length} lines`;
+  }
+
+  return truncate(lines[0], 60);
+}
+
+/**
+ * Truncate string with ellipsis
+ * @param {string} str - String to truncate
+ * @param {number} maxLen - Max length
+ * @returns {string}
+ */
+function truncate(str, maxLen) {
+  if (!str || str.length <= maxLen) return str || '';
+  return str.substring(0, maxLen - 1) + '…';
+}
+
+/**
+ * Get display name for a tool result - single source of truth
+ * @param {Object} message - Tool result message (enriched or not)
+ * @returns {string} Human-readable display name
+ */
+function getToolResultDisplayName(message) {
+  // Bash: prefer description, then command
+  if (message.bash_description) return message.bash_description;
+  if (message.bash_command) return truncateCommand(message.bash_command);
+
+  // Generic: prefer summary, then name
+  if (message.tool_summary) return message.tool_summary;
+  if (message.tool_name) return message.tool_name;
+
+  // Never show tool_id - use generic fallback
+  return 'Tool Result';
+}
+
+/**
  * Render a Bash tool result with collapsible output (MSSCI-11851)
  * @param {Object} message - Enriched Bash tool result message
  * @returns {string} HTML string
  */
 export function renderBashToolResult(message) {
-  const { tool_id, output, is_error, bash_command, bash_exit_code } = message;
+  const { tool_id, output, is_error, bash_exit_code, elapsed_ms } = message;
   const errorClass = is_error ? ' error' : '';
 
-  // Format command for header (truncated)
-  const displayCommand = truncateCommand(bash_command);
+  const headerText = getToolResultDisplayName(message);
+
+  // Generate output summary for the header
+  const outputSummary = generateBashOutputSummary(output, is_error);
+  const summaryHtml = outputSummary ? ` <span class="bash-summary">→ ${escapeHtml(outputSummary)}</span>` : '';
 
   // Format exit code with styling
   const exitCodeHtml = formatExitCode(bash_exit_code);
+
+  // Format elapsed time
+  const elapsedHtml = elapsed_ms !== undefined ? `<span class="bash-elapsed">${formatDuration(elapsed_ms)}</span>` : '';
 
   // Convert ANSI codes in output, then escape any remaining HTML
   // Note: We escape first, then apply ANSI conversion to avoid escaping our spans
@@ -346,8 +430,8 @@ export function renderBashToolResult(message) {
   return `<div class="message message-tool-result message-bash-result${errorClass}" data-tool-id="${tool_id}">
   <details class="bash-output collapsible"${openAttr}>
     <summary class="bash-header">
-      <span class="bash-command">${escapeHtml(displayCommand)}</span>
-      ${exitCodeHtml}
+      <span class="bash-command">${escapeHtml(headerText)}</span>${summaryHtml}
+      ${elapsedHtml}${exitCodeHtml}
     </summary>
     <pre class="bash-output-content"><code>${coloredOutput}</code></pre>
   </details>
@@ -366,26 +450,16 @@ export function renderToolResultMessage(message) {
   }
 
   const { tool_id, output, is_error } = message;
-  const isLong = output.length > COLLAPSIBLE_THRESHOLD;
   const errorClass = is_error ? ' error' : '';
-
+  const displayName = getToolResultDisplayName(message);
   const content = `<pre><code>${escapeHtml(output)}</code></pre>`;
-
-  if (isLong) {
-    // Add open attribute when verbose mode is enabled
-    const openAttr = verboseModeEnabled ? ' open' : '';
-
-    return `<div class="message message-tool-result${errorClass}" data-tool-id="${tool_id}">
-  <details class="tool-output collapsible"${openAttr}>
-    <summary>Result for ${escapeHtml(tool_id)}</summary>
-    ${content}
-  </details>
-</div>`;
-  }
+  const openAttr = verboseModeEnabled ? ' open' : '';
 
   return `<div class="message message-tool-result${errorClass}" data-tool-id="${tool_id}">
-  <div class="tool-result-header">Result for ${escapeHtml(tool_id)}</div>
-  ${content}
+  <details class="tool-output collapsible"${openAttr}>
+    <summary>${escapeHtml(displayName)}</summary>
+    ${content}
+  </details>
 </div>`;
 }
 

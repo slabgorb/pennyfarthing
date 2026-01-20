@@ -4,7 +4,7 @@
 
 ## Design Specification Format
 
-### Component Spec for Conductor
+### Component Spec for Pennyfarthing
 ```markdown
 ## [Component Name]
 

@@ -1,3 +1,8 @@
+---
+name: persona-benchmark
+description: Run benchmarks to compare persona effectiveness across themes. Use when testing which personas perform best on code review, test writing, or architecture tasks, or when running comparative analysis across themes.
+---
+
 # Persona Benchmark Skill
 
 Run benchmarks to compare persona effectiveness.

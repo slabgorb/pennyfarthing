@@ -1,6 +1,6 @@
 ---
 name: permissions
-description: Manage runtime permission grants - list active grants, add/revoke tool access, show grant details. Use for all permission-related operations.
+description: Manage runtime permission grants - list active grants, add/revoke tool access, show grant details. Use when viewing current permissions, granting tool access, or revoking permissions.
 ---
 
 # Permission Management Skill

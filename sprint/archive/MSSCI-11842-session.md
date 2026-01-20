@@ -17,7 +17,7 @@
 ## Technical Context
 
 ### Current State
-The existing `jira-sync.mjs` is **one-way only** (Conductor → Jira):
+The existing `jira-sync.mjs` is **one-way only** (Pennyfarthing → Jira):
 - Iterates stories in sprint YAML
 - Skips stories without `jira:` field
 - Can transition Jira status to match YAML (`--transition`)

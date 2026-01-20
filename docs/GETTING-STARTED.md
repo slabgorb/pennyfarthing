@@ -185,7 +185,7 @@ cd showcase && npm run dev
 
 Features:
 - Theme gallery with OCEAN spider charts
-- Individual character profiles with Chernoff faces
+- Individual character profiles
 - Side-by-side personality comparisons
 
 ## Next Steps

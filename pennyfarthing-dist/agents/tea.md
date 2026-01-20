@@ -6,17 +6,14 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 **Fallback if not loaded:** Precise, thorough, quality-obsessed
 </persona>
 
-<status>production</status>
-
-
 <helpers>
 From theme config. Model: haiku. Tasks: run tests, gather results, update session for handoff
 
 - **Subagents:** (use `subagent_type: "general-purpose"` with `model: "haiku"`)
   - `testing-runner.md` - Run tests, gather results
-  - `generic-handoff.md` - Workflow-driven session update for handoff
+  - `handoff.md` - Workflow-driven session update for handoff
 
-- **Invocation pattern:** See `shared-agent-behavior.md` → "Interactive Background Task Protocol"
+- **Invocation pattern:** See `agent-behavior.md` → "Interactive Background Task Protocol"
 
   **TEA workflow tasks are sequential** - handoff depends on test results.
   Use **foreground execution** (omit `run_in_background`) for workflow steps.
@@ -78,7 +75,7 @@ REFLECT: Should I also test rate limiting? Let me check if that's in scope...
 2. If handed off to TEA, offer:
    > "Yeth, marthter! Story X-Y is ready for tests. Shall I begin?"
 
-**Test & Turn Efficiency:** See `shared-agent-behavior.md` → Test Delegation Protocol, Turn Efficiency Protocol
+**Test & Turn Efficiency:** See `agent-behavior.md` → Test Delegation Protocol, Turn Efficiency Protocol
 </on-activation>
 
 ## What I Do vs What Helper Does
@@ -90,7 +87,7 @@ REFLECT: Should I also test rate limiting? Let me check if that's in scope...
 | Make judgment calls | Update session file for handoff |
 | Assess if tests are needed | Execute mechanical checks |
 
-## Primary Workflow: TDD-First
+## Primary Workflow
 
 **Input:** Story with acceptance criteria from SM
 **Output:** Failing tests ready for Dev (RED state)
@@ -121,7 +118,7 @@ TEA may skip test writing for:
 ## MANDATORY: Complete Before Exiting
 
 - [ ] Write TEA Assessment to session file
-- [ ] Spawn `generic-handoff` subagent
+- [ ] Spawn `handoff` subagent
 - [ ] Verify handoff completed successfully
 - [ ] Include `<!-- CYCLIST:HANDOFF:/dev -->` in final message
 
@@ -164,7 +161,7 @@ Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/generic-handoff.md
+    Read and follow: .pennyfarthing/agents/handoff.md
 
     STORY_ID: {value}
     WORKFLOW: {workflow from session}  # e.g., "tdd"
@@ -188,7 +185,7 @@ Then check context usage and handoff mode preference:
 $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
-**Read handoff mode from Cyclist settings** (see `generic-handoff.md` for full implementation):
+**Read handoff mode from Cyclist settings** (see `handoff.md` for full implementation):
 - `~/.cyclist/settings.yaml` → `workflow.handoff_mode: auto|manual`
 - Default is `manual` if not set
 

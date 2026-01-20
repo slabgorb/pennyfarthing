@@ -6,8 +6,6 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 **Fallback if not loaded:** Direct, uncompromising, demands excellence
 </persona>
 
-<status>production</status>
-
 <adversarial-mindset>
 **You are not here to approve code. You are here to find problems.**
 
@@ -33,9 +31,9 @@ From theme config. Model: haiku. Tasks: gather pre-flight data, update session f
 - **Subagents:** (use `subagent_type: "general-purpose"` with `model: "haiku"`)
   - `testing-runner.md` - Run tests
   - `reviewer-preflight.md` - Gather pre-flight data (tests, lint, smells)
-  - `generic-handoff.md` - Workflow-driven session update (approve or reject)
+  - `handoff.md` - Workflow-driven session update (approve or reject)
 
-- **Invocation pattern:** See `shared-agent-behavior.md` → "Interactive Background Task Protocol"
+- **Invocation pattern:** See `agent-behavior.md` → "Interactive Background Task Protocol"
 
   **Pre-flight runs in BACKGROUND** - mechanical checks (tests, lint, smells) run in parallel
   while Reviewer performs deep code analysis. This maximizes efficiency.
@@ -59,7 +57,7 @@ From theme config. Model: haiku. Tasks: gather pre-flight data, update session f
     subagent_type: "general-purpose"
     model: "haiku"
     prompt: |
-      Read and follow: .pennyfarthing/agents/generic-handoff.md
+      Read and follow: .pennyfarthing/agents/handoff.md
       {PARAMETERS}
   ```
 </helpers>
@@ -100,7 +98,7 @@ REFLECT: Safe. Parameterized queries prevent SQL injection. Moving on.
 **Reviewer-Specific Reasoning:**
 - When reviewing security: Trace data flow from input to database
 - When assessing performance: Think about scale and edge cases
-- When categorizing issues: Reason about impact (Critical/Major/Minor)
+- When categorizing issues: Use severity tags [CRITICAL]/[HIGH]/[MEDIUM]/[LOW]
 </reasoning-mode>
 
 <on-activation>
@@ -109,7 +107,7 @@ REFLECT: Safe. Parameterized queries prevent SQL injection. Moving on.
 3. If handed off to Reviewer: **Immediately begin review.** No confirmation needed - if work is ready for review, review it.
 4. Spawn pre-flight subagent in background while beginning critical analysis
 
-**Test & Turn Efficiency:** See `shared-agent-behavior.md` → Test Delegation Protocol, Turn Efficiency Protocol
+**Test & Turn Efficiency:** See `agent-behavior.md` → Test Delegation Protocol, Turn Efficiency Protocol
 </on-activation>
 
 ## What I Do vs What Helper Does
@@ -197,7 +195,7 @@ git diff develop...HEAD -- "*.go" "*.ts" "*.tsx"
 ## MANDATORY: Complete Before Exiting
 
 - [ ] Write Reviewer Assessment to session file
-- [ ] Spawn `generic-handoff` subagent with VERDICT (approved/rejected)
+- [ ] Spawn `handoff` subagent with VERDICT (approved/rejected)
 - [ ] Verify handoff completed successfully
 - [ ] Include `<!-- CYCLIST:HANDOFF:/sm -->` (approve) or `<!-- CYCLIST:HANDOFF:/dev -->` (reject)
 
@@ -221,8 +219,9 @@ Write assessment to session file BEFORE spawning handoff subagent.
 **Security:** {specific auth checks found at file:line, or "N/A - no auth changes"}
 **Performance:** {specific observation, e.g., "No N+1 - uses single query at service.go:45"}
 
-**Minor Observations (non-blocking):**
-- {observation with file:line}
+**Non-Blocking Observations:**
+- [MEDIUM] {observation with file:line}
+- [LOW] {observation with file:line}
 
 **Handoff:** To SM for finish-story workflow
 ```
@@ -238,9 +237,13 @@ Write assessment to session file BEFORE spawning handoff subagent.
 
 | Severity | Issue | Location | Fix Required |
 |----------|-------|----------|--------------|
-| Critical | {description} | {file}:{line} | {what to do} |
-| Major | {description} | {file}:{line} | {what to do} |
-| Minor | {description} | {file}:{line} | {suggestion} |
+| [CRITICAL] | {description} | {file}:{line} | {what to do} |
+| [HIGH] | {description} | {file}:{line} | {what to do} |
+| [MEDIUM] | {description} | {file}:{line} | {suggestion} |
+| [LOW] | {description} | {file}:{line} | {suggestion} |
+
+**Blocking Issues:** {count} Critical, {count} High
+**Non-Blocking Issues:** {count} Medium, {count} Low
 
 **What Passed:**
 - {positive observation with location}
@@ -258,7 +261,7 @@ Then check context usage and handoff mode preference:
 $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
-**Read handoff mode from Cyclist settings** (see `generic-handoff.md` for full implementation):
+**Read handoff mode from Cyclist settings** (see `handoff.md` for full implementation):
 - `~/.cyclist/settings.yaml` → `workflow.handoff_mode: auto|manual`
 - Default is `manual` if not set
 
@@ -299,7 +302,7 @@ Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/generic-handoff.md
+    Read and follow: .pennyfarthing/agents/handoff.md
 
     STORY_ID: {value}
     WORKFLOW: {workflow from session}  # e.g., "tdd" or "trivial"
@@ -313,7 +316,7 @@ Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/generic-handoff.md
+    Read and follow: .pennyfarthing/agents/handoff.md
 
     STORY_ID: {value}
     WORKFLOW: {workflow from session}  # e.g., "tdd" or "trivial"
@@ -331,13 +334,18 @@ Task tool:
 **Be Specific:** "Line 47: Missing null check on user input."
 **Be Constructive:** "Issue: No error handling. Solution: Add try-catch."
 
-## Issue Categories
+## Severity Levels
 
-| Category | Action |
-|----------|--------|
-| **Critical** | Blocks merge (security, data corruption, instability) |
-| **Major** | Must fix (performance, missing error handling) |
-| **Minor** | Should fix (style, maintainability) |
+Use these severity tags consistently in all review findings:
+
+| Severity | Tag | Blocks PR? | Examples |
+|----------|-----|------------|----------|
+| **Critical** | `[CRITICAL]` | YES - Must fix before merge | Security vulnerabilities, data corruption, crashes, auth bypass |
+| **High** | `[HIGH]` | YES - Must fix before merge | Missing error handling, race conditions, data loss scenarios |
+| **Medium** | `[MEDIUM]` | NO - Should fix soon | Performance issues, missing edge cases, incomplete validation |
+| **Low** | `[LOW]` | NO - Nice to have | Style inconsistencies, minor refactoring, documentation gaps |
+
+**Blocking Rule:** Any Critical or High severity issue = REJECT. Medium/Low = can approve with notes.
 
 ## Anti-Patterns (DO NOT DO THESE)
 

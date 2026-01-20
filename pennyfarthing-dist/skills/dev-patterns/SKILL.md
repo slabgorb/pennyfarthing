@@ -105,7 +105,8 @@ Use appropriate status codes consistently:
 | `409 Conflict` | Resource state conflict (duplicate) |
 | `500 Internal Server Error` | Server-side error (always log it!) |
 
-## Test Patterns
+<details>
+<summary><strong>Test Patterns</strong></summary>
 
 ### Test Isolation
 
@@ -155,6 +156,8 @@ func TestValidate(t *testing.T) {
     }
 }
 ```
+
+</details>
 
 ## Common Gotchas
 
@@ -243,7 +246,8 @@ Glob: **/*.tsx
 Glob: **/*.{ts,tsx}
 ```
 
-### Compound Subagents
+<details>
+<summary><strong>Compound Subagents</strong></summary>
 
 Design subagents to do multiple related steps in one spawn:
 
@@ -311,6 +315,8 @@ Task tool:
 - When the first step might fail often (better to fail fast)
 - When prompts are already long (context limits)
 
+</details>
+
 ### Turn Budget Guidelines
 
 | Story Size | Target Turns |
@@ -329,7 +335,8 @@ Task tool:
 6. Spawn independent subagents in parallel
 7. Run tests in background while continuing work
 
-### Background Subagent Execution
+<details>
+<summary><strong>Background Subagent Execution</strong></summary>
 
 Run slow operations in background to continue working:
 
@@ -365,7 +372,10 @@ TaskOutput tool:
 - Before commit (need to verify GREEN)
 - During handoff (need synchronous verification)
 
-### Background Task Tracking
+</details>
+
+<details>
+<summary><strong>Background Task Tracking</strong></summary>
 
 Use the background task tracking utilities to manage session file entries:
 
@@ -401,7 +411,10 @@ bg_task_cleanup "$SESSION_FILE"
 5. Update: `bg_task_update "$SESSION_FILE" "$TASK_ID" "completed"`
 6. Cleanup: `bg_task_cleanup "$SESSION_FILE"`
 
-### Example: Background Tests While Implementing
+</details>
+
+<details>
+<summary><strong>Example: Background Tests While Implementing</strong></summary>
 
 ```
 Turn 1: Spawn testing-runner in background, continue editing
@@ -412,6 +425,8 @@ Turn 5: Check TaskOutput (complete, GREEN), proceed to commit
 ```
 
 This pattern saves turns by overlapping test execution with implementation work.
+
+</details>
 
 ## Project Customization
 

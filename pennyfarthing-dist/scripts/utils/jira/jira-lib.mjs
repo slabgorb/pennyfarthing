@@ -170,9 +170,9 @@ export function getJiraField(issueJson, fieldPath, defaultValue = null) {
 }
 
 /**
- * Status mapping: Conductor -> Jira
+ * Status mapping: Pennyfarthing -> Jira
  */
-export function mapStatusToJira(conductorStatus) {
+export function mapStatusToJira(PennyfarthingStatus) {
   const mapping = {
     'backlog': 'To Do',
     'todo': 'To Do',
@@ -188,11 +188,11 @@ export function mapStatusToJira(conductorStatus) {
     'blocked': 'Blocked'
   };
 
-  return mapping[conductorStatus?.toLowerCase()] || 'To Do';
+  return mapping[PennyfarthingStatus?.toLowerCase()] || 'To Do';
 }
 
 /**
- * Status mapping: Jira -> Conductor
+ * Status mapping: Jira -> Pennyfarthing
  */
 export function mapJiraToStatus(jiraStatus) {
   const mapping = {
@@ -328,23 +328,23 @@ export function getStoryPoints(issueKey, issueJson = null) {
 /**
  * Sync story points via REST API (jira CLI doesn't handle custom fields well)
  */
-export async function syncStoryPoints(issueKey, conductorPoints, options = {}) {
+export async function syncStoryPoints(issueKey, PennyfarthingPoints, options = {}) {
   const { dryRun = false, currentJiraPoints = null } = options;
 
-  if (!conductorPoints || conductorPoints === 'null') {
-    return { success: false, reason: 'No points in Conductor' };
+  if (!PennyfarthingPoints || PennyfarthingPoints === 'null') {
+    return { success: false, reason: 'No points in Pennyfarthing' };
   }
 
   // Compare current points
   const jiraPoints = currentJiraPoints ?? getStoryPoints(issueKey);
   const jiraPointsInt = jiraPoints ? Math.floor(Number(jiraPoints)) : null;
 
-  if (jiraPointsInt === Number(conductorPoints)) {
+  if (jiraPointsInt === Number(PennyfarthingPoints)) {
     return { success: true, alreadySynced: true };
   }
 
   if (dryRun) {
-    warn(`[DRY-RUN] Would sync points for ${issueKey}: ${jiraPoints} -> ${conductorPoints}`);
+    warn(`[DRY-RUN] Would sync points for ${issueKey}: ${jiraPoints} -> ${PennyfarthingPoints}`);
     return { success: true, dryRun: true };
   }
 
@@ -361,7 +361,7 @@ export async function syncStoryPoints(issueKey, conductorPoints, options = {}) {
       },
       body: JSON.stringify({
         fields: {
-          customfield_10031: Number(conductorPoints)
+          customfield_10031: Number(PennyfarthingPoints)
         }
       })
     });

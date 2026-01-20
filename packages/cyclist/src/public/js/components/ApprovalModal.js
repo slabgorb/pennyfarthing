@@ -42,6 +42,16 @@ let currentContext = {};
 let pendingCount = 0;
 let responseCallback = null;
 
+// MSSCI-11947: State for AskUserQuestion form
+let currentQuestions = [];
+let selectedAnswers = {}; // { questionIndex: value or [values] }
+let otherInputValues = {}; // { questionIndex: customText }
+let otherInputVisible = {}; // { questionIndex: boolean }
+
+// MSSCI-11947: State for ExitPlanMode form
+let planFeedback = '';
+let renderedFormHtml = '';
+
 // Settings store - dynamically loaded to support both Node.js (tests) and browser environments
 let settingsStore = null;
 
@@ -99,6 +109,14 @@ export function hideApprovalModal() {
   currentToolName = '';
   currentReason = '';
   currentContext = {};
+  // MSSCI-11947: Reset AskUserQuestion state
+  currentQuestions = [];
+  selectedAnswers = {};
+  otherInputValues = {};
+  otherInputVisible = {};
+  // MSSCI-11947: Reset ExitPlanMode state
+  planFeedback = '';
+  renderedFormHtml = '';
 
   const modal = document.getElementById('approval-modal');
   if (modal) {
@@ -137,6 +155,7 @@ export function isToolUseMessage(message) {
 
 /**
  * Show the permission modal for any tool type (Story 33-3)
+ * MSSCI-11947: Extended to handle AskUserQuestion and ExitPlanMode with custom forms
  * @param {string} toolName - The tool name (Bash, WebFetch, Edit, Write, etc.)
  * @param {string} toolId - The tool_use_id
  * @param {object} context - Tool-specific context (command, url, file_path, etc.)
@@ -148,6 +167,20 @@ export function showPermissionModal(toolName, toolId, context, reason = '') {
   currentContext = context || {};
   currentReason = reason || '';
   modalVisible = true;
+
+  // MSSCI-11947: Handle AskUserQuestion with custom form
+  if (toolName === 'AskUserQuestion' && context?.questions) {
+    currentQuestions = context.questions;
+    selectedAnswers = {};
+    otherInputValues = {};
+    otherInputVisible = {};
+    renderedFormHtml = renderAskUserQuestionForm(context.questions);
+  }
+  // MSSCI-11947: Handle ExitPlanMode with custom form
+  else if (toolName === 'ExitPlanMode') {
+    planFeedback = '';
+    renderedFormHtml = renderExitPlanModeForm(context?.allowedPrompts || []);
+  }
 
   // For backward compatibility, also set currentCommand for Bash
   if (toolName === 'Bash' && context?.command) {
@@ -178,6 +211,9 @@ export function showPermissionModal(toolName, toolId, context, reason = '') {
     if (contextEl) {
       if (toolName === 'Bash' && context?.command) {
         contextEl.innerHTML = highlightBashSyntax(context.command);
+      } else if (toolName === 'AskUserQuestion' || toolName === 'ExitPlanMode') {
+        // MSSCI-11947: Use custom rendered form HTML
+        contextEl.innerHTML = renderedFormHtml;
       } else {
         contextEl.textContent = formatContextForDisplay(toolName, context);
       }
@@ -188,6 +224,9 @@ export function showPermissionModal(toolName, toolId, context, reason = '') {
     if (commandDisplay) {
       if (toolName === 'Bash' && context?.command) {
         commandDisplay.innerHTML = highlightBashSyntax(context.command);
+      } else if (toolName === 'AskUserQuestion' || toolName === 'ExitPlanMode') {
+        // MSSCI-11947: Use custom rendered form HTML
+        commandDisplay.innerHTML = renderedFormHtml;
       } else {
         commandDisplay.textContent = formatContextForDisplay(toolName, context);
       }
@@ -441,20 +480,6 @@ export function highlightBashSyntax(command) {
 }
 
 /**
- * Escape HTML special characters
- * @param {string} str - String to escape
- * @returns {string}
- */
-function escapeHtml(str) {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
-/**
  * Get the safety level of a command
  * @param {string} command - Command to analyze
  * @returns {'safe' | 'caution' | 'danger'}
@@ -619,6 +644,312 @@ function handleKeydown(event) {
     event.preventDefault();
     handleAlwaysAllow();
   }
+}
+
+// =============================================================================
+// MSSCI-11947: AskUserQuestion Form Functions (AC2)
+// =============================================================================
+
+/**
+ * Render the AskUserQuestion form with radio/checkbox options
+ * MSSCI-11947: AC2 - Render question options
+ * @param {Array} questions - Array of question objects
+ * @returns {string} HTML string for the form
+ */
+export function renderAskUserQuestionForm(questions) {
+  if (!questions || questions.length === 0) {
+    return '<p>No questions to display</p>';
+  }
+
+  let html = '<div class="ask-user-question-form">';
+
+  questions.forEach((q, qIndex) => {
+    const inputType = q.multiSelect ? 'checkbox' : 'radio';
+    const inputName = `question-${qIndex}`;
+
+    html += `<div class="question-group" data-question-index="${qIndex}">`;
+    html += `<div class="question-header">${escapeHtml(q.header || '')}</div>`;
+    html += `<div class="question-text">${escapeHtml(q.question)}</div>`;
+    html += '<div class="question-options">';
+
+    // Render each option
+    q.options.forEach((opt, optIndex) => {
+      const optionId = `q${qIndex}-opt${optIndex}`;
+      html += `<label class="option-label" for="${optionId}">`;
+      html += `<input type="${inputType}" id="${optionId}" name="${inputName}" value="${escapeHtml(opt.label)}" data-question="${qIndex}" data-option="${optIndex}" />`;
+      html += `<span class="option-text">${escapeHtml(opt.label)}</span>`;
+      if (opt.description) {
+        html += `<span class="option-description">${escapeHtml(opt.description)}</span>`;
+      }
+      html += '</label>';
+    });
+
+    // Add "Other" option
+    const otherId = `q${qIndex}-other`;
+    html += `<label class="option-label other-option" for="${otherId}">`;
+    html += `<input type="${inputType}" id="${otherId}" name="${inputName}" value="__OTHER__" data-question="${qIndex}" data-other="true" />`;
+    html += '<span class="option-text">Other</span>';
+    html += '</label>';
+
+    // Other text input (hidden by default)
+    html += `<div class="other-input-container" id="other-input-${qIndex}" style="display: none;">`;
+    html += `<input type="text" class="other-input" data-question="${qIndex}" placeholder="Enter your answer..." />`;
+    html += '</div>';
+
+    html += '</div>'; // .question-options
+    html += '</div>'; // .question-group
+  });
+
+  html += '</div>'; // .ask-user-question-form
+  return html;
+}
+
+/**
+ * Get the collected answers from the AskUserQuestion form
+ * MSSCI-11947: AC2 - Collect user selections
+ * @returns {object} Answers object keyed by question index
+ */
+export function getAskUserQuestionAnswers() {
+  const answers = {};
+
+  currentQuestions.forEach((q, qIndex) => {
+    const key = String(qIndex);
+
+    // Check if "Other" was selected
+    if (otherInputVisible[qIndex] && otherInputValues[qIndex]) {
+      answers[key] = otherInputValues[qIndex];
+    } else if (selectedAnswers[qIndex] !== undefined) {
+      answers[key] = selectedAnswers[qIndex];
+    }
+  });
+
+  return answers;
+}
+
+/**
+ * Get the currently rendered form HTML
+ * MSSCI-11947: AC2 - For testing form output
+ * @returns {string}
+ */
+export function getRenderedFormHtml() {
+  return renderedFormHtml;
+}
+
+/**
+ * Select an option for a question
+ * MSSCI-11947: AC2 - Programmatic option selection
+ * @param {number} questionIndex - The question index
+ * @param {string} value - The option value to select
+ */
+export function selectOption(questionIndex, value) {
+  const question = currentQuestions[questionIndex];
+  if (!question) return;
+
+  if (question.multiSelect) {
+    // For multi-select, toggle the value in the array
+    if (!selectedAnswers[questionIndex]) {
+      selectedAnswers[questionIndex] = [];
+    }
+    const arr = selectedAnswers[questionIndex];
+    const idx = arr.indexOf(value);
+    if (idx === -1) {
+      arr.push(value);
+    }
+  } else {
+    // For single-select, just set the value
+    selectedAnswers[questionIndex] = value;
+  }
+
+  // Hide "Other" input if a regular option is selected
+  otherInputVisible[questionIndex] = false;
+}
+
+/**
+ * Select the "Other" option for a question
+ * MSSCI-11947: AC2 - Handle "Other" selection
+ * @param {number} questionIndex - The question index
+ */
+export function selectOtherOption(questionIndex) {
+  otherInputVisible[questionIndex] = true;
+  // Clear any regular selection for single-select
+  const question = currentQuestions[questionIndex];
+  if (question && !question.multiSelect) {
+    delete selectedAnswers[questionIndex];
+  }
+}
+
+/**
+ * Check if the "Other" input is visible for a question
+ * MSSCI-11947: AC2 - Check "Other" visibility state
+ * @param {number} questionIndex - The question index
+ * @returns {boolean}
+ */
+export function isOtherInputVisible(questionIndex) {
+  return !!otherInputVisible[questionIndex];
+}
+
+/**
+ * Set the "Other" custom input value
+ * MSSCI-11947: AC2 - Set custom text
+ * @param {number} questionIndex - The question index
+ * @param {string} value - The custom text value
+ */
+export function setOtherInput(questionIndex, value) {
+  otherInputValues[questionIndex] = value;
+}
+
+/**
+ * Handle submission of AskUserQuestion form
+ * MSSCI-11947: AC2 - Submit with data
+ */
+export function handleSubmitAskUserQuestion() {
+  const answers = getAskUserQuestionAnswers();
+
+  if (responseCallback) {
+    responseCallback({
+      toolId: currentToolId,
+      approved: true,
+      grantScope: 'once', // AskUserQuestion responses are always one-time
+      data: { answers },
+    });
+  }
+  hideApprovalModal();
+}
+
+// =============================================================================
+// MSSCI-11947: ExitPlanMode Form Functions (AC3)
+// =============================================================================
+
+/**
+ * Render the ExitPlanMode form with approval/rejection buttons
+ * MSSCI-11947: AC3 - Render plan approval form
+ * @param {Array} allowedPrompts - Array of {tool, prompt} objects
+ * @returns {string} HTML string for the form
+ */
+export function renderExitPlanModeForm(allowedPrompts) {
+  let html = '<div class="exit-plan-mode-form">';
+
+  // Show plan file path if available
+  if (currentContext?.planFilePath) {
+    html += `<div class="plan-file-path">Plan file: ${escapeHtml(currentContext.planFilePath)}</div>`;
+  }
+
+  // Show requested permissions if any
+  if (allowedPrompts && allowedPrompts.length > 0) {
+    html += '<div class="requested-permissions">';
+    html += '<h4>Requested Permissions:</h4>';
+    html += '<ul>';
+    allowedPrompts.forEach(p => {
+      html += `<li><strong>${escapeHtml(p.tool)}:</strong> ${escapeHtml(p.prompt)}</li>`;
+    });
+    html += '</ul>';
+    html += '</div>';
+  }
+
+  // Feedback textarea
+  html += '<div class="feedback-section">';
+  html += '<label for="plan-feedback">Feedback (optional):</label>';
+  html += '<textarea id="plan-feedback" class="plan-feedback" placeholder="Add feedback for the agent..."></textarea>';
+  html += '</div>';
+
+  // Approve/Reject buttons
+  html += '<div class="plan-buttons">';
+  html += '<button type="button" class="approve-plan-btn" data-action="approve-plan">Approve Plan</button>';
+  html += '<button type="button" class="reject-plan-btn" data-action="reject-plan">Reject Plan</button>';
+  html += '</div>';
+
+  html += '</div>'; // .exit-plan-mode-form
+  return html;
+}
+
+/**
+ * Get the ExitPlanMode response
+ * MSSCI-11947: AC3 - Get plan response with feedback
+ * @returns {object} Response object with approved and feedback
+ */
+export function getExitPlanModeResponse() {
+  return {
+    approved: false, // Will be set by approve/reject handlers
+    feedback: planFeedback || '',
+  };
+}
+
+/**
+ * Check if the Approve Plan button exists
+ * MSSCI-11947: AC3 - For testing
+ * @returns {boolean}
+ */
+export function hasApprovePlanButton() {
+  return renderedFormHtml.includes('approve-plan-btn') || renderedFormHtml.includes('Approve Plan');
+}
+
+/**
+ * Check if the Reject Plan button exists
+ * MSSCI-11947: AC3 - For testing
+ * @returns {boolean}
+ */
+export function hasRejectPlanButton() {
+  return renderedFormHtml.includes('reject-plan-btn') || renderedFormHtml.includes('Reject Plan');
+}
+
+/**
+ * Set the plan feedback text
+ * MSSCI-11947: AC3 - Set feedback value
+ * @param {string} text - The feedback text
+ */
+export function setPlanFeedback(text) {
+  planFeedback = text;
+}
+
+/**
+ * Handle plan approval
+ * MSSCI-11947: AC3 - Approve with feedback
+ */
+export function handleApprovePlan() {
+  if (responseCallback) {
+    responseCallback({
+      toolId: currentToolId,
+      approved: true,
+      data: {
+        approved: true,
+        feedback: planFeedback || '',
+      },
+    });
+  }
+  hideApprovalModal();
+}
+
+/**
+ * Handle plan rejection
+ * MSSCI-11947: AC3 - Reject with feedback
+ */
+export function handleRejectPlan() {
+  if (responseCallback) {
+    responseCallback({
+      toolId: currentToolId,
+      approved: false,
+      data: {
+        approved: false,
+        feedback: planFeedback || '',
+      },
+    });
+  }
+  hideApprovalModal();
+}
+
+/**
+ * Escape HTML special characters
+ * @param {string} str - String to escape
+ * @returns {string}
+ */
+function escapeHtml(str) {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 /**
