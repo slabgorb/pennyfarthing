@@ -28,7 +28,11 @@ From theme config. Model: haiku. Tasks: run tests, gather results, update sessio
     subagent_type: "general-purpose"
     model: "haiku"
     prompt: |
-      Read and follow: .pennyfarthing/agents/{subagent-name}.md
+      You are the {subagent-name} subagent.
+
+      Read .pennyfarthing/agents/{subagent-name}.md for your instructions,
+      then EXECUTE all steps described there. Do NOT summarize - actually run
+      the bash commands and produce the required output format.
 
       {PARAMETERS}
   ```
@@ -103,7 +107,11 @@ REFLECT: Minimal fix: return ErrNotFound when query returns no rows. This matche
      subagent_type: "general-purpose"
      model: "haiku"
      prompt: |
-       Read and follow: .pennyfarthing/agents/testing-runner.md
+       You are the testing-runner subagent.
+
+       Read .pennyfarthing/agents/testing-runner.md for your instructions,
+       then EXECUTE all steps described there. Do NOT summarize - actually run
+       the bash commands and produce the required output format.
 
        REPOS: pennyfarthing
        CONTEXT: Verify RED state for Story {STORY_ID}
@@ -180,7 +188,7 @@ $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
 **Read handoff mode from Cyclist settings** (see `handoff.md` for full implementation):
-- `~/.cyclist/settings.yaml` → `workflow.handoff_mode: auto|manual`
+- `.pennyfarthing/config.local.yaml → `handoff_mode: auto|manual`
 - Default is `manual` if not set
 
 **Handoff Decision Matrix:**
@@ -218,7 +226,11 @@ Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/handoff.md
+    You are the handoff subagent.
+
+    Read .pennyfarthing/agents/handoff.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
 
     STORY_ID: {value}
     WORKFLOW: {workflow from session}  # e.g., "tdd" or "trivial"
