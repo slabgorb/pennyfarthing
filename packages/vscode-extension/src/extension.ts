@@ -1,10 +1,4 @@
 import * as vscode from 'vscode';
-import {
-  PennyfarthingTerminalProfileProvider,
-  PennyfarthingTerminalLinkProvider,
-} from './providers/terminal';
-import { AgentStatusTreeDataProvider } from './providers/sidebar';
-import { WheelHubAdapter } from './server/wheelhub-adapter';
 
 /**
  * Pennyfarthing VS Code Extension
@@ -13,11 +7,41 @@ import { WheelHubAdapter } from './server/wheelhub-adapter';
  * providing agent orchestration integration for Claude Code.
  */
 
+// Lazy imports to avoid blocking activation
+let WheelHubAdapter: typeof import('./server/wheelhub-adapter').WheelHubAdapter | null = null;
+let AgentStatusTreeDataProvider: typeof import('./providers/sidebar').AgentStatusTreeDataProvider | null = null;
+let PennyfarthingTerminalProfileProvider: typeof import('./providers/terminal').PennyfarthingTerminalProfileProvider | null = null;
+let PennyfarthingTerminalLinkProvider: typeof import('./providers/terminal').PennyfarthingTerminalLinkProvider | null = null;
+
 // Module-level reference for cleanup
-let wheelHubAdapter: WheelHubAdapter | null = null;
+let wheelHubAdapter: InstanceType<typeof import('./server/wheelhub-adapter').WheelHubAdapter> | null = null;
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const outputChannel = vscode.window.createOutputChannel('Pennyfarthing');
+  outputChannel.appendLine('Pennyfarthing extension activating...');
+  outputChannel.show(); // Show output panel to see logs
+
+  // Load modules lazily
+  try {
+    outputChannel.appendLine('Loading providers...');
+    const terminalModule = await import('./providers/terminal');
+    PennyfarthingTerminalProfileProvider = terminalModule.PennyfarthingTerminalProfileProvider;
+    PennyfarthingTerminalLinkProvider = terminalModule.PennyfarthingTerminalLinkProvider;
+
+    outputChannel.appendLine('Loading sidebar...');
+    const sidebarModule = await import('./providers/sidebar');
+    AgentStatusTreeDataProvider = sidebarModule.AgentStatusTreeDataProvider;
+
+    outputChannel.appendLine('Loading WheelHub...');
+    const wheelhubModule = await import('./server/wheelhub-adapter');
+    WheelHubAdapter = wheelhubModule.WheelHubAdapter;
+
+    outputChannel.appendLine('All modules loaded');
+  } catch (err) {
+    outputChannel.appendLine(`Failed to load modules: ${err instanceof Error ? err.message : String(err)}`);
+    return;
+  }
+
   outputChannel.appendLine('Pennyfarthing extension activated');
 
   // Register status command
@@ -129,7 +153,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }
   );
 
-  // Start WheelHub server (MSSCI-12047)
+  // Start WheelHub server (MSSCI-12047) - non-blocking to avoid activation hang
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
   if (workspaceFolder) {
     wheelHubAdapter = new WheelHubAdapter(
@@ -137,32 +161,34 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       outputChannel
     );
 
-    try {
-      await wheelHubAdapter.start();
-      outputChannel.appendLine(
-        `[WheelHub] Server listening on port ${wheelHubAdapter.getPort()}`
-      );
+    // Start server asynchronously to not block extension activation
+    wheelHubAdapter.start()
+      .then(() => {
+        outputChannel.appendLine(
+          `[WheelHub] Server listening on port ${wheelHubAdapter!.getPort()}`
+        );
 
-      // Wire sidebar provider to WheelHub for real-time stats updates (MSSCI-12048)
-      sidebarProvider.connectToWheelHub(wheelHubAdapter.getWebSocketManager());
-      outputChannel.appendLine('[WheelHub] Sidebar provider connected to stats channel');
+        // Wire sidebar provider to WheelHub for real-time stats updates (MSSCI-12048)
+        sidebarProvider.connectToWheelHub(wheelHubAdapter!.getWebSocketManager());
+        outputChannel.appendLine('[WheelHub] Sidebar provider connected to stats channel');
+      })
+      .catch((err) => {
+        outputChannel.appendLine(
+          `[WheelHub] Failed to start server: ${err instanceof Error ? err.message : String(err)}`
+        );
+      });
 
-      // Create disposable for cleanup
-      const serverDisposable = {
-        _isWheelHubDisposable: true,
-        dispose: async () => {
-          if (wheelHubAdapter) {
-            await wheelHubAdapter.stop();
-          }
-        },
-      };
+    // Create disposable for cleanup
+    const serverDisposable = {
+      _isWheelHubDisposable: true,
+      dispose: async () => {
+        if (wheelHubAdapter) {
+          await wheelHubAdapter.stop();
+        }
+      },
+    };
 
-      context.subscriptions.push(serverDisposable as vscode.Disposable);
-    } catch (err) {
-      outputChannel.appendLine(
-        `[WheelHub] Failed to start server: ${err instanceof Error ? err.message : String(err)}`
-      );
-    }
+    context.subscriptions.push(serverDisposable as vscode.Disposable);
   }
 
   context.subscriptions.push(

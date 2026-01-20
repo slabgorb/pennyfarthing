@@ -23,3 +23,11 @@
 - Ask "does this actually work end-to-end?" not just "do tests pass?"
 - Require at least one acceptance test that exercises the full data flow
 - Manual testing with real system (not mocks) for user-facing features
+
+### Approving Unconnected Components (Story MSSCI-12048)
+**Problem:** VS Code sidebar TreeDataProvider had all the right methods (`connectToWheelHub()`, `updatePersona()`), but extension.ts never called `connectToWheelHub()`. The WheelHubAdapter was started, the provider was registered, but they were never wired together. Tests passed because they called `updatePersona()` directly.
+**Solution:**
+- Trace the data flow end-to-end: from source (WheelHub) to sink (UI)
+- Check that components are wired, not just that they exist
+- Look for placeholder/stub implementations in methods that "exist" but don't work
+- Require integration tests that verify actual data flow, not just component behavior
