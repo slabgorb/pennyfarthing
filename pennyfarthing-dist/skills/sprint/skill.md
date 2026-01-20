@@ -5,7 +5,7 @@ description: |
   sprint status, finding available stories, reviewing backlog, or understanding story context
   and history.
   IMPORTANT: Always use the provided scripts - never manually edit sprint YAML.
-args: "[status|backlog|archive|new]"
+args: "[status|backlog|work|archive|new]"
 ---
 
 # /sprint - Sprint Management
@@ -37,6 +37,73 @@ Show available stories grouped by epic with Jira context.
 ```
 
 **Output:** Backlog stories with epic descriptions, points, priority, and workflow tags.
+
+---
+
+### `/sprint work [story-id|epic-id|next]`
+
+Start work on a story. This is the primary entry point for development work.
+
+**Alias:** `/new-work` is equivalent to `/sprint work`
+
+#### Without argument: Interactive selection
+
+Shows backlog, user selects story, then proceeds to setup.
+
+**Flow:**
+1. Load SM persona
+2. Check for in-progress work
+3. Show available stories
+4. User selects story
+5. Setup and handoff to TEA/Dev
+
+#### With story ID: Direct start
+
+**Run first:**
+```bash
+.pennyfarthing/scripts/run.sh check-story.sh <story-id>
+```
+
+**If `available: true`:** Skip backlog, proceed directly to story setup with returned data.
+**If `available: false`:** Report why (assigned, in progress, etc.)
+
+**Example:**
+```bash
+.pennyfarthing/scripts/run.sh check-story.sh MSSCI-12038
+# Returns: {"type": "story", "available": true, "title": "...", ...}
+```
+
+#### With epic ID: Start first available story in epic
+
+**Run first:**
+```bash
+.pennyfarthing/scripts/run.sh check-story.sh <epic-id>
+```
+
+**Returns:** Epic info with `first_story` (highest priority available story).
+**Action:** Automatically start work on `first_story` if available.
+
+**Example:**
+```bash
+.pennyfarthing/scripts/run.sh check-story.sh MSSCI-11952
+# Returns: {"type": "epic", "first_story": {"id": "MSSCI-11954", ...}, ...}
+```
+
+#### With `next`: Auto-select highest priority story
+
+**Run first:**
+```bash
+.pennyfarthing/scripts/run.sh check-story.sh next
+```
+
+**Returns:** Highest-priority available story across all epics.
+**Action:** Automatically start work on returned story.
+
+**Example:**
+```bash
+.pennyfarthing/scripts/run.sh check-story.sh next
+# Returns: {"type": "next", "story": {"id": "MSSCI-11950", "priority": "P1", ...}}
+```
 
 ---
 
@@ -103,6 +170,39 @@ Initialize a new sprint from template.
 
 ---
 
+## Work Flow Details
+
+When `/sprint work` (or `/new-work`) starts a story:
+
+<agent-activation>
+Load SM persona first:
+```bash
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" agent-session.sh start "sm"
+```
+</agent-activation>
+
+### Story Setup Steps
+
+1. **Check story** via `check-story.sh` (if ID provided)
+2. **Write context** to `.session/context-story-{id}.md`
+3. **Setup story** via `generic-sm-setup` subagent (claims Jira, creates branch)
+4. **Handoff** to next agent based on workflow:
+
+| Workflow | Route |
+|----------|-------|
+| `trivial` | SM → Dev |
+| `tdd` | SM → TEA → Dev → Reviewer |
+| `agent-docs` | SM → Orchestrator |
+
+### Gates Before Handoff
+
+- [ ] Session file exists at `.session/{story-id}-session.md`
+- [ ] Story context written with ACs
+- [ ] Jira claimed (assigned, In Progress)
+- [ ] Branch created
+
+---
+
 ## File Locations
 
 | File | Purpose |
@@ -130,11 +230,17 @@ brew install ankitpokhrel/jira/jira
 
 ## Quick Reference
 
-| Command | Script |
-|---------|--------|
+| Command | Script/Action |
+|---------|---------------|
 | `/sprint` | `sprint-status.sh` |
 | `/sprint status` | `sprint-status.sh` |
 | `/sprint backlog` | `available-stories.sh` |
+| `/sprint work` | Interactive story selection → SM flow |
+| `/sprint work MSSCI-XXX` | `check-story.sh` → direct start |
+| `/sprint work EPIC-ID` | `check-story.sh` → start first story |
+| `/sprint work next` | `check-story.sh next` → start highest priority |
 | `/sprint archive MSSCI-XXX` | `archive-story.sh MSSCI-XXX` |
-| `/sprint archive MSSCI-XXX 123` | `archive-story.sh MSSCI-XXX 123` |
 | `/sprint new 2605 277 ...` | `new-sprint.sh 2605 277 ...` |
+| `/new-work` | Alias for `/sprint work` |
+| `/new-work MSSCI-XXX` | Alias for `/sprint work MSSCI-XXX` |
+| `/new-work next` | Alias for `/sprint work next` |
