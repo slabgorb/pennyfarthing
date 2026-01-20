@@ -88,18 +88,57 @@ $(echo "$EPIC_DESCRIPTION" | sed 's/^/      /')
 EOF
 )
 
-# Get stories and format them
-STORIES_YAML=$(echo "$EPIC_DATA" | yq -r '.stories[] |
-  "      - id: " + .id + "\n" +
-  "        title: \"" + .title + "\"\n" +
-  "        description: |\n" + (.description // "" | split("\n") | map("          " + .) | join("\n")) + "\n" +
-  "        points: " + (.points | tostring) + "\n" +
-  "        priority: " + (.priority // "P2") + "\n" +
-  "        status: backlog\n" +
-  "        repos: " + (.repos // "pennyfarthing") + "\n" +
-  "        workflow: " + (.workflow // "tdd") + "\n" +
-  "        acceptance_criteria:" + (if .acceptance_criteria then "\n" + (.acceptance_criteria | map("          - " + .) | join("\n")) else " []" end)
-')
+# Get stories and format them using a helper function
+format_story() {
+  local story_json="$1"
+  local id title desc points priority repos workflow
+
+  id=$(echo "$story_json" | yq -r '.id // ""')
+  title=$(echo "$story_json" | yq -r '.title // ""')
+  desc=$(echo "$story_json" | yq -r '.description // ""')
+  points=$(echo "$story_json" | yq -r '.points // 0')
+  priority=$(echo "$story_json" | yq -r '.priority // "P2"')
+  repos=$(echo "$story_json" | yq -r '.repos // "pennyfarthing"')
+  workflow=$(echo "$story_json" | yq -r '.workflow // "tdd"')
+
+  # Format description with proper indentation
+  local desc_formatted
+  desc_formatted=$(echo "$desc" | sed 's/^/          /')
+
+  # Build story YAML
+  echo "      - id: $id"
+  echo "        title: \"$title\""
+  echo "        description: |"
+  echo "$desc_formatted"
+  echo "        points: $points"
+  echo "        priority: $priority"
+  echo "        status: backlog"
+  echo "        repos: $repos"
+  echo "        workflow: $workflow"
+
+  # Handle acceptance_criteria - check if array exists and has items
+  local ac_count
+  ac_count=$(echo "$story_json" | yq -r '(.acceptance_criteria // []) | length')
+  if [[ "$ac_count" -gt 0 ]]; then
+    echo "        acceptance_criteria:"
+    echo "$story_json" | yq -r '(.acceptance_criteria // [])[] | "          - " + .'
+  else
+    echo "        acceptance_criteria: []"
+  fi
+}
+
+# Process each story
+STORIES_YAML=""
+story_count=$(echo "$EPIC_DATA" | yq -r '.stories | length')
+for i in $(seq 0 $((story_count - 1))); do
+  story_json=$(echo "$EPIC_DATA" | yq -o json ".stories[$i]")
+  if [[ -n "$STORIES_YAML" ]]; then
+    STORIES_YAML="$STORIES_YAML
+$(format_story "$story_json")"
+  else
+    STORIES_YAML=$(format_story "$story_json")
+  fi
+done
 
 # Combine epic and stories
 FULL_EPIC_YAML="$EPIC_YAML
