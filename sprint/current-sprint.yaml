@@ -11,7 +11,7 @@ summary:
   remaining_points: 34
 epics:
   # ===========================================================================
-  # EPIC 48: WheelHub Notification Consolidation (continued)
+  # MSSCI-11942: WheelHub Notification Consolidation
   # ===========================================================================
   - id: MSSCI-11942
     type: epic
@@ -97,7 +97,7 @@ epics:
           - 16 existing files refactored to use new module
 
   # ===========================================================================
-  # EPIC 47: Stepped Workflow Support (BMAD-Inspired)
+  # Stepped Workflow Support (BMAD-Inspired) - pending Jira
   # ===========================================================================
   - id: epic-47
     type: epic
@@ -243,7 +243,7 @@ epics:
           - Documentation for each workflow
 
   # ===========================================================================
-  # EPIC 49: Cyclist VS Code Extension
+  # MSSCI-12015: Cyclist VS Code Extension
   # ===========================================================================
   - id: MSSCI-12015
     type: epic
