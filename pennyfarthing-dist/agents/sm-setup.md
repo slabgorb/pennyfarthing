@@ -51,10 +51,11 @@ Other formats break Cyclist detection.
 ## Setup Steps
 
 1. Verify epic has Jira key (auto-create if missing)
-2. Claim story in Jira
-3. Write session file with Workflow Tracking section
-4. Create feature branch
-5. Update sprint YAML status
+2. Check workflow permissions (auto-prompt for missing)
+3. Claim story in Jira
+4. Write session file with Workflow Tracking section
+5. Create feature branch
+6. Update sprint YAML status
 </gate>
 
 ## Step 1: Check Epic Jira
@@ -66,13 +67,47 @@ EPIC_JIRA=$(yq eval ".epics[] | select(.id == \"epic-${EPIC_NUM}\") | .jira" spr
 
 If missing: auto-create via `jira-epic-creation.ts`
 
-## Step 2: Claim in Jira
+## Step 2: Check Workflow Permissions
+
+If the workflow has a `permissions` array, check each permission against cached grants.
+
+```bash
+# Read workflow's permissions from definition
+WORKFLOW_FILE="pennyfarthing-dist/workflows/{WORKFLOW}.yaml"
+PERMISSIONS=$(yq eval '.workflow.permissions // []' "$WORKFLOW_FILE")
+
+# Read cached grants
+GRANTS=$(cat .claude/settings.local.json 2>/dev/null | jq '.permissions.grants // []')
+```
+
+**For each required permission:**
+
+1. Check if a matching grant exists (same tool + scope)
+2. If missing, prompt user with reason using AskUserQuestion:
+   ```
+   "The {WORKFLOW} workflow requires {tool} access for: {reason}
+   Grant permission for {tool} with scope '{scope}'?"
+   ```
+3. If granted, add to `.claude/settings.local.json` under `permissions.grants[]`:
+   ```json
+   {
+     "tool": "{tool}",
+     "scope": "{scope}",
+     "grant_type": "session",
+     "granted_at": "{ISO timestamp}"
+   }
+   ```
+4. If denied, report blocked and exit
+
+**Note:** Use `checkWorkflowPermissions()` from `@pennyfarthing/core` for permission matching logic.
+
+## Step 3: Claim in Jira
 
 ```bash
 ./scripts/run.sh jira-claim-story.sh {JIRA_KEY} --claim
 ```
 
-## Step 3: Write Session File
+## Step 4: Write Session File
 
 ```markdown
 # Story {STORY_ID}: {TITLE}
@@ -92,7 +127,7 @@ If missing: auto-create via `jira-epic-creation.ts`
 | setup | {NOW} | - | - |
 ```
 
-## Step 4: Create Branch
+## Step 5: Create Branch
 
 ```bash
 cd $CLAUDE_PROJECT_DIR && git checkout develop && git pull && \

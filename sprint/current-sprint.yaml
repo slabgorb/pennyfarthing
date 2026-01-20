@@ -6,9 +6,9 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 43
+  total_points: 46
   completed_points: 9
-  remaining_points: 34
+  remaining_points: 37
 epics:
   # ===========================================================================
   # MSSCI-11942: WheelHub Notification Consolidation
@@ -250,6 +250,41 @@ epics:
           - prd workflow with tri-modal support
           - Step files and templates included
           - Documentation for each workflow
+
+  # ===========================================================================
+  # MSSCI-11705: Runtime Permission Management
+  # ===========================================================================
+  - id: MSSCI-11705
+    type: epic
+    jira: MSSCI-11705
+    title: "Epic: Runtime Permission Management"
+    description: |
+      Allow agents to request and manage tool permissions at runtime. Currently
+      permissions must be pre-configured; agents can't request spot permissions
+      for tools like WebFetch when needed.
+    points: 3
+    completed_points: 0
+    priority: P2
+    status: in_progress
+    stories:
+      - id: MSSCI-11710
+        jira: MSSCI-11710
+        title: "Permission presets by workflow"
+        description: |
+          Workflows can declare required permissions. Auto-prompt for missing
+          permissions on workflow start.
+        points: 3
+        priority: P2
+        status: in_progress
+        assigned_to: Keith Avery
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Workflow YAML supports permissions field declaring required permissions
+          - On workflow start, system checks if required permissions are granted
+          - Missing permissions trigger auto-prompt to user
+          - Granted permissions recorded in session for workflow duration
+          - Works with existing /permissions skill infrastructure
 
   # ===========================================================================
   # MSSCI-12015: Cyclist VS Code Extension
