@@ -1308,7 +1308,6 @@ export async function handleSettingsGet(): Promise<CyclistSettings & { pennyfart
   return {
     ...settings,
     pennyfarthing: {
-      ...settings.pennyfarthing,
       theme,
     },
   };
