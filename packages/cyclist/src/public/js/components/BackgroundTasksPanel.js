@@ -22,6 +22,21 @@ let panelElement = null;
 /** Timer for updating elapsed times */
 let elapsedTimeInterval = null;
 
+/** WebSocket connection for fallback mode */
+let wsConnection = null;
+
+/** WebSocket connection state */
+let connectionState = 'disconnected';
+
+/** WebSocket reconnection timer */
+let reconnectTimer = null;
+
+/** WebSocket URL for reconnection */
+let wsUrl = null;
+
+/** Reconnection interval (2s per WheelHub pattern) */
+const RECONNECT_INTERVAL = 2000;
+
 /**
  * Format elapsed time since start
  * @param {number} startedAt - Timestamp in ms
@@ -280,11 +295,171 @@ export function clearBackgroundTasks() {
  */
 export function destroyBackgroundTasksPanel() {
   stopElapsedTimeUpdates();
+  disconnectWebSocket();
   if (panelElement) {
     panelElement.removeEventListener('click', handlePanelClick);
     panelElement = null;
   }
   tasks = [];
+}
+
+/**
+ * Connect to WebSocket for real-time task updates
+ * Used as fallback when IPC is not available (web-only mode)
+ * @param {string} url - WebSocket URL (e.g., 'ws://localhost:8765/ws/background-tasks')
+ * @returns {Promise<void>}
+ */
+export async function connectWebSocket(url) {
+  wsUrl = url;
+
+  // Close existing connection if any
+  if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
+    wsConnection.close();
+  }
+
+  return new Promise((resolve, reject) => {
+    try {
+      connectionState = 'connecting';
+      wsConnection = new WebSocket(url);
+
+      wsConnection.onopen = async () => {
+        connectionState = 'connected';
+        clearReconnectTimer();
+
+        // Fetch initial tasks via REST API
+        await fetchInitialTasks();
+
+        resolve();
+      };
+
+      wsConnection.onmessage = (event) => {
+        handleWebSocketMessage(event.data);
+      };
+
+      wsConnection.onclose = () => {
+        connectionState = 'disconnected';
+        scheduleReconnect();
+      };
+
+      wsConnection.onerror = (error) => {
+        connectionState = 'disconnected';
+        console.error('[BackgroundTasksPanel] WebSocket error:', error);
+        reject(error);
+      };
+    } catch (error) {
+      connectionState = 'disconnected';
+      reject(error);
+    }
+  });
+}
+
+/**
+ * Disconnect WebSocket connection
+ */
+export function disconnectWebSocket() {
+  clearReconnectTimer();
+  if (wsConnection) {
+    wsConnection.close();
+    wsConnection = null;
+  }
+  connectionState = 'disconnected';
+}
+
+/**
+ * Handle incoming WebSocket message
+ * @param {string} data - Raw message data
+ */
+function handleWebSocketMessage(data) {
+  try {
+    const message = JSON.parse(data);
+
+    if (message.type === 'task:started' && message.task) {
+      addBackgroundTask({
+        taskId: message.task.taskId,
+        description: message.task.description || '',
+        subagentType: message.task.subagentType || '',
+        startedAt: message.task.startedAt || Date.now(),
+        status: 'pending',
+      });
+    } else if (message.type === 'task:completed' && message.task) {
+      updateBackgroundTask(message.task.taskId, {
+        status: 'completed',
+        success: message.task.success,
+        output: message.task.output,
+        error: message.task.error,
+      });
+    } else if (message.type === 'init' && Array.isArray(message.tasks)) {
+      // Handle initial tasks from WebSocket connection
+      message.tasks.forEach(task => addBackgroundTask(task));
+    }
+  } catch (error) {
+    console.error('[BackgroundTasksPanel] Failed to parse WebSocket message:', error);
+  }
+}
+
+/**
+ * Fetch initial tasks via REST API
+ */
+async function fetchInitialTasks() {
+  try {
+    // Derive REST API URL from WebSocket URL
+    const restUrl = wsUrl
+      .replace('ws://', 'http://')
+      .replace('wss://', 'https://')
+      .replace('/ws/background-tasks', '/api/background-tasks');
+
+    const response = await fetch(restUrl);
+    if (response.ok) {
+      const data = await response.json();
+      if (Array.isArray(data.tasks)) {
+        data.tasks.forEach(task => addBackgroundTask(task));
+      }
+    }
+  } catch (error) {
+    console.error('[BackgroundTasksPanel] Failed to fetch initial tasks:', error);
+  }
+}
+
+/**
+ * Schedule WebSocket reconnection
+ */
+function scheduleReconnect() {
+  if (reconnectTimer || !wsUrl) return;
+
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    if (connectionState === 'disconnected' && wsUrl) {
+      connectWebSocket(wsUrl).catch(() => {
+        // Reconnect attempt failed, will schedule another
+      });
+    }
+  }, RECONNECT_INTERVAL);
+}
+
+/**
+ * Clear reconnection timer
+ */
+function clearReconnectTimer() {
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+}
+
+/**
+ * Check if WebSocket is connected
+ * @returns {boolean}
+ */
+export function isConnected() {
+  return connectionState === 'connected';
+}
+
+/**
+ * Get current WebSocket connection state
+ * @returns {'disconnected' | 'connecting' | 'connected'}
+ */
+export function getConnectionState() {
+  return connectionState;
 }
 
 /**
