@@ -780,7 +780,7 @@ epics:
     type: epic
     title: "Epic: WheelHub Notification Consolidation"
     points: 20
-    completed_points: 10
+    completed_points: 12
     priority: P2
     status: in_progress
     stories:
@@ -811,7 +811,10 @@ epics:
           PanelManager emits badge-changed event when counts change.
         points: 2
         priority: P2
-        status: in_progress
+        status: done
+        assigned_to: Keith Avery
+        completed: 2026-01-20
+        pr: 367
         repos: cyclist
         workflow: tdd
         acceptance_criteria:
