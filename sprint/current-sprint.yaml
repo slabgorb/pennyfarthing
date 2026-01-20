@@ -14,22 +14,26 @@ epics:
     type: epic
     title: "Epic: WheelHub Notification Consolidation"
     priority: P2
-    status: in_progress
+    status: done
+    completed: 2026-01-20
     stories:
       - id: MSSCI-11945
+        jira: MSSCI-11945
         title: "Livereload pattern alignment"
         description: |
           Migrate livereload from exponential backoff to 2s fixed reconnection
           to align with standard WheelHub pattern.
         points: 1
         priority: P3
-        status: backlog
+        status: done
+        completed: 2026-01-20
         repos: cyclist
         workflow: trivial
         acceptance_criteria:
           - livereload.js uses 2s fixed reconnection
           - Consistent with other WheelHub channels
       - id: MSSCI-11946
+        jira: MSSCI-11946
         title: "LocalStorage cross-tab synchronization"
         description: |
           Create settings-sync.js module using BroadcastChannel API for
@@ -37,7 +41,8 @@ epics:
           access across 16 files.
         points: 5
         priority: P2
-        status: backlog
+        status: done
+        completed: 2026-01-20
         repos: cyclist
         workflow: tdd
         acceptance_criteria:
@@ -63,6 +68,7 @@ epics:
           - Task status updates shown in real-time
           - Completed tasks remain visible until dismissed
       - id: MSSCI-11948
+        jira: MSSCI-11948
         title: "Remove redundant popup tool use notifications"
         description: |
           With WheelHub consolidation complete, the popup tool use notifications
@@ -70,13 +76,50 @@ epics:
           all tool use visibility. Remove the popup system to reduce complexity.
         points: 2
         priority: P2
-        status: backlog
+        status: done
+        completed: 2026-01-20
         repos: cyclist
         workflow: trivial
         acceptance_criteria:
           - Popup tool use notification code removed
           - No visual regression in tool use visibility
           - Approval modal remains the single source for tool interactions
+      - id: MSSCI-11943
+        jira: MSSCI-11943
+        title: "Story/Git WebSocket channels with file watchers"
+        points: 3
+        priority: P2
+        status: done
+        completed: 2026-01-20
+        repos: cyclist
+        workflow: tdd
+      - id: MSSCI-11944
+        jira: MSSCI-11944
+        title: "Event-driven badge updates"
+        points: 2
+        priority: P2
+        status: done
+        completed: 2026-01-20
+        repos: cyclist
+        workflow: tdd
+      - id: MSSCI-11947
+        jira: MSSCI-11947
+        title: "Hook response data channel for interactive tools"
+        points: 2
+        priority: P2
+        status: done
+        completed: 2026-01-20
+        repos: cyclist
+        workflow: tdd
+      - id: MSSCI-11949
+        jira: MSSCI-11949
+        title: "Remove tool/skill log panels and consolidate to messages"
+        points: 2
+        priority: P2
+        status: done
+        completed: 2026-01-20
+        repos: cyclist
+        workflow: trivial
   # ===========================================================================
   # EPIC 49: Skill Frontmatter Enhancement
   # ===========================================================================
@@ -91,6 +134,15 @@ epics:
     status: in_progress
     repos: pennyfarthing
     stories:
+      - id: MSSCI-11953
+        jira: MSSCI-11953
+        title: "Enhance skill descriptions with 'when to use' context"
+        points: 2
+        priority: P2
+        status: done
+        completed: 2026-01-20
+        repos: pennyfarthing
+        workflow: trivial
       - id: MSSCI-11954
         jira: MSSCI-11954
         title: "Add allowed-tools to context-sensitive skills"
@@ -99,12 +151,31 @@ epics:
           frontmatter to restrict tool access where appropriate.
         points: 1
         priority: P2
-        status: backlog
+        status: done
+        completed: 2026-01-20
         repos: pennyfarthing
         workflow: trivial
         acceptance_criteria:
           - Context-sensitive skills have allowed-tools list
           - Tool restrictions documented in skill files
+      - id: MSSCI-11955
+        jira: MSSCI-11955
+        title: "Progressive disclosure for large skills"
+        points: 2
+        priority: P2
+        status: done
+        completed: 2026-01-20
+        repos: pennyfarthing
+        workflow: trivial
+      - id: MSSCI-11956
+        jira: MSSCI-11956
+        title: "Create systematic-debugging skill"
+        points: 2
+        priority: P2
+        status: done
+        completed: 2026-01-20
+        repos: pennyfarthing
+        workflow: trivial
       - id: MSSCI-11957
         jira: MSSCI-11957
         title: "Add severity levels to Reviewer agent"
@@ -113,13 +184,23 @@ epics:
           medium, low). Helps prioritize fixes and reduces noise.
         points: 2
         priority: P2
-        status: backlog
+        status: done
+        completed: 2026-01-20
         repos: pennyfarthing
         workflow: agent-docs
         acceptance_criteria:
           - Reviewer categorizes findings by severity
           - Critical/high/medium/low levels defined
           - Output format includes severity tags
+      - id: MSSCI-12034
+        jira: MSSCI-12034
+        title: "Create /sprint skill with prescriptive scripts"
+        points: 3
+        priority: P2
+        status: done
+        completed: 2026-01-20
+        repos: pennyfarthing
+        workflow: trivial
       - id: MSSCI-12035
         jira: MSSCI-12035
         title: "Rewrite /story skill with prescriptive scripts"
@@ -128,7 +209,8 @@ epics:
           following the /sprint pattern. Include helper scripts for story operations.
         points: 2
         priority: P2
-        status: backlog
+        status: done
+        completed: 2026-01-20
         repos: pennyfarthing
         workflow: trivial
         acceptance_criteria:
@@ -171,7 +253,8 @@ epics:
           /sprint backlog command via available-stories.sh script.
         points: 1
         priority: P2
-        status: backlog
+        status: done
+        completed: 2026-01-20
         repos: pennyfarthing
         workflow: trivial
         acceptance_criteria:
