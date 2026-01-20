@@ -434,3 +434,9 @@ completed:
     points: 2
     completed: 2026-01-20
     pr: 366
+  - id: MSSCI-12036
+    epic: MSSCI-11952
+    title: "Rewrite /workflow skill with prescriptive scripts"
+    points: 2
+    completed: 2026-01-20
+    pr: 376

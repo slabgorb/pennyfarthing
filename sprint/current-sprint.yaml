@@ -217,20 +217,6 @@ epics:
           - /story skill created with prescriptive scripts
           - story-management skill removed or redirected
           - Scripts for common story operations
-      - id: MSSCI-12036
-        jira: MSSCI-12036
-        title: "Rewrite /workflow skill with prescriptive scripts"
-        description: |
-          Replace existing workflow skill with prescriptive version
-          following the /sprint pattern.
-        points: 2
-        priority: P2
-        status: in_progress
-        repos: pennyfarthing
-        workflow: trivial
-        acceptance_criteria:
-          - /workflow skill rewritten with prescriptive format
-          - Helper scripts for workflow operations
       - id: MSSCI-12037
         jira: MSSCI-12037
         title: "Rewrite /just skill with prescriptive scripts"
