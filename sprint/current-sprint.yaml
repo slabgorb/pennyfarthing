@@ -600,7 +600,7 @@ epics:
         priority: P1
         status: backlog
         repos: pennyfarthing
-        workflow: tdd
+        workflow: bdd
         acceptance_criteria: []
       - id: MSSCI-12049
         jira: MSSCI-12049
