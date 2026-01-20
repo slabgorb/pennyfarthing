@@ -121,17 +121,10 @@ output_persona() {
     return 1
   fi
 
-  # Find theme file (check custom themes first, then built-in locations)
-  # Custom themes: .claude/pennyfarthing/themes/
-  # Built-in: .pennyfarthing/personas/themes/ and personas/themes/
-  if [ -f "$PROJECT_ROOT/.claude/pennyfarthing/themes/${theme}.yaml" ]; then
-    theme_file="$PROJECT_ROOT/.claude/pennyfarthing/themes/${theme}.yaml"
-  elif [ -f "$PROJECT_ROOT/.pennyfarthing/personas/themes/${theme}.yaml" ]; then
-    theme_file="$PROJECT_ROOT/.pennyfarthing/personas/themes/${theme}.yaml"
-  elif [ -f "$PROJECT_ROOT/personas/themes/${theme}.yaml" ]; then
-    theme_file="$PROJECT_ROOT/personas/themes/${theme}.yaml"
-  else
-    echo "<!-- Theme file not found: ${theme}.yaml -->" >&2
+  # Find theme file - single source of truth: .pennyfarthing/personas/themes/
+  theme_file="$PROJECT_ROOT/.pennyfarthing/personas/themes/${theme}.yaml"
+  if [ ! -f "$theme_file" ]; then
+    echo "<!-- Theme file not found: ${theme_file} -->" >&2
     return 1
   fi
 

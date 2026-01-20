@@ -80,7 +80,7 @@ Multi-repo: `cd $CLAUDE_PROJECT_DIR/$(get_repo_path "$repo")` after sourcing `sc
 <info>
 **Config:** `.pennyfarthing/config.local.yaml` with `theme:` field.
 
-**102 themes available:** `/list-themes` to browse, `/show-theme <name>` for details, `/set-theme <name>` to change.
+**many themes available:** `/list-themes` to browse, `/show-theme <name>` for details, `/set-theme <name>` to change.
 
 **Categories:** TV Series, Film, Literature, Anime, Games, History/Mythology.
 
