@@ -85,6 +85,104 @@ backlog:
           points: 2
           status: backlog
 
+    # =========================================================================
+    # WORKFLOW SYSTEM - BMAD-Inspired Stepped Workflows
+    # =========================================================================
+    - id: epic-47
+      title: Stepped Workflow Support (BMAD-Inspired)
+      description: |
+        Extend Pennyfarthing's workflow system to support BMAD-style stepped
+        workflows natively. Adds progressive disclosure, step-based execution,
+        user approval gates, tri-modal support, and cross-session resumability.
+
+        ADR: docs/adr/0005-bmad-workflow-import.md
+      points: 17
+      priority: P1
+      marker: workflow
+      repos: pennyfarthing
+      status: backlog
+      stories:
+        - id: 47-1
+          title: Workflow YAML schema extension (type: stepped)
+          description: |
+            Update workflow YAML schema to support type: stepped with new fields:
+            steps (path, pattern), modes, variables, gates, template.
+            Workflow loader detects type and routes to appropriate executor.
+          points: 2
+          priority: P0
+          status: backlog
+          repos: pennyfarthing
+        - id: 47-2
+          title: Step file parser and variable resolution
+          description: |
+            Create step file parser that extracts <step-meta> block, resolves
+            {variable} placeholders, and identifies gate markers. Variable
+            resolver with priority chain: Workflow → Session → Config → Env → Defaults.
+          points: 3
+          priority: P0
+          status: backlog
+          repos: pennyfarthing
+        - id: 47-3
+          title: Session file state tracking for stepped workflows
+          description: |
+            Extend session file format with ## Workflow State section tracking:
+            workflow name, type, mode, current step, steps completed array,
+            timestamps. Session reader/writer for stepped workflow state.
+          points: 2
+          priority: P0
+          status: backlog
+          repos: pennyfarthing
+        - id: 47-4
+          title: "/workflow command updates (list, start, resume, status)"
+          description: |
+            Update /workflow skill with: list (show phased + stepped),
+            start <name> [--mode] (begin stepped workflow), resume [name]
+            (continue from last step), status (show current progress).
+          points: 3
+          priority: P0
+          status: backlog
+          repos: pennyfarthing
+        - id: 47-5
+          title: Gate detection and user approval flow
+          description: |
+            Gate detection from: gates.after_steps in workflow YAML, gate: true
+            in step meta, <!-- GATE --> marker in content. Gate UI displays
+            prompt, waits for user input, records decision in session.
+          points: 2
+          priority: P1
+          status: backlog
+          repos: pennyfarthing
+        - id: 47-6
+          title: Tri-modal support (create/validate/edit)
+          description: |
+            Mode selection at workflow start. Route to appropriate steps
+            directory based on mode (steps/, steps-v/, steps-e/). Track
+            mode in session state.
+          points: 2
+          priority: P1
+          status: backlog
+          repos: pennyfarthing
+        - id: 47-7
+          title: BMAD workflow migration script
+          description: |
+            Create migrate-bmad-workflow.sh script to convert BMAD workflow
+            format to Pennyfarthing stepped format. Handle step files,
+            variable syntax, and mode directories.
+          points: 1
+          priority: P2
+          status: backlog
+          repos: pennyfarthing
+        - id: 47-8
+          title: Example stepped workflows (architecture, prd)
+          description: |
+            Create example stepped workflows demonstrating the feature:
+            architecture workflow with 8 steps and gates, prd workflow
+            with tri-modal support. Include step files and templates.
+          points: 2
+          priority: P2
+          status: backlog
+          repos: pennyfarthing
+
 # =============================================================================
 # COMPLETED/CLOSED EPICS (removed from backlog)
 # =============================================================================
@@ -115,11 +213,14 @@ backlog:
 # =============================================================================
 # BACKLOG SUMMARY
 # =============================================================================
+# Workflow System (P1):
+#   - Epic 47: Stepped Workflow Support (17 pts) - BMAD-inspired
+#
 # Quality & Scale (P2):
 #   - Epic 39: QA Oversight Capabilities (23 pts)
 #   - Epic 40: Scale Adaptation & Brownfield (17 pts)
 #
-# Total Backlog: 40 pts
+# Total Backlog: 57 pts
 #
 # See sprint/planning.yaml for:
 #   - Benchmark Reliability Initiative (44 pts, 6 epics)
