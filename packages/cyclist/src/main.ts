@@ -55,6 +55,7 @@ import {
   loadGrants,
   saveGrants,
   type CyclistSettings,
+  type SettingsInput,
 } from './settings.js';
 import { initializeGrants, setGrantsPersistCallback } from './settings-store.js';
 // Story 33-7: Import approval gate functions for tool execution pipeline
@@ -1307,19 +1308,27 @@ export async function handleSettingsGet(): Promise<CyclistSettings> {
 /**
  * Handle settings:save IPC call
  * Saves settings and returns result with success flag
- * Also writes theme to .pennyfarthing/config.local.yaml for Pennyfarthing compatibility (24-2)
+ * Theme is written ONLY to .pennyfarthing/config.local.yaml (single source of truth)
  */
-export async function handleSettingsSave(settings: Partial<CyclistSettings>): Promise<{ success: boolean; settings?: CyclistSettings; themeChanged?: boolean }> {
+export async function handleSettingsSave(settings: SettingsInput): Promise<{ success: boolean; settings?: CyclistSettings; themeChanged?: boolean }> {
   try {
-    saveUserSettings(settings);
+    // Extract theme before saving - theme goes to config.local.yaml only, not to CyclistSettings
+    const theme = settings.pennyfarthing?.theme;
+    const { theme: _theme, ...pennyfarthingWithoutTheme } = settings.pennyfarthing || {};
+    const settingsWithoutTheme = {
+      ...settings,
+      pennyfarthing: pennyfarthingWithoutTheme,
+    };
 
-    // 24-2: Dual-write theme to .pennyfarthing/config.local.yaml for Pennyfarthing compatibility
+    saveUserSettings(settingsWithoutTheme as Partial<CyclistSettings>);
+
+    // Write theme to .pennyfarthing/config.local.yaml ONLY (single source of truth)
     const projectDir = getProjectDirectory();
     let themeChanged = false;
-    if (settings.pennyfarthing?.theme && projectDir) {
+    if (theme && projectDir) {
       try {
         const configPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
-        fs.writeFileSync(configPath, `theme: "${settings.pennyfarthing.theme}"\n`, 'utf-8');
+        fs.writeFileSync(configPath, `theme: "${theme}"\n`, 'utf-8');
         themeChanged = true;
 
         // Touch the agent session file to trigger watchAgentChanges
@@ -1388,7 +1397,7 @@ export function setupSettingsIPCHandlers(ipcMain: {
 
   // 24-1: Save settings
   ipcMain.handle(IPC_SETTINGS_CHANNELS.SAVE, async (_event: unknown, ...args: unknown[]) => {
-    const settings = args[0] as Partial<CyclistSettings>;
+    const settings = args[0] as SettingsInput;
     const result = await handleSettingsSave(settings);
     // Broadcast the settings object, not the result wrapper
     if (result.success && result.settings) {

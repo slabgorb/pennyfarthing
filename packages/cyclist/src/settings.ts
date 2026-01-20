@@ -41,7 +41,7 @@ export interface NotificationSettings {
 }
 
 export interface PennyfarthingSettings {
-  theme: string;
+  // theme is stored ONLY in .pennyfarthing/config.local.yaml, not in CyclistSettings
   favorites: string[];
   recentThemes: string[];
 }
@@ -62,13 +62,21 @@ export interface CyclistSettings {
   accounts?: AccountsSettings;
 }
 
-// Partial settings for merging
+// Partial settings for merging (internal use - theme not included)
 export type PartialSettings = {
   workflow?: Partial<WorkflowSettings>;
   display?: Partial<DisplaySettings>;
   notifications?: Partial<NotificationSettings>;
   pennyfarthing?: Partial<PennyfarthingSettings>;
   accounts?: AccountsSettings;
+};
+
+// Settings input from API/IPC - includes theme for routing to config.local.yaml
+// Theme is accepted here but NOT persisted to CyclistSettings - it goes to config.local.yaml only
+export type SettingsInput = PartialSettings & {
+  pennyfarthing?: Partial<PennyfarthingSettings> & {
+    theme?: string;
+  };
 };
 
 // =============================================================================
@@ -100,7 +108,7 @@ const DEFAULT_SETTINGS: CyclistSettings = {
     sound: false,
   },
   pennyfarthing: {
-    theme: 'alice-in-wonderland',
+    // theme is stored ONLY in .pennyfarthing/config.local.yaml
     favorites: [],
     recentThemes: [],
   },
@@ -256,8 +264,7 @@ export function validateSettings(settings: unknown): boolean {
     return false;
   }
   const pennyfarthing = s.pennyfarthing as Record<string, unknown>;
-  // AC6: Theme must be a non-empty string
-  if (typeof pennyfarthing.theme !== 'string' || pennyfarthing.theme === '') return false;
+  // theme is NOT validated here - it's stored ONLY in .pennyfarthing/config.local.yaml
   if (!Array.isArray(pennyfarthing.favorites)) return false;
 
   return true;
@@ -354,9 +361,7 @@ export function mergeSettings(base: CyclistSettings, override: PartialSettings):
   }
 
   if (override.pennyfarthing) {
-    if (typeof override.pennyfarthing.theme === 'string') {
-      result.pennyfarthing.theme = override.pennyfarthing.theme;
-    }
+    // theme is NOT merged here - it's stored ONLY in .pennyfarthing/config.local.yaml
     if (Array.isArray(override.pennyfarthing.favorites)) {
       result.pennyfarthing.favorites = override.pennyfarthing.favorites;
     }
@@ -380,12 +385,19 @@ export function mergeSettings(base: CyclistSettings, override: PartialSettings):
 /**
  * Load user settings from ~/.cyclist/settings.yaml
  * Returns default settings if file doesn't exist or is invalid
+ * Note: theme is stripped - it's stored ONLY in .pennyfarthing/config.local.yaml
  */
 function loadUserSettingsFile(): PartialSettings {
   try {
     if (fs.existsSync(USER_SETTINGS_FILE)) {
       const content = fs.readFileSync(USER_SETTINGS_FILE, 'utf-8');
-      return parseSettings(content);
+      const parsed = parseSettings(content);
+      // Strip theme - it's stored ONLY in .pennyfarthing/config.local.yaml
+      if (parsed.pennyfarthing) {
+        const { theme: _theme, ...pennyfarthingWithoutTheme } = parsed.pennyfarthing as Record<string, unknown>;
+        parsed.pennyfarthing = pennyfarthingWithoutTheme as Partial<PennyfarthingSettings>;
+      }
+      return parsed;
     }
   } catch {
     // Error reading file - return empty
@@ -396,13 +408,20 @@ function loadUserSettingsFile(): PartialSettings {
 /**
  * Load project settings from .claude/cyclist.local.yaml
  * Returns empty object if file doesn't exist or is invalid
+ * Note: theme is stripped - it's stored ONLY in .pennyfarthing/config.local.yaml
  */
 export function loadProjectSettings(projectDir: string): PartialSettings {
   try {
     const projectSettingsPath = path.join(projectDir, PROJECT_SETTINGS_FILE);
     if (fs.existsSync(projectSettingsPath)) {
       const content = fs.readFileSync(projectSettingsPath, 'utf-8');
-      return parseSettings(content);
+      const parsed = parseSettings(content);
+      // Strip theme - it's stored ONLY in .pennyfarthing/config.local.yaml
+      if (parsed.pennyfarthing) {
+        const { theme: _theme, ...pennyfarthingWithoutTheme } = parsed.pennyfarthing as Record<string, unknown>;
+        parsed.pennyfarthing = pennyfarthingWithoutTheme as Partial<PennyfarthingSettings>;
+      }
+      return parsed;
     }
   } catch {
     // Error reading file - return empty

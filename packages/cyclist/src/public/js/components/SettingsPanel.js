@@ -76,12 +76,12 @@ export async function load() {
     // Get current theme from settings
     if (window.electronAPI?.settings?.get) {
       const settings = await window.electronAPI.settings.get();
-      currentTheme = settings?.pennyfarthing?.theme || 'shakespeare';
+      currentTheme = settings?.pennyfarthing?.theme || 'alice-in-wonderland';
     } else {
       const response = await fetch('/api/settings');
       if (response.ok) {
         const settings = await response.json();
-        currentTheme = settings?.pennyfarthing?.theme || 'shakespeare';
+        currentTheme = settings?.pennyfarthing?.theme || 'alice-in-wonderland';
       }
     }
 

@@ -27,6 +27,7 @@ import { app } from '../src/server.js';
 // Settings type definition (should match src/settings.ts)
 // Updated in Story 31-13: handoff_mode replaces auto_handoff + handoff_confirm
 // Updated in Story 35-6: font_ui and font_mono added
+// Theme moved to .pennyfarthing/config.local.yaml - not part of CyclistSettings
 interface CyclistSettings {
   workflow: {
     handoff_mode: 'auto' | 'manual';
@@ -43,7 +44,7 @@ interface CyclistSettings {
     sound: boolean;
   };
   pennyfarthing: {
-    theme: string;
+    // theme is stored ONLY in .pennyfarthing/config.local.yaml
     favorites: string[];
     recentThemes: string[];
   };
@@ -53,6 +54,7 @@ interface CyclistSettings {
 // Updated in Story 31-13: handoff_mode replaces auto_handoff + handoff_confirm
 // Updated in Story 35-6: font_ui and font_mono added
 // Updated in Story 35-8: recentThemes added
+// Theme moved to .pennyfarthing/config.local.yaml - not part of CyclistSettings
 const DEFAULT_SETTINGS: CyclistSettings = {
   workflow: {
     handoff_mode: 'manual',
@@ -69,7 +71,7 @@ const DEFAULT_SETTINGS: CyclistSettings = {
     sound: false,
   },
   pennyfarthing: {
-    theme: 'alice-in-wonderland',
+    // theme is stored ONLY in .pennyfarthing/config.local.yaml
     favorites: [],
     recentThemes: [],
   },
