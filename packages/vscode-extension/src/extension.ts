@@ -3,6 +3,7 @@ import {
   PennyfarthingTerminalProfileProvider,
   PennyfarthingTerminalLinkProvider,
 } from './providers/terminal';
+import { WheelHubAdapter } from './server/wheelhub-adapter';
 
 /**
  * Pennyfarthing VS Code Extension
@@ -11,7 +12,10 @@ import {
  * providing agent orchestration integration for Claude Code.
  */
 
-export function activate(context: vscode.ExtensionContext): void {
+// Module-level reference for cleanup
+let wheelHubAdapter: WheelHubAdapter | null = null;
+
+export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const outputChannel = vscode.window.createOutputChannel('Pennyfarthing');
   outputChannel.appendLine('Pennyfarthing extension activated');
 
@@ -34,6 +38,38 @@ export function activate(context: vscode.ExtensionContext): void {
     new PennyfarthingTerminalLinkProvider()
   );
 
+  // Start WheelHub server (MSSCI-12047)
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+  if (workspaceFolder) {
+    wheelHubAdapter = new WheelHubAdapter(
+      workspaceFolder.uri.fsPath,
+      outputChannel
+    );
+
+    try {
+      await wheelHubAdapter.start();
+      outputChannel.appendLine(
+        `[WheelHub] Server listening on port ${wheelHubAdapter.getPort()}`
+      );
+
+      // Create disposable for cleanup
+      const serverDisposable = {
+        _isWheelHubDisposable: true,
+        dispose: async () => {
+          if (wheelHubAdapter) {
+            await wheelHubAdapter.stop();
+          }
+        },
+      };
+
+      context.subscriptions.push(serverDisposable as vscode.Disposable);
+    } catch (err) {
+      outputChannel.appendLine(
+        `[WheelHub] Failed to start server: ${err instanceof Error ? err.message : String(err)}`
+      );
+    }
+  }
+
   context.subscriptions.push(
     outputChannel,
     statusCommand,
@@ -42,6 +78,10 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 }
 
-export function deactivate(): void {
-  // Cleanup on deactivation
+export async function deactivate(): Promise<void> {
+  // Cleanup WheelHub server on deactivation
+  if (wheelHubAdapter) {
+    await wheelHubAdapter.stop();
+    wheelHubAdapter = null;
+  }
 }

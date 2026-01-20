@@ -182,6 +182,9 @@ importers:
       '@pennyfarthing/shared':
         specifier: workspace:*
         version: link:../shared
+      ws:
+        specifier: ^8.17.0
+        version: 8.19.0
     devDependencies:
       '@types/node':
         specifier: ^20.10.0
@@ -189,6 +192,9 @@ importers:
       '@types/vscode':
         specifier: ^1.85.0
         version: 1.108.1
+      '@types/ws':
+        specifier: ^8.5.10
+        version: 8.18.1
       esbuild:
         specifier: ^0.27.2
         version: 0.27.2
