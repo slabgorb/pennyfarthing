@@ -270,6 +270,29 @@ epics:
           - /sprint epic create creates Jira epic and child stories
           - /sprint epic sync updates Jira from sprint YAML
           - Scripts follow existing /sprint skill patterns
+      - id: MSSCI-12089
+        jira: MSSCI-12089
+        title: "Add finish-story.sh script to /story skill"
+        description: |
+          Create finish-story.sh script that encapsulates the SM finish workflow:
+          - Archive session to sprint/archive/{jira-key}-session.md
+          - Squash merge PR and delete remote branch
+          - Transition Jira to Done
+          - Update sprint YAML (status, completed date)
+          - Clean up local branch and session file
+          Update SM agent to invoke script instead of manual steps.
+        points: 2
+        priority: P2
+        status: done
+        completed: 2026-01-20
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - finish-story.sh script created in pennyfarthing-dist/scripts/
+          - Script handles all finish workflow steps
+          - --dry-run option for preview mode
+          - /story skill documentation updated
+          - SM agent updated to use script
   # ===========================================================================
   # EPIC 51: Stepped Workflow Support (BMAD-Inspired)
   # ===========================================================================
