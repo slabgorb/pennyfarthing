@@ -508,7 +508,7 @@ epics:
       - TirePump integrates with VS Code's workspace state API
       - Reuse Cyclist's public/js components in webview context
     priority: P2
-    status: backlog
+    status: in_progress
     repos: pennyfarthing
     stories:
       - id: MSSCI-12045
