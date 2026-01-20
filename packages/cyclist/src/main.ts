@@ -1299,11 +1299,14 @@ export async function handleSettingsSave(settings: SettingsInput): Promise<{ suc
       pennyfarthing: pennyfarthingWithoutTheme,
     };
 
-    saveUserSettings(settingsWithoutTheme as Partial<CyclistSettings>);
+    // Get project directory FIRST - needed for both settings save and theme update
+    const projectDir = getProjectDirectory();
+
+    // Pass projectDir to avoid cwd fallback
+    saveUserSettings(settingsWithoutTheme as Partial<CyclistSettings>, projectDir || undefined);
 
     // Write theme to .pennyfarthing/config.local.yaml ONLY (single source of truth)
     // Uses read-modify-write to preserve other settings (workflow, display, etc.)
-    const projectDir = getProjectDirectory();
     let themeChanged = false;
     if (theme && projectDir) {
       try {
