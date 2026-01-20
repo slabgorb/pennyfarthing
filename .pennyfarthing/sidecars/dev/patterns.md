@@ -45,6 +45,34 @@ console.error(`[Component] Failed: ${path}`, err);
 showToast('Error');  // Unnecessary layer
 ```
 
+## YAML Config Read-Modify-Write
+
+When updating a single field in YAML, preserve other settings:
+
+```typescript
+// Read existing
+let existing = {};
+if (fs.existsSync(path)) {
+  const parsed = parseYaml(fs.readFileSync(path, 'utf-8'));
+  if (parsed && typeof parsed === 'object') existing = parsed;
+}
+// Modify and write back
+existing.field = newValue;
+fs.writeFileSync(path, stringifyYaml(existing));
+```
+
+**Anti-pattern:** `fs.writeFileSync(path, \`field: "${value}"\n\`)` destroys other settings.
+
+## Per-Project Electron Storage
+
+Libraries like `electron-window-state` default to user-level storage. Use `path` option for per-project:
+
+```typescript
+windowStateKeeper({
+  path: join(projectDir, '.pennyfarthing'),  // Per-project
+});
+```
+
 ---
 
 *Add implementation patterns discovered during development below*

@@ -48,6 +48,7 @@ import {
 } from './paths.js';
 import { getContextUsage, ContextInfo } from './api/context.js';
 import { getVerboseMode, setVerboseMode } from './settings-store.js';
+import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import {
   getCurrentSettings,
   saveUserSettings,
@@ -1323,12 +1324,30 @@ export async function handleSettingsSave(settings: SettingsInput): Promise<{ suc
     saveUserSettings(settingsWithoutTheme as Partial<CyclistSettings>);
 
     // Write theme to .pennyfarthing/config.local.yaml ONLY (single source of truth)
+    // Uses read-modify-write to preserve other settings (workflow, display, etc.)
     const projectDir = getProjectDirectory();
     let themeChanged = false;
     if (theme && projectDir) {
       try {
         const configPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
-        fs.writeFileSync(configPath, `theme: "${theme}"\n`, 'utf-8');
+
+        // Read existing config to preserve other settings
+        let existingConfig: Record<string, unknown> = {};
+        if (fs.existsSync(configPath)) {
+          const existingContent = fs.readFileSync(configPath, 'utf-8');
+          const parsed = parseYaml(existingContent);
+          if (parsed && typeof parsed === 'object') {
+            existingConfig = parsed as Record<string, unknown>;
+          }
+        }
+
+        // Update only the theme, preserving everything else
+        existingConfig.theme = theme;
+
+        // Write back with theme first for consistent ordering
+        const { theme: themeValue, ...rest } = existingConfig;
+        const ordered = { theme: themeValue, ...rest };
+        fs.writeFileSync(configPath, stringifyYaml(ordered), 'utf-8');
         themeChanged = true;
 
         // Touch the agent session file to trigger watchAgentChanges
@@ -2136,7 +2155,6 @@ if (isElectron) {
   // Dynamic imports to avoid errors in Node test environment
   const { app, BrowserWindow, ipcMain, dialog, Menu } = await import('electron');
   const { createTerminalServer } = await import('./server.js');
-  // Story 35-13: Window state persistence
   const windowStateKeeper = (await import('electron-window-state')).default;
 
   // Pass BrowserWindow to settings-window module (ESM-compatible, avoids require())
@@ -2162,13 +2180,17 @@ if (isElectron) {
 
   /**
    * Create the main application window
-   * Story 35-13: Uses electron-window-state for window bounds persistence
+   * Window bounds stored per-project in .pennyfarthing/ via electron-window-state
    */
   function createWindow(): void {
-    // Story 35-13: Load saved window state (size, position, maximized)
+    // Store window state in project's .pennyfarthing directory (per-project persistence)
+    const projectDir = getProjectDirectory();
+    const statePath = projectDir ? join(projectDir, '.pennyfarthing') : undefined;
+
     const mainWindowState = windowStateKeeper({
       defaultWidth: windowConfig.width,
       defaultHeight: windowConfig.height,
+      path: statePath,
     });
 
     // Create window with persisted bounds (or defaults on first run)
@@ -2180,7 +2202,7 @@ if (isElectron) {
       height: mainWindowState.height,
     });
 
-    // Story 35-13: Register window state manager to auto-save on resize/move/close
+    // Register window state manager to auto-save on resize/move/close
     mainWindowState.manage(mainWindow);
 
     // Set main window for data broadcasts (must be before did-finish-load handler)
