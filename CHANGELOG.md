@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [7.2.0] - 2026-01-19
+
+*No unreleased changes*
+
+---
+
 ## [7.1.0] - 2026-01-19
 
 ### Cyclist Observability & Jira Integration
@@ -1427,7 +1433,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v7.1.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v7.2.0...HEAD
+[7.2.0]: https://github.com/1898andCo/pennyfarthing/compare/v7.1.0...v7.2.0
 [7.1.0]: https://github.com/1898andCo/pennyfarthing/compare/v7.0.2...v7.1.0
 [7.0.2]: https://github.com/1898andCo/pennyfarthing/compare/v7.0.1...v7.0.2
 [7.0.1]: https://github.com/1898andCo/pennyfarthing/compare/v7.0.0...v7.0.1
