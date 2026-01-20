@@ -101,6 +101,7 @@ epics:
   # ===========================================================================
   - id: epic-47
     type: epic
+    jira: MSSCI-12022
     title: "Epic: Stepped Workflow Support (BMAD-Inspired)"
     description: |
       Extend Pennyfarthing's workflow system to support BMAD-style stepped
@@ -114,6 +115,7 @@ epics:
     status: backlog
     stories:
       - id: 47-1
+        jira: MSSCI-12023
         title: Workflow YAML schema extension (type: stepped)
         description: |
           Update workflow YAML schema to support type: stepped with new fields:
@@ -130,6 +132,7 @@ epics:
           - Workflow loader detects type and routes appropriately
           - Backward compatible with existing type: phased workflows
       - id: 47-2
+        jira: MSSCI-12025
         title: Step file parser and variable resolution
         description: |
           Create step file parser that extracts <step-meta> block, resolves
@@ -146,6 +149,7 @@ epics:
           - Gate markers detected (<!-- GATE --> or from meta)
           - Priority chain: Workflow → Session → Config → Env → Defaults
       - id: 47-3
+        jira: MSSCI-12024
         title: Session file state tracking for stepped workflows
         description: |
           Extend session file format with ## Workflow State section tracking:
@@ -162,6 +166,7 @@ epics:
           - Session reader/writer for stepped state
           - Compatible with existing session file format
       - id: 47-4
+        jira: MSSCI-12026
         title: "/workflow command updates (list, start, resume, status)"
         description: |
           Update /workflow skill with: list (show phased + stepped),
@@ -178,6 +183,7 @@ epics:
           - /workflow resume [name] continues from last step
           - /workflow status shows current progress
       - id: 47-5
+        jira: MSSCI-12027
         title: Gate detection and user approval flow
         description: |
           Gate detection from: gates.after_steps in workflow YAML, gate: true
@@ -194,6 +200,7 @@ epics:
           - Gates detected from <!-- GATE --> marker
           - Gate pauses execution, displays prompt, records decision
       - id: 47-6
+        jira: MSSCI-12028
         title: Tri-modal support (create/validate/edit)
         description: |
           Mode selection at workflow start. Route to appropriate steps
@@ -210,6 +217,7 @@ epics:
           - Mode tracked in session state
           - Default mode configurable in workflow YAML
       - id: 47-7
+        jira: MSSCI-12029
         title: BMAD workflow migration script
         description: |
           Create migrate-bmad-workflow.sh script to convert BMAD workflow
@@ -226,6 +234,7 @@ epics:
           - Handles step file conversion
           - Converts variable syntax
       - id: 47-8
+        jira: MSSCI-12030
         title: Example stepped workflows (architecture, prd)
         description: |
           Create example stepped workflows demonstrating the feature:
