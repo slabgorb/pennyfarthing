@@ -102,13 +102,8 @@ echo ""
 # Check if epic already has a Jira key
 if [[ -n "$EPIC_JIRA" && "$EPIC_JIRA" != "null" ]]; then
   echo "Epic already has Jira key: $EPIC_JIRA"
+  echo "Proceeding to create/update child stories..."
   echo ""
-  read -p "Create stories under this epic? [y/N] " -n 1 -r
-  echo
-  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo "Aborted."
-    exit 0
-  fi
   JIRA_EPIC_KEY="$EPIC_JIRA"
 else
   # Create the epic in Jira
@@ -227,7 +222,8 @@ while IFS= read -r STORY_JSON; do
       jira sprint add "$SPRINT_JIRA_ID" "$STORY_JIRA_KEY" 2>/dev/null || true
     fi
 
-    # Update sprint YAML with Jira key
+    # Update sprint YAML - set both id and jira to the Jira key
+    yq eval -i "(.epics[] | select(.id == \"$EPIC_ID\")).stories[$STORY_INDEX].id = \"$STORY_JIRA_KEY\"" "$SPRINT_FILE"
     yq eval -i "(.epics[] | select(.id == \"$EPIC_ID\")).stories[$STORY_INDEX].jira = \"$STORY_JIRA_KEY\"" "$SPRINT_FILE"
   fi
 
