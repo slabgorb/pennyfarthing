@@ -1,0 +1,193 @@
+/**
+ * WebSocket Manager for WheelHub Adapter
+ *
+ * Manages WebSocket channels and client connections for VS Code extension.
+ * Subset of Cyclist's websocket.ts, adapted for embedded server context.
+ */
+
+import type { WebSocket as WsWebSocket } from 'ws';
+
+// Use WebSocket type from ws module
+type WebSocket = WsWebSocket;
+
+// WebSocket message types for Claude communication
+interface ClaudeWebSocketMessage {
+  type: 'send' | 'abort' | 'clear' | 'setMode';
+  prompt?: string;
+  mode?: string;
+}
+
+// Stats data type
+interface StatsData {
+  agent?: string;
+  phase?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Manages WebSocket channels and broadcasts for the WheelHub server.
+ */
+export class WebSocketManager {
+  // Channel -> Set of connected clients
+  private channels: Map<string, Set<WebSocket>> = new Map();
+
+  // Registered channel paths
+  private registeredChannels: Set<string> = new Set();
+
+  constructor() {
+    // Pre-register expected channels
+    this.registerChannel('/ws/stats');
+    this.registerChannel('/ws/story');
+    this.registerChannel('/ws/claude');
+    this.registerChannel('/ws/git');
+  }
+
+  /**
+   * Register a WebSocket channel path.
+   */
+  registerChannel(path: string): void {
+    this.registeredChannels.add(path);
+    if (!this.channels.has(path)) {
+      this.channels.set(path, new Set());
+    }
+  }
+
+  /**
+   * Check if a channel is registered.
+   */
+  hasChannel(path: string): boolean {
+    return this.registeredChannels.has(path);
+  }
+
+  /**
+   * Handle a new WebSocket connection on a channel.
+   */
+  handleConnection(path: string, ws: WebSocket): void {
+    // Ensure channel exists
+    if (!this.channels.has(path)) {
+      this.channels.set(path, new Set());
+    }
+
+    const clients = this.channels.get(path)!;
+    clients.add(ws);
+
+    // Send initial payload based on channel type
+    if (path === '/ws/stats') {
+      this.sendInitialStats(ws);
+    }
+
+    // Set up message handler for claude channel
+    if (path === '/ws/claude') {
+      ws.on('message', (data: Buffer | string) => {
+        this.handleClaudeMessage(ws, data);
+      });
+    }
+
+    // Remove client on close
+    ws.on('close', () => {
+      clients.delete(ws);
+    });
+
+    // Remove client on error
+    ws.on('error', () => {
+      clients.delete(ws);
+    });
+  }
+
+  /**
+   * Send initial stats payload to a newly connected client.
+   */
+  private sendInitialStats(ws: WebSocket): void {
+    const initialStats = {
+      type: 'stats',
+      agent: null,
+      phase: null,
+      timestamp: new Date().toISOString(),
+    };
+    if (ws.readyState === 1) {
+      // WebSocket.OPEN
+      ws.send(JSON.stringify(initialStats));
+    }
+  }
+
+  /**
+   * Handle incoming Claude WebSocket message.
+   */
+  private handleClaudeMessage(ws: WebSocket, data: Buffer | string): void {
+    try {
+      const msg = JSON.parse(data.toString()) as ClaudeWebSocketMessage;
+
+      switch (msg.type) {
+        case 'send':
+          // Route to Claude service (to be integrated)
+          // For now, acknowledge receipt
+          break;
+
+        case 'abort':
+          // Handle abort request
+          break;
+
+        case 'clear':
+          // Clear session
+          break;
+
+        case 'setMode':
+          // Set permission mode
+          break;
+      }
+    } catch (err) {
+      // Invalid message format - log but don't crash
+      console.error('[WebSocketManager] Error parsing message:', err);
+    }
+  }
+
+  /**
+   * Broadcast stats update to all connected stats clients.
+   */
+  broadcastStats(data: StatsData): void {
+    const clients = this.channels.get('/ws/stats');
+    if (!clients) return;
+
+    const message = JSON.stringify({
+      type: 'stats',
+      ...data,
+      timestamp: new Date().toISOString(),
+    });
+
+    for (const client of clients) {
+      if (client.readyState === 1) {
+        // WebSocket.OPEN
+        client.send(message);
+      }
+    }
+  }
+
+  /**
+   * Close all client connections on a channel.
+   */
+  closeChannel(path: string): void {
+    const clients = this.channels.get(path);
+    if (!clients) return;
+
+    for (const client of clients) {
+      client.close();
+    }
+    clients.clear();
+  }
+
+  /**
+   * Close all client connections across all channels.
+   */
+  closeAll(): void {
+    for (const [path] of this.channels) {
+      this.closeChannel(path);
+    }
+  }
+
+  /**
+   * Get all registered channel paths.
+   */
+  getChannels(): string[] {
+    return Array.from(this.registeredChannels);
+  }
+}
