@@ -1,0 +1,1 @@
+../skills/sprint/scripts/archive-story.sh

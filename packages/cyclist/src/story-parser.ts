@@ -28,8 +28,9 @@ export interface StoryInfo {
   points: number | null;
   sprint: {
     number: number;
-    completed: number;
-    total: number;
+    remaining: number;
+    inProgress: number;
+    endDate: string | null;
   } | null;
   nextAgent: string | null;        // Next agent in workflow
   workflow: WorkflowStep[] | null; // TDD flow progress
@@ -296,14 +297,54 @@ function buildWorkflowWithStatus(
 }
 
 // Parse sprint YAML for progress
+// Returns remaining points, in-progress points, and end date
 export function parseSprintYaml(content: string): StoryInfo['sprint'] | null {
   try {
     const data = parseYaml(content);
+
+    // Old format: sprint.number - convert to new format
     if (data?.sprint?.number && data?.summary) {
       return {
         number: data.sprint.number,
-        completed: data.summary.completed_points || 0,
-        total: data.summary.total_points || 0,
+        remaining: data.summary.total_points - data.summary.completed_points || 0,
+        inProgress: 0,
+        endDate: null,
+      };
+    }
+
+    // New format: sprint.name with end_date
+    if (data?.sprint?.name) {
+      // Extract sprint number from name (e.g., "TO Sprint 2604" -> 2604)
+      const nameMatch = data.sprint.name.match(/(\d+)/);
+      const sprintNumber = nameMatch ? parseInt(nameMatch[1], 10) : 0;
+
+      // Calculate points by status
+      let remainingPoints = 0;
+      let inProgressPoints = 0;
+
+      if (data?.epics && Array.isArray(data.epics)) {
+        for (const epic of data.epics) {
+          if (epic?.stories && Array.isArray(epic.stories)) {
+            for (const story of epic.stories) {
+              const points = story?.points && typeof story.points === 'number' ? story.points : 0;
+              const status = story?.status || 'backlog';
+
+              if (status === 'in_progress') {
+                inProgressPoints += points;
+              } else if (status === 'backlog' || status === null) {
+                remainingPoints += points;
+              }
+              // done stories are not counted (they're in the archive)
+            }
+          }
+        }
+      }
+
+      return {
+        number: sprintNumber,
+        remaining: remainingPoints,
+        inProgress: inProgressPoints,
+        endDate: data.sprint.end_date || null,
       };
     }
   } catch {

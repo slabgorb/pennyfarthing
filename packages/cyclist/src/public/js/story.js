@@ -110,8 +110,6 @@ function resolveAgentNames(text) {
 export function updateStory(story) {
   const titleEl = document.getElementById('story-title');
   const phaseEl = document.getElementById('story-phase');
-  const progressFill = document.querySelector('.progress-fill');
-  const sprintPoints = document.querySelector('.sprint-points');
 
   if (titleEl) {
     if (story.id && story.title) {
@@ -126,12 +124,8 @@ export function updateStory(story) {
     phaseEl.style.display = 'none';
   }
 
-  if (story.sprint && progressFill && sprintPoints) {
-    const { completed, total } = story.sprint;
-    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-    progressFill.style.width = `${percentage}%`;
-    sprintPoints.textContent = `${completed}/${total} pts`;
-  }
+  // Update sprint info (remaining, in progress, end date)
+  updateSprintInfo(story.sprint);
 
   // B-13: Update workflow progress visualization
   updateWorkflowProgress(story.workflow);
@@ -141,6 +135,35 @@ export function updateStory(story) {
 
   // B-13: Update acceptance criteria checklist
   updateAcceptanceCriteria(story.criteria);
+}
+
+/**
+ * Update sprint info display
+ * @param {Object|null} sprint - Sprint data with remaining, inProgress, endDate
+ */
+function updateSprintInfo(sprint) {
+  const remainingEl = document.getElementById('sprint-remaining');
+  const inProgressEl = document.getElementById('sprint-in-progress');
+  const endDateEl = document.getElementById('sprint-end-date');
+
+  if (remainingEl) {
+    remainingEl.textContent = sprint?.remaining != null ? `${sprint.remaining} pts` : '-';
+  }
+
+  if (inProgressEl) {
+    inProgressEl.textContent = sprint?.inProgress != null ? `${sprint.inProgress} pts` : '-';
+  }
+
+  if (endDateEl) {
+    if (sprint?.endDate) {
+      // Format date as "Feb 2" style
+      const date = new Date(sprint.endDate);
+      const formatted = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      endDateEl.textContent = formatted;
+    } else {
+      endDateEl.textContent = '-';
+    }
+  }
 }
 
 /**
