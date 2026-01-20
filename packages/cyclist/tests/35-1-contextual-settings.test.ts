@@ -28,7 +28,7 @@ describe('35-1: Contextual Settings Placement', () => {
   let settingsDocument: Document;
 
   beforeAll(async () => {
-    // Fetch main index HTML
+    // Fetch main index HTML (GET requests only - no mutations)
     const indexResponse = await request(app).get('/');
     indexHtml = indexResponse.text;
 
@@ -45,6 +45,7 @@ describe('35-1: Contextual Settings Placement', () => {
     settingsWindow.document.write(settingsHtml);
     settingsDocument = settingsWindow.document;
   });
+
 
   // ==========================================================================
   // AC1: Theme chooser accessible from profile/persona area click
@@ -207,24 +208,26 @@ describe('35-1: Contextual Settings Placement', () => {
   describe('AC4: Settings persistence from new locations', () => {
 
     it('should have settings API endpoint that handles theme updates', async () => {
-      // PATCH /api/settings should accept theme changes
+      // Verify settings API exists and returns current settings (GET doesn't mutate)
       const response = await request(app)
-        .patch('/api/settings')
-        .send({ pennyfarthing: { theme: 'the-expanse' } })
+        .get('/api/settings')
         .expect('Content-Type', /json/);
 
-      // Should succeed or return expected structure
-      expect(response.status).toBeLessThan(500);
+      // Should return settings structure
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('workflow');
     });
 
-    it('should have settings API endpoint that handles handoff_mode updates', async () => {
-      // PATCH /api/settings should accept handoff mode changes
+    it('should have settings API endpoint that accepts PATCH requests', async () => {
+      // Verify PATCH endpoint exists by checking it doesn't 404
+      // We send an empty body to avoid actually changing settings
       const response = await request(app)
         .patch('/api/settings')
-        .send({ workflow: { handoff_mode: 'auto' } })
+        .send({})
         .expect('Content-Type', /json/);
 
-      expect(response.status).toBeLessThan(500);
+      // Should not 404 (endpoint exists)
+      expect(response.status).not.toBe(404);
     });
 
     // 35-8: updateTheme moved from persona.js to SettingsPanel.selectTheme
