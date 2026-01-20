@@ -115,7 +115,34 @@
           }
         ]
       }
-    }
+    },
+    "chatParticipants": [
+      {
+        "id": "pennyfarthing",
+        "name": "pennyfarthing",
+        "fullName": "Pennyfarthing",
+        "description": "Claude Code agent orchestration for TDD workflow",
+        "isSticky": true,
+        "commands": [
+          {
+            "name": "sm",
+            "description": "Switch to Scrum Master agent"
+          },
+          {
+            "name": "tea",
+            "description": "Switch to Test Engineer agent"
+          },
+          {
+            "name": "dev",
+            "description": "Switch to Developer agent"
+          },
+          {
+            "name": "reviewer",
+            "description": "Switch to Reviewer agent"
+          }
+        ]
+      }
+    ]
   },
   "scripts": {
     "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
