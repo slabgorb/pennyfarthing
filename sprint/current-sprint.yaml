@@ -122,3 +122,61 @@ epics:
           - Reviewer categorizes findings by severity
           - Critical/high/medium/low levels defined
           - Output format includes severity tags
+      - id: MSSCI-12035
+        jira: MSSCI-12035
+        title: "Rewrite /story skill with prescriptive scripts"
+        description: |
+          Replace story-management skill with prescriptive /story skill
+          following the /sprint pattern. Include helper scripts for story operations.
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - /story skill created with prescriptive scripts
+          - story-management skill removed or redirected
+          - Scripts for common story operations
+      - id: MSSCI-12036
+        jira: MSSCI-12036
+        title: "Rewrite /workflow skill with prescriptive scripts"
+        description: |
+          Replace existing workflow skill with prescriptive version
+          following the /sprint pattern.
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - /workflow skill rewritten with prescriptive format
+          - Helper scripts for workflow operations
+      - id: MSSCI-12037
+        jira: MSSCI-12037
+        title: "Rewrite /just skill with prescriptive scripts"
+        description: |
+          Replace existing just skill with prescriptive version
+          following the /sprint pattern.
+        points: 1
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - /just skill rewritten with prescriptive format
+          - Common just recipes documented
+      - id: MSSCI-12038
+        jira: MSSCI-12038
+        title: "Remove /backlog skill (consolidated into /sprint)"
+        description: |
+          Remove backlog skill - functionality now handled by
+          /sprint backlog command via available-stories.sh script.
+        points: 1
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - /backlog skill removed
+          - Symlink removed from .claude/skills/
+          - /sprint backlog documented as replacement
