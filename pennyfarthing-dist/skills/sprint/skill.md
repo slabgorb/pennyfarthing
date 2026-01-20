@@ -5,7 +5,7 @@ description: |
   sprint status, finding available stories, reviewing backlog, or understanding story context
   and history.
   IMPORTANT: Always use the provided scripts - never manually edit sprint YAML.
-args: "[status|backlog|work|archive|new]"
+args: "[status|backlog|work|archive|new|promote|epic]"
 ---
 
 # /sprint - Sprint Management
@@ -170,6 +170,105 @@ Initialize a new sprint from template.
 
 ---
 
+### `/sprint promote <epic-id>`
+
+Move an epic from `planning.yaml` to `current-sprint.yaml`.
+
+**Run:**
+```bash
+.pennyfarthing/scripts/run.sh promote-epic.sh <epic-id>
+```
+
+**Arguments:**
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `epic-id` | Yes | Local epic ID (e.g., `epic-41`) |
+
+**Example:**
+```bash
+.pennyfarthing/scripts/run.sh promote-epic.sh epic-41
+```
+
+**What it does:**
+1. Finds epic in `sprint/planning.yaml`
+2. Extracts epic metadata and all stories
+3. Appends to `sprint/current-sprint.yaml` epics section
+4. Outputs yq command to remove from planning.yaml
+
+**Next steps after promote:**
+- Review appended YAML in current-sprint.yaml
+- Optionally create Jira epic: `/sprint epic create <epic-id>`
+- Remove from planning.yaml if desired
+
+---
+
+### `/sprint epic create <epic-id> [--dry-run]`
+
+Create a Jira epic and its child stories from sprint YAML.
+
+**Run:**
+```bash
+.pennyfarthing/scripts/run.sh create-jira-epic.sh <epic-id> [--dry-run]
+```
+
+**Arguments:**
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `epic-id` | Yes | Epic ID from current-sprint.yaml |
+| `--dry-run` | No | Preview without creating issues |
+
+**Example:**
+```bash
+.pennyfarthing/scripts/run.sh create-jira-epic.sh MSSCI-11952
+.pennyfarthing/scripts/run.sh create-jira-epic.sh epic-41 --dry-run
+```
+
+**What it does:**
+1. Creates Jira epic if no `jira:` field exists
+2. Creates child stories linked to the epic
+3. Sets story points and priority in Jira
+4. Adds stories to current sprint (if jira_id set)
+5. Updates sprint YAML with Jira keys
+
+**Prerequisites:**
+- `jira` CLI installed and configured
+- `JIRA_API_TOKEN` environment variable set
+
+---
+
+### `/sprint epic sync <epic-id> [options]`
+
+Sync an epic and its stories from sprint YAML to Jira.
+
+**Run:**
+```bash
+.pennyfarthing/scripts/run.sh sync-epic-jira.sh <epic-id> [options]
+```
+
+**Arguments:**
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `epic-id` | Yes | Epic ID from current-sprint.yaml |
+| `--dry-run` | No | Preview without making changes |
+| `--transition` | No | Transition Jira issues to match YAML status |
+| `--points` | No | Sync story points from YAML to Jira |
+| `--all` | No | Equivalent to `--transition --points` |
+
+**Examples:**
+```bash
+.pennyfarthing/scripts/run.sh sync-epic-jira.sh MSSCI-11952              # Show status
+.pennyfarthing/scripts/run.sh sync-epic-jira.sh MSSCI-11952 --dry-run    # Preview
+.pennyfarthing/scripts/run.sh sync-epic-jira.sh MSSCI-11952 --all        # Full sync
+```
+
+**What it does:**
+1. Compares sprint YAML status with Jira status
+2. Optionally transitions Jira issues to match
+3. Optionally syncs story points to Jira
+4. Reports sync summary
+
+---
+
 ## Work Flow Details
 
 When `/sprint work` (or `/new-work`) starts a story:
@@ -241,6 +340,9 @@ brew install ankitpokhrel/jira/jira
 | `/sprint work next` | `check-story.sh next` → start highest priority |
 | `/sprint archive MSSCI-XXX` | `archive-story.sh MSSCI-XXX` |
 | `/sprint new 2605 277 ...` | `new-sprint.sh 2605 277 ...` |
+| `/sprint promote epic-41` | `promote-epic.sh epic-41` |
+| `/sprint epic create MSSCI-XXX` | `create-jira-epic.sh MSSCI-XXX` |
+| `/sprint epic sync MSSCI-XXX` | `sync-epic-jira.sh MSSCI-XXX` |
 | `/new-work` | Alias for `/sprint work` |
 | `/new-work MSSCI-XXX` | Alias for `/sprint work MSSCI-XXX` |
 | `/new-work next` | Alias for `/sprint work next` |
