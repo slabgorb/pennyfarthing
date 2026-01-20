@@ -7,7 +7,44 @@
  * Charts are unfilled (stroke only) to enable clean stacking for comparisons.
  */
 
-import { loadThemeOcean, OceanScores } from './generate-face.js';
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { parse as parseYaml } from 'yaml';
+import { findMonorepoRoot } from '../cli/utils/files.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Find monorepo root by walking up from current directory
+const projectRoot = findMonorepoRoot(__dirname);
+const themesDir = join(projectRoot, 'pennyfarthing-dist', 'personas', 'themes');
+
+// OCEAN personality scores interface
+export interface OceanScores {
+  O: number;
+  C: number;
+  E: number;
+  A: number;
+  N: number;
+}
+
+/**
+ * Load OCEAN scores for a specific theme and agent
+ */
+export function loadThemeOcean(theme: string, agent: string): OceanScores {
+  const themePath = join(themesDir, `${theme}.yaml`);
+  const content = readFileSync(themePath, 'utf-8');
+  const data = parseYaml(content) as Record<string, unknown>;
+
+  const agents = data.agents as Record<string, Record<string, unknown>> | undefined;
+  if (!agents || !agents[agent]) {
+    return { O: 3, C: 3, E: 3, A: 3, N: 3 }; // Default neutral scores
+  }
+
+  const ocean = agents[agent].ocean as OceanScores | undefined;
+  return ocean || { O: 3, C: 3, E: 3, A: 3, N: 3 };
+}
 
 // Chart configuration
 const VIEW_SIZE = 200;
