@@ -34,11 +34,11 @@ REQUIRED_FIELDS=("name" "description" "tools" "model")
 # Expected subagent files (8 total - consolidated in Story 31-11/31-12)
 EXPECTED_SUBAGENTS=(
     "workflow-status-check.md"
-    "generic-sm-setup.md"
-    "generic-sm-finish.md"
+    "sm-setup.md"
+    "sm-finish.md"
     "sm-file-summary.md"
     "sm-handoff.md"
-    "generic-handoff.md"
+    "handoff.md"
     "reviewer-preflight.md"
     "testing-runner.md"
 )

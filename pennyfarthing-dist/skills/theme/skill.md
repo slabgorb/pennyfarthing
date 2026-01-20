@@ -1,6 +1,6 @@
 ---
 name: theme
-description: Manage persona themes - list available themes, show current/specific theme details, and set active theme. Use for all theme-related operations.
+description: Manage persona themes - list available themes, show current/specific theme details, and set active theme. Use when switching persona themes, viewing available characters, or checking which theme is currently active.
 ---
 
 # Theme Management Skill

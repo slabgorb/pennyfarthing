@@ -246,6 +246,24 @@ skills:
     related_skills: [story-management, jira]
     keywords: [sprint, backlog, velocity, kanban]
 
+  systematic-debugging:
+    name: systematic-debugging
+    description: Systematic debugging approach for isolating and fixing issues
+    category: development
+    tags: [debugging, troubleshooting, root-cause]
+    version: "1.0.0"
+    prerequisites: []
+    examples:
+      - context: Debugging test failures
+        invocation: /systematic-debugging
+      - context: Investigating regressions
+        invocation: /systematic-debugging bisect
+    anti_patterns:
+      - Don't jump to solutions without reproducing the issue first
+      - Don't fix symptoms instead of root causes
+    related_skills: [testing, dev-patterns, agentic-patterns]
+    keywords: [debugging, bisect, reproduce, isolate, root-cause, regression]
+
   story-management:
     name: story-management
     description: Story creation, sizing, and sprint workflow patterns

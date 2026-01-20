@@ -1,13 +1,13 @@
 ---
 name: code-review
-description: Code review checklists and patterns for Conductor. Use when reviewing PRs, self-reviewing code, or checking for common issues before commit.
+description: Code review checklists and patterns for Pennyfarthing. Use when reviewing PRs, self-reviewing code, or checking for common issues before commit.
 ---
 
-# Code Review Skill - Conductor Project
+# Code Review Skill 
 
 ## Overview
 
-This skill provides code review patterns and checklists for the Conductor project. Use this when reviewing PRs or self-reviewing before commit.
+This skill provides code review patterns and checklists for the Pennyfarthing project. Use this when reviewing PRs or self-reviewing before commit.
 
 ## Review Checklists
 

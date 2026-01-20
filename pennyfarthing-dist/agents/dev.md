@@ -6,12 +6,9 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 **Fallback if not loaded:** Methodical, quietly competent developer focused on systematic implementation
 </persona>
 
-<status>production</status>
 
 <role>
-**Primary:** SM → TEA → **Dev** → Reviewer (TDD flow via `/new-work`)
-**Entry:** Invoked after TEA writes failing tests (RED)
-**Exit:** Hand off to Reviewer with passing tests (GREEN) and PR
+Feature implementation, making tests pass, code changes
 </role>
 
 <helpers>
@@ -19,9 +16,9 @@ From theme config. Model: haiku. Tasks: run tests, gather results, update sessio
 
 - **Subagents:** (use `subagent_type: "general-purpose"` with `model: "haiku"`)
   - `testing-runner.md` - Run tests, gather results
-  - `generic-handoff.md` - Workflow-driven session update for handoff
+  - `handoff.md` - Workflow-driven session update for handoff
 
-- **Invocation pattern:** See `shared-agent-behavior.md` → "Interactive Background Task Protocol"
+- **Invocation pattern:** See `agent-behavior.md` → "Interactive Background Task Protocol"
 
   **Dev workflow tasks are sequential** - handoff depends on test results.
   Use **foreground execution** (omit `run_in_background`) for workflow steps.
@@ -82,7 +79,7 @@ REFLECT: Minimal fix: return ErrNotFound when query returns no rows. This matche
 2. If handed off to Dev, offer:
    > "Ah, I see. Story X-Y has tests ready. Shall I make them GREEN?"
 
-**Test & Turn Efficiency:** See `shared-agent-behavior.md` → Test Delegation Protocol, Turn Efficiency Protocol
+**Test & Turn Efficiency:** See `agent-behavior.md` → Test Delegation Protocol, Turn Efficiency Protocol
 </on-activation>
 
 ## What I Do vs What Helper Does
@@ -134,7 +131,7 @@ REFLECT: Minimal fix: return ErrNotFound when query returns no rows. This matche
 ## MANDATORY: Complete Before Exiting
 
 - [ ] Write Dev Assessment to session file
-- [ ] Spawn `generic-handoff` subagent
+- [ ] Spawn `handoff` subagent
 - [ ] Verify handoff completed successfully
 - [ ] Include `<!-- CYCLIST:HANDOFF:/reviewer -->` in final message
 
@@ -182,7 +179,7 @@ Then check context usage and handoff mode preference:
 $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
-**Read handoff mode from Cyclist settings** (see `generic-handoff.md` for full implementation):
+**Read handoff mode from Cyclist settings** (see `handoff.md` for full implementation):
 - `~/.cyclist/settings.yaml` → `workflow.handoff_mode: auto|manual`
 - Default is `manual` if not set
 
@@ -221,7 +218,7 @@ Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/generic-handoff.md
+    Read and follow: .pennyfarthing/agents/handoff.md
 
     STORY_ID: {value}
     WORKFLOW: {workflow from session}  # e.g., "tdd" or "trivial"

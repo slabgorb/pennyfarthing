@@ -15,6 +15,8 @@ export const EDITOR_OPTIONS = {
   editorProps: {
     attributes: {
       class: 'prose prose-invert max-w-none focus:outline-none',
+      spellcheck: 'true',
+      lang: 'en',
     },
   },
 };
@@ -55,3 +57,4 @@ export const IMAGE_WARN_SIZE_BYTES = 5 * 1024 * 1024;
 
 /** Maximum allowed image size (20MB) - block paste */
 export const IMAGE_MAX_SIZE_BYTES = 20 * 1024 * 1024;
+

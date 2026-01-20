@@ -287,21 +287,21 @@ get_story_points() {
     echo "$points"
 }
 
-# Sync story points from Conductor to Jira
-# Usage: sync_story_points <issue_key> <conductor_points> [jira_points]
+# Sync story points from Pennyfarthing to Jira
+# Usage: sync_story_points <issue_key> <Pennyfarthing_points> [jira_points]
 # Returns: 0 if synced, 1 if already correct, 2 if failed
 sync_story_points() {
     local key="$1"
-    local conductor_points="$2"
+    local Pennyfarthing_points="$2"
     local jira_points="${3:-}"
 
-    if dry_run_check "sync story points for $key: ${conductor_points}"; then
+    if dry_run_check "sync story points for $key: ${Pennyfarthing_points}"; then
         return 0
     fi
 
-    # Skip if no points defined in Conductor
-    if [ -z "$conductor_points" ] || [ "$conductor_points" = "null" ]; then
-        warn "  ⚠️  No story points defined in Conductor"
+    # Skip if no points defined in Pennyfarthing
+    if [ -z "$Pennyfarthing_points" ] || [ "$Pennyfarthing_points" = "null" ]; then
+        warn "  ⚠️  No story points defined in Pennyfarthing"
         return 1
     fi
 
@@ -312,7 +312,7 @@ sync_story_points() {
 
     # Compare as integers (Jira might return float like "5.0")
     local jira_points_int=$(echo "$jira_points" | cut -d'.' -f1)
-    if [ "$jira_points_int" = "$conductor_points" ]; then
+    if [ "$jira_points_int" = "$Pennyfarthing_points" ]; then
         return 1  # Already correct
     fi
 
@@ -326,7 +326,7 @@ sync_story_points() {
     http_code=$(curl -s -o /dev/null -w "%{http_code}" -X PUT \
         -u "${jira_user}:${JIRA_API_TOKEN}" \
         -H "Content-Type: application/json" \
-        -d "{\"fields\": {\"customfield_10031\": ${conductor_points}}}" \
+        -d "{\"fields\": {\"customfield_10031\": ${Pennyfarthing_points}}}" \
         "${api_url}" 2>&1)
 
     if [ "$http_code" = "204" ] || [ "$http_code" = "200" ]; then
@@ -341,13 +341,13 @@ sync_story_points() {
 # Status Mapping
 #############################################
 
-# map_status_to_jira CONDUCTOR_STATUS
-# Map Conductor status to Jira status name
+# map_status_to_jira Pennyfarthing_STATUS
+# Map Pennyfarthing status to Jira status name
 # Returns: Jira status string
 map_status_to_jira() {
-    local conductor_status="$1"
+    local Pennyfarthing_status="$1"
 
-    case "$conductor_status" in
+    case "$Pennyfarthing_status" in
         backlog|todo)
             echo "To Do"
             ;;
@@ -371,8 +371,8 @@ map_status_to_jira() {
 }
 
 # map_jira_to_status JIRA_STATUS
-# Map Jira status to Conductor status name
-# Returns: Conductor status string
+# Map Jira status to Pennyfarthing status name
+# Returns: Pennyfarthing status string
 map_jira_to_status() {
     local jira_status="$1"
 
@@ -412,7 +412,7 @@ get_pr_author() {
     fi
 
     # Extract org/repo/number from URL
-    # Example: https://github.com/1898andCo/conductor-ui/pull/42
+    # Example: https://github.com/1898andCo/Pennyfarthing-ui/pull/42
     if [[ "$pr_url" =~ github\.com/([^/]+)/([^/]+)/pull/([0-9]+) ]]; then
         local org="${BASH_REMATCH[1]}"
         local repo="${BASH_REMATCH[2]}"

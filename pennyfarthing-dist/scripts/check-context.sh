@@ -116,7 +116,9 @@ else
     fi
 fi
 
-# Parse last message for usage data
+# Parse transcript for baseline (first turn) and current (last turn) usage data
+# Baseline = system prompt overhead, cached per session
+# Usable = current - baseline (what the user's conversation has consumed)
 RESULT=$(python3 -c "
 import sys
 import json
@@ -127,8 +129,11 @@ max_tokens = $MAX_TOKENS
 with open('$TRANSCRIPT', 'r') as f:
     lines = f.readlines()
 
-# Find last line with usage data
-for line in reversed(lines):
+# Find first and last lines with usage data
+first_total = None
+last_total = None
+
+for line in lines:
     try:
         data = json.loads(line.strip())
         if 'message' in data and 'usage' in data['message']:
@@ -136,50 +141,74 @@ for line in reversed(lines):
             input_t = usage.get('input_tokens', 0)
             cache_read = usage.get('cache_read_input_tokens', 0)
             cache_create = usage.get('cache_creation_input_tokens', 0)
-
             total = cache_read + cache_create + input_t
-            pct = (total / max_tokens) * 100
 
-            print(f'CONTEXT_TOKENS={total}')
-            print(f'CONTEXT_PERCENT={pct:.0f}')
-            # Use configurable warning threshold
-            if pct > warning_threshold:
-                print('CONTEXT_STATUS=HIGH')
-                print('HANDOFF_MODE=auto')
-            else:
-                print('CONTEXT_STATUS=OK')
-                print('HANDOFF_MODE=ask')
-            break
+            if first_total is None:
+                first_total = total
+            last_total = total
     except:
         continue
+
+if last_total is not None:
+    # Baseline is first turn's total (system prompt + tools + CLAUDE.md etc)
+    baseline = first_total if first_total is not None else 0
+
+    # Usable tokens = what user's conversation has consumed
+    usable_tokens = last_total - baseline
+
+    # Available capacity = max minus baseline overhead
+    available_capacity = max_tokens - baseline
+
+    # Usable percent = conversation usage as % of available capacity
+    usable_pct = (usable_tokens / available_capacity * 100) if available_capacity > 0 else 0
+
+    # Total percent (for backwards compatibility)
+    total_pct = (last_total / max_tokens) * 100
+
+    # Output all values
+    print(f'CONTEXT_TOKENS={last_total}')
+    print(f'CONTEXT_PERCENT={total_pct:.0f}')
+    print(f'CONTEXT_BASELINE={baseline}')
+    print(f'CONTEXT_USABLE_TOKENS={usable_tokens}')
+    print(f'CONTEXT_USABLE_PERCENT={usable_pct:.0f}')
+    print(f'CONTEXT_AVAILABLE={available_capacity}')
+
+    # Use usable percent for status decisions (more accurate for user)
+    if usable_pct > warning_threshold:
+        print('CONTEXT_STATUS=HIGH')
+        print('HANDOFF_MODE=auto')
+    else:
+        print('CONTEXT_STATUS=OK')
+        print('HANDOFF_MODE=ask')
 " 2>/dev/null)
 
 if [ "$HUMAN_MODE" = "true" ]; then
     eval "$RESULT"
     if [ "$CONTEXT_STATUS" = "HIGH" ]; then
-        echo "⚠️  Context: ${CONTEXT_PERCENT}% (${CONTEXT_TOKENS} tokens) - AUTO-HANDOFF"
+        echo "⚠️  Context: ${CONTEXT_USABLE_PERCENT}% used (${CONTEXT_USABLE_TOKENS} of ${CONTEXT_AVAILABLE} available) - AUTO-HANDOFF"
     else
-        echo "✅ Context: ${CONTEXT_PERCENT}% (${CONTEXT_TOKENS} tokens) - OK to continue"
+        echo "✅ Context: ${CONTEXT_USABLE_PERCENT}% used (${CONTEXT_USABLE_TOKENS} of ${CONTEXT_AVAILABLE} available)"
     fi
+    echo "   Overhead: ${CONTEXT_BASELINE} tokens (system prompt + tools)"
 
-    # Output warning messages at configurable thresholds
-    if [ -n "$CONTEXT_PERCENT" ]; then
-        if [ "$CONTEXT_PERCENT" -ge "$CRITICAL_THRESHOLD" ] 2>/dev/null; then
-            echo "CONTEXT_WARNING: Critical (${CONTEXT_PERCENT}%) - checkpoint and handoff recommended"
-        elif [ "$CONTEXT_PERCENT" -ge "$WARNING_THRESHOLD" ] 2>/dev/null; then
-            echo "CONTEXT_WARNING: High (${CONTEXT_PERCENT}%) - consider handoff soon"
+    # Output warning messages at configurable thresholds (use usable percent)
+    if [ -n "$CONTEXT_USABLE_PERCENT" ]; then
+        if [ "$CONTEXT_USABLE_PERCENT" -ge "$CRITICAL_THRESHOLD" ] 2>/dev/null; then
+            echo "CONTEXT_WARNING: Critical (${CONTEXT_USABLE_PERCENT}%) - checkpoint and handoff recommended"
+        elif [ "$CONTEXT_USABLE_PERCENT" -ge "$WARNING_THRESHOLD" ] 2>/dev/null; then
+            echo "CONTEXT_WARNING: High (${CONTEXT_USABLE_PERCENT}%) - consider handoff soon"
         fi
     fi
 else
     echo "$RESULT"
 
-    # Also output warnings in non-human mode for scripting
+    # Also output warnings in non-human mode for scripting (use usable percent)
     eval "$RESULT" 2>/dev/null || true
-    if [ -n "$CONTEXT_PERCENT" ]; then
-        if [ "$CONTEXT_PERCENT" -ge "$CRITICAL_THRESHOLD" ] 2>/dev/null; then
+    if [ -n "$CONTEXT_USABLE_PERCENT" ]; then
+        if [ "$CONTEXT_USABLE_PERCENT" -ge "$CRITICAL_THRESHOLD" ] 2>/dev/null; then
             echo "CONTEXT_WARNING=Critical"
             echo "CONTEXT_RECOMMENDATION=checkpoint and handoff recommended"
-        elif [ "$CONTEXT_PERCENT" -ge "$WARNING_THRESHOLD" ] 2>/dev/null; then
+        elif [ "$CONTEXT_USABLE_PERCENT" -ge "$WARNING_THRESHOLD" ] 2>/dev/null; then
             echo "CONTEXT_WARNING=High"
             echo "CONTEXT_RECOMMENDATION=consider handoff soon"
         fi

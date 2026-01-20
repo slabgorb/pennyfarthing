@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Create or checkout feature branches in conductor repos
+# Create or checkout feature branches in Pennyfarthing repos
 # Idempotent, worktree-aware, branches from develop
 
 set -e
@@ -27,18 +27,18 @@ Arguments:
                  Options: api, ui, all
 
 Repo Options:
-  api     - conductor-api only
-  ui      - conductor-ui only
+  api     - Pennyfarthing-api only
+  ui      - Pennyfarthing-ui only
   all     - both repos (default)
 
 Examples:
   # All repos (default)
   ./create-feature-branches.sh feat/cross-repo-feature
 
-  # Conductor UI only
+  # Pennyfarthing UI only
   ./create-feature-branches.sh feat/11-2-ui-component ui
 
-  # Conductor API only
+  # Pennyfarthing API only
   ./create-feature-branches.sh fix/validation-bug api
 
 Behavior:
@@ -64,8 +64,8 @@ if [[ ! "$REPOS" =~ ^(api|ui|all)$ ]]; then
     echo "   Got: $REPOS"
     echo ""
     echo "Options:"
-    echo "  api     - conductor-api only"
-    echo "  ui      - conductor-ui only"
+    echo "  api     - Pennyfarthing-api only"
+    echo "  ui      - Pennyfarthing-ui only"
     echo "  all     - both repos (default)"
     exit 1
 fi
@@ -149,14 +149,14 @@ echo "   Repos: $REPOS"
 # Process repos based on selection
 case "$REPOS" in
     api)
-        create_or_checkout_branch "$REPO_BASE/conductor-api" "conductor-api"
+        create_or_checkout_branch "$REPO_BASE/Pennyfarthing-api" "Pennyfarthing-api"
         ;;
     ui)
-        create_or_checkout_branch "$REPO_BASE/conductor-ui" "conductor-ui"
+        create_or_checkout_branch "$REPO_BASE/Pennyfarthing-ui" "Pennyfarthing-ui"
         ;;
     all)
-        create_or_checkout_branch "$REPO_BASE/conductor-api" "conductor-api"
-        create_or_checkout_branch "$REPO_BASE/conductor-ui" "conductor-ui"
+        create_or_checkout_branch "$REPO_BASE/Pennyfarthing-api" "Pennyfarthing-api"
+        create_or_checkout_branch "$REPO_BASE/Pennyfarthing-ui" "Pennyfarthing-ui"
         ;;
 esac
 

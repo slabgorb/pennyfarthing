@@ -10,7 +10,7 @@ A Claude Code agent orchestration framework with TDD workflow and themed persona
 
 ### [**Browse 102 Themes in the Interactive Showcase**](https://animated-meme-3e4494y.pages.github.io/)
 
-Explore all themes with OCEAN spider charts, Chernoff faces, and 1020 character profiles.
+Explore all themes with OCEAN spider charts and 1020 character profiles.
 
 ---
 
@@ -185,7 +185,7 @@ your-project/
 | **Classic** | `princess-bride`, `a-team`, `mash`, `west-wing` |
 | **Minimal** | `control`, `minimalist` |
 
-All 102 themes include OCEAN (Big Five) personality profiles and Chernoff face visualizations.
+All 102 themes include OCEAN (Big Five) personality profiles and spider chart visualizations.
 
 See [Theme Comparison Guide](docs/THEME-COMPARISON.md) for personality analysis, OCEAN profiles, and help choosing between themes.
 

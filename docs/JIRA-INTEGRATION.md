@@ -172,9 +172,9 @@ update_issue "MSSCI-10988" "New Title" "New Description"
 
 ## Status Transition Automation
 
-### Conductor-to-Jira Mapping
+### Pennyfarthing-to-Jira Mapping
 
-| Conductor Status | Jira Status |
+| Pennyfarthing Status | Jira Status |
 |------------------|-------------|
 | backlog | To Do |
 | in-progress | In Progress |
@@ -268,27 +268,27 @@ SM delegates Jira operations to consolidated subagents:
 
 | Subagent | Jira Operations |
 |----------|-----------------|
-| `generic-sm-setup MODE=setup` | Claim issue, transition to In Progress |
-| `generic-sm-finish PHASE=preflight` | Check Jira status readiness |
-| `generic-sm-finish PHASE=execute` | Transition to Done, sync points |
+| `sm-setup MODE=setup` | Claim issue, transition to In Progress |
+| `sm-finish PHASE=preflight` | Check Jira status readiness |
+| `sm-finish PHASE=execute` | Transition to Done, sync points |
 
 ### SM Workflow
 
 ```
 SM → [Check Status] → [NEW_WORK]
   ↓
-  → generic-sm-setup MODE=setup:
+  → sm-setup MODE=setup:
     - jira-claim-story.sh --claim
     - Create branches
     - Write session file
   ↓
   → TEA → Dev → Reviewer → [APPROVED]
   ↓
-  → generic-sm-finish PHASE=preflight:
+  → sm-finish PHASE=preflight:
     - Check Jira readiness
     - Check PR/lint status
   ↓
-  → generic-sm-finish PHASE=execute:
+  → sm-finish PHASE=execute:
     - jira-sync-story.sh --transition --points
     - Archive session
     - Update sprint YAML

@@ -26,94 +26,33 @@
 
 ### Benchmark Results Are Valuable
 **Problem:** Untracked files in `internal/results/baselines/*/dev/runs/` look like temp artifacts
-**Reality:** These are valuable benchmark run results - judges, summaries, raw outputs
-**Solution:** NEVER delete files in `internal/results/baselines/`. If cleanup is needed, ask user first. These files capture benchmark execution history even when untracked.
+**Reality:** These are valuable benchmark run results
+**Solution:** NEVER delete files in `internal/results/baselines/`. Ask user first.
 
-## Command Creation Gotchas
+## Command/Skill Discovery
 
 ### Missing Symlink for New Commands
-**Problem:** New command created in `pennyfarthing-dist/commands/` but `/command` not discoverable
-**Cause:** Symlink in `.claude/commands/` was never created
-**Solution:** When creating new commands, ALWAYS create both:
-1. The actual file: `pennyfarthing-dist/commands/{name}.md`
-2. The symlink: `cd .claude/commands && ln -s ../../pennyfarthing-dist/commands/{name}.md {name}.md`
+**Problem:** New command in `pennyfarthing-dist/commands/` not discoverable
+**Solution:** Create symlink: `cd .claude/commands && ln -s ../../pennyfarthing-dist/commands/{name}.md`
 
-Claude Code discovers commands via the `.claude/commands/` directory, not `pennyfarthing-dist/`.
+### Skill Not Discovered
+**Problem:** CLI command fails, skill wasn't loaded
+**Solution:** Check if there's a skill for that tool (`/jira`, `/just`, etc.) before troubleshooting
 
-## Jira Sync Gotchas
+## Jira Gotchas
 
-### Manual Issue Creation Creates Duplicates
-**Problem:** Using `jira issue create` manually for epics/stories creates duplicates and messy state
-**Cause:** Didn't read the jira skill first; didn't know about `jira-sync.sh`
-**Solution:** ALWAYS read `.claude/skills/jira/SKILL.md` before ANY Jira operations. Use the provided scripts:
-- `jira-sync.sh <epic>` - Sync all stories in an epic
-- `jira-sync-story.sh <story>` - Sync a single story
-- Use `--dry-run` first to preview changes
+### NEVER GUESS JIRA IDs
+Local IDs like `31-18` are NOT Jira keys. Valid keys: `MSSCI-XXXXX`.
+Always look up, query, create, or ask - never fabricate.
 
-### Wrong Field Name for Jira Key
-**Problem:** Sync script says "Not synced to Jira - skipping"
-**Cause:** Used `jira_key:` instead of `jira:` in sprint YAML
-**Solution:** The field is `jira:` (not `jira_key:`) for both epics and stories
+### Wrong Field Name
+Use `jira:` not `jira_key:` in sprint YAML.
 
-### Canceled vs Cancelled
-**Problem:** `jira issue move` fails with "invalid transition state"
-**Solution:** Use American spelling: "Canceled" not "Cancelled"
+### Canceled Spelling
+Use American: "Canceled" not "Cancelled"
 
-## Handoff Marker Gotchas
+## Subagent Data Freshness
 
-### Missing Cyclist Handoff Prompt
-**Problem:** After handoff subagent completes, user doesn't see the quick-action button to invoke next agent
-**Cause:** Subagent output didn't include the Cyclist marker
-**Solution:** Handoff subagents MUST emit `<!-- CYCLIST:HANDOFF:/agent -->` in their final output
-
-This HTML comment is parsed by Cyclist's `quick-actions.js` to show the handoff button. Without it, the user has to manually type `/tea` or `/dev`.
-
-**Format:**
-```
-<!-- CYCLIST:HANDOFF:/tea -->
-```
-
-**Files that need it:**
-- `sm-handoff.md` - SM→TEA/Dev transitions
-- `generic-handoff.md` - TEA→Dev→Reviewer→SM transitions
-
-### Skill Not Discovered for CLI Commands
-**Problem:** Jira assign command failed with "400 Bad Request", wasted time troubleshooting
-**Cause:** `/jira` skill wasn't listed in SM agent's `<skills>` section, so it wasn't loaded
-**Solution:**
-1. When a CLI command fails, ALWAYS check if there's a skill for that tool (`/jira`, `/just`, etc.)
-2. Skills must be listed in the agent's `<skills>` section to be auto-discovered
-3. Added `/jira` to SM agent skills (2026-01-15)
-
-**Broader lesson:** If you're doing operations with a CLI tool and hit errors, invoke the relevant skill BEFORE troubleshooting manually.
-
-## Installation Gotchas
-
-### Package Not on npm
-**Problem:** Looking for `npm install pennyfarthing` or checking npmjs.com
-**Reality:** Pennyfarthing is installed from GitHub, not npm registry
-**Solution:** Install via: `npm install github:1898andCo/pennyfarthing`
-
-The CLI still expects `node_modules/pennyfarthing/pennyfarthing-dist/` structure, which GitHub installs create correctly.
-
----
-
-## NEVER GUESS JIRA IDs
-
-**Problem:** Created stories with placeholder IDs like `31-18` or `35-17` instead of real Jira keys
-**Cause:** Guessed at ID format instead of creating in Jira first
-**Impact:** Invalid IDs in sprint YAML, confusion about what's real
-
-**SOLUTION - NEVER fabricate Jira IDs. Instead:**
-1. **Look it up** in `sprint/current-sprint.yaml` under the story's `id:` field
-2. **Query Jira** using `jira issue list` or `jira issue view`
-3. **Create new** using `jira issue create` (returns the real ID)
-4. **Ask the user** if you cannot determine the correct ID
-
-Old-style IDs like `31-18` are **local sprint YAML placeholders** - they are NOT valid Jira keys. Valid Jira keys follow the pattern `MSSCI-XXXXX`.
-
-**Learned:** 2026-01-18 (the hard way)
-
----
-
-*Add story management gotchas discovered during coordination below*
+### Stale epic context data
+**Problem:** workflow-status-check reports cached story counts
+**Solution:** Verify against `sprint/current-sprint.yaml` before presenting to user

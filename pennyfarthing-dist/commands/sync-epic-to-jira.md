@@ -6,7 +6,7 @@ description: Sync Pennyfarthing epic to Jira MSSCI project using jira CLI
 
 This workflow syncs a Pennyfarthing epic and its stories to Jira using the `jira` CLI tool.
 
-**IMPORTANT:** All Pennyfarthing issues MUST be labeled with `pennyfarthing` to distinguish them from Conductor work.
+**IMPORTANT:** All Pennyfarthing issues MUST be labeled with `pennyfarthing` to distinguish them from Pennyfarthing work.
 
 ## Prerequisites
 
@@ -31,7 +31,7 @@ All Pennyfarthing epics and stories must include the `pennyfarthing` label:
 # View story status
 ./scripts/run.sh jira-sync-story.sh 35-2-topology-editor
 
-# Transition to match Conductor status
+# Transition to match Pennyfarthing status
 ./scripts/run.sh jira-sync-story.sh 35-2-topology-editor --transition
 
 # Add a comment
@@ -140,7 +140,7 @@ jira issue list -a$(jira me)
 
 ## Status Mapping
 
-| Conductor | Jira |
+| Pennyfarthing | Jira |
 |-----------|------|
 | `backlog` | To Do |
 | `in-progress` | In Progress |
@@ -149,7 +149,7 @@ jira issue list -a$(jira me)
 
 ## Priority Mapping
 
-| Conductor | Jira |
+| Pennyfarthing | Jira |
 |-----------|------|
 | `P0` | Highest |
 | `P1` | High |

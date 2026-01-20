@@ -1,6 +1,6 @@
 ---
 name: finalize-run
-description: Validate and save run results. Single exit point for all benchmark runs.
+description: Validate and save benchmark run results. Use when completing a benchmark run, validating results before storage, or ensuring all runs pass through the single guardrail exit point.
 ---
 
 # Finalize Run Skill

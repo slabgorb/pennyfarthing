@@ -33,8 +33,8 @@ The primary work session file. One per active story.
 - `36-2-session.md`
 - `10-15-session.md`
 
-**Created by:** `generic-sm-setup MODE=setup`
-**Archived by:** `generic-sm-finish PHASE=execute` → `sprint/archive/story-{STORY_ID}-{DATE}.md`
+**Created by:** `sm-setup MODE=setup`
+**Archived by:** `sm-finish PHASE=execute` → `sprint/archive/story-{STORY_ID}-{DATE}.md`
 
 ---
 
@@ -52,7 +52,7 @@ context-epic-{EPIC_NUM}.md
 - `context-epic-10.md`
 
 **Created by:** SM (epic-tech-context task)
-**Archived by:** `generic-sm-finish PHASE=execute` (story), `/start-epic` or `/retro` (epic)
+**Archived by:** `sm-finish PHASE=execute` (story), `/start-epic` or `/retro` (epic)
 
 ---
 
@@ -75,7 +75,7 @@ test-{STORY_ID}-{AGENT}-{PHASE}.md
 - `test-36-2-dev-green.md`
 - `test-36-2-reviewer-verify.log`
 
-**Created by:** `generic-handoff`, `reviewer-preflight`, `testing-runner`
+**Created by:** `handoff`, `reviewer-preflight`, `testing-runner`
 **Cleaned by:** `session-cleanup.sh --story {STORY_ID}` or 1-day retention
 
 ---

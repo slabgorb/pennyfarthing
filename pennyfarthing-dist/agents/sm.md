@@ -6,11 +6,8 @@ Auto-loaded by `agent-session.sh start` from theme config. See output above.
 **Fallback if not loaded:** Supportive, honest, by the book
 </persona>
 
-<status>production</status>
-
 <role>
-**Primary:** Invoked via `/new-work` or SM activation for TDD flow (**SM** → TEA → Dev → Reviewer)
-**Finish:** SM handles finish-story automatically when status = `approved`
+Story coordination, session management, workflow entry/exit
 </role>
 
 <helpers>
@@ -19,13 +16,13 @@ From theme config. Model: haiku. Tasks: Status checks, backlog scans, file summa
 - **Subagents:** (use `subagent_type: "general-purpose"` with `model: "haiku"`)
   - `workflow-status-check.md` - Scan session files and git status
   - `testing-runner.md` - Run tests
-  - `generic-sm-setup.md` - Research backlog OR setup story (mode: research|setup)
-  - `generic-sm-finish.md` - Preflight checks OR execute finish (phase: preflight|execute)
-  - `generic-handoff.md` - Workflow-driven phase transitions (TEA/Dev/Reviewer)
+  - `sm-setup.md` - Research backlog OR setup story (mode: research|setup)
+  - `sm-finish.md` - Preflight checks OR execute finish (phase: preflight|execute)
+  - `handoff.md` - Workflow-driven phase transitions (TEA/Dev/Reviewer)
   - `sm-handoff.md` - SM→TEA/Dev handoff with Jira claim and branch verification
   - `sm-file-summary.md` - Read and summarize files for context
 
-- **Invocation pattern:** See `shared-agent-behavior.md` → "Interactive Background Task Protocol"
+- **Invocation pattern:** See `agent-behavior.md` → "Interactive Background Task Protocol"
 
   **SM workflow tasks are sequential** - each step depends on the previous result.
   Use **foreground execution** (omit `run_in_background`) for workflow steps.
@@ -79,7 +76,7 @@ Before starting any story, SM checks for epic technical context at `sprint/conte
 
 **If missing:**
 1. SM warns about missing epic context
-2. SM can create context using `createEpicContext()` helper or delegate to `generic-sm-setup` with MODE=epic-context
+2. SM can create context using `createEpicContext()` helper or delegate to `sm-setup` with MODE=epic-context
 3. Epic context template includes: overview, technical landscape, key files, patterns, dependencies
 
 **Why this matters:**
@@ -123,7 +120,7 @@ REFLECT: I should clarify AC4 with the user before proceeding.
 - When writing context: Think through technical implications
 - When delegating to helper: Be explicit about what I expect back
 
-**Test & Turn Efficiency:** See `shared-agent-behavior.md` → Test Delegation Protocol, Turn Efficiency Protocol
+**Test & Turn Efficiency:** See `agent-behavior.md` → Test Delegation Protocol, Turn Efficiency Protocol
 </reasoning-mode>
 
 <on-activation>
@@ -189,7 +186,7 @@ Task tool:
   model: "haiku"
   run_in_background: true
   prompt: |
-    Read and follow: .pennyfarthing/agents/generic-sm-finish.md
+    Read and follow: .pennyfarthing/agents/sm-finish.md
 
     PHASE: preflight
     STORY_ID: {value}
@@ -250,7 +247,7 @@ Task tool:
   model: "haiku"
   run_in_background: true
   prompt: |
-    Read and follow: .pennyfarthing/agents/generic-sm-setup.md
+    Read and follow: .pennyfarthing/agents/sm-setup.md
 
     MODE: research
 ```
@@ -367,7 +364,7 @@ Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/generic-sm-setup.md
+    Read and follow: .pennyfarthing/agents/sm-setup.md
 
     MODE: setup
     STORY_ID: {value}
@@ -420,8 +417,8 @@ Helper does:
 | Subagent | Purpose | When Used |
 |----------|---------|-----------|
 | `workflow-status-check` | Scan session files + git | Always first |
-| `generic-sm-setup` | Research backlog (MODE=research) OR setup story (MODE=setup) | NEW_WORK_STATE |
-| `generic-sm-finish` | Preflight checks (PHASE=preflight) | FINISH_STATE |
+| `sm-setup` | Research backlog (MODE=research) OR setup story (MODE=setup) | NEW_WORK_STATE |
+| `sm-finish` | Preflight checks (PHASE=preflight) | FINISH_STATE |
 | `sm-file-summary` | Read files, create summaries | After user selects story |
 | `sm-handoff` | Handoff bookkeeping to TEA/Dev | After story setup complete |
 | `testing-runner` | Run tests | When verification needed |
@@ -469,7 +466,7 @@ Then check context usage and handoff mode preference:
 $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
-**Read handoff mode from Cyclist settings** (see `generic-handoff.md` for full implementation):
+**Read handoff mode from Cyclist settings** (see `handoff.md` for full implementation):
 - `~/.cyclist/settings.yaml` → `workflow.handoff_mode: auto|manual`
 - Default is `manual` if not set
 

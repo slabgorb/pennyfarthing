@@ -37,11 +37,26 @@ completed_sprints:
       - { id: MSSCI-11715, title: "Cyclist UI/UX Improvements" }
       - { id: MSSCI-11728, title: "OTEL Tool Call Enrichment" }
 
+  # Sprint 11 (Jan 15-19, 2026)
+  # Workflow engine polish, Cyclist UI, agent modernization
+  sprint_11:
+    points: 143
+    stories: 63
+    jira_sprint: 275  # TO Sprint 2602
+    epics:
+      - { id: MSSCI-11599, title: "Customizable Workflow Engine" }
+      - { id: MSSCI-11705, title: "Runtime Permission Management" }
+      - { id: MSSCI-11715, title: "Cyclist UI/UX Improvements" }
+      - { id: MSSCI-11728, title: "OTEL Tool Call Enrichment" }
+      - { id: MSSCI-11794, title: "Technical Debt & Bug Fixes" }
+      - { id: MSSCI-11795, title: "Agent File Modernization" }
+      - { id: MSSCI-11796, title: "Jira-Pennyfarthing Sync Improvements" }
+
 totals:
-  points: 383
-  stories: 319
-  sprints: 10
-  date_range: 2025-12-22 to 2026-01-15
+  points: 526
+  stories: 382
+  sprints: 11
+  date_range: 2025-12-22 to 2026-01-19
 
 # Epics without Jira presence (historical)
 unlinked_epics:

@@ -58,5 +58,5 @@ All code changes handled by Dev with design specifications.
 - **Sidecar:** `.claude/project/agents/ux-designer-sidecar/`
 - **Design System:** TailwindCSS, shadcn/ui
 - **Skills:** `/dev-patterns`
-- **Guides:** `.pennyfarthing/guides/shared-context.md`
+- **Guides:** `.pennyfarthing/guides/agent-behavior.md`
 </reference>

@@ -62,8 +62,8 @@ From theme config. Model: haiku. Tasks: {What helpers do for this agent}
 </skills>
 
 <context>
-**See:** `.pennyfarthing/guides/tactical-agent-behavior.md` for shared tactical agent behavior.
-**See:** `.pennyfarthing/guides/shared-context.md` for project info and git strategy.
+**See:** `.pennyfarthing/guides/agent-behavior.md` for shared tactical agent behavior.
+**See:** `.pennyfarthing/guides/agent-behavior.md` for project info and git strategy.
 </context>
 
 <reasoning-mode>

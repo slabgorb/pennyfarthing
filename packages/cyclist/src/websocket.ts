@@ -1,6 +1,7 @@
 import { Server } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
-import { watch } from 'fs';
+import { watch, existsSync } from 'fs';
+import { join } from 'path';
 import { getCurrentStats, getStatsClients } from './api/stats.js';
 import { getPersonaClients, broadcastPersona } from './api/persona.js';
 import { getTokenStatsClients } from './api/token-stats.js';
@@ -10,6 +11,8 @@ import { detectPennyfarthingProject, getCurrentPersona, watchAgentChanges } from
 import { ClaudeService, type PermissionMode } from './claude-service.js';
 import { publicDir } from './paths.js';
 import { getOtelConfig } from './server.js';
+import { getStoryInfo } from './story-parser.js';
+import { getGitInfo } from './api/git.js';
 
 // WebSocket message types for Claude communication
 interface ClaudeWebSocketMessage {
@@ -24,9 +27,30 @@ const claudeSessions = new Map<WebSocket, ClaudeService>();
 // Livereload clients
 const livereloadClients = new Set<WebSocket>();
 
+// Story WebSocket clients (MSSCI-11943)
+const storyClients = new Set<WebSocket>();
+
+// Git WebSocket clients (MSSCI-11943)
+const gitClients = new Set<WebSocket>();
+
 // Debounce timer for livereload
 let livereloadDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 const LIVERELOAD_DEBOUNCE_MS = 100;
+
+// Debounce timers for story and git (MSSCI-11943)
+let storyDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let gitCoalesceTimer: ReturnType<typeof setTimeout> | null = null;
+const STORY_DEBOUNCE_MS = 100; // AC1: 100ms debounce for story
+const GIT_COALESCE_MS = 500;   // AC2: 500ms coalesce for git
+
+// Export client getters for external use
+export function getStoryClients(): Set<WebSocket> {
+  return storyClients;
+}
+
+export function getGitClients(): Set<WebSocket> {
+  return gitClients;
+}
 
 // Setup WebSocket servers for stats and persona updates
 export function setupWebSocketServers(
@@ -50,6 +74,12 @@ export function setupWebSocketServers(
 
   // WebSocket server for background tasks at /ws/background-tasks (Story 35-16)
   const backgroundTasksWss = new WebSocketServer({ noServer: true });
+
+  // WebSocket server for story updates at /ws/story (MSSCI-11943)
+  const storyWss = new WebSocketServer({ noServer: true });
+
+  // WebSocket server for git updates at /ws/git (MSSCI-11943)
+  const gitWss = new WebSocketServer({ noServer: true });
 
   // Handle upgrade requests
   server.on('upgrade', (request, socket, head) => {
@@ -78,6 +108,14 @@ export function setupWebSocketServers(
     } else if (pathname === '/ws/background-tasks') {
       backgroundTasksWss.handleUpgrade(request, socket, head, (ws) => {
         backgroundTasksWss.emit('connection', ws, request);
+      });
+    } else if (pathname === '/ws/story') {
+      storyWss.handleUpgrade(request, socket, head, (ws) => {
+        storyWss.emit('connection', ws, request);
+      });
+    } else if (pathname === '/ws/git') {
+      gitWss.handleUpgrade(request, socket, head, (ws) => {
+        gitWss.emit('connection', ws, request);
       });
     } else {
       // Reject connections to other paths
@@ -179,6 +217,52 @@ export function setupWebSocketServers(
     });
   });
 
+  // Handle story WebSocket connections (MSSCI-11943)
+  storyWss.on('connection', (ws: WebSocket) => {
+    // Add client to broadcast set
+    storyClients.add(ws);
+
+    // Send initial story data on connection
+    const projectDir = getProjectDir();
+    const storyInfo = getStoryInfo(projectDir);
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'init', ...storyInfo }));
+    }
+
+    // Remove client on disconnect
+    ws.on('close', () => {
+      storyClients.delete(ws);
+    });
+
+    // Handle errors gracefully
+    ws.on('error', () => {
+      storyClients.delete(ws);
+    });
+  });
+
+  // Handle git WebSocket connections (MSSCI-11943)
+  gitWss.on('connection', (ws: WebSocket) => {
+    // Add client to broadcast set
+    gitClients.add(ws);
+
+    // Send initial git data on connection
+    const projectDir = getProjectDir();
+    const gitInfo = getGitInfo(projectDir);
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'init', ...gitInfo }));
+    }
+
+    // Remove client on disconnect
+    ws.on('close', () => {
+      gitClients.delete(ws);
+    });
+
+    // Handle errors gracefully
+    ws.on('error', () => {
+      gitClients.delete(ws);
+    });
+  });
+
   // Set up agent file watcher for persona broadcasts
   const projectDir = getProjectDir();
   const sessionId = process.env.CYCLIST_SESSION_ID;
@@ -190,6 +274,55 @@ export function setupWebSocketServers(
         broadcastPersona(persona);
       }
     });
+  }
+
+  // Set up story file watcher (MSSCI-11943: AC1 - broadcast on sprint/*.yaml changes)
+  const sprintDir = join(projectDir, 'sprint');
+  if (existsSync(sprintDir)) {
+    try {
+      watch(sprintDir, { recursive: false }, (eventType, filename) => {
+        if (!filename || !filename.endsWith('.yaml')) return;
+
+        // Debounce rapid changes (100ms per AC1)
+        if (storyDebounceTimer) {
+          clearTimeout(storyDebounceTimer);
+        }
+
+        storyDebounceTimer = setTimeout(() => {
+          const storyInfo = getStoryInfo(projectDir);
+          broadcastStoryUpdate(storyInfo);
+          storyDebounceTimer = null;
+        }, STORY_DEBOUNCE_MS);
+      });
+    } catch (err) {
+      console.error('[WebSocket] Failed to set up story file watcher:', err);
+    }
+  }
+
+  // Set up git file watchers (MSSCI-11943: AC2 - broadcast on .git/HEAD and .git/index changes)
+  const gitDir = join(projectDir, '.git');
+  if (existsSync(gitDir)) {
+    try {
+      // Watch .git/HEAD for branch switches
+      const headPath = join(gitDir, 'HEAD');
+      if (existsSync(headPath)) {
+        watch(headPath, (eventType) => {
+          if (eventType !== 'change') return;
+          triggerGitUpdate(projectDir);
+        });
+      }
+
+      // Watch .git/index for staging changes
+      const indexPath = join(gitDir, 'index');
+      if (existsSync(indexPath)) {
+        watch(indexPath, (eventType) => {
+          if (eventType !== 'change') return;
+          triggerGitUpdate(projectDir);
+        });
+      }
+    } catch (err) {
+      console.error('[WebSocket] Failed to set up git file watchers:', err);
+    }
   }
 
   // Handle Claude WebSocket connections (web mode)
@@ -327,4 +460,37 @@ export function setupWebSocketServers(
       console.error('[Livereload] Failed to set up file watcher:', err);
     }
   }
+}
+
+// MSSCI-11943: Broadcast story update to all connected clients
+function broadcastStoryUpdate(storyInfo: ReturnType<typeof getStoryInfo>): void {
+  const message = JSON.stringify({ type: 'update', ...storyInfo });
+  for (const client of storyClients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  }
+}
+
+// MSSCI-11943: Broadcast git update to all connected clients
+function broadcastGitUpdate(gitInfo: ReturnType<typeof getGitInfo>): void {
+  const message = JSON.stringify({ type: 'update', ...gitInfo });
+  for (const client of gitClients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  }
+}
+
+// MSSCI-11943: Trigger git update with coalescing (500ms per AC2)
+function triggerGitUpdate(projectDir: string): void {
+  if (gitCoalesceTimer) {
+    clearTimeout(gitCoalesceTimer);
+  }
+
+  gitCoalesceTimer = setTimeout(() => {
+    const gitInfo = getGitInfo(projectDir);
+    broadcastGitUpdate(gitInfo);
+    gitCoalesceTimer = null;
+  }, GIT_COALESCE_MS);
 }

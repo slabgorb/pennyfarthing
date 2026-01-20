@@ -158,36 +158,41 @@ describe('34-1: First-run setup documentation', () => {
   describe('justfile recipes', () => {
     const justfilePath = join(MONOREPO_ROOT, 'justfile');
 
-    it('should have cyclist-setup recipe', () => {
+    it('should have cyclist recipe with setup subcommand', () => {
       const content = readFileSync(justfilePath, 'utf-8');
-      expect(content).toMatch(/^cyclist-setup:/m);
+      // Consolidated recipe: cyclist *args with setup) case
+      expect(content).toMatch(/^cyclist \*args:/m);
+      expect(content).toMatch(/setup\)/);
     });
 
-    it('should have cyclist-install-app recipe', () => {
+    it('should have cyclist recipe with install subcommand', () => {
       const content = readFileSync(justfilePath, 'utf-8');
-      expect(content).toMatch(/^cyclist-install-app:/m);
+      // install subcommand calls both install-app.sh and install-cli.sh
+      expect(content).toMatch(/install\)/);
+      expect(content).toMatch(/install-app\.sh/);
+      expect(content).toMatch(/install-cli\.sh/);
     });
 
-    it('should have cyclist-install-cli recipe', () => {
+    it('should have cyclist recipe with rebuild subcommand', () => {
       const content = readFileSync(justfilePath, 'utf-8');
-      expect(content).toMatch(/^cyclist-install-cli:/m);
+      expect(content).toMatch(/rebuild\)/);
     });
 
-    it('should have cyclist-rebuild recipe', () => {
+    it('should have cyclist recipe with doctor subcommand', () => {
       const content = readFileSync(justfilePath, 'utf-8');
-      expect(content).toMatch(/^cyclist-rebuild:/m);
+      expect(content).toMatch(/doctor\)/);
     });
 
-    it('cyclist-setup should run pnpm install', () => {
+    it('cyclist setup should run pnpm install', () => {
       const content = readFileSync(justfilePath, 'utf-8');
-      const setupSection = content.match(/cyclist-setup:[\s\S]*?(?=\n[a-z]+-|\n#|$)/);
-      expect(setupSection?.[0]).toMatch(/pnpm install/);
+      // The setup case handler includes pnpm install
+      expect(content).toMatch(/setup\)[\s\S]*?pnpm install/);
     });
 
-    it('cyclist-setup should run electron-rebuild', () => {
+    it('cyclist setup should run electron-rebuild', () => {
       const content = readFileSync(justfilePath, 'utf-8');
-      const setupSection = content.match(/cyclist-setup:[\s\S]*?(?=\n[a-z]+-|\n#|$)/);
-      expect(setupSection?.[0]).toMatch(/electron-rebuild/);
+      // The setup case handler includes electron-rebuild
+      expect(content).toMatch(/setup\)[\s\S]*?electron-rebuild/);
     });
   });
 

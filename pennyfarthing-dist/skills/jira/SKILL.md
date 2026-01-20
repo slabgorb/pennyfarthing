@@ -7,7 +7,7 @@ description: Jira CLI commands for sprint management. Use when viewing, assignin
 
 ## Overview
 
-This skill covers using `jira` (ankitpokhrel/jira) for Jira integration. The examples below use Conductor project settings - update PROJECT_KEY and PROJECT_LABEL for your project.
+This skill covers using `jira` (ankitpokhrel/jira) for Jira integration. The examples below use Pennyfarthing project settings - update PROJECT_KEY and PROJECT_LABEL for your project.
 
 ## CRITICAL: Never Guess Jira IDs
 
@@ -40,12 +40,12 @@ Configure these in your project's `.claude/project/hooks/setup-env.sh`:
 
 ```bash
 export JIRA_PROJECT_KEY="MSSCI"    # Your Jira project key
-export PROJECT_LABEL="conductor"   # Label for filtering issues (defaults to PROJECT_NAME)
+export PROJECT_LABEL="Pennyfarthing"   # Label for filtering issues (defaults to PROJECT_NAME)
 ```
 
 The `PROJECT_LABEL` is used to tag Jira issues created by the sync scripts. If not set, it defaults to `PROJECT_NAME`.
 
-Example settings (Conductor project):
+Example settings (Pennyfarthing project):
 - **Project Key:** `MSSCI`
 - **Label:** `$PROJECT_LABEL` (or `$PROJECT_NAME` if not set)
 - **Config file:** `~/.config/.jira/.config.yml`
@@ -189,6 +189,54 @@ jira issue list --jql "project=MSSCI AND type=Story AND parent=MSSCI-10980" --pl
 jira issue list --jql "project=MSSCI AND summary~'feedback rules'" --plain
 ```
 
+### Sprint Operations
+
+The `jira sprint list` command has limited functionality. Use these workarounds to get sprint information:
+
+**Get current active sprint:**
+```bash
+# Find an issue in the active sprint, then extract sprint details
+jira issue view MSSCI-11940 --raw | jq '.fields.customfield_10020[] | select(.state == "active")'
+```
+
+**Get all sprints (active and future):**
+```bash
+# Query issues in different sprint states and extract unique sprints
+# Active sprint issues
+jira issue list --project MSSCI -q "sprint in openSprints()" --plain
+
+# Future sprint issues
+jira issue list --project MSSCI -q "sprint in futureSprints()" --plain
+
+# Get sprint details from any issue with sprint info
+jira issue view MSSCI-XXXXX --raw | jq '.fields.customfield_10020'
+```
+
+**Discover all sprints by sampling issues:**
+```bash
+# Check sprint info across multiple issues to find all sprints
+for key in MSSCI-11851 MSSCI-11940 MSSCI-11866; do
+    jira issue view "$key" --raw 2>/dev/null | \
+    jq -r '.fields.customfield_10020[]? | "\(.id) | \(.name) | \(.state) | \(.startDate) | \(.endDate)"'
+done | sort -u
+```
+
+**Sprint field reference:**
+- Sprint data is in custom field `customfield_10020` (array of sprint objects)
+- Each sprint object contains: `id`, `name`, `state`, `boardId`, `startDate`, `endDate`
+- States: `active`, `future`, `closed`
+
+**Add issues to a sprint:**
+```bash
+# Add issue to sprint by sprint ID
+jira sprint add SPRINT_ID MSSCI-XXXXX
+
+# Example: Add to sprint 276
+jira sprint add 276 MSSCI-11999
+```
+
+**Note:** Sprint creation is done via Jira UI or REST API, not the CLI.
+
 ## Project Scripts
 
 The project has helper scripts for common Jira operations. All scripts are invoked via `run.sh`:
@@ -209,7 +257,7 @@ Syncs all stories in an epic to Jira. Shows status, optionally transitions issue
 # Dry run - show what would happen without making changes
 ./.pennyfarthing/scripts/run.sh jira-sync.sh 24 --dry-run
 
-# Sync status (transition issues to match Conductor status)
+# Sync status (transition issues to match Pennyfarthing status)
 ./.pennyfarthing/scripts/run.sh jira-sync.sh 24 --transition
 
 # Sync both status and story points
@@ -224,7 +272,7 @@ Syncs a single story to Jira with more detailed output.
 # Show story status in Jira
 ./.pennyfarthing/scripts/run.sh jira-sync-story.sh 24-1
 
-# Transition to match Conductor status
+# Transition to match Pennyfarthing status
 ./.pennyfarthing/scripts/run.sh jira-sync-story.sh 24-1 --transition
 
 # Sync story points
@@ -318,3 +366,6 @@ export JIRA_API_TOKEN='new-token'
 | Get my username | `jira me` |
 | List issues | `jira issue list --jql "project=MSSCI"` |
 | Claim story | `./scripts/jira-claim-story.sh MSSCI-XXX --claim` |
+| Get active sprint | `jira issue view MSSCI-XXX --raw \| jq '.fields.customfield_10020'` |
+| Add to sprint | `jira sprint add SPRINT_ID MSSCI-XXX` |
+| Future sprint issues | `jira issue list -p MSSCI -q "sprint in futureSprints()"` |

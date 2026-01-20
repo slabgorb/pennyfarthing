@@ -121,17 +121,10 @@ output_persona() {
     return 1
   fi
 
-  # Find theme file (check custom themes first, then built-in locations)
-  # Custom themes: .claude/pennyfarthing/themes/
-  # Built-in: .pennyfarthing/personas/themes/ and personas/themes/
-  if [ -f "$PROJECT_ROOT/.claude/pennyfarthing/themes/${theme}.yaml" ]; then
-    theme_file="$PROJECT_ROOT/.claude/pennyfarthing/themes/${theme}.yaml"
-  elif [ -f "$PROJECT_ROOT/.pennyfarthing/personas/themes/${theme}.yaml" ]; then
-    theme_file="$PROJECT_ROOT/.pennyfarthing/personas/themes/${theme}.yaml"
-  elif [ -f "$PROJECT_ROOT/personas/themes/${theme}.yaml" ]; then
-    theme_file="$PROJECT_ROOT/personas/themes/${theme}.yaml"
-  else
-    echo "<!-- Theme file not found: ${theme}.yaml -->" >&2
+  # Find theme file - single source of truth: .pennyfarthing/personas/themes/
+  theme_file="$PROJECT_ROOT/.pennyfarthing/personas/themes/${theme}.yaml"
+  if [ ! -f "$theme_file" ]; then
+    echo "<!-- Theme file not found: ${theme_file} -->" >&2
     return 1
   fi
 
@@ -277,7 +270,7 @@ case "$1" in
           HAS_HANDOFF="yes"
         fi
 
-        # Also check for CYCLIST:HANDOFF marker (generic-handoff output)
+        # Also check for CYCLIST:HANDOFF marker (handoff output)
         if [ "$HAS_HANDOFF" = "no" ] && grep -q "CYCLIST:HANDOFF" "$ACTIVE_SESSION" 2>/dev/null; then
           HAS_HANDOFF="yes"
         fi
@@ -291,10 +284,10 @@ case "$1" in
           echo "  Assessment: Found ($EXPECTED_SECTION)" >&2
           echo "  Handoff: NOT FOUND" >&2
           echo "" >&2
-          echo "  You MUST spawn generic-handoff before stopping:" >&2
+          echo "  You MUST spawn handoff before stopping:" >&2
           echo "" >&2
           echo "    Task tool:" >&2
-          echo "      subagent_type: \"generic-handoff\"" >&2
+          echo "      subagent_type: \"handoff\"" >&2
           echo "      prompt: |" >&2
           echo "        STORY_ID: {story-id}" >&2
           echo "        WORKFLOW: {workflow}" >&2
@@ -352,13 +345,38 @@ case "$1" in
       echo "No active sessions"
     fi
     ;;
+  refresh)
+    # Re-output persona for current agent (after theme change)
+    # Usage: agent-session.sh refresh [session-id]
+    session_id="${2:-$SESSION_ID}"
+    if [ -z "$session_id" ]; then
+      echo "Usage: agent-session.sh refresh [session-id]" >&2
+      exit 1
+    fi
+
+    AGENT_FILE=$(get_agent_file "$session_id")
+    if [ ! -f "$AGENT_FILE" ]; then
+      echo "No active session: $session_id" >&2
+      exit 1
+    fi
+
+    CURRENT_AGENT=$(cat "$AGENT_FILE")
+    echo "Refreshing persona for: $CURRENT_AGENT"
+
+    if is_character_voice_enabled; then
+      output_persona "$CURRENT_AGENT"
+    else
+      echo "Character voice disabled - no persona to refresh"
+    fi
+    ;;
   *)
-    echo "Usage: agent-session.sh <start|stop|stop-all|status|list> [args]" >&2
+    echo "Usage: agent-session.sh <start|stop|stop-all|status|list|refresh> [args]" >&2
     echo "  start \"agent\" \"session-id\"  - Register agent for session" >&2
     echo "  stop \"session-id\"            - Remove agent for session" >&2
     echo "  stop-all                      - Remove all agent sessions" >&2
     echo "  status                        - Get agent for session (reads JSON stdin)" >&2
     echo "  list                          - List all active sessions" >&2
+    echo "  refresh \"session-id\"         - Re-output persona after theme change" >&2
     exit 1
     ;;
 esac

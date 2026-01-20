@@ -477,7 +477,7 @@ describe('CLI argument parsing', () => {
 
 describe('Helper functions from jira-lib.mjs', () => {
 
-  it('mapStatusToJira converts Conductor status to Jira', () => {
+  it('mapStatusToJira converts Pennyfarthing status to Jira', () => {
     assert.strictEqual(mapStatusToJira('backlog'), 'To Do');
     assert.strictEqual(mapStatusToJira('in_progress'), 'In Progress');
     assert.strictEqual(mapStatusToJira('in-progress'), 'In Progress');
@@ -485,7 +485,7 @@ describe('Helper functions from jira-lib.mjs', () => {
     assert.strictEqual(mapStatusToJira('review'), 'In Review');
   });
 
-  it('mapJiraToStatus converts Jira status to Conductor', () => {
+  it('mapJiraToStatus converts Jira status to Pennyfarthing', () => {
     assert.strictEqual(mapJiraToStatus('To Do'), 'backlog');
     assert.strictEqual(mapJiraToStatus('In Progress'), 'in-progress');
     assert.strictEqual(mapJiraToStatus('Done'), 'done');

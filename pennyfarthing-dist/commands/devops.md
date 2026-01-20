@@ -55,5 +55,5 @@ Infrastructure and deployment automation specialist who maintains CI/CD pipeline
 - **Agent:** `.pennyfarthing/agents/devops.md`
 - **Sidecar:** `.claude/project/agents/devops-sidecar/`
 - **Skills:** `/just`
-- **Context:** `.pennyfarthing/guides/shared-context.md`, architecture documentation
+- **Context:** `.pennyfarthing/guides/agent-behavior.md`, architecture documentation
 </reference>

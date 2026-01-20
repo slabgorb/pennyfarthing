@@ -1,6 +1,6 @@
 ---
 name: workflow
-description: List available workflows, show current workflow details, and switch workflows mid-session if needed. Use for all workflow-related operations.
+description: List available workflows, show current workflow details, and switch workflows mid-session. Use when checking available workflow types (TDD, trivial, agent-docs), viewing current workflow phase, or switching to a different workflow pattern.
 ---
 
 # Workflow Management Skill

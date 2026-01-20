@@ -49,4 +49,8 @@ Change the active persona theme for all agents.
    ```
    Confirm the theme line shows the new value.
 
-6. Inform the user they need to start a new agent session to use the new theme.
+6. Refresh the current agent's persona to apply the new theme:
+   ```bash
+   d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" agent-session.sh refresh
+   ```
+   This outputs the updated persona. **Adopt the new character immediately** - do not continue using the old persona.

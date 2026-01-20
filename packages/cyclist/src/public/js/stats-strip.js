@@ -200,31 +200,45 @@ function updateStripStat(dataStat, value) {
 
 /**
  * Update context meter fill width and level
- * @param {number} percent - Context usage percentage (0-100)
- * @param {number} [tokens] - Context token count (optional)
+ * Now uses usable context (conversation usage) instead of total context
+ * @param {number} percent - Total context usage percentage (0-100) - kept for backwards compat
+ * @param {number} [tokens] - Total context token count (optional)
+ * @param {Object} [contextInfo] - Full context info with usable fields
  */
-function updateContextMeter(percent, tokens) {
+function updateContextMeter(percent, tokens, contextInfo) {
   const contextMini = document.querySelector('#stats-strip .context-mini');
   const fill = document.querySelector('#stats-strip .context-mini-fill');
   const label = document.querySelector('#stats-strip .context-mini-label');
 
+  // Use usable percent if available, otherwise fall back to total percent
+  const displayPercent = contextInfo?.usablePercent ?? percent;
+
   if (fill) {
-    fill.style.width = `${Math.min(100, Math.max(0, percent))}%`;
+    fill.style.width = `${Math.min(100, Math.max(0, displayPercent))}%`;
   }
 
   if (label) {
-    label.textContent = `${percent}%`;
+    label.textContent = `${displayPercent}%`;
   }
 
-  // Update context tokens display (ground truth from transcript)
-  if (tokens !== undefined && tokens !== null) {
-    updateStripStat('strip-context-tokens', formatTokenCount(tokens));
+  // Update context tokens display - show usable tokens if available
+  const displayTokens = contextInfo?.usableTokens ?? tokens;
+  if (displayTokens !== undefined && displayTokens !== null) {
+    updateStripStat('strip-context-tokens', formatTokenCount(displayTokens));
   }
 
-  updateContextLevel(contextMini, percent);
+  // Update tooltip with breakdown if we have full context info
+  if (contextMini && contextInfo?.baseline !== null && contextInfo?.available !== null) {
+    const usable = contextInfo.usableTokens ?? 0;
+    const available = contextInfo.available ?? 0;
+    const baseline = contextInfo.baseline ?? 0;
+    contextMini.title = `Conversation: ${formatTokenCount(usable)} / ${formatTokenCount(available)} available\nSystem overhead: ${formatTokenCount(baseline)} tokens`;
+  }
+
+  updateContextLevel(contextMini, displayPercent);
 
   // 23-4: Update compact button visibility based on context threshold
-  updateCompactButtonVisibility(percent);
+  updateCompactButtonVisibility(displayPercent);
 }
 
 /**
@@ -346,13 +360,14 @@ async function initStatsStrip() {
 
   // Context usage - subscribe to main process polling updates (B-19)
   // Context data includes both percent and tokens (ground truth from transcript)
+  // Now also includes usable context fields (baseline, usableTokens, usablePercent, available)
   if (window.electronAPI?.context) {
     // Get initial context via IPC
     if (window.electronAPI.context.get) {
       try {
         const ctx = await window.electronAPI.context.get();
         if (ctx && ctx.percent !== null && ctx.percent !== undefined) {
-          updateContextMeter(ctx.percent, ctx.tokens);
+          updateContextMeter(ctx.percent, ctx.tokens, ctx);
         }
       } catch (err) {
         // Silent fail - context is optional
@@ -363,7 +378,7 @@ async function initStatsStrip() {
     if (window.electronAPI.context.onUpdate) {
       window.electronAPI.context.onUpdate((_event, ctx) => {
         if (ctx && ctx.percent !== null && ctx.percent !== undefined) {
-          updateContextMeter(ctx.percent, ctx.tokens);
+          updateContextMeter(ctx.percent, ctx.tokens, ctx);
         }
       });
     }

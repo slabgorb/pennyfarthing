@@ -13,7 +13,7 @@ import { Server, createServer as createHttpServer, IncomingMessage, ServerRespon
 import { fileURLToPath } from 'url';
 import { dirname, join, basename } from 'path';
 import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
-import { getStoryInfo, getGitInfo, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig, findAvailablePort, writeApprovalPortFile, cleanupApprovalPortFile } from './server.js';
+import { getStoryInfo, getGitInfo, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig, writeApprovalPortFile, cleanupApprovalPortFile } from './server.js';
 import { parseToolStats, ToolStats, createEmptyStats } from './tool-stats.js';
 import {
   getTokenStats,
@@ -55,6 +55,7 @@ import {
   loadGrants,
   saveGrants,
   type CyclistSettings,
+  type SettingsInput,
 } from './settings.js';
 import { initializeGrants, setGrantsPersistCallback } from './settings-store.js';
 // Story 33-7: Import approval gate functions for tool execution pipeline
@@ -448,6 +449,10 @@ let currentContext: ContextInfo = {
   tokens: null,
   status: null,
   error: null,
+  baseline: null,
+  usableTokens: null,
+  usablePercent: null,
+  available: null,
 };
 
 /**
@@ -467,6 +472,10 @@ export function resetContext(): void {
     tokens: null,
     status: null,
     error: null,
+    baseline: null,
+    usableTokens: null,
+    usablePercent: null,
+    available: null,
   };
   broadcastToRenderer(IPC_DATA_CHANNELS.CONTEXT_UPDATE, currentContext);
 }
@@ -1299,24 +1308,45 @@ export async function handleSettingsGet(): Promise<CyclistSettings> {
 /**
  * Handle settings:save IPC call
  * Saves settings and returns result with success flag
- * Also writes theme to .pennyfarthing/config.local.yaml for Pennyfarthing compatibility (24-2)
+ * Theme is written ONLY to .pennyfarthing/config.local.yaml (single source of truth)
  */
-export async function handleSettingsSave(settings: Partial<CyclistSettings>): Promise<{ success: boolean; settings?: CyclistSettings }> {
+export async function handleSettingsSave(settings: SettingsInput): Promise<{ success: boolean; settings?: CyclistSettings; themeChanged?: boolean }> {
   try {
-    saveUserSettings(settings);
+    // Extract theme before saving - theme goes to config.local.yaml only, not to CyclistSettings
+    const theme = settings.pennyfarthing?.theme;
+    const { theme: _theme, ...pennyfarthingWithoutTheme } = settings.pennyfarthing || {};
+    const settingsWithoutTheme = {
+      ...settings,
+      pennyfarthing: pennyfarthingWithoutTheme,
+    };
 
-    // 24-2: Dual-write theme to .pennyfarthing/config.local.yaml for Pennyfarthing compatibility
+    saveUserSettings(settingsWithoutTheme as Partial<CyclistSettings>);
+
+    // Write theme to .pennyfarthing/config.local.yaml ONLY (single source of truth)
     const projectDir = getProjectDirectory();
-    if (settings.pennyfarthing?.theme && projectDir) {
+    let themeChanged = false;
+    if (theme && projectDir) {
       try {
         const configPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
-        fs.writeFileSync(configPath, `theme: "${settings.pennyfarthing.theme}"\n`, 'utf-8');
+        fs.writeFileSync(configPath, `theme: "${theme}"\n`, 'utf-8');
+        themeChanged = true;
+
+        // Touch the agent session file to trigger watchAgentChanges
+        // This broadcasts the new persona to the Cyclist UI via PERSONA_UPDATE
+        const sessionId = process.env.CYCLIST_SESSION_ID;
+        if (sessionId) {
+          const agentFile = join(projectDir, '.session', 'agents', sessionId);
+          if (fs.existsSync(agentFile)) {
+            const now = new Date();
+            fs.utimesSync(agentFile, now, now);
+          }
+        }
       } catch (err) {
         console.error('Failed to write .pennyfarthing/config.local.yaml:', err);
       }
     }
 
-    return { success: true, settings: getCurrentSettings() };
+    return { success: true, settings: getCurrentSettings(), themeChanged };
   } catch {
     return { success: false };
   }
@@ -1367,13 +1397,55 @@ export function setupSettingsIPCHandlers(ipcMain: {
 
   // 24-1: Save settings
   ipcMain.handle(IPC_SETTINGS_CHANNELS.SAVE, async (_event: unknown, ...args: unknown[]) => {
-    const settings = args[0] as Partial<CyclistSettings>;
+    const settings = args[0] as SettingsInput;
     const result = await handleSettingsSave(settings);
     // Broadcast the settings object, not the result wrapper
     if (result.success && result.settings) {
       broadcastToRenderer(IPC_SETTINGS_CHANNELS.CHANGED, result.settings);
       // 35-6: Directly apply font settings via executeJavaScript for immediate effect
       applyFontSettingsToMainWindow(result.settings);
+
+      // Send persona refresh prompt to Claude when theme changes
+      if (result.themeChanged && claudeServiceInstance) {
+        const projectDir = getProjectDirectory();
+        const sessionId = process.env.CYCLIST_SESSION_ID;
+        if (projectDir && sessionId) {
+          // Call agent-session.sh refresh to get full persona output
+          // This includes character, style, role, trait, quote, helper, user-title, and crew
+          const { execSync } = await import('child_process');
+          try {
+            const scriptPath = join(projectDir, '.pennyfarthing', 'scripts', 'agent-session.sh');
+            const personaOutput = execSync(`"${scriptPath}" refresh "${sessionId}"`, {
+              cwd: projectDir,
+              encoding: 'utf-8',
+              env: { ...process.env, SESSION_ID: sessionId },
+            });
+
+            if (personaOutput && personaOutput.includes('<persona')) {
+              const refreshPrompt = `<theme-changed>
+Your theme has changed to "${settings.pennyfarthing?.theme}". Here is your new persona:
+
+${personaOutput}
+
+Adopt this character immediately in your next response. Do not acknowledge this message directly - just switch to the new persona naturally.
+</theme-changed>`;
+
+              // Send asynchronously - don't wait for response
+              (async () => {
+                try {
+                  for await (const message of claudeServiceInstance!.sendMessage(refreshPrompt)) {
+                    broadcastToRenderer(IPC_CLAUDE_CHANNELS.CLAUDE_MESSAGE, message);
+                  }
+                } catch (err) {
+                  console.error('[Settings] Failed to send persona refresh to Claude:', err);
+                }
+              })();
+            }
+          } catch (err) {
+            console.error('[Settings] Failed to run agent-session.sh refresh:', err);
+          }
+        }
+      }
     }
     return result;
   });
@@ -1700,13 +1772,13 @@ export function setupApprovalIPCHandlers(ipcMain: {
 // discovery file to prevent cross-instance interference when multiple Cyclist
 // windows are open for different projects.
 
-const DEFAULT_APPROVAL_SERVER_PORT = 7432;
 let approvalServer: ReturnType<typeof createHttpServer> | null = null;
 let approvalServerPort: number | null = null;
 
 // Pending approval requests from hooks, keyed by toolId
+// MSSCI-11947: Extended to support data field for interactive tools
 const pendingHookApprovals: Map<string, {
-  resolve: (response: { decision: string; reason: string }) => void;
+  resolve: (response: { decision: string; reason: string; data?: Record<string, unknown> }) => void;
   toolName: string;
   input: Record<string, unknown>;
 }> = new Map();
@@ -1780,9 +1852,127 @@ export function resolveHookApproval(
   }
 }
 
+// =============================================================================
+// MSSCI-11947: Hook Response Data Channel
+// =============================================================================
+// Functions for handling interactive tools (AskUserQuestion, ExitPlanMode)
+// that need to return structured data back to Claude, not just allow/deny.
+
+/**
+ * Check if a tool_use is an interactive tool that needs data return
+ * MSSCI-11947: AC1 - Detect AskUserQuestion and ExitPlanMode
+ */
+export function isInteractiveToolUse(toolUse: { tool_name?: string; type?: string }): boolean {
+  const interactiveTools = ['AskUserQuestion', 'ExitPlanMode'];
+  return toolUse.type === 'tool_use' && interactiveTools.includes(toolUse.tool_name || '');
+}
+
+/**
+ * Process an interactive tool_use and wait for user response with data
+ * MSSCI-11947: AC1 - Handle interactive tool approval flow
+ */
+export function processInteractiveToolUse(toolUse: {
+  tool_name?: string;
+  tool_id?: string;
+  input?: Record<string, unknown>;
+}): Promise<{ decision: string; reason: string; data?: Record<string, unknown> }> {
+  const toolId = toolUse.tool_id || `interactive-${Date.now()}`;
+  const toolName = toolUse.tool_name || 'Unknown';
+  const input = toolUse.input || {};
+
+  return new Promise((resolve) => {
+    pendingHookApprovals.set(toolId, { resolve, toolName, input });
+
+    // Send approval request to renderer with full tool input
+    broadcastToRenderer('permission-request', {
+      toolId,
+      toolName,
+      context: input,
+      source: 'hook',
+    });
+  });
+}
+
+/**
+ * Resolve a pending hook approval with data (for interactive tools)
+ * MSSCI-11947: AC1 - Extended resolve that includes data field
+ */
+export function resolveHookApprovalWithData(
+  toolId: string,
+  approved: boolean,
+  grantScope?: 'once' | 'session' | 'always',
+  data?: Record<string, unknown>,
+): void {
+  const pending = pendingHookApprovals.get(toolId);
+  if (pending) {
+    // For interactive tools, we don't create grants (they're one-time responses)
+    pending.resolve({
+      decision: approved ? 'allow' : 'deny',
+      reason: approved ? `Approved by user (${grantScope || 'once'})` : 'Rejected by user',
+      data: data || {},
+    });
+    pendingHookApprovals.delete(toolId);
+  }
+}
+
+/**
+ * Format hook response with optional data field
+ * MSSCI-11947: AC4 - Format response for hook output
+ */
+export function formatHookResponseWithData(
+  decision: 'allow' | 'deny',
+  reason: string,
+  data?: Record<string, unknown>,
+): { decision: string; reason: string; data?: Record<string, unknown> } {
+  const response: { decision: string; reason: string; data?: Record<string, unknown> } = {
+    decision,
+    reason,
+  };
+  if (data !== undefined) {
+    response.data = data;
+  }
+  return response;
+}
+
+/**
+ * Format answers as updatedInput for AskUserQuestion
+ * MSSCI-11947: AC4 - Format for hook updatedInput
+ */
+export function formatUpdatedInputForAskUserQuestion(
+  answers: Record<string, string | string[]>,
+): { answers: Record<string, string | string[]> } {
+  return { answers };
+}
+
+/**
+ * Format plan response as updatedInput for ExitPlanMode
+ * MSSCI-11947: AC4 - Format for hook updatedInput
+ */
+export function formatUpdatedInputForExitPlanMode(
+  response: { approved: boolean; feedback?: string },
+): { approved: boolean; feedback?: string } {
+  return response;
+}
+
+/**
+ * Serialize approval data for transmission
+ * MSSCI-11947: AC1 - JSON serialization helper
+ */
+export function serializeApprovalData(data: Record<string, unknown>): string {
+  return JSON.stringify(data);
+}
+
+/**
+ * Deserialize approval data from transmission
+ * MSSCI-11947: AC1 - JSON deserialization helper
+ */
+export function deserializeApprovalData(data: string): Record<string, unknown> {
+  return JSON.parse(data);
+}
+
 /**
  * Start the approval hook server with dynamic port selection
- * Uses findAvailablePort to avoid conflicts with other Cyclist instances
+ * Uses port 0 to let OS assign an available port (avoids race conditions)
  * Writes port to .cyclist-approval-port for hook discovery
  */
 export async function startApprovalServer(): Promise<void> {
@@ -1794,14 +1984,6 @@ export async function startApprovalServer(): Promise<void> {
   const projectDir = getProjectDirectory();
   if (!projectDir) {
     console.warn('No project directory set, cannot start approval server');
-    return;
-  }
-
-  // Find an available port starting from default
-  try {
-    approvalServerPort = await findAvailablePort(DEFAULT_APPROVAL_SERVER_PORT);
-  } catch (error) {
-    console.error('Could not find available port for approval server:', error);
     return;
   }
 
@@ -1829,11 +2011,16 @@ export async function startApprovalServer(): Promise<void> {
     }
   });
 
-  approvalServer.listen(approvalServerPort, '127.0.0.1', () => {
-    console.log(`Approval hook server running on http://127.0.0.1:${approvalServerPort}`);
-    // Write port file for hook discovery
-    writeApprovalPortFile(projectDir, approvalServerPort!);
-    console.log(`[33-7] Wrote .cyclist-approval-port file to ${projectDir}`);
+  // Use port 0 to let OS assign an available port (avoids race conditions)
+  approvalServer.listen(0, '127.0.0.1', () => {
+    const addr = approvalServer!.address();
+    approvalServerPort = typeof addr === 'object' && addr ? addr.port : null;
+    if (approvalServerPort) {
+      console.log(`Approval hook server running on http://127.0.0.1:${approvalServerPort}`);
+      // Write port file for hook discovery
+      writeApprovalPortFile(projectDir, approvalServerPort);
+      console.log(`[33-7] Wrote .cyclist-approval-port file to ${projectDir}`);
+    }
   });
 
   approvalServer.on('error', (err: NodeJS.ErrnoException) => {
@@ -2022,20 +2209,18 @@ if (isElectron) {
    * Start the Express server on an available port
    */
   async function startServer(): Promise<void> {
-    // Find an available port
-    actualPort = await findAvailablePort(DEFAULT_PORT);
-    if (actualPort !== DEFAULT_PORT) {
-      console.log(`Port ${DEFAULT_PORT} in use, using ${actualPort} instead`);
-    }
-
-    // Store the port globally for OTEL config in spawnPTY
-    setActualPort(actualPort);
-
     return new Promise((resolve, reject) => {
       try {
         server = createTerminalServer();
-        server.listen(actualPort, () => {
+        // Use port 0 to let OS assign an available port (avoids race conditions)
+        server.listen(0, () => {
+          const addr = server!.address();
+          actualPort = typeof addr === 'object' && addr ? addr.port : DEFAULT_PORT;
           console.log(`Cyclist server running at http://localhost:${actualPort}`);
+
+          // Store the port globally for OTEL config in spawnPTY
+          setActualPort(actualPort);
+
           // Write port file for OTEL auto-configuration (Story 20-1)
           const projectDir = getProjectDirectory();
           if (projectDir) {
