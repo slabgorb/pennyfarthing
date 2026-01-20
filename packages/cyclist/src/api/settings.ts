@@ -19,10 +19,13 @@ import { getProjectDirectory } from '../paths.js';
 // =============================================================================
 
 /**
- * Extended settings response that includes theme from config.local.yaml
- * Theme is NOT part of CyclistSettings - it's stored ONLY in .pennyfarthing/config.local.yaml
+ * Extended settings response that includes theme and handoff_mode from config.local.yaml
+ * These are NOT part of CyclistSettings - stored ONLY in .pennyfarthing/config.local.yaml
  */
-export interface SettingsResponse extends CyclistSettings {
+export interface SettingsResponse extends Omit<CyclistSettings, 'workflow'> {
+  workflow: CyclistSettings['workflow'] & {
+    handoff_mode?: string;
+  };
   pennyfarthing?: {
     theme: string;
   };
@@ -68,33 +71,41 @@ export function createSettingsRouter(): Router {
   /**
    * GET / - Get current settings
    * AC4: Returns consistent error format
-   * Theme is read ONLY from .pennyfarthing/config.local.yaml (single source of truth)
+   * Theme and handoff_mode are read from .pennyfarthing/config.local.yaml (single source of truth)
    */
   router.get('/', (_req, res) => {
     try {
       const settings = getCurrentSettings();
 
-      // Read theme from config.local.yaml ONLY (single source of truth)
+      // Read theme and handoff_mode from config.local.yaml (single source of truth)
       let theme = 'alice-in-wonderland'; // Default fallback
+      let handoffMode = 'manual'; // Default fallback
       const projectDir = getProjectDirectory();
       if (projectDir) {
         try {
           const configPath = path.join(projectDir, '.pennyfarthing', 'config.local.yaml');
           if (fs.existsSync(configPath)) {
             const content = fs.readFileSync(configPath, 'utf-8');
-            const parsed = parse(content) as { theme?: string };
+            const parsed = parse(content) as { theme?: string; workflow?: { handoff_mode?: string } };
             if (parsed?.theme) {
               theme = parsed.theme;
             }
+            if (parsed?.workflow?.handoff_mode) {
+              handoffMode = parsed.workflow.handoff_mode;
+            }
           }
         } catch {
-          // Ignore project config errors - use default
+          // Ignore project config errors - use defaults
         }
       }
 
-      // Construct response with theme added (theme is NOT in CyclistSettings)
+      // Construct response with theme and handoff_mode added
       const response: SettingsResponse = {
         ...settings,
+        workflow: {
+          ...settings.workflow,
+          handoff_mode: handoffMode,
+        },
         pennyfarthing: { theme },
       };
 
