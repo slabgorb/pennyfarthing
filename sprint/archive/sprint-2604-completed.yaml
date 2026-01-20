@@ -422,6 +422,12 @@ completed:
     title: "Create systematic-debugging skill"
     points: 3
     completed: 2026-01-19
+  - id: MSSCI-12034
+    epic: MSSCI-11952
+    title: "Create /sprint skill with prescriptive scripts"
+    points: 3
+    completed: 2026-01-20
+    pr: 368
   - id: "35-12"
     epic: MSSCI-11715
     title: "Prompt suggestion pill instead of blocking bar"
