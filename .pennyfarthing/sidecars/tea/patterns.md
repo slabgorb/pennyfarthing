@@ -118,3 +118,27 @@ For MSSCI-12048 (3-point story, 6 ACs):
 - 22 Gherkin scenarios
 - 43 Vitest tests
 - Ratio: ~7 tests per AC average
+
+## TypeScript Stub Pattern (MSSCI-12081)
+
+For tests to confirm RED state properly, create a stub implementation that compiles but throws:
+
+```typescript
+export function myFunction(args: Type): Result {
+  throw new Error('myFunction not implemented');
+}
+```
+
+This allows:
+1. Tests to import and compile
+2. Tests to fail on assertion (not import error)
+3. Clear "not implemented" message in test output
+
+## Variable Resolver Test Categories
+
+When testing variable resolution, cover these categories:
+1. **Single source resolution** - Basic replacement works
+2. **Priority chain** - Higher priority wins, fallback when missing
+3. **Standard variables** - System defaults (date, paths)
+4. **Unresolved tracking** - Variables left as-is, tracked in result
+5. **Edge cases** - Type coercion, invalid syntax, empty values, null/undefined
