@@ -85,6 +85,7 @@ import {
 // Re-export project directory functions for external consumers
 export { getProjectDirectory, setProjectDirectory, isValidProjectDirectory };
 import * as fs from 'fs';
+import { parse } from 'yaml';
 
 // Calculate __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -1278,10 +1279,39 @@ export const isSettingsInitialized = false;
 
 /**
  * Handle settings:get IPC call
- * Returns current settings
+ * Returns current settings with theme from config.local.yaml
+ * Theme is stored ONLY in .pennyfarthing/config.local.yaml (single source of truth)
  */
-export async function handleSettingsGet(): Promise<CyclistSettings> {
-  return getCurrentSettings();
+export async function handleSettingsGet(): Promise<CyclistSettings & { pennyfarthing: { theme: string } }> {
+  const settings = getCurrentSettings();
+
+  // Read theme from config.local.yaml ONLY (single source of truth)
+  // This mirrors the HTTP API behavior in api/settings.ts
+  let theme = 'alice-in-wonderland'; // Default fallback
+  const projectDir = getProjectDirectory();
+  if (projectDir) {
+    try {
+      const configPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
+      if (fs.existsSync(configPath)) {
+        const content = fs.readFileSync(configPath, 'utf-8');
+        const parsed = parse(content) as { theme?: string };
+        if (parsed?.theme) {
+          theme = parsed.theme;
+        }
+      }
+    } catch {
+      // Ignore project config errors - use default
+    }
+  }
+
+  // Return settings with theme included
+  return {
+    ...settings,
+    pennyfarthing: {
+      ...settings.pennyfarthing,
+      theme,
+    },
+  };
 }
 
 /**
