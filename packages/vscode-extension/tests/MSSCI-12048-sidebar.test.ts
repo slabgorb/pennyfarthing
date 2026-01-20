@@ -72,9 +72,28 @@ class MockTreeItem {
   }
 }
 
+// Mock ChatParticipant for extension activation
+class MockChatParticipant {
+  id: string;
+  displayName?: string;
+  iconPath?: any;
+  subCommands: Array<{ name: string; description: string }> = [];
+  dispose = vi.fn();
+  constructor(id: string, handler: any) {
+    this.id = id;
+  }
+}
+
 const mockVscode = {
+  chat: {
+    createChatParticipant: vi.fn(
+      (id: string, handler: any) => new MockChatParticipant(id, handler)
+    ),
+  },
   window: {
     createOutputChannel: vi.fn(() => mockOutputChannel),
+    activeTerminal: { sendText: vi.fn(), show: vi.fn() },
+    terminals: [{ sendText: vi.fn(), show: vi.fn() }],
     registerTerminalProfileProvider: vi.fn(() => ({ dispose: vi.fn() })),
     registerTerminalLinkProvider: vi.fn(() => ({ dispose: vi.fn() })),
     registerTreeDataProvider: vi.fn(() => ({ dispose: vi.fn() })),

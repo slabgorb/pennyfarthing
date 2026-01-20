@@ -47,6 +47,18 @@ export interface StatsData {
 // Listener callback type for same-process subscribers
 export type StatsListener = (data: StatsData) => void;
 
+// Message data type for chat participant
+export interface MessageData {
+  type: 'chunk' | 'tool_use' | 'done' | 'error';
+  content?: string;
+  name?: string;
+  input?: Record<string, unknown>;
+  error?: string;
+}
+
+// Listener callback type for message subscribers
+export type MessageListener = (data: MessageData) => void;
+
 /**
  * Manages WebSocket channels and broadcasts for the WheelHub server.
  */
@@ -60,12 +72,16 @@ export class WebSocketManager {
   // Same-process listeners (for sidebar provider integration)
   private statsListeners: Set<StatsListener> = new Set();
 
+  // Same-process listeners (for chat participant integration)
+  private messageListeners: Set<MessageListener> = new Set();
+
   constructor() {
     // Pre-register expected channels
     this.registerChannel('/ws/stats');
     this.registerChannel('/ws/story');
     this.registerChannel('/ws/claude');
     this.registerChannel('/ws/git');
+    this.registerChannel('/ws/messages');
   }
 
   /**
@@ -76,6 +92,17 @@ export class WebSocketManager {
     this.statsListeners.add(listener);
     return () => {
       this.statsListeners.delete(listener);
+    };
+  }
+
+  /**
+   * Register a same-process listener for message updates.
+   * Used by the chat participant to receive Claude responses.
+   */
+  onMessages(listener: MessageListener): () => void {
+    this.messageListeners.add(listener);
+    return () => {
+      this.messageListeners.delete(listener);
     };
   }
 
@@ -210,6 +237,36 @@ export class WebSocketManager {
   }
 
   /**
+   * Broadcast message update to all connected message clients and same-process listeners.
+   */
+  broadcastMessages(data: MessageData): void {
+    // Notify same-process listeners (chat participant)
+    for (const listener of this.messageListeners) {
+      try {
+        listener(data);
+      } catch (err) {
+        console.error('[WebSocketManager] Error in message listener:', err);
+      }
+    }
+
+    // Notify WebSocket clients
+    const clients = this.channels.get('/ws/messages');
+    if (!clients) return;
+
+    const message = JSON.stringify({
+      ...data,
+      timestamp: new Date().toISOString(),
+    });
+
+    for (const client of clients) {
+      if (client.readyState === 1) {
+        // WebSocket.OPEN
+        client.send(message);
+      }
+    }
+  }
+
+  /**
    * Close all client connections on a channel.
    */
   closeChannel(path: string): void {
@@ -236,5 +293,12 @@ export class WebSocketManager {
    */
   getChannels(): string[] {
     return Array.from(this.registeredChannels);
+  }
+
+  /**
+   * Check if there are any message listeners registered.
+   */
+  hasMessageListeners(): boolean {
+    return this.messageListeners.size > 0;
   }
 }

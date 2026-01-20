@@ -93,7 +93,30 @@ class MockSelection {
   }
 }
 
+// Mock ChatParticipant for extension activation
+class MockChatParticipant {
+  id: string;
+  displayName?: string;
+  iconPath?: any;
+  subCommands: Array<{ name: string; description: string }> = [];
+  dispose = vi.fn();
+  constructor(id: string, handler: any) {
+    this.id = id;
+  }
+}
+
+const mockTerminal = {
+  sendText: vi.fn(),
+  show: vi.fn(),
+  dispose: vi.fn(),
+};
+
 const mockVscode = {
+  chat: {
+    createChatParticipant: vi.fn(
+      (id: string, handler: any) => new MockChatParticipant(id, handler)
+    ),
+  },
   window: {
     createOutputChannel: vi.fn(() => mockOutputChannel),
     registerTerminalProfileProvider: vi.fn(() => ({ dispose: vi.fn() })),
@@ -104,7 +127,8 @@ const mockVscode = {
     showErrorMessage: vi.fn(),
     showTextDocument: vi.fn(() => Promise.resolve()),
     showQuickPick: vi.fn(),
-    activeTerminal: null,
+    activeTerminal: mockTerminal,
+    terminals: [mockTerminal],
   },
   workspace: {
     workspaceFolders: [mockWorkspaceFolder],

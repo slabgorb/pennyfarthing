@@ -12,9 +12,11 @@ let WheelHubAdapter: typeof import('./server/wheelhub-adapter').WheelHubAdapter 
 let AgentStatusTreeDataProvider: typeof import('./providers/sidebar').AgentStatusTreeDataProvider | null = null;
 let PennyfarthingTerminalProfileProvider: typeof import('./providers/terminal').PennyfarthingTerminalProfileProvider | null = null;
 let PennyfarthingTerminalLinkProvider: typeof import('./providers/terminal').PennyfarthingTerminalLinkProvider | null = null;
+let PennyfarthingChatParticipant: typeof import('./providers/chat-participant').PennyfarthingChatParticipant | null = null;
 
 // Module-level reference for cleanup
 let wheelHubAdapter: InstanceType<typeof import('./server/wheelhub-adapter').WheelHubAdapter> | null = null;
+let chatParticipant: InstanceType<typeof import('./providers/chat-participant').PennyfarthingChatParticipant> | null = null;
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const outputChannel = vscode.window.createOutputChannel('Pennyfarthing');
@@ -35,6 +37,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     outputChannel.appendLine('Loading WheelHub...');
     const wheelhubModule = await import('./server/wheelhub-adapter');
     WheelHubAdapter = wheelhubModule.WheelHubAdapter;
+
+    outputChannel.appendLine('Loading chat participant...');
+    const chatModule = await import('./providers/chat-participant');
+    PennyfarthingChatParticipant = chatModule.PennyfarthingChatParticipant;
 
     outputChannel.appendLine('All modules loaded');
   } catch (err) {
@@ -69,6 +75,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     'pennyfarthing.agentStatus',
     sidebarProvider
   );
+
+  // Register chat participant (MSSCI-12097)
+  chatParticipant = new PennyfarthingChatParticipant();
+  chatParticipant.register();
+  outputChannel.appendLine('[ChatParticipant] @pennyfarthing registered');
 
   // Register sidebar commands
   const switchAgentCommand = vscode.commands.registerCommand(
@@ -171,6 +182,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         // Wire sidebar provider to WheelHub for real-time stats updates (MSSCI-12048)
         sidebarProvider.connectToWheelHub(wheelHubAdapter!.getWebSocketManager());
         outputChannel.appendLine('[WheelHub] Sidebar provider connected to stats channel');
+
+        // Wire chat participant to WheelHub for message streaming (MSSCI-12097)
+        if (chatParticipant) {
+          chatParticipant.connectToWheelHub(wheelHubAdapter!.getWebSocketManager());
+          outputChannel.appendLine('[WheelHub] Chat participant connected to messages channel');
+        }
       })
       .catch((err) => {
         outputChannel.appendLine(
@@ -198,6 +215,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     terminalLinkProvider,
     sidebarTreeView,
     { dispose: () => sidebarProvider.dispose() }, // Clean up sidebar provider
+    { dispose: () => chatParticipant?.dispose() }, // Clean up chat participant
     switchAgentCommand,
     viewBacklogCommand,
     startWorkCommand,
