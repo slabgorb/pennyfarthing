@@ -601,9 +601,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Listen for persona theme changes and reload the agent cache
-window.addEventListener('themechange', (e) => {
-  // Only reload if this is a persona theme change (not just color theme)
-  if (e.detail?.themeId || e.detail?.personaTheme) {
+// SettingsPanel dispatches 'theme:changed' on document with { theme: themeId }
+document.addEventListener('theme:changed', (e) => {
+  if (e.detail?.theme) {
+    console.log('[Story] Persona theme changed to:', e.detail.theme);
     clearThemeAgentsCache();
     loadThemeAgents();
   }
