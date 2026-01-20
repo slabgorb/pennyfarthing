@@ -811,7 +811,7 @@ epics:
           PanelManager emits badge-changed event when counts change.
         points: 2
         priority: P2
-        status: backlog
+        status: in_progress
         repos: cyclist
         workflow: tdd
         acceptance_criteria:
@@ -848,6 +848,22 @@ epics:
           - Theme changes in Tab 1 reflect in Tab 2 immediately
           - All localStorage access goes through settings-sync.js
           - 16 existing files refactored to use new module
+      - id: MSSCI-11950
+        jira: MSSCI-11950
+        title: "Background tasks panel not showing background tasks"
+        description: |
+          The background tasks panel in Cyclist is not displaying background
+          tasks when they are running. Need to investigate and fix the data
+          flow from task creation to panel display.
+        points: 2
+        priority: P1
+        status: backlog
+        repos: cyclist
+        workflow: tdd
+        acceptance_criteria:
+          - Background tasks appear in panel when spawned
+          - Task status updates shown in real-time
+          - Completed tasks remain visible until dismissed
       - id: MSSCI-11947
         title: "Hook response data channel for interactive tools"
         description: |
