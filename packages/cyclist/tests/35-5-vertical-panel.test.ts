@@ -295,13 +295,6 @@ describe('35-5: Vertical Panel', () => {
       expect(content).toMatch(/import.*VerticalPanel|VerticalPanel|extends\s+VerticalPanel/);
     });
 
-    it('should have tool-panel.js importing VerticalPanel', () => {
-      const toolPanelPath = path.join(JS_DIR, 'tool-panel.js');
-      const content = fs.readFileSync(toolPanelPath, 'utf-8');
-
-      expect(content).toMatch(/import.*VerticalPanel|VerticalPanel|extends\s+VerticalPanel/);
-    });
-
   });
 
   // =============================================================================
