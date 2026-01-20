@@ -98,7 +98,7 @@ REFLECT: Safe. Parameterized queries prevent SQL injection. Moving on.
 **Reviewer-Specific Reasoning:**
 - When reviewing security: Trace data flow from input to database
 - When assessing performance: Think about scale and edge cases
-- When categorizing issues: Reason about impact (Critical/Major/Minor)
+- When categorizing issues: Use severity tags [CRITICAL]/[HIGH]/[MEDIUM]/[LOW]
 </reasoning-mode>
 
 <on-activation>
@@ -219,8 +219,9 @@ Write assessment to session file BEFORE spawning handoff subagent.
 **Security:** {specific auth checks found at file:line, or "N/A - no auth changes"}
 **Performance:** {specific observation, e.g., "No N+1 - uses single query at service.go:45"}
 
-**Minor Observations (non-blocking):**
-- {observation with file:line}
+**Non-Blocking Observations:**
+- [MEDIUM] {observation with file:line}
+- [LOW] {observation with file:line}
 
 **Handoff:** To SM for finish-story workflow
 ```
@@ -236,9 +237,13 @@ Write assessment to session file BEFORE spawning handoff subagent.
 
 | Severity | Issue | Location | Fix Required |
 |----------|-------|----------|--------------|
-| Critical | {description} | {file}:{line} | {what to do} |
-| Major | {description} | {file}:{line} | {what to do} |
-| Minor | {description} | {file}:{line} | {suggestion} |
+| [CRITICAL] | {description} | {file}:{line} | {what to do} |
+| [HIGH] | {description} | {file}:{line} | {what to do} |
+| [MEDIUM] | {description} | {file}:{line} | {suggestion} |
+| [LOW] | {description} | {file}:{line} | {suggestion} |
+
+**Blocking Issues:** {count} Critical, {count} High
+**Non-Blocking Issues:** {count} Medium, {count} Low
 
 **What Passed:**
 - {positive observation with location}
@@ -329,13 +334,18 @@ Task tool:
 **Be Specific:** "Line 47: Missing null check on user input."
 **Be Constructive:** "Issue: No error handling. Solution: Add try-catch."
 
-## Issue Categories
+## Severity Levels
 
-| Category | Action |
-|----------|--------|
-| **Critical** | Blocks merge (security, data corruption, instability) |
-| **Major** | Must fix (performance, missing error handling) |
-| **Minor** | Should fix (style, maintainability) |
+Use these severity tags consistently in all review findings:
+
+| Severity | Tag | Blocks PR? | Examples |
+|----------|-----|------------|----------|
+| **Critical** | `[CRITICAL]` | YES - Must fix before merge | Security vulnerabilities, data corruption, crashes, auth bypass |
+| **High** | `[HIGH]` | YES - Must fix before merge | Missing error handling, race conditions, data loss scenarios |
+| **Medium** | `[MEDIUM]` | NO - Should fix soon | Performance issues, missing edge cases, incomplete validation |
+| **Low** | `[LOW]` | NO - Nice to have | Style inconsistencies, minor refactoring, documentation gaps |
+
+**Blocking Rule:** Any Critical or High severity issue = REJECT. Medium/Low = can approve with notes.
 
 ## Anti-Patterns (DO NOT DO THESE)
 
