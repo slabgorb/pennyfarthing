@@ -33,7 +33,11 @@ From theme config. Model: haiku. Tasks: Status checks, backlog scans, file summa
     model: "haiku"
     # No run_in_background - SM workflow is sequential
     prompt: |
-      Read and follow: .pennyfarthing/agents/{subagent-name}.md
+      You are the {subagent-name} subagent.
+
+      Read .pennyfarthing/agents/{subagent-name}.md for your instructions,
+      then EXECUTE all steps described there. Do NOT summarize - actually run
+      the bash commands and produce the required output format.
 
       {PARAMETERS}
   ```
@@ -130,9 +134,11 @@ REFLECT: I should clarify AC4 with the user before proceeding.
      subagent_type: "general-purpose"
      model: "haiku"
      prompt: |
-       Read and follow: .pennyfarthing/agents/workflow-status-check.md
+       You are the workflow-status-check subagent. CALLING_AGENT: SM
 
-       CALLING_AGENT: SM
+       Read .pennyfarthing/agents/workflow-status-check.md for your instructions,
+       then EXECUTE all steps described there. Do NOT summarize - actually run
+       the bash commands and produce the required output format.
    ```
 2. Helper returns: `FINISH_STATE`, `NEW_WORK_STATE`, or `IN_PROGRESS_STATE`
 3. If `FINISH_STATE`: Proceed to Finish Story Flow
@@ -149,9 +155,11 @@ Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/workflow-status-check.md
+    You are the workflow-status-check subagent. CALLING_AGENT: SM
 
-    CALLING_AGENT: SM
+    Read .pennyfarthing/agents/workflow-status-check.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
 ```
 
 **Helper returns:**
@@ -186,9 +194,12 @@ Task tool:
   model: "haiku"
   run_in_background: true
   prompt: |
-    Read and follow: .pennyfarthing/agents/sm-finish.md
+    You are the sm-finish subagent. PHASE: preflight
 
-    PHASE: preflight
+    Read .pennyfarthing/agents/sm-finish.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
+
     STORY_ID: {value}
     JIRA_KEY: {value from session/YAML jira field, or omit if not found}
     REPOS: {value}
@@ -247,9 +258,11 @@ Task tool:
   model: "haiku"
   run_in_background: true
   prompt: |
-    Read and follow: .pennyfarthing/agents/sm-setup.md
+    You are the sm-setup subagent. MODE: research
 
-    MODE: research
+    Read .pennyfarthing/agents/sm-setup.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
 ```
 
 Helper scans the sprint backlog, checks Jira status, finds available stories.
@@ -278,7 +291,11 @@ Task tool:
   run_in_background: true
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/sm-file-summary.md
+    You are the sm-file-summary subagent.
+
+    Read .pennyfarthing/agents/sm-file-summary.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
 
     STORY_ID: {value}
     FILE_LIST: |
@@ -364,9 +381,12 @@ Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/sm-setup.md
+    You are the sm-setup subagent. MODE: setup
 
-    MODE: setup
+    Read .pennyfarthing/agents/sm-setup.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
+
     STORY_ID: {value}
     JIRA_KEY: {value}
     REPOS: {value}
@@ -396,7 +416,11 @@ Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/sm-handoff.md
+    You are the sm-handoff subagent.
+
+    Read .pennyfarthing/agents/sm-handoff.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
 
     STORY_ID: {value}
     REPOS: {value}
@@ -467,7 +491,7 @@ $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
 **Read handoff mode from Cyclist settings** (see `handoff.md` for full implementation):
-- `~/.cyclist/settings.yaml` → `workflow.handoff_mode: auto|manual`
+- `.pennyfarthing/config.local.yaml → `handoff_mode: auto|manual`
 - Default is `manual` if not set
 
 **After New Work Setup - Handoff Decision Matrix:**

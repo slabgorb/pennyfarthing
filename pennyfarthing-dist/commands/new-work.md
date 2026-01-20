@@ -31,8 +31,11 @@ Task tool:
   model: "haiku"
   run_in_background: true
   prompt: |
-    Read and follow: .pennyfarthing/agents/workflow-status-check.md
-    CALLING_AGENT: SM
+    You are the workflow-status-check subagent. CALLING_AGENT: SM
+
+    Read .pennyfarthing/agents/workflow-status-check.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
 ```
 Use `TaskOutput` with the returned task_id to get the result.
 
@@ -48,8 +51,11 @@ Task tool:
   model: "haiku"
   run_in_background: true
   prompt: |
-    Read and follow: .pennyfarthing/agents/generic-sm-setup.md
-    MODE: research
+    You are the generic-sm-setup subagent. MODE: research
+
+    Read .pennyfarthing/agents/generic-sm-setup.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
 ```
 Use `TaskOutput` with the returned task_id to get the result.
 
@@ -62,10 +68,14 @@ Task tool:
   model: "haiku"
   run_in_background: true
   prompt: |
-    Read and follow: .pennyfarthing/agents/sm-file-summary.md
+    You are the sm-file-summary subagent.
     STORY_ID: {selected-story}
     FILE_LIST: |
       {relevant files}
+
+    Read .pennyfarthing/agents/sm-file-summary.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
 ```
 Use `TaskOutput` with the returned task_id to get the result.
 
@@ -80,7 +90,7 @@ Task tool:
   model: "haiku"
   run_in_background: true
   prompt: |
-    Read and follow: .pennyfarthing/agents/generic-sm-setup.md
+    You are the generic-sm-setup subagent.
     MODE: setup
     STORY_ID: {value}
     JIRA_KEY: {value}
@@ -89,6 +99,10 @@ Task tool:
     ASSIGNEE: {user name}
     SESSION_CONTENT: |
       {session file content}
+
+    Read .pennyfarthing/agents/generic-sm-setup.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
 ```
 Use `TaskOutput` with the returned task_id to get the result.
 
@@ -99,13 +113,17 @@ Task tool:
   model: "haiku"
   run_in_background: true
   prompt: |
-    Read and follow: .pennyfarthing/agents/sm-handoff.md
+    You are the sm-handoff subagent.
     STORY_ID: {value}
     REPOS: {value}
     TITLE: {value}
     AC_COUNT: {value}
     BRANCH_NAME: {value}
     JIRA_KEY: {value}
+
+    Read .pennyfarthing/agents/sm-handoff.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
 ```
 Use `TaskOutput` with the returned task_id to get the result.
 

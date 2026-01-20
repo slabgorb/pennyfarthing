@@ -31,7 +31,11 @@ From theme config. Model: haiku. Tasks: Status checks, metrics gathering, file s
     subagent_type: "general-purpose"
     model: "haiku"
     prompt: |
-      Read and follow: .pennyfarthing/agents/{subagent-name}.md
+      You are the {subagent-name} subagent.
+
+      Read .pennyfarthing/agents/{subagent-name}.md for your instructions,
+      then EXECUTE all steps described there. Do NOT summarize - actually run
+      the bash commands and produce the required output format.
 
       {PARAMETERS}
   ```
@@ -253,7 +257,11 @@ Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/testing-runner.md
+    You are the testing-runner subagent.
+
+    Read .pennyfarthing/agents/testing-runner.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
 
     REPOS: pennyfarthing
     CONTEXT: Verify agent file changes don't break tests
@@ -312,7 +320,11 @@ Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/handoff.md
+    You are the handoff subagent.
+
+    Read .pennyfarthing/agents/handoff.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
 
     STORY_ID: {value}
     WORKFLOW: agent-docs
