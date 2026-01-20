@@ -14,6 +14,7 @@
 // 35-5: Import VerticalPanel base class for unified panel pattern
 // DiffPanel uses VerticalPanel's persistence and resize patterns
 import { VerticalPanel } from './vertical-panel.js';
+import { settingsSync, STORAGE_KEYS } from './settings-sync.js';
 
 const STORAGE_KEY = 'cyclist-diff-panel';
 const MIN_WIDTH = 150;
@@ -31,16 +32,12 @@ let startX = 0;
 let startWidth = 0;
 
 /**
- * Get saved panel state from localStorage
+ * Get saved panel state from settings-sync
  */
 function loadState() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      return JSON.parse(saved);
-    }
-  } catch (e) {
-    console.warn('[DiffPanel] Failed to load state:', e);
+  const saved = settingsSync.get(STORAGE_KEYS.DIFF_PANEL);
+  if (saved && typeof saved === 'object') {
+    return saved;
   }
   return { width: DEFAULT_WIDTH, collapsed: true };
 }
@@ -68,14 +65,10 @@ function setWidth(width) {
 }
 
 /**
- * Save panel state to localStorage
+ * Save panel state to settings-sync (cross-tab broadcast)
  */
 function saveState(state) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch (e) {
-    console.warn('[DiffPanel] Failed to save state:', e);
-  }
+  settingsSync.set(STORAGE_KEYS.DIFF_PANEL, state);
 }
 
 /**

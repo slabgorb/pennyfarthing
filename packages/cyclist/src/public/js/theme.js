@@ -5,6 +5,8 @@
  * Themes are applied by updating CSS custom properties on :root.
  */
 
+import { settingsSync, STORAGE_KEYS } from './settings-sync.js';
+
 // Theme definitions
 const themes = {
   dark: {
@@ -86,9 +88,6 @@ const terminalThemes = {
 // Default theme
 const DEFAULT_THEME = 'dark';
 
-// localStorage key
-const STORAGE_KEY = 'cyclist-theme';
-
 // Current theme state
 let currentTheme = DEFAULT_THEME;
 
@@ -121,12 +120,8 @@ function applyTheme(themeName) {
     root.style.setProperty(cssProperty, value);
   });
 
-  // Save preference to localStorage
-  try {
-    localStorage.setItem(STORAGE_KEY, themeName);
-  } catch (e) {
-    console.warn('Could not save theme preference:', e);
-  }
+  // Save preference via settings-sync (cross-tab broadcast)
+  settingsSync.set(STORAGE_KEYS.THEME, themeName);
 
   // Update current theme state
   currentTheme = themeName;
@@ -146,13 +141,9 @@ function applyTheme(themeName) {
 function loadTheme() {
   let savedTheme = DEFAULT_THEME;
 
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored && themes[stored]) {
-      savedTheme = stored;
-    }
-  } catch (e) {
-    console.warn('Could not load theme preference:', e);
+  const stored = settingsSync.get(STORAGE_KEYS.THEME);
+  if (stored && themes[stored]) {
+    savedTheme = stored;
   }
 
   applyTheme(savedTheme);

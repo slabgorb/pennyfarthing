@@ -6,7 +6,7 @@
  * - Tab bar reads from manager to render tabs
  * - 35-5: Multiple panels can be open simultaneously (no mutual exclusion)
  * - Supports different display modes (overlay, push, side-by-side)
- * - Persists state to localStorage
+ * - Persists state via settings-sync (cross-tab)
  *
  * Usage:
  *   import PanelManager from '/js/panel-manager.js';
@@ -30,7 +30,7 @@
  *   PanelManager.on('panel-changed', ({ panelId, isOpen }) => { ... });
  */
 
-const STORAGE_KEY = 'cyclist-panel-manager';
+import { settingsSync, STORAGE_KEYS } from './settings-sync.js';
 
 // Display modes
 export const DisplayMode = {
@@ -48,36 +48,27 @@ const state = {
 };
 
 /**
- * Load persisted state
+ * Load persisted state from settings-sync
  */
 function loadState() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      state.displayMode = parsed.displayMode || DisplayMode.OVERLAY;
-      // Don't restore activePanel - start with all closed
-      return parsed;
-    }
-  } catch (e) {
-    console.warn('[PanelManager] Failed to load state:', e);
+  const saved = settingsSync.get(STORAGE_KEYS.PANEL_MANAGER);
+  if (saved && typeof saved === 'object') {
+    state.displayMode = saved.displayMode || DisplayMode.OVERLAY;
+    // Don't restore activePanel - start with all closed
+    return saved;
   }
   return {};
 }
 
 /**
- * Save state to localStorage
+ * Save state to settings-sync (cross-tab broadcast)
  */
 function saveState() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      displayMode: state.displayMode,
-      activePanel: state.activePanel,
-      // Per-panel settings (width, etc) are saved by panels themselves
-    }));
-  } catch (e) {
-    console.warn('[PanelManager] Failed to save state:', e);
-  }
+  settingsSync.set(STORAGE_KEYS.PANEL_MANAGER, {
+    displayMode: state.displayMode,
+    activePanel: state.activePanel,
+    // Per-panel settings (width, etc) are saved by panels themselves
+  });
 }
 
 /**
