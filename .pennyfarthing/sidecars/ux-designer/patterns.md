@@ -104,3 +104,55 @@ File panel in Cyclist: "FILES" label appears when panel collapses.
 - `.message-assistant p { max-width: 72ch }` limits paragraph width
 - Good for readability but wastes space when panels collapsed
 - Solution: Use `max-width: min(72ch, 100%)` for responsive behavior
+
+---
+
+## VS Code TreeView Sidebar Design
+
+**Story:** MSSCI-12048 (VS Code Extension Sidebar)
+
+### Information Hierarchy for Agent Status
+
+```
+Activity Bar Icon
+└── Tree View
+    ├── Agent Section (expanded by default)
+    │   └── Character, role, context %
+    ├── Sprint Section (collapsed by default)
+    │   └── Points, in-progress count
+    ├── Story Section (expanded by default)
+    │   └── ID, phase, branch, points
+    └── Quick Actions (leaf nodes with commands)
+```
+
+### VS Code TreeItem Best Practices
+
+1. **Use `description` for secondary info** - appears grayed after label
+2. **Use `tooltip` for full context** - shows on hover
+3. **Use `contextValue` for menu targeting** - enables context menus
+4. **Use `command` for click actions** - single-click behavior
+
+### Data Sources for Sidebar
+
+| Data | Source | Update Mechanism |
+|------|--------|------------------|
+| Agent/Persona | OTEL spans | WebSocket `/ws/stats` |
+| Context % | Claude API polling | WebSocket `/ws/stats` |
+| Sprint | `sprint/current-sprint.yaml` | File watcher |
+| Story | `.session/{story-id}-session.md` | File watcher |
+
+### Reusable Logic from Cyclist
+
+- `persona.js:humanize()` - Converts slug to title case
+- `stats-strip.js:updateContextLevel()` - Context % thresholds
+- `stats-strip.js:formatTokenCount()` - Token display formatting
+
+### VS Code Codicon Reference
+
+Common icons for tree items:
+- `$(account)` - Agent/persona
+- `$(tasklist)` - Sprint
+- `$(book)` - Story
+- `$(play)` - Start work
+- `$(sync)` - Switch/refresh
+- `$(list-unordered)` - Backlog

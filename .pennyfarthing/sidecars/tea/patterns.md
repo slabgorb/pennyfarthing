@@ -39,3 +39,82 @@ src/components/User.test.tsx
 ---
 
 *Add testing patterns discovered during test development below*
+
+---
+
+## VS Code Extension TreeDataProvider Testing
+
+**Story:** MSSCI-12048 (VS Code Sidebar)
+
+### BDD with Gherkin + Vitest
+
+For VS Code extensions using BDD workflow:
+
+1. **Write Gherkin scenarios** in `tests/features/*.feature`
+   - Human-readable specification
+   - One scenario per behavior
+   - Tag with AC reference (e.g., `@AC1`)
+
+2. **Implement as Vitest tests** in `tests/*.test.ts`
+   - Group by AC in `describe` blocks
+   - One test per scenario assertion
+   - Mock VS Code API comprehensively
+
+### VS Code TreeDataProvider Mock Pattern
+
+```typescript
+// Mock VS Code TreeItemCollapsibleState
+const TreeItemCollapsibleState = {
+  None: 0,
+  Collapsed: 1,
+  Expanded: 2,
+};
+
+// Mock TreeItem class
+class MockTreeItem {
+  label: string;
+  description?: string;
+  tooltip?: string;
+  contextValue?: string;
+  collapsibleState?: number;
+  command?: { command: string; arguments?: any[] };
+  accessibilityInformation?: { label: string };
+
+  constructor(label: string, collapsibleState?: number) {
+    this.label = label;
+    this.collapsibleState = collapsibleState;
+  }
+}
+
+// Mock vscode module
+vi.mock('vscode', () => ({
+  window: {
+    registerTreeDataProvider: vi.fn(() => ({ dispose: vi.fn() })),
+    createTreeView: vi.fn(() => ({ dispose: vi.fn() })),
+  },
+  TreeItem: MockTreeItem,
+  TreeItemCollapsibleState,
+  EventEmitter: vi.fn(() => ({ fire: vi.fn(), event: vi.fn() })),
+}));
+```
+
+### Testing TreeDataProvider Updates
+
+```typescript
+it('should fire onDidChangeTreeData when data updates', async () => {
+  const provider = new AgentStatusTreeDataProvider();
+  const mockListener = vi.fn();
+  provider.onDidChangeTreeData(mockListener);
+
+  provider.updatePersona({ character: 'Test', role: 'dev' });
+
+  expect(mockListener).toHaveBeenCalled();
+});
+```
+
+### Test Count Reference
+
+For MSSCI-12048 (3-point story, 6 ACs):
+- 22 Gherkin scenarios
+- 43 Vitest tests
+- Ratio: ~7 tests per AC average
