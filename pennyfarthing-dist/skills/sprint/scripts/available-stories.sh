@@ -51,8 +51,8 @@ for EPIC_ID in $EPIC_IDS; do
   # Get epic title from sprint YAML (faster than Jira for display)
   EPIC_TITLE=$(yq ".epics[] | select(.id == \"$EPIC_ID\") | .title" "$SPRINT_FILE")
 
-  # Get stories for this epic that are in backlog
-  STORY_COUNT=$(yq ".epics[] | select(.id == \"$EPIC_ID\") | .stories[] | select(.status == \"backlog\") | .id" "$SPRINT_FILE" 2>/dev/null | wc -l | tr -d ' ')
+  # Get stories for this epic that are available (backlog or ready)
+  STORY_COUNT=$(yq ".epics[] | select(.id == \"$EPIC_ID\") | .stories[] | select(.status == \"backlog\" or .status == \"ready\") | .id" "$SPRINT_FILE" 2>/dev/null | wc -l | tr -d ' ')
 
   if [[ "$STORY_COUNT" -eq 0 ]]; then
     continue
@@ -75,8 +75,8 @@ for EPIC_ID in $EPIC_IDS; do
   echo "| ID | Title | Pts | Pri | Status | Workflow |"
   echo "|----|-------|-----|-----|--------|----------|"
 
-  # Get backlog stories for this epic
-  yq -o=json ".epics[] | select(.id == \"$EPIC_ID\") | .stories[] | select(.status == \"backlog\")" "$SPRINT_FILE" 2>/dev/null | \
+  # Get available stories for this epic (backlog or ready)
+  yq -o=json ".epics[] | select(.id == \"$EPIC_ID\") | .stories[] | select(.status == \"backlog\" or .status == \"ready\")" "$SPRINT_FILE" 2>/dev/null | \
     jq -r '[.id, .title, (.points | tostring), (.priority // "P2"), (.status // "backlog"), (.workflow // "tdd")] | @tsv' | \
     while IFS=$'\t' read -r story_id story_title story_points story_priority story_status story_workflow; do
       # Truncate title if too long
@@ -90,8 +90,8 @@ for EPIC_ID in $EPIC_IDS; do
 done
 
 # Summary
-TOTAL_BACKLOG=$(yq '[.epics[].stories[] | select(.status == "backlog")] | length' "$SPRINT_FILE")
-TOTAL_POINTS=$(yq '.epics[].stories[] | select(.status == "backlog") | .points' "$SPRINT_FILE" | paste -sd+ - | bc 2>/dev/null || echo "0")
+TOTAL_BACKLOG=$(yq '[.epics[].stories[] | select(.status == "backlog" or .status == "ready")] | length' "$SPRINT_FILE")
+TOTAL_POINTS=$(yq '.epics[].stories[] | select(.status == "backlog" or .status == "ready") | .points' "$SPRINT_FILE" | paste -sd+ - | bc 2>/dev/null || echo "0")
 
 echo "---"
 echo "**Total available:** $TOTAL_BACKLOG stories, $TOTAL_POINTS points"

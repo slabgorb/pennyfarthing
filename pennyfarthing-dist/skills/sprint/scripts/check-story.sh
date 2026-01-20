@@ -36,8 +36,8 @@ fi
 
 # Handle "next" argument - find highest priority available story
 if [[ "$ID" == "next" ]]; then
-  # Get all backlog stories, sort by priority, take first
-  NEXT_STORY=$(yq -o json "[.epics[].stories[] | select(.status == \"backlog\" or .status == null)] | sort_by(.priority) | .[0]" "$SPRINT_FILE" 2>/dev/null || echo "null")
+  # Get all available stories (backlog or ready), sort by priority, take first
+  NEXT_STORY=$(yq -o json "[.epics[].stories[] | select(.status == \"backlog\" or .status == \"ready\" or .status == null)] | sort_by(.priority) | .[0]" "$SPRINT_FILE" 2>/dev/null || echo "null")
 
   if [[ "$NEXT_STORY" != "null" && -n "$NEXT_STORY" ]]; then
     STORY_ID=$(echo "$NEXT_STORY" | yq -r '.id')
@@ -75,10 +75,10 @@ EPIC_DATA=$(yq -o json ".epics[] | select(.id == \"$ID\")" "$SPRINT_FILE" 2>/dev
 
 if [[ -n "$EPIC_DATA" && "$EPIC_DATA" != "null" ]]; then
   # It's an epic - get first available story by priority
-  FIRST_STORY=$(yq -o json "[.epics[] | select(.id == \"$ID\") | .stories[] | select(.status == \"backlog\" or .status == null)] | sort_by(.priority) | .[0]" "$SPRINT_FILE" 2>/dev/null || echo "null")
+  FIRST_STORY=$(yq -o json "[.epics[] | select(.id == \"$ID\") | .stories[] | select(.status == \"backlog\" or .status == \"ready\" or .status == null)] | sort_by(.priority) | .[0]" "$SPRINT_FILE" 2>/dev/null || echo "null")
 
   EPIC_TITLE=$(echo "$EPIC_DATA" | yq -r '.title // "Unknown"')
-  STORY_COUNT=$(yq "[.epics[] | select(.id == \"$ID\") | .stories[] | select(.status == \"backlog\" or .status == null)] | length" "$SPRINT_FILE" 2>/dev/null || echo "0")
+  STORY_COUNT=$(yq "[.epics[] | select(.id == \"$ID\") | .stories[] | select(.status == \"backlog\" or .status == \"ready\" or .status == null)] | length" "$SPRINT_FILE" 2>/dev/null || echo "0")
 
   if [[ "$FIRST_STORY" != "null" && -n "$FIRST_STORY" ]]; then
     STORY_ID=$(echo "$FIRST_STORY" | yq -r '.id')
@@ -131,8 +131,8 @@ if [[ -n "$STORY_DATA" && "$STORY_DATA" != "null" ]]; then
   EPIC_ID=$(yq -r ".epics[] | select(.stories[].id == \"$ID\") | .id" "$SPRINT_FILE" 2>/dev/null | head -1)
   REPOS=$(echo "$STORY_DATA" | yq -r '.repos // "pennyfarthing"')
 
-  # Story is available if status is backlog and not assigned
-  if [[ "$STATUS" == "backlog" && -z "$ASSIGNED" ]]; then
+  # Story is available if status is backlog/ready and not assigned
+  if [[ ("$STATUS" == "backlog" || "$STATUS" == "ready") && -z "$ASSIGNED" ]]; then
     AVAILABLE="true"
   else
     AVAILABLE="false"
