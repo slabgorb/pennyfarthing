@@ -369,3 +369,131 @@ planning:
               priority: P1
               status: planning
               repos: pennyfarthing
+
+    # =========================================================================
+    # VS CODE EXTENSION - Distribution Expansion
+    # Package Pennyfarthing as a VS Code extension for broader reach
+    # Total: 21 points across 1 epic
+    #
+    # Key Architectural Decisions:
+    #   - Extension activates Pennyfarthing in VS Code terminal context
+    #   - Reuses WheelHub WebSocket architecture for real-time updates
+    #   - Reflector protocol adapts to VS Code webview panels
+    #   - TirePump context management integrates with VS Code's workspace state
+    # =========================================================================
+
+    - name: "VS Code Extension"
+      description: |
+        Package Pennyfarthing as a VS Code extension for developers who prefer
+        VS Code over standalone Cyclist or CLI. Leverages existing architecture
+        (WheelHub, Reflector, TirePump) adapted to VS Code's extension API.
+      status: planning
+      blocked_by: null
+      epics:
+        - id: epic-50
+          title: "VS Code Extension for Pennyfarthing"
+          description: |
+            Create a VS Code extension that brings Pennyfarthing's agent orchestration
+            to VS Code users. The extension provides:
+            - Terminal integration for Claude Code sessions
+            - Sidebar panel showing agent status and personas
+            - Webview panel adapting Cyclist's UI components
+            - Command palette integration for skills and workflows
+
+            Architecture approach:
+            - WheelHub server runs as extension-hosted process
+            - Reflector HTML comments parsed by extension, rendered in VS Code UI
+            - TirePump integrates with VS Code's workspace state API
+            - Reuse Cyclist's public/js components in webview context
+          points: 21
+          priority: P2
+          marker: "distribution"
+          repos: pennyfarthing
+          status: planning
+          stories:
+            - id: "50-1"
+              title: "Extension scaffolding with Yeoman generator"
+              description: |
+                Initialize VS Code extension project structure:
+                - Use `yo code` to generate TypeScript extension
+                - Configure package.json with activation events
+                - Set up build pipeline (esbuild for bundling)
+                - Add to monorepo as packages/vscode-extension
+              points: 2
+              priority: P0
+              status: planning
+              repos: pennyfarthing
+            - id: "50-2"
+              title: "Terminal provider for Claude Code sessions"
+              description: |
+                Create custom terminal profile that:
+                - Launches Claude Code with Pennyfarthing context
+                - Sets PROJECT_ROOT and other env vars
+                - Hooks into session-start.sh flow
+                - Provides terminal link detection for file paths
+              points: 3
+              priority: P0
+              status: planning
+              repos: pennyfarthing
+            - id: "50-3"
+              title: "WheelHub adapter for VS Code"
+              description: |
+                Adapt WheelHub WebSocket server for VS Code context:
+                - Extension hosts WheelHub server process
+                - WebSocket connection from webview panels
+                - Message routing between terminal and UI
+                - Graceful shutdown on extension deactivation
+              points: 5
+              priority: P0
+              status: planning
+              repos: pennyfarthing
+            - id: "50-4"
+              title: "Sidebar panel with agent status"
+              description: |
+                Create VS Code tree view showing:
+                - Current agent and persona
+                - Sprint status (points remaining, in-progress)
+                - Active story context
+                - Quick actions (switch agent, view backlog)
+                Reuse stats-strip.js and persona.js logic.
+              points: 3
+              priority: P1
+              status: planning
+              repos: pennyfarthing
+            - id: "50-5"
+              title: "Reflector protocol adapter"
+              description: |
+                Parse Reflector HTML comments from Claude output:
+                - HANDOFF: Show VS Code notification with action button
+                - CONTEXT_CLEAR: Trigger TirePump via command
+                - QUESTION/CHOICES: Render VS Code quick pick
+                Integrate with terminal output stream parsing.
+              points: 3
+              priority: P1
+              status: planning
+              repos: pennyfarthing
+            - id: "50-6"
+              title: "Command palette integration"
+              description: |
+                Register VS Code commands for all skills:
+                - `pennyfarthing.sprint.status`
+                - `pennyfarthing.sprint.work`
+                - `pennyfarthing.theme.switch`
+                - etc.
+                Parse skill YAML for command metadata.
+              points: 2
+              priority: P1
+              status: planning
+              repos: pennyfarthing
+            - id: "50-7"
+              title: "Webview panel for Cyclist UI"
+              description: |
+                Optional full Cyclist UI in VS Code webview:
+                - Embed existing public/js components
+                - CSP-compliant asset loading
+                - State sync with extension host
+                - Theme integration with VS Code color theme
+              points: 3
+              priority: P2
+              status: planning
+              repos: pennyfarthing
