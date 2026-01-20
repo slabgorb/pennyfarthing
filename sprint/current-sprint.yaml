@@ -131,7 +131,8 @@ epics:
       Improve skill discoverability by enhancing SKILL.md frontmatter per
       Anthropic's official guidance. Follow-on to Epic 9's infrastructure work.
     priority: P3
-    status: in_progress
+    status: done
+    completed: 2026-01-20
     repos: pennyfarthing
     stories:
       - id: MSSCI-11953
@@ -304,7 +305,7 @@ epics:
       workflows with progressive disclosure, gates, and tri-modal execution.
       Based on ADR-0005. Makes stepped workflows a first-class Pennyfarthing capability.
     priority: P2
-    status: ready
+    status: in_progress
     repos: pennyfarthing
     adr: docs/adr/0005-bmad-workflow-import.md
     stories:
@@ -321,7 +322,8 @@ epics:
           Workflow loader detects type and routes to appropriate executor.
         points: 2
         priority: P0
-        status: in_progress
+        status: done
+        completed: 2026-01-20
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria:
@@ -330,7 +332,6 @@ epics:
           - Modes configuration supports tri-modal paths
           - Existing phased workflows work unchanged
         jira: MSSCI-12078
-        assigned_to: Keith Avery
       - id: MSSCI-12079
         title: "Step file parser with <step-meta> extraction"
         description: |
@@ -384,7 +385,8 @@ epics:
           Session reader/writer for stepped workflow state.
         points: 2
         priority: P0
-        status: in_progress
+        status: done
+        completed: 2026-01-20
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria:
