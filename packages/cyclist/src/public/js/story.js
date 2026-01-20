@@ -3,6 +3,8 @@
  * MSSCI-11943: WebSocket channels replace polling for real-time updates
  */
 
+import { settingsSync, STORAGE_KEYS } from './settings-sync.js';
+
 // Polling intervals for periodic refresh (fallback only, not used for WebSocket)
 const STORY_POLL_INTERVAL = 10000; // 10 seconds
 const GIT_POLL_INTERVAL = 5000;    // 5 seconds
@@ -18,31 +20,20 @@ let gitWebSocket = null;
 let storyReconnectDelay = WS_RECONNECT_BASE_DELAY;
 let gitReconnectDelay = WS_RECONNECT_BASE_DELAY;
 
-// localStorage key for AC panel collapse state (27-1)
-const AC_COLLAPSED_KEY = 'cyclist-ac-collapsed';
-
 /**
- * Get AC panel collapsed state from localStorage
+ * Get AC panel collapsed state from settings-sync
  * @returns {boolean} True if collapsed, false if expanded (default: false)
  */
 function getAcCollapsed() {
-  try {
-    return localStorage.getItem(AC_COLLAPSED_KEY) === 'true';
-  } catch {
-    return false;
-  }
+  return settingsSync.get(STORAGE_KEYS.AC_COLLAPSED, false) === true;
 }
 
 /**
- * Save AC panel collapsed state to localStorage
+ * Save AC panel collapsed state to settings-sync
  * @param {boolean} collapsed - Whether panel is collapsed
  */
 function setAcCollapsed(collapsed) {
-  try {
-    localStorage.setItem(AC_COLLAPSED_KEY, String(collapsed));
-  } catch {
-    // Ignore localStorage errors
-  }
+  settingsSync.set(STORAGE_KEYS.AC_COLLAPSED, collapsed);
 }
 
 let storyPollTimer = null;

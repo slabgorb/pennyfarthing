@@ -288,11 +288,14 @@ describe('MSSCI-11946: LocalStorage Cross-Tab Synchronization', () => {
     });
 
     it('should set value in localStorage', async () => {
-      const { settingsSync } = await import('../src/public/js/settings-sync.js');
+      vi.resetModules();
+      const { createSettingsSync } = await import('../src/public/js/settings-sync.js');
+      const settingsSync = createSettingsSync();
       settingsSync.set('test-key', 'test-value');
 
-      const stored = mockLocalStorage.get('test-key');
+      const stored = localStorage.getItem('test-key');
       expect(JSON.parse(stored!)).toBe('test-value');
+      settingsSync.close();
     });
 
     it('should serialize objects to JSON when setting', async () => {
