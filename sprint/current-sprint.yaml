@@ -341,7 +341,7 @@ epics:
           - Returns structured step object
         points: 2
         priority: P0
-        status: in_progress
+        status: done
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria:
@@ -350,7 +350,7 @@ epics:
           - Parser handles missing meta gracefully
           - Gate detection from meta or marker
         jira: MSSCI-12079
-        assigned_to: Keith Avery
+        completed: "2026-01-20"
       - id: MSSCI-12081
         title: "Variable resolver with priority chain"
         description: |
