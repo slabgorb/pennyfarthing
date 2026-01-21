@@ -707,3 +707,152 @@ planning:
               priority: P2
               status: planning
               repos: pennyfarthing
+
+    # ==========================================================================
+    # REPOSITORY OPTIMIZATION - Reduce Clone Times
+    # ==========================================================================
+    - name: "Repository Optimization"
+      description: |
+        Reduce repository size from ~750MB to ~100MB by moving portrait images
+        to external CDN. Improves clone times, CI/CD performance, and developer
+        experience.
+      status: ready
+      blocked_by: null
+      epics:
+        # ======================================================================
+        # EPIC 55: CDN Portrait Storage
+        # ======================================================================
+        - id: epic-55
+          title: "CDN Portrait Storage"
+          description: |
+            Move 606MB of portrait images out of main repository to jsDelivr CDN.
+
+            Current state:
+            - pennyfarthing-dist/personas/portraits/ = 606MB
+            - ~1,000 PNG images across 102 themes
+            - Every clone downloads all portraits
+
+            Target state:
+            - Portraits in separate pennyfarthing-portraits repo
+            - Served via jsDelivr CDN (free, fast, global)
+            - Main repo shrinks from ~750MB to ~100MB
+            - Optional local cache for offline development
+
+            ADR: docs/adr/0006-cdn-portrait-storage.md
+          points: 13
+          priority: P1
+          marker: "infrastructure"
+          repos: pennyfarthing
+          status: planning
+          stories:
+            # Phase 1: Repository Setup
+            - id: "55-1"
+              title: "Create pennyfarthing-portraits repository"
+              description: |
+                Create new GitHub repository for portrait images:
+                - Repository: 1898andCo/pennyfarthing-portraits
+                - Directory structure: {theme}/{character}.webp
+                - README with usage instructions
+                - License file (same as main repo)
+                - .gitignore for any temp files
+              points: 1
+              priority: P0
+              status: planning
+              repos: pennyfarthing-portraits
+            - id: "55-2"
+              title: "Convert PNG portraits to WebP format"
+              description: |
+                Batch convert all portrait PNGs to WebP:
+                - Use cwebp with quality 85 (good balance)
+                - Expected size reduction: 50-70%
+                - Script: scripts/convert-portraits-webp.sh
+                - Preserve original directory structure
+                - Generate conversion report (before/after sizes)
+              points: 2
+              priority: P0
+              status: planning
+              repos: pennyfarthing
+            - id: "55-3"
+              title: "Upload portraits and tag v1.0.0 release"
+              description: |
+                Populate portraits repository and create release:
+                - Copy converted WebP images to portraits repo
+                - Commit with proper structure
+                - Tag v1.0.0 release (enables jsDelivr caching)
+                - Verify jsDelivr URLs work:
+                  https://cdn.jsdelivr.net/gh/1898andCo/pennyfarthing-portraits@v1.0.0/mash/hawkeye.webp
+              points: 1
+              priority: P0
+              status: planning
+              repos: pennyfarthing-portraits
+            # Phase 2: Schema Migration
+            - id: "55-4"
+              title: "Update theme schema for portrait URLs"
+              description: |
+                Extend theme YAML schema to support portrait object:
+                ```yaml
+                agents:
+                  sm:
+                    portrait:
+                      cdn: "https://cdn.jsdelivr.net/gh/..."
+                      local: "~/.pennyfarthing/portraits/..."
+                ```
+                Update schema documentation and validation.
+              points: 2
+              priority: P0
+              status: planning
+              repos: pennyfarthing
+            - id: "55-5"
+              title: "Write theme migration script"
+              description: |
+                Create script to add portrait URLs to all themes:
+                - Script: scripts/migrate-portrait-urls.sh
+                - Read each theme YAML
+                - Generate CDN URL based on theme/character
+                - Add portrait object to each agent
+                - Preserve existing fields (visual, etc.)
+                - Dry-run mode for verification
+              points: 2
+              priority: P0
+              status: planning
+              repos: pennyfarthing
+            - id: "55-6"
+              title: "Update Cyclist UI portrait resolver"
+              description: |
+                Modify portrait loading in Cyclist:
+                - Check for local portrait first (offline support)
+                - Fall back to CDN URL
+                - Handle loading states and errors gracefully
+                - Cache resolved URLs for session
+                Files: packages/cyclist/src/public/js/persona-panel.js
+              points: 2
+              priority: P0
+              status: planning
+              repos: pennyfarthing
+            # Phase 3: Cleanup
+            - id: "55-7"
+              title: "Remove portraits from main repository"
+              description: |
+                Clean up main repo after migration verified:
+                - Remove pennyfarthing-dist/personas/portraits/
+                - Add to .gitignore
+                - Update any hardcoded portrait paths
+                - Verify build still works
+                - Document the change in CHANGELOG
+              points: 1
+              priority: P1
+              status: planning
+              repos: pennyfarthing
+            - id: "55-8"
+              title: "Add local portrait cache command"
+              description: |
+                Add CLI command for offline portrait installation:
+                - `pennyfarthing portraits install` - all themes
+                - `pennyfarthing portraits install --theme mash` - specific theme
+                - Downloads to ~/.pennyfarthing/portraits/
+                - Progress indicator during download
+                - Verify downloaded files
+              points: 2
+              priority: P1
+              status: planning
+              repos: pennyfarthing
