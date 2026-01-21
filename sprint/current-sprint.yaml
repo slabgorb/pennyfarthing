@@ -984,11 +984,13 @@ epics:
           - Ensure compatibility with BMAD projects
         points: 2
         priority: P1
-        status: in_progress
+        status: done
+        completed: 2026-01-21
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
         jira: MSSCI-12136
+        branch: feat/MSSCI-12136-enhance-architecture-workflow
       - id: MSSCI-12137
         title: "Import Epics-and-Stories workflow"
         description: |
@@ -998,11 +1000,12 @@ epics:
           - Output format compatible with sprint YAML
         points: 3
         priority: P1
-        status: backlog
+        status: in_progress
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
         jira: MSSCI-12137
+        branch: feat/MSSCI-12137-epics-and-stories-workflow
       - id: MSSCI-12138
         title: "Import Implementation Readiness workflow"
         description: |
@@ -1136,4 +1139,24 @@ epics:
         workflow: tdd
         acceptance_criteria: []
         jira: MSSCI-12146
+      - id: MSSCI-12147
+        title: "Remove unnecessary variable conversion from migration script"
+        description: |
+          The migrate-bmad-workflow.mjs script converts {var-name} to {var_name},
+          but BMAD already uses underscores in variable names. This conversion:
+          - Adds complexity without benefit
+          - Could cause false positives on legitimate dashes in content
+          - Creates test complexity (checking for "no dashed variables")
+
+          Action: Remove convertVariables() function and related tests. BMAD
+          standardized on underscores, so conversion is dead code.
+        points: 1
+        priority: P3
+        status: backlog
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - convertVariables() function removed from migrate-bmad-workflow.mjs
+          - Tests for variable conversion removed or updated
+          - Existing workflows still import correctly
     jira: MSSCI-12131
