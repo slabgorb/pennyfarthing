@@ -929,7 +929,8 @@ epics:
           - Single-mode workflow (create only)
         points: 2
         priority: P0
-        status: in_progress
+        status: done
+        completed: 2026-01-21
         repos: pennyfarthing
         workflow: trivial
         acceptance_criteria: []
@@ -944,11 +945,12 @@ epics:
           - Feeds into product brief and PRD
         points: 2
         priority: P0
-        status: backlog
+        status: in_progress
         repos: pennyfarthing
-        workflow: tdd
+        workflow: trivial
         acceptance_criteria: []
         jira: MSSCI-12135
+        branch: feat/MSSCI-12135-research-workflow
       - id: MSSCI-12136
         title: "Enhance Architecture workflow from BMAD"
         description: |
