@@ -59,6 +59,7 @@ __pycache__/
 
 # VS Code extension builds
 *.vsix
+packages/vscode-extension/resources/portraits/
 
 # Git worktrees
 worktrees/
