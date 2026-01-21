@@ -13,14 +13,19 @@ Pennyfarthing uses YAML-defined workflows to control agent sequences. The defaul
 
 ### `/workflow` or `/workflow list`
 
-List all available workflows.
+List all available workflows with type indicators.
 
 **Run:**
 ```bash
 .pennyfarthing/scripts/run.sh list-workflows.sh
 ```
 
-**Output:** Table of workflows with name, default status, and description.
+**Output:** Table of workflows with:
+- **Type**: `phased` (agent-driven) or `stepped` (progressive disclosure)
+- **Steps/Phases**: Number of steps or phases in the workflow
+- **Modes**: Available tri-modal options (create/validate/edit) if applicable
+- **Default**: Whether this is the default workflow
+- **Description**: Brief workflow description
 
 ---
 
