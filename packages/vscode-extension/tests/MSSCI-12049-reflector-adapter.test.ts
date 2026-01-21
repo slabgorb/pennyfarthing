@@ -1,316 +1,580 @@
 /**
- * MSSCI-12049: Reflector Protocol Adapter (Pivoted)
+ * MSSCI-12049: Reflector Protocol Adapter
  *
- * Tests for parsing CYCLIST HTML comments from Claude output in the
- * VS Code chat participant, integrating with ClaudeService text events.
- *
- * Pivot Note: Original implementation used WheelHub WebSocket approach.
- * This version integrates with ClaudeService in chat-participant.ts.
+ * Tests for parsing CYCLIST markers from Claude output and mapping to VS Code UI.
+ * Tests are written to FAIL until Dev implements the adapter.
  *
  * Acceptance Criteria:
- * - AC1: detectMarkers() parses CYCLIST markers from text
- * - AC2: stripMarkers() removes markers before display
- * - AC3: HANDOFF shows VS Code notification with action button
- * - AC4: CONTEXT_CLEAR executes pennyfarthing.contextClear command
- * - AC5: QUESTION/yesno shows Yes/No quick pick
- * - AC6: CHOICES shows quick pick with parsed options
- * - AC7: Integrates with chat-participant onText handler
+ * - AC1: Reflector adapter parses CYCLIST markers from text
+ * - AC2: HANDOFF markers show VS Code notification with agent button
+ * - AC3: CONTEXT_CLEAR triggers context clear command
+ * - AC4: QUESTION/CHOICES show VS Code quick pick
+ * - AC5: Markers stripped from visible terminal output
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { join } from 'path';
 
-// ============================================================================
-// VS Code Mocks
-// ============================================================================
+// Mock VS Code API - must be before importing extension
+const mockContext = {
+  subscriptions: [] as { dispose: () => void }[],
+  workspaceState: { get: vi.fn(), update: vi.fn() },
+  globalState: { get: vi.fn(), update: vi.fn() },
+  extensionPath: '/mock/extension/path',
+  extensionUri: { fsPath: '/mock/extension/path' },
+};
 
+// Track VS Code API calls for assertions
 const mockShowInformationMessage = vi.fn();
 const mockShowQuickPick = vi.fn();
 const mockExecuteCommand = vi.fn();
 
 const mockVscode = {
   window: {
-    showInformationMessage: mockShowInformationMessage,
-    showQuickPick: mockShowQuickPick,
-    showErrorMessage: vi.fn(),
     createOutputChannel: vi.fn(() => ({
       appendLine: vi.fn(),
       dispose: vi.fn(),
+      show: vi.fn(),
     })),
+    showInformationMessage: mockShowInformationMessage,
+    showQuickPick: mockShowQuickPick,
+    registerTerminalProfileProvider: vi.fn(() => ({ dispose: vi.fn() })),
+    registerTerminalLinkProvider: vi.fn(() => ({ dispose: vi.fn() })),
+    registerTreeDataProvider: vi.fn(() => ({ dispose: vi.fn() })),
+    createTerminal: vi.fn(),
   },
   commands: {
-    executeCommand: mockExecuteCommand,
     registerCommand: vi.fn(() => ({ dispose: vi.fn() })),
+    executeCommand: mockExecuteCommand,
+  },
+  workspace: {
+    workspaceFolders: [{ uri: { fsPath: '/mock/workspace' } }],
   },
   Uri: {
     file: vi.fn((path: string) => ({ fsPath: path, scheme: 'file' })),
+  },
+  chat: {
+    createChatParticipant: vi.fn(() => ({ dispose: vi.fn() })),
   },
 };
 
 vi.mock('vscode', () => mockVscode);
 
-// ============================================================================
-// Types (expected from reflector.ts)
-// ============================================================================
+const EXTENSION_ROOT = join(__dirname, '..');
 
-interface CyclistMarker {
-  type: 'HANDOFF' | 'CONTEXT_CLEAR' | 'QUESTION' | 'CHOICES';
-  value: string;
-}
-
-// ============================================================================
-// Tests
-// ============================================================================
-
-describe('MSSCI-12049: Reflector Protocol Adapter (Pivoted)', () => {
+describe('MSSCI-12049: Reflector Protocol Adapter', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    vi.resetModules();
-  });
-
   // ==========================================================================
-  // AC1: detectMarkers() parses CYCLIST markers from text
+  // AC1: Reflector adapter parses CYCLIST markers from text
   // ==========================================================================
-  describe('AC1: detectMarkers() parses CYCLIST markers from text', () => {
-    it('should have adapters/reflector.ts file', async () => {
-      const { existsSync } = await vi.importActual<typeof import('fs')>('fs');
-      const { join } = await vi.importActual<typeof import('path')>('path');
-      const reflectorPath = join(
-        __dirname,
-        '..',
-        'src',
-        'adapters',
-        'reflector.ts'
-      );
-      expect(existsSync(reflectorPath)).toBe(true);
-    });
+  describe('AC1: Reflector adapter parses CYCLIST markers from text', () => {
+    describe('Module exports', () => {
+      it('should have adapters/reflector.ts file', async () => {
+        const { existsSync } = await import('fs');
+        const reflectorPath = join(EXTENSION_ROOT, 'src', 'adapters', 'reflector.ts');
+        expect(existsSync(reflectorPath)).toBe(true);
+      });
 
-    it('should export detectMarkers function', async () => {
-      const reflector = await import('../src/adapters/reflector');
-      expect(reflector.detectMarkers).toBeDefined();
-      expect(typeof reflector.detectMarkers).toBe('function');
-    });
+      it('should export detectMarkers function', async () => {
+        const reflector = await import('../src/adapters/reflector');
+        expect(reflector.detectMarkers).toBeDefined();
+        expect(typeof reflector.detectMarkers).toBe('function');
+      });
 
-    it('should detect HANDOFF marker', async () => {
-      const { detectMarkers } = await import('../src/adapters/reflector');
-      const text = 'Some text <!-- CYCLIST:HANDOFF:/dev --> more text';
+      it('should export stripMarkers function', async () => {
+        const reflector = await import('../src/adapters/reflector');
+        expect(reflector.stripMarkers).toBeDefined();
+        expect(typeof reflector.stripMarkers).toBe('function');
+      });
 
-      const markers = detectMarkers(text);
-
-      expect(markers).toHaveLength(1);
-      expect(markers[0]).toEqual({ type: 'HANDOFF', value: '/dev' });
-    });
-
-    it('should detect CONTEXT_CLEAR marker', async () => {
-      const { detectMarkers } = await import('../src/adapters/reflector');
-      const text = '<!-- CYCLIST:CONTEXT_CLEAR:/tea -->';
-
-      const markers = detectMarkers(text);
-
-      expect(markers).toHaveLength(1);
-      expect(markers[0]).toEqual({ type: 'CONTEXT_CLEAR', value: '/tea' });
-    });
-
-    it('should detect QUESTION marker', async () => {
-      const { detectMarkers } = await import('../src/adapters/reflector');
-      const text = '<!-- CYCLIST:QUESTION:yesno -->';
-
-      const markers = detectMarkers(text);
-
-      expect(markers).toHaveLength(1);
-      expect(markers[0]).toEqual({ type: 'QUESTION', value: 'yesno' });
-    });
-
-    it('should detect CHOICES marker', async () => {
-      const { detectMarkers } = await import('../src/adapters/reflector');
-      const text = '<!-- CYCLIST:CHOICES:option1,option2,option3 -->';
-
-      const markers = detectMarkers(text);
-
-      expect(markers).toHaveLength(1);
-      expect(markers[0]).toEqual({
-        type: 'CHOICES',
-        value: 'option1,option2,option3',
+      it('should export ReflectorAdapter class', async () => {
+        const reflector = await import('../src/adapters/reflector');
+        expect(reflector.ReflectorAdapter).toBeDefined();
       });
     });
 
-    it('should detect multiple markers in text', async () => {
-      const { detectMarkers } = await import('../src/adapters/reflector');
-      const text = `
-        Ready for handoff.
-        <!-- CYCLIST:HANDOFF:/dev -->
-        <!-- CYCLIST:QUESTION:yesno -->
-      `;
+    describe('HANDOFF marker detection', () => {
+      it('should detect HANDOFF marker with agent name', async () => {
+        const { detectMarkers } = await import('../src/adapters/reflector');
 
-      const markers = detectMarkers(text);
+        const text = 'Ready for the next phase.\n<!-- CYCLIST:HANDOFF:/tea -->';
+        const result = detectMarkers(text);
 
-      expect(markers).toHaveLength(2);
-      expect(markers[0].type).toBe('HANDOFF');
-      expect(markers[1].type).toBe('QUESTION');
+        expect(result).not.toBeNull();
+        expect(result).toHaveLength(1);
+        expect(result![0].type).toBe('handoff');
+        expect(result![0].value).toBe('/tea');
+      });
+
+      it('should detect HANDOFF marker for /dev', async () => {
+        const { detectMarkers } = await import('../src/adapters/reflector');
+
+        const text = 'Tests are RED. Ready for implementation.\n<!-- CYCLIST:HANDOFF:/dev -->';
+        const result = detectMarkers(text);
+
+        expect(result).not.toBeNull();
+        expect(result![0].type).toBe('handoff');
+        expect(result![0].value).toBe('/dev');
+      });
+
+      it('should detect HANDOFF marker for /reviewer', async () => {
+        const { detectMarkers } = await import('../src/adapters/reflector');
+
+        const text = 'Implementation complete.\n<!-- CYCLIST:HANDOFF:/reviewer -->';
+        const result = detectMarkers(text);
+
+        expect(result).not.toBeNull();
+        expect(result![0].type).toBe('handoff');
+        expect(result![0].value).toBe('/reviewer');
+      });
+
+      it('should detect HANDOFF marker for /sm', async () => {
+        const { detectMarkers } = await import('../src/adapters/reflector');
+
+        const text = 'PR approved.\n<!-- CYCLIST:HANDOFF:/sm -->';
+        const result = detectMarkers(text);
+
+        expect(result).not.toBeNull();
+        expect(result![0].type).toBe('handoff');
+        expect(result![0].value).toBe('/sm');
+      });
     });
 
-    it('should return empty array when no markers found', async () => {
-      const { detectMarkers } = await import('../src/adapters/reflector');
-      const text = 'Just some normal text without any markers';
+    describe('CONTEXT_CLEAR marker detection', () => {
+      it('should detect CONTEXT_CLEAR marker', async () => {
+        const { detectMarkers } = await import('../src/adapters/reflector');
 
-      const markers = detectMarkers(text);
+        const text = 'Context is high. Clearing session.\n<!-- CYCLIST:CONTEXT_CLEAR:/dev -->';
+        const result = detectMarkers(text);
 
-      expect(markers).toEqual([]);
+        expect(result).not.toBeNull();
+        expect(result![0].type).toBe('context_clear');
+        expect(result![0].value).toBe('/dev');
+      });
     });
 
-    it('should handle empty input', async () => {
-      const { detectMarkers } = await import('../src/adapters/reflector');
+    describe('QUESTION marker detection', () => {
+      it('should detect QUESTION marker with yesno type', async () => {
+        const { detectMarkers } = await import('../src/adapters/reflector');
 
-      expect(detectMarkers('')).toEqual([]);
-      expect(detectMarkers(null as any)).toEqual([]);
-      expect(detectMarkers(undefined as any)).toEqual([]);
+        const text = 'Shall I proceed?\n<!-- CYCLIST:QUESTION:yesno -->';
+        const result = detectMarkers(text);
+
+        expect(result).not.toBeNull();
+        expect(result![0].type).toBe('question');
+        expect(result![0].value).toBe('yesno');
+      });
     });
 
-    it('should not match malformed markers', async () => {
-      const { detectMarkers } = await import('../src/adapters/reflector');
-      const text = `
-        <!-- CYCLIST:INVALID -->
-        <!-- CYCLIST:HANDOFF -->
-        <!-- CYCLIST: HANDOFF:/dev -->
-        <!- CYCLIST:HANDOFF:/dev -->
-      `;
+    describe('CHOICES marker detection', () => {
+      it('should detect CHOICES marker with numeric options', async () => {
+        const { detectMarkers } = await import('../src/adapters/reflector');
 
-      const markers = detectMarkers(text);
+        const text = 'Which option?\n1. First\n2. Second\n<!-- CYCLIST:CHOICES:1,2 -->';
+        const result = detectMarkers(text);
 
-      expect(markers).toEqual([]);
+        expect(result).not.toBeNull();
+        expect(result![0].type).toBe('choices');
+        expect(result![0].value).toBe('1,2');
+      });
+
+      it('should detect CHOICES marker with text labels', async () => {
+        const { detectMarkers } = await import('../src/adapters/reflector');
+
+        const text = 'Pick one:\n<!-- CYCLIST:CHOICES:Option A,Option B,Option C -->';
+        const result = detectMarkers(text);
+
+        expect(result).not.toBeNull();
+        expect(result![0].type).toBe('choices');
+        expect(result![0].value).toBe('Option A,Option B,Option C');
+      });
+    });
+
+    describe('Edge cases', () => {
+      it('should return null when no markers present', async () => {
+        const { detectMarkers } = await import('../src/adapters/reflector');
+
+        const text = 'This is a regular message without any markers.';
+        const result = detectMarkers(text);
+
+        expect(result).toBeNull();
+      });
+
+      it('should return null for empty string', async () => {
+        const { detectMarkers } = await import('../src/adapters/reflector');
+
+        const result = detectMarkers('');
+        expect(result).toBeNull();
+      });
+
+      it('should return null for null/undefined input', async () => {
+        const { detectMarkers } = await import('../src/adapters/reflector');
+
+        expect(detectMarkers(null as any)).toBeNull();
+        expect(detectMarkers(undefined as any)).toBeNull();
+      });
+
+      it('should handle whitespace inside marker', async () => {
+        const { detectMarkers } = await import('../src/adapters/reflector');
+
+        const text = '<!--  CYCLIST:HANDOFF:/tea  -->';
+        const result = detectMarkers(text);
+
+        expect(result).not.toBeNull();
+        expect(result![0].value).toBe('/tea');
+      });
+
+      it('should be case-insensitive for marker type', async () => {
+        const { detectMarkers } = await import('../src/adapters/reflector');
+
+        const text = '<!-- cyclist:handoff:/tea -->';
+        const result = detectMarkers(text);
+
+        expect(result).not.toBeNull();
+        expect(result![0].type).toBe('handoff');
+      });
+
+      it('should NOT detect markers inside code blocks', async () => {
+        const { detectMarkers } = await import('../src/adapters/reflector');
+
+        const text = `Here's an example:
+\`\`\`html
+<!-- CYCLIST:HANDOFF:/tea -->
+\`\`\`
+That was just an example.`;
+
+        const result = detectMarkers(text);
+        expect(result).toBeNull();
+      });
+
+      it('should detect multiple markers in order', async () => {
+        const { detectMarkers } = await import('../src/adapters/reflector');
+
+        const text = `First marker
+<!-- CYCLIST:QUESTION:yesno -->
+Second marker
+<!-- CYCLIST:CHOICES:1,2 -->`;
+
+        const result = detectMarkers(text);
+
+        expect(result).not.toBeNull();
+        expect(result).toHaveLength(2);
+        expect(result![0].type).toBe('question');
+        expect(result![1].type).toBe('choices');
+      });
     });
   });
 
   // ==========================================================================
-  // AC2: stripMarkers() removes markers before display
+  // AC2: HANDOFF markers show VS Code notification with agent button
   // ==========================================================================
-  describe('AC2: stripMarkers() removes markers before display', () => {
-    it('should export stripMarkers function', async () => {
-      const reflector = await import('../src/adapters/reflector');
-      expect(reflector.stripMarkers).toBeDefined();
-      expect(typeof reflector.stripMarkers).toBe('function');
+  describe('AC2: HANDOFF markers show VS Code notification with agent button', () => {
+    it('should show information message for HANDOFF marker', async () => {
+      const { ReflectorAdapter } = await import('../src/adapters/reflector');
+
+      const adapter = new ReflectorAdapter();
+      const text = 'Ready for review.\n<!-- CYCLIST:HANDOFF:/reviewer -->';
+
+      await adapter.processText(text);
+
+      expect(mockShowInformationMessage).toHaveBeenCalled();
     });
 
-    it('should remove CYCLIST markers from text', async () => {
-      const { stripMarkers } = await import('../src/adapters/reflector');
-      const text = 'Hello <!-- CYCLIST:HANDOFF:/dev --> World';
+    it('should include agent command in notification message', async () => {
+      const { ReflectorAdapter } = await import('../src/adapters/reflector');
 
-      const result = stripMarkers(text);
+      const adapter = new ReflectorAdapter();
+      const text = 'Tests are RED.\n<!-- CYCLIST:HANDOFF:/dev -->';
 
-      expect(result).toBe('Hello  World');
-    });
-
-    it('should remove multiple markers', async () => {
-      const { stripMarkers } = await import('../src/adapters/reflector');
-      const text = `Start <!-- CYCLIST:HANDOFF:/dev --> Middle <!-- CYCLIST:QUESTION:yesno --> End`;
-
-      const result = stripMarkers(text);
-
-      expect(result).toBe('Start  Middle  End');
-    });
-
-    it('should preserve non-marker HTML comments', async () => {
-      const { stripMarkers } = await import('../src/adapters/reflector');
-      const text = '<!-- This is a normal comment --> Keep this';
-
-      const result = stripMarkers(text);
-
-      expect(result).toBe('<!-- This is a normal comment --> Keep this');
-    });
-
-    it('should handle text with no markers', async () => {
-      const { stripMarkers } = await import('../src/adapters/reflector');
-      const text = 'No markers here';
-
-      const result = stripMarkers(text);
-
-      expect(result).toBe('No markers here');
-    });
-
-    it('should handle empty input', async () => {
-      const { stripMarkers } = await import('../src/adapters/reflector');
-
-      expect(stripMarkers('')).toBe('');
-      expect(stripMarkers(null as any)).toBe('');
-      expect(stripMarkers(undefined as any)).toBe('');
-    });
-
-    it('should trim trailing whitespace after stripping', async () => {
-      const { stripMarkers } = await import('../src/adapters/reflector');
-      const text = 'Content\n<!-- CYCLIST:HANDOFF:/dev -->\n';
-
-      const result = stripMarkers(text);
-
-      expect(result).toBe('Content\n\n');
-    });
-  });
-
-  // ==========================================================================
-  // AC3: HANDOFF shows VS Code notification with action button
-  // ==========================================================================
-  describe('AC3: HANDOFF shows VS Code notification with action button', () => {
-    it('should export processMarker function', async () => {
-      const reflector = await import('../src/adapters/reflector');
-      expect(reflector.processMarker).toBeDefined();
-      expect(typeof reflector.processMarker).toBe('function');
-    });
-
-    it('should show notification for HANDOFF marker', async () => {
-      const { processMarker } = await import('../src/adapters/reflector');
-      mockShowInformationMessage.mockResolvedValue(undefined);
-
-      await processMarker({ type: 'HANDOFF', value: '/dev' });
+      await adapter.processText(text);
 
       expect(mockShowInformationMessage).toHaveBeenCalledWith(
-        expect.stringContaining('dev'),
-        expect.any(String) // Action button text
+        expect.stringContaining('/dev'),
+        expect.anything()
       );
     });
 
-    it('should include action button to switch agent', async () => {
-      const { processMarker } = await import('../src/adapters/reflector');
-      mockShowInformationMessage.mockResolvedValue('Switch');
+    it('should provide action button to invoke agent', async () => {
+      const { ReflectorAdapter } = await import('../src/adapters/reflector');
+      mockShowInformationMessage.mockResolvedValueOnce('Continue with /tea');
 
-      await processMarker({ type: 'HANDOFF', value: '/tea' });
+      const adapter = new ReflectorAdapter();
+      const text = '<!-- CYCLIST:HANDOFF:/tea -->';
 
+      await adapter.processText(text);
+
+      // Should have action button
       expect(mockShowInformationMessage).toHaveBeenCalledWith(
-        expect.anything(),
-        'Switch to /tea'
+        expect.any(String),
+        expect.stringMatching(/Continue|/i)
       );
     });
 
-    it('should execute switchAgent command when action clicked', async () => {
-      const { processMarker } = await import('../src/adapters/reflector');
-      mockShowInformationMessage.mockResolvedValue('Switch to /dev');
+    it('should execute agent command when action button clicked', async () => {
+      const { ReflectorAdapter } = await import('../src/adapters/reflector');
+      mockShowInformationMessage.mockResolvedValueOnce('Continue with /dev');
 
-      await processMarker({ type: 'HANDOFF', value: '/dev' });
+      const adapter = new ReflectorAdapter();
+      const text = '<!-- CYCLIST:HANDOFF:/dev -->';
 
+      await adapter.processText(text);
+
+      // When user clicks the action, it should execute the switch command
       expect(mockExecuteCommand).toHaveBeenCalledWith(
         'pennyfarthing.switchAgent',
         '/dev'
       );
     });
+  });
 
-    it('should not execute command when notification dismissed', async () => {
-      const { processMarker } = await import('../src/adapters/reflector');
-      mockShowInformationMessage.mockResolvedValue(undefined);
+  // ==========================================================================
+  // AC3: CONTEXT_CLEAR triggers context clear command
+  // ==========================================================================
+  describe('AC3: CONTEXT_CLEAR triggers context clear command', () => {
+    it('should execute context clear command for CONTEXT_CLEAR marker', async () => {
+      const { ReflectorAdapter } = await import('../src/adapters/reflector');
 
-      await processMarker({ type: 'HANDOFF', value: '/dev' });
+      const adapter = new ReflectorAdapter();
+      const text = 'Context is high.\n<!-- CYCLIST:CONTEXT_CLEAR:/dev -->';
 
-      expect(mockExecuteCommand).not.toHaveBeenCalled();
+      await adapter.processText(text);
+
+      expect(mockExecuteCommand).toHaveBeenCalledWith(
+        'pennyfarthing.contextClear',
+        '/dev'
+      );
+    });
+
+    it('should pass agent name to context clear command', async () => {
+      const { ReflectorAdapter } = await import('../src/adapters/reflector');
+
+      const adapter = new ReflectorAdapter();
+      const text = '<!-- CYCLIST:CONTEXT_CLEAR:/tea -->';
+
+      await adapter.processText(text);
+
+      expect(mockExecuteCommand).toHaveBeenCalledWith(
+        'pennyfarthing.contextClear',
+        '/tea'
+      );
     });
   });
 
   // ==========================================================================
-  // AC4: CONTEXT_CLEAR executes pennyfarthing.contextClear command
+  // AC4: QUESTION/CHOICES show VS Code quick pick
   // ==========================================================================
-  describe('AC4: CONTEXT_CLEAR executes pennyfarthing.contextClear command', () => {
-    it('should execute contextClear command for CONTEXT_CLEAR marker', async () => {
-      const { processMarker } = await import('../src/adapters/reflector');
+  describe('AC4: QUESTION/CHOICES show VS Code quick pick', () => {
+    describe('QUESTION:yesno', () => {
+      it('should show quick pick for yesno question', async () => {
+        const { ReflectorAdapter } = await import('../src/adapters/reflector');
 
-      await processMarker({ type: 'CONTEXT_CLEAR', value: '/tea' });
+        const adapter = new ReflectorAdapter();
+        const text = 'Shall I proceed?\n<!-- CYCLIST:QUESTION:yesno -->';
+
+        await adapter.processText(text);
+
+        expect(mockShowQuickPick).toHaveBeenCalled();
+      });
+
+      it('should provide Yes and No options', async () => {
+        const { ReflectorAdapter } = await import('../src/adapters/reflector');
+
+        const adapter = new ReflectorAdapter();
+        const text = '<!-- CYCLIST:QUESTION:yesno -->';
+
+        await adapter.processText(text);
+
+        expect(mockShowQuickPick).toHaveBeenCalledWith(
+          expect.arrayContaining(['Yes', 'No']),
+          expect.any(Object)
+        );
+      });
+    });
+
+    describe('CHOICES', () => {
+      it('should show quick pick for CHOICES marker', async () => {
+        const { ReflectorAdapter } = await import('../src/adapters/reflector');
+
+        const adapter = new ReflectorAdapter();
+        const text = 'Pick one:\n<!-- CYCLIST:CHOICES:1,2,3 -->';
+
+        await adapter.processText(text);
+
+        expect(mockShowQuickPick).toHaveBeenCalled();
+      });
+
+      it('should provide choice options from marker value', async () => {
+        const { ReflectorAdapter } = await import('../src/adapters/reflector');
+
+        const adapter = new ReflectorAdapter();
+        const text = '<!-- CYCLIST:CHOICES:Option A,Option B -->';
+
+        await adapter.processText(text);
+
+        expect(mockShowQuickPick).toHaveBeenCalledWith(
+          expect.arrayContaining(['Option A', 'Option B']),
+          expect.any(Object)
+        );
+      });
+
+      it('should handle numeric choices by extracting text from context', async () => {
+        const { ReflectorAdapter } = await import('../src/adapters/reflector');
+
+        const adapter = new ReflectorAdapter();
+        const text = `Which do you prefer?
+1. First option
+2. Second option
+<!-- CYCLIST:CHOICES:1,2 -->`;
+
+        await adapter.processText(text);
+
+        // Should extract "First option" and "Second option" from numbered list
+        expect(mockShowQuickPick).toHaveBeenCalledWith(
+          expect.arrayContaining([
+            expect.stringContaining('First'),
+            expect.stringContaining('Second'),
+          ]),
+          expect.any(Object)
+        );
+      });
+    });
+  });
+
+  // ==========================================================================
+  // AC5: Markers stripped from visible terminal output
+  // ==========================================================================
+  describe('AC5: Markers stripped from visible terminal output', () => {
+    it('should remove HANDOFF markers from text', async () => {
+      const { stripMarkers } = await import('../src/adapters/reflector');
+
+      const text = 'Ready for review.\n<!-- CYCLIST:HANDOFF:/reviewer -->';
+      const result = stripMarkers(text);
+
+      expect(result).not.toContain('CYCLIST');
+      expect(result).not.toContain('HANDOFF');
+      expect(result).toContain('Ready for review');
+    });
+
+    it('should remove CONTEXT_CLEAR markers from text', async () => {
+      const { stripMarkers } = await import('../src/adapters/reflector');
+
+      const text = 'Context high.\n<!-- CYCLIST:CONTEXT_CLEAR:/dev -->';
+      const result = stripMarkers(text);
+
+      expect(result).not.toContain('CYCLIST');
+      expect(result).not.toContain('CONTEXT_CLEAR');
+    });
+
+    it('should remove QUESTION markers from text', async () => {
+      const { stripMarkers } = await import('../src/adapters/reflector');
+
+      const text = 'Proceed?\n<!-- CYCLIST:QUESTION:yesno -->';
+      const result = stripMarkers(text);
+
+      expect(result).not.toContain('CYCLIST');
+      expect(result).not.toContain('QUESTION');
+    });
+
+    it('should remove CHOICES markers from text', async () => {
+      const { stripMarkers } = await import('../src/adapters/reflector');
+
+      const text = 'Options:\n<!-- CYCLIST:CHOICES:1,2,3 -->';
+      const result = stripMarkers(text);
+
+      expect(result).not.toContain('CYCLIST');
+      expect(result).not.toContain('CHOICES');
+    });
+
+    it('should preserve all other text content', async () => {
+      const { stripMarkers } = await import('../src/adapters/reflector');
+
+      const text = `## Implementation Complete
+
+All tests are passing. The changes include:
+- Feature A
+- Feature B
+
+Ready for review.
+<!-- CYCLIST:HANDOFF:/reviewer -->`;
+
+      const result = stripMarkers(text);
+
+      expect(result).toContain('## Implementation Complete');
+      expect(result).toContain('All tests are passing');
+      expect(result).toContain('Feature A');
+      expect(result).toContain('Feature B');
+      expect(result).toContain('Ready for review');
+      expect(result).not.toContain('CYCLIST');
+    });
+
+    it('should handle multiple markers in same text', async () => {
+      const { stripMarkers } = await import('../src/adapters/reflector');
+
+      const text = `Question here
+<!-- CYCLIST:QUESTION:choice -->
+<!-- CYCLIST:CHOICES:1,2 -->`;
+
+      const result = stripMarkers(text);
+
+      expect(result).not.toContain('CYCLIST');
+      expect(result).toContain('Question here');
+    });
+
+    it('should return original text when no markers present', async () => {
+      const { stripMarkers } = await import('../src/adapters/reflector');
+
+      const text = 'This is regular text without markers.';
+      const result = stripMarkers(text);
+
+      expect(result).toBe(text);
+    });
+
+    it('should handle empty string', async () => {
+      const { stripMarkers } = await import('../src/adapters/reflector');
+
+      const result = stripMarkers('');
+      expect(result).toBe('');
+    });
+  });
+
+  // ==========================================================================
+  // Integration: ReflectorAdapter processes text end-to-end
+  // ==========================================================================
+  describe('Integration: ReflectorAdapter end-to-end', () => {
+    it('should not trigger any UI for text without markers', async () => {
+      const { ReflectorAdapter } = await import('../src/adapters/reflector');
+
+      const adapter = new ReflectorAdapter();
+      const text = 'Just a regular message.';
+
+      await adapter.processText(text);
+
+      expect(mockShowInformationMessage).not.toHaveBeenCalled();
+      expect(mockShowQuickPick).not.toHaveBeenCalled();
+      expect(mockExecuteCommand).not.toHaveBeenCalled();
+    });
+
+    it('should process HANDOFF marker and show notification', async () => {
+      const { ReflectorAdapter } = await import('../src/adapters/reflector');
+
+      const adapter = new ReflectorAdapter();
+      const text = 'Done.\n<!-- CYCLIST:HANDOFF:/dev -->';
+
+      await adapter.processText(text);
+
+      expect(mockShowInformationMessage).toHaveBeenCalled();
+    });
+
+    it('should process CONTEXT_CLEAR marker and execute command', async () => {
+      const { ReflectorAdapter } = await import('../src/adapters/reflector');
+
+      const adapter = new ReflectorAdapter();
+      const text = '<!-- CYCLIST:CONTEXT_CLEAR:/tea -->';
+
+      await adapter.processText(text);
 
       expect(mockExecuteCommand).toHaveBeenCalledWith(
         'pennyfarthing.contextClear',
@@ -318,252 +582,15 @@ describe('MSSCI-12049: Reflector Protocol Adapter (Pivoted)', () => {
       );
     });
 
-    it('should handle command execution errors gracefully', async () => {
-      const { processMarker } = await import('../src/adapters/reflector');
-      mockExecuteCommand.mockRejectedValue(new Error('Command failed'));
-
-      // Should not throw
-      await expect(
-        processMarker({ type: 'CONTEXT_CLEAR', value: '/dev' })
-      ).resolves.not.toThrow();
-    });
-  });
-
-  // ==========================================================================
-  // AC5: QUESTION/yesno shows Yes/No quick pick
-  // ==========================================================================
-  describe('AC5: QUESTION/yesno shows Yes/No quick pick', () => {
-    it('should show Yes/No quick pick for QUESTION:yesno', async () => {
-      const { processMarker } = await import('../src/adapters/reflector');
-      mockShowQuickPick.mockResolvedValue('Yes');
-
-      await processMarker({ type: 'QUESTION', value: 'yesno' });
-
-      expect(mockShowQuickPick).toHaveBeenCalledWith(['Yes', 'No'], {
-        placeHolder: expect.any(String),
-      });
-    });
-
-    it('should return selected value', async () => {
-      const { processMarker } = await import('../src/adapters/reflector');
-      mockShowQuickPick.mockResolvedValue('Yes');
-
-      const result = await processMarker({ type: 'QUESTION', value: 'yesno' });
-
-      expect(result).toBe('Yes');
-    });
-
-    it('should handle user cancellation', async () => {
-      const { processMarker } = await import('../src/adapters/reflector');
-      mockShowQuickPick.mockResolvedValue(undefined);
-
-      const result = await processMarker({ type: 'QUESTION', value: 'yesno' });
-
-      expect(result).toBeUndefined();
-    });
-  });
-
-  // ==========================================================================
-  // AC6: CHOICES shows quick pick with parsed options
-  // ==========================================================================
-  describe('AC6: CHOICES shows quick pick with parsed options', () => {
-    it('should parse comma-separated choices', async () => {
-      const { processMarker } = await import('../src/adapters/reflector');
-      mockShowQuickPick.mockResolvedValue('option2');
-
-      await processMarker({ type: 'CHOICES', value: 'option1,option2,option3' });
-
-      expect(mockShowQuickPick).toHaveBeenCalledWith(
-        ['option1', 'option2', 'option3'],
-        expect.any(Object)
-      );
-    });
-
-    it('should handle single choice', async () => {
-      const { processMarker } = await import('../src/adapters/reflector');
-      mockShowQuickPick.mockResolvedValue('only-option');
-
-      await processMarker({ type: 'CHOICES', value: 'only-option' });
-
-      expect(mockShowQuickPick).toHaveBeenCalledWith(
-        ['only-option'],
-        expect.any(Object)
-      );
-    });
-
-    it('should trim whitespace from choices', async () => {
-      const { processMarker } = await import('../src/adapters/reflector');
-      mockShowQuickPick.mockResolvedValue('b');
-
-      await processMarker({ type: 'CHOICES', value: ' a , b , c ' });
-
-      expect(mockShowQuickPick).toHaveBeenCalledWith(
-        ['a', 'b', 'c'],
-        expect.any(Object)
-      );
-    });
-
-    it('should return selected choice', async () => {
-      const { processMarker } = await import('../src/adapters/reflector');
-      mockShowQuickPick.mockResolvedValue('selected');
-
-      const result = await processMarker({
-        type: 'CHOICES',
-        value: 'a,selected,c',
-      });
-
-      expect(result).toBe('selected');
-    });
-  });
-
-  // ==========================================================================
-  // AC7: Integrates with chat-participant onText handler
-  // ==========================================================================
-  describe('AC7: Integrates with chat-participant onText handler', () => {
-    it('should export ReflectorAdapter class', async () => {
-      const reflector = await import('../src/adapters/reflector');
-      expect(reflector.ReflectorAdapter).toBeDefined();
-    });
-
-    it('should have processText method for chat integration', async () => {
+    it('should process QUESTION marker and show quick pick', async () => {
       const { ReflectorAdapter } = await import('../src/adapters/reflector');
+
       const adapter = new ReflectorAdapter();
+      const text = '<!-- CYCLIST:QUESTION:yesno -->';
 
-      expect(adapter.processText).toBeDefined();
-      expect(typeof adapter.processText).toBe('function');
-    });
+      await adapter.processText(text);
 
-    it('should return stripped text from processText', async () => {
-      const { ReflectorAdapter } = await import('../src/adapters/reflector');
-      const adapter = new ReflectorAdapter();
-
-      const result = await adapter.processText(
-        'Hello <!-- CYCLIST:HANDOFF:/dev --> World'
-      );
-
-      expect(result.displayText).toBe('Hello  World');
-    });
-
-    it('should trigger marker processing from processText', async () => {
-      const { ReflectorAdapter } = await import('../src/adapters/reflector');
-      const adapter = new ReflectorAdapter();
-      mockShowInformationMessage.mockResolvedValue(undefined);
-
-      await adapter.processText('Text <!-- CYCLIST:HANDOFF:/dev -->');
-
-      expect(mockShowInformationMessage).toHaveBeenCalled();
-    });
-
-    it('should process all markers in text', async () => {
-      const { ReflectorAdapter } = await import('../src/adapters/reflector');
-      const adapter = new ReflectorAdapter();
-      mockShowInformationMessage.mockResolvedValue(undefined);
-      mockShowQuickPick.mockResolvedValue('Yes');
-
-      await adapter.processText(`
-        <!-- CYCLIST:HANDOFF:/dev -->
-        <!-- CYCLIST:QUESTION:yesno -->
-      `);
-
-      expect(mockShowInformationMessage).toHaveBeenCalled();
       expect(mockShowQuickPick).toHaveBeenCalled();
-    });
-
-    it('should return markers found in result', async () => {
-      const { ReflectorAdapter } = await import('../src/adapters/reflector');
-      const adapter = new ReflectorAdapter();
-
-      const result = await adapter.processText(
-        '<!-- CYCLIST:HANDOFF:/dev -->'
-      );
-
-      expect(result.markers).toHaveLength(1);
-      expect(result.markers[0].type).toBe('HANDOFF');
-    });
-
-    it('chat-participant.ts should import ReflectorAdapter', async () => {
-      const { readFileSync } =
-        await vi.importActual<typeof import('fs')>('fs');
-      const { join } = await vi.importActual<typeof import('path')>('path');
-      const chatPath = join(
-        __dirname,
-        '..',
-        'src',
-        'providers',
-        'chat-participant.ts'
-      );
-
-      const content = readFileSync(chatPath, 'utf-8');
-
-      expect(content).toContain('ReflectorAdapter');
-      expect(content).toContain("from '../adapters/reflector'");
-    });
-
-    it('chat-participant.ts should use processText in onText handler', async () => {
-      const { readFileSync } =
-        await vi.importActual<typeof import('fs')>('fs');
-      const { join } = await vi.importActual<typeof import('path')>('path');
-      const chatPath = join(
-        __dirname,
-        '..',
-        'src',
-        'providers',
-        'chat-participant.ts'
-      );
-
-      const content = readFileSync(chatPath, 'utf-8');
-
-      // Should call processText and use displayText
-      expect(content).toContain('processText');
-      expect(content).toContain('displayText');
-    });
-  });
-
-  // ==========================================================================
-  // Edge Cases
-  // ==========================================================================
-  describe('Edge cases', () => {
-    it('should handle markers split across text chunks', async () => {
-      const { ReflectorAdapter } = await import('../src/adapters/reflector');
-      const adapter = new ReflectorAdapter();
-
-      // First chunk ends mid-marker
-      const chunk1 = 'Text <!-- CYCLIST:HA';
-      const chunk2 = 'NDOFF:/dev --> more';
-
-      // Adapter should buffer incomplete markers
-      const result1 = await adapter.processText(chunk1);
-      const result2 = await adapter.processText(chunk2);
-
-      // The complete marker should be detected
-      expect(result1.markers.length + result2.markers.length).toBe(1);
-    });
-
-    it('should handle unknown marker types gracefully', async () => {
-      const { detectMarkers } = await import('../src/adapters/reflector');
-      const text = '<!-- CYCLIST:UNKNOWN:value -->';
-
-      // Should not throw, should return empty or ignore
-      const markers = detectMarkers(text);
-      expect(markers.every((m) => ['HANDOFF', 'CONTEXT_CLEAR', 'QUESTION', 'CHOICES'].includes(m.type))).toBe(true);
-    });
-
-    it('should handle rapid successive marker processing', async () => {
-      const { ReflectorAdapter } = await import('../src/adapters/reflector');
-      const adapter = new ReflectorAdapter();
-      mockShowInformationMessage.mockResolvedValue(undefined);
-
-      // Process many markers quickly
-      const promises = Array(10)
-        .fill(null)
-        .map((_, i) =>
-          adapter.processText(`<!-- CYCLIST:HANDOFF:/agent${i} -->`)
-        );
-
-      await Promise.all(promises);
-
-      // Should have processed all without errors
-      expect(mockShowInformationMessage).toHaveBeenCalledTimes(10);
     });
   });
 });

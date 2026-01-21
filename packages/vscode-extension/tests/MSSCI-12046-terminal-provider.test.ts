@@ -121,12 +121,15 @@ const mockVscode = {
     registerTerminalProfileProvider: vi.fn(() => ({ dispose: vi.fn() })),
     registerTerminalLinkProvider: vi.fn(() => ({ dispose: vi.fn() })),
     registerTreeDataProvider: vi.fn(() => ({ dispose: vi.fn() })),
+    registerWebviewViewProvider: vi.fn(() => ({ dispose: vi.fn() })),
     createTerminal: vi.fn(() => mockTerminal),
     showInformationMessage: vi.fn(),
     showTextDocument: vi.fn(() => Promise.resolve()),
     showQuickPick: vi.fn(),
     activeTerminal: mockTerminal,
     terminals: [mockTerminal],
+    activeColorTheme: { kind: 2 },
+    onDidChangeActiveColorTheme: vi.fn(() => ({ dispose: vi.fn() })),
   },
   workspace: {
     workspaceFolders: [mockWorkspaceFolder],
@@ -134,6 +137,7 @@ const mockVscode = {
   },
   commands: {
     registerCommand: vi.fn(() => ({ dispose: vi.fn() })),
+    executeCommand: vi.fn(() => Promise.resolve()),
   },
   Uri: {
     file: vi.fn((path: string) => ({ fsPath: path, scheme: 'file' })),

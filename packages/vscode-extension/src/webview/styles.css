@@ -1,0 +1,240 @@
+/**
+ * MSSCI-12051: Cyclist Webview Styles
+ *
+ * CSP-compliant styles for Cyclist panel in VS Code.
+ * Uses VS Code CSS variables for theme integration.
+ */
+
+/* Reset and base styles */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  color: var(--vscode-foreground);
+  background-color: var(--vscode-editor-background);
+}
+
+/* Theme classes */
+body.vscode-light {
+  --cyclist-context-safe: #22c55e;
+  --cyclist-context-warning: #f59e0b;
+  --cyclist-context-danger: #ef4444;
+}
+
+body.vscode-dark {
+  --cyclist-context-safe: #4ade80;
+  --cyclist-context-warning: #fbbf24;
+  --cyclist-context-danger: #f87171;
+}
+
+/* Main container */
+#cyclist-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 8px;
+  gap: 12px;
+}
+
+/* Stats Strip */
+.stats-strip {
+  background-color: var(--vscode-sideBar-background);
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 4px;
+  padding: 8px 12px;
+}
+
+.context-meter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 20px;
+  background-color: var(--vscode-input-background);
+  border-radius: 10px;
+  padding: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.context-bar {
+  height: 100%;
+  min-width: 4px;
+  border-radius: 8px;
+  transition: width 0.3s ease, background-color 0.3s ease;
+  background-color: var(--cyclist-context-safe);
+}
+
+.context-bar.level-safe {
+  background-color: var(--cyclist-context-safe);
+}
+
+.context-bar.level-warning {
+  background-color: var(--cyclist-context-warning);
+}
+
+.context-bar.level-danger {
+  background-color: var(--cyclist-context-danger);
+}
+
+.context-label {
+  position: absolute;
+  right: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+}
+
+/* Persona Panel */
+.persona-panel {
+  background-color: var(--vscode-sideBar-background);
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 4px;
+  padding: 12px;
+}
+
+.character-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+  margin-bottom: 4px;
+}
+
+.character-role {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--vscode-descriptionForeground);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Story Panel */
+.story-panel {
+  background-color: var(--vscode-sideBar-background);
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 4px;
+  padding: 12px;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.story-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.story-id {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--vscode-textLink-foreground);
+}
+
+.story-phase {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background-color: var(--vscode-badge-background);
+  color: var(--vscode-badge-foreground);
+  text-transform: uppercase;
+}
+
+.story-title {
+  font-size: 13px;
+  color: var(--vscode-foreground);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.story-branch {
+  font-size: 11px;
+  font-family: var(--vscode-editor-font-family);
+  color: var(--vscode-descriptionForeground);
+  background-color: var(--vscode-textCodeBlock-background);
+  padding: 4px 8px;
+  border-radius: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Connection Status */
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: var(--vscode-inputValidation-warningBackground);
+  border: 1px solid var(--vscode-inputValidation-warningBorder);
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.connection-status.hidden {
+  display: none;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--vscode-notificationsWarningIcon-foreground);
+}
+
+.status-indicator.reconnecting {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.status-indicator.disconnected {
+  background-color: var(--vscode-notificationsErrorIcon-foreground);
+}
+
+.status-text {
+  color: var(--vscode-foreground);
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* Scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--vscode-scrollbarSlider-background);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--vscode-scrollbarSlider-hoverBackground);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--vscode-scrollbarSlider-activeBackground);
+}

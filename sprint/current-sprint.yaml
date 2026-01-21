@@ -13,6 +13,7 @@ epics:
   # ===========================================================================
   - id: MSSCI-11942
     type: epic
+    jira: MSSCI-12120
     title: "Epic: WheelHub Notification Consolidation"
     priority: P2
     status: done
@@ -236,6 +237,7 @@ epics:
           - Symlink removed from .claude/skills/
           - /sprint backlog documented as replacement
       - id: MSSCI-12039
+        jira: MSSCI-12119
         title: "Consolidate /new-work into /sprint work with next argument"
         description: |
           Make /new-work an alias for /sprint work. Add 'next' argument to
@@ -306,7 +308,9 @@ epics:
       workflows with progressive disclosure, gates, and tri-modal execution.
       Based on ADR-0005. Makes stepped workflows a first-class Pennyfarthing capability.
     priority: P2
-    status: in_progress
+    status: done
+    completed: 2026-01-21
+    completed_points: 17
     repos: pennyfarthing
     adr: docs/adr/0005-bmad-workflow-import.md
     stories:
@@ -488,7 +492,7 @@ epics:
           Documents stepped workflow patterns for other workflows.
         points: 1
         priority: P2
-        status: ready
+        status: done
         repos: pennyfarthing
         workflow: trivial
         acceptance_criteria:
@@ -497,11 +501,13 @@ epics:
           - Gates defined at appropriate checkpoints
           - Workflow runs end-to-end successfully
         jira: MSSCI-12087
+        branch: feat/MSSCI-12087-architecture-workflow
+        completed: "2026-01-21"
     jira: MSSCI-12077
   # ===========================================================================
   # EPIC 52: VS Code Extension for Pennyfarthing
   # ===========================================================================
-  - id: 52
+  - id: MSSCI-12042
     type: epic
     jira: MSSCI-12042
     title: "Epic: VS Code Extension for Pennyfarthing"
@@ -519,7 +525,9 @@ epics:
       - TirePump integrates with VS Code's workspace state API
       - Reuse Cyclist's public/js components in webview context
     priority: P2
-    status: in_progress
+    status: done
+    completed: 2026-01-21
+    completed_points: 29
     repos: pennyfarthing
     stories:
       - id: MSSCI-12045
@@ -673,14 +681,16 @@ epics:
           UI enhancement rather than a requirement.
         points: 3
         priority: P2
-        status: ready
+        status: done
         repos: pennyfarthing
         workflow: tdd
+        branch: feat/MSSCI-12051-webview-cyclist-ui
         acceptance_criteria:
           - Webview renders Cyclist components
           - CSP allows script/style loading
           - Theme syncs with VS Code appearance
           - Stats/story panels update in real-time
+        completed: "2026-01-21"
       - id: MSSCI-12097
         jira: MSSCI-12097
         title: "VS Code Chat API integration for Claude conversations"
@@ -706,3 +716,396 @@ epics:
           - Slash commands (/sm, /tea, etc.) prepend to prompt
           - Tool use displays with formatted markdown
           - Works alongside GitHub Copilot Chat
+  - id: epic-53
+    type: epic
+    title: "Epic: VS Code Extension UX/UI Pass"
+    description: |
+      Polish the VS Code extension shipped in Epic 52. Focus on:
+      - Clearer onboarding and discoverability
+      - Full integration with Cyclist skills, commands, workflows
+      - Improved chat formatting and streaming UX
+      - Visual polish for Gearshift and sidebar
+    priority: P1
+    status: backlog
+    repos: pennyfarthing
+    stories:
+      - id: MSSCI-12123
+        title: "Welcome view with onboarding flow"
+        description: |
+          Create VS Code welcome view that appears on first activation:
+          - Explain what Pennyfarthing is and how to use it
+          - Show available agents with descriptions
+          - Quick-start buttons for common workflows
+          - Link to full documentation
+        points: 2
+        priority: P0
+        status: done
+        completed: 2026-01-21
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12123
+      - id: MSSCI-12124
+        title: "Skills/commands discovery in sidebar"
+        description: |
+          Enhance sidebar tree view with skills and commands:
+          - Collapsible "Skills" section listing all available skills
+          - Collapsible "Commands" section with slash commands
+          - Click to invoke skill/command in chat
+          - Search/filter functionality
+          - Show skill descriptions on hover
+        points: 3
+        priority: P0
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12124
+      - id: MSSCI-12125
+        title: "Workflow panel with status/progress"
+        description: |
+          Add workflow tracking to sidebar:
+          - Show active workflow name and type (phased/stepped)
+          - Display current step/phase with progress indicator
+          - Show completed vs remaining steps
+          - Quick actions: resume, abandon, view details
+        points: 3
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12125
+      - id: MSSCI-12126
+        title: "Chat response formatting improvements"
+        description: |
+          Improve how Claude responses render in VS Code chat:
+          - Better code block syntax highlighting
+          - Collapsible tool use sections
+          - File path links that open in editor
+          - Markdown table rendering
+          - Progress indicators for long operations
+        points: 2
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12126
+      - id: MSSCI-12127
+        title: "Gearshift visual polish and persistence"
+        description: |
+          Polish the Gearshift mode switcher:
+          - Clear visual indication of current mode
+          - Smooth transitions between modes
+          - Persist mode across sessions
+          - Tooltip explanations for each mode
+          - Keyboard shortcuts for mode switching
+        points: 2
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12127
+      - id: MSSCI-12128
+        title: "Error handling with actionable messages"
+        description: |
+          Improve error UX throughout extension:
+          - User-friendly error messages (not raw stack traces)
+          - Actionable suggestions for common errors
+          - Retry buttons where appropriate
+          - Link to troubleshooting docs
+          - Error reporting mechanism
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12128
+      - id: MSSCI-12129
+        title: "Theme integration (VS Code to Pennyfarthing)"
+        description: |
+          Sync VS Code theme with Pennyfarthing webview:
+          - Detect VS Code light/dark mode
+          - Apply matching styles to Cyclist components
+          - Respect user's VS Code color customizations
+          - Handle theme changes in real-time
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12129
+      - id: MSSCI-12130
+        title: "Quick-pick for skill/workflow invocation"
+        description: |
+          Add VS Code quick-pick menus for common actions:
+          - Ctrl+Shift+P → "Pennyfarthing: Run Skill" → skill picker
+          - Ctrl+Shift+P → "Pennyfarthing: Start Workflow" → workflow picker
+          - Recently used skills/workflows at top
+          - Fuzzy search support
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12130
+    jira: MSSCI-12122
+  - id: epic-54
+    type: epic
+    title: "Epic: BikeLane BMAD Workflow Imports"
+    description: |
+      Import all BMAD workflows into Pennyfarthing's BikeLane stepped workflow
+      system. Goal: full BMAD compatibility - any BMAD workflow should run
+      unchanged in Pennyfarthing.
+
+      Source: ~/Projects/BMAD-METHOD/src/modules/bmm/workflows/
+      Target: pennyfarthing-dist/workflows/
+
+      Phases:
+      1. Migration tooling and PRD workflow
+      2. Solutioning workflows (architecture, epics)
+      3. Implementation workflows (dev, sprint, retro)
+      4. Utility workflows and validation
+    priority: P1
+    status: in_progress
+    repos: pennyfarthing
+    stories:
+      - id: MSSCI-12132
+        title: "BMAD to Pennyfarthing migration script"
+        description: |
+          Create migration tool that converts BMAD workflow format to
+          Pennyfarthing stepped workflow format:
+          - Parse BMAD step files (step-NN-*.md)
+          - Extract step-meta if present, infer if not
+          - Convert variable syntax if needed
+          - Generate workflow.yaml with correct schema
+          - Preserve tri-modal structure (steps-c, steps-v, steps-e)
+          Script: pennyfarthing-dist/scripts/migrate-bmad-workflow.sh
+        points: 3
+        priority: P0
+        status: done
+        completed: 2026-01-21
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Script parses BMAD workflow.md configuration
+          - Script extracts YAML frontmatter from step files
+          - Variable syntax converted (dashes to underscores)
+          - workflow.yaml generated with correct schema
+          - Tri-modal structure preserved
+          - Dry-run mode shows changes without writing
+        jira: MSSCI-12132
+        pr: 403
+      - id: MSSCI-12133
+        title: "Import PRD workflow (all 3 modes)"
+        description: |
+          Import BMAD PRD (Product Requirements Document) workflow:
+          - Source: bmm/workflows/2-plan-workflows/prd/
+          - 12 create steps, validate steps, edit steps
+          - Gates after discovery, scoping, and completion
+          - Template for PRD output document
+          First major workflow import - validates migration approach.
+        points: 5
+        priority: P0
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12133
+        completed: "2026-01-21"
+      - id: MSSCI-12134
+        title: "Import Product Brief workflow"
+        description: |
+          Import BMAD product brief workflow:
+          - Source: bmm/workflows/1-analysis/create-product-brief/
+          - Quick product definition before full PRD
+          - Single-mode workflow (create only)
+        points: 2
+        priority: P0
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12134
+      - id: MSSCI-12135
+        title: "Import Research workflow"
+        description: |
+          Import BMAD research workflow:
+          - Source: bmm/workflows/1-analysis/research/
+          - Structured research and discovery process
+          - Feeds into product brief and PRD
+        points: 2
+        priority: P0
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12135
+      - id: MSSCI-12136
+        title: "Enhance Architecture workflow from BMAD"
+        description: |
+          Enhance existing architecture workflow with BMAD patterns:
+          - Source: bmm/workflows/3-solutioning/ (if exists)
+          - Compare with our 7-step architecture workflow
+          - Add any missing steps or gates
+          - Ensure compatibility with BMAD projects
+        points: 2
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12136
+      - id: MSSCI-12137
+        title: "Import Epics-and-Stories workflow"
+        description: |
+          Import BMAD epic/story generation workflow:
+          - Converts PRD into actionable epics and stories
+          - Structured breakdown process
+          - Output format compatible with sprint YAML
+        points: 3
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12137
+      - id: MSSCI-12138
+        title: "Import Implementation Readiness workflow"
+        description: |
+          Import BMAD implementation readiness check:
+          - Validates project is ready for development
+          - Checklist of prerequisites
+          - Gate before dev work begins
+        points: 2
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12138
+      - id: MSSCI-12139
+        title: "Import UX Design workflow"
+        description: |
+          Import BMAD UX design workflow:
+          - Source: bmm/workflows/2-plan-workflows/ (if exists)
+          - User journey mapping
+          - Wireframe/mockup guidance
+          - Design system integration
+        points: 3
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12139
+      - id: MSSCI-12140
+        title: "Import Dev-Story workflow"
+        description: |
+          Import BMAD dev-story workflow:
+          - Source: bmm/workflows/4-implementation/dev-story/
+          - Story implementation guidance
+          - TDD integration points
+          - Compare with our existing TDD flow
+        points: 3
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12140
+      - id: MSSCI-12141
+        title: "Import Sprint Planning workflow"
+        description: |
+          Import BMAD sprint planning workflow:
+          - Source: bmm/workflows/4-implementation/sprint-planning/
+          - Structured planning ceremony
+          - Capacity and velocity considerations
+          - Story selection process
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12141
+      - id: MSSCI-12142
+        title: "Import Retrospective workflow"
+        description: |
+          Import BMAD retrospective workflow:
+          - Source: bmm/workflows/4-implementation/retrospective/
+          - Structured retro ceremony
+          - Action item tracking
+          - Team improvement focus
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12142
+      - id: MSSCI-12143
+        title: "Import Code Review workflow"
+        description: |
+          Import BMAD code review workflow:
+          - Source: bmm/workflows/4-implementation/code-review/
+          - Structured review process
+          - Compare with our Reviewer agent
+          - Identify integration points
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12143
+      - id: MSSCI-12144
+        title: "Import Brainstorming workflow"
+        description: |
+          Import BMAD brainstorming/party-mode workflow:
+          - Source: bmm/workflows/bmad-quick-flow/ or similar
+          - Unstructured creative exploration
+          - Multi-agent collaboration mode
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12144
+      - id: MSSCI-12145
+        title: "Import Project Context generation workflow"
+        description: |
+          Import BMAD project context workflow:
+          - Source: bmm/workflows/generate-project-context/
+          - Automated context document generation
+          - Codebase analysis and summarization
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12145
+      - id: MSSCI-12146
+        title: "BMAD compatibility validation suite"
+        description: |
+          Create validation suite to ensure BMAD compatibility:
+          - Test each imported workflow runs correctly
+          - Verify variable resolution works
+          - Check gate behavior matches BMAD
+          - Document any intentional differences
+          - Create compatibility matrix
+        points: 3
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12146
+    jira: MSSCI-12131
