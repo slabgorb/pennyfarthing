@@ -4,40 +4,9 @@
 
 ## Session File Gotchas
 
-### Write Without Read
-**Problem:** Write tool fails with "File has not been read yet"
-**Solution:** Always Read existing files before Write
-
 ### Missing Assessment
 **Problem:** Handoff offered without assessment written
 **Solution:** Always Edit session file BEFORE spawning handoff subagent
-
-## Scale Assessment Gotchas
-
-### Trivial Story Sent to TEA
-**Problem:** 1-point fix goes through full TDD flow
-**Solution:** Trivial stories (1-2 pts, chore/fix) go directly to Dev
-
-### Complex Story Without TEA
-**Problem:** 8-point feature skips test planning
-**Solution:** All standard/complex stories must go through TEA
-
-## Cleanup Gotchas
-
-### Benchmark Results Are Valuable
-**Problem:** Untracked files in `internal/results/baselines/*/dev/runs/` look like temp artifacts
-**Reality:** These are valuable benchmark run results
-**Solution:** NEVER delete files in `internal/results/baselines/`. Ask user first.
-
-## Command/Skill Discovery
-
-### Missing Symlink for New Commands
-**Problem:** New command in `pennyfarthing-dist/commands/` not discoverable
-**Solution:** Create symlink: `cd .claude/commands && ln -s ../../pennyfarthing-dist/commands/{name}.md`
-
-### Skill Not Discovered
-**Problem:** CLI command fails, skill wasn't loaded
-**Solution:** Check if there's a skill for that tool (`/jira`, `/just`, etc.) before troubleshooting
 
 ## Jira Gotchas
 
@@ -45,14 +14,24 @@
 Local IDs like `31-18` are NOT Jira keys. Valid keys: `MSSCI-XXXXX`.
 Always look up, query, create, or ask - never fabricate.
 
-### Wrong Field Name
-Use `jira:` not `jira_key:` in sprint YAML.
+### Always Use --project MSSCI Flag
+**Problem:** Jira CLI commands fail or behave unexpectedly without project flag
+**Solution:** ALWAYS include `--project MSSCI` on move/assign commands
 
-### Canceled Spelling
-Use American: "Canceled" not "Cancelled"
+## Session-Sprint ID Mismatch
 
-## Subagent Data Freshness
+### Session Uses Local ID, Sprint Uses Jira Key
+**Problem:** Session files created with local IDs (e.g., `53-1-session.md`) but sprint YAML stories migrated to use Jira keys as IDs (e.g., `id: MSSCI-12123`)
+**Symptom:** `finish-story.sh` fails with "Could not determine Jira key" because it looks up story by session filename
+**Root Cause:** Epic 53 was synced to Jira mid-flight after session file was created with old naming convention
+**Solution:**
+1. For immediate fix: Pass Jira key explicitly or rename session file
+2. For systemic fix: Ensure session filenames match story IDs in sprint YAML
+**Future Work:** Consider migration script to normalize session filenames when stories are synced to Jira
 
-### Stale epic context data
-**Problem:** workflow-status-check reports cached story counts
-**Solution:** Verify against `sprint/current-sprint.yaml` before presenting to user
+## Cleanup Gotchas
+
+### Benchmark Results Are Valuable
+**Problem:** Untracked files in `internal/results/baselines/` look like temp artifacts
+**Reality:** These are valuable benchmark run results
+**Solution:** NEVER delete files in `internal/results/baselines/`. Ask user first.
