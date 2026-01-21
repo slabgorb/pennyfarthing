@@ -739,7 +739,8 @@ epics:
           - Link to full documentation
         points: 2
         priority: P0
-        status: backlog
+        status: done
+        completed: 2026-01-21
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
