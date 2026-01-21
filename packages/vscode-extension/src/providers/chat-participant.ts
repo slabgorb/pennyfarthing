@@ -53,13 +53,16 @@ export class PennyfarthingChatParticipant {
       this.handleRequest.bind(this)
     );
 
-    this.participant.displayName = 'Pennyfarthing';
-    this.participant.iconPath = vscode.Uri.file(
+    // These properties exist at runtime but may not be in older @types/vscode
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const participant = this.participant as any;
+    participant.displayName = 'Pennyfarthing';
+    participant.iconPath = vscode.Uri.file(
       __dirname + '/../../resources/pennyfarthing.svg'
     );
 
     // Register agent subcommands
-    this.participant.subCommands = AGENT_COMMANDS;
+    participant.subCommands = AGENT_COMMANDS;
 
     return this.participant;
   }
