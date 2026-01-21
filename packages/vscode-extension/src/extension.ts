@@ -13,6 +13,7 @@ let AgentStatusTreeDataProvider: typeof import('./providers/sidebar').AgentStatu
 let PennyfarthingTerminalProfileProvider: typeof import('./providers/terminal').PennyfarthingTerminalProfileProvider | null = null;
 let PennyfarthingTerminalLinkProvider: typeof import('./providers/terminal').PennyfarthingTerminalLinkProvider | null = null;
 let PennyfarthingChatParticipant: typeof import('./providers/chat-participant').PennyfarthingChatParticipant | null = null;
+let registerSkillCommands: typeof import('./commands/command-registry').registerSkillCommands | null = null;
 
 // Module-level reference for cleanup
 let wheelHubAdapter: InstanceType<typeof import('./server/wheelhub-adapter').WheelHubAdapter> | null = null;
@@ -41,6 +42,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     outputChannel.appendLine('Loading chat participant...');
     const chatModule = await import('./providers/chat-participant');
     PennyfarthingChatParticipant = chatModule.PennyfarthingChatParticipant;
+
+    outputChannel.appendLine('Loading command registry...');
+    const commandModule = await import('./commands/command-registry');
+    registerSkillCommands = commandModule.registerSkillCommands;
 
     outputChannel.appendLine('All modules loaded');
   } catch (err) {
@@ -85,6 +90,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   } catch (err) {
     outputChannel.appendLine(`[ChatParticipant] Failed to register: ${err instanceof Error ? err.message : String(err)}`);
   }
+
+  // Register skill commands for command palette (MSSCI-12050)
+  const skillCommandDisposables = registerSkillCommands!(context, outputChannel);
+  context.subscriptions.push(...skillCommandDisposables);
 
   // Register sidebar commands
   const switchAgentCommand = vscode.commands.registerCommand(
