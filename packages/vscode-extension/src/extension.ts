@@ -78,8 +78,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   // Register chat participant (MSSCI-12097)
   chatParticipant = new PennyfarthingChatParticipant();
-  chatParticipant.register();
-  outputChannel.appendLine('[ChatParticipant] @pennyfarthing registered');
+  chatParticipant.setOutputChannel(outputChannel);
+  try {
+    chatParticipant.register();
+    outputChannel.appendLine('[ChatParticipant] @pennyfarthing registered');
+  } catch (err) {
+    outputChannel.appendLine(`[ChatParticipant] Failed to register: ${err instanceof Error ? err.message : String(err)}`);
+  }
 
   // Register sidebar commands
   const switchAgentCommand = vscode.commands.registerCommand(

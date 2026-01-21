@@ -4,38 +4,13 @@
  * Integrates with VS Code's native chat view to provide @pennyfarthing
  * as a chat participant alongside GitHub Copilot.
  *
+ * Uses ClaudeService to spawn Claude CLI and stream responses.
+ *
  * MSSCI-12097
  */
 
 import * as vscode from 'vscode';
-import { WebSocketManager } from '../server/websocket-manager';
-
-// Types for tool use parsing
-interface ToolUse {
-  name: string;
-  input: Record<string, unknown>;
-}
-
-interface ParsedToolUse {
-  tools: ToolUse[];
-  textContent: string;
-}
-
-interface ToolResult {
-  name: string;
-  input: Record<string, unknown>;
-  result: string;
-  success: boolean;
-}
-
-// Message data from WheelHub
-interface MessageData {
-  type: 'chunk' | 'tool_use' | 'done' | 'error';
-  content?: string;
-  name?: string;
-  input?: Record<string, unknown>;
-  error?: string;
-}
+import { ClaudeService } from '../services/claude-service';
 
 // Agent subcommand definitions
 const AGENT_COMMANDS = [
@@ -58,28 +33,21 @@ const AGENT_NAMES: Record<string, string> = {
 };
 
 /**
- * Chat participant that bridges VS Code chat to Claude terminal.
+ * Chat participant that bridges VS Code chat to Claude CLI.
  */
 export class PennyfarthingChatParticipant {
   private participant: vscode.ChatParticipant | null = null;
-  private wsManager: WebSocketManager;
-  private connected = true;
-  private responseTimeout = 10; // Very short default - tests set longer if needed
-  private messageUnsubscribe: (() => void) | null = null;
-  private waitForStreaming = true; // Set to false in tests to skip streaming wait
+  private claudeService: ClaudeService | null = null;
+  private outputChannel: vscode.OutputChannel | null = null;
 
-  constructor() {
-    // Create internal WebSocketManager for message handling
-    // This can be replaced via connectToWheelHub() for production use
-    this.wsManager = new WebSocketManager();
-  }
+  constructor() {}
 
   /**
    * Register the chat participant with VS Code.
    */
   register(): vscode.ChatParticipant {
     this.participant = vscode.chat.createChatParticipant(
-      'pennyfarthing',
+      'pennyfarthing-vscode.pennyfarthing',
       this.handleRequest.bind(this)
     );
 
@@ -95,37 +63,35 @@ export class PennyfarthingChatParticipant {
   }
 
   /**
-   * Connect to WheelHub for message streaming.
+   * Set output channel for logging.
    */
-  connectToWheelHub(wsManager: WebSocketManager): void {
-    this.wsManager = wsManager;
-    this.connected = true;
+  setOutputChannel(channel: vscode.OutputChannel): void {
+    this.outputChannel = channel;
   }
 
   /**
-   * Get the connected WebSocketManager.
+   * Log a message to the output channel.
    */
-  getWebSocketManager(): WebSocketManager {
-    return this.wsManager;
+  private log(message: string): void {
+    this.outputChannel?.appendLine(`[ChatParticipant] ${message}`);
   }
 
   /**
-   * Handle disconnect state.
+   * Get or create ClaudeService for the workspace.
    */
-  handleDisconnect(): void {
-    this.connected = false;
-  }
+  private getClaudeService(): ClaudeService {
+    if (!this.claudeService) {
+      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+      const cwd = workspaceFolder?.uri.fsPath ?? process.cwd();
 
-  /**
-   * Set response timeout (for testing).
-   */
-  setResponseTimeout(ms: number): void {
-    this.responseTimeout = ms;
+      this.claudeService = new ClaudeService({ cwd });
+      this.log(`Created ClaudeService for ${cwd}`);
+    }
+    return this.claudeService;
   }
 
   /**
    * Handle incoming chat request from VS Code.
-   * Public for testing - called via register() binding.
    */
   async handleRequest(
     request: vscode.ChatRequest,
@@ -139,182 +105,99 @@ export class PennyfarthingChatParticipant {
       return;
     }
 
-    // Check connection status
-    if (!this.connected) {
-      response.markdown(
-        '⚠️ Not connected to Claude. Please ensure a Claude terminal is running and try again.'
-      );
-      return;
-    }
-
-    // Get active terminal
-    const terminal = vscode.window.activeTerminal || vscode.window.terminals[0];
-    if (!terminal) {
-      response.markdown(
-        '⚠️ No Claude terminal available. Please start a Pennyfarthing Claude terminal first.'
-      );
-      return;
-    }
-
-    // Handle agent switch commands
+    // Handle agent switch commands - prepend to prompt
+    let prompt = request.prompt || '';
     if (request.command) {
       const agentName = AGENT_NAMES[request.command];
       if (agentName) {
-        terminal.sendText(`/${request.command}`);
-        response.markdown(`Switching to ${agentName} agent...`);
-
-        // If there's additional prompt text, send it after the switch
-        if (request.prompt && request.prompt.trim()) {
-          terminal.sendText(request.prompt);
-        }
-        return;
+        prompt = `/${request.command} ${prompt}`.trim();
+        this.log(`Agent switch: ${agentName}`);
       }
     }
 
     // Handle empty prompt
-    if (!request.prompt || !request.prompt.trim()) {
-      response.markdown('Please enter a message. The prompt cannot be empty.');
+    if (!prompt.trim()) {
+      response.markdown('Please enter a message.');
       return;
     }
 
     // Show progress
-    response.progress('Sending to Claude...');
+    response.progress('Thinking...');
+    this.log(`Sending: ${prompt.substring(0, 100)}...`);
 
-    // Send message to terminal
-    terminal.sendText(request.prompt);
-
-    // Stream response if available - but only block if actively waiting
-    // For test scenarios where no streaming is expected, this will timeout quickly
-    await this.streamResponse(response, token);
+    try {
+      await this.streamClaudeResponse(prompt, response, token);
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      this.log(`Error: ${errorMsg}`);
+      response.markdown(`\n\n❌ Error: ${errorMsg}`);
+    }
   }
 
   /**
-   * Stream response from WheelHub to chat.
+   * Stream response from Claude CLI to chat.
    */
-  private async streamResponse(
+  private async streamClaudeResponse(
+    prompt: string,
     response: vscode.ChatResponseStream,
     token: vscode.CancellationToken
   ): Promise<void> {
-    return new Promise((resolve) => {
-      let resolved = false;
-      let timeoutId: NodeJS.Timeout | null = null;
+    return new Promise((resolve, reject) => {
+      const service = this.getClaudeService();
 
-      const cleanup = () => {
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-          timeoutId = null;
-        }
-        if (this.messageUnsubscribe) {
-          this.messageUnsubscribe();
-          this.messageUnsubscribe = null;
-        }
+      // Handle text chunks
+      const onText = (text: string) => {
+        response.markdown(text);
       };
 
-      const finish = () => {
-        if (!resolved) {
-          resolved = true;
-          cleanup();
-          resolve();
-        }
-      };
-
-      // Set timeout
-      timeoutId = setTimeout(() => {
-        if (!resolved) {
-          response.markdown('\n\n⚠️ Response timed out. Check the terminal.');
-          finish();
-        }
-      }, this.responseTimeout);
-
-      // Check cancellation
-      if (token.isCancellationRequested) {
-        response.markdown('Request cancelled.');
-        finish();
-        return;
-      }
-
-      // Subscribe to messages
-      if (this.wsManager) {
-        this.messageUnsubscribe = this.wsManager.onMessages(
-          (data: MessageData) => {
-            if (resolved) return;
-
-            switch (data.type) {
-              case 'chunk':
-                if (data.content) {
-                  response.markdown(data.content);
-                }
-                break;
-
-              case 'tool_use':
-                if (data.name && data.input) {
-                  const toolMarkdown = this.formatToolUse(data.name, data.input);
-                  response.markdown(toolMarkdown);
-                }
-                break;
-
-              case 'done':
-                finish();
-                break;
-
-              case 'error':
-                response.markdown(`\n\n❌ Error: ${data.error || 'Unknown error'}`);
-                finish();
-                break;
-            }
-          }
+      // Handle tool use
+      const onToolUse = (name: string, input: Record<string, unknown>) => {
+        const inputStr = this.truncateInput(JSON.stringify(input, null, 2));
+        response.markdown(
+          `\n\n📄 **Tool: ${name}**\n\`\`\`json\n${inputStr}\n\`\`\`\n`
         );
-      } else {
-        // No WebSocket manager - finish immediately
-        finish();
-      }
+      };
+
+      // Handle completion
+      const onComplete = () => {
+        cleanup();
+        resolve();
+      };
+
+      // Handle errors
+      const onError = (err: Error) => {
+        cleanup();
+        reject(err);
+      };
+
+      // Cleanup listeners
+      const cleanup = () => {
+        service.off('text', onText);
+        service.off('toolUse', onToolUse);
+        service.off('complete', onComplete);
+        service.off('error', onError);
+      };
+
+      // Register listeners
+      service.on('text', onText);
+      service.on('toolUse', onToolUse);
+      service.on('complete', onComplete);
+      service.on('error', onError);
+
+      // Handle cancellation
+      token.onCancellationRequested(() => {
+        this.log('Request cancelled by user');
+        service.stop();
+        cleanup();
+        resolve();
+      });
+
+      // Send the message
+      service.sendMessage(prompt).catch((err) => {
+        cleanup();
+        reject(err);
+      });
     });
-  }
-
-  /**
-   * Format tool use as collapsible markdown.
-   */
-  private formatToolUse(name: string, input: Record<string, unknown>): string {
-    const inputStr = this.truncateInput(JSON.stringify(input, null, 2));
-    return `\n<details>\n<summary>📄 Tool: ${name}</summary>\n\n\`\`\`json\n${inputStr}\n\`\`\`\n</details>\n`;
-  }
-
-  /**
-   * Parse tool_use blocks from raw Claude response.
-   */
-  parseToolUse(rawResponse: string): ParsedToolUse {
-    const tools: ToolUse[] = [];
-    const toolUseRegex =
-      /<tool_use>\s*<name>([^<]+)<\/name>\s*<input>([^<]+)<\/input>\s*<\/tool_use>/g;
-
-    let match;
-    while ((match = toolUseRegex.exec(rawResponse)) !== null) {
-      try {
-        const input = JSON.parse(match[2]);
-        tools.push({
-          name: match[1].trim(),
-          input,
-        });
-      } catch {
-        // Invalid JSON in input - skip
-      }
-    }
-
-    // Remove tool_use blocks from text
-    const textContent = rawResponse.replace(toolUseRegex, '').trim();
-
-    return { tools, textContent };
-  }
-
-  /**
-   * Format a tool result for display.
-   */
-  formatToolResult(result: ToolResult): string {
-    const icon = result.success ? '✅' : '❌';
-    const inputStr = this.truncateInput(JSON.stringify(result.input, null, 2));
-    const status = result.success ? 'passed' : 'failed';
-
-    return `${icon} **${result.name}** (${status})\n\`\`\`\n${inputStr}\n\`\`\`\n${result.result}...`;
   }
 
   /**
@@ -328,24 +211,12 @@ export class PennyfarthingChatParticipant {
   }
 
   /**
-   * Filter conversation history to only include Pennyfarthing messages.
-   */
-  filterHistory(
-    context: vscode.ChatContext
-  ): Array<{ participant: string; request?: { prompt: string } }> {
-    return context.history.filter((item) => {
-      const turn = item as { participant?: string };
-      return turn.participant === 'pennyfarthing';
-    }) as Array<{ participant: string; request?: { prompt: string } }>;
-  }
-
-  /**
-   * Dispose of the chat participant.
+   * Dispose of the chat participant and Claude service.
    */
   dispose(): void {
-    if (this.messageUnsubscribe) {
-      this.messageUnsubscribe();
-      this.messageUnsubscribe = null;
+    if (this.claudeService) {
+      this.claudeService.stop();
+      this.claudeService = null;
     }
     if (this.participant) {
       this.participant.dispose();
