@@ -1,14 +1,11 @@
 /**
  * Toolbar Module
  * Handles formatting toolbar button actions and state
- * Story 35-1: Added handoff toggle for contextual settings
  */
 
 // State
 let toolbarButtons = null;
 let getEditorFn = null;
-let handoffButton = null;
-let currentHandoffMode = 'manual'; // 'auto' or 'manual'
 
 /**
  * Map of toolbar actions to editor commands
@@ -89,121 +86,4 @@ export function initToolbar({ getEditor }) {
       }
     });
   });
-
-  // 35-1: Initialize handoff toggle
-  initHandoffToggle();
-}
-
-// =============================================================================
-// Handoff Toggle Functions (35-1)
-// =============================================================================
-
-/**
- * Initialize the handoff toggle button
- * Sets up click handler and loads current state from settings
- */
-export async function initHandoffToggle() {
-  if (typeof document === 'undefined') return;
-
-  const toolbar = document.getElementById('editor-toolbar');
-  if (!toolbar) return;
-
-  handoffButton = toolbar.querySelector('[data-control="handoff-mode"]');
-  if (!handoffButton) return;
-
-  // Load current state from settings
-  try {
-    if (window.electronAPI?.settings?.get) {
-      const settings = await window.electronAPI.settings.get();
-      currentHandoffMode = settings?.workflow?.handoff_mode || 'manual';
-    } else {
-      const response = await fetch('/api/settings');
-      if (response.ok) {
-        const settings = await response.json();
-        currentHandoffMode = settings?.workflow?.handoff_mode || 'manual';
-      }
-    }
-  } catch (err) {
-    console.warn('[Toolbar] Failed to load handoff mode:', err);
-    currentHandoffMode = 'manual';
-  }
-
-  // Update button visual state
-  updateHandoffState(currentHandoffMode);
-
-  // Set up click handler
-  handoffButton.addEventListener('click', (e) => {
-    e.preventDefault();
-    toggleHandoffMode();
-  });
-
-  console.log('[Toolbar] Handoff toggle initialized:', currentHandoffMode);
-}
-
-/**
- * Update the handoff button visual state
- * @param {string} mode - 'auto' or 'manual'
- */
-export function updateHandoffState(mode) {
-  currentHandoffMode = mode;
-
-  if (!handoffButton) {
-    handoffButton = document.querySelector('[data-control="handoff-mode"]');
-  }
-  if (!handoffButton) return;
-
-  // Update label text
-  const label = handoffButton.querySelector('.handoff-label');
-  if (label) {
-    label.textContent = mode === 'auto' ? 'AUTO' : 'MANUAL';
-  }
-
-  // Update button class for styling
-  if (mode === 'auto') {
-    handoffButton.classList.add('auto-enabled');
-    handoffButton.classList.remove('manual-enabled');
-  } else {
-    handoffButton.classList.add('manual-enabled');
-    handoffButton.classList.remove('auto-enabled');
-  }
-
-  // Update title
-  handoffButton.title = mode === 'auto'
-    ? 'Auto-handoff enabled: Automatically proceed to next agent'
-    : 'Manual handoff: Ask before proceeding to next agent';
-}
-
-/**
- * Toggle between auto and manual handoff modes
- * Persists the change via settings API
- */
-export async function toggleHandoffMode() {
-  const newMode = currentHandoffMode === 'auto' ? 'manual' : 'auto';
-
-  try {
-    // Persist via settings API
-    if (window.electronAPI?.settings?.save) {
-      await window.electronAPI.settings.save({ workflow: { handoff_mode: newMode } });
-    } else {
-      await fetch('/api/settings', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ workflow: { handoff_mode: newMode } }),
-      });
-    }
-
-    // Update visual state
-    updateHandoffState(newMode);
-    console.log('[Toolbar] Handoff mode toggled to:', newMode);
-  } catch (err) {
-    console.error('[Toolbar] Failed to toggle handoff mode:', err);
-  }
-}
-
-/**
- * Get the current handoff mode
- * @returns {string} 'auto' or 'manual'
- */
-export function getHandoffMode() {
-  return currentHandoffMode;
 }

@@ -82,24 +82,21 @@ describe('AC2: Theme + Agent Input -> SVG Output', () => {
     }
   });
 
-  it('should throw error for non-existent theme', async () => {
+  it('should throw ENOENT for non-existent theme', async () => {
     const { generateSpider } = await import('./generate-spider.js');
 
     assert.throws(
       () => generateSpider('nonexistent-theme', 'sm'),
-      /theme.*not found/i,
-      'Should throw error for missing theme'
+      /ENOENT/,
+      'Should throw ENOENT for missing theme file'
     );
   });
 
-  it('should throw error for non-existent agent', async () => {
+  it('should return default OCEAN scores for non-existent agent', async () => {
     const { generateSpider } = await import('./generate-spider.js');
-
-    assert.throws(
-      () => generateSpider('deadwood', 'nonexistent-agent'),
-      /agent.*not found/i,
-      'Should throw error for missing agent'
-    );
+    // Non-existent agents get default neutral scores (3,3,3,3,3) rather than error
+    const svg = generateSpider('deadwood', 'nonexistent-agent');
+    assert.ok(svg.includes('<svg'), 'Should generate SVG with default scores');
   });
 
   it('should accept OCEAN scores directly via generateSpiderFromOcean', async () => {

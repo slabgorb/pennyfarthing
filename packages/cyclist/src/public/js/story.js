@@ -3,6 +3,8 @@
  * MSSCI-11943: WebSocket channels replace polling for real-time updates
  */
 
+import { settingsSync, STORAGE_KEYS } from './settings-sync.js';
+
 // Polling intervals for periodic refresh (fallback only, not used for WebSocket)
 const STORY_POLL_INTERVAL = 10000; // 10 seconds
 const GIT_POLL_INTERVAL = 5000;    // 5 seconds
@@ -18,31 +20,20 @@ let gitWebSocket = null;
 let storyReconnectDelay = WS_RECONNECT_BASE_DELAY;
 let gitReconnectDelay = WS_RECONNECT_BASE_DELAY;
 
-// localStorage key for AC panel collapse state (27-1)
-const AC_COLLAPSED_KEY = 'cyclist-ac-collapsed';
-
 /**
- * Get AC panel collapsed state from localStorage
+ * Get AC panel collapsed state from settings-sync
  * @returns {boolean} True if collapsed, false if expanded (default: false)
  */
 function getAcCollapsed() {
-  try {
-    return localStorage.getItem(AC_COLLAPSED_KEY) === 'true';
-  } catch {
-    return false;
-  }
+  return settingsSync.get(STORAGE_KEYS.AC_COLLAPSED, false) === true;
 }
 
 /**
- * Save AC panel collapsed state to localStorage
+ * Save AC panel collapsed state to settings-sync
  * @param {boolean} collapsed - Whether panel is collapsed
  */
 function setAcCollapsed(collapsed) {
-  try {
-    localStorage.setItem(AC_COLLAPSED_KEY, String(collapsed));
-  } catch {
-    // Ignore localStorage errors
-  }
+  settingsSync.set(STORAGE_KEYS.AC_COLLAPSED, collapsed);
 }
 
 let storyPollTimer = null;
@@ -119,8 +110,6 @@ function resolveAgentNames(text) {
 export function updateStory(story) {
   const titleEl = document.getElementById('story-title');
   const phaseEl = document.getElementById('story-phase');
-  const progressFill = document.querySelector('.progress-fill');
-  const sprintPoints = document.querySelector('.sprint-points');
 
   if (titleEl) {
     if (story.id && story.title) {
@@ -135,12 +124,8 @@ export function updateStory(story) {
     phaseEl.style.display = 'none';
   }
 
-  if (story.sprint && progressFill && sprintPoints) {
-    const { completed, total } = story.sprint;
-    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-    progressFill.style.width = `${percentage}%`;
-    sprintPoints.textContent = `${completed}/${total} pts`;
-  }
+  // Update sprint info (remaining, in progress, end date)
+  updateSprintInfo(story.sprint);
 
   // B-13: Update workflow progress visualization
   updateWorkflowProgress(story.workflow);
@@ -150,6 +135,35 @@ export function updateStory(story) {
 
   // B-13: Update acceptance criteria checklist
   updateAcceptanceCriteria(story.criteria);
+}
+
+/**
+ * Update sprint info display
+ * @param {Object|null} sprint - Sprint data with remaining, inProgress, endDate
+ */
+function updateSprintInfo(sprint) {
+  const remainingEl = document.getElementById('sprint-remaining');
+  const inProgressEl = document.getElementById('sprint-in-progress');
+  const endDateEl = document.getElementById('sprint-end-date');
+
+  if (remainingEl) {
+    remainingEl.textContent = sprint?.remaining != null ? `${sprint.remaining} pts` : '-';
+  }
+
+  if (inProgressEl) {
+    inProgressEl.textContent = sprint?.inProgress != null ? `${sprint.inProgress} pts` : '-';
+  }
+
+  if (endDateEl) {
+    if (sprint?.endDate) {
+      // Format date as "Feb 2" style
+      const date = new Date(sprint.endDate);
+      const formatted = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      endDateEl.textContent = formatted;
+    } else {
+      endDateEl.textContent = '-';
+    }
+  }
 }
 
 /**
@@ -610,9 +624,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Listen for persona theme changes and reload the agent cache
-window.addEventListener('themechange', (e) => {
-  // Only reload if this is a persona theme change (not just color theme)
-  if (e.detail?.themeId || e.detail?.personaTheme) {
+// SettingsPanel dispatches 'theme:changed' on document with { theme: themeId }
+document.addEventListener('theme:changed', (e) => {
+  if (e.detail?.theme) {
+    console.log('[Story] Persona theme changed to:', e.detail.theme);
     clearThemeAgentsCache();
     loadThemeAgents();
   }

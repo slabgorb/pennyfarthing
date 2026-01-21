@@ -11,9 +11,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [7.3.0] - 2026-01-21
+
+### VS Code Extension & Stepped Workflows
+
+This release delivers the initial VS Code extension for Pennyfarthing, stepped workflow execution, and significant skill consolidation.
+
+### Added
+
+#### Epic 50: VS Code Extension
+- **Extension Scaffolding** (MSSCI-12045) - Initial VS Code extension structure with activation
+- **Terminal Provider** (MSSCI-12046) - Claude Code session management in VS Code terminal
+- **WheelHub Adapter** (MSSCI-12047) - Connect VS Code to Cyclist's central coordination server
+- **Sidebar Panel with Agent Status** (MSSCI-12048) - Real-time agent information in VS Code sidebar
+- **Reflector Protocol Adapter** (MSSCI-12049) - Bridge Cyclist's Reflector signals to VS Code UI
+- **Command Palette Integration** (MSSCI-12050) - Pennyfarthing commands accessible via Cmd+Shift+P
+- **VS Code Chat API Integration** (MSSCI-12097) - Claude CLI as VS Code chat participant with streaming
+- **Claude CLI Chat Participant** - Native chat integration with streaming responses
+
+#### Epic 51: Stepped Workflow Engine
+- **Stepped Workflow Schema** (MSSCI-12078) - YAML schema for multi-step workflow definitions
+- **Step File Parser** (MSSCI-12079) - Parse step files into executable workflow steps
+- **Workflow Executor** (MSSCI-12084) - `/workflow start`, `/workflow resume`, `/workflow status` commands
+- **Workflow Type Indicator** (MSSCI-12083) - Show workflow type in `/workflow list` output
+- **Gate Detection & Approval Flow** (MSSCI-12085) - Approval gates for stepped workflows
+- **Tri-modal BikePaths Support** (MSSCI-12086) - Plan/Manual/Auto modes in stepped workflows
+- **Session State Tracking** (MSSCI-12082) - Track workflow state across session boundaries
+- **Variable Resolver** - Priority chain for resolving variables in step files
+
+#### Skill Consolidation
+- **`/sprint` Skill Rewrite** - Comprehensive sprint management with YAML restructure
+- **`/story` Skill Rewrite** (MSSCI-12035) - Consolidated story management commands
+- **`/workflow` Skill Rewrite** - Prescriptive scripts for workflow operations
+- **Removed `/backlog`** (MSSCI-12038) - Consolidated into `/sprint` skill
+- **Removed `/new-work`** - Consolidated into `/sprint work --next`
+- **Epic Management Commands** - `/sprint epic` commands for epic lifecycle
+- **`finish-story.sh` Script** - Automated story completion with PR merge and archival
+
+#### Cyclist Enhancements
+- **Event-Driven Badge Updates** (MSSCI-11944) - Real-time badge counts without polling
+- **LocalStorage Cross-Tab Sync** (MSSCI-11946) - Settings sync across Cyclist windows
+- **Allowed-Tools in Skills** (MSSCI-11954) - Context-sensitive tool permissions per skill
+- **Workflow Permission Exports** (MSSCI-11710) - Reusable permission checking functions
+
+### Fixed
+- **Gearshift Mode Reliability** (MSSCI-12052) - Fixed mode switch flakiness in Cyclist
+- **VS Code Activation Failure** - Resolved extension not activating on startup
+- **Ready Status in Points** - Include 'ready' stories in sprint remaining points calculation
+- **CYCLIST:CHOICES Labels** - Support text labels in reflector choice markers
+- **Per-Project Window State** - Cyclist remembers window state per project
+- **Settings Test Isolation** - Prevent tests from corrupting user config
+- **Project Root Detection** - Use project root for settings, not working directory
+- **WebSocket Fallback** - BackgroundTasksPanel gracefully handles connection failures
+- **Jira Epic/Story Scripts** - Improved `promote-epic.sh` and `create-jira-epic.sh`
+
+### Changed
+- **Sprint YAML Structure** - Added `jira_sprint_name` and `in_sprint` fields for bidirectional sync
+- **Suggestion Pill Removed** - Removed ghost text suggestion feature (too distracting)
+
+### Summary
+| Metric | Value |
+|--------|-------|
+| Stories Completed | 20+ |
+| Epics Delivered | 2 (Epic 50, Epic 51) |
+| Features | 26 |
+| Bug Fixes | 14 |
+| Skills Consolidated | 4 |
+
+---
+
 ## [7.2.0] - 2026-01-19
 
-*No unreleased changes*
+*Maintenance release with minor fixes*
 
 ---
 
@@ -1433,7 +1502,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v7.2.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v7.3.0...HEAD
+[7.3.0]: https://github.com/1898andCo/pennyfarthing/compare/v7.2.0...v7.3.0
 [7.2.0]: https://github.com/1898andCo/pennyfarthing/compare/v7.1.0...v7.2.0
 [7.1.0]: https://github.com/1898andCo/pennyfarthing/compare/v7.0.2...v7.1.0
 [7.0.2]: https://github.com/1898andCo/pennyfarthing/compare/v7.0.1...v7.0.2

@@ -6,7 +6,7 @@
  * Features:
  * - Collapse/expand with smooth CSS transitions
  * - Drag-to-resize width
- * - State persistence to localStorage
+ * - State persistence via settings-sync (cross-tab sync)
  * - PanelManager integration
  * - Badge count support for tab bar
  * - Safety mechanism to prevent all panels collapsed
@@ -28,6 +28,8 @@
  *     order: 1,
  *   });
  */
+
+import { settingsSync } from './settings-sync.js';
 
 const COLLAPSE_THRESHOLD = 50;
 
@@ -116,33 +118,25 @@ export class VerticalPanel {
   }
 
   /**
-   * Load panel state from localStorage
+   * Load panel state from settings-sync
    * @returns {{width: number, collapsed: boolean}}
    */
   loadState() {
-    try {
-      const saved = localStorage.getItem(this.storageKey);
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch (e) {
-      console.warn(`[VerticalPanel:${this.id}] Failed to load state:`, e);
+    const saved = settingsSync.get(this.storageKey);
+    if (saved && typeof saved === 'object') {
+      return saved;
     }
     return { width: this.defaultWidth, collapsed: false };
   }
 
   /**
-   * Save panel state to localStorage
+   * Save panel state to settings-sync (with cross-tab broadcast)
    */
   saveState() {
-    try {
-      localStorage.setItem(this.storageKey, JSON.stringify({
-        width: this._width,
-        collapsed: this._collapsed,
-      }));
-    } catch (e) {
-      console.warn(`[VerticalPanel:${this.id}] Failed to save state:`, e);
-    }
+    settingsSync.set(this.storageKey, {
+      width: this._width,
+      collapsed: this._collapsed,
+    });
   }
 
   /**

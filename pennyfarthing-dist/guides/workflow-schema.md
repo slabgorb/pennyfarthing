@@ -34,6 +34,11 @@ workflow:
       min: number       # Optional: minimum points
       max: number       # Optional: maximum points
     default: boolean    # Optional: use as fallback workflow
+
+  permissions:          # Optional: required permissions for this workflow
+    - tool: string      # Required: tool name (Bash, Read, WebFetch, etc.)
+      scope: string     # Required: scope pattern (e.g., "npm test", "*.github.com")
+      reason: string    # Required: human-readable reason for the permission
 ```
 
 ## Required Fields
@@ -55,6 +60,7 @@ workflow:
 | `phases[].output` | Array of outputs for next phases |
 | `phases[].gate` | Conditions to proceed to next phase |
 | `workflow.triggers` | Rules for automatic workflow selection |
+| `workflow.permissions` | Array of permission presets required by the workflow |
 
 ## Gate Types
 
@@ -64,6 +70,61 @@ workflow:
 | `tests_fail` | Tests must be failing (RED phase) |
 | `approval` | Requires reviewer approval |
 | `manual` | Manual confirmation required |
+
+## Permission Presets
+
+Workflows can declare required permissions that are checked at workflow start. If any permissions are missing, the user is prompted to grant them before proceeding.
+
+### Permission Fields
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `tool` | Yes | Tool name: `Bash`, `Read`, `Write`, `Edit`, `WebFetch`, `WebSearch`, `Glob`, `Grep`, `Task` |
+| `scope` | Yes | Scope pattern for the permission (e.g., `"npm test"`, `"*.github.com"`, `"src/**/*"`) |
+| `reason` | Yes | Human-readable explanation shown when prompting user |
+
+### Permission Checking
+
+On workflow start:
+1. System reads workflow's `permissions` array
+2. Compares against cached grants in `.claude/settings.local.json`
+3. For each missing permission, prompts user with the `reason`
+4. Granted permissions are cached for the session
+
+### Example: TDD Workflow with Permissions
+
+```yaml
+workflow:
+  name: tdd-with-permissions
+  description: TDD workflow with pre-declared permissions
+  version: "1.0.0"
+
+  permissions:
+    - tool: Bash
+      scope: "npm test|npm run build"
+      reason: "TDD workflow requires running tests and builds"
+    - tool: Read
+      scope: "src/**/*"
+      reason: "Need to read source files for implementation"
+
+  phases:
+    - name: setup
+      agent: sm
+    - name: red
+      agent: tea
+      gate:
+        type: tests_fail
+    - name: green
+      agent: dev
+      gate:
+        type: tests_pass
+    - name: review
+      agent: reviewer
+      gate:
+        type: approval
+    - name: finish
+      agent: sm
+```
 
 ## Examples
 
@@ -193,3 +254,4 @@ Error: workflow.triggers.points min (10) cannot be greater than max (5)
 - Story 31-2: Workflow loader and validator
 - Story 31-3: Story-to-workflow routing engine
 - Story 31-5: /workflow skill for listing and switching
+- Story MSSCI-11710: Permission presets by workflow

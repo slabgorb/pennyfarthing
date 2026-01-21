@@ -1,3 +1,4 @@
 portraits/
 src/public/js/tiptap.bundle.js
 coverage/
+.pennyfarthing/config.local.yaml

@@ -45,7 +45,12 @@ From theme config. Model: haiku. Tasks: gather pre-flight data, update session f
     model: "haiku"
     run_in_background: true  # <-- Key: don't block on mechanical checks
     prompt: |
-      Read and follow: .pennyfarthing/agents/reviewer-preflight.md
+      You are the reviewer-preflight subagent.
+
+      Read .pennyfarthing/agents/reviewer-preflight.md for your instructions,
+      then EXECUTE all steps described there. Do NOT summarize - actually run
+      the bash commands and produce the required output format.
+
       {PARAMETERS}
   ```
 
@@ -57,7 +62,12 @@ From theme config. Model: haiku. Tasks: gather pre-flight data, update session f
     subagent_type: "general-purpose"
     model: "haiku"
     prompt: |
-      Read and follow: .pennyfarthing/agents/handoff.md
+      You are the handoff subagent.
+
+      Read .pennyfarthing/agents/handoff.md for your instructions,
+      then EXECUTE all steps described there. Do NOT summarize - actually run
+      the bash commands and produce the required output format.
+
       {PARAMETERS}
   ```
 </helpers>
@@ -133,7 +143,11 @@ Task tool:
   model: "haiku"
   run_in_background: true
   prompt: |
-    Read and follow: .pennyfarthing/agents/reviewer-preflight.md
+    You are the reviewer-preflight subagent.
+
+    Read .pennyfarthing/agents/reviewer-preflight.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
 
     STORY_ID: {value}
     REPOS: {value}
@@ -262,7 +276,7 @@ $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
 **Read handoff mode from Cyclist settings** (see `handoff.md` for full implementation):
-- `~/.cyclist/settings.yaml` → `workflow.handoff_mode: auto|manual`
+- `.pennyfarthing/config.local.yaml → `handoff_mode: auto|manual`
 - Default is `manual` if not set
 
 **Handoff Decision Matrix:**
@@ -302,7 +316,11 @@ Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/handoff.md
+    You are the handoff subagent.
+
+    Read .pennyfarthing/agents/handoff.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
 
     STORY_ID: {value}
     WORKFLOW: {workflow from session}  # e.g., "tdd" or "trivial"
@@ -316,7 +334,11 @@ Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/handoff.md
+    You are the handoff subagent.
+
+    Read .pennyfarthing/agents/handoff.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
 
     STORY_ID: {value}
     WORKFLOW: {workflow from session}  # e.g., "tdd" or "trivial"

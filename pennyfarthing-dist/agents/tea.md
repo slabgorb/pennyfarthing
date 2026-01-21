@@ -23,7 +23,11 @@ From theme config. Model: haiku. Tasks: run tests, gather results, update sessio
     subagent_type: "general-purpose"
     model: "haiku"
     prompt: |
-      Read and follow: .pennyfarthing/agents/{subagent-name}.md
+      You are the {subagent-name} subagent.
+
+      Read .pennyfarthing/agents/{subagent-name}.md for your instructions,
+      then EXECUTE all steps described there. Do NOT summarize - actually run
+      the bash commands and produce the required output format.
 
       {PARAMETERS}
   ```
@@ -99,7 +103,22 @@ REFLECT: Should I also test rate limiting? Let me check if that's in scope...
    - Write failing tests covering each AC
    - Use `/testing` skill for patterns
    - Commit: `git commit -m "test: add failing tests for X-Y"`
-5. **Have Helper verify RED state** (spawn testing-runner subagent)
+5. **Verify RED state** - spawn testing-runner:
+   ```yaml
+   Task tool:
+     subagent_type: "general-purpose"
+     model: "haiku"
+     prompt: |
+       You are the testing-runner subagent.
+
+       Read .pennyfarthing/agents/testing-runner.md for instructions,
+       then EXECUTE all steps.
+
+       RUN_MODE: verify
+       TEST_FILE: {path}
+       REPOS: {repos}
+       EXPECTED_STATE: RED
+   ```
 6. Write TEA Assessment to session file
 7. **Have Helper handle handoff** (spawn tea-handoff subagent)
 8. Hand off to Dev: "Tests are RED. Make them GREEN."
@@ -161,7 +180,11 @@ Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/handoff.md
+    You are the handoff subagent.
+
+    Read .pennyfarthing/agents/handoff.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
 
     STORY_ID: {value}
     WORKFLOW: {workflow from session}  # e.g., "tdd"
@@ -186,7 +209,7 @@ $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
 **Read handoff mode from Cyclist settings** (see `handoff.md` for full implementation):
-- `~/.cyclist/settings.yaml` → `workflow.handoff_mode: auto|manual`
+- `.pennyfarthing/config.local.yaml → `handoff_mode: auto|manual`
 - Default is `manual` if not set
 
 **Handoff Decision Matrix:**

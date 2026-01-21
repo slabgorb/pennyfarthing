@@ -33,7 +33,11 @@ From theme config. Model: haiku. Tasks: Status checks, backlog scans, file summa
     model: "haiku"
     # No run_in_background - SM workflow is sequential
     prompt: |
-      Read and follow: .pennyfarthing/agents/{subagent-name}.md
+      You are the {subagent-name} subagent.
+
+      Read .pennyfarthing/agents/{subagent-name}.md for your instructions,
+      then EXECUTE all steps described there. Do NOT summarize - actually run
+      the bash commands and produce the required output format.
 
       {PARAMETERS}
   ```
@@ -91,8 +95,8 @@ Before starting any story, SM checks for epic technical context at `sprint/conte
 </critical-gates>
 
 <skills>
-- `/sprint-context` - Sprint status, backlog, story management
-- `/story-management` - Story creation and sizing patterns
+- `/sprint` - Sprint status, backlog, story management
+- `/story` - Story creation, sizing, and finish workflow
 </skills>
 
 <context>
@@ -130,9 +134,11 @@ REFLECT: I should clarify AC4 with the user before proceeding.
      subagent_type: "general-purpose"
      model: "haiku"
      prompt: |
-       Read and follow: .pennyfarthing/agents/workflow-status-check.md
+       You are the workflow-status-check subagent. CALLING_AGENT: SM
 
-       CALLING_AGENT: SM
+       Read .pennyfarthing/agents/workflow-status-check.md for your instructions,
+       then EXECUTE all steps described there. Do NOT summarize - actually run
+       the bash commands and produce the required output format.
    ```
 2. Helper returns: `FINISH_STATE`, `NEW_WORK_STATE`, or `IN_PROGRESS_STATE`
 3. If `FINISH_STATE`: Proceed to Finish Story Flow
@@ -149,9 +155,11 @@ Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/workflow-status-check.md
+    You are the workflow-status-check subagent. CALLING_AGENT: SM
 
-    CALLING_AGENT: SM
+    Read .pennyfarthing/agents/workflow-status-check.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
 ```
 
 **Helper returns:**
@@ -186,9 +194,12 @@ Task tool:
   model: "haiku"
   run_in_background: true
   prompt: |
-    Read and follow: .pennyfarthing/agents/sm-finish.md
+    You are the sm-finish subagent. PHASE: preflight
 
-    PHASE: preflight
+    Read .pennyfarthing/agents/sm-finish.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
+
     STORY_ID: {value}
     JIRA_KEY: {value from session/YAML jira field, or omit if not found}
     REPOS: {value}
@@ -203,37 +214,37 @@ Helper checks PR status, auto-fixes lint issues, prepares Jira transition.
 - Jira ready for transition
 - Session content for archiving
 
-### Step 2: Archive Session File
+### Step 2: Run Finish Script
 
-Copy the session file directly to the archive using the Jira key as the filename:
+After preflight passes, execute the finish-story script via `/story` skill:
 
 ```bash
-cp .session/{STORY_ID}-session.md sprint/archive/{JIRA_KEY}-session.md
+.pennyfarthing/scripts/run.sh finish-story.sh {STORY_ID}
 ```
 
-**Example:** `.session/47-5-session.md` → `sprint/archive/MSSCI-11800-session.md`
+**The script handles all finish steps:**
+1. Archives session file to `sprint/archive/{jira-key}-session.md`
+2. Squash merges PR and deletes remote branch
+3. Transitions Jira to Done
+4. Updates sprint YAML (status: done, completed date, removes assigned_to)
+5. Deletes local feature branch
+6. Removes session file
 
-No summary file is written. The session file itself serves as the historical record. Summaries and lessons learned are captured during sprint retrospectives instead.
+**Preview mode:** Use `--dry-run` to see what would happen without executing:
+```bash
+.pennyfarthing/scripts/run.sh finish-story.sh {STORY_ID} --dry-run
+```
 
-### Step 3: Complete Finish Steps
+### Step 3: Commit Archive (if needed)
 
-After archiving:
-1. Transition Jira to Done: `jira issue move {JIRA_KEY} "Done"`
-2. Update sprint YAML (status: done, completed date)
-3. Remove the session file from `.session/`
-4. Commit the archive
-5. Merge PR and clean up branch:
-   ```bash
-   # If PR exists, squash merge and delete remote branch
-   gh pr merge {BRANCH} --squash --delete-branch 2>/dev/null || true
+The script updates sprint YAML but doesn't commit. After script completes:
+```bash
+git add sprint/archive/{JIRA_KEY}-session.md sprint/current-sprint.yaml
+git commit -m "chore(sprint): complete {STORY_ID}"
+git push origin develop
+```
 
-   # Return to develop
-   git checkout develop
-   git pull origin develop
-
-   # Delete local feature branch
-   git branch -d {BRANCH} 2>/dev/null || true
-   ```
+**Note:** Sprint tracking files can be committed directly to develop.
 
 ## Phase 1B: New Work Flow
 
@@ -247,9 +258,11 @@ Task tool:
   model: "haiku"
   run_in_background: true
   prompt: |
-    Read and follow: .pennyfarthing/agents/sm-setup.md
+    You are the sm-setup subagent. MODE: research
 
-    MODE: research
+    Read .pennyfarthing/agents/sm-setup.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
 ```
 
 Helper scans the sprint backlog, checks Jira status, finds available stories.
@@ -278,7 +291,11 @@ Task tool:
   run_in_background: true
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/sm-file-summary.md
+    You are the sm-file-summary subagent.
+
+    Read .pennyfarthing/agents/sm-file-summary.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
 
     STORY_ID: {value}
     FILE_LIST: |
@@ -364,9 +381,12 @@ Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/sm-setup.md
+    You are the sm-setup subagent. MODE: setup
 
-    MODE: setup
+    Read .pennyfarthing/agents/sm-setup.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
+
     STORY_ID: {value}
     JIRA_KEY: {value}
     REPOS: {value}
@@ -396,7 +416,11 @@ Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/sm-handoff.md
+    You are the sm-handoff subagent.
+
+    Read .pennyfarthing/agents/sm-handoff.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
 
     STORY_ID: {value}
     REPOS: {value}
@@ -467,7 +491,7 @@ $CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
 ```
 
 **Read handoff mode from Cyclist settings** (see `handoff.md` for full implementation):
-- `~/.cyclist/settings.yaml` → `workflow.handoff_mode: auto|manual`
+- `.pennyfarthing/config.local.yaml → `handoff_mode: auto|manual`
 - Default is `manual` if not set
 
 **After New Work Setup - Handoff Decision Matrix:**

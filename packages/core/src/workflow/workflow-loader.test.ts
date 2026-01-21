@@ -81,7 +81,7 @@ workflow:
       assert.strictEqual(result.filePath, filePath, 'Should include file path');
       assert.ok(result.workflow, 'Should return workflow object');
       assert.strictEqual(result.workflow?.name, 'test-workflow');
-      assert.strictEqual(result.workflow?.phases.length, 1);
+      assert.strictEqual(result.workflow?.phases?.length, 1);
       assert.strictEqual(result.errors, undefined, 'Should not have errors');
     });
 
@@ -215,9 +215,9 @@ workflow:
       assert.strictEqual(result.success, true);
       assert.strictEqual(result.workflow?.description, 'A complete workflow');
       assert.strictEqual(result.workflow?.version, '1.0.0');
-      assert.strictEqual(result.workflow?.phases.length, 2);
-      assert.deepStrictEqual(result.workflow?.phases[0].output, ['session']);
-      assert.strictEqual(result.workflow?.phases[1].gate?.type, 'tests_pass');
+      assert.strictEqual(result.workflow?.phases?.length, 2);
+      assert.deepStrictEqual(result.workflow?.phases?.[0].output, ['session']);
+      assert.strictEqual(result.workflow?.phases?.[1].gate?.type, 'tests_pass');
       assert.strictEqual(result.workflow?.triggers?.default, true);
     });
   });
@@ -369,7 +369,7 @@ workflow:
 
       assert.strictEqual(result.success, true, 'tdd.yaml should be valid');
       assert.strictEqual(result.workflow?.name, 'tdd');
-      assert.ok(result.workflow?.phases.length >= 4, 'TDD has multiple phases');
+      assert.ok((result.workflow?.phases?.length ?? 0) >= 4, 'TDD has multiple phases');
     });
 
     it('should successfully load trivial.yaml from pennyfarthing-dist', () => {

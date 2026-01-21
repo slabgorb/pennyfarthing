@@ -50,7 +50,12 @@ Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/testing-runner.md
+    You are the testing-runner subagent.
+
+    Read .pennyfarthing/agents/testing-runner.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
+
     REPOS: {REPOS}
     CONTEXT: PR review pre-flight for Story {STORY_ID}
     RUN_ID: {STORY_ID}-review

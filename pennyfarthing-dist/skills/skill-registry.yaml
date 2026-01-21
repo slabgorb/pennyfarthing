@@ -21,6 +21,7 @@ skills:
       - Don't apply patterns mechanically without understanding context
     related_skills: [context-engineering]
     keywords: [react, reflection, planning, tool-use, chain-of-thought]
+    allowed_tools: [Read, Glob, Grep, Task]  # Reference material - read-only
 
   changelog:
     name: changelog
@@ -74,6 +75,7 @@ skills:
       - Don't repeat large code blocks in prompts
     related_skills: [agentic-patterns]
     keywords: [context-window, tokens, summarization, lazy-loading]
+    allowed_tools: [Read, Glob, Grep, Task]  # Reference material - read-only
 
   cyclist:
     name: cyclist
@@ -108,6 +110,7 @@ skills:
       - Don't apply patterns from other frameworks blindly
     related_skills: [code-review, testing]
     keywords: [implementation, debugging, fixes, best-practices]
+    allowed_tools: [Read, Glob, Grep, Task]  # Reference material - read-only
 
   finalize-run:
     name: finalize-run
@@ -245,6 +248,7 @@ skills:
       - Don't manually edit sprint YAML - use skills
     related_skills: [story-management, jira]
     keywords: [sprint, backlog, velocity, kanban]
+    allowed_tools: [Read, Glob, Grep, Bash, Task]  # Read-only sprint data access
 
   systematic-debugging:
     name: systematic-debugging

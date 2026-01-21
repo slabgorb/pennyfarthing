@@ -62,9 +62,10 @@ describe('Story 15-3: Sidebar Sections UI', () => {
     });
 
     // MSSCI-11821: AC requires all 15-3 tests passing
-    it('should have persona-info container grouping name and role', () => {
-      const personaInfo = document.querySelector('#persona-info, .persona-info');
-      expect(personaInfo).not.toBeNull();
+    // Note: persona-info container was replaced with persona-section + portrait-row structure
+    it('should have portrait-row container grouping portrait and details', () => {
+      const portraitRow = document.querySelector('.portrait-row');
+      expect(portraitRow).not.toBeNull();
     });
 
     it('should have styling for character name (large, bold)', () => {

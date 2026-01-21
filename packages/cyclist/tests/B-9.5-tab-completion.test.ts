@@ -375,7 +375,7 @@ describe('B-9.5: Tab Completion for Slash Commands', () => {
 
       const names = SLASH_COMMANDS.map(c => c.name);
 
-      expect(names).toContain('/new-work');
+      // Note: /new-work was removed - using /work as the entry point
       expect(names).toContain('/work');
       expect(names).toContain('/dev');
       expect(names).toContain('/tea');
@@ -386,9 +386,10 @@ describe('B-9.5: Tab Completion for Slash Commands', () => {
     it('should filter to Pennyfarthing commands with appropriate prefix', async () => {
       const { filterCommands } = await import('../src/public/js/slash-commands.js');
 
-      const results = filterCommands('/new');
+      // Note: /new-work was removed - test with /work prefix instead
+      const results = filterCommands('/work');
 
-      expect(results.map(c => c.name)).toContain('/new-work');
+      expect(results.map(c => c.name)).toContain('/work');
     });
 
     it('should include description for Pennyfarthing commands', async () => {

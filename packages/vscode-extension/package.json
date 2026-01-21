@@ -1,0 +1,175 @@
+{
+  "name": "pennyfarthing-vscode",
+  "displayName": "Pennyfarthing",
+  "description": "VS Code extension for Pennyfarthing - agent orchestration for Claude Code",
+  "version": "0.0.1",
+  "publisher": "1898andco",
+  "license": "MIT",
+  "private": true,
+  "main": "./dist/extension.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/1898andCo/pennyfarthing.git",
+    "directory": "packages/vscode-extension"
+  },
+  "homepage": "https://github.com/1898andCo/pennyfarthing#readme",
+  "bugs": {
+    "url": "https://github.com/1898andCo/pennyfarthing/issues"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "workspaceContains:.pennyfarthing",
+    "workspaceContains:.claude"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "pennyfarthing",
+          "title": "Pennyfarthing",
+          "icon": "resources/pennyfarthing.svg"
+        }
+      ]
+    },
+    "views": {
+      "pennyfarthing": [
+        {
+          "id": "pennyfarthing.agentStatus",
+          "name": "Agent Status",
+          "contextualTitle": "Pennyfarthing Agent Status"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "pennyfarthing.showStatus",
+        "title": "Pennyfarthing: Show Status"
+      },
+      {
+        "command": "pennyfarthing.switchAgent",
+        "title": "Switch Agent",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "pennyfarthing.viewBacklog",
+        "title": "View Backlog",
+        "icon": "$(list-unordered)"
+      },
+      {
+        "command": "pennyfarthing.startWork",
+        "title": "Start Work",
+        "icon": "$(play)"
+      },
+      {
+        "command": "pennyfarthing.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "pennyfarthing.openJira",
+        "title": "Open in Jira"
+      },
+      {
+        "command": "pennyfarthing.runSkill",
+        "title": "Pennyfarthing: Run Skill",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "pennyfarthing.skills",
+        "title": "Pennyfarthing: Skills"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "pennyfarthing.refresh",
+          "when": "view == pennyfarthing.agentStatus",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "pennyfarthing.switchAgent",
+          "when": "view == pennyfarthing.agentStatus && viewItem == agent"
+        },
+        {
+          "command": "pennyfarthing.openJira",
+          "when": "view == pennyfarthing.agentStatus && viewItem == story"
+        }
+      ]
+    },
+    "terminal": {
+      "profiles": {
+        "linux": [
+          {
+            "id": "pennyfarthing.claudeTerminal",
+            "title": "Pennyfarthing Claude"
+          }
+        ],
+        "osx": [
+          {
+            "id": "pennyfarthing.claudeTerminal",
+            "title": "Pennyfarthing Claude"
+          }
+        ],
+        "windows": [
+          {
+            "id": "pennyfarthing.claudeTerminal",
+            "title": "Pennyfarthing Claude"
+          }
+        ]
+      }
+    },
+    "chatParticipants": [
+      {
+        "id": "pennyfarthing-vscode.pennyfarthing",
+        "name": "pennyfarthing",
+        "fullName": "Pennyfarthing",
+        "description": "Claude Code agent orchestration for TDD workflow",
+        "isSticky": true,
+        "commands": [
+          {
+            "name": "sm",
+            "description": "Switch to Scrum Master agent"
+          },
+          {
+            "name": "tea",
+            "description": "Switch to Test Engineer agent"
+          },
+          {
+            "name": "dev",
+            "description": "Switch to Developer agent"
+          },
+          {
+            "name": "reviewer",
+            "description": "Switch to Reviewer agent"
+          }
+        ]
+      }
+    ]
+  },
+  "scripts": {
+    "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
+    "watch": "npm run build -- --watch",
+    "package": "vsce package",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@pennyfarthing/shared": "workspace:*",
+    "ws": "^8.17.0"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.10.0",
+    "@types/ws": "^8.5.10",
+    "esbuild": "^0.27.2",
+    "typescript": "^5.3.2",
+    "vitest": "^4.0.16"
+  }
+}

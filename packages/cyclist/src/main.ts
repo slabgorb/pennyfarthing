@@ -48,6 +48,7 @@ import {
 } from './paths.js';
 import { getContextUsage, ContextInfo } from './api/context.js';
 import { getVerboseMode, setVerboseMode } from './settings-store.js';
+import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import {
   getCurrentSettings,
   saveUserSettings,
@@ -84,6 +85,7 @@ import {
 // Re-export project directory functions for external consumers
 export { getProjectDirectory, setProjectDirectory, isValidProjectDirectory };
 import * as fs from 'fs';
+import { parse } from 'yaml';
 
 // Calculate __dirname for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -700,32 +702,10 @@ export function initializeApp(projectDir?: string): CyclistSettings {
 }
 
 /**
- * Apply font settings directly to main window via executeJavaScript
- * 35-6: This is the reliable way to apply CSS variable changes in Electron
- * Uses webContents.executeJavaScript to set CSS custom properties on :root
- * @param settings - CyclistSettings object containing display.font_ui and display.font_mono
+ * Apply font settings to main window (stub - fonts not currently used)
  */
-export function applyFontSettingsToMainWindow(settings: CyclistSettings): void {
-  if (!dataWindowRef || dataWindowRef.webContents.isDestroyed()) {
-    return;
-  }
-
-  const fontUi = settings.display?.font_ui;
-  const fontMono = settings.display?.font_mono;
-
-  // Build the JavaScript to execute in renderer
-  const jsCode = `
-    (function() {
-      const root = document.documentElement;
-      ${fontUi ? `root.style.setProperty('--font-ui', '"${fontUi}", system-ui, -apple-system, sans-serif');` : ''}
-      ${fontMono ? `root.style.setProperty('--font-mono', '"${fontMono}", Monaco, "Courier New", monospace');` : ''}
-      console.log('[FontSettings] Applied via executeJavaScript:', '${fontUi || 'default'}', '${fontMono || 'default'}');
-    })();
-  `;
-
-  dataWindowRef.webContents.executeJavaScript(jsCode).catch((err) => {
-    console.error('[FontSettings] Failed to apply fonts:', err);
-  });
+export function applyFontSettingsToMainWindow(_settings: CyclistSettings): void {
+  // Font settings removed - function kept for API compatibility
 }
 
 /**
@@ -1299,10 +1279,38 @@ export const isSettingsInitialized = false;
 
 /**
  * Handle settings:get IPC call
- * Returns current settings
+ * Returns current settings with theme from config.local.yaml
+ * Theme is stored ONLY in .pennyfarthing/config.local.yaml (single source of truth)
  */
-export async function handleSettingsGet(): Promise<CyclistSettings> {
-  return getCurrentSettings();
+export async function handleSettingsGet(): Promise<CyclistSettings & { pennyfarthing: { theme: string } }> {
+  const settings = getCurrentSettings();
+
+  // Read theme from config.local.yaml ONLY (single source of truth)
+  // This mirrors the HTTP API behavior in api/settings.ts
+  let theme = 'alice-in-wonderland'; // Default fallback
+  const projectDir = getProjectDirectory();
+  if (projectDir) {
+    try {
+      const configPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
+      if (fs.existsSync(configPath)) {
+        const content = fs.readFileSync(configPath, 'utf-8');
+        const parsed = parse(content) as { theme?: string };
+        if (parsed?.theme) {
+          theme = parsed.theme;
+        }
+      }
+    } catch {
+      // Ignore project config errors - use default
+    }
+  }
+
+  // Return settings with theme included
+  return {
+    ...settings,
+    pennyfarthing: {
+      theme,
+    },
+  };
 }
 
 /**
@@ -1320,15 +1328,36 @@ export async function handleSettingsSave(settings: SettingsInput): Promise<{ suc
       pennyfarthing: pennyfarthingWithoutTheme,
     };
 
-    saveUserSettings(settingsWithoutTheme as Partial<CyclistSettings>);
+    // Get project directory FIRST - needed for both settings save and theme update
+    const projectDir = getProjectDirectory();
+
+    // Pass projectDir to avoid cwd fallback
+    saveUserSettings(settingsWithoutTheme as Partial<CyclistSettings>, projectDir || undefined);
 
     // Write theme to .pennyfarthing/config.local.yaml ONLY (single source of truth)
-    const projectDir = getProjectDirectory();
+    // Uses read-modify-write to preserve other settings (workflow, display, etc.)
     let themeChanged = false;
     if (theme && projectDir) {
       try {
         const configPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
-        fs.writeFileSync(configPath, `theme: "${theme}"\n`, 'utf-8');
+
+        // Read existing config to preserve other settings
+        let existingConfig: Record<string, unknown> = {};
+        if (fs.existsSync(configPath)) {
+          const existingContent = fs.readFileSync(configPath, 'utf-8');
+          const parsed = parseYaml(existingContent);
+          if (parsed && typeof parsed === 'object') {
+            existingConfig = parsed as Record<string, unknown>;
+          }
+        }
+
+        // Update only the theme, preserving everything else
+        existingConfig.theme = theme;
+
+        // Write back with theme first for consistent ordering
+        const { theme: themeValue, ...rest } = existingConfig;
+        const ordered = { theme: themeValue, ...rest };
+        fs.writeFileSync(configPath, stringifyYaml(ordered), 'utf-8');
         themeChanged = true;
 
         // Touch the agent session file to trigger watchAgentChanges
@@ -2136,7 +2165,6 @@ if (isElectron) {
   // Dynamic imports to avoid errors in Node test environment
   const { app, BrowserWindow, ipcMain, dialog, Menu } = await import('electron');
   const { createTerminalServer } = await import('./server.js');
-  // Story 35-13: Window state persistence
   const windowStateKeeper = (await import('electron-window-state')).default;
 
   // Pass BrowserWindow to settings-window module (ESM-compatible, avoids require())
@@ -2162,13 +2190,17 @@ if (isElectron) {
 
   /**
    * Create the main application window
-   * Story 35-13: Uses electron-window-state for window bounds persistence
+   * Window bounds stored per-project in .pennyfarthing/ via electron-window-state
    */
   function createWindow(): void {
-    // Story 35-13: Load saved window state (size, position, maximized)
+    // Store window state in project's .pennyfarthing directory (per-project persistence)
+    const projectDir = getProjectDirectory();
+    const statePath = projectDir ? join(projectDir, '.pennyfarthing') : undefined;
+
     const mainWindowState = windowStateKeeper({
       defaultWidth: windowConfig.width,
       defaultHeight: windowConfig.height,
+      path: statePath,
     });
 
     // Create window with persisted bounds (or defaults on first run)
@@ -2180,7 +2212,7 @@ if (isElectron) {
       height: mainWindowState.height,
     });
 
-    // Story 35-13: Register window state manager to auto-save on resize/move/close
+    // Register window state manager to auto-save on resize/move/close
     mainWindowState.manage(mainWindow);
 
     // Set main window for data broadcasts (must be before did-finish-load handler)

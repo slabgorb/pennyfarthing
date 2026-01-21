@@ -78,7 +78,7 @@ describe('Workflow Schema Validation (31-1)', () => {
 
       const result = validateWorkflow(workflow);
       assert.strictEqual(result.valid, true, 'Complete workflow should be valid');
-      assert.strictEqual(result.workflow?.phases.length, 3);
+      assert.strictEqual(result.workflow?.phases?.length, 3);
     });
 
     it('should accept TDD workflow structure', () => {
@@ -104,7 +104,7 @@ describe('Workflow Schema Validation (31-1)', () => {
       const result = validateWorkflow(workflow);
       assert.strictEqual(result.valid, true, 'TDD workflow should be valid');
       assert.strictEqual(result.workflow?.name, 'tdd');
-      assert.strictEqual(result.workflow?.phases.length, 5);
+      assert.strictEqual(result.workflow?.phases?.length, 5);
     });
 
     it('should accept trivial workflow (skip TEA)', () => {
@@ -411,10 +411,10 @@ describe('Workflow Schema Validation (31-1)', () => {
 
       const result = validateWorkflow(workflow);
       assert.strictEqual(result.valid, true);
-      assert.strictEqual(result.workflow?.phases[0].name, 'first');
-      assert.strictEqual(result.workflow?.phases[1].name, 'second');
-      assert.strictEqual(result.workflow?.phases[2].name, 'third');
-      assert.strictEqual(result.workflow?.phases[3].name, 'fourth');
+      assert.strictEqual(result.workflow?.phases?.[0].name, 'first');
+      assert.strictEqual(result.workflow?.phases?.[1].name, 'second');
+      assert.strictEqual(result.workflow?.phases?.[2].name, 'third');
+      assert.strictEqual(result.workflow?.phases?.[3].name, 'fourth');
     });
   });
 
