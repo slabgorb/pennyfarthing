@@ -73,6 +73,15 @@
       {
         "command": "pennyfarthing.openJira",
         "title": "Open in Jira"
+      },
+      {
+        "command": "pennyfarthing.runSkill",
+        "title": "Pennyfarthing: Run Skill",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "pennyfarthing.skills",
+        "title": "Pennyfarthing: Skills"
       }
     ],
     "menus": {
