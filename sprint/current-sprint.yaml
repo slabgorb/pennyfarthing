@@ -308,7 +308,9 @@ epics:
       workflows with progressive disclosure, gates, and tri-modal execution.
       Based on ADR-0005. Makes stepped workflows a first-class Pennyfarthing capability.
     priority: P2
-    status: in_progress
+    status: done
+    completed: 2026-01-21
+    completed_points: 17
     repos: pennyfarthing
     adr: docs/adr/0005-bmad-workflow-import.md
     stories:
@@ -523,7 +525,9 @@ epics:
       - TirePump integrates with VS Code's workspace state API
       - Reuse Cyclist's public/js components in webview context
     priority: P2
-    status: in_progress
+    status: done
+    completed: 2026-01-21
+    completed_points: 29
     repos: pennyfarthing
     stories:
       - id: MSSCI-12045
