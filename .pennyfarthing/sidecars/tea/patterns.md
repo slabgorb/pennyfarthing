@@ -161,3 +161,58 @@ When adding new sections to VS Code TreeDataProvider:
 - 40 Vitest tests
 - ~4 tests per AC average
 - Tests fail with `TypeError: method is not a function` when not implemented
+
+## WebviewViewProvider Testing Pattern (MSSCI-12148)
+
+When testing VS Code WebviewViewProvider implementations:
+
+**Test Categories:**
+1. **Provider existence** - File exists, class exports, implements interface
+2. **Package.json registration** - View defined with correct id, type, name
+3. **Webview options** - enableScripts, localResourceRoots configured
+4. **HTML content** - Required elements present (img, character-name, etc.)
+5. **Message handling** - onDidReceiveMessage wired, handlers work
+6. **WheelHub integration** - connectToWheelHub, updatePersona, stat forwarding
+7. **Theme support** - detectVSCodeTheme, onDidChangeActiveColorTheme subscription
+8. **CSP compliance** - Content-Security-Policy, nonce generation, webview.cspSource
+9. **Resource URIs** - asWebviewUri called for local resources
+10. **Disposal** - dispose method cleans up subscriptions
+
+**Mock Pattern for WebviewView:**
+```typescript
+class MockWebviewView {
+  webview: MockWebview;
+  visible = true;
+  viewType = 'your.viewType';
+  onDidDispose = vi.fn();
+  onDidChangeVisibility = vi.fn();
+  show = vi.fn();
+  constructor() {
+    this.webview = new MockWebview();
+  }
+}
+
+class MockWebview {
+  options: any = {};
+  html = '';
+  cspSource = 'vscode-webview:';
+  onDidReceiveMessage = vi.fn((handler) => {
+    this._messageHandler = handler;
+    return { dispose: vi.fn() };
+  });
+  postMessage = vi.fn();
+  asWebviewUri = vi.fn((uri: any) => ({
+    toString: () => `vscode-webview://mock/${uri.fsPath}`,
+    fsPath: uri.fsPath,
+  }));
+  private _messageHandler?: (message: any) => void;
+  simulateMessage(message: any) {
+    if (this._messageHandler) this._messageHandler(message);
+  }
+}
+```
+
+**Test Count Reference (MSSCI-12148, 3 pts, 8 ACs):**
+- 49 Vitest tests
+- ~6 tests per AC average
+- Tests fail with `Cannot find module` when not implemented
