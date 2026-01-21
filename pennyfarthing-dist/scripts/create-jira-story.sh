@@ -26,7 +26,7 @@ fi
 SPRINT_FILE="$PROJECT_ROOT/sprint/current-sprint.yaml"
 JIRA_PROJECT="${JIRA_PROJECT_KEY:-MSSCI}"
 PROJECT_LABEL="${PROJECT_LABEL:-${PROJECT_NAME:-pennyfarthing}}"
-SPRINT_JIRA_ID=$(yq '.sprint.jira_id' "$SPRINT_FILE" 2>/dev/null || echo "")
+SPRINT_JIRA_ID=$(yq '.sprint.jira_sprint_id' "$SPRINT_FILE" 2>/dev/null || echo "")
 
 # Get story data
 STORY_DATA=$(yq -o json "(.epics[] | select(.jira == \"$EPIC_JIRA_KEY\")).stories[] | select(.id == \"$STORY_ID\")" "$SPRINT_FILE" 2>/dev/null || echo "")
