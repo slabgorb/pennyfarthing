@@ -465,7 +465,7 @@ epics:
           - Default to create mode if not specified
         points: 2
         priority: P2
-        status: in_progress
+        status: done
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria:
@@ -475,6 +475,7 @@ epics:
           - Defaults to create mode
         jira: MSSCI-12086
         branch: feat/MSSCI-12086-trimodal-support
+        completed: "2026-01-21"
       - id: MSSCI-12087
         title: "Example: architecture stepped workflow"
         description: |
