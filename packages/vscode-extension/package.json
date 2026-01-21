@@ -118,7 +118,7 @@
     },
     "chatParticipants": [
       {
-        "id": "pennyfarthing",
+        "id": "pennyfarthing-vscode.pennyfarthing",
         "name": "pennyfarthing",
         "fullName": "Pennyfarthing",
         "description": "Claude Code agent orchestration for TDD workflow",
