@@ -1174,6 +1174,30 @@ epics:
         workflow: tdd
         acceptance_criteria: []
         jira: MSSCI-12146
+      - id: MSSCI-12148
+        jira: MSSCI-12176
+        title: "Implement workflow start/resume/status shell scripts"
+        description: |
+          MSSCI-12084 implemented the TypeScript workflow executor but the shell
+          script wrappers were never created. This story adds the missing CLI
+          scripts that invoke the stepped workflow commands:
+          - start-workflow.sh - Start a stepped workflow with tri-modal support
+          - resume-workflow.sh - Resume from last completed step
+          - workflow-status.sh - Show progress bar and state
+          These scripts enable `/workflow start prd --mode edit` for brownfield
+          PRD workflows and other BMAD-imported stepped workflows.
+        points: 2
+        priority: P1
+        status: done
+        completed: 2026-01-21
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - start-workflow.sh creates session and loads step 1
+          - start-workflow.sh --mode selects tri-modal path
+          - resume-workflow.sh detects incomplete workflow and continues
+          - workflow-status.sh shows step progress and completion %
+          - Symlinks created in pennyfarthing-dist/scripts/
       - id: MSSCI-12147
         title: "Remove unnecessary variable conversion from migration script"
         description: |
