@@ -445,7 +445,7 @@ epics:
           - Record decision in session
         points: 2
         priority: P2
-        status: ready
+        status: done
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria:
@@ -454,6 +454,7 @@ epics:
           - User choice recorded in session
           - Continue proceeds to next step
         jira: MSSCI-12085
+        completed: "2026-01-21"
       - id: MSSCI-12086
         title: "Tri-modal support (create/validate/edit)"
         description: |
