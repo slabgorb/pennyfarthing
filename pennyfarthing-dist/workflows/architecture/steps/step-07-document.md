@@ -6,9 +6,36 @@ name: documentation
 gate: false
 </step-meta>
 
+## Mandatory Execution Rules
+
+- READ the complete step file before taking any action
+- COMPILE all outputs from previous steps into cohesive document
+- VALIDATE completeness before finalizing
+- ALWAYS treat this as collaborative completion between architectural peers
+
+## Execution Protocols
+
+- Show your analysis before taking any action
+- Validate all sections are complete before generating document
+- Present completion summary and options
+- Update frontmatter `stepsCompleted: [1, 2, 3, 4, 5, 6, 7]`
+- NO MORE STEPS - this is the final step
+
 ## Purpose
 
-Consolidate the architecture decision into a formal document (ADR or architecture spec).
+Consolidate the architecture decision into a formal document (ADR or architecture spec). Validate completeness before finalizing.
+
+## Pre-Documentation Validation
+
+Before compiling the document, verify:
+
+- [ ] Context analysis is complete (Step 2)
+- [ ] Patterns selected with rationale (Step 3)
+- [ ] Components defined with boundaries (Step 4)
+- [ ] Interfaces specified with contracts (Step 5)
+- [ ] Risks assessed with mitigations (Step 6)
+
+If any section is incomplete, report to user before proceeding.
 
 ## Instructions
 
@@ -32,6 +59,7 @@ Consolidate the architecture decision into a formal document (ADR or architectur
 
 ## Actions
 
+- Validate: All previous step outputs are complete
 - Write: Architecture document using template
 - Store: In `docs/adr/` or `docs/architecture/`
 - Update: Any architecture index or registry
@@ -82,10 +110,32 @@ Create `{output_file}` using the template, containing:
 ### Risks and Mitigations
 [From Step 6]
 
+## Implementation Consistency Rules
+
+[Rules that ensure AI agents implement consistently]
+
 ## Related Decisions
 
 - [Links to related ADRs]
 ```
+
+## Completion Menu
+
+After generating document, present completion options:
+
+- **[V] Validate** - Run comprehensive validation checks on the complete architecture
+- **[E] Edit** - Make revisions to specific sections
+- **[C] Complete** - Finalize document and end workflow
+- **[R] Restart Section** - Go back to a specific step
+
+## Validation Checks
+
+When user selects [V]:
+1. Verify all PRD requirements have corresponding architecture decisions
+2. Check component boundaries align with domain concepts
+3. Validate interfaces are complete and consistent
+4. Confirm risks have appropriate mitigations
+5. Report validation results with any gaps
 
 ## Completion
 
@@ -95,3 +145,16 @@ The architecture workflow is complete. The decision document is ready for review
 1. Review document with stakeholders
 2. Update status to "Accepted" after approval
 3. Begin implementation planning
+
+## Success Metrics
+
+- All previous step outputs compiled into document
+- Validation checks passed
+- Document written to appropriate location
+- User confirmed completion
+
+## Failure Modes
+
+- Missing sections from previous steps
+- Incomplete validation
+- Not confirming completion with user

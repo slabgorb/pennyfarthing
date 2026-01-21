@@ -6,6 +6,21 @@ name: context-analysis
 gate: true
 </step-meta>
 
+## Mandatory Execution Rules
+
+- READ the complete step file before taking any action
+- ANALYZE loaded documents, don't assume or generate requirements
+- ALWAYS treat this as collaborative discovery between architectural peers
+- FOCUS on understanding project scope and requirements for architecture
+
+## Execution Protocols
+
+- Show your analysis before taking any action
+- Present A/P/C menu after generating context analysis
+- ONLY save when user chooses [C] Continue
+- Update frontmatter `stepsCompleted: [1, 2]` before loading next step
+- FORBIDDEN to load next step until [C] is selected
+
 ## Purpose
 
 Analyze the project context and identify architectural concerns that will shape the decision.
@@ -59,9 +74,42 @@ Add to session file:
 
 <!-- GATE -->
 
-## Gate: Context Confirmation
+## Collaboration Menu (A/P/C)
 
-Before proceeding, confirm the context analysis is complete:
+After generating context analysis, present choices:
 
-- **[C] Continue** - Context is well understood, proceed to pattern selection
+- **[A] Advanced Elicitation** - Use discovery protocols to develop deeper insights about project context and architectural implications
+- **[P] Party Mode** - Bring multiple perspectives to analyze project requirements from different architectural angles
+- **[C] Continue** - Save the content to the document and proceed to pattern selection
 - **[R] Revise** - Need to gather more information or clarify constraints
+
+## Advanced Elicitation Mode
+
+When user selects [A]:
+1. Ask probing questions about non-obvious constraints
+2. Explore edge cases and failure scenarios
+3. Identify implicit assumptions in requirements
+4. Dig deeper into integration complexity
+
+## Party Mode
+
+When user selects [P]:
+1. Present analysis from multiple viewpoints:
+   - **Security architect**: What could go wrong?
+   - **Performance engineer**: Where are the bottlenecks?
+   - **Operations**: How will this run in production?
+   - **Developer experience**: How maintainable is this?
+2. Synthesize perspectives into unified understanding
+
+## Success Metrics
+
+- Technical constraints extracted from PRD
+- Current landscape mapped accurately
+- Key concerns identified with rationale
+- User confirmed context before proceeding
+
+## Failure Modes
+
+- Generating requirements not found in documents
+- Proceeding without user confirmation
+- Missing critical constraints from PRD
