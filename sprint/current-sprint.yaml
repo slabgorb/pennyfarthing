@@ -772,11 +772,13 @@ epics:
           - Quick actions: resume, abandon, view details
         points: 3
         priority: P1
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
         jira: MSSCI-12125
+        branch: feat/MSSCI-12125-workflow-panel
+        completed: "2026-01-21"
       - id: MSSCI-12126
         title: "Chat response formatting improvements"
         description: |
