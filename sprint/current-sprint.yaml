@@ -422,7 +422,8 @@ epics:
           Commands create/read session state and load appropriate step.
         points: 3
         priority: P1
-        status: ready
+        status: done
+        completed: 2026-01-21
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria:
