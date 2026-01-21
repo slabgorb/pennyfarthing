@@ -14,14 +14,14 @@ let PennyfarthingTerminalProfileProvider: typeof import('./providers/terminal').
 let PennyfarthingTerminalLinkProvider: typeof import('./providers/terminal').PennyfarthingTerminalLinkProvider | null = null;
 let PennyfarthingChatParticipant: typeof import('./providers/chat-participant').PennyfarthingChatParticipant | null = null;
 let registerSkillCommands: typeof import('./commands/command-registry').registerSkillCommands | null = null;
-let CyclistWebviewProvider: typeof import('./providers/cyclist-webview').CyclistWebviewProvider | null = null;
+let AgentPortraitWebviewProvider: typeof import('./providers/agent-portrait-webview').AgentPortraitWebviewProvider | null = null;
 let WelcomeWebviewProvider: typeof import('./providers/welcome-webview').WelcomeWebviewProvider | null = null;
 let ReflectorAdapter: typeof import('./adapters/reflector').ReflectorAdapter | null = null;
 
 // Module-level reference for cleanup
 let wheelHubAdapter: InstanceType<typeof import('./server/wheelhub-adapter').WheelHubAdapter> | null = null;
 let chatParticipant: InstanceType<typeof import('./providers/chat-participant').PennyfarthingChatParticipant> | null = null;
-let cyclistWebviewProvider: InstanceType<typeof import('./providers/cyclist-webview').CyclistWebviewProvider> | null = null;
+let agentPortraitWebviewProvider: InstanceType<typeof import('./providers/agent-portrait-webview').AgentPortraitWebviewProvider> | null = null;
 let welcomeWebviewProvider: InstanceType<typeof import('./providers/welcome-webview').WelcomeWebviewProvider> | null = null;
 let reflectorAdapter: InstanceType<typeof import('./adapters/reflector').ReflectorAdapter> | null = null;
 
@@ -53,9 +53,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     const commandModule = await import('./commands/command-registry');
     registerSkillCommands = commandModule.registerSkillCommands;
 
-    outputChannel.appendLine('Loading Cyclist webview...');
-    const cyclistWebviewModule = await import('./providers/cyclist-webview');
-    CyclistWebviewProvider = cyclistWebviewModule.CyclistWebviewProvider;
+    outputChannel.appendLine('Loading Agent Portrait webview...');
+    const agentPortraitModule = await import('./providers/agent-portrait-webview');
+    AgentPortraitWebviewProvider = agentPortraitModule.AgentPortraitWebviewProvider;
 
     outputChannel.appendLine('Loading Welcome webview...');
     const welcomeWebviewModule = await import('./providers/welcome-webview');
@@ -104,17 +104,22 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   sidebarProvider.startFileWatchers();
   outputChannel.appendLine('[Sidebar] File watchers started for session/config sync');
 
-  // Register Cyclist webview provider (MSSCI-12051)
-  cyclistWebviewProvider = new CyclistWebviewProvider!(context.extensionUri);
-  const cyclistWebviewDisposable = vscode.window.registerWebviewViewProvider(
-    'pennyfarthing.cyclistPanel',
-    cyclistWebviewProvider,
+  // Register Agent Portrait webview provider (MSSCI-12148)
+  agentPortraitWebviewProvider = new AgentPortraitWebviewProvider!(context.extensionUri);
+  const agentPortraitWebviewDisposable = vscode.window.registerWebviewViewProvider(
+    'pennyfarthing.agentPortrait',
+    agentPortraitWebviewProvider,
     {
       webviewOptions: {
         retainContextWhenHidden: true,
       },
     }
   );
+
+  // Start file watchers for Agent Portrait sync (MSSCI-12148)
+  // Watches config.local.yaml for theme and .session/agents/* for current agent
+  agentPortraitWebviewProvider.startFileWatchers();
+  outputChannel.appendLine('[AgentPortrait] File watchers started for config/agent sync');
 
   // Register Welcome webview provider (MSSCI-12123)
   welcomeWebviewProvider = new WelcomeWebviewProvider!(context.extensionUri, context.globalState);
@@ -307,11 +312,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
         // Note: Chat participant uses direct CLI spawning (ADR-004), not WheelHub
 
-        // Wire Cyclist webview provider to WheelHub for stats/story updates (MSSCI-12051)
-        if (cyclistWebviewProvider) {
-          cyclistWebviewProvider.connectToWheelHub(wheelHubAdapter!.getWebSocketManager());
-          outputChannel.appendLine('[WheelHub] Cyclist webview connected to stats channel');
-        }
+        // Note: Agent Portrait uses file watchers (not WheelHub) for persona updates (MSSCI-12148)
 
         // Wire Reflector adapter to WheelHub for marker detection (MSSCI-12049)
         if (ReflectorAdapter) {
@@ -345,11 +346,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     terminalProfileProvider,
     terminalLinkProvider,
     sidebarTreeView,
-    cyclistWebviewDisposable, // MSSCI-12051: Cyclist webview
+    agentPortraitWebviewDisposable, // MSSCI-12148: Agent Portrait webview
     welcomeWebviewDisposable, // MSSCI-12123: Welcome webview
     { dispose: () => sidebarProvider.dispose() }, // Clean up sidebar provider
     { dispose: () => chatParticipant?.dispose() }, // Clean up chat participant
-    { dispose: () => cyclistWebviewProvider?.dispose() }, // Clean up Cyclist webview provider
+    { dispose: () => agentPortraitWebviewProvider?.dispose() }, // Clean up Agent Portrait webview provider
     { dispose: () => welcomeWebviewProvider?.dispose() }, // Clean up Welcome webview provider
     { dispose: () => reflectorAdapter?.dispose() }, // Clean up Reflector adapter (MSSCI-12049)
     switchAgentCommand,

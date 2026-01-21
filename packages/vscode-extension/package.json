@@ -45,15 +45,15 @@
           "contextualTitle": "Pennyfarthing Welcome"
         },
         {
+          "id": "pennyfarthing.agentPortrait",
+          "name": "Agent Portrait",
+          "type": "webview",
+          "contextualTitle": "Pennyfarthing Agent Portrait"
+        },
+        {
           "id": "pennyfarthing.agentStatus",
           "name": "Agent Status",
           "contextualTitle": "Pennyfarthing Agent Status"
-        },
-        {
-          "id": "pennyfarthing.cyclistPanel",
-          "name": "Cyclist",
-          "type": "webview",
-          "contextualTitle": "Pennyfarthing Cyclist"
         }
       ]
     },
@@ -166,6 +166,8 @@
     ]
   },
   "scripts": {
+    "copy-portraits": "node -e \"const fs=require('fs'),path=require('path');const src='../../pennyfarthing-dist/personas/portraits',dst='resources/portraits';if(!fs.existsSync(dst))fs.mkdirSync(dst,{recursive:true});fs.readdirSync(src).forEach(theme=>{const tsrc=path.join(src,theme,'medium'),tdst=path.join(dst,theme);if(fs.existsSync(tsrc)&&fs.statSync(tsrc).isDirectory()){if(!fs.existsSync(tdst))fs.mkdirSync(tdst,{recursive:true});fs.readdirSync(tsrc).filter(f=>f.endsWith('.png')).forEach(f=>fs.copyFileSync(path.join(tsrc,f),path.join(tdst,f)));}});\"",
+    "prebuild": "npm run copy-portraits",
     "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
     "watch": "npm run build -- --watch",
     "package": "vsce package",
