@@ -13,6 +13,7 @@ epics:
   # ===========================================================================
   - id: MSSCI-11942
     type: epic
+    jira: MSSCI-12120
     title: "Epic: WheelHub Notification Consolidation"
     priority: P2
     status: done
@@ -236,6 +237,7 @@ epics:
           - Symlink removed from .claude/skills/
           - /sprint backlog documented as replacement
       - id: MSSCI-12039
+        jira: MSSCI-12119
         title: "Consolidate /new-work into /sprint work with next argument"
         description: |
           Make /new-work an alias for /sprint work. Add 'next' argument to
@@ -501,7 +503,7 @@ epics:
   # ===========================================================================
   # EPIC 52: VS Code Extension for Pennyfarthing
   # ===========================================================================
-  - id: 52
+  - id: MSSCI-12042
     type: epic
     jira: MSSCI-12042
     title: "Epic: VS Code Extension for Pennyfarthing"
