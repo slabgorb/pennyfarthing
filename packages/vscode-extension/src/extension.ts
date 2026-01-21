@@ -17,6 +17,7 @@ let registerSkillCommands: typeof import('./commands/command-registry').register
 let AgentPortraitWebviewProvider: typeof import('./providers/agent-portrait-webview').AgentPortraitWebviewProvider | null = null;
 let WelcomeWebviewProvider: typeof import('./providers/welcome-webview').WelcomeWebviewProvider | null = null;
 let ReflectorAdapter: typeof import('./adapters/reflector').ReflectorAdapter | null = null;
+let StatusBarManager: typeof import('./statusbar').StatusBarManager | null = null;
 
 // Module-level reference for cleanup
 let wheelHubAdapter: InstanceType<typeof import('./server/wheelhub-adapter').WheelHubAdapter> | null = null;
@@ -24,6 +25,7 @@ let chatParticipant: InstanceType<typeof import('./providers/chat-participant').
 let agentPortraitWebviewProvider: InstanceType<typeof import('./providers/agent-portrait-webview').AgentPortraitWebviewProvider> | null = null;
 let welcomeWebviewProvider: InstanceType<typeof import('./providers/welcome-webview').WelcomeWebviewProvider> | null = null;
 let reflectorAdapter: InstanceType<typeof import('./adapters/reflector').ReflectorAdapter> | null = null;
+let statusBarManager: InstanceType<typeof import('./statusbar').StatusBarManager> | null = null;
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const outputChannel = vscode.window.createOutputChannel('Pennyfarthing');
@@ -64,6 +66,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     outputChannel.appendLine('Loading Reflector adapter...');
     const reflectorModule = await import('./adapters/reflector');
     ReflectorAdapter = reflectorModule.ReflectorAdapter;
+
+    outputChannel.appendLine('Loading StatusBarManager...');
+    const statusbarModule = await import('./statusbar');
+    StatusBarManager = statusbarModule.StatusBarManager;
 
     outputChannel.appendLine('All modules loaded');
   } catch (err) {
@@ -153,6 +159,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // Register skill commands for command palette (MSSCI-12050)
   const skillCommandDisposables = registerSkillCommands!(context, outputChannel);
   context.subscriptions.push(...skillCommandDisposables);
+
+  // Initialize StatusBarManager (MSSCI-12190) - create early for display even if WheelHub isn't ready
+  if (StatusBarManager && !statusBarManager) {
+    statusBarManager = new StatusBarManager();
+    outputChannel.appendLine('[StatusBar] StatusBarManager initialized');
+  }
 
   // Register sidebar commands
   const switchAgentCommand = vscode.commands.registerCommand(
@@ -320,6 +332,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
           reflectorAdapter.connectToWheelHub(wheelHubAdapter!.getWebSocketManager());
           outputChannel.appendLine('[WheelHub] Reflector adapter connected to messages channel');
         }
+
+        // Connect StatusBarManager to WheelHub for real-time context updates (MSSCI-12190)
+        if (statusBarManager) {
+          statusBarManager.connectToWheelHub(wheelHubAdapter!.getWebSocketManager());
+          statusBarManager.setConnectionState('connected');
+          outputChannel.appendLine('[WheelHub] StatusBarManager connected to stats channel');
+        }
       })
       .catch((err) => {
         outputChannel.appendLine(
@@ -353,6 +372,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     { dispose: () => agentPortraitWebviewProvider?.dispose() }, // Clean up Agent Portrait webview provider
     { dispose: () => welcomeWebviewProvider?.dispose() }, // Clean up Welcome webview provider
     { dispose: () => reflectorAdapter?.dispose() }, // Clean up Reflector adapter (MSSCI-12049)
+    statusBarManager as vscode.Disposable, // Clean up StatusBarManager (MSSCI-12190)
     switchAgentCommand,
     viewBacklogCommand,
     startWorkCommand,
