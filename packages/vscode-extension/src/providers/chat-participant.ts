@@ -11,6 +11,7 @@
 
 import * as vscode from 'vscode';
 import { ClaudeService } from '../services/claude-service';
+import { ReflectorAdapter } from '../adapters/reflector';
 
 // Agent subcommand definitions
 const AGENT_COMMANDS = [
@@ -39,6 +40,7 @@ export class PennyfarthingChatParticipant {
   private participant: vscode.ChatParticipant | null = null;
   private claudeService: ClaudeService | null = null;
   private outputChannel: vscode.OutputChannel | null = null;
+  private reflectorAdapter: ReflectorAdapter = new ReflectorAdapter();
 
   constructor() {}
 
@@ -121,6 +123,9 @@ export class PennyfarthingChatParticipant {
       return;
     }
 
+    // Reset reflector adapter for new conversation
+    this.reflectorAdapter.reset();
+
     // Show progress
     response.progress('Thinking...');
     this.log(`Sending: ${prompt.substring(0, 100)}...`);
@@ -145,9 +150,13 @@ export class PennyfarthingChatParticipant {
     return new Promise((resolve, reject) => {
       const service = this.getClaudeService();
 
-      // Handle text chunks
-      const onText = (text: string) => {
-        response.markdown(text);
+      // Handle text chunks - process through Reflector to detect/strip CYCLIST markers
+      const onText = async (text: string) => {
+        const result = await this.reflectorAdapter.processText(text);
+        // Display text with markers stripped, markers processed in background
+        if (result.displayText) {
+          response.markdown(result.displayText);
+        }
       };
 
       // Handle tool use
@@ -159,7 +168,12 @@ export class PennyfarthingChatParticipant {
       };
 
       // Handle completion
-      const onComplete = () => {
+      const onComplete = async () => {
+        // Flush any remaining buffered text from reflector
+        const flushed = await this.reflectorAdapter.flush();
+        if (flushed.displayText) {
+          response.markdown(flushed.displayText);
+        }
         cleanup();
         resolve();
       };
