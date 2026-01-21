@@ -653,7 +653,8 @@ epics:
           Parse skill YAML for command metadata.
         points: 2
         priority: P1
-        status: in_progress
+        status: done
+        completed: 2026-01-21
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
