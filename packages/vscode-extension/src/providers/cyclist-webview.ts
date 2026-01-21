@@ -25,6 +25,7 @@ interface WebviewMessage {
   type: string;
   command?: string;
   args?: unknown[];
+  [key: string]: unknown;
 }
 
 /**
@@ -212,7 +213,9 @@ export class CyclistWebviewProvider implements vscode.WebviewViewProvider {
   private _handleWebviewMessage(message: WebviewMessage): void {
     switch (message.type) {
       case 'executeCommand':
-        vscode.commands.executeCommand(message.command, ...(message.args || []));
+        if (message.command) {
+          vscode.commands.executeCommand(message.command, ...(message.args || []));
+        }
         break;
 
       case 'requestInitialState':

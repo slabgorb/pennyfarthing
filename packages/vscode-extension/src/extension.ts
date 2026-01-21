@@ -215,11 +215,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         sidebarProvider.connectToWheelHub(wheelHubAdapter!.getWebSocketManager());
         outputChannel.appendLine('[WheelHub] Sidebar provider connected to stats channel');
 
-        // Wire chat participant to WheelHub for message streaming (MSSCI-12097)
-        if (chatParticipant) {
-          chatParticipant.connectToWheelHub(wheelHubAdapter!.getWebSocketManager());
-          outputChannel.appendLine('[WheelHub] Chat participant connected to messages channel');
-        }
+        // Note: Chat participant uses direct CLI spawning (ADR-004), not WheelHub
 
         // Wire Cyclist webview provider to WheelHub for stats/story updates (MSSCI-12051)
         if (cyclistWebviewProvider) {
