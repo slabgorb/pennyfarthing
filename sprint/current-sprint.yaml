@@ -673,14 +673,16 @@ epics:
           UI enhancement rather than a requirement.
         points: 3
         priority: P2
-        status: ready
+        status: done
         repos: pennyfarthing
         workflow: tdd
+        branch: feat/MSSCI-12051-webview-cyclist-ui
         acceptance_criteria:
           - Webview renders Cyclist components
           - CSP allows script/style loading
           - Theme syncs with VS Code appearance
           - Stats/story panels update in real-time
+        completed: "2026-01-21"
       - id: MSSCI-12097
         jira: MSSCI-12097
         title: "VS Code Chat API integration for Claude conversations"
