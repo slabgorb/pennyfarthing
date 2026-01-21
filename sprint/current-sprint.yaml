@@ -880,36 +880,66 @@ epics:
           - Sidebar reflects current workflow state
         completed: "2026-01-21"
       - id: MSSCI-12148
-        title: "Split agent status into webview with portraits"
+        title: "Agent portrait webview panel, remove Cyclist pane"
         description: |
-          Refactor the sidebar to separate agent status from story status:
+          Add agent portrait webview to sidebar and remove the redundant Cyclist pane.
 
-          Current state: Agent status (persona, role, etc.) and story status are
-          combined in a single sidebar tree view.
+          CURRENT STATE (from screenshot):
+          - "AGENT STATUS" tree view shows "Agent: Agent UNKNOWN" with theme name
+          - "CYCLIST" pane shows redundant stats (--, --, Connecting...)
+          - No portrait images displayed anywhere
+          - Portraits exist at pennyfarthing-dist/personas/portraits/{theme}/medium/{agent}-{id}.png
 
-          Goal:
-          1. Agent Status Webview - Rich visual panel with:
-             - Portrait image for current agent persona
-             - Character name and role prominently displayed
-             - Theme indicator
-             - Visual differentiation from story content
+          WHAT TO BUILD:
+          1. New WebviewViewProvider for agent portrait panel (like WelcomeWebviewProvider)
+          2. Register as "pennyfarthing.agentPortrait" in package.json views
+          3. Copy portraits to extension resources during build (or symlink)
+          4. Display portrait using asWebviewUri() from extension resources
+          5. Show character name, role, and theme below portrait
+          6. Connect to WheelHub wsManager.onStats() for real-time updates
 
-          2. Story Status - Remains in tree view with:
-             - Current sprint info
-             - Active story details
-             - Workflow progress
+          PORTRAIT PACKAGING:
+          - Source: pennyfarthing-dist/personas/portraits/{theme}/medium/*.png
+          - Target: packages/vscode-extension/resources/portraits/{theme}/*.png
+          - Build step: Copy/symlink portraits during extension build
+          - Size: Use "medium" size (best for sidebar width)
+
+          WHAT TO REMOVE:
+          - "pennyfarthing.cyclistPanel" view from package.json
+          - cyclist-webview.ts provider
+          - cyclist-adapter.js webview frontend
+          - CyclistWebviewProvider registration in extension.ts
+
+          FILES TO MODIFY:
+          - packages/vscode-extension/package.json - Add portrait view, remove cyclist
+          - packages/vscode-extension/src/providers/ - New agent-portrait-webview.ts
+          - packages/vscode-extension/src/extension.ts - Register portrait, remove cyclist
+          - packages/vscode-extension/.vscodeignore - Include portraits in package
+
+          FILES TO DELETE:
+          - packages/vscode-extension/src/providers/cyclist-webview.ts
+          - packages/vscode-extension/src/webview/cyclist-adapter.js
+
+          REFERENCE IMPLEMENTATIONS:
+          - welcome-webview.ts (236 lines) - WebviewViewProvider pattern
+          - sidebar.ts updatePersona() - PersonaData interface {character, theme, role}
         points: 3
         priority: P1
-        status: backlog
+        status: done
+        completed: "2026-01-21"
+        assigned_to: Keith Avery
+        branch: feat/MSSCI-12148-agent-portrait-webview
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria:
-          - Agent status is rendered in a VS Code webview panel
-          - Portrait images display correctly for themed personas
-          - Agent panel updates when agent changes (via WheelHub/sidebar sync)
-          - Story status remains in tree view, separate from agent display
-          - Clean visual hierarchy distinguishing agent from story context
-          - Works with all 102 persona themes
+          - AC1: New "Agent Portrait" webview panel appears in Pennyfarthing sidebar
+          - AC2: Portraits packaged into extension resources during build
+          - AC3: Portrait image loads via asWebviewUri() for current agent/theme
+          - AC4: Character name and role displayed below portrait
+          - AC5: Panel updates when agent changes via WheelHub onStats() listener
+          - AC6: Fallback display when no portrait exists (show agent name/icon)
+          - AC7: Works with VS Code light and dark themes
+          - AC8: Cyclist pane completely removed from sidebar
         jira: MSSCI-12148
         github_issue: 416
     jira: MSSCI-12122
