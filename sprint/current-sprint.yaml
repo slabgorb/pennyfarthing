@@ -490,7 +490,7 @@ epics:
           Documents stepped workflow patterns for other workflows.
         points: 1
         priority: P2
-        status: ready
+        status: done
         repos: pennyfarthing
         workflow: trivial
         acceptance_criteria:
@@ -499,6 +499,8 @@ epics:
           - Gates defined at appropriate checkpoints
           - Workflow runs end-to-end successfully
         jira: MSSCI-12087
+        branch: feat/MSSCI-12087-architecture-workflow
+        completed: "2026-01-21"
     jira: MSSCI-12077
   # ===========================================================================
   # EPIC 52: VS Code Extension for Pennyfarthing
