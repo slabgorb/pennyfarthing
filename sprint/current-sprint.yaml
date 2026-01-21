@@ -756,7 +756,7 @@ epics:
           - Show skill descriptions on hover
         points: 3
         priority: P0
-        status: backlog
+        status: in_progress
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []

@@ -7,6 +7,11 @@
 
 import * as vscode from 'vscode';
 import type { WebSocketManager, StatsData } from '../server/websocket-manager';
+import {
+  parseSkillRegistry,
+  groupSkillsByCategory,
+  type SkillMetadata,
+} from '../commands/skill-parser';
 
 // Role display names for accessibility
 const ROLE_NAMES: Record<string, string> = {
@@ -21,6 +26,39 @@ const ROLE_NAMES: Record<string, string> = {
   devops: 'DevOps Engineer',
   orchestrator: 'Orchestrator',
 };
+
+// Category display names for skills
+const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
+  'ai-llm': 'AI & LLM',
+  development: 'Development',
+  documentation: 'Documentation',
+  tools: 'Tools',
+  'project-management': 'Project Management',
+  benchmarking: 'Benchmarking',
+  theming: 'Theming',
+  other: 'Other',
+};
+
+// Slash command definitions for Commands section
+interface SlashCommand {
+  name: string;
+  description: string;
+}
+
+const SLASH_COMMANDS: SlashCommand[] = [
+  { name: 'sm', description: 'Start Scrum Master agent' },
+  { name: 'tea', description: 'Start Test Engineer agent' },
+  { name: 'dev', description: 'Start Developer agent' },
+  { name: 'reviewer', description: 'Start Code Reviewer agent' },
+  { name: 'architect', description: 'Start Architect agent' },
+  { name: 'pm', description: 'Start Product Manager agent' },
+  { name: 'work', description: 'Start or resume work session' },
+  { name: 'sprint', description: 'View sprint status and backlog' },
+  { name: 'check', description: 'Run quality gates (lint, type, test)' },
+  { name: 'help', description: 'Get help with Pennyfarthing' },
+  { name: 'brainstorm', description: 'Structured brainstorm session' },
+  { name: 'release', description: 'Merge develop to main and push' },
+];
 
 // Data types for sidebar state
 interface PersonaData {
@@ -54,10 +92,14 @@ type TreeItemType =
   | 'sprint'
   | 'story'
   | 'actions'
+  | 'skills'
+  | 'commands'
+  | 'skill-category'
   | 'empty';
 
 interface SidebarTreeItem extends vscode.TreeItem {
   itemType?: TreeItemType;
+  categoryName?: string; // For skill-category items to track which category
 }
 
 /**
@@ -82,8 +124,33 @@ export class AgentStatusTreeDataProvider
   private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
   private statsUnsubscribe: (() => void) | null = null;
 
+  // Skills cache
+  private skillsCache: SkillMetadata[] | null = null;
+  private skillsByCategory: Map<string, SkillMetadata[]> | null = null;
+
   constructor() {
     // Initial state is empty
+    // Load skills on construction
+    this.loadSkills();
+  }
+
+  /**
+   * Load skills from skill-registry.yaml
+   */
+  private loadSkills(): void {
+    try {
+      // Try to find project root by looking for common markers
+      const workspaceFolders = vscode.workspace.workspaceFolders;
+      if (workspaceFolders && workspaceFolders.length > 0) {
+        const projectDir = workspaceFolders[0].uri.fsPath;
+        this.skillsCache = parseSkillRegistry(projectDir);
+        this.skillsByCategory = groupSkillsByCategory(this.skillsCache);
+      }
+    } catch {
+      // Skills not available, will show empty section
+      this.skillsCache = [];
+      this.skillsByCategory = new Map();
+    }
   }
 
   /**
@@ -117,6 +184,12 @@ export class AgentStatusTreeDataProvider
         return this.getStoryChildren();
       case 'actions':
         return this.getActionsChildren();
+      case 'skills':
+        return this.getSkillsChildren();
+      case 'commands':
+        return this.getCommandsChildren();
+      case 'skill-category':
+        return this.getSkillCategoryChildren(element);
       default:
         return [];
     }
@@ -173,6 +246,16 @@ export class AgentStatusTreeDataProvider
     // Quick Actions section (always shown if agent is active or no agent)
     if (!this.isConnecting) {
       items.push(this.createActionsItem());
+    }
+
+    // Skills section (always shown - MSSCI-12124)
+    if (!this.isConnecting) {
+      items.push(this.createSkillsItem());
+    }
+
+    // Commands section (always shown - MSSCI-12124)
+    if (!this.isConnecting) {
+      items.push(this.createCommandsItem());
     }
 
     return items;
@@ -417,6 +500,134 @@ export class AgentStatusTreeDataProvider
     item.iconPath = new vscode.ThemeIcon(icon);
 
     return item;
+  }
+
+  // =========================================================================
+  // Skills section (MSSCI-12124)
+  // =========================================================================
+
+  private createSkillsItem(): SidebarTreeItem {
+    const skillCount = this.skillsCache?.length ?? 0;
+    const item = new vscode.TreeItem(
+      'Skills',
+      vscode.TreeItemCollapsibleState.Collapsed
+    ) as SidebarTreeItem;
+
+    item.itemType = 'skills';
+    item.description = `${skillCount} skill${skillCount !== 1 ? 's' : ''}`;
+    item.iconPath = new vscode.ThemeIcon('lightbulb');
+
+    return item;
+  }
+
+  private getSkillsChildren(): SidebarTreeItem[] {
+    if (!this.skillsByCategory) {
+      return [];
+    }
+
+    const items: SidebarTreeItem[] = [];
+
+    // Create category items
+    for (const [category, skills] of this.skillsByCategory) {
+      const displayName =
+        CATEGORY_DISPLAY_NAMES[category] || this.humanize(category);
+      const item = new vscode.TreeItem(
+        displayName,
+        vscode.TreeItemCollapsibleState.Collapsed
+      ) as SidebarTreeItem;
+
+      item.itemType = 'skill-category';
+      item.categoryName = category;
+      item.description = `${skills.length}`;
+      item.iconPath = new vscode.ThemeIcon('folder');
+
+      items.push(item);
+    }
+
+    return items;
+  }
+
+  private getSkillCategoryChildren(element: SidebarTreeItem): SidebarTreeItem[] {
+    const categoryName = element.categoryName;
+    if (!categoryName || !this.skillsByCategory) {
+      return [];
+    }
+
+    const skills = this.skillsByCategory.get(categoryName);
+    if (!skills) {
+      return [];
+    }
+
+    return skills.map((skill) => this.createSkillItem(skill));
+  }
+
+  private createSkillItem(skill: SkillMetadata): SidebarTreeItem {
+    const item = new vscode.TreeItem(
+      `/${skill.name}`,
+      vscode.TreeItemCollapsibleState.None
+    ) as SidebarTreeItem;
+
+    // Build tooltip with description and examples
+    let tooltip = skill.description;
+    if (skill.examples && skill.examples.length > 0) {
+      tooltip += '\n\nExamples:';
+      for (const example of skill.examples) {
+        tooltip += `\n• ${example.context}: ${example.invocation}`;
+      }
+    }
+
+    item.tooltip = tooltip;
+    item.description = skill.category;
+    item.iconPath = new vscode.ThemeIcon('symbol-method');
+    item.command = {
+      command: 'pennyfarthing.invokeSkill',
+      arguments: [skill.name],
+      title: `Run /${skill.name}`,
+    };
+    item.accessibilityInformation = {
+      label: `${skill.name} skill, ${skill.description}`,
+    };
+
+    return item;
+  }
+
+  // =========================================================================
+  // Commands section (MSSCI-12124)
+  // =========================================================================
+
+  private createCommandsItem(): SidebarTreeItem {
+    const item = new vscode.TreeItem(
+      'Commands',
+      vscode.TreeItemCollapsibleState.Collapsed
+    ) as SidebarTreeItem;
+
+    item.itemType = 'commands';
+    item.iconPath = new vscode.ThemeIcon('terminal');
+
+    return item;
+  }
+
+  private getCommandsChildren(): SidebarTreeItem[] {
+    return SLASH_COMMANDS.map((cmd) => {
+      const item = new vscode.TreeItem(
+        `/${cmd.name}`,
+        vscode.TreeItemCollapsibleState.None
+      ) as SidebarTreeItem;
+
+      item.description = cmd.description;
+      item.tooltip = cmd.description;
+      item.iconPath = new vscode.ThemeIcon('chevron-right');
+      item.command = {
+        command: 'pennyfarthing.invokeCommand',
+        arguments: [cmd.name],
+        title: `Run /${cmd.name}`,
+      };
+      item.accessibilityInformation = {
+        label: `${cmd.name} command, ${cmd.description}`,
+      };
+
+      return item;
+    });
   }
 
   // =========================================================================

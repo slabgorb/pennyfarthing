@@ -227,6 +227,36 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }
   );
 
+  // Register invokeSkill command for sidebar skills (MSSCI-12124)
+  const invokeSkillCommand = vscode.commands.registerCommand(
+    'pennyfarthing.invokeSkill',
+    async (skillName: string) => {
+      const terminal = vscode.window.activeTerminal;
+      if (terminal) {
+        terminal.sendText(`/${skillName}`);
+      } else {
+        vscode.window.showInformationMessage(
+          `Run /${skillName} in your Claude terminal`
+        );
+      }
+    }
+  );
+
+  // Register invokeCommand command for sidebar commands (MSSCI-12124)
+  const invokeCommandCommand = vscode.commands.registerCommand(
+    'pennyfarthing.invokeCommand',
+    async (commandName: string) => {
+      const terminal = vscode.window.activeTerminal;
+      if (terminal) {
+        terminal.sendText(`/${commandName}`);
+      } else {
+        vscode.window.showInformationMessage(
+          `Run /${commandName} in your Claude terminal`
+        );
+      }
+    }
+  );
+
   // Register contextClear command for Reflector CONTEXT_CLEAR marker (MSSCI-12049)
   const contextClearCommand = vscode.commands.registerCommand(
     'pennyfarthing.contextClear',
@@ -322,6 +352,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     startWorkCommand,
     refreshCommand,
     openJiraCommand,
+    invokeSkillCommand, // MSSCI-12124
+    invokeCommandCommand, // MSSCI-12124
     contextClearCommand // MSSCI-12049
   );
 }
