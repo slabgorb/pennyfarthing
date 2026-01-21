@@ -1075,16 +1075,25 @@ epics:
         title: "Import Implementation Readiness workflow"
         description: |
           Import BMAD implementation readiness check:
-          - Validates project is ready for development
-          - Checklist of prerequisites
-          - Gate before dev work begins
+          - Source: bmm/workflows/3-solutioning/check-implementation-readiness/
+          - 6 steps: document discovery, PRD analysis, epic coverage, UX alignment, epic quality, final assessment
+          - Validates PRD, Architecture, Epics are complete before implementation
+          - Adversarial review approach to find gaps
         points: 2
         priority: P1
-        status: backlog
+        status: in_progress
         repos: pennyfarthing
         workflow: tdd
-        acceptance_criteria: []
+        acceptance_criteria:
+          - AC1: pennyfarthing-dist/workflows/implementation-readiness/ directory created
+          - AC2: workflow.yaml with correct schema (name, description, type, steps)
+          - AC3: All 6 step files copied with variable syntax validated
+          - AC4: Template file(s) copied if present
+          - AC5: /workflow list shows implementation-readiness as available
+          - AC6: Workflow purpose documented (BMAD reference)
         jira: MSSCI-12138
+        assigned_to: Keith Avery
+        branch: feat/MSSCI-12138-implementation-readiness-workflow
       - id: MSSCI-12139
         title: "Import UX Design workflow"
         description: |
