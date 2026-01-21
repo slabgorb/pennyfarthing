@@ -66,7 +66,42 @@ export interface WorkflowPermissionPreset {
 }
 
 /**
+ * Steps configuration for stepped workflows
+ */
+export interface WorkflowSteps {
+  /** Directory containing step files */
+  path: string;
+  /** Naming pattern for step files (e.g., "step-{nn}-*.md") */
+  pattern: string;
+}
+
+/**
+ * Tri-modal configuration for stepped workflows
+ */
+export interface WorkflowModes {
+  /** Default mode: 'create' | 'validate' | 'edit' */
+  default: 'create' | 'validate' | 'edit';
+  /** Path to create mode steps */
+  create?: string;
+  /** Path to validate mode steps */
+  validate?: string;
+  /** Path to edit mode steps */
+  edit?: string;
+}
+
+/**
+ * Gate configuration for stepped workflows
+ */
+export interface WorkflowSteppedGates {
+  /** Step numbers after which to pause for user approval */
+  after_steps?: number[];
+  /** Marker string to detect gates in step file content */
+  gate_marker?: string;
+}
+
+/**
  * Complete workflow definition
+ * Supports both phased (traditional) and stepped (BMAD-style) workflows
  */
 export interface WorkflowDefinition {
   /** Unique workflow identifier */
@@ -75,8 +110,22 @@ export interface WorkflowDefinition {
   description?: string;
   /** Semver version for tracking changes (optional) */
   version?: string;
-  /** Ordered list of phases */
-  phases: WorkflowPhase[];
+  /** Workflow type: 'phased' (default) or 'stepped' */
+  type?: 'phased' | 'stepped';
+  /** Ordered list of phases (required for phased workflows) */
+  phases?: WorkflowPhase[];
+  /** Primary agent for stepped workflows */
+  agent?: string;
+  /** Steps configuration (required for stepped workflows) */
+  steps?: WorkflowSteps;
+  /** Tri-modal configuration (optional, stepped only) */
+  modes?: WorkflowModes;
+  /** Variable definitions for stepped workflows */
+  variables?: Record<string, unknown>;
+  /** Gate configuration for stepped workflows */
+  gates?: WorkflowSteppedGates;
+  /** Output template path for stepped workflows */
+  template?: string;
   /** Rules for automatic workflow selection (optional) */
   triggers?: WorkflowTriggers;
   /** Permission presets required by this workflow (optional) */
@@ -144,14 +193,134 @@ export function validateWorkflow(input: unknown): WorkflowValidationResult {
     errors.push({ field: 'workflow.name', message: 'Name must be a string' });
   }
 
-  // Validate workflow.phases (required, array with at least one phase)
-  if (!('phases' in workflowObj) || workflowObj.phases === undefined) {
-    errors.push({ field: 'workflow.phases', message: 'Phases is required' });
-  } else if (!Array.isArray(workflowObj.phases)) {
-    errors.push({ field: 'workflow.phases', message: 'Phases must be an array' });
-  } else if (workflowObj.phases.length === 0) {
-    errors.push({ field: 'workflow.phases', message: 'Workflow must have at least one phase' });
+  // Determine workflow type (default to 'phased' for backward compatibility)
+  const workflowType = ('type' in workflowObj && workflowObj.type !== undefined)
+    ? workflowObj.type
+    : 'phased';
+
+  // Validate type field if present
+  if ('type' in workflowObj && workflowObj.type !== undefined) {
+    if (workflowObj.type !== 'phased' && workflowObj.type !== 'stepped') {
+      errors.push({ field: 'workflow.type', message: 'Type must be "phased" or "stepped"' });
+    }
+  }
+
+  const isStepped = workflowType === 'stepped';
+  const hasPhases = 'phases' in workflowObj && workflowObj.phases !== undefined;
+  const hasSteps = 'steps' in workflowObj && workflowObj.steps !== undefined;
+
+  // Validate mutual exclusivity: stepped workflows cannot have phases
+  if (isStepped && hasPhases) {
+    errors.push({ field: 'workflow.phases', message: 'Stepped workflows cannot have phases (mutually exclusive)' });
+  }
+
+  // Validate stepped workflow requirements
+  if (isStepped) {
+    // steps is required for stepped workflows
+    if (!hasSteps) {
+      errors.push({ field: 'workflow.steps', message: 'steps configuration is required for stepped workflows' });
+    } else {
+      // Validate steps object
+      const stepsObj = workflowObj.steps as Record<string, unknown>;
+      if (!stepsObj || typeof stepsObj !== 'object') {
+        errors.push({ field: 'workflow.steps', message: 'Steps must be an object' });
+      } else {
+        // path is required and must be non-empty
+        if (!('path' in stepsObj) || stepsObj.path === undefined || stepsObj.path === null) {
+          errors.push({ field: 'workflow.steps.path', message: 'Steps path is required' });
+        } else if (typeof stepsObj.path !== 'string') {
+          errors.push({ field: 'workflow.steps.path', message: 'Steps path must be a string' });
+        } else if (stepsObj.path.trim() === '') {
+          errors.push({ field: 'workflow.steps.path', message: 'Steps path cannot be empty' });
+        }
+        // pattern is required and must be non-empty
+        if (!('pattern' in stepsObj) || stepsObj.pattern === undefined || stepsObj.pattern === null) {
+          errors.push({ field: 'workflow.steps.pattern', message: 'Steps pattern is required' });
+        } else if (typeof stepsObj.pattern !== 'string') {
+          errors.push({ field: 'workflow.steps.pattern', message: 'Steps pattern must be a string' });
+        } else if (stepsObj.pattern.trim() === '') {
+          errors.push({ field: 'workflow.steps.pattern', message: 'Steps pattern cannot be empty' });
+        }
+      }
+    }
+
+    // Validate modes (optional, but only valid for stepped)
+    if ('modes' in workflowObj && workflowObj.modes !== undefined) {
+      const modesObj = workflowObj.modes as Record<string, unknown>;
+      if (!modesObj || typeof modesObj !== 'object') {
+        errors.push({ field: 'workflow.modes', message: 'Modes must be an object' });
+      } else {
+        // default mode must be one of: create, validate, edit
+        if ('default' in modesObj && modesObj.default !== undefined) {
+          if (modesObj.default !== 'create' && modesObj.default !== 'validate' && modesObj.default !== 'edit') {
+            errors.push({ field: 'workflow.modes.default', message: 'Modes default must be "create", "validate", or "edit"' });
+          }
+        }
+        // Mode paths must be strings if present
+        for (const mode of ['create', 'validate', 'edit']) {
+          if (mode in modesObj && modesObj[mode] !== undefined && typeof modesObj[mode] !== 'string') {
+            errors.push({ field: `workflow.modes.${mode}`, message: `Modes ${mode} must be a string` });
+          }
+        }
+      }
+    }
+
+    // Validate stepped gates (optional)
+    if ('gates' in workflowObj && workflowObj.gates !== undefined) {
+      const gatesObj = workflowObj.gates as Record<string, unknown>;
+      if (!gatesObj || typeof gatesObj !== 'object') {
+        errors.push({ field: 'workflow.gates', message: 'Gates must be an object' });
+      } else {
+        // after_steps must be array of numbers if present
+        if ('after_steps' in gatesObj && gatesObj.after_steps !== undefined) {
+          if (!Array.isArray(gatesObj.after_steps)) {
+            errors.push({ field: 'workflow.gates.after_steps', message: 'Gates after_steps must be an array' });
+          } else {
+            const afterSteps = gatesObj.after_steps as unknown[];
+            afterSteps.forEach((step, index) => {
+              if (typeof step !== 'number') {
+                errors.push({ field: `workflow.gates.after_steps[${index}]`, message: 'Gates after_steps values must be numbers' });
+              }
+            });
+          }
+        }
+        // gate_marker must be string if present
+        if ('gate_marker' in gatesObj && gatesObj.gate_marker !== undefined) {
+          if (typeof gatesObj.gate_marker !== 'string') {
+            errors.push({ field: 'workflow.gates.gate_marker', message: 'Gates gate_marker must be a string' });
+          }
+        }
+      }
+    }
+
+    // Validate template (optional, string)
+    if ('template' in workflowObj && workflowObj.template !== undefined) {
+      if (typeof workflowObj.template !== 'string') {
+        errors.push({ field: 'workflow.template', message: 'Template must be a string' });
+      }
+    }
+
+    // Validate variables (optional, object) - no additional constraints
+    // variables can be any object shape
+
   } else {
+    // Phased workflow validation
+
+    // modes is only valid for stepped workflows
+    if ('modes' in workflowObj && workflowObj.modes !== undefined) {
+      errors.push({ field: 'workflow.modes', message: 'modes configuration is only valid for stepped workflows' });
+    }
+  }
+
+  // Validate workflow.phases (required for phased workflows)
+  if (!isStepped) {
+    if (!hasPhases) {
+      errors.push({ field: 'workflow.phases', message: 'Phases is required' });
+    } else if (!Array.isArray(workflowObj.phases)) {
+      errors.push({ field: 'workflow.phases', message: 'Phases must be an array' });
+    } else if (workflowObj.phases.length === 0) {
+      errors.push({ field: 'workflow.phases', message: 'Workflow must have at least one phase' });
+    } else {
     // Validate each phase
     const phases = workflowObj.phases as unknown[];
     phases.forEach((phase, index) => {
@@ -204,6 +373,7 @@ export function validateWorkflow(input: unknown): WorkflowValidationResult {
         }
       }
     });
+    }
   }
 
   // Validate triggers (optional)
@@ -312,35 +482,101 @@ export function validateWorkflow(input: unknown): WorkflowValidationResult {
   }
 
   // Build the validated workflow object
-  const phases = (workflowObj.phases as Record<string, unknown>[]).map((phase): WorkflowPhase => {
-    const result: WorkflowPhase = {
-      name: phase.name as string,
-      agent: phase.agent as string
-    };
+  const workflow: WorkflowDefinition = {
+    name: workflowObj.name as string
+  };
 
-    if (phase.input !== undefined) {
-      result.input = phase.input as string[];
-    }
-    if (phase.output !== undefined) {
-      result.output = phase.output as string[];
-    }
-    if (phase.gate !== undefined) {
-      const gateObj = phase.gate as Record<string, unknown>;
-      result.gate = {
-        type: gateObj.type as string
+  // Set type (default to phased for backward compatibility)
+  if ('type' in workflowObj && workflowObj.type !== undefined) {
+    workflow.type = workflowObj.type as 'phased' | 'stepped';
+  }
+
+  // Determine if stepped for conditional field handling
+  const isSteppedWorkflow = workflow.type === 'stepped';
+
+  // Build phases array for phased workflows
+  if (!isSteppedWorkflow && workflowObj.phases !== undefined) {
+    workflow.phases = (workflowObj.phases as Record<string, unknown>[]).map((phase): WorkflowPhase => {
+      const result: WorkflowPhase = {
+        name: phase.name as string,
+        agent: phase.agent as string
       };
-      if (gateObj.condition !== undefined) {
-        result.gate.condition = gateObj.condition as string;
+
+      if (phase.input !== undefined) {
+        result.input = phase.input as string[];
+      }
+      if (phase.output !== undefined) {
+        result.output = phase.output as string[];
+      }
+      if (phase.gate !== undefined) {
+        const gateObj = phase.gate as Record<string, unknown>;
+        result.gate = {
+          type: gateObj.type as string
+        };
+        if (gateObj.condition !== undefined) {
+          result.gate.condition = gateObj.condition as string;
+        }
+      }
+
+      return result;
+    });
+  }
+
+  // Build stepped workflow fields
+  if (isSteppedWorkflow) {
+    // agent (optional for stepped workflows)
+    if (workflowObj.agent !== undefined) {
+      workflow.agent = workflowObj.agent as string;
+    }
+
+    // steps (required for stepped, already validated)
+    if (workflowObj.steps !== undefined) {
+      const stepsObj = workflowObj.steps as Record<string, unknown>;
+      workflow.steps = {
+        path: stepsObj.path as string,
+        pattern: stepsObj.pattern as string
+      };
+    }
+
+    // modes (optional)
+    if (workflowObj.modes !== undefined) {
+      const modesObj = workflowObj.modes as Record<string, unknown>;
+      workflow.modes = {
+        default: modesObj.default as 'create' | 'validate' | 'edit'
+      };
+      if (modesObj.create !== undefined) {
+        workflow.modes.create = modesObj.create as string;
+      }
+      if (modesObj.validate !== undefined) {
+        workflow.modes.validate = modesObj.validate as string;
+      }
+      if (modesObj.edit !== undefined) {
+        workflow.modes.edit = modesObj.edit as string;
       }
     }
 
-    return result;
-  });
+    // variables (optional)
+    if (workflowObj.variables !== undefined) {
+      workflow.variables = workflowObj.variables as Record<string, unknown>;
+    }
 
-  const workflow: WorkflowDefinition = {
-    name: workflowObj.name as string,
-    phases
-  };
+    // gates (optional, stepped workflow gates)
+    if (workflowObj.gates !== undefined) {
+      const gatesObj = workflowObj.gates as Record<string, unknown>;
+      workflow.gates = {};
+      if (gatesObj.after_steps !== undefined) {
+        workflow.gates.after_steps = gatesObj.after_steps as number[];
+      }
+      if (gatesObj.gate_marker !== undefined) {
+        workflow.gates.gate_marker = gatesObj.gate_marker as string;
+      }
+    }
+
+    // template (optional)
+    if (workflowObj.template !== undefined) {
+      workflow.template = workflowObj.template as string;
+    }
+  }
 
   if (workflowObj.description !== undefined) {
     workflow.description = workflowObj.description as string;

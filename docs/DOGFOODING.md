@@ -40,16 +40,9 @@ pennyfarthing/
 │   └── workflows/               # Workflow definitions
 │
 ├── .claude/                     <- CLAUDE CODE DISCOVERY
-│   ├── commands/                <- DIRECTORY (not symlink!)
-│   │   ├── dev.md -> ../../pennyfarthing-dist/commands/dev.md
-│   │   ├── sm.md -> ../../pennyfarthing-dist/commands/sm.md
-│   │   └── ... (individual file symlinks)
-│   │
-│   ├── skills/                  <- DIRECTORY (not symlink!)
-│   │   ├── testing -> ../../pennyfarthing-dist/skills/testing
-│   │   ├── changelog -> ../../pennyfarthing-dist/skills/changelog
-│   │   └── ... (individual folder symlinks)
-│   │
+│   ├── commands -> ../pennyfarthing-dist/commands   (direct symlink)
+│   ├── skills -> ../pennyfarthing-dist/skills       (direct symlink)
+│   ├── scripts -> ../pennyfarthing-dist/scripts     (direct symlink)
 │   └── project/                 <- Real directory (project-specific)
 │       ├── agents/              <- Agent sidecars (patterns, gotchas, decisions)
 │       ├── commands/            <- User commands (optional)
@@ -65,7 +58,7 @@ pennyfarthing/
 │   └── config.local.yaml        <- Theme selection (gitignored)
 ```
 
-**Key insight:** Commands and skills use individual symlinks in `.claude/` for Claude Code discovery, while bulk content lives in `.pennyfarthing/` for cleaner organization.
+**Key insight:** Both `.claude/` and `.pennyfarthing/` use direct symlinks to `pennyfarthing-dist/`. This means everything resolves in a single hop - no symlink chains.
 
 ## Dogfood vs Fresh Install Parity
 
@@ -162,18 +155,15 @@ git add pennyfarthing-dist/agents/new-agent.md
 ### New Command
 
 ```bash
-# 1. Create in source
+# 1. Create in source - that's it!
 vim pennyfarthing-dist/commands/new-command.md
 
-# 2. Add symlink to .claude/commands/
-ln -s ../../pennyfarthing-dist/commands/new-command.md .claude/commands/new-command.md
-
-# 3. Commit both
+# 2. Commit
 git add pennyfarthing-dist/commands/new-command.md
-git add .claude/commands/new-command.md
-```
 
-Note: Commands use individual file symlinks to allow user-defined commands alongside built-ins.
+# Symlink resolves automatically:
+# .claude/commands -> ../pennyfarthing-dist/commands
+```
 
 ### New Skill
 
@@ -182,13 +172,35 @@ Note: Commands use individual file symlinks to allow user-defined commands along
 mkdir pennyfarthing-dist/skills/new-skill
 vim pennyfarthing-dist/skills/new-skill/skill.md
 
-# 2. Add symlink to .claude/skills/
-ln -s ../../pennyfarthing-dist/skills/new-skill .claude/skills/new-skill
+# 2. Symlink is automatic (whole directory is symlinked)
+# .claude/skills -> ../pennyfarthing-dist/skills
 
-# 3. Commit both
+# 3. Commit
 git add pennyfarthing-dist/skills/new-skill/
-git add .claude/skills/new-skill
 ```
+
+### Skill with Scripts
+
+Skills can include scripts in a `scripts/` subdirectory. These need to be discoverable by `run.sh`, which looks in `.pennyfarthing/scripts/`.
+
+```bash
+# 1. Create skill with scripts
+mkdir -p pennyfarthing-dist/skills/my-skill/scripts
+vim pennyfarthing-dist/skills/my-skill/skill.md
+vim pennyfarthing-dist/skills/my-skill/scripts/my-script.sh
+chmod +x pennyfarthing-dist/skills/my-skill/scripts/my-script.sh
+
+# 2. Add symlink from scripts/ to make it discoverable by run.sh
+ln -s ../skills/my-skill/scripts/my-script.sh pennyfarthing-dist/scripts/my-script.sh
+
+# 3. Commit all
+git add pennyfarthing-dist/skills/my-skill/
+git add pennyfarthing-dist/scripts/my-script.sh
+```
+
+**Why the symlink?** The `run.sh` bootstrap looks in `.pennyfarthing/scripts/` (which resolves to `pennyfarthing-dist/scripts/`). Skills can keep their scripts co-located for organization, then symlink into the main scripts directory for discoverability.
+
+**In installed projects:** The installer copies skill scripts to `.pennyfarthing/scripts/` directly, so the pattern works identically.
 
 ### New Workflow
 
@@ -208,14 +220,15 @@ git add pennyfarthing-dist/workflows/new-workflow.yaml
 | Location | Purpose | Git Tracked |
 |----------|---------|-------------|
 | `pennyfarthing-dist/` | Source of truth | Yes |
-| `.claude/commands/` | Command discovery (file symlinks) | Yes |
-| `.claude/skills/` | Skill discovery (folder symlinks) | Yes |
+| `.claude/commands` | Symlink → `pennyfarthing-dist/commands` | Yes (symlink) |
+| `.claude/skills` | Symlink → `pennyfarthing-dist/skills` | Yes (symlink) |
+| `.claude/scripts` | Symlink → `pennyfarthing-dist/scripts` | Yes (symlink) |
 | `.claude/project/` | Project-specific files | Yes |
-| `.pennyfarthing/agents` | Symlink to source | Yes (symlink) |
-| `.pennyfarthing/guides` | Symlink to source | Yes (symlink) |
-| `.pennyfarthing/personas` | Symlink to source | Yes (symlink) |
-| `.pennyfarthing/scripts` | Symlink to source | Yes (symlink) |
-| `.pennyfarthing/workflows` | Symlink to source | Yes (symlink) |
+| `.pennyfarthing/agents` | Symlink → `pennyfarthing-dist/agents` | Yes (symlink) |
+| `.pennyfarthing/guides` | Symlink → `pennyfarthing-dist/guides` | Yes (symlink) |
+| `.pennyfarthing/personas` | Symlink → `pennyfarthing-dist/personas` | Yes (symlink) |
+| `.pennyfarthing/scripts` | Symlink → `pennyfarthing-dist/scripts` | Yes (symlink) |
+| `.pennyfarthing/workflows` | Symlink → `pennyfarthing-dist/workflows` | Yes (symlink) |
 | `.pennyfarthing/sidecars/` | Agent learning files | Yes |
 | `.pennyfarthing/config.local.yaml` | Theme selection | No (gitignored) |
 
@@ -230,10 +243,11 @@ git add pennyfarthing-dist/workflows/new-workflow.yaml
 │                                                                  │
 │   Source: pennyfarthing-dist/   (edit and commit here)          │
 │                                                                  │
-│   Discovery: .claude/commands/  (individual symlinks)           │
-│              .claude/skills/    (individual symlinks)           │
+│   Discovery: .claude/           (direct symlinks to source)     │
+│   Content:   .pennyfarthing/    (direct symlinks to source)     │
 │                                                                  │
-│   Content:   .pennyfarthing/*   (direct symlinks to source)     │
+│   Exception: Skills with scripts need a symlink in              │
+│   pennyfarthing-dist/scripts/ pointing to the skill's script.   │
 └─────────────────────────────────────────────────────────────────┘
 ```
 

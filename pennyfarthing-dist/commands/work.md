@@ -49,8 +49,14 @@ Task tool:
   model: "haiku"
   run_in_background: true
   prompt: |
-    Read and follow: .pennyfarthing/agents/workflow-status-check.md
-    Scan workflow state for /work command
+    You are the workflow-status-check subagent.
+    CALLING_AGENT: Orchestrator (from /work command)
+
+    Read .pennyfarthing/agents/workflow-status-check.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
+
+    Scan workflow state for /work command.
 ```
 Use `TaskOutput` with the returned task_id to get the result.
 

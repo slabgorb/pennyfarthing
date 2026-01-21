@@ -28,7 +28,11 @@ From theme config. Model: haiku. Tasks: Architecture scanning, pattern analysis,
     subagent_type: "general-purpose"
     model: "haiku"
     prompt: |
-      Read and follow: .pennyfarthing/agents/{subagent-name}.md
+      You are the {subagent-name} subagent.
+
+      Read .pennyfarthing/agents/{subagent-name}.md for your instructions,
+      then EXECUTE all steps described there. Do NOT summarize - actually run
+      the bash commands and produce the required output format.
 
       {PARAMETERS}
   ```
@@ -154,7 +158,11 @@ Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/testing-runner.md
+    You are the testing-runner subagent.
+
+    Read .pennyfarthing/agents/testing-runner.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
 
     REPOS: all
     CONTEXT: Verifying build after design change

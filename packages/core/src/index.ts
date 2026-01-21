@@ -54,3 +54,27 @@ export {
   type DimensionComparison,
   type DimensionStats,
 } from './scripts/job-fair-aggregator.js';
+
+// Workflow System (Stories 31-1, 31-2, 31-3, MSSCI-11710)
+export {
+  // Schema validation
+  validateWorkflow,
+  type WorkflowDefinition,
+  type WorkflowPhase,
+  type WorkflowTriggers,
+  type WorkflowPermissionPreset,
+  type WorkflowValidationError,
+  type WorkflowValidationResult,
+  // Workflow loading
+  loadWorkflowFile,
+  loadWorkflowsFromDir,
+  type WorkflowLoadResult,
+  type WorkflowLoadResults,
+  // Story-to-workflow routing
+  routeStoryToWorkflow,
+  type StoryMetadata,
+  type RoutingResult,
+  // Permission checking (Story MSSCI-11710)
+  checkWorkflowPermissions,
+  type WorkflowPermissionCheckResult,
+} from './workflow/index.js';

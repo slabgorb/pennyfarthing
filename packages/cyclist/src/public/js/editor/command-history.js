@@ -4,6 +4,7 @@
  */
 
 import { HISTORY_KEY, MAX_HISTORY } from './constants.js';
+import { settingsSync } from '../settings-sync.js';
 
 // State
 let commandHistory = [];
@@ -30,31 +31,20 @@ export function initCommandHistory({ getContent, setContent, moveCursorToEnd }) 
 }
 
 /**
- * Load command history from localStorage
+ * Load command history from settings-sync
  */
 export function loadHistory() {
-  if (typeof localStorage === 'undefined') return;
-  try {
-    const stored = localStorage.getItem(HISTORY_KEY);
-    if (stored) {
-      commandHistory = JSON.parse(stored);
-    }
-  } catch (e) {
-    console.warn('Failed to load command history:', e);
-    commandHistory = [];
+  const stored = settingsSync.get(HISTORY_KEY);
+  if (stored && Array.isArray(stored)) {
+    commandHistory = stored;
   }
 }
 
 /**
- * Save command history to localStorage
+ * Save command history to settings-sync (cross-tab broadcast)
  */
 function saveHistory() {
-  if (typeof localStorage === 'undefined') return;
-  try {
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(commandHistory));
-  } catch (e) {
-    console.warn('Failed to save command history:', e);
-  }
+  settingsSync.set(HISTORY_KEY, commandHistory);
 }
 
 /**

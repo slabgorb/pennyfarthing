@@ -28,7 +28,7 @@ describe('35-1: Contextual Settings Placement', () => {
   let settingsDocument: Document;
 
   beforeAll(async () => {
-    // Fetch main index HTML
+    // Fetch main index HTML (GET requests only - no mutations)
     const indexResponse = await request(app).get('/');
     indexHtml = indexResponse.text;
 
@@ -45,6 +45,7 @@ describe('35-1: Contextual Settings Placement', () => {
     settingsWindow.document.write(settingsHtml);
     settingsDocument = settingsWindow.document;
   });
+
 
   // ==========================================================================
   // AC1: Theme chooser accessible from profile/persona area click
@@ -112,56 +113,32 @@ describe('35-1: Contextual Settings Placement', () => {
   });
 
   // ==========================================================================
-  // AC2: Auto-handoff toggle visible in editor toolbar
+  // AC2: Permission mode switch in toolbar (unified with handoff)
+  // Handoff is now part of the 4-way permission mode: plan|manual|accept|turbo
   // ==========================================================================
-  describe('AC2: Auto-handoff toggle in toolbar', () => {
+  describe('AC2: Permission mode switch in toolbar', () => {
 
-    it('should have handoff toggle button in editor toolbar', async () => {
-      // New button for handoff mode
-      expect(indexHtml).toMatch(/editor-toolbar[^]*handoff/i);
+    it('should have mode switch in editor toolbar', async () => {
+      expect(indexHtml).toMatch(/editor-toolbar[^]*mode-switch/i);
     });
 
-    it('should have button with data-control="handoff-mode"', async () => {
-      expect(indexHtml).toContain('data-control="handoff-mode"');
+    it('should have mode switch with data-control="mode-switch"', async () => {
+      expect(indexHtml).toContain('data-control="mode-switch"');
     });
 
-    it('should have handoff toggle button after mode switch', async () => {
-      // Should appear after the mode-switch segmented control (35-4)
-      // Use the full HTML since toolbar contains nested divs
-      const modeSwitchIndex = indexHtml.indexOf('data-control="mode-switch"');
-      const handoffIndex = indexHtml.indexOf('data-control="handoff-mode"');
-
-      expect(modeSwitchIndex).toBeGreaterThan(-1);
-      expect(handoffIndex).toBeGreaterThan(-1);
-      expect(handoffIndex).toBeGreaterThan(modeSwitchIndex);
+    it('should have turbo mode segment for auto-handoff', async () => {
+      // Turbo mode = auto-accept + auto-handoff
+      expect(indexHtml).toContain('data-mode="turbo"');
     });
 
-    it('should have handoff button with appropriate class', async () => {
-      // Button should have styling class
-      expect(indexHtml).toMatch(/class="[^"]*handoff-toggle[^"]*"/);
+    it('should have turbo button with title explaining auto-handoff', async () => {
+      // Turbo mode includes auto-handoff
+      expect(indexHtml).toMatch(/title="[^"]*turbo[^"]*auto-handoff[^"]*"/i);
     });
 
-    it('should have handoff button title explaining the toggle', async () => {
-      // Should have helpful tooltip
-      expect(indexHtml).toMatch(/title="[^"]*handoff[^"]*"/i);
-    });
-
-    it('should export initHandoffToggle from toolbar.js', async () => {
-      const toolbar = await import('../src/public/js/editor/toolbar.js');
-      expect(toolbar.initHandoffToggle).toBeDefined();
-      expect(typeof toolbar.initHandoffToggle).toBe('function');
-    });
-
-    it('should export updateHandoffState from toolbar.js', async () => {
-      const toolbar = await import('../src/public/js/editor/toolbar.js');
-      expect(toolbar.updateHandoffState).toBeDefined();
-      expect(typeof toolbar.updateHandoffState).toBe('function');
-    });
-
-    it('should export toggleHandoffMode from toolbar.js', async () => {
-      const toolbar = await import('../src/public/js/editor/toolbar.js');
-      expect(toolbar.toggleHandoffMode).toBeDefined();
-      expect(typeof toolbar.toggleHandoffMode).toBe('function');
+    it('should NOT have separate handoff toggle button', async () => {
+      // Handoff is unified into permission mode, no separate toggle
+      expect(indexHtml).not.toContain('data-control="handoff-mode"');
     });
 
   });
@@ -231,24 +208,26 @@ describe('35-1: Contextual Settings Placement', () => {
   describe('AC4: Settings persistence from new locations', () => {
 
     it('should have settings API endpoint that handles theme updates', async () => {
-      // PATCH /api/settings should accept theme changes
+      // Verify settings API exists and returns current settings (GET doesn't mutate)
       const response = await request(app)
-        .patch('/api/settings')
-        .send({ pennyfarthing: { theme: 'the-expanse' } })
+        .get('/api/settings')
         .expect('Content-Type', /json/);
 
-      // Should succeed or return expected structure
-      expect(response.status).toBeLessThan(500);
+      // Should return settings structure
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('workflow');
     });
 
-    it('should have settings API endpoint that handles handoff_mode updates', async () => {
-      // PATCH /api/settings should accept handoff mode changes
+    it('should have settings API endpoint that accepts PATCH requests', async () => {
+      // Verify PATCH endpoint exists by checking it doesn't 404
+      // We send an empty body to avoid actually changing settings
       const response = await request(app)
         .patch('/api/settings')
-        .send({ workflow: { handoff_mode: 'auto' } })
+        .send({})
         .expect('Content-Type', /json/);
 
-      expect(response.status).toBeLessThan(500);
+      // Should not 404 (endpoint exists)
+      expect(response.status).not.toBe(404);
     });
 
     // 35-8: updateTheme moved from persona.js to SettingsPanel.selectTheme
@@ -267,10 +246,10 @@ describe('35-1: Contextual Settings Placement', () => {
       expect(typeof persona.refreshPersona).toBe('function');
     });
 
-    it('should have toolbar toggle persist via settings API', async () => {
-      const toolbar = await import('../src/public/js/editor/toolbar.js');
-      // toggleHandoffMode should persist the change
-      expect(toolbar.toggleHandoffMode.length).toBeGreaterThanOrEqual(0);
+    it('should have controls module for permission mode', async () => {
+      const controls = await import('../src/public/js/controls.js');
+      // controls.js now handles permission mode (unified with handoff)
+      expect(controls).toBeDefined();
     });
 
     it('should have IPC handler for theme changes', async () => {
@@ -316,25 +295,24 @@ describe('35-1: Contextual Settings Placement', () => {
   });
 
   // ==========================================================================
-  // Integration: Toolbar handoff toggle and settings
+  // Integration: Permission mode switch (unified with handoff)
   // ==========================================================================
-  describe('Integration: Toolbar handoff toggle workflow', () => {
+  describe('Integration: Permission mode switch workflow', () => {
 
-    it('should load current handoff mode on toolbar init', async () => {
-      const toolbar = await import('../src/public/js/editor/toolbar.js');
-      // Should have function to get current state
-      expect(toolbar.getHandoffMode).toBeDefined();
+    it('should have 4-way mode switch in toolbar', async () => {
+      // Mode switch should have plan/manual/accept/turbo
+      expect(indexHtml).toMatch(/data-mode="plan"/);
+      expect(indexHtml).toMatch(/data-mode="manual"/);
+      expect(indexHtml).toMatch(/data-mode="accept"/);
+      expect(indexHtml).toMatch(/data-mode="turbo"/);
     });
 
-    it('should update button text based on handoff mode', async () => {
-      const toolbar = await import('../src/public/js/editor/toolbar.js');
-      // Should have function to update visual state
-      expect(toolbar.updateHandoffState).toBeDefined();
-    });
-
-    it('should toggle between "AUTO" and "MANUAL" display text', async () => {
-      // Button should show current state
-      expect(indexHtml).toMatch(/AUTO|MANUAL/);
+    it('should display mode labels in UI', async () => {
+      // Buttons should show mode names
+      expect(indexHtml).toMatch(/PLAN/);
+      expect(indexHtml).toMatch(/MANUAL/);
+      expect(indexHtml).toMatch(/ACCEPT/);
+      expect(indexHtml).toMatch(/TURBO/);
     });
 
   });

@@ -1,0 +1,103 @@
+# Sprint YAML Template
+# Copy this file and rename to current-sprint.yaml when starting a new sprint
+#
+# Naming convention: "TO Sprint YYWW" where YY=year, WW=week number
+# Example: "TO Sprint 2604" = 2026, week 4
+#
+# Completed stories should be moved to: sprint/archive/sprint-{YYWW}-completed.yaml
+
+sprint:
+  name: "TO Sprint YYWW"      # Team sprint name (required)
+  jira_sprint_id: NNN         # Jira sprint ID for sync (required)
+  jira_sprint_name: "TO Sprint YYWW"  # Jira sprint name (should match name)
+  goal: Brief sprint goal     # One-line sprint goal (required)
+  start_date: YYYY-MM-DD      # Sprint start date (required)
+  end_date: YYYY-MM-DD        # Sprint end date (required)
+  status: active              # active | closed
+
+# Completed stories archived to: sprint/archive/sprint-YYWW-completed.yaml
+
+epics:
+  # ===========================================================================
+  # EPIC NN: Epic Title
+  # ===========================================================================
+  - id: MSSCI-XXXXX           # Jira epic key (required)
+    type: epic
+    title: "Epic: Title Here"
+    description: |            # Optional multi-line description
+      Epic description goes here.
+    priority: P1              # P0 (critical) | P1 (high) | P2 (medium) | P3 (low)
+    status: in_progress       # in_progress | done
+    repos: cyclist            # Optional: cyclist | pennyfarthing | both
+    stories:
+      # --- Story Template ---
+      - id: MSSCI-XXXXX       # Jira story key (required)
+        jira: MSSCI-XXXXX     # Optional: explicit Jira key if different from id
+        title: "Story title"
+        description: |        # Optional multi-line description
+          Story description goes here.
+        points: 3             # Story points: 1, 2, 3, 5, 8
+        priority: P1          # P0 | P1 | P2 | P3
+        status: backlog       # backlog | ready | in_progress | done
+        in_sprint: true       # Whether story is in Jira sprint (synced bidirectionally)
+        repos: cyclist        # cyclist | pennyfarthing | both
+        workflow: tdd         # tdd | trivial | agent-docs | bdd
+        acceptance_criteria:
+          - First acceptance criterion
+          - Second acceptance criterion
+
+      # --- In-Progress Story (additional fields) ---
+      - id: MSSCI-XXXXX
+        title: "Active story"
+        points: 2
+        priority: P1
+        status: in_progress
+        assigned_to: Developer Name  # Who is working on it
+        started: 2026-01-20T10:00:00Z  # ISO timestamp
+        repos: cyclist
+        workflow: tdd
+        acceptance_criteria:
+          - Criterion here
+
+# ===========================================================================
+# Field Reference
+# ===========================================================================
+#
+# Sprint fields:
+#   name            - "TO Sprint YYWW" format, matches team convention
+#   jira_sprint_id  - Numeric Jira sprint ID (e.g., 276)
+#   jira_sprint_name - Jira sprint name (typically matches name)
+#   goal            - Brief sprint objective
+#   start_date      - YYYY-MM-DD format
+#   end_date        - YYYY-MM-DD format
+#   status          - active or closed
+#
+# Epic fields:
+#   id          - Jira epic key (MSSCI-XXXXX)
+#   type        - Always "epic"
+#   title       - "Epic: Title" format
+#   description - Optional multi-line description
+#   priority    - P0/P1/P2/P3
+#   status      - in_progress or done
+#   repos       - Optional target repo(s)
+#
+# Story fields:
+#   id          - Jira story key (MSSCI-XXXXX) or local ID (NN-N)
+#   jira        - Optional explicit Jira key
+#   title       - Story title
+#   description - Optional multi-line description
+#   points      - 1, 2, 3, 5, or 8
+#   priority    - P0 (critical), P1 (high), P2 (medium), P3 (low)
+#   status      - backlog, ready, in_progress, or done
+#   in_sprint   - true/false - whether story is in Jira sprint (synced bidirectionally)
+#   repos       - cyclist, pennyfarthing, or both
+#   workflow    - tdd (3+ pts), trivial (1-2 pts), agent-docs, bdd
+#   acceptance_criteria - List of testable criteria
+#
+# In-progress additional fields:
+#   assigned_to - Developer name
+#   started     - ISO 8601 timestamp
+#
+# Completed stories move to archive with:
+#   completed   - YYYY-MM-DD
+#   pr          - PR number (optional)

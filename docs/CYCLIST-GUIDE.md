@@ -398,14 +398,15 @@ Example `~/.cyclist/themes/dark-blue.css`:
 
 ## Configuration
 
-### User Settings
+### Project Settings
 
-Located at `~/.cyclist/settings.yaml`:
+Located at `.pennyfarthing/config.local.yaml`:
 
 ```yaml
+theme: "big-lebowski"      # Persona theme
+
 workflow:
-  auto_handoff: false      # Auto-proceed on handoffs
-  handoff_confirm: true    # Confirm before handoffs
+  handoff_mode: manual     # 'auto' or 'manual' handoffs
 
 display:
   show_flow: true          # Show workflow visualization
@@ -417,14 +418,9 @@ notifications:
   sound: false             # Play sounds
 ```
 
-### Project Settings
+> **Note:** User-level settings (`~/.cyclist/settings.yaml`) are deprecated.
+> All settings are now project-local in `.pennyfarthing/config.local.yaml`.
 
-Override user settings per-project in `.claude/cyclist.local.yaml`:
-
-```yaml
-display:
-  show_ocean: true         # Show OCEAN for this project
-```
 
 ## Environment Variables
 

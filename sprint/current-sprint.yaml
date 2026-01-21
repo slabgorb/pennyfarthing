@@ -1,67 +1,23 @@
 sprint:
-  number: 12
-  goal: Complete WheelHub notification consolidation
+  name: "TO Sprint 2604"
+  jira_sprint_id: 276
+  jira_sprint_name: "TO Sprint 2604"
+  goal: WheelHub notification consolidation, skill frontmatter enhancement, and stepped workflow support (BMAD alignment)
   start_date: 2026-01-20
   end_date: 2026-02-02
   status: active
-  velocity_target: 22
-summary:
-  total_points: 11
-  completed_points: 4
-  remaining_points: 7
+# Completed stories archived to: sprint/archive/sprint-2604-completed.yaml
 epics:
   # ===========================================================================
-  # EPIC 48: WheelHub Notification Consolidation (continued)
+  # EPIC 48: WheelHub Notification Consolidation
   # ===========================================================================
   - id: MSSCI-11942
     type: epic
-    jira: MSSCI-11942
     title: "Epic: WheelHub Notification Consolidation"
-    description: |
-      Consolidate notification patterns across Cyclist. Replace polling with
-      event-driven WebSocket channels, standardize reconnection behavior,
-      and add cross-tab synchronization.
-    points: 11
-    completed_points: 4
     priority: P2
-    status: in_progress
+    status: done
+    completed: 2026-01-20
     stories:
-      - id: MSSCI-11949
-        jira: MSSCI-11949
-        title: "Remove tool/skill log panels and consolidate to messages"
-        description: |
-          The tool-panel.js and skill-panel.js provide dedicated side panels for
-          viewing tool executions and skill invocations. However, this information
-          is already visible in the messages view with enriched tool descriptions
-          (MSSCI-11929). The separate panels add complexity without unique value.
-        points: 3
-        priority: P2
-        status: done
-        completed: 2026-01-19
-        repos: cyclist
-        workflow: trivial
-        acceptance_criteria:
-          - tool-panel.js and its UI removed
-          - skill-panel.js and its UI removed
-          - Badge polling for these panels removed
-          - Related localStorage keys cleaned up
-          - Messages view remains the single source for tool/skill activity
-      - id: MSSCI-11944
-        jira: MSSCI-11944
-        title: "Event-driven badge updates"
-        description: |
-          Replace 500ms setInterval badge polling with event-driven updates.
-          PanelManager emits badge-changed event when counts change.
-        points: 2
-        priority: P2
-        status: backlog
-        repos: cyclist
-        workflow: tdd
-        acceptance_criteria:
-          - PanelManager emits badge-changed event on count changes
-          - tab-bar.js subscribes to event instead of polling
-          - No 500ms setInterval in tab-bar.js
-          - Badges update immediately on change
       - id: MSSCI-11945
         jira: MSSCI-11945
         title: "Livereload pattern alignment"
@@ -71,7 +27,7 @@ epics:
         points: 1
         priority: P3
         status: done
-        completed: 2026-01-19
+        completed: 2026-01-20
         repos: cyclist
         workflow: trivial
         acceptance_criteria:
@@ -86,7 +42,8 @@ epics:
           access across 16 files.
         points: 5
         priority: P2
-        status: backlog
+        status: done
+        completed: 2026-01-20
         repos: cyclist
         workflow: tdd
         acceptance_criteria:
@@ -94,3 +51,658 @@ epics:
           - Theme changes in Tab 1 reflect in Tab 2 immediately
           - All localStorage access goes through settings-sync.js
           - 16 existing files refactored to use new module
+      - id: MSSCI-11950
+        jira: MSSCI-11950
+        title: "Background tasks panel not showing background tasks"
+        description: |
+          The background tasks panel in Cyclist is not displaying background
+          tasks when they are running. Need to investigate and fix the data
+          flow from task creation to panel display.
+        points: 2
+        priority: P1
+        status: done
+        completed: 2026-01-20
+        repos: cyclist
+        workflow: tdd
+        acceptance_criteria:
+          - Background tasks appear in panel when spawned
+          - Task status updates shown in real-time
+          - Completed tasks remain visible until dismissed
+      - id: MSSCI-11948
+        jira: MSSCI-11948
+        title: "Remove redundant popup tool use notifications"
+        description: |
+          With WheelHub consolidation complete, the popup tool use notifications
+          are redundant. The approval modal and WebSocket channels now handle
+          all tool use visibility. Remove the popup system to reduce complexity.
+        points: 2
+        priority: P2
+        status: done
+        completed: 2026-01-20
+        repos: cyclist
+        workflow: trivial
+        acceptance_criteria:
+          - Popup tool use notification code removed
+          - No visual regression in tool use visibility
+          - Approval modal remains the single source for tool interactions
+      - id: MSSCI-11943
+        jira: MSSCI-11943
+        title: "Story/Git WebSocket channels with file watchers"
+        points: 3
+        priority: P2
+        status: done
+        completed: 2026-01-20
+        repos: cyclist
+        workflow: tdd
+      - id: MSSCI-11944
+        jira: MSSCI-11944
+        title: "Event-driven badge updates"
+        points: 2
+        priority: P2
+        status: done
+        completed: 2026-01-20
+        repos: cyclist
+        workflow: tdd
+      - id: MSSCI-11947
+        jira: MSSCI-11947
+        title: "Hook response data channel for interactive tools"
+        points: 2
+        priority: P2
+        status: done
+        completed: 2026-01-20
+        repos: cyclist
+        workflow: tdd
+      - id: MSSCI-11949
+        jira: MSSCI-11949
+        title: "Remove tool/skill log panels and consolidate to messages"
+        points: 2
+        priority: P2
+        status: done
+        completed: 2026-01-20
+        repos: cyclist
+        workflow: trivial
+  # ===========================================================================
+  # EPIC 49: Skill Frontmatter Enhancement
+  # ===========================================================================
+  - id: MSSCI-11952
+    type: epic
+    jira: MSSCI-11952
+    title: "Epic: Skill Frontmatter Enhancement"
+    description: |
+      Improve skill discoverability by enhancing SKILL.md frontmatter per
+      Anthropic's official guidance. Follow-on to Epic 9's infrastructure work.
+    priority: P3
+    status: done
+    completed: 2026-01-20
+    repos: pennyfarthing
+    stories:
+      - id: MSSCI-11953
+        jira: MSSCI-11953
+        title: "Enhance skill descriptions with 'when to use' context"
+        points: 2
+        priority: P2
+        status: done
+        completed: 2026-01-20
+        repos: pennyfarthing
+        workflow: trivial
+      - id: MSSCI-11954
+        jira: MSSCI-11954
+        title: "Add allowed-tools to context-sensitive skills"
+        description: |
+          Some skills should only use specific tools. Add allowed-tools
+          frontmatter to restrict tool access where appropriate.
+        points: 1
+        priority: P2
+        status: done
+        completed: 2026-01-20
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - Context-sensitive skills have allowed-tools list
+          - Tool restrictions documented in skill files
+      - id: MSSCI-11955
+        jira: MSSCI-11955
+        title: "Progressive disclosure for large skills"
+        points: 2
+        priority: P2
+        status: done
+        completed: 2026-01-20
+        repos: pennyfarthing
+        workflow: trivial
+      - id: MSSCI-11956
+        jira: MSSCI-11956
+        title: "Create systematic-debugging skill"
+        points: 2
+        priority: P2
+        status: done
+        completed: 2026-01-20
+        repos: pennyfarthing
+        workflow: trivial
+      - id: MSSCI-11957
+        jira: MSSCI-11957
+        title: "Add severity levels to Reviewer agent"
+        description: |
+          Reviewer should categorize findings by severity (critical, high,
+          medium, low). Helps prioritize fixes and reduces noise.
+        points: 2
+        priority: P2
+        status: done
+        completed: 2026-01-20
+        repos: pennyfarthing
+        workflow: agent-docs
+        acceptance_criteria:
+          - Reviewer categorizes findings by severity
+          - Critical/high/medium/low levels defined
+          - Output format includes severity tags
+      - id: MSSCI-12034
+        jira: MSSCI-12034
+        title: "Create /sprint skill with prescriptive scripts"
+        points: 3
+        priority: P2
+        status: done
+        completed: 2026-01-20
+        repos: pennyfarthing
+        workflow: trivial
+      - id: MSSCI-12035
+        jira: MSSCI-12035
+        title: "Rewrite /story skill with prescriptive scripts"
+        description: |
+          Replace story-management skill with prescriptive /story skill
+          following the /sprint pattern. Include helper scripts for story operations.
+        points: 2
+        priority: P2
+        status: done
+        completed: 2026-01-20
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - /story skill created with prescriptive scripts
+          - story-management skill removed or redirected
+          - Scripts for common story operations
+      - id: MSSCI-12038
+        jira: MSSCI-12038
+        title: "Remove /backlog skill (consolidated into /sprint)"
+        description: |
+          Remove backlog skill - functionality now handled by
+          /sprint backlog command via available-stories.sh script.
+        points: 1
+        priority: P2
+        status: done
+        completed: 2026-01-20
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - /backlog skill removed
+          - Symlink removed from .claude/skills/
+          - /sprint backlog documented as replacement
+      - id: MSSCI-12039
+        title: "Consolidate /new-work into /sprint work with next argument"
+        description: |
+          Make /new-work an alias for /sprint work. Add 'next' argument to
+          auto-select highest priority story. Remove /sprint-context skill
+          (consolidated into /sprint). Update DOGFOODING.md with skill-with-scripts pattern.
+        points: 2
+        priority: P2
+        status: done
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - /new-work documented as alias for /sprint work
+          - check-story.sh supports 'next' argument
+          - /sprint-context skill removed
+          - DOGFOODING.md updated with skill scripts pattern
+        branch: feat/new-work-skill-with-parameters
+      - id: MSSCI-12043
+        jira: MSSCI-12043
+        title: "Add epic management commands to /sprint skill"
+        description: |
+          Extend /sprint skill with epic lifecycle commands:
+          - /sprint promote <epic-id> - Move epic from planning.yaml to current-sprint.yaml
+          - /sprint epic create - Create Jira epic with stories
+          - /sprint epic sync - Sync epic and stories to Jira
+          Scripts: promote-epic.sh, create-jira-epic.sh, sync-epic-jira.sh
+        points: 3
+        priority: P2
+        status: done
+        completed: 2026-01-20
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - /sprint promote moves epic from planning.yaml to current-sprint.yaml
+          - /sprint epic create creates Jira epic and child stories
+          - /sprint epic sync updates Jira from sprint YAML
+          - Scripts follow existing /sprint skill patterns
+      - id: MSSCI-12089
+        jira: MSSCI-12089
+        title: "Add finish-story.sh script to /story skill"
+        description: |
+          Create finish-story.sh script that encapsulates the SM finish workflow:
+          - Archive session to sprint/archive/{jira-key}-session.md
+          - Squash merge PR and delete remote branch
+          - Transition Jira to Done
+          - Update sprint YAML (status, completed date)
+          - Clean up local branch and session file
+          Update SM agent to invoke script instead of manual steps.
+        points: 2
+        priority: P2
+        status: done
+        completed: 2026-01-20
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - finish-story.sh script created in pennyfarthing-dist/scripts/
+          - Script handles all finish workflow steps
+          - --dry-run option for preview mode
+          - /story skill documentation updated
+          - SM agent updated to use script
+  # ===========================================================================
+  # EPIC 51: Stepped Workflow Support (BMAD-Inspired)
+  # ===========================================================================
+  - id: MSSCI-12060
+    type: epic
+    title: "Epic: Stepped Workflow Support (BMAD-Inspired)"
+    description: |
+      Extend Pennyfarthing's native workflow system to support BMAD-style stepped
+      workflows with progressive disclosure, gates, and tri-modal execution.
+      Based on ADR-0005. Makes stepped workflows a first-class Pennyfarthing capability.
+    priority: P2
+    status: in_progress
+    repos: pennyfarthing
+    adr: docs/adr/0005-bmad-workflow-import.md
+    stories:
+      - id: MSSCI-12078
+        title: "Workflow YAML schema extension for type: stepped"
+        description: |
+          Extend workflow YAML schema to support:
+          - type: stepped | phased (phased default for backward compat)
+          - steps: { path, pattern }
+          - modes: { default, create, validate, edit }
+          - variables: object
+          - gates: { after_steps, gate_marker }
+          - template: string
+          Workflow loader detects type and routes to appropriate executor.
+        points: 2
+        priority: P0
+        status: done
+        completed: 2026-01-20
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Workflow YAML supports type field (stepped | phased)
+          - Steps configuration validates path and pattern
+          - Modes configuration supports tri-modal paths
+          - Existing phased workflows work unchanged
+        jira: MSSCI-12078
+      - id: MSSCI-12079
+        title: "Step file parser with <step-meta> extraction"
+        description: |
+          Create step file parser that:
+          - Extracts <step-meta> block (number, name, gate)
+          - Parses markdown content after meta
+          - Identifies gate markers (<!-- GATE --> or from meta)
+          - Returns structured step object
+        points: 2
+        priority: P0
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Parser extracts step-meta YAML block
+          - Parser returns step number, name, gate flag
+          - Parser handles missing meta gracefully
+          - Gate detection from meta or marker
+        jira: MSSCI-12079
+        completed: "2026-01-20"
+      - id: MSSCI-12081
+        title: "Variable resolver with priority chain"
+        description: |
+          Create variable resolver that resolves {variable} placeholders
+          from multiple sources in priority order:
+          1. Workflow YAML variables
+          2. Session file values
+          3. .pennyfarthing/config.local.yaml
+          4. Environment/system (project_root, date)
+          5. Defaults (planning_artifacts, etc.)
+        points: 2
+        priority: P0
+        status: done
+        completed: 2026-01-20
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Resolves variables from workflow YAML
+          - Falls back through priority chain
+          - Standard variables documented and working
+          - Unresolved variables flagged with warning
+        jira: MSSCI-12081
+      - id: MSSCI-12082
+        title: "Session file stepped workflow state tracking"
+        description: |
+          Extend session file format to track stepped workflow state:
+          - Workflow name, type, mode
+          - Current step number
+          - Steps completed array
+          - Timestamps (started, last updated)
+          Session reader/writer for stepped workflow state.
+        points: 2
+        priority: P0
+        status: done
+        completed: 2026-01-20
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Session file has Workflow State section
+          - State tracks current step and completed steps
+          - State persists across session reloads
+          - Reader/writer handles missing state gracefully
+        jira: MSSCI-12082
+      - id: MSSCI-12083
+        title: "/workflow list command with type indicator"
+        description: |
+          Update /workflow list to show all workflows with type indicator:
+          - Display phased vs stepped workflows
+          - Show step count for stepped workflows
+          - Indicate available modes (create/validate/edit)
+        points: 1
+        priority: P1
+        status: done
+        completed: 2026-01-21
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - List shows workflow type (phased/stepped)
+          - Stepped workflows show step count
+          - Tri-modal workflows show available modes
+        jira: MSSCI-12083
+      - id: MSSCI-12084
+        title: "/workflow start and resume commands"
+        description: |
+          Implement workflow execution commands:
+          - /workflow start <name> [--mode create|validate|edit]
+          - /workflow resume [name] - continue from last step
+          - /workflow status - show current progress
+          Commands create/read session state and load appropriate step.
+        points: 3
+        priority: P1
+        status: done
+        completed: 2026-01-21
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - start creates session and loads step 1
+          - start --mode selects tri-modal path
+          - resume detects incomplete workflow and continues
+          - status shows step progress and completion %
+        jira: MSSCI-12084
+      - id: MSSCI-12085
+        title: "Gate detection and approval flow"
+        description: |
+          Implement gate handling:
+          - Detect gates from workflow.gates.after_steps
+          - Detect gates from step-meta gate: true
+          - Detect gates from <!-- GATE --> marker
+          - Display gate prompt from step file
+          - Wait for user [C]ontinue/[R]evise choice
+          - Record decision in session
+        points: 2
+        priority: P2
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Gates detected from all three sources
+          - Gate prompt displayed to user
+          - User choice recorded in session
+          - Continue proceeds to next step
+        jira: MSSCI-12085
+        completed: "2026-01-21"
+      - id: MSSCI-12086
+        title: "Tri-modal support (create/validate/edit)"
+        description: |
+          Implement tri-modal workflow execution:
+          - Mode selection at workflow start (--mode flag)
+          - Route to appropriate steps directory based on mode
+          - Track mode in session state
+          - Default to create mode if not specified
+        points: 2
+        priority: P2
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Mode selectable via --mode flag
+          - Steps loaded from mode-specific directory
+          - Mode tracked in session state
+          - Defaults to create mode
+        jira: MSSCI-12086
+        branch: feat/MSSCI-12086-trimodal-support
+        completed: "2026-01-21"
+      - id: MSSCI-12087
+        title: "Example: architecture stepped workflow"
+        description: |
+          Create example stepped workflow for architecture decisions:
+          - workflow.yaml with type: stepped
+          - 5-8 step files in steps/ directory
+          - Gates after key decision points
+          - Template for output document
+          Documents stepped workflow patterns for other workflows.
+        points: 1
+        priority: P2
+        status: ready
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - architecture.yaml created with stepped config
+          - Step files follow step-{nn}-*.md pattern
+          - Gates defined at appropriate checkpoints
+          - Workflow runs end-to-end successfully
+        jira: MSSCI-12087
+    jira: MSSCI-12077
+  # ===========================================================================
+  # EPIC 52: VS Code Extension for Pennyfarthing
+  # ===========================================================================
+  - id: 52
+    type: epic
+    jira: MSSCI-12042
+    title: "Epic: VS Code Extension for Pennyfarthing"
+    description: |
+      Create a VS Code extension that brings Pennyfarthing's agent orchestration
+      to VS Code users. The extension provides:
+      - Terminal integration for Claude Code sessions
+      - Sidebar panel showing agent status and personas
+      - Webview panel adapting Cyclist's UI components
+      - Command palette integration for skills and workflows
+
+      Architecture approach:
+      - WheelHub server runs as extension-hosted process
+      - Reflector HTML comments parsed by extension, rendered in VS Code UI
+      - TirePump integrates with VS Code's workspace state API
+      - Reuse Cyclist's public/js components in webview context
+    priority: P2
+    status: in_progress
+    repos: pennyfarthing
+    stories:
+      - id: MSSCI-12045
+        jira: MSSCI-12045
+        title: "Extension scaffolding with Yeoman generator"
+        description: |
+          Initialize VS Code extension project structure:
+          - Use `yo code` to generate TypeScript extension
+          - Configure package.json with activation events
+          - Set up build pipeline (esbuild for bundling)
+          - Add to monorepo as packages/vscode-extension
+        points: 2
+        priority: P0
+        status: done
+        completed: 2026-01-20
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+      - id: MSSCI-12046
+        jira: MSSCI-12046
+        title: "Terminal provider for Claude Code sessions"
+        description: |
+          Create custom terminal profile that:
+          - Launches Claude Code with Pennyfarthing context
+          - Sets PROJECT_ROOT and other env vars
+          - Hooks into session-start.sh flow
+          - Provides terminal link detection for file paths
+        points: 3
+        priority: P0
+        status: done
+        completed: 2026-01-20
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+      - id: MSSCI-12047
+        jira: MSSCI-12047
+        title: "WheelHub adapter for VS Code"
+        description: |
+          Adapt WheelHub WebSocket server for VS Code context:
+          - Extension hosts WheelHub server process
+          - WebSocket connection from webview panels
+          - Message routing between terminal and UI
+          - Graceful shutdown on extension deactivation
+        points: 5
+        priority: P0
+        status: done
+        completed: 2026-01-20
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+      - id: MSSCI-12052
+        jira: MSSCI-12088
+        title: "Gearshift mode switch not functioning correctly"
+        description: |
+          The Gearshift strip (PLAN|MANUAL|ACCEPT|TURBO) has multiple bugs:
+          1. Visual display not updating when mode changes
+          2. Signals not being sent to Claude Code
+          3. Autohandoff setting not being applied
+
+          Expected behavior:
+          - PLAN: send /plan signal, light segment, autohandoff=false
+          - MANUAL: send manual mode signal, light segment, autohandoff=false
+          - ACCEPT: send accept mode signal, light segment, autohandoff=false
+          - TURBO: send accept mode, light segment, autohandoff=true
+        points: 3
+        priority: P1
+        status: done
+        completed: 2026-01-20
+        repos: cyclist
+        workflow: tdd
+        acceptance_criteria:
+          - Clicking each mode visually highlights the correct segment
+          - PLAN mode sends /plan signal to Claude
+          - MANUAL mode sends default permission mode to Claude
+          - ACCEPT mode sends acceptEdits mode to Claude
+          - TURBO mode sends acceptEdits + autohandoff=true to Claude
+          - Mode persists to settings correctly
+      - id: MSSCI-12048
+        jira: MSSCI-12048
+        title: "Sidebar panel with agent status"
+        description: |
+          Create VS Code tree view showing:
+          - Current agent and persona
+          - Sprint status (points remaining, in-progress)
+          - Active story context
+          - Quick actions (switch agent, view backlog)
+          Reuse stats-strip.js and persona.js logic.
+        points: 3
+        priority: P1
+        status: done
+        repos: pennyfarthing
+        workflow: bdd
+        acceptance_criteria: []
+        completed: "2026-01-20"
+      - id: MSSCI-12049
+        jira: MSSCI-12049
+        title: "Reflector protocol adapter"
+        description: |
+          Parse Reflector HTML comments from Claude output:
+          - HANDOFF: Show VS Code notification with action button
+          - CONTEXT_CLEAR: Trigger TirePump via command
+          - QUESTION/CHOICES: Render VS Code quick pick
+          Implementation approach:
+          - detectMarkers(): Parse markers from ClaudeService text events
+          - stripMarkers(): Remove markers from visible chat output
+          - handleMarker(): Trigger VS Code UI actions
+          Note: Original WheelHub-based impl on feat/MSSCI-12049-reflector-adapter
+          needs adapting to integrate with ClaudeService in chat-participant.ts
+        points: 3
+        priority: P1
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - detectMarkers() parses CYCLIST markers from text
+          - stripMarkers() removes markers before display
+          - HANDOFF shows VS Code notification with action
+          - CONTEXT_CLEAR executes pennyfarthing.contextClear
+          - QUESTION/yesno shows Yes/No quick pick
+          - CHOICES shows quick pick with options
+          - Integrates with chat-participant onText handler
+        completed: "2026-01-21"
+      - id: MSSCI-12050
+        jira: MSSCI-12050
+        title: "Command palette integration"
+        description: |
+          Register VS Code commands for all skills:
+          - `pennyfarthing.sprint.status`
+          - `pennyfarthing.sprint.work`
+          - `pennyfarthing.theme.switch`
+          - etc.
+          Parse skill YAML for command metadata.
+        points: 2
+        priority: P1
+        status: done
+        completed: 2026-01-21
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+      - id: MSSCI-12051
+        jira: MSSCI-12051
+        title: "Webview panel for Cyclist UI"
+        description: |
+          Optional full Cyclist UI in VS Code webview:
+          - Embed existing public/js components
+          - CSP-compliant asset loading
+          - State sync via WheelHub adapter (already implemented)
+          - Theme integration with VS Code color theme
+          Note: With Chat API (MSSCI-12097) providing the core Claude
+          interaction via ClaudeService, this webview becomes optional
+          UI enhancement rather than a requirement.
+        points: 3
+        priority: P2
+        status: ready
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Webview renders Cyclist components
+          - CSP allows script/style loading
+          - Theme syncs with VS Code appearance
+          - Stats/story panels update in real-time
+      - id: MSSCI-12097
+        jira: MSSCI-12097
+        title: "VS Code Chat API integration for Claude conversations"
+        description: |
+          Integrate with VS Code's native Chat API using ClaudeService:
+          - Register as a chat participant (@pennyfarthing)
+          - Spawn Claude CLI directly via ClaudeService (stream-json format)
+          - Display in VS Code's native chat view alongside Copilot
+          - Support slash commands (/sm, /tea, /dev, /reviewer)
+          - Stream responses in real-time from Claude CLI subprocess
+          Note: Pivoted from WheelHub channel approach to direct CLI spawning
+          for simpler architecture and better session management.
+        points: 5
+        priority: P1
+        status: done
+        completed: "2026-01-20"
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - "@pennyfarthing appears in VS Code chat view"
+          - User can send messages via chat input
+          - Assistant responses stream in real-time from Claude CLI
+          - Slash commands (/sm, /tea, etc.) prepend to prompt
+          - Tool use displays with formatted markdown
+          - Works alongside GitHub Copilot Chat

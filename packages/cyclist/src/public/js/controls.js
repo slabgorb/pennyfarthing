@@ -1,11 +1,13 @@
 /**
  * Controls Module - Permission mode toggle via IPC
  *
- * 35-4: Three-way mode switch (segmented control)
- * Direct selection of Claude permission modes:
- * - default (MANUAL): Ask permission for everything
- * - plan (PLAN): Read-only planning mode
- * - acceptEdits (ACCEPT): Auto-accept file edits
+ * Permission mode switch (4-way segmented control):
+ * - plan: Read-only planning mode
+ * - manual: Ask permission for everything (default)
+ * - accept: Auto-accept file edits
+ * - turbo: Auto-accept everything + auto-handoff to next agent
+ *
+ * Mode is persisted to settings and synced with Claude Code.
  *
  * 23-4: Adds Cmd+Shift+K keyboard shortcut for compact command
  */
@@ -16,18 +18,29 @@ import { clear as clearChangedFiles } from './components/ChangedFilesList.js';
 import { clearDiffs } from './components/DiffViewer.js';
 
 /**
- * Valid modes for the segmented control
+ * Valid modes for the segmented control (matches settings.ts PermissionMode)
  */
-const VALID_MODES = ['default', 'plan', 'acceptEdits'];
+const VALID_MODES = ['plan', 'manual', 'accept', 'turbo'];
+
+/**
+ * Map our mode names to Claude Code's permission mode names
+ * Note: turbo = acceptEdits + auto_handoff (handled separately)
+ */
+const MODE_TO_CLAUDE = {
+  plan: 'plan',
+  manual: 'default',
+  accept: 'acceptEdits',
+  turbo: 'acceptEdits', // turbo uses acceptEdits, auto_handoff is separate setting
+};
 
 /**
  * Current mode state
  */
-let currentMode = 'default';
+let currentMode = 'manual';
 
 /**
  * Update the mode switch display (segmented control)
- * 35-4: Updates which segment is active based on current mode
+ * Updates which segment is active based on current mode
  */
 function updateModeSwitchDisplay() {
   const modeSwitch = document.querySelector('[data-control="mode-switch"]');
@@ -43,8 +56,50 @@ function updateModeSwitchDisplay() {
 }
 
 /**
+ * Load permission mode from settings and sync with Claude Code
+ * Detects turbo mode from permission_mode=turbo OR (accept + handoff_mode=auto)
+ */
+async function loadModeFromSettings() {
+  try {
+    let settings;
+    if (window.electronAPI?.settings?.get) {
+      settings = await window.electronAPI.settings.get();
+    } else {
+      const response = await fetch('/api/settings');
+      if (response.ok) {
+        settings = await response.json();
+      }
+    }
+
+    let mode = settings?.workflow?.permission_mode || 'manual';
+    const handoffMode = settings?.workflow?.handoff_mode;
+
+    // Detect turbo: explicit turbo OR (accept + auto handoff)
+    if (mode === 'turbo' || (mode === 'accept' && handoffMode === 'auto')) {
+      mode = 'turbo';
+    }
+
+    if (VALID_MODES.includes(mode)) {
+      currentMode = mode;
+      updateModeSwitchDisplay();
+
+      // Sync with Claude Code
+      const claudeMode = MODE_TO_CLAUDE[mode];
+      if (window.electronAPI?.claude?.setMode) {
+        await window.electronAPI.claude.setMode(claudeMode);
+      }
+
+      console.log('[Controls] Mode loaded from settings:', mode, '(Claude:', claudeMode + ')');
+    }
+  } catch (err) {
+    console.warn('[Controls] Failed to load mode from settings:', err);
+  }
+}
+
+/**
  * Set permission mode directly (no cycling)
- * 35-4: Direct mode selection from segmented control
+ * Persists to settings and syncs with Claude Code
+ * Turbo mode = acceptEdits + auto_handoff enabled
  */
 async function setPermissionMode(newMode, event) {
   if (event) {
@@ -64,16 +119,36 @@ async function setPermissionMode(newMode, event) {
 
   console.log('Switching to mode:', newMode);
 
-  if (!window.electronAPI?.claude?.setMode) {
-    console.warn('Claude API not available - cannot set mode');
-    return;
-  }
-
   try {
-    await window.electronAPI.claude.setMode(newMode);
+    // Build settings payload
+    // Turbo mode = acceptEdits + auto handoff
+    const settings = {
+      workflow: {
+        permission_mode: newMode,
+        handoff_mode: newMode === 'turbo' ? 'auto' : 'manual',
+      },
+    };
+
+    // Persist to settings
+    if (window.electronAPI?.settings?.save) {
+      await window.electronAPI.settings.save(settings);
+    } else {
+      await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
+      });
+    }
+
+    // Then sync with Claude Code
+    const claudeMode = MODE_TO_CLAUDE[newMode];
+    if (window.electronAPI?.claude?.setMode) {
+      await window.electronAPI.claude.setMode(claudeMode);
+    }
+
     currentMode = newMode;
     updateModeSwitchDisplay();
-    console.log('Mode set successfully:', newMode);
+    console.log('Mode set successfully:', newMode, '(Claude:', claudeMode + ', handoff:', settings.workflow.handoff_mode + ')');
   } catch (error) {
     console.error('Failed to set permission mode:', error);
   }
@@ -188,16 +263,8 @@ function initControls() {
     }
   });
 
-  // Get initial mode from backend
-  if (window.electronAPI?.claude?.getMode) {
-    window.electronAPI.claude.getMode()
-      .then(mode => {
-        console.log('Initial mode from backend:', mode);
-        currentMode = mode;
-        updateModeSwitchDisplay();
-      })
-      .catch(err => console.error('Failed to get initial mode:', err));
-  }
+  // Load initial mode from settings (source of truth)
+  loadModeFromSettings();
 
   // 23-4: Register global keyboard shortcut for compact (Cmd+Shift+K / Ctrl+Shift+K)
   document.addEventListener('keydown', handleCompactShortcut);

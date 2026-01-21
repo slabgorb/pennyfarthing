@@ -763,13 +763,6 @@ html, body {
   outline-offset: -2px;
 }
 
-/* Active segment - MANUAL (default/neutral) */
-.mode-switch-segment.active[data-mode="default"] {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
 /* Active segment - PLAN (teal) */
 .mode-switch-segment.active[data-mode="plan"] {
   background: #14b8a6;
@@ -777,11 +770,25 @@ html, body {
   box-shadow: 0 1px 2px rgba(20, 184, 166, 0.3);
 }
 
+/* Active segment - MANUAL (default/neutral) */
+.mode-switch-segment.active[data-mode="manual"] {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
 /* Active segment - ACCEPT (purple) */
-.mode-switch-segment.active[data-mode="acceptEdits"] {
+.mode-switch-segment.active[data-mode="accept"] {
   background: #8b5cf6;
   color: white;
   box-shadow: 0 1px 2px rgba(139, 92, 246, 0.3);
+}
+
+/* Active segment - TURBO (amber/gold) */
+.mode-switch-segment.active[data-mode="turbo"] {
+  background: #f59e0b;
+  color: white;
+  box-shadow: 0 1px 2px rgba(245, 158, 11, 0.3);
 }
 
 /* Keyboard hint styling */
@@ -2088,31 +2095,31 @@ html, body {
   margin-bottom: 0.5rem;
 }
 
-.sprint-progress {
+.sprint-info {
   display: flex;
-  align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
+  padding: 0.5rem 0;
 }
 
-.progress-bar {
+.sprint-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   flex: 1;
-  height: 4px;
-  background: var(--border);
-  border-radius: 2px;
-  overflow: hidden;
 }
 
-.progress-fill {
-  height: 100%;
-  background: var(--accent);
-  border-radius: 2px;
-  transition: width 0.3s ease;
-}
-
-.sprint-points {
-  font-size: 0.8rem;
+.sprint-label {
+  font-size: 0.65rem;
   color: var(--text-secondary);
-  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sprint-value {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
 }
 
 /* B-13: Workflow Progress Visualization */

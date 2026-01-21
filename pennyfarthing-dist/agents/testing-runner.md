@@ -128,7 +128,12 @@ Task tool:
   model: "haiku"
   run_in_background: true
   prompt: |
-    Read and follow: .pennyfarthing/agents/testing-runner.md
+    You are the testing-runner subagent.
+
+    Read .pennyfarthing/agents/testing-runner.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
+
     REPOS: all
     CONTEXT: Background test run
     RUN_ID: bg-test-001

@@ -1,6 +1,7 @@
 ---
 name: context-engineering
 description: Strategies for managing context windows in long-running agent sessions. Use when approaching context limits, designing subagent prompts, optimizing token usage, or implementing just-in-time context loading.
+allowed_tools: [Read, Glob, Grep, Task]
 ---
 
 # Context Engineering Skill

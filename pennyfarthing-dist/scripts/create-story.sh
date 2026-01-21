@@ -1,0 +1,1 @@
+../skills/story/scripts/create-story.sh

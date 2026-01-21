@@ -1,0 +1,449 @@
+# Sprint TO Sprint 2604 - Completed Stories
+# Jira Sprint ID: 276
+# Archived: 2026-01-20
+
+sprint:
+  name: "TO Sprint 2604"
+  jira_sprint_id: 276
+  jira_sprint_name: "TO Sprint 2604"
+  goal: WheelHub notification consolidation, skill frontmatter enhancement, and continued polish
+
+completed:
+  # EPIC 31: Customizable Workflow Engine (MSSCI-11599)
+  - id: MSSCI-11845
+    epic: MSSCI-11599
+    title: Background task completion notifications in Cyclist
+    points: 3
+    completed: 2026-01-18
+    pr: 257
+  - id: MSSCI-11846
+    epic: MSSCI-11599
+    title: "Bug: Trivial workflow phase naming inconsistency"
+    points: 1
+    completed: 2026-01-18
+    pr: 325
+  - id: MSSCI-11914
+    epic: MSSCI-11599
+    title: "Respect handoff mode preference (manual/auto)"
+    points: 2
+    completed: 2026-01-18
+    pr: 332
+
+  # EPIC 33: Runtime Permission Management (MSSCI-11705)
+  - id: MSSCI-11847
+    epic: MSSCI-11705
+    title: Permission presets by workflow
+    points: 2
+    completed: 2026-01-18
+    pr: 330
+  - id: MSSCI-11848
+    epic: MSSCI-11705
+    title: Wire approval gate into tool execution pipeline
+    points: 3
+    completed: 2026-01-18
+    pr: 311
+
+  # EPIC 35: Cyclist UI/UX Improvements (MSSCI-11715)
+  - id: MSSCI-11716
+    epic: MSSCI-11715
+    title: Contextual settings placement
+    points: 3
+    completed: 2026-01-17
+    pr: 244
+  - id: MSSCI-11717
+    epic: MSSCI-11715
+    title: Display current directory in status bar
+    points: 2
+    completed: 2026-01-17
+  - id: MSSCI-11718
+    epic: MSSCI-11715
+    title: Workflow phase visualization
+    points: 3
+    completed: 2026-01-17
+    pr: 249
+  - id: MSSCI-11719
+    epic: MSSCI-11715
+    title: Three-way mode switch (Plan/Manual/Accept)
+    points: 2
+    completed: 2026-01-17
+  - id: MSSCI-11720
+    epic: MSSCI-11715
+    title: Collapsible portrait panel
+    points: 2
+    completed: 2026-01-17
+    pr: 262
+  - id: MSSCI-11721
+    epic: MSSCI-11715
+    title: Font face selector
+    points: 2
+    completed: 2026-01-17
+  - id: MSSCI-11724
+    epic: MSSCI-11715
+    title: Settings panel fixes and expansion
+    points: 3
+    completed: 2026-01-17
+  - id: MSSCI-11726
+    epic: MSSCI-11715
+    title: Clickable file paths in diff view
+    points: 1
+    completed: 2026-01-18
+    pr: 292
+  - id: MSSCI-11727
+    epic: MSSCI-11715
+    title: Skill invocations panel
+    points: 3
+    completed: 2026-01-18
+    pr: 305
+  - id: MSSCI-11849
+    epic: MSSCI-11715
+    title: Window state persistence
+    points: 2
+    completed: 2026-01-17
+  - id: MSSCI-11850
+    epic: MSSCI-11715
+    title: Settings architecture cleanup and consolidation
+    points: 3
+    completed: 2026-01-18
+    pr: 304
+  - id: MSSCI-11723
+    epic: MSSCI-11715
+    title: Rethink theme switcher for settings panel integration
+    points: 3
+    completed: 2026-01-18
+  - id: MSSCI-11851
+    epic: MSSCI-11715
+    title: Collapsible Bash tool output in message stream
+    points: 2
+    completed: 2026-01-18
+    pr: 321
+  - id: MSSCI-11852
+    epic: MSSCI-11715
+    title: Background tasks sidebar panel with real-time status
+    points: 5
+    completed: 2026-01-18
+    pr: 324
+  - id: MSSCI-11917
+    epic: MSSCI-11715
+    title: Resizable theme panel width
+    points: 1
+    completed: 2026-01-18
+    pr: 335
+  - id: MSSCI-11928
+    epic: MSSCI-11715
+    title: Persistent Bash output in message stream (not transient popup)
+    points: 3
+    completed: 2026-01-19
+    pr: 346
+
+  # EPIC 36: OTEL Tool Call Enrichment (MSSCI-11728) - EPIC COMPLETE
+  - id: MSSCI-11731
+    epic: MSSCI-11728
+    title: Bash tool enrichment
+    points: 2
+    completed: 2026-01-17
+  - id: MSSCI-11732
+    epic: MSSCI-11728
+    title: Search tool enrichment (Grep/Glob)
+    points: 2
+    completed: 2026-01-17
+    pr: 271
+  - id: MSSCI-11733
+    epic: MSSCI-11728
+    title: Task/subagent enrichment
+    points: 2
+    completed: 2026-01-18
+    pr: 333
+  - id: MSSCI-11734
+    epic: MSSCI-11728
+    title: Enriched span export and visualization
+    points: 4
+    completed: 2026-01-18
+    pr: 340
+
+  # EPIC 37: Technical Debt & Bug Fixes (MSSCI-11794)
+  - id: MSSCI-11809
+    epic: MSSCI-11794
+    title: Clean up stale TODO comments
+    points: 1
+    completed: 2026-01-17
+  - id: MSSCI-11810
+    epic: MSSCI-11794
+    title: Fix flaky timestamp test
+    points: 1
+    completed: 2026-01-17
+  - id: MSSCI-11811
+    epic: MSSCI-11794
+    title: Remove deprecated WebSocket terminal mode
+    points: 2
+    completed: 2026-01-17
+  - id: MSSCI-11812
+    epic: MSSCI-11794
+    title: Remove or fix skipped test suites
+    points: 3
+    completed: 2026-01-17
+  - id: MSSCI-11813
+    epic: MSSCI-11794
+    title: Implement agent-evaluation.ts file reading
+    points: 2
+    completed: 2026-01-17
+  - id: MSSCI-11814
+    epic: MSSCI-11794
+    title: Fix pattern-based question detection
+    points: 3
+    completed: 2026-01-17
+  - id: MSSCI-11816
+    epic: MSSCI-11794
+    title: Fix persona IPC handlers returning incomplete data
+    points: 2
+    completed: 2026-01-17
+    pr: 288
+  - id: MSSCI-11818
+    epic: MSSCI-11794
+    title: Fix background task shell script arithmetic
+    points: 1
+    completed: 2026-01-17
+  - id: MSSCI-11822
+    epic: MSSCI-11794
+    title: "Bug: Handoff buttons show hardcoded theme characters"
+    points: 2
+    completed: 2026-01-17
+  - id: MSSCI-11823
+    epic: MSSCI-11794
+    title: "Bug: Workflow indicator shows hardcoded TDD phases"
+    points: 2
+    completed: 2026-01-17
+    pr: 286
+  - id: MSSCI-11824
+    epic: MSSCI-11794
+    title: "Bug: Agent high-context circuit breaker not triggering"
+    points: 3
+    completed: 2026-01-17
+    pr: 291
+  - id: MSSCI-11825
+    epic: MSSCI-11794
+    title: "Bug: pennyfarthing-dist missing commands and guides directories"
+    points: 2
+    completed: 2026-01-17
+  - id: MSSCI-11815
+    epic: MSSCI-11794
+    title: Clean up copy mode migration code
+    points: 2
+    completed: 2026-01-18
+    pr: 337
+  - id: MSSCI-11817
+    epic: MSSCI-11794
+    title: Add test coverage tooling
+    points: 2
+    completed: 2026-01-18
+    pr: 338
+  - id: MSSCI-11819
+    epic: MSSCI-11794
+    title: Remove persona-config.local.yaml deprecation
+    points: 1
+    completed: 2026-01-18
+    pr: 336
+  - id: MSSCI-11820
+    epic: MSSCI-11794
+    title: Audit and fix context.js script inclusion
+    points: 2
+    completed: 2026-01-18
+  - id: MSSCI-11821
+    epic: MSSCI-11794
+    title: Fix 15-3 sidebar section styling tests
+    points: 2
+    completed: 2026-01-19
+  - id: MSSCI-11826
+    epic: MSSCI-11794
+    title: "Bug: cyclist-doctor reports false failures for workspace deps"
+    points: 1
+    completed: 2026-01-18
+  - id: MSSCI-11827
+    epic: MSSCI-11794
+    title: "Bug: workflows directory not included in installation symlinks"
+    points: 1
+    completed: 2026-01-18
+  - id: "48-1"
+    epic: MSSCI-11794
+    title: "Bug: Fix existing broken tests"
+    points: 2
+    completed: 2026-01-19
+
+  # EPIC 38: Agent File Modernization (MSSCI-11795)
+  - id: MSSCI-11828
+    epic: MSSCI-11795
+    title: Fix stale references in agent files
+    points: 1
+    completed: 2026-01-17
+  - id: MSSCI-11829
+    epic: MSSCI-11795
+    title: Add status tags to agent files
+    points: 1
+    completed: 2026-01-17
+  - id: MSSCI-11830
+    epic: MSSCI-11795
+    title: Modernize PM agent for custom workflows
+    points: 2
+    completed: 2026-01-17
+    pr: 290
+  - id: MSSCI-11831
+    epic: MSSCI-11795
+    title: Modernize Architect agent for custom workflows
+    points: 2
+    completed: 2026-01-17
+    pr: 290
+  - id: MSSCI-11832
+    epic: MSSCI-11795
+    title: Modernize DevOps agent for custom workflows
+    points: 3
+    completed: 2026-01-17
+    pr: 290
+  - id: MSSCI-11835
+    epic: MSSCI-11795
+    title: Modernize Orchestrator agent
+    points: 2
+    completed: 2026-01-17
+    pr: 290
+  - id: MSSCI-11836
+    epic: MSSCI-11795
+    title: SM workflow routing from story tags
+    points: 3
+    completed: 2026-01-17
+  - id: MSSCI-11839
+    epic: MSSCI-11795
+    title: Consolidate duplicated instructions to shared-agent-behavior.md
+    points: 2
+    completed: 2026-01-17
+    pr: 289
+  - id: MSSCI-11833
+    epic: MSSCI-11795
+    title: Modernize Tech Writer agent for custom workflows
+    points: 2
+    completed: 2026-01-19
+    pr: 347
+  - id: MSSCI-11834
+    epic: MSSCI-11795
+    title: Modernize UX Designer agent for custom workflows
+    points: 2
+    completed: 2026-01-19
+    pr: 348
+  - id: MSSCI-11837
+    epic: MSSCI-11795
+    title: Centralize handoff logic and honor auto/manual mode
+    points: 3
+    completed: 2026-01-18
+    pr: 319
+  - id: MSSCI-11838
+    epic: MSSCI-11795
+    title: "Bug: Workflow indicator missing finish step"
+    points: 2
+    completed: 2026-01-18
+  - id: MSSCI-11840
+    epic: MSSCI-11795
+    title: Auto-mode context clear and agent reload on handoff
+    points: 5
+    completed: 2026-01-18
+    pr: 319
+
+  # EPIC 47: Jira-Pennyfarthing Sync Improvements (MSSCI-11796)
+  - id: MSSCI-11841
+    epic: MSSCI-11796
+    title: Auto-create Jira epic on local epic creation
+    points: 3
+    completed: 2026-01-17
+    pr: 315
+  - id: MSSCI-11798
+    epic: MSSCI-11796
+    title: Sync sprint numbers with Jira sprint IDs
+    points: 3
+    completed: 2026-01-17
+    pr: 316
+  - id: MSSCI-11799
+    epic: MSSCI-11796
+    title: Detect stories in Jira but missing from YAML
+    points: 3
+    completed: 2026-01-17
+    pr: 317
+  - id: MSSCI-11842
+    epic: MSSCI-11796
+    title: Bidirectional sync script for sprint YAML and Jira
+    points: 4
+    completed: 2026-01-18
+    pr: 322
+  - id: MSSCI-11843
+    epic: MSSCI-11796
+    title: Retrofit historical epics with Jira links
+    points: 2
+    completed: 2026-01-18
+  - id: MSSCI-11844
+    epic: MSSCI-11796
+    title: Document Jira auto-creation for SM setup flow
+    points: 2
+    completed: 2026-01-18
+  - id: MSSCI-11929
+    epic: MSSCI-11796
+    title: "Use enriched tool descriptions in collapsed headers instead of 'Tool Result'"
+    points: 2
+    completed: 2026-01-19
+
+  # EPIC 48: WheelHub Notification Consolidation (MSSCI-11942)
+  - id: MSSCI-11943
+    epic: MSSCI-11942
+    title: "Story/Git WebSocket channels with file watchers"
+    points: 5
+    completed: 2026-01-19
+    pr: 350
+  - id: MSSCI-11944
+    epic: MSSCI-11942
+    title: "Event-driven badge updates"
+    points: 2
+    completed: 2026-01-20
+    pr: 367
+  - id: MSSCI-11947
+    epic: MSSCI-11942
+    title: "Hook response data channel for interactive tools"
+    points: 5
+    completed: 2026-01-19
+    pr: 353
+
+  # EPIC 49: Skill Frontmatter Enhancement (MSSCI-11952)
+  - id: MSSCI-11953
+    epic: MSSCI-11952
+    title: "Enhance skill descriptions with 'when to use' context"
+    points: 2
+    completed: 2026-01-19
+    pr: 352
+  - id: MSSCI-11955
+    epic: MSSCI-11952
+    title: "Progressive disclosure for large skills"
+    points: 2
+    completed: 2026-01-19
+    pr: 354
+  - id: MSSCI-11956
+    epic: MSSCI-11952
+    title: "Create systematic-debugging skill"
+    points: 3
+    completed: 2026-01-19
+  - id: MSSCI-12034
+    epic: MSSCI-11952
+    title: "Create /sprint skill with prescriptive scripts"
+    points: 3
+    completed: 2026-01-20
+    pr: 368
+  - id: "35-12"
+    epic: MSSCI-11715
+    title: "Prompt suggestion pill instead of blocking bar"
+    points: 2
+    completed: 2026-01-20
+    pr: 366
+  - id: MSSCI-12036
+    epic: MSSCI-11952
+    title: "Rewrite /workflow skill with prescriptive scripts"
+    points: 2
+    completed: 2026-01-20
+    pr: 376
+  - id: MSSCI-12037
+    epic: MSSCI-11952
+    title: "Rewrite /just skill with prescriptive scripts"
+    points: 1
+    completed: 2026-01-20
+    pr: 377

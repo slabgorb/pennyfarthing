@@ -6,7 +6,7 @@
  * - Tab bar reads from manager to render tabs
  * - 35-5: Multiple panels can be open simultaneously (no mutual exclusion)
  * - Supports different display modes (overlay, push, side-by-side)
- * - Persists state to localStorage
+ * - Persists state via settings-sync (cross-tab)
  *
  * Usage:
  *   import PanelManager from '/js/panel-manager.js';
@@ -30,7 +30,7 @@
  *   PanelManager.on('panel-changed', ({ panelId, isOpen }) => { ... });
  */
 
-const STORAGE_KEY = 'cyclist-panel-manager';
+import { settingsSync, STORAGE_KEYS } from './settings-sync.js';
 
 // Display modes
 export const DisplayMode = {
@@ -45,39 +45,31 @@ const state = {
   activePanel: null,       // Currently open panel ID (or null)
   displayMode: DisplayMode.OVERLAY,
   listeners: new Map(),    // Event listeners
+  badgeCounts: new Map(),  // Badge counts per panel (for change detection)
 };
 
 /**
- * Load persisted state
+ * Load persisted state from settings-sync
  */
 function loadState() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      state.displayMode = parsed.displayMode || DisplayMode.OVERLAY;
-      // Don't restore activePanel - start with all closed
-      return parsed;
-    }
-  } catch (e) {
-    console.warn('[PanelManager] Failed to load state:', e);
+  const saved = settingsSync.get(STORAGE_KEYS.PANEL_MANAGER);
+  if (saved && typeof saved === 'object') {
+    state.displayMode = saved.displayMode || DisplayMode.OVERLAY;
+    // Don't restore activePanel - start with all closed
+    return saved;
   }
   return {};
 }
 
 /**
- * Save state to localStorage
+ * Save state to settings-sync (cross-tab broadcast)
  */
 function saveState() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      displayMode: state.displayMode,
-      activePanel: state.activePanel,
-      // Per-panel settings (width, etc) are saved by panels themselves
-    }));
-  } catch (e) {
-    console.warn('[PanelManager] Failed to save state:', e);
-  }
+  settingsSync.set(STORAGE_KEYS.PANEL_MANAGER, {
+    displayMode: state.displayMode,
+    activePanel: state.activePanel,
+    // Per-panel settings (width, etc) are saved by panels themselves
+  });
 }
 
 /**
@@ -269,6 +261,36 @@ export function getDisplayMode() {
 }
 
 /**
+ * Update badge count for a panel and emit badge-changed event
+ *
+ * This is the event-driven API for badge updates. Call this when a panel's
+ * badge count changes. The 'badge-changed' event is only emitted when the
+ * count actually changes, avoiding unnecessary updates.
+ *
+ * @param {string} panelId - Panel ID
+ * @param {number} count - New badge count
+ * @emits badge-changed - { panelId, count } when count changes
+ */
+export function updateBadgeCount(panelId, count) {
+  const oldCount = state.badgeCounts.get(panelId) ?? 0;
+
+  // Only emit if count actually changed
+  if (count !== oldCount) {
+    state.badgeCounts.set(panelId, count);
+    emit('badge-changed', { panelId, count });
+  }
+}
+
+/**
+ * Get badge count for a panel
+ * @param {string} panelId - Panel ID
+ * @returns {number} Current badge count
+ */
+export function getBadgeCount(panelId) {
+  return state.badgeCounts.get(panelId) ?? 0;
+}
+
+/**
  * Subscribe to an event
  * @param {string} event - Event name
  * @param {Function} handler - Event handler
@@ -341,6 +363,8 @@ export default {
   getDisplayMode,
   on,
   init,
+  updateBadgeCount,
+  getBadgeCount,
 };
 
 // Auto-initialize on DOM ready

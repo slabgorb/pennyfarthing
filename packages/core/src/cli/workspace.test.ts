@@ -185,16 +185,13 @@ describe('Story 11-2: pnpm Workspace Structure', () => {
   });
 
   describe('Root package.json', () => {
-    it('should be a workspace root (private or minimal deps)', () => {
-      const packageJsonPath = join(PROJECT_ROOT, 'package.json');
-      const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
-      // Workspace root should either be private or have minimal/no dependencies
-      const isWorkspaceRoot = pkg.private === true ||
-        !pkg.dependencies ||
-        Object.keys(pkg.dependencies || {}).length === 0;
+    it('should be a workspace root (has workspaces config or pnpm-workspace.yaml)', () => {
+      // In pnpm workspaces, root can have dependencies for npm publishing
+      // The key indicator is pnpm-workspace.yaml existence, not package.json structure
+      const workspaceYamlPath = join(PROJECT_ROOT, 'pnpm-workspace.yaml');
       assert.ok(
-        isWorkspaceRoot,
-        'Root package.json should be private or have no dependencies (workspace root)'
+        existsSync(workspaceYamlPath),
+        'Root should have pnpm-workspace.yaml (workspace root indicator)'
       );
     });
   });

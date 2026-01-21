@@ -10,8 +10,8 @@
 import { Router } from 'express';
 import fs from 'fs';
 import path from 'path';
-import { parse } from 'yaml';
-import { getCurrentSettings, saveUserSettings, addToRecentThemes, type CyclistSettings, type PartialSettings, type SettingsInput } from '../settings.js';
+import { parse, stringify } from 'yaml';
+import { getCurrentSettings, saveUserSettings, type CyclistSettings, type SettingsInput } from '../settings.js';
 import { getProjectDirectory } from '../paths.js';
 
 // =============================================================================
@@ -19,11 +19,14 @@ import { getProjectDirectory } from '../paths.js';
 // =============================================================================
 
 /**
- * Extended settings response that includes theme from config.local.yaml
- * Theme is NOT part of CyclistSettings - it's stored ONLY in .pennyfarthing/config.local.yaml
+ * Extended settings response that includes theme and handoff_mode from config.local.yaml
+ * These are NOT part of CyclistSettings - stored ONLY in .pennyfarthing/config.local.yaml
  */
-export interface SettingsResponse extends CyclistSettings {
-  pennyfarthing: CyclistSettings['pennyfarthing'] & {
+export interface SettingsResponse extends Omit<CyclistSettings, 'workflow'> {
+  workflow: CyclistSettings['workflow'] & {
+    handoff_mode?: string;
+  };
+  pennyfarthing?: {
     theme: string;
   };
 }
@@ -68,37 +71,42 @@ export function createSettingsRouter(): Router {
   /**
    * GET / - Get current settings
    * AC4: Returns consistent error format
-   * Theme is read ONLY from .pennyfarthing/config.local.yaml (single source of truth)
+   * Theme and handoff_mode are read from .pennyfarthing/config.local.yaml (single source of truth)
    */
   router.get('/', (_req, res) => {
     try {
       const settings = getCurrentSettings();
 
-      // Read theme from config.local.yaml ONLY (single source of truth)
+      // Read theme and handoff_mode from config.local.yaml (single source of truth)
       let theme = 'alice-in-wonderland'; // Default fallback
+      let handoffMode = 'manual'; // Default fallback
       const projectDir = getProjectDirectory();
       if (projectDir) {
         try {
           const configPath = path.join(projectDir, '.pennyfarthing', 'config.local.yaml');
           if (fs.existsSync(configPath)) {
             const content = fs.readFileSync(configPath, 'utf-8');
-            const parsed = parse(content) as { theme?: string };
+            const parsed = parse(content) as { theme?: string; workflow?: { handoff_mode?: string } };
             if (parsed?.theme) {
               theme = parsed.theme;
             }
+            if (parsed?.workflow?.handoff_mode) {
+              handoffMode = parsed.workflow.handoff_mode;
+            }
           }
         } catch {
-          // Ignore project config errors - use default
+          // Ignore project config errors - use defaults
         }
       }
 
-      // Construct response with theme added (theme is NOT in CyclistSettings)
+      // Construct response with theme and handoff_mode added
       const response: SettingsResponse = {
         ...settings,
-        pennyfarthing: {
-          ...settings.pennyfarthing,
-          theme,
+        workflow: {
+          ...settings.workflow,
+          handoff_mode: handoffMode,
         },
+        pennyfarthing: { theme },
       };
 
       res.json(response);
@@ -121,32 +129,7 @@ export function createSettingsRouter(): Router {
         return res.status(400).json(createErrorResponse('VALIDATION_ERROR', 'Invalid settings object'));
       }
 
-      // AC4: Validate specific field constraints before saving
-      if (partialSettings.display?.sidebar_width !== undefined) {
-        const width = partialSettings.display.sidebar_width;
-        if (typeof width !== 'number' || width < 200 || width > 500) {
-          return res.status(400).json(createErrorResponse(
-            'VALIDATION_ERROR',
-            'Sidebar width must be between 200 and 500'
-          ));
-        }
-      }
-
-      // Validate font settings are non-empty if provided
-      if (partialSettings.display?.font_ui !== undefined && partialSettings.display.font_ui === '') {
-        return res.status(400).json(createErrorResponse(
-          'VALIDATION_ERROR',
-          'Font UI must be a non-empty string'
-        ));
-      }
-      if (partialSettings.display?.font_mono !== undefined && partialSettings.display.font_mono === '') {
-        return res.status(400).json(createErrorResponse(
-          'VALIDATION_ERROR',
-          'Font Mono must be a non-empty string'
-        ));
-      }
-
-      // Validate theme is non-empty and matches slug pattern (35-8: prevent YAML injection)
+      // Validate theme is non-empty and matches slug pattern (prevent YAML injection)
       if (partialSettings.pennyfarthing?.theme !== undefined) {
         const theme = partialSettings.pennyfarthing.theme;
         if (theme === '') {
@@ -164,59 +147,58 @@ export function createSettingsRouter(): Router {
         }
       }
 
-      // Validate handoff_mode enum
-      if (partialSettings.workflow?.handoff_mode !== undefined) {
-        const mode = partialSettings.workflow.handoff_mode;
-        if (mode !== 'auto' && mode !== 'manual') {
+      // Validate permission_mode enum
+      if (partialSettings.workflow?.permission_mode !== undefined) {
+        const mode = partialSettings.workflow.permission_mode;
+        const validModes = ['plan', 'manual', 'accept', 'turbo'];
+        if (!validModes.includes(mode)) {
           return res.status(400).json(createErrorResponse(
             'VALIDATION_ERROR',
-            'Handoff mode must be "auto" or "manual"'
+            'Permission mode must be "plan", "manual", "accept", or "turbo"'
           ));
         }
       }
 
-      // Extract theme - it goes to config.local.yaml only, not to CyclistSettings
+      // Extract theme - it goes to config.local.yaml, not to CyclistSettings
       const theme = partialSettings.pennyfarthing?.theme;
 
-      // Story 35-8: Track theme changes in recentThemes
-      // Theme is project-level only, so we track recent themes but don't save theme to user settings
-      let settingsToSave: PartialSettings;
-      if (theme) {
-        const current = getCurrentSettings();
-        const updated = addToRecentThemes(current, theme);
-        // Strip theme from user-level save - theme is project-level only
-        // Keep recentThemes and favorites in user settings
-        const { theme: _theme, ...pennyfarthingWithoutTheme } = partialSettings.pennyfarthing || {};
-        settingsToSave = {
-          ...partialSettings,
-          pennyfarthing: {
-            ...pennyfarthingWithoutTheme,
-            recentThemes: updated.pennyfarthing.recentThemes,
-          },
-        };
-      } else {
-        // No theme change - strip theme field anyway for type safety
-        const { theme: _theme, ...pennyfarthingWithoutTheme } = partialSettings.pennyfarthing || {};
-        settingsToSave = {
-          ...partialSettings,
-          pennyfarthing: pennyfarthingWithoutTheme,
-        };
-      }
+      // Strip pennyfarthing from settings to save (we handle theme separately)
+      const { pennyfarthing: _pf, ...settingsToSave } = partialSettings;
 
-      // Save settings using the settings module (theme excluded - it's project-level)
-      const success = saveUserSettings(settingsToSave as Partial<CyclistSettings>);
+      // Get project directory FIRST - needed for both settings save and theme update
+      const projectDir = getProjectDirectory();
+
+      // Save settings using the settings module (pass projectDir to avoid cwd fallback)
+      const success = saveUserSettings(settingsToSave as Partial<CyclistSettings>, projectDir || undefined);
 
       if (!success) {
         return res.status(500).json(createErrorResponse('FILE_ERROR', 'Failed to save settings to file'));
       }
 
-      // Write theme to .pennyfarthing/config.local.yaml ONLY (single source of truth)
-      const projectDir = getProjectDirectory();
+      // Update theme in .pennyfarthing/config.local.yaml using read-modify-write
+      // This preserves other settings (like handoff_mode) in the same file
       let themeChanged = false;
       if (theme && projectDir) {
         try {
           const configPath = path.join(projectDir, '.pennyfarthing', 'config.local.yaml');
-          fs.writeFileSync(configPath, `theme: "${theme}"\n`, 'utf-8');
+
+          // Read existing config to preserve other settings
+          let existingConfig: Record<string, unknown> = {};
+          if (fs.existsSync(configPath)) {
+            const existingContent = fs.readFileSync(configPath, 'utf-8');
+            const parsed = parse(existingContent);
+            if (parsed && typeof parsed === 'object') {
+              existingConfig = parsed as Record<string, unknown>;
+            }
+          }
+
+          // Update only the theme, preserving everything else
+          existingConfig.theme = theme;
+
+          // Write back with theme first for consistent ordering
+          const { theme: themeValue, ...rest } = existingConfig;
+          const ordered = { theme: themeValue, ...rest };
+          fs.writeFileSync(configPath, stringify(ordered), 'utf-8');
           themeChanged = true;
 
           // Touch the agent session file to trigger watchAgentChanges

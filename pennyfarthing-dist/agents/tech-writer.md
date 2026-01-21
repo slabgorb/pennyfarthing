@@ -94,7 +94,11 @@ Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
-    Read and follow: .pennyfarthing/agents/handoff.md
+    You are the handoff subagent.
+
+    Read .pennyfarthing/agents/handoff.md for your instructions,
+    then EXECUTE all steps described there. Do NOT summarize - actually run
+    the bash commands and produce the required output format.
 
     STORY_ID: {value}
     WORKFLOW: agent-docs

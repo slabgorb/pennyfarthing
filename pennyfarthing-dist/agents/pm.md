@@ -28,7 +28,11 @@ From theme config. Model: haiku. Tasks: Backlog scanning, Jira queries, velocity
     subagent_type: "general-purpose"
     model: "haiku"
     prompt: |
-      Read and follow: .pennyfarthing/agents/{subagent-name}.md
+      You are the {subagent-name} subagent.
+
+      Read .pennyfarthing/agents/{subagent-name}.md for your instructions,
+      then EXECUTE all steps described there. Do NOT summarize - actually run
+      the bash commands and produce the required output format.
 
       {PARAMETERS}
   ```

@@ -16,7 +16,6 @@ import PanelManager from '/js/panel-manager.js';
 let tabBar = null;
 let tabBarLeft = null;
 let modelIndicator = null;
-let badgeUpdateInterval = null;
 
 /**
  * Create a tab button element
@@ -132,6 +131,20 @@ export function setModelIndicator(modelName) {
  * Initialize tab bar
  */
 export function init() {
+  // Subscribe to badge-changed event for immediate updates (replaces polling)
+  PanelManager.on('badge-changed', ({ panelId, count }) => {
+    const badge = document.getElementById(`${panelId}-tab-badge`);
+    if (badge) {
+      const newText = count > 0 ? String(count) : '';
+      badge.textContent = newText;
+      // Pulse animation on change
+      if (count > 0) {
+        badge.classList.add('pulse');
+        setTimeout(() => badge.classList.remove('pulse'), 300);
+      }
+    }
+  });
+
   tabBar = document.getElementById('tab-bar');
   if (!tabBar) {
     console.warn('[TabBar] Tab bar element not found');
@@ -158,9 +171,6 @@ export function init() {
     updateTabState(panelId, isOpen);
   });
 
-  // Periodic badge updates (panels may update counts independently)
-  badgeUpdateInterval = setInterval(updateBadges, 500);
-
   console.log('[TabBar] Initialized');
 }
 
@@ -168,9 +178,8 @@ export function init() {
  * Cleanup
  */
 export function destroy() {
-  if (badgeUpdateInterval) {
-    clearInterval(badgeUpdateInterval);
-  }
+  // No-op: Event-driven updates don't require cleanup
+  // (PanelManager event subscriptions are module-scoped)
 }
 
 // Export for module use

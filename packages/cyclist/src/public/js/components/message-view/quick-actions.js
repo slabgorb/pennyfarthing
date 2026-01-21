@@ -256,9 +256,25 @@ function processStructuredMarkers(markers, fullText = '') {
       break;
 
     case 'choices':
-      // Parse choice numbers from value like "1,2,3"
-      const choiceNumbers = primaryMarker.value.split(',').map(n => parseInt(n.trim(), 10));
-      const choices = extractChoiceTexts(fullText, choiceNumbers);
+      // Parse choices from value - supports both formats:
+      // 1. Numeric: "1,2,3" - extracts text from numbered list in message
+      // 2. Text labels: "Option A,Option B,Option C" - uses labels directly
+      const choiceValues = primaryMarker.value.split(',').map(v => v.trim());
+      const firstValue = choiceValues[0];
+      const isNumeric = /^\d+$/.test(firstValue);
+
+      let choices;
+      if (isNumeric) {
+        // Legacy numeric format - extract text from message
+        const choiceNumbers = choiceValues.map(n => parseInt(n, 10));
+        choices = extractChoiceTexts(fullText, choiceNumbers);
+      } else {
+        // Text label format - use labels directly
+        choices = choiceValues.map((text, index) => ({
+          number: index + 1,
+          text: text,
+        }));
+      }
       return {
         type: 'list',
         choices,
@@ -280,8 +296,20 @@ function processStructuredMarkers(markers, fullText = '') {
   // Check if there's both a QUESTION:choice and CHOICES marker
   const choicesMarker = markers.find(m => m.type === 'choices');
   if (primaryMarker.type === 'question' && choicesMarker) {
-    const choiceNumbers = choicesMarker.value.split(',').map(n => parseInt(n.trim(), 10));
-    const choices = extractChoiceTexts(fullText, choiceNumbers);
+    const choiceValues = choicesMarker.value.split(',').map(v => v.trim());
+    const firstValue = choiceValues[0];
+    const isNumeric = /^\d+$/.test(firstValue);
+
+    let choices;
+    if (isNumeric) {
+      const choiceNumbers = choiceValues.map(n => parseInt(n, 10));
+      choices = extractChoiceTexts(fullText, choiceNumbers);
+    } else {
+      choices = choiceValues.map((text, index) => ({
+        number: index + 1,
+        text: text,
+      }));
+    }
     return {
       type: 'list',
       choices,

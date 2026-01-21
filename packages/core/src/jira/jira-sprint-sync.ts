@@ -310,7 +310,7 @@ export async function getSprintVelocityFromJira(
 }
 
 // ============================================
-// AC4: Local sprint number matches Jira sprint
+// AC4: Local sprint name matches Jira sprint
 // ============================================
 
 export interface ValidateSprintAlignmentOptions {
@@ -321,22 +321,13 @@ export interface ValidateSprintAlignmentOptions {
 
 export interface ValidateSprintAlignmentResult extends SprintSyncResult {
   aligned?: boolean;
-  localNumber?: number;
+  localSprintName?: string;
   jiraSprintId?: number;
-  extractedNumber?: number;
+  jiraSprintName?: string;
 }
 
 /**
- * Extract sprint number from Jira sprint name
- * Handles formats like "Sprint 11", "MSSCI Sprint 11", etc.
- */
-function extractSprintNumber(name: string): number | null {
-  const match = name.match(/Sprint\s+(\d+)/i);
-  return match ? parseInt(match[1], 10) : null;
-}
-
-/**
- * Validate that local sprint number matches Jira sprint
+ * Validate that local sprint name matches Jira sprint name
  */
 export async function validateSprintAlignment(
   options: ValidateSprintAlignmentOptions
@@ -363,13 +354,14 @@ export async function validateSprintAlignment(
     const content = readFileSync(sprintPath, 'utf-8');
     const yaml = parse(content) as {
       sprint?: {
-        number?: number;
+        name?: string;
         jira_sprint_id?: number;
+        jira_sprint_name?: string;
         status?: string;
       };
     };
 
-    const localNumber = yaml.sprint?.number;
+    const localSprintName = yaml.sprint?.jira_sprint_name || yaml.sprint?.name;
     const jiraSprintId = yaml.sprint?.jira_sprint_id;
     const localStatus = yaml.sprint?.status;
 
@@ -378,7 +370,7 @@ export async function validateSprintAlignment(
       return {
         success: false,
         error: 'Sprint jira_sprint_id not configured',
-        localNumber
+        localSprintName
       };
     }
 
@@ -398,35 +390,32 @@ export async function validateSprintAlignment(
       return {
         success: false,
         error: `Jira sprint ${jiraSprintId} not found`,
-        localNumber,
+        localSprintName,
         jiraSprintId
       };
     }
-
-    // Extract sprint number from Jira sprint name
-    const extractedNumber = extractSprintNumber(jiraSprint.name);
 
     // Check for state mismatch (local active but Jira closed)
     if (localStatus === 'active' && jiraSprint.state === 'closed') {
       return {
         success: true,
         aligned: false,
-        localNumber,
+        localSprintName,
         jiraSprintId,
-        extractedNumber: extractedNumber ?? undefined,
+        jiraSprintName: jiraSprint.name,
         warning: `Sprint mismatch: local is active but Jira sprint is closed`
       };
     }
 
-    // Check for number mismatch
-    if (extractedNumber !== null && extractedNumber !== localNumber) {
+    // Check for name mismatch
+    if (localSprintName && jiraSprint.name !== localSprintName) {
       return {
         success: true,
         aligned: false,
-        localNumber,
+        localSprintName,
         jiraSprintId,
-        extractedNumber,
-        warning: `Sprint number mismatch: local is ${localNumber}, Jira is ${extractedNumber}`
+        jiraSprintName: jiraSprint.name,
+        warning: `Sprint name mismatch: local is "${localSprintName}", Jira is "${jiraSprint.name}"`
       };
     }
 
@@ -434,9 +423,9 @@ export async function validateSprintAlignment(
     return {
       success: true,
       aligned: true,
-      localNumber,
+      localSprintName,
       jiraSprintId,
-      extractedNumber: extractedNumber ?? undefined
+      jiraSprintName: jiraSprint.name
     };
   } catch (err) {
     return {
@@ -743,6 +732,334 @@ export async function importMissingStoriesToYaml(
     return {
       success: false,
       error: `Failed to update sprint YAML: ${(err as Error).message}`
+    };
+  }
+}
+
+// ============================================
+// Story Sprint Membership Sync (Bidirectional)
+// ============================================
+
+export interface StorySprintMembership {
+  storyId: string;
+  jiraKey: string;
+  inSprint: boolean;
+  jiraSprintId?: number;
+}
+
+export interface SyncStorySprintMembershipOptions {
+  sprintPath: string;
+  jiraSprintId: number;
+  _mockJiraIssues?: SprintIssue[];
+  _mockError?: string;
+}
+
+export interface SyncStorySprintMembershipResult extends SprintSyncResult {
+  updated?: number;
+  added?: string[];
+  removed?: string[];
+  unchanged?: number;
+}
+
+/**
+ * Sync story sprint membership between YAML and Jira
+ *
+ * Direction: Jira → YAML
+ * - Stories in Jira sprint get in_sprint: true
+ * - Stories not in Jira sprint get in_sprint: false
+ */
+export async function syncStorySprintMembershipFromJira(
+  options: SyncStorySprintMembershipOptions
+): Promise<SyncStorySprintMembershipResult> {
+  const { sprintPath, jiraSprintId, _mockJiraIssues, _mockError } = options;
+
+  if (_mockError) {
+    return { success: false, error: _mockError };
+  }
+
+  if (!existsSync(sprintPath)) {
+    return { success: false, error: `Sprint file not found: ${sprintPath}` };
+  }
+
+  try {
+    const content = readFileSync(sprintPath, 'utf-8');
+    const yaml = parse(content) as {
+      sprint?: { jira_sprint_id?: number };
+      epics?: Array<{
+        id: string;
+        stories?: Array<{
+          id: string;
+          jira?: string;
+          in_sprint?: boolean;
+        }>;
+      }>;
+    };
+
+    // Get issues in Jira sprint
+    let jiraIssueKeys: Set<string>;
+    if (_mockJiraIssues !== undefined) {
+      jiraIssueKeys = new Set(_mockJiraIssues.map(i => i.key));
+    } else {
+      // Real implementation would call: jira sprint list {sprintId} --plain
+      return {
+        success: false,
+        error: 'Real Jira API not yet implemented - use _mockJiraIssues for testing'
+      };
+    }
+
+    const added: string[] = [];
+    const removed: string[] = [];
+    let unchanged = 0;
+
+    // Update in_sprint for each story
+    if (yaml.epics) {
+      for (const epic of yaml.epics) {
+        if (epic.stories) {
+          for (const story of epic.stories) {
+            const jiraKey = story.jira || story.id;
+            const inJiraSprint = jiraIssueKeys.has(jiraKey);
+            const wasInSprint = story.in_sprint === true;
+
+            if (inJiraSprint && !wasInSprint) {
+              story.in_sprint = true;
+              added.push(jiraKey);
+            } else if (!inJiraSprint && wasInSprint) {
+              story.in_sprint = false;
+              removed.push(jiraKey);
+            } else {
+              unchanged++;
+            }
+          }
+        }
+      }
+    }
+
+    // Write back if changes were made
+    if (added.length > 0 || removed.length > 0) {
+      const updatedContent = stringify(yaml, {
+        lineWidth: 0,
+        singleQuote: false
+      });
+      writeFileSync(sprintPath, updatedContent);
+    }
+
+    return {
+      success: true,
+      updated: added.length + removed.length,
+      added,
+      removed,
+      unchanged
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: `Failed to sync sprint membership: ${(err as Error).message}`
+    };
+  }
+}
+
+export interface AddStoryToJiraSprintOptions {
+  jiraKey: string;
+  sprintId: number;
+  _mockSuccess?: boolean;
+  _mockError?: string;
+}
+
+export interface AddStoryToJiraSprintResult extends SprintSyncResult {
+  added?: boolean;
+}
+
+/**
+ * Add a story to a Jira sprint
+ *
+ * Direction: YAML → Jira
+ * Uses: jira sprint add {sprintId} {jiraKey}
+ */
+export async function addStoryToJiraSprint(
+  options: AddStoryToJiraSprintOptions
+): Promise<AddStoryToJiraSprintResult> {
+  const { jiraKey, sprintId, _mockSuccess, _mockError } = options;
+
+  if (_mockError) {
+    return { success: false, error: _mockError };
+  }
+
+  if (_mockSuccess !== undefined) {
+    return { success: _mockSuccess, added: _mockSuccess };
+  }
+
+  // Real implementation would call: jira sprint add {sprintId} {jiraKey}
+  return {
+    success: false,
+    error: 'Real Jira API not yet implemented - use _mockSuccess for testing'
+  };
+}
+
+export interface RemoveStoryFromJiraSprintOptions {
+  jiraKey: string;
+  _mockSuccess?: boolean;
+  _mockError?: string;
+}
+
+export interface RemoveStoryFromJiraSprintResult extends SprintSyncResult {
+  removed?: boolean;
+}
+
+/**
+ * Remove a story from its current Jira sprint (move to backlog)
+ *
+ * Direction: YAML → Jira
+ * Uses: jira issue edit {jiraKey} --sprint "" or move to backlog
+ */
+export async function removeStoryFromJiraSprint(
+  options: RemoveStoryFromJiraSprintOptions
+): Promise<RemoveStoryFromJiraSprintResult> {
+  const { jiraKey, _mockSuccess, _mockError } = options;
+
+  if (_mockError) {
+    return { success: false, error: _mockError };
+  }
+
+  if (_mockSuccess !== undefined) {
+    return { success: _mockSuccess, removed: _mockSuccess };
+  }
+
+  // Real implementation would move story to backlog
+  return {
+    success: false,
+    error: 'Real Jira API not yet implemented - use _mockSuccess for testing'
+  };
+}
+
+export interface SyncStorySprintMembershipToJiraOptions {
+  sprintPath: string;
+  jiraSprintId: number;
+  dryRun?: boolean;
+  _mockAddSuccess?: boolean;
+  _mockRemoveSuccess?: boolean;
+  _mockError?: string;
+}
+
+export interface SyncStorySprintMembershipToJiraResult extends SprintSyncResult {
+  toAdd?: string[];
+  toRemove?: string[];
+  added?: string[];
+  removed?: string[];
+  failed?: string[];
+}
+
+/**
+ * Sync story sprint membership from YAML to Jira
+ *
+ * Direction: YAML → Jira
+ * - Stories with in_sprint: true are added to Jira sprint
+ * - Stories with in_sprint: false are removed from Jira sprint
+ */
+export async function syncStorySprintMembershipToJira(
+  options: SyncStorySprintMembershipToJiraOptions
+): Promise<SyncStorySprintMembershipToJiraResult> {
+  const {
+    sprintPath,
+    jiraSprintId,
+    dryRun = false,
+    _mockAddSuccess,
+    _mockRemoveSuccess,
+    _mockError
+  } = options;
+
+  if (_mockError) {
+    return { success: false, error: _mockError };
+  }
+
+  if (!existsSync(sprintPath)) {
+    return { success: false, error: `Sprint file not found: ${sprintPath}` };
+  }
+
+  try {
+    const content = readFileSync(sprintPath, 'utf-8');
+    const yaml = parse(content) as {
+      sprint?: { jira_sprint_id?: number };
+      epics?: Array<{
+        id: string;
+        stories?: Array<{
+          id: string;
+          jira?: string;
+          in_sprint?: boolean;
+        }>;
+      }>;
+    };
+
+    const toAdd: string[] = [];
+    const toRemove: string[] = [];
+
+    // Collect stories that need sprint membership changes
+    if (yaml.epics) {
+      for (const epic of yaml.epics) {
+        if (epic.stories) {
+          for (const story of epic.stories) {
+            const jiraKey = story.jira || story.id;
+            // Only process stories with explicit in_sprint field
+            if (story.in_sprint === true) {
+              toAdd.push(jiraKey);
+            } else if (story.in_sprint === false) {
+              toRemove.push(jiraKey);
+            }
+          }
+        }
+      }
+    }
+
+    // Dry run: just return what would be done
+    if (dryRun) {
+      return {
+        success: true,
+        toAdd,
+        toRemove
+      };
+    }
+
+    // Execute changes
+    const added: string[] = [];
+    const removed: string[] = [];
+    const failed: string[] = [];
+
+    for (const jiraKey of toAdd) {
+      const result = await addStoryToJiraSprint({
+        jiraKey,
+        sprintId: jiraSprintId,
+        _mockSuccess: _mockAddSuccess
+      });
+      if (result.success) {
+        added.push(jiraKey);
+      } else {
+        failed.push(jiraKey);
+      }
+    }
+
+    for (const jiraKey of toRemove) {
+      const result = await removeStoryFromJiraSprint({
+        jiraKey,
+        _mockSuccess: _mockRemoveSuccess
+      });
+      if (result.success) {
+        removed.push(jiraKey);
+      } else {
+        failed.push(jiraKey);
+      }
+    }
+
+    return {
+      success: failed.length === 0,
+      toAdd,
+      toRemove,
+      added,
+      removed,
+      failed: failed.length > 0 ? failed : undefined
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: `Failed to sync sprint membership to Jira: ${(err as Error).message}`
     };
   }
 }

@@ -1,6 +1,7 @@
 ---
 name: otel
 description: Claude Code OTEL telemetry format documentation. Use when working with OTEL span interception, enrichment, or correlation in Cyclist.
+allowed_tools: [Read, Glob, Grep, Task]
 ---
 
 # OTEL Skill - Claude Code Telemetry

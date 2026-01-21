@@ -355,14 +355,15 @@ describe('Jira Sprint Sync (47-2)', () => {
   });
 
   // ============================================
-  // AC4: Local sprint number matches Jira sprint
+  // AC4: Local sprint name matches Jira sprint
   // ============================================
   describe('validateSprintAlignment() - AC4: Local sprint matches Jira', () => {
 
-    it('should return aligned when sprint numbers match', async () => {
+    it('should return aligned when sprint names match', async () => {
       const sprintYaml = `sprint:
-  number: 11
+  name: "TO Sprint 2604"
   jira_sprint_id: 275
+  jira_sprint_name: "TO Sprint 2604"
   status: active
 `;
       const sprintPath = join(TEST_DIR, 'current-sprint.yaml');
@@ -372,21 +373,22 @@ describe('Jira Sprint Sync (47-2)', () => {
         sprintPath,
         _mockJiraSprint: {
           id: 275,
-          name: 'Sprint 11',
+          name: 'TO Sprint 2604',
           state: 'active'
         }
       });
 
       assert.strictEqual(result.success, true);
       assert.strictEqual(result.aligned, true);
-      assert.strictEqual(result.localNumber, 11);
+      assert.strictEqual(result.localSprintName, 'TO Sprint 2604');
       assert.strictEqual(result.jiraSprintId, 275);
     });
 
     it('should detect misalignment when sprint names differ', async () => {
       const sprintYaml = `sprint:
-  number: 11
+  name: "TO Sprint 2604"
   jira_sprint_id: 275
+  jira_sprint_name: "TO Sprint 2604"
   status: active
 `;
       const sprintPath = join(TEST_DIR, 'current-sprint.yaml');
@@ -396,7 +398,7 @@ describe('Jira Sprint Sync (47-2)', () => {
         sprintPath,
         _mockJiraSprint: {
           id: 275,
-          name: 'Sprint 12', // Mismatch!
+          name: 'TO Sprint 2605', // Mismatch!
           state: 'active'
         }
       });
@@ -408,8 +410,9 @@ describe('Jira Sprint Sync (47-2)', () => {
 
     it('should detect when Jira sprint is closed but local is active', async () => {
       const sprintYaml = `sprint:
-  number: 11
+  name: "TO Sprint 2604"
   jira_sprint_id: 275
+  jira_sprint_name: "TO Sprint 2604"
   status: active
 `;
       const sprintPath = join(TEST_DIR, 'current-sprint.yaml');
@@ -419,7 +422,7 @@ describe('Jira Sprint Sync (47-2)', () => {
         sprintPath,
         _mockJiraSprint: {
           id: 275,
-          name: 'Sprint 11',
+          name: 'TO Sprint 2604',
           state: 'closed' // Jira sprint closed!
         }
       });
@@ -431,7 +434,7 @@ describe('Jira Sprint Sync (47-2)', () => {
 
     it('should handle missing jira_sprint_id in YAML', async () => {
       const sprintYaml = `sprint:
-  number: 11
+  name: "TO Sprint 2604"
   status: active
 `;
       const sprintPath = join(TEST_DIR, 'current-sprint.yaml');
@@ -447,10 +450,11 @@ describe('Jira Sprint Sync (47-2)', () => {
         'Should report missing jira_sprint_id');
     });
 
-    it('should extract sprint number from Jira sprint name', async () => {
+    it('should use jira_sprint_name for comparison if present', async () => {
       const sprintYaml = `sprint:
-  number: 11
+  name: "My Local Name"
   jira_sprint_id: 275
+  jira_sprint_name: "TO Sprint 2604"
   status: active
 `;
       const sprintPath = join(TEST_DIR, 'current-sprint.yaml');
@@ -460,14 +464,14 @@ describe('Jira Sprint Sync (47-2)', () => {
         sprintPath,
         _mockJiraSprint: {
           id: 275,
-          name: 'MSSCI Sprint 11', // Different format but same number
+          name: 'TO Sprint 2604',
           state: 'active'
         }
       });
 
       assert.strictEqual(result.success, true);
       assert.strictEqual(result.aligned, true);
-      assert.strictEqual(result.extractedNumber, 11);
+      assert.strictEqual(result.jiraSprintName, 'TO Sprint 2604');
     });
   });
 
@@ -479,7 +483,7 @@ describe('Jira Sprint Sync (47-2)', () => {
     it('should sync sprint with Jira and update YAML', async () => {
       // Start with no jira_sprint_id
       const sprintYaml = `sprint:
-  number: 11
+  name: "TO Sprint 2604"
   goal: Test sprint
   status: active
 `;
@@ -498,7 +502,7 @@ describe('Jira Sprint Sync (47-2)', () => {
         sprintPath,
         _mockJiraSprint: {
           id: 275,
-          name: 'Sprint 11',
+          name: 'TO Sprint 2604',
           state: 'active'
         }
       });
