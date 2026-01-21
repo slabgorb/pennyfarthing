@@ -1110,11 +1110,13 @@ epics:
           - Compare with our existing TDD flow
         points: 3
         priority: P2
-        status: backlog
+        status: in_progress
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
         jira: MSSCI-12140
+        assigned_to: Keith Avery
+        branch: feat/MSSCI-12140-dev-story-workflow
       - id: MSSCI-12141
         title: "Import Sprint Planning workflow"
         description: |
@@ -1183,11 +1185,14 @@ epics:
           - Codebase analysis and summarization
         points: 2
         priority: P2
-        status: backlog
+        status: done
+        completed: 2026-01-21
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
         jira: MSSCI-12145
+        assigned_to: Keith Avery
+        branch: feat/MSSCI-12145-project-context-workflow
       - id: MSSCI-12146
         title: "BMAD compatibility validation suite"
         description: |
