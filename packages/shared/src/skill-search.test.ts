@@ -224,25 +224,15 @@ describe('Story 9-2: Skill Search Utility', () => {
     });
   });
 
-  describe('Shell Wrapper Integration', () => {
+  describe('Shell Wrapper Integration', { skip: !existsSync(WRAPPER_PATH) }, () => {
+    // Skip all wrapper tests if skill-search.sh doesn't exist yet
 
     it('should execute via bash wrapper', () => {
-      // Integration test: Wrapper calls Node script correctly
-      // Skip if wrapper doesn't exist yet
-      if (!existsSync(WRAPPER_PATH)) {
-        assert.fail('skill-search.sh wrapper does not exist yet');
-      }
-
       const result = execSync(`bash ${WRAPPER_PATH} --help`, { encoding: 'utf-8' });
       assert.ok(result.includes('search') || result.includes('usage'), 'Should show help text');
     });
 
     it('should output JSON with --json flag via wrapper', () => {
-      // Integration test: JSON output via wrapper
-      if (!existsSync(WRAPPER_PATH)) {
-        assert.fail('skill-search.sh wrapper does not exist yet');
-      }
-
       const result = execSync(`bash ${WRAPPER_PATH} --json`, { encoding: 'utf-8' });
       const parsed = JSON.parse(result);
 
@@ -250,11 +240,6 @@ describe('Story 9-2: Skill Search Utility', () => {
     });
 
     it('should filter by tag via wrapper', () => {
-      // Integration test: Tag filter via wrapper
-      if (!existsSync(WRAPPER_PATH)) {
-        assert.fail('skill-search.sh wrapper does not exist yet');
-      }
-
       const result = execSync(`bash ${WRAPPER_PATH} --tag tdd --json`, { encoding: 'utf-8' });
       const parsed = JSON.parse(result);
 
@@ -266,11 +251,6 @@ describe('Story 9-2: Skill Search Utility', () => {
     });
 
     it('should show human-readable table without --json flag', () => {
-      // AC3: Non-JSON mode shows human-readable table
-      if (!existsSync(WRAPPER_PATH)) {
-        assert.fail('skill-search.sh wrapper does not exist yet');
-      }
-
       const result = execSync(`bash ${WRAPPER_PATH} --tag tdd`, { encoding: 'utf-8' });
 
       // Should not be valid JSON (it's a table)

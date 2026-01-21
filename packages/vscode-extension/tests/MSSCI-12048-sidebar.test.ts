@@ -97,6 +97,7 @@ const mockVscode = {
     registerTerminalProfileProvider: vi.fn(() => ({ dispose: vi.fn() })),
     registerTerminalLinkProvider: vi.fn(() => ({ dispose: vi.fn() })),
     registerTreeDataProvider: vi.fn(() => ({ dispose: vi.fn() })),
+    registerWebviewViewProvider: vi.fn(() => ({ dispose: vi.fn() })),
     createTreeView: vi.fn(() => ({
       dispose: vi.fn(),
       reveal: vi.fn(),
@@ -106,6 +107,8 @@ const mockVscode = {
     showQuickPick: vi.fn(),
     showInformationMessage: vi.fn(),
     showErrorMessage: vi.fn(),
+    activeColorTheme: { kind: 2 },
+    onDidChangeActiveColorTheme: vi.fn(() => ({ dispose: vi.fn() })),
   },
   workspace: {
     workspaceFolders: [mockWorkspaceFolder],

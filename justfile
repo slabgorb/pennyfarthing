@@ -218,3 +218,71 @@ portraits-all:
 test-cyclist-watch:
     cd packages/cyclist && npm test -- --watch
 
+# =============================================================================
+# VS Code Extension
+# =============================================================================
+
+# VS Code extension - unified command for all extension operations
+#
+# Commands:
+#   just vscode              # Build and install extension
+#   just vscode build        # Build only (no install)
+#   just vscode install      # Install from existing .vsix
+#   just vscode package      # Create .vsix package
+#   just vscode uninstall    # Remove extension from VS Code
+vscode *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd packages/vscode-extension
+
+    case "${1:-}" in
+        build)
+            echo "Building VS Code extension..."
+            npm run build
+            echo "✓ Built dist/extension.js"
+            ;;
+        package)
+            echo "Packaging VS Code extension..."
+            npm run build
+            npx @vscode/vsce package --no-dependencies
+            echo "✓ Created .vsix package"
+            ls -la *.vsix
+            ;;
+        install)
+            vsix=$(ls -t *.vsix 2>/dev/null | head -1)
+            if [[ -z "$vsix" ]]; then
+                echo "No .vsix found. Run 'just vscode package' first."
+                exit 1
+            fi
+            echo "Installing $vsix..."
+            code --install-extension "$vsix" --force
+            echo "✓ Installed. Reload VS Code to activate."
+            ;;
+        uninstall)
+            echo "Uninstalling Pennyfarthing extension..."
+            code --uninstall-extension 1898andco.pennyfarthing-vscode || true
+            echo "✓ Uninstalled"
+            ;;
+        ""|default)
+            echo "Building and installing VS Code extension..."
+            npm run build
+            npx @vscode/vsce package --no-dependencies
+            vsix=$(ls -t *.vsix | head -1)
+            code --install-extension "$vsix" --force
+            echo ""
+            echo "✓ Extension installed: $vsix"
+            echo "  Reload VS Code (Cmd+Shift+P → 'Developer: Reload Window')"
+            ;;
+        *)
+            echo "Unknown command: $1"
+            echo ""
+            echo "Commands:"
+            echo "  just vscode              # Build and install"
+            echo "  just vscode build        # Build only"
+            echo "  just vscode package      # Create .vsix"
+            echo "  just vscode install      # Install existing .vsix"
+            echo "  just vscode uninstall    # Remove extension"
+            exit 1
+            ;;
+    esac
+

@@ -1,0 +1,38 @@
+# Architecture Workflow - Stepped Workflow for Architectural Decisions
+# Example stepped workflow demonstrating BMAD-inspired progressive disclosure
+#
+# Flow: Initialize → Context → Patterns → Components → Interfaces → Risks → Document
+# Use for architectural decisions, system design, and technical planning
+
+workflow:
+  name: architecture
+  description: Collaborative architectural decision-making with progressive disclosure
+  version: "1.0.0"
+  type: stepped
+
+  # Step configuration
+  steps:
+    path: ./architecture/steps/
+    pattern: step-{nn}-*.md
+
+  # Variables available in step files
+  variables:
+    output_file: planning-artifacts/architecture.md
+    input_required:
+      - prd
+
+  # User approval gates - pause for confirmation at key decision points
+  gates:
+    after_steps: [2, 4, 6]
+    gate_marker: "<!-- GATE -->"
+
+  # Output template
+  template: ./architecture/templates/architecture-decision.md
+
+  # Agent assignment
+  agent: architect
+
+  # Triggers - when to suggest this workflow
+  triggers:
+    types: [architecture, design, adr, system-design]
+    tags: [architecture, stepped]

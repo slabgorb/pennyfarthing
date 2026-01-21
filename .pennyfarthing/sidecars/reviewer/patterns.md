@@ -53,3 +53,36 @@ Returning to Dev for fixes.
 ---
 
 *Add review patterns discovered during code review below*
+
+## EventEmitter Async Handler Pattern
+
+When reviewing code that uses async handlers with EventEmitter:
+```typescript
+// Pattern to watch for
+emitter.on('event', async (data) => {
+  const result = await someAsyncOperation(data);
+  mightThrow(result);  // <-- Unhandled rejection if this throws
+});
+```
+
+**Issue:** EventEmitter doesn't await async handlers. Unhandled rejections can crash or silently fail.
+
+**Recommendation:** Wrap handler body in try-catch:
+```typescript
+emitter.on('event', async (data) => {
+  try {
+    const result = await someAsyncOperation(data);
+    mightThrow(result);
+  } catch (err) {
+    console.error('Handler error:', err);
+  }
+});
+```
+
+## Regex Pattern Review Checklist
+
+When reviewing regex-based parsing:
+1. Test with edge case values (dashes, colons, special chars)
+2. Check for catastrophic backtracking (nested quantifiers)
+3. Verify global flag behavior with `exec()` loops
+4. Confirm captured groups match expected values

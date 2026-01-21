@@ -2,7 +2,7 @@
   "name": "pennyfarthing-vscode",
   "displayName": "Pennyfarthing",
   "description": "VS Code extension for Pennyfarthing - agent orchestration for Claude Code",
-  "version": "0.0.1",
+  "version": "7.4.0",
   "publisher": "1898andco",
   "license": "MIT",
   "private": true,
@@ -39,9 +39,21 @@
     "views": {
       "pennyfarthing": [
         {
+          "id": "pennyfarthing.welcomePanel",
+          "name": "Welcome",
+          "type": "webview",
+          "contextualTitle": "Pennyfarthing Welcome"
+        },
+        {
           "id": "pennyfarthing.agentStatus",
           "name": "Agent Status",
           "contextualTitle": "Pennyfarthing Agent Status"
+        },
+        {
+          "id": "pennyfarthing.cyclistPanel",
+          "name": "Cyclist",
+          "type": "webview",
+          "contextualTitle": "Pennyfarthing Cyclist"
         }
       ]
     },

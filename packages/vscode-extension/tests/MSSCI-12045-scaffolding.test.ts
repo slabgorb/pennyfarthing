@@ -34,7 +34,7 @@ describe('MSSCI-12045: VS Code Extension Scaffolding', () => {
       const pkg = JSON.parse(readFileSync(packagePath, 'utf-8'));
 
       // VS Code extension requirements
-      expect(pkg.name).toBe('@pennyfarthing/vscode-extension');
+      expect(pkg.name).toBe('pennyfarthing-vscode');
       expect(pkg.publisher).toBeDefined();
       expect(pkg.engines?.vscode).toBeDefined();
       expect(pkg.main).toBeDefined();
@@ -43,7 +43,7 @@ describe('MSSCI-12045: VS Code Extension Scaffolding', () => {
     it('should have correct package name for monorepo', () => {
       const packagePath = join(EXTENSION_ROOT, 'package.json');
       const pkg = JSON.parse(readFileSync(packagePath, 'utf-8'));
-      expect(pkg.name).toBe('@pennyfarthing/vscode-extension');
+      expect(pkg.name).toBe('pennyfarthing-vscode');
     });
   });
 
@@ -132,7 +132,7 @@ describe('MSSCI-12045: VS Code Extension Scaffolding', () => {
 
     it('should be listed in pnpm workspace packages', () => {
       // Run pnpm list from monorepo root to verify workspace recognition
-      const output = execSync('pnpm list --filter @pennyfarthing/vscode-extension --json', {
+      const output = execSync('pnpm list --filter pennyfarthing-vscode --json', {
         cwd: join(EXTENSION_ROOT, '..', '..'),
         encoding: 'utf-8',
         stdio: ['pipe', 'pipe', 'pipe'],
@@ -140,7 +140,7 @@ describe('MSSCI-12045: VS Code Extension Scaffolding', () => {
 
       // If package is recognized, output will contain package info
       // If not recognized, command will fail or return empty
-      expect(output).toContain('@pennyfarthing/vscode-extension');
+      expect(output).toContain('pennyfarthing-vscode');
     });
 
     it('should have workspace:* dependency pattern for internal packages', () => {

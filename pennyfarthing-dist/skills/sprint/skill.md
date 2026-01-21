@@ -236,6 +236,40 @@ Create a Jira epic and its child stories from sprint YAML.
 
 ---
 
+### `/sprint reconcile [--fix]`
+
+Generate a reconciliation report comparing sprint YAML against Jira.
+
+**Run:**
+```bash
+.pennyfarthing/scripts/run.sh jira-reconcile.sh [--fix]
+```
+
+**Arguments:**
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `--fix` | No | Apply automatic fixes where safe |
+
+**Example:**
+```bash
+.pennyfarthing/scripts/run.sh jira-reconcile.sh          # Report only
+.pennyfarthing/scripts/run.sh jira-reconcile.sh --fix    # Report and fix
+```
+
+**What it checks:**
+1. **Status mismatches** - YAML status vs Jira status
+2. **Missing Jira keys** - YAML stories without jira: field
+3. **Orphan issues** - In Jira sprint but not in YAML
+4. **Sprint membership** - YAML stories not in Jira sprint
+5. **Epic sync** - Epic ID/jira field alignment
+
+**What --fix does:**
+- Adds YAML stories to Jira sprint if missing
+- Does NOT auto-fix status mismatches (requires human decision)
+- Does NOT create missing Jira issues (requires human decision)
+
+---
+
 ### `/sprint epic sync <epic-id> [options]`
 
 Sync an epic and its stories from sprint YAML to Jira.
@@ -376,3 +410,5 @@ brew install ankitpokhrel/jira/jira
 | `/new-work` | Alias for `/sprint work` |
 | `/new-work MSSCI-XXX` | Alias for `/sprint work MSSCI-XXX` |
 | `/new-work next` | Alias for `/sprint work next` |
+| `/sprint reconcile` | `jira-reconcile.sh` |
+| `/sprint reconcile --fix` | `jira-reconcile.sh --fix` |

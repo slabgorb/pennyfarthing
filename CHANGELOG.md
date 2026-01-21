@@ -11,6 +11,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [7.4.0] - 2026-01-21
+
+### Maintenance Release
+
+Minor improvements and documentation updates.
+
+### Added
+- **ADR-0006** - Architecture Decision Record for CDN portrait storage
+- **VS Code extension management** - `just vscode` command for extension tasks
+- **MASH theme optimization** - Job fair benchmark results with optimized character assignments
+
+### Changed
+- **Package versions synced** - All workspace packages aligned to 7.3.0 → 7.4.0
+
+---
+
 ## [7.3.0] - 2026-01-21
 
 ### VS Code Extension & Stepped Workflows
@@ -1502,7 +1518,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v7.3.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v7.4.0...HEAD
+[7.4.0]: https://github.com/1898andCo/pennyfarthing/compare/v7.3.0...v7.4.0
 [7.3.0]: https://github.com/1898andCo/pennyfarthing/compare/v7.2.0...v7.3.0
 [7.2.0]: https://github.com/1898andCo/pennyfarthing/compare/v7.1.0...v7.2.0
 [7.1.0]: https://github.com/1898andCo/pennyfarthing/compare/v7.0.2...v7.1.0

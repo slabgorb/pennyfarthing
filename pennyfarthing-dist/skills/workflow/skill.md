@@ -1,13 +1,13 @@
 ---
 name: workflow
 description: |
-  List available workflows, show current workflow details, and switch workflows mid-session. Use when checking available workflow types (TDD, trivial, agent-docs), viewing current workflow phase, or switching to a different workflow pattern.
-args: "[list|show [name]|set <name>]"
+  List available workflows, show current workflow details, and switch workflows mid-session. Use when checking available workflow types (TDD, trivial, agent-docs), viewing current workflow phase, switching to a different workflow pattern, or managing BikeLane stepped workflows.
+args: "[list|show [name]|set <name>|start <name> [--mode <mode>]|resume [name]|status]"
 ---
 
 # /workflow - Workflow Management
 
-Pennyfarthing uses YAML-defined workflows to control agent sequences. The default TDD workflow (SM → TEA → Dev → Reviewer) can be customized or replaced with alternative flows.
+Pennyfarthing uses YAML-defined workflows to control agent sequences. The default TDD workflow (SM → TEA → Dev → Reviewer) can be customized or replaced with alternative flows. BikeLane stepped workflows provide progressive disclosure for planning and decision-making processes.
 
 ## Commands
 
@@ -74,6 +74,73 @@ Switch to a different workflow mid-session.
 
 ---
 
+## BikeLane Stepped Workflow Commands
+
+BikeLane workflows use `type: stepped` and execute one step at a time with user gates.
+
+### `/workflow start <name> [--mode <mode>]`
+
+Start a stepped workflow. Creates a new session and begins at step 1.
+
+**Run:**
+```bash
+.pennyfarthing/scripts/run.sh start-workflow.sh <name> [--mode <mode>]
+```
+
+**Arguments:**
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `name` | Yes | Workflow name (e.g., `architecture`) |
+| `--mode` | No | Execution mode: `create` (default), `validate`, or `edit` |
+
+**Examples:**
+```bash
+/workflow start architecture              # Start in default (create) mode
+/workflow start architecture --mode validate  # Start in validate mode
+```
+
+---
+
+### `/workflow resume [name]`
+
+Resume an interrupted stepped workflow from the last completed step.
+
+**Run:**
+```bash
+.pennyfarthing/scripts/run.sh resume-workflow.sh [name]
+```
+
+**Arguments:**
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `name` | No | Workflow to resume. If omitted, detects from active session. |
+
+**Examples:**
+```bash
+/workflow resume                  # Resume active workflow
+/workflow resume architecture     # Resume specific workflow
+```
+
+---
+
+### `/workflow status`
+
+Show current stepped workflow progress.
+
+**Run:**
+```bash
+.pennyfarthing/scripts/run.sh workflow-status.sh
+```
+
+**Output:**
+- Current workflow name and type
+- Current step number and name
+- Steps completed
+- Mode (create/validate/edit)
+- Progress percentage
+
+---
+
 ## Built-in Workflows
 
 ### TDD (default for 3+ point features)
@@ -121,6 +188,19 @@ SM → UX-Designer → TEA → Dev → Reviewer → SM
 - For UI components and user-facing features
 - **Triggers:** `types: [ui, ux, behavior]`, `tags: [bdd, ux-first]`
 
+### Architecture (stepped workflow)
+
+```
+initialize → context → patterns → components → interfaces → risks → document
+     1    →    2    →    3     →     4      →     5      →   6   →    7
+                [gate]              [gate]                  [gate]
+```
+
+- Progressive disclosure stepped workflow
+- 7 steps with gates at context, components, and risks
+- **Type:** `stepped` (BikeLane)
+- **Triggers:** `types: [architecture, design, adr]`, `tags: [architecture, stepped]`
+
 ---
 
 ## Workflow Routing Priority
@@ -153,6 +233,10 @@ When multiple workflows match a story:
 | `/workflow show` | `show-workflow.sh` (current session) |
 | `/workflow show tdd` | `show-workflow.sh tdd` |
 | `/workflow set trivial` | Manual edit of session file |
+| `/workflow start architecture` | `start-workflow.sh architecture` |
+| `/workflow start architecture --mode validate` | `start-workflow.sh architecture --mode validate` |
+| `/workflow resume` | `resume-workflow.sh` |
+| `/workflow status` | `workflow-status.sh` |
 
 ---
 
@@ -185,3 +269,13 @@ workflow:
     types: [docs]
     tags: [documentation]
 ```
+
+---
+
+## BikeLane Documentation
+
+For comprehensive documentation on creating stepped workflows, see:
+
+- **[docs/BIKELANE.md](../../docs/BIKELANE.md)** - Full BikeLane user guide
+- **[docs/adr/0005-bmad-workflow-import.md](../../docs/adr/0005-bmad-workflow-import.md)** - Technical ADR
+- **[pennyfarthing-dist/workflows/architecture.yaml](../workflows/architecture.yaml)** - Example implementation
