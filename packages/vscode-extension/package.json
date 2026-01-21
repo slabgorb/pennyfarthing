@@ -39,6 +39,12 @@
     "views": {
       "pennyfarthing": [
         {
+          "id": "pennyfarthing.welcomePanel",
+          "name": "Welcome",
+          "type": "webview",
+          "contextualTitle": "Pennyfarthing Welcome"
+        },
+        {
           "id": "pennyfarthing.agentStatus",
           "name": "Agent Status",
           "contextualTitle": "Pennyfarthing Agent Status"

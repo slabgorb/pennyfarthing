@@ -771,7 +771,7 @@ export interface SyncStorySprintMembershipResult extends SprintSyncResult {
 export async function syncStorySprintMembershipFromJira(
   options: SyncStorySprintMembershipOptions
 ): Promise<SyncStorySprintMembershipResult> {
-  const { sprintPath, jiraSprintId, _mockJiraIssues, _mockError } = options;
+  const { sprintPath, jiraSprintId: _jiraSprintId, _mockJiraIssues, _mockError } = options;
 
   if (_mockError) {
     return { success: false, error: _mockError };
@@ -878,7 +878,7 @@ export interface AddStoryToJiraSprintResult extends SprintSyncResult {
 export async function addStoryToJiraSprint(
   options: AddStoryToJiraSprintOptions
 ): Promise<AddStoryToJiraSprintResult> {
-  const { jiraKey, sprintId, _mockSuccess, _mockError } = options;
+  const { jiraKey: _jiraKey, sprintId: _sprintId, _mockSuccess, _mockError } = options;
 
   if (_mockError) {
     return { success: false, error: _mockError };
@@ -914,7 +914,7 @@ export interface RemoveStoryFromJiraSprintResult extends SprintSyncResult {
 export async function removeStoryFromJiraSprint(
   options: RemoveStoryFromJiraSprintOptions
 ): Promise<RemoveStoryFromJiraSprintResult> {
-  const { jiraKey, _mockSuccess, _mockError } = options;
+  const { jiraKey: _jiraKey, _mockSuccess, _mockError } = options;
 
   if (_mockError) {
     return { success: false, error: _mockError };

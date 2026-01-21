@@ -15,12 +15,14 @@ let PennyfarthingTerminalLinkProvider: typeof import('./providers/terminal').Pen
 let PennyfarthingChatParticipant: typeof import('./providers/chat-participant').PennyfarthingChatParticipant | null = null;
 let registerSkillCommands: typeof import('./commands/command-registry').registerSkillCommands | null = null;
 let CyclistWebviewProvider: typeof import('./providers/cyclist-webview').CyclistWebviewProvider | null = null;
+let WelcomeWebviewProvider: typeof import('./providers/welcome-webview').WelcomeWebviewProvider | null = null;
 let ReflectorAdapter: typeof import('./adapters/reflector').ReflectorAdapter | null = null;
 
 // Module-level reference for cleanup
 let wheelHubAdapter: InstanceType<typeof import('./server/wheelhub-adapter').WheelHubAdapter> | null = null;
 let chatParticipant: InstanceType<typeof import('./providers/chat-participant').PennyfarthingChatParticipant> | null = null;
 let cyclistWebviewProvider: InstanceType<typeof import('./providers/cyclist-webview').CyclistWebviewProvider> | null = null;
+let welcomeWebviewProvider: InstanceType<typeof import('./providers/welcome-webview').WelcomeWebviewProvider> | null = null;
 let reflectorAdapter: InstanceType<typeof import('./adapters/reflector').ReflectorAdapter> | null = null;
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
@@ -54,6 +56,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     outputChannel.appendLine('Loading Cyclist webview...');
     const cyclistWebviewModule = await import('./providers/cyclist-webview');
     CyclistWebviewProvider = cyclistWebviewModule.CyclistWebviewProvider;
+
+    outputChannel.appendLine('Loading Welcome webview...');
+    const welcomeWebviewModule = await import('./providers/welcome-webview');
+    WelcomeWebviewProvider = welcomeWebviewModule.WelcomeWebviewProvider;
 
     outputChannel.appendLine('Loading Reflector adapter...');
     const reflectorModule = await import('./adapters/reflector');
@@ -104,6 +110,25 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       },
     }
   );
+
+  // Register Welcome webview provider (MSSCI-12123)
+  welcomeWebviewProvider = new WelcomeWebviewProvider!(context.extensionUri, context.globalState);
+  const welcomeWebviewDisposable = vscode.window.registerWebviewViewProvider(
+    'pennyfarthing.welcomePanel',
+    welcomeWebviewProvider,
+    {
+      webviewOptions: {
+        retainContextWhenHidden: true,
+      },
+    }
+  );
+
+  // First-run detection: reveal sidebar on first activation (MSSCI-12123)
+  if (!welcomeWebviewProvider.hasUserSeenWelcome()) {
+    outputChannel.appendLine('[Welcome] First activation detected, revealing sidebar');
+    // Reveal the Pennyfarthing sidebar to show the welcome panel
+    vscode.commands.executeCommand('workbench.view.extension.pennyfarthing');
+  }
 
   // Register chat participant (MSSCI-12097)
   chatParticipant = new PennyfarthingChatParticipant();
@@ -286,9 +311,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     terminalLinkProvider,
     sidebarTreeView,
     cyclistWebviewDisposable, // MSSCI-12051: Cyclist webview
+    welcomeWebviewDisposable, // MSSCI-12123: Welcome webview
     { dispose: () => sidebarProvider.dispose() }, // Clean up sidebar provider
     { dispose: () => chatParticipant?.dispose() }, // Clean up chat participant
     { dispose: () => cyclistWebviewProvider?.dispose() }, // Clean up Cyclist webview provider
+    { dispose: () => welcomeWebviewProvider?.dispose() }, // Clean up Welcome webview provider
     { dispose: () => reflectorAdapter?.dispose() }, // Clean up Reflector adapter (MSSCI-12049)
     switchAgentCommand,
     viewBacklogCommand,
