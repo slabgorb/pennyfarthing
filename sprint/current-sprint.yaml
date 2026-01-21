@@ -1000,12 +1000,13 @@ epics:
           - Output format compatible with sprint YAML
         points: 3
         priority: P1
-        status: in_progress
+        status: done
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
         jira: MSSCI-12137
         branch: feat/MSSCI-12137-epics-and-stories-workflow
+        completed: "2026-01-21"
       - id: MSSCI-12138
         title: "Import Implementation Readiness workflow"
         description: |
