@@ -494,9 +494,9 @@ epics:
         jira: MSSCI-12087
     jira: MSSCI-12077
   # ===========================================================================
-  # EPIC 50: VS Code Extension for Pennyfarthing
+  # EPIC 52: VS Code Extension for Pennyfarthing
   # ===========================================================================
-  - id: MSSCI-12042
+  - id: 52
     type: epic
     jira: MSSCI-12042
     title: "Epic: VS Code Extension for Pennyfarthing"
@@ -620,7 +620,7 @@ epics:
           Integrate with terminal output stream parsing.
         points: 3
         priority: P1
-        status: backlog
+        status: ready
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
@@ -636,7 +636,7 @@ epics:
           Parse skill YAML for command metadata.
         points: 2
         priority: P1
-        status: backlog
+        status: ready
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
@@ -651,7 +651,7 @@ epics:
           - Theme integration with VS Code color theme
         points: 3
         priority: P2
-        status: backlog
+        status: ready
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
