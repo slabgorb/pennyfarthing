@@ -621,10 +621,11 @@ epics:
           Integrate with terminal output stream parsing.
         points: 3
         priority: P1
-        status: ready
+        status: done
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
+        completed: "2026-01-21"
       - id: MSSCI-12050
         jira: MSSCI-12050
         title: "Command palette integration"
