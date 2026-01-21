@@ -621,13 +621,25 @@ epics:
           - HANDOFF: Show VS Code notification with action button
           - CONTEXT_CLEAR: Trigger TirePump via command
           - QUESTION/CHOICES: Render VS Code quick pick
-          Integrate with terminal output stream parsing.
+          Implementation approach:
+          - detectMarkers(): Parse markers from ClaudeService text events
+          - stripMarkers(): Remove markers from visible chat output
+          - handleMarker(): Trigger VS Code UI actions
+          Note: Original WheelHub-based impl on feat/MSSCI-12049-reflector-adapter
+          needs adapting to integrate with ClaudeService in chat-participant.ts
         points: 3
         priority: P1
         status: done
         repos: pennyfarthing
         workflow: tdd
-        acceptance_criteria: []
+        acceptance_criteria:
+          - detectMarkers() parses CYCLIST markers from text
+          - stripMarkers() removes markers before display
+          - HANDOFF shows VS Code notification with action
+          - CONTEXT_CLEAR executes pennyfarthing.contextClear
+          - QUESTION/yesno shows Yes/No quick pick
+          - CHOICES shows quick pick with options
+          - Integrates with chat-participant onText handler
         completed: "2026-01-21"
       - id: MSSCI-12050
         jira: MSSCI-12050
@@ -641,7 +653,7 @@ epics:
           Parse skill YAML for command metadata.
         points: 2
         priority: P1
-        status: ready
+        status: in_progress
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
@@ -652,24 +664,33 @@ epics:
           Optional full Cyclist UI in VS Code webview:
           - Embed existing public/js components
           - CSP-compliant asset loading
-          - State sync with extension host
+          - State sync via WheelHub adapter (already implemented)
           - Theme integration with VS Code color theme
+          Note: With Chat API (MSSCI-12097) providing the core Claude
+          interaction via ClaudeService, this webview becomes optional
+          UI enhancement rather than a requirement.
         points: 3
         priority: P2
         status: ready
         repos: pennyfarthing
         workflow: tdd
-        acceptance_criteria: []
+        acceptance_criteria:
+          - Webview renders Cyclist components
+          - CSP allows script/style loading
+          - Theme syncs with VS Code appearance
+          - Stats/story panels update in real-time
       - id: MSSCI-12097
         jira: MSSCI-12097
         title: "VS Code Chat API integration for Claude conversations"
         description: |
-          Integrate with VS Code's native Chat API to show Claude conversations:
+          Integrate with VS Code's native Chat API using ClaudeService:
           - Register as a chat participant (@pennyfarthing)
-          - Receive messages from WheelHub /ws/messages channel
+          - Spawn Claude CLI directly via ClaudeService (stream-json format)
           - Display in VS Code's native chat view alongside Copilot
           - Support slash commands (/sm, /tea, /dev, /reviewer)
-          - Stream responses in real-time
+          - Stream responses in real-time from Claude CLI subprocess
+          Note: Pivoted from WheelHub channel approach to direct CLI spawning
+          for simpler architecture and better session management.
         points: 5
         priority: P1
         status: done
@@ -679,7 +700,7 @@ epics:
         acceptance_criteria:
           - "@pennyfarthing appears in VS Code chat view"
           - User can send messages via chat input
-          - Assistant responses stream in real-time from Claude
-          - Slash commands (/sm, /tea, etc.) invoke agent switches
-          - Tool use displays with collapsible details
+          - Assistant responses stream in real-time from Claude CLI
+          - Slash commands (/sm, /tea, etc.) prepend to prompt
+          - Tool use displays with formatted markdown
           - Works alongside GitHub Copilot Chat
