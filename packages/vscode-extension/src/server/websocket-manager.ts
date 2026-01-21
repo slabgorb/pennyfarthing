@@ -237,6 +237,38 @@ export class WebSocketManager {
   }
 
   /**
+   * Broadcast story update to all connected story clients and same-process listeners.
+   * Story data is also included in stats broadcasts.
+   */
+  broadcastStory(data: StatsData['story']): void {
+    // Notify stats listeners with story data (they handle story extraction)
+    for (const listener of this.statsListeners) {
+      try {
+        listener({ story: data });
+      } catch (err) {
+        console.error('[WebSocketManager] Error in stats listener:', err);
+      }
+    }
+
+    // Notify WebSocket clients on story channel
+    const clients = this.channels.get('/ws/story');
+    if (!clients) return;
+
+    const message = JSON.stringify({
+      type: 'story',
+      ...data,
+      timestamp: new Date().toISOString(),
+    });
+
+    for (const client of clients) {
+      if (client.readyState === 1) {
+        // WebSocket.OPEN
+        client.send(message);
+      }
+    }
+  }
+
+  /**
    * Broadcast message update to all connected message clients and same-process listeners.
    */
   broadcastMessages(data: MessageData): void {

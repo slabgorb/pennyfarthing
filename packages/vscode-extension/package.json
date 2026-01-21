@@ -42,6 +42,12 @@
           "id": "pennyfarthing.agentStatus",
           "name": "Agent Status",
           "contextualTitle": "Pennyfarthing Agent Status"
+        },
+        {
+          "id": "pennyfarthing.cyclistPanel",
+          "name": "Cyclist",
+          "type": "webview",
+          "contextualTitle": "Pennyfarthing Cyclist"
         }
       ]
     },

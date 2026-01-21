@@ -14,10 +14,12 @@ let PennyfarthingTerminalProfileProvider: typeof import('./providers/terminal').
 let PennyfarthingTerminalLinkProvider: typeof import('./providers/terminal').PennyfarthingTerminalLinkProvider | null = null;
 let PennyfarthingChatParticipant: typeof import('./providers/chat-participant').PennyfarthingChatParticipant | null = null;
 let registerSkillCommands: typeof import('./commands/command-registry').registerSkillCommands | null = null;
+let CyclistWebviewProvider: typeof import('./providers/cyclist-webview').CyclistWebviewProvider | null = null;
 
 // Module-level reference for cleanup
 let wheelHubAdapter: InstanceType<typeof import('./server/wheelhub-adapter').WheelHubAdapter> | null = null;
 let chatParticipant: InstanceType<typeof import('./providers/chat-participant').PennyfarthingChatParticipant> | null = null;
+let cyclistWebviewProvider: InstanceType<typeof import('./providers/cyclist-webview').CyclistWebviewProvider> | null = null;
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const outputChannel = vscode.window.createOutputChannel('Pennyfarthing');
@@ -46,6 +48,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     outputChannel.appendLine('Loading command registry...');
     const commandModule = await import('./commands/command-registry');
     registerSkillCommands = commandModule.registerSkillCommands;
+
+    outputChannel.appendLine('Loading Cyclist webview...');
+    const cyclistWebviewModule = await import('./providers/cyclist-webview');
+    CyclistWebviewProvider = cyclistWebviewModule.CyclistWebviewProvider;
 
     outputChannel.appendLine('All modules loaded');
   } catch (err) {
@@ -79,6 +85,18 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const sidebarTreeView = vscode.window.registerTreeDataProvider(
     'pennyfarthing.agentStatus',
     sidebarProvider
+  );
+
+  // Register Cyclist webview provider (MSSCI-12051)
+  cyclistWebviewProvider = new CyclistWebviewProvider!(context.extensionUri);
+  const cyclistWebviewDisposable = vscode.window.registerWebviewViewProvider(
+    'pennyfarthing.cyclistPanel',
+    cyclistWebviewProvider,
+    {
+      webviewOptions: {
+        retainContextWhenHidden: true,
+      },
+    }
   );
 
   // Register chat participant (MSSCI-12097)
@@ -202,6 +220,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
           chatParticipant.connectToWheelHub(wheelHubAdapter!.getWebSocketManager());
           outputChannel.appendLine('[WheelHub] Chat participant connected to messages channel');
         }
+
+        // Wire Cyclist webview provider to WheelHub for stats/story updates (MSSCI-12051)
+        if (cyclistWebviewProvider) {
+          cyclistWebviewProvider.connectToWheelHub(wheelHubAdapter!.getWebSocketManager());
+          outputChannel.appendLine('[WheelHub] Cyclist webview connected to stats channel');
+        }
       })
       .catch((err) => {
         outputChannel.appendLine(
@@ -228,8 +252,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     terminalProfileProvider,
     terminalLinkProvider,
     sidebarTreeView,
+    cyclistWebviewDisposable, // MSSCI-12051: Cyclist webview
     { dispose: () => sidebarProvider.dispose() }, // Clean up sidebar provider
     { dispose: () => chatParticipant?.dispose() }, // Clean up chat participant
+    { dispose: () => cyclistWebviewProvider?.dispose() }, // Clean up Cyclist webview provider
     switchAgentCommand,
     viewBacklogCommand,
     startWorkCommand,
