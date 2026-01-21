@@ -858,6 +858,25 @@ epics:
         workflow: tdd
         acceptance_criteria: []
         jira: MSSCI-12130
+      - id: MSSCI-12147
+        title: "Fix chat message formatting and sidebar sync"
+        description: |
+          Two bugs in VS Code extension chat experience:
+          1. XML tags appearing in rendered messages - tags like <system-reminder>,
+             tool result wrappers, etc. are showing raw instead of being stripped
+          2. Sidebar not syncing with activity - agent status, workflow state,
+             or other sidebar panels not updating as chat activity occurs
+        points: 2
+        priority: P1
+        status: in_progress
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - XML tags stripped from chat message display
+          - System reminder tags not visible to user
+          - Tool result formatting cleaned up
+          - Sidebar updates when agent changes
+          - Sidebar reflects current workflow state
     jira: MSSCI-12122
   - id: epic-54
     type: epic

@@ -142,3 +142,22 @@ When testing variable resolution, cover these categories:
 3. **Standard variables** - System defaults (date, paths)
 4. **Unresolved tracking** - Variables left as-is, tracked in result
 5. **Edge cases** - Type coercion, invalid syntax, empty values, null/undefined
+
+## Sidebar Section Testing Pattern (MSSCI-12125)
+
+When adding new sections to VS Code TreeDataProvider:
+
+**Test Categories:**
+1. **Section visibility** - Show when data present, hide when absent
+2. **Data display** - Labels, descriptions, icons correct
+3. **Child items** - Detail items rendered correctly
+4. **Actions** - Command handlers wired correctly
+5. **Updates** - `onDidChangeTreeData` fires on state change
+6. **Edge cases** - null/undefined, empty state, invalid data
+7. **Accessibility** - Screen reader labels present
+8. **Ordering** - Section appears in correct position
+
+**Test Count Reference (MSSCI-12125, 3 pts, 10 ACs):**
+- 40 Vitest tests
+- ~4 tests per AC average
+- Tests fail with `TypeError: method is not a function` when not implemented

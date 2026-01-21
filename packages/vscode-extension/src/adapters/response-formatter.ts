@@ -2,8 +2,10 @@
  * Response Formatter for VS Code Chat
  *
  * MSSCI-12126: Chat response formatting improvements
+ * MSSCI-12147: XML tag stripping for clean display
  *
  * Provides formatting utilities for Claude responses in VS Code chat:
+ * - XML/system tag stripping (MSSCI-12147)
  * - Code block syntax highlighting
  * - Collapsible tool use sections
  * - File path clickable links
@@ -12,6 +14,63 @@
  */
 
 import * as vscode from 'vscode';
+
+// ============================================================================
+// MSSCI-12147: XML Tag Stripping
+// ============================================================================
+
+/**
+ * System tags that should be stripped from display.
+ * These are internal markers that shouldn't be shown to users.
+ */
+const SYSTEM_TAG_PATTERNS: RegExp[] = [
+  // System reminders injected by Claude Code
+  /<system-reminder>[\s\S]*?<\/system-reminder>/gi,
+  // Tool output wrappers
+  /<output>[\s\S]*?<\/output>/gi,
+  // Tool result containers
+  /<result>[\s\S]*?<\/result>/gi,
+  // Function call blocks (antml namespace)
+  /<[\w-]+[^>]*>[\s\S]*?<\/antml:[\w-]+>/gi,
+  // Function results
+  /<function_results>[\s\S]*?<\/function_results>/gi,
+];
+
+/**
+ * Strip system XML tags from text for clean display.
+ * Preserves content inside code blocks.
+ *
+ * @param text - Text that may contain system XML tags
+ * @returns Text with system tags removed
+ */
+export function stripSystemTags(text: string): string {
+  if (!text) {
+    return '';
+  }
+
+  // First, identify code blocks to preserve them
+  const codeBlockPlaceholders: Map<string, string> = new Map();
+  let placeholderIndex = 0;
+
+  // Replace code blocks with placeholders
+  let result = text.replace(/```[\s\S]*?```/g, (match) => {
+    const placeholder = `__CODE_BLOCK_${placeholderIndex++}__`;
+    codeBlockPlaceholders.set(placeholder, match);
+    return placeholder;
+  });
+
+  // Strip all system tags
+  for (const pattern of SYSTEM_TAG_PATTERNS) {
+    result = result.replace(pattern, '');
+  }
+
+  // Restore code blocks
+  for (const [placeholder, original] of codeBlockPlaceholders) {
+    result = result.replace(placeholder, original);
+  }
+
+  return result;
+}
 
 // ============================================================================
 // AC1: Code Block Syntax Highlighting
@@ -545,7 +604,8 @@ export class ProgressTracker {
  * Apply all response formatters in the correct order.
  *
  * Order matters:
- * 1. Tables first (structural, might affect code block detection)
+ * 0. Strip system tags first (MSSCI-12147) - removes internal XML before display
+ * 1. Tables (structural, might affect code block detection)
  * 2. Code blocks (so we can exclude them from file path conversion)
  * 3. File paths last (operates on plain text regions only)
  */
@@ -556,6 +616,9 @@ export function formatResponse(text: string): string {
 
   // Apply formatters in order
   let result = text;
+
+  // 0. Strip system XML tags (MSSCI-12147)
+  result = stripSystemTags(result);
 
   // 1. Format tables
   result = formatTables(result);

@@ -112,6 +112,20 @@ const mockVscode = {
   },
   workspace: {
     workspaceFolders: [mockWorkspaceFolder],
+    createFileSystemWatcher: vi.fn(() => ({
+      onDidChange: vi.fn(() => ({ dispose: vi.fn() })),
+      onDidCreate: vi.fn(() => ({ dispose: vi.fn() })),
+      onDidDelete: vi.fn(() => ({ dispose: vi.fn() })),
+      dispose: vi.fn(),
+    })),
+    findFiles: vi.fn().mockResolvedValue([]),
+    fs: {
+      readFile: vi.fn().mockResolvedValue(new Uint8Array()),
+      stat: vi.fn().mockRejectedValue(new Error('File not found')),
+    },
+  },
+  RelativePattern: class {
+    constructor(public base: any, public pattern: string) {}
   },
   commands: {
     registerCommand: vi.fn(() => ({ dispose: vi.fn() })),
@@ -926,6 +940,36 @@ describe('MSSCI-12048: VS Code Sidebar Agent Status', () => {
       expect(storyItem.accessibilityInformation?.label).toContain(
         '3 points'
       );
+    });
+  });
+
+  // ========================================================================
+  // MSSCI-12147: File Watcher Sidebar Sync
+  // ========================================================================
+  describe('MSSCI-12147: File watcher sidebar sync', () => {
+    it('should have startFileWatchers method', async () => {
+      const sidebarModule = await import('../src/providers/sidebar');
+      const provider = new sidebarModule.AgentStatusTreeDataProvider();
+
+      expect(typeof provider.startFileWatchers).toBe('function');
+    });
+
+    it('should have stopFileWatchers method', async () => {
+      const sidebarModule = await import('../src/providers/sidebar');
+      const provider = new sidebarModule.AgentStatusTreeDataProvider();
+
+      expect(typeof provider.stopFileWatchers).toBe('function');
+    });
+
+    it('should cleanup file watchers on dispose', async () => {
+      const sidebarModule = await import('../src/providers/sidebar');
+      const provider = new sidebarModule.AgentStatusTreeDataProvider();
+
+      // Start watchers (won't do anything without workspace folder)
+      provider.startFileWatchers();
+
+      // Dispose should not throw
+      expect(() => provider.dispose()).not.toThrow();
     });
   });
 });
