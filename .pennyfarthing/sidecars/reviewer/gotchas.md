@@ -31,3 +31,11 @@
 - Check that components are wired, not just that they exist
 - Look for placeholder/stub implementations in methods that "exist" but don't work
 - Require integration tests that verify actual data flow, not just component behavior
+
+### AC1-style Requirements Need Integration Verification (Story MSSCI-12123)
+**Problem:** Welcome view had `hasUserSeenWelcome()` method but extension.ts never called it during activation. AC1 said "appears automatically on first activation" but no code wired the detection to the reveal. Tests passed because they tested the method in isolation, not the integration.
+**Solution:**
+- When ACs say "automatically" or "on [event]", verify the trigger is wired to the action
+- Check that event handlers/lifecycle hooks actually call the methods that implement the behavior
+- Compare implementation against technical spec code snippets provided in session file
+- Integration tests should verify the full path: event → handler → method → effect
