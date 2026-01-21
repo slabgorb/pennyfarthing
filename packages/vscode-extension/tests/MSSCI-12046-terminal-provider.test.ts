@@ -137,6 +137,7 @@ const mockVscode = {
   },
   commands: {
     registerCommand: vi.fn(() => ({ dispose: vi.fn() })),
+    executeCommand: vi.fn(() => Promise.resolve()),
   },
   Uri: {
     file: vi.fn((path: string) => ({ fsPath: path, scheme: 'file' })),
