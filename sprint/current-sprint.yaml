@@ -912,11 +912,12 @@ epics:
           First major workflow import - validates migration approach.
         points: 5
         priority: P0
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
         jira: MSSCI-12133
+        completed: "2026-01-21"
       - id: MSSCI-12134
         title: "Import Product Brief workflow"
         description: |
