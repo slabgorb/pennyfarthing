@@ -1,6 +1,7 @@
 sprint:
   name: "TO Sprint 2604"
-  jira_id: 276
+  jira_sprint_id: 276
+  jira_sprint_name: "TO Sprint 2604"
   goal: WheelHub notification consolidation, skill frontmatter enhancement, and stepped workflow support (BMAD alignment)
   start_date: 2026-01-20
   end_date: 2026-02-02

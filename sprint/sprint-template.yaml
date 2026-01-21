@@ -8,7 +8,8 @@
 
 sprint:
   name: "TO Sprint YYWW"      # Team sprint name (required)
-  jira_id: NNN                # Jira sprint ID for sync (required)
+  jira_sprint_id: NNN         # Jira sprint ID for sync (required)
+  jira_sprint_name: "TO Sprint YYWW"  # Jira sprint name (should match name)
   goal: Brief sprint goal     # One-line sprint goal (required)
   start_date: YYYY-MM-DD      # Sprint start date (required)
   end_date: YYYY-MM-DD        # Sprint end date (required)
@@ -37,7 +38,8 @@ epics:
           Story description goes here.
         points: 3             # Story points: 1, 2, 3, 5, 8
         priority: P1          # P0 | P1 | P2 | P3
-        status: backlog       # backlog | in_progress | done
+        status: backlog       # backlog | ready | in_progress | done
+        in_sprint: true       # Whether story is in Jira sprint (synced bidirectionally)
         repos: cyclist        # cyclist | pennyfarthing | both
         workflow: tdd         # tdd | trivial | agent-docs | bdd
         acceptance_criteria:
@@ -62,12 +64,13 @@ epics:
 # ===========================================================================
 #
 # Sprint fields:
-#   name        - "TO Sprint YYWW" format, matches team convention
-#   jira_id     - Numeric Jira sprint ID (e.g., 276)
-#   goal        - Brief sprint objective
-#   start_date  - YYYY-MM-DD format
-#   end_date    - YYYY-MM-DD format
-#   status      - active or closed
+#   name            - "TO Sprint YYWW" format, matches team convention
+#   jira_sprint_id  - Numeric Jira sprint ID (e.g., 276)
+#   jira_sprint_name - Jira sprint name (typically matches name)
+#   goal            - Brief sprint objective
+#   start_date      - YYYY-MM-DD format
+#   end_date        - YYYY-MM-DD format
+#   status          - active or closed
 #
 # Epic fields:
 #   id          - Jira epic key (MSSCI-XXXXX)
@@ -85,7 +88,8 @@ epics:
 #   description - Optional multi-line description
 #   points      - 1, 2, 3, 5, or 8
 #   priority    - P0 (critical), P1 (high), P2 (medium), P3 (low)
-#   status      - backlog, in_progress, or done
+#   status      - backlog, ready, in_progress, or done
+#   in_sprint   - true/false - whether story is in Jira sprint (synced bidirectionally)
 #   repos       - cyclist, pennyfarthing, or both
 #   workflow    - tdd (3+ pts), trivial (1-2 pts), agent-docs, bdd
 #   acceptance_criteria - List of testable criteria

@@ -227,7 +227,7 @@ Create a Jira epic and its child stories from sprint YAML.
 1. Creates Jira epic if no `jira:` field exists
 2. Creates child stories linked to the epic
 3. Sets story points and priority in Jira
-4. Adds stories to current sprint (if jira_id set)
+4. Adds stories to current sprint (if jira_sprint_id set)
 5. Updates sprint YAML with Jira keys
 
 **Prerequisites:**
@@ -316,9 +316,39 @@ d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$
 |-------|-------------|
 | Sprint name | `"TO Sprint YYWW"` (e.g., "TO Sprint 2604") |
 | Story IDs | Jira keys `MSSCI-XXXXX` |
-| Status | `backlog`, `in_progress`, `done` |
+| Status | `backlog`, `ready`, `in_progress`, `done` |
 | Workflow | `tdd`, `trivial`, `agent-docs`, `bdd` |
 | Priority | `P0`, `P1`, `P2`, `P3` |
+| in_sprint | `true`, `false` - Jira sprint membership |
+
+## Sprint Schema
+
+### Sprint-level fields
+
+| Field | Description |
+|-------|-------------|
+| `name` | Sprint name in "TO Sprint YYWW" format |
+| `jira_sprint_id` | Numeric Jira sprint ID (e.g., 276) |
+| `jira_sprint_name` | Jira sprint name (should match name) |
+| `goal` | Sprint goal/objective |
+| `start_date` | YYYY-MM-DD |
+| `end_date` | YYYY-MM-DD |
+| `status` | `active` or `closed` |
+
+### Story-level fields
+
+| Field | Description |
+|-------|-------------|
+| `in_sprint` | `true/false` - whether story is in Jira sprint (synced bidirectionally) |
+
+The `in_sprint` field tracks Jira sprint membership:
+- `in_sprint: true` - Story is in the Jira sprint
+- `in_sprint: false` - Story is not in Jira sprint (backlog)
+- Field omitted - Sprint membership not explicitly tracked
+
+**Bidirectional sync:**
+- **Jira → YAML**: `syncStorySprintMembershipFromJira()` updates `in_sprint` based on Jira
+- **YAML → Jira**: `syncStorySprintMembershipToJira()` adds/removes stories from Jira sprint
 
 ## Dependencies
 

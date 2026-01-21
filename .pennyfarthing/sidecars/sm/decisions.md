@@ -29,8 +29,9 @@
 **Date:** January 2026
 **Problem:** Pennyfarthing sprints were independent; need alignment with larger team
 **Decision:** Adopt team sprint naming convention `TO Sprint YYWW` with Jira sprint ID
-**Format:** `name: "TO Sprint 2604"` + `jira_id: 276`
+**Format:** `name: "TO Sprint 2604"` + `jira_sprint_id: 276` + `jira_sprint_name: "TO Sprint 2604"`
 **Rationale:** Sprints are timeboxed by team calendar, not by points completed
+**Updated:** January 2026 - renamed `jira_id` to `jira_sprint_id` and added `jira_sprint_name` for clarity
 
 ### DEC-SM-006: No Velocity Targets
 **Date:** January 2026

@@ -69,7 +69,8 @@ fi
 cat > "$SPRINT_FILE" << EOF
 sprint:
   name: "TO Sprint $SPRINT_YYWW"
-  jira_id: $JIRA_ID
+  jira_sprint_id: $JIRA_ID
+  jira_sprint_name: "TO Sprint $SPRINT_YYWW"
   goal: $GOAL
   start_date: $START_DATE
   end_date: $END_DATE
@@ -92,7 +93,8 @@ cat > "$ARCHIVE_FILE" << EOF
 
 sprint:
   name: "TO Sprint $SPRINT_YYWW"
-  jira_id: $JIRA_ID
+  jira_sprint_id: $JIRA_ID
+  jira_sprint_name: "TO Sprint $SPRINT_YYWW"
   goal: $GOAL
 
 completed:
