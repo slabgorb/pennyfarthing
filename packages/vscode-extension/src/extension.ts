@@ -15,11 +15,13 @@ let PennyfarthingTerminalLinkProvider: typeof import('./providers/terminal').Pen
 let PennyfarthingChatParticipant: typeof import('./providers/chat-participant').PennyfarthingChatParticipant | null = null;
 let registerSkillCommands: typeof import('./commands/command-registry').registerSkillCommands | null = null;
 let CyclistWebviewProvider: typeof import('./providers/cyclist-webview').CyclistWebviewProvider | null = null;
+let ReflectorAdapter: typeof import('./adapters/reflector').ReflectorAdapter | null = null;
 
 // Module-level reference for cleanup
 let wheelHubAdapter: InstanceType<typeof import('./server/wheelhub-adapter').WheelHubAdapter> | null = null;
 let chatParticipant: InstanceType<typeof import('./providers/chat-participant').PennyfarthingChatParticipant> | null = null;
 let cyclistWebviewProvider: InstanceType<typeof import('./providers/cyclist-webview').CyclistWebviewProvider> | null = null;
+let reflectorAdapter: InstanceType<typeof import('./adapters/reflector').ReflectorAdapter> | null = null;
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const outputChannel = vscode.window.createOutputChannel('Pennyfarthing');
@@ -52,6 +54,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     outputChannel.appendLine('Loading Cyclist webview...');
     const cyclistWebviewModule = await import('./providers/cyclist-webview');
     CyclistWebviewProvider = cyclistWebviewModule.CyclistWebviewProvider;
+
+    outputChannel.appendLine('Loading Reflector adapter...');
+    const reflectorModule = await import('./adapters/reflector');
+    ReflectorAdapter = reflectorModule.ReflectorAdapter;
 
     outputChannel.appendLine('All modules loaded');
   } catch (err) {
@@ -196,6 +202,30 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     }
   );
 
+  // Register contextClear command for Reflector CONTEXT_CLEAR marker (MSSCI-12049)
+  const contextClearCommand = vscode.commands.registerCommand(
+    'pennyfarthing.contextClear',
+    async (agent?: string) => {
+      // Clear context and optionally switch to specified agent
+      // TirePump in Cyclist clears session and reloads
+      const terminal = vscode.window.activeTerminal;
+      if (terminal) {
+        // Send /clear to reset context, then optionally invoke agent
+        terminal.sendText('/clear');
+        if (agent) {
+          // Give a moment for clear to process, then switch agent
+          setTimeout(() => {
+            terminal.sendText(agent);
+          }, 500);
+        }
+      } else {
+        vscode.window.showInformationMessage(
+          `Context clear requested${agent ? ` with ${agent}` : ''}. Start a Claude terminal first.`
+        );
+      }
+    }
+  );
+
   // Start WheelHub server (MSSCI-12047) - non-blocking to avoid activation hang
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
   if (workspaceFolder) {
@@ -221,6 +251,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         if (cyclistWebviewProvider) {
           cyclistWebviewProvider.connectToWheelHub(wheelHubAdapter!.getWebSocketManager());
           outputChannel.appendLine('[WheelHub] Cyclist webview connected to stats channel');
+        }
+
+        // Wire Reflector adapter to WheelHub for marker detection (MSSCI-12049)
+        if (ReflectorAdapter) {
+          reflectorAdapter = new ReflectorAdapter();
+          reflectorAdapter.connectToWheelHub(wheelHubAdapter!.getWebSocketManager());
+          outputChannel.appendLine('[WheelHub] Reflector adapter connected to messages channel');
         }
       })
       .catch((err) => {
@@ -252,11 +289,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     { dispose: () => sidebarProvider.dispose() }, // Clean up sidebar provider
     { dispose: () => chatParticipant?.dispose() }, // Clean up chat participant
     { dispose: () => cyclistWebviewProvider?.dispose() }, // Clean up Cyclist webview provider
+    { dispose: () => reflectorAdapter?.dispose() }, // Clean up Reflector adapter (MSSCI-12049)
     switchAgentCommand,
     viewBacklogCommand,
     startWorkCommand,
     refreshCommand,
-    openJiraCommand
+    openJiraCommand,
+    contextClearCommand // MSSCI-12049
   );
 }
 

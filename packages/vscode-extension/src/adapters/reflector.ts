@@ -1,285 +1,310 @@
 /**
- * Reflector Protocol Adapter
+ * Reflector Protocol Adapter for VS Code Extension
  *
- * Parses CYCLIST HTML comments from Claude output and triggers
- * VS Code UI actions (notifications, quick picks, commands).
+ * Parses CYCLIST markers from Claude output and maps to VS Code UI actions.
  *
- * MSSCI-12049 (Pivoted)
+ * Marker Format: <!-- CYCLIST:TYPE:value -->
+ *
+ * Types:
+ * - HANDOFF: Show notification with agent button
+ * - CONTEXT_CLEAR: Execute context clear command
+ * - QUESTION: Show quick pick (yesno)
+ * - CHOICES: Show quick pick with options
  */
 
 import * as vscode from 'vscode';
-
-// ============================================================================
-// Types
-// ============================================================================
+import type { WebSocketManager, MessageData } from '../server/websocket-manager';
 
 /**
- * Marker types supported by the Reflector protocol.
+ * Marker object returned by detectMarkers
  */
-export type MarkerType = 'HANDOFF' | 'CONTEXT_CLEAR' | 'QUESTION' | 'CHOICES';
-
-/**
- * A detected CYCLIST marker from Claude output.
- */
-export interface CyclistMarker {
-  type: MarkerType;
+export interface Marker {
+  type: 'handoff' | 'context_clear' | 'question' | 'choices';
   value: string;
 }
 
 /**
- * Result of processing text through the ReflectorAdapter.
+ * Regex pattern for CYCLIST markers.
+ * Ported from Cyclist's quick-actions.js:160
+ * Pattern: <!-- CYCLIST:TYPE:value -->
+ * Case-insensitive for CYCLIST prefix and TYPE, preserves value case
  */
-export interface ProcessTextResult {
-  /** Text with CYCLIST markers removed, safe to display */
-  displayText: string;
-  /** Markers that were detected and processed */
-  markers: CyclistMarker[];
+const MARKER_PATTERN = /<!--\s*CYCLIST:(\w+):([^>]+?)\s*-->/gi;
+
+/**
+ * Strip code blocks from text before marker detection.
+ * Markers inside code blocks should not be processed.
+ */
+function stripCodeBlocks(text: string): string {
+  return text.replace(/```[\s\S]*?```/g, '');
 }
-
-// ============================================================================
-// Constants
-// ============================================================================
-
-/**
- * Regex pattern for detecting CYCLIST markers.
- * Format: <!-- CYCLIST:TYPE:value -->
- */
-const MARKER_PATTERN =
-  /<!--\s*CYCLIST:(HANDOFF|CONTEXT_CLEAR|QUESTION|CHOICES):([^\s][^-]*?)\s*-->/g;
-
-/**
- * Valid marker types that we recognize.
- */
-const VALID_TYPES: Set<string> = new Set([
-  'HANDOFF',
-  'CONTEXT_CLEAR',
-  'QUESTION',
-  'CHOICES',
-]);
-
-// ============================================================================
-// Core Functions
-// ============================================================================
 
 /**
  * Detect CYCLIST markers in text.
  *
- * @param text - Raw text that may contain CYCLIST markers
- * @returns Array of detected markers
+ * @param text - Text to scan for markers
+ * @returns Array of markers found, or null if none
  */
-export function detectMarkers(text: string): CyclistMarker[] {
+export function detectMarkers(text: string): Marker[] | null {
+  // Handle null/undefined/empty input
   if (!text) {
-    return [];
+    return null;
   }
 
-  const markers: CyclistMarker[] = [];
-  const regex = new RegExp(MARKER_PATTERN.source, 'g');
-  let match: RegExpExecArray | null;
+  // Strip code blocks first - markers inside code should be ignored
+  const withoutCode = stripCodeBlocks(text);
+  if (!withoutCode.trim()) {
+    return null;
+  }
 
-  while ((match = regex.exec(text)) !== null) {
-    const [, type, value] = match;
-    if (VALID_TYPES.has(type)) {
-      markers.push({
-        type: type as MarkerType,
-        value: value.trim(),
-      });
+  const markers: Marker[] = [];
+
+  // Reset lastIndex for global regex
+  MARKER_PATTERN.lastIndex = 0;
+
+  let match;
+  while ((match = MARKER_PATTERN.exec(withoutCode)) !== null) {
+    const rawType = match[1].toLowerCase();
+
+    // Map marker types to our interface types
+    let type: Marker['type'];
+    switch (rawType) {
+      case 'handoff':
+        type = 'handoff';
+        break;
+      case 'context_clear':
+        type = 'context_clear';
+        break;
+      case 'question':
+        type = 'question';
+        break;
+      case 'choices':
+        type = 'choices';
+        break;
+      default:
+        // Skip unknown marker types
+        continue;
     }
+
+    markers.push({
+      type,
+      value: match[2].trim(),
+    });
   }
 
-  return markers;
+  return markers.length > 0 ? markers : null;
 }
 
 /**
- * Remove CYCLIST markers from text, preserving other content.
+ * Strip CYCLIST markers from text for display.
  *
- * @param text - Text that may contain CYCLIST markers
- * @returns Text with CYCLIST markers removed
+ * @param text - Text containing markers
+ * @returns Text with markers removed
  */
 export function stripMarkers(text: string): string {
   if (!text) {
     return '';
   }
 
-  return text.replace(MARKER_PATTERN, '');
+  // Remove all CYCLIST markers, preserving other content
+  return text.replace(MARKER_PATTERN, '').trim();
 }
 
 /**
- * Process a single marker by triggering appropriate VS Code UI action.
+ * Extract numbered choice text from message content.
+ * Looks for patterns like "1. Option text" or "1) Option text".
  *
- * @param marker - The marker to process
- * @returns Result of user interaction, if any
+ * @param text - Full message text
+ * @param choiceNumbers - Array of choice numbers to extract
+ * @returns Array of choice labels
  */
-export async function processMarker(
-  marker: CyclistMarker
-): Promise<string | undefined> {
-  try {
-    switch (marker.type) {
-      case 'HANDOFF':
-        return await handleHandoff(marker.value);
+function extractChoiceTexts(text: string, choiceNumbers: number[]): string[] {
+  const foundChoices = new Map<number, string>();
 
-      case 'CONTEXT_CLEAR':
-        return await handleContextClear(marker.value);
+  // Patterns for numbered lists
+  const patterns = [
+    /^\s*(\d+)\.\s+(.+)$/gm, // "1. Option text"
+    /^\s*(\d+)\)\s+(.+)$/gm, // "1) Option text"
+  ];
 
-      case 'QUESTION':
-        return await handleQuestion(marker.value);
-
-      case 'CHOICES':
-        return await handleChoices(marker.value);
-
-      default:
-        return undefined;
+  for (const pattern of patterns) {
+    pattern.lastIndex = 0;
+    let match;
+    while ((match = pattern.exec(text)) !== null) {
+      const num = parseInt(match[1], 10);
+      if (choiceNumbers.includes(num) && !foundChoices.has(num)) {
+        foundChoices.set(num, match[2].trim());
+      }
     }
-  } catch (error) {
-    // Gracefully handle errors - don't propagate to caller
-    console.error(`[Reflector] Error processing ${marker.type} marker:`, error);
-    return undefined;
   }
-}
 
-// ============================================================================
-// Marker Handlers
-// ============================================================================
-
-/**
- * Handle HANDOFF marker - show notification with action button.
- */
-async function handleHandoff(value: string): Promise<string | undefined> {
-  const actionText = `Switch to ${value}`;
-  const result = await vscode.window.showInformationMessage(
-    `Ready to hand off to ${value.replace('/', '')} agent`,
-    actionText
+  // Return choices in order, falling back to "Option N" if not found
+  return choiceNumbers.map(
+    (num) => foundChoices.get(num) || `Option ${num}`
   );
-
-  if (result === actionText) {
-    await vscode.commands.executeCommand('pennyfarthing.switchAgent', value);
-    return result;
-  }
-
-  return undefined;
 }
 
 /**
- * Handle CONTEXT_CLEAR marker - execute context clear command.
+ * ReflectorAdapter processes text and triggers VS Code UI actions.
  */
-async function handleContextClear(value: string): Promise<string | undefined> {
-  await vscode.commands.executeCommand('pennyfarthing.contextClear', value);
-  return value;
-}
+export class ReflectorAdapter {
+  private messageUnsubscribe: (() => void) | null = null;
 
-/**
- * Handle QUESTION marker - show quick pick with Yes/No options.
- */
-async function handleQuestion(value: string): Promise<string | undefined> {
-  if (value === 'yesno') {
-    return await vscode.window.showQuickPick(['Yes', 'No'], {
-      placeHolder: 'Please select an option',
+  /**
+   * Connect to WheelHub WebSocket manager for message streaming.
+   * Listens for Claude responses and processes Reflector markers.
+   *
+   * @param wsManager - WebSocketManager from WheelHub adapter
+   */
+  connectToWheelHub(wsManager: WebSocketManager): void {
+    // Unsubscribe from any previous connection
+    if (this.messageUnsubscribe) {
+      this.messageUnsubscribe();
+    }
+
+    // Subscribe to messages channel
+    this.messageUnsubscribe = wsManager.onMessages((data: MessageData) => {
+      // Process text chunks that may contain markers
+      if (data.type === 'chunk' && data.content) {
+        // Fire-and-forget: process markers asynchronously
+        this.processText(data.content).catch((err) => {
+          console.error('[ReflectorAdapter] Error processing text:', err);
+        });
+      }
     });
   }
 
-  // Future: support other question types
-  return undefined;
-}
-
-/**
- * Handle CHOICES marker - show quick pick with parsed options.
- */
-async function handleChoices(value: string): Promise<string | undefined> {
-  const choices = value.split(',').map((choice) => choice.trim());
-
-  return await vscode.window.showQuickPick(choices, {
-    placeHolder: 'Please select an option',
-  });
-}
-
-// ============================================================================
-// ReflectorAdapter Class
-// ============================================================================
-
-/**
- * Adapter for integrating Reflector with chat-participant.
- *
- * Handles buffering of incomplete markers split across text chunks.
- */
-export class ReflectorAdapter {
-  /** Buffer for incomplete marker at end of previous chunk */
-  private buffer: string = '';
-
   /**
-   * Process text chunk from ClaudeService.
-   *
-   * Detects markers, strips them from display text, and triggers VS Code actions.
-   *
-   * @param text - Text chunk from Claude output
-   * @returns Processed result with display text and markers found
+   * Dispose of the adapter and clean up subscriptions.
    */
-  async processText(text: string): Promise<ProcessTextResult> {
-    if (!text) {
-      return { displayText: '', markers: [] };
+  dispose(): void {
+    if (this.messageUnsubscribe) {
+      this.messageUnsubscribe();
+      this.messageUnsubscribe = null;
     }
-
-    // Combine with buffer from previous chunk
-    const combinedText = this.buffer + text;
-
-    // Check for incomplete marker at end (starts with <!-- but no closing -->)
-    const incompleteMarkerMatch = combinedText.match(/<!--[^>]*$/);
-    let textToProcess: string;
-
-    if (incompleteMarkerMatch) {
-      // Save incomplete marker to buffer, process the rest
-      const incompleteStart = incompleteMarkerMatch.index!;
-      textToProcess = combinedText.substring(0, incompleteStart);
-      this.buffer = combinedText.substring(incompleteStart);
-    } else {
-      // No incomplete marker, process everything
-      textToProcess = combinedText;
-      this.buffer = '';
-    }
-
-    // Detect markers in text to process
-    const markers = detectMarkers(textToProcess);
-
-    // Strip markers for display
-    const displayText = stripMarkers(textToProcess);
-
-    // Process each marker (fire-and-forget for UI actions)
-    for (const marker of markers) {
-      // Don't await - let UI actions happen asynchronously
-      processMarker(marker).catch((err) => {
-        console.error(`[Reflector] Failed to process marker:`, err);
-      });
-    }
-
-    return { displayText, markers };
   }
 
   /**
-   * Reset the buffer (e.g., between conversations).
+   * Reset state for a new conversation.
+   * Called by chat-participant at the start of each request.
    */
   reset(): void {
-    this.buffer = '';
+    // No-op for WheelHub-based adapter - state is per-message
+    // This method exists for API compatibility with chat-participant
   }
 
   /**
-   * Flush any remaining buffered text.
-   * Call at end of stream to process any incomplete markers.
+   * Flush any buffered content.
+   * Called by chat-participant at the end of streaming.
+   *
+   * @returns Object with displayText (may be empty)
    */
-  async flush(): Promise<ProcessTextResult> {
-    if (!this.buffer) {
-      return { displayText: '', markers: [] };
-    }
+  async flush(): Promise<{ displayText: string }> {
+    // No-op for WheelHub-based adapter - we process markers immediately
+    // This method exists for API compatibility with chat-participant
+    return { displayText: '' };
+  }
 
-    const text = this.buffer;
-    this.buffer = '';
-
+  /**
+   * Process text for CYCLIST markers and trigger appropriate VS Code UI.
+   * For chat-participant: returns text with markers stripped.
+   * For WheelHub: also fires VS Code UI actions.
+   *
+   * @param text - Text to process
+   * @returns Object with displayText (markers stripped)
+   */
+  async processText(text: string): Promise<{ displayText: string }> {
     const markers = detectMarkers(text);
     const displayText = stripMarkers(text);
 
-    for (const marker of markers) {
-      processMarker(marker).catch((err) => {
-        console.error(`[Reflector] Failed to process marker:`, err);
-      });
+    if (markers) {
+      // Process each marker (fire VS Code UI actions)
+      for (const marker of markers) {
+        await this.processMarker(marker, text);
+      }
     }
 
-    return { displayText, markers };
+    return { displayText };
+  }
+
+  /**
+   * Process a single marker and trigger VS Code UI.
+   */
+  private async processMarker(marker: Marker, fullText: string): Promise<void> {
+    switch (marker.type) {
+      case 'handoff':
+        await this.handleHandoff(marker.value);
+        break;
+
+      case 'context_clear':
+        await this.handleContextClear(marker.value);
+        break;
+
+      case 'question':
+        await this.handleQuestion(marker.value);
+        break;
+
+      case 'choices':
+        await this.handleChoices(marker.value, fullText);
+        break;
+    }
+  }
+
+  /**
+   * Handle HANDOFF marker - show notification with action button.
+   */
+  private async handleHandoff(agent: string): Promise<void> {
+    const actionLabel = `Continue with ${agent}`;
+
+    const result = await vscode.window.showInformationMessage(
+      `Ready to hand off to ${agent}`,
+      actionLabel
+    );
+
+    if (result === actionLabel) {
+      await vscode.commands.executeCommand('pennyfarthing.switchAgent', agent);
+    }
+  }
+
+  /**
+   * Handle CONTEXT_CLEAR marker - execute context clear command.
+   */
+  private async handleContextClear(agent: string): Promise<void> {
+    await vscode.commands.executeCommand('pennyfarthing.contextClear', agent);
+  }
+
+  /**
+   * Handle QUESTION marker - show quick pick.
+   */
+  private async handleQuestion(questionType: string): Promise<void> {
+    if (questionType === 'yesno') {
+      await vscode.window.showQuickPick(['Yes', 'No'], {
+        placeHolder: 'Choose an option',
+      });
+    }
+  }
+
+  /**
+   * Handle CHOICES marker - show quick pick with options.
+   */
+  private async handleChoices(value: string, fullText: string): Promise<void> {
+    const choiceValues = value.split(',').map((v) => v.trim());
+    const firstValue = choiceValues[0];
+    const isNumeric = /^\d+$/.test(firstValue);
+
+    let options: string[];
+
+    if (isNumeric) {
+      // Numeric format - extract text from numbered list in message
+      const choiceNumbers = choiceValues.map((n) => parseInt(n, 10));
+      options = extractChoiceTexts(fullText, choiceNumbers);
+    } else {
+      // Text label format - use labels directly
+      options = choiceValues;
+    }
+
+    await vscode.window.showQuickPick(options, {
+      placeHolder: 'Choose an option',
+    });
   }
 }
