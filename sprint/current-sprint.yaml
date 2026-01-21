@@ -868,7 +868,7 @@ epics:
              or other sidebar panels not updating as chat activity occurs
         points: 2
         priority: P1
-        status: in_progress
+        status: done
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria:
@@ -877,6 +877,7 @@ epics:
           - Tool result formatting cleaned up
           - Sidebar updates when agent changes
           - Sidebar reflects current workflow state
+        completed: "2026-01-21"
     jira: MSSCI-12122
   - id: epic-54
     type: epic
