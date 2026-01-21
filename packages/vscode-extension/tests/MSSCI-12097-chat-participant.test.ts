@@ -491,7 +491,7 @@ describe('MSSCI-12097: VS Code Chat API integration', () => {
   // AC5: Tool use displays with formatted output
   // ==========================================================================
   describe('AC5: Tool use display', () => {
-    it('should format tool use with name and truncated input', async () => {
+    it('should use formatToolUse from response-formatter', async () => {
       const { readFileSync } =
         await vi.importActual<typeof import('fs')>('fs');
       const { join } = await vi.importActual<typeof import('path')>('path');
@@ -504,12 +504,12 @@ describe('MSSCI-12097: VS Code Chat API integration', () => {
       );
 
       const content = readFileSync(chatPath, 'utf-8');
-      // Should have tool formatting with emoji and name
-      expect(content).toContain('Tool:');
-      expect(content).toContain('truncateInput');
+      // Should import formatToolUse from response-formatter (MSSCI-12126)
+      expect(content).toContain('formatToolUse');
+      expect(content).toContain('response-formatter');
     });
 
-    it('should truncate long tool inputs', async () => {
+    it('should use ProgressTracker for long operations', async () => {
       const { readFileSync } =
         await vi.importActual<typeof import('fs')>('fs');
       const { join } = await vi.importActual<typeof import('path')>('path');
@@ -522,9 +522,9 @@ describe('MSSCI-12097: VS Code Chat API integration', () => {
       );
 
       const content = readFileSync(chatPath, 'utf-8');
-      // Should have truncation logic
-      expect(content).toContain('maxLength');
-      expect(content).toContain('...');
+      // Should use ProgressTracker for tool operations (MSSCI-12126 AC5)
+      expect(content).toContain('ProgressTracker');
+      expect(content).toContain('startToolProgress');
     });
   });
 
