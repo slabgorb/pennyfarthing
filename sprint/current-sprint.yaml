@@ -1110,7 +1110,8 @@ epics:
           - Compare with our existing TDD flow
         points: 3
         priority: P2
-        status: in_progress
+        status: done
+        completed: 2026-01-21
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
