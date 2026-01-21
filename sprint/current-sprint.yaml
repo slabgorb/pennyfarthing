@@ -788,7 +788,8 @@ epics:
           - Progress indicators for long operations
         points: 2
         priority: P1
-        status: backlog
+        status: done
+        completed: 2026-01-21
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
