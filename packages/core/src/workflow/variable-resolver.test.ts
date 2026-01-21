@@ -19,7 +19,6 @@ import {
   resolveVariables,
   resolveStepVariables,
   type VariableSource,
-  type ResolveResult,
 } from './variable-resolver.js';
 
 describe('Variable Resolver (MSSCI-12081)', () => {
