@@ -807,11 +807,12 @@ epics:
           - Keyboard shortcuts for mode switching
         points: 2
         priority: P1
-        status: in_progress
+        status: done
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
         jira: MSSCI-12127
+        completed: "2026-01-21"
       - id: MSSCI-12128
         title: "Error handling with actionable messages"
         description: |
@@ -878,6 +879,39 @@ epics:
           - Sidebar updates when agent changes
           - Sidebar reflects current workflow state
         completed: "2026-01-21"
+      - id: MSSCI-12148
+        title: "Split agent status into webview with portraits"
+        description: |
+          Refactor the sidebar to separate agent status from story status:
+
+          Current state: Agent status (persona, role, etc.) and story status are
+          combined in a single sidebar tree view.
+
+          Goal:
+          1. Agent Status Webview - Rich visual panel with:
+             - Portrait image for current agent persona
+             - Character name and role prominently displayed
+             - Theme indicator
+             - Visual differentiation from story content
+
+          2. Story Status - Remains in tree view with:
+             - Current sprint info
+             - Active story details
+             - Workflow progress
+        points: 3
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Agent status is rendered in a VS Code webview panel
+          - Portrait images display correctly for themed personas
+          - Agent panel updates when agent changes (via WheelHub/sidebar sync)
+          - Story status remains in tree view, separate from agent display
+          - Clean visual hierarchy distinguishing agent from story context
+          - Works with all 102 persona themes
+        jira: MSSCI-12148
+        github_issue: 416
     jira: MSSCI-12122
   - id: epic-54
     type: epic
