@@ -10,6 +10,7 @@
  * Mode is persisted to settings and synced with Claude Code.
  *
  * 23-4: Adds Cmd+Shift+K keyboard shortcut for compact command
+ * MSSCI-12127: Enhanced with sliding highlight, keyboard shortcuts, tooltips
  */
 
 import { resetState as resetFilePanel } from './file-panel.js';
@@ -21,6 +22,17 @@ import { clearDiffs } from './components/DiffViewer.js';
  * Valid modes for the segmented control (matches settings.ts PermissionMode)
  */
 const VALID_MODES = ['plan', 'manual', 'accept', 'turbo'];
+
+/**
+ * Map mode index to mode name (for keyboard shortcuts)
+ * MSSCI-12127 AC5
+ */
+const MODE_INDEX = {
+  1: 'plan',
+  2: 'manual',
+  3: 'accept',
+  4: 'turbo',
+};
 
 /**
  * Map our mode names to Claude Code's permission mode names
@@ -40,19 +52,47 @@ let currentMode = 'manual';
 
 /**
  * Update the mode switch display (segmented control)
- * Updates which segment is active based on current mode
+ * Updates which segment is active and positions the sliding highlight
+ * MSSCI-12127: Enhanced with sliding highlight animation
  */
 function updateModeSwitchDisplay() {
   const modeSwitch = document.querySelector('[data-control="mode-switch"]');
   if (!modeSwitch) return;
 
   const segments = modeSwitch.querySelectorAll('.mode-switch-segment');
+  const highlight = modeSwitch.querySelector('.mode-switch-highlight');
+
   segments.forEach(segment => {
     const segmentMode = segment.dataset.mode;
     const isActive = segmentMode === currentMode;
     segment.classList.toggle('active', isActive);
     segment.setAttribute('aria-checked', isActive ? 'true' : 'false');
+
+    // Position the sliding highlight behind the active segment
+    if (isActive && highlight) {
+      const segmentRect = segment.getBoundingClientRect();
+      const switchRect = modeSwitch.getBoundingClientRect();
+      const offsetLeft = segmentRect.left - switchRect.left - 2; // Account for padding
+
+      highlight.style.width = `${segmentRect.width}px`;
+      highlight.style.transform = `translateX(${offsetLeft}px)`;
+      highlight.dataset.activeMode = segmentMode;
+    }
   });
+}
+
+/**
+ * Flash visual feedback on a segment (for keyboard shortcuts)
+ * MSSCI-12127 AC6
+ */
+function flashSegment(mode) {
+  const segment = document.querySelector(`.mode-switch-segment[data-mode="${mode}"]`);
+  if (!segment) return;
+
+  segment.classList.add('shortcut-flash');
+  segment.addEventListener('animationend', () => {
+    segment.classList.remove('shortcut-flash');
+  }, { once: true });
 }
 
 /**
@@ -227,6 +267,35 @@ function handleCompactShortcut(event) {
 }
 
 /**
+ * MSSCI-12127 AC5: Handle keyboard shortcuts for mode switching
+ * Cmd+1/2/3/4 (Mac) or Ctrl+1/2/3/4 (Windows/Linux)
+ */
+function handleModeShortcut(event) {
+  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+  const modifierKey = isMac ? event.metaKey : event.ctrlKey;
+
+  // Check for Cmd/Ctrl + 1/2/3/4 (without Shift)
+  if (modifierKey && !event.shiftKey && !event.altKey) {
+    const keyNum = parseInt(event.key, 10);
+    if (keyNum >= 1 && keyNum <= 4) {
+      const targetMode = MODE_INDEX[keyNum];
+      if (targetMode) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        console.log(`[Controls] Mode shortcut triggered: Cmd/Ctrl+${keyNum} -> ${targetMode}`);
+
+        // Flash the segment for visual feedback (AC6)
+        flashSegment(targetMode);
+
+        // Set the mode
+        setPermissionMode(targetMode);
+      }
+    }
+  }
+}
+
+/**
  * Initialize controls
  */
 function initControls() {
@@ -242,6 +311,11 @@ function initControls() {
         const mode = segment.dataset.mode;
         setPermissionMode(mode, event);
       });
+    });
+
+    // MSSCI-12127: Initialize highlight position after layout settles
+    requestAnimationFrame(() => {
+      updateModeSwitchDisplay();
     });
   } else {
     console.error('Mode switch not found!');
@@ -269,6 +343,10 @@ function initControls() {
   // 23-4: Register global keyboard shortcut for compact (Cmd+Shift+K / Ctrl+Shift+K)
   document.addEventListener('keydown', handleCompactShortcut);
   console.log('[Controls] Compact keyboard shortcut registered (Cmd/Ctrl+Shift+K)');
+
+  // MSSCI-12127 AC5: Register keyboard shortcuts for mode switching (Cmd/Ctrl+1/2/3/4)
+  document.addEventListener('keydown', handleModeShortcut);
+  console.log('[Controls] Mode keyboard shortcuts registered (Cmd/Ctrl+1/2/3/4)');
 }
 
 // =============================================================================

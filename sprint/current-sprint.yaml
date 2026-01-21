@@ -807,7 +807,7 @@ epics:
           - Keyboard shortcuts for mode switching
         points: 2
         priority: P1
-        status: backlog
+        status: in_progress
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
