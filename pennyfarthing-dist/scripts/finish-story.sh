@@ -62,9 +62,13 @@ if [[ ! -f "$SESSION_FILE" ]]; then
   exit 1
 fi
 
-# Extract metadata from session file
-JIRA_KEY=$(grep -E '^\*\*Jira:\*\*' "$SESSION_FILE" | sed 's/\*\*Jira:\*\* //' | tr -d ' ' || echo "")
-BRANCH=$(grep -E '^\*\*Branch:\*\*' "$SESSION_FILE" | sed 's/\*\*Branch:\*\* //' | tr -d ' ' || echo "")
+# Extract metadata from session file (handle both "**Jira:**" and "- **Jira:**" formats)
+JIRA_KEY=$(grep -E '\*\*Jira:\*\*' "$SESSION_FILE" | sed 's/.*\*\*Jira:\*\* //' | tr -d ' ' || echo "")
+# Extract branch - strip any trailing annotations like "(pushed)"
+BRANCH=$(grep -E '\*\*Branch:\*\*' "$SESSION_FILE" | sed 's/.*\*\*Branch:\*\* //' | sed 's/ *(.*//' | tr -d ' ' || echo "")
+
+# Try to get PR number from session file first (format: **PR:** #422 - title)
+PR_NUMBER=$(grep -E '\*\*PR:\*\*' "$SESSION_FILE" | sed 's/.*#\([0-9]*\).*/\1/' || echo "")
 
 # Fallback: try to get Jira key from sprint YAML if not in session
 if [[ -z "$JIRA_KEY" || "$JIRA_KEY" == "null" ]]; then
@@ -77,9 +81,8 @@ if [[ -z "$JIRA_KEY" || "$JIRA_KEY" == "null" ]]; then
   exit 1
 fi
 
-# Get PR number for this branch
-PR_NUMBER=""
-if [[ -n "$BRANCH" ]]; then
+# Fallback: get PR number from GitHub if not in session file
+if [[ -z "$PR_NUMBER" ]] && [[ -n "$BRANCH" ]]; then
   PR_NUMBER=$(gh pr list --head "$BRANCH" --json number --jq '.[0].number' 2>/dev/null || echo "")
 fi
 
