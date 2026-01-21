@@ -887,7 +887,8 @@ epics:
           Script: pennyfarthing-dist/scripts/migrate-bmad-workflow.sh
         points: 3
         priority: P0
-        status: in_progress
+        status: done
+        completed: 2026-01-21
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria:
@@ -898,7 +899,7 @@ epics:
           - Tri-modal structure preserved
           - Dry-run mode shows changes without writing
         jira: MSSCI-12132
-        branch: feat/MSSCI-12132-bmad-migration-script
+        pr: 403
       - id: MSSCI-12133
         title: "Import PRD workflow (all 3 modes)"
         description: |
