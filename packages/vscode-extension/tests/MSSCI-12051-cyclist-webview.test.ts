@@ -133,6 +133,20 @@ const mockVscode = {
   },
   workspace: {
     workspaceFolders: [mockWorkspaceFolder],
+    createFileSystemWatcher: vi.fn(() => ({
+      onDidChange: vi.fn(() => ({ dispose: vi.fn() })),
+      onDidCreate: vi.fn(() => ({ dispose: vi.fn() })),
+      onDidDelete: vi.fn(() => ({ dispose: vi.fn() })),
+      dispose: vi.fn(),
+    })),
+    findFiles: vi.fn().mockResolvedValue([]),
+    fs: {
+      readFile: vi.fn().mockResolvedValue(new Uint8Array()),
+      stat: vi.fn().mockRejectedValue(new Error('File not found')),
+    },
+  },
+  RelativePattern: class {
+    constructor(public base: any, public pattern: string) {}
   },
   commands: {
     registerCommand: vi.fn(() => ({ dispose: vi.fn() })),

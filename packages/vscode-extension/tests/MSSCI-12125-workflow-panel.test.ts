@@ -103,9 +103,14 @@ const mockVscode = {
   workspace: {
     workspaceFolders: [{ uri: { fsPath: '/mock/workspace' }, name: 'mock-workspace', index: 0 }],
     createFileSystemWatcher: vi.fn(() => mockFileSystemWatcher),
+    findFiles: vi.fn().mockResolvedValue([]),
     fs: {
-      readFile: vi.fn(),
+      readFile: vi.fn().mockResolvedValue(new Uint8Array()),
+      stat: vi.fn().mockRejectedValue(new Error('File not found')),
     },
+  },
+  RelativePattern: class {
+    constructor(public base: any, public pattern: string) {}
   },
   commands: {
     registerCommand: vi.fn(() => ({ dispose: vi.fn() })),

@@ -580,6 +580,111 @@ describe('AC5: Progress indicators', () => {
 });
 
 // ============================================================================
+// MSSCI-12147: XML Tag Stripping
+// ============================================================================
+describe('MSSCI-12147: XML tag stripping', () => {
+  describe('stripSystemTags', () => {
+    it('should remove <system-reminder> tags and their content', async () => {
+      const { stripSystemTags } = await import(
+        '../src/adapters/response-formatter'
+      );
+
+      const input = 'Hello <system-reminder>This is internal</system-reminder> World';
+      const result = stripSystemTags(input);
+
+      expect(result).toBe('Hello  World');
+      expect(result).not.toContain('system-reminder');
+      expect(result).not.toContain('This is internal');
+    });
+
+    it('should remove multiline <system-reminder> tags', async () => {
+      const { stripSystemTags } = await import(
+        '../src/adapters/response-formatter'
+      );
+
+      const input = `Some text
+<system-reminder>
+This is a multiline
+system reminder
+</system-reminder>
+More text`;
+      const result = stripSystemTags(input);
+
+      expect(result).not.toContain('system-reminder');
+      expect(result).toContain('Some text');
+      expect(result).toContain('More text');
+    });
+
+    it('should remove <output> tags and their content', async () => {
+      const { stripSystemTags } = await import(
+        '../src/adapters/response-formatter'
+      );
+
+      const input = 'Result: <output>tool output here</output> done';
+      const result = stripSystemTags(input);
+
+      expect(result).not.toContain('<output>');
+      expect(result).not.toContain('tool output here');
+    });
+
+    it('should remove <result> tags and their content', async () => {
+      const { stripSystemTags } = await import(
+        '../src/adapters/response-formatter'
+      );
+
+      const input = '<result>\n<name>Read</name>\n<output>file content</output>\n</result>';
+      const result = stripSystemTags(input);
+
+      expect(result).not.toContain('<result>');
+      expect(result).not.toContain('</result>');
+    });
+
+    it('should handle empty input', async () => {
+      const { stripSystemTags } = await import(
+        '../src/adapters/response-formatter'
+      );
+
+      const result = stripSystemTags('');
+      expect(result).toBe('');
+    });
+
+    it('should handle input with no tags', async () => {
+      const { stripSystemTags } = await import(
+        '../src/adapters/response-formatter'
+      );
+
+      const input = 'Just plain text with no XML tags';
+      const result = stripSystemTags(input);
+
+      expect(result).toBe(input);
+    });
+
+    it('should preserve code blocks containing XML-like content', async () => {
+      const { stripSystemTags } = await import(
+        '../src/adapters/response-formatter'
+      );
+
+      const input = '```xml\n<system-reminder>example</system-reminder>\n```';
+      const result = stripSystemTags(input);
+
+      // Should NOT strip content inside code blocks
+      expect(result).toContain('<system-reminder>');
+    });
+
+    it('should handle multiple tags in sequence', async () => {
+      const { stripSystemTags } = await import(
+        '../src/adapters/response-formatter'
+      );
+
+      const input = '<system-reminder>a</system-reminder>text<system-reminder>b</system-reminder>';
+      const result = stripSystemTags(input);
+
+      expect(result).toBe('text');
+    });
+  });
+});
+
+// ============================================================================
 // Integration: ResponseFormatter Pipeline
 // ============================================================================
 describe('ResponseFormatter integration', () => {
@@ -640,6 +745,20 @@ See /path/to/file.ts for details.
 
       const result = formatResponse('   \n   \n   ');
       expect(result).toBe('   \n   \n   ');
+    });
+
+    it('should strip system tags before other formatting (MSSCI-12147)', async () => {
+      const { formatResponse } = await import(
+        '../src/adapters/response-formatter'
+      );
+
+      const input = 'Hello <system-reminder>internal note</system-reminder> World';
+      const result = formatResponse(input);
+
+      expect(result).not.toContain('system-reminder');
+      expect(result).not.toContain('internal note');
+      expect(result).toContain('Hello');
+      expect(result).toContain('World');
     });
   });
 });
