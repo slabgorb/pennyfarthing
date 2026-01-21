@@ -164,6 +164,26 @@ function getSupportingDirectories(sourceDir) {
 }
 
 /**
+ * Get root-level template files (e.g., project-context-template.md)
+ */
+function getRootTemplateFiles(sourceDir) {
+  const files = [];
+
+  try {
+    const entries = fs.readdirSync(sourceDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.isFile() && entry.name.includes('-template') && entry.name.endsWith('.md')) {
+        files.push(entry.name);
+      }
+    }
+  } catch {
+    // Ignore errors
+  }
+
+  return files;
+}
+
+/**
  * Recursively copy directory with file transformation
  */
 function copyDirWithTransform(srcDir, destDir, transform, dryRun) {
@@ -418,6 +438,27 @@ function main() {
       },
       dryRun
     );
+  }
+
+  console.log('');
+
+  // Copy root-level template files
+  const templateFiles = getRootTemplateFiles(sourceDir);
+
+  for (const file of templateFiles) {
+    log.info(`Processing root template file: ${file}`);
+
+    const srcPath = path.join(sourceDir, file);
+    const destPath = path.join(targetDir, file);
+
+    if (dryRun) {
+      log.info(`[DRY-RUN] Would copy: ${file}`);
+    } else {
+      const content = fs.readFileSync(srcPath, 'utf-8');
+      const transformed = convertVariables(content);
+      fs.writeFileSync(destPath, transformed, 'utf-8');
+      log.success(`Copied: ${file}`);
+    }
   }
 
   console.log('');
