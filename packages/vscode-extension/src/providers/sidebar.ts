@@ -85,12 +85,25 @@ interface StoryData {
   points: number;
 }
 
+// Workflow state data for sidebar display (MSSCI-12125)
+interface WorkflowData {
+  name: string;
+  type: 'stepped' | 'phased';
+  mode?: 'create' | 'validate' | 'edit';
+  currentStep: number;
+  totalSteps: number;
+  stepsCompleted: number[];
+  status: 'in_progress' | 'completed' | 'paused';
+  phaseName?: string; // For phased workflows: 'setup', 'red', 'green', etc.
+}
+
 // Tree item types for getChildren routing
 type TreeItemType =
   | 'root'
   | 'agent'
   | 'sprint'
   | 'story'
+  | 'workflow'
   | 'actions'
   | 'skills'
   | 'commands'
@@ -120,6 +133,7 @@ export class AgentStatusTreeDataProvider
   private context: ContextData | null = null;
   private sprint: SprintData | null = null;
   private story: StoryData | null = null;
+  private workflow: WorkflowData | null = null;
   private isConnecting = false;
   private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
   private statsUnsubscribe: (() => void) | null = null;
@@ -182,6 +196,8 @@ export class AgentStatusTreeDataProvider
         return this.getSprintChildren();
       case 'story':
         return this.getStoryChildren();
+      case 'workflow':
+        return this.getWorkflowChildren();
       case 'actions':
         return this.getActionsChildren();
       case 'skills':
@@ -241,6 +257,11 @@ export class AgentStatusTreeDataProvider
       ) as SidebarTreeItem;
       emptyStory.itemType = 'empty';
       items.push(emptyStory);
+    }
+
+    // Workflow section (only shown when workflow is active - MSSCI-12125)
+    if (this.workflow) {
+      items.push(this.createWorkflowItem());
     }
 
     // Quick Actions section (always shown if agent is active or no agent)
@@ -455,6 +476,116 @@ export class AgentStatusTreeDataProvider
   }
 
   // =========================================================================
+  // Workflow section (MSSCI-12125)
+  // =========================================================================
+
+  private createWorkflowItem(): SidebarTreeItem {
+    const item = new vscode.TreeItem(
+      'Workflow',
+      vscode.TreeItemCollapsibleState.Expanded
+    ) as SidebarTreeItem;
+
+    item.description = this.workflow!.name;
+    item.contextValue = 'workflow';
+    item.itemType = 'workflow';
+
+    // Use different icons for stepped vs phased workflows
+    item.iconPath =
+      this.workflow!.type === 'stepped'
+        ? new vscode.ThemeIcon('list-ordered')
+        : new vscode.ThemeIcon('git-compare');
+
+    // Accessibility label
+    const completedCount = this.workflow!.stepsCompleted.length;
+    const totalSteps = this.workflow!.totalSteps;
+    item.accessibilityInformation = {
+      label: `Workflow ${this.workflow!.name}, type ${this.workflow!.type}, ${completedCount} of ${totalSteps} steps completed`,
+    };
+
+    return item;
+  }
+
+  private getWorkflowChildren(): SidebarTreeItem[] {
+    if (!this.workflow) {
+      return [];
+    }
+
+    const children: SidebarTreeItem[] = [];
+
+    // Type child
+    const typeItem = new vscode.TreeItem(
+      `Type: ${this.workflow.type}`,
+      vscode.TreeItemCollapsibleState.None
+    ) as SidebarTreeItem;
+    typeItem.iconPath = new vscode.ThemeIcon('symbol-type-parameter');
+    children.push(typeItem);
+
+    // Current step/phase
+    const isPhased = this.workflow.type === 'phased';
+    const currentLabel = isPhased
+      ? `Phase: ${this.workflow.phaseName || `Phase ${this.workflow.currentStep}`}`
+      : `Current: Step ${this.workflow.currentStep}`;
+    const currentItem = new vscode.TreeItem(
+      currentLabel,
+      vscode.TreeItemCollapsibleState.None
+    ) as SidebarTreeItem;
+    currentItem.iconPath = new vscode.ThemeIcon('sync~spin');
+    children.push(currentItem);
+
+    // Progress (completed/total)
+    const completedCount = this.workflow.stepsCompleted.length;
+    const totalSteps = this.workflow.totalSteps;
+    const percentage = Math.round((completedCount / totalSteps) * 100);
+    const unitLabel = isPhased ? 'phases' : 'steps';
+    const progressItem = new vscode.TreeItem(
+      `Progress: ${completedCount}/${totalSteps} ${unitLabel}`,
+      vscode.TreeItemCollapsibleState.None
+    ) as SidebarTreeItem;
+    progressItem.description = `${percentage}%`;
+    progressItem.iconPath = new vscode.ThemeIcon('pie-chart');
+    progressItem.accessibilityInformation = {
+      label: `${completedCount} of ${totalSteps} ${unitLabel} completed, ${percentage} percent`,
+    };
+    children.push(progressItem);
+
+    // Quick actions
+    const resumeItem = new vscode.TreeItem(
+      'Resume',
+      vscode.TreeItemCollapsibleState.None
+    ) as SidebarTreeItem;
+    resumeItem.iconPath = new vscode.ThemeIcon('play');
+    resumeItem.command = {
+      command: 'pennyfarthing.resumeWorkflow',
+      title: 'Resume Workflow',
+    };
+    children.push(resumeItem);
+
+    const abandonItem = new vscode.TreeItem(
+      'Abandon',
+      vscode.TreeItemCollapsibleState.None
+    ) as SidebarTreeItem;
+    abandonItem.iconPath = new vscode.ThemeIcon('close');
+    abandonItem.command = {
+      command: 'pennyfarthing.abandonWorkflow',
+      title: 'Abandon Workflow',
+    };
+    children.push(abandonItem);
+
+    const detailsItem = new vscode.TreeItem(
+      'View Details',
+      vscode.TreeItemCollapsibleState.None
+    ) as SidebarTreeItem;
+    detailsItem.iconPath = new vscode.ThemeIcon('info');
+    detailsItem.command = {
+      command: 'pennyfarthing.viewWorkflowDetails',
+      title: 'View Workflow Details',
+    };
+    children.push(detailsItem);
+
+    return children;
+  }
+
+  // =========================================================================
   // Quick Actions section
   // =========================================================================
 
@@ -651,6 +782,16 @@ export class AgentStatusTreeDataProvider
 
   updateStory(data: StoryData): void {
     this.story = data;
+    this._onDidChangeTreeData.fire();
+  }
+
+  /**
+   * Update workflow state (MSSCI-12125)
+   * Called by file watcher or direct updates.
+   * Pass null to clear the workflow (hide section).
+   */
+  updateWorkflow(data: WorkflowData | null): void {
+    this.workflow = data;
     this._onDidChangeTreeData.fire();
   }
 
