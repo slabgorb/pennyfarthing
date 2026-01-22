@@ -105,11 +105,11 @@ if [ "$ISSUE_JSON" = "{}" ]; then
     exit 3
 fi
 
-# Parse assignee
-ASSIGNEE=$(echo "$ISSUE_JSON" | jq -r '.fields.assignee.displayName // "Unassigned"')
-ASSIGNEE_EMAIL=$(echo "$ISSUE_JSON" | jq -r '.fields.assignee.emailAddress // ""')
-STATUS=$(echo "$ISSUE_JSON" | jq -r '.fields.status.name // "Unknown"')
-SUMMARY=$(echo "$ISSUE_JSON" | jq -r '.fields.summary // "No summary"')
+# Parse assignee (use printf to avoid zsh echo interpreting \n in JSON)
+ASSIGNEE=$(printf '%s' "$ISSUE_JSON" | jq -r '.fields.assignee.displayName // "Unassigned"')
+ASSIGNEE_EMAIL=$(printf '%s' "$ISSUE_JSON" | jq -r '.fields.assignee.emailAddress // ""')
+STATUS=$(printf '%s' "$ISSUE_JSON" | jq -r '.fields.status.name // "Unknown"')
+SUMMARY=$(printf '%s' "$ISSUE_JSON" | jq -r '.fields.summary // "No summary"')
 
 echo ""
 echo "📋 Issue: ${JIRA_ISSUE_KEY}"
