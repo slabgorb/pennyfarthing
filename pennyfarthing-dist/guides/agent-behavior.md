@@ -7,6 +7,10 @@
 ## Critical Protocols
 
 <critical>
+**Reflector markers:** Subagent output is NOT visible to Cyclist. After handoff subagent returns `AGENT_COMMAND`, the calling agent MUST emit the marker in direct text output. See `<agent-command-protocol>` below.
+</critical>
+
+<critical>
 **Absolute paths:** `cd $CLAUDE_PROJECT_DIR && just test` - never relative `cd`.
 Multi-repo: `cd $CLAUDE_PROJECT_DIR/$(get_repo_path "$repo")` after sourcing `scripts/repo-utils.sh`.
 </critical>
@@ -16,7 +20,7 @@ Multi-repo: `cd $CLAUDE_PROJECT_DIR/$(get_repo_path "$repo")` after sourcing `sc
 </critical>
 
 <critical>
-**Handoff Action:** When `handoff` returns `INVOKE_DIRECTLY`, invoke next agent immediately. Don't ask permission.
+**Handoff Action:** When `handoff` returns `AGENT_COMMAND`, parse it and emit the marker. Don't ask permission.
 </critical>
 
 <critical>
@@ -170,3 +174,62 @@ HTML comments that agents emit to signal Cyclist UI. Format: `<!-- CYCLIST:TYPE:
 - `CONTEXT_CLEAR` - Context >80% at handoff
 - `QUESTION`/`CHOICES` - User input needed mid-work
 </info>
+
+---
+
+<agent-command-protocol>
+## AGENT_COMMAND Protocol
+
+<critical>
+**Subagent output is NOT visible to Cyclist.** Tool results are not parsed for markers.
+Handoff subagents return an `AGENT_COMMAND` block. The **calling agent** must parse it and emit the marker.
+</critical>
+
+### How It Works
+
+1. Agent writes assessment to session file FIRST
+2. Agent spawns `handoff` or `sm-handoff` subagent
+3. Subagent returns an `AGENT_COMMAND` block with marker instructions
+4. **Agent parses AGENT_COMMAND and emits the marker in direct text output**
+
+### AGENT_COMMAND Format
+
+```
+---
+AGENT_COMMAND:
+  action: emit_marker
+  marker_type: {handoff|context_clear|none}
+  marker_value: {agent}
+  fallback_message: "Run `/{agent}` to continue"
+---
+```
+
+### Agent Action Based on marker_type
+
+| marker_type | Agent Action |
+|-------------|--------------|
+| `none` | Output only the `fallback_message` text |
+| `handoff` | Output: `<!-- CYCLIST:HANDOFF:/{marker_value} -->` |
+| `context_clear` | Output: `<!-- CYCLIST:CONTEXT_CLEAR:/{marker_value} -->` |
+| `blocked` | Report the error, do not emit any marker |
+
+### Example
+
+Subagent returns:
+```
+---
+AGENT_COMMAND:
+  action: emit_marker
+  marker_type: handoff
+  marker_value: dev
+  fallback_message: "Run `/dev` to continue"
+---
+```
+
+Agent must output in their direct text (not a tool call):
+```
+<!-- CYCLIST:HANDOFF:/dev -->
+```
+
+**CRITICAL:** The marker MUST appear in the agent's direct text output, not in a tool result.
+</agent-command-protocol>

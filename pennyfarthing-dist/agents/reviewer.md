@@ -266,12 +266,12 @@ Write assessment to session file BEFORE spawning handoff subagent.
 
 ## Handoff Protocol
 
-**IMPORTANT:** The `handoff` subagent is the single source of truth for emitting handoff markers.
+**See:** `pennyfarthing-dist/guides/agent-behavior.md` → AGENT_COMMAND Protocol
 
 1. Reviewer writes assessment to session file FIRST
 2. Reviewer spawns `handoff` subagent with VERDICT (approved/rejected)
-3. Subagent handles all bookkeeping AND emits the appropriate marker (`HANDOFF` or `CONTEXT_CLEAR`)
-4. Reviewer does NOT emit markers directly - trust the subagent
+3. Subagent returns an `AGENT_COMMAND` block
+4. **Reviewer parses AGENT_COMMAND and emits the marker in direct text output**
 
 **Verdict routing:**
 - APPROVED → next agent is SM (`/sm`)

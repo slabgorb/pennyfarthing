@@ -115,6 +115,15 @@ Task tool:
       **Handoff:** To SM for story completion
 ```
 
+## Handoff Protocol
+
+**See:** `pennyfarthing-dist/guides/agent-behavior.md` → AGENT_COMMAND Protocol
+
+1. Tech Writer writes assessment/review FIRST
+2. Tech Writer spawns `handoff` subagent
+3. Subagent returns an `AGENT_COMMAND` block
+4. **Tech Writer parses AGENT_COMMAND and emits the marker in direct text output**
+
 ## Key Workflows
 
 ### 1. API Documentation
