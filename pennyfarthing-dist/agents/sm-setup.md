@@ -17,8 +17,13 @@ model: haiku
 <gate>
 ## Research Steps
 
-1. Read sprint YAML, extract `status: backlog|ready` stories
-2. Batch query Jira for status/assignee
+1. Use `/sprint backlog` for initial backlog scan:
+   ```bash
+   .pennyfarthing/scripts/run.sh sprint/available-stories.sh
+   ```
+2. Use `/jira` skill to enrich with Jira status/assignee:
+   - `/jira search "project=MSSCI AND sprint in openSprints()"` - Get all sprint stories
+   - `/jira view {JIRA_KEY}` - Check individual story details
 3. Check context availability
 4. Check dependencies
 5. Output report with recommendations
@@ -103,9 +108,21 @@ GRANTS=$(cat .claude/settings.local.json 2>/dev/null | jq '.permissions.grants /
 
 ## Step 3: Claim in Jira
 
+Use `/jira claim` command:
+
 ```bash
-./scripts/run.sh jira/jira-claim-story.sh {JIRA_KEY} --claim
+# Check availability first
+.pennyfarthing/scripts/run.sh jira/jira-claim-story.sh {JIRA_KEY}
+
+# Then claim (assign to self + move to In Progress)
+.pennyfarthing/scripts/run.sh jira/jira-claim-story.sh {JIRA_KEY} --claim
 ```
+
+**Exit codes:**
+- `0` - Available or successfully claimed
+- `1` - Assigned to someone else (BLOCKED)
+- `2` - Not found or not synced to Jira
+- `3` - Error (CLI not installed, etc.)
 
 ## Step 4: Write Session File
 
