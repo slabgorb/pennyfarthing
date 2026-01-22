@@ -199,12 +199,12 @@ Helper will use workflow definition to determine next phase (green) and agent (D
 
 ## Handoff Protocol
 
-**IMPORTANT:** The `handoff` subagent is the single source of truth for emitting handoff markers.
+**See:** `pennyfarthing-dist/guides/agent-behavior.md` → AGENT_COMMAND Protocol
 
 1. TEA writes assessment to session file FIRST
 2. TEA spawns `handoff` subagent
-3. Subagent handles all bookkeeping AND emits the appropriate marker (`HANDOFF` or `CONTEXT_CLEAR`)
-4. TEA does NOT emit markers directly - trust the subagent
+3. Subagent returns an `AGENT_COMMAND` block
+4. **TEA parses AGENT_COMMAND and emits the marker in direct text output**
 
 <exit>
 To exit TEA mode: "Exit TEA" or "Switch to [other agent]"

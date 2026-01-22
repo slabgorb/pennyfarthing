@@ -741,5 +741,7 @@ epics:
           preserving base64-encoded image data for deferred submission.
         points: 3
         priority: P1
-        status: backlog
+        status: in_progress
         repos: pennyfarthing
+        assigned_to: Keith Avery
+        branch: feat/MSSCI-12274-image-queue-support

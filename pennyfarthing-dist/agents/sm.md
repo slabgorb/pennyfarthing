@@ -604,12 +604,12 @@ SM uses `/story` skill for story operations. Key commands:
 
 ## Handoff Protocol
 
-**IMPORTANT:** The `handoff` subagent is the single source of truth for emitting handoff markers.
+**See:** `pennyfarthing-dist/guides/agent-behavior.md` → AGENT_COMMAND Protocol
 
 1. SM writes assessment/context FIRST
 2. SM spawns `sm-handoff` subagent (for new work) or `handoff` subagent (for other transitions)
-3. Subagent handles all bookkeeping AND emits the appropriate marker (`HANDOFF` or `CONTEXT_CLEAR`)
-4. SM does NOT emit markers directly - trust the subagent
+3. Subagent returns an `AGENT_COMMAND` block
+4. **SM parses AGENT_COMMAND and emits the marker in direct text output**
 
 **Workflow routing (for `sm-handoff`):**
 
