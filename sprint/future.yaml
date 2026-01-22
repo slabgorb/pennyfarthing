@@ -1,7 +1,10 @@
-# Pennyfarthing Planning
-# Future initiatives not yet ready for sprint commitment
-# These are well-researched but awaiting prerequisites or prioritization
-# Updated: 2026-01-21
+# Pennyfarthing Future Work
+# Combined planning and backlog initiatives not yet committed to a sprint
+# These are researched and ready for prioritization when capacity allows
+# Updated: 2026-01-22
+#
+# Epic Numbering: 39-56 (next available: 57)
+# Note: Current sprint uses Jira IDs (MSSCI-XXXXX), these use legacy epic-N format
 
 # =============================================================================
 # BENCHMARK RELIABILITY - Scientific Evaluation
@@ -17,7 +20,7 @@
 #   - TEA variance CV < 15%
 # =============================================================================
 
-planning:
+future:
   initiatives:
     - name: "Benchmark Reliability"
       description: |
@@ -25,6 +28,7 @@ planning:
         Based on HELM (Stanford CRFM), ARC-AGI, and MLPerf methodologies.
       status: research_complete
       blocked_by: "Need stable benchmark baseline before measuring improvements"
+      total_points: 44
       epics:
         - id: epic-41
           title: "Precision/Recall Detection Scoring"
@@ -370,7 +374,6 @@ planning:
               status: planning
               repos: pennyfarthing
 
-
     # ==========================================================================
     # VS CODE & BIKELANE - Follow-on Epics
     # ==========================================================================
@@ -381,6 +384,7 @@ planning:
         workflow compatibility.
       status: ready
       blocked_by: null
+      total_points: 56
       epics:
         # ======================================================================
         # EPIC 53: VS Code Extension UX/UI Pass
@@ -718,6 +722,7 @@ planning:
         experience.
       status: ready
       blocked_by: null
+      total_points: 13
       epics:
         # ======================================================================
         # EPIC 55: CDN Portrait Storage
@@ -856,3 +861,108 @@ planning:
               priority: P1
               status: planning
               repos: pennyfarthing
+
+    # ==========================================================================
+    # QUALITY & SCALE - Future Initiatives (Lower Priority)
+    # ==========================================================================
+    - name: "Quality & Scale"
+      description: |
+        Quality assurance oversight and scale adaptation capabilities.
+        Lower priority work for when core features are stable.
+      status: backlog
+      blocked_by: null
+      total_points: 40
+      epics:
+        - id: epic-39
+          title: Quality Assurance Oversight Capabilities
+          description: |
+            Add BMAD TEA-style quality oversight capabilities to Pennyfarthing.
+            Extend Reviewer with test quality scoring, risk-based prioritization,
+            coverage traceability, NFR assessment, and release gate decisions.
+          points: 23
+          priority: P2
+          marker: quality
+          repos: pennyfarthing
+          status: backlog
+          stories:
+            - id: 39-1
+              title: Test quality review with 0-100 scoring
+              points: 5
+              status: backlog
+            - id: 39-2
+              title: Test quality knowledge base
+              points: 3
+              status: backlog
+            - id: 39-3
+              title: Risk-based test prioritization
+              points: 3
+              status: backlog
+            - id: 39-4
+              title: Coverage traceability
+              points: 5
+              status: backlog
+            - id: 39-5
+              title: NFR assessment skill
+              points: 3
+              status: backlog
+            - id: 39-6
+              title: Release gate integration
+              points: 2
+              status: backlog
+            - id: 39-7
+              title: Reviewer multi-phase review mode
+              points: 2
+              status: backlog
+
+        - id: epic-40
+          title: Scale Adaptation and Brownfield Support
+          description: |
+            Adopt BMAD's scale-adaptive approach and add brownfield codebase discovery.
+            Add upward scaling for larger initiatives (Level 0-4) and brownfield
+            analysis for existing codebases.
+          points: 17
+          priority: P2
+          marker: infrastructure
+          repos: pennyfarthing
+          status: backlog
+          stories:
+            - id: 40-1
+              title: Define scale levels
+              points: 2
+              status: backlog
+            - id: 40-2
+              title: Quick-spec workflow
+              points: 3
+              status: backlog
+            - id: 40-3
+              title: Enterprise workflow hooks
+              points: 3
+              status: backlog
+            - id: 40-4
+              title: Brownfield discovery command
+              points: 5
+              status: backlog
+            - id: 40-5
+              title: Brownfield convention adoption
+              points: 2
+              status: backlog
+            - id: 40-6
+              title: PRD import support
+              points: 2
+              status: backlog
+
+# =============================================================================
+# SUMMARY
+# =============================================================================
+# Initiative                      | Epics | Points | Status
+# --------------------------------|-------|--------|------------------
+# Benchmark Reliability           |   6   |   44   | research_complete
+# VS Code & BikeLane Enhancement  |   2   |   56   | ready
+# Repository Optimization         |   1   |   13   | ready
+# Quality & Scale                 |   2   |   40   | backlog
+# --------------------------------|-------|--------|------------------
+# TOTAL                           |  11   |  153   |
+#
+# Epic Numbering Used: 39-46, 53-55
+# Next Available Epic Number: 57
+# =============================================================================
