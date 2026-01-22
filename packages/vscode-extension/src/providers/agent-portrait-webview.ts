@@ -71,13 +71,6 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
   }
 
   /**
-   * Get the agent role to portrait filename mapping.
-   */
-  public getAgentPortraitMapping(): Record<string, string> {
-    return { ...AGENT_PORTRAIT_MAPPING };
-  }
-
-  /**
    * Get the portrait path for a given theme and agent role.
    * Scans the portraits directory for files matching the shortName pattern.
    */
