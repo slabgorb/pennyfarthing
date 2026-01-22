@@ -499,17 +499,20 @@ async function mergeSettingsHooks(
     modified = true;
     logger.info('Added missing statusLine configuration');
   } else if (statusLine.command && typeof statusLine.command === 'string') {
-    // Migrate from any legacy path to new path (.claude/scripts/statusline.sh)
+    // Migrate from any legacy path to new path (.pennyfarthing/scripts/misc/statusline.sh)
     const legacyPaths = [
       '.claude/core/statusline.sh',
       '.claude/statusline.sh',
-      '.claude/pennyfarthing/statusline.sh'  // Also migrate from old copy-mode path
+      '.claude/pennyfarthing/statusline.sh',  // Old copy-mode path (v4.0.0-4.0.3)
+      '.claude/pennyfarthing/scripts/statusline.sh',  // Bug in template (fixed in v4.0.5)
+      '.claude/scripts/statusline.sh',  // Previous location (pre-v6.6)
+      '.pennyfarthing/scripts/statusline.sh'  // Missing misc/ subdirectory (fixed in v7.0.3)
     ];
     for (const legacyPath of legacyPaths) {
       if (statusLine.command.includes(legacyPath)) {
         statusLine.command = statusLine.command.replace(
           legacyPath,
-          '.claude/scripts/statusline.sh'
+          '.pennyfarthing/scripts/misc/statusline.sh'
         );
         modified = true;
         logger.info(`Updated statusLine path from ${legacyPath} to new location`);
