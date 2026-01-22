@@ -79,6 +79,9 @@ EOF
 
 # Remove the first message from the queue (for next invocation)
 # Use jq if available, otherwise leave queue management to the TypeScript side
+# Run in background and ignore errors to avoid blocking hook response
 if command -v jq &> /dev/null; then
-  jq 'if length > 0 then .[1:] else [] end' "$BELL_QUEUE_FILE" > "$BELL_QUEUE_FILE.tmp" && mv "$BELL_QUEUE_FILE.tmp" "$BELL_QUEUE_FILE"
+  (jq 'if length > 0 then .[1:] else [] end' "$BELL_QUEUE_FILE" > "$BELL_QUEUE_FILE.tmp" 2>/dev/null && mv "$BELL_QUEUE_FILE.tmp" "$BELL_QUEUE_FILE") &
 fi
+
+exit 0
