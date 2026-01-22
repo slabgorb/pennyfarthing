@@ -3,10 +3,21 @@
 # These are researched and ready for prioritization when capacity allows
 # Updated: 2026-01-22
 #
-# Epic Numbering: 39-46, 55 (next available: 57)
+# Epic Numbering: 39-46, 55-59 (next available: 60)
 # Note: Current sprint uses Jira IDs (MSSCI-XXXXX), these use legacy epic-N format
 # Note: Epic 53 in sprint as MSSCI-12122 (in progress)
 # Note: Epic 54 completed as MSSCI-12131 in Sprint 12
+
+# =============================================================================
+# VS CODE EXTENSION - IDE Integration
+# Bring Pennyfarthing agent experience to VS Code
+# Total: 21 points across 3 epics (epic-56 promoted to Sprint 12 as MSSCI-12226)
+#
+# PRD: artifacts/prd.md (completed 2026-01-21)
+# Epics: artifacts/epics-and-stories.md (completed 2026-01-21)
+#
+# Architecture: Thin UI client to WheelHub (single source of truth)
+# =============================================================================
 
 # =============================================================================
 # BENCHMARK RELIABILITY - Scientific Evaluation
@@ -24,6 +35,153 @@
 
 future:
   initiatives:
+    # ==========================================================================
+    # VS CODE EXTENSION - IDE Integration
+    # ==========================================================================
+    - name: "VS Code Extension"
+      description: |
+        Bring the Pennyfarthing agent experience to VS Code by replicating essential
+        Cyclist UI components while leveraging native VS Code features where superior.
+        Extension serves as thin UI client to WheelHub (single source of truth).
+      status: ready
+      blocked_by: null
+      total_points: 21
+      prd: artifacts/prd.md
+      epics_doc: artifacts/epics-and-stories.md
+      note: "epic-56 (Glanceable Status Awareness, 13pts) promoted to Sprint 12 as MSSCI-12226"
+      epics:
+        # epic-56 promoted to Sprint 12 as MSSCI-12226
+
+        - id: epic-57
+          title: "Agent Identity & Emotional Connection"
+          description: |
+            Users can see and connect with their current agent persona - portrait,
+            name, and theme visible in the sidebar, creating the emotional connection
+            that makes Pennyfarthing engaging.
+
+            FRs: FR6-10 (persona card, portrait, theme)
+          points: 8
+          priority: P0
+          marker: "vscode"
+          repos: pennyfarthing
+          status: planning
+          stories:
+            - id: "57-1"
+              title: "Persona Card Webview"
+              description: |
+                Sidebar webview with agent portrait image, character name prominently
+                displayed, and theme name/badge. Populates within 2 seconds of activation.
+              points: 3
+              priority: P0
+              status: planning
+              repos: pennyfarthing
+            - id: "57-2"
+              title: "Portrait Loading with Caching"
+              description: |
+                Load portraits from CDN: https://cdn.pennyfarthing.dev/portraits/{theme}/{agent}.png
+                Cache locally after first load. Fallback to default on failure.
+                Support all 102 themes.
+              points: 3
+              priority: P0
+              status: planning
+              repos: pennyfarthing
+            - id: "57-3"
+              title: "Real-time Agent Updates"
+              description: |
+                Persona card updates when WheelHub broadcasts new agent on /agent channel.
+                Portrait, name, and theme badge all update within 1 second.
+              points: 2
+              priority: P0
+              status: planning
+              repos: pennyfarthing
+
+        - id: epic-58
+          title: "Sprint & Story Awareness"
+          description: |
+            Users can see their current story, sprint status, and branch health
+            without leaving VS Code - full workflow awareness via the sidebar tree view.
+
+            FRs: FR11-15 (story, sprint, branch, file watcher)
+          points: 8
+          priority: P1
+          marker: "vscode"
+          repos: pennyfarthing
+          status: planning
+          stories:
+            - id: "58-1"
+              title: "Story Status Tree View"
+              description: |
+                Display current story title from .session/{story-id}-session.md
+                or "No active story" indicator in sidebar tree view.
+              points: 2
+              priority: P0
+              status: planning
+              repos: pennyfarthing
+            - id: "58-2"
+              title: "Sprint Metrics Display"
+              description: |
+                Display remaining points, in-progress points, and sprint end date
+                from sprint/current-sprint.yaml in sidebar tree view.
+              points: 2
+              priority: P0
+              status: planning
+              repos: pennyfarthing
+            - id: "58-3"
+              title: "Branch Status Indicator"
+              description: |
+                Display CLEAN/DIRTY indicator based on git uncommitted changes.
+              points: 2
+              priority: P1
+              status: planning
+              repos: pennyfarthing
+            - id: "58-4"
+              title: "File Watcher Integration"
+              description: |
+                Watch .session/ and sprint/current-sprint.yaml for changes.
+                Update tree view within 500ms of file change.
+              points: 2
+              priority: P1
+              status: planning
+              repos: pennyfarthing
+
+        - id: epic-59
+          title: "Chat Integration"
+          description: |
+            Users can invoke Pennyfarthing agents and all slash commands directly
+            from VS Code Chat using @pf.
+
+            FRs: FR20-21 (chat participant, slash commands)
+            Note: @pennyfarthing chat participant already exists - this epic enhances it.
+          points: 5
+          priority: P1
+          marker: "vscode"
+          repos: pennyfarthing
+          status: planning
+          stories:
+            - id: "59-1"
+              title: "@pf Chat Participant"
+              description: |
+                Register @pf as chat participant (in addition to existing @pennyfarthing).
+                Route messages to Pennyfarthing agent system.
+              points: 2
+              priority: P0
+              status: planning
+              repos: pennyfarthing
+            - id: "59-2"
+              title: "Slash Command Integration"
+              description: |
+                Support all Pennyfarthing slash commands via @pf:
+                - Agent commands: /sm, /tea, /dev, /reviewer
+                - Skill commands: /workflow, /sprint, /theme
+                Behavior identical to Claude Code terminal.
+              points: 3
+              priority: P0
+              status: planning
+              repos: pennyfarthing
+
+    # ==========================================================================
+    # BENCHMARK RELIABILITY - Scientific Evaluation
+    # ==========================================================================
     - name: "Benchmark Reliability"
       description: |
         Research-backed improvements to agent benchmarking methodology.
@@ -620,16 +778,23 @@ future:
 # =============================================================================
 # Initiative                      | Epics | Points | Status
 # --------------------------------|-------|--------|------------------
+# VS Code Extension               |   4   |   34   | ready
 # Benchmark Reliability           |   6   |   44   | research_complete
 # Repository Optimization         |   1   |   13   | ready
 # Quality & Scale                 |   2   |   40   | backlog
 # --------------------------------|-------|--------|------------------
-# TOTAL                           |   9   |   97   |
+# TOTAL                           |  13   |  131   |
 #
-# Epic Numbering Used: 39-46, 55
-# Next Available Epic Number: 57
+# Epic Numbering Used: 39-46, 55-59
+# Next Available Epic Number: 60
+#
+# VS Code Extension Epics (NEW - from artifacts/epics-and-stories.md):
+# - Epic 56: Glanceable Status Awareness (13 pts) - WheelHub + status bar
+# - Epic 57: Agent Identity & Emotional Connection (8 pts) - Persona card
+# - Epic 58: Sprint & Story Awareness (8 pts) - Tree view
+# - Epic 59: Chat Integration (5 pts) - @pf participant
 #
 # IN SPRINT (moved from future):
-# - Epic 53: VS Code Extension UX/UI Pass (18 pts) → MSSCI-12122 (in progress)
+# - Epic 53: VS Code Extension UX/UI Pass (18 pts) → MSSCI-12122 (cancelled)
 # - Epic 54: BikeLane BMAD Workflow Imports (38 pts) → MSSCI-12131 (done)
 # =============================================================================
