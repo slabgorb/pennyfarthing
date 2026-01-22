@@ -45,7 +45,6 @@ epics:
         points: 2
         status: done
         completed: 2026-01-18
-
   # ===========================================================================
   # EPIC: Cyclist UI/UX Improvements (MSSCI-11715) - COMPLETE
   # ===========================================================================
@@ -64,7 +63,6 @@ epics:
         points: 2
         status: done
         completed: 2026-01-18
-
   # ===========================================================================
   # EPIC: WheelHub Notification Consolidation (MSSCI-11942) - COMPLETE
   # ===========================================================================
@@ -123,7 +121,6 @@ epics:
         points: 2
         status: done
         completed: 2026-01-19
-
   # ===========================================================================
   # EPIC: Skill Frontmatter Enhancement (MSSCI-11952) - COMPLETE
   # ===========================================================================
@@ -217,7 +214,6 @@ epics:
         points: 0
         status: done
         completed: 2026-01-20
-
   # ===========================================================================
   # EPIC: VS Code Extension (MSSCI-12042) - COMPLETE
   # ===========================================================================
@@ -287,7 +283,6 @@ epics:
         points: 3
         status: done
         completed: 2026-01-21
-
   # ===========================================================================
   # EPIC: Stepped Workflow Support (MSSCI-12077) - COMPLETE
   # ===========================================================================
@@ -357,7 +352,6 @@ epics:
         points: 1
         status: done
         completed: 2026-01-21
-
   # ===========================================================================
   # EPIC: VS Code Extension UX/UI Pass (MSSCI-12122) - IN PROGRESS
   # ===========================================================================
@@ -421,7 +415,6 @@ epics:
         points: 2
         status: backlog
         repos: pennyfarthing
-
   # ===========================================================================
   # EPIC: BikeLane BMAD Workflow Imports (MSSCI-12131) - IN PROGRESS
   # ===========================================================================
@@ -507,8 +500,9 @@ epics:
         jira: MSSCI-12176
         title: "Implement workflow start/resume/status shell scripts"
         points: 2
-        status: backlog
+        status: done
         repos: pennyfarthing
+        completed: "2026-01-22"
       - id: MSSCI-12142
         jira: MSSCI-12142
         title: "Import Retrospective workflow"
@@ -533,7 +527,6 @@ epics:
         points: 3
         status: backlog
         repos: pennyfarthing
-
   # ===========================================================================
   # Standalone Stories (no epic parent in Jira)
   # ===========================================================================
