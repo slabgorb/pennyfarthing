@@ -235,6 +235,23 @@ echo "**Steps:** $STEP_COUNT"
 echo "**Agent:** $WORKFLOW_AGENT"
 echo "**Session:** $SESSION_FILE"
 echo ""
+
+# Check if auto-handoff is enabled (turbo mode)
+CONFIG_FILE="$PROJECT_ROOT/.pennyfarthing/config.local.yaml"
+HANDOFF_MODE="manual"
+if [[ -f "$CONFIG_FILE" ]]; then
+  HANDOFF_MODE=$(yq eval '.workflow.handoff_mode // "manual"' "$CONFIG_FILE")
+fi
+
+# Emit Reflector directive - auto-invoke if in turbo mode, else show button
+if [[ "$HANDOFF_MODE" == "auto" ]]; then
+  echo "**Auto-handoff enabled.** Invoking /$WORKFLOW_AGENT agent..."
+  echo ""
+  echo "<!-- CYCLIST:INVOKE:/$WORKFLOW_AGENT -->"
+else
+  echo "<!-- CYCLIST:HANDOFF:/$WORKFLOW_AGENT -->"
+fi
+echo ""
 echo "---"
 echo ""
 echo "## Step 1 of $STEP_COUNT"
