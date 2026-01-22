@@ -15,7 +15,7 @@
  * 5. Events stored in session-scoped memory
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, beforeAll } from 'vitest';
 import request from 'supertest';
 import { app } from '../src/server.js';
 
@@ -216,6 +216,12 @@ const nonToolEvent = {
 // =============================================================================
 
 describe('Story 19-1: OTLP Tool Events', () => {
+
+  // Reset event store at the start of this test file to ensure
+  // clean state regardless of other tests that may have run
+  beforeAll(() => {
+    resetEventStore();
+  });
 
   describe('AC1: /v1/logs endpoint parses claude_code.tool_result events', () => {
 
