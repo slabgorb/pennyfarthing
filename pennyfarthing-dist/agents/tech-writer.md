@@ -121,8 +121,8 @@ Task tool:
 
 1. Tech Writer writes assessment/review FIRST
 2. Tech Writer spawns `handoff` subagent
-3. Subagent returns an `AGENT_COMMAND` block
-4. **Tech Writer parses AGENT_COMMAND and emits the marker in direct text output**
+3. Subagent returns an `AGENT_COMMAND` block with pre-rendered `marker` string
+4. **Tech Writer outputs `marker` verbatim, then outputs `fallback` message**
 
 ## Key Workflows
 

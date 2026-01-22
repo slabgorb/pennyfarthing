@@ -182,8 +182,8 @@ Use `/code-review` skill checklist:
 
 1. Dev writes assessment to session file FIRST
 2. Dev spawns `handoff` subagent
-3. Subagent returns an `AGENT_COMMAND` block
-4. **Dev parses AGENT_COMMAND and emits the marker in direct text output**
+3. Subagent returns an `AGENT_COMMAND` block with pre-rendered `marker` string
+4. **Dev outputs `marker` verbatim, then outputs `fallback` message**
 
 ## Handoff Subagent
 

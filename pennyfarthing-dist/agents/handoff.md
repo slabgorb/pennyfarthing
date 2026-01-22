@@ -20,8 +20,8 @@ model: haiku
 
 <critical>
 **Subagent output is NOT visible to Cyclist.** Tool results are not parsed for markers.
-You MUST return an explicit `AGENT_COMMAND` block for the calling agent to execute.
-The calling agent will parse this block and emit the appropriate marker in their direct output.
+You MUST return an explicit `AGENT_COMMAND` block with a pre-rendered `marker` string.
+The calling agent will output the `marker` string verbatim in their direct text output.
 </critical>
 
 ---
@@ -131,22 +131,25 @@ No automated checks. Always passes.
    |------|-----|------|--------|-----------|
    ```
 
-6. **Check context and determine handoff type:**
+6. **Generate AGENT_COMMAND block:**
    ```bash
-   eval "$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/check-context.sh)"
-   echo "IS_CYCLIST=$IS_CYCLIST"
-   echo "USE_TIREPUMP=$USE_TIREPUMP"
-   echo "CONTEXT_PERCENT=$CONTEXT_PERCENT"
-   echo "PERMISSION_MODE=$PERMISSION_MODE"
+   $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {NEXT_AGENT}
+   ```
+   The script handles IS_CYCLIST and USE_TIREPUMP detection automatically.
+
+   For errors:
+   ```bash
+   $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh --error "Error message here"
    ```
 
-7. **Return AGENT_COMMAND block** (see Output Format below)
+7. **Return handoff summary + AGENT_COMMAND block** (see Output Format below)
 
 ---
 
 ## Output Format
 
-Your output MUST end with an `AGENT_COMMAND` block. The calling agent will parse this and emit the appropriate marker.
+Your output MUST end with an `AGENT_COMMAND` block containing a pre-rendered `marker` string.
+The calling agent outputs the `marker` string verbatim - no parsing or mapping required.
 
 ```
 HANDOFF COMPLETE
@@ -162,20 +165,20 @@ TirePump: {USE_TIREPUMP}
 
 ---
 AGENT_COMMAND:
-  action: emit_marker
-  marker_type: {MARKER_TYPE}
-  marker_value: {NEXT_AGENT}
-  fallback_message: "Run `/{NEXT_AGENT}` to continue"
+  marker: "{MARKER_STRING}"
+  fallback: "Run `/{NEXT_AGENT}` to continue"
 ---
 ```
 
-### Marker Type Decision
+### Marker String Generation
 
-| IS_CYCLIST | USE_TIREPUMP | marker_type | Calling Agent Action |
-|------------|--------------|-------------|---------------------|
-| false | * | none | Agent outputs: `fallback_message` text only |
-| true | false | handoff | Agent outputs: `<!-- CYCLIST:HANDOFF:/{marker_value} -->` |
-| true | true | context_clear | Agent outputs: `<!-- CYCLIST:CONTEXT_CLEAR:/{marker_value} -->` |
+Use the `handoff-marker.sh` script to generate the complete AGENT_COMMAND block:
+
+```bash
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {NEXT_AGENT}
+```
+
+**Output the script result verbatim.** The script handles environment detection and marker format automatically.
 
 ### Example Output (Cyclist, TirePump active)
 
@@ -193,10 +196,8 @@ TirePump: true
 
 ---
 AGENT_COMMAND:
-  action: emit_marker
-  marker_type: context_clear
-  marker_value: reviewer
-  fallback_message: "Run `/reviewer` to continue"
+  marker: "<!-- CYCLIST:CONTEXT_CLEAR:/reviewer -->"
+  fallback: "Run `/reviewer` to continue"
 ---
 ```
 
@@ -216,10 +217,8 @@ TirePump: false
 
 ---
 AGENT_COMMAND:
-  action: emit_marker
-  marker_type: handoff
-  marker_value: dev
-  fallback_message: "Run `/dev` to continue"
+  marker: "<!-- CYCLIST:HANDOFF:/dev -->"
+  fallback: "Run `/dev` to continue"
 ---
 ```
 
@@ -239,10 +238,8 @@ TirePump: false
 
 ---
 AGENT_COMMAND:
-  action: emit_marker
-  marker_type: none
-  marker_value: dev
-  fallback_message: "Run `/dev` to continue"
+  marker: ""
+  fallback: "Run `/dev` to continue"
 ---
 ```
 
@@ -259,8 +256,9 @@ Recommended fix: {action}
 
 ---
 AGENT_COMMAND:
-  action: blocked
-  reason: "{message}"
+  marker: ""
+  fallback: "{message}"
+  error: true
 ---
 ```
 
@@ -283,9 +281,9 @@ AGENT_COMMAND:
 
 When you receive this subagent's output, parse the `AGENT_COMMAND` block and:
 
-1. If `action: blocked` → Report the error, do not emit any marker
-2. If `marker_type: none` → Output the `fallback_message` text only
-3. If `marker_type: handoff` → Output: `<!-- CYCLIST:HANDOFF:/{marker_value} -->`
-4. If `marker_type: context_clear` → Output: `<!-- CYCLIST:CONTEXT_CLEAR:/{marker_value} -->`
+1. If `error: true` → Report the `fallback` message as an error, do not emit any marker
+2. Otherwise → Output the `marker` string verbatim (if non-empty), then output the `fallback` message
+
+**Simple rule: Output `marker` then `fallback`. That's it.**
 
 **CRITICAL: The marker MUST appear in the calling agent's direct text output, not in a tool result.**

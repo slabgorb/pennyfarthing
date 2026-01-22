@@ -608,8 +608,8 @@ SM uses `/story` skill for story operations. Key commands:
 
 1. SM writes assessment/context FIRST
 2. SM spawns `sm-handoff` subagent (for new work) or `handoff` subagent (for other transitions)
-3. Subagent returns an `AGENT_COMMAND` block
-4. **SM parses AGENT_COMMAND and emits the marker in direct text output**
+3. Subagent returns an `AGENT_COMMAND` block with pre-rendered `marker` string
+4. **SM outputs `marker` verbatim, then outputs `fallback` message**
 
 **Workflow routing (for `sm-handoff`):**
 
