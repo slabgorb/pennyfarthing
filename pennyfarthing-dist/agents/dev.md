@@ -184,7 +184,7 @@ After writing assessment, ALWAYS spawn handoff subagent to complete bookkeeping.
 Then check context usage and handoff mode preference:
 
 ```bash
-$CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
+$CLAUDE_PROJECT_DIR/scripts/core/check-context.sh --human
 ```
 
 **Read handoff mode from Cyclist settings** (see `handoff.md` for full implementation):

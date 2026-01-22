@@ -270,7 +270,7 @@ Write assessment to session file BEFORE spawning handoff subagent.
 <critical>
 **Before emitting ANY Reflector marker, check context and mode FIRST:**
 ```bash
-eval "$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check-context.sh)"
+eval "$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/check-context.sh)"
 ```
 
 Then decide:
