@@ -401,9 +401,10 @@ epics:
         jira: MSSCI-12128
         title: "Error handling with actionable messages"
         points: 2
-        status: in_progress
+        status: done
         repos: pennyfarthing
         branch: feat/MSSCI-12128-error-handling-actionable-messages
+        completed: "2026-01-22"
       - id: MSSCI-12129
         jira: MSSCI-12129
         title: "Theme integration (VS Code to Pennyfarthing)"
