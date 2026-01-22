@@ -3,8 +3,9 @@
 # These are researched and ready for prioritization when capacity allows
 # Updated: 2026-01-22
 #
-# Epic Numbering: 39-46, 53, 55 (next available: 57)
+# Epic Numbering: 39-46, 55 (next available: 57)
 # Note: Current sprint uses Jira IDs (MSSCI-XXXXX), these use legacy epic-N format
+# Note: Epic 53 in sprint as MSSCI-12122 (in progress)
 # Note: Epic 54 completed as MSSCI-12131 in Sprint 12
 
 # =============================================================================
@@ -376,135 +377,6 @@ future:
               repos: pennyfarthing
 
     # ==========================================================================
-    # VS CODE EXTENSION - UX Polish
-    # ==========================================================================
-    - name: "VS Code Extension Enhancement"
-      description: |
-        Follow-on work to Epic 52 (VS Code Extension).
-        VS Code needs UX polish and Cyclist integration.
-      status: ready
-      blocked_by: null
-      total_points: 18
-      epics:
-        # ======================================================================
-        # EPIC 53: VS Code Extension UX/UI Pass
-        # ======================================================================
-        - id: epic-53
-          title: "VS Code Extension UX/UI Pass"
-          description: |
-            Polish the VS Code extension shipped in Epic 52. Focus on:
-            - Clearer onboarding and discoverability
-            - Full integration with Cyclist skills, commands, workflows
-            - Improved chat formatting and streaming UX
-            - Visual polish for Gearshift and sidebar
-          points: 18
-          priority: P1
-          marker: "distribution"
-          repos: pennyfarthing
-          status: planning
-          stories:
-            - id: "53-1"
-              title: "Welcome view with onboarding flow"
-              description: |
-                Create VS Code welcome view that appears on first activation:
-                - Explain what Pennyfarthing is and how to use it
-                - Show available agents with descriptions
-                - Quick-start buttons for common workflows
-                - Link to full documentation
-              points: 2
-              priority: P0
-              status: planning
-              repos: pennyfarthing
-            - id: "53-2"
-              title: "Skills/commands discovery in sidebar"
-              description: |
-                Enhance sidebar tree view with skills and commands:
-                - Collapsible "Skills" section listing all available skills
-                - Collapsible "Commands" section with slash commands
-                - Click to invoke skill/command in chat
-                - Search/filter functionality
-                - Show skill descriptions on hover
-              points: 3
-              priority: P0
-              status: planning
-              repos: pennyfarthing
-            - id: "53-3"
-              title: "Workflow panel with status/progress"
-              description: |
-                Add workflow tracking to sidebar:
-                - Show active workflow name and type (phased/stepped)
-                - Display current step/phase with progress indicator
-                - Show completed vs remaining steps
-                - Quick actions: resume, abandon, view details
-              points: 3
-              priority: P1
-              status: planning
-              repos: pennyfarthing
-            - id: "53-4"
-              title: "Chat response formatting improvements"
-              description: |
-                Improve how Claude responses render in VS Code chat:
-                - Better code block syntax highlighting
-                - Collapsible tool use sections
-                - File path links that open in editor
-                - Markdown table rendering
-                - Progress indicators for long operations
-              points: 2
-              priority: P1
-              status: planning
-              repos: pennyfarthing
-            - id: "53-5"
-              title: "Gearshift visual polish and persistence"
-              description: |
-                Polish the Gearshift mode switcher:
-                - Clear visual indication of current mode
-                - Smooth transitions between modes
-                - Persist mode across sessions
-                - Tooltip explanations for each mode
-                - Keyboard shortcuts for mode switching
-              points: 2
-              priority: P1
-              status: planning
-              repos: pennyfarthing
-            - id: "53-6"
-              title: "Error handling with actionable messages"
-              description: |
-                Improve error UX throughout extension:
-                - User-friendly error messages (not raw stack traces)
-                - Actionable suggestions for common errors
-                - Retry buttons where appropriate
-                - Link to troubleshooting docs
-                - Error reporting mechanism
-              points: 2
-              priority: P2
-              status: planning
-              repos: pennyfarthing
-            - id: "53-7"
-              title: "Theme integration (VS Code to Pennyfarthing)"
-              description: |
-                Sync VS Code theme with Pennyfarthing webview:
-                - Detect VS Code light/dark mode
-                - Apply matching styles to Cyclist components
-                - Respect user's VS Code color customizations
-                - Handle theme changes in real-time
-              points: 2
-              priority: P2
-              status: planning
-              repos: pennyfarthing
-            - id: "53-8"
-              title: "Quick-pick for skill/workflow invocation"
-              description: |
-                Add VS Code quick-pick menus for common actions:
-                - Ctrl+Shift+P → "Pennyfarthing: Run Skill" → skill picker
-                - Ctrl+Shift+P → "Pennyfarthing: Start Workflow" → workflow picker
-                - Recently used skills/workflows at top
-                - Fuzzy search support
-              points: 2
-              priority: P2
-              status: planning
-              repos: pennyfarthing
-
-    # ==========================================================================
     # REPOSITORY OPTIMIZATION - Reduce Clone Times
     # ==========================================================================
     - name: "Repository Optimization"
@@ -749,15 +621,15 @@ future:
 # Initiative                      | Epics | Points | Status
 # --------------------------------|-------|--------|------------------
 # Benchmark Reliability           |   6   |   44   | research_complete
-# VS Code Extension Enhancement   |   1   |   18   | ready
 # Repository Optimization         |   1   |   13   | ready
 # Quality & Scale                 |   2   |   40   | backlog
 # --------------------------------|-------|--------|------------------
-# TOTAL                           |  10   |  115   |
+# TOTAL                           |   9   |   97   |
 #
-# Epic Numbering Used: 39-46, 53, 55
+# Epic Numbering Used: 39-46, 55
 # Next Available Epic Number: 57
 #
-# COMPLETED (moved to sprint):
+# IN SPRINT (moved from future):
+# - Epic 53: VS Code Extension UX/UI Pass (18 pts) → MSSCI-12122 (in progress)
 # - Epic 54: BikeLane BMAD Workflow Imports (38 pts) → MSSCI-12131 (done)
 # =============================================================================
