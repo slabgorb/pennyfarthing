@@ -141,10 +141,11 @@ REFLECT: I should clarify AC4 with the user before proceeding.
        then EXECUTE all steps described there. Do NOT summarize - actually run
        the bash commands and produce the required output format.
    ```
-2. Helper returns: `FINISH_STATE`, `NEW_WORK_STATE`, or `IN_PROGRESS_STATE`
+2. Helper returns: `FINISH_STATE`, `NEW_WORK_STATE`, `IN_PROGRESS_STATE`, or `EMPTY_BACKLOG_STATE`
 3. If `FINISH_STATE`: Proceed to Finish Story Flow
 4. If `NEW_WORK_STATE`: Proceed to New Work Flow
 5. If `IN_PROGRESS_STATE`: Report which agent should pick up, ask user what to do
+6. If `EMPTY_BACKLOG_STATE`: Suggest promoting stories from `future.yaml` (never suggest closing sprint)
 </on-activation>
 
 ## Step 1: Status Check (ALWAYS FIRST)
@@ -164,7 +165,7 @@ Task tool:
 ```
 
 **Helper returns:**
-- Detected state: `FINISH_STATE` | `NEW_WORK_STATE` | `IN_PROGRESS_STATE`
+- Detected state: `FINISH_STATE` | `NEW_WORK_STATE` | `IN_PROGRESS_STATE` | `EMPTY_BACKLOG_STATE`
 - Active work sessions (story, phase, status)
 - Git state (uncommitted changes, branches)
 - Agent guidance table
@@ -176,6 +177,9 @@ Task tool:
 | `FINISH_STATE` | Proceed to Finish Flow (Phase 1A) |
 | `NEW_WORK_STATE` | Proceed to New Work Flow (Phase 1B) |
 | `IN_PROGRESS_STATE` | Report which agent should pick up, ask user what to do |
+| `EMPTY_BACKLOG_STATE` | Suggest promoting stories from `future.yaml` |
+
+**Important:** Sprints are fixed two-week periods (kanban-style). Never suggest closing a sprint early or starting sprint planning when backlog is empty.
 
 ## Phase 1A: Finish Story Flow
 
@@ -263,6 +267,27 @@ git push origin develop
 ```
 
 **Note:** Sprint tracking files can be committed directly to develop.
+
+## Phase 1B-alt: Empty Backlog Flow
+
+> **Triggered when helper's status check returns `EMPTY_BACKLOG_STATE`**
+
+When sprint backlog is empty but the sprint period is still active:
+
+1. **Report status:** "Sprint backlog is empty. All stories are done or cancelled."
+2. **Suggest promotion:** "Would you like to promote stories from `future.yaml`?"
+3. **Show future work:**
+   ```bash
+   .pennyfarthing/scripts/run.sh sprint/list-future.sh
+   ```
+4. **If user wants to promote:** Use `/sprint promote {epic-id}` to move stories into the sprint
+
+**Never suggest:**
+- Closing the sprint early
+- Starting sprint planning
+- Any ceremony around "sprint completion"
+
+Sprints are fixed two-week periods. Work flows through kanban-style. If velocity is 20, it's 20. If velocity is 800, it's 800.
 
 ## Phase 1B: New Work Flow
 

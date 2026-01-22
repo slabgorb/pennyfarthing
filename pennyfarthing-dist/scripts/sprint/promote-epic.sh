@@ -1,5 +1,5 @@
 #!/bin/bash
-# Promote an epic from planning.yaml to current-sprint.yaml
+# Promote an epic from future.yaml to current-sprint.yaml
 # Usage: .pennyfarthing/scripts/run.sh sprint/promote-epic.sh <epic-id>
 #
 # Example: .pennyfarthing/scripts/run.sh sprint/promote-epic.sh epic-41
@@ -12,7 +12,7 @@ if [[ -z "$EPIC_ID" ]]; then
   echo "Usage: promote-epic.sh <epic-id>"
   echo "Example: promote-epic.sh epic-41"
   echo ""
-  echo "Moves an epic and its stories from planning.yaml to current-sprint.yaml"
+  echo "Moves an epic and its stories from future.yaml to current-sprint.yaml"
   exit 1
 fi
 
@@ -25,11 +25,11 @@ if [[ -z "${PROJECT_ROOT:-}" ]]; then
   PROJECT_ROOT="$d"
 fi
 
-PLANNING_FILE="$PROJECT_ROOT/sprint/planning.yaml"
+FUTURE_FILE="$PROJECT_ROOT/sprint/future.yaml"
 SPRINT_FILE="$PROJECT_ROOT/sprint/current-sprint.yaml"
 
-if [[ ! -f "$PLANNING_FILE" ]]; then
-  echo "Error: Planning file not found at $PLANNING_FILE"
+if [[ ! -f "$FUTURE_FILE" ]]; then
+  echo "Error: Future file not found at $FUTURE_FILE"
   exit 1
 fi
 
@@ -44,15 +44,15 @@ if ! command -v yq &> /dev/null; then
   exit 1
 fi
 
-# Find the epic in planning.yaml
-# Epics are nested under planning.initiatives[].epics[]
-EPIC_DATA=$(yq -o json ".planning.initiatives[].epics[] | select(.id == \"$EPIC_ID\")" "$PLANNING_FILE" 2>/dev/null || echo "")
+# Find the epic in future.yaml
+# Epics are nested under future.initiatives[].epics[]
+EPIC_DATA=$(yq -o json ".future.initiatives[].epics[] | select(.id == \"$EPIC_ID\")" "$FUTURE_FILE" 2>/dev/null || echo "")
 
 if [[ -z "$EPIC_DATA" || "$EPIC_DATA" == "null" ]]; then
-  echo "Error: Epic $EPIC_ID not found in $PLANNING_FILE"
+  echo "Error: Epic $EPIC_ID not found in $FUTURE_FILE"
   echo ""
   echo "Available epics:"
-  yq '.planning.initiatives[].epics[].id' "$PLANNING_FILE" 2>/dev/null || echo "  None found"
+  yq '.future.initiatives[].epics[].id' "$FUTURE_FILE" 2>/dev/null || echo "  None found"
   exit 1
 fi
 
@@ -155,10 +155,10 @@ echo "$FULL_EPIC_YAML" >> "$SPRINT_FILE"
 
 echo "Appended epic to $SPRINT_FILE"
 echo ""
-echo "To remove from planning.yaml, manually edit or use:"
-echo "  yq eval -i 'del(.planning.initiatives[].epics[] | select(.id == \"$EPIC_ID\"))' $PLANNING_FILE"
+echo "To remove from future.yaml, manually edit or use:"
+echo "  yq eval -i 'del(.future.initiatives[].epics[] | select(.id == \"$EPIC_ID\"))' $FUTURE_FILE"
 echo ""
 echo "Next steps:"
 echo "  1. Review the appended YAML in $SPRINT_FILE"
-echo "  2. Optionally create Jira epic: .pennyfarthing/scripts/run.sh create-jira-epic.sh $EPIC_ID"
-echo "  3. Remove from planning.yaml if desired"
+echo "  2. Optionally create Jira epic: .pennyfarthing/scripts/run.sh jira/create-jira-epic.sh $EPIC_ID"
+echo "  3. Remove from future.yaml if desired"
