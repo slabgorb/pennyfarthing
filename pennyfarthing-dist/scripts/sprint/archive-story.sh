@@ -1,17 +1,42 @@
 #!/bin/bash
 # Archive a completed story from current-sprint.yaml to the sprint archive
-# Usage: .pennyfarthing/scripts/run.sh sprint/archive-story.sh <story-id> [pr-number]
+# Usage: .pennyfarthing/scripts/run.sh sprint/archive-story.sh <story-id> [pr-number] [--apply]
 #
 # Example: .pennyfarthing/scripts/run.sh sprint/archive-story.sh MSSCI-11945 368
+#          .pennyfarthing/scripts/run.sh sprint/archive-story.sh MSSCI-11945 368 --apply
+#
+# Options:
+#   --apply    Also remove story from current-sprint.yaml (atomic operation)
 
 set -euo pipefail
 
 STORY_ID="${1:-}"
-PR_NUMBER="${2:-}"
+PR_NUMBER=""
+APPLY_FLAG=false
+
+# Parse positional and flag arguments
+shift || true
+for arg in "$@"; do
+  case $arg in
+    --apply)
+      APPLY_FLAG=true
+      ;;
+    *)
+      # If not a flag, it's the PR number
+      if [[ -z "$PR_NUMBER" ]]; then
+        PR_NUMBER="$arg"
+      fi
+      ;;
+  esac
+done
 
 if [[ -z "$STORY_ID" ]]; then
-  echo "Usage: archive-story.sh <story-id> [pr-number]"
+  echo "Usage: archive-story.sh <story-id> [pr-number] [--apply]"
   echo "Example: archive-story.sh MSSCI-11945 368"
+  echo "         archive-story.sh MSSCI-11945 368 --apply"
+  echo ""
+  echo "Options:"
+  echo "  --apply    Also remove story from current-sprint.yaml"
   exit 1
 fi
 
@@ -93,9 +118,18 @@ echo ""
 
 echo "Added to $ARCHIVE_FILE"
 
-# Remove from current sprint
-echo ""
-echo "Now remove the story from $SPRINT_FILE"
-echo "Use: yq eval -i 'del(.epics[].stories[] | select(.id == \"$STORY_ID\"))' $SPRINT_FILE"
-echo ""
-echo "If the epic has no more stories, also remove the epic section."
+# Remove from current sprint (if --apply)
+if $APPLY_FLAG; then
+  echo ""
+  echo "Removing story from current sprint..."
+  yq eval -i "del(.epics[].stories[] | select(.id == \"$STORY_ID\"))" "$SPRINT_FILE"
+  echo "✓ Story removed from $SPRINT_FILE"
+  echo ""
+  echo "If the epic has no more stories, you may want to remove the empty epic section."
+else
+  echo ""
+  echo "To also remove from $SPRINT_FILE, re-run with --apply:"
+  echo "  .pennyfarthing/scripts/run.sh sprint/archive-story.sh $STORY_ID ${PR_NUMBER:-<pr>} --apply"
+  echo ""
+  echo "Or manually: yq eval -i 'del(.epics[].stories[] | select(.id == \"$STORY_ID\"))' $SPRINT_FILE"
+fi

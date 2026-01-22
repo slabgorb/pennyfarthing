@@ -66,11 +66,14 @@ Other formats break Cyclist detection.
 ## Step 1: Check Epic Jira
 
 ```bash
+# Extract epic number from story ID
 EPIC_NUM=$(echo "{STORY_ID}" | cut -d'-' -f1)
-EPIC_JIRA=$(yq eval ".epics[] | select(.id == \"epic-${EPIC_NUM}\") | .jira" sprint/current-sprint.yaml)
+
+# Get epic's Jira key (use script, not direct yq)
+EPIC_JIRA=$(.pennyfarthing/scripts/run.sh sprint/get-epic-field.sh "$EPIC_NUM" jira)
 ```
 
-If missing: auto-create via `jira-epic-creation.ts`
+If missing or "null": auto-create via `jira-epic-creation.ts`
 
 ## Step 2: Check Workflow Permissions
 

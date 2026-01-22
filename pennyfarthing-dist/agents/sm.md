@@ -244,9 +244,18 @@ After preflight passes, use `/story finish`:
 .pennyfarthing/scripts/run.sh sprint/archive-story.sh {STORY_ID} {PR_NUMBER}
 ```
 
-### Step 3: Commit Archive (if needed)
+### Step 3: Commit Changes
 
-The script updates sprint YAML but doesn't commit. After script completes:
+<critical>
+**Never manually edit sprint YAML.** The `/story finish` script handles all YAML updates:
+- Sets status to `done`
+- Adds `completed` date
+- Removes `assigned_to`
+
+SM only commits the results.
+</critical>
+
+After script completes, commit the changes:
 ```bash
 git add sprint/archive/{JIRA_KEY}-session.md sprint/current-sprint.yaml
 git commit -m "chore(sprint): complete {STORY_ID}"
@@ -384,8 +393,8 @@ I also determine the workflow to use:
 
 **Extract workflow from sprint YAML:**
 ```bash
-# Get workflow tag for story X-Y
-yq '.epics[].stories[] | select(.id == "X-Y") | .workflow // "tdd"' sprint/current-sprint.yaml
+# Get workflow tag for story X-Y (use script, not direct yq)
+.pennyfarthing/scripts/run.sh sprint/get-story-field.sh X-Y workflow
 ```
 
 **Routing by workflow:**
@@ -404,8 +413,8 @@ yq '.epics[].stories[] | select(.id == "X-Y") | .workflow // "tdd"' sprint/curre
 
 **First, get the workflow tag from sprint YAML:**
 ```bash
-# Extract workflow for the selected story
-yq '.epics[].stories[] | select(.id == "X-Y") | .workflow // "tdd"' sprint/current-sprint.yaml
+# Extract workflow for the selected story (use script, not direct yq)
+.pennyfarthing/scripts/run.sh sprint/get-story-field.sh X-Y workflow
 ```
 
 Then spawn setup with the detected workflow:
