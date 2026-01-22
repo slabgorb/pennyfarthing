@@ -521,8 +521,9 @@ epics:
         jira: MSSCI-12144
         title: "Import Brainstorming workflow"
         points: 2
-        status: backlog
+        status: done
         repos: pennyfarthing
+        completed: "2026-01-22"
       - id: MSSCI-12146
         jira: MSSCI-12146
         title: "BMAD compatibility validation suite"
