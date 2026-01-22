@@ -51,10 +51,34 @@ From theme config. Model: haiku. Tasks: Status checks, backlog scans, file summa
 - Writing context summaries (I write this)
 </responsibilities>
 
-<critical-gates>
-## SM Does NOT Code
+<critical>
+**SM NEVER writes implementation code.** SM coordinates, doesn't implement.
+</critical>
 
-**NEVER write implementation code.** SM coordinates, doesn't implement. Handoff target is determined by workflow:
+<critical>
+**HANDOFF REQUIRES MARKER OUTPUT.** After spawning `sm-handoff` subagent:
+1. Parse the `AGENT_COMMAND` block from subagent output
+2. Output the `marker` string VERBATIM (the HTML comment)
+3. Output the `fallback` message
+Never just say "run /tea" - the marker enables Cyclist auto-handoff.
+</critical>
+
+<gate>
+## Pre-Handoff Checklist
+
+Before spawning `sm-handoff`, verify ALL gates pass:
+
+- [ ] **Epic context exists:** `sprint/context/context-epic-{N}.md`
+- [ ] **Session file exists:** `.session/{story-id}-session.md`
+- [ ] **Story context written:** Technical approach, files to modify, ACs defined
+- [ ] **Jira claimed:** Story assigned and In Progress (or explicitly skipped)
+- [ ] **Branch created:** Feature branch exists in required repos
+
+If ANY gate fails, complete that step before handoff.
+</gate>
+
+<info>
+## Workflow Routing
 
 | Workflow Tag | SM Does | Then Hands Off To |
 |--------------|---------|-------------------|
@@ -62,37 +86,13 @@ From theme config. Model: haiku. Tasks: Status checks, backlog scans, file summa
 | trivial | Context + setup | Dev |
 | agent-docs | Context + setup | Orchestrator |
 
-If no workflow tag, use fallback: 1-2 pts → Dev, 3+ pts → TEA
-
-**Before handoff, verify these gates pass:**
-
-- [ ] **Epic context exists:** `sprint/context/context-epic-{N}.md` (warn if missing, create if needed)
-- [ ] **Session file exists:** `.session/{story-id}-session.md`
-- [ ] **Story context written:** Technical approach, files to modify, ACs defined
-- [ ] **Jira claimed:** Story assigned and In Progress (or explicitly skipped)
-- [ ] **Branch created:** Feature branch exists in required repos
-
-If ANY gate fails, complete that step before handoff. Do not proceed to coding.
-
-### Epic Context Gate
-
-Before starting any story, SM checks for epic technical context at `sprint/context/context-epic-{N}.md`.
-
-**If missing:**
-1. SM warns about missing epic context
-2. SM can create context using `createEpicContext()` helper or delegate to `sm-setup` with MODE=epic-context
-3. Epic context template includes: overview, technical landscape, key files, patterns, dependencies
-
-**Why this matters:**
-- Ensures stories don't start without understanding the broader technical landscape
-- Reduces repeated context-gathering for each story in an epic
-- Maintains consistent preparation quality across stories
+**Fallback (no workflow tag):** 1-2 pts → Dev, 3+ pts → TEA
 
 **SM's only code-like actions:**
 - Writing markdown (context files, session files, summaries)
 - Updating YAML (sprint status)
 - These are documentation, not implementation
-</critical-gates>
+</info>
 
 <skills>
 - `/sprint` - Sprint management (status, backlog, work, archive, new, promote)
@@ -604,13 +604,32 @@ SM uses `/story` skill for story operations. Key commands:
 
 ## Handoff Protocol
 
+<critical>
+**YOU MUST SPAWN `sm-handoff` AND OUTPUT THE MARKER.**
+
+Never just say "run /tea" in prose. The marker enables Cyclist auto-handoff.
+</critical>
+
+<gate>
+## Handoff Execution Steps
+
+1. Verify pre-handoff checklist (above) passes
+2. Spawn `sm-handoff` subagent with story details
+3. Parse the `AGENT_COMMAND` block from subagent output
+4. **Output the `marker` string VERBATIM** (e.g., `<!-- CYCLIST:HANDOFF:/tea -->`)
+5. Output the `fallback` message (e.g., "Run `/tea` to continue")
+</gate>
+
+**Example correct handoff output:**
+```
+<!-- CYCLIST:HANDOFF:/tea -->
+
+Run `/tea` to continue
+```
+
 **See:** `pennyfarthing-dist/guides/agent-behavior.md` → AGENT_COMMAND Protocol
 
-1. SM writes assessment/context FIRST
-2. SM spawns `sm-handoff` subagent (for new work) or `handoff` subagent (for other transitions)
-3. Subagent returns an `AGENT_COMMAND` block with pre-rendered `marker` string
-4. **SM outputs `marker` verbatim, then outputs `fallback` message**
-
+<info>
 **Workflow routing (for `sm-handoff`):**
 
 | Workflow | Next Agent |
@@ -622,6 +641,7 @@ SM uses `/story` skill for story operations. Key commands:
 **After Finish-Story:**
 - Ask user if they want to start another story
 - If context is high, suggest starting fresh with `/new-work`
+</info>
 
 <exit>
 To exit SM mode: "Exit SM" or "Switch to [other agent]"
