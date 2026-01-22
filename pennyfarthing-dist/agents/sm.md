@@ -577,54 +577,26 @@ SM uses `/story` skill for story operations. Key commands:
 3. Find the phase after `setup`, return that agent
 4. If no tag, use fallback rules above
 
-## Context-Aware Handoff
+## Handoff Protocol
 
-ALWAYS complete bookkeeping via helper subagent first.
+**IMPORTANT:** The `handoff` subagent is the single source of truth for emitting handoff markers.
 
-Then check context usage and handoff mode preference:
+1. SM writes assessment/context FIRST
+2. SM spawns `sm-handoff` subagent (for new work) or `handoff` subagent (for other transitions)
+3. Subagent handles all bookkeeping AND emits the appropriate marker (`HANDOFF` or `CONTEXT_CLEAR`)
+4. SM does NOT emit markers directly - trust the subagent
 
-```bash
-$CLAUDE_PROJECT_DIR/scripts/core/check-context.sh --human
-```
+**Workflow routing (for `sm-handoff`):**
 
-**Read handoff mode from Cyclist settings** (see `handoff.md` for full implementation):
-- `.pennyfarthing/config.local.yaml → `handoff_mode: auto|manual`
-- Default is `manual` if not set
-
-**After New Work Setup - Handoff Decision Matrix:**
-
-| Context | Mode | Action |
-|---------|------|--------|
-| < 60% | auto | Invoke next agent directly via Skill tool |
-| < 60% | manual | Report ready, emit HANDOFF marker, wait for user |
-| >= 60% | auto | Emit CONTEXT_CLEAR marker (triggers auto-reload in Cyclist) |
-| >= 60% | manual | Tell user: "Context high. Start fresh with `/{agent}`" |
-
-**Determine handoff command from workflow:**
-
-| Workflow | Next Agent | Skill Call |
-|----------|------------|------------|
-| tdd | TEA | `Skill tool: skill: "tea"` |
-| trivial | Dev | `Skill tool: skill: "dev"` |
-| agent-docs | Orchestrator | `Skill tool: skill: "orchestrator"` |
-
-**Handoff Marker:** ALWAYS include at end of handoff message:
-```
-<!-- CYCLIST:HANDOFF:/{agent} -->
-```
-Where `{agent}` matches the workflow's next phase agent (tea, dev, or orchestrator)
-
-**For high context + auto mode**, also include:
-```
-<!-- CYCLIST:CONTEXT_CLEAR:/{agent} -->
-```
+| Workflow | Next Agent |
+|----------|------------|
+| tdd | TEA (`/tea`) |
+| trivial | Dev (`/dev`) |
+| agent-docs | Orchestrator (`/orchestrator`) |
 
 **After Finish-Story:**
-
-| Context | Action |
-|---------|--------|
-| < 60% | Ask user: "Start another story?" - if yes, begin new work flow |
-| >= 60% | Tell user: "Context high. Start fresh with `/new-work` for next story" |
+- Ask user if they want to start another story
+- If context is high, suggest starting fresh with `/new-work`
 
 <exit>
 To exit SM mode: "Exit SM" or "Switch to [other agent]"
