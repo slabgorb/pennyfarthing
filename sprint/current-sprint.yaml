@@ -9,8 +9,8 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 127
-  completed_points: 112
-  remaining_points: 15
+  completed_points: 121
+  remaining_points: 6
   notes: |
     Sprint 12 includes work from multiple epics that were tracked in Jira but
     not in local sprint YAML. This file has been reconciled with Jira Sprint 276.
@@ -22,10 +22,10 @@ summary:
     - MSSCI-11952: Skill Frontmatter Enhancement (13 stories, all done)
     - MSSCI-12042: VS Code Extension (9 stories, all done)
     - MSSCI-12077: Stepped Workflow Support (9 stories, all done)
+    - MSSCI-12131: BikeLane BMAD Workflow Imports (15 stories, all done)
 
     In Progress Epics:
     - MSSCI-12122: VS Code Extension UX/UI Pass (5 done, 3 to do)
-    - MSSCI-12131: BikeLane BMAD Workflow Imports (11 done, 5 to do)
 epics:
   # ===========================================================================
   # EPIC: Runtime Permission Management (MSSCI-11705) - COMPLETE
@@ -416,7 +416,7 @@ epics:
         status: backlog
         repos: pennyfarthing
   # ===========================================================================
-  # EPIC: BikeLane BMAD Workflow Imports (MSSCI-12131) - IN PROGRESS
+  # EPIC: BikeLane BMAD Workflow Imports (MSSCI-12131) - COMPLETE
   # ===========================================================================
   - id: MSSCI-12131
     type: epic
@@ -426,9 +426,9 @@ epics:
       Import all BMAD workflows into Pennyfarthing's BikeLane stepped workflow
       system. Goal: full BMAD compatibility.
     points: 40
-    completed_points: 31
+    completed_points: 40
     priority: P1
-    status: in_progress
+    status: done
     stories:
       - id: MSSCI-12132
         jira: MSSCI-12132

@@ -3,8 +3,9 @@
 # These are researched and ready for prioritization when capacity allows
 # Updated: 2026-01-22
 #
-# Epic Numbering: 39-56 (next available: 57)
+# Epic Numbering: 39-46, 53, 55 (next available: 57)
 # Note: Current sprint uses Jira IDs (MSSCI-XXXXX), these use legacy epic-N format
+# Note: Epic 54 completed as MSSCI-12131 in Sprint 12
 
 # =============================================================================
 # BENCHMARK RELIABILITY - Scientific Evaluation
@@ -375,16 +376,15 @@ future:
               repos: pennyfarthing
 
     # ==========================================================================
-    # VS CODE & BIKELANE - Follow-on Epics
+    # VS CODE EXTENSION - UX Polish
     # ==========================================================================
-    - name: "VS Code & BikeLane Enhancement"
+    - name: "VS Code Extension Enhancement"
       description: |
-        Follow-on work to Epic 52 (VS Code Extension) and Epic 51 (Stepped Workflows).
-        VS Code needs UX polish and Cyclist integration. BikeLane needs full BMAD
-        workflow compatibility.
+        Follow-on work to Epic 52 (VS Code Extension).
+        VS Code needs UX polish and Cyclist integration.
       status: ready
       blocked_by: null
-      total_points: 56
+      total_points: 18
       epics:
         # ======================================================================
         # EPIC 53: VS Code Extension UX/UI Pass
@@ -500,214 +500,6 @@ future:
                 - Recently used skills/workflows at top
                 - Fuzzy search support
               points: 2
-              priority: P2
-              status: planning
-              repos: pennyfarthing
-
-        # ======================================================================
-        # EPIC 54: BikeLane BMAD Workflow Imports
-        # ======================================================================
-        - id: epic-54
-          title: "BikeLane BMAD Workflow Imports"
-          description: |
-            Import all BMAD workflows into Pennyfarthing's BikeLane stepped workflow
-            system. Goal: full BMAD compatibility - any BMAD workflow should run
-            unchanged in Pennyfarthing.
-
-            Source: ~/Projects/BMAD-METHOD/src/modules/bmm/workflows/
-            Target: pennyfarthing-dist/workflows/
-
-            Phases:
-            1. Migration tooling and PRD workflow
-            2. Solutioning workflows (architecture, epics)
-            3. Implementation workflows (dev, sprint, retro)
-            4. Utility workflows and validation
-          points: 38
-          priority: P1
-          marker: "workflow"
-          repos: pennyfarthing
-          status: planning
-          stories:
-            # Phase 1: Foundation + PRD
-            - id: "54-1"
-              title: "BMAD to Pennyfarthing migration script"
-              description: |
-                Create migration tool that converts BMAD workflow format to
-                Pennyfarthing stepped workflow format:
-                - Parse BMAD step files (step-NN-*.md)
-                - Extract step-meta if present, infer if not
-                - Convert variable syntax if needed
-                - Generate workflow.yaml with correct schema
-                - Preserve tri-modal structure (steps-c, steps-v, steps-e)
-                Script: pennyfarthing-dist/scripts/migrate-bmad-workflow.sh
-              points: 3
-              priority: P0
-              status: planning
-              repos: pennyfarthing
-            - id: "54-2"
-              title: "Import PRD workflow (all 3 modes)"
-              description: |
-                Import BMAD PRD (Product Requirements Document) workflow:
-                - Source: bmm/workflows/2-plan-workflows/prd/
-                - 12 create steps, validate steps, edit steps
-                - Gates after discovery, scoping, and completion
-                - Template for PRD output document
-                First major workflow import - validates migration approach.
-              points: 5
-              priority: P0
-              status: planning
-              repos: pennyfarthing
-            - id: "54-3"
-              title: "Import Product Brief workflow"
-              description: |
-                Import BMAD product brief workflow:
-                - Source: bmm/workflows/1-analysis/create-product-brief/
-                - Quick product definition before full PRD
-                - Single-mode workflow (create only)
-              points: 2
-              priority: P0
-              status: planning
-              repos: pennyfarthing
-            - id: "54-4"
-              title: "Import Research workflow"
-              description: |
-                Import BMAD research workflow:
-                - Source: bmm/workflows/1-analysis/research/
-                - Structured research and discovery process
-                - Feeds into product brief and PRD
-              points: 2
-              priority: P0
-              status: planning
-              repos: pennyfarthing
-            # Phase 2: Solutioning
-            - id: "54-5"
-              title: "Enhance Architecture workflow from BMAD"
-              description: |
-                Enhance existing architecture workflow with BMAD patterns:
-                - Source: bmm/workflows/3-solutioning/ (if exists)
-                - Compare with our 7-step architecture workflow
-                - Add any missing steps or gates
-                - Ensure compatibility with BMAD projects
-              points: 2
-              priority: P1
-              status: planning
-              repos: pennyfarthing
-            - id: "54-6"
-              title: "Import Epics-and-Stories workflow"
-              description: |
-                Import BMAD epic/story generation workflow:
-                - Converts PRD into actionable epics and stories
-                - Structured breakdown process
-                - Output format compatible with sprint YAML
-              points: 3
-              priority: P1
-              status: planning
-              repos: pennyfarthing
-            - id: "54-7"
-              title: "Import Implementation Readiness workflow"
-              description: |
-                Import BMAD implementation readiness check:
-                - Validates project is ready for development
-                - Checklist of prerequisites
-                - Gate before dev work begins
-              points: 2
-              priority: P1
-              status: planning
-              repos: pennyfarthing
-            - id: "54-8"
-              title: "Import UX Design workflow"
-              description: |
-                Import BMAD UX design workflow:
-                - Source: bmm/workflows/2-plan-workflows/ (if exists)
-                - User journey mapping
-                - Wireframe/mockup guidance
-                - Design system integration
-              points: 3
-              priority: P1
-              status: planning
-              repos: pennyfarthing
-            # Phase 3: Implementation
-            - id: "54-9"
-              title: "Import Dev-Story workflow"
-              description: |
-                Import BMAD dev-story workflow:
-                - Source: bmm/workflows/4-implementation/dev-story/
-                - Story implementation guidance
-                - TDD integration points
-                - Compare with our existing TDD flow
-              points: 3
-              priority: P2
-              status: planning
-              repos: pennyfarthing
-            - id: "54-10"
-              title: "Import Sprint Planning workflow"
-              description: |
-                Import BMAD sprint planning workflow:
-                - Source: bmm/workflows/4-implementation/sprint-planning/
-                - Structured planning ceremony
-                - Capacity and velocity considerations
-                - Story selection process
-              points: 2
-              priority: P2
-              status: planning
-              repos: pennyfarthing
-            - id: "54-11"
-              title: "Import Retrospective workflow"
-              description: |
-                Import BMAD retrospective workflow:
-                - Source: bmm/workflows/4-implementation/retrospective/
-                - Structured retro ceremony
-                - Action item tracking
-                - Team improvement focus
-              points: 2
-              priority: P2
-              status: planning
-              repos: pennyfarthing
-            - id: "54-12"
-              title: "Import Code Review workflow"
-              description: |
-                Import BMAD code review workflow:
-                - Source: bmm/workflows/4-implementation/code-review/
-                - Structured review process
-                - Compare with our Reviewer agent
-                - Identify integration points
-              points: 2
-              priority: P2
-              status: planning
-              repos: pennyfarthing
-            # Phase 4: Utilities
-            - id: "54-13"
-              title: "Import Brainstorming workflow"
-              description: |
-                Import BMAD brainstorming/party-mode workflow:
-                - Source: bmm/workflows/bmad-quick-flow/ or similar
-                - Unstructured creative exploration
-                - Multi-agent collaboration mode
-              points: 2
-              priority: P2
-              status: planning
-              repos: pennyfarthing
-            - id: "54-14"
-              title: "Import Project Context generation workflow"
-              description: |
-                Import BMAD project context workflow:
-                - Source: bmm/workflows/generate-project-context/
-                - Automated context document generation
-                - Codebase analysis and summarization
-              points: 2
-              priority: P2
-              status: planning
-              repos: pennyfarthing
-            - id: "54-15"
-              title: "BMAD compatibility validation suite"
-              description: |
-                Create validation suite to ensure BMAD compatibility:
-                - Test each imported workflow runs correctly
-                - Verify variable resolution works
-                - Check gate behavior matches BMAD
-                - Document any intentional differences
-                - Create compatibility matrix
-              points: 3
               priority: P2
               status: planning
               repos: pennyfarthing
@@ -957,12 +749,15 @@ future:
 # Initiative                      | Epics | Points | Status
 # --------------------------------|-------|--------|------------------
 # Benchmark Reliability           |   6   |   44   | research_complete
-# VS Code & BikeLane Enhancement  |   2   |   56   | ready
+# VS Code Extension Enhancement   |   1   |   18   | ready
 # Repository Optimization         |   1   |   13   | ready
 # Quality & Scale                 |   2   |   40   | backlog
 # --------------------------------|-------|--------|------------------
-# TOTAL                           |  11   |  153   |
+# TOTAL                           |  10   |  115   |
 #
-# Epic Numbering Used: 39-46, 53-55
+# Epic Numbering Used: 39-46, 53, 55
 # Next Available Epic Number: 57
+#
+# COMPLETED (moved to sprint):
+# - Epic 54: BikeLane BMAD Workflow Imports (38 pts) → MSSCI-12131 (done)
 # =============================================================================
