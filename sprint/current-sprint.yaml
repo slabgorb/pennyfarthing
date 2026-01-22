@@ -528,8 +528,9 @@ epics:
         jira: MSSCI-12146
         title: "BMAD compatibility validation suite"
         points: 3
-        status: backlog
+        status: done
         repos: pennyfarthing
+        completed: "2026-01-22"
   # ===========================================================================
   # Standalone Stories (no epic parent in Jira)
   # ===========================================================================
