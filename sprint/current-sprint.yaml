@@ -8,10 +8,10 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 127
+  total_points: 143
   completed_points: 121
   cancelled_points: 6
-  remaining_points: 0
+  remaining_points: 16
   notes: |
     Sprint 12 includes work from multiple epics that were tracked in Jira but
     not in local sprint YAML. This file has been reconciled with Jira Sprint 276.
@@ -535,14 +535,76 @@ epics:
         repos: pennyfarthing
         completed: "2026-01-22"
   # ===========================================================================
+  # EPIC: Glanceable Status Awareness (epic-56) - IN PROGRESS
+  # ===========================================================================
+  - id: epic-56
+    type: epic
+    title: "Epic: Glanceable Status Awareness"
+    description: |
+      Users can monitor their Pennyfarthing session at a glance without clicking
+      anything - context level, permission mode, and active model are always
+      visible in the status bar. Includes WheelHub connection infrastructure.
+      FRs: FR1-5 (status bar), FR16-19 (WheelHub integration)
+    points: 13
+    completed_points: 0
+    priority: P0
+    status: in_progress
+    marker: vscode
+    repos: pennyfarthing
+    jira: MSSCI-12226
+    stories:
+      - id: "56-1"
+        jira: MSSCI-12227
+        title: "WheelHub Connection Infrastructure"
+        description: |
+          Extension connects to WheelHub WebSocket on activation, subscribes to
+          /context, /agent, /gearshift, /story channels. Graceful degradation
+          with "Connecting..." state and 2-second retry interval.
+        points: 5
+        priority: P0
+        status: done
+        completed: 2026-01-22
+        repos: pennyfarthing
+      - id: "56-2"
+        jira: MSSCI-12228
+        title: "Context Meter Status Bar Item"
+        description: |
+          Display context usage in status bar: `CONTEXT: 54k (31%)`
+          Color states: green (<60%), yellow (60-80%), red (>80%)
+          Updates within 1 second of WheelHub event.
+        points: 3
+        priority: P0
+        status: backlog
+        repos: pennyfarthing
+      - id: "56-3"
+        jira: MSSCI-12229
+        title: "Gearshift Mode Status Bar Item"
+        description: |
+          Display current permission mode: PLAN, MANUAL, ACCEPT, or TURBO.
+          Updates within 1 second of WheelHub /gearshift event.
+        points: 2
+        priority: P0
+        status: backlog
+        repos: pennyfarthing
+      - id: "56-4"
+        jira: MSSCI-12230
+        title: "Model Indicator Status Bar Item"
+        description: |
+          Display active Claude model (e.g., OPUS 4-5) in status bar.
+          Updates on session start via WheelHub /model channel.
+        points: 3
+        priority: P0
+        status: backlog
+        repos: pennyfarthing
+  # ===========================================================================
   # Standalone Stories (no epic parent in Jira)
   # ===========================================================================
   - id: standalone
     type: misc
     title: "Standalone Stories"
-    points: 3
+    points: 6
     completed_points: 3
-    status: done
+    status: in_progress
     stories:
       - id: MSSCI-11799
         jira: MSSCI-11799
@@ -550,3 +612,13 @@ epics:
         points: 3
         status: done
         completed: 2026-01-17
+      - id: MSSCI-12235
+        jira: MSSCI-12235
+        title: "Cyclist environment detection and reflector refinement"
+        description: |
+          Add reliable detection for whether Claude Code is running inside Cyclist
+          (for autohandoff support). Refine reflector code for better integration.
+        points: 3
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
