@@ -780,7 +780,6 @@ epics:
         priority: P2
         status: done
         repos: pennyfarthing
-        assigned_to: Keith Avery
         branch: feat/MSSCI-12275-bell-mode
         workflow: tdd
         completed: "2026-01-22"
