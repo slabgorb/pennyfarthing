@@ -8,10 +8,10 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 143
+  total_points: 146
   completed_points: 124
   cancelled_points: 6
-  remaining_points: 13
+  remaining_points: 16
   notes: |
     Sprint 12 includes work from multiple epics that were tracked in Jira but
     not in local sprint YAML. This file has been reconciled with Jira Sprint 276.
@@ -602,9 +602,9 @@ epics:
   - id: standalone
     type: misc
     title: "Standalone Stories"
-    points: 6
+    points: 9
     completed_points: 6
-    status: done
+    status: in_progress
     stories:
       - id: MSSCI-11799
         jira: MSSCI-11799
@@ -622,4 +622,16 @@ epics:
         priority: P1
         status: done
         completed: 2026-01-22
+        repos: pennyfarthing
+      - id: MSSCI-12274
+        jira: MSSCI-12274
+        title: "Support images in queued messages via base64 encoding"
+        description: |
+          When a user pastes an image and submits while Claude is processing,
+          the image data is lost because the message queue only stores text strings.
+          Extend the queue to store message objects with both text and images array,
+          preserving base64-encoded image data for deferred submission.
+        points: 3
+        priority: P1
+        status: backlog
         repos: pennyfarthing
