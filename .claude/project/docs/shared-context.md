@@ -181,3 +181,90 @@ window.electronAPI.xxx.onUpdate(cb)    // Subscribe to updates
 ```
 
 See `.claude/project/agents/dev-sidecar/gotchas.md` for IPC registration gotchas.
+
+## BMAD Architecture Review (2026-01-19)
+
+A comprehensive brownfield discovery using BMAD methodology has been completed. Key outputs:
+
+### Documentation Generated
+
+| Document | Purpose |
+|----------|---------|
+| `_bmad-output/project-overview.md` | Executive summary, business purpose |
+| `_bmad-output/architecture-patterns.md` | Code patterns and conventions |
+| `_bmad-output/agent-architecture.md` | Agent hierarchy and subagent system |
+| `_bmad-output/critical-rules.md` | 15 implementation rules with consequences |
+| `_bmad-output/ai-guidance.md` | Do's, don'ts, and common tasks |
+| `_bmad-output/development-guide.md` | Local setup and workflow |
+
+### ADRs Created
+
+Six new Architecture Decision Records were created from the BMAD review:
+
+- **ADR-0005**: Single Source of Truth via Symlinks
+- **ADR-0006**: State Detection Over Explicit Commands
+- **ADR-0007**: Subagent Delegation Model (Opus/Haiku Split)
+- **ADR-0008**: Result Object Error Handling
+- **ADR-0009**: Session File Coordination Protocol
+- **ADR-0010**: ESM Module Requirements
+
+### Critical Patterns Documented
+
+1. **Function Naming Conventions**
+   - `parse*` - Parse/transform data
+   - `extract*` - Pull data from structures
+   - `ensure*` - Guarantee state/existence
+   - `is*` / `check*` - Boolean checks
+   - `find*` - Search operations
+   - `create*` / `build*` - Construction
+
+2. **File Structure Convention**
+   - JSDoc header with story reference
+   - Imports (node built-ins, third-party, project)
+   - Types section
+   - Helper functions section
+   - Main export section
+
+3. **Anti-Patterns to Avoid**
+   - Throwing exceptions for business errors (use result objects)
+   - Modifying symlinked directories (modify pennyfarthing-dist/)
+   - Blocking on subagent results (use background when possible)
+   - Writing assessment after handoff (must be before)
+
+### Data Flow Patterns
+
+**Configuration Cascade:**
+```
+1. pennyfarthing-dist/defaults     # Distributed defaults
+2. .pennyfarthing/config.local.yaml # User theme override
+3. Environment variables            # Runtime overrides
+4. CLI arguments                    # Invocation overrides
+```
+
+**Sprint Data Flow:**
+```
+sprint/current-sprint.yaml → SM reads → Story selected →
+.session/{id}-session.md created → Agents modify →
+SM finish → Sprint YAML updated → Session archived
+```
+
+**Cyclist Data Flow:**
+```
+Claude Code → OTLP spans → otlp-receiver.ts →
+enriched-span-exporter.ts → WebSocket → Frontend UI
+```
+
+## Quick Reference Card
+
+```
+MODIFY:    pennyfarthing-dist/
+DON'T:     .claude/*, .pennyfarthing/agents|guides|personas|scripts/
+IMPORTS:   Always use .js extension
+ERRORS:    Return {success, error}, don't throw
+TESTS:     core/*.test.ts, cyclist/B-*.test.ts
+BUILD:     npm run build (commits dist/)
+SUBAGENTS: model: haiku
+CONTEXT:   Check with check-context.sh
+HANDOFF:   Write assessment FIRST
+MARKERS:   CYCLIST:HANDOFF:/agent
+```
