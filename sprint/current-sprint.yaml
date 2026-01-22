@@ -1305,11 +1305,14 @@ epics:
           Updates within 1 second of WheelHub event.
         points: 3
         priority: P0
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: tdd
         jira: MSSCI-12191
         acceptance_criteria: []
+        completed: "2026-01-21"
+        delivered_in: MSSCI-12190
+        notes: Implemented as part of WheelHub Connection Infrastructure
       - id: MSSCI-12192
         title: "Gearshift Mode Status Bar Item"
         description: |

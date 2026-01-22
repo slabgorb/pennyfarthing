@@ -29,6 +29,8 @@ export interface StatsData {
   context?: {
     usablePercent: number;
   };
+  /** Permission mode for gearshift status bar (MSSCI-12192) */
+  mode?: 'plan' | 'manual' | 'accept' | 'turbo';
   sprint?: {
     totalPoints: number;
     completedPoints: number;
