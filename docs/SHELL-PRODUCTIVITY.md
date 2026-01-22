@@ -115,22 +115,22 @@ checkpoint_clear         # Remove all
 
 ```bash
 # Human-readable context status
-.pennyfarthing/scripts/check-context.sh --human
+.pennyfarthing/scripts/core/check-context.sh --human
 
 # Load into environment variables
-eval $(.pennyfarthing/scripts/check-context.sh)
+eval $(.pennyfarthing/scripts/core/check-context.sh)
 echo "Context: $CONTEXT_PERCENT% ($CONTEXT_TOKENS tokens)"
 echo "Status: $CONTEXT_STATUS"
 
 # Check specific session
-.pennyfarthing/scripts/check-context.sh --session <session-id>
+.pennyfarthing/scripts/core/check-context.sh --session <session-id>
 ```
 
 ### Quick Aliases
 
 ```bash
 # Context check alias
-alias ctx='.pennyfarthing/scripts/check-context.sh --human'
+alias ctx='.pennyfarthing/scripts/core/check-context.sh --human'
 
 # Doctor alias
 alias pfd='pennyfarthing doctor'
@@ -336,7 +336,7 @@ jq -n \
 pennyfarthing doctor --fix
 
 # Context status
-.pennyfarthing/scripts/check-context.sh --human
+.pennyfarthing/scripts/core/check-context.sh --human
 
 # Recent checkpoints
 source .pennyfarthing/scripts/utils/checkpoint.sh && checkpoint_list
@@ -356,7 +356,7 @@ find .claude -type l ! -exec test -e {} \; -print
 # Pennyfarthing shortcuts
 alias pf='pennyfarthing'
 alias pfd='pennyfarthing doctor'
-alias ctx='.pennyfarthing/scripts/check-context.sh --human'
+alias ctx='.pennyfarthing/scripts/core/check-context.sh --human'
 
 # Git shortcuts for sessions
 alias gs='git status -s'
@@ -416,7 +416,7 @@ alias pfdf='pennyfarthing doctor --fix'
 
 # Context monitoring
 ctx() {
-  local script="${CLAUDE_PROJECT_DIR:-.}/.pennyfarthing/scripts/check-context.sh"
+  local script="${CLAUDE_PROJECT_DIR:-.}/.pennyfarthing/scripts/core/check-context.sh"
   [[ -x "$script" ]] && "$script" --human || echo "Not in a Pennyfarthing project"
 }
 

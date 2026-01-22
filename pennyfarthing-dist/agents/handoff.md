@@ -145,7 +145,7 @@ No automated checks. Always passes.
 
 6. **Check context and determine handoff type:**
    ```bash
-   eval "$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check-context.sh)"
+   eval "$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/check-context.sh)"
    # USE_TIREPUMP=true means: turbo mode + context >60%
    # CONTEXT_PERCENT, PERMISSION_MODE also available
    ```
