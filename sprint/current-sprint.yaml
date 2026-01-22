@@ -1105,11 +1105,13 @@ epics:
           - Design system integration
         points: 3
         priority: P1
-        status: backlog
+        status: done
+        branch: feat/MSSCI-12139-ux-design-workflow
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
         jira: MSSCI-12139
+        completed: "2026-01-22"
       - id: MSSCI-12140
         title: "Import Dev-Story workflow"
         description: |
