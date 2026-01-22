@@ -1,5 +1,6 @@
 /**
  * MSSCI-12190: StatusBarManager - WheelHub Connection Infrastructure
+ * MSSCI-12192: Gearshift Mode Status Bar Item
  *
  * Orchestrates VS Code status bar items for Pennyfarthing extension.
  * Manages connection state and subscribes to WheelHub stats updates.
@@ -11,12 +12,15 @@ import type { WebSocketManager, StatsData } from '../server/websocket-manager';
 /** Connection state for WheelHub */
 export type ConnectionState = 'connecting' | 'connected' | 'disconnected';
 
+/** Permission mode type */
+type PermissionMode = 'plan' | 'manual' | 'accept' | 'turbo';
+
 /** Callback for retry events */
 type RetryCallback = () => void;
 
 /**
  * Manages status bar items for the Pennyfarthing VS Code extension.
- * Displays context usage, connection state, and handles retry logic.
+ * Displays context usage, gearshift mode, connection state, and handles retry logic.
  */
 export class StatusBarManager implements vscode.Disposable {
   /** Marker for identifying this disposable in subscriptions */
@@ -24,6 +28,9 @@ export class StatusBarManager implements vscode.Disposable {
 
   /** Status bar item for context display */
   private contextItem: vscode.StatusBarItem;
+
+  /** Status bar item for gearshift mode display (MSSCI-12192) */
+  private gearshiftItem: vscode.StatusBarItem;
 
   /** Subscription cleanup function for WebSocketManager */
   private statsUnsubscribe?: () => void;
@@ -43,6 +50,9 @@ export class StatusBarManager implements vscode.Disposable {
   /** Last known context data */
   private lastContext?: { usablePercent: number; tokens?: number };
 
+  /** Last known permission mode */
+  private lastMode?: PermissionMode;
+
   /**
    * Create a new StatusBarManager.
    * @param wsManager Optional WebSocketManager for stats subscription
@@ -54,9 +64,17 @@ export class StatusBarManager implements vscode.Disposable {
       100
     );
 
+    // Create gearshift status bar item with priority 99 (right of context)
+    this.gearshiftItem = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Left,
+      99
+    );
+
     // Set initial connecting state
     this.updateContextDisplay();
+    this.updateGearshiftDisplay();
     this.contextItem.show();
+    this.gearshiftItem.show();
 
     // Subscribe to stats if WebSocketManager provided
     if (wsManager) {
@@ -90,6 +108,15 @@ export class StatusBarManager implements vscode.Disposable {
           tokens: typeof tokens === 'number' ? tokens : undefined,
         };
         this.updateContextDisplay();
+      }
+    }
+
+    // Extract mode data if present (MSSCI-12192)
+    if (data.mode) {
+      const validModes: PermissionMode[] = ['plan', 'manual', 'accept', 'turbo'];
+      if (validModes.includes(data.mode as PermissionMode)) {
+        this.lastMode = data.mode as PermissionMode;
+        this.updateGearshiftDisplay();
       }
     }
   }
@@ -162,6 +189,36 @@ export class StatusBarManager implements vscode.Disposable {
   }
 
   /**
+   * Update the gearshift status bar item display (MSSCI-12192).
+   */
+  private updateGearshiftDisplay(): void {
+    if (this.disposed) return;
+
+    switch (this.connectionState) {
+      case 'connecting':
+        this.gearshiftItem.text = '--';
+        this.gearshiftItem.tooltip = 'Waiting for WheelHub connection';
+        break;
+
+      case 'disconnected':
+        this.gearshiftItem.text = '--';
+        this.gearshiftItem.tooltip = 'WheelHub disconnected - mode unavailable';
+        break;
+
+      case 'connected':
+        if (this.lastMode) {
+          // Display mode in uppercase
+          this.gearshiftItem.text = this.lastMode.toUpperCase();
+          this.gearshiftItem.tooltip = `Permission mode: ${this.lastMode}`;
+        } else {
+          this.gearshiftItem.text = 'MANUAL';
+          this.gearshiftItem.tooltip = 'Permission mode: manual (default)';
+        }
+        break;
+    }
+  }
+
+  /**
    * Set the connection state and update display accordingly.
    * @param state The new connection state
    */
@@ -198,10 +255,12 @@ export class StatusBarManager implements vscode.Disposable {
 
         // Update display to show retry attempt
         this.updateContextDisplay();
+        this.updateGearshiftDisplay();
       }, 2000);
     }
 
     this.updateContextDisplay();
+    this.updateGearshiftDisplay();
   }
 
   /**
@@ -257,5 +316,6 @@ export class StatusBarManager implements vscode.Disposable {
 
     // Dispose status bar items
     this.contextItem.dispose();
+    this.gearshiftItem.dispose();
   }
 }
