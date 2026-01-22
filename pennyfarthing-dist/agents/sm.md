@@ -95,8 +95,9 @@ Before starting any story, SM checks for epic technical context at `sprint/conte
 </critical-gates>
 
 <skills>
-- `/sprint` - Sprint status, backlog, story management
-- `/story` - Story creation, sizing, and finish workflow
+- `/sprint` - Sprint management (status, backlog, work, archive, new, promote)
+- `/story` - Story operations (size, template, create, finish)
+- `/jira` - Jira issue management (view, claim, move, assign, create, sync, reconcile)
 </skills>
 
 <context>
@@ -208,6 +209,10 @@ Task tool:
 
 Helper checks PR status, auto-fixes lint issues, prepares Jira transition.
 
+**Helper uses `/jira` skill:**
+- `/jira view {JIRA_KEY}` to check current status
+- Transition happens in Step 2 via finish-story script
+
 **Helper returns:**
 - PR status (merged/open/none)
 - Lint status (clean/fixed)
@@ -216,23 +221,27 @@ Helper checks PR status, auto-fixes lint issues, prepares Jira transition.
 
 ### Step 2: Run Finish Script
 
-After preflight passes, execute the finish-story script via `/story` skill:
+After preflight passes, use `/story finish`:
 
 ```bash
+# Preview first (recommended)
+.pennyfarthing/scripts/run.sh workflow/finish-story.sh {STORY_ID} --dry-run
+
+# Execute finish
 .pennyfarthing/scripts/run.sh workflow/finish-story.sh {STORY_ID}
 ```
 
-**The script handles all finish steps:**
+**`/story finish` handles all finish steps:**
 1. Archives session file to `sprint/archive/{jira-key}-session.md`
 2. Squash merges PR and deletes remote branch
-3. Transitions Jira to Done
+3. Transitions Jira to Done via `/jira move`
 4. Updates sprint YAML (status: done, completed date, removes assigned_to)
 5. Deletes local feature branch
 6. Removes session file
 
-**Preview mode:** Use `--dry-run` to see what would happen without executing:
+**Alternative: Manual archive only** (if not using full finish script):
 ```bash
-.pennyfarthing/scripts/run.sh workflow/finish-story.sh {STORY_ID} --dry-run
+.pennyfarthing/scripts/run.sh sprint/archive-story.sh {STORY_ID} {PR_NUMBER}
 ```
 
 ### Step 3: Commit Archive (if needed)
@@ -252,6 +261,13 @@ git push origin develop
 
 ### Step 1: Helper Researches Backlog
 
+**Alternative:** For quick backlog view without helper, use `/sprint backlog`:
+```bash
+.pennyfarthing/scripts/run.sh sprint/available-stories.sh
+```
+
+**For full research with Jira enrichment**, spawn helper:
+
 ```yaml
 Task tool:
   subagent_type: "general-purpose"
@@ -266,6 +282,11 @@ Task tool:
 ```
 
 Helper scans the sprint backlog, checks Jira status, finds available stories.
+
+**Helper uses skills:**
+- `/sprint backlog` → `available-stories.sh` for initial backlog
+- `/jira search` to query stories in current sprint
+- `/jira view` to check assignee/status for each story
 
 **Helper returns:**
 - Available stories table (sorted by priority) - excludes stories with `assigned_to` or Jira assignee
@@ -282,6 +303,19 @@ I receive helper's research report and present to the user:
 2. Recommended next story with reasoning
 3. Blocked stories and why
 4. Waits for user selection
+
+**Sizing Help:** If user asks about story complexity:
+```bash
+.pennyfarthing/scripts/run.sh story/size-story.sh [points]
+```
+Shows sizing guidelines, workflow suggestions, and split advice for large stories.
+
+**Direct Start Shortcuts:** If user already knows which story:
+- `/sprint work MSSCI-XXX` - Start specific story directly
+- `/sprint work next` - Start highest priority available story
+- `/sprint work EPIC-ID` - Start first available in epic
+
+These bypass research phase and go directly to setup.
 
 ### Step 3: Helper Summarizes Files
 
@@ -401,8 +435,11 @@ Task tool:
 
 **Get WORKFLOW:** Use the workflow tag from sprint YAML. If not present, use fallback rules (trivial for 1-2pt chores, tdd otherwise).
 
+**Helper uses `/jira` skill:**
+- `/jira claim {JIRA_KEY} --claim` - Assigns to self and moves to In Progress
+
 Helper does:
-- Claims Jira story (assigns to user, moves to In Progress)
+- Claims Jira story via `/jira claim` (assigns to user, moves to In Progress)
 - Writes session file
 - Creates feature branches
 - Updates sprint YAML (status: in_progress, assigned_to: {ASSIGNEE})
@@ -456,6 +493,57 @@ Helper does:
 | Archive session, transition Jira | Run preflight checks |
 | Present options to user | Scan backlog and Jira |
 | Make judgment calls | Execute mechanical steps |
+
+## Jira Operations Quick Reference
+
+SM uses `/jira` skill for all Jira operations. Key commands:
+
+| Operation | Command | When to Use |
+|-----------|---------|-------------|
+| Check story status | `/jira view {KEY}` | Before claiming, during research |
+| Claim story | `/jira claim {KEY} --claim` | Story setup |
+| Move to Done | `/jira move {KEY} "Done"` | Finish flow |
+| Search sprint | `/jira search "sprint in openSprints()"` | Backlog research |
+| Sync epic | `/jira sync {EPIC_KEY} --all` | Before sprint or when drift detected |
+| Reconcile | `/jira reconcile` | Periodic health check, sprint start |
+| Create epic | `/jira create epic {ID}` | New epic without Jira key |
+
+**Reconcile on drift:** If backlog research shows mismatches between YAML and Jira, run `/jira reconcile` to generate a report. Use `--fix` for safe auto-fixes.
+
+## Sprint Operations Quick Reference
+
+SM uses `/sprint` skill for sprint management. Key commands:
+
+| Operation | Command | When to Use |
+|-----------|---------|-------------|
+| Sprint status | `/sprint status` | Check current sprint state |
+| View backlog | `/sprint backlog` | Research available stories |
+| Start work | `/sprint work {KEY}` | Direct start on specific story |
+| Start next | `/sprint work next` | Auto-select highest priority |
+| Archive story | `/sprint archive {KEY}` | Manual archive (usually via finish) |
+| New sprint | `/sprint new {YYWW} ...` | Initialize new sprint |
+| Promote epic | `/sprint promote {ID}` | Move epic from planning to sprint |
+
+## Story Operations Quick Reference
+
+SM uses `/story` skill for story operations. Key commands:
+
+| Operation | Command | When to Use |
+|-----------|---------|-------------|
+| Sizing help | `/story size [pts]` | Help user understand complexity |
+| Get template | `/story template [type]` | Bug/feature/refactor templates |
+| Create story | `/story create {EPIC} "title" {pts}` | Generate story YAML |
+| Finish story | `/story finish {KEY}` | Complete story (archive, merge, Jira) |
+
+**Sizing Quick Reference:**
+
+| Points | Complexity | Workflow |
+|--------|------------|----------|
+| 1-2 | Single file, minimal testing | `trivial` |
+| 3 | Few files, some testing | `tdd` |
+| 5 | Multiple files, comprehensive testing | `tdd` |
+| 8 | Significant scope, extensive testing | `tdd` |
+| 13+ | **SPLIT** - Too complex | Break into smaller stories |
 
 ## Workflow-Based Routing
 
