@@ -507,8 +507,10 @@ epics:
         jira: MSSCI-12142
         title: "Import Retrospective workflow"
         points: 2
-        status: backlog
+        status: done
         repos: pennyfarthing
+        assigned_to: Keith Avery
+        completed: "2026-01-22"
       - id: MSSCI-12143
         jira: MSSCI-12143
         title: "Import Code Review workflow"
