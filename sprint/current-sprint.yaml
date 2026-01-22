@@ -8,10 +8,10 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 146
-  completed_points: 124
+  total_points: 151
+  completed_points: 127
   cancelled_points: 6
-  remaining_points: 16
+  remaining_points: 18
   notes: |
     Sprint 12 includes work from multiple epics that were tracked in Jira but
     not in local sprint YAML. This file has been reconciled with Jira Sprint 276.
@@ -743,7 +743,25 @@ epics:
           preserving base64-encoded image data for deferred submission.
         points: 3
         priority: P1
-        status: in_progress
+        status: done
         repos: pennyfarthing
-        assigned_to: Keith Avery
-        branch: feat/MSSCI-12274-image-queue-support
+        completed: "2026-01-22"
+      - id: MSSCI-12275
+        title: "Bell mode: inject queued messages after tool use"
+        description: |
+          When Bell mode is enabled, queued messages are injected into the conversation
+          context after each tool use, rather than waiting for Claude to finish. This
+          lets users provide feedback mid-turn without aborting Claude's work.
+
+          Implementation:
+          - Add Bell mode toggle to settings (off by default)
+          - Hook into tool_result event in OTEL receiver
+          - When Bell mode on and queue non-empty, dequeue message and inject as user turn
+          - Claude continues processing but now sees the injected message in context
+          - UI shows 🔔 indicator when Bell mode is active
+
+          Metaphor: Like ringing a bike bell - you get attention without stopping traffic.
+        points: 5
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
