@@ -114,6 +114,8 @@ function initMessageView() {
     // Track the last assistant message for processing on completion
     // This prevents quick action detection during streaming (partial text)
     let lastAssistantMessage = null;
+    // MSSCI-12143: Also track tool_results that may contain CYCLIST markers (from subagents)
+    let pendingToolResultMarkers = null;
 
     // Handle streaming messages from Claude SDK
     window.electronAPI.claude.onMessage((message) => {
@@ -128,6 +130,19 @@ function initMessageView() {
           const enrichedResult = enrichMessage(toolResult);
           addMessage(enrichedResult);
           updateActivity(enrichedResult);
+
+          // MSSCI-12143: Check tool_result content for CYCLIST markers (subagent handoffs)
+          const toolResultText = toolResult.content || '';
+          if (toolResultText.includes('CYCLIST:')) {
+            const markers = processMessageForQuickActions({
+              type: 'assistant',
+              message: { content: [{ type: 'text', text: toolResultText }] }
+            });
+            if (markers) {
+              console.log('[MessageView] Found CYCLIST marker in tool_result:', markers);
+              pendingToolResultMarkers = markers;
+            }
+          }
         }
         return; // Don't render the wrapper user message
       }
@@ -159,23 +174,32 @@ function initMessageView() {
 
       // Process quick actions ONLY on completion (markers-only detection)
       // This ensures we analyze the complete message, not streaming fragments
-      if (lastAssistantMessage) {
-        const quickActionResult = processMessageForQuickActions(lastAssistantMessage);
-        if (quickActionResult) {
-          // MSSCI-11840: Handle context_clear marker automatically
-          if (quickActionResult.type === 'context_clear') {
-            // Use provided agent, or fall back to current agent (for circuit breaker)
-            const agent = quickActionResult.agent || getCurrentAgentCommand();
-            console.log('[MessageView] Auto-handling CONTEXT_CLEAR marker for:', agent);
-            if (agent) {
-              handleContextClearMarker(agent);
-            }
-          } else {
-            showQuickActions(quickActionResult);
-          }
-        }
-        lastAssistantMessage = null; // Reset for next turn
+      // MSSCI-12143: Check assistant message first, then tool_result markers (subagent handoffs)
+      // Tool results are checked because subagents (via Task tool) emit markers in their output
+      let quickActionResult = lastAssistantMessage
+        ? processMessageForQuickActions(lastAssistantMessage)
+        : null;
+      // If assistant message didn't have markers, check tool_result markers
+      if (!quickActionResult && pendingToolResultMarkers) {
+        quickActionResult = pendingToolResultMarkers;
       }
+
+      if (quickActionResult) {
+        // MSSCI-11840: Handle context_clear marker automatically
+        if (quickActionResult.type === 'context_clear') {
+          // Use provided agent, or fall back to current agent (for circuit breaker)
+          const agent = quickActionResult.agent || getCurrentAgentCommand();
+          console.log('[MessageView] Auto-handling CONTEXT_CLEAR marker for:', agent);
+          if (agent) {
+            handleContextClearMarker(agent);
+          }
+        } else {
+          showQuickActions(quickActionResult);
+        }
+      }
+      // Reset for next turn
+      lastAssistantMessage = null;
+      pendingToolResultMarkers = null;
     });
 
     window.electronAPI.claude.onError((error) => {
