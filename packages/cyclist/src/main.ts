@@ -2162,8 +2162,10 @@ const isElectron = typeof process !== 'undefined' &&
   process.versions.electron;
 
 if (isElectron) {
-  // Dynamic imports to avoid errors in Node test environment
-  const { app, BrowserWindow, ipcMain, dialog, Menu } = await import('electron');
+  // Use createRequire for electron - dynamic import() doesn't expose named exports properly in Electron
+  const { createRequire } = await import('module');
+  const require = createRequire(import.meta.url);
+  const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
   const { createTerminalServer } = await import('./server.js');
   const windowStateKeeper = (await import('electron-window-state')).default;
 

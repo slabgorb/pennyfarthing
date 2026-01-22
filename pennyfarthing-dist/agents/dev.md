@@ -140,8 +140,7 @@ REFLECT: Minimal fix: return ErrNotFound when query returns no rows. This matche
 
 - [ ] Write Dev Assessment to session file
 - [ ] Spawn `handoff` subagent
-- [ ] Verify handoff completed successfully
-- [ ] Include `<!-- CYCLIST:HANDOFF:/reviewer -->` in final message
+- [ ] Verify handoff completed successfully (subagent emits the marker)
 
 **agent-session.sh stop will FAIL if assessment exists but handoff is missing.**
 </handoff-gate>
@@ -177,38 +176,14 @@ Use `/code-review` skill checklist:
 - [ ] Error handling implemented
 </self-review>
 
-## Context-Aware Handoff
+## Handoff Protocol
 
-After writing assessment, ALWAYS spawn handoff subagent to complete bookkeeping.
+**See:** `pennyfarthing-dist/guides/agent-behavior.md` → AGENT_COMMAND Protocol
 
-Then check context usage and handoff mode preference:
-
-```bash
-$CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
-```
-
-**Read handoff mode from Cyclist settings** (see `handoff.md` for full implementation):
-- `.pennyfarthing/config.local.yaml → `handoff_mode: auto|manual`
-- Default is `manual` if not set
-
-**Handoff Decision Matrix:**
-
-| Context | Mode | Action |
-|---------|------|--------|
-| < 60% | auto | Invoke `/reviewer` directly via Skill tool |
-| < 60% | manual | Report ready, emit HANDOFF marker, wait for user |
-| >= 60% | auto | Emit CONTEXT_CLEAR marker (triggers auto-reload in Cyclist) |
-| >= 60% | manual | Tell user: "Context high. Start fresh session with `/reviewer`" |
-
-**Handoff Marker:** ALWAYS include at end of handoff message:
-```
-<!-- CYCLIST:HANDOFF:/reviewer -->
-```
-
-**For high context + auto mode**, also include:
-```
-<!-- CYCLIST:CONTEXT_CLEAR:/reviewer -->
-```
+1. Dev writes assessment to session file FIRST
+2. Dev spawns `handoff` subagent
+3. Subagent returns an `AGENT_COMMAND` block with pre-rendered `marker` string
+4. **Dev outputs `marker` verbatim, then outputs `fallback` message**
 
 ## Handoff Subagent
 

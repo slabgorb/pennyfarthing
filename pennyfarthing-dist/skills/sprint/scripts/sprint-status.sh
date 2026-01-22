@@ -1,7 +1,13 @@
 #!/bin/bash
 # Display current sprint status
-# Usage: .pennyfarthing/scripts/run.sh sprint-status.sh
+# Usage: .pennyfarthing/scripts/core/run.sh sprint/sprint-status.sh [filter]
 #    or: Invoked with PROJECT_ROOT already set
+#
+# Filters:
+#   (none)       - Show all stories
+#   todo         - Show only backlog stories
+#   in-progress  - Show only in_progress stories
+#   done         - Show only done/cancelled stories
 
 set -euo pipefail
 
@@ -13,6 +19,36 @@ if [[ -z "${PROJECT_ROOT:-}" ]]; then
   done
   PROJECT_ROOT="$d"
 fi
+
+# Parse filter argument
+FILTER="${1:-}"
+case "$FILTER" in
+  todo|backlog)
+    STATUS_FILTER="backlog"
+    FILTER_LABEL="Todo"
+    ;;
+  in-progress|wip)
+    STATUS_FILTER="in_progress"
+    FILTER_LABEL="In Progress"
+    ;;
+  done|completed)
+    STATUS_FILTER="done"
+    FILTER_LABEL="Done"
+    ;;
+  cancelled|canceled)
+    STATUS_FILTER="cancelled"
+    FILTER_LABEL="Cancelled"
+    ;;
+  "")
+    STATUS_FILTER=""
+    FILTER_LABEL=""
+    ;;
+  *)
+    echo "Error: Unknown filter '$FILTER'"
+    echo "Valid filters: todo, in-progress, done, cancelled"
+    exit 1
+    ;;
+esac
 
 SPRINT_FILE="$PROJECT_ROOT/sprint/current-sprint.yaml"
 
@@ -67,11 +103,33 @@ echo "| In Progress | $IN_PROGRESS | $IN_PROGRESS_POINTS |"
 echo "| **Total Remaining** | **$TOTAL_STORIES** | **$TOTAL_POINTS** |"
 echo ""
 
-# List stories by epic
-echo "## Stories by Epic"
+# List stories by epic (grouped - epic name appears once)
+if [[ -n "$FILTER_LABEL" ]]; then
+  echo "## Stories by Epic (${FILTER_LABEL} only)"
+else
+  echo "## Stories by Epic"
+fi
 echo ""
 
-yq eval '.epics[] | "### " + .title + "\n" + (.stories[] | "- [" + .status + "] " + .id + ": " + .title + " (" + (.points | tostring) + " pts)")' "$SPRINT_FILE" 2>/dev/null || echo "No stories found"
+# Process each epic, output header once then all its stories
+# Apply status filter if specified
+if [[ -n "$STATUS_FILTER" ]]; then
+  yq eval -o=json '.epics[]' "$SPRINT_FILE" 2>/dev/null | jq -r --arg status "$STATUS_FILTER" '
+    .title as $title |
+    [.stories[] | select(.status == $status)] |
+    if length > 0 then
+      "### " + $title + "\n" +
+      (map("- [" + .status + "] " + .id + ": " + .title + " (" + (.points | tostring) + " pts)") | join("\n")) + "\n"
+    else
+      empty
+    end
+  ' 2>/dev/null || echo "No stories found"
+else
+  yq eval -o=json '.epics[]' "$SPRINT_FILE" 2>/dev/null | jq -r '
+    "### " + .title + "\n" +
+    (.stories | map("- [" + .status + "] " + .id + ": " + .title + " (" + (.points | tostring) + " pts)") | join("\n")) + "\n"
+  ' 2>/dev/null || echo "No stories found"
+fi
 
 # Check archive for completed count
 SPRINT_NUM=$(echo "$SPRINT_NAME" | sed 's/TO Sprint //')

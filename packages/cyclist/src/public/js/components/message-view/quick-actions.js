@@ -19,6 +19,7 @@ import { getThemeAgents, loadThemeAgents } from '../../story.js';
  */
 export const MARKER_TYPES = {
   HANDOFF: 'handoff',
+  INVOKE: 'invoke',  // Auto-execute agent (turbo mode)
   QUESTION: 'question',
   CHOICES: 'choices',
   CONTEXT_CLEAR: 'context_clear',
@@ -243,6 +244,16 @@ function processStructuredMarkers(markers, fullText = '') {
         confidence: 1.0,
       };
 
+    case 'invoke':
+      // Auto-execute agent command (turbo mode) - no buttons, immediate execution
+      return {
+        type: 'invoke',
+        agent: primaryMarker.value,
+        autoExecute: true,
+        source: 'structured_marker',
+        confidence: 1.0,
+      };
+
     case 'question':
       if (primaryMarker.value === 'yesno') {
         return {
@@ -332,6 +343,17 @@ function processStructuredMarkers(markers, fullText = '') {
  */
 export function renderQuickActions(result) {
   if (!result) return '';
+
+  // INVOKE type: auto-execute immediately, no buttons
+  if (result.type === 'invoke') {
+    // Schedule auto-execution for next tick (after render completes)
+    setTimeout(() => {
+      console.log(`[QuickActions] Auto-invoking agent: ${result.agent}`);
+      insertAndSubmit(result.agent);
+    }, 100);
+    // Return a status indicator instead of buttons
+    return `<div class="quick-actions-container"><span class="auto-invoke-status">Invoking ${result.agent}...</span></div>`;
+  }
 
   if (result.type === 'handoff') {
     // For handoffs: display shows character/role name, data-response has the command

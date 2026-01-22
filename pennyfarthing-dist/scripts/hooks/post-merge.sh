@@ -39,7 +39,7 @@ SESSION_DIR="$PROJECT_ROOT/.session"
 SPRINT_FILE="$PROJECT_ROOT/sprint/current-sprint.yaml"
 
 # Source sprint-common.sh for shared functions
-SPRINT_COMMON="$PROJECT_ROOT/.pennyfarthing/scripts/utils/sprint-common.sh"
+SPRINT_COMMON="$PROJECT_ROOT/.pennyfarthing/scripts/sprint/sprint-common.sh"
 if [[ -f "$SPRINT_COMMON" ]]; then
     # shellcheck source=/dev/null
     source "$SPRINT_COMMON"

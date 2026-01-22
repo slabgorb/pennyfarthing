@@ -114,7 +114,7 @@ Context auto-loaded by `/prime --agent my-agent`:
 <exit>
 To exit: "Exit My Agent" or switch to another agent
 
-On exit, run: `./scripts/run.sh agent-session.sh stop`
+On exit, run: `./scripts/run.sh core/agent-session.sh stop`
 </exit>
 ```
 
@@ -194,7 +194,7 @@ Steps:
 <exit>
 To exit: "Exit My Agent" or switch to another agent
 
-On exit, run: `./scripts/run.sh agent-session.sh stop`
+On exit, run: `./scripts/run.sh core/agent-session.sh stop`
 </exit>
 ```
 
@@ -210,7 +210,7 @@ description: My Agent - Brief role description
 <agent-activation>
 **FIRST:** Use Bash tool to run:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" agent-session.sh start "my-agent"
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" core/agent-session.sh start "my-agent"
 ```
 This finds the project root and loads your persona.
 
@@ -218,7 +218,7 @@ Then load and follow `.pennyfarthing/agents/my-agent.md`
 </agent-activation>
 
 <agent-exit>
-On exit: Capture learnings to sidecar, run `agent-session.sh stop`
+On exit: Capture learnings to sidecar, run `run.sh core/agent-session.sh stop`
 </agent-exit>
 
 <purpose>
@@ -529,7 +529,7 @@ Steps:
 <exit>
 To exit: "Exit Security Auditor" or switch to another agent
 
-On exit, run: `./scripts/run.sh agent-session.sh stop`
+On exit, run: `./scripts/run.sh core/agent-session.sh stop`
 </exit>
 ```
 
@@ -545,14 +545,14 @@ description: Security Auditor - Code and dependency security auditing
 <agent-activation>
 **FIRST:** Use Bash tool to run:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" agent-session.sh start "security-auditor"
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" core/agent-session.sh start "security-auditor"
 ```
 
 Then load and follow `.pennyfarthing/agents/security-auditor.md`
 </agent-activation>
 
 <agent-exit>
-On exit: Capture learnings to sidecar, run `agent-session.sh stop`
+On exit: Capture learnings to sidecar, run `run.sh core/agent-session.sh stop`
 </agent-exit>
 
 <purpose>

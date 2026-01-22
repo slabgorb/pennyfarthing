@@ -1,185 +1,340 @@
 ---
 name: jira
 description: Jira CLI commands for sprint management. Use when viewing, assigning, or updating Jira issues from the command line.
+args: "[view|claim|move|assign|create|sync|reconcile|link|search|sprint]"
 ---
 
-# Jira CLI Skill
+# /jira - Jira Issue Management
 
-## Overview
+<critical>
+Never fabricate or guess Jira IDs. Valid Jira keys follow the pattern `MSSCI-XXXXX`. Old-style IDs like `31-18` are local sprint YAML placeholders, NOT valid Jira keys.
+</critical>
 
-This skill covers using `jira` (ankitpokhrel/jira) for Jira integration. The examples below use Pennyfarthing project settings - update PROJECT_KEY and PROJECT_LABEL for your project.
+## Commands
 
-## CRITICAL: Never Guess Jira IDs
+### `/jira` or `/jira view <issue-key>`
 
-**NEVER fabricate or guess Jira ticket numbers.** If you need a Jira ID:
+View details of a Jira issue.
 
-1. **Look it up** in `sprint/current-sprint.yaml` under the story's `id:` field
-2. **Query Jira** using `jira issue list` or `jira issue view`
-3. **Create new** using `jira issue create` (returns the real ID)
-4. **Ask the user** if you cannot determine the correct ID
+<run>
+jira issue view MSSCI-XXXXX
+</run>
 
-Old-style IDs like `31-18` or `35-17` are **local sprint YAML placeholders** - they are NOT valid Jira keys. Valid Jira keys follow the pattern `MSSCI-XXXXX`.
+<when>
+You need to see issue details: summary, status, assignee, description, linked issues.
+</when>
 
-## Prerequisites
+<example>
+# Standard view
+jira issue view MSSCI-12038
 
-```bash
-# Install jira
-brew install ankitpokhrel/jira/jira
+# JSON output for scripting
+jira issue view MSSCI-12038 --raw
+</example>
 
-# Initialize (one-time setup)
-jira init
+---
 
-# Set API token (required)
-export JIRA_API_TOKEN='your-token'
-# Create token at: https://id.atlassian.com/manage-profile/security/api-tokens
-```
+### `/jira claim <issue-key> [--claim]`
 
-## Project Configuration
+Check availability and claim a story for work.
 
-Configure these in your project's `.claude/project/hooks/setup-env.sh`:
+<run>
+.pennyfarthing/scripts/core/run.sh jira/jira-claim-story.sh <issue-key> [--claim]
+</run>
 
-```bash
-export JIRA_PROJECT_KEY="MSSCI"    # Your Jira project key
-export PROJECT_LABEL="Pennyfarthing"   # Label for filtering issues (defaults to PROJECT_NAME)
-```
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `issue-key` | Yes | Jira key `MSSCI-XXXXX` or story key `35-7-name` |
+| `--claim` | No | Actually claim (assign + move to In Progress) |
+</args>
 
-The `PROJECT_LABEL` is used to tag Jira issues created by the sync scripts. If not set, it defaults to `PROJECT_NAME`.
+<exit-codes>
+| Code | Meaning |
+|------|---------|
+| `0` | Available or successfully claimed |
+| `1` | Assigned to someone else |
+| `2` | Not found or not synced |
+| `3` | Error (CLI not installed, etc.) |
+</exit-codes>
 
-Example settings (Pennyfarthing project):
-- **Project Key:** `MSSCI`
-- **Label:** `$PROJECT_LABEL` (or `$PROJECT_NAME` if not set)
-- **Config file:** `~/.config/.jira/.config.yml`
+<example>
+# Check if available
+.pennyfarthing/scripts/core/run.sh jira/jira-claim-story.sh MSSCI-12038
 
-## Common Operations
+# Claim it (assign to self + In Progress)
+.pennyfarthing/scripts/core/run.sh jira/jira-claim-story.sh MSSCI-12038 --claim
+</example>
 
-### View an Issue
+---
 
-```bash
-# View issue details
-jira issue view MSSCI-10988
+### `/jira move <issue-key> <status>`
 
-# Get raw JSON (for scripting)
-jira issue view MSSCI-10988 --raw
-```
+Transition a Jira issue to a new status.
 
-### Assign an Issue
+<run>
+jira issue move MSSCI-XXXXX "<status>" --project MSSCI
+</run>
 
-**IMPORTANT:** The `-p/--project` flag is required even though the issue key contains the project prefix.
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `issue-key` | Yes | Jira key `MSSCI-XXXXX` |
+| `status` | Yes | Target status (see table below) |
+</args>
 
-```bash
-# Assign to a specific user (by email or display name)
-jira issue assign -pMSSCI MSSCI-10988 "michael.rosenfeld@1898andco.io"
-jira issue assign -pMSSCI MSSCI-10988 "Keith Avery"
+<output>
+| Status | Description |
+|--------|-------------|
+| `To Do` | Not started |
+| `In Progress` | Actively working |
+| `Done` | Completed |
+</output>
 
+<example>
+jira issue move MSSCI-12038 "In Progress" --project MSSCI
+jira issue move MSSCI-12038 "Done" --project MSSCI
+</example>
+
+---
+
+### `/jira assign <issue-key> <user>`
+
+Assign an issue to a user.
+
+<run>
+jira issue assign MSSCI-XXXXX "<user>" --project MSSCI
+</run>
+
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `issue-key` | Yes | Jira key `MSSCI-XXXXX` |
+| `user` | Yes | Email, display name, or `x` to unassign |
+</args>
+
+<critical>
+The `--project` flag is required even though the key contains the project prefix.
+</critical>
+
+<example>
 # Assign to self
-jira issue assign -pMSSCI MSSCI-10988 "$(jira me)"
+jira issue assign MSSCI-12038 "$(jira me)" --project MSSCI
+
+# Assign by name
+jira issue assign MSSCI-12038 "Keith Avery" --project MSSCI
 
 # Unassign
-jira issue assign -pMSSCI MSSCI-10988 x
-```
+jira issue assign MSSCI-12038 x --project MSSCI
+</example>
 
-### Move Issue Status
+---
 
-```bash
-# Move to In Progress
-jira issue move MSSCI-10988 "In Progress" --project MSSCI
+### `/jira create story <epic-key> <story-id>`
 
-# Move to Done
-jira issue move MSSCI-10988 "Done" --project MSSCI
-```
+Create a single Jira story under an epic from sprint YAML.
 
-### Create Issues
+<run>
+.pennyfarthing/scripts/core/run.sh jira/create-jira-story.sh <epic-key> <story-id>
+</run>
 
-**IMPORTANT:** The `--no-input` flag alone may still hang waiting for stdin. Pipe empty input to prevent hangs:
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `epic-key` | Yes | Parent epic Jira key |
+| `story-id` | Yes | Story ID from sprint YAML |
+</args>
 
-```bash
-# Create a story (pipe to prevent stdin hang)
-echo "" | jira issue create \
-    -p MSSCI \
-    -t Story \
-    -s "Story Title" \
-    -l pennyfarthing \
-    --no-input
+<when>
+Creating a single story that's missing from Jira but exists in sprint YAML.
+</when>
 
-# Create an epic
-echo "" | jira issue create \
-    --project MSSCI \
-    --type Epic \
-    --summary "Epic Title" \
-    --body "Description" \
-    --label $PROJECT_LABEL \
-    --no-input
+<example>
+.pennyfarthing/scripts/core/run.sh jira/create-jira-story.sh MSSCI-12077 MSSCI-12066
+</example>
 
-# Create a story under an epic (--parent links it to the epic)
-echo "" | jira issue create \
-    -pMSSCI \
-    -tStory \
-    -s"Story Title" \
-    -b"Description" \
-    --parent MSSCI-10980 \
-    -yHigh \
-    -l pennyfarthing \
-    --no-input
-```
+<output>
+1. Reads story from sprint YAML
+2. Creates story in Jira with title, description, priority
+3. Links to parent epic
+4. Sets story points
+5. Adds to current sprint
+6. Updates sprint YAML with Jira key
+</output>
 
-**Auto-creation during SM setup:**
+---
 
-Starting with PR #315 (MSSCI-11841), SM setup automatically creates Jira epics when detecting a local epic without a `jira` field in the sprint YAML. This happens via the `jira-epic-creation.ts` module:
+### `/jira create epic <epic-id> [--dry-run]`
 
-```typescript
-// Automatically invoked during generic-sm-setup (MODE=setup)
-// 1. Detects epic missing Jira key
-// 2. Creates epic in Jira with matching title/description
-// 3. Updates sprint YAML with new Jira key
-// 4. Ensures story can be properly linked to epic
-```
+Create a Jira epic and all its child stories from sprint YAML.
 
-The auto-creation:
-- Uses the epic title and description from sprint YAML
-- Applies `pennyfarthing` label automatically
-- Updates sprint YAML atomically with the new Jira key
-- Enables seamless story creation without manual epic setup
+<run>
+.pennyfarthing/scripts/core/run.sh jira/create-jira-epic.sh <epic-id> [--dry-run]
+</run>
 
-### Link Issues (Parent-Child)
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `epic-id` | Yes | Epic ID from sprint YAML (e.g., `epic-41` or `MSSCI-11952`) |
+| `--dry-run` | No | Preview without creating issues |
+</args>
 
-**CRITICAL:** Argument order matters! First issue becomes the PARENT, second becomes the CHILD.
+<example>
+# Preview what would be created
+.pennyfarthing/scripts/core/run.sh jira/create-jira-epic.sh epic-41 --dry-run
 
-```bash
-# CORRECT: Epic is parent, Story is child
+# Create epic and stories
+.pennyfarthing/scripts/core/run.sh jira/create-jira-epic.sh epic-41
+</example>
+
+<output>
+1. Creates Jira epic if no `jira:` field exists
+2. Creates all child stories linked to the epic
+3. Sets story points and priority in Jira
+4. Adds stories to current sprint (if jira_sprint_id set)
+5. Updates sprint YAML with Jira keys
+</output>
+
+---
+
+### `/jira sync <epic-id> [options]`
+
+Sync an epic and its stories from sprint YAML to Jira.
+
+<run>
+.pennyfarthing/scripts/core/run.sh jira/sync-epic-jira.sh <epic-id> [options]
+</run>
+
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `epic-id` | Yes | Epic Jira key (e.g., `MSSCI-11952`) |
+| `--dry-run` | No | Preview without making changes |
+| `--transition` | No | Transition Jira issues to match YAML status |
+| `--points` | No | Sync story points from YAML to Jira |
+| `--all` | No | Equivalent to `--transition --points` |
+</args>
+
+<example>
+# Show sync status
+.pennyfarthing/scripts/core/run.sh jira/sync-epic-jira.sh MSSCI-11952
+
+# Preview changes
+.pennyfarthing/scripts/core/run.sh jira/sync-epic-jira.sh MSSCI-11952 --dry-run
+
+# Full sync
+.pennyfarthing/scripts/core/run.sh jira/sync-epic-jira.sh MSSCI-11952 --all
+</example>
+
+<output>
+1. Compares sprint YAML status with Jira status
+2. Optionally transitions Jira issues to match
+3. Optionally syncs story points to Jira
+4. Reports sync summary
+</output>
+
+---
+
+### `/jira reconcile [--fix]`
+
+Generate a reconciliation report comparing sprint YAML against Jira.
+
+<run>
+.pennyfarthing/scripts/core/run.sh jira/jira-reconcile.sh [--fix]
+</run>
+
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `--fix` | No | Apply automatic fixes where safe |
+</args>
+
+<example>
+# Report only
+.pennyfarthing/scripts/core/run.sh jira/jira-reconcile.sh
+
+# Report and fix
+.pennyfarthing/scripts/core/run.sh jira/jira-reconcile.sh --fix
+</example>
+
+<output>
+Checks performed:
+1. **Status mismatches** - YAML status vs Jira status
+2. **Missing Jira keys** - YAML stories without jira: field
+3. **Orphan issues** - In Jira sprint but not in YAML
+4. **Sprint membership** - YAML stories not in Jira sprint
+5. **Epic sync** - Epic ID/jira field alignment
+</output>
+
+<when>
+Use `--fix` to:
+- Add YAML stories to Jira sprint if missing
+
+Does NOT auto-fix (requires human decision):
+- Status mismatches
+- Missing Jira issues
+</when>
+
+---
+
+### `/jira link <parent> <child> <type>`
+
+Link two Jira issues.
+
+<run>
+jira issue link <parent-key> <child-key> "<link-type>"
+</run>
+
+<critical>
+Argument order matters! First issue becomes the PARENT, second becomes the CHILD.
+</critical>
+
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `parent-key` | Yes | Parent issue Jira key |
+| `child-key` | Yes | Child issue Jira key |
+| `link-type` | Yes | Link type (see table below) |
+</args>
+
+<output>
+| Type | Description |
+|------|-------------|
+| `Parent-Child` | For epic/story hierarchy |
+| `Blocks` | For dependencies |
+| `Relates` | For general relationships |
+| `Duplicate` | For duplicate issues |
+</output>
+
+<example>
+# Link epic to story (epic is parent)
 jira issue link MSSCI-11494 MSSCI-11390 "Parent-Child"
-# Result: Epic "IS PARENT OF" Story ✓
 
-# WRONG: This makes the Story parent of the Epic!
-jira issue link MSSCI-11390 MSSCI-11494 "Parent-Child"
-# Result: Story "IS PARENT OF" Epic ✗
-```
+# Unlink
+jira issue unlink MSSCI-11494 MSSCI-11390
 
-**Verify the link direction:**
-```bash
-# Check what an issue is linked to
+# Verify link direction
 jira issue view MSSCI-11494 --plain | grep -A5 "Linked Issues"
-# Should show: IS PARENT OF (not IS CHILD OF)
-```
+</example>
 
-**Fix incorrect links:**
-```bash
-# Remove the bad link
-jira issue unlink MSSCI-11390 MSSCI-11494
+---
 
-# Re-create with correct order (parent first, child second)
-jira issue link MSSCI-11494 MSSCI-11390 "Parent-Child"
-```
+### `/jira search <jql>`
 
-**Available link types:**
-- `Parent-Child` - For epic/story hierarchy
-- `Blocks` - For dependencies
-- `Relates` - For general relationships
-- `Duplicate` - For duplicate issues
+Search for issues using JQL.
 
-### Search Issues
+<run>
+jira issue list --jql "<jql-query>" --plain
+</run>
 
-```bash
-# Find epics
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `jql-query` | Yes | JQL query string |
+</args>
+
+<example>
+# Find all epics
 jira issue list --jql "project=MSSCI AND type=Epic" --plain
 
 # Find stories in an epic
@@ -187,128 +342,102 @@ jira issue list --jql "project=MSSCI AND type=Story AND parent=MSSCI-10980" --pl
 
 # Find by summary
 jira issue list --jql "project=MSSCI AND summary~'feedback rules'" --plain
-```
 
-### Sprint Operations
-
-The `jira sprint list` command has limited functionality. Use these workarounds to get sprint information:
-
-**Get current active sprint:**
-```bash
-# Find an issue in the active sprint, then extract sprint details
-jira issue view MSSCI-11940 --raw | jq '.fields.customfield_10020[] | select(.state == "active")'
-```
-
-**Get all sprints (active and future):**
-```bash
-# Query issues in different sprint states and extract unique sprints
 # Active sprint issues
 jira issue list --project MSSCI -q "sprint in openSprints()" --plain
 
 # Future sprint issues
 jira issue list --project MSSCI -q "sprint in futureSprints()" --plain
+</example>
 
-# Get sprint details from any issue with sprint info
-jira issue view MSSCI-XXXXX --raw | jq '.fields.customfield_10020'
-```
+---
 
-**Discover all sprints by sampling issues:**
+### `/jira sprint add <sprint-id> <issue-key>`
+
+Add an issue to a sprint.
+
+<run>
+jira sprint add <sprint-id> <issue-key>
+</run>
+
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `sprint-id` | Yes | Numeric sprint ID |
+| `issue-key` | Yes | Jira key `MSSCI-XXXXX` |
+</args>
+
+<example>
+jira sprint add 276 MSSCI-11999
+</example>
+
+<when>
+Get sprint ID from an issue:
 ```bash
-# Check sprint info across multiple issues to find all sprints
-for key in MSSCI-11851 MSSCI-11940 MSSCI-11866; do
-    jira issue view "$key" --raw 2>/dev/null | \
-    jq -r '.fields.customfield_10020[]? | "\(.id) | \(.name) | \(.state) | \(.startDate) | \(.endDate)"'
-done | sort -u
+jira issue view MSSCI-XXXXX --raw | jq '.fields.customfield_10020[] | select(.state == "active") | .id'
 ```
+</when>
 
-**Sprint field reference:**
+---
+
+### `/jira sprint info`
+
+Get sprint information from Jira.
+
+<run>
+jira issue view MSSCI-XXXXX --raw | jq '.fields.customfield_10020[] | select(.state == "active")'
+</run>
+
+<output>
+Sprint field reference:
 - Sprint data is in custom field `customfield_10020` (array of sprint objects)
 - Each sprint object contains: `id`, `name`, `state`, `boardId`, `startDate`, `endDate`
 - States: `active`, `future`, `closed`
+</output>
 
-**Add issues to a sprint:**
-```bash
-# Add issue to sprint by sprint ID
-jira sprint add SPRINT_ID MSSCI-XXXXX
+---
 
-# Example: Add to sprint 276
-jira sprint add 276 MSSCI-11999
-```
+## Quick Reference
 
-**Note:** Sprint creation is done via Jira UI or REST API, not the CLI.
+| Command | Script/Action |
+|---------|---------------|
+| `/jira view MSSCI-XXX` | `jira issue view MSSCI-XXX` |
+| `/jira claim MSSCI-XXX` | `jira-claim-story.sh MSSCI-XXX` |
+| `/jira claim MSSCI-XXX --claim` | `jira-claim-story.sh MSSCI-XXX --claim` |
+| `/jira move MSSCI-XXX "Done"` | `jira issue move MSSCI-XXX "Done" -p MSSCI` |
+| `/jira assign MSSCI-XXX "user"` | `jira issue assign MSSCI-XXX "user" -p MSSCI` |
+| `/jira create story E-KEY S-ID` | `create-jira-story.sh E-KEY S-ID` |
+| `/jira create epic epic-41` | `create-jira-epic.sh epic-41` |
+| `/jira sync MSSCI-XXX` | `sync-epic-jira.sh MSSCI-XXX` |
+| `/jira sync MSSCI-XXX --all` | `sync-epic-jira.sh MSSCI-XXX --all` |
+| `/jira reconcile` | `jira-reconcile.sh` |
+| `/jira reconcile --fix` | `jira-reconcile.sh --fix` |
+| `/jira link P-KEY C-KEY "Type"` | `jira issue link P-KEY C-KEY "Type"` |
+| `/jira search "jql"` | `jira issue list --jql "jql"` |
+| `/jira sprint add ID KEY` | `jira sprint add ID KEY` |
 
-## Project Scripts
+---
 
-The project has helper scripts for common Jira operations. All scripts are invoked via `run.sh`:
+## Prerequisites
 
-```bash
-# Pattern: ./.pennyfarthing/scripts/run.sh <script-name> [args]
-# Or if scripts are in PATH: ./scripts/run.sh <script-name> [args]
-```
+<run>
+# Install jira CLI
+brew install ankitpokhrel/jira/jira
 
-### Sync Epic to Jira
+# Initialize (one-time)
+jira init
 
-Syncs all stories in an epic to Jira. Shows status, optionally transitions issues and syncs story points.
+# Set API token (required)
+export JIRA_API_TOKEN='your-token'
+</run>
 
-```bash
-# Show sync status for epic 24
-./.pennyfarthing/scripts/run.sh jira-sync.sh 24
+<when>
+Create token at: https://id.atlassian.com/manage-profile/security/api-tokens
+</when>
 
-# Dry run - show what would happen without making changes
-./.pennyfarthing/scripts/run.sh jira-sync.sh 24 --dry-run
-
-# Sync status (transition issues to match Pennyfarthing status)
-./.pennyfarthing/scripts/run.sh jira-sync.sh 24 --transition
-
-# Sync both status and story points
-./.pennyfarthing/scripts/run.sh jira-sync.sh 24 --transition --points
-```
-
-### Sync Single Story
-
-Syncs a single story to Jira with more detailed output.
-
-```bash
-# Show story status in Jira
-./.pennyfarthing/scripts/run.sh jira-sync-story.sh 24-1
-
-# Transition to match Pennyfarthing status
-./.pennyfarthing/scripts/run.sh jira-sync-story.sh 24-1 --transition
-
-# Sync story points
-./.pennyfarthing/scripts/run.sh jira-sync-story.sh 24-1 --points
-
-# Add a comment
-./.pennyfarthing/scripts/run.sh jira-sync-story.sh 24-1 --comment "Started development"
-```
-
-### Claim a Story
-
-Check availability and claim a Jira story for work.
-
-```bash
-# Check if story is available
-./.pennyfarthing/scripts/run.sh jira-claim-story.sh MSSCI-10988
-
-# Claim the story (assign to self + move to In Progress)
-./.pennyfarthing/scripts/run.sh jira-claim-story.sh MSSCI-10988 --claim
-
-# Using story key format
-./.pennyfarthing/scripts/run.sh jira-claim-story.sh 35-4 --claim
-```
-
-### Script Summary
-
-| Script | Purpose |
-|--------|---------|
-| `jira-sync.sh` | Sync all stories in an epic to Jira |
-| `jira-sync-story.sh` | Sync a single story to Jira |
-| `jira-claim-story.sh` | Claim a story (assign + move to In Progress) |
-| `sync-epic-to-jira.sh` | Alias for `jira-sync.sh` |
+---
 
 ## GitHub to Jira User Mapping
-
-When assigning issues based on PR authors:
 
 | GitHub Username | Jira Email |
 |-----------------|------------|
@@ -318,54 +447,38 @@ When assigning issues based on PR authors:
 | Zious11 | jared.richards@1898andco.io |
 | drbothen | joshua.magady@1898andco.io |
 
+---
+
 ## Troubleshooting
 
 ### "400 Bad Request" on assign
 
+<critical>
 The `--project` flag is required:
-```bash
+</critical>
+
+<example>
 # WRONG
 jira issue assign MSSCI-10988 "user@email.com"
 
 # CORRECT
-jira issue assign --project MSSCI MSSCI-10988 "user@email.com"
-```
+jira issue assign MSSCI-10988 "user@email.com" --project MSSCI
+</example>
 
 ### "User not found"
 
-Use either the exact email address or exact display name from Jira:
-```bash
-# Both work - display name or email
-jira issue assign -pMSSCI MSSCI-10988 "Keith Avery"
-jira issue assign -pMSSCI MSSCI-10988 "keith.avery@1898andco.io"
-```
+Use either the exact email address or exact display name from Jira.
 
 ### Interactive prompts blocking scripts
 
-Always use `--no-input` flag for non-interactive usage:
-```bash
-jira issue create --project MSSCI --type Story --summary "Title" --no-input
-```
+<run>
+echo "" | jira issue create --project MSSCI --type Story --summary "Title" --no-input
+</run>
+
+<when>
+Always use `--no-input` flag and pipe empty input to prevent blocking.
+</when>
 
 ### Token expired
 
-Regenerate at https://id.atlassian.com/manage-profile/security/api-tokens and update:
-```bash
-export JIRA_API_TOKEN='new-token'
-```
-
-## Quick Reference
-
-| Action | Command |
-|--------|---------|
-| View issue | `jira issue view MSSCI-XXX` |
-| Assign | `jira issue assign --project MSSCI MSSCI-XXX "email@1898andco.io"` |
-| Move status | `jira issue move MSSCI-XXX "In Progress" --project MSSCI` |
-| Link parent→child | `jira issue link MSSCI-PARENT MSSCI-CHILD "Parent-Child"` |
-| Unlink issues | `jira issue unlink MSSCI-XXX MSSCI-YYY` |
-| Get my username | `jira me` |
-| List issues | `jira issue list --jql "project=MSSCI"` |
-| Claim story | `./scripts/jira-claim-story.sh MSSCI-XXX --claim` |
-| Get active sprint | `jira issue view MSSCI-XXX --raw \| jq '.fields.customfield_10020'` |
-| Add to sprint | `jira sprint add SPRINT_ID MSSCI-XXX` |
-| Future sprint issues | `jira issue list -p MSSCI -q "sprint in futureSprints()"` |
+Regenerate at https://id.atlassian.com/manage-profile/security/api-tokens

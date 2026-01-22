@@ -9,7 +9,7 @@ Comprehensive troubleshooting for common errors and recovery procedures in Penny
 pennyfarthing doctor --fix
 
 # Check context usage
-.pennyfarthing/scripts/check-context.sh --human
+.pennyfarthing/scripts/core/check-context.sh --human
 
 # List recent checkpoints
 source .pennyfarthing/scripts/utils/checkpoint.sh && checkpoint_list
@@ -236,7 +236,7 @@ just test-setup
 **Solution:**
 ```bash
 # Check current usage
-.pennyfarthing/scripts/check-context.sh --human
+.pennyfarthing/scripts/core/check-context.sh --human
 
 # If above 70%, proactively:
 # 1. Save checkpoint

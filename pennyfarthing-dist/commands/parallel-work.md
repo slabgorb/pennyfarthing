@@ -3,7 +3,7 @@ description: Start parallel work in a new worktree
 ---
 
 ```bash
-./scripts/run.sh agent-session.sh start "parallel-work"
+./scripts/run.sh core/agent-session.sh start "parallel-work"
 ```
 
 <parallel-work-flow>
@@ -20,10 +20,10 @@ read -p "Branch name (e.g., feat/5-3a-feature): " BRANCH_NAME
 
 # Create worktree
 WORKTREE_NAME="wt-${STORY_ID}"
-./scripts/run.sh worktree-manager.sh create "$WORKTREE_NAME" "$BRANCH_NAME"
+./scripts/run.sh git/worktree-manager.sh create "$WORKTREE_NAME" "$BRANCH_NAME"
 
 # Get port configuration
-eval $(./scripts/run.sh worktree-manager.sh ports "$WORKTREE_NAME")
+eval $(./scripts/run.sh git/worktree-manager.sh ports "$WORKTREE_NAME")
 ```
 
 ### Step 2: Create Session File
@@ -67,5 +67,5 @@ Invoke SM to complete story setup in the worktree context.
 </agent-activation>
 
 <agent-exit>
-On exit: Capture learnings to sidecar, run `agent-session.sh stop`
+On exit: Capture learnings to sidecar, run `run.sh core/agent-session.sh stop`
 </agent-exit>

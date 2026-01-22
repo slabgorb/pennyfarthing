@@ -1,28 +1,51 @@
 ---
 name: cyclist
-description: Launch Cyclist visual terminal for Claude Code. Use this skill when starting Cyclist to monitor agent work, view personas, or debug sessions.
+description: |
+  Cyclist visual terminal detection and status. Use when checking if running inside Cyclist,
+  getting session status, or accessing Cyclist-specific features.
+args: "[check|status]"
 ---
 
-# Cyclist Visual Terminal Skill
+# /cyclist - Cyclist Visual Terminal
 
-## When to Use This Skill
+## Commands
 
-- Starting Cyclist to monitor Claude Code sessions
-- Viewing persona portraits and attributes
-- Debugging agent interactions visually
-- Running Cyclist in web mode for development
+### `/cyclist` or `/cyclist check`
 
-## Overview
+Check if running inside Cyclist visual terminal.
 
-Cyclist is a visual terminal interface for Claude Code that displays:
-- Real-time terminal output with persona styling
-- Agent portraits and OCEAN personality traits
-- Story/session progress tracking
-- Git status and context information
+<run>
+.pennyfarthing/scripts/core/run.sh cyclist/is-cyclist.sh
+</run>
 
-## Quick Start
+<output>
+JSON: `{"cyclist": true}` with exit 0 if in Cyclist, `{"cyclist": false}` with exit 1 if not.
+</output>
 
-Use `just cyclist` from the project root:
+<example>
+.pennyfarthing/scripts/core/run.sh cyclist/is-cyclist.sh
+# Returns: {"cyclist": true}
+</example>
+
+---
+
+## Environment Variables
+
+Cyclist sets these environment variables when spawning Claude:
+
+| Variable | Value | Description |
+|----------|-------|-------------|
+| `CYCLIST` | `1` | Always set when running in Cyclist |
+| `CYCLIST_SESSION_ID` | UUID | Session tracking identifier |
+| `CYCLIST_PROJECT_DIR` | path | Project directory if specified |
+| `CYCLIST_THEME_PATH` | path | Custom theme file path |
+| `CYCLIST_DEV_WEB` | `1` | Set in web dev mode |
+
+---
+
+## Starting Cyclist
+
+Use `just cyclist` from the project root (outside of Claude Code):
 
 ```bash
 # Electron with folder picker (default)
@@ -31,138 +54,35 @@ just cyclist
 # Electron in current directory
 just cyclist here
 
-# Electron in specific directory
-just cyclist dir=/path/to/project
-
 # Web dev mode (browser + hot reload)
 just cyclist web
 
 # Web server only (production)
 just cyclist server
-
-# Verbose/debug logging
-just cyclist verbose
-
-# Combine flags (any order)
-just cyclist here verbose
-just cyclist web dir=/path/to/project
-just cyclist verbose here
 ```
 
-## Environment Variables
+---
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `CYCLIST_PROJECT_DIR` | Project directory path | auto (picker in Electron) |
-| `PORT` | Server port | `1898` |
-| `CYCLIST_SESSION_ID` | Session tracking ID | auto-generated |
-| `CYCLIST_VERBOSE` | Enable verbose logging | unset |
-| `CYCLIST_DEV_WEB` | Enable web dev mode (set to `1`) | unset |
-| `CYCLIST_THEME_PATH` | Custom theme file path | auto-detected |
+## Internal Codenames
 
-## CLI Flags (Electron App)
+| Codename | Component | Description |
+|----------|-----------|-------------|
+| **WheelHub** | Server | Central coordination (API, WebSocket, OTLP) |
+| **TirePump** | Context clearing | Clear session, reset stats, reload agent |
+| **JobFair** | Character benchmarking | Discover which characters excel at each role |
 
-| Flag | Description |
-|------|-------------|
-| `--project-dir=/path` | Specify project directory |
+---
 
-## Just Commands Reference
+## Quick Reference
 
-All Cyclist operations use a single `just cyclist` command:
+| Command | Script |
+|---------|--------|
+| `/cyclist` | `cyclist/is-cyclist.sh` |
+| `/cyclist check` | `cyclist/is-cyclist.sh` |
 
-**Run modes:**
-| Command | Description |
-|---------|-------------|
-| `just cyclist` | Start Electron with folder picker |
-| `just cyclist here` | Start Electron in current directory |
-| `just cyclist dir=/path` | Start Electron in specific directory |
-| `just cyclist web` | Start web dev mode (browser + hot reload) |
-| `just cyclist server` | Start web server only (production) |
-| `just cyclist verbose` | Enable verbose/debug logging |
-| `just cyclist here verbose` | Combine flags (any order) |
+## Related Skills
 
-**Maintenance:**
-| Command | Description |
-|---------|-------------|
-| `just cyclist setup` | First-time setup (clean, install, rebuild, build) |
-| `just cyclist doctor` | Diagnose setup issues (add `--fix` to auto-repair) |
-| `just cyclist build` | Build Cyclist TypeScript |
-| `just cyclist clean` | Remove dist/ |
-| `just cyclist rebuild` | Rebuild native modules (node-pty) |
-| `just cyclist package` | Build Electron app for distribution |
-| `just cyclist install` | Install app + CLI |
-
-**Testing:**
-| Command | Description |
-|---------|-------------|
-| `just test-cyclist` | Run Cyclist tests |
-| `just test-cyclist-watch` | Run tests in watch mode |
-
-## Direct npm Scripts
-
-From `packages/cyclist/`:
-
-| Script | Description |
-|--------|-------------|
-| `npm start` | Run production server |
-| `npm run dev` | Electron dev mode with file watching |
-| `npm run dev:once` | Build and run Electron once (no watching) |
-| `npm run dev:web` | Web server with tsx watch |
-| `npm run dev:server` | Server-only with tsx watch |
-| `npm run build` | Compile TypeScript |
-
-## Port Auto-Discovery
-
-The server automatically finds an available port starting from 1898:
-- Tries ports 1898, 1899, 1900... up to 10 attempts
-- Logs the actual port: `Cyclist running at http://localhost:{port}`
-
-## Requirements
-
-- Project must have `.pennyfarthing/` directory with config (Pennyfarthing-enabled)
-- For Electron: Cyclist.app must be installed, or run from source
-- For web: Run from `packages/cyclist/` directory
-
-## Troubleshooting
-
-### Window not appearing (Electron)
-
-The `package.json` has `"main": "dist/server.js"` for npm module use. The `dev` scripts explicitly run `electron dist/main.js` to use the correct entry point. If you run `electron .` directly, it will run the web server instead of the Electron main process.
-
-**Fix:** Use `just cyclist` which runs `electron dist/main.js`.
-
-### Server won't start
-
-- Ensure you're in the cyclist package directory (or use `just` commands)
-- Run `npm run build` first if dist/ is stale
-- Check console for port conflict messages
-
-### No portraits showing
-
-- Verify `pennyfarthing-dist/personas/portraits/` exists
-- Check theme in `.pennyfarthing/config.local.yaml`
-
-### "Not a Pennyfarthing project"
-
-- Ensure project has `.pennyfarthing/` directory with `config.local.yaml` or agent symlinks
-- Or has `.claude/` directory with persona-config.yaml (legacy)
-- Run `pennyfarthing init` in the project first
-- Or set `CYCLIST_PROJECT_DIR` to point to a valid project
-
-### Native module issues (node-pty)
-
-```bash
-# Rebuild native modules for current Electron version
-just cyclist-rebuild
-
-# Or full setup from scratch
-just cyclist-setup
-```
-
-### Missing workspace dependencies
-
-If you see `Cannot find module '@pennyfarthing/core'`, the monorepo dependencies aren't built. The `just cyclist` command auto-detects this and builds them, but you can also run manually:
-
-```bash
-pnpm run build  # From project root
-```
+| Skill | Purpose |
+|-------|---------|
+| `/theme` | Theme management (list, show, set) |
+| `/just` | Run just recipes including `just cyclist` |

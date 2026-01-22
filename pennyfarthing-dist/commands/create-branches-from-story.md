@@ -100,16 +100,16 @@ Use this instead of Step 3 if you need to work on multiple stories simultaneousl
 cd $CLAUDE_PROJECT_DIR
 
 # Create worktree with branches (both API and UI)
-./scripts/run.sh worktree-manager.sh create [story-id] feat/[story-id]-[description]
+./scripts/run.sh git/worktree-manager.sh create [story-id] feat/[story-id]-[description]
 
 # Example: Story 5-2
-./scripts/run.sh worktree-manager.sh create 5-2 feat/5-2-csv-import
+./scripts/run.sh git/worktree-manager.sh create 5-2 feat/5-2-csv-import
 
 # For API-only work
-./scripts/run.sh worktree-manager.sh create [story-id] feat/[story-id]-[description] api
+./scripts/run.sh git/worktree-manager.sh create [story-id] feat/[story-id]-[description] api
 
 # For UI-only work
-./scripts/run.sh worktree-manager.sh create [story-id] feat/[story-id]-[description] ui
+./scripts/run.sh git/worktree-manager.sh create [story-id] feat/[story-id]-[description] ui
 ```
 
 This creates:
@@ -119,16 +119,7 @@ This creates:
 
 **Skip to Step 5b** if using worktrees.
 
-### 4. Create Pennyfarthing Session
-
-```bash
-cd $CLAUDE_PROJECT_DIR
-
-# Start new work session
-./scripts/run.sh new-work.sh
-```
-
-### 5. Document the Work
+### 4. Document the Work
 
 Edit `.session/{STORY_ID}-session.md`:
 
@@ -232,7 +223,7 @@ cd $CLAUDE_PROJECT_DIR/worktrees/[story-id]/API
 cd $CLAUDE_PROJECT_DIR/worktrees/[story-id]/UI
 
 # Get port configuration for dev servers
-eval $(./scripts/run.sh worktree-manager.sh ports [story-id])
+eval $(./scripts/run.sh git/worktree-manager.sh ports [story-id])
 echo "API: $API_PORT, UI: $UI_PORT"
 ```
 
@@ -253,11 +244,7 @@ git checkout main && git pull
 git checkout -b feature/AUTH-123-user-authentication
 git push -u origin feature/AUTH-123-user-authentication
 
-# 3. Create Pennyfarthing session
-cd ..
-./scripts/run.sh new-work.sh
-
-# 4. Edit session file
+# 3. Edit session file
 # Update .session/{STORY_ID}-session.md with story details
 
 # 5. Start working
@@ -358,9 +345,6 @@ git push -u origin feature/STORY-ID-description
 cd ../UI && git checkout main && git pull && \
 git checkout -b feature/STORY-ID-description && \
 git push -u origin feature/STORY-ID-description
-
-# Create session
-cd .. && ./scripts/run.sh new-work.sh
 
 # Edit session
 # Update .session/{STORY_ID}-session.md

@@ -6,9 +6,24 @@ name: interface-definition
 gate: false
 </step-meta>
 
+## Mandatory Execution Rules
+
+- READ the complete step file before taking any action
+- DEFINE explicit contracts that prevent implementation ambiguity
+- ALWAYS treat this as collaborative discovery between architectural peers
+- FOCUS on conventions that ensure consistent implementations
+
+## Execution Protocols
+
+- Show your analysis before taking any action
+- Present A/P/C menu after generating interface definitions
+- ONLY save when user chooses [C] Continue
+- Update frontmatter `stepsCompleted: [1, 2, 3, 4, 5]` before loading next step
+- FORBIDDEN to load next step until [C] is selected
+
 ## Purpose
 
-Define the APIs, contracts, and communication patterns between components.
+Define the APIs, contracts, and communication patterns between components. Establish conventions that ensure consistent implementation across different agents or developers.
 
 ## Instructions
 
@@ -27,11 +42,16 @@ Define the APIs, contracts, and communication patterns between components.
    - Error handling patterns
    - Versioning strategy
 
+4. **Document for Consistency**:
+   - Explicit enough that two implementations would be compatible
+   - No room for interpretation on critical contracts
+
 ## Actions
 
 - Design: API contracts (OpenAPI, protobuf, or pseudocode)
 - Document: Event schemas if using async
 - Define: Error codes and handling
+- Specify: Conventions that must be followed
 
 ## Output
 
@@ -58,8 +78,56 @@ Add to session file:
 - **Naming**: [snake_case, camelCase, etc.]
 - **Errors**: [HTTP codes, error envelope format]
 - **Versioning**: [URL path, header, etc.]
+
+### Contract Enforcement
+> Rules that ensure consistent implementation
+
+- [Contract 1]: [Exact specification]
+- [Contract 2]: [Exact specification]
 ```
+
+## Collaboration Menu (A/P/C)
+
+After generating interface definitions, present choices:
+
+- **[A] Advanced Elicitation** - Use discovery protocols to identify missing contracts or edge cases
+- **[P] Party Mode** - Bring multiple perspectives to evaluate API design from different consumer viewpoints
+- **[C] Continue** - Save the content and proceed to risk assessment
+- **[R] Revise** - Need to reconsider interface design or add missing contracts
+
+## Advanced Elicitation Mode
+
+When user selects [A]:
+1. Identify edge cases in API contracts
+2. Explore error scenarios and handling
+3. Question versioning and backward compatibility
+4. Consider rate limiting and quotas
+
+## Party Mode
+
+When user selects [P]:
+1. Present interface design from multiple viewpoints:
+   - **API consumer**: Is this intuitive to use?
+   - **Security engineer**: Are there auth/authz gaps?
+   - **Mobile developer**: Will this work on constrained networks?
+   - **Integration team**: How will this connect to existing systems?
+2. Synthesize perspectives into refined contracts
+
+## Success Metrics
+
+- External APIs clearly documented
+- Internal contracts specify exact message formats
+- Conventions established for naming, errors, versioning
+- Contracts explicit enough for independent implementation
+- User confirmed interfaces before proceeding
+
+## Failure Modes
+
+- Ambiguous contract specifications
+- Missing error handling definitions
+- Inconsistent naming conventions
+- Proceeding without user confirmation
 
 ## Next Step
 
-Proceed to Risk Assessment to identify potential issues.
+After user selects [C], proceed to Risk Assessment to identify potential issues.

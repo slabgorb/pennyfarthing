@@ -99,18 +99,18 @@ describe('AC1: Context-clear signal emission', () => {
 
   });
 
-  describe('generic-handoff emits CONTEXT_CLEAR in auto mode + high context', () => {
+  describe('handoff emits CONTEXT_CLEAR in auto mode + high context', () => {
 
     it('should export formatContextClearMarker function', async () => {
-      // The generic-handoff module should have a function to format the marker
-      const handoff = await import('../../core/src/workflow/generic-handoff.js');
+      // The handoff module should have a function to format the marker
+      const handoff = await import('../../core/src/workflow/handoff.js');
 
       expect(handoff.formatContextClearMarker).toBeDefined();
       expect(typeof handoff.formatContextClearMarker).toBe('function');
     });
 
     it('should return CONTEXT_CLEAR marker when auto mode and context > 60%', async () => {
-      const handoff = await import('../../core/src/workflow/generic-handoff.js');
+      const handoff = await import('../../core/src/workflow/handoff.js');
 
       const marker = handoff.formatContextClearMarker({
         handoffMode: 'auto',
@@ -122,7 +122,7 @@ describe('AC1: Context-clear signal emission', () => {
     });
 
     it('should return HANDOFF marker when auto mode and context <= 60%', async () => {
-      const handoff = await import('../../core/src/workflow/generic-handoff.js');
+      const handoff = await import('../../core/src/workflow/handoff.js');
 
       const marker = handoff.formatContextClearMarker({
         handoffMode: 'auto',
@@ -136,7 +136,7 @@ describe('AC1: Context-clear signal emission', () => {
     });
 
     it('should return HANDOFF marker when manual mode regardless of context', async () => {
-      const handoff = await import('../../core/src/workflow/generic-handoff.js');
+      const handoff = await import('../../core/src/workflow/handoff.js');
 
       const marker = handoff.formatContextClearMarker({
         handoffMode: 'manual',
@@ -150,7 +150,7 @@ describe('AC1: Context-clear signal emission', () => {
     });
 
     it('should include context percentage in CONTEXT_CLEAR marker message', async () => {
-      const handoff = await import('../../core/src/workflow/generic-handoff.js');
+      const handoff = await import('../../core/src/workflow/handoff.js');
 
       const output = handoff.formatContextClearOutput({
         handoffMode: 'auto',
@@ -415,7 +415,7 @@ describe('AC4: Auto mode workflow continuation', () => {
   describe('CONTEXT_CLEAR marker only emitted in auto mode', () => {
 
     it('should detect auto mode from settings before emitting marker', async () => {
-      const handoff = await import('../../core/src/workflow/generic-handoff.js');
+      const handoff = await import('../../core/src/workflow/handoff.js');
 
       // When handoff mode is 'auto' and context > 60%, emit CONTEXT_CLEAR
       const result = handoff.shouldEmitContextClear({
@@ -427,7 +427,7 @@ describe('AC4: Auto mode workflow continuation', () => {
     });
 
     it('should NOT emit CONTEXT_CLEAR in manual mode', async () => {
-      const handoff = await import('../../core/src/workflow/generic-handoff.js');
+      const handoff = await import('../../core/src/workflow/handoff.js');
 
       const result = handoff.shouldEmitContextClear({
         handoffMode: 'manual',
@@ -438,7 +438,7 @@ describe('AC4: Auto mode workflow continuation', () => {
     });
 
     it('should NOT emit CONTEXT_CLEAR when context is low', async () => {
-      const handoff = await import('../../core/src/workflow/generic-handoff.js');
+      const handoff = await import('../../core/src/workflow/handoff.js');
 
       const result = handoff.shouldEmitContextClear({
         handoffMode: 'auto',

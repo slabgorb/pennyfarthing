@@ -90,12 +90,42 @@
           <button type="button" class="toolbar-btn" data-action="blockquote" title="Quote">"</button>
           <button type="button" class="toolbar-btn" data-action="codeBlock" title="Code Block">{ }</button>
           <span class="toolbar-spacer"></span>
-          <!-- Permission mode switch (4-way segmented control) -->
+          <!-- Permission mode switch (4-way segmented control) - MSSCI-12127 enhanced -->
           <div class="mode-switch" data-control="mode-switch" role="radiogroup" aria-label="Permission mode">
-            <button type="button" class="mode-switch-segment" data-mode="plan" role="radio" aria-checked="false" title="Plan mode - Read-only planning">PLAN</button>
-            <button type="button" class="mode-switch-segment active" data-mode="manual" role="radio" aria-checked="true" title="Manual mode - Ask permission for everything">MANUAL</button>
-            <button type="button" class="mode-switch-segment" data-mode="accept" role="radio" aria-checked="false" title="Accept mode - Auto-accept file edits">ACCEPT</button>
-            <button type="button" class="mode-switch-segment" data-mode="turbo" role="radio" aria-checked="false" title="Turbo mode - Auto-accept everything + auto-handoff">TURBO</button>
+            <!-- Sliding highlight indicator (JS positions this) -->
+            <div class="mode-switch-highlight" data-active-mode="manual"></div>
+            <button type="button" class="mode-switch-segment" data-mode="plan" data-shortcut="1" role="radio" aria-checked="false" title="Plan mode - Read-only planning (⌘1)">
+              PLAN
+              <div class="mode-switch-tooltip">
+                <div class="mode-switch-tooltip-title">Plan Mode</div>
+                <div class="mode-switch-tooltip-desc">Read-only planning, no file changes</div>
+                <span class="mode-switch-tooltip-shortcut">⌘1</span>
+              </div>
+            </button>
+            <button type="button" class="mode-switch-segment active" data-mode="manual" data-shortcut="2" role="radio" aria-checked="true" title="Manual mode - Ask permission for everything (⌘2)">
+              MANUAL
+              <div class="mode-switch-tooltip">
+                <div class="mode-switch-tooltip-title">Manual Mode</div>
+                <div class="mode-switch-tooltip-desc">Ask permission for all changes</div>
+                <span class="mode-switch-tooltip-shortcut">⌘2</span>
+              </div>
+            </button>
+            <button type="button" class="mode-switch-segment" data-mode="accept" data-shortcut="3" role="radio" aria-checked="false" title="Accept mode - Auto-accept file edits (⌘3)">
+              ACCEPT
+              <div class="mode-switch-tooltip">
+                <div class="mode-switch-tooltip-title">Accept Mode</div>
+                <div class="mode-switch-tooltip-desc">Auto-accept file edits</div>
+                <span class="mode-switch-tooltip-shortcut">⌘3</span>
+              </div>
+            </button>
+            <button type="button" class="mode-switch-segment" data-mode="turbo" data-shortcut="4" role="radio" aria-checked="false" title="Turbo mode - Auto-accept everything + auto-handoff (⌘4)">
+              TURBO
+              <div class="mode-switch-tooltip">
+                <div class="mode-switch-tooltip-title">Turbo Mode</div>
+                <div class="mode-switch-tooltip-desc">Auto-accept all + auto-handoff</div>
+                <span class="mode-switch-tooltip-shortcut">⌘4</span>
+              </div>
+            </button>
           </div>
         </div>
         <div id="editor-row">
@@ -217,12 +247,16 @@
         </section>
         <div id="sprint-info" class="sprint-info">
           <div class="sprint-stat">
-            <span class="sprint-label">Remaining</span>
+            <span class="sprint-label">Done</span>
+            <span id="sprint-done" class="sprint-value">-</span>
+          </div>
+          <div class="sprint-stat">
+            <span class="sprint-label">Todo</span>
             <span id="sprint-remaining" class="sprint-value">-</span>
           </div>
           <div class="sprint-stat">
-            <span class="sprint-label">In Progress</span>
-            <span id="sprint-in-progress" class="sprint-value">-</span>
+            <span class="sprint-label">Progress</span>
+            <span id="sprint-percent" class="sprint-value">-</span>
           </div>
           <div class="sprint-stat">
             <span class="sprint-label">Ends</span>

@@ -7,6 +7,11 @@
 
 import * as vscode from 'vscode';
 import type { WebSocketManager, StatsData } from '../server/websocket-manager';
+import {
+  parseSkillRegistry,
+  groupSkillsByCategory,
+  type SkillMetadata,
+} from '../commands/skill-parser';
 
 // Role display names for accessibility
 const ROLE_NAMES: Record<string, string> = {
@@ -21,6 +26,39 @@ const ROLE_NAMES: Record<string, string> = {
   devops: 'DevOps Engineer',
   orchestrator: 'Orchestrator',
 };
+
+// Category display names for skills
+const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
+  'ai-llm': 'AI & LLM',
+  development: 'Development',
+  documentation: 'Documentation',
+  tools: 'Tools',
+  'project-management': 'Project Management',
+  benchmarking: 'Benchmarking',
+  theming: 'Theming',
+  other: 'Other',
+};
+
+// Slash command definitions for Commands section
+interface SlashCommand {
+  name: string;
+  description: string;
+}
+
+const SLASH_COMMANDS: SlashCommand[] = [
+  { name: 'sm', description: 'Start Scrum Master agent' },
+  { name: 'tea', description: 'Start Test Engineer agent' },
+  { name: 'dev', description: 'Start Developer agent' },
+  { name: 'reviewer', description: 'Start Code Reviewer agent' },
+  { name: 'architect', description: 'Start Architect agent' },
+  { name: 'pm', description: 'Start Product Manager agent' },
+  { name: 'work', description: 'Start or resume work session' },
+  { name: 'sprint', description: 'View sprint status and backlog' },
+  { name: 'check', description: 'Run quality gates (lint, type, test)' },
+  { name: 'help', description: 'Get help with Pennyfarthing' },
+  { name: 'brainstorm', description: 'Structured brainstorm session' },
+  { name: 'release', description: 'Merge develop to main and push' },
+];
 
 // Data types for sidebar state
 interface PersonaData {
@@ -47,17 +85,34 @@ interface StoryData {
   points: number;
 }
 
+// Workflow state data for sidebar display (MSSCI-12125)
+interface WorkflowData {
+  name: string;
+  type: 'stepped' | 'phased';
+  mode?: 'create' | 'validate' | 'edit';
+  currentStep: number;
+  totalSteps: number;
+  stepsCompleted: number[];
+  status: 'in_progress' | 'completed' | 'paused';
+  phaseName?: string; // For phased workflows: 'setup', 'red', 'green', etc.
+}
+
 // Tree item types for getChildren routing
 type TreeItemType =
   | 'root'
   | 'agent'
   | 'sprint'
   | 'story'
+  | 'workflow'
   | 'actions'
+  | 'skills'
+  | 'commands'
+  | 'skill-category'
   | 'empty';
 
 interface SidebarTreeItem extends vscode.TreeItem {
   itemType?: TreeItemType;
+  categoryName?: string; // For skill-category items to track which category
 }
 
 /**
@@ -78,12 +133,38 @@ export class AgentStatusTreeDataProvider
   private context: ContextData | null = null;
   private sprint: SprintData | null = null;
   private story: StoryData | null = null;
+  private workflow: WorkflowData | null = null;
   private isConnecting = false;
   private reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
   private statsUnsubscribe: (() => void) | null = null;
 
+  // Skills cache
+  private skillsCache: SkillMetadata[] | null = null;
+  private skillsByCategory: Map<string, SkillMetadata[]> | null = null;
+
   constructor() {
     // Initial state is empty
+    // Load skills on construction
+    this.loadSkills();
+  }
+
+  /**
+   * Load skills from skill-registry.yaml
+   */
+  private loadSkills(): void {
+    try {
+      // Try to find project root by looking for common markers
+      const workspaceFolders = vscode.workspace.workspaceFolders;
+      if (workspaceFolders && workspaceFolders.length > 0) {
+        const projectDir = workspaceFolders[0].uri.fsPath;
+        this.skillsCache = parseSkillRegistry(projectDir);
+        this.skillsByCategory = groupSkillsByCategory(this.skillsCache);
+      }
+    } catch {
+      // Skills not available, will show empty section
+      this.skillsCache = [];
+      this.skillsByCategory = new Map();
+    }
   }
 
   /**
@@ -115,8 +196,16 @@ export class AgentStatusTreeDataProvider
         return this.getSprintChildren();
       case 'story':
         return this.getStoryChildren();
+      case 'workflow':
+        return this.getWorkflowChildren();
       case 'actions':
         return this.getActionsChildren();
+      case 'skills':
+        return this.getSkillsChildren();
+      case 'commands':
+        return this.getCommandsChildren();
+      case 'skill-category':
+        return this.getSkillCategoryChildren(element);
       default:
         return [];
     }
@@ -170,9 +259,24 @@ export class AgentStatusTreeDataProvider
       items.push(emptyStory);
     }
 
+    // Workflow section (only shown when workflow is active - MSSCI-12125)
+    if (this.workflow) {
+      items.push(this.createWorkflowItem());
+    }
+
     // Quick Actions section (always shown if agent is active or no agent)
     if (!this.isConnecting) {
       items.push(this.createActionsItem());
+    }
+
+    // Skills section (always shown - MSSCI-12124)
+    if (!this.isConnecting) {
+      items.push(this.createSkillsItem());
+    }
+
+    // Commands section (always shown - MSSCI-12124)
+    if (!this.isConnecting) {
+      items.push(this.createCommandsItem());
     }
 
     return items;
@@ -372,6 +476,116 @@ export class AgentStatusTreeDataProvider
   }
 
   // =========================================================================
+  // Workflow section (MSSCI-12125)
+  // =========================================================================
+
+  private createWorkflowItem(): SidebarTreeItem {
+    const item = new vscode.TreeItem(
+      'Workflow',
+      vscode.TreeItemCollapsibleState.Expanded
+    ) as SidebarTreeItem;
+
+    item.description = this.workflow!.name;
+    item.contextValue = 'workflow';
+    item.itemType = 'workflow';
+
+    // Use different icons for stepped vs phased workflows
+    item.iconPath =
+      this.workflow!.type === 'stepped'
+        ? new vscode.ThemeIcon('list-ordered')
+        : new vscode.ThemeIcon('git-compare');
+
+    // Accessibility label
+    const completedCount = this.workflow!.stepsCompleted.length;
+    const totalSteps = this.workflow!.totalSteps;
+    item.accessibilityInformation = {
+      label: `Workflow ${this.workflow!.name}, type ${this.workflow!.type}, ${completedCount} of ${totalSteps} steps completed`,
+    };
+
+    return item;
+  }
+
+  private getWorkflowChildren(): SidebarTreeItem[] {
+    if (!this.workflow) {
+      return [];
+    }
+
+    const children: SidebarTreeItem[] = [];
+
+    // Type child
+    const typeItem = new vscode.TreeItem(
+      `Type: ${this.workflow.type}`,
+      vscode.TreeItemCollapsibleState.None
+    ) as SidebarTreeItem;
+    typeItem.iconPath = new vscode.ThemeIcon('symbol-type-parameter');
+    children.push(typeItem);
+
+    // Current step/phase
+    const isPhased = this.workflow.type === 'phased';
+    const currentLabel = isPhased
+      ? `Phase: ${this.workflow.phaseName || `Phase ${this.workflow.currentStep}`}`
+      : `Current: Step ${this.workflow.currentStep}`;
+    const currentItem = new vscode.TreeItem(
+      currentLabel,
+      vscode.TreeItemCollapsibleState.None
+    ) as SidebarTreeItem;
+    currentItem.iconPath = new vscode.ThemeIcon('sync~spin');
+    children.push(currentItem);
+
+    // Progress (completed/total)
+    const completedCount = this.workflow.stepsCompleted.length;
+    const totalSteps = this.workflow.totalSteps;
+    const percentage = Math.round((completedCount / totalSteps) * 100);
+    const unitLabel = isPhased ? 'phases' : 'steps';
+    const progressItem = new vscode.TreeItem(
+      `Progress: ${completedCount}/${totalSteps} ${unitLabel}`,
+      vscode.TreeItemCollapsibleState.None
+    ) as SidebarTreeItem;
+    progressItem.description = `${percentage}%`;
+    progressItem.iconPath = new vscode.ThemeIcon('pie-chart');
+    progressItem.accessibilityInformation = {
+      label: `${completedCount} of ${totalSteps} ${unitLabel} completed, ${percentage} percent`,
+    };
+    children.push(progressItem);
+
+    // Quick actions
+    const resumeItem = new vscode.TreeItem(
+      'Resume',
+      vscode.TreeItemCollapsibleState.None
+    ) as SidebarTreeItem;
+    resumeItem.iconPath = new vscode.ThemeIcon('play');
+    resumeItem.command = {
+      command: 'pennyfarthing.resumeWorkflow',
+      title: 'Resume Workflow',
+    };
+    children.push(resumeItem);
+
+    const abandonItem = new vscode.TreeItem(
+      'Abandon',
+      vscode.TreeItemCollapsibleState.None
+    ) as SidebarTreeItem;
+    abandonItem.iconPath = new vscode.ThemeIcon('close');
+    abandonItem.command = {
+      command: 'pennyfarthing.abandonWorkflow',
+      title: 'Abandon Workflow',
+    };
+    children.push(abandonItem);
+
+    const detailsItem = new vscode.TreeItem(
+      'View Details',
+      vscode.TreeItemCollapsibleState.None
+    ) as SidebarTreeItem;
+    detailsItem.iconPath = new vscode.ThemeIcon('info');
+    detailsItem.command = {
+      command: 'pennyfarthing.viewWorkflowDetails',
+      title: 'View Workflow Details',
+    };
+    children.push(detailsItem);
+
+    return children;
+  }
+
+  // =========================================================================
   // Quick Actions section
   // =========================================================================
 
@@ -420,6 +634,134 @@ export class AgentStatusTreeDataProvider
   }
 
   // =========================================================================
+  // Skills section (MSSCI-12124)
+  // =========================================================================
+
+  private createSkillsItem(): SidebarTreeItem {
+    const skillCount = this.skillsCache?.length ?? 0;
+    const item = new vscode.TreeItem(
+      'Skills',
+      vscode.TreeItemCollapsibleState.Collapsed
+    ) as SidebarTreeItem;
+
+    item.itemType = 'skills';
+    item.description = `${skillCount} skill${skillCount !== 1 ? 's' : ''}`;
+    item.iconPath = new vscode.ThemeIcon('lightbulb');
+
+    return item;
+  }
+
+  private getSkillsChildren(): SidebarTreeItem[] {
+    if (!this.skillsByCategory) {
+      return [];
+    }
+
+    const items: SidebarTreeItem[] = [];
+
+    // Create category items
+    for (const [category, skills] of this.skillsByCategory) {
+      const displayName =
+        CATEGORY_DISPLAY_NAMES[category] || this.humanize(category);
+      const item = new vscode.TreeItem(
+        displayName,
+        vscode.TreeItemCollapsibleState.Collapsed
+      ) as SidebarTreeItem;
+
+      item.itemType = 'skill-category';
+      item.categoryName = category;
+      item.description = `${skills.length}`;
+      item.iconPath = new vscode.ThemeIcon('folder');
+
+      items.push(item);
+    }
+
+    return items;
+  }
+
+  private getSkillCategoryChildren(element: SidebarTreeItem): SidebarTreeItem[] {
+    const categoryName = element.categoryName;
+    if (!categoryName || !this.skillsByCategory) {
+      return [];
+    }
+
+    const skills = this.skillsByCategory.get(categoryName);
+    if (!skills) {
+      return [];
+    }
+
+    return skills.map((skill) => this.createSkillItem(skill));
+  }
+
+  private createSkillItem(skill: SkillMetadata): SidebarTreeItem {
+    const item = new vscode.TreeItem(
+      `/${skill.name}`,
+      vscode.TreeItemCollapsibleState.None
+    ) as SidebarTreeItem;
+
+    // Build tooltip with description and examples
+    let tooltip = skill.description;
+    if (skill.examples && skill.examples.length > 0) {
+      tooltip += '\n\nExamples:';
+      for (const example of skill.examples) {
+        tooltip += `\n• ${example.context}: ${example.invocation}`;
+      }
+    }
+
+    item.tooltip = tooltip;
+    item.description = skill.category;
+    item.iconPath = new vscode.ThemeIcon('symbol-method');
+    item.command = {
+      command: 'pennyfarthing.invokeSkill',
+      arguments: [skill.name],
+      title: `Run /${skill.name}`,
+    };
+    item.accessibilityInformation = {
+      label: `${skill.name} skill, ${skill.description}`,
+    };
+
+    return item;
+  }
+
+  // =========================================================================
+  // Commands section (MSSCI-12124)
+  // =========================================================================
+
+  private createCommandsItem(): SidebarTreeItem {
+    const item = new vscode.TreeItem(
+      'Commands',
+      vscode.TreeItemCollapsibleState.Collapsed
+    ) as SidebarTreeItem;
+
+    item.itemType = 'commands';
+    item.iconPath = new vscode.ThemeIcon('terminal');
+
+    return item;
+  }
+
+  private getCommandsChildren(): SidebarTreeItem[] {
+    return SLASH_COMMANDS.map((cmd) => {
+      const item = new vscode.TreeItem(
+        `/${cmd.name}`,
+        vscode.TreeItemCollapsibleState.None
+      ) as SidebarTreeItem;
+
+      item.description = cmd.description;
+      item.tooltip = cmd.description;
+      item.iconPath = new vscode.ThemeIcon('chevron-right');
+      item.command = {
+        command: 'pennyfarthing.invokeCommand',
+        arguments: [cmd.name],
+        title: `Run /${cmd.name}`,
+      };
+      item.accessibilityInformation = {
+        label: `${cmd.name} command, ${cmd.description}`,
+      };
+
+      return item;
+    });
+  }
+
+  // =========================================================================
   // Update methods (called by WheelHub WebSocket handlers)
   // =========================================================================
 
@@ -440,6 +782,16 @@ export class AgentStatusTreeDataProvider
 
   updateStory(data: StoryData): void {
     this.story = data;
+    this._onDidChangeTreeData.fire();
+  }
+
+  /**
+   * Update workflow state (MSSCI-12125)
+   * Called by file watcher or direct updates.
+   * Pass null to clear the workflow (hide section).
+   */
+  updateWorkflow(data: WorkflowData | null): void {
+    this.workflow = data;
     this._onDidChangeTreeData.fire();
   }
 
@@ -522,6 +874,200 @@ export class AgentStatusTreeDataProvider
   }
 
   // =========================================================================
+  // File Watcher Methods (MSSCI-12147)
+  // =========================================================================
+
+  private sessionWatcher: vscode.FileSystemWatcher | null = null;
+  private configWatcher: vscode.FileSystemWatcher | null = null;
+
+  /**
+   * Start watching session and config files for changes.
+   * This enables sidebar sync without requiring WheelHub connection.
+   */
+  startFileWatchers(): void {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (!workspaceFolder) {
+      return;
+    }
+
+    const basePath = workspaceFolder.uri.fsPath;
+
+    // Watch session files for story/workflow state changes
+    const sessionPattern = new vscode.RelativePattern(
+      basePath,
+      '.session/*-session.md'
+    );
+    this.sessionWatcher = vscode.workspace.createFileSystemWatcher(sessionPattern);
+
+    this.sessionWatcher.onDidChange((uri) => this.parseSessionFile(uri));
+    this.sessionWatcher.onDidCreate((uri) => this.parseSessionFile(uri));
+    this.sessionWatcher.onDidDelete(() => {
+      // Clear story/workflow when session deleted
+      this.story = null;
+      this.workflow = null;
+      this._onDidChangeTreeData.fire();
+    });
+
+    // Watch config file for persona/theme changes
+    const configPattern = new vscode.RelativePattern(
+      basePath,
+      '.pennyfarthing/config.local.yaml'
+    );
+    this.configWatcher = vscode.workspace.createFileSystemWatcher(configPattern);
+
+    this.configWatcher.onDidChange((uri) => this.parseConfigFile(uri));
+    this.configWatcher.onDidCreate((uri) => this.parseConfigFile(uri));
+
+    // Initial parse of existing files
+    this.initialFileParse(basePath);
+  }
+
+  /**
+   * Parse session file for story and workflow state.
+   */
+  private async parseSessionFile(uri: vscode.Uri): Promise<void> {
+    try {
+      const content = await vscode.workspace.fs.readFile(uri);
+      const text = new TextDecoder().decode(content);
+
+      // Extract story ID from filename
+      const filename = uri.path.split('/').pop() || '';
+      const storyIdMatch = filename.match(/^(.+)-session\.md$/);
+      const storyId = storyIdMatch ? storyIdMatch[1] : null;
+
+      if (!storyId) {
+        return;
+      }
+
+      // Parse story details from session file
+      const titleMatch = text.match(/\*\*Title:\*\*\s*(.+)/);
+      const phaseMatch = text.match(/\*\*Phase:\*\*\s*(\w+)/);
+      const branchMatch = text.match(/\*\*(?:Feature )?Branch:\*\*\s*(.+)/);
+      const pointsMatch = text.match(/\*\*Points:\*\*\s*(\d+)/);
+
+      if (titleMatch) {
+        this.story = {
+          id: storyId,
+          title: titleMatch[1].trim(),
+          phase: phaseMatch ? phaseMatch[1].trim().toLowerCase() : 'unknown',
+          branch: branchMatch ? branchMatch[1].trim() : '',
+          points: pointsMatch ? parseInt(pointsMatch[1], 10) : 0,
+        };
+      }
+
+      // Parse workflow state if present
+      const workflowNameMatch = text.match(/\*\*Workflow:\*\*\s*(\w+)/);
+      const workflowStepMatch = text.match(/Current Step:\s*(\d+)/);
+      const workflowTotalMatch = text.match(/Total Steps:\s*(\d+)/);
+
+      if (workflowNameMatch) {
+        const workflowName = workflowNameMatch[1].trim().toLowerCase();
+
+        // Determine workflow type from name or content
+        const isSteppedWorkflow =
+          workflowName.includes('prd') ||
+          workflowName.includes('research') ||
+          workflowName.includes('brief') ||
+          text.includes('type: stepped');
+
+        if (isSteppedWorkflow && workflowStepMatch && workflowTotalMatch) {
+          this.workflow = {
+            name: workflowName,
+            type: 'stepped',
+            currentStep: parseInt(workflowStepMatch[1], 10),
+            totalSteps: parseInt(workflowTotalMatch[1], 10),
+            stepsCompleted: [], // Would need more parsing for this
+            status: 'in_progress',
+          };
+        } else if (['tdd', 'trivial', 'agent-docs', 'bdd'].includes(workflowName)) {
+          // Phased workflow
+          this.workflow = {
+            name: workflowName,
+            type: 'phased',
+            currentStep: 1,
+            totalSteps: workflowName === 'tdd' ? 4 : 3,
+            stepsCompleted: [],
+            status: 'in_progress',
+            phaseName: phaseMatch ? phaseMatch[1].trim() : undefined,
+          };
+        }
+      }
+
+      this._onDidChangeTreeData.fire();
+    } catch {
+      // File read error, ignore
+    }
+  }
+
+  /**
+   * Parse config file for persona/theme.
+   */
+  private async parseConfigFile(uri: vscode.Uri): Promise<void> {
+    try {
+      const content = await vscode.workspace.fs.readFile(uri);
+      const text = new TextDecoder().decode(content);
+
+      // Parse theme from YAML
+      const themeMatch = text.match(/^theme:\s*(.+)$/m);
+      if (themeMatch) {
+        const theme = themeMatch[1].trim().replace(/["']/g, '');
+
+        // Update persona with theme info (character will come from agent activation)
+        if (this.persona) {
+          this.persona.theme = theme;
+        } else {
+          this.persona = {
+            character: 'Agent',
+            theme: theme,
+            role: 'unknown',
+          };
+        }
+        this._onDidChangeTreeData.fire();
+      }
+    } catch {
+      // File read error, ignore
+    }
+  }
+
+  /**
+   * Initial parse of existing session and config files.
+   */
+  private async initialFileParse(basePath: string): Promise<void> {
+    // Find and parse most recent session file
+    const sessionGlob = new vscode.RelativePattern(basePath, '.session/*-session.md');
+    const sessionFiles = await vscode.workspace.findFiles(sessionGlob, null, 10);
+
+    if (sessionFiles.length > 0) {
+      // Sort by modification time (most recent first)
+      const sortedFiles = sessionFiles.sort((a, b) => b.fsPath.localeCompare(a.fsPath));
+      await this.parseSessionFile(sortedFiles[0]);
+    }
+
+    // Parse config file
+    const configUri = vscode.Uri.file(`${basePath}/.pennyfarthing/config.local.yaml`);
+    try {
+      await vscode.workspace.fs.stat(configUri);
+      await this.parseConfigFile(configUri);
+    } catch {
+      // Config file doesn't exist
+    }
+  }
+
+  /**
+   * Stop file watchers and clean up.
+   */
+  stopFileWatchers(): void {
+    if (this.sessionWatcher) {
+      this.sessionWatcher.dispose();
+      this.sessionWatcher = null;
+    }
+    if (this.configWatcher) {
+      this.configWatcher.dispose();
+      this.configWatcher = null;
+    }
+  }
+
+  // =========================================================================
   // Utility methods
   // =========================================================================
 
@@ -533,6 +1079,9 @@ export class AgentStatusTreeDataProvider
   }
 
   dispose(): void {
+    // Clean up file watchers
+    this.stopFileWatchers();
+
     // Clean up reconnect timeout
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);

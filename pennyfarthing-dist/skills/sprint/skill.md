@@ -5,25 +5,42 @@ description: |
   sprint status, finding available stories, reviewing backlog, or understanding story context
   and history.
   IMPORTANT: Always use the provided scripts - never manually edit sprint YAML.
-args: "[status|backlog|work|archive|new|promote|epic]"
+args: "[status|backlog|work|archive|new|promote]"
 ---
 
 # /sprint - Sprint Management
 
-**CRITICAL:** Never manually edit `sprint/current-sprint.yaml`. Use the scripts below for deterministic, correct YAML formatting.
+<critical>
+Never manually edit `sprint/current-sprint.yaml`. Use the scripts below for deterministic, correct YAML formatting.
+</critical>
 
 ## Commands
 
-### `/sprint` or `/sprint status`
+### `/sprint` or `/sprint status [filter]`
 
 Show current sprint status with story counts and points.
 
-**Run:**
-```bash
-.pennyfarthing/scripts/run.sh sprint-status.sh
-```
+<run>
+.pennyfarthing/scripts/core/run.sh sprint/sprint-status.sh [filter]
+</run>
 
-**Output:** Sprint metadata, stories by status, points breakdown, completed count from archive.
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `filter` | No | Filter stories: `todo`, `in-progress`, `done`, `cancelled` |
+</args>
+
+<example>
+.pennyfarthing/scripts/core/run.sh sprint/sprint-status.sh           # All stories
+.pennyfarthing/scripts/core/run.sh sprint/sprint-status.sh todo      # Backlog only
+.pennyfarthing/scripts/core/run.sh sprint/sprint-status.sh in-progress  # WIP only
+.pennyfarthing/scripts/core/run.sh sprint/sprint-status.sh done      # Completed only
+</example>
+
+<output>
+Sprint metadata, stories by status (grouped under epic headers), points breakdown, completed count from archive.
+When filtered, only shows epics with matching stories.
+</output>
 
 ---
 
@@ -31,12 +48,13 @@ Show current sprint status with story counts and points.
 
 Show available stories grouped by epic with Jira context.
 
-**Run:**
-```bash
-.pennyfarthing/scripts/run.sh available-stories.sh
-```
+<run>
+.pennyfarthing/scripts/core/run.sh sprint/available-stories.sh
+</run>
 
-**Output:** Backlog stories with epic descriptions, points, priority, and workflow tags.
+<output>
+Backlog stories with epic descriptions, points, priority, and workflow tags.
+</output>
 
 ---
 
@@ -44,98 +62,109 @@ Show available stories grouped by epic with Jira context.
 
 Start work on a story. This is the primary entry point for development work.
 
-**Alias:** `/new-work` is equivalent to `/sprint work`
+<when>
+- Starting new development work
+- `/new-work` is an alias for this command
+</when>
 
 #### Without argument: Interactive selection
 
 Shows backlog, user selects story, then proceeds to setup.
 
-**Flow:**
+<output>
 1. Load SM persona
 2. Check for in-progress work
 3. Show available stories
 4. User selects story
 5. Setup and handoff to TEA/Dev
+</output>
 
 #### With story ID: Direct start
 
-**Run first:**
-```bash
-.pennyfarthing/scripts/run.sh check-story.sh <story-id>
-```
+<run>
+.pennyfarthing/scripts/core/run.sh sprint/check-story.sh <story-id>
+</run>
 
-**If `available: true`:** Skip backlog, proceed directly to story setup with returned data.
-**If `available: false`:** Report why (assigned, in progress, etc.)
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `story-id` | Yes | Jira key (e.g., `MSSCI-12038`) |
+</args>
 
-**Example:**
-```bash
-.pennyfarthing/scripts/run.sh check-story.sh MSSCI-12038
+<output>
+- `available: true` - Skip backlog, proceed to setup
+- `available: false` - Report why (assigned, in progress, etc.)
+</output>
+
+<example>
+.pennyfarthing/scripts/core/run.sh sprint/check-story.sh MSSCI-12038
 # Returns: {"type": "story", "available": true, "title": "...", ...}
-```
+</example>
 
 #### With epic ID: Start first available story in epic
 
-**Run first:**
-```bash
-.pennyfarthing/scripts/run.sh check-story.sh <epic-id>
-```
+<run>
+.pennyfarthing/scripts/core/run.sh sprint/check-story.sh <epic-id>
+</run>
 
-**Returns:** Epic info with `first_story` (highest priority available story).
-**Action:** Automatically start work on `first_story` if available.
+<output>
+Epic info with `first_story` (highest priority available story).
+Action: Automatically start work on `first_story` if available.
+</output>
 
-**Example:**
-```bash
-.pennyfarthing/scripts/run.sh check-story.sh MSSCI-11952
+<example>
+.pennyfarthing/scripts/core/run.sh sprint/check-story.sh MSSCI-11952
 # Returns: {"type": "epic", "first_story": {"id": "MSSCI-11954", ...}, ...}
-```
+</example>
 
 #### With `next`: Auto-select highest priority story
 
-**Run first:**
-```bash
-.pennyfarthing/scripts/run.sh check-story.sh next
-```
+<run>
+.pennyfarthing/scripts/core/run.sh sprint/check-story.sh next
+</run>
 
-**Returns:** Highest-priority available story across all epics.
-**Action:** Automatically start work on returned story.
+<output>
+Highest-priority available story across all epics.
+Action: Automatically start work on returned story.
+</output>
 
-**Example:**
-```bash
-.pennyfarthing/scripts/run.sh check-story.sh next
+<example>
+.pennyfarthing/scripts/core/run.sh sprint/check-story.sh next
 # Returns: {"type": "next", "story": {"id": "MSSCI-11950", "priority": "P1", ...}}
-```
+</example>
 
 ---
 
-### `/sprint archive <story-id> [pr-number]`
+### `/sprint archive <story-id> [pr-number] [--apply]`
 
 Archive a completed story to the sprint archive file.
 
-**Run:**
-```bash
-.pennyfarthing/scripts/run.sh archive-story.sh <story-id> [pr-number]
-```
+<run>
+.pennyfarthing/scripts/core/run.sh sprint/archive-story.sh <story-id> [pr-number] [--apply]
+</run>
 
-**Arguments:**
+<args>
 | Arg | Required | Description |
 |-----|----------|-------------|
-| `story-id` | Yes | Jira key (e.g., `MSSCI-11945`) |
+| `story-id` | Yes | Story ID (e.g., `35-2`) |
 | `pr-number` | No | PR number if merged via PR |
+| `--apply` | No | Also remove story from current-sprint.yaml |
+</args>
 
-**Example:**
-```bash
-.pennyfarthing/scripts/run.sh archive-story.sh MSSCI-11945 368
-```
+<example>
+# Archive only (manual removal needed)
+.pennyfarthing/scripts/core/run.sh sprint/archive-story.sh 35-2 368
 
-**What it does:**
+# Archive and remove atomically (recommended)
+.pennyfarthing/scripts/core/run.sh sprint/archive-story.sh 35-2 368 --apply
+</example>
+
+<output>
 1. Extracts story from `current-sprint.yaml`
 2. Appends to `sprint/archive/sprint-{YYWW}-completed.yaml`
-3. Outputs yq command to remove from current sprint
-
-**IMPORTANT:** After running, execute the provided yq command to complete removal:
-```bash
-yq eval -i 'del(.epics[].stories[] | select(.id == "MSSCI-11945"))' sprint/current-sprint.yaml
-```
+3. With `--apply`: Also removes from current sprint
+4. Without `--apply`: Outputs command to complete removal
+</output>
 
 ---
 
@@ -143,12 +172,11 @@ yq eval -i 'del(.epics[].stories[] | select(.id == "MSSCI-11945"))' sprint/curre
 
 Initialize a new sprint from template.
 
-**Run:**
-```bash
-.pennyfarthing/scripts/run.sh new-sprint.sh <yyww> <jira-id> <start> <end> "<goal>"
-```
+<run>
+.pennyfarthing/scripts/core/run.sh sprint/new-sprint.sh <yyww> <jira-id> <start> <end> "<goal>"
+</run>
 
-**Arguments:**
+<args>
 | Arg | Required | Description |
 |-----|----------|-------------|
 | `yyww` | Yes | Sprint identifier (e.g., `2605` for 2026 week 5) |
@@ -156,166 +184,176 @@ Initialize a new sprint from template.
 | `start` | Yes | Start date `YYYY-MM-DD` |
 | `end` | Yes | End date `YYYY-MM-DD` |
 | `goal` | Yes | Sprint goal (quoted string) |
+</args>
 
-**Example:**
-```bash
-.pennyfarthing/scripts/run.sh new-sprint.sh 2605 277 2026-02-03 2026-02-16 "Polish and stabilization"
-```
+<example>
+.pennyfarthing/scripts/core/run.sh sprint/new-sprint.sh 2605 277 2026-02-03 2026-02-16 "Polish and stabilization"
+</example>
 
-**Creates:**
+<output>
+Creates:
 - `sprint/current-sprint.yaml` - New sprint file
 - `sprint/archive/sprint-{YYWW}-completed.yaml` - Empty archive
 
-**Warning:** Prompts for confirmation if current sprint is still active.
+Warning: Prompts for confirmation if current sprint is still active.
+</output>
+
+---
+
+### `/sprint future [--epic EPIC_ID]`
+
+Show future work initiatives and epics available for promotion.
+
+<run>
+.pennyfarthing/scripts/core/run.sh sprint/list-future.sh [--epic EPIC_ID]
+</run>
+
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `--epic` | No | Show detailed stories for a specific epic |
+</args>
+
+<output>
+Without `--epic`:
+- Initiatives grouped by status (READY, BLOCKED, planning)
+- Epics with points, priority, and status
+- Summary of total epics and points
+- Promotion instructions
+
+With `--epic`:
+- Full epic details including description
+- All stories with points and status
+- Promotion command for that epic
+</output>
+
+<example>
+# Show all future work
+.pennyfarthing/scripts/core/run.sh sprint/list-future.sh
+
+# Show details for specific epic
+.pennyfarthing/scripts/core/run.sh sprint/list-future.sh --epic epic-55
+</example>
 
 ---
 
 ### `/sprint promote <epic-id>`
 
-Move an epic from `planning.yaml` to `current-sprint.yaml`.
+Move an epic from `future.yaml` to `current-sprint.yaml`.
 
-**Run:**
-```bash
-.pennyfarthing/scripts/run.sh promote-epic.sh <epic-id>
-```
+<run>
+.pennyfarthing/scripts/core/run.sh sprint/promote-epic.sh <epic-id>
+</run>
 
-**Arguments:**
+<args>
 | Arg | Required | Description |
 |-----|----------|-------------|
 | `epic-id` | Yes | Local epic ID (e.g., `epic-41`) |
+</args>
 
-**Example:**
-```bash
-.pennyfarthing/scripts/run.sh promote-epic.sh epic-41
-```
+<example>
+.pennyfarthing/scripts/core/run.sh sprint/promote-epic.sh epic-41
+</example>
 
-**What it does:**
+<output>
 1. Finds epic in `sprint/planning.yaml`
 2. Extracts epic metadata and all stories
 3. Appends to `sprint/current-sprint.yaml` epics section
 4. Outputs yq command to remove from planning.yaml
+</output>
 
-**Next steps after promote:**
+<when>
+Next steps after promote:
 - Review appended YAML in current-sprint.yaml
-- Optionally create Jira epic: `/sprint epic create <epic-id>`
+- Create Jira epic: `/jira create epic <epic-id>`
 - Remove from planning.yaml if desired
+</when>
 
 ---
 
-### `/sprint epic create <epic-id> [--dry-run]`
+## Read Operations
 
-Create a Jira epic and its child stories from sprint YAML.
+These scripts read sprint YAML without modifying it. Use these instead of direct `yq` queries.
 
-**Run:**
-```bash
-.pennyfarthing/scripts/run.sh create-jira-epic.sh <epic-id> [--dry-run]
-```
+### Get Story Field
 
-**Arguments:**
+<run>
+.pennyfarthing/scripts/core/run.sh sprint/get-story-field.sh <story-id> <field>
+</run>
+
+<args>
 | Arg | Required | Description |
 |-----|----------|-------------|
-| `epic-id` | Yes | Epic ID from current-sprint.yaml |
-| `--dry-run` | No | Preview without creating issues |
+| `story-id` | Yes | Story ID (e.g., `35-2`) |
+| `field` | Yes | Field name to extract |
+</args>
 
-**Example:**
-```bash
-.pennyfarthing/scripts/run.sh create-jira-epic.sh MSSCI-11952
-.pennyfarthing/scripts/run.sh create-jira-epic.sh epic-41 --dry-run
-```
+<example>
+.pennyfarthing/scripts/core/run.sh sprint/get-story-field.sh 35-2 workflow   # Returns: tdd
+.pennyfarthing/scripts/core/run.sh sprint/get-story-field.sh 35-2 jira       # Returns: MSSCI-12345
+.pennyfarthing/scripts/core/run.sh sprint/get-story-field.sh 35-2 status     # Returns: in_progress
+</example>
 
-**What it does:**
-1. Creates Jira epic if no `jira:` field exists
-2. Creates child stories linked to the epic
-3. Sets story points and priority in Jira
-4. Adds stories to current sprint (if jira_sprint_id set)
-5. Updates sprint YAML with Jira keys
-
-**Prerequisites:**
-- `jira` CLI installed and configured
-- `JIRA_API_TOKEN` environment variable set
+<output>
+Field value or "null" if not found. Common fields: `workflow`, `status`, `jira`, `points`, `title`, `repos`, `priority`.
+</output>
 
 ---
 
-### `/sprint reconcile [--fix]`
+### Get Epic Field
 
-Generate a reconciliation report comparing sprint YAML against Jira.
+<run>
+.pennyfarthing/scripts/core/run.sh sprint/get-epic-field.sh <epic-id> <field>
+</run>
 
-**Run:**
-```bash
-.pennyfarthing/scripts/run.sh jira-reconcile.sh [--fix]
-```
-
-**Arguments:**
+<args>
 | Arg | Required | Description |
 |-----|----------|-------------|
-| `--fix` | No | Apply automatic fixes where safe |
+| `epic-id` | Yes | Epic ID (e.g., `epic-35` or just `35`) |
+| `field` | Yes | Field name to extract |
+</args>
 
-**Example:**
-```bash
-.pennyfarthing/scripts/run.sh jira-reconcile.sh          # Report only
-.pennyfarthing/scripts/run.sh jira-reconcile.sh --fix    # Report and fix
-```
+<example>
+.pennyfarthing/scripts/core/run.sh sprint/get-epic-field.sh epic-35 jira    # Returns: MSSCI-11234
+.pennyfarthing/scripts/core/run.sh sprint/get-epic-field.sh 35 title        # Returns: Epic title
+</example>
 
-**What it checks:**
-1. **Status mismatches** - YAML status vs Jira status
-2. **Missing Jira keys** - YAML stories without jira: field
-3. **Orphan issues** - In Jira sprint but not in YAML
-4. **Sprint membership** - YAML stories not in Jira sprint
-5. **Epic sync** - Epic ID/jira field alignment
-
-**What --fix does:**
-- Adds YAML stories to Jira sprint if missing
-- Does NOT auto-fix status mismatches (requires human decision)
-- Does NOT create missing Jira issues (requires human decision)
+<output>
+Field value or "null" if not found. Common fields: `jira`, `title`, `description`, `status`.
+</output>
 
 ---
 
-### `/sprint epic sync <epic-id> [options]`
+## Jira Operations
 
-Sync an epic and its stories from sprint YAML to Jira.
+For Jira-specific operations, use the `/jira` skill:
 
-**Run:**
-```bash
-.pennyfarthing/scripts/run.sh sync-epic-jira.sh <epic-id> [options]
-```
-
-**Arguments:**
-| Arg | Required | Description |
-|-----|----------|-------------|
-| `epic-id` | Yes | Epic ID from current-sprint.yaml |
-| `--dry-run` | No | Preview without making changes |
-| `--transition` | No | Transition Jira issues to match YAML status |
-| `--points` | No | Sync story points from YAML to Jira |
-| `--all` | No | Equivalent to `--transition --points` |
-
-**Examples:**
-```bash
-.pennyfarthing/scripts/run.sh sync-epic-jira.sh MSSCI-11952              # Show status
-.pennyfarthing/scripts/run.sh sync-epic-jira.sh MSSCI-11952 --dry-run    # Preview
-.pennyfarthing/scripts/run.sh sync-epic-jira.sh MSSCI-11952 --all        # Full sync
-```
-
-**What it does:**
-1. Compares sprint YAML status with Jira status
-2. Optionally transitions Jira issues to match
-3. Optionally syncs story points to Jira
-4. Reports sync summary
+| Task | Command |
+|------|---------|
+| Create epic in Jira | `/jira create epic <epic-id>` |
+| Sync epic to Jira | `/jira sync <epic-id>` |
+| Reconcile YAML vs Jira | `/jira reconcile` |
+| Claim a story | `/jira claim <issue-key>` |
+| View issue details | `/jira view <issue-key>` |
 
 ---
 
 ## Work Flow Details
 
+<when>
 When `/sprint work` (or `/new-work`) starts a story:
+</when>
 
 <agent-activation>
 Load SM persona first:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" agent-session.sh start "sm"
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/core/run.sh" core/agent-session.sh start "sm"
 ```
 </agent-activation>
 
 ### Story Setup Steps
 
+<output>
 1. **Check story** via `check-story.sh` (if ID provided)
 2. **Write context** to `.session/context-story-{id}.md`
 3. **Setup story** via `generic-sm-setup` subagent (claims Jira, creates branch)
@@ -326,13 +364,17 @@ d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$
 | `trivial` | SM → Dev |
 | `tdd` | SM → TEA → Dev → Reviewer |
 | `agent-docs` | SM → Orchestrator |
+</output>
 
 ### Gates Before Handoff
 
+<critical>
+All gates must pass before handoff:
 - [ ] Session file exists at `.session/{story-id}-session.md`
 - [ ] Story context written with ACs
 - [ ] Jira claimed (assigned, In Progress)
 - [ ] Branch created
+</critical>
 
 ---
 
@@ -375,21 +417,22 @@ d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$
 |-------|-------------|
 | `in_sprint` | `true/false` - whether story is in Jira sprint (synced bidirectionally) |
 
+<output>
 The `in_sprint` field tracks Jira sprint membership:
 - `in_sprint: true` - Story is in the Jira sprint
 - `in_sprint: false` - Story is not in Jira sprint (backlog)
 - Field omitted - Sprint membership not explicitly tracked
-
-**Bidirectional sync:**
-- **Jira → YAML**: `syncStorySprintMembershipFromJira()` updates `in_sprint` based on Jira
-- **YAML → Jira**: `syncStorySprintMembershipToJira()` adds/removes stories from Jira sprint
+</output>
 
 ## Dependencies
 
-```bash
+<run>
 brew install yq
-brew install ankitpokhrel/jira/jira
-```
+</run>
+
+<when>
+For Jira integration, see `/jira` skill prerequisites.
+</when>
 
 ## Quick Reference
 
@@ -397,6 +440,9 @@ brew install ankitpokhrel/jira/jira
 |---------|---------------|
 | `/sprint` | `sprint-status.sh` |
 | `/sprint status` | `sprint-status.sh` |
+| `/sprint status todo` | `sprint-status.sh todo` |
+| `/sprint status in-progress` | `sprint-status.sh in-progress` |
+| `/sprint status done` | `sprint-status.sh done` |
 | `/sprint backlog` | `available-stories.sh` |
 | `/sprint work` | Interactive story selection → SM flow |
 | `/sprint work MSSCI-XXX` | `check-story.sh` → direct start |
@@ -404,11 +450,16 @@ brew install ankitpokhrel/jira/jira
 | `/sprint work next` | `check-story.sh next` → start highest priority |
 | `/sprint archive MSSCI-XXX` | `archive-story.sh MSSCI-XXX` |
 | `/sprint new 2605 277 ...` | `new-sprint.sh 2605 277 ...` |
+| `/sprint future` | `list-future.sh` |
+| `/sprint future --epic X` | `list-future.sh --epic X` |
 | `/sprint promote epic-41` | `promote-epic.sh epic-41` |
-| `/sprint epic create MSSCI-XXX` | `create-jira-epic.sh MSSCI-XXX` |
-| `/sprint epic sync MSSCI-XXX` | `sync-epic-jira.sh MSSCI-XXX` |
 | `/new-work` | Alias for `/sprint work` |
 | `/new-work MSSCI-XXX` | Alias for `/sprint work MSSCI-XXX` |
 | `/new-work next` | Alias for `/sprint work next` |
-| `/sprint reconcile` | `jira-reconcile.sh` |
-| `/sprint reconcile --fix` | `jira-reconcile.sh --fix` |
+
+## Related Skills
+
+| Skill | Purpose |
+|-------|---------|
+| `/jira` | Jira operations (create, sync, reconcile, claim) |
+| `/story` | Story creation, sizing, finish workflow |

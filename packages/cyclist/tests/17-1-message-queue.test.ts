@@ -89,9 +89,9 @@ describe('Story 17-1: Message Input Buffer', () => {
       const testMessage = 'Test queued message';
       editor.queueMessage(testMessage);
 
-      // Verify it was queued, not discarded
+      // Verify it was queued, not discarded (MSSCI-12274: now returns QueuedMessage[])
       const queue = editor.getMessageQueue();
-      expect(queue).toContain(testMessage);
+      expect(queue.some(m => m.text === testMessage)).toBe(true);
 
       // Cleanup
       editor.clearMessageQueue();
@@ -153,10 +153,11 @@ describe('Story 17-1: Message Input Buffer', () => {
       editor.queueMessage('Second');
       editor.queueMessage('Third');
 
+      // MSSCI-12274: queue now returns QueuedMessage[] objects
       const queue = editor.getMessageQueue();
-      expect(queue[0]).toBe('First');
-      expect(queue[1]).toBe('Second');
-      expect(queue[2]).toBe('Third');
+      expect(queue[0].text).toBe('First');
+      expect(queue[1].text).toBe('Second');
+      expect(queue[2].text).toBe('Third');
 
       // Cleanup
       editor.clearMessageQueue();
@@ -171,8 +172,9 @@ describe('Story 17-1: Message Input Buffer', () => {
       expect(editor.getQueueCount()).toBe(2);
 
       // Process first message (requires mocking send, so just test dequeue)
+      // MSSCI-12274: dequeue now returns QueuedMessage object
       const next = editor.dequeueMessage();
-      expect(next).toBe('First');
+      expect(next.text).toBe('First');
       expect(editor.getQueueCount()).toBe(1);
 
       // Cleanup
@@ -219,10 +221,10 @@ describe('Story 17-1: Message Input Buffer', () => {
       // Queue a message
       editor.queueMessage('Persistent message');
 
-      // Check localStorage was updated
+      // Check localStorage was updated (MSSCI-12274: now stored as QueuedMessage[])
       expect(mockStorage[editor.MESSAGE_QUEUE_KEY]).toBeDefined();
       const saved = JSON.parse(mockStorage[editor.MESSAGE_QUEUE_KEY]);
-      expect(saved).toContain('Persistent message');
+      expect(saved.some((m: { text: string }) => m.text === 'Persistent message')).toBe(true);
 
       // Cleanup
       editor.clearMessageQueue();
@@ -232,7 +234,7 @@ describe('Story 17-1: Message Input Buffer', () => {
     it('should restore queue from localStorage on load', async () => {
       const editor = await import('../src/public/js/editor.js');
 
-      // Pre-populate localStorage
+      // Pre-populate localStorage with legacy string format (MSSCI-12274: tests migration)
       const mockQueue = ['Saved message 1', 'Saved message 2'];
       const mockStorage: Record<string, string> = {
         [editor.MESSAGE_QUEUE_KEY]: JSON.stringify(mockQueue),
@@ -243,12 +245,13 @@ describe('Story 17-1: Message Input Buffer', () => {
         removeItem: (key: string) => { delete mockStorage[key]; },
       });
 
-      // Load queue
+      // Load queue (should migrate legacy format)
       editor.loadMessageQueue();
 
-      // Verify restoration
+      // Verify restoration (now as QueuedMessage[])
       const queue = editor.getMessageQueue();
-      expect(queue).toEqual(mockQueue);
+      expect(queue[0].text).toBe('Saved message 1');
+      expect(queue[1].text).toBe('Saved message 2');
 
       // Cleanup
       editor.clearMessageQueue();

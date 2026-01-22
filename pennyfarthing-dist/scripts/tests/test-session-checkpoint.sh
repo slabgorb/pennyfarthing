@@ -395,7 +395,7 @@ echo ""
 
 # Test: checkpoint.sh functions are available
 test_checkpoint_functions_exist() {
-    local checkpoint="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/checkpoint.sh"
+    local checkpoint="$PROJECT_ROOT/pennyfarthing-dist/scripts/lib/checkpoint.sh"
 
     if [[ ! -f "$checkpoint" ]]; then
         fail "checkpoint functions exist" "file exists" "checkpoint.sh not found"

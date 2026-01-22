@@ -138,8 +138,7 @@ TEA may skip test writing for:
 
 - [ ] Write TEA Assessment to session file
 - [ ] Spawn `handoff` subagent
-- [ ] Verify handoff completed successfully
-- [ ] Include `<!-- CYCLIST:HANDOFF:/dev -->` in final message
+- [ ] Verify handoff completed successfully (subagent emits the marker)
 
 **agent-session.sh stop will FAIL if assessment exists but handoff is missing.**
 </handoff-gate>
@@ -198,38 +197,14 @@ Helper will use workflow definition to determine next phase (green) and agent (D
 
 **Note:** TEA is only invoked in TDD workflow (trivial workflow skips TEA).
 
-## Context-Aware Handoff
+## Handoff Protocol
 
-After writing assessment, ALWAYS spawn handoff subagent to complete bookkeeping.
+**See:** `pennyfarthing-dist/guides/agent-behavior.md` → AGENT_COMMAND Protocol
 
-Then check context usage and handoff mode preference:
-
-```bash
-$CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
-```
-
-**Read handoff mode from Cyclist settings** (see `handoff.md` for full implementation):
-- `.pennyfarthing/config.local.yaml → `handoff_mode: auto|manual`
-- Default is `manual` if not set
-
-**Handoff Decision Matrix:**
-
-| Context | Mode | Action |
-|---------|------|--------|
-| < 60% | auto | Invoke `/dev` directly via Skill tool |
-| < 60% | manual | Report ready, emit HANDOFF marker, wait for user |
-| >= 60% | auto | Emit CONTEXT_CLEAR marker (triggers auto-reload in Cyclist) |
-| >= 60% | manual | Tell user: "Context high. Start fresh session with `/dev`" |
-
-**Handoff Marker:** ALWAYS include at end of handoff message:
-```
-<!-- CYCLIST:HANDOFF:/dev -->
-```
-
-**For high context + auto mode**, also include:
-```
-<!-- CYCLIST:CONTEXT_CLEAR:/dev -->
-```
+1. TEA writes assessment to session file FIRST
+2. TEA spawns `handoff` subagent
+3. Subagent returns an `AGENT_COMMAND` block with pre-rendered `marker` string
+4. **TEA outputs `marker` verbatim, then outputs `fallback` message**
 
 <exit>
 To exit TEA mode: "Exit TEA" or "Switch to [other agent]"

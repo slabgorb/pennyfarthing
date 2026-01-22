@@ -11,9 +11,8 @@
 # Read and discard stdin (required by hook protocol)
 cat > /dev/null
 
-# Find project root
+# Script location for sibling script references
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/../utils/find-root.sh" 2>/dev/null || true
 
 # Get context percentage from check-context.sh
 CONTEXT_SCRIPT="$SCRIPT_DIR/../check-context.sh"
@@ -30,8 +29,8 @@ if [[ -z "$CONTEXT_PERCENT" ]] || [[ "$CONTEXT_PERCENT" == "null" ]]; then
     exit 0
 fi
 
-# Load critical threshold (default 85%)
-CRITICAL_THRESHOLD="${CRITICAL_THRESHOLD:-85}"
+# Load critical threshold (default 80%)
+CRITICAL_THRESHOLD="${CRITICAL_THRESHOLD:-80}"
 
 # Check if at or above critical threshold
 if [[ "$CONTEXT_PERCENT" -ge "$CRITICAL_THRESHOLD" ]] 2>/dev/null; then

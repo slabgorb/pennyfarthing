@@ -116,7 +116,20 @@ const ColorThemeKind = {
   HighContrastLight: 4,
 };
 
+// StatusBarAlignment enum
+const StatusBarAlignment = {
+  Left: 1,
+  Right: 2,
+};
+
+// ThemeColor mock
+class MockThemeColor {
+  constructor(public id: string) {}
+}
+
 const mockVscode = {
+  StatusBarAlignment,
+  ThemeColor: MockThemeColor,
   chat: {
     createChatParticipant: vi.fn(
       (id: string, handler: any) => new MockChatParticipant(id, handler)
@@ -124,6 +137,15 @@ const mockVscode = {
   },
   window: {
     createOutputChannel: vi.fn(() => mockOutputChannel),
+    createStatusBarItem: vi.fn(() => ({
+      show: vi.fn(),
+      hide: vi.fn(),
+      dispose: vi.fn(),
+      text: '',
+      tooltip: '',
+      color: undefined,
+      backgroundColor: undefined,
+    })),
     registerWebviewViewProvider: vi.fn(() => ({ dispose: vi.fn() })),
     registerTerminalProfileProvider: vi.fn(() => ({ dispose: vi.fn() })),
     registerTerminalLinkProvider: vi.fn(() => ({ dispose: vi.fn() })),
@@ -141,6 +163,20 @@ const mockVscode = {
   },
   workspace: {
     workspaceFolders: [mockWorkspaceFolder],
+    createFileSystemWatcher: vi.fn(() => ({
+      onDidChange: vi.fn(() => ({ dispose: vi.fn() })),
+      onDidCreate: vi.fn(() => ({ dispose: vi.fn() })),
+      onDidDelete: vi.fn(() => ({ dispose: vi.fn() })),
+      dispose: vi.fn(),
+    })),
+    findFiles: vi.fn().mockResolvedValue([]),
+    fs: {
+      readFile: vi.fn().mockResolvedValue(new Uint8Array()),
+      stat: vi.fn().mockRejectedValue(new Error('File not found')),
+    },
+  },
+  RelativePattern: class {
+    constructor(public base: any, public pattern: string) {}
   },
   commands: {
     registerCommand: vi.fn(() => ({ dispose: vi.fn() })),

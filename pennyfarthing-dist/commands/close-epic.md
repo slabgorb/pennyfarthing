@@ -67,14 +67,17 @@ Recalculate and update the summary section:
 
 ### Step 6: Jira Transition (Optional)
 
-If epic has `jira_key`:
+If epic has `jira_key`, use `/jira move` skill:
 ```bash
 # Check if Jira CLI available
 if command -v jira &> /dev/null; then
     echo "Transition Jira epic to Done? (y/n)"
-    # If yes: jira issue move $JIRA_KEY "Done"
+    # If yes, use /jira move skill:
+    # jira issue move $JIRA_KEY "Done" --project MSSCI
 fi
 ```
+
+**Note:** Always use `/jira` skill commands - see `.claude/skills/jira/skill.md` for syntax.
 
 ### Step 7: Archive Context (Optional)
 

@@ -31,8 +31,8 @@ export interface ContextInfo {
 export function getContextUsage(projectDir: string, sessionId?: string): ContextInfo {
   // Find the check-context.sh script
   const possiblePaths = [
-    join(projectDir, '.claude', 'scripts', 'check-context.sh'),
-    join(projectDir, 'pennyfarthing-dist', 'scripts', 'check-context.sh'),
+    join(projectDir, 'pennyfarthing-dist', 'scripts', 'core', 'check-context.sh'),
+    join(projectDir, '.pennyfarthing', 'scripts', 'core', 'check-context.sh'),
   ];
 
   let scriptPath: string | null = null;

@@ -9,10 +9,9 @@
 
 set -euo pipefail
 
-# Find project root
+# Load shared functions
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/../utils/find-root.sh"
-source "$SCRIPT_DIR/../utils/checkpoint.sh"
+source "$SCRIPT_DIR/../lib/checkpoint.sh"
 
 # Read input from stdin (contains session_id, source, cwd, etc.)
 input=$(cat)
