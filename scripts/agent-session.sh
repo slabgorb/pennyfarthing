@@ -1,1 +1,0 @@
-../pennyfarthing-dist/scripts/agent-session.sh
