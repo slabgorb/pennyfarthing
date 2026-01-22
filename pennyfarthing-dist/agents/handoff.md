@@ -19,24 +19,9 @@ model: haiku
 </info>
 
 <critical>
-**Reflector markers only in Cyclist.** Run `check-context.sh` and check `IS_CYCLIST`:
-
-If `IS_CYCLIST=true`, emit one of:
-
-Standard handoff (user clicks to continue):
-```
-<!-- CYCLIST:HANDOFF:/{NEXT_AGENT} -->
-```
-
-TirePump handoff (auto-clear context + load next agent):
-```
-<!-- CYCLIST:CONTEXT_CLEAR:/{NEXT_AGENT} -->
-```
-
-**Decision logic:**
-1. If `IS_CYCLIST=false` → DO NOT emit any markers (plain text handoff message only)
-2. If `IS_CYCLIST=true` AND `USE_TIREPUMP=true` → emit `CONTEXT_CLEAR`
-3. If `IS_CYCLIST=true` AND `USE_TIREPUMP=false` → emit `HANDOFF`
+**Subagent output is NOT visible to Cyclist.** Tool results are not parsed for markers.
+You MUST return an explicit `AGENT_COMMAND` block for the calling agent to execute.
+The calling agent will parse this block and emit the appropriate marker in their direct output.
 </critical>
 
 ---
@@ -149,19 +134,19 @@ No automated checks. Always passes.
 6. **Check context and determine handoff type:**
    ```bash
    eval "$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/check-context.sh)"
-   # IS_CYCLIST=true means: running inside Cyclist visual terminal
-   # USE_TIREPUMP=true means: turbo mode + context >60%
-   # CONTEXT_PERCENT, PERMISSION_MODE also available
+   echo "IS_CYCLIST=$IS_CYCLIST"
+   echo "USE_TIREPUMP=$USE_TIREPUMP"
+   echo "CONTEXT_PERCENT=$CONTEXT_PERCENT"
+   echo "PERMISSION_MODE=$PERMISSION_MODE"
    ```
 
-7. **Report result (with Reflector if in Cyclist):**
-   - If `IS_CYCLIST=false` → Plain text only: "Handoff to {NEXT_AGENT} - run `/{next_agent}`"
-   - If `IS_CYCLIST=true` AND `USE_TIREPUMP=true` → `<!-- CYCLIST:CONTEXT_CLEAR:/{NEXT_AGENT} -->`
-   - If `IS_CYCLIST=true` AND `USE_TIREPUMP=false` → `<!-- CYCLIST:HANDOFF:/{NEXT_AGENT} -->`
+7. **Return AGENT_COMMAND block** (see Output Format below)
 
 ---
 
 ## Output Format
+
+Your output MUST end with an `AGENT_COMMAND` block. The calling agent will parse this and emit the appropriate marker.
 
 ```
 HANDOFF COMPLETE
@@ -175,14 +160,90 @@ Mode: {PERMISSION_MODE}
 Cyclist: {IS_CYCLIST}
 TirePump: {USE_TIREPUMP}
 
-(if IS_CYCLIST=true AND USE_TIREPUMP=false):
-<!-- CYCLIST:HANDOFF:/{NEXT_AGENT} -->
+---
+AGENT_COMMAND:
+  action: emit_marker
+  marker_type: {MARKER_TYPE}
+  marker_value: {NEXT_AGENT}
+  fallback_message: "Run `/{NEXT_AGENT}` to continue"
+---
+```
 
-(if IS_CYCLIST=true AND USE_TIREPUMP=true):
-<!-- CYCLIST:CONTEXT_CLEAR:/{NEXT_AGENT} -->
+### Marker Type Decision
 
-(if IS_CYCLIST=false - no marker, just instruction):
-Next: Run `/{next_agent}` to continue
+| IS_CYCLIST | USE_TIREPUMP | marker_type | Calling Agent Action |
+|------------|--------------|-------------|---------------------|
+| false | * | none | Agent outputs: `fallback_message` text only |
+| true | false | handoff | Agent outputs: `<!-- CYCLIST:HANDOFF:/{marker_value} -->` |
+| true | true | context_clear | Agent outputs: `<!-- CYCLIST:CONTEXT_CLEAR:/{marker_value} -->` |
+
+### Example Output (Cyclist, TirePump active)
+
+```
+HANDOFF COMPLETE
+
+From: green (Dev)
+To: review (Reviewer)
+Gate: tests_pass - PASSED
+
+Context: 72%
+Mode: turbo
+Cyclist: true
+TirePump: true
+
+---
+AGENT_COMMAND:
+  action: emit_marker
+  marker_type: context_clear
+  marker_value: reviewer
+  fallback_message: "Run `/reviewer` to continue"
+---
+```
+
+### Example Output (Cyclist, no TirePump)
+
+```
+HANDOFF COMPLETE
+
+From: red (TEA)
+To: green (Dev)
+Gate: tests_fail - PASSED
+
+Context: 35%
+Mode: accept
+Cyclist: true
+TirePump: false
+
+---
+AGENT_COMMAND:
+  action: emit_marker
+  marker_type: handoff
+  marker_value: dev
+  fallback_message: "Run `/dev` to continue"
+---
+```
+
+### Example Output (Not Cyclist)
+
+```
+HANDOFF COMPLETE
+
+From: red (TEA)
+To: green (Dev)
+Gate: tests_fail - PASSED
+
+Context: unknown
+Mode: unknown
+Cyclist: false
+TirePump: false
+
+---
+AGENT_COMMAND:
+  action: emit_marker
+  marker_type: none
+  marker_value: dev
+  fallback_message: "Run `/dev` to continue"
+---
 ```
 
 ## Error Format
@@ -195,6 +256,12 @@ Gate type: {gate}
 Error: {message}
 
 Recommended fix: {action}
+
+---
+AGENT_COMMAND:
+  action: blocked
+  reason: "{message}"
+---
 ```
 
 ---
@@ -209,5 +276,16 @@ Recommended fix: {action}
 | SM | `/sm` |
 | Architect | `/architect` |
 | DevOps | `/devops` |
-| Reflector | `/reflector` |
 
+---
+
+## Calling Agent Instructions
+
+When you receive this subagent's output, parse the `AGENT_COMMAND` block and:
+
+1. If `action: blocked` → Report the error, do not emit any marker
+2. If `marker_type: none` → Output the `fallback_message` text only
+3. If `marker_type: handoff` → Output: `<!-- CYCLIST:HANDOFF:/{marker_value} -->`
+4. If `marker_type: context_clear` → Output: `<!-- CYCLIST:CONTEXT_CLEAR:/{marker_value} -->`
+
+**CRITICAL: The marker MUST appear in the calling agent's direct text output, not in a tool result.**

@@ -14,11 +14,8 @@ AC checkboxes are marked ONLY by the agent that does the work.
 </critical>
 
 <critical>
-**Reflector required.** Final output MUST include:
-```
-<!-- CYCLIST:HANDOFF:/{NEXT_AGENT} -->
-```
-Where `{NEXT_AGENT}` is `tea` (3+ pts) or `dev` (1-2 pts).
+**Subagent output is NOT visible to Cyclist.** Tool results are not parsed for markers.
+You MUST return explicit commands for the calling agent to execute.
 </critical>
 
 <info>
@@ -60,7 +57,20 @@ Edit `## Workflow Tracking`:
 
 **Duration:** Subtract SM Started from {NOW}, format as `Xm` or `Xh Ym`.
 
+## Detect Environment
+
+Run check-context.sh to determine if running in Cyclist:
+
+```bash
+eval "$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/check-context.sh)"
+echo "IS_CYCLIST=$IS_CYCLIST"
+echo "USE_TIREPUMP=$USE_TIREPUMP"
+echo "CONTEXT_PERCENT=$CONTEXT_PERCENT"
+```
+
 ## Output Format
+
+Your output MUST end with an `AGENT_COMMAND` block that tells the calling agent exactly what to do:
 
 ```
 ## Handoff Complete
@@ -70,5 +80,67 @@ Story {STORY_ID} ready for {NEXT_AGENT} phase.
 - Branch verified
 - Jira claimed
 
-<!-- CYCLIST:HANDOFF:/{NEXT_AGENT} -->
+---
+AGENT_COMMAND:
+  action: emit_marker
+  marker_type: {MARKER_TYPE}
+  marker_value: {NEXT_AGENT}
+  fallback_message: "Run `/{NEXT_AGENT}` to continue"
+---
 ```
+
+### Marker Type Decision
+
+| IS_CYCLIST | USE_TIREPUMP | marker_type | Calling Agent Action |
+|------------|--------------|-------------|---------------------|
+| false | * | none | Agent outputs: "Run `/{NEXT_AGENT}` to continue" |
+| true | false | handoff | Agent outputs: `<!-- CYCLIST:HANDOFF:/{NEXT_AGENT} -->` |
+| true | true | context_clear | Agent outputs: `<!-- CYCLIST:CONTEXT_CLEAR:/{NEXT_AGENT} -->` |
+
+### Example Output (Cyclist, no TirePump)
+
+```
+## Handoff Complete
+
+Story MSSCI-12274 ready for TEA phase.
+- Session file updated with phase transition (setup → test)
+- Branch verified: `feat/MSSCI-12274-image-queue-support`
+- Acceptance criteria confirmed: 7 criteria defined
+
+---
+AGENT_COMMAND:
+  action: emit_marker
+  marker_type: handoff
+  marker_value: tea
+  fallback_message: "Run `/tea` to continue"
+---
+```
+
+### Example Output (Not Cyclist)
+
+```
+## Handoff Complete
+
+Story MSSCI-12274 ready for TEA phase.
+- Session file updated with phase transition (setup → test)
+- Branch verified: `feat/MSSCI-12274-image-queue-support`
+- Acceptance criteria confirmed: 7 criteria defined
+
+---
+AGENT_COMMAND:
+  action: emit_marker
+  marker_type: none
+  marker_value: tea
+  fallback_message: "Run `/tea` to continue"
+---
+```
+
+## Calling Agent Instructions
+
+When you receive this subagent's output, parse the `AGENT_COMMAND` block and:
+
+1. If `marker_type: none` → Output the `fallback_message` text
+2. If `marker_type: handoff` → Output: `<!-- CYCLIST:HANDOFF:/{marker_value} -->`
+3. If `marker_type: context_clear` → Output: `<!-- CYCLIST:CONTEXT_CLEAR:/{marker_value} -->`
+
+**The marker MUST appear in the calling agent's direct text output, not in a tool result.**
