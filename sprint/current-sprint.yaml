@@ -566,7 +566,7 @@ epics:
         completed: 2026-01-22
         repos: pennyfarthing
       - id: "56-2"
-        jira: MSSCI-12228
+        jira: MSSCI-12230
         title: "Context Meter Status Bar Item"
         description: |
           Display context usage in status bar: `CONTEXT: 54k (31%)`
@@ -587,13 +587,120 @@ epics:
         status: backlog
         repos: pennyfarthing
       - id: "56-4"
-        jira: MSSCI-12230
+        jira: MSSCI-12228
         title: "Model Indicator Status Bar Item"
         description: |
           Display active Claude model (e.g., OPUS 4-5) in status bar.
           Updates on session start via WheelHub /model channel.
         points: 3
         priority: P0
+        status: backlog
+        repos: pennyfarthing
+  # ===========================================================================
+  # EPIC: Agent Identity & Emotional Connection (epic-57) - BACKLOG
+  # ===========================================================================
+  - id: epic-57
+    type: epic
+    title: "Epic: Agent Identity & Emotional Connection"
+    description: |
+      Users can see and connect with their current agent persona - portrait,
+      name, and theme visible in the sidebar, creating the emotional connection
+      that makes Pennyfarthing engaging.
+      FRs: FR6-10 (persona card, portrait, theme)
+    points: 8
+    completed_points: 0
+    priority: P0
+    status: backlog
+    marker: vscode
+    repos: pennyfarthing
+    jira: MSSCI-12189
+    stories:
+      - id: "57-1"
+        jira: MSSCI-12191
+        title: "Persona Card Webview"
+        description: |
+          Sidebar webview with agent portrait image, character name prominently
+          displayed, and theme name/badge. Populates within 2 seconds of activation.
+        points: 3
+        priority: P0
+        status: backlog
+        repos: pennyfarthing
+      - id: "57-2"
+        jira: MSSCI-12192
+        title: "Portrait Loading with Caching"
+        description: |
+          Load portraits from CDN: https://cdn.pennyfarthing.dev/portraits/{theme}/{agent}.png
+          Cache locally after first load. Fallback to default on failure.
+          Support all 102 themes.
+        points: 3
+        priority: P0
+        status: backlog
+        repos: pennyfarthing
+      - id: "57-3"
+        jira: MSSCI-12193
+        title: "Real-time Agent Updates"
+        description: |
+          Persona card updates when WheelHub broadcasts new agent on /agent channel.
+          Portrait, name, and theme badge all update within 1 second.
+        points: 2
+        priority: P0
+        status: backlog
+        repos: pennyfarthing
+  # ===========================================================================
+  # EPIC: Sprint & Story Awareness (epic-58) - BACKLOG
+  # ===========================================================================
+  - id: epic-58
+    type: epic
+    title: "Epic: Sprint & Story Awareness"
+    description: |
+      Users can see their current story, sprint status, and branch health
+      without leaving VS Code - full workflow awareness via the sidebar tree view.
+      FRs: FR11-15 (story, sprint, branch, file watcher)
+    points: 8
+    completed_points: 0
+    priority: P1
+    status: backlog
+    marker: vscode
+    repos: pennyfarthing
+    jira: MSSCI-12236
+    stories:
+      - id: "58-1"
+        jira: MSSCI-12237
+        title: "Story Status Tree View"
+        description: |
+          Display current story title from .session/{story-id}-session.md
+          or "No active story" indicator in sidebar tree view.
+        points: 2
+        priority: P0
+        status: backlog
+        repos: pennyfarthing
+      - id: "58-2"
+        jira: MSSCI-12238
+        title: "Sprint Metrics Display"
+        description: |
+          Display remaining points, in-progress points, and sprint end date
+          from sprint/current-sprint.yaml in sidebar tree view.
+        points: 2
+        priority: P0
+        status: backlog
+        repos: pennyfarthing
+      - id: "58-3"
+        jira: MSSCI-12239
+        title: "Branch Status Indicator"
+        description: |
+          Display CLEAN/DIRTY indicator based on git uncommitted changes.
+        points: 2
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+      - id: "58-4"
+        jira: MSSCI-12240
+        title: "File Watcher Integration"
+        description: |
+          Watch .session/ and sprint/current-sprint.yaml for changes.
+          Update tree view within 500ms of file change.
+        points: 2
+        priority: P1
         status: backlog
         repos: pennyfarthing
   # ===========================================================================
