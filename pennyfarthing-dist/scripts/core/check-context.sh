@@ -234,10 +234,10 @@ else
     if [ -n "$CONTEXT_USABLE_PERCENT" ]; then
         if [ "$CONTEXT_USABLE_PERCENT" -ge "$CRITICAL_THRESHOLD" ] 2>/dev/null; then
             echo "CONTEXT_WARNING=Critical"
-            echo "CONTEXT_RECOMMENDATION=checkpoint and handoff recommended"
+            echo "CONTEXT_RECOMMENDATION='checkpoint and handoff recommended'"
         elif [ "$CONTEXT_USABLE_PERCENT" -ge "$WARNING_THRESHOLD" ] 2>/dev/null; then
             echo "CONTEXT_WARNING=High"
-            echo "CONTEXT_RECOMMENDATION=consider handoff soon"
+            echo "CONTEXT_RECOMMENDATION='consider handoff soon'"
         fi
     fi
 fi
