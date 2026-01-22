@@ -139,19 +139,30 @@ export function updateStory(story) {
 
 /**
  * Update sprint info display
- * @param {Object|null} sprint - Sprint data with remaining, inProgress, endDate
+ * @param {Object|null} sprint - Sprint data with done, remaining, inProgress, endDate
  */
 function updateSprintInfo(sprint) {
+  const doneEl = document.getElementById('sprint-done');
   const remainingEl = document.getElementById('sprint-remaining');
-  const inProgressEl = document.getElementById('sprint-in-progress');
+  const percentEl = document.getElementById('sprint-percent');
   const endDateEl = document.getElementById('sprint-end-date');
+
+  if (doneEl) {
+    doneEl.textContent = sprint?.done != null ? `${sprint.done} pts` : '-';
+  }
 
   if (remainingEl) {
     remainingEl.textContent = sprint?.remaining != null ? `${sprint.remaining} pts` : '-';
   }
 
-  if (inProgressEl) {
-    inProgressEl.textContent = sprint?.inProgress != null ? `${sprint.inProgress} pts` : '-';
+  if (percentEl) {
+    if (sprint?.done != null && sprint?.remaining != null) {
+      const total = sprint.done + sprint.remaining + (sprint.inProgress || 0);
+      const percent = total > 0 ? Math.round((sprint.done / total) * 100) : 0;
+      percentEl.textContent = `${percent}%`;
+    } else {
+      percentEl.textContent = '-';
+    }
   }
 
   if (endDateEl) {

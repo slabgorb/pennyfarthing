@@ -28,6 +28,7 @@ export interface StoryInfo {
   points: number | null;
   sprint: {
     number: number;
+    done: number;
     remaining: number;
     inProgress: number;
     endDate: string | null;
@@ -297,58 +298,69 @@ function buildWorkflowWithStatus(
 }
 
 // Parse sprint YAML for progress
-// Returns remaining points, in-progress points, and end date
+// Returns done points, remaining points, in-progress points, and end date
 export function parseSprintYaml(content: string): StoryInfo['sprint'] | null {
   try {
     const data = parseYaml(content);
 
-    // Old format: sprint.number - convert to new format
-    if (data?.sprint?.number && data?.summary) {
-      return {
-        number: data.sprint.number,
-        remaining: data.summary.total_points - data.summary.completed_points || 0,
-        inProgress: 0,
-        endDate: null,
-      };
+    // Extract sprint number (either from sprint.number or sprint.name)
+    let sprintNumber = 0;
+    if (data?.sprint?.number) {
+      sprintNumber = data.sprint.number;
+    } else if (data?.sprint?.name) {
+      const nameMatch = data.sprint.name.match(/(\d+)/);
+      sprintNumber = nameMatch ? parseInt(nameMatch[1], 10) : 0;
     }
 
-    // New format: sprint.name with end_date
-    if (data?.sprint?.name) {
-      // Extract sprint number from name (e.g., "TO Sprint 2604" -> 2604)
-      const nameMatch = data.sprint.name.match(/(\d+)/);
-      const sprintNumber = nameMatch ? parseInt(nameMatch[1], 10) : 0;
+    // No valid sprint data
+    if (!data?.sprint) {
+      return null;
+    }
 
-      // Calculate points by status
-      let remainingPoints = 0;
-      let inProgressPoints = 0;
+    // Calculate points by iterating over epics/stories
+    let donePoints = 0;
+    let remainingPoints = 0;
+    let inProgressPoints = 0;
 
-      if (data?.epics && Array.isArray(data.epics)) {
-        for (const epic of data.epics) {
-          if (epic?.stories && Array.isArray(epic.stories)) {
-            for (const story of epic.stories) {
-              const points = story?.points && typeof story.points === 'number' ? story.points : 0;
-              const status = story?.status || 'backlog';
+    if (data?.epics && Array.isArray(data.epics)) {
+      for (const epic of data.epics) {
+        if (epic?.stories && Array.isArray(epic.stories)) {
+          for (const story of epic.stories) {
+            const points = story?.points && typeof story.points === 'number' ? story.points : 0;
+            const status = story?.status || 'backlog';
 
-              const done = status === 'done' || status === 'completed';
-              const todo = status === 'backlog' || status === 'ready' || status === null;
+            const isDone = status === 'done' || status === 'completed';
+            const isTodo = status === 'backlog' || status === 'ready' || status === null;
 
-              if (status === 'in_progress') {
-                inProgressPoints += points;
-              } else if (todo && !done) {
-                remainingPoints += points;
-              }
+            if (isDone) {
+              donePoints += points;
+            } else if (status === 'in_progress') {
+              inProgressPoints += points;
+            } else if (isTodo) {
+              remainingPoints += points;
             }
           }
         }
       }
-
-      return {
-        number: sprintNumber,
-        remaining: remainingPoints,
-        inProgress: inProgressPoints,
-        endDate: data.sprint.end_date || null,
-      };
     }
+
+    // Prefer summary values if available (they're the source of truth)
+    if (data?.summary) {
+      if (data.summary.completed_points != null) {
+        donePoints = data.summary.completed_points;
+      }
+      if (data.summary.remaining_points != null) {
+        remainingPoints = data.summary.remaining_points;
+      }
+    }
+
+    return {
+      number: sprintNumber,
+      done: donePoints,
+      remaining: remainingPoints,
+      inProgress: inProgressPoints,
+      endDate: data.sprint.end_date || null,
+    };
   } catch {
     // Malformed YAML
   }
