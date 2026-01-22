@@ -7,7 +7,7 @@
  */
 
 import * as vscode from 'vscode';
-import type { WebSocketManager, StatsData } from '../server/websocket-manager';
+import type { WebSocketManager, StatsData, ContextData } from '../server/websocket-manager';
 
 /** Connection state for WheelHub */
 export type ConnectionState = 'connecting' | 'connected' | 'disconnected';
@@ -32,8 +32,11 @@ export class StatusBarManager implements vscode.Disposable {
   /** Status bar item for gearshift mode display (MSSCI-12192) */
   private gearshiftItem: vscode.StatusBarItem;
 
-  /** Subscription cleanup function for WebSocketManager */
+  /** Subscription cleanup function for WebSocketManager stats */
   private statsUnsubscribe?: () => void;
+
+  /** Subscription cleanup function for dedicated /context channel (MSSCI-12230) */
+  private contextUnsubscribe?: () => void;
 
   /** Current connection state */
   private connectionState: ConnectionState = 'connecting';
@@ -76,9 +79,13 @@ export class StatusBarManager implements vscode.Disposable {
     this.contextItem.show();
     this.gearshiftItem.show();
 
-    // Subscribe to stats if WebSocketManager provided
+    // Subscribe to channels if WebSocketManager provided
     if (wsManager) {
       this.statsUnsubscribe = wsManager.onStats((data) => this.handleStats(data));
+      // MSSCI-12230: Subscribe to dedicated /context channel if available
+      if (typeof wsManager.onContext === 'function') {
+        this.contextUnsubscribe = wsManager.onContext((data) => this.handleContext(data));
+      }
     }
   }
 
@@ -118,6 +125,32 @@ export class StatusBarManager implements vscode.Disposable {
         this.lastMode = data.mode as PermissionMode;
         this.updateGearshiftDisplay();
       }
+    }
+  }
+
+  /**
+   * MSSCI-12230: Handle incoming context data from dedicated /context channel.
+   * This is the preferred source for context data over StatsData.context.
+   */
+  private handleContext(data: ContextData): void {
+    if (this.disposed) return;
+
+    // Update connection state to connected on first context
+    if (this.connectionState !== 'connected') {
+      this.setConnectionState('connected');
+    }
+
+    // ContextData has tokens, usablePercent, maxTokens directly (not nested)
+    const percent = data.usablePercent;
+    const tokens = data.tokens;
+
+    // Validate percent is a reasonable number
+    if (typeof percent === 'number' && !isNaN(percent)) {
+      this.lastContext = {
+        usablePercent: Math.max(0, Math.min(100, percent)),
+        tokens: typeof tokens === 'number' ? tokens : undefined,
+      };
+      this.updateContextDisplay();
     }
   }
 
@@ -264,20 +297,27 @@ export class StatusBarManager implements vscode.Disposable {
   }
 
   /**
-   * Connect to WheelHub WebSocketManager for stats updates.
+   * Connect to WheelHub WebSocketManager for stats and context updates.
    * Can be called after initialization to enable real-time updates.
    * @param wsManager WebSocketManager instance
    */
   connectToWheelHub(wsManager: WebSocketManager): void {
     if (this.disposed) return;
 
-    // Unsubscribe from previous connection if any
+    // Unsubscribe from previous connections if any
     if (this.statsUnsubscribe) {
       this.statsUnsubscribe();
+    }
+    if (this.contextUnsubscribe) {
+      this.contextUnsubscribe();
     }
 
     // Subscribe to new WebSocketManager
     this.statsUnsubscribe = wsManager.onStats((data) => this.handleStats(data));
+    // MSSCI-12230: Subscribe to dedicated /context channel if available
+    if (typeof wsManager.onContext === 'function') {
+      this.contextUnsubscribe = wsManager.onContext((data) => this.handleContext(data));
+    }
   }
 
   /**
@@ -305,10 +345,15 @@ export class StatusBarManager implements vscode.Disposable {
       this.retryTimer = undefined;
     }
 
-    // Unsubscribe from WebSocketManager
+    // Unsubscribe from WebSocketManager channels
     if (this.statsUnsubscribe) {
       this.statsUnsubscribe();
       this.statsUnsubscribe = undefined;
+    }
+    // MSSCI-12230: Unsubscribe from dedicated /context channel
+    if (this.contextUnsubscribe) {
+      this.contextUnsubscribe();
+      this.contextUnsubscribe = undefined;
     }
 
     // Clear callbacks
