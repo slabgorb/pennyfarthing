@@ -34,7 +34,7 @@ export const SLASH_COMMANDS = [
     "description": "Create control baseline for a scenario (shortcut for /benchmark control <agent>)"
   },
   {
-    "name": "/brainstorm",
+    "name": "/brainstorming",
     "description": "Structured problem-solving brainstorm session"
   },
   {
