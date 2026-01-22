@@ -17,7 +17,7 @@ fi
 PROJECT_ROOT="${PROJECT_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
 # Source repo utilities for dynamic repo configuration
-source "$SCRIPT_DIR/../repo-utils.sh"
+source "$SCRIPT_DIR/../misc/repo-utils.sh"
 
 # Colors
 GREEN='\033[0;32m'
