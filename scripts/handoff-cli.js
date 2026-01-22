@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * generic-handoff-cli.js - CLI wrapper for generic-handoff.ts functions
+ * handoff-cli.js - CLI wrapper for handoff.ts functions
  *
  * Story 31-10: Provides CLI interface for workflow handoff operations
  *
@@ -10,9 +10,9 @@
  *   format-transition  Format session file update markdown
  *
  * Usage:
- *   node generic-handoff-cli.js check-gate --workflow tdd --phase green --tests-green
- *   node generic-handoff-cli.js next-phase --workflow tdd --phase review --verdict rejected
- *   node generic-handoff-cli.js format-transition --workflow tdd --from red --to green
+ *   node handoff-cli.js check-gate --workflow tdd --phase green --tests-green
+ *   node handoff-cli.js next-phase --workflow tdd --phase review --verdict rejected
+ *   node handoff-cli.js format-transition --workflow tdd --from red --to green
  */
 
 import { existsSync } from 'node:fs';
@@ -25,7 +25,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const coreDistPath = join(__dirname, '..', 'packages', 'core', 'dist', 'workflow');
 
 const { findCurrentPhase, getNextPhase, checkGate, formatPhaseTransition, calculateDuration } =
-  await import(join(coreDistPath, 'generic-handoff.js'));
+  await import(join(coreDistPath, 'handoff.js'));
 
 // Load workflow from YAML using yq (already installed system-wide)
 function loadWorkflow(workflowName) {
@@ -149,7 +149,7 @@ const command = args[0];
 const opts = parseArgs(args.slice(1));
 
 if (!command || !commands[command]) {
-  console.error(`Usage: generic-handoff-cli.js <command> [options]
+  console.error(`Usage: handoff-cli.js <command> [options]
 
 Commands:
   check-gate         Check if gate conditions are satisfied

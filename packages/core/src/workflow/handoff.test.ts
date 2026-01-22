@@ -1,11 +1,11 @@
 /**
- * Tests for Story 31-7: Generic Workflow-Driven Handoff Subagent
+ * Tests for Story 31-7: Workflow-Driven Handoff Subagent
  *
- * These tests define the contract for the generic handoff module that
+ * These tests define the contract for the handoff module that
  * replaces 5 hardcoded handoff files (sm-handoff, tea-handoff, dev-handoff,
  * reviewer-handoff-approve, reviewer-handoff-reject).
  *
- * The generic handoff reads phase requirements from workflow definitions
+ * The handoff module reads phase requirements from workflow definitions
  * and performs gate checks based on phase gate type.
  *
  * Test categories:
@@ -27,14 +27,14 @@ import { fileURLToPath } from 'node:url';
 // Import types from existing modules
 import type { WorkflowDefinition } from './workflow-schema.js';
 
-// Import the generic handoff functions
+// Import the handoff functions
 import {
   findCurrentPhase,
   getNextPhase,
   checkGate,
   formatPhaseTransition,
   calculateDuration
-} from './generic-handoff.js';
+} from './handoff.js';
 
 // Get directory for test fixtures
 const __dirname = dirname(fileURLToPath(import.meta.url));

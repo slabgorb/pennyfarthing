@@ -39,7 +39,7 @@ DEFAULT_WARNING_THRESHOLD=60
 DEFAULT_CRITICAL_THRESHOLD=85
 DEFAULT_MAX_TOKENS=200000
 
-# Load thresholds from .pennyfarthing/config.local.yaml (preferred) or settings.local.json (fallback)
+# Load thresholds and permission_mode from .pennyfarthing/config.local.yaml (preferred) or settings.local.json (fallback)
 PENNYFARTHING_CONFIG="${CLAUDE_PROJECT_DIR:-$PROJECT_DIR}/.pennyfarthing/config.local.yaml"
 SETTINGS_FILE="${CLAUDE_PROJECT_DIR:-$PROJECT_DIR}/.claude/settings.local.json"
 CONFIG=$(python3 -c "
@@ -50,18 +50,23 @@ imminent_threshold = $DEFAULT_IMMINENT_THRESHOLD
 warning_threshold = $DEFAULT_WARNING_THRESHOLD
 critical_threshold = $DEFAULT_CRITICAL_THRESHOLD
 max_tokens = $DEFAULT_MAX_TOKENS
+permission_mode = 'manual'  # Default to manual
 
 # First try .pennyfarthing/config.local.yaml (preferred location)
 try:
     import yaml
     with open('$PENNYFARTHING_CONFIG', 'r') as f:
         config = yaml.safe_load(f)
-        if config and 'context_budget' in config:
-            cb = config['context_budget']
-            imminent_threshold = cb.get('imminent_threshold', imminent_threshold)
-            warning_threshold = cb.get('warning_threshold', warning_threshold)
-            critical_threshold = cb.get('critical_threshold', critical_threshold)
-            max_tokens = cb.get('max_tokens', max_tokens)
+        if config:
+            if 'context_budget' in config:
+                cb = config['context_budget']
+                imminent_threshold = cb.get('imminent_threshold', imminent_threshold)
+                warning_threshold = cb.get('warning_threshold', warning_threshold)
+                critical_threshold = cb.get('critical_threshold', critical_threshold)
+                max_tokens = cb.get('max_tokens', max_tokens)
+            # Read permission_mode from workflow section
+            if 'workflow' in config and 'permission_mode' in config['workflow']:
+                permission_mode = config['workflow']['permission_mode']
 except:
     # Fallback to settings.local.json (legacy location)
     try:
@@ -73,6 +78,8 @@ except:
                 warning_threshold = cb.get('warning_threshold', warning_threshold)
                 critical_threshold = cb.get('critical_threshold', critical_threshold)
                 max_tokens = cb.get('max_tokens', max_tokens)
+            if 'workflow' in settings and 'permission_mode' in settings['workflow']:
+                permission_mode = settings['workflow']['permission_mode']
     except:
         pass
 
@@ -80,6 +87,7 @@ print(f'IMMINENT_THRESHOLD={imminent_threshold}')
 print(f'WARNING_THRESHOLD={warning_threshold}')
 print(f'CRITICAL_THRESHOLD={critical_threshold}')
 print(f'MAX_TOKENS={max_tokens}')
+print(f'PERMISSION_MODE={permission_mode}')
 " 2>/dev/null)
 
 # Apply config or use defaults
@@ -125,6 +133,8 @@ import json
 
 warning_threshold = $WARNING_THRESHOLD
 max_tokens = $MAX_TOKENS
+permission_mode = '$PERMISSION_MODE'
+tirepump_threshold = 60  # Threshold for TirePump auto-handoff
 
 with open('$TRANSCRIPT', 'r') as f:
     lines = f.readlines()
@@ -172,6 +182,7 @@ if last_total is not None:
     print(f'CONTEXT_USABLE_TOKENS={usable_tokens}')
     print(f'CONTEXT_USABLE_PERCENT={usable_pct:.0f}')
     print(f'CONTEXT_AVAILABLE={available_capacity}')
+    print(f'PERMISSION_MODE={permission_mode}')
 
     # Use usable percent for status decisions (more accurate for user)
     if usable_pct > warning_threshold:
@@ -180,16 +191,26 @@ if last_total is not None:
     else:
         print('CONTEXT_STATUS=OK')
         print('HANDOFF_MODE=ask')
+
+    # TirePump: Use CONTEXT_CLEAR (clear + load next agent) when:
+    # 1. permission_mode is 'turbo' (auto-handoff enabled)
+    # 2. context > 60% (tirepump_threshold)
+    # This enables continuous autonomous runs without manual intervention
+    use_tirepump = permission_mode == 'turbo' and usable_pct > tirepump_threshold
+    print(f'USE_TIREPUMP={str(use_tirepump).lower()}')
 " 2>/dev/null)
 
 if [ "$HUMAN_MODE" = "true" ]; then
     eval "$RESULT"
-    if [ "$CONTEXT_STATUS" = "HIGH" ]; then
+    if [ "$USE_TIREPUMP" = "true" ]; then
+        echo "🔄 Context: ${CONTEXT_USABLE_PERCENT}% used (${CONTEXT_USABLE_TOKENS} of ${CONTEXT_AVAILABLE} available) - TIREPUMP (clear + next agent)"
+    elif [ "$CONTEXT_STATUS" = "HIGH" ]; then
         echo "⚠️  Context: ${CONTEXT_USABLE_PERCENT}% used (${CONTEXT_USABLE_TOKENS} of ${CONTEXT_AVAILABLE} available) - AUTO-HANDOFF"
     else
         echo "✅ Context: ${CONTEXT_USABLE_PERCENT}% used (${CONTEXT_USABLE_TOKENS} of ${CONTEXT_AVAILABLE} available)"
     fi
     echo "   Overhead: ${CONTEXT_BASELINE} tokens (system prompt + tools)"
+    echo "   Mode: ${PERMISSION_MODE}"
 
     # Output warning messages at configurable thresholds (use usable percent)
     if [ -n "$CONTEXT_USABLE_PERCENT" ]; then

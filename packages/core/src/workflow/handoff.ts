@@ -1,5 +1,5 @@
 /**
- * Generic Workflow-Driven Handoff
+ * Workflow-Driven Handoff
  *
  * Replaces hardcoded handoff files with workflow-driven logic.
  * Reads phase requirements from workflow definitions.

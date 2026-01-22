@@ -267,38 +267,36 @@ Write assessment to session file BEFORE spawning handoff subagent.
 
 ## Context-Aware Handoff
 
-After writing assessment, ALWAYS spawn appropriate handoff subagent to complete bookkeeping.
-
-Then check context usage and handoff mode preference:
-
+<critical>
+**Before emitting ANY Reflector marker, check context and mode FIRST:**
 ```bash
-$CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
+eval "$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check-context.sh)"
 ```
 
-**Read handoff mode from Cyclist settings** (see `handoff.md` for full implementation):
-- `.pennyfarthing/config.local.yaml → `handoff_mode: auto|manual`
-- Default is `manual` if not set
+Then decide:
+1. If `USE_TIREPUMP=true` → emit `CONTEXT_CLEAR` marker only
+2. If auto mode + low context → **invoke next agent via Skill tool (NO marker)**
+3. Only emit `HANDOFF` marker in manual mode
+</critical>
+
+After writing assessment, ALWAYS spawn appropriate handoff subagent to complete bookkeeping.
 
 **Handoff Decision Matrix:**
 
 | Context | Mode | Verdict | Action |
 |---------|------|---------|--------|
-| < 60% | auto | APPROVED | Invoke `/sm` directly via Skill tool |
-| < 60% | auto | REJECTED | Invoke `/dev` directly via Skill tool |
+| < 60% | auto | APPROVED | Invoke `/sm` directly via Skill tool (no marker) |
+| < 60% | auto | REJECTED | Invoke `/dev` directly via Skill tool (no marker) |
 | < 60% | manual | any | Report ready, emit HANDOFF marker, wait for user |
 | >= 60% | auto | any | Emit CONTEXT_CLEAR marker (triggers auto-reload in Cyclist) |
 | >= 60% | manual | any | Tell user: "Context high. Start fresh with `/sm` (approve) or `/dev` (reject)" |
 
-**Handoff Marker:** ALWAYS include at end of handoff message:
+**Reflector markers (only when needed):**
 ```
-<!-- CYCLIST:HANDOFF:/sm -->   # For approvals
-<!-- CYCLIST:HANDOFF:/dev -->  # For rejections
-```
-
-**For high context + auto mode**, also include:
-```
-<!-- CYCLIST:CONTEXT_CLEAR:/sm -->   # For approvals
-<!-- CYCLIST:CONTEXT_CLEAR:/dev -->  # For rejections
+<!-- CYCLIST:HANDOFF:/sm -->      # Manual mode approvals
+<!-- CYCLIST:HANDOFF:/dev -->     # Manual mode rejections
+<!-- CYCLIST:CONTEXT_CLEAR:/sm --> # High context + auto approvals
+<!-- CYCLIST:CONTEXT_CLEAR:/dev --> # High context + auto rejections
 ```
 
 Handoff subagent (generic - handles both approve and reject).

@@ -1386,7 +1386,7 @@ epics:
           Example: `.pennyfarthing/scripts/run.sh fix-session-phase.sh 56-1 approved`
         points: 3
         priority: P1
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria:
@@ -1395,3 +1395,7 @@ epics:
           - Handoff History row added with gate and status
           - workflow-status-check correctly detects current phase after handoff
           - All three transitions tested (TEA→Dev, Dev→Reviewer, Reviewer→SM)
+        completed: "2026-01-22"
+        jira: MSSCI-12204
+        branch: feat/handoff-phase-update-bug-fix
+        pr: 427

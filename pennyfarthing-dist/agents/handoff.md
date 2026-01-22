@@ -19,15 +19,21 @@ model: haiku
 </info>
 
 <critical>
-**Reflector required.** Final output MUST include:
+**Reflector required.** Final output MUST include one of:
+
+Standard handoff (user clicks to continue):
 ```
 <!-- CYCLIST:HANDOFF:/{NEXT_AGENT} -->
 ```
 
-If context >60% and auto mode:
+TirePump handoff (auto-clear context + load next agent):
 ```
 <!-- CYCLIST:CONTEXT_CLEAR:/{NEXT_AGENT} -->
 ```
+
+**Decision:** Run `check-context.sh` and check `USE_TIREPUMP`:
+- If `USE_TIREPUMP=true` → emit `CONTEXT_CLEAR` (enables continuous autonomous runs)
+- Otherwise → emit `HANDOFF`
 </critical>
 
 ---
@@ -75,7 +81,7 @@ No automated checks. Always passes.
 
 1. **Find phase and gate type:**
    ```bash
-   ./scripts/generic-handoff-cli.sh find-phase --workflow {WORKFLOW} --phase {CURRENT_PHASE}
+   ./scripts/handoff-cli.sh find-phase --workflow {WORKFLOW} --phase {CURRENT_PHASE}
    ```
 
 2. **Verify assessment exists** (if ASSESSMENT_SECTION provided)
@@ -84,20 +90,69 @@ No automated checks. Always passes.
 
 4. **Determine next phase:**
    ```bash
-   ./scripts/generic-handoff-cli.sh next-phase --workflow {WORKFLOW} --phase {CURRENT_PHASE}
+   ./scripts/handoff-cli.sh next-phase --workflow {WORKFLOW} --phase {CURRENT_PHASE}
    ```
 
-5. **Update session file:**
-   - Update `## Workflow Tracking` section
-   - Update Phase History table
-   - Add Handoff History row
+5. **Update session file using Edit tool:**
 
-6. **Check context and handoff mode:**
+   First, get timestamps and calculate duration:
    ```bash
-   CONTEXT_OUTPUT=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check-context.sh)
+   PHASE_STARTED=$(grep "^\*\*Phase Started:\*\*" .session/{STORY_ID}-session.md | sed 's/\*\*Phase Started:\*\* //')
+   NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+   DURATION=$(./scripts/handoff-cli.sh calculate-duration --started-at "$PHASE_STARTED" --ended-at "$NOW")
    ```
 
-7. **Report result with Reflector**
+   **5a. Update `**Phase:**` field** - Use Edit tool:
+   ```
+   file_path: .session/{STORY_ID}-session.md
+   old_string: "**Phase:** {CURRENT_PHASE}"
+   new_string: "**Phase:** {NEXT_PHASE}"
+   ```
+
+   **5b. Update `**Phase Started:**` field** - Use Edit tool:
+   ```
+   file_path: .session/{STORY_ID}-session.md
+   old_string: "**Phase Started:** {PHASE_STARTED}"
+   new_string: "**Phase Started:** {NOW}"
+   ```
+
+   **5c. Update Phase History table** - Use Edit tool to add end timestamp and duration:
+   Find the row for current phase (has `| - | - |` at end) and update:
+   ```
+   file_path: .session/{STORY_ID}-session.md
+   old_string: "| {CURRENT_PHASE} | {PHASE_STARTED} | - | - |"
+   new_string: "| {CURRENT_PHASE} | {PHASE_STARTED} | {NOW} | {DURATION} |"
+   ```
+
+   Phase History table format:
+   ```
+   | Phase | Started | Ended | Duration |
+   |-------|---------|-------|----------|
+   ```
+
+   **5d. Add Handoff History row** - Use Edit tool to append to Handoff History section:
+   If `### Handoff History` section doesn't exist, create it first.
+   Then append a row:
+   ```
+   | {CURRENT_PHASE} ({CURRENT_AGENT}) | {NEXT_PHASE} ({NEXT_AGENT}) | {GATE_TYPE} | PASSED | {NOW} |
+   ```
+
+   Handoff History table format:
+   ```
+   | From | To | Gate | Status | Timestamp |
+   |------|-----|------|--------|-----------|
+   ```
+
+6. **Check context and determine handoff type:**
+   ```bash
+   eval "$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check-context.sh)"
+   # USE_TIREPUMP=true means: turbo mode + context >60%
+   # CONTEXT_PERCENT, PERMISSION_MODE also available
+   ```
+
+7. **Report result with Reflector:**
+   - If `USE_TIREPUMP=true` → `<!-- CYCLIST:CONTEXT_CLEAR:/{NEXT_AGENT} -->`
+   - Otherwise → `<!-- CYCLIST:HANDOFF:/{NEXT_AGENT} -->`
 
 ---
 
@@ -111,9 +166,12 @@ To: {NEXT_PHASE} ({NEXT_AGENT})
 Gate: {GATE_TYPE} - PASSED
 
 Context: {CONTEXT_PERCENT}%
-Action: {INVOKE_DIRECTLY | USER_INVOKE | FRESH_SESSION}
+Mode: {PERMISSION_MODE}
+TirePump: {USE_TIREPUMP}
 
 <!-- CYCLIST:HANDOFF:/{NEXT_AGENT} -->
+or (if USE_TIREPUMP=true):
+<!-- CYCLIST:CONTEXT_CLEAR:/{NEXT_AGENT} -->
 ```
 
 ## Error Format
