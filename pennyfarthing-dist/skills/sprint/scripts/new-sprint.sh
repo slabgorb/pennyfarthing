@@ -1,8 +1,8 @@
 #!/bin/bash
 # Initialize a new sprint from template
-# Usage: .pennyfarthing/scripts/run.sh new-sprint.sh <sprint-yyww> <jira-id> <start-date> <end-date> "<goal>"
+# Usage: .pennyfarthing/scripts/run.sh sprint/new-sprint.sh <sprint-yyww> <jira-id> <start-date> <end-date> "<goal>"
 #
-# Example: .pennyfarthing/scripts/run.sh new-sprint.sh 2605 277 2026-02-03 2026-02-16 "Polish and stabilization"
+# Example: .pennyfarthing/scripts/run.sh sprint/new-sprint.sh 2605 277 2026-02-03 2026-02-16 "Polish and stabilization"
 
 set -euo pipefail
 

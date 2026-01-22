@@ -30,8 +30,10 @@ mkdir -p "$TEST_DIR/.pennyfarthing/personas/themes"
 mkdir -p "$TEST_DIR/.claude/pennyfarthing"
 mkdir -p "$TEST_DIR/scripts"
 
-# Copy agent-session.sh
-cp "$PROJECT_ROOT/scripts/agent-session.sh" "$TEST_DIR/scripts/"
+# Copy core scripts (including agent-session.sh)
+mkdir -p "$TEST_DIR/scripts/core"
+cp "$PROJECT_ROOT/scripts/core/agent-session.sh" "$TEST_DIR/scripts/core/"
+cp "$PROJECT_ROOT/scripts/core/run.sh" "$TEST_DIR/scripts/"
 
 # Create minimal theme file
 cat > "$TEST_DIR/.pennyfarthing/personas/themes/test-theme.yaml" << 'EOF'
@@ -54,7 +56,7 @@ EOF
 echo ""
 echo "Test 1: Without preferences file (should show persona)..."
 cd "$TEST_DIR"
-OUTPUT=$("$TEST_DIR/scripts/agent-session.sh" start sm test-session 2>&1 || true)
+OUTPUT=$("$TEST_DIR/scripts/core/agent-session.sh" start sm test-session 2>&1 || true)
 
 if echo "$OUTPUT" | grep -q "Character:"; then
   echo -e "${GREEN}PASS${NC}: Persona shown when no preferences file"
@@ -73,7 +75,7 @@ explain_decisions: true
 auto_commit: false
 EOF
 
-OUTPUT=$("$TEST_DIR/scripts/agent-session.sh" start sm test-session-2 2>&1 || true)
+OUTPUT=$("$TEST_DIR/scripts/core/agent-session.sh" start sm test-session-2 2>&1 || true)
 
 if echo "$OUTPUT" | grep -q "Character:"; then
   echo -e "${GREEN}PASS${NC}: Persona shown when character_voice=true"
@@ -92,7 +94,7 @@ explain_decisions: true
 auto_commit: false
 EOF
 
-OUTPUT=$("$TEST_DIR/scripts/agent-session.sh" start sm test-session-3 2>&1 || true)
+OUTPUT=$("$TEST_DIR/scripts/core/agent-session.sh" start sm test-session-3 2>&1 || true)
 
 if echo "$OUTPUT" | grep -q "<persona"; then
   echo -e "${RED}FAIL${NC}: Persona shown when character_voice=false (should be suppressed)"

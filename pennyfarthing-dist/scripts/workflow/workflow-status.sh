@@ -1,6 +1,6 @@
 #!/bin/bash
 # Show current stepped workflow progress
-# Usage: .pennyfarthing/scripts/run.sh workflow-status.sh [name]
+# Usage: .pennyfarthing/scripts/run.sh workflow/workflow-status.sh [name]
 #
 # If no name provided, shows status of active workflow session
 

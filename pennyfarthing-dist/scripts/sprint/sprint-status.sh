@@ -1,38 +1,30 @@
 #!/bin/bash
 # Display current sprint status
-# Usage: .pennyfarthing/scripts/run.sh sprint-status.sh
+# Usage: .pennyfarthing/scripts/run.sh sprint/sprint-status.sh
 #    or: Invoked with PROJECT_ROOT already set
 
 set -euo pipefail
 
-# PROJECT_ROOT should be set by run.sh, but find it if not
-if [[ -z "${PROJECT_ROOT:-}" ]]; then
-  d="$PWD"
-  while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do
-    d="$(dirname "$d")"
-  done
-  PROJECT_ROOT="$d"
-fi
+# Load shared sprint functions
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/sprint-common.sh"
 
-SPRINT_FILE="$PROJECT_ROOT/sprint/current-sprint.yaml"
+SPRINT_FILE=$(get_sprint_file)
 
 if [[ ! -f "$SPRINT_FILE" ]]; then
   echo "Error: Sprint file not found at $SPRINT_FILE"
   exit 1
 fi
 
-if ! command -v yq &> /dev/null; then
-  echo "Error: yq is required but not installed"
-  echo "Install with: brew install yq"
-  exit 1
-fi
+check_yq || exit 1
 
-# Extract sprint metadata
-SPRINT_NAME=$(yq eval '.sprint.name' "$SPRINT_FILE")
-SPRINT_GOAL=$(yq eval '.sprint.goal' "$SPRINT_FILE")
-START_DATE=$(yq eval '.sprint.start_date' "$SPRINT_FILE")
-END_DATE=$(yq eval '.sprint.end_date' "$SPRINT_FILE")
-STATUS=$(yq eval '.sprint.status' "$SPRINT_FILE")
+# Extract sprint metadata using shared function pattern
+SPRINT_NUM=$(get_sprint_metadata "number")
+SPRINT_NAME="TO Sprint $SPRINT_NUM"
+SPRINT_GOAL=$(get_sprint_metadata "goal")
+START_DATE=$(get_sprint_metadata "start_date")
+END_DATE=$(get_sprint_metadata "end_date")
+STATUS=$(get_sprint_metadata "status")
 
 echo "# Sprint Status"
 echo ""
@@ -42,21 +34,16 @@ echo "**Dates:** $START_DATE to $END_DATE"
 echo "**Status:** $STATUS"
 echo ""
 
-# Count stories by status
-TOTAL_STORIES=$(yq eval '[.epics[].stories[]] | length' "$SPRINT_FILE")
-BACKLOG=$(yq eval '[.epics[].stories[] | select(.status == "backlog")] | length' "$SPRINT_FILE")
-IN_PROGRESS=$(yq eval '[.epics[].stories[] | select(.status == "in_progress")] | length' "$SPRINT_FILE")
+# Get counts using shared functions
+STORY_COUNTS=$(get_story_counts)
+BACKLOG=$(echo "$STORY_COUNTS" | grep -o 'backlog:[0-9]*' | cut -d: -f2)
+IN_PROGRESS=$(echo "$STORY_COUNTS" | grep -o 'in_progress:[0-9]*' | cut -d: -f2)
+TOTAL_STORIES=$((BACKLOG + IN_PROGRESS))
 
-# Sum points using paste+bc (yq add not available in all versions)
-sum_points() {
-  local result
-  result=$(echo "$1" | paste -sd+ - | bc 2>/dev/null)
-  echo "${result:-0}"
-}
-
-TOTAL_POINTS=$(sum_points "$(yq '.epics[].stories[].points' "$SPRINT_FILE")")
-BACKLOG_POINTS=$(sum_points "$(yq '.epics[].stories[] | select(.status == "backlog") | .points' "$SPRINT_FILE")")
-IN_PROGRESS_POINTS=$(sum_points "$(yq '.epics[].stories[] | select(.status == "in_progress") | .points' "$SPRINT_FILE")")
+POINT_COUNTS=$(get_point_counts)
+BACKLOG_POINTS=$(echo "$POINT_COUNTS" | grep -o 'backlog:[0-9]*' | cut -d: -f2)
+IN_PROGRESS_POINTS=$(echo "$POINT_COUNTS" | grep -o 'in_progress:[0-9]*' | cut -d: -f2)
+TOTAL_POINTS=$(echo "$POINT_COUNTS" | grep -o 'total:[0-9]*' | cut -d: -f2)
 
 echo "## Summary"
 echo ""

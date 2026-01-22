@@ -1,6 +1,6 @@
 #!/bin/bash
 # Output sprint info as JSON for Cyclist sidebar
-# Usage: .pennyfarthing/scripts/run.sh sprint-info.sh
+# Usage: .pennyfarthing/scripts/run.sh sprint/sprint-info.sh
 #
 # Returns: {"remaining": N, "inProgress": N, "endDate": "YYYY-MM-DD"}
 
