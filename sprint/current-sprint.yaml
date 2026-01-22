@@ -1404,7 +1404,7 @@ epics:
           - Document script ownership and purpose
         points: 5
         priority: P2
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: trivial
         acceptance_criteria:
@@ -1415,6 +1415,7 @@ epics:
           - AC5: Each subdirectory has README with ownership
           - AC6: All existing scripts still invocable
           - AC7: Dogfooding pattern documented (write to pennyfarthing-dist/)
+        completed: "2026-01-22"
   - id: defects
     type: epic
     title: "Epic: Workflow and Infrastructure Defects"
