@@ -5,7 +5,8 @@
 
 # Source common utilities (for dry_run_check, escape_for_jql, get_issue_json, etc.)
 _JIRA_LIB_DIR="$(cd "$(dirname "${0:-$BASH_SOURCE[0]}")" && pwd)"
-source "${_JIRA_LIB_DIR}/common.sh"
+_SCRIPTS_DIR="$(dirname "$_JIRA_LIB_DIR")"
+source "${_SCRIPTS_DIR}/lib/common.sh"
 
 #############################################
 # Dependency Checks

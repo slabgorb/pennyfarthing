@@ -23,7 +23,9 @@ set -e
 
 # Source common functions
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "${SCRIPT_DIR}/sprint-common.sh"
+PARENT_DIR="$(dirname "$SCRIPT_DIR")"
+source "${PARENT_DIR}/lib/common.sh"
+source "${PARENT_DIR}/sprint/sprint-common.sh"
 source "${SCRIPT_DIR}/jira-lib.sh"
 
 # Check dependencies (using jira-lib's robust check)
