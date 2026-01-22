@@ -10,7 +10,8 @@ sprint:
 summary:
   total_points: 127
   completed_points: 121
-  remaining_points: 6
+  cancelled_points: 6
+  remaining_points: 0
   notes: |
     Sprint 12 includes work from multiple epics that were tracked in Jira but
     not in local sprint YAML. This file has been reconciled with Jira Sprint 276.
@@ -23,9 +24,7 @@ summary:
     - MSSCI-12042: VS Code Extension (9 stories, all done)
     - MSSCI-12077: Stepped Workflow Support (9 stories, all done)
     - MSSCI-12131: BikeLane BMAD Workflow Imports (15 stories, all done)
-
-    In Progress Epics:
-    - MSSCI-12122: VS Code Extension UX/UI Pass (5 done, 3 to do)
+    - MSSCI-12122: VS Code Extension UX/UI Pass (5 done, 3 cancelled)
 epics:
   # ===========================================================================
   # EPIC: Runtime Permission Management (MSSCI-11705) - COMPLETE
@@ -353,7 +352,7 @@ epics:
         status: done
         completed: 2026-01-21
   # ===========================================================================
-  # EPIC: VS Code Extension UX/UI Pass (MSSCI-12122) - IN PROGRESS
+  # EPIC: VS Code Extension UX/UI Pass (MSSCI-12122) - COMPLETE (partial)
   # ===========================================================================
   - id: MSSCI-12122
     type: epic
@@ -364,8 +363,9 @@ epics:
       chat formatting, and visual polish.
     points: 18
     completed_points: 12
+    cancelled_points: 6
     priority: P1
-    status: in_progress
+    status: done
     stories:
       - id: MSSCI-12123
         jira: MSSCI-12123
@@ -401,19 +401,19 @@ epics:
         jira: MSSCI-12128
         title: "Error handling with actionable messages"
         points: 2
-        status: backlog
+        status: cancelled
         repos: pennyfarthing
       - id: MSSCI-12129
         jira: MSSCI-12129
         title: "Theme integration (VS Code to Pennyfarthing)"
         points: 2
-        status: backlog
+        status: cancelled
         repos: pennyfarthing
       - id: MSSCI-12130
         jira: MSSCI-12130
         title: "Quick-pick for skill/workflow invocation"
         points: 2
-        status: backlog
+        status: cancelled
         repos: pennyfarthing
   # ===========================================================================
   # EPIC: BikeLane BMAD Workflow Imports (MSSCI-12131) - COMPLETE
