@@ -16,16 +16,30 @@ Never manually edit `sprint/current-sprint.yaml`. Use the scripts below for dete
 
 ## Commands
 
-### `/sprint` or `/sprint status`
+### `/sprint` or `/sprint status [filter]`
 
 Show current sprint status with story counts and points.
 
 <run>
-.pennyfarthing/scripts/run.sh sprint/sprint-status.sh
+.pennyfarthing/scripts/run.sh sprint/sprint-status.sh [filter]
 </run>
 
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `filter` | No | Filter stories: `todo`, `in-progress`, `done`, `cancelled` |
+</args>
+
+<example>
+.pennyfarthing/scripts/run.sh sprint/sprint-status.sh           # All stories
+.pennyfarthing/scripts/run.sh sprint/sprint-status.sh todo      # Backlog only
+.pennyfarthing/scripts/run.sh sprint/sprint-status.sh in-progress  # WIP only
+.pennyfarthing/scripts/run.sh sprint/sprint-status.sh done      # Completed only
+</example>
+
 <output>
-Sprint metadata, stories by status, points breakdown, completed count from archive.
+Sprint metadata, stories by status (grouped under epic headers), points breakdown, completed count from archive.
+When filtered, only shows epics with matching stories.
 </output>
 
 ---
@@ -186,9 +200,46 @@ Warning: Prompts for confirmation if current sprint is still active.
 
 ---
 
+### `/sprint future [--epic EPIC_ID]`
+
+Show future work initiatives and epics available for promotion.
+
+<run>
+.pennyfarthing/scripts/run.sh sprint/list-future.sh [--epic EPIC_ID]
+</run>
+
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `--epic` | No | Show detailed stories for a specific epic |
+</args>
+
+<output>
+Without `--epic`:
+- Initiatives grouped by status (READY, BLOCKED, planning)
+- Epics with points, priority, and status
+- Summary of total epics and points
+- Promotion instructions
+
+With `--epic`:
+- Full epic details including description
+- All stories with points and status
+- Promotion command for that epic
+</output>
+
+<example>
+# Show all future work
+.pennyfarthing/scripts/run.sh sprint/list-future.sh
+
+# Show details for specific epic
+.pennyfarthing/scripts/run.sh sprint/list-future.sh --epic epic-55
+</example>
+
+---
+
 ### `/sprint promote <epic-id>`
 
-Move an epic from `planning.yaml` to `current-sprint.yaml`.
+Move an epic from `future.yaml` to `current-sprint.yaml`.
 
 <run>
 .pennyfarthing/scripts/run.sh sprint/promote-epic.sh <epic-id>
@@ -389,6 +440,9 @@ For Jira integration, see `/jira` skill prerequisites.
 |---------|---------------|
 | `/sprint` | `sprint-status.sh` |
 | `/sprint status` | `sprint-status.sh` |
+| `/sprint status todo` | `sprint-status.sh todo` |
+| `/sprint status in-progress` | `sprint-status.sh in-progress` |
+| `/sprint status done` | `sprint-status.sh done` |
 | `/sprint backlog` | `available-stories.sh` |
 | `/sprint work` | Interactive story selection → SM flow |
 | `/sprint work MSSCI-XXX` | `check-story.sh` → direct start |
@@ -396,6 +450,8 @@ For Jira integration, see `/jira` skill prerequisites.
 | `/sprint work next` | `check-story.sh next` → start highest priority |
 | `/sprint archive MSSCI-XXX` | `archive-story.sh MSSCI-XXX` |
 | `/sprint new 2605 277 ...` | `new-sprint.sh 2605 277 ...` |
+| `/sprint future` | `list-future.sh` |
+| `/sprint future --epic X` | `list-future.sh --epic X` |
 | `/sprint promote epic-41` | `promote-epic.sh epic-41` |
 | `/new-work` | Alias for `/sprint work` |
 | `/new-work MSSCI-XXX` | Alias for `/sprint work MSSCI-XXX` |
