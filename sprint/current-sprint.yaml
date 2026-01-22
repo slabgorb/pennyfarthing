@@ -1,17 +1,72 @@
 sprint:
   number: 12
-  goal: Complete WheelHub notification consolidation
+  jira_sprint_id: 276
+  jira_sprint_name: "TO Sprint 2604"
+  goal: Complete WheelHub notification consolidation, VS Code extension, stepped workflows, and BMAD imports
   start_date: 2026-01-20
   end_date: 2026-02-02
   status: active
   velocity_target: 22
 summary:
-  total_points: 11
-  completed_points: 9
-  remaining_points: 2
+  total_points: 127
+  completed_points: 112
+  remaining_points: 15
+  notes: |
+    Sprint 12 includes work from multiple epics that were tracked in Jira but
+    not in local sprint YAML. This file has been reconciled with Jira Sprint 276.
+
+    Completed Epics:
+    - MSSCI-11705: Runtime Permission Management (1 story carried over)
+    - MSSCI-11715: Cyclist UI/UX Improvements (1 story carried over)
+    - MSSCI-11942: WheelHub Notification Consolidation (7 stories, all done)
+    - MSSCI-11952: Skill Frontmatter Enhancement (13 stories, all done)
+    - MSSCI-12042: VS Code Extension (9 stories, all done)
+    - MSSCI-12077: Stepped Workflow Support (9 stories, all done)
+
+    In Progress Epics:
+    - MSSCI-12122: VS Code Extension UX/UI Pass (5 done, 3 to do)
+    - MSSCI-12131: BikeLane BMAD Workflow Imports (11 done, 5 to do)
 epics:
   # ===========================================================================
-  # EPIC 48: WheelHub Notification Consolidation (continued)
+  # EPIC: Runtime Permission Management (MSSCI-11705) - COMPLETE
+  # ===========================================================================
+  - id: MSSCI-11705
+    type: epic
+    jira: MSSCI-11705
+    title: "Epic: Runtime Permission Management"
+    points: 2
+    completed_points: 2
+    priority: P1
+    status: done
+    stories:
+      - id: MSSCI-11710
+        jira: MSSCI-11710
+        title: "Permission presets by workflow"
+        points: 2
+        status: done
+        completed: 2026-01-18
+
+  # ===========================================================================
+  # EPIC: Cyclist UI/UX Improvements (MSSCI-11715) - COMPLETE
+  # ===========================================================================
+  - id: MSSCI-11715
+    type: epic
+    jira: MSSCI-11715
+    title: "Epic: Cyclist UI/UX Improvements"
+    points: 2
+    completed_points: 2
+    priority: P2
+    status: done
+    stories:
+      - id: MSSCI-11725
+        jira: MSSCI-11725
+        title: "Line numbers in file diffs"
+        points: 2
+        status: done
+        completed: 2026-01-18
+
+  # ===========================================================================
+  # EPIC: WheelHub Notification Consolidation (MSSCI-11942) - COMPLETE
   # ===========================================================================
   - id: MSSCI-11942
     type: epic
@@ -21,77 +76,477 @@ epics:
       Consolidate notification patterns across Cyclist. Replace polling with
       event-driven WebSocket channels, standardize reconnection behavior,
       and add cross-tab synchronization.
-    points: 11
-    completed_points: 9
+    points: 21
+    completed_points: 21
     priority: P2
-    status: in_progress
+    status: done
     stories:
-      - id: MSSCI-11949
-        jira: MSSCI-11949
-        title: "Remove tool/skill log panels and consolidate to messages"
-        description: |
-          The tool-panel.js and skill-panel.js provide dedicated side panels for
-          viewing tool executions and skill invocations. However, this information
-          is already visible in the messages view with enriched tool descriptions
-          (MSSCI-11929). The separate panels add complexity without unique value.
-        points: 3
-        priority: P2
+      - id: MSSCI-11943
+        jira: MSSCI-11943
+        title: "Story/Git WebSocket channels with file watchers"
+        points: 5
         status: done
         completed: 2026-01-19
-        repos: cyclist
-        workflow: trivial
-        acceptance_criteria:
-          - tool-panel.js and its UI removed
-          - skill-panel.js and its UI removed
-          - Badge polling for these panels removed
-          - Related localStorage keys cleaned up
-          - Messages view remains the single source for tool/skill activity
       - id: MSSCI-11944
         jira: MSSCI-11944
         title: "Event-driven badge updates"
-        description: |
-          Replace 500ms setInterval badge polling with event-driven updates.
-          PanelManager emits badge-changed event when counts change.
         points: 2
-        priority: P2
-        status: backlog
-        repos: cyclist
-        workflow: tdd
-        acceptance_criteria:
-          - PanelManager emits badge-changed event on count changes
-          - tab-bar.js subscribes to event instead of polling
-          - No 500ms setInterval in tab-bar.js
-          - Badges update immediately on change
+        status: done
+        completed: 2026-01-20
       - id: MSSCI-11945
         jira: MSSCI-11945
         title: "Livereload pattern alignment"
-        description: |
-          Migrate livereload from exponential backoff to 2s fixed reconnection
-          to align with standard WheelHub pattern.
         points: 1
-        priority: P3
         status: done
         completed: 2026-01-19
-        repos: cyclist
-        workflow: trivial
-        acceptance_criteria:
-          - livereload.js uses 2s fixed reconnection
-          - Consistent with other WheelHub channels
       - id: MSSCI-11946
         jira: MSSCI-11946
         title: "LocalStorage cross-tab synchronization"
-        description: |
-          Create settings-sync.js module using BroadcastChannel API for
-          cross-tab localStorage synchronization. Centralizes localStorage
-          access across 16 files.
         points: 5
-        priority: P2
         status: done
         completed: 2026-01-20
-        repos: cyclist
-        workflow: tdd
-        acceptance_criteria:
-          - settings-sync.js module created with BroadcastChannel API
-          - Theme changes in Tab 1 reflect in Tab 2 immediately
-          - All localStorage access goes through settings-sync.js
-          - 16 existing files refactored to use new module
+      - id: MSSCI-11947
+        jira: MSSCI-11947
+        title: "Hook response data channel for interactive tools"
+        points: 5
+        status: done
+        completed: 2026-01-19
+      - id: MSSCI-11948
+        jira: MSSCI-11948
+        title: "Remove redundant popup tool use notifications"
+        points: 1
+        status: done
+        completed: 2026-01-19
+      - id: MSSCI-11949
+        jira: MSSCI-11949
+        title: "Remove tool/skill log panels and consolidate to messages"
+        points: 2
+        status: done
+        completed: 2026-01-19
+
+  # ===========================================================================
+  # EPIC: Skill Frontmatter Enhancement (MSSCI-11952) - COMPLETE
+  # ===========================================================================
+  - id: MSSCI-11952
+    type: epic
+    jira: MSSCI-11952
+    title: "Epic: Skill Frontmatter Enhancement"
+    description: |
+      Improve skill discoverability by enhancing SKILL.md frontmatter.
+      Includes skill rewrites with prescriptive scripts.
+    points: 17
+    completed_points: 17
+    priority: P1
+    status: done
+    stories:
+      - id: MSSCI-11953
+        jira: MSSCI-11953
+        title: "Enhance skill descriptions with 'when to use' context"
+        points: 2
+        status: done
+        completed: 2026-01-19
+      - id: MSSCI-11954
+        jira: MSSCI-11954
+        title: "Add allowed-tools to context-sensitive skills"
+        points: 1
+        status: done
+        completed: 2026-01-19
+      - id: MSSCI-11955
+        jira: MSSCI-11955
+        title: "Progressive disclosure for large skills"
+        points: 2
+        status: done
+        completed: 2026-01-19
+      - id: MSSCI-11956
+        jira: MSSCI-11956
+        title: "Create systematic-debugging skill"
+        points: 3
+        status: done
+        completed: 2026-01-19
+      - id: MSSCI-11957
+        jira: MSSCI-11957
+        title: "Add severity levels to Reviewer agent"
+        points: 1
+        status: done
+        completed: 2026-01-19
+      - id: MSSCI-12034
+        jira: MSSCI-12034
+        title: "Create /sprint skill with prescriptive scripts"
+        points: 3
+        status: done
+        completed: 2026-01-20
+      - id: MSSCI-12035
+        jira: MSSCI-12035
+        title: "Rewrite /story skill with prescriptive scripts"
+        points: 1
+        status: done
+        completed: 2026-01-20
+      - id: MSSCI-12036
+        jira: MSSCI-12036
+        title: "Rewrite /workflow skill with prescriptive scripts"
+        points: 1
+        status: done
+        completed: 2026-01-20
+      - id: MSSCI-12037
+        jira: MSSCI-12037
+        title: "Rewrite /just skill with prescriptive scripts"
+        points: 1
+        status: done
+        completed: 2026-01-20
+      - id: MSSCI-12038
+        jira: MSSCI-12038
+        title: "Remove /backlog skill (consolidated into /sprint)"
+        points: 1
+        status: done
+        completed: 2026-01-20
+      - id: MSSCI-12043
+        jira: MSSCI-12043
+        title: "Add epic management commands to /sprint skill"
+        points: 1
+        status: done
+        completed: 2026-01-20
+      - id: MSSCI-12089
+        jira: MSSCI-12089
+        title: "Add finish-story.sh script to /story skill"
+        points: 0
+        status: done
+        completed: 2026-01-20
+      - id: MSSCI-12119
+        jira: MSSCI-12119
+        title: "Consolidate /new-work into /sprint work with next argument"
+        points: 0
+        status: done
+        completed: 2026-01-20
+
+  # ===========================================================================
+  # EPIC: VS Code Extension (MSSCI-12042) - COMPLETE
+  # ===========================================================================
+  - id: MSSCI-12042
+    type: epic
+    jira: MSSCI-12042
+    title: "Epic: VS Code Extension for Pennyfarthing"
+    description: |
+      Create a VS Code extension that brings Pennyfarthing's agent orchestration
+      to VS Code users with terminal integration, sidebar panels, and webview UI.
+    points: 26
+    completed_points: 26
+    priority: P2
+    status: done
+    stories:
+      - id: MSSCI-12045
+        jira: MSSCI-12045
+        title: "Extension scaffolding with Yeoman generator"
+        points: 2
+        status: done
+        completed: 2026-01-20
+      - id: MSSCI-12046
+        jira: MSSCI-12046
+        title: "Terminal provider for Claude Code sessions"
+        points: 3
+        status: done
+        completed: 2026-01-20
+      - id: MSSCI-12047
+        jira: MSSCI-12047
+        title: "WheelHub adapter for VS Code"
+        points: 5
+        status: done
+        completed: 2026-01-20
+      - id: MSSCI-12048
+        jira: MSSCI-12048
+        title: "Sidebar panel with agent status"
+        points: 3
+        status: done
+        completed: 2026-01-20
+      - id: MSSCI-12049
+        jira: MSSCI-12049
+        title: "Reflector protocol adapter"
+        points: 3
+        status: done
+        completed: 2026-01-20
+      - id: MSSCI-12050
+        jira: MSSCI-12050
+        title: "Command palette integration"
+        points: 2
+        status: done
+        completed: 2026-01-20
+      - id: MSSCI-12051
+        jira: MSSCI-12051
+        title: "Webview panel for Cyclist UI"
+        points: 3
+        status: done
+        completed: 2026-01-20
+      - id: MSSCI-12088
+        jira: MSSCI-12088
+        title: "Gearshift mode switch not functioning correctly"
+        points: 2
+        status: done
+        completed: 2026-01-20
+      - id: MSSCI-12097
+        jira: MSSCI-12097
+        title: "VS Code Chat API integration for Claude conversations"
+        points: 3
+        status: done
+        completed: 2026-01-21
+
+  # ===========================================================================
+  # EPIC: Stepped Workflow Support (MSSCI-12077) - COMPLETE
+  # ===========================================================================
+  - id: MSSCI-12077
+    type: epic
+    jira: MSSCI-12077
+    title: "Epic: Stepped Workflow Support (BMAD-Inspired)"
+    description: |
+      Add stepped workflow support (BikeLane) to complement phased workflows.
+      Enables BMAD-style multi-step workflows with gates and variable resolution.
+    points: 17
+    completed_points: 17
+    priority: P1
+    status: done
+    stories:
+      - id: MSSCI-12078
+        jira: MSSCI-12078
+        title: "Workflow YAML schema extension for type: stepped"
+        points: 2
+        status: done
+        completed: 2026-01-20
+      - id: MSSCI-12079
+        jira: MSSCI-12079
+        title: "Step file parser with <step-meta> extraction"
+        points: 3
+        status: done
+        completed: 2026-01-20
+      - id: MSSCI-12081
+        jira: MSSCI-12081
+        title: "Variable resolver with priority chain"
+        points: 2
+        status: done
+        completed: 2026-01-20
+      - id: MSSCI-12082
+        jira: MSSCI-12082
+        title: "Session file stepped workflow state tracking"
+        points: 2
+        status: done
+        completed: 2026-01-20
+      - id: MSSCI-12083
+        jira: MSSCI-12083
+        title: "/workflow list command with type indicator"
+        points: 1
+        status: done
+        completed: 2026-01-20
+      - id: MSSCI-12084
+        jira: MSSCI-12084
+        title: "/workflow start and resume commands"
+        points: 3
+        status: done
+        completed: 2026-01-20
+      - id: MSSCI-12085
+        jira: MSSCI-12085
+        title: "Gate detection and approval flow"
+        points: 2
+        status: done
+        completed: 2026-01-21
+      - id: MSSCI-12086
+        jira: MSSCI-12086
+        title: "Tri-modal support (create/validate/edit)"
+        points: 1
+        status: done
+        completed: 2026-01-21
+      - id: MSSCI-12087
+        jira: MSSCI-12087
+        title: "Example: architecture stepped workflow"
+        points: 1
+        status: done
+        completed: 2026-01-21
+
+  # ===========================================================================
+  # EPIC: VS Code Extension UX/UI Pass (MSSCI-12122) - IN PROGRESS
+  # ===========================================================================
+  - id: MSSCI-12122
+    type: epic
+    jira: MSSCI-12122
+    title: "Epic: VS Code Extension UX/UI Pass"
+    description: |
+      Polish the VS Code extension. Focus on onboarding, discoverability,
+      chat formatting, and visual polish.
+    points: 18
+    completed_points: 12
+    priority: P1
+    status: in_progress
+    stories:
+      - id: MSSCI-12123
+        jira: MSSCI-12123
+        title: "Welcome view with onboarding flow"
+        points: 2
+        status: done
+        completed: 2026-01-21
+      - id: MSSCI-12124
+        jira: MSSCI-12124
+        title: "Skills/commands discovery in sidebar"
+        points: 3
+        status: done
+        completed: 2026-01-21
+      - id: MSSCI-12125
+        jira: MSSCI-12125
+        title: "Workflow panel with status/progress"
+        points: 3
+        status: done
+        completed: 2026-01-21
+      - id: MSSCI-12126
+        jira: MSSCI-12126
+        title: "Chat response formatting improvements"
+        points: 2
+        status: done
+        completed: 2026-01-21
+      - id: MSSCI-12127
+        jira: MSSCI-12127
+        title: "Gearshift visual polish and persistence"
+        points: 2
+        status: done
+        completed: 2026-01-21
+      - id: MSSCI-12128
+        jira: MSSCI-12128
+        title: "Error handling with actionable messages"
+        points: 2
+        status: backlog
+        repos: pennyfarthing
+      - id: MSSCI-12129
+        jira: MSSCI-12129
+        title: "Theme integration (VS Code to Pennyfarthing)"
+        points: 2
+        status: backlog
+        repos: pennyfarthing
+      - id: MSSCI-12130
+        jira: MSSCI-12130
+        title: "Quick-pick for skill/workflow invocation"
+        points: 2
+        status: backlog
+        repos: pennyfarthing
+
+  # ===========================================================================
+  # EPIC: BikeLane BMAD Workflow Imports (MSSCI-12131) - IN PROGRESS
+  # ===========================================================================
+  - id: MSSCI-12131
+    type: epic
+    jira: MSSCI-12131
+    title: "Epic: BikeLane BMAD Workflow Imports"
+    description: |
+      Import all BMAD workflows into Pennyfarthing's BikeLane stepped workflow
+      system. Goal: full BMAD compatibility.
+    points: 40
+    completed_points: 31
+    priority: P1
+    status: in_progress
+    stories:
+      - id: MSSCI-12132
+        jira: MSSCI-12132
+        title: "BMAD to Pennyfarthing migration script"
+        points: 3
+        status: done
+        completed: 2026-01-21
+      - id: MSSCI-12133
+        jira: MSSCI-12133
+        title: "Import PRD workflow (all 3 modes)"
+        points: 5
+        status: done
+        completed: 2026-01-21
+      - id: MSSCI-12134
+        jira: MSSCI-12134
+        title: "Import Product Brief workflow"
+        points: 2
+        status: done
+        completed: 2026-01-21
+      - id: MSSCI-12135
+        jira: MSSCI-12135
+        title: "Import Research workflow"
+        points: 2
+        status: done
+        completed: 2026-01-21
+      - id: MSSCI-12136
+        jira: MSSCI-12136
+        title: "Enhance Architecture workflow from BMAD"
+        points: 2
+        status: done
+        completed: 2026-01-21
+      - id: MSSCI-12137
+        jira: MSSCI-12137
+        title: "Import Epics-and-Stories workflow"
+        points: 3
+        status: done
+        completed: 2026-01-21
+      - id: MSSCI-12138
+        jira: MSSCI-12138
+        title: "Import Implementation Readiness workflow"
+        points: 2
+        status: done
+        completed: 2026-01-21
+      - id: MSSCI-12139
+        jira: MSSCI-12139
+        title: "Import UX Design workflow"
+        points: 3
+        status: done
+        completed: 2026-01-21
+      - id: MSSCI-12140
+        jira: MSSCI-12140
+        title: "Import Dev-Story workflow"
+        points: 3
+        status: done
+        completed: 2026-01-21
+      - id: MSSCI-12141
+        jira: MSSCI-12141
+        title: "Import Sprint Planning workflow"
+        points: 2
+        status: done
+        completed: 2026-01-21
+      - id: MSSCI-12145
+        jira: MSSCI-12145
+        title: "Import Project Context generation workflow"
+        points: 2
+        status: done
+        completed: 2026-01-21
+      - id: MSSCI-12176
+        jira: MSSCI-12176
+        title: "Implement workflow start/resume/status shell scripts"
+        points: 2
+        status: backlog
+        repos: pennyfarthing
+      - id: MSSCI-12142
+        jira: MSSCI-12142
+        title: "Import Retrospective workflow"
+        points: 2
+        status: backlog
+        repos: pennyfarthing
+      - id: MSSCI-12143
+        jira: MSSCI-12143
+        title: "Import Code Review workflow"
+        points: 2
+        status: backlog
+        repos: pennyfarthing
+      - id: MSSCI-12144
+        jira: MSSCI-12144
+        title: "Import Brainstorming workflow"
+        points: 2
+        status: backlog
+        repos: pennyfarthing
+      - id: MSSCI-12146
+        jira: MSSCI-12146
+        title: "BMAD compatibility validation suite"
+        points: 3
+        status: backlog
+        repos: pennyfarthing
+
+  # ===========================================================================
+  # Standalone Stories (no epic parent in Jira)
+  # ===========================================================================
+  - id: standalone
+    type: misc
+    title: "Standalone Stories"
+    points: 3
+    completed_points: 3
+    status: done
+    stories:
+      - id: MSSCI-11799
+        jira: MSSCI-11799
+        title: "Detect Jira-only stories missing from sprint YAML"
+        points: 3
+        status: done
+        completed: 2026-01-17
