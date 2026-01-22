@@ -1,0 +1,1 @@
+../misc/generate-skill-docs.sh

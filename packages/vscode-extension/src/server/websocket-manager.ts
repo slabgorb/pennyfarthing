@@ -49,6 +49,40 @@ export interface StatsData {
 // Listener callback type for same-process subscribers
 export type StatsListener = (data: StatsData) => void;
 
+// MSSCI-12227: Separate channel data types per PRD spec
+export interface ContextData {
+  tokens: number;
+  usablePercent: number;
+  maxTokens: number;
+}
+
+export interface AgentData {
+  agent: string;
+  persona: {
+    character: string;
+    theme: string;
+    role: string;
+  };
+}
+
+export interface GearshiftData {
+  mode: 'plan' | 'manual' | 'accept' | 'turbo';
+}
+
+export interface StoryData {
+  id: string;
+  title: string;
+  phase: string;
+  branch: string;
+  points: number;
+}
+
+// Listener callback types for separate channels
+export type ContextListener = (data: ContextData) => void;
+export type AgentListener = (data: AgentData) => void;
+export type GearshiftListener = (data: GearshiftData) => void;
+export type StoryListener = (data: StoryData) => void;
+
 // Message data type for chat participant
 export interface MessageData {
   type: 'chunk' | 'tool_use' | 'done' | 'error';
@@ -77,6 +111,15 @@ export class WebSocketManager {
   // Same-process listeners (for chat participant integration)
   private messageListeners: Set<MessageListener> = new Set();
 
+  // MSSCI-12227: Separate channel listeners per PRD spec
+  private contextListeners: Set<ContextListener> = new Set();
+  private agentListeners: Set<AgentListener> = new Set();
+  private gearshiftListeners: Set<GearshiftListener> = new Set();
+  private storyListeners: Set<StoryListener> = new Set();
+
+  // Connection state tracking for AC3
+  private connectionState: 'connecting' | 'connected' | 'disconnected' = 'connecting';
+
   constructor() {
     // Pre-register expected channels
     this.registerChannel('/ws/stats');
@@ -84,6 +127,12 @@ export class WebSocketManager {
     this.registerChannel('/ws/claude');
     this.registerChannel('/ws/git');
     this.registerChannel('/ws/messages');
+
+    // MSSCI-12227: Register separate channels per PRD spec
+    this.registerChannel('/context');
+    this.registerChannel('/agent');
+    this.registerChannel('/gearshift');
+    this.registerChannel('/story');
   }
 
   /**
@@ -105,6 +154,46 @@ export class WebSocketManager {
     this.messageListeners.add(listener);
     return () => {
       this.messageListeners.delete(listener);
+    };
+  }
+
+  /**
+   * MSSCI-12227: Register a same-process listener for context updates.
+   */
+  onContext(listener: ContextListener): () => void {
+    this.contextListeners.add(listener);
+    return () => {
+      this.contextListeners.delete(listener);
+    };
+  }
+
+  /**
+   * MSSCI-12227: Register a same-process listener for agent updates.
+   */
+  onAgent(listener: AgentListener): () => void {
+    this.agentListeners.add(listener);
+    return () => {
+      this.agentListeners.delete(listener);
+    };
+  }
+
+  /**
+   * MSSCI-12227: Register a same-process listener for gearshift updates.
+   */
+  onGearshift(listener: GearshiftListener): () => void {
+    this.gearshiftListeners.add(listener);
+    return () => {
+      this.gearshiftListeners.delete(listener);
+    };
+  }
+
+  /**
+   * MSSCI-12227: Register a same-process listener for story updates.
+   */
+  onStory(listener: StoryListener): () => void {
+    this.storyListeners.add(listener);
+    return () => {
+      this.storyListeners.delete(listener);
     };
   }
 
@@ -298,6 +387,133 @@ export class WebSocketManager {
         client.send(message);
       }
     }
+  }
+
+  /**
+   * MSSCI-12227: Broadcast context data to /context channel subscribers.
+   */
+  broadcastContext(data: ContextData): void {
+    // Notify same-process listeners
+    for (const listener of this.contextListeners) {
+      try {
+        listener(data);
+      } catch (err) {
+        console.error('[WebSocketManager] Error in context listener:', err);
+      }
+    }
+
+    // Notify WebSocket clients on /context channel
+    const clients = this.channels.get('/context');
+    if (!clients) return;
+
+    const message = JSON.stringify({
+      type: 'context',
+      ...data,
+      timestamp: new Date().toISOString(),
+    });
+
+    for (const client of clients) {
+      if (client.readyState === 1) {
+        client.send(message);
+      }
+    }
+  }
+
+  /**
+   * MSSCI-12227: Broadcast agent data to /agent channel subscribers.
+   */
+  broadcastAgent(data: AgentData): void {
+    // Notify same-process listeners
+    for (const listener of this.agentListeners) {
+      try {
+        listener(data);
+      } catch (err) {
+        console.error('[WebSocketManager] Error in agent listener:', err);
+      }
+    }
+
+    // Notify WebSocket clients on /agent channel
+    const clients = this.channels.get('/agent');
+    if (!clients) return;
+
+    const message = JSON.stringify({
+      type: 'agent',
+      ...data,
+      timestamp: new Date().toISOString(),
+    });
+
+    for (const client of clients) {
+      if (client.readyState === 1) {
+        client.send(message);
+      }
+    }
+  }
+
+  /**
+   * MSSCI-12227: Broadcast gearshift data to /gearshift channel subscribers.
+   */
+  broadcastGearshift(data: GearshiftData): void {
+    // Notify same-process listeners
+    for (const listener of this.gearshiftListeners) {
+      try {
+        listener(data);
+      } catch (err) {
+        console.error('[WebSocketManager] Error in gearshift listener:', err);
+      }
+    }
+
+    // Notify WebSocket clients on /gearshift channel
+    const clients = this.channels.get('/gearshift');
+    if (!clients) return;
+
+    const message = JSON.stringify({
+      type: 'gearshift',
+      ...data,
+      timestamp: new Date().toISOString(),
+    });
+
+    for (const client of clients) {
+      if (client.readyState === 1) {
+        client.send(message);
+      }
+    }
+  }
+
+  /**
+   * MSSCI-12227: Broadcast story data to /story channel subscribers.
+   */
+  broadcastStoryUpdate(data: StoryData): void {
+    // Notify same-process listeners
+    for (const listener of this.storyListeners) {
+      try {
+        listener(data);
+      } catch (err) {
+        console.error('[WebSocketManager] Error in story listener:', err);
+      }
+    }
+
+    // Notify WebSocket clients on /story channel
+    const clients = this.channels.get('/story');
+    if (!clients) return;
+
+    const message = JSON.stringify({
+      type: 'story',
+      ...data,
+      timestamp: new Date().toISOString(),
+    });
+
+    for (const client of clients) {
+      if (client.readyState === 1) {
+        client.send(message);
+      }
+    }
+  }
+
+  /**
+   * MSSCI-12227: Get the current connection state (AC3).
+   */
+  getConnectionState(): 'connecting' | 'connected' | 'disconnected' {
+    return this.connectionState;
   }
 
   /**
