@@ -104,7 +104,7 @@ GRANTS=$(cat .claude/settings.local.json 2>/dev/null | jq '.permissions.grants /
 ## Step 3: Claim in Jira
 
 ```bash
-./scripts/run.sh jira-claim-story.sh {JIRA_KEY} --claim
+./scripts/run.sh jira/jira-claim-story.sh {JIRA_KEY} --claim
 ```
 
 ## Step 4: Write Session File

@@ -219,7 +219,7 @@ Helper checks PR status, auto-fixes lint issues, prepares Jira transition.
 After preflight passes, execute the finish-story script via `/story` skill:
 
 ```bash
-.pennyfarthing/scripts/run.sh finish-story.sh {STORY_ID}
+.pennyfarthing/scripts/run.sh workflow/finish-story.sh {STORY_ID}
 ```
 
 **The script handles all finish steps:**
@@ -232,7 +232,7 @@ After preflight passes, execute the finish-story script via `/story` skill:
 
 **Preview mode:** Use `--dry-run` to see what would happen without executing:
 ```bash
-.pennyfarthing/scripts/run.sh finish-story.sh {STORY_ID} --dry-run
+.pennyfarthing/scripts/run.sh workflow/finish-story.sh {STORY_ID} --dry-run
 ```
 
 ### Step 3: Commit Archive (if needed)
@@ -532,7 +532,7 @@ Where `{agent}` matches the workflow's next phase agent (tea, dev, or orchestrat
 <exit>
 To exit SM mode: "Exit SM" or "Switch to [other agent]"
 
-On exit, run: `./scripts/run.sh agent-session.sh stop`
+On exit, run: `./scripts/run.sh core/agent-session.sh stop`
 </exit>
 
 **Ready to coordinate the work!** 📋

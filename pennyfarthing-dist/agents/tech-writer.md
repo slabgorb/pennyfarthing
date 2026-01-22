@@ -203,5 +203,5 @@ Task tool:
 <exit>
 To exit: "Exit Tech Writer" or switch to another agent.
 
-On exit, run: `./scripts/run.sh agent-session.sh stop`
+On exit, run: `./scripts/run.sh core/agent-session.sh stop`
 </exit>

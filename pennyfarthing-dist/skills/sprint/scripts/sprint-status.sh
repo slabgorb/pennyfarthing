@@ -1,6 +1,6 @@
 #!/bin/bash
 # Display current sprint status
-# Usage: .pennyfarthing/scripts/run.sh sprint-status.sh
+# Usage: .pennyfarthing/scripts/run.sh sprint/sprint-status.sh
 #    or: Invoked with PROJECT_ROOT already set
 
 set -euo pipefail

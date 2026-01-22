@@ -1,1 +1,0 @@
-../skills/story/scripts/story-template.sh

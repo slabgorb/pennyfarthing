@@ -11,7 +11,7 @@ cat > /dev/null
 
 # Find project root
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/../utils/find-root.sh"
+source "$SCRIPT_DIR/../lib/find-root.sh"
 
 # Get context percentage from check-context.sh
 CONTEXT_SCRIPT="$SCRIPT_DIR/../check-context.sh"

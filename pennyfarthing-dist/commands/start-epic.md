@@ -41,13 +41,13 @@ Before starting a new epic, clean up stale artifacts from previous work:
 cd $CLAUDE_PROJECT_DIR
 
 # Run conservative cleanup (7+ day old artifacts)
-$CLAUDE_PROJECT_DIR/scripts/run.sh session-cleanup.sh --dry-run
+$CLAUDE_PROJECT_DIR/scripts/run.sh misc/session-cleanup.sh --dry-run
 
 # If dry-run looks good, run actual cleanup
-$CLAUDE_PROJECT_DIR/scripts/run.sh session-cleanup.sh
+$CLAUDE_PROJECT_DIR/scripts/run.sh misc/session-cleanup.sh
 
 # Archive epic contexts for completed epics
-$CLAUDE_PROJECT_DIR/scripts/run.sh session-cleanup.sh --aggressive
+$CLAUDE_PROJECT_DIR/scripts/run.sh misc/session-cleanup.sh --aggressive
 ```
 
 This ensures a clean slate before starting new epic work and archives contexts from completed epics.
