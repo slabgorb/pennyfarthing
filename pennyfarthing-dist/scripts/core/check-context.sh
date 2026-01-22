@@ -198,6 +198,12 @@ if last_total is not None:
     # This enables continuous autonomous runs without manual intervention
     use_tirepump = permission_mode == 'turbo' and usable_pct > tirepump_threshold
     print(f'USE_TIREPUMP={str(use_tirepump).lower()}')
+
+    # Cyclist detection: Check if CYCLIST env var is set to '1'
+    # Markers should only be emitted when running inside Cyclist
+    import os
+    is_cyclist = os.environ.get('CYCLIST', '') == '1'
+    print(f'IS_CYCLIST={str(is_cyclist).lower()}')
 " 2>/dev/null)
 
 if [ "$HUMAN_MODE" = "true" ]; then

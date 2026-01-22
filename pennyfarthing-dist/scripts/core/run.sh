@@ -69,7 +69,7 @@ if [[ -f "$SCRIPT_PATH" ]]; then
 else
     echo "Error: Script not found: $SCRIPT_NAME" >&2
     echo "Full path required. Available categories:" >&2
-    echo "  core/, workflow/, sprint/, story/, jira/, git/, theme/, test/, lib/, misc/, hooks/" >&2
+    echo "  core/, workflow/, sprint/, story/, jira/, git/, theme/, test/, lib/, misc/, hooks/, cyclist/" >&2
     echo "Example: run.sh core/agent-session.sh start sm" >&2
     exit 1
 fi

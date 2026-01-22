@@ -19,7 +19,9 @@ model: haiku
 </info>
 
 <critical>
-**Reflector required.** Final output MUST include one of:
+**Reflector markers only in Cyclist.** Run `check-context.sh` and check `IS_CYCLIST`:
+
+If `IS_CYCLIST=true`, emit one of:
 
 Standard handoff (user clicks to continue):
 ```
@@ -31,9 +33,10 @@ TirePump handoff (auto-clear context + load next agent):
 <!-- CYCLIST:CONTEXT_CLEAR:/{NEXT_AGENT} -->
 ```
 
-**Decision:** Run `check-context.sh` and check `USE_TIREPUMP`:
-- If `USE_TIREPUMP=true` → emit `CONTEXT_CLEAR` (enables continuous autonomous runs)
-- Otherwise → emit `HANDOFF`
+**Decision logic:**
+1. If `IS_CYCLIST=false` → DO NOT emit any markers (plain text handoff message only)
+2. If `IS_CYCLIST=true` AND `USE_TIREPUMP=true` → emit `CONTEXT_CLEAR`
+3. If `IS_CYCLIST=true` AND `USE_TIREPUMP=false` → emit `HANDOFF`
 </critical>
 
 ---
@@ -146,13 +149,15 @@ No automated checks. Always passes.
 6. **Check context and determine handoff type:**
    ```bash
    eval "$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/check-context.sh)"
+   # IS_CYCLIST=true means: running inside Cyclist visual terminal
    # USE_TIREPUMP=true means: turbo mode + context >60%
    # CONTEXT_PERCENT, PERMISSION_MODE also available
    ```
 
-7. **Report result with Reflector:**
-   - If `USE_TIREPUMP=true` → `<!-- CYCLIST:CONTEXT_CLEAR:/{NEXT_AGENT} -->`
-   - Otherwise → `<!-- CYCLIST:HANDOFF:/{NEXT_AGENT} -->`
+7. **Report result (with Reflector if in Cyclist):**
+   - If `IS_CYCLIST=false` → Plain text only: "Handoff to {NEXT_AGENT} - run `/{next_agent}`"
+   - If `IS_CYCLIST=true` AND `USE_TIREPUMP=true` → `<!-- CYCLIST:CONTEXT_CLEAR:/{NEXT_AGENT} -->`
+   - If `IS_CYCLIST=true` AND `USE_TIREPUMP=false` → `<!-- CYCLIST:HANDOFF:/{NEXT_AGENT} -->`
 
 ---
 
@@ -167,11 +172,17 @@ Gate: {GATE_TYPE} - PASSED
 
 Context: {CONTEXT_PERCENT}%
 Mode: {PERMISSION_MODE}
+Cyclist: {IS_CYCLIST}
 TirePump: {USE_TIREPUMP}
 
+(if IS_CYCLIST=true AND USE_TIREPUMP=false):
 <!-- CYCLIST:HANDOFF:/{NEXT_AGENT} -->
-or (if USE_TIREPUMP=true):
+
+(if IS_CYCLIST=true AND USE_TIREPUMP=true):
 <!-- CYCLIST:CONTEXT_CLEAR:/{NEXT_AGENT} -->
+
+(if IS_CYCLIST=false - no marker, just instruction):
+Next: Run `/{next_agent}` to continue
 ```
 
 ## Error Format
