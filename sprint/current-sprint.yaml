@@ -574,9 +574,10 @@ epics:
           Updates within 1 second of WheelHub event.
         points: 3
         priority: P0
-        status: in_progress
+        status: done
         repos: pennyfarthing
         assigned_to: Keith Avery
+        completed: "2026-01-22"
       - id: "56-3"
         jira: MSSCI-12229
         title: "Gearshift Mode Status Bar Item"
