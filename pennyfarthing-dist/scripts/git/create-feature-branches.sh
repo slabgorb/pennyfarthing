@@ -11,10 +11,6 @@ elif [ -f ../.env ]; then
     set -a; source ../.env; set +a
 fi
 
-# Find project root
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/find-root.sh"
-
 show_help() {
     cat << EOF
 Create Feature Branches - Idempotent branch creation/checkout

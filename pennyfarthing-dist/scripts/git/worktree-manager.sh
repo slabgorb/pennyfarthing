@@ -8,10 +8,6 @@
 
 set -e
 
-# Find project root
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/../lib/find-root.sh"
-
 # Load environment
 if [ -f "$PROJECT_ROOT/.env" ]; then
     set -a; source "$PROJECT_ROOT/.env"; set +a

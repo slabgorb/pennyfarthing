@@ -11,9 +11,8 @@
 
 set -euo pipefail
 
-# Find project root and load shared functions
+# Load shared functions
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/../lib/find-root.sh"
 source "$SCRIPT_DIR/../sprint/sprint-common.sh"
 
 # Defaults

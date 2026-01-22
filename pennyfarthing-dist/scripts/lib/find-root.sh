@@ -1,12 +1,14 @@
 #!/usr/bin/env zsh
 # Shared utility: Find project root by .claude/ marker
-# Source this file to get PROJECT_ROOT set correctly
 #
-# Usage: source "$(dirname "$0")/lib/find-root.sh"
-#    or: source "$SCRIPT_DIR/../lib/find-root.sh"
+# DEPRECATED: Scripts invoked via run.sh already have PROJECT_ROOT set.
+# This file is kept for backwards compatibility with scripts that may be
+# run directly (not via run.sh).
 #
-# After sourcing, PROJECT_ROOT will be set to the project root directory.
-# Uses SCRIPT_DIR if available (preferred), falls back to PWD.
+# When run.sh executes a script, it sets PROJECT_ROOT before exec'ing,
+# so sourcing this file is a no-op (line 12 skips if already set).
+#
+# For new scripts: Just assume PROJECT_ROOT is set by the caller (run.sh).
 
 # Skip if PROJECT_ROOT is already set (e.g., by run.sh or CLAUDE_PROJECT_DIR)
 if [ -z "${PROJECT_ROOT:-}" ]; then

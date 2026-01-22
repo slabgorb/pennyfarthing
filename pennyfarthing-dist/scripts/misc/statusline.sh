@@ -10,11 +10,6 @@ if ! echo "$input" | jq -e . >/dev/null 2>&1; then
     exit 0
 fi
 
-# Use CLAUDE_PROJECT_DIR if set, otherwise find via .claude/ marker
-PROJECT_ROOT="${CLAUDE_PROJECT_DIR:-}"
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/../lib/find-root.sh"
-
 # Extract fields - use cwd for display only, PROJECT_ROOT for file lookups
 cwd=$(echo "$input" | jq -r '.workspace.current_dir // empty' 2>/dev/null)
 dir_name=$(basename "$cwd" 2>/dev/null || echo "?")

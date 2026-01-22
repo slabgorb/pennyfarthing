@@ -8,10 +8,6 @@
 #
 # Session files stored in .session/agents/<session-id> for multi-session support
 
-# Find project root
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/../lib/find-root.sh"
-
 # Agents directory for multi-session support
 AGENTS_DIR="$PROJECT_ROOT/.session/agents"
 

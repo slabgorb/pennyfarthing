@@ -11,9 +11,8 @@
 # Read and discard stdin (required by hook protocol)
 cat > /dev/null
 
-# Find project root
+# Script location for sibling script references
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/../lib/find-root.sh" 2>/dev/null || true
 
 # Get context percentage from check-context.sh
 CONTEXT_SCRIPT="$SCRIPT_DIR/../check-context.sh"
