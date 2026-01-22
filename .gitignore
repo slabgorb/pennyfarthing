@@ -33,6 +33,12 @@ npm-debug.log*
 # Build output (delivered via npm)
 dist/
 
+# TypeScript build output in source directories (misplaced builds)
+packages/*/src/**/*.js
+packages/*/src/**/*.js.map
+packages/*/src/**/*.d.ts
+packages/*/src/**/*.d.ts.map
+
 # Package lock (project uses pnpm - ignore npm lockfile)
 package-lock.json
 

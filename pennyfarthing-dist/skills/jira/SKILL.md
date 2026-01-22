@@ -270,16 +270,16 @@ Syncs a single story to Jira with more detailed output.
 
 ```bash
 # Show story status in Jira
-./.pennyfarthing/scripts/run.sh jira-sync-story.sh 24-1
+./.pennyfarthing/scripts/run.sh jira/jira-sync-story.sh 24-1
 
 # Transition to match Pennyfarthing status
-./.pennyfarthing/scripts/run.sh jira-sync-story.sh 24-1 --transition
+./.pennyfarthing/scripts/run.sh jira/jira-sync-story.sh 24-1 --transition
 
 # Sync story points
-./.pennyfarthing/scripts/run.sh jira-sync-story.sh 24-1 --points
+./.pennyfarthing/scripts/run.sh jira/jira-sync-story.sh 24-1 --points
 
 # Add a comment
-./.pennyfarthing/scripts/run.sh jira-sync-story.sh 24-1 --comment "Started development"
+./.pennyfarthing/scripts/run.sh jira/jira-sync-story.sh 24-1 --comment "Started development"
 ```
 
 ### Claim a Story
@@ -288,13 +288,13 @@ Check availability and claim a Jira story for work.
 
 ```bash
 # Check if story is available
-./.pennyfarthing/scripts/run.sh jira-claim-story.sh MSSCI-10988
+./.pennyfarthing/scripts/run.sh jira/jira-claim-story.sh MSSCI-10988
 
 # Claim the story (assign to self + move to In Progress)
-./.pennyfarthing/scripts/run.sh jira-claim-story.sh MSSCI-10988 --claim
+./.pennyfarthing/scripts/run.sh jira/jira-claim-story.sh MSSCI-10988 --claim
 
 # Using story key format
-./.pennyfarthing/scripts/run.sh jira-claim-story.sh 35-4 --claim
+./.pennyfarthing/scripts/run.sh jira/jira-claim-story.sh 35-4 --claim
 ```
 
 ### Script Summary
