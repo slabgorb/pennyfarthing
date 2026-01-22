@@ -137,9 +137,33 @@ function notifyQueueChange() {
 
 /**
  * Save message queue to settings-sync (cross-tab broadcast)
+ * Also syncs to bell queue file when bell mode is enabled (MSSCI-12275)
  */
 export function saveMessageQueue() {
   settingsSync.set(MESSAGE_QUEUE_KEY, messageQueue);
+  // Sync to file for bell mode hook (fire and forget)
+  syncQueueToFile();
+}
+
+/**
+ * Sync message queue to .pennyfarthing/bell-queue.json for PostToolUse hook
+ * Only writes when bell mode is enabled (MSSCI-12275)
+ * @private
+ */
+async function syncQueueToFile() {
+  try {
+    const response = await fetch('/api/bell-queue', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(messageQueue),
+    });
+    if (!response.ok) {
+      console.warn('[MessageQueue] Failed to sync bell queue:', response.status);
+    }
+  } catch (err) {
+    // Ignore errors - bell mode sync is best-effort
+    console.debug('[MessageQueue] Bell queue sync error:', err);
+  }
 }
 
 /**

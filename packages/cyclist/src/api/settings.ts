@@ -13,6 +13,7 @@ import path from 'path';
 import { parse, stringify } from 'yaml';
 import { getCurrentSettings, saveUserSettings, type CyclistSettings, type SettingsInput } from '../settings.js';
 import { getProjectDirectory } from '../paths.js';
+import { isBellModeEnabled, setBellMode, loadBellModeState } from '../bell-mode.js';
 
 // =============================================================================
 // Theme Response Type
@@ -25,6 +26,7 @@ import { getProjectDirectory } from '../paths.js';
 export interface SettingsResponse extends Omit<CyclistSettings, 'workflow'> {
   workflow: CyclistSettings['workflow'] & {
     handoff_mode?: string;
+    bell_mode?: boolean;
   };
   pennyfarthing?: {
     theme: string;
@@ -72,8 +74,9 @@ export function createSettingsRouter(): Router {
    * GET / - Get current settings
    * AC4: Returns consistent error format
    * Theme and handoff_mode are read from .pennyfarthing/config.local.yaml (single source of truth)
+   * Bell mode is read from .pennyfarthing/bell-mode.json (MSSCI-12275)
    */
-  router.get('/', (_req, res) => {
+  router.get('/', async (_req, res) => {
     try {
       const settings = getCurrentSettings();
 
@@ -99,12 +102,17 @@ export function createSettingsRouter(): Router {
         }
       }
 
-      // Construct response with theme and handoff_mode added
+      // Load bell mode state from its dedicated file (MSSCI-12275)
+      await loadBellModeState();
+      const bellMode = isBellModeEnabled();
+
+      // Construct response with theme, handoff_mode, and bell_mode added
       const response: SettingsResponse = {
         ...settings,
         workflow: {
           ...settings.workflow,
           handoff_mode: handoffMode,
+          bell_mode: bellMode,
         },
         pennyfarthing: { theme },
       };
@@ -159,11 +167,28 @@ export function createSettingsRouter(): Router {
         }
       }
 
+      // Handle bell_mode toggle (MSSCI-12275) - stored in separate file
+      const bellModeValue = (partialSettings.workflow as Record<string, unknown>)?.bell_mode;
+      if (bellModeValue !== undefined) {
+        if (typeof bellModeValue !== 'boolean') {
+          return res.status(400).json(createErrorResponse(
+            'VALIDATION_ERROR',
+            'Bell mode must be a boolean'
+          ));
+        }
+        await setBellMode(bellModeValue);
+      }
+
       // Extract theme - it goes to config.local.yaml, not to CyclistSettings
       const theme = partialSettings.pennyfarthing?.theme;
 
-      // Strip pennyfarthing from settings to save (we handle theme separately)
-      const { pennyfarthing: _pf, ...settingsToSave } = partialSettings;
+      // Strip pennyfarthing and bell_mode from settings to save (handled separately)
+      const { pennyfarthing: _pf, ...rest } = partialSettings;
+      const settingsToSave = { ...rest };
+      if (settingsToSave.workflow) {
+        const { bell_mode: _bm, ...workflowRest } = settingsToSave.workflow as Record<string, unknown>;
+        settingsToSave.workflow = workflowRest as typeof settingsToSave.workflow;
+      }
 
       // Get project directory FIRST - needed for both settings save and theme update
       const projectDir = getProjectDirectory();
