@@ -46,7 +46,7 @@ echo ""
 
 # Test: detect_drift function exists in sprint-common.sh
 test_detect_drift_function_exists() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
 
     if [[ ! -f "$sprint_common" ]]; then
         fail "detect_drift function exists" "file exists" "sprint-common.sh not found"
@@ -64,7 +64,7 @@ test_detect_drift_function_exists() {
 
 # Test: detect_drift scans git merge log
 test_detect_drift_uses_git_log() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
 
     if [[ ! -f "$sprint_common" ]]; then
         fail "detect_drift uses git log" "file exists" "sprint-common.sh not found"
@@ -83,7 +83,7 @@ test_detect_drift_uses_git_log() {
 
 # Test: detect_drift calls get_story_field to check YAML status
 test_detect_drift_checks_yaml() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
 
     if [[ ! -f "$sprint_common" ]]; then
         fail "detect_drift checks YAML status" "file exists" "sprint-common.sh not found"
@@ -102,7 +102,7 @@ test_detect_drift_checks_yaml() {
 
 # Test: detect_drift uses extract_story_id to parse branch names
 test_detect_drift_uses_extract() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
 
     if [[ ! -f "$sprint_common" ]]; then
         fail "detect_drift uses extract_story_id" "file exists" "sprint-common.sh not found"
@@ -120,7 +120,7 @@ test_detect_drift_uses_extract() {
 
 # Test: detect_drift returns empty when no drift exists
 test_detect_drift_no_drift() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
 
     if [[ ! -f "$sprint_common" ]]; then
         fail "detect_drift returns empty when no drift" "file exists" "sprint-common.sh not found"
@@ -161,7 +161,7 @@ test_detect_drift_no_drift() {
 
 # Test: detect_drift identifies story that is merged but marked in_progress
 test_detect_drift_finds_in_progress() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
 
     if [[ ! -f "$sprint_common" ]]; then
         fail "detect_drift finds in_progress drift" "file exists" "sprint-common.sh not found"
@@ -180,7 +180,7 @@ test_detect_drift_finds_in_progress() {
 
 # Test: detect_drift ignores stories already marked done
 test_detect_drift_ignores_done() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
 
     if [[ ! -f "$sprint_common" ]]; then
         fail "detect_drift ignores done stories" "file exists" "sprint-common.sh not found"
@@ -199,7 +199,7 @@ test_detect_drift_ignores_done() {
 
 # Test: detect_drift ignores stories marked backlog (not drift - never started)
 test_detect_drift_ignores_backlog() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
 
     if [[ ! -f "$sprint_common" ]]; then
         fail "detect_drift ignores backlog stories" "file exists" "sprint-common.sh not found"
@@ -218,7 +218,7 @@ test_detect_drift_ignores_backlog() {
 
 # Test: detect_drift checks Jira status for drift
 test_detect_drift_checks_jira() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
 
     if [[ ! -f "$sprint_common" ]]; then
         fail "detect_drift checks Jira status" "file exists" "sprint-common.sh not found"
@@ -237,7 +237,7 @@ test_detect_drift_checks_jira() {
 
 # Test: detect_drift output includes Jira status
 test_detect_drift_output_includes_jira() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
 
     if [[ ! -f "$sprint_common" ]]; then
         fail "detect_drift output includes Jira status" "file exists" "sprint-common.sh not found"
@@ -276,7 +276,7 @@ echo ""
 
 # Test: detect_drift returns story_id:status format
 test_drift_output_format() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
 
     if [[ ! -f "$sprint_common" ]]; then
         fail "drift output includes story ID and status" "file exists" "sprint-common.sh not found"
@@ -313,7 +313,7 @@ test_workflow_status_check_integration() {
 
 # Test: Drift report is user-friendly (mentions "merged" and "status")
 test_drift_report_clarity() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
     local workflow_file="$PROJECT_ROOT/pennyfarthing-dist/agents/workflow-status-check.md"
 
     local found=false
@@ -352,7 +352,7 @@ echo ""
 
 # Test: reconcile_drift function or auto-reconcile logic exists
 test_reconcile_function_exists() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
     local workflow_file="$PROJECT_ROOT/pennyfarthing-dist/agents/workflow-status-check.md"
 
     local found=false
@@ -378,7 +378,7 @@ test_reconcile_function_exists() {
 
 # Test: Auto-reconcile uses update_story_status
 test_reconcile_uses_update() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
 
     if [[ ! -f "$sprint_common" ]]; then
         fail "reconcile uses update_story_status" "file exists" "sprint-common.sh not found"
@@ -401,7 +401,7 @@ test_reconcile_uses_update() {
 
 # Test: Auto-reconcile logs to reconciliation.log
 test_reconcile_logs_event() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
     local workflow_file="$PROJECT_ROOT/pennyfarthing-dist/agents/workflow-status-check.md"
 
     local found=false
@@ -446,7 +446,7 @@ test_offers_reconcile_option() {
 
 # Test: reconcile_drift transitions Jira to Done
 test_reconcile_transitions_jira() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
 
     if [[ ! -f "$sprint_common" ]]; then
         fail "reconcile transitions Jira" "file exists" "sprint-common.sh not found"
@@ -499,7 +499,7 @@ echo ""
 
 # Test: All required functions exist together
 test_drift_pipeline_complete() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
 
     if [[ ! -f "$sprint_common" ]]; then
         fail "drift pipeline complete" "file exists" "sprint-common.sh not found"
@@ -523,7 +523,7 @@ test_drift_pipeline_complete() {
 
 # Test: detect_drift is callable without errors
 test_detect_drift_callable() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
 
     if [[ ! -f "$sprint_common" ]]; then
         fail "detect_drift callable" "file exists" "sprint-common.sh not found"

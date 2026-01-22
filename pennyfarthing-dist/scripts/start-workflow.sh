@@ -1,1 +1,0 @@
-../skills/workflow/scripts/start-workflow.sh

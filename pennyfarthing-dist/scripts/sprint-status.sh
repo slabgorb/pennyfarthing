@@ -1,1 +1,0 @@
-../skills/sprint/scripts/sprint-status.sh

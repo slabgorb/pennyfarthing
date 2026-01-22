@@ -201,11 +201,8 @@ backlog → in-progress → review → done
 ### Story: UI 5-2 Environment Configuration Validation
 
 ```bash
-# 1. Start work session
+# 1. Create session with story details
 cd $CLAUDE_PROJECT_DIR
-./scripts/run.sh new-work.sh
-
-# 2. Edit session with story details
 cat > .session/{STORY_ID}-session.md << 'EOF'
 # Feature: Environment Configuration Validation
 

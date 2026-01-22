@@ -20,7 +20,7 @@ Show current sprint status with story counts and points.
 
 **Run:**
 ```bash
-.pennyfarthing/scripts/run.sh sprint-status.sh
+.pennyfarthing/scripts/run.sh sprint/sprint-status.sh
 ```
 
 **Output:** Sprint metadata, stories by status, points breakdown, completed count from archive.
@@ -33,7 +33,7 @@ Show available stories grouped by epic with Jira context.
 
 **Run:**
 ```bash
-.pennyfarthing/scripts/run.sh available-stories.sh
+.pennyfarthing/scripts/run.sh sprint/available-stories.sh
 ```
 
 **Output:** Backlog stories with epic descriptions, points, priority, and workflow tags.
@@ -61,7 +61,7 @@ Shows backlog, user selects story, then proceeds to setup.
 
 **Run first:**
 ```bash
-.pennyfarthing/scripts/run.sh check-story.sh <story-id>
+.pennyfarthing/scripts/run.sh sprint/check-story.sh <story-id>
 ```
 
 **If `available: true`:** Skip backlog, proceed directly to story setup with returned data.
@@ -69,7 +69,7 @@ Shows backlog, user selects story, then proceeds to setup.
 
 **Example:**
 ```bash
-.pennyfarthing/scripts/run.sh check-story.sh MSSCI-12038
+.pennyfarthing/scripts/run.sh sprint/check-story.sh MSSCI-12038
 # Returns: {"type": "story", "available": true, "title": "...", ...}
 ```
 
@@ -77,7 +77,7 @@ Shows backlog, user selects story, then proceeds to setup.
 
 **Run first:**
 ```bash
-.pennyfarthing/scripts/run.sh check-story.sh <epic-id>
+.pennyfarthing/scripts/run.sh sprint/check-story.sh <epic-id>
 ```
 
 **Returns:** Epic info with `first_story` (highest priority available story).
@@ -85,7 +85,7 @@ Shows backlog, user selects story, then proceeds to setup.
 
 **Example:**
 ```bash
-.pennyfarthing/scripts/run.sh check-story.sh MSSCI-11952
+.pennyfarthing/scripts/run.sh sprint/check-story.sh MSSCI-11952
 # Returns: {"type": "epic", "first_story": {"id": "MSSCI-11954", ...}, ...}
 ```
 
@@ -93,7 +93,7 @@ Shows backlog, user selects story, then proceeds to setup.
 
 **Run first:**
 ```bash
-.pennyfarthing/scripts/run.sh check-story.sh next
+.pennyfarthing/scripts/run.sh sprint/check-story.sh next
 ```
 
 **Returns:** Highest-priority available story across all epics.
@@ -101,7 +101,7 @@ Shows backlog, user selects story, then proceeds to setup.
 
 **Example:**
 ```bash
-.pennyfarthing/scripts/run.sh check-story.sh next
+.pennyfarthing/scripts/run.sh sprint/check-story.sh next
 # Returns: {"type": "next", "story": {"id": "MSSCI-11950", "priority": "P1", ...}}
 ```
 
@@ -113,7 +113,7 @@ Archive a completed story to the sprint archive file.
 
 **Run:**
 ```bash
-.pennyfarthing/scripts/run.sh archive-story.sh <story-id> [pr-number]
+.pennyfarthing/scripts/run.sh sprint/archive-story.sh <story-id> [pr-number]
 ```
 
 **Arguments:**
@@ -124,7 +124,7 @@ Archive a completed story to the sprint archive file.
 
 **Example:**
 ```bash
-.pennyfarthing/scripts/run.sh archive-story.sh MSSCI-11945 368
+.pennyfarthing/scripts/run.sh sprint/archive-story.sh MSSCI-11945 368
 ```
 
 **What it does:**
@@ -145,7 +145,7 @@ Initialize a new sprint from template.
 
 **Run:**
 ```bash
-.pennyfarthing/scripts/run.sh new-sprint.sh <yyww> <jira-id> <start> <end> "<goal>"
+.pennyfarthing/scripts/run.sh sprint/new-sprint.sh <yyww> <jira-id> <start> <end> "<goal>"
 ```
 
 **Arguments:**
@@ -159,7 +159,7 @@ Initialize a new sprint from template.
 
 **Example:**
 ```bash
-.pennyfarthing/scripts/run.sh new-sprint.sh 2605 277 2026-02-03 2026-02-16 "Polish and stabilization"
+.pennyfarthing/scripts/run.sh sprint/new-sprint.sh 2605 277 2026-02-03 2026-02-16 "Polish and stabilization"
 ```
 
 **Creates:**
@@ -176,7 +176,7 @@ Move an epic from `planning.yaml` to `current-sprint.yaml`.
 
 **Run:**
 ```bash
-.pennyfarthing/scripts/run.sh promote-epic.sh <epic-id>
+.pennyfarthing/scripts/run.sh sprint/promote-epic.sh <epic-id>
 ```
 
 **Arguments:**
@@ -186,7 +186,7 @@ Move an epic from `planning.yaml` to `current-sprint.yaml`.
 
 **Example:**
 ```bash
-.pennyfarthing/scripts/run.sh promote-epic.sh epic-41
+.pennyfarthing/scripts/run.sh sprint/promote-epic.sh epic-41
 ```
 
 **What it does:**
@@ -208,7 +208,7 @@ Create a Jira epic and its child stories from sprint YAML.
 
 **Run:**
 ```bash
-.pennyfarthing/scripts/run.sh create-jira-epic.sh <epic-id> [--dry-run]
+.pennyfarthing/scripts/run.sh jira/create-jira-epic.sh <epic-id> [--dry-run]
 ```
 
 **Arguments:**
@@ -219,8 +219,8 @@ Create a Jira epic and its child stories from sprint YAML.
 
 **Example:**
 ```bash
-.pennyfarthing/scripts/run.sh create-jira-epic.sh MSSCI-11952
-.pennyfarthing/scripts/run.sh create-jira-epic.sh epic-41 --dry-run
+.pennyfarthing/scripts/run.sh jira/create-jira-epic.sh MSSCI-11952
+.pennyfarthing/scripts/run.sh jira/create-jira-epic.sh epic-41 --dry-run
 ```
 
 **What it does:**
@@ -242,7 +242,7 @@ Generate a reconciliation report comparing sprint YAML against Jira.
 
 **Run:**
 ```bash
-.pennyfarthing/scripts/run.sh jira-reconcile.sh [--fix]
+.pennyfarthing/scripts/run.sh jira/jira-reconcile.sh [--fix]
 ```
 
 **Arguments:**
@@ -252,8 +252,8 @@ Generate a reconciliation report comparing sprint YAML against Jira.
 
 **Example:**
 ```bash
-.pennyfarthing/scripts/run.sh jira-reconcile.sh          # Report only
-.pennyfarthing/scripts/run.sh jira-reconcile.sh --fix    # Report and fix
+.pennyfarthing/scripts/run.sh jira/jira-reconcile.sh          # Report only
+.pennyfarthing/scripts/run.sh jira/jira-reconcile.sh --fix    # Report and fix
 ```
 
 **What it checks:**
@@ -276,7 +276,7 @@ Sync an epic and its stories from sprint YAML to Jira.
 
 **Run:**
 ```bash
-.pennyfarthing/scripts/run.sh sync-epic-jira.sh <epic-id> [options]
+.pennyfarthing/scripts/run.sh jira/sync-epic-jira.sh <epic-id> [options]
 ```
 
 **Arguments:**
@@ -290,9 +290,9 @@ Sync an epic and its stories from sprint YAML to Jira.
 
 **Examples:**
 ```bash
-.pennyfarthing/scripts/run.sh sync-epic-jira.sh MSSCI-11952              # Show status
-.pennyfarthing/scripts/run.sh sync-epic-jira.sh MSSCI-11952 --dry-run    # Preview
-.pennyfarthing/scripts/run.sh sync-epic-jira.sh MSSCI-11952 --all        # Full sync
+.pennyfarthing/scripts/run.sh jira/sync-epic-jira.sh MSSCI-11952              # Show status
+.pennyfarthing/scripts/run.sh jira/sync-epic-jira.sh MSSCI-11952 --dry-run    # Preview
+.pennyfarthing/scripts/run.sh jira/sync-epic-jira.sh MSSCI-11952 --all        # Full sync
 ```
 
 **What it does:**

@@ -107,7 +107,7 @@ echo ""
 
 # Test: extract_story_id function exists in sprint-common.sh or post-merge.sh
 test_extract_function_exists() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
     local post_merge="$PROJECT_ROOT/pennyfarthing-dist/scripts/hooks/post-merge.sh"
 
     local found=false
@@ -131,7 +131,7 @@ test_extract_function_exists() {
 
 # Test: Extracts "8-1" from "feat/8-1-merge-detection"
 test_extract_standard_format() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
 
     if [[ ! -f "$sprint_common" ]]; then
         fail "extract from feat/8-1-merge-detection" "file exists" "sprint-common.sh not found"
@@ -167,7 +167,7 @@ test_extract_standard_format() {
 
 # Test: Extracts "15-7" from "feat/15-7-move-assets"
 test_extract_double_digit() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
 
     if [[ ! -f "$sprint_common" ]]; then
         fail "extract from feat/15-7-move-assets" "file exists" "sprint-common.sh not found"
@@ -202,7 +202,7 @@ test_extract_double_digit() {
 
 # Test: Returns empty for non-matching branch "fix/something"
 test_extract_no_match() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
 
     if [[ ! -f "$sprint_common" ]]; then
         fail "no match for fix/something" "file exists" "sprint-common.sh not found"
@@ -237,7 +237,7 @@ test_extract_no_match() {
 
 # Test: Returns empty for invalid format "feat/invalid"
 test_extract_invalid_format() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
 
     if [[ ! -f "$sprint_common" ]]; then
         fail "no match for feat/invalid" "file exists" "sprint-common.sh not found"
@@ -287,7 +287,7 @@ echo ""
 
 # Test: update_story_status function exists
 test_update_function_exists() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
 
     if [[ ! -f "$sprint_common" ]]; then
         fail "update_story_status function exists" "file exists" "sprint-common.sh not found"
@@ -305,7 +305,7 @@ test_update_function_exists() {
 
 # Test: update_story_status uses yq to modify YAML
 test_update_uses_yq() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
 
     if [[ ! -f "$sprint_common" ]]; then
         fail "update_story_status uses yq" "file exists" "sprint-common.sh not found"
@@ -336,7 +336,7 @@ echo ""
 
 # Test: update_story_status adds completed date
 test_adds_completed_date() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
 
     if [[ ! -f "$sprint_common" ]]; then
         fail "adds completed date" "file exists" "sprint-common.sh not found"
@@ -355,7 +355,7 @@ test_adds_completed_date() {
 
 # Test: Date format is YYYY-MM-DD
 test_date_format() {
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
 
     if [[ ! -f "$sprint_common" ]]; then
         fail "date format YYYY-MM-DD" "file exists" "sprint-common.sh not found"
@@ -387,7 +387,7 @@ echo ""
 # Test: log_reconciliation function exists
 test_log_function_exists() {
     local post_merge="$PROJECT_ROOT/pennyfarthing-dist/scripts/hooks/post-merge.sh"
-    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/sprint-common.sh"
+    local sprint_common="$PROJECT_ROOT/pennyfarthing-dist/scripts/sprint/sprint-common.sh"
 
     local found=false
 

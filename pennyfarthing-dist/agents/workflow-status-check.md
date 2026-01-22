@@ -17,7 +17,7 @@ Uses `/sprint` skill scripts for deterministic output.
 Run the sprint status script and parse output:
 
 ```bash
-.pennyfarthing/scripts/run.sh sprint-status.sh
+.pennyfarthing/scripts/run.sh sprint/sprint-status.sh
 ```
 
 Then check for active sessions:

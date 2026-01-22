@@ -1349,6 +1349,72 @@ epics:
   # ===========================================================================
   # DEFECTS: Workflow and Infrastructure Bugs
   # ===========================================================================
+  # ===========================================================================
+  # TECH DEBT: Infrastructure Maintenance
+  # ===========================================================================
+  - id: tech-debt
+    type: epic
+    title: "Epic: Technical Debt and Infrastructure"
+    description: |
+      Maintenance work to improve codebase quality, reduce complexity,
+      and establish sustainable patterns.
+    priority: P2
+    status: backlog
+    repos: pennyfarthing
+    stories:
+      - id: MSSCI-12206
+        jira: MSSCI-12206
+        title: "Rationalize scripts directory structure"
+        description: |
+          The scripts directory has grown organically with multiple patterns:
+
+          CURRENT STATE:
+          - .pennyfarthing/scripts/ has 47 items (scripts, symlinks, subdirs)
+          - Skill-specific scripts in .pennyfarthing/skills/{skill}/scripts/
+          - 14 symlinks in main dir pointing to skill scripts
+          - utils/ subdirectory with 30 files (jira libs, test helpers, Python judges)
+          - hooks/ subdirectory with 9 git/Claude hooks
+          - Source of truth: pennyfarthing-dist/scripts/ (dogfooding)
+
+          PROBLEMS:
+          1. No clear ownership - is finish-story.sh a sprint skill or core script?
+          2. Symlinks create maintenance burden and confusion
+          3. utils/ is a dumping ground (jira, tests, metrics, Python all mixed)
+          4. Dogfooding means writing to pennyfarthing-dist/ but reading from .pennyfarthing/
+          5. Installation inconsistency (some scripts copied, others symlinked)
+
+          PROPOSED STRUCTURE:
+          ```
+          pennyfarthing-dist/scripts/
+          ├── core/           # Always needed (run.sh, agent-session.sh, check-context.sh)
+          ├── workflow/       # Workflow mechanics (finish-story, fix-session-phase)
+          ├── sprint/         # Sprint YAML operations (promote, archive, status)
+          ├── jira/           # Jira integration (claim, sync, reconcile)
+          ├── git/            # Git operations (create-branches, worktree)
+          ├── hooks/          # Git and Claude hooks
+          ├── test/           # Test infrastructure (setup, cache, runner)
+          └── lib/            # Shared bash libraries (common.sh, logging.sh)
+          ```
+
+          APPROACH:
+          - Move scripts to categorical subdirectories
+          - Eliminate symlinks - skills reference scripts by full path
+          - Update run.sh to search subdirectories
+          - Consolidate utils/ into categorical homes
+          - Document script ownership and purpose
+        points: 5
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - AC1: Scripts organized into categorical subdirectories
+          - AC2: No symlinks in scripts directory (skills use full paths)
+          - AC3: run.sh finds scripts in subdirectories
+          - AC4: utils/ eliminated - contents in categorical homes
+          - AC5: Each subdirectory has README with ownership
+          - AC6: All existing scripts still invocable
+          - AC7: Dogfooding pattern documented (write to pennyfarthing-dist/)
   - id: defects
     type: epic
     title: "Epic: Workflow and Infrastructure Defects"
