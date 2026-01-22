@@ -60,7 +60,7 @@ Show available stories grouped by epic.
 
 **Run:**
 \`\`\`bash
-.pennyfarthing/scripts/run.sh available-stories.sh
+.pennyfarthing/scripts/run.sh sprint/available-stories.sh
 \`\`\`
 ```
 

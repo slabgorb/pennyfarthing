@@ -238,6 +238,141 @@ detect_drift() {
     printf '%s\n' "${drifted[@]}" 2>/dev/null || true
 }
 
+# =============================================================================
+# Sprint Summary Functions
+# =============================================================================
+
+# get_sprint_file
+# Returns path to current sprint YAML file
+get_sprint_file() {
+    echo "$PROJECT_ROOT/sprint/current-sprint.yaml"
+}
+
+# check_yq
+# Verify yq is available, return error message if not
+# Returns: 0 if yq available, 1 if not
+check_yq() {
+    if ! command -v yq &>/dev/null; then
+        echo "Error: yq is required but not installed. Install with: brew install yq" >&2
+        return 1
+    fi
+    return 0
+}
+
+# get_sprint_metadata FIELD
+# Extract a field from sprint metadata
+# Arguments:
+#   FIELD - Field name (number, name, goal, start_date, end_date, status)
+# Returns: field value or empty string
+get_sprint_metadata() {
+    local field="$1"
+    local sprint_file
+    sprint_file=$(get_sprint_file)
+
+    if [[ ! -f "$sprint_file" ]]; then
+        return 1
+    fi
+
+    check_yq || return 1
+    yq eval ".sprint.$field // \"\"" "$sprint_file" 2>/dev/null
+}
+
+# get_sprint_summary
+# Get one-line sprint summary: "Sprint N: Goal"
+# Returns: formatted summary string
+get_sprint_summary() {
+    local sprint_num sprint_goal
+    sprint_num=$(get_sprint_metadata "number")
+    sprint_goal=$(get_sprint_metadata "goal")
+
+    if [[ -n "$sprint_num" && "$sprint_num" != "null" ]]; then
+        echo "Sprint ${sprint_num}: ${sprint_goal}"
+    fi
+}
+
+# sum_points VALUES
+# Sum a list of point values (one per line)
+# Arguments:
+#   VALUES - newline-separated point values from yq
+# Returns: integer sum
+sum_points() {
+    local result
+    result=$(echo "$1" | paste -sd+ - | bc 2>/dev/null)
+    echo "${result:-0}"
+}
+
+# get_sprint_progress
+# Get sprint progress as "completed/total points"
+# Returns: formatted progress string
+get_sprint_progress() {
+    local sprint_file
+    sprint_file=$(get_sprint_file)
+
+    if [[ ! -f "$sprint_file" ]]; then
+        return 1
+    fi
+
+    check_yq || return 1
+
+    # Get summary fields if available
+    local completed total
+    completed=$(yq '.summary.completed_points // 0' "$sprint_file" 2>/dev/null)
+    total=$(yq '.summary.total_points // 0' "$sprint_file" 2>/dev/null)
+
+    # If summary not available, calculate from stories
+    if [[ "$total" == "0" || "$total" == "null" ]]; then
+        total=$(sum_points "$(yq '.epics[].stories[].points' "$sprint_file" 2>/dev/null)")
+    fi
+
+    echo "Progress: ${completed:-0}/${total:-0} points"
+}
+
+# get_story_counts
+# Get story counts by status
+# Returns: "backlog:N in_progress:N done:N" format
+get_story_counts() {
+    local sprint_file
+    sprint_file=$(get_sprint_file)
+
+    if [[ ! -f "$sprint_file" ]]; then
+        return 1
+    fi
+
+    check_yq || return 1
+
+    local backlog in_progress done
+    backlog=$(yq eval '[.epics[].stories[] | select(.status == "backlog")] | length' "$sprint_file" 2>/dev/null)
+    in_progress=$(yq eval '[.epics[].stories[] | select(.status == "in_progress")] | length' "$sprint_file" 2>/dev/null)
+    done=$(yq eval '[.epics[].stories[] | select(.status == "done")] | length' "$sprint_file" 2>/dev/null)
+
+    echo "backlog:${backlog:-0} in_progress:${in_progress:-0} done:${done:-0}"
+}
+
+# get_point_counts
+# Get point totals by status
+# Returns: "backlog:N in_progress:N done:N total:N" format
+get_point_counts() {
+    local sprint_file
+    sprint_file=$(get_sprint_file)
+
+    if [[ ! -f "$sprint_file" ]]; then
+        return 1
+    fi
+
+    check_yq || return 1
+
+    local backlog in_progress total
+    total=$(sum_points "$(yq '.epics[].stories[].points' "$sprint_file" 2>/dev/null)")
+    backlog=$(sum_points "$(yq '.epics[].stories[] | select(.status == "backlog") | .points' "$sprint_file" 2>/dev/null)")
+    in_progress=$(sum_points "$(yq '.epics[].stories[] | select(.status == "in_progress") | .points' "$sprint_file" 2>/dev/null)")
+
+    echo "backlog:${backlog:-0} in_progress:${in_progress:-0} total:${total:-0}"
+}
+
+# =============================================================================
+# Drift Detection Functions
+# =============================================================================
+
 # reconcile_drift STORY_ID
 # Auto-reconcile a drifted story by updating YAML status to done and Jira to Done
 # Logs the reconciliation event

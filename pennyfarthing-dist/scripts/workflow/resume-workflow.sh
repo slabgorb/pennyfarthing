@@ -1,6 +1,6 @@
 #!/bin/bash
 # Resume a stepped workflow from last completed step
-# Usage: .pennyfarthing/scripts/run.sh resume-workflow.sh [name]
+# Usage: .pennyfarthing/scripts/run.sh workflow/resume-workflow.sh [name]
 #
 # If no name provided, detects from active session
 

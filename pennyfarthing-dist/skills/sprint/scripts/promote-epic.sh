@@ -1,8 +1,8 @@
 #!/bin/bash
 # Promote an epic from planning.yaml to current-sprint.yaml
-# Usage: .pennyfarthing/scripts/run.sh promote-epic.sh <epic-id>
+# Usage: .pennyfarthing/scripts/run.sh sprint/promote-epic.sh <epic-id>
 #
-# Example: .pennyfarthing/scripts/run.sh promote-epic.sh epic-41
+# Example: .pennyfarthing/scripts/run.sh sprint/promote-epic.sh epic-41
 
 set -euo pipefail
 

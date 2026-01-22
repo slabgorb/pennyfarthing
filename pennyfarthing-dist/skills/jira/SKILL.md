@@ -252,16 +252,16 @@ Syncs all stories in an epic to Jira. Shows status, optionally transitions issue
 
 ```bash
 # Show sync status for epic 24
-./.pennyfarthing/scripts/run.sh jira-sync.sh 24
+./.pennyfarthing/scripts/run.sh jira/jira-sync.sh 24
 
 # Dry run - show what would happen without making changes
-./.pennyfarthing/scripts/run.sh jira-sync.sh 24 --dry-run
+./.pennyfarthing/scripts/run.sh jira/jira-sync.sh 24 --dry-run
 
 # Sync status (transition issues to match Pennyfarthing status)
-./.pennyfarthing/scripts/run.sh jira-sync.sh 24 --transition
+./.pennyfarthing/scripts/run.sh jira/jira-sync.sh 24 --transition
 
 # Sync both status and story points
-./.pennyfarthing/scripts/run.sh jira-sync.sh 24 --transition --points
+./.pennyfarthing/scripts/run.sh jira/jira-sync.sh 24 --transition --points
 ```
 
 ### Sync Single Story

@@ -184,7 +184,7 @@ if [[ -L "scripts" ]]; then
     ok "scripts -> $TARGET"
 elif [[ -d "scripts" ]]; then
     # Check if contents are symlinks to pennyfarthing-dist
-    if [[ -L "scripts/agent-session.sh" ]]; then
+    if [[ -L "scripts/core/agent-session.sh" ]]; then
         ok "scripts/ directory with symlinks (dogfooding setup)"
     else
         warn "scripts/ is a directory but contents may not be symlinked"

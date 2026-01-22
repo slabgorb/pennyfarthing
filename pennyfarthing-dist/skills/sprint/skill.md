@@ -310,7 +310,7 @@ When `/sprint work` (or `/new-work`) starts a story:
 <agent-activation>
 Load SM persona first:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" agent-session.sh start "sm"
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" core/agent-session.sh start "sm"
 ```
 </agent-activation>
 

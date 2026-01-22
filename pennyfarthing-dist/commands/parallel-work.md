@@ -67,5 +67,5 @@ Invoke SM to complete story setup in the worktree context.
 </agent-activation>
 
 <agent-exit>
-On exit: Capture learnings to sidecar, run `agent-session.sh stop`
+On exit: Capture learnings to sidecar, run `run.sh core/agent-session.sh stop`
 </agent-exit>

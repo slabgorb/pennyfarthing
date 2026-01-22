@@ -5,7 +5,7 @@ description: DevOps Engineer - Infrastructure and deployment automation
 <agent-activation>
 **FIRST:** Use Bash tool to run:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" agent-session.sh start "devops"
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" core/agent-session.sh start "devops"
 ```
 This finds the project root and loads your persona. Adopt the character shown in the output.
 
@@ -13,7 +13,7 @@ Then load and follow `.pennyfarthing/agents/devops.md`
 </agent-activation>
 
 <agent-exit>
-On exit: Capture learnings to sidecar, run `agent-session.sh stop`
+On exit: Capture learnings to sidecar, run `run.sh core/agent-session.sh stop`
 </agent-exit>
 
 <purpose>

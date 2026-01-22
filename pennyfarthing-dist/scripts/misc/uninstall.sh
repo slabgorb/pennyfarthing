@@ -96,12 +96,11 @@ MANAGED_PATHS=(
     ".claude/manifest.json"
     ".claude/settings.local.json"
     ".claude/statusline.sh"
+    "scripts/core"
     "scripts/hooks"
-    "scripts/utils"
-    "scripts/agent-session.sh"
-    "scripts/check-context.sh"
-    "scripts/repo-utils.sh"
-    "scripts/worktree-manager.sh"
+    "scripts/lib"
+    "scripts/misc"
+    "scripts/run.sh"
 )
 
 # Project paths that can be removed with --all (but preserve archives)

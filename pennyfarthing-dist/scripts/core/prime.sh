@@ -11,9 +11,10 @@
 
 set -euo pipefail
 
-# Find project root
+# Find project root and load shared functions
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/../lib/find-root.sh"
+source "$SCRIPT_DIR/../sprint/sprint-common.sh"
 
 # Defaults
 QUIET=false
@@ -55,26 +56,23 @@ if [[ "$MINIMAL" == "true" ]]; then
     exit 0
 fi
 
-# 1. Sprint summary (extract key info only, not full notes)
-if [[ -f "$PROJECT_ROOT/sprint/current-sprint.yaml" ]]; then
+# 1. Sprint summary (uses shared functions from sprint-common.sh)
+if [[ -f "$(get_sprint_file)" ]]; then
     print_header "Sprint Context"
 
-    # Extract sprint number and goal
-    sprint_num=$(yq '.sprint.number // ""' "$PROJECT_ROOT/sprint/current-sprint.yaml" 2>/dev/null)
-    sprint_goal=$(yq '.sprint.goal // ""' "$PROJECT_ROOT/sprint/current-sprint.yaml" 2>/dev/null)
-    if [[ -n "$sprint_num" && "$sprint_num" != "null" ]]; then
-        echo "Sprint ${sprint_num}: ${sprint_goal}"
+    # Use shared functions for consistent output
+    summary=$(get_sprint_summary)
+    if [[ -n "$summary" ]]; then
+        echo "$summary"
     fi
 
-    # Extract progress
-    completed=$(yq '.summary.completed_points // 0' "$PROJECT_ROOT/sprint/current-sprint.yaml" 2>/dev/null)
-    total=$(yq '.summary.total_points // 0' "$PROJECT_ROOT/sprint/current-sprint.yaml" 2>/dev/null)
-    if [[ -n "$completed" && -n "$total" ]]; then
-        echo "Progress: ${completed}/${total} points"
+    progress=$(get_sprint_progress)
+    if [[ -n "$progress" ]]; then
+        echo "$progress"
     fi
 fi
 
-# 2. Active session (if exists) - first 50 lines only
+# 2. Active session (if exists) - extract header metadata + current assessment
 SESSION_FILE=""
 if [[ -d "$PROJECT_ROOT/.session" ]]; then
     # Find a session file (typically only one active at a time)
@@ -83,13 +81,26 @@ fi
 
 if [[ -n "$SESSION_FILE" && -f "$SESSION_FILE" ]]; then
     print_header "Active Session: $(basename "$SESSION_FILE")"
-    head -50 "$SESSION_FILE"
 
-    # Indicate if truncated
-    total_lines=$(wc -l < "$SESSION_FILE" | tr -d ' ')
-    if [[ "$total_lines" -gt 50 ]]; then
+    # Extract header (everything before first ## heading)
+    # This includes: title, metadata fields (Phase, Workflow, Repos, Branch, etc.)
+    awk '/^## / {exit} {print}' "$SESSION_FILE"
+
+    # Find the most recent assessment section (workflow-agnostic)
+    # Assessment sections are named: "## {Agent} Assessment" (TEA, Dev, Reviewer, SM, etc.)
+    # Show the LAST one in the file as it represents current state
+    last_assessment=$(grep -n '^## .*Assessment' "$SESSION_FILE" | tail -1 | cut -d: -f1)
+
+    if [[ -n "$last_assessment" ]]; then
         echo ""
-        echo "... (truncated, ${total_lines} total lines)"
+        echo "---"
+        # Extract from that line to next ## or EOF
+        awk -v start="$last_assessment" '
+            NR >= start {
+                if (NR > start && /^## /) exit
+                print
+            }
+        ' "$SESSION_FILE"
     fi
 fi
 
