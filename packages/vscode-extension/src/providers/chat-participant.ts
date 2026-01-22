@@ -17,6 +17,7 @@ import {
   formatToolUse,
   ProgressTracker,
 } from '../adapters/response-formatter';
+import { handleChatError } from '../adapters/error-handler';
 
 // Agent subcommand definitions
 const AGENT_COMMANDS = [
@@ -143,7 +144,7 @@ export class PennyfarthingChatParticipant {
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       this.log(`Error: ${errorMsg}`);
-      response.markdown(`\n\n❌ Error: ${errorMsg}`);
+      response.markdown(handleChatError(err));
     }
   }
 
