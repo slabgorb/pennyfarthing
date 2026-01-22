@@ -316,13 +316,17 @@ describe('Story MSSCI-12274: Image Queue Support', () => {
       // Process should call submit with text AND images
       editor.processNextInQueue();
 
-      // Submit should be called with images
-      expect(mockSubmit).toHaveBeenCalled();
-      // The submit callback should receive images as second parameter
-      // or the insertContent should have access to them
+      // Submit should be called with text and images
+      expect(mockSubmit).toHaveBeenCalledTimes(1);
       const submitCall = mockSubmit.mock.calls[0];
-      // We expect submit to be called, and the message with images to be processed
-      // The exact signature depends on implementation, but images should be passed
+
+      // Verify text was passed as first argument
+      expect(submitCall[0]).toBe('Message with images for submit');
+
+      // Verify images array was passed as second argument
+      expect(submitCall[1]).toHaveLength(2);
+      expect(submitCall[1][0].dataUrl).toBe(TEST_IMAGE.dataUrl);
+      expect(submitCall[1][1].dataUrl).toBe(TEST_IMAGE_2.dataUrl);
 
       editor.clearMessageQueue();
     });
@@ -347,7 +351,14 @@ describe('Story MSSCI-12274: Image Queue Support', () => {
 
       editor.processNextInQueue();
 
-      expect(mockSubmit).toHaveBeenCalled();
+      expect(mockSubmit).toHaveBeenCalledTimes(1);
+      const submitCall = mockSubmit.mock.calls[0];
+
+      // Verify text was passed
+      expect(submitCall[0]).toBe('Text only message');
+
+      // Verify empty images array was passed
+      expect(submitCall[1]).toEqual([]);
 
       editor.clearMessageQueue();
     });
