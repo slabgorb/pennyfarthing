@@ -37,7 +37,7 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
 
   // Handle dogfooding mode - run the dogfood script instead
   if (options.dogfood) {
-    const dogfoodScript = join(projectRoot, 'pennyfarthing-dist/scripts/doctor-dogfood.sh');
+    const dogfoodScript = join(projectRoot, 'pennyfarthing-dist/scripts/misc/doctor-dogfood.sh');
 
     if (!existsSync(dogfoodScript)) {
       logger.error('Dogfood mode requires the pennyfarthing repo (pennyfarthing-dist/ not found)');
