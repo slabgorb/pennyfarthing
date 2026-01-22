@@ -1321,11 +1321,13 @@ epics:
           Updates within 1 second of mode change.
         points: 2
         priority: P0
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: tdd
         jira: MSSCI-12192
+        branch: feat/MSSCI-12192-gearshift-status-bar
         acceptance_criteria: []
+        completed: "2026-01-22"
       - id: MSSCI-12193
         title: "Model Indicator Status Bar Item"
         description: |
