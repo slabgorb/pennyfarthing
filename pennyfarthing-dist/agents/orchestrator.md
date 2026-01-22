@@ -344,3 +344,12 @@ Task tool:
 
       **Handoff:** To Tech Writer for quality review
 ```
+
+## Handoff Protocol
+
+**See:** `pennyfarthing-dist/guides/agent-behavior.md` → AGENT_COMMAND Protocol
+
+1. Orchestrator writes assessment FIRST
+2. Orchestrator spawns `handoff` subagent
+3. Subagent returns an `AGENT_COMMAND` block
+4. **Orchestrator parses AGENT_COMMAND and emits the marker in direct text output**

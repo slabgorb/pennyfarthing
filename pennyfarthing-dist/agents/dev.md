@@ -178,12 +178,12 @@ Use `/code-review` skill checklist:
 
 ## Handoff Protocol
 
-**IMPORTANT:** The `handoff` subagent is the single source of truth for emitting handoff markers.
+**See:** `pennyfarthing-dist/guides/agent-behavior.md` → AGENT_COMMAND Protocol
 
 1. Dev writes assessment to session file FIRST
 2. Dev spawns `handoff` subagent
-3. Subagent handles all bookkeeping AND emits the appropriate marker (`HANDOFF` or `CONTEXT_CLEAR`)
-4. Dev does NOT emit markers directly - trust the subagent
+3. Subagent returns an `AGENT_COMMAND` block
+4. **Dev parses AGENT_COMMAND and emits the marker in direct text output**
 
 ## Handoff Subagent
 

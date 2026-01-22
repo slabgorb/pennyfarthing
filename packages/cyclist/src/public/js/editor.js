@@ -65,6 +65,7 @@ export { getCompletionState, showCompletionPopup, closeCompletionPopup, navigate
 
 // Re-export message queue for external consumers
 export {
+  initMessageQueue,
   isProcessing,
   setProcessing,
   getMessageQueue,
