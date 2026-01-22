@@ -13,8 +13,8 @@
  *    - Preflight: PR check, lint fix, Jira status → JSON report
  *    - Execute: archive, Jira transition, cleanup → completion flags
  *
- * 3. generic-handoff with setup phase support
- *    - Add setup→red transition to generic-handoff
+ * 3. handoff with setup phase support
+ *    - Add setup→red transition to handoff
  *    - Gate type: manual (verifies context exists)
  *
  * Run with: npm test
@@ -45,12 +45,12 @@ import {
   executeFinish
 } from './generic-sm-finish.js';
 
-// Import extended generic-handoff for setup phase
+// Import extended handoff for setup phase
 import {
   findCurrentPhase,
   getNextPhase,
   checkGate
-} from './generic-handoff.js';
+} from './handoff.js';
 
 import type { WorkflowDefinition } from './workflow-schema.js';
 
@@ -585,7 +585,7 @@ describe('Generic Handoff - Setup Phase Support (31-11)', () => {
   describe('setup phase in TDD workflow', () => {
 
     it('should find setup phase with no gate', () => {
-      // AC: sm-handoff folded into generic-handoff with setup phase support
+      // AC: sm-handoff folded into handoff with setup phase support
       const phase = findCurrentPhase(TDD_WORKFLOW, 'setup');
 
       assert.ok(phase, 'Should find setup phase');
@@ -595,7 +595,7 @@ describe('Generic Handoff - Setup Phase Support (31-11)', () => {
     });
 
     it('should transition from setup to red (TEA)', () => {
-      // AC: sm-handoff folded into generic-handoff with setup phase support
+      // AC: sm-handoff folded into handoff with setup phase support
       const next = getNextPhase(TDD_WORKFLOW, 'setup');
 
       assert.ok(next, 'Should find next phase');

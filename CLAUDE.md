@@ -89,7 +89,7 @@ Subagents use Claude Code's Task tool with `subagent_type`. Key subagents:
 - `generic-sm-finish` - Preflight checks (PHASE=preflight) or execute finish (PHASE=execute)
 - `sm-handoff` - SM→TEA/Dev handoff with Jira/branch verification
 - `testing-runner` - Config-driven test execution
-- `generic-handoff` - Workflow-driven phase transitions (TEA/Dev/Reviewer)
+- `handoff` - Workflow-driven phase transitions (TEA/Dev/Reviewer)
 - `reviewer-preflight` - Gather review data before critical analysis
 
 ### Handoff Protocol
