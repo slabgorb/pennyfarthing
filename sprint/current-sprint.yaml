@@ -9,9 +9,9 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 143
-  completed_points: 121
+  completed_points: 124
   cancelled_points: 6
-  remaining_points: 16
+  remaining_points: 13
   notes: |
     Sprint 12 includes work from multiple epics that were tracked in Jira but
     not in local sprint YAML. This file has been reconciled with Jira Sprint 276.
@@ -603,8 +603,8 @@ epics:
     type: misc
     title: "Standalone Stories"
     points: 6
-    completed_points: 3
-    status: in_progress
+    completed_points: 6
+    status: done
     stories:
       - id: MSSCI-11799
         jira: MSSCI-11799
@@ -620,5 +620,6 @@ epics:
           (for autohandoff support). Refine reflector code for better integration.
         points: 3
         priority: P1
-        status: backlog
+        status: done
+        completed: 2026-01-22
         repos: pennyfarthing
