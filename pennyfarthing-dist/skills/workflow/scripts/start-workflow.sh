@@ -1,6 +1,6 @@
 #!/bin/bash
 # Start a stepped workflow
-# Usage: .pennyfarthing/scripts/run.sh workflow/start-workflow.sh <name> [--mode create|validate|edit]
+# Usage: .pennyfarthing/scripts/core/run.sh workflow/start-workflow.sh <name> [--mode create|validate|edit]
 #
 # Creates a new workflow session and loads step 1.
 # For tri-modal workflows, --mode selects the step path (default: create)

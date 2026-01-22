@@ -23,8 +23,8 @@ Scripts for Jira integration, synchronization, and story management.
 ## Usage
 
 ```bash
-.pennyfarthing/scripts/run.sh jira/jira-claim-story.sh MSSCI-12345
-.pennyfarthing/scripts/run.sh jira/jira-reconcile.sh
+.pennyfarthing/scripts/core/run.sh jira/jira-claim-story.sh MSSCI-12345
+.pennyfarthing/scripts/core/run.sh jira/jira-reconcile.sh
 ```
 
 ## Ownership

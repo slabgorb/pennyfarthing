@@ -1,8 +1,8 @@
 #!/bin/bash
 # Archive a completed story from current-sprint.yaml to the sprint archive
-# Usage: .pennyfarthing/scripts/run.sh sprint/archive-story.sh <story-id> [pr-number]
+# Usage: .pennyfarthing/scripts/core/run.sh sprint/archive-story.sh <story-id> [pr-number]
 #
-# Example: .pennyfarthing/scripts/run.sh sprint/archive-story.sh MSSCI-11945 368
+# Example: .pennyfarthing/scripts/core/run.sh sprint/archive-story.sh MSSCI-11945 368
 
 set -euo pipefail
 

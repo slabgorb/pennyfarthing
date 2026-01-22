@@ -19,7 +19,7 @@ model: haiku
 
 1. Use `/sprint backlog` for initial backlog scan:
    ```bash
-   .pennyfarthing/scripts/run.sh sprint/available-stories.sh
+   .pennyfarthing/scripts/core/run.sh sprint/available-stories.sh
    ```
 2. Use `/jira` skill to enrich with Jira status/assignee:
    - `/jira search "project=MSSCI AND sprint in openSprints()"` - Get all sprint stories
@@ -70,7 +70,7 @@ Other formats break Cyclist detection.
 EPIC_NUM=$(echo "{STORY_ID}" | cut -d'-' -f1)
 
 # Get epic's Jira key (use script, not direct yq)
-EPIC_JIRA=$(.pennyfarthing/scripts/run.sh sprint/get-epic-field.sh "$EPIC_NUM" jira)
+EPIC_JIRA=$(.pennyfarthing/scripts/core/run.sh sprint/get-epic-field.sh "$EPIC_NUM" jira)
 ```
 
 If missing or "null": auto-create via `jira-epic-creation.ts`
@@ -115,10 +115,10 @@ Use `/jira claim` command:
 
 ```bash
 # Check availability first
-.pennyfarthing/scripts/run.sh jira/jira-claim-story.sh {JIRA_KEY}
+.pennyfarthing/scripts/core/run.sh jira/jira-claim-story.sh {JIRA_KEY}
 
 # Then claim (assign to self + move to In Progress)
-.pennyfarthing/scripts/run.sh jira/jira-claim-story.sh {JIRA_KEY} --claim
+.pennyfarthing/scripts/core/run.sh jira/jira-claim-story.sh {JIRA_KEY} --claim
 ```
 
 **Exit codes:**

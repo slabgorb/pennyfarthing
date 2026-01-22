@@ -14,7 +14,7 @@ Scripts for test infrastructure and benchmarking.
 ## Usage
 
 ```bash
-.pennyfarthing/scripts/run.sh test/test-setup.sh
+.pennyfarthing/scripts/core/run.sh test/test-setup.sh
 ```
 
 ## Ownership

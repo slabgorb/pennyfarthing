@@ -23,13 +23,13 @@ Display story sizing guidelines.
 </when>
 
 <run>
-.pennyfarthing/scripts/run.sh story/size-story.sh [points]
+.pennyfarthing/scripts/core/run.sh story/size-story.sh [points]
 </run>
 
 <example>
-.pennyfarthing/scripts/run.sh story/size-story.sh        # All guidelines
-.pennyfarthing/scripts/run.sh story/size-story.sh 3      # 3-point guidance
-.pennyfarthing/scripts/run.sh story/size-story.sh 13     # Split guidance
+.pennyfarthing/scripts/core/run.sh story/size-story.sh        # All guidelines
+.pennyfarthing/scripts/core/run.sh story/size-story.sh 3      # 3-point guidance
+.pennyfarthing/scripts/core/run.sh story/size-story.sh 13     # Split guidance
 </example>
 
 <output>
@@ -48,13 +48,13 @@ Display story templates by type.
 </when>
 
 <run>
-.pennyfarthing/scripts/run.sh story/story-template.sh [type]
+.pennyfarthing/scripts/core/run.sh story/story-template.sh [type]
 </run>
 
 <example>
-.pennyfarthing/scripts/run.sh story/story-template.sh           # All templates
-.pennyfarthing/scripts/run.sh story/story-template.sh bug       # Bug template
-.pennyfarthing/scripts/run.sh story/story-template.sh feature   # Feature template
+.pennyfarthing/scripts/core/run.sh story/story-template.sh           # All templates
+.pennyfarthing/scripts/core/run.sh story/story-template.sh bug       # Bug template
+.pennyfarthing/scripts/core/run.sh story/story-template.sh feature   # Feature template
 </example>
 
 <output>
@@ -68,7 +68,7 @@ YAML template with acceptance criteria patterns.
 Generate a story YAML block for adding to sprint.
 
 <run>
-.pennyfarthing/scripts/run.sh story/create-story.sh <epic-id> "<title>" <points> [options]
+.pennyfarthing/scripts/core/run.sh story/create-story.sh <epic-id> "<title>" <points> [options]
 </run>
 
 <args>
@@ -91,16 +91,16 @@ Generate a story YAML block for adding to sprint.
 
 <example>
 # Simple feature
-.pennyfarthing/scripts/run.sh story/create-story.sh MSSCI-11952 "Add error handling" 3
+.pennyfarthing/scripts/core/run.sh story/create-story.sh MSSCI-11952 "Add error handling" 3
 
 # Bug fix
-.pennyfarthing/scripts/run.sh story/create-story.sh MSSCI-11952 "Fix null pointer" 2 --type bug
+.pennyfarthing/scripts/core/run.sh story/create-story.sh MSSCI-11952 "Fix null pointer" 2 --type bug
 
 # Chore with explicit workflow
-.pennyfarthing/scripts/run.sh story/create-story.sh MSSCI-11952 "Update deps" 1 --type chore
+.pennyfarthing/scripts/core/run.sh story/create-story.sh MSSCI-11952 "Update deps" 1 --type chore
 
 # With Jira command
-.pennyfarthing/scripts/run.sh story/create-story.sh MSSCI-11952 "New feature" 5 --jira
+.pennyfarthing/scripts/core/run.sh story/create-story.sh MSSCI-11952 "New feature" 5 --jira
 </example>
 
 <output>
@@ -121,7 +121,7 @@ Prerequisites before running:
 </critical>
 
 <run>
-.pennyfarthing/scripts/run.sh workflow/finish-story.sh <story-id> [--dry-run]
+.pennyfarthing/scripts/core/run.sh workflow/finish-story.sh <story-id> [--dry-run]
 </run>
 
 <args>
@@ -132,8 +132,8 @@ Prerequisites before running:
 </args>
 
 <example>
-.pennyfarthing/scripts/run.sh workflow/finish-story.sh MSSCI-12052           # Finish story
-.pennyfarthing/scripts/run.sh workflow/finish-story.sh MSSCI-12052 --dry-run # Preview only
+.pennyfarthing/scripts/core/run.sh workflow/finish-story.sh MSSCI-12052           # Finish story
+.pennyfarthing/scripts/core/run.sh workflow/finish-story.sh MSSCI-12052 --dry-run # Preview only
 </example>
 
 <output>

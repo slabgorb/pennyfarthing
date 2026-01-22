@@ -229,10 +229,10 @@ After preflight passes, use `/story finish`:
 
 ```bash
 # Preview first (recommended)
-.pennyfarthing/scripts/run.sh workflow/finish-story.sh {STORY_ID} --dry-run
+.pennyfarthing/scripts/core/run.sh workflow/finish-story.sh {STORY_ID} --dry-run
 
 # Execute finish
-.pennyfarthing/scripts/run.sh workflow/finish-story.sh {STORY_ID}
+.pennyfarthing/scripts/core/run.sh workflow/finish-story.sh {STORY_ID}
 ```
 
 **`/story finish` handles all finish steps:**
@@ -245,7 +245,7 @@ After preflight passes, use `/story finish`:
 
 **Alternative: Manual archive only** (if not using full finish script):
 ```bash
-.pennyfarthing/scripts/run.sh sprint/archive-story.sh {STORY_ID} {PR_NUMBER}
+.pennyfarthing/scripts/core/run.sh sprint/archive-story.sh {STORY_ID} {PR_NUMBER}
 ```
 
 ### Step 3: Commit Changes
@@ -278,7 +278,7 @@ When sprint backlog is empty but the sprint period is still active:
 2. **Suggest promotion:** "Would you like to promote stories from `future.yaml`?"
 3. **Show future work:**
    ```bash
-   .pennyfarthing/scripts/run.sh sprint/list-future.sh
+   .pennyfarthing/scripts/core/run.sh sprint/list-future.sh
    ```
 4. **If user wants to promote:** Use `/sprint promote {epic-id}` to move stories into the sprint
 
@@ -297,7 +297,7 @@ Sprints are fixed two-week periods. Work flows through kanban-style. If velocity
 
 **Alternative:** For quick backlog view without helper, use `/sprint backlog`:
 ```bash
-.pennyfarthing/scripts/run.sh sprint/available-stories.sh
+.pennyfarthing/scripts/core/run.sh sprint/available-stories.sh
 ```
 
 **For full research with Jira enrichment**, spawn helper:
@@ -340,7 +340,7 @@ I receive helper's research report and present to the user:
 
 **Sizing Help:** If user asks about story complexity:
 ```bash
-.pennyfarthing/scripts/run.sh story/size-story.sh [points]
+.pennyfarthing/scripts/core/run.sh story/size-story.sh [points]
 ```
 Shows sizing guidelines, workflow suggestions, and split advice for large stories.
 
@@ -419,7 +419,7 @@ I also determine the workflow to use:
 **Extract workflow from sprint YAML:**
 ```bash
 # Get workflow tag for story X-Y (use script, not direct yq)
-.pennyfarthing/scripts/run.sh sprint/get-story-field.sh X-Y workflow
+.pennyfarthing/scripts/core/run.sh sprint/get-story-field.sh X-Y workflow
 ```
 
 **Routing by workflow:**
@@ -439,7 +439,7 @@ I also determine the workflow to use:
 **First, get the workflow tag from sprint YAML:**
 ```bash
 # Extract workflow for the selected story (use script, not direct yq)
-.pennyfarthing/scripts/run.sh sprint/get-story-field.sh X-Y workflow
+.pennyfarthing/scripts/core/run.sh sprint/get-story-field.sh X-Y workflow
 ```
 
 Then spawn setup with the detected workflow:

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Create a Jira epic and its child stories from sprint YAML
-# Usage: .pennyfarthing/scripts/run.sh create-jira-epic.sh <epic-id> [--dry-run]
+# Usage: .pennyfarthing/scripts/core/run.sh create-jira-epic.sh <epic-id> [--dry-run]
 
 set -euo pipefail
 

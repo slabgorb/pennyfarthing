@@ -1,6 +1,6 @@
 #!/bin/bash
 # Display available stories grouped by epic with Jira context
-# Usage: .pennyfarthing/scripts/run.sh sprint/available-stories.sh
+# Usage: .pennyfarthing/scripts/core/run.sh sprint/available-stories.sh
 #
 # Shows backlog stories with epic context, points, and workflow
 

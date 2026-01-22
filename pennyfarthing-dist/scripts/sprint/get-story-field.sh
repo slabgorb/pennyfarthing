@@ -1,11 +1,11 @@
 #!/bin/bash
 # Get a field value from a story in sprint YAML
-# Usage: .pennyfarthing/scripts/run.sh sprint/get-story-field.sh <story-id> <field>
+# Usage: .pennyfarthing/scripts/core/run.sh sprint/get-story-field.sh <story-id> <field>
 #
 # Examples:
-#   .pennyfarthing/scripts/run.sh sprint/get-story-field.sh 35-2 workflow
-#   .pennyfarthing/scripts/run.sh sprint/get-story-field.sh 35-2 jira
-#   .pennyfarthing/scripts/run.sh sprint/get-story-field.sh 35-2 status
+#   .pennyfarthing/scripts/core/run.sh sprint/get-story-field.sh 35-2 workflow
+#   .pennyfarthing/scripts/core/run.sh sprint/get-story-field.sh 35-2 jira
+#   .pennyfarthing/scripts/core/run.sh sprint/get-story-field.sh 35-2 status
 #
 # Common fields: workflow, status, jira, points, title, repos, priority
 # Returns the field value or "null" if not found

@@ -29,8 +29,8 @@ Uncategorized utilities and one-off scripts.
 ## Usage
 
 ```bash
-.pennyfarthing/scripts/run.sh misc/doctor-dogfood.sh
-.pennyfarthing/scripts/run.sh misc/run-ci.sh
+.pennyfarthing/scripts/core/run.sh misc/doctor-dogfood.sh
+.pennyfarthing/scripts/core/run.sh misc/run-ci.sh
 ```
 
 ## Ownership

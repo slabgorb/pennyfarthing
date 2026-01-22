@@ -1,6 +1,6 @@
 #!/bin/bash
 # Show workflow details
-# Usage: .pennyfarthing/scripts/run.sh workflow/show-workflow.sh [name]
+# Usage: .pennyfarthing/scripts/core/run.sh workflow/show-workflow.sh [name]
 #    or: Invoked with PROJECT_ROOT already set
 #
 # If no name provided, shows current session's workflow

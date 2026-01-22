@@ -39,7 +39,7 @@ jira issue view MSSCI-12038 --raw
 Check availability and claim a story for work.
 
 <run>
-.pennyfarthing/scripts/run.sh jira/jira-claim-story.sh <issue-key> [--claim]
+.pennyfarthing/scripts/core/run.sh jira/jira-claim-story.sh <issue-key> [--claim]
 </run>
 
 <args>
@@ -60,10 +60,10 @@ Check availability and claim a story for work.
 
 <example>
 # Check if available
-.pennyfarthing/scripts/run.sh jira/jira-claim-story.sh MSSCI-12038
+.pennyfarthing/scripts/core/run.sh jira/jira-claim-story.sh MSSCI-12038
 
 # Claim it (assign to self + In Progress)
-.pennyfarthing/scripts/run.sh jira/jira-claim-story.sh MSSCI-12038 --claim
+.pennyfarthing/scripts/core/run.sh jira/jira-claim-story.sh MSSCI-12038 --claim
 </example>
 
 ---
@@ -135,7 +135,7 @@ jira issue assign MSSCI-12038 x --project MSSCI
 Create a single Jira story under an epic from sprint YAML.
 
 <run>
-.pennyfarthing/scripts/run.sh jira/create-jira-story.sh <epic-key> <story-id>
+.pennyfarthing/scripts/core/run.sh jira/create-jira-story.sh <epic-key> <story-id>
 </run>
 
 <args>
@@ -150,7 +150,7 @@ Creating a single story that's missing from Jira but exists in sprint YAML.
 </when>
 
 <example>
-.pennyfarthing/scripts/run.sh jira/create-jira-story.sh MSSCI-12077 MSSCI-12066
+.pennyfarthing/scripts/core/run.sh jira/create-jira-story.sh MSSCI-12077 MSSCI-12066
 </example>
 
 <output>
@@ -169,7 +169,7 @@ Creating a single story that's missing from Jira but exists in sprint YAML.
 Create a Jira epic and all its child stories from sprint YAML.
 
 <run>
-.pennyfarthing/scripts/run.sh jira/create-jira-epic.sh <epic-id> [--dry-run]
+.pennyfarthing/scripts/core/run.sh jira/create-jira-epic.sh <epic-id> [--dry-run]
 </run>
 
 <args>
@@ -181,10 +181,10 @@ Create a Jira epic and all its child stories from sprint YAML.
 
 <example>
 # Preview what would be created
-.pennyfarthing/scripts/run.sh jira/create-jira-epic.sh epic-41 --dry-run
+.pennyfarthing/scripts/core/run.sh jira/create-jira-epic.sh epic-41 --dry-run
 
 # Create epic and stories
-.pennyfarthing/scripts/run.sh jira/create-jira-epic.sh epic-41
+.pennyfarthing/scripts/core/run.sh jira/create-jira-epic.sh epic-41
 </example>
 
 <output>
@@ -202,7 +202,7 @@ Create a Jira epic and all its child stories from sprint YAML.
 Sync an epic and its stories from sprint YAML to Jira.
 
 <run>
-.pennyfarthing/scripts/run.sh jira/sync-epic-jira.sh <epic-id> [options]
+.pennyfarthing/scripts/core/run.sh jira/sync-epic-jira.sh <epic-id> [options]
 </run>
 
 <args>
@@ -217,13 +217,13 @@ Sync an epic and its stories from sprint YAML to Jira.
 
 <example>
 # Show sync status
-.pennyfarthing/scripts/run.sh jira/sync-epic-jira.sh MSSCI-11952
+.pennyfarthing/scripts/core/run.sh jira/sync-epic-jira.sh MSSCI-11952
 
 # Preview changes
-.pennyfarthing/scripts/run.sh jira/sync-epic-jira.sh MSSCI-11952 --dry-run
+.pennyfarthing/scripts/core/run.sh jira/sync-epic-jira.sh MSSCI-11952 --dry-run
 
 # Full sync
-.pennyfarthing/scripts/run.sh jira/sync-epic-jira.sh MSSCI-11952 --all
+.pennyfarthing/scripts/core/run.sh jira/sync-epic-jira.sh MSSCI-11952 --all
 </example>
 
 <output>
@@ -240,7 +240,7 @@ Sync an epic and its stories from sprint YAML to Jira.
 Generate a reconciliation report comparing sprint YAML against Jira.
 
 <run>
-.pennyfarthing/scripts/run.sh jira/jira-reconcile.sh [--fix]
+.pennyfarthing/scripts/core/run.sh jira/jira-reconcile.sh [--fix]
 </run>
 
 <args>
@@ -251,10 +251,10 @@ Generate a reconciliation report comparing sprint YAML against Jira.
 
 <example>
 # Report only
-.pennyfarthing/scripts/run.sh jira/jira-reconcile.sh
+.pennyfarthing/scripts/core/run.sh jira/jira-reconcile.sh
 
 # Report and fix
-.pennyfarthing/scripts/run.sh jira/jira-reconcile.sh --fix
+.pennyfarthing/scripts/core/run.sh jira/jira-reconcile.sh --fix
 </example>
 
 <output>

@@ -1,8 +1,8 @@
 #!/bin/bash
 # Promote an epic from planning.yaml to current-sprint.yaml
-# Usage: .pennyfarthing/scripts/run.sh sprint/promote-epic.sh <epic-id>
+# Usage: .pennyfarthing/scripts/core/run.sh sprint/promote-epic.sh <epic-id>
 #
-# Example: .pennyfarthing/scripts/run.sh sprint/promote-epic.sh epic-41
+# Example: .pennyfarthing/scripts/core/run.sh sprint/promote-epic.sh epic-41
 
 set -euo pipefail
 
@@ -160,5 +160,5 @@ echo "  yq eval -i 'del(.planning.initiatives[].epics[] | select(.id == \"$EPIC_
 echo ""
 echo "Next steps:"
 echo "  1. Review the appended YAML in $SPRINT_FILE"
-echo "  2. Optionally create Jira epic: .pennyfarthing/scripts/run.sh create-jira-epic.sh $EPIC_ID"
+echo "  2. Optionally create Jira epic: .pennyfarthing/scripts/core/run.sh create-jira-epic.sh $EPIC_ID"
 echo "  3. Remove from planning.yaml if desired"

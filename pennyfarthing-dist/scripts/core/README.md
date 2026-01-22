@@ -16,8 +16,8 @@ Essential scripts required for all Pennyfarthing operations.
 These scripts are invoked via `run.sh`:
 
 ```bash
-.pennyfarthing/scripts/run.sh core/agent-session.sh start sm
-.pennyfarthing/scripts/run.sh core/check-context.sh --human
+.pennyfarthing/scripts/core/run.sh core/agent-session.sh start sm
+.pennyfarthing/scripts/core/run.sh core/check-context.sh --human
 ```
 
 ## Ownership
