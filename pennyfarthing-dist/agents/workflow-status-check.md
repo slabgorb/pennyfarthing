@@ -39,6 +39,9 @@ fi
 | `FINISH_STATE` | Session exists with Phase=approved OR Status=approved |
 | `IN_PROGRESS_STATE` | Session exists with active phase (tea/dev/review) |
 | `NEW_WORK_STATE` | No sessions AND sprint has backlog/ready stories |
+| `EMPTY_BACKLOG_STATE` | No sessions AND sprint has NO backlog/ready stories |
+
+**Important:** Sprints are fixed two-week periods (kanban-style). Never suggest closing a sprint early or starting sprint planning when backlog is empty. The correct response to `EMPTY_BACKLOG_STATE` is to suggest promoting stories from `future.yaml`.
 
 ---
 
@@ -61,4 +64,5 @@ fi
 - FINISH_STATE → Proceed to finish flow
 - IN_PROGRESS_STATE → Report which agent should continue
 - NEW_WORK_STATE → Show available stories
+- EMPTY_BACKLOG_STATE → Suggest promoting stories from future.yaml
 ```
