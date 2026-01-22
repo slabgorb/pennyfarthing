@@ -1,9 +1,9 @@
 #!/bin/bash
 # Sync an epic and its stories to Jira
-# Usage: .pennyfarthing/scripts/run.sh sync-epic-jira.sh <epic-id> [--dry-run] [--transition] [--points] [--all]
+# Usage: .pennyfarthing/scripts/core/run.sh sync-epic-jira.sh <epic-id> [--dry-run] [--transition] [--points] [--all]
 #
-# Example: .pennyfarthing/scripts/run.sh sync-epic-jira.sh MSSCI-11952
-# Example: .pennyfarthing/scripts/run.sh sync-epic-jira.sh MSSCI-11952 --all
+# Example: .pennyfarthing/scripts/core/run.sh sync-epic-jira.sh MSSCI-11952
+# Example: .pennyfarthing/scripts/core/run.sh sync-epic-jira.sh MSSCI-11952 --all
 #
 # This script syncs status and story points from sprint YAML to Jira.
 # It wraps the existing jira-sync.mjs for better integration with /sprint skill.

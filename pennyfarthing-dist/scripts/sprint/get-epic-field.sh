@@ -1,11 +1,11 @@
 #!/bin/bash
 # Get a field value from an epic in sprint YAML
-# Usage: .pennyfarthing/scripts/run.sh sprint/get-epic-field.sh <epic-id> <field>
+# Usage: .pennyfarthing/scripts/core/run.sh sprint/get-epic-field.sh <epic-id> <field>
 #
 # Examples:
-#   .pennyfarthing/scripts/run.sh sprint/get-epic-field.sh epic-35 jira
-#   .pennyfarthing/scripts/run.sh sprint/get-epic-field.sh epic-35 title
-#   .pennyfarthing/scripts/run.sh sprint/get-epic-field.sh 35 jira  # Also works without 'epic-' prefix
+#   .pennyfarthing/scripts/core/run.sh sprint/get-epic-field.sh epic-35 jira
+#   .pennyfarthing/scripts/core/run.sh sprint/get-epic-field.sh epic-35 title
+#   .pennyfarthing/scripts/core/run.sh sprint/get-epic-field.sh 35 jira  # Also works without 'epic-' prefix
 #
 # Common fields: jira, title, description, status
 # Returns the field value or "null" if not found

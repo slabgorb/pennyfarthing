@@ -1,6 +1,6 @@
 #!/bin/bash
 # List all available workflows with type indicators
-# Usage: .pennyfarthing/scripts/run.sh workflow/list-workflows.sh
+# Usage: .pennyfarthing/scripts/core/run.sh workflow/list-workflows.sh
 #    or: Invoked with PROJECT_ROOT already set
 #
 # MSSCI-12083: Added type, steps, and modes columns

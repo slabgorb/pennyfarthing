@@ -1,6 +1,6 @@
 #!/bin/bash
 # Jira vs YAML Reconciliation Report
-# Usage: .pennyfarthing/scripts/run.sh jira/jira-reconcile.sh [--fix]
+# Usage: .pennyfarthing/scripts/core/run.sh jira/jira-reconcile.sh [--fix]
 #
 # Compares sprint YAML against Jira to find:
 # - Status mismatches

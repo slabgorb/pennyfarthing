@@ -1,6 +1,6 @@
 #!/bin/bash
 # Display current sprint status
-# Usage: .pennyfarthing/scripts/run.sh sprint/sprint-status.sh [filter]
+# Usage: .pennyfarthing/scripts/core/run.sh sprint/sprint-status.sh [filter]
 #    or: Invoked with PROJECT_ROOT already set
 #
 # Filters:

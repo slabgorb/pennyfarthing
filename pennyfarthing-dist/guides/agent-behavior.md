@@ -104,9 +104,9 @@ Multi-repo: `cd $CLAUDE_PROJECT_DIR/$(get_repo_path "$repo")` after sourcing `sc
 **Rule 4:** All sprint YAML access goes through scripts
 ```bash
 # GOOD: Use scripts for ALL operations
-.pennyfarthing/scripts/run.sh sprint/get-story-field.sh X-Y workflow
-.pennyfarthing/scripts/run.sh sprint/get-epic-field.sh 35 jira
-.pennyfarthing/scripts/run.sh sprint/check-story.sh X-Y
+.pennyfarthing/scripts/core/run.sh sprint/get-story-field.sh X-Y workflow
+.pennyfarthing/scripts/core/run.sh sprint/get-epic-field.sh 35 jira
+.pennyfarthing/scripts/core/run.sh sprint/check-story.sh X-Y
 
 # BAD: Direct yq queries (even read-only)
 yq '.epics[].stories[] | ...' sprint/current-sprint.yaml

@@ -15,7 +15,7 @@ args: "[check|status]"
 Check if running inside Cyclist visual terminal.
 
 <run>
-.pennyfarthing/scripts/run.sh cyclist/is-cyclist.sh
+.pennyfarthing/scripts/core/run.sh cyclist/is-cyclist.sh
 </run>
 
 <output>
@@ -23,7 +23,7 @@ JSON: `{"cyclist": true}` with exit 0 if in Cyclist, `{"cyclist": false}` with e
 </output>
 
 <example>
-.pennyfarthing/scripts/run.sh cyclist/is-cyclist.sh
+.pennyfarthing/scripts/core/run.sh cyclist/is-cyclist.sh
 # Returns: {"cyclist": true}
 </example>
 

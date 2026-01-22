@@ -26,10 +26,10 @@ All scripts are invoked via `run.sh` with **full category paths**:
 
 ```bash
 # From project root
-.pennyfarthing/scripts/run.sh core/agent-session.sh start sm
-.pennyfarthing/scripts/run.sh sprint/sprint-status.sh
-.pennyfarthing/scripts/run.sh jira/jira-claim-story.sh MSSCI-12345
-.pennyfarthing/scripts/run.sh workflow/finish-story.sh MSSCI-12345
+.pennyfarthing/scripts/core/run.sh core/agent-session.sh start sm
+.pennyfarthing/scripts/core/run.sh sprint/sprint-status.sh
+.pennyfarthing/scripts/core/run.sh jira/jira-claim-story.sh MSSCI-12345
+.pennyfarthing/scripts/core/run.sh workflow/finish-story.sh MSSCI-12345
 ```
 
 ## Dogfooding Pattern

@@ -13,7 +13,7 @@ Scripts for managing agent persona themes.
 ## Usage
 
 ```bash
-.pennyfarthing/scripts/run.sh theme/list-themes.sh
+.pennyfarthing/scripts/core/run.sh theme/list-themes.sh
 ```
 
 ## Ownership

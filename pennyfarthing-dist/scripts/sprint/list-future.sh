@@ -1,6 +1,6 @@
 #!/bin/bash
 # Display future work initiatives and epics from future.yaml
-# Usage: .pennyfarthing/scripts/run.sh sprint/list-future.sh [--epic EPIC_ID]
+# Usage: .pennyfarthing/scripts/core/run.sh sprint/list-future.sh [--epic EPIC_ID]
 #
 # Shows initiatives with their epics, points, status, and blockers
 # Use --epic to show detailed stories for a specific epic

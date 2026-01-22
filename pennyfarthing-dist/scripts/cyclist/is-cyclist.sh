@@ -1,6 +1,6 @@
 #!/bin/bash
 # Check if running inside Cyclist visual terminal
-# Usage: .pennyfarthing/scripts/run.sh cyclist/is-cyclist.sh
+# Usage: .pennyfarthing/scripts/core/run.sh cyclist/is-cyclist.sh
 #
 # Exit codes:
 #   0 - Running in Cyclist

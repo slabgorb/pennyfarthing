@@ -18,8 +18,8 @@ Scripts for workflow mechanics, phase transitions, and quality gates.
 ## Usage
 
 ```bash
-.pennyfarthing/scripts/run.sh workflow/finish-story.sh MSSCI-12345
-.pennyfarthing/scripts/run.sh workflow/start-workflow.sh prd --mode create
+.pennyfarthing/scripts/core/run.sh workflow/finish-story.sh MSSCI-12345
+.pennyfarthing/scripts/core/run.sh workflow/start-workflow.sh prd --mode create
 ```
 
 ## Ownership
