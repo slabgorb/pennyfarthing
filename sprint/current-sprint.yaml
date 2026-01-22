@@ -1140,7 +1140,7 @@ epics:
           - Story selection process
         points: 2
         priority: P2
-        status: in_progress
+        status: done
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria:
@@ -1151,6 +1151,8 @@ epics:
           - Agent assignment set to sm for sprint planning
         jira: MSSCI-12141
         branch: feat/MSSCI-12141-sprint-planning-workflow
+        completed: "2026-01-22"
+        pr: 429
       - id: MSSCI-12142
         title: "Import Retrospective workflow"
         description: |
