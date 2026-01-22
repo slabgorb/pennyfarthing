@@ -217,15 +217,15 @@ Reviewer → Dev:  Changes requested
 
 ### Standard Pattern
 ```bash
-# ✅ CORRECT - Use $CLAUDE_PROJECT_DIR
-$CLAUDE_PROJECT_DIR/scripts/agent-session.sh start "Agent Name"
+# ✅ CORRECT - Use $CLAUDE_PROJECT_DIR with run.sh
+$CLAUDE_PROJECT_DIR/scripts/run.sh core/agent-session.sh start "Agent Name"
 $CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md
 
 # ❌ WRONG - Don't use git rev-parse (unreliable in agent context)
-$(git rev-parse --show-toplevel)/scripts/agent-session.sh
+$(git rev-parse --show-toplevel)/scripts/run.sh core/agent-session.sh
 
 # ❌ WRONG - Don't hardcode absolute paths
-/Users/someone/project/scripts/agent-session.sh
+/Users/someone/project/scripts/run.sh core/agent-session.sh
 ```
 
 ### Why $CLAUDE_PROJECT_DIR?

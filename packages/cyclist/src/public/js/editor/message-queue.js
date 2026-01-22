@@ -1,10 +1,68 @@
 /**
- * Message Queue Module (Story 17-1)
- * Handles non-blocking message input during Claude processing
+ * Message Queue Module (Story 17-1, MSSCI-12274)
+ * Handles non-blocking message input during Claude processing.
+ * Supports queued messages with attached images (base64 encoded).
+ *
+ * @typedef {import('./constants.js').QueuedMessage} QueuedMessage
+ * @typedef {import('./constants.js').PastedImage} PastedImage
  */
 
 import { MESSAGE_QUEUE_KEY, MAX_QUEUE_SIZE } from './constants.js';
 import { settingsSync } from '../settings-sync.js';
+
+/**
+ * Normalize a message input to QueuedMessage format.
+ * Handles both legacy string input and new object format.
+ * @param {string|QueuedMessage} message - Message to normalize
+ * @returns {QueuedMessage|null} Normalized message or null if invalid
+ * @private
+ */
+function normalizeMessage(message) {
+  if (!message) return null;
+
+  // Handle string input (legacy format)
+  if (typeof message === 'string') {
+    const trimmed = message.trim();
+    if (!trimmed) return null;
+    return { text: trimmed, images: [] };
+  }
+
+  // Handle object input (new format)
+  if (typeof message === 'object' && message.text !== undefined) {
+    const trimmed = (message.text || '').trim();
+    if (!trimmed) return null;
+    return {
+      text: trimmed,
+      images: Array.isArray(message.images) ? message.images : [],
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Migrate a stored queue item to QueuedMessage format.
+ * @param {string|QueuedMessage} item - Queue item from storage
+ * @returns {QueuedMessage} Migrated message
+ * @private
+ */
+function migrateQueueItem(item) {
+  // Already in new format
+  if (typeof item === 'object' && item.text !== undefined) {
+    return {
+      text: item.text,
+      images: Array.isArray(item.images) ? item.images : [],
+    };
+  }
+
+  // Legacy string format
+  if (typeof item === 'string') {
+    return { text: item, images: [] };
+  }
+
+  // Fallback for any unexpected format
+  return { text: String(item), images: [] };
+}
 
 // State
 let messageQueue = [];
@@ -48,7 +106,7 @@ export function setProcessing(value) {
 
 /**
  * Get a copy of the current message queue
- * @returns {string[]} Array of queued messages
+ * @returns {QueuedMessage[]} Array of queued messages
  */
 export function getMessageQueue() {
   return [...messageQueue];
@@ -88,24 +146,29 @@ export function saveMessageQueue() {
 }
 
 /**
- * Load message queue from settings-sync
+ * Load message queue from settings-sync.
+ * Automatically migrates legacy string[] format to QueuedMessage[].
  */
 export function loadMessageQueue() {
   const stored = settingsSync.get(MESSAGE_QUEUE_KEY);
   if (stored && Array.isArray(stored)) {
-    messageQueue = stored;
+    // Migrate each item to QueuedMessage format
+    messageQueue = stored.map(migrateQueueItem);
     notifyQueueChange();
   }
 }
 
 /**
  * Add a message to the queue
- * @param {string} message - Message to queue
+ * @param {string|QueuedMessage} message - Message to queue (string or object with text/images)
  * @returns {boolean} True if message was queued, false if rejected
  */
 export function queueMessage(message) {
-  // Reject empty or whitespace-only messages
-  if (!message || !message.trim()) {
+  // Normalize to QueuedMessage format
+  const normalized = normalizeMessage(message);
+
+  // Reject invalid messages (null, empty, whitespace-only)
+  if (!normalized) {
     return false;
   }
 
@@ -114,7 +177,7 @@ export function queueMessage(message) {
     return false;
   }
 
-  messageQueue.push(message);
+  messageQueue.push(normalized);
   saveMessageQueue();
   notifyQueueChange();
   return true;
@@ -122,7 +185,7 @@ export function queueMessage(message) {
 
 /**
  * Remove and return the first message from the queue (FIFO)
- * @returns {string|null} The dequeued message, or null if queue is empty
+ * @returns {QueuedMessage|null} The dequeued message, or null if queue is empty
  */
 export function dequeueMessage() {
   if (messageQueue.length === 0) {
@@ -169,11 +232,11 @@ export function processNextInQueue() {
 
   const nextMessage = dequeueMessage();
   if (nextMessage) {
-    // Clear editor and insert the queued message
+    // Clear editor and insert the queued message text
     if (clearEditorFn) clearEditorFn();
-    if (insertContentFn) insertContentFn(nextMessage);
-    // Submit it
-    if (submitFn) submitFn();
+    if (insertContentFn) insertContentFn(nextMessage.text);
+    // Submit with images if callback accepts them
+    if (submitFn) submitFn(nextMessage.text, nextMessage.images);
   }
 }
 
@@ -207,10 +270,10 @@ export async function injectMessage(index) {
   // Reset processing state
   processingState = false;
 
-  // Inject and submit
+  // Inject and submit with images
   if (clearEditorFn) clearEditorFn();
-  if (insertContentFn) insertContentFn(message);
-  if (submitFn) submitFn();
+  if (insertContentFn) insertContentFn(message.text);
+  if (submitFn) submitFn(message.text, message.images);
 
   return true;
 }

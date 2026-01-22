@@ -27,6 +27,23 @@ export const MESSAGE_QUEUE_KEY = 'cyclist-message-queue';
 /** Maximum number of messages allowed in queue (Story 17-1) */
 export const MAX_QUEUE_SIZE = 10;
 
+// ============================================================================
+// Queued Message Type (Story MSSCI-12274)
+// ============================================================================
+
+/**
+ * @typedef {Object} PastedImage
+ * @property {string} dataUrl - Base64-encoded image data URL
+ * @property {string} mimeType - Image MIME type (e.g., 'image/png')
+ * @property {string} filename - Image filename
+ */
+
+/**
+ * @typedef {Object} QueuedMessage
+ * @property {string} text - Message text content
+ * @property {PastedImage[]} images - Attached images (empty array if none)
+ */
+
 /** localStorage key for persisting command history (B-9.4) */
 export const HISTORY_KEY = 'cyclist-command-history';
 

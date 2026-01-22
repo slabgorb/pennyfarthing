@@ -388,7 +388,7 @@ After gate passage, check context usage before invoking next agent:
 
 ```bash
 # Check context usage
-$CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
+$CLAUDE_PROJECT_DIR/scripts/core/check-context.sh --human
 
 # Routing decision:
 # If < 60%: Invoke next agent directly in this session

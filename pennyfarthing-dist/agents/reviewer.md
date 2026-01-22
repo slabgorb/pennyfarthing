@@ -210,8 +210,7 @@ git diff develop...HEAD -- "*.go" "*.ts" "*.tsx"
 
 - [ ] Write Reviewer Assessment to session file
 - [ ] Spawn `handoff` subagent with VERDICT (approved/rejected)
-- [ ] Verify handoff completed successfully
-- [ ] Include `<!-- CYCLIST:HANDOFF:/sm -->` (approve) or `<!-- CYCLIST:HANDOFF:/dev -->` (reject)
+- [ ] Verify handoff completed successfully (subagent emits the marker)
 
 **agent-session.sh stop will FAIL if assessment exists but handoff is missing.**
 </handoff-gate>
@@ -265,41 +264,18 @@ Write assessment to session file BEFORE spawning handoff subagent.
 **Handoff:** Back to Dev for fixes
 ```
 
-## Context-Aware Handoff
+## Handoff Protocol
 
-After writing assessment, ALWAYS spawn appropriate handoff subagent to complete bookkeeping.
+**See:** `pennyfarthing-dist/guides/agent-behavior.md` → AGENT_COMMAND Protocol
 
-Then check context usage and handoff mode preference:
+1. Reviewer writes assessment to session file FIRST
+2. Reviewer spawns `handoff` subagent with VERDICT (approved/rejected)
+3. Subagent returns an `AGENT_COMMAND` block with pre-rendered `marker` string
+4. **Reviewer outputs `marker` verbatim, then outputs `fallback` message**
 
-```bash
-$CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
-```
-
-**Read handoff mode from Cyclist settings** (see `handoff.md` for full implementation):
-- `.pennyfarthing/config.local.yaml → `handoff_mode: auto|manual`
-- Default is `manual` if not set
-
-**Handoff Decision Matrix:**
-
-| Context | Mode | Verdict | Action |
-|---------|------|---------|--------|
-| < 60% | auto | APPROVED | Invoke `/sm` directly via Skill tool |
-| < 60% | auto | REJECTED | Invoke `/dev` directly via Skill tool |
-| < 60% | manual | any | Report ready, emit HANDOFF marker, wait for user |
-| >= 60% | auto | any | Emit CONTEXT_CLEAR marker (triggers auto-reload in Cyclist) |
-| >= 60% | manual | any | Tell user: "Context high. Start fresh with `/sm` (approve) or `/dev` (reject)" |
-
-**Handoff Marker:** ALWAYS include at end of handoff message:
-```
-<!-- CYCLIST:HANDOFF:/sm -->   # For approvals
-<!-- CYCLIST:HANDOFF:/dev -->  # For rejections
-```
-
-**For high context + auto mode**, also include:
-```
-<!-- CYCLIST:CONTEXT_CLEAR:/sm -->   # For approvals
-<!-- CYCLIST:CONTEXT_CLEAR:/dev -->  # For rejections
-```
+**Verdict routing:**
+- APPROVED → next agent is SM (`/sm`)
+- REJECTED → returns to Dev (`/dev`)
 
 Handoff subagent (generic - handles both approve and reject).
 

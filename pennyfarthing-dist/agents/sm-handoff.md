@@ -14,11 +14,9 @@ AC checkboxes are marked ONLY by the agent that does the work.
 </critical>
 
 <critical>
-**Reflector required.** Final output MUST include:
-```
-<!-- CYCLIST:HANDOFF:/{NEXT_AGENT} -->
-```
-Where `{NEXT_AGENT}` is `tea` (3+ pts) or `dev` (1-2 pts).
+**Subagent output is NOT visible to Cyclist.** Tool results are not parsed for markers.
+You MUST return an `AGENT_COMMAND` block with a pre-rendered `marker` string.
+The calling agent outputs the `marker` verbatim - no parsing or mapping required.
 </critical>
 
 <info>
@@ -60,7 +58,21 @@ Edit `## Workflow Tracking`:
 
 **Duration:** Subtract SM Started from {NOW}, format as `Xm` or `Xh Ym`.
 
+## Generate AGENT_COMMAND Block
+
+Use the `handoff-marker.sh` script to generate the complete AGENT_COMMAND block:
+
+```bash
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {NEXT_AGENT}
+```
+
+The script handles IS_CYCLIST and USE_TIREPUMP detection automatically.
+Output the script result verbatim.
+
 ## Output Format
+
+Your output MUST end with an `AGENT_COMMAND` block with a pre-rendered `marker` string.
+The calling agent outputs the `marker` verbatim - no parsing or mapping required.
 
 ```
 ## Handoff Complete
@@ -70,5 +82,64 @@ Story {STORY_ID} ready for {NEXT_AGENT} phase.
 - Branch verified
 - Jira claimed
 
-<!-- CYCLIST:HANDOFF:/{NEXT_AGENT} -->
+---
+AGENT_COMMAND:
+  marker: "{MARKER_STRING}"
+  fallback: "Run `/{NEXT_AGENT}` to continue"
+---
 ```
+
+### Marker String Generation
+
+The `handoff-marker.sh` script generates the complete AGENT_COMMAND block including the correct marker:
+
+```bash
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {NEXT_AGENT}
+```
+
+**Output the script result verbatim.** No manual marker lookup required.
+
+### Example Output (Cyclist, no TirePump)
+
+```
+## Handoff Complete
+
+Story MSSCI-12274 ready for TEA phase.
+- Session file updated with phase transition (setup → test)
+- Branch verified: `feat/MSSCI-12274-image-queue-support`
+- Acceptance criteria confirmed: 7 criteria defined
+
+---
+AGENT_COMMAND:
+  marker: "<!-- CYCLIST:HANDOFF:/tea -->"
+  fallback: "Run `/tea` to continue"
+---
+```
+
+### Example Output (Not Cyclist)
+
+```
+## Handoff Complete
+
+Story MSSCI-12274 ready for TEA phase.
+- Session file updated with phase transition (setup → test)
+- Branch verified: `feat/MSSCI-12274-image-queue-support`
+- Acceptance criteria confirmed: 7 criteria defined
+
+---
+AGENT_COMMAND:
+  marker: ""
+  fallback: "Run `/tea` to continue"
+---
+```
+
+## Calling Agent Instructions
+
+When you receive this subagent's output, parse the `AGENT_COMMAND` block and:
+
+1. Output the `marker` string verbatim (if non-empty)
+2. Output the `fallback` message
+
+**Simple rule: Output `marker` then `fallback`. That's it.**
+
+**The marker MUST appear in the calling agent's direct text output, not in a tool result.**

@@ -19,15 +19,9 @@ model: haiku
 </info>
 
 <critical>
-**Reflector required.** Final output MUST include:
-```
-<!-- CYCLIST:HANDOFF:/{NEXT_AGENT} -->
-```
-
-If context >60% and auto mode:
-```
-<!-- CYCLIST:CONTEXT_CLEAR:/{NEXT_AGENT} -->
-```
+**Subagent output is NOT visible to Cyclist.** Tool results are not parsed for markers.
+You MUST return an explicit `AGENT_COMMAND` block with a pre-rendered `marker` string.
+The calling agent will output the `marker` string verbatim in their direct text output.
 </critical>
 
 ---
@@ -75,7 +69,7 @@ No automated checks. Always passes.
 
 1. **Find phase and gate type:**
    ```bash
-   ./scripts/generic-handoff-cli.sh find-phase --workflow {WORKFLOW} --phase {CURRENT_PHASE}
+   ./scripts/handoff-cli.sh find-phase --workflow {WORKFLOW} --phase {CURRENT_PHASE}
    ```
 
 2. **Verify assessment exists** (if ASSESSMENT_SECTION provided)
@@ -84,24 +78,78 @@ No automated checks. Always passes.
 
 4. **Determine next phase:**
    ```bash
-   ./scripts/generic-handoff-cli.sh next-phase --workflow {WORKFLOW} --phase {CURRENT_PHASE}
+   ./scripts/handoff-cli.sh next-phase --workflow {WORKFLOW} --phase {CURRENT_PHASE}
    ```
 
-5. **Update session file:**
-   - Update `## Workflow Tracking` section
-   - Update Phase History table
-   - Add Handoff History row
+5. **Update session file using Edit tool:**
 
-6. **Check context and handoff mode:**
+   First, get timestamps and calculate duration:
    ```bash
-   CONTEXT_OUTPUT=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/check-context.sh)
+   PHASE_STARTED=$(grep "^\*\*Phase Started:\*\*" .session/{STORY_ID}-session.md | sed 's/\*\*Phase Started:\*\* //')
+   NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+   DURATION=$(./scripts/handoff-cli.sh calculate-duration --started-at "$PHASE_STARTED" --ended-at "$NOW")
    ```
 
-7. **Report result with Reflector**
+   **5a. Update `**Phase:**` field** - Use Edit tool:
+   ```
+   file_path: .session/{STORY_ID}-session.md
+   old_string: "**Phase:** {CURRENT_PHASE}"
+   new_string: "**Phase:** {NEXT_PHASE}"
+   ```
+
+   **5b. Update `**Phase Started:**` field** - Use Edit tool:
+   ```
+   file_path: .session/{STORY_ID}-session.md
+   old_string: "**Phase Started:** {PHASE_STARTED}"
+   new_string: "**Phase Started:** {NOW}"
+   ```
+
+   **5c. Update Phase History table** - Use Edit tool to add end timestamp and duration:
+   Find the row for current phase (has `| - | - |` at end) and update:
+   ```
+   file_path: .session/{STORY_ID}-session.md
+   old_string: "| {CURRENT_PHASE} | {PHASE_STARTED} | - | - |"
+   new_string: "| {CURRENT_PHASE} | {PHASE_STARTED} | {NOW} | {DURATION} |"
+   ```
+
+   Phase History table format:
+   ```
+   | Phase | Started | Ended | Duration |
+   |-------|---------|-------|----------|
+   ```
+
+   **5d. Add Handoff History row** - Use Edit tool to append to Handoff History section:
+   If `### Handoff History` section doesn't exist, create it first.
+   Then append a row:
+   ```
+   | {CURRENT_PHASE} ({CURRENT_AGENT}) | {NEXT_PHASE} ({NEXT_AGENT}) | {GATE_TYPE} | PASSED | {NOW} |
+   ```
+
+   Handoff History table format:
+   ```
+   | From | To | Gate | Status | Timestamp |
+   |------|-----|------|--------|-----------|
+   ```
+
+6. **Generate AGENT_COMMAND block:**
+   ```bash
+   $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {NEXT_AGENT}
+   ```
+   The script handles IS_CYCLIST and USE_TIREPUMP detection automatically.
+
+   For errors:
+   ```bash
+   $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh --error "Error message here"
+   ```
+
+7. **Return handoff summary + AGENT_COMMAND block** (see Output Format below)
 
 ---
 
 ## Output Format
+
+Your output MUST end with an `AGENT_COMMAND` block containing a pre-rendered `marker` string.
+The calling agent outputs the `marker` string verbatim - no parsing or mapping required.
 
 ```
 HANDOFF COMPLETE
@@ -111,9 +159,88 @@ To: {NEXT_PHASE} ({NEXT_AGENT})
 Gate: {GATE_TYPE} - PASSED
 
 Context: {CONTEXT_PERCENT}%
-Action: {INVOKE_DIRECTLY | USER_INVOKE | FRESH_SESSION}
+Mode: {PERMISSION_MODE}
+Cyclist: {IS_CYCLIST}
+TirePump: {USE_TIREPUMP}
 
-<!-- CYCLIST:HANDOFF:/{NEXT_AGENT} -->
+---
+AGENT_COMMAND:
+  marker: "{MARKER_STRING}"
+  fallback: "Run `/{NEXT_AGENT}` to continue"
+---
+```
+
+### Marker String Generation
+
+Use the `handoff-marker.sh` script to generate the complete AGENT_COMMAND block:
+
+```bash
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {NEXT_AGENT}
+```
+
+**Output the script result verbatim.** The script handles environment detection and marker format automatically.
+
+### Example Output (Cyclist, TirePump active)
+
+```
+HANDOFF COMPLETE
+
+From: green (Dev)
+To: review (Reviewer)
+Gate: tests_pass - PASSED
+
+Context: 72%
+Mode: turbo
+Cyclist: true
+TirePump: true
+
+---
+AGENT_COMMAND:
+  marker: "<!-- CYCLIST:CONTEXT_CLEAR:/reviewer -->"
+  fallback: "Run `/reviewer` to continue"
+---
+```
+
+### Example Output (Cyclist, no TirePump)
+
+```
+HANDOFF COMPLETE
+
+From: red (TEA)
+To: green (Dev)
+Gate: tests_fail - PASSED
+
+Context: 35%
+Mode: accept
+Cyclist: true
+TirePump: false
+
+---
+AGENT_COMMAND:
+  marker: "<!-- CYCLIST:HANDOFF:/dev -->"
+  fallback: "Run `/dev` to continue"
+---
+```
+
+### Example Output (Not Cyclist)
+
+```
+HANDOFF COMPLETE
+
+From: red (TEA)
+To: green (Dev)
+Gate: tests_fail - PASSED
+
+Context: unknown
+Mode: unknown
+Cyclist: false
+TirePump: false
+
+---
+AGENT_COMMAND:
+  marker: ""
+  fallback: "Run `/dev` to continue"
+---
 ```
 
 ## Error Format
@@ -126,6 +253,13 @@ Gate type: {gate}
 Error: {message}
 
 Recommended fix: {action}
+
+---
+AGENT_COMMAND:
+  marker: ""
+  fallback: "{message}"
+  error: true
+---
 ```
 
 ---
@@ -140,5 +274,16 @@ Recommended fix: {action}
 | SM | `/sm` |
 | Architect | `/architect` |
 | DevOps | `/devops` |
-| Reflector | `/reflector` |
 
+---
+
+## Calling Agent Instructions
+
+When you receive this subagent's output, parse the `AGENT_COMMAND` block and:
+
+1. If `error: true` → Report the `fallback` message as an error, do not emit any marker
+2. Otherwise → Output the `marker` string verbatim (if non-empty), then output the `fallback` message
+
+**Simple rule: Output `marker` then `fallback`. That's it.**
+
+**CRITICAL: The marker MUST appear in the calling agent's direct text output, not in a tool result.**

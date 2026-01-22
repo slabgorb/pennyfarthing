@@ -34,7 +34,7 @@ export const SLASH_COMMANDS = [
     "description": "Create control baseline for a scenario (shortcut for /benchmark control <agent>)"
   },
   {
-    "name": "/brainstorm",
+    "name": "/brainstorming",
     "description": "Structured problem-solving brainstorm session"
   },
   {
@@ -252,6 +252,10 @@ export const SLASH_COMMANDS = [
   {
     "name": "/work",
     "description": "Resume work or start new - smart entry point that picks up where you left off"
+  },
+  {
+    "name": "/workflow",
+    "description": "List available workflows, show current workflow details, and switch workflows mid-session. Use when checking available workflow types (TDD, trivial, agent-docs), viewing current workflow phase, switching to a different workflow pattern, or managing BikeLane stepped workflows."
   }
 ].sort((a, b) => a.name.localeCompare(b.name));
 

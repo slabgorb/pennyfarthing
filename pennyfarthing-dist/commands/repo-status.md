@@ -15,13 +15,13 @@ Repos are configured in `.claude/project/repos.yaml`. The script automatically r
 Run this command to show the status of all repos:
 
 ```bash
-$CLAUDE_PROJECT_DIR/scripts/run.sh git-status-all.sh
+$CLAUDE_PROJECT_DIR/scripts/run.sh git/git-status-all.sh
 ```
 
 For a brief one-line-per-repo summary:
 
 ```bash
-$CLAUDE_PROJECT_DIR/scripts/run.sh git-status-all.sh --brief
+$CLAUDE_PROJECT_DIR/scripts/run.sh git/git-status-all.sh --brief
 ```
 
 ## What It Shows

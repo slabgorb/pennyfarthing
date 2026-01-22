@@ -65,6 +65,7 @@ export { getCompletionState, showCompletionPopup, closeCompletionPopup, navigate
 
 // Re-export message queue for external consumers
 export {
+  initMessageQueue,
   isProcessing,
   setProcessing,
   getMessageQueue,
@@ -578,21 +579,26 @@ export async function createEditor() {
 
 /**
  * Submit editor content to Claude SDK
- * Called on Enter key press
+ * Called on Enter key press, or by processNextInQueue with queued content
+ * @param {string} [passedText] - Optional text from queue replay
+ * @param {Array} [passedImages] - Optional images from queue replay
  */
-function submitEditorContent() {
+function submitEditorContent(passedText, passedImages) {
   if (!editorInstance) return;
 
-  const markdown = getEditorMarkdown();
+  // Use passed values (from queue) or get from editor
+  const markdown = passedText ?? getEditorMarkdown();
+  const images = passedImages ?? [...pendingImages];
 
   // Don't submit empty content
   if (!markdown.trim()) return;
 
-  // If Claude is processing, queue the message instead
-  if (isProcessing()) {
-    const queued = queueMessage(markdown);
+  // If Claude is processing, queue the message instead (only for direct user input, not queue replay)
+  if (isProcessing() && passedText === undefined) {
+    const queued = queueMessage({ text: markdown, images: images });
     if (queued) {
       console.log('[Editor] Message queued while processing');
+      clearPendingImages();
       clearEditor();
       editorInstance.commands.focus();
     } else {
@@ -601,8 +607,8 @@ function submitEditorContent() {
     return;
   }
 
-  // Prevent duplicate sends
-  if (isSubmitting) {
+  // Prevent duplicate sends (only for direct user input)
+  if (isSubmitting && passedText === undefined) {
     console.log('[Editor] Ignoring submit - already processing');
     return;
   }
@@ -611,12 +617,11 @@ function submitEditorContent() {
   isSubmitting = true;
   setProcessing(true);
 
-  // Add to command history
-  addToHistory(markdown);
-  resetHistoryNavigation();
-
-  // Capture images before clearing (28-1)
-  const images = [...pendingImages];
+  // Add to command history (only for direct user input)
+  if (passedText === undefined) {
+    addToHistory(markdown);
+    resetHistoryNavigation();
+  }
 
   // Add user message to the view (28-1: include images for display)
   addMessage({
@@ -637,11 +642,15 @@ function submitEditorContent() {
     onSubmitCallback(markdown);
   }
 
-  // Clear pending images after submit (28-1)
-  clearPendingImages();
+  // Clear pending images after submit (28-1) - only for direct user input
+  if (passedText === undefined) {
+    clearPendingImages();
+  }
 
-  // Clear editor after submit
-  clearEditor();
+  // Clear editor after submit (only for direct user input - queue replay already cleared)
+  if (passedText === undefined) {
+    clearEditor();
+  }
 
   // Clear quick action buttons
   onResponseSubmitted();

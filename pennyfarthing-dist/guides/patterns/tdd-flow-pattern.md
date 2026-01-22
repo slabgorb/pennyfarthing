@@ -301,7 +301,7 @@ User runs /new-work → workflow-status-check detects no epic context
 Each agent checks context usage after completing work:
 
 ```bash
-$CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
+$CLAUDE_PROJECT_DIR/scripts/core/check-context.sh --human
 ```
 
 | Context | Action |

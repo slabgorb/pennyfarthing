@@ -115,6 +115,15 @@ Task tool:
       **Handoff:** To SM for story completion
 ```
 
+## Handoff Protocol
+
+**See:** `pennyfarthing-dist/guides/agent-behavior.md` → AGENT_COMMAND Protocol
+
+1. Tech Writer writes assessment/review FIRST
+2. Tech Writer spawns `handoff` subagent
+3. Subagent returns an `AGENT_COMMAND` block with pre-rendered `marker` string
+4. **Tech Writer outputs `marker` verbatim, then outputs `fallback` message**
+
 ## Key Workflows
 
 ### 1. API Documentation
@@ -203,5 +212,5 @@ Task tool:
 <exit>
 To exit: "Exit Tech Writer" or switch to another agent.
 
-On exit, run: `./scripts/run.sh agent-session.sh stop`
+On exit, run: `./scripts/run.sh core/agent-session.sh stop`
 </exit>

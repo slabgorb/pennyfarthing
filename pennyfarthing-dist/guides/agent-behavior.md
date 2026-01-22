@@ -7,6 +7,10 @@
 ## Critical Protocols
 
 <critical>
+**Reflector markers:** Subagent output is NOT visible to Cyclist. After handoff subagent returns `AGENT_COMMAND`, output the `marker` string verbatim. See `<agent-command-protocol>` below.
+</critical>
+
+<critical>
 **Absolute paths:** `cd $CLAUDE_PROJECT_DIR && just test` - never relative `cd`.
 Multi-repo: `cd $CLAUDE_PROJECT_DIR/$(get_repo_path "$repo")` after sourcing `scripts/repo-utils.sh`.
 </critical>
@@ -16,7 +20,7 @@ Multi-repo: `cd $CLAUDE_PROJECT_DIR/$(get_repo_path "$repo")` after sourcing `sc
 </critical>
 
 <critical>
-**Handoff Action:** When `handoff` returns `INVOKE_DIRECTLY`, invoke next agent immediately. Don't ask permission.
+**Handoff Action:** When `handoff` returns `AGENT_COMMAND`, output `marker` verbatim then `fallback`. Don't ask permission.
 </critical>
 
 <critical>
@@ -74,6 +78,55 @@ Multi-repo: `cd $CLAUDE_PROJECT_DIR/$(get_repo_path "$repo")` after sourcing `sc
 
 ---
 
+## Sprint YAML and Jira Interaction Rules
+
+<critical>
+**Never directly edit sprint YAML.** All sprint YAML modifications MUST go through dedicated scripts.
+</critical>
+
+<info>
+**Rule 1:** Use `/sprint` skill for sprint operations
+- `/sprint status` - View sprint
+- `/sprint backlog` - View available stories
+- `/sprint work` - Start a story
+- `/sprint archive` - Archive completed story
+
+**Rule 2:** Use `/story` skill for story operations
+- `/story finish` - Complete story (handles YAML, Jira, merge, archive)
+- `/story create` - Add new story to sprint
+
+**Rule 3:** Use `/jira` skill for all Jira operations
+- `/jira claim` - Assign and move to In Progress
+- `/jira move` - Transition status
+- `/jira view` - Check status
+- `/jira sync` - Sync YAML ↔ Jira
+
+**Rule 4:** All sprint YAML access goes through scripts
+```bash
+# GOOD: Use scripts for ALL operations
+.pennyfarthing/scripts/core/run.sh sprint/get-story-field.sh X-Y workflow
+.pennyfarthing/scripts/core/run.sh sprint/get-epic-field.sh 35 jira
+.pennyfarthing/scripts/core/run.sh sprint/check-story.sh X-Y
+
+# BAD: Direct yq queries (even read-only)
+yq '.epics[].stories[] | ...' sprint/current-sprint.yaml
+```
+
+**Script Responsibilities:**
+| Operation | Script | Skill |
+|-----------|--------|-------|
+| Get story field | `get-story-field.sh` | - |
+| Get epic field | `get-epic-field.sh` | - |
+| Check story/epic | `check-story.sh` | `/sprint work` |
+| Start story | `jira-claim-story.sh` | `/jira claim` |
+| Finish story | `finish-story.sh` | `/story finish` |
+| Archive story | `archive-story.sh --apply` | `/sprint archive` |
+| Sync to Jira | `sync-epic-jira.sh` | `/jira sync` |
+| Create epic | `create-jira-epic.sh` | `/jira create epic` |
+</info>
+
+---
+
 
 ## Persona System
 
@@ -121,3 +174,65 @@ HTML comments that agents emit to signal Cyclist UI. Format: `<!-- CYCLIST:TYPE:
 - `CONTEXT_CLEAR` - Context >80% at handoff
 - `QUESTION`/`CHOICES` - User input needed mid-work
 </info>
+
+---
+
+<agent-command-protocol>
+## AGENT_COMMAND Protocol
+
+<critical>
+**Subagent output is NOT visible to Cyclist.** Tool results are not parsed for markers.
+Handoff subagents return an `AGENT_COMMAND` block with a pre-rendered `marker` string.
+The **calling agent** outputs the `marker` verbatim - no parsing or mapping required.
+</critical>
+
+### How It Works
+
+1. Agent writes assessment to session file FIRST
+2. Agent spawns `handoff` subagent
+3. Subagent runs `handoff-marker.sh {next-agent}` to generate `AGENT_COMMAND` block
+4. Subagent returns the block with pre-rendered `marker` string
+5. **Agent outputs `marker` verbatim, then outputs `fallback` message**
+
+**Single Source of Truth:** The `handoff-marker.sh` script is the authoritative source for marker format. It handles environment detection (IS_CYCLIST, USE_TIREPUMP) automatically.
+
+### AGENT_COMMAND Format
+
+```
+---
+AGENT_COMMAND:
+  marker: "{PRE_RENDERED_MARKER_STRING}"
+  fallback: "Run `/{agent}` to continue"
+---
+```
+
+The `marker` field contains the exact string to output (or empty string if no marker needed).
+The `fallback` field contains human-readable instructions.
+
+### Agent Action
+
+**Simple rule: Output `marker` then `fallback`. That's it.**
+
+1. If `error: true` → Report the `fallback` message as an error
+2. Otherwise → Output `marker` verbatim (if non-empty), then output `fallback`
+
+### Example
+
+Subagent returns:
+```
+---
+AGENT_COMMAND:
+  marker: "<!-- CYCLIST:HANDOFF:/dev -->"
+  fallback: "Run `/dev` to continue"
+---
+```
+
+Agent outputs in their direct text (not a tool call):
+```
+<!-- CYCLIST:HANDOFF:/dev -->
+
+Run `/dev` to continue
+```
+
+**CRITICAL:** The marker MUST appear in the agent's direct text output, not in a tool result.
+</agent-command-protocol>

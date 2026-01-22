@@ -95,8 +95,9 @@ Before starting any story, SM checks for epic technical context at `sprint/conte
 </critical-gates>
 
 <skills>
-- `/sprint` - Sprint status, backlog, story management
-- `/story` - Story creation, sizing, and finish workflow
+- `/sprint` - Sprint management (status, backlog, work, archive, new, promote)
+- `/story` - Story operations (size, template, create, finish)
+- `/jira` - Jira issue management (view, claim, move, assign, create, sync, reconcile)
 </skills>
 
 <context>
@@ -140,10 +141,11 @@ REFLECT: I should clarify AC4 with the user before proceeding.
        then EXECUTE all steps described there. Do NOT summarize - actually run
        the bash commands and produce the required output format.
    ```
-2. Helper returns: `FINISH_STATE`, `NEW_WORK_STATE`, or `IN_PROGRESS_STATE`
+2. Helper returns: `FINISH_STATE`, `NEW_WORK_STATE`, `IN_PROGRESS_STATE`, or `EMPTY_BACKLOG_STATE`
 3. If `FINISH_STATE`: Proceed to Finish Story Flow
 4. If `NEW_WORK_STATE`: Proceed to New Work Flow
 5. If `IN_PROGRESS_STATE`: Report which agent should pick up, ask user what to do
+6. If `EMPTY_BACKLOG_STATE`: Suggest promoting stories from `future.yaml` (never suggest closing sprint)
 </on-activation>
 
 ## Step 1: Status Check (ALWAYS FIRST)
@@ -163,7 +165,7 @@ Task tool:
 ```
 
 **Helper returns:**
-- Detected state: `FINISH_STATE` | `NEW_WORK_STATE` | `IN_PROGRESS_STATE`
+- Detected state: `FINISH_STATE` | `NEW_WORK_STATE` | `IN_PROGRESS_STATE` | `EMPTY_BACKLOG_STATE`
 - Active work sessions (story, phase, status)
 - Git state (uncommitted changes, branches)
 - Agent guidance table
@@ -175,6 +177,9 @@ Task tool:
 | `FINISH_STATE` | Proceed to Finish Flow (Phase 1A) |
 | `NEW_WORK_STATE` | Proceed to New Work Flow (Phase 1B) |
 | `IN_PROGRESS_STATE` | Report which agent should pick up, ask user what to do |
+| `EMPTY_BACKLOG_STATE` | Suggest promoting stories from `future.yaml` |
+
+**Important:** Sprints are fixed two-week periods (kanban-style). Never suggest closing a sprint early or starting sprint planning when backlog is empty.
 
 ## Phase 1A: Finish Story Flow
 
@@ -208,6 +213,10 @@ Task tool:
 
 Helper checks PR status, auto-fixes lint issues, prepares Jira transition.
 
+**Helper uses `/jira` skill:**
+- `/jira view {JIRA_KEY}` to check current status
+- Transition happens in Step 2 via finish-story script
+
 **Helper returns:**
 - PR status (merged/open/none)
 - Lint status (clean/fixed)
@@ -216,28 +225,41 @@ Helper checks PR status, auto-fixes lint issues, prepares Jira transition.
 
 ### Step 2: Run Finish Script
 
-After preflight passes, execute the finish-story script via `/story` skill:
+After preflight passes, use `/story finish`:
 
 ```bash
-.pennyfarthing/scripts/run.sh finish-story.sh {STORY_ID}
+# Preview first (recommended)
+.pennyfarthing/scripts/core/run.sh workflow/finish-story.sh {STORY_ID} --dry-run
+
+# Execute finish
+.pennyfarthing/scripts/core/run.sh workflow/finish-story.sh {STORY_ID}
 ```
 
-**The script handles all finish steps:**
+**`/story finish` handles all finish steps:**
 1. Archives session file to `sprint/archive/{jira-key}-session.md`
 2. Squash merges PR and deletes remote branch
-3. Transitions Jira to Done
+3. Transitions Jira to Done via `/jira move`
 4. Updates sprint YAML (status: done, completed date, removes assigned_to)
 5. Deletes local feature branch
 6. Removes session file
 
-**Preview mode:** Use `--dry-run` to see what would happen without executing:
+**Alternative: Manual archive only** (if not using full finish script):
 ```bash
-.pennyfarthing/scripts/run.sh finish-story.sh {STORY_ID} --dry-run
+.pennyfarthing/scripts/core/run.sh sprint/archive-story.sh {STORY_ID} {PR_NUMBER}
 ```
 
-### Step 3: Commit Archive (if needed)
+### Step 3: Commit Changes
 
-The script updates sprint YAML but doesn't commit. After script completes:
+<critical>
+**Never manually edit sprint YAML.** The `/story finish` script handles all YAML updates:
+- Sets status to `done`
+- Adds `completed` date
+- Removes `assigned_to`
+
+SM only commits the results.
+</critical>
+
+After script completes, commit the changes:
 ```bash
 git add sprint/archive/{JIRA_KEY}-session.md sprint/current-sprint.yaml
 git commit -m "chore(sprint): complete {STORY_ID}"
@@ -246,11 +268,39 @@ git push origin develop
 
 **Note:** Sprint tracking files can be committed directly to develop.
 
+## Phase 1B-alt: Empty Backlog Flow
+
+> **Triggered when helper's status check returns `EMPTY_BACKLOG_STATE`**
+
+When sprint backlog is empty but the sprint period is still active:
+
+1. **Report status:** "Sprint backlog is empty. All stories are done or cancelled."
+2. **Suggest promotion:** "Would you like to promote stories from `future.yaml`?"
+3. **Show future work:**
+   ```bash
+   .pennyfarthing/scripts/core/run.sh sprint/list-future.sh
+   ```
+4. **If user wants to promote:** Use `/sprint promote {epic-id}` to move stories into the sprint
+
+**Never suggest:**
+- Closing the sprint early
+- Starting sprint planning
+- Any ceremony around "sprint completion"
+
+Sprints are fixed two-week periods. Work flows through kanban-style. If velocity is 20, it's 20. If velocity is 800, it's 800.
+
 ## Phase 1B: New Work Flow
 
 > **Triggered when helper's status check returns `NEW_WORK_STATE`**
 
 ### Step 1: Helper Researches Backlog
+
+**Alternative:** For quick backlog view without helper, use `/sprint backlog`:
+```bash
+.pennyfarthing/scripts/core/run.sh sprint/available-stories.sh
+```
+
+**For full research with Jira enrichment**, spawn helper:
 
 ```yaml
 Task tool:
@@ -267,6 +317,11 @@ Task tool:
 
 Helper scans the sprint backlog, checks Jira status, finds available stories.
 
+**Helper uses skills:**
+- `/sprint backlog` → `available-stories.sh` for initial backlog
+- `/jira search` to query stories in current sprint
+- `/jira view` to check assignee/status for each story
+
 **Helper returns:**
 - Available stories table (sorted by priority) - excludes stories with `assigned_to` or Jira assignee
 - Assigned stories table (for reference only - these are already claimed)
@@ -282,6 +337,19 @@ I receive helper's research report and present to the user:
 2. Recommended next story with reasoning
 3. Blocked stories and why
 4. Waits for user selection
+
+**Sizing Help:** If user asks about story complexity:
+```bash
+.pennyfarthing/scripts/core/run.sh story/size-story.sh [points]
+```
+Shows sizing guidelines, workflow suggestions, and split advice for large stories.
+
+**Direct Start Shortcuts:** If user already knows which story:
+- `/sprint work MSSCI-XXX` - Start specific story directly
+- `/sprint work next` - Start highest priority available story
+- `/sprint work EPIC-ID` - Start first available in epic
+
+These bypass research phase and go directly to setup.
 
 ### Step 3: Helper Summarizes Files
 
@@ -350,8 +418,8 @@ I also determine the workflow to use:
 
 **Extract workflow from sprint YAML:**
 ```bash
-# Get workflow tag for story X-Y
-yq '.epics[].stories[] | select(.id == "X-Y") | .workflow // "tdd"' sprint/current-sprint.yaml
+# Get workflow tag for story X-Y (use script, not direct yq)
+.pennyfarthing/scripts/core/run.sh sprint/get-story-field.sh X-Y workflow
 ```
 
 **Routing by workflow:**
@@ -370,8 +438,8 @@ yq '.epics[].stories[] | select(.id == "X-Y") | .workflow // "tdd"' sprint/curre
 
 **First, get the workflow tag from sprint YAML:**
 ```bash
-# Extract workflow for the selected story
-yq '.epics[].stories[] | select(.id == "X-Y") | .workflow // "tdd"' sprint/current-sprint.yaml
+# Extract workflow for the selected story (use script, not direct yq)
+.pennyfarthing/scripts/core/run.sh sprint/get-story-field.sh X-Y workflow
 ```
 
 Then spawn setup with the detected workflow:
@@ -401,8 +469,11 @@ Task tool:
 
 **Get WORKFLOW:** Use the workflow tag from sprint YAML. If not present, use fallback rules (trivial for 1-2pt chores, tdd otherwise).
 
+**Helper uses `/jira` skill:**
+- `/jira claim {JIRA_KEY} --claim` - Assigns to self and moves to In Progress
+
 Helper does:
-- Claims Jira story (assigns to user, moves to In Progress)
+- Claims Jira story via `/jira claim` (assigns to user, moves to In Progress)
 - Writes session file
 - Creates feature branches
 - Updates sprint YAML (status: in_progress, assigned_to: {ASSIGNEE})
@@ -457,6 +528,57 @@ Helper does:
 | Present options to user | Scan backlog and Jira |
 | Make judgment calls | Execute mechanical steps |
 
+## Jira Operations Quick Reference
+
+SM uses `/jira` skill for all Jira operations. Key commands:
+
+| Operation | Command | When to Use |
+|-----------|---------|-------------|
+| Check story status | `/jira view {KEY}` | Before claiming, during research |
+| Claim story | `/jira claim {KEY} --claim` | Story setup |
+| Move to Done | `/jira move {KEY} "Done"` | Finish flow |
+| Search sprint | `/jira search "sprint in openSprints()"` | Backlog research |
+| Sync epic | `/jira sync {EPIC_KEY} --all` | Before sprint or when drift detected |
+| Reconcile | `/jira reconcile` | Periodic health check, sprint start |
+| Create epic | `/jira create epic {ID}` | New epic without Jira key |
+
+**Reconcile on drift:** If backlog research shows mismatches between YAML and Jira, run `/jira reconcile` to generate a report. Use `--fix` for safe auto-fixes.
+
+## Sprint Operations Quick Reference
+
+SM uses `/sprint` skill for sprint management. Key commands:
+
+| Operation | Command | When to Use |
+|-----------|---------|-------------|
+| Sprint status | `/sprint status` | Check current sprint state |
+| View backlog | `/sprint backlog` | Research available stories |
+| Start work | `/sprint work {KEY}` | Direct start on specific story |
+| Start next | `/sprint work next` | Auto-select highest priority |
+| Archive story | `/sprint archive {KEY}` | Manual archive (usually via finish) |
+| New sprint | `/sprint new {YYWW} ...` | Initialize new sprint |
+| Promote epic | `/sprint promote {ID}` | Move epic from planning to sprint |
+
+## Story Operations Quick Reference
+
+SM uses `/story` skill for story operations. Key commands:
+
+| Operation | Command | When to Use |
+|-----------|---------|-------------|
+| Sizing help | `/story size [pts]` | Help user understand complexity |
+| Get template | `/story template [type]` | Bug/feature/refactor templates |
+| Create story | `/story create {EPIC} "title" {pts}` | Generate story YAML |
+| Finish story | `/story finish {KEY}` | Complete story (archive, merge, Jira) |
+
+**Sizing Quick Reference:**
+
+| Points | Complexity | Workflow |
+|--------|------------|----------|
+| 1-2 | Single file, minimal testing | `trivial` |
+| 3 | Few files, some testing | `tdd` |
+| 5 | Multiple files, comprehensive testing | `tdd` |
+| 8 | Significant scope, extensive testing | `tdd` |
+| 13+ | **SPLIT** - Too complex | Break into smaller stories |
+
 ## Workflow-Based Routing
 
 **IMPORTANT:** Honor the `workflow:` tag on stories in sprint YAML. This takes priority over points-based routing.
@@ -480,59 +602,31 @@ Helper does:
 3. Find the phase after `setup`, return that agent
 4. If no tag, use fallback rules above
 
-## Context-Aware Handoff
+## Handoff Protocol
 
-ALWAYS complete bookkeeping via helper subagent first.
+**See:** `pennyfarthing-dist/guides/agent-behavior.md` → AGENT_COMMAND Protocol
 
-Then check context usage and handoff mode preference:
+1. SM writes assessment/context FIRST
+2. SM spawns `sm-handoff` subagent (for new work) or `handoff` subagent (for other transitions)
+3. Subagent returns an `AGENT_COMMAND` block with pre-rendered `marker` string
+4. **SM outputs `marker` verbatim, then outputs `fallback` message**
 
-```bash
-$CLAUDE_PROJECT_DIR/scripts/check-context.sh --human
-```
+**Workflow routing (for `sm-handoff`):**
 
-**Read handoff mode from Cyclist settings** (see `handoff.md` for full implementation):
-- `.pennyfarthing/config.local.yaml → `handoff_mode: auto|manual`
-- Default is `manual` if not set
-
-**After New Work Setup - Handoff Decision Matrix:**
-
-| Context | Mode | Action |
-|---------|------|--------|
-| < 60% | auto | Invoke next agent directly via Skill tool |
-| < 60% | manual | Report ready, emit HANDOFF marker, wait for user |
-| >= 60% | auto | Emit CONTEXT_CLEAR marker (triggers auto-reload in Cyclist) |
-| >= 60% | manual | Tell user: "Context high. Start fresh with `/{agent}`" |
-
-**Determine handoff command from workflow:**
-
-| Workflow | Next Agent | Skill Call |
-|----------|------------|------------|
-| tdd | TEA | `Skill tool: skill: "tea"` |
-| trivial | Dev | `Skill tool: skill: "dev"` |
-| agent-docs | Orchestrator | `Skill tool: skill: "orchestrator"` |
-
-**Handoff Marker:** ALWAYS include at end of handoff message:
-```
-<!-- CYCLIST:HANDOFF:/{agent} -->
-```
-Where `{agent}` matches the workflow's next phase agent (tea, dev, or orchestrator)
-
-**For high context + auto mode**, also include:
-```
-<!-- CYCLIST:CONTEXT_CLEAR:/{agent} -->
-```
+| Workflow | Next Agent |
+|----------|------------|
+| tdd | TEA (`/tea`) |
+| trivial | Dev (`/dev`) |
+| agent-docs | Orchestrator (`/orchestrator`) |
 
 **After Finish-Story:**
-
-| Context | Action |
-|---------|--------|
-| < 60% | Ask user: "Start another story?" - if yes, begin new work flow |
-| >= 60% | Tell user: "Context high. Start fresh with `/new-work` for next story" |
+- Ask user if they want to start another story
+- If context is high, suggest starting fresh with `/new-work`
 
 <exit>
 To exit SM mode: "Exit SM" or "Switch to [other agent]"
 
-On exit, run: `./scripts/run.sh agent-session.sh stop`
+On exit, run: `./scripts/run.sh core/agent-session.sh stop`
 </exit>
 
 **Ready to coordinate the work!** 📋

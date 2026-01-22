@@ -17,7 +17,7 @@ List all available workflows with type indicators.
 
 **Run:**
 ```bash
-.pennyfarthing/scripts/run.sh list-workflows.sh
+.pennyfarthing/scripts/core/run.sh workflow/list-workflows.sh
 ```
 
 **Output:** Table of workflows with:
@@ -35,7 +35,7 @@ Show workflow details. If no name provided, shows current session's workflow.
 
 **Run:**
 ```bash
-.pennyfarthing/scripts/run.sh show-workflow.sh [name]
+.pennyfarthing/scripts/core/run.sh workflow/show-workflow.sh [name]
 ```
 
 **Arguments:**
@@ -45,9 +45,9 @@ Show workflow details. If no name provided, shows current session's workflow.
 
 **Examples:**
 ```bash
-.pennyfarthing/scripts/run.sh show-workflow.sh          # Current session workflow
-.pennyfarthing/scripts/run.sh show-workflow.sh tdd      # Show TDD workflow
-.pennyfarthing/scripts/run.sh show-workflow.sh trivial  # Show trivial workflow
+.pennyfarthing/scripts/core/run.sh workflow/show-workflow.sh          # Current session workflow
+.pennyfarthing/scripts/core/run.sh workflow/show-workflow.sh tdd      # Show TDD workflow
+.pennyfarthing/scripts/core/run.sh workflow/show-workflow.sh trivial  # Show trivial workflow
 ```
 
 **Output:** Workflow description, phase flow diagram, phases table, and trigger conditions.
@@ -63,7 +63,7 @@ Switch to a different workflow mid-session.
 **Steps:**
 1. Verify workflow exists:
    ```bash
-   .pennyfarthing/scripts/run.sh show-workflow.sh <name>
+   .pennyfarthing/scripts/core/run.sh workflow/show-workflow.sh <name>
    ```
 
 2. Update the session file's workflow field:
@@ -84,7 +84,7 @@ Start a stepped workflow. Creates a new session and begins at step 1.
 
 **Run:**
 ```bash
-.pennyfarthing/scripts/run.sh start-workflow.sh <name> [--mode <mode>]
+.pennyfarthing/scripts/core/run.sh workflow/start-workflow.sh <name> [--mode <mode>]
 ```
 
 **Arguments:**
@@ -107,7 +107,7 @@ Resume an interrupted stepped workflow from the last completed step.
 
 **Run:**
 ```bash
-.pennyfarthing/scripts/run.sh resume-workflow.sh [name]
+.pennyfarthing/scripts/core/run.sh workflow/resume-workflow.sh [name]
 ```
 
 **Arguments:**
@@ -129,7 +129,7 @@ Show current stepped workflow progress.
 
 **Run:**
 ```bash
-.pennyfarthing/scripts/run.sh workflow-status.sh
+.pennyfarthing/scripts/core/run.sh workflow/workflow-status.sh
 ```
 
 **Output:**
@@ -237,6 +237,62 @@ When multiple workflows match a story:
 | `/workflow start architecture --mode validate` | `start-workflow.sh architecture --mode validate` |
 | `/workflow resume` | `resume-workflow.sh` |
 | `/workflow status` | `workflow-status.sh` |
+| `/workflow fix-phase 56-1 review` | `fix-session-phase.sh 56-1 review` |
+
+---
+
+## Session Phase Repair
+
+### `/workflow fix-phase <story-id> <target-phase> [--dry-run]`
+
+Fix session file when handoffs didn't update phase tracking properly. This corrects the `**Phase:**` field and adds missing handoff history rows.
+
+**When to use:**
+- SM detects wrong phase after handoff
+- `workflow-status-check` shows stale state
+- Phase History table is incomplete
+
+**Run:**
+```bash
+.pennyfarthing/scripts/core/run.sh workflow/fix-session-phase.sh <story-id> <target-phase> [--dry-run]
+```
+
+**Arguments:**
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `story-id` | Yes | Story ID (e.g., `56-1` or `MSSCI-12190`) |
+| `target-phase` | Yes | Target phase to set (e.g., `review`, `approved`, `finish`) |
+
+**Options:**
+| Option | Description |
+|--------|-------------|
+| `--dry-run` | Show what would be done without executing |
+
+**Examples:**
+```bash
+# Preview what would change
+.pennyfarthing/scripts/core/run.sh workflow/fix-session-phase.sh 56-1 review --dry-run
+
+# Fix phase to review (after Dev completed)
+.pennyfarthing/scripts/core/run.sh workflow/fix-session-phase.sh 56-1 review
+
+# Fix phase to approved (after Reviewer approved)
+.pennyfarthing/scripts/core/run.sh workflow/fix-session-phase.sh 56-1 approved
+
+# Using Jira key
+.pennyfarthing/scripts/core/run.sh workflow/fix-session-phase.sh MSSCI-12190 approved
+```
+
+**Valid phases by workflow:**
+| Workflow | Phase Sequence |
+|----------|----------------|
+| `tdd` | setup → red → green → review → approved → finish |
+| `trivial` | setup → impl → review → approved → finish |
+
+**What it updates:**
+1. `**Phase:**` field to target phase
+2. `**Phase Started:**` to current timestamp
+3. Handoff History table with missing transitions
 
 ---
 

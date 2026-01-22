@@ -86,3 +86,36 @@ When reviewing regex-based parsing:
 2. Check for catastrophic backtracking (nested quantifiers)
 3. Verify global flag behavior with `exec()` loops
 4. Confirm captured groups match expected values
+
+## Platform-Specific UI Text Pattern
+
+When reviewing keyboard shortcut displays:
+```javascript
+// Common issue: hardcoded Mac symbols
+title="Plan mode (⌘1)"  // Wrong for Windows users
+
+// Better: dynamic or generic
+const modifier = isMac ? '⌘' : 'Ctrl+';
+title={`Plan mode (${modifier}1)`}
+```
+
+**Checklist:**
+- [ ] Check if keyboard shortcuts show correct modifier for platform
+- [ ] Verify JavaScript handler uses same platform detection as display text
+- [ ] Look for `⌘`, `⇧`, `⌥` symbols that may confuse non-Mac users
+
+## fetch() Error Handling Pattern
+
+When reviewing fetch calls, verify response status is checked:
+```javascript
+// Problematic - doesn't catch HTTP errors
+await fetch('/api/settings', { method: 'PATCH', body: ... });
+currentMode = newMode;  // Runs even on 500 error
+
+// Better - explicit status check
+const response = await fetch('/api/settings', { method: 'PATCH', body: ... });
+if (!response.ok) throw new Error(`HTTP ${response.status}`);
+currentMode = newMode;
+```
+
+**Note:** `fetch()` only rejects on network failure, not HTTP error status codes.

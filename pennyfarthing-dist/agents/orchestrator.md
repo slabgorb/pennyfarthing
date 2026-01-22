@@ -227,7 +227,7 @@ REFLECT: Update dev.md to make handoff subagent mandatory in the gate checklist.
 <exit>
 To exit: "Exit Orchestrator" or switch to another agent.
 
-On exit, run: `./scripts/run.sh agent-session.sh stop`
+On exit, run: `./scripts/run.sh core/agent-session.sh stop`
 </exit>
 
 <reasoning-mode>
@@ -344,3 +344,12 @@ Task tool:
 
       **Handoff:** To Tech Writer for quality review
 ```
+
+## Handoff Protocol
+
+**See:** `pennyfarthing-dist/guides/agent-behavior.md` → AGENT_COMMAND Protocol
+
+1. Orchestrator writes assessment FIRST
+2. Orchestrator spawns `handoff` subagent
+3. Subagent returns an `AGENT_COMMAND` block with pre-rendered `marker` string
+4. **Orchestrator outputs `marker` verbatim, then outputs `fallback` message**

@@ -9,7 +9,8 @@ export function findNodeModulesPath(projectRoot: string): string | null {
   // Package locations to check (in priority order)
   const packagePaths = [
     '@pennyfarthing/core/pennyfarthing-dist',  // Scoped package (current)
-    'pennyfarthing/pennyfarthing-dist',         // Legacy unscoped package
+    'pennyfarthing/pennyfarthing-dist',         // Legacy unscoped (symlink from init)
+    'pennyfarthing-monorepo/pennyfarthing-dist', // GitHub dependency (npm alias)
   ];
 
   // Check standard location first

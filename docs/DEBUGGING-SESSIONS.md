@@ -9,7 +9,7 @@ Guide for debugging Claude Code sessions when things go wrong, including verbose
 pennyfarthing doctor
 
 # Check context usage
-.pennyfarthing/scripts/check-context.sh --human
+.pennyfarthing/scripts/core/check-context.sh --human
 
 # View recent logs
 source .pennyfarthing/scripts/utils/logging.sh && log_list 20
@@ -38,7 +38,7 @@ Most scripts support `--verbose`:
 
 ```bash
 .pennyfarthing/scripts/agent-session.sh start dev --verbose
-.pennyfarthing/scripts/check-context.sh --verbose
+.pennyfarthing/scripts/core/check-context.sh --verbose
 ```
 
 ### Verbose Output Style
@@ -56,7 +56,7 @@ When verbose mode is enabled, output includes:
 
 ```bash
 # Human-readable output
-.pennyfarthing/scripts/check-context.sh --human
+.pennyfarthing/scripts/core/check-context.sh --human
 
 # Example output:
 # ✅ Context: 65% (130000 tokens) - OK to continue
@@ -67,7 +67,7 @@ When verbose mode is enabled, output includes:
 
 ```bash
 # Load context variables
-eval $(.pennyfarthing/scripts/check-context.sh)
+eval $(.pennyfarthing/scripts/core/check-context.sh)
 
 # Available variables:
 echo $CONTEXT_TOKENS    # 130000
@@ -79,7 +79,7 @@ echo $HANDOFF_MODE      # ask or auto
 ### Check Specific Session
 
 ```bash
-.pennyfarthing/scripts/check-context.sh --session <session-id>
+.pennyfarthing/scripts/core/check-context.sh --session <session-id>
 ```
 
 ### Thresholds
@@ -174,7 +174,7 @@ Console output uses colors:
 
 **Diagnosis:**
 ```bash
-.pennyfarthing/scripts/check-context.sh --human
+.pennyfarthing/scripts/core/check-context.sh --human
 # Shows: ⚠️ Context: 87% (174000 tokens) - CRITICAL
 ```
 

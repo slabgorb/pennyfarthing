@@ -12,6 +12,12 @@
 import * as vscode from 'vscode';
 import { ClaudeService } from '../services/claude-service';
 import { ReflectorAdapter } from '../adapters/reflector';
+import {
+  formatResponse,
+  formatToolUse,
+  ProgressTracker,
+} from '../adapters/response-formatter';
+import { handleChatError } from '../adapters/error-handler';
 
 // Agent subcommand definitions
 const AGENT_COMMANDS = [
@@ -138,7 +144,7 @@ export class PennyfarthingChatParticipant {
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       this.log(`Error: ${errorMsg}`);
-      response.markdown(`\n\n❌ Error: ${errorMsg}`);
+      response.markdown(handleChatError(err));
     }
   }
 
@@ -153,29 +159,48 @@ export class PennyfarthingChatParticipant {
     return new Promise((resolve, reject) => {
       const service = this.getClaudeService();
 
+      // Create progress tracker for long operations (AC5)
+      const progressTracker = new ProgressTracker();
+
       // Handle text chunks - process through Reflector to detect/strip CYCLIST markers
+      // Then apply response formatting (AC1, AC3, AC4)
       const onText = async (text: string) => {
         const result = await this.reflectorAdapter.processText(text);
         // Display text with markers stripped, markers processed in background
         if (result.displayText) {
-          response.markdown(result.displayText);
+          // Apply response formatting: tables, code blocks, file paths
+          const formatted = formatResponse(result.displayText);
+          response.markdown(formatted);
         }
       };
 
-      // Handle tool use
+      // Handle tool use - format as collapsible sections (AC2)
+      // and track progress for long operations (AC5)
       const onToolUse = (name: string, input: Record<string, unknown>) => {
-        const inputStr = this.truncateInput(JSON.stringify(input, null, 2));
-        response.markdown(
-          `\n\n📄 **Tool: ${name}**\n\`\`\`json\n${inputStr}\n\`\`\`\n`
-        );
+        // Track tool for progress indicator
+        progressTracker.recordToolStart(name);
+        progressTracker.startToolProgress(name, response);
+
+        // Format tool use as collapsible section
+        const formatted = formatToolUse(name, input);
+        response.markdown('\n\n' + formatted + '\n');
+      };
+
+      // Handle tool result - clear progress
+      const onToolResult = () => {
+        progressTracker.endToolProgress(response);
       };
 
       // Handle completion
       const onComplete = async () => {
+        // Clear any remaining progress indicator
+        progressTracker.endToolProgress(response);
+
         // Flush any remaining buffered text from reflector
         const flushed = await this.reflectorAdapter.flush();
         if (flushed.displayText) {
-          response.markdown(flushed.displayText);
+          const formatted = formatResponse(flushed.displayText);
+          response.markdown(formatted);
         }
         cleanup();
         resolve();
@@ -191,6 +216,7 @@ export class PennyfarthingChatParticipant {
       const cleanup = () => {
         service.off('text', onText);
         service.off('toolUse', onToolUse);
+        service.off('toolResult', onToolResult);
         service.off('complete', onComplete);
         service.off('error', onError);
       };
@@ -198,6 +224,7 @@ export class PennyfarthingChatParticipant {
       // Register listeners
       service.on('text', onText);
       service.on('toolUse', onToolUse);
+      service.on('toolResult', onToolResult);
       service.on('complete', onComplete);
       service.on('error', onError);
 
@@ -215,16 +242,6 @@ export class PennyfarthingChatParticipant {
         reject(err);
       });
     });
-  }
-
-  /**
-   * Truncate long input strings for display.
-   */
-  private truncateInput(input: string, maxLength = 500): string {
-    if (input.length <= maxLength) {
-      return input;
-    }
-    return input.substring(0, maxLength) + '...';
   }
 
   /**

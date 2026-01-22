@@ -2,6 +2,13 @@
 
 > Pennyfarthing-specific story management patterns
 
+## Startup Workflow
+
+On activation, load critical skills:
+1. Run `agent-session.sh start "sm"` to load persona
+2. Load and follow `.pennyfarthing/agents/sm.md`
+3. Load Jira skill (`.claude/skills/jira/skill.md`) for story operations
+
 ## Scale-Adaptive Workflow
 
 | Points | Scale | Workflow |
