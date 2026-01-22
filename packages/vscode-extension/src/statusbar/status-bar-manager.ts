@@ -1,6 +1,7 @@
 /**
  * MSSCI-12190: StatusBarManager - WheelHub Connection Infrastructure
  * MSSCI-12192: Gearshift Mode Status Bar Item
+ * MSSCI-12228: Model Indicator Status Bar Item
  *
  * Orchestrates VS Code status bar items for Pennyfarthing extension.
  * Manages connection state and subscribes to WheelHub stats updates.
@@ -32,6 +33,9 @@ export class StatusBarManager implements vscode.Disposable {
   /** Status bar item for gearshift mode display (MSSCI-12192) */
   private gearshiftItem: vscode.StatusBarItem;
 
+  /** Status bar item for model indicator display (MSSCI-12228) */
+  private modelItem: vscode.StatusBarItem;
+
   /** Subscription cleanup function for WebSocketManager stats */
   private statsUnsubscribe?: () => void;
 
@@ -56,6 +60,9 @@ export class StatusBarManager implements vscode.Disposable {
   /** Last known permission mode */
   private lastMode?: PermissionMode;
 
+  /** Last known model name (MSSCI-12228) */
+  private lastModel?: string;
+
   /**
    * Create a new StatusBarManager.
    * @param wsManager Optional WebSocketManager for stats subscription
@@ -73,11 +80,19 @@ export class StatusBarManager implements vscode.Disposable {
       99
     );
 
+    // MSSCI-12228: Create model status bar item with priority 98 (right of gearshift)
+    this.modelItem = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Left,
+      98
+    );
+
     // Set initial connecting state
     this.updateContextDisplay();
     this.updateGearshiftDisplay();
+    this.updateModelDisplay();
     this.contextItem.show();
     this.gearshiftItem.show();
+    this.modelItem.show();
 
     // Subscribe to channels if WebSocketManager provided
     if (wsManager) {
@@ -125,6 +140,13 @@ export class StatusBarManager implements vscode.Disposable {
         this.lastMode = data.mode as PermissionMode;
         this.updateGearshiftDisplay();
       }
+    }
+
+    // MSSCI-12228: Extract model data if present
+    const model = (data as { model?: string }).model;
+    if (typeof model === 'string') {
+      this.lastModel = model;
+      this.updateModelDisplay();
     }
   }
 
@@ -252,6 +274,57 @@ export class StatusBarManager implements vscode.Disposable {
   }
 
   /**
+   * MSSCI-12228: Format a full model ID to a short display name.
+   * @param model Full model ID (e.g., "claude-opus-4-5-20251101")
+   * @returns Short display name in uppercase (e.g., "OPUS 4-5")
+   */
+  private formatModelName(model: string): string {
+    if (!model || model === '—' || model === '-') return '';
+    // Remove "claude-" prefix and date suffix (YYYYMMDD)
+    let formatted = model
+      .replace(/^claude-/, '')
+      .replace(/-\d{8}$/, '');
+    // Replace first hyphen with space (e.g., "opus-4-5" -> "opus 4-5")
+    formatted = formatted.replace(/-/, ' ');
+    return formatted.toUpperCase();
+  }
+
+  /**
+   * MSSCI-12228: Update the model status bar item display.
+   */
+  private updateModelDisplay(): void {
+    if (this.disposed) return;
+
+    switch (this.connectionState) {
+      case 'connecting':
+        this.modelItem.text = 'MODEL: --';
+        this.modelItem.tooltip = 'Waiting for WheelHub connection';
+        break;
+
+      case 'disconnected':
+        this.modelItem.text = 'MODEL: --';
+        this.modelItem.tooltip = 'WheelHub disconnected - model unavailable';
+        break;
+
+      case 'connected':
+        if (this.lastModel) {
+          const formatted = this.formatModelName(this.lastModel);
+          if (formatted) {
+            this.modelItem.text = `MODEL: ${formatted}`;
+            this.modelItem.tooltip = `Active model: ${this.lastModel}`;
+          } else {
+            this.modelItem.text = 'MODEL: --';
+            this.modelItem.tooltip = 'Model unknown';
+          }
+        } else {
+          this.modelItem.text = 'MODEL: --';
+          this.modelItem.tooltip = 'Waiting for model data';
+        }
+        break;
+    }
+  }
+
+  /**
    * Set the connection state and update display accordingly.
    * @param state The new connection state
    */
@@ -289,11 +362,13 @@ export class StatusBarManager implements vscode.Disposable {
         // Update display to show retry attempt
         this.updateContextDisplay();
         this.updateGearshiftDisplay();
+        this.updateModelDisplay();
       }, 2000);
     }
 
     this.updateContextDisplay();
     this.updateGearshiftDisplay();
+    this.updateModelDisplay();
   }
 
   /**
@@ -362,5 +437,6 @@ export class StatusBarManager implements vscode.Disposable {
     // Dispose status bar items
     this.contextItem.dispose();
     this.gearshiftItem.dispose();
+    this.modelItem.dispose();
   }
 }
