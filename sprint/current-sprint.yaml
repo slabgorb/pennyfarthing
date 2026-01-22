@@ -601,7 +601,7 @@ epics:
         repos: pennyfarthing
         completed: "2026-01-22"
   # ===========================================================================
-  # EPIC: Agent Identity & Emotional Connection (epic-57) - BACKLOG
+  # EPIC: Agent Identity & Emotional Connection (epic-57) - IN PROGRESS
   # ===========================================================================
   - id: epic-57
     type: epic
@@ -614,7 +614,7 @@ epics:
     points: 8
     completed_points: 0
     priority: P0
-    status: backlog
+    status: in_progress
     marker: vscode
     repos: pennyfarthing
     jira: MSSCI-12189
