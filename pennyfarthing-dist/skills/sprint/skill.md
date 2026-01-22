@@ -121,37 +121,36 @@ Action: Automatically start work on returned story.
 
 ---
 
-### `/sprint archive <story-id> [pr-number]`
+### `/sprint archive <story-id> [pr-number] [--apply]`
 
 Archive a completed story to the sprint archive file.
 
 <run>
-.pennyfarthing/scripts/run.sh sprint/archive-story.sh <story-id> [pr-number]
+.pennyfarthing/scripts/run.sh sprint/archive-story.sh <story-id> [pr-number] [--apply]
 </run>
 
 <args>
 | Arg | Required | Description |
 |-----|----------|-------------|
-| `story-id` | Yes | Jira key (e.g., `MSSCI-11945`) |
+| `story-id` | Yes | Story ID (e.g., `35-2`) |
 | `pr-number` | No | PR number if merged via PR |
+| `--apply` | No | Also remove story from current-sprint.yaml |
 </args>
 
 <example>
-.pennyfarthing/scripts/run.sh sprint/archive-story.sh MSSCI-11945 368
+# Archive only (manual removal needed)
+.pennyfarthing/scripts/run.sh sprint/archive-story.sh 35-2 368
+
+# Archive and remove atomically (recommended)
+.pennyfarthing/scripts/run.sh sprint/archive-story.sh 35-2 368 --apply
 </example>
 
 <output>
 1. Extracts story from `current-sprint.yaml`
 2. Appends to `sprint/archive/sprint-{YYWW}-completed.yaml`
-3. Outputs yq command to remove from current sprint
+3. With `--apply`: Also removes from current sprint
+4. Without `--apply`: Outputs command to complete removal
 </output>
-
-<critical>
-After running, execute the provided yq command to complete removal:
-```bash
-yq eval -i 'del(.epics[].stories[] | select(.id == "MSSCI-11945"))' sprint/current-sprint.yaml
-```
-</critical>
 
 ---
 
@@ -218,6 +217,59 @@ Next steps after promote:
 - Create Jira epic: `/jira create epic <epic-id>`
 - Remove from planning.yaml if desired
 </when>
+
+---
+
+## Read Operations
+
+These scripts read sprint YAML without modifying it. Use these instead of direct `yq` queries.
+
+### Get Story Field
+
+<run>
+.pennyfarthing/scripts/run.sh sprint/get-story-field.sh <story-id> <field>
+</run>
+
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `story-id` | Yes | Story ID (e.g., `35-2`) |
+| `field` | Yes | Field name to extract |
+</args>
+
+<example>
+.pennyfarthing/scripts/run.sh sprint/get-story-field.sh 35-2 workflow   # Returns: tdd
+.pennyfarthing/scripts/run.sh sprint/get-story-field.sh 35-2 jira       # Returns: MSSCI-12345
+.pennyfarthing/scripts/run.sh sprint/get-story-field.sh 35-2 status     # Returns: in_progress
+</example>
+
+<output>
+Field value or "null" if not found. Common fields: `workflow`, `status`, `jira`, `points`, `title`, `repos`, `priority`.
+</output>
+
+---
+
+### Get Epic Field
+
+<run>
+.pennyfarthing/scripts/run.sh sprint/get-epic-field.sh <epic-id> <field>
+</run>
+
+<args>
+| Arg | Required | Description |
+|-----|----------|-------------|
+| `epic-id` | Yes | Epic ID (e.g., `epic-35` or just `35`) |
+| `field` | Yes | Field name to extract |
+</args>
+
+<example>
+.pennyfarthing/scripts/run.sh sprint/get-epic-field.sh epic-35 jira    # Returns: MSSCI-11234
+.pennyfarthing/scripts/run.sh sprint/get-epic-field.sh 35 title        # Returns: Epic title
+</example>
+
+<output>
+Field value or "null" if not found. Common fields: `jira`, `title`, `description`, `status`.
+</output>
 
 ---
 

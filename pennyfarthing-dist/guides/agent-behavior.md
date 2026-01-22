@@ -74,6 +74,55 @@ Multi-repo: `cd $CLAUDE_PROJECT_DIR/$(get_repo_path "$repo")` after sourcing `sc
 
 ---
 
+## Sprint YAML and Jira Interaction Rules
+
+<critical>
+**Never directly edit sprint YAML.** All sprint YAML modifications MUST go through dedicated scripts.
+</critical>
+
+<info>
+**Rule 1:** Use `/sprint` skill for sprint operations
+- `/sprint status` - View sprint
+- `/sprint backlog` - View available stories
+- `/sprint work` - Start a story
+- `/sprint archive` - Archive completed story
+
+**Rule 2:** Use `/story` skill for story operations
+- `/story finish` - Complete story (handles YAML, Jira, merge, archive)
+- `/story create` - Add new story to sprint
+
+**Rule 3:** Use `/jira` skill for all Jira operations
+- `/jira claim` - Assign and move to In Progress
+- `/jira move` - Transition status
+- `/jira view` - Check status
+- `/jira sync` - Sync YAML ↔ Jira
+
+**Rule 4:** All sprint YAML access goes through scripts
+```bash
+# GOOD: Use scripts for ALL operations
+.pennyfarthing/scripts/run.sh sprint/get-story-field.sh X-Y workflow
+.pennyfarthing/scripts/run.sh sprint/get-epic-field.sh 35 jira
+.pennyfarthing/scripts/run.sh sprint/check-story.sh X-Y
+
+# BAD: Direct yq queries (even read-only)
+yq '.epics[].stories[] | ...' sprint/current-sprint.yaml
+```
+
+**Script Responsibilities:**
+| Operation | Script | Skill |
+|-----------|--------|-------|
+| Get story field | `get-story-field.sh` | - |
+| Get epic field | `get-epic-field.sh` | - |
+| Check story/epic | `check-story.sh` | `/sprint work` |
+| Start story | `jira-claim-story.sh` | `/jira claim` |
+| Finish story | `finish-story.sh` | `/story finish` |
+| Archive story | `archive-story.sh --apply` | `/sprint archive` |
+| Sync to Jira | `sync-epic-jira.sh` | `/jira sync` |
+| Create epic | `create-jira-epic.sh` | `/jira create epic` |
+</info>
+
+---
+
 
 ## Persona System
 

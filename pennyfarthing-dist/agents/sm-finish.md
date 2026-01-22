@@ -26,15 +26,15 @@ Run ALL checks in parallel, then aggregate results.
 5. **Cleanup:** remove temp files from `.session/`
 </gate>
 
-## Jira Transition (after preflight passes)
+## Jira Transition
 
-Use `/jira move` to transition to Done:
+<critical>
+The Jira transition to Done is handled by `/story finish` (finish-story.sh).
+Do NOT transition Jira here - that would duplicate the finish script's work.
+This subagent only performs preflight checks and assessment.
+</critical>
 
-```bash
-jira issue move {JIRA_KEY} "Done" --project MSSCI
-```
-
-**Note:** The `--project` flag is required even though the key contains the project prefix.
+**Preflight only verifies:** Jira is ready for transition (not blocked, not already Done).
 
 ## Readiness Report
 
