@@ -48,11 +48,14 @@ future:
       total_points: 21
       prd: artifacts/prd.md
       epics_doc: artifacts/epics-and-stories.md
-      note: "epic-56 (Glanceable Status Awareness, 13pts) promoted to Sprint 12 as MSSCI-12226"
+      note: "epic-56 as MSSCI-12226, epic-57 as MSSCI-12189, epic-58 as MSSCI-12236"
       epics:
         # epic-56 promoted to Sprint 12 as MSSCI-12226
+        # epic-57 promoted to Sprint 12 as MSSCI-12189 (repurposed from duplicate)
+        # epic-58 promoted to Sprint 12 as MSSCI-12236
 
         - id: epic-57
+          status: promoted  # In Sprint 12 as MSSCI-12189
           title: "Agent Identity & Emotional Connection"
           description: |
             Users can see and connect with their current agent persona - portrait,
@@ -96,6 +99,7 @@ future:
               repos: pennyfarthing
 
         - id: epic-58
+          status: promoted  # In Sprint 12 as MSSCI-12236
           title: "Sprint & Story Awareness"
           description: |
             Users can see their current story, sprint status, and branch health
@@ -106,7 +110,6 @@ future:
           priority: P1
           marker: "vscode"
           repos: pennyfarthing
-          status: planning
           stories:
             - id: "58-1"
               title: "Story Status Tree View"
