@@ -4,34 +4,139 @@
 
 ## Session File Gotchas
 
+### Write Without Read
+**Problem:** Write tool fails with "File has not been read yet"
+**Solution:** Always Read existing files before Write
+
 ### Missing Assessment
 **Problem:** Handoff offered without assessment written
 **Solution:** Always Edit session file BEFORE spawning handoff subagent
 
-## Jira Gotchas
+## Scale Assessment Gotchas
 
-### NEVER GUESS JIRA IDs
-Local IDs like `31-18` are NOT Jira keys. Valid keys: `MSSCI-XXXXX`.
-Always look up, query, create, or ask - never fabricate.
+### Trivial Story Sent to TEA
+**Problem:** 1-point fix goes through full TDD flow
+**Solution:** Trivial stories (1-2 pts, chore/fix) go directly to Dev
 
-### Always Use --project MSSCI Flag
-**Problem:** Jira CLI commands fail or behave unexpectedly without project flag
-**Solution:** ALWAYS include `--project MSSCI` on move/assign commands
-
-## Session-Sprint ID Mismatch
-
-### Session Uses Local ID, Sprint Uses Jira Key
-**Problem:** Session files created with local IDs (e.g., `53-1-session.md`) but sprint YAML stories migrated to use Jira keys as IDs (e.g., `id: MSSCI-12123`)
-**Symptom:** `finish-story.sh` fails with "Could not determine Jira key" because it looks up story by session filename
-**Root Cause:** Epic 53 was synced to Jira mid-flight after session file was created with old naming convention
-**Solution:**
-1. For immediate fix: Pass Jira key explicitly or rename session file
-2. For systemic fix: Ensure session filenames match story IDs in sprint YAML
-**Future Work:** Consider migration script to normalize session filenames when stories are synced to Jira
+### Complex Story Without TEA
+**Problem:** 8-point feature skips test planning
+**Solution:** All standard/complex stories must go through TEA
 
 ## Cleanup Gotchas
 
 ### Benchmark Results Are Valuable
-**Problem:** Untracked files in `internal/results/baselines/` look like temp artifacts
-**Reality:** These are valuable benchmark run results
-**Solution:** NEVER delete files in `internal/results/baselines/`. Ask user first.
+**Problem:** Untracked files in `internal/results/baselines/*/dev/runs/` look like temp artifacts
+**Reality:** These are valuable benchmark run results - judges, summaries, raw outputs
+**Solution:** NEVER delete files in `internal/results/baselines/`. If cleanup is needed, ask user first. These files capture benchmark execution history even when untracked.
+
+## Command Creation Gotchas
+
+### Missing Symlink for New Commands
+**Problem:** New command created in `pennyfarthing-dist/commands/` but `/command` not discoverable
+**Cause:** Symlink in `.claude/commands/` was never created
+**Solution:** When creating new commands, ALWAYS create both:
+1. The actual file: `pennyfarthing-dist/commands/{name}.md`
+2. The symlink: `cd .claude/commands && ln -s ../../pennyfarthing-dist/commands/{name}.md {name}.md`
+
+Claude Code discovers commands via the `.claude/commands/` directory, not `pennyfarthing-dist/`.
+
+## Jira Sync Gotchas
+
+### Manual Issue Creation Creates Duplicates
+**Problem:** Using `jira issue create` manually for epics/stories creates duplicates and messy state
+**Cause:** Didn't read the jira skill first; didn't know about `jira-sync.sh`
+**Solution:** ALWAYS read `.claude/skills/jira/SKILL.md` before ANY Jira operations. Use the provided scripts:
+- `jira-sync.sh <epic>` - Sync all stories in an epic
+- `jira-sync-story.sh <story>` - Sync a single story
+- Use `--dry-run` first to preview changes
+
+### Wrong Field Name for Jira Key
+**Problem:** Sync script says "Not synced to Jira - skipping"
+**Cause:** Used `jira_key:` instead of `jira:` in sprint YAML
+**Solution:** The field is `jira:` (not `jira_key:`) for both epics and stories
+
+### Canceled vs Cancelled
+**Problem:** `jira issue move` fails with "invalid transition state"
+**Solution:** Use American spelling: "Canceled" not "Cancelled"
+
+## Handoff Marker Gotchas
+
+### Missing Cyclist Handoff Prompt
+**Problem:** After handoff subagent completes, user doesn't see the quick-action button to invoke next agent
+**Cause:** Subagent output didn't include the Cyclist marker
+**Solution:** Handoff subagents MUST emit `<!-- CYCLIST:HANDOFF:/agent -->` in their final output
+
+This HTML comment is parsed by Cyclist's `quick-actions.js` to show the handoff button. Without it, the user has to manually type `/tea` or `/dev`.
+
+**Format:**
+```
+<!-- CYCLIST:HANDOFF:/tea -->
+```
+
+**Files that need it:**
+- `sm-handoff.md` - SM→TEA/Dev transitions
+- `generic-handoff.md` - TEA→Dev→Reviewer→SM transitions
+
+### Skill Not Discovered for CLI Commands
+**Problem:** Jira assign command failed with "400 Bad Request", wasted time troubleshooting
+**Cause:** `/jira` skill wasn't listed in SM agent's `<skills>` section, so it wasn't loaded
+**Solution:**
+1. When a CLI command fails, ALWAYS check if there's a skill for that tool (`/jira`, `/just`, etc.)
+2. Skills must be listed in the agent's `<skills>` section to be auto-discovered
+3. Added `/jira` to SM agent skills (2026-01-15)
+
+**Broader lesson:** If you're doing operations with a CLI tool and hit errors, invoke the relevant skill BEFORE troubleshooting manually.
+
+## Installation Gotchas
+
+### Package Not on npm
+**Problem:** Looking for `npm install pennyfarthing` or checking npmjs.com
+**Reality:** Pennyfarthing is installed from GitHub, not npm registry
+**Solution:** Install via: `npm install github:1898andCo/pennyfarthing`
+
+The CLI still expects `node_modules/pennyfarthing/pennyfarthing-dist/` structure, which GitHub installs create correctly.
+
+---
+
+## NEVER GUESS JIRA IDs
+
+**Problem:** Created stories with placeholder IDs like `31-18` or `35-17` instead of real Jira keys
+**Cause:** Guessed at ID format instead of creating in Jira first
+**Impact:** Invalid IDs in sprint YAML, confusion about what's real
+
+**SOLUTION - NEVER fabricate Jira IDs. Instead:**
+1. **Look it up** in `sprint/current-sprint.yaml` under the story's `id:` field
+2. **Query Jira** using `jira issue list` or `jira issue view`
+3. **Create new** using `jira issue create` (returns the real ID)
+4. **Ask the user** if you cannot determine the correct ID
+
+Old-style IDs like `31-18` are **local sprint YAML placeholders** - they are NOT valid Jira keys. Valid Jira keys follow the pattern `MSSCI-XXXXX`.
+
+**Learned:** 2026-01-18 (the hard way)
+
+---
+
+*Add story management gotchas discovered during coordination below*
+
+---
+
+## Subagent Data Freshness Gotchas
+
+### workflow-status-check returns stale epic context data
+**Date:** 2026-01-18
+**Problem:** The workflow-status-check subagent reads `.session/context-epic-*.md` files and reports cached/outdated story counts and sprint progress instead of querying actual sprint YAML.
+**Impact:** Presented user with old numbers (e.g., "8 backlog stories" when there were fewer)
+**Solution:** When presenting sprint status to user, SM should either:
+1. Read `sprint/current-sprint.yaml` directly for current numbers
+2. Verify subagent output against actual sprint file before presenting
+3. Be explicit about data source when presenting status
+
+**Lesson:** Never trust subagent-reported story counts without verification against `sprint/current-sprint.yaml`.
+
+### Sprint notes use stale shorthand epic numbers instead of MSSCI IDs
+**Date:** 2026-01-18
+**Problem:** Sprint notes section used "Epic 31", "Epic 35" shorthand with outdated remaining points, while the actual epic data uses MSSCI-XXXXX IDs with current points.
+**Cause:** Notes weren't updated when stories completed; shorthand numbers don't match actual epic IDs.
+**Solution:** Sprint notes should use MSSCI epic IDs (e.g., MSSCI-11599, MSSCI-11715) and remaining points should be calculated from `points - completed_points` in the epic definition.
+
+**Lesson:** Always use MSSCI IDs, never shorthand "Epic N" numbers. Keep notes in sync with actual epic data.
