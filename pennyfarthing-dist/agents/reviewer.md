@@ -270,8 +270,8 @@ Write assessment to session file BEFORE spawning handoff subagent.
 
 1. Reviewer writes assessment to session file FIRST
 2. Reviewer spawns `handoff` subagent with VERDICT (approved/rejected)
-3. Subagent returns an `AGENT_COMMAND` block
-4. **Reviewer parses AGENT_COMMAND and emits the marker in direct text output**
+3. Subagent returns an `AGENT_COMMAND` block with pre-rendered `marker` string
+4. **Reviewer outputs `marker` verbatim, then outputs `fallback` message**
 
 **Verdict routing:**
 - APPROVED → next agent is SM (`/sm`)

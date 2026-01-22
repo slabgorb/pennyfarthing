@@ -203,8 +203,8 @@ Helper will use workflow definition to determine next phase (green) and agent (D
 
 1. TEA writes assessment to session file FIRST
 2. TEA spawns `handoff` subagent
-3. Subagent returns an `AGENT_COMMAND` block
-4. **TEA parses AGENT_COMMAND and emits the marker in direct text output**
+3. Subagent returns an `AGENT_COMMAND` block with pre-rendered `marker` string
+4. **TEA outputs `marker` verbatim, then outputs `fallback` message**
 
 <exit>
 To exit TEA mode: "Exit TEA" or "Switch to [other agent]"

@@ -351,5 +351,5 @@ Task tool:
 
 1. Orchestrator writes assessment FIRST
 2. Orchestrator spawns `handoff` subagent
-3. Subagent returns an `AGENT_COMMAND` block
-4. **Orchestrator parses AGENT_COMMAND and emits the marker in direct text output**
+3. Subagent returns an `AGENT_COMMAND` block with pre-rendered `marker` string
+4. **Orchestrator outputs `marker` verbatim, then outputs `fallback` message**

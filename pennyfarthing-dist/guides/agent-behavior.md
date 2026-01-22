@@ -7,7 +7,7 @@
 ## Critical Protocols
 
 <critical>
-**Reflector markers:** Subagent output is NOT visible to Cyclist. After handoff subagent returns `AGENT_COMMAND`, the calling agent MUST emit the marker in direct text output. See `<agent-command-protocol>` below.
+**Reflector markers:** Subagent output is NOT visible to Cyclist. After handoff subagent returns `AGENT_COMMAND`, output the `marker` string verbatim. See `<agent-command-protocol>` below.
 </critical>
 
 <critical>
@@ -20,7 +20,7 @@ Multi-repo: `cd $CLAUDE_PROJECT_DIR/$(get_repo_path "$repo")` after sourcing `sc
 </critical>
 
 <critical>
-**Handoff Action:** When `handoff` returns `AGENT_COMMAND`, parse it and emit the marker. Don't ask permission.
+**Handoff Action:** When `handoff` returns `AGENT_COMMAND`, output `marker` verbatim then `fallback`. Don't ask permission.
 </critical>
 
 <critical>
@@ -182,36 +182,39 @@ HTML comments that agents emit to signal Cyclist UI. Format: `<!-- CYCLIST:TYPE:
 
 <critical>
 **Subagent output is NOT visible to Cyclist.** Tool results are not parsed for markers.
-Handoff subagents return an `AGENT_COMMAND` block. The **calling agent** must parse it and emit the marker.
+Handoff subagents return an `AGENT_COMMAND` block with a pre-rendered `marker` string.
+The **calling agent** outputs the `marker` verbatim - no parsing or mapping required.
 </critical>
 
 ### How It Works
 
 1. Agent writes assessment to session file FIRST
-2. Agent spawns `handoff` or `sm-handoff` subagent
-3. Subagent returns an `AGENT_COMMAND` block with marker instructions
-4. **Agent parses AGENT_COMMAND and emits the marker in direct text output**
+2. Agent spawns `handoff` subagent
+3. Subagent runs `handoff-marker.sh {next-agent}` to generate `AGENT_COMMAND` block
+4. Subagent returns the block with pre-rendered `marker` string
+5. **Agent outputs `marker` verbatim, then outputs `fallback` message**
+
+**Single Source of Truth:** The `handoff-marker.sh` script is the authoritative source for marker format. It handles environment detection (IS_CYCLIST, USE_TIREPUMP) automatically.
 
 ### AGENT_COMMAND Format
 
 ```
 ---
 AGENT_COMMAND:
-  action: emit_marker
-  marker_type: {handoff|context_clear|none}
-  marker_value: {agent}
-  fallback_message: "Run `/{agent}` to continue"
+  marker: "{PRE_RENDERED_MARKER_STRING}"
+  fallback: "Run `/{agent}` to continue"
 ---
 ```
 
-### Agent Action Based on marker_type
+The `marker` field contains the exact string to output (or empty string if no marker needed).
+The `fallback` field contains human-readable instructions.
 
-| marker_type | Agent Action |
-|-------------|--------------|
-| `none` | Output only the `fallback_message` text |
-| `handoff` | Output: `<!-- CYCLIST:HANDOFF:/{marker_value} -->` |
-| `context_clear` | Output: `<!-- CYCLIST:CONTEXT_CLEAR:/{marker_value} -->` |
-| `blocked` | Report the error, do not emit any marker |
+### Agent Action
+
+**Simple rule: Output `marker` then `fallback`. That's it.**
+
+1. If `error: true` → Report the `fallback` message as an error
+2. Otherwise → Output `marker` verbatim (if non-empty), then output `fallback`
 
 ### Example
 
@@ -219,16 +222,16 @@ Subagent returns:
 ```
 ---
 AGENT_COMMAND:
-  action: emit_marker
-  marker_type: handoff
-  marker_value: dev
-  fallback_message: "Run `/dev` to continue"
+  marker: "<!-- CYCLIST:HANDOFF:/dev -->"
+  fallback: "Run `/dev` to continue"
 ---
 ```
 
-Agent must output in their direct text (not a tool call):
+Agent outputs in their direct text (not a tool call):
 ```
 <!-- CYCLIST:HANDOFF:/dev -->
+
+Run `/dev` to continue
 ```
 
 **CRITICAL:** The marker MUST appear in the agent's direct text output, not in a tool result.

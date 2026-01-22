@@ -15,7 +15,8 @@ AC checkboxes are marked ONLY by the agent that does the work.
 
 <critical>
 **Subagent output is NOT visible to Cyclist.** Tool results are not parsed for markers.
-You MUST return explicit commands for the calling agent to execute.
+You MUST return an `AGENT_COMMAND` block with a pre-rendered `marker` string.
+The calling agent outputs the `marker` verbatim - no parsing or mapping required.
 </critical>
 
 <info>
@@ -57,20 +58,21 @@ Edit `## Workflow Tracking`:
 
 **Duration:** Subtract SM Started from {NOW}, format as `Xm` or `Xh Ym`.
 
-## Detect Environment
+## Generate AGENT_COMMAND Block
 
-Run check-context.sh to determine if running in Cyclist:
+Use the `handoff-marker.sh` script to generate the complete AGENT_COMMAND block:
 
 ```bash
-eval "$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/check-context.sh)"
-echo "IS_CYCLIST=$IS_CYCLIST"
-echo "USE_TIREPUMP=$USE_TIREPUMP"
-echo "CONTEXT_PERCENT=$CONTEXT_PERCENT"
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {NEXT_AGENT}
 ```
+
+The script handles IS_CYCLIST and USE_TIREPUMP detection automatically.
+Output the script result verbatim.
 
 ## Output Format
 
-Your output MUST end with an `AGENT_COMMAND` block that tells the calling agent exactly what to do:
+Your output MUST end with an `AGENT_COMMAND` block with a pre-rendered `marker` string.
+The calling agent outputs the `marker` verbatim - no parsing or mapping required.
 
 ```
 ## Handoff Complete
@@ -82,20 +84,20 @@ Story {STORY_ID} ready for {NEXT_AGENT} phase.
 
 ---
 AGENT_COMMAND:
-  action: emit_marker
-  marker_type: {MARKER_TYPE}
-  marker_value: {NEXT_AGENT}
-  fallback_message: "Run `/{NEXT_AGENT}` to continue"
+  marker: "{MARKER_STRING}"
+  fallback: "Run `/{NEXT_AGENT}` to continue"
 ---
 ```
 
-### Marker Type Decision
+### Marker String Generation
 
-| IS_CYCLIST | USE_TIREPUMP | marker_type | Calling Agent Action |
-|------------|--------------|-------------|---------------------|
-| false | * | none | Agent outputs: "Run `/{NEXT_AGENT}` to continue" |
-| true | false | handoff | Agent outputs: `<!-- CYCLIST:HANDOFF:/{NEXT_AGENT} -->` |
-| true | true | context_clear | Agent outputs: `<!-- CYCLIST:CONTEXT_CLEAR:/{NEXT_AGENT} -->` |
+The `handoff-marker.sh` script generates the complete AGENT_COMMAND block including the correct marker:
+
+```bash
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {NEXT_AGENT}
+```
+
+**Output the script result verbatim.** No manual marker lookup required.
 
 ### Example Output (Cyclist, no TirePump)
 
@@ -109,10 +111,8 @@ Story MSSCI-12274 ready for TEA phase.
 
 ---
 AGENT_COMMAND:
-  action: emit_marker
-  marker_type: handoff
-  marker_value: tea
-  fallback_message: "Run `/tea` to continue"
+  marker: "<!-- CYCLIST:HANDOFF:/tea -->"
+  fallback: "Run `/tea` to continue"
 ---
 ```
 
@@ -128,10 +128,8 @@ Story MSSCI-12274 ready for TEA phase.
 
 ---
 AGENT_COMMAND:
-  action: emit_marker
-  marker_type: none
-  marker_value: tea
-  fallback_message: "Run `/tea` to continue"
+  marker: ""
+  fallback: "Run `/tea` to continue"
 ---
 ```
 
@@ -139,8 +137,9 @@ AGENT_COMMAND:
 
 When you receive this subagent's output, parse the `AGENT_COMMAND` block and:
 
-1. If `marker_type: none` → Output the `fallback_message` text
-2. If `marker_type: handoff` → Output: `<!-- CYCLIST:HANDOFF:/{marker_value} -->`
-3. If `marker_type: context_clear` → Output: `<!-- CYCLIST:CONTEXT_CLEAR:/{marker_value} -->`
+1. Output the `marker` string verbatim (if non-empty)
+2. Output the `fallback` message
+
+**Simple rule: Output `marker` then `fallback`. That's it.**
 
 **The marker MUST appear in the calling agent's direct text output, not in a tool result.**
