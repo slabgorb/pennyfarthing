@@ -71,19 +71,16 @@ let processingState = false;
 
 // Editor callbacks (set via init)
 let clearEditorFn = null;
-let insertContentFn = null;
 let submitFn = null;
 
 /**
  * Initialize message queue with editor callbacks
  * @param {Object} callbacks - Editor callback functions
  * @param {Function} callbacks.clearEditor - Clear editor content
- * @param {Function} callbacks.insertContent - Insert content into editor
  * @param {Function} callbacks.submit - Submit editor content
  */
-export function initMessageQueue({ clearEditor, insertContent, submit }) {
+export function initMessageQueue({ clearEditor, submit }) {
   clearEditorFn = clearEditor;
-  insertContentFn = insertContent;
   submitFn = submit;
   loadMessageQueue();
 }
@@ -232,10 +229,8 @@ export function processNextInQueue() {
 
   const nextMessage = dequeueMessage();
   if (nextMessage) {
-    // Clear editor and insert the queued message text
-    if (clearEditorFn) clearEditorFn();
-    if (insertContentFn) insertContentFn(nextMessage.text);
-    // Submit with images if callback accepts them
+    // Submit directly with text and images - no need to insert into editor
+    // The text is passed to submitFn which handles display in message view
     if (submitFn) submitFn(nextMessage.text, nextMessage.images);
   }
 }
@@ -270,9 +265,8 @@ export async function injectMessage(index) {
   // Reset processing state
   processingState = false;
 
-  // Inject and submit with images
+  // Clear any existing editor content, then submit directly
   if (clearEditorFn) clearEditorFn();
-  if (insertContentFn) insertContentFn(message.text);
   if (submitFn) submitFn(message.text, message.images);
 
   return true;
