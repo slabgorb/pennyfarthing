@@ -794,3 +794,110 @@ epics:
         branch: feat/MSSCI-12275-bell-mode
         workflow: tdd
         completed: "2026-01-22"
+  - id: epic-61
+    type: epic
+    title: "Epic: Reflector Marker Consolidation"
+    description: |
+      Pennyfarthing developers have a single, well-tested source of truth for marker parsing used by all consumers, with configurable behavior.
+    priority: P1
+    status: done
+    repos: pennyfarthing
+    stories:
+      - id: MSSCI-12317
+        title: "Create Marker Types and Constants"
+        description: |
+          TypeScript interfaces and constants for the marker system
+        points: 1
+        priority: P0
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12317
+        completed: "2026-01-23"
+      - id: MSSCI-12318
+        title: "Implement Code Block Stripping"
+        description: |
+          a function to strip fenced code blocks from text
+        points: 1
+        priority: P0
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12318
+        completed: "2026-01-23"
+      - id: MSSCI-12319
+        title: "Implement Marker Detection"
+        description: |
+          a function to detect CYCLIST markers in text
+        points: 1
+        priority: P0
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12319
+        completed: "2026-01-23"
+      - id: MSSCI-12320
+        title: "Implement Marker Stripping"
+        description: |
+          a function to remove all markers from text
+        points: 1
+        priority: P0
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12320
+        completed: "2026-01-23"
+      - id: MSSCI-12321
+        title: "Comprehensive Test Suite for Marker Module"
+        description: |
+          >90% test coverage for the marker module
+        points: 1
+        priority: P0
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12321
+        completed: "2026-01-23"
+      - id: MSSCI-12322
+        title: "Migrate Cyclist to Shared Marker Module"
+        description: |
+          quick-actions.js to import marker functions from @pennyfarthing/shared
+        points: 1
+        priority: P0
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12322
+        completed: "2026-01-23"
+      - id: MSSCI-12323
+        title: "Migrate VS Code Extension to Shared Marker Module"
+        description: |
+          reflector.ts to import marker functions from @pennyfarthing/shared
+        points: 1
+        priority: P0
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12323
+        completed: "2026-01-23"
+      - id: MSSCI-12324
+        title: "Configurable TirePump Threshold"
+        description: |
+          to configure when context clearing triggers
+        points: 1
+        priority: P0
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12324
+        completed: "2026-01-23"
+    jira: MSSCI-12315
+    completed: "2026-01-23"
