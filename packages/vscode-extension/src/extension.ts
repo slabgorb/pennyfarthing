@@ -105,10 +105,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     sidebarProvider
   );
 
-  // Start file watchers for sidebar sync (MSSCI-12147)
-  // This enables sidebar updates from session/config files without WheelHub
-  sidebarProvider.startFileWatchers();
-  outputChannel.appendLine('[Sidebar] File watchers started for session/config sync');
+  // Note: Session file watching moved to Cyclist/WheelHub (MSSCI-12237)
+  // Sidebar now receives story updates exclusively via WheelHub WebSocket
 
   // Register Agent Portrait webview provider (MSSCI-12148)
   agentPortraitWebviewProvider = new AgentPortraitWebviewProvider!(context.extensionUri);
