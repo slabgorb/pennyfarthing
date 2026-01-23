@@ -66,9 +66,9 @@ export function parseSessionFile(content: string, projectDir?: string): Partial<
   }
 
   // Extract phase: **Phase:** dev or **Phase:** TEA (RED complete) -> Dev (GREEN)
-  // Also check table format: | Phase | dev |
+  // Also check table format: | Phase | dev | or | **Phase** | dev |
   const phaseMatch = content.match(/\*\*Phase:\*\*\s*(\w+)/i) ||
-                     content.match(/\|\s*Phase\s*\|\s*(\w+)/i);
+                     content.match(/\|\s*\*?\*?Phase\*?\*?\s*\|\s*(\w+)/i);
   if (phaseMatch) {
     result.phase = phaseMatch[1].toLowerCase();
   }
