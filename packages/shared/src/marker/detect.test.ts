@@ -15,6 +15,7 @@ import {
   stripCodeBlocks,
   MARKER_PATTERN,
   MARKER_TYPES,
+  VALID_MARKER_TYPES,
   type Marker,
   type MarkerType,
 } from './index.js';
@@ -135,6 +136,36 @@ describe('marker constants', () => {
 
     it('should have CHOICES constant', () => {
       assert.strictEqual(MARKER_TYPES.CHOICES, 'choices');
+    });
+  });
+
+  describe('VALID_MARKER_TYPES', () => {
+    it('should be a Set', () => {
+      assert.ok(VALID_MARKER_TYPES instanceof Set);
+    });
+
+    it('should contain all 5 marker types', () => {
+      assert.strictEqual(VALID_MARKER_TYPES.size, 5);
+      assert.ok(VALID_MARKER_TYPES.has('handoff'));
+      assert.ok(VALID_MARKER_TYPES.has('context_clear'));
+      assert.ok(VALID_MARKER_TYPES.has('invoke'));
+      assert.ok(VALID_MARKER_TYPES.has('question'));
+      assert.ok(VALID_MARKER_TYPES.has('choices'));
+    });
+
+    it('should match MARKER_TYPES values', () => {
+      // VALID_MARKER_TYPES should contain exactly the values from MARKER_TYPES
+      const typeValues = Object.values(MARKER_TYPES);
+      assert.strictEqual(VALID_MARKER_TYPES.size, typeValues.length);
+      for (const value of typeValues) {
+        assert.ok(VALID_MARKER_TYPES.has(value), `Should contain ${value}`);
+      }
+    });
+
+    it('should not contain invalid types', () => {
+      assert.ok(!VALID_MARKER_TYPES.has('invalid'));
+      assert.ok(!VALID_MARKER_TYPES.has('HANDOFF')); // Case sensitive - lowercase only
+      assert.ok(!VALID_MARKER_TYPES.has(''));
     });
   });
 });
