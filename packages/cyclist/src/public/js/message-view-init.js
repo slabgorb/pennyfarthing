@@ -18,10 +18,10 @@ import {
   setQuickActionsVisible,
   setVerboseMode as setMessageViewVerboseMode
 } from './components/MessageView.js';
-import { renderBackgroundTaskNotification } from './components/message-view/message-renderers.js';
+import { renderBackgroundTaskNotification, renderBellInjectedMessage } from './components/message-view/message-renderers.js';
 import { enrichMessage } from './message-enrichment.js';
 import { updateActivity, clearActivity } from './activity.js';
-import { resetSubmitting, setProcessing, processNextInQueue, setOnQueueChange, clearMessageQueue, loadMessageQueue, getMessageQueue, removeFromQueue, injectMessage } from './editor.js';
+import { resetSubmitting, setProcessing, processNextInQueue, setOnQueueChange, clearMessageQueue, loadMessageQueue, getMessageQueue, removeFromQueue, injectMessage, dequeueMessage } from './editor.js';
 import { handleMessage as handleGitCommitMessage } from './git-commit-detector.js';
 import { getCurrentAgentCommand } from './persona.js';
 import { settingsSync, STORAGE_KEYS } from './settings-sync.js';
@@ -248,6 +248,11 @@ function initMessageView() {
     console.log('[MessageView] Connected to background task notifications');
   }
 
+  // Bell mode: Connect to /ws/bell for injected message notifications
+  // When the PostToolUse hook injects a message, this WebSocket receives notification
+  // to dequeue from the in-memory queue and display the message in the conversation
+  connectBellWebSocket();
+
   // Wire up stop button and escape key
   const stopBtn = document.getElementById('stop-btn');
 
@@ -405,4 +410,99 @@ function updateToolBlocksVerboseMode(enabled) {
   });
 
   console.log(`[MessageView] Updated ${toolBlocks.length} tool blocks, verbose mode: ${enabled}`);
+}
+
+// =============================================================================
+// Bell Mode WebSocket Connection
+// =============================================================================
+
+/** Bell WebSocket connection */
+let bellWebSocket = null;
+let bellReconnectDelay = 1000;
+const BELL_RECONNECT_MAX_DELAY = 30000;
+const BELL_RECONNECT_MULTIPLIER = 1.5;
+
+/**
+ * Connect to the bell WebSocket for injected message notifications
+ * When the PostToolUse hook injects a message, this receives notification
+ * to dequeue from the in-memory queue and display in conversation
+ */
+function connectBellWebSocket() {
+  if (bellWebSocket?.readyState === WebSocket.OPEN) {
+    return; // Already connected
+  }
+
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${protocol}//${window.location.host}/ws/bell`;
+
+  try {
+    bellWebSocket = new WebSocket(wsUrl);
+
+    bellWebSocket.onopen = () => {
+      console.log('[Bell] WebSocket connected');
+      bellReconnectDelay = 1000; // Reset delay on successful connection
+    };
+
+    bellWebSocket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'bell-consumed') {
+          handleBellConsumed(data.text);
+        }
+      } catch (err) {
+        console.error('[Bell] Failed to parse WebSocket message:', err);
+      }
+    };
+
+    bellWebSocket.onclose = () => {
+      console.log('[Bell] WebSocket closed, reconnecting...');
+      scheduleBellReconnect();
+    };
+
+    bellWebSocket.onerror = (err) => {
+      console.error('[Bell] WebSocket error:', err);
+    };
+  } catch (err) {
+    console.error('[Bell] Failed to connect:', err);
+    scheduleBellReconnect();
+  }
+}
+
+/**
+ * Schedule reconnection with exponential backoff
+ */
+function scheduleBellReconnect() {
+  setTimeout(() => {
+    bellReconnectDelay = Math.min(
+      bellReconnectDelay * BELL_RECONNECT_MULTIPLIER,
+      BELL_RECONNECT_MAX_DELAY
+    );
+    connectBellWebSocket();
+  }, bellReconnectDelay);
+}
+
+/**
+ * Handle bell-consumed event from server
+ * Dequeues the message and displays it with a bell icon
+ * @param {string} text - The message text that was injected
+ */
+function handleBellConsumed(text) {
+  console.log('[Bell] Message consumed by hook:', text);
+
+  // Dequeue from the in-memory queue (syncs to storage too)
+  const dequeuedMsg = dequeueMessage();
+  if (dequeuedMsg) {
+    console.log('[Bell] Dequeued message:', dequeuedMsg.text);
+  }
+
+  // Display the injected message in the conversation with bell icon
+  const messageView = document.getElementById('message-view');
+  if (messageView && text) {
+    const html = renderBellInjectedMessage({ content: text });
+    if (html) {
+      messageView.insertAdjacentHTML('beforeend', html);
+      // Auto-scroll to show the message
+      messageView.scrollTop = messageView.scrollHeight;
+    }
+  }
 }

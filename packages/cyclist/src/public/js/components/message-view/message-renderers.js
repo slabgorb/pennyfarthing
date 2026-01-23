@@ -593,6 +593,28 @@ export function renderUserMessage(message) {
 }
 
 // =============================================================================
+// Bell Mode Injected Message
+// =============================================================================
+
+/**
+ * Render a bell-injected user message (injected via PostToolUse hook)
+ * Shows a bell icon to indicate the message was injected mid-turn
+ * @param {Object} message - Message with content property
+ * @returns {string} HTML string
+ */
+export function renderBellInjectedMessage(message) {
+  const { content } = message;
+  if (typeof content !== 'string' || !content.trim()) {
+    return '';
+  }
+
+  return `<div class="message message-user message-bell-injected">
+    <span class="bell-indicator" title="Injected via Bell Mode">🔔</span>
+    ${parseMarkdown(content)}
+  </div>`;
+}
+
+// =============================================================================
 // Background Task Notification (31-15)
 // =============================================================================
 
