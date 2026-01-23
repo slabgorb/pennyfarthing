@@ -759,7 +759,8 @@ epics:
         status: done
         repos: pennyfarthing
         completed: "2026-01-22"
-      - id: MSSCI-12276
+      - id: MSSCI-12346
+        jira: MSSCI-12346
         title: "Improve init/update/doctor for legacy install cleanup"
         description: |
           When installing Pennyfarthing over a legacy install (or updating), stale
@@ -784,8 +785,10 @@ epics:
           - [ ] update cleans up known legacy file patterns
         points: 3
         priority: P1
-        status: backlog
+        status: in_progress
         repos: pennyfarthing
+        branch: feat/MSSCI-12346-legacy-cleanup
+        workflow: tdd
       - id: MSSCI-12275
         title: "Bell mode: inject queued messages after tool use"
         description: "When Bell mode is enabled, queued messages are injected into the conversation\ncontext after each tool use, rather than waiting for Claude to finish. This\nlets users provide feedback mid-turn without aborting Claude's work.\n\nImplementation:\n- Add Bell mode toggle to settings (off by default)\n- Hook into tool_result event in OTEL receiver\n- When Bell mode on and queue non-empty, dequeue message and inject as user turn\n- Claude continues processing but now sees the injected message in context\n- UI shows \U0001F514 indicator when Bell mode is active\n\nMetaphor: Like ringing a bike bell - you get attention without stopping traffic.\n"

@@ -25,7 +25,7 @@ interface DoctorOptions {
   dogfood?: boolean;
 }
 
-interface CheckResult {
+export interface CheckResult {
   name: string;
   status: 'pass' | 'warn' | 'fail';
   detail?: string;
@@ -79,6 +79,8 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
   results.push(...checkUserFiles(projectRoot));
   results.push(...checkDirectories(projectRoot));
   results.push(...checkHooks(projectRoot));
+  results.push(...checkLegacyFiles(projectRoot));
+  results.push(checkLegacyStatuslinePath(projectRoot));
 
   // Output results
   if (options.json) {
@@ -92,7 +94,8 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
     { name: 'Core Files', filter: (r: CheckResult) => r.name.startsWith('core/') },
     { name: 'User Files', filter: (r: CheckResult) => r.name.startsWith('project/') || r.name.startsWith('persona') || r.name.startsWith('settings') },
     { name: 'Directories', filter: (r: CheckResult) => r.name.startsWith('dir/') },
-    { name: 'Hooks', filter: (r: CheckResult) => r.name.startsWith('hook/') }
+    { name: 'Hooks', filter: (r: CheckResult) => r.name.startsWith('hook/') },
+    { name: 'Legacy Files', filter: (r: CheckResult) => r.name.startsWith('legacy/') }
   ];
 
   for (const category of categories) {
@@ -749,4 +752,144 @@ function checkHooks(projectRoot: string): CheckResult[] {
   }
 
   return results;
+}
+
+/**
+ * Known legacy statusline paths from various Pennyfarthing versions.
+ * These should be detected and cleaned up when proper statusline exists.
+ */
+const LEGACY_STATUSLINE_PATHS = [
+  '.claude/core/statusline.sh',
+  '.claude/statusline.sh',
+  '.claude/pennyfarthing/statusline.sh',     // v4.0.0-4.0.3
+  '.claude/pennyfarthing/scripts/statusline.sh', // v4.0.5
+  '.claude/scripts/statusline.sh',           // pre-v6.6
+  '.pennyfarthing/scripts/statusline.sh'     // before v7.0.3
+] as const;
+
+/**
+ * Canonical statusline path for current version (v7.x)
+ */
+const CANONICAL_STATUSLINE_PATH = '.pennyfarthing/scripts/misc/statusline.sh';
+
+/**
+ * Check for legacy files that may shadow or conflict with current Pennyfarthing files.
+ * Returns results with fix functions for --fix mode.
+ */
+export function checkLegacyFiles(projectRoot: string): CheckResult[] {
+  const results: CheckResult[] = [];
+
+  // Check for legacy .claude/scripts/statusline.sh
+  const legacyStatusline = join(projectRoot, '.claude/scripts/statusline.sh');
+  const properStatusline = join(projectRoot, CANONICAL_STATUSLINE_PATH);
+
+  if (pathExists(legacyStatusline)) {
+    if (pathExists(properStatusline)) {
+      // Both exist - legacy shadows proper
+      results.push({
+        name: 'legacy/.claude/scripts/statusline.sh',
+        status: 'warn',
+        detail: 'Shadows proper pennyfarthing statusline',
+        fix: () => {
+          unlinkSync(legacyStatusline);
+        }
+      });
+    }
+    // If only legacy exists, don't warn - user may have custom setup
+  }
+
+  // Check for legacy .claude/persona-config.yaml
+  const legacyPersonaConfig = join(projectRoot, '.claude/persona-config.yaml');
+  const properThemeConfig = join(projectRoot, '.pennyfarthing/config.local.yaml');
+
+  if (pathExists(legacyPersonaConfig)) {
+    if (pathExists(properThemeConfig)) {
+      // Both exist - legacy may conflict
+      results.push({
+        name: 'legacy/.claude/persona-config.yaml',
+        status: 'warn',
+        detail: 'May conflict with .pennyfarthing/config.local.yaml',
+        fix: () => {
+          unlinkSync(legacyPersonaConfig);
+        }
+      });
+    }
+    // If only legacy exists, don't warn - it's the active config
+  }
+
+  return results;
+}
+
+/**
+ * Check if settings.local.json has a legacy statusline path.
+ * Returns result with fix function to update to canonical path.
+ */
+export function checkLegacyStatuslinePath(projectRoot: string): CheckResult {
+  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+
+  // No settings file - nothing to check
+  if (!pathExists(settingsPath)) {
+    return {
+      name: 'settings/statusline-path',
+      status: 'pass',
+      detail: 'No settings file'
+    };
+  }
+
+  let settings: Record<string, unknown>;
+  try {
+    settings = JSON.parse(readFileSync(settingsPath, 'utf-8'));
+  } catch {
+    return {
+      name: 'settings/statusline-path',
+      status: 'warn',
+      detail: 'Cannot parse settings.local.json'
+    };
+  }
+
+  const hooks = settings.hooks as Record<string, string> | undefined;
+  if (!hooks || !hooks.StatusLine) {
+    // No statusline hook configured
+    return {
+      name: 'settings/statusline-path',
+      status: 'pass',
+      detail: 'No statusline hook configured'
+    };
+  }
+
+  const currentPath = hooks.StatusLine;
+
+  // Check if it's the canonical path
+  if (currentPath === CANONICAL_STATUSLINE_PATH) {
+    return {
+      name: 'settings/statusline-path',
+      status: 'pass',
+      detail: undefined
+    };
+  }
+
+  // Check if it's a known legacy path
+  if (LEGACY_STATUSLINE_PATHS.includes(currentPath as typeof LEGACY_STATUSLINE_PATHS[number])) {
+    // Check if proper statusline exists before offering fix
+    const properStatusline = join(projectRoot, CANONICAL_STATUSLINE_PATH);
+    if (pathExists(properStatusline)) {
+      return {
+        name: 'settings/statusline-path',
+        status: 'warn',
+        detail: `Legacy path: ${currentPath}`,
+        fix: () => {
+          const updatedSettings = { ...settings };
+          (updatedSettings.hooks as Record<string, string>).StatusLine = CANONICAL_STATUSLINE_PATH;
+          writeFileSync(settingsPath, JSON.stringify(updatedSettings, null, 2));
+        }
+      };
+    }
+  }
+
+  // Unknown path - pass (user may have custom setup)
+  return {
+    name: 'settings/statusline-path',
+    status: 'pass',
+    detail: `Custom path: ${currentPath}`
+  };
 }
