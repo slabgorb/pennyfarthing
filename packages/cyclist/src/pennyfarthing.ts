@@ -336,22 +336,33 @@ export function getCurrentAgent(projectDir: string, sessionId?: string): string 
 export function getCurrentPersona(projectDir: string, sessionId?: string): Persona | null {
   // Check if this is a Pennyfarthing project
   if (!detectPennyfarthingProject(projectDir)) {
+    console.log('[Persona] Not a Pennyfarthing project:', projectDir);
     return null;
   }
 
   // Get theme configuration
   const config = loadThemeConfig(projectDir);
   if (!config) {
+    console.log('[Persona] No theme config found');
     return null;
   }
+  console.log('[Persona] Theme config:', config);
 
   // Find theme file path
-  // Check multiple locations: .claude/personas/themes/, pennyfarthing-dist/personas/themes/
-  const possiblePaths = [
+  // Check multiple locations: bundled resources, .claude/personas/themes/, pennyfarthing-dist/personas/themes/
+  const possiblePaths: string[] = [];
+
+  // 1. Packaged Electron app: Contents/Resources/pennyfarthing-dist/personas/themes
+  if (process.resourcesPath) {
+    possiblePaths.push(join(process.resourcesPath, 'pennyfarthing-dist', 'personas', 'themes', `${config.theme}.yaml`));
+  }
+
+  // 2. Project directory paths
+  possiblePaths.push(
     join(projectDir, '.claude', 'personas', 'themes', `${config.theme}.yaml`),
     join(projectDir, '.claude', 'pennyfarthing', 'themes', `${config.theme}.yaml`),
     join(projectDir, 'pennyfarthing-dist', 'personas', 'themes', `${config.theme}.yaml`),
-  ];
+  );
 
   // Use CYCLIST_THEME_PATH env var if available
   const envThemePath = process.env.CYCLIST_THEME_PATH;
@@ -360,16 +371,21 @@ export function getCurrentPersona(projectDir: string, sessionId?: string): Perso
   }
 
   let themePath: string | null = null;
+  console.log('[Persona] Searching theme paths:', possiblePaths);
   for (const path of possiblePaths) {
-    if (existsSync(path)) {
+    const exists = existsSync(path);
+    console.log('[Persona] Checking:', path, 'exists:', exists);
+    if (exists) {
       themePath = path;
       break;
     }
   }
 
   if (!themePath) {
+    console.log('[Persona] No theme file found');
     return null;
   }
+  console.log('[Persona] Using theme path:', themePath);
 
   // Load theme
   const agents = loadThemeYaml(themePath);
@@ -377,10 +393,19 @@ export function getCurrentPersona(projectDir: string, sessionId?: string): Perso
     return null;
   }
 
-  // Get current agent
-  const agentRole = getCurrentAgent(projectDir, sessionId);
+  // Get current agent (with fallback for standalone app)
+  let agentRole = getCurrentAgent(projectDir, sessionId);
   if (!agentRole) {
-    return null;
+    // Fallback: use 'orchestrator' or first available agent for standalone mode
+    if (agents['orchestrator']) {
+      agentRole = 'orchestrator';
+    } else {
+      const availableRoles = Object.keys(agents);
+      if (availableRoles.length === 0) {
+        return null;
+      }
+      agentRole = availableRoles[0];
+    }
   }
 
   // Get persona for agent role
@@ -436,11 +461,19 @@ export function getFullPersonaDetails(projectDir: string, sessionId?: string): F
   }
 
   // Find theme file path
-  const possiblePaths = [
+  const possiblePaths: string[] = [];
+
+  // 1. Packaged Electron app: Contents/Resources/pennyfarthing-dist/personas/themes
+  if (process.resourcesPath) {
+    possiblePaths.push(join(process.resourcesPath, 'pennyfarthing-dist', 'personas', 'themes', `${config.theme}.yaml`));
+  }
+
+  // 2. Project directory paths
+  possiblePaths.push(
     join(projectDir, '.claude', 'personas', 'themes', `${config.theme}.yaml`),
     join(projectDir, '.claude', 'pennyfarthing', 'themes', `${config.theme}.yaml`),
     join(projectDir, 'pennyfarthing-dist', 'personas', 'themes', `${config.theme}.yaml`),
-  ];
+  );
 
   const envThemePath = process.env.CYCLIST_THEME_PATH;
   if (envThemePath) {
@@ -473,10 +506,19 @@ export function getFullPersonaDetails(projectDir: string, sessionId?: string): F
     return null;
   }
 
-  // Get current agent
-  const agentRole = getCurrentAgent(projectDir, sessionId);
+  // Get current agent (with fallback for standalone app)
+  let agentRole = getCurrentAgent(projectDir, sessionId);
   if (!agentRole) {
-    return null;
+    // Fallback: use 'orchestrator' or first available agent for standalone mode
+    if (agents['orchestrator']) {
+      agentRole = 'orchestrator';
+    } else {
+      const availableRoles = Object.keys(agents);
+      if (availableRoles.length === 0) {
+        return null;
+      }
+      agentRole = availableRoles[0];
+    }
   }
 
   // Get raw persona data for agent role

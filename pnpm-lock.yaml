@@ -84,7 +84,7 @@ importers:
     dependencies:
       '@pennyfarthing/core':
         specifier: workspace:*
-        version: link:../..
+        version: link:../core
       '@pennyfarthing/shared':
         specifier: workspace:*
         version: link:../shared
