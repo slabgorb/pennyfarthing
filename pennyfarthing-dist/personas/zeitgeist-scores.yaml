@@ -1,0 +1,184 @@
+# Zeitgeist Score Assignments
+# Measuring persona articulation depth (NOT quality or preference)
+#
+# Scale (recalibrated for better spread):
+#   exceptional (90-100): Maximum articulation - speech patterns, authentic quotes, named helpers
+#   rich (70-89): Strong characterization - mostly authentic, good distinctiveness
+#   moderate (50-69): Adequate characterization - functional but some generic elements
+#   thin (30-49): Shallow characterization - concept helpers, object agents, adaptations over quotes
+#   minimal (0-29): Insufficient articulation - baseline or incoherent source
+#
+# Rubric dimensions:
+#   - Behavioral Specificity (25%): specific vs generic quirks
+#   - Speech Pattern Signal (25%): accent, case rules, verbal tics, vocabulary
+#   - Catchphrase Authenticity (20%): actual quotes vs adaptations
+#   - Helper Characterization (15%): named characters vs concepts
+#   - Agent Distinctiveness (15%): voice differentiation
+#
+# Purpose: Correlate with OCEAN profiles and benchmark performance
+# Reference: ZEITGEIST-ANALYSIS.md
+
+# Calibrated samples (manually scored with rubric):
+calibrated:
+  discworld:
+    composite: 98.0
+    rating: exceptional
+    breakdown:
+      behavioral: 100
+      speech: 100  # 4/4
+      catchphrases: 90
+      helpers: 100
+      distinctiveness: 100  # 5/5
+    notes: "DEATH's CAPITALS, Igor's lisp, all named helpers with personality"
+
+  star-trek-tos:
+    composite: 84.75
+    rating: rich
+    breakdown:
+      behavioral: 100
+      speech: 75  # 3/4 - no case rules
+      catchphrases: 100
+      helpers: 60  # named but minimal personality
+      distinctiveness: 80  # 4/5
+    notes: "Strong authentic quotes, weak helper characterization"
+
+  gilligans-island:
+    composite: 49.5
+    rating: thin  # 30-49 range; concept helpers (0%) and object agents
+    breakdown:
+      behavioral: 72
+      speech: 50  # 2/4
+      catchphrases: 50  # adaptations not quotes
+      helpers: 0  # all concepts
+      distinctiveness: 60  # 3/5
+    notes: "Object agents, concept helpers, limited source material"
+
+  control:
+    composite: 3.0
+    rating: minimal
+    breakdown:
+      behavioral: 0
+      speech: 0
+      catchphrases: 0
+      helpers: 0
+      distinctiveness: 20  # 1/5 floor
+    notes: "Intentional baseline - zero persona elements"
+
+# Assignments by score level (awaiting full rubric application)
+exceptional:
+  - discworld        # 98.0 - calibrated sample
+  - firefly          # Strong Whedon dialogue, distinctive voices
+  - star-wars        # Massive canon, highly quotable
+  - west-wing        # Sorkin dialogue, rapid-fire distinctive
+  - breaking-bad     # Prestige TV, deep character arcs
+  - dune             # Dense philosophical, unique vocabulary
+  - the-wire         # Institutional depth, distinctive dialects
+  - succession       # Sharp dialogue, family dynamics
+  - the-sopranos     # Psychological depth, NJ vernacular
+  - mad-men          # Period authenticity, character depth
+  - game-of-thrones  # Complex characters, quotable
+
+rich:
+  - star-trek-tos    # 84.75 - calibrated sample
+  - star-trek-tng    # Similar to TOS after enhancement
+  - the-expanse      # Books + show, Belter Creole
+  - ted-lasso        # Folksy wisdom, distinctive optimism
+  - parks-and-rec    # Quotable, distinct character voices
+  - catch-22         # Literary, absurdist voice
+  - better-call-saul # Prestige TV, character depth
+  - babylon-5        # Deep SF, character arcs
+  - battlestar-galactica
+  - sherlock-holmes  # Canonical detective fiction
+  - doctor-who       # 60 years of material
+  - harry-potter     # Well-known, quotable
+  - lord-of-the-rings
+  - hitchhikers-guide # Adams' distinctive voice
+  - foundation       # Classic SF
+  - mass-effect      # Deep game lore
+  - arcane           # Visually distinctive, character depth
+  - avatar-the-last-airbender
+  - cowboy-bebop
+  - futurama         # Long run, quotable
+  - the-good-place   # Philosophy + comedy
+  - the-office       # Mockumentary depth
+  - the-simpsons     # 35 years of material
+  - marvel-mcu
+  - sandman          # Gaiman depth
+  - watchmen
+  - vorkosigan-saga
+  - his-dark-materials
+  - neuromancer      # Cyberpunk canonical
+  - snow-crash
+  - bobiverse
+  - expeditionary-force # Skippy is very quotable
+  - hannibal
+  - fargo
+  - justified
+  - peaky-blinders
+  - deadwood
+  - black-sails
+  - the-americans
+  - twin-peaks
+  - x-files
+  - the-matrix
+  - blade-runner
+  - the-crown
+  - rome
+  - inspector-morse
+  - software-pioneers
+  - wwii-leaders
+  - house-md
+  - imperial-radch
+  - a-team           # After enhancement
+  - princess-bride   # After enhancement
+  - superfriends     # After enhancement
+  - mash
+
+moderate:
+  - jane-austen
+  - agatha-christie
+  - dickens
+  - shakespeare      # Rich source but archaic voice challenges
+  - moby-dick
+  - great-gatsby
+  - 1984             # Concepts over characters
+  - count-of-monte-cristo
+  - don-quixote
+  - les-miserables
+  - gothic-literature
+  - lovecraft-mythos
+  - the-odyssey
+  - arthurian-mythos
+  - greek-mythology
+  - norse-mythology
+  - alice-in-wonderland
+  - monty-python
+  - big-lebowski
+  - mad-max
+  - the-witcher
+  - ancient-philosophers
+  - ancient-strategists
+  - enlightenment-thinkers
+  - classical-composers
+  - jazz-legends
+  - film-auteurs
+  - renaissance-masters
+  - russian-masters
+  - scientific-revolutionaries
+  - military-commanders
+  - historical-figures
+  - world-explorers
+
+thin:
+  - gilligans-island # 49.5 - concept helpers (0%), object agents
+  - legion-of-doom   # Cartoon villains, shallow characterization
+
+minimal:
+  - control          # 3.0 - intentional baseline
+  - all-stars        # Mixed universe, no coherent source
+
+# Notes for analysis:
+# - "exceptional" themes have speech pattern encoding (accent, case, tics)
+# - "thin" themes have object agents and/or concept helpers
+# - OCEAN profiles should be controlled when comparing zeitgeist to performance
+# - Historical/biographical themes tend toward "moderate" (documented but less quotable)
