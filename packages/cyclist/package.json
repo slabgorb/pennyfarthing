@@ -90,6 +90,16 @@
     "extraMetadata": {
       "main": "dist/main.js"
     },
+    "extraResources": [
+      {
+        "from": "../../pennyfarthing-dist/personas",
+        "to": "pennyfarthing-dist/personas"
+      },
+      {
+        "from": "../../pennyfarthing-dist/agents",
+        "to": "pennyfarthing-dist/agents"
+      }
+    ],
     "mac": {
       "category": "public.app-category.developer-tools",
       "target": [

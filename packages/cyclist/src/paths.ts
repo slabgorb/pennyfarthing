@@ -26,7 +26,16 @@ function resolvePennyfarthingDist(): string | null {
     return envPath;
   }
 
-  // 2. Monorepo root (pennyfarthing-dist/ at repo root for dogfooding)
+  // 2. Packaged Electron app: Contents/Resources/pennyfarthing-dist/
+  // In packaged app, __dirname is inside app.asar, process.resourcesPath points to Resources
+  if (process.resourcesPath) {
+    const electronResourcesPath = join(process.resourcesPath, 'pennyfarthing-dist');
+    if (existsSync(electronResourcesPath)) {
+      return electronResourcesPath;
+    }
+  }
+
+  // 3. Monorepo root (pennyfarthing-dist/ at repo root for dogfooding)
   let currentDir = __dirname;
   for (let i = 0; i < 10; i++) {
     const monorepoPath = join(currentDir, 'pennyfarthing-dist');
@@ -38,14 +47,14 @@ function resolvePennyfarthingDist(): string | null {
     currentDir = parentDir;
   }
 
-  // 3. npm installed: node_modules/pennyfarthing/pennyfarthing-dist/
+  // 4. npm installed: node_modules/pennyfarthing/pennyfarthing-dist/
   // From cyclist's perspective: ../../pennyfarthing/pennyfarthing-dist
   const npmPath = join(__dirname, '..', '..', 'pennyfarthing', 'pennyfarthing-dist');
   if (existsSync(npmPath)) {
     return npmPath;
   }
 
-  // 4. Scoped npm: node_modules/@pennyfarthing/core/pennyfarthing-dist/
+  // 5. Scoped npm: node_modules/@pennyfarthing/core/pennyfarthing-dist/
   const scopedPath = join(__dirname, '..', '..', '@pennyfarthing', 'core', 'pennyfarthing-dist');
   if (existsSync(scopedPath)) {
     return scopedPath;
