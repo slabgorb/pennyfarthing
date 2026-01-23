@@ -53,9 +53,8 @@ future:
         # epic-56 promoted to Sprint 12 as MSSCI-12226
         # epic-57 promoted to Sprint 12 as MSSCI-12189 (repurposed from duplicate)
         # epic-58 promoted to Sprint 12 as MSSCI-12236
-
         - id: epic-57
-          status: promoted  # In Sprint 12 as MSSCI-12189
+          status: promoted # In Sprint 12 as MSSCI-12189
           title: "Agent Identity & Emotional Connection"
           description: |
             Users can see and connect with their current agent persona - portrait,
@@ -97,9 +96,8 @@ future:
               priority: P0
               status: planning
               repos: pennyfarthing
-
         - id: epic-58
-          status: promoted  # In Sprint 12 as MSSCI-12236
+          status: promoted # In Sprint 12 as MSSCI-12236
           title: "Sprint & Story Awareness"
           description: |
             Users can see their current story, sprint status, and branch health
@@ -146,7 +144,6 @@ future:
               priority: P1
               status: planning
               repos: pennyfarthing
-
         - id: epic-59
           title: "Chat Integration"
           description: |
@@ -181,7 +178,6 @@ future:
               priority: P0
               status: planning
               repos: pennyfarthing
-
     # ==========================================================================
     # BENCHMARK RELIABILITY - Scientific Evaluation
     # ==========================================================================
@@ -276,7 +272,6 @@ future:
               priority: P1
               status: planning
               repos: pennyfarthing
-
         - id: epic-42
           title: "Anchored Rubric Criteria"
           description: |
@@ -327,7 +322,6 @@ future:
               priority: P1
               status: planning
               repos: pennyfarthing
-
         - id: epic-43
           title: "False Positive Traps (Red Herrings)"
           description: |
@@ -385,7 +379,6 @@ future:
               priority: P1
               status: planning
               repos: pennyfarthing
-
         - id: epic-44
           title: "Multi-Judge Validation"
           description: |
@@ -457,7 +450,6 @@ future:
               priority: P1
               status: planning
               repos: pennyfarthing
-
         - id: epic-45
           title: "Gold Standard References"
           description: |
@@ -523,7 +515,6 @@ future:
               priority: P1
               status: planning
               repos: pennyfarthing
-
         - id: epic-46
           title: "Difficulty Profile Enhancement"
           description: |
@@ -587,7 +578,6 @@ future:
               priority: P1
               status: planning
               repos: pennyfarthing
-
     # ==========================================================================
     # REPOSITORY OPTIMIZATION - Reduce Clone Times
     # ==========================================================================
@@ -737,7 +727,6 @@ future:
               priority: P1
               status: planning
               repos: pennyfarthing
-
     # ==========================================================================
     # QUALITY & SCALE - Future Initiatives (Lower Priority)
     # ==========================================================================
@@ -789,7 +778,6 @@ future:
               title: Reviewer multi-phase review mode
               points: 2
               status: backlog
-
         - id: epic-40
           title: Scale Adaptation and Brownfield Support
           description: |
@@ -826,8 +814,6 @@ future:
               title: PRD import support
               points: 2
               status: backlog
-
-
     # ==========================================================================
     # Reflector Consolidation
     # Imported from: docs/planning/reflector-epics-and-stories.md
@@ -841,82 +827,7 @@ future:
       total_points: 8
       prd: docs/planning/reflector-prd.md
       epics_doc: docs/planning/reflector-epics-and-stories.md
-      epics:
-        - id: epic-61
-          title: "Reflector Marker Consolidation"
-          description: |
-            Pennyfarthing developers have a single, well-tested source of truth for marker parsing used by all consumers, with configurable behavior.
-          points: 8
-          priority: P1
-          marker: "reflector"
-          repos: pennyfarthing
-          status: planning
-          stories:
-            - id: "61-1"
-              title: "Create Marker Types and Constants"
-              description: |
-                TypeScript interfaces and constants for the marker system
-              points: 1
-              priority: P0
-              status: planning
-              repos: pennyfarthing
-            - id: "61-2"
-              title: "Implement Code Block Stripping"
-              description: |
-                a function to strip fenced code blocks from text
-              points: 1
-              priority: P0
-              status: planning
-              repos: pennyfarthing
-            - id: "61-3"
-              title: "Implement Marker Detection"
-              description: |
-                a function to detect CYCLIST markers in text
-              points: 1
-              priority: P0
-              status: planning
-              repos: pennyfarthing
-            - id: "61-4"
-              title: "Implement Marker Stripping"
-              description: |
-                a function to remove all markers from text
-              points: 1
-              priority: P0
-              status: planning
-              repos: pennyfarthing
-            - id: "61-5"
-              title: "Comprehensive Test Suite for Marker Module"
-              description: |
-                >90% test coverage for the marker module
-              points: 1
-              priority: P0
-              status: planning
-              repos: pennyfarthing
-            - id: "61-6"
-              title: "Migrate Cyclist to Shared Marker Module"
-              description: |
-                quick-actions.js to import marker functions from @pennyfarthing/shared
-              points: 1
-              priority: P0
-              status: planning
-              repos: pennyfarthing
-            - id: "61-7"
-              title: "Migrate VS Code Extension to Shared Marker Module"
-              description: |
-                reflector.ts to import marker functions from @pennyfarthing/shared
-              points: 1
-              priority: P0
-              status: planning
-              repos: pennyfarthing
-            - id: "61-8"
-              title: "Configurable TirePump Threshold"
-              description: |
-                to configure when context clearing triggers
-              points: 1
-              priority: P0
-              status: planning
-              repos: pennyfarthing
-
+      epics: []
 # =============================================================================
 # SUMMARY
 # =============================================================================
