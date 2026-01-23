@@ -100,9 +100,42 @@ The CLI can auto-fix:
 
 </auto-fixes>
 
+<drift-detection>
+
+## Agent Behavior Drift Detection
+
+Check if agents are following expected behavioral patterns:
+
+```bash
+# Run drift detection
+.pennyfarthing/scripts/core/run.sh health/drift-detection.sh
+
+# Verbose mode (see individual files)
+.pennyfarthing/scripts/core/run.sh health/drift-detection.sh --verbose
+```
+
+The script analyzes archived session files for:
+
+| Agent | Checks For |
+|-------|------------|
+| **Reviewer** | Substantive comments (not just approvals) |
+| **Dev** | Test evidence when declaring GREEN |
+| **SM** | Structured handoff sections with target agent |
+| **TEA** | Test file references before Dev handoff |
+
+**Healthy rates:** Under 10% drift is considered normal.
+
+**When drift is high:**
+- Review agent behavior files for clarity
+- Add explicit gates/checklists
+- Consider making critical behaviors automatic via scripts
+
+</drift-detection>
+
 <reference>
 - **CLI:** `pennyfarthing doctor`, `pennyfarthing update`
 - **Manifest:** `.claude/manifest.json` (tracks version and file hashes)
 - **Source:** `.claude/pennyfarthing/` (managed files)
 - **Symlinks:** `.pennyfarthing/agents/`, `.claude/commands/`, etc.
+- **Drift Detection:** `.pennyfarthing/scripts/health/drift-detection.sh`
 </reference>
