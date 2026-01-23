@@ -6,7 +6,13 @@
  */
 
 import { existsSync, readFileSync, readdirSync, statSync, watch, FSWatcher } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+// For dev mode: path to pennyfarthing-2 root relative to this file
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const CYCLIST_ROOT = join(__dirname, '..', '..', '..'); // packages/cyclist/src -> pennyfarthing-2
 import { parse as parseYaml } from 'yaml';
 
 /**
@@ -357,7 +363,12 @@ export function getCurrentPersona(projectDir: string, sessionId?: string): Perso
     possiblePaths.push(join(process.resourcesPath, 'pennyfarthing-dist', 'personas', 'themes', `${config.theme}.yaml`));
   }
 
-  // 2. Project directory paths
+  // 2. Development mode: relative to cyclist package (pennyfarthing-2/pennyfarthing-dist)
+  possiblePaths.push(
+    join(CYCLIST_ROOT, 'pennyfarthing-dist', 'personas', 'themes', `${config.theme}.yaml`),
+  );
+
+  // 3. Project directory paths (for projects that bundle their own themes)
   possiblePaths.push(
     join(projectDir, '.claude', 'personas', 'themes', `${config.theme}.yaml`),
     join(projectDir, '.claude', 'pennyfarthing', 'themes', `${config.theme}.yaml`),
@@ -468,7 +479,12 @@ export function getFullPersonaDetails(projectDir: string, sessionId?: string): F
     possiblePaths.push(join(process.resourcesPath, 'pennyfarthing-dist', 'personas', 'themes', `${config.theme}.yaml`));
   }
 
-  // 2. Project directory paths
+  // 2. Development mode: relative to cyclist package (pennyfarthing-2/pennyfarthing-dist)
+  possiblePaths.push(
+    join(CYCLIST_ROOT, 'pennyfarthing-dist', 'personas', 'themes', `${config.theme}.yaml`),
+  );
+
+  // 3. Project directory paths (for projects that bundle their own themes)
   possiblePaths.push(
     join(projectDir, '.claude', 'personas', 'themes', `${config.theme}.yaml`),
     join(projectDir, '.claude', 'pennyfarthing', 'themes', `${config.theme}.yaml`),
