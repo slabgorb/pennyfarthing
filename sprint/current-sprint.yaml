@@ -706,8 +706,9 @@ epics:
           Display CLEAN/DIRTY indicator based on git uncommitted changes.
         points: 2
         priority: P1
-        status: backlog
+        status: cancelled
         repos: pennyfarthing
+        cancellation_reason: "VS Code already provides git status; keeping existing Cyclist git UI as-is"
       - id: "58-4"
         jira: MSSCI-12240
         title: "File Watcher Integration"

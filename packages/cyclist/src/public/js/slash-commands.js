@@ -202,6 +202,10 @@ export const SLASH_COMMANDS = [
     "description": "Run a single agent on a scenario with absolute rubric scoring"
   },
   {
+    "name": "/sprint",
+    "description": "Sprint status, backlog, and story management - check status, find work, archive completed stories"
+  },
+  {
     "name": "/sprint-planning",
     "description": "Facilitate sprint planning session"
   },
