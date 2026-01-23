@@ -13,6 +13,7 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { WebSocketManager, AgentData } from '../server/websocket-manager.js';
+import type { PortraitCacheService, PortraitResult } from '../services/portrait-cache.js';
 
 // Persona data interface matching sidebar.ts
 interface PersonaData {
@@ -44,9 +45,47 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
   private _currentTheme?: string;
   private _currentAgent?: string;
   private _wsUnsubscribe?: () => void;
+  private _portraitCacheService?: PortraitCacheService;
 
   constructor(extensionUri: vscode.Uri) {
     this._extensionUri = extensionUri;
+  }
+
+  /**
+   * Set the portrait cache service for async portrait loading.
+   * MSSCI-12192: Portrait Loading with Caching
+   */
+  public setPortraitCacheService(service: PortraitCacheService): void {
+    this._portraitCacheService = service;
+  }
+
+  /**
+   * Get the portrait cache service.
+   * MSSCI-12192: Portrait Loading with Caching
+   */
+  public getPortraitCacheService(): PortraitCacheService | undefined {
+    return this._portraitCacheService;
+  }
+
+  /**
+   * Load a portrait asynchronously using the cache service.
+   * Returns the portrait result from cache or bundled.
+   * MSSCI-12192: Portrait Loading with Caching
+   */
+  public async loadPortraitAsync(theme: string, agent: string): Promise<PortraitResult> {
+    if (this._portraitCacheService) {
+      return this._portraitCacheService.getPortrait(theme, agent);
+    }
+
+    // Fallback: return bundled path directly
+    const portraitPath = this.getPortraitPath(theme, agent);
+    const fullPath = path.join(this._extensionUri.fsPath, portraitPath);
+
+    if (fs.existsSync(fullPath)) {
+      return { path: fullPath, source: 'bundled' };
+    }
+
+    return { path: null, source: 'none' };
   }
 
   /**
