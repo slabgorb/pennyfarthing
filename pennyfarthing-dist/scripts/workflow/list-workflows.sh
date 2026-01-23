@@ -34,15 +34,29 @@ echo ""
 echo "| Workflow | Type | Default | Steps/Phases | Modes | Description |"
 echo "|----------|------|---------|--------------|-------|-------------|"
 
-for f in "$WORKFLOWS_DIR"/*.yaml; do
+# Find all workflow YAML files: top-level *.yaml and subdirectory workflow.yaml files
+workflow_files=()
+while IFS= read -r -d '' f; do
+  workflow_files+=("$f")
+done < <(find "$WORKFLOWS_DIR" -maxdepth 1 -name "*.yaml" -print0 2>/dev/null)
+while IFS= read -r -d '' f; do
+  workflow_files+=("$f")
+done < <(find "$WORKFLOWS_DIR" -mindepth 2 -name "workflow.yaml" -print0 2>/dev/null)
+
+# Sort by workflow name for consistent output
+IFS=$'\n' sorted_files=($(for f in "${workflow_files[@]}"; do echo "$f"; done | sort))
+unset IFS
+
+for f in "${sorted_files[@]}"; do
   [[ -f "$f" ]] || continue
 
   name=$(yq eval '.workflow.name' "$f")
   desc=$(yq eval '.workflow.description' "$f" | head -1)
   is_default=$(yq eval '.workflow.triggers.default // false' "$f")
 
-  # Detect workflow type (stepped vs phased)
+  # Detect workflow type (stepped, phased, or procedural)
   # Stepped workflows have .workflow.type == "stepped" or .workflow.steps
+  # Procedural workflows have .workflow.type == "procedural" (BMAD reference workflows)
   workflow_type=$(yq eval '.workflow.type // "phased"' "$f")
   has_steps=$(yq eval '.workflow.steps != null' "$f")
 
@@ -51,12 +65,30 @@ for f in "$WORKFLOWS_DIR"/*.yaml; do
     # Count step files if steps.path is defined
     steps_path=$(yq eval '.workflow.steps.path // ""' "$f")
     steps_pattern=$(yq eval '.workflow.steps.pattern // "step-*.md"' "$f")
-    if [[ -n "$steps_path" ]] && [[ -d "$PROJECT_ROOT/$steps_path" ]]; then
-      step_count=$(find "$PROJECT_ROOT/$steps_path" -name "$steps_pattern" 2>/dev/null | wc -l | tr -d ' ')
-      steps_col="${step_count} steps"
+    # Resolve steps_path relative to the workflow file's directory
+    workflow_dir=$(dirname "$f")
+    if [[ -n "$steps_path" ]]; then
+      # Handle relative paths (./steps/ or steps/)
+      if [[ "$steps_path" == ./* ]]; then
+        resolved_path="$workflow_dir/${steps_path#./}"
+      elif [[ "$steps_path" != /* ]]; then
+        resolved_path="$workflow_dir/$steps_path"
+      else
+        resolved_path="$steps_path"
+      fi
+      if [[ -d "$resolved_path" ]]; then
+        step_count=$(find "$resolved_path" -maxdepth 1 -name "step-*.md" 2>/dev/null | wc -l | tr -d ' ')
+        steps_col="${step_count} steps"
+      else
+        steps_col="-"
+      fi
     else
       steps_col="-"
     fi
+  elif [[ "$workflow_type" == "procedural" ]]; then
+    type_col="procedural"
+    # Procedural workflows use instructions.md instead of phases/steps
+    steps_col="instructions"
   else
     type_col="phased"
     # Count phases for phased workflows
@@ -87,5 +119,6 @@ echo ""
 echo "**Legend:**"
 echo "- **phased**: Agent-driven workflow (SM → TEA → Dev → Reviewer)"
 echo "- **stepped**: Step-by-step guided workflow with progressive disclosure"
+echo "- **procedural**: BMAD reference workflow with instructions file"
 echo ""
 echo "Use \`/workflow show <name>\` for workflow details."
