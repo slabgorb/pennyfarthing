@@ -35,6 +35,8 @@ export interface StatsData {
     totalPoints: number;
     completedPoints: number;
     inProgressCount: number;
+    inProgressPoints: number;
+    endDate: string | null;
   };
   story?: {
     id: string;
