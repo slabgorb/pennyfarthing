@@ -649,11 +649,11 @@ epics:
           Portrait, name, and theme badge all update within 1 second.
         points: 2
         priority: P0
-        status: in_progress
+        status: done
         repos: pennyfarthing
-        assigned_to: Keith Avery
         branch: feat/57-3-realtime-agent-updates
         workflow: tdd
+        completed: "2026-01-23"
   # ===========================================================================
   # EPIC: Sprint & Story Awareness (epic-58) - BACKLOG
   # ===========================================================================
