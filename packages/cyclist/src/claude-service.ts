@@ -630,7 +630,13 @@ export class ClaudeService extends EventEmitter {
       // Send SIGINT to interrupt current turn
       this.currentProcess.kill('SIGINT');
     }
-    // Emit event to break any waiting promises
+    // Resolve any pending message resolvers to unblock waitForMessage()
+    // This allows the sendMessage() generator to exit its while loop
+    for (const resolve of this.messageResolvers) {
+      resolve(null);
+    }
+    this.messageResolvers = [];
+    // Emit event for any external listeners
     this.emit('interrupted');
   }
 
