@@ -3,12 +3,16 @@
  * compute-theme-tiers.js - Compute tier rankings from job-fair results
  *
  * Reads all summary.yaml files from internal/results/job-fair/
- * For each theme, extracts all character×role scores from the matrix
- * Computes delta vs baseline for each role, then averages across all roles
+ * For each theme, extracts character×role scores from the matrix
+ * Normalizes across formats, then computes delta vs baseline
  * Assigns tier based on overall performance vs control baseline
  *
- * IMPORTANT: Uses the MOST COMPLETE run for each theme (most matrix entries),
- * not the most recent. This prevents incomplete runs from overriding good data.
+ * KEY DESIGN DECISIONS:
+ * 1. Normalizes dev roles: averages dev-codegen + dev-debug into synthetic "dev"
+ *    to enable fair comparison across old 4-role and new 6-role formats.
+ *    Final comparison uses: dev, reviewer, sm, tea (4 roles)
+ * 2. Uses the MOST COMPLETE run for each theme (most matrix entries),
+ *    not the most recent. This prevents incomplete runs from overriding good data.
  *
  * Tier criteria (calibrated for actual delta distribution):
  *   S: delta >= +7  (elite - top performers)
@@ -35,6 +39,15 @@ const THEMES_DIR = join(PROJECT_ROOT, 'personas', 'themes');
 
 // Default minimum entries for a run to be considered complete
 const DEFAULT_MIN_ENTRIES = 20;
+
+// Normalized roles for fair comparison across old (4-role) and new (6-role) formats:
+//   - Old format: dev, reviewer, sm, tea
+//   - New format: architect, dev-codegen, dev-debug, reviewer, sm, tea
+//
+// Strategy: Average dev-codegen + dev-debug into synthetic "dev" score, giving us
+// 4 comparable roles: dev, reviewer, sm, tea
+const NORMALIZED_ROLES = new Set(['dev', 'reviewer', 'sm', 'tea']);
+const DEV_SUBROLES = ['dev-codegen', 'dev-debug'];
 
 // Tier thresholds (calibrated for actual delta distribution)
 const TIER_THRESHOLDS = {
@@ -84,7 +97,11 @@ Options:
   --min-entries N     Minimum matrix entries for a run to be complete (default: ${DEFAULT_MIN_ENTRIES})
   --help, -h          Show this help message
 
-Tier Criteria (based on mean delta from control):
+Normalization:
+  Averages dev-codegen + dev-debug into synthetic "dev" score.
+  Final comparison uses 4 roles: dev, reviewer, sm, tea.
+
+Tier Criteria (based on mean delta from control on common roles):
   S: delta >= +7    (elite - top performers)
   A: delta >= +5    (excellent - strong positive)
   B: delta >= +3    (strong - solid performers)
@@ -176,31 +193,76 @@ function parseMatrixScores(filePath) {
 }
 
 /**
+ * Normalize baselines: average dev-codegen + dev-debug into synthetic "dev"
+ */
+function normalizeBaselines(baselines) {
+  if (!baselines) return null;
+
+  const normalized = { ...baselines };
+
+  // If we have dev-codegen and dev-debug but no dev, create synthetic dev
+  if (!normalized.dev && normalized['dev-codegen'] && normalized['dev-debug']) {
+    const codegen = normalized['dev-codegen'];
+    const debug = normalized['dev-debug'];
+    normalized.dev = {
+      mean: (codegen.mean + debug.mean) / 2,
+      std: Math.sqrt((codegen.std ** 2 + debug.std ** 2) / 2), // pooled std approximation
+      n: codegen.n + debug.n,
+    };
+  }
+
+  return normalized;
+}
+
+/**
  * Compute delta vs baselines for a job-fair run
  * Returns: { meanDelta, meanScore, nRoles, roleDeltas }
+ *
+ * Normalizes dev-codegen + dev-debug into synthetic "dev" for fair comparison
+ * across old (4-role) and new (6-role) benchmark formats.
  */
 function computeDeltas(baselines, matrixScores) {
   if (!baselines || !matrixScores || matrixScores.length === 0) return null;
 
+  // Normalize baselines (average dev-codegen + dev-debug into dev)
+  const normalizedBaselines = normalizeBaselines(baselines);
+
   // Aggregate scores by role
-  const roleScores = {};
+  // First pass: collect raw scores including dev subroles
+  const rawScores = {};
   for (const { role, mean } of matrixScores) {
     if (typeof mean !== 'number') continue;
-    if (!roleScores[role]) {
-      roleScores[role] = { sum: 0, count: 0 };
+    if (!rawScores[role]) {
+      rawScores[role] = { sum: 0, count: 0 };
     }
-    roleScores[role].sum += mean;
-    roleScores[role].count++;
+    rawScores[role].sum += mean;
+    rawScores[role].count++;
   }
 
-  // Compute deltas vs baselines
+  // Second pass: normalize dev subroles into synthetic "dev"
+  const roleScores = {};
+  for (const [role, scores] of Object.entries(rawScores)) {
+    if (DEV_SUBROLES.includes(role)) {
+      // Accumulate dev subroles into synthetic "dev"
+      if (!roleScores.dev) {
+        roleScores.dev = { sum: 0, count: 0 };
+      }
+      roleScores.dev.sum += scores.sum;
+      roleScores.dev.count += scores.count;
+    } else if (NORMALIZED_ROLES.has(role)) {
+      roleScores[role] = scores;
+    }
+    // Skip roles not in NORMALIZED_ROLES (e.g., architect)
+  }
+
+  // Compute deltas vs normalized baselines
   const roleDeltas = {};
   let totalDelta = 0;
   let totalScore = 0;
   let nRoles = 0;
 
   for (const [role, scores] of Object.entries(roleScores)) {
-    const baseline = baselines[role];
+    const baseline = normalizedBaselines[role];
     if (!baseline || typeof baseline.mean !== 'number') continue;
 
     const roleMean = scores.sum / scores.count;
@@ -303,6 +365,8 @@ function main() {
 
   console.log('Configuration:');
   console.log(`  Minimum entries for complete run: ${args.minEntries}`);
+  console.log(`  Normalized roles: ${[...NORMALIZED_ROLES].join(', ')}`);
+  console.log(`  Dev subroles (averaged): ${DEV_SUBROLES.join(' + ')} → dev`);
   console.log(`  Job fair directory: ${JOB_FAIR_DIR}`);
   console.log('');
 
