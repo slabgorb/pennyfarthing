@@ -11,6 +11,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [7.5.0] - 2026-01-23
+
+### VS Code Agent Identity & Cyclist Enhancements
+
+This release delivers the Agent Identity epic for VS Code, Bell mode for Cyclist, new sprint management commands, and significant infrastructure improvements.
+
+### Added
+
+#### Epic 57: Agent Identity & Emotional Connection
+- **Persona Card Webview** (MSSCI-12191) - Enhanced persona card with prominent character name and theme badge
+- **Portrait Caching Service** (MSSCI-12192) - Efficient portrait image caching for VS Code sidebar
+- **Real-Time Agent Updates** (MSSCI-12193) - WebSocket-based live updates when agents change
+
+#### Epic 56: Cyclist Bell Mode & Queue Improvements
+- **Bell Mode** (MSSCI-12275) - Inject queued messages after tool use for smoother workflows
+- **Image Queue Support** (MSSCI-12274) - Support images in queued messages with proper UI handling
+
+#### Epic 58: Sprint Metrics & Session Monitoring
+- **Session File Watcher** (MSSCI-12237) - Story status tree view updates from session file changes
+- **Sprint Metrics Display** (MSSCI-12238) - Show sprint points and end date in VS Code sidebar
+
+#### Commands & Skills
+- **`/sprint` Command** (MSSCI-12336) - Wrapper command for sprint management operations
+- **`/standalone` Command** (MSSCI-12326) - Quick tracked commits for small changes without full ceremony
+
+#### Infrastructure
+- **Marker Parsing Consolidation** (MSSCI-12315) - Shared module for CYCLIST marker parsing across packages
+- **Agent Behavior Drift Detection** (MSSCI-12325) - Health check detects when agent files diverge from templates
+- **VS Code Model Indicator** (MSSCI-12228) - Status bar item showing current Claude model
+- **Context Channel Migration** - StatusBarManager uses dedicated `/context` IPC channel
+- **Automatic Future Import** - Epics-and-stories workflow auto-imports to future.yaml
+- **BMAD Compatibility Suite** (MSSCI-12146) - Validation suite for BMAD format interoperability
+
+#### Documentation
+- **AI Agent Implementation Guide** - Comprehensive guide for building AI agents
+- **Measurement Framework Guide** - Research-backed framework from ICML 2025
+
+### Fixed
+- **Statusline PROJECT_ROOT** - Use CLAUDE_PROJECT_DIR for reliable path resolution
+- **Doctor Dogfood Path** - Correct script path detection in dogfood mode
+- **Bell Mode Hook** - UI refinements and hook reliability improvements
+- **Queue Message Handling** - QueuedMessage treated as object not string
+- **StatusLine Misc Path** - Include misc/ subdirectory in path resolution
+- **Handoff Marker Generation** - Consolidate into single script for consistency
+- **Monorepo Path Lookup** - Support pennyfarthing-monorepo path in node_modules
+- **Image Queue Wiring** - Proper connection to editor submission flow
+- **Test Isolation** - Improved Cyclist test isolation with forks pool
+- **Core Run Path** - Use core/run.sh path for npm compatibility
+
+### Changed
+- **Electron Updated** - Bumped from 33.4.11 to 35.7.5
+
+### Summary
+| Metric | Value |
+|--------|-------|
+| Stories Completed | 15+ |
+| Epics Delivered | 4 (Epic 56, 57, 58, Reflector Consolidation) |
+| Features | 16 |
+| Bug Fixes | 10 |
+| New Commands | 2 (`/sprint`, `/standalone`) |
+
+---
+
 ## [7.4.0] - 2026-01-21
 
 ### Maintenance Release
@@ -1518,7 +1581,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v7.4.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v7.5.0...HEAD
+[7.5.0]: https://github.com/1898andCo/pennyfarthing/compare/v7.4.0...v7.5.0
 [7.4.0]: https://github.com/1898andCo/pennyfarthing/compare/v7.3.0...v7.4.0
 [7.3.0]: https://github.com/1898andCo/pennyfarthing/compare/v7.2.0...v7.3.0
 [7.2.0]: https://github.com/1898andCo/pennyfarthing/compare/v7.1.0...v7.2.0
