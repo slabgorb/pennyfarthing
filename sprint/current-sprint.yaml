@@ -717,7 +717,8 @@ epics:
           Update tree view within 500ms of file change.
         points: 2
         priority: P1
-        status: backlog
+        status: cancelled
+        cancelled_reason: "VS Code extension potentially being deprecated"
         repos: pennyfarthing
   # ===========================================================================
   # Standalone Stories (no epic parent in Jira)
