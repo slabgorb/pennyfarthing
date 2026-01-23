@@ -27,7 +27,7 @@
     "build": "npm run build:commands && tsc --build && tsc -p tsconfig.preload.json && npm run build:editor",
     "build:commands": "node scripts/generate-slash-commands.js",
     "build:editor": "esbuild src/editor-bundle.ts --bundle --format=iife --global-name=TipTap --outfile=src/public/js/tiptap.bundle.js",
-    "build:electron": "npm run build && electron-builder",
+    "build:electron": "npm run build && electron-builder -c.npmRebuild=false",
     "start": "node dist/server.js",
     "test": "vitest run",
     "test:watch": "vitest",
