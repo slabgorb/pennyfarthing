@@ -75,6 +75,8 @@ interface SprintData {
   totalPoints: number;
   completedPoints: number;
   inProgressCount: number;
+  inProgressPoints: number;
+  endDate: string | null;
 }
 
 interface StoryData {
@@ -375,9 +377,9 @@ export class AgentStatusTreeDataProvider
     const children: SidebarTreeItem[] = [];
 
     if (this.sprint) {
-      // In Progress count
+      // In Progress with points and count
       const inProgressItem = new vscode.TreeItem(
-        `In Progress: ${this.sprint.inProgressCount} stories`,
+        `In Progress: ${this.sprint.inProgressPoints} pts (${this.sprint.inProgressCount} stories)`,
         vscode.TreeItemCollapsibleState.None
       ) as SidebarTreeItem;
       inProgressItem.iconPath = new vscode.ThemeIcon('sync~spin');
@@ -390,6 +392,12 @@ export class AgentStatusTreeDataProvider
       ) as SidebarTreeItem;
       completedItem.iconPath = new vscode.ThemeIcon('check');
       children.push(completedItem);
+
+      // End date with urgency indicator
+      if (this.sprint.endDate) {
+        const endDateItem = this.createEndDateItem(this.sprint.endDate);
+        children.push(endDateItem);
+      }
     } else {
       const emptyItem = new vscode.TreeItem(
         'No active sprint',
@@ -399,6 +407,48 @@ export class AgentStatusTreeDataProvider
     }
 
     return children;
+  }
+
+  private createEndDateItem(endDate: string): SidebarTreeItem {
+    // Parse date string as local date to avoid timezone issues
+    // endDate format is 'YYYY-MM-DD'
+    const [year, month, day] = endDate.split('-').map(Number);
+    const endDateObj = new Date(year, month - 1, day); // month is 0-indexed
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const daysRemaining = Math.ceil(
+      (endDateObj.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    // Format date as "Feb 2" style
+    const formattedDate = endDateObj.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    });
+
+    let label: string;
+    let iconColor: vscode.ThemeColor;
+
+    if (daysRemaining <= 0) {
+      label = `Ends: Today`;
+      iconColor = new vscode.ThemeColor('errorForeground');
+    } else if (daysRemaining < 3) {
+      label = `Ends: ${formattedDate} (${daysRemaining} days)`;
+      iconColor = new vscode.ThemeColor('warningForeground');
+    } else {
+      label = `Ends: ${formattedDate}`;
+      iconColor = new vscode.ThemeColor('foreground');
+    }
+
+    const endDateItem = new vscode.TreeItem(
+      label,
+      vscode.TreeItemCollapsibleState.None
+    ) as SidebarTreeItem;
+    endDateItem.iconPath = new vscode.ThemeIcon('calendar', iconColor);
+
+    return endDateItem;
   }
 
   // =========================================================================
