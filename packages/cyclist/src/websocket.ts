@@ -6,6 +6,7 @@ import { getCurrentStats, getStatsClients } from './api/stats.js';
 import { getPersonaClients, broadcastPersona } from './api/persona.js';
 import { getTokenStatsClients } from './api/token-stats.js';
 import { getBackgroundTaskClients } from './api/background-tasks.js';
+import { getBellClients } from './api/bell.js';
 import { getTokenStats, getBackgroundTasks } from './otlp-receiver.js';
 import { detectPennyfarthingProject, getCurrentPersona, watchAgentChanges } from './pennyfarthing.js';
 import { ClaudeService, type PermissionMode } from './claude-service.js';
@@ -81,6 +82,9 @@ export function setupWebSocketServers(
   // WebSocket server for git updates at /ws/git (MSSCI-11943)
   const gitWss = new WebSocketServer({ noServer: true });
 
+  // WebSocket server for bell mode at /ws/bell (bell-consumed events)
+  const bellWss = new WebSocketServer({ noServer: true });
+
   // Handle upgrade requests
   server.on('upgrade', (request, socket, head) => {
     const pathname = new URL(request.url || '', `http://${request.headers.host}`).pathname;
@@ -116,6 +120,10 @@ export function setupWebSocketServers(
     } else if (pathname === '/ws/git') {
       gitWss.handleUpgrade(request, socket, head, (ws) => {
         gitWss.emit('connection', ws, request);
+      });
+    } else if (pathname === '/ws/bell') {
+      bellWss.handleUpgrade(request, socket, head, (ws) => {
+        bellWss.emit('connection', ws, request);
       });
     } else {
       // Reject connections to other paths
@@ -260,6 +268,23 @@ export function setupWebSocketServers(
     // Handle errors gracefully
     ws.on('error', () => {
       gitClients.delete(ws);
+    });
+  });
+
+  // Handle bell WebSocket connections (for bell-consumed events)
+  const bellClients = getBellClients();
+  bellWss.on('connection', (ws: WebSocket) => {
+    // Add client to broadcast set
+    bellClients.add(ws);
+
+    // Remove client on disconnect
+    ws.on('close', () => {
+      bellClients.delete(ws);
+    });
+
+    // Handle errors gracefully
+    ws.on('error', () => {
+      bellClients.delete(ws);
     });
   });
 

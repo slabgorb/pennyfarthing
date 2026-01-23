@@ -1660,6 +1660,20 @@ html, body {
   background: var(--bg-primary);
 }
 
+/* Bell mode injected message indicator */
+.message-bell-injected {
+  position: relative;
+  border-left-color: var(--accent);
+}
+
+.message-bell-injected .bell-indicator {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  font-size: 1rem;
+  opacity: 0.8;
+}
+
 /* Thinking indicator - throbbing border and background on persona card */
 .persona-section.thinking {
   animation: thinking-throb 1.5s ease-in-out infinite;
