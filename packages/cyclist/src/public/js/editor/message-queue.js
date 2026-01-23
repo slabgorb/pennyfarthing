@@ -71,19 +71,16 @@ let processingState = false;
 
 // Editor callbacks (set via init)
 let clearEditorFn = null;
-let insertContentFn = null;
 let submitFn = null;
 
 /**
  * Initialize message queue with editor callbacks
  * @param {Object} callbacks - Editor callback functions
  * @param {Function} callbacks.clearEditor - Clear editor content
- * @param {Function} callbacks.insertContent - Insert content into editor
  * @param {Function} callbacks.submit - Submit editor content
  */
-export function initMessageQueue({ clearEditor, insertContent, submit }) {
+export function initMessageQueue({ clearEditor, submit }) {
   clearEditorFn = clearEditor;
-  insertContentFn = insertContent;
   submitFn = submit;
   loadMessageQueue();
 }
@@ -140,9 +137,33 @@ function notifyQueueChange() {
 
 /**
  * Save message queue to settings-sync (cross-tab broadcast)
+ * Also syncs to bell queue file when bell mode is enabled (MSSCI-12275)
  */
 export function saveMessageQueue() {
   settingsSync.set(MESSAGE_QUEUE_KEY, messageQueue);
+  // Sync to file for bell mode hook (fire and forget)
+  syncQueueToFile();
+}
+
+/**
+ * Sync message queue to .pennyfarthing/bell-queue.json for PostToolUse hook
+ * Only writes when bell mode is enabled (MSSCI-12275)
+ * @private
+ */
+async function syncQueueToFile() {
+  try {
+    const response = await fetch('/api/bell-queue', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(messageQueue),
+    });
+    if (!response.ok) {
+      console.warn('[MessageQueue] Failed to sync bell queue:', response.status);
+    }
+  } catch (err) {
+    // Ignore errors - bell mode sync is best-effort
+    console.debug('[MessageQueue] Bell queue sync error:', err);
+  }
 }
 
 /**
@@ -232,10 +253,8 @@ export function processNextInQueue() {
 
   const nextMessage = dequeueMessage();
   if (nextMessage) {
-    // Clear editor and insert the queued message text
-    if (clearEditorFn) clearEditorFn();
-    if (insertContentFn) insertContentFn(nextMessage.text);
-    // Submit with images if callback accepts them
+    // Submit directly with text and images - no need to insert into editor
+    // The text is passed to submitFn which handles display in message view
     if (submitFn) submitFn(nextMessage.text, nextMessage.images);
   }
 }
@@ -270,9 +289,8 @@ export async function injectMessage(index) {
   // Reset processing state
   processingState = false;
 
-  // Inject and submit with images
+  // Clear any existing editor content, then submit directly
   if (clearEditorFn) clearEditorFn();
-  if (insertContentFn) insertContentFn(message.text);
   if (submitFn) submitFn(message.text, message.images);
 
   return true;

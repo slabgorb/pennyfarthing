@@ -91,6 +91,35 @@ app.use('/api/settings', createSettingsRouter());
 app.use('/api/background-tasks', createBackgroundTasksRouter());
 // MSSCI-11734: Enriched spans API
 app.use('/api/spans', createSpansRouter());
+
+// MSSCI-12275: Bell mode queue sync endpoint
+// Writes message queue to .pennyfarthing/bell-queue.json for PostToolUse hook
+app.post('/api/bell-queue', (req, res) => {
+  const projectDir = getProjectDir();
+  const queuePath = join(projectDir, '.pennyfarthing', 'bell-queue.json');
+  const modePath = join(projectDir, '.pennyfarthing', 'bell-mode.json');
+
+  // Only write if bell mode is enabled
+  try {
+    if (existsSync(modePath)) {
+      const modeContent = readFileSync(modePath, 'utf8');
+      const mode = JSON.parse(modeContent);
+      if (mode?.enabled) {
+        const queue = req.body;
+        if (Array.isArray(queue)) {
+          writeFileSync(queuePath, JSON.stringify(queue, null, 2));
+        }
+      } else if (existsSync(queuePath)) {
+        // Bell mode disabled - remove stale queue file
+        unlinkSync(queuePath);
+      }
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[Bell Queue] Sync error:', err);
+    res.status(500).json({ error: 'Failed to sync bell queue' });
+  }
+});
 app.use('/v1', createOTLPRouter());
 
 // Initialize token stats WebSocket broadcast callback

@@ -1,13 +1,14 @@
 /**
  * MSSCI-12190: StatusBarManager - WheelHub Connection Infrastructure
  * MSSCI-12192: Gearshift Mode Status Bar Item
+ * MSSCI-12228: Model Indicator Status Bar Item
  *
  * Orchestrates VS Code status bar items for Pennyfarthing extension.
  * Manages connection state and subscribes to WheelHub stats updates.
  */
 
 import * as vscode from 'vscode';
-import type { WebSocketManager, StatsData } from '../server/websocket-manager';
+import type { WebSocketManager, StatsData, ContextData } from '../server/websocket-manager';
 
 /** Connection state for WheelHub */
 export type ConnectionState = 'connecting' | 'connected' | 'disconnected';
@@ -32,8 +33,14 @@ export class StatusBarManager implements vscode.Disposable {
   /** Status bar item for gearshift mode display (MSSCI-12192) */
   private gearshiftItem: vscode.StatusBarItem;
 
-  /** Subscription cleanup function for WebSocketManager */
+  /** Status bar item for model indicator display (MSSCI-12228) */
+  private modelItem: vscode.StatusBarItem;
+
+  /** Subscription cleanup function for WebSocketManager stats */
   private statsUnsubscribe?: () => void;
+
+  /** Subscription cleanup function for dedicated /context channel (MSSCI-12230) */
+  private contextUnsubscribe?: () => void;
 
   /** Current connection state */
   private connectionState: ConnectionState = 'connecting';
@@ -53,6 +60,9 @@ export class StatusBarManager implements vscode.Disposable {
   /** Last known permission mode */
   private lastMode?: PermissionMode;
 
+  /** Last known model name (MSSCI-12228) */
+  private lastModel?: string;
+
   /**
    * Create a new StatusBarManager.
    * @param wsManager Optional WebSocketManager for stats subscription
@@ -70,15 +80,27 @@ export class StatusBarManager implements vscode.Disposable {
       99
     );
 
+    // MSSCI-12228: Create model status bar item with priority 98 (right of gearshift)
+    this.modelItem = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Left,
+      98
+    );
+
     // Set initial connecting state
     this.updateContextDisplay();
     this.updateGearshiftDisplay();
+    this.updateModelDisplay();
     this.contextItem.show();
     this.gearshiftItem.show();
+    this.modelItem.show();
 
-    // Subscribe to stats if WebSocketManager provided
+    // Subscribe to channels if WebSocketManager provided
     if (wsManager) {
       this.statsUnsubscribe = wsManager.onStats((data) => this.handleStats(data));
+      // MSSCI-12230: Subscribe to dedicated /context channel if available
+      if (typeof wsManager.onContext === 'function') {
+        this.contextUnsubscribe = wsManager.onContext((data) => this.handleContext(data));
+      }
     }
   }
 
@@ -118,6 +140,39 @@ export class StatusBarManager implements vscode.Disposable {
         this.lastMode = data.mode as PermissionMode;
         this.updateGearshiftDisplay();
       }
+    }
+
+    // MSSCI-12228: Extract model data if present
+    const model = (data as { model?: string }).model;
+    if (typeof model === 'string') {
+      this.lastModel = model;
+      this.updateModelDisplay();
+    }
+  }
+
+  /**
+   * MSSCI-12230: Handle incoming context data from dedicated /context channel.
+   * This is the preferred source for context data over StatsData.context.
+   */
+  private handleContext(data: ContextData): void {
+    if (this.disposed) return;
+
+    // Update connection state to connected on first context
+    if (this.connectionState !== 'connected') {
+      this.setConnectionState('connected');
+    }
+
+    // ContextData has tokens, usablePercent, maxTokens directly (not nested)
+    const percent = data.usablePercent;
+    const tokens = data.tokens;
+
+    // Validate percent is a reasonable number
+    if (typeof percent === 'number' && !isNaN(percent)) {
+      this.lastContext = {
+        usablePercent: Math.max(0, Math.min(100, percent)),
+        tokens: typeof tokens === 'number' ? tokens : undefined,
+      };
+      this.updateContextDisplay();
     }
   }
 
@@ -219,6 +274,57 @@ export class StatusBarManager implements vscode.Disposable {
   }
 
   /**
+   * MSSCI-12228: Format a full model ID to a short display name.
+   * @param model Full model ID (e.g., "claude-opus-4-5-20251101")
+   * @returns Short display name in uppercase (e.g., "OPUS 4-5")
+   */
+  private formatModelName(model: string): string {
+    if (!model || model === '—' || model === '-') return '';
+    // Remove "claude-" prefix and date suffix (YYYYMMDD)
+    let formatted = model
+      .replace(/^claude-/, '')
+      .replace(/-\d{8}$/, '');
+    // Replace first hyphen with space (e.g., "opus-4-5" -> "opus 4-5")
+    formatted = formatted.replace(/-/, ' ');
+    return formatted.toUpperCase();
+  }
+
+  /**
+   * MSSCI-12228: Update the model status bar item display.
+   */
+  private updateModelDisplay(): void {
+    if (this.disposed) return;
+
+    switch (this.connectionState) {
+      case 'connecting':
+        this.modelItem.text = 'MODEL: --';
+        this.modelItem.tooltip = 'Waiting for WheelHub connection';
+        break;
+
+      case 'disconnected':
+        this.modelItem.text = 'MODEL: --';
+        this.modelItem.tooltip = 'WheelHub disconnected - model unavailable';
+        break;
+
+      case 'connected':
+        if (this.lastModel) {
+          const formatted = this.formatModelName(this.lastModel);
+          if (formatted) {
+            this.modelItem.text = `MODEL: ${formatted}`;
+            this.modelItem.tooltip = `Active model: ${this.lastModel}`;
+          } else {
+            this.modelItem.text = 'MODEL: --';
+            this.modelItem.tooltip = 'Model unknown';
+          }
+        } else {
+          this.modelItem.text = 'MODEL: --';
+          this.modelItem.tooltip = 'Waiting for model data';
+        }
+        break;
+    }
+  }
+
+  /**
    * Set the connection state and update display accordingly.
    * @param state The new connection state
    */
@@ -256,28 +362,37 @@ export class StatusBarManager implements vscode.Disposable {
         // Update display to show retry attempt
         this.updateContextDisplay();
         this.updateGearshiftDisplay();
+        this.updateModelDisplay();
       }, 2000);
     }
 
     this.updateContextDisplay();
     this.updateGearshiftDisplay();
+    this.updateModelDisplay();
   }
 
   /**
-   * Connect to WheelHub WebSocketManager for stats updates.
+   * Connect to WheelHub WebSocketManager for stats and context updates.
    * Can be called after initialization to enable real-time updates.
    * @param wsManager WebSocketManager instance
    */
   connectToWheelHub(wsManager: WebSocketManager): void {
     if (this.disposed) return;
 
-    // Unsubscribe from previous connection if any
+    // Unsubscribe from previous connections if any
     if (this.statsUnsubscribe) {
       this.statsUnsubscribe();
+    }
+    if (this.contextUnsubscribe) {
+      this.contextUnsubscribe();
     }
 
     // Subscribe to new WebSocketManager
     this.statsUnsubscribe = wsManager.onStats((data) => this.handleStats(data));
+    // MSSCI-12230: Subscribe to dedicated /context channel if available
+    if (typeof wsManager.onContext === 'function') {
+      this.contextUnsubscribe = wsManager.onContext((data) => this.handleContext(data));
+    }
   }
 
   /**
@@ -305,10 +420,15 @@ export class StatusBarManager implements vscode.Disposable {
       this.retryTimer = undefined;
     }
 
-    // Unsubscribe from WebSocketManager
+    // Unsubscribe from WebSocketManager channels
     if (this.statsUnsubscribe) {
       this.statsUnsubscribe();
       this.statsUnsubscribe = undefined;
+    }
+    // MSSCI-12230: Unsubscribe from dedicated /context channel
+    if (this.contextUnsubscribe) {
+      this.contextUnsubscribe();
+      this.contextUnsubscribe = undefined;
     }
 
     // Clear callbacks
@@ -317,5 +437,6 @@ export class StatusBarManager implements vscode.Disposable {
     // Dispose status bar items
     this.contextItem.dispose();
     this.gearshiftItem.dispose();
+    this.modelItem.dispose();
   }
 }

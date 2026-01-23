@@ -92,7 +92,7 @@ else
       TITLE=$(yq -r "(.epics[] | select(.jira == \"$JIRA_EPIC_KEY\" or .id == \"$EPIC_ID\")).stories[] | select(.id == \"$STORY_ID\") | .title" "$SPRINT_FILE")
       echo "[DRY RUN] Would create: $STORY_ID - $TITLE"
     else
-      "$SCRIPTS_DIR/create-jira-story.sh" "$JIRA_EPIC_KEY" "$STORY_ID"
+      "$SCRIPTS_DIR/jira/create-jira-story.sh" "$JIRA_EPIC_KEY" "$STORY_ID"
     fi
   done
 fi

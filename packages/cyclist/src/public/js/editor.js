@@ -542,7 +542,6 @@ export async function createEditor() {
 
     initMessageQueue({
       clearEditor,
-      insertContent: (text) => editorInstance?.commands.insertContent(text),
       submit: submitEditorContent
     });
 

@@ -206,6 +206,10 @@ export const SLASH_COMMANDS = [
     "description": "Facilitate sprint planning session"
   },
   {
+    "name": "/standalone",
+    "description": "Wrap current changes into a standalone Jira story, branch, PR, and merge"
+  },
+  {
     "name": "/start-epic",
     "description": "Start an epic - move to current sprint and generate tech context"
   },

@@ -39,7 +39,7 @@ The calling agent will output the `marker` string verbatim in their direct text 
 
 <gate>
 ### tests_pass (Dev → Reviewer)
-- Quality checks pass (`check.sh`)
+- Quality checks pass (run: `.pennyfarthing/scripts/run.sh workflow/check.sh`)
 - Git working tree clean
 - Changes pushed to remote
 - PR exists and is open

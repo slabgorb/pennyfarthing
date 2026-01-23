@@ -33,11 +33,12 @@ done
 PROJECT_DIR="${PROJECT_ROOT:-$(pwd)}"
 CLAUDE_PROJECT_PATH="$HOME/.claude/projects/$(echo "$PROJECT_DIR" | tr '/' '-')"
 
-# Default thresholds (can be overridden by settings.local.json)
+# Default thresholds (can be overridden by settings.local.json or config.local.yaml)
 DEFAULT_IMMINENT_THRESHOLD=65
 DEFAULT_WARNING_THRESHOLD=60
 DEFAULT_CRITICAL_THRESHOLD=85
 DEFAULT_MAX_TOKENS=200000
+DEFAULT_TIREPUMP_THRESHOLD=60
 
 # Load thresholds and permission_mode from .pennyfarthing/config.local.yaml (preferred) or settings.local.json (fallback)
 PENNYFARTHING_CONFIG="${CLAUDE_PROJECT_DIR:-$PROJECT_DIR}/.pennyfarthing/config.local.yaml"
@@ -50,6 +51,7 @@ imminent_threshold = $DEFAULT_IMMINENT_THRESHOLD
 warning_threshold = $DEFAULT_WARNING_THRESHOLD
 critical_threshold = $DEFAULT_CRITICAL_THRESHOLD
 max_tokens = $DEFAULT_MAX_TOKENS
+tirepump_threshold = $DEFAULT_TIREPUMP_THRESHOLD
 permission_mode = 'manual'  # Default to manual
 
 # First try .pennyfarthing/config.local.yaml (preferred location)
@@ -64,6 +66,7 @@ try:
                 warning_threshold = cb.get('warning_threshold', warning_threshold)
                 critical_threshold = cb.get('critical_threshold', critical_threshold)
                 max_tokens = cb.get('max_tokens', max_tokens)
+                tirepump_threshold = cb.get('tirepump_threshold', tirepump_threshold)
             # Read permission_mode from workflow section
             if 'workflow' in config and 'permission_mode' in config['workflow']:
                 permission_mode = config['workflow']['permission_mode']
@@ -78,6 +81,7 @@ except:
                 warning_threshold = cb.get('warning_threshold', warning_threshold)
                 critical_threshold = cb.get('critical_threshold', critical_threshold)
                 max_tokens = cb.get('max_tokens', max_tokens)
+                tirepump_threshold = cb.get('tirepump_threshold', tirepump_threshold)
             if 'workflow' in settings and 'permission_mode' in settings['workflow']:
                 permission_mode = settings['workflow']['permission_mode']
     except:
@@ -87,6 +91,7 @@ print(f'IMMINENT_THRESHOLD={imminent_threshold}')
 print(f'WARNING_THRESHOLD={warning_threshold}')
 print(f'CRITICAL_THRESHOLD={critical_threshold}')
 print(f'MAX_TOKENS={max_tokens}')
+print(f'TIREPUMP_THRESHOLD={tirepump_threshold}')
 print(f'PERMISSION_MODE={permission_mode}')
 " 2>/dev/null)
 
@@ -96,6 +101,7 @@ eval "$CONFIG" 2>/dev/null || {
     WARNING_THRESHOLD=$DEFAULT_WARNING_THRESHOLD
     CRITICAL_THRESHOLD=$DEFAULT_CRITICAL_THRESHOLD
     MAX_TOKENS=$DEFAULT_MAX_TOKENS
+    TIREPUMP_THRESHOLD=$DEFAULT_TIREPUMP_THRESHOLD
 }
 
 # Find transcript - either specific session or most recent
@@ -134,7 +140,7 @@ import json
 warning_threshold = $WARNING_THRESHOLD
 max_tokens = $MAX_TOKENS
 permission_mode = '$PERMISSION_MODE'
-tirepump_threshold = 60  # Threshold for TirePump auto-handoff
+tirepump_threshold = $TIREPUMP_THRESHOLD  # Threshold for TirePump auto-handoff (configurable)
 
 with open('$TRANSCRIPT', 'r') as f:
     lines = f.readlines()
@@ -234,10 +240,10 @@ else
     if [ -n "$CONTEXT_USABLE_PERCENT" ]; then
         if [ "$CONTEXT_USABLE_PERCENT" -ge "$CRITICAL_THRESHOLD" ] 2>/dev/null; then
             echo "CONTEXT_WARNING=Critical"
-            echo "CONTEXT_RECOMMENDATION=checkpoint and handoff recommended"
+            echo "CONTEXT_RECOMMENDATION='checkpoint and handoff recommended'"
         elif [ "$CONTEXT_USABLE_PERCENT" -ge "$WARNING_THRESHOLD" ] 2>/dev/null; then
             echo "CONTEXT_WARNING=High"
-            echo "CONTEXT_RECOMMENDATION=consider handoff soon"
+            echo "CONTEXT_RECOMMENDATION='consider handoff soon'"
         fi
     fi
 fi

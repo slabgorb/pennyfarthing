@@ -8,10 +8,10 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 146
-  completed_points: 124
+  total_points: 154
+  completed_points: 127
   cancelled_points: 6
-  remaining_points: 16
+  remaining_points: 21
   notes: |
     Sprint 12 includes work from multiple epics that were tracked in Jira but
     not in local sprint YAML. This file has been reconciled with Jira Sprint 276.
@@ -574,9 +574,10 @@ epics:
           Updates within 1 second of WheelHub event.
         points: 3
         priority: P0
-        status: in_progress
+        status: done
         repos: pennyfarthing
         assigned_to: Keith Avery
+        completed: "2026-01-22"
       - id: "56-3"
         jira: MSSCI-12229
         title: "Gearshift Mode Status Bar Item"
@@ -585,8 +586,9 @@ epics:
           Updates within 1 second of WheelHub /gearshift event.
         points: 2
         priority: P0
-        status: backlog
+        status: done
         repos: pennyfarthing
+        completed: "2026-01-22"
       - id: "56-4"
         jira: MSSCI-12228
         title: "Model Indicator Status Bar Item"
@@ -595,10 +597,11 @@ epics:
           Updates on session start via WheelHub /model channel.
         points: 3
         priority: P0
-        status: backlog
+        status: done
         repos: pennyfarthing
+        completed: "2026-01-22"
   # ===========================================================================
-  # EPIC: Agent Identity & Emotional Connection (epic-57) - BACKLOG
+  # EPIC: Agent Identity & Emotional Connection (epic-57) - IN PROGRESS
   # ===========================================================================
   - id: epic-57
     type: epic
@@ -611,7 +614,7 @@ epics:
     points: 8
     completed_points: 0
     priority: P0
-    status: backlog
+    status: in_progress
     marker: vscode
     repos: pennyfarthing
     jira: MSSCI-12189
@@ -624,8 +627,9 @@ epics:
           displayed, and theme name/badge. Populates within 2 seconds of activation.
         points: 3
         priority: P0
-        status: backlog
+        status: done
         repos: pennyfarthing
+        completed: "2026-01-23"
       - id: "57-2"
         jira: MSSCI-12192
         title: "Portrait Loading with Caching"
@@ -635,8 +639,11 @@ epics:
           Support all 102 themes.
         points: 3
         priority: P0
-        status: backlog
+        status: done
         repos: pennyfarthing
+        branch: feat/57-2-portrait-caching
+        workflow: tdd
+        completed: "2026-01-23"
       - id: "57-3"
         jira: MSSCI-12193
         title: "Real-time Agent Updates"
@@ -645,8 +652,11 @@ epics:
           Portrait, name, and theme badge all update within 1 second.
         points: 2
         priority: P0
-        status: backlog
+        status: done
         repos: pennyfarthing
+        branch: feat/57-3-realtime-agent-updates
+        workflow: tdd
+        completed: "2026-01-23"
   # ===========================================================================
   # EPIC: Sprint & Story Awareness (epic-58) - BACKLOG
   # ===========================================================================
@@ -673,8 +683,11 @@ epics:
           or "No active story" indicator in sidebar tree view.
         points: 2
         priority: P0
-        status: backlog
+        status: done
         repos: pennyfarthing
+        branch: feat/58-1-story-status-tree-view
+        workflow: tdd
+        completed: "2026-01-23"
       - id: "58-2"
         jira: MSSCI-12238
         title: "Sprint Metrics Display"
@@ -683,8 +696,9 @@ epics:
           from sprint/current-sprint.yaml in sidebar tree view.
         points: 2
         priority: P0
-        status: backlog
+        status: done
         repos: pennyfarthing
+        completed: "2026-01-23"
       - id: "58-3"
         jira: MSSCI-12239
         title: "Branch Status Indicator"
@@ -741,7 +755,150 @@ epics:
           preserving base64-encoded image data for deferred submission.
         points: 3
         priority: P1
-        status: in_progress
+        status: done
         repos: pennyfarthing
-        assigned_to: Keith Avery
-        branch: feat/MSSCI-12274-image-queue-support
+        completed: "2026-01-22"
+      - id: MSSCI-12276
+        title: "Improve init/update/doctor for legacy install cleanup"
+        description: |
+          When installing Pennyfarthing over a legacy install (or updating), stale
+          files can remain that conflict with or shadow Pennyfarthing's proper files.
+
+          Discovered in ~/Projects/conductor:
+          - `.claude/scripts/statusline.sh` (legacy, simplified) shadows
+            `.pennyfarthing/scripts/misc/statusline.sh` (proper, feature-rich)
+          - `settings.local.json` may point to wrong statusline path
+          - `.claude/persona-config.yaml` may conflict with `.pennyfarthing/config.local.yaml`
+
+          Implementation:
+          - `init`: Detect legacy `.claude/scripts/` files, offer to remove or migrate
+          - `update`: Check for stale files that shadow pennyfarthing-dist symlinks
+          - `doctor`: Add check for conflicting statusline scripts, fix path in settings
+          - All: Validate statusline path in settings.local.json points to correct location
+
+          Acceptance Criteria:
+          - [ ] doctor --fix removes stale `.claude/scripts/statusline.sh` if pennyfarthing one exists
+          - [ ] doctor --fix updates settings.local.json statusline path if wrong
+          - [ ] init warns about legacy files and offers cleanup
+          - [ ] update cleans up known legacy file patterns
+        points: 3
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+      - id: MSSCI-12275
+        title: "Bell mode: inject queued messages after tool use"
+        description: "When Bell mode is enabled, queued messages are injected into the conversation\ncontext after each tool use, rather than waiting for Claude to finish. This\nlets users provide feedback mid-turn without aborting Claude's work.\n\nImplementation:\n- Add Bell mode toggle to settings (off by default)\n- Hook into tool_result event in OTEL receiver\n- When Bell mode on and queue non-empty, dequeue message and inject as user turn\n- Claude continues processing but now sees the injected message in context\n- UI shows \U0001F514 indicator when Bell mode is active\n\nMetaphor: Like ringing a bike bell - you get attention without stopping traffic.\n"
+        points: 5
+        priority: P2
+        status: done
+        repos: pennyfarthing
+        branch: feat/MSSCI-12275-bell-mode
+        workflow: tdd
+        completed: "2026-01-22"
+  - id: epic-61
+    type: epic
+    title: "Epic: Reflector Marker Consolidation"
+    description: |
+      Pennyfarthing developers have a single, well-tested source of truth for marker parsing used by all consumers, with configurable behavior.
+    priority: P1
+    status: done
+    repos: pennyfarthing
+    stories:
+      - id: MSSCI-12317
+        title: "Create Marker Types and Constants"
+        description: |
+          TypeScript interfaces and constants for the marker system
+        points: 1
+        priority: P0
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12317
+        completed: "2026-01-23"
+      - id: MSSCI-12318
+        title: "Implement Code Block Stripping"
+        description: |
+          a function to strip fenced code blocks from text
+        points: 1
+        priority: P0
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12318
+        completed: "2026-01-23"
+      - id: MSSCI-12319
+        title: "Implement Marker Detection"
+        description: |
+          a function to detect CYCLIST markers in text
+        points: 1
+        priority: P0
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12319
+        completed: "2026-01-23"
+      - id: MSSCI-12320
+        title: "Implement Marker Stripping"
+        description: |
+          a function to remove all markers from text
+        points: 1
+        priority: P0
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12320
+        completed: "2026-01-23"
+      - id: MSSCI-12321
+        title: "Comprehensive Test Suite for Marker Module"
+        description: |
+          >90% test coverage for the marker module
+        points: 1
+        priority: P0
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12321
+        completed: "2026-01-23"
+      - id: MSSCI-12322
+        title: "Migrate Cyclist to Shared Marker Module"
+        description: |
+          quick-actions.js to import marker functions from @pennyfarthing/shared
+        points: 1
+        priority: P0
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12322
+        completed: "2026-01-23"
+      - id: MSSCI-12323
+        title: "Migrate VS Code Extension to Shared Marker Module"
+        description: |
+          reflector.ts to import marker functions from @pennyfarthing/shared
+        points: 1
+        priority: P0
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12323
+        completed: "2026-01-23"
+      - id: MSSCI-12324
+        title: "Configurable TirePump Threshold"
+        description: |
+          to configure when context clearing triggers
+        points: 1
+        priority: P0
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12324
+        completed: "2026-01-23"
+    jira: MSSCI-12315
+    completed: "2026-01-23"

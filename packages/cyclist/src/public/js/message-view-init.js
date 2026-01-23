@@ -305,17 +305,24 @@ function initMessageView() {
       return;
     }
 
-    queueInlineList.innerHTML = messages.map((msg, i) => `
+    queueInlineList.innerHTML = messages.map((msg, i) => {
+      // MSSCI-12274: msg is now a QueuedMessage object { text, images }, not a string
+      const text = msg.text || '';
+      const hasImages = msg.images && msg.images.length > 0;
+      const imageIndicator = hasImages ? `<span class="queue-image-indicator" title="${msg.images.length} image(s)">🖼</span>` : '';
+      return `
       <li class="queue-inline-item" data-index="${i}">
         <button class="queue-inject-btn" data-index="${i}" title="Stop Claude and send this message">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M5 12h14M12 5l7 7-7 7"/>
           </svg>
         </button>
-        <span class="queue-inline-text" title="${msg.replace(/"/g, '&quot;')}">${msg}</span>
+        ${imageIndicator}
+        <span class="queue-inline-text" title="${text.replace(/"/g, '&quot;')}">${text}</span>
         <button class="queue-inline-remove" data-index="${i}" title="Remove">✕</button>
       </li>
-    `).join('');
+    `;
+    }).join('');
   }
 
   if (queueInline) {

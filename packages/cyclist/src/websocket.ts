@@ -299,6 +299,30 @@ export function setupWebSocketServers(
     }
   }
 
+  // Set up session file watcher (MSSCI-12237: Story Status Tree View)
+  // Watch .session/*-session.md files and broadcast updates via /ws/story
+  const sessionDir = join(projectDir, '.session');
+  if (existsSync(sessionDir)) {
+    try {
+      watch(sessionDir, { recursive: false }, (eventType, filename) => {
+        if (!filename || !filename.endsWith('-session.md')) return;
+
+        // Debounce rapid changes (100ms like sprint watcher)
+        if (storyDebounceTimer) {
+          clearTimeout(storyDebounceTimer);
+        }
+
+        storyDebounceTimer = setTimeout(() => {
+          const storyInfo = getStoryInfo(projectDir);
+          broadcastStoryUpdate(storyInfo);
+          storyDebounceTimer = null;
+        }, STORY_DEBOUNCE_MS);
+      });
+    } catch (err) {
+      console.error('[WebSocket] Failed to set up session file watcher:', err);
+    }
+  }
+
   // Set up git file watchers (MSSCI-11943: AC2 - broadcast on .git/HEAD and .git/index changes)
   const gitDir = join(projectDir, '.git');
   if (existsSync(gitDir)) {

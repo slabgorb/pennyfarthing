@@ -53,9 +53,8 @@ future:
         # epic-56 promoted to Sprint 12 as MSSCI-12226
         # epic-57 promoted to Sprint 12 as MSSCI-12189 (repurposed from duplicate)
         # epic-58 promoted to Sprint 12 as MSSCI-12236
-
         - id: epic-57
-          status: promoted  # In Sprint 12 as MSSCI-12189
+          status: promoted # In Sprint 12 as MSSCI-12189
           title: "Agent Identity & Emotional Connection"
           description: |
             Users can see and connect with their current agent persona - portrait,
@@ -97,9 +96,8 @@ future:
               priority: P0
               status: planning
               repos: pennyfarthing
-
         - id: epic-58
-          status: promoted  # In Sprint 12 as MSSCI-12236
+          status: promoted # In Sprint 12 as MSSCI-12236
           title: "Sprint & Story Awareness"
           description: |
             Users can see their current story, sprint status, and branch health
@@ -146,7 +144,6 @@ future:
               priority: P1
               status: planning
               repos: pennyfarthing
-
         - id: epic-59
           title: "Chat Integration"
           description: |
@@ -181,7 +178,6 @@ future:
               priority: P0
               status: planning
               repos: pennyfarthing
-
     # ==========================================================================
     # BENCHMARK RELIABILITY - Scientific Evaluation
     # ==========================================================================
@@ -189,9 +185,29 @@ future:
       description: |
         Research-backed improvements to agent benchmarking methodology.
         Based on HELM (Stanford CRFM), ARC-AGI, and MLPerf methodologies.
+
+        Grounded in measurement theory from Wallach et al. (2025) "Position:
+        Evaluating Generative AI Systems Is a Social Science Measurement Challenge"
+        (ICML 2025, https://arxiv.org/abs/2502.00561).
+
+        Key insight: AI evaluation is a measurement challenge requiring the same
+        rigor social scientists apply to measuring abstract constructs. Our epics
+        implement the four-level measurement framework:
+        - Level 1: Background Concept (what we care about)
+        - Level 2: Systematized Concept (scoped definition)
+        - Level 3: Operationalization (measurement procedure)
+        - Level 4: Scores/Indicators (numeric outputs)
+
+        See: pennyfarthing-dist/guides/measurement-framework.md
       status: research_complete
       blocked_by: "Need stable benchmark baseline before measuring improvements"
       total_points: 44
+      research_references:
+        - title: "Position: Evaluating Generative AI Systems Is a Social Science Measurement Challenge"
+          authors: "Wallach, Desai, Cooper, Wang, et al."
+          venue: "ICML 2025"
+          url: "https://arxiv.org/abs/2502.00561"
+          key_insight: "Four-level measurement framework; construct validity; inter-rater reliability"
       epics:
         - id: epic-41
           title: "Precision/Recall Detection Scoring"
@@ -199,6 +215,10 @@ future:
             Separate detection scoring into precision and recall components.
             Current formula conflates finding issues with avoiding false positives.
             New approach makes trade-offs explicit and measurable.
+
+            Framework alignment: Level 4 improvement - separate scores for
+            distinct constructs (finding issues vs. avoiding false alarms).
+            Addresses the anti-pattern of conflating operationalization with construct.
 
             Research basis: HELM benchmark methodology (Stanford CRFM)
           points: 8
@@ -252,12 +272,16 @@ future:
               priority: P1
               status: planning
               repos: pennyfarthing
-
         - id: epic-42
           title: "Anchored Rubric Criteria"
           description: |
             Replace vague rubric criteria ("clear_explanations") with behavioral
             anchors that define what each score level means concretely.
+
+            Framework alignment: Level 3 improvement - operationalization with
+            explicit behavioral anchors. Per Wallach et al., "A benchmark score
+            tells us nothing without understanding the construct it purports to
+            measure." Anchors make the construct explicit at each score level.
 
             Research basis: 2025 research shows few-shot doesn't fix judge
             self-inconsistency; explicit anchors reduce variance.
@@ -298,13 +322,17 @@ future:
               priority: P1
               status: planning
               repos: pennyfarthing
-
         - id: epic-43
           title: "False Positive Traps (Red Herrings)"
           description: |
             Add intentional non-issues to scenarios to systematically measure
             precision. Agents that flag red herrings as issues lose points;
             agents that correctly identify them as non-issues get bonus.
+
+            Framework alignment: Level 3 improvement - tests construct validity.
+            Per Wallach et al., valid measurement requires evidence that scores
+            DON'T correlate with unrelated constructs. Red herrings test whether
+            high detection scores reflect true understanding vs. pattern matching.
 
             Research basis: ARC-AGI distinguishes novel reasoning from
             pattern matching; red herrings test true understanding.
@@ -351,13 +379,18 @@ future:
               priority: P1
               status: planning
               repos: pennyfarthing
-
         - id: epic-44
           title: "Multi-Judge Validation"
           description: |
             Measure judge reliability by running multiple judges with prompt
             variations. Calculate Krippendorff's Alpha to quantify inter-rater
             reliability. Flag results when Alpha < 0.65.
+
+            Framework alignment: Reliability evidence. Per Wallach et al.,
+            "Annotator disagreement is not noise to be averaged away—it is
+            meaningful data about construct complexity." Multi-judge validation
+            quantifies measurement reliability and identifies constructs that
+            need clearer operationalization.
 
             Research basis: Krippendorff's Alpha is standard for inter-rater
             reliability; 2025 research recommends Gwet's AC2 for skewed data.
@@ -417,13 +450,17 @@ future:
               priority: P1
               status: planning
               repos: pennyfarthing
-
         - id: epic-45
           title: "Gold Standard References"
           description: |
             Add human-curated ideal responses to scenarios. Judge can use
             these as calibration references to reduce variance and provide
             consistent scoring anchored to known-good examples.
+
+            Framework alignment: Level 3 improvement - calibration anchors.
+            Per Wallach et al., operationalization needs clear anchoring to
+            ensure consistent interpretation. Gold standards define what
+            "high quality" looks like concretely, reducing subjective variance.
 
             Research basis: HELM uses reference implementations for
             calibration; MLPerf provides gold standards for comparison.
@@ -478,13 +515,18 @@ future:
               priority: P1
               status: planning
               repos: pennyfarthing
-
         - id: epic-46
           title: "Difficulty Profile Enhancement"
           description: |
             Replace single difficulty label with multi-dimensional profile
             including percentile bands from empirical data. Enables better
             scenario selection and more meaningful score interpretation.
+
+            Framework alignment: Level 2 improvement - multi-dimensional
+            construct decomposition. Per Wallach et al., background concepts
+            must be systematized into measurable sub-constructs. "Difficulty"
+            is too vague; decomposing into detection_challenge, reasoning_complexity,
+            and domain_knowledge makes the construct explicit and measurable.
 
             Research basis: ARC-AGI separates difficulty dimensions;
             percentile bands from MLPerf methodology.
@@ -536,7 +578,6 @@ future:
               priority: P1
               status: planning
               repos: pennyfarthing
-
     # ==========================================================================
     # REPOSITORY OPTIMIZATION - Reduce Clone Times
     # ==========================================================================
@@ -686,7 +727,6 @@ future:
               priority: P1
               status: planning
               repos: pennyfarthing
-
     # ==========================================================================
     # QUALITY & SCALE - Future Initiatives (Lower Priority)
     # ==========================================================================
@@ -738,7 +778,6 @@ future:
               title: Reviewer multi-phase review mode
               points: 2
               status: backlog
-
         - id: epic-40
           title: Scale Adaptation and Brownfield Support
           description: |
@@ -775,7 +814,20 @@ future:
               title: PRD import support
               points: 2
               status: backlog
-
+    # ==========================================================================
+    # Reflector Consolidation
+    # Imported from: docs/planning/reflector-epics-and-stories.md
+    # Date: 2026-01-23
+    # ==========================================================================
+    - name: "Reflector Consolidation"
+      description: |
+        This document provides the complete epic and story breakdown for the Reflector System Rationalization initiative, decomposing the requirements from the PRD into implementable stories.
+      status: ready
+      blocked_by: null
+      total_points: 8
+      prd: docs/planning/reflector-prd.md
+      epics_doc: docs/planning/reflector-epics-and-stories.md
+      epics: []
 # =============================================================================
 # SUMMARY
 # =============================================================================
@@ -788,8 +840,8 @@ future:
 # --------------------------------|-------|--------|------------------
 # TOTAL                           |  13   |  131   |
 #
-# Epic Numbering Used: 39-46, 55-59
-# Next Available Epic Number: 60
+# Epic Numbering Used: 39-46, 55-61
+# Next Available Epic Number: 62
 #
 # VS Code Extension Epics (NEW - from artifacts/epics-and-stories.md):
 # - Epic 56: Glanceable Status Awareness (13 pts) - WheelHub + status bar
