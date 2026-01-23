@@ -47,6 +47,7 @@ export {
   stripCodeBlocks,
   MARKER_PATTERN,
   MARKER_TYPES,
+  VALID_MARKER_TYPES,
   type Marker,
   type MarkerType,
 } from './marker/index.js';
