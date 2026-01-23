@@ -500,6 +500,7 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
     let portraitSrc = '';
     let characterName = 'No Agent Active';
     let characterRole = '';
+    let themeName = '';
     let showFallback = true;
 
     if (this._persona) {
@@ -510,6 +511,7 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
       }
       characterName = this._persona.character;
       characterRole = this._formatRole(this._persona.role);
+      themeName = this._formatThemeName(this._persona.theme);
     }
 
     return /* html */ `<!DOCTYPE html>
@@ -597,10 +599,10 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
     }
 
     .character-name {
-      font-size: 14px;
-      font-weight: 600;
+      font-size: 18px;
+      font-weight: bold;
       color: var(--vscode-foreground);
-      margin-bottom: 4px;
+      margin: 0 0 4px 0;
     }
 
     .character-role {
@@ -608,6 +610,17 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
       color: var(--vscode-descriptionForeground);
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .theme-badge {
+      display: inline-block;
+      font-size: 11px;
+      color: var(--vscode-badge-foreground);
+      background: var(--vscode-badge-background);
+      padding: 2px 8px;
+      border-radius: 10px;
+      text-transform: capitalize;
     }
 
     .codicon {
@@ -632,8 +645,9 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
   </div>
 
   <div class="character-info">
-    <div class="character-name" id="character-name">${characterName}</div>
+    <h2 class="character-name" id="character-name">${characterName}</h2>
     <div class="character-role" id="character-role">${characterRole}</div>
+    <span class="theme-badge" id="theme-badge">${themeName}</span>
   </div>
 
   <script nonce="${nonce}">
@@ -646,6 +660,7 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
       const fallbackAgentName = document.getElementById('fallback-agent-name');
       const characterNameEl = document.getElementById('character-name');
       const characterRoleEl = document.getElementById('character-role');
+      const themeBadgeEl = document.getElementById('theme-badge');
 
       // Format role for display
       function formatRole(role) {
@@ -664,6 +679,12 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
         return roleMap[role?.toLowerCase()] || role || '';
       }
 
+      // Format theme name for display (greek-mythology -> Greek Mythology)
+      function formatThemeName(theme) {
+        if (!theme) return '';
+        return theme.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+      }
+
       // Update the UI with new persona data
       function updateUI(data) {
         if (!data) return;
@@ -674,6 +695,7 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
         // Update character info
         characterNameEl.textContent = persona.character || 'No Agent Active';
         characterRoleEl.textContent = formatRole(persona.role);
+        themeBadgeEl.textContent = formatThemeName(persona.theme);
         fallbackAgentName.textContent = persona.character || 'No Agent';
 
         // Show/hide portrait vs fallback
@@ -726,5 +748,17 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
       orchestrator: 'Orchestrator',
     };
     return roleMap[role?.toLowerCase()] || role || '';
+  }
+
+  /**
+   * Format theme name for display.
+   * Converts "greek-mythology" to "Greek Mythology".
+   */
+  private _formatThemeName(theme: string): string {
+    if (!theme) return '';
+    return theme
+      .split('-')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   }
 }
