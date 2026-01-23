@@ -683,8 +683,11 @@ epics:
           or "No active story" indicator in sidebar tree view.
         points: 2
         priority: P0
-        status: backlog
+        status: done
         repos: pennyfarthing
+        branch: feat/58-1-story-status-tree-view
+        workflow: tdd
+        completed: "2026-01-23"
       - id: "58-2"
         jira: MSSCI-12238
         title: "Sprint Metrics Display"
