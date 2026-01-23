@@ -1,15 +1,18 @@
 /**
  * MSSCI-12148: Agent Portrait Webview Provider
+ * MSSCI-12193: Real-time Agent Updates via WebSocket
  *
  * WebviewViewProvider implementation for the Agent Portrait panel in VS Code.
  * Displays the current agent's portrait image, character name, and role.
  * Updates via file watchers on config.local.yaml and .session/agents/*.
+ * Also updates via WebSocket broadcasts from WheelHub when available.
  */
 
 import * as vscode from 'vscode';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
+import type { WebSocketManager, AgentData } from '../server/websocket-manager.js';
 
 // Persona data interface matching sidebar.ts
 interface PersonaData {
@@ -40,6 +43,7 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
   private _agentWatcher?: vscode.FileSystemWatcher;
   private _currentTheme?: string;
   private _currentAgent?: string;
+  private _wsUnsubscribe?: () => void;
 
   constructor(extensionUri: vscode.Uri) {
     this._extensionUri = extensionUri;
@@ -185,6 +189,26 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
       this._agentWatcher.dispose();
       this._agentWatcher = undefined;
     }
+  }
+
+  /**
+   * MSSCI-12193: Set the WebSocket manager for real-time agent updates.
+   * Subscribes to the agent channel to receive persona broadcasts from WheelHub.
+   * @param wsManager The WebSocketManager instance
+   */
+  public setWebSocketManager(wsManager: WebSocketManager): void {
+    // Unsubscribe from previous manager if set
+    if (this._wsUnsubscribe) {
+      this._wsUnsubscribe();
+    }
+
+    // Subscribe to agent channel broadcasts
+    this._wsUnsubscribe = wsManager.onAgent((data: AgentData) => {
+      // Extract persona from broadcast and update
+      if (data.persona) {
+        this.updatePersona(data.persona);
+      }
+    });
   }
 
   /**
@@ -478,6 +502,12 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
   public dispose(): void {
     // Stop file watchers
     this.stopFileWatchers();
+
+    // Unsubscribe from WebSocket manager (MSSCI-12193)
+    if (this._wsUnsubscribe) {
+      this._wsUnsubscribe();
+      this._wsUnsubscribe = undefined;
+    }
 
     // Dispose all subscriptions
     for (const disposable of this._disposables) {
