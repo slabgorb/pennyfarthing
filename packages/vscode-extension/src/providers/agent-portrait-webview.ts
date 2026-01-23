@@ -1,15 +1,19 @@
 /**
  * MSSCI-12148: Agent Portrait Webview Provider
+ * MSSCI-12193: Real-time Agent Updates via WebSocket
  *
  * WebviewViewProvider implementation for the Agent Portrait panel in VS Code.
  * Displays the current agent's portrait image, character name, and role.
  * Updates via file watchers on config.local.yaml and .session/agents/*.
+ * Also updates via WebSocket broadcasts from WheelHub when available.
  */
 
 import * as vscode from 'vscode';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
+import type { WebSocketManager, AgentData } from '../server/websocket-manager.js';
+import type { PortraitCacheService, PortraitResult } from '../services/portrait-cache.js';
 
 // Persona data interface matching sidebar.ts
 interface PersonaData {
@@ -40,9 +44,48 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
   private _agentWatcher?: vscode.FileSystemWatcher;
   private _currentTheme?: string;
   private _currentAgent?: string;
+  private _wsUnsubscribe?: () => void;
+  private _portraitCacheService?: PortraitCacheService;
 
   constructor(extensionUri: vscode.Uri) {
     this._extensionUri = extensionUri;
+  }
+
+  /**
+   * Set the portrait cache service for async portrait loading.
+   * MSSCI-12192: Portrait Loading with Caching
+   */
+  public setPortraitCacheService(service: PortraitCacheService): void {
+    this._portraitCacheService = service;
+  }
+
+  /**
+   * Get the portrait cache service.
+   * MSSCI-12192: Portrait Loading with Caching
+   */
+  public getPortraitCacheService(): PortraitCacheService | undefined {
+    return this._portraitCacheService;
+  }
+
+  /**
+   * Load a portrait asynchronously using the cache service.
+   * Returns the portrait result from cache or bundled.
+   * MSSCI-12192: Portrait Loading with Caching
+   */
+  public async loadPortraitAsync(theme: string, agent: string): Promise<PortraitResult> {
+    if (this._portraitCacheService) {
+      return this._portraitCacheService.getPortrait(theme, agent);
+    }
+
+    // Fallback: return bundled path directly
+    const portraitPath = this.getPortraitPath(theme, agent);
+    const fullPath = path.join(this._extensionUri.fsPath, portraitPath);
+
+    if (fs.existsSync(fullPath)) {
+      return { path: fullPath, source: 'bundled' };
+    }
+
+    return { path: null, source: 'none' };
   }
 
   /**
@@ -185,6 +228,26 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
       this._agentWatcher.dispose();
       this._agentWatcher = undefined;
     }
+  }
+
+  /**
+   * MSSCI-12193: Set the WebSocket manager for real-time agent updates.
+   * Subscribes to the agent channel to receive persona broadcasts from WheelHub.
+   * @param wsManager The WebSocketManager instance
+   */
+  public setWebSocketManager(wsManager: WebSocketManager): void {
+    // Unsubscribe from previous manager if set
+    if (this._wsUnsubscribe) {
+      this._wsUnsubscribe();
+    }
+
+    // Subscribe to agent channel broadcasts
+    this._wsUnsubscribe = wsManager.onAgent((data: AgentData) => {
+      // Extract persona from broadcast and update
+      if (data.persona) {
+        this.updatePersona(data.persona);
+      }
+    });
   }
 
   /**
@@ -479,6 +542,12 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
     // Stop file watchers
     this.stopFileWatchers();
 
+    // Unsubscribe from WebSocket manager (MSSCI-12193)
+    if (this._wsUnsubscribe) {
+      this._wsUnsubscribe();
+      this._wsUnsubscribe = undefined;
+    }
+
     // Dispose all subscriptions
     for (const disposable of this._disposables) {
       disposable.dispose();
@@ -500,6 +569,7 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
     let portraitSrc = '';
     let characterName = 'No Agent Active';
     let characterRole = '';
+    let themeName = '';
     let showFallback = true;
 
     if (this._persona) {
@@ -510,6 +580,7 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
       }
       characterName = this._persona.character;
       characterRole = this._formatRole(this._persona.role);
+      themeName = this._formatThemeName(this._persona.theme);
     }
 
     return /* html */ `<!DOCTYPE html>
@@ -597,10 +668,10 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
     }
 
     .character-name {
-      font-size: 14px;
-      font-weight: 600;
+      font-size: 18px;
+      font-weight: bold;
       color: var(--vscode-foreground);
-      margin-bottom: 4px;
+      margin: 0 0 4px 0;
     }
 
     .character-role {
@@ -608,6 +679,17 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
       color: var(--vscode-descriptionForeground);
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .theme-badge {
+      display: inline-block;
+      font-size: 11px;
+      color: var(--vscode-badge-foreground);
+      background: var(--vscode-badge-background);
+      padding: 2px 8px;
+      border-radius: 10px;
+      text-transform: capitalize;
     }
 
     .codicon {
@@ -632,8 +714,9 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
   </div>
 
   <div class="character-info">
-    <div class="character-name" id="character-name">${characterName}</div>
+    <h2 class="character-name" id="character-name">${characterName}</h2>
     <div class="character-role" id="character-role">${characterRole}</div>
+    <span class="theme-badge" id="theme-badge">${themeName}</span>
   </div>
 
   <script nonce="${nonce}">
@@ -646,6 +729,7 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
       const fallbackAgentName = document.getElementById('fallback-agent-name');
       const characterNameEl = document.getElementById('character-name');
       const characterRoleEl = document.getElementById('character-role');
+      const themeBadgeEl = document.getElementById('theme-badge');
 
       // Format role for display
       function formatRole(role) {
@@ -664,6 +748,12 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
         return roleMap[role?.toLowerCase()] || role || '';
       }
 
+      // Format theme name for display (greek-mythology -> Greek Mythology)
+      function formatThemeName(theme) {
+        if (!theme) return '';
+        return theme.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+      }
+
       // Update the UI with new persona data
       function updateUI(data) {
         if (!data) return;
@@ -674,6 +764,7 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
         // Update character info
         characterNameEl.textContent = persona.character || 'No Agent Active';
         characterRoleEl.textContent = formatRole(persona.role);
+        themeBadgeEl.textContent = formatThemeName(persona.theme);
         fallbackAgentName.textContent = persona.character || 'No Agent';
 
         // Show/hide portrait vs fallback
@@ -726,5 +817,17 @@ export class AgentPortraitWebviewProvider implements vscode.WebviewViewProvider 
       orchestrator: 'Orchestrator',
     };
     return roleMap[role?.toLowerCase()] || role || '';
+  }
+
+  /**
+   * Format theme name for display.
+   * Converts "greek-mythology" to "Greek Mythology".
+   */
+  private _formatThemeName(theme: string): string {
+    if (!theme) return '';
+    return theme
+      .split('-')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   }
 }

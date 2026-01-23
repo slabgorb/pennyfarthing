@@ -13,6 +13,7 @@ fi
 # Extract fields - use cwd for display only, PROJECT_ROOT for file lookups
 cwd=$(echo "$input" | jq -r '.workspace.current_dir // empty' 2>/dev/null)
 dir_name=$(basename "$cwd" 2>/dev/null || echo "?")
+PROJECT_ROOT="${CLAUDE_PROJECT_DIR:-$cwd}"
 session_id=$(echo "$input" | jq -r '.session_id // empty' 2>/dev/null)
 
 # Model name - clean up

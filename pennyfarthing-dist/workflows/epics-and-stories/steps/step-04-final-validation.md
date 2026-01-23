@@ -7,6 +7,7 @@ workflow_path: '{project_root}/.pennyfarthing/workflows/epics-and-stories'
 
 # File References
 thisStepFile: './step-04-final-validation.md'
+nextStepFile: './step-05-import-to-future.md'
 workflowFile: '{workflow_path}/workflow.yaml'
 outputFile: '{planning_artifacts}/epics.md'
 
@@ -139,7 +140,14 @@ If all validations pass:
 - Ensure proper formatting
 - Save the final epics.md
 
-**Present Final Menu:**
-**All validations complete!** [C] Complete Workflow
+**Present Menu:**
+**All validations complete!** [C] Continue to import to future.yaml
 
-When C is selected, the workflow is complete and the epics.md is ready for development.
+#### Menu Handling Logic:
+
+- IF C: Save final document, update frontmatter, then load, read entire file, then execute {nextStepFile}
+- IF Any other comments or queries: help user respond then redisplay menu
+
+## CRITICAL STEP COMPLETION NOTE
+
+ONLY WHEN C is selected and validations are complete, will you then load, read entire file, then execute {nextStepFile} to import epics to future.yaml.

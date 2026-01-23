@@ -966,31 +966,32 @@ describe('MSSCI-12048: VS Code Sidebar Agent Status', () => {
   });
 
   // ========================================================================
-  // MSSCI-12147: File Watcher Sidebar Sync
+  // MSSCI-12147: File Watcher Sidebar Sync (SUPERSEDED by MSSCI-12237)
   // ========================================================================
-  describe('MSSCI-12147: File watcher sidebar sync', () => {
-    it('should have startFileWatchers method', async () => {
+  describe('MSSCI-12147: File watcher sidebar sync (superseded)', () => {
+    // Note: MSSCI-12237 moved session file watching from VS Code extension to Cyclist/WheelHub.
+    // The sidebar now receives story updates exclusively via WheelHub WebSocket.
+    // See tests/MSSCI-12237-story-tree-view.test.ts for current behavior tests.
+
+    it('should NOT have startFileWatchers method (moved to Cyclist per MSSCI-12237)', async () => {
       const sidebarModule = await import('../src/providers/sidebar');
       const provider = new sidebarModule.AgentStatusTreeDataProvider();
 
-      expect(typeof provider.startFileWatchers).toBe('function');
+      expect(provider.startFileWatchers).toBeUndefined();
     });
 
-    it('should have stopFileWatchers method', async () => {
+    it('should NOT have stopFileWatchers method (moved to Cyclist per MSSCI-12237)', async () => {
       const sidebarModule = await import('../src/providers/sidebar');
       const provider = new sidebarModule.AgentStatusTreeDataProvider();
 
-      expect(typeof provider.stopFileWatchers).toBe('function');
+      expect(provider.stopFileWatchers).toBeUndefined();
     });
 
-    it('should cleanup file watchers on dispose', async () => {
+    it('should cleanup without file watchers on dispose', async () => {
       const sidebarModule = await import('../src/providers/sidebar');
       const provider = new sidebarModule.AgentStatusTreeDataProvider();
 
-      // Start watchers (won't do anything without workspace folder)
-      provider.startFileWatchers();
-
-      // Dispose should not throw
+      // Dispose should not throw (no file watchers to clean up)
       expect(() => provider.dispose()).not.toThrow();
     });
   });

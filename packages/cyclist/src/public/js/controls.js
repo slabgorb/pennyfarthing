@@ -51,6 +51,11 @@ const MODE_TO_CLAUDE = {
 let currentMode = 'manual';
 
 /**
+ * Current bell mode state (MSSCI-12275)
+ */
+let bellModeEnabled = false;
+
+/**
  * Update the mode switch display (segmented control)
  * Updates which segment is active and positions the sliding highlight
  * MSSCI-12127: Enhanced with sliding highlight animation
@@ -266,6 +271,96 @@ function handleCompactShortcut(event) {
   }
 }
 
+// =============================================================================
+// Bell Mode (MSSCI-12275)
+// =============================================================================
+
+/**
+ * Update the bell mode toggle display
+ */
+function updateBellModeDisplay() {
+  const toggle = document.getElementById('bell-mode-toggle');
+  if (!toggle) return;
+
+  toggle.setAttribute('aria-pressed', bellModeEnabled ? 'true' : 'false');
+}
+
+/**
+ * Load bell mode state from settings
+ */
+async function loadBellModeFromSettings() {
+  try {
+    let settings;
+    if (window.electronAPI?.settings?.get) {
+      settings = await window.electronAPI.settings.get();
+    } else {
+      const response = await fetch('/api/settings');
+      if (response.ok) {
+        settings = await response.json();
+      }
+    }
+
+    bellModeEnabled = settings?.workflow?.bell_mode || false;
+    updateBellModeDisplay();
+    console.log('[Controls] Bell mode loaded from settings:', bellModeEnabled);
+  } catch (err) {
+    console.warn('[Controls] Failed to load bell mode from settings:', err);
+  }
+}
+
+/**
+ * Toggle bell mode on/off
+ */
+async function toggleBellMode(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  const newValue = !bellModeEnabled;
+  console.log('[Controls] Toggling bell mode to:', newValue);
+
+  try {
+    const settings = {
+      workflow: {
+        bell_mode: newValue,
+      },
+    };
+
+    if (window.electronAPI?.settings?.save) {
+      await window.electronAPI.settings.save(settings);
+    } else {
+      await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
+      });
+    }
+
+    bellModeEnabled = newValue;
+    updateBellModeDisplay();
+    console.log('[Controls] Bell mode set successfully:', bellModeEnabled);
+  } catch (error) {
+    console.error('[Controls] Failed to toggle bell mode:', error);
+  }
+}
+
+/**
+ * Handle Cmd/Ctrl+B keyboard shortcut for bell mode toggle
+ */
+function handleBellModeShortcut(event) {
+  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+  const modifierKey = isMac ? event.metaKey : event.ctrlKey;
+
+  if (modifierKey && !event.shiftKey && !event.altKey && event.key.toLowerCase() === 'b') {
+    event.preventDefault();
+    event.stopPropagation();
+
+    console.log('[Controls] Bell mode shortcut triggered (Cmd/Ctrl+B)');
+    toggleBellMode();
+  }
+}
+
 /**
  * MSSCI-12127 AC5: Handle keyboard shortcuts for mode switching
  * Cmd+1/2/3/4 (Mac) or Ctrl+1/2/3/4 (Windows/Linux)
@@ -340,6 +435,14 @@ function initControls() {
   // Load initial mode from settings (source of truth)
   loadModeFromSettings();
 
+  // MSSCI-12275: Bell mode toggle
+  const bellModeToggle = document.getElementById('bell-mode-toggle');
+  if (bellModeToggle) {
+    console.log('[Controls] Found bell mode toggle, attaching click handler');
+    bellModeToggle.addEventListener('click', toggleBellMode);
+    loadBellModeFromSettings();
+  }
+
   // 23-4: Register global keyboard shortcut for compact (Cmd+Shift+K / Ctrl+Shift+K)
   document.addEventListener('keydown', handleCompactShortcut);
   console.log('[Controls] Compact keyboard shortcut registered (Cmd/Ctrl+Shift+K)');
@@ -347,6 +450,10 @@ function initControls() {
   // MSSCI-12127 AC5: Register keyboard shortcuts for mode switching (Cmd/Ctrl+1/2/3/4)
   document.addEventListener('keydown', handleModeShortcut);
   console.log('[Controls] Mode keyboard shortcuts registered (Cmd/Ctrl+1/2/3/4)');
+
+  // MSSCI-12275: Register keyboard shortcut for bell mode toggle (Cmd/Ctrl+B)
+  document.addEventListener('keydown', handleBellModeShortcut);
+  console.log('[Controls] Bell mode keyboard shortcut registered (Cmd/Ctrl+B)');
 }
 
 // =============================================================================

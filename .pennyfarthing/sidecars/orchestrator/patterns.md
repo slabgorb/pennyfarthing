@@ -64,4 +64,29 @@ Code blocks in skill files are documentation, not executed. Use:
 
 ---
 
+## Automated Drift Detection
+
+**Added:** 2026-01-23
+
+Script to analyze archived sessions for behavioral drift:
+
+```bash
+.pennyfarthing/scripts/core/run.sh health/drift-detection.sh [--verbose]
+```
+
+**Drift signals:**
+| Agent | Signal | Healthy Rate |
+|-------|--------|--------------|
+| Reviewer | Approval without substantive feedback | <5% |
+| Dev | GREEN without test evidence | <5% |
+| SM | Handoff without target agent | <15% |
+| TEA | Handoff without test file references | <10% |
+
+**Response to high drift:**
+1. Make behavior explicit in agent files
+2. Add gates/checklists
+3. Consider scripting critical behaviors
+
+---
+
 *Add process patterns discovered during orchestration below*
