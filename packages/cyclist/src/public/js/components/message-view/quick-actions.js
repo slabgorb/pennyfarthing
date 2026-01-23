@@ -16,6 +16,12 @@ import { getThemeAgents, loadThemeAgents } from '../../story.js';
 /**
  * Known marker types for CYCLIST structured markers (MSSCI-11840)
  * Used by detectStructuredMarkers to classify marker types
+ *
+ * NOTE: This is intentionally duplicated from @pennyfarthing/shared/marker
+ * because this file runs in the browser without a bundler. The shared
+ * module is the source of truth - keep these values in sync.
+ * @see packages/shared/src/marker/constants.ts
+ * @see docs/adr/0011-reflector-marker-consolidation.md
  */
 export const MARKER_TYPES = {
   HANDOFF: 'handoff',
@@ -146,6 +152,12 @@ function getAgentDisplayName(agentCmd) {
  * Markers are HTML comments in the format: <!-- CYCLIST:TYPE:value -->
  * This provides 100% accurate detection vs pattern-based heuristics.
  *
+ * NOTE: This function is intentionally duplicated from @pennyfarthing/shared/marker
+ * because this file runs in the browser without a bundler. The shared module
+ * is the source of truth - keep this implementation in sync.
+ * @see packages/shared/src/marker/detect.ts
+ * @see docs/adr/0011-reflector-marker-consolidation.md
+ *
  * @param {string} text - Text to analyze
  * @returns {Array|null} Array of marker objects with {type, value, source}, or null if none found
  */
@@ -160,12 +172,19 @@ export function detectStructuredMarkers(text) {
   // Case-insensitive for CYCLIST prefix and TYPE, preserves value case
   const markerPattern = /<!--\s*CYCLIST:(\w+):([^>]+?)\s*-->/gi;
 
+  // Valid marker types - must match MARKER_TYPES above
+  const validTypes = new Set(['handoff', 'invoke', 'question', 'choices', 'context_clear']);
+
   const markers = [];
   let match;
 
   while ((match = markerPattern.exec(withoutCode)) !== null) {
+    const type = match[1].toLowerCase();
+    // Skip unknown marker types (matches shared module behavior)
+    if (!validTypes.has(type)) continue;
+
     markers.push({
-      type: match[1].toLowerCase(),
+      type,
       value: match[2].trim(),
       source: 'structured_marker',
     });

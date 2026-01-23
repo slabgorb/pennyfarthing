@@ -2,6 +2,9 @@
  * Reflector Protocol Adapter for VS Code Extension
  *
  * Parses CYCLIST markers from Claude output and maps to VS Code UI actions.
+ * Uses @pennyfarthing/shared/marker for marker detection (single source of truth).
+ *
+ * @see docs/adr/0011-reflector-marker-consolidation.md
  *
  * Marker Format: <!-- CYCLIST:TYPE:value -->
  *
@@ -14,101 +17,14 @@
 
 import * as vscode from 'vscode';
 import type { WebSocketManager, MessageData } from '../server/websocket-manager';
+import {
+  detectMarkers,
+  stripMarkers,
+  type Marker,
+} from '@pennyfarthing/shared';
 
-/**
- * Marker object returned by detectMarkers
- */
-export interface Marker {
-  type: 'handoff' | 'context_clear' | 'question' | 'choices';
-  value: string;
-}
-
-/**
- * Regex pattern for CYCLIST markers.
- * Ported from Cyclist's quick-actions.js:160
- * Pattern: <!-- CYCLIST:TYPE:value -->
- * Case-insensitive for CYCLIST prefix and TYPE, preserves value case
- */
-const MARKER_PATTERN = /<!--\s*CYCLIST:(\w+):([^>]+?)\s*-->/gi;
-
-/**
- * Strip code blocks from text before marker detection.
- * Markers inside code blocks should not be processed.
- */
-function stripCodeBlocks(text: string): string {
-  return text.replace(/```[\s\S]*?```/g, '');
-}
-
-/**
- * Detect CYCLIST markers in text.
- *
- * @param text - Text to scan for markers
- * @returns Array of markers found, or null if none
- */
-export function detectMarkers(text: string): Marker[] | null {
-  // Handle null/undefined/empty input
-  if (!text) {
-    return null;
-  }
-
-  // Strip code blocks first - markers inside code should be ignored
-  const withoutCode = stripCodeBlocks(text);
-  if (!withoutCode.trim()) {
-    return null;
-  }
-
-  const markers: Marker[] = [];
-
-  // Reset lastIndex for global regex
-  MARKER_PATTERN.lastIndex = 0;
-
-  let match;
-  while ((match = MARKER_PATTERN.exec(withoutCode)) !== null) {
-    const rawType = match[1].toLowerCase();
-
-    // Map marker types to our interface types
-    let type: Marker['type'];
-    switch (rawType) {
-      case 'handoff':
-        type = 'handoff';
-        break;
-      case 'context_clear':
-        type = 'context_clear';
-        break;
-      case 'question':
-        type = 'question';
-        break;
-      case 'choices':
-        type = 'choices';
-        break;
-      default:
-        // Skip unknown marker types
-        continue;
-    }
-
-    markers.push({
-      type,
-      value: match[2].trim(),
-    });
-  }
-
-  return markers.length > 0 ? markers : null;
-}
-
-/**
- * Strip CYCLIST markers from text for display.
- *
- * @param text - Text containing markers
- * @returns Text with markers removed
- */
-export function stripMarkers(text: string): string {
-  if (!text) {
-    return '';
-  }
-
-  // Remove all CYCLIST markers, preserving other content
-  return text.replace(MARKER_PATTERN, '').trim();
-}
+// Re-export for backward compatibility
+export { detectMarkers, stripMarkers, type Marker };
 
 /**
  * Extract numbered choice text from message content.
