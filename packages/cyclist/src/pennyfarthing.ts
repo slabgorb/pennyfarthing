@@ -373,6 +373,8 @@ export function getCurrentPersona(projectDir: string, sessionId?: string): Perso
     join(projectDir, '.claude', 'personas', 'themes', `${config.theme}.yaml`),
     join(projectDir, '.claude', 'pennyfarthing', 'themes', `${config.theme}.yaml`),
     join(projectDir, 'pennyfarthing-dist', 'personas', 'themes', `${config.theme}.yaml`),
+    // 3. NPM package location (installed via @pennyfarthing/core)
+    join(projectDir, 'node_modules', '@pennyfarthing', 'core', 'pennyfarthing-dist', 'personas', 'themes', `${config.theme}.yaml`),
   );
 
   // Use CYCLIST_THEME_PATH env var if available
@@ -489,6 +491,8 @@ export function getFullPersonaDetails(projectDir: string, sessionId?: string): F
     join(projectDir, '.claude', 'personas', 'themes', `${config.theme}.yaml`),
     join(projectDir, '.claude', 'pennyfarthing', 'themes', `${config.theme}.yaml`),
     join(projectDir, 'pennyfarthing-dist', 'personas', 'themes', `${config.theme}.yaml`),
+    // 3. NPM package location (installed via @pennyfarthing/core)
+    join(projectDir, 'node_modules', '@pennyfarthing', 'core', 'pennyfarthing-dist', 'personas', 'themes', `${config.theme}.yaml`),
   );
 
   const envThemePath = process.env.CYCLIST_THEME_PATH;

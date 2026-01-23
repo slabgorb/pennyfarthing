@@ -381,7 +381,15 @@ export class ClaudeService extends EventEmitter {
 
     const args = this.buildArgs();
     const cwd = options?.cwd ?? this.defaultCwd ?? process.cwd();
-    const env = { ...process.env, ...this.defaultEnv, ...options?.env, CYCLIST: '1' };
+    // Augment PATH for GUI apps that don't inherit shell profile
+    const home = process.env.HOME ?? '';
+    const extraPaths = [
+      `${home}/.local/bin`,
+      '/usr/local/bin',
+      '/opt/homebrew/bin',
+    ].join(':');
+    const augmentedPath = `${extraPaths}:${process.env.PATH ?? ''}`;
+    const env = { ...process.env, ...this.defaultEnv, ...options?.env, CYCLIST: '1', PATH: augmentedPath };
 
     console.log('[ClaudeService] Spawning new Claude process (persistent mode)');
     const proc = this.spawner('claude', args, {
