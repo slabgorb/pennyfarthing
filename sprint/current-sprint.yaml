@@ -992,7 +992,8 @@ epics:
           Update reflector.ts to import from @pennyfarthing/shared. Remove local MARKER_PATTERN, detectMarkers(), stripMarkers().
         points: 1
         priority: P1
-        status: backlog
+        status: cancelled
+        cancelled_reason: "VS Code extension potentially being deprecated"
         repos: pennyfarthing-vscode
         workflow: tdd
         acceptance_criteria: []
