@@ -38,3 +38,15 @@ export {
   type GeneratorOptions,
   type GeneratorResult,
 } from './generate-skill-docs.js';
+
+// Marker module - Reflector protocol marker detection
+// @see docs/adr/0011-reflector-marker-consolidation.md
+export {
+  detectMarkers,
+  stripMarkers,
+  stripCodeBlocks,
+  MARKER_PATTERN,
+  MARKER_TYPES,
+  type Marker,
+  type MarkerType,
+} from './marker/index.js';
