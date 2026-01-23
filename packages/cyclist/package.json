@@ -92,8 +92,13 @@
     },
     "extraResources": [
       {
-        "from": "../../pennyfarthing-dist/personas",
-        "to": "pennyfarthing-dist/personas"
+        "from": "../../pennyfarthing-dist/personas/portraits",
+        "to": "pennyfarthing-dist/personas/portraits",
+        "filter": ["**/*", "!**/original/**", "!**/small/**"]
+      },
+      {
+        "from": "../../pennyfarthing-dist/personas/themes",
+        "to": "pennyfarthing-dist/personas/themes"
       },
       {
         "from": "../../pennyfarthing-dist/agents",

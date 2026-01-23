@@ -190,7 +190,7 @@ Examples:
 
 #### Visual Descriptions
 
-The `visual` field provides a portrait prompt for image generation. These descriptions are used by `scripts/generate-portraits.py` to create woodcut-style portraits.
+The `visual` field provides a portrait prompt for image generation. These descriptions are used by `./scripts/generate-portraits.sh` to create woodcut-style portraits.
 
 **Guidelines:**
 - Focus on physical appearance, distinctive features, and visual props
@@ -344,20 +344,25 @@ questions:
 **If Yes:** Run the portrait generator:
 
 ```bash
-python3 scripts/generate-portraits.py --theme {theme-name}
+./scripts/generate-portraits.sh --theme {theme-name}
+```
+
+**Generate a single agent's portrait:**
+```bash
+./scripts/generate-portraits.sh --theme {theme-name} --role {role}
 ```
 
 **Requirements:**
-- Python 3 with: `pip install diffusers transformers accelerate torch pillow pyyaml tqdm`
+- Python 3 venv at `.venv/` with: `pip install diffusers transformers accelerate torch pillow pyyaml tqdm`
 - Apple Silicon Mac (MPS) or NVIDIA GPU (CUDA)
 - First run downloads ~6.5GB SDXL model
 
 **Dry run first:** To preview what will be generated:
 ```bash
-python3 scripts/generate-portraits.py --theme {theme-name} --dry-run
+./scripts/generate-portraits.sh --theme {theme-name} --dry-run
 ```
 
-**Output:** `pennyfarthing-dist/personas/portraits/{theme}/{role}.png` (100x100px woodcut style)
+**Output:** `pennyfarthing-dist/personas/portraits/{theme}/{shortName}-{OCEAN}.png`
 
 **If generation fails:** The theme file is still valid - portraits can be generated later manually.
 
