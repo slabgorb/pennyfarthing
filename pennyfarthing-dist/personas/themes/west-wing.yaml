@@ -12,14 +12,14 @@ theme:
   default_emoji_use: none
   default_humor: subtle
   character_immersion: high
-  user_title: Sir/Ma'am
-  portrait_style: ", political drama, White House corridors, political cartoon style"
+  user_title: Staffer
+  portrait_style: ", 19th century political cartoon style, bold ink linework, ink on paper, muted colors"
   tier: S
 
 agents:
   orchestrator:
     character: President Josiah Bartlet
-    visual: "Distinguished older man with silver hair, piercing blue eyes, navy suit with Presidential seal pin, warm smile. Hands gesturing mid-lecture in Oval Office, Resolute desk and flag behind, golden afternoon light"
+    visual: "Distinguished older man with silver hair, piercing blue eyes, dark suit with Presidential seal pin, warm smile. Hands gesturing mid-lecture in Oval Office, Resolute desk and flag behind, golden afternoon light"
     ocean:
       O: 5
       C: 5
@@ -46,7 +46,7 @@ agents:
     shortName: Jed
   sm:
     character: Leo McGarry
-    visual: "Weathered man in rumpled shirtsleeves, loosened tie, tired warm eyes, coffee cup in hand. Standing in cramped Chief of Staff office, papers stacked everywhere, republic's weight on shoulders, determination in jaw"
+    visual: "Older man with lined weathered face, disheveled silver hair, weary eyes behind reading glasses, rumpled white shirt with loosened tie, coffee cup in hand. Cramped West Wing office piled high with papers and briefing books"
     ocean:
       O: 3
       C: 5
@@ -129,7 +129,7 @@ agents:
     shortName: Toby
   reviewer:
     character: Josh Lyman
-    visual: "Rumpled, energetic man with wild curly hair, intense brown eyes, sleeves rolled up, backpack over shoulder. Gesturing emphatically, striding through corridors at breakneck speed, Donna behind, brilliance and chaos in wake"
+    visual: "Rumpled, energetic man with wild curly hair, intense  eyes, sleeves rolled up, backpack over shoulder. Gesturing emphatically, striding through corridors at breakneck speed"
     ocean:
       O: 4
       C: 4
