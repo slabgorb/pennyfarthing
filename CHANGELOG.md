@@ -13,7 +13,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [7.6.0] - 2026-01-24
 
-*No unreleased changes*
+### Cyclist Standalone & Infrastructure Improvements
+
+This release delivers standalone Electron builds for Cyclist, real-time debugging tools, and significant infrastructure hardening.
+
+### Added
+
+#### Cyclist Enhancements
+- **Real-Time Debug Panel** (MSSCI-12387) - Live debugging panel with E2E test infrastructure
+- **Web Mode Detection** (MSSCI-12386) - Automatic UI improvements when running in web context
+- **Standalone Electron Build** - Bundled personas for distribution without npm dependencies
+
+#### Infrastructure
+- **Content Copy Installation** (MSSCI-12391) - Copy pennyfarthing content instead of symlinking to node_modules for better reliability
+- **Legacy File Detection** (MSSCI-12346) - Doctor command detects and cleans up legacy files
+- **Zeitgeist Measurement Framework** (MSSCI-12343) - Measure persona cultural relevance and recognition
+- **Agent Workflow Phase Ownership** (MSSCI-12385) - Improved handoff and phase ownership tracking
+
+#### Documentation
+- **Tandem Agent Pairing ADR** - Architecture decision record for pair programming patterns
+- **Benchmark Methodology Guide** - Comprehensive documentation for persona benchmarking
+
+### Fixed
+
+#### Cyclist Fixes
+- **Stop Button Reliability** - Resolve pending promises on interrupt() to unblock stop button
+- **GUI App PATH** - Augment PATH for GUI apps and add NPM theme paths
+- **Dev Mode Themes** - Add dev mode theme resolution path
+- **Bell Mode Queue** - Sync dequeue with browser state
+- **Electron Builder** - Disable npmRebuild for cleaner builds
+
+#### Build & Deployment
+- **Deploy Script** - Add --no-verify to version bump commit
+- **Release Script** - Correct deploy.sh path resolution
+- **Shared Module** - Export VALID_MARKER_TYPES and fix test discovery
+
+#### Benchmarking
+- **Role Normalization** - Normalize dev roles for fair cross-format comparison
+- **Tier Computation** - Rewrite tier computation with better methodology
+
+### Changed
+- **Agent Commands** - Slim agent commands to minimal loaders for faster activation
+
+### Summary
+| Metric | Value |
+|--------|-------|
+| Stories Completed | 8+ |
+| Features | 7 |
+| Bug Fixes | 10 |
+| Cyclist Improvements | 4 |
 
 ---
 
