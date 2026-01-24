@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, symlinkSync, copyFileSync, readdirSync } from 'fs';
+import { readFileSync, writeFileSync, copyFileSync, readdirSync } from 'fs';
 import { join, relative } from 'path';
 import fsExtra from 'fs-extra';
 
@@ -13,16 +13,13 @@ import {
 import {
   pathExists,
   isDirectory,
-  isSymlink,
   hashFile
 } from '../utils/files.js';
 import { getPackageVersion, getAssetsPath } from '../utils/version.js';
 import {
-  computeRelativeSymlink,
-  createCommandsDirectory,
-  createSkillsDirectory,
-  needsCommandsMigration,
-  needsSkillsMigration
+  copyDirectory,
+  copyCommandsDirectory,
+  copySkillsDirectory
 } from '../utils/symlinks.js';
 import { findNodeModulesPath } from '../utils/node-modules.js';
 import { DIRECTORY_SYMLINKS, CORE_AGENTS } from '../utils/constants.js';
@@ -119,8 +116,8 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
     logger.info('Dry run mode - no changes will be made');
   }
 
-  // Symlink mode: verify symlinks are correct
-  await updateSymlinkMode(projectRoot, nodeModulesPath, manifest, packageVersion, { dryRun });
+  // Update installed content by re-copying from package
+  await updateInstalledContent(projectRoot, nodeModulesPath, manifest, packageVersion, { dryRun });
 
   // 7. Success
   logger.newline();
@@ -134,9 +131,10 @@ export async function updateCommand(options: UpdateOptions): Promise<void> {
 }
 
 /**
- * Update in symlink mode - verify symlinks point to correct location
+ * Update installed content by re-copying from package
+ * This ensures .pennyfarthing/ has the latest content
  */
-async function updateSymlinkMode(
+async function updateInstalledContent(
   projectRoot: string,
   nodeModulesPath: string,
   manifest: ReturnType<typeof readManifest>,
@@ -146,34 +144,21 @@ async function updateSymlinkMode(
   const dryRun = options.dryRun;
 
   logger.newline();
-  logger.info('Verifying symlinks...');
+  logger.info('Updating Pennyfarthing content...');
 
-  // Verify standard symlinks (not commands or skills - handled separately)
+  // Re-copy directories from package to .pennyfarthing/
   for (const { name, link } of DIRECTORY_SYMLINKS) {
-    const linkPath = join(projectRoot, link);
-    const targetPath = join(nodeModulesPath, name);
-    const expectedRelative = computeRelativeSymlink(linkPath, targetPath);
+    const sourcePath = join(nodeModulesPath, name);
+    const destPath = join(projectRoot, link);
 
-    if (!isSymlink(linkPath)) {
-      // Create missing symlink
-      if (!dryRun) {
-        try {
-          if (pathExists(linkPath)) {
-            removeSync(linkPath);
-          }
-          symlinkSync(expectedRelative, linkPath);
-          logger.created(`${link} -> ${expectedRelative}`);
-        } catch (e) {
-          logger.warning(`Could not create symlink ${link}: ${e}`);
-        }
-      }
+    if (copyDirectory(sourcePath, destPath, dryRun)) {
+      logger.updated(`${link}/`);
     } else {
-      // Verify symlink points to correct location
-      logger.info(`  ✓ ${link}`);
+      logger.warning(`Could not update ${link}`);
     }
   }
 
-  // Handle commands directory - migrate from symlink to directory if needed
+  // Ensure project directories exist
   const projectCommandsDir = join(projectRoot, '.claude/project/commands');
   if (!pathExists(projectCommandsDir)) {
     if (!dryRun) {
@@ -182,18 +167,6 @@ async function updateSymlinkMode(
     logger.created('.claude/project/commands/ (for user custom commands)');
   }
 
-  if (needsCommandsMigration(projectRoot)) {
-    logger.info('Migrating commands to new directory structure...');
-    const builtInCommandsPath = join(nodeModulesPath, 'commands');
-    createCommandsDirectory(projectRoot, builtInCommandsPath, projectCommandsDir, dryRun || false);
-  } else {
-    const commandsDir = join(projectRoot, '.claude/commands');
-    if (isDirectory(commandsDir)) {
-      logger.info(`  ✓ .claude/commands/ (directory with individual symlinks)`);
-    }
-  }
-
-  // Handle skills directory - migrate from symlink to directory if needed
   const projectSkillsDir = join(projectRoot, '.claude/project/skills');
   if (!pathExists(projectSkillsDir)) {
     if (!dryRun) {
@@ -202,16 +175,12 @@ async function updateSymlinkMode(
     logger.created('.claude/project/skills/ (for user custom skills)');
   }
 
-  if (needsSkillsMigration(projectRoot)) {
-    logger.info('Migrating skills to new directory structure...');
-    const builtInSkillsPath = join(nodeModulesPath, 'skills');
-    createSkillsDirectory(projectRoot, builtInSkillsPath, projectSkillsDir, dryRun || false);
-  } else {
-    const skillsDir = join(projectRoot, '.claude/skills');
-    if (isDirectory(skillsDir)) {
-      logger.info(`  ✓ .claude/skills/ (directory with individual symlinks)`);
-    }
-  }
+  // Re-copy commands and skills
+  const builtInCommandsPath = join(nodeModulesPath, 'commands');
+  copyCommandsDirectory(projectRoot, builtInCommandsPath, projectCommandsDir, dryRun || false);
+
+  const builtInSkillsPath = join(nodeModulesPath, 'skills');
+  copySkillsDirectory(projectRoot, builtInSkillsPath, projectSkillsDir, dryRun || false);
 
   // Migrate sidecars from old location to new location
   await migrateSidecars(projectRoot, { dryRun });

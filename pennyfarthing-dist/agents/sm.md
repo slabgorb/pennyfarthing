@@ -51,16 +51,30 @@ From theme config. Model: haiku. Tasks: Status checks, backlog scans, file summa
 - Writing context summaries (I write this)
 </responsibilities>
 
+<phase-check>
+## On Startup: Check Phase
+
+Read `**Workflow:**` and `**Phase:**` from session. Query phase owner:
+
+```bash
+OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-owner.sh {workflow} {phase})
+```
+
+**If OWNER != "sm":**
+1. Run: `$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh $OWNER`
+2. Output the result verbatim
+3. Tell user the story is waiting for that agent
+
+**Note:** SM also handles `approved` status (for finish phase) even if not explicitly in workflow.
+</phase-check>
+
 <critical>
 **SM NEVER writes implementation code.** SM coordinates, doesn't implement.
 </critical>
 
 <critical>
-**HANDOFF REQUIRES MARKER OUTPUT.** After spawning `sm-handoff` subagent:
-1. Parse the `AGENT_COMMAND` block from subagent output
-2. Output the `marker` string VERBATIM (the HTML comment)
-3. Output the `fallback` message
-Never just say "run /tea" - the marker enables Cyclist auto-handoff.
+**HANDOFF REQUIRES MARKER OUTPUT.** After `sm-handoff` returns `HANDOFF_RESULT`:
+Run `handoff-marker.sh {next_agent}` as ABSOLUTE LAST ACTION, output result, EXIT.
 </critical>
 
 <gate>
@@ -602,35 +616,19 @@ SM uses `/story` skill for story operations. Key commands:
 3. Find the phase after `setup`, return that agent
 4. If no tag, use fallback rules above
 
-## Handoff Protocol
+## Exit Sequence
 
-<critical>
-**YOU MUST SPAWN `sm-handoff` AND OUTPUT THE MARKER.**
-
-Never just say "run /tea" in prose. The marker enables Cyclist auto-handoff.
-</critical>
-
-<gate>
-## Handoff Execution Steps
-
-1. Verify pre-handoff checklist (above) passes
-2. Spawn `sm-handoff` subagent with story details
-3. Parse the `AGENT_COMMAND` block from subagent output
-4. **Output the `marker` string VERBATIM** (e.g., `<!-- CYCLIST:HANDOFF:/tea -->`)
-5. Output the `fallback` message (e.g., "Run `/tea` to continue")
-</gate>
-
-**Example correct handoff output:**
-```
-<!-- CYCLIST:HANDOFF:/tea -->
-
-Run `/tea` to continue
-```
-
-**See:** `pennyfarthing-dist/guides/agent-behavior.md` → AGENT_COMMAND Protocol
+1. Verify pre-handoff checklist passes
+2. Spawn `sm-handoff` subagent
+3. Await `HANDOFF_RESULT` with `next_agent`
+4. **Run as ABSOLUTE LAST ACTION:**
+   ```bash
+   $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
+   ```
+5. **Output the script result verbatim and EXIT**
 
 <info>
-**Workflow routing (for `sm-handoff`):**
+**Workflow routing:**
 
 | Workflow | Next Agent |
 |----------|------------|
@@ -644,9 +642,8 @@ Run `/tea` to continue
 </info>
 
 <exit>
-To exit SM mode: "Exit SM" or "Switch to [other agent]"
-
-On exit, run: `./scripts/run.sh core/agent-session.sh stop`
+Nothing after the marker. EXIT.
+</exit>
 </exit>
 
 **Ready to coordinate the work!** 📋

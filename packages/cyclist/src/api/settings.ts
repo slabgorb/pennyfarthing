@@ -205,7 +205,13 @@ export function createSettingsRouter(): Router {
       let themeChanged = false;
       if (theme && projectDir) {
         try {
-          const configPath = path.join(projectDir, '.pennyfarthing', 'config.local.yaml');
+          const pennyfarthingDir = path.join(projectDir, '.pennyfarthing');
+          const configPath = path.join(pennyfarthingDir, 'config.local.yaml');
+
+          // Create .pennyfarthing directory if it doesn't exist
+          if (!fs.existsSync(pennyfarthingDir)) {
+            fs.mkdirSync(pennyfarthingDir, { recursive: true });
+          }
 
           // Read existing config to preserve other settings
           let existingConfig: Record<string, unknown> = {};
@@ -256,17 +262,40 @@ export function createSettingsRouter(): Router {
    */
   router.get('/themes', async (_req, res) => {
     try {
-      const projectDir = getProjectDirectory();
-      if (!projectDir) {
-        return res.json([]);
+      // Find themes directory - check bundled resources first, then project dir
+      let themesDir: string | null = null;
+
+      // Debug logging
+      console.log('[Themes API] process.resourcesPath:', process.resourcesPath);
+
+      // 1. Packaged Electron app: Contents/Resources/pennyfarthing-dist/personas/themes
+      if (process.resourcesPath) {
+        const bundledThemes = path.join(process.resourcesPath, 'pennyfarthing-dist', 'personas', 'themes');
+        console.log('[Themes API] Checking bundled path:', bundledThemes, 'exists:', fs.existsSync(bundledThemes));
+        if (fs.existsSync(bundledThemes)) {
+          themesDir = bundledThemes;
+        }
       }
 
-      const themesDir = path.join(projectDir, 'pennyfarthing-dist', 'personas', 'themes');
-      if (!fs.existsSync(themesDir)) {
+      // 2. Monorepo/dev: project dir pennyfarthing-dist
+      if (!themesDir) {
+        const projectDir = getProjectDirectory();
+        if (projectDir) {
+          const projectThemes = path.join(projectDir, 'pennyfarthing-dist', 'personas', 'themes');
+          if (fs.existsSync(projectThemes)) {
+            themesDir = projectThemes;
+          }
+        }
+      }
+
+      console.log('[Themes API] Final themesDir:', themesDir);
+
+      if (!themesDir) {
         return res.json([]);
       }
 
       const files = fs.readdirSync(themesDir).filter(f => f.endsWith('.yaml')).sort();
+      console.log('[Themes API] Found', files.length, 'theme files');
       const themes = files.map(f => {
         const id = f.replace('.yaml', '');
         const name = id.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');

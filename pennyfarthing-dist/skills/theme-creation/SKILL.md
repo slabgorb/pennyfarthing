@@ -143,27 +143,32 @@ Each agent gets an OCEAN profile (Big Five personality traits):
 
 Each agent can have a `visual` field that describes their appearance for portrait generation.
 
-**Generate portraits:**
+**Generate all portraits for a theme:**
 ```bash
-python3 scripts/generate-portraits.py --theme {name}
+./scripts/generate-portraits.sh --theme {name}
+```
+
+**Generate a single agent's portrait:**
+```bash
+./scripts/generate-portraits.sh --theme {name} --role {role}
 ```
 
 **Dry run (preview):**
 ```bash
-python3 scripts/generate-portraits.py --theme {name} --dry-run
+./scripts/generate-portraits.sh --theme {name} --dry-run
 ```
 
 **Requirements:**
-- Python 3 with diffusers, torch, pillow, pyyaml
-- Apple Silicon Mac (MPS) or NVIDIA GPU
+- Python 3 venv at `.venv/` with: `pip install diffusers transformers accelerate torch pillow pyyaml tqdm`
+- Apple Silicon Mac (MPS) or NVIDIA GPU (CUDA)
 - ~6.5GB model download on first run
 
-**Output:** `pennyfarthing-dist/personas/portraits/{theme}/{role}.png` (100x100px woodcut style)
+**Output:** `pennyfarthing-dist/personas/portraits/{theme}/{shortName}-{OCEAN}.png`
 
 ## Post-Creation Steps
 
 After creating a theme:
 1. Theme file at `.claude/pennyfarthing/themes/{name}.yaml`
 2. Activate with `/set-theme {name}`
-3. Generate portraits with `python3 scripts/generate-portraits.py --theme {name}`
+3. Generate portraits with `./scripts/generate-portraits.sh --theme {name}`
 4. Edit YAML directly for fine-tuning

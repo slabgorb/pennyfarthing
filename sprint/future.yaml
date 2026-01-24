@@ -3,7 +3,7 @@
 # These are researched and ready for prioritization when capacity allows
 # Updated: 2026-01-22
 #
-# Epic Numbering: 39-46, 55-59 (next available: 60)
+# Epic Numbering: 39-46, 55-60 (next available: 61)
 # Note: Current sprint uses Jira IDs (MSSCI-XXXXX), these use legacy epic-N format
 # Note: Epic 53 in sprint as MSSCI-12122 (in progress)
 # Note: Epic 54 completed as MSSCI-12131 in Sprint 12
@@ -814,20 +814,6 @@ future:
               title: PRD import support
               points: 2
               status: backlog
-    # ==========================================================================
-    # Reflector Consolidation
-    # Imported from: docs/planning/reflector-epics-and-stories.md
-    # Date: 2026-01-23
-    # ==========================================================================
-    - name: "Reflector Consolidation"
-      description: |
-        This document provides the complete epic and story breakdown for the Reflector System Rationalization initiative, decomposing the requirements from the PRD into implementable stories.
-      status: ready
-      blocked_by: null
-      total_points: 8
-      prd: docs/planning/reflector-prd.md
-      epics_doc: docs/planning/reflector-epics-and-stories.md
-      epics: []
 # =============================================================================
 # SUMMARY
 # =============================================================================

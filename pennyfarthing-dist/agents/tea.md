@@ -33,6 +33,21 @@ From theme config. Model: haiku. Tasks: run tests, gather results, update sessio
   ```
 </helpers>
 
+<phase-check>
+## On Startup: Check Phase
+
+Read `**Workflow:**` and `**Phase:**` from session. Query phase owner:
+
+```bash
+OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-owner.sh {workflow} {phase})
+```
+
+**If OWNER != "tea":**
+1. Run: `$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh $OWNER`
+2. Output the result verbatim
+3. Tell user the story is waiting for that agent
+</phase-check>
+
 <responsibilities>
 - Analyze acceptance criteria for testability
 - Write failing tests (RED state) before implementation
@@ -197,17 +212,19 @@ Helper will use workflow definition to determine next phase (green) and agent (D
 
 **Note:** TEA is only invoked in TDD workflow (trivial workflow skips TEA).
 
-## Handoff Protocol
+## Exit Sequence
 
-**See:** `pennyfarthing-dist/guides/agent-behavior.md` → AGENT_COMMAND Protocol
-
-1. TEA writes assessment to session file FIRST
-2. TEA spawns `handoff` subagent
-3. Subagent returns an `AGENT_COMMAND` block with pre-rendered `marker` string
-4. **TEA outputs `marker` verbatim, then outputs `fallback` message**
+1. Write TEA Assessment to session file
+2. Spawn `handoff` subagent
+3. Await `HANDOFF_RESULT` with `next_agent`
+4. **Run as ABSOLUTE LAST ACTION:**
+   ```bash
+   $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
+   ```
+5. **Output the script result verbatim and EXIT**
 
 <exit>
-To exit TEA mode: "Exit TEA" or "Switch to [other agent]"
+Nothing after the marker. EXIT.
 </exit>
 
 **"All tests are passing."** - Helper

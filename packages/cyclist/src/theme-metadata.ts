@@ -276,6 +276,30 @@ export function deriveCategory(themeId: string, source: string): string {
 let themeMetadataCache: ThemeMetadata[] | null = null;
 
 /**
+ * Find the themes directory - checks bundled resources first, then project dir
+ */
+function findThemesDir(): string | null {
+  // 1. Packaged Electron app: Contents/Resources/pennyfarthing-dist/personas/themes
+  if (process.resourcesPath) {
+    const bundledThemes = join(process.resourcesPath, 'pennyfarthing-dist', 'personas', 'themes');
+    if (fs.existsSync(bundledThemes)) {
+      return bundledThemes;
+    }
+  }
+
+  // 2. Monorepo/dev: project dir pennyfarthing-dist
+  const projectDir = getProjectDirectory();
+  if (projectDir) {
+    const projectThemes = join(projectDir, 'pennyfarthing-dist', 'personas', 'themes');
+    if (fs.existsSync(projectThemes)) {
+      return projectThemes;
+    }
+  }
+
+  return null;
+}
+
+/**
  * Get cached theme metadata
  */
 export function getThemeMetadataCache(): ThemeMetadata[] | null {
@@ -287,13 +311,12 @@ export function getThemeMetadataCache(): ThemeMetadata[] | null {
  * Returns sorted list of theme names
  */
 export async function getAvailableThemes(): Promise<string[]> {
-  const projectDir = getProjectDirectory();
-  if (!projectDir) {
+  const themesDir = findThemesDir();
+  if (!themesDir) {
     return ['alice-in-wonderland']; // Default fallback
   }
 
   try {
-    const themesDir = join(projectDir, 'pennyfarthing-dist', 'personas', 'themes');
     const files = fs.readdirSync(themesDir);
     return files
       .filter(f => f.endsWith('.yaml'))
@@ -315,8 +338,8 @@ export async function loadThemeMetadata(): Promise<ThemeMetadata[]> {
     return themeMetadataCache;
   }
 
-  const projectDir = getProjectDirectory();
-  if (!projectDir) {
+  const themesDir = findThemesDir();
+  if (!themesDir) {
     themeMetadataCache = [];
     return themeMetadataCache;
   }
@@ -324,7 +347,6 @@ export async function loadThemeMetadata(): Promise<ThemeMetadata[]> {
   const metadata: ThemeMetadata[] = [];
 
   try {
-    const themesDir = join(projectDir, 'pennyfarthing-dist', 'personas', 'themes');
     const files = fs.readdirSync(themesDir).filter(f => f.endsWith('.yaml')).sort();
 
     // Dynamic import of yaml (already available in project)
@@ -379,8 +401,8 @@ export async function loadThemeMetadataWithAgents(): Promise<ThemeMetadataWithAg
     return themeMetadataWithAgentsCache;
   }
 
-  const projectDir = getProjectDirectory();
-  if (!projectDir) {
+  const themesDir = findThemesDir();
+  if (!themesDir) {
     themeMetadataWithAgentsCache = [];
     return themeMetadataWithAgentsCache;
   }
@@ -388,7 +410,6 @@ export async function loadThemeMetadataWithAgents(): Promise<ThemeMetadataWithAg
   const metadata: ThemeMetadataWithAgents[] = [];
 
   try {
-    const themesDir = join(projectDir, 'pennyfarthing-dist', 'personas', 'themes');
     const files = fs.readdirSync(themesDir).filter(f => f.endsWith('.yaml')).sort();
 
     // Dynamic import of yaml (already available in project)

@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "build": "tsc && cp src/*.sh dist/ 2>/dev/null || true",
-    "test": "node --test dist/*.test.js",
+    "test": "node --test 'dist/**/*.test.js'",
     "clean": "rm -rf dist/"
   },
   "keywords": [

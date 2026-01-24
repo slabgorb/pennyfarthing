@@ -120,6 +120,21 @@ app.post('/api/bell-queue', (req, res) => {
     res.status(500).json({ error: 'Failed to sync bell queue' });
   }
 });
+
+// Bell mode message consumed endpoint (called by PostToolUse hook)
+// Broadcasts to browser to dequeue and display the injected message
+import { broadcastBellConsumed } from './api/bell.js';
+
+app.post('/api/bell-consumed', (req, res) => {
+  const { text } = req.body || {};
+  try {
+    broadcastBellConsumed(text || '');
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[Bell Consumed] Broadcast error:', err);
+    res.status(500).json({ error: 'Failed to broadcast bell consumed' });
+  }
+});
 app.use('/v1', createOTLPRouter());
 
 // Initialize token stats WebSocket broadcast callback

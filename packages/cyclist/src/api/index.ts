@@ -23,3 +23,5 @@ export { createSettingsRouter } from './settings.js';
 export { createBackgroundTasksRouter, getBackgroundTaskClients, broadcastBackgroundTaskEvent, initBackgroundTaskBroadcast } from './background-tasks.js';
 // MSSCI-11734: Enriched spans API
 export { createSpansRouter } from './spans.js';
+// Bell mode WebSocket broadcast
+export { getBellClients, broadcastBellConsumed } from './bell.js';

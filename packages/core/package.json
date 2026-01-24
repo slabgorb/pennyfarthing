@@ -30,7 +30,8 @@
   "types": "dist/index.d.ts",
   "files": [
     "dist/",
-    "bin/"
+    "bin/",
+    "pennyfarthing-dist/"
   ],
   "scripts": {
     "build": "tsc",

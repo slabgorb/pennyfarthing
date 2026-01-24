@@ -38,6 +38,17 @@ Key flow:
 4. Hook outputs JSON with `permissionDecision`
 5. Claude Code allows/blocks based on decision
 
+## Cyclist Working Directory
+
+**Cyclist must be started from project root**, not from `packages/cyclist/`. The Claude subprocess inherits the working directory, and if started from the wrong place, agents can't access sprint files, session files, or other project resources.
+
+Check with:
+```bash
+ps aux | grep cyclist  # Look at the cwd
+```
+
+If permissions are failing for project files, restart Cyclist from project root.
+
 ---
 
 *Add gotchas discovered during development below*

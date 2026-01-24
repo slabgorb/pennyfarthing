@@ -205,10 +205,21 @@ if last_total is not None:
     use_tirepump = permission_mode == 'turbo' and usable_pct > tirepump_threshold
     print(f'USE_TIREPUMP={str(use_tirepump).lower()}')
 
-    # Cyclist detection: Check if CYCLIST env var is set to '1'
-    # Markers should only be emitted when running inside Cyclist
+    # Cyclist detection: Multiple methods for robustness
+    # 1. CYCLIST env var set to '1' (Electron mode - Cyclist spawns Claude)
+    # 2. .cyclist-port file exists (Web mode - Claude connects to running Cyclist)
     import os
+    from pathlib import Path
     is_cyclist = os.environ.get('CYCLIST', '') == '1'
+    if not is_cyclist:
+        # Check for .cyclist-port file in packages/cyclist directory
+        # This indicates Cyclist is running in web mode
+        project_dir = os.environ.get('CYCLIST_PROJECT_DIR', os.getcwd())
+        port_file = Path(project_dir) / 'packages' / 'cyclist' / '.cyclist-port'
+        if not port_file.exists():
+            # Also check cwd in case we're already in cyclist dir
+            port_file = Path(os.getcwd()) / '.cyclist-port'
+        is_cyclist = port_file.exists()
     print(f'IS_CYCLIST={str(is_cyclist).lower()}')
 " 2>/dev/null)
 

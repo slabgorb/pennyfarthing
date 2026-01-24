@@ -282,6 +282,16 @@ export function setTheme(themeName: string, projectRoot: string, options: SetThe
   // Update theme
   config.theme = themeName;
 
+  // Bake theme characters into config (so statusline doesn't need to follow symlinks)
+  // This makes .pennyfarthing self-contained for installed apps
+  const themeCharacters: Record<string, string> = {};
+  for (const [agentId, agentData] of Object.entries(theme.agents)) {
+    if (agentData?.character) {
+      themeCharacters[agentId] = agentData.character;
+    }
+  }
+  config.theme_characters = themeCharacters;
+
   // Write back with comment header
   const yamlContent = YAML.stringify(config);
   writeFileSync(configPath, header + yamlContent, 'utf8');
