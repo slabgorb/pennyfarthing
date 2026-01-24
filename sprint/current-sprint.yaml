@@ -916,7 +916,8 @@ epics:
       detection/stripping functions. Migrate Cyclist and VS Code extension
       to use shared module. Add configurable TirePump threshold.
     priority: P1
-    status: in_progress
+    status: done
+    cancelled_points: 2
     repos: pennyfarthing
     stories:
       - id: MSSCI-12370
@@ -973,7 +974,8 @@ epics:
           Achieve >90% coverage for marker module. Test all 5 marker types, code block immunity, edge cases.
         points: 1
         priority: P0
-        status: backlog
+        status: cancelled
+        cancelled_reason: "Epic 60 cancelled - marker consolidation deprioritized"
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
@@ -984,7 +986,8 @@ epics:
           Update quick-actions.js to import from @pennyfarthing/shared. Remove local markerPattern and detectStructuredMarkers().
         points: 1
         priority: P1
-        status: backlog
+        status: cancelled
+        cancelled_reason: "Epic 60 cancelled - marker consolidation deprioritized"
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
@@ -1230,8 +1233,10 @@ epics:
           - Type hints throughout
         points: 3
         priority: P1
-        status: backlog
+        status: in_progress
         repos: pennyfarthing
+        branch: feat/63-5-jira-sync-python
+        workflow: tdd
       - id: "63-6"
         jira: MSSCI-12400
         title: "Port jira-bidirectional-sync.mjs to Python"
