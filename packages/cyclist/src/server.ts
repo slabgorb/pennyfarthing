@@ -123,22 +123,25 @@ app.post('/api/welcome', (req, res) => {
 app.post('/api/bell-queue', (req, res) => {
   const projectDir = getProjectDir();
   const queuePath = join(projectDir, '.pennyfarthing', 'bell-queue.json');
-  const modePath = join(projectDir, '.pennyfarthing', 'bell-mode.json');
+  const configPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
 
-  // Only write if bell mode is enabled
+  // Only write if bell mode is enabled (read from config.local.yaml)
   try {
-    if (existsSync(modePath)) {
-      const modeContent = readFileSync(modePath, 'utf8');
-      const mode = JSON.parse(modeContent);
-      if (mode?.enabled) {
-        const queue = req.body;
-        if (Array.isArray(queue)) {
-          writeFileSync(queuePath, JSON.stringify(queue, null, 2));
-        }
-      } else if (existsSync(queuePath)) {
-        // Bell mode disabled - remove stale queue file
-        unlinkSync(queuePath);
+    let bellModeEnabled = false;
+    if (existsSync(configPath)) {
+      const configContent = readFileSync(configPath, 'utf8');
+      // Simple check for bell_mode: true in YAML
+      bellModeEnabled = /^\s*bell_mode:\s*true/m.test(configContent);
+    }
+
+    if (bellModeEnabled) {
+      const queue = req.body;
+      if (Array.isArray(queue)) {
+        writeFileSync(queuePath, JSON.stringify(queue, null, 2));
       }
+    } else if (existsSync(queuePath)) {
+      // Bell mode disabled - remove stale queue file
+      unlinkSync(queuePath);
     }
     res.json({ ok: true });
   } catch (err) {
