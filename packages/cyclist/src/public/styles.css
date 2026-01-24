@@ -1712,6 +1712,21 @@ html, body {
   color: var(--text-primary);
 }
 
+/* Bell-injected messages (MSSCI-12275) */
+.message-bell-injected {
+  border-left: 3px solid var(--warning, #f59e0b);
+  background: color-mix(in srgb, var(--warning, #f59e0b) 10%, var(--bg-secondary));
+  position: relative;
+}
+
+.message-bell-injected .bell-indicator {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
 /* 28-1: User message image thumbnails */
 .user-message-images {
   display: flex;
@@ -5805,4 +5820,41 @@ html, body {
 .welcome-close:hover {
   background: rgba(255, 255, 255, 0.1);
   color: var(--text-primary);
+}
+
+/* Inline welcome message (displays in message view) */
+.welcome-inline {
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.welcome-inline-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.welcome-inline-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.welcome-inline-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.welcome-inline-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.welcome-inline-details {
+  font-size: 12px;
+  color: var(--text-secondary);
 }

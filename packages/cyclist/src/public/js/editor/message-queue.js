@@ -69,6 +69,7 @@ let messageQueue = [];
 let onQueueChangeCallback = null;
 let processingState = false;
 let queuePaused = false; // Set by abort to prevent auto-advance
+let bellModeEnabled = false; // MSSCI-12275: Bell mode state (injected by hook)
 
 // Editor callbacks (set via init)
 let clearEditorFn = null;
@@ -126,6 +127,24 @@ export function resumeQueue() {
  */
 export function isQueuePaused() {
   return queuePaused;
+}
+
+/**
+ * Set bell mode state (MSSCI-12275)
+ * When enabled, queue auto-advance is disabled (hook handles injection)
+ * @param {boolean} enabled - Whether bell mode is enabled
+ */
+export function setBellMode(enabled) {
+  bellModeEnabled = enabled;
+  console.log('[MessageQueue] Bell mode:', enabled ? 'enabled' : 'disabled');
+}
+
+/**
+ * Check if bell mode is enabled
+ * @returns {boolean} True if bell mode is enabled
+ */
+export function isBellModeEnabled() {
+  return bellModeEnabled;
 }
 
 /**
@@ -281,6 +300,12 @@ export function processNextInQueue() {
     console.log('[MessageQueue] Queue paused, skipping auto-advance');
     return;
   }
+  // MSSCI-12275: When bell mode is enabled, the hook handles injection
+  // Don't auto-advance here to avoid duplicate submissions
+  if (bellModeEnabled) {
+    console.log('[MessageQueue] Bell mode enabled, hook will handle queue');
+    return;
+  }
 
   const nextMessage = dequeueMessage();
   if (nextMessage) {
@@ -326,3 +351,88 @@ export async function injectMessage(index) {
 
   return true;
 }
+
+// =============================================================================
+// Bell Mode WebSocket (MSSCI-12275)
+// Listens for bell-consumed events from the hook and dequeues + displays
+// =============================================================================
+
+let bellSocket = null;
+
+/**
+ * Initialize the bell mode WebSocket listener
+ * Called automatically on module load
+ */
+function initBellWebSocket() {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${protocol}//${window.location.host}/ws/bell`;
+
+  bellSocket = new WebSocket(wsUrl);
+
+  bellSocket.onopen = () => {
+    console.log('[Bell] WebSocket connected');
+  };
+
+  bellSocket.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.type === 'bell-consumed') {
+        handleBellConsumed(data.text);
+      }
+    } catch (err) {
+      console.error('[Bell] Failed to parse message:', err);
+    }
+  };
+
+  bellSocket.onclose = () => {
+    console.log('[Bell] WebSocket closed, reconnecting...');
+    setTimeout(initBellWebSocket, 2000);
+  };
+
+  bellSocket.onerror = (err) => {
+    console.error('[Bell] WebSocket error:', err);
+  };
+}
+
+/**
+ * Handle a bell-consumed event from the hook
+ * Dequeues the first message and displays it in the message view
+ * @param {string} text - The message text that was injected
+ */
+function handleBellConsumed(text) {
+  console.log('[Bell] Message consumed by hook:', text);
+
+  // Dequeue the first message from our local queue
+  const message = dequeueMessage();
+
+  if (message) {
+    // Display the injected message in the message view as a user message
+    displayInjectedMessage(message.text);
+  }
+}
+
+/**
+ * Display an injected bell message in the message view
+ * Uses the message store to properly integrate with MessageView
+ * @param {string} text - The message text to display
+ */
+async function displayInjectedMessage(text) {
+  try {
+    // Dynamically import to avoid circular dependencies
+    const { addMessage } = await import('../message-store.js');
+
+    // Add as a bell-injected message type that MessageView will render
+    addMessage({
+      type: 'bell-injected',
+      content: text,
+      timestamp: Date.now(),
+    });
+
+    console.log('[Bell] Added injected message to store');
+  } catch (err) {
+    console.error('[Bell] Failed to add message to store:', err);
+  }
+}
+
+// Initialize bell WebSocket on module load
+initBellWebSocket();

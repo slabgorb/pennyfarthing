@@ -47,7 +47,9 @@ import {
   injectMessage,
   pauseQueue,
   resumeQueue,
-  isQueuePaused
+  isQueuePaused,
+  setBellMode,
+  isBellModeEnabled
 } from './editor/message-queue.js';
 import {
   showImagePreview,
@@ -84,7 +86,9 @@ export {
   injectMessage,
   pauseQueue,
   resumeQueue,
-  isQueuePaused
+  isQueuePaused,
+  setBellMode,
+  isBellModeEnabled
 } from './editor/message-queue.js';
 
 // Re-export markdown for external consumers
