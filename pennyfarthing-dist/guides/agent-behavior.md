@@ -7,7 +7,7 @@
 ## Critical Protocols
 
 <critical>
-**Reflector markers:** Subagent output is NOT visible to Cyclist. After handoff subagent returns `AGENT_COMMAND`, output the `marker` string verbatim. See `<agent-command-protocol>` below.
+**Reflector markers:** Run `handoff-marker.sh {next_agent}` as your ABSOLUTE LAST ACTION and output the result verbatim. See `<agent-exit-protocol>` below.
 </critical>
 
 <critical>
@@ -20,7 +20,7 @@ Multi-repo: `cd $CLAUDE_PROJECT_DIR/$(get_repo_path "$repo")` after sourcing `sc
 </critical>
 
 <critical>
-**Handoff Action:** When `handoff` returns `AGENT_COMMAND`, output `marker` verbatim then `fallback`. Don't ask permission.
+**Handoff Action:** After handoff subagent returns, run `handoff-marker.sh` as LAST action, output result, EXIT.
 </critical>
 
 <critical>
@@ -177,48 +177,32 @@ HTML comments that agents emit to signal Cyclist UI. Format: `<!-- CYCLIST:TYPE:
 
 ---
 
-<agent-command-protocol>
-## AGENT_COMMAND Protocol
+<agent-exit-protocol>
+## Agent Exit Protocol
 
-<critical>
-**Subagent output is NOT visible to Cyclist.** Tool results are not parsed for markers.
-Handoff subagents return an `AGENT_COMMAND` block with a pre-rendered `marker` string.
-The **calling agent** outputs the `marker` verbatim - no parsing or mapping required.
-</critical>
+### Exit Sequence
 
-### How It Works
+1. Write assessment to session file
+2. Spawn `handoff` subagent
+3. Await `HANDOFF_RESULT`
+4. If `status: blocked` → report error, stop
+5. **Run this as ABSOLUTE LAST ACTION:**
+   ```bash
+   $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
+   ```
+6. **Output the script result verbatim and EXIT**
 
-1. Agent writes assessment to session file FIRST
-2. Agent spawns `handoff` subagent
-3. Subagent runs `handoff-marker.sh {next-agent}` to generate `AGENT_COMMAND` block
-4. Subagent returns the block with pre-rendered `marker` string
-5. **Agent outputs `marker` verbatim, then outputs `fallback` message**
-
-**Single Source of Truth:** The `handoff-marker.sh` script is the authoritative source for marker format. It handles environment detection (IS_CYCLIST, USE_TIREPUMP) automatically.
-
-### AGENT_COMMAND Format
+### HANDOFF_RESULT Format
 
 ```
----
-AGENT_COMMAND:
-  marker: "{PRE_RENDERED_MARKER_STRING}"
-  fallback: "Run `/{agent}` to continue"
----
+HANDOFF_RESULT:
+  status: success|blocked
+  next_agent: {agent_name}
+  error: "{message}"  # if blocked
 ```
 
-The `marker` field contains the exact string to output (or empty string if no marker needed).
-The `fallback` field contains human-readable instructions.
+### Script Output (emit verbatim)
 
-### Agent Action
-
-**Simple rule: Output `marker` then `fallback`. That's it.**
-
-1. If `error: true` → Report the `fallback` message as an error
-2. Otherwise → Output `marker` verbatim (if non-empty), then output `fallback`
-
-### Example
-
-Subagent returns:
 ```
 ---
 AGENT_COMMAND:
@@ -227,12 +211,54 @@ AGENT_COMMAND:
 ---
 ```
 
-Agent outputs in their direct text (not a tool call):
-```
-<!-- CYCLIST:HANDOFF:/dev -->
+**Nothing after the marker. EXIT.**
+</agent-exit-protocol>
 
-Run `/dev` to continue
+<wrong-phase-detection>
+## Wrong Phase Detection
+
+When an agent detects the story is NOT in their phase, emit a marker immediately.
+
+### How to Check (works with custom workflows)
+
+1. Read `**Workflow:**` and `**Phase:**` from session file
+2. Query the phase owner:
+   ```bash
+   OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-owner.sh {workflow} {phase})
+   ```
+3. If `$OWNER` != your agent name → story belongs to another agent
+
+### Action When Not Your Phase
+
+```bash
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {OWNER}
 ```
 
-**CRITICAL:** The marker MUST appear in the agent's direct text output, not in a tool result.
-</agent-command-protocol>
+Then output the result verbatim. This triggers Cyclist's handoff button.
+
+### Example
+
+Dev reads session: `**Workflow:** tdd`, `**Phase:** review`
+
+```bash
+OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-owner.sh tdd review)
+# Returns: reviewer
+```
+
+Since "reviewer" != "dev", Dev runs:
+```bash
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh reviewer
+```
+
+### Do NOT just say "run /reviewer"
+
+Wrong:
+> The story is in review. Run `/reviewer` to continue.
+
+Right:
+> The story is in review phase.
+>
+> <!-- CYCLIST:HANDOFF:/reviewer -->
+>
+> Run `/reviewer` to continue
+</wrong-phase-detection>

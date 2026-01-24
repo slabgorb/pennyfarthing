@@ -72,6 +72,21 @@ From theme config. Model: haiku. Tasks: gather pre-flight data, update session f
   ```
 </helpers>
 
+<phase-check>
+## On Startup: Check Phase
+
+Read `**Workflow:**` and `**Phase:**` from session. Query phase owner:
+
+```bash
+OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-owner.sh {workflow} {phase})
+```
+
+**If OWNER != "reviewer":**
+1. Run: `$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh $OWNER`
+2. Output the result verbatim
+3. Tell user the story is waiting for that agent
+</phase-check>
+
 <responsibilities>
 - Security analysis (vulnerabilities, auth issues, injection risks)
 - Edge case analysis (null/empty/max values)
@@ -264,67 +279,47 @@ Write assessment to session file BEFORE spawning handoff subagent.
 **Handoff:** Back to Dev for fixes
 ```
 
-## Handoff Protocol
+## Exit Sequence
 
-**See:** `pennyfarthing-dist/guides/agent-behavior.md` → AGENT_COMMAND Protocol
-
-1. Reviewer writes assessment to session file FIRST
-2. Reviewer spawns `handoff` subagent with VERDICT (approved/rejected)
-3. Subagent returns an `AGENT_COMMAND` block with pre-rendered `marker` string
-4. **Reviewer outputs `marker` verbatim, then outputs `fallback` message**
+1. Write Reviewer Assessment to session file
+2. Spawn `handoff` subagent with VERDICT
+3. Await `HANDOFF_RESULT` with `next_agent`
+4. **Run as ABSOLUTE LAST ACTION:**
+   ```bash
+   $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
+   ```
+5. **Output the script result verbatim and EXIT**
 
 **Verdict routing:**
-- APPROVED → next agent is SM (`/sm`)
-- REJECTED → returns to Dev (`/dev`)
+- APPROVED → `next_agent: sm`
+- REJECTED → `next_agent: dev`
 
-Handoff subagent (generic - handles both approve and reject).
+## Handoff Subagent
 
 **First, read workflow from session file:**
 ```bash
 grep "^\*\*Workflow:\*\*" .session/{STORY_ID}-session.md | sed 's/\*\*Workflow:\*\* //'
 ```
 
-Then spawn with detected workflow:
+Then spawn:
 
 ```yaml
-# Approval
 Task tool:
   subagent_type: "general-purpose"
   model: "haiku"
   prompt: |
     You are the handoff subagent.
-
-    Read .pennyfarthing/agents/handoff.md for your instructions,
-    then EXECUTE all steps described there. Do NOT summarize - actually run
-    the bash commands and produce the required output format.
+    Read .pennyfarthing/agents/handoff.md and EXECUTE.
 
     STORY_ID: {value}
-    WORKFLOW: {workflow from session}  # e.g., "tdd" or "trivial"
+    WORKFLOW: {workflow from session}
     CURRENT_PHASE: review
     REPOS: {value}
     ASSESSMENT_SECTION: Reviewer Assessment
-    VERDICT: approved
-
-# Rejection
-Task tool:
-  subagent_type: "general-purpose"
-  model: "haiku"
-  prompt: |
-    You are the handoff subagent.
-
-    Read .pennyfarthing/agents/handoff.md for your instructions,
-    then EXECUTE all steps described there. Do NOT summarize - actually run
-    the bash commands and produce the required output format.
-
-    STORY_ID: {value}
-    WORKFLOW: {workflow from session}  # e.g., "tdd" or "trivial"
-    CURRENT_PHASE: review
-    REPOS: {value}
-    ASSESSMENT_SECTION: Reviewer Assessment
-    VERDICT: rejected
+    VERDICT: {approved|rejected}
 ```
 
-**Note:** Both TDD and trivial workflows have a `review` phase with the same name.
+Helper returns `HANDOFF_RESULT` with `next_agent`.
 
 ## Communication Style
 
