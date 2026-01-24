@@ -63,14 +63,7 @@ export function extractToolResultsFromUserMessage(message) {
     }));
 }
 
-// Wait for DOM to be ready (skip in test environment)
-if (typeof document !== 'undefined' && document.getElementById('message-view')) {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initMessageView);
-  } else {
-    initMessageView();
-  }
-}
+// DOM initialization moved to end of file to avoid TDZ errors with bellWebSocket
 
 /**
  * Initialize the MessageView and connect to SDK events
@@ -504,5 +497,19 @@ function handleBellConsumed(text) {
       // Auto-scroll to show the message
       messageView.scrollTop = messageView.scrollHeight;
     }
+  }
+}
+
+// =============================================================================
+// DOM Initialization
+// =============================================================================
+// Must be at end of file to ensure all variables (especially bellWebSocket)
+// are declared before initMessageView() accesses them.
+
+if (typeof document !== 'undefined' && document.getElementById('message-view')) {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMessageView);
+  } else {
+    initMessageView();
   }
 }
