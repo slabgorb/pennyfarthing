@@ -47,11 +47,13 @@ test.describe('Cyclist App', () => {
     const modeSwitch = page.locator('.mode-switch');
     await expect(modeSwitch).toBeVisible();
 
-    // Check mode buttons exist
+    // Check mode buttons exist (MSSCI-12395: turbo removed, now plan/manual/accept)
     await expect(page.locator('[data-mode="plan"]')).toBeVisible();
     await expect(page.locator('[data-mode="manual"]')).toBeVisible();
     await expect(page.locator('[data-mode="accept"]')).toBeVisible();
-    await expect(page.locator('[data-mode="turbo"]')).toBeVisible();
+
+    // Check relay mode toggle exists (MSSCI-12395: independent auto-handoff)
+    await expect(page.locator('#relay-mode-toggle')).toBeVisible();
   });
 
   test('should switch modes with keyboard shortcuts', async ({ page }) => {
@@ -69,9 +71,14 @@ test.describe('Cyclist App', () => {
     await page.keyboard.press('Meta+3');
     await expect(page.locator('[data-mode="accept"]')).toHaveAttribute('aria-checked', 'true');
 
-    // Press Cmd+4 for turbo mode
-    await page.keyboard.press('Meta+4');
-    await expect(page.locator('[data-mode="turbo"]')).toHaveAttribute('aria-checked', 'true');
+    // MSSCI-12395: Relay mode toggle (independent auto-handoff)
+    // Note: Cmd+4 shortcut conflicts with panel shortcuts - test via click instead
+    const relayToggle = page.locator('#relay-mode-toggle');
+    const initialState = await relayToggle.getAttribute('aria-pressed');
+    await relayToggle.click();
+    // Wait for async toggle to complete (settings API call)
+    const expectedState = initialState === 'true' ? 'false' : 'true';
+    await expect(relayToggle).toHaveAttribute('aria-pressed', expectedState, { timeout: 5000 });
   });
 
   test('should toggle panels with keyboard shortcuts', async ({ page }) => {
@@ -108,13 +115,16 @@ test.describe('Cyclist App', () => {
     const bellToggle = page.locator('#bell-mode-toggle');
     await expect(bellToggle).toBeVisible();
 
-    // Click to toggle
+    // Get initial state and toggle
+    const initialState = await bellToggle.getAttribute('aria-pressed');
     await bellToggle.click();
-    await expect(bellToggle).toHaveAttribute('aria-pressed', 'true');
+    // Wait for async toggle to complete (settings API call)
+    const expectedAfterFirst = initialState === 'true' ? 'false' : 'true';
+    await expect(bellToggle).toHaveAttribute('aria-pressed', expectedAfterFirst, { timeout: 5000 });
 
-    // Click again to toggle off
+    // Click again to toggle back
     await bellToggle.click();
-    await expect(bellToggle).toHaveAttribute('aria-pressed', 'false');
+    await expect(bellToggle).toHaveAttribute('aria-pressed', initialState, { timeout: 5000 });
   });
 });
 

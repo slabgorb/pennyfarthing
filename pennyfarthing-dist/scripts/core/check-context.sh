@@ -53,6 +53,7 @@ critical_threshold = $DEFAULT_CRITICAL_THRESHOLD
 max_tokens = $DEFAULT_MAX_TOKENS
 tirepump_threshold = $DEFAULT_TIREPUMP_THRESHOLD
 permission_mode = 'manual'  # Default to manual
+relay_mode = False  # MSSCI-12395: Independent auto-handoff toggle
 
 # First try .pennyfarthing/config.local.yaml (preferred location)
 try:
@@ -67,9 +68,13 @@ try:
                 critical_threshold = cb.get('critical_threshold', critical_threshold)
                 max_tokens = cb.get('max_tokens', max_tokens)
                 tirepump_threshold = cb.get('tirepump_threshold', tirepump_threshold)
-            # Read permission_mode from workflow section
-            if 'workflow' in config and 'permission_mode' in config['workflow']:
-                permission_mode = config['workflow']['permission_mode']
+            # Read permission_mode and relay_mode from workflow section
+            if 'workflow' in config:
+                if 'permission_mode' in config['workflow']:
+                    permission_mode = config['workflow']['permission_mode']
+                # MSSCI-12395: relay_mode for auto-handoff (independent of permission_mode)
+                if 'relay_mode' in config['workflow']:
+                    relay_mode = config['workflow']['relay_mode'] == True
 except:
     # Fallback to settings.local.json (legacy location)
     try:
@@ -82,8 +87,12 @@ except:
                 critical_threshold = cb.get('critical_threshold', critical_threshold)
                 max_tokens = cb.get('max_tokens', max_tokens)
                 tirepump_threshold = cb.get('tirepump_threshold', tirepump_threshold)
-            if 'workflow' in settings and 'permission_mode' in settings['workflow']:
-                permission_mode = settings['workflow']['permission_mode']
+            if 'workflow' in settings:
+                if 'permission_mode' in settings['workflow']:
+                    permission_mode = settings['workflow']['permission_mode']
+                # MSSCI-12395: relay_mode for auto-handoff (independent of permission_mode)
+                if 'relay_mode' in settings['workflow']:
+                    relay_mode = settings['workflow']['relay_mode'] == True
     except:
         pass
 
@@ -93,6 +102,7 @@ print(f'CRITICAL_THRESHOLD={critical_threshold}')
 print(f'MAX_TOKENS={max_tokens}')
 print(f'TIREPUMP_THRESHOLD={tirepump_threshold}')
 print(f'PERMISSION_MODE={permission_mode}')
+print(f'RELAY_MODE={str(relay_mode).lower()}')
 " 2>/dev/null)
 
 # Apply config or use defaults
@@ -140,6 +150,7 @@ import json
 warning_threshold = $WARNING_THRESHOLD
 max_tokens = $MAX_TOKENS
 permission_mode = '$PERMISSION_MODE'
+relay_mode = '$RELAY_MODE' == 'true'  # MSSCI-12395: Independent auto-handoff toggle
 tirepump_threshold = $TIREPUMP_THRESHOLD  # Threshold for TirePump auto-handoff (configurable)
 
 with open('$TRANSCRIPT', 'r') as f:
@@ -199,10 +210,11 @@ if last_total is not None:
         print('HANDOFF_MODE=ask')
 
     # TirePump: Use CONTEXT_CLEAR (clear + load next agent) when:
-    # 1. permission_mode is 'turbo' (auto-handoff enabled)
+    # 1. relay_mode is true (auto-handoff enabled) - MSSCI-12395
     # 2. context > 60% (tirepump_threshold)
     # This enables continuous autonomous runs without manual intervention
-    use_tirepump = permission_mode == 'turbo' and usable_pct > tirepump_threshold
+    # Legacy: also support permission_mode == 'turbo' for backwards compatibility
+    use_tirepump = (relay_mode or permission_mode == 'turbo') and usable_pct > tirepump_threshold
     print(f'USE_TIREPUMP={str(use_tirepump).lower()}')
 
     # Cyclist detection: Multiple methods for robustness
