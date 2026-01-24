@@ -44,7 +44,10 @@ import {
   loadMessageQueue,
   saveMessageQueue,
   processNextInQueue,
-  injectMessage
+  injectMessage,
+  pauseQueue,
+  resumeQueue,
+  isQueuePaused
 } from './editor/message-queue.js';
 import {
   showImagePreview,
@@ -78,7 +81,10 @@ export {
   loadMessageQueue,
   saveMessageQueue,
   processNextInQueue,
-  injectMessage
+  injectMessage,
+  pauseQueue,
+  resumeQueue,
+  isQueuePaused
 } from './editor/message-queue.js';
 
 // Re-export markdown for external consumers
@@ -592,6 +598,9 @@ function submitEditorContent(passedText, passedImages) {
   // Don't submit empty content
   if (!markdown.trim()) return;
 
+  // Debug: Log processing state
+  console.log('[Editor] submitEditorContent called, isProcessing:', isProcessing(), 'isSubmitting:', isSubmitting, 'passedText:', passedText !== undefined);
+
   // If Claude is processing, queue the message instead (only for direct user input, not queue replay)
   if (isProcessing() && passedText === undefined) {
     const queued = queueMessage({ text: markdown, images: images });
@@ -615,6 +624,11 @@ function submitEditorContent(passedText, passedImages) {
   // Mark as submitting
   isSubmitting = true;
   setProcessing(true);
+
+  // Resume queue if it was paused by abort (user is actively sending, so resume auto-advance)
+  if (isQueuePaused()) {
+    resumeQueue();
+  }
 
   // Add to command history (only for direct user input)
   if (passedText === undefined) {

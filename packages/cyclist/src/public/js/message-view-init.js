@@ -21,7 +21,7 @@ import {
 import { renderBackgroundTaskNotification, renderBellInjectedMessage } from './components/message-view/message-renderers.js';
 import { enrichMessage } from './message-enrichment.js';
 import { updateActivity, clearActivity } from './activity.js';
-import { resetSubmitting, setProcessing, processNextInQueue, setOnQueueChange, clearMessageQueue, loadMessageQueue, getMessageQueue, removeFromQueue, injectMessage, dequeueMessage } from './editor.js';
+import { resetSubmitting, setProcessing, processNextInQueue, setOnQueueChange, clearMessageQueue, loadMessageQueue, getMessageQueue, removeFromQueue, injectMessage, dequeueMessage, pauseQueue } from './editor.js';
 import { handleMessage as handleGitCommitMessage } from './git-commit-detector.js';
 import { getCurrentAgentCommand } from './persona.js';
 import { settingsSync, STORAGE_KEYS } from './settings-sync.js';
@@ -252,9 +252,12 @@ function initMessageView() {
   async function abortClaude() {
     if (window.electronAPI?.claude) {
       console.log('[MessageView] Aborting Claude');
+      pauseQueue(); // Prevent queue auto-advance after abort
       await window.electronAPI.claude.abort();
       hideThinking();
       clearActivity();
+      resetSubmitting(); // Allow new submissions after abort
+      setProcessing(false); // Mark processing complete
     }
   }
 

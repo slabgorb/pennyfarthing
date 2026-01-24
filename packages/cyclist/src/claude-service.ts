@@ -495,6 +495,11 @@ export class ClaudeService extends EventEmitter {
    * Returns null if process exits or is interrupted.
    */
   private waitForMessage(): Promise<SDKMessage | null> {
+    // Check interrupted flag FIRST - exit immediately if interrupted
+    if (this.interrupted) {
+      return Promise.resolve(null);
+    }
+
     // Check queue first
     if (this.messageQueue.length > 0) {
       return Promise.resolve(this.messageQueue.shift()!);
@@ -630,6 +635,8 @@ export class ClaudeService extends EventEmitter {
       // Send SIGINT to interrupt current turn
       this.currentProcess.kill('SIGINT');
     }
+    // Clear any queued messages - don't process stale data after interrupt
+    this.messageQueue = [];
     // Resolve any pending message resolvers to unblock waitForMessage()
     // This allows the sendMessage() generator to exit its while loop
     for (const resolve of this.messageResolvers) {
@@ -646,18 +653,25 @@ export class ClaudeService extends EventEmitter {
    * Background agent fix: Clear process state properly
    */
   abort(): void {
+    console.log('[ClaudeService] abort() called, currentProcess:', !!this.currentProcess);
+    // Set interrupted flag first so waitForMessage exits immediately
+    this.interrupted = true;
+    this.processExited = true;
+    // Clear message queue - don't process stale data
+    this.messageQueue = [];
+    // Kill the process if running - use SIGKILL for immediate termination
     if (this.currentProcess) {
-      console.log('[ClaudeService] Aborting process');
-      this.currentProcess.kill();
+      console.log('[ClaudeService] Killing process with SIGKILL, pid:', this.currentProcess.pid);
+      this.currentProcess.kill('SIGKILL');
       this.currentProcess = null;
     }
-    this.processExited = true;
     // Clear any pending message resolvers
     for (const resolve of this.messageResolvers) {
       resolve(null);
     }
     this.messageResolvers = [];
-    this.interrupt(); // Also set interrupted flag and emit event
+    // Emit event for any external listeners
+    this.emit('interrupted');
   }
 
   /**

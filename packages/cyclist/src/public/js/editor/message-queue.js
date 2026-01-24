@@ -68,6 +68,7 @@ function migrateQueueItem(item) {
 let messageQueue = [];
 let onQueueChangeCallback = null;
 let processingState = false;
+let queuePaused = false; // Set by abort to prevent auto-advance
 
 // Editor callbacks (set via init)
 let clearEditorFn = null;
@@ -98,7 +99,33 @@ export function isProcessing() {
  * @param {boolean} value - New processing state
  */
 export function setProcessing(value) {
+  const oldValue = processingState;
   processingState = Boolean(value);
+  console.log('[MessageQueue] setProcessing:', oldValue, '->', processingState, new Error().stack.split('\n')[2]);
+}
+
+/**
+ * Pause queue processing (called on abort to prevent auto-advance)
+ */
+export function pauseQueue() {
+  queuePaused = true;
+  console.log('[MessageQueue] Queue paused');
+}
+
+/**
+ * Resume queue processing (called on next user submit)
+ */
+export function resumeQueue() {
+  queuePaused = false;
+  console.log('[MessageQueue] Queue resumed');
+}
+
+/**
+ * Check if queue is paused
+ * @returns {boolean} True if queue is paused
+ */
+export function isQueuePaused() {
+  return queuePaused;
 }
 
 /**
@@ -250,6 +277,10 @@ export function removeFromQueue(index) {
 export function processNextInQueue() {
   if (messageQueue.length === 0) return;
   if (processingState) return;
+  if (queuePaused) {
+    console.log('[MessageQueue] Queue paused, skipping auto-advance');
+    return;
+  }
 
   const nextMessage = dequeueMessage();
   if (nextMessage) {
