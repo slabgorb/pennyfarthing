@@ -22,11 +22,14 @@ import { isBellModeEnabled, setBellMode, loadBellModeState } from '../bell-mode.
 /**
  * Extended settings response that includes theme and handoff_mode from config.local.yaml
  * These are NOT part of CyclistSettings - stored ONLY in .pennyfarthing/config.local.yaml
+ *
+ * Note: relay_mode is part of CyclistSettings.workflow since MSSCI-12395
  */
 export interface SettingsResponse extends Omit<CyclistSettings, 'workflow'> {
   workflow: CyclistSettings['workflow'] & {
     handoff_mode?: string;
     bell_mode?: boolean;
+    relay_mode?: boolean;
   };
   pennyfarthing?: {
     theme: string;
@@ -155,14 +158,25 @@ export function createSettingsRouter(): Router {
         }
       }
 
-      // Validate permission_mode enum
+      // Validate permission_mode enum (turbo removed in MSSCI-12395)
       if (partialSettings.workflow?.permission_mode !== undefined) {
         const mode = partialSettings.workflow.permission_mode;
-        const validModes = ['plan', 'manual', 'accept', 'turbo'];
+        const validModes = ['plan', 'manual', 'accept'];
         if (!validModes.includes(mode)) {
           return res.status(400).json(createErrorResponse(
             'VALIDATION_ERROR',
-            'Permission mode must be "plan", "manual", "accept", or "turbo"'
+            'Permission mode must be "plan", "manual", or "accept". Use relay_mode for auto-handoff.'
+          ));
+        }
+      }
+
+      // Validate relay_mode is boolean if present (MSSCI-12395)
+      if (partialSettings.workflow?.relay_mode !== undefined) {
+        const relayMode = partialSettings.workflow.relay_mode;
+        if (typeof relayMode !== 'boolean') {
+          return res.status(400).json(createErrorResponse(
+            'VALIDATION_ERROR',
+            'Relay mode must be a boolean (true or false)'
           ));
         }
       }
