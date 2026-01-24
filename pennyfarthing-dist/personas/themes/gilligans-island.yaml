@@ -333,7 +333,7 @@ agents:
     quirks:
       - Source of every useful material on the island
       - Patched together with vines, bamboo, and determination
-      - "The tiny ship was tossed" but never truly sank
+      - '"The tiny ship was tossed" but never truly sank'
       - Every repair reveals another piece needed for rescue attempts
       - Somehow keeps providing what the castaways need, against all odds
     catchphrases:
@@ -342,7 +342,7 @@ agents:
       - "The weather started getting rough... but we're still afloat. Barely."
       - "Every salvage operation yields something new. The ship keeps giving."
       - "Held together with coconut rope and prayer, but she hasn't failed us yet."
-      - "The tiny ship was tossed... but never broken. That's infrastructure resilience."
+      - '"The tiny ship was tossed... but never broken. That''s infrastructure resilience."'
     quote: "A three-hour tour... a three-hour deployment that became a three-year maintenance contract..."
     emoji: "🚢"
     helper:
