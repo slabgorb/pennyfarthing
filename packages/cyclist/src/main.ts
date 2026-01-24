@@ -58,6 +58,7 @@ import {
   type CyclistSettings,
   type SettingsInput,
 } from './settings.js';
+import { broadcastBackgroundTaskEvent } from './api/background-tasks.js';
 import { initializeGrants, setGrantsPersistCallback } from './settings-store.js';
 // Story 33-7: Import approval gate functions for tool execution pipeline
 import {
@@ -874,14 +875,18 @@ export function startProjectWatchers(): void {
   console.log('User email callback registered for OTLP broadcasts');
 
   // 35-16: Register background task start callback
+  // Broadcast to BOTH Electron IPC and WebSocket clients
   setBackgroundTaskStartCallback((task: BackgroundTask) => {
     broadcastToRenderer(IPC_BACKGROUND_TASK_CHANNELS.TASK_STARTED, task);
+    broadcastBackgroundTaskEvent('task:started', task);
     console.log(`Background task started: ${task.subagentType} - ${task.description}`);
   });
 
   // 31-15: Register background task completion callback
+  // Broadcast to BOTH Electron IPC and WebSocket clients
   setBackgroundTaskCallback((task: BackgroundTask) => {
     broadcastToRenderer(IPC_BACKGROUND_TASK_CHANNELS.TASK_COMPLETED, task);
+    broadcastBackgroundTaskEvent('task:completed', task);
     console.log(`Background task completed: ${task.subagentType} (${task.success ? 'success' : 'failed'})`);
   });
   console.log('Background task callbacks registered for OTLP broadcasts');

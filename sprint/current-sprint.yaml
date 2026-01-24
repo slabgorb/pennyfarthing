@@ -1132,3 +1132,138 @@ epics:
           - manual + relay:on works (ask permission but auto-handoff)
           - Existing turbo configs migrate correctly
           - UI shows both controls clearly
+  # ===========================================================================
+  # EPIC: Script Parallelism & Python Migration (epic-63) - IN PROGRESS
+  # ===========================================================================
+  - id: epic-63
+    type: epic
+    jira: MSSCI-12394
+    title: "Epic: Script Parallelism & Python Migration"
+    description: |
+      Improve Pennyfarthing script performance through parallelism and migrate
+      JavaScript utility scripts to Python for better maintainability, subprocess
+      handling, and async patterns.
+
+      Phase 1: Quick parallelism wins in existing bash/JS
+      Phase 2: Port Jira sync scripts to Python
+      Phase 3: Port other utility scripts to Python
+      Phase 4: Establish Python patterns for future scripts
+    priority: P2
+    status: in_progress
+    repos: pennyfarthing
+    stories:
+      - id: "63-1"
+        jira: MSSCI-12395
+        title: "Fix background tasks WebSocket broadcast"
+        description: |
+          Background tasks panel in Cyclist never shows background agents.
+          Root cause: callbacks in main.ts only broadcast to Electron IPC,
+          not to WebSocket clients via broadcastBackgroundTaskEvent().
+
+          Two-line fix: add broadcastBackgroundTaskEvent() calls to both
+          setBackgroundTaskStartCallback and setBackgroundTaskCallback.
+        points: 1
+        priority: P0
+        status: done
+        repos: pennyfarthing
+        branch: feat/parallelism-and-background-tasks
+        completed: "2026-01-24"
+      - id: "63-2"
+        jira: MSSCI-12396
+        title: "Parallelize git-status-all.sh"
+        description: |
+          Run git status checks across repos in parallel using & + wait pattern.
+          Capture output to temp files to maintain ordered display.
+          Also parallelize summary count collection.
+        points: 1
+        priority: P1
+        status: done
+        repos: pennyfarthing
+        branch: feat/parallelism-and-background-tasks
+        completed: "2026-01-24"
+      - id: "63-3"
+        jira: MSSCI-12397
+        title: "Parallelize create-feature-branches.sh"
+        description: |
+          Run branch creation/checkout across repos in parallel when processing
+          "all" repos. Capture output to temp files for ordered display.
+          Rebuild PROCESSED_REPOS array from temp file for verification phase.
+        points: 1
+        priority: P1
+        status: done
+        repos: pennyfarthing
+        branch: feat/parallelism-and-background-tasks
+        completed: "2026-01-24"
+      - id: "63-4"
+        jira: MSSCI-12398
+        title: "Create Python script infrastructure"
+        description: |
+          Formalize existing Python infrastructure and create shared package.
+
+          Existing foundation:
+          - .venv with Python 3.14, httpx, pyyaml, torch, diffusers
+          - scripts/generate-portraits.py (400 lines, good patterns)
+          - pennyfarthing-dist/scripts/test/*-judge.py (SWE-bench evaluation)
+
+          Work needed:
+          - Add pyproject.toml at project root to formalize dependencies
+          - Create pennyfarthing_scripts/ package structure
+          - Extract shared utilities from generate-portraits.py patterns:
+            - Config loading (graceful degradation for optional deps)
+            - Sprint YAML parsing
+            - Jira client wrapper (around jira CLI)
+          - Add just recipe: `just py <script>` to run with venv python
+          - Document Python patterns in dev-patterns skill
+        points: 2
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+      - id: "63-5"
+        jira: MSSCI-12399
+        title: "Port jira-sync.mjs to Python"
+        description: |
+          Rewrite jira-sync.mjs in Python with:
+          - Async httpx for parallel Jira API calls
+          - Batch-then-report architecture (collect work, execute parallel, report)
+          - Proper progress display with rich or similar
+          - Type hints throughout
+        points: 3
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+      - id: "63-6"
+        jira: MSSCI-12400
+        title: "Port jira-bidirectional-sync.mjs to Python"
+        description: |
+          Rewrite jira-bidirectional-sync.mjs in Python with:
+          - Async execution of YAML and Jira updates in parallel
+          - Better conflict detection and resolution
+          - Structured logging
+        points: 2
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+      - id: "63-7"
+        jira: MSSCI-12401
+        title: "Port remaining Jira scripts to Python"
+        description: |
+          Port jira-lib.mjs, jira-sync-story.mjs, and jira-epic-creation scripts
+          to Python. Consolidate shared Jira logic into pennyfarthing_scripts.jira
+          module.
+        points: 3
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+      - id: "63-8"
+        jira: MSSCI-12402
+        title: "Port git utility scripts to Python"
+        description: |
+          Port git-status-all.sh and create-feature-branches.sh to Python for:
+          - Better error handling
+          - asyncio.gather for parallel git operations
+          - Consistent output formatting
+          - Cross-platform compatibility
+        points: 3
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
