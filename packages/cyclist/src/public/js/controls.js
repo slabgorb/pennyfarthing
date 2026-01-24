@@ -17,6 +17,7 @@ import { resetState as resetFilePanel } from './file-panel.js';
 import { resetState as resetDiffPanel } from './diff-panel.js';
 import { clear as clearChangedFiles } from './components/ChangedFilesList.js';
 import { clearDiffs } from './components/DiffViewer.js';
+import { getMessageQueue, setOnQueueChange, removeFromQueue, clearMessageQueue } from './editor/message-queue.js';
 
 /**
  * Valid modes for the segmented control (matches settings.ts PermissionMode)
@@ -196,6 +197,57 @@ async function setPermissionMode(newMode, event) {
     console.log('Mode set successfully:', newMode, '(Claude:', claudeMode + ', handoff:', settings.workflow.handoff_mode + ')');
   } catch (error) {
     console.error('Failed to set permission mode:', error);
+  }
+}
+
+/**
+ * Abort Claude processing (stop button / Escape key)
+ */
+async function abortClaude(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  console.log('[Controls] Abort requested');
+
+  if (!window.electronAPI?.claude?.abort) {
+    console.warn('[Controls] Claude API not available - cannot abort');
+    return;
+  }
+
+  try {
+    await window.electronAPI.claude.abort();
+    console.log('[Controls] Claude aborted successfully');
+    updateStopButtonState(false);
+  } catch (error) {
+    console.error('[Controls] Failed to abort Claude:', error);
+  }
+}
+
+/**
+ * Update stop button enabled/disabled state
+ * @export
+ */
+export function updateStopButtonState(isProcessing) {
+  const stopBtn = document.getElementById('stop-btn');
+  if (stopBtn) {
+    stopBtn.disabled = !isProcessing;
+  }
+}
+
+/**
+ * Handle Escape key for aborting Claude
+ */
+function handleEscapeKey(event) {
+  if (event.key === 'Escape') {
+    // Don't abort if focus is in a modal or popup
+    const activeElement = document.activeElement;
+    const isInModal = activeElement?.closest('.modal, .popup, .dropdown');
+    if (isInModal) return;
+
+    console.log('[Controls] Escape pressed - aborting Claude');
+    abortClaude(event);
   }
 }
 
@@ -425,6 +477,54 @@ function initControls() {
     console.error('Clear button not found!');
   }
 
+  // Stop button handler
+  const stopBtn = document.getElementById('stop-btn');
+  if (stopBtn) {
+    console.log('[Controls] Found stop button, attaching click handler');
+    stopBtn.addEventListener('click', abortClaude);
+  } else {
+    console.error('[Controls] Stop button not found!');
+  }
+
+  // Escape key to abort Claude
+  document.addEventListener('keydown', handleEscapeKey);
+  console.log('[Controls] Escape key handler registered for abort');
+
+  // Initialize queue display
+  initQueueDisplay();
+
+  // Subscribe to Claude complete/error to reset stop button state
+  if (window.electronAPI?.claude?.onComplete) {
+    window.electronAPI.claude.onComplete(() => {
+      console.log('[Controls] Claude processing complete');
+      updateStopButtonState(false);
+    });
+  }
+
+  if (window.electronAPI?.claude?.onError) {
+    window.electronAPI.claude.onError((error) => {
+      console.log('[Controls] Claude error:', error);
+      updateStopButtonState(false);
+    });
+  }
+
+  // Subscribe to Claude message to enable stop button when processing starts
+  if (window.electronAPI?.claude?.onMessage) {
+    let firstMessage = true;
+    window.electronAPI.claude.onMessage(() => {
+      if (firstMessage) {
+        updateStopButtonState(true);
+        firstMessage = false;
+      }
+    });
+    // Reset firstMessage flag on complete
+    if (window.electronAPI?.claude?.onComplete) {
+      window.electronAPI.claude.onComplete(() => {
+        firstMessage = true;
+      });
+    }
+  }
+
   // Abort Claude process on page refresh/close to prevent orphaned processes
   window.addEventListener('beforeunload', () => {
     if (window.electronAPI?.claude?.abort) {
@@ -454,6 +554,88 @@ function initControls() {
   // MSSCI-12275: Register keyboard shortcut for bell mode toggle (Cmd/Ctrl+B)
   document.addEventListener('keydown', handleBellModeShortcut);
   console.log('[Controls] Bell mode keyboard shortcut registered (Cmd/Ctrl+B)');
+}
+
+// =============================================================================
+// Queue Display (Bell Mode - MSSCI-12275)
+// =============================================================================
+
+/**
+ * Render the inline queue display
+ */
+function renderQueueDisplay() {
+  const queueContainer = document.getElementById('queue-inline');
+  const queueList = queueContainer?.querySelector('.queue-inline-list');
+  if (!queueContainer || !queueList) return;
+
+  const messages = getMessageQueue();
+
+  if (messages.length === 0) {
+    queueContainer.style.display = 'none';
+    return;
+  }
+
+  // Show container
+  queueContainer.style.display = 'block';
+
+  // Render messages
+  queueList.innerHTML = messages.map((msg, index) => {
+    const text = msg.text || msg;
+    const truncated = text.length > 60 ? text.substring(0, 60) + '...' : text;
+    const hasImages = msg.images && msg.images.length > 0;
+    const imageIndicator = hasImages ? ` <span class="queue-image-indicator">📎${msg.images.length}</span>` : '';
+
+    return `
+      <li class="queue-inline-item" data-index="${index}">
+        <span class="queue-inline-text">${escapeHtml(truncated)}${imageIndicator}</span>
+        <button class="queue-inline-remove" data-index="${index}" title="Remove from queue">×</button>
+      </li>
+    `;
+  }).join('');
+
+  // Attach remove handlers
+  queueList.querySelectorAll('.queue-inline-remove').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const index = parseInt(btn.dataset.index, 10);
+      removeFromQueue(index);
+    });
+  });
+}
+
+/**
+ * Escape HTML for safe rendering
+ */
+function escapeHtml(str) {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/**
+ * Initialize queue display and listeners
+ */
+function initQueueDisplay() {
+  // Initial render
+  renderQueueDisplay();
+
+  // Subscribe to queue changes
+  setOnQueueChange(() => {
+    renderQueueDisplay();
+  });
+
+  // Clear button in queue header
+  const clearQueueBtn = document.querySelector('.queue-clear-btn');
+  if (clearQueueBtn) {
+    clearQueueBtn.addEventListener('click', () => {
+      clearMessageQueue();
+    });
+  }
+
+  console.log('[Controls] Queue display initialized');
 }
 
 // =============================================================================

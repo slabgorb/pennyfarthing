@@ -7,7 +7,8 @@ import { getPersonaClients, broadcastPersona } from './api/persona.js';
 import { getTokenStatsClients } from './api/token-stats.js';
 import { getBackgroundTaskClients } from './api/background-tasks.js';
 import { getBellClients } from './api/bell.js';
-import { getTokenStats, getBackgroundTasks } from './otlp-receiver.js';
+import { getTokenStats, getBackgroundTasks, addToolEventListener, type ToolEvent } from './otlp-receiver.js';
+import { getEnrichedSpans } from './enriched-span-exporter.js';
 import { detectPennyfarthingProject, getCurrentPersona, watchAgentChanges } from './pennyfarthing.js';
 import { ClaudeService, type PermissionMode } from './claude-service.js';
 import { publicDir } from './paths.js';
@@ -34,6 +35,9 @@ const storyClients = new Set<WebSocket>();
 // Git WebSocket clients (MSSCI-11943)
 const gitClients = new Set<WebSocket>();
 
+// Spans WebSocket clients (real-time debugging)
+const spansClients = new Set<WebSocket>();
+
 // Debounce timer for livereload
 let livereloadDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 const LIVERELOAD_DEBOUNCE_MS = 100;
@@ -51,6 +55,10 @@ export function getStoryClients(): Set<WebSocket> {
 
 export function getGitClients(): Set<WebSocket> {
   return gitClients;
+}
+
+export function getSpansClients(): Set<WebSocket> {
+  return spansClients;
 }
 
 // Setup WebSocket servers for stats and persona updates
@@ -84,6 +92,9 @@ export function setupWebSocketServers(
 
   // WebSocket server for bell mode at /ws/bell (bell-consumed events)
   const bellWss = new WebSocketServer({ noServer: true });
+
+  // WebSocket server for spans at /ws/spans (real-time debugging)
+  const spansWss = new WebSocketServer({ noServer: true });
 
   // Handle upgrade requests
   server.on('upgrade', (request, socket, head) => {
@@ -124,6 +135,10 @@ export function setupWebSocketServers(
     } else if (pathname === '/ws/bell') {
       bellWss.handleUpgrade(request, socket, head, (ws) => {
         bellWss.emit('connection', ws, request);
+      });
+    } else if (pathname === '/ws/spans') {
+      spansWss.handleUpgrade(request, socket, head, (ws) => {
+        spansWss.emit('connection', ws, request);
       });
     } else {
       // Reject connections to other paths
@@ -286,6 +301,46 @@ export function setupWebSocketServers(
     ws.on('error', () => {
       bellClients.delete(ws);
     });
+  });
+
+  // Handle spans WebSocket connections (real-time debugging)
+  spansWss.on('connection', async (ws: WebSocket) => {
+    console.log('[WebSocket] Spans client connected');
+    spansClients.add(ws);
+
+    // Send initial spans on connection
+    try {
+      const spans = await getEnrichedSpans();
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'init', spans }));
+      }
+    } catch (err) {
+      console.error('[WebSocket] Error fetching initial spans:', err);
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'init', spans: [] }));
+      }
+    }
+
+    // Remove client on disconnect
+    ws.on('close', () => {
+      console.log('[WebSocket] Spans client disconnected');
+      spansClients.delete(ws);
+    });
+
+    // Handle errors gracefully
+    ws.on('error', () => {
+      spansClients.delete(ws);
+    });
+  });
+
+  // Set up tool event listener to broadcast new spans to WebSocket clients
+  addToolEventListener((event: ToolEvent) => {
+    const message = JSON.stringify({ type: 'span', span: event });
+    for (const client of spansClients) {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    }
   });
 
   // Set up agent file watcher for persona broadcasts
