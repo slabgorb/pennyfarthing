@@ -218,6 +218,14 @@ portraits-all:
 test-cyclist-watch:
     cd packages/cyclist && npm test -- --watch
 
+# Check sidecar files for bloat
+sidecar-health:
+    .pennyfarthing/scripts/maintenance/sidecar-health.sh
+
+# Archive bloated sidecars and prepare for pruning
+sidecar-prune:
+    .pennyfarthing/scripts/maintenance/sidecar-health.sh --fix
+
 # =============================================================================
 # VS Code Extension
 # =============================================================================
