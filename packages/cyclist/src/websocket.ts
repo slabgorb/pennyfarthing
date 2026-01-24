@@ -7,6 +7,7 @@ import { getPersonaClients, broadcastPersona } from './api/persona.js';
 import { getTokenStatsClients } from './api/token-stats.js';
 import { getBackgroundTaskClients } from './api/background-tasks.js';
 import { getBellClients } from './api/bell.js';
+import { getWelcomeClients } from './api/welcome.js';
 import { getTokenStats, getBackgroundTasks, addToolEventListener, type ToolEvent } from './otlp-receiver.js';
 import { getEnrichedSpans } from './enriched-span-exporter.js';
 import { detectPennyfarthingProject, getCurrentPersona, watchAgentChanges } from './pennyfarthing.js';
@@ -96,6 +97,9 @@ export function setupWebSocketServers(
   // WebSocket server for spans at /ws/spans (real-time debugging)
   const spansWss = new WebSocketServer({ noServer: true });
 
+  // WebSocket server for welcome messages at /ws/welcome
+  const welcomeWss = new WebSocketServer({ noServer: true });
+
   // Handle upgrade requests
   server.on('upgrade', (request, socket, head) => {
     const pathname = new URL(request.url || '', `http://${request.headers.host}`).pathname;
@@ -139,6 +143,10 @@ export function setupWebSocketServers(
     } else if (pathname === '/ws/spans') {
       spansWss.handleUpgrade(request, socket, head, (ws) => {
         spansWss.emit('connection', ws, request);
+      });
+    } else if (pathname === '/ws/welcome') {
+      welcomeWss.handleUpgrade(request, socket, head, (ws) => {
+        welcomeWss.emit('connection', ws, request);
       });
     } else {
       // Reject connections to other paths
@@ -330,6 +338,23 @@ export function setupWebSocketServers(
     // Handle errors gracefully
     ws.on('error', () => {
       spansClients.delete(ws);
+    });
+  });
+
+  // Handle welcome WebSocket connections
+  const welcomeClients = getWelcomeClients();
+  welcomeWss.on('connection', (ws: WebSocket) => {
+    console.log('[WebSocket] Welcome client connected');
+    welcomeClients.add(ws);
+
+    // Remove client on disconnect
+    ws.on('close', () => {
+      welcomeClients.delete(ws);
+    });
+
+    // Handle errors gracefully
+    ws.on('error', () => {
+      welcomeClients.delete(ws);
     });
   });
 

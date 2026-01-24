@@ -86,6 +86,8 @@ export function updatePersona(persona) {
   // Project name at top (repo folder name)
   if (projectEl && persona.projectName) {
     projectEl.textContent = persona.projectName;
+    // Also update the document/tab title
+    document.title = `${persona.projectName} - Cyclist`;
   }
 
   // Theme name centered below portrait, humanized
