@@ -63,6 +63,17 @@ app.get('/', (_req, res) => {
   res.sendFile(join(publicDir, 'index.html'));
 });
 
+// Serve pennyfarthing logo from project root (for welcome message)
+app.get('/pennyfarthing-transparent.png', (_req, res) => {
+  const projectDir = getProjectDirectory() || process.cwd();
+  const logoPath = join(projectDir, 'pennyfarthing-transparent.png');
+  res.sendFile(logoPath, (err) => {
+    if (err) {
+      res.status(404).send('Logo not found');
+    }
+  });
+});
+
 // Wrapper that provides fallback to cwd for standalone server mode
 function getProjectDir(): string {
   return getProjectDirectory() || process.cwd();

@@ -14,6 +14,22 @@ cat > /dev/null
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="${CLAUDE_PROJECT_DIR:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 
+# Once-per-session guard: only show welcome on first invocation
+# Use session ID from environment or generate a unique one
+SESSION_ID="${CLAUDE_SESSION_ID:-$$}"
+WELCOME_LOCK="$PROJECT_ROOT/.session/.welcome-shown-$SESSION_ID"
+
+# Ensure .session directory exists
+mkdir -p "$PROJECT_ROOT/.session"
+
+# Check if welcome was already shown for this session
+if [[ -f "$WELCOME_LOCK" ]]; then
+    exit 0
+fi
+
+# Mark welcome as shown for this session
+touch "$WELCOME_LOCK"
+
 # Check if running in Cyclist (port file exists)
 PORT_FILE="$PROJECT_ROOT/.cyclist-port"
 IN_CYCLIST=false
