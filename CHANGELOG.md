@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [7.6.0] - 2026-01-24
+
+*No unreleased changes*
+
+---
+
 ## [7.5.0] - 2026-01-23
 
 ### VS Code Agent Identity & Cyclist Enhancements
@@ -1581,7 +1587,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v7.5.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v7.6.0...HEAD
+[7.6.0]: https://github.com/1898andCo/pennyfarthing/compare/v7.5.0...v7.6.0
 [7.5.0]: https://github.com/1898andCo/pennyfarthing/compare/v7.4.0...v7.5.0
 [7.4.0]: https://github.com/1898andCo/pennyfarthing/compare/v7.3.0...v7.4.0
 [7.3.0]: https://github.com/1898andCo/pennyfarthing/compare/v7.2.0...v7.3.0
