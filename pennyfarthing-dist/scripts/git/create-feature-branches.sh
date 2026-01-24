@@ -143,6 +143,7 @@ echo "   Branch: $BRANCH_NAME"
 echo "   Repos: $REPOS"
 
 # Process repos based on selection
+# When processing multiple repos, run in parallel for faster network I/O
 case "$REPOS" in
     api)
         create_or_checkout_branch "$REPO_BASE/Pennyfarthing-api" "Pennyfarthing-api"
@@ -151,8 +152,42 @@ case "$REPOS" in
         create_or_checkout_branch "$REPO_BASE/Pennyfarthing-ui" "Pennyfarthing-ui"
         ;;
     all)
-        create_or_checkout_branch "$REPO_BASE/Pennyfarthing-api" "Pennyfarthing-api"
-        create_or_checkout_branch "$REPO_BASE/Pennyfarthing-ui" "Pennyfarthing-ui"
+        # Parallel execution for both repos
+        tmpdir=$(mktemp -d)
+        trap "rm -rf '$tmpdir'" EXIT
+        HAD_ERRORS=false
+
+        # Run both in parallel, capturing output
+        # Write to separate files to avoid race condition on shared file
+        (
+            create_or_checkout_branch "$REPO_BASE/Pennyfarthing-api" "Pennyfarthing-api"
+            echo "$REPO_BASE/Pennyfarthing-api:Pennyfarthing-api" > "$tmpdir/api.processed"
+        ) > "$tmpdir/api.out" 2>&1 &
+        pid_api=$!
+
+        (
+            create_or_checkout_branch "$REPO_BASE/Pennyfarthing-ui" "Pennyfarthing-ui"
+            echo "$REPO_BASE/Pennyfarthing-ui:Pennyfarthing-ui" > "$tmpdir/ui.processed"
+        ) > "$tmpdir/ui.out" 2>&1 &
+        pid_ui=$!
+
+        # Wait for both and capture exit codes
+        wait $pid_api; rc_api=$?
+        wait $pid_ui; rc_ui=$?
+
+        # Show output in order
+        [ -f "$tmpdir/api.out" ] && cat "$tmpdir/api.out"
+        [ -f "$tmpdir/ui.out" ] && cat "$tmpdir/ui.out"
+
+        # Rebuild PROCESSED_REPOS from separate files (avoids race condition)
+        [ -f "$tmpdir/api.processed" ] && PROCESSED_REPOS+=("$(cat "$tmpdir/api.processed")")
+        [ -f "$tmpdir/ui.processed" ] && PROCESSED_REPOS+=("$(cat "$tmpdir/ui.processed")")
+
+        # Check for failures
+        if [ $rc_api -ne 0 ] || [ $rc_ui -ne 0 ]; then
+            echo "⚠️  Some repos had errors"
+            HAD_ERRORS=true
+        fi
         ;;
 esac
 
@@ -222,5 +257,11 @@ done
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "✅ Done! All branches verified and ready."
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+if [ "$HAD_ERRORS" = true ]; then
+    echo "⚠️  Done with errors. Check output above."
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    exit 1
+else
+    echo "✅ Done! All branches verified and ready."
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+fi
