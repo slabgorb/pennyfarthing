@@ -158,14 +158,15 @@ HTML comments that agents emit to signal Cyclist UI. Format: `<!-- CYCLIST:TYPE:
 |------|-------|----------------|
 | `HANDOFF` | `/agent` | Shows "Continue with /agent" button |
 | `CONTEXT_CLEAR` | `/agent` | Clears session, reloads with agent |
-| `QUESTION` | `yesno` | Shows yes/no dialog |
-| `CHOICES` | `1,2,3` | Shows choice buttons |
+| `QUESTION` | `yesno` or `open` | Shows input dialog |
+| `CHOICES` | `opt1,opt2,opt3` | Shows choice buttons |
 
 **Examples:**
 ```
 <!-- CYCLIST:HANDOFF:/tea -->
 <!-- CYCLIST:CONTEXT_CLEAR:/dev -->
 <!-- CYCLIST:QUESTION:yesno -->
+<!-- CYCLIST:QUESTION:open -->
 <!-- CYCLIST:CHOICES:option1,option2,option3 -->
 ```
 
@@ -174,6 +175,27 @@ HTML comments that agents emit to signal Cyclist UI. Format: `<!-- CYCLIST:TYPE:
 - `CONTEXT_CLEAR` - Context >80% at handoff
 - `QUESTION`/`CHOICES` - User input needed mid-work
 </info>
+
+<critical>
+**Question Reflector Enforcement:** A Stop hook validates that ANY question to the user has a reflector marker. Emit the marker BEFORE your question.
+
+**Question types requiring markers:**
+- Direct questions ending with `?`
+- Implicit questions: "let me know if...", "would you like...", "should I..."
+- Choice offerings: "Option A or Option B"
+- Requests for input: "what do you think", "your preference"
+- Clarification requests: "could you clarify"
+
+**Marker selection:**
+- `<!-- CYCLIST:QUESTION:yesno -->` - Yes/no questions
+- `<!-- CYCLIST:QUESTION:open -->` - Open-ended questions
+- `<!-- CYCLIST:CHOICES:a,b,c -->` - Multiple choice (list options)
+
+**Exempt (no marker needed):**
+- Rhetorical questions you answer yourself
+- Questions inside code blocks or examples
+- Historical context ("the question was...")
+</critical>
 
 ---
 
