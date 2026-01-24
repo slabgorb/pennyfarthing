@@ -75,9 +75,7 @@ worktrees/
 .pennyfarthing/window-state.json
 .cyclist-approval-port
 
-# Bell mode runtime state (MSSCI-12275)
-.pennyfarthing/bell-mode.json
+# Bell mode runtime queue (MSSCI-12275)
 .pennyfarthing/bell-queue.json
-**/.pennyfarthing/bell-mode.json
 **/.pennyfarthing/bell-queue.json
 .env

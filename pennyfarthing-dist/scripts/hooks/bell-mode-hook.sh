@@ -8,7 +8,7 @@
 # Claude's next API call.
 #
 # Configuration files:
-#   .pennyfarthing/bell-mode.json - { "enabled": true/false }
+#   .pennyfarthing/config.local.yaml - workflow.bell_mode: true/false
 #   .pennyfarthing/bell-queue.json - [{ "text": "...", "images": [...] }, ...]
 #
 # Output format (when injecting):
@@ -35,15 +35,17 @@ if [[ ! -d "$PROJECT_ROOT/.pennyfarthing" ]]; then
   exit 0
 fi
 
-BELL_MODE_CONFIG="$PROJECT_ROOT/.pennyfarthing/bell-mode.json"
+CONFIG_LOCAL_YAML="$PROJECT_ROOT/.pennyfarthing/config.local.yaml"
 BELL_QUEUE_FILE="$PROJECT_ROOT/.pennyfarthing/bell-queue.json"
 
-# Check if bell mode is enabled
-if [[ ! -f "$BELL_MODE_CONFIG" ]]; then
+# Check if bell mode is enabled in config.local.yaml
+if [[ ! -f "$CONFIG_LOCAL_YAML" ]]; then
   exit 0
 fi
 
-ENABLED=$(cat "$BELL_MODE_CONFIG" 2>/dev/null | grep -o '"enabled"[[:space:]]*:[[:space:]]*true' || true)
+# Parse YAML to check workflow.bell_mode - look for "bell_mode: true"
+# This handles both "bell_mode: true" and "  bell_mode: true" (indented under workflow)
+ENABLED=$(grep -E '^\s*bell_mode:\s*true' "$CONFIG_LOCAL_YAML" 2>/dev/null || true)
 if [[ -z "$ENABLED" ]]; then
   exit 0
 fi

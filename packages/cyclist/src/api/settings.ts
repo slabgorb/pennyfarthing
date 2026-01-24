@@ -13,7 +13,7 @@ import path from 'path';
 import { parse, stringify } from 'yaml';
 import { getCurrentSettings, saveUserSettings, type CyclistSettings, type SettingsInput } from '../settings.js';
 import { getProjectDirectory } from '../paths.js';
-import { isBellModeEnabled, setBellMode, loadBellModeState } from '../bell-mode.js';
+import { setBellMode } from '../bell-mode.js';
 
 // =============================================================================
 // Theme Response Type
@@ -76,38 +76,37 @@ export function createSettingsRouter(): Router {
   /**
    * GET / - Get current settings
    * AC4: Returns consistent error format
-   * Theme and handoff_mode are read from .pennyfarthing/config.local.yaml (single source of truth)
-   * Bell mode is read from .pennyfarthing/bell-mode.json (MSSCI-12275)
+   * Theme, handoff_mode, and bell_mode are all read from .pennyfarthing/config.local.yaml (single source of truth)
    */
   router.get('/', async (_req, res) => {
     try {
       const settings = getCurrentSettings();
 
-      // Read theme and handoff_mode from config.local.yaml (single source of truth)
+      // Read theme, handoff_mode, and bell_mode from config.local.yaml (single source of truth)
       let theme = 'alice-in-wonderland'; // Default fallback
       let handoffMode = 'manual'; // Default fallback
+      let bellMode = false; // Default fallback
       const projectDir = getProjectDirectory();
       if (projectDir) {
         try {
           const configPath = path.join(projectDir, '.pennyfarthing', 'config.local.yaml');
           if (fs.existsSync(configPath)) {
             const content = fs.readFileSync(configPath, 'utf-8');
-            const parsed = parse(content) as { theme?: string; workflow?: { handoff_mode?: string } };
+            const parsed = parse(content) as { theme?: string; workflow?: { handoff_mode?: string; bell_mode?: boolean } };
             if (parsed?.theme) {
               theme = parsed.theme;
             }
             if (parsed?.workflow?.handoff_mode) {
               handoffMode = parsed.workflow.handoff_mode;
             }
+            if (parsed?.workflow?.bell_mode !== undefined) {
+              bellMode = parsed.workflow.bell_mode;
+            }
           }
         } catch {
           // Ignore project config errors - use defaults
         }
       }
-
-      // Load bell mode state from its dedicated file (MSSCI-12275)
-      await loadBellModeState();
-      const bellMode = isBellModeEnabled();
 
       // Construct response with theme, handoff_mode, and bell_mode added
       const response: SettingsResponse = {
