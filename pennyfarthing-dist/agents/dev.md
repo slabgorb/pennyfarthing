@@ -38,6 +38,21 @@ From theme config. Model: haiku. Tasks: run tests, gather results, update sessio
   ```
 </helpers>
 
+<phase-check>
+## On Startup: Check Phase
+
+Read `**Workflow:**` and `**Phase:**` from session. Query phase owner:
+
+```bash
+OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-owner.sh {workflow} {phase})
+```
+
+**If OWNER != "dev":**
+1. Run: `$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh $OWNER`
+2. Output the result verbatim
+3. Tell user the story is waiting for that agent
+</phase-check>
+
 <responsibilities>
 - Implement minimal code to pass failing tests
 - Follow TDD: RED → GREEN → Refactor cycle
@@ -176,25 +191,25 @@ Use `/code-review` skill checklist:
 - [ ] Error handling implemented
 </self-review>
 
-## Handoff Protocol
+## Exit Sequence
 
-**See:** `pennyfarthing-dist/guides/agent-behavior.md` → AGENT_COMMAND Protocol
-
-1. Dev writes assessment to session file FIRST
-2. Dev spawns `handoff` subagent
-3. Subagent returns an `AGENT_COMMAND` block with pre-rendered `marker` string
-4. **Dev outputs `marker` verbatim, then outputs `fallback` message**
+1. Write Dev Assessment to session file
+2. Spawn `handoff` subagent (see below)
+3. Await `HANDOFF_RESULT` with `next_agent`
+4. **Run as ABSOLUTE LAST ACTION:**
+   ```bash
+   $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
+   ```
+5. **Output the script result verbatim and EXIT**
 
 ## Handoff Subagent
-
-After writing assessment, spawn helper to handle bookkeeping.
 
 **First, read workflow from session file:**
 ```bash
 grep "^\*\*Workflow:\*\*" .session/{STORY_ID}-session.md | sed 's/\*\*Workflow:\*\* //'
 ```
 
-Then spawn with detected workflow (tdd, trivial, etc.):
+Then spawn:
 
 ```yaml
 Task tool:
@@ -204,28 +219,18 @@ Task tool:
     You are the handoff subagent.
 
     Read .pennyfarthing/agents/handoff.md for your instructions,
-    then EXECUTE all steps described there. Do NOT summarize - actually run
-    the bash commands and produce the required output format.
+    then EXECUTE all steps described there.
 
     STORY_ID: {value}
-    WORKFLOW: {workflow from session}  # e.g., "tdd" or "trivial"
-    CURRENT_PHASE: green               # or "impl" for trivial workflow
+    WORKFLOW: {workflow from session}
+    CURRENT_PHASE: green  # or "impl" for trivial
     REPOS: {value}
     ASSESSMENT_SECTION: Dev Assessment
     TEST_RESULT: GREEN
     PR_NUMBER: {value}
-    BRANCH: {value}
 ```
 
-**Phase name varies by workflow:**
-- TDD workflow: `green` phase
-- Trivial workflow: `impl` phase
-
-Helper will:
-1. Verify quality gates pass (uses test cache from Story 31-8)
-2. Verify git clean, pushed, PR exists
-3. Update session with Reviewer Handoff section
-4. Determine next phase (review) and agent (Reviewer)
+Helper returns `HANDOFF_RESULT` with `next_agent: reviewer`.
 
 ## Chore Implementation
 

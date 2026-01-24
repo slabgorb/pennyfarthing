@@ -1007,9 +1007,10 @@ epics:
           Add tirepump_threshold to config.local.yaml. Update check-context.sh to read from config with default fallback of 60.
         points: 1
         priority: P2
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
         jira: MSSCI-12377
+        completed: "2026-01-24"
     jira: MSSCI-12369
