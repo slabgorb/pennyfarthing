@@ -1,65 +1,96 @@
 # Pennyfarthing
 
-**v7.0.0** | *The outer loop goes once, the inner loop goes many times.*
+**v7.6.1** | *The outer loop goes once, the inner loop goes many times.*
 
-<img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px" margin="10px">
+<img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
-A Claude Code agent orchestration framework with TDD workflow and themed personas. Install via npm, configure once, and let coordinated agents guide your development.
-
----
-
-### [**Browse 102 Themes in the Interactive Showcase**](https://animated-meme-3e4494y.pages.github.io/)
-
-Explore all themes with OCEAN spider charts and 1020 character profiles.
+A Claude Code agent orchestration framework built around three pillars: a flexible development platform, scientific personality research, and streamlined integrations.
 
 ---
 
-## Features
+## What is Pennyfarthing?
 
-- **24 Agents** - Strategic (PM, Architect) and tactical (SM, TEA, Dev, Reviewer) agents with official Haiku-based subagents for mechanical tasks
-- **Automatic Handoffs** - Context-aware agent transitions via official subagent format
-- **102 Persona Themes** - Star Trek, Breaking Bad, Dune, The Office, Game of Thrones, Arthurian Mythos, and more with OCEAN personality profiles
-- **20 Skills** - Reusable knowledge domains (testing, code-review, judge, jira, etc.)
-- **43 Slash Commands** - Entry points for agent activation, benchmarking, and workflows
-- **Scientific Benchmarking** - Evaluate personas against standardized scenarios with statistical analysis
-- **CLI Tool** - `pennyfarthing init`, `update`, `doctor`, `uninstall`, `theme`
+### 1. Development Platform
+
+A multi-agent system with customizable BikeLane workflows for structured software development:
+
+- **19 Coordinated Agents** - SM, TEA, Dev, Reviewer, Architect, PM, and more
+- **19 BikeLane Workflows** - Phased (TDD, BDD, Trivial), Stepped (PRD, Architecture), Procedural (Brainstorming, Retrospective)
+- **45 Slash Commands** - Entry points for agent activation and workflows
+- **22 Skills** - Reusable knowledge domains (testing, code-review, jira, mermaid, etc.)
+- **Automatic Handoffs** - Context-aware agent transitions via subagent delegation
+
+### 2. Personality Research
+
+A scientific study of how strong personalities affect AI agent behavior:
+
+- **OCEAN Profiling** - Big Five personality scores for every character
+- **TRAIL Framework** - Categorizing errors (reasoning, planning, execution) and correlating with personality
+- **Benchmarking System** - `/solo`, `/benchmark-control`, `/benchmark` for statistical evaluation
+- **JobFair** - Discovering which characters excel at roles beyond their native specialization
+
+The 102 persona themes (Discworld, Star Trek, Breaking Bad, etc.) are instruments of inquiry, not decoration. Early findings show character expertise often trumps abstract personality scores.
+
+### 3. Integration & Tooling
+
+Smoothing out development processes:
+
+- **Jira Integration** - Bidirectional sync, epic auto-creation, sprint velocity
+- **Sprint Management** - Story tracking with `current-sprint.yaml`
+- **Cyclist Visual Terminal** - Rich UI with agent portraits, session stats, workflow visualization
+
+---
+
+### [**Explore the Research Showcase**](https://animated-meme-3e4494y.pages.github.io/)
+
+102 themes with OCEAN spider charts, benchmark tiers, and 1020 character profiles.
+
+---
 
 ## Quick Start
 
 ```bash
 cd your-project
 
-# Install CLI (1.1 MB)
+# Install CLI
 npm install --save-dev @pennyfarthing/core
 
-# Initialize (creates symlinks, no file copying)
+# Initialize (creates symlinks)
 npx pennyfarthing init
 
 # Verify installation
 npx pennyfarthing doctor
 
 # Start working (in Claude Code)
-/new-work
+/work
 ```
 
 ### Optional: Visual Terminal
 
-For the Cyclist visual terminal with agent portraits and rich UI:
-
 ```bash
-# Install optional visual terminal (160 MB, includes portraits)
+# Install Cyclist (160 MB, includes portraits)
 npm install --save-dev @pennyfarthing/cyclist
 
-# Launch Cyclist
+# Launch
 npx pennyfarthing cyclist
 ```
 
-## The TDD Flow
+## BikeLane Workflows
+
+BikeLane is the umbrella workflow system supporting three types:
+
+| Type | Description | Examples |
+|------|-------------|----------|
+| **Phased** | Agent-driven with automatic handoffs | tdd, bdd, trivial, agent-docs |
+| **Stepped** | Progressive disclosure with user gates | prd, architecture, research, sprint-planning |
+| **Procedural** | Flexible agent-guided processes | brainstorming, code-review, retrospective |
+
+### Example: TDD Workflow (Phased)
 
 ```
-/new-work → SM → TEA → Dev → Reviewer → SM (finish)
-             │     │     │       │
-          setup  tests  impl   review
+/work → SM → TEA → Dev → Reviewer → SM (finish)
+         │     │     │       │
+      setup  tests  impl   review
 ```
 
 | Agent | Role | Phase |
@@ -69,57 +100,42 @@ npx pennyfarthing cyclist
 | **Dev** | Developer | Make tests pass (GREEN) |
 | **Reviewer** | Code Reviewer | Quality validation, approve/reject |
 
-Handoffs are automatic when context usage is below 70%. Above that threshold, agents recommend starting a fresh session.
+Use `/workflow list` to see all 19 workflows. Use `/workflow start <name>` to begin any workflow.
 
-## Cyclist - Visual Terminal
+## Benchmarking & Personality Research
 
-Cyclist is the visual companion to Pennyfarthing - a rich UI that wraps Claude Code with real-time agent personas, session stats, and workflow visualization.
+Pennyfarthing includes a scientific benchmarking system for evaluating how personality affects agent performance:
 
 ```bash
-# Install (optional, 160 MB with portraits)
-npm install --save-dev @pennyfarthing/cyclist
+# Run a single agent on a scenario
+/solo theme:agent --scenario cache-invalidation
 
-# Launch
-npx pennyfarthing cyclist
+# Create a control baseline (10 runs)
+/benchmark-control reviewer --scenario order-service
+
+# Compare persona vs control with statistics
+/benchmark breaking-bad reviewer --scenario order-service
 ```
 
-### Features
+**Key Findings:**
+- Cohen's d effect sizes measure performance differences
+- Multivariate OCEAN patterns predict better than individual traits
+- Character expertise often trumps abstract personality scores
+- The "Stoic Analyst" profile (Low O + High C + Low E + Low N) excels at code review
 
-- **Real-time Persona Display** - Character portraits and OCEAN personality profiles update as agents change
-- **Session Statistics** - Token usage (input/output), context percentage, model info
-- **Story Progress** - Visual TDD workflow tracker (SM → TEA → Dev → Reviewer)
-- **Task Visualizer** - Live todo list from Claude's TodoWrite tool
-- **Rich Text Editor** - TipTap-based prompt editor with formatting
-- **Tab Panel** - Diff viewer, file browser, workspace tools
-
-### Architecture
-
-Cyclist uses Electron with an Express server for the UI:
-
-| Component | Purpose |
-|-----------|---------|
-| `main.ts` | Electron main process, IPC handlers, PTY spawn |
-| `preload.ts` | Secure IPC bridge via contextBridge |
-| `pennyfarthing.ts` | Theme loading, persona detection |
-| `claude-service.ts` | Claude Code CLI wrapper |
-| `otlp-receiver.ts` | OpenTelemetry metrics receiver |
-
-See [Cyclist Documentation](docs/CYCLIST.md) for full details.
+See [Benchmarking Documentation](docs/BENCHMARKING.md) for methodology.
 
 ## CLI Commands
 
 | Command | Description |
 |---------|-------------|
-| `pennyfarthing init [name]` | Initialize in a project |
+| `pennyfarthing init` | Initialize in a project |
 | `pennyfarthing update` | Update to latest version |
 | `pennyfarthing doctor` | Check installation health |
 | `pennyfarthing doctor --fix` | Auto-fix common issues |
 | `pennyfarthing uninstall` | Remove for clean reinstall |
 | `pennyfarthing theme list` | Show available themes |
 | `pennyfarthing theme set <name>` | Change active theme |
-| `pennyfarthing theme show [name]` | Display theme details |
-| `pennyfarthing theme create <name>` | Create custom theme |
-| `pennyfarthing version` | Show version info |
 
 ## Documentation
 
@@ -127,18 +143,32 @@ See [Cyclist Documentation](docs/CYCLIST.md) for full details.
 |----------|-------------|
 | [**User Guide**](docs/USER-GUIDE.md) | Complete documentation |
 | [Getting Started](docs/GETTING-STARTED.md) | Quick start guide |
-| [TDD Flow Diagrams](docs/TDD-FLOW-DIAGRAMS.md) | Visual sequence diagrams and flowcharts |
-| [Architecture](docs/ARCHITECTURE.md) | System design and principles |
+| [Workflow Diagrams](docs/WORKFLOW-DIAGRAMS.md) | Visual Mermaid diagrams for all workflows |
+| [BikeLane](docs/BIKELANE.md) | Workflow system architecture |
 | [Agents](docs/AGENTS.md) | Agent reference |
 | [Commands](docs/COMMANDS.md) | Slash command reference |
-| [Skills](docs/SKILLS.md) | Knowledge domain reference |
-| [Workflows](docs/WORKFLOWS.md) | TDD and workflow guides |
-| [Personas](docs/PERSONAS.md) | Theme customization |
-| [Theme Comparison](docs/THEME-COMPARISON.md) | Personality analysis & Big Five (OCEAN) profiles |
-| [Configuration](docs/CONFIGURATION.md) | Configuration reference |
-| [Permissions](docs/PERMISSIONS.md) | Claude Code permissions setup |
 | [Benchmarking](docs/BENCHMARKING.md) | Scientific persona evaluation |
-| [Cyclist](docs/CYCLIST.md) | Cyclist sidebar integration |
+| [Jira Integration](docs/JIRA-INTEGRATION.md) | Jira CLI and sprint sync |
+| [Cyclist](docs/CYCLIST.md) | Visual terminal documentation |
+
+## Available Themes (102)
+
+| Category | Themes |
+|----------|--------|
+| **Sci-Fi TV** | `the-expanse`, `star-trek-tng`, `firefly`, `battlestar-galactica`, `doctor-who` |
+| **Sci-Fi Film** | `star-wars`, `dune`, `blade-runner`, `the-matrix`, `alien` |
+| **Fantasy** | `game-of-thrones`, `lord-of-the-rings`, `discworld`, `sandman`, `arthurian-mythos` |
+| **Drama** | `breaking-bad`, `the-wire`, `succession`, `mad-men`, `fargo` |
+| **Comedy** | `the-office`, `parks-and-rec`, `ted-lasso`, `the-good-place` |
+| **Literary** | `shakespeare`, `jane-austen`, `sherlock-holmes`, `hitchhikers-guide` |
+| **Games** | `mass-effect`, `portal`, `baldurs-gate`, `disco-elysium` |
+
+All themes include OCEAN (Big Five) personality profiles. See [Theme Comparison](docs/THEME-COMPARISON.md) for personality analysis.
+
+Configure in `.pennyfarthing/config.local.yaml`:
+```yaml
+theme: the-expanse
+```
 
 ## Directory Structure
 
@@ -147,155 +177,33 @@ After initialization:
 ```
 your-project/
 ├── .claude/
-│   ├── commands/             # → symlinks to @pennyfarthing/core commands
-│   ├── skills/               # → symlinks to @pennyfarthing/core skills
-│   ├── project/              # YOUR customizations
-│   │   ├── agents/*-sidecar/ # Agent memory/learnings
-│   │   ├── docs/             # shared-context.md
-│   │   └── hooks/            # setup-env.sh
-│   ├── manifest.json         # Installation manifest
-│   └── settings.local.json   # Claude Code settings
+│   ├── commands/             # → symlinks to @pennyfarthing/core
+│   ├── skills/               # → symlinks to @pennyfarthing/core
+│   └── project/              # Your customizations
 ├── .pennyfarthing/
-│   ├── agents/               # → symlink to @pennyfarthing/core agents
-│   ├── guides/               # → symlink to @pennyfarthing/core guides
-│   ├── personas/             # → symlink to @pennyfarthing/core personas
-│   ├── scripts/              # → symlink to @pennyfarthing/core scripts
+│   ├── agents/               # → symlink to @pennyfarthing/core
+│   ├── workflows/            # → symlink to @pennyfarthing/core
 │   ├── sidecars/             # Agent learning files
-│   └── config.local.yaml     # Theme selection (gitignored)
+│   └── config.local.yaml     # Theme selection
 ├── sprint/
 │   ├── current-sprint.yaml   # Active sprint
-│   ├── archive/              # Completed sessions
-│   └── context/              # Story summaries
+│   └── archive/              # Completed sessions
 └── .session/
     └── {story-id}-session.md # Active work session
 ```
 
-## Available Themes (102 total)
+## What's New in v7.6
 
-| Category | Themes |
-|----------|--------|
-| **Sci-Fi TV** | `the-expanse`, `star-trek-tng`, `star-trek-tos`, `firefly`, `battlestar-galactica`, `doctor-who` |
-| **Sci-Fi Film** | `star-wars`, `dune`, `blade-runner`, `the-matrix`, `alien` |
-| **Fantasy** | `game-of-thrones`, `lord-of-the-rings`, `the-witcher`, `sandman`, `his-dark-materials`, `arthurian-mythos` |
-| **Mythology** | `greek-mythology`, `lovecraft-mythos`, `norse-mythology` |
-| **Drama** | `breaking-bad`, `the-wire`, `succession`, `mad-men`, `deadwood`, `fargo` |
-| **Comedy** | `the-office`, `parks-and-rec`, `ted-lasso`, `the-good-place`, `arrested-development` |
-| **Literary** | `discworld`, `shakespeare`, `jane-austen`, `sherlock-holmes`, `hitchhikers-guide` |
-| **Games** | `mass-effect`, `portal`, `baldurs-gate`, `disco-elysium` |
-| **Classic** | `princess-bride`, `a-team`, `mash`, `west-wing` |
-| **Minimal** | `control`, `minimalist` |
+- **BikeLane Workflow System** - Unified umbrella for Phased, Stepped, and Procedural workflows
+- **BMAD 6.0 Compatibility** - Full import support for BMAD workflows with tri-modal execution
+- **19 Workflows** - Expanded from TDD-only to comprehensive workflow library
+- **Scientific Benchmarking** - TRAIL-OCEAN hypothesis testing framework
+- **JobFair** - Cross-role performance discovery system
 
-All 102 themes include OCEAN (Big Five) personality profiles and spider chart visualizations.
-
-See [Theme Comparison Guide](docs/THEME-COMPARISON.md) for personality analysis, OCEAN profiles, and help choosing between themes.
-
-Create custom themes with `/theme-maker`.
-
-Configure in `.pennyfarthing/config.local.yaml`:
-```yaml
-theme: star-trek-tos
-```
-
-## Customization
-
-### Output Styles
-
-Pennyfarthing ships with output styles for Claude Code's `/output-style` command:
-
-| Style | Description |
-|-------|-------------|
-| `verbose` | Detailed explanations, educational |
-| `terse` | Minimal output, just the essentials |
-| `teaching` | Explains reasoning, suggests alternatives |
-
-Usage: `/output-style verbose` (in Claude Code)
-
-### Preferences
-
-User preferences are configured in `.claude/pennyfarthing/preferences.yaml`:
-
-```yaml
-# Enable persona character voice in agent output
-character_voice: true
-
-# Show reasoning and decision explanations
-explain_decisions: true
-
-# Auto-commit on story completion
-auto_commit: false
-```
-
-Override locally with `.claude/pennyfarthing/preferences.local.yaml` (gitignored).
-
-## Updating
-
-```bash
-# Update CLI
-npm update @pennyfarthing/core
-
-# Update visual terminal (if installed)
-npm update @pennyfarthing/cyclist
-
-# Verify after update
-npx pennyfarthing doctor
-```
-
-## Uninstalling
-
-```bash
-# Remove managed files (preserves your project customizations)
-pennyfarthing uninstall
-
-# Remove everything except archived work
-pennyfarthing uninstall --all
-```
-
-Archived sprint data (`sprint/archive/`, `sprint/context/`) is always preserved.
-
-## What's New in v7.0
-
-- **BREAKING: Package Renamed** - `pennyfarthing` → `@pennyfarthing/core`
-- **BREAKING: Directory Restructure** - Content moved from `.claude/` to `.pennyfarthing/`
-- **Cyclist Split** - Visual terminal is now optional `@pennyfarthing/cyclist` (160MB → 1.1MB core)
-- **Customizable Workflow Engine** - YAML-based workflow definitions with story routing
-- **BMAD Interoperability** - Parse and export BMAD format stories and epics
-- **Runtime Permission Management** - Approval gates, spot grants, `/permissions` skill
-- **Enhanced OTEL** - Tool enrichment for Bash, Read, Edit, Write, Grep/Glob spans
-- **Agent Modernization** - All agents updated with status tags and shared behavior
-
-See [CHANGELOG.md](CHANGELOG.md) for full migration guide.
-
-## What's New in v6.5
-
-- **Simplified Installation** - Two packages for different needs:
-  - `@pennyfarthing/core` - CLI only (1.1 MB)
-  - `@pennyfarthing/cyclist` - Optional visual terminal with portraits (160 MB)
-- **Portrait Optimization** - Cyclist bundles only 128px and 256px portraits (saves 450MB)
-- **Agent Modernization** - All agents updated with status tags and consolidated shared behavior
-- **OTEL Tool Enrichment** - Bash, Write, Read, Edit, Grep/Glob spans enriched with operation context
-
-## What's New in v6.0
-
-- **Monorepo Architecture** - Restructured as pnpm workspace for development
-- **Cyclist Visual Terminal** - Full GUI support with persona sidebar
-  - Portrait resolver works across all install scenarios
-  - Real-time agent display with OCEAN-slugged filenames
-- **New Themes** - Arthurian Mythos, Greek Mythology, Lovecraft Mythos
-  - 30 new characters with full OCEAN profiles
-  - Woodcut-style portraits for all characters
-
-## What's New in v5.x
-
-- **Job Fair Benchmarking** - Data-driven role optimization with `/job-fair` command
-- **Context Circuit Breaker** - Hard stop at 85% context with `/continue-session` recovery
-- **Choreography Patterns** - 4 comprehensive guides (TDD flow, helper delegation, fan-out/fan-in, approval gates)
-- **Scientific Benchmarking** - `/solo`, `/benchmark`, `/judge` commands for persona evaluation
-- **Showcase Website** - Interactive theme browser at [showcase site](https://animated-meme-3e4494y.pages.github.io/)
+See [CHANGELOG.md](CHANGELOG.md) for full details.
 
 ---
 
-*For full changelog, see [CHANGELOG.md](CHANGELOG.md)*
-
 ## License
 
-Copyright 2025 1898 & Co. All rights reserved.
+Copyright 2025-2026 1898 & Co. All rights reserved.
