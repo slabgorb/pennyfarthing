@@ -14,7 +14,7 @@ theme:
   character_immersion: high
   user_title: Fellow Replicant
   portrait_style: ", seen through CRT screen, scan lines"
-  tier: A
+  tier: B
 agents:
   orchestrator:
     character: Original Bob

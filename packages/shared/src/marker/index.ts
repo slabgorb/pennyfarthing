@@ -12,7 +12,7 @@
 export { type MarkerType, type Marker } from './types.js';
 
 // Constants
-export { MARKER_PATTERN, MARKER_TYPES } from './constants.js';
+export { MARKER_PATTERN, MARKER_TYPES, VALID_MARKER_TYPES } from './constants.js';
 
 // Functions
 export { stripCodeBlocks, stripMarkers } from './strip.js';

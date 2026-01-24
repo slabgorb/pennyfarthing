@@ -58,6 +58,18 @@
       </div>
     </div>
     <div class="resize-handle" id="diff-panel-resize" title="Drag to resize"></div>
+    <!-- Debug panel (real-time OTEL span viewer) -->
+    <div id="debug-panel" class="debug-panel collapsed">
+      <div class="debug-panel-header">
+        <span class="debug-panel-title">Debug</span>
+        <span class="debug-panel-count" id="debug-panel-count"></span>
+        <button class="debug-panel-collapse-btn" id="debug-panel-collapse" title="Collapse panel">◀</button>
+      </div>
+      <div class="debug-panel-content">
+        <!-- SpanTimeline will be mounted here -->
+      </div>
+    </div>
+    <div class="resize-handle" id="debug-panel-resize" title="Drag to resize"></div>
     <!-- Panel expand buttons removed - now using horizontal tab bar at top -->
     <!-- 35-5: Message panel wrapper for collapsible message view -->
     <div id="message-panel" class="vertical-panel position-center">
@@ -583,5 +595,7 @@
     import { createEditor } from '/js/editor.js';
     createEditor();
   </script>
+  <!-- Debug panel (real-time OTEL span viewer) -->
+  <script type="module" src="/js/debug-panel.js"></script>
 </body>
 </html>

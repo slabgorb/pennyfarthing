@@ -240,12 +240,48 @@ export function setTokenStatsCallback(callback: (stats: TokenStats) => void): vo
 // Callback for when tool events are recorded (set by main.ts for IPC broadcast)
 let onToolEventRecorded: ((event: ToolEvent) => void) | null = null;
 
+// Additional listeners for tool events (for WebSocket broadcast, etc.)
+const toolEventListeners: ((event: ToolEvent) => void)[] = [];
+
 /**
  * Register callback for tool event recording
  * Called by main.ts to wire up IPC broadcast to renderer
  */
 export function setToolEventCallback(callback: (event: ToolEvent) => void): void {
   onToolEventRecorded = callback;
+}
+
+/**
+ * Add a listener for tool events (supports multiple subscribers)
+ * Returns unsubscribe function
+ */
+export function addToolEventListener(listener: (event: ToolEvent) => void): () => void {
+  toolEventListeners.push(listener);
+  return () => {
+    const index = toolEventListeners.indexOf(listener);
+    if (index > -1) {
+      toolEventListeners.splice(index, 1);
+    }
+  };
+}
+
+/**
+ * Notify all tool event listeners
+ * Called internally when a tool event is recorded
+ */
+function notifyToolEventListeners(event: ToolEvent): void {
+  // Call the primary callback (IPC broadcast)
+  if (onToolEventRecorded) {
+    onToolEventRecorded(event);
+  }
+  // Call all additional listeners (WebSocket, etc.)
+  for (const listener of toolEventListeners) {
+    try {
+      listener(event);
+    } catch (e) {
+      console.error('[OTLP] Error in tool event listener:', e);
+    }
+  }
 }
 
 // 35-2: Callback for when user email is discovered
@@ -531,10 +567,8 @@ export function parseOTLPLogs(body: unknown): RawLogEvent[] {
  */
 export function recordToolEvent(event: ToolEvent): void {
   toolEvents.push(event);
-  // Broadcast to renderer if callback registered
-  if (onToolEventRecorded) {
-    onToolEventRecorded(event);
-  }
+  // Broadcast to all listeners (IPC, WebSocket, etc.)
+  notifyToolEventListeners(event);
 }
 
 /**

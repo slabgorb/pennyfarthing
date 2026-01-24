@@ -9,9 +9,9 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 154
-  completed_points: 127
+  completed_points: 130
   cancelled_points: 6
-  remaining_points: 21
+  remaining_points: 18
   notes: |
     Sprint 12 includes work from multiple epics that were tracked in Jira but
     not in local sprint YAML. This file has been reconciled with Jira Sprint 276.
@@ -706,8 +706,9 @@ epics:
           Display CLEAN/DIRTY indicator based on git uncommitted changes.
         points: 2
         priority: P1
-        status: backlog
+        status: cancelled
         repos: pennyfarthing
+        cancellation_reason: "VS Code already provides git status; keeping existing Cyclist git UI as-is"
       - id: "58-4"
         jira: MSSCI-12240
         title: "File Watcher Integration"
@@ -716,7 +717,8 @@ epics:
           Update tree view within 500ms of file change.
         points: 2
         priority: P1
-        status: backlog
+        status: cancelled
+        cancelled_reason: "VS Code extension potentially being deprecated"
         repos: pennyfarthing
   # ===========================================================================
   # Standalone Stories (no epic parent in Jira)
@@ -758,7 +760,8 @@ epics:
         status: done
         repos: pennyfarthing
         completed: "2026-01-22"
-      - id: MSSCI-12276
+      - id: MSSCI-12346
+        jira: MSSCI-12346
         title: "Improve init/update/doctor for legacy install cleanup"
         description: |
           When installing Pennyfarthing over a legacy install (or updating), stale
@@ -783,8 +786,11 @@ epics:
           - [ ] update cleans up known legacy file patterns
         points: 3
         priority: P1
-        status: backlog
+        status: done
+        completed: "2026-01-23"
         repos: pennyfarthing
+        branch: feat/MSSCI-12346-legacy-cleanup
+        workflow: tdd
       - id: MSSCI-12275
         title: "Bell mode: inject queued messages after tool use"
         description: "When Bell mode is enabled, queued messages are injected into the conversation\ncontext after each tool use, rather than waiting for Claude to finish. This\nlets users provide feedback mid-turn without aborting Claude's work.\n\nImplementation:\n- Add Bell mode toggle to settings (off by default)\n- Hook into tool_result event in OTEL receiver\n- When Bell mode on and queue non-empty, dequeue message and inject as user turn\n- Claude continues processing but now sees the injected message in context\n- UI shows \U0001F514 indicator when Bell mode is active\n\nMetaphor: Like ringing a bike bell - you get attention without stopping traffic.\n"
@@ -902,3 +908,109 @@ epics:
         completed: "2026-01-23"
     jira: MSSCI-12315
     completed: "2026-01-23"
+  - id: epic-60
+    type: epic
+    title: "Epic: Reflector Marker Consolidation"
+    description: |
+      Create shared marker module in @pennyfarthing/shared with unified
+      detection/stripping functions. Migrate Cyclist and VS Code extension
+      to use shared module. Add configurable TirePump threshold.
+    priority: P1
+    status: in_progress
+    repos: pennyfarthing
+    stories:
+      - id: MSSCI-12370
+        title: "Create Marker Types and Constants"
+        description: |
+          Create packages/shared/src/marker/ with types.ts, constants.ts. Export MarkerType, Marker, MarkerResult interfaces and MARKER_PATTERN regex.
+        points: 1
+        priority: P0
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12370
+        branch: feat/60-1-marker-types-constants
+        completed: "2026-01-23"
+      - id: MSSCI-12371
+        title: "Implement Code Block Stripping"
+        description: |
+          Implement stripCodeBlocks() to remove fenced code blocks before marker detection.
+        points: 1
+        priority: P0
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12371
+      - id: MSSCI-12372
+        title: "Implement Marker Detection"
+        description: |
+          Implement detectMarkers() returning Marker[] or null. Handle case-insensitive TYPE, preserve value case, reset lastIndex.
+        points: 1
+        priority: P0
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        branch: feat/MSSCI-12372-marker-detection
+        acceptance_criteria: []
+        jira: MSSCI-12372
+      - id: MSSCI-12373
+        title: "Implement Marker Stripping"
+        description: |
+          Implement stripMarkers() to remove all CYCLIST markers from text.
+        points: 1
+        priority: P0
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12373
+        completed: "2026-01-24"
+      - id: MSSCI-12374
+        title: "Comprehensive Test Suite"
+        description: |
+          Achieve >90% coverage for marker module. Test all 5 marker types, code block immunity, edge cases.
+        points: 1
+        priority: P0
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12374
+      - id: MSSCI-12375
+        title: "Migrate Cyclist to Shared Module"
+        description: |
+          Update quick-actions.js to import from @pennyfarthing/shared. Remove local markerPattern and detectStructuredMarkers().
+        points: 1
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12375
+      - id: MSSCI-12376
+        title: "Migrate VS Code Extension to Shared Module"
+        description: |
+          Update reflector.ts to import from @pennyfarthing/shared. Remove local MARKER_PATTERN, detectMarkers(), stripMarkers().
+        points: 1
+        priority: P1
+        status: cancelled
+        cancelled_reason: "VS Code extension potentially being deprecated"
+        repos: pennyfarthing-vscode
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12376
+      - id: MSSCI-12377
+        title: "Configurable TirePump Threshold"
+        description: |
+          Add tirepump_threshold to config.local.yaml. Update check-context.sh to read from config with default fallback of 60.
+        points: 1
+        priority: P2
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12377
+        completed: "2026-01-24"
+    jira: MSSCI-12369

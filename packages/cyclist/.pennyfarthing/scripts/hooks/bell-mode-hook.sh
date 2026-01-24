@@ -77,8 +77,16 @@ cat << EOF
 }
 EOF
 
-# Remove the first message from the queue (for next invocation)
-# Use jq if available, otherwise leave queue management to the TypeScript side
+# Notify Cyclist to dequeue the message and display it in the conversation
+# This solves the sync issue where the browser's in-memory queue doesn't know
+# the hook consumed a message
+CYCLIST_PORT="${CYCLIST_PORT:-3456}"
+curl -s -X POST "http://localhost:${CYCLIST_PORT}/api/bell-consumed" \
+  -H "Content-Type: application/json" \
+  -d "{\"text\": \"$FIRST_MESSAGE_TEXT\"}" \
+  >/dev/null 2>&1 &
+
+# Also update the file directly (for next hook invocation, before browser syncs)
 if command -v jq &> /dev/null; then
   jq 'if length > 0 then .[1:] else [] end' "$BELL_QUEUE_FILE" > "$BELL_QUEUE_FILE.tmp" && mv "$BELL_QUEUE_FILE.tmp" "$BELL_QUEUE_FILE"
 fi
