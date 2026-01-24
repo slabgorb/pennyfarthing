@@ -2,12 +2,13 @@
 # prime.sh - Load essential project context at agent activation
 # Usage: prime.sh [--minimal] [--full] [--quiet] [--agent <name>]
 #
-# Loads context in priority order (CLAUDE.md skipped - already in system prompt):
-# 1. Sprint summary (current-sprint.yaml key fields)
-# 2. Active session (.session/*-session.md)
-# 3. Agent sidecar (if --agent provided)
-# 4. Agent behavior guide (combined protocols for all agents)
-# 5. Domain docs (--full only)
+# Loads context in priority order (optimized for attention):
+# 1. CLAUDE.md (already in system prompt - skipped)
+# 2. Agent definition + behavior guide (HIGHEST PRIORITY - load first!)
+# 3. Persona (already output by agent-session.sh before this runs)
+# 4. Session summary (active work context)
+# 5. Sidecars (patterns, gotchas, decisions - lowest priority)
+# 6. Domain docs (--full only)
 
 set -euo pipefail
 
@@ -33,7 +34,7 @@ while [[ $# -gt 0 ]]; do
             echo "  --minimal      Skip all context (fastest)"
             echo "  --full         Include domain docs from .claude/project/"
             echo "  --quiet        Suppress section headers"
-            echo "  --agent <name> Load agent's sidecar patterns"
+            echo "  --agent <name> Load agent definition and sidecar"
             exit 0
             ;;
         *) shift ;;
@@ -48,33 +49,61 @@ print_header() {
     fi
 }
 
-# CLAUDE.md is already loaded by Claude Code system prompt - skip it
-
 # Stop here for minimal mode
 if [[ "$MINIMAL" == "true" ]]; then
     exit 0
 fi
 
-# 1. Sprint summary (uses shared functions from sprint-common.sh)
+# =============================================================================
+# PRIORITY 1: Agent definition (HIGHEST ATTENTION ZONE)
+# =============================================================================
+# This is the most critical content - load it FIRST while attention is highest
+
+if [[ -n "$AGENT_NAME" ]]; then
+    AGENT_FILE="$PROJECT_ROOT/.pennyfarthing/agents/${AGENT_NAME}.md"
+    if [[ -f "$AGENT_FILE" ]]; then
+        print_header "Agent Definition: ${AGENT_NAME}"
+        cat "$AGENT_FILE"
+    fi
+fi
+
+# =============================================================================
+# PRIORITY 2: Agent behavior guide (shared protocols)
+# =============================================================================
+
+if [[ -n "$AGENT_NAME" ]]; then
+    BEHAVIOR_GUIDE="$PROJECT_ROOT/.pennyfarthing/guides/agent-behavior.md"
+    if [[ -f "$BEHAVIOR_GUIDE" ]]; then
+        print_header "Agent Behavior Guide"
+        cat "$BEHAVIOR_GUIDE"
+    fi
+fi
+
+# =============================================================================
+# PRIORITY 3: Persona already loaded by agent-session.sh (before prime.sh runs)
+# =============================================================================
+# Nothing to do here - persona is output by agent-session.sh start
+
+# =============================================================================
+# PRIORITY 4: Session summary (active work context)
+# =============================================================================
+
+# Sprint summary (brief - just name and progress)
 if [[ -f "$(get_sprint_file)" ]]; then
     print_header "Sprint Context"
-
-    # Use shared functions for consistent output
     summary=$(get_sprint_summary)
     if [[ -n "$summary" ]]; then
         echo "$summary"
     fi
-
     progress=$(get_sprint_progress)
     if [[ -n "$progress" ]]; then
         echo "$progress"
     fi
 fi
 
-# 2. Active session (if exists) - extract header metadata + current assessment
+# Active session (if exists) - extract header metadata + current assessment
 SESSION_FILE=""
 if [[ -d "$PROJECT_ROOT/.session" ]]; then
-    # Find a session file (typically only one active at a time)
     SESSION_FILE=$(find "$PROJECT_ROOT/.session" -maxdepth 1 -name "*-session.md" -type f 2>/dev/null | head -1)
 fi
 
@@ -82,18 +111,14 @@ if [[ -n "$SESSION_FILE" && -f "$SESSION_FILE" ]]; then
     print_header "Active Session: $(basename "$SESSION_FILE")"
 
     # Extract header (everything before first ## heading)
-    # This includes: title, metadata fields (Phase, Workflow, Repos, Branch, etc.)
     awk '/^## / {exit} {print}' "$SESSION_FILE"
 
-    # Find the most recent assessment section (workflow-agnostic)
-    # Assessment sections are named: "## {Agent} Assessment" (TEA, Dev, Reviewer, SM, etc.)
-    # Show the LAST one in the file as it represents current state
+    # Find the most recent assessment section
     last_assessment=$(grep -n '^## .*Assessment' "$SESSION_FILE" | tail -1 | cut -d: -f1)
 
     if [[ -n "$last_assessment" ]]; then
         echo ""
         echo "---"
-        # Extract from that line to next ## or EOF
         awk -v start="$last_assessment" '
             NR >= start {
                 if (NR > start && /^## /) exit
@@ -103,29 +128,29 @@ if [[ -n "$SESSION_FILE" && -f "$SESSION_FILE" ]]; then
     fi
 fi
 
-# 3. Agent sidecar (if --agent provided)
+# =============================================================================
+# PRIORITY 5: Sidecars (patterns, gotchas, decisions - LOWEST PRIORITY)
+# =============================================================================
+# These are supplementary - loaded last when attention is lower
+
 if [[ -n "$AGENT_NAME" ]]; then
     SIDECAR_DIR="$PROJECT_ROOT/.pennyfarthing/sidecars/${AGENT_NAME}"
     if [[ -d "$SIDECAR_DIR" ]]; then
-        for pattern_file in "$SIDECAR_DIR"/*.md; do
+        # Load in specific order: patterns first (most useful), then gotchas, then decisions
+        for filename in patterns.md gotchas.md decisions.md; do
+            pattern_file="$SIDECAR_DIR/$filename"
             if [[ -f "$pattern_file" ]]; then
-                print_header "Agent Sidecar: $(basename "$pattern_file")"
+                print_header "Agent Sidecar: $filename"
                 cat "$pattern_file"
             fi
         done
     fi
 fi
 
-# 4. Agent behavior guide (combined protocols for all agents)
-if [[ -n "$AGENT_NAME" ]]; then
-    BEHAVIOR_GUIDE="$PROJECT_ROOT/.pennyfarthing/guides/agent-behavior.md"
-    if [[ -f "$BEHAVIOR_GUIDE" ]]; then
-        print_header "Agent Behavior Guide"
-        cat "$BEHAVIOR_GUIDE"
-    fi
-fi
+# =============================================================================
+# PRIORITY 6: Domain docs (--full only, rarely used)
+# =============================================================================
 
-# 5. Domain docs (--full only)
 if [[ "$FULL" == "true" ]]; then
     for doc in "$PROJECT_ROOT/.claude/project"/CLAUDE-*.md; do
         if [[ -f "$doc" ]]; then

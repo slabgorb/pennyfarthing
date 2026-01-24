@@ -211,15 +211,21 @@ case "$1" in
     echo "$2" > "$AGENT_FILE"
     echo "Session: $session_id -> $2"
 
-    # Output persona on start (unless character_voice is disabled)
-    if is_character_voice_enabled; then
-      output_persona "$2"
-    fi
+    # Context loading order (optimized for attention):
+    # 1. CLAUDE.md (system prompt - already loaded)
+    # 2. Agent definition + behavior guide (loaded by prime.sh FIRST)
+    # 3. Persona (output here, AFTER agent definition)
+    # 4. Session summary (loaded by prime.sh)
+    # 5. Sidecars (loaded by prime.sh LAST)
 
-    # Auto-prime context after persona (reduces cold-start overhead)
-    # Pass agent name so prime can load agent-specific sidecar
+    # Auto-prime loads agent definition FIRST (highest attention zone)
     if [[ -f "$PROJECT_ROOT/.pennyfarthing/scripts/prime.sh" ]]; then
       "$PROJECT_ROOT/.pennyfarthing/scripts/prime.sh" --quiet --agent "$2"
+    fi
+
+    # Output persona AFTER agent definition (character voice is supplementary)
+    if is_character_voice_enabled; then
+      output_persona "$2"
     fi
     ;;
   stop)
