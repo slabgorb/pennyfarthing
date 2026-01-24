@@ -1,0 +1,39 @@
+[project]
+name = "pennyfarthing-scripts"
+version = "7.6.1"
+description = "Python utilities for Pennyfarthing agent orchestration"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+
+dependencies = [
+    "pyyaml>=6.0",
+    "httpx>=0.28",
+]
+
+[project.optional-dependencies]
+portraits = [
+    "torch>=2.0",
+    "diffusers>=0.36",
+    "transformers>=4.0",
+    "accelerate>=1.0",
+    "pillow>=12.0",
+]
+
+dev = [
+    "pytest>=8.0",
+    "pytest-mock>=3.0",
+    "ruff>=0.8",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "C4", "UP"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/python"]
+python_files = ["test_*.py"]

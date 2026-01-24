@@ -1216,7 +1216,7 @@ epics:
           - Document Python patterns in dev-patterns skill
         points: 2
         priority: P1
-        status: backlog
+        status: in_progress
         repos: pennyfarthing
       - id: "63-5"
         jira: MSSCI-12399
