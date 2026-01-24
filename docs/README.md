@@ -2,49 +2,91 @@
 
 Complete documentation for the Pennyfarthing agent orchestration framework.
 
+## What is Pennyfarthing?
+
+Pennyfarthing is a Claude Code agent orchestration framework built around three pillars:
+
+### 1. Development Platform
+
+A multi-agent system with customizable BikeLane workflows for structured software development:
+
+- **19 Coordinated Agents** - SM, TEA, Dev, Reviewer, Architect, and more
+- **BikeLane Workflows** - 19 workflows in three types (Phased, Stepped, Procedural)
+- **Subagent Handoffs** - Automated state transitions between agents
+- **45 Slash Commands** - Entry points for agent activation
+- **22 Skills** - Project-agnostic knowledge domains
+
+### 2. Personality Research
+
+A scientific study of how strong personalities affect agent behavior:
+
+- **OCEAN Profiling** - Big Five personality scores for every character
+- **TRAIL Framework Integration** - Categorizing errors (reasoning, planning, execution) and correlating with personality
+- **Benchmarking System** - `/solo`, `/benchmark-control`, `/benchmark` for statistical evaluation
+- **JobFair** - Discovering which characters excel at roles beyond their native specialization
+- **Hypothesis Testing** - Does High Openness detect more reasoning errors? Does Low Agreeableness improve adversarial review?
+
+The persona themes (102 across Discworld, Star Trek, Breaking Bad, etc.) are instruments of inquiry, not decoration. Early findings show character expertise often trumps abstract personality scores.
+
+### 3. 1898 Integration
+
+Tooling to smooth out annoying development processes:
+
+- **Jira Integration** - Bidirectional sync, epic auto-creation, sprint velocity tracking
+- **Sprint Management** - Story tracking with `current-sprint.yaml`
+- **Git Workflow** - Branch conventions, PR creation, commit standards
+
 ## Quick Navigation
 
 | Document | Description |
 |----------|-------------|
 | [**User Guide**](USER-GUIDE.md) | Complete guide - installation, configuration, usage |
 | [Getting Started](GETTING-STARTED.md) | Quick start guide |
+
+### Development Platform
+| Document | Description |
+|----------|-------------|
 | [Agents](AGENTS.md) | Agent reference and capabilities |
 | [Commands](COMMANDS.md) | Slash command reference |
-| [Workflows](WORKFLOWS.md) | Key workflow guides |
-| [Personas](PERSONAS.md) | Persona system and themes |
-| [Theme Comparison](THEME-COMPARISON.md) | OCEAN personality profiles and theme selection |
-| [Showcase](SHOWCASE.md) | Interactive theme gallery website |
-| [Configuration](CONFIGURATION.md) | Configuration reference |
-| [Skills](SKILLS.md) | Skills reference |
-| [Benchmarking](BENCHMARKING.md) | Scientific persona evaluation |
-| [Troubleshooting](TROUBLESHOOTING.md) | Error diagnosis and recovery |
-| [Cyclist Guide](CYCLIST-GUIDE.md) | Visual terminal user guide |
-| [Cyclist Reference](CYCLIST.md) | Cyclist architecture and IPC |
-| [Debugging Sessions](DEBUGGING-SESSIONS.md) | Debug Claude Code sessions |
-| [Shell Productivity](SHELL-PRODUCTIVITY.md) | Shell aliases and productivity tips |
+| [Workflows](WORKFLOWS.md) | BikeLane workflow guides |
+| [Workflow Diagrams](WORKFLOW-DIAGRAMS.md) | Visual Mermaid diagrams of all workflows |
+| [BikeLane](BIKELANE.md) | Workflow system architecture |
+| [BMAD Compatibility](bmad-compatibility-matrix.md) | BMAD 6.0 compatibility |
 | [Custom Agents](CUSTOM-AGENTS.md) | Create project-specific agents |
+
+### Personality Research
+| Document | Description |
+|----------|-------------|
+| [Benchmarking](BENCHMARKING.md) | Scientific persona evaluation methodology |
+| [TRAIL-OCEAN Mapping](../pennyfarthing-dist/personas/TRAIL-OCEAN-MAPPING.md) | Hypothesis-driven personality testing |
+| [OCEAN Benchmarking](../pennyfarthing-dist/personas/OCEAN-BENCHMARKING.md) | Empirical findings on personality correlations |
+| [Personas](PERSONAS.md) | Persona system overview |
+| [Theme Comparison](THEME-COMPARISON.md) | OCEAN profiles and theme selection |
+
+### Integration & Operations
+| Document | Description |
+|----------|-------------|
+| [Jira Integration](JIRA-INTEGRATION.md) | Jira CLI and sprint sync |
 | [CI/CD Integration](CI-CD-INTEGRATION.md) | CI pipelines and git hooks |
 | [Team Workflow](TEAM-WORKFLOW.md) | Multi-developer coordination |
-| [Jira Integration](JIRA-INTEGRATION.md) | Jira CLI and sprint sync |
+| [Configuration](CONFIGURATION.md) | Configuration reference |
+| [Troubleshooting](TROUBLESHOOTING.md) | Error diagnosis and recovery |
 
-## What is Pennyfarthing?
-
-Pennyfarthing is a shared agent orchestration framework for Claude Code projects. It provides:
-
-- **Agent System** - 24 coordinated agents for multi-agent TDD development
-- **102 Persona Themes** - Character personalities with OCEAN profiles (Discworld, Star Trek, The Expanse, etc.)
-- **Subagent Handoffs** - Automated state transitions between agents
-- **Slash Commands** - Entry points for agent activation
-- **Skills** - Project-agnostic knowledge domains
-- **Sprint Management** - Story tracking and workflow coordination
-- **Scientific Benchmarking** - TRAIL framework for evaluating code review effectiveness
+### Tools
+| Document | Description |
+|----------|-------------|
+| [Cyclist Guide](CYCLIST-GUIDE.md) | Visual terminal user guide |
+| [Cyclist Reference](CYCLIST.md) | Cyclist architecture and IPC |
+| [Skills](SKILLS.md) | Skills reference |
+| [Debugging Sessions](DEBUGGING-SESSIONS.md) | Debug Claude Code sessions |
+| [Shell Productivity](SHELL-PRODUCTIVITY.md) | Shell aliases and productivity tips |
 
 ## Quick Start
 
 ```bash
 cd your-project
 
-# Install as dev dependency (scoped package as of v6.0)
+# Install as dev dependency
 npm install --save-dev @pennyfarthing/core
 
 # Initialize (creates symlinks)
@@ -54,22 +96,18 @@ npx pennyfarthing init
 npx pennyfarthing doctor
 
 # Start working (in Claude Code)
-/new-work
+/work
 ```
 
-## The TDD Workflow
+## Example: TDD Workflow
 
 ```
-/new-work --> SM --> TEA --> Dev --> Reviewer --> SM (finish)
-              |       |       |         |
-           setup   tests    impl     review
+/work → SM → TEA → Dev → Reviewer → SM (finish)
+         |      |      |       |
+      setup  tests   impl   review
 ```
 
-1. **SM** (Scrum Master) - Story selection, session setup
-2. **TEA** (Test Engineer) - Write failing tests (RED)
-3. **Dev** (Developer) - Make tests pass (GREEN)
-4. **Reviewer** - Code quality validation
-5. **SM** - Archive session, complete story
+This is one of 19 BikeLane workflows. Others include stepped planning workflows (PRD, Architecture), procedural workflows (Brainstorming, Retrospective), and quick workflows (Trivial, Quick-Dev).
 
 ## CLI Commands
 
@@ -83,5 +121,5 @@ npx pennyfarthing doctor
 ## Getting Help
 
 - See [User Guide](USER-GUIDE.md) for complete documentation
-- See [Troubleshooting](USER-GUIDE.md#troubleshooting) for common issues
+- See [Troubleshooting](TROUBLESHOOTING.md) for common issues
 - GitHub Issues: https://github.com/1898andCo/pennyfarthing/issues

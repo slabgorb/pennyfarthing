@@ -45,7 +45,7 @@ What becomes easier or more difficult because of this change?
 | [0008](./0008-result-object-error-handling.md) | Result Object Error Handling | Accepted | 2026-01-19 |
 | [0009](./0009-session-file-coordination.md) | Session File Coordination Protocol | Accepted | 2026-01-19 |
 | [0010](./0010-esm-module-requirements.md) | ESM Module Requirements | Accepted | 2026-01-19 |
-| [0011](./0011-reflector-marker-consolidation.md) | Reflector Marker Consolidation | Proposed | 2026-01-23 |
+| [0011](./0011-reflector-marker-consolidation.md) | Reflector Marker Consolidation | Accepted | 2026-01-23 |
 | [0012](./0012-tandem-agent-pairing.md) | Tandem Agent Pairing | Proposed | 2026-01-23 |
 
 ## Creating a New ADR

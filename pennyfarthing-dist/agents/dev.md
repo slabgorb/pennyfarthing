@@ -147,7 +147,7 @@ REFLECT: Minimal fix: return ErrNotFound when query returns no rows. This matche
    gh pr create --title "..." --body "..." --base develop
    ```
 9. Write Dev Assessment to session file
-10. **Have helper handle handoff** (spawn dev-handoff subagent)
+10. **Have helper handle handoff** (spawn handoff subagent with CURRENT_PHASE=green)
 11. Hand off to Reviewer: "PR #N is ready. All tests GREEN."
 
 <handoff-gate>

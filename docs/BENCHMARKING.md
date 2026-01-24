@@ -308,4 +308,4 @@ For hypothesis-driven research correlating OCEAN dimensions with error detection
 
 ## Legacy Framework
 
-Note: `benchmarks/README.md` documents an older framework using `just` commands. The current system uses `/solo`, `/benchmark-control`, and `/benchmark`.
+Note: The legacy framework (using `just` commands) is documented in [docs/archive/benchmarks-legacy.md](archive/benchmarks-legacy.md). The current system uses `/solo`, `/benchmark-control`, and `/benchmark`.

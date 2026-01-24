@@ -381,14 +381,14 @@ jira issue list --jql "project=MSSCI AND updated >= -7d"
 
 | File | Purpose |
 |------|---------|
-| `pennyfarthing-dist/scripts/utils/jira-lib.sh` | Core Jira library |
-| `pennyfarthing-dist/scripts/utils/jira-claim-story.sh` | Story claiming |
-| `pennyfarthing-dist/scripts/utils/jira-sync-story.sh` | Story sync |
-| `pennyfarthing-dist/scripts/utils/sync-epic-to-jira.sh` | Epic sync |
+| `pennyfarthing-dist/scripts/jira/jira-lib.sh` | Core Jira library |
+| `pennyfarthing-dist/scripts/jira/jira-claim-story.sh` | Story claiming |
+| `pennyfarthing-dist/scripts/jira/jira-sync-story.sh` | Story sync |
+| `pennyfarthing-dist/scripts/jira/sync-epic-to-jira.sh` | Epic sync |
 | `pennyfarthing-dist/skills/jira/SKILL.md` | CLI reference |
 
 ## See Also
 
 - [Team Workflow](TEAM-WORKFLOW.md) - Multi-developer coordination
-- [Workflows](WORKFLOWS.md) - TDD workflow documentation
+- [Workflows](WORKFLOWS.md) - BikeLane workflow documentation (TDD, trivial, agent-docs, etc.)
 - [Sprint Context Skill](SKILLS.md#sprint-context) - Sprint management

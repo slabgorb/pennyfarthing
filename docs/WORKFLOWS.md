@@ -1,34 +1,175 @@
 # Workflows Guide
 
-Step-by-step guides for common Pennyfarthing workflows.
+Comprehensive guide to BikeLane workflows in Pennyfarthing.
 
 ## Table of Contents
 
-- [The TDD Workflow](#the-tdd-workflow)
-- [Sprint Planning](#sprint-planning)
-- [Starting New Work](#starting-new-work)
-- [Finishing Work](#finishing-work)
-- [Code Review](#code-review)
-- [Parallel Work with Worktrees](#parallel-work-with-worktrees)
-- [Jira Integration](#jira-integration)
+- [BikeLane Overview](#bikelane-overview)
+- [Workflow Types](#workflow-types)
+  - [Phased Workflows](#phased-workflows)
+  - [Stepped Workflows](#stepped-workflows)
+  - [Procedural Workflows](#procedural-workflows)
+- [Workflow Commands](#workflow-commands)
+- [Common Workflows](#common-workflows)
+  - [TDD Workflow](#tdd-workflow)
+  - [Sprint Planning](#sprint-planning)
+  - [Starting New Work](#starting-new-work)
+  - [Finishing Work](#finishing-work)
+  - [Code Review](#code-review)
+- [Advanced Topics](#advanced-topics)
+  - [Parallel Work with Worktrees](#parallel-work-with-worktrees)
+  - [Jira Integration](#jira-integration)
+- [Best Practices](#best-practices)
 
 ---
 
-## The TDD Workflow
+## BikeLane Overview
 
-The core development workflow follows Test-Driven Development principles.
+BikeLane is Pennyfarthing's unified workflow orchestration system. All workflows in Pennyfarthing are BikeLane workflows, providing consistent execution patterns across different development activities.
 
-### Overview
+### What BikeLane Provides
 
+1. **Workflow Discovery** - List and explore available workflows
+2. **State Management** - Track progress through workflow phases
+3. **Agent Coordination** - Automatic handoffs between agents
+4. **Progressive Disclosure** - Reveal information as needed (stepped workflows)
+5. **Resumability** - Continue interrupted workflows
+
+### Core Concepts
+
+**Workflow** - A structured process for accomplishing a task (e.g., TDD, sprint planning, research)
+
+**Phase** - A discrete step in a workflow with specific entry/exit criteria
+
+**Agent** - An AI agent specialized for a particular role (SM, TEA, Dev, Reviewer, etc.)
+
+**Handoff** - Transition between agents or phases, managed by the workflow system
+
+---
+
+## Workflow Types
+
+BikeLane supports three types of workflows, each optimized for different use cases.
+
+### Phased Workflows
+
+Agent-driven workflows with automatic handoffs between agents. These workflows progress automatically based on agent completion signals.
+
+**Available Phased Workflows:**
+
+| Workflow | Description | Agent Flow |
+|----------|-------------|------------|
+| `tdd` | Test-Driven Development | SM → TEA → Dev → Reviewer → SM |
+| `bdd` | Behavior-Driven Development | SM → TEA → Dev → Reviewer → SM |
+| `trivial` | Quick changes without full TDD ceremony | SM → Dev → Reviewer → SM |
+| `agent-docs` | Documentation-focused workflow | SM → Tech Writer → Reviewer → SM |
+
+**Characteristics:**
+- Automatic agent handoffs
+- Session file coordination
+- Progress tracked in `.session/{story-id}-session.md`
+- Agents detect state and continue work
+
+### Stepped Workflows
+
+Progressive disclosure workflows with user gates between steps. These workflows reveal information incrementally and wait for user approval before proceeding.
+
+**Available Stepped Workflows:**
+
+| Workflow | Description | Use Case |
+|----------|-------------|----------|
+| `prd` | Product Requirements Document | Define product features and requirements |
+| `architecture` | System architecture planning | Design system architecture |
+| `research` | Multi-modal research | Market/domain/technical research |
+| `sprint-planning` | Sprint planning sessions | Plan sprint work and goals |
+| `epics-and-stories` | Epic and story creation | Create and structure epics/stories |
+| `product-brief` | Product brief creation | Define product vision and goals |
+| `project-context` | Generate project context for AI | Create AI-readable project documentation |
+| `implementation-readiness` | Verify implementation readiness | Check if work is ready to begin |
+| `ux-design` | UX design workflow | Design user experiences |
+| `quick-dev` | Quick development workflow | Fast implementation path |
+| `quick-spec` | Quick specification workflow | Rapid spec creation |
+
+**Characteristics:**
+- User gates between steps
+- Progressive information disclosure
+- BMAD 6.0 compatible format
+- Ideal for planning and design activities
+- Can be paused and resumed
+
+**BMAD 6.0 Compatibility:**
+Stepped workflows are fully compatible with BMAD 6.0 format. See `docs/bmad-compatibility-matrix.md` for detailed compatibility information.
+
+### Procedural Workflows
+
+Flexible agent-guided processes that adapt to user input and context. These workflows provide structure but allow for dynamic paths.
+
+**Available Procedural Workflows:**
+
+| Workflow | Description | Primary Agent |
+|----------|-------------|---------------|
+| `brainstorming` | Structured brainstorming sessions | PM + Team |
+| `code-review` | Code review process | Reviewer |
+| `dev-story` | Development story workflow | SM + Dev |
+| `retrospective` | Sprint retrospective | SM |
+
+**Characteristics:**
+- Flexible execution path
+- Agent-guided with user collaboration
+- Adapts to context and feedback
+- Less rigid structure than phased workflows
+
+---
+
+## Workflow Commands
+
+Manage workflows using the `/workflow` skill:
+
+```bash
+# List all available workflows
+/workflow list
+
+# Start a specific workflow
+/workflow start tdd
+/workflow start sprint-planning
+/workflow start research
+
+# Check current workflow status
+/workflow status
+
+# Resume an interrupted workflow
+/workflow resume
+
+# Switch to a different workflow
+/workflow start <new-workflow>
 ```
-/new-work --> SM --> TEA --> Dev --> Reviewer --> SM (finish)
-              |       |       |         |
-           setup   tests    impl     review
+
+**Note:** Starting work with `/new-work` automatically selects the appropriate workflow based on story type and context.
+
+---
+
+## Common Workflows
+
+### TDD Workflow
+
+Test-Driven Development is one of several phased workflows available in BikeLane.
+
+**When to use:**
+- Building new features
+- Fixing bugs with test coverage
+- Working on testable components
+- Following strict TDD discipline
+
+**Agent flow:**
+```
+/new-work → SM → TEA → Dev → Reviewer → SM (finish)
+             |     |      |        |
+          setup  tests  impl    review
 ```
 
-### Phase 1: Story Setup (SM)
+#### Phase 1: Story Setup (SM)
 
-**Trigger:** `/new-work`
+**Trigger:** `/new-work` with TDD workflow
 
 1. SM activates and checks for existing work
 2. If no work in progress:
@@ -59,7 +200,7 @@ The core development workflow follows Test-Driven Development principles.
 - [ ] Reviewer: Code reviewed
 ```
 
-### Phase 2: Write Tests (TEA)
+#### Phase 2: Write Tests (TEA)
 
 **Trigger:** Automatic handoff from SM
 
@@ -76,7 +217,7 @@ The core development workflow follows Test-Driven Development principles.
 - Tests should fail for the right reasons
 - Document test strategy in session notes
 
-### Phase 3: Implementation (Dev)
+#### Phase 3: Implementation (Dev)
 
 **Trigger:** Automatic handoff from TEA
 
@@ -94,7 +235,7 @@ The core development workflow follows Test-Driven Development principles.
 - Keep changes focused on story scope
 - Create clean, reviewable PR
 
-### Phase 4: Code Review (Reviewer)
+#### Phase 4: Code Review (Reviewer)
 
 **Trigger:** Automatic handoff from Dev
 
@@ -111,7 +252,7 @@ The core development workflow follows Test-Driven Development principles.
 - Documents issues in session file
 - Hands off back to Dev for fixes
 
-### Phase 5: Finish (SM)
+#### Phase 5: Finish (SM)
 
 **Trigger:** Status = `approved`
 
@@ -123,35 +264,46 @@ The core development workflow follows Test-Driven Development principles.
 
 ---
 
-## Sprint Planning
+### Sprint Planning
 
-Plan upcoming sprint work with the PM agent.
+Plan upcoming sprint work using the `sprint-planning` stepped workflow.
 
-### Workflow
+**Workflow type:** Stepped (progressive disclosure with user gates)
 
-1. **Invoke:** `/sprint-planning`
+#### Starting Sprint Planning
 
-2. **Review current state:**
+```bash
+/workflow start sprint-planning
+```
+
+Or use the shortcut:
+```bash
+/sprint-planning
+```
+
+#### Workflow Steps
+
+1. **Review current state:**
    - Completed work from previous sprint
    - Carryover items
    - Velocity metrics
 
-3. **Analyze backlog:**
+2. **Analyze backlog:**
    - Review prioritized epics/stories
    - Check dependencies
    - Consider team capacity
 
-4. **Select sprint work:**
+3. **Select sprint work:**
    - Choose stories for sprint
    - Verify story readiness
    - Set sprint goal
 
-5. **Update tracking:**
+4. **Update tracking:**
    - Update `sprint/current-sprint.yaml`
    - Move selected stories to sprint
    - Set story priorities
 
-### Sprint YAML Structure
+#### Sprint YAML Structure
 
 ```yaml
 sprint:
@@ -180,13 +332,13 @@ completed: []
 
 ---
 
-## Starting New Work
+### Starting New Work
 
-Begin working on a story.
+Begin working on a story using the `/new-work` command.
 
-### Simple Start
+#### Simple Start
 
-```
+```bash
 /new-work
 ```
 
@@ -194,50 +346,53 @@ The SM agent will:
 1. Check for existing work in progress
 2. Show the sprint backlog
 3. Help you select a story
-4. Set up the work session
+4. Determine appropriate workflow (TDD, trivial, etc.)
+5. Set up the work session
 
-### Resuming Work
+#### Resuming Work
 
 If work is already in progress, `/new-work` will:
 1. Detect the existing session
 2. Show current status
 3. Route to appropriate agent (TEA, Dev, or Reviewer)
+4. Continue with the active workflow
 
-### Creating a New Story
+#### Creating a New Story
 
 If no suitable story exists:
 1. SM can create a new story
 2. Define acceptance criteria
 3. Estimate points
 4. Add to sprint
+5. Choose workflow type
 
 ---
 
-## Finishing Work
+### Finishing Work
 
 Complete a story after code review approval.
 
-### Automatic Finish
+#### Automatic Finish
 
 When the Reviewer approves:
 1. Session status set to `approved`
 2. SM automatically detects this
 3. Runs finish workflow
 
-### Manual Finish
+#### Manual Finish
 
 If needed manually:
-```
+```bash
 /sm
 ```
 
 SM will detect `approved` status and run finish.
 
-### Finish Workflow
+#### Finish Workflow
 
 1. **Archive session:**
    ```
-   .session/{story-id}-session.md --> sprint/archive/PROJ-123.md
+   .session/{story-id}-session.md → sprint/archive/PROJ-123.md
    ```
 
 2. **Update sprint tracking:**
@@ -255,18 +410,23 @@ SM will detect `approved` status and run finish.
 
 ---
 
-## Code Review
+### Code Review
 
-Detailed code review process.
+Detailed code review process using the `code-review` procedural workflow.
 
-### Review Initiation
+#### Review Initiation
 
 Reviewer activates after Dev creates PR:
-```
+```bash
 /reviewer
 ```
 
-### Preflight Checks
+Or start the code-review workflow explicitly:
+```bash
+/workflow start code-review
+```
+
+#### Preflight Checks
 
 Before reviewing, Reviewer runs:
 1. All tests pass
@@ -274,7 +434,7 @@ Before reviewing, Reviewer runs:
 3. Build succeeds
 4. No merge conflicts
 
-### Review Focus
+#### Review Focus
 
 1. **Correctness:**
    - Does the code do what it claims?
@@ -301,7 +461,7 @@ Before reviewing, Reviewer runs:
    - Testing right things?
    - Maintainable tests?
 
-### Review Outcomes
+#### Review Outcomes
 
 **Approved:**
 ```
@@ -319,14 +479,16 @@ Routing back to Dev.
 
 ---
 
-## Parallel Work with Worktrees
+## Advanced Topics
 
-Work on multiple stories simultaneously.
+### Parallel Work with Worktrees
 
-### Setup
+Work on multiple stories simultaneously using git worktrees.
+
+#### Setup
 
 1. **Create worktree:**
-   ```
+   ```bash
    /setup-worktree feature/auth-ui
    ```
 
@@ -340,7 +502,7 @@ Work on multiple stories simultaneously.
    - New worktree: different story
    - No conflict between sessions
 
-### Managing Worktrees
+#### Managing Worktrees
 
 **List worktrees:**
 ```bash
@@ -352,7 +514,7 @@ git worktree list
 git worktree remove ../project-feature-auth-ui
 ```
 
-### Session Isolation
+#### Session Isolation
 
 Each worktree has its own:
 - `.session/{story-id}-session.md`
@@ -361,14 +523,14 @@ Each worktree has its own:
 
 ---
 
-## Jira Integration
+### Jira Integration
 
-Sync work with Jira.
+Sync work with Jira for external tracking.
 
-### Sync Epic to Jira
+#### Sync Epic to Jira
 
 Push local epic definition to Jira:
-```
+```bash
 /sync-epic-to-jira AUTH-EPIC
 ```
 
@@ -378,14 +540,14 @@ Push local epic definition to Jira:
 3. Creates/updates child stories
 4. Syncs status
 
-### Story Status Sync
+#### Story Status Sync
 
 When SM finishes a story:
 1. Jira ticket transitioned to Done
 2. Resolution set
 3. Comments added if configured
 
-### Configuration
+#### Configuration
 
 Set up in `.env`:
 ```bash
@@ -396,14 +558,41 @@ JIRA_API_TOKEN=your-token
 
 ---
 
-## Workflow Tips
+## Best Practices
 
-### Best Practices
+### Workflow Selection
 
-1. **Always use `/new-work`** - Let the system detect state
+**Choose TDD workflow when:**
+- Building testable features
+- Bug fixes requiring test coverage
+- Following strict TDD discipline
+- Team values test-first approach
+
+**Choose trivial workflow when:**
+- Quick fixes
+- Documentation updates
+- Configuration changes
+- Changes too simple for full TDD
+
+**Choose stepped workflow when:**
+- Planning activities
+- Research phases
+- Design work
+- Need progressive disclosure
+
+**Choose procedural workflow when:**
+- Collaborative activities
+- Flexible processes
+- Context-dependent paths
+
+### General Guidelines
+
+1. **Use `/workflow list`** to discover available workflows
 2. **Trust the handoffs** - Subagents update session correctly
 3. **Keep session file accurate** - Notes help future work
 4. **Complete one story** before starting another (unless using worktrees)
+5. **Use appropriate workflow** - Not everything needs TDD
+6. **Check workflow status** - Use `/workflow status` to see progress
 
 ### Troubleshooting
 
@@ -411,10 +600,12 @@ JIRA_API_TOKEN=your-token
 - Check `.session/{story-id}-session.md` exists
 - May have been archived accidentally
 - Check `sprint/archive/` for recent files
+- Use `/workflow status` to check current state
 
 **Stuck in wrong agent:**
 - Use direct command (e.g., `/dev`)
 - Or restart with `/new-work`
+- Check workflow status with `/workflow status`
 
 **PR not created:**
 - Verify tests pass
@@ -425,3 +616,17 @@ JIRA_API_TOKEN=your-token
 - Review all issues carefully
 - Ask Reviewer for clarification
 - Consider Architect input for design issues
+
+**Workflow won't resume:**
+- Check session file is properly formatted
+- Verify workflow type matches current task
+- Use `/workflow start <name>` to restart
+
+---
+
+## See Also
+
+- [BMAD Compatibility Matrix](bmad-compatibility-matrix.md) - Stepped workflow compatibility details
+- [AGENTS.md](AGENTS.md) - Agent roles and responsibilities
+- [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture overview
+- [ADR 0006](adr/0006-state-detection-pattern.md) - State detection pattern documentation
