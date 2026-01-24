@@ -125,7 +125,12 @@ function initMessageView() {
           updateActivity(enrichedResult);
 
           // MSSCI-12143: Check tool_result content for CYCLIST markers (subagent handoffs)
-          const toolResultText = toolResult.content || '';
+          // Handle SDK array content blocks (e.g., [{type: 'text', text: '...'}])
+          const toolResultText = typeof toolResult.output === 'string'
+            ? toolResult.output
+            : (Array.isArray(toolResult.output)
+                ? toolResult.output.filter(b => b.type === 'text').map(b => b.text).join('\n')
+                : '');
           if (toolResultText.includes('CYCLIST:')) {
             const markers = processMessageForQuickActions({
               type: 'assistant',
