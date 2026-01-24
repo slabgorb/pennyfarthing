@@ -208,6 +208,8 @@ if $DRY_RUN; then
     log_dry "git tag -a $TAG_NAME -m 'Release $NEW_VERSION'"
     log_dry "git push origin develop main --tags"
     log_dry "git checkout develop"
+    log_dry "source .env && npm publish --access public"
+    log_dry "gh release create $TAG_NAME"
 else
     log_info "Merging develop to main..."
     git -C "$PROJECT_ROOT" checkout main
@@ -235,6 +237,19 @@ else
     # Step 7: Return to develop
     log_info "Returning to develop..."
     git -C "$PROJECT_ROOT" checkout develop
+
+    # Step 8: Publish to npm
+    log_info "Publishing to npm..."
+    if [[ -f "$PROJECT_ROOT/.env" ]]; then
+        source "$PROJECT_ROOT/.env"
+        npm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
+    fi
+    (cd "$PROJECT_ROOT" && npm publish --access public)
+    log_info "Published @pennyfarthing/core@$NEW_VERSION to npm"
+
+    # Step 9: Create GitHub release
+    log_info "Creating GitHub release..."
+    gh release create "$TAG_NAME" --title "v$NEW_VERSION" --notes "See [CHANGELOG.md](https://github.com/1898andCo/pennyfarthing/blob/main/CHANGELOG.md#${NEW_VERSION//\.}-${TODAY//-}) for details." || log_warn "GitHub release creation failed (may already exist)"
 fi
 
 echo ""
@@ -243,11 +258,13 @@ if $DRY_RUN; then
     echo ""
     echo "  Would release version: $NEW_VERSION"
     echo "  Would create tag: $TAG_NAME"
+    echo "  Would publish: @pennyfarthing/core@$NEW_VERSION"
 else
     log_info "Deploy complete!"
     echo ""
     echo "  Version: $NEW_VERSION"
     echo "  Tag: $TAG_NAME"
     echo "  Branches pushed: develop, main"
+    echo "  npm: @pennyfarthing/core@$NEW_VERSION"
 fi
 echo ""
