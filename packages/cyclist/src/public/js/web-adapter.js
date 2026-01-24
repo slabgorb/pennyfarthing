@@ -197,7 +197,7 @@ if (window.electronAPI) {
     toolStats: createDataAPI('/api/stats', null), // Uses same stats endpoint
     tokenStats: createDataAPI('/api/token-stats', '/ws/token-stats'), // Token stats from OTLP
     todos: {
-      get: () => Promise.resolve({ todos: [] }), // Todos managed in-browser for now
+      get: () => Promise.resolve([]), // Return empty array directly (todos.js expects array)
       onUpdate: () => {} // No-op
     },
 

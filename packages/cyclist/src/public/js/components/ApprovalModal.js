@@ -55,15 +55,18 @@ let renderedFormHtml = '';
 // Settings store - dynamically loaded to support both Node.js (tests) and browser environments
 let settingsStore = null;
 
-// Try to load settings store
-try {
-  // This will work in Node.js test environment
-  const ss = await import('../../../settings-store.js');
-  settingsStore = ss;
-} catch {
-  // In browser environment, settingsStore will be set via setSettingsStore
-  settingsStore = null;
+// Only attempt import in Node.js environment (tests), skip in browser to avoid 404
+if (typeof window === 'undefined') {
+  try {
+    // This will work in Node.js test environment
+    const ss = await import('../../../settings-store.js');
+    settingsStore = ss;
+  } catch {
+    // Module not available
+    settingsStore = null;
+  }
 }
+// In browser environment, settingsStore will be set via setSettingsStore
 
 /**
  * Show the approval modal with a command
