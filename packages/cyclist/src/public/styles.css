@@ -4238,6 +4238,286 @@ html, body {
 }
 
 /* =============================================================================
+ * Debug Panel (Real-time OTEL Span Viewer)
+ * ============================================================================= */
+
+.debug-panel {
+  display: flex;
+  flex-direction: column;
+  width: 400px;
+  min-width: var(--panel-min-width);
+  max-width: 50vw;
+  height: 100%;
+  background: var(--bg-secondary, #1a1a2e);
+  border-right: 1px solid var(--border, #333);
+  transition: width 0.2s ease, min-width 0.2s ease, opacity 0.2s ease;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.debug-panel.collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+  border-right: none;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.debug-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-tertiary, #252540);
+  border-bottom: 1px solid var(--border, #333);
+  flex-shrink: 0;
+}
+
+.debug-panel-title {
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.debug-panel-count {
+  margin-left: 8px;
+  padding: 2px 8px;
+  background: var(--accent-primary, #6366f1);
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+}
+
+.debug-panel-collapse-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.debug-panel-collapse-btn:hover {
+  opacity: 1;
+}
+
+.debug-panel-content {
+  flex: 1;
+  overflow: auto;
+  padding: 0;
+}
+
+/* =============================================================================
+ * SpanTimeline Component Styles
+ * ============================================================================= */
+
+.span-timeline {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.timeline-title {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.span-count {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.timeline-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.timeline-controls select {
+  padding: 4px 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.timeline-controls select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.btn-export-spans {
+  padding: 4px 12px;
+  background: var(--accent-primary);
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-export-spans:hover {
+  background: var(--accent-hover);
+}
+
+.timeline-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.timeline-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.timeline-loading {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.filter-no-results {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.timeline-entry {
+  margin-bottom: 8px;
+  padding: 10px;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+  border-left: 3px solid var(--accent-primary);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.timeline-entry:hover {
+  background: var(--bg-hover);
+}
+
+.timeline-entry.hidden {
+  display: none;
+}
+
+.entry-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.tool-icon {
+  font-size: 1rem;
+}
+
+.tool-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.span-timestamp {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  margin-left: auto;
+}
+
+.span-duration {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  background: var(--bg-secondary);
+  border-radius: 3px;
+}
+
+.status-success {
+  color: #10b981;
+}
+
+.status-error {
+  color: #ef4444;
+}
+
+.duration-bar {
+  height: 3px;
+  background: var(--accent-primary);
+  border-radius: 2px;
+  margin-top: 8px;
+  opacity: 0.6;
+  transition: width 0.3s ease;
+}
+
+.enrichment-details {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.2s ease, padding 0.2s ease;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.enrichment-details.expanded {
+  max-height: 300px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  margin-top: 10px;
+}
+
+.detail-row {
+  padding: 3px 0;
+}
+
+.detail-row .label {
+  color: var(--text-secondary);
+  text-transform: lowercase;
+}
+
+.detail-row code {
+  background: var(--bg-secondary);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.no-enrichment {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Tool-specific border colors */
+.timeline-entry.tool-bash { border-left-color: #f59e0b; }
+.timeline-entry.tool-read { border-left-color: #3b82f6; }
+.timeline-entry.tool-write { border-left-color: #10b981; }
+.timeline-entry.tool-edit { border-left-color: #10b981; }
+.timeline-entry.tool-task { border-left-color: #8b5cf6; }
+.timeline-entry.tool-glob { border-left-color: #ec4899; }
+.timeline-entry.tool-grep { border-left-color: #ec4899; }
+.timeline-entry.tool-webfetch { border-left-color: #06b6d4; }
+.timeline-entry.tool-websearch { border-left-color: #06b6d4; }
+
+/* =============================================================================
  * 22-6: Audit Log Modal
  * ============================================================================= */
 
