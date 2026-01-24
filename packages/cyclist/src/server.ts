@@ -92,6 +92,21 @@ app.use('/api/background-tasks', createBackgroundTasksRouter());
 // MSSCI-11734: Enriched spans API
 app.use('/api/spans', createSpansRouter());
 
+// Welcome message endpoint (triggered by SessionStart hook)
+// Broadcasts welcome message to /ws/welcome channel for Cyclist display
+import { broadcastWelcome, getWelcomeClients } from './api/welcome.js';
+
+app.post('/api/welcome', (req, res) => {
+  const { project, theme } = req.body || {};
+  try {
+    broadcastWelcome({ project: project || '', theme: theme || '' });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[Welcome] Broadcast error:', err);
+    res.status(500).json({ error: 'Failed to broadcast welcome' });
+  }
+});
+
 // MSSCI-12275: Bell mode queue sync endpoint
 // Writes message queue to .pennyfarthing/bell-queue.json for PostToolUse hook
 app.post('/api/bell-queue', (req, res) => {
