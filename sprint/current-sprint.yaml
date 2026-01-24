@@ -1216,8 +1216,9 @@ epics:
           - Document Python patterns in dev-patterns skill
         points: 2
         priority: P1
-        status: in_progress
+        status: done
         repos: pennyfarthing
+        completed: "2026-01-24"
       - id: "63-5"
         jira: MSSCI-12399
         title: "Port jira-sync.mjs to Python"
