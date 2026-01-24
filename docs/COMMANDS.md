@@ -1,6 +1,6 @@
 # Slash Commands Reference
 
-Complete reference for all Pennyfarthing slash commands.
+Complete reference for all 45 Pennyfarthing slash commands.
 
 ## Command Categories
 
@@ -15,6 +15,24 @@ Complete reference for all Pennyfarthing slash commands.
 ---
 
 ## TDD Workflow Commands
+
+### `/work`
+
+**Purpose:** Resume work or start new - smart entry point that picks up where you left off
+
+**Usage:**
+```
+/work
+```
+
+**What it does:**
+1. Detects current workflow state
+2. If work in progress: suggests appropriate agent to continue
+3. If finished work: invokes SM to complete story
+4. If no work: invokes /new-work to pick up new story
+5. If missing epic context: prompts to run /start-epic
+
+**Entry point for:** Resuming interrupted work or starting fresh
 
 ### `/new-work`
 
@@ -34,7 +52,24 @@ Complete reference for all Pennyfarthing slash commands.
 
 **Entry point for:** The entire TDD flow
 
-**Alternatives:** None - this is the only entry point
+### `/check`
+
+**Purpose:** Run quality gates (lint, type check, tests) before handoff
+
+**Usage:**
+```
+/check
+/check --repo api
+/check --tests-only
+/check --filter "TestUserLogin"
+```
+
+**What it does:**
+1. Runs lint (if configured)
+2. Runs type check (if TypeScript)
+3. Runs tests
+4. Reports pass/fail status
+5. Blocks handoff to Reviewer if checks fail
 
 ---
 
@@ -230,20 +265,37 @@ Complete reference for all Pennyfarthing slash commands.
 3. Breaks down into stories (if needed)
 4. Updates tracking
 
-### `/brainstorm`
+### `/close-epic`
+
+**Purpose:** Close an epic - verify completion, update status, and archive context
+
+**Usage:**
+```
+/close-epic [epic-id]
+```
+
+**What it does:**
+1. Verifies all stories in epic are done
+2. Updates epic status to done
+3. Calculates completed points
+4. Optionally transitions Jira epic to Done
+5. Optionally archives epic context file
+
+### `/brainstorm` (alias: `/brainstorming`)
 
 **Purpose:** Structured problem-solving brainstorm session
 
 **Usage:**
 ```
 /brainstorm [topic]
+/brainstorming [topic]
 ```
 
 **What it does:**
-1. Gathers multiple agent perspectives
-2. Explores solutions
-3. Evaluates options
-4. Produces recommendations
+1. Follows 5-phase structured approach (Problem Definition, Divergent Thinking, Clustering, Evaluation, Selection)
+2. Scores ideas on impact, effort, and risk
+3. Selects 1-3 ideas to pursue
+4. Produces actionable recommendations with next steps
 
 ### `/party-mode`
 
@@ -259,6 +311,24 @@ Complete reference for all Pennyfarthing slash commands.
 2. Free-form discussion
 3. Creative problem solving
 4. Less structured than `/brainstorm`
+
+### `/job-fair`
+
+**Purpose:** Discover which characters in a theme excel at each role
+
+**Usage:**
+```
+/job-fair <theme>
+/job-fair <theme> --runs 2
+/job-fair <theme> --roles dev,reviewer
+```
+
+**What it does:**
+1. Runs every character in a theme against benchmarks
+2. Tests characters in their native roles
+3. Can test cross-role performance
+4. Identifies hidden talents across the cast
+5. Saves results matrix showing performance by character and role
 
 ---
 
@@ -356,7 +426,7 @@ Complete reference for all Pennyfarthing slash commands.
 
 ### `/git-cleanup`
 
-**Purpose:** Clean up git repos by organizing changes into proper commits/branches
+**Purpose:** Clean up git repos by organizing changes into proper commits/branches by initiative
 
 **Usage:**
 ```
@@ -369,20 +439,77 @@ Complete reference for all Pennyfarthing slash commands.
 3. Creates appropriate branches
 4. Structures clean commits
 
-### `/setup-worktree`
+### `/chore`
 
-**Purpose:** Create a new worktree for parallel development work
+**Purpose:** Quick commit for small changes without full git-cleanup ceremony
 
 **Usage:**
 ```
-/setup-worktree [branch-name]
+/chore
+/chore "update sprint tracking"
+/chore doc "update README"
+/chore ux "adjust button spacing"
+```
+
+**What it does:**
+1. Creates branch from develop (chore/*, docs/*, or ux/*)
+2. Commits all dirty changes with conventional message
+3. Merges to develop locally
+4. Pushes develop
+5. Fast path for maintenance, config, docs, or styling tweaks
+
+### `/standalone`
+
+**Purpose:** Wrap current changes into a standalone Jira story, branch, PR, and merge
+
+**Usage:**
+```
+/standalone
+/standalone "Add drift detection script"
+/standalone "Add drift detection script" 2
+```
+
+**What it does:**
+1. Creates Jira story for the changes
+2. Creates feature branch
+3. Commits and pushes
+4. Creates PR with summary
+5. Merges PR and marks story Done
+6. Fast path for shipping completed work that deserves tracking but didn't need story setup upfront
+
+### `/release`
+
+**Purpose:** Merge develop to main and push (optional version bump)
+
+**Usage:**
+```
+/release
+/release --bump patch
+/release --bump minor
+/release --dry-run
+```
+
+**What it does:**
+1. Pulls latest develop and main
+2. Merges develop into main
+3. Pushes main and develop
+4. Optionally bumps version and creates GitHub release
+
+### `/parallel-work`
+
+**Purpose:** Start parallel work in a new worktree
+
+**Usage:**
+```
+/parallel-work
 ```
 
 **What it does:**
 1. Creates git worktree
 2. Sets up parallel workspace
-3. Configures environment
-4. Allows concurrent work on different stories
+3. Creates session file for the new story
+4. Hands to SM to complete story setup in worktree context
+5. Allows concurrent work on different stories
 
 ### `/create-branches-from-story`
 
@@ -435,7 +562,7 @@ Complete reference for all Pennyfarthing slash commands.
 
 ### `/update-domain-docs`
 
-**Purpose:** Update CLAUDE-*.md domain documentation files
+**Purpose:** Update CLAUDE-*.md domain documentation files based on current codebase
 
 **Usage:**
 ```
@@ -447,6 +574,22 @@ Complete reference for all Pennyfarthing slash commands.
 2. Updates domain documentation
 3. Reflects current patterns
 4. Updates file references
+
+### `/sprint`
+
+**Purpose:** Sprint status, backlog, and story management
+
+**Usage:**
+```
+/sprint [status|backlog|work|archive|new|future|promote] [args...]
+```
+
+**What it does:**
+1. Shows sprint status with story counts and points
+2. Lists available stories ready for work
+3. Starts work on a story
+4. Archives completed stories
+5. Manages future work and epic promotion
 
 ---
 
@@ -574,13 +717,165 @@ Creates a complete theme file at `.claude/pennyfarthing/themes/{name}.yaml` with
 2. Scans custom themes in `.claude/pennyfarthing/themes/`
 3. Lists all with descriptions
 
+### `/create-theme`
+
+**Purpose:** Create a new custom persona theme
+
+**Usage:**
+```
+/create-theme <name>
+/create-theme <name> --base <theme>
+/create-theme <name> --user
+```
+
+**What it does:**
+1. Creates a new theme file
+2. Optionally bases it on an existing theme (default: minimalist)
+3. Can create as user-level theme (available across all projects)
+4. Guides user on next steps for customization
+
+---
+
+## Utility Commands
+
+### `/continue-session`
+
+**Purpose:** Resume work from a saved checkpoint after context circuit breaker
+
+**Usage:**
+```
+/continue-session
+/continue-session --list
+/continue-session --story-id ID
+```
+
+**What it does:**
+1. Scans for saved checkpoints in `.session/checkpoints.log`
+2. Presents available checkpoints to restore
+3. Restores checkpoint and finds matching session file
+4. Resumes appropriate agent based on workflow phase
+5. Recovery command for context overflow situations
+
+### `/prime`
+
+**Purpose:** Load essential project context at agent activation
+
+**Usage:**
+```
+/prime
+/prime --minimal
+/prime --full
+/prime --agent <name>
+```
+
+**What it does:**
+1. Loads CLAUDE.md and user instructions
+2. Loads sprint summary and active session
+3. Optionally loads agent sidecar patterns
+4. Optionally includes domain documentation
+5. Automatically invoked on agent activation
+
+### `/permissions`
+
+**Purpose:** View and manage runtime permission grants
+
+**Usage:**
+```
+/permissions
+/permissions grant <tool> "<scope>" [--type <type>]
+/permissions revoke <tool>
+/permissions show <tool>
+```
+
+**What it does:**
+1. Lists all active permission grants
+2. Grants tool access with scope patterns
+3. Revokes permissions for specific tools
+4. Shows detailed grant information
+
+### `/workflow`
+
+**Purpose:** List available workflows, show current workflow details, and switch workflows
+
+**Usage:**
+```
+/workflow
+/workflow show [name]
+/workflow set <name>
+/workflow start <name> [--mode <mode>]
+/workflow resume [name]
+```
+
+**What it does:**
+1. Lists available workflows (TDD, trivial, agent-docs)
+2. Shows current workflow phase and details
+3. Switches to different workflow pattern mid-session
+4. Manages BikeLane stepped workflows
+
+---
+
+## System Commands
+
+### `/health-check`
+
+**Purpose:** Check Pennyfarthing installation health and apply updates
+
+**Usage:**
+```
+/health-check
+pennyfarthing doctor
+pennyfarthing doctor --fix
+```
+
+**What it does:**
+1. Checks manifest.json validity
+2. Verifies all managed files present
+3. Validates symlinks
+4. Checks for available updates
+5. Can auto-fix broken symlinks and missing directories
+
+### `/run-ci`
+
+**Purpose:** Detect and run CI locally
+
+**Usage:**
+```
+/run-ci
+/run-ci --detect-only
+/run-ci --dry-run
+```
+
+**What it does:**
+1. Auto-detects CI system (Justfile, GitHub Actions, GitLab CI, npm fallback)
+2. Runs appropriate CI commands locally
+3. Reproduces CI environment for debugging
+4. Verifies CI will pass before pushing
+
+### `/help`
+
+**Purpose:** Context-aware help for Pennyfarthing commands, agents, and workflows
+
+**Usage:**
+```
+/help
+```
+
+**What it does:**
+1. Provides quick-start guidance
+2. Shows TDD workflow overview
+3. Lists all agents and commands
+4. Shows available themes
+5. Provides context-aware suggestions based on current state
+
 ---
 
 ## Command Quick Reference
 
 | Command | Purpose | Category |
 |---------|---------|----------|
+| `/work` | Resume or start work | TDD |
 | `/new-work` | Start work session | TDD |
+| `/check` | Run quality gates | TDD |
 | `/sm` | Scrum Master | Agent |
 | `/tea` | Test Engineer | Agent |
 | `/dev` | Developer | Agent |
@@ -591,25 +886,39 @@ Creates a complete theme file at `.claude/pennyfarthing/themes/{name}.yaml` with
 | `/ux-designer` | UX Designer | Agent |
 | `/devops` | DevOps Engineer | Agent |
 | `/orchestrator` | Orchestrator | Agent |
+| `/sprint` | Sprint management | Planning |
 | `/sprint-planning` | Plan sprint | Planning |
 | `/retro` | Sprint retrospective | Planning |
 | `/start-epic` | Start an epic | Planning |
+| `/close-epic` | Close an epic | Planning |
 | `/brainstorm` | Problem solving | Planning |
 | `/party-mode` | Creative brainstorm | Planning |
+| `/job-fair` | Character benchmarking | Planning |
 | `/solo` | Single agent evaluation | Benchmarking |
 | `/benchmark-control` | Create baseline | Benchmarking |
 | `/benchmark` | Compare vs baseline | Benchmarking |
 | `/repo-status` | Check git status | Operations |
 | `/git-cleanup` | Organize commits | Operations |
-| `/setup-worktree` | Create worktree | Operations |
+| `/chore` | Quick commit | Operations |
+| `/standalone` | Jira story+PR+merge | Operations |
+| `/release` | Merge to main | Operations |
+| `/parallel-work` | Create worktree | Operations |
 | `/create-branches-from-story` | Create branches | Operations |
 | `/sync-epic-to-jira` | Sync to Jira | Sync |
 | `/sync-work-with-sprint` | Sync work/sprint | Sync |
 | `/update-domain-docs` | Update docs | Sync |
 | `/theme-maker` | Create custom theme | Theme |
+| `/create-theme` | Create theme | Theme |
 | `/set-theme` | Change active theme | Theme |
 | `/show-theme` | View theme details | Theme |
 | `/list-themes` | List available themes | Theme |
+| `/continue-session` | Resume checkpoint | Utility |
+| `/prime` | Load project context | Utility |
+| `/permissions` | Manage permissions | Utility |
+| `/workflow` | Workflow management | Utility |
+| `/health-check` | Check installation | System |
+| `/run-ci` | Run CI locally | System |
+| `/help` | Get help | System |
 
 ---
 

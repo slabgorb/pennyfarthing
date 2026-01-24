@@ -12,7 +12,7 @@ pennyfarthing doctor --fix
 .pennyfarthing/scripts/core/check-context.sh --human
 
 # List recent checkpoints
-source .pennyfarthing/scripts/utils/checkpoint.sh && checkpoint_list
+source .pennyfarthing/scripts/lib/checkpoint.sh && checkpoint_list
 
 # Verify git state
 git diff-index --quiet HEAD -- && echo "Clean" || echo "Dirty"
@@ -48,14 +48,14 @@ pennyfarthing doctor --fix
 pennyfarthing init --force
 ```
 
-#### "settings.local.json missing"
+#### "config.local.yaml missing"
 
-**Cause:** Copy-mode installs may skip this file.
+**Cause:** Theme configuration file missing.
 
 **Solution:**
 ```bash
 pennyfarthing doctor --fix
-# Creates default settings.local.json
+# Creates default config.local.yaml
 ```
 
 ### Path Resolution Errors
@@ -75,9 +75,9 @@ pennyfarthing doctor --fix
 
 #### "Scripts path not found"
 
-**Cause:** Path divergence between `.claude/scripts` and `.claude/pennyfarthing/scripts`.
+**Cause:** Path divergence between old and new script locations.
 
-**Solution:** Version 2 scripts try both locations automatically. Update with:
+**Solution:** Scripts are now in `.pennyfarthing/scripts/` (symlinked to `pennyfarthing-dist/scripts/`). Update with:
 ```bash
 pennyfarthing update
 ```
@@ -152,7 +152,7 @@ Write .session/story-session.md
 - Implementation: Complete
 - Ready for review: Yes
 ```
-Then spawn: `dev-handoff` subagent
+Then spawn: `handoff` subagent
 
 ### Test Failures
 
@@ -240,7 +240,7 @@ just test-setup
 
 # If above 70%, proactively:
 # 1. Save checkpoint
-source .pennyfarthing/scripts/utils/checkpoint.sh
+source .pennyfarthing/scripts/lib/checkpoint.sh
 checkpoint_save "dev-phase" "implemented user auth"
 
 # 2. Update session file with progress
@@ -320,7 +320,7 @@ message.type === 'tool_use'  // WRONG
 ### Retry with Backoff
 
 ```bash
-source .pennyfarthing/scripts/utils/retry.sh
+source .pennyfarthing/scripts/lib/retry.sh
 
 # Retry up to 3 times with exponential backoff
 retry_with_backoff 3 1 10 curl -s https://api.example.com/health
@@ -329,7 +329,7 @@ retry_with_backoff 3 1 10 curl -s https://api.example.com/health
 ### Fallback Commands
 
 ```bash
-source .pennyfarthing/scripts/utils/retry.sh
+source .pennyfarthing/scripts/lib/retry.sh
 
 # Try primary, fall back to alternative
 command_with_fallback "git pull --ff-only" "git pull --no-rebase"
@@ -338,7 +338,7 @@ command_with_fallback "git pull --ff-only" "git pull --no-rebase"
 ### Checkpoint System
 
 ```bash
-source .pennyfarthing/scripts/utils/checkpoint.sh
+source .pennyfarthing/scripts/lib/checkpoint.sh
 
 # Save progress
 checkpoint_save "feature-auth" "completed login endpoint"
@@ -353,7 +353,7 @@ checkpoint_restore "feature-auth"
 ### File Locking
 
 ```bash
-source .pennyfarthing/scripts/utils/file-lock.sh
+source .pennyfarthing/scripts/lib/file-lock.sh
 
 # Execute command under lock
 with_lock ".session/state.json" exclusive "update-state.sh"
@@ -376,7 +376,7 @@ PENNYFARTHING_VERBOSE=true pennyfarthing doctor
 
 Most scripts support `--verbose` flag:
 ```bash
-.pennyfarthing/scripts/agent-session.sh start dev --verbose
+.pennyfarthing/scripts/core/agent-session.sh start dev --verbose
 ```
 
 ## Decision Tree
@@ -402,6 +402,6 @@ Problem?
 ## Getting Help
 
 - Run `pennyfarthing doctor` for automated diagnostics
-- Check agent sidecars: `.claude/project/agents/{agent}-sidecar/gotchas.md`
+- Check agent sidecars: `.pennyfarthing/sidecars/{agent}/gotchas.md`
 - Review session file: `.session/{story-id}-session.md`
 - GitHub Issues: https://github.com/1898andCo/pennyfarthing/issues

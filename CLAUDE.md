@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Pennyfarthing is a Claude Code agent orchestration framework with TDD workflow and themed personas. It coordinates multiple AI agents (SM, TEA, Dev, Reviewer) through story-driven development cycles.
+Pennyfarthing is a Claude Code agent orchestration framework with customizable BikeLane workflows and themed personas. It coordinates AI agents through configurable development cycles - from TDD to planning workflows to BMAD-compatible stepped processes.
 
-**Version:** 7.0.2
+**Version:** 7.6.1
 **Node:** >=18.0.0
 **Type:** ES module with TypeScript (pnpm monorepo)
 
@@ -26,10 +26,10 @@ npm run lint      # ESLint (requires separate install)
 
 ```
 pennyfarthing-dist/      # Single source of truth for all definitions
-├── agents/              # 10 main agents + 8 official subagents
-├── commands/            # 43 slash commands
+├── agents/              # 19 agent definitions total
+├── commands/            # 45 slash commands
 ├── guides/              # Behavior guides
-├── skills/              # 21 knowledge domains
+├── skills/              # 22 knowledge domains
 ├── personas/            # Themed agent personas (102 themes)
 └── scripts/             # Utility scripts
 
@@ -68,7 +68,19 @@ sprint/                  # Sprint tracking (current-sprint.yaml, archive/, conte
 4. **Lazy Context Loading** - Context loaded only when needed per agent type
 5. **Tracked Build Output** - `dist/` is committed (not gitignored) because we serve directly from GitHub
 
-### TDD Flow
+### BikeLane Workflows
+
+BikeLane is the umbrella for all workflow types in Pennyfarthing. Use `/workflow list` to see all available workflows, `/workflow start <name>` to begin.
+
+**BikeLane Workflow Types:**
+
+| Type | Description | Examples |
+|------|-------------|----------|
+| **Phased** | Agent-driven development cycles with automatic handoffs | tdd, bdd, trivial, agent-docs |
+| **Stepped** | Progressive disclosure with user gates, BMAD 6.0 compatible | prd, architecture, research, sprint-planning, epics-and-stories, product-brief, project-context, implementation-readiness, ux-design, quick-dev, quick-spec |
+| **Procedural** | Flexible agent-guided processes | brainstorming, code-review, dev-story, retrospective |
+
+#### Example: TDD Workflow
 
 ```
 /new-work → SM → TEA → Dev → Reviewer → SM (finish)
@@ -98,6 +110,14 @@ Subagents use Claude Code's Task tool with `subagent_type`. Key subagents:
 2. Spawns appropriate subagent via Task tool
 3. Subagent updates session file with structured result
 4. Next agent reads state and continues
+
+### BMAD 6.0 Compatibility
+
+Pennyfarthing provides full BMAD 6.0 workflow import support:
+- Stepped workflows with tri-modal execution (create/validate/edit)
+- Custom mode support beyond standard three
+- Migration script: `pennyfarthing-dist/scripts/migrate-bmad-workflow.mjs`
+- See `docs/bmad-compatibility-matrix.md` for details
 
 ## Key Files
 

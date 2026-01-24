@@ -135,7 +135,7 @@ REFLECT: Should I also test rate limiting? Let me check if that's in scope...
        EXPECTED_STATE: RED
    ```
 6. Write TEA Assessment to session file
-7. **Have Helper handle handoff** (spawn tea-handoff subagent)
+7. **Have Helper handle handoff** (spawn handoff subagent with CURRENT_PHASE=red)
 8. Hand off to Dev: "Tests are RED. Make them GREEN."
 
 ## Chore Bypass Criteria

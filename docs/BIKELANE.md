@@ -1,25 +1,112 @@
-# BikeLane: Customizable Stepped Workflows
+# BikeLane: Pennyfarthing Workflow System
 
-BikeLane is Pennyfarthing's stepped workflow system, enabling BMAD-inspired progressive disclosure for complex planning and decision-making processes. Unlike phased workflows (TDD, trivial) that move through agent-driven phases, stepped workflows execute one step at a time with explicit user gates for quality control.
+BikeLane is Pennyfarthing's comprehensive workflow orchestration system. It provides a unified framework for coordinating agent activities across three distinct workflow types: phased, stepped, and procedural. Each workflow type serves different development needs while sharing common infrastructure for state tracking, variable resolution, and agent coordination.
 
 ## Overview
 
-| Feature | Description |
-|---------|-------------|
-| **Progressive Disclosure** | One step file loaded at a time, reducing context and focusing agent attention |
-| **User Gates** | Pause points requiring explicit [C]ontinue/[R]evise approval |
-| **Tri-Modal Execution** | Create, Validate, or Edit modes for flexible artifact management |
-| **Variable Resolution** | Dynamic `{variable}` placeholders resolved from multiple sources |
-| **Session-Based State** | Progress tracked in session files for cross-session resumability |
+BikeLane workflows enable:
+- Structured agent collaboration through defined phases or steps
+- Progressive disclosure of context for complex planning processes
+- Flexible procedural guidance for exploratory tasks
+- Session-based state tracking for cross-session resumability
+- Dynamic variable resolution from multiple sources
+- User gates for quality control at critical decision points
+
+## Workflow Types
+
+BikeLane supports three workflow types, each optimized for different collaboration patterns:
+
+### Phased Workflows
+
+Agent-driven development cycles with automatic handoffs between agents. These workflows move through predefined phases with agents taking turns to accomplish specific objectives.
+
+**Characteristics:**
+- Automatic phase transitions
+- Agent-to-agent handoffs
+- Clear role boundaries
+- State-driven execution
+
+**Use Cases:**
+- Development cycles (TDD, BDD)
+- Quick fixes without ceremony
+- Documentation updates
+
+**Available Workflows:**
+- `tdd` - Test-driven development with code review
+- `bdd` - Behavior-driven development with UX design phase
+- `trivial` - Quick fixes without full TDD ceremony
+- `agent-docs` - Agent file and process documentation updates
+
+### Stepped Workflows
+
+Progressive disclosure workflows that execute one step at a time with explicit user gates for quality control. Inspired by BMAD methodology, these workflows break complex planning and decision-making processes into manageable increments.
+
+**Characteristics:**
+- One step loaded at a time (reduced context)
+- User approval gates at decision points
+- Tri-modal support (create/validate/edit)
+- Progressive artifact building
+- BMAD 6.0 compatible
+
+**Use Cases:**
+- Architecture decisions
+- Product planning
+- Research and discovery
+- Sprint planning
+- Requirements definition
+
+**Available Workflows:**
+- `prd` - Product requirements documentation (tri-modal: create/validate/edit)
+- `architecture` - Architectural decision-making with progressive disclosure
+- `research` - Research and discovery (tri-modal: market/domain/technical)
+- `sprint-planning` - Sprint planning session facilitation
+- `epics-and-stories` - Epic and story breakdown
+- `product-brief` - Product brief creation
+- `project-context` - Project context documentation
+- `implementation-readiness` - Implementation readiness assessment
+- `ux-design` - User experience design
+- `quick-dev` - Quick development planning
+- `quick-spec` - Quick technical specification
+
+### Procedural Workflows
+
+Flexible agent-guided processes without strict step sequences. These workflows provide structure and best practices while allowing agents to adapt their approach to the specific situation.
+
+**Characteristics:**
+- No fixed step sequence
+- Checklist-based guidance
+- Agent discretion on execution order
+- Exploratory and adaptive
+
+**Use Cases:**
+- Brainstorming sessions
+- Code reviews
+- Story development
+- Retrospectives
+
+**Available Workflows:**
+- `brainstorming` - Structured problem-solving brainstorm session
+- `code-review` - Code review checklists and patterns
+- `dev-story` - Story development guidance
+- `retrospective` - Sprint retrospective facilitation
 
 ## Quick Start
 
 ```bash
-# List available workflows (shows both phased and stepped)
+# List all workflows (shows type indicators)
 /workflow list
 
-# Start the architecture workflow
+# Start a phased workflow (automatic execution)
+/workflow start tdd
+
+# Start a stepped workflow (progressive steps)
 /workflow start architecture
+
+# Start in a specific mode
+/workflow start prd --mode validate
+
+# Start a procedural workflow (guided execution)
+/workflow start brainstorming
 
 # Resume an interrupted workflow
 /workflow resume
@@ -28,18 +115,13 @@ BikeLane is Pennyfarthing's stepped workflow system, enabling BMAD-inspired prog
 /workflow status
 ```
 
-## Workflow Types
+## Stepped Workflow Deep Dive
 
-Pennyfarthing supports two workflow types:
+Stepped workflows are BikeLane's most sophisticated workflow type, enabling BMAD-style progressive disclosure for complex processes.
 
-| Type | Use Case | Example |
-|------|----------|---------|
-| **Phased** | Agent-driven development cycles | TDD, Trivial, BDD |
-| **Stepped** | Progressive planning/decision processes | Architecture, PRD |
+### Creating a Stepped Workflow
 
-## Creating a Stepped Workflow
-
-### 1. Workflow YAML Definition
+#### 1. Workflow YAML Definition
 
 Create a YAML file in `pennyfarthing-dist/workflows/`:
 
@@ -79,7 +161,7 @@ workflow:
     tags: [my-workflow, stepped]
 ```
 
-### 2. Step Files
+#### 2. Step Files
 
 Create markdown files following the `step-{nn}-name.md` pattern:
 
@@ -123,7 +205,7 @@ Add to session file:
 Brief note about what comes next.
 ```
 
-### 3. Gate Steps
+#### 3. Gate Steps
 
 For steps requiring user approval, add `gate: true` to the meta block and include a gate prompt:
 
@@ -150,7 +232,7 @@ Before proceeding, confirm the analysis is complete:
 - **[R] Revise** - Need to gather more information
 ```
 
-### 4. Output Template (Optional)
+#### 4. Output Template (Optional)
 
 Create a template for the final output document:
 
@@ -179,95 +261,64 @@ Create a template for the final output document:
 *Generated by Pennyfarthing {workflow_name} workflow*
 ```
 
-## Schema Reference
+### Tri-Modal Support
 
-### Workflow YAML Schema
+Stepped workflows can support multiple execution modes for flexible artifact management. This is particularly useful for workflows that need to create, validate, or edit artifacts.
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `name` | string | Yes | Workflow identifier |
-| `description` | string | Yes | Human-readable description |
-| `version` | string | Yes | Semantic version |
-| `type` | `stepped` \| `phased` | Yes | Workflow type (`stepped` for BikeLane) |
-| `steps.path` | string | Yes | Directory containing step files |
-| `steps.pattern` | string | Yes | File naming pattern |
-| `variables` | object | No | Variables available in steps |
-| `gates.after_steps` | number[] | No | Step numbers requiring approval |
-| `gates.gate_marker` | string | No | Marker for inline gates |
-| `template` | string | No | Output template path |
-| `agent` | string | Yes | Agent to execute workflow |
-| `triggers.types` | string[] | No | Story types that trigger this workflow |
-| `triggers.tags` | string[] | No | Tags that trigger this workflow |
+#### Standard Tri-Modal Pattern
 
-### Step Meta Schema
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `number` | number | Yes | Step sequence number |
-| `name` | string | Yes | Step identifier (kebab-case) |
-| `gate` | boolean | No | Whether step requires user approval |
-
-## Variable Resolution
-
-Variables in step files (`{variable_name}`) are resolved from multiple sources in priority order:
-
-| Priority | Source | Example Variables |
-|----------|--------|-------------------|
-| 1 | Workflow YAML `variables:` | `output_file`, `input_required` |
-| 2 | Session file | `story_id`, `workflow_mode`, `current_step` |
-| 3 | `.pennyfarthing/config.local.yaml` | `user_name`, `theme` |
-| 4 | Environment/system | `project_root`, `date` |
-| 5 | Defaults | `planning_artifacts: planning-artifacts/` |
-
-### Standard Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `{project_root}` | Project root directory | `$PWD` |
-| `{project_name}` | Project name | Directory name |
-| `{user_name}` | User's name | From config |
-| `{date}` | Current date | ISO format |
-| `{planning_artifacts}` | Planning output directory | `planning-artifacts/` |
-| `{session_file}` | Current session file path | Auto-detected |
-| `{current_step}` | Current step number | From session |
-| `{workflow_mode}` | Current mode | From session |
-
-## Tri-Modal Support
-
-Stepped workflows can support three execution modes for flexible artifact management:
+The classic BMAD pattern with create, validate, and edit modes:
 
 ```yaml
 workflow:
   # ...
   modes:
     default: create              # Default mode if not specified
-    create: ./steps/             # Create new artifacts
+    create: ./steps-c/           # Create new artifacts
     validate: ./steps-v/         # Validate existing artifacts
     edit: ./steps-e/             # Edit/update artifacts
 ```
 
-### Starting in Different Modes
+#### Custom Mode Names
+
+Pennyfarthing extends BMAD by supporting custom mode names for domain-specific workflows:
+
+```yaml
+workflow:
+  # ...
+  modes:
+    default: market
+    market: ./steps-market/      # Market research
+    domain: ./steps-domain/      # Domain analysis
+    technical: ./steps-technical/ # Technical feasibility
+```
+
+#### Starting in Different Modes
 
 ```bash
-# Start in default (create) mode
+# Start in default mode
 /workflow start architecture
 
 # Start in validate mode
-/workflow start architecture --mode validate
+/workflow start prd --mode validate
 
 # Start in edit mode
-/workflow start architecture --mode edit
+/workflow start prd --mode edit
+
+# Start in custom mode
+/workflow start research --mode domain
 ```
 
-### Mode Behavior
+#### Mode Behavior
 
-| Mode | Purpose | Step Directory |
-|------|---------|----------------|
-| **Create** | Generate new artifacts from scratch | `./steps/` |
+| Mode Type | Purpose | Step Directory Pattern |
+|-----------|---------|------------------------|
+| **Create** | Generate new artifacts from scratch | `./steps/` or `./steps-c/` |
 | **Validate** | Check existing artifacts against criteria | `./steps-v/` |
 | **Edit** | Update or revise existing artifacts | `./steps-e/` |
+| **Custom** | Domain-specific execution paths | `./steps-{mode}/` |
 
-## Gate Detection
+### Gate Detection
 
 Gates can be detected from three sources (in priority order):
 
@@ -282,7 +333,32 @@ When a gate is detected:
 4. Decision is recorded in the session file
 5. Execution continues or repeats based on choice
 
-## Session State Tracking
+### Variable Resolution
+
+Variables in step files (`{variable_name}`) are resolved from multiple sources in priority order:
+
+| Priority | Source | Example Variables |
+|----------|--------|-------------------|
+| 1 | Workflow YAML `variables:` | `output_file`, `input_required` |
+| 2 | Session file | `story_id`, `workflow_mode`, `current_step` |
+| 3 | `.pennyfarthing/config.local.yaml` | `user_name`, `theme` |
+| 4 | Environment/system | `project_root`, `date` |
+| 5 | Defaults | `planning_artifacts: planning-artifacts/` |
+
+#### Standard Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `{project_root}` | Project root directory | `$PWD` |
+| `{project_name}` | Project name | Directory name |
+| `{user_name}` | User's name | From config |
+| `{date}` | Current date | ISO format |
+| `{planning_artifacts}` | Planning output directory | `planning-artifacts/` |
+| `{session_file}` | Current session file path | Auto-detected |
+| `{current_step}` | Current step number | From session |
+| `{workflow_mode}` | Current mode | From session |
+
+### Session State Tracking
 
 Stepped workflow progress is tracked in the session file:
 
@@ -307,9 +383,97 @@ Stepped workflow progress is tracked in the session file:
 [In progress...]
 ```
 
+## BMAD 6.0 Compatibility
+
+Pennyfarthing provides full import support for BMAD workflows with automatic conversion of syntax and structure.
+
+### Supported Features
+
+| Feature | Support | Notes |
+|---------|---------|-------|
+| Stepped workflows | Full | Core workflow type |
+| Procedural workflows | Full | Flexible guidance workflows |
+| Tri-modal (create/validate/edit) | Full | Standard BMAD pattern |
+| Custom mode names | Extended | Pennyfarthing enhancement |
+| Variable resolution | Full | Auto-converts hyphens to underscores |
+| Gate configuration | Full | Multiple detection methods |
+| Step file format | Compatible | Converts to frontmatter |
+
+### Migration Script
+
+Import BMAD workflows automatically:
+
+```bash
+node pennyfarthing-dist/scripts/migrate-bmad-workflow.mjs \
+  --source ~/Projects/BMAD-METHOD/src/modules/bmm/workflows/2-plan-workflows/prd \
+  --target pennyfarthing-dist/workflows/prd
+```
+
+The migration script:
+- Converts `{var-name}` to `{var_name}` (hyphen to underscore)
+- Transforms `<step-meta>` tags to YAML frontmatter
+- Preserves mode directories and gate configuration
+- Validates step file naming and references
+
+### Key Differences from BMAD
+
+| Aspect | BMAD | Pennyfarthing |
+|--------|------|---------------|
+| Variable syntax | `{var-name}` | `{var_name}` (auto-converted) |
+| Step metadata | `<step-meta>` XML tags | YAML frontmatter |
+| Custom modes | Not supported | Fully supported |
+
+### Imported BMAD Workflows
+
+The following BMAD workflows are included:
+
+| Workflow | Type | Modes | Description |
+|----------|------|-------|-------------|
+| prd | stepped | create/validate/edit | Product requirements documentation |
+| product-brief | stepped | single | Product brief creation |
+| research | stepped | market/domain/technical | Research and discovery |
+| epics-and-stories | stepped | single | Epic and story breakdown |
+| implementation-readiness | stepped | single | Implementation readiness assessment |
+| ux-design | stepped | single | User experience design |
+| dev-story | stepped | single | Story development guidance |
+| sprint-planning | stepped | single | Sprint planning facilitation |
+| retrospective | procedural | - | Sprint retrospective |
+| project-context | stepped | single | Project context documentation |
+
+See [docs/bmad-compatibility-matrix.md](/Users/keithavery/Projects/pennyfarthing-2/docs/bmad-compatibility-matrix.md) for complete compatibility details.
+
+## Schema Reference
+
+### Workflow YAML Schema
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Workflow identifier |
+| `description` | string | Yes | Human-readable description |
+| `version` | string | Yes | Semantic version |
+| `type` | `stepped` \| `phased` \| `procedural` | Yes | Workflow type |
+| `steps.path` | string | Stepped only | Directory containing step files |
+| `steps.pattern` | string | Stepped only | File naming pattern |
+| `variables` | object | No | Variables available in steps |
+| `modes` | object | No | Mode-to-directory mapping |
+| `gates.after_steps` | number[] | No | Step numbers requiring approval |
+| `gates.gate_marker` | string | No | Marker for inline gates |
+| `template` | string | No | Output template path |
+| `agent` | string | Yes | Agent to execute workflow |
+| `triggers.types` | string[] | No | Story types that trigger this workflow |
+| `triggers.tags` | string[] | No | Tags that trigger this workflow |
+
+### Step Meta Schema
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `number` | number | Yes | Step sequence number |
+| `name` | string | Yes | Step identifier (kebab-case) |
+| `gate` | boolean | No | Whether step requires user approval |
+
 ## Example: Architecture Workflow
 
-The architecture workflow demonstrates a complete BikeLane implementation:
+The architecture workflow demonstrates a complete stepped workflow implementation:
 
 ```
 pennyfarthing-dist/workflows/
@@ -356,7 +520,7 @@ pennyfarthing-dist/workflows/
 |---------|-------------|
 | `/workflow list` | List all workflows with type indicators |
 | `/workflow show [name]` | Show workflow details |
-| `/workflow start <name>` | Start a stepped workflow |
+| `/workflow start <name>` | Start a workflow |
 | `/workflow start <name> --mode <mode>` | Start in specific mode |
 | `/workflow resume` | Resume interrupted workflow |
 | `/workflow resume <name>` | Resume specific workflow |
@@ -364,14 +528,16 @@ pennyfarthing-dist/workflows/
 
 ## Best Practices
 
-### Step Design
+### Stepped Workflow Design
+
+#### Step Design
 
 1. **Single Responsibility**: Each step should accomplish one clear objective
 2. **Clear Actions**: List specific files to read, patterns to search, outputs to produce
 3. **Meaningful Gates**: Place gates at decision points, not after every step
 4. **Progressive Output**: Each step builds on previous step's output
 
-### Gate Placement
+#### Gate Placement
 
 Place gates after steps that:
 - Make significant decisions that affect subsequent steps
@@ -379,12 +545,62 @@ Place gates after steps that:
 - Complete major workflow phases
 - Produce artifacts that need review before proceeding
 
-### Variable Usage
+#### Variable Usage
 
 - Define workflow-specific variables in the YAML `variables:` section
 - Use standard variables for common values (`{date}`, `{project_name}`)
 - Document required inputs in `input_required` array
 - Provide sensible defaults where possible
+
+### Phased Workflow Design
+
+1. **Clear Phase Boundaries**: Each phase should have distinct entry and exit criteria
+2. **Agent Specialization**: Assign agents with appropriate skills to each phase
+3. **Handoff Protocol**: Define what information passes between phases
+4. **State Detection**: Ensure agents can detect current phase from session files
+
+### Procedural Workflow Design
+
+1. **Comprehensive Checklists**: Provide thorough guidance while allowing flexibility
+2. **Clear Objectives**: Define what success looks like
+3. **Best Practices**: Include patterns, anti-patterns, and gotchas
+4. **Tool Suggestions**: Recommend specific tools or commands for common tasks
+
+## Complete Workflow Inventory
+
+### Phased Workflows (4)
+
+| Workflow | Description | Primary Agents |
+|----------|-------------|----------------|
+| `tdd` | Test-driven development with code review | TEA, Dev, Reviewer |
+| `bdd` | Behavior-driven development with UX design phase | UX, TEA, Dev, Reviewer |
+| `trivial` | Quick fixes without full TDD ceremony | Dev, Reviewer |
+| `agent-docs` | Agent file and process documentation updates | Tech Writer |
+
+### Stepped Workflows (11)
+
+| Workflow | Description | Modes | Agent |
+|----------|-------------|-------|-------|
+| `prd` | Product requirements documentation | create/validate/edit | PM |
+| `architecture` | Architectural decision-making | single | Architect |
+| `research` | Research and discovery | market/domain/technical | PM |
+| `sprint-planning` | Sprint planning session | single | SM |
+| `epics-and-stories` | Epic and story breakdown | single | PM |
+| `product-brief` | Product brief creation | single | PM |
+| `project-context` | Project context documentation | single | Tech Writer |
+| `implementation-readiness` | Implementation readiness assessment | single | Architect |
+| `ux-design` | User experience design | single | UX Designer |
+| `quick-dev` | Quick development planning | single | Dev |
+| `quick-spec` | Quick technical specification | single | Architect |
+
+### Procedural Workflows (4)
+
+| Workflow | Description | Agent |
+|----------|-------------|-------|
+| `brainstorming` | Structured problem-solving brainstorm | PM |
+| `code-review` | Code review checklists and patterns | Reviewer |
+| `dev-story` | Story development guidance | Dev |
+| `retrospective` | Sprint retrospective facilitation | SM |
 
 ## Troubleshooting
 
@@ -419,8 +635,17 @@ Warning: Unresolved variable {my_var}
 2. `gate: false` or missing in `<step-meta>`
 3. `<!-- GATE -->` marker missing from content
 
+### Mode Not Found
+
+```
+Error: Mode 'custom-mode' not configured
+```
+
+**Solution**: Add mode to `modes:` section in workflow YAML with appropriate directory path.
+
 ## Related Documentation
 
-- [ADR-0005: Stepped Workflow Support](adr/0005-bmad-workflow-import.md) - Technical decision record
+- [docs/bmad-compatibility-matrix.md](/Users/keithavery/Projects/pennyfarthing-2/docs/bmad-compatibility-matrix.md) - BMAD import compatibility
 - [Workflow Skill](/workflow) - Command reference
-- [Architecture Workflow Example](../pennyfarthing-dist/workflows/architecture.yaml) - Reference implementation
+- [Architecture Workflow Example](/Users/keithavery/Projects/pennyfarthing-2/pennyfarthing-dist/workflows/architecture.yaml) - Reference implementation
+- [ADR-0006: State Detection Pattern](/Users/keithavery/Projects/pennyfarthing-2/docs/adr/0006-state-detection-pattern.md) - Workflow state management
