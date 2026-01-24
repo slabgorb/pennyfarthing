@@ -94,10 +94,11 @@ if [[ -n "$BUMP_TYPE" ]]; then
     info "Version bump requested: $BUMP_TYPE"
 
     # Run deploy.sh which handles version bump + full release
+    DEPLOY_SCRIPT="$(dirname "$SCRIPT_DIR")/misc/deploy.sh"
     if $DRY_RUN; then
-        exec "$SCRIPT_DIR/deploy.sh" --dry-run "$BUMP_TYPE"
+        exec "$DEPLOY_SCRIPT" --dry-run "$BUMP_TYPE"
     else
-        exec "$SCRIPT_DIR/deploy.sh" "$BUMP_TYPE"
+        exec "$DEPLOY_SCRIPT" "$BUMP_TYPE"
     fi
 fi
 
