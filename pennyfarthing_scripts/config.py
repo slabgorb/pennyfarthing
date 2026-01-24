@@ -27,6 +27,29 @@ def get_project_root() -> Path:
     return Path(__file__).resolve().parent.parent
 
 
+def find_project_root(start_dir: Path | None = None) -> Path:
+    """Find project root by looking for .claude directory.
+
+    Args:
+        start_dir: Directory to start search from (defaults to cwd)
+
+    Returns:
+        Path to project root
+
+    Raises:
+        FileNotFoundError: If no .claude directory found
+    """
+    current = Path(start_dir) if start_dir else Path.cwd()
+    current = current.resolve()
+
+    while current != current.parent:
+        if (current / ".claude").is_dir():
+            return current
+        current = current.parent
+
+    raise FileNotFoundError("Could not find project root (no .claude/ directory found)")
+
+
 def load_yaml_config(path: Path) -> dict[str, Any] | None:
     """Load a YAML configuration file.
 

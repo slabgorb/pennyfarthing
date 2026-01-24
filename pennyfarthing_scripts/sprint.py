@@ -4,9 +4,52 @@ Sprint YAML parsing utilities for Pennyfarthing scripts.
 Provides access to sprint/current-sprint.yaml data.
 """
 
+from pathlib import Path
 from typing import Any
 
 from .config import get_project_root, load_yaml_config
+
+
+def load_sprint(project_root: Path | None = None) -> dict[str, Any] | None:
+    """Load sprint data from project root.
+
+    Args:
+        project_root: Project root path (defaults to auto-detect)
+
+    Returns:
+        Sprint data as dict, or None if not found
+    """
+    root = project_root or get_project_root()
+    sprint_path = root / "sprint" / "current-sprint.yaml"
+    return load_yaml_config(sprint_path)
+
+
+def find_epic(sprint_data: dict[str, Any], epic_num: str) -> dict[str, Any] | None:
+    """Find epic in sprint data (handles various ID formats).
+
+    Args:
+        sprint_data: Sprint YAML data
+        epic_num: Epic number (e.g., "63", "epic-63", or "63")
+
+    Returns:
+        Epic dict if found, None otherwise
+    """
+    if not sprint_data or "epics" not in sprint_data:
+        return None
+
+    # Normalize the epic number
+    epic_num_clean = epic_num.replace("epic-", "")
+
+    for epic in sprint_data["epics"]:
+        epic_id = str(epic.get("id", ""))
+        # Match "63", "epic-63", or just the number
+        if epic_id == epic_num or epic_id == f"epic-{epic_num}" or epic_id == epic_num_clean:
+            return epic
+        # Also try without prefix
+        if epic_id.replace("epic-", "") == epic_num_clean:
+            return epic
+
+    return None
 
 
 def load_current_sprint() -> dict[str, Any] | None:

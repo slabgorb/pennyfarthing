@@ -22,6 +22,7 @@ portraits = [
 
 dev = [
     "pytest>=8.0",
+    "pytest-asyncio>=0.25",
     "pytest-mock>=3.0",
     "ruff>=0.8",
 ]
@@ -37,3 +38,5 @@ ignore = ["E501"]
 [tool.pytest.ini_options]
 testpaths = ["tests/python"]
 python_files = ["test_*.py"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
