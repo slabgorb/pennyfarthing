@@ -1122,9 +1122,11 @@ export function setupClaudeIPCHandlers(ipcMain: {
   });
 
   // Interrupt handler - stops current Claude turn (like Escape in CLI)
+  // Uses abort() to fully kill the process - SIGINT alone doesn't reliably stop Claude CLI
   ipcMain.handle(IPC_CLAUDE_CHANNELS.CLAUDE_ABORT, async () => {
     const service = getClaudeService();
-    service.interrupt();
+    console.log('[main] CLAUDE_ABORT called - aborting Claude process');
+    service.abort();
     return true;
   });
 
