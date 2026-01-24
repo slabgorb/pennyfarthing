@@ -65,8 +65,8 @@ test.describe('Reflector - Quick Actions', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
 
-    // Wait for app to initialize
-    await expect(page.locator('#quick-actions')).toBeVisible();
+    // Wait for app to initialize - container exists but is hidden when empty (CSS: #quick-actions:empty)
+    await expect(page.locator('#quick-actions')).toBeAttached();
 
     // Set up test harness - inject message handler
     await page.evaluate(() => {
@@ -108,7 +108,7 @@ The tests are ready for implementation.
       await injectMockMessage(page, messageWithHandoff);
 
       // Wait for buttons to appear
-      await expect(page.locator('#quick-actions .quick-action-btn')).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('#quick-actions .quick-action-btn').first()).toBeVisible({ timeout: 5000 });
 
       // Should have two buttons: the agent and "Not yet"
       const buttons = await getQuickActionButtons(page);
@@ -129,7 +129,7 @@ Ready for the next phase.
 
       await injectMockMessage(page, messageWithHandoff);
 
-      await expect(page.locator('#quick-actions .quick-action-btn')).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('#quick-actions .quick-action-btn').first()).toBeVisible({ timeout: 5000 });
 
       const buttons = await getQuickActionButtons(page);
       await expect(buttons).toHaveCount(2);
@@ -148,7 +148,7 @@ All tests are passing. Ready to proceed with the code review?
 
       await injectMockMessage(page, messageWithQuestion);
 
-      await expect(page.locator('#quick-actions .quick-action-btn')).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('#quick-actions .quick-action-btn').first()).toBeVisible({ timeout: 5000 });
 
       const buttons = await getQuickActionButtons(page);
       await expect(buttons).toHaveCount(2);
@@ -195,7 +195,7 @@ Which approach would you prefer?
 
       await injectMockMessage(page, messageWithChoices);
 
-      await expect(page.locator('#quick-actions .quick-action-btn')).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('#quick-actions .quick-action-btn').first()).toBeVisible({ timeout: 5000 });
 
       const buttons = await getQuickActionButtons(page);
       await expect(buttons).toHaveCount(3);
@@ -217,7 +217,7 @@ Select the testing framework:
 
       await injectMockMessage(page, messageWithChoices);
 
-      await expect(page.locator('#quick-actions .quick-action-btn')).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('#quick-actions .quick-action-btn').first()).toBeVisible({ timeout: 5000 });
 
       const buttons = await getQuickActionButtons(page);
       await expect(buttons).toHaveCount(3);
@@ -244,7 +244,7 @@ Which mode should be default?
 
       await injectMockMessage(page, messageWithChoices);
 
-      await expect(page.locator('#quick-actions .quick-action-btn')).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('#quick-actions .quick-action-btn').first()).toBeVisible({ timeout: 5000 });
 
       const buttons = await getQuickActionButtons(page);
       await expect(buttons).toHaveCount(4);
@@ -272,20 +272,20 @@ This is documentation, not an actual handoff.
     });
   });
 
-  test.describe('Turbo mode OFF behavior', () => {
+  test.describe('Relay mode OFF behavior (MSSCI-12395)', () => {
 
-    test('should show buttons even with INVOKE marker when turbo off', async ({ page }) => {
-      // First ensure mode is not turbo
-      const turboBtn = page.locator('[data-mode="turbo"]');
-      const isActive = await turboBtn.getAttribute('aria-checked');
+    test('should show buttons for HANDOFF marker', async ({ page }) => {
+      // MSSCI-12395: With relay mode off (manual handoff), HANDOFF markers show buttons
+      // Ensure relay mode is off by checking toggle state
+      const relayToggle = page.locator('#relay-mode-toggle');
+      const isActive = await relayToggle.getAttribute('aria-pressed');
 
       if (isActive === 'true') {
-        // Switch to manual mode
-        await page.locator('[data-mode="manual"]').click();
+        // Turn off relay mode
+        await relayToggle.click();
       }
 
-      // With turbo OFF, INVOKE should still auto-execute (it's not about buttons)
-      // But HANDOFF should show buttons
+      // HANDOFF should show buttons (user chooses whether to proceed)
       const message = `
 Ready for implementation.
 
@@ -295,7 +295,7 @@ Ready for implementation.
       await injectMockMessage(page, message);
 
       // Buttons should appear
-      await expect(page.locator('#quick-actions .quick-action-btn')).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('#quick-actions .quick-action-btn').first()).toBeVisible({ timeout: 5000 });
     });
   });
 
@@ -336,7 +336,8 @@ test.describe('Reflector - Edge Cases', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('#quick-actions')).toBeVisible();
+    // Container exists but is hidden when empty (CSS: #quick-actions:empty)
+    await expect(page.locator('#quick-actions')).toBeAttached();
 
     // Set up test harness
     await page.evaluate(() => {
@@ -375,13 +376,13 @@ Here are your options:
     await injectMockMessage(page, message);
 
     // Should show choices (first marker type processed)
-    await expect(page.locator('#quick-actions .quick-action-btn')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#quick-actions .quick-action-btn').first()).toBeVisible({ timeout: 5000 });
   });
 
   test('should clear buttons when new message arrives', async ({ page }) => {
     // First inject a message with buttons
     await injectMockMessage(page, 'Ready? <!-- CYCLIST:QUESTION:yesno -->');
-    await expect(page.locator('#quick-actions .quick-action-btn')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#quick-actions .quick-action-btn').first()).toBeVisible({ timeout: 5000 });
 
     // Clear by calling clearQuickActions
     await page.evaluate(() => {
@@ -417,6 +418,6 @@ Lower case test.
     await injectMockMessage(page, message);
 
     // Should still detect
-    await expect(page.locator('#quick-actions .quick-action-btn')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#quick-actions .quick-action-btn').first()).toBeVisible({ timeout: 5000 });
   });
 });

@@ -17,6 +17,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { getProjectDirectory } from './paths.js';
 
 // Configuration paths (relative to project root)
 const BELL_MODE_CONFIG = '.pennyfarthing/bell-mode.json';
@@ -70,10 +71,11 @@ async function getQueueModule(): Promise<typeof queueModule> {
 
 /**
  * Get the project root directory (where .pennyfarthing lives)
+ * Uses CYCLIST_PROJECT_DIR or CLI arg, falling back to cwd
  */
 function getProjectRoot(): string {
-  // In tests, use cwd. In production, walk up to find .pennyfarthing
-  return process.cwd();
+  // Use the same project directory resolution as the rest of the app
+  return getProjectDirectory() || process.cwd();
 }
 
 /**
