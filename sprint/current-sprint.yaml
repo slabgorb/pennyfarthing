@@ -1233,10 +1233,11 @@ epics:
           - Type hints throughout
         points: 3
         priority: P1
-        status: in_progress
+        status: done
         repos: pennyfarthing
         branch: feat/63-5-jira-sync-python
         workflow: tdd
+        completed: "2026-01-24"
       - id: "63-6"
         jira: MSSCI-12400
         title: "Port jira-bidirectional-sync.mjs to Python"
