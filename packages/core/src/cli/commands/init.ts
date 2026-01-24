@@ -490,6 +490,40 @@ async function mergeSettingsLocalJson(
     logger.info('Added missing SessionEnd hooks');
   }
 
+  // Merge Stop hooks if missing (question reflector enforcement)
+  if (!hooks.Stop && templateContent.hooks?.Stop) {
+    hooks.Stop = templateContent.hooks.Stop;
+    modified = true;
+    logger.info('Added missing Stop hooks');
+  } else if (Array.isArray(hooks.Stop)) {
+    // Check if question-reflector-check hook is configured
+    const hasReflectorHook = hooks.Stop.some((entry: unknown) => {
+      if (typeof entry === 'object' && entry !== null) {
+        const hookEntry = entry as { hooks?: Array<{ command?: string }> };
+        return hookEntry.hooks?.some(h =>
+          h.command?.includes('question-reflector-check')
+        );
+      }
+      return false;
+    });
+
+    if (!hasReflectorHook && templateContent.hooks?.Stop) {
+      // Prepend the question-reflector-check hook entry
+      const reflectorEntry = templateContent.hooks.Stop.find((entry: unknown) => {
+        if (typeof entry === 'object' && entry !== null) {
+          const hookEntry = entry as { hooks?: Array<{ command?: string }> };
+          return hookEntry.hooks?.some(h => h.command?.includes('question-reflector-check'));
+        }
+        return false;
+      });
+      if (reflectorEntry) {
+        hooks.Stop = [reflectorEntry, ...hooks.Stop];
+        modified = true;
+        logger.info('Added missing question-reflector-check hook');
+      }
+    }
+  }
+
   // Ensure statusLine is configured and points to new location
   const statusLine = existingSettings.statusLine as Record<string, unknown> | undefined;
   if (!statusLine) {

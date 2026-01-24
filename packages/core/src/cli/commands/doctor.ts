@@ -370,6 +370,10 @@ function checkUserFiles(projectRoot: string): CheckResult[] {
     const hookCheck = checkSessionStartHooks(projectRoot, installationType);
     results.push(hookCheck);
 
+    // Check Stop hook is configured (question reflector enforcement)
+    const stopHookCheck = checkStopHook(projectRoot, installationType);
+    results.push(stopHookCheck);
+
     // Check benchmark permissions (needed for /benchmark, /solo subagents)
     const benchmarkCheck = checkBenchmarkPermissions(projectRoot);
     results.push(benchmarkCheck);
@@ -521,6 +525,107 @@ function checkSessionStartHooks(projectRoot: string, installationType: string): 
       detail: 'Could not parse settings.local.json'
     };
   }
+}
+
+/**
+ * Check that Stop hook is properly configured in settings.local.json
+ * This is needed for question reflector enforcement in Cyclist
+ */
+function checkStopHook(projectRoot: string, installationType: string): CheckResult {
+  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+
+  try {
+    const settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+
+    // Check if hooks.Stop exists and contains question-reflector-check
+    if (!settings.hooks?.Stop) {
+      return {
+        name: 'settings/stop-hook',
+        status: 'warn',
+        detail: 'Missing Stop hook - question reflector not enforced',
+        fix: () => {
+          addStopHook(projectRoot, installationType);
+        }
+      };
+    }
+
+    // Check if question-reflector-check is configured
+    const hasReflectorHook = settings.hooks.Stop.some((entry: unknown) => {
+      if (typeof entry === 'object' && entry !== null) {
+        const hookEntry = entry as { hooks?: Array<{ command?: string }> };
+        return hookEntry.hooks?.some(h =>
+          h.command?.includes('question-reflector-check')
+        );
+      }
+      return false;
+    });
+
+    if (!hasReflectorHook) {
+      return {
+        name: 'settings/stop-hook',
+        status: 'warn',
+        detail: 'question-reflector-check not configured',
+        fix: () => {
+          addStopHook(projectRoot, installationType);
+        }
+      };
+    }
+
+    return {
+      name: 'settings/stop-hook',
+      status: 'pass',
+      detail: undefined
+    };
+  } catch {
+    return {
+      name: 'settings/stop-hook',
+      status: 'warn',
+      detail: 'Could not parse settings.local.json'
+    };
+  }
+}
+
+/**
+ * Fix function: Add Stop hook to settings.local.json
+ */
+function addStopHook(projectRoot: string, installationType: string): void {
+  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+  const scriptBase = getScriptBasePath(installationType);
+
+  const requiredHook = {
+    matcher: '',
+    hooks: [
+      {
+        type: 'command',
+        command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/question-reflector-check.sh`
+      }
+    ]
+  };
+
+  let settings: Record<string, unknown> = {};
+
+  if (pathExists(settingsPath)) {
+    try {
+      settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+    } catch {
+      // Start fresh if parse fails
+    }
+  }
+
+  if (!settings.hooks) {
+    settings.hooks = {};
+  }
+
+  const hooks = settings.hooks as Record<string, unknown>;
+
+  if (!hooks.Stop) {
+    hooks.Stop = [requiredHook];
+  } else if (Array.isArray(hooks.Stop)) {
+    // Prepend the required hook
+    hooks.Stop = [requiredHook, ...hooks.Stop];
+  }
+
+  writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf8');
 }
 
 /**
