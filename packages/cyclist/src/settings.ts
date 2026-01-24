@@ -15,16 +15,20 @@ import { parse, stringify } from 'yaml';
 // =============================================================================
 
 /**
- * Permission modes for Claude Code
+ * Permission modes for Claude Code (gearshift)
  * - plan: Read-only planning mode
  * - manual: Ask permission for everything (default)
  * - accept: Auto-accept file edits
- * - turbo: Auto-accept everything + auto-handoff to next agent
+ *
+ * Note: 'turbo' was removed in MSSCI-12395. Auto-handoff is now controlled
+ * by the separate relay_mode setting. Old turbo configs are migrated to
+ * permission_mode: 'accept' + relay_mode: true.
  */
-export type PermissionMode = 'plan' | 'manual' | 'accept' | 'turbo';
+export type PermissionMode = 'plan' | 'manual' | 'accept';
 
 export interface WorkflowSettings {
   permission_mode: PermissionMode;
+  relay_mode?: boolean;
 }
 
 // Account-specific settings for usage tracking
@@ -71,6 +75,7 @@ export const GRANTS_FILE = path.join(os.homedir(), '.cyclist', 'grants.json');
 const DEFAULT_SETTINGS: CyclistSettings = {
   workflow: {
     permission_mode: 'manual',
+    relay_mode: false,
   },
 };
 
@@ -148,8 +153,15 @@ export function validateSettings(settings: unknown): boolean {
     return false;
   }
   const workflow = s.workflow as Record<string, unknown>;
-  const validModes = ['plan', 'manual', 'accept', 'turbo'];
+
+  // Valid permission modes (turbo removed in MSSCI-12395)
+  const validModes = ['plan', 'manual', 'accept'];
   if (!validModes.includes(workflow.permission_mode as string)) {
+    return false;
+  }
+
+  // Validate relay_mode if present (must be boolean)
+  if ('relay_mode' in workflow && typeof workflow.relay_mode !== 'boolean') {
     return false;
   }
 
@@ -161,7 +173,14 @@ export function validateSettings(settings: unknown): boolean {
 // =============================================================================
 
 /**
- * Migrate legacy settings to new permission_mode format
+ * Migrate legacy settings to new format
+ *
+ * Migration paths:
+ * - permission_mode: 'turbo' → permission_mode: 'accept' + relay_mode: true
+ * - handoff_mode: 'auto' → relay_mode: true
+ * - handoff_mode: 'manual' → relay_mode: false
+ * - auto_handoff: true → relay_mode: true
+ * - auto_handoff: false → relay_mode: false
  */
 export function migrateSettings(settings: PartialSettings): CyclistSettings {
   const result = getDefaultSettings();
@@ -169,21 +188,35 @@ export function migrateSettings(settings: PartialSettings): CyclistSettings {
   if (settings.workflow) {
     const workflow = settings.workflow as Record<string, unknown>;
 
-    // Check for new format first (permission_mode)
-    const validModes = ['plan', 'manual', 'accept', 'turbo'];
+    // Handle explicit relay_mode first (new format, no migration needed)
+    const hasExplicitRelay = 'relay_mode' in workflow && typeof workflow.relay_mode === 'boolean';
+    if (hasExplicitRelay) {
+      result.workflow.relay_mode = workflow.relay_mode as boolean;
+    }
+
+    // Handle permission_mode
+    const validModes = ['plan', 'manual', 'accept'];
     if (validModes.includes(workflow.permission_mode as string)) {
       result.workflow.permission_mode = workflow.permission_mode as PermissionMode;
     }
-    // Migrate from handoff_mode format
-    else if (workflow.handoff_mode === 'auto') {
-      result.workflow.permission_mode = 'turbo';
+    // Migrate 'turbo' to 'accept' + relay_mode: true
+    else if (workflow.permission_mode === 'turbo') {
+      result.workflow.permission_mode = 'accept';
+      result.workflow.relay_mode = true;
     }
-    else if (workflow.handoff_mode === 'manual') {
-      result.workflow.permission_mode = 'manual';
-    }
-    // Migrate from oldest format (auto_handoff boolean)
-    else if ('auto_handoff' in workflow) {
-      result.workflow.permission_mode = workflow.auto_handoff === true ? 'turbo' : 'manual';
+
+    // Migrate relay_mode from legacy handoff settings (only if not explicitly set)
+    // This is INDEPENDENT of permission_mode - a user could have manual + auto handoff
+    if (!hasExplicitRelay && result.workflow.relay_mode !== true) {
+      if (workflow.handoff_mode === 'auto') {
+        result.workflow.relay_mode = true;
+      } else if (workflow.handoff_mode === 'manual') {
+        result.workflow.relay_mode = false;
+      }
+      // Migrate from oldest format (auto_handoff boolean)
+      else if ('auto_handoff' in workflow) {
+        result.workflow.relay_mode = workflow.auto_handoff === true;
+      }
     }
   }
 
@@ -205,9 +238,16 @@ export function mergeSettings(base: CyclistSettings, override: PartialSettings):
   const result: CyclistSettings = JSON.parse(JSON.stringify(base));
 
   if (override.workflow) {
-    const validModes = ['plan', 'manual', 'accept', 'turbo'];
+    // Valid permission modes (turbo removed in MSSCI-12395)
+    const validModes = ['plan', 'manual', 'accept'];
     if (validModes.includes(override.workflow.permission_mode as string)) {
       result.workflow.permission_mode = override.workflow.permission_mode as PermissionMode;
+    }
+    // 'turbo' in override is rejected - keeps base value
+
+    // Merge relay_mode if present
+    if (typeof override.workflow.relay_mode === 'boolean') {
+      result.workflow.relay_mode = override.workflow.relay_mode;
     }
   }
 
@@ -499,11 +539,15 @@ export function getBillingRolloverDay(email: string | null): BillingDay {
 // =============================================================================
 
 /**
- * Check if turbo mode is enabled
+ * Check if turbo mode is enabled (legacy compatibility function)
+ *
  * Turbo mode = auto-accept everything + auto-handoff to next agent.
+ * Now implemented as: permission_mode: 'accept' + relay_mode: true
+ *
+ * @deprecated Check permission_mode and relay_mode separately instead
  */
 export function isTurboModeEnabled(settings: Pick<CyclistSettings, 'workflow'>): boolean {
-  return settings.workflow?.permission_mode === 'turbo';
+  return settings.workflow?.permission_mode === 'accept' && settings.workflow?.relay_mode === true;
 }
 
 /**

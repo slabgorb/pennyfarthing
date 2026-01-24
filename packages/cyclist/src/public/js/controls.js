@@ -1,16 +1,19 @@
 /**
  * Controls Module - Permission mode toggle via IPC
  *
- * Permission mode switch (4-way segmented control):
+ * Permission mode switch (3-way segmented control):
  * - plan: Read-only planning mode
  * - manual: Ask permission for everything (default)
  * - accept: Auto-accept file edits
- * - turbo: Auto-accept everything + auto-handoff to next agent
+ *
+ * Relay mode (independent toggle):
+ * - Auto-handoff to next agent (previously part of 'turbo' mode)
  *
  * Mode is persisted to settings and synced with Claude Code.
  *
  * 23-4: Adds Cmd+Shift+K keyboard shortcut for compact command
  * MSSCI-12127: Enhanced with sliding highlight, keyboard shortcuts, tooltips
+ * MSSCI-12395: Removed 'turbo', added independent relay_mode toggle
  */
 
 import { resetState as resetFilePanel } from './file-panel.js';
@@ -21,35 +24,41 @@ import { getMessageQueue, setOnQueueChange, removeFromQueue, clearMessageQueue }
 
 /**
  * Valid modes for the segmented control (matches settings.ts PermissionMode)
+ * MSSCI-12395: Removed 'turbo' - now use relay_mode toggle instead
  */
-const VALID_MODES = ['plan', 'manual', 'accept', 'turbo'];
+const VALID_MODES = ['plan', 'manual', 'accept'];
 
 /**
  * Map mode index to mode name (for keyboard shortcuts)
- * MSSCI-12127 AC5
+ * MSSCI-12127 AC5, MSSCI-12395: Removed turbo (4 now toggles relay)
  */
 const MODE_INDEX = {
   1: 'plan',
   2: 'manual',
   3: 'accept',
-  4: 'turbo',
+  // 4 is now relay toggle, handled separately
 };
 
 /**
  * Map our mode names to Claude Code's permission mode names
- * Note: turbo = acceptEdits + auto_handoff (handled separately)
+ * MSSCI-12395: Removed turbo mapping
  */
 const MODE_TO_CLAUDE = {
   plan: 'plan',
   manual: 'default',
   accept: 'acceptEdits',
-  turbo: 'acceptEdits', // turbo uses acceptEdits, auto_handoff is separate setting
 };
 
 /**
  * Current mode state
  */
 let currentMode = 'manual';
+
+/**
+ * Current relay mode state (MSSCI-12395)
+ * Auto-handoff to next agent (previously part of 'turbo' mode)
+ */
+let relayModeEnabled = false;
 
 /**
  * Current bell mode state (MSSCI-12275)
@@ -102,8 +111,8 @@ function flashSegment(mode) {
 }
 
 /**
- * Load permission mode from settings and sync with Claude Code
- * Detects turbo mode from permission_mode=turbo OR (accept + handoff_mode=auto)
+ * Load permission mode and relay mode from settings and sync with Claude Code
+ * MSSCI-12395: Handles relay_mode as separate setting, migrates legacy turbo
  */
 async function loadModeFromSettings() {
   try {
@@ -118,11 +127,18 @@ async function loadModeFromSettings() {
     }
 
     let mode = settings?.workflow?.permission_mode || 'manual';
-    const handoffMode = settings?.workflow?.handoff_mode;
 
-    // Detect turbo: explicit turbo OR (accept + auto handoff)
-    if (mode === 'turbo' || (mode === 'accept' && handoffMode === 'auto')) {
-      mode = 'turbo';
+    // MSSCI-12395: Handle relay_mode (new) or detect from legacy turbo/handoff_mode
+    let relay = settings?.workflow?.relay_mode;
+    if (relay === undefined) {
+      // Legacy migration: turbo → accept + relay
+      if (mode === 'turbo') {
+        mode = 'accept';
+        relay = true;
+      } else {
+        // Legacy: handoff_mode: 'auto' → relay: true
+        relay = settings?.workflow?.handoff_mode === 'auto';
+      }
     }
 
     if (VALID_MODES.includes(mode)) {
@@ -137,6 +153,11 @@ async function loadModeFromSettings() {
 
       console.log('[Controls] Mode loaded from settings:', mode, '(Claude:', claudeMode + ')');
     }
+
+    // Load relay mode
+    relayModeEnabled = relay || false;
+    updateRelayModeDisplay();
+    console.log('[Controls] Relay mode loaded from settings:', relayModeEnabled);
   } catch (err) {
     console.warn('[Controls] Failed to load mode from settings:', err);
   }
@@ -145,7 +166,7 @@ async function loadModeFromSettings() {
 /**
  * Set permission mode directly (no cycling)
  * Persists to settings and syncs with Claude Code
- * Turbo mode = acceptEdits + auto_handoff enabled
+ * MSSCI-12395: relay_mode is now a separate toggle
  */
 async function setPermissionMode(newMode, event) {
   if (event) {
@@ -166,12 +187,10 @@ async function setPermissionMode(newMode, event) {
   console.log('Switching to mode:', newMode);
 
   try {
-    // Build settings payload
-    // Turbo mode = acceptEdits + auto handoff
+    // Build settings payload - relay_mode is independent now
     const settings = {
       workflow: {
         permission_mode: newMode,
-        handoff_mode: newMode === 'turbo' ? 'auto' : 'manual',
       },
     };
 
@@ -194,7 +213,7 @@ async function setPermissionMode(newMode, event) {
 
     currentMode = newMode;
     updateModeSwitchDisplay();
-    console.log('Mode set successfully:', newMode, '(Claude:', claudeMode + ', handoff:', settings.workflow.handoff_mode + ')');
+    console.log('Mode set successfully:', newMode, '(Claude:', claudeMode + ')');
   } catch (error) {
     console.error('Failed to set permission mode:', error);
   }
@@ -324,6 +343,86 @@ function handleCompactShortcut(event) {
 }
 
 // =============================================================================
+// Relay Mode (MSSCI-12395)
+// =============================================================================
+
+/**
+ * Update the relay mode toggle display
+ */
+function updateRelayModeDisplay() {
+  const toggle = document.getElementById('relay-mode-toggle');
+  if (!toggle) return;
+
+  toggle.setAttribute('aria-pressed', relayModeEnabled ? 'true' : 'false');
+  toggle.classList.toggle('active', relayModeEnabled);
+}
+
+/**
+ * Toggle relay mode on/off
+ * MSSCI-12395: Independent auto-handoff toggle (formerly part of turbo)
+ */
+async function toggleRelayMode(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  const newValue = !relayModeEnabled;
+  console.log('[Controls] Toggling relay mode to:', newValue);
+
+  try {
+    const settings = {
+      workflow: {
+        relay_mode: newValue,
+      },
+    };
+
+    if (window.electronAPI?.settings?.save) {
+      await window.electronAPI.settings.save(settings);
+    } else {
+      await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
+      });
+    }
+
+    relayModeEnabled = newValue;
+    updateRelayModeDisplay();
+    console.log('[Controls] Relay mode set successfully:', relayModeEnabled);
+  } catch (error) {
+    console.error('[Controls] Failed to toggle relay mode:', error);
+  }
+}
+
+/**
+ * Handle Cmd/Ctrl+4 keyboard shortcut for relay mode toggle
+ * MSSCI-12395: Repurposed from turbo mode shortcut
+ */
+function handleRelayModeShortcut(event) {
+  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+  const modifierKey = isMac ? event.metaKey : event.ctrlKey;
+
+  if (modifierKey && !event.shiftKey && !event.altKey && event.key === '4') {
+    event.preventDefault();
+    event.stopPropagation();
+
+    console.log('[Controls] Relay mode shortcut triggered (Cmd/Ctrl+4)');
+
+    // Flash the relay toggle for visual feedback
+    const toggle = document.getElementById('relay-mode-toggle');
+    if (toggle) {
+      toggle.classList.add('shortcut-flash');
+      toggle.addEventListener('animationend', () => {
+        toggle.classList.remove('shortcut-flash');
+      }, { once: true });
+    }
+
+    toggleRelayMode();
+  }
+}
+
+// =============================================================================
 // Bell Mode (MSSCI-12275)
 // =============================================================================
 
@@ -415,16 +514,17 @@ function handleBellModeShortcut(event) {
 
 /**
  * MSSCI-12127 AC5: Handle keyboard shortcuts for mode switching
- * Cmd+1/2/3/4 (Mac) or Ctrl+1/2/3/4 (Windows/Linux)
+ * Cmd+1/2/3 (Mac) or Ctrl+1/2/3 (Windows/Linux)
+ * MSSCI-12395: Cmd/Ctrl+4 is now relay toggle (handled separately)
  */
 function handleModeShortcut(event) {
   const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
   const modifierKey = isMac ? event.metaKey : event.ctrlKey;
 
-  // Check for Cmd/Ctrl + 1/2/3/4 (without Shift)
+  // Check for Cmd/Ctrl + 1/2/3 (without Shift) - not 4, that's relay now
   if (modifierKey && !event.shiftKey && !event.altKey) {
     const keyNum = parseInt(event.key, 10);
-    if (keyNum >= 1 && keyNum <= 4) {
+    if (keyNum >= 1 && keyNum <= 3) {
       const targetMode = MODE_INDEX[keyNum];
       if (targetMode) {
         event.preventDefault();
@@ -535,6 +635,13 @@ function initControls() {
   // Load initial mode from settings (source of truth)
   loadModeFromSettings();
 
+  // MSSCI-12395: Relay mode toggle (auto-handoff, formerly part of turbo)
+  const relayModeToggle = document.getElementById('relay-mode-toggle');
+  if (relayModeToggle) {
+    console.log('[Controls] Found relay mode toggle, attaching click handler');
+    relayModeToggle.addEventListener('click', toggleRelayMode);
+  }
+
   // MSSCI-12275: Bell mode toggle
   const bellModeToggle = document.getElementById('bell-mode-toggle');
   if (bellModeToggle) {
@@ -547,9 +654,13 @@ function initControls() {
   document.addEventListener('keydown', handleCompactShortcut);
   console.log('[Controls] Compact keyboard shortcut registered (Cmd/Ctrl+Shift+K)');
 
-  // MSSCI-12127 AC5: Register keyboard shortcuts for mode switching (Cmd/Ctrl+1/2/3/4)
+  // MSSCI-12127 AC5: Register keyboard shortcuts for mode switching (Cmd/Ctrl+1/2/3)
   document.addEventListener('keydown', handleModeShortcut);
-  console.log('[Controls] Mode keyboard shortcuts registered (Cmd/Ctrl+1/2/3/4)');
+  console.log('[Controls] Mode keyboard shortcuts registered (Cmd/Ctrl+1/2/3)');
+
+  // MSSCI-12395: Register keyboard shortcut for relay mode toggle (Cmd/Ctrl+4)
+  document.addEventListener('keydown', handleRelayModeShortcut);
+  console.log('[Controls] Relay mode keyboard shortcut registered (Cmd/Ctrl+4)');
 
   // MSSCI-12275: Register keyboard shortcut for bell mode toggle (Cmd/Ctrl+B)
   document.addEventListener('keydown', handleBellModeShortcut);
