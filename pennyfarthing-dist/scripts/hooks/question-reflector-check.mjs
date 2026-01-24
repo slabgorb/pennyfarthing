@@ -87,18 +87,9 @@ function stripCodeBlocks(text) {
  * @returns {boolean} True if enforcement should be skipped
  */
 export function shouldSkipEnforcement(config) {
-  const workflow = config?.workflow || {};
-
-  // Legacy: turbo mode skips enforcement
-  if (workflow.permission_mode === 'turbo') {
-    return true;
-  }
-
-  // New: relay_mode skips enforcement (for auto-handoff flows)
-  if (workflow.relay_mode === true) {
-    return true;
-  }
-
+  // Never skip enforcement - markers must always be emitted.
+  // relay_mode only controls whether Cyclist auto-executes markers
+  // vs showing buttons to the user.
   return false;
 }
 
