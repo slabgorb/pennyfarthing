@@ -3,7 +3,7 @@
 # These are researched and ready for prioritization when capacity allows
 # Updated: 2026-01-22
 #
-# Epic Numbering: 39-46, 55-60 (next available: 61)
+# Epic Numbering: 39-46, 55-62 (next available: 63)
 # Note: Current sprint uses Jira IDs (MSSCI-XXXXX), these use legacy epic-N format
 # Note: Epic 53 in sprint as MSSCI-12122 (in progress)
 # Note: Epic 54 completed as MSSCI-12131 in Sprint 12
@@ -814,6 +814,58 @@ future:
               title: PRD import support
               points: 2
               status: backlog
+# =============================================================================
+# TECHNICAL DEBT - Infrastructure Cleanup
+# Separate meta-scripts from distributed scripts
+# Total: 5 points
+# =============================================================================
+
+    - name: "Technical Debt"
+      description: |
+        Infrastructure cleanup and separation of concerns for maintainability.
+      status: backlog
+      blocked_by: null
+      total_points: 5
+      epics:
+        - id: epic-62
+          title: Separate Meta Scripts from Distributed Scripts
+          description: |
+            Currently scripts/ at root and pennyfarthing-dist/scripts/ overlap
+            in confusing ways. deploy.sh exists in both places. This causes
+            confusion about which script is used where.
+
+            Clean separation:
+            - scripts/ - pennyfarthing development only (deploy, release, CI)
+            - pennyfarthing-dist/scripts/ - only what users get installed
+
+            Acceptance criteria:
+            - No script duplication between directories
+            - Clear documentation of which scripts go where
+            - /release command uses scripts/deploy.sh (meta)
+            - User projects only get pennyfarthing-dist/scripts/*
+          points: 5
+          priority: P3
+          marker: tech-debt
+          repos: pennyfarthing
+          status: backlog
+          stories:
+            - id: 62-1
+              title: Audit current script locations and usages
+              points: 1
+              status: backlog
+            - id: 62-2
+              title: Move meta scripts to scripts/ only
+              points: 2
+              status: backlog
+            - id: 62-3
+              title: Update /release and deploy commands
+              points: 1
+              status: backlog
+            - id: 62-4
+              title: Document script organization in CLAUDE.md
+              points: 1
+              status: backlog
+
 # =============================================================================
 # SUMMARY
 # =============================================================================

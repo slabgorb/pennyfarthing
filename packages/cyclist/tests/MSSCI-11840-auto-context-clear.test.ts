@@ -385,12 +385,12 @@ describe('AC4: Auto mode workflow continuation', () => {
       expect(typeof settings.isAutoModeEnabled).toBe('function');
     });
 
-    it('should return true when permission_mode is turbo', async () => {
+    it('should return true when accept + relay_mode (MSSCI-12395)', async () => {
       const settings = await import('../src/settings.js');
 
-      // Mock settings with turbo mode (auto-handoff enabled)
+      // New format: accept + relay_mode = auto-handoff enabled
       const mockSettings = {
-        workflow: { permission_mode: 'turbo' as const },
+        workflow: { permission_mode: 'accept' as const, relay_mode: true },
       };
 
       const result = settings.isAutoModeEnabled(mockSettings);
@@ -398,7 +398,19 @@ describe('AC4: Auto mode workflow continuation', () => {
       expect(result).toBe(true);
     });
 
-    it('should return false when permission_mode is not turbo', async () => {
+    it('should return false when accept without relay_mode (MSSCI-12395)', async () => {
+      const settings = await import('../src/settings.js');
+
+      const mockSettings = {
+        workflow: { permission_mode: 'accept' as const, relay_mode: false },
+      };
+
+      const result = settings.isAutoModeEnabled(mockSettings);
+
+      expect(result).toBe(false);
+    });
+
+    it('should return false when permission_mode is manual', async () => {
       const settings = await import('../src/settings.js');
 
       const mockSettings = {

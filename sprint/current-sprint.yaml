@@ -1014,3 +1014,121 @@ epics:
         jira: MSSCI-12377
         completed: "2026-01-24"
     jira: MSSCI-12369
+  # ===========================================================================
+  # EPIC: Hook Infrastructure (epic-62) - IN PROGRESS
+  # ===========================================================================
+  - id: epic-62
+    type: epic
+    title: "Epic: Hook Infrastructure Improvements"
+    description: |
+      Improve Claude Code hook infrastructure for better maintainability,
+      cross-platform compatibility, and testability.
+    priority: P1
+    status: in_progress
+    repos: pennyfarthing
+    stories:
+      - id: MSSCI-12393
+        jira: MSSCI-12393
+        title: "JavaScript question-reflector hook with bash wrapper"
+        description: |
+          Rewrite question-reflector-check.sh in JavaScript for maintainability.
+          Current bash implementation has cross-platform issues (tac vs tail -r)
+          and complex regex patterns that are hard to test.
+
+          Add PreToolUse hook for AskUserQuestion tool to ensure all question
+          paths emit reflector markers.
+
+          Implementation:
+          - Create question-reflector-check.mjs with clear pattern detection
+          - Thin bash wrapper that passes stdin to node script
+          - Add AskUserQuestion PreToolUse hook entry in settings.json
+          - Stop hook catches text-based questions
+          - PreToolUse hook catches AskUserQuestion tool use
+        points: 3
+        priority: P1
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        branch: feat/MSSCI-12393-js-question-reflector
+        completed: "2026-01-24"
+        acceptance_criteria:
+          - Question mark at end of message detected
+          - Question mark mid-message detected (followed by more content)
+          - Implicit questions detected (would you like, should I)
+          - Choice offerings detected
+          - Messages WITH proper markers pass through
+          - Code blocks do not trigger false positives
+          - Rhetorical questions do not trigger
+          - AskUserQuestion tool use requires marker
+      - id: MSSCI-12394
+        title: "Sprint and Story YAML validators"
+        description: |
+          Create validation scripts for Pennyfarthing YAML files to catch
+          structural errors early. Validators should be runnable via just
+          recipes and optionally as pre-commit hooks.
+
+          Implementation:
+          - sprint-yaml-validator.mjs - validates current-sprint.yaml structure
+          - story-yaml-validator.mjs - validates story fields and relationships
+          - epic-yaml-validator.mjs - validates epic structure and story references
+          - Support both current sprint and archived sprints
+
+          Validation rules:
+          - Required fields present (id, title, status, points)
+          - Status values are valid (backlog, in_progress, done, cancelled)
+          - Points are numeric
+          - Jira keys follow pattern MSSCI-NNNNN
+          - Branch names follow convention
+          - No duplicate story IDs within sprint
+          - Epic stories reference valid story IDs
+        points: 3
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Sprint YAML validates structure and required fields
+          - Story entries validate all required fields
+          - Epic entries validate story references
+          - Clear error messages for validation failures
+          - Can validate archived sprints
+          - just validate-sprint recipe works
+      - id: MSSCI-12395
+        jira: MSSCI-12395
+        title: "Refactor turbo mode into independent relay toggle"
+        description: |
+          Currently 'turbo' mode conflates two behaviors:
+          1. Auto-accept file edits (gearshift)
+          2. Auto-handoff between agents (relay)
+
+          Agents frequently misinterpret 'turbo' as meaning 'skip all safeguards'
+          when it really just means 'auto-handoff'.
+
+          Refactor into:
+          - Gearshift modes (mutually exclusive): plan, manual, accept
+          - Relay mode (independent toggle): on/off
+
+          Current 'turbo' behavior = accept + relay:on
+
+          Implementation:
+          - Update CyclistSettings type in settings.ts
+          - Add relay_mode: boolean to WorkflowSettings
+          - Remove 'turbo' from PermissionMode type
+          - Update UI gearshift controls
+          - Add separate relay toggle in UI
+          - Migrate existing turbo configs to accept + relay:on
+          - Update all hooks to check relay_mode instead of turbo
+        points: 5
+        priority: P1
+        status: done
+        repos: pennyfarthing
+        branch: feat/MSSCI-12395-relay-toggle
+        workflow: tdd
+        completed: "2026-01-24"
+        acceptance_criteria:
+          - Gearshift only has plan/manual/accept modes
+          - Relay is independent on/off toggle
+          - accept + relay:on = old turbo behavior
+          - manual + relay:on works (ask permission but auto-handoff)
+          - Existing turbo configs migrate correctly
+          - UI shows both controls clearly

@@ -113,8 +113,8 @@ describe('35-1: Contextual Settings Placement', () => {
   });
 
   // ==========================================================================
-  // AC2: Permission mode switch in toolbar (unified with handoff)
-  // Handoff is now part of the 4-way permission mode: plan|manual|accept|turbo
+  // AC2: Permission mode switch in toolbar (MSSCI-12395: 3-way + relay toggle)
+  // Handoff is now an independent relay toggle, separate from gearshift
   // ==========================================================================
   describe('AC2: Permission mode switch in toolbar', () => {
 
@@ -126,18 +126,18 @@ describe('35-1: Contextual Settings Placement', () => {
       expect(indexHtml).toContain('data-control="mode-switch"');
     });
 
-    it('should have turbo mode segment for auto-handoff', async () => {
-      // Turbo mode = auto-accept + auto-handoff
-      expect(indexHtml).toContain('data-mode="turbo"');
+    it('should have relay toggle for auto-handoff (MSSCI-12395)', async () => {
+      // Relay mode = auto-handoff, independent of gearshift
+      expect(indexHtml).toContain('data-control="relay-toggle"');
     });
 
-    it('should have turbo button with title explaining auto-handoff', async () => {
-      // Turbo mode includes auto-handoff
-      expect(indexHtml).toMatch(/title="[^"]*turbo[^"]*auto-handoff[^"]*"/i);
+    it('should have relay button with title explaining auto-handoff (MSSCI-12395)', async () => {
+      // Relay mode = auto-handoff
+      expect(indexHtml).toMatch(/title="[^"]*relay[^"]*auto-handoff[^"]*"/i);
     });
 
-    it('should NOT have separate handoff toggle button', async () => {
-      // Handoff is unified into permission mode, no separate toggle
+    it('should NOT have separate handoff toggle button (old style)', async () => {
+      // Old handoff toggle replaced by relay toggle
       expect(indexHtml).not.toContain('data-control="handoff-mode"');
     });
 
@@ -295,24 +295,25 @@ describe('35-1: Contextual Settings Placement', () => {
   });
 
   // ==========================================================================
-  // Integration: Permission mode switch (unified with handoff)
+  // Integration: Permission mode switch (MSSCI-12395: 3-way + relay)
   // ==========================================================================
   describe('Integration: Permission mode switch workflow', () => {
 
-    it('should have 4-way mode switch in toolbar', async () => {
-      // Mode switch should have plan/manual/accept/turbo
+    it('should have 3-way mode switch plus relay toggle (MSSCI-12395)', async () => {
+      // Mode switch should have plan/manual/accept (no turbo)
       expect(indexHtml).toMatch(/data-mode="plan"/);
       expect(indexHtml).toMatch(/data-mode="manual"/);
       expect(indexHtml).toMatch(/data-mode="accept"/);
-      expect(indexHtml).toMatch(/data-mode="turbo"/);
+      // Relay toggle is separate
+      expect(indexHtml).toMatch(/data-control="relay-toggle"/);
     });
 
-    it('should display mode labels in UI', async () => {
-      // Buttons should show mode names
+    it('should display mode labels in UI (MSSCI-12395)', async () => {
+      // Buttons should show mode names plus relay
       expect(indexHtml).toMatch(/PLAN/);
       expect(indexHtml).toMatch(/MANUAL/);
       expect(indexHtml).toMatch(/ACCEPT/);
-      expect(indexHtml).toMatch(/TURBO/);
+      expect(indexHtml).toMatch(/RELAY/);
     });
 
   });

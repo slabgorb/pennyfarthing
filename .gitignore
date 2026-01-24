@@ -80,3 +80,4 @@ worktrees/
 .pennyfarthing/bell-queue.json
 **/.pennyfarthing/bell-mode.json
 **/.pennyfarthing/bell-queue.json
+.env

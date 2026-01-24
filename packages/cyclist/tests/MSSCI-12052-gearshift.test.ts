@@ -37,12 +37,12 @@ describe('MSSCI-12052: Gearshift Mode Switch', () => {
   // ==========================================================================
   describe('AC1: Visual display updates', () => {
 
-    it('should have mode switch with all four segments', () => {
+    it('should have mode switch with three segments (MSSCI-12395: turbo removed)', () => {
       const modeSwitch = indexDocument.querySelector('[data-control="mode-switch"]');
       expect(modeSwitch).not.toBeNull();
 
       const segments = modeSwitch!.querySelectorAll('.mode-switch-segment');
-      expect(segments.length).toBe(4);
+      expect(segments.length).toBe(3);
     });
 
     it('should have PLAN segment with data-mode="plan"', () => {
@@ -63,10 +63,10 @@ describe('MSSCI-12052: Gearshift Mode Switch', () => {
       expect(acceptSegment!.textContent).toContain('ACCEPT');
     });
 
-    it('should have TURBO segment with data-mode="turbo"', () => {
-      const turboSegment = indexDocument.querySelector('[data-mode="turbo"]');
-      expect(turboSegment).not.toBeNull();
-      expect(turboSegment!.textContent).toContain('TURBO');
+    it('should have RELAY toggle (MSSCI-12395: replaced turbo segment)', () => {
+      const relayToggle = indexDocument.querySelector('[data-control="relay-toggle"]');
+      expect(relayToggle).not.toBeNull();
+      expect(relayToggle!.textContent).toContain('RELAY');
     });
 
     it('should have MANUAL as default active segment', () => {
@@ -168,27 +168,27 @@ describe('MSSCI-12052: Gearshift Mode Switch', () => {
       expect(response.status).toBeLessThan(500);
     });
 
-    it('should persist TURBO mode with autohandoff=true', async () => {
+    it('should persist relay_mode=true with accept (MSSCI-12395: replaces turbo)', async () => {
       const response = await request(app)
         .patch('/api/settings')
         .send({
           workflow: {
-            permission_mode: 'turbo',
-            handoff_mode: 'auto'
+            permission_mode: 'accept',
+            relay_mode: true
           }
         });
 
       expect(response.status).toBeLessThan(500);
     });
 
-    it('should return correct handoff_mode in settings GET', async () => {
-      // First set turbo mode
+    it('should return relay_mode in settings GET (MSSCI-12395)', async () => {
+      // First set accept + relay mode
       await request(app)
         .patch('/api/settings')
         .send({
           workflow: {
-            permission_mode: 'turbo',
-            handoff_mode: 'auto'
+            permission_mode: 'accept',
+            relay_mode: true
           }
         });
 
@@ -197,8 +197,9 @@ describe('MSSCI-12052: Gearshift Mode Switch', () => {
       expect(response.status).toBe(200);
       const settings = response.body;
       expect(settings.workflow).toBeDefined();
-      // Should reflect turbo mode with auto handoff
-      expect(settings.workflow.handoff_mode).toBe('auto');
+      // Should reflect accept mode with relay enabled
+      expect(settings.workflow.permission_mode).toBe('accept');
+      expect(settings.workflow.relay_mode).toBe(true);
     });
 
   });
@@ -228,8 +229,8 @@ describe('MSSCI-12052: Gearshift Mode Switch', () => {
       expect(indexHtml).toMatch(/data-mode="accept"/);
     });
 
-    it('should have TURBO segment in HTML', () => {
-      expect(indexHtml).toMatch(/data-mode="turbo"/);
+    it('should have RELAY toggle in HTML (MSSCI-12395: replaces turbo)', () => {
+      expect(indexHtml).toMatch(/data-control="relay-toggle"/);
     });
 
   });

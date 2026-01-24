@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cyclist - Claude Code Dashboard</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚴</text></svg>">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -102,7 +103,7 @@
           <button type="button" class="toolbar-btn" data-action="blockquote" title="Quote">"</button>
           <button type="button" class="toolbar-btn" data-action="codeBlock" title="Code Block">{ }</button>
           <span class="toolbar-spacer"></span>
-          <!-- Permission mode switch (4-way segmented control) - MSSCI-12127 enhanced -->
+          <!-- Permission mode switch (3-way segmented control) - MSSCI-12395: turbo removed -->
           <div class="mode-switch" data-control="mode-switch" role="radiogroup" aria-label="Permission mode">
             <!-- Sliding highlight indicator (JS positions this) -->
             <div class="mode-switch-highlight" data-active-mode="manual"></div>
@@ -130,15 +131,13 @@
                 <span class="mode-switch-tooltip-shortcut">⌘3</span>
               </div>
             </button>
-            <button type="button" class="mode-switch-segment" data-mode="turbo" data-shortcut="4" role="radio" aria-checked="false" title="Turbo mode - Auto-accept everything + auto-handoff (⌘4)">
-              TURBO
-              <div class="mode-switch-tooltip">
-                <div class="mode-switch-tooltip-title">Turbo Mode</div>
-                <div class="mode-switch-tooltip-desc">Auto-accept all + auto-handoff</div>
-                <span class="mode-switch-tooltip-shortcut">⌘4</span>
-              </div>
-            </button>
           </div>
+          <span class="toolbar-divider"></span>
+          <!-- Relay Mode toggle (MSSCI-12395) - auto-handoff to next agent -->
+          <button type="button" id="relay-mode-toggle" class="relay-mode-toggle" data-control="relay-toggle" title="Relay Mode - Auto-handoff to next agent (⌘4)" aria-pressed="false">
+            <span class="relay-icon">🔄</span>
+            <span class="relay-label">RELAY</span>
+          </button>
           <span class="toolbar-divider"></span>
           <!-- Bell Mode toggle (MSSCI-12275) - inject queued messages after tool use -->
           <button type="button" id="bell-mode-toggle" class="bell-mode-toggle" title="Bell Mode - Inject queued messages after tool use (⌘B)" aria-pressed="false">
@@ -496,7 +495,7 @@
   <!-- Livereload: auto-refresh in dev mode -->
   <script src="/js/livereload.js"></script>
   <!-- Theme management: applyTheme, loadTheme, getCurrentTheme -->
-  <script src="/js/theme.js"></script>
+  <script type="module" src="/js/theme.js"></script>
   <!-- Font settings: apply user font preferences (35-6) -->
   <script type="module" src="/js/font-settings.js"></script>
   <!-- MessageView: SDK message display -->
