@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, symlinkSync, readdirSync, statSync } from 'fs';
+import { readFileSync, writeFileSync, readdirSync, statSync } from 'fs';
 import { join, relative, basename } from 'path';
 import fsExtra from 'fs-extra';
 
@@ -18,9 +18,9 @@ import {
 } from '../utils/files.js';
 import { getPackageVersion, getAssetsPath } from '../utils/version.js';
 import {
-  computeRelativeSymlink,
-  createCommandsDirectory,
-  createSkillsDirectory,
+  copyDirectory,
+  copyCommandsDirectory,
+  copySkillsDirectory,
   removeSymlinkOrDirectory
 } from '../utils/symlinks.js';
 import { findNodeModulesPath } from '../utils/node-modules.js';
@@ -130,16 +130,16 @@ export async function initCommand(
   const nodeModulesRelPath = relative(projectRoot, nodeModulesPath);
 
   logger.newline();
-  logger.info('Creating symlinks to node_modules...');
-  logger.info(`  Found: ${nodeModulesRelPath}`);
+  logger.info('Copying Pennyfarthing content to .pennyfarthing/...');
+  logger.info(`  Source: ${nodeModulesRelPath}`);
 
-  // Remove legacy .claude/pennyfarthing/ if it exists (migration from copy mode)
+  // Remove legacy .claude/pennyfarthing/ if it exists (migration from old copy mode)
   const legacyPennyfarthingDir = join(projectRoot, '.claude/pennyfarthing');
   if (pathExists(legacyPennyfarthingDir) && isDirectory(legacyPennyfarthingDir)) {
     if (!dryRun) {
       removeSync(legacyPennyfarthingDir);
     }
-    logger.info('Removed legacy .claude/pennyfarthing/ (migrating from copy mode)');
+    logger.info('Removed legacy .claude/pennyfarthing/');
   }
 
   // Remove legacy symlinks from .claude/ (now in .pennyfarthing/)
@@ -148,41 +148,31 @@ export async function initCommand(
     const legacyPath = join(projectRoot, '.claude', name);
     if (pathExists(legacyPath)) {
       removeSymlinkOrDirectory(legacyPath, dryRun);
-      logger.info(`Removed legacy .claude/${name} (now in .pennyfarthing/)`);
+      logger.info(`Removed legacy .claude/${name}`);
     }
   }
 
-  // Create symlinks pointing to node_modules (except commands and skills - handled separately)
+  // Copy directories from node_modules to .pennyfarthing/ (self-contained install)
   for (const { name, link } of DIRECTORY_SYMLINKS) {
-    const linkPath = join(projectRoot, link);
-    const targetPath = join(nodeModulesPath, name);
+    const sourcePath = join(nodeModulesPath, name);
+    const destPath = join(projectRoot, link);
 
-    // Remove existing symlink or directory
-    removeSymlinkOrDirectory(linkPath, dryRun);
-
-    if (!dryRun) {
-      const relativeTarget = computeRelativeSymlink(linkPath, targetPath);
-      try {
-        symlinkSync(relativeTarget, linkPath);
-        logger.created(`${link} -> ${relativeTarget}`);
-      } catch (e) {
-        logger.warning(`Could not create symlink ${link}: ${e}`);
-      }
+    if (copyDirectory(sourcePath, destPath, dryRun)) {
+      logger.created(`${link}/ (copied from package)`);
     } else {
-      const relativeTarget = computeRelativeSymlink(linkPath, targetPath);
-      logger.created(`${link} -> ${relativeTarget}`);
+      logger.warning(`Could not copy ${name} to ${link}`);
     }
   }
 
-  // Create commands directory with individual symlinks (allows user commands)
+  // Copy commands directory (allows user commands alongside built-in)
   const builtInCommandsPath = join(nodeModulesPath, 'commands');
   const projectCommandsPath = join(projectRoot, '.claude/project/commands');
-  createCommandsDirectory(projectRoot, builtInCommandsPath, projectCommandsPath, dryRun || false);
+  copyCommandsDirectory(projectRoot, builtInCommandsPath, projectCommandsPath, dryRun || false);
 
-  // Create skills directory with individual symlinks (allows user skills)
+  // Copy skills directory (allows user skills alongside built-in)
   const builtInSkillsPath = join(nodeModulesPath, 'skills');
   const projectSkillsPath = join(projectRoot, '.claude/project/skills');
-  createSkillsDirectory(projectRoot, builtInSkillsPath, projectSkillsPath, dryRun || false);
+  copySkillsDirectory(projectRoot, builtInSkillsPath, projectSkillsPath, dryRun || false);
 
   // 8. Create agent sidecars if not exist
   logger.newline();

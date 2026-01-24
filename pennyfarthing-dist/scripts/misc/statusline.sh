@@ -90,7 +90,8 @@ elif [ -d "$PROJECT_ROOT/.session/agents" ]; then
     fi
 fi
 
-# Get character name from theme for current agent
+# Get character name from config for current agent
+# Config now includes theme_characters baked in (no symlink chasing needed)
 config_file=""
 if [ -f "$PROJECT_ROOT/.pennyfarthing/config.local.yaml" ]; then
     config_file="$PROJECT_ROOT/.pennyfarthing/config.local.yaml"
@@ -99,40 +100,31 @@ elif [ -f "$PROJECT_ROOT/.claude/persona-config.yaml" ]; then
 fi
 
 character_display=""
-if [ -n "$config_file" ]; then
-    theme=$(yq '.theme' "$config_file" 2>/dev/null)
-    if [ -n "$theme" ] && [ "$theme" != "null" ] && [ -n "$agent_name" ]; then
-        # Find theme file (same resolution as agent-session.sh)
-        theme_file=""
-        if [ -f "$PROJECT_ROOT/.claude/pennyfarthing/themes/${theme}.yaml" ]; then
-            theme_file="$PROJECT_ROOT/.claude/pennyfarthing/themes/${theme}.yaml"
-        elif [ -f "$PROJECT_ROOT/.pennyfarthing/personas/themes/${theme}.yaml" ]; then
-            theme_file="$PROJECT_ROOT/.pennyfarthing/personas/themes/${theme}.yaml"
-        elif [ -f "$PROJECT_ROOT/personas/themes/${theme}.yaml" ]; then
-            theme_file="$PROJECT_ROOT/personas/themes/${theme}.yaml"
-        fi
+if [ -n "$config_file" ] && [ -n "$agent_name" ]; then
+    # Try baked theme_characters first (self-contained, no symlinks)
+    full_name=$(yq ".theme_characters.${agent_name}" "$config_file" 2>/dev/null)
 
-        if [ -n "$theme_file" ]; then
-            full_name=$(yq ".agents.${agent_name}.character" "$theme_file" 2>/dev/null)
-            if [ -n "$full_name" ] && [ "$full_name" != "null" ]; then
-                # Smart character name extraction:
-                # 1. Remove parenthetical content: "Breq (Justice of Toren)" → "Breq"
-                # 2. Strip common titles: "Captain Kirk" → "Kirk"
-                # 3. If single word remains, use it; otherwise take last word
-                clean_name=$(echo "$full_name" | sed 's/ *([^)]*)//g' | xargs)
-                clean_name=$(echo "$clean_name" | sed -E 's/^(Captain|Lieutenant|Dr\.|Doc|Mr\.|Mrs\.|Ms\.|Admiral|Commander|Chief|Ensign|Translator|Agent|Colonel|Major|Sergeant|Professor|Lord|Lady|Sir|The) +//i')
-                word_count=$(echo "$clean_name" | wc -w | tr -d ' ')
-                if [ "$word_count" -eq 1 ]; then
-                    character_display="$clean_name"
-                else
-                    character_display=$(echo "$clean_name" | awk '{print $NF}')
-                fi
-            fi
+    if [ -n "$full_name" ] && [ "$full_name" != "null" ]; then
+        # Smart character name extraction:
+        # 1. Remove parenthetical content: "Breq (Justice of Toren)" → "Breq"
+        # 2. Strip common titles: "Captain Kirk" → "Kirk"
+        # 3. If single word remains, use it; otherwise take last word
+        clean_name=$(echo "$full_name" | sed 's/ *([^)]*)//g' | xargs)
+        clean_name=$(echo "$clean_name" | sed -E 's/^(Captain|Lieutenant|Dr\.|Doc|Mr\.|Mrs\.|Ms\.|Admiral|Commander|Chief|Ensign|Translator|Agent|Colonel|Major|Sergeant|Professor|Lord|Lady|Sir|The) +//i')
+        word_count=$(echo "$clean_name" | wc -w | tr -d ' ')
+        if [ "$word_count" -eq 1 ]; then
+            character_display="$clean_name"
+        else
+            character_display=$(echo "$clean_name" | awk '{print $NF}')
         fi
     fi
+
     # Fallback to theme name if no character found
-    if [ -z "$character_display" ] && [ -n "$theme" ] && [ "$theme" != "null" ]; then
-        character_display="$(echo "${theme:0:1}" | tr '[:lower:]' '[:upper:]')${theme:1}"
+    if [ -z "$character_display" ]; then
+        theme=$(yq '.theme' "$config_file" 2>/dev/null)
+        if [ -n "$theme" ] && [ "$theme" != "null" ]; then
+            character_display="$(echo "${theme:0:1}" | tr '[:lower:]' '[:upper:]')${theme:1}"
+        fi
     fi
 fi
 theme_display="$character_display"
