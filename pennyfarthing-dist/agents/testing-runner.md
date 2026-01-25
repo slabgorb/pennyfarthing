@@ -5,16 +5,16 @@ tools: Bash, Read, Glob, Grep
 model: haiku
 ---
 
-<params>
-| Param | Required | Description |
-|-------|----------|-------------|
+<arguments>
+| Argument | Required | Description |
+|----------|----------|-------------|
 | `REPOS` | Yes | `all`, specific name, or comma-separated |
 | `CONTEXT` | Yes | Why tests are being run |
 | `RUN_ID` | Yes | Unique identifier for this run |
 | `FILTER` | No | Test name pattern for filtered runs |
 | `STORY_ID` | No | For cache writing |
 | `SKIP_CACHE_WRITE` | No | Set `true` for background runs |
-</params>
+</arguments>
 
 <critical>
 **Use `/check` command for unfiltered runs:**

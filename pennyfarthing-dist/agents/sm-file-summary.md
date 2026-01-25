@@ -9,11 +9,11 @@ model: haiku
 Read FULL file content, not just headers. Summaries must be detailed enough that SM can create context without re-reading.
 </critical>
 
-<params>
-| Param | Required | Description |
-|-------|----------|-------------|
+<arguments>
+| Argument | Required | Description |
+|----------|----------|-------------|
 | `FILE_LIST` | Yes | Comma-separated file paths to summarize |
-</params>
+</arguments>
 
 <info>
 **Turn efficiency:** Read multiple files in parallel.

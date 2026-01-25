@@ -10,6 +10,12 @@ Universal entry point telling agents: what work exists, what phase, and whether 
 Uses `/sprint` skill scripts for deterministic output.
 </info>
 
+<arguments>
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `CALLING_AGENT` | Yes | Agent requesting status check (e.g., "SM", "Architect", "PM") |
+</arguments>
+
 ---
 
 ## Execution

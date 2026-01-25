@@ -33,20 +33,39 @@ Run `handoff-marker.sh {next_agent}` as ABSOLUTE LAST ACTION, output result, EXI
 |----------|---------|
 | `reviewer-preflight` | Run tests, lint, gather smells (background) |
 | `handoff` | Update session for approve/reject |
-
-**Invocation:**
-```yaml
-Task tool:
-  subagent_type: "general-purpose"
-  model: "haiku"
-  run_in_background: true  # for preflight only
-  prompt: |
-    You are the {subagent-name} subagent.
-    Read .pennyfarthing/agents/{subagent-name}.md for instructions.
-    EXECUTE all steps. Do NOT summarize.
-    {PARAMETERS}
-```
 </helpers>
+
+<parameters>
+## Subagent Parameters
+
+### reviewer-preflight (run in background)
+```yaml
+STORY_ID: "{STORY_ID}"
+REPOS: "{REPOS}"
+BRANCH: "{BRANCH}"
+PR_NUMBER: "{PR_NUMBER}"
+```
+
+### handoff (approval)
+```yaml
+STORY_ID: "{STORY_ID}"
+WORKFLOW: "{WORKFLOW}"
+CURRENT_PHASE: "review"
+REPOS: "{REPOS}"
+VERDICT: "approved"
+ASSESSMENT_SECTION: "Reviewer Assessment"
+```
+
+### handoff (rejection)
+```yaml
+STORY_ID: "{STORY_ID}"
+WORKFLOW: "{WORKFLOW}"
+CURRENT_PHASE: "review"
+REPOS: "{REPOS}"
+VERDICT: "rejected"
+ASSESSMENT_SECTION: "Reviewer Assessment"
+```
+</parameters>
 
 <context>
 **Load on activation:**

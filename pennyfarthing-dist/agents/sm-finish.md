@@ -5,14 +5,14 @@ tools: Bash, Read
 model: haiku
 ---
 
-<params>
-| Param | Required | Description |
-|-------|----------|-------------|
+<arguments>
+| Argument | Required | Description |
+|----------|----------|-------------|
 | `STORY_ID` | Yes | Story identifier, e.g., "31-10" |
 | `JIRA_KEY` | No | Jira issue key (skip Jira checks if absent) |
 | `REPOS` | Yes | Repository name(s) |
 | `BRANCH` | Yes | Feature branch name |
-</params>
+</arguments>
 
 <critical>
 Run ALL checks in parallel, then aggregate results.

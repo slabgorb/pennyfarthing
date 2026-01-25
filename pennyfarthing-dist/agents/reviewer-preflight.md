@@ -5,14 +5,14 @@ tools: Bash, Read, Glob, Grep
 model: haiku
 ---
 
-<params>
-| Param | Required | Description |
-|-------|----------|-------------|
+<arguments>
+| Argument | Required | Description |
+|----------|----------|-------------|
 | `STORY_ID` | Yes | Story identifier, e.g., "31-10" |
 | `REPOS` | Yes | Repository name(s) |
 | `BRANCH` | Yes | Feature branch name |
 | `PR_NUMBER` | Yes | Pull request number |
-</params>
+</arguments>
 
 <gate>
 ## Pre-Flight Checklist
