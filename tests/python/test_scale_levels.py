@@ -1,7 +1,9 @@
 """
 Tests for scale level detection and workflow routing.
 
-Story: MSSCI-12416 - Define Scale Levels
+Stories:
+  - MSSCI-12416 - Define Scale Levels
+  - MSSCI-12417 - Wire Scale Level into Workflow Initiation
 Epic: MSSCI-12415 - Scale Adaptation and Brownfield Support
 
 BMAD Scale Levels:
