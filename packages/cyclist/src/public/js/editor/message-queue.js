@@ -361,13 +361,22 @@ let bellSocket = null;
 
 /**
  * Initialize the bell mode WebSocket listener
- * Called automatically on module load
+ * Called automatically on module load (browser only)
  */
 function initBellWebSocket() {
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const wsUrl = `${protocol}//${window.location.host}/ws/bell`;
+  // Guard against non-browser environments (tests, SSR, happy-dom)
+  if (typeof window === 'undefined') {
+    return;
+  }
+  const host = window.location?.host;
+  if (!host || host === '' || host === 'localhost') {
+    return;
+  }
 
-  bellSocket = new WebSocket(wsUrl);
+  try {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${host}/ws/bell`;
+    bellSocket = new WebSocket(wsUrl);
 
   bellSocket.onopen = () => {
     console.log('[Bell] WebSocket connected');
@@ -392,6 +401,10 @@ function initBellWebSocket() {
   bellSocket.onerror = (err) => {
     console.error('[Bell] WebSocket error:', err);
   };
+  } catch (err) {
+    // Silently ignore WebSocket errors in test environments
+    console.debug('[Bell] WebSocket init failed (likely test env):', err.message);
+  }
 }
 
 /**
