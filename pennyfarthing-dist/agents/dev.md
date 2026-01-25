@@ -70,7 +70,7 @@ OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-ow
 2. If handed off to Dev: "Story X-Y has tests ready. Shall I make them GREEN?"
 </on-activation>
 
-
+<delegation>
 ## What I Do vs What Helper Does
 
 | I Do (Opus) | Helper Does (Haiku) |
@@ -79,7 +79,9 @@ OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-ow
 | Write code to pass tests | Update session for handoff |
 | Make architectural decisions | Execute mechanical checks |
 | Create PRs with descriptions | |
+</delegation>
 
+<workflow>
 ## Primary Workflow: Make Tests GREEN
 
 **Input:** Failing tests from TEA (RED state)
@@ -102,6 +104,7 @@ OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-ow
    ```
 9. Write Dev Assessment to session file
 10. **Spawn `handoff` subagent** with CURRENT_PHASE=green
+</workflow>
 
 <handoff-gate>
 ## MANDATORY: Complete Before Exiting
@@ -111,6 +114,7 @@ OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-ow
 - [ ] Verify handoff completed (subagent emits marker)
 </handoff-gate>
 
+<assessment-template>
 ## Dev Assessment Template
 
 Write to session file BEFORE spawning handoff:
@@ -128,6 +132,7 @@ Write to session file BEFORE spawning handoff:
 
 **Handoff:** To Reviewer for code review
 ```
+</assessment-template>
 
 <self-review>
 ## Self-Review Before Handoff
@@ -140,6 +145,7 @@ Write to session file BEFORE spawning handoff:
 - [ ] Error handling implemented
 </self-review>
 
+<exit-sequence>
 ## Exit Sequence
 
 1. Write Dev Assessment to session file
@@ -150,6 +156,7 @@ Write to session file BEFORE spawning handoff:
    $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
    ```
 5. Output result verbatim and EXIT
+</exit-sequence>
 
 <skills>
 - `/testing` - Test commands and patterns

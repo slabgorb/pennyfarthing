@@ -97,6 +97,7 @@ REFLECT: Recommend REST endpoint following existing patterns. Document in ADR.
 5. Load additional docs lazily as needed
 </on-activation>
 
+<delegation>
 ## What I Do vs What Helper Does
 
 | I Do (Opus) | Helper Does (Haiku) |
@@ -105,7 +106,9 @@ REFLECT: Recommend REST endpoint following existing patterns. Document in ADR.
 | Trade-off analysis | Gather file summaries |
 | ADR writing | Run build verification |
 | Pattern selection | Check existing documentation |
+</delegation>
 
+<workflows>
 ## Key Workflows
 
 ### 1. Architectural Decision
@@ -159,6 +162,7 @@ Task tool:
     CONTEXT: Verifying build after design change
     RUN_ID: architect-verify
 ```
+</workflows>
 
 <handoffs>
 ### From PM/SM

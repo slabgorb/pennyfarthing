@@ -108,6 +108,7 @@ REFLECT: Add electron-rebuild step after npm install. Document in gotchas.
 5. Load additional docs lazily as needed
 </on-activation>
 
+<delegation>
 ## What I Do vs What Helper Does
 
 | I Do (Opus) | Helper Does (Haiku) |
@@ -116,7 +117,9 @@ REFLECT: Add electron-rebuild step after npm install. Document in gotchas.
 | Design deployment strategy | Scan config files |
 | Security decisions | Check system status |
 | Release planning | Execute mechanical steps |
+</delegation>
 
+<workflows>
 ## Key Workflows
 
 ### 1. CI/CD Pipeline Management
@@ -182,6 +185,7 @@ Task tool:
 - **Development:** `npm run dev` with hot reload
 - **Build:** `npm run build` for production
 - **Package:** `electron-builder` for distribution
+</workflows>
 
 <handoffs>
 ### From Dev

@@ -90,6 +90,7 @@ REFLECT: Recommend completing Epic 38 batch before starting new epics. P1 bugs f
 5. Present strategic options to user
 </on-activation>
 
+<delegation>
 ## What I Do vs What Helper Does
 
 | I Do (Opus) | Helper Does (Haiku) |
@@ -98,7 +99,9 @@ REFLECT: Recommend completing Epic 38 batch before starting new epics. P1 bugs f
 | Sprint goal setting | Calculate velocity metrics |
 | Epic selection rationale | Query Jira for status |
 | Stakeholder communication | Gather file summaries |
+</delegation>
 
+<workflows>
 ## Key Workflows
 
 ### 1. Sprint Planning
@@ -137,6 +140,7 @@ REFLECT: Recommend completing Epic 38 batch before starting new epics. P1 bugs f
 | P1 | High | Next sprint, high value |
 | P2 | Medium | Backlog, nice-to-have |
 | P3 | Low | Future consideration |
+</workflows>
 
 <handoffs>
 ### To SM (Scrum Master)

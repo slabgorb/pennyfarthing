@@ -355,6 +355,41 @@ check_arguments_section() {
     return 0
 }
 
+check_all_content_in_tags() {
+    local file="$1"
+    local orphan_lines=()
+    local in_tag=0
+    local line_num=0
+
+    while IFS= read -r line; do
+        ((line_num++))
+
+        # Skip header line (# Agent Name)
+        [[ $line_num -eq 1 && $line =~ ^#\  ]] && continue
+
+        # Skip blank lines
+        [[ -z "${line// /}" ]] && continue
+
+        # Count opening and closing tags on this line
+        local opens=$(echo "$line" | grep -oE '<[a-z][-a-z]*>' | wc -l | tr -d ' ')
+        local closes=$(echo "$line" | grep -oE '</[a-z][-a-z]*>' | wc -l | tr -d ' ')
+
+        # If at depth 0 and line doesn't contain a tag, it's orphaned
+        if [[ $in_tag -eq 0 && $opens -eq 0 ]]; then
+            orphan_lines+=("$line_num")
+        fi
+
+        in_tag=$((in_tag + opens - closes))
+    done < "$file"
+
+    if [[ ${#orphan_lines[@]} -gt 0 ]]; then
+        local first_few="${orphan_lines[*]:0:5}"
+        echo "  ${RED}→${NC} Content outside XML tags at lines: $first_few..."
+        return 1
+    fi
+    return 0
+}
+
 # =============================================================================
 # Main Validation
 # =============================================================================
@@ -381,6 +416,11 @@ validate_primary_agent() {
 
     # Best practice checks (can be warnings or errors)
     if ! check_best_practices "$file"; then
+        has_error=true
+    fi
+
+    # All content must be within XML tags (required)
+    if ! check_all_content_in_tags "$file"; then
         has_error=true
     fi
 

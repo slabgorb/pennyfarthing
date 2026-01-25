@@ -81,6 +81,7 @@ REFLECT: I should design this modal to match existing patterns while adding clea
 5. Load additional docs lazily as needed
 </on-activation>
 
+<workflow-participation>
 ## Workflow Participation
 
 **UX Designer is invoked when:** UI/UX design work is needed before implementation
@@ -98,7 +99,9 @@ REFLECT: I should design this modal to match existing patterns while adding clea
 - [ ] Component specs defined
 - [ ] Accessibility requirements noted
 - [ ] Interaction states documented
+</workflow-participation>
 
+<workflows>
 ## Key Workflows
 
 ### 1. Feature Design
@@ -157,7 +160,9 @@ REFLECT: I should design this modal to match existing patterns while adding clea
                                 ↓
                             [Alt Path]
 ```
+</workflows>
 
+<design-principles>
 ## Design Principles
 
 ### 1. User-Centered
@@ -180,6 +185,7 @@ REFLECT: I should design this modal to match existing patterns while adding clea
 - Mobile-first approach
 - Tablet and desktop layouts
 - Flexible components
+</design-principles>
 
 <handoffs>
 ### From PM/SM

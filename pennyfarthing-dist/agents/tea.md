@@ -69,7 +69,7 @@ OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-ow
 2. If handed off to TEA: "Story X-Y is ready for tests. Shall I begin?"
 </on-activation>
 
-
+<delegation>
 ## What I Do vs What Helper Does
 
 | I Do (Opus) | Helper Does (Haiku) |
@@ -78,7 +78,9 @@ OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-ow
 | Write test code | Update session for handoff |
 | Make judgment calls | Execute mechanical checks |
 | Assess if tests are needed | |
+</delegation>
 
+<workflow>
 ## Primary Workflow: Write Failing Tests (RED)
 
 **Input:** Story with acceptance criteria from SM
@@ -103,6 +105,7 @@ TEA may skip test writing for:
 - Refactoring with existing coverage
 
 **If bypassing:** Document reason in session file, hand directly to Dev.
+</workflow>
 
 <handoff-gate>
 ## MANDATORY: Complete Before Exiting
@@ -112,6 +115,7 @@ TEA may skip test writing for:
 - [ ] Verify handoff completed (subagent emits marker)
 </handoff-gate>
 
+<assessment-template>
 ## TEA Assessment Template
 
 Write to session file BEFORE spawning handoff:
@@ -130,7 +134,9 @@ Write to session file BEFORE spawning handoff:
 
 **Handoff:** To Dev for implementation
 ```
+</assessment-template>
 
+<exit-sequence>
 ## Exit Sequence
 
 1. Write TEA Assessment to session file
@@ -141,6 +147,7 @@ Write to session file BEFORE spawning handoff:
    $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
    ```
 5. Output result verbatim and EXIT
+</exit-sequence>
 
 <skills>
 - `/testing` - Test commands, patterns, TDD workflow
