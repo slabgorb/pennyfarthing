@@ -1291,8 +1291,12 @@ epics:
           - Cross-platform compatibility
         points: 3
         priority: P2
-        status: backlog
+        status: done
         repos: pennyfarthing
+        branch: feature/MSSCI-12402-port-git-scripts-python
+        assigned_to: Keith Avery
+        workflow: tdd
+        completed: "2026-01-25"
       - id: "63-9"
         jira: MSSCI-12413
         title: "Reorganize pennyfarthing_scripts into fan-out CLI pattern"
@@ -1384,13 +1388,40 @@ epics:
         jira: MSSCI-12418
       - id: MSSCI-12419
         title: "Brownfield discovery command"
-        description: ""
+        description: |
+          Create /brownfield skill that analyzes existing codebases and generates
+          AI-ready documentation. Uses parallel file scanning to identify project
+          type, tech stack, architecture patterns, and conventions.
+
+          Implementation:
+          - pennyfarthing_scripts/brownfield/discover.py - Main discovery logic
+          - Uses existing pennyfarthing_scripts.common.output for formatting
+          - Parallel directory scanning with asyncio
+          - Output to docs/brownfield/ or _bmad-output/ format
+
+          Generates documentation matching _bmad-output structure:
+          - project-overview.md - Executive summary and architecture
+          - source-tree-analysis.md - Annotated directory structure
+          - technology-stack.md - Complete tech stack reference
+          - architecture-patterns.md - Code patterns and conventions
+          - critical-rules.md - Implementation rules and constraints
+          - ai-guidance.md - Guidance for AI agents
         points: 5
         priority: P2
-        status: backlog
+        status: done
         repos: pennyfarthing
+        branch: feat/MSSCI-12419-brownfield-discovery
         workflow: tdd
-        acceptance_criteria: []
+        assigned_to: Keith Avery
+        completed: "2026-01-25"
+        acceptance_criteria:
+          - /brownfield scan command generates project overview
+          - Detects project type (monorepo, single package, etc.)
+          - Identifies tech stack from package.json, pyproject.toml, etc.
+          - Extracts architecture patterns from code structure
+          - Generates AI guidance document
+          - Supports depth levels (quick/standard/deep)
+          - Output matches _bmad-output format
         jira: MSSCI-12419
       - id: MSSCI-12420
         title: "Brownfield convention adoption"
