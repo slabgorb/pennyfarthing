@@ -7,7 +7,7 @@ Provides access to sprint/current-sprint.yaml data.
 from pathlib import Path
 from typing import Any
 
-from .config import get_project_root, load_yaml_config
+from pennyfarthing_scripts.common.config import get_project_root, load_yaml_config
 
 
 def load_sprint(project_root: Path | None = None) -> dict[str, Any] | None:

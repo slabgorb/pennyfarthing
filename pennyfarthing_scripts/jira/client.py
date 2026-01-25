@@ -1,9 +1,10 @@
 """
-Jira CLI wrapper for Pennyfarthing scripts.
+Jira client and helper functions for Pennyfarthing scripts.
 
-Wraps the `jira` CLI tool for issue operations.
+Wraps the `jira` CLI tool and REST API for issue operations.
 """
 
+import base64
 import json
 import os
 import re
@@ -336,7 +337,8 @@ class JiraClient:
         """
         self.base_url = base_url or JIRA_URL
         self.user = user or os.environ.get("JIRA_USER", "keith.avery@1898andco.io")
-        self.token = token or os.environ.get("JIRA_API_TOKEN", "")
+        # Use explicit token if provided (even empty), otherwise fall back to env var
+        self.token = token if token is not None else os.environ.get("JIRA_API_TOKEN", "")
 
     def _get_auth_header(self) -> dict[str, str]:
         """Build authorization header for REST API.
@@ -346,8 +348,6 @@ class JiraClient:
         """
         if not self.token:
             return {}
-
-        import base64
 
         credentials = base64.b64encode(f"{self.user}:{self.token}".encode()).decode()
         return {"Authorization": f"Basic {credentials}"}
