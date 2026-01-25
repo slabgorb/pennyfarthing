@@ -36,3 +36,6 @@ runs:
   - run_8.json
   - run_9.json
   - run_10.json
+
+metadata:
+  pennyfarthing_version: "5.0.0"

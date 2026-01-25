@@ -34,3 +34,6 @@ runs:
   - run_20260102T134602Z.json
   - run_20260102T134756Z.json
   - run_20260102T134757Z.json
+
+metadata:
+  pennyfarthing_version: "5.0.0"

@@ -420,6 +420,20 @@ agent:
   cross_role: true
 ```
 
+**REQUIRED: Capture Pennyfarthing version in metadata:**
+```bash
+# Get version from package.json
+version=$(node -p "require('./package.json').version")
+```
+
+Include in summary.yaml:
+```yaml
+metadata:
+  created_at: "{ISO timestamp}"
+  pennyfarthing_version: "{version}"  # REQUIRED for baseline staleness detection
+  model: sonnet
+```
+
 **ALWAYS save summary.yaml, even for n=1.** This ensures consistent data structure for analysis.
 
 Display:
