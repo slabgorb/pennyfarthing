@@ -80,6 +80,21 @@ CHECKLIST_TAGS=(
     "review-checklist"
 )
 
+# Mindset tags - each primary agent should have one
+# Format: agent_file:expected_tag
+declare -A MINDSET_TAGS=(
+    ["sm.md"]="coordination-discipline"
+    ["tea.md"]="test-paranoia"
+    ["dev.md"]="minimalist-discipline"
+    ["reviewer.md"]="adversarial-mindset"
+    ["orchestrator.md"]="systems-thinking"
+    ["architect.md"]="pragmatic-restraint"
+    ["pm.md"]="ruthless-prioritization"
+    ["devops.md"]="automation-discipline"
+    ["tech-writer.md"]="clarity-obsession"
+    ["ux-designer.md"]="consistency-guardian"
+)
+
 # Best practice thresholds
 MAX_LINES=300
 FIRST_CRITICAL_MAX_LINE=30
@@ -283,6 +298,63 @@ check_no_orphan_content() {
     return 0
 }
 
+check_mindset_tag() {
+    local file="$1"
+    local filename=$(basename "$file")
+
+    # Get expected mindset tag for this agent
+    local expected_tag="${MINDSET_TAGS[$filename]:-}"
+
+    if [[ -z "$expected_tag" ]]; then
+        # No mindset tag expected for this agent
+        return 0
+    fi
+
+    if ! grep -q "<${expected_tag}>" "$file" 2>/dev/null; then
+        echo "  ${RED}→${NC} Missing mindset tag: <$expected_tag>"
+        return 1
+    fi
+
+    # Verify it's closed
+    if ! grep -q "</${expected_tag}>" "$file" 2>/dev/null; then
+        echo "  ${RED}→${NC} Unclosed mindset tag: <$expected_tag>"
+        return 1
+    fi
+
+    return 0
+}
+
+check_parameters_section() {
+    local file="$1"
+
+    # If file has <helpers> tag, it should also have <parameters>
+    if grep -q "<helpers>" "$file" 2>/dev/null; then
+        if ! grep -q "<parameters>" "$file" 2>/dev/null; then
+            echo "  ${YELLOW}→${NC} Has <helpers> but missing <parameters> section"
+            return 1
+        fi
+    fi
+    return 0
+}
+
+check_arguments_section() {
+    local file="$1"
+
+    # Subagents should have <arguments> section
+    if ! grep -q "<arguments>" "$file" 2>/dev/null; then
+        echo "  ${YELLOW}→${NC} Missing <arguments> section"
+        return 1
+    fi
+
+    # Verify it's closed
+    if ! grep -q "</arguments>" "$file" 2>/dev/null; then
+        echo "  ${RED}→${NC} Unclosed <arguments> tag"
+        return 1
+    fi
+
+    return 0
+}
+
 # =============================================================================
 # Main Validation
 # =============================================================================
@@ -310,6 +382,16 @@ validate_primary_agent() {
     # Best practice checks (can be warnings or errors)
     if ! check_best_practices "$file"; then
         has_error=true
+    fi
+
+    # Mindset tag check (required)
+    if ! check_mindset_tag "$file"; then
+        has_error=true
+    fi
+
+    # Parameters section check (warning if helpers present)
+    if ! check_parameters_section "$file"; then
+        has_warning=true
     fi
 
     # Warning checks
@@ -382,6 +464,13 @@ validate_subagent() {
         echo -e "${RED}✗ INVALID:${NC} $filename"
         ((invalid_count++))
         return 1
+    fi
+
+    # Check for <arguments> section
+    if ! check_arguments_section "$file"; then
+        echo -e "${YELLOW}⚠ WARNING:${NC} $filename (subagent)"
+        ((warning_count++))
+        return 0
     fi
 
     echo -e "${GREEN}✓ VALID:${NC} $filename (subagent)"
