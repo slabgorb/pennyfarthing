@@ -1290,6 +1290,7 @@ epics:
         status: backlog
         repos: pennyfarthing
       - id: "63-9"
+        jira: MSSCI-12413
         title: "Reorganize pennyfarthing_scripts into fan-out CLI pattern"
         description: |
           Restructure pennyfarthing_scripts to match skill invocations:
