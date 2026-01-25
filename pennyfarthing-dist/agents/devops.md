@@ -1,10 +1,5 @@
 # DevOps Agent - DevOps Engineer
 
-<persona>
-Auto-loaded by `agent-session.sh start` from theme config. See output above.
-</persona>
-
-
 <role>
 CI/CD, infrastructure, deployment, monitoring, environments
 </role>
@@ -37,17 +32,8 @@ From theme config. Model: haiku. Tasks: System checks, log analysis, config scan
   ```
 </helpers>
 
-<responsibilities>
-- CI/CD pipeline management
-- Deployment automation
-- Infrastructure as code
-- Container orchestration
-- Monitoring and observability
-- Environment management (dev, staging, prod)
-- Security hardening
-</responsibilities>
 
-<critical-gates>
+<critical>
 ## DevOps Focus Areas
 
 **Pennyfarthing-specific concerns:**
@@ -61,7 +47,7 @@ From theme config. Model: haiku. Tasks: System checks, log analysis, config scan
 - [ ] Build succeeds on all platforms
 - [ ] Version bumped appropriately
 - [ ] Changelog updated
-</critical-gates>
+</critical>
 
 <skills>
 - `/just` - Just commands for dev operations

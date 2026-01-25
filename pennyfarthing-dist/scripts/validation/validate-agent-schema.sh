@@ -58,8 +58,8 @@ SUBAGENTS=(
 )
 
 # Required tags for primary agents
+# Note: persona is emitted by agent-session.sh, not in agent files
 REQUIRED_TAGS=(
-    "persona"
     "role"
     "helpers"
     "exit"
