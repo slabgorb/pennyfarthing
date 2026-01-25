@@ -204,9 +204,14 @@ if last_total is not None:
     # Use usable percent for status decisions (more accurate for user)
     if usable_pct > warning_threshold:
         print('CONTEXT_STATUS=HIGH')
-        print('HANDOFF_MODE=auto')
     else:
         print('CONTEXT_STATUS=OK')
+
+    # HANDOFF_MODE: 'auto' if relay_mode enabled, 'ask' otherwise
+    # MSSCI-12395: relay_mode controls autohandoff independent of context level
+    if relay_mode:
+        print('HANDOFF_MODE=auto')
+    else:
         print('HANDOFF_MODE=ask')
 
     # TirePump: Use CONTEXT_CLEAR (clear + load next agent) when:

@@ -138,3 +138,62 @@ def get_epic_by_id(epic_id: str) -> dict[str, Any] | None:
         if epic.get("id") == epic_id:
             return epic
     return None
+
+
+def find_story(epic: dict[str, Any] | None, story_id: str) -> dict[str, Any] | None:
+    """Find a story within an epic by its ID.
+
+    Args:
+        epic: Epic dict containing stories
+        story_id: The story ID (e.g., "63-7")
+
+    Returns:
+        Story dict if found, None otherwise
+    """
+    if not epic or "stories" not in epic:
+        return None
+
+    for story in epic["stories"]:
+        if story.get("id") == story_id:
+            return story
+
+    return None
+
+
+def get_story_field(
+    sprint_data: dict[str, Any], story_id: str, field_name: str
+) -> Any | None:
+    """Get a specific field from a story in sprint data.
+
+    Extracts the epic number from the story ID (e.g., "63-7" -> epic 63)
+    and looks up the story within that epic.
+
+    Args:
+        sprint_data: Sprint YAML data
+        story_id: The story ID (e.g., "63-7")
+        field_name: The field to extract (e.g., "status", "points", "workflow")
+
+    Returns:
+        Field value if found, None otherwise
+    """
+    if not sprint_data or not story_id:
+        return None
+
+    # Extract epic number from story ID (e.g., "63-7" -> "63")
+    parts = story_id.split("-")
+    if len(parts) < 2:
+        return None
+
+    epic_num = parts[0]
+
+    # Find the epic
+    epic = find_epic(sprint_data, epic_num)
+    if not epic:
+        return None
+
+    # Find the story within the epic
+    story = find_story(epic, story_id)
+    if not story:
+        return None
+
+    return story.get(field_name)

@@ -9,6 +9,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 from typing import Any
 
 # Configuration
@@ -225,3 +226,75 @@ def get_story_points(issue_key: str, issue_json: dict[str, Any] | None = None) -
     # customfield_10031 is Story Points for 1898andco Jira
     points = get_jira_field(issue_json, "fields.customfield_10031")
     return int(points) if points is not None else None
+
+
+def check_dependencies(quiet: bool = False) -> dict[str, list[str]]:
+    """Check if jira CLI and dependencies are available.
+
+    Args:
+        quiet: If True, suppress output
+
+    Returns:
+        Dict with 'available' and 'missing' lists
+    """
+    from pathlib import Path
+
+    available = []
+    missing = []
+
+    # Check for jira CLI
+    if is_jira_cli_available():
+        available.append("jira")
+    else:
+        missing.append("jira")
+        if not quiet:
+            print("[ERROR] jira not found", file=sys.stderr)
+            print("  Install with: brew install ankitpokhrel/jira-cli/jira-cli", file=sys.stderr)
+            print("  Then run: jira init", file=sys.stderr)
+
+    # Check for JIRA_API_TOKEN
+    if os.environ.get("JIRA_API_TOKEN"):
+        available.append("JIRA_API_TOKEN")
+    else:
+        missing.append("JIRA_API_TOKEN")
+        if not quiet:
+            print("[ERROR] JIRA_API_TOKEN not set", file=sys.stderr)
+            print("  Create token at: https://id.atlassian.com/manage-profile/security/api-tokens", file=sys.stderr)
+            print("  Then: export JIRA_API_TOKEN=\"your-token\"", file=sys.stderr)
+
+    # Check jira config
+    config_path = Path.home() / ".config" / ".jira" / ".config.yml"
+    if config_path.exists():
+        available.append("jira-config")
+    elif "jira" not in missing:
+        missing.append("jira-config")
+        if not quiet:
+            print("[ERROR] jira not configured", file=sys.stderr)
+            print("  Run: jira init", file=sys.stderr)
+
+    return {"available": available, "missing": missing}
+
+
+# GitHub username to Jira email mapping
+GITHUB_TO_JIRA_MAP = {
+    "slabgorb": "keith.avery@1898andco.io",
+    "arcaven": "michael.pursifull@1898andco.io",
+    "RoseSecurity": "michael.rosenfeld@1898andco.io",
+    "Zious11": "jared.richards@1898andco.io",
+    "drbothen": "joshua.magady@1898andco.io",
+}
+
+
+def map_github_to_jira(github_user: str | None) -> str | None:
+    """Map GitHub username to Jira email.
+
+    Args:
+        github_user: GitHub username
+
+    Returns:
+        Jira email address, or None if input is None
+    """
+    if github_user is None:
+        return None
+
+    return GITHUB_TO_JIRA_MAP.get(github_user, f"{github_user}@1898andco.io")
