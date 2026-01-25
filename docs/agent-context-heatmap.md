@@ -8,18 +8,15 @@ When `/sm` is invoked, these sources are loaded IN ORDER:
 
 | Order | Source | Lines | Cumulative |
 |-------|--------|-------|------------|
-| 1 | CLAUDE.md (system prompt) | ~150 | 150 |
-| 2 | Persona block (from theme) | ~20 | 170 |
-| 3 | Crew manifest (from theme) | ~15 | 185 |
-| 4 | Sprint Context (2 lines) | ~2 | 187 |
-| 5 | Active Session (if exists) | ~50 | 237 |
-| 6 | **Sidecar: decisions.md** | 29 | 266 |
-| 7 | **Sidecar: gotchas.md** | 142 | 408 |
-| 8 | **Sidecar: patterns.md** | 41 | 449 |
-| 9 | **agent-behavior.md** | 286 | 735 |
-| 10 | **sm.md** (agent definition) | 713 | **1,448** |
+| 1 | Agent definition header | ~5 | 5 |
+| 2 | Persona block (from theme) | ~5 | 10 |
+| 3 | Agent definition body | ~210 | 220 |
+| 4 | Agent Behavior Guide | ~290 | 510 |
+| 5 | Sidecar files (if present) | ~50 | 560 |
 
-**Total context before first user message: ~1,450 lines**
+**Total context before first user message: ~560-620 lines (~18,000 chars)**
+
+*Updated after SM trim (2026-01-24): SM reduced from 713→214 lines, prime output from 36,052→18,249 chars (49% reduction)*
 
 ## Heat Map Legend
 
@@ -32,258 +29,205 @@ When `/sm` is invoked, these sources are loaded IN ORDER:
 
 ---
 
-## Phase 1: Early Context (Lines 1-185) 🔵 VERY HIGH
+## Phase 1: Agent Definition (Lines 1-220) 🔵 VERY HIGH → 🟢 HIGH
 
-### CLAUDE.md (Line 1-150)
-System-level instructions. Always followed because:
-- First thing in context
-- System prompt has highest weight
-- Contains tool definitions
-
-### Persona + Crew (Lines 150-185)
-Theme-specific character loading:
+### Header + Persona (Lines 1-10)
 ```
-<persona agent="sm" theme="lovecraft-mythos">
-Character: The Mi-Go
-Style: Fungi from Yuggoth...
+# SM Agent - Scrum Master
+
+<persona>
+Auto-loaded by agent-session.sh...
 </persona>
 
-<crew theme="lovecraft-mythos">
-When handing off, address them by character name:
-  tea: Herbert West
-  dev: Yog-Sothoth
-  ...
-</crew>
+<role>
+Story coordination, session management...
+</role>
 ```
 
-**Compliance: 🔵 VERY HIGH** - Character voice is consistently adopted.
+**Compliance: 🔵 VERY HIGH** - First thing in context, character voice consistently adopted.
 
----
+### Critical Blocks (Lines 13-30)
+After the SM trim, critical instructions are now in the **HIGH ATTENTION** zone:
 
-## Phase 2: Sprint + Session Context (Lines 185-237) 🟢 HIGH
-
-### Sprint Context (2 lines)
-```
-Sprint 12: Complete WheelHub notification...
-Progress: 130/154 points
-```
-
-**Compliance: 🟢 HIGH** - Short, referenced when presenting status.
-
-### Active Session (if exists)
-Session header with Phase, Workflow, Repos, Branch. Most recent assessment.
-
-**Compliance: 🟢 HIGH** - Agents read this to understand current state.
-
----
-
-## Phase 3: Sidecar Files (Lines 237-449) 🟡 MEDIUM
-
-### decisions.md (29 lines)
 ```markdown
-### DEC-SM-001: Scale-Adaptive Routing
-**Decision:** Trivial stories (1-2 pts) skip TEA...
+<critical>
+**WORKFLOW STATUS CHECK IS MANDATORY - FIRST ACTION ON EVERY ACTIVATION**
+</critical>
+
+<critical>
+**SM NEVER writes implementation code.**
+</critical>
+
+<critical>
+**HANDOFF REQUIRES MARKER OUTPUT.**
+</critical>
 ```
 
-**Compliance: 🟡 MEDIUM**
-- Short enough to read
-- But buried between persona and behavior guide
-- Easy to forget specific decisions
+**Compliance: 🔵 VERY HIGH** - Critical blocks now appear at lines 13-30 instead of lines 71-105. This is the optimal attention zone.
 
-### gotchas.md (142 lines) 🔴 LOW
+### Helpers + On-Activation (Lines 32-79)
+
+The `<on-activation>` block now appears at line 56 instead of line 172:
+
 ```markdown
-### Write Without Read
-**Problem:** Write tool fails...
+<on-activation>
+## MANDATORY FIRST ACTION
 
-### NEVER GUESS JIRA IDs
-**Problem:** Created stories with placeholder IDs...
+**Spawn workflow-status-check FIRST. Always.**
 ```
 
-**Compliance: 🔴 LOW**
-- 142 lines is too long
-- Negative patterns ("don't do X") are less memorable than positive patterns
-- Same gotchas keep being repeated suggests they're not being read
+**Compliance: 🟢 HIGH** - Moved from the "low attention" zone (line 172) to "high attention" zone (line 56).
 
-### patterns.md (41 lines) 🟡 MEDIUM
+### Flows + Gates (Lines 80-200)
+
+Finish Flow, New Work Flow, and Pre-Handoff Checklist. Streamlined from 400+ lines to ~120 lines.
+
+**Compliance: 🟢 HIGH** - Flows are now concise decision trees, not verbose procedures.
+
+### Exit Sequence (Lines 201-214)
+
 ```markdown
-## Scale-Adaptive Workflow
-| Points | Scale | Workflow |
-|--------|-------|----------|
-| 1-2 pts | Trivial | SM → Dev (skip TEA) |
+<exit>
+## Exit Sequence
+...
+Nothing after the marker. EXIT.
+</exit>
 ```
 
-**Compliance: 🟡 MEDIUM**
-- Table format helps
-- But appears after 400 lines of prior context
+**Compliance: 🔵 VERY HIGH** - Terminal actions at file end, always followed.
 
 ---
 
-## Phase 4: agent-behavior.md (Lines 449-735) 🟡 MEDIUM
+## Phase 2: Agent Behavior Guide (Lines 220-510) 🟢 HIGH → 🟡 MEDIUM
 
-This is the shared behavior guide for ALL agents. Key sections:
+### Critical Protocols (Lines 220-260)
 
-| Lines | Section | Tag | Compliance |
-|-------|---------|-----|------------|
-| 1-30 | Critical Protocols | `<critical>` x6 | 🟢 HIGH |
-| 31-60 | Reference | `<info>` | 🟡 MEDIUM |
-| 61-90 | Project Context | `<info>` | 🟡 MEDIUM |
-| 91-140 | Sprint YAML Rules | `<critical>` + `<info>` | 🟡 MEDIUM |
-| 141-180 | Persona System | `<info>` | 🟢 HIGH |
-| 181-220 | Reflector | `<info>` + `<critical>` | 🟢 HIGH |
-| 221-260 | Agent Exit Protocol | `<agent-exit-protocol>` | 🟢 HIGH |
-| 261-286 | Wrong Phase Detection | `<wrong-phase-detection>` | 🟢 HIGH |
+6 `<critical>` blocks covering:
+- Reflector markers
+- Absolute paths
+- Session file extraction
+- Handoff action
+- Test delegation
+- Sidecar memory
 
-**Key Observation:** The behavior guide has 6 `<critical>` blocks in the first 30 lines. These are well-followed. But by line 450+ in the full context, attention has degraded.
+**Compliance: 🟢 HIGH** - Critical tags get attention, but this is now mid-context.
 
----
+### Reference + Project Context (Lines 260-340)
 
-## Phase 5: sm.md (Lines 735-1448) 🔴 LOW overall
+Generic information about workflow, skills, project structure.
 
-The agent definition file comes LAST. By this point:
-- ~735 lines of context already processed
-- Attention weight significantly degraded
-- Model is "skimming" not "reading"
+**Compliance: 🟡 MEDIUM** - Reference material, scanned on demand.
 
-### SM Section Heat Map (relative to file start)
+### Reflector + Exit Protocol (Lines 340-510)
 
-| SM Lines | Absolute Lines | Section | Compliance |
-|----------|----------------|---------|------------|
-| 1-10 | 735-745 | Header + Persona | 🟢 HIGH |
-| 11-44 | 746-779 | Helpers | 🟡 MEDIUM |
-| 45-70 | 780-805 | Phase-check | 🟡 MEDIUM |
-| **71-105** | **806-840** | **Critical blocks (3x)** | **🟡 MEDIUM** |
-| 107-170 | 842-905 | Gate + Info + Reasoning | 🔴 LOW |
-| **172-205** | **907-940** | **on-activation** | **🔴 LOW** |
-| 207-325 | 942-1060 | Finish flow | 🔴 LOW |
-| 326-430 | 1061-1165 | New work flow | 🔴 LOW |
-| 430-590 | 1165-1325 | Setup + handoff details | 🔴 LOW |
-| 590-710 | 1325-1445 | Quick references | 🔴 LOW |
+Detailed instructions for Cyclist UI markers and exit sequences.
 
-### The Critical Problem
-
-**The `<on-activation>` block that says "ALWAYS run workflow-status-check FIRST" appears at absolute line ~907 of a 1,448 line context.**
-
-By this point, attention has degraded so severely that even `<critical>` tags don't help.
+**Compliance: 🟡 MEDIUM** - Important but late in context. Agents often need reminders.
 
 ---
 
-## Attention Curve Visualization
+## Phase 3: Sidecar Files (Lines 510-560) 🟡 MEDIUM
+
+### decisions.md (~20 lines)
+Key decisions like scale-adaptive routing.
+
+### gotchas.md (~20 lines)
+Top gotchas only (trimmed from 142 lines).
+
+### patterns.md (~10 lines)
+Essential patterns in table format.
+
+**Compliance: 🟡 MEDIUM** - Late in context, but short and scannable.
+
+---
+
+## Attention Curve Visualization (After Trim)
 
 ```
 Line    Attention   Content
-0       ████████████ CLAUDE.md (system)
-100     ██████████   Persona
-200     █████████    Sprint context
-300     ████████     Sidecar decisions
-400     ███████      Sidecar gotchas
-500     ██████       Sidecar patterns
-600     █████        agent-behavior (critical)
-700     ████         agent-behavior (info)
-800     ███          sm.md (critical blocks)
-900     ██           sm.md (on-activation) ← PROBLEM
-1000    ██           sm.md (flows)
-1100    █            sm.md (helpers)
-1200    █            sm.md (references)
-1300    █            sm.md (exit)
-1400    █            EOF
+0       ████████████ # SM Agent header
+10      ███████████  <persona> + <role>
+20      ██████████   <critical> blocks (3x) ← OPTIMAL ZONE
+40      █████████    <helpers>
+60      ████████     <on-activation> ← MOVED HERE
+100     ███████      Finish/New Work flows
+150     ██████       Gates + Routing
+200     █████        <exit>
+300     ████         Agent Behavior Guide (critical)
+400     ███          Agent Behavior Guide (info)
+500     ██           Sidecar files
+600     █            EOF
 ```
+
+**Key improvement:** Critical instructions now peak at line 20, not line 172.
 
 ---
 
-## Root Cause Analysis
+## Before vs After Comparison
 
-### Why SM Bypasses Workflow
+| Metric | Before (2026-01-23) | After (2026-01-24) | Change |
+|--------|---------------------|---------------------|--------|
+| SM file lines | 713 | 214 | -70% |
+| Prime output chars | 36,052 | 18,249 | -49% |
+| Prime output lines | 1,122 | 624 | -44% |
+| First `<critical>` | Line 71 | Line 13 | +58 lines earlier |
+| `<on-activation>` | Line 172 | Line 56 | +116 lines earlier |
+| Workflow flows | 400+ lines | ~120 lines | -70% |
 
-1. **Agent file loads LAST** - After 735 lines of other content
-2. **Critical instructions at line 907** - Deep in the "low attention" zone
-3. **gotchas.md has relevant warnings** - But at 142 lines, too long to retain
-4. **Helpful patterns exist** - But buried in sidecar files
+---
 
-### What the Model Actually Retains
+## Root Cause Analysis (Historical)
 
-From the full 1,448 line context, the model reliably retains:
+### Why SM Bypassed Workflow (Before Trim)
 
-1. **Character persona** (lines 150-185) - Always adopted
-2. **First critical blocks** (agent-behavior lines 1-30) - Usually followed
+1. **Agent file loaded with critical sections late** - Line 172 for on-activation
+2. **gotchas.md was 142 lines** - Too long to retain
+3. **Procedural content dominated** - Decision logic buried in procedures
+
+### What the Model Reliably Retains
+
+1. **Character persona** (lines 1-10) - Always adopted
+2. **First critical blocks** (lines 10-50) - High compliance
 3. **Table formats** - Scannable, referenced on demand
-4. **Exit sequences** - At file end, terminal actions
+4. **Exit sequences** - Terminal actions at file end
 
 ### What Gets Lost
 
-1. **Sidecar gotchas** - 142 lines of "don't do X"
-2. **on-activation instructions** - At line 907
-3. **Detailed flows** - Lines 900-1300
-4. **Helper patterns** - Too detailed, too late
+1. **Long procedural flows** - Attention degrades after 100 lines
+2. **Reference sections deep in file** - Rarely reached
+3. **Duplicate content** - Redundancy doesn't help, wastes tokens
 
 ---
 
-## Recommendations
+## Recommendations (Updated)
 
-### Immediate: Reorder Loading
+### Structural Patterns That Work ✓
 
-Change `prime.sh` to load agent file BEFORE sidecar/behavior:
+| Pattern | Example | Why It Works |
+|---------|---------|--------------|
+| Critical blocks early | Lines 13-30 | Peak attention zone |
+| Short files | 214 lines vs 713 | Maintains attention throughout |
+| Table formats | Workflow routing table | Scannable, high retention |
+| Unique XML tags | `<on-activation>`, `<gate>` | Distinct, memorable |
+| Terminal `<exit>` | Lines 201-214 | End-of-file actions followed |
 
-```
-Current:  prime.sh → sidecar → behavior → agent.md (LAST)
-Proposed: prime.sh → agent.md (FIRST) → sidecar → behavior
-```
+### Patterns to Avoid ✗
 
-This puts critical agent instructions in the "high attention" zone.
-
-### Structural: Shorten Files
-
-| File | Current | Target | Action |
-|------|---------|--------|--------|
-| sm.md | 713 lines | <300 | Extract flows to separate files |
-| gotchas.md | 142 lines | <50 | Keep only top 10, link to full list |
-| agent-behavior.md | 286 lines | <150 | Move reference sections to skill |
-
-### Content: Front-Load Critical
-
-Move ALL critical instructions to first 50 lines of sm.md:
-
-```markdown
-# SM Agent
-
-<critical>
-FIRST ACTION: Spawn workflow-status-check subagent. No exceptions.
-</critical>
-
-<critical>
-SM NEVER writes implementation code.
-FORBIDDEN: Reading .py/.ts/.js files, TodoWrite for implementation
-</critical>
-
-<critical>
-WHEN USER SELECTS STORY: Create session → Write context → Handoff to TEA/Dev
-DO NOT: Read implementation files, plan implementation, write code
-</critical>
-
-[rest of file...]
-```
-
-### Loading: Agent-First Context
-
-Modify agent-session.sh to output agent file content immediately after persona:
-
-```bash
-# Current: persona → prime.sh (sidecar, behavior)
-# Proposed: persona → agent.md → prime.sh
-
-output_persona "$2"
-cat "$PROJECT_ROOT/.pennyfarthing/agents/${2}.md"  # NEW
-"$PROJECT_ROOT/.pennyfarthing/scripts/prime.sh" --quiet --agent "$2"
-```
+| Pattern | Problem | Fix |
+|---------|---------|-----|
+| Procedures in agent file | Buries decisions in steps | Move to subagent files |
+| 700+ line files | Attention degradation | Target <300 lines |
+| Duplicate content | Wastes tokens, no benefit | Single source of truth |
+| Reference sections at EOF | Never reached | Link to skills instead |
 
 ---
 
 ## Summary
 
-| Issue | Impact | Fix |
-|-------|--------|-----|
-| Agent file loads at line 735 | Critical instructions ignored | Load agent file first |
-| on-activation at line 907 | First action not followed | Move to line 10 |
-| gotchas.md is 142 lines | Not retained | Trim to 50 lines |
-| 1,448 total context lines | Attention spread too thin | Target <800 total |
+The SM trim demonstrates that **position matters more than emphasis**. Moving critical instructions from line 172 to line 13 has more impact than adding more `<critical>` tags.
 
-The SM bypass pattern isn't a bug in the instructions - it's a bug in the **loading order**. The most critical instructions appear in the zone of lowest attention.
+**Target metrics for all agents:**
+- File size: <300 lines
+- Prime output: <25,000 chars
+- First `<critical>`: Within first 30 lines
+- `<on-activation>`: Within first 100 lines

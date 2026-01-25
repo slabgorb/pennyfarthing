@@ -294,3 +294,17 @@ vscode *args:
             ;;
     esac
 
+# =============================================================================
+# Validation
+# =============================================================================
+
+# Validate agent files against schema and best practices
+validate-agents *args:
+    ./pennyfarthing-dist/scripts/validation/validate-agent-schema.sh {{args}}
+
+# Validate subagent YAML frontmatter
+validate-subagents:
+    ./pennyfarthing-dist/scripts/misc/validate-subagent-frontmatter.sh
+
+# Run all validations
+validate: validate-agents validate-subagents
