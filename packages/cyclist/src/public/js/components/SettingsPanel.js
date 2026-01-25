@@ -221,6 +221,7 @@ function createThemeCard(theme) {
   const tierConfig = TIER_CONFIG[theme.tier] || TIER_CONFIG.U;
   const tierBadge = document.createElement('span');
   tierBadge.className = `tier-badge ${tierConfig.class}`;
+  tierBadge.setAttribute('data-tier', theme.tier || 'U');
   tierBadge.textContent = tierConfig.label;
   tierBadge.title = tierConfig.title;
 
