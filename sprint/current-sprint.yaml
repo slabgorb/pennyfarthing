@@ -1344,13 +1344,28 @@ epics:
         completed: "2026-01-25"
       - id: MSSCI-12417
         title: "Quick-spec workflow"
-        description: ""
+        description: |
+          Wire scale level detection into workflow initiation flow.
+          When user starts a new initiative, detect scale level from description
+          and route to appropriate workflow (trivial/quick-spec/prd).
+
+          Deliverables:
+          - Add /workflow init command or update /workflow start
+          - Call detect_scale_level() from pennyfarthing_scripts.workflow
+          - Prompt user to confirm or override detected level
+          - Route to appropriate workflow based on level
+          - Verify quick-spec workflow (already imported) works with L1
         points: 3
         priority: P2
         status: backlog
         repos: pennyfarthing
         workflow: tdd
-        acceptance_criteria: []
+        acceptance_criteria:
+          - User describes work, scale level auto-detected
+          - User can override detected level
+          - L0 routes to trivial workflow
+          - L1 routes to quick-spec workflow
+          - L2+ routes to prd workflow
         jira: MSSCI-12417
       - id: MSSCI-12418
         title: "Enterprise workflow hooks"
