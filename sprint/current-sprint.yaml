@@ -803,40 +803,7 @@ epics:
         completed: "2026-01-22"
       - id: MSSCI-12403
         title: "Cyclist UX polish: persona popup and controls refinement"
-        description: |
-          Improve Cyclist visual terminal UX with focus on persona popup presentation,
-          control button styling, and keyboard shortcut rationalization.
-
-          Persona Popup Enhancements:
-          - Remove VOICE section (keep STYLE, BACKGROUND, QUIRKS)
-          - Add team roster on right side of popup
-          - Hover over team member shows their portrait/details (live preview)
-          - Show team statistics (tier rankings)
-          - Show agent statistics (lift over baseline from Job Fair benchmarks)
-          - Smooth open/close animations
-
-          Control Button Polish:
-          - Convert RELAY button to icon-only with bicycle icon 🚲
-          - Convert BELL button to icon-only with bell icon 🔔
-          - Consistent sizing and hover states for icon buttons
-          - Tooltips explaining each control on hover
-
-          Keyboard Shortcut Rationalization:
-          - Audit all current keyboard shortcuts for collisions
-          - Design non-conflicting shortcut scheme
-          - Ensure shortcuts don't fire when typing in text inputs
-          - Create modal manager for Escape key priority
-          - Replace naked 's'/'a' keys with Cmd+Enter variants
-
-          Behaviors (BDD scenarios):
-          - GIVEN the RELAY button WHEN rendered THEN show bicycle icon only (no text)
-          - GIVEN the BELL button WHEN rendered THEN show bell icon only (no text)
-          - GIVEN any icon button WHEN hovered THEN show tooltip with label
-          - GIVEN persona popup opens WHEN team roster visible THEN show all theme agents
-          - GIVEN user hovers team member WHEN in popup THEN preview that agent's details
-          - GIVEN persona popup WHEN rendered THEN show team tier and agent lift stats
-          - GIVEN user is typing in input WHEN shortcut key pressed THEN do not trigger
-          - GIVEN Escape pressed WHEN multiple modals open THEN close topmost only
+        description: "Improve Cyclist visual terminal UX with focus on persona popup presentation,\ncontrol button styling, and keyboard shortcut rationalization.\n\nPersona Popup Enhancements:\n- Remove VOICE section (keep STYLE, BACKGROUND, QUIRKS)\n- Add team roster on right side of popup\n- Hover over team member shows their portrait/details (live preview)\n- Show team statistics (tier rankings)\n- Show agent statistics (lift over baseline from Job Fair benchmarks)\n- Smooth open/close animations\n\nControl Button Polish:\n- Convert RELAY button to icon-only with bicycle icon \U0001F6B2\n- Convert BELL button to icon-only with bell icon \U0001F514\n- Consistent sizing and hover states for icon buttons\n- Tooltips explaining each control on hover\n\nKeyboard Shortcut Rationalization:\n- Audit all current keyboard shortcuts for collisions\n- Design non-conflicting shortcut scheme\n- Ensure shortcuts don't fire when typing in text inputs\n- Create modal manager for Escape key priority\n- Replace naked 's'/'a' keys with Cmd+Enter variants\n\nBehaviors (BDD scenarios):\n- GIVEN the RELAY button WHEN rendered THEN show bicycle icon only (no text)\n- GIVEN the BELL button WHEN rendered THEN show bell icon only (no text)\n- GIVEN any icon button WHEN hovered THEN show tooltip with label\n- GIVEN persona popup opens WHEN team roster visible THEN show all theme agents\n- GIVEN user hovers team member WHEN in popup THEN preview that agent's details\n- GIVEN persona popup WHEN rendered THEN show team tier and agent lift stats\n- GIVEN user is typing in input WHEN shortcut key pressed THEN do not trigger\n- GIVEN Escape pressed WHEN multiple modals open THEN close topmost only\n"
         points: 5
         priority: P2
         status: done
