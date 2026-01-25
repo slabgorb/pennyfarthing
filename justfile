@@ -306,5 +306,9 @@ validate-agents *args:
 validate-subagents:
     ./pennyfarthing-dist/scripts/misc/validate-subagent-frontmatter.sh
 
+# Validate sprint YAML structure
+validate-sprint *args:
+    .venv/bin/python -m pennyfarthing_scripts.sprint.validator {{args}}
+
 # Run all validations
-validate: validate-agents validate-subagents
+validate: validate-agents validate-subagents validate-sprint

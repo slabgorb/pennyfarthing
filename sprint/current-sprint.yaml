@@ -1074,6 +1074,7 @@ epics:
           - Rhetorical questions do not trigger
           - AskUserQuestion tool use requires marker
       - id: MSSCI-12394
+        jira: MSSCI-12394
         title: "Sprint and Story YAML validators"
         description: |
           Create validation scripts for Pennyfarthing YAML files to catch
@@ -1096,9 +1097,11 @@ epics:
           - Epic stories reference valid story IDs
         points: 3
         priority: P2
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: tdd
+        branch: feature/MSSCI-12394-sprint-yaml-validators
+        assigned_to: Keith Avery
         acceptance_criteria:
           - Sprint YAML validates structure and required fields
           - Story entries validate all required fields
@@ -1106,6 +1109,7 @@ epics:
           - Clear error messages for validation failures
           - Can validate archived sprints
           - just validate-sprint recipe works
+        completed: "2026-01-25"
       - id: MSSCI-12395
         jira: MSSCI-12395
         title: "Refactor turbo mode into independent relay toggle"
@@ -1272,10 +1276,11 @@ epics:
           module.
         points: 3
         priority: P2
-        status: in_progress
+        status: done
         repos: pennyfarthing
         branch: feat/63-7-jira-scripts-python
         workflow: tdd
+        completed: "2026-01-25"
       - id: "63-8"
         jira: MSSCI-12402
         title: "Port git utility scripts to Python"
