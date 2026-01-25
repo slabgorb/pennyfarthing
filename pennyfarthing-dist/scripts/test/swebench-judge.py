@@ -17,52 +17,15 @@ import sys
 from pathlib import Path
 from difflib import SequenceMatcher
 
-def load_swebench_data(cache_path="/tmp/swebench_all.json"):
-    """Load SWE-bench ground truth data."""
-    with open(cache_path, 'r') as f:
-        return json.load(f)
+# Add parent to path for pennyfarthing_scripts imports
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
-def find_ground_truth(data, scenario_name):
-    """Find scenario in SWE-bench data."""
-    for item in data:
-        instance_id = item.get('instance_id', '')
-        if scenario_name in instance_id.replace('__', '-'):
-            return item
-    return None
+from pennyfarthing_scripts.swebench import (
+    extract_patch_info,
+    find_scenario,
+    load_swebench_data,
+)
 
-def extract_patch_info(patch_text):
-    """Extract structured info from patch."""
-    info = {
-        'files': [],
-        'functions': [],
-        'additions': [],
-        'deletions': [],
-        'key_code': []
-    }
-
-    for line in patch_text.split('\n'):
-        if line.startswith('diff --git'):
-            match = re.search(r'b/(.+)$', line)
-            if match:
-                info['files'].append(match.group(1))
-
-        if line.startswith('@@'):
-            match = re.search(r'@@.*@@\s*(.+)$', line)
-            if match:
-                info['functions'].append(match.group(1).strip())
-
-        if line.startswith('+') and not line.startswith('+++'):
-            clean = line[1:].strip()
-            if clean and not clean.startswith('#'):
-                info['additions'].append(clean)
-                info['key_code'].append(clean)
-
-        if line.startswith('-') and not line.startswith('---'):
-            clean = line[1:].strip()
-            if clean and not clean.startswith('#'):
-                info['deletions'].append(clean)
-
-    return info
 
 def score_identifies_bug_location(response, ground_truth):
     """Score IDENTIFIES_BUG_LOCATION (15 pts) using ground truth."""
@@ -74,33 +37,34 @@ def score_identifies_bug_location(response, ground_truth):
 
     # Check files (7.5 pts)
     files_found = 0
-    for f in patch_info['files']:
+    for f in patch_info.files:
         filename = Path(f).name.lower()
         if filename in response_lower or f.lower() in response_lower:
             files_found += 1
 
-    if patch_info['files']:
-        file_score = (files_found / len(patch_info['files'])) * 7.5
+    if patch_info.files:
+        file_score = (files_found / len(patch_info.files)) * 7.5
         score += file_score
-        details.append(f"Files: {files_found}/{len(patch_info['files'])} found")
+        details.append(f"Files: {files_found}/{len(patch_info.files)} found")
 
     # Check functions/classes (7.5 pts)
     funcs_found = 0
-    for func in patch_info['functions']:
+    for func in patch_info.functions:
         func_match = re.search(r'(def|class)\s+(\w+)', func)
         if func_match:
             func_name = func_match.group(2).lower()
             if func_name in response_lower:
                 funcs_found += 1
 
-    if patch_info['functions']:
-        func_score = min(7.5, (funcs_found / len(patch_info['functions'])) * 7.5)
+    if patch_info.functions:
+        func_score = min(7.5, (funcs_found / len(patch_info.functions)) * 7.5)
         score += func_score
-        details.append(f"Functions: {funcs_found}/{len(patch_info['functions'])} found")
+        details.append(f"Functions: {funcs_found}/{len(patch_info.functions)} found")
     else:
         score += 3.75  # Partial credit if no specific function in patch
 
     return min(15, score), details
+
 
 def score_explains_why_broken(response, ground_truth):
     """Score EXPLAINS_WHY_BROKEN (15 pts)."""
@@ -133,6 +97,7 @@ def score_explains_why_broken(response, ground_truth):
 
     return min(15, score), details
 
+
 def score_fix_addresses_issue(response, ground_truth):
     """Score FIX_ADDRESSES_ISSUE (20 pts) using ground truth patch."""
     patch_info = extract_patch_info(ground_truth.get('patch', ''))
@@ -143,7 +108,7 @@ def score_fix_addresses_issue(response, ground_truth):
 
     # Check if key additions from patch appear in response
     additions_matched = 0
-    for addition in patch_info['additions'][:5]:
+    for addition in patch_info.additions[:5]:
         # Normalize whitespace
         addition_norm = re.sub(r'\s+', ' ', addition.lower())
         response_norm = re.sub(r'\s+', ' ', response_lower)
@@ -157,10 +122,10 @@ def score_fix_addresses_issue(response, ground_truth):
             if sim > 0.7:
                 additions_matched += 0.5
 
-    if patch_info['additions']:
-        addition_score = (additions_matched / min(5, len(patch_info['additions']))) * 15
+    if patch_info.additions:
+        addition_score = (additions_matched / min(5, len(patch_info.additions))) * 15
         score += addition_score
-        details.append(f"Code matches: {additions_matched}/{min(5, len(patch_info['additions']))}")
+        details.append(f"Code matches: {additions_matched}/{min(5, len(patch_info.additions))}")
 
     # Check for code block with fix
     if '```' in response:
@@ -168,6 +133,7 @@ def score_fix_addresses_issue(response, ground_truth):
         details.append("Has code block")
 
     return min(20, score), details
+
 
 def score_fix_is_minimal(response, ground_truth):
     """Score FIX_IS_MINIMAL (10 pts)."""
@@ -177,7 +143,7 @@ def score_fix_is_minimal(response, ground_truth):
     details = []
 
     # Count lines in patch vs lines in response code blocks
-    patch_lines = len(patch_info['additions']) + len(patch_info['deletions'])
+    patch_lines = len(patch_info.additions) + len(patch_info.deletions)
 
     # Extract code blocks from response
     code_blocks = re.findall(r'```[\w]*\n(.*?)```', response, re.DOTALL)
@@ -199,6 +165,7 @@ def score_fix_is_minimal(response, ground_truth):
         score = 5
 
     return min(10, score), details
+
 
 def score_fix_syntax_correct(response):
     """Score FIX_SYNTAX_CORRECT (10 pts)."""
@@ -232,6 +199,7 @@ def score_fix_syntax_correct(response):
 
     return min(10, score), details
 
+
 def score_edge_cases(response):
     """Score EDGE_CASES (10 pts)."""
     response_lower = response.lower()
@@ -246,6 +214,7 @@ def score_edge_cases(response):
     details.append(f"Edge case markers: {found}")
 
     return score, details
+
 
 def score_test_coverage(response):
     """Score TEST_COVERAGE (10 pts)."""
@@ -271,6 +240,7 @@ def score_test_coverage(response):
 
     return min(10, score), details
 
+
 def score_in_character(response, persona="senior developer"):
     """Score IN_CHARACTER (10 pts)."""
     response_lower = response.lower()
@@ -287,9 +257,10 @@ def score_in_character(response, persona="senior developer"):
 
     return score, details
 
+
 def judge_response(scenario_name, response_text, swebench_data):
     """Full judgment using scenario rubric + ground truth."""
-    ground_truth = find_ground_truth(swebench_data, scenario_name)
+    ground_truth = find_scenario(swebench_data, scenario_name)
 
     if not ground_truth:
         return {'error': f'Scenario {scenario_name} not found in SWE-bench data'}
@@ -345,14 +316,16 @@ def judge_response(scenario_name, response_text, swebench_data):
         scores['persona']['subtotal']
     )
 
+    patch_info = extract_patch_info(ground_truth.get('patch', ''))
     return {
         'scenario': scenario_name,
         'instance_id': ground_truth.get('instance_id'),
         'scores': scores,
         'total': round(total, 1),
         'details': all_details,
-        'ground_truth_files': extract_patch_info(ground_truth.get('patch', ''))['files']
+        'ground_truth_files': patch_info.files
     }
+
 
 def main():
     if len(sys.argv) < 3:
@@ -395,6 +368,7 @@ def main():
     with open(output_path, 'w') as f:
         json.dump(result, f, indent=2)
     print(f"\nSaved to: {output_path}")
+
 
 if __name__ == '__main__':
     main()

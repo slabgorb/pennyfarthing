@@ -10,44 +10,33 @@ from typing import Any
 import yaml
 
 
-def get_project_root() -> Path:
+def get_project_root(start_dir: Path | None = None) -> Path:
     """Find the Pennyfarthing project root.
 
-    Walks up from current file looking for package.json marker.
-
-    Returns:
-        Path to project root directory
-    """
-    current = Path(__file__).resolve().parent
-    while current != current.parent:
-        if (current / "package.json").exists():
-            return current
-        current = current.parent
-    # Fallback to parent of pennyfarthing_scripts
-    return Path(__file__).resolve().parent.parent
-
-
-def find_project_root(start_dir: Path | None = None) -> Path:
-    """Find project root by looking for .claude directory.
+    Walks up from start_dir (or cwd) looking for .pennyfarthing directory.
 
     Args:
         start_dir: Directory to start search from (defaults to cwd)
 
     Returns:
-        Path to project root
+        Path to project root directory
 
     Raises:
-        FileNotFoundError: If no .claude directory found
+        FileNotFoundError: If no .pennyfarthing directory found
     """
     current = Path(start_dir) if start_dir else Path.cwd()
     current = current.resolve()
 
     while current != current.parent:
-        if (current / ".claude").is_dir():
+        if (current / ".pennyfarthing").is_dir():
             return current
         current = current.parent
 
-    raise FileNotFoundError("Could not find project root (no .claude/ directory found)")
+    raise FileNotFoundError("Could not find project root (no .pennyfarthing/ directory found)")
+
+
+# Alias for backwards compatibility
+find_project_root = get_project_root
 
 
 def load_yaml_config(path: Path) -> dict[str, Any] | None:

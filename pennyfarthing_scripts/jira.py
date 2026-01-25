@@ -298,3 +298,316 @@ def map_github_to_jira(github_user: str | None) -> str | None:
         return None
 
     return GITHUB_TO_JIRA_MAP.get(github_user, f"{github_user}@1898andco.io")
+
+
+# =============================================================================
+# JiraClient - Unified REST API client
+# =============================================================================
+
+
+class JiraClient:
+    """Unified Jira REST API client with sync and async support.
+
+    Consolidates REST API access previously scattered across:
+    - jira_sync.py (httpx async)
+    - jira_epic_creation.py (curl subprocess)
+
+    Usage (sync):
+        client = JiraClient()
+        issue = client.get_issue("MSSCI-12345")
+
+    Usage (async):
+        client = JiraClient()
+        issue = await client.get_issue_async("MSSCI-12345")
+    """
+
+    def __init__(
+        self,
+        base_url: str | None = None,
+        user: str | None = None,
+        token: str | None = None,
+    ):
+        """Initialize Jira client.
+
+        Args:
+            base_url: Jira instance URL (defaults to JIRA_URL env/constant)
+            user: Jira user email (defaults to JIRA_USER env)
+            token: API token (defaults to JIRA_API_TOKEN env)
+        """
+        self.base_url = base_url or JIRA_URL
+        self.user = user or os.environ.get("JIRA_USER", "keith.avery@1898andco.io")
+        self.token = token or os.environ.get("JIRA_API_TOKEN", "")
+
+    def _get_auth_header(self) -> dict[str, str]:
+        """Build authorization header for REST API.
+
+        Returns:
+            Dict with Authorization header, or empty dict if no token
+        """
+        if not self.token:
+            return {}
+
+        import base64
+
+        credentials = base64.b64encode(f"{self.user}:{self.token}".encode()).decode()
+        return {"Authorization": f"Basic {credentials}"}
+
+    def _get_headers(self, content_type: bool = False) -> dict[str, str]:
+        """Build full headers for API request.
+
+        Args:
+            content_type: Include Content-Type header for POST/PUT
+
+        Returns:
+            Headers dict
+        """
+        headers = self._get_auth_header()
+        headers["Accept"] = "application/json"
+        if content_type:
+            headers["Content-Type"] = "application/json"
+        return headers
+
+    # -------------------------------------------------------------------------
+    # Sync methods (using subprocess curl for reliability)
+    # -------------------------------------------------------------------------
+
+    def _call_api_sync(
+        self,
+        method: str,
+        endpoint: str,
+        data: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
+        """Call Jira REST API synchronously.
+
+        Args:
+            method: HTTP method (GET, POST, PUT)
+            endpoint: API endpoint (e.g., /rest/api/3/issue/MSSCI-123)
+            data: Request body data
+
+        Returns:
+            Response JSON if successful, None otherwise
+        """
+        if not self.token:
+            return None
+
+        url = f"{self.base_url}{endpoint}"
+
+        curl_args = [
+            "curl",
+            "-s",
+            "-X", method,
+            "-H", "Accept: application/json",
+            "-H", "Content-Type: application/json",
+            "-u", f"{self.user}:{self.token}",
+        ]
+
+        if data:
+            curl_args.extend(["-d", json.dumps(data)])
+
+        curl_args.append(url)
+
+        result = subprocess.run(curl_args, capture_output=True, text=True)
+
+        if result.returncode != 0:
+            return None
+
+        try:
+            return json.loads(result.stdout)
+        except json.JSONDecodeError:
+            return None
+
+    def get_issue_sync(self, issue_key: str) -> dict[str, Any] | None:
+        """Fetch issue from Jira synchronously.
+
+        Args:
+            issue_key: Jira issue key (e.g., MSSCI-12345)
+
+        Returns:
+            Issue JSON dict or None if not found
+        """
+        return self._call_api_sync("GET", f"/rest/api/3/issue/{issue_key}")
+
+    def create_issue_sync(self, payload: dict[str, Any]) -> dict[str, Any] | None:
+        """Create a Jira issue synchronously.
+
+        Args:
+            payload: Issue creation payload with fields
+
+        Returns:
+            Created issue JSON (with key, id) or None on failure
+        """
+        return self._call_api_sync("POST", "/rest/api/3/issue", payload)
+
+    def update_issue_sync(
+        self, issue_key: str, fields: dict[str, Any]
+    ) -> dict[str, Any] | None:
+        """Update issue fields synchronously.
+
+        Args:
+            issue_key: Jira issue key
+            fields: Fields to update
+
+        Returns:
+            Response JSON or None on failure
+        """
+        return self._call_api_sync(
+            "PUT", f"/rest/api/3/issue/{issue_key}", {"fields": fields}
+        )
+
+    # -------------------------------------------------------------------------
+    # Async methods (using httpx for parallel operations)
+    # -------------------------------------------------------------------------
+
+    async def get_issue_async(self, issue_key: str) -> dict[str, Any] | None:
+        """Fetch issue from Jira asynchronously.
+
+        Args:
+            issue_key: Jira issue key
+
+        Returns:
+            Issue JSON dict or None if not found
+        """
+        import httpx
+
+        url = f"{self.base_url}/rest/api/3/issue/{issue_key}"
+        headers = self._get_headers()
+
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.get(url, headers=headers, timeout=30.0)
+                if response.status_code == 200:
+                    return response.json()
+                return None
+            except httpx.HTTPError:
+                return None
+
+    async def transition_async(
+        self, issue_key: str, target_status: str
+    ) -> dict[str, Any]:
+        """Transition issue to target status asynchronously.
+
+        Args:
+            issue_key: Jira issue key
+            target_status: Target status name (e.g., "In Progress", "Done")
+
+        Returns:
+            Result dict with success status and optional reason
+        """
+        import httpx
+
+        url = f"{self.base_url}/rest/api/3/issue/{issue_key}/transitions"
+        headers = self._get_headers(content_type=True)
+
+        async with httpx.AsyncClient() as client:
+            try:
+                # Get available transitions
+                response = await client.get(url, headers=headers, timeout=30.0)
+                if response.status_code != 200:
+                    return {
+                        "success": False,
+                        "reason": f"Could not get transitions: {response.status_code}",
+                    }
+
+                transitions = response.json().get("transitions", [])
+                transition_id = None
+                for t in transitions:
+                    if t.get("name", "").lower() == target_status.lower():
+                        transition_id = t.get("id")
+                        break
+
+                if not transition_id:
+                    return {
+                        "success": False,
+                        "reason": f"No transition to '{target_status}' available",
+                    }
+
+                # Execute transition
+                response = await client.post(
+                    url,
+                    headers=headers,
+                    json={"transition": {"id": transition_id}},
+                    timeout=30.0,
+                )
+
+                if response.status_code in (200, 204):
+                    return {"success": True}
+                return {
+                    "success": False,
+                    "reason": f"Transition failed: {response.status_code}",
+                }
+
+            except httpx.HTTPError as e:
+                return {"success": False, "reason": str(e)}
+
+    async def update_fields_async(
+        self, issue_key: str, fields: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Update issue fields asynchronously.
+
+        Args:
+            issue_key: Jira issue key
+            fields: Fields dict to update
+
+        Returns:
+            Result dict with success status
+        """
+        import httpx
+
+        url = f"{self.base_url}/rest/api/3/issue/{issue_key}"
+        headers = self._get_headers(content_type=True)
+
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.put(
+                    url,
+                    headers=headers,
+                    json={"fields": fields},
+                    timeout=30.0,
+                )
+
+                if response.status_code in (200, 204):
+                    return {"success": True}
+                return {"success": False, "reason": f"HTTP {response.status_code}"}
+
+            except httpx.HTTPError as e:
+                return {"success": False, "reason": str(e)}
+
+    async def sync_story_points_async(
+        self,
+        issue_key: str,
+        points: int,
+        current_points: int | None = None,
+    ) -> dict[str, Any]:
+        """Sync story points to Jira asynchronously.
+
+        Args:
+            issue_key: Jira issue key
+            points: Story points to set
+            current_points: Current Jira points (to check if sync needed)
+
+        Returns:
+            Result dict with success status
+        """
+        if current_points is not None and current_points == points:
+            return {"success": True, "already_synced": True}
+
+        # customfield_10031 is Story Points for 1898andco Jira
+        return await self.update_fields_async(
+            issue_key, {"customfield_10031": points}
+        )
+
+
+# Module-level client instance for convenience
+_default_client: JiraClient | None = None
+
+
+def get_client() -> JiraClient:
+    """Get or create the default JiraClient instance.
+
+    Returns:
+        Shared JiraClient instance
+    """
+    global _default_client
+    if _default_client is None:
+        _default_client = JiraClient()
+    return _default_client
