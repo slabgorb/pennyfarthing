@@ -8,6 +8,7 @@ import { getTokenStatsClients } from './api/token-stats.js';
 import { getBackgroundTaskClients } from './api/background-tasks.js';
 import { getBellClients } from './api/bell.js';
 import { getWelcomeClients } from './api/welcome.js';
+import { addHookClient, handleHookWebSocketMessage } from './api/hook-request.js';
 import { getTokenStats, getBackgroundTasks, addToolEventListener, type ToolEvent } from './otlp-receiver.js';
 import { getEnrichedSpans } from './enriched-span-exporter.js';
 import { detectPennyfarthingProject, getCurrentPersona, watchAgentChanges } from './pennyfarthing.js';
@@ -100,6 +101,9 @@ export function setupWebSocketServers(
   // WebSocket server for welcome messages at /ws/welcome
   const welcomeWss = new WebSocketServer({ noServer: true });
 
+  // WebSocket server for hook requests at /ws/hooks (MSSCI-12409)
+  const hooksWss = new WebSocketServer({ noServer: true });
+
   // Handle upgrade requests
   server.on('upgrade', (request, socket, head) => {
     const pathname = new URL(request.url || '', `http://${request.headers.host}`).pathname;
@@ -147,6 +151,10 @@ export function setupWebSocketServers(
     } else if (pathname === '/ws/welcome') {
       welcomeWss.handleUpgrade(request, socket, head, (ws) => {
         welcomeWss.emit('connection', ws, request);
+      });
+    } else if (pathname === '/ws/hooks') {
+      hooksWss.handleUpgrade(request, socket, head, (ws) => {
+        hooksWss.emit('connection', ws, request);
       });
     } else {
       // Reject connections to other paths
@@ -355,6 +363,22 @@ export function setupWebSocketServers(
     // Handle errors gracefully
     ws.on('error', () => {
       welcomeClients.delete(ws);
+    });
+  });
+
+  // Handle hooks WebSocket connections (MSSCI-12409: WheelHub consolidation)
+  hooksWss.on('connection', (ws: WebSocket) => {
+    console.log('[WebSocket] Hook client connected');
+    addHookClient(ws);
+
+    // Handle messages from client (approval responses)
+    ws.on('message', (data: Buffer) => {
+      handleHookWebSocketMessage(ws, data.toString());
+    });
+
+    // Handle errors gracefully
+    ws.on('error', (err) => {
+      console.error('[WebSocket] Hook client error:', err);
     });
   });
 

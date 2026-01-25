@@ -27,6 +27,7 @@ import {
   createBackgroundTasksRouter,
   initBackgroundTaskBroadcast,
   createSpansRouter,
+  createHookRequestRouter,
 } from './api/index.js';
 
 // Settings initialization (35-6: required for font settings persistence)
@@ -102,6 +103,8 @@ app.use('/api/settings', createSettingsRouter());
 app.use('/api/background-tasks', createBackgroundTasksRouter());
 // MSSCI-11734: Enriched spans API
 app.use('/api/spans', createSpansRouter());
+// MSSCI-12409: Hook request API (WheelHub consolidation)
+app.use('/api/hook-request', createHookRequestRouter());
 
 // Welcome message endpoint (triggered by SessionStart hook)
 // Broadcasts welcome message to /ws/welcome channel for Cyclist display
