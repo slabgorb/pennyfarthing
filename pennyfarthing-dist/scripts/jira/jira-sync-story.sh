@@ -1,8 +1,18 @@
 #!/usr/bin/env zsh
-# Thin wrapper for jira-sync-story.mjs
-# Usage: ./scripts/jira-sync-story.sh <story_key> [--transition] [--points] [--comment "message"]
+# Sync a single story between sprint YAML and Jira
+# Usage: jira-sync-story.sh <story_key> [--transition] [--points] [--comment "message"]
 #
-# Delegates to Node script for cleaner, more maintainable implementation.
+# Thin wrapper that delegates to Python CLI:
+#   python -m pennyfarthing_scripts.jira create story <story_key> [options]
+#
+# Note: The subcommand is 'create story' but it handles sync, not creation.
 
+set -e
+
+# Source common functions for Python discovery
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-exec node "${SCRIPT_DIR}/jira/jira-sync-story.mjs" "$@"
+PARENT_DIR="$(dirname "$SCRIPT_DIR")"
+source "${PARENT_DIR}/lib/common.sh"
+
+# Delegate to Python CLI
+run_python_module jira create story "$@"
