@@ -26,3 +26,6 @@ efficiency:
   avg_input_tokens: 1200
   avg_output_tokens: 1000
   tokens_per_point: 26
+
+metadata:
+  pennyfarthing_version: "4.3.0"
