@@ -105,7 +105,7 @@ app.use('/api/spans', createSpansRouter());
 
 // Welcome message endpoint (triggered by SessionStart hook)
 // Broadcasts welcome message to /ws/welcome channel for Cyclist display
-import { broadcastWelcome, getWelcomeClients } from './api/welcome.js';
+import { broadcastWelcome } from './api/welcome.js';
 
 app.post('/api/welcome', (req, res) => {
   const { project, theme } = req.body || {};
