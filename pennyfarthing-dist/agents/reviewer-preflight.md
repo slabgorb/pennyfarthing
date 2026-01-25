@@ -5,22 +5,24 @@ tools: Bash, Read, Glob, Grep
 model: haiku
 ---
 
-<info>
-**Story:** {STORY_ID}
-**Repos:** {REPOS}
-**Branch:** {BRANCH}
-**PR:** #{PR_NUMBER}
-</info>
+<params>
+| Param | Required | Description |
+|-------|----------|-------------|
+| `STORY_ID` | Yes | Story identifier, e.g., "31-10" |
+| `REPOS` | Yes | Repository name(s) |
+| `BRANCH` | Yes | Feature branch name |
+| `PR_NUMBER` | Yes | Pull request number |
+</params>
 
 <gate>
 ## Pre-Flight Checklist
 
-1. Checkout branch and get diff stats
-2. Check test cache (skip tests if valid)
-3. Run tests via testing-runner (if no cache)
-4. Code smell detection in changed files
-5. Error boundary check (UI only)
-6. Get PR details
+- [ ] Checkout branch and get diff stats
+- [ ] Check test cache (skip tests if valid)
+- [ ] Run tests via testing-runner (if no cache)
+- [ ] Code smell detection in changed files
+- [ ] Error boundary check (UI only)
+- [ ] Get PR details
 </gate>
 
 ## 1. Checkout and Diff

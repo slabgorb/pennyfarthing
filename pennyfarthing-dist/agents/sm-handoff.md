@@ -19,24 +19,27 @@ This subagent verifies prerequisites and updates session file only.
 Return `HANDOFF_RESULT` with the next agent name - SM runs `handoff-marker.sh` as their last action.
 </critical>
 
-<info>
-**From:** SM
-**To:** {NEXT_AGENT} (TEA or Dev)
-**Session:** `.session/{STORY_ID}-session.md`
-</info>
+<params>
+| Param | Required | Description |
+|-------|----------|-------------|
+| `STORY_ID` | Yes | Story identifier, e.g., "31-10" |
+| `NEXT_AGENT` | Yes | Target agent: `tea` or `dev` |
+| `NEXT_PHASE` | Yes | Target phase: `red` (TEA) or `implement` (Dev) |
+| `WORKFLOW` | Yes | Workflow type: "tdd", "trivial", etc. |
+</params>
 
 <gate>
 ## Handoff Checklist
 
-1. Session file exists with story context
-2. Acceptance criteria defined (count, don't mark)
-3. Feature branches created
-4. Jira story claimed (if applicable)
-5. Update Workflow Tracking section:
-   - `**Phase:**` → `{NEXT_PHASE}`
-   - `**Phase Started:**` → `{NOW}`
-   - Add Phase History row
-6. Report status summary
+- [ ] Session file exists with story context
+- [ ] Acceptance criteria defined (count, don't mark)
+- [ ] Feature branches created
+- [ ] Jira story claimed (if applicable)
+- [ ] Update Workflow Tracking section:
+  - `**Phase:**` → `{NEXT_PHASE}`
+  - `**Phase Started:**` → `{NOW}`
+  - Add Phase History row
+- [ ] Report status summary
 </gate>
 
 ## Phase Transition Update
