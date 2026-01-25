@@ -16,8 +16,8 @@ import { highlightCode } from './syntax-highlighter.js';
  */
 export function stripMarkers(text) {
   if (!text) return text;
-  // Remove CYCLIST markers: <!-- CYCLIST:TYPE:value -->
-  return text.replace(/<!--\s*CYCLIST:\w+:[^>]+?\s*-->/gi, '').trim();
+  // Remove CYCLIST markers: <!-- CYCLIST:TYPE --> or <!-- CYCLIST:TYPE:value -->
+  return text.replace(/<!--\s*CYCLIST:[^>]+?\s*-->/gi, '').trim();
 }
 
 /**
