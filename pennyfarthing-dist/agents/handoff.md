@@ -5,9 +5,9 @@ tools: Bash, Read, Edit, Grep
 model: haiku
 ---
 
-<params>
-| Param | Required | Description |
-|-------|----------|-------------|
+<arguments>
+| Argument | Required | Description |
+|----------|----------|-------------|
 | `STORY_ID` | Yes | e.g., "31-10" |
 | `WORKFLOW` | Yes | "tdd", "trivial", etc. |
 | `CURRENT_PHASE` | Yes | "red", "green", "review" |
@@ -16,7 +16,7 @@ model: haiku
 | `TEST_RESULT` | No | "RED" or "GREEN" |
 | `ASSESSMENT_SECTION` | No | e.g., "TEA Assessment" |
 | `PR_NUMBER` | No | For green→review |
-</params>
+</arguments>
 
 <critical>
 **Marker generation happens in the CALLING agent, not here.**

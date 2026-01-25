@@ -19,14 +19,14 @@ This subagent verifies prerequisites and updates session file only.
 Return `HANDOFF_RESULT` with the next agent name - SM runs `handoff-marker.sh` as their last action.
 </critical>
 
-<params>
-| Param | Required | Description |
-|-------|----------|-------------|
+<arguments>
+| Argument | Required | Description |
+|----------|----------|-------------|
 | `STORY_ID` | Yes | Story identifier, e.g., "31-10" |
 | `NEXT_AGENT` | Yes | Target agent: `tea` or `dev` |
 | `NEXT_PHASE` | Yes | Target phase: `red` (TEA) or `implement` (Dev) |
 | `WORKFLOW` | Yes | Workflow type: "tdd", "trivial", etc. |
-</params>
+</arguments>
 
 <gate>
 ## Handoff Checklist
