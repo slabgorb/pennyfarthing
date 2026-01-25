@@ -1361,7 +1361,8 @@ epics:
           - Verify quick-spec workflow (already imported) works with L1
         points: 3
         priority: P2
-        status: backlog
+        status: done
+        branch: feat/MSSCI-12417-workflow-init
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria:
