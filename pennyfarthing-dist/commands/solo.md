@@ -249,6 +249,37 @@ It goes directly to a file, then jq reads it safely.
 
 ## Step 6: Invoke Judge Skill
 
+**Detect SWE-bench scenarios for deterministic evaluation:**
+
+Check if the scenario is from SWE-bench by looking at its path or category:
+```python
+is_swebench = (
+    'swe-bench' in scenario_path.lower() or
+    scenario.get('category') == 'swe-bench' or
+    scenario.get('source') == 'swe-bench'
+)
+```
+
+**If SWE-bench scenario:**
+
+Use deterministic Python-based evaluation instead of LLM-as-judge:
+
+```bash
+# Save response to temp file for Python judge
+echo '{"result": "{RESPONSE}"}' > /tmp/solo_response_$$.json
+
+# Run SWE-bench judge (deterministic scoring against ground truth)
+python3 .pennyfarthing/scripts/test/swebench-judge.py {scenario_name} /tmp/solo_response_$$.json
+```
+
+The Python script returns:
+- `total`: Score out of 100
+- `scores`: Breakdown by category (root_cause, fix_quality, completeness, persona)
+- `details`: Specific findings and matches
+
+**If standard scenario (non-SWE-bench):**
+
+Use LLM-as-judge:
 ```
 /judge --mode solo --data {
   "spec": "{spec}",
