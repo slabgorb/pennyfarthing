@@ -61,51 +61,55 @@ Edit `## Workflow Tracking`:
 
 **Duration:** Subtract SM Started from {NOW}, format as `Xm` or `Xh Ym`.
 
+<output>
 ## Output Format
 
-Return a `HANDOFF_RESULT` block. SM will use this to run `handoff-marker.sh`.
+Return a `HANDOFF_RESULT` block:
 
-### Success Format
-
+### Success
 ```
 HANDOFF_RESULT:
   status: success
   next_agent: {NEXT_AGENT}
   next_phase: {NEXT_PHASE}
   story_id: {STORY_ID}
-  summary: "Session updated, branch verified, Jira claimed"
+  summary: "{what was done}"
+
+  next_steps:
+    - "Handoff complete. Run handoff-marker.sh as ABSOLUTE LAST ACTION."
+    - "Command: $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}"
+    - "Output marker result verbatim, then EXIT. Nothing after."
 ```
 
 ### Example (SM → TEA)
-
 ```
 HANDOFF_RESULT:
   status: success
   next_agent: tea
   next_phase: red
   story_id: MSSCI-12274
-  summary: "Session updated (setup → red), branch feat/MSSCI-12274-image-queue verified, 7 AC defined"
+  summary: "Session updated (setup → red), branch verified, 7 AC defined"
+
+  next_steps:
+    - "Handoff complete. Run handoff-marker.sh as ABSOLUTE LAST ACTION."
+    - "Command: $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh tea"
+    - "Output marker result verbatim, then EXIT. Nothing after."
 ```
 
-### Example (SM → Dev, trivial workflow)
-
-```
-HANDOFF_RESULT:
-  status: success
-  next_agent: dev
-  next_phase: implement
-  story_id: 46-3
-  summary: "Session updated (setup → implement), branch feat/46-3-fix-typo verified"
-```
-
-### Error Format
-
+### Blocked
 ```
 HANDOFF_RESULT:
   status: blocked
-  error: "{error message}"
+  error: "{description}"
   fix: "{recommended action}"
+  failed_check: "{which gate check failed}"
+
+  next_steps:
+    - "Handoff blocked: {error}"
+    - "Required action: {fix}"
+    - "Do NOT run handoff-marker.sh. Resolve issue first."
 ```
+</output>
 
 ---
 

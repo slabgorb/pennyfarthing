@@ -30,34 +30,50 @@ Read FULL file content, not just headers. Summaries must be detailed enough that
 - [ ] Provide line references
 </gate>
 
+<output>
 ## Output Format
 
-```markdown
-### file: {path} ({N} lines)
+Return a `FILE_SUMMARY_RESULT` block:
 
-**Summary:** {2-3 sentence description}
+### Success
+```
+FILE_SUMMARY_RESULT:
+  status: success
+  files_summarized: {N}
+  files:
+    - path: "{path}"
+      lines: {N}
+      summary: "{2-3 sentence description}"
+      pattern: "{Service|Component|Hook|etc.}"
+      key_exports:
+        - "{FunctionName(params) ReturnType}"
+      dependencies:
+        internal: ["{import}"]
+        external: ["{package}"]
+      lines_of_interest:
+        - range: "L{start}-L{end}"
+          description: "{why interesting}"
+      relevance: "{why this file matters to story}"
 
-**Key exports:**
-- `FunctionName(params) ReturnType` - description
-- `TypeName` - description
-
-**Patterns:** {Service | Component | Hook | etc.}
-
-**Dependencies:**
-- Internal: {imports}
-- External: {packages}
-
-**Lines of interest:**
-- L{start}-L{end}: {description}
-
-**Relevant to story:** {why this file matters}
+  next_steps:
+    - "File summaries complete. Use this context to write story context file."
+    - "Key files for implementation: {list top 3 by relevance}"
 ```
 
-## Error Handling
-
-```markdown
-### file: {path} (NOT FOUND)
-
-**Error:** File does not exist
-**Suggestion:** Check path or `ls -la {directory}`
+### Partial (some files not found)
 ```
+FILE_SUMMARY_RESULT:
+  status: warning
+  files_summarized: {N}
+  files_missing: {N}
+  missing:
+    - path: "{path}"
+      suggestion: "{check path or ls -la}"
+  files:
+    - {... same as success}
+
+  next_steps:
+    - "{N} files not found. Verify paths or update FILE_LIST."
+    - "Proceeding with {files_summarized} available summaries."
+```
+</output>

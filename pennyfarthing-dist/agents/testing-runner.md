@@ -86,25 +86,69 @@ if test_cache_valid "$SESSION_FILE"; then
 fi
 ```
 
+<output>
 ## Output Format
 
-```markdown
-## Test Results: {CONTEXT}
+Return a `TEST_RESULT` block:
 
-### Summary
-| Repo | Passed | Failed | Skipped | Status |
-|------|--------|--------|---------|--------|
-
-### Overall: {GREEN / RED / YELLOW}
-
-- **GREEN:** All pass, no skips
-- **YELLOW:** All pass, skips exist
-- **RED:** Failures
-
-### Failing Tests
-| Repo | Test | File | Error |
-|------|------|------|-------|
+### Success (GREEN)
 ```
+TEST_RESULT:
+  status: success
+  overall: GREEN
+  passed: {N}
+  failed: 0
+  skipped: 0
+  duration: "{Xs}"
+  repos:
+    - name: {repo}
+      passed: {N}
+      failed: 0
+      skipped: 0
+
+  next_steps:
+    - "Tests passing. Caller may proceed with handoff."
+    - "If Dev: Ready for PR creation and Reviewer handoff."
+    - "If TEA: WARNING - tests should be RED. Verify tests exercise new code."
+```
+
+### Warning (YELLOW)
+```
+TEST_RESULT:
+  status: warning
+  overall: YELLOW
+  passed: {N}
+  failed: 0
+  skipped: {N}
+  skip_violations:
+    - repo: {repo}
+      test: "{test name}"
+      file: "{file path}"
+
+  next_steps:
+    - "Tests pass but {N} skipped. Review skip violations before handoff."
+    - "Skipped tests may indicate incomplete implementation."
+```
+
+### Blocked (RED)
+```
+TEST_RESULT:
+  status: blocked
+  overall: RED
+  passed: {N}
+  failed: {N}
+  failures:
+    - repo: {repo}
+      test: "{test name}"
+      file: "{file path}"
+      error: "{error message}"
+
+  next_steps:
+    - "Tests failing. Do NOT proceed with handoff."
+    - "If Dev: Fix failures before continuing."
+    - "If TEA: RED state confirmed. Ready for Dev handoff."
+```
+</output>
 
 ## Background Execution
 

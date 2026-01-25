@@ -28,7 +28,7 @@ If invalid, explain the rules and ask again.
 
 ### Step 2: Mode Selection
 
-Use `AskUserQuestion` to let the user choose their creation mode:
+Output `<!-- CYCLIST:CHOICES:mode -->` marker, then use AskUserQuestion:
 
 ```yaml
 questions:
@@ -253,7 +253,7 @@ Display a preview of all generated agents before confirming:
 
 ### Step 4: Confirm or Regenerate
 
-Use `AskUserQuestion` to let the user decide:
+Output `<!-- CYCLIST:CHOICES:confirm -->` marker, then use AskUserQuestion:
 
 ```yaml
 questions:
@@ -380,7 +380,7 @@ Same as AI-Driven mode - ask for the theme concept:
 
 ### Step 2: Generate Options for Each Agent
 
-For each agent type, generate 3-4 fitting character suggestions based on the universe. Present options using `AskUserQuestion`:
+For each agent type, generate 3-4 fitting character suggestions based on the universe. Output `<!-- CYCLIST:CHOICES:agent -->` marker, then present options using AskUserQuestion:
 
 ```yaml
 questions:
@@ -458,7 +458,7 @@ Show a preview of the complete theme before confirming. Include OCEAN scores for
 
 ### Step 5: Confirm or Edit
 
-Use `AskUserQuestion` to let the user decide:
+Output `<!-- CYCLIST:CHOICES:confirm -->` marker, then use AskUserQuestion:
 
 ```yaml
 questions:
@@ -608,7 +608,7 @@ Show a preview of the complete theme including OCEAN profiles:
 
 ### Step 6: Confirm or Edit
 
-Use `AskUserQuestion` to let the user decide:
+Output `<!-- CYCLIST:CHOICES:confirm -->` marker, then use AskUserQuestion:
 
 ```yaml
 questions:

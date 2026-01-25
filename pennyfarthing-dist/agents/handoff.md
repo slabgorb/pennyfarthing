@@ -135,48 +135,71 @@ No automated checks. Always passes.
 
 ---
 
+<output>
 ## Output Format
 
-Return a `HANDOFF_RESULT` block. The calling agent will use this to run `handoff-marker.sh`.
+Return a `HANDOFF_RESULT` block:
 
-### Success Format
-
+### Success
 ```
 HANDOFF_RESULT:
   status: success
   next_agent: {NEXT_AGENT}
   next_phase: {NEXT_PHASE}
   gate: {GATE_TYPE}
+  story_id: {STORY_ID}
+
+  next_steps:
+    - "Handoff complete. Run handoff-marker.sh as ABSOLUTE LAST ACTION."
+    - "Command: $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}"
+    - "Output marker result verbatim, then EXIT. Nothing after."
 ```
 
 ### Example (TEA → Dev)
-
 ```
 HANDOFF_RESULT:
   status: success
   next_agent: dev
   next_phase: green
   gate: tests_fail
+  story_id: 46-5
+
+  next_steps:
+    - "Handoff complete. Run handoff-marker.sh as ABSOLUTE LAST ACTION."
+    - "Command: $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh dev"
+    - "Output marker result verbatim, then EXIT. Nothing after."
 ```
 
 ### Example (Dev → Reviewer)
-
 ```
 HANDOFF_RESULT:
   status: success
   next_agent: reviewer
   next_phase: review
   gate: tests_pass
+  story_id: 46-5
+
+  next_steps:
+    - "Handoff complete. Run handoff-marker.sh as ABSOLUTE LAST ACTION."
+    - "Command: $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh reviewer"
+    - "Output marker result verbatim, then EXIT. Nothing after."
 ```
 
-### Error Format
-
+### Blocked
 ```
 HANDOFF_RESULT:
   status: blocked
-  error: "{error message}"
+  error: "{description}"
   fix: "{recommended action}"
+  gate: {GATE_TYPE}
+  failed_check: "{specific check that failed}"
+
+  next_steps:
+    - "Handoff blocked at gate '{gate}': {error}"
+    - "Required action: {fix}"
+    - "Do NOT run handoff-marker.sh. Resolve issue first."
 ```
+</output>
 
 ---
 

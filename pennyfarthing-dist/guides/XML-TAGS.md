@@ -199,6 +199,49 @@ Tags used specifically by Haiku subagents for parameter contracts.
 
 **Note:** Use `<info>` for contextual information that isn't a parameter contract.
 
+### `<output>`
+
+**Purpose:** Define the standardized output format for subagents. Ensures calling agents receive both data AND instructions on what to do next.
+
+**Usage:** All subagents must use this format for their final output.
+
+**Standard format:**
+```markdown
+<output>
+## Output Format
+
+Return a `{SUBAGENT}_RESULT` block:
+
+### Success
+\`\`\`
+{SUBAGENT}_RESULT:
+  status: success
+  {data fields...}
+
+  next_steps:
+    - {instruction 1}
+    - {instruction 2}
+\`\`\`
+
+### Blocked
+\`\`\`
+{SUBAGENT}_RESULT:
+  status: blocked
+  error: "{description}"
+  fix: "{recommended action}"
+
+  next_steps:
+    - {what caller should do}
+\`\`\`
+</output>
+```
+
+**Required fields:**
+- `status`: `success` | `blocked` | `warning`
+- `next_steps`: Array of instructions for the calling agent
+
+**Why this matters:** Subagent output is NOT visible to users (only to the calling agent). Clear next steps ensure the caller knows exactly what to do with the result.
+
 ## Specialized Tags (Single-Agent Use)
 
 Tags used by specific agents for their unique responsibilities.

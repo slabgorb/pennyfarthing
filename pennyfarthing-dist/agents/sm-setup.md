@@ -36,18 +36,33 @@ model: haiku
 - [ ] Output report with recommendations
 </gate>
 
-## Output Format
+<output>
+## Output Format (MODE: research)
 
-```markdown
-## Sprint {N} Backlog Research
+Return a `RESEARCH_RESULT` block:
 
-### Available Stories
-| Story | Title | Points | Repos | Context |
-|-------|-------|--------|-------|---------|
-
-### Recommended Next
-**Story {ID}:** {TITLE} ({PTS} pts)
 ```
+RESEARCH_RESULT:
+  status: success
+  sprint_number: {N}
+  available_count: {N}
+  stories:
+    - id: "{STORY_ID}"
+      title: "{title}"
+      points: {N}
+      repos: ["{repo}"]
+      context_ready: {true|false}
+      blocked_by: ["{dependency}"] or null
+  recommended:
+    id: "{STORY_ID}"
+    reason: "{why this story}"
+
+  next_steps:
+    - "Present stories to user for selection."
+    - "Recommended: {recommended.id} - {recommended.reason}"
+    - "On selection: Spawn sm-setup with MODE=setup, STORY_ID={selected}"
+```
+</output>
 
 ---
 
@@ -98,11 +113,13 @@ GRANTS=$(cat .claude/settings.local.json 2>/dev/null | jq '.permissions.grants /
 **For each required permission:**
 
 1. Check if a matching grant exists (same tool + scope)
-2. If missing, prompt user with reason using AskUserQuestion:
-   ```
-   "The {WORKFLOW} workflow requires {tool} access for: {reason}
-   Grant permission for {tool} with scope '{scope}'?"
-   ```
+2. If missing, prompt user for permission:
+   - First output marker: `<!-- CYCLIST:QUESTION:yesno -->`
+   - Then use AskUserQuestion with the prompt:
+     ```
+     "The {WORKFLOW} workflow requires {tool} access for: {reason}
+     Grant permission for {tool} with scope '{scope}'?"
+     ```
 3. If granted, add to `.claude/settings.local.json` under `permissions.grants[]`:
    ```json
    {
@@ -161,21 +178,39 @@ cd $CLAUDE_PROJECT_DIR && git checkout develop && git pull && \
 git checkout -b feat/{STORY_ID}-{SLUG}
 ```
 
-## Output
+<output>
+## Output Format (MODE: setup)
 
-```markdown
-## Setup Complete
+Return a `SETUP_RESULT` block:
 
-- [x] Jira claimed: {JIRA_KEY}
-- [x] Session file: `.session/{STORY_ID}-session.md`
-- [x] Branch: `feat/{STORY_ID}-{SLUG}`
+### Success
+```
+SETUP_RESULT:
+  status: success
+  story_id: "{STORY_ID}"
+  jira_key: "{JIRA_KEY}"
+  session_file: ".session/{STORY_ID}-session.md"
+  branch: "feat/{STORY_ID}-{SLUG}"
+  workflow: "{WORKFLOW}"
+  next_agent: "{tea|dev}"
+
+  next_steps:
+    - "Setup complete. Spawn sm-handoff to transition to {next_agent}."
+    - "Workflow '{workflow}' routes to: {next_agent}"
+    - "Session file ready at: {session_file}"
 ```
 
-## Error Handling
-
-```markdown
-## SETUP BLOCKED
-
-**Issue:** {DESCRIPTION}
-**Fix:** {RECOMMENDED_ACTION}
+### Blocked
 ```
+SETUP_RESULT:
+  status: blocked
+  error: "{description}"
+  fix: "{recommended action}"
+  stage: "{epic_jira|permissions|jira_claim|session|branch}"
+
+  next_steps:
+    - "Setup blocked at {stage}: {error}"
+    - "Required action: {fix}"
+    - "Do NOT proceed with handoff until resolved."
+```
+</output>

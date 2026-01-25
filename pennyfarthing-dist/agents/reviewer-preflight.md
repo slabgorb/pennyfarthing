@@ -77,22 +77,52 @@ Search changed files for:
 gh pr view {PR_NUMBER} --json title,body,additions,deletions,changedFiles
 ```
 
+<output>
 ## Output Format
 
-```markdown
-## Pre-Flight Report: Story {STORY_ID}
+Return a `PREFLIGHT_RESULT` block:
 
-### Test Results
-| Repo | Passed | Failed | Status |
-|------|--------|--------|--------|
-
-### Code Smells
-| Pattern | Count | Files |
-|---------|-------|-------|
-
-### Diff Stats
-- Files: {N}, +{additions}, -{deletions}
-
-### Files to Review
-{list}
+### Success
 ```
+PREFLIGHT_RESULT:
+  status: success
+  story_id: {STORY_ID}
+  tests:
+    overall: {GREEN|YELLOW|RED}
+    passed: {N}
+    failed: {N}
+    skipped: {N}
+  code_smells:
+    console_log: {N}
+    dangerously_set_inner_html: {N}
+    test_skips: {N}
+    todos: {N}
+  diff:
+    files: {N}
+    additions: {N}
+    deletions: {N}
+  pr:
+    number: {N}
+    title: "{title}"
+    url: "{url}"
+  files_to_review:
+    - "{path}"
+
+  next_steps:
+    - "Preflight complete. Begin critical analysis of diff."
+    - "Focus review on: {files_to_review}"
+    - "Code smells found: {total_smells} - investigate before approval."
+```
+
+### Blocked
+```
+PREFLIGHT_RESULT:
+  status: blocked
+  error: "{description}"
+  fix: "{recommended action}"
+
+  next_steps:
+    - "Cannot proceed with review. {error}"
+    - "Action required: {fix}"
+```
+</output>

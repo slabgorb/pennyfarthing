@@ -38,26 +38,62 @@ This subagent only performs preflight checks and assessment.
 
 **Preflight only verifies:** Jira is ready for transition (not blocked, not already Done).
 
-## Readiness Report
+<output>
+## Output Format
 
-```json
-{
-  "pr_status": "merged|open|NO_PR",
-  "lint_status": "clean|failed",
-  "jira_current": "In Progress|Done|N/A",
-  "acceptance_criteria": { "total": N, "checked": N },
-  "ready_to_finish": true|false,
-  "issues": [],
-  "warnings": []
-}
+Return a `FINISH_PREFLIGHT_RESULT` block:
+
+### Ready to Finish
+```
+FINISH_PREFLIGHT_RESULT:
+  status: success
+  ready_to_finish: true
+  story_id: "{STORY_ID}"
+  pr:
+    status: "merged"
+    url: "{url}"
+  lint: "clean"
+  jira:
+    current: "In Progress"
+    key: "{JIRA_KEY}"
+  acceptance_criteria:
+    total: {N}
+    checked: {N}
+
+  next_steps:
+    - "Preflight passed. Run finish-story.sh to complete."
+    - "Command: .pennyfarthing/scripts/core/run.sh workflow/finish-story.sh {STORY_ID}"
+    - "Then commit and push sprint archive changes."
 ```
 
-<info>
-**ready_to_finish = true when:**
-- PR merged (or acceptable for trivial)
-- Lint clean
-- All ACs checked
-- No critical issues
+### Not Ready
+```
+FINISH_PREFLIGHT_RESULT:
+  status: blocked
+  ready_to_finish: false
+  issues:
+    - severity: "critical"
+      issue: "{description}"
+      fix: "{action}"
+  warnings:
+    - "{non-blocking warning}"
 
-**Jira skipped:** Set `jira_skipped: true` if no valid key.
-</info>
+  next_steps:
+    - "Cannot finish. {issues.length} blocking issue(s)."
+    - "Critical: {issues[0].issue} - Fix: {issues[0].fix}"
+    - "Resolve issues before running finish-story.sh"
+```
+
+### Jira Skipped
+```
+FINISH_PREFLIGHT_RESULT:
+  status: success
+  ready_to_finish: true
+  jira_skipped: true
+  reason: "No valid Jira key in session"
+
+  next_steps:
+    - "Preflight passed (Jira skipped). Run finish-story.sh to complete."
+    - "Note: Story will not be transitioned in Jira."
+```
+</output>

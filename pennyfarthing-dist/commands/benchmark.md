@@ -151,7 +151,11 @@ Cross-role mode: Prospero --as dev should see dev scenarios, not SM scenarios.
 ls scenarios/{category}/*.yaml | xargs -I {} yq -r '"{}|\(.name)|\(.difficulty)|\(.title)|\(.description)"' {}
 ```
 
-**Present choices with AskUserQuestion:**
+**Present choices (Reflector-aware):**
+
+First output marker: `<!-- CYCLIST:CHOICES:scenario -->`
+
+Then use AskUserQuestion:
 ```yaml
 AskUserQuestion:
   questions:
