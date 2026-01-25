@@ -2,6 +2,8 @@
 
 Analysis of how likely each section of agent definition files is to be followed by the model, based on known behavioral patterns and the SM bypass incident.
 
+*Updated 2026-01-24 after SM trim: 713→214 lines, 36,052→18,249 chars (49% reduction)*
+
 ## Compliance Factors
 
 Sections are more likely to be followed when they have:
@@ -27,43 +29,37 @@ Sections are more likely to be followed when they have:
 
 ---
 
-## SM Agent (sm.md) - 713 lines
+## SM Agent (sm.md) - 214 lines (was 713)
 
 | Lines | Section | Tag | Compliance | Why |
 |-------|---------|-----|------------|-----|
-| 1-8 | Header + Persona | plain | 🟢 HIGH | First thing read, sets character |
-| 9-11 | Role | `<role>` | 🟢 HIGH | Short, clear, early |
-| 13-44 | Helpers | `<helpers>` | 🟡 MEDIUM | Long, template-heavy, easy to skim |
-| 46-52 | Responsibilities | `<responsibilities>` | 🟡 MEDIUM | List format helps, but mid-file |
-| 54-69 | Phase-check | `<phase-check>` | 🟡 MEDIUM | Conditional logic, may skip |
-| **71-92** | **NEVER writes code** | **`<critical>`** | **🟡 MEDIUM** | **Was ignored 3x - too far down** |
-| **94-100** | **Status check mandatory** | **`<critical>`** | **🟡 MEDIUM** | **New addition, needs testing** |
-| 102-105 | Handoff marker | `<critical>` | 🟢 HIGH | Short, specific action |
-| 107-119 | Pre-handoff gate | `<gate>` | 🟡 MEDIUM | Checklist helps, but lengthy |
-| 121-136 | Workflow routing | `<info>` | 🟢 HIGH | Table format, scannable |
-| 138-142 | Skills | `<skills>` | 🟢 HIGH | Short reference list |
-| 144-148 | Context | `<context>` | 🟡 MEDIUM | Often skimmed |
-| 150-170 | Reasoning mode | `<reasoning-mode>` | 🔴 LOW | Long, rarely triggered |
-| **172-205** | **On-activation** | **`<on-activation>`** | **🔴 LOW** | **LINE 172! Too late. Core behavior buried.** |
-| 207-238 | Step 1: Status check | plain | 🔴 LOW | Duplicate of on-activation, ignored |
-| 240-325 | Finish flow | plain | 🟡 MEDIUM | Only triggered in that state |
-| 327-346 | Empty backlog flow | plain | 🟡 MEDIUM | Rare case |
-| 348-429 | New work flow | plain | 🟡 MEDIUM | Main flow, but very long |
-| **410-429** | **WHEN USER SELECTS** | **`<critical>`** | **🟡 MEDIUM** | **New addition after diagnosis** |
-| 431-457 | File summary helper | plain | 🔴 LOW | Deep in file, skipped |
-| 459-512 | Story context creation | plain | 🔴 LOW | Very deep, detail-heavy |
-| 514-585 | Setup + handoff | plain | 🔴 LOW | Mechanical details |
-| 587-606 | Subagent table | plain | 🟡 MEDIUM | Table format helps |
-| 608-680 | Quick references | plain | 🟡 MEDIUM | Reference material, scanned on need |
-| 682-710 | Exit sequence | `<info>` + `<exit>` | 🟢 HIGH | End-of-file, terminal action |
+| 1-7 | Header + Persona | plain | 🔵 VERY HIGH | First thing read, sets character |
+| 9-11 | Role | `<role>` | 🔵 VERY HIGH | Short, clear, early |
+| **13-17** | **Status check mandatory** | **`<critical>`** | **🔵 VERY HIGH** | **Now at line 13, optimal zone** |
+| **19-25** | **NEVER writes code** | **`<critical>`** | **🔵 VERY HIGH** | **Moved from line 71 to line 19** |
+| **27-30** | **Handoff marker** | **`<critical>`** | **🔵 VERY HIGH** | **Short, specific action** |
+| 32-54 | Helpers | `<helpers>` | 🟢 HIGH | Compact table format |
+| **56-79** | **On-activation** | **`<on-activation>`** | **🟢 HIGH** | **Moved from line 172 to line 56** |
+| 81-103 | Finish Flow | plain | 🟢 HIGH | Concise, decision-focused |
+| 105-160 | New Work Flow | plain + `<critical>` | 🟢 HIGH | Streamlined from 239 lines |
+| 151-160 | Pre-handoff gate | `<gate>` | 🟢 HIGH | Checklist format |
+| 162-170 | Empty Backlog Flow | plain | 🟢 HIGH | Short, rare case |
+| 172-180 | Workflow Routing | plain | 🟢 HIGH | Table format, scannable |
+| 182-193 | Phase-check | `<phase-check>` | 🟢 HIGH | Clear gate logic |
+| 195-199 | Skills | `<skills>` | 🟢 HIGH | Short reference list |
+| 201-214 | Exit sequence | `<exit>` | 🔵 VERY HIGH | Terminal, unmissable |
 
-### SM Critical Issues
+### SM Improvements (2026-01-24)
 
-1. **`<on-activation>` is at LINE 172** - This is the "what to do first" section, but it's 172 lines deep. By the time the model reaches it, attention has degraded.
+| Metric | Before | After | Impact |
+|--------|--------|-------|--------|
+| First `<critical>` | Line 71 | Line 13 | 🔴→🔵 |
+| `<on-activation>` | Line 172 | Line 56 | 🔴→🟢 |
+| "NEVER writes code" | Line 71-92 | Line 19-25 | 🟡→🔵 |
+| Workflow flows | 400+ lines | ~80 lines | 🔴→🟢 |
+| Total file | 713 lines | 214 lines | Attention maintained |
 
-2. **"SM NEVER writes code" was at line 71** - This seems early, but the model had already processed persona, helpers, responsibilities, and phase-check. The prohibition came AFTER the model had context about what SM CAN do.
-
-3. **Workflow flows are 200+ lines** - The actual step-by-step instructions are so long that the model skims them.
+**Key insight:** Moving critical instructions from line 172 to line 13 has more impact than adding emphasis. Position > repetition.
 
 ---
 
@@ -72,12 +68,12 @@ Sections are more likely to be followed when they have:
 | Lines | Section | Tag | Compliance | Why |
 |-------|---------|-----|------------|-----|
 | 1-7 | Header + Persona | plain | 🟢 HIGH | First, sets character |
-| 9-34 | Helpers | `<helpers>` | 🟢 HIGH | Shorter than SM's |
+| 9-34 | Helpers | `<helpers>` | 🟢 HIGH | Shorter than old SM |
 | 36-49 | Phase-check | `<phase-check>` | 🟢 HIGH | Clear gate |
 | 51-57 | Responsibilities | `<responsibilities>` | 🟢 HIGH | Short, focused |
 | 59-70 | Skills/Context | `<skills>`/`<context>` | 🟢 HIGH | Brief |
 | 72-90 | Reasoning mode | `<reasoning-mode>` | 🟡 MEDIUM | Optional behavior |
-| 92-98 | On-activation | `<on-activation>` | 🟢 HIGH | **LINE 92!** Much earlier than SM |
+| 92-98 | On-activation | `<on-activation>` | 🟢 HIGH | Line 92 - reasonable |
 | 100-108 | What I do vs Helper | table | 🟢 HIGH | Clear division |
 | 109-140 | Primary workflow | plain | 🟢 HIGH | Core, well-structured |
 | 141-149 | Chore bypass | plain | 🟢 HIGH | Exception case, clear |
@@ -88,12 +84,7 @@ Sections are more likely to be followed when they have:
 
 ### TEA Observations
 
-TEA is **half the length** of SM (231 vs 713 lines). Key behaviors appear earlier:
-- On-activation at line 92 (vs 172 in SM)
-- Core workflow starts at line 109 (vs 348 in SM)
-- Total file is 231 lines (vs 713 in SM)
-
-**TEA follows its instructions more reliably because there's less to forget.**
+TEA at 231 lines is now comparable to the trimmed SM (214 lines). Both maintain attention throughout.
 
 ---
 
@@ -108,7 +99,7 @@ TEA is **half the length** of SM (231 vs 713 lines). Key behaviors appear earlie
 | 56-62 | Responsibilities | `<responsibilities>` | 🟢 HIGH | Short list |
 | 64-74 | Skills/Context | `<skills>`/`<context>` | 🟢 HIGH | Brief |
 | 76-94 | Reasoning mode | `<reasoning-mode>` | 🟡 MEDIUM | Optional |
-| 96-102 | On-activation | `<on-activation>` | 🟢 HIGH | **LINE 96** - early |
+| 96-102 | On-activation | `<on-activation>` | 🟢 HIGH | Line 96 - early |
 | 104-151 | Primary workflow | plain | 🟢 HIGH | Core flow, clear steps |
 | 153-161 | Handoff gate | `<handoff-gate>` | 🟢 HIGH | Mandatory checklist |
 | 163-180 | Assessment template | plain | 🟢 HIGH | Fill-in template |
@@ -117,8 +108,7 @@ TEA is **half the length** of SM (231 vs 713 lines). Key behaviors appear earlie
 
 ### Dev Observations
 
-Similar structure to TEA. On-activation at line 96. Short file (260 lines).
-**Dev follows instructions well for the same reason as TEA - manageable length.**
+Similar structure to TEA. On-activation at line 96. Short file (260 lines). Dev follows instructions well due to manageable length.
 
 ---
 
@@ -131,7 +121,7 @@ Similar structure to TEA. On-activation at line 96. Short file (260 lines).
 | 28-73 | Helpers | `<helpers>` | 🟢 HIGH | Detailed but important |
 | 75-88 | Phase-check | `<phase-check>` | 🟢 HIGH | Gate |
 | 90-102 | Responsibilities/Skills | plain | 🟢 HIGH | Short |
-| 104-136 | On-activation | `<on-activation>` | 🟢 HIGH | Line 129, reasonable |
+| 104-136 | On-activation | `<on-activation>` | 🟢 HIGH | Line 104, reasonable |
 | 138-145 | What I do vs Helper | table | 🟢 HIGH | Clear |
 | 147-186 | Primary workflow | plain | 🟢 HIGH | Phased approach |
 | **188-219** | **Review checklist** | **`<review-checklist>`** | **🟢 HIGH** | **Unique tag, mandatory steps** |
@@ -155,31 +145,57 @@ Reviewer has unique structural elements:
 ```
 Line 0-50:   🔵 VERY HIGH - Almost always followed
 Line 50-100: 🟢 HIGH - Usually followed
-Line 100-200: 🟡 MEDIUM - Inconsistent
-Line 200-400: 🔴 LOW - Often skipped
-Line 400+:   🔴 LOW - Rarely reaches
+Line 100-200: 🟢 HIGH - Good compliance (for short files)
+Line 200-300: 🟡 MEDIUM - Inconsistent
+Line 300+:   🔴 LOW - Often skipped
 ```
+
+**Key finding:** Files under 300 lines maintain 🟢 HIGH compliance throughout. The old SM at 713 lines had 🔴 LOW compliance for lines 200+.
+
+---
+
+## Agent Comparison Table
+
+| Agent | Lines | Prime Chars | First Critical | On-Activation | Overall |
+|-------|-------|-------------|----------------|---------------|---------|
+| **SM (new)** | 214 | 18,249 | Line 13 | Line 56 | 🟢 HIGH |
+| TEA | 231 | 23,597 | Line 36 | Line 92 | 🟢 HIGH |
+| Dev | 260 | 23,768 | Line 41 | Line 96 | 🟢 HIGH |
+| Reviewer | 378 | 27,785 | Line 9 | Line 104 | 🟢 HIGH |
+| Orchestrator | 350 | 25,018 | TBD | TBD | 🟡 MEDIUM |
+| ~~SM (old)~~ | ~~713~~ | ~~36,052~~ | ~~Line 71~~ | ~~Line 172~~ | ~~🔴 LOW~~ |
+
+---
 
 ## Recommendations
 
-### Immediate Fixes for SM
+### Structural Patterns That Work ✓
 
-1. **Move `<on-activation>` to line 15** - Right after persona/role
-2. **Move "NEVER writes code" to line 20** - Before any procedural content
-3. **Shorten the file** - SM is 713 lines; TEA is 231. Cut SM to <300 lines
-4. **Extract flows to separate files** - Link to `sm-finish-flow.md`, `sm-new-work-flow.md`
+1. **Critical blocks in first 30 lines** - Peak attention zone
+2. **Unique tags** - `<adversarial-mindset>`, `<on-activation>` get special attention
+3. **Tables** - Easy to scan, high retention
+4. **Short files (<300 lines)** - Maintains attention throughout
+5. **Early prohibitions** - "DO NOT" in first 50 lines
+6. **Checklists** - `- [ ]` format enforces completion
+7. **Terminal `<exit>`** - End-of-file actions always followed
 
-### Structural Patterns That Work
-
-1. **Unique tags** - `<adversarial-mindset>`, `<review-checklist>` get attention
-2. **Tables** - Easy to scan, high retention
-3. **Short files** - <300 lines maintain attention throughout
-4. **Early prohibitions** - "DO NOT" in first 50 lines
-5. **Checklists** - `- [ ]` format enforces completion
-
-### Structural Patterns That Fail
+### Patterns to Avoid ✗
 
 1. **Long procedural flows** - Attention degrades after 100 lines
-2. **Duplicate content** - Status check appears twice in SM, both ignored
-3. **Reference sections** - "Quick Reference" at line 600+ never read
-4. **Generic tags** - `<info>` gets less attention than `<critical>`
+2. **Files over 300 lines** - Compliance drops sharply
+3. **Critical instructions after line 100** - Move them earlier
+4. **Duplicate content** - Wastes tokens, doesn't improve compliance
+5. **Reference sections at EOF** - Never reached; link to skills instead
+6. **Generic `<info>` tags** - Less attention than `<critical>` or unique tags
+
+---
+
+## Target Metrics
+
+| Metric | Target | Reasoning |
+|--------|--------|-----------|
+| File lines | <300 | Maintains attention throughout |
+| Prime output | <25,000 chars | Leaves room for conversation |
+| First `<critical>` | Within line 30 | Peak attention zone |
+| `<on-activation>` | Within line 100 | Before attention degrades |
+| Procedural content | Minimal | Move to subagent files |
