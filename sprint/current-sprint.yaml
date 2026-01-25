@@ -1313,6 +1313,6 @@ epics:
           - Easier testing and maintenance
         points: 5
         priority: P1
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: tdd
