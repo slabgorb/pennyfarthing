@@ -66,7 +66,8 @@ describe('MSSCI-12052: Gearshift Mode Switch', () => {
     it('should have RELAY toggle (MSSCI-12395: replaced turbo segment)', () => {
       const relayToggle = indexDocument.querySelector('[data-control="relay-toggle"]');
       expect(relayToggle).not.toBeNull();
-      expect(relayToggle!.textContent).toContain('RELAY');
+      // MSSCI-12403: Relay uses icon-only, text is in title/aria-label
+      expect(relayToggle!.getAttribute('title')).toContain('Relay');
     });
 
     it('should have MANUAL as default active segment', () => {

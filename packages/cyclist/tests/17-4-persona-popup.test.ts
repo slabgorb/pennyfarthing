@@ -118,12 +118,8 @@ describe('Story 17-4: Popup Profile View for Persona Details', () => {
     });
   });
 
-  describe('AC3: Persona attributes displayed (voice, style, quirks, background)', () => {
-    it('should have element for voice attribute', () => {
-      const voiceEl = document.querySelector('.persona-voice, [data-persona="voice"]');
-      expect(voiceEl).not.toBeNull();
-    });
-
+  describe('AC3: Persona attributes displayed (style, quirks, background)', () => {
+    // Note: voice attribute was removed from persona display (not all personas have it)
     it('should have element for style attribute', () => {
       const styleEl = document.querySelector('.persona-style, [data-persona="style"]');
       expect(styleEl).not.toBeNull();
