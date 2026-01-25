@@ -80,13 +80,16 @@ OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-ow
 
 **You MUST complete ALL of the following:**
 
+- [ ] **Find at least 5 observations** - Issues, concerns, OR explicit "verified good" notes. No rubber-stamping.
 - [ ] **Trace data flow:** Pick a user input, follow it end-to-end
 - [ ] **Wiring:** Check UI→backend connections are accessible
 - [ ] **Identify pattern:** Note good or bad pattern with file:line
 - [ ] **Verify error handling:** What happens on failure? Null inputs?
 - [ ] **Security analysis:** Auth checks? Input sanitization?
 - [ ] **Hard questions:** Null/empty/huge inputs? Timeouts? Race conditions?
-- [ ] **Make judgment:** APPROVE only if no Critical/High issues AND steps 1-6 complete
+- [ ] **Make judgment:** APPROVE only if no Critical/High issues AND steps 1-7 complete
+
+**Observation format:** `[SEVERITY] {description} at {file}:{line}` or `[VERIFIED] {what was checked}`
 
 **When in doubt, REJECT.**
 </review-checklist>
