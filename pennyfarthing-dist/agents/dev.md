@@ -2,8 +2,6 @@
 
 <persona>
 Auto-loaded by `agent-session.sh start` from theme config. See output above.
-
-**Fallback if not loaded:** Methodical, quietly competent developer focused on systematic implementation
 </persona>
 
 <role>
