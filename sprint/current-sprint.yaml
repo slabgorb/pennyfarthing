@@ -1258,8 +1258,11 @@ epics:
           - Structured logging
         points: 2
         priority: P1
-        status: backlog
+        status: done
         repos: pennyfarthing
+        branch: feat/63-6-jira-bidirectional-sync-python
+        workflow: tdd
+        completed: "2026-01-25"
       - id: "63-7"
         jira: MSSCI-12401
         title: "Port remaining Jira scripts to Python"
@@ -1286,3 +1289,29 @@ epics:
         priority: P2
         status: backlog
         repos: pennyfarthing
+      - id: "63-9"
+        title: "Reorganize pennyfarthing_scripts into fan-out CLI pattern"
+        description: |
+          Restructure pennyfarthing_scripts to match skill invocations:
+
+          Target structure:
+          - jira.py (CLI) → jira/ (library modules)
+          - sprint.py (CLI) → sprint/ (library modules)
+          - story.py (CLI) → story/ (library modules)
+          - common/ (shared: output.py, config.py)
+
+          Each CLI maps 1:1 with skill args:
+          - /jira [view|claim|sync|...] → python -m pennyfarthing_scripts.jira [subcommand]
+          - /sprint [status|work|archive|...] → python -m pennyfarthing_scripts.sprint [subcommand]
+          - /story [size|template|create|...] → python -m pennyfarthing_scripts.story [subcommand]
+
+          Benefits:
+          - Clear division of responsibility
+          - Agents understand CLI ↔ skill mapping
+          - Library modules importable independently
+          - Easier testing and maintenance
+        points: 5
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
