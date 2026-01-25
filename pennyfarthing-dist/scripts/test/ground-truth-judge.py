@@ -16,71 +16,21 @@ import sys
 from pathlib import Path
 from difflib import SequenceMatcher
 
-def load_swebench_data(cache_path="/tmp/swebench_all.json"):
-    """Load SWE-bench data from cache."""
-    with open(cache_path, 'r') as f:
-        return json.load(f)
+# Add parent to path for pennyfarthing_scripts imports
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
-def find_scenario(data, scenario_name):
-    """Find scenario in SWE-bench data by name."""
-    # Normalize name (flask-5014 -> pallets__flask-5014)
-    for item in data:
-        instance_id = item.get('instance_id', '')
-        # Try various matching strategies
-        if scenario_name in instance_id.replace('__', '-'):
-            return item
-        if scenario_name.replace('-', '__') in instance_id:
-            return item
-    return None
+from pennyfarthing_scripts.swebench import (
+    extract_patch_info,
+    extract_problem_keywords,
+    find_scenario,
+    get_meaningful_patterns,
+    load_swebench_data,
+)
 
-def extract_patch_elements(patch_text):
-    """Extract key elements from a patch."""
-    elements = {
-        'files': [],
-        'functions': [],
-        'additions': [],
-        'deletions': [],
-        'key_patterns': []
-    }
-
-    current_file = None
-    for line in patch_text.split('\n'):
-        # File changes
-        if line.startswith('diff --git'):
-            match = re.search(r'b/(.+)$', line)
-            if match:
-                current_file = match.group(1)
-                elements['files'].append(current_file)
-
-        # Function/class context
-        if line.startswith('@@'):
-            match = re.search(r'@@.*@@\s*(.+)$', line)
-            if match:
-                elements['functions'].append(match.group(1).strip())
-
-        # Additions
-        if line.startswith('+') and not line.startswith('+++'):
-            clean_line = line[1:].strip()
-            if clean_line and not clean_line.startswith('#'):
-                elements['additions'].append(clean_line)
-                # Extract key patterns (function calls, variable names, etc.)
-                patterns = re.findall(r'\b\w+\b', clean_line)
-                elements['key_patterns'].extend(patterns)
-
-        # Deletions
-        if line.startswith('-') and not line.startswith('---'):
-            clean_line = line[1:].strip()
-            if clean_line and not clean_line.startswith('#'):
-                elements['deletions'].append(clean_line)
-
-    # Deduplicate
-    elements['key_patterns'] = list(set(elements['key_patterns']))
-
-    return elements
 
 def score_response(response_text, ground_truth):
     """Score a response against ground truth patch."""
-    gt_elements = extract_patch_elements(ground_truth['patch'])
+    patch_info = extract_patch_info(ground_truth['patch'])
 
     scores = {
         'file_identification': 0,
@@ -94,16 +44,16 @@ def score_response(response_text, ground_truth):
 
     # 1. FILE IDENTIFICATION (20 points)
     files_found = 0
-    for f in gt_elements['files']:
+    for f in patch_info.files:
         # Check various forms of the filename
         filename = Path(f).name
         if filename.lower() in response_lower or f.lower() in response_lower:
             files_found += 1
 
-    if gt_elements['files']:
-        file_score = (files_found / len(gt_elements['files'])) * 20
+    if patch_info.files:
+        file_score = (files_found / len(patch_info.files)) * 20
         scores['file_identification'] = min(20, file_score)
-        scores['details']['files_expected'] = gt_elements['files']
+        scores['details']['files_expected'] = patch_info.files
         scores['details']['files_found'] = files_found
     else:
         scores['file_identification'] = 20  # No specific file in patch
@@ -111,7 +61,7 @@ def score_response(response_text, ground_truth):
     # 2. LOCATION IDENTIFICATION (20 points)
     # Look for function/class names mentioned in the patch
     locations_found = 0
-    for func in gt_elements['functions']:
+    for func in patch_info.functions:
         # Extract the function/class name
         func_match = re.search(r'(def|class)\s+(\w+)', func)
         if func_match:
@@ -121,20 +71,17 @@ def score_response(response_text, ground_truth):
         elif func.strip() and func.strip().split()[0] in response_lower:
             locations_found += 1
 
-    if gt_elements['functions']:
-        loc_score = (locations_found / len(gt_elements['functions'])) * 20
+    if patch_info.functions:
+        loc_score = (locations_found / len(patch_info.functions)) * 20
         scores['location_identification'] = min(20, loc_score)
-        scores['details']['locations_expected'] = gt_elements['functions'][:3]
+        scores['details']['locations_expected'] = patch_info.functions[:3]
         scores['details']['locations_found'] = locations_found
     else:
         scores['location_identification'] = 10  # Partial credit
 
     # 3. FIX LOGIC MATCH (40 points)
     # Check if key code patterns from the fix appear in the response
-    key_patterns = gt_elements['key_patterns']
-    # Filter to meaningful patterns (not common words)
-    common_words = {'if', 'else', 'return', 'self', 'def', 'class', 'for', 'in', 'not', 'and', 'or', 'is', 'none', 'true', 'false'}
-    meaningful_patterns = [p for p in key_patterns if p.lower() not in common_words and len(p) > 2]
+    meaningful_patterns = get_meaningful_patterns(patch_info.key_patterns)
 
     patterns_found = 0
     for pattern in meaningful_patterns:
@@ -150,7 +97,7 @@ def score_response(response_text, ground_truth):
 
     # Check for actual code additions
     additions_matched = 0
-    for addition in gt_elements['additions'][:5]:  # Check first 5 additions
+    for addition in patch_info.additions[:5]:  # Check first 5 additions
         # Normalize and check
         addition_normalized = re.sub(r'\s+', ' ', addition.lower())
         response_normalized = re.sub(r'\s+', ' ', response_lower)
@@ -160,8 +107,8 @@ def score_response(response_text, ground_truth):
         if similarity > 0.6 or addition_normalized in response_normalized:
             additions_matched += 1
 
-    if gt_elements['additions']:
-        addition_score = (additions_matched / min(5, len(gt_elements['additions']))) * 20
+    if patch_info.additions:
+        addition_score = (additions_matched / min(5, len(patch_info.additions))) * 20
         scores['details']['additions_matched'] = additions_matched
     else:
         addition_score = 10
@@ -205,23 +152,6 @@ def score_response(response_text, ground_truth):
 
     return scores
 
-def extract_problem_keywords(problem_statement):
-    """Extract key technical terms from problem statement."""
-    if not problem_statement:
-        return []
-
-    # Find quoted strings, function names, error messages
-    keywords = []
-
-    # Find quoted terms
-    quoted = re.findall(r'[`\'"]([^`\'"]+)[`\'"]', problem_statement)
-    keywords.extend(quoted)
-
-    # Find CamelCase or snake_case identifiers
-    identifiers = re.findall(r'\b[A-Z][a-z]+[A-Z]\w*\b|\b\w+_\w+\b', problem_statement)
-    keywords.extend(identifiers)
-
-    return list(set(keywords))[:10]
 
 def main():
     if len(sys.argv) < 3:
@@ -284,6 +214,7 @@ def main():
     print(f"\nSaved to: {output_path}")
 
     return scores
+
 
 if __name__ == '__main__':
     main()

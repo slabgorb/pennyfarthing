@@ -15,12 +15,11 @@ Examples:
 
 import argparse
 import json
-import os
-import subprocess
 import sys
 from typing import Any
 
 from . import jira
+from .jira import JiraClient
 from .sprint import find_epic, load_current_sprint
 
 
@@ -76,52 +75,6 @@ def build_epic_payload(epic_data: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def call_jira_api(
-    method: str, endpoint: str, data: dict[str, Any] | None = None
-) -> dict[str, Any] | None:
-    """Call Jira REST API.
-
-    Args:
-        method: HTTP method (GET, POST, PUT)
-        endpoint: API endpoint (e.g., /rest/api/3/issue)
-        data: Request body data
-
-    Returns:
-        Response JSON if successful, None otherwise
-    """
-    jira_user = os.environ.get("JIRA_USER", "keith.avery@1898andco.io")
-    jira_token = os.environ.get("JIRA_API_TOKEN")
-
-    if not jira_token:
-        print("[ERROR] JIRA_API_TOKEN not set", file=sys.stderr)
-        return None
-
-    url = f"{jira.JIRA_URL}{endpoint}"
-
-    curl_args = [
-        "curl",
-        "-s",
-        "-X", method,
-        "-H", "Content-Type: application/json",
-        "-u", f"{jira_user}:{jira_token}",
-    ]
-
-    if data:
-        curl_args.extend(["-d", json.dumps(data)])
-
-    curl_args.append(url)
-
-    result = subprocess.run(curl_args, capture_output=True, text=True)
-
-    if result.returncode != 0:
-        return None
-
-    try:
-        return json.loads(result.stdout)
-    except json.JSONDecodeError:
-        return None
-
-
 def create_epic(
     title: str,
     description: str = "",
@@ -148,7 +101,8 @@ def create_epic(
             "payload": payload,
         }
 
-    response = call_jira_api("POST", "/rest/api/3/issue", payload)
+    client = JiraClient()
+    response = client.create_issue_sync(payload)
 
     if response and "key" in response:
         return {

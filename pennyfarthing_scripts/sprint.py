@@ -52,14 +52,8 @@ def find_epic(sprint_data: dict[str, Any], epic_num: str) -> dict[str, Any] | No
     return None
 
 
-def load_current_sprint() -> dict[str, Any] | None:
-    """Load sprint/current-sprint.yaml.
-
-    Returns:
-        Sprint data as dict, or None if not found
-    """
-    sprint_path = get_project_root() / "sprint" / "current-sprint.yaml"
-    return load_yaml_config(sprint_path)
+# Alias for backwards compatibility
+load_current_sprint = load_sprint
 
 
 def get_sprint_info() -> dict[str, Any]:
@@ -68,7 +62,7 @@ def get_sprint_info() -> dict[str, Any]:
     Returns:
         Sprint info dict with number, status, goal, etc.
     """
-    data = load_current_sprint()
+    data = load_sprint()
     if data and "sprint" in data:
         return data["sprint"]
     return {}
@@ -80,7 +74,7 @@ def get_all_stories() -> list[dict[str, Any]]:
     Returns:
         Flat list of all story dicts
     """
-    data = load_current_sprint()
+    data = load_sprint()
     if not data or "epics" not in data:
         return []
 
@@ -130,7 +124,7 @@ def get_epic_by_id(epic_id: str) -> dict[str, Any] | None:
     Returns:
         Epic dict if found, None otherwise
     """
-    data = load_current_sprint()
+    data = load_sprint()
     if not data or "epics" not in data:
         return None
 

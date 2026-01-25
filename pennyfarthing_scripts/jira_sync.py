@@ -12,51 +12,19 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import os
 import sys
 from dataclasses import dataclass, field
 from typing import Any
 
-import httpx
-
-from pennyfarthing_scripts.config import find_project_root
+from pennyfarthing_scripts.config import get_project_root
 from pennyfarthing_scripts.jira import (
-    JIRA_PROJECT,
-    JIRA_URL,
+    JiraClient,
     extract_jira_key,
     get_jira_field,
     map_status_to_jira,
 )
+from pennyfarthing_scripts.output import error, info, success, warn
 from pennyfarthing_scripts.sprint import find_epic, load_sprint
-
-# ANSI colors for output
-COLORS = {
-    "red": "\x1b[31m",
-    "green": "\x1b[32m",
-    "yellow": "\x1b[33m",
-    "blue": "\x1b[34m",
-    "reset": "\x1b[0m",
-}
-
-
-def success(msg: str) -> None:
-    """Print success message."""
-    print(f"{COLORS['green']}[OK]{COLORS['reset']} {msg}", file=sys.stderr)
-
-
-def info(msg: str) -> None:
-    """Print info message."""
-    print(f"{COLORS['blue']}[INFO]{COLORS['reset']} {msg}", file=sys.stderr)
-
-
-def warn(msg: str) -> None:
-    """Print warning message."""
-    print(f"{COLORS['yellow']}[WARN]{COLORS['reset']} {msg}", file=sys.stderr)
-
-
-def error(msg: str) -> None:
-    """Print error message."""
-    print(f"{COLORS['red']}[ERROR]{COLORS['reset']} {msg}", file=sys.stderr)
 
 
 @dataclass
@@ -71,128 +39,16 @@ class SyncResult:
     dry_run: bool = False
 
 
-def get_auth_header() -> dict[str, str]:
-    """Get authorization header for Jira REST API."""
-    jira_user = os.environ.get("JIRA_USER", "keith.avery@1898andco.io")
-    jira_token = os.environ.get("JIRA_API_TOKEN", "")
-    if not jira_token:
-        return {}
-
-    import base64
-
-    credentials = base64.b64encode(f"{jira_user}:{jira_token}".encode()).decode()
-    return {"Authorization": f"Basic {credentials}"}
+# Module-level client for async operations
+_client: JiraClient | None = None
 
 
-async def get_issue_async(issue_key: str) -> dict[str, Any] | None:
-    """Fetch issue from Jira asynchronously.
-
-    Args:
-        issue_key: Jira issue key
-
-    Returns:
-        Issue JSON dict or None if not found
-    """
-    url = f"{JIRA_URL}/rest/api/3/issue/{issue_key}"
-    headers = get_auth_header()
-    headers["Accept"] = "application/json"
-
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.get(url, headers=headers, timeout=30.0)
-            if response.status_code == 200:
-                return response.json()
-            return None
-        except httpx.HTTPError:
-            return None
-
-
-async def move_issue_async(issue_key: str, target_status: str) -> dict[str, Any]:
-    """Transition issue to target status asynchronously.
-
-    Args:
-        issue_key: Jira issue key
-        target_status: Target status name
-
-    Returns:
-        Result dict with success status
-    """
-    # First, get available transitions
-    url = f"{JIRA_URL}/rest/api/3/issue/{issue_key}/transitions"
-    headers = get_auth_header()
-    headers["Accept"] = "application/json"
-    headers["Content-Type"] = "application/json"
-
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.get(url, headers=headers, timeout=30.0)
-            if response.status_code != 200:
-                return {"success": False, "reason": f"Could not get transitions: {response.status_code}"}
-
-            transitions = response.json().get("transitions", [])
-            transition_id = None
-            for t in transitions:
-                if t.get("name", "").lower() == target_status.lower():
-                    transition_id = t.get("id")
-                    break
-
-            if not transition_id:
-                return {"success": False, "reason": f"No transition to '{target_status}' available"}
-
-            # Execute transition
-            response = await client.post(
-                url,
-                headers=headers,
-                json={"transition": {"id": transition_id}},
-                timeout=30.0,
-            )
-
-            if response.status_code in (200, 204):
-                return {"success": True}
-            return {"success": False, "reason": f"Transition failed: {response.status_code}"}
-
-        except httpx.HTTPError as e:
-            return {"success": False, "reason": str(e)}
-
-
-async def sync_story_points_async(
-    issue_key: str,
-    points: int,
-    current_jira_points: int | None = None,
-) -> dict[str, Any]:
-    """Sync story points to Jira asynchronously.
-
-    Args:
-        issue_key: Jira issue key
-        points: Story points to set
-        current_jira_points: Current Jira points (to check if sync needed)
-
-    Returns:
-        Result dict with success status
-    """
-    if current_jira_points is not None and current_jira_points == points:
-        return {"success": True, "already_synced": True}
-
-    url = f"{JIRA_URL}/rest/api/3/issue/{issue_key}"
-    headers = get_auth_header()
-    headers["Accept"] = "application/json"
-    headers["Content-Type"] = "application/json"
-
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.put(
-                url,
-                headers=headers,
-                json={"fields": {"customfield_10031": points}},
-                timeout=30.0,
-            )
-
-            if response.status_code in (200, 204):
-                return {"success": True}
-            return {"success": False, "reason": f"HTTP {response.status_code}"}
-
-        except httpx.HTTPError as e:
-            return {"success": False, "reason": str(e)}
+def _get_client() -> JiraClient:
+    """Get or create the module's JiraClient instance."""
+    global _client
+    if _client is None:
+        _client = JiraClient()
+    return _client
 
 
 def format_story_line(story: dict[str, Any]) -> str:
@@ -273,8 +129,9 @@ async def sync_story(
             dry_run=True,
         )
 
-    # Fetch current Jira state
-    issue_json = await get_issue_async(jira_key)
+    # Get client and fetch current Jira state
+    client = _get_client()
+    issue_json = await client.get_issue_async(jira_key)
     if not issue_json:
         return SyncResult(
             story_id=story_id,
@@ -289,7 +146,7 @@ async def sync_story(
 
     # Transition if requested and needed
     if do_transition and current_status != target_status:
-        result = await move_issue_async(jira_key, target_status)
+        result = await client.transition_async(jira_key, target_status)
         if result.get("success"):
             actions.append(f"transitioned: {current_status} -> {target_status}")
         else:
@@ -301,7 +158,7 @@ async def sync_story(
         current_points = get_jira_field(issue_json, "fields.customfield_10031")
         current_points_int = int(current_points) if current_points else None
 
-        result = await sync_story_points_async(
+        result = await client.sync_story_points_async(
             jira_key, int(story_points), current_points_int
         )
         if result.get("success"):
@@ -406,7 +263,7 @@ async def async_main(args: argparse.Namespace) -> int:
     """
     # Find project root and load sprint
     try:
-        project_root = find_project_root()
+        project_root = get_project_root()
     except FileNotFoundError as e:
         error(str(e))
         return 1
