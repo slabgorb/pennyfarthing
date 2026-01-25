@@ -726,8 +726,8 @@ epics:
   - id: standalone
     type: misc
     title: "Standalone Stories"
-    points: 9
-    completed_points: 6
+    points: 14
+    completed_points: 11
     status: in_progress
     stories:
       - id: MSSCI-11799
@@ -801,6 +801,49 @@ epics:
         branch: feat/MSSCI-12275-bell-mode
         workflow: tdd
         completed: "2026-01-22"
+      - id: MSSCI-12403
+        title: "Cyclist UX polish: persona popup and controls refinement"
+        description: |
+          Improve Cyclist visual terminal UX with focus on persona popup presentation,
+          control button styling, and keyboard shortcut rationalization.
+
+          Persona Popup Enhancements:
+          - Remove VOICE section (keep STYLE, BACKGROUND, QUIRKS)
+          - Add team roster on right side of popup
+          - Hover over team member shows their portrait/details (live preview)
+          - Show team statistics (tier rankings)
+          - Show agent statistics (lift over baseline from Job Fair benchmarks)
+          - Smooth open/close animations
+
+          Control Button Polish:
+          - Convert RELAY button to icon-only with bicycle icon 🚲
+          - Convert BELL button to icon-only with bell icon 🔔
+          - Consistent sizing and hover states for icon buttons
+          - Tooltips explaining each control on hover
+
+          Keyboard Shortcut Rationalization:
+          - Audit all current keyboard shortcuts for collisions
+          - Design non-conflicting shortcut scheme
+          - Ensure shortcuts don't fire when typing in text inputs
+          - Create modal manager for Escape key priority
+          - Replace naked 's'/'a' keys with Cmd+Enter variants
+
+          Behaviors (BDD scenarios):
+          - GIVEN the RELAY button WHEN rendered THEN show bicycle icon only (no text)
+          - GIVEN the BELL button WHEN rendered THEN show bell icon only (no text)
+          - GIVEN any icon button WHEN hovered THEN show tooltip with label
+          - GIVEN persona popup opens WHEN team roster visible THEN show all theme agents
+          - GIVEN user hovers team member WHEN in popup THEN preview that agent's details
+          - GIVEN persona popup WHEN rendered THEN show team tier and agent lift stats
+          - GIVEN user is typing in input WHEN shortcut key pressed THEN do not trigger
+          - GIVEN Escape pressed WHEN multiple modals open THEN close topmost only
+        points: 5
+        priority: P2
+        status: done
+        repos: pennyfarthing
+        branch: feat/MSSCI-12403-persona-popup-redesign
+        workflow: bdd
+        completed: "2026-01-25"
   - id: epic-61
     type: epic
     title: "Epic: Reflector Marker Consolidation"
