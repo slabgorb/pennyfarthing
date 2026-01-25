@@ -1302,8 +1302,10 @@ epics:
           module.
         points: 3
         priority: P2
-        status: backlog
+        status: in_progress
         repos: pennyfarthing
+        branch: feat/63-7-jira-scripts-python
+        workflow: tdd
       - id: "63-8"
         jira: MSSCI-12402
         title: "Port git utility scripts to Python"
