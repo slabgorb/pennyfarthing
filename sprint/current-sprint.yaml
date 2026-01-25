@@ -1101,7 +1101,6 @@ epics:
         repos: pennyfarthing
         workflow: tdd
         branch: feature/MSSCI-12394-sprint-yaml-validators
-        assigned_to: Keith Avery
         acceptance_criteria:
           - Sprint YAML validates structure and required fields
           - Story entries validate all required fields
