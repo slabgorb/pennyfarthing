@@ -9,6 +9,7 @@ Modules:
     jira_sync: Async epic sync to Jira
     jira_sync_story: Single story sync to Jira
     jira_epic_creation: Create Jira epics from sprint YAML
+    jira_bidirectional_sync: Bidirectional sync between sprint YAML and Jira
     swebench: SWE-bench patch parsing and scenario utilities
 """
 
