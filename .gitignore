@@ -79,3 +79,4 @@ worktrees/
 .pennyfarthing/bell-queue.json
 **/.pennyfarthing/bell-queue.json
 .env
+uv.lock
