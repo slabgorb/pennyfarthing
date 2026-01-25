@@ -21,6 +21,8 @@ Canonical evaluation of agent responses. All judging goes through this skill.
 - `phase-dev` - Relay Dev phase rubric
 - `phase-reviewer` - Relay Reviewer phase rubric
 - `coherence` - Relay chain coherence rating
+- `swebench` - Deterministic SWE-bench evaluation (Python script)
+- `ground-truth` - Ground-truth patch comparison (Python script)
 
 ## Unified Rubric (solo/compare)
 
@@ -106,6 +108,8 @@ Extract:
 | compare | `contestants[]` (each with spec, character, response), `challenge` | `baseline_issues`, `baseline_criteria` |
 | phase-* | `team1`, `team2` (each with theme, response), `context` | |
 | coherence | `theme`, `sm_response`, `tea_response`, `dev_response`, `reviewer_response` | |
+| swebench | `scenario`, `response_file` | |
+| ground-truth | `scenario`, `response_file` | |
 
 **Note:** When checklist data is provided, solo mode uses checklist-based evaluation:
 - `baseline_issues` → code-review, tea, dev scenarios (things to FIND)
@@ -467,6 +471,59 @@ Output ONLY valid JSON (no markdown, no extra text):
 }
 ```
 ```
+
+</details>
+
+<details>
+<summary><strong>SWE-bench Mode (Deterministic Python Evaluation)</strong></summary>
+
+**For `swebench` and `ground-truth` modes, use Python scripts instead of LLM-as-judge.**
+
+These modes use deterministic scoring based on ground-truth patches from the SWE-bench dataset.
+
+**Prerequisites:**
+```bash
+# Ensure SWE-bench data is downloaded (one-time)
+.pennyfarthing/scripts/run.sh test/ensure-swebench-data.sh
+```
+
+**swebench mode:**
+Uses structured rubric + ground truth validation. Scores:
+- root_cause (30%): Bug location + explanation
+- fix_quality (40%): Addresses issue + minimal + syntax correct
+- completeness (20%): Edge cases + test coverage
+- persona (10%): In-character delivery
+
+```bash
+# Execute via Python script
+python3 .pennyfarthing/scripts/test/swebench-judge.py <scenario_name> <response_file>
+
+# Example
+python3 .pennyfarthing/scripts/test/swebench-judge.py flask-5014 /tmp/run_1.json
+```
+
+**ground-truth mode:**
+Compares fix against actual SWE-bench patch. Scores:
+- file_identification (20%): Correct files identified
+- location_identification (20%): Correct functions/locations
+- fix_logic_match (40%): Code matches ground truth
+- completeness (20%): Has all elements of good fix
+
+```bash
+# Execute via Python script
+python3 .pennyfarthing/scripts/test/ground-truth-judge.py <scenario_name> <response_file>
+
+# Example
+python3 .pennyfarthing/scripts/test/ground-truth-judge.py django-10554 /tmp/run_1.json
+```
+
+**Response file format:**
+Both scripts expect JSON with either:
+- `result`: The agent's response text
+- `response_text`: Alternative field name
+
+**Output:**
+Scripts print scores to stdout and save detailed JSON to `{input_path.replace('run_', 'swebench_judge_')}` or `{input_path.replace('run_', 'gt_judge_')}`.
 
 </details>
 
