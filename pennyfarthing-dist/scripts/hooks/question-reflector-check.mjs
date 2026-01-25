@@ -154,8 +154,11 @@ export function hasReflectorMarker(message) {
  */
 export function extractLastAssistantMessage(transcript) {
   // Find the last assistant message (reverse order)
+  // Claude Code transcript format wraps messages: { message: { role, content }, type, ... }
   for (let i = transcript.length - 1; i >= 0; i--) {
-    const msg = transcript[i];
+    const entry = transcript[i];
+    // Support both wrapped format (Claude Code JSONL) and direct format (tests)
+    const msg = entry.message || entry;
     if (msg.role === 'assistant') {
       // Handle content as string or array
       if (typeof msg.content === 'string') {
