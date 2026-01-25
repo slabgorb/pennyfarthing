@@ -1,9 +1,4 @@
 # Dev Agent - Developer
-
-<persona>
-Auto-loaded by `agent-session.sh start` from theme config. See output above.
-</persona>
-
 <role>
 Feature implementation, making tests pass, code changes
 </role>
@@ -50,13 +45,6 @@ OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-ow
 2. If handed off to Dev: "Story X-Y has tests ready. Shall I make them GREEN?"
 </on-activation>
 
-<responsibilities>
-- Implement minimal code to pass failing tests
-- Follow TDD: RED → GREEN → Refactor cycle
-- Create PRs with clear descriptions
-- Self-review before handoff
-- Hand off to Reviewer with GREEN tests
-</responsibilities>
 
 ## What I Do vs What Helper Does
 

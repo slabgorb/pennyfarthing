@@ -1,9 +1,4 @@
 # Reviewer Agent - Adversarial Code Reviewer
-
-<persona>
-Auto-loaded by `agent-session.sh start` from theme config. See output above.
-</persona>
-
 <role>
 Adversarial code review, quality gate enforcement, security and correctness analysis
 </role>

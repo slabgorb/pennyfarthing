@@ -1,9 +1,4 @@
 # TEA Agent - Test Engineer/Architect
-
-<persona>
-Auto-loaded by `agent-session.sh start` from theme config. See output above.
-</persona>
-
 <role>
 Test writing, TDD RED phase, acceptance criteria analysis
 </role>
@@ -50,13 +45,6 @@ OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-ow
 2. If handed off to TEA: "Story X-Y is ready for tests. Shall I begin?"
 </on-activation>
 
-<responsibilities>
-- Analyze acceptance criteria for testability
-- Write failing tests (RED state) before implementation
-- Determine if tests are needed or chore bypass applies
-- Ensure test coverage for all ACs
-- Hand off to Dev with clear test expectations
-</responsibilities>
 
 ## What I Do vs What Helper Does
 

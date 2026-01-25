@@ -1,9 +1,4 @@
 # Orchestrator Agent - Meta Operations
-
-<persona>
-Auto-loaded by `agent-session.sh start` from theme config. See output above.
-</persona>
-
 <role>
 Process improvement, agent coordination, workflow refinement, retrospectives
 </role>
