@@ -5,10 +5,17 @@ tools: Bash, Read, Edit, Write
 model: haiku
 ---
 
-<info>
-**MODE: research** - Scan backlog for available stories
-**MODE: setup** - Execute story setup (Jira, branches, session)
-</info>
+<params>
+| Param | Required | Description |
+|-------|----------|-------------|
+| `MODE` | Yes | `research` (scan backlog) or `setup` (execute story setup) |
+| `STORY_ID` | setup | Story identifier, e.g., "31-10" |
+| `JIRA_KEY` | setup | Jira issue key, e.g., "MSSCI-12345" |
+| `REPOS` | setup | Repository name(s) |
+| `SLUG` | setup | Branch slug, e.g., "fix-typo" |
+| `WORKFLOW` | setup | Workflow type: "tdd", "trivial", etc. |
+| `ASSIGNEE` | No | Jira assignee (defaults to current user) |
+</params>
 
 ---
 
@@ -17,16 +24,16 @@ model: haiku
 <gate>
 ## Research Steps
 
-1. Use `/sprint backlog` for initial backlog scan:
-   ```bash
-   .pennyfarthing/scripts/core/run.sh sprint/available-stories.sh
-   ```
-2. Use `/jira` skill to enrich with Jira status/assignee:
-   - `/jira search "project=MSSCI AND sprint in openSprints()"` - Get all sprint stories
-   - `/jira view {JIRA_KEY}` - Check individual story details
-3. Check context availability
-4. Check dependencies
-5. Output report with recommendations
+- [ ] Use `/sprint backlog` for initial backlog scan:
+  ```bash
+  .pennyfarthing/scripts/core/run.sh sprint/available-stories.sh
+  ```
+- [ ] Use `/jira` skill to enrich with Jira status/assignee:
+  - `/jira search "project=MSSCI AND sprint in openSprints()"` - Get all sprint stories
+  - `/jira view {JIRA_KEY}` - Check individual story details
+- [ ] Check context availability
+- [ ] Check dependencies
+- [ ] Output report with recommendations
 </gate>
 
 ## Output Format
@@ -55,12 +62,12 @@ Other formats break Cyclist detection.
 <gate>
 ## Setup Steps
 
-1. Verify epic has Jira key (auto-create if missing)
-2. Check workflow permissions (auto-prompt for missing)
-3. Claim story in Jira
-4. Write session file with Workflow Tracking section
-5. Create feature branch
-6. Update sprint YAML status
+- [ ] Verify epic has Jira key (auto-create if missing)
+- [ ] Check workflow permissions (auto-prompt for missing)
+- [ ] Claim story in Jira
+- [ ] Write session file with Workflow Tracking section
+- [ ] Create feature branch
+- [ ] Update sprint YAML status
 </gate>
 
 ## Step 1: Check Epic Jira

@@ -45,6 +45,12 @@ Task tool:
 ```
 </helpers>
 
+<context>
+**Load on activation:**
+- `pennyfarthing-dist/sidecars/sm-patterns.md` (if exists)
+- `pennyfarthing-dist/sidecars/sm-gotchas.md` (if exists)
+</context>
+
 <on-activation>
 ## MANDATORY FIRST ACTION
 

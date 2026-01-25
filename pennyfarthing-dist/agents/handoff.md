@@ -5,7 +5,7 @@ tools: Bash, Read, Edit, Grep
 model: haiku
 ---
 
-<info>
+<params>
 | Param | Required | Description |
 |-------|----------|-------------|
 | `STORY_ID` | Yes | e.g., "31-10" |
@@ -16,7 +16,7 @@ model: haiku
 | `TEST_RESULT` | No | "RED" or "GREEN" |
 | `ASSESSMENT_SECTION` | No | e.g., "TEA Assessment" |
 | `PR_NUMBER` | No | For green→review |
-</info>
+</params>
 
 <critical>
 **Marker generation happens in the CALLING agent, not here.**
@@ -30,29 +30,29 @@ Return `HANDOFF_RESULT` with the next agent name - the calling agent runs `hando
 
 <gate>
 ### tests_fail (TEA → Dev)
-- Tests committed
-- Tests are RED (failing)
-- Assessment exists
+- [ ] Tests committed
+- [ ] Tests are RED (failing)
+- [ ] Assessment exists
 
 **STOP if tests GREEN** - TEA must verify tests exercise new code.
 </gate>
 
 <gate>
 ### tests_pass (Dev → Reviewer)
-- Quality checks pass (run: `.pennyfarthing/scripts/run.sh workflow/check.sh`)
-- Git working tree clean
-- Changes pushed to remote
-- PR exists and is open
-- Assessment exists
+- [ ] Quality checks pass (run: `.pennyfarthing/scripts/run.sh workflow/check.sh`)
+- [ ] Git working tree clean
+- [ ] Changes pushed to remote
+- [ ] PR exists and is open
+- [ ] Assessment exists
 
 **STOP if any check fails.**
 </gate>
 
 <gate>
 ### approval (Reviewer → SM/Dev)
-- Reviewer Assessment exists
-- Contains APPROVED or REJECTED
-- Verdict matches VERDICT parameter
+- [ ] Reviewer Assessment exists
+- [ ] Contains APPROVED or REJECTED
+- [ ] Verdict matches VERDICT parameter
 
 **If VERDICT=approved:** Status → approved, ready for SM finish
 **If VERDICT=rejected:** Return to Dev with issues

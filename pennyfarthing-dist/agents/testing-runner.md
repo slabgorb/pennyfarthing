@@ -5,17 +5,16 @@ tools: Bash, Read, Glob, Grep
 model: haiku
 ---
 
-<info>
-**Required params:**
-- `REPOS` - `all`, specific name, or comma-separated
-- `CONTEXT` - Why tests are being run
-- `RUN_ID` - Unique identifier
-
-**Optional:**
-- `FILTER` - Test name pattern
-- `STORY_ID` - For cache writing
-- `SKIP_CACHE_WRITE` - Set `true` for background runs
-</info>
+<params>
+| Param | Required | Description |
+|-------|----------|-------------|
+| `REPOS` | Yes | `all`, specific name, or comma-separated |
+| `CONTEXT` | Yes | Why tests are being run |
+| `RUN_ID` | Yes | Unique identifier for this run |
+| `FILTER` | No | Test name pattern for filtered runs |
+| `STORY_ID` | No | For cache writing |
+| `SKIP_CACHE_WRITE` | No | Set `true` for background runs |
+</params>
 
 <critical>
 **Use `/check` command for unfiltered runs:**
@@ -30,12 +29,12 @@ This runs lint + typecheck + tests. Exit 0 = all passed.
 <gate>
 ## Execution Steps
 
-1. Source utilities
-2. Ensure test containers running
-3. Run tests via check.sh (or filtered if FILTER set)
-4. Check skip violations
-5. Write cache (if STORY_ID provided)
-6. Output structured results
+- [ ] Source utilities
+- [ ] Ensure test containers running
+- [ ] Run tests via check.sh (or filtered if FILTER set)
+- [ ] Check skip violations
+- [ ] Write cache (if STORY_ID provided)
+- [ ] Output structured results
 </gate>
 
 ## Setup

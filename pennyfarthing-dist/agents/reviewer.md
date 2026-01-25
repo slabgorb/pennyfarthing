@@ -48,6 +48,12 @@ Task tool:
 ```
 </helpers>
 
+<context>
+**Load on activation:**
+- `pennyfarthing-dist/sidecars/reviewer-patterns.md` (if exists)
+- `pennyfarthing-dist/sidecars/reviewer-gotchas.md` (if exists)
+</context>
+
 <phase-check>
 ## On Startup: Check Phase
 

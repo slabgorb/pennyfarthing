@@ -356,7 +356,7 @@ d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$
 <output>
 1. **Check story** via `check-story.sh` (if ID provided)
 2. **Write context** to `.session/context-story-{id}.md`
-3. **Setup story** via `generic-sm-setup` subagent (claims Jira, creates branch)
+3. **Setup story** via `sm-setup` subagent (claims Jira, creates branch)
 4. **Handoff** to next agent based on workflow:
 
 | Workflow | Route |

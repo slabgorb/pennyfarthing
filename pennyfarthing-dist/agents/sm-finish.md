@@ -5,12 +5,14 @@ tools: Bash, Read
 model: haiku
 ---
 
-<info>
-**Story:** {STORY_ID}
-**Jira:** {JIRA_KEY} (optional)
-**Repos:** {REPOS}
-**Branch:** {BRANCH}
-</info>
+<params>
+| Param | Required | Description |
+|-------|----------|-------------|
+| `STORY_ID` | Yes | Story identifier, e.g., "31-10" |
+| `JIRA_KEY` | No | Jira issue key (skip Jira checks if absent) |
+| `REPOS` | Yes | Repository name(s) |
+| `BRANCH` | Yes | Feature branch name |
+</params>
 
 <critical>
 Run ALL checks in parallel, then aggregate results.
@@ -19,11 +21,11 @@ Run ALL checks in parallel, then aggregate results.
 <gate>
 ## Parallel Checks
 
-1. **PR Status:** `gh pr view {BRANCH} --json state,merged,mergeable,url`
-2. **Lint:** `npm run lint`
-3. **Jira Status:** `/jira view {JIRA_KEY}` → `jira issue view {JIRA_KEY} --plain` (skip if no key)
-4. **Acceptance Criteria:** grep checkboxes from session file
-5. **Cleanup:** remove temp files from `.session/`
+- [ ] **PR Status:** `gh pr view {BRANCH} --json state,merged,mergeable,url`
+- [ ] **Lint:** `npm run lint`
+- [ ] **Jira Status:** `/jira view {JIRA_KEY}` → `jira issue view {JIRA_KEY} --plain` (skip if no key)
+- [ ] **Acceptance Criteria:** grep checkboxes from session file
+- [ ] **Cleanup:** remove temp files from `.session/`
 </gate>
 
 ## Jira Transition
