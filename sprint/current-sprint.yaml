@@ -1316,3 +1316,80 @@ epics:
         status: done
         repos: pennyfarthing
         workflow: tdd
+  - id: epic-40
+    type: epic
+    title: "Epic: Scale Adaptation and Brownfield Support"
+    description: |
+      Adopt BMAD's scale-adaptive approach and add brownfield codebase discovery.
+      Add upward scaling for larger initiatives (Level 0-4) and brownfield
+      analysis for existing codebases.
+    priority: P2
+    status: backlog
+    repos: pennyfarthing
+    stories:
+      - id: MSSCI-12416
+        title: "Define scale levels"
+        description: |
+          Define Pennyfarthing's scale level system aligned with BMAD 6.0.
+          Scale levels determine workflow routing - small fixes go to quick-spec,
+          larger initiatives get full PRD treatment.
+        points: 2
+        priority: P2
+        status: done
+        branch: feat/40-1-scale-levels
+        workflow: tdd
+        repos: pennyfarthing
+        acceptance_criteria: []
+        jira: MSSCI-12416
+        completed: "2026-01-25"
+      - id: MSSCI-12417
+        title: "Quick-spec workflow"
+        description: ""
+        points: 3
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12417
+      - id: MSSCI-12418
+        title: "Enterprise workflow hooks"
+        description: ""
+        points: 3
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12418
+      - id: MSSCI-12419
+        title: "Brownfield discovery command"
+        description: ""
+        points: 5
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12419
+      - id: MSSCI-12420
+        title: "Brownfield convention adoption"
+        description: ""
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12420
+      - id: MSSCI-12421
+        title: "PRD import support"
+        description: ""
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12421
+    jira: MSSCI-12415
