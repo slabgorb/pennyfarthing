@@ -14,86 +14,69 @@ model: haiku
 | `BRANCH` | Yes | Feature branch name |
 </arguments>
 
+<execution>
+## Run Preflight Script
+
+The preflight script runs all checks in parallel using asyncio:
+
+```bash
+source .venv/bin/activate && python -m pennyfarthing_scripts.preflight finish {STORY_ID} --branch {BRANCH} --jira {JIRA_KEY}
+```
+
+If no JIRA_KEY, omit the `--jira` flag.
+
+The script returns JSON with:
+- `status`: "success" or "blocked"
+- `ready_to_finish`: boolean
+- `issues`: array of blocking issues
+- `warnings`: array of non-blocking warnings
+- `next_steps`: array of recommended actions
+</execution>
+
 <critical>
-Run ALL checks in parallel, then aggregate results.
-</critical>
-
-<gate>
-## Parallel Checks
-
-- [ ] **PR Status:** `gh pr view {BRANCH} --json state,merged,mergeable,url`
-- [ ] **Lint:** `npm run lint`
-- [ ] **Jira Status:** `/jira view {JIRA_KEY}` → `jira issue view {JIRA_KEY} --plain` (skip if no key)
-- [ ] **Acceptance Criteria:** grep checkboxes from session file
-- [ ] **Cleanup:** remove temp files from `.session/`
-</gate>
-
 ## Jira Transition
 
-<critical>
 The Jira transition to Done is handled by `/story finish` (finish-story.sh).
 Do NOT transition Jira here - that would duplicate the finish script's work.
 This subagent only performs preflight checks and assessment.
 </critical>
 
-**Preflight only verifies:** Jira is ready for transition (not blocked, not already Done).
-
 <output>
 ## Output Format
 
-Return a `FINISH_PREFLIGHT_RESULT` block:
+Parse the JSON output from the preflight script and return a `FINISH_PREFLIGHT_RESULT` block.
 
 ### Ready to Finish
-```
+```yaml
 FINISH_PREFLIGHT_RESULT:
   status: success
   ready_to_finish: true
-  story_id: "{STORY_ID}"
+  story_id: "{story_id from JSON}"
   pr:
-    status: "merged"
-    url: "{url}"
-  lint: "clean"
+    state: "{pr.state from JSON}"
+    merged: {pr.merged from JSON}
+    url: "{pr.url from JSON}"
+  lint:
+    clean: {lint.clean from JSON}
   jira:
-    current: "In Progress"
-    key: "{JIRA_KEY}"
+    current: "{jira.current from JSON}"
+    key: "{jira.key from JSON}"
   acceptance_criteria:
-    total: {N}
-    checked: {N}
-
-  next_steps:
-    - "Preflight passed. Run finish-story.sh to complete."
-    - "Command: .pennyfarthing/scripts/core/run.sh workflow/finish-story.sh {STORY_ID}"
-    - "Then commit and push sprint archive changes."
+    total: {acceptance_criteria.total from JSON}
+    checked: {acceptance_criteria.checked from JSON}
+  next_steps: {next_steps array from JSON}
 ```
 
 ### Not Ready
-```
+```yaml
 FINISH_PREFLIGHT_RESULT:
   status: blocked
   ready_to_finish: false
-  issues:
-    - severity: "critical"
-      issue: "{description}"
-      fix: "{action}"
-  warnings:
-    - "{non-blocking warning}"
-
-  next_steps:
-    - "Cannot finish. {issues.length} blocking issue(s)."
-    - "Critical: {issues[0].issue} - Fix: {issues[0].fix}"
-    - "Resolve issues before running finish-story.sh"
+  issues: {issues array from JSON}
+  warnings: {warnings array from JSON}
+  next_steps: {next_steps array from JSON}
 ```
 
 ### Jira Skipped
-```
-FINISH_PREFLIGHT_RESULT:
-  status: success
-  ready_to_finish: true
-  jira_skipped: true
-  reason: "No valid Jira key in session"
-
-  next_steps:
-    - "Preflight passed (Jira skipped). Run finish-story.sh to complete."
-    - "Note: Story will not be transitioned in Jira."
-```
+If `jira_skipped: true` in JSON, note this in output.
 </output>
