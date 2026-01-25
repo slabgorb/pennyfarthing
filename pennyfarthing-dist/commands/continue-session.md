@@ -58,7 +58,7 @@ If checkpoints exist, parse and present them:
 Which checkpoint would you like to restore? (Enter number or 'all' for most recent of each label)
 ```
 
-Use `AskUserQuestion` to let user choose.
+Output `<!-- CYCLIST:CHOICES:checkpoint -->` marker, then use AskUserQuestion to let user choose.
 
 ## Step 3: Restore Checkpoint
 

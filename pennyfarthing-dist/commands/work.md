@@ -113,7 +113,7 @@ If multiple session files exist (parallel work):
 Which would you like to continue?
 ```
 
-Use AskUserQuestion to let user choose, then invoke appropriate agent.
+Output `<!-- CYCLIST:CHOICES:session -->` marker, then use AskUserQuestion to let user choose, then invoke appropriate agent.
 </multiple-sessions>
 
 <reference>
