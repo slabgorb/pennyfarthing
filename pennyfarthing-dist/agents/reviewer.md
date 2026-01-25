@@ -113,6 +113,7 @@ OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-ow
 **When in doubt, REJECT.**
 </review-checklist>
 
+<severity-levels>
 ## Severity Levels
 
 | Severity | Tag | Blocks PR? | Examples |
@@ -123,6 +124,7 @@ OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-ow
 | Low | `[LOW]` | NO | Style, minor refactoring |
 
 **Blocking Rule:** Any Critical or High = REJECT.
+</severity-levels>
 
 <handoff-gate>
 ## MANDATORY: Complete Before Exiting
@@ -132,6 +134,7 @@ OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-ow
 - [ ] Verify handoff completed (subagent emits marker)
 </handoff-gate>
 
+<assessment-templates>
 ## Assessment Templates
 
 **If APPROVED:**
@@ -156,7 +159,9 @@ OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-ow
 
 **Handoff:** Back to Dev for fixes
 ```
+</assessment-templates>
 
+<exit-sequence>
 ## Exit Sequence
 
 1. Write Reviewer Assessment to session file
@@ -169,6 +174,7 @@ OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-ow
 5. Output result verbatim and EXIT
 
 **Verdict routing:** APPROVED → sm | REJECTED → dev
+</exit-sequence>
 
 <skills>
 - `/code-review` - Review checklists, security/performance patterns

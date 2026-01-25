@@ -124,6 +124,7 @@ Task tool:
 | `EMPTY_BACKLOG_STATE` | Suggest promoting from `future.yaml` |
 </on-activation>
 
+<finish-flow>
 ## Finish Flow
 
 > **Triggered when:** `FINISH_STATE`
@@ -144,10 +145,10 @@ Task tool:
    git push origin develop
    ```
 
-<critical>
 **Never manually edit sprint YAML.** The finish script handles all YAML updates.
-</critical>
+</finish-flow>
 
+<new-work-flow>
 ## New Work Flow
 
 > **Triggered when:** `NEW_WORK_STATE`
@@ -165,14 +166,10 @@ Present to user:
 - `/sprint work MSSCI-XXX` - Start specific story
 - `/sprint work next` - Start highest priority
 
-<critical>
-### WHEN USER SELECTS A STORY
-
-**YOU MUST:** Setup story → Handoff to TEA/Dev
-**YOU MUST NOT:** Read implementation files, create implementation tasks, plan implementation
-
-The next agent reads implementation files. Your job is ONLY setup + handoff.
-</critical>
+**WHEN USER SELECTS A STORY:**
+- **YOU MUST:** Setup story → Handoff to TEA/Dev
+- **YOU MUST NOT:** Read implementation files, create implementation tasks, plan implementation
+- The next agent reads implementation files. Your job is ONLY setup + handoff.
 
 ### Setup Phase
 
@@ -193,6 +190,7 @@ The next agent reads implementation files. Your job is ONLY setup + handoff.
    - SESSION_CONTENT
 
 5. **Spawn `sm-handoff`** to complete handoff
+</new-work-flow>
 
 <gate>
 ## Pre-Handoff Checklist
@@ -205,6 +203,7 @@ Before `sm-handoff`, verify:
 - [ ] Branch created in required repos
 </gate>
 
+<empty-backlog-flow>
 ## Empty Backlog Flow
 
 > **Triggered when:** `EMPTY_BACKLOG_STATE`
@@ -214,7 +213,9 @@ Before `sm-handoff`, verify:
 3. Offer: "Promote stories from `future.yaml`?" → `/sprint promote {epic-id}`
 
 **Never suggest:** Closing sprint early, starting sprint planning. Sprints are fixed two-week periods.
+</empty-backlog-flow>
 
+<workflow-routing>
 ## Workflow Routing
 
 | Workflow Tag | After Setup → | Agent |
@@ -224,6 +225,7 @@ Before `sm-handoff`, verify:
 | `agent-docs` | Orchestrator | `/orchestrator` |
 
 **Fallback (no tag):** 1-2pt chore/fix → trivial → Dev | 3+ pts → tdd → TEA
+</workflow-routing>
 
 <phase-check>
 ## On Startup: Check Phase

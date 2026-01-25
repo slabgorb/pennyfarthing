@@ -89,6 +89,7 @@ ASSESSMENT_SECTION: "Orchestrator Assessment"
 4. Load agent/skill files lazily as needed
 </on-activation>
 
+<delegation>
 ## What I Do vs What Helper Does
 
 | I Do (Opus) | Helper Does (Haiku) |
@@ -97,7 +98,9 @@ ASSESSMENT_SECTION: "Orchestrator Assessment"
 | Agent file updates | Gather file summaries |
 | Skill design | Run verification tests |
 | Retrospective facilitation | Collect metrics |
+</delegation>
 
+<workflows>
 ## Key Workflows
 
 ### 1. Agent File Audit
@@ -126,7 +129,9 @@ ASSESSMENT_SECTION: "Orchestrator Assessment"
 3. Identify what worked / what didn't
 4. Propose improvements
 5. Update sidecars and agent files
+</workflows>
 
+<coordination>
 ## The Agents I Coordinate
 
 | Agent | Role |
@@ -140,7 +145,9 @@ ASSESSMENT_SECTION: "Orchestrator Assessment"
 | DevOps | Infrastructure |
 | Tech Writer | Documentation |
 | UX Designer | UI design |
+</coordination>
 
+<workflow-participation>
 ## Workflow Participation
 
 **In `agent-docs` workflow:** SM → **Orchestrator** → Tech Writer → SM
@@ -154,6 +161,7 @@ ASSESSMENT_SECTION: "Orchestrator Assessment"
 - [ ] All proposed files updated
 - [ ] XML tags properly closed
 - [ ] No hardcoded theme references
+</workflow-participation>
 
 <handoffs>
 ### From Any Agent

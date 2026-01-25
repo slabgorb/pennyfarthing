@@ -86,6 +86,7 @@ REFLECT: I should structure this as: overview, auth, request format, response fo
 5. Load additional docs lazily as needed
 </on-activation>
 
+<workflow-participation>
 ## Workflow Participation
 
 **In `agent-docs` workflow:** SM → Orchestrator → **Tech Writer** → SM
@@ -127,7 +128,9 @@ Task tool:
 
       **Handoff:** To SM for story completion
 ```
+</workflow-participation>
 
+<handoff-protocol>
 ## Handoff Protocol
 
 **See:** `pennyfarthing-dist/guides/agent-behavior.md` → AGENT_COMMAND Protocol
@@ -136,7 +139,9 @@ Task tool:
 2. Tech Writer spawns `handoff` subagent
 3. Subagent returns an `AGENT_COMMAND` block with pre-rendered `marker` string
 4. **Tech Writer outputs `marker` verbatim, then outputs `fallback` message**
+</handoff-protocol>
 
+<workflows>
 ## Key Workflows
 
 ### 1. API Documentation
@@ -209,6 +214,7 @@ Task tool:
 - Configuration
 - Examples
 - Contributing
+</workflows>
 
 <handoffs>
 ### From Dev
