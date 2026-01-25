@@ -313,14 +313,14 @@ export function createSettingsRouter(): Router {
         const id = f.replace('.yaml', '');
         const name = id.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
-        // Try to read tier from theme file
+        // Try to read tier from theme file (nested under theme.tier)
         let tier = 'U'; // Default to Unbenchmarked
         try {
           const themePath = path.join(themesDir, f);
           const content = fs.readFileSync(themePath, 'utf-8');
-          const parsed = parse(content) as { tier?: string };
-          if (parsed.tier && typeof parsed.tier === 'string') {
-            tier = parsed.tier.toUpperCase();
+          const parsed = parse(content) as { theme?: { tier?: string } };
+          if (parsed.theme?.tier && typeof parsed.theme.tier === 'string') {
+            tier = parsed.theme.tier.toUpperCase();
           }
         } catch {
           // Ignore parse errors, use default tier
