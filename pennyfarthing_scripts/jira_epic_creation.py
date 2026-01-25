@@ -1,0 +1,221 @@
+#!/usr/bin/env python3
+"""
+Create Jira epics from Pennyfarthing sprint YAML definitions.
+
+Usage:
+    python -m pennyfarthing_scripts.jira_epic_creation <epic_id> [options]
+
+Options:
+    --dry-run       Show what would be done without making changes
+
+Examples:
+    python -m pennyfarthing_scripts.jira_epic_creation epic-63 --dry-run
+    python -m pennyfarthing_scripts.jira_epic_creation 63
+"""
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+from typing import Any
+
+from . import jira
+from .sprint import find_epic, load_current_sprint
+
+
+def parse_args(args: list[str] | None = None) -> argparse.Namespace:
+    """Parse command line arguments.
+
+    Args:
+        args: Command line arguments (defaults to sys.argv[1:])
+
+    Returns:
+        Parsed arguments namespace
+    """
+    parser = argparse.ArgumentParser(
+        description="Create Jira epic from Pennyfarthing sprint YAML"
+    )
+    parser.add_argument("epic_id", help="Epic ID (e.g., epic-63 or 63)")
+    parser.add_argument("--dry-run", action="store_true", help="Show changes without applying")
+
+    return parser.parse_args(args)
+
+
+def build_epic_payload(epic_data: dict[str, Any]) -> dict[str, Any]:
+    """Build Jira API payload for creating an epic.
+
+    Args:
+        epic_data: Epic data from sprint YAML
+
+    Returns:
+        Jira API request payload
+    """
+    title = epic_data.get("title", "")
+    description = epic_data.get("description", "")
+
+    # Build ADF (Atlassian Document Format) for description
+    description_adf = {
+        "type": "doc",
+        "version": 1,
+        "content": [
+            {
+                "type": "paragraph",
+                "content": [{"type": "text", "text": description}] if description else [],
+            }
+        ],
+    }
+
+    return {
+        "fields": {
+            "project": {"key": jira.JIRA_PROJECT},
+            "summary": title,
+            "description": description_adf,
+            "issuetype": {"name": "Epic"},
+        }
+    }
+
+
+def call_jira_api(
+    method: str, endpoint: str, data: dict[str, Any] | None = None
+) -> dict[str, Any] | None:
+    """Call Jira REST API.
+
+    Args:
+        method: HTTP method (GET, POST, PUT)
+        endpoint: API endpoint (e.g., /rest/api/3/issue)
+        data: Request body data
+
+    Returns:
+        Response JSON if successful, None otherwise
+    """
+    jira_user = os.environ.get("JIRA_USER", "keith.avery@1898andco.io")
+    jira_token = os.environ.get("JIRA_API_TOKEN")
+
+    if not jira_token:
+        print("[ERROR] JIRA_API_TOKEN not set", file=sys.stderr)
+        return None
+
+    url = f"{jira.JIRA_URL}{endpoint}"
+
+    curl_args = [
+        "curl",
+        "-s",
+        "-X", method,
+        "-H", "Content-Type: application/json",
+        "-u", f"{jira_user}:{jira_token}",
+    ]
+
+    if data:
+        curl_args.extend(["-d", json.dumps(data)])
+
+    curl_args.append(url)
+
+    result = subprocess.run(curl_args, capture_output=True, text=True)
+
+    if result.returncode != 0:
+        return None
+
+    try:
+        return json.loads(result.stdout)
+    except json.JSONDecodeError:
+        return None
+
+
+def create_epic(
+    title: str,
+    description: str = "",
+    *,
+    dry_run: bool = False,
+) -> dict[str, Any]:
+    """Create a Jira epic.
+
+    Args:
+        title: Epic title/summary
+        description: Epic description
+        dry_run: If True, show changes without applying
+
+    Returns:
+        Result dict with success, key, error fields
+    """
+    epic_data = {"title": title, "description": description}
+    payload = build_epic_payload(epic_data)
+
+    if dry_run:
+        return {
+            "success": True,
+            "dry_run": True,
+            "payload": payload,
+        }
+
+    response = call_jira_api("POST", "/rest/api/3/issue", payload)
+
+    if response and "key" in response:
+        return {
+            "success": True,
+            "key": response["key"],
+            "id": response.get("id"),
+        }
+    else:
+        return {
+            "success": False,
+            "error": "Failed to create epic",
+            "response": response,
+        }
+
+
+def create_epic_from_yaml(epic_id: str, *, dry_run: bool = False) -> dict[str, Any]:
+    """Create a Jira epic from sprint YAML definition.
+
+    Args:
+        epic_id: Epic ID (e.g., "epic-63" or "63")
+        dry_run: If True, show changes without applying
+
+    Returns:
+        Result dict with success, key, error fields
+    """
+    sprint_data = load_current_sprint()
+    if not sprint_data:
+        return {"success": False, "error": "Could not load sprint YAML"}
+
+    epic = find_epic(sprint_data, epic_id)
+    if not epic:
+        return {"success": False, "error": f"Epic '{epic_id}' not found in sprint YAML"}
+
+    # Check if epic already has a Jira key
+    if epic.get("jira"):
+        return {
+            "success": False,
+            "error": f"Epic already has Jira key: {epic['jira']}",
+        }
+
+    title = epic.get("title", f"Epic {epic_id}")
+    description = epic.get("description", "")
+
+    return create_epic(title, description, dry_run=dry_run)
+
+
+def main() -> int:
+    """CLI entry point.
+
+    Returns:
+        Exit code (0 for success, 1 for failure)
+    """
+    args = parse_args()
+
+    result = create_epic_from_yaml(args.epic_id, dry_run=args.dry_run)
+
+    if result["success"]:
+        if result.get("dry_run"):
+            print(f"[DRY-RUN] Would create epic for {args.epic_id}")
+            print(f"  Payload: {json.dumps(result.get('payload', {}), indent=2)}")
+        else:
+            print(f"✓ Created epic: {result.get('key')}")
+        return 0
+    else:
+        print(f"✗ Failed: {result.get('error', 'Unknown error')}", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
