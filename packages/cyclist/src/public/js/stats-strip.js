@@ -284,30 +284,98 @@ function updateProjectDirectory(directory) {
 }
 
 /**
+ * Build summary text for collapsed git section
+ * @param {Array} repos - Array of repo status objects
+ * @returns {string} Summary HTML
+ */
+function buildGitSummary(repos) {
+  const dirtyRepos = repos.filter(r => !r.clean);
+  const totalDirty = repos.reduce((sum, repo) => sum + (repo.dirtyFiles?.length || 0), 0);
+
+  if (dirtyRepos.length === 0) {
+    return '<span class="summary-clean">All clean</span>';
+  }
+
+  // Show dirty repo names and file count
+  const repoNames = dirtyRepos.map(r => r.name).join(', ');
+  return `<span class="summary-dirty">${repoNames}</span> <span class="summary-count">(${totalDirty} file${totalDirty === 1 ? '' : 's'})</span>`;
+}
+
+/**
+ * Build detail HTML for expanded git section
+ * @param {Array} repos - Array of repo status objects
+ * @returns {string} Detail HTML
+ */
+function buildGitDetail(repos) {
+  return repos.map(repo => {
+    const statusClass = repo.clean ? 'clean' : 'dirty';
+    const statusText = repo.clean ? 'Clean' : 'Dirty';
+
+    // Build ahead/behind suffix
+    let aheadBehind = '';
+    if (repo.ahead > 0) aheadBehind += ` ↑${repo.ahead}`;
+    if (repo.behind > 0) aheadBehind += ` ↓${repo.behind}`;
+
+    // Full folder name
+    const folderName = repo.name;
+
+    // Build dirty files list (max 10)
+    let dirtyFilesHtml = '';
+    if (!repo.clean && repo.dirtyFiles && repo.dirtyFiles.length > 0) {
+      const maxFiles = 10;
+      const filesToShow = repo.dirtyFiles.slice(0, maxFiles);
+      const remaining = repo.dirtyFiles.length - maxFiles;
+
+      dirtyFilesHtml = `<div class="dirty-files">
+        ${filesToShow.map(f => `<div class="dirty-file"><span class="file-status">${f.status}</span>${f.path}</div>`).join('')}
+        ${remaining > 0 ? `<div class="dirty-more">+${remaining} more file${remaining === 1 ? '' : 's'}</div>` : ''}
+      </div>`;
+    }
+
+    return `<div class="repo-row" title="${repo.branch}${aheadBehind}">
+      <div class="repo-header">
+        <span class="repo-name">${folderName}</span>
+        <span class="repo-badge ${statusClass}">${statusText}</span>
+      </div>
+      ${dirtyFilesHtml}
+    </div>`;
+  }).join('');
+}
+
+/**
  * Update git status display for all configured repos
- * @param {Array} repos - Array of repo status objects { name, path, branch, clean, ahead, behind }
+ * @param {Array} repos - Array of repo status objects { name, path, branch, clean, ahead, behind, dirtyFiles }
  */
 function updateGitStatusAll(repos) {
-  const container = document.querySelector('#stats-strip .git-status-all');
-  if (!container || !repos || repos.length === 0) return;
+  const detailContainer = document.querySelector('#git-repos');
+  const summaryEl = document.querySelector('#git-section-summary');
+  const badgeEl = document.querySelector('#git-section-badge');
+  if (!detailContainer || !repos || repos.length === 0) return;
 
-  container.innerHTML = repos.map(repo => {
-    const statusClass = repo.clean ? 'clean' : 'dirty';
-    const statusIcon = repo.clean ? '✓' : '●';
+  // Calculate stats
+  const dirtyRepos = repos.filter(r => !r.clean);
+  const totalDirty = repos.reduce((sum, repo) => sum + (repo.dirtyFiles?.length || 0), 0);
 
-    // Build ahead/behind indicator
-    let aheadBehind = '';
-    if (repo.ahead > 0) aheadBehind += `↑${repo.ahead}`;
-    if (repo.behind > 0) aheadBehind += `↓${repo.behind}`;
+  // Update badge
+  if (badgeEl) {
+    if (dirtyRepos.length > 0) {
+      badgeEl.textContent = `${totalDirty}`;
+      badgeEl.className = 'section-badge dirty';
+      badgeEl.style.display = '';
+    } else {
+      badgeEl.textContent = '✓';
+      badgeEl.className = 'section-badge clean';
+      badgeEl.style.display = '';
+    }
+  }
 
-    // Short name: conductor-api → api, pennyfarthing → pf (first 3 chars after last hyphen or of whole name)
-    const parts = repo.name.split('-');
-    const shortName = parts.length > 1 ? parts[parts.length - 1].slice(0, 3) : repo.name.slice(0, 2);
+  // Update summary (visible when collapsed)
+  if (summaryEl) {
+    summaryEl.innerHTML = buildGitSummary(repos);
+  }
 
-    return `<span class="repo-status ${statusClass}" title="${repo.name}: ${repo.branch}${repo.clean ? ' (clean)' : ' (uncommitted changes)'}">
-      <span class="repo-name">${shortName}</span><span class="status-icon">${statusIcon}</span>${aheadBehind ? `<span class="ahead-behind">${aheadBehind}</span>` : ''}
-    </span>`;
-  }).join('');
+  // Update detail (visible when expanded)
+  detailContainer.innerHTML = buildGitDetail(repos);
 }
 
 /**
@@ -514,6 +582,8 @@ async function initStatsStrip() {
 
   // Set up polling for git status (5 second interval as fallback)
   setInterval(fetchGitStatusAll, 5000);
+
+  // Note: Collapse toggle is handled by collapsed-sections.js for persistence
 
   console.log('[StatsStrip] IPC connected');
 }

@@ -5,12 +5,19 @@ import { join } from 'path';
 import { parse as parseYaml } from 'yaml';
 import { detectPennyfarthingProject } from '../pennyfarthing.js';
 
+// Dirty file info
+export interface DirtyFile {
+  status: string;  // M, A, D, ?, etc.
+  path: string;
+}
+
 // Git info interface
 export interface GitInfo {
   branch: string;
   clean: boolean;
   ahead: number | null;
   behind: number | null;
+  dirtyFiles: DirtyFile[];
 }
 
 // Extended git info with repo name for multi-repo display
@@ -81,6 +88,7 @@ export function getAllReposGitInfo(projectDir: string): RepoGitInfo[] {
       clean: gitInfo?.clean ?? true,
       ahead: gitInfo?.ahead ?? null,
       behind: gitInfo?.behind ?? null,
+      dirtyFiles: gitInfo?.dirtyFiles ?? [],
     };
   });
 }
@@ -94,17 +102,34 @@ export function getGitInfo(projectDir: string): GitInfo | null {
       encoding: 'utf-8',
     }).trim();
 
-    // Check if clean using diff-index (faster, doesn't hold lock like --porcelain)
+    // Get dirty files using --porcelain for parseable output
+    let dirtyFiles: DirtyFile[] = [];
     let clean = true;
     try {
-      execSync('git diff-index --quiet HEAD --', {
+      const statusOutput = execSync('git status --porcelain', {
         cwd: projectDir,
         encoding: 'utf-8',
-      });
-      clean = true;
+      }).trim();
+
+      if (statusOutput) {
+        clean = false;
+        dirtyFiles = statusOutput.split('\n').map(line => {
+          const status = line.substring(0, 2).trim() || '?';
+          const path = line.substring(3);
+          return { status, path };
+        });
+      }
     } catch {
-      // Exit code 1 means there are changes
-      clean = false;
+      // Fall back to diff-index check if porcelain fails
+      try {
+        execSync('git diff-index --quiet HEAD --', {
+          cwd: projectDir,
+          encoding: 'utf-8',
+        });
+        clean = true;
+      } catch {
+        clean = false;
+      }
     }
 
     // Get ahead/behind counts (suppress stderr for branches without upstream)
@@ -128,7 +153,7 @@ export function getGitInfo(projectDir: string): GitInfo | null {
       // No upstream configured - leave as null
     }
 
-    return { branch, clean, ahead, behind };
+    return { branch, clean, ahead, behind, dirtyFiles };
   } catch (error) {
     // Not a git repo or git command failed - return null gracefully
     // Handles: not a git repository, EPIPE, ENOENT, etc.

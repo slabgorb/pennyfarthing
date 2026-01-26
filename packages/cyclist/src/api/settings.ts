@@ -332,5 +332,80 @@ export function createSettingsRouter(): Router {
     }
   });
 
+  /**
+   * GET /collapsed - Get collapsed section states from config.local.yaml
+   * Returns { persona: boolean, git: boolean, ... }
+   */
+  router.get('/collapsed', (_req, res) => {
+    try {
+      const projectDir = getProjectDirectory();
+      if (!projectDir) {
+        return res.json({});
+      }
+
+      const configPath = path.join(projectDir, '.pennyfarthing', 'config.local.yaml');
+      if (!fs.existsSync(configPath)) {
+        return res.json({});
+      }
+
+      const content = fs.readFileSync(configPath, 'utf-8');
+      const parsed = parse(content) as { display?: { collapsed_sections?: Record<string, boolean> } };
+      res.json(parsed?.display?.collapsed_sections || {});
+    } catch (error) {
+      console.error('[Settings API] Failed to get collapsed sections:', error);
+      res.json({});
+    }
+  });
+
+  /**
+   * PATCH /collapsed - Update collapsed section states in config.local.yaml
+   * Body: { sectionId: boolean, ... }
+   */
+  router.patch('/collapsed', (req, res) => {
+    try {
+      const updates = req.body as Record<string, boolean>;
+      if (!updates || typeof updates !== 'object') {
+        return res.status(400).json(createErrorResponse('VALIDATION_ERROR', 'Invalid collapsed sections object'));
+      }
+
+      const projectDir = getProjectDirectory();
+      if (!projectDir) {
+        return res.status(500).json(createErrorResponse('FILE_ERROR', 'Project directory not found'));
+      }
+
+      const pennyfarthingDir = path.join(projectDir, '.pennyfarthing');
+      const configPath = path.join(pennyfarthingDir, 'config.local.yaml');
+
+      // Create .pennyfarthing directory if needed
+      if (!fs.existsSync(pennyfarthingDir)) {
+        fs.mkdirSync(pennyfarthingDir, { recursive: true });
+      }
+
+      // Read existing config
+      let existingConfig: Record<string, unknown> = {};
+      if (fs.existsSync(configPath)) {
+        const content = fs.readFileSync(configPath, 'utf-8');
+        const parsed = parse(content);
+        if (parsed && typeof parsed === 'object') {
+          existingConfig = parsed as Record<string, unknown>;
+        }
+      }
+
+      // Merge collapsed sections into display
+      const display = (existingConfig.display || {}) as Record<string, unknown>;
+      const existingCollapsed = (display.collapsed_sections || {}) as Record<string, boolean>;
+      display.collapsed_sections = { ...existingCollapsed, ...updates };
+      existingConfig.display = display;
+
+      // Write back
+      fs.writeFileSync(configPath, stringify(existingConfig), 'utf-8');
+
+      res.json(display.collapsed_sections);
+    } catch (error) {
+      console.error('[Settings API] Failed to save collapsed sections:', error);
+      res.status(500).json(createErrorResponse('FILE_ERROR', 'Failed to save collapsed sections'));
+    }
+  });
+
   return router;
 }

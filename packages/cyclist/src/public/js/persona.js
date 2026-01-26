@@ -138,6 +138,16 @@ export function updatePersona(persona) {
   if (persona.slug && persona.theme && window.loadPortraitWithTheme) {
     window.loadPortraitWithTheme(persona.slug, persona.theme);
   }
+
+  // Update collapsed summary: "Agent Name · ROLE"
+  const summaryEl = document.getElementById('persona-section-summary');
+  if (summaryEl) {
+    const agentName = persona.character || '';
+    const role = (persona.role || '').toUpperCase();
+    summaryEl.innerHTML = agentName && role
+      ? `<span class="summary-agent">${agentName}</span> · <span class="summary-role">${role}</span>`
+      : agentName || role || '';
+  }
 }
 
 /**
@@ -164,6 +174,8 @@ async function initPersona() {
   window.electronAPI.persona.onUpdate((_event, persona) => {
     updatePersona(persona);
   });
+
+  // Note: Collapse toggle is handled by collapsed-sections.js for persistence
 
   console.log('Persona IPC connected');
 }
