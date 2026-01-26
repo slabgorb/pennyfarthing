@@ -296,6 +296,25 @@
         </div>
       </div>
 
+      <!-- B-12451: BikeLane Workflow Section - Collapsible workflow visualization -->
+      <section id="bikelane-section" class="collapsible-section bikelane-section hidden" style="display: none;">
+        <div class="section-header">
+          <h3 class="section-title">BIKELANE</h3>
+          <span class="workflow-type-badge" data-workflow-type="">—</span>
+          <span class="phase-summary section-summary"></span>
+          <button class="collapse-btn" aria-label="Toggle workflow" title="Toggle workflow">▼</button>
+        </div>
+        <div class="section-detail">
+          <!-- Phase progress visualization -->
+          <div class="phase-progress workflow-phases"></div>
+          <!-- Phase history timeline -->
+          <div class="phase-history">
+            <h4 class="phase-history-header">PHASE HISTORY</h4>
+            <div class="phase-history-list"></div>
+          </div>
+        </div>
+      </section>
+
       <!-- Git Section - Multi-repo status with dirty file list -->
       <section id="git-section" class="collapsible-section git-section collapsed">
         <div class="section-header">
@@ -556,6 +575,8 @@
   <script type="module" src="/js/settings-panel.js"></script>
   <script type="module" src="/js/persona.js"></script>
   <script type="module" src="/js/story.js"></script>
+  <!-- B-12451: BikeLane Workflow Section -->
+  <script type="module" src="/js/bikelane-section.js"></script>
   <script type="module" src="/js/todos.js"></script>
   <!-- 35-16: Background Tasks Panel -->
   <script type="module" src="/js/components/BackgroundTasksPanel.js"></script>
