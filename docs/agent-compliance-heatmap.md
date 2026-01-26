@@ -1,8 +1,8 @@
 # Agent File Compliance Heat Map
 
-Analysis of how likely each section of agent definition files is to be followed by the model, based on known behavioral patterns and the SM bypass incident.
+Analysis of how likely each section of agent definition files is to be followed by the model, based on position, tag type, and behavioral patterns.
 
-*Updated 2026-01-24 after SM trim: 713→214 lines, 36,052→18,249 chars (49% reduction)*
+*Updated 2026-01-26 with current agent measurements*
 
 ## Compliance Factors
 
@@ -11,11 +11,9 @@ Sections are more likely to be followed when they have:
 | Factor | Impact | Description |
 |--------|--------|-------------|
 | **Position** | HIGH | Earlier in file = higher attention weight |
-| **Tag Type** | HIGH | `<critical>` > `<gate>` > `<info>` > plain markdown |
+| **Tag Type** | HIGH | `<critical>` > unique tags > `<info>` > plain markdown |
 | **Specificity** | HIGH | Explicit "DO NOT" lists > general principles |
 | **Actionability** | MEDIUM | Concrete tool calls > abstract instructions |
-| **Repetition** | MEDIUM | Said multiple times = more likely followed |
-| **Recency** | MEDIUM | Closer to current context = more weight |
 | **Length** | LOW-NEG | Very long sections lose attention |
 
 ## Heat Map Legend
@@ -29,173 +27,157 @@ Sections are more likely to be followed when they have:
 
 ---
 
-## SM Agent (sm.md) - 214 lines (was 713)
+## SM Agent (sm.md) - 262 lines
 
 | Lines | Section | Tag | Compliance | Why |
 |-------|---------|-----|------------|-----|
-| 1-7 | Header + Persona | plain | 🔵 VERY HIGH | First thing read, sets character |
-| 9-11 | Role | `<role>` | 🔵 VERY HIGH | Short, clear, early |
-| **13-17** | **Status check mandatory** | **`<critical>`** | **🔵 VERY HIGH** | **Now at line 13, optimal zone** |
-| **19-25** | **NEVER writes code** | **`<critical>`** | **🔵 VERY HIGH** | **Moved from line 71 to line 19** |
-| **27-30** | **Handoff marker** | **`<critical>`** | **🔵 VERY HIGH** | **Short, specific action** |
-| 32-54 | Helpers | `<helpers>` | 🟢 HIGH | Compact table format |
-| **56-79** | **On-activation** | **`<on-activation>`** | **🟢 HIGH** | **Moved from line 172 to line 56** |
-| 81-103 | Finish Flow | plain | 🟢 HIGH | Concise, decision-focused |
-| 105-160 | New Work Flow | plain + `<critical>` | 🟢 HIGH | Streamlined from 239 lines |
-| 151-160 | Pre-handoff gate | `<gate>` | 🟢 HIGH | Checklist format |
-| 162-170 | Empty Backlog Flow | plain | 🟢 HIGH | Short, rare case |
-| 172-180 | Workflow Routing | plain | 🟢 HIGH | Table format, scannable |
-| 182-193 | Phase-check | `<phase-check>` | 🟢 HIGH | Clear gate logic |
-| 195-199 | Skills | `<skills>` | 🟢 HIGH | Short reference list |
-| 201-214 | Exit sequence | `<exit>` | 🔵 VERY HIGH | Terminal, unmissable |
-
-### SM Improvements (2026-01-24)
-
-| Metric | Before | After | Impact |
-|--------|--------|-------|--------|
-| First `<critical>` | Line 71 | Line 13 | 🔴→🔵 |
-| `<on-activation>` | Line 172 | Line 56 | 🔴→🟢 |
-| "NEVER writes code" | Line 71-92 | Line 19-25 | 🟡→🔵 |
-| Workflow flows | 400+ lines | ~80 lines | 🔴→🟢 |
-| Total file | 713 lines | 214 lines | Attention maintained |
-
-**Key insight:** Moving critical instructions from line 172 to line 13 has more impact than adding emphasis. Position > repetition.
+| 1-4 | Header + Role | `<role>` | 🔵 VERY HIGH | First thing read |
+| **6-18** | **Coordination Discipline** | **`<coordination-discipline>`** | **🔵 VERY HIGH** | **Unique tag, early, sets mindset** |
+| **20-24** | **Status check mandatory** | **`<critical>`** | **🔵 VERY HIGH** | **Line 20, optimal zone** |
+| **26-31** | **NEVER writes code** | **`<critical>`** | **🔵 VERY HIGH** | **Clear prohibition** |
+| **33-36** | **Handoff marker** | **`<critical>`** | **🔵 VERY HIGH** | **Specific action** |
+| 38-48 | Helpers | `<helpers>` | 🟢 HIGH | Compact table |
+| 50-94 | Parameters | `<parameters>` | 🟢 HIGH | Reference, scannable |
+| 96-100 | Context | `<context>` | 🟢 HIGH | Brief |
+| **102-125** | **On-activation** | **`<on-activation>`** | **🟢 HIGH** | **Line 102, good position** |
+| 127-149 | Finish Flow | `<finish-flow>` | 🟢 HIGH | Concise decision tree |
+| 151-216 | New Work + Routing | plain | 🟢 HIGH | Streamlined |
+| 249-262 | Exit sequence | `<exit>` | 🔵 VERY HIGH | Terminal, unmissable |
 
 ---
 
-## TEA Agent (tea.md) - 231 lines
+## Dev Agent (dev.md) - 169 lines
 
 | Lines | Section | Tag | Compliance | Why |
 |-------|---------|-----|------------|-----|
-| 1-7 | Header + Persona | plain | 🟢 HIGH | First, sets character |
-| 9-34 | Helpers | `<helpers>` | 🟢 HIGH | Shorter than old SM |
-| 36-49 | Phase-check | `<phase-check>` | 🟢 HIGH | Clear gate |
-| 51-57 | Responsibilities | `<responsibilities>` | 🟢 HIGH | Short, focused |
-| 59-70 | Skills/Context | `<skills>`/`<context>` | 🟢 HIGH | Brief |
-| 72-90 | Reasoning mode | `<reasoning-mode>` | 🟡 MEDIUM | Optional behavior |
-| 92-98 | On-activation | `<on-activation>` | 🟢 HIGH | Line 92 - reasonable |
-| 100-108 | What I do vs Helper | table | 🟢 HIGH | Clear division |
-| 109-140 | Primary workflow | plain | 🟢 HIGH | Core, well-structured |
-| 141-149 | Chore bypass | plain | 🟢 HIGH | Exception case, clear |
-| 151-159 | Handoff gate | `<handoff-gate>` | 🟢 HIGH | Checklist, mandatory tag |
-| 161-179 | Assessment template | plain | 🟢 HIGH | Template to fill |
-| 181-213 | Handoff subagent | plain | 🟢 HIGH | Copy-paste example |
-| 215-228 | Exit sequence | `<exit>` | 🔵 VERY HIGH | Terminal, unmissable |
+| 1-4 | Header + Role | `<role>` | 🔵 VERY HIGH | First |
+| **6-18** | **Minimalist Discipline** | **`<minimalist-discipline>`** | **🔵 VERY HIGH** | **Unique tag, sets coding style** |
+| **20-23** | **Handoff marker** | **`<critical>`** | **🔵 VERY HIGH** | **Line 20, optimal** |
+| 25-32 | Helpers | `<helpers>` | 🟢 HIGH | Short table |
+| 34-55 | Parameters | `<parameters>` | 🟢 HIGH | Reference |
+| 57-66 | Phase-check | `<phase-check>` | 🟢 HIGH | Gate behavior |
+| **68-71** | **On-activation** | **`<on-activation>`** | **🟢 HIGH** | **Line 68, excellent** |
+| 73-82 | Delegation | `<delegation>` | 🟢 HIGH | Clear table |
+| 84-107 | Primary workflow | `<workflow>` | 🟢 HIGH | Core flow |
+| 109-115 | Handoff gate | `<handoff-gate>` | 🟢 HIGH | Checklist |
+| 117-137 | Assessment template | `<assessment-template>` | 🟢 HIGH | Fill-in |
+| 139-157 | Exit sequence | `<exit-sequence>` | 🔵 VERY HIGH | Terminal |
+| 159-169 | Skills + Exit | `<skills>`, `<exit>` | 🔵 VERY HIGH | End of file |
 
-### TEA Observations
-
-TEA at 231 lines is now comparable to the trimmed SM (214 lines). Both maintain attention throughout.
+**Dev is the shortest main agent at 169 lines - excellent attention throughout.**
 
 ---
 
-## Dev Agent (dev.md) - 260 lines
+## Architect Agent (architect.md) - 188 lines
 
 | Lines | Section | Tag | Compliance | Why |
 |-------|---------|-----|------------|-----|
-| 1-8 | Header + Persona | plain | 🟢 HIGH | First |
-| 10-12 | Role | `<role>` | 🟢 HIGH | Short |
-| 14-39 | Helpers | `<helpers>` | 🟢 HIGH | Template-heavy but clear |
-| 41-54 | Phase-check | `<phase-check>` | 🟢 HIGH | Gate behavior |
-| 56-62 | Responsibilities | `<responsibilities>` | 🟢 HIGH | Short list |
-| 64-74 | Skills/Context | `<skills>`/`<context>` | 🟢 HIGH | Brief |
-| 76-94 | Reasoning mode | `<reasoning-mode>` | 🟡 MEDIUM | Optional |
-| 96-102 | On-activation | `<on-activation>` | 🟢 HIGH | Line 96 - early |
-| 104-151 | Primary workflow | plain | 🟢 HIGH | Core flow, clear steps |
-| 153-161 | Handoff gate | `<handoff-gate>` | 🟢 HIGH | Mandatory checklist |
-| 163-180 | Assessment template | plain | 🟢 HIGH | Fill-in template |
-| 182-192 | Self-review | `<self-review>` | 🟢 HIGH | Checklist format |
-| 194-257 | Exit + commit format | `<exit>` | 🔵 VERY HIGH | Terminal |
-
-### Dev Observations
-
-Similar structure to TEA. On-activation at line 96. Short file (260 lines). Dev follows instructions well due to manageable length.
+| 1-4 | Header + Role | `<role>` | 🔵 VERY HIGH | First |
+| **6-18** | **Pragmatic Restraint** | **`<pragmatic-restraint>`** | **🔵 VERY HIGH** | **Unique tag, prevents over-engineering** |
+| 20-28 | Helpers | `<helpers>` | 🟢 HIGH | Short |
+| 30-49 | Parameters | `<parameters>` | 🟢 HIGH | Reference |
+| **52-57** | **Critical** | **`<critical>`** | **🔵 VERY HIGH** | **Line 52, still in attention zone** |
+| 59-62 | Skills | `<skills>` | 🟢 HIGH | Brief reference |
+| 64-68 | Context | `<context>` | 🟢 HIGH | Short |
+| 70-90 | Reasoning mode | `<reasoning-mode>` | 🟢 HIGH | Optional but clear |
+| **92-98** | **On-activation** | **`<on-activation>`** | **🟢 HIGH** | **Line 92, good** |
+| 100-109 | Delegation | `<delegation>` | 🟢 HIGH | Table format |
+| 111-144 | Primary workflow | `<workflow>` | 🟢 HIGH | Core flow |
+| 146-152 | Handoff gate | `<handoff-gate>` | 🟢 HIGH | Checklist |
+| 154-176 | Assessment template | `<assessment-template>` | 🟢 HIGH | Template |
+| 178-188 | Exit | `<exit-sequence>`, `<exit>` | 🔵 VERY HIGH | Terminal |
 
 ---
 
-## Reviewer Agent (reviewer.md) - 378 lines
+## Reviewer Agent (reviewer.md) - 186 lines
 
 | Lines | Section | Tag | Compliance | Why |
 |-------|---------|-----|------------|-----|
-| 1-7 | Header + Persona | plain | 🟢 HIGH | First |
-| **9-25** | **Adversarial mindset** | **`<adversarial-mindset>`** | **🔵 VERY HIGH** | **Unique tag, strong language** |
-| 28-73 | Helpers | `<helpers>` | 🟢 HIGH | Detailed but important |
-| 75-88 | Phase-check | `<phase-check>` | 🟢 HIGH | Gate |
-| 90-102 | Responsibilities/Skills | plain | 🟢 HIGH | Short |
-| 104-136 | On-activation | `<on-activation>` | 🟢 HIGH | Line 104, reasonable |
-| 138-145 | What I do vs Helper | table | 🟢 HIGH | Clear |
-| 147-186 | Primary workflow | plain | 🟢 HIGH | Phased approach |
-| **188-219** | **Review checklist** | **`<review-checklist>`** | **🟢 HIGH** | **Unique tag, mandatory steps** |
-| 221-280 | Assessment templates | plain | 🟢 HIGH | Structured |
-| 282-322 | Exit + handoff | `<exit>` | 🔵 VERY HIGH | Terminal |
-| **343-374** | **Anti-patterns** | **plain** | **🟡 MEDIUM** | **Good examples but late in file** |
+| 1-4 | Header + Role | `<role>` | 🔵 VERY HIGH | First |
+| **6-18** | **Adversarial Mindset** | **`<adversarial-mindset>`** | **🔵 VERY HIGH** | **Unique tag, strong language, sets aggressive tone** |
+| **20-22** | **Preflight spawn** | **`<critical>`** | **🔵 VERY HIGH** | **Line 20, optimal** |
+| **24-27** | **Handoff marker** | **`<critical>`** | **🔵 VERY HIGH** | **Line 24** |
+| 29-36 | Helpers | `<helpers>` | 🟢 HIGH | Compact |
+| 38-68 | Parameters | `<parameters>` | 🟢 HIGH | Reference |
+| 70-74 | Context | `<context>` | 🟢 HIGH | Brief |
+| 76-85 | Phase-check | `<phase-check>` | 🟢 HIGH | Gate |
+| **87-95** | **On-activation** | **`<on-activation>`** | **🟢 HIGH** | **Line 87, good** |
+| **97-114** | **Review checklist** | **`<review-checklist>`** | **🟢 HIGH** | **Mandatory steps, unique tag** |
+| 116-136 | Workflow | `<workflow>` | 🟢 HIGH | Phased approach |
+| 138-144 | Handoff gate | `<handoff-gate>` | 🟢 HIGH | Checklist |
+| 146-174 | Assessment template | `<assessment-template>` | 🟢 HIGH | Structured |
+| 176-186 | Exit | `<exit-sequence>`, `<exit>` | 🔵 VERY HIGH | Terminal |
 
-### Reviewer Observations
-
-Reviewer has unique structural elements:
-1. `<adversarial-mindset>` tag is EARLY and STRONG
-2. `<review-checklist>` with mandatory steps
-3. Anti-patterns section shows what NOT to do
-
-**Reviewer tends to follow its aggressive stance because of strong early priming.**
+**Reviewer's `<adversarial-mindset>` at line 6 is highly effective - aggressive tone is maintained throughout.**
 
 ---
 
-## Summary: Position vs Compliance
+## TEA Agent (tea.md) - 161 lines
 
-```
-Line 0-50:   🔵 VERY HIGH - Almost always followed
-Line 50-100: 🟢 HIGH - Usually followed
-Line 100-200: 🟢 HIGH - Good compliance (for short files)
-Line 200-300: 🟡 MEDIUM - Inconsistent
-Line 300+:   🔴 LOW - Often skipped
-```
+| Lines | Section | Tag | Compliance | Why |
+|-------|---------|-----|------------|-----|
+| 1-4 | Header + Role | `<role>` | 🔵 VERY HIGH | First |
+| **6-18** | **Test Paranoia** | **`<test-paranoia>`** | **🔵 VERY HIGH** | **Unique tag, paranoid stance early** |
+| **20-23** | **Handoff marker** | **`<critical>`** | **🔵 VERY HIGH** | **Line 20, optimal** |
+| 25-32 | Helpers | `<helpers>` | 🟢 HIGH | Short |
+| 34-54 | Parameters | `<parameters>` | 🟢 HIGH | Reference |
+| 56-65 | Phase-check | `<phase-check>` | 🟢 HIGH | Gate |
+| **67-70** | **On-activation** | **`<on-activation>`** | **🟢 HIGH** | **Line 67, excellent** |
+| 72-81 | Delegation | `<delegation>` | 🟢 HIGH | Table |
+| 83-108 | Primary workflow | `<workflow>` | 🟢 HIGH | Core, chore bypass |
+| 110-116 | Handoff gate | `<handoff-gate>` | 🟢 HIGH | Checklist |
+| 118-137 | Assessment template | `<assessment-template>` | 🟢 HIGH | Template |
+| 139-150 | Exit sequence | `<exit-sequence>` | 🔵 VERY HIGH | Terminal |
+| 152-161 | Skills + Exit | `<skills>`, `<exit>` | 🔵 VERY HIGH | End of file |
 
-**Key finding:** Files under 300 lines maintain 🟢 HIGH compliance throughout. The old SM at 713 lines had 🔴 LOW compliance for lines 200+.
+**TEA is second shortest at 161 lines - `<test-paranoia>` sets the right mindset immediately.**
 
 ---
 
 ## Agent Comparison Table
 
-| Agent | Lines | Prime Chars | First Critical | On-Activation | Overall |
-|-------|-------|-------------|----------------|---------------|---------|
-| **SM (new)** | 214 | 18,249 | Line 13 | Line 56 | 🟢 HIGH |
-| TEA | 231 | 23,597 | Line 36 | Line 92 | 🟢 HIGH |
-| Dev | 260 | 23,768 | Line 41 | Line 96 | 🟢 HIGH |
-| Reviewer | 378 | 27,785 | Line 9 | Line 104 | 🟢 HIGH |
-| Orchestrator | 350 | 25,018 | TBD | TBD | 🟡 MEDIUM |
-| ~~SM (old)~~ | ~~713~~ | ~~36,052~~ | ~~Line 71~~ | ~~Line 172~~ | ~~🔴 LOW~~ |
+| Agent | Lines | Prime Chars | First Critical | On-Activation | Discipline Tag | Overall |
+|-------|-------|-------------|----------------|---------------|----------------|---------|
+| **TEA** | 161 | 21,522 | Line 20 | Line 67 | `<test-paranoia>` | 🔵 VERY HIGH |
+| **Dev** | 169 | 21,599 | Line 20 | Line 68 | `<minimalist-discipline>` | 🔵 VERY HIGH |
+| **Reviewer** | 186 | 20,866 | Line 20 | Line 87 | `<adversarial-mindset>` | 🔵 VERY HIGH |
+| **Architect** | 188 | 16,401 | Line 52 | Line 92 | `<pragmatic-restraint>` | 🟢 HIGH |
+| **SM** | 262 | 19,798 | Line 20 | Line 102 | `<coordination-discipline>` | 🟢 HIGH |
+
+**All agents are under 300 lines and under 25,000 chars - attention maintained throughout.**
 
 ---
 
-## Recommendations
+## Key Patterns
 
-### Structural Patterns That Work ✓
+### What Works
 
-1. **Critical blocks in first 30 lines** - Peak attention zone
-2. **Unique tags** - `<adversarial-mindset>`, `<on-activation>` get special attention
-3. **Tables** - Easy to scan, high retention
-4. **Short files (<300 lines)** - Maintains attention throughout
-5. **Early prohibitions** - "DO NOT" in first 50 lines
-6. **Checklists** - `- [ ]` format enforces completion
-7. **Terminal `<exit>`** - End-of-file actions always followed
+| Pattern | Example | Why |
+|---------|---------|-----|
+| Discipline tag at line 6-18 | `<test-paranoia>`, `<adversarial-mindset>` | Sets agent mindset immediately |
+| Critical blocks at lines 20-36 | All agents | Peak attention zone |
+| On-activation before line 100 | All agents now | Before attention degrades |
+| Unique XML tags | `<handoff-gate>`, `<review-checklist>` | Distinct, memorable |
+| Short files (<200 lines) | TEA, Dev, Reviewer | Full attention throughout |
+| Terminal `<exit>` | All agents | End-of-file always followed |
 
-### Patterns to Avoid ✗
+### What to Avoid
 
-1. **Long procedural flows** - Attention degrades after 100 lines
-2. **Files over 300 lines** - Compliance drops sharply
-3. **Critical instructions after line 100** - Move them earlier
-4. **Duplicate content** - Wastes tokens, doesn't improve compliance
-5. **Reference sections at EOF** - Never reached; link to skills instead
-6. **Generic `<info>` tags** - Less attention than `<critical>` or unique tags
+| Pattern | Problem | Fix |
+|---------|---------|-----|
+| Files over 300 lines | Attention degradation | Move procedures to subagents |
+| Critical instructions after line 100 | Lower compliance | Restructure to put critical early |
+| Generic tags | Less memorable | Use unique, descriptive tags |
+| Long procedural sections | Skipped | Use decision trees and tables |
 
 ---
 
 ## Target Metrics
 
-| Metric | Target | Reasoning |
-|--------|--------|-----------|
-| File lines | <300 | Maintains attention throughout |
-| Prime output | <25,000 chars | Leaves room for conversation |
-| First `<critical>` | Within line 30 | Peak attention zone |
-| `<on-activation>` | Within line 100 | Before attention degrades |
-| Procedural content | Minimal | Move to subagent files |
+| Metric | Target | Current Status |
+|--------|--------|----------------|
+| File lines | <200 | TEA (161), Dev (169), Reviewer (186), Architect (188) |
+| Prime output | <25,000 chars | All agents under target |
+| First `<critical>` | Within line 30 | All at line 20-24 (except Architect at 52) |
+| `<on-activation>` | Within line 100 | All within range |
+| Discipline tag | Lines 6-18 | All agents have unique discipline tag |
