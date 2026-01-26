@@ -90,7 +90,13 @@ function stripCodeBlocks(text) {
  * @returns {boolean} True if enforcement should be skipped
  */
 export function shouldSkipEnforcement(config) {
-  // Never skip enforcement - markers must always be emitted.
+  // Skip enforcement in CLI mode - markers are only needed for Cyclist UI
+  // Cyclist sets CYCLIST=1 in the environment when spawning Claude
+  if (process.env.CYCLIST !== '1') {
+    return true;
+  }
+
+  // In Cyclist mode, never skip enforcement - markers must always be emitted.
   // relay_mode only controls whether Cyclist auto-executes markers
   // vs showing buttons to the user.
   return false;
