@@ -165,7 +165,7 @@ export function handleHookWebSocketMessage(ws: WebSocket, message: string): void
 // =============================================================================
 
 async function handleHookRequest(req: Request, res: Response): Promise<void> {
-  const { toolName, toolId, input, sessionId, context } = req.body as HookRequest;
+  const { toolName, toolId, input, sessionId: _sessionId, context } = req.body as HookRequest;
 
   if (!toolName || !toolId) {
     res.status(400).json({ error: 'Missing required fields: toolName, toolId' });
