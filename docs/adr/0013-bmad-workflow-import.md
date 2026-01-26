@@ -1,4 +1,4 @@
-# ADR-0005: Stepped Workflow Support (BMAD-Inspired)
+# ADR-0013: Stepped Workflow Support (BMAD-Inspired)
 
 **Status:** Proposed
 **Date:** 2026-01-19

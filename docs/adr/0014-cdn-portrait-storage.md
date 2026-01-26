@@ -1,4 +1,4 @@
-# ADR-0006: CDN-Based Portrait Storage
+# ADR-0014: CDN-Based Portrait Storage
 
 ## Status
 

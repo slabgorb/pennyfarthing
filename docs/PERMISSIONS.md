@@ -285,9 +285,9 @@ If Claude Code reports permission errors:
 ## Related Documentation
 
 - [CONFIGURATION.md](./CONFIGURATION.md) - Full settings.local.json reference
-- [WORKFLOWS.md](./WORKFLOWS.md) - Agent workflow documentation
+- [BIKELANE.md](./BIKELANE.md) - Workflow system documentation
 - [AGENTS.md](./AGENTS.md) - Agent capabilities and roles
 
 ---
 
-**Last Updated:** 2025-12-24
+**Last Updated:** 2026-01-26

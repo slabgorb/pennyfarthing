@@ -48,11 +48,8 @@ Tooling to smooth out annoying development processes:
 |----------|-------------|
 | [Agents](AGENTS.md) | Agent reference and capabilities |
 | [Commands](COMMANDS.md) | Slash command reference |
-| [Workflows](WORKFLOWS.md) | BikeLane workflow guides |
-| [Workflow Diagrams](WORKFLOW-DIAGRAMS.md) | Visual Mermaid diagrams of all workflows |
 | [BikeLane](BIKELANE.md) | Workflow system architecture |
-| [BMAD Compatibility](bmad-compatibility-matrix.md) | BMAD 6.0 compatibility |
-| [Custom Agents](CUSTOM-AGENTS.md) | Create project-specific agents |
+| [BikeLane Diagrams](BIKELANE-DIAGRAMS.md) | Visual Mermaid diagrams of all workflows |
 
 ### Personality Research
 | Document | Description |
@@ -61,7 +58,6 @@ Tooling to smooth out annoying development processes:
 | [TRAIL-OCEAN Mapping](../pennyfarthing-dist/personas/TRAIL-OCEAN-MAPPING.md) | Hypothesis-driven personality testing |
 | [OCEAN Benchmarking](../pennyfarthing-dist/personas/OCEAN-BENCHMARKING.md) | Empirical findings on personality correlations |
 | [Personas](PERSONAS.md) | Persona system overview |
-| [Theme Comparison](THEME-COMPARISON.md) | OCEAN profiles and theme selection |
 
 ### Integration & Operations
 | Document | Description |
@@ -76,10 +72,9 @@ Tooling to smooth out annoying development processes:
 | Document | Description |
 |----------|-------------|
 | [Cyclist Guide](CYCLIST-GUIDE.md) | Visual terminal user guide |
-| [Cyclist Reference](CYCLIST.md) | Cyclist architecture and IPC |
+| [Cyclist Architecture](CYCLIST-ARCHITECTURE.md) | Cyclist internals and IPC |
 | [Skills](SKILLS.md) | Skills reference |
 | [Debugging Sessions](DEBUGGING-SESSIONS.md) | Debug Claude Code sessions |
-| [Shell Productivity](SHELL-PRODUCTIVITY.md) | Shell aliases and productivity tips |
 
 ## Quick Start
 
