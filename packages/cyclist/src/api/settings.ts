@@ -14,6 +14,7 @@ import { parse, stringify } from 'yaml';
 import { getCurrentSettings, saveUserSettings, type CyclistSettings, type SettingsInput } from '../settings.js';
 import { getProjectDirectory } from '../paths.js';
 import { setBellMode } from '../bell-mode.js';
+import { isOtelDebugEnabled } from '../otlp-receiver.js';
 
 // =============================================================================
 // Theme Response Type
@@ -297,14 +298,18 @@ export function createSettingsRouter(): Router {
         }
       }
 
-      console.log('[Themes API] Final themesDir:', themesDir);
+      if (isOtelDebugEnabled()) {
+        console.log('[Themes API] Final themesDir:', themesDir);
+      }
 
       if (!themesDir) {
         return res.json([]);
       }
 
       const files = fs.readdirSync(themesDir).filter(f => f.endsWith('.yaml')).sort();
-      console.log('[Themes API] Found', files.length, 'theme files');
+      if (isOtelDebugEnabled()) {
+        console.log('[Themes API] Found', files.length, 'theme files');
+      }
       const themes = files.map(f => {
         const id = f.replace('.yaml', '');
         const name = id.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
