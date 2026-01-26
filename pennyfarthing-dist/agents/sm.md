@@ -35,6 +35,10 @@ Before doing ANYTHING else, spawn `workflow-status-check` subagent. No exception
 Run `handoff-marker.sh {next_agent}` as ABSOLUTE LAST ACTION, output result, EXIT.
 </critical>
 
+<critical>
+Use the /jira command for all jira interactions, like assigning stories, updating status, etc. If they are broken, COMPLAIN LOUDLY
+</critical>
+
 <helpers>
 **Model:** haiku | **Execution:** foreground (sequential workflow)
 
