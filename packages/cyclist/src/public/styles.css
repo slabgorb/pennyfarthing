@@ -1133,6 +1133,66 @@ html, body {
   animation: pulse 0.5s ease-out;
 }
 
+/* Multi-repo: Project directory display */
+#stats-strip .project-dir {
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#stats-strip .project-dir:empty {
+  display: none;
+}
+
+/* Multi-repo: Git status indicators for all repos */
+#stats-strip .git-status-all {
+  display: flex;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+}
+
+#stats-strip .git-status-all:empty {
+  display: none;
+}
+
+#stats-strip .repo-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.0625rem 0.25rem;
+  border-radius: 3px;
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+  cursor: default;
+}
+
+#stats-strip .repo-status.clean {
+  background: rgba(46, 204, 113, 0.15);
+  color: var(--status-ready, #2ecc71);
+}
+
+#stats-strip .repo-status.dirty {
+  background: rgba(231, 76, 60, 0.15);
+  color: var(--status-error, #e74c3c);
+}
+
+#stats-strip .repo-status .repo-name {
+  font-weight: 500;
+}
+
+#stats-strip .repo-status .status-icon {
+  font-size: 0.65rem;
+}
+
+#stats-strip .repo-status .ahead-behind {
+  opacity: 0.7;
+  font-size: 0.6rem;
+  margin-left: 0.125rem;
+}
+
 .model-badge {
   display: inline-flex;
   align-items: center;

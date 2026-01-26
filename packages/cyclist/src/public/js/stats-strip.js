@@ -263,6 +263,71 @@ function updateUserEmail(email) {
 }
 
 /**
+ * Update project directory display
+ * @param {string} directory - Full path to project directory
+ */
+function updateProjectDirectory(directory) {
+  const element = document.querySelector('#stats-strip .project-dir');
+  if (!element || !directory) return;
+
+  // Show only the folder name, not full path
+  const folderName = directory.split('/').pop() || directory;
+
+  if (element.textContent !== folderName) {
+    element.textContent = folderName;
+    element.title = `Project: ${directory}`;
+
+    // Pulse animation
+    element.classList.add('updated');
+    setTimeout(() => element.classList.remove('updated'), 500);
+  }
+}
+
+/**
+ * Update git status display for all configured repos
+ * @param {Array} repos - Array of repo status objects { name, path, branch, clean, ahead, behind }
+ */
+function updateGitStatusAll(repos) {
+  const container = document.querySelector('#stats-strip .git-status-all');
+  if (!container || !repos || repos.length === 0) return;
+
+  container.innerHTML = repos.map(repo => {
+    const statusClass = repo.clean ? 'clean' : 'dirty';
+    const statusIcon = repo.clean ? '✓' : '●';
+
+    // Build ahead/behind indicator
+    let aheadBehind = '';
+    if (repo.ahead > 0) aheadBehind += `↑${repo.ahead}`;
+    if (repo.behind > 0) aheadBehind += `↓${repo.behind}`;
+
+    // Short name: conductor-api → api, pennyfarthing → pf (first 3 chars after last hyphen or of whole name)
+    const parts = repo.name.split('-');
+    const shortName = parts.length > 1 ? parts[parts.length - 1].slice(0, 3) : repo.name.slice(0, 2);
+
+    return `<span class="repo-status ${statusClass}" title="${repo.name}: ${repo.branch}${repo.clean ? ' (clean)' : ' (uncommitted changes)'}">
+      <span class="repo-name">${shortName}</span><span class="status-icon">${statusIcon}</span>${aheadBehind ? `<span class="ahead-behind">${aheadBehind}</span>` : ''}
+    </span>`;
+  }).join('');
+}
+
+/**
+ * Fetch git status for all repos from API
+ */
+async function fetchGitStatusAll() {
+  try {
+    const response = await fetch('/api/git/all');
+    if (!response.ok) {
+      console.warn('[StatsStrip] Git status fetch failed:', response.status);
+      return;
+    }
+    const repos = await response.json();
+    updateGitStatusAll(repos);
+  } catch (err) {
+    console.warn('[StatsStrip] Failed to fetch git status:', err);
+  }
+}
+
+/**
  * Update usage meter display (23-1)
  * @param {Object} usageStats - Usage stats object
  * @param {number} usageStats.fiveHourPercent - 5-hour remaining percentage
@@ -414,7 +479,7 @@ async function initStatsStrip() {
     compactBtn.addEventListener('click', executeCompact);
   }
 
-  // 35-2: Project info subscription (user email from OTEL)
+  // 35-2: Project info subscription (user email and directory from OTEL)
   if (window.electronAPI?.projectInfo) {
     // Get initial project info
     if (window.electronAPI.projectInfo.get) {
@@ -423,8 +488,11 @@ async function initStatsStrip() {
         if (info?.userEmail) {
           updateUserEmail(info.userEmail);
         }
+        if (info?.directory) {
+          updateProjectDirectory(info.directory);
+        }
       } catch (err) {
-        // Silent fail - email is optional
+        // Silent fail - email/directory is optional
       }
     }
 
@@ -434,9 +502,18 @@ async function initStatsStrip() {
         if (info?.userEmail) {
           updateUserEmail(info.userEmail);
         }
+        if (info?.directory) {
+          updateProjectDirectory(info.directory);
+        }
       });
     }
   }
+
+  // Multi-repo git status - fetch from API
+  fetchGitStatusAll();
+
+  // Set up polling for git status (5 second interval as fallback)
+  setInterval(fetchGitStatusAll, 5000);
 
   console.log('[StatsStrip] IPC connected');
 }
@@ -454,3 +531,7 @@ window.updateCompactButtonVisibility = updateCompactButtonVisibility;
 // 35-2: Export user email function
 window.updateUserEmail = updateUserEmail;
 window.executeCompact = executeCompact;
+// Multi-repo: Export project dir and git status functions
+window.updateProjectDirectory = updateProjectDirectory;
+window.updateGitStatusAll = updateGitStatusAll;
+window.fetchGitStatusAll = fetchGitStatusAll;

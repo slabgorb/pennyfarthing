@@ -1,5 +1,8 @@
 import { Router } from 'express';
 import { execSync } from 'child_process';
+import { existsSync, readFileSync } from 'fs';
+import { join } from 'path';
+import { parse as parseYaml } from 'yaml';
 import { detectPennyfarthingProject } from '../pennyfarthing.js';
 
 // Git info interface
@@ -8,6 +11,78 @@ export interface GitInfo {
   clean: boolean;
   ahead: number | null;
   behind: number | null;
+}
+
+// Extended git info with repo name for multi-repo display
+export interface RepoGitInfo extends GitInfo {
+  name: string;
+  path: string;
+}
+
+// Repo config from pennyfarthing-settings.yaml
+interface RepoConfig {
+  name: string;
+  path: string;
+}
+
+/**
+ * Get repos from pennyfarthing-settings.yaml
+ * Returns array of repo configs, falls back to single repo (current dir) if none configured
+ */
+export function getReposFromConfig(projectDir: string): RepoConfig[] {
+  const configPath = join(projectDir, '.claude', 'project', 'pennyfarthing-settings.yaml');
+
+  if (!existsSync(configPath)) {
+    // No config - return current directory as single repo
+    const dirName = projectDir.split('/').pop() || 'project';
+    return [{ name: dirName, path: '.' }];
+  }
+
+  try {
+    const configContent = readFileSync(configPath, 'utf-8');
+    const config = parseYaml(configContent);
+
+    if (!config?.repos || typeof config.repos !== 'object') {
+      const dirName = projectDir.split('/').pop() || 'project';
+      return [{ name: dirName, path: '.' }];
+    }
+
+    const repos: RepoConfig[] = [];
+    for (const [name, repoConfig] of Object.entries(config.repos)) {
+      const rc = repoConfig as Record<string, unknown> | null;
+      repos.push({
+        name,
+        path: (rc?.path as string) || name,
+      });
+    }
+
+    return repos.length > 0 ? repos : [{ name: projectDir.split('/').pop() || 'project', path: '.' }];
+  } catch (err) {
+    console.warn('[Git API] Failed to parse pennyfarthing-settings.yaml:', err);
+    const dirName = projectDir.split('/').pop() || 'project';
+    return [{ name: dirName, path: '.' }];
+  }
+}
+
+/**
+ * Get git status for all configured repos
+ */
+export function getAllReposGitInfo(projectDir: string): RepoGitInfo[] {
+  const repos = getReposFromConfig(projectDir);
+
+  return repos.map(repo => {
+    const repoPath = join(projectDir, repo.path);
+    const gitInfo = getGitInfo(repoPath);
+
+    return {
+      name: repo.name,
+      path: repo.path,
+      branch: gitInfo?.branch || 'unknown',
+      clean: gitInfo?.clean ?? true,
+      ahead: gitInfo?.ahead ?? null,
+      behind: gitInfo?.behind ?? null,
+    };
+  });
 }
 
 // Get git status for project
@@ -87,6 +162,18 @@ export function createGitRouter(getProjectDir: () => string): Router {
     }
 
     res.json(gitInfo);
+  });
+
+  // Git API - GET status for all configured repos
+  router.get('/all', (_req, res) => {
+    const projectDir = getProjectDir();
+
+    if (!detectPennyfarthingProject(projectDir)) {
+      return res.status(404).json({ error: 'Not a Pennyfarthing project' });
+    }
+
+    const allReposInfo = getAllReposGitInfo(projectDir);
+    res.json(allReposInfo);
   });
 
   return router;
