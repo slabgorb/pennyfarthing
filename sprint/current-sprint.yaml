@@ -8,10 +8,10 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 154
+  total_points: 158
   completed_points: 130
   cancelled_points: 6
-  remaining_points: 18
+  remaining_points: 22
   notes: |
     Sprint 12 includes work from multiple epics that were tracked in Jira but
     not in local sprint YAML. This file has been reconciled with Jira Sprint 276.
@@ -726,7 +726,7 @@ epics:
   - id: standalone
     type: misc
     title: "Standalone Stories"
-    points: 14
+    points: 18
     completed_points: 11
     status: in_progress
     stories:
@@ -811,6 +811,57 @@ epics:
         branch: feat/MSSCI-12403-persona-popup-redesign
         workflow: bdd
         completed: "2026-01-25"
+      - id: MSSCI-12424
+        title: "Remove ungated DEBUG console.log in otlp-receiver.ts"
+        description: |
+          Lines 756-769 in otlp-receiver.ts have DEBUG console.log statements that
+          are NOT gated by the otelDebugEnabled flag. These spam the console every
+          time a Task tool is used in production.
+
+          Fix: Gate these logs behind `if (otelDebugEnabled)` or remove them.
+
+          Found via: tail -f /tmp/cyclist.log
+        points: 1
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        workflow: trivial
+      - id: MSSCI-12425
+        title: "Remove debug logging in api/settings.ts"
+        description: |
+          Line 282 in api/settings.ts has a debug console.log that logs
+          `process.resourcesPath` every time themes are loaded:
+
+          console.log('[Themes API] process.resourcesPath:', process.resourcesPath);
+
+          This logs "undefined" in dev mode which is noisy. Remove or gate behind
+          a debug flag.
+
+          Found via: tail -f /tmp/cyclist.log
+        points: 1
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: trivial
+      - id: MSSCI-12426
+        title: "Fix uncaught exception during startup when no project directory"
+        description: |
+          During Cyclist startup, an uncaught exception occurs:
+          "The 'path' argument must be of type string. Received undefined"
+
+          This happens between "No project directory, showing folder picker" and
+          "Project directory set". Something is trying to use a file path before
+          the project directory is established.
+
+          The error is caught by the uncaughtException handler at main.ts:2209
+          so the app continues, but it indicates a code path issue.
+
+          Found via: /Applications/Cyclist.app/Contents/MacOS/Cyclist 2>&1 | tee /tmp/cyclist-live.log
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
   - id: epic-61
     type: epic
     title: "Epic: Reflector Marker Consolidation"
