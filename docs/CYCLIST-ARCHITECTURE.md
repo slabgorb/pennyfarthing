@@ -1,4 +1,4 @@
-# Cyclist - Visual Desktop Interface
+# Cyclist Architecture
 
 Cyclist is a desktop application for running Claude Code with a visual terminal interface. It provides real-time agent personas, session statistics, story progress tracking, and a rich text editor - all wrapped in an Electron app.
 
