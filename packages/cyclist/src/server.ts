@@ -27,6 +27,7 @@ import {
   createBackgroundTasksRouter,
   initBackgroundTaskBroadcast,
   createSpansRouter,
+  createHookRequestRouter,
 } from './api/index.js';
 
 // Settings initialization (35-6: required for font settings persistence)
@@ -63,6 +64,17 @@ app.get('/', (_req, res) => {
   res.sendFile(join(publicDir, 'index.html'));
 });
 
+// Serve pennyfarthing logo from project root (for welcome message)
+app.get('/pennyfarthing-transparent.png', (_req, res) => {
+  const projectDir = getProjectDirectory() || process.cwd();
+  const logoPath = join(projectDir, 'pennyfarthing-transparent.png');
+  res.sendFile(logoPath, (err) => {
+    if (err) {
+      res.status(404).send('Logo not found');
+    }
+  });
+});
+
 // Wrapper that provides fallback to cwd for standalone server mode
 function getProjectDir(): string {
   return getProjectDirectory() || process.cwd();
@@ -91,28 +103,48 @@ app.use('/api/settings', createSettingsRouter());
 app.use('/api/background-tasks', createBackgroundTasksRouter());
 // MSSCI-11734: Enriched spans API
 app.use('/api/spans', createSpansRouter());
+// MSSCI-12409: Hook request API (WheelHub consolidation)
+app.use('/api/hook-request', createHookRequestRouter());
+
+// Welcome message endpoint (triggered by SessionStart hook)
+// Broadcasts welcome message to /ws/welcome channel for Cyclist display
+import { broadcastWelcome } from './api/welcome.js';
+
+app.post('/api/welcome', (req, res) => {
+  const { project, theme } = req.body || {};
+  try {
+    broadcastWelcome({ project: project || '', theme: theme || '' });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[Welcome] Broadcast error:', err);
+    res.status(500).json({ error: 'Failed to broadcast welcome' });
+  }
+});
 
 // MSSCI-12275: Bell mode queue sync endpoint
 // Writes message queue to .pennyfarthing/bell-queue.json for PostToolUse hook
 app.post('/api/bell-queue', (req, res) => {
   const projectDir = getProjectDir();
   const queuePath = join(projectDir, '.pennyfarthing', 'bell-queue.json');
-  const modePath = join(projectDir, '.pennyfarthing', 'bell-mode.json');
+  const configPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
 
-  // Only write if bell mode is enabled
+  // Only write if bell mode is enabled (read from config.local.yaml)
   try {
-    if (existsSync(modePath)) {
-      const modeContent = readFileSync(modePath, 'utf8');
-      const mode = JSON.parse(modeContent);
-      if (mode?.enabled) {
-        const queue = req.body;
-        if (Array.isArray(queue)) {
-          writeFileSync(queuePath, JSON.stringify(queue, null, 2));
-        }
-      } else if (existsSync(queuePath)) {
-        // Bell mode disabled - remove stale queue file
-        unlinkSync(queuePath);
+    let bellModeEnabled = false;
+    if (existsSync(configPath)) {
+      const configContent = readFileSync(configPath, 'utf8');
+      // Simple check for bell_mode: true in YAML
+      bellModeEnabled = /^\s*bell_mode:\s*true/m.test(configContent);
+    }
+
+    if (bellModeEnabled) {
+      const queue = req.body;
+      if (Array.isArray(queue)) {
+        writeFileSync(queuePath, JSON.stringify(queue, null, 2));
       }
+    } else if (existsSync(queuePath)) {
+      // Bell mode disabled - remove stale queue file
+      unlinkSync(queuePath);
     }
     res.json({ ok: true });
   } catch (err) {

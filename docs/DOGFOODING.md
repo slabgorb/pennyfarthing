@@ -1,6 +1,6 @@
-# Pennyfarthing Dogfooding Architecture (v7.0+)
+# Pennyfarthing Dogfooding Architecture (v7.6+)
 
-Pennyfarthing uses itself for development - "eating your own dogfood." With v7.0's restructured directory layout, there's clear separation between Claude Code discovery (`.claude/`) and Pennyfarthing content (`.pennyfarthing/`).
+Pennyfarthing uses itself for development - "eating your own dogfood." With v7.0+'s restructured directory layout, there's clear separation between Claude Code discovery (`.claude/`) and Pennyfarthing content (`.pennyfarthing/`).
 
 ## Quick Start for New Developers
 
@@ -22,21 +22,21 @@ pnpm install
 ./pennyfarthing-dist/scripts/doctor-dogfood.sh --fix
 ```
 
-## The Structure (v7.0+)
+## The Structure (v7.6+)
 
-The v7.0 restructure separates concerns:
+The v7.0+ restructure separates concerns:
 - **`.claude/`** - Claude Code discovery (commands, skills, project customizations)
 - **`.pennyfarthing/`** - Pennyfarthing content (agents, guides, personas, scripts)
 
 ```
 pennyfarthing/
 ├── pennyfarthing-dist/          <- SOURCE OF TRUTH (distributable package)
-│   ├── agents/                  # 10 main agents + 8 subagents
-│   ├── commands/                # 43 slash commands
+│   ├── agents/                  # 19 agent definitions
+│   ├── commands/                # 45 slash commands
 │   ├── guides/                  # Behavior guides
 │   ├── personas/                # 102 themed personas
 │   ├── scripts/                 # Utility scripts
-│   ├── skills/                  # 21 knowledge domains
+│   ├── skills/                  # 22 knowledge domains
 │   └── workflows/               # Workflow definitions
 │
 ├── .claude/                     <- CLAUDE CODE DISCOVERY

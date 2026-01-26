@@ -21,7 +21,7 @@ import {
 import { renderBackgroundTaskNotification, renderBellInjectedMessage } from './components/message-view/message-renderers.js';
 import { enrichMessage } from './message-enrichment.js';
 import { updateActivity, clearActivity } from './activity.js';
-import { resetSubmitting, setProcessing, processNextInQueue, setOnQueueChange, clearMessageQueue, loadMessageQueue, getMessageQueue, removeFromQueue, injectMessage, dequeueMessage } from './editor.js';
+import { resetSubmitting, setProcessing, processNextInQueue, setOnQueueChange, clearMessageQueue, loadMessageQueue, getMessageQueue, removeFromQueue, injectMessage, dequeueMessage, pauseQueue } from './editor.js';
 import { handleMessage as handleGitCommitMessage } from './git-commit-detector.js';
 import { getCurrentAgentCommand } from './persona.js';
 import { settingsSync, STORAGE_KEYS } from './settings-sync.js';
@@ -125,7 +125,12 @@ function initMessageView() {
           updateActivity(enrichedResult);
 
           // MSSCI-12143: Check tool_result content for CYCLIST markers (subagent handoffs)
-          const toolResultText = toolResult.content || '';
+          // Handle SDK array content blocks (e.g., [{type: 'text', text: '...'}])
+          const toolResultText = typeof toolResult.output === 'string'
+            ? toolResult.output
+            : (Array.isArray(toolResult.output)
+                ? toolResult.output.filter(b => b.type === 'text').map(b => b.text).join('\n')
+                : '');
           if (toolResultText.includes('CYCLIST:')) {
             const markers = processMessageForQuickActions({
               type: 'assistant',
@@ -252,9 +257,12 @@ function initMessageView() {
   async function abortClaude() {
     if (window.electronAPI?.claude) {
       console.log('[MessageView] Aborting Claude');
+      pauseQueue(); // Prevent queue auto-advance after abort
       await window.electronAPI.claude.abort();
       hideThinking();
       clearActivity();
+      resetSubmitting(); // Allow new submissions after abort
+      setProcessing(false); // Mark processing complete
     }
   }
 

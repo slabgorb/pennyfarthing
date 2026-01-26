@@ -1,21 +1,21 @@
 #!/usr/bin/env node
 /**
- * question-reflector-check.mjs - Question reflector enforcement hook
+ * reflector-check.mjs - CYCLIST reflector marker enforcement hook
  *
- * Story: MSSCI-12393
+ * Story: MSSCI-12393 (questions), extended for all markers
  *
- * Validates that any question asked by the agent has an appropriate
- * CYCLIST reflector marker. Used by both Stop hook and PreToolUse hook.
+ * EVERY turn end MUST have a CYCLIST reflector marker. This ensures:
+ * - Cyclist UI can render appropriate buttons/actions
+ * - User always has opportunity to intervene
+ * - Workflow handoffs are never silently dropped
  *
- * Question types detected:
- *   - Direct questions (ends with ?)
- *   - Implicit questions (would you like, should I, let me know if)
- *   - Choice offerings (option A or B, we could do X or Y)
- *
- * Required markers:
- *   <!-- CYCLIST:QUESTION:yesno -->
- *   <!-- CYCLIST:QUESTION:open -->
- *   <!-- CYCLIST:CHOICES:opt1,opt2,opt3 -->
+ * Valid markers (any one required):
+ *   <!-- CYCLIST:HANDOFF:/agent -->        - Workflow handoff to next agent
+ *   <!-- CYCLIST:CONTEXT_CLEAR:/agent -->  - Handoff with context clear (TirePump)
+ *   <!-- CYCLIST:QUESTION:yesno -->        - Yes/no question
+ *   <!-- CYCLIST:QUESTION:open -->         - Open-ended question
+ *   <!-- CYCLIST:CHOICES:opt1,opt2,opt3 --> - Multiple choice
+ *   <!-- CYCLIST:CONTINUE -->              - Status update, user can continue or redirect
  */
 
 import { readFileSync } from 'fs';
@@ -25,9 +25,12 @@ import { join, dirname } from 'path';
 // Constants
 // =============================================================================
 
-// Marker patterns
+// Marker patterns - ALL valid CYCLIST markers
 const QUESTION_MARKER_PATTERN = /<!--\s*CYCLIST:QUESTION:(yesno|open)\s*-->/i;
 const CHOICES_MARKER_PATTERN = /<!--\s*CYCLIST:CHOICES:[^>]+\s*-->/i;
+const HANDOFF_MARKER_PATTERN = /<!--\s*CYCLIST:HANDOFF:\/\w+\s*-->/i;
+const CONTEXT_CLEAR_MARKER_PATTERN = /<!--\s*CYCLIST:CONTEXT_CLEAR:\/\w+\s*-->/i;
+const CONTINUE_MARKER_PATTERN = /<!--\s*CYCLIST:CONTINUE\s*-->/i;
 
 // Question patterns - direct (with ?)
 // Match: end of line, followed by space+capital (new sentence), or followed by newline
@@ -87,18 +90,15 @@ function stripCodeBlocks(text) {
  * @returns {boolean} True if enforcement should be skipped
  */
 export function shouldSkipEnforcement(config) {
-  const workflow = config?.workflow || {};
-
-  // Legacy: turbo mode skips enforcement
-  if (workflow.permission_mode === 'turbo') {
+  // Skip enforcement in CLI mode - markers are only needed for Cyclist UI
+  // Cyclist sets CYCLIST=1 in the environment when spawning Claude
+  if (process.env.CYCLIST !== '1') {
     return true;
   }
 
-  // New: relay_mode skips enforcement (for auto-handoff flows)
-  if (workflow.relay_mode === true) {
-    return true;
-  }
-
+  // In Cyclist mode, never skip enforcement - markers must always be emitted.
+  // relay_mode only controls whether Cyclist auto-executes markers
+  // vs showing buttons to the user.
   return false;
 }
 
@@ -139,12 +139,18 @@ export function detectQuestion(message) {
 }
 
 /**
- * Check if a message has a CYCLIST reflector marker
+ * Check if a message has ANY valid CYCLIST reflector marker
  * @param {string} message - The message to check
- * @returns {boolean} True if a marker is present
+ * @returns {boolean} True if any marker is present
  */
 export function hasReflectorMarker(message) {
-  return QUESTION_MARKER_PATTERN.test(message) || CHOICES_MARKER_PATTERN.test(message);
+  return (
+    QUESTION_MARKER_PATTERN.test(message) ||
+    CHOICES_MARKER_PATTERN.test(message) ||
+    HANDOFF_MARKER_PATTERN.test(message) ||
+    CONTEXT_CLEAR_MARKER_PATTERN.test(message) ||
+    CONTINUE_MARKER_PATTERN.test(message)
+  );
 }
 
 /**
@@ -154,8 +160,11 @@ export function hasReflectorMarker(message) {
  */
 export function extractLastAssistantMessage(transcript) {
   // Find the last assistant message (reverse order)
+  // Claude Code transcript format wraps messages: { message: { role, content }, type, ... }
   for (let i = transcript.length - 1; i >= 0; i--) {
-    const msg = transcript[i];
+    const entry = transcript[i];
+    // Support both wrapped format (Claude Code JSONL) and direct format (tests)
+    const msg = entry.message || entry;
     if (msg.role === 'assistant') {
       // Handle content as string or array
       if (typeof msg.content === 'string') {
@@ -176,32 +185,40 @@ export function extractLastAssistantMessage(transcript) {
 
 /**
  * Build the block reason message
- * @param {string} questionType - The type of question detected
+ * @param {string} questionType - The type of question detected (or empty for general)
  * @returns {string} The reason message
  */
 function buildBlockReason(questionType) {
-  let reason = 'You asked a question but did not emit a CYCLIST reflector marker. ';
+  let reason = 'Every turn MUST end with a CYCLIST reflector marker. ';
 
-  switch (questionType) {
-    case 'direct':
-      reason += 'Add <!-- CYCLIST:QUESTION:yesno --> for yes/no questions or <!-- CYCLIST:QUESTION:open --> for open-ended questions before your question.';
-      break;
-    case 'implicit':
-      reason += 'Add <!-- CYCLIST:QUESTION:yesno --> before phrases like "would you like" or "should I".';
-      break;
-    case 'choices':
-      reason += 'Add <!-- CYCLIST:CHOICES:option1,option2,option3 --> listing the choices before presenting options.';
-      break;
-    default:
-      reason += 'Add the appropriate marker before your question.';
+  if (questionType) {
+    // Specific question type detected
+    switch (questionType) {
+      case 'direct':
+        reason += 'You asked a question. Add <!-- CYCLIST:QUESTION:yesno --> or <!-- CYCLIST:QUESTION:open --> before your question.';
+        break;
+      case 'implicit':
+        reason += 'You asked an implicit question. Add <!-- CYCLIST:QUESTION:yesno --> before phrases like "would you like" or "should I".';
+        break;
+      case 'choices':
+        reason += 'You offered choices. Add <!-- CYCLIST:CHOICES:option1,option2,option3 --> listing the choices.';
+        break;
+    }
+  } else {
+    // No question detected, but still need a marker
+    reason += 'Valid markers:\n';
+    reason += '  <!-- CYCLIST:HANDOFF:/agent --> - workflow handoff\n';
+    reason += '  <!-- CYCLIST:QUESTION:yesno --> - yes/no question\n';
+    reason += '  <!-- CYCLIST:QUESTION:open --> - open question\n';
+    reason += '  <!-- CYCLIST:CHOICES:a,b,c --> - multiple choice\n';
+    reason += '  <!-- CYCLIST:CONTINUE --> - status update, user may continue or redirect';
   }
 
-  reason += ' Re-state your question with the appropriate marker.';
   return reason;
 }
 
 /**
- * Main check for Stop hook - validates question reflector markers
+ * Main check for Stop hook - validates ALL turns have reflector markers
  * @param {object} input - Hook input with transcript_path, stop_hook_active
  * @param {object} config - Config with workflow settings
  * @param {string} lastMessage - The last assistant message (pre-extracted for testing)
@@ -218,26 +235,22 @@ export function checkQuestionReflector(input, config, lastMessage) {
     return { ok: true };
   }
 
-  // If no message, allow
+  // If no message, allow (edge case - shouldn't happen)
   if (!lastMessage) {
     return { ok: true };
   }
 
-  // If marker present, allow
+  // If ANY marker present, allow
   if (hasReflectorMarker(lastMessage)) {
     return { ok: true };
   }
 
-  // Check for questions
+  // No marker found - block
+  // Check if it's a question to give more specific guidance
   const detection = detectQuestion(lastMessage);
-  if (!detection.detected) {
-    return { ok: true };
-  }
-
-  // Question detected without marker - block
   return {
     decision: 'block',
-    reason: buildBlockReason(detection.type),
+    reason: buildBlockReason(detection.detected ? detection.type : ''),
   };
 }
 

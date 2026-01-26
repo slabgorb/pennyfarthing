@@ -116,6 +116,185 @@ Tags that organize agent content.
 
 **Purpose:** How to leave agent mode and cleanup.
 
+## Workflow Tags (TDD Agents)
+
+Tags used by agents participating in the TDD workflow cycle (SM, TEA, Dev, Reviewer).
+
+### `<phase-check>`
+
+**Purpose:** Verify agent owns the current workflow phase before proceeding. Prevents agents from acting on stories they shouldn't own.
+
+**Usage:** SM, TEA, Dev, Reviewer - runs `phase-owner.sh` on activation to determine correct owner.
+
+```markdown
+<phase-check>
+## On Startup: Check Phase
+
+Read `**Workflow:**` and `**Phase:**` from session. Query:
+```bash
+OWNER=$(.pennyfarthing/scripts/core/run.sh workflow/phase-owner.sh {workflow} {phase})
+```
+
+**If OWNER != "dev":** Run `handoff-marker.sh $OWNER`, output result, tell user.
+</phase-check>
+```
+
+### `<handoff-gate>`
+
+**Purpose:** Exit checklist that MUST be completed before handoff. Ensures assessment is written and subagent is spawned.
+
+**Usage:** TEA, Dev, Reviewer - mandatory checklist before exiting.
+
+```markdown
+<handoff-gate>
+## MANDATORY: Complete Before Exiting
+
+- [ ] Write Assessment to session file
+- [ ] Spawn `handoff` subagent
+- [ ] Verify handoff completed (subagent emits marker)
+</handoff-gate>
+```
+
+**Difference from `<gate>`:** `<handoff-gate>` is specifically for phase transitions; `<gate>` is for general prerequisites.
+
+### `<handoffs>`
+
+**Purpose:** Documents handoff relationships for strategic agents that coordinate but don't participate in the TDD cycle.
+
+**Usage:** PM, Architect, DevOps, Tech-Writer, UX-Designer, Orchestrator.
+
+```markdown
+<handoffs>
+### From PM/SM
+**When:** Epic needs architectural design
+**Input:** Business requirements, constraints
+**Action:** Design solution and provide guidance
+
+### To Dev
+**When:** Design is complete
+**Output:** Architecture decision and implementation plan
+</handoffs>
+```
+
+## Subagent Tags
+
+Tags used specifically by Haiku subagents for parameter contracts.
+
+### `<params>`
+
+**Purpose:** Define the parameter contract for subagents. Specifies what the calling agent must provide in the prompt.
+
+**Usage:** Subagents only (sm-setup, sm-finish, sm-handoff, sm-file-summary, handoff, testing-runner, reviewer-preflight).
+
+**Standard format (table):**
+```markdown
+<params>
+| Param | Required | Description |
+|-------|----------|-------------|
+| `STORY_ID` | Yes | Story identifier, e.g., "31-10" |
+| `WORKFLOW` | Yes | Workflow type: "tdd", "trivial", etc. |
+| `FILTER` | No | Test name pattern for filtered runs |
+</params>
+```
+
+**Note:** Use `<info>` for contextual information that isn't a parameter contract.
+
+### `<output>`
+
+**Purpose:** Define the standardized output format for subagents. Ensures calling agents receive both data AND instructions on what to do next.
+
+**Usage:** All subagents must use this format for their final output.
+
+**Standard format:**
+```markdown
+<output>
+## Output Format
+
+Return a `{SUBAGENT}_RESULT` block:
+
+### Success
+\`\`\`
+{SUBAGENT}_RESULT:
+  status: success
+  {data fields...}
+
+  next_steps:
+    - {instruction 1}
+    - {instruction 2}
+\`\`\`
+
+### Blocked
+\`\`\`
+{SUBAGENT}_RESULT:
+  status: blocked
+  error: "{description}"
+  fix: "{recommended action}"
+
+  next_steps:
+    - {what caller should do}
+\`\`\`
+</output>
+```
+
+**Required fields:**
+- `status`: `success` | `blocked` | `warning`
+- `next_steps`: Array of instructions for the calling agent
+
+**Why this matters:** Subagent output is NOT visible to users (only to the calling agent). Clear next steps ensure the caller knows exactly what to do with the result.
+
+## Specialized Tags (Single-Agent Use)
+
+Tags used by specific agents for their unique responsibilities.
+
+### `<adversarial-mindset>`
+
+**Purpose:** Sets skeptical review stance. Establishes the reviewer's critical, problem-hunting approach.
+
+**Usage:** Reviewer-only.
+
+```markdown
+<adversarial-mindset>
+**You are not here to approve code. You are here to find problems.**
+
+Assume the code is broken until you prove otherwise.
+**Default stance:** Skeptical. Suspicious. Looking for the flaw.
+</adversarial-mindset>
+```
+
+### `<review-checklist>`
+
+**Purpose:** Mandatory review steps the Reviewer must complete before making a judgment.
+
+**Usage:** Reviewer-only.
+
+```markdown
+<review-checklist>
+## MANDATORY Review Steps
+
+- [ ] **Trace data flow:** Pick a user input, follow it end-to-end
+- [ ] **Verify error handling:** What happens on failure?
+- [ ] **Security analysis:** Auth checks? Input sanitization?
+- [ ] **Make judgment:** APPROVE only if no Critical/High issues
+</review-checklist>
+```
+
+### `<self-review>`
+
+**Purpose:** Pre-handoff quality check for Dev to verify implementation before passing to Reviewer.
+
+**Usage:** Dev-only.
+
+```markdown
+<self-review>
+## Self-Review Before Handoff
+
+- [ ] Code is wired to front end or other components
+- [ ] Code follows project patterns
+- [ ] All acceptance criteria met
+- [ ] Tests passing (not skipped!)
+</self-review>
+```
+
 ## Usage Guidelines
 
 1. **`<critical>` sparingly** - If everything is critical, nothing is. Reserve for true invariants.

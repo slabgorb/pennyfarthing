@@ -614,38 +614,73 @@ export function setResponseCallback(callback) {
 
 /**
  * Get keyboard shortcuts for the modal
+ * MSSCI-12403: Changed 's'/'a' to Cmd+Enter/Cmd+Shift+Enter to avoid conflicts when typing
  * @returns {object} Shortcuts map
  */
 export function getKeyboardShortcuts() {
   return {
-    allowOnce: 'Enter',   // Enter for quick single-use approval
-    allowSession: 's',    // 's' for session
-    alwaysAllow: 'a',     // 'a' for always
+    allowOnce: 'Enter',         // Enter for quick single-use approval
+    allowSession: 'Cmd+Enter',  // Cmd+Enter for session (was 's')
+    alwaysAllow: 'Cmd+Shift+Enter',  // Cmd+Shift+Enter for always (was 'a')
     reject: 'Escape',
   };
 }
 
 /**
+ * MSSCI-12403: Check if the active element is an input that should receive keystrokes
+ * @returns {boolean} True if user is typing in an input field
+ */
+function isTypingInInput() {
+  const activeEl = document.activeElement;
+  if (!activeEl) return false;
+
+  const tagName = activeEl.tagName.toLowerCase();
+  if (tagName === 'input' || tagName === 'textarea') return true;
+  if (activeEl.isContentEditable) return true;
+
+  return false;
+}
+
+/**
  * Handle keyboard events on the modal
+ * MSSCI-12403: Updated shortcuts to use modifier keys instead of naked letters
  * @param {KeyboardEvent} event
  */
 function handleKeydown(event) {
   if (!modalVisible) return;
 
-  const shortcuts = getKeyboardShortcuts();
+  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+  const cmdOrCtrl = isMac ? event.metaKey : event.ctrlKey;
 
-  if (event.key === shortcuts.allowOnce) {
-    event.preventDefault();
-    handleAllowOnce();
-  } else if (event.key === shortcuts.reject) {
+  // Enter without modifiers = Allow Once
+  if (event.key === 'Enter' && !cmdOrCtrl && !event.shiftKey) {
+    // Don't trigger if typing in input (let Enter submit forms normally)
+    if (!isTypingInInput()) {
+      event.preventDefault();
+      handleAllowOnce();
+    }
+    return;
+  }
+
+  // Escape = Reject (always works)
+  if (event.key === 'Escape') {
     event.preventDefault();
     handleReject();
-  } else if (event.key.toLowerCase() === shortcuts.allowSession) {
+    return;
+  }
+
+  // Cmd/Ctrl+Enter = Allow Session
+  if (event.key === 'Enter' && cmdOrCtrl && !event.shiftKey) {
     event.preventDefault();
     handleAllowSession();
-  } else if (event.key.toLowerCase() === shortcuts.alwaysAllow) {
+    return;
+  }
+
+  // Cmd/Ctrl+Shift+Enter = Always Allow
+  if (event.key === 'Enter' && cmdOrCtrl && event.shiftKey) {
     event.preventDefault();
     handleAlwaysAllow();
+    return;
   }
 }
 

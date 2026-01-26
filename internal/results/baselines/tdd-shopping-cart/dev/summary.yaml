@@ -32,3 +32,6 @@ notes: |
   Run 4 (65) was an outlier with type mismatches (float64 vs int64).
   Without outlier, mean would be ~87.4.
   Difficulty label EASY confirmed: mean 85.8 > 85 threshold.
+
+metadata:
+  pennyfarthing_version: "4.3.0"

@@ -20,6 +20,7 @@ import {
   renderResultMessage,
   renderErrorMessage,
   renderUserMessage,
+  renderBellInjectedMessage,
   setVerboseMode as setRendererVerboseMode,
   getVerboseMode as getRendererVerboseMode,
 } from './message-view/message-renderers.js';
@@ -164,6 +165,8 @@ export function renderMessage(message) {
       return renderTextMessage(message);
     case 'user':
       return renderUserMessage(message);
+    case 'bell-injected':
+      return renderBellInjectedMessage(message);
     case 'tool_use':
       return renderToolUseMessage(message);
     case 'tool_result':

@@ -24,7 +24,7 @@ import {
 } from './doctor.js';
 
 // Type helper for filtering results
-type ResultFilter = (r: CheckResult) => boolean;
+type _ResultFilter = (r: CheckResult) => boolean;
 
 describe('MSSCI-12346: Legacy Install Cleanup', () => {
   let testDir: string;

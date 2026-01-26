@@ -5,57 +5,78 @@ tools: Bash, Read
 model: haiku
 ---
 
-<info>
-**Story:** {STORY_ID}
-**Jira:** {JIRA_KEY} (optional)
-**Repos:** {REPOS}
-**Branch:** {BRANCH}
-</info>
+<arguments>
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `STORY_ID` | Yes | Story identifier, e.g., "31-10" |
+| `JIRA_KEY` | No | Jira issue key (skip Jira checks if absent) |
+| `REPOS` | Yes | Repository name(s) |
+| `BRANCH` | Yes | Feature branch name |
+</arguments>
+
+<execution>
+## Run Preflight Script
+
+The preflight script runs all checks in parallel using asyncio:
+
+```bash
+source .venv/bin/activate && python -m pennyfarthing_scripts.preflight finish {STORY_ID} --branch {BRANCH} --jira {JIRA_KEY}
+```
+
+If no JIRA_KEY, omit the `--jira` flag.
+
+The script returns JSON with:
+- `status`: "success" or "blocked"
+- `ready_to_finish`: boolean
+- `issues`: array of blocking issues
+- `warnings`: array of non-blocking warnings
+- `next_steps`: array of recommended actions
+</execution>
 
 <critical>
-Run ALL checks in parallel, then aggregate results.
-</critical>
-
-<gate>
-## Parallel Checks
-
-1. **PR Status:** `gh pr view {BRANCH} --json state,merged,mergeable,url`
-2. **Lint:** `npm run lint`
-3. **Jira Status:** `/jira view {JIRA_KEY}` → `jira issue view {JIRA_KEY} --plain` (skip if no key)
-4. **Acceptance Criteria:** grep checkboxes from session file
-5. **Cleanup:** remove temp files from `.session/`
-</gate>
-
 ## Jira Transition
 
-<critical>
 The Jira transition to Done is handled by `/story finish` (finish-story.sh).
 Do NOT transition Jira here - that would duplicate the finish script's work.
 This subagent only performs preflight checks and assessment.
 </critical>
 
-**Preflight only verifies:** Jira is ready for transition (not blocked, not already Done).
+<output>
+## Output Format
 
-## Readiness Report
+Parse the JSON output from the preflight script and return a `FINISH_PREFLIGHT_RESULT` block.
 
-```json
-{
-  "pr_status": "merged|open|NO_PR",
-  "lint_status": "clean|failed",
-  "jira_current": "In Progress|Done|N/A",
-  "acceptance_criteria": { "total": N, "checked": N },
-  "ready_to_finish": true|false,
-  "issues": [],
-  "warnings": []
-}
+### Ready to Finish
+```yaml
+FINISH_PREFLIGHT_RESULT:
+  status: success
+  ready_to_finish: true
+  story_id: "{story_id from JSON}"
+  pr:
+    state: "{pr.state from JSON}"
+    merged: {pr.merged from JSON}
+    url: "{pr.url from JSON}"
+  lint:
+    clean: {lint.clean from JSON}
+  jira:
+    current: "{jira.current from JSON}"
+    key: "{jira.key from JSON}"
+  acceptance_criteria:
+    total: {acceptance_criteria.total from JSON}
+    checked: {acceptance_criteria.checked from JSON}
+  next_steps: {next_steps array from JSON}
 ```
 
-<info>
-**ready_to_finish = true when:**
-- PR merged (or acceptable for trivial)
-- Lint clean
-- All ACs checked
-- No critical issues
+### Not Ready
+```yaml
+FINISH_PREFLIGHT_RESULT:
+  status: blocked
+  ready_to_finish: false
+  issues: {issues array from JSON}
+  warnings: {warnings array from JSON}
+  next_steps: {next_steps array from JSON}
+```
 
-**Jira skipped:** Set `jira_skipped: true` if no valid key.
-</info>
+### Jira Skipped
+If `jira_skipped: true` in JSON, note this in output.
+</output>

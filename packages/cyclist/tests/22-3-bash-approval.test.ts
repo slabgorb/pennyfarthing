@@ -217,6 +217,9 @@ describe('22-3: Bash Command Approval Gate', () => {
       const settingsStore = await import('../src/settings-store.js');
       const approvalModal = await import('../src/public/js/components/ApprovalModal.js');
 
+      // Wire up the settings store to approval modal
+      approvalModal.setSettingsStore(settingsStore);
+
       // Enable gate
       settingsStore.setBashApprovalGate(true);
 
@@ -574,6 +577,9 @@ describe('22-3: Bash Command Approval Gate', () => {
     it('should skip approval for allowlisted commands', async () => {
       const settingsStore = await import('../src/settings-store.js');
       const approvalModal = await import('../src/public/js/components/ApprovalModal.js');
+
+      // Wire up the settings store to approval modal
+      approvalModal.setSettingsStore(settingsStore);
 
       // Enable gate and add allowlist pattern
       settingsStore.setBashApprovalGate(true);

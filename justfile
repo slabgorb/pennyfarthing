@@ -218,6 +218,14 @@ portraits-all:
 test-cyclist-watch:
     cd packages/cyclist && npm test -- --watch
 
+# Check sidecar files for bloat
+sidecar-health:
+    .pennyfarthing/scripts/maintenance/sidecar-health.sh
+
+# Archive bloated sidecars and prepare for pruning
+sidecar-prune:
+    .pennyfarthing/scripts/maintenance/sidecar-health.sh --fix
+
 # =============================================================================
 # VS Code Extension
 # =============================================================================
@@ -286,3 +294,21 @@ vscode *args:
             ;;
     esac
 
+# =============================================================================
+# Validation
+# =============================================================================
+
+# Validate agent files against schema and best practices
+validate-agents *args:
+    ./pennyfarthing-dist/scripts/validation/validate-agent-schema.sh {{args}}
+
+# Validate subagent YAML frontmatter
+validate-subagents:
+    ./pennyfarthing-dist/scripts/misc/validate-subagent-frontmatter.sh
+
+# Validate sprint YAML structure
+validate-sprint *args:
+    .venv/bin/python -m pennyfarthing_scripts.sprint.validator {{args}}
+
+# Run all validations
+validate: validate-agents validate-subagents validate-sprint

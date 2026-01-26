@@ -19,24 +19,27 @@ This subagent verifies prerequisites and updates session file only.
 Return `HANDOFF_RESULT` with the next agent name - SM runs `handoff-marker.sh` as their last action.
 </critical>
 
-<info>
-**From:** SM
-**To:** {NEXT_AGENT} (TEA or Dev)
-**Session:** `.session/{STORY_ID}-session.md`
-</info>
+<arguments>
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `STORY_ID` | Yes | Story identifier, e.g., "31-10" |
+| `NEXT_AGENT` | Yes | Target agent: `tea` or `dev` |
+| `NEXT_PHASE` | Yes | Target phase: `red` (TEA) or `implement` (Dev) |
+| `WORKFLOW` | Yes | Workflow type: "tdd", "trivial", etc. |
+</arguments>
 
 <gate>
 ## Handoff Checklist
 
-1. Session file exists with story context
-2. Acceptance criteria defined (count, don't mark)
-3. Feature branches created
-4. Jira story claimed (if applicable)
-5. Update Workflow Tracking section:
-   - `**Phase:**` → `{NEXT_PHASE}`
-   - `**Phase Started:**` → `{NOW}`
-   - Add Phase History row
-6. Report status summary
+- [ ] Session file exists with story context
+- [ ] Acceptance criteria defined (count, don't mark)
+- [ ] Feature branches created
+- [ ] Jira story claimed (if applicable)
+- [ ] Update Workflow Tracking section:
+  - `**Phase:**` → `{NEXT_PHASE}`
+  - `**Phase Started:**` → `{NOW}`
+  - Add Phase History row
+- [ ] Report status summary
 </gate>
 
 ## Phase Transition Update
@@ -58,51 +61,55 @@ Edit `## Workflow Tracking`:
 
 **Duration:** Subtract SM Started from {NOW}, format as `Xm` or `Xh Ym`.
 
+<output>
 ## Output Format
 
-Return a `HANDOFF_RESULT` block. SM will use this to run `handoff-marker.sh`.
+Return a `HANDOFF_RESULT` block:
 
-### Success Format
-
+### Success
 ```
 HANDOFF_RESULT:
   status: success
   next_agent: {NEXT_AGENT}
   next_phase: {NEXT_PHASE}
   story_id: {STORY_ID}
-  summary: "Session updated, branch verified, Jira claimed"
+  summary: "{what was done}"
+
+  next_steps:
+    - "Handoff complete. Run handoff-marker.sh as ABSOLUTE LAST ACTION."
+    - "Command: $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}"
+    - "Output marker result verbatim, then EXIT. Nothing after."
 ```
 
 ### Example (SM → TEA)
-
 ```
 HANDOFF_RESULT:
   status: success
   next_agent: tea
   next_phase: red
   story_id: MSSCI-12274
-  summary: "Session updated (setup → red), branch feat/MSSCI-12274-image-queue verified, 7 AC defined"
+  summary: "Session updated (setup → red), branch verified, 7 AC defined"
+
+  next_steps:
+    - "Handoff complete. Run handoff-marker.sh as ABSOLUTE LAST ACTION."
+    - "Command: $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh tea"
+    - "Output marker result verbatim, then EXIT. Nothing after."
 ```
 
-### Example (SM → Dev, trivial workflow)
-
-```
-HANDOFF_RESULT:
-  status: success
-  next_agent: dev
-  next_phase: implement
-  story_id: 46-3
-  summary: "Session updated (setup → implement), branch feat/46-3-fix-typo verified"
-```
-
-### Error Format
-
+### Blocked
 ```
 HANDOFF_RESULT:
   status: blocked
-  error: "{error message}"
+  error: "{description}"
   fix: "{recommended action}"
+  failed_check: "{which gate check failed}"
+
+  next_steps:
+    - "Handoff blocked: {error}"
+    - "Required action: {fix}"
+    - "Do NOT run handoff-marker.sh. Resolve issue first."
 ```
+</output>
 
 ---
 

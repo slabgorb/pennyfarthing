@@ -1,8 +1,8 @@
 # Pennyfarthing User Guide
 
-Complete guide to using Pennyfarthing, a Claude Code agent framework with TDD workflow and persona system.
+Complete guide to using Pennyfarthing, a Claude Code agent framework with BikeLane workflow system and persona themes.
 
-**Version:** 7.0.0
+**Version:** 7.6.1
 
 ---
 
@@ -13,7 +13,7 @@ Complete guide to using Pennyfarthing, a Claude Code agent framework with TDD wo
 3. [Quick Start](#quick-start)
 4. [CLI Commands](#cli-commands)
 5. [The Agent System](#the-agent-system)
-6. [The TDD Workflow](#the-tdd-workflow)
+6. [The BikeLane Workflow System](#the-bikelane-workflow-system)
 7. [Slash Commands](#slash-commands)
 8. [Configuration](#configuration)
 9. [Persona Themes](#persona-themes)
@@ -27,11 +27,12 @@ Complete guide to using Pennyfarthing, a Claude Code agent framework with TDD wo
 
 Pennyfarthing is a shared agent orchestration framework for Claude Code projects. It provides:
 
-- **Agent System** - 24 coordinated agents for multi-agent TDD development
-- **Persona System** - 102 themed character personalities (Discworld, Star Trek, The Expanse, etc.)
+- **Agent System** - 24 coordinated agents for multi-agent development
+- **BikeLane Workflows** - 19 workflow options for different development scenarios (TDD, BDD, research, architecture, etc.)
+- **Persona System** - 104 themed character personalities (Discworld, Star Trek, The Expanse, etc.)
 - **Subagent Handoffs** - Automated state transitions between agents
-- **Slash Commands** - 43 entry points for agent activation and workflows
-- **Skills** - 20 project-agnostic knowledge domains
+- **Slash Commands** - 45 entry points for agent activation and workflows
+- **Skills** - 22 project-agnostic knowledge domains
 - **Sprint Management** - Story tracking and workflow coordination
 - **Scientific Benchmarking** - TRAIL framework for evaluating code review effectiveness
 - **Showcase Website** - Interactive theme gallery with OCEAN personality visualizations
@@ -40,7 +41,7 @@ Pennyfarthing is a shared agent orchestration framework for Claude Code projects
 
 > "The outer loop goes once, the inner loop goes many times."
 
-Strategic planning happens occasionally. Tactical execution (story implementation) happens iteratively through the TDD flow.
+Strategic planning happens occasionally. Tactical execution (story implementation) happens iteratively through the appropriate BikeLane workflow.
 
 ---
 
@@ -153,21 +154,26 @@ This activates the SM (Scrum Master) agent who will:
 2. Show available stories from the sprint backlog
 3. Help you select a story
 4. Set up the work session
-5. Hand off to TEA for test writing
+5. Hand off to the appropriate workflow
 
-### 3. Follow the TDD Flow
+### 3. Choose Your Workflow
 
-The standard development flow:
+BikeLane provides different workflows for different scenarios. You can:
 
-```
-/new-work → SM → TEA → Dev → Reviewer → SM (finish)
-```
+- Let agents automatically select a workflow based on the task
+- Explicitly start a workflow with `/workflow start <name>`
+- View available workflows with `/workflow list`
+- Check current progress with `/workflow status`
 
-1. **SM** sets up the story and creates branches
-2. **TEA** writes failing tests (RED)
-3. **Dev** implements code to pass tests (GREEN)
-4. **Reviewer** validates code quality
-5. **SM** archives the session and marks complete
+Common workflows include:
+- **tdd** - Test-driven development (RED-GREEN-REFACTOR)
+- **bdd** - Behavior-driven development
+- **trivial** - Quick fixes and simple changes
+- **prd** - Product requirements documentation
+- **architecture** - System design and planning
+- **research** - Investigation and discovery
+
+See [The BikeLane Workflow System](#the-bikelane-workflow-system) for complete details.
 
 ---
 
@@ -270,7 +276,7 @@ pennyfarthing uninstall --dry-run     # Preview what would be removed
 
 Pennyfarthing uses specialized agents for different aspects of development:
 
-### Tactical Agents (TDD Flow)
+### Tactical Agents (Development Flow)
 
 | Agent | Command | Role | Character (Discworld) |
 |-------|---------|------|----------------------|
@@ -305,57 +311,104 @@ Agents load their sidecars on activation, maintaining context across sessions.
 
 ---
 
-## The TDD Workflow
+## The BikeLane Workflow System
 
-### Standard Flow
+BikeLane is Pennyfarthing's flexible workflow system that adapts to different development scenarios. Instead of forcing all work through a single process, BikeLane offers 19 different workflows organized into three categories.
 
+### Workflow Categories
+
+#### 1. Phased Workflows (Agent-Driven)
+
+Agent-driven workflows where agents hand off between phases:
+
+| Workflow | Purpose | Flow |
+|----------|---------|------|
+| **tdd** | Test-driven development | SM → TEA → Dev → Reviewer → SM |
+| **bdd** | Behavior-driven development | SM → TEA (BDD) → Dev → Reviewer → SM |
+| **trivial** | Quick fixes (1-2 pts) | SM → Dev (skip tests) → SM |
+| **agent-docs** | Documentation work | SM → Tech Writer → Reviewer → SM |
+
+**Example TDD Flow:**
 ```
 ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌──────────┐    ┌─────────┐
-│   SM    │───▶│   TEA   │───▶│   Dev   │───▶│ Reviewer │───▶│   SM    │
+│   SM    │───►│   TEA   │───►│   Dev   │───►│ Reviewer │───►│   SM    │
 │ (setup) │    │ (tests) │    │ (impl)  │    │ (review) │    │(finish) │
 └─────────┘    └─────────┘    └─────────┘    └──────────┘    └─────────┘
 ```
 
-### Phase Details
+#### 2. Stepped Workflows (Progressive Disclosure)
 
-**1. SM (Setup)**
-- Checks workflow status
-- Researches available stories
-- Creates story context file
-- Sets up feature branches
-- Claims Jira story (if configured)
+Structured workflows with gates and checkpoints, compatible with BMAD 6.0:
 
-**2. TEA (Test Writing)**
-- Analyzes acceptance criteria
-- Writes failing tests (RED)
-- Ensures tests are comprehensive
-- Hands off to Dev when tests ready
+| Workflow | Purpose | Gates |
+|----------|---------|-------|
+| **prd** | Product requirements | Research → Draft → Review → Finalize |
+| **architecture** | System design | Context → Design → Review → Decide |
+| **research** | Investigation | Plan → Execute → Analyze → Report |
+| **refactoring** | Code improvement | Analyze → Plan → Execute → Validate |
+| **bug-investigation** | Root cause analysis | Reproduce → Diagnose → Fix → Verify |
+| **spike** | Technical exploration | Plan → Explore → Evaluate → Recommend |
+| **security-review** | Security audit | Scan → Analyze → Report → Remediate |
+| **performance-tuning** | Optimization | Baseline → Profile → Optimize → Validate |
+| **dependency-upgrade** | Upgrade management | Audit → Plan → Upgrade → Test |
+| **release-planning** | Release preparation | Scope → Plan → Prepare → Execute |
 
-**3. Dev (Implementation)**
-- Makes tests pass (GREEN)
-- Follows project patterns
-- Keeps implementation minimal
-- Hands off when all tests pass
+**Example Architecture Workflow:**
+```
+Context Gathering → Design → Review → Decision
+     (gate)        (gate)   (gate)    (complete)
+```
 
-**4. Reviewer (Code Review)**
-- Validates code quality
-- Checks for security issues
-- Ensures patterns followed
-- Approves or requests changes
+#### 3. Procedural Workflows (Flexible Processes)
 
-**5. SM (Finish)**
-- Archives session files
-- Writes completion summary
-- Updates sprint YAML
-- Transitions Jira to Done
+Open-ended workflows for collaborative and creative work:
+
+| Workflow | Purpose |
+|----------|---------|
+| **brainstorming** | Structured problem-solving |
+| **code-review** | Manual code review process |
+| **pair-programming** | Collaborative development |
+| **onboarding** | New developer orientation |
+| **incident-response** | Production issue handling |
+
+### BikeLane Quick Reference
+
+```bash
+# List all available workflows
+/workflow list
+
+# Start a specific workflow
+/workflow start tdd
+/workflow start architecture
+/workflow start research
+
+# Check current workflow progress
+/workflow status
+
+# Switch workflows mid-stream (if needed)
+/workflow start <different-workflow>
+```
+
+### BMAD 6.0 Compatibility
+
+Pennyfarthing's stepped workflows are compatible with the BMAD 6.0 pattern language for structured problem-solving. If you're familiar with BMAD patterns, you'll find:
+
+- Progressive disclosure of information
+- Explicit gates and checkpoints
+- Structured decision points
+- Clear completion criteria
+
+This makes it easy to bring established BMAD workflows into Pennyfarthing projects.
 
 ### Scale-Adaptive Routing
 
-| Story Size | Points | Workflow |
-|------------|--------|----------|
-| Trivial | 1-2 | SM → Dev (skip TEA) |
-| Standard | 3-5 | SM → TEA → Dev → Reviewer |
-| Complex | 8+ | SM → TEA → Dev → Reviewer |
+BikeLane can automatically select workflows based on story size:
+
+| Story Size | Points | Suggested Workflow |
+|------------|--------|-------------------|
+| Trivial | 1-2 | trivial |
+| Standard | 3-5 | tdd or bdd |
+| Complex | 8+ | tdd with architecture spike |
 
 ---
 
@@ -370,6 +423,14 @@ Agents load their sidecars on activation, maintaining context across sessions.
 | `/tea` | Activate Test Engineer |
 | `/dev` | Activate Developer |
 | `/reviewer` | Activate Code Reviewer |
+
+### Workflow Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/workflow list` | Show all available workflows |
+| `/workflow start <name>` | Start a specific workflow |
+| `/workflow status` | Check current workflow progress |
 
 ### Strategic Commands
 
@@ -576,14 +637,17 @@ Skills are reusable knowledge domains that agents can reference.
 
 | Skill | Purpose |
 |-------|---------|
-| `sprint-context` | Sprint status and backlog |
-| `story-management` | Story creation patterns |
+| `sprint` | Sprint status and backlog |
+| `story` | Story creation patterns |
 | `code-review` | Review guidelines |
 | `testing` | Test patterns and best practices |
 | `dev-patterns` | Implementation patterns |
 | `jira` | Jira CLI usage |
 | `just` | Justfile task runner |
 | `yq` | YAML processing |
+| `workflow` | BikeLane workflow management |
+| `context-engineering` | Context window optimization |
+| `agentic-patterns` | Agent reasoning patterns |
 
 ### Using Skills
 
@@ -666,6 +730,17 @@ echo $SESSION_ID
 ```bash
 # Start new work
 /new-work
+
+# List available workflows
+/workflow list
+
+# Start specific workflow
+/workflow start tdd
+/workflow start architecture
+/workflow start research
+
+# Check workflow progress
+/workflow status
 
 # Switch agents manually
 /tea        # Switch to Test Engineer

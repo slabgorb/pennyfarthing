@@ -60,13 +60,13 @@ Task tool:
 | Subagent | Purpose | Execution |
 |----------|---------|-----------|
 | `workflow-status-check` | Detect workflow state | Foreground |
-| `generic-sm-setup` | Research backlog or setup story | Background |
-| `generic-sm-finish` | Preflight or execute finish | Background |
+| `sm-setup` | Research backlog or setup story | Background |
+| `sm-finish` | Preflight or execute finish | Background |
 | `sm-file-summary` | Summarize files | Background |
 | `sm-handoff` | SM→TEA/Dev handoff | Foreground |
 | `testing-runner` | Run tests | Background |
 | `reviewer-preflight` | Gather review data | Background |
-| `generic-handoff` | Phase transitions | Foreground |
+| `handoff` | Phase transitions | Foreground |
 
 ### What Main Agent Does vs Subagent
 

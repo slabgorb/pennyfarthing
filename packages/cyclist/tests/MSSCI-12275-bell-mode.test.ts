@@ -20,9 +20,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
+import { parse, stringify } from 'yaml';
 
-// Test data
-const BELL_MODE_CONFIG_PATH = '.pennyfarthing/bell-mode.json';
+// Test data - implementation uses config.local.yaml for bell mode state
+const BELL_MODE_CONFIG_PATH = '.pennyfarthing/config.local.yaml';
 const BELL_QUEUE_PATH = '.pennyfarthing/bell-queue.json';
 
 describe('Story MSSCI-12275: Bell Mode', () => {
@@ -77,7 +78,7 @@ describe('Story MSSCI-12275: Bell Mode', () => {
 
   describe('AC2: Bell mode state persisted in .pennyfarthing/ config', () => {
 
-    it('should write bell mode state to .pennyfarthing/bell-mode.json', async () => {
+    it('should write bell mode state to .pennyfarthing/config.local.yaml', async () => {
       const bellMode = await import('../src/bell-mode.js');
 
       // Enable bell mode
@@ -87,8 +88,8 @@ describe('Story MSSCI-12275: Bell Mode', () => {
       const configPath = path.join(process.cwd(), BELL_MODE_CONFIG_PATH);
       expect(fs.existsSync(configPath)).toBe(true);
 
-      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-      expect(config.enabled).toBe(true);
+      const config = parse(fs.readFileSync(configPath, 'utf8')) as { workflow?: { bell_mode?: boolean } };
+      expect(config.workflow?.bell_mode).toBe(true);
 
       // Cleanup
       await bellMode.setBellMode(false);
@@ -98,7 +99,7 @@ describe('Story MSSCI-12275: Bell Mode', () => {
       // Pre-write config file
       const configPath = path.join(process.cwd(), BELL_MODE_CONFIG_PATH);
       fs.mkdirSync(path.dirname(configPath), { recursive: true });
-      fs.writeFileSync(configPath, JSON.stringify({ enabled: true }));
+      fs.writeFileSync(configPath, stringify({ workflow: { bell_mode: true } }));
 
       const bellMode = await import('../src/bell-mode.js');
       await bellMode.loadBellModeState();
@@ -111,6 +112,9 @@ describe('Story MSSCI-12275: Bell Mode', () => {
 
     it('should default to disabled if config file missing', async () => {
       const bellMode = await import('../src/bell-mode.js');
+
+      // Reset in-memory state from previous tests
+      bellMode.resetBellMode();
 
       // Ensure config doesn't exist
       const configPath = path.join(process.cwd(), BELL_MODE_CONFIG_PATH);
@@ -352,10 +356,10 @@ describe('Bell Mode Hook Script', () => {
       // Hook script should exit 0 with no output when disabled
       const { execSync } = await import('child_process');
 
-      // Ensure bell mode is disabled
+      // Ensure bell mode is disabled (using YAML config format)
       const configPath = path.join(process.cwd(), BELL_MODE_CONFIG_PATH);
       fs.mkdirSync(path.dirname(configPath), { recursive: true });
-      fs.writeFileSync(configPath, JSON.stringify({ enabled: false }));
+      fs.writeFileSync(configPath, stringify({ workflow: { bell_mode: false } }));
 
       const hookPath = path.join(process.cwd(), '.pennyfarthing/scripts/hooks/bell-mode-hook.sh');
 
@@ -372,10 +376,10 @@ describe('Bell Mode Hook Script', () => {
     it('should return additionalContext JSON when bell mode enabled and queue non-empty', async () => {
       const { execSync } = await import('child_process');
 
-      // Enable bell mode
+      // Enable bell mode (using YAML config format)
       const configPath = path.join(process.cwd(), BELL_MODE_CONFIG_PATH);
       fs.mkdirSync(path.dirname(configPath), { recursive: true });
-      fs.writeFileSync(configPath, JSON.stringify({ enabled: true }));
+      fs.writeFileSync(configPath, stringify({ workflow: { bell_mode: true } }));
 
       // Write queue file
       const queuePath = path.join(process.cwd(), BELL_QUEUE_PATH);

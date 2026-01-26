@@ -155,3 +155,58 @@ check_dependencies() {
     fi
     return 0
 }
+
+#############################################
+# Python Execution
+#############################################
+
+# get_python
+# Find the best Python interpreter (venv preferred, fallback to system)
+# Sets PYTHON_CMD variable
+#
+# Priority:
+#   1. PROJECT_ROOT/.venv/bin/python (project venv)
+#   2. python3 (system)
+#   3. python (legacy fallback)
+#
+# Usage:
+#   get_python
+#   $PYTHON_CMD -m pennyfarthing_scripts.jira view MSSCI-12345
+#
+get_python() {
+    # Find project root if not set
+    if [[ -z "${PROJECT_ROOT:-}" ]]; then
+        local d="$PWD"
+        while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do
+            d="$(dirname "$d")"
+        done
+        PROJECT_ROOT="$d"
+    fi
+
+    # Check for project venv first
+    if [[ -x "${PROJECT_ROOT}/.venv/bin/python" ]]; then
+        PYTHON_CMD="${PROJECT_ROOT}/.venv/bin/python"
+    elif command -v python3 &> /dev/null; then
+        PYTHON_CMD="python3"
+    elif command -v python &> /dev/null; then
+        PYTHON_CMD="python"
+    else
+        error "Python not found. Install Python 3.11+ or create .venv"
+        return 1
+    fi
+}
+
+# run_python_module MODULE [ARGS...]
+# Run a pennyfarthing_scripts Python module with proper venv handling
+#
+# Usage:
+#   run_python_module jira view MSSCI-12345
+#   run_python_module sprint status
+#   run_python_module story size 3
+#
+run_python_module() {
+    get_python || return 1
+    local module="$1"
+    shift
+    exec $PYTHON_CMD -m "pennyfarthing_scripts.${module}" "$@"
+}

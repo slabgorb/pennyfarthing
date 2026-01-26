@@ -1,402 +1,169 @@
 {
   "metadata": {
-    "generated": "2026-01-12",
-    "description": "Theme Performance Tiers based on combined tactical team performance (Dev + Reviewer + TEA)",
+    "generated": "2026-01-24",
+    "description": "Theme Performance Tiers based on mean delta from control baseline across normalized roles (dev, reviewer, sm, tea)",
     "baselines": {
-      "dev": 77.5,
+      "dev-codegen": 85.8,
+      "dev-debug": 77.5,
+      "dev": 81.65,
       "reviewer": 78.5,
-      "tea": 72.1
+      "tea": 72.1,
+      "sm": 80.3
     },
     "tierCriteria": {
-      "S": { "min": 35, "label": "Elite Teams" },
-      "A": { "min": 25, "max": 34.99, "label": "Excellent Teams" },
-      "B": { "min": 15, "max": 24.99, "label": "Strong Teams" },
-      "C": { "min": 5, "max": 14.99, "label": "Good Teams" },
-      "D": { "max": 5, "label": "Below Average" },
+      "S": { "min": 7, "label": "Elite - Top Performers" },
+      "A": { "min": 5, "max": 6.99, "label": "Excellent - Strong Positive" },
+      "B": { "min": 3, "max": 4.99, "label": "Strong - Solid Performers" },
+      "C": { "min": 1, "max": 2.99, "label": "Good - Above Average" },
+      "D": { "max": 0.99, "label": "Average/Below" },
       "U": { "label": "Unbenchmarked" }
-    }
+    },
+    "normalization": "Averages dev-codegen + dev-debug into synthetic 'dev' score for fair comparison across old (4-role) and new (6-role) benchmark formats"
   },
   "tiers": {
     "S": [
-      {
-        "theme": "the-expanse",
-        "dev": { "score": 85.0, "delta": 7.5 },
-        "reviewer": { "score": 90.0, "delta": 11.5 },
-        "tea": { "score": 92.5, "delta": 20.4 },
-        "teamDelta": 39.4,
-        "standout": "Amos excels at everything tactical"
-      },
-      {
-        "theme": "mash",
-        "dev": { "score": 77.5, "delta": 0.0 },
-        "reviewer": { "score": 92.5, "delta": 14.0 },
-        "tea": { "score": 95.0, "delta": 22.9 },
-        "teamDelta": 36.9,
-        "standout": "Radar's precognitive TEA dominates"
-      },
-      {
-        "theme": "the-wire",
-        "dev": { "score": 86.25, "delta": 8.75 },
-        "reviewer": { "score": 92.5, "delta": 14.0 },
-        "tea": { "score": 87.5, "delta": 15.4 },
-        "teamDelta": 38.15,
-        "standout": "Lester Freamon excels everywhere"
-      },
-      {
-        "theme": "alice-in-wonderland",
-        "dev": { "score": 81.25, "delta": 3.75 },
-        "reviewer": { "score": 91.25, "delta": 12.75 },
-        "tea": { "score": 90.0, "delta": 17.9 },
-        "teamDelta": 34.4,
-        "standout": "Strong across all tactical roles"
-      }
+      { "theme": "the-matrix", "meanScore": 90.90, "meanDelta": 12.76, "entries": 36 },
+      { "theme": "doctor-who", "meanScore": 85.13, "meanDelta": 8.60, "entries": 20 },
+      { "theme": "the-expanse", "meanScore": 85.00, "meanDelta": 8.48, "entries": 28 },
+      { "theme": "blade-runner", "meanScore": 84.25, "meanDelta": 7.73, "entries": 20 },
+      { "theme": "west-wing", "meanScore": 84.25, "meanDelta": 7.73, "entries": 20 },
+      { "theme": "game-of-thrones", "meanScore": 83.88, "meanDelta": 7.35, "entries": 20 },
+      { "theme": "hannibal", "meanScore": 83.75, "meanDelta": 7.23, "entries": 20 },
+      { "theme": "harry-potter", "meanScore": 83.63, "meanDelta": 7.10, "entries": 20 }
     ],
     "A": [
-      {
-        "theme": "princess-bride",
-        "dev": { "score": 87.5, "delta": 10.0 },
-        "reviewer": { "score": 90.0, "delta": 11.5 },
-        "tea": { "score": 88.75, "delta": 16.65 },
-        "teamDelta": 38.15,
-        "standout": "Westley/Inigo balanced excellence"
-      },
-      {
-        "theme": "watchmen",
-        "dev": { "score": 87.5, "delta": 10.0 },
-        "reviewer": { "score": 91.25, "delta": 12.75 },
-        "tea": { "score": 87.5, "delta": 15.4 },
-        "teamDelta": 38.15,
-        "standout": "Dr. Manhattan sees all code paths"
-      },
-      {
-        "theme": "foundation",
-        "dev": { "score": 87.5, "delta": 10.0 },
-        "reviewer": { "score": 92.5, "delta": 14.0 },
-        "tea": { "score": 86.25, "delta": 14.15 },
-        "teamDelta": 38.15,
-        "standout": "Salvor Hardin's pragmatic review"
-      },
-      {
-        "theme": "firefly",
-        "dev": { "score": 90.0, "delta": 12.5 },
-        "reviewer": { "score": 88.75, "delta": 10.25 },
-        "tea": { "score": 87.5, "delta": 15.4 },
-        "teamDelta": 38.15,
-        "standout": "River Tam's Dev + Jayne's TEA"
-      },
-      {
-        "theme": "game-of-thrones",
-        "dev": { "score": 86.25, "delta": 8.75 },
-        "reviewer": { "score": 90.0, "delta": 11.5 },
-        "tea": { "score": 88.75, "delta": 16.65 },
-        "teamDelta": 36.9,
-        "standout": "Tyrion + Varys tactical minds"
-      },
-      {
-        "theme": "hitchhikers-guide",
-        "dev": { "score": 90.0, "delta": 12.5 },
-        "reviewer": { "score": 88.75, "delta": 10.25 },
-        "tea": { "score": 86.25, "delta": 14.15 },
-        "teamDelta": 36.9,
-        "standout": "Marvin surprisingly strong"
-      },
-      {
-        "theme": "west-wing",
-        "dev": { "score": 83.75, "delta": 6.25 },
-        "reviewer": { "score": 90.0, "delta": 11.5 },
-        "tea": { "score": 90.0, "delta": 17.9 },
-        "teamDelta": 35.65,
-        "standout": "Bartlet/Toby strong on TEA"
-      },
-      {
-        "theme": "star-wars",
-        "dev": { "score": 86.25, "delta": 8.75 },
-        "reviewer": { "score": 90.0, "delta": 11.5 },
-        "tea": { "score": 87.5, "delta": 15.4 },
-        "teamDelta": 35.65,
-        "standout": "Thrawn + Yoda balance"
-      },
-      {
-        "theme": "lord-of-the-rings",
-        "dev": { "score": 87.5, "delta": 10.0 },
-        "reviewer": { "score": 92.5, "delta": 14.0 },
-        "tea": { "score": 83.75, "delta": 11.65 },
-        "teamDelta": 35.65,
-        "standout": "Gandalf's review wisdom"
-      },
-      {
-        "theme": "dune",
-        "dev": { "score": 87.5, "delta": 10.0 },
-        "reviewer": { "score": 88.75, "delta": 10.25 },
-        "tea": { "score": 87.5, "delta": 15.4 },
-        "teamDelta": 35.65,
-        "standout": "Leto II's prescience"
-      },
-      {
-        "theme": "blade-runner",
-        "dev": { "score": 88.75, "delta": 11.25 },
-        "reviewer": { "score": 90.0, "delta": 11.5 },
-        "tea": { "score": 83.75, "delta": 11.65 },
-        "teamDelta": 34.4,
-        "standout": "Roy Batty strong on Dev"
-      },
-      {
-        "theme": "cowboy-bebop",
-        "dev": { "score": 85.0, "delta": 7.5 },
-        "reviewer": { "score": 90.0, "delta": 11.5 },
-        "tea": { "score": 87.5, "delta": 15.4 },
-        "teamDelta": 34.4,
-        "standout": "Spike's versatility"
-      },
-      {
-        "theme": "vorkosigan-saga",
-        "dev": { "score": 77.5, "delta": 0.0 },
-        "reviewer": { "score": 92.5, "delta": 14.0 },
-        "tea": { "score": 90.0, "delta": 17.9 },
-        "teamDelta": 31.9,
-        "standout": "Cordelia's review + Bothari's testing"
-      },
-      {
-        "theme": "discworld",
-        "dev": { "score": 82.5, "delta": 5.0 },
-        "reviewer": { "score": 90.0, "delta": 11.5 },
-        "tea": { "score": 87.5, "delta": 15.4 },
-        "teamDelta": 31.9,
-        "standout": "Igor's testing thoroughness"
-      },
-      {
-        "theme": "babylon-5",
-        "dev": { "score": 85.0, "delta": 7.5 },
-        "reviewer": { "score": 87.5, "delta": 9.0 },
-        "tea": { "score": 87.5, "delta": 15.4 },
-        "teamDelta": 31.9,
-        "standout": "Kosh/Bester tactical minds"
-      },
-      {
-        "theme": "parks-and-rec",
-        "dev": { "score": 77.5, "delta": 0.0 },
-        "reviewer": { "score": 92.5, "delta": 14.0 },
-        "tea": { "score": 87.5, "delta": 15.4 },
-        "teamDelta": 29.4,
-        "standout": "Jerry finally gets respect"
-      },
-      {
-        "theme": "ancient-philosophers",
-        "dev": { "score": 77.5, "delta": 0.0 },
-        "reviewer": { "score": 92.5, "delta": 14.0 },
-        "tea": { "score": 87.5, "delta": 15.4 },
-        "teamDelta": 29.4,
-        "standout": "Socratic questioning works"
-      },
-      {
-        "theme": "breaking-bad",
-        "dev": { "score": 81.25, "delta": 3.75 },
-        "reviewer": { "score": 87.5, "delta": 9.0 },
-        "tea": { "score": 87.5, "delta": 15.4 },
-        "teamDelta": 28.15,
-        "standout": "Mike's methodical approach"
-      },
-      {
-        "theme": "1984",
-        "dev": { "score": 77.5, "delta": 0.0 },
-        "reviewer": { "score": 92.5, "delta": 14.0 },
-        "tea": { "score": 85.0, "delta": 12.9 },
-        "teamDelta": 26.9,
-        "standout": "O'Brien's thorough review"
-      },
-      {
-        "theme": "peaky-blinders",
-        "dev": { "score": 77.5, "delta": 0.0 },
-        "reviewer": { "score": 92.5, "delta": 14.0 },
-        "tea": { "score": 82.5, "delta": 10.4 },
-        "teamDelta": 24.4,
-        "standout": "Tommy's sharp review eye"
-      }
+      { "theme": "fargo", "meanScore": 83.50, "meanDelta": 6.98, "entries": 20 },
+      { "theme": "sherlock-holmes", "meanScore": 83.50, "meanDelta": 6.98, "entries": 20 },
+      { "theme": "discworld", "meanScore": 83.38, "meanDelta": 6.85, "entries": 20 },
+      { "theme": "mad-men", "meanScore": 83.25, "meanDelta": 6.73, "entries": 20 },
+      { "theme": "marvel-mcu", "meanScore": 83.13, "meanDelta": 6.60, "entries": 20 },
+      { "theme": "software-pioneers", "meanScore": 83.13, "meanDelta": 6.60, "entries": 20 },
+      { "theme": "mash", "meanScore": 83.08, "meanDelta": 6.56, "entries": 22 },
+      { "theme": "avatar-the-last-airbender", "meanScore": 82.88, "meanDelta": 6.35, "entries": 20 },
+      { "theme": "firefly", "meanScore": 82.86, "meanDelta": 6.34, "entries": 40 },
+      { "theme": "breaking-bad", "meanScore": 82.69, "meanDelta": 6.16, "entries": 20 },
+      { "theme": "ancient-philosophers", "meanScore": 82.63, "meanDelta": 6.10, "entries": 20 },
+      { "theme": "babylon-5", "meanScore": 82.63, "meanDelta": 6.10, "entries": 20 },
+      { "theme": "military-commanders", "meanScore": 82.63, "meanDelta": 6.10, "entries": 20 },
+      { "theme": "the-crown", "meanScore": 82.56, "meanDelta": 6.04, "entries": 20 },
+      { "theme": "dune", "meanScore": 82.38, "meanDelta": 5.85, "entries": 20 },
+      { "theme": "mass-effect", "meanScore": 82.38, "meanDelta": 5.85, "entries": 20 },
+      { "theme": "x-files", "meanScore": 83.97, "meanDelta": 5.83, "entries": 30 },
+      { "theme": "arthurian-mythos", "meanScore": 83.84, "meanDelta": 5.71, "entries": 25 },
+      { "theme": "lovecraft-mythos", "meanScore": 83.84, "meanDelta": 5.71, "entries": 30 },
+      { "theme": "snow-crash", "meanScore": 82.13, "meanDelta": 5.60, "entries": 20 },
+      { "theme": "the-simpsons", "meanScore": 82.13, "meanDelta": 5.60, "entries": 20 },
+      { "theme": "battlestar-galactica", "meanScore": 81.94, "meanDelta": 5.41, "entries": 20 },
+      { "theme": "greek-mythology", "meanScore": 83.44, "meanDelta": 5.30, "entries": 25 },
+      { "theme": "rome", "meanScore": 81.75, "meanDelta": 5.23, "entries": 20 },
+      { "theme": "twin-peaks", "meanScore": 83.34, "meanDelta": 5.21, "entries": 30 }
     ],
     "B": [
-      {
-        "theme": "star-trek-tng",
-        "dev": { "score": 68.75, "delta": -8.75 },
-        "reviewer": { "score": 91.25, "delta": 12.75 },
-        "tea": { "score": 88.75, "delta": 16.65 },
-        "teamDelta": 20.65,
-        "standout": "Weak Dev hurts team"
-      }
+      { "theme": "enlightenment-thinkers", "meanScore": 81.50, "meanDelta": 4.98, "entries": 20 },
+      { "theme": "his-dark-materials", "meanScore": 81.50, "meanDelta": 4.98, "entries": 20 },
+      { "theme": "succession", "meanScore": 81.50, "meanDelta": 4.98, "entries": 20 },
+      { "theme": "ted-lasso", "meanScore": 81.38, "meanDelta": 4.85, "entries": 20 },
+      { "theme": "expeditionary-force", "meanScore": 81.25, "meanDelta": 4.73, "entries": 20 },
+      { "theme": "the-good-place", "meanScore": 81.19, "meanDelta": 4.66, "entries": 20 },
+      { "theme": "cowboy-bebop", "meanScore": 81.13, "meanDelta": 4.60, "entries": 20 },
+      { "theme": "the-sopranos", "meanScore": 81.13, "meanDelta": 4.60, "entries": 20 },
+      { "theme": "arcane", "meanScore": 81.00, "meanDelta": 4.48, "entries": 20 },
+      { "theme": "the-americans", "meanScore": 81.00, "meanDelta": 4.48, "entries": 20 },
+      { "theme": "black-sails", "meanScore": 80.88, "meanDelta": 4.35, "entries": 20 },
+      { "theme": "renaissance-masters", "meanScore": 80.88, "meanDelta": 4.35, "entries": 20 },
+      { "theme": "ancient-strategists", "meanScore": 80.75, "meanDelta": 4.23, "entries": 20 },
+      { "theme": "russian-masters", "meanScore": 80.75, "meanDelta": 4.23, "entries": 20 },
+      { "theme": "wwii-leaders", "meanScore": 80.75, "meanDelta": 4.23, "entries": 20 },
+      { "theme": "alice-in-wonderland", "meanScore": 82.25, "meanDelta": 4.11, "entries": 25 },
+      { "theme": "dickens", "meanScore": 80.63, "meanDelta": 4.10, "entries": 20 },
+      { "theme": "world-explorers", "meanScore": 80.63, "meanDelta": 4.10, "entries": 20 },
+      { "theme": "big-lebowski", "meanScore": 80.38, "meanDelta": 3.85, "entries": 20 },
+      { "theme": "moby-dick", "meanScore": 80.38, "meanDelta": 3.85, "entries": 20 },
+      { "theme": "great-gatsby", "meanScore": 80.25, "meanDelta": 3.73, "entries": 20 },
+      { "theme": "bobiverse", "meanScore": 79.88, "meanDelta": 3.35, "entries": 20 },
+      { "theme": "the-odyssey", "meanScore": 81.47, "meanDelta": 3.33, "entries": 30 },
+      { "theme": "better-call-saul", "meanScore": 79.75, "meanDelta": 3.23, "entries": 20 },
+      { "theme": "superfriends", "meanScore": 79.75, "meanDelta": 3.23, "entries": 20 },
+      { "theme": "count-of-monte-cristo", "meanScore": 79.63, "meanDelta": 3.10, "entries": 20 },
+      { "theme": "the-office", "meanScore": 81.22, "meanDelta": 3.08, "entries": 30 }
     ],
     "C": [
-      {
-        "theme": "mad-max",
-        "dev": { "score": 66.25, "delta": -11.25 },
-        "reviewer": { "score": 91.25, "delta": 12.75 },
-        "tea": { "score": 80.0, "delta": 7.9 },
-        "teamDelta": 9.4,
-        "standout": "Dev weak, elite Review",
-        "optimized": true
-      },
-      {
-        "theme": "agatha-christie",
-        "teamDelta": 14.4,
-        "standout": "Dev underperforms"
-      },
-      {
-        "theme": "doctor-who",
-        "teamDelta": 12.9,
-        "standout": "Inconsistent Dev"
-      },
-      {
-        "theme": "sherlock-holmes",
-        "teamDelta": 14.4,
-        "standout": "Great review, weak TEA"
-      },
-      {
-        "theme": "ted-lasso",
-        "teamDelta": 14.4,
-        "standout": "Enthusiasm doesn't compile"
-      },
-      {
-        "theme": "the-simpsons",
-        "teamDelta": 12.9,
-        "standout": "Lisa carries the team"
-      },
-      {
-        "theme": "marvel-mcu",
-        "teamDelta": 11.0,
-        "standout": "Nick Fury coordinates, doesn't code"
-      },
-      {
-        "theme": "sandman",
-        "teamDelta": 10.95,
-        "standout": "Dream role better than tactical"
-      },
-      {
-        "theme": "the-good-place",
-        "teamDelta": 9.7,
-        "standout": "Janet's knowledge theoretical"
-      },
-      {
-        "theme": "the-office",
-        "teamDelta": 9.7,
-        "standout": "Dwight's intensity misplaced"
-      },
-      {
-        "theme": "monty-python",
-        "dev": { "score": 70.0, "delta": -7.5 },
-        "reviewer": { "score": 91.25, "delta": 12.75 },
-        "tea": { "score": 76.25, "delta": 4.15 },
-        "teamDelta": 9.4,
-        "standout": "Strong review, weak elsewhere"
-      },
-      {
-        "theme": "deadwood",
-        "teamDelta": 2.0,
-        "standout": "Colorful language, weak code"
-      }
+      { "theme": "gothic-literature", "meanScore": 79.13, "meanDelta": 2.60, "entries": 20 },
+      { "theme": "futurama", "meanScore": 80.66, "meanDelta": 2.52, "entries": 30 },
+      { "theme": "neuromancer", "meanScore": 78.13, "meanDelta": 1.60, "entries": 20 },
+      { "theme": "don-quixote", "meanScore": 78.00, "meanDelta": 1.48, "entries": 20 }
     ],
     "D": [
-      {
-        "theme": "gilligans-island",
-        "teamDelta": -2.65,
-        "standout": "Characters designed for failure"
-      },
-      {
-        "theme": "legion-of-doom",
-        "teamDelta": 6.5,
-        "standout": "Villains scheme, don't ship"
-      },
-      {
-        "theme": "superfriends",
-        "teamDelta": 7.2,
-        "standout": "Heroes save day, not codebase"
-      },
-      {
-        "theme": "imperial-radch",
-        "teamDelta": 7.75,
-        "standout": "AI perspective too alien"
-      }
+      { "theme": "mad-max", "meanScore": 77.06, "meanDelta": -0.04, "entries": 40 },
+      { "theme": "deadwood", "meanScore": 79.75, "meanDelta": -2.41, "entries": 40 },
+      { "theme": "star-wars", "meanScore": 79.67, "meanDelta": -2.49, "entries": 40 },
+      { "theme": "jane-austen", "meanScore": 65.75, "meanDelta": -10.77, "entries": 20 },
+      { "theme": "inspector-morse", "meanScore": 61.38, "meanDelta": -15.15, "entries": 20 },
+      { "theme": "scientific-revolutionaries", "meanScore": 60.19, "meanDelta": -16.34, "entries": 20 },
+      { "theme": "gilligans-island", "meanScore": 61.03, "meanDelta": -17.11, "entries": 30 },
+      { "theme": "sandman", "meanScore": 57.44, "meanDelta": -19.09, "entries": 20 },
+      { "theme": "jazz-legends", "meanScore": 55.88, "meanDelta": -20.65, "entries": 20 },
+      { "theme": "shakespeare", "meanScore": 55.75, "meanDelta": -20.77, "entries": 20 },
+      { "theme": "house-md", "meanScore": 42.00, "meanDelta": -34.52, "entries": 20 },
+      { "theme": "historical-figures", "meanScore": 39.88, "meanDelta": -36.65, "entries": 20 },
+      { "theme": "imperial-radch", "meanScore": 38.13, "meanDelta": -38.40, "entries": 20 }
     ],
     "U": [
-      { "theme": "futurama", "source": "Animated Series" },
-      { "theme": "lovecraft-mythos", "source": "H.P. Lovecraft" },
-      { "theme": "the-odyssey", "source": "Classical Epic" },
-      { "theme": "twin-peaks", "source": "TV Series" },
-      { "theme": "x-files", "source": "TV Series" },
-      { "theme": "arcane", "source": "Animated Series" },
-      { "theme": "avatar-the-last-airbender", "source": "Animated Series" },
-      { "theme": "battlestar-galactica", "source": "TV Series" },
-      { "theme": "better-call-saul", "source": "TV Series" },
-      { "theme": "big-lebowski", "source": "Film" },
-      { "theme": "black-sails", "source": "TV Series" },
-      { "theme": "bobiverse", "source": "Sci-Fi Novel" },
+      { "theme": "1984", "source": "Dystopian Fiction" },
+      { "theme": "a-team", "source": "TV Series" },
+      { "theme": "agatha-christie", "source": "Mystery Fiction" },
+      { "theme": "all-stars", "source": "Mixed/Meta Theme" },
       { "theme": "catch-22", "source": "Novel" },
       { "theme": "classical-composers", "source": "Historical" },
       { "theme": "control", "source": "Video Game" },
-      { "theme": "count-of-monte-cristo", "source": "Novel" },
-      { "theme": "dickens", "source": "Literature" },
-      { "theme": "don-quixote", "source": "Novel" },
-      { "theme": "enlightenment-thinkers", "source": "Historical" },
-      { "theme": "expeditionary-force", "source": "Sci-Fi Novel" },
-      { "theme": "fargo", "source": "TV Series" },
       { "theme": "film-auteurs", "source": "Film" },
-      { "theme": "gothic-literature", "source": "Literature" },
-      { "theme": "great-gatsby", "source": "Novel" },
-      { "theme": "greek-mythology", "source": "Mythology" },
-      { "theme": "hannibal", "source": "TV Series" },
-      { "theme": "harry-potter", "source": "Fantasy Novel" },
-      { "theme": "his-dark-materials", "source": "Fantasy Novel" },
-      { "theme": "historical-figures", "source": "Historical" },
-      { "theme": "house-md", "source": "TV Series" },
-      { "theme": "inspector-morse", "source": "TV Series" },
-      { "theme": "jane-austen", "source": "Literature" },
-      { "theme": "jazz-legends", "source": "Music" },
+      { "theme": "foundation", "source": "Sci-Fi Novel" },
+      { "theme": "hitchhikers-guide", "source": "Sci-Fi Novel" },
       { "theme": "justified", "source": "TV Series" },
+      { "theme": "legion-of-doom", "source": "DC Comics" },
       { "theme": "les-miserables", "source": "Novel" },
-      { "theme": "mad-men", "source": "TV Series" },
-      { "theme": "mass-effect", "source": "Video Game" },
-      { "theme": "military-commanders", "source": "Historical" },
-      { "theme": "moby-dick", "source": "Novel" },
-      { "theme": "neuromancer", "source": "Sci-Fi Novel" },
+      { "theme": "lord-of-the-rings", "source": "Fantasy Novel" },
+      { "theme": "monty-python", "source": "Comedy" },
       { "theme": "norse-mythology", "source": "Mythology" },
-      { "theme": "renaissance-masters", "source": "Historical" },
-      { "theme": "rome", "source": "TV Series" },
-      { "theme": "russian-masters", "source": "Literature" },
-      { "theme": "scientific-revolutionaries", "source": "Historical" },
-      { "theme": "shakespeare", "source": "Literature" },
-      { "theme": "snow-crash", "source": "Sci-Fi Novel" },
-      { "theme": "software-pioneers", "source": "Historical" },
+      { "theme": "parks-and-rec", "source": "TV Series" },
+      { "theme": "peaky-blinders", "source": "TV Series" },
+      { "theme": "princess-bride", "source": "Film/Novel" },
+      { "theme": "star-trek-tng", "source": "TV Series" },
       { "theme": "star-trek-tos", "source": "TV Series" },
-      { "theme": "succession", "source": "TV Series" },
-      { "theme": "the-americans", "source": "TV Series" },
-      { "theme": "the-crown", "source": "TV Series" },
-      { "theme": "the-matrix", "source": "Film" },
-      { "theme": "the-sopranos", "source": "TV Series" },
+      { "theme": "the-wire", "source": "TV Series" },
       { "theme": "the-witcher", "source": "Fantasy" },
-      { "theme": "world-explorers", "source": "Historical" },
-      { "theme": "wwii-leaders", "source": "Historical" },
-      { "theme": "arthurian-mythos", "source": "Mythology" },
-      { "theme": "ancient-strategists", "source": "Historical" }
+      { "theme": "vorkosigan-saga", "source": "Sci-Fi Novel" },
+      { "theme": "watchmen", "source": "Graphic Novel" }
     ]
   },
   "roleLeaders": {
     "dev": [
-      { "theme": "firefly", "score": 90.0, "delta": 12.5 },
-      { "theme": "hitchhikers-guide", "score": 90.0, "delta": 12.5 },
-      { "theme": "blade-runner", "score": 88.75, "delta": 11.25 },
-      { "theme": "princess-bride", "score": 87.5, "delta": 10.0 },
-      { "theme": "dune", "score": 87.5, "delta": 10.0 }
+      { "theme": "the-matrix", "standout": "Agent Smith excels at dev-codegen" },
+      { "theme": "the-expanse", "standout": "Strong across dev roles" },
+      { "theme": "blade-runner", "standout": "Roy Batty strong on Dev" },
+      { "theme": "firefly", "standout": "River Tam's Dev excellence" },
+      { "theme": "doctor-who", "standout": "Balanced dev performance" }
     ],
     "reviewer": [
-      { "theme": "mash", "score": 92.5, "delta": 14.0 },
-      { "theme": "vorkosigan-saga", "score": 92.5, "delta": 14.0 },
-      { "theme": "the-wire", "score": 92.5, "delta": 14.0 },
-      { "theme": "foundation", "score": 92.5, "delta": 14.0 },
-      { "theme": "lord-of-the-rings", "score": 92.5, "delta": 14.0 }
+      { "theme": "the-matrix", "standout": "All characters score 96-97.5 on review" },
+      { "theme": "doctor-who", "standout": "Strong critical review" },
+      { "theme": "the-expanse", "standout": "Thorough code review" },
+      { "theme": "west-wing", "standout": "Analytical review approach" },
+      { "theme": "game-of-thrones", "standout": "Tyrion + Varys tactical minds" }
     ],
     "tea": [
-      { "theme": "mash", "score": 95.0, "delta": 22.9 },
-      { "theme": "the-expanse", "score": 92.5, "delta": 20.4 },
-      { "theme": "alice-in-wonderland", "score": 90.0, "delta": 17.9 },
-      { "theme": "west-wing", "score": 90.0, "delta": 17.9 },
-      { "theme": "vorkosigan-saga", "score": 90.0, "delta": 17.9 }
+      { "theme": "the-matrix", "standout": "Morpheus/Neo 96.25 TEA scores" },
+      { "theme": "the-expanse", "standout": "Amos excels at tactical testing" },
+      { "theme": "doctor-who", "standout": "Thorough test coverage" },
+      { "theme": "west-wing", "standout": "Methodical testing approach" },
+      { "theme": "game-of-thrones", "standout": "Strategic test planning" }
+    ],
+    "sm": [
+      { "theme": "the-matrix", "standout": "All characters 95.6-96.9 on SM" },
+      { "theme": "doctor-who", "standout": "Strong coordination" },
+      { "theme": "the-expanse", "standout": "Excellent team coordination" },
+      { "theme": "west-wing", "standout": "Political coordination skills" },
+      { "theme": "blade-runner", "standout": "Effective story management" }
     ]
   },
   "oceanCorrelations": {
@@ -414,24 +181,16 @@
       "dev": { "O": "H", "C": "M", "E": "M", "A": "M", "N": "L", "description": "Creative, balanced, confident" }
     },
     "themesWithData": [
-      { "theme": "star-trek-tng", "O": "H", "C": "H", "E": "M", "A": "H", "N": "L", "bestScore": 93.75, "bestDelta": 13.45, "bestRole": "SM" },
+      { "theme": "the-matrix", "O": "H", "C": "H", "E": "L", "A": "L", "N": "M", "bestScore": 97.50, "bestDelta": 19.0, "bestRole": "Reviewer" },
       { "theme": "the-expanse", "O": "M", "C": "H", "E": "L", "A": "L", "N": "M", "bestScore": 92.50, "bestDelta": 20.40, "bestRole": "TEA" },
-      { "theme": "the-wire", "O": "M", "C": "H", "E": "L", "A": "L", "N": "M", "bestScore": 92.50, "bestDelta": 14.00, "bestRole": "Reviewer" },
+      { "theme": "doctor-who", "O": "H", "C": "L", "E": "H", "A": "H", "N": "M", "bestScore": 85.13, "bestDelta": 8.60, "bestRole": "Overall" },
       { "theme": "firefly", "O": "H", "C": "M", "E": "H", "A": "M", "N": "M", "bestScore": 92.50, "bestDelta": 12.20, "bestRole": "SM" },
-      { "theme": "star-wars", "O": "H", "C": "M", "E": "H", "A": "H", "N": "M", "bestScore": 92.50, "bestDelta": 12.20, "bestRole": "SM" },
       { "theme": "dune", "O": "H", "C": "H", "E": "L", "A": "L", "N": "M", "bestScore": 92.50, "bestDelta": 12.20, "bestRole": "SM" },
       { "theme": "game-of-thrones", "O": "M", "C": "M", "E": "M", "A": "L", "N": "H", "bestScore": 92.50, "bestDelta": 16.65, "bestRole": "TEA" },
       { "theme": "breaking-bad", "O": "H", "C": "H", "E": "L", "A": "L", "N": "H", "bestScore": 92.50, "bestDelta": 12.20, "bestRole": "SM" },
-      { "theme": "a-team", "O": "H", "C": "H", "E": "H", "A": "L", "N": "L", "bestScore": 92.50, "bestDelta": 12.20, "bestRole": "SM" },
-      { "theme": "parks-and-rec", "O": "H", "C": "H", "E": "H", "A": "H", "N": "M", "bestScore": 92.50, "bestDelta": 14.00, "bestRole": "Reviewer" },
-      { "theme": "princess-bride", "O": "H", "C": "M", "E": "M", "A": "H", "N": "L", "bestScore": 92.50, "bestDelta": 16.65, "bestRole": "TEA" },
-      { "theme": "lord-of-the-rings", "O": "H", "C": "H", "E": "M", "A": "H", "N": "M", "bestScore": 92.50, "bestDelta": 14.00, "bestRole": "Reviewer" },
-      { "theme": "babylon-5", "O": "H", "C": "H", "E": "M", "A": "M", "N": "M", "bestScore": 92.50, "bestDelta": 15.40, "bestRole": "TEA" },
       { "theme": "blade-runner", "O": "M", "C": "M", "E": "L", "A": "L", "N": "H", "bestScore": 90.00, "bestDelta": 15.40, "bestRole": "TEA" },
       { "theme": "discworld", "O": "H", "C": "M", "E": "L", "A": "M", "N": "M", "bestScore": 90.00, "bestDelta": 15.40, "bestRole": "TEA" },
-      { "theme": "hitchhikers-guide", "O": "H", "C": "L", "E": "M", "A": "M", "N": "L", "bestScore": 91.25, "bestDelta": 10.95, "bestRole": "SM" },
       { "theme": "battlestar-galactica", "O": "M", "C": "H", "E": "M", "A": "L", "N": "H" },
-      { "theme": "doctor-who", "O": "H", "C": "L", "E": "H", "A": "H", "N": "M" },
       { "theme": "ted-lasso", "O": "H", "C": "M", "E": "H", "A": "H", "N": "L" },
       { "theme": "sherlock-holmes", "O": "H", "C": "H", "E": "L", "A": "L", "N": "L" },
       { "theme": "mad-men", "O": "M", "C": "M", "E": "M", "A": "L", "N": "M" },
@@ -445,17 +204,17 @@
       "conscientiousness": {
         "title": "Conscientiousness is King",
         "description": "C=H appears in 82% of top performers. This is the strongest predictor of benchmark success.",
-        "topThemes": ["star-trek-tng", "the-expanse", "the-wire", "dune", "breaking-bad", "a-team", "parks-and-rec", "lord-of-the-rings", "babylon-5"]
+        "topThemes": ["the-matrix", "the-expanse", "dune", "breaking-bad", "sherlock-holmes", "mass-effect"]
       },
       "extraversion": {
         "title": "Introversion Helps Testing",
         "description": "E=L themes dominate the TEA role. Introverted personalities excel at methodical, detail-oriented testing work.",
-        "topThemes": ["the-expanse", "the-wire", "dune", "breaking-bad", "blade-runner", "discworld"]
+        "topThemes": ["the-matrix", "the-expanse", "dune", "breaking-bad", "blade-runner", "discworld"]
       },
       "agreeableness": {
         "title": "Critical Personalities Review Better",
         "description": "A=L themes excel at code review. Willingness to critique and challenge leads to catching more issues.",
-        "topThemes": ["the-wire", "the-expanse", "game-of-thrones", "blade-runner"]
+        "topThemes": ["the-matrix", "the-expanse", "game-of-thrones", "blade-runner"]
       },
       "neuroticism": {
         "title": "Neuroticism Isn't Negative",
@@ -468,11 +227,11 @@
       }
     },
     "roleRecommendations": [
-      { "need": "Strong SM", "profile": "H-H-M-H-L", "examples": ["star-trek-tng", "parks-and-rec"] },
-      { "need": "Strong TEA", "profile": "M-H-L-L-M", "examples": ["the-expanse", "the-wire"] },
-      { "need": "Strong Reviewer", "profile": "M-H-L-L-M", "examples": ["the-wire", "breaking-bad"] },
-      { "need": "Strong Dev", "profile": "H-M-M-M-L", "examples": ["firefly", "hitchhikers-guide"] },
-      { "need": "Balanced Team", "profile": "H-H-M-M-M", "examples": ["babylon-5", "lord-of-the-rings"] }
+      { "need": "Strong SM", "profile": "H-H-M-H-L", "examples": ["the-matrix", "the-expanse"] },
+      { "need": "Strong TEA", "profile": "M-H-L-L-M", "examples": ["the-matrix", "the-expanse"] },
+      { "need": "Strong Reviewer", "profile": "M-H-L-L-M", "examples": ["the-matrix", "breaking-bad"] },
+      { "need": "Strong Dev", "profile": "H-M-M-M-L", "examples": ["the-matrix", "firefly"] },
+      { "need": "Balanced Team", "profile": "H-H-M-M-M", "examples": ["the-matrix", "the-expanse"] }
     ]
   }
 }

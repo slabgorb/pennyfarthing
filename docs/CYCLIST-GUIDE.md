@@ -567,6 +567,41 @@ export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
 - Context percentage
 - Cost calculations
 
+## Internal Codenames
+
+Cyclist uses bicycle-themed codenames for major subsystems:
+
+### WheelHub
+
+The central coordination server (implemented in `packages/cyclist/src/server.ts`) where all communication converges:
+
+- API endpoints for stats, personas, git, stories, settings
+- WebSocket servers for real-time communication
+- OTLP receiver for telemetry ingestion
+- Acceptance handling and cache invalidation
+
+### TirePump
+
+The context clearing system that reinflates the session when context runs low:
+
+- Clears the Claude Code session cleanly
+- Resets all stats (tokens, tools, context percentage)
+- Reloads the current agent (e.g., /dev) automatically
+- Preserves workflow state in .session/ files
+
+Triggered by the Compact button (appears at 50% context) or automatically at critical thresholds.
+
+### JobFair
+
+Character benchmarking system that discovers which personas excel at each role:
+
+- Runs every character in a theme against standardized benchmarks
+- Produces talent matrices (character x role performance scores)
+- Guides theme optimization decisions
+- Invoked via `/job-fair <theme>`
+
+Results are saved to `internal/results/job-fair/`.
+
 ## See Also
 
 - [Cyclist Technical Reference](CYCLIST.md) - Architecture and IPC details

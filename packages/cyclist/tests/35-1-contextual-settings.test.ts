@@ -309,11 +309,12 @@ describe('35-1: Contextual Settings Placement', () => {
     });
 
     it('should display mode labels in UI (MSSCI-12395)', async () => {
-      // Buttons should show mode names plus relay
+      // Buttons should show mode names
       expect(indexHtml).toMatch(/PLAN/);
       expect(indexHtml).toMatch(/MANUAL/);
       expect(indexHtml).toMatch(/ACCEPT/);
-      expect(indexHtml).toMatch(/RELAY/);
+      // Relay toggle uses icon-only (MSSCI-12403), not text label
+      expect(indexHtml).toMatch(/data-control="relay-toggle"/);
     });
 
   });

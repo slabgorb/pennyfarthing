@@ -5,17 +5,16 @@ tools: Bash, Read, Glob, Grep
 model: haiku
 ---
 
-<info>
-**Required params:**
-- `REPOS` - `all`, specific name, or comma-separated
-- `CONTEXT` - Why tests are being run
-- `RUN_ID` - Unique identifier
-
-**Optional:**
-- `FILTER` - Test name pattern
-- `STORY_ID` - For cache writing
-- `SKIP_CACHE_WRITE` - Set `true` for background runs
-</info>
+<arguments>
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `REPOS` | Yes | `all`, specific name, or comma-separated |
+| `CONTEXT` | Yes | Why tests are being run |
+| `RUN_ID` | Yes | Unique identifier for this run |
+| `FILTER` | No | Test name pattern for filtered runs |
+| `STORY_ID` | No | For cache writing |
+| `SKIP_CACHE_WRITE` | No | Set `true` for background runs |
+</arguments>
 
 <critical>
 **Use `/check` command for unfiltered runs:**
@@ -30,12 +29,12 @@ This runs lint + typecheck + tests. Exit 0 = all passed.
 <gate>
 ## Execution Steps
 
-1. Source utilities
-2. Ensure test containers running
-3. Run tests via check.sh (or filtered if FILTER set)
-4. Check skip violations
-5. Write cache (if STORY_ID provided)
-6. Output structured results
+- [ ] Source utilities
+- [ ] Ensure test containers running
+- [ ] Run tests via check.sh (or filtered if FILTER set)
+- [ ] Check skip violations
+- [ ] Write cache (if STORY_ID provided)
+- [ ] Output structured results
 </gate>
 
 ## Setup
@@ -87,25 +86,69 @@ if test_cache_valid "$SESSION_FILE"; then
 fi
 ```
 
+<output>
 ## Output Format
 
-```markdown
-## Test Results: {CONTEXT}
+Return a `TEST_RESULT` block:
 
-### Summary
-| Repo | Passed | Failed | Skipped | Status |
-|------|--------|--------|---------|--------|
-
-### Overall: {GREEN / RED / YELLOW}
-
-- **GREEN:** All pass, no skips
-- **YELLOW:** All pass, skips exist
-- **RED:** Failures
-
-### Failing Tests
-| Repo | Test | File | Error |
-|------|------|------|-------|
+### Success (GREEN)
 ```
+TEST_RESULT:
+  status: success
+  overall: GREEN
+  passed: {N}
+  failed: 0
+  skipped: 0
+  duration: "{Xs}"
+  repos:
+    - name: {repo}
+      passed: {N}
+      failed: 0
+      skipped: 0
+
+  next_steps:
+    - "Tests passing. Caller may proceed with handoff."
+    - "If Dev: Ready for PR creation and Reviewer handoff."
+    - "If TEA: WARNING - tests should be RED. Verify tests exercise new code."
+```
+
+### Warning (YELLOW)
+```
+TEST_RESULT:
+  status: warning
+  overall: YELLOW
+  passed: {N}
+  failed: 0
+  skipped: {N}
+  skip_violations:
+    - repo: {repo}
+      test: "{test name}"
+      file: "{file path}"
+
+  next_steps:
+    - "Tests pass but {N} skipped. Review skip violations before handoff."
+    - "Skipped tests may indicate incomplete implementation."
+```
+
+### Blocked (RED)
+```
+TEST_RESULT:
+  status: blocked
+  overall: RED
+  passed: {N}
+  failed: {N}
+  failures:
+    - repo: {repo}
+      test: "{test name}"
+      file: "{file path}"
+      error: "{error message}"
+
+  next_steps:
+    - "Tests failing. Do NOT proceed with handoff."
+    - "If Dev: Fix failures before continuing."
+    - "If TEA: RED state confirmed. Ready for Dev handoff."
+```
+</output>
 
 ## Background Execution
 

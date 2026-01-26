@@ -65,6 +65,7 @@ dimensions:
 metadata:
   created_at: "2026-01-01T00:00:00Z"
   updated_at: "2026-01-01T00:00:00Z"
+  pennyfarthing_version: "7.6.1"  # Version when baseline was created
   model: sonnet
   notes: ""
 

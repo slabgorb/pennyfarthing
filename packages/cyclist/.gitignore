@@ -7,6 +7,7 @@ release/
 # Playwright test artifacts
 e2e-results/
 playwright-report/
+test-results/
 
 # Session state
 .session/

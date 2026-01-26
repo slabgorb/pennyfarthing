@@ -13,7 +13,7 @@ import path from 'path';
 import { parse, stringify } from 'yaml';
 import { getCurrentSettings, saveUserSettings, type CyclistSettings, type SettingsInput } from '../settings.js';
 import { getProjectDirectory } from '../paths.js';
-import { isBellModeEnabled, setBellMode, loadBellModeState } from '../bell-mode.js';
+import { setBellMode } from '../bell-mode.js';
 
 // =============================================================================
 // Theme Response Type
@@ -76,38 +76,37 @@ export function createSettingsRouter(): Router {
   /**
    * GET / - Get current settings
    * AC4: Returns consistent error format
-   * Theme and handoff_mode are read from .pennyfarthing/config.local.yaml (single source of truth)
-   * Bell mode is read from .pennyfarthing/bell-mode.json (MSSCI-12275)
+   * Theme, handoff_mode, and bell_mode are all read from .pennyfarthing/config.local.yaml (single source of truth)
    */
   router.get('/', async (_req, res) => {
     try {
       const settings = getCurrentSettings();
 
-      // Read theme and handoff_mode from config.local.yaml (single source of truth)
+      // Read theme, handoff_mode, and bell_mode from config.local.yaml (single source of truth)
       let theme = 'alice-in-wonderland'; // Default fallback
       let handoffMode = 'manual'; // Default fallback
+      let bellMode = false; // Default fallback
       const projectDir = getProjectDirectory();
       if (projectDir) {
         try {
           const configPath = path.join(projectDir, '.pennyfarthing', 'config.local.yaml');
           if (fs.existsSync(configPath)) {
             const content = fs.readFileSync(configPath, 'utf-8');
-            const parsed = parse(content) as { theme?: string; workflow?: { handoff_mode?: string } };
+            const parsed = parse(content) as { theme?: string; workflow?: { handoff_mode?: string; bell_mode?: boolean } };
             if (parsed?.theme) {
               theme = parsed.theme;
             }
             if (parsed?.workflow?.handoff_mode) {
               handoffMode = parsed.workflow.handoff_mode;
             }
+            if (parsed?.workflow?.bell_mode !== undefined) {
+              bellMode = parsed.workflow.bell_mode;
+            }
           }
         } catch {
           // Ignore project config errors - use defaults
         }
       }
-
-      // Load bell mode state from its dedicated file (MSSCI-12275)
-      await loadBellModeState();
-      const bellMode = isBellModeEnabled();
 
       // Construct response with theme, handoff_mode, and bell_mode added
       const response: SettingsResponse = {
@@ -314,14 +313,14 @@ export function createSettingsRouter(): Router {
         const id = f.replace('.yaml', '');
         const name = id.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
-        // Try to read tier from theme file
+        // Try to read tier from theme file (nested under theme.tier)
         let tier = 'U'; // Default to Unbenchmarked
         try {
           const themePath = path.join(themesDir, f);
           const content = fs.readFileSync(themePath, 'utf-8');
-          const parsed = parse(content) as { tier?: string };
-          if (parsed.tier && typeof parsed.tier === 'string') {
-            tier = parsed.tier.toUpperCase();
+          const parsed = parse(content) as { theme?: { tier?: string } };
+          if (parsed.theme?.tier && typeof parsed.theme.tier === 'string') {
+            tier = parsed.theme.tier.toUpperCase();
           }
         } catch {
           // Ignore parse errors, use default tier

@@ -5,9 +5,9 @@ tools: Bash, Read, Edit, Grep
 model: haiku
 ---
 
-<info>
-| Param | Required | Description |
-|-------|----------|-------------|
+<arguments>
+| Argument | Required | Description |
+|----------|----------|-------------|
 | `STORY_ID` | Yes | e.g., "31-10" |
 | `WORKFLOW` | Yes | "tdd", "trivial", etc. |
 | `CURRENT_PHASE` | Yes | "red", "green", "review" |
@@ -16,7 +16,7 @@ model: haiku
 | `TEST_RESULT` | No | "RED" or "GREEN" |
 | `ASSESSMENT_SECTION` | No | e.g., "TEA Assessment" |
 | `PR_NUMBER` | No | For green→review |
-</info>
+</arguments>
 
 <critical>
 **Marker generation happens in the CALLING agent, not here.**
@@ -30,29 +30,29 @@ Return `HANDOFF_RESULT` with the next agent name - the calling agent runs `hando
 
 <gate>
 ### tests_fail (TEA → Dev)
-- Tests committed
-- Tests are RED (failing)
-- Assessment exists
+- [ ] Tests committed
+- [ ] Tests are RED (failing)
+- [ ] Assessment exists
 
 **STOP if tests GREEN** - TEA must verify tests exercise new code.
 </gate>
 
 <gate>
 ### tests_pass (Dev → Reviewer)
-- Quality checks pass (run: `.pennyfarthing/scripts/run.sh workflow/check.sh`)
-- Git working tree clean
-- Changes pushed to remote
-- PR exists and is open
-- Assessment exists
+- [ ] Quality checks pass (run: `.pennyfarthing/scripts/run.sh workflow/check.sh`)
+- [ ] Git working tree clean
+- [ ] Changes pushed to remote
+- [ ] PR exists and is open
+- [ ] Assessment exists
 
 **STOP if any check fails.**
 </gate>
 
 <gate>
 ### approval (Reviewer → SM/Dev)
-- Reviewer Assessment exists
-- Contains APPROVED or REJECTED
-- Verdict matches VERDICT parameter
+- [ ] Reviewer Assessment exists
+- [ ] Contains APPROVED or REJECTED
+- [ ] Verdict matches VERDICT parameter
 
 **If VERDICT=approved:** Status → approved, ready for SM finish
 **If VERDICT=rejected:** Return to Dev with issues
@@ -135,48 +135,71 @@ No automated checks. Always passes.
 
 ---
 
+<output>
 ## Output Format
 
-Return a `HANDOFF_RESULT` block. The calling agent will use this to run `handoff-marker.sh`.
+Return a `HANDOFF_RESULT` block:
 
-### Success Format
-
+### Success
 ```
 HANDOFF_RESULT:
   status: success
   next_agent: {NEXT_AGENT}
   next_phase: {NEXT_PHASE}
   gate: {GATE_TYPE}
+  story_id: {STORY_ID}
+
+  next_steps:
+    - "Handoff complete. Run handoff-marker.sh as ABSOLUTE LAST ACTION."
+    - "Command: $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}"
+    - "Output marker result verbatim, then EXIT. Nothing after."
 ```
 
 ### Example (TEA → Dev)
-
 ```
 HANDOFF_RESULT:
   status: success
   next_agent: dev
   next_phase: green
   gate: tests_fail
+  story_id: 46-5
+
+  next_steps:
+    - "Handoff complete. Run handoff-marker.sh as ABSOLUTE LAST ACTION."
+    - "Command: $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh dev"
+    - "Output marker result verbatim, then EXIT. Nothing after."
 ```
 
 ### Example (Dev → Reviewer)
-
 ```
 HANDOFF_RESULT:
   status: success
   next_agent: reviewer
   next_phase: review
   gate: tests_pass
+  story_id: 46-5
+
+  next_steps:
+    - "Handoff complete. Run handoff-marker.sh as ABSOLUTE LAST ACTION."
+    - "Command: $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh reviewer"
+    - "Output marker result verbatim, then EXIT. Nothing after."
 ```
 
-### Error Format
-
+### Blocked
 ```
 HANDOFF_RESULT:
   status: blocked
-  error: "{error message}"
+  error: "{description}"
   fix: "{recommended action}"
+  gate: {GATE_TYPE}
+  failed_check: "{specific check that failed}"
+
+  next_steps:
+    - "Handoff blocked at gate '{gate}': {error}"
+    - "Required action: {fix}"
+    - "Do NOT run handoff-marker.sh. Resolve issue first."
 ```
+</output>
 
 ---
 

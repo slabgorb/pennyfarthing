@@ -5,10 +5,17 @@ tools: Bash, Read, Edit, Write
 model: haiku
 ---
 
-<info>
-**MODE: research** - Scan backlog for available stories
-**MODE: setup** - Execute story setup (Jira, branches, session)
-</info>
+<arguments>
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `MODE` | Yes | `research` (scan backlog) or `setup` (execute story setup) |
+| `STORY_ID` | setup | Story identifier, e.g., "31-10" |
+| `JIRA_KEY` | setup | Jira issue key, e.g., "MSSCI-12345" |
+| `REPOS` | setup | Repository name(s) |
+| `SLUG` | setup | Branch slug, e.g., "fix-typo" |
+| `WORKFLOW` | setup | Workflow type: "tdd", "trivial", etc. |
+| `ASSIGNEE` | No | Jira assignee (defaults to current user) |
+</arguments>
 
 ---
 
@@ -17,30 +24,45 @@ model: haiku
 <gate>
 ## Research Steps
 
-1. Use `/sprint backlog` for initial backlog scan:
-   ```bash
-   .pennyfarthing/scripts/core/run.sh sprint/available-stories.sh
-   ```
-2. Use `/jira` skill to enrich with Jira status/assignee:
-   - `/jira search "project=MSSCI AND sprint in openSprints()"` - Get all sprint stories
-   - `/jira view {JIRA_KEY}` - Check individual story details
-3. Check context availability
-4. Check dependencies
-5. Output report with recommendations
+- [ ] Use `/sprint backlog` for initial backlog scan:
+  ```bash
+  .pennyfarthing/scripts/core/run.sh sprint/available-stories.sh
+  ```
+- [ ] Use `/jira` skill to enrich with Jira status/assignee:
+  - `/jira search "project=MSSCI AND sprint in openSprints()"` - Get all sprint stories
+  - `/jira view {JIRA_KEY}` - Check individual story details
+- [ ] Check context availability
+- [ ] Check dependencies
+- [ ] Output report with recommendations
 </gate>
 
-## Output Format
+<output>
+## Output Format (MODE: research)
 
-```markdown
-## Sprint {N} Backlog Research
+Return a `RESEARCH_RESULT` block:
 
-### Available Stories
-| Story | Title | Points | Repos | Context |
-|-------|-------|--------|-------|---------|
-
-### Recommended Next
-**Story {ID}:** {TITLE} ({PTS} pts)
 ```
+RESEARCH_RESULT:
+  status: success
+  sprint_number: {N}
+  available_count: {N}
+  stories:
+    - id: "{STORY_ID}"
+      title: "{title}"
+      points: {N}
+      repos: ["{repo}"]
+      context_ready: {true|false}
+      blocked_by: ["{dependency}"] or null
+  recommended:
+    id: "{STORY_ID}"
+    reason: "{why this story}"
+
+  next_steps:
+    - "Present stories to user for selection."
+    - "Recommended: {recommended.id} - {recommended.reason}"
+    - "On selection: Spawn sm-setup with MODE=setup, STORY_ID={selected}"
+```
+</output>
 
 ---
 
@@ -55,12 +77,12 @@ Other formats break Cyclist detection.
 <gate>
 ## Setup Steps
 
-1. Verify epic has Jira key (auto-create if missing)
-2. Check workflow permissions (auto-prompt for missing)
-3. Claim story in Jira
-4. Write session file with Workflow Tracking section
-5. Create feature branch
-6. Update sprint YAML status
+- [ ] Verify epic has Jira key (auto-create if missing)
+- [ ] Check workflow permissions (auto-prompt for missing)
+- [ ] Claim story in Jira
+- [ ] Write session file with Workflow Tracking section
+- [ ] Create feature branch
+- [ ] Update sprint YAML status
 </gate>
 
 ## Step 1: Check Epic Jira
@@ -91,11 +113,13 @@ GRANTS=$(cat .claude/settings.local.json 2>/dev/null | jq '.permissions.grants /
 **For each required permission:**
 
 1. Check if a matching grant exists (same tool + scope)
-2. If missing, prompt user with reason using AskUserQuestion:
-   ```
-   "The {WORKFLOW} workflow requires {tool} access for: {reason}
-   Grant permission for {tool} with scope '{scope}'?"
-   ```
+2. If missing, prompt user for permission:
+   - First output marker: `<!-- CYCLIST:QUESTION:yesno -->`
+   - Then use AskUserQuestion with the prompt:
+     ```
+     "The {WORKFLOW} workflow requires {tool} access for: {reason}
+     Grant permission for {tool} with scope '{scope}'?"
+     ```
 3. If granted, add to `.claude/settings.local.json` under `permissions.grants[]`:
    ```json
    {
@@ -154,21 +178,39 @@ cd $CLAUDE_PROJECT_DIR && git checkout develop && git pull && \
 git checkout -b feat/{STORY_ID}-{SLUG}
 ```
 
-## Output
+<output>
+## Output Format (MODE: setup)
 
-```markdown
-## Setup Complete
+Return a `SETUP_RESULT` block:
 
-- [x] Jira claimed: {JIRA_KEY}
-- [x] Session file: `.session/{STORY_ID}-session.md`
-- [x] Branch: `feat/{STORY_ID}-{SLUG}`
+### Success
+```
+SETUP_RESULT:
+  status: success
+  story_id: "{STORY_ID}"
+  jira_key: "{JIRA_KEY}"
+  session_file: ".session/{STORY_ID}-session.md"
+  branch: "feat/{STORY_ID}-{SLUG}"
+  workflow: "{WORKFLOW}"
+  next_agent: "{tea|dev}"
+
+  next_steps:
+    - "Setup complete. Spawn sm-handoff to transition to {next_agent}."
+    - "Workflow '{workflow}' routes to: {next_agent}"
+    - "Session file ready at: {session_file}"
 ```
 
-## Error Handling
-
-```markdown
-## SETUP BLOCKED
-
-**Issue:** {DESCRIPTION}
-**Fix:** {RECOMMENDED_ACTION}
+### Blocked
 ```
+SETUP_RESULT:
+  status: blocked
+  error: "{description}"
+  fix: "{recommended action}"
+  stage: "{epic_jira|permissions|jira_claim|session|branch}"
+
+  next_steps:
+    - "Setup blocked at {stage}: {error}"
+    - "Required action: {fix}"
+    - "Do NOT proceed with handoff until resolved."
+```
+</output>

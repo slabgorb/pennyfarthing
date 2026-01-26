@@ -1,6 +1,6 @@
 # ADR-0011: Reflector Marker Consolidation
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-01-23
 **Author:** Architect (Emperor Palpatine)
 
