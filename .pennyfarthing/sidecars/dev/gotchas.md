@@ -49,6 +49,25 @@ ps aux | grep cyclist  # Look at the cwd
 
 If permissions are failing for project files, restart Cyclist from project root.
 
+## Tailing Cyclist Logs
+
+**Dev mode** (running via `just cyclist` or `npm run dev`):
+```bash
+tail -f /tmp/cyclist.log
+```
+
+**Packaged app** (no file logging by default):
+```bash
+# Kill existing and relaunch with log capture
+pkill -f "Cyclist.app"
+/Applications/Cyclist.app/Contents/MacOS/Cyclist 2>&1 | tee /tmp/cyclist-live.log
+```
+
+Search for errors:
+```bash
+grep -i -E "(error|warn|exception|fail)" /tmp/cyclist.log | tail -50
+```
+
 ---
 
 *Add gotchas discovered during development below*
