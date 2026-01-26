@@ -65,7 +65,7 @@ class ValidationResult:
 # =============================================================================
 
 VALID_SPRINT_STATUSES = {"active", "closed"}
-VALID_STORY_STATUSES = {"backlog", "in_progress", "done", "cancelled"}
+VALID_STORY_STATUSES = {"backlog", "ready", "in_progress", "done", "canceled"}
 JIRA_KEY_PATTERN = re.compile(r"^MSSCI-\d{5}$")
 ISO_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -142,7 +142,7 @@ def validate_story(story: dict[str, Any], epic_id: str, story_index: int = 0) ->
 
     Validates:
     - Required fields present (id, title, status, points)
-    - status is valid value (backlog, in_progress, done, cancelled)
+    - status is valid value (backlog, ready, in_progress, done, canceled)
     - points is numeric
     - jira key follows pattern MSSCI-NNNNN if present
     - branch follows convention if present
@@ -292,7 +292,7 @@ def validate_archived_sprint(data: dict[str, Any]) -> ValidationResult:
     """Validate an archived sprint file.
 
     Archived sprints have the same structure as current sprints
-    but allow done/cancelled status for all stories.
+    but allow done/canceled status for all stories.
 
     Args:
         data: Archived sprint YAML data
@@ -302,7 +302,7 @@ def validate_archived_sprint(data: dict[str, Any]) -> ValidationResult:
     """
     # For archived sprints, use the same validation as full sprint
     # The key difference is that all story statuses are valid
-    # (done/cancelled are expected in archived sprints)
+    # (done/canceled are expected in archived sprints)
     return validate_full_sprint(data)
 
 
