@@ -785,6 +785,15 @@ export function hideClearingIndicator() {
   // Clear any UI indicators
 }
 
+/**
+ * Check if relay mode is enabled
+ * Used by quick-actions to auto-execute HANDOFF markers
+ * @returns {boolean}
+ */
+export function isRelayModeEnabled() {
+  return relayModeEnabled;
+}
+
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initControls);
