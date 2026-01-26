@@ -21,8 +21,9 @@ This document is auto-generated from `skill-registry.yaml`. Do not edit manually
 - [Project Management](#project-management)
   - [jira](#jira)
   - [permissions](#permissions)
-  - [sprint-context](#sprint-context)
-  - [story-management](#story-management)
+  - [sprint](#sprint)
+  - [story](#story)
+  - [workflow](#workflow)
 - [Theming](#theming)
   - [theme](#theme)
   - [theme-creation](#theme-creation)
@@ -30,6 +31,7 @@ This document is auto-generated from `skill-registry.yaml`. Do not edit manually
   - [cyclist](#cyclist)
   - [just](#just)
   - [mermaid](#mermaid)
+  - [otel](#otel)
   - [yq](#yq)
 
 ## AI/LLM
@@ -228,7 +230,7 @@ Jira CLI commands for sprint management
 **Anti-patterns:**
 - Don't bypass Jira for sprint tracking
 
-**Related:** [sprint-context](#sprint-context), [story-management](#story-management)
+**Related:** [sprint](#sprint), [story](#story)
 
 ### permissions
 
@@ -247,41 +249,57 @@ Manage runtime permission grants - list, grant, and revoke tool access
 - Don't manually edit settings.local.json permissions - use skill
 - Don't grant overly broad scope patterns
 
-**Related:** [sprint-context](#sprint-context)
+### sprint
 
-### sprint-context
-
-Sprint status, backlog, and story management context
+Sprint status, backlog, and story management for Pennyfarthing
 
 **Tags:** sprint, status, backlog
 
 **Keywords:** sprint, backlog, velocity, kanban
 
 **Examples:**
-- Checking sprint status: `/sprint-context`
-- Finding available stories: `/sprint-context available`
+- Checking sprint status: `/sprint`
+- Finding available stories: `/sprint backlog`
 
 **Anti-patterns:**
-- Don't manually edit sprint YAML - use skills
+- Don't manually edit sprint YAML - use scripts
 
-**Related:** [story-management](#story-management), [jira](#jira)
+**Related:** [story](#story), [jira](#jira)
 
-### story-management
+### story
 
-Story creation, sizing, and sprint workflow patterns
+Story creation, sizing, and templates for Pennyfarthing workflow
 
 **Tags:** stories, sizing, workflow
 
 **Keywords:** user-stories, estimation, points, acceptance-criteria
 
 **Examples:**
-- Creating new stories: `/story-management create`
-- Sizing stories: `/story-management size`
+- Creating new stories: `/story create`
+- Sizing stories: `/story size`
 
 **Anti-patterns:**
 - Don't create stories without acceptance criteria
 
-**Related:** [sprint-context](#sprint-context), [jira](#jira)
+**Related:** [sprint](#sprint), [jira](#jira)
+
+### workflow
+
+Manage workflows - list, show, set, start, resume, and check status
+
+**Tags:** workflow, phases, tdd
+
+**Keywords:** tdd, trivial, agent-docs, bdd, architecture, bikelane, stepped, phased
+
+**Examples:**
+- Listing available workflows: `/workflow`
+- Showing current workflow: `/workflow show`
+- Starting stepped workflow: `/workflow start architecture`
+
+**Anti-patterns:**
+- Don't switch workflows mid-story unless requirements fundamentally changed
+
+**Related:** [sprint](#sprint), [story](#story)
 
 ## Theming
 
@@ -370,6 +388,23 @@ Generate diagrams using Mermaid syntax for documentation
 - Don't create overly complex diagrams - split into multiple if needed
 
 **Related:** [changelog](#changelog)
+
+### otel
+
+Claude Code OTEL telemetry format documentation for span interception and enrichment
+
+**Tags:** telemetry, monitoring, otel
+
+**Keywords:** opentelemetry, spans, traces, enrichment, correlation
+
+**Examples:**
+- Working with OTEL spans: `/otel`
+- Enriching tool telemetry in Cyclist: `/otel enrichment`
+
+**Anti-patterns:**
+- Don't assume fields exist - verify against this documentation
+
+**Related:** [cyclist](#cyclist)
 
 ### yq
 

@@ -20,7 +20,7 @@ import { resetState as resetFilePanel } from './file-panel.js';
 import { resetState as resetDiffPanel } from './diff-panel.js';
 import { clear as clearChangedFiles } from './components/ChangedFilesList.js';
 import { clearDiffs } from './components/DiffViewer.js';
-import { getMessageQueue, setOnQueueChange, removeFromQueue, clearMessageQueue } from './editor/message-queue.js';
+import { getMessageQueue, setOnQueueChange, removeFromQueue, clearMessageQueue, setBellMode as setMessageQueueBellMode } from './editor/message-queue.js';
 
 /**
  * Valid modes for the segmented control (matches settings.ts PermissionMode)
@@ -453,6 +453,8 @@ async function loadBellModeFromSettings() {
 
     bellModeEnabled = settings?.workflow?.bell_mode || false;
     updateBellModeDisplay();
+    // MSSCI-12275: Sync message queue bell mode state on load
+    setMessageQueueBellMode(bellModeEnabled);
     console.log('[Controls] Bell mode loaded from settings:', bellModeEnabled);
   } catch (err) {
     console.warn('[Controls] Failed to load bell mode from settings:', err);
@@ -490,6 +492,8 @@ async function toggleBellMode(event) {
 
     bellModeEnabled = newValue;
     updateBellModeDisplay();
+    // MSSCI-12275: Update message queue bell mode state
+    setMessageQueueBellMode(newValue);
     console.log('[Controls] Bell mode set successfully:', bellModeEnabled);
   } catch (error) {
     console.error('[Controls] Failed to toggle bell mode:', error);

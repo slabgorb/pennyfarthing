@@ -21,7 +21,7 @@ Without approval gates, workflows may:
 
 ## Solution
 
-Implement **explicit verification points** where workflow progression requires passing a gate condition. Gates can be automated (tests must pass), require human review (Reviewer approval), or request user decisions (AskUserQuestion).
+Implement **explicit verification points** where workflow progression requires passing a gate condition. Gates can be automated (tests must pass), require human review (Reviewer approval), or request user decisions (via Reflector-aware prompts).
 
 ```
 Workflow Stage
@@ -47,7 +47,7 @@ The key insight: **Make workflow progression conditional on explicit verificatio
 
 1. **Automated Gates** - Mechanical checks that must pass (tests, lint, pre-flight)
 2. **Human Review Gates** - Expert judgment required before proceeding
-3. **User Decision Gates** - Interactive choices via AskUserQuestion
+3. **User Decision Gates** - Interactive choices via Reflector (CYCLIST marker + AskUserQuestion)
 4. **Plan Approval Gates** - Confirmation of proposed approach via EnterPlanMode
 
 ## State Diagram
@@ -228,12 +228,19 @@ The Reviewer agent implements an adversarial review gate:
 
 ### Gate Type 3: User Decision Gates
 
-Interactive prompts that pause workflow for user input.
+Interactive prompts that pause workflow for user input. **Requires Reflector pattern:**
 
-**Example: AskUserQuestion for Story Selection**
+1. Output CYCLIST marker first (enables Cyclist UI integration)
+2. Then use AskUserQuestion tool
+
+**Example: Reflector-Aware Story Selection**
+
+```markdown
+<!-- CYCLIST:CHOICES:story -->
+```
 
 ```yaml
-# SM presents story options to user
+# SM presents story options to user (after outputting marker)
 AskUserQuestion:
   questions:
     - question: "Which story shall we work on?"
@@ -252,8 +259,12 @@ AskUserQuestion:
 
 **Example: Confirmation Before Destructive Action**
 
+```markdown
+<!-- CYCLIST:QUESTION:yesno -->
+```
+
 ```yaml
-# Before Jira claim or branch deletion
+# Before Jira claim or branch deletion (after outputting marker)
 AskUserQuestion:
   questions:
     - question: "Confirm claiming MSSCI-11374 and creating branch?"
@@ -265,6 +276,11 @@ AskUserQuestion:
         - label: "No, cancel"
           description: "Abort setup and return to story selection"
 ```
+
+**Reflector Markers:**
+- `<!-- CYCLIST:CHOICES:{category} -->` - Multiple choice selection
+- `<!-- CYCLIST:QUESTION:yesno -->` - Yes/No confirmation
+- `<!-- CYCLIST:QUESTION:open -->` - Free-text input
 
 ### Gate Type 4: Plan Approval Gates
 
@@ -736,9 +752,13 @@ When implementing approval gates:
 - GREEN verification: `agents/dev-handoff.md`
 
 ### Claude Code Tools
-- `AskUserQuestion`: Interactive user decision gates
+- `AskUserQuestion`: Interactive user decision gates (requires CYCLIST marker via Reflector)
 - `EnterPlanMode` / `ExitPlanMode`: Plan approval gates
 - `Task` with `subagent_type`: Delegated gate execution
+
+### Reflector Hook
+- `question-reflector-check.mjs`: Enforces CYCLIST marker before AskUserQuestion
+- Markers: `<!-- CYCLIST:CHOICES:... -->`, `<!-- CYCLIST:QUESTION:yesno|open -->`
 
 ---
 

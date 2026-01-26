@@ -202,7 +202,7 @@ Hooks are installed automatically by `pennyfarthing init`:
 pennyfarthing doctor --fix
 
 # Or install script
-.pennyfarthing/scripts/install-git-hooks.sh
+.pennyfarthing/scripts/git/install-git-hooks.sh
 ```
 
 ## Quality Gate Automation
@@ -213,7 +213,7 @@ Comprehensive quality check before agent handoffs:
 
 ```bash
 # Usage
-.pennyfarthing/scripts/check.sh [OPTIONS]
+.pennyfarthing/scripts/workflow/check.sh [OPTIONS]
 
 # Options
 --skip-check       # Emergency bypass
@@ -265,9 +265,9 @@ The script auto-detects project type:
 Auto-detects and runs appropriate CI:
 
 ```bash
-.pennyfarthing/scripts/run-ci.sh              # Run detected CI
-.pennyfarthing/scripts/run-ci.sh --detect-only # Show what would run
-.pennyfarthing/scripts/run-ci.sh --dry-run     # Preview without executing
+.pennyfarthing/scripts/misc/run-ci.sh              # Run detected CI
+.pennyfarthing/scripts/misc/run-ci.sh --detect-only # Show what would run
+.pennyfarthing/scripts/misc/run-ci.sh --dry-run     # Preview without executing
 ```
 
 ### Detection Priority
@@ -373,7 +373,9 @@ grep -q "## Reviewer Assessment" .session/{STORY_ID}-session.md
 grep "**Verdict:**" .session/{STORY_ID}-session.md
 ```
 
-## TDD Flow State Machine
+## BikeLane Workflow State Machine
+
+BikeLane supports multiple phased workflows. The TDD workflow is shown below as an example.
 
 ```
 ┌──────────┐
@@ -413,6 +415,11 @@ REJECTED    APPROVED
      │
      └──────────► DEV_GREEN (fix issues)
 ```
+
+Other BikeLane workflows include:
+- **trivial** - Quick changes without full TDD ceremony (SM → Dev → Reviewer → SM)
+- **agent-docs** - Documentation workflow (SM → Tech Writer → Reviewer → SM)
+- **bdd** - Behavior-Driven Development (SM → TEA → Dev → Reviewer → SM)
 
 ### State Tracking
 
@@ -537,11 +544,12 @@ test:
 ### Run with Pennyfarthing detection
 
 ```bash
-.pennyfarthing/scripts/run-ci.sh  # Auto-detects GitLab CI
+.pennyfarthing/scripts/misc/run-ci.sh  # Auto-detects GitLab CI
 ```
 
 ## See Also
 
 - [Troubleshooting](TROUBLESHOOTING.md) - Error recovery
 - [Debugging Sessions](DEBUGGING-SESSIONS.md) - Session debugging
-- [Workflows](WORKFLOWS.md) - TDD workflow documentation
+- [Workflows](WORKFLOWS.md) - BikeLane workflow documentation (TDD, trivial, agent-docs, stepped workflows, etc.)
+- [BikeLane](BIKELANE.md) - BikeLane workflow system deep-dive

@@ -79,7 +79,7 @@ just test   # Run tests
 In Claude Code:
 
 ```
-/list-themes       # Browse 102 available themes
+/list-themes       # Browse all available themes
 /set-theme         # Interactive theme selector
 /show-theme        # Preview current or any theme
 ```
@@ -94,7 +94,7 @@ pennyfarthing theme set discworld
 Or edit `.pennyfarthing/config.local.yaml` directly:
 
 ```yaml
-theme: discworld    # 102 themes available - see THEME-COMPARISON.md
+theme: discworld    # See THEME-COMPARISON.md for all available themes
 ```
 
 ## Your First Work Session
@@ -108,9 +108,18 @@ In Claude Code:
 The SM (Scrum Master) agent activates and guides you through:
 1. Selecting a story from the backlog
 2. Setting up the work session
-3. Handing off to TEA for test writing
+3. Handing off based on the chosen workflow
 
-## The TDD Flow
+## Workflows
+
+Pennyfarthing uses BikeLane workflows - flexible, configurable agent sequences:
+
+```
+/workflow list          # See all available workflows
+/workflow start <name>  # Start a specific workflow
+```
+
+**Example: TDD Workflow**
 
 ```
 /new-work → SM → TEA → Dev → Reviewer → SM (finish)
@@ -122,6 +131,8 @@ The SM (Scrum Master) agent activates and guides you through:
 | TEA | `/tea` | Write failing tests |
 | Dev | `/dev` | Make tests pass |
 | Reviewer | `/reviewer` | Code review |
+
+See [WORKFLOWS.md](WORKFLOWS.md) for all workflow types including stepped workflows for planning, architecture, and more.
 
 ## Quick Commands
 
@@ -176,7 +187,7 @@ See [BENCHMARKING.md](BENCHMARKING.md) for complete guide.
 
 ## Showcase Website
 
-Browse all 102 themes and 1020 character profiles at the interactive showcase:
+Browse all themes and character profiles at the interactive showcase:
 
 ```bash
 # Build and serve locally

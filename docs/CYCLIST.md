@@ -60,6 +60,18 @@ Cyclist needs a project directory to operate on. Specify it via:
 
 ## Architecture
 
+### Internal Codenames
+
+Cyclist uses bicycle-themed internal codenames for major subsystems:
+
+| Codename | Component | Description |
+|----------|-----------|-------------|
+| **WheelHub** | `src/server.ts` | Central coordination server - the hub where all communication converges (API endpoints, WebSocket servers, OTLP receiver, acceptance handling, cache invalidation) |
+| **TirePump** | Context clearing system | Reinflates the session when context runs low - clears Claude session, resets stats, reloads current agent while preserving workflow state |
+| **JobFair** | Character benchmarking | Runs every character in a theme against benchmarks to discover which personas excel at each role, producing talent matrices for theme optimization |
+
+See `packages/cyclist/README.md` for detailed implementation notes.
+
 ### Process Model
 
 ```

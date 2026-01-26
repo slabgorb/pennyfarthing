@@ -2,6 +2,7 @@
  * Persona Module - Electron IPC client for persona updates
  * Story 17-4: Added popup profile view for full persona details
  * Story 35-8: Removed theme picker - theme changes now via SettingsPanel only
+ * MSSCI-12403: Two-panel popup with team roster and hover preview
  */
 
 /** Module-level storage for helper name (used by activity.js and MessageView.js) */
@@ -9,6 +10,15 @@ let currentHelperName = null;
 
 /** Module-level storage for current persona data (for popup) */
 let currentPersonaData = null;
+
+/** MSSCI-12403: Full theme data including all agents for team roster */
+let themeData = null;
+
+/** MSSCI-12403: Hover preview timeout for debouncing */
+let hoverTimeout = null;
+
+/** MSSCI-12403: Currently previewed agent (null = showing current agent) */
+let previewedAgent = null;
 
 /**
  * Get the current helper name for subagent display
@@ -86,6 +96,8 @@ export function updatePersona(persona) {
   // Project name at top (repo folder name)
   if (projectEl && persona.projectName) {
     projectEl.textContent = persona.projectName;
+    // Also update the document/tab title
+    document.title = `${persona.projectName} - Cyclist`;
   }
 
   // Theme name centered below portrait, humanized
@@ -179,84 +191,265 @@ async function fetchFullPersonaDetails() {
 }
 
 /**
+ * MSSCI-12403: Fetch enhanced theme data for team roster
+ * @returns {Promise<Object|null>} Theme data with all agents or null
+ */
+async function fetchThemeData() {
+  try {
+    const response = await fetch('/api/theme-agents/full');
+    if (response.ok) {
+      return await response.json();
+    }
+    return null;
+  } catch (err) {
+    console.error('Failed to fetch theme data:', err);
+    return null;
+  }
+}
+
+/**
+ * MSSCI-12403: Update popup display with agent data (current or previewed)
+ * @param {Object} agent - Agent data to display
+ * @param {Object} persona - Full persona data for current agent
+ */
+function updatePopupDisplay(agent, persona) {
+  const popup = document.getElementById('persona-popup');
+  if (!popup) return;
+
+  const characterNameEl = popup.querySelector('[data-persona="character"]');
+  const roleMappingEl = popup.querySelector('[data-persona="role-mapping"]');
+  const styleEl = popup.querySelector('[data-persona="style"]');
+  const backgroundEl = popup.querySelector('[data-persona="background"]');
+  const quirksEl = popup.querySelector('[data-persona="quirks"]');
+  const liftBadge = popup.querySelector('.lift-badge');
+
+  // Update text content
+  if (characterNameEl) characterNameEl.textContent = agent.character || '—';
+  if (roleMappingEl) roleMappingEl.textContent = `${(agent.role || '').toUpperCase()} → ${agent.character || ''}`;
+  if (styleEl) styleEl.textContent = agent.style || '—';
+  if (backgroundEl) backgroundEl.textContent = agent.background || '—';
+  if (quirksEl) {
+    if (Array.isArray(agent.quirks) && agent.quirks.length > 0) {
+      quirksEl.textContent = agent.quirks.join(', ');
+    } else {
+      quirksEl.textContent = '—';
+    }
+  }
+
+  // Update lift badge
+  if (liftBadge) {
+    if (agent.lift !== undefined && agent.lift !== null) {
+      const sign = agent.lift >= 0 ? '+' : '';
+      liftBadge.textContent = `${sign}${agent.lift.toFixed(1)}`;
+      liftBadge.dataset.lift = liftBadge.textContent;
+      liftBadge.classList.remove('positive', 'negative', 'neutral');
+      if (agent.lift > 0) liftBadge.classList.add('positive');
+      else if (agent.lift < 0) liftBadge.classList.add('negative');
+      else liftBadge.classList.add('neutral');
+    } else {
+      liftBadge.textContent = '—';
+      liftBadge.dataset.lift = '—';
+    }
+  }
+
+  // Update portrait
+  const portraitContainer = popup.querySelector('.popup-portrait');
+  if (portraitContainer && agent.slug && themeData?.theme) {
+    const img = portraitContainer.querySelector('img');
+    const placeholder = portraitContainer.querySelector('.portrait-placeholder');
+    if (img) {
+      img.classList.add('loading');
+      const portraitPath = window.buildPortraitPath
+        ? window.buildPortraitPath(themeData.theme, agent.slug, 'large')
+        : `/portraits/${themeData.theme}/large/${agent.slug}.png`;
+      img.src = portraitPath;
+      img.style.display = 'block';
+      img.onerror = () => {
+        img.style.display = 'none';
+        img.classList.remove('loading');
+        if (placeholder) placeholder.style.display = 'flex';
+      };
+      img.onload = () => {
+        img.classList.remove('loading');
+        if (placeholder) placeholder.style.display = 'none';
+      };
+    }
+  }
+}
+
+/**
+ * MSSCI-12403: Populate the team roster list
+ * @param {string} currentRole - Current active agent role
+ */
+function populateTeamRoster(currentRole) {
+  const popup = document.getElementById('persona-popup');
+  const rosterList = popup?.querySelector('.roster-list');
+  if (!rosterList || !themeData?.agents) return;
+
+  rosterList.innerHTML = '';
+
+  for (const agent of themeData.agents) {
+    const isCurrent = agent.role === currentRole;
+    const li = document.createElement('li');
+    li.className = `roster-item${isCurrent ? ' current' : ''}`;
+    li.dataset.role = agent.role;
+    li.setAttribute('role', 'option');
+    li.setAttribute('aria-selected', isCurrent ? 'true' : 'false');
+
+    li.innerHTML = `
+      <span class="roster-item-left">
+        <span class="roster-indicator"></span>
+        <span class="roster-character">${agent.character}</span>
+      </span>
+      <span class="roster-item-right">
+        <span class="roster-role">${agent.role.toUpperCase()}</span>
+        <span class="roster-current-marker">←</span>
+      </span>
+    `;
+
+    // Hover preview with debounce
+    li.addEventListener('mouseenter', () => {
+      if (hoverTimeout) clearTimeout(hoverTimeout);
+      hoverTimeout = setTimeout(() => {
+        previewedAgent = agent;
+        updatePopupDisplay(agent, currentPersonaData);
+        // Update visual selection in roster
+        rosterList.querySelectorAll('.roster-item').forEach(item => {
+          item.classList.toggle('previewing', item.dataset.role === agent.role);
+        });
+      }, 100);
+    });
+
+    li.addEventListener('mouseleave', () => {
+      if (hoverTimeout) clearTimeout(hoverTimeout);
+      hoverTimeout = setTimeout(() => {
+        if (previewedAgent) {
+          previewedAgent = null;
+          // Revert to current agent
+          const currentAgent = themeData.agents.find(a => a.role === currentRole);
+          if (currentAgent) {
+            updatePopupDisplay(currentAgent, currentPersonaData);
+          }
+          // Clear preview visual
+          rosterList.querySelectorAll('.roster-item').forEach(item => {
+            item.classList.remove('previewing');
+          });
+        }
+      }, 200);
+    });
+
+    // MSSCI-12403: Click to load agent
+    li.addEventListener('click', () => {
+      // Don't reload current agent
+      if (isCurrent) return;
+
+      // Send the agent command (e.g., /dev, /sm, /tea)
+      const command = `/${agent.role}`;
+
+      // Close the popup first
+      hidePersonaPopup();
+
+      // Send the command to Claude
+      if (window.electronAPI?.claude?.send) {
+        window.electronAPI.claude.send(command);
+      }
+    });
+
+    rosterList.appendChild(li);
+  }
+}
+
+/**
  * Show the persona popup with full details
+ * MSSCI-12403: Now includes team roster and tier/lift badges
  */
 async function showPersonaPopup() {
   const popup = document.getElementById('persona-popup');
   const backdrop = document.getElementById('persona-popup-backdrop');
   if (!popup || !backdrop) return;
 
-  // Fetch full details
-  const fullPersona = await fetchFullPersonaDetails();
+  // Fetch full details and theme data in parallel
+  const [fullPersona, fetchedThemeData] = await Promise.all([
+    fetchFullPersonaDetails(),
+    fetchThemeData()
+  ]);
+
   if (!fullPersona && !currentPersonaData) return;
 
   // Use full details if available, otherwise fall back to current data
   const persona = fullPersona || currentPersonaData;
 
-  // Update popup content
-  const characterNameEl = popup.querySelector('[data-persona="character"]');
-  const roleMappingEl = popup.querySelector('[data-persona="role-mapping"]');
+  // Store theme data for roster interactions
+  themeData = fetchedThemeData;
+
+  // Update theme name and tier badge
   const themeEl = popup.querySelector('[data-persona="theme"]');
-  const styleEl = popup.querySelector('[data-persona="style"]');
-  const voiceEl = popup.querySelector('[data-persona="voice"]');
-  const backgroundEl = popup.querySelector('[data-persona="background"]');
-  const quirksEl = popup.querySelector('[data-persona="quirks"]');
+  const tierBadge = popup.querySelector('.tier-badge');
 
-  if (characterNameEl) characterNameEl.textContent = persona.character || '—';
-  if (roleMappingEl) roleMappingEl.textContent = persona.roleMapping || `${(persona.role || '').toUpperCase()} → ${persona.character || ''}`;
   if (themeEl) themeEl.textContent = humanize(persona.theme || '');
-  if (styleEl) styleEl.textContent = persona.style || '—';
-  if (voiceEl) voiceEl.textContent = persona.voice || '—';
-  if (backgroundEl) backgroundEl.textContent = persona.background || persona.roleDescription || '—';
-  if (quirksEl) {
-    if (Array.isArray(persona.quirks) && persona.quirks.length > 0) {
-      quirksEl.textContent = persona.quirks.join(', ');
-    } else {
-      quirksEl.textContent = '—';
-    }
+  if (tierBadge && themeData?.tier) {
+    tierBadge.textContent = themeData.tier;
+    tierBadge.dataset.tier = themeData.tier;
+  } else if (tierBadge) {
+    tierBadge.removeAttribute('data-tier');
   }
 
-  // Update portrait (use large size for popup - 256x256)
-  const portraitContainer = popup.querySelector('.popup-portrait');
-  if (portraitContainer && persona.slug && persona.theme) {
-    const img = portraitContainer.querySelector('img');
-    const placeholder = portraitContainer.querySelector('.portrait-placeholder');
-    if (img) {
-      // Use buildPortraitPath if available (from portrait.js), otherwise build directly
-      const portraitPath = window.buildPortraitPath
-        ? window.buildPortraitPath(persona.theme, persona.slug, 'large')
-        : `/portraits/${persona.theme}/large/${persona.slug}.png`;
-      img.src = portraitPath;
-      img.style.display = 'block';
-      img.onerror = () => {
-        img.style.display = 'none';
-        if (placeholder) placeholder.style.display = 'flex';
-      };
-      img.onload = () => {
-        if (placeholder) placeholder.style.display = 'none';
-      };
-    }
+  // Find current agent in theme data for full details
+  const currentAgent = themeData?.agents?.find(a => a.role === persona.role);
+  const agentToDisplay = currentAgent || {
+    character: persona.character,
+    role: persona.role,
+    style: persona.style,
+    background: persona.background || persona.roleDescription,
+    quirks: persona.quirks,
+    slug: persona.slug,
+    lift: undefined
+  };
+
+  // Update popup display with current agent
+  updatePopupDisplay(agentToDisplay, persona);
+
+  // Populate team roster
+  if (themeData?.agents) {
+    populateTeamRoster(persona.role);
   }
 
-  // Show popup and backdrop
+  // Show popup and backdrop with animations
   backdrop.style.display = 'block';
+  backdrop.classList.add('visible');
   popup.style.display = 'block';
+  popup.classList.remove('closing');
   popup.classList.add('active');
   popup.focus();
 }
 
 /**
  * Hide the persona popup
+ * MSSCI-12403: Now with close animation
  */
 function hidePersonaPopup() {
   const popup = document.getElementById('persona-popup');
   const backdrop = document.getElementById('persona-popup-backdrop');
-  if (popup) {
-    popup.style.display = 'none';
+
+  if (popup && popup.classList.contains('active')) {
+    // Clear any pending hover timeout
+    if (hoverTimeout) {
+      clearTimeout(hoverTimeout);
+      hoverTimeout = null;
+    }
+    previewedAgent = null;
+
+    // Animate close
+    popup.classList.add('closing');
     popup.classList.remove('active');
-  }
-  if (backdrop) {
-    backdrop.style.display = 'none';
+    backdrop?.classList.remove('visible');
+
+    // Hide after animation completes
+    setTimeout(() => {
+      popup.style.display = 'none';
+      popup.classList.remove('closing');
+      if (backdrop) backdrop.style.display = 'none';
+    }, 150);
   }
 }
 

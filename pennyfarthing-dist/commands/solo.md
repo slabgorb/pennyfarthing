@@ -380,6 +380,11 @@ else:
      avg_output_tokens: {avg_out}
      tokens_per_point: {tpp:.2f}
 
+   metadata:
+     created_at: {ISO8601 timestamp}
+     pennyfarthing_version: {version from package.json}  # REQUIRED
+     model: sonnet
+
    # Include baseline comparison if baseline exists and theme != control
    baseline_comparison:
      control_mean: {baseline_mean}

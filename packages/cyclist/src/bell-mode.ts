@@ -6,7 +6,8 @@
  * to finish processing.
  *
  * Architecture:
- * - State persisted to `.pennyfarthing/bell-mode.json` (read by hook script)
+ * - State persisted to `.pennyfarthing/config.local.yaml` (workflow.bell_mode)
+ *   Single source of truth alongside other workflow settings (handoff_mode, relay_mode)
  * - Queue synced to `.pennyfarthing/bell-queue.json` (read by hook script)
  * - Hook script returns additionalContext JSON when conditions met
  *
@@ -17,10 +18,11 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { parse, stringify } from 'yaml';
 import { getProjectDirectory } from './paths.js';
 
 // Configuration paths (relative to project root)
-const BELL_MODE_CONFIG = '.pennyfarthing/bell-mode.json';
+const CONFIG_LOCAL_YAML = '.pennyfarthing/config.local.yaml';
 const BELL_QUEUE_FILE = '.pennyfarthing/bell-queue.json';
 
 // In-memory state
@@ -41,10 +43,17 @@ interface _QueuedMessage {
 }
 
 /**
- * Bell mode configuration file structure
+ * config.local.yaml structure (partial - only what we need)
  */
-interface BellModeConfig {
-  enabled: boolean;
+interface ConfigLocalYaml {
+  theme?: string;
+  workflow?: {
+    bell_mode?: boolean;
+    handoff_mode?: string;
+    relay_mode?: boolean;
+    permission_mode?: string;
+  };
+  [key: string]: unknown;
 }
 
 /**
@@ -79,10 +88,10 @@ function getProjectRoot(): string {
 }
 
 /**
- * Get the full path to the bell mode config file
+ * Get the full path to config.local.yaml
  */
 function getConfigPath(): string {
-  return path.join(getProjectRoot(), BELL_MODE_CONFIG);
+  return path.join(getProjectRoot(), CONFIG_LOCAL_YAML);
 }
 
 /**
@@ -117,11 +126,11 @@ export async function setBellMode(enabled: boolean): Promise<void> {
 }
 
 /**
- * Write current bell mode state to config file
+ * Write current bell mode state to config.local.yaml
+ * Uses read-modify-write to preserve other settings
  */
 async function writeBellModeState(): Promise<void> {
   const configPath = getConfigPath();
-  const config: BellModeConfig = { enabled: bellModeEnabled };
 
   // Ensure directory exists
   const dir = path.dirname(configPath);
@@ -129,11 +138,39 @@ async function writeBellModeState(): Promise<void> {
     fs.mkdirSync(dir, { recursive: true });
   }
 
-  fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+  // Read existing config to preserve other settings
+  let config: ConfigLocalYaml = {};
+  try {
+    if (fs.existsSync(configPath)) {
+      const content = fs.readFileSync(configPath, 'utf-8');
+      const parsed = parse(content);
+      if (parsed && typeof parsed === 'object') {
+        config = parsed as ConfigLocalYaml;
+      }
+    }
+  } catch {
+    // Start fresh on parse error
+    config = {};
+  }
+
+  // Update workflow.bell_mode
+  if (!config.workflow) {
+    config.workflow = {};
+  }
+  config.workflow.bell_mode = bellModeEnabled;
+
+  // Write back with theme first for consistent ordering
+  const { theme, workflow, ...rest } = config;
+  const ordered: ConfigLocalYaml = {};
+  if (theme !== undefined) ordered.theme = theme;
+  if (workflow !== undefined) ordered.workflow = workflow;
+  Object.assign(ordered, rest);
+
+  fs.writeFileSync(configPath, stringify(ordered), 'utf-8');
 }
 
 /**
- * Load bell mode state from config file
+ * Load bell mode state from config.local.yaml
  * Call this on startup to restore previous state
  */
 export async function loadBellModeState(): Promise<void> {
@@ -141,9 +178,9 @@ export async function loadBellModeState(): Promise<void> {
 
   try {
     if (fs.existsSync(configPath)) {
-      const content = fs.readFileSync(configPath, 'utf8');
-      const config: BellModeConfig = JSON.parse(content);
-      bellModeEnabled = config.enabled ?? false;
+      const content = fs.readFileSync(configPath, 'utf-8');
+      const config = parse(content) as ConfigLocalYaml;
+      bellModeEnabled = config?.workflow?.bell_mode ?? false;
     } else {
       // Default to disabled if no config file
       bellModeEnabled = false;

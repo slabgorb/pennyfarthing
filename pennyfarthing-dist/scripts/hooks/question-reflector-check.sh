@@ -2,8 +2,8 @@
 #
 # Question Reflector Enforcement Hook (Stop hook / PreToolUse hook)
 #
-# Thin wrapper that delegates to question-reflector-check.mjs for the actual logic.
-# This allows the hook to be written in JavaScript for easier testing and maintenance.
+# Thin wrapper that delegates to question_reflector_check.py for the actual logic.
+# This allows the hook to be written in Python for easier testing and maintenance.
 #
 # Input (stdin): JSON with transcript_path, stop_hook_active, etc.
 # Output (stdout): JSON decision to allow or block
@@ -16,5 +16,5 @@ set -euo pipefail
 # Get the directory where this script lives
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Delegate to JavaScript implementation
-exec node "$SCRIPT_DIR/question-reflector-check.mjs"
+# Delegate to Python implementation
+exec python3 "$SCRIPT_DIR/question_reflector_check.py"

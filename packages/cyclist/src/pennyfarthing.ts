@@ -342,63 +342,42 @@ export function getCurrentAgent(projectDir: string, sessionId?: string): string 
 export function getCurrentPersona(projectDir: string, sessionId?: string): Persona | null {
   // Check if this is a Pennyfarthing project
   if (!detectPennyfarthingProject(projectDir)) {
-    console.log('[Persona] Not a Pennyfarthing project:', projectDir);
     return null;
   }
 
   // Get theme configuration
   const config = loadThemeConfig(projectDir);
   if (!config) {
-    console.log('[Persona] No theme config found');
     return null;
   }
-  console.log('[Persona] Theme config:', config);
 
-  // Find theme file path
-  // Check multiple locations: bundled resources, .claude/personas/themes/, pennyfarthing-dist/personas/themes/
-  const possiblePaths: string[] = [];
-
-  // 1. Packaged Electron app: Contents/Resources/pennyfarthing-dist/personas/themes
-  if (process.resourcesPath) {
-    possiblePaths.push(join(process.resourcesPath, 'pennyfarthing-dist', 'personas', 'themes', `${config.theme}.yaml`));
-  }
-
-  // 2. Development mode: relative to cyclist package (pennyfarthing-2/pennyfarthing-dist)
-  possiblePaths.push(
-    join(CYCLIST_ROOT, 'pennyfarthing-dist', 'personas', 'themes', `${config.theme}.yaml`),
-  );
-
-  // 3. Project directory paths (for projects that bundle their own themes)
-  possiblePaths.push(
-    join(projectDir, '.claude', 'personas', 'themes', `${config.theme}.yaml`),
-    join(projectDir, '.claude', 'pennyfarthing', 'themes', `${config.theme}.yaml`),
-    join(projectDir, 'pennyfarthing-dist', 'personas', 'themes', `${config.theme}.yaml`),
-    // 3. NPM package location (installed via @pennyfarthing/core)
-    join(projectDir, 'node_modules', '@pennyfarthing', 'core', 'pennyfarthing-dist', 'personas', 'themes', `${config.theme}.yaml`),
-  );
-
-  // Use CYCLIST_THEME_PATH env var if available
-  const envThemePath = process.env.CYCLIST_THEME_PATH;
-  if (envThemePath) {
-    possiblePaths.unshift(envThemePath);
-  }
+  // Find theme file path - two sources of truth:
+  // 1. Packaged Electron app: Contents/Resources/pennyfarthing-dist
+  // 2. Dev/dogfooding: monorepo pennyfarthing-dist
+  const themeFile = `${config.theme}.yaml`;
+  const themesSubpath = join('pennyfarthing-dist', 'personas', 'themes', themeFile);
 
   let themePath: string | null = null;
-  console.log('[Persona] Searching theme paths:', possiblePaths);
-  for (const path of possiblePaths) {
-    const exists = existsSync(path);
-    console.log('[Persona] Checking:', path, 'exists:', exists);
-    if (exists) {
-      themePath = path;
-      break;
+
+  // Packaged app takes priority
+  if (process.resourcesPath) {
+    const bundledPath = join(process.resourcesPath, themesSubpath);
+    if (existsSync(bundledPath)) {
+      themePath = bundledPath;
+    }
+  }
+
+  // Dev/dogfooding fallback
+  if (!themePath) {
+    const devPath = join(CYCLIST_ROOT, themesSubpath);
+    if (existsSync(devPath)) {
+      themePath = devPath;
     }
   }
 
   if (!themePath) {
-    console.log('[Persona] No theme file found');
     return null;
   }
-  console.log('[Persona] Using theme path:', themePath);
 
   // Load theme
   const agents = loadThemeYaml(themePath);
@@ -473,38 +452,27 @@ export function getFullPersonaDetails(projectDir: string, sessionId?: string): F
     return null;
   }
 
-  // Find theme file path
-  const possiblePaths: string[] = [];
-
-  // 1. Packaged Electron app: Contents/Resources/pennyfarthing-dist/personas/themes
-  if (process.resourcesPath) {
-    possiblePaths.push(join(process.resourcesPath, 'pennyfarthing-dist', 'personas', 'themes', `${config.theme}.yaml`));
-  }
-
-  // 2. Development mode: relative to cyclist package (pennyfarthing-2/pennyfarthing-dist)
-  possiblePaths.push(
-    join(CYCLIST_ROOT, 'pennyfarthing-dist', 'personas', 'themes', `${config.theme}.yaml`),
-  );
-
-  // 3. Project directory paths (for projects that bundle their own themes)
-  possiblePaths.push(
-    join(projectDir, '.claude', 'personas', 'themes', `${config.theme}.yaml`),
-    join(projectDir, '.claude', 'pennyfarthing', 'themes', `${config.theme}.yaml`),
-    join(projectDir, 'pennyfarthing-dist', 'personas', 'themes', `${config.theme}.yaml`),
-    // 3. NPM package location (installed via @pennyfarthing/core)
-    join(projectDir, 'node_modules', '@pennyfarthing', 'core', 'pennyfarthing-dist', 'personas', 'themes', `${config.theme}.yaml`),
-  );
-
-  const envThemePath = process.env.CYCLIST_THEME_PATH;
-  if (envThemePath) {
-    possiblePaths.unshift(envThemePath);
-  }
+  // Find theme file path - two sources of truth:
+  // 1. Packaged Electron app: Contents/Resources/pennyfarthing-dist
+  // 2. Dev/dogfooding: monorepo pennyfarthing-dist
+  const themeFile = `${config.theme}.yaml`;
+  const themesSubpath = join('pennyfarthing-dist', 'personas', 'themes', themeFile);
 
   let themePath: string | null = null;
-  for (const path of possiblePaths) {
-    if (existsSync(path)) {
-      themePath = path;
-      break;
+
+  // Packaged app takes priority
+  if (process.resourcesPath) {
+    const bundledPath = join(process.resourcesPath, themesSubpath);
+    if (existsSync(bundledPath)) {
+      themePath = bundledPath;
+    }
+  }
+
+  // Dev/dogfooding fallback
+  if (!themePath) {
+    const devPath = join(CYCLIST_ROOT, themesSubpath);
+    if (existsSync(devPath)) {
+      themePath = devPath;
     }
   }
 

@@ -11,6 +11,7 @@ All definitions live in one place (`pennyfarthing-dist/`), accessed via symlinks
 - **Official subagents:** `.pennyfarthing/agents/` (same directory as agents)
 - **Commands:** `.claude/commands/` → `pennyfarthing/commands/`
 - **Personas:** `.pennyfarthing/personas/` → `pennyfarthing/personas/`
+- **Workflows:** `.pennyfarthing/workflows/` → `pennyfarthing/workflows/`
 
 Projects consume these via symlinks, not copies. Updates propagate automatically.
 
@@ -40,11 +41,12 @@ Context is loaded only when needed:
 ```
 pennyfarthing/
 ├── pennyfarthing-dist/             # Source files (copied on install)
-│   ├── agents/                     # Agent definitions + official subagents
-│   ├── commands/                   # Slash commands (25 commands)
+│   ├── agents/                     # 19 agent definitions (includes subagents)
+│   ├── commands/                   # 45 slash commands
 │   ├── guides/                     # Behavior guides
-│   ├── skills/                     # Project-agnostic knowledge
-│   └── personas/                   # Theme files
+│   ├── skills/                     # 22 knowledge domains
+│   ├── personas/                   # 102 theme files
+│   └── workflows/                  # 20 workflow definitions
 │
 ├── src/                            # NPM CLI source
 │
@@ -74,6 +76,7 @@ your-project/
     ├── guides/                     # → symlink to node_modules guides
     ├── personas/                   # → symlink to node_modules personas
     ├── scripts/                    # → symlink to node_modules scripts
+    ├── workflows/                  # → symlink to node_modules workflows
     ├── sidecars/                   # Agent learning files
     │   └── {agent}/                # patterns.md, gotchas.md, decisions.md
     ├── config.local.yaml           # Theme configuration
@@ -96,7 +99,7 @@ Full project scope. Make cross-repo decisions. Coordinate work.
 
 ### Tactical Agents
 
-Story-scoped. Focus on implementation. Execute TDD flow.
+Story-scoped. Focus on implementation. Execute workflow phases.
 
 | Agent | Role | Responsibilities |
 |-------|------|------------------|
@@ -107,14 +110,26 @@ Story-scoped. Focus on implementation. Execute TDD flow.
 
 ### Support Agents
 
-Specialized tasks outside core TDD flow.
+Specialized tasks outside core workflows.
 
 | Agent | Role | Responsibilities |
 |-------|------|------------------|
 | **Tech Writer** | Documentation | API docs, user guides, README |
 | **UX Designer** | User Experience | UI design, accessibility |
 
-## The TDD Flow
+## BikeLane Workflow System
+
+Pennyfarthing's BikeLane system provides flexible workflow orchestration through three workflow types:
+
+### Workflow Types
+
+| Type | Description | Example |
+|------|-------------|---------|
+| **Phased** | Linear progression through defined phases | TDD (RED → GREEN → REFACTOR) |
+| **Stepped** | Discrete steps with branch logic and loops | Sprint Planning, PRD creation |
+| **Procedural** | Free-form agent coordination | Brainstorming, Research |
+
+### Example: TDD Workflow (Phased)
 
 ```
 /new-work
@@ -149,6 +164,17 @@ SM (Finish - Cleanup)
     |-- Helper: Bookkeeping
     |-- Helper: Execution
 ```
+
+### Workflow Definitions
+
+Workflows are defined in `pennyfarthing-dist/workflows/`:
+- **YAML files:** Simple workflow definitions (5 workflows)
+- **Directory-based:** Complex stepped workflows (15 workflows)
+
+The workflow system enables:
+- Multiple concurrent development approaches
+- Context-appropriate process selection
+- Custom project-specific workflows
 
 ## Official Subagent System
 
@@ -397,6 +423,13 @@ Stories sync to/from Jira via:
 - Fun while remaining professional
 - Configurable per project preference
 
+### Why BikeLane Workflows?
+
+- Flexibility: Different tasks need different process structures
+- Clarity: Explicit workflow definitions reduce ambiguity
+- Extensibility: Projects can add custom workflows
+- Reusability: Common patterns encoded as reusable workflows
+
 ## Resilience Utilities
 
 Sprint 1 introduced reusable utilities in `scripts/utils/` for robust agent workflows.
@@ -473,7 +506,7 @@ Tool spans are enriched with operation-specific metadata:
 OTEL spans are correlated to provide:
 - **Agent attribution** - Which agent made the tool call
 - **Story context** - Current story ID for cost attribution
-- **TDD phase** - RED/GREEN/REVIEW phase timing
+- **Workflow phase** - Current workflow phase timing
 - **Session boundary** - Track work across sessions
 
 ### Configuration
@@ -499,7 +532,7 @@ interface ToolSpan {
   attributes: {
     agent?: string;       // Active agent role
     story_id?: string;    // Current story
-    tdd_phase?: string;   // RED/GREEN/REVIEW
+    workflow_phase?: string; // Current workflow phase
     // Tool-specific attributes...
   };
 }

@@ -175,7 +175,8 @@ Invoked via `Task tool` with `subagent_type: "{name}"`:
 | `sm-setup` | Research backlog (MODE=research) or setup story (MODE=setup) |
 | `sm-finish` | Preflight checks (PHASE=preflight) or execute finish (PHASE=execute) |
 | `sm-file-summary` | Summarize changes |
-| `sm-handoff` | Handoff bookkeeping to TEA/Dev |
+| `sm-handoff` | SM→TEA/Dev handoff with Jira/branch verification |
+| `handoff` | Workflow-driven handoff (CURRENT_PHASE=setup) |
 | `testing-runner` | Run tests |
 
 ### Discworld Persona
@@ -228,7 +229,7 @@ Invoked via `Task tool` with `subagent_type: "{name}"`:
 | Subagent | Purpose |
 |----------|---------|
 | `testing-runner` | Execute tests |
-| `tea-handoff` | Update session, hand off to Dev |
+| `handoff` | Workflow-driven handoff (CURRENT_PHASE=red, next=green) |
 
 ### Discworld Persona
 
@@ -282,7 +283,7 @@ Invoked via `Task tool` with `subagent_type: "{name}"`:
 | Subagent | Purpose |
 |----------|---------|
 | `testing-runner` | Verify tests pass |
-| `dev-handoff` | Update session, hand off to Reviewer |
+| `handoff` | Workflow-driven handoff (CURRENT_PHASE=green, next=review) |
 
 ### Discworld Persona
 
@@ -340,8 +341,7 @@ Invoked via `Task tool` with `subagent_type: "{name}"`:
 |----------|---------|
 | `testing-runner` | Run tests |
 | `reviewer-preflight` | Gather review data |
-| `reviewer-handoff-approve` | Approve, route to SM |
-| `reviewer-handoff-reject` | Reject, route to Dev |
+| `handoff` | Workflow-driven handoff (VERDICT=approved→SM or VERDICT=rejected→Dev) |
 
 ### Discworld Persona
 

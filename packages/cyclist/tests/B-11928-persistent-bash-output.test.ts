@@ -167,6 +167,7 @@ describe('Story MSSCI-11928: Persistent Bash output in message stream', () => {
 
       expect(results).toHaveLength(0);
     });
+
   });
 
   describe('AC2: Collapsible section shows command in header', () => {

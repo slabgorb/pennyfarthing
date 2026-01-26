@@ -8,7 +8,7 @@
 # Claude's next API call.
 #
 # Configuration files:
-#   .pennyfarthing/bell-mode.json - { "enabled": true/false }
+#   .pennyfarthing/config.local.yaml - workflow.bell_mode: true/false
 #   .pennyfarthing/bell-queue.json - [{ "text": "...", "images": [...] }, ...]
 #
 # Output format (when injecting):
@@ -35,15 +35,17 @@ if [[ ! -d "$PROJECT_ROOT/.pennyfarthing" ]]; then
   exit 0
 fi
 
-BELL_MODE_CONFIG="$PROJECT_ROOT/.pennyfarthing/bell-mode.json"
+CONFIG_LOCAL_YAML="$PROJECT_ROOT/.pennyfarthing/config.local.yaml"
 BELL_QUEUE_FILE="$PROJECT_ROOT/.pennyfarthing/bell-queue.json"
 
-# Check if bell mode is enabled
-if [[ ! -f "$BELL_MODE_CONFIG" ]]; then
+# Check if bell mode is enabled in config.local.yaml
+if [[ ! -f "$CONFIG_LOCAL_YAML" ]]; then
   exit 0
 fi
 
-ENABLED=$(cat "$BELL_MODE_CONFIG" 2>/dev/null | grep -o '"enabled"[[:space:]]*:[[:space:]]*true' || true)
+# Parse YAML to check workflow.bell_mode - look for "bell_mode: true"
+# This handles both "bell_mode: true" and "  bell_mode: true" (indented under workflow)
+ENABLED=$(grep -E '^\s*bell_mode:\s*true' "$CONFIG_LOCAL_YAML" 2>/dev/null || true)
 if [[ -z "$ENABLED" ]]; then
   exit 0
 fi
@@ -67,6 +69,13 @@ if [[ -z "$FIRST_MESSAGE_TEXT" ]]; then
   exit 0
 fi
 
+# Get Cyclist port (if running)
+CYCLIST_PORT=""
+PORT_FILE="$PROJECT_ROOT/.cyclist-port"
+if [[ -f "$PORT_FILE" ]]; then
+  CYCLIST_PORT=$(cat "$PORT_FILE" 2>/dev/null)
+fi
+
 # Output the hook response JSON
 cat << EOF
 {
@@ -77,11 +86,21 @@ cat << EOF
 }
 EOF
 
-# Remove the first message from the queue (for next invocation)
-# Use jq if available, otherwise leave queue management to the TypeScript side
-# Run in background and ignore errors to avoid blocking hook response
-if command -v jq &> /dev/null; then
-  (jq 'if length > 0 then .[1:] else [] end' "$BELL_QUEUE_FILE" > "$BELL_QUEUE_FILE.tmp" 2>/dev/null && mv "$BELL_QUEUE_FILE.tmp" "$BELL_QUEUE_FILE") &
-fi
+# Remove the first message from the queue and notify Cyclist
+# Run in background to avoid blocking hook response
+(
+  # Dequeue using jq if available
+  if command -v jq &> /dev/null; then
+    jq 'if length > 0 then .[1:] else [] end' "$BELL_QUEUE_FILE" > "$BELL_QUEUE_FILE.tmp" 2>/dev/null && mv "$BELL_QUEUE_FILE.tmp" "$BELL_QUEUE_FILE"
+  fi
+
+  # Notify Cyclist browser to dequeue and display the message
+  if [[ -n "$CYCLIST_PORT" ]] && [[ "$CYCLIST_PORT" =~ ^[0-9]+$ ]]; then
+    curl -s -X POST "http://localhost:$CYCLIST_PORT/api/bell-consumed" \
+      -H "Content-Type: application/json" \
+      -d "{\"text\": \"$FIRST_MESSAGE_TEXT\"}" \
+      >/dev/null 2>&1 || true
+  fi
+) &
 
 exit 0

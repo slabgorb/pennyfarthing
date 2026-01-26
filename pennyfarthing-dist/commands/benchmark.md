@@ -151,7 +151,11 @@ Cross-role mode: Prospero --as dev should see dev scenarios, not SM scenarios.
 ls scenarios/{category}/*.yaml | xargs -I {} yq -r '"{}|\(.name)|\(.difficulty)|\(.title)|\(.description)"' {}
 ```
 
-**Present choices with AskUserQuestion:**
+**Present choices (Reflector-aware):**
+
+First output marker: `<!-- CYCLIST:CHOICES:scenario -->`
+
+Then use AskUserQuestion:
 ```yaml
 AskUserQuestion:
   questions:
@@ -414,6 +418,20 @@ agent:
   source_role: {source_role}      # where character normally lives (e.g., sm)
   effective_role: {effective_role}  # what they're doing (e.g., dev)
   cross_role: true
+```
+
+**REQUIRED: Capture Pennyfarthing version in metadata:**
+```bash
+# Get version from package.json
+version=$(node -p "require('./package.json').version")
+```
+
+Include in summary.yaml:
+```yaml
+metadata:
+  created_at: "{ISO timestamp}"
+  pennyfarthing_version: "{version}"  # REQUIRED for baseline staleness detection
+  model: sonnet
 ```
 
 **ALWAYS save summary.yaml, even for n=1.** This ensures consistent data structure for analysis.

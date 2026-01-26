@@ -1,18 +1,20 @@
-# BMAD Compatibility Matrix
+# BMAD 6.0 Compatibility Matrix
 
-This document describes the compatibility between BMAD workflows and Pennyfarthing's BikeLane stepped workflow system.
+This document describes the compatibility between BMAD 6.0 workflows and Pennyfarthing's BikeLane stepped workflow system. BikeLane is Pennyfarthing's unified workflow execution system that supports both native workflows and imported BMAD workflows.
 
 ## Overview
 
-Pennyfarthing supports importing BMAD workflows with full compatibility for core features. This matrix documents supported features, intentional differences, and migration notes.
+Pennyfarthing supports importing BMAD 6.0 workflows with full compatibility for core features. When imported, BMAD workflows become BikeLane stepped workflows, allowing them to run seamlessly within Pennyfarthing's unified workflow system. This matrix documents supported features, intentional differences, and migration notes.
 
 ## Workflow Types
 
-| Type | BMAD | Pennyfarthing | Notes |
-|------|------|---------------|-------|
+| Type | BMAD 6.0 | BikeLane | Notes |
+|------|----------|----------|-------|
 | Stepped | Yes | Yes | Full support via `type: stepped` |
 | Procedural | Yes | Yes | Full support via `type: procedural` |
-| Linear | - | Yes | Pennyfarthing-only type |
+| Linear | - | Yes | BikeLane-only type |
+
+When imported, BMAD workflows become BikeLane workflows and execute through Pennyfarthing's unified workflow engine.
 
 ## Mode Support
 
@@ -137,9 +139,9 @@ node pennyfarthing-dist/scripts/migrate-bmad-workflow.mjs \
 - [ ] Test mode routing if multi-modal
 - [ ] Verify gate configuration references valid step numbers
 
-## Imported Workflows
+## Imported Workflows from BMAD 6.0
 
-The following BMAD workflows have been imported:
+The following BMAD 6.0 workflows have been imported and converted to BikeLane stepped workflows:
 
 | Workflow | Type | Modes | Status |
 |----------|------|-------|--------|
@@ -153,6 +155,10 @@ The following BMAD workflows have been imported:
 | sprint-planning | stepped | single | Imported |
 | retrospective | procedural | - | Imported |
 | project-context | stepped | single | Imported |
+| quick-dev | stepped | single | Imported |
+| quick-spec | stepped | single | Imported |
+
+All imported workflows run as BikeLane stepped workflows within Pennyfarthing's workflow system.
 
 ## Testing
 

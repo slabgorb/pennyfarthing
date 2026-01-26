@@ -141,7 +141,7 @@ skills:
         invocation: /jira assign ISSUE-123
     anti_patterns:
       - Don't bypass Jira for sprint tracking
-    related_skills: [sprint-context, story-management]
+    related_skills: [sprint, story]
     keywords: [atlassian, issues, tickets, backlog]
 
   judge:
@@ -195,6 +195,23 @@ skills:
     related_skills: [changelog]
     keywords: [flowchart, sequence, er-diagram, gantt, class-diagram]
 
+  otel:
+    name: otel
+    description: Claude Code OTEL telemetry format documentation for span interception and enrichment
+    category: tools
+    tags: [telemetry, monitoring, otel]
+    version: "1.0.0"
+    prerequisites: []
+    examples:
+      - context: Working with OTEL spans
+        invocation: /otel
+      - context: Enriching tool telemetry in Cyclist
+        invocation: /otel enrichment
+    anti_patterns:
+      - Don't assume fields exist - verify against this documentation
+    related_skills: [cyclist]
+    keywords: [opentelemetry, spans, traces, enrichment, correlation]
+
   permissions:
     name: permissions
     description: Manage runtime permission grants - list, grant, and revoke tool access
@@ -212,7 +229,7 @@ skills:
     anti_patterns:
       - Don't manually edit settings.local.json permissions - use skill
       - Don't grant overly broad scope patterns
-    related_skills: [sprint-context]
+    related_skills: []
     keywords: [grants, scopes, tools, runtime, security]
 
   persona-benchmark:
@@ -232,23 +249,23 @@ skills:
     related_skills: [judge, finalize-run, theme]
     keywords: [benchmark, comparison, personas, testing]
 
-  sprint-context:
-    name: sprint-context
-    description: Sprint status, backlog, and story management context
+  sprint:
+    name: sprint
+    description: Sprint status, backlog, and story management for Pennyfarthing
     category: project-management
     tags: [sprint, status, backlog]
     version: "1.0.0"
     prerequisites: []
     examples:
       - context: Checking sprint status
-        invocation: /sprint-context
+        invocation: /sprint
       - context: Finding available stories
-        invocation: /sprint-context available
+        invocation: /sprint backlog
     anti_patterns:
-      - Don't manually edit sprint YAML - use skills
-    related_skills: [story-management, jira]
+      - Don't manually edit sprint YAML - use scripts
+    related_skills: [story, jira]
     keywords: [sprint, backlog, velocity, kanban]
-    allowed_tools: [Read, Glob, Grep, Bash, Task]  # Read-only sprint data access
+    allowed_tools: [Read, Glob, Grep, Bash, Task]
 
   systematic-debugging:
     name: systematic-debugging
@@ -268,21 +285,21 @@ skills:
     related_skills: [testing, dev-patterns, agentic-patterns]
     keywords: [debugging, bisect, reproduce, isolate, root-cause, regression]
 
-  story-management:
-    name: story-management
-    description: Story creation, sizing, and sprint workflow patterns
+  story:
+    name: story
+    description: Story creation, sizing, and templates for Pennyfarthing workflow
     category: project-management
     tags: [stories, sizing, workflow]
     version: "1.0.0"
     prerequisites: []
     examples:
       - context: Creating new stories
-        invocation: /story-management create
+        invocation: /story create
       - context: Sizing stories
-        invocation: /story-management size
+        invocation: /story size
     anti_patterns:
       - Don't create stories without acceptance criteria
-    related_skills: [sprint-context, jira]
+    related_skills: [sprint, jira]
     keywords: [user-stories, estimation, points, acceptance-criteria]
 
   testing:
@@ -338,6 +355,25 @@ skills:
       - Don't create incomplete themes missing required agents
     related_skills: [theme]
     keywords: [personas, custom, generation, wizard]
+
+  workflow:
+    name: workflow
+    description: Manage workflows - list, show, set, start, resume, and check status
+    category: project-management
+    tags: [workflow, phases, tdd]
+    version: "1.0.0"
+    prerequisites: []
+    examples:
+      - context: Listing available workflows
+        invocation: /workflow
+      - context: Showing current workflow
+        invocation: /workflow show
+      - context: Starting stepped workflow
+        invocation: /workflow start architecture
+    anti_patterns:
+      - Don't switch workflows mid-story unless requirements fundamentally changed
+    related_skills: [sprint, story]
+    keywords: [tdd, trivial, agent-docs, bdd, architecture, bikelane, stepped, phased]
 
   yq:
     name: yq

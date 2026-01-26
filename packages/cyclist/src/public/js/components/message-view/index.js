@@ -49,4 +49,5 @@ export {
   renderResultMessage,
   renderErrorMessage,
   renderUserMessage,
+  renderBellInjectedMessage,
 } from './message-renderers.js';

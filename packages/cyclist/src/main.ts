@@ -58,6 +58,7 @@ import {
   type CyclistSettings,
   type SettingsInput,
 } from './settings.js';
+import { broadcastBackgroundTaskEvent } from './api/background-tasks.js';
 import { initializeGrants, setGrantsPersistCallback } from './settings-store.js';
 // Story 33-7: Import approval gate functions for tool execution pipeline
 import {
@@ -68,6 +69,7 @@ import {
   type SDKToolResultError,
 } from './approval-gate.js';
 import { openSettingsWindow, setMainWindowRef, setBrowserWindowRef } from './settings-window.js';
+import { setBellMode } from './bell-mode.js';
 import {
   IPC_DATA_CHANNELS,
   IPC_CLAUDE_CHANNELS,
@@ -874,14 +876,18 @@ export function startProjectWatchers(): void {
   console.log('User email callback registered for OTLP broadcasts');
 
   // 35-16: Register background task start callback
+  // Broadcast to BOTH Electron IPC and WebSocket clients
   setBackgroundTaskStartCallback((task: BackgroundTask) => {
     broadcastToRenderer(IPC_BACKGROUND_TASK_CHANNELS.TASK_STARTED, task);
+    broadcastBackgroundTaskEvent('task:started', task);
     console.log(`Background task started: ${task.subagentType} - ${task.description}`);
   });
 
   // 31-15: Register background task completion callback
+  // Broadcast to BOTH Electron IPC and WebSocket clients
   setBackgroundTaskCallback((task: BackgroundTask) => {
     broadcastToRenderer(IPC_BACKGROUND_TASK_CHANNELS.TASK_COMPLETED, task);
+    broadcastBackgroundTaskEvent('task:completed', task);
     console.log(`Background task completed: ${task.subagentType} (${task.success ? 'success' : 'failed'})`);
   });
   console.log('Background task callbacks registered for OTLP broadcasts');
@@ -1117,9 +1123,11 @@ export function setupClaudeIPCHandlers(ipcMain: {
   });
 
   // Interrupt handler - stops current Claude turn (like Escape in CLI)
+  // Uses abort() to fully kill the process - SIGINT alone doesn't reliably stop Claude CLI
   ipcMain.handle(IPC_CLAUDE_CHANNELS.CLAUDE_ABORT, async () => {
     const service = getClaudeService();
-    service.interrupt();
+    console.log('[main] CLAUDE_ABORT called - aborting Claude process');
+    service.abort();
     return true;
   });
 
@@ -1279,34 +1287,47 @@ export const isSettingsInitialized = false;
 
 /**
  * Handle settings:get IPC call
- * Returns current settings with theme from config.local.yaml
- * Theme is stored ONLY in .pennyfarthing/config.local.yaml (single source of truth)
+ * Returns current settings with theme, handoff_mode, and bell_mode
+ * All workflow settings are stored in .pennyfarthing/config.local.yaml (single source of truth)
+ * This mirrors the HTTP API behavior in api/settings.ts
  */
-export async function handleSettingsGet(): Promise<CyclistSettings & { pennyfarthing: { theme: string } }> {
+export async function handleSettingsGet(): Promise<CyclistSettings & { workflow: CyclistSettings['workflow'] & { handoff_mode?: string; bell_mode?: boolean }; pennyfarthing: { theme: string } }> {
   const settings = getCurrentSettings();
 
-  // Read theme from config.local.yaml ONLY (single source of truth)
-  // This mirrors the HTTP API behavior in api/settings.ts
+  // Read theme, handoff_mode, and bell_mode from config.local.yaml (single source of truth)
   let theme = 'alice-in-wonderland'; // Default fallback
+  let handoffMode = 'manual'; // Default fallback
+  let bellMode = false; // Default fallback
   const projectDir = getProjectDirectory();
   if (projectDir) {
     try {
       const configPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
       if (fs.existsSync(configPath)) {
         const content = fs.readFileSync(configPath, 'utf-8');
-        const parsed = parse(content) as { theme?: string };
+        const parsed = parse(content) as { theme?: string; workflow?: { handoff_mode?: string; bell_mode?: boolean } };
         if (parsed?.theme) {
           theme = parsed.theme;
         }
+        if (parsed?.workflow?.handoff_mode) {
+          handoffMode = parsed.workflow.handoff_mode;
+        }
+        if (parsed?.workflow?.bell_mode !== undefined) {
+          bellMode = parsed.workflow.bell_mode;
+        }
       }
     } catch {
-      // Ignore project config errors - use default
+      // Ignore project config errors - use defaults
     }
   }
 
-  // Return settings with theme included
+  // Return settings with theme, handoff_mode, and bell_mode included
   return {
     ...settings,
+    workflow: {
+      ...settings.workflow,
+      handoff_mode: handoffMode,
+      bell_mode: bellMode,
+    },
     pennyfarthing: {
       theme,
     },
@@ -1330,6 +1351,18 @@ export async function handleSettingsSave(settings: SettingsInput): Promise<{ suc
 
     // Get project directory FIRST - needed for both settings save and theme update
     const projectDir = getProjectDirectory();
+
+    // Handle bell_mode toggle (MSSCI-12275) - stored in config.local.yaml via setBellMode
+    const bellModeValue = (settings.workflow as Record<string, unknown> | undefined)?.bell_mode;
+    if (typeof bellModeValue === 'boolean') {
+      await setBellMode(bellModeValue);
+    }
+
+    // Strip bell_mode from settings before saving (written to config.local.yaml by setBellMode)
+    if (settingsWithoutTheme.workflow) {
+      const { bell_mode: _bm, ...workflowRest } = settingsWithoutTheme.workflow as Record<string, unknown>;
+      settingsWithoutTheme.workflow = workflowRest as typeof settingsWithoutTheme.workflow;
+    }
 
     // Pass projectDir to avoid cwd fallback
     saveUserSettings(settingsWithoutTheme as Partial<CyclistSettings>, projectDir || undefined);

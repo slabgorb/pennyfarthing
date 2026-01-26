@@ -25,3 +25,5 @@ export { createBackgroundTasksRouter, getBackgroundTaskClients, broadcastBackgro
 export { createSpansRouter } from './spans.js';
 // Bell mode WebSocket broadcast
 export { getBellClients, broadcastBellConsumed } from './bell.js';
+// MSSCI-12409: Hook request API (WheelHub consolidation)
+export { createHookRequestRouter, getHookClients, addHookClient, resolveApproval, handleHookWebSocketMessage } from './hook-request.js';

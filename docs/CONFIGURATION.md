@@ -29,9 +29,50 @@ Controls theme selection (gitignored for per-developer preferences).
 ```yaml
 # Theme selection - 102 themes available
 theme: discworld
+
+# Workflow configuration
+workflow:
+  permission_mode: accept     # accept | turbo
+  handoff_mode: manual        # manual | auto
+  bell_mode: true             # true | false (enable/disable bell notifications)
+  relay_mode: true            # true | false (enable/disable relay mode)
+
+# Context budget thresholds
+context_budget:
+  tirepump_threshold: 60      # TirePump activation threshold (percent)
+  imminent_threshold: 65      # Context imminent warning (percent)
+  warning_threshold: 60       # Context warning (percent)
+  critical_threshold: 85      # Context critical threshold (percent)
+  max_tokens: 200000          # Maximum tokens
+
+# Display options (Cyclist terminal)
+display:
+  show_flow: true             # Show workflow visualization
+  show_ocean: false           # Show OCEAN personality scores
+  sidebar_width: 300          # Sidebar width in pixels
+
+# Notifications (Cyclist terminal)
+notifications:
+  phase_change: true          # Notify on phase changes
+  sound: false                # Play sounds
+
+# Theme attribute customization
+attributes:
+  verbosity: medium           # low | medium | high
+  formality: casual           # formal | casual | playful
+  humor: enabled              # disabled | subtle | enabled
+  emoji_use: minimal          # none | minimal | frequent
+
+# Per-agent overrides (optional)
+overrides:
+  dev:
+    verbosity: high
+    formality: formal
 ```
 
 See [THEME-COMPARISON.md](THEME-COMPARISON.md) for all available themes.
+
+For BikeLane workflow configuration and available workflow types, see [BIKELANE.md](BIKELANE.md) and [WORKFLOWS.md](WORKFLOWS.md).
 
 ### Options
 
@@ -91,6 +132,84 @@ Visual expression.
 Per-agent attribute overrides. Keys are agent names:
 - `orchestrator`, `sm`, `tea`, `dev`, `reviewer`
 - `architect`, `pm`, `tech-writer`, `ux-designer`, `devops`
+
+#### `workflow.permission_mode`
+
+Controls how permission prompts are handled.
+
+| Value | Description |
+|-------|-------------|
+| `accept` | Show permission prompts for review (default) |
+| `turbo` | Auto-accept permissions, enable auto-handoffs |
+
+#### `workflow.handoff_mode`
+
+Controls agent-to-agent handoff behavior.
+
+| Value | Description |
+|-------|-------------|
+| `manual` | Wait for user to invoke next agent (default) |
+| `auto` | Automatically hand off to next agent |
+
+#### `workflow.bell_mode`
+
+Enable or disable bell notifications in Cyclist.
+
+| Value | Description |
+|-------|-------------|
+| `true` | Bell notifications enabled (default) |
+| `false` | Bell notifications disabled |
+
+#### `workflow.relay_mode`
+
+Enable or disable relay mode for agent coordination.
+
+| Value | Description |
+|-------|-------------|
+| `true` | Relay mode enabled (default) |
+| `false` | Relay mode disabled |
+
+#### `context_budget.tirepump_threshold`
+
+Percentage threshold for TirePump activation (context clearing system). Default: `60`.
+
+When context usage exceeds this threshold and `permission_mode` is `turbo`, TirePump automatically clears context and reloads the agent.
+
+#### `context_budget.imminent_threshold`
+
+Percentage threshold for imminent context warning. Default: `65`.
+
+#### `context_budget.warning_threshold`
+
+Percentage threshold for context warning. Default: `60`.
+
+#### `context_budget.critical_threshold`
+
+Percentage threshold for critical context warning. Default: `85`.
+
+#### `context_budget.max_tokens`
+
+Maximum token budget. Default: `200000`.
+
+#### `display.show_flow`
+
+Show workflow visualization in Cyclist terminal. Default: `true`.
+
+#### `display.show_ocean`
+
+Show OCEAN personality scores in Cyclist terminal. Default: `false`.
+
+#### `display.sidebar_width`
+
+Sidebar width in pixels for Cyclist terminal. Default: `300`.
+
+#### `notifications.phase_change`
+
+Enable notifications on workflow phase changes in Cyclist. Default: `true`.
+
+#### `notifications.sound`
+
+Enable sound notifications in Cyclist. Default: `false`.
 
 ---
 
@@ -585,7 +704,7 @@ Project-specific knowledge for each agent.
 
 ### Location
 
-`.claude/project/agents/{agent-name}-sidecar/patterns.md`
+`.pennyfarthing/sidecars/{agent-name}/patterns.md`
 
 ### Purpose
 
@@ -649,8 +768,8 @@ Skills are registered in the MCP server or settings.
 
 ### Skill Locations
 
-- **Core skills:** `pennyfarthing/skills/`
-- **Project skills:** `.claude/project/skills/`
+- **Core skills:** `pennyfarthing-dist/skills/` (symlinked from `.claude/skills/`)
+- **Project skills:** `.claude/project/skills/` (optional, for project-specific skills)
 
 ### Skill Structure
 

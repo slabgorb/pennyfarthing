@@ -151,6 +151,10 @@ overrides:
 
 ## Reflector
 
+<critical>
+**EVERY TURN MUST END WITH A CYCLIST MARKER.** A Stop hook enforces this - you will be blocked if you forget.
+</critical>
+
 <info>
 HTML comments that agents emit to signal Cyclist UI. Format: `<!-- CYCLIST:TYPE:value -->`
 
@@ -160,6 +164,7 @@ HTML comments that agents emit to signal Cyclist UI. Format: `<!-- CYCLIST:TYPE:
 | `CONTEXT_CLEAR` | `/agent` | Clears session, reloads with agent |
 | `QUESTION` | `yesno` or `open` | Shows input dialog |
 | `CHOICES` | `opt1,opt2,opt3` | Shows choice buttons |
+| `CONTINUE` | (none) | Shows "Continue" button for status updates |
 
 **Examples:**
 ```
@@ -168,30 +173,38 @@ HTML comments that agents emit to signal Cyclist UI. Format: `<!-- CYCLIST:TYPE:
 <!-- CYCLIST:QUESTION:yesno -->
 <!-- CYCLIST:QUESTION:open -->
 <!-- CYCLIST:CHOICES:option1,option2,option3 -->
+<!-- CYCLIST:CONTINUE -->
 ```
 
 **When to use:**
 - `HANDOFF` - End of phase (TEA→Dev, Dev→Reviewer)
 - `CONTEXT_CLEAR` - Context >80% at handoff
 - `QUESTION`/`CHOICES` - User input needed mid-work
+- `CONTINUE` - Status updates, task completion, any turn that isn't a handoff or question
 </info>
 
 <critical>
-**Question Reflector Enforcement:** A Stop hook validates that ANY question to the user has a reflector marker. Emit the marker BEFORE your question.
+**Marker Selection Guide:**
 
-**Question types requiring markers:**
+| Situation | Marker |
+|-----------|--------|
+| Workflow handoff to next agent | `<!-- CYCLIST:HANDOFF:/agent -->` |
+| Handoff with context >80% | `<!-- CYCLIST:CONTEXT_CLEAR:/agent -->` |
+| Yes/no question | `<!-- CYCLIST:QUESTION:yesno -->` |
+| Open-ended question | `<!-- CYCLIST:QUESTION:open -->` |
+| Multiple choice | `<!-- CYCLIST:CHOICES:a,b,c -->` |
+| Status update / task complete | `<!-- CYCLIST:CONTINUE -->` |
+| Providing information | `<!-- CYCLIST:CONTINUE -->` |
+| Reporting an error/blocker | `<!-- CYCLIST:CONTINUE -->` |
+
+**Question types requiring QUESTION/CHOICES markers:**
 - Direct questions ending with `?`
 - Implicit questions: "let me know if...", "would you like...", "should I..."
 - Choice offerings: "Option A or Option B"
 - Requests for input: "what do you think", "your preference"
 - Clarification requests: "could you clarify"
 
-**Marker selection:**
-- `<!-- CYCLIST:QUESTION:yesno -->` - Yes/no questions
-- `<!-- CYCLIST:QUESTION:open -->` - Open-ended questions
-- `<!-- CYCLIST:CHOICES:a,b,c -->` - Multiple choice (list options)
-
-**Exempt (no marker needed):**
+**Exempt from question detection (but still need CONTINUE):**
 - Rhetorical questions you answer yourself
 - Questions inside code blocks or examples
 - Historical context ("the question was...")

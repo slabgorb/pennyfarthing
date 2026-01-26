@@ -726,8 +726,8 @@ epics:
   - id: standalone
     type: misc
     title: "Standalone Stories"
-    points: 9
-    completed_points: 6
+    points: 14
+    completed_points: 11
     status: in_progress
     stories:
       - id: MSSCI-11799
@@ -801,6 +801,16 @@ epics:
         branch: feat/MSSCI-12275-bell-mode
         workflow: tdd
         completed: "2026-01-22"
+      - id: MSSCI-12403
+        title: "Cyclist UX polish: persona popup and controls refinement"
+        description: "Improve Cyclist visual terminal UX with focus on persona popup presentation,\ncontrol button styling, and keyboard shortcut rationalization.\n\nPersona Popup Enhancements:\n- Remove VOICE section (keep STYLE, BACKGROUND, QUIRKS)\n- Add team roster on right side of popup\n- Hover over team member shows their portrait/details (live preview)\n- Show team statistics (tier rankings)\n- Show agent statistics (lift over baseline from Job Fair benchmarks)\n- Smooth open/close animations\n\nControl Button Polish:\n- Convert RELAY button to icon-only with bicycle icon \U0001F6B2\n- Convert BELL button to icon-only with bell icon \U0001F514\n- Consistent sizing and hover states for icon buttons\n- Tooltips explaining each control on hover\n\nKeyboard Shortcut Rationalization:\n- Audit all current keyboard shortcuts for collisions\n- Design non-conflicting shortcut scheme\n- Ensure shortcuts don't fire when typing in text inputs\n- Create modal manager for Escape key priority\n- Replace naked 's'/'a' keys with Cmd+Enter variants\n\nBehaviors (BDD scenarios):\n- GIVEN the RELAY button WHEN rendered THEN show bicycle icon only (no text)\n- GIVEN the BELL button WHEN rendered THEN show bell icon only (no text)\n- GIVEN any icon button WHEN hovered THEN show tooltip with label\n- GIVEN persona popup opens WHEN team roster visible THEN show all theme agents\n- GIVEN user hovers team member WHEN in popup THEN preview that agent's details\n- GIVEN persona popup WHEN rendered THEN show team tier and agent lift stats\n- GIVEN user is typing in input WHEN shortcut key pressed THEN do not trigger\n- GIVEN Escape pressed WHEN multiple modals open THEN close topmost only\n"
+        points: 5
+        priority: P2
+        status: done
+        repos: pennyfarthing
+        branch: feat/MSSCI-12403-persona-popup-redesign
+        workflow: bdd
+        completed: "2026-01-25"
   - id: epic-61
     type: epic
     title: "Epic: Reflector Marker Consolidation"
@@ -916,7 +926,8 @@ epics:
       detection/stripping functions. Migrate Cyclist and VS Code extension
       to use shared module. Add configurable TirePump threshold.
     priority: P1
-    status: in_progress
+    status: done
+    cancelled_points: 2
     repos: pennyfarthing
     stories:
       - id: MSSCI-12370
@@ -973,7 +984,8 @@ epics:
           Achieve >90% coverage for marker module. Test all 5 marker types, code block immunity, edge cases.
         points: 1
         priority: P0
-        status: backlog
+        status: cancelled
+        cancelled_reason: "Epic 60 cancelled - marker consolidation deprioritized"
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
@@ -984,7 +996,8 @@ epics:
           Update quick-actions.js to import from @pennyfarthing/shared. Remove local markerPattern and detectStructuredMarkers().
         points: 1
         priority: P1
-        status: backlog
+        status: cancelled
+        cancelled_reason: "Epic 60 cancelled - marker consolidation deprioritized"
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria: []
@@ -1061,6 +1074,7 @@ epics:
           - Rhetorical questions do not trigger
           - AskUserQuestion tool use requires marker
       - id: MSSCI-12394
+        jira: MSSCI-12394
         title: "Sprint and Story YAML validators"
         description: |
           Create validation scripts for Pennyfarthing YAML files to catch
@@ -1083,9 +1097,10 @@ epics:
           - Epic stories reference valid story IDs
         points: 3
         priority: P2
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: tdd
+        branch: feature/MSSCI-12394-sprint-yaml-validators
         acceptance_criteria:
           - Sprint YAML validates structure and required fields
           - Story entries validate all required fields
@@ -1093,6 +1108,7 @@ epics:
           - Clear error messages for validation failures
           - Can validate archived sprints
           - just validate-sprint recipe works
+        completed: "2026-01-25"
       - id: MSSCI-12395
         jira: MSSCI-12395
         title: "Refactor turbo mode into independent relay toggle"
@@ -1132,3 +1148,299 @@ epics:
           - manual + relay:on works (ask permission but auto-handoff)
           - Existing turbo configs migrate correctly
           - UI shows both controls clearly
+  # ===========================================================================
+  # EPIC: Script Parallelism & Python Migration (epic-63) - IN PROGRESS
+  # ===========================================================================
+  - id: epic-63
+    type: epic
+    jira: MSSCI-12394
+    title: "Epic: Script Parallelism & Python Migration"
+    description: |
+      Improve Pennyfarthing script performance through parallelism and migrate
+      JavaScript utility scripts to Python for better maintainability, subprocess
+      handling, and async patterns.
+
+      Phase 1: Quick parallelism wins in existing bash/JS
+      Phase 2: Port Jira sync scripts to Python
+      Phase 3: Port other utility scripts to Python
+      Phase 4: Establish Python patterns for future scripts
+    priority: P2
+    status: in_progress
+    repos: pennyfarthing
+    stories:
+      - id: "63-1"
+        jira: MSSCI-12395
+        title: "Fix background tasks WebSocket broadcast"
+        description: |
+          Background tasks panel in Cyclist never shows background agents.
+          Root cause: callbacks in main.ts only broadcast to Electron IPC,
+          not to WebSocket clients via broadcastBackgroundTaskEvent().
+
+          Two-line fix: add broadcastBackgroundTaskEvent() calls to both
+          setBackgroundTaskStartCallback and setBackgroundTaskCallback.
+        points: 1
+        priority: P0
+        status: done
+        repos: pennyfarthing
+        branch: feat/parallelism-and-background-tasks
+        completed: "2026-01-24"
+      - id: "63-2"
+        jira: MSSCI-12396
+        title: "Parallelize git-status-all.sh"
+        description: |
+          Run git status checks across repos in parallel using & + wait pattern.
+          Capture output to temp files to maintain ordered display.
+          Also parallelize summary count collection.
+        points: 1
+        priority: P1
+        status: done
+        repos: pennyfarthing
+        branch: feat/parallelism-and-background-tasks
+        completed: "2026-01-24"
+      - id: "63-3"
+        jira: MSSCI-12397
+        title: "Parallelize create-feature-branches.sh"
+        description: |
+          Run branch creation/checkout across repos in parallel when processing
+          "all" repos. Capture output to temp files for ordered display.
+          Rebuild PROCESSED_REPOS array from temp file for verification phase.
+        points: 1
+        priority: P1
+        status: done
+        repos: pennyfarthing
+        branch: feat/parallelism-and-background-tasks
+        completed: "2026-01-24"
+      - id: "63-4"
+        jira: MSSCI-12398
+        title: "Create Python script infrastructure"
+        description: |
+          Formalize existing Python infrastructure and create shared package.
+
+          Existing foundation:
+          - .venv with Python 3.14, httpx, pyyaml, torch, diffusers
+          - scripts/generate-portraits.py (400 lines, good patterns)
+          - pennyfarthing-dist/scripts/test/*-judge.py (SWE-bench evaluation)
+
+          Work needed:
+          - Add pyproject.toml at project root to formalize dependencies
+          - Create pennyfarthing_scripts/ package structure
+          - Extract shared utilities from generate-portraits.py patterns:
+            - Config loading (graceful degradation for optional deps)
+            - Sprint YAML parsing
+            - Jira client wrapper (around jira CLI)
+          - Add just recipe: `just py <script>` to run with venv python
+          - Document Python patterns in dev-patterns skill
+        points: 2
+        priority: P1
+        status: done
+        repos: pennyfarthing
+        completed: "2026-01-24"
+      - id: "63-5"
+        jira: MSSCI-12399
+        title: "Port jira-sync.mjs to Python"
+        description: |
+          Rewrite jira-sync.mjs in Python with:
+          - Async httpx for parallel Jira API calls
+          - Batch-then-report architecture (collect work, execute parallel, report)
+          - Proper progress display with rich or similar
+          - Type hints throughout
+        points: 3
+        priority: P1
+        status: done
+        repos: pennyfarthing
+        branch: feat/63-5-jira-sync-python
+        workflow: tdd
+        completed: "2026-01-24"
+      - id: "63-6"
+        jira: MSSCI-12400
+        title: "Port jira-bidirectional-sync.mjs to Python"
+        description: |
+          Rewrite jira-bidirectional-sync.mjs in Python with:
+          - Async execution of YAML and Jira updates in parallel
+          - Better conflict detection and resolution
+          - Structured logging
+        points: 2
+        priority: P1
+        status: done
+        repos: pennyfarthing
+        branch: feat/63-6-jira-bidirectional-sync-python
+        workflow: tdd
+        completed: "2026-01-25"
+      - id: "63-7"
+        jira: MSSCI-12401
+        title: "Port remaining Jira scripts to Python"
+        description: |
+          Port jira-lib.mjs, jira-sync-story.mjs, and jira-epic-creation scripts
+          to Python. Consolidate shared Jira logic into pennyfarthing_scripts.jira
+          module.
+        points: 3
+        priority: P2
+        status: done
+        repos: pennyfarthing
+        branch: feat/63-7-jira-scripts-python
+        workflow: tdd
+        completed: "2026-01-25"
+      - id: "63-8"
+        jira: MSSCI-12402
+        title: "Port git utility scripts to Python"
+        description: |
+          Port git-status-all.sh and create-feature-branches.sh to Python for:
+          - Better error handling
+          - asyncio.gather for parallel git operations
+          - Consistent output formatting
+          - Cross-platform compatibility
+        points: 3
+        priority: P2
+        status: done
+        repos: pennyfarthing
+        branch: feature/MSSCI-12402-port-git-scripts-python
+        assigned_to: Keith Avery
+        workflow: tdd
+        completed: "2026-01-25"
+      - id: "63-9"
+        jira: MSSCI-12413
+        title: "Reorganize pennyfarthing_scripts into fan-out CLI pattern"
+        description: |
+          Restructure pennyfarthing_scripts to match skill invocations:
+
+          Target structure:
+          - jira.py (CLI) → jira/ (library modules)
+          - sprint.py (CLI) → sprint/ (library modules)
+          - story.py (CLI) → story/ (library modules)
+          - common/ (shared: output.py, config.py)
+
+          Each CLI maps 1:1 with skill args:
+          - /jira [view|claim|sync|...] → python -m pennyfarthing_scripts.jira [subcommand]
+          - /sprint [status|work|archive|...] → python -m pennyfarthing_scripts.sprint [subcommand]
+          - /story [size|template|create|...] → python -m pennyfarthing_scripts.story [subcommand]
+
+          Benefits:
+          - Clear division of responsibility
+          - Agents understand CLI ↔ skill mapping
+          - Library modules importable independently
+          - Easier testing and maintenance
+        points: 5
+        priority: P1
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+  - id: epic-40
+    type: epic
+    title: "Epic: Scale Adaptation and Brownfield Support"
+    description: |
+      Adopt BMAD's scale-adaptive approach and add brownfield codebase discovery.
+      Add upward scaling for larger initiatives (Level 0-4) and brownfield
+      analysis for existing codebases.
+    priority: P2
+    status: backlog
+    repos: pennyfarthing
+    stories:
+      - id: MSSCI-12416
+        title: "Define scale levels"
+        description: |
+          Define Pennyfarthing's scale level system aligned with BMAD 6.0.
+          Scale levels determine workflow routing - small fixes go to quick-spec,
+          larger initiatives get full PRD treatment.
+        points: 2
+        priority: P2
+        status: done
+        branch: feat/40-1-scale-levels
+        workflow: tdd
+        repos: pennyfarthing
+        acceptance_criteria: []
+        jira: MSSCI-12416
+        completed: "2026-01-25"
+      - id: MSSCI-12417
+        title: "Quick-spec workflow"
+        description: |
+          Wire scale level detection into workflow initiation flow.
+          When user starts a new initiative, detect scale level from description
+          and route to appropriate workflow (trivial/quick-spec/prd).
+
+          Deliverables:
+          - Add /workflow init command or update /workflow start
+          - Call detect_scale_level() from pennyfarthing_scripts.workflow
+          - Prompt user to confirm or override detected level
+          - Route to appropriate workflow based on level
+          - Verify quick-spec workflow (already imported) works with L1
+        points: 3
+        priority: P2
+        status: done
+        branch: feat/MSSCI-12417-workflow-init
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - User describes work, scale level auto-detected
+          - User can override detected level
+          - L0 routes to trivial workflow
+          - L1 routes to quick-spec workflow
+          - L2+ routes to prd workflow
+        jira: MSSCI-12417
+      - id: MSSCI-12418
+        title: "Enterprise workflow hooks"
+        description: ""
+        points: 3
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12418
+      - id: MSSCI-12419
+        title: "Brownfield discovery command"
+        description: |
+          Create /brownfield skill that analyzes existing codebases and generates
+          AI-ready documentation. Uses parallel file scanning to identify project
+          type, tech stack, architecture patterns, and conventions.
+
+          Implementation:
+          - pennyfarthing_scripts/brownfield/discover.py - Main discovery logic
+          - Uses existing pennyfarthing_scripts.common.output for formatting
+          - Parallel directory scanning with asyncio
+          - Output to docs/brownfield/ or _bmad-output/ format
+
+          Generates documentation matching _bmad-output structure:
+          - project-overview.md - Executive summary and architecture
+          - source-tree-analysis.md - Annotated directory structure
+          - technology-stack.md - Complete tech stack reference
+          - architecture-patterns.md - Code patterns and conventions
+          - critical-rules.md - Implementation rules and constraints
+          - ai-guidance.md - Guidance for AI agents
+        points: 5
+        priority: P2
+        status: done
+        repos: pennyfarthing
+        branch: feat/MSSCI-12419-brownfield-discovery
+        workflow: tdd
+        assigned_to: Keith Avery
+        completed: "2026-01-25"
+        acceptance_criteria:
+          - /brownfield scan command generates project overview
+          - Detects project type (monorepo, single package, etc.)
+          - Identifies tech stack from package.json, pyproject.toml, etc.
+          - Extracts architecture patterns from code structure
+          - Generates AI guidance document
+          - Supports depth levels (quick/standard/deep)
+          - Output matches _bmad-output format
+        jira: MSSCI-12419
+      - id: MSSCI-12420
+        title: "Brownfield convention adoption"
+        description: ""
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12420
+      - id: MSSCI-12421
+        title: "PRD import support"
+        description: ""
+        points: 2
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria: []
+        jira: MSSCI-12421
+    jira: MSSCI-12415

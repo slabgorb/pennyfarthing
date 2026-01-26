@@ -1,8 +1,16 @@
 #!/usr/bin/env zsh
-# Thin wrapper for jira-sync.mjs
-# Usage: ./scripts/jira-sync.sh <epic_number> [--dry-run] [--transition] [--points]
+# Sync an epic and its stories to Jira
+# Usage: jira-sync.sh <epic_number> [--dry-run] [--transition] [--points]
 #
-# Delegates to Node script for cleaner, more maintainable implementation.
+# Thin wrapper that delegates to Python CLI:
+#   python -m pennyfarthing_scripts.jira sync <epic_number> [options]
 
+set -e
+
+# Source common functions for Python discovery
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-exec node "${SCRIPT_DIR}/jira/jira-sync.mjs" "$@"
+PARENT_DIR="$(dirname "$SCRIPT_DIR")"
+source "${PARENT_DIR}/lib/common.sh"
+
+# Delegate to Python CLI
+run_python_module jira sync "$@"

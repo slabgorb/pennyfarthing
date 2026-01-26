@@ -134,15 +134,14 @@
           </div>
           <span class="toolbar-divider"></span>
           <!-- Relay Mode toggle (MSSCI-12395) - auto-handoff to next agent -->
-          <button type="button" id="relay-mode-toggle" class="relay-mode-toggle" data-control="relay-toggle" title="Relay Mode - Auto-handoff to next agent (⌘4)" aria-pressed="false">
-            <span class="relay-icon">🔄</span>
-            <span class="relay-label">RELAY</span>
+          <button type="button" id="relay-mode-toggle" class="relay-mode-toggle" data-control="relay-toggle" title="Relay - Auto-handoff (⌘4)" aria-pressed="false" aria-label="Relay Mode">
+            <span class="relay-icon">✋</span>
           </button>
           <span class="toolbar-divider"></span>
           <!-- Bell Mode toggle (MSSCI-12275) - inject queued messages after tool use -->
-          <button type="button" id="bell-mode-toggle" class="bell-mode-toggle" title="Bell Mode - Inject queued messages after tool use (⌘B)" aria-pressed="false">
+          <!-- MSSCI-12403: Icon-only -->
+          <button type="button" id="bell-mode-toggle" class="bell-mode-toggle" title="Bell - Queue inject (⌘B)" aria-pressed="false" aria-label="Bell Mode">
             <span class="bell-icon">🔔</span>
-            <span class="bell-label">BELL</span>
           </button>
         </div>
         <div id="editor-row">
@@ -370,34 +369,50 @@
     </div>
   </div>
 
-  <!-- Persona Popup Modal (17-4) -->
+  <!-- Persona Popup Modal (17-4, MSSCI-12403: Two-panel redesign with team roster) -->
   <div class="persona-popup-backdrop" id="persona-popup-backdrop" style="display: none;"></div>
-  <div class="persona-popup" id="persona-popup" tabindex="-1" style="display: none;">
+  <div class="persona-popup" id="persona-popup" tabindex="-1" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="popup-character-name">
     <button class="popup-close" data-action="close" aria-label="Close popup">&times;</button>
     <div class="persona-popup-content">
-      <div class="popup-header">
-        <div class="popup-portrait large-portrait">
-          <img src="" alt="Character portrait" style="display: none;">
-          <div class="portrait-placeholder" style="display: flex;">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="80" height="80">
-              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-            </svg>
+      <!-- Two-panel layout: agent detail (left) + team roster (right) -->
+      <div class="popup-panels">
+        <!-- Left panel: Current/previewed agent details -->
+        <div class="popup-agent-panel">
+          <div class="popup-header">
+            <div class="popup-portrait large-portrait">
+              <img src="" alt="Character portrait" style="display: none;">
+              <div class="portrait-placeholder" style="display: flex;">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="80" height="80">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+              </div>
+            </div>
+            <div class="popup-title-area">
+              <div class="popup-character-name" id="popup-character-name" data-persona="character">Character Name</div>
+              <div class="role-mapping" data-persona="role-mapping">ROLE → Character</div>
+              <div class="popup-theme" data-persona="theme">Theme Name</div>
+              <!-- MSSCI-12403: Tier and lift badges -->
+              <div class="popup-badges">
+                <span class="tier-badge" data-tier="S">S</span>
+                <span class="lift-badge positive" data-lift="+0.0">—</span>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="popup-title-area">
-          <div class="popup-character-name" data-persona="character">Character Name</div>
-          <div class="role-mapping" data-persona="role-mapping">ROLE → Character</div>
-          <div class="popup-theme" data-persona="theme">Theme Name</div>
+        <!-- Right panel: Team roster -->
+        <div class="popup-roster-panel">
+          <div class="roster-header">The Crew</div>
+          <div class="roster-divider"></div>
+          <ul class="roster-list" role="listbox" aria-label="Team members">
+            <!-- Populated by JS from /api/theme-agents/full -->
+          </ul>
         </div>
       </div>
+      <!-- Attributes section (full width below panels) -->
       <div class="popup-attributes">
         <div class="popup-attr">
           <span class="persona-attr-label">Style</span>
           <span class="persona-style" data-persona="style">—</span>
-        </div>
-        <div class="popup-attr">
-          <span class="persona-attr-label">Voice</span>
-          <span class="persona-voice" data-persona="voice">—</span>
         </div>
         <div class="popup-attr">
           <span class="persona-attr-label">Background</span>
@@ -596,5 +611,7 @@
   </script>
   <!-- Debug panel (real-time OTEL span viewer) -->
   <script type="module" src="/js/debug-panel.js"></script>
+  <!-- Welcome banner on session start -->
+  <script type="module" src="/js/welcome.js"></script>
 </body>
 </html>

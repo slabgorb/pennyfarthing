@@ -29,6 +29,7 @@ export const MARKER_TYPES = {
   QUESTION: 'question',
   CHOICES: 'choices',
   CONTEXT_CLEAR: 'context_clear',
+  CONTINUE: 'continue',  // Status update, user can continue or redirect
 };
 
 /**
@@ -168,12 +169,13 @@ export function detectStructuredMarkers(text) {
   const withoutCode = text.replace(/```[\s\S]*?```/g, '');
   if (!withoutCode.trim()) return null;
 
-  // Pattern: <!-- CYCLIST:TYPE:value -->
+  // Pattern: <!-- CYCLIST:TYPE:value --> or <!-- CYCLIST:TYPE --> (for CONTINUE)
   // Case-insensitive for CYCLIST prefix and TYPE, preserves value case
-  const markerPattern = /<!--\s*CYCLIST:(\w+):([^>]+?)\s*-->/gi;
+  // Value is optional - CONTINUE marker has no value
+  const markerPattern = /<!--\s*CYCLIST:(\w+)(?::([^>]+?))?\s*-->/gi;
 
   // Valid marker types - must match MARKER_TYPES above
-  const validTypes = new Set(['handoff', 'invoke', 'question', 'choices', 'context_clear']);
+  const validTypes = new Set(['handoff', 'invoke', 'question', 'choices', 'context_clear', 'continue']);
 
   const markers = [];
   let match;
@@ -185,7 +187,7 @@ export function detectStructuredMarkers(text) {
 
     markers.push({
       type,
-      value: match[2].trim(),
+      value: match[2] ? match[2].trim() : null,  // Value is optional (null for CONTINUE)
       source: 'structured_marker',
     });
   }
@@ -321,6 +323,15 @@ function processStructuredMarkers(markers, fullText = '') {
         source: 'structured_marker',
         confidence: 1.0,
       };
+
+    case 'continue':
+      // Status update - show "Continue" button for user to proceed
+      return {
+        type: 'continue',
+        responses: ['Continue'],
+        source: 'structured_marker',
+        confidence: 1.0,
+      };
   }
 
   // Check if there's both a QUESTION:choice and CHOICES marker
@@ -386,7 +397,7 @@ export function renderQuickActions(result) {
     return `<div class="quick-actions-container">\n${buttons}\n</div>`;
   }
 
-  if (result.type === 'yesno') {
+  if (result.type === 'yesno' || result.type === 'continue') {
     const buttons = result.responses.map(response =>
       `<button class="quick-action-btn" data-response="${response}">${response}</button>`
     ).join('\n');

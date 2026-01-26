@@ -22,3 +22,6 @@ notes: |
   Fresh baseline 2026-01-01 with --tools "" flag.
   Previous baseline (65.25) was contaminated.
   Used same judge rubric as persona benchmarks.
+
+metadata:
+  pennyfarthing_version: "4.3.0"

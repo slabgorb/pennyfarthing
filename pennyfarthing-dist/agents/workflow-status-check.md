@@ -10,6 +10,12 @@ Universal entry point telling agents: what work exists, what phase, and whether 
 Uses `/sprint` skill scripts for deterministic output.
 </info>
 
+<arguments>
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `CALLING_AGENT` | Yes | Agent requesting status check (e.g., "SM", "Architect", "PM") |
+</arguments>
+
 ---
 
 ## Execution
@@ -45,24 +51,36 @@ fi
 
 ---
 
+<output>
 ## Output Format
 
-```markdown
-## Workflow Status Report
+Return a `STATUS_CHECK_RESULT` block:
 
-### Detected State
-**{STATE}**
-
-### Sprint Summary
-[Output from sprint-status.sh]
-
-### Active Session
-| Story | Phase | Status | Branch |
-|-------|-------|--------|--------|
-
-### Recommended Action
-- FINISH_STATE → Proceed to finish flow
-- IN_PROGRESS_STATE → Report which agent should continue
-- NEW_WORK_STATE → Show available stories
-- EMPTY_BACKLOG_STATE → Suggest promoting stories from future.yaml
+### Success
 ```
+STATUS_CHECK_RESULT:
+  status: success
+  state: {FINISH_STATE|IN_PROGRESS_STATE|NEW_WORK_STATE|EMPTY_BACKLOG_STATE}
+  story_id: {ID or null}
+  phase: {current phase or null}
+  phase_owner: {agent name or null}
+  sprint_number: {N}
+  backlog_count: {N}
+
+  next_steps:
+    - FINISH_STATE: "Proceed to Finish Flow - spawn sm-finish with PHASE=preflight"
+    - IN_PROGRESS_STATE: "Report phase owner '{phase_owner}' should continue. Run handoff-marker.sh {phase_owner}"
+    - NEW_WORK_STATE: "Present available stories to user. Await selection, then spawn sm-setup MODE=setup"
+    - EMPTY_BACKLOG_STATE: "Report backlog empty. Suggest promoting from future.yaml"
+```
+
+### Active Session Details (if IN_PROGRESS_STATE)
+```
+  session:
+    story_id: {ID}
+    title: "{title}"
+    workflow: {workflow}
+    phase: {phase}
+    branch: {branch}
+```
+</output>

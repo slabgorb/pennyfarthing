@@ -82,15 +82,26 @@ if ! $BRIEF; then
     echo ""
 fi
 
-# Check each repo from configuration
+# Check each repo from configuration (parallelized for performance)
 repo_count=$(get_repo_count)
 if [[ "$repo_count" -eq 0 ]]; then
     # No repos configured, just show current directory
     show_repo_status "Project" "$PROJECT_ROOT"
 else
+    # Create temp dir for parallel output capture
+    tmpdir=$(mktemp -d)
+    trap "rm -rf '$tmpdir'" EXIT
+
+    # Launch status checks in parallel
     for repo in $(get_repos); do
         repo_path=$(get_repo_full_path "$repo")
-        show_repo_status "$repo" "$repo_path"
+        (show_repo_status "$repo" "$repo_path" > "$tmpdir/$repo.out" 2>&1) &
+    done
+    wait
+
+    # Output results in order
+    for repo in $(get_repos); do
+        [ -f "$tmpdir/$repo.out" ] && cat "$tmpdir/$repo.out"
     done
 fi
 
@@ -108,14 +119,28 @@ if ! $BRIEF; then
         unpushed=$(git -C "$PROJECT_ROOT" log origin/develop..HEAD --oneline 2>/dev/null | wc -l | tr -d ' ')
         total_unpushed=$((total_unpushed + unpushed))
     else
+        # Parallelize summary collection
+        summary_tmp=$(mktemp -d)
         for repo in $(get_repos); do
             repo_path=$(get_repo_full_path "$repo")
-            [ -d "$repo_path/.git" ] || [ -d "$repo_path" ] || continue
-            count=$(git -C "$repo_path" status --short 2>/dev/null | wc -l | tr -d ' ')
-            total_changes=$((total_changes + count))
-            unpushed=$(git -C "$repo_path" log origin/develop..HEAD --oneline 2>/dev/null | wc -l | tr -d ' ')
-            total_unpushed=$((total_unpushed + unpushed))
+            (
+                [ -d "$repo_path/.git" ] || [ -d "$repo_path" ] || exit 0
+                count=$(git -C "$repo_path" status --short 2>/dev/null | wc -l | tr -d ' ')
+                unpushed=$(git -C "$repo_path" log origin/develop..HEAD --oneline 2>/dev/null | wc -l | tr -d ' ')
+                echo "$count $unpushed" > "$summary_tmp/$repo.count"
+            ) &
         done
+        wait
+
+        # Aggregate results
+        for repo in $(get_repos); do
+            if [ -f "$summary_tmp/$repo.count" ]; then
+                read count unpushed < "$summary_tmp/$repo.count"
+                total_changes=$((total_changes + count))
+                total_unpushed=$((total_unpushed + unpushed))
+            fi
+        done
+        rm -rf "$summary_tmp"
     fi
 
     if [ "$total_changes" -eq 0 ] && [ "$total_unpushed" -eq 0 ]; then

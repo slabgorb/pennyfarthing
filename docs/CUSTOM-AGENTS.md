@@ -24,7 +24,7 @@ pennyfarthing-dist/
 ├── commands/
 │   └── my-agent.md          # Slash command registration
 └── guides/
-    └── AGENT-SCOPES.md      # Permission definitions
+    └── permission-protocol.md      # Permission request protocol
 ```
 
 ### Tactical Agent Template
@@ -114,7 +114,7 @@ Context auto-loaded by `/prime --agent my-agent`:
 <exit>
 To exit: "Exit My Agent" or switch to another agent
 
-On exit, run: `./scripts/run.sh core/agent-session.sh stop`
+On exit, run phase-check-end script to capture learnings
 </exit>
 ```
 
@@ -194,7 +194,7 @@ Steps:
 <exit>
 To exit: "Exit My Agent" or switch to another agent
 
-On exit, run: `./scripts/run.sh core/agent-session.sh stop`
+On exit, run phase-check-end script to capture learnings
 </exit>
 ```
 
@@ -210,7 +210,7 @@ description: My Agent - Brief role description
 <agent-activation>
 **FIRST:** Use Bash tool to run:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" core/agent-session.sh start "my-agent"
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/core/run.sh" core/phase-check-start.sh "my-agent"
 ```
 This finds the project root and loads your persona.
 
@@ -218,7 +218,7 @@ Then load and follow `.pennyfarthing/agents/my-agent.md`
 </agent-activation>
 
 <agent-exit>
-On exit: Capture learnings to sidecar, run `run.sh core/agent-session.sh stop`
+On exit: Capture learnings to sidecar, run phase-check-end script
 </agent-exit>
 
 <purpose>
@@ -248,7 +248,7 @@ One-line description of agent purpose
 
 <reference>
 - **Agent:** `.pennyfarthing/agents/my-agent.md`
-- **Sidecar:** `.claude/project/agents/my-agent-sidecar/`
+- **Sidecar:** `.pennyfarthing/sidecars/my-agent/`
 - **Skills:** `/skill-name`
 - **Handoffs:** From X, To Y
 </reference>
@@ -328,43 +328,68 @@ Task tool:
     ASSESSMENT_SUMMARY: "All items complete"
 ```
 
-## Permission Scopes
+## Agent Scope Configuration
 
-Add to `pennyfarthing-dist/guides/AGENT-SCOPES.md`:
+Add your agent to `.claude/project/docs/agent-scopes.yaml`:
 
 ```yaml
-my-agent:
-  scope: story              # or 'full' for strategic
-  permissions:
-    - Read                  # Read any file
-    - Grep                  # Search contents
-    - Glob                  # Find files
-    - Bash                  # Execute commands
-    - Edit(.session/**)     # Edit session files
-    - Task(testing-runner)  # Invoke specific subagent
-    - Skill(testing)        # Use specific skill
+strategic_agents:
+  - orchestrator
+  - pm
+  - sm
+  - architect
+  - devops
+  - my-agent              # Add strategic agents here
+
+tactical_agents:
+  - dev
+  - tea
+  - reviewer
+  - tech-writer
+  - ux-designer
+  - my-agent              # Or add tactical agents here
 ```
-
-### Permission Reference
-
-| Permission | Description |
-|------------|-------------|
-| `Read` | Read any file |
-| `Grep` | Search file contents |
-| `Glob` | Find files by pattern |
-| `Bash` | Execute shell commands |
-| `Edit(pattern)` | Edit files matching pattern |
-| `Write(pattern)` | Create files matching pattern |
-| `Skill(name)` | Invoke named skill |
-| `Task(type)` | Spawn subagent type |
 
 ### Scope Tiers
 
 | Tier | Scope | Agents |
 |------|-------|--------|
-| 1 - Strategic | Full project | Orchestrator, PM, SM, Architect |
-| 2 - Tactical | Story-focused | Dev, TEA, Reviewer, Tech-Writer |
+| 1 - Strategic | Full project | Orchestrator, PM, SM, Architect, DevOps |
+| 2 - Tactical | Story-focused | Dev, TEA, Reviewer, Tech-Writer, UX-Designer |
 | 3 - Helper | Single task | Subagents (handoffs, runners) |
+
+Strategic agents load:
+- Full sprint status
+- All repo contexts
+- Epic definitions
+- Active work
+
+Tactical agents load:
+- Story section only
+- Active work
+- Target repo context only
+
+### Runtime Permissions
+
+Agents request additional tool access at runtime using the permission protocol. See `pennyfarthing-dist/guides/permission-protocol.md` for details.
+
+Permission requests use this format:
+
+```yaml
+permission_request:
+  tool: "WebFetch"                    # Tool name
+  reason: "Fetch API docs"            # Why access is needed
+  scope: "*.github.com"               # What access pattern
+  grant_type: "session"               # "once" | "session" | "always"
+```
+
+Common tools agents may request:
+- `Read`, `Grep`, `Glob` - File operations
+- `Bash` - Execute commands
+- `Edit`, `Write` - File modifications
+- `WebFetch` - Fetch external content
+- `Skill` - Invoke skills
+- `Task` - Spawn subagents
 
 ## Testing Your Agent
 
@@ -529,7 +554,7 @@ Steps:
 <exit>
 To exit: "Exit Security Auditor" or switch to another agent
 
-On exit, run: `./scripts/run.sh core/agent-session.sh stop`
+On exit, run phase-check-end script to capture learnings
 </exit>
 ```
 
@@ -545,14 +570,14 @@ description: Security Auditor - Code and dependency security auditing
 <agent-activation>
 **FIRST:** Use Bash tool to run:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/run.sh" core/agent-session.sh start "security-auditor"
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/core/run.sh" core/phase-check-start.sh "security-auditor"
 ```
 
 Then load and follow `.pennyfarthing/agents/security-auditor.md`
 </agent-activation>
 
 <agent-exit>
-On exit: Capture learnings to sidecar, run `run.sh core/agent-session.sh stop`
+On exit: Capture learnings to sidecar, run phase-check-end script
 </agent-exit>
 
 <purpose>
@@ -580,7 +605,7 @@ Security-focused analyst who audits code, dependencies, and compliance
 
 <reference>
 - **Agent:** `.pennyfarthing/agents/security-auditor.md`
-- **Sidecar:** `.claude/project/agents/security-auditor-sidecar/`
+- **Sidecar:** `.pennyfarthing/sidecars/security-auditor/`
 - **Skills:** `/dev-patterns`, `/code-review`
 </reference>
 ```
@@ -591,11 +616,11 @@ Before deploying your custom agent:
 
 - [ ] Agent file follows appropriate template (tactical/strategic)
 - [ ] Command file has correct activation block
-- [ ] Permissions defined in AGENT-SCOPES.md
+- [ ] Agent added to `.claude/project/docs/agent-scopes.yaml`
 - [ ] Handoff subagent created (if needed)
-- [ ] Agent added to README inventory
+- [ ] Agent added to `pennyfarthing-dist/agents/README.md` inventory
 - [ ] Tested activation, workflows, and handoffs
-- [ ] Sidecar directory created for learnings
+- [ ] Sidecar directory created at `.pennyfarthing/sidecars/my-agent/`
 
 ## See Also
 
