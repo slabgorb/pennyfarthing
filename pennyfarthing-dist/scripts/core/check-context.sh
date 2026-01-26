@@ -207,6 +207,9 @@ if last_total is not None:
     else:
         print('CONTEXT_STATUS=OK')
 
+    # RELAY_MODE: Output for handoff-marker.sh to use
+    print(f'RELAY_MODE={str(relay_mode).lower()}')
+
     # HANDOFF_MODE: 'auto' if relay_mode enabled, 'ask' otherwise
     # MSSCI-12395: relay_mode controls autohandoff independent of context level
     if relay_mode:
