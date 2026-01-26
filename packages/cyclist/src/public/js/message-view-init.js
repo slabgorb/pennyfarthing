@@ -21,7 +21,7 @@ import {
 import { renderBackgroundTaskNotification, renderBellInjectedMessage } from './components/message-view/message-renderers.js';
 import { enrichMessage } from './message-enrichment.js';
 import { updateActivity, clearActivity } from './activity.js';
-import { resetSubmitting, setProcessing, processNextInQueue, setOnQueueChange, clearMessageQueue, loadMessageQueue, getMessageQueue, removeFromQueue, injectMessage, dequeueMessage, pauseQueue } from './editor.js';
+import { resetSubmitting, setProcessing, handleTurnComplete, setOnQueueChange, clearMessageQueue, loadMessageQueue, getMessageQueue, removeFromQueue, injectMessage, dequeueMessage, pauseQueue } from './editor.js';
 import { handleMessage as handleGitCommitMessage } from './git-commit-detector.js';
 import { getCurrentAgentCommand } from './persona.js';
 import { settingsSync, STORAGE_KEYS } from './settings-sync.js';
@@ -168,7 +168,7 @@ function initMessageView() {
       clearActivity();
       resetSubmitting(); // Allow new submissions
       setProcessing(false); // 17-1: Mark processing complete
-      processNextInQueue(); // 17-1: Send next queued message if any
+      handleTurnComplete(); // MSSCI-12450: Send all queued messages on turn complete
 
       // Process quick actions ONLY on completion (markers-only detection)
       // This ensures we analyze the complete message, not streaming fragments
