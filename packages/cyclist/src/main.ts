@@ -2398,6 +2398,53 @@ if (isElectron) {
     return result.response === 0; // true if "Choose Different Folder"
   }
 
+  /**
+   * Open a new Cyclist window for a different project.
+   * Prompts user to select a project folder, validates it has Pennyfarthing,
+   * then spawns a new Cyclist instance pointing to that project.
+   */
+  async function openNewWindow(): Promise<void> {
+    // Prompt for project folder
+    const result = await dialog.showOpenDialog({
+      properties: ['openDirectory'],
+      title: 'Select Project for New Window',
+    });
+
+    if (result.canceled || !result.filePaths[0]) return;
+
+    const selectedProjectDir = result.filePaths[0];
+
+    // Validate it's a Pennyfarthing project
+    if (!detectPennyfarthingProject(selectedProjectDir)) {
+      dialog.showErrorBox(
+        'Not a Pennyfarthing Project',
+        `The folder "${basename(selectedProjectDir)}" does not have Pennyfarthing installed.\n\nCyclist requires a .claude directory with Pennyfarthing configuration.`
+      );
+      return;
+    }
+
+    // Spawn new instance
+    const { spawn } = await import('child_process');
+
+    if (process.platform === 'darwin') {
+      // macOS: Use 'open -n' to force new instance of .app bundle
+      const appPath = process.execPath.includes('.app')
+        ? process.execPath.replace(/\/Contents\/MacOS\/.*$/, '')
+        : process.execPath;
+
+      spawn('open', ['-n', appPath, '--args', `--project-dir=${selectedProjectDir}`], {
+        detached: true,
+        stdio: 'ignore',
+      }).unref();
+    } else {
+      // Windows/Linux: Just spawn new Electron process directly
+      spawn(process.execPath, [`--project-dir=${selectedProjectDir}`], {
+        detached: true,
+        stdio: 'ignore',
+      }).unref();
+    }
+  }
+
   // App ready - check for project directory, validate Pennyfarthing, then start
   app.whenReady().then(async () => {
     try {
@@ -2481,7 +2528,18 @@ if (isElectron) {
             { role: 'quit' },
           ],
         },
-        { role: 'fileMenu' },
+        {
+          label: 'File',
+          submenu: [
+            {
+              label: 'New Window',
+              accelerator: 'CmdOrCtrl+Shift+N',
+              click: openNewWindow,
+            },
+            { type: 'separator' },
+            { role: 'close' },
+          ],
+        },
         { role: 'editMenu' },
         buildViewMenu() as Electron.MenuItemConstructorOptions,
         buildToolsMenu() as Electron.MenuItemConstructorOptions,
