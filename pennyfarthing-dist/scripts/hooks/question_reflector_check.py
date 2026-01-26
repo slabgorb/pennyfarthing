@@ -198,30 +198,39 @@ def extract_last_assistant_message(transcript: list[dict[str, Any]]) -> str:
 def build_block_reason(question_type: str) -> str:
     """Build the block reason message.
 
+    Provides actionable guidance so Claude can emit JUST the marker
+    on retry rather than regenerating the entire response.
+
     Args:
         question_type: The type of question detected (or empty for general)
 
     Returns:
-        The reason message
+        The reason message with suggested marker
     """
-    reason = 'Every turn MUST end with a CYCLIST reflector marker. '
+    # Key insight: Tell Claude to ONLY emit the marker, not regenerate everything
+    reason = 'Missing CYCLIST marker. Your response content is fine - just APPEND the marker.\n\n'
 
     if question_type:
-        # Specific question type detected
+        # Specific question type detected - suggest exact marker
         if question_type == 'direct':
-            reason += 'You asked a question. Add <!-- CYCLIST:QUESTION:yesno --> or <!-- CYCLIST:QUESTION:open --> before your question.'
+            reason += 'Detected: direct question (?)\n'
+            reason += 'APPEND THIS: <!-- CYCLIST:QUESTION:open -->\n'
+            reason += '(Use yesno if it\'s a yes/no question)'
         elif question_type == 'implicit':
-            reason += 'You asked an implicit question. Add <!-- CYCLIST:QUESTION:yesno --> before phrases like "would you like" or "should I".'
+            reason += 'Detected: implicit question (would you like, should I, etc.)\n'
+            reason += 'APPEND THIS: <!-- CYCLIST:QUESTION:yesno -->'
         elif question_type == 'choices':
-            reason += 'You offered choices. Add <!-- CYCLIST:CHOICES:option1,option2,option3 --> listing the choices.'
+            reason += 'Detected: choice offering\n'
+            reason += 'APPEND THIS: <!-- CYCLIST:CHOICES:option1,option2 -->\n'
+            reason += '(Replace option1,option2 with actual choices)'
     else:
-        # No question detected, but still need a marker
-        reason += 'Valid markers:\n'
+        # No question detected - suggest CONTINUE marker
+        reason += 'No question detected - this looks like a status update.\n'
+        reason += 'APPEND THIS: <!-- CYCLIST:CONTINUE -->\n\n'
+        reason += 'Other markers if needed:\n'
         reason += '  <!-- CYCLIST:HANDOFF:/agent --> - workflow handoff\n'
         reason += '  <!-- CYCLIST:QUESTION:yesno --> - yes/no question\n'
-        reason += '  <!-- CYCLIST:QUESTION:open --> - open question\n'
-        reason += '  <!-- CYCLIST:CHOICES:a,b,c --> - multiple choice\n'
-        reason += '  <!-- CYCLIST:CONTINUE --> - status update, user may continue or redirect'
+        reason += '  <!-- CYCLIST:QUESTION:open --> - open question'
 
     return reason
 
