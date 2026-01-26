@@ -1105,14 +1105,23 @@ html, body {
 
 /* B-22: Stats Strip - compact stats display below editor */
 /* B-20: Increased font sizes for readability */
+/* Match editor-row horizontal padding so strip aligns with rich text box */
 #stats-strip {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.25rem 0.75rem;
+  justify-content: space-between;
+  padding: 0.25rem 0.5rem;
+  margin-right: 2.5rem; /* Account for editor-controls width + gap */
   background: var(--bg-secondary);
   border-top: 1px solid var(--border);
   font-size: 0.8125rem;
+}
+
+#stats-strip .stats-left,
+#stats-strip .stats-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 /* 35-2: User email display in stats strip */
@@ -1138,7 +1147,7 @@ html, body {
   font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
   color: var(--text-muted);
   font-size: 0.75rem;
-  max-width: 120px;
+  max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1148,49 +1157,54 @@ html, body {
   display: none;
 }
 
-/* Multi-repo: Git status indicators for all repos */
-#stats-strip .git-status-all {
+/* Multi-repo: Git status in sidebar git-section */
+#git-repos {
   display: flex;
+  flex-direction: column;
   gap: 0.25rem;
-  font-size: 0.7rem;
+  width: 100%;
 }
 
-#stats-strip .git-status-all:empty {
+#git-repos:empty {
   display: none;
 }
 
-#stats-strip .repo-status {
-  display: inline-flex;
+#git-repos .repo-row {
+  display: flex;
   align-items: center;
-  gap: 0.125rem;
-  padding: 0.0625rem 0.25rem;
-  border-radius: 3px;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+#git-repos .repo-name {
   font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
-  cursor: default;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-#stats-strip .repo-status.clean {
-  background: rgba(46, 204, 113, 0.15);
-  color: var(--status-ready, #2ecc71);
+#git-repos .repo-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.125rem 0.375rem;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
 }
 
-#stats-strip .repo-status.dirty {
-  background: rgba(231, 76, 60, 0.15);
-  color: var(--status-error, #e74c3c);
+#git-repos .repo-badge.clean {
+  background: color-mix(in srgb, var(--status-ready) 20%, transparent);
+  color: var(--status-ready);
 }
 
-#stats-strip .repo-status .repo-name {
-  font-weight: 500;
-}
-
-#stats-strip .repo-status .status-icon {
-  font-size: 0.65rem;
-}
-
-#stats-strip .repo-status .ahead-behind {
-  opacity: 0.7;
-  font-size: 0.6rem;
-  margin-left: 0.125rem;
+#git-repos .repo-badge.dirty {
+  background: color-mix(in srgb, var(--status-working) 20%, transparent);
+  color: var(--status-working);
 }
 
 .model-badge {
@@ -2287,7 +2301,7 @@ html, body {
   height: 48px;
 }
 
-/* Persona Section Styles */
+/* Persona Section Styles - Uses CollapsibleSection base */
 .persona-section {
   background: var(--bg-primary);
   border-radius: 8px;
@@ -2295,8 +2309,33 @@ html, body {
   padding: 0.5rem 0.75rem;  /* B-20: Standardized sidebar padding */
 }
 
-/* Project name at top of persona section */
-.project-name {
+/* Project name in header (also section title) */
+.persona-section .project-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+  text-align: left;
+}
+
+/* Summary styling for collapsed persona section */
+.persona-section .section-summary {
+  font-size: 0.75rem;
+}
+
+.persona-section .summary-agent {
+  color: var(--text-primary);
+}
+
+.persona-section .summary-role {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Legacy project-name styling (standalone, not in header) */
+.project-name:not(.section-title) {
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -2551,26 +2590,139 @@ html, body {
   opacity: 0.7;
 }
 
-/* Git Section Styles */
-.git-section {
+/* ==========================================================================
+   CollapsibleSection Component - Base styles for summary/detail sections
+   ========================================================================== */
+.collapsible-section {
   background: var(--bg-primary);
   border-radius: 8px;
   padding: 0.5rem 0.75rem;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.375rem;
 }
 
-/* Hide redundant header */
-.git-section h3 {
+.collapsible-section .section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.collapsible-section .section-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.collapsible-section .section-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.0625rem 0.25rem;
+  border-radius: 3px;
   display: none;
 }
 
-#git-branch,
-.git-branch {
-  font-size: 0.9rem;
+.collapsible-section .section-badge.dirty {
+  background: color-mix(in srgb, var(--status-working) 20%, transparent);
+  color: var(--status-working);
+}
+
+.collapsible-section .section-badge.clean {
+  background: color-mix(in srgb, var(--status-ready) 20%, transparent);
+  color: var(--status-ready);
+}
+
+/* Summary view - visible when collapsed, hidden when expanded */
+.collapsible-section .section-summary {
+  flex: 1;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.collapsible-section.collapsed .section-summary {
+  opacity: 1;
+}
+
+.collapsible-section .collapse-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  cursor: pointer;
+  padding: 0.125rem;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.collapsible-section.collapsed .collapse-btn {
+  transform: rotate(-90deg);
+}
+
+/* Detail view - visible when expanded, hidden when collapsed */
+.collapsible-section .section-detail,
+.collapsible-section .section-content {
+  margin-top: 0.5rem;
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.2s ease;
+  max-height: 500px;
+  opacity: 1;
+}
+
+.collapsible-section.collapsed .section-detail,
+.collapsible-section.collapsed .section-content {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+}
+
+/* ==========================================================================
+   Git Section - Uses CollapsibleSection base
+   ========================================================================== */
+.git-section {
+  /* Inherits from .collapsible-section */
+}
+
+/* Summary styling for collapsed view */
+.git-section .summary-clean {
+  color: var(--status-ready);
+}
+
+.git-section .summary-dirty {
+  color: var(--text-primary);
   font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+}
+
+.git-section .summary-count {
+  color: var(--status-working);
+}
+
+/* Repo rows in git section */
+#git-repos .repo-row {
+  padding: 0.25rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+#git-repos .repo-row:last-child {
+  border-bottom: none;
+}
+
+#git-repos .repo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+#git-repos .repo-name {
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+  font-size: 0.85rem;
   color: var(--text-primary);
   flex: 1;
   min-width: 0;
@@ -2579,25 +2731,52 @@ html, body {
   white-space: nowrap;
 }
 
-#git-status,
-.git-status {
-  display: inline-block;
-  font-size: 0.75rem;
+#git-repos .repo-badge {
+  font-size: 0.65rem;
   font-weight: 600;
-  padding: 0.125rem 0.375rem;
+  padding: 0.0625rem 0.25rem;
   border-radius: 3px;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  flex-shrink: 0;
 }
 
-.status-clean {
+#git-repos .repo-badge.clean {
   background: color-mix(in srgb, var(--status-ready) 20%, transparent);
   color: var(--status-ready);
 }
 
-.status-dirty {
+#git-repos .repo-badge.dirty {
   background: color-mix(in srgb, var(--status-working) 20%, transparent);
   color: var(--status-working);
+}
+
+/* Dirty files list */
+#git-repos .dirty-files {
+  margin-top: 0.25rem;
+  padding-left: 0.5rem;
+  font-size: 0.75rem;
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+}
+
+#git-repos .dirty-file {
+  color: var(--text-secondary);
+  padding: 0.0625rem 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#git-repos .dirty-file .file-status {
+  color: var(--status-working);
+  margin-right: 0.25rem;
+  font-weight: 500;
+}
+
+#git-repos .dirty-more {
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 0.125rem 0;
 }
 
 /* Theme Toggle Button */
