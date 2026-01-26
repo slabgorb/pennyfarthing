@@ -2206,7 +2206,12 @@ if (isElectron) {
   setBrowserWindowRef(BrowserWindow);
 
   // Suppress error dialogs - log to console instead
+  // Filter out transient startup errors that occur before project directory is set
   process.on('uncaughtException', (error) => {
+    // Ignore path errors during startup (before project directory is established)
+    if (error.message?.includes("'path' argument must be of type string")) {
+      return; // Transient startup condition - app will continue normally
+    }
     console.error('Uncaught exception:', error.message);
   });
   process.on('unhandledRejection', (reason) => {

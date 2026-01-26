@@ -278,13 +278,9 @@ export function createSettingsRouter(): Router {
       // Find themes directory - check bundled resources first, then project dir
       let themesDir: string | null = null;
 
-      // Debug logging
-      console.log('[Themes API] process.resourcesPath:', process.resourcesPath);
-
       // 1. Packaged Electron app: Contents/Resources/pennyfarthing-dist/personas/themes
       if (process.resourcesPath) {
         const bundledThemes = path.join(process.resourcesPath, 'pennyfarthing-dist', 'personas', 'themes');
-        console.log('[Themes API] Checking bundled path:', bundledThemes, 'exists:', fs.existsSync(bundledThemes));
         if (fs.existsSync(bundledThemes)) {
           themesDir = bundledThemes;
         }
