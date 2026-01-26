@@ -752,11 +752,25 @@ export async function processLogEvents(rawEvents: RawLogEvent[]): Promise<void> 
       if (toolName === 'Task' && toolParams) {
         try {
           const params = JSON.parse(toolParams);
-          if (params.run_in_background === true) {
+          // DEBUG: Log Task tool params to understand what Claude Code sends
+          console.log('[OTLP DEBUG] Task tool params:', JSON.stringify(params));
+          console.log('[OTLP DEBUG] Task event attributes:', JSON.stringify(event.attributes));
+          if (params.run_in_background === true || params.run_in_background === 'true') {
             const taskId = event.attributes['task_id'] as string;
+            console.log('[OTLP DEBUG] Background task detected, taskId:', taskId);
             if (taskId) {
               trackBackgroundTask({
                 taskId,
+                description: params.description || '',
+                subagentType: params.subagent_type || '',
+                startedAt: event.timestamp,
+              });
+            } else {
+              console.log('[OTLP DEBUG] No task_id attribute found - generating synthetic ID');
+              // Generate synthetic task ID from timestamp and description
+              const syntheticId = `task-${Date.now()}-${(params.description || '').slice(0, 20).replace(/\s/g, '-')}`;
+              trackBackgroundTask({
+                taskId: syntheticId,
                 description: params.description || '',
                 subagentType: params.subagent_type || '',
                 startedAt: event.timestamp,
@@ -895,7 +909,7 @@ export async function processLogEvents(rawEvents: RawLogEvent[]): Promise<void> 
       if (toolName === 'Task' && parsedToolParams) {
         toolEvent.subagentType = parsedToolParams.subagent_type as string | undefined;
         toolEvent.promptSummary = (parsedToolParams.prompt as string)?.substring(0, 200);
-        toolEvent.isBackground = parsedToolParams.run_in_background === true;
+        toolEvent.isBackground = parsedToolParams.run_in_background === true || parsedToolParams.run_in_background === 'true';
       }
 
       // Story 36-5: TaskOutput result summary enrichment

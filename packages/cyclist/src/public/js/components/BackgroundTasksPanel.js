@@ -166,7 +166,7 @@ export function initBackgroundTasksPanel(container) {
     startElapsedTimeUpdates();
   }
 
-  // Subscribe to IPC events if available
+  // Subscribe to IPC events if available (Electron mode)
   if (typeof window !== 'undefined' && window.electronAPI?.backgroundTask) {
     window.electronAPI.backgroundTask.onStarted?.((_event, task) => {
       addBackgroundTask(task);
@@ -179,6 +179,12 @@ export function initBackgroundTasksPanel(container) {
         output: task.output,
         error: task.error,
       });
+    });
+  } else if (typeof window !== 'undefined') {
+    // Browser mode - connect via WebSocket
+    const wsUrl = `ws://${location.host}/ws/background-tasks`;
+    connectWebSocket(wsUrl).catch((err) => {
+      console.warn('[BackgroundTasksPanel] WebSocket connection failed:', err.message);
     });
   }
 }
