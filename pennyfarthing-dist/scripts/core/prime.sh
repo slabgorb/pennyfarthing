@@ -4,4 +4,12 @@
 #
 # Thin wrapper around python -m pennyfarthing_scripts.prime
 
+# Find the package root (where pennyfarthing_scripts lives)
+# Works for both npm installs (node_modules/@pennyfarthing/core) and local dev
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PACKAGE_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+
+# Set PYTHONPATH so Python can find pennyfarthing_scripts
+export PYTHONPATH="${PACKAGE_ROOT}:${PYTHONPATH:-}"
+
 exec python3 -m pennyfarthing_scripts.prime "$@"
