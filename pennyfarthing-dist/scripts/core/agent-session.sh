@@ -219,8 +219,8 @@ case "$1" in
     # 5. Sidecars (loaded by prime.sh LAST)
 
     # Auto-prime loads agent definition FIRST (highest attention zone)
-    if [[ -f "$PROJECT_ROOT/.pennyfarthing/scripts/prime.sh" ]]; then
-      "$PROJECT_ROOT/.pennyfarthing/scripts/prime.sh" --quiet --agent "$2"
+    if [[ -f "$PROJECT_ROOT/.pennyfarthing/scripts/core/prime.sh" ]]; then
+      "$PROJECT_ROOT/.pennyfarthing/scripts/core/prime.sh" --quiet --agent "$2"
     fi
 
     # Output persona AFTER agent definition (character voice is supplementary)
