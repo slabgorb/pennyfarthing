@@ -20,22 +20,22 @@
 #   ./scripts/run.sh jira/jira-claim-story.sh MSSCI-12345
 #
 # This solves the absolute path problem by:
-# 1. Finding PROJECT_ROOT by looking for the .claude/ directory
+# 1. Finding PROJECT_ROOT by looking for the .pennyfarthing/ directory
 # 2. Exporting PROJECT_ROOT for the script to use
 # 3. Running the script with full absolute paths
 
 set -euo pipefail
 
-# Find PROJECT_ROOT by looking for .claude/ marker
+# Find PROJECT_ROOT by looking for .pennyfarthing/ marker
 find_project_root() {
     local dir="$PWD"
-    while [[ ! -d "$dir/.claude" ]] && [[ "$dir" != "/" ]]; do
+    while [[ ! -d "$dir/.pennyfarthing" ]] && [[ "$dir" != "/" ]]; do
         dir="$(dirname "$dir")"
     done
-    if [[ -d "$dir/.claude" ]]; then
+    if [[ -d "$dir/.pennyfarthing" ]]; then
         echo "$dir"
     else
-        echo "Error: Could not find project root (no .claude/ directory found)" >&2
+        echo "Error: Could not find project root (no .pennyfarthing/ directory found)" >&2
         exit 1
     fi
 }

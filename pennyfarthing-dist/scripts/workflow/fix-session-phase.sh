@@ -49,7 +49,7 @@ fi
 # PROJECT_ROOT should be set by run.sh, but find it if not
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
   d="$PWD"
-  while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do
+  while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do
     d="$(dirname "$d")"
   done
   PROJECT_ROOT="$d"

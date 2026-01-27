@@ -22,10 +22,10 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # Use exported PROJECT_ROOT from run.sh, or detect it
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
     _dir="$PWD"
-    while [[ ! -d "$_dir/.claude" ]] && [[ "$_dir" != "/" ]]; do
+    while [[ ! -d "$_dir/.pennyfarthing" ]] && [[ "$_dir" != "/" ]]; do
         _dir="$(dirname "$_dir")"
     done
-    if [[ -d "$_dir/.claude" ]]; then
+    if [[ -d "$_dir/.pennyfarthing" ]]; then
         PROJECT_ROOT="$_dir"
     else
         PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
