@@ -211,22 +211,21 @@ case "$1" in
     echo "$2" > "$AGENT_FILE"
     echo "Session: $session_id -> $2"
 
-    # Context loading order (optimized for attention):
-    # 1. CLAUDE.md (system prompt - already loaded)
-    # 2. Agent definition + behavior guide (loaded by prime.sh FIRST)
-    # 3. Persona (output here, AFTER agent definition)
-    # 4. Session summary (loaded by prime.sh)
-    # 5. Sidecars (loaded by prime.sh LAST)
+    # Prime v2: Unified Python entry point handles everything
+    # - Workflow state detection
+    # - Agent definition loading
+    # - Persona (if character_voice enabled)
+    # - Behavior guide
+    # - Sidecars
+    # - Session/sprint context
+    PRIME_ARGS=(--agent "$2" --session-id "$session_id")
 
-    # Auto-prime loads agent definition FIRST (highest attention zone)
-    if [[ -f "$PROJECT_ROOT/.pennyfarthing/scripts/core/prime.sh" ]]; then
-      "$PROJECT_ROOT/.pennyfarthing/scripts/core/prime.sh" --quiet --agent "$2"
+    # Pass persona preference to prime
+    if ! is_character_voice_enabled; then
+      PRIME_ARGS+=(--no-persona)
     fi
 
-    # Output persona AFTER agent definition (character voice is supplementary)
-    if is_character_voice_enabled; then
-      output_persona "$2"
-    fi
+    python3 -m pennyfarthing_scripts.prime "${PRIME_ARGS[@]}"
     ;;
   stop)
     # Use provided session ID, fall back to SESSION_ID env var
