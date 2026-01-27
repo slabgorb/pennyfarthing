@@ -123,7 +123,7 @@ def get_issue(issue_key: str) -> dict[str, Any] | None:
         return None
 
     result = subprocess.run(
-        ["jira", "issue", "view", issue_key, "--output", "json"],
+        ["jira", "issue", "view", issue_key, "--raw"],
         capture_output=True,
         text=True,
     )
