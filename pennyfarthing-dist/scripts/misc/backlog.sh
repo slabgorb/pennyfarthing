@@ -8,11 +8,11 @@ set -euo pipefail
 SCRIPT_DIR="${0:A:h}"
 PROJECT_ROOT="${SCRIPT_DIR}/../.."
 
-# Find project root by looking for .claude directory
+# Find project root by looking for .pennyfarthing directory
 find_project_root() {
     local dir="$PWD"
     while [[ "$dir" != "/" ]]; do
-        if [[ -d "$dir/.claude" ]]; then
+        if [[ -d "$dir/.pennyfarthing" ]]; then
             echo "$dir"
             return 0
         fi

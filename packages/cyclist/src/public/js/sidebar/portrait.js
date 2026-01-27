@@ -16,6 +16,11 @@ let portraitContainer = null;
 let portraitImg = null;
 let portraitPlaceholder = null;
 
+// MSSCI-12474: Thumbnail elements for collapsed header
+let thumbContainer = null;
+let thumbImg = null;
+let thumbPlaceholder = null;
+
 // Track current role/theme for reloading
 let currentRole = null;
 let currentPortraitTheme = null;
@@ -79,6 +84,30 @@ function handleImageLoad() {
 }
 
 /**
+ * MSSCI-12474: Handle successful thumbnail load
+ */
+function handleThumbLoad() {
+  if (thumbImg) {
+    thumbImg.style.display = 'block';
+  }
+  if (thumbPlaceholder) {
+    thumbPlaceholder.style.display = 'none';
+  }
+}
+
+/**
+ * MSSCI-12474: Handle thumbnail load error - show fallback
+ */
+function handleThumbError() {
+  if (thumbImg) {
+    thumbImg.style.display = 'none';
+  }
+  if (thumbPlaceholder) {
+    thumbPlaceholder.style.display = 'flex';
+  }
+}
+
+/**
  * Handle image load error - show fallback
  */
 function handleImageError() {
@@ -124,6 +153,19 @@ export function loadPortraitWithTheme(slug, theme, size = DEFAULT_PORTRAIT_SIZE)
 
   portraitImg.onerror = handleError;
   portraitImg.src = primaryPath;
+
+  // MSSCI-12474: Also load thumbnail (uses small size)
+  if (thumbImg) {
+    const thumbPath = buildPortraitPath(currentPortraitTheme, slug, PORTRAIT_SIZES.small);
+    thumbImg.onerror = () => {
+      if (currentPortraitTheme !== 'discworld') {
+        thumbImg.src = buildPortraitPath('discworld', slug, PORTRAIT_SIZES.small);
+      } else {
+        handleThumbError();
+      }
+    };
+    thumbImg.src = thumbPath;
+  }
 
   // Update server state
   fetch('/api/portrait', {
@@ -201,9 +243,20 @@ export function init() {
   portraitImg = portraitContainer?.querySelector('img');
   portraitPlaceholder = portraitContainer?.querySelector('.portrait-placeholder');
 
+  // MSSCI-12474: Initialize thumbnail elements
+  thumbContainer = document.getElementById('portrait-thumb');
+  thumbImg = thumbContainer?.querySelector('img');
+  thumbPlaceholder = thumbContainer?.querySelector('.portrait-placeholder');
+
   if (portraitImg) {
     portraitImg.addEventListener('load', handleImageLoad);
     portraitImg.addEventListener('error', handleImageError);
+  }
+
+  // MSSCI-12474: Thumbnail load handlers
+  if (thumbImg) {
+    thumbImg.addEventListener('load', handleThumbLoad);
+    thumbImg.addEventListener('error', handleThumbError);
   }
 
   // Listen for UI theme changes
@@ -228,6 +281,11 @@ export function destroy() {
   if (portraitImg) {
     portraitImg.removeEventListener('load', handleImageLoad);
     portraitImg.removeEventListener('error', handleImageError);
+  }
+  // MSSCI-12474: Cleanup thumbnail handlers
+  if (thumbImg) {
+    thumbImg.removeEventListener('load', handleThumbLoad);
+    thumbImg.removeEventListener('error', handleThumbError);
   }
   window.removeEventListener('themechange', handleThemeChange);
 }

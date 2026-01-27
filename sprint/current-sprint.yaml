@@ -8,10 +8,10 @@ sprint:
   status: active
   velocity_target: 22
 summary:
-  total_points: 158
+  total_points: 190
   completed_points: 130
   cancelled_points: 6
-  remaining_points: 22
+  remaining_points: 54
   notes: |
     Sprint 12 includes work from multiple epics that were tracked in Jira but
     not in local sprint YAML. This file has been reconciled with Jira Sprint 276.
@@ -1495,3 +1495,235 @@ epics:
         acceptance_criteria: []
         jira: MSSCI-12421
     jira: MSSCI-12415
+  # ===========================================================================
+  # EPIC: Cyclist UX Polish (epic-64) - NEW
+  # ===========================================================================
+  - id: epic-64
+    type: epic
+    title: "Epic: Cyclist UX Polish"
+    description: |
+      Improve Cyclist terminal UX based on UX Overview PRD - fix bugs, polish
+      existing features, and add missing visibility. Covers DIFFS panel, stats
+      strip, sidebar sections, tab bar, and fresh start state management.
+    priority: P1
+    status: backlog
+    repos: pennyfarthing
+    prd: docs/prd/ux-overview.md
+    stories:
+      # MVP Stories
+      - id: "MSSCI-12466"
+        title: "DIFFS panel: Show file line numbers instead of diff-relative"
+        description: |
+          Line numbers in diff viewer show position within the diff, not actual
+          file line numbers. Developer needs to know which line in the file to
+          navigate to.
+        points: 2
+        priority: P1
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        branch: feat/MSSCI-12466-diffs-panel-line-numbers
+        acceptance_criteria:
+          - Line numbers in diff view match actual file line numbers
+          - Works for both partial and combined views
+        jira: MSSCI-12466
+        completed: "2026-01-27"
+      - id: "MSSCI-12467"
+        title: "DIFFS panel: Fix file opener for $EDITOR"
+        description: |
+          Clicking file path header in diff viewer should open the file in the
+          user's configured editor. Currently broken.
+        points: 1
+        priority: P1
+        status: done
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - Click file path opens file in $EDITOR
+          - Falls back gracefully if $EDITOR not set
+        jira: MSSCI-12467
+        completed: "2026-01-27"
+      - id: "MSSCI-12468"
+        title: "DIFFS panel: Improve combined diff view"
+        description: |
+          Combined diff view needs better UX showing original → final state
+          with proper context.
+        points: 2
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Combined view shows clear original → final transition
+          - Context lines displayed appropriately
+        jira: MSSCI-12468
+      - id: "MSSCI-12469"
+        title: "Stats strip: Redesign layout with identity context"
+        description: |
+          Redesign stats strip to show:
+          PWD (responsive: short when narrow, full when wide) → Jira email →
+          GitHub username → spacer → Claude model → Context %
+
+          Remove: context tokens, usage limits
+        points: 3
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - PWD responsive (short in narrow window, long in wide)
+          - Jira email displayed from jira CLI config
+          - GitHub username displayed from gh CLI config
+          - Model and context % preserved
+          - Usage limits removed
+        jira: MSSCI-12469
+      - id: "MSSCI-12470"
+        title: "Tab bar: Fix indicator sync on startup"
+        description: |
+          On app startup, Message and Sidebar panels are open but their tab
+          indicators don't show active state. Must click twice to sync.
+        points: 1
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - Tab indicators match actual panel state on startup
+          - First click toggles correctly
+        jira: MSSCI-12470
+      - id: "MSSCI-12471"
+        title: "Fresh start: Audit and fix stale data on load"
+        description: |
+          On fresh load, many panels show stale data. Audit all stateful
+          components and ensure clean state on:
+          - App start
+          - Clear button
+          - TirePump (context clear)
+
+          Components to audit: tab indicators, stats strip, persona section,
+          story section, CHANGED/DIFFS panels, tasks section, background tasks,
+          BikeLane section, git section, quick actions.
+        points: 3
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - All panels have clear()/reset() methods
+          - Reset called on app start, Clear, TirePump
+          - No localStorage/sessionStorage pollution
+          - All indicators reset to defaults
+        jira: MSSCI-12471
+      - id: "MSSCI-12472"
+        title: "Persona section: Remove OCEAN scores and helper updates"
+        description: |
+          Remove OCEAN score bars and helper real-time updates from persona
+          section. These add noise without value.
+        points: 1
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - OCEAN scores removed from UI
+          - Helper task line removed from UI
+        jira: MSSCI-12472
+      - id: "MSSCI-12473"
+        title: "Persona section: Random catchphrase on activation"
+        description: |
+          Instead of showing static quote, pick random catchphrase from theme's
+          catchphrases array on agent activation. Quote stays fixed until next
+          agent switch.
+        points: 2
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Random catchphrase selected from array on agent switch
+          - Falls back to first catchphrase if array has one item
+          - Falls back to quote field if catchphrases missing
+        jira: MSSCI-12473
+      - id: "MSSCI-12474"
+        title: "Persona section: Tighten layout"
+        description: |
+          Reduce vertical sprawl in persona section for more compact display.
+        points: 1
+        priority: P1
+        status: done
+        repos: pennyfarthing
+        workflow: trivial
+        acceptance_criteria:
+          - Persona section more compact
+          - All essential info still visible
+        jira: MSSCI-12474
+        completed: "2026-01-27"
+      # Growth Stories
+      - id: "MSSCI-12475"
+        title: "Story section: Expandable sprint/epic details"
+        description: |
+          Make story section expandable to show full sprint and epic context
+          without needing to open YAML files.
+        points: 5
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Expandable section shows all sprint stories
+          - Shows epic context (parent epic, sibling stories)
+          - Jira links clickable
+          - Points and status for each story
+        jira: MSSCI-12475
+      - id: "MSSCI-12476"
+        title: "BikeLane section: Show workflow status when active"
+        description: |
+          BikeLane section exists but is hidden. Make it visible when a
+          workflow is active.
+        points: 3
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Section visible when workflow active
+          - Shows workflow name and type badge
+          - Shows current step/phase
+          - Progress visualization
+          - Phase history timeline
+        jira: MSSCI-12476
+      - id: "MSSCI-12477"
+        title: "Background tasks: Implement subagent visibility"
+        description: |
+          Background tasks section exists but doesn't work. Implement proper
+          visibility for subagents and long-running tasks.
+        points: 5
+        priority: P2
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Shows active subagent tasks
+          - Shows background Bash commands
+          - Status indicators (running/completed/failed)
+          - Duration/elapsed time
+          - Output preview on expand
+        jira: MSSCI-12477
+      # Vision Stories
+      - id: "MSSCI-12478"
+        title: "Theme schema: Consolidate quote → catchphrases"
+        description: |
+          Some themes have quote field, others have catchphrases array.
+          Consolidate all to use catchphrases array only.
+        points: 3
+        priority: P3
+        status: backlog
+        repos: pennyfarthing
+        workflow: tdd
+        acceptance_criteria:
+          - Migration script merges quote into catchphrases
+          - All 102 themes updated
+          - quote field removed from schema
+          - Theme validation updated
+        jira: MSSCI-12478
+    jira: MSSCI-12465

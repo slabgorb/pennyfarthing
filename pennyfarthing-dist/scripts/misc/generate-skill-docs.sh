@@ -17,13 +17,13 @@
 
 set -euo pipefail
 
-# Find project root (directory containing .claude/)
+# Find project root (directory containing .pennyfarthing/)
 find_project_root() {
   local dir="$PWD"
-  while [[ ! -d "$dir/.claude" ]] && [[ "$dir" != "/" ]]; do
+  while [[ ! -d "$dir/.pennyfarthing" ]] && [[ "$dir" != "/" ]]; do
     dir="$(dirname "$dir")"
   done
-  if [[ -d "$dir/.claude" ]]; then
+  if [[ -d "$dir/.pennyfarthing" ]]; then
     echo "$dir"
   else
     echo ""
@@ -32,7 +32,7 @@ find_project_root() {
 
 PROJECT_ROOT="$(find_project_root)"
 if [[ -z "$PROJECT_ROOT" ]]; then
-  echo "Error: Cannot find project root (no .claude directory found)" >&2
+  echo "Error: Cannot find project root (no .pennyfarthing directory found)" >&2
   exit 1
 fi
 
