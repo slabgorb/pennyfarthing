@@ -16,7 +16,7 @@ import { ClaudeService, type PermissionMode } from './claude-service.js';
 import { publicDir } from './paths.js';
 import { getOtelConfig } from './server.js';
 import { getStoryInfo } from './story-parser.js';
-import { getGitInfo } from './api/git.js';
+import { getGitInfo, getAllReposGitInfo } from './api/git.js';
 
 // WebSocket message types for Claude communication
 interface ClaudeWebSocketMessage {
@@ -280,15 +280,16 @@ export function setupWebSocketServers(
   });
 
   // Handle git WebSocket connections (MSSCI-11943)
+  // Updated to send multi-repo data for sidebar REPOS section
   gitWss.on('connection', (ws: WebSocket) => {
     // Add client to broadcast set
     gitClients.add(ws);
 
-    // Send initial git data on connection
+    // Send initial git data on connection (multi-repo)
     const projectDir = getProjectDir();
-    const gitInfo = getGitInfo(projectDir);
+    const allReposInfo = getAllReposGitInfo(projectDir);
     if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: 'init', ...gitInfo }));
+      ws.send(JSON.stringify({ type: 'init', repos: allReposInfo }));
     }
 
     // Remove client on disconnect
@@ -625,9 +626,9 @@ function broadcastStoryUpdate(storyInfo: ReturnType<typeof getStoryInfo>): void 
   }
 }
 
-// MSSCI-11943: Broadcast git update to all connected clients
-function broadcastGitUpdate(gitInfo: ReturnType<typeof getGitInfo>): void {
-  const message = JSON.stringify({ type: 'update', ...gitInfo });
+// MSSCI-11943: Broadcast git update to all connected clients (multi-repo)
+function broadcastGitUpdate(allReposInfo: ReturnType<typeof getAllReposGitInfo>): void {
+  const message = JSON.stringify({ type: 'update', repos: allReposInfo });
   for (const client of gitClients) {
     if (client.readyState === WebSocket.OPEN) {
       client.send(message);
@@ -642,8 +643,8 @@ function triggerGitUpdate(projectDir: string): void {
   }
 
   gitCoalesceTimer = setTimeout(() => {
-    const gitInfo = getGitInfo(projectDir);
-    broadcastGitUpdate(gitInfo);
+    const allReposInfo = getAllReposGitInfo(projectDir);
+    broadcastGitUpdate(allReposInfo);
     gitCoalesceTimer = null;
   }, GIT_COALESCE_MS);
 }
