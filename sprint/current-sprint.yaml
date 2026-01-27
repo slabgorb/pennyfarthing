@@ -826,7 +826,7 @@ epics:
         status: done
         repos: pennyfarthing
         workflow: trivial
-      - id: MSSCI-12425
+      - id: MSSCI-12509
         title: "Remove debug logging in api/settings.ts"
         description: |
           Line 282 in api/settings.ts has a debug console.log that logs
@@ -843,7 +843,7 @@ epics:
         status: backlog
         repos: pennyfarthing
         workflow: trivial
-      - id: MSSCI-12426
+      - id: MSSCI-12510
         title: "Fix uncaught exception during startup when no project directory"
         description: |
           During Cyclist startup, an uncaught exception occurs:
