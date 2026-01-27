@@ -18,7 +18,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Determine project root (directory containing .claude)
 PROJECT_ROOT="$SCRIPT_DIR"
-while [[ ! -d "$PROJECT_ROOT/.claude" ]] && [[ "$PROJECT_ROOT" != "/" ]]; do
+while [[ ! -d "$PROJECT_ROOT/.pennyfarthing" ]] && [[ "$PROJECT_ROOT" != "/" ]]; do
     PROJECT_ROOT="$(dirname "$PROJECT_ROOT")"
 done
 

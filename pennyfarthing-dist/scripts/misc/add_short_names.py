@@ -23,10 +23,10 @@ except ImportError:
 
 
 def find_project_root() -> Path:
-    """Find project root by looking for .claude directory."""
+    """Find project root by looking for .pennyfarthing directory."""
     current = Path.cwd()
     while current != current.parent:
-        if (current / ".claude").is_dir():
+        if (current / ".pennyfarthing").is_dir():
             return current
         current = current.parent
     return Path.cwd()

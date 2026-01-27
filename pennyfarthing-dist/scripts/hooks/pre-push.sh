@@ -12,10 +12,10 @@ set -uo pipefail
 # Find project root
 find_project_root() {
     local dir="$PWD"
-    while [[ ! -d "$dir/.claude" ]] && [[ "$dir" != "/" ]]; do
+    while [[ ! -d "$dir/.pennyfarthing" ]] && [[ "$dir" != "/" ]]; do
         dir="$(dirname "$dir")"
     done
-    if [[ -d "$dir/.claude" ]]; then
+    if [[ -d "$dir/.pennyfarthing" ]]; then
         echo "$dir"
     else
         return 1

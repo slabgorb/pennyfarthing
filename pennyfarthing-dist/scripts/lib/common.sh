@@ -177,7 +177,7 @@ get_python() {
     # Find project root if not set
     if [[ -z "${PROJECT_ROOT:-}" ]]; then
         local d="$PWD"
-        while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do
+        while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do
             d="$(dirname "$d")"
         done
         PROJECT_ROOT="$d"
