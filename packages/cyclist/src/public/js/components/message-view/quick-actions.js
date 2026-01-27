@@ -7,7 +7,8 @@
 
 import { escapeHtml } from './markdown-parser.js';
 import { insertAndSubmit } from '../../editor.js';
-import { getThemeAgents, loadThemeAgents } from '../../story.js';
+import { getThemeAgents, loadThemeAgents } from '../../sidebar/story.js';
+import { isRelayModeEnabled } from '../../controls.js';
 
 // =============================================================================
 // Constants
@@ -386,7 +387,16 @@ export function renderQuickActions(result) {
   }
 
   if (result.type === 'handoff') {
-    // For handoffs: display shows character/role name, data-response has the command
+    // When relay mode is enabled, auto-execute handoffs like INVOKE markers
+    if (isRelayModeEnabled()) {
+      setTimeout(() => {
+        console.log(`[QuickActions] Relay mode ON - auto-executing handoff to: ${result.agent}`);
+        insertAndSubmit(result.agent);
+      }, 100);
+      return `<div class="quick-actions-container"><span class="auto-invoke-status">Handing off to ${getAgentDisplayName(result.agent)}...</span></div>`;
+    }
+
+    // Relay mode OFF: show buttons for manual confirmation
     const buttons = result.responses.map(response => {
       // Check if this is an agent command (starts with /)
       const isAgentCmd = response.startsWith('/');

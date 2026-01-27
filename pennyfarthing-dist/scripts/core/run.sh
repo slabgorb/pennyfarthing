@@ -64,6 +64,15 @@ fi
 # Full path required - script must include category
 SCRIPT_PATH="$SCRIPTS_DIR/$SCRIPT_NAME"
 
+# Python-first dispatch: prefer .py over .sh when available
+# This enables transparent migration of shell scripts to Python
+SCRIPT_BASE="${SCRIPT_NAME%.sh}"
+PYTHON_PATH="$SCRIPTS_DIR/${SCRIPT_BASE}.py"
+
+if [[ -f "$PYTHON_PATH" ]] && command -v python3 &>/dev/null; then
+    exec python3 "$PYTHON_PATH" "$@"
+fi
+
 if [[ -f "$SCRIPT_PATH" ]]; then
     exec "$SCRIPT_PATH" "$@"
 else

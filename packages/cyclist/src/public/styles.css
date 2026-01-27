@@ -777,18 +777,13 @@ html, body {
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.05em;
-  border: none;
+  border: 1px solid var(--border);
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.15s ease;
   text-transform: uppercase;
-}
-
-/* Default state - MANUAL (white/neutral) */
-.mode-btn {
   background: var(--bg-secondary);
   color: var(--text-primary);
-  border: 1px solid var(--border);
 }
 
 .mode-btn:hover {
@@ -931,10 +926,6 @@ html, body {
 /* MSSCI-12395: Turbo flash removed - relay_mode is now a separate toggle */
 
 /* Custom tooltip styling (MSSCI-12127 AC4) */
-.mode-switch-segment {
-  position: relative;
-}
-
 .mode-switch-tooltip {
   position: absolute;
   bottom: calc(100% + 8px);
@@ -1105,32 +1096,52 @@ html, body {
 
 /* B-22: Stats Strip - compact stats display below editor */
 /* B-20: Increased font sizes for readability */
+/* Match editor-row horizontal padding so strip aligns with rich text box */
 #stats-strip {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.25rem 0.75rem;
+  justify-content: space-between;
+  padding: 0.25rem 0.5rem;
+  margin-right: 2.5rem; /* Account for editor-controls width + gap */
   background: var(--bg-secondary);
   border-top: 1px solid var(--border);
   font-size: 0.8125rem;
 }
 
-/* 35-2: User email display in stats strip */
-.user-email {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  max-width: 180px;
+#stats-strip .stats-left,
+#stats-strip .stats-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Claude's working directory display (responsive) */
+#stats-strip .pwd {
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  flex: 1;
+  min-width: 50px;
+  max-width: 300px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.user-email:empty {
+#stats-strip .pwd:empty {
   display: none;
 }
 
-.user-email.updated {
-  animation: pulse 0.5s ease-out;
+/* Multi-repo git status - see Git Section (~line 2700) for full styles */
+#git-repos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 100%;
+}
+
+#git-repos:empty {
+  display: none;
 }
 
 .model-badge {
@@ -1696,20 +1707,6 @@ html, body {
   background: var(--bg-primary);
 }
 
-/* Bell mode injected message indicator */
-.message-bell-injected {
-  position: relative;
-  border-left-color: var(--accent);
-}
-
-.message-bell-injected .bell-indicator {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  font-size: 1rem;
-  opacity: 0.8;
-}
-
 /* Thinking indicator - throbbing border and background on persona card */
 .persona-section.thinking {
   animation: thinking-throb 1.5s ease-in-out infinite;
@@ -2227,7 +2224,7 @@ html, body {
   height: 48px;
 }
 
-/* Persona Section Styles */
+/* Persona Section Styles - Uses CollapsibleSection base */
 .persona-section {
   background: var(--bg-primary);
   border-radius: 8px;
@@ -2235,15 +2232,57 @@ html, body {
   padding: 0.5rem 0.75rem;  /* B-20: Standardized sidebar padding */
 }
 
-/* Project name at top of persona section */
-.project-name {
-  font-size: 1rem;
+/* Two-line header for collapsed persona section */
+.persona-section .section-header {
+  align-items: flex-start;
+}
+
+.persona-section .persona-header-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.persona-section .persona-header-line1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.persona-section .persona-header-line2 {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.persona-section.collapsed .persona-header-line2 {
+  opacity: 1;
+}
+
+/* Project name in header */
+.persona-section .project-name {
+  font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-primary);
-  text-align: center;
-  margin-bottom: 0.5rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.05em;
+  margin: 0;
+  text-align: left;
+}
+
+/* Agent name and role in line 2 */
+.persona-section .summary-agent {
+  color: var(--text-primary);
+}
+
+.persona-section .summary-role {
+  color: var(--accent);
+  font-weight: 600;
 }
 
 /* Theme name under portrait */
@@ -2491,53 +2530,412 @@ html, body {
   opacity: 0.7;
 }
 
-/* Git Section Styles */
-.git-section {
+/* ==========================================================================
+   CollapsibleSection Component - Base styles for summary/detail sections
+   ========================================================================== */
+.collapsible-section {
   background: var(--bg-primary);
   border-radius: 8px;
   padding: 0.5rem 0.75rem;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.375rem;
 }
 
-/* Hide redundant header */
-.git-section h3 {
+.collapsible-section .section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.collapsible-section .section-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.collapsible-section .section-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.0625rem 0.25rem;
+  border-radius: 3px;
   display: none;
 }
 
-#git-branch,
-.git-branch {
-  font-size: 0.9rem;
-  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+.collapsible-section .section-badge.dirty {
+  background: color-mix(in srgb, var(--status-working) 20%, transparent);
+  color: var(--status-working);
+}
+
+.collapsible-section .section-badge.clean {
+  background: color-mix(in srgb, var(--status-ready) 20%, transparent);
+  color: var(--status-ready);
+}
+
+/* Summary view - visible when collapsed, hidden when expanded */
+.collapsible-section .section-summary {
+  flex: 1;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.collapsible-section.collapsed .section-summary {
+  opacity: 1;
+}
+
+.collapsible-section .collapse-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  cursor: pointer;
+  padding: 0.125rem;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.collapsible-section.collapsed .collapse-btn {
+  transform: rotate(-90deg);
+}
+
+/* Detail view - visible when expanded, hidden when collapsed */
+.collapsible-section .section-detail,
+.collapsible-section .section-content {
+  margin-top: 0.5rem;
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.2s ease;
+  max-height: 500px;
+  opacity: 1;
+}
+
+.collapsible-section.collapsed .section-detail,
+.collapsible-section.collapsed .section-content {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+}
+
+/* ==========================================================================
+   Git Section - Uses CollapsibleSection base
+   ========================================================================== */
+.git-section {
+  /* Inherits from .collapsible-section */
+}
+
+/* Summary styling for collapsed view */
+.git-section .summary-clean {
+  color: var(--status-ready);
+}
+
+.git-section .summary-dirty {
   color: var(--text-primary);
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+}
+
+.git-section .summary-count {
+  color: var(--status-working);
+}
+
+/* Repo rows in git section */
+#git-repos .repo-row {
+  padding: 0.25rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+#git-repos .repo-row:last-child {
+  border-bottom: none;
+}
+
+#git-repos .repo-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#git-repos .repo-name {
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+#git-repos .repo-branch {
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
   flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-align: right;
 }
 
-#git-status,
-.git-status {
-  display: inline-block;
-  font-size: 0.75rem;
+#git-repos .repo-badge {
+  font-size: 0.65rem;
   font-weight: 600;
-  padding: 0.125rem 0.375rem;
+  padding: 0.0625rem 0.25rem;
   border-radius: 3px;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  flex-shrink: 0;
 }
 
-.status-clean {
+#git-repos .repo-badge.clean {
   background: color-mix(in srgb, var(--status-ready) 20%, transparent);
   color: var(--status-ready);
 }
 
-.status-dirty {
+#git-repos .repo-badge.dirty {
   background: color-mix(in srgb, var(--status-working) 20%, transparent);
   color: var(--status-working);
+}
+
+/* Dirty files list */
+#git-repos .dirty-files {
+  margin-top: 0.25rem;
+  padding-left: 0.5rem;
+  font-size: 0.75rem;
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+}
+
+#git-repos .dirty-file {
+  color: var(--text-secondary);
+  padding: 0.0625rem 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#git-repos .dirty-file .file-status {
+  color: var(--status-working);
+  margin-right: 0.25rem;
+  font-weight: 500;
+}
+
+#git-repos .dirty-more {
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 0.125rem 0;
+}
+
+/* ==========================================================================
+   B-12451: BikeLane Workflow Section
+   ========================================================================== */
+#bikelane-section {
+  background: var(--bg-primary);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  transition: opacity 0.2s ease, max-height 0.3s ease;
+}
+
+#bikelane-section.hidden,
+.bikelane-section.hidden,
+[hidden] {
+  display: none !important;
+}
+
+#bikelane-section.collapsed .section-detail {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+}
+
+/* Workflow type badge (pill styling) */
+.workflow-type-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.125rem 0.375rem;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+/* Phase summary in collapsed header */
+.phase-summary {
+  flex: 1;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+}
+
+.phase-summary .current {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Phase progress visualization */
+.phase-progress,
+.workflow-phases {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.phase-step,
+.workflow-phase {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  min-width: 2.5rem;
+}
+
+.phase-step::after {
+  content: '';
+  display: none;
+}
+
+.phase-arrow,
+.phase-connector {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.phase-icon {
+  font-size: 0.875rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.phase-label,
+.phase-agent {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.phase-name,
+.phase-title {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* Phase status states */
+.phase-step.done .phase-icon,
+.phase-item.done .phase-icon,
+.phase-step.completed .phase-icon,
+.phase-item.completed .phase-icon {
+  color: var(--status-ready);
+}
+
+.phase-step.current .phase-icon,
+.phase-item.current .phase-icon,
+.phase-step.active .phase-icon,
+.phase-item.active .phase-icon {
+  color: var(--accent);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.phase-step.pending .phase-icon,
+.phase-item.pending .phase-icon {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+/* Phase history timeline */
+.phase-history {
+  border-top: 1px solid var(--border);
+  padding-top: 0.5rem;
+}
+
+.phase-history-header,
+.phase-history h4 {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.phase-history-item,
+.history-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  font-size: 0.75rem;
+}
+
+.phase-history-item .history-icon,
+.history-entry .history-icon {
+  width: 1rem;
+  flex-shrink: 0;
+}
+
+.history-agent,
+.phase-history-item .agent {
+  font-weight: 500;
+  color: var(--text-primary);
+  min-width: 2.5rem;
+}
+
+.history-duration,
+.history-status,
+.phase-history-item .duration,
+.phase-history-item .status {
+  color: var(--text-secondary);
+  margin-left: auto;
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+  font-size: 0.7rem;
+}
+
+/* History item status classes */
+.phase-history-item.done,
+.history-entry.done {
+  color: var(--text-primary);
+}
+
+.phase-history-item.done .history-icon,
+.history-entry.done .history-icon {
+  color: var(--status-ready);
+}
+
+.phase-history-item.current,
+.history-entry.current {
+  color: var(--accent);
+}
+
+.phase-history-item.current .history-icon,
+.history-entry.current .history-icon {
+  color: var(--accent);
+}
+
+.phase-history-item.pending,
+.history-entry.pending {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.phase-history-item.pending .history-icon,
+.history-entry.pending .history-icon {
+  color: var(--text-muted);
+}
+
+.in-progress {
+  color: var(--accent);
+  font-style: italic;
 }
 
 /* Theme Toggle Button */
@@ -4769,14 +5167,6 @@ html, body {
   padding: 2px 6px;
   background: var(--bg-secondary);
   border-radius: 3px;
-}
-
-.status-success {
-  color: #10b981;
-}
-
-.status-error {
-  color: #ef4444;
 }
 
 .duration-bar {

@@ -88,7 +88,10 @@ export {
   resumeQueue,
   isQueuePaused,
   setBellMode,
-  isBellModeEnabled
+  isBellModeEnabled,
+  sendAllQueuedMessages,
+  flushRemainingQueue,
+  handleTurnComplete
 } from './editor/message-queue.js';
 
 // Re-export markdown for external consumers

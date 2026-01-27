@@ -48,6 +48,7 @@ eval "$("$SCRIPT_DIR/check-context.sh" 2>/dev/null)" || true
 # Default values if check-context.sh failed
 IS_CYCLIST="${IS_CYCLIST:-false}"
 USE_TIREPUMP="${USE_TIREPUMP:-false}"
+RELAY_MODE="${RELAY_MODE:-false}"
 
 # Generate marker based on environment
 if [[ "$IS_ERROR" == "true" ]]; then
@@ -69,8 +70,18 @@ AGENT_COMMAND:
   fallback: "Run \`/${NEXT_AGENT}\` to continue"
 ---
 EOF
+elif [[ "$RELAY_MODE" != "true" ]]; then
+  # Cyclist + Relay OFF - emit question marker for manual handoff confirmation
+  cat <<EOF
+---
+AGENT_COMMAND:
+  marker: "<!-- CYCLIST:QUESTION:yesno -->"
+  question: "Ready to hand off to /${NEXT_AGENT}?"
+  fallback: "Run \`/${NEXT_AGENT}\` to continue"
+---
+EOF
 elif [[ "$USE_TIREPUMP" == "true" ]]; then
-  # Cyclist + TirePump - context clear marker
+  # Cyclist + Relay ON + high context - context clear marker
   cat <<EOF
 ---
 AGENT_COMMAND:
@@ -79,7 +90,7 @@ AGENT_COMMAND:
 ---
 EOF
 else
-  # Cyclist, no TirePump - handoff marker
+  # Cyclist + Relay ON + low context - handoff marker
   cat <<EOF
 ---
 AGENT_COMMAND:

@@ -13,7 +13,7 @@ import { Server, createServer as createHttpServer, IncomingMessage, ServerRespon
 import { fileURLToPath } from 'url';
 import { dirname, join, basename } from 'path';
 import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
-import { getStoryInfo, getGitInfo, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig, writeApprovalPortFile, cleanupApprovalPortFile } from './server.js';
+import { getStoryInfo, getGitInfo, getAllReposGitInfo, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig, writeApprovalPortFile, cleanupApprovalPortFile } from './server.js';
 import { parseToolStats, ToolStats, createEmptyStats } from './tool-stats.js';
 import {
   getTokenStats,
@@ -790,11 +790,11 @@ export function setupDataIPCHandlers(ipcMain: {
     return getStoryInfo(projectDir);
   });
 
-  // Git handler - returns git status from repository (B-2.1)
+  // Git handler - returns git status for all repos (multi-repo support)
   ipcMain.handle(IPC_DATA_CHANNELS.GIT_GET, async () => {
     const projectDir = getProjectDirectory();
     if (!projectDir) return null;
-    return getGitInfo(projectDir);
+    return { repos: getAllReposGitInfo(projectDir) };
   });
 
   // Tool stats handler - returns current tool stats (E5-2)
@@ -2206,7 +2206,12 @@ if (isElectron) {
   setBrowserWindowRef(BrowserWindow);
 
   // Suppress error dialogs - log to console instead
+  // Filter out transient startup errors that occur before project directory is set
   process.on('uncaughtException', (error) => {
+    // Ignore path errors during startup (before project directory is established)
+    if (error.message?.includes("'path' argument must be of type string")) {
+      return; // Transient startup condition - app will continue normally
+    }
     console.error('Uncaught exception:', error.message);
   });
   process.on('unhandledRejection', (reason) => {
@@ -2398,6 +2403,53 @@ if (isElectron) {
     return result.response === 0; // true if "Choose Different Folder"
   }
 
+  /**
+   * Open a new Cyclist window for a different project.
+   * Prompts user to select a project folder, validates it has Pennyfarthing,
+   * then spawns a new Cyclist instance pointing to that project.
+   */
+  async function openNewWindow(): Promise<void> {
+    // Prompt for project folder
+    const result = await dialog.showOpenDialog({
+      properties: ['openDirectory'],
+      title: 'Select Project for New Window',
+    });
+
+    if (result.canceled || !result.filePaths[0]) return;
+
+    const selectedProjectDir = result.filePaths[0];
+
+    // Validate it's a Pennyfarthing project
+    if (!detectPennyfarthingProject(selectedProjectDir)) {
+      dialog.showErrorBox(
+        'Not a Pennyfarthing Project',
+        `The folder "${basename(selectedProjectDir)}" does not have Pennyfarthing installed.\n\nCyclist requires a .claude directory with Pennyfarthing configuration.`
+      );
+      return;
+    }
+
+    // Spawn new instance
+    const { spawn } = await import('child_process');
+
+    if (process.platform === 'darwin') {
+      // macOS: Use 'open -n' to force new instance of .app bundle
+      const appPath = process.execPath.includes('.app')
+        ? process.execPath.replace(/\/Contents\/MacOS\/.*$/, '')
+        : process.execPath;
+
+      spawn('open', ['-n', appPath, '--args', `--project-dir=${selectedProjectDir}`], {
+        detached: true,
+        stdio: 'ignore',
+      }).unref();
+    } else {
+      // Windows/Linux: Just spawn new Electron process directly
+      spawn(process.execPath, [`--project-dir=${selectedProjectDir}`], {
+        detached: true,
+        stdio: 'ignore',
+      }).unref();
+    }
+  }
+
   // App ready - check for project directory, validate Pennyfarthing, then start
   app.whenReady().then(async () => {
     try {
@@ -2481,7 +2533,18 @@ if (isElectron) {
             { role: 'quit' },
           ],
         },
-        { role: 'fileMenu' },
+        {
+          label: 'File',
+          submenu: [
+            {
+              label: 'New Window',
+              accelerator: 'CmdOrCtrl+Shift+N',
+              click: openNewWindow,
+            },
+            { type: 'separator' },
+            { role: 'close' },
+          ],
+        },
         { role: 'editMenu' },
         buildViewMenu() as Electron.MenuItemConstructorOptions,
         buildToolsMenu() as Electron.MenuItemConstructorOptions,

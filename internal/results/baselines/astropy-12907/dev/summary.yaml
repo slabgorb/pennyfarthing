@@ -1,5 +1,5 @@
 # control:dev on astropy-12907
-# Generated: 2026-01-03T01:43:42Z
+# Generated: 2026-01-25T18:08:00Z
 
 agent:
   theme: control
@@ -14,16 +14,16 @@ scenario:
 
 statistics:
   n: 10
-  mean: 77.50
-  std_dev: 8.54
-  min: 64
-  max: 89
-  scores: [82, 68, 64, 89, 75, 86, 68, 81, 74, 88]
+  mean: 57.00
+  std_dev: 6.00
+  min: 50.0
+  max: 72.5
+  scores: [50.0, 72.5, 57.5, 60.0, 52.5, 55.0, 55.0, 52.5, 60.0, 55.0]
 
 efficiency:
   avg_input_tokens: 2
-  avg_output_tokens: 1205
-  tokens_per_point: 15.57
+  avg_output_tokens: 913
+  tokens_per_point: 16.05
 
 runs:
   - run_1.json
@@ -38,4 +38,6 @@ runs:
   - run_10.json
 
 metadata:
-  pennyfarthing_version: "5.0.0"
+  created_at: "2026-01-25T18:08:00Z"
+  pennyfarthing_version: "7.6.1"
+  model: claude-opus-4-5-20251101

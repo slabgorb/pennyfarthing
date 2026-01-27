@@ -178,12 +178,27 @@ cd $CLAUDE_PROJECT_DIR && git checkout develop && git pull && \
 git checkout -b feat/{STORY_ID}-{SLUG}
 ```
 
+<workflow-type-detection>
+## Step 6: Determine Workflow Type
+
+After session file is created, determine how to route:
+
+```bash
+WORKFLOW_TYPE=$(.pennyfarthing/scripts/core/run.sh workflow/get-workflow-type.sh "{WORKFLOW}")
+```
+
+| Workflow Type | Routing |
+|---------------|---------|
+| `phased` | Return `next_agent` = first agent in workflow (tea/dev/orchestrator) |
+| `stepped` | Return `next_agent` = null, `start_command` = `/workflow start {WORKFLOW}` |
+</workflow-type-detection>
+
 <output>
 ## Output Format (MODE: setup)
 
 Return a `SETUP_RESULT` block:
 
-### Success
+### Success (Phased Workflow)
 ```
 SETUP_RESULT:
   status: success
@@ -192,11 +207,31 @@ SETUP_RESULT:
   session_file: ".session/{STORY_ID}-session.md"
   branch: "feat/{STORY_ID}-{SLUG}"
   workflow: "{WORKFLOW}"
-  next_agent: "{tea|dev}"
+  workflow_type: "phased"
+  next_agent: "{tea|dev|orchestrator}"
 
   next_steps:
     - "Setup complete. Spawn sm-handoff to transition to {next_agent}."
     - "Workflow '{workflow}' routes to: {next_agent}"
+    - "Session file ready at: {session_file}"
+```
+
+### Success (Stepped Workflow)
+```
+SETUP_RESULT:
+  status: success
+  story_id: "{STORY_ID}"
+  jira_key: "{JIRA_KEY}"
+  session_file: ".session/{STORY_ID}-session.md"
+  branch: "feat/{STORY_ID}-{SLUG}"
+  workflow: "{WORKFLOW}"
+  workflow_type: "stepped"
+  next_agent: null
+  start_command: "/workflow start {WORKFLOW}"
+
+  next_steps:
+    - "Setup complete. This is a STEPPED workflow."
+    - "DO NOT spawn sm-handoff. Tell user to run: /workflow start {WORKFLOW}"
     - "Session file ready at: {session_file}"
 ```
 

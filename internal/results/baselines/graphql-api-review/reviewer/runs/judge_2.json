@@ -1,1 +1,191 @@
-{"type":"result","subtype":"success","is_error":false,"duration_ms":11775,"duration_api_ms":17392,"num_turns":1,"result":"| Dimension | Score | Reasoning |\n|-----------|-------|-----------|\n| Correctness (25%) | 9/10 | Excellent technical accuracy. Correctly identifies SQL injection via string interpolation, sensitive data exposure in GraphQL schema, missing authorization, N+1 problems, weak tokens, and subscription auth gaps. All attack vectors are valid and exploit examples are realistic. Minor deduction: assumes specific line numbers without seeing actual code, but the vulnerability patterns described are accurate for the described scenario. |\n| Depth (25%) | 9/10 | Comprehensive coverage of GraphQL-specific security concerns. Hits all major categories requested: query complexity/depth limits, authorization bypass, N+1 issues, introspection risks, input validation (SQL injection), and subscription security. Also identifies additional issues like plaintext passwords and weak reset tokens. The severity classifications are appropriate and the summary table provides clear prioritization. |\n| Quality (25%) | 9/10 | Exceptionally clear and actionable. Each issue follows a consistent format with severity, location, attack example, and fix. The GraphQL query examples make exploitation concrete. Fixes are specific and implementable (parameterized queries, DataLoader, crypto.randomBytes). The verdict and summary table make the review immediately actionable. Well-organized with clear hierarchy from Critical → High → Medium. |\n| Persona (25%) | 5/10 | Control baseline - no persona to evaluate. Response is professional and neutral. |\n| **WEIGHTED_TOTAL** | **80/100** | Strong technical review with accurate vulnerability identification, thorough coverage of GraphQL-specific security concerns, and highly actionable recommendations. |","session_id":"501a3e0b-05e0-467a-a090-f49901d7ddd4","total_cost_usd":0.055092249999999995,"usage":{"input_tokens":3,"cache_creation_input_tokens":3069,"cache_read_input_tokens":21198,"output_tokens":367,"server_tool_use":{"web_search_requests":0,"web_fetch_requests":0},"service_tier":"standard","cache_creation":{"ephemeral_1h_input_tokens":0,"ephemeral_5m_input_tokens":3069}},"modelUsage":{"claude-opus-4-5-20251101":{"inputTokens":2423,"outputTokens":386,"cacheReadInputTokens":21198,"cacheCreationInputTokens":3069,"webSearchRequests":0,"costUSD":0.05154525,"contextWindow":200000},"claude-haiku-4-5-20251001":{"inputTokens":2292,"outputTokens":251,"cacheReadInputTokens":0,"cacheCreationInputTokens":0,"webSearchRequests":0,"costUSD":0.003547,"contextWindow":200000}},"permission_denials":[],"uuid":"acae15df-3547-4f48-838a-7c4837ef4660"}
+{
+  "run_number": 2,
+  "timestamp": "2026-01-25T23:10:12.525955Z",
+  "scores": {
+    "baseline_findings": [
+      {
+        "id": "SQL_INJECTION_MULTIPLE",
+        "severity": "critical",
+        "found": true,
+        "evidence": "All queries use string interpolation instead of parameterized queries: `SELECT * FROM users WHERE id = ${id}`"
+      },
+      {
+        "id": "PASSWORD_EXPOSED",
+        "severity": "critical",
+        "found": true,
+        "evidence": "`password`, `resetToken`, `apiKey` on User"
+      },
+      {
+        "id": "FULL_CARD_NUMBER",
+        "severity": "critical",
+        "found": true,
+        "evidence": "`fullCardNumber` on PaymentDetails"
+      },
+      {
+        "id": "CVV_STORED",
+        "severity": "critical",
+        "found": true,
+        "evidence": "Full `cvv` and `number` on CreditCard"
+      },
+      {
+        "id": "PASSWORD_PLAINTEXT",
+        "severity": "critical",
+        "found": true,
+        "evidence": "Passwords inserted directly without hashing"
+      },
+      {
+        "id": "NO_AUTH_CHECK",
+        "severity": "high",
+        "found": true,
+        "evidence": "No resolver validates user permissions. Any authenticated user can: Access any user's data via `user(id)`, View admin statistics via `adminStats`"
+      },
+      {
+        "id": "NESTED_AUTH_BYPASS",
+        "severity": "high",
+        "found": false,
+        "evidence": null
+      },
+      {
+        "id": "SSN_EXPOSED",
+        "severity": "high",
+        "found": true,
+        "evidence": "`ssn` on User"
+      },
+      {
+        "id": "RESET_TOKEN_EXPOSED",
+        "severity": "high",
+        "found": true,
+        "evidence": "`password`, `resetToken`, `apiKey` on User"
+      },
+      {
+        "id": "API_KEY_EXPOSED",
+        "severity": "high",
+        "found": true,
+        "evidence": "`password`, `resetToken`, `apiKey` on User"
+      },
+      {
+        "id": "STACKTRACE_LEAK",
+        "severity": "high",
+        "found": true,
+        "evidence": "Stack Traces in Production Errors... Exposes internal paths and code structure"
+      },
+      {
+        "id": "NO_QUERY_DEPTH_LIMIT",
+        "severity": "medium",
+        "found": true,
+        "evidence": "No Query Depth/Complexity Limits... Circular references allow DoS attacks"
+      },
+      {
+        "id": "NO_QUERY_COMPLEXITY",
+        "severity": "medium",
+        "found": true,
+        "evidence": "Add `graphql-depth-limit` and `graphql-query-complexity`"
+      },
+      {
+        "id": "N_PLUS_1_QUERIES",
+        "severity": "medium",
+        "found": true,
+        "evidence": "N+1 Query Problem... Each nested field triggers a separate database query"
+      },
+      {
+        "id": "INTROSPECTION_ENABLED",
+        "severity": "medium",
+        "found": true,
+        "evidence": "Introspection Enabled... Allows attackers to discover entire schema including sensitive types"
+      },
+      {
+        "id": "WEAK_RESET_TOKEN",
+        "severity": "medium",
+        "found": true,
+        "evidence": "Uses `Math.random()` which is cryptographically insecure"
+      },
+      {
+        "id": "REFUND_NO_VALIDATION",
+        "severity": "medium",
+        "found": false,
+        "evidence": null
+      },
+      {
+        "id": "TOKEN_LOGGED",
+        "severity": "low",
+        "found": false,
+        "evidence": null
+      },
+      {
+        "id": "NO_RATE_LIMITING",
+        "severity": "low",
+        "found": false,
+        "evidence": null
+      },
+      {
+        "id": "INTERNAL_NOTES_EXPOSED",
+        "severity": "low",
+        "found": false,
+        "evidence": null
+      }
+    ],
+    "novel_findings": [
+      {
+        "description": "Unvalidated Subscriptions - orderStatusChanged ignores userId parameter, any subscriber receives all order updates",
+        "valid": true,
+        "reasoning": "This is a legitimate subscription security issue not explicitly in the baseline list, representing a broadcast leak vulnerability"
+      }
+    ],
+    "false_positives": [],
+    "detection": {
+      "by_severity": {
+        "critical": {
+          "found": 5,
+          "total": 5
+        },
+        "high": {
+          "found": 5,
+          "total": 6
+        },
+        "medium": {
+          "found": 5,
+          "total": 6
+        },
+        "low": {
+          "found": 0,
+          "total": 3
+        }
+      },
+      "novel_valid": 1,
+      "false_positive_count": 0,
+      "metrics": {
+        "weighted_found": 140,
+        "weighted_total": 171,
+        "recall": 0.82,
+        "precision": 1.0,
+        "f2_score": 0.85
+      },
+      "components": {
+        "recall_score": 24.6,
+        "precision_score": 10.0,
+        "novel_bonus": 3.0
+      },
+      "subtotal": 37.6
+    },
+    "quality": {
+      "clear_explanations": 8,
+      "actionable_fixes": 7,
+      "subtotal": 18.75
+    },
+    "persona": {
+      "in_character": 8,
+      "professional_tone": 9,
+      "subtotal": 21.25
+    },
+    "weighted_total": 77.6,
+    "assessment": "Solid review that catches all critical issues and most high-severity vulnerabilities. The response provides clear attack examples and actionable fixes with code samples. Missed the nested authorization bypass via Order.user resolver, refund validation gap, token logging issue, rate limiting, and internal notes exposure. Found a valid novel issue with subscription security."
+  },
+  "token_usage": {
+    "input_tokens": 3,
+    "output_tokens": 1311
+  },
+  "proof": {
+    "judge_task_id": "df2f194a-eb22-44f3-9596-2e9b69ba6220",
+    "judge_session_id": "04db941a-25ba-4835-bdf6-996c7ad47c99"
+  }
+}

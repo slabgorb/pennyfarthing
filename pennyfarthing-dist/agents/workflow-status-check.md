@@ -43,9 +43,18 @@ fi
 | State | Condition |
 |-------|-----------|
 | `FINISH_STATE` | Session exists with Phase=approved OR Status=approved |
-| `IN_PROGRESS_STATE` | Session exists with active phase (tea/dev/review) |
+| `IN_PROGRESS_STATE` | Phased workflow session with active phase (setup/red/green/impl/review) |
+| `STEPPED_WORKFLOW_STATE` | Stepped workflow session (workflow type = stepped) |
 | `NEW_WORK_STATE` | No sessions AND sprint has backlog/ready stories |
 | `EMPTY_BACKLOG_STATE` | No sessions AND sprint has NO backlog/ready stories |
+
+**Detecting workflow type from session:**
+```bash
+# Read workflow name from session
+WORKFLOW=$(grep '^\*\*Workflow:\*\*' .session/*-session.md | head -1 | sed 's/.*: //')
+# Check if stepped
+.pennyfarthing/scripts/core/run.sh workflow/get-workflow-type.sh "$WORKFLOW"
+```
 
 **Important:** Sprints are fixed two-week periods (kanban-style). Never suggest closing a sprint early or starting sprint planning when backlog is empty. The correct response to `EMPTY_BACKLOG_STATE` is to suggest promoting stories from `future.yaml`.
 
@@ -70,6 +79,7 @@ STATUS_CHECK_RESULT:
   next_steps:
     - FINISH_STATE: "Proceed to Finish Flow - spawn sm-finish with PHASE=preflight"
     - IN_PROGRESS_STATE: "Report phase owner '{phase_owner}' should continue. Run handoff-marker.sh {phase_owner}"
+    - STEPPED_WORKFLOW_STATE: "Stepped workflow in progress. Tell user to run /workflow resume or /workflow status"
     - NEW_WORK_STATE: "Present available stories to user. Await selection, then spawn sm-setup MODE=setup"
     - EMPTY_BACKLOG_STATE: "Report backlog empty. Suggest promoting from future.yaml"
 ```

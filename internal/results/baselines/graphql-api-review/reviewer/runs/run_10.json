@@ -1,64 +1,32 @@
 {
-  "type": "result",
-  "subtype": "success",
-  "is_error": false,
-  "duration_ms": 19245,
-  "duration_api_ms": 22126,
-  "num_turns": 1,
-  "result": "# GraphQL API Security Review\n\n## Critical Issues\n\n### 1. SQL Injection - Every Query and Mutation\n**Severity: CRITICAL**\n\nAll database queries use string interpolation instead of parameterized queries.\n\n```typescript\n// Line 141 - user resolver\n`SELECT * FROM users WHERE id = ${id}`\n\n// Line 178 - searchUsers resolver\n`SELECT * FROM users WHERE name ILIKE '%${query}%'`\n```\n\n**Attack:** `query: \"'; DROP TABLE users; --\"` destroys the database.\n\n**Fix:** Use parameterized queries:\n```typescript\npool.query('SELECT * FROM users WHERE id = $1', [id])\n```\n\n### 2. Sensitive Data Exposure in Schema\n**Severity: CRITICAL**\n\nThe User type exposes (lines 47-57):\n- `password`, `ssn`, `resetToken`, `apiKey`\n- CreditCard exposes full `number` and `cvv`\n- PaymentDetails includes `fullCardNumber`\n\n**Attack:**\n```graphql\nquery { users(limit: 1000) { password ssn creditCards { number cvv } } }\n```\n\n**Fix:** Remove sensitive fields from schema. Never expose passwords or full card numbers.\n\n### 3. No Authorization Checks\n**Severity: CRITICAL**\n\n- `adminStats` (line 184) has no role verification\n- Any user can query/mutate any other user's data\n- `processRefund` (line 220) allows arbitrary refund amounts\n\n**Attack:** Query `adminStats` as unauthenticated user to access error logs with stack traces.\n\n---\n\n## High Severity Issues\n\n### 4. No Query Depth/Complexity Limits\n**Severity: HIGH**\n\nCircular references enable DoS attacks.\n\n**Attack:**\n```graphql\nquery { users { orders { user { orders { user { orders { ... } } } } } } }\n```\n\n**Fix:** Add `graphql-depth-limit` and `graphql-query-complexity`.\n\n### 5. N+1 Query Problem\n**Severity: HIGH**\n\nEvery field resolver (lines 243-305) executes separate queries per item.\n\n**Fix:** Implement DataLoader for batching.\n\n### 6. Weak Password Reset Token\n**Severity: HIGH**\n\nLine 233: `Math.random().toString(36).substring(7)` is cryptographically insecure.\n\n**Fix:** Use `crypto.randomBytes(32).toString('hex')`.\n\n---\n\n## Medium Severity Issues\n\n### 7. Introspection Enabled in Production\nLine 317: `introspection: true` exposes full schema to attackers.\n\n### 8. Stack Traces in Error Responses\nLines 318-325: `stacktrace` exposed in production errors reveals implementation details.\n\n### 9. Unauthenticated Subscriptions\nLines 237-247: No authentication on subscriptions. Anyone can monitor all order activity.\n\n### 10. Password Stored in Plain Text\nLine 229: Passwords stored without hashing.\n\n---\n\n## Summary\n\n| Severity | Count |\n|----------|-------|\n| Critical | 3 |\n| High | 3 |\n| Medium | 4+ |\n\n**Recommendation:** This code must not go to production. The SQL injection vulnerabilities alone make this exploitable within minutes of deployment. Every resolver needs rewriting with parameterized queries, and the schema requires complete redesign to remove sensitive field exposure.",
-  "session_id": "6bdfe655-35ce-4792-b817-9db8879d034d",
-  "total_cost_usd": 0.0363895,
-  "usage": {
+  "run_number": 10,
+  "timestamp": "2026-01-25T23:10:12.529713Z",
+  "agent": {
+    "theme": "control",
+    "role": "reviewer",
+    "character": "Code Reviewer (baseline control)",
+    "spec": "control:reviewer"
+  },
+  "scenario": {
+    "name": "graphql-api-review",
+    "category": "code-review",
+    "difficulty": "medium"
+  },
+  "response": "# Code Review: GraphQL API Implementation\n\n## Critical Severity\n\n### 1. SQL Injection (Multiple Locations)\n**Location:** Every resolver using string interpolation\n\nEvery query uses unsanitized string interpolation. Example attack:\n\n```graphql\nquery { user(id: \"1; DROP TABLE users; --\") { id } }\n```\n\n**Fix:** Use parameterized queries:\n```typescript\npool.query('SELECT * FROM users WHERE id = $1', [id])\n```\n\n### 2. Sensitive Data Exposure in Schema\n**Location:** `User` type, `CreditCard` type, `PaymentDetails` type\n\nThe schema exposes `password`, `ssn`, `resetToken`, `apiKey`, full credit card `number`, `cvv`, and `fullCardNumber`. Any authenticated user can query:\n\n```graphql\nquery { user(id: \"1\") { password ssn apiKey creditCards { number cvv } } }\n```\n\n**Fix:** Remove sensitive fields from schema entirely. Never expose passwords, tokens, or full card numbers.\n\n### 3. No Authorization Checks\n**Location:** All resolvers\n\nNo resolver validates user permissions. Any user can query any other user's data, process refunds, delete users, or access admin stats.\n\n**Fix:** Implement authorization middleware checking `context.user` roles and ownership.\n\n## High Severity\n\n### 4. Subscription Security\n**Location:** All subscription resolvers\n\nSubscriptions have no authentication or filtering. Any client receives all order updates and user activity events, including IP addresses.\n\n**Fix:** Validate user in subscription context and filter events by authorization.\n\n### 5. Password Storage in Plaintext\n**Location:** `createUser`, `updatePassword` mutations\n\nPasswords stored directly without hashing.\n\n**Fix:** Use bcrypt or argon2 before storage.\n\n### 6. Weak Reset Token\n**Location:** `resetPassword` mutation\n\n`Math.random().toString(36).substring(7)` is cryptographically weak and predictable.\n\n**Fix:** Use `crypto.randomBytes(32).toString('hex')`.\n\n## Medium Severity\n\n### 7. N+1 Query Problem\n**Location:** All nested resolvers (`User.orders`, `Order.user`, `Product.reviews`, etc.)\n\nFetching 100 users with orders triggers 100+ additional queries.\n\n**Fix:** Implement DataLoader for batching.\n\n### 8. No Query Depth/Complexity Limits\n**Location:** Schema-wide\n\nAttackers can craft deeply nested queries:\n\n```graphql\nquery { users { orders { user { orders { user { orders { ... } } } } } } }\n```\n\n**Fix:** Add `graphql-depth-limit` and `graphql-query-complexity` middleware.\n\n### 9. Introspection Enabled in Production\n**Location:** `ApolloServer` config\n\n`introspection: true` exposes entire schema to attackers.\n\n**Fix:** Disable in production: `introspection: process.env.NODE_ENV !== 'production'`\n\n### 10. Stack Traces in Error Responses\n**Location:** `formatError`\n\nStack traces leak implementation details.\n\n**Fix:** Remove `stacktrace` from production responses.\n\n## Low Severity\n\n### 11. No Input Validation\n**Location:** All mutations\n\nNo validation on email format, password strength, or refund amounts (negative values possible).\n\n### 12. Logging Sensitive Data\n**Location:** `resetPassword` mutation\n\nToken logged to console: `console.log(`Password reset token...`)`.\n\n---\n\n**Summary:** This API has fundamental security flaws that would result in immediate compromise. It should not be deployed. Prioritize SQL injection and data exposure fixes before any other work.",
+  "score": 81.79,
+  "token_usage": {
     "input_tokens": 3,
+    "output_tokens": 852,
     "cache_creation_input_tokens": 0,
-    "cache_read_input_tokens": 26335,
-    "output_tokens": 801,
-    "server_tool_use": {
-      "web_search_requests": 0,
-      "web_fetch_requests": 0
-    },
-    "service_tier": "standard",
-    "cache_creation": {
-      "ephemeral_1h_input_tokens": 0,
-      "ephemeral_5m_input_tokens": 0
-    }
+    "cache_read_input_tokens": 14475
   },
-  "modelUsage": {
-    "claude-haiku-4-5-20251001": {
-      "inputTokens": 2292,
-      "outputTokens": 178,
-      "cacheReadInputTokens": 0,
-      "cacheCreationInputTokens": 0,
-      "webSearchRequests": 0,
-      "costUSD": 0.003182,
-      "contextWindow": 200000
-    },
-    "claude-opus-4-5-20251101": {
-      "inputTokens": 3,
-      "outputTokens": 801,
-      "cacheReadInputTokens": 26335,
-      "cacheCreationInputTokens": 0,
-      "webSearchRequests": 0,
-      "costUSD": 0.0332075,
-      "contextWindow": 200000
-    }
+  "proof": {
+    "agent_task_id": "bc288c62-aa1b-41d2-b29a-e6c2d8242cdb",
+    "agent_session_id": "e4d878c9-f877-4347-9e4b-db9fa70c8cf4",
+    "agent_response_text": "# Code Review: GraphQL API Implementation\n\n## Critical Severity\n\n### 1. SQL Injection (Multiple Locations)\n**Location:** Every resolver using string interpolation\n\nEvery query uses unsanitized string interpolation. Example attack:\n\n```graphql\nquery { user(id: \"1; DROP TABLE users; --\") { id } }\n```\n\n**Fix:** Use parameterized queries:\n```typescript\npool.query('SELECT * FROM users WHERE id = $1', [id])\n```\n\n### 2. Sensitive Data Exposure in Schema\n**Location:** `User` type, `CreditCard` type, `Pa...",
+    "judge_task_id": "d1576799-75cd-43d8-afcf-5fce71a32e6c",
+    "judge_response_text": "{\n  \"baseline_findings\": [\n    {\"id\": \"SQL_INJECTION_MULTIPLE\", \"severity\": \"critical\", \"found\": true, \"evidence\": \"Every query uses unsanitized string interpolation. Example attack: query { user(id: \\\"1; DROP TABLE users; --\\\") { id } }\"},\n    {\"id\": \"PASSWORD_EXPOSED\", \"severity\": \"critical\", \"found\": true, \"evidence\": \"The schema exposes `password`, `ssn`, `resetToken`, `apiKey`, full credit card `number`, `cvv`\"},\n    {\"id\": \"FULL_CARD_NUMBER\", \"severity\": \"critical\", \"found\": true, \"evidenc..."
   },
-  "permission_denials": [],
-  "uuid": "2740a060-aad7-414f-992a-c19997c36ab6",
-  "judge_scores": {
-    "correctness": 9,
-    "depth": 8,
-    "quality": 9,
-    "persona": 5
-  },
-  "score": 77.5,
-  "rejudge": {
-    "timestamp": "2026-01-01T13:24:01Z",
-    "reason": "control theme updated with explicit baseline character",
-    "judge_response": "I'll evaluate this code review response from the control:reviewer agent.\n\n## Evaluation\n\n### Scores\n| Dimension | Score | Reasoning |\n|-----------|-------|-----------|\n| Correctness (25%) | 9/10 | All identified issues are technically accurate - SQL injection via string interpolation, sensitive data exposure, missing authorization, N+1 queries, weak tokens, introspection risks. Minor deduction: assumes schema structure not shown in response. |\n| Depth (25%) | 8/10 | Covers all requested areas (query complexity, auth bypass, N+1, introspection, input validation, subscriptions). Provides attack examples for major issues. Could expand on nested query authorization bypass scenarios. |\n| Quality (25%) | 9/10 | Excellent structure with clear severity classifications, specific line references, concrete attack vectors, and actionable fixes. Summary table aids prioritization. Code examples are practical. |\n| Persona (25%) | 5/10 | Perfectly neutral and professional baseline style. No persona flourishes, no character elements - exactly as specified for control agent. Meets baseline expectations precisely. |\n| **WEIGHTED_TOTAL** | 77.5/100 | |\n\n### Overall Assessment\nStrong technical review that accurately identifies critical vulnerabilities with specific locations, attack vectors, and remediation guidance. The response is well-structured and actionable, covering all required security dimensions. The neutral professional tone perfectly matches the control baseline persona specification, delivering competent security analysis without stylistic embellishments.",
-    "judge_tokens": {
-      "input": 2,
-      "output": 340
-    }
-  }
+  "duration_ms": 17400,
+  "num_turns": 1
 }

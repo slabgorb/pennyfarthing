@@ -84,7 +84,15 @@ let submitFn = null;
 export function initMessageQueue({ clearEditor, submit }) {
   clearEditorFn = clearEditor;
   submitFn = submit;
-  loadMessageQueue();
+  // Reset state flags on init (important for test isolation)
+  processingState = false;
+  queuePaused = false;
+  bellModeEnabled = false;
+  // Clear queue completely on init - fresh start each time
+  // (Production use case: page reload restores queue via loadMessageQueue() call elsewhere,
+  //  Test isolation: each test starts with empty queue)
+  messageQueue = [];
+  notifyQueueChange();
 }
 
 /**
@@ -221,8 +229,11 @@ export function loadMessageQueue() {
   if (stored && Array.isArray(stored)) {
     // Migrate each item to QueuedMessage format
     messageQueue = stored.map(migrateQueueItem);
-    notifyQueueChange();
+  } else {
+    // Clear any stale in-memory queue if no stored data
+    messageQueue = [];
   }
+  notifyQueueChange();
 }
 
 /**
@@ -444,6 +455,97 @@ async function displayInjectedMessage(text) {
     console.log('[Bell] Added injected message to store');
   } catch (err) {
     console.error('[Bell] Failed to add message to store:', err);
+  }
+}
+
+// =============================================================================
+// MSSCI-12450: Turn Complete Queue Functions
+// =============================================================================
+
+/**
+ * Send all queued messages at once (bell mode OFF behavior)
+ * Called when Claude's turn completes and bell mode is disabled.
+ * Sends all queued messages in FIFO order, then clears the queue.
+ */
+export function sendAllQueuedMessages() {
+  if (queuePaused) {
+    console.log('[MessageQueue] Queue paused, skipping sendAllQueuedMessages');
+    return;
+  }
+  if (processingState) {
+    console.log('[MessageQueue] Still processing, skipping sendAllQueuedMessages');
+    return;
+  }
+  if (messageQueue.length === 0) {
+    return;
+  }
+
+  // Send all messages in FIFO order
+  const messagesToSend = [...messageQueue];
+  for (const msg of messagesToSend) {
+    if (submitFn) {
+      submitFn(msg.text, msg.images);
+    }
+  }
+
+  // Clear the queue
+  messageQueue = [];
+  saveMessageQueue();
+  notifyQueueChange();
+}
+
+/**
+ * Flush remaining messages in queue (bell mode ON cleanup)
+ * Called when Claude's turn completes and bell mode is enabled.
+ * Any messages not consumed by the PostToolUse hook are sent immediately.
+ */
+export function flushRemainingQueue() {
+  if (queuePaused) {
+    console.log('[MessageQueue] Queue paused, skipping flushRemainingQueue');
+    return;
+  }
+  if (processingState) {
+    console.log('[MessageQueue] Still processing, skipping flushRemainingQueue');
+    return;
+  }
+  if (messageQueue.length === 0) {
+    return;
+  }
+
+  // Send all remaining messages
+  const messagesToSend = [...messageQueue];
+  for (const msg of messagesToSend) {
+    if (submitFn) {
+      submitFn(msg.text, msg.images);
+    }
+  }
+
+  // Clear the queue
+  messageQueue = [];
+  saveMessageQueue();
+  notifyQueueChange();
+}
+
+/**
+ * Handle turn complete - coordinator for queue processing
+ * Checks bell mode state and calls the appropriate function:
+ * - Bell mode OFF: sendAllQueuedMessages()
+ * - Bell mode ON: flushRemainingQueue()
+ */
+export function handleTurnComplete() {
+  if (queuePaused) {
+    console.log('[MessageQueue] Queue paused, skipping handleTurnComplete');
+    return;
+  }
+  if (processingState) {
+    console.log('[MessageQueue] Still processing, skipping handleTurnComplete');
+    return;
+  }
+
+  if (bellModeEnabled) {
+    flushRemainingQueue();
+  } else {
+    sendAllQueuedMessages();
   }
 }
 

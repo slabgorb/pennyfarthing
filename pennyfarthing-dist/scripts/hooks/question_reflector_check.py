@@ -69,6 +69,19 @@ CHOICE_PATTERNS = [
     re.compile(r'\bchoose between\b', re.IGNORECASE),
 ]
 
+# Handoff phrase patterns - SM saying they'll hand off but not actually doing it
+HANDOFF_PHRASE_PATTERNS = [
+    re.compile(r'\bhanding (off )?to\b', re.IGNORECASE),
+    re.compile(r'\bpassing to\b', re.IGNORECASE),
+    re.compile(r'\bhand(ing)? this (off )?to\b', re.IGNORECASE),
+    re.compile(r'\b(Naomi|Amos|Avasarala|Holden|Alex|Drummer) (will|can)\b', re.IGNORECASE),
+    re.compile(r'\bfor (the )?(GREEN|RED|REVIEW) phase\b', re.IGNORECASE),
+    re.compile(r'\bspawning .* agent\b', re.IGNORECASE),
+]
+
+# Task tool invocation pattern in transcript
+TASK_TOOL_PATTERN = re.compile(r'"tool_name":\s*"Task"', re.IGNORECASE)
+
 
 # =============================================================================
 # Helper Functions
@@ -147,6 +160,55 @@ def detect_question(message: str) -> dict[str, Any]:
     return {'detected': False, 'type': ''}
 
 
+def detect_handoff_phrase(message: str) -> bool:
+    """Detect if a message contains handoff language (promising to hand off).
+
+    Args:
+        message: The message to check
+
+    Returns:
+        True if handoff language detected
+    """
+    # Strip code blocks first
+    clean_message = strip_code_blocks(message)
+
+    for pattern in HANDOFF_PHRASE_PATTERNS:
+        if pattern.search(clean_message):
+            return True
+    return False
+
+
+def has_task_tool_in_turn(transcript: list[dict[str, Any]]) -> bool:
+    """Check if the current turn includes a Task tool invocation.
+
+    Args:
+        transcript: Array of message objects
+
+    Returns:
+        True if Task tool was used in the current turn
+    """
+    # Find messages in the current turn (after the last user message)
+    current_turn_start = -1
+    for i, entry in enumerate(transcript):
+        msg = entry.get('message', entry)
+        if msg.get('role') == 'user':
+            current_turn_start = i
+
+    if current_turn_start < 0:
+        return False
+
+    # Check all entries after last user message for Task tool
+    for entry in transcript[current_turn_start:]:
+        msg = entry.get('message', entry)
+        if msg.get('role') == 'assistant':
+            content = msg.get('content', [])
+            if isinstance(content, list):
+                for block in content:
+                    if block.get('type') == 'tool_use' and block.get('name') == 'Task':
+                        return True
+    return False
+
+
 def has_reflector_marker(message: str) -> bool:
     """Check if a message has ANY valid CYCLIST reflector marker.
 
@@ -195,33 +257,53 @@ def extract_last_assistant_message(transcript: list[dict[str, Any]]) -> str:
     return ''
 
 
-def build_block_reason(question_type: str) -> str:
+def build_block_reason(question_type: str, handoff_without_task: bool = False) -> str:
     """Build the block reason message.
+
+    Provides actionable guidance so Claude can emit JUST the marker
+    on retry rather than regenerating the entire response.
 
     Args:
         question_type: The type of question detected (or empty for general)
+        handoff_without_task: True if handoff language detected but no Task tool used
 
     Returns:
-        The reason message
+        The reason message with suggested marker
     """
-    reason = 'Every turn MUST end with a CYCLIST reflector marker. '
+    # Special case: handoff language without Task tool
+    if handoff_without_task:
+        return (
+            'HANDOFF COMPLIANCE VIOLATION: You said you would hand off but did NOT use the Task tool.\n\n'
+            'SM Protocol: Task tool FIRST, narration SECOND.\n\n'
+            'Either:\n'
+            '1. Actually spawn the agent now using the Task tool, OR\n'
+            '2. If you completed the work yourself, remove handoff language and add <!-- CYCLIST:CONTINUE -->'
+        )
+
+    # Key insight: Tell Claude to ONLY emit the marker, not regenerate everything
+    reason = 'Missing CYCLIST marker. Your response content is fine - just APPEND the marker.\n\n'
 
     if question_type:
-        # Specific question type detected
+        # Specific question type detected - suggest exact marker
         if question_type == 'direct':
-            reason += 'You asked a question. Add <!-- CYCLIST:QUESTION:yesno --> or <!-- CYCLIST:QUESTION:open --> before your question.'
+            reason += 'Detected: direct question (?)\n'
+            reason += 'APPEND THIS: <!-- CYCLIST:QUESTION:open -->\n'
+            reason += '(Use yesno if it\'s a yes/no question)'
         elif question_type == 'implicit':
-            reason += 'You asked an implicit question. Add <!-- CYCLIST:QUESTION:yesno --> before phrases like "would you like" or "should I".'
+            reason += 'Detected: implicit question (would you like, should I, etc.)\n'
+            reason += 'APPEND THIS: <!-- CYCLIST:QUESTION:yesno -->'
         elif question_type == 'choices':
-            reason += 'You offered choices. Add <!-- CYCLIST:CHOICES:option1,option2,option3 --> listing the choices.'
+            reason += 'Detected: choice offering\n'
+            reason += 'APPEND THIS: <!-- CYCLIST:CHOICES:option1,option2 -->\n'
+            reason += '(Replace option1,option2 with actual choices)'
     else:
-        # No question detected, but still need a marker
-        reason += 'Valid markers:\n'
+        # No question detected - suggest CONTINUE marker
+        reason += 'No question detected - this looks like a status update.\n'
+        reason += 'APPEND THIS: <!-- CYCLIST:CONTINUE -->\n\n'
+        reason += 'Other markers if needed:\n'
         reason += '  <!-- CYCLIST:HANDOFF:/agent --> - workflow handoff\n'
         reason += '  <!-- CYCLIST:QUESTION:yesno --> - yes/no question\n'
-        reason += '  <!-- CYCLIST:QUESTION:open --> - open question\n'
-        reason += '  <!-- CYCLIST:CHOICES:a,b,c --> - multiple choice\n'
-        reason += '  <!-- CYCLIST:CONTINUE --> - status update, user may continue or redirect'
+        reason += '  <!-- CYCLIST:QUESTION:open --> - open question'
 
     return reason
 
@@ -229,14 +311,19 @@ def build_block_reason(question_type: str) -> str:
 def check_question_reflector(
     input_data: dict[str, Any],
     config: dict[str, Any],
-    last_message: str
+    last_message: str,
+    transcript: list[dict[str, Any]] | None = None
 ) -> dict[str, Any]:
     """Main check for Stop hook - validates ALL turns have reflector markers.
+
+    Also enforces handoff compliance: if handoff language detected without
+    Task tool usage, blocks the turn.
 
     Args:
         input_data: Hook input with transcript_path, stop_hook_active
         config: Config with workflow settings
         last_message: The last assistant message (pre-extracted for testing)
+        transcript: Full transcript for checking Task tool usage
 
     Returns:
         { 'ok': True } or { 'decision': 'block', 'reason': str }
@@ -256,6 +343,16 @@ def check_question_reflector(
     # If ANY marker present, allow
     if has_reflector_marker(last_message):
         return {'ok': True}
+
+    # HANDOFF COMPLIANCE CHECK:
+    # If handoff language detected but no Task tool was used, block
+    if detect_handoff_phrase(last_message):
+        has_task = transcript and has_task_tool_in_turn(transcript)
+        if not has_task:
+            return {
+                'decision': 'block',
+                'reason': build_block_reason('', handoff_without_task=True),
+            }
 
     # No marker found - block
     # Check if it's a question to give more specific guidance
@@ -331,21 +428,21 @@ def load_config(project_dir: str) -> dict[str, Any]:
         return {'workflow': {'permission_mode': 'manual'}}
 
 
-def read_transcript(transcript_path: str) -> str:
+def read_transcript(transcript_path: str) -> tuple[str, list[dict[str, Any]]]:
     """Read transcript and extract last assistant message.
 
     Args:
         transcript_path: Path to JSONL transcript
 
     Returns:
-        The last assistant message
+        Tuple of (last assistant message, full transcript)
     """
     try:
         content = Path(transcript_path).read_text()
         lines = [line for line in content.strip().split('\n') if line]
 
         # Parse JSONL and build transcript array
-        transcript = []
+        transcript: list[dict[str, Any]] = []
         for line in lines:
             try:
                 transcript.append(json.loads(line))
@@ -353,9 +450,9 @@ def read_transcript(transcript_path: str) -> str:
                 # Skip malformed lines
                 pass
 
-        return extract_last_assistant_message(transcript)
+        return extract_last_assistant_message(transcript), transcript
     except Exception:
-        return ''
+        return '', []
 
 
 def main() -> None:
@@ -385,8 +482,8 @@ def main() -> None:
     else:
         # Stop hook
         transcript_path = input_data.get('transcript_path', '')
-        last_message = read_transcript(transcript_path) if transcript_path else ''
-        result = check_question_reflector(input_data, config, last_message)
+        last_message, transcript = read_transcript(transcript_path) if transcript_path else ('', [])
+        result = check_question_reflector(input_data, config, last_message, transcript)
         print(json.dumps(result))
 
     sys.exit(0)

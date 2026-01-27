@@ -241,25 +241,76 @@ function updateContextMeter(percent, tokens, contextInfo) {
   updateCompactButtonVisibility(displayPercent);
 }
 
+// Store project root for relative path calculation
+let projectRoot = '';
+
 /**
- * 35-2: Update user email display
- * @param {string} email - User email address
+ * Set project root directory (called once on init)
+ * @param {string} root - Full path to project root
  */
-function updateUserEmail(email) {
-  const element = document.querySelector('#stats-strip .user-email');
+function setProjectRoot(root) {
+  projectRoot = root;
+}
+
+/**
+ * Update Claude's working directory display with responsive design
+ * Shows relative path if room, otherwise just folder name
+ * @param {string} pwd - Full path to working directory
+ */
+function updatePwd(pwd) {
+  const element = document.querySelector('#stats-strip .pwd');
+  if (!element || !pwd) return;
+
+  // Calculate relative path from project root
+  let displayPath = pwd;
+  if (projectRoot && pwd.startsWith(projectRoot)) {
+    displayPath = pwd.slice(projectRoot.length);
+    if (displayPath.startsWith('/')) displayPath = displayPath.slice(1);
+    if (!displayPath) displayPath = '.';
+  }
+
+  // Folder name for compact display
+  const folderName = pwd.split('/').pop() || pwd;
+
+  // Store both for responsive switching
+  element.dataset.fullPath = displayPath;
+  element.dataset.folderName = folderName;
+  element.title = `Working directory: ${pwd}`;
+
+  // Initial display uses responsive check
+  updatePwdDisplay(element);
+}
+
+/**
+ * Update pwd display based on available width (responsive)
+ * @param {HTMLElement} element - The pwd element
+ */
+function updatePwdDisplay(element) {
   if (!element) return;
 
-  const oldValue = element.textContent;
-  if (oldValue !== email) {
-    element.textContent = email;
-    element.title = `Authenticated as: ${email}`;
+  const fullPath = element.dataset.fullPath || '';
+  const folderName = element.dataset.folderName || '';
 
-    // Add pulse animation
-    element.classList.add('updated');
-    setTimeout(() => {
-      element.classList.remove('updated');
-    }, 500);
+  // Try full path first
+  element.textContent = fullPath;
+
+  // If it overflows, switch to folder name only
+  if (element.scrollWidth > element.clientWidth) {
+    element.textContent = folderName;
   }
+}
+
+/**
+ * Set up resize observer for responsive pwd display
+ */
+function setupPwdResizeObserver() {
+  const element = document.querySelector('#stats-strip .pwd');
+  if (!element) return;
+
+  const resizeObserver = new ResizeObserver(() => {
+    updatePwdDisplay(element);
+  });
+  resizeObserver.observe(element.parentElement);
 }
 
 /**
@@ -414,35 +465,76 @@ async function initStatsStrip() {
     compactBtn.addEventListener('click', executeCompact);
   }
 
-  // 35-2: Project info subscription (user email from OTEL)
-  if (window.electronAPI?.projectInfo) {
-    // Get initial project info
-    if (window.electronAPI.projectInfo.get) {
-      try {
-        const info = await window.electronAPI.projectInfo.get();
-        if (info?.userEmail) {
-          updateUserEmail(info.userEmail);
-        }
-      } catch (err) {
-        // Silent fail - email is optional
+  // Set up project root for relative path calculation
+  if (window.electronAPI?.projectInfo?.get) {
+    try {
+      const info = await window.electronAPI.projectInfo.get();
+      if (info?.directory) {
+        setProjectRoot(info.directory);
       }
-    }
-
-    // Subscribe to project info updates (fires when email is discovered from OTEL)
-    if (window.electronAPI.projectInfo.onUpdate) {
-      window.electronAPI.projectInfo.onUpdate((_event, info) => {
-        if (info?.userEmail) {
-          updateUserEmail(info.userEmail);
-        }
-      });
+    } catch (err) {
+      // Silent fail - directory is optional
     }
   }
+
+  // Set up resize observer for responsive pwd display
+  setupPwdResizeObserver();
+
+  // Note: Collapse toggle is handled by collapsed-sections.js for persistence
+  // Git status is handled by story.js via WebSocket (/ws/git), not polling here
 
   console.log('[StatsStrip] IPC connected');
 }
 
+/**
+ * Initialize stats strip via WebSocket (web mode)
+ * Connects to /ws/stats for real-time pwd updates from Bash spans
+ */
+function initStatsStripWebSocket() {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${protocol}//${window.location.host}/ws/stats`;
+
+  try {
+    const statsSocket = new WebSocket(wsUrl);
+
+    statsSocket.onopen = () => {
+      console.log('[StatsStrip] WebSocket connected');
+    };
+
+    statsSocket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.model) {
+          updateStripStat('strip-model', data.model);
+        }
+        if (data.pwd) {
+          updatePwd(data.pwd);
+        }
+      } catch (err) {
+        console.error('[StatsStrip] Failed to parse WebSocket message:', err);
+      }
+    };
+
+    statsSocket.onerror = (err) => {
+      console.error('[StatsStrip] WebSocket error:', err);
+    };
+
+    statsSocket.onclose = () => {
+      console.log('[StatsStrip] WebSocket disconnected, reconnecting in 5s...');
+      setTimeout(initStatsStripWebSocket, 5000);
+    };
+  } catch (err) {
+    console.error('[StatsStrip] Failed to create WebSocket:', err);
+  }
+}
+
 // Initialize on page load
 initStatsStrip();
+
+// Also try WebSocket connection for web mode (pwd updates)
+if (!window.electronAPI?.stats) {
+  initStatsStripWebSocket();
+}
 
 // Export for external use
 window.initStatsStrip = initStatsStrip;
@@ -451,6 +543,8 @@ window.updateContextMeter = updateContextMeter;
 window.updateUsageMeter = updateUsageMeter;
 // 23-4: Export compact button functions
 window.updateCompactButtonVisibility = updateCompactButtonVisibility;
-// 35-2: Export user email function
-window.updateUserEmail = updateUserEmail;
 window.executeCompact = executeCompact;
+// Export pwd functions
+window.updatePwd = updatePwd;
+window.setProjectRoot = setProjectRoot;
+// Git sidebar functions moved to story.js
