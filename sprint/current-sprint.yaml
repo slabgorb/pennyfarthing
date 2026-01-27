@@ -791,7 +791,7 @@ epics:
         repos: pennyfarthing
         branch: feat/MSSCI-12346-legacy-cleanup
         workflow: tdd
-      - id: MSSCI-12275
+      - id: MSSCI-12520
         title: "Bell mode: inject queued messages after tool use"
         description: "When Bell mode is enabled, queued messages are injected into the conversation\ncontext after each tool use, rather than waiting for Claude to finish. This\nlets users provide feedback mid-turn without aborting Claude's work.\n\nImplementation:\n- Add Bell mode toggle to settings (off by default)\n- Hook into tool_result event in OTEL receiver\n- When Bell mode on and queue non-empty, dequeue message and inject as user turn\n- Claude continues processing but now sees the injected message in context\n- UI shows \U0001F514 indicator when Bell mode is active\n\nMetaphor: Like ringing a bike bell - you get attention without stopping traffic.\n"
         points: 5
@@ -801,7 +801,7 @@ epics:
         branch: feat/MSSCI-12275-bell-mode
         workflow: tdd
         completed: "2026-01-22"
-      - id: MSSCI-12403
+      - id: MSSCI-12523
         title: "Cyclist UX polish: persona popup and controls refinement"
         description: "Improve Cyclist visual terminal UX with focus on persona popup presentation,\ncontrol button styling, and keyboard shortcut rationalization.\n\nPersona Popup Enhancements:\n- Remove VOICE section (keep STYLE, BACKGROUND, QUIRKS)\n- Add team roster on right side of popup\n- Hover over team member shows their portrait/details (live preview)\n- Show team statistics (tier rankings)\n- Show agent statistics (lift over baseline from Job Fair benchmarks)\n- Smooth open/close animations\n\nControl Button Polish:\n- Convert RELAY button to icon-only with bicycle icon \U0001F6B2\n- Convert BELL button to icon-only with bell icon \U0001F514\n- Consistent sizing and hover states for icon buttons\n- Tooltips explaining each control on hover\n\nKeyboard Shortcut Rationalization:\n- Audit all current keyboard shortcuts for collisions\n- Design non-conflicting shortcut scheme\n- Ensure shortcuts don't fire when typing in text inputs\n- Create modal manager for Escape key priority\n- Replace naked 's'/'a' keys with Cmd+Enter variants\n\nBehaviors (BDD scenarios):\n- GIVEN the RELAY button WHEN rendered THEN show bicycle icon only (no text)\n- GIVEN the BELL button WHEN rendered THEN show bell icon only (no text)\n- GIVEN any icon button WHEN hovered THEN show tooltip with label\n- GIVEN persona popup opens WHEN team roster visible THEN show all theme agents\n- GIVEN user hovers team member WHEN in popup THEN preview that agent's details\n- GIVEN persona popup WHEN rendered THEN show team tier and agent lift stats\n- GIVEN user is typing in input WHEN shortcut key pressed THEN do not trigger\n- GIVEN Escape pressed WHEN multiple modals open THEN close topmost only\n"
         points: 5
@@ -811,7 +811,7 @@ epics:
         branch: feat/MSSCI-12403-persona-popup-redesign
         workflow: bdd
         completed: "2026-01-25"
-      - id: MSSCI-12424
+      - id: MSSCI-12524
         title: "Remove ungated DEBUG console.log in otlp-receiver.ts"
         description: |
           Lines 756-769 in otlp-receiver.ts have DEBUG console.log statements that
@@ -826,7 +826,7 @@ epics:
         status: done
         repos: pennyfarthing
         workflow: trivial
-      - id: MSSCI-12425
+      - id: MSSCI-12509
         title: "Remove debug logging in api/settings.ts"
         description: |
           Line 282 in api/settings.ts has a debug console.log that logs
@@ -840,10 +840,11 @@ epics:
           Found via: tail -f /tmp/cyclist.log
         points: 1
         priority: P2
-        status: backlog
+        status: done
+        completed: 2026-01-27
         repos: pennyfarthing
         workflow: trivial
-      - id: MSSCI-12426
+      - id: MSSCI-12510
         title: "Fix uncaught exception during startup when no project directory"
         description: |
           During Cyclist startup, an uncaught exception occurs:
@@ -1124,8 +1125,8 @@ epics:
           - Code blocks do not trigger false positives
           - Rhetorical questions do not trigger
           - AskUserQuestion tool use requires marker
-      - id: MSSCI-12394
-        jira: MSSCI-12394
+      - id: MSSCI-12521
+        jira: MSSCI-12521
         title: "Sprint and Story YAML validators"
         description: |
           Create validation scripts for Pennyfarthing YAML files to catch
@@ -1160,8 +1161,8 @@ epics:
           - Can validate archived sprints
           - just validate-sprint recipe works
         completed: "2026-01-25"
-      - id: MSSCI-12395
-        jira: MSSCI-12395
+      - id: MSSCI-12522
+        jira: MSSCI-12522
         title: "Refactor turbo mode into independent relay toggle"
         description: |
           Currently 'turbo' mode conflates two behaviors:
@@ -1220,7 +1221,7 @@ epics:
     repos: pennyfarthing
     stories:
       - id: "63-1"
-        jira: MSSCI-12395
+        jira: MSSCI-12522
         title: "Fix background tasks WebSocket broadcast"
         description: |
           Background tasks panel in Cyclist never shows background agents.
@@ -1699,7 +1700,7 @@ epics:
           visibility for subagents and long-running tasks.
         points: 5
         priority: P2
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria:
@@ -1709,6 +1710,7 @@ epics:
           - Duration/elapsed time
           - Output preview on expand
         jira: MSSCI-12477
+        completed: "2026-01-27"
       # Vision Stories
       - id: "MSSCI-12478"
         title: "Theme schema: Consolidate quote → catchphrases"
