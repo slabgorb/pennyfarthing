@@ -21,7 +21,6 @@ import {
  * @property {'auto' | 'manual'} workflow.handoff_mode
  * @property {Object} display
  * @property {boolean} display.show_flow
- * @property {boolean} display.show_ocean
  * @property {number} display.sidebar_width
  * @property {string} display.font_ui
  * @property {string} display.font_mono
@@ -98,11 +97,6 @@ export function loadFormValues(settings) {
     showFlow.checked = settings.display?.show_flow ?? true;
   }
 
-  const showOcean = form.querySelector('#show_ocean');
-  if (showOcean) {
-    showOcean.checked = settings.display?.show_ocean ?? false;
-  }
-
   const sidebarWidth = form.querySelector('#sidebar_width');
   if (sidebarWidth) {
     sidebarWidth.value = settings.display?.sidebar_width ?? 300;
@@ -169,7 +163,6 @@ export function getFormValues() {
     },
     display: {
       show_flow: form.querySelector('#show_flow')?.checked ?? true,
-      show_ocean: form.querySelector('#show_ocean')?.checked ?? false,
       sidebar_width: parseInt(form.querySelector('#sidebar_width')?.value ?? '300', 10),
       font_ui: form.querySelector('#font_ui')?.value ?? 'system-ui',
       font_mono: form.querySelector('#font_mono')?.value ?? 'SF Mono',
@@ -197,7 +190,6 @@ export function getDefaultSettings() {
     },
     display: {
       show_flow: true,
-      show_ocean: false,
       sidebar_width: 300,
       font_ui: 'system-ui',
       font_mono: 'SF Mono',

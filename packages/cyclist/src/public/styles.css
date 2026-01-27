@@ -1553,7 +1553,7 @@ html, body {
   margin-bottom: 8px;
 }
 
-/* Portrait details: role and OCEAN (next to portrait) */
+/* Portrait details: role (next to portrait) */
 .portrait-details {
   display: flex;
   flex-direction: column;

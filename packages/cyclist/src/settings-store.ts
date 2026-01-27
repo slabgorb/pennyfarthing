@@ -205,7 +205,7 @@ function matchPathPattern(pattern: string, path: string): boolean {
  */
 export function syncWithFileSettings(fileSettings: {
   workflow?: { auto_handoff?: boolean; handoff_confirm?: boolean };
-  display?: { show_flow?: boolean; show_ocean?: boolean; sidebar_width?: number };
+  display?: { show_flow?: boolean; sidebar_width?: number };
   notifications?: { phase_change?: boolean; sound?: boolean };
 }): void {
   // Future: could sync verbose mode or other settings from file
