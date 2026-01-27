@@ -840,7 +840,8 @@ epics:
           Found via: tail -f /tmp/cyclist.log
         points: 1
         priority: P2
-        status: backlog
+        status: done
+        completed: 2026-01-27
         repos: pennyfarthing
         workflow: trivial
       - id: MSSCI-12510
