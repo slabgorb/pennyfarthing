@@ -135,6 +135,16 @@ def prime(
             _print_header(filename, quiet)
             print(content)
 
+    # ==========================================================================
+    # FINAL: Activation directive
+    # ==========================================================================
+    if agent_name:
+        print()
+        print("<activation-directive>")
+        print("Context loaded. Do NOT manually read agent definition files.")
+        print("Your agent file has been loaded above. Proceed with your first action.")
+        print("</activation-directive>")
+
     return 0
 
 
