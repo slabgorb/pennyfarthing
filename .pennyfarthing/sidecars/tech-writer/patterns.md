@@ -1,34 +1,7 @@
-# tech-writer Patterns
+# Tech Writer Agent Patterns
 
-Capture successful patterns discovered during tech-writer work.
-
-## Pattern Template
-
-Use this format to document recurring patterns:
-
-### [Pattern Name]
-
-**Context:** When does this pattern apply? What problem does it solve?
-
-**Solution:** What to do. Step-by-step or best practice.
-
-**Example:**
-```
-code or workflow example
-```
-
-**Why it works:** Key insight or reasoning.
+> Pennyfarthing-specific documentation patterns
 
 ---
 
-## Examples to Add
-
-Start with patterns you discover:
-- Common Git workflows
-- Effective communication patterns
-- Code organization approaches
-- Testing strategies
-- Build/deployment patterns
-- Error recovery procedures
-
-Keep 5-15 active patterns. Archive older entries to sprint/archive/ when they become obsolete.
+*Add documentation patterns discovered during tech writing work below*
