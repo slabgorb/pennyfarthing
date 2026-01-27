@@ -197,3 +197,4 @@ Key architectural decisions are documented in `docs/adr/`. Review these before m
 5. **Use Haiku for subagents** - never Opus for mechanical tasks
 6. **Commit `dist/`** alongside `src/` changes (tracked build output)
 7. **Detect state** from session files, never hardcode workflow state
+8. **Never manually read agent files** - activation scripts load agent definitions via `prime.py`; do not use Read tool on `pennyfarthing-dist/agents/*.md` after skill activation
