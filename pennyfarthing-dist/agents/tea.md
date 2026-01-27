@@ -58,7 +58,7 @@ ASSESSMENT_SECTION: "TEA Assessment"
 
 Read `**Workflow:**` and `**Phase:**` from session. Query:
 ```bash
-OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-owner.sh {workflow} {phase})
+OWNER=$(.pennyfarthing/scripts/core/run.sh workflow/phase-owner.sh {workflow} {phase})
 ```
 
 **If OWNER != "tea":** Run `handoff-marker.sh $OWNER`, output result, tell user.
@@ -144,7 +144,7 @@ Write to session file BEFORE spawning handoff:
 3. Await `HANDOFF_RESULT` with `next_agent`
 4. **ABSOLUTE LAST ACTION:**
    ```bash
-   $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
+   .pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
    ```
 5. Output result verbatim and EXIT
 </exit-sequence>

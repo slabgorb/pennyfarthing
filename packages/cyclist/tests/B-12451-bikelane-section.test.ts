@@ -345,22 +345,17 @@ describe('B-12451: BikeLane Workflow Sidebar Section', () => {
 
   describe('AC8: Data updates via WebSocket', () => {
 
-    it('should include bikelane-section.js script', () => {
-      // TODO: Create bikelane-section.js and include in index.html
-      expect(html).toContain('bikelane-section.js');
+    it('should include sidebar module that loads bikelane', () => {
+      // Sidebar modules are now loaded via /js/sidebar/index.js
+      // which imports bikelane.js among other sidebar components
+      expect(html).toContain('sidebar/index.js');
     });
 
-    it('should export updateBikelaneSection function', () => {
-      // TODO: Implement updateBikelaneSection in bikelane-section.js
-      // This function should update the section based on workflow data
-
-      // Test will fail until the module is created and script is included
-      // Dev must create bikelane-section.js and add it to index.html
-      // The script should expose window.bikelaneSection.update or similar
-
-      // For now, we verify the script tag exists (which it doesn't yet)
-      // This is a proxy test that will fail until implementation
-      expect(html).toContain('bikelane-section.js');
+    it('should export updateBikelaneSection function', async () => {
+      // BikeLane module exports update function (aliased as updateBikelaneSection)
+      // Loaded via sidebar/index.js which imports sidebar/bikelane.js
+      const { updateBikelaneSection } = await import('../src/public/js/sidebar/bikelane.js');
+      expect(typeof updateBikelaneSection).toBe('function');
     });
 
     it('should listen to story WebSocket channel for workflow updates', async () => {
@@ -560,7 +555,7 @@ import {
   renderPhaseProgress,
   renderPhaseHistory,
   renderPhaseSummary,
-} from '../src/public/js/bikelane-section.js';
+} from '../src/public/js/sidebar/bikelane.js';
 
 describe('B-12451: bikelane-section.js Module', () => {
 
@@ -741,7 +736,7 @@ describe('B-12451: WebSocket Integration', () => {
     };
 
     // Verify the module exports updateBikelaneSection
-    const { updateBikelaneSection } = await import('../src/public/js/bikelane-section.js');
+    const { updateBikelaneSection } = await import('../src/public/js/sidebar/bikelane.js');
     expect(typeof updateBikelaneSection).toBe('function');
 
     // Verify it accepts workflow data without throwing
@@ -751,7 +746,7 @@ describe('B-12451: WebSocket Integration', () => {
   it('should hide section when workflow is null', async () => {
     // Test verifies that updateBikelaneSection handles null workflow
 
-    const { updateBikelaneSection } = await import('../src/public/js/bikelane-section.js');
+    const { updateBikelaneSection } = await import('../src/public/js/sidebar/bikelane.js');
 
     // Verify it accepts null workflow without throwing
     expect(() => updateBikelaneSection(null)).not.toThrow();
@@ -760,7 +755,7 @@ describe('B-12451: WebSocket Integration', () => {
   it('should handle workflow type changes', async () => {
     // Test verifies sequential workflow updates work
 
-    const { updateBikelaneSection } = await import('../src/public/js/bikelane-section.js');
+    const { updateBikelaneSection } = await import('../src/public/js/sidebar/bikelane.js');
 
     const initialWorkflow = { type: 'tdd', phases: [] };
     const updatedWorkflow = { type: 'trivial', phases: [] };
@@ -775,7 +770,7 @@ describe('B-12451: WebSocket Integration', () => {
   it('should handle phase status transitions', async () => {
     // Test verifies phase transitions are handled correctly
 
-    const { updateBikelaneSection } = await import('../src/public/js/bikelane-section.js');
+    const { updateBikelaneSection } = await import('../src/public/js/sidebar/bikelane.js');
 
     const phase1 = {
       type: 'tdd',
@@ -860,7 +855,7 @@ describe('B-12451: Collapse State Persistence', () => {
     // which bikelane-section.js registers with on init
 
     // Verify bikelane-section.js registers with collapsed sections system
-    const bikelaneModule = await import('../src/public/js/bikelane-section.js');
+    const bikelaneModule = await import('../src/public/js/sidebar/bikelane.js');
     expect(bikelaneModule).toBeDefined();
     // The module initialization calls window.collapsedSections.initSection if available
   });
@@ -871,7 +866,7 @@ describe('B-12451: Collapse State Persistence', () => {
 
     // Verify CSS supports collapsed state (tested in CSS Integration tests)
     // This test confirms the module loads without errors
-    const bikelaneModule = await import('../src/public/js/bikelane-section.js');
+    const bikelaneModule = await import('../src/public/js/sidebar/bikelane.js');
     expect(bikelaneModule.updateBikelaneSection).toBeDefined();
   });
 

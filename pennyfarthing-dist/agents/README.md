@@ -213,31 +213,39 @@ Reviewer → Dev:  Changes requested
 
 ## Path Standards
 
-**IMPORTANT:** All agent commands use `$CLAUDE_PROJECT_DIR` for path references.
+**IMPORTANT:** Use relative paths from project root or the `run.sh` wrapper for script execution.
 
 ### Standard Pattern
 ```bash
-# ✅ CORRECT - Use $CLAUDE_PROJECT_DIR with run.sh
-$CLAUDE_PROJECT_DIR/scripts/run.sh core/agent-session.sh start "Agent Name"
-$CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md
+# ✅ CORRECT - Use run.sh wrapper (handles path resolution)
+.pennyfarthing/scripts/core/run.sh core/agent-session.sh start "Agent Name"
 
-# ❌ WRONG - Don't use git rev-parse (unreliable in agent context)
-$(git rev-parse --show-toplevel)/scripts/run.sh core/agent-session.sh
+# ✅ CORRECT - Relative paths for files (Claude starts in project root)
+.session/{STORY_ID}-session.md
+
+# ✅ CORRECT - Commands use climber pattern to find project root
+d="$PWD"; while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done
+"$d/.pennyfarthing/scripts/core/run.sh" core/agent-session.sh start "sm"
+
+# ❌ WRONG - $CLAUDE_PROJECT_DIR doesn't exist in Claude Bash calls
+$CLAUDE_PROJECT_DIR/scripts/run.sh core/agent-session.sh  # BROKEN!
 
 # ❌ WRONG - Don't hardcode absolute paths
 /Users/someone/project/scripts/run.sh core/agent-session.sh
 ```
 
-### Why $CLAUDE_PROJECT_DIR?
-- `$(git rev-parse --show-toplevel)` doesn't work reliably in agent context
-- Hardcoded paths break on different machines
-- `$CLAUDE_PROJECT_DIR` is set by the environment and works consistently
+### Why Relative Paths?
+- `$CLAUDE_PROJECT_DIR` is available in hooks but NOT in Claude's Bash tool calls
+- `run.sh` internally finds project root via `.pennyfarthing/` marker
+- Claude Code always starts in the project root directory
+- The climber pattern handles subdirectory execution if needed
 
-### Usage in Agent Commands
-All agent commands in `.claude/commands/` have been standardized to use `$CLAUDE_PROJECT_DIR`:
-- Agent session registration
-- Script execution
-- File path references
+### Path Context
+| Context | `$CLAUDE_PROJECT_DIR` | Relative Paths | run.sh |
+|---------|----------------------|----------------|--------|
+| Hooks (settings.json) | ✅ Available | ✅ Works | ✅ Works |
+| Claude Bash calls | ❌ Not set | ✅ Works | ✅ Works |
+| Scripts (via run.sh) | ❌ Use `$PROJECT_ROOT` | ✅ Works | - |
 
 ## Background Subagent Execution
 
@@ -276,8 +284,8 @@ When running in Cyclist, background tasks are automatically tracked:
 Use the background task tracking utilities to manage session file entries:
 
 ```bash
-source $CLAUDE_PROJECT_DIR/scripts/utils/background-tasks.sh
-SESSION_FILE="$CLAUDE_PROJECT_DIR/.session/${STORY_ID}-session.md"
+source .pennyfarthing/scripts/utils/background-tasks.sh
+SESSION_FILE=".session/${STORY_ID}-session.md"
 
 # After spawning, record the task:
 bg_task_add "$SESSION_FILE" "$TASK_ID" "testing-runner" "Background test run"

@@ -174,7 +174,7 @@ Use `/jira claim` command:
 ## Step 5: Create Branch
 
 ```bash
-cd $CLAUDE_PROJECT_DIR && git checkout develop && git pull && \
+git checkout develop && git pull && \
 git checkout -b feat/{STORY_ID}-{SLUG}
 ```
 
