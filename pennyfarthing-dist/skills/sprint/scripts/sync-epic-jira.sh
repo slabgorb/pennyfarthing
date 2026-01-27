@@ -6,7 +6,7 @@
 # Example: .pennyfarthing/scripts/core/run.sh sync-epic-jira.sh MSSCI-11952 --all
 #
 # This script syncs status and story points from sprint YAML to Jira.
-# It wraps the existing jira-sync.mjs for better integration with /sprint skill.
+# Thin wrapper that delegates to Python CLI.
 
 set -euo pipefail
 
@@ -63,25 +63,7 @@ if [[ -z "$EPIC_EXISTS" ]]; then
   exit 1
 fi
 
-# Extract epic number for jira-sync.mjs compatibility
-# jira-sync.mjs expects epic number (e.g., 35) not full ID
-# But it also accepts Jira keys directly
-# Let's check if this is a Jira key (MSSCI-XXXXX) or local ID
-
-# Pass through to jira-sync.mjs with remaining arguments
-JIRA_SYNC_SCRIPT="$PROJECT_ROOT/.pennyfarthing/scripts/utils/jira/jira-sync.mjs"
-
-if [[ ! -f "$JIRA_SYNC_SCRIPT" ]]; then
-  # Try alternate location
-  JIRA_SYNC_SCRIPT="$PROJECT_ROOT/pennyfarthing-dist/scripts/utils/jira/jira-sync.mjs"
-fi
-
-if [[ ! -f "$JIRA_SYNC_SCRIPT" ]]; then
-  echo "Error: jira-sync.mjs not found"
-  exit 1
-fi
-
-# Build arguments for jira-sync.mjs
+# Build arguments for Python CLI
 shift  # Remove epic-id from arguments
 SYNC_ARGS=("$EPIC_ID")
 
@@ -100,5 +82,5 @@ done
 echo "Syncing epic $EPIC_ID to Jira..."
 echo ""
 
-# Run jira-sync.mjs
-exec node "$JIRA_SYNC_SCRIPT" "${SYNC_ARGS[@]}"
+# Delegate to Python CLI
+exec python3 -m pennyfarthing_scripts.jira sync "${SYNC_ARGS[@]}"
