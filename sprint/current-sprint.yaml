@@ -1511,7 +1511,7 @@ epics:
     prd: docs/prd/ux-overview.md
     stories:
       # MVP Stories
-      - id: "64-1"
+      - id: "MSSCI-12466"
         title: "DIFFS panel: Show file line numbers instead of diff-relative"
         description: |
           Line numbers in diff viewer show position within the diff, not actual
@@ -1525,7 +1525,8 @@ epics:
         acceptance_criteria:
           - Line numbers in diff view match actual file line numbers
           - Works for both partial and combined views
-      - id: "64-2"
+        jira: MSSCI-12466
+      - id: "MSSCI-12467"
         title: "DIFFS panel: Fix file opener for $EDITOR"
         description: |
           Clicking file path header in diff viewer should open the file in the
@@ -1538,7 +1539,8 @@ epics:
         acceptance_criteria:
           - Click file path opens file in $EDITOR
           - Falls back gracefully if $EDITOR not set
-      - id: "64-3"
+        jira: MSSCI-12467
+      - id: "MSSCI-12468"
         title: "DIFFS panel: Improve combined diff view"
         description: |
           Combined diff view needs better UX showing original → final state
@@ -1551,7 +1553,8 @@ epics:
         acceptance_criteria:
           - Combined view shows clear original → final transition
           - Context lines displayed appropriately
-      - id: "64-4"
+        jira: MSSCI-12468
+      - id: "MSSCI-12469"
         title: "Stats strip: Redesign layout with identity context"
         description: |
           Redesign stats strip to show:
@@ -1570,7 +1573,8 @@ epics:
           - GitHub username displayed from gh CLI config
           - Model and context % preserved
           - Usage limits removed
-      - id: "64-5"
+        jira: MSSCI-12469
+      - id: "MSSCI-12470"
         title: "Tab bar: Fix indicator sync on startup"
         description: |
           On app startup, Message and Sidebar panels are open but their tab
@@ -1583,7 +1587,8 @@ epics:
         acceptance_criteria:
           - Tab indicators match actual panel state on startup
           - First click toggles correctly
-      - id: "64-6"
+        jira: MSSCI-12470
+      - id: "MSSCI-12471"
         title: "Fresh start: Audit and fix stale data on load"
         description: |
           On fresh load, many panels show stale data. Audit all stateful
@@ -1605,7 +1610,8 @@ epics:
           - Reset called on app start, Clear, TirePump
           - No localStorage/sessionStorage pollution
           - All indicators reset to defaults
-      - id: "64-7"
+        jira: MSSCI-12471
+      - id: "MSSCI-12472"
         title: "Persona section: Remove OCEAN scores and helper updates"
         description: |
           Remove OCEAN score bars and helper real-time updates from persona
@@ -1618,7 +1624,8 @@ epics:
         acceptance_criteria:
           - OCEAN scores removed from UI
           - Helper task line removed from UI
-      - id: "64-8"
+        jira: MSSCI-12472
+      - id: "MSSCI-12473"
         title: "Persona section: Random catchphrase on activation"
         description: |
           Instead of showing static quote, pick random catchphrase from theme's
@@ -1633,7 +1640,8 @@ epics:
           - Random catchphrase selected from array on agent switch
           - Falls back to first catchphrase if array has one item
           - Falls back to quote field if catchphrases missing
-      - id: "64-9"
+        jira: MSSCI-12473
+      - id: "MSSCI-12474"
         title: "Persona section: Tighten layout"
         description: |
           Reduce vertical sprawl in persona section for more compact display.
@@ -1645,8 +1653,9 @@ epics:
         acceptance_criteria:
           - Persona section more compact
           - All essential info still visible
+        jira: MSSCI-12474
       # Growth Stories
-      - id: "64-10"
+      - id: "MSSCI-12475"
         title: "Story section: Expandable sprint/epic details"
         description: |
           Make story section expandable to show full sprint and epic context
@@ -1661,7 +1670,8 @@ epics:
           - Shows epic context (parent epic, sibling stories)
           - Jira links clickable
           - Points and status for each story
-      - id: "64-11"
+        jira: MSSCI-12475
+      - id: "MSSCI-12476"
         title: "BikeLane section: Show workflow status when active"
         description: |
           BikeLane section exists but is hidden. Make it visible when a
@@ -1677,7 +1687,8 @@ epics:
           - Shows current step/phase
           - Progress visualization
           - Phase history timeline
-      - id: "64-12"
+        jira: MSSCI-12476
+      - id: "MSSCI-12477"
         title: "Background tasks: Implement subagent visibility"
         description: |
           Background tasks section exists but doesn't work. Implement proper
@@ -1693,8 +1704,9 @@ epics:
           - Status indicators (running/completed/failed)
           - Duration/elapsed time
           - Output preview on expand
+        jira: MSSCI-12477
       # Vision Stories
-      - id: "64-13"
+      - id: "MSSCI-12478"
         title: "Theme schema: Consolidate quote → catchphrases"
         description: |
           Some themes have quote field, others have catchphrases array.
@@ -1709,3 +1721,5 @@ epics:
           - All 102 themes updated
           - quote field removed from schema
           - Theme validation updated
+        jira: MSSCI-12478
+    jira: MSSCI-12465
