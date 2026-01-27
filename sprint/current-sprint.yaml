@@ -1551,15 +1551,15 @@ epics:
           with proper context.
         points: 2
         priority: P1
-        status: in_progress
+        status: done
         repos: pennyfarthing
         workflow: tdd
-        branch: feat/38-1-diffs-panel-improve-combined-diff
-        assigned_to: Keith Avery
+        branch: feat/MSSCI-12468-diffs-combined-view
         acceptance_criteria:
           - Combined view shows clear original → final transition
           - Context lines displayed appropriately
         jira: MSSCI-12468
+        completed: "2026-01-27"
       - id: "MSSCI-12469"
         title: "Stats strip: Redesign layout with identity context"
         description: |
