@@ -1,5 +1,5 @@
 #!/usr/bin/env zsh
-# Shared utility: Find project root by .claude/ marker
+# Shared utility: Find project root by .pennyfarthing/ marker
 #
 # DEPRECATED: Scripts invoked via run.sh already have PROJECT_ROOT set.
 # This file is kept for backwards compatibility with scripts that may be
@@ -19,14 +19,14 @@ if [ -z "${PROJECT_ROOT:-}" ]; then
         _find_root_dir="$PWD"
     fi
 
-    while [[ ! -d "$_find_root_dir/.claude" ]] && [[ "$_find_root_dir" != "/" ]]; do
+    while [[ ! -d "$_find_root_dir/.pennyfarthing" ]] && [[ "$_find_root_dir" != "/" ]]; do
         _find_root_dir="$(dirname "$_find_root_dir")"
     done
 
-    if [[ -d "$_find_root_dir/.claude" ]]; then
+    if [[ -d "$_find_root_dir/.pennyfarthing" ]]; then
         PROJECT_ROOT="$_find_root_dir"
     else
-        echo "Error: Could not find project root (no .claude/ directory found)" >&2
+        echo "Error: Could not find project root (no .pennyfarthing/ directory found)" >&2
         exit 1
     fi
     unset _find_root_dir

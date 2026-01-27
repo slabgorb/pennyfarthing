@@ -1579,31 +1579,6 @@ html, body {
   margin-top: 8px;
 }
 
-/* OCEAN personality scores - in portrait details */
-.ocean-scores {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.ocean-row {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.ocean-row .trait-label {
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--accent);
-}
-
-.ocean-row .trait-value {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
 /* Benchmark score display */
 .benchmark-score {
   font-size: 0.8rem;
@@ -2235,6 +2210,37 @@ html, body {
 /* Two-line header for collapsed persona section */
 .persona-section .section-header {
   align-items: flex-start;
+}
+
+/* MSSCI-12474: Small portrait thumbnail in header (visible when collapsed) */
+.persona-section .portrait-thumb {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg-secondary);
+  margin-right: 0.5rem;
+  display: none;  /* Hidden by default (when expanded) */
+}
+
+.persona-section.collapsed .portrait-thumb {
+  display: block;  /* Show when collapsed */
+}
+
+.persona-section .portrait-thumb img {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+}
+
+.persona-section .portrait-thumb .portrait-placeholder {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
 }
 
 .persona-section .persona-header-content {

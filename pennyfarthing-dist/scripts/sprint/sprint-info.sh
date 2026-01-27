@@ -9,7 +9,7 @@ set -euo pipefail
 # PROJECT_ROOT should be set by run.sh
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
   d="$PWD"
-  while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do
+  while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do
     d="$(dirname "$d")"
   done
   PROJECT_ROOT="$d"

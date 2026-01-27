@@ -52,28 +52,6 @@ function humanize(str) {
 }
 
 /**
- * Update OCEAN scores display
- * @param {Object} ocean - OCEAN scores { O, C, E, A, N } with values 1-5
- */
-function updateOceanScores(ocean) {
-  const oceanContainer = document.getElementById('ocean-scores');
-  if (!oceanContainer) return;
-
-  const traits = ['O', 'C', 'E', 'A', 'N'];
-  for (const trait of traits) {
-    const row = oceanContainer.querySelector(`[data-trait="${trait}"]`);
-    if (!row) continue;
-
-    const value = ocean?.[trait] ?? 0;
-    const valueEl = row.querySelector('.trait-value');
-
-    if (valueEl) {
-      valueEl.textContent = value > 0 ? value : '-';
-    }
-  }
-}
-
-/**
  * Update persona display in the UI
  * @param {Object} persona - Persona data from IPC
  */
@@ -113,11 +91,6 @@ export function updatePersona(persona) {
   if (roleEl) {
     // Show the agent role (dev, sm, tea, etc.) - not the character's story role
     roleEl.textContent = (persona.role || '').toUpperCase();
-  }
-
-  // Update OCEAN scores
-  if (persona.ocean) {
-    updateOceanScores(persona.ocean);
   }
 
   // Update benchmark score if available
