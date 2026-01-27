@@ -757,7 +757,7 @@ When implementing approval gates:
 - `Task` with `subagent_type`: Delegated gate execution
 
 ### Reflector Hook
-- `question-reflector-check.mjs`: Enforces CYCLIST marker before AskUserQuestion
+- `question_reflector_check.py`: Enforces CYCLIST marker before AskUserQuestion
 - Markers: `<!-- CYCLIST:CHOICES:... -->`, `<!-- CYCLIST:QUESTION:yesno|open -->`
 
 ---
