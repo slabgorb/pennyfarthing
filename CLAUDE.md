@@ -153,7 +153,7 @@ Pennyfarthing integrates with Jira for sprint and story tracking. Key capabiliti
 - Enables seamless story workflow without manual Jira setup
 
 ### Bidirectional Sync (PR #322)
-- `jira-bidirectional-sync.mjs` syncs status, points, and stories between sprint YAML and Jira
+- `pennyfarthing_scripts/jira/bidirectional.py` syncs status, points, and stories between sprint YAML and Jira
 - Dry-run mode shows changes before applying
 - Supports both YAML→Jira and Jira→YAML updates
 - Handles new stories, status transitions, and story point updates
