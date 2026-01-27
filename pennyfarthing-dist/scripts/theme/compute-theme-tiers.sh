@@ -1,11 +1,13 @@
-#!/bin/bash
-# compute-theme-tiers.sh - Shell wrapper for compute-theme-tiers.js
-# Computes tier rankings from job-fair results and updates theme files
+#!/usr/bin/env bash
+# compute-theme-tiers.sh - Compute tier rankings from job-fair results
 #
 # Uses the MOST COMPLETE run for each theme (most matrix entries),
 # not the most recent. This prevents incomplete runs from overriding good data.
 #
-# All logic is implemented in compute-theme-tiers.js (Node.js)
+# Usage: compute-theme-tiers.sh [--dry-run] [--verbose] [--min-entries N]
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-exec node "$SCRIPT_DIR/compute-theme-tiers.js" "$@"
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+exec python3 "$SCRIPT_DIR/compute_theme_tiers.py" "$@"

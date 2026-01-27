@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# migrate-bmad-workflow.sh - Thin wrapper for migrate-bmad-workflow.mjs
+# migrate-bmad-workflow.sh - Migrate BMAD workflows to Pennyfarthing format
 #
 # Usage: ./scripts/migrate-bmad-workflow.sh [--dry-run] <source-dir> [target-dir]
-#
-# Delegates to Node script for cleaner YAML parsing and variable conversion.
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-exec node "${SCRIPT_DIR}/migrate-bmad-workflow.mjs" "$@"
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+exec python3 "$SCRIPT_DIR/migrate_bmad_workflow.py" "$@"
