@@ -2,7 +2,7 @@ import { Server } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import { watch, existsSync } from 'fs';
 import { join } from 'path';
-import { getCurrentStats, getStatsClients } from './api/stats.js';
+import { getCurrentStats, getStatsClients, updatePwd } from './api/stats.js';
 import { getPersonaClients, broadcastPersona } from './api/persona.js';
 import { getTokenStatsClients } from './api/token-stats.js';
 import { getBackgroundTaskClients } from './api/background-tasks.js';
@@ -384,12 +384,19 @@ export function setupWebSocketServers(
   });
 
   // Set up tool event listener to broadcast new spans to WebSocket clients
+  // Also track pwd from Bash commands for stats-strip display
   addToolEventListener((event: ToolEvent) => {
+    // Broadcast span to spans WebSocket clients
     const message = JSON.stringify({ type: 'span', span: event });
     for (const client of spansClients) {
       if (client.readyState === WebSocket.OPEN) {
         client.send(message);
       }
+    }
+
+    // Track pwd from Bash tool completions
+    if (event.toolName === 'Bash' && event.workingDirectory) {
+      updatePwd(event.workingDirectory);
     }
   });
 

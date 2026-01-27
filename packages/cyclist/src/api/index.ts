@@ -1,5 +1,5 @@
 // API module exports
-export { createStatsRouter, broadcastStats, getCurrentStats, getStatsClients } from './stats.js';
+export { createStatsRouter, broadcastStats, getCurrentStats, getStatsClients, updatePwd } from './stats.js';
 export { createPortraitRouter, getCurrentPortrait } from './portrait.js';
 export { createPersonaRouter, broadcastPersona, getPersonaClients } from './persona.js';
 export { createGitRouter, getGitInfo } from './git.js';

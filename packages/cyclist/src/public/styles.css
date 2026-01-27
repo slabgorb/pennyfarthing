@@ -1124,36 +1124,20 @@ html, body {
   gap: 0.75rem;
 }
 
-/* 35-2: User email display in stats strip */
-.user-email {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  max-width: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.user-email:empty {
-  display: none;
-}
-
-.user-email.updated {
-  animation: pulse 0.5s ease-out;
-}
-
-/* Multi-repo: Project directory display */
-#stats-strip .project-dir {
+/* Claude's working directory display (responsive) */
+#stats-strip .pwd {
   font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
   color: var(--text-muted);
   font-size: 0.75rem;
-  max-width: 180px;
+  flex: 1;
+  min-width: 50px;
+  max-width: 300px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-#stats-strip .project-dir:empty {
+#stats-strip .pwd:empty {
   display: none;
 }
 

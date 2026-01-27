@@ -4,9 +4,10 @@ import { ParsedStats } from '../parser.js';
 
 // Stats state (in-memory for prototype)
 // Context is handled separately via dedicated context IPC channel (B-19)
-let currentStats: { model: string; status: string } = {
+let currentStats: { model: string; status: string; pwd: string } = {
   model: '—', // Unknown until parsed from PTY output
   status: '—',
+  pwd: '', // Claude's current working directory (from Bash spans)
 };
 
 // Stats WebSocket clients (for real-time updates)
@@ -25,6 +26,14 @@ export function getCurrentStats() {
 // Get stats clients set (for WebSocket setup)
 export function getStatsClients() {
   return statsClients;
+}
+
+// Update pwd and broadcast (called when Bash tool completes)
+export function updatePwd(pwd: string): void {
+  if (pwd && pwd !== currentStats.pwd) {
+    currentStats.pwd = pwd;
+    broadcastStats({ pwd } as ParsedStats);
+  }
 }
 
 // Broadcast stats to all connected clients (debounced)
@@ -64,7 +73,7 @@ export function createStatsRouter(): Router {
   // Stats API - SET stats (partial update supported)
   // Context is handled separately via dedicated context IPC channel (B-19)
   router.post('/', (req, res) => {
-    const { model, status } = req.body;
+    const { model, status, pwd } = req.body;
 
     // Validate types if provided
     if (model !== undefined && typeof model !== 'string') {
@@ -73,12 +82,16 @@ export function createStatsRouter(): Router {
     if (status !== undefined && typeof status !== 'string') {
       return res.status(400).json({ error: 'status must be a string' });
     }
+    if (pwd !== undefined && typeof pwd !== 'string') {
+      return res.status(400).json({ error: 'pwd must be a string' });
+    }
 
     // Partial update - merge with existing stats
     currentStats = {
       ...currentStats,
       ...(model !== undefined && { model }),
       ...(status !== undefined && { status }),
+      ...(pwd !== undefined && { pwd }),
     };
 
     res.json({ success: true, ...currentStats });
