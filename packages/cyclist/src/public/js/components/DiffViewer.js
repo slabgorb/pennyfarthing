@@ -332,34 +332,36 @@ export function renderDiff(container, diffData) {
   filePathLink.className = 'file-path file-path-link';
   filePathLink.href = '#';
   filePathLink.textContent = diffData.filePath;
-  filePathLink.title = 'Click to open in default application';
+  filePathLink.title = 'Click to open in $EDITOR';
   filePathLink.addEventListener('click', async (e) => {
     e.preventDefault();
     console.log(`[DiffViewer] Click handler fired for: ${diffData.filePath}`);
 
-    // 35-11: Check if electronAPI.fileBrowser exists
-    if (window.electronAPI?.fileBrowser?.openFile) {
-      console.log(`[DiffViewer] electronAPI.fileBrowser.openFile available, calling...`);
-      try {
-        const result = await window.electronAPI.fileBrowser.openFile(diffData.filePath);
-        console.log(`[DiffViewer] openFile result:`, result);
-        if (result && !result.success) {
-          console.error(`[DiffViewer] Failed to open file: ${diffData.filePath}`, result.error);
-          filePathLink.title = `Failed to open: ${result.error || 'file may no longer exist'}`;
-          filePathLink.classList.add('file-path-error');
-          setTimeout(() => filePathLink.classList.remove('file-path-error'), 3000);
-        }
-      } catch (err) {
-        console.error(`[DiffViewer] Failed to open file: ${diffData.filePath}`, err);
-        filePathLink.title = 'Failed to open file - it may no longer exist';
+    try {
+      // MSSCI-12467: Use REST API to open file in $EDITOR
+      const response = await fetch('/api/files/edit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: diffData.filePath }),
+      });
+
+      const result = await response.json();
+      console.log(`[DiffViewer] openFile result:`, result);
+
+      if (!result.success) {
+        console.error(`[DiffViewer] Failed to open file: ${diffData.filePath}`, result.error);
+        filePathLink.title = `Failed to open: ${result.error || 'unknown error'}`;
         filePathLink.classList.add('file-path-error');
         setTimeout(() => filePathLink.classList.remove('file-path-error'), 3000);
+      } else {
+        // Brief visual feedback on success
+        filePathLink.title = `Opened in ${result.editor}`;
       }
-    } else {
-      // 35-11 FIX: Add else branch to show when API is missing
-      console.error(`[DiffViewer] electronAPI.fileBrowser.openFile is not available`);
-      filePathLink.title = 'Cannot open file - API not available';
+    } catch (err) {
+      console.error(`[DiffViewer] Failed to open file: ${diffData.filePath}`, err);
+      filePathLink.title = 'Failed to open file - server error';
       filePathLink.classList.add('file-path-error');
+      setTimeout(() => filePathLink.classList.remove('file-path-error'), 3000);
     }
   });
 
