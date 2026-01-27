@@ -374,6 +374,10 @@ function checkUserFiles(projectRoot: string): CheckResult[] {
     const stopHookCheck = checkStopHook(projectRoot, installationType);
     results.push(stopHookCheck);
 
+    // Check PostToolUse hook is configured (bell mode - MSSCI-12275)
+    const postToolUseHookCheck = checkPostToolUseHook(projectRoot, installationType);
+    results.push(postToolUseHookCheck);
+
     // Check benchmark permissions (needed for /benchmark, /solo subagents)
     const benchmarkCheck = checkBenchmarkPermissions(projectRoot);
     results.push(benchmarkCheck);
@@ -586,6 +590,108 @@ function checkStopHook(projectRoot: string, installationType: string): CheckResu
 }
 
 /**
+ * Check that PostToolUse hook is properly configured in settings.local.json
+ * This is needed for bell mode to inject queued messages (MSSCI-12275)
+ */
+function checkPostToolUseHook(projectRoot: string, installationType: string): CheckResult {
+  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+
+  try {
+    const settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+
+    // Check if hooks.PostToolUse exists and contains bell-mode-hook
+    if (!settings.hooks?.PostToolUse) {
+      return {
+        name: 'settings/post-tool-use-hook',
+        status: 'warn',
+        detail: 'Missing PostToolUse hook - bell mode will not work',
+        fix: () => {
+          addPostToolUseHook(projectRoot, installationType);
+        }
+      };
+    }
+
+    // Check if bell-mode-hook is configured
+    const hasBellModeHook = settings.hooks.PostToolUse.some((entry: unknown) => {
+      if (typeof entry === 'object' && entry !== null) {
+        const hookEntry = entry as { hooks?: Array<{ command?: string }> };
+        return hookEntry.hooks?.some(h =>
+          h.command?.includes('bell-mode-hook')
+        );
+      }
+      return false;
+    });
+
+    if (!hasBellModeHook) {
+      return {
+        name: 'settings/post-tool-use-hook',
+        status: 'warn',
+        detail: 'bell-mode-hook not configured - bell mode will not work',
+        fix: () => {
+          addPostToolUseHook(projectRoot, installationType);
+        }
+      };
+    }
+
+    return {
+      name: 'settings/post-tool-use-hook',
+      status: 'pass',
+      detail: undefined
+    };
+  } catch {
+    return {
+      name: 'settings/post-tool-use-hook',
+      status: 'warn',
+      detail: 'Could not parse settings.local.json'
+    };
+  }
+}
+
+/**
+ * Fix function: Add PostToolUse hook to settings.local.json
+ * Required for bell mode to inject queued messages via additionalContext
+ */
+function addPostToolUseHook(projectRoot: string, installationType: string): void {
+  const settingsPath = join(projectRoot, '.claude/settings.local.json');
+  const scriptBase = getScriptBasePath(installationType);
+
+  const requiredHook = {
+    matcher: '',
+    hooks: [
+      {
+        type: 'command',
+        command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/bell-mode-hook.sh`
+      }
+    ]
+  };
+
+  let settings: Record<string, unknown> = {};
+
+  if (pathExists(settingsPath)) {
+    try {
+      settings = JSON.parse(readFileSync(settingsPath, 'utf8'));
+    } catch {
+      // Start fresh if parse fails
+    }
+  }
+
+  if (!settings.hooks) {
+    settings.hooks = {};
+  }
+
+  const hooks = settings.hooks as Record<string, unknown>;
+
+  if (!hooks.PostToolUse) {
+    hooks.PostToolUse = [requiredHook];
+  } else if (Array.isArray(hooks.PostToolUse)) {
+    // Prepend the required hook
+    hooks.PostToolUse = [requiredHook, ...hooks.PostToolUse];
+  }
+
+  writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf8');
+}
+
+/**
  * Fix function: Add Stop hook to settings.local.json
  */
 function addStopHook(projectRoot: string, installationType: string): void {
@@ -751,6 +857,28 @@ function createSettingsLocalJson(projectRoot: string, installationType: string):
             {
               type: 'command',
               command: '"$CLAUDE_PROJECT_DIR"/.claude/project/hooks/setup-env.sh'
+            }
+          ]
+        }
+      ],
+      PostToolUse: [
+        {
+          matcher: '',
+          hooks: [
+            {
+              type: 'command',
+              command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/bell-mode-hook.sh`
+            }
+          ]
+        }
+      ],
+      Stop: [
+        {
+          matcher: '',
+          hooks: [
+            {
+              type: 'command',
+              command: `"$CLAUDE_PROJECT_DIR"/${scriptBase}/hooks/question-reflector-check.sh`
             }
           ]
         }

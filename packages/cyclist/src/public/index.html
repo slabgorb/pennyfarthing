@@ -160,29 +160,33 @@
         </div>
         <!-- B-22: Stats Strip - compact stats display below editor -->
         <!-- 23-1: Token display removed, usage limits added -->
-        <!-- 35-2: User email display -->
+        <!-- Stats strip with left/right groups -->
         <div id="stats-strip">
-          <span class="user-email" data-stat="strip-user-email" title="Authenticated user"></span>
-          <span class="model-badge" data-stat="strip-model">—</span>
-          <span class="context-stats" title="Current context window">
-            <span class="stats-label">Context:</span>
-            <span class="context-tokens" data-stat="strip-context-tokens">—</span>
-          </span>
-          <div class="context-mini">
-            <div class="context-mini-fill"></div>
-            <span class="context-mini-label" data-stat="strip-context">—%</span>
+          <div class="stats-left">
+            <span class="pwd" data-stat="strip-pwd" title="Claude's working directory"></span>
           </div>
-          <!-- 23-4: Compact button - appears when context > 50% -->
-          <button type="button" class="compact-btn hidden" title="Compact context (Cmd+Shift+K)" aria-label="Compact context to reduce usage">Compact</button>
-          <!-- 23-1: Usage limits display (hidden until data available) -->
-          <span class="usage-5hr usage-safe" data-stat="strip-usage-5hr" title="5-hour window usage" style="display: none;">
-            <span class="usage-label">Window:</span>
-            <span class="usage-value"></span>
-          </span>
-          <span class="usage-weekly usage-safe" data-stat="strip-usage-weekly" title="Weekly usage" style="display: none;">
-            <span class="usage-label">Week:</span>
-            <span class="usage-value"></span>
-          </span>
+          <div class="stats-right">
+            <span class="model-badge" data-stat="strip-model">—</span>
+            <span class="context-stats" title="Current context window">
+              <span class="stats-label">Context:</span>
+              <span class="context-tokens" data-stat="strip-context-tokens">—</span>
+            </span>
+            <div class="context-mini">
+              <div class="context-mini-fill"></div>
+              <span class="context-mini-label" data-stat="strip-context">—%</span>
+            </div>
+            <!-- 23-4: Compact button - appears when context > 50% -->
+            <button type="button" class="compact-btn hidden" title="Compact context (Cmd+Shift+K)" aria-label="Compact context to reduce usage">Compact</button>
+            <!-- 23-1: Usage limits display (hidden until data available) -->
+            <span class="usage-5hr usage-safe" data-stat="strip-usage-5hr" title="5-hour window usage" style="display: none;">
+              <span class="usage-label">Window:</span>
+              <span class="usage-value"></span>
+            </span>
+            <span class="usage-weekly usage-safe" data-stat="strip-usage-weekly" title="Weekly usage" style="display: none;">
+              <span class="usage-label">Week:</span>
+              <span class="usage-value"></span>
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -191,40 +195,50 @@
     <div class="resize-handle" id="sidebar-resize" title="Drag to resize"></div>
     <!-- 35-5: Sidebar as vertical panel (collapse via tab bar, not inline button) -->
     <aside id="sidebar" class="vertical-panel position-right">
-      <!-- Persona Section -->
-      <div id="persona-section" class="persona-section">
-        <div id="project-name" class="project-name"></div>
-        <!-- Character name below project name, above portrait -->
-        <div id="character-name" class="character-name">Loading...</div>
-        <!-- Portrait with role/OCEAN beside it -->
-        <div class="portrait-row">
-          <div id="portrait">
-            <img src="" alt="Character portrait" style="display: none;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <div class="portrait-placeholder" style="display: flex;">
-              <svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-              </svg>
+      <!-- Persona Section - Collapsible -->
+      <section id="persona-section" class="collapsible-section persona-section">
+        <div class="section-header">
+          <div class="persona-header-content">
+            <div class="persona-header-line1">
+              <span id="project-name" class="project-name"></span>
+              <button class="collapse-btn" aria-label="Toggle persona">▼</button>
             </div>
-          </div>
-          <div class="portrait-details">
-            <div id="character-role" class="character-role"></div>
-            <div id="ocean-scores" class="ocean-scores">
-              <div class="ocean-row" data-trait="O"><span class="trait-label">O</span><span class="trait-value"></span></div>
-              <div class="ocean-row" data-trait="C"><span class="trait-label">C</span><span class="trait-value"></span></div>
-              <div class="ocean-row" data-trait="E"><span class="trait-label">E</span><span class="trait-value"></span></div>
-              <div class="ocean-row" data-trait="A"><span class="trait-label">A</span><span class="trait-value"></span></div>
-              <div class="ocean-row" data-trait="N"><span class="trait-label">N</span><span class="trait-value"></span></div>
-            </div>
+            <div id="persona-section-summary" class="persona-header-line2"></div>
           </div>
         </div>
-        <!-- Theme centered under portrait -->
-        <div id="theme-name" class="theme-name"></div>
-        <div id="benchmark-score" class="benchmark-score"></div>
-        <!-- MSSCI-11821: Character quote display -->
-        <div id="character-quote" class="character-quote"></div>
-        <div id="helper-line" class="activity-line"></div>
-        <div id="helper-task-line" class="activity-line"></div>
-      </div>
+        <div class="section-detail">
+          <!-- Character name below project name, above portrait -->
+          <div id="character-name" class="character-name">Loading...</div>
+          <!-- Portrait with role/OCEAN beside it -->
+          <div class="portrait-row">
+            <div id="portrait">
+              <img src="" alt="Character portrait" style="display: none;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+              <div class="portrait-placeholder" style="display: flex;">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+              </div>
+            </div>
+            <div class="portrait-details">
+              <div id="character-role" class="character-role"></div>
+              <div id="ocean-scores" class="ocean-scores">
+                <div class="ocean-row" data-trait="O"><span class="trait-label">O</span><span class="trait-value"></span></div>
+                <div class="ocean-row" data-trait="C"><span class="trait-label">C</span><span class="trait-value"></span></div>
+                <div class="ocean-row" data-trait="E"><span class="trait-label">E</span><span class="trait-value"></span></div>
+                <div class="ocean-row" data-trait="A"><span class="trait-label">A</span><span class="trait-value"></span></div>
+                <div class="ocean-row" data-trait="N"><span class="trait-label">N</span><span class="trait-value"></span></div>
+              </div>
+            </div>
+          </div>
+          <!-- Theme centered under portrait -->
+          <div id="theme-name" class="theme-name"></div>
+          <div id="benchmark-score" class="benchmark-score"></div>
+          <!-- MSSCI-11821: Character quote display -->
+          <div id="character-quote" class="character-quote"></div>
+          <div id="helper-line" class="activity-line"></div>
+          <div id="helper-task-line" class="activity-line"></div>
+        </div>
+      </section>
 
       <!-- Theme Picker (35-1: Contextual settings) -->
       <div id="theme-picker" class="theme-picker" style="display: none;">
@@ -281,12 +295,35 @@
         </div>
       </div>
 
-      <!-- Git Section -->
-      <div id="git-section" class="git-section">
-        <h3>Git</h3>
-        <div id="git-branch" class="git-branch">-</div>
-        <div id="git-status" class="git-status status-clean">Clean</div>
-      </div>
+      <!-- B-12451: BikeLane Workflow Section - Collapsible workflow visualization -->
+      <section id="bikelane-section" class="collapsible-section bikelane-section hidden" style="display: none;">
+        <div class="section-header">
+          <h3 class="section-title">BIKELANE</h3>
+          <span class="workflow-type-badge" data-workflow-type="">—</span>
+          <span class="phase-summary section-summary"></span>
+          <button class="collapse-btn" aria-label="Toggle workflow" title="Toggle workflow">▼</button>
+        </div>
+        <div class="section-detail">
+          <!-- Phase progress visualization -->
+          <div class="phase-progress workflow-phases"></div>
+          <!-- Phase history timeline -->
+          <div class="phase-history">
+            <h4 class="phase-history-header">PHASE HISTORY</h4>
+            <div class="phase-history-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Git Section - Multi-repo status with dirty file list -->
+      <section id="git-section" class="collapsible-section git-section collapsed">
+        <div class="section-header">
+          <span class="section-title">Repos</span>
+          <span id="git-section-badge" class="section-badge"></span>
+          <span id="git-section-summary" class="section-summary"></span>
+          <button class="collapse-btn" aria-label="Toggle git status">▼</button>
+        </div>
+        <div id="git-repos" class="section-detail"></div>
+      </section>
 
       <!-- B-17: Tasks Section (Todo Visualizer) -->
       <section id="todo-section" class="todo-section collapsed">
@@ -528,16 +565,15 @@
       window.electronAPI.auditLog.onShow(showAuditLogModal);
     }
   </script>
-  <script type="module" src="/js/portrait.js"></script>
   <script src="/js/stats-strip.js"></script>
+  <!-- Collapsed sections persistence -->
+  <script src="/js/collapsed-sections.js"></script>
   <!-- 35-8: ThemePicker removed - theme changes now via SettingsPanel only -->
   <!-- 35-9: Settings Panel (vertical panel wrapper + form component) -->
   <script type="module" src="/js/settings-panel.js"></script>
   <script type="module" src="/js/persona.js"></script>
-  <script type="module" src="/js/story.js"></script>
-  <script type="module" src="/js/todos.js"></script>
-  <!-- 35-16: Background Tasks Panel -->
-  <script type="module" src="/js/components/BackgroundTasksPanel.js"></script>
+  <!-- Sidebar modules (portrait, story, git, AC, tasks, background-tasks, bikelane) -->
+  <script type="module" src="/js/sidebar/index.js"></script>
   <script type="module" src="/js/diff-panel.js"></script>
   <script type="module" src="/js/components/DiffViewer.js"></script>
   <script type="module" src="/js/file-panel.js"></script>

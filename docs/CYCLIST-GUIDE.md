@@ -43,6 +43,9 @@ Right-click a folder → "Open in Cyclist"
 
 See [Quick Action Setup](#finder-quick-action-macos) for configuration.
 
+**Option 4: New Window (from running instance)**
+File > New Window (Cmd+Shift+N) to open another project in a separate instance.
+
 ### Development Mode
 
 ```bash
@@ -88,7 +91,7 @@ pnpm run dev:server
 │  Branch      │  Formatting toolbar | Input area                 │
 │              │                                                  │
 │  ──────────  │  ─────────────────────────────────────────────── │
-│              │  Stats: tokens | context | tools                 │
+│              │  Stats: tokens | context | tools | project | git │
 │  Tasks       │                                                  │
 │  [ ] Todo 1  │                                                  │
 │  [✓] Todo 2  │                                                  │
@@ -130,6 +133,7 @@ Shows repository state at a glance.
 - **Branch** - Current branch name
 - **Status** - Clean or dirty indicator
 - **Sync** - Ahead/behind remote counts
+- **Multi-repo** - Status for all configured repos (monorepo setups)
 
 ### Tasks Section
 
@@ -182,6 +186,15 @@ Invoke /tea to begin the RED phase.
 
 Button appears: `[/tea]`
 
+#### Continue Actions
+
+When Claude needs to continue work:
+```
+<!-- CYCLIST:CONTINUE -->
+```
+
+Button appears: `[Continue]`
+
 #### Permission Prompts
 
 When Claude needs permission:
@@ -221,6 +234,7 @@ Agents can emit HTML comment markers for 100% accurate detection:
 <!-- CYCLIST:HANDOFF:/tea -->
 <!-- CYCLIST:QUESTION:yesno -->
 <!-- CYCLIST:CHOICES:1,2,3 -->
+<!-- CYCLIST:CONTINUE -->
 ```
 
 These are invisible to users but guarantee button rendering.
@@ -300,6 +314,8 @@ Compact statistics in the prompt bar area.
 - **Tools** - Number of tool calls
 - **Model** - Active model name
 - **Cost** - Estimated USD cost
+- **Project** - Current project folder (hover for full path)
+- **Git** - Repository status badges (multi-repo if configured)
 
 ## Rich Text Editor
 
@@ -349,6 +365,10 @@ Launch agents directly from the menu.
 - **Continue Session** - Resume previous work (`/continue-session`)
 - **Sprint Context** - View sprint status (`/sprint-context`)
 - **Work** - Smart work entry (`/work`)
+
+### File Menu
+
+- **New Window** (Cmd+Shift+N) - Open another project in a new Cyclist instance
 
 ### View Menu
 
@@ -407,6 +427,7 @@ theme: "big-lebowski"      # Persona theme
 
 workflow:
   handoff_mode: manual     # 'auto' or 'manual' handoffs
+  bell_mode: false         # Bell mode for queued messages
 
 display:
   show_flow: true          # Show workflow visualization
@@ -420,6 +441,20 @@ notifications:
 
 > **Note:** User-level settings (`~/.cyclist/settings.yaml`) are deprecated.
 > All settings are now project-local in `.pennyfarthing/config.local.yaml`.
+
+### Multi-Repo Configuration
+
+For monorepo or multi-project setups, configure repos in `.claude/project/pennyfarthing-settings.yaml`:
+
+```yaml
+repos:
+  - path: /path/to/main-repo
+    name: main
+  - path: /path/to/api-repo
+    name: api
+```
+
+The stats strip will show status badges for all configured repositories.
 
 
 ## Environment Variables
@@ -520,6 +555,26 @@ Export session activity for analysis.
 - Success/failure status
 - Input parameters
 
+## Multi-Instance Support
+
+Run multiple Cyclist instances for different projects simultaneously.
+
+### Opening New Instances
+
+1. **From menu**: File > New Window (Cmd+Shift+N)
+2. **From command line**: Launch with different `--project-dir` arguments
+3. **From Finder**: Right-click different folders with Quick Action
+
+### How It Works
+
+- Each instance runs on a separate port
+- Approval port files (`.cyclist-approval-port`) prevent conflicts
+- Instances are fully isolated with their own state
+
+### Switching Between Instances
+
+Use standard window management (Cmd+` on macOS) to switch between Cyclist windows.
+
 ## Troubleshooting
 
 ### Persona not loading
@@ -551,6 +606,7 @@ Export session activity for analysis.
 1. Check confidence threshold (default 0.6)
 2. Verify pattern matches expected format
 3. Look for false positive prevention keywords
+4. For guaranteed detection, use explicit markers (`<!-- CYCLIST:TYPE:value -->`)
 
 ## OpenTelemetry Integration
 
@@ -566,6 +622,28 @@ export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
 - Tool call events with duration
 - Context percentage
 - Cost calculations
+
+## Hook Approval
+
+Cyclist handles tool approval through the WheelHub system.
+
+### Auto-Approved Commands
+
+These safe commands are approved automatically:
+- `ls`, `pwd`, `echo`
+- `cat` on code/text files
+- `git status|diff|log|branch`
+- `npm run build|test|lint`
+- `node|npm --version`
+
+### Manual Approval
+
+Other commands show an approval modal with:
+- Tool name and command
+- Context percentage indicator
+- Accept/Deny buttons
+
+Approval decisions respect permission grants configured in settings.
 
 ## Internal Codenames
 

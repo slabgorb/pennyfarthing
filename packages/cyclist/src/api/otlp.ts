@@ -4,6 +4,7 @@ import {
   aggregateTokenStats,
   parseOTLPLogs,
   processLogEvents,
+  isOtelDebugEnabled,
 } from '../otlp-receiver.js';
 
 // Create OTLP API router for OpenTelemetry metrics/logs
@@ -17,7 +18,7 @@ export function createOTLPRouter(): Router {
       aggregateTokenStats(parsed);
 
       // Log received metrics for debugging (AC5)
-      if (Object.keys(parsed).length > 0) {
+      if (isOtelDebugEnabled() && Object.keys(parsed).length > 0) {
         console.log('[OTLP] Received token metrics:', parsed);
       }
 
@@ -41,7 +42,9 @@ export function createOTLPRouter(): Router {
       // Process and store tool/prompt events (async for enrichment)
       if (rawEvents.length > 0) {
         await processLogEvents(rawEvents);
-        console.log(`[OTLP] Processed ${rawEvents.length} log event(s)`);
+        if (isOtelDebugEnabled()) {
+          console.log(`[OTLP] Processed ${rawEvents.length} log event(s)`);
+        }
       }
 
       res.status(200).send();

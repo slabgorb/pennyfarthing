@@ -2,7 +2,7 @@ import { Server } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import { watch, existsSync } from 'fs';
 import { join } from 'path';
-import { getCurrentStats, getStatsClients } from './api/stats.js';
+import { getCurrentStats, getStatsClients, updatePwd } from './api/stats.js';
 import { getPersonaClients, broadcastPersona } from './api/persona.js';
 import { getTokenStatsClients } from './api/token-stats.js';
 import { getBackgroundTaskClients } from './api/background-tasks.js';
@@ -16,7 +16,7 @@ import { ClaudeService, type PermissionMode } from './claude-service.js';
 import { publicDir } from './paths.js';
 import { getOtelConfig } from './server.js';
 import { getStoryInfo } from './story-parser.js';
-import { getGitInfo } from './api/git.js';
+import { getGitInfo, getAllReposGitInfo } from './api/git.js';
 
 // WebSocket message types for Claude communication
 interface ClaudeWebSocketMessage {
@@ -280,15 +280,17 @@ export function setupWebSocketServers(
   });
 
   // Handle git WebSocket connections (MSSCI-11943)
+  // Updated to send multi-repo data for sidebar REPOS section
   gitWss.on('connection', (ws: WebSocket) => {
     // Add client to broadcast set
     gitClients.add(ws);
 
-    // Send initial git data on connection
+    // Send initial git data on connection (multi-repo)
     const projectDir = getProjectDir();
-    const gitInfo = getGitInfo(projectDir);
+    const allReposInfo = getAllReposGitInfo(projectDir);
+    console.log('[Git WS] New connection, sending init with', allReposInfo.length, 'repos');
     if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: 'init', ...gitInfo }));
+      ws.send(JSON.stringify({ type: 'init', repos: allReposInfo }));
     }
 
     // Remove client on disconnect
@@ -383,12 +385,19 @@ export function setupWebSocketServers(
   });
 
   // Set up tool event listener to broadcast new spans to WebSocket clients
+  // Also track pwd from Bash commands for stats-strip display
   addToolEventListener((event: ToolEvent) => {
+    // Broadcast span to spans WebSocket clients
     const message = JSON.stringify({ type: 'span', span: event });
     for (const client of spansClients) {
       if (client.readyState === WebSocket.OPEN) {
         client.send(message);
       }
+    }
+
+    // Track pwd from Bash tool completions
+    if (event.toolName === 'Bash' && event.workingDirectory) {
+      updatePwd(event.workingDirectory);
     }
   });
 
@@ -625,9 +634,9 @@ function broadcastStoryUpdate(storyInfo: ReturnType<typeof getStoryInfo>): void 
   }
 }
 
-// MSSCI-11943: Broadcast git update to all connected clients
-function broadcastGitUpdate(gitInfo: ReturnType<typeof getGitInfo>): void {
-  const message = JSON.stringify({ type: 'update', ...gitInfo });
+// MSSCI-11943: Broadcast git update to all connected clients (multi-repo)
+function broadcastGitUpdate(allReposInfo: ReturnType<typeof getAllReposGitInfo>): void {
+  const message = JSON.stringify({ type: 'update', repos: allReposInfo });
   for (const client of gitClients) {
     if (client.readyState === WebSocket.OPEN) {
       client.send(message);
@@ -642,8 +651,8 @@ function triggerGitUpdate(projectDir: string): void {
   }
 
   gitCoalesceTimer = setTimeout(() => {
-    const gitInfo = getGitInfo(projectDir);
-    broadcastGitUpdate(gitInfo);
+    const allReposInfo = getAllReposGitInfo(projectDir);
+    broadcastGitUpdate(allReposInfo);
     gitCoalesceTimer = null;
   }, GIT_COALESCE_MS);
 }

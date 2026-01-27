@@ -752,12 +752,15 @@ export async function processLogEvents(rawEvents: RawLogEvent[]): Promise<void> 
       if (toolName === 'Task' && toolParams) {
         try {
           const params = JSON.parse(toolParams);
-          // DEBUG: Log Task tool params to understand what Claude Code sends
-          console.log('[OTLP DEBUG] Task tool params:', JSON.stringify(params));
-          console.log('[OTLP DEBUG] Task event attributes:', JSON.stringify(event.attributes));
+          if (otelDebugEnabled) {
+            console.log('[OTLP DEBUG] Task tool params:', JSON.stringify(params));
+            console.log('[OTLP DEBUG] Task event attributes:', JSON.stringify(event.attributes));
+          }
           if (params.run_in_background === true || params.run_in_background === 'true') {
             const taskId = event.attributes['task_id'] as string;
-            console.log('[OTLP DEBUG] Background task detected, taskId:', taskId);
+            if (otelDebugEnabled) {
+              console.log('[OTLP DEBUG] Background task detected, taskId:', taskId);
+            }
             if (taskId) {
               trackBackgroundTask({
                 taskId,
@@ -766,7 +769,9 @@ export async function processLogEvents(rawEvents: RawLogEvent[]): Promise<void> 
                 startedAt: event.timestamp,
               });
             } else {
-              console.log('[OTLP DEBUG] No task_id attribute found - generating synthetic ID');
+              if (otelDebugEnabled) {
+                console.log('[OTLP DEBUG] No task_id attribute found - generating synthetic ID');
+              }
               // Generate synthetic task ID from timestamp and description
               const syntheticId = `task-${Date.now()}-${(params.description || '').slice(0, 20).replace(/\s/g, '-')}`;
               trackBackgroundTask({

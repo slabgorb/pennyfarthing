@@ -153,7 +153,7 @@ Pennyfarthing integrates with Jira for sprint and story tracking. Key capabiliti
 - Enables seamless story workflow without manual Jira setup
 
 ### Bidirectional Sync (PR #322)
-- `jira-bidirectional-sync.mjs` syncs status, points, and stories between sprint YAML and Jira
+- `pennyfarthing_scripts/jira/bidirectional.py` syncs status, points, and stories between sprint YAML and Jira
 - Dry-run mode shows changes before applying
 - Supports both YAML→Jira and Jira→YAML updates
 - Handles new stories, status transitions, and story point updates
@@ -197,3 +197,4 @@ Key architectural decisions are documented in `docs/adr/`. Review these before m
 5. **Use Haiku for subagents** - never Opus for mechanical tasks
 6. **Commit `dist/`** alongside `src/` changes (tracked build output)
 7. **Detect state** from session files, never hardcode workflow state
+8. **Never manually read agent files** - activation scripts load agent definitions via `prime.py`; do not use Read tool on `pennyfarthing-dist/agents/*.md` after skill activation

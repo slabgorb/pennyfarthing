@@ -11,7 +11,7 @@ import request from 'supertest';
 
 // Import will fail until otlp-receiver.ts exists - that's expected (RED phase)
 // @ts-expect-error - File doesn't exist yet
-import { parseOTLPMetrics, aggregateTokenStats, getTokenStats, resetTokenStats } from '../src/otlp-receiver.js';
+import { parseOTLPMetrics, aggregateTokenStats, getTokenStats, resetTokenStats, setOtelDebug } from '../src/otlp-receiver.js';
 
 import { app } from '../src/server.js';
 
@@ -303,7 +303,9 @@ describe('E6-1: OTLP Collector Integration', () => {
 
   describe('AC5: Logs received metrics for debugging', () => {
 
-    it('should log when metrics are received', async () => {
+    it('should log when metrics are received with debug enabled', async () => {
+      // Enable OTEL debug mode to trigger console.log
+      setOtelDebug(true);
       const consoleSpy = vi.spyOn(console, 'log');
 
       await request(app)
@@ -317,6 +319,7 @@ describe('E6-1: OTLP Collector Integration', () => {
       expect(calls).toMatch(/otlp|metrics|token/i);
 
       consoleSpy.mockRestore();
+      setOtelDebug(false);
     });
 
   });

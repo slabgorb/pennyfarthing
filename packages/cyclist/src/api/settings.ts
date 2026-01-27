@@ -14,6 +14,7 @@ import { parse, stringify } from 'yaml';
 import { getCurrentSettings, saveUserSettings, type CyclistSettings, type SettingsInput } from '../settings.js';
 import { getProjectDirectory } from '../paths.js';
 import { setBellMode } from '../bell-mode.js';
+import { isOtelDebugEnabled } from '../otlp-receiver.js';
 
 // =============================================================================
 // Theme Response Type
@@ -278,13 +279,9 @@ export function createSettingsRouter(): Router {
       // Find themes directory - check bundled resources first, then project dir
       let themesDir: string | null = null;
 
-      // Debug logging
-      console.log('[Themes API] process.resourcesPath:', process.resourcesPath);
-
       // 1. Packaged Electron app: Contents/Resources/pennyfarthing-dist/personas/themes
       if (process.resourcesPath) {
         const bundledThemes = path.join(process.resourcesPath, 'pennyfarthing-dist', 'personas', 'themes');
-        console.log('[Themes API] Checking bundled path:', bundledThemes, 'exists:', fs.existsSync(bundledThemes));
         if (fs.existsSync(bundledThemes)) {
           themesDir = bundledThemes;
         }
@@ -301,14 +298,18 @@ export function createSettingsRouter(): Router {
         }
       }
 
-      console.log('[Themes API] Final themesDir:', themesDir);
+      if (isOtelDebugEnabled()) {
+        console.log('[Themes API] Final themesDir:', themesDir);
+      }
 
       if (!themesDir) {
         return res.json([]);
       }
 
       const files = fs.readdirSync(themesDir).filter(f => f.endsWith('.yaml')).sort();
-      console.log('[Themes API] Found', files.length, 'theme files');
+      if (isOtelDebugEnabled()) {
+        console.log('[Themes API] Found', files.length, 'theme files');
+      }
       const themes = files.map(f => {
         const id = f.replace('.yaml', '');
         const name = id.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
@@ -333,6 +334,81 @@ export function createSettingsRouter(): Router {
     } catch (error) {
       console.error('[Settings API] Failed to load themes:', error);
       res.status(500).json({ error: 'Failed to load themes' });
+    }
+  });
+
+  /**
+   * GET /collapsed - Get collapsed section states from config.local.yaml
+   * Returns { persona: boolean, git: boolean, ... }
+   */
+  router.get('/collapsed', (_req, res) => {
+    try {
+      const projectDir = getProjectDirectory();
+      if (!projectDir) {
+        return res.json({});
+      }
+
+      const configPath = path.join(projectDir, '.pennyfarthing', 'config.local.yaml');
+      if (!fs.existsSync(configPath)) {
+        return res.json({});
+      }
+
+      const content = fs.readFileSync(configPath, 'utf-8');
+      const parsed = parse(content) as { display?: { collapsed_sections?: Record<string, boolean> } };
+      res.json(parsed?.display?.collapsed_sections || {});
+    } catch (error) {
+      console.error('[Settings API] Failed to get collapsed sections:', error);
+      res.json({});
+    }
+  });
+
+  /**
+   * PATCH /collapsed - Update collapsed section states in config.local.yaml
+   * Body: { sectionId: boolean, ... }
+   */
+  router.patch('/collapsed', (req, res) => {
+    try {
+      const updates = req.body as Record<string, boolean>;
+      if (!updates || typeof updates !== 'object') {
+        return res.status(400).json(createErrorResponse('VALIDATION_ERROR', 'Invalid collapsed sections object'));
+      }
+
+      const projectDir = getProjectDirectory();
+      if (!projectDir) {
+        return res.status(500).json(createErrorResponse('FILE_ERROR', 'Project directory not found'));
+      }
+
+      const pennyfarthingDir = path.join(projectDir, '.pennyfarthing');
+      const configPath = path.join(pennyfarthingDir, 'config.local.yaml');
+
+      // Create .pennyfarthing directory if needed
+      if (!fs.existsSync(pennyfarthingDir)) {
+        fs.mkdirSync(pennyfarthingDir, { recursive: true });
+      }
+
+      // Read existing config
+      let existingConfig: Record<string, unknown> = {};
+      if (fs.existsSync(configPath)) {
+        const content = fs.readFileSync(configPath, 'utf-8');
+        const parsed = parse(content);
+        if (parsed && typeof parsed === 'object') {
+          existingConfig = parsed as Record<string, unknown>;
+        }
+      }
+
+      // Merge collapsed sections into display
+      const display = (existingConfig.display || {}) as Record<string, unknown>;
+      const existingCollapsed = (display.collapsed_sections || {}) as Record<string, boolean>;
+      display.collapsed_sections = { ...existingCollapsed, ...updates };
+      existingConfig.display = display;
+
+      // Write back
+      fs.writeFileSync(configPath, stringify(existingConfig), 'utf-8');
+
+      res.json(display.collapsed_sections);
+    } catch (error) {
+      console.error('[Settings API] Failed to save collapsed sections:', error);
+      res.status(500).json(createErrorResponse('FILE_ERROR', 'Failed to save collapsed sections'));
     }
   });
 

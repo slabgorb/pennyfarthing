@@ -7,18 +7,21 @@ Scripts for Jira integration, synchronization, and story management.
 | Script | Purpose |
 |--------|---------|
 | `jira-lib.sh` | Shared Jira bash utilities (library) |
-| `jira-lib.mjs` | Shared Jira JavaScript utilities (library) |
 | `jira-claim-story.sh` | Claim a story (assign and move to In Progress) |
 | `jira-reconcile.sh` | Reconcile Jira with sprint YAML |
-| `jira-sync.sh` | Sync story to Jira |
-| `jira-sync.mjs` | Sync story to Jira (JavaScript) |
-| `jira-sync-story.sh` | Sync individual story |
-| `jira-sync-story.mjs` | Sync individual story (JavaScript) |
+| `jira-sync.sh` | Sync story to Jira (wrapper → Python) |
+| `jira-sync-story.sh` | Sync individual story (wrapper → Python) |
 | `create-jira-epic.sh` | Create Jira epic with stories |
 | `create-jira-story.sh` | Create individual Jira story |
-| `sync-epic-jira.sh` | Sync epic to Jira |
+| `sync-epic-jira.sh` | Sync epic to Jira (wrapper → Python) |
 | `sync-epic-to-jira.sh` | Sync epic to Jira (alternate) |
-| `jira-bidirectional-sync.mjs` | Bidirectional sync between YAML and Jira |
+
+## Python Implementation
+
+Core logic lives in `pennyfarthing_scripts/jira/`:
+- `sync.py` — Epic and story sync
+- `bidirectional.py` — Two-way YAML ↔ Jira sync
+- `story.py` — Story operations
 
 ## Usage
 

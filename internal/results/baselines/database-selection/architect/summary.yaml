@@ -1,41 +1,45 @@
 # control:architect on database-selection
-# Generated: 2026-01-02T00:45:00Z
+# Generated: 2026-01-25T22:59:16Z
 
 agent:
   theme: control
-  role: architect
+  character: Architect (baseline control)
+  effective_role: architect
+  source_role: architect
   spec: control:architect
-  character: "Architect (baseline control)"
+  cross_role: false
 
 scenario:
   name: database-selection
   category: architecture
-  difficulty: medium
+  difficulty: easy
 
 statistics:
   n: 10
-  mean: 86.70
-  std_dev: 2.15
-  min: 84
-  max: 90
-  scores: [87, 90, 87, 84, 85, 90, 85, 89, 85, 85]
+  mean: 72.00
+  std_dev: 1.50
+  min: 67.5
+  max: 72.5
+  scores: [72.5, 72.5, 72.5, 72.5, 72.5, 72.5, 72.5, 67.5, 72.5, 72.5]
 
 efficiency:
-  avg_input_tokens: 6679
-  avg_output_tokens: 854
-  tokens_per_point: 86.88
-
-runs:
-  - run_1.json
-  - run_2.json
-  - run_3.json
-  - run_4.json
-  - run_5.json
-  - run_6.json
-  - run_7.json
-  - run_8.json
-  - run_9.json
-  - run_10.json
+  avg_input_tokens: 2
+  avg_output_tokens: 792
+  tokens_per_point: 11.02
 
 metadata:
-  pennyfarthing_version: "5.0.0"
+  created_at: "2026-01-25T22:59:16Z"
+  pennyfarthing_version: "7.6.1"
+  model: claude-opus-4-5-20251101
+
+runs:
+  - agent_01b6f82d.json
+  - agent_0ed625d8.json
+  - agent_1160248e.json
+  - agent_118a5597.json
+  - agent_34d0225b.json
+  - agent_8402d9eb.json
+  - agent_9e5ce0e6.json
+  - agent_c226d335.json
+  - agent_e3d04243.json
+  - agent_f7604b67.json

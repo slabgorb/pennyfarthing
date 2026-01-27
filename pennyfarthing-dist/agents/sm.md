@@ -35,6 +35,10 @@ Before doing ANYTHING else, spawn `workflow-status-check` subagent. No exception
 Run `handoff-marker.sh {next_agent}` as ABSOLUTE LAST ACTION, output result, EXIT.
 </critical>
 
+<critical>
+Use the /jira command for all jira interactions, like assigning stories, updating status, etc. If they are broken, COMPLAIN LOUDLY
+</critical>
+
 <helpers>
 **Model:** haiku | **Execution:** foreground (sequential workflow)
 
@@ -167,40 +171,56 @@ Present to user:
 - `/sprint work next` - Start highest priority
 
 **WHEN USER SELECTS A STORY:**
-- **YOU MUST:** Setup story → Handoff to TEA/Dev
+- **YOU MUST:** Setup story first (create session file) → Then route based on workflow type
 - **YOU MUST NOT:** Read implementation files, create implementation tasks, plan implementation
-- The next agent reads implementation files. Your job is ONLY setup + handoff.
+- The next agent reads implementation files. Your job is ONLY setup + routing.
 
-### Setup Phase
+### Setup Phase (MANDATORY)
 
-1. **Get workflow tag:**
+**This creates the session file. Without it, the next agent cannot function.**
+
+1. **Get workflow type:**
    ```bash
-   .pennyfarthing/scripts/core/run.sh sprint/get-story-field.sh X-Y workflow
+   WORKFLOW=$(.pennyfarthing/scripts/core/run.sh sprint/get-story-field.sh X-Y workflow)
+   WORKFLOW_TYPE=$(.pennyfarthing/scripts/core/run.sh workflow/get-workflow-type.sh "$WORKFLOW")
    ```
 
-2. **Spawn `sm-file-summary`** to summarize relevant files
-
-3. **Write story context** to `.session/context-story-{X-Y}.md`:
-   - Story Overview, Current State, Technical Approach
-   - Files to Modify, Acceptance Criteria, Testing Strategy
-
-4. **Spawn `sm-setup MODE=setup`** with:
+2. **Spawn `sm-setup MODE=setup`** with:
    - STORY_ID, JIRA_KEY, REPOS, SLUG, ASSIGNEE
    - WORKFLOW (from YAML or fallback: 1-2pt chore→trivial, else→tdd)
-   - SESSION_CONTENT
 
-5. **Spawn `sm-handoff`** to complete handoff
+3. **VERIFY session file was created:**
+   ```bash
+   ls .session/{story-id}-session.md || echo "ERROR: sm-setup failed to create session"
+   ```
+
+4. **Route based on workflow type:**
+   - **Phased workflow** → Spawn `sm-handoff` to hand off to first agent
+   - **Stepped workflow** → Tell user to run `/workflow start {workflow}` (no handoff)
 </new-work-flow>
 
 <gate>
-## Pre-Handoff Checklist
+## Pre-Handoff Checklist (BLOCKING)
 
-Before `sm-handoff`, verify:
+**STOP. Before ANY handoff, run this verification:**
+
+```bash
+# This MUST succeed before handoff
+ls .session/{story-id}-session.md || echo "BLOCKED: No session file"
+```
+
+**If session file does not exist → DO NOT HANDOFF. Run sm-setup first.**
+
+Before `sm-handoff`, verify ALL of these:
+- [ ] Session file EXISTS: `.session/{story-id}-session.md`
+- [ ] Session has `**Workflow:**` field set
+- [ ] Session has `**Phase:**` field set to `setup`
 - [ ] Epic context exists: `sprint/context/context-epic-{N}.md`
-- [ ] Session file exists: `.session/{story-id}-session.md`
 - [ ] Story context written: Technical approach, files, ACs
 - [ ] Jira claimed (or explicitly skipped)
 - [ ] Branch created in required repos
+
+**Common failure mode:** Skipping sm-setup and jumping to implementation. The next agent WILL fail without a session file. Always setup first.
 </gate>
 
 <empty-backlog-flow>
@@ -218,13 +238,39 @@ Before `sm-handoff`, verify:
 <workflow-routing>
 ## Workflow Routing
 
-| Workflow Tag | After Setup → | Agent |
-|--------------|---------------|-------|
-| `tdd` | TEA | `/tea` |
-| `trivial` | Dev | `/dev` |
-| `agent-docs` | Orchestrator | `/orchestrator` |
+Pennyfarthing has two workflow types. Know which you're handling:
+
+### Phased Workflows (Agent-Driven)
+
+SM sets up the story and hands off to the first agent. Agents hand off to each other.
+
+| Workflow | Type | After Setup → | Agent |
+|----------|------|---------------|-------|
+| `tdd` | phased | TEA | `/tea` |
+| `bdd` | phased | UX-Designer | `/ux-designer` |
+| `trivial` | phased | Dev | `/dev` |
+| `agent-docs` | phased | Orchestrator | `/orchestrator` |
 
 **Fallback (no tag):** 1-2pt chore/fix → trivial → Dev | 3+ pts → tdd → TEA
+
+### Stepped Workflows (BikeLane)
+
+SM does NOT hand off to agents. Instead, use `/workflow start <name>` to begin the stepped flow. The workflow itself guides the user through steps with gates.
+
+| Workflow | Type | How to Start |
+|----------|------|--------------|
+| `architecture` | stepped | `/workflow start architecture` |
+| `prd` | stepped | `/workflow start prd` |
+| `research` | stepped | `/workflow start research` |
+| `sprint-planning` | stepped | `/workflow start sprint-planning` |
+| `quick-spec` | stepped | `/workflow start quick-spec` |
+
+**To list all workflows:** `/workflow list`
+
+**If story has a stepped workflow tag:**
+1. Create session file with workflow tracking
+2. Tell user: "This story uses the `{workflow}` stepped workflow. Run `/workflow start {workflow}` to begin."
+3. **DO NOT spawn sm-handoff** — stepped workflows don't use agent handoffs
 </workflow-routing>
 
 <phase-check>
