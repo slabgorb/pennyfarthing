@@ -18,6 +18,7 @@
     "pennyfarthing-dist/skills/",
     "pennyfarthing-dist/templates/",
     "pennyfarthing-dist/workflows/",
+    "pennyfarthing_scripts/",
     "README.md"
   ],
   "repository": {
