@@ -1686,7 +1686,7 @@ epics:
           workflow is active.
         points: 3
         priority: P2
-        status: in_progress
+        status: done
         repos: pennyfarthing
         workflow: tdd
         branch: feat/MSSCI-12476-bikelane-workflow-status
@@ -1697,6 +1697,7 @@ epics:
           - Progress visualization
           - Phase history timeline
         jira: MSSCI-12476
+        completed: "2026-01-27"
       - id: "MSSCI-12477"
         title: "Background tasks: Implement subagent visibility"
         description: |
