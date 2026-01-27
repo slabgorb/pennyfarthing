@@ -49,9 +49,10 @@ export function createFileBrowserRouter(getProjectDir: () => string): Router {
     }
   });
 
-  // Open file in user's editor ($EDITOR)
+  // Open file in GUI editor
   // Story MSSCI-12467: DIFFS panel file opener
-  router.post('/edit', (req, res) => {
+  // Preference: Windsurf → VS Code → Notepad (ignores $EDITOR which may be terminal-based)
+  router.post('/edit', async (req, res) => {
     try {
       const projectDir = getProjectDir();
       const { path: filePath, lineNumber } = req.body;
@@ -68,25 +69,38 @@ export function createFileBrowserRouter(getProjectDir: () => string): Router {
         return res.status(404).json({ success: false, error: 'File not found' });
       }
 
-      // Get editor from environment
-      const editor = process.env.EDITOR || process.env.VISUAL || 'code';
+      // GUI editor preference order (ignores $EDITOR which may be vim/nano)
+      const editorCandidates = ['windsurf', 'code', 'notepad'];
 
-      // Build command arguments based on editor
+      // Find first available editor
+      let editor: string | null = null;
+      for (const candidate of editorCandidates) {
+        try {
+          const { execSync } = await import('child_process');
+          // Check if command exists (works on macOS/Linux with 'which', Windows with 'where')
+          const whichCmd = process.platform === 'win32' ? 'where' : 'which';
+          execSync(`${whichCmd} ${candidate}`, { stdio: 'ignore' });
+          editor = candidate;
+          break;
+        } catch {
+          // Command not found, try next
+        }
+      }
+
+      if (!editor) {
+        return res.status(500).json({
+          success: false,
+          error: 'No GUI editor found. Install Windsurf, VS Code, or Notepad.'
+        });
+      }
+
+      // Build command arguments (all these editors use similar syntax)
       let args: string[];
-      if (editor.includes('code') || editor.includes('cursor')) {
-        // VS Code / Cursor: --goto file:line
+      if (editor === 'windsurf' || editor === 'code') {
+        // Windsurf / VS Code: --goto file:line
         args = lineNumber ? ['--goto', `${absolutePath}:${lineNumber}`] : [absolutePath];
-      } else if (editor.includes('vim') || editor.includes('nvim') || editor.includes('nano')) {
-        // Vim/Neovim/Nano: +line file
-        args = lineNumber ? [`+${lineNumber}`, absolutePath] : [absolutePath];
-      } else if (editor.includes('emacs')) {
-        // Emacs: +line file
-        args = lineNumber ? [`+${lineNumber}`, absolutePath] : [absolutePath];
-      } else if (editor.includes('subl') || editor.includes('sublime')) {
-        // Sublime: file:line
-        args = lineNumber ? [`${absolutePath}:${lineNumber}`] : [absolutePath];
       } else {
-        // Generic fallback
+        // Notepad: just the file path
         args = [absolutePath];
       }
 
