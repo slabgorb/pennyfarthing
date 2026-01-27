@@ -1625,13 +1625,15 @@ epics:
           section. These add noise without value.
         points: 1
         priority: P1
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: trivial
+        branch: feat/MSSCI-12472-persona-remove-ocean
         acceptance_criteria:
           - OCEAN scores removed from UI
           - Helper task line removed from UI
         jira: MSSCI-12472
+        completed: "2026-01-27"
       - id: "MSSCI-12473"
         title: "Persona section: Random catchphrase on activation"
         description: |
