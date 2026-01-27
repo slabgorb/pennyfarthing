@@ -189,8 +189,39 @@ export function createSkillsDirectory(
 }
 
 /**
+ * Create a symlink from destPath to sourcePath.
+ * This keeps .pennyfarthing pointing to node_modules, which is required
+ * for prime.sh to find pennyfarthing_scripts via relative path calculation.
+ */
+export function createDirectorySymlink(
+  sourcePath: string,
+  destPath: string,
+  dryRun: boolean = false
+): boolean {
+  if (!pathExists(sourcePath)) {
+    return false;
+  }
+
+  // Remove existing symlink or directory (migration from copy mode)
+  removeSymlinkOrDirectory(destPath, dryRun);
+
+  if (!dryRun) {
+    try {
+      const relativeTarget = relative(dirname(destPath), sourcePath);
+      symlinkSync(relativeTarget, destPath);
+      return true;
+    } catch (e) {
+      logger.warning(`Could not create symlink ${destPath} -> ${sourcePath}: ${e}`);
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
  * Copy a directory from source to destination (for installed apps).
  * Unlike symlinks, this makes .pennyfarthing self-contained.
+ * @deprecated Use createDirectorySymlink instead - copies break prime.sh path resolution
  */
 export function copyDirectory(
   sourcePath: string,
