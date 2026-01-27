@@ -19,8 +19,8 @@ model: haiku
 <critical>
 **Use `/check` command for unfiltered runs:**
 ```bash
-$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/run.sh workflow/check.sh
-$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/run.sh workflow/check.sh --repo api
+.pennyfarthing/scripts/core/run.sh workflow/check.sh
+.pennyfarthing/scripts/core/run.sh workflow/check.sh --repo api
 ```
 
 This runs lint + typecheck + tests. Exit 0 = all passed.
@@ -40,8 +40,8 @@ This runs lint + typecheck + tests. Exit 0 = all passed.
 ## Setup
 
 ```bash
-source $CLAUDE_PROJECT_DIR/scripts/repo-utils.sh
-source $CLAUDE_PROJECT_DIR/scripts/utils/test-setup.sh
+source .pennyfarthing/scripts/repo-utils.sh
+source .pennyfarthing/scripts/utils/test-setup.sh
 
 RUN_ID="${RUN_ID:-$(generate_run_id)}"
 ensure_test_containers
@@ -50,8 +50,8 @@ ensure_test_containers
 ## Filtered Runs
 
 ```bash
-$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/run.sh workflow/check.sh --filter "TestUserLogin"
-$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/run.sh workflow/check.sh --repo api --filter "TestUserLogin"
+.pennyfarthing/scripts/core/run.sh workflow/check.sh --filter "TestUserLogin"
+.pennyfarthing/scripts/core/run.sh workflow/check.sh --repo api --filter "TestUserLogin"
 ```
 
 | Language | Filter Flag |
@@ -73,8 +73,8 @@ fi
 
 Write cache after running:
 ```bash
-source $CLAUDE_PROJECT_DIR/scripts/utils/test-cache.sh
-SESSION_FILE="$CLAUDE_PROJECT_DIR/.session/${STORY_ID}-session.md"
+source .pennyfarthing/scripts/utils/test-cache.sh
+SESSION_FILE=".session/${STORY_ID}-session.md"
 test_cache_write "$SESSION_FILE" "$RESULT" "$PASS" "$FAIL" "$SKIP" "${DURATION}s"
 ```
 

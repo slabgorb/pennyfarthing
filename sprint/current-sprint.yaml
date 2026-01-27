@@ -1686,9 +1686,10 @@ epics:
           workflow is active.
         points: 3
         priority: P2
-        status: backlog
+        status: in_progress
         repos: pennyfarthing
         workflow: tdd
+        branch: feat/MSSCI-12476-bikelane-workflow-status
         acceptance_criteria:
           - Section visible when workflow active
           - Shows workflow name and type badge
