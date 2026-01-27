@@ -37,9 +37,11 @@ export function detectWriteTool(message) {
 /**
  * Extract DiffData from an Edit tool_use message
  * @param {Object} message - SDK tool_use message with Edit input
+ * @param {Object} [context] - Optional context with startLine
+ * @param {number} [context.startLine] - Starting line number in the actual file (1-indexed)
  * @returns {Object} DiffData object
  */
-export function extractDiffDataFromEdit(message) {
+export function extractDiffDataFromEdit(message, context) {
   const input = message.input;
   return {
     id: message.tool_id,
@@ -48,6 +50,7 @@ export function extractDiffDataFromEdit(message) {
     newContent: input.new_string,
     toolType: 'Edit',
     timestamp: Date.now(),
+    startLine: context?.startLine,
   };
 }
 
@@ -197,9 +200,13 @@ export function removeDiffsForFiles(filePaths) {
  *
  * @param {string} oldContent - Original content
  * @param {string} newContent - Modified content
+ * @param {Object} [options] - Options for diff computation
+ * @param {number} [options.startLine] - Starting line number in the actual file (1-indexed, defaults to 1)
  * @returns {Array} Array of diff lines
  */
-export function computeDiff(oldContent, newContent) {
+export function computeDiff(oldContent, newContent, options) {
+  // Normalize startLine: treat 0 or negative as 1
+  const startLine = Math.max(1, options?.startLine || 1);
   const oldLines = oldContent ? oldContent.split('\n') : [];
   const newLines = newContent ? newContent.split('\n') : [];
 
@@ -213,7 +220,7 @@ export function computeDiff(oldContent, newContent) {
     return oldLines.map((line, i) => ({
       type: 'unchanged',
       line,
-      lineNumber: i + 1,
+      lineNumber: startLine + i,
     }));
   }
 
@@ -222,11 +229,11 @@ export function computeDiff(oldContent, newContent) {
   const result = [];
 
   oldLines.forEach((line, i) => {
-    result.push({ type: 'removed', line, lineNumber: i + 1 });
+    result.push({ type: 'removed', line, lineNumber: startLine + i });
   });
 
   newLines.forEach((line, i) => {
-    result.push({ type: 'added', line, lineNumber: i + 1 });
+    result.push({ type: 'added', line, lineNumber: startLine + i });
   });
 
   return result;
@@ -376,8 +383,8 @@ export function renderDiff(container, diffData) {
     viewer.appendChild(newFileEl);
   }
 
-  // Compute and render unified diff
-  const diff = computeDiff(diffData.oldContent, diffData.newContent);
+  // Compute and render unified diff with actual file line numbers
+  const diff = computeDiff(diffData.oldContent, diffData.newContent, { startLine: diffData.startLine });
 
   // Render removed lines first, then added lines (unified style)
   const removedLines = diff.filter(d => d.type === 'removed');
