@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [7.8.1] - 2026-01-27
+
+### Fixed
+
+- **Agent Activation** - Fixed incorrect path to `prime.sh` in `agent-session.sh` that caused agent definitions to not load on activation
+
+---
+
 ## [7.8.0] - 2026-01-27
 
 ### Changed
@@ -1660,7 +1668,8 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v7.8.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v7.8.1...HEAD
+[7.8.1]: https://github.com/1898andCo/pennyfarthing/compare/v7.8.0...v7.8.1
 [7.8.0]: https://github.com/1898andCo/pennyfarthing/compare/v7.7.0...v7.8.0
 [7.7.0]: https://github.com/1898andCo/pennyfarthing/compare/v7.6.1...v7.7.0
 [7.6.1]: https://github.com/1898andCo/pennyfarthing/compare/v7.6.0...v7.6.1
