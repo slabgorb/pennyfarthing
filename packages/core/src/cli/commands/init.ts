@@ -18,7 +18,7 @@ import {
 } from '../utils/files.js';
 import { getPackageVersion, getAssetsPath } from '../utils/version.js';
 import {
-  copyDirectory,
+  createDirectorySymlink,
   copyCommandsDirectory,
   copySkillsDirectory,
   removeSymlinkOrDirectory
@@ -130,7 +130,7 @@ export async function initCommand(
   const nodeModulesRelPath = relative(projectRoot, nodeModulesPath);
 
   logger.newline();
-  logger.info('Copying Pennyfarthing content to .pennyfarthing/...');
+  logger.info('Linking Pennyfarthing content to .pennyfarthing/...');
   logger.info(`  Source: ${nodeModulesRelPath}`);
 
   // Remove legacy .claude/pennyfarthing/ if it exists (migration from old copy mode)
@@ -152,15 +152,16 @@ export async function initCommand(
     }
   }
 
-  // Copy directories from node_modules to .pennyfarthing/ (self-contained install)
+  // Symlink directories from node_modules to .pennyfarthing/
+  // Symlinks are required for prime.sh to find pennyfarthing_scripts via path resolution
   for (const { name, link } of DIRECTORY_SYMLINKS) {
     const sourcePath = join(nodeModulesPath, name);
     const destPath = join(projectRoot, link);
 
-    if (copyDirectory(sourcePath, destPath, dryRun)) {
-      logger.created(`${link}/ (copied from package)`);
+    if (createDirectorySymlink(sourcePath, destPath, dryRun)) {
+      logger.created(`${link}/ (symlinked to package)`);
     } else {
-      logger.warning(`Could not copy ${name} to ${link}`);
+      logger.warning(`Could not symlink ${name} to ${link}`);
     }
   }
 
