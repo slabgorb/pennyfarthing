@@ -278,7 +278,7 @@ SM does NOT hand off to agents. Instead, use `/workflow start <name>` to begin t
 
 Read `**Workflow:**` and `**Phase:**` from session. Query:
 ```bash
-OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-owner.sh {workflow} {phase})
+OWNER=$(.pennyfarthing/scripts/core/run.sh workflow/phase-owner.sh {workflow} {phase})
 ```
 
 **If OWNER != "sm":** Run `handoff-marker.sh $OWNER`, output result, tell user.
@@ -300,7 +300,7 @@ OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-ow
 3. Await `HANDOFF_RESULT` with `next_agent`
 4. **ABSOLUTE LAST ACTION:**
    ```bash
-   $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
+   .pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
    ```
 5. Output result verbatim and EXIT
 
