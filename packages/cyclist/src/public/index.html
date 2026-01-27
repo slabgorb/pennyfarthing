@@ -198,6 +198,15 @@
       <!-- Persona Section - Collapsible -->
       <section id="persona-section" class="collapsible-section persona-section">
         <div class="section-header">
+          <!-- MSSCI-12474: Small portrait thumbnail shown when collapsed -->
+          <div id="portrait-thumb" class="portrait-thumb">
+            <img src="" alt="" style="display: none;">
+            <div class="portrait-placeholder" style="display: flex;">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+            </div>
+          </div>
           <div class="persona-header-content">
             <div class="persona-header-line1">
               <span id="project-name" class="project-name"></span>
@@ -221,13 +230,6 @@
             </div>
             <div class="portrait-details">
               <div id="character-role" class="character-role"></div>
-              <div id="ocean-scores" class="ocean-scores">
-                <div class="ocean-row" data-trait="O"><span class="trait-label">O</span><span class="trait-value"></span></div>
-                <div class="ocean-row" data-trait="C"><span class="trait-label">C</span><span class="trait-value"></span></div>
-                <div class="ocean-row" data-trait="E"><span class="trait-label">E</span><span class="trait-value"></span></div>
-                <div class="ocean-row" data-trait="A"><span class="trait-label">A</span><span class="trait-value"></span></div>
-                <div class="ocean-row" data-trait="N"><span class="trait-label">N</span><span class="trait-value"></span></div>
-              </div>
             </div>
           </div>
           <!-- Theme centered under portrait -->
