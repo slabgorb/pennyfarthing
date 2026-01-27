@@ -1700,7 +1700,7 @@ epics:
           visibility for subagents and long-running tasks.
         points: 5
         priority: P2
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria:
@@ -1710,6 +1710,7 @@ epics:
           - Duration/elapsed time
           - Output preview on expand
         jira: MSSCI-12477
+        completed: "2026-01-27"
       # Vision Stories
       - id: "MSSCI-12478"
         title: "Theme schema: Consolidate quote → catchphrases"
