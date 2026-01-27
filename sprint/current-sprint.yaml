@@ -1648,13 +1648,14 @@ epics:
           Reduce vertical sprawl in persona section for more compact display.
         points: 1
         priority: P1
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: trivial
         acceptance_criteria:
           - Persona section more compact
           - All essential info still visible
         jira: MSSCI-12474
+        completed: "2026-01-27"
       # Growth Stories
       - id: "MSSCI-12475"
         title: "Story section: Expandable sprint/epic details"
