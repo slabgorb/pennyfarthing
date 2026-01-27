@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-*No unreleased changes*
+### Changed
+
+#### Cyclist
+- **Sidebar Modularization** - Refactored scattered sidebar code into 8 focused modules (`sidebar/index.js`, `portrait.js`, `story.js`, `git.js`, `acceptance-criteria.js`, `tasks.js`, `background-tasks.js`, `bikelane.js`)
+- **Multi-repo Git WebSocket** - Export `getAllReposGitInfo` for real-time multi-repo status updates
+
+#### Scripts
+- **Prime Script Migration** - Replaced complex shell script with thin Python wrapper for better maintainability
 
 ---
 
