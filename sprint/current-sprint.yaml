@@ -1519,13 +1519,15 @@ epics:
           navigate to.
         points: 2
         priority: P1
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: tdd
+        branch: feat/MSSCI-12466-diffs-panel-line-numbers
         acceptance_criteria:
           - Line numbers in diff view match actual file line numbers
           - Works for both partial and combined views
         jira: MSSCI-12466
+        completed: "2026-01-27"
       - id: "MSSCI-12467"
         title: "DIFFS panel: Fix file opener for $EDITOR"
         description: |
