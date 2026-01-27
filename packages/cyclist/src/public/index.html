@@ -565,7 +565,6 @@
       window.electronAPI.auditLog.onShow(showAuditLogModal);
     }
   </script>
-  <script type="module" src="/js/portrait.js"></script>
   <script src="/js/stats-strip.js"></script>
   <!-- Collapsed sections persistence -->
   <script src="/js/collapsed-sections.js"></script>
@@ -573,12 +572,8 @@
   <!-- 35-9: Settings Panel (vertical panel wrapper + form component) -->
   <script type="module" src="/js/settings-panel.js"></script>
   <script type="module" src="/js/persona.js"></script>
-  <script type="module" src="/js/story.js"></script>
-  <!-- B-12451: BikeLane Workflow Section -->
-  <script type="module" src="/js/bikelane-section.js"></script>
-  <script type="module" src="/js/todos.js"></script>
-  <!-- 35-16: Background Tasks Panel -->
-  <script type="module" src="/js/components/BackgroundTasksPanel.js"></script>
+  <!-- Sidebar modules (portrait, story, git, AC, tasks, background-tasks, bikelane) -->
+  <script type="module" src="/js/sidebar/index.js"></script>
   <script type="module" src="/js/diff-panel.js"></script>
   <script type="module" src="/js/components/DiffViewer.js"></script>
   <script type="module" src="/js/file-panel.js"></script>

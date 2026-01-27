@@ -1,50 +1,53 @@
 /**
- * B-12451: BikeLane Workflow Sidebar Section
+ * BikeLane Module - Workflow visualization
  *
  * Renders workflow visualization including:
  * - Workflow type badge (TDD, BDD, etc.)
  * - Phase progress visualization with icons
  * - Phase history timeline with durations
  * - Collapse/expand with persistence
+ *
+ * HTML elements:
+ * - #bikelane-section - Section container (collapsible)
+ * - .workflow-type-badge - Workflow type badge
+ * - .phase-progress - Phase progress visualization
+ * - .phase-history-list - Phase history timeline
  */
 
 /**
  * Format workflow type for display
- * @param {string} type - Workflow type (tdd, bdd, trivial, etc.)
- * @returns {string} Formatted type for display
+ * @param {string} type - Workflow type
+ * @returns {string} Formatted type
  */
 export function formatWorkflowType(type) {
-  if (!type) return '—';
+  if (!type) return '\u2014';
 
-  // Common types that should be uppercase
   const upperTypes = ['tdd', 'bdd'];
   if (upperTypes.includes(type.toLowerCase())) {
     return type.toUpperCase();
   }
 
-  // Title case for other types
   return type.charAt(0).toUpperCase() + type.slice(1);
 }
 
 /**
  * Render phase progress visualization HTML
- * @param {Array} phases - Array of phase objects {name, agent, label, status}
- * @returns {string} HTML string for phase progress
+ * @param {Array} phases - Array of phase objects
+ * @returns {string} HTML string
  */
 export function renderPhaseProgress(phases) {
   if (!phases || phases.length === 0) return '';
 
   return phases.map((phase, index) => {
     const statusClass = phase.status || 'pending';
-    const icon = statusClass === 'done' ? '✓' : statusClass === 'current' ? '●' : '○';
+    const icon = statusClass === 'done' ? '\u2713' : statusClass === 'current' ? '\u25CF' : '\u25CB';
     const label = phase.label || phase.agent?.toUpperCase() || phase.name?.toUpperCase() || '';
     const name = phase.name?.toUpperCase() || '';
 
     let html = '';
 
-    // Add arrow before step (except first)
     if (index > 0) {
-      html += '<span class="phase-arrow">→</span>';
+      html += '<span class="phase-arrow">\u2192</span>';
     }
 
     html += `
@@ -61,15 +64,15 @@ export function renderPhaseProgress(phases) {
 
 /**
  * Render phase history timeline HTML
- * @param {Array} history - Array of history entries {phase, agent, duration, status}
- * @returns {string} HTML string for phase history
+ * @param {Array} history - Array of history entries
+ * @returns {string} HTML string
  */
 export function renderPhaseHistory(history) {
   if (!history || history.length === 0) return '';
 
   return history.map(entry => {
     const statusClass = entry.status || 'pending';
-    const icon = statusClass === 'done' ? '✓' : statusClass === 'current' ? '→' : '○';
+    const icon = statusClass === 'done' ? '\u2713' : statusClass === 'current' ? '\u2192' : '\u25CB';
     const phase = entry.phase?.toUpperCase() || '';
     const agent = entry.agent || '';
 
@@ -95,8 +98,8 @@ export function renderPhaseHistory(history) {
 
 /**
  * Render collapsed phase summary
- * @param {Array} phases - Array of phase objects {name, agent, label, status}
- * @returns {string} HTML string for collapsed summary (e.g., "SM → TEA → Dev → Rev")
+ * @param {Array} phases - Array of phase objects
+ * @returns {string} HTML string
  */
 export function renderPhaseSummary(phases) {
   if (!phases || phases.length === 0) return '';
@@ -107,25 +110,23 @@ export function renderPhaseSummary(phases) {
     return isCurrent
       ? `<span class="current">${label}</span>`
       : label;
-  }).join(' → ');
+  }).join(' \u2192 ');
 }
 
 /**
  * Update the BikeLane section with workflow data
- * @param {Object|null} workflow - Workflow data or null to hide section
+ * @param {Object|null} workflow - Workflow data or null
  */
-export function updateBikelaneSection(workflow) {
+export function update(workflow) {
   const section = document.getElementById('bikelane-section');
   if (!section) return;
 
-  // Hide section if no workflow
   if (!workflow) {
     section.classList.add('hidden');
     section.style.display = 'none';
     return;
   }
 
-  // Show section
   section.classList.remove('hidden');
   section.style.display = '';
 
@@ -156,31 +157,32 @@ export function updateBikelaneSection(workflow) {
 }
 
 /**
- * Initialize the BikeLane section
- * - Register with collapsed-sections.js for persistence
- * - Set up WebSocket listener for story updates
+ * Initialize bikelane module
  */
-function initBikelaneSection() {
+export function init() {
   // Register with collapsed sections system if available
   if (window.collapsedSections?.initSection) {
     window.collapsedSections.initSection('bikelane-section');
   }
 
-  console.log('[BikeLane] Section initialized');
+  // Export to window for backward compatibility
+  window.bikelaneSection = {
+    update,
+    formatWorkflowType,
+    renderPhaseProgress,
+    renderPhaseHistory,
+    renderPhaseSummary,
+  };
+
+  console.log('[BikeLane] Module initialized');
 }
 
-// Export for external use
-window.bikelaneSection = {
-  update: updateBikelaneSection,
-  formatWorkflowType,
-  renderPhaseProgress,
-  renderPhaseHistory,
-  renderPhaseSummary,
-};
-
-// Initialize on DOM ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initBikelaneSection);
-} else {
-  initBikelaneSection();
+/**
+ * Cleanup bikelane module
+ */
+export function destroy() {
+  // No cleanup needed
 }
+
+// Legacy exports
+export const updateBikelaneSection = update;

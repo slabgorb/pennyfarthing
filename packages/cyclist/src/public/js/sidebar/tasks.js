@@ -1,23 +1,25 @@
 /**
- * B-17: Todo Visualizer Module - Electron IPC client for todo list display
+ * Tasks Module - Todo list display from Claude's TodoWrite
  *
- * Displays Claude's TodoWrite tool usage in the sidebar.
- * Updates in real-time as Claude modifies todos.
+ * HTML elements:
+ * - #todo-section - Section container (collapsible)
+ * - #todo-list - Todo items list
+ * - #todo-progress - Progress indicator (X/Y)
  */
 
 /**
  * Status indicator characters
  */
 const STATUS_INDICATORS = {
-  completed: '✓',
-  in_progress: '●',
-  pending: '○',
+  completed: '\u2713',   // checkmark
+  in_progress: '\u25CF', // filled circle
+  pending: '\u25CB',     // empty circle
 };
 
 /**
- * Get status indicator character for a todo status
- * @param {string} status - Todo status: 'completed' | 'in_progress' | 'pending'
- * @returns {string} The indicator character
+ * Get status indicator character
+ * @param {string} status - Todo status
+ * @returns {string} Indicator character
  */
 export function getStatusIndicator(status) {
   return STATUS_INDICATORS[status] || STATUS_INDICATORS.pending;
@@ -45,7 +47,7 @@ export function formatProgress(progress) {
 /**
  * Determine if section should auto-collapse
  * @param {Array} todos - Array of todo items
- * @returns {boolean} True if section should be collapsed
+ * @returns {boolean} True if should collapse
  */
 export function shouldAutoCollapse(todos) {
   return todos.length === 0;
@@ -71,7 +73,6 @@ export function createTodoElements(todos) {
 
     const content = document.createElement('span');
     content.className = 'todo-content';
-    // Show activeForm for in-progress tasks, content for others
     content.textContent = todo.status === 'in_progress' ? todo.activeForm : todo.content;
 
     el.appendChild(indicator);
@@ -83,29 +84,25 @@ export function createTodoElements(todos) {
 
 /**
  * Update todos section in the UI
- * @param {Array} todos - Array of todo items from IPC
+ * @param {Array} todos - Array of todo items
  */
-export function updateTodos(todos) {
+export function update(todos) {
   const todoSection = document.getElementById('todo-section');
   const todoList = document.getElementById('todo-list');
   const todoProgress = document.getElementById('todo-progress');
 
   if (!todoSection || !todoList) return;
 
-  // Update progress count
   const progress = calculateProgress(todos);
   if (todoProgress) {
     todoProgress.textContent = formatProgress(progress);
   }
 
-  // Clear existing items
   todoList.innerHTML = '';
 
-  // Create and append new items
   const elements = createTodoElements(todos);
   elements.forEach(el => todoList.appendChild(el));
 
-  // Handle auto-collapse
   if (shouldAutoCollapse(todos)) {
     todoSection.classList.add('collapsed');
   } else {
@@ -114,7 +111,7 @@ export function updateTodos(todos) {
 }
 
 /**
- * Toggle collapse state of todo section
+ * Toggle collapse state
  */
 function toggleCollapse() {
   const todoSection = document.getElementById('todo-section');
@@ -124,28 +121,27 @@ function toggleCollapse() {
 }
 
 /**
- * Initialize todos via Electron IPC
+ * Initialize tasks module
  */
-async function initTodos() {
+export function init() {
   // Check if Electron API is available
   if (!window.electronAPI?.todos) {
-    console.warn('Electron API (todos) not available');
+    console.warn('[Tasks] Electron API (todos) not available');
     return;
   }
 
   // Get initial data
-  try {
-    const todos = await window.electronAPI.todos.get();
+  window.electronAPI.todos.get().then(todos => {
     if (todos) {
-      updateTodos(todos);
+      update(todos);
     }
-  } catch (err) {
-    console.error('Failed to get initial todos:', err);
-  }
+  }).catch(err => {
+    console.error('[Tasks] Failed to get initial todos:', err);
+  });
 
-  // Subscribe to updates from main process
+  // Subscribe to updates
   window.electronAPI.todos.onUpdate((_event, todos) => {
-    updateTodos(todos);
+    update(todos);
   });
 
   // Set up collapse toggle handler
@@ -154,10 +150,18 @@ async function initTodos() {
     sectionHeader.addEventListener('click', toggleCollapse);
   }
 
-  console.log('Todos IPC connected');
+  console.log('[Tasks] Module initialized');
 }
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', () => {
-  initTodos();
-});
+/**
+ * Cleanup tasks module
+ */
+export function destroy() {
+  const sectionHeader = document.querySelector('#todo-section .section-header');
+  if (sectionHeader) {
+    sectionHeader.removeEventListener('click', toggleCollapse);
+  }
+}
+
+// Legacy exports
+export const updateTodos = update;

@@ -172,8 +172,10 @@ describe('E1-4: Character Portrait Display', () => {
     });
 
     it('should include portrait.js or equivalent for client-side swapping', async () => {
-      // HTML should include a script for portrait management
+      // HTML should include a script for portrait management (now in sidebar/index.js)
       const hasPortraitScript =
+        html.includes('sidebar/index.js') ||
+        html.includes('sidebar/portrait.js') ||
         html.includes('portrait.js') ||
         html.includes('portrait.ts') ||
         html.includes('data-portrait') ||
@@ -183,8 +185,8 @@ describe('E1-4: Character Portrait Display', () => {
     });
 
     it('should include portrait.js script', () => {
-      // The HTML should include portrait.js which has portrait management functions
-      expect(html.includes('portrait.js')).toBe(true);
+      // The HTML should include sidebar/index.js which loads portrait management functions
+      expect(html.includes('sidebar/index.js')).toBe(true);
     });
   });
 });

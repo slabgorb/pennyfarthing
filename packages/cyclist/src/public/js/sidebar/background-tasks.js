@@ -1,14 +1,10 @@
 /**
- * BackgroundTasksPanel - Sidebar panel showing running and completed background tasks
+ * Background Tasks Module - Running and completed background tasks display
  *
- * Story 35-16: Background Tasks Sidebar Panel with Real-time Status
- *
- * Features:
- * - Shows running tasks with elapsed time
- * - Shows completed tasks with success/failure status
- * - Expandable output for completed tasks
- * - Dismiss button for completed tasks
- * - Real-time updates via IPC or WebSocket
+ * HTML elements:
+ * - #background-tasks-section - Section container (collapsible)
+ * - #background-tasks-container - Container for task cards
+ * - #bg-tasks-count - Badge showing task count
  */
 
 /** @typedef {{ taskId: string, description: string, subagentType: string, startedAt: number, status: 'pending' | 'completed', success?: boolean, output?: string, error?: string }} BackgroundTask */
@@ -19,22 +15,15 @@ let tasks = [];
 /** Panel element reference */
 let panelElement = null;
 
-/** Timer for updating elapsed times */
+/** Timer for elapsed time updates */
 let elapsedTimeInterval = null;
 
-/** WebSocket connection for fallback mode */
+/** WebSocket connection */
 let wsConnection = null;
-
-/** WebSocket connection state */
 let connectionState = 'disconnected';
-
-/** WebSocket reconnection timer */
 let reconnectTimer = null;
-
-/** WebSocket URL for reconnection */
 let wsUrl = null;
 
-/** Reconnection interval (2s per WheelHub pattern) */
 const RECONNECT_INTERVAL = 2000;
 
 /**
@@ -116,17 +105,16 @@ function renderTaskCard(task) {
 
 /**
  * Render the background tasks panel
- * @param {BackgroundTask[]} taskList - List of tasks to render
+ * @param {BackgroundTask[]} taskList
  * @returns {string} HTML string
  */
 export function renderBackgroundTasksPanel(taskList) {
-  const pendingCount = taskList.filter(t => t.status === 'pending').length;
   const totalCount = taskList.length;
 
   const countBadge = totalCount > 0 ? `<span class="task-count-badge">[${totalCount}]</span>` : '';
 
   const taskCards = taskList
-    .sort((a, b) => b.startedAt - a.startedAt) // Most recent first
+    .sort((a, b) => b.startedAt - a.startedAt)
     .map(renderTaskCard)
     .join('');
 
@@ -149,47 +137,6 @@ export function renderBackgroundTasksPanel(taskList) {
 }
 
 /**
- * Initialize the background tasks panel
- * @param {HTMLElement} [container] - Optional container element
- */
-export function initBackgroundTasksPanel(container) {
-  tasks = [];
-
-  if (container) {
-    panelElement = container;
-    updatePanelDisplay();
-
-    // Set up click handlers for dismiss buttons
-    panelElement.addEventListener('click', handlePanelClick);
-
-    // Start elapsed time updates
-    startElapsedTimeUpdates();
-  }
-
-  // Subscribe to IPC events if available (Electron mode)
-  if (typeof window !== 'undefined' && window.electronAPI?.backgroundTask) {
-    window.electronAPI.backgroundTask.onStarted?.((_event, task) => {
-      addBackgroundTask(task);
-    });
-
-    window.electronAPI.backgroundTask.onCompleted?.((_event, task) => {
-      updateBackgroundTask(task.taskId, {
-        status: 'completed',
-        success: task.success,
-        output: task.output,
-        error: task.error,
-      });
-    });
-  } else if (typeof window !== 'undefined') {
-    // Browser mode - connect via WebSocket
-    const wsUrl = `ws://${location.host}/ws/background-tasks`;
-    connectWebSocket(wsUrl).catch((err) => {
-      console.warn('[BackgroundTasksPanel] WebSocket connection failed:', err.message);
-    });
-  }
-}
-
-/**
  * Handle click events on the panel
  * @param {Event} event
  */
@@ -202,7 +149,7 @@ function handlePanelClick(event) {
 }
 
 /**
- * Start interval to update elapsed times for pending tasks
+ * Start interval to update elapsed times
  */
 function startElapsedTimeUpdates() {
   if (elapsedTimeInterval) {
@@ -234,7 +181,25 @@ function stopElapsedTimeUpdates() {
 }
 
 /**
- * Update the panel display
+ * Update section badge
+ */
+function updateSectionBadge() {
+  const badge = document.getElementById('bg-tasks-count');
+  if (badge) {
+    const count = tasks.length;
+    badge.textContent = `(${count})`;
+    badge.style.display = count > 0 ? 'inline' : 'none';
+  }
+
+  // Auto-expand when tasks are added
+  const section = document.getElementById('background-tasks-section');
+  if (section && tasks.length > 0 && section.classList.contains('collapsed')) {
+    section.classList.remove('collapsed');
+  }
+}
+
+/**
+ * Update panel display
  */
 function updatePanelDisplay() {
   if (panelElement) {
@@ -248,7 +213,6 @@ function updatePanelDisplay() {
  * @param {BackgroundTask} task
  */
 export function addBackgroundTask(task) {
-  // Check if task already exists
   const existingIndex = tasks.findIndex(t => t.taskId === task.taskId);
   if (existingIndex >= 0) {
     tasks[existingIndex] = { ...tasks[existingIndex], ...task };
@@ -272,7 +236,7 @@ export function updateBackgroundTask(taskId, updates) {
 }
 
 /**
- * Dismiss (remove) a background task
+ * Dismiss a background task
  * @param {string} taskId
  */
 export function dismissBackgroundTask(taskId) {
@@ -281,7 +245,7 @@ export function dismissBackgroundTask(taskId) {
 }
 
 /**
- * Get all tracked background tasks
+ * Get all background tasks
  * @returns {BackgroundTask[]}
  */
 export function getBackgroundTasks() {
@@ -297,83 +261,8 @@ export function clearBackgroundTasks() {
 }
 
 /**
- * Cleanup function
- */
-export function destroyBackgroundTasksPanel() {
-  stopElapsedTimeUpdates();
-  disconnectWebSocket();
-  if (panelElement) {
-    panelElement.removeEventListener('click', handlePanelClick);
-    panelElement = null;
-  }
-  tasks = [];
-}
-
-/**
- * Connect to WebSocket for real-time task updates
- * Used as fallback when IPC is not available (web-only mode)
- * @param {string} url - WebSocket URL (e.g., 'ws://localhost:8765/ws/background-tasks')
- * @returns {Promise<void>}
- */
-export async function connectWebSocket(url) {
-  wsUrl = url;
-
-  // Close existing connection if any
-  if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
-    wsConnection.close();
-  }
-
-  return new Promise((resolve, reject) => {
-    try {
-      connectionState = 'connecting';
-      wsConnection = new WebSocket(url);
-
-      wsConnection.onopen = async () => {
-        connectionState = 'connected';
-        clearReconnectTimer();
-
-        // Fetch initial tasks via REST API
-        await fetchInitialTasks();
-
-        resolve();
-      };
-
-      wsConnection.onmessage = (event) => {
-        handleWebSocketMessage(event.data);
-      };
-
-      wsConnection.onclose = () => {
-        connectionState = 'disconnected';
-        scheduleReconnect();
-      };
-
-      wsConnection.onerror = (error) => {
-        connectionState = 'disconnected';
-        console.error('[BackgroundTasksPanel] WebSocket error:', error);
-        reject(error);
-      };
-    } catch (error) {
-      connectionState = 'disconnected';
-      reject(error);
-    }
-  });
-}
-
-/**
- * Disconnect WebSocket connection
- */
-export function disconnectWebSocket() {
-  clearReconnectTimer();
-  if (wsConnection) {
-    wsConnection.close();
-    wsConnection = null;
-  }
-  connectionState = 'disconnected';
-}
-
-/**
- * Handle incoming WebSocket message
- * @param {string} data - Raw message data
+ * Handle WebSocket message
+ * @param {string} data
  */
 function handleWebSocketMessage(data) {
   try {
@@ -395,11 +284,10 @@ function handleWebSocketMessage(data) {
         error: message.task.error,
       });
     } else if (message.type === 'init' && Array.isArray(message.tasks)) {
-      // Handle initial tasks from WebSocket connection
       message.tasks.forEach(task => addBackgroundTask(task));
     }
   } catch (error) {
-    console.error('[BackgroundTasksPanel] Failed to parse WebSocket message:', error);
+    console.error('[BackgroundTasks] Failed to parse WebSocket message:', error);
   }
 }
 
@@ -408,7 +296,6 @@ function handleWebSocketMessage(data) {
  */
 async function fetchInitialTasks() {
   try {
-    // Derive REST API URL from WebSocket URL
     const restUrl = wsUrl
       .replace('ws://', 'http://')
       .replace('wss://', 'https://')
@@ -422,7 +309,7 @@ async function fetchInitialTasks() {
       }
     }
   } catch (error) {
-    console.error('[BackgroundTasksPanel] Failed to fetch initial tasks:', error);
+    console.error('[BackgroundTasks] Failed to fetch initial tasks:', error);
   }
 }
 
@@ -435,9 +322,7 @@ function scheduleReconnect() {
   reconnectTimer = setTimeout(() => {
     reconnectTimer = null;
     if (connectionState === 'disconnected' && wsUrl) {
-      connectWebSocket(wsUrl).catch(() => {
-        // Reconnect attempt failed, will schedule another
-      });
+      connectWebSocket(wsUrl).catch(() => {});
     }
   }, RECONNECT_INTERVAL);
 }
@@ -453,7 +338,64 @@ function clearReconnectTimer() {
 }
 
 /**
- * Check if WebSocket is connected
+ * Connect to WebSocket
+ * @param {string} url
+ * @returns {Promise<void>}
+ */
+export async function connectWebSocket(url) {
+  wsUrl = url;
+
+  if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
+    wsConnection.close();
+  }
+
+  return new Promise((resolve, reject) => {
+    try {
+      connectionState = 'connecting';
+      wsConnection = new WebSocket(url);
+
+      wsConnection.onopen = async () => {
+        connectionState = 'connected';
+        clearReconnectTimer();
+        await fetchInitialTasks();
+        resolve();
+      };
+
+      wsConnection.onmessage = (event) => {
+        handleWebSocketMessage(event.data);
+      };
+
+      wsConnection.onclose = () => {
+        connectionState = 'disconnected';
+        scheduleReconnect();
+      };
+
+      wsConnection.onerror = (error) => {
+        connectionState = 'disconnected';
+        console.error('[BackgroundTasks] WebSocket error:', error);
+        reject(error);
+      };
+    } catch (error) {
+      connectionState = 'disconnected';
+      reject(error);
+    }
+  });
+}
+
+/**
+ * Disconnect WebSocket
+ */
+export function disconnectWebSocket() {
+  clearReconnectTimer();
+  if (wsConnection) {
+    wsConnection.close();
+    wsConnection = null;
+  }
+  connectionState = 'disconnected';
+}
+
+/**
+ * Check if connected
  * @returns {boolean}
  */
 export function isConnected() {
@@ -461,33 +403,15 @@ export function isConnected() {
 }
 
 /**
- * Get current WebSocket connection state
- * @returns {'disconnected' | 'connecting' | 'connected'}
+ * Get connection state
+ * @returns {string}
  */
 export function getConnectionState() {
   return connectionState;
 }
 
 /**
- * Update the sidebar section count badge
- */
-function updateSectionBadge() {
-  const badge = document.getElementById('bg-tasks-count');
-  if (badge) {
-    const count = tasks.length;
-    badge.textContent = `(${count})`;
-    badge.style.display = count > 0 ? 'inline' : 'none';
-  }
-
-  // Auto-expand section when tasks are added
-  const section = document.getElementById('background-tasks-section');
-  if (section && tasks.length > 0 && section.classList.contains('collapsed')) {
-    section.classList.remove('collapsed');
-  }
-}
-
-/**
- * Handle section header toggle
+ * Setup section toggle
  */
 function setupSectionToggle() {
   const section = document.getElementById('background-tasks-section');
@@ -502,14 +426,57 @@ function setupSectionToggle() {
 }
 
 /**
- * Auto-initialize on DOM ready
+ * Initialize background tasks module
  */
-if (typeof document !== 'undefined') {
-  document.addEventListener('DOMContentLoaded', () => {
-    const container = document.getElementById('background-tasks-container');
-    if (container) {
-      initBackgroundTasksPanel(container);
-      setupSectionToggle();
-    }
-  });
+export function init() {
+  tasks = [];
+  panelElement = document.getElementById('background-tasks-container');
+
+  if (panelElement) {
+    updatePanelDisplay();
+    panelElement.addEventListener('click', handlePanelClick);
+    startElapsedTimeUpdates();
+  }
+
+  // Subscribe to IPC events if available (Electron mode)
+  if (typeof window !== 'undefined' && window.electronAPI?.backgroundTask) {
+    window.electronAPI.backgroundTask.onStarted?.((_event, task) => {
+      addBackgroundTask(task);
+    });
+
+    window.electronAPI.backgroundTask.onCompleted?.((_event, task) => {
+      updateBackgroundTask(task.taskId, {
+        status: 'completed',
+        success: task.success,
+        output: task.output,
+        error: task.error,
+      });
+    });
+  } else if (typeof window !== 'undefined') {
+    // Browser mode - connect via WebSocket
+    const url = `ws://${location.host}/ws/background-tasks`;
+    connectWebSocket(url).catch((err) => {
+      console.warn('[BackgroundTasks] WebSocket connection failed:', err.message);
+    });
+  }
+
+  setupSectionToggle();
 }
+
+/**
+ * Cleanup background tasks module
+ */
+export function destroy() {
+  stopElapsedTimeUpdates();
+  disconnectWebSocket();
+  if (panelElement) {
+    panelElement.removeEventListener('click', handlePanelClick);
+    panelElement = null;
+  }
+  tasks = [];
+}
+
+// Legacy exports
+export const update = updatePanelDisplay;
+export const initBackgroundTasksPanel = init;
+export const destroyBackgroundTasksPanel = destroy;
