@@ -136,8 +136,9 @@ check_xml_tags_balanced() {
     local open_tags=($(grep -oE '<[a-z][-a-z]*>' "$file" 2>/dev/null | sed 's/[<>]//g' | sort -u))
 
     for tag in "${open_tags[@]}"; do
-        local open_count=$(grep -c "<${tag}>" "$file" 2>/dev/null || echo 0)
-        local close_count=$(grep -c "</${tag}>" "$file" 2>/dev/null || echo 0)
+        # grep -c returns 0 count but exit code 1 when no matches; use arithmetic to default to 0
+        local open_count=$(($(grep -c "<${tag}>" "$file" 2>/dev/null) + 0))
+        local close_count=$(($(grep -c "</${tag}>" "$file" 2>/dev/null) + 0))
 
         if [[ $open_count -ne $close_count ]]; then
             errors+=("Tag <$tag> has $open_count opens but $close_count closes")
