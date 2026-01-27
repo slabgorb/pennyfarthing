@@ -314,118 +314,6 @@ function setupPwdResizeObserver() {
 }
 
 /**
- * Build summary text for collapsed git section
- * @param {Array} repos - Array of repo status objects
- * @returns {string} Summary HTML
- */
-function buildGitSummary(repos) {
-  const dirtyRepos = repos.filter(r => !r.clean);
-  const totalDirty = repos.reduce((sum, repo) => sum + (repo.dirtyFiles?.length || 0), 0);
-
-  if (dirtyRepos.length === 0) {
-    return '<span class="summary-clean">All clean</span>';
-  }
-
-  // Show dirty repo names and file count
-  const repoNames = dirtyRepos.map(r => r.name).join(', ');
-  return `<span class="summary-dirty">${repoNames}</span> <span class="summary-count">(${totalDirty} file${totalDirty === 1 ? '' : 's'})</span>`;
-}
-
-/**
- * Build detail HTML for expanded git section
- * @param {Array} repos - Array of repo status objects
- * @returns {string} Detail HTML
- */
-function buildGitDetail(repos) {
-  return repos.map(repo => {
-    const statusClass = repo.clean ? 'clean' : 'dirty';
-    const statusText = repo.clean ? 'Clean' : 'Dirty';
-
-    // Build ahead/behind suffix
-    let aheadBehind = '';
-    if (repo.ahead > 0) aheadBehind += ` ↑${repo.ahead}`;
-    if (repo.behind > 0) aheadBehind += ` ↓${repo.behind}`;
-
-    // Full folder name
-    const folderName = repo.name;
-
-    // Build dirty files list (max 10)
-    let dirtyFilesHtml = '';
-    if (!repo.clean && repo.dirtyFiles && repo.dirtyFiles.length > 0) {
-      const maxFiles = 10;
-      const filesToShow = repo.dirtyFiles.slice(0, maxFiles);
-      const remaining = repo.dirtyFiles.length - maxFiles;
-
-      dirtyFilesHtml = `<div class="dirty-files">
-        ${filesToShow.map(f => `<div class="dirty-file"><span class="file-status">${f.status}</span>${f.path}</div>`).join('')}
-        ${remaining > 0 ? `<div class="dirty-more">+${remaining} more file${remaining === 1 ? '' : 's'}</div>` : ''}
-      </div>`;
-    }
-
-    return `<div class="repo-row" title="${repo.branch}${aheadBehind}">
-      <div class="repo-header">
-        <span class="repo-name">${folderName}</span>
-        <span class="repo-badge ${statusClass}">${statusText}</span>
-      </div>
-      ${dirtyFilesHtml}
-    </div>`;
-  }).join('');
-}
-
-/**
- * Update git status display for all configured repos
- * @param {Array} repos - Array of repo status objects { name, path, branch, clean, ahead, behind, dirtyFiles }
- */
-function updateGitStatusAll(repos) {
-  const detailContainer = document.querySelector('#git-repos');
-  const summaryEl = document.querySelector('#git-section-summary');
-  const badgeEl = document.querySelector('#git-section-badge');
-  if (!detailContainer || !repos || repos.length === 0) return;
-
-  // Calculate stats
-  const dirtyRepos = repos.filter(r => !r.clean);
-  const totalDirty = repos.reduce((sum, repo) => sum + (repo.dirtyFiles?.length || 0), 0);
-
-  // Update badge
-  if (badgeEl) {
-    if (dirtyRepos.length > 0) {
-      badgeEl.textContent = `${totalDirty}`;
-      badgeEl.className = 'section-badge dirty';
-      badgeEl.style.display = '';
-    } else {
-      badgeEl.textContent = '✓';
-      badgeEl.className = 'section-badge clean';
-      badgeEl.style.display = '';
-    }
-  }
-
-  // Update summary (visible when collapsed)
-  if (summaryEl) {
-    summaryEl.innerHTML = buildGitSummary(repos);
-  }
-
-  // Update detail (visible when expanded)
-  detailContainer.innerHTML = buildGitDetail(repos);
-}
-
-/**
- * Fetch git status for all repos from API
- */
-async function fetchGitStatusAll() {
-  try {
-    const response = await fetch('/api/git/all');
-    if (!response.ok) {
-      console.warn('[StatsStrip] Git status fetch failed:', response.status);
-      return;
-    }
-    const repos = await response.json();
-    updateGitStatusAll(repos);
-  } catch (err) {
-    console.warn('[StatsStrip] Failed to fetch git status:', err);
-  }
-}
-
-/**
  * Update usage meter display (23-1)
  * @param {Object} usageStats - Usage stats object
  * @param {number} usageStats.fiveHourPercent - 5-hour remaining percentage
@@ -656,8 +544,7 @@ window.updateUsageMeter = updateUsageMeter;
 // 23-4: Export compact button functions
 window.updateCompactButtonVisibility = updateCompactButtonVisibility;
 window.executeCompact = executeCompact;
-// Export pwd and git status functions
+// Export pwd functions
 window.updatePwd = updatePwd;
 window.setProjectRoot = setProjectRoot;
-window.updateGitStatusAll = updateGitStatusAll;
-window.fetchGitStatusAll = fetchGitStatusAll;
+// Git sidebar functions moved to story.js
