@@ -288,6 +288,7 @@ export function setupWebSocketServers(
     // Send initial git data on connection (multi-repo)
     const projectDir = getProjectDir();
     const allReposInfo = getAllReposGitInfo(projectDir);
+    console.log('[Git WS] New connection, sending init with', allReposInfo.length, 'repos');
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ type: 'init', repos: allReposInfo }));
     }

@@ -40,7 +40,7 @@ import { setupWebSocketServers } from './websocket.js';
 export { broadcastStats } from './api/index.js';
 export { getStoryInfo } from './story-parser.js';
 export type { StoryInfo, WorkflowStep, CriteriaItem } from './story-parser.js';
-export { getGitInfo } from './api/index.js';
+export { getGitInfo, getAllReposGitInfo } from './api/index.js';
 export type { GitInfo } from './api/index.js';
 
 export const app: Express = express();
