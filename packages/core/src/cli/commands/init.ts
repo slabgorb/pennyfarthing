@@ -582,7 +582,7 @@ async function mergeSettingsLocalJson(
     return migrated;
   };
 
-  for (const hookType of ['SessionStart', 'SessionEnd', 'PreToolUse', 'PostToolUse']) {
+  for (const hookType of ['SessionStart', 'SessionEnd', 'PreToolUse', 'PostToolUse', 'Stop']) {
     if (Array.isArray(hooks[hookType])) {
       if (migrateHookPaths(hooks[hookType] as unknown[])) {
         modified = true;
