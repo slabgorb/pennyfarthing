@@ -1587,13 +1587,14 @@ epics:
           indicators don't show active state. Must click twice to sync.
         points: 1
         priority: P1
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: trivial
         acceptance_criteria:
           - Tab indicators match actual panel state on startup
           - First click toggles correctly
         jira: MSSCI-12470
+        completed: "2026-01-27"
       - id: "MSSCI-12471"
         title: "Fresh start: Audit and fix stale data on load"
         description: |
