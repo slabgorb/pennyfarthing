@@ -538,8 +538,15 @@ export function connectGitWebSocket() {
       try {
         const data = JSON.parse(event.data);
         // Handle both init and update messages
-        if (data.type === 'init' || data.type === 'update' || data.branch !== undefined) {
-          updateGit(data);
+        if (data.type === 'init' || data.type === 'update') {
+          // Multi-repo format: { type, repos: [...] }
+          if (data.repos && window.updateGitStatusAll) {
+            window.updateGitStatusAll(data.repos);
+          }
+          // Legacy single-repo format for backwards compatibility
+          if (data.branch !== undefined) {
+            updateGit(data);
+          }
         }
       } catch (err) {
         console.error('[Git] Failed to parse WebSocket message:', err);

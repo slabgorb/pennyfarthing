@@ -577,13 +577,8 @@ async function initStatsStrip() {
     }
   }
 
-  // Multi-repo git status - fetch from API
-  fetchGitStatusAll();
-
-  // Set up polling for git status (5 second interval as fallback)
-  setInterval(fetchGitStatusAll, 5000);
-
   // Note: Collapse toggle is handled by collapsed-sections.js for persistence
+  // Git status is handled by story.js via WebSocket (/ws/git), not polling here
 
   console.log('[StatsStrip] IPC connected');
 }
