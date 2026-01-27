@@ -1533,13 +1533,14 @@ epics:
           user's configured editor. Currently broken.
         points: 1
         priority: P1
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: trivial
         acceptance_criteria:
           - Click file path opens file in $EDITOR
           - Falls back gracefully if $EDITOR not set
         jira: MSSCI-12467
+        completed: "2026-01-27"
       - id: "MSSCI-12468"
         title: "DIFFS panel: Improve combined diff view"
         description: |
