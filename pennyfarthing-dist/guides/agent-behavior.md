@@ -11,8 +11,20 @@
 </critical>
 
 <critical>
-**Absolute paths:** `cd $CLAUDE_PROJECT_DIR && just test` - never relative `cd`.
-Multi-repo: `cd $CLAUDE_PROJECT_DIR/$(get_repo_path "$repo")` after sourcing `scripts/repo-utils.sh`.
+**Path resolution:** Use `.pennyfarthing/scripts/core/run.sh` for all script calls - it handles path resolution.
+For direct commands, use relative paths from project root (Claude Code starts there).
+
+```bash
+# GOOD: Use run.sh wrapper
+.pennyfarthing/scripts/core/run.sh workflow/check.sh
+
+# GOOD: Relative paths for simple commands
+just test
+npm run build
+
+# BAD: $CLAUDE_PROJECT_DIR doesn't exist in Bash calls
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/foo.sh  # BROKEN!
+```
 </critical>
 
 <critical>
@@ -223,7 +235,7 @@ HTML comments that agents emit to signal Cyclist UI. Format: `<!-- CYCLIST:TYPE:
 4. If `status: blocked` → report error, stop
 5. **Run this as ABSOLUTE LAST ACTION:**
    ```bash
-   $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
+   .pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
    ```
 6. **Output the script result verbatim and EXIT**
 
@@ -259,14 +271,14 @@ When an agent detects the story is NOT in their phase, emit a marker immediately
 1. Read `**Workflow:**` and `**Phase:**` from session file
 2. Query the phase owner:
    ```bash
-   OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-owner.sh {workflow} {phase})
+   OWNER=$(.pennyfarthing/scripts/core/run.sh workflow/phase-owner.sh {workflow} {phase})
    ```
 3. If `$OWNER` != your agent name → story belongs to another agent
 
 ### Action When Not Your Phase
 
 ```bash
-$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {OWNER}
+.pennyfarthing/scripts/core/handoff-marker.sh {OWNER}
 ```
 
 Then output the result verbatim. This triggers Cyclist's handoff button.
@@ -276,13 +288,13 @@ Then output the result verbatim. This triggers Cyclist's handoff button.
 Dev reads session: `**Workflow:** tdd`, `**Phase:** review`
 
 ```bash
-OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-owner.sh tdd review)
+OWNER=$(.pennyfarthing/scripts/core/run.sh workflow/phase-owner.sh tdd review)
 # Returns: reviewer
 ```
 
 Since "reviewer" != "dev", Dev runs:
 ```bash
-$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh reviewer
+.pennyfarthing/scripts/core/handoff-marker.sh reviewer
 ```
 
 ### Do NOT just say "run /reviewer"

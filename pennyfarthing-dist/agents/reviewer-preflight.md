@@ -28,14 +28,15 @@ model: haiku
 ## 1. Checkout and Diff
 
 ```bash
-cd $CLAUDE_PROJECT_DIR/${REPO} && git fetch origin && git checkout {BRANCH} && git diff develop...HEAD --stat
+# If REPO is a path, cd to it; otherwise check packages/
+cd "${REPO}" 2>/dev/null || cd "packages/${REPO}" && git fetch origin && git checkout {BRANCH} && git diff develop...HEAD --stat
 ```
 
 ## 2. Check Test Cache
 
 ```bash
-source $CLAUDE_PROJECT_DIR/scripts/utils/test-cache.sh
-SESSION_FILE="$CLAUDE_PROJECT_DIR/.session/{STORY_ID}-session.md"
+source scripts/utils/test-cache.sh
+SESSION_FILE=".session/{STORY_ID}-session.md"
 
 if test_cache_valid "$SESSION_FILE"; then
     CACHED_RESULT=$(test_cache_get "$SESSION_FILE" "result")
