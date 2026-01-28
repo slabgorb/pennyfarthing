@@ -2349,6 +2349,161 @@ html, body {
   color: var(--text-primary);
 }
 
+/* 64-19: Sprint Stories Section */
+.sprint-stories-section {
+  margin-top: 0.5rem;
+}
+
+.sprint-stories-section .section-header {
+  cursor: pointer;
+}
+
+.sprint-story-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  margin-bottom: 0.375rem;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  border-left: 2px solid transparent;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.sprint-story-item:last-child {
+  margin-bottom: 0;
+}
+
+.sprint-story-item.current {
+  border-left-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-secondary));
+}
+
+.sprint-story-item .story-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.sprint-story-item .story-id,
+.sprint-story-item .story-jira-link {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-family: var(--font-mono, monospace);
+}
+
+.sprint-story-item .story-jira-link {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.sprint-story-item .story-jira-link:hover {
+  text-decoration: underline;
+}
+
+.sprint-story-item .story-title-text {
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.sprint-story-item .story-points {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+}
+
+/* Story Status Badges */
+.story-status {
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.125rem 0.375rem;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.story-status.done {
+  background: color-mix(in srgb, var(--status-ready) 20%, transparent);
+  color: var(--status-ready);
+}
+
+.story-status.in_progress {
+  background: color-mix(in srgb, var(--status-working) 20%, transparent);
+  color: var(--status-working);
+}
+
+.story-status.backlog {
+  background: color-mix(in srgb, var(--text-secondary) 15%, transparent);
+  color: var(--text-secondary);
+}
+
+.story-status.cancelled {
+  background: color-mix(in srgb, var(--status-error) 20%, transparent);
+  color: var(--status-error);
+  text-decoration: line-through;
+}
+
+/* 64-19: Epic Context Section */
+.epic-context-section {
+  margin-top: 0.5rem;
+}
+
+.epic-context-section .section-header {
+  cursor: pointer;
+}
+
+.epic-context {
+  padding: 0.5rem;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+}
+
+.epic-context .epic-title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.epic-context .epic-jira-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.epic-context .epic-jira-link:hover {
+  text-decoration: underline;
+}
+
+.epic-context .epic-stories {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.epic-context .epic-story-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 0.375rem;
+  background: var(--bg-primary);
+  border-radius: 3px;
+  font-size: 0.7rem;
+}
+
+.epic-context .epic-story-item .story-id {
+  font-family: var(--font-mono, monospace);
+  color: var(--text-secondary);
+}
+
 /* B-13: Workflow Progress Visualization */
 .workflow-progress {
   display: flex;

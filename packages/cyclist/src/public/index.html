@@ -278,6 +278,24 @@
             <span id="sprint-end-date" class="sprint-value">-</span>
           </div>
         </div>
+        <!-- 64-19: Expandable Sprint Stories Section -->
+        <section id="sprint-stories-section" class="collapsible-section sprint-stories-section collapsed" style="display: none;">
+          <div class="section-header" data-action="toggle-sprint-stories">
+            <span class="section-title">Sprint Stories</span>
+            <span id="sprint-stories-count" class="section-summary"></span>
+            <button class="collapse-btn" aria-label="Toggle sprint stories">▼</button>
+          </div>
+          <div id="sprint-stories-list" class="section-content"></div>
+        </section>
+        <!-- 64-19: Epic Context Section (shown when expanded) -->
+        <section id="epic-context-section" class="collapsible-section epic-context-section collapsed" style="display: none;">
+          <div class="section-header" data-action="toggle-epic-context">
+            <span class="section-title">Epic</span>
+            <span id="epic-context-summary" class="section-summary"></span>
+            <button class="collapse-btn" aria-label="Toggle epic context">▼</button>
+          </div>
+          <div id="epic-context-content" class="section-content"></div>
+        </section>
       </div>
 
       <!-- B-12451: BikeLane Workflow Section - Collapsible workflow visualization -->
