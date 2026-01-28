@@ -29,8 +29,13 @@ Execute the approved change groupings following the branch workflow:
 ### 3.1 Stash All Changes
 
 ```bash
-# Stash everything to start clean
-git stash push -m "git-cleanup-$(date +%Y%m%d-%H%M%S)"
+# Stash everything to start clean - MARK CLEARLY
+git stash push -m "CLEANUP-WIP: git-cleanup-$(date +%Y%m%d-%H%M%S)"
+```
+
+**Verify stash worked:**
+```bash
+git stash list  # Should show your CLEANUP-WIP entry
 ```
 
 ### 3.2 For Each Group
@@ -57,8 +62,8 @@ git stash pop
 # Stage only files for this group
 git add {file1} {file2} ...
 
-# Re-stash remaining changes
-git stash push -m "remaining-cleanup"
+# Re-stash remaining changes - MARK CLEARLY
+git stash push -m "CLEANUP-WIP: remaining changes"
 ```
 
 #### Show Diff for Verification
@@ -186,6 +191,15 @@ If a commit fails:
 1. **Hook rejection**: Check commit message format, try again
 2. **Merge conflict**: Report to user, offer to abort or resolve
 3. **Test failure**: Report which tests failed, offer to proceed or abort
+
+**CRITICAL: Before panicking about lost work, CHECK STASH:**
+```bash
+git stash list              # Work is probably here!
+git stash show -p stash@{0} # See what's in it
+git stash pop               # Restore it
+```
+
+When a pre-commit hook blocks a commit, staged changes may be auto-stashed. Always check.
 
 ## Output
 

@@ -14,6 +14,150 @@
 // Cache for theme agent-to-character mappings
 let themeAgentsCache = null;
 
+// Expand/collapse state for sprint stories section
+let sprintStoriesExpanded = false;
+
+/**
+ * Escape HTML entities to prevent XSS
+ * @param {string} text - Text to escape
+ * @returns {string} Escaped text
+ */
+function escapeHtml(text) {
+  if (!text) return '';
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+/**
+ * Format story status for display
+ * @param {string} status - Status value (done, in_progress, backlog, cancelled)
+ * @returns {{text: string, className: string}} Formatted status
+ */
+export function formatStoryStatus(status) {
+  const statusMap = {
+    done: { text: 'Done', className: 'story-status done' },
+    in_progress: { text: 'In Progress', className: 'story-status in_progress' },
+    backlog: { text: 'Backlog', className: 'story-status backlog' },
+    cancelled: { text: 'Cancelled', className: 'story-status cancelled' },
+  };
+  return statusMap[status] || { text: status || 'Unknown', className: 'story-status unknown' };
+}
+
+/**
+ * Format story points for display
+ * @param {number|null|undefined} points - Point value
+ * @returns {string} Formatted points string
+ */
+export function formatStoryPoints(points) {
+  if (points === null || points === undefined) {
+    return '- pts';
+  }
+  return points === 1 ? '1 pt' : `${points} pts`;
+}
+
+/**
+ * Check if sprint stories section is expanded
+ * @returns {boolean} Expanded state
+ */
+export function isExpanded() {
+  return sprintStoriesExpanded;
+}
+
+/**
+ * Set sprint stories section expanded state
+ * @param {boolean} expanded - New expanded state
+ */
+export function setExpanded(expanded) {
+  sprintStoriesExpanded = expanded;
+}
+
+/**
+ * Reset expand state to default (for testing)
+ */
+export function resetExpandState() {
+  sprintStoriesExpanded = false;
+}
+
+/**
+ * Render a list of sprint stories as HTML
+ * @param {Array|null} stories - Array of story objects
+ * @param {string|null} currentStoryId - ID of current story to highlight
+ * @returns {string} HTML string
+ */
+export function renderSprintStoriesList(stories, currentStoryId) {
+  if (!stories || stories.length === 0) {
+    return '';
+  }
+
+  const items = stories.map(story => {
+    const isCurrent = story.id === currentStoryId;
+    const currentClass = isCurrent ? ' current' : '';
+    const currentAttr = isCurrent ? ' data-current="true"' : '';
+    const status = formatStoryStatus(story.status);
+    const points = formatStoryPoints(story.points);
+
+    // Render ID as link if Jira URL exists, otherwise plain text
+    let idHtml;
+    if (story.jiraUrl) {
+      idHtml = `<a href="${escapeHtml(story.jiraUrl)}" target="_blank" rel="noopener noreferrer" class="story-jira-link">${escapeHtml(story.id)}</a>`;
+    } else {
+      idHtml = `<span class="story-id">${escapeHtml(story.id)}</span>`;
+    }
+
+    return `<div class="sprint-story-item${currentClass}" data-story-id="${escapeHtml(story.id)}"${currentAttr}>
+      <div class="story-header">
+        ${idHtml}
+        <span class="${status.className}" data-status="${story.status}">${status.text}</span>
+      </div>
+      <div class="story-title-text">${escapeHtml(story.title)}</div>
+      <div class="story-points">${points}</div>
+    </div>`;
+  });
+
+  return items.join('\n');
+}
+
+/**
+ * Render epic context as HTML
+ * @param {Object|null} epicContext - Epic context object
+ * @returns {string} HTML string
+ */
+export function renderEpicContext(epicContext) {
+  if (!epicContext) {
+    return '';
+  }
+
+  // Render epic title with optional Jira link
+  let titleHtml;
+  if (epicContext.jiraUrl) {
+    titleHtml = `<a href="${escapeHtml(epicContext.jiraUrl)}" target="_blank" rel="noopener noreferrer" class="epic-jira-link">${escapeHtml(epicContext.jiraKey)}</a>: ${escapeHtml(epicContext.title)}`;
+  } else {
+    titleHtml = escapeHtml(epicContext.title);
+  }
+
+  // Render stories list
+  let storiesHtml = '';
+  if (epicContext.stories && epicContext.stories.length > 0) {
+    const storyItems = epicContext.stories.map(story => {
+      const status = formatStoryStatus(story.status);
+      return `<div class="epic-story-item">
+        <span class="story-id">${escapeHtml(story.id)}</span>
+        <span class="${status.className}">${status.text}</span>
+      </div>`;
+    });
+    storiesHtml = `<div class="epic-stories">${storyItems.join('\n')}</div>`;
+  }
+
+  return `<div class="epic-context">
+    <div class="epic-title">${titleHtml}</div>
+    ${storiesHtml}
+  </div>`;
+}
+
 /**
  * Get the cached theme agents mapping
  * @returns {Object|null}
@@ -124,58 +268,6 @@ function updateSprintInfo(sprint) {
 }
 
 /**
- * Update workflow progress visualization
- * @param {Array|null} workflow - Array of workflow steps
- */
-function updateWorkflowProgress(workflow) {
-  const workflowEl = document.getElementById('workflow-progress');
-  if (!workflowEl) return;
-
-  if (!workflow || workflow.length === 0) {
-    workflowEl.style.display = 'none';
-    return;
-  }
-
-  workflowEl.style.display = 'flex';
-  workflowEl.innerHTML = '';
-
-  workflow.forEach((step, index) => {
-    if (index > 0) {
-      const arrow = document.createElement('span');
-      arrow.className = 'workflow-arrow';
-      arrow.textContent = '\u2192';
-      workflowEl.appendChild(arrow);
-    }
-
-    const stepEl = document.createElement('div');
-    stepEl.className = `workflow-step status-${step.status}`;
-    stepEl.setAttribute('data-agent', step.agent);
-
-    const iconEl = document.createElement('span');
-    iconEl.className = `workflow-icon status-${step.status}`;
-    switch (step.status) {
-      case 'done':
-        iconEl.textContent = '\u2713';
-        break;
-      case 'current':
-        iconEl.textContent = '\u25CF';
-        break;
-      default:
-        iconEl.textContent = '\u25CB';
-        break;
-    }
-    stepEl.appendChild(iconEl);
-
-    const labelEl = document.createElement('span');
-    labelEl.className = 'workflow-label';
-    labelEl.textContent = step.label || getDefaultLabel(step.agent);
-    stepEl.appendChild(labelEl);
-
-    workflowEl.appendChild(stepEl);
-  });
-}
-
-/**
  * Update story details (next agent, PR)
  * @param {Object} story - Story data
  */
@@ -221,6 +313,60 @@ function updateStoryDetails(story) {
 }
 
 /**
+ * Update sprint stories section in the UI
+ * @param {Array|null} sprintStories - Array of sprint stories
+ * @param {string|null} currentStoryId - ID of current story
+ */
+function updateSprintStoriesSection(sprintStories, currentStoryId) {
+  const sectionEl = document.getElementById('sprint-stories-section');
+  const listEl = document.getElementById('sprint-stories-list');
+  const countEl = document.getElementById('sprint-stories-count');
+
+  if (!sectionEl || !listEl) return;
+
+  if (!sprintStories || sprintStories.length === 0) {
+    sectionEl.style.display = 'none';
+    return;
+  }
+
+  // Show section and render stories
+  sectionEl.style.display = '';
+  listEl.innerHTML = renderSprintStoriesList(sprintStories, currentStoryId);
+
+  // Update count summary
+  if (countEl) {
+    const done = sprintStories.filter(s => s.status === 'done').length;
+    countEl.textContent = `(${done}/${sprintStories.length})`;
+  }
+}
+
+/**
+ * Update epic context section in the UI
+ * @param {Object|null} epicContext - Epic context data
+ */
+function updateEpicContextSection(epicContext) {
+  const sectionEl = document.getElementById('epic-context-section');
+  const contentEl = document.getElementById('epic-context-content');
+  const summaryEl = document.getElementById('epic-context-summary');
+
+  if (!sectionEl || !contentEl) return;
+
+  if (!epicContext) {
+    sectionEl.style.display = 'none';
+    return;
+  }
+
+  // Show section and render epic context
+  sectionEl.style.display = '';
+  contentEl.innerHTML = renderEpicContext(epicContext);
+
+  // Update summary with epic title
+  if (summaryEl) {
+    summaryEl.textContent = epicContext.title || '';
+  }
+}
+
+/**
  * Update story section in the UI
  * @param {Object} story - Story data
  */
@@ -242,8 +388,25 @@ export function update(story) {
   }
 
   updateSprintInfo(story.sprint);
-  updateWorkflowProgress(story.workflow);
   updateStoryDetails(story);
+
+  // 64-19: Update expandable sections
+  updateSprintStoriesSection(story.sprintStories, story.id);
+  updateEpicContextSection(story.epicContext);
+}
+
+/**
+ * Toggle collapse state for a collapsible section
+ * @param {HTMLElement} sectionEl - The section element
+ */
+function toggleSectionCollapse(sectionEl) {
+  if (!sectionEl) return;
+  const isCollapsed = sectionEl.classList.toggle('collapsed');
+
+  // Track expand state for sprint stories section
+  if (sectionEl.id === 'sprint-stories-section') {
+    setExpanded(!isCollapsed);
+  }
 }
 
 /**
@@ -258,6 +421,23 @@ export function init() {
       loadThemeAgents();
     }
   });
+
+  // 64-19: Add click handlers for expandable sections
+  const sprintStoriesHeader = document.querySelector('[data-action="toggle-sprint-stories"]');
+  if (sprintStoriesHeader) {
+    sprintStoriesHeader.addEventListener('click', () => {
+      const section = document.getElementById('sprint-stories-section');
+      toggleSectionCollapse(section);
+    });
+  }
+
+  const epicContextHeader = document.querySelector('[data-action="toggle-epic-context"]');
+  if (epicContextHeader) {
+    epicContextHeader.addEventListener('click', () => {
+      const section = document.getElementById('epic-context-section');
+      toggleSectionCollapse(section);
+    });
+  }
 }
 
 /**

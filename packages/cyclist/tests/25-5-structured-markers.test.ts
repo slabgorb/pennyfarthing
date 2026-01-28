@@ -527,6 +527,4 @@ Now the real marker:
 
   });
 
-  });
-
 });

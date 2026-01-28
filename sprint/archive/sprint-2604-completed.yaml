@@ -447,3 +447,9 @@ completed:
     points: 1
     completed: 2026-01-20
     pr: 377
+  - id: MSSCI-12510
+    epic: standalone
+    title: "Fix uncaught exception during startup when no project directory"
+    points: 2
+    completed: 2026-01-28
+    pr: 528

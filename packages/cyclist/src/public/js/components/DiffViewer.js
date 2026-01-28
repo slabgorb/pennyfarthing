@@ -403,6 +403,184 @@ export function renderDiff(container, diffData) {
 }
 
 // =============================================================================
+// MSSCI-12468: Enhanced Combined Diff Rendering
+// =============================================================================
+
+import { computeCombinedDiff } from './DiffHistoryManager.js';
+
+/**
+ * Escape HTML to prevent XSS
+ * @param {string} text - Text to escape
+ * @returns {string} Escaped text
+ */
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+/**
+ * Render combined diff with improved UX (MSSCI-12468)
+ *
+ * Features:
+ * - Header with Original → Final labels
+ * - File path display
+ * - Change summary (additions/deletions)
+ * - Unified diff with +/- prefixes
+ * - Dual line numbers (old/new)
+ * - Context lines with collapse/expand
+ * - Hunk headers with line ranges
+ *
+ * @param {HTMLElement} container - Container element
+ * @param {Object} diffData - DiffData object
+ * @param {Object} [options] - Options
+ * @param {number} [options.contextLines=3] - Number of context lines
+ */
+export function renderCombinedDiff(container, diffData, options = {}) {
+  const ext = getFileExtension(diffData.filePath);
+  const langClass = getLanguageClass(ext);
+  const contextLines = options.contextLines ?? 3;
+
+  // Compute the diff
+  const result = computeCombinedDiff(diffData.oldContent, diffData.newContent, { contextLines });
+
+  // Create viewer wrapper
+  const viewer = document.createElement('div');
+  viewer.className = `diff-viewer combined-diff ${langClass}`;
+
+  // Create header section
+  const header = document.createElement('div');
+  header.className = 'combined-diff-header';
+
+  // File path
+  const filename = diffData.filePath.split('/').pop() || 'unknown';
+  const filePathEl = document.createElement('span');
+  filePathEl.className = 'combined-diff-file-path';
+  filePathEl.textContent = filename;
+  header.appendChild(filePathEl);
+
+  // Original → Final label
+  const transitionLabel = document.createElement('span');
+  transitionLabel.className = 'combined-diff-transition';
+  transitionLabel.innerHTML = ' <span class="original-label">Original</span> → <span class="final-label">Final</span>';
+  header.appendChild(transitionLabel);
+
+  viewer.appendChild(header);
+
+  // Change summary
+  let additions = 0, deletions = 0;
+  for (const hunk of result.hunks) {
+    for (const line of hunk.lines) {
+      if (line.type === 'added') additions++;
+      if (line.type === 'removed') deletions++;
+    }
+  }
+
+  const summary = document.createElement('div');
+  summary.className = 'combined-diff-summary';
+  summary.innerHTML = `<span class="additions">+${additions}</span> <span class="deletions">-${deletions}</span>`;
+  viewer.appendChild(summary);
+
+  // Handle new file indicator
+  if (diffData.isNewFile || diffData.oldContent === '') {
+    const newFileIndicator = document.createElement('div');
+    newFileIndicator.className = 'combined-diff-new-file';
+    newFileIndicator.textContent = 'New file';
+    viewer.appendChild(newFileIndicator);
+  }
+
+  // Handle deleted file indicator
+  if (diffData.newContent === '' && diffData.oldContent !== '') {
+    const deletedIndicator = document.createElement('div');
+    deletedIndicator.className = 'combined-diff-deleted-file';
+    deletedIndicator.textContent = 'File deleted';
+    viewer.appendChild(deletedIndicator);
+  }
+
+  // Render hunks
+  let isFirstHunk = true;
+  for (const hunk of result.hunks) {
+    // Add expand button between hunks
+    if (!isFirstHunk) {
+      const expandBtn = document.createElement('button');
+      expandBtn.className = 'diff-expand-button';
+      expandBtn.textContent = '···';
+      expandBtn.title = 'Expand hidden lines';
+      viewer.appendChild(expandBtn);
+    }
+    isFirstHunk = false;
+
+    // Create hunk container
+    const hunkEl = document.createElement('div');
+    hunkEl.className = 'diff-hunk';
+
+    // Hunk header
+    const hunkHeader = document.createElement('div');
+    hunkHeader.className = 'diff-hunk-header';
+    const { oldStart, oldCount, newStart, newCount } = hunk.header;
+    hunkHeader.textContent = `@@ -${oldStart},${oldCount} +${newStart},${newCount} @@`;
+    hunkEl.appendChild(hunkHeader);
+
+    // Render lines
+    for (const line of hunk.lines) {
+      const lineEl = document.createElement('div');
+      lineEl.className = `diff-line ${line.type}`;
+
+      // Line numbers container
+      const lineNumbers = document.createElement('span');
+      lineNumbers.className = 'diff-line-numbers';
+
+      // Old line number
+      const oldLineNum = document.createElement('span');
+      oldLineNum.className = 'old-line-number';
+      oldLineNum.textContent = line.oldLineNumber != null ? String(line.oldLineNumber) : '';
+      lineNumbers.appendChild(oldLineNum);
+
+      // New line number
+      const newLineNum = document.createElement('span');
+      newLineNum.className = 'new-line-number';
+      newLineNum.textContent = line.newLineNumber != null ? String(line.newLineNumber) : '';
+      lineNumbers.appendChild(newLineNum);
+
+      lineEl.appendChild(lineNumbers);
+
+      // Prefix
+      const prefix = document.createElement('span');
+      prefix.className = 'diff-line-prefix';
+      if (line.type === 'added') {
+        prefix.textContent = '+';
+      } else if (line.type === 'removed') {
+        prefix.textContent = '-';
+      } else {
+        prefix.textContent = ' ';
+      }
+      lineEl.appendChild(prefix);
+
+      // Content (escaped for XSS safety)
+      const content = document.createElement('span');
+      content.className = 'diff-line-content';
+      content.textContent = line.line;  // textContent auto-escapes
+      lineEl.appendChild(content);
+
+      hunkEl.appendChild(lineEl);
+    }
+
+    viewer.appendChild(hunkEl);
+  }
+
+  // Handle no changes
+  if (result.hunks.length === 0 && result.totalChanges === 0) {
+    const noChanges = document.createElement('div');
+    noChanges.className = 'combined-diff-no-changes';
+    noChanges.textContent = 'No changes';
+    viewer.appendChild(noChanges);
+  }
+
+  container.innerHTML = '';
+  container.appendChild(viewer);
+}
+
+// =============================================================================
 // IPC Integration
 // =============================================================================
 
@@ -448,4 +626,5 @@ export default {
   getLanguageClass,
   createDiffLineElement,
   renderDiff,
+  renderCombinedDiff,
 };

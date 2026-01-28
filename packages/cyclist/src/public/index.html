@@ -159,33 +159,21 @@
           </div>
         </div>
         <!-- B-22: Stats Strip - compact stats display below editor -->
-        <!-- 23-1: Token display removed, usage limits added -->
-        <!-- Stats strip with left/right groups -->
+        <!-- MSSCI-12469: Redesigned with identity context (PWD → Jira → GitHub → spacer → Model → Context) -->
         <div id="stats-strip">
           <div class="stats-left">
             <span class="pwd" data-stat="strip-pwd" title="Claude's working directory"></span>
+            <span class="jira-email" data-stat="strip-jira-email" title="Jira user email"></span>
+            <span class="github-user" data-stat="strip-github-user" title="GitHub username"></span>
           </div>
           <div class="stats-right">
             <span class="model-badge" data-stat="strip-model">—</span>
-            <span class="context-stats" title="Current context window">
-              <span class="stats-label">Context:</span>
-              <span class="context-tokens" data-stat="strip-context-tokens">—</span>
-            </span>
             <div class="context-mini">
               <div class="context-mini-fill"></div>
               <span class="context-mini-label" data-stat="strip-context">—%</span>
             </div>
             <!-- 23-4: Compact button - appears when context > 50% -->
             <button type="button" class="compact-btn hidden" title="Compact context (Cmd+Shift+K)" aria-label="Compact context to reduce usage">Compact</button>
-            <!-- 23-1: Usage limits display (hidden until data available) -->
-            <span class="usage-5hr usage-safe" data-stat="strip-usage-5hr" title="5-hour window usage" style="display: none;">
-              <span class="usage-label">Window:</span>
-              <span class="usage-value"></span>
-            </span>
-            <span class="usage-weekly usage-safe" data-stat="strip-usage-weekly" title="Weekly usage" style="display: none;">
-              <span class="usage-label">Week:</span>
-              <span class="usage-value"></span>
-            </span>
           </div>
         </div>
       </div>
@@ -218,7 +206,7 @@
         <div class="section-detail">
           <!-- Character name below project name, above portrait -->
           <div id="character-name" class="character-name">Loading...</div>
-          <!-- Portrait with role/OCEAN beside it -->
+          <!-- Portrait with role beside it -->
           <div class="portrait-row">
             <div id="portrait">
               <img src="" alt="Character portrait" style="display: none;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
@@ -238,7 +226,6 @@
           <!-- MSSCI-11821: Character quote display -->
           <div id="character-quote" class="character-quote"></div>
           <div id="helper-line" class="activity-line"></div>
-          <div id="helper-task-line" class="activity-line"></div>
         </div>
       </section>
 
@@ -259,10 +246,6 @@
         <h3>Current Story</h3>
         <div id="story-title" class="story-title">No active story</div>
         <div id="story-phase" class="story-phase">Phase: -</div>
-        <!-- B-13/37-15: Workflow Progress Visualization (populated dynamically by story.js) -->
-        <div id="workflow-progress" class="workflow-progress" style="display: none;">
-          <!-- Workflow steps rendered dynamically based on active workflow -->
-        </div>
         <!-- B-13: Next Agent & PR Info -->
         <div id="story-details" class="story-details" style="display: none;">
           <div id="next-agent" class="next-agent"></div>
@@ -295,6 +278,24 @@
             <span id="sprint-end-date" class="sprint-value">-</span>
           </div>
         </div>
+        <!-- 64-19: Expandable Sprint Stories Section -->
+        <section id="sprint-stories-section" class="collapsible-section sprint-stories-section collapsed" style="display: none;">
+          <div class="section-header" data-action="toggle-sprint-stories">
+            <span class="section-title">Sprint Stories</span>
+            <span id="sprint-stories-count" class="section-summary"></span>
+            <button class="collapse-btn" aria-label="Toggle sprint stories">▼</button>
+          </div>
+          <div id="sprint-stories-list" class="section-content"></div>
+        </section>
+        <!-- 64-19: Epic Context Section (shown when expanded) -->
+        <section id="epic-context-section" class="collapsible-section epic-context-section collapsed" style="display: none;">
+          <div class="section-header" data-action="toggle-epic-context">
+            <span class="section-title">Epic</span>
+            <span id="epic-context-summary" class="section-summary"></span>
+            <button class="collapse-btn" aria-label="Toggle epic context">▼</button>
+          </div>
+          <div id="epic-context-content" class="section-content"></div>
+        </section>
       </div>
 
       <!-- B-12451: BikeLane Workflow Section - Collapsible workflow visualization -->
@@ -327,12 +328,12 @@
         <div id="git-repos" class="section-detail"></div>
       </section>
 
-      <!-- B-17: Tasks Section (Todo Visualizer) -->
+      <!-- B-17: Todos Section (Todo Visualizer) -->
       <section id="todo-section" class="todo-section collapsed">
         <div class="section-header" data-action="toggle-collapse">
-          <span class="section-title">Tasks</span>
+          <span class="section-title">Todos</span>
           <span id="todo-progress" class="todo-progress">(0/0)</span>
-          <button class="collapse-btn" aria-label="Toggle tasks">▼</button>
+          <button class="collapse-btn" aria-label="Toggle todos">▼</button>
         </div>
         <div id="todo-list" class="section-content"></div>
       </section>

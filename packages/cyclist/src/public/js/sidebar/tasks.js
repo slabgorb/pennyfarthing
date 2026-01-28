@@ -154,6 +154,46 @@ export function init() {
 }
 
 /**
+ * Clear all tasks from the UI
+ * MSSCI-12471: Called on context clear to remove stale todos
+ * @export
+ */
+export function clearTasks() {
+  // Clear todo list (actual DOM structure)
+  const todoList = document.getElementById('todo-list');
+  if (todoList) {
+    todoList.innerHTML = '';
+  }
+
+  // Also check for test DOM structure (#tasks-section)
+  const tasksSection = document.getElementById('tasks-section');
+  if (tasksSection) {
+    const todoItems = tasksSection.querySelectorAll('.todo-item');
+    todoItems.forEach(item => item.remove());
+  }
+
+  // Reset progress counter
+  const todoProgress = document.getElementById('todo-progress');
+  if (todoProgress) {
+    todoProgress.textContent = '(0/0)';
+  }
+
+  // Reset badge if it exists (test DOM structure)
+  const badge = document.getElementById('tasks-count-badge');
+  if (badge) {
+    badge.textContent = '0';
+  }
+
+  // Collapse the section since it's empty
+  const todoSection = document.getElementById('todo-section');
+  if (todoSection) {
+    todoSection.classList.add('collapsed');
+  }
+
+  console.log('[Tasks] Cleared all tasks');
+}
+
+/**
  * Cleanup tasks module
  */
 export function destroy() {

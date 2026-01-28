@@ -151,7 +151,7 @@ HANDOFF_RESULT:
 
   next_steps:
     - "Handoff complete. Run handoff-marker.sh as ABSOLUTE LAST ACTION."
-    - "Command: $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}"
+    - "Command: .pennyfarthing/scripts/core/handoff-marker.sh {next_agent}"
     - "Output marker result verbatim, then EXIT. Nothing after."
 ```
 
@@ -166,7 +166,7 @@ HANDOFF_RESULT:
 
   next_steps:
     - "Handoff complete. Run handoff-marker.sh as ABSOLUTE LAST ACTION."
-    - "Command: $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh dev"
+    - "Command: .pennyfarthing/scripts/core/handoff-marker.sh dev"
     - "Output marker result verbatim, then EXIT. Nothing after."
 ```
 
@@ -181,7 +181,7 @@ HANDOFF_RESULT:
 
   next_steps:
     - "Handoff complete. Run handoff-marker.sh as ABSOLUTE LAST ACTION."
-    - "Command: $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh reviewer"
+    - "Command: .pennyfarthing/scripts/core/handoff-marker.sh reviewer"
     - "Output marker result verbatim, then EXIT. Nothing after."
 ```
 
@@ -229,7 +229,7 @@ When you receive `HANDOFF_RESULT`:
 **CRITICAL: The calling agent MUST run this as their ABSOLUTE LAST ACTION:**
 
 ```bash
-$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
+.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
 ```
 
 Then output the script's result verbatim and EXIT. Nothing else after.

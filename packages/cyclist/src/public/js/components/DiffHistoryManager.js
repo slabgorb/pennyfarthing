@@ -371,6 +371,298 @@ export function renderDiffWithMode(container, history, mode) {
 }
 
 // =============================================================================
+// MSSCI-12468: Enhanced Combined Diff with Context Lines
+// =============================================================================
+
+/**
+ * @typedef {Object} DiffLine
+ * @property {'context' | 'added' | 'removed'} type - Line type
+ * @property {string} line - Line content
+ * @property {number} [oldLineNumber] - Line number in old content
+ * @property {number} [newLineNumber] - Line number in new content
+ */
+
+/**
+ * @typedef {Object} HunkHeader
+ * @property {number} oldStart - Start line in old content
+ * @property {number} oldCount - Number of lines from old content
+ * @property {number} newStart - Start line in new content
+ * @property {number} newCount - Number of lines from new content
+ */
+
+/**
+ * @typedef {Object} DiffHunk
+ * @property {HunkHeader} header - Hunk header info
+ * @property {DiffLine[]} lines - Lines in this hunk
+ */
+
+/**
+ * @typedef {Object} CombinedDiffResult
+ * @property {string} filePath - Path to the file
+ * @property {string} originalContent - Original content
+ * @property {string} finalContent - Final content
+ * @property {DiffHunk[]} hunks - Array of diff hunks
+ * @property {number} totalChanges - Total number of additions + deletions
+ */
+
+/**
+ * Compute LCS (Longest Common Subsequence) for diff algorithm
+ * @param {string[]} oldLines - Old content lines
+ * @param {string[]} newLines - New content lines
+ * @returns {number[][]} LCS table
+ */
+function computeLCS(oldLines, newLines) {
+  const m = oldLines.length;
+  const n = newLines.length;
+  const dp = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
+
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (oldLines[i - 1] === newLines[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1] + 1;
+      } else {
+        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+      }
+    }
+  }
+
+  return dp;
+}
+
+/**
+ * Backtrack through LCS table to get diff operations
+ * @param {string[]} oldLines - Old content lines
+ * @param {string[]} newLines - New content lines
+ * @param {number[][]} dp - LCS table
+ * @returns {DiffLine[]} Raw diff lines (no context trimming yet)
+ */
+function backtrackLCS(oldLines, newLines, dp) {
+  const result = [];
+  let i = oldLines.length;
+  let j = newLines.length;
+  let oldLineNum = oldLines.length;
+  let newLineNum = newLines.length;
+
+  // Backtrack from bottom-right to top-left
+  const ops = [];
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && oldLines[i - 1] === newLines[j - 1]) {
+      ops.unshift({ type: 'context', line: oldLines[i - 1], oldIdx: i - 1, newIdx: j - 1 });
+      i--;
+      j--;
+    } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+      ops.unshift({ type: 'added', line: newLines[j - 1], oldIdx: -1, newIdx: j - 1 });
+      j--;
+    } else {
+      ops.unshift({ type: 'removed', line: oldLines[i - 1], oldIdx: i - 1, newIdx: -1 });
+      i--;
+    }
+  }
+
+  // Convert to DiffLine with proper line numbers
+  let currentOld = 1;
+  let currentNew = 1;
+  for (const op of ops) {
+    if (op.type === 'context') {
+      result.push({
+        type: 'context',
+        line: op.line,
+        oldLineNumber: currentOld,
+        newLineNumber: currentNew,
+      });
+      currentOld++;
+      currentNew++;
+    } else if (op.type === 'removed') {
+      result.push({
+        type: 'removed',
+        line: op.line,
+        oldLineNumber: currentOld,
+        newLineNumber: undefined,
+      });
+      currentOld++;
+    } else if (op.type === 'added') {
+      result.push({
+        type: 'added',
+        line: op.line,
+        oldLineNumber: undefined,
+        newLineNumber: currentNew,
+      });
+      currentNew++;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Group diff lines into hunks with context
+ * @param {DiffLine[]} diffLines - All diff lines
+ * @param {number} contextLines - Number of context lines to include
+ * @returns {DiffHunk[]} Array of hunks
+ */
+function groupIntoHunks(diffLines, contextLines) {
+  if (diffLines.length === 0) return [];
+
+  // Find change indices
+  const changeIndices = [];
+  for (let i = 0; i < diffLines.length; i++) {
+    if (diffLines[i].type !== 'context') {
+      changeIndices.push(i);
+    }
+  }
+
+  if (changeIndices.length === 0) return [];
+
+  // Group changes into hunks
+  const hunks = [];
+  let hunkStart = Math.max(0, changeIndices[0] - contextLines);
+  let lastChangeEnd = changeIndices[0];
+
+  for (let i = 1; i < changeIndices.length; i++) {
+    const idx = changeIndices[i];
+    // If this change is within context range of the previous, extend the hunk
+    if (idx - lastChangeEnd <= contextLines * 2) {
+      lastChangeEnd = idx;
+    } else {
+      // Create hunk for previous group
+      const hunkEnd = Math.min(diffLines.length, lastChangeEnd + contextLines + 1);
+      hunks.push(createHunk(diffLines, hunkStart, hunkEnd));
+
+      // Start new hunk
+      hunkStart = Math.max(0, idx - contextLines);
+      lastChangeEnd = idx;
+    }
+  }
+
+  // Create final hunk
+  const hunkEnd = Math.min(diffLines.length, lastChangeEnd + contextLines + 1);
+  hunks.push(createHunk(diffLines, hunkStart, hunkEnd));
+
+  return hunks;
+}
+
+/**
+ * Create a single hunk from diff lines
+ * @param {DiffLine[]} diffLines - All diff lines
+ * @param {number} start - Start index
+ * @param {number} end - End index (exclusive)
+ * @returns {DiffHunk}
+ */
+function createHunk(diffLines, start, end) {
+  const lines = diffLines.slice(start, end);
+
+  // Calculate header values
+  let oldStart = 0, oldCount = 0, newStart = 0, newCount = 0;
+
+  for (const line of lines) {
+    if (line.type === 'context') {
+      if (oldStart === 0) oldStart = line.oldLineNumber;
+      if (newStart === 0) newStart = line.newLineNumber;
+      oldCount++;
+      newCount++;
+    } else if (line.type === 'removed') {
+      if (oldStart === 0) oldStart = line.oldLineNumber;
+      oldCount++;
+    } else if (line.type === 'added') {
+      if (newStart === 0) newStart = line.newLineNumber;
+      newCount++;
+    }
+  }
+
+  // Handle edge case where hunk starts with addition
+  if (oldStart === 0 && lines.length > 0) {
+    // Find first context or removed line for oldStart
+    for (const line of lines) {
+      if (line.oldLineNumber) {
+        oldStart = line.oldLineNumber;
+        break;
+      }
+    }
+    if (oldStart === 0) oldStart = 1;
+  }
+  if (newStart === 0 && lines.length > 0) {
+    for (const line of lines) {
+      if (line.newLineNumber) {
+        newStart = line.newLineNumber;
+        break;
+      }
+    }
+    if (newStart === 0) newStart = 1;
+  }
+
+  return {
+    header: { oldStart, oldCount, newStart, newCount },
+    lines,
+  };
+}
+
+/**
+ * Compute combined diff with context lines (MSSCI-12468)
+ *
+ * @param {string} oldContent - Original content
+ * @param {string} newContent - Final content
+ * @param {Object} [options] - Options
+ * @param {number} [options.contextLines=3] - Number of context lines
+ * @returns {CombinedDiffResult}
+ */
+export function computeCombinedDiff(oldContent, newContent, options = {}) {
+  const contextLines = options.contextLines ?? 3;
+
+  // Normalize line endings
+  const normalizedOld = oldContent.replace(/\r\n/g, '\n');
+  const normalizedNew = newContent.replace(/\r\n/g, '\n');
+
+  // Handle empty content
+  if (!normalizedOld && !normalizedNew) {
+    return {
+      filePath: '',
+      originalContent: oldContent,
+      finalContent: newContent,
+      hunks: [],
+      totalChanges: 0,
+    };
+  }
+
+  // Split into lines
+  const oldLines = normalizedOld ? normalizedOld.split('\n') : [];
+  const newLines = normalizedNew ? normalizedNew.split('\n') : [];
+
+  // Handle identical content
+  if (normalizedOld === normalizedNew) {
+    return {
+      filePath: '',
+      originalContent: oldContent,
+      finalContent: newContent,
+      hunks: [],
+      totalChanges: 0,
+    };
+  }
+
+  // Compute LCS-based diff
+  const dp = computeLCS(oldLines, newLines);
+  const diffLines = backtrackLCS(oldLines, newLines, dp);
+
+  // Group into hunks
+  const hunks = groupIntoHunks(diffLines, contextLines);
+
+  // Count changes
+  let totalChanges = 0;
+  for (const line of diffLines) {
+    if (line.type !== 'context') {
+      totalChanges++;
+    }
+  }
+
+  return {
+    filePath: '',
+    originalContent: oldContent,
+    finalContent: newContent,
+    hunks,
+    totalChanges,
+  };
+}
+
+// =============================================================================
 // Default Export
 // =============================================================================
 
@@ -391,4 +683,5 @@ export default {
   renderNavigationControls,
   renderViewModeTabs,
   renderDiffWithMode,
+  computeCombinedDiff,
 };

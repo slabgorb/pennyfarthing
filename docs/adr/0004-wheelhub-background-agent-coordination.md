@@ -1,8 +1,10 @@
 # ADR-0004: Wheelhub Background Agent Coordination
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-01-18
 **Author:** Architect Agent (Emperor Palpatine)
+**Accepted:** 2026-01-28
+**Note:** Core infrastructure implemented: OTLP receiver tracks tasks, IPC broadcasts completions, inline notifications work. Sidebar panel (Phase 2) is future work.
 
 ## Context
 

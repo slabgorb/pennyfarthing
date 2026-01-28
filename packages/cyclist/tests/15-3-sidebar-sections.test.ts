@@ -118,18 +118,17 @@ describe('Story 15-3: Sidebar Sections UI', () => {
       expect(storyPhase).not.toBeNull();
     });
 
-    it('should have workflow progress visualization', () => {
-      const workflowProgress = document.querySelector('#workflow-progress, .workflow-progress');
-      expect(workflowProgress).not.toBeNull();
+    // MSSCI-12551: Workflow progress moved to bikelane section
+    it('should NOT have workflow progress in story section (moved to bikelane)', () => {
+      const storySection = document.querySelector('#story-section');
+      const workflowProgress = storySection?.querySelector('#workflow-progress, .workflow-progress');
+      expect(workflowProgress).toBeNull();
     });
 
-    // 37-15: Workflow steps are now rendered dynamically based on active workflow
-    // The container is present but empty until workflow data is provided via JS
-    it('should have workflow-progress container for dynamic step rendering', () => {
-      const workflowProgress = document.querySelector('#workflow-progress');
-      expect(workflowProgress).not.toBeNull();
-      // Steps are rendered dynamically by story.js when workflow data exists
-      // No hardcoded steps should be present in initial HTML
+    // MSSCI-12551: Workflow is now rendered in bikelane section
+    it('should have bikelane section for workflow display', () => {
+      const bikelaneSection = document.querySelector('#bikelane-section');
+      expect(bikelaneSection).not.toBeNull();
     });
 
   });
@@ -141,19 +140,20 @@ describe('Story 15-3: Sidebar Sections UI', () => {
       expect(gitSection).not.toBeNull();
     });
 
-    it('should display git branch name', () => {
-      const gitBranch = document.querySelector('#git-branch, .git-branch');
-      expect(gitBranch).not.toBeNull();
+    // Git info is now displayed in collapsible multi-repo format
+    it('should have git-repos container for dynamic repo list', () => {
+      const gitRepos = document.querySelector('#git-repos');
+      expect(gitRepos).not.toBeNull();
     });
 
-    it('should display git status', () => {
-      const gitStatus = document.querySelector('#git-status, .git-status');
-      expect(gitStatus).not.toBeNull();
+    it('should have git section badge for summary status', () => {
+      const gitBadge = document.querySelector('#git-section-badge');
+      expect(gitBadge).not.toBeNull();
     });
 
-    it('should have status styling (clean, dirty)', () => {
-      expect(css).toContain('.status-clean');
-      expect(css).toContain('.status-dirty');
+    it('should have collapsible section structure', () => {
+      const gitSection = document.querySelector('#git-section.collapsible-section');
+      expect(gitSection).not.toBeNull();
     });
 
   });

@@ -68,6 +68,12 @@ function registerWithPanelManager() {
         onClose: () => collapse(),
         getBadgeCount: () => 0,
       });
+
+      // Sync initial state to PanelManager (fixes tab indicator on startup)
+      // If panel loaded as expanded from settings-sync, tell PanelManager it's open
+      if (sidebarPanel && !sidebarPanel.isCollapsed()) {
+        PanelManager.default.open('sidebar');
+      }
     }
   }).catch(err => {
     console.warn('[SidebarPanel] Could not register with PanelManager:', err);

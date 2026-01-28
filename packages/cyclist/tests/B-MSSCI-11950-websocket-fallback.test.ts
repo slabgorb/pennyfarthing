@@ -175,15 +175,15 @@ describe('AC1: Background tasks appear in panel when spawned (WebSocket fallback
     // Wait for connection
     await new Promise(resolve => setTimeout(resolve, 100));
 
-    // Trigger a background task via OTLP
+    // Track a background task directly (simulates message stream detection)
     const otlpReceiver = await import('../src/otlp-receiver.js');
-    const span = createBackgroundTaskSpan({
+    otlpReceiver.trackBackgroundTask({
       taskId: 'ws-fallback-001',
       description: 'Test via WebSocket',
       subagentType: 'testing-runner',
+      startedAt: Date.now(),
+      isBackground: true,
     });
-    const events = otlpReceiver.parseOTLPLogs(span);
-    await otlpReceiver.processLogEvents(events);
 
     // Wait for WebSocket message to arrive
     await new Promise(resolve => setTimeout(resolve, 200));
@@ -251,12 +251,14 @@ describe('AC2: Task status updates shown in real-time (WebSocket fallback)', () 
 
     const otlpReceiver = await import('../src/otlp-receiver.js');
 
-    // Start task
-    const startSpan = createBackgroundTaskSpan({
+    // Start task directly (simulates message stream detection)
+    otlpReceiver.trackBackgroundTask({
       taskId: 'ws-update-001',
       description: 'Task to complete',
+      subagentType: 'testing-runner',
+      startedAt: Date.now(),
+      isBackground: true,
     });
-    await otlpReceiver.processLogEvents(otlpReceiver.parseOTLPLogs(startSpan));
     await new Promise(resolve => setTimeout(resolve, 100));
 
     // Verify task is pending
@@ -264,7 +266,7 @@ describe('AC2: Task status updates shown in real-time (WebSocket fallback)', () 
     let task = tasks.find((t: { taskId: string }) => t.taskId === 'ws-update-001');
     expect(task?.status).toBe('pending');
 
-    // Complete task
+    // Complete task via TaskOutput OTEL (this path still works)
     const completeSpan = createTaskOutputSpan({
       taskId: 'ws-update-001',
       status: 'completed',
@@ -291,15 +293,17 @@ describe('AC2: Task status updates shown in real-time (WebSocket fallback)', () 
 
     const otlpReceiver = await import('../src/otlp-receiver.js');
 
-    // Start task
-    const startSpan = createBackgroundTaskSpan({
+    // Start task directly (simulates message stream detection)
+    otlpReceiver.trackBackgroundTask({
       taskId: 'ws-fail-001',
       description: 'Task that will fail',
+      subagentType: 'testing-runner',
+      startedAt: Date.now(),
+      isBackground: true,
     });
-    await otlpReceiver.processLogEvents(otlpReceiver.parseOTLPLogs(startSpan));
     await new Promise(resolve => setTimeout(resolve, 100));
 
-    // Fail task
+    // Fail task via TaskOutput OTEL (this path still works)
     const failSpan = createTaskOutputSpan({
       taskId: 'ws-fail-001',
       status: 'completed',
@@ -458,7 +462,7 @@ describe('Integration: WebSocket reconnection behavior', () => {
 
     panelModule.initBackgroundTasksPanel(container);
     await panelModule.connectWebSocket(`ws://localhost:${PORT}/ws/background-tasks`);
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, 300)); // Increased timeout for connection
 
     // Panel should expose reconnection capability
     expect(panelModule.getConnectionState).toBeDefined();
@@ -471,13 +475,15 @@ describe('Integration: WebSocket reconnection behavior', () => {
     server = createTerminalServer();
     await new Promise<void>((resolve) => server.listen(PORT, resolve));
 
-    // Add a task to the server before panel connects
+    // Add a task to the server before panel connects (simulates message stream detection)
     const otlpReceiver = await import('../src/otlp-receiver.js');
-    const span = createBackgroundTaskSpan({
+    otlpReceiver.trackBackgroundTask({
       taskId: 'pre-existing-001',
       description: 'Task created before panel init',
+      subagentType: 'testing-runner',
+      startedAt: Date.now(),
+      isBackground: true,
     });
-    await otlpReceiver.processLogEvents(otlpReceiver.parseOTLPLogs(span));
 
     const panelModule = await import('../src/public/js/components/BackgroundTasksPanel.js');
     const container = globalThis.document.getElementById('background-tasks-container');

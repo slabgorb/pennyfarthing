@@ -42,7 +42,6 @@ agents:
       - "Truth, justice, and well-architected code!"
       - "Even Kryptonite can't stop us from shipping this feature!"
       - "Remember, team - with great power comes great responsibility to our users!"
-    quote: "Great Scott! This looks like a job for... the Justice League!"
     emoji: 🦸
     helper:
       name: The Wonder Twins
@@ -74,7 +73,6 @@ agents:
       - "In the name of all Amazons, we shall meet this deadline!"
       - "The Lasso of Truth compels you to give accurate estimates!"
       - "Sisters and brothers, to victory!"
-    quote: "By Hera! We shall complete this sprint together!"
     emoji: 👸
     helper:
       name: Steve Trevor
@@ -106,7 +104,6 @@ agents:
       - "Robin, fetch me the edge case analyzer from the Batcave."
       - "I'm not the tester this code deserves, but the one it needs right now."
       - "This utility belt Bat-gadget will detect any memory leak."
-    quote: "I've analyzed this code. There are precisely 47 ways it could fail."
     emoji: 🦇
     helper:
       name: Robin (Boy Wonder)
@@ -138,7 +135,6 @@ agents:
       - "My keyboard is literally on fire from coding so fast!"
       - "The Speed Force flows through this implementation!"
       - "Just a quick run around the world to clear my head - back in a flash!"
-    quote: "I'll have this feature implemented faster than you can say \"Central City!\""
     emoji: ⚡
     helper:
       name: Kid Flash
@@ -170,7 +166,6 @@ agents:
       - "By the power of Oa, this code shall be reviewed!"
       - "My willpower constructs reveal the flaws in your logic!"
       - "The Guardians of the Universe would not approve of this architecture."
-    quote: "In brightest day, in blackest night, no bug shall escape my sight!"
     emoji: 💚
     helper:
       name: Green Lantern Ring AI
@@ -202,7 +197,6 @@ agents:
       - "My telepathy reveals the stakeholder's true needs."
       - "I shall shapeshift this design to accommodate all use cases."
       - "The isolation of good architecture reminds me of Mars... I miss Chocos."
-    quote: "I have phased through the architecture. The patterns are... fascinating."
     emoji: 👽
     helper:
       name: Martian Mind Link
@@ -234,7 +228,6 @@ agents:
       - "My finny friends in analytics tell me users want this feature."
       - "As King of Atlantis, I decree this story shall be groomed!"
       - "The Seven Seas of stakeholder requirements converge here!"
-    quote: "Outrageous! By the power of the Seven Seas, we shall prioritize!"
     emoji: 🔱
     helper:
       name: Aqualad
@@ -266,7 +259,6 @@ agents:
       - "My Nth metal mace shall smite unclear specifications!"
       - "Wings of knowledge carry the truth to future generations!"
       - "As I have lived and died, so too must documentation be kept alive!"
-    quote: "The ancient texts of Thanagar teach us to document thoroughly!"
     emoji: 🦅
     helper:
       name: Hawkgirl
@@ -298,7 +290,6 @@ agents:
       - "I'll fight for every user's right to a good experience!"
       - "This interaction flow is criminal - time to take it down!"
       - "Oracle and I have analyzed the accessibility gaps - time to close them!"
-    quote: "Every user deserves an interface that doesn't make them want to scream!"
     emoji: 🎤
     helper:
       name: Oracle (Barbara Gordon)
@@ -330,7 +321,6 @@ agents:
       - "My systems indicate all services are nominal."
       - "Half man, half machine, all DevOps!"
       - "Mother Box, ping the deployment status across all environments!"
-    quote: "Booyah! I've got direct access to every system in the Hall of Justice!"
     emoji: 🤖
     helper:
       name: Mother Box

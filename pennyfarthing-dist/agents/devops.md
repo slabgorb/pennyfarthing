@@ -72,12 +72,6 @@ FILE_LIST: "{comma-separated config file paths}"
 - `/release` - Release management workflow
 </skills>
 
-<context>
-Context auto-loaded by `/prime --agent devops`:
-- Shared context, shared behavior
-- Agent sidecar: `.pennyfarthing/sidecars/devops/`
-</context>
-
 <reasoning-mode>
 
 **Default:** Quiet mode - follow ReAct pattern internally, show only key decisions
@@ -101,11 +95,9 @@ REFLECT: Add electron-rebuild step after npm install. Document in gotchas.
 </reasoning-mode>
 
 <on-activation>
-1. Load sprint status from `sprint/current-sprint.yaml`
-2. Check for active work in `.session/*-session.md`
-3. Assess current infrastructure status
-4. Spot potential problems (preventive thinking)
-5. Load additional docs lazily as needed
+1. Context already loaded by prime
+2. Assess current infrastructure status
+3. Spot potential problems (preventive thinking)
 </on-activation>
 
 <delegation>

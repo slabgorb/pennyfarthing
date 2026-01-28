@@ -67,6 +67,33 @@ interface ThemeConfig {
 }
 
 /**
+ * Select a random catchphrase from an array, with fallback logic
+ * Story MSSCI-12473: Random catchphrase on agent activation
+ *
+ * @param catchphrases - Array of catchphrases (may be undefined/null/empty)
+ * @param fallbackQuote - Fallback quote to use if catchphrases unavailable
+ * @returns Selected catchphrase, fallback quote, or empty string
+ */
+export function selectCatchphrase(
+  catchphrases: string[] | undefined | null,
+  fallbackQuote: string | undefined | null
+): string {
+  // AC3: Falls back to quote field if catchphrases missing or empty
+  if (!catchphrases || catchphrases.length === 0) {
+    return fallbackQuote ?? '';
+  }
+
+  // AC2: Falls back to first catchphrase if array has one item
+  if (catchphrases.length === 1) {
+    return catchphrases[0];
+  }
+
+  // AC1: Random catchphrase selected from array
+  const randomIndex = Math.floor(Math.random() * catchphrases.length);
+  return catchphrases[randomIndex];
+}
+
+/**
  * Convert a name to a URL-safe slug (lowercase kebab-case)
  * Matches pennyfarthing showcase loader.ts logic
  */
@@ -420,6 +447,10 @@ export function getCurrentPersona(projectDir: string, sessionId?: string): Perso
   // Extract helper info if available
   const helper = (persona as { helper?: Helper }).helper;
 
+  // MSSCI-12473: Extract catchphrases and select random one, with fallback to quote
+  const catchphrases = (persona as { catchphrases?: string[] }).catchphrases;
+  const selectedQuote = selectCatchphrase(catchphrases, persona.quote);
+
   return {
     character: persona.character,
     displayName,
@@ -428,7 +459,7 @@ export function getCurrentPersona(projectDir: string, sessionId?: string): Perso
     style: persona.style,
     theme: config.theme,
     slug,  // Character slug for portrait path
-    quote: persona.quote,
+    quote: selectedQuote,  // MSSCI-12473: Random catchphrase or fallback quote
     helper: helper || undefined,  // Helper/subagent info (e.g., "The Fellowship")
     ocean: persona.ocean,
   };

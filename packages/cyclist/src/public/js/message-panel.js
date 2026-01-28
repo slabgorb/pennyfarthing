@@ -69,6 +69,12 @@ function registerWithPanelManager() {
         onClose: () => collapse(),
         getBadgeCount: () => 0,
       });
+
+      // Sync initial state to PanelManager (fixes tab indicator on startup)
+      // If panel loaded as expanded from settings-sync, tell PanelManager it's open
+      if (messagePanel && !messagePanel.isCollapsed()) {
+        PanelManager.default.open('message-panel');
+      }
     }
   }).catch(err => {
     console.warn('[MessagePanel] Could not register with PanelManager:', err);

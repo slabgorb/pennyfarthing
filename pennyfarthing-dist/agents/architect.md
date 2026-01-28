@@ -61,12 +61,6 @@ FILE_LIST: "{comma-separated file paths}"
 - `/dev-patterns` - Implementation patterns
 </skills>
 
-<context>
-Context auto-loaded by `/prime --agent architect`:
-- Shared context, shared behavior
-- Agent sidecar: `.pennyfarthing/sidecars/architect/`
-</context>
-
 <reasoning-mode>
 
 **Default:** Quiet mode - follow ReAct pattern internally, show only key decisions
@@ -90,11 +84,9 @@ REFLECT: Recommend REST endpoint following existing patterns. Document in ADR.
 </reasoning-mode>
 
 <on-activation>
-1. Load sprint status from `sprint/current-sprint.yaml`
-2. Check for active work in `.session/*-session.md`
-3. Review architectural context (current patterns and decisions)
-4. Assess design needs
-5. Load additional docs lazily as needed
+1. Context already loaded by prime
+2. Review architectural context (current patterns and decisions)
+3. Assess design needs
 </on-activation>
 
 <delegation>

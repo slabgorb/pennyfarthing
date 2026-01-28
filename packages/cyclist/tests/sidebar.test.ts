@@ -86,12 +86,12 @@ describe('E1-3: Sidebar Layout', () => {
       expect(modelBadge).not.toBeNull();
     });
 
-    // 23-1: Token stats replaced by usage limits
-    it('should have usage stats in stats strip', () => {
-      const usage5hr = document.querySelector('#stats-strip .usage-5hr');
-      const usageWeekly = document.querySelector('#stats-strip .usage-weekly');
-      expect(usage5hr).not.toBeNull();
-      expect(usageWeekly).not.toBeNull();
+    // MSSCI-12469: Identity elements (Jira email, GitHub username)
+    it('should have identity elements in stats strip', () => {
+      const jiraEmail = document.querySelector('#stats-strip .jira-email');
+      const githubUser = document.querySelector('#stats-strip .github-user');
+      expect(jiraEmail).not.toBeNull();
+      expect(githubUser).not.toBeNull();
     });
 
     it('should have context meter in stats strip', () => {

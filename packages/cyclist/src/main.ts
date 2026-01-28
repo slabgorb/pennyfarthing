@@ -13,7 +13,7 @@ import { Server, createServer as createHttpServer, IncomingMessage, ServerRespon
 import { fileURLToPath } from 'url';
 import { dirname, join, basename } from 'path';
 import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
-import { getStoryInfo, getGitInfo, getAllReposGitInfo, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig, writeApprovalPortFile, cleanupApprovalPortFile } from './server.js';
+import { getStoryInfo, getAllReposGitInfo, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig, writeApprovalPortFile, cleanupApprovalPortFile } from './server.js';
 import { parseToolStats, ToolStats, createEmptyStats } from './tool-stats.js';
 import {
   getTokenStats,
@@ -34,6 +34,8 @@ import {
   setBackgroundTaskCallback,
   setBackgroundTaskStartCallback,
   BackgroundTask,
+  trackBackgroundTask,
+  completeBackgroundTask,
 } from './otlp-receiver.js';
 import { ClaudeService, SDKMessage } from './claude-service.js';
 import { isTodoWriteMessage, extractTodos, type TodoItem } from './todos.js';
@@ -1070,6 +1072,21 @@ export function setupClaudeIPCHandlers(ipcMain: {
                     timestamp: Date.now(),
                     status: 'running',
                   });
+                } else if (block.name === 'Task') {
+                  // Background tasks fix: detect from message stream, not OTEL
+                  // OTEL logs do NOT emit tool_parameters for Task tools
+                  const input = block.input as {
+                    description?: string;
+                    subagent_type?: string;
+                    run_in_background?: boolean;
+                  };
+                  trackBackgroundTask({
+                    taskId: block.id || `task-${Date.now()}`,
+                    description: input.description || '',
+                    subagentType: input.subagent_type || '',
+                    startedAt: Date.now(),
+                    isBackground: input.run_in_background === true,
+                  });
                 }
               }
             }
@@ -1095,6 +1112,18 @@ export function setupClaudeIPCHandlers(ipcMain: {
                     error: block.is_error ? (typeof block.content === 'string' ? block.content.slice(0, 200) : 'Unknown error') : undefined,
                     durationMs,
                   });
+                }
+
+                // Background task completion detection from message stream
+                // tool_use_id matches the taskId we stored when Task tool was invoked
+                const completedTask = completeBackgroundTask(
+                  block.tool_use_id,
+                  !block.is_error,
+                  block.is_error ? undefined : (typeof block.content === 'string' ? block.content.slice(0, 500) : undefined),
+                  block.is_error ? (typeof block.content === 'string' ? block.content.slice(0, 500) : 'Task failed') : undefined
+                );
+                if (completedTask) {
+                  console.log(`[main] Background task completed from stream: ${completedTask.taskId} (${completedTask.success ? 'success' : 'error'})`);
                 }
               }
             }

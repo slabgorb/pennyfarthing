@@ -9,9 +9,9 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 190
-  completed_points: 130
+  completed_points: 133
   cancelled_points: 6
-  remaining_points: 54
+  remaining_points: 51
   notes: |
     Sprint 12 includes work from multiple epics that were tracked in Jira but
     not in local sprint YAML. This file has been reconciled with Jira Sprint 276.
@@ -844,25 +844,6 @@ epics:
         completed: 2026-01-27
         repos: pennyfarthing
         workflow: trivial
-      - id: MSSCI-12510
-        title: "Fix uncaught exception during startup when no project directory"
-        description: |
-          During Cyclist startup, an uncaught exception occurs:
-          "The 'path' argument must be of type string. Received undefined"
-
-          This happens between "No project directory, showing folder picker" and
-          "Project directory set". Something is trying to use a file path before
-          the project directory is established.
-
-          The error is caught by the uncaughtException handler at main.ts:2209
-          so the app continues, but it indicates a code path issue.
-
-          Found via: /Applications/Cyclist.app/Contents/MacOS/Cyclist 2>&1 | tee /tmp/cyclist-live.log
-        points: 2
-        priority: P2
-        status: backlog
-        repos: pennyfarthing
-        workflow: tdd
   - id: epic-61
     type: epic
     title: "Epic: Reflector Marker Consolidation"
@@ -1551,13 +1532,15 @@ epics:
           with proper context.
         points: 2
         priority: P1
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: tdd
+        branch: feat/MSSCI-12468-diffs-combined-view
         acceptance_criteria:
           - Combined view shows clear original → final transition
           - Context lines displayed appropriately
         jira: MSSCI-12468
+        completed: "2026-01-27"
       - id: "MSSCI-12469"
         title: "Stats strip: Redesign layout with identity context"
         description: |
@@ -1568,7 +1551,7 @@ epics:
           Remove: context tokens, usage limits
         points: 3
         priority: P1
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria:
@@ -1578,6 +1561,7 @@ epics:
           - Model and context % preserved
           - Usage limits removed
         jira: MSSCI-12469
+        completed: "2026-01-28"
       - id: "MSSCI-12470"
         title: "Tab bar: Fix indicator sync on startup"
         description: |
@@ -1585,13 +1569,14 @@ epics:
           indicators don't show active state. Must click twice to sync.
         points: 1
         priority: P1
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: trivial
         acceptance_criteria:
           - Tab indicators match actual panel state on startup
           - First click toggles correctly
         jira: MSSCI-12470
+        completed: "2026-01-27"
       - id: "MSSCI-12471"
         title: "Fresh start: Audit and fix stale data on load"
         description: |
@@ -1606,15 +1591,17 @@ epics:
           BikeLane section, git section, quick actions.
         points: 3
         priority: P1
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: tdd
+        branch: feat/MSSCI-12471-fresh-start-audit
         acceptance_criteria:
           - All panels have clear()/reset() methods
           - Reset called on app start, Clear, TirePump
           - No localStorage/sessionStorage pollution
           - All indicators reset to defaults
         jira: MSSCI-12471
+        completed: "2026-01-28"
       - id: "MSSCI-12472"
         title: "Persona section: Remove OCEAN scores and helper updates"
         description: |
@@ -1622,13 +1609,15 @@ epics:
           section. These add noise without value.
         points: 1
         priority: P1
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: trivial
+        branch: feat/MSSCI-12472-persona-remove-ocean
         acceptance_criteria:
           - OCEAN scores removed from UI
           - Helper task line removed from UI
         jira: MSSCI-12472
+        completed: "2026-01-27"
       - id: "MSSCI-12473"
         title: "Persona section: Random catchphrase on activation"
         description: |
@@ -1637,7 +1626,7 @@ epics:
           agent switch.
         points: 2
         priority: P1
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria:
@@ -1645,6 +1634,7 @@ epics:
           - Falls back to first catchphrase if array has one item
           - Falls back to quote field if catchphrases missing
         jira: MSSCI-12473
+        completed: "2026-01-28"
       - id: "MSSCI-12474"
         title: "Persona section: Tighten layout"
         description: |
@@ -1667,7 +1657,8 @@ epics:
           without needing to open YAML files.
         points: 5
         priority: P2
-        status: backlog
+        status: done
+        completed: "2026-01-28"
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria:
@@ -1683,9 +1674,10 @@ epics:
           workflow is active.
         points: 3
         priority: P2
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: tdd
+        branch: feat/MSSCI-12476-bikelane-workflow-status
         acceptance_criteria:
           - Section visible when workflow active
           - Shows workflow name and type badge
@@ -1693,6 +1685,7 @@ epics:
           - Progress visualization
           - Phase history timeline
         jira: MSSCI-12476
+        completed: "2026-01-27"
       - id: "MSSCI-12477"
         title: "Background tasks: Implement subagent visibility"
         description: |
@@ -1711,6 +1704,35 @@ epics:
           - Output preview on expand
         jira: MSSCI-12477
         completed: "2026-01-27"
+      - id: "MSSCI-12551"
+        title: "BikeLane: Fix workflow display - remove from story, show in bikelane"
+        description: |
+          Workflow steps displaying in story panel instead of bikelane panel,
+          AND bikelane panel not displaying workflow data at all.
+
+          Problems:
+          1. story.js renders workflow to #workflow-progress in story section
+          2. bikelane section receives data but doesn't display (hidden/not wired)
+
+          Fix:
+          1. Remove updateWorkflowProgress() from story.js
+          2. Remove #workflow-progress from story section HTML
+          3. Ensure bikelane section visible when workflow active
+          4. Wire bikelane.update() to display workflow data
+        points: 3
+        priority: P1
+        status: done
+        repos: pennyfarthing
+        workflow: tdd
+        branch: feat/MSSCI-12551-bikelane-workflow-display
+        acceptance_criteria:
+          - Workflow steps render ONLY in bikelane panel (not story)
+          - Bikelane section VISIBLE when workflow is active
+          - Shows workflow type badge (TDD, trivial, etc)
+          - Shows phase progress with current phase highlighted
+          - Shows phase history timeline
+        jira: MSSCI-12551
+        completed: "2026-01-28"
       # Vision Stories
       - id: "MSSCI-12478"
         title: "Theme schema: Consolidate quote → catchphrases"
@@ -1719,7 +1741,7 @@ epics:
           Consolidate all to use catchphrases array only.
         points: 3
         priority: P3
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria:
@@ -1728,4 +1750,46 @@ epics:
           - quote field removed from schema
           - Theme validation updated
         jira: MSSCI-12478
+        completed: "2026-01-28"
+      - id: "MSSCI-12552"
+        title: "Bug: BikeLane panel shows 'No active story' with active session"
+        description: |
+          BikeLane panel in Cyclist displays "No active story" even when
+          .session/{story-id}-session.md exists with an in-progress story.
+          Panel should detect and display the active story.
+        points: 2
+        priority: P1
+        status: done
+        repos: cyclist
+        workflow: tdd
+        acceptance_criteria:
+          - BikeLane panel detects .session/*.session.md files
+          - Active story metadata displayed when session exists
+          - Panel updates when session file changes
+        completed: "2026-01-28"
+      - id: "64-19"
+        title: "Story section: Implement expandable UI (MSSCI-12475 follow-up)"
+        description: |
+          MSSCI-12475 delivered the data layer (SprintStory, EpicContext interfaces
+          and parser functions in story-parser.ts) but the UI was never implemented.
+
+          This story completes the work:
+          - Add expandable section HTML to index.html
+          - Add rendering logic to story.js consuming sprintStories/epicContext
+          - Add CSS for expandable/collapsible styling
+          - Wire up Jira link clicks
+
+          The data is already available via parseStoryData() - just needs UI.
+        points: 3
+        priority: P1
+        status: in_progress
+        repos: pennyfarthing
+        branch: feat/64-19-expandable-story-ui
+        workflow: tdd
+        assigned_to: Keith Avery
+        acceptance_criteria:
+          - Expandable section shows all sprint stories
+          - Shows epic context (parent epic, sibling stories)
+          - Jira links clickable
+          - Points and status for each story
     jira: MSSCI-12465

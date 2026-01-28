@@ -54,12 +54,6 @@ FILE_LIST: "{comma-separated file paths}"
 - `/story-management` - Story creation and sizing patterns
 </skills>
 
-<context>
-Context auto-loaded by `/prime --agent pm`:
-- Shared context, shared behavior
-- Agent sidecar: `.pennyfarthing/sidecars/pm/`
-</context>
-
 <reasoning-mode>
 
 **Default:** Quiet mode - follow ReAct pattern internally, show only key decisions
@@ -83,11 +77,10 @@ REFLECT: Recommend completing Epic 38 batch before starting new epics. P1 bugs f
 </reasoning-mode>
 
 <on-activation>
-1. Load sprint status from `sprint/current-sprint.yaml`
-2. Check for active work in `.session/*-session.md`
-3. Assess current progress (completed vs remaining points)
-4. Identify blockers and priorities
-5. Present strategic options to user
+1. Context already loaded by prime
+2. Assess current progress (completed vs remaining points)
+3. Identify blockers and priorities
+4. Present strategic options to user
 </on-activation>
 
 <delegation>
