@@ -844,25 +844,6 @@ epics:
         completed: 2026-01-27
         repos: pennyfarthing
         workflow: trivial
-      - id: MSSCI-12510
-        title: "Fix uncaught exception during startup when no project directory"
-        description: |
-          During Cyclist startup, an uncaught exception occurs:
-          "The 'path' argument must be of type string. Received undefined"
-
-          This happens between "No project directory, showing folder picker" and
-          "Project directory set". Something is trying to use a file path before
-          the project directory is established.
-
-          The error is caught by the uncaughtException handler at main.ts:2209
-          so the app continues, but it indicates a code path issue.
-
-          Found via: /Applications/Cyclist.app/Contents/MacOS/Cyclist 2>&1 | tee /tmp/cyclist-live.log
-        points: 2
-        priority: P2
-        status: backlog
-        repos: pennyfarthing
-        workflow: tdd
   - id: epic-61
     type: epic
     title: "Epic: Reflector Marker Consolidation"
