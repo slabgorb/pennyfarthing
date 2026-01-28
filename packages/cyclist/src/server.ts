@@ -28,6 +28,7 @@ import {
   initBackgroundTaskBroadcast,
   createSpansRouter,
   createHookRequestRouter,
+  createIdentityRouter,
 } from './api/index.js';
 
 // Settings initialization (35-6: required for font settings persistence)
@@ -105,6 +106,8 @@ app.use('/api/background-tasks', createBackgroundTasksRouter());
 app.use('/api/spans', createSpansRouter());
 // MSSCI-12409: Hook request API (WheelHub consolidation)
 app.use('/api/hook-request', createHookRequestRouter());
+// MSSCI-12469: Identity API for stats strip
+app.use('/api/identity', createIdentityRouter());
 
 // Welcome message endpoint (triggered by SessionStart hook)
 // Broadcasts welcome message to /ws/welcome channel for Cyclist display

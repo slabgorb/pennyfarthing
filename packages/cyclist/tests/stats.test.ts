@@ -42,12 +42,12 @@ describe('E1-5: Stats Dashboard', () => {
       expect(modelValue).not.toBeNull();
     });
 
-    // 23-1: Token metrics replaced by usage limits display
-    it('should display usage metrics', () => {
-      const usage5hr = document.querySelector('#stats-strip [data-stat="strip-usage-5hr"]');
-      const usageWeekly = document.querySelector('#stats-strip [data-stat="strip-usage-weekly"]');
-      expect(usage5hr).not.toBeNull();
-      expect(usageWeekly).not.toBeNull();
+    // MSSCI-12469: Identity elements (Jira email, GitHub username)
+    it('should display identity elements', () => {
+      const jiraEmail = document.querySelector('#stats-strip [data-stat="strip-jira-email"]');
+      const githubUser = document.querySelector('#stats-strip [data-stat="strip-github-user"]');
+      expect(jiraEmail).not.toBeNull();
+      expect(githubUser).not.toBeNull();
     });
 
     it('should display context meter', () => {
@@ -98,9 +98,9 @@ describe('E1-5: Stats Dashboard', () => {
       expect(css).toMatch(/\.model-badge[^}]*font-weight/);
     });
 
-    // 23-1: Token stats replaced by usage limits
-    it('should have usage stats with monospace font', () => {
-      expect(css).toMatch(/(\.usage-5hr|\.usage-weekly)[^}]*font-family[^}]*mono/);
+    // MSSCI-12469: Identity elements styling
+    it('should have identity elements with monospace font', () => {
+      expect(css).toMatch(/(\.jira-email|\.github-user)[^}]*font-family[^}]*mono/);
     });
 
     it('should have consistent spacing in stats strip', () => {
