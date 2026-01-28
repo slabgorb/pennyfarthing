@@ -1609,9 +1609,10 @@ epics:
           BikeLane section, git section, quick actions.
         points: 3
         priority: P1
-        status: backlog
+        status: in_progress
         repos: pennyfarthing
         workflow: tdd
+        branch: feat/MSSCI-12471-fresh-start-audit
         acceptance_criteria:
           - All panels have clear()/reset() methods
           - Reset called on app start, Clear, TirePump
