@@ -9,9 +9,9 @@ sprint:
   velocity_target: 22
 summary:
   total_points: 190
-  completed_points: 130
+  completed_points: 133
   cancelled_points: 6
-  remaining_points: 54
+  remaining_points: 51
   notes: |
     Sprint 12 includes work from multiple epics that were tracked in Jira but
     not in local sprint YAML. This file has been reconciled with Jira Sprint 276.
@@ -1591,7 +1591,7 @@ epics:
           BikeLane section, git section, quick actions.
         points: 3
         priority: P1
-        status: in_progress
+        status: done
         repos: pennyfarthing
         workflow: tdd
         branch: feat/MSSCI-12471-fresh-start-audit
@@ -1601,6 +1601,7 @@ epics:
           - No localStorage/sessionStorage pollution
           - All indicators reset to defaults
         jira: MSSCI-12471
+        completed: "2026-01-28"
       - id: "MSSCI-12472"
         title: "Persona section: Remove OCEAN scores and helper updates"
         description: |
