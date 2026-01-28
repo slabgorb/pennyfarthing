@@ -313,11 +313,9 @@ async function clearSession(event) {
     clearChangedFiles();
     clearDiffs();
 
-    // Clear agent panel persona display (23-2 fix: use correct IDs)
-    const nameEl = document.getElementById('character-name');
-    const roleEl = document.getElementById('character-role');
-    if (nameEl) nameEl.textContent = '';
-    if (roleEl) roleEl.textContent = '';
+    // NOTE: Do NOT clear persona display (character-name, character-role)
+    // Persona reflects the current theme configuration, not session state
+    // Theme persists across session clears
   } catch (error) {
     console.error('Failed to clear session:', error);
   }
