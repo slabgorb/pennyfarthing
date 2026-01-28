@@ -1642,7 +1642,7 @@ epics:
           agent switch.
         points: 2
         priority: P1
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria:
@@ -1650,6 +1650,7 @@ epics:
           - Falls back to first catchphrase if array has one item
           - Falls back to quote field if catchphrases missing
         jira: MSSCI-12473
+        completed: "2026-01-28"
       - id: "MSSCI-12474"
         title: "Persona section: Tighten layout"
         description: |
