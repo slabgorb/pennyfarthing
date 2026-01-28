@@ -38,17 +38,25 @@ Run periodically to clean up merged branches:
 git branch --merged develop | grep -v "develop\|main" | xargs -r git branch -d
 ```
 
-### Stash Cleanup
+### Stash Verification (MANDATORY)
 
-If old stashes accumulated:
+**Before completing, verify stash is empty:**
 
 ```bash
-# View stashes
 git stash list
-
-# Drop old cleanup stashes
-git stash drop stash@{n}
 ```
+
+**If stash has entries:**
+- If CLEANUP-WIP entries: These are leftover from this session - pop or clear them
+- If other entries: Ask user before clearing
+
+**Clear stash completely when done:**
+```bash
+# After confirming with user
+git stash clear
+```
+
+**Why this matters:** Leftover stash entries cause confusion in future cleanups and can lead to lost work if forgotten.
 
 ## Quick Re-run
 

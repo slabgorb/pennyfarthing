@@ -12,6 +12,24 @@ Build a complete picture of:
 
 ## Execution
 
+### 1.0 Check Stash (CRITICAL - DO THIS FIRST)
+
+```bash
+echo "=== Stash Status (CRITICAL) ==="
+git stash list
+```
+
+**If stash has ANY entries:**
+1. Show the stash contents to user
+2. Ask: "Stash contains saved work. Clear it completely before proceeding?"
+3. If user agrees: `git stash clear`
+4. If user declines: **STOP** - do not proceed with cleanup
+
+**This prevents:**
+- Losing work that was stashed from a previous interrupted cleanup
+- Confusion about what changes belong to what
+- Accidentally clearing someone else's stashed work
+
 ### 1.1 Gather Git Status (All Repos)
 
 ```bash
