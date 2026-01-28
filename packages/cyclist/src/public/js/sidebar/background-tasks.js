@@ -7,7 +7,7 @@
  * - #bg-tasks-count - Badge showing task count
  */
 
-/** @typedef {{ taskId: string, description: string, subagentType: string, startedAt: number, status: 'pending' | 'completed', success?: boolean, output?: string, error?: string }} BackgroundTask */
+/** @typedef {{ taskId: string, description: string, subagentType: string, startedAt: number, status: 'pending' | 'completed', success?: boolean, output?: string, error?: string, isBackground?: boolean }} BackgroundTask */
 
 /** Local task store */
 let tasks = [];
@@ -69,7 +69,9 @@ function escapeHtml(str) {
 function renderTaskCard(task) {
   const isPending = task.status === 'pending';
   const isSuccess = task.status === 'completed' && task.success;
+  const isBackground = task.isBackground === true;
   const statusClass = isPending ? 'task-pending' : (isSuccess ? 'task-success' : 'task-error');
+  const bgClass = isBackground ? 'task-background' : 'task-foreground';
   const statusIcon = isPending ? '&#x23F3;' : (isSuccess ? '&#x2705;' : '&#x274C;');
   const elapsed = formatElapsedTime(task.startedAt);
 
@@ -90,10 +92,11 @@ function renderTaskCard(task) {
   }
 
   return `
-    <div class="task-card ${statusClass}" data-task-id="${escapeHtml(task.taskId)}" data-started-at="${task.startedAt}">
+    <div class="task-card ${statusClass} ${bgClass}" data-task-id="${escapeHtml(task.taskId)}" data-started-at="${task.startedAt}">
       <div class="task-header">
         <span class="task-status-icon">${statusIcon}</span>
         <span class="task-type">${escapeHtml(task.subagentType)}</span>
+        ${isBackground ? '<span class="task-bg-badge">BG</span>' : ''}
         ${dismissButton}
       </div>
       <div class="task-description">${escapeHtml(task.description)}</div>

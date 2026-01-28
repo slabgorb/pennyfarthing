@@ -136,18 +136,16 @@ describe('AC1: GET /api/background-tasks returns list of tracked tasks', () => {
     expect(response.body).toEqual({ tasks: [] });
   });
 
-  it('should return tracked tasks after OTEL span received', async () => {
-    // Register a background task via OTEL by directly calling the processing functions
-    // (avoids supertest/mime dependency issue while testing actual functionality)
+  it('should return tracked tasks after task is registered', async () => {
+    // Register a background task directly (simulates message stream detection)
     const otlpReceiver = await import('../src/otlp-receiver.js');
-    const span = createBackgroundTaskSpan({
+    otlpReceiver.trackBackgroundTask({
       taskId: 'api-test-001',
       description: 'Test task for API',
       subagentType: 'testing-runner',
+      startedAt: Date.now(),
+      isBackground: true,
     });
-
-    const events = otlpReceiver.parseOTLPLogs(span);
-    await otlpReceiver.processLogEvents(events);
 
     // Query the API
     const response = await request(app).get('/api/background-tasks');
@@ -164,15 +162,16 @@ describe('AC1: GET /api/background-tasks returns list of tracked tasks', () => {
   it('should return tasks with updated status after completion', async () => {
     const otlpReceiver = await import('../src/otlp-receiver.js');
 
-    // Register task
-    const taskSpan = createBackgroundTaskSpan({
+    // Register task directly (simulates message stream detection)
+    otlpReceiver.trackBackgroundTask({
       taskId: 'api-test-002',
       description: 'Task to complete',
+      subagentType: 'testing-runner',
+      startedAt: Date.now(),
+      isBackground: true,
     });
-    const taskEvents = otlpReceiver.parseOTLPLogs(taskSpan);
-    await otlpReceiver.processLogEvents(taskEvents);
 
-    // Complete task
+    // Complete task via TaskOutput OTEL span (this path still works)
     const outputSpan = createTaskOutputSpan({
       taskId: 'api-test-002',
       status: 'completed',
@@ -193,16 +192,29 @@ describe('AC1: GET /api/background-tasks returns list of tracked tasks', () => {
 
   it('should return multiple concurrent tasks', async () => {
     const otlpReceiver = await import('../src/otlp-receiver.js');
-    const spans = [
-      createBackgroundTaskSpan({ taskId: 'multi-001', subagentType: 'testing-runner' }),
-      createBackgroundTaskSpan({ taskId: 'multi-002', subagentType: 'reviewer-preflight' }),
-      createBackgroundTaskSpan({ taskId: 'multi-003', subagentType: 'Explore' }),
-    ];
 
-    for (const span of spans) {
-      const events = otlpReceiver.parseOTLPLogs(span);
-      await otlpReceiver.processLogEvents(events);
-    }
+    // Register tasks directly (simulates message stream detection)
+    otlpReceiver.trackBackgroundTask({
+      taskId: 'multi-001',
+      description: 'Task 1',
+      subagentType: 'testing-runner',
+      startedAt: Date.now(),
+      isBackground: true,
+    });
+    otlpReceiver.trackBackgroundTask({
+      taskId: 'multi-002',
+      description: 'Task 2',
+      subagentType: 'reviewer-preflight',
+      startedAt: Date.now(),
+      isBackground: true,
+    });
+    otlpReceiver.trackBackgroundTask({
+      taskId: 'multi-003',
+      description: 'Task 3',
+      subagentType: 'Explore',
+      startedAt: Date.now(),
+      isBackground: true,
+    });
 
     const response = await request(app).get('/api/background-tasks');
     expect(response.status).toBe(200);
@@ -238,14 +250,14 @@ describe('AC2: IPC broadcasts task start events (not just completion)', () => {
     const startCallback = vi.fn();
     otlpReceiver.setBackgroundTaskStartCallback(startCallback);
 
-    const span = createBackgroundTaskSpan({
+    // Track task directly (simulates message stream detection)
+    otlpReceiver.trackBackgroundTask({
       taskId: 'start-callback-001',
       description: 'Test start callback',
       subagentType: 'testing-runner',
+      startedAt: Date.now(),
+      isBackground: true,
     });
-
-    const events = otlpReceiver.parseOTLPLogs(span);
-    await otlpReceiver.processLogEvents(events);
 
     expect(startCallback).toHaveBeenCalled();
     expect(startCallback).toHaveBeenCalledWith(expect.objectContaining({
@@ -272,12 +284,16 @@ describe('AC2: IPC broadcasts task start events (not just completion)', () => {
     otlpReceiver.setBackgroundTaskStartCallback(startCallback);
     otlpReceiver.setBackgroundTaskCallback(completeCallback);
 
-    // Register task
-    const taskSpan = createBackgroundTaskSpan({ taskId: 'order-test-001' });
-    const taskEvents = otlpReceiver.parseOTLPLogs(taskSpan);
-    await otlpReceiver.processLogEvents(taskEvents);
+    // Register task directly (simulates message stream detection)
+    otlpReceiver.trackBackgroundTask({
+      taskId: 'order-test-001',
+      description: 'Order test',
+      subagentType: 'testing-runner',
+      startedAt: Date.now(),
+      isBackground: true,
+    });
 
-    // Complete task
+    // Complete task via TaskOutput OTEL span (this path still works)
     const outputSpan = createTaskOutputSpan({
       taskId: 'order-test-001',
       status: 'completed',
@@ -295,9 +311,14 @@ describe('AC2: IPC broadcasts task start events (not just completion)', () => {
     otlpReceiver.setBackgroundTaskStartCallback(startCallback);
 
     const beforeTime = Date.now();
-    const span = createBackgroundTaskSpan({ taskId: 'timestamp-test-001' });
-    const events = otlpReceiver.parseOTLPLogs(span);
-    await otlpReceiver.processLogEvents(events);
+    // Track task directly (simulates message stream detection)
+    otlpReceiver.trackBackgroundTask({
+      taskId: 'timestamp-test-001',
+      description: 'Timestamp test',
+      subagentType: 'testing-runner',
+      startedAt: Date.now(),
+      isBackground: true,
+    });
     const afterTime = Date.now();
 
     expect(startCallback).toHaveBeenCalled();
@@ -363,16 +384,15 @@ describe('AC3: WebSocket /ws/background-tasks pushes real-time updates', () => {
       ws = new WebSocket(`ws://localhost:${PORT}/ws/background-tasks`);
 
       ws.on('open', async () => {
-        // Process OTEL span directly to trigger task start
+        // Call trackBackgroundTask directly (simulates message stream detection)
         const otlpReceiver = await import('../src/otlp-receiver.js');
-        const span = createBackgroundTaskSpan({
+        otlpReceiver.trackBackgroundTask({
           taskId: 'ws-start-001',
           description: 'WebSocket start test',
           subagentType: 'testing-runner',
+          startedAt: Date.now(),
+          isBackground: true,
         });
-
-        const events = otlpReceiver.parseOTLPLogs(span);
-        await otlpReceiver.processLogEvents(events);
       });
 
       ws.on('message', (data) => {
@@ -406,12 +426,16 @@ describe('AC3: WebSocket /ws/background-tasks pushes real-time updates', () => {
       ws.on('open', async () => {
         const otlpReceiver = await import('../src/otlp-receiver.js');
 
-        // Register task
-        const taskSpan = createBackgroundTaskSpan({ taskId: 'ws-complete-001' });
-        const taskEvents = otlpReceiver.parseOTLPLogs(taskSpan);
-        await otlpReceiver.processLogEvents(taskEvents);
+        // Register task directly (simulates message stream detection)
+        otlpReceiver.trackBackgroundTask({
+          taskId: 'ws-complete-001',
+          description: 'WebSocket completion test',
+          subagentType: 'testing-runner',
+          startedAt: Date.now(),
+          isBackground: true,
+        });
 
-        // Complete task
+        // Complete task via TaskOutput OTEL span (this path still works)
         const outputSpan = createTaskOutputSpan({
           taskId: 'ws-complete-001',
           status: 'completed',
@@ -460,11 +484,15 @@ describe('AC3: WebSocket /ws/background-tasks pushes real-time updates', () => {
     ws1.on('message', (data) => ws1Messages.push(JSON.parse(data.toString())));
     ws2.on('message', (data) => ws2Messages.push(JSON.parse(data.toString())));
 
-    // Trigger task by processing OTEL span directly
+    // Trigger task by calling trackBackgroundTask directly (simulates message stream detection)
     const otlpReceiver = await import('../src/otlp-receiver.js');
-    const span = createBackgroundTaskSpan({ taskId: 'broadcast-001' });
-    const events = otlpReceiver.parseOTLPLogs(span);
-    await otlpReceiver.processLogEvents(events);
+    otlpReceiver.trackBackgroundTask({
+      taskId: 'broadcast-001',
+      description: 'Broadcast test',
+      subagentType: 'testing-runner',
+      startedAt: Date.now(),
+      isBackground: true,
+    });
 
     // Wait for messages
     await new Promise((resolve) => setTimeout(resolve, 500));
