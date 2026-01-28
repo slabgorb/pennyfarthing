@@ -431,15 +431,8 @@ export function parseSprintYaml(content: string): StoryInfo['sprint'] | null {
       }
     }
 
-    // Prefer summary values if available (they're the source of truth)
-    if (data?.summary) {
-      if (data.summary.completed_points != null) {
-        donePoints = data.summary.completed_points;
-      }
-      if (data.summary.remaining_points != null) {
-        remainingPoints = data.summary.remaining_points;
-      }
-    }
+    // Stories are the source of truth - calculated values above are authoritative
+    // (Summary header values may be stale)
 
     return {
       number: sprintNumber,
