@@ -19,6 +19,36 @@ export interface CriteriaItem {
   completed: boolean;
 }
 
+// MSSCI-12475: Sprint story for expandable story section
+export interface SprintStory {
+  id: string;
+  title: string;
+  points: number;
+  status: 'backlog' | 'in_progress' | 'done' | 'cancelled';
+  jiraKey: string | null;
+  jiraUrl: string | null;
+}
+
+// MSSCI-12475: Epic context for expandable story section
+export interface EpicContext {
+  id: string;
+  title: string;
+  jiraKey: string | null;
+  jiraUrl: string | null;
+  stories: SprintStory[];
+}
+
+// Jira base URL for generating browse links
+const JIRA_BASE_URL = 'https://1898andco.atlassian.net/browse';
+
+// Generate Jira URL from key
+function generateJiraUrl(jiraKey: string | null): string | null {
+  if (!jiraKey || !jiraKey.startsWith('MSSCI-')) {
+    return null;
+  }
+  return `${JIRA_BASE_URL}/${jiraKey}`;
+}
+
 // Story info interface (enhanced with workflow details)
 export interface StoryInfo {
   id: string | null;
@@ -38,6 +68,10 @@ export interface StoryInfo {
   pr: string | null;               // PR number (e.g., "32")
   branch: string | null;           // Feature branch name
   criteria: CriteriaItem[] | null; // Acceptance criteria checklist
+  // MSSCI-12475: Expandable story section data
+  sprintStories: SprintStory[] | null;  // All stories in current sprint
+  epicContext: EpicContext | null;       // Current story's epic with siblings
+  jiraUrl: string | null;                // Jira URL for current story
 }
 
 // Parse session file for story info
@@ -409,6 +443,109 @@ export function parseSprintYaml(content: string): StoryInfo['sprint'] | null {
   return null;
 }
 
+// MSSCI-12475: Parse sprint YAML to get all stories from all epics
+export function getSprintStories(sprintContent: string): SprintStory[] | null {
+  try {
+    const data = parseYaml(sprintContent);
+    if (!data?.epics || !Array.isArray(data.epics)) {
+      return [];
+    }
+
+    const stories: SprintStory[] = [];
+    for (const epic of data.epics) {
+      if (epic?.stories && Array.isArray(epic.stories)) {
+        for (const story of epic.stories) {
+          const storyId = story?.id || '';
+          // Determine Jira key - use story ID if it looks like a Jira key
+          const jiraKey = storyId.startsWith('MSSCI-') ? storyId : null;
+
+          stories.push({
+            id: storyId,
+            title: story?.title || '',
+            points: typeof story?.points === 'number' ? story.points : 0,
+            status: normalizeStoryStatus(story?.status),
+            jiraKey,
+            jiraUrl: generateJiraUrl(jiraKey),
+          });
+        }
+      }
+    }
+    return stories;
+  } catch {
+    // Malformed YAML
+    return null;
+  }
+}
+
+// MSSCI-12475: Get epic context for a specific story
+export function getEpicContext(sprintContent: string, storyId: string): EpicContext | null {
+  try {
+    const data = parseYaml(sprintContent);
+    if (!data?.epics || !Array.isArray(data.epics)) {
+      return null;
+    }
+
+    // Find the epic containing this story
+    for (const epic of data.epics) {
+      if (!epic?.stories || !Array.isArray(epic.stories)) {
+        continue;
+      }
+
+      const storyInEpic = epic.stories.find((s: { id?: string }) => s?.id === storyId);
+      if (storyInEpic) {
+        // Found the epic - build context
+        const epicJiraKey = epic?.jira || null;
+        const stories: SprintStory[] = epic.stories.map((s: { id?: string; title?: string; points?: number; status?: string }) => {
+          const sId = s?.id || '';
+          const sJiraKey = sId.startsWith('MSSCI-') ? sId : null;
+          return {
+            id: sId,
+            title: s?.title || '',
+            points: typeof s?.points === 'number' ? s.points : 0,
+            status: normalizeStoryStatus(s?.status),
+            jiraKey: sJiraKey,
+            jiraUrl: generateJiraUrl(sJiraKey),
+          };
+        });
+
+        return {
+          id: epic?.id || '',
+          title: epic?.title || '',
+          jiraKey: epicJiraKey,
+          jiraUrl: generateJiraUrl(epicJiraKey),
+          stories,
+        };
+      }
+    }
+
+    // Story not found in any epic
+    return null;
+  } catch {
+    // Malformed YAML
+    return null;
+  }
+}
+
+// Normalize story status to valid enum values
+function normalizeStoryStatus(status: string | undefined | null): 'backlog' | 'in_progress' | 'done' | 'cancelled' {
+  if (!status) return 'backlog';
+  const normalized = status.toLowerCase();
+  switch (normalized) {
+    case 'done':
+    case 'completed':
+      return 'done';
+    case 'in_progress':
+    case 'in-progress':
+    case 'active':
+      return 'in_progress';
+    case 'cancelled':
+    case 'canceled':
+      return 'cancelled';
+    default:
+      return 'backlog';
+  }
+}
+
 // Get workflow phases from workflow YAML definition
 // Checks multiple locations: .claude/workflows/, pennyfarthing-dist/workflows/
 export function getWorkflowPhases(workflowName: string, projectDir: string): Omit<WorkflowPhase, 'status'>[] | null {
@@ -466,22 +603,34 @@ export function getStoryInfo(projectDir: string): StoryInfo {
     pr: null,
     branch: null,
     criteria: null,
+    // MSSCI-12475: Expandable story section
+    sprintStories: null,
+    epicContext: null,
+    jiraUrl: null,
   };
 
   try {
     // Find session files
     const sessionDir = join(projectDir, '.session');
     if (!existsSync(sessionDir)) {
+      // MSSCI-12475: Try to get sprint stories even without session
+      const sprintPath = join(projectDir, 'sprint', 'current-sprint.yaml');
+      if (existsSync(sprintPath)) {
+        const sprintContent = readFileSync(sprintPath, 'utf-8');
+        nullResult.sprint = parseSprintYaml(sprintContent);
+        nullResult.sprintStories = getSprintStories(sprintContent);
+      }
       return nullResult;
     }
 
     const files = readdirSync(sessionDir).filter(f => f.endsWith('-session.md'));
     if (files.length === 0) {
-      // No session files, but try to get sprint progress
+      // No session files, but try to get sprint progress and stories
       const sprintPath = join(projectDir, 'sprint', 'current-sprint.yaml');
       if (existsSync(sprintPath)) {
         const sprintContent = readFileSync(sprintPath, 'utf-8');
         nullResult.sprint = parseSprintYaml(sprintContent);
+        nullResult.sprintStories = getSprintStories(sprintContent);
       }
       return nullResult;
     }
@@ -501,13 +650,27 @@ export function getStoryInfo(projectDir: string): StoryInfo {
     const sessionContent = readFileSync(sessionPath, 'utf-8');
     const storyInfo = parseSessionFile(sessionContent, projectDir);
 
-    // Get sprint progress
+    // Get sprint progress and MSSCI-12475 expandable data
     const sprintPath = join(projectDir, 'sprint', 'current-sprint.yaml');
     let sprint: StoryInfo['sprint'] = null;
+    let sprintStories: SprintStory[] | null = null;
+    let epicContext: EpicContext | null = null;
+    let sprintContent = '';
+
     if (existsSync(sprintPath)) {
-      const sprintContent = readFileSync(sprintPath, 'utf-8');
+      sprintContent = readFileSync(sprintPath, 'utf-8');
       sprint = parseSprintYaml(sprintContent);
+      sprintStories = getSprintStories(sprintContent);
+
+      // Get epic context if we have a story ID
+      if (storyInfo.id) {
+        epicContext = getEpicContext(sprintContent, storyInfo.id);
+      }
     }
+
+    // Generate Jira URL for current story
+    const storyId = storyInfo.id || null;
+    const jiraKey = storyId && storyId.startsWith('MSSCI-') ? storyId : null;
 
     return {
       id: storyInfo.id || null,
@@ -521,6 +684,10 @@ export function getStoryInfo(projectDir: string): StoryInfo {
       pr: storyInfo.pr || null,
       branch: storyInfo.branch || null,
       criteria: storyInfo.criteria || null,
+      // MSSCI-12475: Expandable story section
+      sprintStories,
+      epicContext,
+      jiraUrl: generateJiraUrl(jiraKey),
     };
   } catch {
     return nullResult;
