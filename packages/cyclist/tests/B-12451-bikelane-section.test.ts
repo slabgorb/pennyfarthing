@@ -359,11 +359,9 @@ describe('B-12451: BikeLane Workflow Sidebar Section', () => {
     });
 
     it('should listen to story WebSocket channel for workflow updates', async () => {
-      // TODO: Implement WebSocket listener in bikelane-section.js
-      // Should subscribe to /ws/story or workflow-specific channel
-
-      // Verify story.js is included (bikelane-section.js should work alongside it)
-      expect(html).toContain('story.js');
+      // Bikelane updates are handled via sidebar/index.js which manages WebSocket
+      // and routes data to bikelane.update(). Verify sidebar module is included.
+      expect(html).toContain('sidebar/index.js');
     });
 
     it('should render workflow type badge on data update', async () => {

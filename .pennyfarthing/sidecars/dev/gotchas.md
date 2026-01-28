@@ -68,6 +68,28 @@ Search for errors:
 grep -i -E "(error|warn|exception|fail)" /tmp/cyclist.log | tail -50
 ```
 
+## Finding Project Root
+
+**Use `.pennyfarthing/` as the marker**, not `pennyfarthing-dist/`.
+
+The `.pennyfarthing/` directory is the most reliable marker - it's created by `pennyfarthing init` in any project using Pennyfarthing, and it exists at the monorepo root for dogfooding too.
+
+`pennyfarthing-dist/` is problematic because:
+- It exists as a symlink in `packages/core/` pointing to `../../pennyfarthing-dist`
+- `findMonorepoRoot()` would find the symlink first and return wrong path
+
+```typescript
+// GOOD: Use .pennyfarthing as marker
+if (existsSync(join(dir, '.pennyfarthing'))) {
+  return dir;
+}
+
+// BAD: pennyfarthing-dist can be a symlink
+if (existsSync(join(dir, 'pennyfarthing-dist'))) {
+  return dir;  // Might return packages/core/ instead of root!
+}
+```
+
 ---
 
 *Add gotchas discovered during development below*
