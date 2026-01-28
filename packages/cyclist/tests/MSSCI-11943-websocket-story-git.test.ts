@@ -499,14 +499,14 @@ describe('AC3: story.js uses WebSocket instead of setInterval polling', () => {
 
   it('should export connectStoryWebSocket function', async () => {
     // This test will fail until the function is implemented
-    const storyModule = await import('../src/public/js/story.js');
+    const storyModule = await import('../src/public/js/sidebar/story.js');
     expect(storyModule.connectStoryWebSocket).toBeDefined();
     expect(typeof storyModule.connectStoryWebSocket).toBe('function');
   });
 
   it('should export connectGitWebSocket function', async () => {
     // This test will fail until the function is implemented
-    const storyModule = await import('../src/public/js/story.js');
+    const storyModule = await import('../src/public/js/sidebar/story.js');
     expect(storyModule.connectGitWebSocket).toBeDefined();
     expect(typeof storyModule.connectGitWebSocket).toBe('function');
   });
@@ -514,7 +514,7 @@ describe('AC3: story.js uses WebSocket instead of setInterval polling', () => {
   it('should NOT have STORY_POLL_INTERVAL used for setInterval', async () => {
     // The polling interval constants should either be removed or
     // only used as fallback, not for active polling
-    const storyModule = await import('../src/public/js/story.js');
+    const storyModule = await import('../src/public/js/sidebar/story.js');
 
     // Check that the module exposes WebSocket-based methods
     // instead of relying on polling
@@ -525,7 +525,7 @@ describe('AC3: story.js uses WebSocket instead of setInterval polling', () => {
   });
 
   it('should reconnect WebSocket on disconnect with backoff', async () => {
-    const storyModule = await import('../src/public/js/story.js');
+    const storyModule = await import('../src/public/js/sidebar/story.js');
 
     // Should have reconnection logic
     expect(storyModule.connectStoryWebSocket).toBeDefined();

@@ -124,58 +124,6 @@ function updateSprintInfo(sprint) {
 }
 
 /**
- * Update workflow progress visualization
- * @param {Array|null} workflow - Array of workflow steps
- */
-function updateWorkflowProgress(workflow) {
-  const workflowEl = document.getElementById('workflow-progress');
-  if (!workflowEl) return;
-
-  if (!workflow || workflow.length === 0) {
-    workflowEl.style.display = 'none';
-    return;
-  }
-
-  workflowEl.style.display = 'flex';
-  workflowEl.innerHTML = '';
-
-  workflow.forEach((step, index) => {
-    if (index > 0) {
-      const arrow = document.createElement('span');
-      arrow.className = 'workflow-arrow';
-      arrow.textContent = '\u2192';
-      workflowEl.appendChild(arrow);
-    }
-
-    const stepEl = document.createElement('div');
-    stepEl.className = `workflow-step status-${step.status}`;
-    stepEl.setAttribute('data-agent', step.agent);
-
-    const iconEl = document.createElement('span');
-    iconEl.className = `workflow-icon status-${step.status}`;
-    switch (step.status) {
-      case 'done':
-        iconEl.textContent = '\u2713';
-        break;
-      case 'current':
-        iconEl.textContent = '\u25CF';
-        break;
-      default:
-        iconEl.textContent = '\u25CB';
-        break;
-    }
-    stepEl.appendChild(iconEl);
-
-    const labelEl = document.createElement('span');
-    labelEl.className = 'workflow-label';
-    labelEl.textContent = step.label || getDefaultLabel(step.agent);
-    stepEl.appendChild(labelEl);
-
-    workflowEl.appendChild(stepEl);
-  });
-}
-
-/**
  * Update story details (next agent, PR)
  * @param {Object} story - Story data
  */
@@ -242,7 +190,6 @@ export function update(story) {
   }
 
   updateSprintInfo(story.sprint);
-  updateWorkflowProgress(story.workflow);
   updateStoryDetails(story);
 }
 
