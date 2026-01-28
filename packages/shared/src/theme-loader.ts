@@ -4,6 +4,7 @@
 
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, basename } from 'node:path';
+import { parse as parseYaml } from 'yaml';
 import { resolvePennyfarthingDist, getPortraitPaths } from './portrait-resolver.js';
 
 export interface ThemeAgent {
@@ -11,7 +12,7 @@ export interface ThemeAgent {
   style: string;
   role: string;
   trait: string;
-  quote: string;
+  catchphrases: string[];
   helper?: string;
 }
 
@@ -26,7 +27,7 @@ interface RawThemeAgent {
   style?: string;
   role?: string;
   trait?: string;
-  quote?: string;
+  catchphrases?: string[];
   helper?: { name?: string; style?: string };
   shortName?: string;
 }
@@ -37,86 +38,6 @@ interface RawTheme {
     description?: string;
   };
   agents?: Record<string, RawThemeAgent>;
-}
-
-/**
- * Simple YAML parser for theme files
- * Only handles the specific YAML structure we need
- */
-function parseYaml(content: string): RawTheme {
-  const result: RawTheme = { theme: {}, agents: {} };
-  const lines = content.split('\n');
-
-  let currentSection: 'theme' | 'agents' | null = null;
-  let currentAgent: string | null = null;
-  let currentSubsection: string | null = null;
-
-  for (const line of lines) {
-    const trimmed = line.trimEnd();
-
-    // Skip empty lines and comments
-    if (!trimmed || trimmed.startsWith('#')) continue;
-
-    // Count leading spaces to determine indent level
-    const indent = line.length - line.trimStart().length;
-    const key = trimmed.split(':')[0].trim();
-    const value = trimmed.includes(':') ? trimmed.substring(trimmed.indexOf(':') + 1).trim() : '';
-
-    if (indent === 0) {
-      if (key === 'theme') {
-        currentSection = 'theme';
-        currentAgent = null;
-      } else if (key === 'agents') {
-        currentSection = 'agents';
-        currentAgent = null;
-      }
-    } else if (indent === 2 && currentSection === 'theme') {
-      if (key === 'name') {
-        result.theme!.name = value.replace(/^["']|["']$/g, '');
-      } else if (key === 'description') {
-        result.theme!.description = value.replace(/^["']|["']$/g, '');
-      }
-    } else if (indent === 2 && currentSection === 'agents') {
-      currentAgent = key;
-      if (!result.agents![currentAgent]) {
-        result.agents![currentAgent] = {};
-      }
-      currentSubsection = null;
-    } else if (indent === 4 && currentSection === 'agents' && currentAgent) {
-      const cleanValue = value.replace(/^["']|["']$/g, '');
-      if (key === 'character') {
-        result.agents![currentAgent].character = cleanValue;
-      } else if (key === 'style') {
-        result.agents![currentAgent].style = cleanValue;
-      } else if (key === 'role') {
-        result.agents![currentAgent].role = cleanValue;
-      } else if (key === 'trait') {
-        result.agents![currentAgent].trait = cleanValue;
-      } else if (key === 'quote') {
-        result.agents![currentAgent].quote = cleanValue;
-      } else if (key === 'shortName') {
-        result.agents![currentAgent].shortName = cleanValue;
-      } else if (key === 'helper') {
-        currentSubsection = 'helper';
-        result.agents![currentAgent].helper = {};
-      }
-    } else if (indent === 6 && currentSubsection === 'helper' && currentAgent) {
-      const cleanValue = value.replace(/^["']|["']$/g, '');
-      if (key === 'name') {
-        if (!result.agents![currentAgent].helper) {
-          result.agents![currentAgent].helper = {};
-        }
-        result.agents![currentAgent].helper!.name = cleanValue;
-      } else if (key === 'style') {
-        if (!result.agents![currentAgent].helper) {
-          result.agents![currentAgent].helper = {};
-        }
-        result.agents![currentAgent].helper!.style = cleanValue;
-      }
-    }
-  }
-
-  return result;
 }
 
 /**
@@ -139,7 +60,7 @@ export function loadTheme(themeName: string): Theme | null {
 
   try {
     const content = readFileSync(themePath, 'utf-8');
-    const raw = parseYaml(content);
+    const raw = parseYaml(content) as RawTheme;
 
     const agents: Record<string, ThemeAgent> = {};
     for (const [agentKey, agentData] of Object.entries(raw.agents || {})) {
@@ -148,7 +69,7 @@ export function loadTheme(themeName: string): Theme | null {
         style: agentData.style || '',
         role: agentData.role || '',
         trait: agentData.trait || '',
-        quote: agentData.quote || '',
+        catchphrases: agentData.catchphrases || [],
         helper: agentData.helper?.name,
       };
     }

@@ -1748,4 +1748,19 @@ epics:
           - quote field removed from schema
           - Theme validation updated
         jira: MSSCI-12478
+      - id: "MSSCI-12552"
+        title: "Bug: BikeLane panel shows 'No active story' with active session"
+        description: |
+          BikeLane panel in Cyclist displays "No active story" even when
+          .session/{story-id}-session.md exists with an in-progress story.
+          Panel should detect and display the active story.
+        points: 2
+        priority: P1
+        status: backlog
+        repos: cyclist
+        workflow: tdd
+        acceptance_criteria:
+          - BikeLane panel detects .session/*.session.md files
+          - Active story metadata displayed when session exists
+          - Panel updates when session file changes
     jira: MSSCI-12465
