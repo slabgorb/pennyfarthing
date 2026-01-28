@@ -71,15 +71,15 @@ describe('B-22: Prompt Bar Stats Display', () => {
       expect(modelBadge).not.toBeNull();
     });
 
-    // 23-1: Token stats replaced by usage limits
-    it('should have usage-5hr element for 5-hour usage', () => {
-      const usage5hr = document.querySelector('#stats-strip .usage-5hr');
-      expect(usage5hr).not.toBeNull();
+    // MSSCI-12469: Usage limits removed, identity elements added
+    it('should have jira-email element', () => {
+      const jiraEmail = document.querySelector('#stats-strip .jira-email');
+      expect(jiraEmail).not.toBeNull();
     });
 
-    it('should have usage-weekly element for weekly usage', () => {
-      const usageWeekly = document.querySelector('#stats-strip .usage-weekly');
-      expect(usageWeekly).not.toBeNull();
+    it('should have github-user element', () => {
+      const githubUser = document.querySelector('#stats-strip .github-user');
+      expect(githubUser).not.toBeNull();
     });
 
     it('should have context-mini meter element', () => {
@@ -119,34 +119,24 @@ describe('B-22: Prompt Bar Stats Display', () => {
 
   });
 
-  // 23-1: AC3 updated - Token counts replaced by usage limits
-  describe('AC3: Usage limits display correctly and update periodically (23-1)', () => {
+  // MSSCI-12469: AC3 updated - Identity elements added (Jira email, GitHub username)
+  describe('AC3: Identity elements display correctly (MSSCI-12469)', () => {
 
-    it('should have data-stat attribute on usage-5hr for updates', () => {
-      const usage5hr = document.querySelector('#stats-strip .usage-5hr');
-      expect(usage5hr?.getAttribute('data-stat')).toBe('strip-usage-5hr');
+    it('should have data-stat attribute on jira-email for updates', () => {
+      const jiraEmail = document.querySelector('#stats-strip .jira-email');
+      expect(jiraEmail?.getAttribute('data-stat')).toBe('strip-jira-email');
     });
 
-    it('should have data-stat attribute on usage-weekly for updates', () => {
-      const usageWeekly = document.querySelector('#stats-strip .usage-weekly');
-      expect(usageWeekly?.getAttribute('data-stat')).toBe('strip-usage-weekly');
+    it('should have data-stat attribute on github-user for updates', () => {
+      const githubUser = document.querySelector('#stats-strip .github-user');
+      expect(githubUser?.getAttribute('data-stat')).toBe('strip-github-user');
     });
 
-    it('should show usage labels', () => {
-      const statsStrip = document.querySelector('#stats-strip');
-      const text = statsStrip?.textContent?.toLowerCase() || '';
-      // Should have 5hr and week labels
-      expect(text).toMatch(/5.?hr|week/i);
-    });
-
-    it('should have usage value elements ready for population', () => {
-      const usage5hr = document.querySelector('#stats-strip .usage-5hr .usage-value');
-      const usageWeekly = document.querySelector('#stats-strip .usage-weekly .usage-value');
-
-      // Elements exist and are ready to be populated by JavaScript
-      // They start empty (hidden) and get populated when data arrives
-      expect(usage5hr).not.toBeNull();
-      expect(usageWeekly).not.toBeNull();
+    it('should have identity API endpoint', async () => {
+      const response = await request(app).get('/api/identity');
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('jiraEmail');
+      expect(response.body).toHaveProperty('githubUsername');
     });
 
   });
@@ -207,13 +197,13 @@ describe('B-22: Prompt Bar Stats Display', () => {
       expect(css).toMatch(/\.model-badge[^}]*border-radius/);
     });
 
-    // 23-1: Token stats replaced by usage limits
-    it('should have CSS for usage stats styling', () => {
-      expect(css).toMatch(/\.usage-5hr[^{]*\{|\.usage-weekly[^{]*\{/);
+    // MSSCI-12469: Identity elements styling
+    it('should have CSS for identity elements styling', () => {
+      expect(css).toMatch(/\.jira-email[^{]*\{|\.github-user[^{]*\{/);
     });
 
-    it('should use monospace font for usage stats', () => {
-      expect(css).toMatch(/(\.usage-5hr|\.usage-weekly)[^}]*font-family[^}]*mono/);
+    it('should use monospace font for identity elements', () => {
+      expect(css).toMatch(/(\.jira-email|\.github-user)[^}]*font-family[^}]*mono/);
     });
 
     it('should have CSS for context-mini meter styling', () => {
