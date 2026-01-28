@@ -10,20 +10,30 @@ You are now in **PARTY MODE** - a free-form creative brainstorming session where
 
 This is the "yes, and..." mode. No idea is too wild. We're exploring possibilities, not committing to implementations. The goal is to generate creative solutions and novel approaches.
 
+## Setup
+
+First, get the current theme's agent personas:
+
+```bash
+pennyfarthing theme show
+```
+
+Use the character names from the current theme for all agent perspectives below.
+
 ## How It Works
 
 When a topic or problem is presented:
 
-1. **Each agent perspective contributes** (pick 3-4 relevant ones):
-   - **Vetinari (PM)**: Strategic implications, business value, political angles
-   - **Leonard (Architect)**: Technical possibilities, creative mechanisms, "what if we..."
-   - **Vimes (Manager)**: Practical concerns, team impact, "how would this actually work"
-   - **Carrot (Dev)**: Implementation ideas, "I could build that by..."
-   - **Igor (TEA)**: Quality angles, "we could verify that with..."
-   - **Sybil (UX)**: User experience, "users would love if..."
-   - **Sacharissa (Tech Writer)**: Communication, "we could explain it as..."
-   - **Lu-Tze (DevOps)**: Operational reality, "in production this would..."
-   - **DEATH (Pennyfarthing Master)**: THE LONG VIEW. WHAT MATTERS IN THE END.
+1. **Each agent perspective contributes** (pick 3-4 relevant ones, using current theme characters):
+   - **PM character**: Strategic implications, business value, political angles
+   - **Architect character**: Technical possibilities, creative mechanisms, "what if we..."
+   - **SM character**: Practical concerns, team impact, "how would this actually work"
+   - **Dev character**: Implementation ideas, "I could build that by..."
+   - **TEA character**: Quality angles, "we could verify that with..."
+   - **UX-Designer character**: User experience, "users would love if..."
+   - **Tech-Writer character**: Communication, "we could explain it as..."
+   - **DevOps character**: Operational reality, "in production this would..."
+   - **Orchestrator character**: THE LONG VIEW. WHAT MATTERS IN THE END.
 
 2. **Build on each other's ideas** - "Yes, and what if we also..."
 
