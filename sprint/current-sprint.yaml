@@ -1767,4 +1767,29 @@ epics:
           - Active story metadata displayed when session exists
           - Panel updates when session file changes
         completed: "2026-01-28"
+      - id: "64-19"
+        title: "Story section: Implement expandable UI (MSSCI-12475 follow-up)"
+        description: |
+          MSSCI-12475 delivered the data layer (SprintStory, EpicContext interfaces
+          and parser functions in story-parser.ts) but the UI was never implemented.
+
+          This story completes the work:
+          - Add expandable section HTML to index.html
+          - Add rendering logic to story.js consuming sprintStories/epicContext
+          - Add CSS for expandable/collapsible styling
+          - Wire up Jira link clicks
+
+          The data is already available via parseStoryData() - just needs UI.
+        points: 3
+        priority: P1
+        status: in_progress
+        repos: pennyfarthing
+        branch: feat/64-19-expandable-story-ui
+        workflow: tdd
+        assigned_to: Keith Avery
+        acceptance_criteria:
+          - Expandable section shows all sprint stories
+          - Shows epic context (parent epic, sibling stories)
+          - Jira links clickable
+          - Points and status for each story
     jira: MSSCI-12465
