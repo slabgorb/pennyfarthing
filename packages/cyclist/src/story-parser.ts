@@ -45,30 +45,66 @@ export interface StoryInfo {
 export function parseSessionFile(content: string, projectDir?: string): Partial<StoryInfo> {
   const result: Partial<StoryInfo> = {};
 
-  // Extract story ID and title from header
+  // MSSCI-12552: Extract from list-item format FIRST (SM setup session files)
+  // This is the most common format: - Story: MSSCI-12552
+  // Must be checked before header format to avoid matching documentation examples
+  const listStoryMatch = content.match(/^-\s*Story:\s*(.+)$/m);
+  if (listStoryMatch) {
+    result.id = listStoryMatch[1].trim();
+  }
+
+  // Extract title from list-item format: - Title: Some title here
+  const listTitleMatch = content.match(/^-\s*Title:\s*(.+)$/m);
+  if (listTitleMatch) {
+    result.title = listTitleMatch[1].trim();
+  }
+
+  // Fall back to header format if list format not found
   // Formats supported:
   //   # Story 15-3: Title (colon separator)
   //   # Story 15-3 Session (with "Session" suffix)
-  const headerMatch = content.match(/^#\s*Story\s+([\w-]+):\s*(.+)$/m) ||
-                      content.match(/^#\s*Story\s+([\w-]+)\s+Session$/m);
-  if (headerMatch) {
-    result.id = headerMatch[1];
-    // For "Session" format, try to get title from **Title:** field
-    if (headerMatch[2]) {
-      result.title = headerMatch[2].trim();
-    } else {
-      // Look for **Title:** field in Story Details section
-      const titleMatch = content.match(/\*\*Title:\*\*\s*(.+)$/m);
-      if (titleMatch) {
-        result.title = titleMatch[1].trim();
+  if (!result.id) {
+    const headerMatch = content.match(/^#\s*Story\s+([\w-]+):\s*(.+)$/m) ||
+                        content.match(/^#\s*Story\s+([\w-]+)\s+Session$/m);
+    if (headerMatch) {
+      result.id = headerMatch[1];
+      // For header format with title in same line
+      if (!result.title && headerMatch[2]) {
+        result.title = headerMatch[2].trim();
       }
+    }
+  }
+
+  // Try **Title:** field if still no title
+  if (!result.title) {
+    const boldTitleMatch = content.match(/\*\*Title:\*\*\s*(.+)$/m);
+    if (boldTitleMatch) {
+      result.title = boldTitleMatch[1].trim();
+    }
+  }
+
+  // Also extract from table format: | **Story** | MSSCI-12400 |
+  if (!result.id) {
+    const tableStoryMatch = content.match(/\|\s*\*?\*?Story\*?\*?\s*\|\s*([^|]+)/i);
+    if (tableStoryMatch) {
+      result.id = tableStoryMatch[1].trim();
+    }
+  }
+
+  // Extract title from table format: | **Title** | Some title |
+  if (!result.title) {
+    const tableTitleMatch = content.match(/\|\s*\*?\*?Title\*?\*?\s*\|\s*([^|]+)/i);
+    if (tableTitleMatch) {
+      result.title = tableTitleMatch[1].trim();
     }
   }
 
   // Extract phase: **Phase:** dev or **Phase:** TEA (RED complete) -> Dev (GREEN)
   // Also check table format: | Phase | dev | or | **Phase** | dev |
+  // Also check list-item format: - Phase: red (MSSCI-12552)
   const phaseMatch = content.match(/\*\*Phase:\*\*\s*(\w+)/i) ||
-                     content.match(/\|\s*\*?\*?Phase\*?\*?\s*\|\s*(\w+)/i);
+                     content.match(/\|\s*\*?\*?Phase\*?\*?\s*\|\s*(\w+)/i) ||
+                     content.match(/^-\s*Phase:\s*(\w+)/m);
   if (phaseMatch) {
     result.phase = phaseMatch[1].toLowerCase();
   }
@@ -102,8 +138,10 @@ export function parseSessionFile(content: string, projectDir?: string): Partial<
   }
 
   // Extract branch from "## Branch" section or **Branch:** line
+  // Also check list-item format: - Branch: feature/... (MSSCI-12552)
   const branchMatch = content.match(/^##\s*Branch\s*\n`([^`]+)`/m) ||
-                      content.match(/\*\*Branch:\*\*\s*`?([^`\n]+)`?/);
+                      content.match(/\*\*Branch:\*\*\s*`?([^`\n]+)`?/) ||
+                      content.match(/^-\s*Branch:\s*(.+)$/m);
   if (branchMatch) {
     result.branch = branchMatch[1].trim();
   }
@@ -154,11 +192,15 @@ export function parseAcceptanceCriteria(content: string): CriteriaItem[] | null 
 export function parseWorkflowProgress(content: string, projectDir?: string): WorkflowPhase[] | null {
   // Try to extract workflow name from session content
   // Workflow names can contain hyphens (e.g., docs-only, custom-flow)
-  const workflowMatch = content.match(/\*\*Workflow:\*\*\s*([\w-]+)/i);
+  // Also check list-item format: - Workflow: tdd (MSSCI-12552)
+  const workflowMatch = content.match(/\*\*Workflow:\*\*\s*([\w-]+)/i) ||
+                        content.match(/^-\s*Workflow:\s*([\w-]+)/m);
   const workflowName = workflowMatch?.[1]?.toLowerCase();
 
   // Try to extract current phase from session content
-  const phaseMatch = content.match(/\*\*Phase:\*\*\s*(\w+)/i);
+  // Also check list-item format: - Phase: red (MSSCI-12552)
+  const phaseMatch = content.match(/\*\*Phase:\*\*\s*(\w+)/i) ||
+                     content.match(/^-\s*Phase:\s*(\w+)/m);
   const currentPhase = phaseMatch?.[1]?.toLowerCase();
 
   // If projectDir provided and workflow specified, use dynamic phases
