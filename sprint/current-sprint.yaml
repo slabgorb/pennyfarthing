@@ -1757,11 +1757,12 @@ epics:
           Panel should detect and display the active story.
         points: 2
         priority: P1
-        status: backlog
+        status: done
         repos: cyclist
         workflow: tdd
         acceptance_criteria:
           - BikeLane panel detects .session/*.session.md files
           - Active story metadata displayed when session exists
           - Panel updates when session file changes
+        completed: "2026-01-28"
     jira: MSSCI-12465
