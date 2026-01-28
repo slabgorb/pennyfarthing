@@ -1718,7 +1718,7 @@ epics:
           4. Wire bikelane.update() to display workflow data
         points: 3
         priority: P1
-        status: in_progress
+        status: done
         repos: pennyfarthing
         workflow: tdd
         branch: feat/MSSCI-12551-bikelane-workflow-display
@@ -1729,6 +1729,7 @@ epics:
           - Shows phase progress with current phase highlighted
           - Shows phase history timeline
         jira: MSSCI-12551
+        completed: "2026-01-28"
       # Vision Stories
       - id: "MSSCI-12478"
         title: "Theme schema: Consolidate quote → catchphrases"
