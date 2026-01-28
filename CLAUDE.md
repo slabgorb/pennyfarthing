@@ -175,6 +175,43 @@ The Cyclist visual terminal uses bicycle-themed internal codenames:
 | **TirePump** | Context clearing system | The complete context clear-and-reload system - clears the session, resets stats, and reloads the current agent when context runs low |
 | **JobFair** | Character benchmarking | Discovers which theme characters excel at each role by running them against benchmarks - finds hidden talents across the cast |
 
+## Prime Activation System
+
+Agent activation uses the Prime system (`pennyfarthing_scripts/prime/`) for unified context loading:
+
+```bash
+# Standard activation (called by /agent commands)
+python -m pennyfarthing_scripts.prime --agent sm
+
+# Options: --minimal (fast), --full (include domain docs), --json (Cyclist)
+```
+
+**Loading stages:** Agent definition → Sidecars → Behavior guide → Sprint context → Session → Persona → Domain docs
+
+**Workflow state detection:** Prime detects NEW_WORK, IN_PROGRESS, FINISH, or EMPTY_BACKLOG state to route agents correctly.
+
+See [ADR-0015](docs/adr/0015-prime-activation-system.md) for architecture details.
+
+## Cyclist Workflow Modes
+
+Cyclist provides three workflow modes that can be combined:
+
+| Mode | Setting | Description |
+|------|---------|-------------|
+| **Permission** | `workflow.permission_mode` | `plan` (confirm all), `manual` (confirm dangerous), `accept` (auto-approve) |
+| **Relay** | `workflow.relay_mode` | Auto-execute HANDOFF markers without user click |
+| **Bell** | `workflow.bell_mode` | Queue messages to inject via PostToolUse hook |
+
+Configuration in `.pennyfarthing/config.local.yaml`:
+```yaml
+workflow:
+  permission_mode: manual
+  relay_mode: true      # Auto-handoff between agents
+  bell_mode: false      # Message queue injection
+```
+
+See [ADR-0016](docs/adr/0016-bell-mode-message-injection.md) and [ADR-0017](docs/adr/0017-relay-mode-automatic-handoff.md).
+
 ## Architecture Decision Records
 
 Key architectural decisions are documented in `docs/adr/`. Review these before making significant changes:
@@ -187,6 +224,11 @@ Key architectural decisions are documented in `docs/adr/`. Review these before m
 | [0008](docs/adr/0008-result-object-error-handling.md) | Result Object Error Handling | Return `{success, error}`, don't throw exceptions |
 | [0009](docs/adr/0009-session-file-coordination.md) | Session File Coordination | Write assessment BEFORE spawning handoff subagent |
 | [0010](docs/adr/0010-esm-module-requirements.md) | ESM Module Requirements | Always use `.js` extension in relative imports |
+| [0011](docs/adr/0011-reflector-marker-consolidation.md) | Reflector Marker Consolidation | CYCLIST markers parsed by shared module |
+| [0013](docs/adr/0013-bmad-workflow-import.md) | Stepped Workflows (BMAD) | BikeLane stepped workflow support |
+| [0015](docs/adr/0015-prime-activation-system.md) | Prime Activation System | Unified agent bootstrap via Python |
+| [0016](docs/adr/0016-bell-mode-message-injection.md) | Bell Mode | Queue messages for injection via hooks |
+| [0017](docs/adr/0017-relay-mode-automatic-handoff.md) | Relay Mode | Automatic agent handoff execution |
 
 ## Critical Implementation Rules
 

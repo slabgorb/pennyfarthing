@@ -1,8 +1,10 @@
 # ADR-0003: Cyclist Alignment with Claude Code 2.1.0
 
-**Status:** Proposed
+**Status:** Superseded
 **Date:** 2026-01-09
 **Author:** Architect (E.B. Farnum)
+**Superseded by:** ADR-0016 (Bell Mode) and ADR-0017 (Relay Mode)
+**Note:** The decisions in this ADR have been implemented. Message queueing became Bell Mode (ADR-0016). Demo mode was adopted. The alignment work is complete; this ADR is now historical context.
 
 ## Context
 

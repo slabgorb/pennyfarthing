@@ -1,8 +1,10 @@
 # ADR-0002: Context Budget Optimization
 
-**Status:** Proposed
+**Status:** Superseded
 **Date:** 2026-01-03
 **Author:** Michael (with analysis assist)
+**Superseded by:** ADR-0015 (Prime Activation System addresses context loading)
+**Note:** The Prime system implements lazy context loading with `--minimal` and `--full` flags, addressing the core concern. Claude Code's skill system has also evolved since this ADR was written.
 
 ## Context
 
