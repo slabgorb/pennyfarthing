@@ -497,38 +497,38 @@ describe('AC3: story.js uses WebSocket instead of setInterval polling', () => {
     globalThis.window = window as unknown as Window & typeof globalThis;
   });
 
-  it('should export connectStoryWebSocket function', async () => {
-    // This test will fail until the function is implemented
-    const storyModule = await import('../src/public/js/sidebar/story.js');
-    expect(storyModule.connectStoryWebSocket).toBeDefined();
-    expect(typeof storyModule.connectStoryWebSocket).toBe('function');
+  it('should export connectStoryWebSocket function from sidebar index', async () => {
+    // WebSocket connections are managed by sidebar/index.js coordinator
+    const sidebarModule = await import('../src/public/js/sidebar/index.js');
+    expect(sidebarModule.connectStoryWebSocket).toBeDefined();
+    expect(typeof sidebarModule.connectStoryWebSocket).toBe('function');
   });
 
-  it('should export connectGitWebSocket function', async () => {
-    // This test will fail until the function is implemented
-    const storyModule = await import('../src/public/js/sidebar/story.js');
-    expect(storyModule.connectGitWebSocket).toBeDefined();
-    expect(typeof storyModule.connectGitWebSocket).toBe('function');
+  it('should export connectGitWebSocket function from sidebar index', async () => {
+    // WebSocket connections are managed by sidebar/index.js coordinator
+    const sidebarModule = await import('../src/public/js/sidebar/index.js');
+    expect(sidebarModule.connectGitWebSocket).toBeDefined();
+    expect(typeof sidebarModule.connectGitWebSocket).toBe('function');
   });
 
   it('should NOT have STORY_POLL_INTERVAL used for setInterval', async () => {
     // The polling interval constants should either be removed or
     // only used as fallback, not for active polling
-    const storyModule = await import('../src/public/js/sidebar/story.js');
+    const sidebarModule = await import('../src/public/js/sidebar/index.js');
 
     // Check that the module exposes WebSocket-based methods
     // instead of relying on polling
-    expect(storyModule.connectStoryWebSocket).toBeDefined();
+    expect(sidebarModule.connectStoryWebSocket).toBeDefined();
 
     // If there's a way to check active intervals, do so
     // This is more of an integration test
   });
 
   it('should reconnect WebSocket on disconnect with backoff', async () => {
-    const storyModule = await import('../src/public/js/sidebar/story.js');
+    const sidebarModule = await import('../src/public/js/sidebar/index.js');
 
     // Should have reconnection logic
-    expect(storyModule.connectStoryWebSocket).toBeDefined();
+    expect(sidebarModule.connectStoryWebSocket).toBeDefined();
 
     // The implementation should handle reconnection
     // This test verifies the API exists for reconnection handling

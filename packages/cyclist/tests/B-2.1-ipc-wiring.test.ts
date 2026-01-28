@@ -295,8 +295,9 @@ describe('B-2.1: IPC Data Wiring', () => {
       main.setupDataIPCHandlers(mockIpcMain);
       const git = await gitHandler?.({}) as Record<string, unknown> | null;
 
-      expect(git).toHaveProperty('branch');
-      expect(typeof git?.branch).toBe('string');
+      // Git handler returns multi-repo format: { repos: [...] }
+      expect(git).toHaveProperty('repos');
+      expect(Array.isArray(git?.repos)).toBe(true);
     });
 
   });
