@@ -1740,7 +1740,7 @@ epics:
           Consolidate all to use catchphrases array only.
         points: 3
         priority: P3
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria:
@@ -1749,6 +1749,7 @@ epics:
           - quote field removed from schema
           - Theme validation updated
         jira: MSSCI-12478
+        completed: "2026-01-28"
       - id: "MSSCI-12552"
         title: "Bug: BikeLane panel shows 'No active story' with active session"
         description: |
