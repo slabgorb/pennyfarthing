@@ -1551,7 +1551,7 @@ epics:
           Remove: context tokens, usage limits
         points: 3
         priority: P1
-        status: backlog
+        status: done
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria:
@@ -1561,6 +1561,7 @@ epics:
           - Model and context % preserved
           - Usage limits removed
         jira: MSSCI-12469
+        completed: "2026-01-28"
       - id: "MSSCI-12470"
         title: "Tab bar: Fix indicator sync on startup"
         description: |
