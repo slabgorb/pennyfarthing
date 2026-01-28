@@ -35,6 +35,7 @@ import {
   setBackgroundTaskStartCallback,
   BackgroundTask,
   trackBackgroundTask,
+  completeBackgroundTask,
 } from './otlp-receiver.js';
 import { ClaudeService, SDKMessage } from './claude-service.js';
 import { isTodoWriteMessage, extractTodos, type TodoItem } from './todos.js';
@@ -1111,6 +1112,18 @@ export function setupClaudeIPCHandlers(ipcMain: {
                     error: block.is_error ? (typeof block.content === 'string' ? block.content.slice(0, 200) : 'Unknown error') : undefined,
                     durationMs,
                   });
+                }
+
+                // Background task completion detection from message stream
+                // tool_use_id matches the taskId we stored when Task tool was invoked
+                const completedTask = completeBackgroundTask(
+                  block.tool_use_id,
+                  !block.is_error,
+                  block.is_error ? undefined : (typeof block.content === 'string' ? block.content.slice(0, 500) : undefined),
+                  block.is_error ? (typeof block.content === 'string' ? block.content.slice(0, 500) : 'Task failed') : undefined
+                );
+                if (completedTask) {
+                  console.log(`[main] Background task completed from stream: ${completedTask.taskId} (${completedTask.success ? 'success' : 'error'})`);
                 }
               }
             }

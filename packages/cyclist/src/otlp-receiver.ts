@@ -201,6 +201,31 @@ export function resetBackgroundTasks(): void {
   backgroundTasks = [];
 }
 
+/**
+ * Complete a background task by its tool_use_id
+ * Called when tool_result is received in message stream
+ */
+export function completeBackgroundTask(
+  taskId: string,
+  success: boolean,
+  output?: string,
+  error?: string
+): BackgroundTask | null {
+  const task = backgroundTasks.find(t => t.taskId === taskId);
+  if (task && task.status === 'pending') {
+    task.status = 'completed';
+    task.success = success;
+    task.output = output;
+    task.error = error;
+    // Trigger completion callback
+    if (onBackgroundTaskComplete) {
+      onBackgroundTaskComplete(task);
+    }
+    return task;
+  }
+  return null;
+}
+
 // 35-2: User info extracted from OTEL spans
 let userEmail: string | null = null;
 
