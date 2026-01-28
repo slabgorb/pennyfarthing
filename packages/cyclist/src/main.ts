@@ -34,6 +34,7 @@ import {
   setBackgroundTaskCallback,
   setBackgroundTaskStartCallback,
   BackgroundTask,
+  trackBackgroundTask,
 } from './otlp-receiver.js';
 import { ClaudeService, SDKMessage } from './claude-service.js';
 import { isTodoWriteMessage, extractTodos, type TodoItem } from './todos.js';
@@ -1069,6 +1070,21 @@ export function setupClaudeIPCHandlers(ipcMain: {
                     args: input.args,
                     timestamp: Date.now(),
                     status: 'running',
+                  });
+                } else if (block.name === 'Task') {
+                  // Background tasks fix: detect from message stream, not OTEL
+                  // OTEL logs do NOT emit tool_parameters for Task tools
+                  const input = block.input as {
+                    description?: string;
+                    subagent_type?: string;
+                    run_in_background?: boolean;
+                  };
+                  trackBackgroundTask({
+                    taskId: block.id || `task-${Date.now()}`,
+                    description: input.description || '',
+                    subagentType: input.subagent_type || '',
+                    startedAt: Date.now(),
+                    isBackground: input.run_in_background === true,
                   });
                 }
               }

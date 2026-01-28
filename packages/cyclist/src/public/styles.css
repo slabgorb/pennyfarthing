@@ -3343,6 +3343,20 @@ html, body {
   border-left-color: var(--error, #ef4444);
 }
 
+.task-card.task-foreground {
+  opacity: 0.85;
+}
+
+.task-bg-badge {
+  font-size: 0.6rem;
+  background: var(--warning, #f59e0b);
+  color: var(--bg-primary, #000);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-weight: 600;
+  margin-left: auto;
+}
+
 .task-header {
   display: flex;
   align-items: center;

@@ -395,6 +395,7 @@ interface BackgroundTaskData {
   success?: boolean;
   output?: string;
   error?: string;
+  isBackground?: boolean;
 }
 
 /**
