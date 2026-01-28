@@ -57,7 +57,11 @@ if [[ ! -f "$SPRINT_FILE" ]]; then
 fi
 
 # Extract sprint name to determine archive file
-SPRINT_NAME=$(grep -E "^\s+name:" "$SPRINT_FILE" | head -1 | sed 's/.*"TO Sprint \([0-9]*\)".*/\1/')
+# Try jira_sprint_name first (newer format), then fall back to name (older format)
+SPRINT_NAME=$(grep -E "^\s+jira_sprint_name:" "$SPRINT_FILE" | head -1 | sed 's/.*TO Sprint \([0-9]*\).*/\1/')
+if [[ -z "$SPRINT_NAME" ]]; then
+  SPRINT_NAME=$(grep -E "^\s+name:" "$SPRINT_FILE" | head -1 | sed 's/.*"TO Sprint \([0-9]*\)".*/\1/')
+fi
 if [[ -z "$SPRINT_NAME" ]]; then
   echo "Error: Could not extract sprint name from $SPRINT_FILE"
   exit 1
