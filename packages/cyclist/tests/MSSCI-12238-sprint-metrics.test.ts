@@ -65,15 +65,17 @@ ${storyYaml}
 // =============================================================================
 
 describe('AC1: parseSprintYaml returns remaining points', () => {
-  it('should return remaining points from summary section', () => {
+  it('should calculate remaining points from stories (not summary header)', () => {
+    // Summary says 21, but stories calculate to 8 - stories are source of truth
     const yaml = createSprintYaml({
-      remainingPoints: 21,
+      remainingPoints: 21, // This stale value should be ignored
     });
 
     const result = parseSprintYaml(yaml);
 
     expect(result).not.toBeNull();
-    expect(result!.remaining).toBe(21);
+    // Default stories: STORY-4 (8 pts backlog) = 8 remaining
+    expect(result!.remaining).toBe(8);
   });
 
   it('should calculate remaining from stories if no summary', () => {
@@ -240,7 +242,8 @@ describe('parseSprintYaml edge cases', () => {
     expect(result).toBeNull();
   });
 
-  it('should handle missing epics array', () => {
+  it('should return zeros when no epics array exists', () => {
+    // Summary values are ignored - no stories means no points
     const yaml = `sprint:
   number: 12
   end_date: 2026-02-02
@@ -252,8 +255,9 @@ summary:
     const result = parseSprintYaml(yaml);
 
     expect(result).not.toBeNull();
-    expect(result!.done).toBe(10);
-    expect(result!.remaining).toBe(5);
+    // No stories = no points (summary is ignored)
+    expect(result!.done).toBe(0);
+    expect(result!.remaining).toBe(0);
     expect(result!.inProgress).toBe(0);
   });
 
