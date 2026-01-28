@@ -21,6 +21,10 @@ import { resetState as resetDiffPanel } from './diff-panel.js';
 import { clear as clearChangedFiles } from './components/ChangedFilesList.js';
 import { clearDiffs } from './components/DiffViewer.js';
 import { getMessageQueue, setOnQueueChange, removeFromQueue, clearMessageQueue, setBellMode as setMessageQueueBellMode } from './editor/message-queue.js';
+import { createSystemBanner, BANNER_TYPES } from './components/SystemBanner.js';
+import { clearTasks } from './sidebar/tasks.js';
+import { clearBackgroundTasks } from './sidebar/background-tasks.js';
+import { clearBikeLane } from './sidebar/bikelane.js';
 
 /**
  * Valid modes for the segmented control (matches settings.ts PermissionMode)
@@ -751,6 +755,98 @@ function initQueueDisplay() {
   }
 
   console.log('[Controls] Queue display initialized');
+}
+
+// =============================================================================
+// System Banner Functions (MSSCI-12471)
+// =============================================================================
+
+/**
+ * Add a system banner to the message view
+ * @param {string} type - Banner type from BANNER_TYPES
+ * @param {Object} options - Optional configuration
+ * @export
+ */
+export function addSystemBanner(type, options = {}) {
+  const messageView = document.getElementById('message-view');
+  if (!messageView) {
+    console.warn('[Controls] Message view not found for system banner');
+    return;
+  }
+
+  const banner = createSystemBanner(type, options);
+  messageView.appendChild(banner);
+
+  // Scroll to show the banner
+  banner.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+  console.log('[Controls] System banner added:', type, options);
+}
+
+/**
+ * Clear session with system banner instead of wiping messages
+ * MSSCI-12471: Shows "Context cleared" banner instead of clearing message view
+ * @export
+ */
+export async function clearSessionWithBanner() {
+  console.log('[Controls] Clear session with banner');
+
+  if (!window.electronAPI?.claude?.clear) {
+    console.warn('[Controls] Claude API not available - cannot clear session');
+    return;
+  }
+
+  try {
+    await window.electronAPI.claude.clear();
+    console.log('[Controls] Session cleared successfully');
+
+    // Add system banner instead of clearing message view
+    addSystemBanner(BANNER_TYPES.CONTEXT_CLEARED);
+
+    // Reset stats display
+    document.querySelectorAll('[data-stat]').forEach(el => {
+      if (el.dataset.stat !== 'status-dot') {
+        el.textContent = '—';
+      }
+    });
+
+    // Reset panel states
+    resetFilePanel();
+    resetDiffPanel();
+
+    // Clear changed files list and diff data
+    clearChangedFiles();
+    clearDiffs();
+
+    // Clear STALE sidebar data (tasks, background-tasks, bikelane)
+    clearTasks();
+    clearBackgroundTasks();
+    clearBikeLane();
+
+    // NOTE: Do NOT clear story, git, or acceptance-criteria sections
+    // These persist across context clears as they represent the current work session
+
+  } catch (error) {
+    console.error('[Controls] Failed to clear session:', error);
+  }
+}
+
+/**
+ * Handle TirePump context clear with banner
+ * MSSCI-12471: Shows banner with next agent info
+ * @param {string} nextAgent - The agent to load after clear
+ * @export
+ */
+export async function handleTirePumpClear(nextAgent) {
+  console.log('[Controls] TirePump clear for agent:', nextAgent);
+
+  // Add banner with next agent info
+  addSystemBanner(BANNER_TYPES.CONTEXT_CLEARED, { nextAgent });
+
+  // Clear stale sidebar data
+  clearTasks();
+  clearBackgroundTasks();
+  clearBikeLane();
 }
 
 // =============================================================================

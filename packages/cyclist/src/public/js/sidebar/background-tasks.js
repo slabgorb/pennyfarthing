@@ -254,10 +254,21 @@ export function getBackgroundTasks() {
 
 /**
  * Clear all tasks
+ * MSSCI-12471: Enhanced to clear DOM elements for context clear
  */
 export function clearBackgroundTasks() {
   tasks = [];
   updatePanelDisplay();
+
+  // Also clear any DOM elements that may exist outside the panel
+  // (for test DOM structure and any other locations)
+  const section = document.getElementById('background-tasks-section');
+  if (section) {
+    const taskElements = section.querySelectorAll('.background-task');
+    taskElements.forEach(el => el.remove());
+  }
+
+  console.log('[BackgroundTasks] Cleared all tasks');
 }
 
 /**
