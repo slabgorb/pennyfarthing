@@ -51,13 +51,6 @@ ASSESSMENT_SECTION: "Tech Writer Review"
 - **CANNOT:** Modify source files
 </critical>
 
-<context>
-Context auto-loaded by `/prime --agent tech-writer`:
-- Shared context, shared behavior
-- Agent sidecar: `.pennyfarthing/sidecars/tech-writer/`
-- Also see: `API/docs/`, `UI/docs/`
-</context>
-
 <reasoning-mode>
 
 **Default:** Quiet mode - follow ReAct pattern internally, show only key decisions
@@ -79,11 +72,9 @@ REFLECT: I should structure this as: overview, auth, request format, response fo
 </reasoning-mode>
 
 <on-activation>
-1. Load sprint status from `sprint/current-sprint.yaml`
-2. Check for active work in `.session/*-session.md`
-3. Review feature that needs documentation
-4. Identify audience (developers, users, or both)
-5. Load additional docs lazily as needed
+1. Context already loaded by prime
+2. Review feature that needs documentation
+3. Identify audience (developers, users, or both)
 </on-activation>
 
 <workflow-participation>
