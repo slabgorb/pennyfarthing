@@ -96,16 +96,26 @@ export function parseSessionFile(content: string, projectDir?: string): Partial<
   // Fall back to header format if list format not found
   // Formats supported:
   //   # Story 15-3: Title (colon separator)
-  //   # Story 15-3 Session (with "Session" suffix)
+  //   # Story 15-3 Session (with "Story" prefix)
+  //   # MSSCI-12552 Session (new format - ID only, no "Story" prefix)
   if (!result.id) {
     const headerMatch = content.match(/^#\s*Story\s+([\w-]+):\s*(.+)$/m) ||
-                        content.match(/^#\s*Story\s+([\w-]+)\s+Session$/m);
+                        content.match(/^#\s*Story\s+([\w-]+)\s+Session$/m) ||
+                        content.match(/^#\s+([\w-]+)\s+Session$/m);
     if (headerMatch) {
       result.id = headerMatch[1];
       // For header format with title in same line
       if (!result.title && headerMatch[2]) {
         result.title = headerMatch[2].trim();
       }
+    }
+  }
+
+  // Fallback: extract ID from **Story:** field if not found in header
+  if (!result.id) {
+    const storyFieldMatch = content.match(/\*\*Story:\*\*\s*([\w-]+)/);
+    if (storyFieldMatch) {
+      result.id = storyFieldMatch[1].trim();
     }
   }
 
@@ -171,9 +181,10 @@ export function parseSessionFile(content: string, projectDir?: string): Partial<
     }
   }
 
-  // Extract branch from "## Branch" section or **Branch:** line
+  // Extract branch from "## Branch" section, **Branch:** line, **Feature Branch:** line
   // Also check list-item format: - Branch: feature/... (MSSCI-12552)
   const branchMatch = content.match(/^##\s*Branch\s*\n`([^`]+)`/m) ||
+                      content.match(/\*\*Feature Branch:\*\*\s*`?([^`\n]+)`?/) ||
                       content.match(/\*\*Branch:\*\*\s*`?([^`\n]+)`?/) ||
                       content.match(/^-\s*Branch:\s*(.+)$/m);
   if (branchMatch) {
