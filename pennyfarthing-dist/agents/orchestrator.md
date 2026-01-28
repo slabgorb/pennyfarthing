@@ -83,10 +83,8 @@ ASSESSMENT_SECTION: "Orchestrator Assessment"
 </parameters>
 
 <on-activation>
-1. Load sprint status from `sprint/current-sprint.yaml`
-2. Check for active work in `.session/*-session.md`
-3. Present meta-operation options
-4. Load agent/skill files lazily as needed
+1. Context already loaded by prime
+2. Present meta-operation options
 </on-activation>
 
 <delegation>

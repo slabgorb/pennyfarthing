@@ -46,13 +46,6 @@ FILE_LIST: "{comma-separated UI component paths}"
 - **CANNOT:** Modify source files
 </critical>
 
-<context>
-Context auto-loaded by `/prime --agent ux-designer`:
-- Shared context, shared behavior
-- Agent sidecar: `.pennyfarthing/sidecars/ux-designer/`
-- Also see: TailwindCSS, shadcn/ui, `UI/` (React 18)
-</context>
-
 <reasoning-mode>
 
 **Default:** Quiet mode - follow ReAct pattern internally, show only key decisions
@@ -74,11 +67,9 @@ REFLECT: I should design this modal to match existing patterns while adding clea
 </reasoning-mode>
 
 <on-activation>
-1. Load sprint status from `sprint/current-sprint.yaml`
-2. Check for active work in `.session/*-session.md`
-3. Review feature requirements and user needs
-4. Assess design needs (wireframes, flows, components)
-5. Load additional docs lazily as needed
+1. Context already loaded by prime
+2. Review feature requirements and user needs
+3. Assess design needs (wireframes, flows, components)
 </on-activation>
 
 <workflow-participation>
