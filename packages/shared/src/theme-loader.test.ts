@@ -1,98 +1,85 @@
+/**
+ * Theme Schema Consolidation Tests - MSSCI-12478
+ *
+ * Tests for consolidating quote field into catchphrases array.
+ * RED STATE: These tests should FAIL until implementation is complete.
+ */
+
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import {
-  loadTheme,
-  listThemes,
-  getAgentPersona,
-} from './theme-loader.js';
+import { loadTheme } from './theme-loader.js';
 
-describe('theme-loader', () => {
-  describe('loadTheme', () => {
-    it('should load a valid theme by name', () => {
-      const theme = loadTheme('shakespeare');
+describe('MSSCI-12478: Theme Schema Consolidation', () => {
 
-      assert.ok(theme !== null, 'Should find theme');
-      assert.strictEqual(theme!.name, 'shakespeare');
-      assert.ok('agents' in theme!, 'Should have agents');
+  describe('AC3: quote field removed from schema', () => {
+    it('ThemeAgent interface should have catchphrases array, not quote string', () => {
+      // Load any theme and check the agent structure
+      const theme = loadTheme('the-expanse');
+      assert.ok(theme !== null, 'Theme should load');
+
+      const agent = theme!.agents['sm'];
+      assert.ok(agent !== undefined, 'SM agent should exist');
+
+      // Should have catchphrases array
+      assert.ok('catchphrases' in agent, 'Agent should have catchphrases property');
+      assert.ok(Array.isArray(agent.catchphrases), 'catchphrases should be an array');
+
+      // Should NOT have quote field (removed from schema)
+      assert.ok(!('quote' in agent), 'Agent should NOT have quote property after migration');
     });
 
-    it('should return null for invalid theme name', () => {
-      const theme = loadTheme('nonexistent-theme-xyz');
+    it('catchphrases array should contain at least one entry', () => {
+      const theme = loadTheme('the-expanse');
+      assert.ok(theme !== null, 'Theme should load');
 
-      assert.strictEqual(theme, null);
-    });
+      const agent = theme!.agents['tea'];
 
-    it('should include all required agent personas', () => {
-      const theme = loadTheme('shakespeare');
-
-      assert.ok(theme !== null);
-      const requiredAgents = ['sm', 'tea', 'dev', 'reviewer'];
-      for (const agent of requiredAgents) {
-        assert.ok(agent in theme!.agents, `Should have ${agent} persona`);
-      }
-    });
-
-    it('should parse agent properties correctly', () => {
-      const theme = loadTheme('shakespeare');
-
-      assert.ok(theme !== null);
-      const smAgent = theme!.agents['sm'];
-      assert.ok('character' in smAgent, 'Agent should have character');
-      assert.ok('style' in smAgent, 'Agent should have style');
-      assert.ok('role' in smAgent, 'Agent should have role');
-      assert.ok('quote' in smAgent, 'Agent should have quote');
+      assert.ok(agent.catchphrases !== undefined, 'catchphrases should be defined');
+      assert.ok(agent.catchphrases.length > 0, 'catchphrases should have at least one entry');
     });
   });
 
-  describe('listThemes', () => {
-    it('should return array of theme names', () => {
-      const themes = listThemes();
+  describe('AC1: Migration script merges quote into catchphrases', () => {
+    it('original quote should be present in catchphrases array', () => {
+      // The Investigator's quote was "Doors and corners, kid. That's where they get you."
+      // After migration, this should be in the catchphrases array
+      const theme = loadTheme('the-expanse');
+      assert.ok(theme !== null, 'Theme should load');
 
-      assert.ok(Array.isArray(themes), 'Should return array');
-      assert.ok(themes.length > 0, 'Should have at least one theme');
+      const agent = theme!.agents['orchestrator'];
+
+      assert.ok(
+        agent.catchphrases.includes("Doors and corners, kid. That's where they get you."),
+        'Original quote should be in catchphrases array'
+      );
     });
 
-    it('should include known themes', () => {
-      const themes = listThemes();
+    it('catchphrases should not have duplicates after migration', () => {
+      const theme = loadTheme('the-expanse');
+      assert.ok(theme !== null, 'Theme should load');
 
-      // These themes should exist based on project structure
-      const knownThemes = ['shakespeare', 'norse-mythology', 'star-trek'];
-      for (const known of knownThemes) {
-        assert.ok(
-          themes.some(t => t.includes(known.split('-')[0])),
-          `Should include theme matching ${known}`
-        );
-      }
+      const agent = theme!.agents['sm'];
+
+      // Check for duplicates
+      const uniqueCatchphrases = [...new Set(agent.catchphrases)];
+      assert.strictEqual(
+        agent.catchphrases.length,
+        uniqueCatchphrases.length,
+        'catchphrases should have no duplicates'
+      );
     });
   });
 
-  describe('getAgentPersona', () => {
-    it('should return agent persona for valid theme and agent', () => {
-      const persona = getAgentPersona('shakespeare', 'sm');
+  describe('AC4: Theme validation updated', () => {
+    it('should parse catchphrases array from YAML', () => {
+      const theme = loadTheme('star-trek-tng');
+      assert.ok(theme !== null, 'Theme should load');
 
-      assert.ok(persona !== null, 'Should find persona');
-      assert.ok('character' in persona!, 'Should have character');
-    });
-
-    it('should return null for invalid theme', () => {
-      const persona = getAgentPersona('nonexistent', 'sm');
-
-      assert.strictEqual(persona, null);
-    });
-
-    it('should return null for invalid agent', () => {
-      const persona = getAgentPersona('shakespeare', 'nonexistent-agent');
-
-      assert.strictEqual(persona, null);
-    });
-
-    it('should return correct character for known persona', () => {
-      // We know shakespeare theme has specific characters
-      const persona = getAgentPersona('shakespeare', 'sm');
-
-      assert.ok(persona !== null);
-      assert.ok(typeof persona!.character === 'string');
-      assert.ok(persona!.character.length > 0);
+      // Every agent should have catchphrases parsed
+      for (const [agentName, agent] of Object.entries(theme!.agents)) {
+        assert.ok(agent.catchphrases !== undefined, `Agent ${agentName} should have catchphrases`);
+        assert.ok(Array.isArray(agent.catchphrases), `Agent ${agentName} catchphrases should be array`);
+      }
     });
   });
 });

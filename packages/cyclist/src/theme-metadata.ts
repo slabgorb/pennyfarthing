@@ -27,7 +27,7 @@ export interface ThemeMetadata {
  */
 export interface ThemeAgent {
   character: string;
-  quote?: string;
+  catchphrases?: string[];
   style?: string;
   role?: string;
 }
@@ -436,7 +436,7 @@ export async function loadThemeMetadataWithAgents(): Promise<ThemeMetadataWithAg
             if (rawAgent) {
               agents[role as keyof typeof agents] = {
                 character: rawAgent.character || '',
-                quote: rawAgent.quote || '',
+                catchphrases: rawAgent.catchphrases || [],
                 style: rawAgent.style || '',
                 role: rawAgent.role || '',
               };

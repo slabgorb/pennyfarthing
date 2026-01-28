@@ -16,7 +16,7 @@ export interface ThemeAgent {
   character: string;
   style?: string;
   role?: string;
-  quote?: string;
+  catchphrases?: string[];
   trait?: string;
   expertise?: string;
   emoji?: string;
