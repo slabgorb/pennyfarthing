@@ -1657,7 +1657,8 @@ epics:
           without needing to open YAML files.
         points: 5
         priority: P2
-        status: backlog
+        status: done
+        completed: "2026-01-28"
         repos: pennyfarthing
         workflow: tdd
         acceptance_criteria:
