@@ -11,6 +11,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [7.9.0] - 2026-01-28
+
+### Cyclist UI Improvements & Prime v2 Bootstrap
+
+This release delivers significant Cyclist UI enhancements including expandable story sections, improved stats display, and the new Prime v2 unified agent bootstrap system.
+
+### Added
+
+#### Cyclist Enhancements
+- **Expandable Story Section UI** (MSSCI-12475) - Collapsible story details in sidebar with rich data display
+- **Redesigned Stats Strip** (MSSCI-12469) - Identity-focused stats display with agent context
+- **System Banner on Context Clear** (MSSCI-12471) - Visual feedback when context is cleared
+- **Random Catchphrase on Activation** - Agent-themed catchphrases displayed on activation
+- **Improved Combined Diff View** (MSSCI-12468) - Context lines around changes for better readability
+- **Real-Time OTEL Debug Panel** - Live debugging panel for viewing OTEL spans
+- **Background Task Subagent Visibility** (MSSCI-12477) - Track subagent tasks in sidebar
+
+#### Infrastructure
+- **Prime v2 Unified Agent Bootstrap** - Streamlined agent activation with Python-based context loading
+- **Theme Catchphrase Consolidation** (MSSCI-12478) - Unified `quote` field into `catchphrases` array
+
+### Changed
+- **Persona Section Simplified** (MSSCI-12472) - Removed OCEAN scores and helper task line for cleaner display
+- **Workflow Display Removed** (MSSCI-12551) - Removed redundant workflow display from story panel
+
+### Fixed
+
+#### Cyclist Fixes
+- **Sprint Points Calculation** - Use calculated sprint points instead of stale summary values
+- **Background Task Completion** - Detect task completion from message stream correctly
+- **Persona Display Preservation** - Preserve persona display on session clear
+- **Task Tool Detection** - Detect Task tools from message stream instead of OTEL
+- **Session File Format** - Support new list-item session file format in parseSessionFile
+- **BikeLane Panel Detection** (MSSCI-12552) - Correctly detect list-item session format
+- **Panel State Sync** (MSSCI-12470) - Sync panel state to PanelManager on startup
+- **Testing Mode Directory** (MSSCI-12510) - Handle testing mode in getProjectDirectory
+
+#### Scripts & Build
+- **Party-Mode Theme** - Use current theme instead of hardcoded value
+- **Archive Story Script** - Support `jira_sprint_name` field in archive-story.sh
+- **Validation Script** - Fix grep -c zsh arithmetic error
+- **Agent Paths** - Replace $CLAUDE_PROJECT_DIR with relative paths for portability
+- **Stop Hook Migration** - Migrate Stop hook paths from legacy locations
+- **Jira ID Corrections** - Fixed 5 mismatched Jira IDs in sprint YAML
+
+### Summary
+| Metric | Value |
+|--------|-------|
+| Stories Completed | 12+ |
+| Features | 8 |
+| Bug Fixes | 16 |
+| Cyclist Improvements | 7 |
+
+---
+
 ## [7.8.5] - 2026-01-27
 
 *No unreleased changes*
@@ -1687,7 +1742,9 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v7.8.2...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v7.9.0...HEAD
+[7.9.0]: https://github.com/1898andCo/pennyfarthing/compare/v7.8.5...v7.9.0
+[7.8.5]: https://github.com/1898andCo/pennyfarthing/compare/v7.8.2...v7.8.5
 [7.8.2]: https://github.com/1898andCo/pennyfarthing/compare/v7.8.1...v7.8.2
 [7.8.1]: https://github.com/1898andCo/pennyfarthing/compare/v7.8.0...v7.8.1
 [7.8.0]: https://github.com/1898andCo/pennyfarthing/compare/v7.7.0...v7.8.0
