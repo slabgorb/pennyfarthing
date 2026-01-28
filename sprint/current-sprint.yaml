@@ -844,6 +844,20 @@ epics:
         completed: 2026-01-27
         repos: pennyfarthing
         workflow: trivial
+      - id: MSSCI-12553
+        title: "Fix sprint TODO points using calculated values instead of stale summary"
+        description: |
+          The Cyclist sidebar shows 51 TODO points when only 7 points remain in backlog.
+          Root cause: story-parser.ts parseSprintYaml() calculates correct values from
+          stories but then overwrites them with stale summary.remaining_points header.
+
+          Fix: Remove lines 434-442 that prefer summary values over calculated values.
+          The stories ARE the source of truth, not the summary header.
+        points: 1
+        priority: P1
+        status: backlog
+        repos: pennyfarthing
+        workflow: trivial
   - id: epic-61
     type: epic
     title: "Epic: Reflector Marker Consolidation"
@@ -1782,14 +1796,14 @@ epics:
           The data is already available via parseStoryData() - just needs UI.
         points: 3
         priority: P1
-        status: in_progress
+        status: done
         repos: pennyfarthing
         branch: feat/64-19-expandable-story-ui
         workflow: tdd
-        assigned_to: Keith Avery
         acceptance_criteria:
           - Expandable section shows all sprint stories
           - Shows epic context (parent epic, sibling stories)
           - Jira links clickable
           - Points and status for each story
+        completed: "2026-01-28"
     jira: MSSCI-12465
