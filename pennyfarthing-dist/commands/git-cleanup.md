@@ -66,6 +66,43 @@ git branch -d chore/cleanup-$(date +%Y%m%d)
 git push origin develop
 ```
 
+## Stash Management (CRITICAL)
+
+**Before starting ANY cleanup:**
+
+```bash
+# 1. CHECK STASH FIRST
+git stash list
+
+# If stash is NOT empty, STOP and ask user before proceeding
+```
+
+**If stash has entries:**
+- Show user: `git stash list`
+- Ask: "Stash contains saved work. Clear it completely before proceeding?"
+- If user agrees: `git stash clear`
+- If user declines: STOP - do not proceed with cleanup
+
+**When using stash during cleanup:**
+- Mark ALL stash saves clearly: `git stash push -m "CLEANUP-WIP: {description}"`
+- After EVERY stash pop, verify it worked: `git stash list`
+- If commit fails (hook rejection, validation error): **CHECK STASH FIRST** before assuming work is lost
+
+**Before panicking about lost work:**
+```bash
+# Work is probably in stash!
+git stash list
+git stash show -p stash@{0}  # See what's there
+git stash pop                 # Restore it
+```
+
+**After cleanup is complete:**
+```bash
+# Verify stash is empty
+git stash list
+# If not empty, either pop remaining work or clear with user permission
+```
+
 ## Safety Rules
 
 - **NEVER** commit directly to develop
@@ -73,3 +110,5 @@ git push origin develop
 - **NEVER** commit secrets (.env, credentials)
 - **ALWAYS** show diff before committing
 - **ALWAYS** use branches
+- **ALWAYS** check stash before assuming work is lost
+- **ALWAYS** clear stash completely after cleanup is done
