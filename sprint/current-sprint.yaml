@@ -1701,6 +1701,34 @@ epics:
           - Output preview on expand
         jira: MSSCI-12477
         completed: "2026-01-27"
+      - id: "MSSCI-12551"
+        title: "BikeLane: Fix workflow display - remove from story, show in bikelane"
+        description: |
+          Workflow steps displaying in story panel instead of bikelane panel,
+          AND bikelane panel not displaying workflow data at all.
+
+          Problems:
+          1. story.js renders workflow to #workflow-progress in story section
+          2. bikelane section receives data but doesn't display (hidden/not wired)
+
+          Fix:
+          1. Remove updateWorkflowProgress() from story.js
+          2. Remove #workflow-progress from story section HTML
+          3. Ensure bikelane section visible when workflow active
+          4. Wire bikelane.update() to display workflow data
+        points: 3
+        priority: P1
+        status: in_progress
+        repos: pennyfarthing
+        workflow: tdd
+        branch: feat/MSSCI-12551-bikelane-workflow-display
+        acceptance_criteria:
+          - Workflow steps render ONLY in bikelane panel (not story)
+          - Bikelane section VISIBLE when workflow is active
+          - Shows workflow type badge (TDD, trivial, etc)
+          - Shows phase progress with current phase highlighted
+          - Shows phase history timeline
+        jira: MSSCI-12551
       # Vision Stories
       - id: "MSSCI-12478"
         title: "Theme schema: Consolidate quote → catchphrases"
