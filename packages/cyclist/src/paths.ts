@@ -88,6 +88,10 @@ let selectedProjectDir: string | null = null;
 // Track if we've already logged the project directory (avoid spam)
 let hasLoggedProjectDir = false;
 
+// Testing mode: when true, skip env var check (set by resetProjectDirectory)
+// MSSCI-12510: This allows tests to simulate "no project directory" scenario
+let testingModeActive = false;
+
 /**
  * Parse --project-dir argument from CLI
  * Used when launching via: open Cyclist.app --args --project-dir=/path
@@ -106,9 +110,11 @@ export function parseProjectDirArg(): string | null {
 
 /**
  * Set the project directory (called after folder picker selection or in tests)
+ * MSSCI-12510: Now clears testing mode so the set directory is honored.
  */
 export function setProjectDirectory(dir: string): void {
   selectedProjectDir = dir;
+  testingModeActive = false; // Clear testing mode when explicitly setting
   console.log('[Cyclist] Project directory set:', dir);
 }
 
@@ -127,12 +133,26 @@ export function isValidProjectDirectory(dir: string): boolean {
 
 /**
  * Get the project directory for Claude to run in
- * Priority: CLI arg → env var → selected dir (from picker) → null (triggers picker)
+ * Priority: CLI arg → selected dir (from picker) → env var → null (triggers picker)
+ *
+ * MSSCI-12510: Changed priority so setProjectDirectory() takes precedence over env var.
+ * This allows explicit setting to override environment defaults.
  */
 export function getProjectDirectory(): string | null {
-  // Check CLI arg first
+  // Check CLI arg first (highest priority)
   if (projectDirFromArg && isValidProjectDirectory(projectDirFromArg)) {
     return projectDirFromArg;
+  }
+
+  // Check selected directory (from picker or setProjectDirectory call)
+  // MSSCI-12510: Moved above env var check so explicit sets take priority
+  if (selectedProjectDir && isValidProjectDirectory(selectedProjectDir)) {
+    return selectedProjectDir;
+  }
+
+  // Skip env var check in testing mode (MSSCI-12510)
+  if (testingModeActive) {
+    return null;
   }
 
   // Check environment variable (useful for web mode)
@@ -145,22 +165,22 @@ export function getProjectDirectory(): string | null {
     return envDir;
   }
 
-  // Check selected directory (from picker)
-  if (selectedProjectDir && isValidProjectDirectory(selectedProjectDir)) {
-    return selectedProjectDir;
-  }
-
   return null;
 }
 
 /**
  * Reset project directory state (for testing only)
- * Clears both CLI arg and selected directory
+ * Clears both CLI arg and selected directory, and enables testing mode
+ * which skips the environment variable check.
+ *
+ * MSSCI-12510: Added testingModeActive flag to allow tests to simulate
+ * the "no project directory" scenario without env var interference.
  */
 export function resetProjectDirectory(): void {
   projectDirFromArg = null;
   selectedProjectDir = null;
   hasLoggedProjectDir = false;
+  testingModeActive = true;
 }
 
 // Resolve public directory - works in dev, compiled, and packaged Electron modes

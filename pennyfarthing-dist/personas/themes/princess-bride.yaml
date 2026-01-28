@@ -42,7 +42,6 @@ agents:
       - "That day, she was amazed to discover that when he said 'deploying,' what he meant was 'I fixed it.'"
       - "The grandson would have complained here, but he was too invested in the outcome."
       - "Where was I? Oh yes..."
-    quote: When I was your age, software was called programs. Now where were we?
     emoji: "\U0001F4D6"
     helper:
       name: The Book
@@ -75,7 +74,6 @@ agents:
       - "Let me put it this way... have you ever heard of Plato? Aristotle? Socrates? Morons."
       - "I can't compete with you physically, and you're no match for my brains."
       - "Truly, you have a dizzying intellect."
-    quote: Inconceivable! This sprint will succeed!
     emoji: "\U0001F9D0"
     helper:
       name: The Iocane Powder
@@ -109,7 +107,6 @@ agents:
       - "You are the Brute Squad."
       - "I hope we win."
       - "Inigo, I hope we fail... er, prevail!"
-    quote: I'm testing because it's the right thing... and also it rhymes.
     emoji: "\U0001F9CD"
     helper:
       name: The Brute Squad
@@ -143,7 +140,6 @@ agents:
       - "I want my father back, you son of a bitch."
       - "There is not much money in revenge."
       - "Offer me anything I ask for... I want my code to work."
-    quote: Hello. My name is Inigo Montoya. You need this feature. Prepare to receive it.
     emoji: "\u2694\uFE0F"
     helper:
       name: The Six-Fingered Man Detector
@@ -177,7 +173,6 @@ agents:
       - "Death cannot stop true love. All it can do is delay it for a while."
       - "We are men of action. Lies do not become us."
       - "Get used to disappointment."
-    quote: As you wish. But this code needs work.
     emoji: "\U0001F3F4\u200D\u2620\uFE0F"
     helper:
       name: The Dread Pirate Ship
@@ -210,7 +205,6 @@ agents:
       - "You mock my pain!"
       - "You seem a decent fellow. I hate to kill your PR."
       - "Please understand I hold you in the highest respect."
-    quote: I spent years building an immunity to technical debt.
     emoji: "\U0001F3AD"
     helper:
       name: The Cliffs of Insanity Scaling Guide
@@ -243,7 +237,6 @@ agents:
       - "Please consider me as an alternative to suicide."
       - "First things first. To the death!"
       - "Surrender!"
-    quote: I shall track this project's progress across any terrain!
     emoji: "\U0001F451"
     helper:
       name: Count Rugen
@@ -276,7 +269,6 @@ agents:
       - "That day, she was amazed to discover..."
       - "Since the invention of the kiss, there have been five kisses rated the most passionate..."
       - "Is this a documentation book?"
-    quote: Let me explain... no, there is too much. Let me sum up.
     emoji: "\U0001F4DA"
     helper:
       name: The Grandson's Questions
@@ -309,7 +301,6 @@ agents:
       - "As you wish."
       - "I died that day!"
       - "You can die too for all I care!"
-    quote: I will never love an interface as I love this one. But perhaps I could like it.
     emoji: "\U0001F451"
     helper:
       name: The Fire Swamp Guide
@@ -342,7 +333,6 @@ agents:
       - "Liar! LIAR! LI-AR!"
       - "Get back, witch!"
       - "Beat it or I'll call the Brute Squad."
-    quote: It just so happens your server is only MOSTLY dead. There's a big difference!
     emoji: "\U0001F9D9"
     helper:
       name: Valerie

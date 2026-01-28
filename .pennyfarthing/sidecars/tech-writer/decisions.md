@@ -1,40 +1,7 @@
-# tech-writer Decisions
+# Tech Writer Agent Decisions
 
-Architecture Decision Records (ADRs) for tech-writer work.
-
-## Decision Template
-
-Use this format for significant technical choices:
-
-### [Decision Title]
-
-**Status:** Proposed / Accepted / Superseded
-
-**Context:** Why was this decision needed? What problem were we solving?
-
-**Decision:** What did we decide to do?
-
-**Rationale:** Why this approach? What were the tradeoffs?
-
-**Alternatives Considered:**
-- Option A: [description and why we didn't choose it]
-- Option B: [description and why we didn't choose it]
-
-**Consequences:** What is the impact? What becomes easier/harder?
-
-**Date:** When was this decided?
+> Pennyfarthing-specific documentation decisions
 
 ---
 
-## Decisions to Document
-
-Start with significant choices:
-- Architecture patterns
-- Technology selections
-- Process decisions
-- Design approaches
-- Library/dependency choices
-- Data storage strategies
-- API design choices
-
-Keep 5-15 active decisions. Supersede rather than delete when contexts change.
+*Add decisions made during tech writing work below*

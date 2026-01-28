@@ -27,3 +27,6 @@ export { createSpansRouter } from './spans.js';
 export { getBellClients, broadcastBellConsumed } from './bell.js';
 // MSSCI-12409: Hook request API (WheelHub consolidation)
 export { createHookRequestRouter, getHookClients, addHookClient, resolveApproval, handleHookWebSocketMessage } from './hook-request.js';
+// MSSCI-12469: Identity API for stats strip
+export { createIdentityRouter } from './identity.js';
+export type { IdentityInfo } from './identity.js';

@@ -166,20 +166,24 @@ export function getDirectoryHashes(dirPath: string): Record<string, string> {
 }
 
 /**
- * Find the monorepo root by walking up from a starting directory.
- * Looks for the pennyfarthing-dist directory as the marker for the root.
- * This is useful for tests and scripts that need to find assets relative to the monorepo root.
+ * Find the project root by walking up from a starting directory.
+ *
+ * Looks for .pennyfarthing/ directory as the primary marker - this exists in any
+ * project using Pennyfarthing (created by `pennyfarthing init`).
  *
  * @param startDir - Starting directory (defaults to __dirname equivalent)
- * @returns Absolute path to monorepo root
+ * @returns Absolute path to project root
  * @throws Error if root cannot be found within 10 levels
  */
 export function findMonorepoRoot(startDir: string): string {
   let dir = startDir;
+
   for (let i = 0; i < 10; i++) {
-    if (existsSync(join(dir, 'pennyfarthing-dist'))) {
+    // Primary marker: .pennyfarthing/ directory (created by pennyfarthing init)
+    if (existsSync(join(dir, '.pennyfarthing'))) {
       return dir;
     }
+
     const parent = dirname(dir);
     if (parent === dir) {
       // Reached filesystem root
@@ -187,5 +191,6 @@ export function findMonorepoRoot(startDir: string): string {
     }
     dir = parent;
   }
-  throw new Error(`Could not find monorepo root (pennyfarthing-dist/) starting from ${startDir}`);
+
+  throw new Error(`Could not find project root (.pennyfarthing/) starting from ${startDir}`);
 }

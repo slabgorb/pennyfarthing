@@ -178,6 +178,50 @@ export function init() {
 }
 
 /**
+ * Clear the BikeLane section
+ * MSSCI-12471: Called on context clear to reset workflow visualization
+ * @export
+ */
+export function clearBikeLane() {
+  // Hide the section
+  const section = document.getElementById('bikelane-section');
+  if (section) {
+    section.classList.add('hidden');
+    section.style.display = 'none';
+  }
+
+  // Clear workflow name (for test DOM structure)
+  const workflowName = document.getElementById('workflow-name');
+  if (workflowName) {
+    workflowName.textContent = '';
+  }
+
+  // Clear the badge
+  const badge = document.querySelector('.workflow-type-badge');
+  if (badge) {
+    badge.textContent = '';
+  }
+
+  // Clear phase visualizations
+  const progress = document.querySelector('.phase-progress');
+  if (progress) {
+    progress.innerHTML = '';
+  }
+
+  const historyList = document.querySelector('.phase-history-list');
+  if (historyList) {
+    historyList.innerHTML = '';
+  }
+
+  const summary = document.querySelector('.phase-summary');
+  if (summary) {
+    summary.innerHTML = '';
+  }
+
+  console.log('[BikeLane] Cleared workflow visualization');
+}
+
+/**
  * Cleanup bikelane module
  */
 export function destroy() {

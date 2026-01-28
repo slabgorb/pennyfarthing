@@ -136,19 +136,18 @@ describe('AC1: Cyclist tracks background task IDs from Task tool', () => {
     expect(typeof otlpReceiver.resetBackgroundTasks).toBe('function');
   });
 
-  it('should detect Task tool span with run_in_background: true', async () => {
-    const span = createBackgroundTaskSpan({
+  it('should track Task tool with run_in_background: true', async () => {
+    // Task detection moved from OTEL to message stream in main.ts
+    // This test simulates what main.ts does when it sees a Task tool_use block
+    const otlpReceiver = await import('../src/otlp-receiver.js');
+    otlpReceiver.trackBackgroundTask({
       taskId: 'bg-task-001',
       description: 'Run unit tests',
       subagentType: 'testing-runner',
+      startedAt: Date.now(),
+      isBackground: true,
     });
 
-    await request(app)
-      .post('/v1/logs')
-      .send(span)
-      .set('Content-Type', 'application/json');
-
-    const otlpReceiver = await import('../src/otlp-receiver.js');
     const tasks = otlpReceiver.getBackgroundTasks();
 
     expect(tasks.length).toBeGreaterThan(0);
@@ -157,18 +156,15 @@ describe('AC1: Cyclist tracks background task IDs from Task tool', () => {
   });
 
   it('should store task description and subagent type', async () => {
-    const span = createBackgroundTaskSpan({
+    const otlpReceiver = await import('../src/otlp-receiver.js');
+    otlpReceiver.trackBackgroundTask({
       taskId: 'bg-task-002',
       description: 'Gather review data',
       subagentType: 'reviewer-preflight',
+      startedAt: Date.now(),
+      isBackground: true,
     });
 
-    await request(app)
-      .post('/v1/logs')
-      .send(span)
-      .set('Content-Type', 'application/json');
-
-    const otlpReceiver = await import('../src/otlp-receiver.js');
     const tasks = otlpReceiver.getBackgroundTasks();
     const tracked = tasks.find((t: { taskId: string }) => t.taskId === 'bg-task-002');
 
@@ -177,54 +173,45 @@ describe('AC1: Cyclist tracks background task IDs from Task tool', () => {
     expect(tracked.subagentType).toBe('reviewer-preflight');
   });
 
-  it('should NOT track regular Task tool spans (non-background)', async () => {
-    // Regular Task span without run_in_background
-    const span = {
-      resourceLogs: [{
-        scopeLogs: [{
-          logRecords: [{
-            timeUnixNano: String(Date.now() * 1_000_000),
-            body: { stringValue: 'claude_code.tool_result' },
-            attributes: [
-              { key: 'tool_name', value: { stringValue: 'Task' } },
-              { key: 'tool_parameters', value: { stringValue: JSON.stringify({
-                description: 'Search codebase',
-                subagent_type: 'Explore',
-                // No run_in_background field
-              }) } },
-              { key: 'success', value: { stringValue: 'true' } },
-            ],
-          }],
-        }],
-      }],
-    };
-
-    await request(app)
-      .post('/v1/logs')
-      .send(span)
-      .set('Content-Type', 'application/json');
-
+  it('should differentiate background vs foreground tasks via isBackground', async () => {
+    // All tasks are now tracked from message stream, with isBackground flag
     const otlpReceiver = await import('../src/otlp-receiver.js');
-    const tasks = otlpReceiver.getBackgroundTasks();
+    otlpReceiver.trackBackgroundTask({
+      taskId: 'fg-task-001',
+      description: 'Search codebase',
+      subagentType: 'Explore',
+      startedAt: Date.now(),
+      isBackground: false,  // Foreground task
+    });
+    otlpReceiver.trackBackgroundTask({
+      taskId: 'bg-task-001',
+      description: 'Run tests in background',
+      subagentType: 'testing-runner',
+      startedAt: Date.now(),
+      isBackground: true,   // Background task
+    });
 
-    // Should not have added this non-background task
-    expect(tasks.length).toBe(0);
+    const tasks = otlpReceiver.getBackgroundTasks();
+    const fgTask = tasks.find((t: { taskId: string }) => t.taskId === 'fg-task-001');
+    const bgTask = tasks.find((t: { taskId: string }) => t.taskId === 'bg-task-001');
+
+    expect(fgTask).toBeDefined();
+    expect(fgTask.isBackground).toBe(false);
+    expect(bgTask).toBeDefined();
+    expect(bgTask.isBackground).toBe(true);
   });
 
   it('should track task start timestamp', async () => {
-    // Capture time with tolerance to avoid flaky race condition
-    // (implementation may capture timestamp 1-2ms before test's startTime)
     const startTime = Date.now() - 10; // 10ms tolerance
-    const span = createBackgroundTaskSpan({
+    const otlpReceiver = await import('../src/otlp-receiver.js');
+    otlpReceiver.trackBackgroundTask({
       taskId: 'bg-task-003',
+      description: 'Test task',
+      subagentType: 'testing-runner',
+      startedAt: Date.now(),
+      isBackground: true,
     });
 
-    await request(app)
-      .post('/v1/logs')
-      .send(span)
-      .set('Content-Type', 'application/json');
-
-    const otlpReceiver = await import('../src/otlp-receiver.js');
     const tasks = otlpReceiver.getBackgroundTasks();
     const tracked = tasks.find((t: { taskId: string }) => t.taskId === 'bg-task-003');
 
@@ -235,16 +222,15 @@ describe('AC1: Cyclist tracks background task IDs from Task tool', () => {
   });
 
   it('should track task status as pending initially', async () => {
-    const span = createBackgroundTaskSpan({
+    const otlpReceiver = await import('../src/otlp-receiver.js');
+    otlpReceiver.trackBackgroundTask({
       taskId: 'bg-task-004',
+      description: 'Test task',
+      subagentType: 'testing-runner',
+      startedAt: Date.now(),
+      isBackground: true,
     });
 
-    await request(app)
-      .post('/v1/logs')
-      .send(span)
-      .set('Content-Type', 'application/json');
-
-    const otlpReceiver = await import('../src/otlp-receiver.js');
     const tasks = otlpReceiver.getBackgroundTasks();
     const tracked = tasks.find((t: { taskId: string }) => t.taskId === 'bg-task-004');
 
@@ -294,17 +280,16 @@ describe('AC2: UI notification appears in Message View when background task comp
     const callback = vi.fn();
     otlpReceiver.setBackgroundTaskCallback(callback);
 
-    // First, register a background task
-    const taskSpan = createBackgroundTaskSpan({
+    // First, register a background task (via message stream detection)
+    otlpReceiver.trackBackgroundTask({
       taskId: 'bg-notify-001',
       description: 'Run tests',
+      subagentType: 'testing-runner',
+      startedAt: Date.now(),
+      isBackground: true,
     });
-    await request(app)
-      .post('/v1/logs')
-      .send(taskSpan)
-      .set('Content-Type', 'application/json');
 
-    // Then, simulate TaskOutput completion
+    // Then, simulate TaskOutput completion via OTEL (this path still works)
     const outputSpan = createTaskOutputSpan({
       taskId: 'bg-notify-001',
       status: 'completed',
@@ -549,18 +534,15 @@ describe('AC5: Works with testing-runner and other background subagents', () => 
   });
 
   it('should track testing-runner subagent', async () => {
-    const span = createBackgroundTaskSpan({
+    const otlpReceiver = await import('../src/otlp-receiver.js');
+    otlpReceiver.trackBackgroundTask({
       taskId: 'testing-001',
       description: 'Run unit tests',
       subagentType: 'testing-runner',
+      startedAt: Date.now(),
+      isBackground: true,
     });
 
-    await request(app)
-      .post('/v1/logs')
-      .send(span)
-      .set('Content-Type', 'application/json');
-
-    const otlpReceiver = await import('../src/otlp-receiver.js');
     const tasks = otlpReceiver.getBackgroundTasks();
     const tracked = tasks.find((t: { taskId: string }) => t.taskId === 'testing-001');
 
@@ -569,18 +551,15 @@ describe('AC5: Works with testing-runner and other background subagents', () => 
   });
 
   it('should track reviewer-preflight subagent', async () => {
-    const span = createBackgroundTaskSpan({
+    const otlpReceiver = await import('../src/otlp-receiver.js');
+    otlpReceiver.trackBackgroundTask({
       taskId: 'preflight-001',
       description: 'Gather review data',
       subagentType: 'reviewer-preflight',
+      startedAt: Date.now(),
+      isBackground: true,
     });
 
-    await request(app)
-      .post('/v1/logs')
-      .send(span)
-      .set('Content-Type', 'application/json');
-
-    const otlpReceiver = await import('../src/otlp-receiver.js');
     const tasks = otlpReceiver.getBackgroundTasks();
     const tracked = tasks.find((t: { taskId: string }) => t.taskId === 'preflight-001');
 
@@ -589,18 +568,15 @@ describe('AC5: Works with testing-runner and other background subagents', () => 
   });
 
   it('should track generic-handoff subagent', async () => {
-    const span = createBackgroundTaskSpan({
+    const otlpReceiver = await import('../src/otlp-receiver.js');
+    otlpReceiver.trackBackgroundTask({
       taskId: 'handoff-001',
       description: 'Complete handoff bookkeeping',
       subagentType: 'generic-handoff',
+      startedAt: Date.now(),
+      isBackground: true,
     });
 
-    await request(app)
-      .post('/v1/logs')
-      .send(span)
-      .set('Content-Type', 'application/json');
-
-    const otlpReceiver = await import('../src/otlp-receiver.js');
     const tasks = otlpReceiver.getBackgroundTasks();
     const tracked = tasks.find((t: { taskId: string }) => t.taskId === 'handoff-001');
 
@@ -609,18 +585,15 @@ describe('AC5: Works with testing-runner and other background subagents', () => 
   });
 
   it('should track sm-file-summary subagent', async () => {
-    const span = createBackgroundTaskSpan({
+    const otlpReceiver = await import('../src/otlp-receiver.js');
+    otlpReceiver.trackBackgroundTask({
       taskId: 'summary-001',
       description: 'Summarize story files',
       subagentType: 'sm-file-summary',
+      startedAt: Date.now(),
+      isBackground: true,
     });
 
-    await request(app)
-      .post('/v1/logs')
-      .send(span)
-      .set('Content-Type', 'application/json');
-
-    const otlpReceiver = await import('../src/otlp-receiver.js');
     const tasks = otlpReceiver.getBackgroundTasks();
     const tracked = tasks.find((t: { taskId: string }) => t.taskId === 'summary-001');
 
@@ -629,18 +602,15 @@ describe('AC5: Works with testing-runner and other background subagents', () => 
   });
 
   it('should track Explore subagent', async () => {
-    const span = createBackgroundTaskSpan({
+    const otlpReceiver = await import('../src/otlp-receiver.js');
+    otlpReceiver.trackBackgroundTask({
       taskId: 'explore-001',
       description: 'Search codebase for patterns',
       subagentType: 'Explore',
+      startedAt: Date.now(),
+      isBackground: true,
     });
 
-    await request(app)
-      .post('/v1/logs')
-      .send(span)
-      .set('Content-Type', 'application/json');
-
-    const otlpReceiver = await import('../src/otlp-receiver.js');
     const tasks = otlpReceiver.getBackgroundTasks();
     const tracked = tasks.find((t: { taskId: string }) => t.taskId === 'explore-001');
 
@@ -649,20 +619,30 @@ describe('AC5: Works with testing-runner and other background subagents', () => 
   });
 
   it('should handle multiple concurrent background tasks', async () => {
-    const spans = [
-      createBackgroundTaskSpan({ taskId: 'concurrent-001', subagentType: 'testing-runner' }),
-      createBackgroundTaskSpan({ taskId: 'concurrent-002', subagentType: 'reviewer-preflight' }),
-      createBackgroundTaskSpan({ taskId: 'concurrent-003', subagentType: 'generic-handoff' }),
-    ];
-
-    for (const span of spans) {
-      await request(app)
-        .post('/v1/logs')
-        .send(span)
-        .set('Content-Type', 'application/json');
-    }
-
     const otlpReceiver = await import('../src/otlp-receiver.js');
+
+    otlpReceiver.trackBackgroundTask({
+      taskId: 'concurrent-001',
+      description: 'Concurrent 1',
+      subagentType: 'testing-runner',
+      startedAt: Date.now(),
+      isBackground: true,
+    });
+    otlpReceiver.trackBackgroundTask({
+      taskId: 'concurrent-002',
+      description: 'Concurrent 2',
+      subagentType: 'reviewer-preflight',
+      startedAt: Date.now(),
+      isBackground: true,
+    });
+    otlpReceiver.trackBackgroundTask({
+      taskId: 'concurrent-003',
+      description: 'Concurrent 3',
+      subagentType: 'generic-handoff',
+      startedAt: Date.now(),
+      isBackground: true,
+    });
+
     const tasks = otlpReceiver.getBackgroundTasks();
 
     expect(tasks.length).toBe(3);
@@ -672,18 +652,18 @@ describe('AC5: Works with testing-runner and other background subagents', () => 
   });
 
   it('should update task status when TaskOutput shows completion', async () => {
-    // Start background task
-    const taskSpan = createBackgroundTaskSpan({
+    const otlpReceiver = await import('../src/otlp-receiver.js');
+
+    // Register task directly (simulates message stream detection)
+    otlpReceiver.trackBackgroundTask({
       taskId: 'status-update-001',
       description: 'Run tests',
       subagentType: 'testing-runner',
+      startedAt: Date.now(),
+      isBackground: true,
     });
-    await request(app)
-      .post('/v1/logs')
-      .send(taskSpan)
-      .set('Content-Type', 'application/json');
 
-    // Complete the task
+    // Complete the task via OTEL (TaskOutput path still works)
     const outputSpan = createTaskOutputSpan({
       taskId: 'status-update-001',
       status: 'completed',
@@ -694,7 +674,6 @@ describe('AC5: Works with testing-runner and other background subagents', () => 
       .send(outputSpan)
       .set('Content-Type', 'application/json');
 
-    const otlpReceiver = await import('../src/otlp-receiver.js');
     const tasks = otlpReceiver.getBackgroundTasks();
     const tracked = tasks.find((t: { taskId: string }) => t.taskId === 'status-update-001');
 
@@ -704,18 +683,18 @@ describe('AC5: Works with testing-runner and other background subagents', () => 
   });
 
   it('should store task output when completed', async () => {
-    // Start background task
-    const taskSpan = createBackgroundTaskSpan({
+    const otlpReceiver = await import('../src/otlp-receiver.js');
+
+    // Register task directly (simulates message stream detection)
+    otlpReceiver.trackBackgroundTask({
       taskId: 'output-store-001',
       description: 'Run tests',
       subagentType: 'testing-runner',
+      startedAt: Date.now(),
+      isBackground: true,
     });
-    await request(app)
-      .post('/v1/logs')
-      .send(taskSpan)
-      .set('Content-Type', 'application/json');
 
-    // Complete with output
+    // Complete with output via OTEL (TaskOutput path still works)
     const outputSpan = createTaskOutputSpan({
       taskId: 'output-store-001',
       status: 'completed',
@@ -727,7 +706,6 @@ describe('AC5: Works with testing-runner and other background subagents', () => 
       .send(outputSpan)
       .set('Content-Type', 'application/json');
 
-    const otlpReceiver = await import('../src/otlp-receiver.js');
     const tasks = otlpReceiver.getBackgroundTasks();
     const tracked = tasks.find((t: { taskId: string }) => t.taskId === 'output-store-001');
 
@@ -776,16 +754,14 @@ describe('Integration: Background Task Notification Flow', () => {
     const notificationCallback = vi.fn();
     otlpReceiver.setBackgroundTaskCallback(notificationCallback);
 
-    // 1. Background task starts
-    const taskSpan = createBackgroundTaskSpan({
+    // 1. Background task starts (via message stream detection)
+    otlpReceiver.trackBackgroundTask({
       taskId: 'e2e-001',
       description: 'Run integration tests',
       subagentType: 'testing-runner',
+      startedAt: Date.now(),
+      isBackground: true,
     });
-    await request(app)
-      .post('/v1/logs')
-      .send(taskSpan)
-      .set('Content-Type', 'application/json');
 
     // Verify tracking
     let tasks = otlpReceiver.getBackgroundTasks();

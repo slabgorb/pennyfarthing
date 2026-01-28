@@ -395,6 +395,7 @@ interface BackgroundTaskData {
   success?: boolean;
   output?: string;
   error?: string;
+  isBackground?: boolean;
 }
 
 /**
@@ -808,13 +809,13 @@ function createElectronAPI(): ElectronAPI {
         // 24-1: Settings panel infrastructure - test stub
         get: () => Promise.resolve({
           workflow: { auto_handoff: false, handoff_confirm: true },
-          display: { show_flow: true, show_ocean: false, sidebar_width: 300 },
+          display: { show_flow: true, sidebar_width: 300 },
           notifications: { phase_change: true, sound: false },
           pennyfarthing: { theme: 'alice-in-wonderland' },
         }),
         save: (_settings: unknown) => Promise.resolve({
           workflow: { auto_handoff: false, handoff_confirm: true },
-          display: { show_flow: true, show_ocean: false, sidebar_width: 300 },
+          display: { show_flow: true, sidebar_width: 300 },
           notifications: { phase_change: true, sound: false },
           pennyfarthing: { theme: 'alice-in-wonderland' },
         }),

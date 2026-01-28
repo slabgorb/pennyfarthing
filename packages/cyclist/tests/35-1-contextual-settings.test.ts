@@ -173,8 +173,9 @@ describe('35-1: Contextual Settings Placement', () => {
       expect(settingsHtml).toContain('id="show_flow"');
     });
 
-    it('should KEEP Display section with show_ocean', async () => {
-      expect(settingsHtml).toContain('id="show_ocean"');
+    it('should NOT have show_ocean in Display section (MSSCI-12472)', async () => {
+      // OCEAN bars setting removed - feature never fully implemented
+      expect(settingsHtml).not.toContain('id="show_ocean"');
     });
 
     it('should KEEP Display section with sidebar_width', async () => {

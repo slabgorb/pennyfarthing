@@ -439,6 +439,7 @@ describe('Integration: Output data flows correctly', () => {
         toggle: vi.fn(),
       },
       querySelector: vi.fn(() => null),
+      querySelectorAll: vi.fn(() => []),
     };
     const mockContainer = {
       innerHTML: '',

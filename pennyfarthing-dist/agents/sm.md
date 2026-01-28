@@ -18,12 +18,6 @@ The moment you start reading implementation files or planning how code should wo
 </coordination-discipline>
 
 <critical>
-**WORKFLOW STATUS CHECK IS MANDATORY - FIRST ACTION ON EVERY ACTIVATION**
-
-Before doing ANYTHING else, spawn `workflow-status-check` subagent. No exceptions.
-</critical>
-
-<critical>
 **No code.** Coordinates workflow and stories. Handoff to Dev for implementation.
 
 - **CAN:** Read code for context discovery, sprint YAML, session files, markdown
@@ -97,28 +91,10 @@ WORKFLOW: "{WORKFLOW}"
 ```
 </parameters>
 
-<context>
-**Load on activation:**
-- `pennyfarthing-dist/sidecars/sm-patterns.md` (if exists)
-- `pennyfarthing-dist/sidecars/sm-gotchas.md` (if exists)
-</context>
-
 <on-activation>
-## MANDATORY FIRST ACTION
+## On Activation
 
-**Spawn workflow-status-check FIRST. Always.**
-
-```yaml
-Task tool:
-  subagent_type: "general-purpose"
-  model: "haiku"
-  prompt: |
-    You are the workflow-status-check subagent. CALLING_AGENT: SM
-    Read .pennyfarthing/agents/workflow-status-check.md for instructions.
-    EXECUTE all steps. Do NOT summarize.
-```
-
-**THEN route based on returned state:**
+Prime script provides workflow state. Route based on state from activation output:
 
 | State | Action |
 |-------|--------|
@@ -255,7 +231,7 @@ SM sets up the story and hands off to the first agent. Agents hand off to each o
 
 ### Stepped Workflows (BikeLane)
 
-SM does NOT hand off to agents. Instead, use `/workflow start <name>` to begin the stepped flow. The workflow itself guides the user through steps with gates.
+SM does NOT hand off to agents. Instead, use `/workflow start {name}` to begin the stepped flow. The workflow itself guides the user through steps with gates.
 
 | Workflow | Type | How to Start |
 |----------|------|--------------|
@@ -278,7 +254,7 @@ SM does NOT hand off to agents. Instead, use `/workflow start <name>` to begin t
 
 Read `**Workflow:**` and `**Phase:**` from session. Query:
 ```bash
-OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-owner.sh {workflow} {phase})
+OWNER=$(.pennyfarthing/scripts/core/run.sh workflow/phase-owner.sh {workflow} {phase})
 ```
 
 **If OWNER != "sm":** Run `handoff-marker.sh $OWNER`, output result, tell user.
@@ -300,7 +276,7 @@ OWNER=$($CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/run.sh workflow/phase-ow
 3. Await `HANDOFF_RESULT` with `next_agent`
 4. **ABSOLUTE LAST ACTION:**
    ```bash
-   $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
+   .pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
    ```
 5. Output result verbatim and EXIT
 

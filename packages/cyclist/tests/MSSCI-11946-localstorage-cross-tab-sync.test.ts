@@ -92,6 +92,7 @@ const JS_DIR = path.join(__dirname, '../src/public/js');
 const SETTINGS_SYNC_PATH = path.join(JS_DIR, 'settings-sync.js');
 
 // Files that should use settings-sync.js after refactoring
+// Note: story.js is at sidebar/story.js and doesn't use localStorage
 const FILES_USING_LOCALSTORAGE = [
   'vertical-panel.js',
   'panel-manager.js',
@@ -103,7 +104,6 @@ const FILES_USING_LOCALSTORAGE = [
   'theme.js',
   'theme-manager.js',
   'message-view-init.js',
-  'story.js',
   'editor/message-queue.js',
   'editor/command-history.js',
 ];
