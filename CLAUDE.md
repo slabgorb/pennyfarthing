@@ -97,8 +97,8 @@ BikeLane is the umbrella for all workflow types in Pennyfarthing. Use `/workflow
 
 Subagents use Claude Code's Task tool with `subagent_type`. Key subagents:
 - `workflow-status-check` - Detect current workflow state
-- `sm-setup` - Research backlog (MODE=research) or setup story (MODE=setup)
-- `sm-finish` - Preflight checks (PHASE=preflight) or execute finish (PHASE=execute)
+- `generic-sm-setup` - Research backlog (MODE=research) or setup story (MODE=setup)
+- `generic-sm-finish` - Preflight checks (PHASE=preflight) or execute finish (PHASE=execute)
 - `sm-handoff` - SM→TEA/Dev handoff with Jira/branch verification
 - `testing-runner` - Config-driven test execution
 - `handoff` - Workflow-driven phase transitions (TEA/Dev/Reviewer)
