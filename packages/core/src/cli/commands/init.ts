@@ -346,7 +346,13 @@ async function generateTemplateFiles(
         content = content.replace(/\$\{PROJECT_NAME\}/g, projectName);
         content = content.replace(/\$\{PROJECT_ROOT\}/g, projectRoot);
         ensureDirSync(join(projectRoot, dest, '..'));
-        writeFileSync(destPath, content, 'utf8');
+        // Shell scripts need executable permission
+        const isShellScript = template.endsWith('.sh.template');
+        if (isShellScript) {
+          writeFileSync(destPath, content, { mode: 0o755 });
+        } else {
+          writeFileSync(destPath, content, 'utf8');
+        }
       }
       logger.created(dest);
     }
@@ -638,7 +644,14 @@ async function updateGitignore(
     '!.session/.gitkeep',
     '.claude/settings.local.json',
     '.claude/persona-config.local.yaml',
-    '.pennyfarthing/config.local.yaml'
+    '.pennyfarthing/config.local.yaml',
+    '',
+    '# Runtime state files (Cyclist, bells, etc)',
+    '*.pid',
+    '*-pid',
+    '*-port',
+    '.pennyfarthing/*.json',
+    '.cyclist-*'
   ];
 
   let content = '';

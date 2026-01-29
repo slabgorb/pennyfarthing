@@ -16,7 +16,7 @@ if [[ -z "${PROJECT_ROOT:-}" ]]; then
   PROJECT_ROOT="$d"
 fi
 
-WORKFLOWS_DIR="$PROJECT_ROOT/pennyfarthing-dist/workflows"
+WORKFLOWS_DIR="$PROJECT_ROOT/.pennyfarthing/workflows"
 
 if [[ ! -d "$WORKFLOWS_DIR" ]]; then
   echo "Error: Workflows directory not found at $WORKFLOWS_DIR"
@@ -38,13 +38,19 @@ echo "|----------|------|---------|--------------|-------|-------------|"
 workflow_files=()
 while IFS= read -r -d '' f; do
   workflow_files+=("$f")
-done < <(find "$WORKFLOWS_DIR" -maxdepth 1 -name "*.yaml" -print0 2>/dev/null)
+done < <(find -L "$WORKFLOWS_DIR" -maxdepth 1 -name "*.yaml" -print0 2>/dev/null)
 while IFS= read -r -d '' f; do
   workflow_files+=("$f")
-done < <(find "$WORKFLOWS_DIR" -mindepth 2 -name "workflow.yaml" -print0 2>/dev/null)
+done < <(find -L "$WORKFLOWS_DIR" -mindepth 2 -name "workflow.yaml" -print0 2>/dev/null)
+
+# Exit early if no workflows found
+if [[ ${#workflow_files[@]} -eq 0 ]]; then
+  echo "No workflows found in $WORKFLOWS_DIR"
+  exit 0
+fi
 
 # Sort by workflow name for consistent output
-IFS=$'\n' sorted_files=($(for f in "${workflow_files[@]}"; do echo "$f"; done | sort))
+IFS=$'\n' sorted_files=($(printf '%s\n' "${workflow_files[@]}" | sort))
 unset IFS
 
 for f in "${sorted_files[@]}"; do
