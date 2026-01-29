@@ -1,0 +1,101 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "Bash",
+      "Bash(claude:*)",
+      "Bash(date:*)",
+      "Bash(mkdir:*)",
+      "Edit(.claude/**)",
+      "Edit(.pennyfarthing/**)",
+      "Edit(sprint/**)",
+      "Edit(.session/**)",
+      "Edit(results/**)",
+      "Write(.claude/**)",
+      "Write(.pennyfarthing/**)",
+      "Write(sprint/**)",
+      "Write(.session/**)",
+      "Write(results/**)",
+      "Skill(sm)",
+      "Skill(tea)",
+      "Skill(dev)",
+      "Skill(reviewer)",
+      "Skill(solo)",
+      "Skill(benchmark)",
+      "Skill(benchmark-control)",
+      "Skill(judge)",
+      "Skill(finalize-run)"
+    ]
+  },
+  "context_budget": {
+    "warning_threshold": 70,
+    "critical_threshold": 85,
+    "max_tokens": 200000
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.pennyfarthing/scripts/hooks/session-start.sh"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/project/hooks/setup-env.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.pennyfarthing/scripts/hooks/question-reflector-check.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.pennyfarthing/scripts/hooks/pre-edit-check.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|Bash|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.pennyfarthing/scripts/hooks/context-warning.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|Bash|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.pennyfarthing/scripts/hooks/context-circuit-breaker.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "\"$CLAUDE_PROJECT_DIR\"/.pennyfarthing/scripts/misc/statusline.sh"
+  }
+}
