@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [7.9.3] - 2026-01-29
+
+### Fixed
+- **npm Publish** - Replace `workspace:*` dependency with explicit version for `@pennyfarthing/shared` to allow npm install outside of pnpm workspaces
+
+---
+
 ## [7.9.2] - 2026-01-29
 
 ### Changed
