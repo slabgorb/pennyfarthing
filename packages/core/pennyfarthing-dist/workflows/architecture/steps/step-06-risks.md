@@ -1,0 +1,142 @@
+# Step 6: Risk Assessment
+
+<step-meta>
+number: 6
+name: risk-assessment
+gate: true
+</step-meta>
+
+## Mandatory Execution Rules
+
+- READ the complete step file before taking any action
+- IDENTIFY risks specific to AI agent implementation
+- ALWAYS treat this as collaborative discovery between architectural peers
+- FOCUS on risks that could cause implementation divergence
+
+## Execution Protocols
+
+- Show your analysis before taking any action
+- Present A/P/C menu after generating risk assessment
+- ONLY save when user chooses [C] Continue
+- Update frontmatter `stepsCompleted: [1, 2, 3, 4, 5, 6]` before loading next step
+- FORBIDDEN to load next step until [C] is selected
+
+## Purpose
+
+Identify technical risks, potential failure modes, and mitigation strategies. Include risks specific to AI-assisted implementation.
+
+## Instructions
+
+1. **Identify Technical Risks**:
+   - Performance bottlenecks
+   - Single points of failure
+   - Security vulnerabilities
+   - Data consistency challenges
+   - Operational complexity
+
+2. **Assess Impact and Likelihood**:
+   - What happens if this risk materializes?
+   - How likely is it?
+   - What's the blast radius?
+
+3. **Define Mitigations**:
+   - How can each risk be reduced or eliminated?
+   - What monitoring/alerting is needed?
+   - What's the fallback plan?
+
+4. **AI Implementation Risks** (BMAD pattern):
+   - Where could AI agents misinterpret requirements?
+   - What ambiguities could lead to incompatible implementations?
+   - How do we detect implementation drift early?
+
+## Actions
+
+- Analyze: Each component for failure modes
+- Review: Security considerations
+- Plan: Monitoring and alerting strategy
+- Identify: AI implementation risk points
+
+## Output
+
+Add to session file:
+
+```markdown
+## Risk Assessment
+
+### Technical Risks
+
+| Risk | Impact | Likelihood | Mitigation |
+|------|--------|------------|------------|
+| [Risk 1] | High/Med/Low | High/Med/Low | [Strategy] |
+| [Risk 2] | High/Med/Low | High/Med/Low | [Strategy] |
+
+### Failure Modes
+
+| Component | Failure Mode | Detection | Recovery |
+|-----------|--------------|-----------|----------|
+| [A] | [How it fails] | [Monitoring] | [Steps] |
+| [B] | [How it fails] | [Monitoring] | [Steps] |
+
+### Security Considerations
+- [Authentication approach]
+- [Authorization model]
+- [Data protection measures]
+
+### AI Implementation Risks
+> Risks specific to AI-assisted development
+
+| Risk | Could Cause | Prevention |
+|------|-------------|------------|
+| Ambiguous requirement | Inconsistent implementation | [Clarification needed] |
+| Missing constraint | Invalid assumptions | [Explicit documentation] |
+
+### Operational Readiness
+- Monitoring: [What to watch]
+- Alerting: [Thresholds]
+- Runbooks: [Key procedures needed]
+```
+
+<!-- GATE -->
+
+## Collaboration Menu (A/P/C)
+
+After generating risk assessment, present choices:
+
+- **[A] Advanced Elicitation** - Use discovery protocols to explore hidden risks or unconsidered failure modes
+- **[P] Party Mode** - Bring multiple perspectives to identify risks from different operational angles
+- **[C] Continue** - Save the content and proceed to documentation
+- **[R] Revise** - Need to address unacceptable risks before proceeding
+
+## Advanced Elicitation Mode
+
+When user selects [A]:
+1. Explore cascading failure scenarios
+2. Question security assumptions
+3. Investigate edge cases in error handling
+4. Challenge operational readiness
+
+## Party Mode
+
+When user selects [P]:
+1. Present risk assessment from multiple viewpoints:
+   - **Security auditor**: What attack vectors exist?
+   - **Site reliability engineer**: What will page us at 3am?
+   - **Compliance officer**: What regulatory risks exist?
+   - **Incident responder**: How will we debug failures?
+2. Synthesize perspectives into comprehensive risk register
+
+## Success Metrics
+
+- Technical risks identified with impact assessment
+- Failure modes documented with recovery procedures
+- Security considerations explicitly addressed
+- AI implementation risks identified and mitigated
+- User confirmed risks are acceptable before proceeding
+
+## Failure Modes
+
+- Overlooking critical failure scenarios
+- Underestimating risk impact or likelihood
+- Missing security considerations
+- Not addressing AI implementation risks
+- Proceeding without user confirmation

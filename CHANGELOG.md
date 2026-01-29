@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [7.9.4] - 2026-01-29
+
+### Fixed
+- **npm Publish** - Include `pennyfarthing-dist/` assets in published package (was symlink, now actual directory)
+
+---
+
 ## [7.9.3] - 2026-01-29
 
 ### Fixed
