@@ -36,12 +36,13 @@ if [[ "$_real_script_dir" == */pennyfarthing-dist/scripts/* ]]; then
     _pkg_root="${_real_script_dir%/pennyfarthing-dist/scripts/*}"
 
     # Determine context: framework dev or consumer?
-    if [[ -d "$_pkg_root/pennyfarthing-dist" && ! -L "$_pkg_root/pennyfarthing-dist" ]]; then
-        # Framework context: package root IS project root
-        PROJECT_ROOT="$_pkg_root"
-    elif [[ "$_pkg_root" == */node_modules/* ]]; then
+    # Check node_modules FIRST - if we're in node_modules, we're always a consumer
+    if [[ "$_pkg_root" == */node_modules/* ]]; then
         # Consumer context: walk up from node_modules to project
         PROJECT_ROOT="${_pkg_root%/node_modules/*}"
+    elif [[ -d "$_pkg_root/pennyfarthing-dist" && ! -L "$_pkg_root/pennyfarthing-dist" ]]; then
+        # Framework context: package root IS project root
+        PROJECT_ROOT="$_pkg_root"
     else
         PROJECT_ROOT="$_pkg_root"
     fi
