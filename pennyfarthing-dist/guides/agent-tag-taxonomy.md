@@ -175,7 +175,7 @@ Logic for checking if this agent owns the current phase.
 
 Read `**Workflow:**` and `**Phase:**` from session. Query:
 ```bash
-OWNER=$(.pennyfarthing/scripts/core/run.sh workflow/phase-owner.sh {workflow} {phase})
+OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 ```
 
 **If OWNER != "dev":** Run `handoff-marker.sh $OWNER`, output result, tell user.

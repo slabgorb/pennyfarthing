@@ -39,7 +39,7 @@ Return `HANDOFF_RESULT` with the next agent name - the calling agent runs `hando
 
 <gate>
 ### tests_pass (Dev → Reviewer)
-- [ ] Quality checks pass (run: `.pennyfarthing/scripts/run.sh workflow/check.sh`)
+- [ ] Quality checks pass (run: `.pennyfarthing/scripts/workflow/check.sh`)
 - [ ] Git working tree clean
 - [ ] Changes pushed to remote
 - [ ] PR exists and is open
@@ -229,7 +229,7 @@ When you receive `HANDOFF_RESULT`:
 **CRITICAL: The calling agent MUST run this as their ABSOLUTE LAST ACTION:**
 
 ```bash
-.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
+.pennyfarthing/scripts/handoff/handoff-marker.sh {next_agent}
 ```
 
 Then output the script's result verbatim and EXIT. Nothing else after.

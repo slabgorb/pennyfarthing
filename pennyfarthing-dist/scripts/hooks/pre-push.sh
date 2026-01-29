@@ -9,21 +9,9 @@
 
 set -uo pipefail
 
-# Find project root
-find_project_root() {
-    local dir="$PWD"
-    while [[ ! -d "$dir/.pennyfarthing" ]] && [[ "$dir" != "/" ]]; do
-        dir="$(dirname "$dir")"
-    done
-    if [[ -d "$dir/.pennyfarthing" ]]; then
-        echo "$dir"
-    else
-        return 1
-    fi
-}
-
-PROJECT_ROOT="$(find_project_root 2>/dev/null || echo "")"
-if [[ -z "$PROJECT_ROOT" ]]; then
+# Self-locate and set up PROJECT_ROOT
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd -P)"
+if ! source "$SCRIPT_DIR/../lib/find-root.sh" 2>/dev/null; then
     exit 0
 fi
 

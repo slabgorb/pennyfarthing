@@ -5,23 +5,9 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="${0:A:h}"
-PROJECT_ROOT="${SCRIPT_DIR}/../.."
-
-# Find project root by looking for .pennyfarthing directory
-find_project_root() {
-    local dir="$PWD"
-    while [[ "$dir" != "/" ]]; do
-        if [[ -d "$dir/.pennyfarthing" ]]; then
-            echo "$dir"
-            return 0
-        fi
-        dir="$(dirname "$dir")"
-    done
-    echo "$PWD"
-}
-
-PROJECT_ROOT="$(find_project_root)"
+# Self-locate and set up PROJECT_ROOT
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd -P)"
+source "$SCRIPT_DIR/../lib/find-root.sh"
 SPRINT_FILE="$PROJECT_ROOT/sprint/current-sprint.yaml"
 
 if [[ ! -f "$SPRINT_FILE" ]]; then

@@ -22,7 +22,7 @@ Pennyfarthing uses Jira integration as the primary conflict prevention mechanism
 /new-work
 
 # SM will run:
-.pennyfarthing/scripts/run.sh jira-claim-story.sh MSSCI-10988 --claim
+.pennyfarthing/scripts/jira/jira-claim-story.sh MSSCI-10988 --claim
 ```
 
 If story is already assigned:
@@ -56,10 +56,10 @@ Work on multiple stories simultaneously using worktrees:
 /parallel-work
 
 # List active worktrees
-.pennyfarthing/scripts/run.sh git/worktree-manager.sh list
+.pennyfarthing/scripts/git/worktree-manager.sh list
 
 # Remove completed worktree
-.pennyfarthing/scripts/run.sh git/worktree-manager.sh remove wt-5-3
+.pennyfarthing/scripts/git/worktree-manager.sh remove wt-5-3
 ```
 
 ### Worktree Isolation
@@ -350,7 +350,7 @@ If blocked, document in session file:
 
 Remove worktrees when stories complete:
 ```bash
-.pennyfarthing/scripts/run.sh git/worktree-manager.sh remove wt-5-2
+.pennyfarthing/scripts/git/worktree-manager.sh remove wt-5-2
 ```
 
 ## See Also

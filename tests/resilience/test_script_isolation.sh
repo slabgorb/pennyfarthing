@@ -20,7 +20,7 @@ pass() { echo -e "${GREEN}PASS${NC}: $1"; TESTS_PASSED=$((TESTS_PASSED + 1)); }
 fail() { echo -e "${RED}FAIL${NC}: $1"; TESTS_FAILED=$((TESTS_FAILED + 1)); }
 
 SETTINGS_TEMPLATE="$PROJECT_ROOT/pennyfarthing-dist/templates/settings.local.json.template"
-RUN_SCRIPT="$PROJECT_ROOT/pennyfarthing-dist/scripts/run.sh"
+FIND_ROOT_SCRIPT="$PROJECT_ROOT/pennyfarthing-dist/scripts/lib/find-root.sh"
 INIT_TS="$PROJECT_ROOT/src/cli/commands/init.ts"
 UPDATE_TS="$PROJECT_ROOT/src/cli/commands/update.ts"
 
@@ -51,27 +51,26 @@ test_no_bare_scripts_in_hooks() {
 }
 
 # ============================================================================
-# AC5: Existing functionality preserved - run.sh uses namespaced paths
+# AC5: Existing functionality preserved - scripts self-locate via BASH_SOURCE
 # ============================================================================
 
-# Test: run.sh looks for scripts in .claude/pennyfarthing/scripts/
-test_run_sh_namespaced_lookup() {
+# Test: find-root.sh exists and uses BASH_SOURCE pattern
+test_find_root_exists() {
     TESTS_RUN=$((TESTS_RUN + 1))
-    if grep -qE '\.claude/pennyfarthing/scripts/' "$RUN_SCRIPT"; then
-        pass "run.sh looks for scripts in .claude/pennyfarthing/scripts/"
+    if [[ -f "$FIND_ROOT_SCRIPT" ]]; then
+        pass "find-root.sh exists"
     else
-        fail "run.sh does not use .claude/pennyfarthing/scripts/ lookup path"
+        fail "find-root.sh not found"
     fi
 }
 
-# Test: run.sh does NOT use bare PROJECT_ROOT/scripts/ lookup
-test_run_sh_no_bare_scripts() {
+# Test: find-root.sh requires SCRIPT_DIR (BASH_SOURCE pattern)
+test_find_root_requires_script_dir() {
     TESTS_RUN=$((TESTS_RUN + 1))
-    # Should NOT have patterns like $PROJECT_ROOT/scripts/$SCRIPT_NAME
-    if grep -qE '\$PROJECT_ROOT/scripts/\$SCRIPT_NAME' "$RUN_SCRIPT"; then
-        fail "run.sh still uses bare \$PROJECT_ROOT/scripts/ lookup"
+    if grep -qE 'SCRIPT_DIR' "$FIND_ROOT_SCRIPT"; then
+        pass "find-root.sh uses SCRIPT_DIR (BASH_SOURCE pattern)"
     else
-        pass "run.sh doesn't use bare \$PROJECT_ROOT/scripts/ lookup"
+        fail "find-root.sh doesn't use SCRIPT_DIR pattern"
     fi
 }
 
@@ -129,11 +128,11 @@ main() {
     test_session_hook_namespaced
     test_no_bare_scripts_in_hooks
 
-    # AC5: run.sh functionality
+    # AC5: scripts self-locate via BASH_SOURCE
     echo ""
-    echo "--- run.sh Script Lookup (AC5) ---"
-    test_run_sh_namespaced_lookup
-    test_run_sh_no_bare_scripts
+    echo "--- Script Self-Location (AC5) ---"
+    test_find_root_exists
+    test_find_root_requires_script_dir
 
     # AC4: No scripts symlink creation
     echo ""

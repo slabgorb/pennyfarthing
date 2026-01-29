@@ -1,12 +1,12 @@
 #!/bin/bash
 # Output sprint info as JSON for Cyclist sidebar
-# Usage: .pennyfarthing/scripts/core/run.sh sprint/sprint-info.sh
+# Usage: .pennyfarthing/scripts/sprint/sprint-info.sh
 #
 # Returns: {"remaining": N, "inProgress": N, "endDate": "YYYY-MM-DD"}
 
 set -euo pipefail
 
-# PROJECT_ROOT should be set by run.sh
+# PROJECT_ROOT should be set by find-root.sh
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
   d="$PWD"
   while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do

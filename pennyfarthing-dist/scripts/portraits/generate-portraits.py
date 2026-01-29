@@ -56,8 +56,25 @@ except Exception:
 
 
 # Configuration
-SCRIPT_DIR = Path(__file__).parent
-PROJECT_ROOT = SCRIPT_DIR.parent
+SCRIPT_DIR = Path(__file__).parent.resolve()
+
+# Find PROJECT_ROOT by walking up until we find pennyfarthing-dist at the expected level
+# Script lives at: {PROJECT_ROOT}/pennyfarthing-dist/scripts/portraits/generate-portraits.py
+def _find_project_root() -> Path:
+    """Find project root by looking for pennyfarthing-dist or .git marker."""
+    current = SCRIPT_DIR
+    # Walk up from portraits/ -> scripts/ -> pennyfarthing-dist/ -> PROJECT_ROOT
+    for _ in range(5):  # Safety limit
+        # Check if this looks like the project root
+        if (current / "pennyfarthing-dist" / "personas" / "themes").exists():
+            return current
+        if (current / ".git").exists() and (current / "pennyfarthing-dist").exists():
+            return current
+        current = current.parent
+    # Fallback: assume old structure (script in {root}/scripts/portraits/)
+    return SCRIPT_DIR.parent.parent
+
+PROJECT_ROOT = _find_project_root()
 BUILTIN_THEMES_DIR = PROJECT_ROOT / "pennyfarthing-dist" / "personas" / "themes"
 CUSTOM_THEMES_DIR = PROJECT_ROOT / ".claude" / "pennyfarthing" / "themes"
 OUTPUT_DIR = PROJECT_ROOT / "pennyfarthing-dist" / "personas" / "portraits"

@@ -142,7 +142,7 @@ During retro, clean up accumulated session artifacts from the sprint:
 
 ```bash
 # See what would be cleaned (dry-run)
-$CLAUDE_PROJECT_DIR/scripts/run.sh misc/session-cleanup.sh --dry-run --aggressive
+$CLAUDE_PROJECT_DIR/scripts/misc/session-cleanup.sh --dry-run --aggressive
 ```
 
 Review the output. Look for:
@@ -153,7 +153,7 @@ Review the output. Look for:
 
 ```bash
 # Run full cleanup with aggressive mode (archives completed epic contexts)
-$CLAUDE_PROJECT_DIR/scripts/run.sh misc/session-cleanup.sh --aggressive
+$CLAUDE_PROJECT_DIR/scripts/misc/session-cleanup.sh --aggressive
 ```
 
 This removes:

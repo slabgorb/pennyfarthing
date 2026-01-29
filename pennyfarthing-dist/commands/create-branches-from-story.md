@@ -100,16 +100,16 @@ Use this instead of Step 3 if you need to work on multiple stories simultaneousl
 cd $CLAUDE_PROJECT_DIR
 
 # Create worktree with branches (both API and UI)
-./scripts/run.sh git/worktree-manager.sh create [story-id] feat/[story-id]-[description]
+./scripts/git/worktree-manager.sh create [story-id] feat/[story-id]-[description]
 
 # Example: Story 5-2
-./scripts/run.sh git/worktree-manager.sh create 5-2 feat/5-2-csv-import
+./scripts/git/worktree-manager.sh create 5-2 feat/5-2-csv-import
 
 # For API-only work
-./scripts/run.sh git/worktree-manager.sh create [story-id] feat/[story-id]-[description] api
+./scripts/git/worktree-manager.sh create [story-id] feat/[story-id]-[description] api
 
 # For UI-only work
-./scripts/run.sh git/worktree-manager.sh create [story-id] feat/[story-id]-[description] ui
+./scripts/git/worktree-manager.sh create [story-id] feat/[story-id]-[description] ui
 ```
 
 This creates:
@@ -223,7 +223,7 @@ cd $CLAUDE_PROJECT_DIR/worktrees/[story-id]/API
 cd $CLAUDE_PROJECT_DIR/worktrees/[story-id]/UI
 
 # Get port configuration for dev servers
-eval $(./scripts/run.sh git/worktree-manager.sh ports [story-id])
+eval $(./scripts/git/worktree-manager.sh ports [story-id])
 echo "API: $API_PORT, UI: $UI_PORT"
 ```
 

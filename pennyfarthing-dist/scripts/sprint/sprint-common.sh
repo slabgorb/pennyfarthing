@@ -1,27 +1,21 @@
 #!/usr/bin/env zsh
 # Sprint Common Functions
 # Shared functions for sprint management
-# Source this file: source "${SCRIPT_DIR}/sprint-common.sh"
+#
+# Usage: Scripts must set up PROJECT_ROOT before sourcing this file:
+#   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd -P)"
+#   source "$SCRIPT_DIR/../lib/find-root.sh"
+#   source "$SCRIPT_DIR/sprint-common.sh"
 
 # Jira project identifier
 export JIRA_PROJECT="MSSCI"
 
-# Find PROJECT_ROOT by looking for .pennyfarthing/ marker
-find_project_root() {
-    local dir="$PWD"
-    while [[ ! -d "$dir/.pennyfarthing" ]] && [[ "$dir" != "/" ]]; do
-        dir="$(dirname "$dir")"
-    done
-    if [[ -d "$dir/.pennyfarthing" ]]; then
-        echo "$dir"
-    else
-        return 1
-    fi
-}
-
-# Get PROJECT_ROOT if not already set
-PROJECT_ROOT="${PROJECT_ROOT:-$(find_project_root)}"
-export PROJECT_ROOT
+# Require PROJECT_ROOT to be set
+if [[ -z "${PROJECT_ROOT:-}" ]]; then
+    echo "Error: PROJECT_ROOT must be set before sourcing sprint-common.sh" >&2
+    echo "Source lib/find-root.sh first" >&2
+    exit 1
+fi
 
 # find_story_file STORY_KEY
 # Search for a story in sprint YAML files

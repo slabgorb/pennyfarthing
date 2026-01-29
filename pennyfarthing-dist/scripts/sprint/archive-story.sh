@@ -1,9 +1,9 @@
 #!/bin/bash
 # Archive a completed story from current-sprint.yaml to the sprint archive
-# Usage: .pennyfarthing/scripts/core/run.sh sprint/archive-story.sh <story-id> [pr-number] [--apply]
+# Usage: .pennyfarthing/scripts/sprint/archive-story.sh <story-id> [pr-number] [--apply]
 #
-# Example: .pennyfarthing/scripts/core/run.sh sprint/archive-story.sh MSSCI-11945 368
-#          .pennyfarthing/scripts/core/run.sh sprint/archive-story.sh MSSCI-11945 368 --apply
+# Example: .pennyfarthing/scripts/sprint/archive-story.sh MSSCI-11945 368
+#          .pennyfarthing/scripts/sprint/archive-story.sh MSSCI-11945 368 --apply
 #
 # Options:
 #   --apply    Also remove story from current-sprint.yaml (atomic operation)
@@ -40,7 +40,7 @@ if [[ -z "$STORY_ID" ]]; then
   exit 1
 fi
 
-# PROJECT_ROOT should be set by run.sh, but find it if not
+# PROJECT_ROOT should be set by find-root.sh, but find it if not
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
   d="$PWD"
   while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do
@@ -133,7 +133,7 @@ if $APPLY_FLAG; then
 else
   echo ""
   echo "To also remove from $SPRINT_FILE, re-run with --apply:"
-  echo "  .pennyfarthing/scripts/core/run.sh sprint/archive-story.sh $STORY_ID ${PR_NUMBER:-<pr>} --apply"
+  echo "  .pennyfarthing/scripts/sprint/archive-story.sh $STORY_ID ${PR_NUMBER:-<pr>} --apply"
   echo ""
   echo "Or manually: yq eval -i 'del(.epics[].stories[] | select(.id == \"$STORY_ID\"))' $SPRINT_FILE"
 fi

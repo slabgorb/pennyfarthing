@@ -11,12 +11,12 @@
 </critical>
 
 <critical>
-**Path resolution:** Use `.pennyfarthing/scripts/core/run.sh` for all script calls - it handles path resolution.
+**Path resolution:** Scripts now self-locate via BASH_SOURCE. Invoke directly from `.pennyfarthing/scripts/`.
 For direct commands, use relative paths from project root (Claude Code starts there).
 
 ```bash
-# GOOD: Use run.sh wrapper
-.pennyfarthing/scripts/core/run.sh workflow/check.sh
+# GOOD: Direct script invocation
+.pennyfarthing/scripts/workflow/check.sh
 
 # GOOD: Relative paths for simple commands
 just test
@@ -116,9 +116,9 @@ $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/foo.sh  # BROKEN!
 **Rule 4:** All sprint YAML access goes through scripts
 ```bash
 # GOOD: Use scripts for ALL operations
-.pennyfarthing/scripts/core/run.sh sprint/get-story-field.sh X-Y workflow
-.pennyfarthing/scripts/core/run.sh sprint/get-epic-field.sh 35 jira
-.pennyfarthing/scripts/core/run.sh sprint/check-story.sh X-Y
+.pennyfarthing/scripts/sprint/get-story-field.sh X-Y workflow
+.pennyfarthing/scripts/sprint/get-epic-field.sh 35 jira
+.pennyfarthing/scripts/sprint/check-story.sh X-Y
 
 # BAD: Direct yq queries (even read-only)
 yq '.epics[].stories[] | ...' sprint/current-sprint.yaml
@@ -235,7 +235,7 @@ HTML comments that agents emit to signal Cyclist UI. Format: `<!-- CYCLIST:TYPE:
 4. If `status: blocked` → report error, stop
 5. **Run this as ABSOLUTE LAST ACTION:**
    ```bash
-   .pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
+   .pennyfarthing/scripts/handoff-marker.sh {next_agent}
    ```
 6. **Output the script result verbatim and EXIT**
 
@@ -271,14 +271,14 @@ When an agent detects the story is NOT in their phase, emit a marker immediately
 1. Read `**Workflow:**` and `**Phase:**` from session file
 2. Query the phase owner:
    ```bash
-   OWNER=$(.pennyfarthing/scripts/core/run.sh workflow/phase-owner.sh {workflow} {phase})
+   OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
    ```
 3. If `$OWNER` != your agent name → story belongs to another agent
 
 ### Action When Not Your Phase
 
 ```bash
-.pennyfarthing/scripts/core/handoff-marker.sh {OWNER}
+.pennyfarthing/scripts/handoff-marker.sh {OWNER}
 ```
 
 Then output the result verbatim. This triggers Cyclist's handoff button.
@@ -288,13 +288,13 @@ Then output the result verbatim. This triggers Cyclist's handoff button.
 Dev reads session: `**Workflow:** tdd`, `**Phase:** review`
 
 ```bash
-OWNER=$(.pennyfarthing/scripts/core/run.sh workflow/phase-owner.sh tdd review)
+OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh tdd review)
 # Returns: reviewer
 ```
 
 Since "reviewer" != "dev", Dev runs:
 ```bash
-.pennyfarthing/scripts/core/handoff-marker.sh reviewer
+.pennyfarthing/scripts/handoff-marker.sh reviewer
 ```
 
 ### Do NOT just say "run /reviewer"

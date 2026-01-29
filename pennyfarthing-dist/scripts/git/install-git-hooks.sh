@@ -8,21 +8,9 @@
 
 set -euo pipefail
 
-# Find project root
-find_project_root() {
-    local dir="$PWD"
-    while [[ ! -d "$dir/.pennyfarthing" ]] && [[ "$dir" != "/" ]]; do
-        dir="$(dirname "$dir")"
-    done
-    if [[ -d "$dir/.pennyfarthing" ]]; then
-        echo "$dir"
-    else
-        echo "Error: Not in a Pennyfarthing project" >&2
-        exit 1
-    fi
-}
-
-PROJECT_ROOT="$(find_project_root)"
+# Self-locate and set up PROJECT_ROOT
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+source "$SCRIPT_DIR/../lib/find-root.sh"
 HOOKS_SOURCE="$PROJECT_ROOT/pennyfarthing-dist/scripts/hooks"
 HOOKS_DEST="$PROJECT_ROOT/.git/hooks"
 

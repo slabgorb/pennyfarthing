@@ -54,7 +54,7 @@ Wait for user confirmation or alternative name.
 Run the import script with `--dry-run` to show what will be added:
 
 ```bash
-.pennyfarthing/scripts/core/run.sh sprint/import-epic-to-future.sh {outputFile} "{initiative_name}" --dry-run
+.pennyfarthing/scripts/sprint/import-epic-to-future.sh {outputFile} "{initiative_name}" --dry-run
 ```
 
 Display the preview output to the user showing:
@@ -70,7 +70,7 @@ Ask user: "Does this look correct? [Y] Yes, import to future.yaml / [N] No, make
 Run the import without `--dry-run`:
 
 ```bash
-.pennyfarthing/scripts/core/run.sh sprint/import-epic-to-future.sh {outputFile} "{initiative_name}"
+.pennyfarthing/scripts/sprint/import-epic-to-future.sh {outputFile} "{initiative_name}"
 ```
 
 **If N:**

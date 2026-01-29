@@ -20,6 +20,9 @@ npm-debug.log*
 # Build output (delivered via npm)
 dist/
 
+# Redundant copy - root pennyfarthing-dist/ is included via package.json files field
+packages/core/pennyfarthing-dist/
+
 # TypeScript build output in source directories (misplaced builds)
 packages/*/src/**/*.js
 packages/*/src/**/*.js.map

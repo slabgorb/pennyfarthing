@@ -11,10 +11,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [7.9.4] - 2026-01-29
+## [8.0.0] - 2026-01-29
+
+### Breaking Changes
+- **Script Path Resolution** - Scripts now use `BASH_SOURCE`-based self-location instead of `run.sh` bootstrap
+  - All existing installations must re-run `pennyfarthing init` to update symlinks
+  - The `.pennyfarthing/scripts/core/run.sh` pattern is deprecated
+  - Scripts derive `PROJECT_ROOT` from their own location in the directory tree
+
+### Changed
+- **Environment Variable** - Use `PENNYFARTHING_ROOT` instead of `PROJECT_ROOT` for explicit override
+  - Avoids conflicts when pennyfarthing repo is nested inside an orchestrator
+  - `PROJECT_ROOT` from parent environment no longer affects script behavior
+
+### Fixed
+- **Nested Repo Support** - `findMonorepoRoot()` now correctly identifies the pennyfarthing repo root when nested inside an orchestrator by checking for `pennyfarthing-dist/` + `packages/` combo
+- **Build in Orchestrator** - Scripts correctly find `pennyfarthing-dist/` assets when run from orchestrator context
+
+---
+
+## [7.9.5] - 2026-01-29
 
 ### Fixed
 - **npm Publish** - Include `pennyfarthing-dist/` assets in published package (was symlink, now actual directory)
+- **npm Package Size** - Exclude `portraits/` and `spiders/` directories (605MB) from package - these are optional and can be downloaded separately
+
+## [7.9.4] - 2026-01-29 [YANKED]
+
+Yanked due to package size (636MB) - portraits directory was accidentally included.
 
 ---
 
@@ -259,7 +283,7 @@ This release delivers the Agent Identity epic for VS Code, Bell mode for Cyclist
 - **Monorepo Path Lookup** - Support pennyfarthing-monorepo path in node_modules
 - **Image Queue Wiring** - Proper connection to editor submission flow
 - **Test Isolation** - Improved Cyclist test isolation with forks pool
-- **Core Run Path** - Use core/run.sh path for npm compatibility
+- **Script Invocation** - Scripts now self-locate via BASH_SOURCE (direct invocation)
 
 ### Changed
 - **Electron Updated** - Bumped from 33.4.11 to 35.7.5
@@ -1389,21 +1413,21 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 ## [4.0.3] - 2025-12-31
 
 ### Fixed
-- **Agent Commands Path** - All agent activation commands now use `$d/.claude/scripts/run.sh` instead of `$d/scripts/run.sh`. The old path only worked in dogfooding; npm-installed projects only have `.claude/scripts/`.
+- **Agent Commands Path** - All agent activation commands updated to use direct script invocation. Scripts now self-locate via BASH_SOURCE instead of relying on a bootstrap wrapper.
 
 ---
 
 ## [4.0.2] - 2025-12-31
 
 ### Fixed
-- **Scripts Path Resolution (Complete)** - `run.sh` now tries both `.claude/scripts/` (npm-installed projects) and `.claude/pennyfarthing/scripts/` (dogfooding). v4.0.1 only tried the former, breaking the pennyfarthing repo itself.
+- **Scripts Path Resolution (Complete)** - Scripts now derive `PROJECT_ROOT` from their position in directory tree using BASH_SOURCE and `find-root.sh`, eliminating dependency on bootstrap wrapper.
 
 ---
 
 ## [4.0.1] - 2025-12-31
 
 ### Fixed
-- **Scripts Path Resolution** - `run.sh` was hardcoded to look for scripts at `.claude/pennyfarthing/scripts/` which only worked in dogfooding setup. Fixed to use `.claude/scripts/` which is the canonical path created by `pennyfarthing init` (symlinked to node_modules or copy-mode location). *(Note: Incomplete fix, see 4.0.2)*
+- **Scripts Path Resolution** - Scripts now self-locate using BASH_SOURCE and find-root.sh instead of relying on run.sh bootstrap, providing direct path resolution.
 
 ---
 

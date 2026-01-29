@@ -20,7 +20,7 @@ Never manually edit `sprint/current-sprint.yaml`. Always use the provided script
 Show current sprint status with story counts and points.
 
 ```bash
-.pennyfarthing/scripts/core/run.sh sprint/sprint-status.sh [filter]
+.pennyfarthing/scripts/sprint/sprint-status.sh [filter]
 ```
 
 | Filter | Description |
@@ -35,7 +35,7 @@ Show current sprint status with story counts and points.
 Show available stories ready for work, grouped by epic.
 
 ```bash
-.pennyfarthing/scripts/core/run.sh sprint/available-stories.sh
+.pennyfarthing/scripts/sprint/available-stories.sh
 ```
 
 ### `/sprint work [story-id|epic-id|next]`
@@ -51,7 +51,7 @@ Start work on a story. Primary entry point for development.
 
 ```bash
 # Check if story is available
-.pennyfarthing/scripts/core/run.sh sprint/check-story.sh <story-id>
+.pennyfarthing/scripts/sprint/check-story.sh <story-id>
 
 # Then load SM to begin work
 ```
@@ -69,7 +69,7 @@ When starting work, this command:
 Archive a completed story.
 
 ```bash
-.pennyfarthing/scripts/core/run.sh sprint/archive-story.sh <story-id> [pr-number] [--apply]
+.pennyfarthing/scripts/sprint/archive-story.sh <story-id> [pr-number] [--apply]
 ```
 
 | Option | Description |
@@ -81,7 +81,7 @@ Archive a completed story.
 Initialize a new sprint.
 
 ```bash
-.pennyfarthing/scripts/core/run.sh sprint/new-sprint.sh 2605 277 2026-02-03 2026-02-16 "Sprint goal"
+.pennyfarthing/scripts/sprint/new-sprint.sh 2605 277 2026-02-03 2026-02-16 "Sprint goal"
 ```
 
 ### `/sprint future [--epic EPIC_ID]`
@@ -89,7 +89,7 @@ Initialize a new sprint.
 Show future work available for promotion.
 
 ```bash
-.pennyfarthing/scripts/core/run.sh sprint/list-future.sh [--epic epic-XX]
+.pennyfarthing/scripts/sprint/list-future.sh [--epic epic-XX]
 ```
 
 ### `/sprint promote <epic-id>`
@@ -97,7 +97,7 @@ Show future work available for promotion.
 Move an epic from future.yaml to current sprint.
 
 ```bash
-.pennyfarthing/scripts/core/run.sh sprint/promote-epic.sh epic-XX
+.pennyfarthing/scripts/sprint/promote-epic.sh epic-XX
 ```
 
 ## Quick Reference

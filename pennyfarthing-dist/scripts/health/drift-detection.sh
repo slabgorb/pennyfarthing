@@ -1,6 +1,6 @@
 #!/bin/bash
 # Drift Detection - Analyze archived sessions for agent behavior drift
-# Usage: .pennyfarthing/scripts/core/run.sh health/drift-detection.sh [--verbose] [--path /additional/path]
+# Usage: .pennyfarthing/scripts/health/drift-detection.sh [--verbose] [--path /additional/path]
 #
 # Checks:
 # 1. Reviewer: Substantive comments present (not just "LGTM")

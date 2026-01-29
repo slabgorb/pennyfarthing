@@ -484,7 +484,7 @@ These modes use deterministic scoring based on ground-truth patches from the SWE
 **Prerequisites:**
 ```bash
 # Ensure SWE-bench data is downloaded (one-time)
-.pennyfarthing/scripts/run.sh test/ensure-swebench-data.sh
+.pennyfarthing/scripts/test/ensure-swebench-data.sh
 ```
 
 **swebench mode:**

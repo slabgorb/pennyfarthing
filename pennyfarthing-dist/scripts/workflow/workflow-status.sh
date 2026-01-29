@@ -1,12 +1,12 @@
 #!/bin/bash
 # Show current stepped workflow progress
-# Usage: .pennyfarthing/scripts/core/run.sh workflow/workflow-status.sh [name]
+# Usage: .pennyfarthing/scripts/workflow/workflow-status.sh [name]
 #
 # If no name provided, shows status of active workflow session
 
 set -euo pipefail
 
-# PROJECT_ROOT should be set by run.sh, but find it if not
+# PROJECT_ROOT should be set by find-root.sh, but find it if not
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
   d="$PWD"
   while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do

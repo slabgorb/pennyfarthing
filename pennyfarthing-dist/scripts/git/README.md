@@ -15,8 +15,8 @@ Scripts for Git operations, branching, and release management.
 ## Usage
 
 ```bash
-.pennyfarthing/scripts/core/run.sh git/create-feature-branches.sh feat/my-feature
-.pennyfarthing/scripts/core/run.sh git/release.sh
+.pennyfarthing/scripts/git/create-feature-branches.sh feat/my-feature
+.pennyfarthing/scripts/git/release.sh
 ```
 
 ## Ownership

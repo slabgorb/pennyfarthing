@@ -1,6 +1,6 @@
 #!/bin/bash
 # Show workflow details
-# Usage: .pennyfarthing/scripts/core/run.sh workflow/show-workflow.sh [name]
+# Usage: .pennyfarthing/scripts/workflow/show-workflow.sh [name]
 #    or: Invoked with PROJECT_ROOT already set
 #
 # If no name provided, shows current session's workflow
@@ -8,7 +8,7 @@
 
 set -euo pipefail
 
-# PROJECT_ROOT should be set by run.sh, but find it if not
+# PROJECT_ROOT should be set by find-root.sh, but find it if not
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
   d="$PWD"
   while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do

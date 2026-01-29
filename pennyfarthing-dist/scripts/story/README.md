@@ -13,8 +13,8 @@ Scripts for story creation and management.
 ## Usage
 
 ```bash
-.pennyfarthing/scripts/core/run.sh story/create-story.sh
-.pennyfarthing/scripts/core/run.sh story/size-story.sh
+.pennyfarthing/scripts/story/create-story.sh
+.pennyfarthing/scripts/story/size-story.sh
 ```
 
 ## Ownership

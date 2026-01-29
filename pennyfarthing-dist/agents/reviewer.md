@@ -72,7 +72,7 @@ ASSESSMENT_SECTION: "Reviewer Assessment"
 
 Read `**Workflow:**` and `**Phase:**` from session. Query:
 ```bash
-OWNER=$(.pennyfarthing/scripts/core/run.sh workflow/phase-owner.sh {workflow} {phase})
+OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 ```
 
 **If OWNER != "reviewer":** Run `handoff-marker.sh $OWNER`, output result, tell user.
@@ -163,7 +163,7 @@ OWNER=$(.pennyfarthing/scripts/core/run.sh workflow/phase-owner.sh {workflow} {p
 3. Await `HANDOFF_RESULT` with `next_agent`
 4. **ABSOLUTE LAST ACTION:**
    ```bash
-   .pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
+   .pennyfarthing/scripts/handoff/handoff-marker.sh {next_agent}
    ```
 5. Output result verbatim and EXIT
 

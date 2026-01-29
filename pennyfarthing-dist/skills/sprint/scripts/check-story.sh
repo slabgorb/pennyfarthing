@@ -1,6 +1,6 @@
 #!/bin/bash
 # Check if a story or epic exists and is available for work
-# Usage: check-story.sh <id|next>
+# Usage: .pennyfarthing/scripts/sprint/check-story.sh <id|next>
 #
 # Arguments:
 #   <story-id>  - Check specific story availability
@@ -18,7 +18,7 @@ if [[ -z "$ID" ]]; then
   exit 1
 fi
 
-# PROJECT_ROOT should be set by run.sh
+# PROJECT_ROOT should be set by find-root.sh
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
   d="$PWD"
   while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do

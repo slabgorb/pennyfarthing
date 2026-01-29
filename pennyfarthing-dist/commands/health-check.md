@@ -3,7 +3,7 @@ description: Check Pennyfarthing installation health and apply updates
 ---
 
 ```bash
-./scripts/run.sh core/agent-session.sh start "devops"
+./scripts/core/agent-session.sh start "devops"
 ```
 
 <agent-activation>
@@ -108,10 +108,10 @@ Check if agents are following expected behavioral patterns:
 
 ```bash
 # Run drift detection
-.pennyfarthing/scripts/core/run.sh health/drift-detection.sh
+.pennyfarthing/scripts/health/drift-detection.sh
 
 # Verbose mode (see individual files)
-.pennyfarthing/scripts/core/run.sh health/drift-detection.sh --verbose
+.pennyfarthing/scripts/health/drift-detection.sh --verbose
 ```
 
 The script analyzes archived session files for:

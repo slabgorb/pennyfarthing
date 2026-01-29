@@ -1,6 +1,6 @@
 #!/bin/bash
 # Jira vs YAML Reconciliation Report
-# Usage: .pennyfarthing/scripts/core/run.sh jira/jira-reconcile.sh [--fix]
+# Usage: .pennyfarthing/scripts/jira/jira-reconcile.sh [--fix]
 #
 # Compares sprint YAML against Jira to find:
 # - Status mismatches
@@ -13,7 +13,7 @@
 
 set -euo pipefail
 
-# PROJECT_ROOT should be set by run.sh, but find it if not
+# PROJECT_ROOT should be set by find-root.sh, but find it if not
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
   d="$PWD"
   while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do

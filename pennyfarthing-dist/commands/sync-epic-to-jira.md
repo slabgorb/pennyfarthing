@@ -29,13 +29,13 @@ All Pennyfarthing epics and stories must include the `pennyfarthing` label:
 
 ```bash
 # View story status
-./scripts/run.sh jira/jira-sync-story.sh 35-2-topology-editor
+./scripts/jira/jira-sync-story.sh 35-2-topology-editor
 
 # Transition to match Pennyfarthing status
-./scripts/run.sh jira/jira-sync-story.sh 35-2-topology-editor --transition
+./scripts/jira/jira-sync-story.sh 35-2-topology-editor --transition
 
 # Add a comment
-./scripts/run.sh jira/jira-sync-story.sh 35-2-topology-editor --comment "Started development"
+./scripts/jira/jira-sync-story.sh 35-2-topology-editor --comment "Started development"
 ```
 
 ### Sync All Stories in Epic
@@ -43,7 +43,7 @@ All Pennyfarthing epics and stories must include the `pennyfarthing` label:
 ```bash
 # For each story in the epic, sync status
 for story in $(yq '.epic-35.stories | keys | .[]' sprint/current-sprint.yaml); do
-    ./scripts/run.sh jira/jira-sync-story.sh "$story" --transition
+    ./scripts/jira/jira-sync-story.sh "$story" --transition
 done
 ```
 

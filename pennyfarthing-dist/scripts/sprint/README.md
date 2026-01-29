@@ -19,8 +19,8 @@ Scripts for sprint YAML operations and sprint management.
 ## Usage
 
 ```bash
-.pennyfarthing/scripts/core/run.sh sprint/sprint-status.sh
-.pennyfarthing/scripts/core/run.sh sprint/available-stories.sh
+.pennyfarthing/scripts/sprint/sprint-status.sh
+.pennyfarthing/scripts/sprint/available-stories.sh
 ```
 
 ## Ownership

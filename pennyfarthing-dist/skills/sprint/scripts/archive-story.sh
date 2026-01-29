@@ -1,8 +1,8 @@
 #!/bin/bash
 # Archive a completed story from current-sprint.yaml to the sprint archive
-# Usage: .pennyfarthing/scripts/core/run.sh sprint/archive-story.sh <story-id> [pr-number]
+# Usage: .pennyfarthing/scripts/sprint/archive-story.sh <story-id> [pr-number]
 #
-# Example: .pennyfarthing/scripts/core/run.sh sprint/archive-story.sh MSSCI-11945 368
+# Example: .pennyfarthing/scripts/sprint/archive-story.sh MSSCI-11945 368
 
 set -euo pipefail
 
@@ -15,7 +15,7 @@ if [[ -z "$STORY_ID" ]]; then
   exit 1
 fi
 
-# PROJECT_ROOT should be set by run.sh, but find it if not
+# PROJECT_ROOT should be set by find-root.sh, but find it if not
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
   d="$PWD"
   while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do

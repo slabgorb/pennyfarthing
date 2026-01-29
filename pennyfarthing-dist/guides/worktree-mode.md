@@ -86,8 +86,8 @@ Ports are stored in the session file and passed to agents.
 | Command | Purpose |
 |---------|---------|
 | `/parallel-work` | Start a new parallel work session |
-| `./scripts/run.sh git/worktree-manager.sh list` | Show active worktrees |
-| `./scripts/run.sh git/worktree-manager.sh remove <name>` | Clean up a worktree |
+| `.pennyfarthing/scripts/git/worktree-manager.sh list` | Show active worktrees |
+| `.pennyfarthing/scripts/git/worktree-manager.sh remove <name>` | Clean up a worktree |
 
 ## TDD Flow in Worktrees
 
@@ -104,7 +104,7 @@ Agents use worktree paths from session file for all operations.
 When story is complete, SM archives the session and the worktree can be removed:
 
 ```bash
-./scripts/run.sh git/worktree-manager.sh remove wt-5-3a
+.pennyfarthing/scripts/git/worktree-manager.sh remove wt-5-3a
 ```
 
 This removes:
