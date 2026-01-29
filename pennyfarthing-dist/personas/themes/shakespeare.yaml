@@ -19,6 +19,10 @@ theme:
     era: historical
     genre: literary
     energy: measured
+zeitgeist:
+  score: 79.0
+  rating: rich
+
 agents:
   orchestrator:
     character: The Chorus

@@ -15,6 +15,10 @@ theme:
   portrait_style: ", Regency era miniature, watercolor on ivory, pastoral countryside, empire waist muslin, Regency romance illustration"
   tier: D
 
+zeitgeist:
+  score: 78.5
+  rating: rich
+
 agents:
   orchestrator:
     character: The Austen Narrator

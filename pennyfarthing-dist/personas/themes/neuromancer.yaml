@@ -16,6 +16,10 @@ theme:
   portrait_style: ", cyberpunk portrait, neon shadows, glitching artifacts, 1980s retrofuturism illustration, matrix green"
   tier: C
 
+zeitgeist:
+  score: 79.5
+  rating: rich
+
 agents:
   orchestrator:
     character: Case

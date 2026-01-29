@@ -16,6 +16,10 @@ theme:
   portrait_style: ", bold outlines, New New York, year 3000 retrofuturism"
   tier: C
 
+zeitgeist:
+  score: 86.5
+  rating: rich
+
 agents:
   orchestrator:
     character: Professor Farnsworth

@@ -15,6 +15,10 @@ theme:
   portrait_style: ", 1970s Saturday morning cartoon, bold flat colors, classic cel animation, villain lighting, swamp headquarters background"
   tier: A
 
+zeitgeist:
+  score: 78.5
+  rating: rich
+
 agents:
   orchestrator:
     character: Lex Luthor

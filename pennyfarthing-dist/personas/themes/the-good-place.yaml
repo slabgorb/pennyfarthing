@@ -16,6 +16,10 @@ theme:
   portrait_style: ", afterlife comedy, bright pastel colors, ethereal glow, warm illustrated style"
   tier: B
 
+zeitgeist:
+  score: 84.0
+  rating: rich
+
 agents:
   orchestrator:
     character: The Judge (Gen)

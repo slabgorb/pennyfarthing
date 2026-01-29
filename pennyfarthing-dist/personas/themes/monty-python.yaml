@@ -21,6 +21,10 @@ theme:
     genre: comedy
     energy: high-energy
 
+zeitgeist:
+  score: 82.3
+  rating: rich
+
 agents:
   orchestrator:
     character: The Colonel

@@ -15,6 +15,10 @@ theme:
   portrait_style: ", maritime oil painting, stormy sea backdrop, dark oceanic tones, scrimshaw details"
   tier: B
 
+zeitgeist:
+  score: 76.75
+  rating: rich
+
 agents:
   orchestrator:
     character: Captain Ahab

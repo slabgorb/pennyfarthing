@@ -15,6 +15,10 @@ theme:
   portrait_style: ", epic crossover art style, golden championship lighting, legendary heroes assembled"
   tier: U
 
+zeitgeist:
+  score: 73.2
+  rating: rich
+
 agents:
   orchestrator:
     character: Aragorn

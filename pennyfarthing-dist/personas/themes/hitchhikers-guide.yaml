@@ -22,6 +22,10 @@ theme:
     genre: sci-fi
     energy: high-energy
 
+zeitgeist:
+  score: 86.0
+  rating: rich
+
 agents:
   orchestrator:
     # JOB FAIR OPTIMIZED: Marvin moved here - brain the size of a planet orchestrates

@@ -15,6 +15,10 @@ theme:
   user_title: Ambassador
   portrait_style: ", 1990s space opera, deep space blue and station amber, alien prosthetics, starfield backdrop"
   tier: A
+zeitgeist:
+  score: 82.0
+  rating: rich
+
 agents:
   orchestrator:
     character: Kosh Naranek

@@ -16,6 +16,10 @@ theme:
   portrait_style: ", dark Slavic fantasy, medieval Eastern European, silver and steel, dark fantasy illustration"
   tier: B
 
+zeitgeist:
+  score: 72.5
+  rating: rich
+
 agents:
   orchestrator:
     character: Destiny (Przeznaczenie)

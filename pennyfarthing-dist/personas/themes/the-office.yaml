@@ -21,6 +21,10 @@ theme:
     genre: drama
     energy: measured
 
+zeitgeist:
+  score: 82.5
+  rating: rich
+
 agents:
   orchestrator:
     character: Michael Scott

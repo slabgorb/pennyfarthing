@@ -15,6 +15,10 @@ theme:
   portrait_style: ", 19th century French revolutionary, barricade and tricolor background, dramatic chiaroscuro, sepia and muted reds"
   tier: D
 
+zeitgeist:
+  score: 67.75
+  rating: moderate
+
 agents:
   orchestrator:
     character: Marius Pontmercy

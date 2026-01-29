@@ -15,6 +15,10 @@ theme:
   portrait_style: ", warm sports comedy, soft golden lighting, stadium backdrop, heartfelt illustration"
   tier: B
 
+zeitgeist:
+  score: 88.0
+  rating: rich
+
 agents:
   orchestrator:
     character: Ted Lasso

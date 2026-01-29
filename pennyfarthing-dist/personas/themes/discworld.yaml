@@ -20,6 +20,10 @@ theme:
     era: timeless
     genre: fantasy
     energy: measured
+zeitgeist:
+  score: 98.0
+  rating: exceptional
+
 agents:
   orchestrator:
     character: DEATH

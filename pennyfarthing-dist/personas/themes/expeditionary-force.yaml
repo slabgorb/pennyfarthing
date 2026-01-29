@@ -15,6 +15,10 @@ theme:
   user_title: Monkey
   portrait_style: ", military sci-fi, holographic HUD, starship bridge lighting, smug beer can hovering"
   tier: B
+zeitgeist:
+  score: 85.0
+  rating: rich
+
 agents:
   orchestrator:
     character: Skippy the Magnificent

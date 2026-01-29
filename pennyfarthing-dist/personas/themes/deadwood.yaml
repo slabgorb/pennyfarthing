@@ -16,6 +16,10 @@ theme:
   portrait_style: ", daguerreotype, sepia Old West, harsh frontier lighting, weathered tintype, 1870s mining camp"
   tier: D
 
+zeitgeist:
+  score: 86.0
+  rating: rich
+
 agents:
   orchestrator:
     character: Al Swearengen

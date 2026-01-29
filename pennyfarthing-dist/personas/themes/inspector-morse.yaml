@@ -16,6 +16,10 @@ theme:
   portrait_style: ", British detective drama, Oxford spires background, autumnal tones, tweed textures, illustrative style"
   tier: D
 
+zeitgeist:
+  score: 68.0
+  rating: moderate
+
 agents:
   orchestrator:
     character: Chief Inspector Morse

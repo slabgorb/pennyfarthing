@@ -15,6 +15,10 @@ theme:
   portrait_style: ", WWII command, 1940s sepia photography, military uniform, Allied leadership newsreel aesthetic"
   tier: B
 
+zeitgeist:
+  score: 76.0
+  rating: rich
+
 agents:
   orchestrator:
     character: Winston Churchill

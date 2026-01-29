@@ -15,6 +15,10 @@ theme:
   user_title: Client
   portrait_style: ", 60's popart silkscreen, warm desert tones, golden hour cinematography, cinematic aesthetic"
   tier: B
+zeitgeist:
+  score: 83.0
+  rating: rich
+
 agents:
   orchestrator:
     character: Howard Hamlin

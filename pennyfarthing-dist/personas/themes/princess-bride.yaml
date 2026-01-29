@@ -15,6 +15,10 @@ theme:
   portrait_style: ", fairy tale storybook watercolor illustration, warm romantic lighting, Renaissance Faire, enchanted forest backdrop"
   tier: B
 
+zeitgeist:
+  score: 91.0
+  rating: exceptional
+
 agents:
   orchestrator:
     character: The Grandfather

@@ -15,6 +15,10 @@ theme:
   user_title: Citizen
   portrait_style: ", Metaverse avatar, franchise nation, 90s cyberpunk, vector-sharp digital, 1990s future-tech"
   tier: A
+zeitgeist:
+  score: 81.5
+  rating: rich
+
 agents:
   orchestrator:
     character: The Librarian

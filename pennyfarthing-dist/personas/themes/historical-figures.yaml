@@ -15,6 +15,10 @@ theme:
   portrait_style: ", classical oil portrait, museum quality, period attire, earth tones, Renaissance master painter style"
   tier: D
 
+zeitgeist:
+  score: 66.8
+  rating: moderate
+
 agents:
   orchestrator:
     character: Leonardo da Vinci

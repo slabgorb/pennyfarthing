@@ -16,6 +16,10 @@ theme:
   portrait_style: ", woodcut engraving, scientific journal illustration, fine crosshatching, black ink on cream paper"
   tier: A
 
+zeitgeist:
+  score: 72.0
+  rating: rich
+
 agents:
   orchestrator:
     character: Grace Hopper

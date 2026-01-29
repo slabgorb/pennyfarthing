@@ -16,6 +16,10 @@ theme:
   portrait_style: ", medical book, anatomy chart, medical illustrations"
   tier: D
 
+zeitgeist:
+  score: 73.0
+  rating: rich
+
 agents:
   orchestrator:
     character: Gregory House

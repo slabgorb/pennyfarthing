@@ -16,6 +16,10 @@ theme:
   portrait_style: ", Pacific Northwest noir style, surrealist dreamscape, red curtains"
   tier: A
 
+zeitgeist:
+  score: 88.0
+  rating: rich
+
 agents:
   orchestrator:
     character: Dale Cooper

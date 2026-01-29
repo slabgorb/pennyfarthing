@@ -16,6 +16,10 @@ theme:
   portrait_style: ", animated sitcom style, bold black outlines"
   tier: A
 
+zeitgeist:
+  score: 85.5
+  rating: rich
+
 agents:
   orchestrator:
     character: Mr. Burns

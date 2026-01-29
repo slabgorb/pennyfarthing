@@ -15,6 +15,10 @@ theme:
   portrait_style: ", Victorian engraving, Victorian crosshatch illustration, crosshatched ink, sepia vignette, gaslit London"
   tier: B
 
+zeitgeist:
+  score: 77.5
+  rating: rich
+
 agents:
   orchestrator:
     character: The Ghost of Christmas Yet to Come

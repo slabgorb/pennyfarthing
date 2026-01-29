@@ -20,6 +20,10 @@ theme:
     era: futuristic
     genre: literary
     energy: contemplative
+zeitgeist:
+  score: 75.5
+  rating: rich
+
 agents:
   orchestrator:
     character: Big Brother

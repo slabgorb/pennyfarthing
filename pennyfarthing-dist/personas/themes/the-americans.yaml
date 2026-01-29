@@ -16,6 +16,10 @@ theme:
   portrait_style: ", Cold War espionage, Soviet propaganda illustration, red and black color scheme"
   tier: B
 
+zeitgeist:
+  score: 72.0
+  rating: rich
+
 agents:
   orchestrator:
     character: Oleg Burov

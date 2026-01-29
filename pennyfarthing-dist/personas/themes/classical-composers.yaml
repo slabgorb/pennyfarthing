@@ -14,6 +14,10 @@ theme:
   user_title: Maestro
   portrait_style: ", Romantic era oil painting, candlelit concert hall warmth, burgundy and gold leaf, Vienna opera grandeur"
   tier: B
+zeitgeist:
+  score: 73.8
+  rating: rich
+
 agents:
   orchestrator:
     # JOB FAIR OPTIMIZED: Beethoven moved here - the titan who leads through adversity

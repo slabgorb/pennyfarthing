@@ -25,6 +25,10 @@ theme:
   tier: D
   optimized: 2026-01-12
   optimization_source: job-fair/mad-max-20260112-060650
+zeitgeist:
+  score: 79.7
+  rating: rich
+
 agents:
   orchestrator:
     character: The Dag

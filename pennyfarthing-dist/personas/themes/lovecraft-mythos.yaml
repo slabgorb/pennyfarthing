@@ -14,6 +14,10 @@ theme:
   portrait_style: ", cosmic horror, eldritch green and purple tones,  1920s pulp magazine cover"
   tier: A
 
+zeitgeist:
+  score: 80.75
+  rating: rich
+
 agents:
   orchestrator:
     character: Randolph Carter
