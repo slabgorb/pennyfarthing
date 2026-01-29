@@ -91,10 +91,12 @@ elif [ -d "$PROJECT_ROOT/.session/agents" ]; then
 fi
 
 # Get character name from theme file (single source of truth)
-# Priority: .pennyfarthing/config.local.yaml > .claude/persona-config.yaml for theme name
+# Priority: .pennyfarthing/config.local.yaml > .claude/persona-config.local.yaml > .claude/persona-config.yaml
 config_file=""
 if [ -f "$PROJECT_ROOT/.pennyfarthing/config.local.yaml" ]; then
     config_file="$PROJECT_ROOT/.pennyfarthing/config.local.yaml"
+elif [ -f "$PROJECT_ROOT/.claude/persona-config.local.yaml" ]; then
+    config_file="$PROJECT_ROOT/.claude/persona-config.local.yaml"
 elif [ -f "$PROJECT_ROOT/.claude/persona-config.yaml" ]; then
     config_file="$PROJECT_ROOT/.claude/persona-config.yaml"
 fi

@@ -16,7 +16,7 @@ if [[ -z "${PROJECT_ROOT:-}" ]]; then
   PROJECT_ROOT="$d"
 fi
 
-WORKFLOWS_DIR="$PROJECT_ROOT/pennyfarthing-dist/workflows"
+WORKFLOWS_DIR="$PROJECT_ROOT/.pennyfarthing/workflows"
 
 if [[ ! -d "$WORKFLOWS_DIR" ]]; then
   echo "Error: Workflows directory not found at $WORKFLOWS_DIR"

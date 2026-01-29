@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [7.9.1] - 2026-01-28
+
+### Fixed
+- **Shell Script Permissions** - `pennyfarthing init` now creates shell script templates (e.g., `setup-env.sh`) with executable permissions (mode 0755)
+- **Statusline Config Search** - Added `.claude/persona-config.local.yaml` to config file search order in statusline.sh
+
+### Changed
+- **Gitignore Updates** - Added runtime state file patterns (*.pid, *-pid, *-port, .cyclist-*)
+
+---
+
 ## [7.9.0] - 2026-01-28
 
 ### Cyclist UI Improvements & Prime v2 Bootstrap
