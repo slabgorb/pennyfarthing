@@ -2,7 +2,7 @@
   "name": "pennyfarthing-vscode",
   "displayName": "Pennyfarthing",
   "description": "VS Code extension for Pennyfarthing - agent orchestration for Claude Code",
-  "version": "8.0.1",
+  "version": "8.0.2",
   "publisher": "1898andco",
   "license": "MIT",
   "private": true,
