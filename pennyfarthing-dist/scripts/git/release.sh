@@ -94,7 +94,23 @@ if [[ -n "$BUMP_TYPE" ]]; then
     info "Version bump requested: $BUMP_TYPE"
 
     # Run deploy.sh which handles version bump + full release
-    DEPLOY_SCRIPT="$(dirname "$SCRIPT_DIR")/misc/deploy.sh"
+    # deploy.sh is in scripts/ (meta-only, not distributed)
+    # This only works when running from the pennyfarthing repo itself
+    #
+    # Try to find deploy.sh relative to the script location first (for pennyfarthing repo)
+    # then fall back to PROJECT_ROOT (for legacy compatibility)
+    SCRIPT_PARENT="$(dirname "$(dirname "$SCRIPT_DIR")")"  # Go up from git/ to scripts/ to root
+    if [[ -f "$SCRIPT_PARENT/../scripts/deploy.sh" ]]; then
+        # We're in pennyfarthing-dist/scripts/git, so go up to repo root
+        DEPLOY_SCRIPT="$(cd "$SCRIPT_PARENT/.." && pwd)/scripts/deploy.sh"
+    elif [[ -f "$PROJECT_ROOT/scripts/deploy.sh" ]]; then
+        DEPLOY_SCRIPT="$PROJECT_ROOT/scripts/deploy.sh"
+    else
+        error "deploy.sh not found"
+        error "Version bumping requires running from the pennyfarthing repo"
+        error "Try: cd pennyfarthing && just release --bump patch"
+        exit 1
+    fi
     if $DRY_RUN; then
         exec "$DEPLOY_SCRIPT" --dry-run "$BUMP_TYPE"
     else

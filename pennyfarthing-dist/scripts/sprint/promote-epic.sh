@@ -3,6 +3,11 @@
 # Usage: .pennyfarthing/scripts/core/run.sh sprint/promote-epic.sh <epic-id>
 #
 # Example: .pennyfarthing/scripts/core/run.sh sprint/promote-epic.sh epic-41
+#
+# Features:
+# - Detects ID collisions and assigns new ID if needed
+# - Uses yq for proper YAML array insertion
+# - Automatically removes from future.yaml after successful promotion
 
 set -euo pipefail
 
@@ -56,6 +61,25 @@ if [[ -z "$EPIC_DATA" || "$EPIC_DATA" == "null" ]]; then
   exit 1
 fi
 
+# Check for ID collision in current-sprint.yaml
+EXISTING_ID=$(yq ".epics[] | select(.id == \"$EPIC_ID\") | .id" "$SPRINT_FILE" 2>/dev/null || echo "")
+
+NEW_EPIC_ID="$EPIC_ID"
+if [[ -n "$EXISTING_ID" && "$EXISTING_ID" != "null" ]]; then
+  echo "Warning: Epic ID $EPIC_ID already exists in current sprint."
+
+  # Find the highest epic-N ID and increment
+  MAX_EPIC_NUM=$(yq '.epics[].id' "$SPRINT_FILE" 2>/dev/null | grep -oE 'epic-[0-9]+' | sed 's/epic-//' | sort -n | tail -1 || echo "0")
+  if [[ -z "$MAX_EPIC_NUM" ]]; then
+    MAX_EPIC_NUM=0
+  fi
+  NEW_EPIC_NUM=$((MAX_EPIC_NUM + 1))
+  NEW_EPIC_ID="epic-$NEW_EPIC_NUM"
+
+  echo "Assigning new ID: $NEW_EPIC_ID"
+  echo ""
+fi
+
 # Extract epic fields
 EPIC_TITLE=$(echo "$EPIC_DATA" | yq -r '.title // "Unknown"')
 EPIC_DESCRIPTION=$(echo "$EPIC_DATA" | yq -r '.description // ""')
@@ -66,99 +90,65 @@ STORY_COUNT=$(echo "$EPIC_DATA" | yq '[.stories[]] | length')
 
 echo ""
 echo "Promoting epic to current sprint:"
-echo "  ID: $EPIC_ID"
+echo "  Original ID: $EPIC_ID"
+if [[ "$NEW_EPIC_ID" != "$EPIC_ID" ]]; then
+  echo "  New ID: $NEW_EPIC_ID"
+fi
 echo "  Title: $EPIC_TITLE"
 echo "  Points: $EPIC_POINTS"
 echo "  Priority: $EPIC_PRIORITY"
 echo "  Stories: $STORY_COUNT"
 echo ""
 
-# Generate the epic YAML block for current-sprint.yaml
-# The format must match existing epics in current-sprint.yaml
-EPIC_YAML=$(cat <<EOF
-  - id: $EPIC_ID
-    type: epic
-    title: "Epic: $EPIC_TITLE"
-    description: |
-$(echo "$EPIC_DESCRIPTION" | sed 's/^/      /')
-    priority: $EPIC_PRIORITY
-    status: backlog
-    repos: $EPIC_REPOS
-    stories:
-EOF
-)
+# Build the new epic object as JSON, then use yq to append it properly
+# This ensures valid YAML structure
 
-# Get stories and format them using a helper function
-format_story() {
-  local story_json="$1"
-  local id title desc points priority repos workflow
+# Extract old epic ID prefix for updating story IDs (e.g., "64" from "epic-64")
+OLD_ID_NUM=$(echo "$EPIC_ID" | sed 's/epic-//')
+NEW_ID_NUM=$(echo "$NEW_EPIC_ID" | sed 's/epic-//')
 
-  id=$(echo "$story_json" | yq -r '.id // ""')
-  title=$(echo "$story_json" | yq -r '.title // ""')
-  desc=$(echo "$story_json" | yq -r '.description // ""')
-  points=$(echo "$story_json" | yq -r '.points // 0')
-  priority=$(echo "$story_json" | yq -r '.priority // "P2"')
-  repos=$(echo "$story_json" | yq -r '.repos // "pennyfarthing"')
-  workflow=$(echo "$story_json" | yq -r '.workflow // "tdd"')
+# Create a temp file for the new epic
+TEMP_EPIC=$(mktemp)
+trap "rm -f $TEMP_EPIC" EXIT
 
-  # Format description with proper indentation
-  local desc_formatted
-  desc_formatted=$(echo "$desc" | sed 's/^/          /')
+# Transform the epic data: update IDs, add required fields, format for current-sprint.yaml
+# Note: Using -o yaml for Go yq (not -y which is Python yq)
+echo "$EPIC_DATA" | yq -o yaml "
+  .id = \"$NEW_EPIC_ID\" |
+  .type = \"epic\" |
+  .title = \"Epic: \" + .title |
+  .status = \"backlog\" |
+  .stories = [.stories[] |
+    .id = ((.id | tostring) | sub(\"^${OLD_ID_NUM}-\"; \"${NEW_ID_NUM}-\")) |
+    .status = \"backlog\" |
+    .repos = (.repos // \"pennyfarthing\") |
+    .workflow = (.workflow // \"tdd\") |
+    .priority = (.priority // \"P2\") |
+    .acceptance_criteria = (.acceptance_criteria // [])
+  ]
+" > "$TEMP_EPIC"
 
-  # Build story YAML
-  echo "      - id: $id"
-  echo "        title: \"$title\""
-  echo "        description: |"
-  echo "$desc_formatted"
-  echo "        points: $points"
-  echo "        priority: $priority"
-  echo "        status: backlog"
-  echo "        repos: $repos"
-  echo "        workflow: $workflow"
-
-  # Handle acceptance_criteria - check if array exists and has items
-  local ac_count
-  ac_count=$(echo "$story_json" | yq -r '(.acceptance_criteria // []) | length')
-  if [[ "$ac_count" -gt 0 ]]; then
-    echo "        acceptance_criteria:"
-    echo "$story_json" | yq -r '(.acceptance_criteria // [])[] | "          - " + .'
-  else
-    echo "        acceptance_criteria: []"
-  fi
-}
-
-# Process each story
-STORIES_YAML=""
-story_count=$(echo "$EPIC_DATA" | yq -r '.stories | length')
-for i in $(seq 0 $((story_count - 1))); do
-  story_json=$(echo "$EPIC_DATA" | yq -o json ".stories[$i]")
-  if [[ -n "$STORIES_YAML" ]]; then
-    STORIES_YAML="$STORIES_YAML
-$(format_story "$story_json")"
-  else
-    STORIES_YAML=$(format_story "$story_json")
-  fi
-done
-
-# Combine epic and stories
-FULL_EPIC_YAML="$EPIC_YAML
-$STORIES_YAML"
-
-echo "Epic YAML to append:"
+echo "Epic to add:"
 echo "---"
-echo "$FULL_EPIC_YAML"
+cat "$TEMP_EPIC"
 echo "---"
 echo ""
 
-# Append to current-sprint.yaml epics section
-echo "$FULL_EPIC_YAML" >> "$SPRINT_FILE"
+# Use yq to properly append the epic to the epics array
+yq eval -i ".epics += [$(cat "$TEMP_EPIC" | yq -o json)]" "$SPRINT_FILE"
 
-echo "Appended epic to $SPRINT_FILE"
+echo "Successfully added epic to $SPRINT_FILE"
+
+# Remove from future.yaml
 echo ""
-echo "To remove from future.yaml, manually edit or use:"
-echo "  yq eval -i 'del(.future.initiatives[].epics[] | select(.id == \"$EPIC_ID\"))' $FUTURE_FILE"
+echo "Removing from future.yaml..."
+yq eval -i "del(.future.initiatives[].epics[] | select(.id == \"$EPIC_ID\"))" "$FUTURE_FILE"
+echo "Removed $EPIC_ID from future.yaml"
+
+echo ""
+echo "Promotion complete!"
 echo ""
 echo "Next steps:"
-echo "  1. Review the appended YAML in $SPRINT_FILE"
-echo "  2. Optionally create Jira epic: .pennyfarthing/scripts/core/run.sh jira/create-jira-epic.sh $EPIC_ID"
-echo "  3. Remove from future.yaml if desired"
+echo "  1. Review the epic in $SPRINT_FILE"
+echo "  2. Create Jira epic: .pennyfarthing/scripts/core/run.sh jira/create-jira-epic.sh $NEW_EPIC_ID"
+echo "  3. Start work: /sprint work ${NEW_ID_NUM}-1"

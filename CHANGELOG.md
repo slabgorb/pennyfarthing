@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-*No unreleased changes*
+### Changed
+- **Script Organization** (MSSCI-12603) - Clean separation between meta scripts (framework development) and distributed scripts (orchestrator use)
+  - `scripts/` - Meta scripts only (deploy, benchmarks, job-fair)
+  - `pennyfarthing-dist/scripts/` - Distributed bash/JS for orchestrators
+  - `pennyfarthing_scripts/` - Distributed Python utilities
+
+### Fixed
+- **Workflow Type Lookup** - `get-workflow-type.py` now looks in `.pennyfarthing/workflows/` (correct path for orchestrator repos)
+- **CI Build** - `generate-skill-docs.sh` now works in both framework repo and orchestrator repos by checking for `pennyfarthing-dist/` fallback
 
 ---
 

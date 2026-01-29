@@ -203,16 +203,16 @@ install:
 # Generate portraits for a theme (uses SDXL, requires GPU)
 # Usage: just portraits arthurian-mythos
 portraits theme:
-    ./scripts/generate-portraits.sh --theme {{theme}} --skip-existing
+    ./pennyfarthing-dist/scripts/portraits/generate-portraits.sh --theme {{theme}} --skip-existing
 
 # Preview portrait generation without running (dry-run)
 # Usage: just portraits-preview arthurian-mythos
 portraits-preview theme:
-    ./scripts/generate-portraits.sh --theme {{theme}} --dry-run
+    ./pennyfarthing-dist/scripts/portraits/generate-portraits.sh --theme {{theme}} --dry-run
 
 # Generate portraits for all themes
 portraits-all:
-    ./scripts/generate-portraits.sh --skip-existing
+    ./pennyfarthing-dist/scripts/portraits/generate-portraits.sh --skip-existing
 
 # Run Cyclist tests in watch mode
 test-cyclist-watch:
