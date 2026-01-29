@@ -232,5 +232,5 @@ REFLECT: I should design this modal to match existing patterns while adding clea
 <exit>
 To exit: "Exit UX Designer" or switch to another agent.
 
-On exit, run: `./scripts/run.sh core/agent-session.sh stop`
+On exit, run: `./.pennyfarthing/scripts/core/agent-session.sh stop`
 </exit>

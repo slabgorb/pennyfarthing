@@ -4,7 +4,7 @@
 
 ## Installation
 
-The package is automatically available when Pennyfarthing is installed. PYTHONPATH is set by `run.sh`.
+The package is automatically available when Pennyfarthing is installed. PYTHONPATH is set by the calling script via environment variables.
 
 ## Packages
 
@@ -32,14 +32,14 @@ The package is automatically available when Pennyfarthing is installed. PYTHONPA
 
 ## Usage
 
-Scripts invoke Python modules via `run.sh`:
+Scripts invoke Python modules directly:
 
 ```bash
 # From a bash script
 python -m pennyfarthing_scripts.jira.sync "$EPIC_ID"
 
-# PYTHONPATH is set by run.sh:
-# export PYTHONPATH="${PENNYFARTHING_PKG_ROOT}${PYTHONPATH:+:$PYTHONPATH}"
+# PYTHONPATH is set by the script:
+# export PYTHONPATH="${PROJECT_ROOT}${PYTHONPATH:+:$PYTHONPATH}"
 ```
 
 ## Dependencies

@@ -9,7 +9,7 @@
 #   - Weekly breakdown (optional)
 #
 # Environment:
-#   PROJECT_ROOT - Set by run.sh bootstrap (required)
+#   PROJECT_ROOT - Set by find-root.sh (required)
 
 set -uo pipefail
 

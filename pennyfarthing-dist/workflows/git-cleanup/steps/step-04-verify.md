@@ -15,7 +15,7 @@ Verify the cleanup was successful and optionally push to remote.
 
 ```bash
 echo "=== Final State ==="
-./scripts/run.sh git/git-status-all.sh
+.pennyfarthing/scripts/git/git-status-all.sh
 ```
 
 Expected: Clean working directory or only intentionally skipped files.

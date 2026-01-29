@@ -1,12 +1,12 @@
 #!/bin/bash
 # Display available stories grouped by epic with Jira context
-# Usage: .pennyfarthing/scripts/core/run.sh sprint/available-stories.sh
+# Usage: .pennyfarthing/scripts/sprint/available-stories.sh
 #
 # Shows backlog stories with epic context, points, and workflow
 
 set -euo pipefail
 
-# PROJECT_ROOT should be set by run.sh, but find it if not
+# PROJECT_ROOT should be set by find-root.sh, but find it if not
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
   d="$PWD"
   while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do

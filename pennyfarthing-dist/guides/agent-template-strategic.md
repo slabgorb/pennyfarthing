@@ -105,7 +105,7 @@ From theme config. Model: haiku. Tasks: {What helpers do for this agent}
 <exit>
 To exit: "Exit {Agent}" or "Switch to [other agent]"
 
-On exit, run: `./scripts/run.sh core/agent-session.sh stop`
+On exit, run: `.pennyfarthing/scripts/core/agent-session.sh stop`
 </exit>
 ```
 

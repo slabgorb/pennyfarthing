@@ -168,8 +168,12 @@ export function getDirectoryHashes(dirPath: string): Record<string, string> {
 /**
  * Find the project root by walking up from a starting directory.
  *
- * Looks for .pennyfarthing/ directory as the primary marker - this exists in any
- * project using Pennyfarthing (created by `pennyfarthing init`).
+ * Checks for markers in priority order:
+ * 1. pennyfarthing-dist/ + packages/ together - Framework source repo (unique combination)
+ * 2. .pennyfarthing/ - Consumer project (created by `pennyfarthing init`)
+ *
+ * The first check uses BOTH markers because an orchestrator might have pennyfarthing-dist/
+ * via symlink, but only the actual pennyfarthing repo has both pennyfarthing-dist/ AND packages/.
  *
  * @param startDir - Starting directory (defaults to __dirname equivalent)
  * @returns Absolute path to project root
@@ -179,7 +183,11 @@ export function findMonorepoRoot(startDir: string): string {
   let dir = startDir;
 
   for (let i = 0; i < 10; i++) {
-    // Primary marker: .pennyfarthing/ directory (created by pennyfarthing init)
+    // Primary marker: pennyfarthing-dist/ + packages/ together (framework source repo only)
+    if (existsSync(join(dir, 'pennyfarthing-dist')) && existsSync(join(dir, 'packages'))) {
+      return dir;
+    }
+    // Secondary marker: .pennyfarthing/ directory (consumer project)
     if (existsSync(join(dir, '.pennyfarthing'))) {
       return dir;
     }
@@ -192,5 +200,5 @@ export function findMonorepoRoot(startDir: string): string {
     dir = parent;
   }
 
-  throw new Error(`Could not find project root (.pennyfarthing/) starting from ${startDir}`);
+  throw new Error(`Could not find project root (pennyfarthing-dist/+packages/ or .pennyfarthing/) starting from ${startDir}`);
 }

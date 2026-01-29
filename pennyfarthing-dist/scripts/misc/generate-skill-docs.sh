@@ -17,36 +17,10 @@
 
 set -euo pipefail
 
-# Find project root
-# Priority 1: .pennyfarthing/ (orchestrator/consumer repos)
-# Priority 2: pennyfarthing-dist/ (framework repo itself)
-find_project_root() {
-  local dir="$PWD"
-  # First try .pennyfarthing/
-  while [[ ! -d "$dir/.pennyfarthing" ]] && [[ "$dir" != "/" ]]; do
-    dir="$(dirname "$dir")"
-  done
-  if [[ -d "$dir/.pennyfarthing" ]]; then
-    echo "$dir"
-    return
-  fi
-  # Fall back to pennyfarthing-dist/ for framework repo
-  dir="$PWD"
-  while [[ ! -d "$dir/pennyfarthing-dist" ]] && [[ "$dir" != "/" ]]; do
-    dir="$(dirname "$dir")"
-  done
-  if [[ -d "$dir/pennyfarthing-dist" ]]; then
-    echo "$dir"
-    return
-  fi
-  echo ""
-}
-
-PROJECT_ROOT="$(find_project_root)"
-if [[ -z "$PROJECT_ROOT" ]]; then
-  echo "Error: Cannot find project root (no .pennyfarthing or pennyfarthing-dist directory found)" >&2
-  exit 1
-fi
+# Self-locate: derive PROJECT_ROOT from this script's position
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+source "$SCRIPT_DIR/../lib/find-root.sh"
+# PROJECT_ROOT is now set
 
 # Default paths
 REGISTRY_PATH="${PROJECT_ROOT}/pennyfarthing-dist/skills/skill-registry.yaml"

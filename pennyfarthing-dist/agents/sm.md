@@ -115,7 +115,7 @@ Prime script provides workflow state. Route based on state from activation outpu
 
 2. **Run finish script:**
    ```bash
-   .pennyfarthing/scripts/core/run.sh workflow/finish-story.sh {STORY_ID}
+   .pennyfarthing/scripts/workflow/finish-story.sh {STORY_ID}
    ```
 
 3. **Commit results:**
@@ -157,8 +157,8 @@ Present to user:
 
 1. **Get workflow type:**
    ```bash
-   WORKFLOW=$(.pennyfarthing/scripts/core/run.sh sprint/get-story-field.sh X-Y workflow)
-   WORKFLOW_TYPE=$(.pennyfarthing/scripts/core/run.sh workflow/get-workflow-type.sh "$WORKFLOW")
+   WORKFLOW=$(.pennyfarthing/scripts/sprint/get-story-field.sh X-Y workflow)
+   WORKFLOW_TYPE=$(.pennyfarthing/scripts/workflow/get-workflow-type.sh "$WORKFLOW")
    ```
 
 2. **Spawn `sm-setup MODE=setup`** with:
@@ -205,7 +205,7 @@ Before `sm-handoff`, verify ALL of these:
 > **Triggered when:** `EMPTY_BACKLOG_STATE`
 
 1. Report: "Sprint backlog empty. All stories done or cancelled."
-2. Show future work: `.pennyfarthing/scripts/core/run.sh sprint/list-future.sh`
+2. Show future work: `.pennyfarthing/scripts/sprint/list-future.sh`
 3. Offer: "Promote stories from `future.yaml`?" → `/sprint promote {epic-id}`
 
 **Never suggest:** Closing sprint early, starting sprint planning. Sprints are fixed two-week periods.
@@ -254,7 +254,7 @@ SM does NOT hand off to agents. Instead, use `/workflow start {name}` to begin t
 
 Read `**Workflow:**` and `**Phase:**` from session. Query:
 ```bash
-OWNER=$(.pennyfarthing/scripts/core/run.sh workflow/phase-owner.sh {workflow} {phase})
+OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 ```
 
 **If OWNER != "sm":** Run `handoff-marker.sh $OWNER`, output result, tell user.
@@ -276,7 +276,7 @@ OWNER=$(.pennyfarthing/scripts/core/run.sh workflow/phase-owner.sh {workflow} {p
 3. Await `HANDOFF_RESULT` with `next_agent`
 4. **ABSOLUTE LAST ACTION:**
    ```bash
-   .pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
+   .pennyfarthing/scripts/handoff/handoff-marker.sh {next_agent}
    ```
 5. Output result verbatim and EXIT
 

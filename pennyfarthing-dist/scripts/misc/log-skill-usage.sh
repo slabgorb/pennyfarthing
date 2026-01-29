@@ -6,7 +6,7 @@
 #   {"ts":"2026-01-11T10:30:45Z","skill":"testing","agent":"dev","session":"abc123"}
 #
 # Environment:
-#   PROJECT_ROOT - Set by run.sh bootstrap (required)
+#   PROJECT_ROOT - Set by find-root.sh (required)
 
 set -euo pipefail
 

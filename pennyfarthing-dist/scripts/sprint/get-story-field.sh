@@ -1,11 +1,11 @@
 #!/bin/bash
 # Get a field value from a story in sprint YAML
-# Usage: .pennyfarthing/scripts/core/run.sh sprint/get-story-field.sh <story-id> <field>
+# Usage: .pennyfarthing/scripts/sprint/get-story-field.sh <story-id> <field>
 #
 # Examples:
-#   .pennyfarthing/scripts/core/run.sh sprint/get-story-field.sh 35-2 workflow
-#   .pennyfarthing/scripts/core/run.sh sprint/get-story-field.sh 35-2 jira
-#   .pennyfarthing/scripts/core/run.sh sprint/get-story-field.sh 35-2 status
+#   .pennyfarthing/scripts/sprint/get-story-field.sh 35-2 workflow
+#   .pennyfarthing/scripts/sprint/get-story-field.sh 35-2 jira
+#   .pennyfarthing/scripts/sprint/get-story-field.sh 35-2 status
 #
 # Common fields: workflow, status, jira, points, title, repos, priority
 # Returns the field value or "null" if not found
@@ -27,7 +27,7 @@ if [[ -z "$STORY_ID" || -z "$FIELD" ]]; then
   exit 1
 fi
 
-# PROJECT_ROOT should be set by run.sh
+# PROJECT_ROOT should be set by find-root.sh
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
   d="$PWD"
   while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do

@@ -114,7 +114,7 @@ class PreflightResult:
         if self.ready_to_finish:
             result["next_steps"] = [
                 "Preflight passed. Run finish-story.sh to complete.",
-                f"Command: .pennyfarthing/scripts/core/run.sh workflow/finish-story.sh {self.story_id}",
+                f"Command: .pennyfarthing/scripts/workflow/finish-story.sh {self.story_id}",
                 "Then commit and push sprint archive changes.",
             ]
         else:

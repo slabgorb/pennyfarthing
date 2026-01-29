@@ -19,7 +19,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# Use exported PROJECT_ROOT from run.sh, or detect it
+# Use exported PROJECT_ROOT from find-root.sh, or detect it
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
     _dir="$PWD"
     while [[ ! -d "$_dir/.pennyfarthing" ]] && [[ "$_dir" != "/" ]]; do

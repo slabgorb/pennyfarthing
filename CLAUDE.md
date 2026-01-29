@@ -144,12 +144,13 @@ Is this script for Pennyfarthing development ONLY?
 ### Distributed Scripts (`pennyfarthing-dist/scripts/`)
 
 Shipped via npm, available in user projects:
-- `core/` - Infrastructure (run.sh, handoff)
 - `sprint/` - Sprint management
 - `story/` - Story operations
 - `jira/` - Jira integration
 - `git/` - Git operations (release.sh)
 - `portraits/` - Portrait generation (requires GPU setup)
+- `core/` - Infrastructure and phase-check utilities
+- `lib/` - Shared libraries (find-root.sh, etc.)
 - And more...
 
 ### Distributed Python (`pennyfarthing_scripts/`)
@@ -166,6 +167,40 @@ Shipped via npm, available in user projects:
 Scripts must exist in ONLY ONE location. Build-time validation prevents duplication.
 
 The `/release --bump` command only works from this repo (requires `scripts/deploy.sh`).
+
+### Script Path Resolution (BASH_SOURCE-First)
+
+All distributed bash scripts MUST derive paths from `BASH_SOURCE`, not `$PWD`. A script
+knows its position in the directory tree, so it can derive PROJECT_ROOT directly.
+
+**Standard Pattern:**
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Self-locate: derive PROJECT_ROOT from this script's position
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+source "$SCRIPT_DIR/../lib/find-root.sh"
+# PROJECT_ROOT is now set
+```
+
+**How It Works:**
+
+The shared library (`find-root.sh`) uses SCRIPT_DIR to:
+1. Resolve symlinks to find the real script location
+2. Extract the package root from the path (scripts are in `pennyfarthing-dist/scripts/<category>/`)
+3. Determine context: framework dev (package root = project root) vs consumer (walk up from node_modules)
+
+**Why This Works:**
+
+- Scripts in `pennyfarthing-dist/scripts/misc/` are always 3 levels below the package root
+- `pwd -P` resolves symlinks, so even when accessed via `.pennyfarthing/scripts/` symlink, we find the real path
+- No reliance on `$PWD` means no confusion from nested repos or working directory
+
+**Environment Override:**
+
+If `PROJECT_ROOT` is already set (by Claude or explicitly), it's respected as an override.
 
 ## Key Files
 

@@ -148,5 +148,5 @@ REFLECT: Recommend completing Epic 38 batch before starting new epics. P1 bugs f
 <exit>
 To exit: "Exit PM" or switch to another agent.
 
-On exit, run: `./scripts/run.sh core/agent-session.sh stop`
+On exit, run: `./.pennyfarthing/scripts/core/agent-session.sh stop`
 </exit>

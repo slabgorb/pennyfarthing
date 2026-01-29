@@ -1,8 +1,8 @@
 #!/bin/bash
 # Initialize a new sprint from template
-# Usage: .pennyfarthing/scripts/core/run.sh sprint/new-sprint.sh <sprint-yyww> <jira-id> <start-date> <end-date> "<goal>"
+# Usage: .pennyfarthing/scripts/sprint/new-sprint.sh <sprint-yyww> <jira-id> <start-date> <end-date> "<goal>"
 #
-# Example: .pennyfarthing/scripts/core/run.sh sprint/new-sprint.sh 2605 277 2026-02-03 2026-02-16 "Polish and stabilization"
+# Example: .pennyfarthing/scripts/sprint/new-sprint.sh 2605 277 2026-02-03 2026-02-16 "Polish and stabilization"
 
 set -euo pipefail
 
@@ -27,7 +27,7 @@ if [[ -z "$SPRINT_YYWW" || -z "$JIRA_ID" || -z "$START_DATE" || -z "$END_DATE" |
   exit 1
 fi
 
-# PROJECT_ROOT should be set by run.sh, but find it if not
+# PROJECT_ROOT should be set by find-root.sh, but find it if not
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
   d="$PWD"
   while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do

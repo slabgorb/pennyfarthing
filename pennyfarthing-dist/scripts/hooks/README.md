@@ -21,7 +21,7 @@ Git hooks and Claude Code hooks.
 Git hooks are installed via:
 
 ```bash
-.pennyfarthing/scripts/core/run.sh git/install-git-hooks.sh
+.pennyfarthing/scripts/git/install-git-hooks.sh
 ```
 
 Claude hooks are configured in `.claude/settings.json`.

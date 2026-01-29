@@ -1,11 +1,11 @@
 #!/bin/bash
 # Get a field value from an epic in sprint YAML
-# Usage: .pennyfarthing/scripts/core/run.sh sprint/get-epic-field.sh <epic-id> <field>
+# Usage: .pennyfarthing/scripts/sprint/get-epic-field.sh <epic-id> <field>
 #
 # Examples:
-#   .pennyfarthing/scripts/core/run.sh sprint/get-epic-field.sh epic-35 jira
-#   .pennyfarthing/scripts/core/run.sh sprint/get-epic-field.sh epic-35 title
-#   .pennyfarthing/scripts/core/run.sh sprint/get-epic-field.sh 35 jira  # Also works without 'epic-' prefix
+#   .pennyfarthing/scripts/sprint/get-epic-field.sh epic-35 jira
+#   .pennyfarthing/scripts/sprint/get-epic-field.sh epic-35 title
+#   .pennyfarthing/scripts/sprint/get-epic-field.sh 35 jira  # Also works without 'epic-' prefix
 #
 # Common fields: jira, title, description, status
 # Returns the field value or "null" if not found
@@ -32,7 +32,7 @@ if [[ ! "$EPIC_ID" =~ ^epic- ]]; then
   EPIC_ID="epic-$EPIC_ID"
 fi
 
-# PROJECT_ROOT should be set by run.sh
+# PROJECT_ROOT should be set by find-root.sh
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
   d="$PWD"
   while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do

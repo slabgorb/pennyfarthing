@@ -26,7 +26,7 @@ model: haiku
 
 - [ ] Use `/sprint backlog` for initial backlog scan:
   ```bash
-  .pennyfarthing/scripts/core/run.sh sprint/available-stories.sh
+  .pennyfarthing/scripts/sprint/available-stories.sh
   ```
 - [ ] Use `/jira` skill to enrich with Jira status/assignee:
   - `/jira search "project=MSSCI AND sprint in openSprints()"` - Get all sprint stories
@@ -92,7 +92,7 @@ Other formats break Cyclist detection.
 EPIC_NUM=$(echo "{STORY_ID}" | cut -d'-' -f1)
 
 # Get epic's Jira key (use script, not direct yq)
-EPIC_JIRA=$(.pennyfarthing/scripts/core/run.sh sprint/get-epic-field.sh "$EPIC_NUM" jira)
+EPIC_JIRA=$(.pennyfarthing/scripts/sprint/get-epic-field.sh "$EPIC_NUM" jira)
 ```
 
 If missing or "null": auto-create via `jira-epic-creation.ts`
@@ -139,10 +139,10 @@ Use `/jira claim` command:
 
 ```bash
 # Check availability first
-.pennyfarthing/scripts/core/run.sh jira/jira-claim-story.sh {JIRA_KEY}
+.pennyfarthing/scripts/jira/jira-claim-story.sh {JIRA_KEY}
 
 # Then claim (assign to self + move to In Progress)
-.pennyfarthing/scripts/core/run.sh jira/jira-claim-story.sh {JIRA_KEY} --claim
+.pennyfarthing/scripts/jira/jira-claim-story.sh {JIRA_KEY} --claim
 ```
 
 **Exit codes:**
@@ -184,7 +184,7 @@ git checkout -b feat/{STORY_ID}-{SLUG}
 After session file is created, determine how to route:
 
 ```bash
-WORKFLOW_TYPE=$(.pennyfarthing/scripts/core/run.sh workflow/get-workflow-type.sh "{WORKFLOW}")
+WORKFLOW_TYPE=$(.pennyfarthing/scripts/workflow/get-workflow-type.sh "{WORKFLOW}")
 ```
 
 | Workflow Type | Routing |

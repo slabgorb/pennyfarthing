@@ -84,16 +84,9 @@ else
     NC=''
 fi
 
-# Find project root
-find_project_root() {
-    local dir="$PWD"
-    while [[ ! -d "$dir/.pennyfarthing" ]] && [[ "$dir" != "/" ]]; do
-        dir="$(dirname "$dir")"
-    done
-    echo "$dir"
-}
-
-PROJECT_ROOT="$(find_project_root)"
+# Self-locate and set up PROJECT_ROOT
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+source "$SCRIPT_DIR/../lib/find-root.sh"
 cd "$PROJECT_ROOT" || exit 1
 
 # Detection functions

@@ -23,7 +23,7 @@ Uses `/sprint` skill scripts for deterministic output.
 Run the sprint status script and parse output:
 
 ```bash
-.pennyfarthing/scripts/core/run.sh sprint/sprint-status.sh
+.pennyfarthing/scripts/sprint/sprint-status.sh
 ```
 
 Then check for active sessions:
@@ -53,7 +53,7 @@ fi
 # Read workflow name from session
 WORKFLOW=$(grep '^\*\*Workflow:\*\*' .session/*-session.md | head -1 | sed 's/.*: //')
 # Check if stepped
-.pennyfarthing/scripts/core/run.sh workflow/get-workflow-type.sh "$WORKFLOW"
+.pennyfarthing/scripts/workflow/get-workflow-type.sh "$WORKFLOW"
 ```
 
 **Important:** Sprints are fixed two-week periods (kanban-style). Never suggest closing a sprint early or starting sprint planning when backlog is empty. The correct response to `EMPTY_BACKLOG_STATE` is to suggest promoting stories from `future.yaml`.

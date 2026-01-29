@@ -19,8 +19,8 @@ model: haiku
 <critical>
 **Use `/check` command for unfiltered runs:**
 ```bash
-.pennyfarthing/scripts/core/run.sh workflow/check.sh
-.pennyfarthing/scripts/core/run.sh workflow/check.sh --repo api
+.pennyfarthing/scripts/workflow/check.sh
+.pennyfarthing/scripts/workflow/check.sh --repo api
 ```
 
 This runs lint + typecheck + tests. Exit 0 = all passed.
@@ -50,8 +50,8 @@ ensure_test_containers
 ## Filtered Runs
 
 ```bash
-.pennyfarthing/scripts/core/run.sh workflow/check.sh --filter "TestUserLogin"
-.pennyfarthing/scripts/core/run.sh workflow/check.sh --repo api --filter "TestUserLogin"
+.pennyfarthing/scripts/workflow/check.sh --filter "TestUserLogin"
+.pennyfarthing/scripts/workflow/check.sh --repo api --filter "TestUserLogin"
 ```
 
 | Language | Filter Flag |

@@ -1,13 +1,13 @@
 #!/bin/bash
 # List all available workflows with type indicators
-# Usage: .pennyfarthing/scripts/core/run.sh workflow/list-workflows.sh
+# Usage: .pennyfarthing/scripts/workflow/list-workflows.sh
 #    or: Invoked with PROJECT_ROOT already set
 #
 # MSSCI-12083: Added type, steps, and modes columns
 
 set -euo pipefail
 
-# PROJECT_ROOT should be set by run.sh, but find it if not
+# PROJECT_ROOT should be set by find-root.sh, but find it if not
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
   d="$PWD"
   while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do

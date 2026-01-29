@@ -1,8 +1,8 @@
 #!/bin/bash
 # Promote an epic from future.yaml to current-sprint.yaml
-# Usage: .pennyfarthing/scripts/core/run.sh sprint/promote-epic.sh <epic-id>
+# Usage: .pennyfarthing/scripts/sprint/promote-epic.sh <epic-id>
 #
-# Example: .pennyfarthing/scripts/core/run.sh sprint/promote-epic.sh epic-41
+# Example: .pennyfarthing/scripts/sprint/promote-epic.sh epic-41
 #
 # Features:
 # - Detects ID collisions and assigns new ID if needed
@@ -21,7 +21,7 @@ if [[ -z "$EPIC_ID" ]]; then
   exit 1
 fi
 
-# PROJECT_ROOT should be set by run.sh, but find it if not
+# PROJECT_ROOT should be set by find-root.sh, but find it if not
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
   d="$PWD"
   while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do
@@ -150,5 +150,5 @@ echo "Promotion complete!"
 echo ""
 echo "Next steps:"
 echo "  1. Review the epic in $SPRINT_FILE"
-echo "  2. Create Jira epic: .pennyfarthing/scripts/core/run.sh jira/create-jira-epic.sh $NEW_EPIC_ID"
+echo "  2. Create Jira epic: .pennyfarthing/scripts/jira/create-jira-epic.sh $NEW_EPIC_ID"
 echo "  3. Start work: /sprint work ${NEW_ID_NUM}-1"

@@ -18,7 +18,7 @@ if [[ -z "$ID" ]]; then
   exit 1
 fi
 
-# PROJECT_ROOT should be set by run.sh
+# PROJECT_ROOT should be set by find-root.sh
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
   d="$PWD"
   while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do

@@ -182,9 +182,11 @@ describe('Story 11-2: pnpm Workspace Structure', () => {
         deps['@pennyfarthing/shared'],
         'packages/core should depend on @pennyfarthing/shared'
       );
+      // Accept either workspace protocol (development) or version (for npm publish)
+      const sharedDep = deps['@pennyfarthing/shared'];
       assert.ok(
-        deps['@pennyfarthing/shared'].includes('workspace'),
-        'Dependency should use workspace protocol (workspace:*)'
+        sharedDep.includes('workspace') || sharedDep.match(/^\^?\d+\.\d+\.\d+/),
+        'Dependency should use workspace protocol or semver version'
       );
     });
   });

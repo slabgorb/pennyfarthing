@@ -1,6 +1,6 @@
 #!/bin/bash
 # Display current sprint status
-# Usage: .pennyfarthing/scripts/core/run.sh sprint/sprint-status.sh [filter]
+# Usage: .pennyfarthing/scripts/sprint/sprint-status.sh [filter]
 #    or: Invoked with PROJECT_ROOT already set
 #
 # Filters:
@@ -11,7 +11,7 @@
 
 set -euo pipefail
 
-# PROJECT_ROOT should be set by run.sh, but find it if not
+# PROJECT_ROOT should be set by find-root.sh, but find it if not
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
   d="$PWD"
   while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do

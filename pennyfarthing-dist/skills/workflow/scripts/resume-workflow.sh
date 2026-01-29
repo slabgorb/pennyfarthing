@@ -1,12 +1,12 @@
 #!/bin/bash
 # Resume a stepped workflow from last completed step
-# Usage: .pennyfarthing/scripts/core/run.sh workflow/resume-workflow.sh [name]
+# Usage: .pennyfarthing/scripts/workflow/resume-workflow.sh [name]
 #
 # If no name provided, detects from active session
 
 set -euo pipefail
 
-# PROJECT_ROOT should be set by run.sh, but find it if not
+# PROJECT_ROOT should be set by find-root.sh, but find it if not
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
   d="$PWD"
   while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do

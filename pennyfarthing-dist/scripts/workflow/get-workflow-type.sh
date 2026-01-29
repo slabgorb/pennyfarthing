@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # get-workflow-type.sh - Determine if a workflow is phased or stepped
 #
-# Usage: .pennyfarthing/scripts/core/run.sh workflow/get-workflow-type.sh <workflow-name>
+# Usage: .pennyfarthing/scripts/workflow/get-workflow-type.sh <workflow-name>
 #
 # Returns: "phased" or "stepped"
 # Exit 1 if workflow not found

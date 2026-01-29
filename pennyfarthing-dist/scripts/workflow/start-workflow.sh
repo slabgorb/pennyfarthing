@@ -1,13 +1,13 @@
 #!/bin/bash
 # Start a stepped workflow
-# Usage: .pennyfarthing/scripts/core/run.sh workflow/start-workflow.sh <name> [--mode create|validate|edit]
+# Usage: .pennyfarthing/scripts/workflow/start-workflow.sh <name> [--mode create|validate|edit]
 #
 # Creates a new workflow session and loads step 1.
 # For tri-modal workflows, --mode selects the step path (default: create)
 
 set -euo pipefail
 
-# PROJECT_ROOT should be set by run.sh, but find it if not
+# PROJECT_ROOT should be set by find-root.sh, but find it if not
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
   d="$PWD"
   while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do

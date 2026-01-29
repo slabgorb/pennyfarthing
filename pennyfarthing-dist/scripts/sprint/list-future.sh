@@ -1,13 +1,13 @@
 #!/bin/bash
 # Display future work initiatives and epics from future.yaml
-# Usage: .pennyfarthing/scripts/core/run.sh sprint/list-future.sh [--epic EPIC_ID]
+# Usage: .pennyfarthing/scripts/sprint/list-future.sh [--epic EPIC_ID]
 #
 # Shows initiatives with their epics, points, status, and blockers
 # Use --epic to show detailed stories for a specific epic
 
 set -euo pipefail
 
-# PROJECT_ROOT should be set by run.sh, but find it if not
+# PROJECT_ROOT should be set by find-root.sh, but find it if not
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
   d="$PWD"
   while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do

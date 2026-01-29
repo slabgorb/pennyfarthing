@@ -69,7 +69,7 @@ To run git-cleanup again:
 Or for a quick status check:
 
 ```bash
-./scripts/run.sh git/git-status-all.sh
+.pennyfarthing/scripts/git/git-status-all.sh
 ```
 
 ---

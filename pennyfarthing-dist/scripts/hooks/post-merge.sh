@@ -14,18 +14,9 @@
 
 set -uo pipefail
 
-# Find project root by looking for .claude/ marker
-find_project_root() {
-    local dir="$PWD"
-    while [[ ! -d "$dir/.pennyfarthing" ]] && [[ "$dir" != "/" ]]; do
-        dir="$(dirname "$dir")"
-    done
-    if [[ -d "$dir/.pennyfarthing" ]]; then
-        echo "$dir"
-    else
-        return 1
-    fi
-}
+# Self-locate and set up PROJECT_ROOT
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd -P)"
+source "$SCRIPT_DIR/../lib/find-root.sh"
 
 # Initialize paths
 PROJECT_ROOT="$(find_project_root 2>/dev/null || echo "")"

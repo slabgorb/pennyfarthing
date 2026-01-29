@@ -1,7 +1,6 @@
 #!/bin/bash
 # Display current sprint status
-# Usage: .pennyfarthing/scripts/core/run.sh sprint/sprint-status.sh [filter]
-#    or: Invoked with PROJECT_ROOT already set
+# Usage: .pennyfarthing/scripts/sprint/sprint-status.sh [filter]
 #
 # Filters:
 #   (none)       - Show all stories
@@ -11,8 +10,9 @@
 
 set -euo pipefail
 
-# Load shared sprint functions
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Self-locate and set up PROJECT_ROOT
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+source "$SCRIPT_DIR/../lib/find-root.sh"
 source "$SCRIPT_DIR/sprint-common.sh"
 
 # Parse filter argument

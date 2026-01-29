@@ -213,39 +213,39 @@ Reviewer → Dev:  Changes requested
 
 ## Path Standards
 
-**IMPORTANT:** Use relative paths from project root or the `run.sh` wrapper for script execution.
+**IMPORTANT:** Scripts self-locate via `BASH_SOURCE`. Use direct script invocation.
 
 ### Standard Pattern
 ```bash
-# ✅ CORRECT - Use run.sh wrapper (handles path resolution)
-.pennyfarthing/scripts/core/run.sh core/agent-session.sh start "Agent Name"
+# ✅ CORRECT - Direct script invocation (scripts self-locate via BASH_SOURCE)
+.pennyfarthing/scripts/core/agent-session.sh start "Agent Name"
 
 # ✅ CORRECT - Relative paths for files (Claude starts in project root)
 .session/{STORY_ID}-session.md
 
 # ✅ CORRECT - Commands use climber pattern to find project root
 d="$PWD"; while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done
-"$d/.pennyfarthing/scripts/core/run.sh" core/agent-session.sh start "sm"
+"$d/.pennyfarthing/scripts/core/agent-session.sh" start "sm"
 
 # ❌ WRONG - $CLAUDE_PROJECT_DIR doesn't exist in Claude Bash calls
-$CLAUDE_PROJECT_DIR/scripts/run.sh core/agent-session.sh  # BROKEN!
+$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/core/agent-session.sh  # BROKEN!
 
 # ❌ WRONG - Don't hardcode absolute paths
-/Users/someone/project/scripts/run.sh core/agent-session.sh
+/Users/someone/project/.pennyfarthing/scripts/core/agent-session.sh
 ```
 
 ### Why Relative Paths?
 - `$CLAUDE_PROJECT_DIR` is available in hooks but NOT in Claude's Bash tool calls
-- `run.sh` internally finds project root via `.pennyfarthing/` marker
+- Scripts self-locate via `BASH_SOURCE` and `find-root.sh`
 - Claude Code always starts in the project root directory
 - The climber pattern handles subdirectory execution if needed
 
 ### Path Context
-| Context | `$CLAUDE_PROJECT_DIR` | Relative Paths | run.sh |
-|---------|----------------------|----------------|--------|
-| Hooks (settings.json) | ✅ Available | ✅ Works | ✅ Works |
-| Claude Bash calls | ❌ Not set | ✅ Works | ✅ Works |
-| Scripts (via run.sh) | ❌ Use `$PROJECT_ROOT` | ✅ Works | - |
+| Context | `$CLAUDE_PROJECT_DIR` | Relative Paths |
+|---------|----------------------|----------------|
+| Hooks (settings.json) | ✅ Available | ✅ Works |
+| Claude Bash calls | ❌ Not set | ✅ Works |
+| Inside scripts | ❌ Use `$PROJECT_ROOT` | ✅ Works |
 
 ## Background Subagent Execution
 

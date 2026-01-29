@@ -2,7 +2,7 @@
 # Start an agent with phase check
 # If the current story's phase belongs to a different agent, emit handoff marker instead
 #
-# Usage: phase-check-start.sh <agent>
+# Usage: .pennyfarthing/scripts/core/phase-check-start.sh <agent>
 # Example: phase-check-start.sh dev
 
 set -euo pipefail
@@ -14,16 +14,11 @@ if [[ -z "$AGENT" ]]; then
   exit 1
 fi
 
-# Find project root
-if [[ -z "${PROJECT_ROOT:-}" ]]; then
-  d="$PWD"
-  while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do
-    d="$(dirname "$d")"
-  done
-  PROJECT_ROOT="$d"
-fi
+# Self-locate and set up PROJECT_ROOT
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+source "$SCRIPT_DIR/../lib/find-root.sh"
 
-SCRIPT_DIR="$PROJECT_ROOT/.pennyfarthing/scripts/core"
+SCRIPTS_DIR="$SCRIPT_DIR/.."
 SESSION_DIR="$PROJECT_ROOT/.session"
 
 # Find active session file
@@ -31,7 +26,7 @@ SESSION_FILE=$(find "$SESSION_DIR" -maxdepth 1 -name "*-session.md" 2>/dev/null 
 
 if [[ -z "$SESSION_FILE" || ! -f "$SESSION_FILE" ]]; then
   # No session - just start the agent normally
-  exec "$SCRIPT_DIR/run.sh" core/agent-session.sh start "$AGENT"
+  exec "$SCRIPTS_DIR/core/agent-session.sh" start "$AGENT"
 fi
 
 # Extract workflow and phase from session (handles multiple formats)
@@ -42,7 +37,7 @@ PHASE=$(grep -E "\*\*Phase\*?\*?:" "$SESSION_FILE" 2>/dev/null | head -1 | sed '
 
 if [[ -z "$WORKFLOW" ]]; then
   # Can't determine workflow - start normally
-  exec "$SCRIPT_DIR/run.sh" core/agent-session.sh start "$AGENT"
+  exec "$SCRIPTS_DIR/core/agent-session.sh" start "$AGENT"
 fi
 
 # If no Phase field, try to infer from status patterns
@@ -66,22 +61,22 @@ if [[ -z "$PHASE" ]]; then
     PHASE="green"  # TEA done, Dev's turn
   else
     # Can't determine phase - start normally
-    exec "$SCRIPT_DIR/run.sh" core/agent-session.sh start "$AGENT"
+    exec "$SCRIPTS_DIR/core/agent-session.sh" start "$AGENT"
   fi
 fi
 
 # Get the owner of this phase
-OWNER=$("$SCRIPT_DIR/run.sh" workflow/phase-owner.sh "$WORKFLOW" "$PHASE" 2>/dev/null || echo "")
+OWNER=$("$SCRIPTS_DIR/workflow/phase-owner.sh" "$WORKFLOW" "$PHASE" 2>/dev/null || echo "")
 
 if [[ -z "$OWNER" ]]; then
   # Phase owner lookup failed - start normally
-  exec "$SCRIPT_DIR/run.sh" core/agent-session.sh start "$AGENT"
+  exec "$SCRIPTS_DIR/core/agent-session.sh" start "$AGENT"
 fi
 
 # Check if this agent owns the phase
 if [[ "$OWNER" == "$AGENT" ]]; then
   # Correct agent - start normally
-  exec "$SCRIPT_DIR/run.sh" core/agent-session.sh start "$AGENT"
+  exec "$SCRIPTS_DIR/core/agent-session.sh" start "$AGENT"
 fi
 
 # Wrong agent! Output the handoff marker and info
@@ -92,4 +87,4 @@ echo "Phase owner: $OWNER (you requested: $AGENT)"
 echo ""
 
 # Generate and output the handoff marker
-"$SCRIPT_DIR/handoff-marker.sh" "$OWNER"
+"$SCRIPTS_DIR/core/handoff-marker.sh" "$OWNER"

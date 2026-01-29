@@ -33,7 +33,7 @@ git stash list
 ### 1.1 Gather Git Status (All Repos)
 
 ```bash
-./scripts/run.sh git/git-status-all.sh
+.pennyfarthing/scripts/git/git-status-all.sh
 ```
 
 This shows branch, staged/unstaged changes, and unpushed commits for all repos.
@@ -61,7 +61,7 @@ If sessions exist, read headers to understand what work is in progress.
 
 ```bash
 echo "=== Worktree Status ==="
-./scripts/run.sh git/worktree-manager.sh status 2>/dev/null || echo "No worktrees"
+.pennyfarthing/scripts/git/worktree-manager.sh status 2>/dev/null || echo "No worktrees"
 ```
 
 ### 1.5 Pre-flight Checks

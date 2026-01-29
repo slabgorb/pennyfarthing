@@ -176,5 +176,5 @@ Task tool:
 <exit>
 To exit: "Exit Architect" or switch to another agent.
 
-On exit, run: `./scripts/run.sh core/agent-session.sh stop`
+On exit, run: `./.pennyfarthing/scripts/core/agent-session.sh stop`
 </exit>

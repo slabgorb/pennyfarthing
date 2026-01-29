@@ -14,7 +14,7 @@ if [[ -z "$EPIC_JIRA_KEY" || -z "$STORY_ID" ]]; then
   exit 1
 fi
 
-# PROJECT_ROOT should be set by run.sh, but find it if not
+# PROJECT_ROOT should be set by find-root.sh, but find it if not
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
   d="$PWD"
   while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do

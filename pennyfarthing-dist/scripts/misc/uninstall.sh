@@ -100,7 +100,6 @@ MANAGED_PATHS=(
     "scripts/hooks"
     "scripts/lib"
     "scripts/misc"
-    "scripts/run.sh"
 )
 
 # Project paths that can be removed with --all (but preserve archives)

@@ -6,7 +6,7 @@ Scripts are organized into categorical subdirectories. **Full paths are required
 
 ```
 scripts/
-├── core/       # Essential scripts (run.sh, agent-session.sh)
+├── core/       # Essential scripts (agent-session.sh)
 ├── workflow/   # Workflow mechanics (finish-story.sh, check.sh)
 ├── sprint/     # Sprint YAML operations (sprint-status.sh)
 ├── story/      # Story operations (create-story.sh)
@@ -22,14 +22,14 @@ scripts/
 
 ## Usage
 
-All scripts are invoked via `run.sh` with **full category paths**:
+Scripts are invoked directly with **full category paths**:
 
 ```bash
 # From project root
-.pennyfarthing/scripts/core/run.sh core/agent-session.sh start sm
-.pennyfarthing/scripts/core/run.sh sprint/sprint-status.sh
-.pennyfarthing/scripts/core/run.sh jira/jira-claim-story.sh MSSCI-12345
-.pennyfarthing/scripts/core/run.sh workflow/finish-story.sh MSSCI-12345
+.pennyfarthing/scripts/core/agent-session.sh start sm
+.pennyfarthing/scripts/sprint/sprint-status.sh
+.pennyfarthing/scripts/jira/jira-claim-story.sh MSSCI-12345
+.pennyfarthing/scripts/workflow/finish-story.sh MSSCI-12345
 ```
 
 ## Distributed Scripts

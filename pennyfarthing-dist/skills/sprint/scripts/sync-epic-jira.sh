@@ -1,9 +1,9 @@
 #!/bin/bash
 # Sync an epic and its stories to Jira
-# Usage: .pennyfarthing/scripts/core/run.sh sync-epic-jira.sh <epic-id> [--dry-run] [--transition] [--points] [--all]
+# Usage: .pennyfarthing/scripts/sprint/sync-epic-jira.sh <epic-id> [--dry-run] [--transition] [--points] [--all]
 #
-# Example: .pennyfarthing/scripts/core/run.sh sync-epic-jira.sh MSSCI-11952
-# Example: .pennyfarthing/scripts/core/run.sh sync-epic-jira.sh MSSCI-11952 --all
+# Example: .pennyfarthing/scripts/sprint/sync-epic-jira.sh MSSCI-11952
+# Example: .pennyfarthing/scripts/sprint/sync-epic-jira.sh MSSCI-11952 --all
 #
 # This script syncs status and story points from sprint YAML to Jira.
 # Thin wrapper that delegates to Python CLI.
@@ -30,7 +30,7 @@ if [[ -z "$EPIC_ID" ]]; then
   exit 1
 fi
 
-# PROJECT_ROOT should be set by run.sh, but find it if not
+# PROJECT_ROOT should be set by find-root.sh, but find it if not
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
   d="$PWD"
   while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do
