@@ -3502,6 +3502,15 @@ html, body {
   opacity: 0.85;
 }
 
+.task-card.task-stale {
+  border-left-color: var(--error, #ef4444);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.task-card.task-stale .task-elapsed {
+  color: var(--error, #ef4444);
+}
+
 .task-bg-badge {
   font-size: 0.6rem;
   background: var(--warning, #f59e0b);
