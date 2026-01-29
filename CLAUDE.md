@@ -1,12 +1,12 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working on the Pennyfarthing framework.
 
 ## Project Overview
 
-Pennyfarthing is a Claude Code agent orchestration framework with customizable BikeLane workflows and themed personas. It coordinates AI agents through configurable development cycles - from TDD to planning workflows to BMAD-compatible stepped processes.
+Pennyfarthing is a Claude Code agent orchestration framework with customizable BikeLane workflows and themed personas. This repo contains the framework source code - for using Pennyfarthing, see the orchestrator repo.
 
-**Version:** 7.6.1
+**Version:** 7.9.0
 **Node:** >=18.0.0
 **Type:** ES module with TypeScript (pnpm monorepo)
 
@@ -17,70 +17,61 @@ npm run build     # TypeScript compilation (tsc)
 npm run dev       # Watch mode (tsc --watch)
 npm run clean     # Remove dist/
 npm test          # Node.js native test runner
-npm run lint      # ESLint (requires separate install)
+npm run lint      # ESLint
 ```
 
-## Architecture
-
-### Directory Structure
+## Directory Structure
 
 ```
-pennyfarthing-dist/      # Single source of truth for all definitions
-├── agents/              # 19 agent definitions total
+pennyfarthing-dist/      # Published package content (single source of truth)
+├── agents/              # 19 agent definitions
 ├── commands/            # 45 slash commands
 ├── guides/              # Behavior guides
 ├── skills/              # 22 knowledge domains
 ├── personas/            # Themed agent personas (102 themes)
+├── workflows/           # Workflow definitions
 └── scripts/             # Utility scripts
 
-src/                     # TypeScript CLI source
-├── cli/                 # Commander-based CLI
-│   ├── commands/        # init, update, doctor, uninstall, version
-│   └── utils/           # logger, prompts, manifest, files
+packages/
+├── core/                # Main package (@pennyfarthing/core)
+│   └── src/cli/         # CLI commands (init, update, doctor, etc.)
+└── cyclist/             # Visual terminal (Electron app)
+    ├── src/public/js/   # Frontend components
+    └── tests/           # Vitest tests (B-*.test.ts naming)
 
-packages/cyclist/        # Cyclist visual terminal (monorepo package)
-├── src/public/js/       # Frontend JavaScript components
-├── tests/               # Vitest tests (B-*.test.ts naming)
-└── package.json         # Cyclist-specific dependencies
-
-.claude/                 # Claude Code discovery (minimal)
-├── commands/            # → symlinks to pennyfarthing-dist/commands
-├── skills/              # → symlinks to pennyfarthing-dist/skills
-└── project/             # Project-specific customizations
-
-.pennyfarthing/          # Pennyfarthing content (main location)
-├── agents/              # → symlink to pennyfarthing-dist/agents
-├── guides/              # → symlink to pennyfarthing-dist/guides
-├── personas/            # → symlink to pennyfarthing-dist/personas
-├── scripts/             # → symlink to pennyfarthing-dist/scripts
-├── sidecars/            # Agent learning files (patterns, gotchas, decisions)
-└── config.local.yaml    # Theme configuration
-
-sprint/                  # Sprint tracking (current-sprint.yaml, archive/, context/)
-.session/                # Active work sessions ({story-id}-session.md)
+tests/                   # Framework tests
+docs/                    # Framework documentation (not ADRs - those are in orchestrator)
 ```
 
-### Core Principles
+## Development Workflow
 
-1. **Single Source of Truth** - All agent/command/skill definitions live in `pennyfarthing-dist/`, accessed via symlinks
-2. **State Detection** - Agents detect workflow state from `.session/{story-id}-session.md`, not explicit commands
-3. **Subagent Delegation** - Opus handles reasoning; Haiku subagents handle mechanical work (tests, git, status)
-4. **Lazy Context Loading** - Context loaded only when needed per agent type
-5. **Tracked Build Output** - `dist/` is committed (not gitignored) because we serve directly from GitHub
+After making changes:
 
-### BikeLane Workflows
+```bash
+npm run build            # Compile TypeScript
+npm link                 # Update global link
 
-BikeLane is the umbrella for all workflow types in Pennyfarthing. Use `/workflow list` to see all available workflows, `/workflow start <name>` to begin.
+# Test in orchestrator repo
+cd ~/Projects/pennyfarthing-orchestrator
+pennyfarthing doctor     # Verify installation
+```
 
-**BikeLane Workflow Types:**
+## Core Principles
+
+1. **Single Source of Truth** - All definitions live in `pennyfarthing-dist/`
+2. **Symlink-based Installation** - Consumers access content via `.pennyfarthing/` symlinks
+3. **Subagent Delegation** - Opus for reasoning, Haiku for mechanical tasks
+4. **Tracked Build Output** - `dist/` is committed (served from GitHub)
+
+## BikeLane Workflows
 
 | Type | Description | Examples |
 |------|-------------|----------|
-| **Phased** | Agent-driven development cycles with automatic handoffs | tdd, bdd, trivial, agent-docs |
-| **Stepped** | Progressive disclosure with user gates, BMAD 6.0 compatible | prd, architecture, research, sprint-planning, epics-and-stories, product-brief, project-context, implementation-readiness, ux-design, quick-dev, quick-spec |
-| **Procedural** | Flexible agent-guided processes | brainstorming, code-review, dev-story, retrospective |
+| **Phased** | Agent-driven with automatic handoffs | tdd, bdd, trivial |
+| **Stepped** | Progressive disclosure with gates | prd, architecture |
+| **Procedural** | Flexible agent-guided | brainstorming, code-review |
 
-#### Example: TDD Workflow
+## CLI Commands
 
 ```
 /new-work → SM → TEA → Dev → Reviewer → SM (finish)
@@ -131,112 +122,51 @@ Pennyfarthing provides full BMAD 6.0 workflow import support:
 
 ## CLI Commands (for users)
 
-```bash
-pennyfarthing init [name]    # Initialize in a project
-pennyfarthing update         # Update to latest version
-pennyfarthing doctor         # Check installation health (--fix to auto-repair)
-pennyfarthing uninstall      # Remove from project
-```
-
-## Persona System
-
-Agents use themed personas for character and style. See `.claude/skills/theme/skill.md` for theme management.
-
-## Jira Integration
-
-Pennyfarthing integrates with Jira for sprint and story tracking. Key capabilities:
-
-### Epic Auto-Creation (PR #315)
-- SM setup automatically creates Jira epics when a local epic lacks a `jira` field
-- Epic creation uses `packages/core/src/jira/jira-epic-creation.ts`
-- Updates sprint YAML atomically with new Jira key
-- Enables seamless story workflow without manual Jira setup
-
-### Bidirectional Sync (PR #322)
-- `pennyfarthing_scripts/jira/bidirectional.py` syncs status, points, and stories between sprint YAML and Jira
-- Dry-run mode shows changes before applying
-- Supports both YAML→Jira and Jira→YAML updates
-- Handles new stories, status transitions, and story point updates
-
-### Sprint Integration (PR #316, #317)
-- Sprint YAML references Jira sprint ID for membership queries
-- Status checks query Jira sprint for velocity metrics
-- Scripts detect stories in Jira but missing from YAML
-
-See `pennyfarthing-dist/skills/jira/skill.md` for detailed CLI commands and workflows.
-
-## Cyclist Internal Codenames
-
-The Cyclist visual terminal uses bicycle-themed internal codenames:
-
-| Codename | Component | Description |
-|----------|-----------|-------------|
-| **WheelHub** | `packages/cyclist/src/server.ts` | Central coordination server - the hub where all communication converges (API, WebSocket, OTLP) |
-| **TirePump** | Context clearing system | The complete context clear-and-reload system - clears the session, resets stats, and reloads the current agent when context runs low |
-| **JobFair** | Character benchmarking | Discovers which theme characters excel at each role by running them against benchmarks - finds hidden talents across the cast |
-
-## Prime Activation System
-
-Agent activation uses the Prime system (`pennyfarthing_scripts/prime/`) for unified context loading:
+The CLI helps users install/manage Pennyfarthing in their projects:
 
 ```bash
-# Standard activation (called by /agent commands)
-python -m pennyfarthing_scripts.prime --agent sm
-
-# Options: --minimal (fast), --full (include domain docs), --json (Cyclist)
+pennyfarthing init       # Initialize in a project
+pennyfarthing update     # Update symlinks after package update
+pennyfarthing doctor     # Check installation health (--fix to repair)
+pennyfarthing uninstall  # Remove from project
 ```
 
-**Loading stages:** Agent definition → Sidecars → Behavior guide → Sprint context → Session → Persona → Domain docs
+## Cyclist (Visual Terminal)
 
-**Workflow state detection:** Prime detects NEW_WORK, IN_PROGRESS, FINISH, or EMPTY_BACKLOG state to route agents correctly.
+Electron-based visual terminal for agent orchestration.
 
-See [ADR-0015](docs/adr/0015-prime-activation-system.md) for architecture details.
-
-## Cyclist Workflow Modes
-
-Cyclist provides three workflow modes that can be combined:
-
-| Mode | Setting | Description |
-|------|---------|-------------|
-| **Permission** | `workflow.permission_mode` | `plan` (confirm all), `manual` (confirm dangerous), `accept` (auto-approve) |
-| **Relay** | `workflow.relay_mode` | Auto-execute HANDOFF markers without user click |
-| **Bell** | `workflow.bell_mode` | Queue messages to inject via PostToolUse hook |
-
-Configuration in `.pennyfarthing/config.local.yaml`:
-```yaml
-workflow:
-  permission_mode: manual
-  relay_mode: true      # Auto-handoff between agents
-  bell_mode: false      # Message queue injection
-```
-
-See [ADR-0016](docs/adr/0016-bell-mode-message-injection.md) and [ADR-0017](docs/adr/0017-relay-mode-automatic-handoff.md).
-
-## Architecture Decision Records
-
-Key architectural decisions are documented in `docs/adr/`. Review these before making significant changes:
-
-| ADR | Decision | Impact |
-|-----|----------|--------|
-| [0005](docs/adr/0005-single-source-of-truth-symlinks.md) | Single Source of Truth via Symlinks | Never modify `.claude/` or `.pennyfarthing/` symlinked dirs |
-| [0006](docs/adr/0006-state-detection-pattern.md) | State Detection Pattern | Agents detect state from session files, not explicit commands |
-| [0007](docs/adr/0007-subagent-delegation-model.md) | Subagent Delegation (Opus/Haiku) | Use Haiku for mechanical tasks, Opus for reasoning |
-| [0008](docs/adr/0008-result-object-error-handling.md) | Result Object Error Handling | Return `{success, error}`, don't throw exceptions |
-| [0009](docs/adr/0009-session-file-coordination.md) | Session File Coordination | Write assessment BEFORE spawning handoff subagent |
-| [0010](docs/adr/0010-esm-module-requirements.md) | ESM Module Requirements | Always use `.js` extension in relative imports |
-| [0011](docs/adr/0011-reflector-marker-consolidation.md) | Reflector Marker Consolidation | CYCLIST markers parsed by shared module |
-| [0013](docs/adr/0013-bmad-workflow-import.md) | Stepped Workflows (BMAD) | BikeLane stepped workflow support |
-| [0015](docs/adr/0015-prime-activation-system.md) | Prime Activation System | Unified agent bootstrap via Python |
-| [0016](docs/adr/0016-bell-mode-message-injection.md) | Bell Mode | Queue messages for injection via hooks |
-| [0017](docs/adr/0017-relay-mode-automatic-handoff.md) | Relay Mode | Automatic agent handoff execution |
+**Key codenames:**
+- **WheelHub** - Central server (`packages/cyclist/src/server.ts`)
+- **TirePump** - Context clearing system
+- **JobFair** - Character benchmarking
 
 ## Critical Implementation Rules
 
-1. **Modify `pennyfarthing-dist/`**, not symlinked directories
+1. **Modify `pennyfarthing-dist/`** - this is the source of truth
 2. **Use `.js` extensions** in all relative TypeScript imports
 3. **Return result objects** `{success, data?, error?}` instead of throwing
-4. **Write assessment BEFORE handoff** in session files
-5. **Use Haiku for subagents** - never Opus for mechanical tasks
-6. **Commit `dist/`** alongside `src/` changes (tracked build output)
-7. **Detect state** from session files, never hardcode workflow state
-8. **Never manually read agent files** - activation scripts load agent definitions via `prime.py`; do not use Read tool on `pennyfarthing-dist/agents/*.md` after skill activation
+4. **Use Haiku for subagents** - never Opus for mechanical tasks
+5. **Commit `dist/`** alongside `src/` changes
+6. **Scripts use `.pennyfarthing/` paths** - never `pennyfarthing-dist/` in runtime scripts
+
+## Testing Changes
+
+Framework changes should be tested in the orchestrator repo:
+
+```bash
+# In pennyfarthing (framework)
+npm run build && npm link
+
+# In pennyfarthing-orchestrator (usage)
+pennyfarthing doctor
+# Then test workflows, agents, etc.
+```
+
+## Publishing
+
+```bash
+npm version patch|minor|major
+npm publish
+```
+
+Consumers update via `npm update @pennyfarthing/core && pennyfarthing update`.
