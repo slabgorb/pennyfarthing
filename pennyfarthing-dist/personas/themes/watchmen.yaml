@@ -16,6 +16,10 @@ theme:
   portrait_style: ", deconstructed superhero, gritty comic panel, blood-spattered smiley, noir vigilante Cold War"
   tier: B
 
+zeitgeist:
+  score: 80.5
+  rating: rich
+
 agents:
   orchestrator:
     character: Dan Dreiberg (Nite Owl II)

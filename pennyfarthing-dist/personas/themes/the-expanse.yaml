@@ -16,6 +16,10 @@ theme:
   portrait_style: ", russian constructivist style, bold geometric shapes, red and black color palette, propaganda poster aesthetic, angular compositions, industrial typography influence"
   tier: S
 
+zeitgeist:
+  score: 91.0
+  rating: exceptional
+
 agents:
   orchestrator:
     character: The Investigator

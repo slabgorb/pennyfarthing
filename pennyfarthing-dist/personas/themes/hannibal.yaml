@@ -16,6 +16,10 @@ theme:
   portrait_style: ", dark psychological thriller, chiaroscuro lighting, baroque aesthetic, burgundy tones, unsettling elegance"
   tier: S
 
+zeitgeist:
+  score: 84.5
+  rating: rich
+
 agents:
   orchestrator:
     character: Hannibal Lecter

@@ -16,6 +16,10 @@ theme:
   portrait_style: ", 1990s anime cel-shaded, noir shadows, jazz palette, cigarette smoke, space western"
   tier: B
 
+zeitgeist:
+  score: 74.5
+  rating: rich
+
 agents:
   orchestrator:
     character: Laughing Bull

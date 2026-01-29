@@ -14,6 +14,10 @@ theme:
   user_title: Commander
   portrait_style: ", classical military oil painting, dramatic battlefield lighting, earth tones, gold accents"
   tier: A
+zeitgeist:
+  score: 73.2
+  rating: rich
+
 agents:
   orchestrator:
     character: Sun Tzu

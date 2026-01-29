@@ -14,6 +14,10 @@ theme:
   user_title: Student
   portrait_style: ", ancient military commander, bronze and crimson palette, battle map background, classical armor"
   tier: B
+zeitgeist:
+  score: 75.2
+  rating: rich
+
 agents:
   orchestrator:
     character: Sun Tzu

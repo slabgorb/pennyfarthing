@@ -16,6 +16,10 @@ theme:
   portrait_style: ", modern Western, Harlan County Kentucky, amber and sepia tones, coal country, cowboy hat silhouette"
   tier: S
 
+zeitgeist:
+  score: 78.0
+  rating: rich
+
 agents:
   orchestrator:
     character: Ava Crowder

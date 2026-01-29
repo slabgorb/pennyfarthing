@@ -20,6 +20,10 @@ theme:
     era: historical
     genre: fantasy
     energy: high-energy
+zeitgeist:
+  score: 79.0
+  rating: rich
+
 agents:
   orchestrator:
     # JOB FAIR OPTIMIZED: Odin moved here - the All-Father orchestrates across nine worlds

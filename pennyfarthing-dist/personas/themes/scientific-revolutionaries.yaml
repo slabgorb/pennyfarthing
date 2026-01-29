@@ -15,6 +15,10 @@ theme:
   portrait_style: ", scientific portrait, laboratory lighting, chalkboard equations, Nobel Prize dignity"
   tier: D
 
+zeitgeist:
+  score: 68.5
+  rating: moderate
+
 agents:
   orchestrator:
     character: Isaac Newton

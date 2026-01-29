@@ -15,6 +15,10 @@ theme:
   portrait_style: ", vintage jazz album cover, smoky jazz club, high contrast black and white, bebop era, 1950s graphic design"
   tier: D
 
+zeitgeist:
+  score: 68.2
+  rating: moderate
+
 agents:
   orchestrator:
     character: Duke Ellington

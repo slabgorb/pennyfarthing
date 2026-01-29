@@ -14,6 +14,10 @@ theme:
   user_title: Dear Client
   portrait_style: ", Victorian detective, gaslight and fog, Baker Street, Victorian pen and ink"
   tier: A
+zeitgeist:
+  score: 85.0
+  rating: rich
+
 agents:
   orchestrator:
     character: Mycroft Holmes

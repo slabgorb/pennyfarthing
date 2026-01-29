@@ -16,6 +16,10 @@ theme:
   portrait_style: ", 1920s Art Deco, muted sepia tones, gaslight atmosphere, mystery novel cover"
   tier: B
 
+zeitgeist:
+  score: 71.75
+  rating: rich
+
 agents:
   orchestrator:
     character: Tommy Beresford

@@ -15,6 +15,10 @@ theme:
   portrait_style: ", 18th century oil, salon style, candlelit scholarly, powdered wig, books and quills"
   tier: B
 
+zeitgeist:
+  score: 74.5
+  rating: rich
+
 agents:
   orchestrator:
     character: Voltaire

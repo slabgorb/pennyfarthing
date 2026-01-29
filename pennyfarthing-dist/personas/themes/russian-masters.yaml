@@ -15,6 +15,10 @@ theme:
   portrait_style: ", 19th century Russian realist, Russian realist painting, melancholic shadows, Orthodox gold"
   tier: B
 
+zeitgeist:
+  score: 81.5
+  rating: rich
+
 agents:
   orchestrator:
     character: Pierre Bezukhov

@@ -16,6 +16,10 @@ theme:
   portrait_style: ", 1920s Birmingham, moody industrial lighting, flat cap, cigarette smoke, sepia tones"
   tier: B
 
+zeitgeist:
+  score: 81.0
+  rating: rich
+
 agents:
   orchestrator:
     character: Grace Shelby (deceased)

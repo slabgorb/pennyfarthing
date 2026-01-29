@@ -16,6 +16,10 @@ theme:
   portrait_style: ", Korean War MASH unit, olive drab Army, surgical tent canvas, 1970s television, warm earth tones"
   tier: A
 
+zeitgeist:
+  score: 74.25
+  rating: rich
+
 agents:
   orchestrator:
     character: Colonel Sherman Potter

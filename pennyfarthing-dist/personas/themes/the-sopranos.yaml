@@ -16,6 +16,10 @@ theme:
   portrait_style: ", crime drama, suburban noir, neon glow, city backdrops"
   tier: B
 
+zeitgeist:
+  score: 78.8
+  rating: rich
+
 agents:
   orchestrator:
     character: Dr. Jennifer Melfi

@@ -16,6 +16,10 @@ theme:
   portrait_style: ", cyberpunk comic art, , black lines, ink wash, and white only, industrial lighting, worn uniforms, ink and wash technique"
   tier: D
 
+zeitgeist:
+  score: 70.0
+  rating: rich
+
 agents:
   orchestrator:
     character: Anaander Mianaai

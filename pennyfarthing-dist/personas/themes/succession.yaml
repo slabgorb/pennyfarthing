@@ -16,6 +16,10 @@ theme:
   portrait_style: ", corporate drama, cold corporate lighting, muted luxury tones, cinematic composition"
   tier: B
 
+zeitgeist:
+  score: 85.5
+  rating: rich
+
 agents:
   orchestrator:
     character: Logan Roy

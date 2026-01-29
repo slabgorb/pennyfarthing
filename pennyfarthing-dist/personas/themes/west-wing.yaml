@@ -16,6 +16,10 @@ theme:
   portrait_style: ", 19th century political cartoon style, bold ink linework, ink on paper, muted colors"
   tier: S
 
+zeitgeist:
+  score: 84.5
+  rating: rich
+
 agents:
   orchestrator:
     character: President Josiah Bartlet

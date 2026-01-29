@@ -15,6 +15,10 @@ theme:
   portrait_style: ", Age of Exploration, antique map parchment, weathered adventurer, expedition documentary style"
   tier: B
 
+zeitgeist:
+  score: 75.8
+  rating: rich
+
 agents:
   orchestrator:
     character: Ernest Shackleton

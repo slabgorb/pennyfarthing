@@ -15,6 +15,10 @@ theme:
   portrait_style: ", classical Greek marble bust, warm Mediterranean light, terracotta tones, laurel wreath"
   tier: A
 
+zeitgeist:
+  score: 76.8
+  rating: rich
+
 agents:
   orchestrator:
     character: Socrates

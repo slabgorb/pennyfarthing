@@ -16,6 +16,10 @@ theme:
   portrait_style: ", magical gilded frame, candlelit castle interior, enchanted moving painting, wizarding fantasy art"
   tier: S
 
+zeitgeist:
+  score: 81.0
+  rating: rich
+
 agents:
   orchestrator:
     character: Albus Dumbledore
