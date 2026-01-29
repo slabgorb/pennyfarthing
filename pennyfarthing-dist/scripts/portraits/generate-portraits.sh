@@ -12,7 +12,16 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Find PROJECT_ROOT by looking for .pennyfarthing or pennyfarthing-dist marker
+_dir="$SCRIPT_DIR"
+while [[ ! -d "$_dir/.pennyfarthing" ]] && [[ ! -d "$_dir/pennyfarthing-dist" ]] && [[ "$_dir" != "/" ]]; do
+    _dir="$(dirname "$_dir")"
+done
+PROJECT_ROOT="$_dir"
+
+# If we're in the pennyfarthing repo itself, look for .venv there
+# If we're in a user project, .venv should be at project root
 VENV_DIR="$PROJECT_ROOT/.venv"
 PYTHON_SCRIPT="$SCRIPT_DIR/generate-portraits.py"
 

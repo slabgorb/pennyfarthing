@@ -31,7 +31,7 @@ def find_project_root() -> Path:
 def get_workflow_type(workflow_name: str) -> str:
     """Get workflow type from YAML definition."""
     project_root = find_project_root()
-    workflows_dir = project_root / "pennyfarthing-dist" / "workflows"
+    workflows_dir = project_root / ".pennyfarthing" / "workflows"
     workflow_file = workflows_dir / f"{workflow_name}.yaml"
 
     if not workflow_file.exists():

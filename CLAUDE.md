@@ -110,6 +110,63 @@ Pennyfarthing provides full BMAD 6.0 workflow import support:
 - Migration script: `pennyfarthing-dist/scripts/migrate-bmad-workflow.mjs`
 - See `docs/bmad-compatibility-matrix.md` for details
 
+## Script Organization
+
+Pennyfarthing has THREE script locations with distinct purposes:
+
+| Location | Ships to Users | Purpose |
+|----------|----------------|---------|
+| `scripts/` | ❌ No | Meta scripts for framework development |
+| `pennyfarthing-dist/scripts/` | ✅ Yes | Distributed bash/JS for user workflows |
+| `pennyfarthing_scripts/` | ✅ Yes | Distributed Python package |
+
+### Decision Tree: Where Should My Script Go?
+
+```
+Is this script for Pennyfarthing development ONLY?
+├── YES → Is it Python?
+│   ├── YES → scripts/*.py (use .venv with GPU deps)
+│   └── NO → scripts/*.sh or *.js
+└── NO (ships to users) → Is it Python?
+    ├── YES → pennyfarthing_scripts/
+    └── NO → pennyfarthing-dist/scripts/<category>/
+```
+
+### Meta Scripts (`scripts/`)
+
+**NOT distributed** - only available in this repo:
+- `deploy.sh` - Release Pennyfarthing (version bump, tag, push)
+- `benchmark-runner.{sh,js}` - Run persona benchmarks
+- `job-fair-*.sh` - Job Fair evaluations
+- `aggregate-benchmark-stats.{sh,js}` - Benchmark aggregation
+- And other development/CI tools
+
+### Distributed Scripts (`pennyfarthing-dist/scripts/`)
+
+Shipped via npm, available in user projects:
+- `core/` - Infrastructure (run.sh, handoff)
+- `sprint/` - Sprint management
+- `story/` - Story operations
+- `jira/` - Jira integration
+- `git/` - Git operations (release.sh)
+- `portraits/` - Portrait generation (requires GPU setup)
+- And more...
+
+### Distributed Python (`pennyfarthing_scripts/`)
+
+Shipped via npm, available in user projects:
+- `jira/` - Jira CLI wrapper
+- `sprint/` - Sprint management
+- `story/` - Story operations
+- `brownfield/` - Codebase analysis
+- Plus hooks (bellmode_hook.py, pretooluse_hook.py, etc.)
+
+### Important: No Duplicates
+
+Scripts must exist in ONLY ONE location. Build-time validation prevents duplication.
+
+The `/release --bump` command only works from this repo (requires `scripts/deploy.sh`).
+
 ## Key Files
 
 | File | Purpose |

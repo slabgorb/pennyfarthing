@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
 # check-context.sh - Check current Claude Code context usage
 # Returns: percentage and recommendation for handoff
 #
