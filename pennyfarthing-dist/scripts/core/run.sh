@@ -61,6 +61,14 @@ if [[ ! -d "$SCRIPTS_DIR" ]]; then
     exit 1
 fi
 
+# Set PYTHONPATH to find pennyfarthing_scripts module
+# Resolve symlink and go up to package root (pennyfarthing-dist/scripts -> package root)
+SCRIPTS_REAL_PATH="$(cd "$SCRIPTS_DIR" && pwd -P)"
+PENNYFARTHING_PKG_ROOT="$(dirname "$(dirname "$SCRIPTS_REAL_PATH")")"
+if [[ -d "$PENNYFARTHING_PKG_ROOT/pennyfarthing_scripts" ]]; then
+    export PYTHONPATH="${PENNYFARTHING_PKG_ROOT}${PYTHONPATH:+:$PYTHONPATH}"
+fi
+
 # Full path required - script must include category
 SCRIPT_PATH="$SCRIPTS_DIR/$SCRIPT_NAME"
 
