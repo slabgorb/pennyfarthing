@@ -29,8 +29,9 @@ fi
 _real_script_dir="$(cd "$SCRIPT_DIR" && pwd -P)"
 
 # Derive package root from script location
-# Scripts in pennyfarthing-dist/scripts/lib/ are 3 levels deep
-# Scripts in pennyfarthing-dist/scripts/<category>/ are also 3 levels deep
+# Scripts can be in:
+# - pennyfarthing-dist/scripts/<category>/ (npm package or framework dev)
+# - .pennyfarthing/scripts/<category>/ (consumer project after init)
 if [[ "$_real_script_dir" == */pennyfarthing-dist/scripts/* ]]; then
     # Extract everything before /pennyfarthing-dist/scripts/
     _pkg_root="${_real_script_dir%/pennyfarthing-dist/scripts/*}"
@@ -46,8 +47,12 @@ if [[ "$_real_script_dir" == */pennyfarthing-dist/scripts/* ]]; then
     else
         PROJECT_ROOT="$_pkg_root"
     fi
+elif [[ "$_real_script_dir" == */.pennyfarthing/scripts/* ]]; then
+    # Consumer project context: scripts copied to .pennyfarthing/scripts/
+    # Extract everything before /.pennyfarthing/scripts/
+    PROJECT_ROOT="${_real_script_dir%/.pennyfarthing/scripts/*}"
 else
-    echo "Error: Script not in expected location (pennyfarthing-dist/scripts/...)" >&2
+    echo "Error: Script not in expected location (pennyfarthing-dist/scripts/ or .pennyfarthing/scripts/)" >&2
     echo "SCRIPT_DIR=$_real_script_dir" >&2
     exit 1
 fi
