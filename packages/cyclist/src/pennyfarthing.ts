@@ -378,25 +378,33 @@ export function getCurrentPersona(projectDir: string, sessionId?: string): Perso
     return null;
   }
 
-  // Find theme file path - two sources of truth:
+  // Find theme file path - three sources of truth:
   // 1. Packaged Electron app: Contents/Resources/pennyfarthing-dist
-  // 2. Dev/dogfooding: monorepo pennyfarthing-dist
+  // 2. Consumer project: .pennyfarthing/personas/themes (after pennyfarthing init)
+  // 3. Dev/dogfooding: monorepo pennyfarthing-dist
   const themeFile = `${config.theme}.yaml`;
-  const themesSubpath = join('pennyfarthing-dist', 'personas', 'themes', themeFile);
 
   let themePath: string | null = null;
 
   // Packaged app takes priority
   if (process.resourcesPath) {
-    const bundledPath = join(process.resourcesPath, themesSubpath);
+    const bundledPath = join(process.resourcesPath, 'pennyfarthing-dist', 'personas', 'themes', themeFile);
     if (existsSync(bundledPath)) {
       themePath = bundledPath;
     }
   }
 
-  // Dev/dogfooding fallback
+  // Consumer project fallback (.pennyfarthing/)
   if (!themePath) {
-    const devPath = join(CYCLIST_ROOT, themesSubpath);
+    const consumerPath = join(projectDir, '.pennyfarthing', 'personas', 'themes', themeFile);
+    if (existsSync(consumerPath)) {
+      themePath = consumerPath;
+    }
+  }
+
+  // Dev/dogfooding fallback (pennyfarthing-dist/)
+  if (!themePath) {
+    const devPath = join(CYCLIST_ROOT, 'pennyfarthing-dist', 'personas', 'themes', themeFile);
     if (existsSync(devPath)) {
       themePath = devPath;
     }
@@ -483,25 +491,33 @@ export function getFullPersonaDetails(projectDir: string, sessionId?: string): F
     return null;
   }
 
-  // Find theme file path - two sources of truth:
+  // Find theme file path - three sources of truth:
   // 1. Packaged Electron app: Contents/Resources/pennyfarthing-dist
-  // 2. Dev/dogfooding: monorepo pennyfarthing-dist
+  // 2. Consumer project: .pennyfarthing/personas/themes (after pennyfarthing init)
+  // 3. Dev/dogfooding: monorepo pennyfarthing-dist
   const themeFile = `${config.theme}.yaml`;
-  const themesSubpath = join('pennyfarthing-dist', 'personas', 'themes', themeFile);
 
   let themePath: string | null = null;
 
   // Packaged app takes priority
   if (process.resourcesPath) {
-    const bundledPath = join(process.resourcesPath, themesSubpath);
+    const bundledPath = join(process.resourcesPath, 'pennyfarthing-dist', 'personas', 'themes', themeFile);
     if (existsSync(bundledPath)) {
       themePath = bundledPath;
     }
   }
 
-  // Dev/dogfooding fallback
+  // Consumer project fallback (.pennyfarthing/)
   if (!themePath) {
-    const devPath = join(CYCLIST_ROOT, themesSubpath);
+    const consumerPath = join(projectDir, '.pennyfarthing', 'personas', 'themes', themeFile);
+    if (existsSync(consumerPath)) {
+      themePath = consumerPath;
+    }
+  }
+
+  // Dev/dogfooding fallback (pennyfarthing-dist/)
+  if (!themePath) {
+    const devPath = join(CYCLIST_ROOT, 'pennyfarthing-dist', 'personas', 'themes', themeFile);
     if (existsSync(devPath)) {
       themePath = devPath;
     }
