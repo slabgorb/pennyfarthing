@@ -1,16 +1,3 @@
-# Local settings
-.claude/settings.local.json
-.claude/settings.json
-.claude/persona-config.yaml
-.claude/persona-config.local.yaml
-
-# Pennyfarthing local config (agent-writable, dogfooding)
-.pennyfarthing/config.local.yaml
-
-# Session files (runtime state)
-.session/*
-!.session/.gitkeep
-
 # OS files
 .DS_Store
 *.swp
@@ -55,16 +42,10 @@ go.mod
 *-test-output.txt
 test-output.txt
 
-
 # Python
 .venv/
 __pycache__/
 *.pyc
-
-# Pennyfarthing runtime
-.session/*
-!.session/.gitkeep
-.claude/settings.local.json
 
 # VS Code extension builds
 *.vsix
@@ -72,14 +53,26 @@ packages/vscode-extension/resources/portraits/
 
 # Git worktrees
 worktrees/
+
+# Cyclist runtime state (when running locally for development)
 .cyclist-port
 .cyclist-pid
-.pennyfarthing/cyclist.yaml
-.pennyfarthing/window-state.json
 .cyclist-approval-port
-
-# Bell mode runtime queue (MSSCI-12275)
-.pennyfarthing/bell-queue.json
-**/.pennyfarthing/bell-queue.json
+.pennyfarthing/
 .env
 uv.lock
+
+
+# Pennyfarthing runtime
+.session/*
+!.session/.gitkeep
+.claude/settings.local.json
+.claude/persona-config.local.yaml
+.pennyfarthing/config.local.yaml
+
+# Runtime state files (Cyclist, bells, etc)
+*.pid
+*-pid
+*-port
+.pennyfarthing/*.json
+.cyclist-*

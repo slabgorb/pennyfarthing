@@ -22,7 +22,7 @@ if [[ -z "${PROJECT_ROOT:-}" ]]; then
   PROJECT_ROOT="$d"
 fi
 
-WORKFLOW_FILE="$PROJECT_ROOT/pennyfarthing-dist/workflows/${WORKFLOW}.yaml"
+WORKFLOW_FILE="$PROJECT_ROOT/.pennyfarthing/workflows/${WORKFLOW}.yaml"
 
 if [[ ! -f "$WORKFLOW_FILE" ]]; then
   echo "Error: Workflow '$WORKFLOW' not found" >&2
