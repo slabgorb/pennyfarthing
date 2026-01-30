@@ -143,7 +143,7 @@ function initEditorModeToggle() {
  */
 async function swapEditor(mode) {
   const container = document.getElementById('editor');
-  const toolbar = document.getElementById('editor-toolbar');
+  const formattingButtons = document.getElementById('formatting-buttons');
   if (!container) return;
 
   // Clear existing editor content
@@ -153,9 +153,8 @@ async function swapEditor(mode) {
     // Load and initialize textarea editor
     const { createEditor } = await import('/js/editor-textarea.js');
     createEditor();
-    // Hide toolbar - not applicable to plain text
-    if (toolbar) toolbar.style.display = 'none';
-    console.log('[Editor] Switched to textarea mode (plain text)');
+    // Hide formatting buttons - not applicable to plain text (keep mode controls in place)
+    if (formattingButtons) formattingButtons.style.visibility = 'hidden';
   } else {
     // Ensure TipTap bundle is loaded
     if (!window.TipTap) {
@@ -169,9 +168,8 @@ async function swapEditor(mode) {
     // Load and initialize TipTap editor
     const { createEditor } = await import('/js/editor.js');
     createEditor();
-    // Show toolbar for rich text
-    if (toolbar) toolbar.style.display = '';
-    console.log('[Editor] Switched to TipTap mode (rich text)');
+    // Show formatting buttons for rich text
+    if (formattingButtons) formattingButtons.style.visibility = '';
   }
 }
 

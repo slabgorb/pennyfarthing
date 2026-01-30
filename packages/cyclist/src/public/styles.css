@@ -636,6 +636,12 @@ html, body {
   background: var(--bg-primary);
 }
 
+#formatting-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
 .toolbar-btn {
   display: flex;
   align-items: center;
