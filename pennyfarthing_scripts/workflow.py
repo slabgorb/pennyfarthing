@@ -258,17 +258,29 @@ def get_workflow_state() -> dict[str, Any]:
     session_file = max(story_sessions, key=lambda f: f.stat().st_mtime)
     content = session_file.read_text()
 
-    # Extract fields from markdown frontmatter-style format
+    # Extract fields from markdown format
+    # Session files use list format: "- **Field:** value"
+    # Also handle direct format: "**Field:** value"
     result: dict[str, Any] = {"state": "IN_PROGRESS_STATE"}
 
     for line in content.split("\n"):
-        if line.startswith("**Story:**"):
-            result["story_id"] = line.replace("**Story:**", "").strip()
-        elif line.startswith("**Jira:**"):
-            result["story_id"] = line.replace("**Jira:**", "").strip()
-        elif line.startswith("**Workflow:**"):
-            result["workflow"] = line.replace("**Workflow:**", "").strip()
-        elif line.startswith("**Phase:**"):
-            result["phase"] = line.replace("**Phase:**", "").strip()
+        # Strip leading "- " for list items
+        stripped = line.lstrip("- ").strip()
+
+        if stripped.startswith("**Story:**"):
+            result["story_id"] = stripped.replace("**Story:**", "").strip()
+        elif stripped.startswith("**Jira:**"):
+            result["story_id"] = stripped.replace("**Jira:**", "").strip()
+        elif stripped.startswith("**ID:**"):
+            # Also check **ID:** field (used in Story Details section)
+            if "story_id" not in result:
+                result["story_id"] = stripped.replace("**ID:**", "").strip()
+        elif stripped.startswith("**Type:**"):
+            # Workflow section uses **Type:** not **Workflow:**
+            result["workflow"] = stripped.replace("**Type:**", "").strip()
+        elif stripped.startswith("**Workflow:**"):
+            result["workflow"] = stripped.replace("**Workflow:**", "").strip()
+        elif stripped.startswith("**Phase:**"):
+            result["phase"] = stripped.replace("**Phase:**", "").strip()
 
     return result
