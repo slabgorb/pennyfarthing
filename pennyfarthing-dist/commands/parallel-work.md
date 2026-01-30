@@ -3,7 +3,7 @@ description: Start parallel work in a new worktree
 ---
 
 ```bash
-./scripts/core/agent-session.sh start "parallel-work"
+python3 -m pennyfarthing_scripts.cli agent start "sm"
 ```
 
 <parallel-work-flow>
@@ -67,5 +67,5 @@ Invoke SM to complete story setup in the worktree context.
 </agent-activation>
 
 <agent-exit>
-On exit: Capture learnings to sidecar, run `./scripts/core/agent-session.sh stop`
+On exit: Capture learnings to sidecar.
 </agent-exit>

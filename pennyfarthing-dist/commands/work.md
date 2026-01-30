@@ -7,9 +7,9 @@ description: Resume work or start new - smart entry point that picks up where yo
 <agent-activation>
 **FIRST:** Use Bash tool to run:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/core/agent-session.sh" start "sm"
+python3 -m pennyfarthing_scripts.cli agent start "sm"
 ```
-This finds the project root and loads your persona. Adopt the character shown in the output.
+This loads your persona. Adopt the character shown in the output.
 </agent-activation>
 
 <purpose>

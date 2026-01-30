@@ -7,6 +7,8 @@
  * - #bg-tasks-count - Badge showing task count
  */
 
+import { getHelperName } from '../persona.js';
+
 /** @typedef {{ taskId: string, description: string, subagentType: string, startedAt: number, status: 'pending' | 'completed', success?: boolean, output?: string, error?: string, isBackground?: boolean }} BackgroundTask */
 
 /** Local task store */
@@ -25,6 +27,7 @@ let reconnectTimer = null;
 let wsUrl = null;
 
 const RECONNECT_INTERVAL = 2000;
+const STALE_TASK_THRESHOLD_MS = 30 * 60 * 1000; // 30 minutes
 
 /**
  * Format elapsed time since start
@@ -86,10 +89,8 @@ function renderTaskCard(task) {
     `;
   }
 
-  let dismissButton = '';
-  if (task.status === 'completed') {
-    dismissButton = `<button class="task-dismiss" data-dismiss="${escapeHtml(task.taskId)}" title="Dismiss">&times;</button>`;
-  }
+  // Always show dismiss button - allows cancelling stuck tasks
+  const dismissButton = `<button class="task-dismiss" data-dismiss="${escapeHtml(task.taskId)}" title="${isPending ? 'Cancel' : 'Dismiss'}">&times;</button>`;
 
   return `
     <div class="task-card ${statusClass} ${bgClass}" data-task-id="${escapeHtml(task.taskId)}" data-started-at="${task.startedAt}">
@@ -128,7 +129,7 @@ export function renderBackgroundTasksPanel(taskList) {
   return `
     <div class="background-tasks-panel">
       <div class="panel-header">
-        <span class="panel-title">Background Tasks</span>
+        <span class="panel-title">${escapeHtml(getHelperName() || 'HELPER')}</span>
         ${countBadge}
       </div>
       <div class="tasks-container">
@@ -167,7 +168,17 @@ function startElapsedTimeUpdates() {
       const startedAt = parseInt(card.dataset.startedAt, 10);
       const elapsedEl = card.querySelector('.task-elapsed.pending');
       if (elapsedEl && startedAt) {
+        const elapsed = Date.now() - startedAt;
+        const isStale = elapsed > STALE_TASK_THRESHOLD_MS;
         elapsedEl.textContent = `Started ${formatElapsedTime(startedAt)} ago`;
+
+        // Mark stale tasks visually
+        if (isStale) {
+          card.classList.add('task-stale');
+          if (!elapsedEl.textContent.includes('(stale)')) {
+            elapsedEl.textContent += ' (stale)';
+          }
+        }
       }
     });
   }, 1000);
@@ -192,6 +203,13 @@ function updateSectionBadge() {
     const count = tasks.length;
     badge.textContent = `(${count})`;
     badge.style.display = count > 0 ? 'inline' : 'none';
+  }
+
+  // Update section title with helper name
+  const sectionTitle = document.getElementById('helper-section-title');
+  if (sectionTitle) {
+    const helperName = getHelperName();
+    sectionTitle.textContent = helperName || 'HELPER';
   }
 
   // Auto-expand when tasks are added

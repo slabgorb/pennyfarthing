@@ -1,9 +1,47 @@
 import { Router } from 'express';
-import { execSync } from 'child_process';
+import { exec, execSync } from 'child_process';
+import { promisify } from 'util';
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { parse as parseYaml } from 'yaml';
 import { detectPennyfarthingProject } from '../pennyfarthing.js';
+
+const execAsync = promisify(exec);
+
+/**
+ * Per-repo mutex to prevent concurrent git operations that cause lock conflicts
+ * Maps repo path to a promise that resolves when the current operation completes
+ */
+const repoLocks = new Map<string, Promise<void>>();
+
+/**
+ * Acquire a lock for a repo, ensuring only one git operation runs at a time
+ * Returns a release function to call when done
+ */
+async function acquireRepoLock(repoPath: string): Promise<() => void> {
+  // Wait for any existing operation to complete
+  const existingLock = repoLocks.get(repoPath);
+  if (existingLock) {
+    await existingLock;
+  }
+
+  // Create a new lock
+  let releaseLock: () => void;
+  const lockPromise = new Promise<void>(resolve => {
+    releaseLock = resolve;
+  });
+  repoLocks.set(repoPath, lockPromise);
+
+  return () => {
+    releaseLock!();
+    // Clean up the lock after a short delay to allow batched requests
+    setTimeout(() => {
+      if (repoLocks.get(repoPath) === lockPromise) {
+        repoLocks.delete(repoPath);
+      }
+    }, 100);
+  };
+}
 
 // Dirty file info
 export interface DirtyFile {
@@ -72,7 +110,7 @@ export function getReposFromConfig(projectDir: string): RepoConfig[] {
 }
 
 /**
- * Get git status for all configured repos
+ * Get git status for all configured repos (sync - blocks event loop, use getAllReposGitInfoAsync when possible)
  */
 export function getAllReposGitInfo(projectDir: string): RepoGitInfo[] {
   const repos = getReposFromConfig(projectDir);
@@ -93,7 +131,31 @@ export function getAllReposGitInfo(projectDir: string): RepoGitInfo[] {
   });
 }
 
-// Get git status for project
+/**
+ * Get git status for all configured repos (async - does not block event loop)
+ */
+export async function getAllReposGitInfoAsync(projectDir: string): Promise<RepoGitInfo[]> {
+  const repos = getReposFromConfig(projectDir);
+
+  const results = await Promise.all(repos.map(async repo => {
+    const repoPath = join(projectDir, repo.path);
+    const gitInfo = await getGitInfoAsync(repoPath);
+
+    return {
+      name: repo.name,
+      path: repo.path,
+      branch: gitInfo?.branch || 'unknown',
+      clean: gitInfo?.clean ?? true,
+      ahead: gitInfo?.ahead ?? null,
+      behind: gitInfo?.behind ?? null,
+      dirtyFiles: gitInfo?.dirtyFiles ?? [],
+    };
+  }));
+
+  return results;
+}
+
+// Get git status for project (sync - blocks event loop)
 export function getGitInfo(projectDir: string): GitInfo | null {
   try {
     // Get current branch
@@ -169,19 +231,102 @@ export function getGitInfo(projectDir: string): GitInfo | null {
   }
 }
 
+/**
+ * Get git status for project (async - does not block event loop)
+ * This should be preferred over getGitInfo for WebSocket broadcasts and polling
+ * Uses a per-repo mutex to prevent git lock conflicts from concurrent operations
+ */
+export async function getGitInfoAsync(projectDir: string): Promise<GitInfo | null> {
+  // Acquire lock to prevent concurrent git operations on the same repo
+  const releaseLock = await acquireRepoLock(projectDir);
+
+  try {
+    // Get current branch
+    const { stdout: branchOutput } = await execAsync('git rev-parse --abbrev-ref HEAD', {
+      cwd: projectDir,
+      encoding: 'utf-8',
+    });
+    const branch = branchOutput.trim();
+
+    // Get dirty files using --porcelain for parseable output
+    let dirtyFiles: DirtyFile[] = [];
+    let clean = true;
+    try {
+      const { stdout: statusOutput } = await execAsync('git status --porcelain', {
+        cwd: projectDir,
+        encoding: 'utf-8',
+      });
+
+      if (statusOutput.trim()) {
+        clean = false;
+        dirtyFiles = statusOutput.trim().split('\n').map(line => {
+          const status = line.substring(0, 2).trim() || '?';
+          const path = line.substring(3);
+          return { status, path };
+        });
+      }
+    } catch {
+      // Fall back to diff-index check if porcelain fails
+      try {
+        await execAsync('git diff-index --quiet HEAD --', {
+          cwd: projectDir,
+          encoding: 'utf-8',
+        });
+        clean = true;
+      } catch {
+        clean = false;
+      }
+    }
+
+    // Get ahead/behind counts (suppress stderr for branches without upstream)
+    let ahead: number | null = null;
+    let behind: number | null = null;
+    try {
+      const { stdout: aheadOutput } = await execAsync('git rev-list --count @{u}..HEAD', {
+        cwd: projectDir,
+        encoding: 'utf-8',
+      });
+      ahead = parseInt(aheadOutput.trim(), 10);
+
+      const { stdout: behindOutput } = await execAsync('git rev-list --count HEAD..@{u}', {
+        cwd: projectDir,
+        encoding: 'utf-8',
+      });
+      behind = parseInt(behindOutput.trim(), 10);
+    } catch {
+      // No upstream configured - leave as null
+    }
+
+    releaseLock();
+    return { branch, clean, ahead, behind, dirtyFiles };
+  } catch (error) {
+    releaseLock();
+    // Not a git repo or git command failed - return null gracefully
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorCode = (error as NodeJS.ErrnoException)?.code;
+
+    // Log non-trivial errors for debugging but don't crash
+    if (!errorMessage.includes('not a git repository')) {
+      console.warn(`getGitInfoAsync failed (${errorCode || 'unknown'}): ${errorMessage}`);
+    }
+
+    return null;
+  }
+}
+
 // Create git API router
 export function createGitRouter(getProjectDir: () => string): Router {
   const router = Router();
 
-  // Git API - GET current git status
-  router.get('/', (_req, res) => {
+  // Git API - GET current git status (async to avoid blocking event loop)
+  router.get('/', async (_req, res) => {
     const projectDir = getProjectDir();
 
     if (!detectPennyfarthingProject(projectDir)) {
       return res.status(404).json({ error: 'Not a Pennyfarthing project' });
     }
 
-    const gitInfo = getGitInfo(projectDir);
+    const gitInfo = await getGitInfoAsync(projectDir);
     if (!gitInfo) {
       return res.status(404).json({ error: 'Not a git repository' });
     }
@@ -189,15 +334,15 @@ export function createGitRouter(getProjectDir: () => string): Router {
     res.json(gitInfo);
   });
 
-  // Git API - GET status for all configured repos
-  router.get('/all', (_req, res) => {
+  // Git API - GET status for all configured repos (async to avoid blocking event loop)
+  router.get('/all', async (_req, res) => {
     const projectDir = getProjectDir();
 
     if (!detectPennyfarthingProject(projectDir)) {
       return res.status(404).json({ error: 'Not a Pennyfarthing project' });
     }
 
-    const allReposInfo = getAllReposGitInfo(projectDir);
+    const allReposInfo = await getAllReposGitInfoAsync(projectDir);
     res.json(allReposInfo);
   });
 

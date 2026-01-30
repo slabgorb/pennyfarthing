@@ -13,7 +13,7 @@
 import { VerticalPanel } from './vertical-panel.js';
 import { SettingsPanel as SettingsForm } from './components/SettingsPanel.js';
 // MSSCI-11946: settings-sync import for cross-tab persistence (via VerticalPanel)
-import { settingsSync } from './settings-sync.js';
+import { settingsSync, STORAGE_KEYS } from './settings-sync.js';
 
 const STORAGE_KEY = 'cyclist-settings-panel';
 

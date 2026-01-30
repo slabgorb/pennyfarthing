@@ -4,7 +4,7 @@ description: Load essential project context at agent activation
 
 <purpose>
 Quickly load essential context files to reduce agent cold-start overhead.
-Automatically invoked on agent activation via agent-session.sh.
+Automatically invoked on agent activation via `pf agent start`.
 </purpose>
 
 <when-to-use>
@@ -17,23 +17,23 @@ Automatically invoked on agent activation via agent-session.sh.
 
 ## Running /prime
 
-Use the prime.sh script:
+Use the Python CLI:
 
 ```bash
 # Load all essential context (default)
-$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/prime.sh
+python3 -m pennyfarthing_scripts.cli agent start "sm"
 
-# Minimal mode - CLAUDE.md only (fastest)
-$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/prime.sh --minimal
+# Minimal mode - fastest startup
+python3 -m pennyfarthing_scripts.cli agent start "sm" --minimal
 
 # Full mode - include domain docs
-$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/prime.sh --full
+python3 -m pennyfarthing_scripts.cli agent start "sm" --full
 
-# Quiet mode - suppress headers (used by agent-session.sh)
-$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/prime.sh --quiet
+# Skip persona loading
+python3 -m pennyfarthing_scripts.cli agent start "sm" --no-persona
 
-# With agent sidecar loading
-$CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/prime.sh --agent reviewer
+# JSON output (for Cyclist integration)
+python3 -m pennyfarthing_scripts.cli agent start "sm" --json
 ```
 
 ## Options
@@ -106,17 +106,16 @@ With `--quiet`, section headers are suppressed.
 
 <integration>
 
-## agent-session.sh Integration
+## Python CLI Integration
 
 The `/prime` command is automatically invoked when agents activate:
 
 1. User invokes `/sm`, `/tea`, `/dev`, or `/reviewer`
-2. `agent-session.sh start` runs
-3. Persona XML is output
-4. `/prime --quiet --agent <agent-name>` loads context automatically
-5. Agent starts with full context AND their learned patterns loaded
+2. `pf agent start <name>` runs
+3. Context is loaded: workflow state, agent definition, persona, behavior guide, sprint context, session, sidecars
+4. Agent starts with full context AND their learned patterns loaded
 
-This reduces the "cold start" problem where agents must discover context through multiple file reads. The `--agent` flag ensures each agent gets their project-specific sidecar patterns immediately.
+This reduces the "cold start" problem where agents must discover context through multiple file reads.
 
 ## Manual Refresh
 
@@ -130,11 +129,8 @@ If context becomes stale mid-session, run `/prime` manually:
 </integration>
 
 <reference>
-- **Script:** `.pennyfarthing/scripts/prime.sh`
-- **Called by:** agent-session.sh on agent start (with `--agent` flag)
-- **Loads:** CLAUDE.md, sprint, session, sidecar, shared context, shared behavior, tactical guide
+- **CLI:** `pf agent start <name>` or `python3 -m pennyfarthing_scripts.cli agent start <name>`
+- **Loads:** Workflow state, agent definition, persona, behavior guide, sprint context, session, sidecars
 - **Sidecar location:** `.pennyfarthing/sidecars/{agent}/*.md`
-- **Shared context:** `.pennyfarthing/guides/agent-behavior.md` (all agents)
-- **Shared behavior:** `.pennyfarthing/guides/agent-behavior.md` (all agents)
-- **Tactical guide:** `.pennyfarthing/guides/agent-behavior.md` (sm, tea, dev, reviewer only)
+- **Behavior guide:** `.pennyfarthing/guides/agent-behavior.md` (all agents)
 </reference>

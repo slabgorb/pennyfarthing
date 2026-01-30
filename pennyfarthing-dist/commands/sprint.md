@@ -50,6 +50,14 @@ Start work on a story. Primary entry point for development.
 | `next` | Auto-select highest priority story |
 
 ```bash
+# MERGE GATE: Check for open PRs first (blocks if any exist)
+OPEN_PRS=$(gh pr list --state open --json number --jq 'length' 2>/dev/null || echo "0")
+if [[ "$OPEN_PRS" -gt 0 ]]; then
+  echo "⛔ BLOCKED: $OPEN_PRS open PR(s) - merge or close before starting new work"
+  gh pr list --state open
+  # Don't proceed until PRs are cleared
+fi
+
 # Check if story is available
 .pennyfarthing/scripts/sprint/check-story.sh <story-id>
 
@@ -58,10 +66,11 @@ Start work on a story. Primary entry point for development.
 
 <workflow>
 When starting work, this command:
-1. Validates story availability
-2. Loads SM agent
-3. SM creates context and claims Jira
-4. Hands off to TEA (tdd) or Dev (trivial)
+1. **Checks merge gate** - blocks if open PRs exist
+2. Validates story availability
+3. Loads SM agent
+4. SM creates context and claims Jira
+5. Hands off to TEA (tdd) or Dev (trivial)
 </workflow>
 
 ### `/sprint archive <story-id> [pr-number] [--apply]`

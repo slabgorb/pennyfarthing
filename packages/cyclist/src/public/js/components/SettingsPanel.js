@@ -18,6 +18,10 @@ let filteredThemes = [];
 /** Loading state */
 let isLoading = false;
 
+/** Search debounce timer */
+let searchDebounceTimer = null;
+const SEARCH_DEBOUNCE_MS = 200;
+
 /**
  * Tier badge colors and labels
  */
@@ -37,11 +41,17 @@ export function init() {
   const panel = document.getElementById('settings-panel');
   if (!panel) return;
 
-  // Wire up search input
+  // Wire up search input with debouncing
   const searchInput = document.getElementById('theme-search');
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
-      filterThemes(e.target.value);
+      if (searchDebounceTimer) {
+        clearTimeout(searchDebounceTimer);
+      }
+      searchDebounceTimer = setTimeout(() => {
+        filterThemes(e.target.value);
+        searchDebounceTimer = null;
+      }, SEARCH_DEBOUNCE_MS);
     });
   }
 

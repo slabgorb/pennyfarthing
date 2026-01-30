@@ -289,10 +289,10 @@ function findThemesDir(): string | null {
 
   const projectDir = getProjectDirectory();
   if (projectDir) {
-    // 2. Consumer project: .pennyfarthing/personas/themes (after pennyfarthing init)
-    const consumerThemes = join(projectDir, '.pennyfarthing', 'personas', 'themes');
-    if (fs.existsSync(consumerThemes)) {
-      return consumerThemes;
+    // 2. Runtime via symlinks: .pennyfarthing/personas/themes (orchestrator pattern)
+    const runtimeThemes = join(projectDir, '.pennyfarthing', 'personas', 'themes');
+    if (fs.existsSync(runtimeThemes)) {
+      return runtimeThemes;
     }
 
     // 3. Monorepo/dev: project dir pennyfarthing-dist
