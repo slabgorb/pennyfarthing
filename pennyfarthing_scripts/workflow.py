@@ -184,21 +184,22 @@ def get_scale_level_info(level: int) -> dict[str, Any]:
 
 
 # Phase ownership mapping for TDD workflow
+# Canonical YAML names: setup, red, green, review, finish
 TDD_PHASE_OWNERS: dict[str, str] = {
     "setup": "sm",
     "red": "tea",
-    "implement": "dev",
     "green": "dev",
     "review": "reviewer",
-    "approved": "sm",
+    "finish": "sm",
 }
 
 # Phase ownership mapping for trivial workflow (no TEA)
+# Canonical YAML names: setup, impl, review, finish
 TRIVIAL_PHASE_OWNERS: dict[str, str] = {
     "setup": "sm",
-    "implement": "dev",
+    "impl": "dev",
     "review": "reviewer",
-    "approved": "sm",
+    "finish": "sm",
 }
 
 # All workflow phase mappings

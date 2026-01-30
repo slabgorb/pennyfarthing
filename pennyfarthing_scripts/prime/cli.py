@@ -171,7 +171,14 @@ def prime(
     # ==========================================================================
     if agent_name:
         agent_content = load_agent_definition(agent_name, root)
-        if agent_content and not json_output:
+        if agent_content is None:
+            # Agent not found - exit with error
+            if json_output:
+                print(json.dumps({"error": f"Agent '{agent_name}' not found"}))
+            else:
+                print(f"Error: Agent '{agent_name}' not found", file=sys.stderr)
+            return 1
+        if not json_output:
             _print_header(f"Agent Definition: {agent_name}", quiet)
             print(agent_content)
 
