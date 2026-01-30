@@ -74,6 +74,24 @@
     <!-- Panel expand buttons removed - now using horizontal tab bar at top -->
     <!-- 35-5: Message panel wrapper for collapsible message view -->
     <div id="message-panel" class="vertical-panel position-center">
+    <!-- 68-5: Persona header (moved from sidebar) -->
+    <header id="persona-header" class="persona-header">
+      <div id="header-portrait-thumb" class="header-portrait-thumb">
+        <img src="" alt="" style="display: none;">
+        <div class="portrait-placeholder" style="display: flex;">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+          </svg>
+        </div>
+      </div>
+      <div class="persona-header-info">
+        <span id="header-character-name" class="header-character-name">Loading...</span>
+        <span class="header-separator">·</span>
+        <span id="header-character-role" class="header-character-role"></span>
+        <span class="header-separator">·</span>
+        <span id="header-theme-name" class="header-theme-name"></span>
+      </div>
+    </header>
     <div id="main-content">
       <main id="message-view">
         <!-- MessageView will be mounted here -->
@@ -174,53 +192,22 @@
     <div class="resize-handle" id="sidebar-resize" title="Drag to resize"></div>
     <!-- 35-5: Sidebar as vertical panel (collapse via tab bar, not inline button) -->
     <aside id="sidebar" class="vertical-panel position-right">
-      <!-- Persona Section - Collapsible -->
-      <section id="persona-section" class="collapsible-section persona-section">
-        <div class="section-header">
-          <!-- MSSCI-12474: Small portrait thumbnail shown when collapsed -->
-          <div id="portrait-thumb" class="portrait-thumb">
-            <img src="" alt="" style="display: none;">
-            <div class="portrait-placeholder" style="display: flex;">
-              <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-              </svg>
-            </div>
-          </div>
-          <div class="persona-header-content">
-            <div class="persona-header-line1">
-              <span id="project-name" class="project-name"></span>
-              <button class="collapse-btn" aria-label="Toggle persona">▼</button>
-            </div>
-            <div id="persona-section-summary" class="persona-header-line2"></div>
-          </div>
-        </div>
-        <div class="section-detail">
-          <!-- Character name below project name, above portrait -->
-          <div id="character-name" class="character-name">Loading...</div>
-          <!-- Portrait with role beside it -->
-          <div class="portrait-row">
-            <div id="portrait">
-              <img src="" alt="Character portrait" style="display: none;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-              <div class="portrait-placeholder" style="display: flex;">
-                <svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
-                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                </svg>
-              </div>
-            </div>
-            <div class="portrait-details">
-              <div id="character-role" class="character-role"></div>
-            </div>
-          </div>
-          <!-- Theme centered under portrait -->
-          <div id="theme-name" class="theme-name"></div>
-          <div id="benchmark-score" class="benchmark-score"></div>
-          <!-- MSSCI-11821: Character quote display -->
-          <div id="character-quote" class="character-quote"></div>
-          <div id="helper-line" class="activity-line"></div>
-        </div>
-      </section>
+      <!-- 68-5: Persona Section MOVED to message panel header (#persona-header) -->
+      <!-- Hidden elements kept for backwards compatibility with persona.js until 68-6 removes sidebar entirely -->
+      <div id="persona-section" style="display: none;">
+        <span id="project-name"></span>
+        <span id="character-name"></span>
+        <span id="character-role"></span>
+        <span id="theme-name"></span>
+        <span id="benchmark-score"></span>
+        <span id="character-quote"></span>
+        <span id="persona-section-summary"></span>
+        <div id="portrait-thumb"><img src="" alt=""><div class="portrait-placeholder"></div></div>
+        <div id="portrait"><img src="" alt=""><div class="portrait-placeholder"></div></div>
+        <div id="helper-line"></div>
+      </div>
 
-      <!-- Theme Picker (35-1: Contextual settings) -->
+      <!-- Theme Picker (35-1: Contextual settings) - kept for settings panel -->
       <div id="theme-picker" class="theme-picker" style="display: none;">
         <div class="theme-picker-header">
           <span class="theme-picker-title">Select Theme</span>

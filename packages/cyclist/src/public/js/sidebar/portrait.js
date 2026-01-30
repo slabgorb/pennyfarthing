@@ -21,6 +21,11 @@ let thumbContainer = null;
 let thumbImg = null;
 let thumbPlaceholder = null;
 
+// 68-5: Header portrait elements (message panel header)
+let headerThumbContainer = null;
+let headerThumbImg = null;
+let headerThumbPlaceholder = null;
+
 // Track current role/theme for reloading
 let currentRole = null;
 let currentPortraitTheme = null;
@@ -96,6 +101,30 @@ function handleThumbLoad() {
 }
 
 /**
+ * 68-5: Handle successful header thumbnail load
+ */
+function handleHeaderThumbLoad() {
+  if (headerThumbImg) {
+    headerThumbImg.style.display = 'block';
+  }
+  if (headerThumbPlaceholder) {
+    headerThumbPlaceholder.style.display = 'none';
+  }
+}
+
+/**
+ * 68-5: Handle header thumbnail load error - show fallback
+ */
+function handleHeaderThumbError() {
+  if (headerThumbImg) {
+    headerThumbImg.style.display = 'none';
+  }
+  if (headerThumbPlaceholder) {
+    headerThumbPlaceholder.style.display = 'flex';
+  }
+}
+
+/**
  * MSSCI-12474: Handle thumbnail load error - show fallback
  */
 function handleThumbError() {
@@ -165,6 +194,19 @@ export function loadPortraitWithTheme(slug, theme, size = DEFAULT_PORTRAIT_SIZE)
       }
     };
     thumbImg.src = thumbPath;
+  }
+
+  // 68-5: Also load header thumbnail (message panel header)
+  if (headerThumbImg) {
+    const headerThumbPath = buildPortraitPath(currentPortraitTheme, slug, PORTRAIT_SIZES.small);
+    headerThumbImg.onerror = () => {
+      if (currentPortraitTheme !== 'discworld') {
+        headerThumbImg.src = buildPortraitPath('discworld', slug, PORTRAIT_SIZES.small);
+      } else {
+        handleHeaderThumbError();
+      }
+    };
+    headerThumbImg.src = headerThumbPath;
   }
 
   // Update server state
@@ -248,6 +290,11 @@ export function init() {
   thumbImg = thumbContainer?.querySelector('img');
   thumbPlaceholder = thumbContainer?.querySelector('.portrait-placeholder');
 
+  // 68-5: Initialize header thumbnail elements (message panel header)
+  headerThumbContainer = document.getElementById('header-portrait-thumb');
+  headerThumbImg = headerThumbContainer?.querySelector('img');
+  headerThumbPlaceholder = headerThumbContainer?.querySelector('.portrait-placeholder');
+
   if (portraitImg) {
     portraitImg.addEventListener('load', handleImageLoad);
     portraitImg.addEventListener('error', handleImageError);
@@ -257,6 +304,12 @@ export function init() {
   if (thumbImg) {
     thumbImg.addEventListener('load', handleThumbLoad);
     thumbImg.addEventListener('error', handleThumbError);
+  }
+
+  // 68-5: Header thumbnail load handlers
+  if (headerThumbImg) {
+    headerThumbImg.addEventListener('load', handleHeaderThumbLoad);
+    headerThumbImg.addEventListener('error', handleHeaderThumbError);
   }
 
   // Listen for UI theme changes
@@ -286,6 +339,11 @@ export function destroy() {
   if (thumbImg) {
     thumbImg.removeEventListener('load', handleThumbLoad);
     thumbImg.removeEventListener('error', handleThumbError);
+  }
+  // 68-5: Cleanup header thumbnail handlers
+  if (headerThumbImg) {
+    headerThumbImg.removeEventListener('load', handleHeaderThumbLoad);
+    headerThumbImg.removeEventListener('error', handleHeaderThumbError);
   }
   window.removeEventListener('themechange', handleThemeChange);
 }
