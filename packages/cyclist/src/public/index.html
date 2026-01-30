@@ -373,6 +373,28 @@
           </div>
         </div>
 
+        <!-- Editor Mode (67-1) -->
+        <section class="settings-section editor-section" data-section="editor">
+          <div class="section-header">
+            <span class="section-icon">⌨️</span>
+            <span class="section-title">Editor</span>
+          </div>
+          <div class="section-content">
+            <div class="setting-row">
+              <label class="setting-label">Input Mode</label>
+              <div class="setting-toggle-group" id="editor-mode-toggle" role="radiogroup" aria-label="Editor input mode">
+                <button type="button" class="toggle-btn" data-value="tiptap" role="radio" aria-checked="true">
+                  Rich Text
+                </button>
+                <button type="button" class="toggle-btn" data-value="textarea" role="radio" aria-checked="false">
+                  Plain Text
+                </button>
+              </div>
+            </div>
+            <p class="setting-hint">Plain text mode is faster but doesn't support formatting.</p>
+          </div>
+        </section>
+
         <!-- Theme Picker (35-8) -->
         <section class="settings-section theme-picker-section" data-section="themes">
           <div class="section-header">
@@ -640,13 +662,42 @@
   </script>
   <!-- Files tab will be added on demand, not on startup -->
   <script type="module" src="/js/controls.js"></script>
-  <!-- TipTap bundle must load before editor.js -->
-  <script src="/js/tiptap.bundle.js"></script>
-  <script type="module" src="/js/editor.js"></script>
+  <!-- Editor: TipTap (rich) or Textarea (plain) - toggle via settings or ?editor=textarea -->
   <script type="module">
-    // Initialize the rich text editor
-    import { createEditor } from '/js/editor.js';
-    createEditor();
+    // Storage key matches STORAGE_KEYS.EDITOR_MODE in settings-sync.js
+    const EDITOR_MODE_KEY = 'cyclist-editor-mode';
+
+    // Check for editor mode: URL param overrides, then localStorage
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlMode = urlParams.get('editor');
+    const editorMode = urlMode || localStorage.getItem(EDITOR_MODE_KEY) || 'tiptap';
+    const useTextarea = editorMode === 'textarea';
+
+    // Save preference if set via URL param
+    if (urlMode) {
+      localStorage.setItem(EDITOR_MODE_KEY, urlMode);
+    }
+
+    if (useTextarea) {
+      // Load lightweight textarea editor (no TipTap bundle needed)
+      const { createEditor } = await import('/js/editor-textarea.js');
+      createEditor();
+      // Hide formatting toolbar - not applicable to plain text
+      const toolbar = document.getElementById('editor-toolbar');
+      if (toolbar) toolbar.style.display = 'none';
+      console.log('[Editor] Using textarea mode (plain text, fast)');
+    } else {
+      // Load TipTap bundle first, then rich text editor
+      await new Promise((resolve) => {
+        const script = document.createElement('script');
+        script.src = '/js/tiptap.bundle.js';
+        script.onload = resolve;
+        document.head.appendChild(script);
+      });
+      const { createEditor } = await import('/js/editor.js');
+      createEditor();
+      console.log('[Editor] Using TipTap mode (rich text)');
+    }
   </script>
   <!-- Debug panel (real-time OTEL span viewer) -->
   <script type="module" src="/js/debug-panel.js"></script>
