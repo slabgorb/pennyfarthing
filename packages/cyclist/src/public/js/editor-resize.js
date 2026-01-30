@@ -9,7 +9,7 @@ let isResizing = false;
 let startY = 0;
 let startHeight = 0;
 
-const MIN_HEIGHT = 60;  // Match control buttons height
+const MIN_HEIGHT = 100;  // Minimum usable editor height
 const MAX_HEIGHT_RATIO = 0.5;  // 50% of viewport
 
 /**
