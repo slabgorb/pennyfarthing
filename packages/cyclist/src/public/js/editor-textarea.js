@@ -45,7 +45,7 @@ import {
 } from './editor/image-preview.js';
 
 // Re-export everything the original editor exports for API compatibility
-export { EDITOR_CONTAINER_ID, EDITOR_OPTIONS, EDITOR_EXTENSIONS, SUPPORTED_IMAGE_TYPES, IMAGE_PREVIEW_SIZE, IMAGE_WARN_SIZE_BYTES, IMAGE_MAX_SIZE_BYTES } from './editor/constants.js';
+export { EDITOR_CONTAINER_ID, SUPPORTED_IMAGE_TYPES, IMAGE_PREVIEW_SIZE, IMAGE_WARN_SIZE_BYTES, IMAGE_MAX_SIZE_BYTES } from './editor/constants.js';
 export { MESSAGE_QUEUE_KEY, MAX_QUEUE_SIZE } from './editor/constants.js';
 export { getCompletionState, showCompletionPopup, closeCompletionPopup, navigateCompletion, selectCompletion, updateCompletions } from './editor/tab-completion.js';
 export {
@@ -299,7 +299,7 @@ export async function createEditor() {
   textareaElement.id = 'editor-textarea';
   textareaElement.className = 'editor-textarea';
   textareaElement.placeholder = '';
-  textareaElement.spellcheck = true;
+  textareaElement.spellcheck = false;  // Disabled - causes input lag on macOS
   textareaElement.lang = 'en';
 
   // Clear container and add textarea
@@ -393,6 +393,7 @@ export async function createEditor() {
         }
       }
     }
+
   });
 
   // Handle input for completion popup and auto-resize
