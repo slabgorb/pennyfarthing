@@ -253,17 +253,12 @@ export async function initSidebar() {
       });
     }
 
-    if (window.electronAPI.git) {
-      window.electronAPI.git.onUpdate((_event, data) => {
-        if (data.repos) {
-          git.update(data.repos);
-        }
-      });
-    }
+    // 68-4: Git updates now handled by git-panel.js
+    // The sidebar no longer owns the git section
 
     // Start polling as backup
     startStoryPolling();
-    startGitPolling();
+    // 68-4: Git polling removed - git-panel owns git updates
 
     console.log('[Sidebar] IPC mode initialized');
   } else {
