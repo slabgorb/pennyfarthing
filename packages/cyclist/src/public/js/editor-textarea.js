@@ -83,6 +83,10 @@ export { jsonToMarkdown } from './editor/markdown.js';
 /** Textarea element */
 let textareaElement = null;
 
+/** Debounce timer for completion updates */
+let completionDebounceTimer = null;
+const COMPLETION_DEBOUNCE_MS = 150;
+
 /** Callback for submit action */
 let onSubmitCallback = null;
 
@@ -402,19 +406,26 @@ export async function createEditor() {
 
     const text = textareaElement.value;
 
-    // Auto-show completion popup when "/" is typed at start
+    // Auto-show completion popup when "/" is typed at start (immediate, no debounce)
     if (text === '/' && !isCompletionVisible()) {
       showCompletionPopup('/');
+      return;
     }
 
-    // Update completion popup as user types
+    // Debounce completion popup updates to reduce lag
     if (isCompletionVisible()) {
-      const prefixInfo = getSlashPrefixFromTextarea();
-      if (prefixInfo) {
-        updateCompletions(prefixInfo.prefix);
-      } else {
-        closeCompletionPopup();
+      if (completionDebounceTimer) {
+        clearTimeout(completionDebounceTimer);
       }
+      completionDebounceTimer = setTimeout(() => {
+        const prefixInfo = getSlashPrefixFromTextarea();
+        if (prefixInfo) {
+          updateCompletions(prefixInfo.prefix);
+        } else {
+          closeCompletionPopup();
+        }
+        completionDebounceTimer = null;
+      }, COMPLETION_DEBOUNCE_MS);
     }
   });
 
