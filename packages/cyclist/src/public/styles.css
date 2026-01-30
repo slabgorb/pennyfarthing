@@ -5937,11 +5937,12 @@ html, body {
   background: var(--bg-tertiary, #252540);
 }
 
+/* 68-6: Increased portrait from 32px to 100px for better visibility */
 .header-portrait-thumb {
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  border-radius: 50%;
+  width: 100px;
+  height: 100px;
+  min-width: 100px;
+  border-radius: 8px;
   overflow: hidden;
   background: var(--bg-tertiary, #252540);
   display: flex;
@@ -5950,14 +5951,14 @@ html, body {
 }
 
 .header-portrait-thumb img {
-  width: 32px;
-  height: 32px;
+  width: 100px;
+  height: 100px;
   object-fit: cover;
 }
 
 .header-portrait-thumb .portrait-placeholder {
-  width: 32px;
-  height: 32px;
+  width: 100px;
+  height: 100px;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -55,23 +55,26 @@ describe('E1-1: Project Setup', () => {
       expect(messageView).not.toBeNull();
     });
 
-    it('should have a sidebar container element', () => {
+    // 68-6: Sidebar removed - content moved to dedicated tab panels
+    it('should NOT have sidebar element (removed in 68-6)', () => {
       const sidebar = document.querySelector('#sidebar');
-      expect(sidebar).not.toBeNull();
+      expect(sidebar).toBeNull();
     });
 
-    it('should have both panels in a flex or grid container', () => {
+    it('should have message view in container', () => {
       const container = document.querySelector('#container');
       const messageView = document.querySelector('#message-view');
-      const sidebar = document.querySelector('#sidebar');
 
-      // Both elements should exist within the container
+      // Message view should exist within the container
       expect(container).not.toBeNull();
       expect(messageView).not.toBeNull();
-      expect(sidebar).not.toBeNull();
-      // Sidebar is direct child of container, message-view is nested in main-content
       expect(container?.contains(messageView)).toBe(true);
-      expect(container?.contains(sidebar)).toBe(true);
+    });
+
+    // 68-6: Verify tab bar exists for panel navigation
+    it('should have tab bar for panel navigation', () => {
+      const tabBar = document.querySelector('#tab-bar');
+      expect(tabBar).not.toBeNull();
     });
 
   });

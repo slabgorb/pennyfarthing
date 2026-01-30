@@ -25,6 +25,8 @@ import { resetSubmitting, setProcessing, handleTurnComplete, setOnQueueChange, c
 import { handleMessage as handleGitCommitMessage } from './git-commit-detector.js';
 import { getCurrentAgentCommand } from './persona.js';
 import { settingsSync, STORAGE_KEYS } from './settings-sync.js';
+// 68-6: Import for MESSAGE tab badge
+import { setWaitingForInput } from './message-panel.js';
 
 // 22-5: Track verbose mode state
 let verboseModeEnabled = false;
@@ -114,6 +116,9 @@ function initMessageView() {
     window.electronAPI.claude.onMessage((message) => {
       console.log('[MessageView] SDK message:', message.type);
 
+      // 68-6: Clear waiting for input when Claude starts responding
+      setWaitingForInput(false);
+
       // MSSCI-11928: Check for SDK-wrapped tool_result in user messages
       const extractedToolResults = extractToolResultsFromUserMessage(message);
       if (extractedToolResults.length > 0) {
@@ -193,6 +198,10 @@ function initMessageView() {
           }
         } else {
           showQuickActions(quickActionResult);
+          // 68-6: Set waiting for input when QUESTION/CHOICES markers detected
+          if (quickActionResult.type === 'question' || quickActionResult.type === 'choices') {
+            setWaitingForInput(true);
+          }
         }
       }
       // Reset for next turn

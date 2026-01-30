@@ -1,11 +1,14 @@
 /**
- * 68-2: Todos Panel as Top-Level Tab
+ * 68-2: Todos/Progress Panel as Top-Level Tab
  *
  * Tests for extracting todos section from sidebar into its own
- * VerticalPanel with a TODOS tab in the tab bar.
+ * VerticalPanel with a PROGRESS tab in the tab bar.
+ *
+ * NOTE: In 68-6, the Todos panel was renamed to Progress panel.
+ * This test file has been updated to reflect the new naming.
  *
  * Acceptance Criteria:
- * - AC1: TODOS tab visible in tab bar
+ * - AC1: PROGRESS tab visible in tab bar (renamed from TODOS in 68-6)
  * - AC2: Panel toggles on tab click
  * - AC3: Progress shows in tab (e.g., "3/5")
  * - AC4: Existing todo rendering works in new location
@@ -22,10 +25,11 @@ import * as path from 'path';
 
 // =============================================================================
 // File path helpers
+// 68-6: Renamed progress-panel.js to progress-panel.js
 // =============================================================================
 
 const JS_DIR = path.join(__dirname, '../src/public/js');
-const TODOS_PANEL_PATH = path.join(JS_DIR, 'todos-panel.js');
+const PROGRESS_PANEL_PATH = path.join(JS_DIR, 'progress-panel.js');  // 68-6: renamed
 const TASKS_MODULE_PATH = path.join(JS_DIR, 'sidebar/tasks.js');
 const INDEX_HTML_PATH = path.join(__dirname, '../src/public/index.html');
 
@@ -49,64 +53,64 @@ describe('68-2: Todos Panel', () => {
   });
 
   // =============================================================================
-  // AC1: TODOS tab visible in tab bar
+  // AC1: PROGRESS tab visible in tab bar
   // =============================================================================
 
-  describe('AC1: TODOS tab visible in tab bar', () => {
+  describe('AC1: PROGRESS tab visible in tab bar', () => {
 
-    it('should have todos-panel.js file', () => {
-      expect(fs.existsSync(TODOS_PANEL_PATH)).toBe(true);
+    it('should have progress-panel.js file', () => {
+      expect(fs.existsSync(PROGRESS_PANEL_PATH)).toBe(true);
     });
 
-    it('should have TodosPanel class extending VerticalPanel', () => {
-      if (!fs.existsSync(TODOS_PANEL_PATH)) {
-        expect.fail('todos-panel.js must exist');
+    it('should have ProgressPanel class extending VerticalPanel', () => {
+      if (!fs.existsSync(PROGRESS_PANEL_PATH)) {
+        expect.fail('progress-panel.js must exist');
       }
 
-      const content = fs.readFileSync(TODOS_PANEL_PATH, 'utf-8');
-      expect(content).toMatch(/class\s+TodosPanel/);
+      const content = fs.readFileSync(PROGRESS_PANEL_PATH, 'utf-8');
+      expect(content).toMatch(/class\s+ProgressPanel/);
     });
 
-    it('should import VerticalPanel in todos-panel.js', () => {
-      if (!fs.existsSync(TODOS_PANEL_PATH)) {
-        expect.fail('todos-panel.js must exist');
+    it('should import VerticalPanel in progress-panel.js', () => {
+      if (!fs.existsSync(PROGRESS_PANEL_PATH)) {
+        expect.fail('progress-panel.js must exist');
       }
 
-      const content = fs.readFileSync(TODOS_PANEL_PATH, 'utf-8');
+      const content = fs.readFileSync(PROGRESS_PANEL_PATH, 'utf-8');
       expect(content).toMatch(/import.*VerticalPanel|VerticalPanel/);
     });
 
-    it('should have #todos-panel element in HTML', () => {
-      const panel = document.querySelector('#todos-panel');
+    it('should have #progress-panel element in HTML', () => {
+      const panel = document.querySelector('#progress-panel');
       expect(panel).not.toBeNull();
     });
 
-    it('should have todos-panel with vertical-panel class', () => {
-      const panel = document.querySelector('#todos-panel');
+    it('should have progress-panel with vertical-panel class', () => {
+      const panel = document.querySelector('#progress-panel');
       expect(panel?.classList.contains('vertical-panel')).toBe(true);
     });
 
-    it('should have todos-panel with position-right class', () => {
-      const panel = document.querySelector('#todos-panel');
+    it('should have progress-panel with position-right class', () => {
+      const panel = document.querySelector('#progress-panel');
       expect(panel?.classList.contains('position-right')).toBe(true);
     });
 
-    it('should register TodosPanel with PanelManager', () => {
-      if (!fs.existsSync(TODOS_PANEL_PATH)) {
-        expect.fail('todos-panel.js must exist');
+    it('should register ProgressPanel with PanelManager', () => {
+      if (!fs.existsSync(PROGRESS_PANEL_PATH)) {
+        expect.fail('progress-panel.js must exist');
       }
 
-      const content = fs.readFileSync(TODOS_PANEL_PATH, 'utf-8');
+      const content = fs.readFileSync(PROGRESS_PANEL_PATH, 'utf-8');
       expect(content).toMatch(/PanelManager.*register|register\(\)/i);
     });
 
-    it('should have label "TODOS" for tab bar', () => {
-      if (!fs.existsSync(TODOS_PANEL_PATH)) {
-        expect.fail('todos-panel.js must exist');
+    it('should have label "PROGRESS" for tab bar', () => {
+      if (!fs.existsSync(PROGRESS_PANEL_PATH)) {
+        expect.fail('progress-panel.js must exist');
       }
 
-      const content = fs.readFileSync(TODOS_PANEL_PATH, 'utf-8');
-      expect(content).toMatch(/label.*TODOS|'TODOS'|"TODOS"/i);
+      const content = fs.readFileSync(PROGRESS_PANEL_PATH, 'utf-8');
+      expect(content).toMatch(/label.*PROGRESS|'PROGRESS'|"PROGRESS"/i);
     });
 
   });
@@ -117,68 +121,68 @@ describe('68-2: Todos Panel', () => {
 
   describe('AC2: Panel toggles on tab click', () => {
 
-    it('should have collapse method in TodosPanel', () => {
-      if (!fs.existsSync(TODOS_PANEL_PATH)) {
-        expect.fail('todos-panel.js must exist');
+    it('should have collapse method in ProgressPanel', () => {
+      if (!fs.existsSync(PROGRESS_PANEL_PATH)) {
+        expect.fail('progress-panel.js must exist');
       }
 
-      const content = fs.readFileSync(TODOS_PANEL_PATH, 'utf-8');
+      const content = fs.readFileSync(PROGRESS_PANEL_PATH, 'utf-8');
       // Either has own method or inherits from VerticalPanel
       expect(content).toMatch(/collapse|VerticalPanel/);
     });
 
-    it('should have expand method in TodosPanel', () => {
-      if (!fs.existsSync(TODOS_PANEL_PATH)) {
-        expect.fail('todos-panel.js must exist');
+    it('should have expand method in ProgressPanel', () => {
+      if (!fs.existsSync(PROGRESS_PANEL_PATH)) {
+        expect.fail('progress-panel.js must exist');
       }
 
-      const content = fs.readFileSync(TODOS_PANEL_PATH, 'utf-8');
+      const content = fs.readFileSync(PROGRESS_PANEL_PATH, 'utf-8');
       expect(content).toMatch(/expand|VerticalPanel/);
     });
 
-    it('should have toggle method in TodosPanel', () => {
-      if (!fs.existsSync(TODOS_PANEL_PATH)) {
-        expect.fail('todos-panel.js must exist');
+    it('should have toggle method in ProgressPanel', () => {
+      if (!fs.existsSync(PROGRESS_PANEL_PATH)) {
+        expect.fail('progress-panel.js must exist');
       }
 
-      const content = fs.readFileSync(TODOS_PANEL_PATH, 'utf-8');
+      const content = fs.readFileSync(PROGRESS_PANEL_PATH, 'utf-8');
       expect(content).toMatch(/toggle|VerticalPanel/);
     });
 
     it('should persist collapse state to localStorage', () => {
-      if (!fs.existsSync(TODOS_PANEL_PATH)) {
-        expect.fail('todos-panel.js must exist');
+      if (!fs.existsSync(PROGRESS_PANEL_PATH)) {
+        expect.fail('progress-panel.js must exist');
       }
 
-      const content = fs.readFileSync(TODOS_PANEL_PATH, 'utf-8');
+      const content = fs.readFileSync(PROGRESS_PANEL_PATH, 'utf-8');
       // Should reference storage key or use VerticalPanel persistence
       expect(content).toMatch(/storageKey|localStorage|cyclist-todos/i);
     });
 
     it('should export collapse function', () => {
-      if (!fs.existsSync(TODOS_PANEL_PATH)) {
-        expect.fail('todos-panel.js must exist');
+      if (!fs.existsSync(PROGRESS_PANEL_PATH)) {
+        expect.fail('progress-panel.js must exist');
       }
 
-      const content = fs.readFileSync(TODOS_PANEL_PATH, 'utf-8');
+      const content = fs.readFileSync(PROGRESS_PANEL_PATH, 'utf-8');
       expect(content).toMatch(/export\s+(function\s+collapse|{[^}]*collapse)/);
     });
 
     it('should export expand function', () => {
-      if (!fs.existsSync(TODOS_PANEL_PATH)) {
-        expect.fail('todos-panel.js must exist');
+      if (!fs.existsSync(PROGRESS_PANEL_PATH)) {
+        expect.fail('progress-panel.js must exist');
       }
 
-      const content = fs.readFileSync(TODOS_PANEL_PATH, 'utf-8');
+      const content = fs.readFileSync(PROGRESS_PANEL_PATH, 'utf-8');
       expect(content).toMatch(/export\s+(function\s+expand|{[^}]*expand)/);
     });
 
     it('should export toggle function', () => {
-      if (!fs.existsSync(TODOS_PANEL_PATH)) {
-        expect.fail('todos-panel.js must exist');
+      if (!fs.existsSync(PROGRESS_PANEL_PATH)) {
+        expect.fail('progress-panel.js must exist');
       }
 
-      const content = fs.readFileSync(TODOS_PANEL_PATH, 'utf-8');
+      const content = fs.readFileSync(PROGRESS_PANEL_PATH, 'utf-8');
       expect(content).toMatch(/export\s+(function\s+toggle|{[^}]*toggle)/);
     });
 
@@ -191,60 +195,61 @@ describe('68-2: Todos Panel', () => {
   describe('AC3: Progress shows in tab (e.g., "3/5")', () => {
 
     it('should have getBadgeCount method returning remaining todo count', () => {
-      if (!fs.existsSync(TODOS_PANEL_PATH)) {
-        expect.fail('todos-panel.js must exist');
+      if (!fs.existsSync(PROGRESS_PANEL_PATH)) {
+        expect.fail('progress-panel.js must exist');
       }
 
-      const content = fs.readFileSync(TODOS_PANEL_PATH, 'utf-8');
+      const content = fs.readFileSync(PROGRESS_PANEL_PATH, 'utf-8');
       expect(content).toMatch(/getBadgeCount/);
     });
 
     it('should import calculateProgress from tasks module', () => {
-      if (!fs.existsSync(TODOS_PANEL_PATH)) {
-        expect.fail('todos-panel.js must exist');
+      if (!fs.existsSync(PROGRESS_PANEL_PATH)) {
+        expect.fail('progress-panel.js must exist');
       }
 
-      const content = fs.readFileSync(TODOS_PANEL_PATH, 'utf-8');
+      const content = fs.readFileSync(PROGRESS_PANEL_PATH, 'utf-8');
       expect(content).toMatch(/calculateProgress|import.*tasks/i);
     });
 
     it('should import formatProgress from tasks module', () => {
-      if (!fs.existsSync(TODOS_PANEL_PATH)) {
-        expect.fail('todos-panel.js must exist');
+      if (!fs.existsSync(PROGRESS_PANEL_PATH)) {
+        expect.fail('progress-panel.js must exist');
       }
 
-      const content = fs.readFileSync(TODOS_PANEL_PATH, 'utf-8');
+      const content = fs.readFileSync(PROGRESS_PANEL_PATH, 'utf-8');
       expect(content).toMatch(/formatProgress|import.*tasks/i);
     });
 
     it('should update badge when todos change', () => {
-      if (!fs.existsSync(TODOS_PANEL_PATH)) {
-        expect.fail('todos-panel.js must exist');
+      if (!fs.existsSync(PROGRESS_PANEL_PATH)) {
+        expect.fail('progress-panel.js must exist');
       }
 
-      const content = fs.readFileSync(TODOS_PANEL_PATH, 'utf-8');
+      const content = fs.readFileSync(PROGRESS_PANEL_PATH, 'utf-8');
       // Should call setBadgeCount or updateBadge on todo change
       expect(content).toMatch(/setBadgeCount|updateBadge|badgeCount/i);
     });
 
     it('should have progress element in panel for displaying X/Y format', () => {
       // Either in HTML or created dynamically
-      const progressElement = document.querySelector('#todos-panel #todos-progress, #todos-panel .todos-progress');
-      const panelContent = fs.existsSync(TODOS_PANEL_PATH) ? fs.readFileSync(TODOS_PANEL_PATH, 'utf-8') : '';
+      const progressElement = document.querySelector('#progress-panel .progress-count, #progress-panel #progress-count');
+      const panelContent = fs.existsSync(PROGRESS_PANEL_PATH) ? fs.readFileSync(PROGRESS_PANEL_PATH, 'utf-8') : '';
 
       // Progress display can be in HTML or code should reference it
+      // 68-6: The progress panel uses progressCountElement and formatProgress()
       const hasProgressElement = progressElement !== null;
-      const createsProgressElement = panelContent.includes('todos-progress') || panelContent.includes('progressElement');
+      const createsProgressElement = panelContent.includes('progressCountElement') || panelContent.includes('formatProgress');
 
       expect(hasProgressElement || createsProgressElement).toBe(true);
     });
 
     it('should calculate progress as completed/total', () => {
-      if (!fs.existsSync(TODOS_PANEL_PATH)) {
-        expect.fail('todos-panel.js must exist');
+      if (!fs.existsSync(PROGRESS_PANEL_PATH)) {
+        expect.fail('progress-panel.js must exist');
       }
 
-      const content = fs.readFileSync(TODOS_PANEL_PATH, 'utf-8');
+      const content = fs.readFileSync(PROGRESS_PANEL_PATH, 'utf-8');
       // Should use calculateProgress or calculate completed vs total
       expect(content).toMatch(/calculateProgress|progress\.completed|progress\.total|completed.*total/i);
     });
@@ -257,26 +262,26 @@ describe('68-2: Todos Panel', () => {
 
   describe('AC4: Existing todo rendering works in new location', () => {
 
-    it('should have container for todo rendering in #todos-panel', () => {
-      const container = document.querySelector('#todos-panel #todos-list, #todos-panel .todos-list');
+    it('should have container for todo rendering in #progress-panel', () => {
+      const container = document.querySelector('#progress-panel #todos-list, #progress-panel .todos-list');
       expect(container).not.toBeNull();
     });
 
     it('should import createTodoElements from tasks module', () => {
-      if (!fs.existsSync(TODOS_PANEL_PATH)) {
-        expect.fail('todos-panel.js must exist');
+      if (!fs.existsSync(PROGRESS_PANEL_PATH)) {
+        expect.fail('progress-panel.js must exist');
       }
 
-      const content = fs.readFileSync(TODOS_PANEL_PATH, 'utf-8');
+      const content = fs.readFileSync(PROGRESS_PANEL_PATH, 'utf-8');
       expect(content).toMatch(/createTodoElements|import.*tasks/i);
     });
 
     it('should render todos into container element', () => {
-      if (!fs.existsSync(TODOS_PANEL_PATH)) {
-        expect.fail('todos-panel.js must exist');
+      if (!fs.existsSync(PROGRESS_PANEL_PATH)) {
+        expect.fail('progress-panel.js must exist');
       }
 
-      const content = fs.readFileSync(TODOS_PANEL_PATH, 'utf-8');
+      const content = fs.readFileSync(PROGRESS_PANEL_PATH, 'utf-8');
       expect(content).toMatch(/containerElement|todos-list/i);
     });
 
@@ -290,50 +295,50 @@ describe('68-2: Todos Panel', () => {
     });
 
     it('should wire up Electron IPC updates to new panel location', () => {
-      if (!fs.existsSync(TODOS_PANEL_PATH)) {
-        expect.fail('todos-panel.js must exist');
+      if (!fs.existsSync(PROGRESS_PANEL_PATH)) {
+        expect.fail('progress-panel.js must exist');
       }
 
-      const content = fs.readFileSync(TODOS_PANEL_PATH, 'utf-8');
+      const content = fs.readFileSync(PROGRESS_PANEL_PATH, 'utf-8');
       // Should handle todo updates via IPC
       expect(content).toMatch(/electronAPI|todos\.onUpdate|onUpdate|IPC/i);
     });
 
     it('should load initial todos on init', () => {
-      if (!fs.existsSync(TODOS_PANEL_PATH)) {
-        expect.fail('todos-panel.js must exist');
+      if (!fs.existsSync(PROGRESS_PANEL_PATH)) {
+        expect.fail('progress-panel.js must exist');
       }
 
-      const content = fs.readFileSync(TODOS_PANEL_PATH, 'utf-8');
+      const content = fs.readFileSync(PROGRESS_PANEL_PATH, 'utf-8');
       // Should fetch initial todos
       expect(content).toMatch(/loadInitialTodos|todos\.get|getInitial/i);
     });
 
     it('should have renderTodos function', () => {
-      if (!fs.existsSync(TODOS_PANEL_PATH)) {
-        expect.fail('todos-panel.js must exist');
+      if (!fs.existsSync(PROGRESS_PANEL_PATH)) {
+        expect.fail('progress-panel.js must exist');
       }
 
-      const content = fs.readFileSync(TODOS_PANEL_PATH, 'utf-8');
+      const content = fs.readFileSync(PROGRESS_PANEL_PATH, 'utf-8');
       expect(content).toMatch(/renderTodos|function.*render/i);
     });
 
     it('should handle empty todos state', () => {
-      if (!fs.existsSync(TODOS_PANEL_PATH)) {
-        expect.fail('todos-panel.js must exist');
+      if (!fs.existsSync(PROGRESS_PANEL_PATH)) {
+        expect.fail('progress-panel.js must exist');
       }
 
-      const content = fs.readFileSync(TODOS_PANEL_PATH, 'utf-8');
+      const content = fs.readFileSync(PROGRESS_PANEL_PATH, 'utf-8');
       // Should show empty state when no todos
       expect(content).toMatch(/todos-empty|no.*tasks|length.*0|empty/i);
     });
 
     it('should have clear function for context clear', () => {
-      if (!fs.existsSync(TODOS_PANEL_PATH)) {
-        expect.fail('todos-panel.js must exist');
+      if (!fs.existsSync(PROGRESS_PANEL_PATH)) {
+        expect.fail('progress-panel.js must exist');
       }
 
-      const content = fs.readFileSync(TODOS_PANEL_PATH, 'utf-8');
+      const content = fs.readFileSync(PROGRESS_PANEL_PATH, 'utf-8');
       // Should be able to clear todos (for context clear)
       expect(content).toMatch(/export.*clear|clearTasks|clear\(\)/i);
     });
@@ -346,28 +351,28 @@ describe('68-2: Todos Panel', () => {
 
   describe('Integration: Panel loads correctly', () => {
 
-    it('should include todos-panel.js script in HTML', () => {
-      const script = document.querySelector('script[src*="todos-panel"]');
+    it('should include progress-panel.js script in HTML', () => {
+      const script = document.querySelector('script[src*="progress-panel"]');
       expect(script).not.toBeNull();
     });
 
     it('should load after DOM is ready', () => {
-      if (!fs.existsSync(TODOS_PANEL_PATH)) {
-        expect.fail('todos-panel.js must exist');
+      if (!fs.existsSync(PROGRESS_PANEL_PATH)) {
+        expect.fail('progress-panel.js must exist');
       }
 
-      const content = fs.readFileSync(TODOS_PANEL_PATH, 'utf-8');
+      const content = fs.readFileSync(PROGRESS_PANEL_PATH, 'utf-8');
       // Should check document.readyState or use DOMContentLoaded
       expect(content).toMatch(/DOMContentLoaded|readyState/);
     });
 
-    it('should have panel title "TODOS" in HTML', () => {
-      const title = document.querySelector('#todos-panel .panel-title');
-      expect(title?.textContent?.trim()).toBe('TODOS');
+    it('should have panel title "PROGRESS" in HTML', () => {
+      const title = document.querySelector('#progress-panel .panel-title');
+      expect(title?.textContent?.trim()).toBe('PROGRESS');
     });
 
     it('should start collapsed by default', () => {
-      const panel = document.querySelector('#todos-panel');
+      const panel = document.querySelector('#progress-panel');
       expect(panel?.classList.contains('collapsed')).toBe(true);
     });
 
