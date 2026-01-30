@@ -24,10 +24,59 @@ def cli():
 
     \b
     workflow  - Workflow state and phase management
+    agent     - Agent session management
     sprint    - Sprint status and story operations (coming soon)
-    agent     - Agent session management (coming soon)
     """
     pass
+
+
+@cli.group()
+def agent():
+    """Agent session management.
+
+    \b
+    Commands:
+      start  - Start an agent session with context
+    """
+    pass
+
+
+@agent.command("start")
+@click.argument("name")
+@click.option("--session-id", help="Use explicit session ID")
+@click.option("--no-persona", is_flag=True, help="Skip persona loading")
+@click.option("--json", "json_output", is_flag=True, help="Output as JSON")
+@click.option("--minimal", is_flag=True, help="Skip all context (fastest)")
+@click.option("--full", is_flag=True, help="Include domain docs")
+def agent_start(
+    name: str,
+    session_id: str | None,
+    no_persona: bool,
+    json_output: bool,
+    minimal: bool,
+    full: bool,
+):
+    """Start an agent session with full context.
+
+    Loads agent definition, persona, behavior guide, sprint context,
+    session context, and sidecar memory.
+
+    \b
+    Arguments:
+      NAME  - Agent name (sm, tea, dev, reviewer, etc.)
+    """
+    # Lazy import - only load when command is actually invoked
+    from pennyfarthing_scripts.prime import prime
+
+    exit_code = prime(
+        agent_name=name,
+        session_id=session_id,
+        no_persona=no_persona,
+        json_output=json_output,
+        minimal=minimal,
+        full=full,
+    )
+    raise SystemExit(exit_code)
 
 
 @cli.group()
