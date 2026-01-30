@@ -279,14 +279,8 @@ export function resetSubmitting() {
 // ============================================================================
 
 function adjustTextareaHeight() {
-  if (!textareaElement) return;
-  // Reset height to auto to get scrollHeight
-  textareaElement.style.height = 'auto';
-  // Set to scrollHeight, clamped to min/max
-  const minHeight = 60;
-  const maxHeight = 300;
-  const newHeight = Math.min(Math.max(textareaElement.scrollHeight, minHeight), maxHeight);
-  textareaElement.style.height = newHeight + 'px';
+  // No-op: textarea fills 100% of #editor container
+  // Container height is controlled by editor-resize.js
 }
 
 export async function createEditor() {
@@ -436,7 +430,8 @@ export async function createEditor() {
 
   initTabCompletion({
     getEditor: () => getEditor(),
-    insertText
+    insertText,
+    replaceSlashPrefix
   });
 
   initMessageQueue({
@@ -483,6 +478,33 @@ function getSlashPrefixFromTextarea() {
   return null;
 }
 
+/**
+ * Replace the current slash prefix with a command name
+ * Used by tab-completion module for textarea mode
+ * @param {string} commandName - The full command name to insert
+ */
+function replaceSlashPrefix(commandName) {
+  if (!textareaElement) return;
+
+  const prefixInfo = getSlashPrefixFromTextarea();
+  if (!prefixInfo) {
+    // No prefix found, just insert at cursor
+    insertText(commandName);
+    return;
+  }
+
+  const value = textareaElement.value;
+  const { start, end } = prefixInfo;
+
+  // Replace the prefix with the command name
+  textareaElement.value = value.substring(0, start) + commandName + value.substring(end);
+  // Position cursor after the inserted command
+  const newPos = start + commandName.length;
+  textareaElement.selectionStart = textareaElement.selectionEnd = newPos;
+  adjustTextareaHeight();
+  textareaElement.focus();
+}
+
 function addTextareaStyles() {
   // Check if styles already added
   if (document.getElementById('textarea-editor-styles')) return;
@@ -492,17 +514,16 @@ function addTextareaStyles() {
   style.textContent = `
     .editor-textarea {
       width: 100%;
-      height: 80px;
+      height: 100%;
       min-height: 60px;
-      max-height: 300px;
-      padding: 0.75rem 1rem;
+      padding: 0.25rem 0.5rem;
       background: transparent;
       border: none;
       outline: none;
       resize: none;
       font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
       font-size: 0.95rem;
-      line-height: 1.5;
+      line-height: 1.4;
       color: var(--text-primary);
     }
 
