@@ -17,6 +17,7 @@ import { settingsSync } from './settings-sync.js';
 const STORAGE_KEY = 'cyclist-message-panel';
 
 let messagePanel = null;
+let waitingForInput = false;
 
 /**
  * Create and initialize the message panel
@@ -67,7 +68,8 @@ function registerWithPanelManager() {
         element: element,
         onOpen: () => expand(),
         onClose: () => collapse(),
-        getBadgeCount: () => 0,
+        // 68-6: Show 🔔 when waiting for user input
+        getBadgeCount: () => waitingForInput ? '🔔' : 0,
       });
 
       // Sync initial state to PanelManager (fixes tab indicator on startup)
@@ -116,6 +118,30 @@ export function isCollapsed() {
   return messagePanel ? messagePanel.isCollapsed() : false;
 }
 
+/**
+ * 68-6: Set waiting for input state (shows 🔔 badge)
+ * @param {boolean} waiting - Whether Claude is waiting for user input
+ */
+export function setWaitingForInput(waiting) {
+  const changed = waitingForInput !== waiting;
+  waitingForInput = waiting;
+
+  // Update badge in tab bar if state changed
+  if (changed) {
+    import('/js/panel-manager.js').then(PanelManager => {
+      PanelManager.default.updateBadgeCount?.('message-panel', waiting ? '🔔' : 0);
+    }).catch(() => {});
+  }
+}
+
+/**
+ * Check if waiting for user input
+ * @returns {boolean}
+ */
+export function isWaitingForInput() {
+  return waitingForInput;
+}
+
 // Export for external use
 export default {
   init,
@@ -123,6 +149,8 @@ export default {
   expand,
   toggle,
   isCollapsed,
+  setWaitingForInput,
+  isWaitingForInput,
 };
 
 // Auto-initialize on DOM ready

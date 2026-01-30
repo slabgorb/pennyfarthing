@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import path from 'path';
 
 export default defineConfig({
   test: {
@@ -18,5 +19,11 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html'],
     },
+  },
+  resolve: {
+    alias: [
+      // 68-6: Map browser absolute paths to source for test environment
+      { find: /^\/js\/(.*)/, replacement: path.resolve(__dirname, 'src/public/js/$1') },
+    ],
   },
 });

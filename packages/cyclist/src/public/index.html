@@ -188,68 +188,14 @@
       </div>
     </div>
     </div><!-- /message-panel -->
-    <!-- MSSCI-11917: Resize handle for sidebar (position-right, so handle is on left) -->
-    <div class="resize-handle" id="sidebar-resize" title="Drag to resize"></div>
-    <!-- 35-5: Sidebar as vertical panel (collapse via tab bar, not inline button) -->
-    <aside id="sidebar" class="vertical-panel position-right">
-      <!-- 68-5: Persona Section MOVED to message panel header (#persona-header) -->
-      <!-- Hidden elements kept for backwards compatibility with persona.js until 68-6 removes sidebar entirely -->
-      <div id="persona-section" style="display: none;">
-        <span id="project-name"></span>
-        <span id="character-name"></span>
-        <span id="character-role"></span>
-        <span id="theme-name"></span>
-        <span id="benchmark-score"></span>
-        <span id="character-quote"></span>
-        <span id="persona-section-summary"></span>
-        <div id="portrait-thumb"><img src="" alt=""><div class="portrait-placeholder"></div></div>
-        <div id="portrait"><img src="" alt=""><div class="portrait-placeholder"></div></div>
-        <div id="helper-line"></div>
-      </div>
-
-      <!-- Theme Picker (35-1: Contextual settings) - kept for settings panel -->
-      <div id="theme-picker" class="theme-picker" style="display: none;">
-        <div class="theme-picker-header">
-          <span class="theme-picker-title">Select Theme</span>
-          <button class="theme-picker-close" data-action="close">&times;</button>
-        </div>
-        <div class="recent-themes">
-          <!-- Recent themes populated dynamically -->
-        </div>
-        <button class="browse-all-themes" data-action="browse-all">Browse all themes...</button>
-      </div>
-
-      <!-- Story Section - MOVED to #sprint-panel (68-3) -->
-      <!-- Hidden: story/sprint info now renders in dedicated panel -->
-
-      <!-- B-12451: BikeLane Workflow Section - Collapsible workflow visualization -->
-      <section id="bikelane-section" class="collapsible-section bikelane-section hidden" style="display: none;">
-        <div class="section-header">
-          <h3 class="section-title">BIKELANE</h3>
-          <span class="workflow-type-badge" data-workflow-type="">—</span>
-          <span class="phase-summary section-summary"></span>
-          <button class="collapse-btn" aria-label="Toggle workflow" title="Toggle workflow">▼</button>
-        </div>
-        <div class="section-detail">
-          <!-- Phase progress visualization -->
-          <div class="phase-progress workflow-phases"></div>
-          <!-- Phase history timeline -->
-          <div class="phase-history">
-            <h4 class="phase-history-header">PHASE HISTORY</h4>
-            <div class="phase-history-list"></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Git Section - MOVED to #git-panel (68-4) -->
-      <!-- Hidden: git status now renders in dedicated panel -->
-
-      <!-- B-17: Todos Section - MOVED to #todos-panel (68-2) -->
-      <!-- Hidden: todos now render in dedicated panel -->
-
-      <!-- 35-16: Background Tasks Section - MOVED to #background-panel (68-1) -->
-      <!-- Hidden: background tasks now render in dedicated panel -->
-    </aside>
+    <!-- 68-6: Sidebar removed - all content moved to dedicated panels:
+         - Persona: #persona-header (68-5)
+         - Story/Sprint: #sprint-panel (68-3)
+         - Todos + BikeLane: #progress-panel (68-2)
+         - Git: #git-panel (68-4)
+         - Background Tasks: #background-panel (68-1)
+         - Theme Picker: #settings-panel (35-9)
+    -->
 
     <!-- 68-3: Sprint Panel (top-level tab for story/sprint info) -->
     <aside id="sprint-panel" class="vertical-panel position-right collapsed">
@@ -631,8 +577,7 @@
   </script>
   <!-- 35-5: Vertical Panel base class -->
   <script type="module" src="/js/vertical-panel.js"></script>
-  <!-- 35-5: Sidebar and Message panels -->
-  <script type="module" src="/js/sidebar-panel.js"></script>
+  <!-- 35-5: Message panel (68-6: sidebar-panel.js removed) -->
   <script type="module" src="/js/message-panel.js"></script>
   <!-- 68-3: Sprint Panel (top-level tab) -->
   <script type="module" src="/js/sprint-panel.js"></script>

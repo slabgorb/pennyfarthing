@@ -299,48 +299,43 @@ describe('35-5: Vertical Panel', () => {
 
   // =============================================================================
   // AC3: Sidebar converted to collapsible vertical panel
+  // 68-6: Sidebar removed entirely - content moved to dedicated tab panels
   // =============================================================================
 
-  describe('AC3: Sidebar as collapsible vertical panel', () => {
+  describe.skip('AC3: Sidebar as collapsible vertical panel (68-6: REMOVED)', () => {
+    // 68-6: These tests are skipped because the sidebar was removed.
+    // Sidebar content has been migrated to dedicated panels:
+    // - Background tasks → background-panel.js
+    // - Todos → progress-panel.js (renamed from todos-panel)
+    // - Sprint → sprint-panel.js
+    // - Git → git-panel.js
+    // - Persona → message panel header
 
-    it('should have sidebar-panel.js file', () => {
+    it.skip('should have sidebar-panel.js file', () => {
       expect(fs.existsSync(SIDEBAR_PANEL_PATH)).toBe(true);
     });
 
-    it('should have sidebar-panel.js with collapse method', () => {
-      if (!fs.existsSync(SIDEBAR_PANEL_PATH)) {
-        expect(true).toBe(false);
-        return;
-      }
-
+    it.skip('should have sidebar-panel.js with collapse method', () => {
       const content = fs.readFileSync(SIDEBAR_PANEL_PATH, 'utf-8');
       expect(content).toContain('collapse');
     });
 
-    it('should have sidebar-panel.js with expand method', () => {
-      if (!fs.existsSync(SIDEBAR_PANEL_PATH)) {
-        expect(true).toBe(false);
-        return;
-      }
-
+    it.skip('should have sidebar-panel.js with expand method', () => {
       const content = fs.readFileSync(SIDEBAR_PANEL_PATH, 'utf-8');
       expect(content).toContain('expand');
     });
 
-    it('should have sidebar element with vertical-panel class in HTML', () => {
+    it.skip('should have sidebar element with vertical-panel class in HTML', () => {
       const sidebar = document.querySelector('#sidebar');
       expect(sidebar).not.toBeNull();
-      expect(sidebar?.classList.contains('vertical-panel')).toBe(true);
     });
 
-    it('should have sidebar with position-right class', () => {
+    it.skip('should have sidebar with position-right class', () => {
       const sidebar = document.querySelector('#sidebar');
       expect(sidebar?.classList.contains('position-right')).toBe(true);
     });
 
-    it('should have sidebar collapsible via tab bar (no inline button needed)', () => {
-      // 35-5: Sidebar collapses via tab bar click, not an inline button
-      // Verify sidebar has the vertical-panel class which enables collapse behavior
+    it.skip('should have sidebar collapsible via tab bar', () => {
       const sidebar = document.querySelector('#sidebar.vertical-panel');
       expect(sidebar).not.toBeNull();
     });
@@ -391,12 +386,8 @@ describe('35-5: Vertical Panel', () => {
 
   describe('AC5: All panels register with PanelManager', () => {
 
-    it('should have sidebar-panel.js registering with PanelManager', () => {
-      if (!fs.existsSync(SIDEBAR_PANEL_PATH)) {
-        expect(true).toBe(false);
-        return;
-      }
-
+    // 68-6: Sidebar removed - skip this test
+    it.skip('should have sidebar-panel.js registering with PanelManager (68-6: REMOVED)', () => {
       const content = fs.readFileSync(SIDEBAR_PANEL_PATH, 'utf-8');
       expect(content).toMatch(/PanelManager.*register|register.*panel/i);
     });
@@ -424,15 +415,9 @@ describe('35-5: Vertical Panel', () => {
       expect(tabBar).not.toBeNull();
     });
 
-    it('should have tab for sidebar in tab bar', () => {
-      // Tab bar dynamically renders, so we check that sidebar registers
-      if (!fs.existsSync(SIDEBAR_PANEL_PATH)) {
-        expect(true).toBe(false);
-        return;
-      }
-
+    // 68-6: Sidebar removed - skip this test
+    it.skip('should have tab for sidebar in tab bar (68-6: REMOVED)', () => {
       const content = fs.readFileSync(SIDEBAR_PANEL_PATH, 'utf-8');
-      // Should have label for tab registration
       expect(content).toMatch(/label.*sidebar|Sidebar/i);
     });
 
@@ -454,14 +439,9 @@ describe('35-5: Vertical Panel', () => {
 
   describe('AC7: Keyboard shortcuts', () => {
 
-    it('should have sidebar-panel with keyboard shortcut defined', () => {
-      if (!fs.existsSync(SIDEBAR_PANEL_PATH)) {
-        expect(true).toBe(false);
-        return;
-      }
-
+    // 68-6: Sidebar removed - skip this test
+    it.skip('should have sidebar-panel with keyboard shortcut defined (68-6: REMOVED)', () => {
       const content = fs.readFileSync(SIDEBAR_PANEL_PATH, 'utf-8');
-      // Should have shortcut for Cmd+B or Cmd+5
       expect(content).toMatch(/shortcut.*['"]?[bB5]['"]?|keyboard/i);
     });
 
@@ -483,12 +463,8 @@ describe('35-5: Vertical Panel', () => {
 
   describe('AC8 & AC9: State persistence', () => {
 
-    it('should have sidebar-panel persisting state to localStorage', () => {
-      if (!fs.existsSync(SIDEBAR_PANEL_PATH)) {
-        expect(true).toBe(false);
-        return;
-      }
-
+    // 68-6: Sidebar removed - skip this test
+    it.skip('should have sidebar-panel persisting state to localStorage (68-6: REMOVED)', () => {
       const content = fs.readFileSync(SIDEBAR_PANEL_PATH, 'utf-8');
       expect(content).toContain('localStorage');
     });
@@ -554,11 +530,12 @@ describe('35-5: Vertical Panel', () => {
 
   describe('Integration: Panel system works together', () => {
 
+    // 68-6: Updated to exclude sidebar-panel.js (removed)
     it('should have all required new files', () => {
       const requiredFiles = [
         VERTICAL_PANEL_PATH,
-        SIDEBAR_PANEL_PATH,
         MESSAGE_PANEL_PATH,
+        // 68-6: SIDEBAR_PANEL_PATH removed
       ];
 
       const missingFiles = requiredFiles.filter(f => !fs.existsSync(f));
@@ -566,21 +543,24 @@ describe('35-5: Vertical Panel', () => {
       expect(missingFiles).toHaveLength(0);
     });
 
+    // 68-6: Updated to not expect sidebar
     it('should have index.html updated with new panel structure', () => {
-      // Check for new panel wrapper elements
       const htmlContent = fs.readFileSync(INDEX_HTML_PATH, 'utf-8');
 
       expect(htmlContent).toContain('message-panel');
-      expect(htmlContent).toMatch(/sidebar.*vertical-panel|vertical-panel.*sidebar/i);
+      // 68-6: Sidebar removed, verify it's NOT present
+      expect(htmlContent).not.toMatch(/id=["']sidebar["']/);
     });
 
-    it('should have all panel JS files loaded in index.html', () => {
+    // 68-6: Updated to not expect sidebar-panel.js
+    it('should have required panel JS files loaded in index.html', () => {
       const htmlContent = fs.readFileSync(INDEX_HTML_PATH, 'utf-8');
 
-      // Check for script imports
+      // Check for script imports (sidebar-panel.js removed in 68-6)
       expect(htmlContent).toMatch(/vertical-panel\.js|vertical-panel/);
-      expect(htmlContent).toMatch(/sidebar-panel\.js|sidebar-panel/);
       expect(htmlContent).toMatch(/message-panel\.js|message-panel/);
+      // 68-6: Verify sidebar-panel script tag is NOT present (comments OK)
+      expect(htmlContent).not.toMatch(/src=["'][^"']*sidebar-panel\.js["']/);
     });
 
   });

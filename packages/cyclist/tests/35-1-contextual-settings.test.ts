@@ -49,27 +49,30 @@ describe('35-1: Contextual Settings Placement', () => {
 
   // ==========================================================================
   // AC1: Theme chooser accessible from profile/persona area click
+  // 68-6: Sidebar removed - persona moved to message header, theme via SettingsPanel
   // ==========================================================================
   describe('AC1: Theme chooser from profile click', () => {
 
-    it('should have a theme picker container in index.html', async () => {
-      // New theme picker element should exist
+    // 68-6: Standalone theme-picker element removed with sidebar
+    // Theme selection now exclusively via SettingsPanel (see tests below)
+    it.skip('should have a theme picker container in index.html', async () => {
+      // 68-6: SKIPPED - theme picker moved to SettingsPanel
       expect(indexHtml).toContain('id="theme-picker"');
     });
 
-    it('should have theme picker positioned near persona section', async () => {
-      // Theme picker should be inside or adjacent to persona section
+    // 68-6: persona-section removed with sidebar, persona now in message header
+    it.skip('should have theme picker positioned near persona section', async () => {
+      // 68-6: SKIPPED - persona and theme picker architecture changed
       const personaSection = indexDocument.getElementById('persona-section');
       expect(personaSection).not.toBeNull();
 
-      // Either inside persona-section or has data attribute linking them
       const themePicker = indexDocument.getElementById('theme-picker');
       expect(themePicker).not.toBeNull();
     });
 
-    it('should have clickable persona section that shows detail popup', async () => {
-      // 35-8: Persona section click shows detail popup (theme changes via SettingsPanel)
-      // No longer triggers theme picker - just opens persona detail view
+    // 68-6: Persona click behavior changed - now in message header (68-5)
+    it.skip('should have clickable persona section that shows detail popup', async () => {
+      // 68-6: SKIPPED - persona section moved to message header
       const personaSection = indexDocument.getElementById('persona-section');
       expect(personaSection).not.toBeNull();
     });
@@ -100,8 +103,9 @@ describe('35-1: Contextual Settings Placement', () => {
       expect(typeof settingsPanel.sortThemesWithRecent).toBe('function');
     });
 
-    it('should have theme picker with recent themes section', async () => {
-      // Theme picker should show recent/favorite themes
+    // 68-6: Theme picker moved to SettingsPanel - recent themes shown there
+    it.skip('should have theme picker with recent themes section', async () => {
+      // 68-6: SKIPPED - recent themes now in SettingsPanel, not standalone picker
       expect(indexHtml).toMatch(/recent-themes|favorites/i);
     });
 

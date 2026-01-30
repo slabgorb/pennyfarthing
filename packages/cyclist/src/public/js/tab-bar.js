@@ -37,12 +37,17 @@ function createTabButton(panel) {
   label.textContent = panel.label;
   btn.appendChild(label);
 
-  // Badge
+  // Badge (supports both numeric counts and string indicators like 🔔)
   const badge = document.createElement('span');
   badge.className = 'tab-badge';
   badge.id = `${panel.id}-tab-badge`;
-  const count = panel.getBadgeCount();
-  badge.textContent = count > 0 ? String(count) : '';
+  const badgeValue = panel.getBadgeCount?.() ?? panel.getBadge?.() ?? 0;
+  // Handle both numeric and string badges
+  if (typeof badgeValue === 'string') {
+    badge.textContent = badgeValue;
+  } else {
+    badge.textContent = badgeValue > 0 ? String(badgeValue) : '';
+  }
   btn.appendChild(badge);
 
   // Click handler
@@ -83,6 +88,16 @@ function updateTabState(panelId, isOpen) {
 }
 
 /**
+ * Format badge value (handles both numbers and strings like 🔔)
+ */
+function formatBadgeValue(value) {
+  if (typeof value === 'string') {
+    return value;
+  }
+  return value > 0 ? String(value) : '';
+}
+
+/**
  * Update all badge counts
  */
 function updateBadges() {
@@ -90,12 +105,12 @@ function updateBadges() {
   panels.forEach(panel => {
     const badge = document.getElementById(`${panel.id}-tab-badge`);
     if (badge) {
-      const count = panel.getBadgeCount();
-      const newText = count > 0 ? String(count) : '';
+      const badgeValue = panel.getBadgeCount?.() ?? panel.getBadge?.() ?? 0;
+      const newText = formatBadgeValue(badgeValue);
       if (badge.textContent !== newText) {
         badge.textContent = newText;
         // Pulse animation on change
-        if (count > 0) {
+        if (newText) {
           badge.classList.add('pulse');
           setTimeout(() => badge.classList.remove('pulse'), 300);
         }
@@ -113,8 +128,8 @@ export function updateBadge(panelId) {
 
   const badge = document.getElementById(`${panel.id}-tab-badge`);
   if (badge) {
-    const count = panel.getBadgeCount();
-    badge.textContent = count > 0 ? String(count) : '';
+    const badgeValue = panel.getBadgeCount?.() ?? panel.getBadge?.() ?? 0;
+    badge.textContent = formatBadgeValue(badgeValue);
   }
 }
 
@@ -132,13 +147,14 @@ export function setModelIndicator(modelName) {
  */
 export function init() {
   // Subscribe to badge-changed event for immediate updates (replaces polling)
+  // 68-6: Use formatBadgeValue to handle both numeric and string badges (🔔)
   PanelManager.on('badge-changed', ({ panelId, count }) => {
     const badge = document.getElementById(`${panelId}-tab-badge`);
     if (badge) {
-      const newText = count > 0 ? String(count) : '';
+      const newText = formatBadgeValue(count);
       badge.textContent = newText;
-      // Pulse animation on change
-      if (count > 0) {
+      // Pulse animation on change (triggers for any non-empty badge)
+      if (newText) {
         badge.classList.add('pulse');
         setTimeout(() => badge.classList.remove('pulse'), 300);
       }

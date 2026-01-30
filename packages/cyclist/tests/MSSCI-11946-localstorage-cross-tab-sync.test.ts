@@ -93,13 +93,14 @@ const SETTINGS_SYNC_PATH = path.join(JS_DIR, 'settings-sync.js');
 
 // Files that should use settings-sync.js after refactoring
 // Note: story.js is at sidebar/story.js and doesn't use localStorage
+// Note: sidebar-panel.js was removed in 68-6
 const FILES_USING_LOCALSTORAGE = [
   'vertical-panel.js',
   'panel-manager.js',
   'file-panel.js',
   'diff-panel.js',
   'settings-panel.js',
-  'sidebar-panel.js',
+  // 'sidebar-panel.js', // 68-6: removed - content moved to dedicated panels
   'message-panel.js',
   'theme.js',
   'theme-manager.js',
