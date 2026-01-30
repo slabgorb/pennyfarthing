@@ -41,7 +41,6 @@ export const STORAGE_KEYS = {
   // Editor keys
   MESSAGE_QUEUE: 'cyclist-message-queue',
   COMMAND_HISTORY: 'cyclist-command-history',
-  EDITOR_MODE: 'cyclist-editor-mode',
 };
 
 // =============================================================================

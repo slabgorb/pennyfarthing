@@ -1,25 +1,10 @@
 /**
  * Editor Constants
- * Configuration values for the TipTap editor
+ * Configuration values for the textarea editor
  */
 
 /** DOM element ID where editor mounts */
 export const EDITOR_CONTAINER_ID = 'editor';
-
-/** List of TipTap extensions loaded */
-export const EDITOR_EXTENSIONS = ['StarterKit', 'CodeBlock'];
-
-/** Editor initialization options */
-export const EDITOR_OPTIONS = {
-  autofocus: true,
-  editorProps: {
-    attributes: {
-      class: 'prose prose-invert max-w-none focus:outline-none',
-      spellcheck: 'true',
-      lang: 'en',
-    },
-  },
-};
 
 /** localStorage key for persisting message queue (Story 17-1) */
 export const MESSAGE_QUEUE_KEY = 'cyclist-message-queue';
@@ -74,4 +59,3 @@ export const IMAGE_WARN_SIZE_BYTES = 5 * 1024 * 1024;
 
 /** Maximum allowed image size (20MB) - block paste */
 export const IMAGE_MAX_SIZE_BYTES = 20 * 1024 * 1024;
-
