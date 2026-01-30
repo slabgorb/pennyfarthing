@@ -5970,6 +5970,57 @@ html, body {
   display: none;
 }
 
+/* Setting Row (67-1: Editor mode toggle) */
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.setting-label {
+  font-size: 13px;
+  color: var(--text-primary, #fff);
+}
+
+.setting-toggle-group {
+  display: flex;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border, #333);
+}
+
+.setting-toggle-group .toggle-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--bg-primary, #1a1a2e);
+  color: var(--text-secondary, #888);
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.setting-toggle-group .toggle-btn:not(:last-child) {
+  border-right: 1px solid var(--border, #333);
+}
+
+.setting-toggle-group .toggle-btn:hover {
+  background: var(--bg-tertiary, #252540);
+}
+
+.setting-toggle-group .toggle-btn.active {
+  background: var(--accent, #6366f1);
+  color: #fff;
+}
+
+.setting-hint {
+  font-size: 11px;
+  color: var(--text-secondary, #888);
+  margin: 0;
+}
+
 /* Setting Items */
 .setting-item {
   margin-bottom: 12px;

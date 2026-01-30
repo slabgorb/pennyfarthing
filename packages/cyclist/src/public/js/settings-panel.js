@@ -13,7 +13,7 @@
 import { VerticalPanel } from './vertical-panel.js';
 import { SettingsPanel as SettingsForm } from './components/SettingsPanel.js';
 // MSSCI-11946: settings-sync import for cross-tab persistence (via VerticalPanel)
-import { settingsSync } from './settings-sync.js';
+import { settingsSync, STORAGE_KEYS } from './settings-sync.js';
 
 const STORAGE_KEY = 'cyclist-settings-panel';
 
@@ -89,7 +89,90 @@ export function init() {
     }
   }
 
+  // Initialize editor mode toggle (67-1)
+  initEditorModeToggle();
+
   console.log('[SettingsPanel] Initialized');
+}
+
+/**
+ * Initialize editor mode toggle (67-1)
+ * Allows switching between TipTap (rich) and textarea (plain) editors
+ */
+function initEditorModeToggle() {
+  const toggleGroup = document.getElementById('editor-mode-toggle');
+  if (!toggleGroup) return;
+
+  // Get current mode from storage - use let so we can update it
+  let selectedMode = settingsSync.get(STORAGE_KEYS.EDITOR_MODE, 'tiptap');
+
+  // Update toggle state
+  const buttons = toggleGroup.querySelectorAll('.toggle-btn');
+  buttons.forEach(btn => {
+    const value = btn.getAttribute('data-value');
+    const isActive = value === selectedMode;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-checked', isActive ? 'true' : 'false');
+
+    // Handle click
+    btn.addEventListener('click', async () => {
+      if (value === selectedMode) return;
+
+      // Update tracked mode
+      selectedMode = value;
+
+      // Save new mode
+      settingsSync.set(STORAGE_KEYS.EDITOR_MODE, value);
+
+      // Update UI
+      buttons.forEach(b => {
+        const active = b.getAttribute('data-value') === value;
+        b.classList.toggle('active', active);
+        b.setAttribute('aria-checked', active ? 'true' : 'false');
+      });
+
+      // Hot-swap the editor without reload
+      await swapEditor(value);
+    });
+  });
+}
+
+/**
+ * Hot-swap the editor between TipTap and textarea modes (67-1)
+ * @param {string} mode - 'tiptap' or 'textarea'
+ */
+async function swapEditor(mode) {
+  const container = document.getElementById('editor');
+  const toolbar = document.getElementById('editor-toolbar');
+  if (!container) return;
+
+  // Clear existing editor content
+  container.innerHTML = '';
+
+  if (mode === 'textarea') {
+    // Load and initialize textarea editor
+    const { createEditor } = await import('/js/editor-textarea.js');
+    createEditor();
+    // Hide toolbar - not applicable to plain text
+    if (toolbar) toolbar.style.display = 'none';
+    console.log('[Editor] Switched to textarea mode (plain text)');
+  } else {
+    // Ensure TipTap bundle is loaded
+    if (!window.TipTap) {
+      await new Promise((resolve) => {
+        const script = document.createElement('script');
+        script.src = '/js/tiptap.bundle.js';
+        script.onload = resolve;
+        document.head.appendChild(script);
+      });
+    }
+    // Load and initialize TipTap editor
+    const { createEditor } = await import('/js/editor.js');
+    createEditor();
+    // Show toolbar for rich text
+    if (toolbar) toolbar.style.display = '';
+    console.log('[Editor] Switched to TipTap mode (rich text)');
+  }
 }
 
 /**
