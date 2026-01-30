@@ -349,14 +349,27 @@ function handleCompactShortcut(event) {
 // =============================================================================
 
 /**
- * Update the relay mode toggle display
+ * Update the relay mode toggle display (toolbar and settings panel)
  */
 function updateRelayModeDisplay() {
+  // Toolbar toggle
   const toggle = document.getElementById('relay-mode-toggle');
-  if (!toggle) return;
+  if (toggle) {
+    toggle.setAttribute('aria-pressed', relayModeEnabled ? 'true' : 'false');
+    toggle.classList.toggle('active', relayModeEnabled);
+  }
 
-  toggle.setAttribute('aria-pressed', relayModeEnabled ? 'true' : 'false');
-  toggle.classList.toggle('active', relayModeEnabled);
+  // Settings panel toggle
+  const settingsToggle = document.getElementById('settings-relay-toggle');
+  if (settingsToggle) {
+    const buttons = settingsToggle.querySelectorAll('.toggle-btn');
+    buttons.forEach(btn => {
+      const isOn = btn.getAttribute('data-value') === 'on';
+      const isActive = isOn === relayModeEnabled;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-checked', isActive ? 'true' : 'false');
+    });
+  }
 }
 
 /**
@@ -429,13 +442,26 @@ function handleRelayModeShortcut(event) {
 // =============================================================================
 
 /**
- * Update the bell mode toggle display
+ * Update the bell mode toggle display (toolbar and settings panel)
  */
 function updateBellModeDisplay() {
+  // Toolbar toggle
   const toggle = document.getElementById('bell-mode-toggle');
-  if (!toggle) return;
+  if (toggle) {
+    toggle.setAttribute('aria-pressed', bellModeEnabled ? 'true' : 'false');
+  }
 
-  toggle.setAttribute('aria-pressed', bellModeEnabled ? 'true' : 'false');
+  // Settings panel toggle
+  const settingsToggle = document.getElementById('settings-bell-toggle');
+  if (settingsToggle) {
+    const buttons = settingsToggle.querySelectorAll('.toggle-btn');
+    buttons.forEach(btn => {
+      const isOn = btn.getAttribute('data-value') === 'on';
+      const isActive = isOn === bellModeEnabled;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-checked', isActive ? 'true' : 'false');
+    });
+  }
 }
 
 /**
@@ -644,16 +670,40 @@ function initControls() {
   // MSSCI-12395: Relay mode toggle (auto-handoff, formerly part of turbo)
   const relayModeToggle = document.getElementById('relay-mode-toggle');
   if (relayModeToggle) {
-    console.log('[Controls] Found relay mode toggle, attaching click handler');
     relayModeToggle.addEventListener('click', toggleRelayMode);
+  }
+
+  // Settings panel relay toggle (mirrors toolbar toggle)
+  const settingsRelayToggle = document.getElementById('settings-relay-toggle');
+  if (settingsRelayToggle) {
+    settingsRelayToggle.querySelectorAll('.toggle-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const newValue = btn.getAttribute('data-value') === 'on';
+        if (newValue !== relayModeEnabled) {
+          toggleRelayMode();
+        }
+      });
+    });
   }
 
   // MSSCI-12275: Bell mode toggle
   const bellModeToggle = document.getElementById('bell-mode-toggle');
   if (bellModeToggle) {
-    console.log('[Controls] Found bell mode toggle, attaching click handler');
     bellModeToggle.addEventListener('click', toggleBellMode);
     loadBellModeFromSettings();
+  }
+
+  // Settings panel bell toggle (mirrors toolbar toggle)
+  const settingsBellToggle = document.getElementById('settings-bell-toggle');
+  if (settingsBellToggle) {
+    settingsBellToggle.querySelectorAll('.toggle-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const newValue = btn.getAttribute('data-value') === 'on';
+        if (newValue !== bellModeEnabled) {
+          toggleBellMode();
+        }
+      });
+    });
   }
 
   // 23-4: Register global keyboard shortcut for compact (Cmd+Shift+K / Ctrl+Shift+K)

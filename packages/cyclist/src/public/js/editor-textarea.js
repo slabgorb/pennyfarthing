@@ -86,9 +86,6 @@ let textareaElement = null;
 /** Callback for submit action */
 let onSubmitCallback = null;
 
-/** Flag to prevent duplicate sends */
-let isSubmitting = false;
-
 /** Pending images */
 let pendingImages = [];
 
@@ -274,9 +271,8 @@ export function insertAndSubmit(text) {
 }
 
 export function resetSubmitting() {
-  isSubmitting = false;
+  // No-op: textarea editor uses isProcessing() from message-queue instead of local flag
 }
-
 
 // ============================================================================
 // Editor Initialization
@@ -308,7 +304,7 @@ export async function createEditor() {
   textareaElement = document.createElement('textarea');
   textareaElement.id = 'editor-textarea';
   textareaElement.className = 'editor-textarea';
-  textareaElement.placeholder = 'Type your message... (Enter to send)';
+  textareaElement.placeholder = '';
   textareaElement.spellcheck = true;
   textareaElement.lang = 'en';
 
@@ -529,27 +525,16 @@ function submitEditorContent(passedText, passedImages) {
 
   if (!markdown.trim()) return;
 
-  console.log('[Editor-Textarea] submitEditorContent called, isProcessing:', isProcessing(), 'isSubmitting:', isSubmitting);
-
   // If Claude is processing, queue the message
   if (isProcessing() && passedText === undefined) {
     const queued = queueMessage({ text: markdown, images: images });
     if (queued) {
-      console.log('[Editor-Textarea] Message queued while processing');
       clearPendingImages();
       clearEditor();
       textareaElement.focus();
     }
     return;
   }
-
-  // Prevent duplicate sends
-  if (isSubmitting && passedText === undefined) {
-    console.log('[Editor-Textarea] Ignoring submit - already processing');
-    return;
-  }
-
-  isSubmitting = true;
   setProcessing(true);
 
   if (isQueuePaused()) {

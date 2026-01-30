@@ -92,17 +92,19 @@
       </div>
       <div id="editor-wrapper">
         <div id="editor-toolbar">
-          <button type="button" class="toolbar-btn" data-action="bold" title="Bold (Ctrl+B)"><strong>B</strong></button>
-          <button type="button" class="toolbar-btn" data-action="italic" title="Italic (Ctrl+I)"><em>I</em></button>
-          <button type="button" class="toolbar-btn" data-action="strike" title="Strikethrough">S̶</button>
-          <button type="button" class="toolbar-btn" data-action="code" title="Inline Code">&lt;/&gt;</button>
-          <span class="toolbar-divider"></span>
-          <button type="button" class="toolbar-btn" data-action="heading" title="Heading">H</button>
-          <button type="button" class="toolbar-btn" data-action="bulletList" title="Bullet List">•</button>
-          <button type="button" class="toolbar-btn" data-action="orderedList" title="Numbered List">1.</button>
-          <button type="button" class="toolbar-btn" data-action="blockquote" title="Quote">"</button>
-          <button type="button" class="toolbar-btn" data-action="codeBlock" title="Code Block">{ }</button>
-          <span class="toolbar-spacer"></span>
+          <div id="formatting-buttons">
+            <button type="button" class="toolbar-btn" data-action="bold" title="Bold (Ctrl+B)"><strong>B</strong></button>
+            <button type="button" class="toolbar-btn" data-action="italic" title="Italic (Ctrl+I)"><em>I</em></button>
+            <button type="button" class="toolbar-btn" data-action="strike" title="Strikethrough">S̶</button>
+            <button type="button" class="toolbar-btn" data-action="code" title="Inline Code">&lt;/&gt;</button>
+            <span class="toolbar-divider"></span>
+            <button type="button" class="toolbar-btn" data-action="heading" title="Heading">H</button>
+            <button type="button" class="toolbar-btn" data-action="bulletList" title="Bullet List">•</button>
+            <button type="button" class="toolbar-btn" data-action="orderedList" title="Numbered List">1.</button>
+            <button type="button" class="toolbar-btn" data-action="blockquote" title="Quote">"</button>
+            <button type="button" class="toolbar-btn" data-action="codeBlock" title="Code Block">{ }</button>
+            <span class="toolbar-spacer"></span>
+          </div>
           <!-- Permission mode switch (3-way segmented control) - MSSCI-12395: turbo removed -->
           <div class="mode-switch" data-control="mode-switch" role="radiogroup" aria-label="Permission mode">
             <!-- Sliding highlight indicator (JS positions this) -->
@@ -373,15 +375,15 @@
           </div>
         </div>
 
-        <!-- Editor Mode (67-1) -->
-        <section class="settings-section editor-section" data-section="editor">
+        <!-- Input Settings (67-1) -->
+        <section class="settings-section input-section" data-section="input">
           <div class="section-header">
             <span class="section-icon">⌨️</span>
-            <span class="section-title">Editor</span>
+            <span class="section-title">Input</span>
           </div>
           <div class="section-content">
             <div class="setting-row">
-              <label class="setting-label">Input Mode</label>
+              <label class="setting-label">Editor Mode</label>
               <div class="setting-toggle-group" id="editor-mode-toggle" role="radiogroup" aria-label="Editor input mode">
                 <button type="button" class="toggle-btn" data-value="tiptap" role="radio" aria-checked="true">
                   Rich Text
@@ -392,6 +394,30 @@
               </div>
             </div>
             <p class="setting-hint">Plain text mode is faster but doesn't support formatting.</p>
+            <div class="setting-row">
+              <label class="setting-label">Relay Mode</label>
+              <div class="setting-toggle-group" id="settings-relay-toggle" role="radiogroup" aria-label="Relay mode">
+                <button type="button" class="toggle-btn" data-value="on" role="radio" aria-checked="false">
+                  On
+                </button>
+                <button type="button" class="toggle-btn" data-value="off" role="radio" aria-checked="true">
+                  Off
+                </button>
+              </div>
+            </div>
+            <p class="setting-hint">Auto-handoff to the next agent when a handoff marker is detected.</p>
+            <div class="setting-row">
+              <label class="setting-label">Bell Mode</label>
+              <div class="setting-toggle-group" id="settings-bell-toggle" role="radiogroup" aria-label="Bell mode">
+                <button type="button" class="toggle-btn" data-value="on" role="radio" aria-checked="false">
+                  On
+                </button>
+                <button type="button" class="toggle-btn" data-value="off" role="radio" aria-checked="true">
+                  Off
+                </button>
+              </div>
+            </div>
+            <p class="setting-hint">Inject queued messages after tool use completes.</p>
           </div>
         </section>
 
@@ -682,9 +708,9 @@
       // Load lightweight textarea editor (no TipTap bundle needed)
       const { createEditor } = await import('/js/editor-textarea.js');
       createEditor();
-      // Hide formatting toolbar - not applicable to plain text
-      const toolbar = document.getElementById('editor-toolbar');
-      if (toolbar) toolbar.style.display = 'none';
+      // Hide formatting buttons - not applicable to plain text (keep mode controls in place)
+      const formattingButtons = document.getElementById('formatting-buttons');
+      if (formattingButtons) formattingButtons.style.visibility = 'hidden';
       console.log('[Editor] Using textarea mode (plain text, fast)');
     } else {
       // Load TipTap bundle first, then rich text editor
