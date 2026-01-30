@@ -75,6 +75,8 @@ export function updatePersona(persona) {
   const headerNameEl = document.getElementById('header-character-name');
   const headerRoleEl = document.getElementById('header-character-role');
   const headerThemeEl = document.getElementById('header-theme-name');
+  // 68-6: Quote element in header
+  const headerQuoteEl = document.getElementById('header-character-quote');
 
   // Project name at top (repo folder name)
   if (projectEl && persona.projectName) {
@@ -121,6 +123,10 @@ export function updatePersona(persona) {
   }
   if (headerThemeEl) {
     headerThemeEl.textContent = humanize(persona.theme || '');
+  }
+  // 68-6: Update header quote
+  if (headerQuoteEl) {
+    headerQuoteEl.textContent = persona.quote ? `"${persona.quote}"` : '';
   }
 
   // Update portrait using the portrait module's function
