@@ -3,7 +3,7 @@ description: Check Pennyfarthing installation health and apply updates
 ---
 
 ```bash
-./scripts/core/agent-session.sh start "devops"
+python3 -m pennyfarthing_scripts.cli agent start "devops"
 ```
 
 <agent-activation>
