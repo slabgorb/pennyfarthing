@@ -630,10 +630,18 @@ html, body {
 #editor-toolbar {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.25rem;
   padding: 0.5rem 0.75rem;
   border-bottom: 1px solid var(--border);
   background: var(--bg-primary);
+}
+
+#formatting-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-right: auto;
 }
 
 .toolbar-btn {
@@ -1300,15 +1308,31 @@ html, body {
 
 #editor {
   flex: 1;
-  height: 80px;
-  min-height: 60px;
-  max-height: 300px;
-  padding: 0.75rem 1rem;
+  height: 100px;
+  min-height: 100px;
+  max-height: 50vh;
+  padding: 0.25rem 0.5rem;
   overflow-y: auto;
   background: var(--bg-primary);
   border-radius: 6px;
   border: 1px solid var(--border);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  resize: none;
+}
+
+/* Custom resize handle above editor */
+.editor-resize-handle {
+  height: 6px;
+  margin: 0 0.5rem;
+  cursor: ns-resize;
+  background: transparent;
+  border-radius: 3px;
+  transition: background-color 0.15s ease;
+}
+
+.editor-resize-handle:hover,
+.editor-resize-handle.dragging {
+  background: var(--accent);
 }
 
 /* B-20: Control buttons beside editor */
@@ -3500,6 +3524,15 @@ html, body {
 
 .task-card.task-foreground {
   opacity: 0.85;
+}
+
+.task-card.task-stale {
+  border-left-color: var(--error, #ef4444);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.task-card.task-stale .task-elapsed {
+  color: var(--error, #ef4444);
 }
 
 .task-bg-badge {
@@ -5959,6 +5992,57 @@ html, body {
 
 .settings-section.collapsed .section-content {
   display: none;
+}
+
+/* Setting Row (67-1: Editor mode toggle) */
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.setting-label {
+  font-size: 13px;
+  color: var(--text-primary, #fff);
+}
+
+.setting-toggle-group {
+  display: flex;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border, #333);
+}
+
+.setting-toggle-group .toggle-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--bg-primary, #1a1a2e);
+  color: var(--text-secondary, #888);
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.setting-toggle-group .toggle-btn:not(:last-child) {
+  border-right: 1px solid var(--border, #333);
+}
+
+.setting-toggle-group .toggle-btn:hover {
+  background: var(--bg-tertiary, #252540);
+}
+
+.setting-toggle-group .toggle-btn.active {
+  background: var(--accent, #6366f1);
+  color: #fff;
+}
+
+.setting-hint {
+  font-size: 11px;
+  color: var(--text-secondary, #888);
+  margin: 0;
 }
 
 /* Setting Items */

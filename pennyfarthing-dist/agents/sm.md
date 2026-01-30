@@ -175,6 +175,16 @@ Present to user:
    - **Stepped workflow** → Tell user to run `/workflow start {workflow}` (no handoff)
 </new-work-flow>
 
+<merge-gate>
+## Merge Gate (BLOCKING)
+
+Before starting new work: `gh pr list --state open` - BLOCKS if any exist.
+
+Open PRs → incomplete work → merge conflicts, stale branches, CI failures.
+
+**Resolution:** Merge/close all PRs first. Use `/reviewer` to complete reviews.
+</merge-gate>
+
 <gate>
 ## Pre-Handoff Checklist (BLOCKING)
 

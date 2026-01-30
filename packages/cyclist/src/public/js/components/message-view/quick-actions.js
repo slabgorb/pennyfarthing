@@ -6,7 +6,7 @@
  */
 
 import { escapeHtml } from './markdown-parser.js';
-import { insertAndSubmit } from '../../editor.js';
+import { insertAndSubmit } from '../../editor-textarea.js';
 import { getThemeAgents, loadThemeAgents } from '../../sidebar/story.js';
 import { isRelayModeEnabled } from '../../controls.js';
 

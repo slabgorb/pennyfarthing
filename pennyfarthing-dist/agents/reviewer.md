@@ -124,6 +124,7 @@ OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 ## MANDATORY: Complete Before Exiting
 
 - [ ] Write Reviewer Assessment to session file
+- [ ] **If APPROVED:** Merge PR directly with `gh pr merge {PR_NUMBER} --merge --delete-branch`
 - [ ] Spawn `handoff` subagent with VERDICT (approved/rejected)
 - [ ] Verify handoff completed (subagent emits marker)
 </handoff-gate>
@@ -158,16 +159,32 @@ OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh {workflow} {phase})
 <exit-sequence>
 ## Exit Sequence
 
+### If APPROVED:
 1. Write Reviewer Assessment to session file
-2. Spawn `handoff` subagent with VERDICT
-3. Await `HANDOFF_RESULT` with `next_agent`
+2. **Merge the PR directly** (don't wait for SM):
+   ```bash
+   gh pr merge {PR_NUMBER} --merge --delete-branch
+   ```
+3. Update session phase to `finish`
+4. Spawn `handoff` subagent with VERDICT=approved
+5. Await `HANDOFF_RESULT` with `next_agent` (will be `sm`)
+6. **ABSOLUTE LAST ACTION:**
+   ```bash
+   .pennyfarthing/scripts/core/handoff-marker.sh sm
+   ```
+7. Output result verbatim and EXIT
+
+### If REJECTED:
+1. Write Reviewer Assessment to session file
+2. Spawn `handoff` subagent with VERDICT=rejected
+3. Await `HANDOFF_RESULT` with `next_agent` (will be `dev`)
 4. **ABSOLUTE LAST ACTION:**
    ```bash
-   .pennyfarthing/scripts/handoff/handoff-marker.sh {next_agent}
+   .pennyfarthing/scripts/core/handoff-marker.sh dev
    ```
 5. Output result verbatim and EXIT
 
-**Verdict routing:** APPROVED → sm | REJECTED → dev
+**Verdict routing:** APPROVED → merge PR, then sm | REJECTED → dev
 </exit-sequence>
 
 <skills>

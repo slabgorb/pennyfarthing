@@ -3,5 +3,5 @@ description: Technical Writer - Documentation creation and maintenance
 ---
 
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/core/agent-session.sh" start "tech-writer"
+python3 -m pennyfarthing_scripts.cli agent start "tech-writer"
 ```

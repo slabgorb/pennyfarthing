@@ -43,12 +43,26 @@ $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/foo.sh  # BROKEN!
 **Sidecar memory:** Capture learnings BEFORE spawning handoff subagent. Don't wait until exit.
 </critical>
 
+<critical>
+**Story completion is MANDATORY.** A story is NOT done until:
+1. Reviewer approves and merges the PR
+2. SM runs `finish-story.sh` (archive session, update Jira, clean up)
+
+**Never** start new work while stories have open PRs. The merge gate blocks `/sprint work` if open PRs exist.
+
+**If stuck in incomplete state:**
+- Open PRs? → Run `/reviewer` to complete reviews and merge
+- Merged but not finished? → Run `/sm` to trigger finish flow
+</critical>
+
 ---
 
 ## Reference
 
 <info>
-**Workflow:** SM → TEA → Dev → Reviewer → SM (finish). Trivial (1-2 pts) skips TEA.
+**Workflow:** SM → TEA → Dev → Reviewer (merge PR) → SM (finish). Trivial (1-2 pts) skips TEA.
+
+**Story completion:** Reviewer merges PR on approval. SM runs `finish-story.sh` to archive and update Jira. A story is NOT complete until SM runs finish.
 
 **Confidence:** HIGH=proceed, MEDIUM=ask before risky, LOW=always ask.
 

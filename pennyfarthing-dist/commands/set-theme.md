@@ -51,6 +51,6 @@ Change the active persona theme for all agents.
 
 6. Refresh the current agent's persona to apply the new theme:
    ```bash
-   d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/core/agent-session.sh" refresh
+   python3 -m pennyfarthing_scripts.cli agent start "sm"
    ```
    This outputs the updated persona. **Adopt the new character immediately** - do not continue using the old persona.
