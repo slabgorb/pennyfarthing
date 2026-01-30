@@ -319,18 +319,20 @@
         <div id="git-repos" class="section-detail"></div>
       </section>
 
-      <!-- B-17: Todos Section (Todo Visualizer) -->
-      <section id="todo-section" class="todo-section collapsed">
-        <div class="section-header" data-action="toggle-collapse">
-          <span class="section-title">TODOS</span>
-          <span id="todo-progress" class="todo-progress">(0/0)</span>
-          <button class="collapse-btn" aria-label="Toggle todos">▼</button>
-        </div>
-        <div id="todo-list" class="section-content"></div>
-      </section>
+      <!-- B-17: Todos Section - MOVED to #todos-panel (68-2) -->
+      <!-- Hidden: todos now render in dedicated panel -->
 
       <!-- 35-16: Background Tasks Section - MOVED to #background-panel (68-1) -->
       <!-- Hidden: background tasks now render in dedicated panel -->
+    </aside>
+
+    <!-- 68-2: Todos Panel (top-level tab for todos) -->
+    <aside id="todos-panel" class="vertical-panel position-right collapsed">
+      <div class="panel-header">
+        <span class="panel-title">TODOS</span>
+        <span id="todos-progress" class="todos-progress">(0/0)</span>
+      </div>
+      <div id="todos-list" class="todos-list section-content"></div>
     </aside>
 
     <!-- 68-1: Background Panel (top-level tab for background tasks) -->
@@ -621,6 +623,8 @@
   <!-- 35-5: Sidebar and Message panels -->
   <script type="module" src="/js/sidebar-panel.js"></script>
   <script type="module" src="/js/message-panel.js"></script>
+  <!-- 68-2: Todos Panel (top-level tab) -->
+  <script type="module" src="/js/todos-panel.js"></script>
   <!-- 68-1: Background Panel (top-level tab) -->
   <script type="module" src="/js/background-panel.js"></script>
   <!-- Panel Manager and Tab Bar -->

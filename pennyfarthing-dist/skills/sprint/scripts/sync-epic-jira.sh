@@ -10,6 +10,13 @@
 
 set -euo pipefail
 
+# Find package root (where pennyfarthing_scripts lives) from script location
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+PACKAGE_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd -P)"
+
+# Set PYTHONPATH so Python can find pennyfarthing_scripts
+export PYTHONPATH="${PACKAGE_ROOT}:${PYTHONPATH:-}"
+
 EPIC_ID="${1:-}"
 
 if [[ -z "$EPIC_ID" ]]; then
