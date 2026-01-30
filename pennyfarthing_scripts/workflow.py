@@ -181,3 +181,94 @@ def get_scale_level_info(level: int) -> dict[str, Any]:
         return {"level": level, "scope": "unknown", "stories_min": 0,
                 "stories_max": 0, "workflow": "prd", "artifacts": []}
     return SCALE_LEVELS[level].copy()
+
+
+# Phase ownership mapping for TDD workflow
+TDD_PHASE_OWNERS: dict[str, str] = {
+    "setup": "sm",
+    "red": "tea",
+    "implement": "dev",
+    "green": "dev",
+    "review": "reviewer",
+    "approved": "sm",
+}
+
+# Phase ownership mapping for trivial workflow (no TEA)
+TRIVIAL_PHASE_OWNERS: dict[str, str] = {
+    "setup": "sm",
+    "implement": "dev",
+    "review": "reviewer",
+    "approved": "sm",
+}
+
+# All workflow phase mappings
+WORKFLOW_PHASES: dict[str, dict[str, str]] = {
+    "tdd": TDD_PHASE_OWNERS,
+    "trivial": TRIVIAL_PHASE_OWNERS,
+    "bdd": TDD_PHASE_OWNERS,  # BDD uses same phases as TDD
+}
+
+
+def get_phase_owner(workflow: str, phase: str) -> str:
+    """Get the agent that owns a workflow phase.
+
+    Args:
+        workflow: Workflow name (tdd, trivial, bdd)
+        phase: Phase name (setup, red, implement, review, approved)
+
+    Returns:
+        Agent name (sm, tea, dev, reviewer)
+    """
+    phases = WORKFLOW_PHASES.get(workflow, TDD_PHASE_OWNERS)
+    return phases.get(phase, "sm")
+
+
+def get_workflow_state() -> dict[str, Any]:
+    """Get current workflow state from session files.
+
+    Scans .session/ directory for active session files and extracts
+    workflow state information.
+
+    Returns:
+        Dict with state, story_id, workflow, phase fields
+    """
+    from pathlib import Path
+
+    # Look for session files in .session/
+    session_dir = Path(".session")
+    if not session_dir.exists():
+        return {"state": "EMPTY_BACKLOG_STATE"}
+
+    # Find session files (pattern: *-session.md)
+    session_files = list(session_dir.glob("*-session.md"))
+
+    # Filter out workflow session files and archived files
+    story_sessions = [
+        f for f in session_files
+        if not f.name.startswith("prd-")
+        and not f.name.startswith("architecture-")
+        and not f.name.startswith("research-")
+        and "workflow" not in f.name.lower()
+    ]
+
+    if not story_sessions:
+        return {"state": "NEW_WORK_STATE"}
+
+    # Read the most recent session file
+    session_file = max(story_sessions, key=lambda f: f.stat().st_mtime)
+    content = session_file.read_text()
+
+    # Extract fields from markdown frontmatter-style format
+    result: dict[str, Any] = {"state": "IN_PROGRESS_STATE"}
+
+    for line in content.split("\n"):
+        if line.startswith("**Story:**"):
+            result["story_id"] = line.replace("**Story:**", "").strip()
+        elif line.startswith("**Jira:**"):
+            result["story_id"] = line.replace("**Jira:**", "").strip()
+        elif line.startswith("**Workflow:**"):
+            result["workflow"] = line.replace("**Workflow:**", "").strip()
+        elif line.startswith("**Phase:**"):
+            result["phase"] = line.replace("**Phase:**", "").strip()
+
+    return result
