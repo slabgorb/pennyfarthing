@@ -3485,6 +3485,40 @@ html, body {
   margin-top: 0;
 }
 
+/* 68-3: Sprint Panel */
+#sprint-panel .sprint-panel-content {
+  padding: 0.5rem;
+  overflow-y: auto;
+}
+
+#sprint-panel .story-section {
+  /* Remove sidebar-specific styling */
+  background: transparent;
+  padding: 0;
+}
+
+#sprint-panel .story-section h3 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin: 0 0 0.5rem 0;
+}
+
+#sprint-panel .story-title {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin-bottom: 0.5rem;
+}
+
+#sprint-panel .sprint-info {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
 /* 68-2: Todos Panel */
 #todos-panel .todos-list {
   padding: 0.5rem;

@@ -232,62 +232,8 @@
         <button class="browse-all-themes" data-action="browse-all">Browse all themes...</button>
       </div>
 
-      <!-- Story Section (B-13: Enhanced) -->
-      <div id="story-section" class="story-section">
-        <h3>Current Story</h3>
-        <div id="story-title" class="story-title">No active story</div>
-        <div id="story-phase" class="story-phase">Phase: -</div>
-        <!-- B-13: Next Agent & PR Info -->
-        <div id="story-details" class="story-details" style="display: none;">
-          <div id="next-agent" class="next-agent"></div>
-          <div id="story-pr" class="story-pr"></div>
-        </div>
-        <!-- B-13: Acceptance Criteria Checklist (collapsible like todos) -->
-        <section id="ac-section" class="ac-section collapsed" style="display: none;">
-          <div class="section-header" data-action="toggle-ac-collapse">
-            <span class="section-title">Acceptance Criteria</span>
-            <span id="ac-progress" class="ac-progress">(0/0)</span>
-            <button class="collapse-btn" aria-label="Toggle criteria">▼</button>
-          </div>
-          <div id="ac-list" class="section-content"></div>
-        </section>
-        <div id="sprint-info" class="sprint-info">
-          <div class="sprint-stat">
-            <span class="sprint-label">Done</span>
-            <span id="sprint-done" class="sprint-value">-</span>
-          </div>
-          <div class="sprint-stat">
-            <span class="sprint-label">Todo</span>
-            <span id="sprint-remaining" class="sprint-value">-</span>
-          </div>
-          <div class="sprint-stat">
-            <span class="sprint-label">Progress</span>
-            <span id="sprint-percent" class="sprint-value">-</span>
-          </div>
-          <div class="sprint-stat">
-            <span class="sprint-label">Ends</span>
-            <span id="sprint-end-date" class="sprint-value">-</span>
-          </div>
-        </div>
-        <!-- 64-19: Expandable Sprint Stories Section -->
-        <section id="sprint-stories-section" class="collapsible-section sprint-stories-section collapsed" style="display: none;">
-          <div class="section-header" data-action="toggle-sprint-stories">
-            <span class="section-title">SPRINT STORIES</span>
-            <span id="sprint-stories-count" class="section-summary"></span>
-            <button class="collapse-btn" aria-label="Toggle sprint stories">▼</button>
-          </div>
-          <div id="sprint-stories-list" class="section-content"></div>
-        </section>
-        <!-- 64-19: Epic Context Section (shown when expanded) -->
-        <section id="epic-context-section" class="collapsible-section epic-context-section collapsed" style="display: none;">
-          <div class="section-header" data-action="toggle-epic-context">
-            <span class="section-title">EPIC</span>
-            <span id="epic-context-summary" class="section-summary"></span>
-            <button class="collapse-btn" aria-label="Toggle epic context">▼</button>
-          </div>
-          <div id="epic-context-content" class="section-content"></div>
-        </section>
-      </div>
+      <!-- Story Section - MOVED to #sprint-panel (68-3) -->
+      <!-- Hidden: story/sprint info now renders in dedicated panel -->
 
       <!-- B-12451: BikeLane Workflow Section - Collapsible workflow visualization -->
       <section id="bikelane-section" class="collapsible-section bikelane-section hidden" style="display: none;">
@@ -324,6 +270,71 @@
 
       <!-- 35-16: Background Tasks Section - MOVED to #background-panel (68-1) -->
       <!-- Hidden: background tasks now render in dedicated panel -->
+    </aside>
+
+    <!-- 68-3: Sprint Panel (top-level tab for story/sprint info) -->
+    <aside id="sprint-panel" class="vertical-panel position-right collapsed">
+      <div class="panel-header">
+        <span class="panel-title">SPRINT</span>
+      </div>
+      <div class="sprint-panel-content section-content">
+        <!-- Story Section (B-13: Enhanced) -->
+        <div id="story-section" class="story-section">
+          <h3>Current Story</h3>
+          <div id="story-title" class="story-title">No active story</div>
+          <div id="story-phase" class="story-phase">Phase: -</div>
+          <!-- B-13: Next Agent & PR Info -->
+          <div id="story-details" class="story-details" style="display: none;">
+            <div id="next-agent" class="next-agent"></div>
+            <div id="story-pr" class="story-pr"></div>
+          </div>
+          <!-- B-13: Acceptance Criteria Checklist (collapsible like todos) -->
+          <section id="ac-section" class="ac-section collapsed" style="display: none;">
+            <div class="section-header" data-action="toggle-ac-collapse">
+              <span class="section-title">Acceptance Criteria</span>
+              <span id="ac-progress" class="ac-progress">(0/0)</span>
+              <button class="collapse-btn" aria-label="Toggle criteria">▼</button>
+            </div>
+            <div id="ac-list" class="section-content"></div>
+          </section>
+          <div id="sprint-info" class="sprint-info">
+            <div class="sprint-stat">
+              <span class="sprint-label">Done</span>
+              <span id="sprint-done" class="sprint-value">-</span>
+            </div>
+            <div class="sprint-stat">
+              <span class="sprint-label">Todo</span>
+              <span id="sprint-remaining" class="sprint-value">-</span>
+            </div>
+            <div class="sprint-stat">
+              <span class="sprint-label">Progress</span>
+              <span id="sprint-percent" class="sprint-value">-</span>
+            </div>
+            <div class="sprint-stat">
+              <span class="sprint-label">Ends</span>
+              <span id="sprint-end-date" class="sprint-value">-</span>
+            </div>
+          </div>
+          <!-- 64-19: Expandable Sprint Stories Section -->
+          <section id="sprint-stories-section" class="collapsible-section sprint-stories-section collapsed" style="display: none;">
+            <div class="section-header" data-action="toggle-sprint-stories">
+              <span class="section-title">SPRINT STORIES</span>
+              <span id="sprint-stories-count" class="section-summary"></span>
+              <button class="collapse-btn" aria-label="Toggle sprint stories">▼</button>
+            </div>
+            <div id="sprint-stories-list" class="section-content"></div>
+          </section>
+          <!-- 64-19: Epic Context Section (shown when expanded) -->
+          <section id="epic-context-section" class="collapsible-section epic-context-section collapsed" style="display: none;">
+            <div class="section-header" data-action="toggle-epic-context">
+              <span class="section-title">EPIC</span>
+              <span id="epic-context-summary" class="section-summary"></span>
+              <button class="collapse-btn" aria-label="Toggle epic context">▼</button>
+            </div>
+            <div id="epic-context-content" class="section-content"></div>
+          </section>
+        </div>
+      </div>
     </aside>
 
     <!-- 68-2: Todos Panel (top-level tab for todos) -->
@@ -623,6 +634,8 @@
   <!-- 35-5: Sidebar and Message panels -->
   <script type="module" src="/js/sidebar-panel.js"></script>
   <script type="module" src="/js/message-panel.js"></script>
+  <!-- 68-3: Sprint Panel (top-level tab) -->
+  <script type="module" src="/js/sprint-panel.js"></script>
   <!-- 68-2: Todos Panel (top-level tab) -->
   <script type="module" src="/js/todos-panel.js"></script>
   <!-- 68-1: Background Panel (top-level tab) -->
