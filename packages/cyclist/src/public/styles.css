@@ -630,6 +630,7 @@ html, body {
 #editor-toolbar {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.25rem;
   padding: 0.5rem 0.75rem;
   border-bottom: 1px solid var(--border);
@@ -640,6 +641,7 @@ html, body {
   display: flex;
   align-items: center;
   gap: 0.25rem;
+  margin-right: auto;
 }
 
 .toolbar-btn {
@@ -1306,15 +1308,31 @@ html, body {
 
 #editor {
   flex: 1;
-  height: 80px;
+  height: 60px;
   min-height: 60px;
-  max-height: 300px;
-  padding: 0.75rem 1rem;
+  max-height: 50vh;
+  padding: 0.25rem 0.5rem;
   overflow-y: auto;
   background: var(--bg-primary);
   border-radius: 6px;
   border: 1px solid var(--border);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  resize: none;
+}
+
+/* Custom resize handle above editor */
+.editor-resize-handle {
+  height: 6px;
+  margin: 0 0.5rem;
+  cursor: ns-resize;
+  background: transparent;
+  border-radius: 3px;
+  transition: background-color 0.15s ease;
+}
+
+.editor-resize-handle:hover,
+.editor-resize-handle.dragging {
+  background: var(--accent);
 }
 
 /* B-20: Control buttons beside editor */

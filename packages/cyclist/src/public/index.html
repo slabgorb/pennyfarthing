@@ -146,6 +146,8 @@
             <span class="bell-icon">🔔</span>
           </button>
         </div>
+        <!-- Editor resize handle (drag to resize editor height) -->
+        <div id="editor-resize-handle" class="editor-resize-handle" title="Drag to resize editor"></div>
         <div id="editor-row">
           <div id="editor">
             <!-- TipTap editor will be mounted here -->
@@ -724,6 +726,10 @@
       createEditor();
       console.log('[Editor] Using TipTap mode (rich text)');
     }
+
+    // Initialize editor resize handle (works with both editor modes)
+    const { initEditorResize } = await import('/js/editor-resize.js');
+    initEditorResize();
   </script>
   <!-- Debug panel (real-time OTEL span viewer) -->
   <script type="module" src="/js/debug-panel.js"></script>

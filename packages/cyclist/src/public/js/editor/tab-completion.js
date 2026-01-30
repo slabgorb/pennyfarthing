@@ -18,16 +18,19 @@ let currentPrefix = '';
 // Editor callbacks (set via init)
 let getEditorFn = null;
 let insertTextFn = null;
+let replaceSlashPrefixFn = null;
 
 /**
  * Initialize tab completion with editor callbacks
  * @param {Object} callbacks - Editor callback functions
  * @param {Function} callbacks.getEditor - Get TipTap editor instance
  * @param {Function} callbacks.insertText - Insert text at cursor
+ * @param {Function} [callbacks.replaceSlashPrefix] - Replace slash prefix with command (textarea mode)
  */
-export function initTabCompletion({ getEditor, insertText }) {
+export function initTabCompletion({ getEditor, insertText, replaceSlashPrefix }) {
   getEditorFn = getEditor;
   insertTextFn = insertText;
+  replaceSlashPrefixFn = replaceSlashPrefix || null;
 }
 
 /**
@@ -226,22 +229,43 @@ function replaceCurrentPrefix(commandName) {
   const editor = getEditorFn?.();
   if (!editor) return;
 
-  const prefixInfo = getSlashPrefix();
-  if (!prefixInfo) {
-    // Fallback: just insert at cursor
-    if (insertTextFn) insertTextFn(commandName);
-    return;
+  // Check if this is a textarea (plaintext mode) or TipTap (rich mode)
+  // Textarea mode: editor.view is undefined
+  // TipTap mode: editor.view exists with state and selection
+  const isTipTap = editor.view?.state?.selection !== undefined;
+
+  if (isTipTap) {
+    // TipTap: use ProseMirror API
+    const prefixInfo = getSlashPrefix();
+    if (!prefixInfo) {
+      // Fallback: just insert at cursor
+      if (insertTextFn) insertTextFn(commandName);
+      return;
+    }
+
+    const { state } = editor.view;
+    const { from } = state.selection;
+    const deleteFrom = from - prefixInfo.prefix.length;
+
+    // Delete the prefix and insert the command
+    editor
+      .chain()
+      .focus()
+      .deleteRange({ from: deleteFrom, to: from })
+      .insertContent(commandName)
+      .run();
+  } else {
+    // Textarea mode: use direct text manipulation via insertTextFn
+    // The textarea module will handle finding and replacing the prefix
+    if (insertTextFn) {
+      // insertTextFn for textarea replaces selection at cursor
+      // We need to replace the current prefix, so we'll use replaceSlashPrefix callback
+      if (replaceSlashPrefixFn) {
+        replaceSlashPrefixFn(commandName);
+      } else {
+        // Fallback if no replaceSlashPrefix callback - just insert
+        insertTextFn(commandName);
+      }
+    }
   }
-
-  const { state } = editor.view;
-  const { from } = state.selection;
-  const deleteFrom = from - prefixInfo.prefix.length;
-
-  // Delete the prefix and insert the command
-  editor
-    .chain()
-    .focus()
-    .deleteRange({ from: deleteFrom, to: from })
-    .insertContent(commandName)
-    .run();
 }
