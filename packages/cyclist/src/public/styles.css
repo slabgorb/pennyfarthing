@@ -6010,6 +6010,28 @@ html, body {
   display: none;
 }
 
+/* 68-6: Thinking indicator for persona header (replaces sidebar persona-section) */
+.persona-header.thinking {
+  animation: thinking-throb 1.5s ease-in-out infinite;
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* 68-6: Character quote in persona header */
+.header-character-quote {
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--text-secondary, #888);
+  margin-left: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px;
+}
+
+.header-character-quote:empty {
+  display: none;
+}
+
 /* Generic panel collapse button */
 .vertical-panel .panel-collapse-btn {
   display: flex;

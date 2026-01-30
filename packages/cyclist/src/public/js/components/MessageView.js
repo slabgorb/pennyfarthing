@@ -188,11 +188,13 @@ export function renderMessage(message) {
 
 /**
  * Show the thinking indicator (throbbing border on persona card) and enable stop button
+ * 68-6: Updated to use persona-header (sidebar removed)
  */
 export function showThinking() {
-  const personaSection = document.getElementById('persona-section');
-  if (personaSection) {
-    personaSection.classList.add('thinking');
+  // 68-6: persona-section was in sidebar, now use persona-header
+  const personaHeader = document.getElementById('persona-header');
+  if (personaHeader) {
+    personaHeader.classList.add('thinking');
   }
   const stopBtn = document.getElementById('stop-btn');
   if (stopBtn) {
@@ -202,11 +204,13 @@ export function showThinking() {
 
 /**
  * Hide the thinking indicator and disable stop button
+ * 68-6: Updated to use persona-header (sidebar removed)
  */
 export function hideThinking() {
-  const personaSection = document.getElementById('persona-section');
-  if (personaSection) {
-    personaSection.classList.remove('thinking');
+  // 68-6: persona-section was in sidebar, now use persona-header
+  const personaHeader = document.getElementById('persona-header');
+  if (personaHeader) {
+    personaHeader.classList.remove('thinking');
   }
   const stopBtn = document.getElementById('stop-btn');
   if (stopBtn) {
