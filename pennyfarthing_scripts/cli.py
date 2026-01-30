@@ -25,9 +25,15 @@ def cli():
     \b
     workflow  - Workflow state and phase management
     agent     - Agent session management
-    sprint    - Sprint status and story operations (coming soon)
+    sprint    - Sprint status and story operations
     """
     pass
+
+
+# Import and register sprint group (lazy registration preserves startup time)
+from pennyfarthing_scripts.sprint.cli import sprint
+
+cli.add_command(sprint)
 
 
 @cli.group()
