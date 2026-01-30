@@ -329,16 +329,18 @@
         <div id="todo-list" class="section-content"></div>
       </section>
 
-      <!-- 35-16: Background Tasks Section -->
-      <section id="background-tasks-section" class="background-tasks-section collapsed">
-        <div class="section-header" data-action="toggle-bg-tasks">
-          <span id="helper-section-title" class="section-title">HELPER</span>
-          <span id="bg-tasks-count" class="bg-tasks-count" style="display: none;">(0)</span>
-          <button class="collapse-btn" aria-label="Toggle background tasks">▼</button>
-        </div>
-        <div id="background-tasks-container" class="section-content"></div>
-      </section>
+      <!-- 35-16: Background Tasks Section - MOVED to #background-panel (68-1) -->
+      <!-- Hidden: background tasks now render in dedicated panel -->
     </aside>
+
+    <!-- 68-1: Background Panel (top-level tab for background tasks) -->
+    <aside id="background-panel" class="vertical-panel position-right collapsed">
+      <div class="panel-header">
+        <span class="panel-title">BACKGROUND</span>
+      </div>
+      <div id="background-tasks-container" class="background-tasks-container section-content"></div>
+    </aside>
+
     <!-- 35-9: Settings Panel (vertical panel on right, like sidebar) -->
     <aside id="settings-panel" class="vertical-panel position-right collapsed" aria-labelledby="settings-title" aria-busy="false">
       <div class="settings-panel-header">
@@ -619,6 +621,8 @@
   <!-- 35-5: Sidebar and Message panels -->
   <script type="module" src="/js/sidebar-panel.js"></script>
   <script type="module" src="/js/message-panel.js"></script>
+  <!-- 68-1: Background Panel (top-level tab) -->
+  <script type="module" src="/js/background-panel.js"></script>
   <!-- Panel Manager and Tab Bar -->
   <script type="module" src="/js/panel-manager.js"></script>
   <script type="module" src="/js/tab-bar.js"></script>
