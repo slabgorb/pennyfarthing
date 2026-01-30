@@ -241,16 +241,8 @@
         </div>
       </section>
 
-      <!-- Git Section - Multi-repo status with dirty file list -->
-      <section id="git-section" class="collapsible-section git-section collapsed">
-        <div class="section-header">
-          <span class="section-title">REPOS</span>
-          <span id="git-section-badge" class="section-badge"></span>
-          <span id="git-section-summary" class="section-summary"></span>
-          <button class="collapse-btn" aria-label="Toggle git status">▼</button>
-        </div>
-        <div id="git-repos" class="section-detail"></div>
-      </section>
+      <!-- Git Section - MOVED to #git-panel (68-4) -->
+      <!-- Hidden: git status now renders in dedicated panel -->
 
       <!-- B-17: Todos Section - MOVED to #todos-panel (68-2) -->
       <!-- Hidden: todos now render in dedicated panel -->
@@ -324,13 +316,23 @@
       </div>
     </aside>
 
-    <!-- 68-2: Todos Panel (top-level tab for todos) -->
-    <aside id="todos-panel" class="vertical-panel position-right collapsed">
+    <!-- 68-2/68-4: Progress Panel (todos + bikelane workflow visualization) -->
+    <aside id="progress-panel" class="vertical-panel position-right collapsed">
       <div class="panel-header">
-        <span class="panel-title">TODOS</span>
-        <span id="todos-progress" class="todos-progress">(0/0)</span>
+        <span class="panel-title">PROGRESS</span>
+        <span id="progress-count" class="progress-count">(0/0)</span>
       </div>
-      <div id="todos-list" class="todos-list section-content"></div>
+      <div class="progress-panel-content section-content">
+        <!-- Bikelane workflow visualization -->
+        <div id="bikelane-container" class="bikelane-container">
+          <div class="bikelane-header">
+            <span class="workflow-type-badge"></span>
+          </div>
+          <div class="phase-progress"></div>
+        </div>
+        <!-- Todo list -->
+        <div id="todos-list" class="todos-list"></div>
+      </div>
     </aside>
 
     <!-- 68-1: Background Panel (top-level tab for background tasks) -->
@@ -339,6 +341,17 @@
         <span class="panel-title">BACKGROUND</span>
       </div>
       <div id="background-tasks-container" class="background-tasks-container section-content"></div>
+    </aside>
+
+    <!-- 68-4: Git Panel (top-level tab for git status) -->
+    <aside id="git-panel" class="vertical-panel position-right collapsed">
+      <div class="panel-header">
+        <span class="panel-title">GIT</span>
+        <span id="git-panel-badge" class="panel-badge"></span>
+      </div>
+      <div class="git-panel-content section-content">
+        <div id="git-repos" class="git-repos"></div>
+      </div>
     </aside>
 
     <!-- 35-9: Settings Panel (vertical panel on right, like sidebar) -->
@@ -623,10 +636,12 @@
   <script type="module" src="/js/message-panel.js"></script>
   <!-- 68-3: Sprint Panel (top-level tab) -->
   <script type="module" src="/js/sprint-panel.js"></script>
-  <!-- 68-2: Todos Panel (top-level tab) -->
-  <script type="module" src="/js/todos-panel.js"></script>
+  <!-- 68-2/68-4: Progress Panel (todos + bikelane) -->
+  <script type="module" src="/js/progress-panel.js"></script>
   <!-- 68-1: Background Panel (top-level tab) -->
   <script type="module" src="/js/background-panel.js"></script>
+  <!-- 68-4: Git Panel (top-level tab) -->
+  <script type="module" src="/js/git-panel.js"></script>
   <!-- Panel Manager and Tab Bar -->
   <script type="module" src="/js/panel-manager.js"></script>
   <script type="module" src="/js/tab-bar.js"></script>
