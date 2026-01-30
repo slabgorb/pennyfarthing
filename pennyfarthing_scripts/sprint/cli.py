@@ -22,6 +22,7 @@ def sprint():
     Commands:
       status   - Show sprint status
       backlog  - Show available stories
+      story    - Show story details
       work     - Start work on a story
       archive  - Archive a completed story
     """
@@ -98,6 +99,43 @@ def work(story_id: str | None, dry_run: bool):
     else:
         error_msg = result.get("error") or result.get("reason")
         raise click.ClickException(f"Not available: {error_msg}")
+
+
+@sprint.command()
+@click.argument("story_id")
+@click.option("--json", "output_json", is_flag=True, help="Output as JSON")
+def story(story_id: str, output_json: bool):
+    """Show details for a specific story.
+
+    \b
+    Arguments:
+      STORY_ID  - Story ID (e.g., MSSCI-12664 or 67-1)
+    """
+    # Lazy import
+    from pennyfarthing_scripts.sprint.loader import get_story_by_id
+
+    story_data = get_story_by_id(story_id)
+
+    if not story_data:
+        raise click.ClickException(f"Story not found: {story_id}")
+
+    if output_json:
+        import json
+
+        click.echo(json.dumps(story_data, indent=2))
+    else:
+        click.echo(f"Story: {story_data.get('id', story_id)}")
+        click.echo(f"Title: {story_data.get('title', 'N/A')}")
+        click.echo(f"Points: {story_data.get('points', 'N/A')}")
+        click.echo(f"Status: {story_data.get('status', 'N/A')}")
+        if story_data.get("priority"):
+            click.echo(f"Priority: {story_data.get('priority')}")
+        if story_data.get("workflow"):
+            click.echo(f"Workflow: {story_data.get('workflow')}")
+        if story_data.get("jira"):
+            click.echo(f"Jira: {story_data.get('jira')}")
+        if story_data.get("description"):
+            click.echo(f"Description: {story_data.get('description')}")
 
 
 @sprint.command()
