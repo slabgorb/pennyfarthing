@@ -11,6 +11,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [8.1.0] - 2026-01-30
+
+### Python CLI Migration (Epic 67)
+
+This release delivers the Python CLI for Pennyfarthing, providing a faster and more maintainable command interface.
+
+### Added
+
+#### Python CLI
+- **Click-based CLI Entry Point** (MSSCI-12656) - `pf` command with lazy-loaded subgroups for <200ms startup
+- **Agent Start Command** (MSSCI-12659) - `pf agent start <name>` with session management
+- **Sprint CLI Migration** (MSSCI-12662) - `pf sprint story <id>` command with JSON output
+- **Workflow Check Command** (MSSCI-12657) - `pf workflow check` with state detection
+- **Bash/Python Parity Tests** (MSSCI-12665) - 24 integration tests verifying CLI parity with bash scripts
+
+#### Cyclist Enhancements
+- **Editor Mode Toggle** (67-1) - Switch between rich text and plaintext editor modes
+- **Background Tasks Helper Persona** - Show helper character in background tasks section
+- **Rome Theme Portraits** - Updated character portraits for Rome persona theme
+
+### Changed
+- **Agent Commands** (MSSCI-12660) - Agent activation commands now use Python CLI (`pf agent start`)
+- **Startup Benchmark CI** (MSSCI-12661) - Python CLI startup time monitored in CI pipeline
+
+### Fixed
+- **Workflow Merge Gate** - Enforce story completion before merge
+- **Session File Parsing** - Parse list-format session files in `get_workflow_state()`
+- **find-root.sh** - Support `.pennyfarthing/scripts/` path for consumer projects
+- **find-root.sh** - Check node_modules path before pennyfarthing-dist
+- **Uninstall** - Add `.pennyfarthing` symlinks and `.claude/commands` to cleanup
+- **Cyclist Editor** - Plaintext mode slash completion and resize behavior
+- **Cyclist Imports** - Update imports from `editor.js` to `editor-textarea.js`
+- **Git Status Polling** - Convert to async with mutex lock for reliability
+
+### Performance
+- **TipTap Removal** - Removed TipTap editor for better input responsiveness
+- **Debouncing** - Added debouncing and optimized rendering for input
+
+### Summary
+| Metric | Value |
+|--------|-------|
+| Stories Completed | 7 |
+| New CLI Commands | 4 (`pf agent start`, `pf sprint story`, `pf workflow check`, `pf workflow phase-check`) |
+| Integration Tests | 24 |
+| Bug Fixes | 8 |
+
+---
+
 ## [8.0.0] - 2026-01-29
 
 ### Breaking Changes
@@ -1806,7 +1854,14 @@ This release completes Epic 11 - a comprehensive personality visualization syste
 
 ---
 
-[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v7.9.0...HEAD
+[Unreleased]: https://github.com/1898andCo/pennyfarthing/compare/v8.1.0...HEAD
+[8.1.0]: https://github.com/1898andCo/pennyfarthing/compare/v8.0.0...v8.1.0
+[8.0.0]: https://github.com/1898andCo/pennyfarthing/compare/v7.9.5...v8.0.0
+[7.9.5]: https://github.com/1898andCo/pennyfarthing/compare/v7.9.4...v7.9.5
+[7.9.4]: https://github.com/1898andCo/pennyfarthing/compare/v7.9.3...v7.9.4
+[7.9.3]: https://github.com/1898andCo/pennyfarthing/compare/v7.9.2...v7.9.3
+[7.9.2]: https://github.com/1898andCo/pennyfarthing/compare/v7.9.1...v7.9.2
+[7.9.1]: https://github.com/1898andCo/pennyfarthing/compare/v7.9.0...v7.9.1
 [7.9.0]: https://github.com/1898andCo/pennyfarthing/compare/v7.8.5...v7.9.0
 [7.8.5]: https://github.com/1898andCo/pennyfarthing/compare/v7.8.2...v7.8.5
 [7.8.2]: https://github.com/1898andCo/pennyfarthing/compare/v7.8.1...v7.8.2
