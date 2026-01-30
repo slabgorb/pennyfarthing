@@ -71,6 +71,11 @@ export function updatePersona(persona) {
   const benchmarkEl = document.getElementById('benchmark-score');
   const quoteEl = document.getElementById('character-quote');
 
+  // 68-5: Header elements (new location in message panel)
+  const headerNameEl = document.getElementById('header-character-name');
+  const headerRoleEl = document.getElementById('header-character-role');
+  const headerThemeEl = document.getElementById('header-theme-name');
+
   // Project name at top (repo folder name)
   if (projectEl && persona.projectName) {
     projectEl.textContent = persona.projectName;
@@ -105,6 +110,17 @@ export function updatePersona(persona) {
   // MSSCI-11821: Update character quote
   if (quoteEl) {
     quoteEl.textContent = persona.quote || '';
+  }
+
+  // 68-5: Update header elements
+  if (headerNameEl) {
+    headerNameEl.textContent = persona.character || 'Loading...';
+  }
+  if (headerRoleEl) {
+    headerRoleEl.textContent = (persona.role || '').toUpperCase();
+  }
+  if (headerThemeEl) {
+    headerThemeEl.textContent = humanize(persona.theme || '');
   }
 
   // Update portrait using the portrait module's function
@@ -443,13 +459,21 @@ function hidePersonaPopup() {
  */
 function initPersonaPopup() {
   const personaSection = document.getElementById('persona-section');
+  const personaHeader = document.getElementById('persona-header');  // 68-5: New header location
   const popup = document.getElementById('persona-popup');
   const backdrop = document.getElementById('persona-popup-backdrop');
   const closeBtn = popup?.querySelector('.popup-close');
 
-  // Click on persona section opens popup
+  // Click on persona section opens popup (legacy sidebar location)
   if (personaSection) {
     personaSection.addEventListener('click', () => {
+      showPersonaPopup();
+    });
+  }
+
+  // 68-5: Click on persona header opens popup (new message panel location)
+  if (personaHeader) {
+    personaHeader.addEventListener('click', () => {
       showPersonaPopup();
     });
   }
