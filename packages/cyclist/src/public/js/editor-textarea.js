@@ -515,7 +515,7 @@ function addTextareaStyles() {
     .editor-textarea {
       width: 100%;
       height: 100%;
-      min-height: 60px;
+      min-height: 100px;
       padding: 0.25rem 0.5rem;
       background: transparent;
       border: none;
