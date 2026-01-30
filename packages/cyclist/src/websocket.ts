@@ -16,7 +16,7 @@ import { ClaudeService, type PermissionMode } from './claude-service.js';
 import { publicDir } from './paths.js';
 import { getOtelConfig } from './server.js';
 import { getStoryInfo } from './story-parser.js';
-import { getAllReposGitInfo } from './api/git.js';
+import { getAllReposGitInfoAsync } from './api/git.js';
 
 // WebSocket message types for Claude communication
 interface ClaudeWebSocketMessage {
@@ -281,13 +281,13 @@ export function setupWebSocketServers(
 
   // Handle git WebSocket connections (MSSCI-11943)
   // Updated to send multi-repo data for sidebar REPOS section
-  gitWss.on('connection', (ws: WebSocket) => {
+  gitWss.on('connection', async (ws: WebSocket) => {
     // Add client to broadcast set
     gitClients.add(ws);
 
-    // Send initial git data on connection (multi-repo)
+    // Send initial git data on connection (multi-repo) - async to avoid blocking
     const projectDir = getProjectDir();
-    const allReposInfo = getAllReposGitInfo(projectDir);
+    const allReposInfo = await getAllReposGitInfoAsync(projectDir);
     console.log('[Git WS] New connection, sending init with', allReposInfo.length, 'repos');
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ type: 'init', repos: allReposInfo }));
@@ -635,7 +635,7 @@ function broadcastStoryUpdate(storyInfo: ReturnType<typeof getStoryInfo>): void 
 }
 
 // MSSCI-11943: Broadcast git update to all connected clients (multi-repo)
-function broadcastGitUpdate(allReposInfo: ReturnType<typeof getAllReposGitInfo>): void {
+function broadcastGitUpdate(allReposInfo: Awaited<ReturnType<typeof getAllReposGitInfoAsync>>): void {
   const message = JSON.stringify({ type: 'update', repos: allReposInfo });
   for (const client of gitClients) {
     if (client.readyState === WebSocket.OPEN) {
@@ -645,13 +645,14 @@ function broadcastGitUpdate(allReposInfo: ReturnType<typeof getAllReposGitInfo>)
 }
 
 // MSSCI-11943: Trigger git update with coalescing (500ms per AC2)
+// Now async to avoid blocking the event loop during git commands
 function triggerGitUpdate(projectDir: string): void {
   if (gitCoalesceTimer) {
     clearTimeout(gitCoalesceTimer);
   }
 
-  gitCoalesceTimer = setTimeout(() => {
-    const allReposInfo = getAllReposGitInfo(projectDir);
+  gitCoalesceTimer = setTimeout(async () => {
+    const allReposInfo = await getAllReposGitInfoAsync(projectDir);
     broadcastGitUpdate(allReposInfo);
     gitCoalesceTimer = null;
   }, GIT_COALESCE_MS);
