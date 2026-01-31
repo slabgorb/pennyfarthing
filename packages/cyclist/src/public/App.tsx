@@ -7,6 +7,7 @@ import { FileTree, FileChange } from './components/FileTree';
 import DiffViewer from './components/DiffViewer';
 import MessageView from './components/MessageView';
 import { useMessageStream } from './hooks/useMessageStream';
+import { CommandPaletteProvider } from './components/CommandPalette';
 
 // =============================================================================
 // Panel Components - Wrappers that connect to data sources
@@ -234,16 +235,18 @@ export default function App() {
   const [rightCollapsed, setRightCollapsed] = useState(false);
 
   return (
-    <div className="cyclist-app">
-      <DockingWorkspace
-        leftCollapsed={leftCollapsed}
-        rightCollapsed={rightCollapsed}
-        onLeftCollapseChange={setLeftCollapsed}
-        onRightCollapseChange={setRightCollapsed}
-        onLayoutChange={(layout) => {
-          console.log('Layout changed:', layout);
-        }}
-      />
-    </div>
+    <CommandPaletteProvider>
+      <div className="cyclist-app">
+        <DockingWorkspace
+          leftCollapsed={leftCollapsed}
+          rightCollapsed={rightCollapsed}
+          onLeftCollapseChange={setLeftCollapsed}
+          onRightCollapseChange={setRightCollapsed}
+          onLayoutChange={(layout) => {
+            console.log('Layout changed:', layout);
+          }}
+        />
+      </div>
+    </CommandPaletteProvider>
   );
 }
