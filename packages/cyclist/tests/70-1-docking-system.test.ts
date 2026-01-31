@@ -310,7 +310,7 @@ describe('70-1: Docking System Foundation', () => {
 
       const leftSidebar = container.querySelector('[data-region="left"]');
       const tabLabels = Array.from(leftSidebar?.querySelectorAll('[role="tab"]') || [])
-        .map(tab => tab.textContent);
+        .map(tab => tab.textContent?.replace(/^⋮+/, '').trim() || '');
 
       expect(tabLabels).toContain('Changed');
       expect(tabLabels).toContain('Diffs');
@@ -433,7 +433,7 @@ describe('70-1: Docking System Foundation', () => {
 
       const rightSidebar = container.querySelector('[data-region="right"]');
       const tabLabels = Array.from(rightSidebar?.querySelectorAll('[role="tab"]') || [])
-        .map(tab => tab.textContent);
+        .map(tab => tab.textContent?.replace(/^⋮+/, '').trim() || '');
 
       expect(tabLabels).toContain('Sprint');
       expect(tabLabels).toContain('Progress');
