@@ -1,8 +1,10 @@
 /**
  * Root React component for Cyclist
  * Story MSSCI-12717 - React Migration
+ * Story MSSCI-12706 - Layout Persistence
  *
  * Renders the DockingWorkspace with all panels registered.
+ * Persists layout changes to config.local.yaml.
  */
 
 import React from 'react';
@@ -12,6 +14,7 @@ import {
   PANEL_INVENTORY,
 } from './components/DockingWorkspace';
 import { CommandPaletteProvider } from './components/CommandPalette';
+import { useLayoutPersistence } from './hooks/useLayoutPersistence';
 
 // Import all panel components
 import {
@@ -51,10 +54,24 @@ registerPanelComponent(PANEL_INVENTORY.SETTINGS, SettingsPanel);
 // =============================================================================
 
 export default function App(): React.ReactElement {
+  const { layout, isLoading, saveLayout } = useLayoutPersistence();
+
+  // Show nothing while loading to avoid flash of default layout
+  if (isLoading || !layout) {
+    return (
+      <div className="cyclist-app cyclist-loading">
+        <div className="loading-spinner" aria-label="Loading layout..." />
+      </div>
+    );
+  }
+
   return (
     <CommandPaletteProvider>
       <div className="cyclist-app">
-        <DockingWorkspace />
+        <DockingWorkspace
+          initialLayout={layout}
+          onLayoutChange={saveLayout}
+        />
       </div>
     </CommandPaletteProvider>
   );
