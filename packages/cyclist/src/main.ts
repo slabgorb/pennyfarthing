@@ -104,13 +104,22 @@ try {
   const mod = await import('electron-reload');
   const electronReload = mod.default as unknown as (
     glob: string,
-    options: { electron?: string; hardResetMethod?: 'exit' | 'quit' }
+    options: {
+      electron?: string;
+      hardResetMethod?: 'exit' | 'quit';
+      ignored?: RegExp | string | string[];
+      followSymlinks?: boolean;
+    }
   ) => void;
-  electronReload(__dirname, {
+  // Watch only *.js files in dist/ - use glob pattern to be specific
+  // This prevents rebuilds when files outside packages/cyclist change
+  electronReload(join(__dirname, '**', '*.js'), {
     electron: join(__dirname, '..', 'node_modules', '.bin', 'electron'),
     hardResetMethod: 'exit',
+    followSymlinks: false,
+    ignored: [/node_modules/],
   });
-  console.log('[Cyclist] Hot reload enabled - watching for file changes');
+  console.log('[Cyclist] Hot reload enabled - watching', __dirname, 'for *.js changes');
 } catch {
   // Not in development or module not available
 }
