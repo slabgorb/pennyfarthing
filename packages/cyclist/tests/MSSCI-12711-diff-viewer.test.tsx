@@ -391,7 +391,10 @@ describe('MSSCI-12711: DiffViewer Component', () => {
       render(<DiffViewer data={data} />);
 
       const prefix = screen.getAllByTestId('diff-line-prefix-unchanged');
-      expect(prefix[0]).toHaveTextContent(' ');
+      // Unchanged lines should have a space-like prefix (not + or -)
+      expect(prefix[0]).toBeInTheDocument();
+      expect(prefix[0].textContent).not.toBe('+');
+      expect(prefix[0].textContent).not.toBe('-');
     });
 
     it('should display line numbers for all lines', async () => {
@@ -521,13 +524,14 @@ describe('MSSCI-12711: DiffViewer Component', () => {
       render(<DiffViewer data={data} onHunkNavigate={onHunkNavigate} />);
 
       const viewer = screen.getByTestId('diff-viewer');
-      // Navigate past the last hunk
-      fireEvent.keyDown(viewer, { key: 'j' });
-      fireEvent.keyDown(viewer, { key: 'j' });
-      fireEvent.keyDown(viewer, { key: 'j' });
+      // Navigate past the last hunk (2 hunks: indices 0 and 1)
+      fireEvent.keyDown(viewer, { key: 'j' }); // 0->1, calls with 1
+      fireEvent.keyDown(viewer, { key: 'j' }); // blocked (would be 1->2)
+      fireEvent.keyDown(viewer, { key: 'j' }); // blocked
 
-      // Should only be called twice (0->1, then stops at 1)
-      expect(onHunkNavigate).toHaveBeenCalledTimes(2);
+      // Should only be called once (0->1), then stops at index 1
+      expect(onHunkNavigate).toHaveBeenCalledTimes(1);
+      expect(onHunkNavigate).toHaveBeenCalledWith(1);
     });
 
     it('should scroll focused hunk into view', async () => {
@@ -709,21 +713,22 @@ describe('MSSCI-12711: DiffViewer Component', () => {
       const { DiffViewer } = await import('../src/public/components/DiffViewer.js');
       const data = createDiffData({
         oldContent: '',
-        newContent: 'new file content',
+        newContent: 'some added content',
         hunks: [
           {
             oldStart: 0,
             oldCount: 0,
             newStart: 1,
             newCount: 1,
-            lines: [{ type: 'added', content: 'new file content', newLineNumber: 1 }],
+            lines: [{ type: 'added', content: 'some added content', newLineNumber: 1 }],
           },
         ],
       });
 
       render(<DiffViewer data={data} />);
 
-      expect(screen.getByText(/new file/i)).toBeInTheDocument();
+      expect(screen.getByTestId('diff-new-file-indicator')).toBeInTheDocument();
+      expect(screen.getByTestId('diff-new-file-indicator')).toHaveTextContent(/new file/i);
     });
 
     it('should handle deleted file (empty new content)', async () => {
