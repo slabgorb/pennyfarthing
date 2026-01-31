@@ -230,13 +230,13 @@ Comprehensive quality check before agent handoffs:
 Quality Gate Check
 ==================
 Section: Lint
-  [PASS] Lint (npm run lint)
+  [PASS] Lint (pnpm run lint)
 
 Section: Type Check
   [PASS] Type Check (tsc --noEmit)
 
 Section: Tests
-  [PASS] Tests (npm test)
+  [PASS] Tests (pnpm test)
 
 Summary
 =======
@@ -254,7 +254,7 @@ The script auto-detects project type:
 
 | Project | Lint | Type Check | Tests |
 |---------|------|------------|-------|
-| Node.js | `npm run lint` or ESLint | `tsc --noEmit` | `npm test` |
+| Node.js | `pnpm run lint` or ESLint | `tsc --noEmit` | `pnpm test` |
 | Go | `golangci-lint run` | (none) | `go test ./...` |
 | Justfile | `just lint` | `just typecheck` | `just test` |
 
@@ -275,14 +275,14 @@ Auto-detects and runs appropriate CI:
 1. Justfile with 'ci' recipe → `just ci`
 2. GitHub Actions → `act` (if installed)
 3. GitLab CI → `gitlab-runner exec shell`
-4. npm fallback → `pnpm/npm run build && test && lint`
+4. pnpm fallback → `pnpm run build && test && lint`
 
 ### Package Manager Detection
 
 ```bash
 pnpm-lock.yaml or pnpm-workspace.yaml → pnpm
 yarn.lock                              → yarn
-otherwise                              → npm
+otherwise                              → pnpm
 ```
 
 ## Automated Review Workflow
@@ -483,9 +483,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-      - run: npm ci
-      - run: npm test
-      - run: npm run lint
+      - uses: pnpm/action-setup@v2
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - run: pnpm run lint
 ```
 
 ### Matrix Testing
@@ -502,8 +503,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - run: npm ci
-      - run: npm test
+      - uses: pnpm/action-setup@v2
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
 ```
 
 ## Integrating with External CI
@@ -532,13 +534,14 @@ stages:
 build:
   stage: build
   script:
-    - npm ci
-    - npm run build
+    - pnpm install --frozen-lockfile
+    - pnpm run build
 
 test:
   stage: test
   script:
-    - npm test
+    - pnpm install --frozen-lockfile
+    - pnpm test
 ```
 
 ### Run with Pennyfarthing detection

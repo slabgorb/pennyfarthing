@@ -6,18 +6,18 @@ This file provides guidance to Claude Code when working on the Pennyfarthing fra
 
 Pennyfarthing is a Claude Code agent orchestration framework with customizable BikeLane workflows and themed personas. This repo contains the framework source code - for using Pennyfarthing, see the orchestrator repo.
 
-**Version:** 7.9.0
+**Version:** 8.1.0
 **Node:** >=18.0.0
 **Type:** ES module with TypeScript (pnpm monorepo)
 
 ## Build Commands
 
 ```bash
-npm run build     # TypeScript compilation (tsc)
-npm run dev       # Watch mode (tsc --watch)
-npm run clean     # Remove dist/
-npm test          # Node.js native test runner
-npm run lint      # ESLint
+pnpm run build     # TypeScript compilation (tsc)
+pnpm run dev       # Watch mode (tsc --watch)
+pnpm run clean     # Remove dist/
+pnpm test          # Node.js native test runner
+pnpm run lint      # ESLint
 ```
 
 ## Directory Structure
@@ -48,8 +48,8 @@ docs/                    # Framework documentation (not ADRs - those are in orch
 After making changes:
 
 ```bash
-npm run build            # Compile TypeScript
-npm link                 # Update global link
+pnpm run build            # Compile TypeScript
+pnpm link                 # Update global link
 
 # Test in orchestrator repo
 cd ~/Projects/pennyfarthing-orchestrator
@@ -247,7 +247,7 @@ Framework changes should be tested in the orchestrator repo:
 
 ```bash
 # In pennyfarthing (framework)
-npm run build && npm link
+pnpm run build && pnpm link
 
 # In pennyfarthing-orchestrator (usage)
 pennyfarthing doctor
@@ -257,8 +257,8 @@ pennyfarthing doctor
 ## Publishing
 
 ```bash
-npm version patch|minor|major
-npm publish
+pnpm version patch|minor|major
+pnpm publish
 ```
 
 Consumers update via `npm update @pennyfarthing/core && pennyfarthing update`.
