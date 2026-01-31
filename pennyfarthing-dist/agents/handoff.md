@@ -229,7 +229,7 @@ When you receive `HANDOFF_RESULT`:
 **CRITICAL: The calling agent MUST run this as their ABSOLUTE LAST ACTION:**
 
 ```bash
-.pennyfarthing/scripts/handoff/handoff-marker.sh {next_agent}
+.pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
 ```
 
 Then output the script's result verbatim and EXIT. Nothing else after.

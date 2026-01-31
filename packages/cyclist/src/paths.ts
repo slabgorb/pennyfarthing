@@ -244,6 +244,19 @@ export function getPortraitsDir(): string | null {
 // Get the dist directory (where compiled JS files live)
 // Used for preload scripts and other assets that are compiled alongside main code
 export function getDistDir(): string {
+  // If running from dist/ (compiled), __dirname is already correct
+  if (__dirname.includes('/dist')) {
+    return __dirname;
+  }
+
+  // If running from src/ (tsx dev mode), resolve to dist/ relative to package root
+  // __dirname in tsx dev mode is src/, so go up one level then into dist/
+  const distFromSrc = join(__dirname, '..', 'dist');
+  if (existsSync(distFromSrc)) {
+    return distFromSrc;
+  }
+
+  // Fallback to __dirname
   return __dirname;
 }
 

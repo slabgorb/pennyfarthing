@@ -35,7 +35,7 @@ cd "${REPO}" 2>/dev/null || cd "packages/${REPO}" && git fetch origin && git che
 ## 2. Check Test Cache
 
 ```bash
-source scripts/utils/test-cache.sh
+source .pennyfarthing/scripts/test/test-cache.sh
 SESSION_FILE=".session/{STORY_ID}-session.md"
 
 if test_cache_valid "$SESSION_FILE"; then
