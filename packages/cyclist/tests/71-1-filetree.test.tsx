@@ -233,7 +233,7 @@ describe('AC3: Click on file opens DiffViewer', () => {
     render(<FileTree files={mockFiles} />);
 
     const fileItem = screen.getByText('FileTree.tsx').closest('[data-testid="file-item"]');
-    fileItem!.focus();
+    fireEvent.focus(fileItem!);
 
     expect(fileItem).toHaveClass('focused');
   });
