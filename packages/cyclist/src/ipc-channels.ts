@@ -143,3 +143,13 @@ export const IPC_CONTEXT_CLEAR_CHANNELS = {
   CLEAR: 'context:clear',
   CLEAR_AND_LOAD: 'context:clearAndLoad',
 } as const;
+
+/**
+ * IPC channel names for layout persistence (MSSCI-12706)
+ * Used for saving/restoring workspace layout to config.local.yaml
+ */
+export const IPC_LAYOUT_CHANNELS = {
+  GET: 'layout:get',
+  SAVE: 'layout:save',
+  UPDATE: 'layout:update',
+} as const;

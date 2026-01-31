@@ -84,6 +84,7 @@ import {
   IPC_BACKGROUND_TASK_CHANNELS,
   IPC_SKILL_CHANNELS,
   IPC_CONTEXT_CLEAR_CHANNELS,
+  IPC_LAYOUT_CHANNELS,
 } from './ipc-channels.js';
 
 // Re-export project directory functions for external consumers
@@ -137,6 +138,7 @@ export {
   IPC_BACKGROUND_TASK_CHANNELS,
   IPC_SKILL_CHANNELS,
   IPC_CONTEXT_CLEAR_CHANNELS,
+  IPC_LAYOUT_CHANNELS,
 } from './ipc-channels.js';
 
 // Re-export menu builders from dedicated module
@@ -1569,6 +1571,90 @@ Adopt this character immediately in your next response. Do not acknowledge this 
 }
 
 // =============================================================================
+// Layout Persistence IPC Handlers (MSSCI-12706)
+// =============================================================================
+
+/**
+ * Set up IPC handlers for layout persistence
+ * MSSCI-12706: Handles layout get/save to config.local.yaml
+ */
+export function setupLayoutIPCHandlers(ipcMain: {
+  handle: (channel: string, handler: (event: unknown, ...args: unknown[]) => Promise<unknown>) => void;
+}): void {
+  // Get layout from config.local.yaml
+  ipcMain.handle(IPC_LAYOUT_CHANNELS.GET, async () => {
+    const projectDir = getProjectDirectory();
+    if (!projectDir) {
+      return null;
+    }
+
+    try {
+      const configPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
+      if (!fs.existsSync(configPath)) {
+        return null;
+      }
+
+      const content = fs.readFileSync(configPath, 'utf-8');
+      const config = parse(content);
+      return config || null;
+    } catch (err) {
+      console.error('[Layout] Failed to read config:', err);
+      return null;
+    }
+  });
+
+  // Save layout to config.local.yaml
+  ipcMain.handle(IPC_LAYOUT_CHANNELS.SAVE, async (_event: unknown, ...args: unknown[]) => {
+    const layout = args[0] as Record<string, unknown>;
+    const projectDir = getProjectDirectory();
+
+    if (!projectDir) {
+      return { success: false };
+    }
+
+    try {
+      const configPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
+      const configDir = dirname(configPath);
+
+      // Ensure .pennyfarthing directory exists
+      if (!fs.existsSync(configDir)) {
+        fs.mkdirSync(configDir, { recursive: true });
+      }
+
+      // Read existing config to preserve other settings
+      let existing: Record<string, unknown> = {};
+      if (fs.existsSync(configPath)) {
+        try {
+          const content = fs.readFileSync(configPath, 'utf-8');
+          const parsed = parse(content);
+          if (parsed && typeof parsed === 'object') {
+            existing = parsed as Record<string, unknown>;
+          }
+        } catch {
+          // Corrupted file - start fresh
+          existing = {};
+        }
+      }
+
+      // Merge layout into existing config
+      const merged: Record<string, unknown> = { ...existing, layout };
+
+      // Keep theme at top for consistent ordering
+      const { theme, ...rest } = merged;
+      const output = theme !== undefined ? { theme, ...rest } : rest;
+
+      fs.writeFileSync(configPath, stringifyYaml(output), 'utf-8');
+      return { success: true };
+    } catch (err) {
+      console.error('[Layout] Failed to save config:', err);
+      return { success: false };
+    }
+  });
+
+  console.log('Layout IPC handlers registered');
+}
+
+// =============================================================================
 // Audit Log IPC Handlers (22-6)
 // =============================================================================
 
@@ -2374,6 +2460,7 @@ if (isElectron) {
   setupClaudeIPCHandlers(ipcMain);
   setupFileBrowserIPCHandlers(ipcMain);
   setupSettingsIPCHandlers(ipcMain);
+  setupLayoutIPCHandlers(ipcMain); // MSSCI-12706: Layout persistence
   setupAuditLogIPCHandlers(ipcMain);
   setupCommandIPCHandlers(ipcMain); // 23-3: Command execution
   setupSkillIPCHandlers(ipcMain); // 35-12: Skill invocation tracking
