@@ -705,3 +705,59 @@ describe('useLayoutPersistence Hook Interface', () => {
     expect(screen.getByTestId('has-error')).toHaveTextContent('yes');
   });
 });
+
+// ============================================================================
+// Integration Test: App.tsx wiring verification
+// ============================================================================
+
+describe('Integration: App.tsx layout persistence wiring', () => {
+  it('should wire useLayoutPersistence hook to DockingWorkspace', async () => {
+    // Import App to verify the wiring exists
+    const AppModule = await import('../src/public/App');
+    const appSource = AppModule.default.toString();
+
+    // Verify the hook is used in App
+    expect(appSource).toContain('useLayoutPersistence');
+  });
+
+  it('should pass initialLayout and onLayoutChange to DockingWorkspace', async () => {
+    // Read App.tsx source to verify props are passed
+    const fs = await import('fs');
+    const path = await import('path');
+    const appPath = path.join(__dirname, '../src/public/App.tsx');
+    const appSource = fs.readFileSync(appPath, 'utf-8');
+
+    // Verify DockingWorkspace receives the required props
+    expect(appSource).toContain('initialLayout={layout}');
+    expect(appSource).toContain('onLayoutChange={saveLayout}');
+  });
+
+  it('should render loading state while layout loads', async () => {
+    // Mock a slow layout fetch
+    mockElectronAPI.layout.get.mockImplementation(() =>
+      new Promise(resolve => setTimeout(() => resolve(null), 500))
+    );
+
+    // Import and render App
+    const { default: App } = await import('../src/public/App');
+    render(<App />);
+
+    // Should show loading state
+    expect(document.querySelector('.cyclist-loading')).toBeInTheDocument();
+  });
+
+  it('should render DockingWorkspace after layout loads', async () => {
+    mockElectronAPI.layout.get.mockResolvedValue(mockSavedLayoutConfig);
+
+    const { default: App } = await import('../src/public/App');
+    render(<App />);
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    // Should render the workspace, not loading state
+    expect(document.querySelector('.cyclist-loading')).not.toBeInTheDocument();
+    expect(screen.getByTestId('docking-workspace')).toBeInTheDocument();
+  });
+});
