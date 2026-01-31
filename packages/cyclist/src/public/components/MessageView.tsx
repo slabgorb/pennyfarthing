@@ -140,14 +140,19 @@ export default function MessageView({ messages }: MessageViewProps): React.React
     );
   };
 
-  // Show empty state when no messages
+  // Show empty state when no messages - prompt to start with /sm
   if (messages.length === 0) {
     return (
       <div data-testid="message-view" className="message-view">
         <div className="message-view-empty">
           <div>
-            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>💬</div>
-            <div>Start a conversation with Claude</div>
+            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🚴</div>
+            <div>Type <code style={{
+              background: 'var(--bg-tertiary, #2d2d2d)',
+              padding: '2px 6px',
+              borderRadius: '3px',
+              fontFamily: 'var(--font-mono, monospace)'
+            }}>/sm</code> to start</div>
           </div>
         </div>
       </div>
