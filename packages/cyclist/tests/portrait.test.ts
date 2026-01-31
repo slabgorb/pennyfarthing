@@ -94,12 +94,12 @@ describe('E1-4: Character Portrait Display', () => {
     });
 
     it('should have portrait container ready for image', () => {
-      const portrait = document.querySelector('#portrait');
+      const portrait = document.querySelector('#header-portrait-thumb');
       expect(portrait).not.toBeNull();
     });
 
     it('should have img element or data-src attribute for portrait loading', () => {
-      const portrait = document.querySelector('#portrait');
+      const portrait = document.querySelector('#header-portrait-thumb');
       // Should have either an img tag or a data-src for lazy loading
       const hasImg = portrait?.querySelector('img') !== null;
       const hasDataSrc = portrait?.hasAttribute('data-src') || portrait?.querySelector('[data-src]') !== null;

@@ -547,7 +547,8 @@ describe('AC4: Sidebar panel shows running tasks with elapsed time', () => {
 
     const html = panelModule.renderBackgroundTasksPanel(tasks);
 
-    expect(html).toContain('Background Tasks');
+    // Panel should have a title (either "HELPER" or dynamic helper name)
+    expect(html).toMatch(/panel-title/);
     // Should show count badge
     expect(html).toMatch(/\[2\]|badge.*2|count.*2/i);
   });
@@ -829,7 +830,7 @@ describe('AC7: Dismiss button removes completed task from panel', () => {
     expect(hasDismiss).toBe(true);
   });
 
-  it('should NOT render dismiss button for pending tasks', async () => {
+  it('should render cancel button for pending tasks', async () => {
     const panelModule = await import('../src/public/js/components/BackgroundTasksPanel.js');
 
     const tasks = [
@@ -844,9 +845,9 @@ describe('AC7: Dismiss button removes completed task from panel', () => {
 
     const html = panelModule.renderBackgroundTasksPanel(tasks);
 
-    // For pending tasks, should not have a dismiss button targeting this task
-    // This is a more nuanced check - pending tasks shouldn't be dismissible
-    expect(html).not.toMatch(/dismiss.*pending-nodismiss|data-dismiss="pending-nodismiss"/i);
+    // Pending tasks should have a cancel button (dismiss with title="Cancel")
+    expect(html).toMatch(/data-dismiss="pending-nodismiss"/i);
+    expect(html).toMatch(/title="Cancel"/i);
   });
 
   it('should export dismissBackgroundTask function', async () => {
