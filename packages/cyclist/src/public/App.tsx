@@ -50,5 +50,9 @@ registerPanelComponent(PANEL_INVENTORY.SETTINGS, SettingsPanel);
 // =============================================================================
 
 export default function App(): React.ReactElement {
-  return <DockingWorkspace />;
+  return (
+    <div className="cyclist-app">
+      <DockingWorkspace />
+    </div>
+  );
 }
