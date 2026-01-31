@@ -425,6 +425,9 @@ describe('AC5: Message view rejects drops', () => {
   });
 
   it('should prevent default on center dragover (no-op drop)', () => {
+    // Spy on Event.prototype.preventDefault since fireEvent creates a new DOM event
+    const preventDefaultSpy = vi.spyOn(Event.prototype, 'preventDefault');
+
     render(<DockingWorkspace />);
 
     const centerRegion = screen.getByTestId('center-region');
@@ -435,7 +438,9 @@ describe('AC5: Message view rejects drops', () => {
 
     fireEvent.dragOver(centerRegion, dragOverEvent);
 
-    expect(dragOverEvent.preventDefault).toHaveBeenCalled();
+    expect(preventDefaultSpy).toHaveBeenCalled();
+
+    preventDefaultSpy.mockRestore();
   });
 });
 
