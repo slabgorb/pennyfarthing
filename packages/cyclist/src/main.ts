@@ -117,7 +117,7 @@ try {
     electron: join(__dirname, '..', 'node_modules', '.bin', 'electron'),
     hardResetMethod: 'exit',
     followSymlinks: false,
-    ignored: [/node_modules/],
+    ignored: /node_modules/,
   });
   console.log('[Cyclist] Hot reload enabled - watching', __dirname, 'for *.js changes');
 } catch {
