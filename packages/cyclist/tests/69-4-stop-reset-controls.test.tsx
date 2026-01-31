@@ -148,21 +148,21 @@ describe('MSSCI-12729: Stop/Reset Controls and Escape Key', () => {
   // AC3: Clicking Stop immediately kills the Claude process
   // ===========================================================================
   describe('AC3: Stop button functionality', () => {
-    it('should call onStop when Stop button is clicked', async () => {
+    it('should call onStop when Stop button is clicked', () => {
       const onStop = vi.fn();
       render(<ControlBar isRunning={true} onStop={onStop} onReset={vi.fn()} />);
 
       const stopButton = screen.getByTestId('stop-button');
-      await userEvent.click(stopButton);
+      fireEvent.click(stopButton);
 
       expect(onStop).toHaveBeenCalledTimes(1);
     });
 
-    it('should call electronAPI.claude.abort when onStop triggers', async () => {
+    it('should call electronAPI.claude.abort when onStop triggers', () => {
       render(<ControlBar isRunning={true} onStop={() => mockAbort()} onReset={vi.fn()} />);
 
       const stopButton = screen.getByTestId('stop-button');
-      await userEvent.click(stopButton);
+      fireEvent.click(stopButton);
 
       expect(mockAbort).toHaveBeenCalled();
     });
@@ -239,28 +239,28 @@ describe('MSSCI-12729: Stop/Reset Controls and Escape Key', () => {
   // AC5: Reset button clears the session and message history
   // ===========================================================================
   describe('AC5: Reset button functionality', () => {
-    it('should call onReset when Reset button is clicked', async () => {
+    it('should call onReset when Reset button is clicked', () => {
       const onReset = vi.fn();
       render(<ControlBar isRunning={false} onStop={vi.fn()} onReset={onReset} />);
 
       const resetButton = screen.getByTestId('reset-button');
-      await userEvent.click(resetButton);
+      fireEvent.click(resetButton);
 
       expect(onReset).toHaveBeenCalledTimes(1);
     });
 
-    it('should call electronAPI.claude.clear when resetting', async () => {
+    it('should call electronAPI.claude.clear when resetting', () => {
       render(
         <ControlBar isRunning={false} onStop={vi.fn()} onReset={() => mockClear()} />
       );
 
       const resetButton = screen.getByTestId('reset-button');
-      await userEvent.click(resetButton);
+      fireEvent.click(resetButton);
 
       expect(mockClear).toHaveBeenCalled();
     });
 
-    it('should clear messages when resetting', async () => {
+    it('should clear messages when resetting', () => {
       render(
         <ControlBar
           isRunning={false}
@@ -273,17 +273,17 @@ describe('MSSCI-12729: Stop/Reset Controls and Escape Key', () => {
       );
 
       const resetButton = screen.getByTestId('reset-button');
-      await userEvent.click(resetButton);
+      fireEvent.click(resetButton);
 
       expect(mockElectronAPI.messages.clear).toHaveBeenCalled();
     });
 
-    it('should work when Claude is running (stop + reset)', async () => {
+    it('should work when Claude is running (stop + reset)', () => {
       const onReset = vi.fn();
       render(<ControlBar isRunning={true} onStop={vi.fn()} onReset={onReset} />);
 
       const resetButton = screen.getByTestId('reset-button');
-      await userEvent.click(resetButton);
+      fireEvent.click(resetButton);
 
       expect(onReset).toHaveBeenCalled();
     });
