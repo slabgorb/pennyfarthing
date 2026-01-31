@@ -140,6 +140,20 @@ export default function MessageView({ messages }: MessageViewProps): React.React
     );
   };
 
+  // Show empty state when no messages
+  if (messages.length === 0) {
+    return (
+      <div data-testid="message-view" className="message-view">
+        <div className="message-view-empty">
+          <div>
+            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>💬</div>
+            <div>Start a conversation with Claude</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div data-testid="message-view" className="message-view">
       <MessageList
