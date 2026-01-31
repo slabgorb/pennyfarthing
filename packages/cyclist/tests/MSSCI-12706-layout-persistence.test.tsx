@@ -137,14 +137,12 @@ describe('AC1: Layout state saved to config.local.yaml on change', () => {
       screen.getByTestId('save-btn').click();
     });
 
-    // Advance timers to trigger debounced save
+    // Advance timers to trigger debounced save (use async version to flush promises)
     await act(async () => {
-      vi.advanceTimersByTime(500);
+      await vi.advanceTimersByTimeAsync(500);
     });
 
-    await waitFor(() => {
-      expect(mockElectronAPI.layout.save).toHaveBeenCalled();
-    });
+    expect(mockElectronAPI.layout.save).toHaveBeenCalled();
   });
 
   it('should pass layout data in correct format to save', async () => {
@@ -155,14 +153,12 @@ describe('AC1: Layout state saved to config.local.yaml on change', () => {
     });
 
     await act(async () => {
-      vi.advanceTimersByTime(500);
+      await vi.advanceTimersByTimeAsync(500);
     });
 
-    await waitFor(() => {
-      const savedData = mockElectronAPI.layout.save.mock.calls[0][0];
-      expect(savedData.leftSidebar.width).toBe(400);
-      expect(savedData.leftSidebar.collapsed).toBe(true);
-    });
+    const savedData = mockElectronAPI.layout.save.mock.calls[0][0];
+    expect(savedData.leftSidebar.width).toBe(400);
+    expect(savedData.leftSidebar.collapsed).toBe(true);
   });
 
   it('should indicate saving state during save operation', async () => {
@@ -176,8 +172,9 @@ describe('AC1: Layout state saved to config.local.yaml on change', () => {
       screen.getByTestId('save-btn').click();
     });
 
+    // Advance past debounce but not past the save completion
     await act(async () => {
-      vi.advanceTimersByTime(500);
+      await vi.advanceTimersByTimeAsync(300);
     });
 
     expect(screen.getByTestId('saving-state')).toHaveTextContent('true');
@@ -193,12 +190,10 @@ describe('AC1: Layout state saved to config.local.yaml on change', () => {
     });
 
     await act(async () => {
-      vi.advanceTimersByTime(500);
+      await vi.advanceTimersByTimeAsync(500);
     });
 
-    await waitFor(() => {
-      expect(screen.getByTestId('saving-state')).toHaveTextContent('false');
-    });
+    expect(screen.getByTestId('saving-state')).toHaveTextContent('false');
   });
 });
 
@@ -223,9 +218,12 @@ describe('AC2: Layout state restored on app startup', () => {
   it('should fetch layout on mount', async () => {
     render(<TestComponent />);
 
-    await waitFor(() => {
-      expect(mockElectronAPI.layout.get).toHaveBeenCalled();
+    // Flush all pending promises
+    await act(async () => {
+      await vi.runAllTimersAsync();
     });
+
+    expect(mockElectronAPI.layout.get).toHaveBeenCalled();
   });
 
   it('should show loading state while fetching', async () => {
@@ -243,10 +241,12 @@ describe('AC2: Layout state restored on app startup', () => {
 
     render(<TestComponent />);
 
-    await waitFor(() => {
-      expect(screen.getByTestId('layout-left-width')).toHaveTextContent('400');
-      expect(screen.getByTestId('layout-left-collapsed')).toHaveTextContent('true');
+    await act(async () => {
+      await vi.runAllTimersAsync();
     });
+
+    expect(screen.getByTestId('layout-left-width')).toHaveTextContent('400');
+    expect(screen.getByTestId('layout-left-collapsed')).toHaveTextContent('true');
   });
 
   it('should restore panel order from saved config', async () => {
@@ -254,9 +254,11 @@ describe('AC2: Layout state restored on app startup', () => {
 
     render(<TestComponent />);
 
-    await waitFor(() => {
-      expect(screen.getByTestId('layout-left-panels')).toHaveTextContent('diffs,changed');
+    await act(async () => {
+      await vi.runAllTimersAsync();
     });
+
+    expect(screen.getByTestId('layout-left-panels')).toHaveTextContent('diffs,changed');
   });
 
   it('should set loading to false after fetch completes', async () => {
@@ -264,9 +266,11 @@ describe('AC2: Layout state restored on app startup', () => {
 
     render(<TestComponent />);
 
-    await waitFor(() => {
-      expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
+    await act(async () => {
+      await vi.runAllTimersAsync();
     });
+
+    expect(screen.getByTestId('loading-state')).toHaveTextContent('false');
   });
 });
 
@@ -292,14 +296,12 @@ describe('AC3: Saved state includes panel positions, widths, collapsed states', 
     });
 
     await act(async () => {
-      vi.advanceTimersByTime(500);
+      await vi.advanceTimersByTimeAsync(500);
     });
 
-    await waitFor(() => {
-      const savedData = mockElectronAPI.layout.save.mock.calls[0][0];
-      expect(savedData.leftSidebar.panels).toEqual(['diffs', 'changed']);
-      expect(savedData.rightSidebar.panels).toEqual(['progress', 'sprint', 'settings']);
-    });
+    const savedData = mockElectronAPI.layout.save.mock.calls[0][0];
+    expect(savedData.leftSidebar.panels).toEqual(['diffs', 'changed']);
+    expect(savedData.rightSidebar.panels).toEqual(['progress', 'sprint', 'settings']);
   });
 
   it('should save sidebar widths', async () => {
@@ -310,14 +312,12 @@ describe('AC3: Saved state includes panel positions, widths, collapsed states', 
     });
 
     await act(async () => {
-      vi.advanceTimersByTime(500);
+      await vi.advanceTimersByTimeAsync(500);
     });
 
-    await waitFor(() => {
-      const savedData = mockElectronAPI.layout.save.mock.calls[0][0];
-      expect(savedData.leftSidebar.width).toBe(400);
-      expect(savedData.rightSidebar.width).toBe(250);
-    });
+    const savedData = mockElectronAPI.layout.save.mock.calls[0][0];
+    expect(savedData.leftSidebar.width).toBe(400);
+    expect(savedData.rightSidebar.width).toBe(250);
   });
 
   it('should save collapsed states for both sidebars', async () => {
@@ -328,14 +328,12 @@ describe('AC3: Saved state includes panel positions, widths, collapsed states', 
     });
 
     await act(async () => {
-      vi.advanceTimersByTime(500);
+      await vi.advanceTimersByTimeAsync(500);
     });
 
-    await waitFor(() => {
-      const savedData = mockElectronAPI.layout.save.mock.calls[0][0];
-      expect(savedData.leftSidebar.collapsed).toBe(true);
-      expect(savedData.rightSidebar.collapsed).toBe(false);
-    });
+    const savedData = mockElectronAPI.layout.save.mock.calls[0][0];
+    expect(savedData.leftSidebar.collapsed).toBe(true);
+    expect(savedData.rightSidebar.collapsed).toBe(false);
   });
 
   it('should include version number for migration support', async () => {
@@ -346,14 +344,12 @@ describe('AC3: Saved state includes panel positions, widths, collapsed states', 
     });
 
     await act(async () => {
-      vi.advanceTimersByTime(500);
+      await vi.advanceTimersByTimeAsync(500);
     });
 
-    await waitFor(() => {
-      const savedData = mockElectronAPI.layout.save.mock.calls[0][0];
-      expect(savedData.version).toBeDefined();
-      expect(typeof savedData.version).toBe('number');
-    });
+    const savedData = mockElectronAPI.layout.save.mock.calls[0][0];
+    expect(savedData.version).toBeDefined();
+    expect(typeof savedData.version).toBe('number');
   });
 });
 
@@ -370,9 +366,11 @@ describe('AC4: Each project maintains independent layout', () => {
 
     render(<TestComponent />);
 
-    await waitFor(() => {
-      expect(mockElectronAPI.projectInfo.get).toHaveBeenCalled();
+    await act(async () => {
+      await vi.runAllTimersAsync();
     });
+
+    expect(mockElectronAPI.projectInfo.get).toHaveBeenCalled();
   });
 
   it('should pass project context when saving layout', async () => {
@@ -394,13 +392,11 @@ describe('AC4: Each project maintains independent layout', () => {
     });
 
     await act(async () => {
-      vi.advanceTimersByTime(500);
+      await vi.advanceTimersByTimeAsync(500);
     });
 
-    await waitFor(() => {
-      // The save should use the project-specific config
-      expect(mockElectronAPI.layout.save).toHaveBeenCalled();
-    });
+    // The save should use the project-specific config
+    expect(mockElectronAPI.layout.save).toHaveBeenCalled();
   });
 
   it('should not share layout state between different projects', async () => {
@@ -414,9 +410,11 @@ describe('AC4: Each project maintains independent layout', () => {
 
     const { unmount } = render(<TestComponent />);
 
-    await waitFor(() => {
-      expect(mockElectronAPI.projectInfo.get).toHaveBeenCalled();
+    await act(async () => {
+      await vi.runAllTimersAsync();
     });
+
+    expect(mockElectronAPI.projectInfo.get).toHaveBeenCalled();
 
     unmount();
 
@@ -425,9 +423,11 @@ describe('AC4: Each project maintains independent layout', () => {
 
     render(<TestComponent />);
 
-    await waitFor(() => {
-      expect(mockElectronAPI.projectInfo.get).toHaveBeenCalledTimes(2);
+    await act(async () => {
+      await vi.runAllTimersAsync();
     });
+
+    expect(mockElectronAPI.projectInfo.get).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -453,9 +453,11 @@ describe('AC5: Graceful handling of corrupted/missing layout config', () => {
 
     render(<TestComponent />);
 
-    await waitFor(() => {
-      expect(screen.getByTestId('has-layout')).toHaveTextContent('yes');
+    await act(async () => {
+      await vi.runAllTimersAsync();
     });
+
+    expect(screen.getByTestId('has-layout')).toHaveTextContent('yes');
   });
 
   it('should return default layout when config is undefined', async () => {
@@ -463,9 +465,11 @@ describe('AC5: Graceful handling of corrupted/missing layout config', () => {
 
     render(<TestComponent />);
 
-    await waitFor(() => {
-      expect(screen.getByTestId('has-layout')).toHaveTextContent('yes');
+    await act(async () => {
+      await vi.runAllTimersAsync();
     });
+
+    expect(screen.getByTestId('has-layout')).toHaveTextContent('yes');
   });
 
   it('should return default layout when API returns error', async () => {
@@ -473,9 +477,11 @@ describe('AC5: Graceful handling of corrupted/missing layout config', () => {
 
     render(<TestComponent />);
 
-    await waitFor(() => {
-      expect(screen.getByTestId('has-layout')).toHaveTextContent('yes');
+    await act(async () => {
+      await vi.runAllTimersAsync();
     });
+
+    expect(screen.getByTestId('has-layout')).toHaveTextContent('yes');
   });
 
   it('should return default layout when saved layout is malformed', async () => {
@@ -488,11 +494,13 @@ describe('AC5: Graceful handling of corrupted/missing layout config', () => {
 
     render(<TestComponent />);
 
-    await waitFor(() => {
-      expect(screen.getByTestId('has-layout')).toHaveTextContent('yes');
-      // Should fall back to defaults
-      expect(screen.getByTestId('left-panels')).toHaveTextContent('changed,diffs,debug');
+    await act(async () => {
+      await vi.runAllTimersAsync();
     });
+
+    expect(screen.getByTestId('has-layout')).toHaveTextContent('yes');
+    // Should fall back to defaults
+    expect(screen.getByTestId('left-panels')).toHaveTextContent('changed,diffs,debug');
   });
 
   it('should handle missing panels array gracefully', async () => {
@@ -506,9 +514,11 @@ describe('AC5: Graceful handling of corrupted/missing layout config', () => {
 
     render(<TestComponent />);
 
-    await waitFor(() => {
-      expect(screen.getByTestId('has-layout')).toHaveTextContent('yes');
+    await act(async () => {
+      await vi.runAllTimersAsync();
     });
+
+    expect(screen.getByTestId('has-layout')).toHaveTextContent('yes');
   });
 
   it('should not crash when save fails', async () => {
@@ -533,7 +543,7 @@ describe('AC5: Graceful handling of corrupted/missing layout config', () => {
     });
 
     await act(async () => {
-      vi.advanceTimersByTime(500);
+      await vi.advanceTimersByTimeAsync(500);
     });
 
     // Should not crash, may show error
@@ -579,7 +589,7 @@ describe('AC6: Layout changes trigger autosave (debounced)', () => {
 
     // Advance less than debounce time
     await act(async () => {
-      vi.advanceTimersByTime(100);
+      await vi.advanceTimersByTimeAsync(100);
     });
 
     // Should not have saved yet
@@ -587,13 +597,11 @@ describe('AC6: Layout changes trigger autosave (debounced)', () => {
 
     // Advance past debounce time
     await act(async () => {
-      vi.advanceTimersByTime(500);
+      await vi.advanceTimersByTimeAsync(400);
     });
 
     // Should only save once with the final value
-    await waitFor(() => {
-      expect(mockElectronAPI.layout.save).toHaveBeenCalledTimes(1);
-    });
+    expect(mockElectronAPI.layout.save).toHaveBeenCalledTimes(1);
   });
 
   it('should save only the final layout state after debounce', async () => {
@@ -604,13 +612,11 @@ describe('AC6: Layout changes trigger autosave (debounced)', () => {
     });
 
     await act(async () => {
-      vi.advanceTimersByTime(500);
+      await vi.advanceTimersByTimeAsync(500);
     });
 
-    await waitFor(() => {
-      const savedData = mockElectronAPI.layout.save.mock.calls[0][0];
-      expect(savedData.leftSidebar.width).toBe(330);  // Final value
-    });
+    const savedData = mockElectronAPI.layout.save.mock.calls[0][0];
+    expect(savedData.leftSidebar.width).toBe(330);  // Final value
   });
 
   it('should respect debounce delay of at least 300ms', async () => {
@@ -622,18 +628,16 @@ describe('AC6: Layout changes trigger autosave (debounced)', () => {
 
     // At 200ms - should not have saved
     await act(async () => {
-      vi.advanceTimersByTime(200);
+      await vi.advanceTimersByTimeAsync(200);
     });
     expect(mockElectronAPI.layout.save).not.toHaveBeenCalled();
 
     // At 400ms - should have saved (past 300ms debounce)
     await act(async () => {
-      vi.advanceTimersByTime(200);
+      await vi.advanceTimersByTimeAsync(200);
     });
 
-    await waitFor(() => {
-      expect(mockElectronAPI.layout.save).toHaveBeenCalled();
-    });
+    expect(mockElectronAPI.layout.save).toHaveBeenCalled();
   });
 
   it('should reset debounce timer on each change', async () => {
@@ -645,7 +649,7 @@ describe('AC6: Layout changes trigger autosave (debounced)', () => {
     });
 
     await act(async () => {
-      vi.advanceTimersByTime(200);
+      await vi.advanceTimersByTimeAsync(200);
     });
 
     // Second save resets timer
@@ -654,20 +658,18 @@ describe('AC6: Layout changes trigger autosave (debounced)', () => {
     });
 
     await act(async () => {
-      vi.advanceTimersByTime(200);
+      await vi.advanceTimersByTimeAsync(200);
     });
 
     // Should not have saved yet (timer was reset)
     expect(mockElectronAPI.layout.save).not.toHaveBeenCalled();
 
     await act(async () => {
-      vi.advanceTimersByTime(300);
+      await vi.advanceTimersByTimeAsync(300);
     });
 
     // Now it should have saved
-    await waitFor(() => {
-      expect(mockElectronAPI.layout.save).toHaveBeenCalledTimes(1);
-    });
+    expect(mockElectronAPI.layout.save).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -692,12 +694,14 @@ describe('useLayoutPersistence Hook Interface', () => {
 
     render(<TestComponent />);
 
-    await waitFor(() => {
-      expect(screen.getByTestId('has-layout')).toHaveTextContent('yes');
-      expect(screen.getByTestId('has-isLoading')).toHaveTextContent('yes');
-      expect(screen.getByTestId('has-isSaving')).toHaveTextContent('yes');
-      expect(screen.getByTestId('has-saveLayout')).toHaveTextContent('yes');
-      expect(screen.getByTestId('has-error')).toHaveTextContent('yes');
+    await act(async () => {
+      await vi.runAllTimersAsync();
     });
+
+    expect(screen.getByTestId('has-layout')).toHaveTextContent('yes');
+    expect(screen.getByTestId('has-isLoading')).toHaveTextContent('yes');
+    expect(screen.getByTestId('has-isSaving')).toHaveTextContent('yes');
+    expect(screen.getByTestId('has-saveLayout')).toHaveTextContent('yes');
+    expect(screen.getByTestId('has-error')).toHaveTextContent('yes');
   });
 });

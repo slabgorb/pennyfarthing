@@ -458,6 +458,27 @@ export interface ElectronSkillAPI {
   onClear: (callback: () => void) => void;
 }
 
+/**
+ * Layout API interface (MSSCI-12706)
+ * Provides IPC channels for saving/restoring workspace layout
+ */
+export interface ElectronLayoutAPI {
+  /**
+   * Get current layout from config.local.yaml
+   */
+  get: () => Promise<unknown>;
+
+  /**
+   * Save layout to config.local.yaml
+   */
+  save: (layout: unknown) => Promise<{ success: boolean }>;
+
+  /**
+   * Subscribe to layout update events
+   */
+  onUpdate: (callback: (event: unknown, layout: unknown) => void) => void;
+}
+
 export interface ElectronAPI {
   stats: ElectronDataAPI;
   persona: ElectronDataAPI;
@@ -483,6 +504,7 @@ export interface ElectronAPI {
   tools: ElectronToolsAPI; // Tool panel toggle
   backgroundTask: ElectronBackgroundTaskAPI; // 31-15: Background task notifications
   skill: ElectronSkillAPI; // 35-12: Skill invocation tracking
+  layout: ElectronLayoutAPI; // MSSCI-12706: Layout persistence
 }
 
 // Check if we're running in Electron (has contextBridge available)
@@ -701,6 +723,14 @@ function createElectronAPI(): ElectronAPI {
           ipcRenderer.on('skill:clear', () => callback());
         },
       },
+      // Layout API (MSSCI-12706)
+      layout: {
+        get: () => ipcRenderer.invoke('layout:get'),
+        save: (layout: unknown) => ipcRenderer.invoke('layout:save', layout) as Promise<{ success: boolean }>,
+        onUpdate: (callback: (event: unknown, layout: unknown) => void) => {
+          ipcRenderer.on('layout:update', callback);
+        },
+      },
     };
   } else {
     // Running in Node (tests) - return testable structure
@@ -875,6 +905,14 @@ function createElectronAPI(): ElectronAPI {
           // No-op in test environment
         },
         onClear: (_callback: () => void) => {
+          // No-op in test environment
+        },
+      },
+      // Layout API (MSSCI-12706) - test stub
+      layout: {
+        get: () => Promise.resolve(null),
+        save: (_layout: unknown) => Promise.resolve({ success: true }),
+        onUpdate: (_callback: (event: unknown, layout: unknown) => void) => {
           // No-op in test environment
         },
       },
