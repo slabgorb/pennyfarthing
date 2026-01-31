@@ -144,7 +144,7 @@ Write to session file BEFORE spawning handoff:
 3. Await `HANDOFF_RESULT` with `next_agent`
 4. **ABSOLUTE LAST ACTION:**
    ```bash
-   .pennyfarthing/scripts/handoff/handoff-marker.sh {next_agent}
+   .pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
    ```
 5. Output result verbatim and EXIT
 </exit-sequence>

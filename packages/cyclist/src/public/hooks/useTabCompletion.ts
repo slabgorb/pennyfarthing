@@ -1,0 +1,133 @@
+/**
+ * useTabCompletion Hook
+ *
+ * React hook for slash command tab completion.
+ * Story MSSCI-12717 - React Migration
+ */
+
+import { useState, useCallback, useMemo } from 'react';
+
+// Import slash commands from the JS module
+// At build time, this will be available
+interface SlashCommand {
+  name: string;
+  description: string;
+}
+
+// We'll define a minimal command set for the hook
+// The full commands are loaded from the auto-generated file
+const DEFAULT_COMMANDS: SlashCommand[] = [
+  { name: '/help', description: 'Show available commands' },
+  { name: '/clear', description: 'Clear conversation history' },
+  { name: '/sm', description: 'Scrum Master - Story coordination' },
+  { name: '/dev', description: 'Developer - Feature implementation' },
+  { name: '/tea', description: 'Test Engineer/Architect' },
+  { name: '/reviewer', description: 'Code Reviewer' },
+];
+
+interface CompletionState {
+  visible: boolean;
+  commands: SlashCommand[];
+  selectedIndex: number;
+  prefix: string;
+}
+
+interface UseTabCompletionResult {
+  state: CompletionState;
+  showCompletion: (prefix: string) => void;
+  hideCompletion: () => void;
+  updateCompletion: (prefix: string) => void;
+  navigateUp: () => void;
+  navigateDown: () => void;
+  selectCurrent: () => string | null;
+  isVisible: boolean;
+}
+
+export function useTabCompletion(commands?: SlashCommand[]): UseTabCompletionResult {
+  const allCommands = useMemo(() => commands || DEFAULT_COMMANDS, [commands]);
+
+  const [state, setState] = useState<CompletionState>({
+    visible: false,
+    commands: [],
+    selectedIndex: 0,
+    prefix: '',
+  });
+
+  const filterCommands = useCallback((prefix: string): SlashCommand[] => {
+    const search = prefix.toLowerCase();
+    return allCommands.filter(cmd =>
+      cmd.name.toLowerCase().startsWith(search)
+    );
+  }, [allCommands]);
+
+  const showCompletion = useCallback((prefix: string) => {
+    const filtered = filterCommands(prefix);
+    setState({
+      visible: true,
+      commands: filtered,
+      selectedIndex: 0,
+      prefix,
+    });
+  }, [filterCommands]);
+
+  const hideCompletion = useCallback(() => {
+    setState({
+      visible: false,
+      commands: [],
+      selectedIndex: 0,
+      prefix: '',
+    });
+  }, []);
+
+  const updateCompletion = useCallback((prefix: string) => {
+    const filtered = filterCommands(prefix);
+    if (filtered.length === 0) {
+      hideCompletion();
+    } else {
+      setState(prev => ({
+        ...prev,
+        commands: filtered,
+        selectedIndex: 0,
+        prefix,
+      }));
+    }
+  }, [filterCommands, hideCompletion]);
+
+  const navigateUp = useCallback(() => {
+    setState(prev => {
+      if (prev.commands.length === 0) return prev;
+      const newIndex = prev.selectedIndex <= 0
+        ? prev.commands.length - 1
+        : prev.selectedIndex - 1;
+      return { ...prev, selectedIndex: newIndex };
+    });
+  }, []);
+
+  const navigateDown = useCallback(() => {
+    setState(prev => {
+      if (prev.commands.length === 0) return prev;
+      const newIndex = prev.selectedIndex >= prev.commands.length - 1
+        ? 0
+        : prev.selectedIndex + 1;
+      return { ...prev, selectedIndex: newIndex };
+    });
+  }, []);
+
+  const selectCurrent = useCallback((): string | null => {
+    if (!state.visible || state.commands.length === 0) return null;
+    const selected = state.commands[state.selectedIndex];
+    hideCompletion();
+    return selected?.name || null;
+  }, [state, hideCompletion]);
+
+  return {
+    state,
+    showCompletion,
+    hideCompletion,
+    updateCompletion,
+    navigateUp,
+    navigateDown,
+    selectCurrent,
+    isVisible: state.visible,
+  };
+}

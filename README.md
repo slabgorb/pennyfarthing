@@ -1,6 +1,6 @@
 # Pennyfarthing
 
-**v7.9.2** | *The outer loop goes once, the inner loop goes many times.*
+**v8.1.0** | *The outer loop goes once, the inner loop goes many times.*
 
 <img src="pennyfarthing.png" alt="Pennyfarthing Logo" width="75" style="float:left; margin:10px">
 
@@ -62,7 +62,7 @@ npx pennyfarthing init
 npx pennyfarthing doctor
 
 # Start working (in Claude Code)
-/work
+/new-work
 ```
 
 ### Optional: Visual Terminal
@@ -88,7 +88,7 @@ BikeLane is the umbrella workflow system supporting three types:
 ### Example: TDD Workflow (Phased)
 
 ```
-/work → SM → TEA → Dev → Reviewer → SM (finish)
+/new-work → SM → TEA → Dev → Reviewer → SM (finish)
          │     │     │       │
       setup  tests  impl   review
 ```

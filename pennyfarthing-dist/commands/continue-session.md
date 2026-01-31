@@ -66,7 +66,7 @@ Source the checkpoint utilities and restore:
 
 ```bash
 # Source checkpoint utilities
-source "${PROJECT_ROOT:-.}/.pennyfarthing/scripts/utils/checkpoint.sh"
+source "${PROJECT_ROOT:-.}/.pennyfarthing/scripts/lib/checkpoint.sh"
 
 # Restore by label
 PHASE=$(checkpoint_restore "phase:${STORY_ID}")
@@ -177,7 +177,7 @@ This command completes the circuit breaker workflow:
 </integration>
 
 <reference>
-- **Checkpoint API:** `scripts/utils/checkpoint.sh`
+- **Checkpoint API:** `.pennyfarthing/scripts/lib/checkpoint.sh`
 - **Circuit Breaker:** `scripts/hooks/context-circuit-breaker.sh`
 - **Related:** `/work`, `/new-work`
 - **Session Files:** `.session/{story-id}-session.md`

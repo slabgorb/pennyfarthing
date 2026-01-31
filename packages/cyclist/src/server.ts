@@ -5,7 +5,7 @@ import { join } from 'path';
 import { existsSync, writeFileSync, unlinkSync, readFileSync } from 'fs';
 
 // Path resolution
-import { publicDir, nodeModulesDir, portraitsDir, getProjectDirectory } from './paths.js';
+import { publicDir, nodeModulesDir, portraitsDir, getProjectDirectory, getDistDir } from './paths.js';
 
 // API routers
 import {
@@ -56,6 +56,13 @@ if (portraitsDir) {
 
 // Serve static files from public directory
 app.use(express.static(publicDir));
+
+// Serve Vite build output (React components) from dist/public
+// This is separate from src/public to avoid Vite overwriting source files
+const distPublicDir = join(getDistDir(), 'public');
+if (existsSync(distPublicDir)) {
+  app.use(express.static(distPublicDir));
+}
 
 // Serve node_modules for client-side imports (xterm.js)
 app.use('/node_modules', express.static(nodeModulesDir));

@@ -40,8 +40,8 @@ This runs lint + typecheck + tests. Exit 0 = all passed.
 ## Setup
 
 ```bash
-source .pennyfarthing/scripts/repo-utils.sh
-source .pennyfarthing/scripts/utils/test-setup.sh
+source .pennyfarthing/scripts/misc/repo-utils.sh
+source .pennyfarthing/scripts/test/test-setup.sh
 
 RUN_ID="${RUN_ID:-$(generate_run_id)}"
 ensure_test_containers
@@ -73,7 +73,7 @@ fi
 
 Write cache after running:
 ```bash
-source .pennyfarthing/scripts/utils/test-cache.sh
+source .pennyfarthing/scripts/test/test-cache.sh
 SESSION_FILE=".session/${STORY_ID}-session.md"
 test_cache_write "$SESSION_FILE" "$RESULT" "$PASS" "$FAIL" "$SKIP" "${DURATION}s"
 ```
