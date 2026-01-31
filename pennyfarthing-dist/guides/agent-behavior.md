@@ -249,7 +249,7 @@ HTML comments that agents emit to signal Cyclist UI. Format: `<!-- CYCLIST:TYPE:
 4. If `status: blocked` → report error, stop
 5. **Run this as ABSOLUTE LAST ACTION:**
    ```bash
-   .pennyfarthing/scripts/handoff-marker.sh {next_agent}
+   .pennyfarthing/scripts/core/handoff-marker.sh {next_agent}
    ```
 6. **Output the script result verbatim and EXIT**
 
@@ -292,7 +292,7 @@ When an agent detects the story is NOT in their phase, emit a marker immediately
 ### Action When Not Your Phase
 
 ```bash
-.pennyfarthing/scripts/handoff-marker.sh {OWNER}
+.pennyfarthing/scripts/core/handoff-marker.sh {OWNER}
 ```
 
 Then output the result verbatim. This triggers Cyclist's handoff button.
@@ -308,7 +308,7 @@ OWNER=$(.pennyfarthing/scripts/workflow/phase-owner.sh tdd review)
 
 Since "reviewer" != "dev", Dev runs:
 ```bash
-.pennyfarthing/scripts/handoff-marker.sh reviewer
+.pennyfarthing/scripts/core/handoff-marker.sh reviewer
 ```
 
 ### Do NOT just say "run /reviewer"

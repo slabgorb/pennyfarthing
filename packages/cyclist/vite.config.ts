@@ -9,8 +9,8 @@ export default defineConfig({
   root: resolve(__dirname, 'src/public'),
   base: '/',
   build: {
-    outDir: resolve(__dirname, 'src/public'),
-    emptyOutDir: false, // Don't wipe existing source files
+    outDir: resolve(__dirname, 'dist/public'),
+    emptyOutDir: true, // Safe to clear - this is a build output directory
     rollupOptions: {
       input: {
         react: resolve(__dirname, 'src/public/index.tsx'),
