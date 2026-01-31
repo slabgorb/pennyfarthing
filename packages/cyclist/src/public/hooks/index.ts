@@ -22,6 +22,11 @@ export type { DiffData } from './useDiffs';
 
 export { useMessageStream } from './useMessageStream';
 
+export { useStatsStrip } from './useStatsStrip';
+
+export { usePersona } from './usePersona';
+export type { PersonaData } from './usePersona';
+
 // Editor hooks
 export { useCommandHistory } from './useCommandHistory';
 export { useTabCompletion } from './useTabCompletion';
