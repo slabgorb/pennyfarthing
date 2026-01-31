@@ -10,7 +10,7 @@
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "tests", "src/preload.ts"],
+  "exclude": ["node_modules", "dist", "tests", "src/preload.ts", "src/public/**/*.tsx", "src/public/styles/**"],
   "references": [
     { "path": "../core" },
     { "path": "../shared" }

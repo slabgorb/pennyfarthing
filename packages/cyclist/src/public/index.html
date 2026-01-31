@@ -6,8 +6,11 @@
   <title>Cyclist - Claude Code Dashboard</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚴</text></svg>">
   <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/css/react.css">
 </head>
 <body>
+  <!-- React root - mounts React components alongside vanilla JS -->
+  <div id="react-root"></div>
   <div id="container">
     <!-- Horizontal Tab Bar for panel navigation (tabs rendered dynamically by tab-bar.js) -->
     <div id="tab-bar" class="tab-bar" role="tablist">
@@ -533,6 +536,8 @@
     </div>
   </div>
 
+  <!-- React bundle (built by Vite) -->
+  <script type="module" src="/js/react/react.js"></script>
   <!-- Web adapter: provides window.electronAPI in browser mode (no-op in Electron) -->
   <script src="/js/web-adapter.js"></script>
   <!-- Livereload: auto-refresh in dev mode -->
