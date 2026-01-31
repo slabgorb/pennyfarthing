@@ -10,6 +10,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import MessageView from '../MessageView';
 import Editor, { PastedImage } from '../Editor';
+import { ControlBar, useControlBar } from '../ControlBar';
 
 // =============================================================================
 // Types
@@ -130,6 +131,13 @@ function transformMessage(sdkMessage: SDKMessage): MessageData | null {
 export function MessagePanel(): React.ReactElement {
   const [messages, setMessages] = useState<MessageData[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const {
+    isRunning,
+    isStopping,
+    handleStop,
+    handleForceStop,
+    handleReset,
+  } = useControlBar();
 
   // Handle incoming SDK message
   const handleSDKMessage = useCallback((sdkMessage: SDKMessage) => {
@@ -201,11 +209,22 @@ export function MessagePanel(): React.ReactElement {
         <MessageView messages={messages} />
       </div>
       <div className="message-panel-editor">
-        <Editor
-          onSubmit={handleSubmit}
-          isProcessing={isProcessing}
-          placeholder="Send a message..."
-        />
+        <div className="editor-with-controls">
+          <div className="editor-area">
+            <Editor
+              onSubmit={handleSubmit}
+              isProcessing={isProcessing || isRunning}
+              placeholder="Send a message..."
+            />
+          </div>
+          <ControlBar
+            isRunning={isRunning || isProcessing}
+            isStopping={isStopping}
+            onStop={handleStop}
+            onForceStop={handleForceStop}
+            onReset={handleReset}
+          />
+        </div>
       </div>
     </div>
   );
