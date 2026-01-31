@@ -6,6 +6,7 @@
  */
 
 import React from 'react';
+import { parseMarkdown } from '../js/components/message-view/markdown-parser.js';
 
 interface StreamingContentProps {
   content: string;
@@ -13,5 +14,19 @@ interface StreamingContentProps {
 }
 
 export default function StreamingContent({ content, isStreaming }: StreamingContentProps): React.ReactElement {
-  throw new Error('StreamingContent not implemented');
+  const html = parseMarkdown(content);
+
+  return (
+    <div data-testid="streaming-content" className="streaming-content">
+      <div dangerouslySetInnerHTML={{ __html: html }} />
+      {isStreaming && (
+        <span
+          data-testid="streaming-indicator"
+          className="streaming-cursor"
+        >
+          <span data-testid="streaming-cursor" className="cursor-blink">▌</span>
+        </span>
+      )}
+    </div>
+  );
 }
