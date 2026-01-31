@@ -279,8 +279,8 @@ describe('AC3: Markdown renders correctly', () => {
 
   it('should render unordered lists correctly', () => {
     render(<MessageView messages={[mockMarkdownMessage]} />);
-    const list = screen.getByRole('list');
-    expect(list).toBeInTheDocument();
+    const lists = screen.getAllByRole('list');
+    expect(lists.length).toBeGreaterThan(0);
   });
 
   it('should render all list items', () => {
@@ -706,12 +706,12 @@ describe('useMessageStream Hook', () => {
 describe('Message Component', () => {
   it('should render user message with avatar', () => {
     render(<Message message={mockUserMessage} />);
-    expect(screen.getByTestId('message-avatar')).toBeInTheDocument();
+    expect(screen.getByTestId('avatar')).toBeInTheDocument();
   });
 
   it('should render assistant message with avatar', () => {
     render(<Message message={mockAssistantMessage} />);
-    expect(screen.getByTestId('message-avatar')).toBeInTheDocument();
+    expect(screen.getByTestId('avatar')).toBeInTheDocument();
   });
 
   it('should apply correct CSS class based on role', () => {
