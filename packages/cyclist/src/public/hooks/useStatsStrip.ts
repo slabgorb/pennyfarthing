@@ -43,14 +43,14 @@ export function useStatsStrip(): UseStatsStripResult {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  // Track load state for each API
-  const [loadState, setLoadState] = useState({
+  // Track load state for each API (value unused, only type needed for callback)
+  const [_loadState, setLoadState] = useState({
     context: false,
     stats: false,
     projectInfo: false,
   });
 
-  const checkLoadComplete = useCallback((state: typeof loadState) => {
+  const checkLoadComplete = useCallback((state: typeof _loadState) => {
     if (state.context && state.stats && state.projectInfo) {
       setIsLoading(false);
     }
