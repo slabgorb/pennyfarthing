@@ -406,10 +406,23 @@
    Editor Component Styles
    ============================================================================= */
 
+/* Editor with controls layout */
+.editor-with-controls {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.editor-area {
+  flex: 1;
+  min-width: 0; /* Prevent overflow */
+}
+
 .editor-container {
   display: flex;
   flex-direction: column;
   padding: 8px;
+  min-width: 0; /* Prevent overflow */
 }
 
 .mode-toolbar {
@@ -442,6 +455,7 @@
 
 .editor-wrapper {
   position: relative;
+  min-width: 0; /* Prevent overflow */
 }
 
 .editor-textarea {
@@ -457,6 +471,7 @@
   font-size: 0.875rem;
   line-height: 1.4;
   resize: none;
+  box-sizing: border-box;
 }
 
 .editor-textarea:focus {
@@ -577,6 +592,85 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* =============================================================================
+   ControlBar Component Styles
+   ============================================================================= */
+
+.control-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  flex-shrink: 0;
+}
+
+.btn-stop {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--error-color, #f14c4c);
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-stop:hover:not(:disabled) {
+  background: #ff6b6b;
+}
+
+.btn-stop:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.btn-stop.stopping {
+  background: var(--warning-color, #cca700);
+}
+
+.btn-stop .icon {
+  font-size: 0.9rem;
+}
+
+.btn-stop .spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.btn-reset {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  background: var(--bg-tertiary, #2d2d2d);
+  border: 1px solid var(--border-color, #3c3c3c);
+  border-radius: 4px;
+  color: var(--text-secondary, #8b8b8b);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-reset:hover {
+  color: var(--text-primary, #d4d4d4);
+  background: var(--bg-hover, #3c3c3c);
+  border-color: var(--text-secondary, #8b8b8b);
 }
 
 /* =============================================================================
