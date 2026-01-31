@@ -448,6 +448,7 @@ function removeGhostElement(): void {
 // =============================================================================
 
 export interface DockingWorkspaceProps {
+  initialLayout?: WorkspaceLayoutConfig;
   leftCollapsed?: boolean;
   rightCollapsed?: boolean;
   onLeftCollapseChange?: (collapsed: boolean) => void;
@@ -457,6 +458,7 @@ export interface DockingWorkspaceProps {
 }
 
 export function DockingWorkspace({
+  initialLayout,
   leftCollapsed: leftCollapsedProp,
   rightCollapsed: rightCollapsedProp,
   onLeftCollapseChange,
@@ -464,7 +466,7 @@ export function DockingWorkspace({
   onDropRejected,
   onLayoutChange,
 }: DockingWorkspaceProps) {
-  const [layout, setLayout] = useState(createWorkspaceLayout);
+  const [layout, setLayout] = useState(() => initialLayout ?? createWorkspaceLayout());
 
   const [leftCollapsed, setLeftCollapsed] = useState(leftCollapsedProp ?? false);
   const [rightCollapsed, setRightCollapsed] = useState(rightCollapsedProp ?? false);
