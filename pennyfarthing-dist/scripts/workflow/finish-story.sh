@@ -63,7 +63,8 @@ if [[ ! -f "$SESSION_FILE" ]]; then
 fi
 
 # Extract metadata from session file (handle both "**Jira:**" and "- **Jira:**" formats)
-JIRA_KEY=$(grep -E '\*\*Jira:\*\*' "$SESSION_FILE" | sed 's/.*\*\*Jira:\*\* //' | tr -d ' ' || echo "")
+# Also handle markdown link format: [MSSCI-12721](https://...)
+JIRA_KEY=$(grep -E '\*\*Jira:\*\*' "$SESSION_FILE" | sed 's/.*\*\*Jira:\*\* //' | sed 's/\[//' | sed 's/\].*//' | tr -d ' ' || echo "")
 # Extract branch - strip any trailing annotations like "(pushed)"
 BRANCH=$(grep -E '\*\*Branch:\*\*' "$SESSION_FILE" | sed 's/.*\*\*Branch:\*\* //' | sed 's/ *(.*//' | tr -d ' ' || echo "")
 
