@@ -23,28 +23,28 @@ describe('MSSCI-12712: ContextIndicator Component', () => {
   describe('Module Structure', () => {
 
     it('should export ContextIndicator component as default', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
 
       expect(module.default).toBeDefined();
       expect(typeof module.default).toBe('function');
     });
 
     it('should export useContext hook from component module', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
 
       expect(module.useContext).toBeDefined();
       expect(typeof module.useContext).toBe('function');
     });
 
     it('should export ContextIndicatorProps type', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
 
       // TypeScript types exist at compile time; verify props shape via component
       expect(module.default).toBeDefined();
     });
 
     it('should export threshold constants', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
 
       expect(module.CONTEXT_THRESHOLDS).toBeDefined();
       expect(module.CONTEXT_THRESHOLDS.WARNING).toBe(70);
@@ -56,7 +56,7 @@ describe('MSSCI-12712: ContextIndicator Component', () => {
   describe('AC1: Component displays current context usage as percentage', () => {
 
     it('should render percentage value from context data', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
       const ContextIndicator = module.default;
 
       // Component should accept percent prop
@@ -64,14 +64,14 @@ describe('MSSCI-12712: ContextIndicator Component', () => {
     });
 
     it('should export formatPercentage utility function', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
 
       expect(module.formatPercentage).toBeDefined();
       expect(typeof module.formatPercentage).toBe('function');
     });
 
     it('should format percentage as integer with % suffix', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
       const { formatPercentage } = module;
 
       expect(formatPercentage(45)).toBe('45%');
@@ -80,7 +80,7 @@ describe('MSSCI-12712: ContextIndicator Component', () => {
     });
 
     it('should clamp percentage between 0 and 100', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
       const { formatPercentage } = module;
 
       expect(formatPercentage(-5)).toBe('0%');
@@ -88,14 +88,14 @@ describe('MSSCI-12712: ContextIndicator Component', () => {
     });
 
     it('should have data-testid="context-indicator" on root element', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
 
       // Presence of testid for DOM querying
       expect(module.CONTEXT_INDICATOR_TESTID).toBe('context-indicator');
     });
 
     it('should have data-testid="context-percent" on percentage display', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
 
       expect(module.CONTEXT_PERCENT_TESTID).toBe('context-percent');
     });
@@ -105,14 +105,14 @@ describe('MSSCI-12712: ContextIndicator Component', () => {
   describe('AC2: Visual indicator with threshold colors', () => {
 
     it('should export getContextLevel function', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
 
       expect(module.getContextLevel).toBeDefined();
       expect(typeof module.getContextLevel).toBe('function');
     });
 
     it('should return "normal" for usage under 70%', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
       const { getContextLevel } = module;
 
       expect(getContextLevel(0)).toBe('normal');
@@ -121,7 +121,7 @@ describe('MSSCI-12712: ContextIndicator Component', () => {
     });
 
     it('should return "elevated" for usage 70-89%', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
       const { getContextLevel } = module;
 
       expect(getContextLevel(70)).toBe('elevated');
@@ -130,7 +130,7 @@ describe('MSSCI-12712: ContextIndicator Component', () => {
     });
 
     it('should return "high" for usage 90%+', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
       const { getContextLevel } = module;
 
       expect(getContextLevel(90)).toBe('high');
@@ -139,19 +139,19 @@ describe('MSSCI-12712: ContextIndicator Component', () => {
     });
 
     it('should have data-testid="context-bar" on progress bar element', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
 
       expect(module.CONTEXT_BAR_TESTID).toBe('context-bar');
     });
 
     it('should have data-testid="context-fill" on progress fill element', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
 
       expect(module.CONTEXT_FILL_TESTID).toBe('context-fill');
     });
 
     it('should apply level class to progress bar (level-normal, level-elevated, level-high)', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
       const { getContextLevel, getLevelClassName } = module;
 
       expect(getLevelClassName(getContextLevel(50))).toBe('level-normal');
@@ -164,28 +164,28 @@ describe('MSSCI-12712: ContextIndicator Component', () => {
   describe('AC3: Real-time updates as context changes', () => {
 
     it('should export useContextIndicator hook', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
 
       expect(module.useContextIndicator).toBeDefined();
       expect(typeof module.useContextIndicator).toBe('function');
     });
 
     it('should subscribe to context updates via electronAPI', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
 
       // Hook should use electronAPI.context.onUpdate
       expect(module.useContextIndicator).toBeDefined();
     });
 
     it('should return isLoading state from hook', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
 
       // Hook signature should include isLoading
       expect(module.useContextIndicator).toBeDefined();
     });
 
     it('should return error state from hook', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
 
       // Hook signature should include error handling
       expect(module.useContextIndicator).toBeDefined();
@@ -196,13 +196,13 @@ describe('MSSCI-12712: ContextIndicator Component', () => {
   describe('AC4: Subtle warning display at 90% threshold', () => {
 
     it('should export WARNING_THRESHOLD constant equal to 90', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
 
       expect(module.CONTEXT_THRESHOLDS.DANGER).toBe(90);
     });
 
     it('should have data-warning attribute when at or above 90%', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
       const { shouldShowWarning } = module;
 
       expect(shouldShowWarning(89)).toBe(false);
@@ -211,7 +211,7 @@ describe('MSSCI-12712: ContextIndicator Component', () => {
     });
 
     it('should export warning message constant', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
 
       expect(module.CONTEXT_WARNING_MESSAGE).toBeDefined();
       expect(typeof module.CONTEXT_WARNING_MESSAGE).toBe('string');
@@ -219,7 +219,7 @@ describe('MSSCI-12712: ContextIndicator Component', () => {
     });
 
     it('should have ARIA live region for screen reader announcements', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
 
       // Component should include aria-live for accessibility
       expect(module.CONTEXT_INDICATOR_ARIA_LIVE).toBe('polite');
@@ -230,14 +230,14 @@ describe('MSSCI-12712: ContextIndicator Component', () => {
   describe('AC5: Tooltip showing exact token count', () => {
 
     it('should export formatTokenCount utility function', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
 
       expect(module.formatTokenCount).toBeDefined();
       expect(typeof module.formatTokenCount).toBe('function');
     });
 
     it('should format token counts with thousands separator', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
       const { formatTokenCount } = module;
 
       expect(formatTokenCount(1000)).toBe('1,000');
@@ -246,14 +246,14 @@ describe('MSSCI-12712: ContextIndicator Component', () => {
     });
 
     it('should export formatTooltip function', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
 
       expect(module.formatTooltip).toBeDefined();
       expect(typeof module.formatTooltip).toBe('function');
     });
 
     it('should format tooltip as "used / total tokens"', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
       const { formatTooltip } = module;
 
       const tooltip = formatTooltip(50000, 200000);
@@ -261,7 +261,7 @@ describe('MSSCI-12712: ContextIndicator Component', () => {
     });
 
     it('should handle undefined values gracefully in tooltip', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
       const { formatTooltip } = module;
 
       expect(formatTooltip(undefined, undefined)).toBe('— / — tokens');
@@ -270,7 +270,7 @@ describe('MSSCI-12712: ContextIndicator Component', () => {
     });
 
     it('should set title attribute on component for native tooltip', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
 
       // Component should apply title attribute for tooltip
       expect(module.default).toBeDefined();
@@ -281,7 +281,7 @@ describe('MSSCI-12712: ContextIndicator Component', () => {
   describe('AC6: Styled consistently with other Cyclist components', () => {
 
     it('should export component CSS module classnames', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
 
       expect(module.COMPONENT_CLASSNAME).toBe('context-indicator');
     });
@@ -353,14 +353,14 @@ describe('MSSCI-12712: ContextIndicator Component', () => {
   describe('Component Integration', () => {
 
     it('should export ContextData interface type', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
 
       // TypeScript interface - component should handle this shape
       expect(module.default).toBeDefined();
     });
 
     it('should handle null context data gracefully', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
       const { formatPercentage, formatTooltip } = module;
 
       // Should not throw with null/undefined inputs
@@ -369,7 +369,7 @@ describe('MSSCI-12712: ContextIndicator Component', () => {
     });
 
     it('should expose compact mode prop for different layouts', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
 
       // Component should support compact mode for smaller displays
       expect(module.COMPACT_MODE_CLASSNAME).toBe('context-indicator--compact');
@@ -380,13 +380,13 @@ describe('MSSCI-12712: ContextIndicator Component', () => {
   describe('Accessibility', () => {
 
     it('should have role="progressbar" on the bar element', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
 
       expect(module.PROGRESS_BAR_ROLE).toBe('progressbar');
     });
 
     it('should include aria-valuenow, aria-valuemin, aria-valuemax attributes', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
       const { getAriaAttributes } = module;
 
       const attrs = getAriaAttributes(75, 100);
@@ -396,7 +396,7 @@ describe('MSSCI-12712: ContextIndicator Component', () => {
     });
 
     it('should have aria-label describing the context usage', async () => {
-      const module = await import('../src/public/components/ContextIndicator/index.js');
+      const module = await import('../src/public/components/ContextIndicator/index.tsx');
       const { getAriaAttributes } = module;
 
       const attrs = getAriaAttributes(75, 100);
