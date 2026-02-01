@@ -10,7 +10,7 @@
  */
 
 import { useMemo } from 'react';
-import { detectMarkers, stripMarkers, MARKER_TYPES } from '@pennyfarthing/shared';
+import { detectMarkers, stripMarkers, MARKER_TYPES } from '@pennyfarthing/shared/browser';
 
 /**
  * Action types that map to different UI presentations
