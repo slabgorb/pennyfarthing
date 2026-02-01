@@ -9,8 +9,8 @@ import { useState, useEffect } from 'react';
 
 export interface TodoItem {
   id: string;
-  subject: string;
-  description?: string;
+  content: string;
+  activeForm: string;
   status: 'pending' | 'in_progress' | 'completed';
   blockedBy?: string[];
   blocks?: string[];
