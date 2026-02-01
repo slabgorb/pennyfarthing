@@ -1523,6 +1523,57 @@
   margin: 0;
 }
 
+/* Tier display - MSSCI-12799 */
+.debug-panel .tier-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 6px 8px;
+  background: var(--bg-tertiary, #2d2d2d);
+  border-radius: 4px;
+}
+
+.debug-panel .tier-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.debug-panel .tier-badge.tier-full {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+}
+
+.debug-panel .tier-badge.tier-refresh {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+.debug-panel .tier-badge.tier-handoff {
+  background: rgba(234, 179, 8, 0.2);
+  color: #eab308;
+  border: 1px solid rgba(234, 179, 8, 0.4);
+}
+
+.debug-panel .tier-badge.tier-minimal {
+  background: rgba(168, 85, 247, 0.2);
+  color: #a855f7;
+  border: 1px solid rgba(168, 85, 247, 0.4);
+}
+
+.debug-panel .tier-savings {
+  font-size: 0.7rem;
+  color: var(--text-secondary, #8b8b8b);
+}
+
 /* Settings panel */
 .settings-panel {
   padding: 8px;

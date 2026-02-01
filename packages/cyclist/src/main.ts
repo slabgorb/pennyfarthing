@@ -38,7 +38,7 @@ import {
   completeBackgroundTask,
 } from './otlp-receiver.js';
 import { ClaudeService, SDKMessage } from './claude-service.js';
-import { getPrimeContext } from './prime.js';
+import { getPrimeContext, selectContextTier } from './prime.js';
 import { isTodoWriteMessage, extractTodos, type TodoItem } from './todos.js';
 // Story 36-8: Import for capturing tool inputs for OTEL enrichment
 import { storePendingToolInput } from './span-correlation.js';
@@ -460,6 +460,31 @@ export function resetSkills(): void {
 // =============================================================================
 
 /**
+ * Current active agent name for tier calculation
+ * Set when agent is loaded via AGENT_LOAD_CONTEXT or AGENT_NEW_SESSION
+ * MSSCI-12799: Required for tier display in DebugPanel
+ */
+let currentAgentName: string | null = null;
+
+/**
+ * Get the current agent name
+ */
+export function getCurrentAgent(): string | null {
+  return currentAgentName;
+}
+
+/**
+ * Set the current agent name and update ClaudeService state
+ */
+export function setCurrentAgent(agent: string | null): void {
+  currentAgentName = agent;
+  // Also update ClaudeService's lastAgent for tier calculation
+  if (claudeServiceInstance) {
+    claudeServiceInstance.setLastAgent(agent);
+  }
+}
+
+/**
  * Current context state - updated by polling check-context.sh
  */
 let currentContext: ContextInfo = {
@@ -485,6 +510,8 @@ export function getContext(): ContextInfo {
  * Called when clearing session
  */
 export function resetContext(): void {
+  // MSSCI-12799: Clear current agent when context is reset
+  currentAgentName = null;
   currentContext = {
     percent: null,
     tokens: null,
@@ -503,11 +530,12 @@ export function resetContext(): void {
  * Returns true if context was updated (values changed)
  */
 export function updateContextState(context: ContextInfo): boolean {
-  // Check if values actually changed
+  // Check if values actually changed (including tier for MSSCI-12799)
   if (
     currentContext.percent === context.percent &&
     currentContext.tokens === context.tokens &&
-    currentContext.status === context.status
+    currentContext.status === context.status &&
+    currentContext.tier === context.tier
   ) {
     return false;
   }
@@ -528,6 +556,18 @@ export const CONTEXT_POLL_INTERVAL_MS = 15000;
 let contextPollTimer: NodeJS.Timeout | null = null;
 
 /**
+ * Calculate the current tier from ClaudeService state
+ * MSSCI-12799: Used to include tier in context broadcast
+ */
+function calculateCurrentTier(): ReturnType<typeof selectContextTier> | undefined {
+  if (!currentAgentName || !claudeServiceInstance) {
+    return undefined;
+  }
+  const state = claudeServiceInstance.getContextState();
+  return selectContextTier(currentAgentName, state);
+}
+
+/**
  * Start polling context usage
  * Calls getContextUsage periodically and broadcasts changes
  * @param projectDir - The project directory
@@ -537,6 +577,8 @@ export function startContextPolling(projectDir: string, getSessionId?: () => str
   // Initial fetch (may not have session ID yet)
   const sessionId = getSessionId?.() ?? undefined;
   const initialContext = getContextUsage(projectDir, sessionId);
+  // MSSCI-12799: Include tier in context
+  initialContext.tier = calculateCurrentTier();
   updateContextState(initialContext);
 
   // Set up polling
@@ -544,9 +586,11 @@ export function startContextPolling(projectDir: string, getSessionId?: () => str
     // Get session ID each poll - it may become available after first message
     const currentSessionId = getSessionId?.() ?? undefined;
     const context = getContextUsage(projectDir, currentSessionId);
+    // MSSCI-12799: Include tier in context
+    context.tier = calculateCurrentTier();
     const changed = updateContextState(context);
     if (changed) {
-      console.log('Context updated:', context.percent, '%', currentSessionId ? `(session: ${currentSessionId.slice(0, 8)}...)` : '');
+      console.log('Context updated:', context.percent, '%', context.tier ? `tier=${context.tier}` : '', currentSessionId ? `(session: ${currentSessionId.slice(0, 8)}...)` : '');
     }
   }, CONTEXT_POLL_INTERVAL_MS);
 
@@ -1240,6 +1284,8 @@ export function setupClaudeIPCHandlers(ipcMain: {
     if (projectDir) {
       // Extract agent name from command (e.g., "/dev" -> "dev")
       const agentName = agent.startsWith('/') ? agent.slice(1) : agent;
+      // MSSCI-12799: Track current agent for tier display
+      setCurrentAgent(agentName);
       const primeContext = getPrimeContext(agentName, projectDir);
       if (primeContext) {
         service.setSystemPrompt(primeContext);
@@ -1266,6 +1312,8 @@ export function setupClaudeIPCHandlers(ipcMain: {
 
     // Extract agent name from command (e.g., "/dev" -> "dev")
     const agentName = agent.startsWith('/') ? agent.slice(1) : agent;
+    // MSSCI-12799: Track current agent for tier display
+    setCurrentAgent(agentName);
     const primeContext = getPrimeContext(agentName, projectDir);
     if (primeContext) {
       const service = getClaudeService();
