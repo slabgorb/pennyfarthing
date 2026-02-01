@@ -122,6 +122,11 @@
   color: #1a1a2e;
 }
 
+/* Editor-specific positioning */
+.editor-mode-switch {
+  margin-bottom: 8px;
+}
+
 /* Screen reader only text */
 .visually-hidden {
   position: absolute;
