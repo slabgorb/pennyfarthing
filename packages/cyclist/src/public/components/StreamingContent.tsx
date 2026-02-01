@@ -22,9 +22,9 @@ export default function StreamingContent({ content, isStreaming }: StreamingCont
       {isStreaming && (
         <span
           data-testid="streaming-indicator"
-          className="streaming-cursor"
+          className="inline text-[var(--accent-color,#007acc)] animate-pulse"
         >
-          <span data-testid="streaming-cursor" className="cursor-blink">▌</span>
+          ▌
         </span>
       )}
     </div>
