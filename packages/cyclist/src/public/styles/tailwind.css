@@ -16,7 +16,8 @@
   flex-direction: column;
   background: var(--bg-primary, #1e1e1e);
   color: var(--text-primary, #d4d4d4);
-  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  font-family: var(--font-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  font-size: var(--font-size-ui, 1rem);
 }
 
 .docking-workspace {
@@ -403,7 +404,7 @@
 
 .message-content code {
   font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
-  font-size: 0.875em;
+  font-size: var(--font-size-code, 0.875em);
 }
 
 .message-content pre code {
@@ -443,7 +444,7 @@
   border: 1px solid var(--border-color, #3c3c3c);
   color: var(--text-secondary, #8b8b8b);
   font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
-  font-size: 0.85rem;
+  font-size: var(--font-size-code, 0.85rem);
   max-width: 100%;
 }
 
@@ -1622,6 +1623,11 @@
   margin-top: -4px;
 }
 
+/* ThemePalette in settings - ensure solid background for dropdown */
+.settings-panel .theme-palette-menu {
+  background: var(--bg-secondary, #252526);
+}
+
 /* Changed panel (FileTree) */
 .changed-panel {
   height: 100%;
@@ -1672,7 +1678,7 @@
   flex: 1;
   color: var(--text-secondary, #8b8b8b);
   font-size: 0.8rem;
-  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  font-family: var(--font-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
   font-style: italic;
 }
 

@@ -97,6 +97,28 @@ export const FONT_SIZE_SCALE: FontSizeScale = {
 const VALID_SIZES: FontSize[] = ['xs', 'sm', 'base', 'lg', 'xl'];
 
 // =============================================================================
+// Sanitization
+// =============================================================================
+
+/**
+ * Sanitize custom font family input to prevent CSS injection.
+ * Removes characters that could break out of font-family context.
+ */
+export function sanitizeFontFamily(input: string): string {
+  if (!input || typeof input !== 'string') {
+    return '';
+  }
+  // Remove dangerous characters that could break CSS context
+  // Allow: letters, numbers, spaces, quotes, commas, hyphens, underscores
+  return input
+    .replace(/[;{}()<>\\]/g, '')  // Remove CSS-breaking chars
+    .replace(/javascript:/gi, '') // Remove script protocol
+    .replace(/expression\s*\(/gi, '') // Remove IE expression()
+    .trim()
+    .slice(0, 500); // Limit length
+}
+
+// =============================================================================
 // Default Settings
 // =============================================================================
 
@@ -196,7 +218,9 @@ export function applyUIFont(presetId: string, customFamily?: string): void {
     return;
   }
 
-  const fontFamily = preset.isCustom && customFamily ? customFamily : preset.fontFamily;
+  const fontFamily = preset.isCustom && customFamily
+    ? sanitizeFontFamily(customFamily)
+    : preset.fontFamily;
   document.documentElement.style.setProperty('--font-ui', fontFamily);
 }
 
@@ -207,7 +231,9 @@ export function applyCodeFont(presetId: string, customFamily?: string): void {
     return;
   }
 
-  const fontFamily = preset.isCustom && customFamily ? customFamily : preset.fontFamily;
+  const fontFamily = preset.isCustom && customFamily
+    ? sanitizeFontFamily(customFamily)
+    : preset.fontFamily;
   document.documentElement.style.setProperty('--font-mono', fontFamily);
 }
 
@@ -221,7 +247,7 @@ export function applyFontSettings(settings: FontSettings): void {
   const uiPreset = UI_FONT_PRESETS.find(p => p.id === settings.uiFont);
   if (uiPreset) {
     const uiFontFamily = uiPreset.isCustom && settings.customUiFont
-      ? settings.customUiFont
+      ? sanitizeFontFamily(settings.customUiFont)
       : uiPreset.fontFamily;
     document.documentElement.style.setProperty('--font-ui', uiFontFamily);
   }
@@ -230,7 +256,7 @@ export function applyFontSettings(settings: FontSettings): void {
   const codePreset = CODE_FONT_PRESETS.find(p => p.id === settings.codeFont);
   if (codePreset) {
     const codeFontFamily = codePreset.isCustom && settings.customCodeFont
-      ? settings.customCodeFont
+      ? sanitizeFontFamily(settings.customCodeFont)
       : codePreset.fontFamily;
     document.documentElement.style.setProperty('--font-mono', codeFontFamily);
   }

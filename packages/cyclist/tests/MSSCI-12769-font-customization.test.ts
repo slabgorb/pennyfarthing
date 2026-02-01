@@ -587,6 +587,50 @@ describe('FontSizePicker Component', () => {
 });
 
 // =============================================================================
+// Sanitization
+// =============================================================================
+
+describe('Font Family Sanitization', () => {
+  it('should sanitize dangerous characters from custom font input', async () => {
+    const { sanitizeFontFamily } = await import('../src/public/js/font-presets.js');
+
+    // Should remove CSS-breaking characters
+    expect(sanitizeFontFamily('Arial; body { display: none }')).toBe('Arial body  display: none');
+    expect(sanitizeFontFamily('Arial{}')).toBe('Arial');
+    expect(sanitizeFontFamily('Arial<script>')).toBe('Arialscript');
+  });
+
+  it('should remove javascript: protocol', async () => {
+    const { sanitizeFontFamily } = await import('../src/public/js/font-presets.js');
+
+    expect(sanitizeFontFamily('javascript:alert(1)')).toBe('alert1');
+  });
+
+  it('should handle normal font family values', async () => {
+    const { sanitizeFontFamily } = await import('../src/public/js/font-presets.js');
+
+    expect(sanitizeFontFamily('Arial')).toBe('Arial');
+    expect(sanitizeFontFamily("'Helvetica Neue', sans-serif")).toBe("'Helvetica Neue', sans-serif");
+    expect(sanitizeFontFamily('Georgia, serif')).toBe('Georgia, serif');
+  });
+
+  it('should limit length to prevent DoS', async () => {
+    const { sanitizeFontFamily } = await import('../src/public/js/font-presets.js');
+
+    const longInput = 'A'.repeat(1000);
+    expect(sanitizeFontFamily(longInput).length).toBeLessThanOrEqual(500);
+  });
+
+  it('should handle empty/invalid input', async () => {
+    const { sanitizeFontFamily } = await import('../src/public/js/font-presets.js');
+
+    expect(sanitizeFontFamily('')).toBe('');
+    expect(sanitizeFontFamily(null as unknown as string)).toBe('');
+    expect(sanitizeFontFamily(undefined as unknown as string)).toBe('');
+  });
+});
+
+// =============================================================================
 // Integration: Settings Panel
 // =============================================================================
 
