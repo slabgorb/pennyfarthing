@@ -141,8 +141,9 @@ describe('AC1: HANDOFF marker → handoff button', () => {
   it('should display agent command as button label', () => {
     render(<QuickActions message={messageWithHandoff} />);
 
-    const button = screen.getByRole('button');
-    expect(button).toHaveTextContent(/dev/i);
+    // First button should show the agent command
+    const buttons = screen.getAllByRole('button');
+    expect(buttons[0]).toHaveTextContent(/dev/i);
   });
 
   it('should render "Not yet" alternative option', () => {

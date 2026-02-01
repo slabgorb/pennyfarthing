@@ -13,7 +13,8 @@ export type MarkerType =
   | 'context_clear'
   | 'invoke'
   | 'question'
-  | 'choices';
+  | 'choices'
+  | 'continue';
 
 /**
  * Parsed marker from agent output.
