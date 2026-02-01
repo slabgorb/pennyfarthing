@@ -18,6 +18,7 @@ import React from 'react';
 // Components under test
 import MessageView from '../src/public/components/MessageView';
 import { MessagePanel } from '../src/public/components/panels/MessagePanel';
+import { isSkillContent } from '../src/public/utils/messageFilters';
 
 // Mock electronAPI
 const mockElectronAPI = {
@@ -297,13 +298,7 @@ describe('AC4: Normal message display regression tests', () => {
 // ============================================================================
 
 describe('isSkillContent utility function', () => {
-  // Import the utility once implemented
-  // import { isSkillContent } from '../src/public/utils/messageFilters';
-
-  const isSkillContent = (content: string): boolean => {
-    // Stub - this function needs to be implemented
-    throw new Error('isSkillContent not implemented');
-  };
+  // Using the imported isSkillContent from messageFilters.ts
 
   it('should return true for content with <command-message> tag', () => {
     expect(isSkillContent('<command-message>sprint</command-message>')).toBe(true);

@@ -19,6 +19,7 @@ import Message from './Message';
 import ToolCallBlock from './ToolCallBlock';
 import SubagentSpan from './SubagentSpan';
 import QuickActions from './QuickActions';
+import { isSkillContent } from '../utils/messageFilters';
 
 interface MessageData {
   type: 'user' | 'assistant' | 'tool_use' | 'tool_result';
@@ -79,8 +80,13 @@ export default function MessageView({ messages }: MessageViewProps): React.React
       }
     });
 
-    // Second pass: group messages
+    // Second pass: group messages (filtering skill content from user messages)
     messages.forEach(msg => {
+      // Filter out skill content from user messages (MSSCI-12783)
+      if (msg.type === 'user' && isSkillContent(msg.content)) {
+        return; // Skip this message - it's skill content
+      }
+
       if (msg.parent_id) {
         // This message belongs to a subagent
         let group = subagentGroups.get(msg.parent_id);
