@@ -17,6 +17,7 @@ export interface PersonaData {
   theme: string | null;
   role: string | null;
   slug: string | null;
+  quote: string | null;  // Random catchphrase from theme
 }
 
 interface UsePersonaResult {

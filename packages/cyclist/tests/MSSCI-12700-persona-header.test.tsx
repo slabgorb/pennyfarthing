@@ -119,12 +119,13 @@ describe('AC1: PersonaHeader displays current agent character name', () => {
 // ============================================================================
 
 describe('AC2: PersonaHeader displays current theme name', () => {
-  it('should display theme name from persona data', async () => {
+  it('should display humanized theme name from persona data', async () => {
     mockElectronAPI.persona.get.mockResolvedValue(mockPersonaRome);
     render(<PersonaHeader />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('persona-theme')).toHaveTextContent('rome');
+      // "rome" should be humanized to "Rome"
+      expect(screen.getByTestId('persona-theme')).toHaveTextContent('Rome');
     });
   });
 
@@ -133,9 +134,9 @@ describe('AC2: PersonaHeader displays current theme name', () => {
     render(<PersonaHeader />);
 
     await waitFor(() => {
-      // star-trek-tng could be displayed as "Star Trek TNG" or similar
+      // "star-trek-tng" should be humanized to "Star Trek Tng"
       const themeEl = screen.getByTestId('persona-theme');
-      expect(themeEl.textContent).toMatch(/star-trek-tng|Star Trek TNG/i);
+      expect(themeEl.textContent).toMatch(/Star Trek Tng/i);
     });
   });
 
@@ -228,7 +229,8 @@ describe('AC4: Component updates when persona changes', () => {
     callback(null, mockPersonaTrek);
 
     await waitFor(() => {
-      expect(screen.getByTestId('persona-theme')).toHaveTextContent(/star-trek-tng/i);
+      // "star-trek-tng" should be humanized to "Star Trek Tng"
+      expect(screen.getByTestId('persona-theme')).toHaveTextContent(/Star Trek Tng/i);
     });
   });
 
@@ -257,44 +259,50 @@ describe('AC5: Component handles missing/undefined persona gracefully', () => {
     mockElectronAPI.persona.get.mockResolvedValue(null);
     render(<PersonaHeader />);
 
-    expect(screen.getByTestId('persona-header')).toBeInTheDocument();
+    // Should render empty state (header with 'empty' class)
+    const header = screen.getByTestId('persona-header');
+    expect(header).toBeInTheDocument();
+    expect(header).toHaveClass('empty');
   });
 
   it('should render without crashing when persona is undefined', async () => {
     mockElectronAPI.persona.get.mockResolvedValue(undefined);
     render(<PersonaHeader />);
 
-    expect(screen.getByTestId('persona-header')).toBeInTheDocument();
+    // Should render empty state (header with 'empty' class)
+    const header = screen.getByTestId('persona-header');
+    expect(header).toBeInTheDocument();
+    expect(header).toHaveClass('empty');
   });
 
-  it('should show placeholder when character is missing', async () => {
+  it('should show empty state when character is missing', async () => {
     mockElectronAPI.persona.get.mockResolvedValue({ theme: 'rome', role: 'dev' });
     render(<PersonaHeader />);
 
+    // Component hides when character is missing (empty state)
     await waitFor(() => {
-      const character = screen.getByTestId('persona-character');
-      // Should show placeholder (em dash, "Unknown", or similar)
-      expect(character.textContent).toMatch(/—|Unknown|Agent/i);
+      const header = screen.getByTestId('persona-header');
+      expect(header).toHaveClass('empty');
     });
   });
 
-  it('should show placeholder when theme is missing', async () => {
+  it('should show default theme when theme is missing', async () => {
     mockElectronAPI.persona.get.mockResolvedValue({ character: 'Test', role: 'dev' });
     render(<PersonaHeader />);
 
     await waitFor(() => {
       const theme = screen.getByTestId('persona-theme');
-      expect(theme.textContent).toMatch(/—|default/i);
+      expect(theme.textContent).toMatch(/default/i);
     });
   });
 
-  it('should show placeholder when role is missing', async () => {
+  it('should show default role when role is missing', async () => {
     mockElectronAPI.persona.get.mockResolvedValue({ character: 'Test', theme: 'rome' });
     render(<PersonaHeader />);
 
     await waitFor(() => {
       const role = screen.getByTestId('persona-role');
-      expect(role.textContent).toMatch(/—|agent/i);
+      expect(role.textContent).toMatch(/agent/i);
     });
   });
 
@@ -302,7 +310,7 @@ describe('AC5: Component handles missing/undefined persona gracefully', () => {
     mockElectronAPI.persona.get.mockRejectedValue(new Error('API Error'));
     render(<PersonaHeader />);
 
-    // Should not crash, should show empty/placeholder state
+    // Should not crash, should show empty state
     expect(screen.getByTestId('persona-header')).toBeInTheDocument();
   });
 });
@@ -312,10 +320,14 @@ describe('AC5: Component handles missing/undefined persona gracefully', () => {
 // ============================================================================
 
 describe('AC6: Accessible with proper ARIA labels', () => {
-  it('should have aria-label on persona-header container', () => {
+  it('should have aria-label on persona-header container when populated', async () => {
+    mockElectronAPI.persona.get.mockResolvedValue(mockPersonaRome);
     render(<PersonaHeader />);
-    const header = screen.getByTestId('persona-header');
-    expect(header).toHaveAttribute('aria-label');
+
+    await waitFor(() => {
+      const header = screen.getByTestId('persona-header');
+      expect(header).toHaveAttribute('aria-label');
+    });
   });
 
   it('should have descriptive aria-label including persona info', async () => {
@@ -329,16 +341,24 @@ describe('AC6: Accessible with proper ARIA labels', () => {
     });
   });
 
-  it('should have role attribute for semantic meaning', () => {
+  it('should have role attribute for semantic meaning when populated', async () => {
+    mockElectronAPI.persona.get.mockResolvedValue(mockPersonaRome);
     render(<PersonaHeader />);
-    const header = screen.getByTestId('persona-header');
-    expect(header).toHaveAttribute('role', 'banner');
+
+    await waitFor(() => {
+      const header = screen.getByTestId('persona-header');
+      expect(header).toHaveAttribute('role', 'banner');
+    });
   });
 
-  it('should have aria-live for announcing updates to screen readers', () => {
+  it('should have aria-live for announcing updates to screen readers when populated', async () => {
+    mockElectronAPI.persona.get.mockResolvedValue(mockPersonaRome);
     render(<PersonaHeader />);
-    const header = screen.getByTestId('persona-header');
-    expect(header).toHaveAttribute('aria-live', 'polite');
+
+    await waitFor(() => {
+      const header = screen.getByTestId('persona-header');
+      expect(header).toHaveAttribute('aria-live', 'polite');
+    });
   });
 });
 
