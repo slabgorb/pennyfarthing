@@ -223,6 +223,75 @@
   font-size: 0.875rem;
 }
 
+/* =============================================================================
+   PersonaHeader Component Styles
+   ============================================================================= */
+
+.persona-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--bg-secondary, #252526);
+  border-bottom: 1px solid var(--border-color, #3c3c3c);
+  flex-shrink: 0;
+}
+
+.persona-header.empty {
+  display: none;
+}
+
+.persona-portrait {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--bg-tertiary, #2d2d2d);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.persona-portrait .portrait-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.persona-portrait .portrait-fallback {
+  font-size: 1.5rem;
+}
+
+.persona-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.persona-character {
+  font-weight: 600;
+  color: var(--text-primary, #d4d4d4);
+  font-size: 0.95rem;
+}
+
+.persona-theme {
+  color: var(--text-secondary, #8b8b8b);
+  font-size: 0.8rem;
+}
+
+.persona-role.badge {
+  padding: 2px 8px;
+  background: var(--accent-color, #007acc);
+  color: #fff;
+  font-size: 0.7rem;
+  border-radius: 10px;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
 /* Message panel */
 .message-panel {
   display: flex;
@@ -355,6 +424,90 @@
   font-weight: 600;
   color: var(--accent-color, #007acc);
   margin-bottom: 0.25rem;
+}
+
+/* =============================================================================
+   Avatar Portraits
+   ============================================================================= */
+
+.avatar-portrait {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatar-emoji {
+  font-size: 1.25rem;
+}
+
+.message-avatar.avatar-fallback::after {
+  content: '🤖';
+  font-size: 1.25rem;
+}
+
+/* =============================================================================
+   Subagent Span Styles
+   ============================================================================= */
+
+.subagent-span {
+  margin: 0.5rem 0;
+  border: 1px solid var(--border-color, #3c3c3c);
+  border-radius: 6px;
+  background: var(--bg-secondary, #252526);
+}
+
+.subagent-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  background: var(--bg-tertiary, #2d2d2d);
+  border-radius: 5px 5px 0 0;
+  font-size: 0.8rem;
+}
+
+.subagent-span.collapsed .subagent-header {
+  border-radius: 5px;
+}
+
+.subagent-toggle {
+  color: var(--text-secondary, #8b8b8b);
+  font-size: 0.7rem;
+}
+
+.subagent-type {
+  color: var(--accent-color, #007acc);
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.subagent-name {
+  color: var(--text-primary, #d4d4d4);
+}
+
+.subagent-count {
+  color: var(--text-secondary, #8b8b8b);
+  font-size: 0.75rem;
+  margin-left: auto;
+}
+
+.subagent-content {
+  padding: 0.5rem;
+}
+
+/* Subagent prompt - the task/instruction given to subagent */
+.message-subagent-prompt {
+  background: var(--bg-tertiary, #2d2d2d);
+  border-left: 3px solid var(--accent-color, #007acc);
+  color: var(--text-secondary, #8b8b8b);
+  font-size: 0.85rem;
+  max-width: 100%;
+}
+
+.message-subagent-prompt .message-content {
+  font-style: italic;
 }
 
 /* Scroll to bottom button */
@@ -627,12 +780,29 @@
 }
 
 .btn-stop:disabled {
-  opacity: 0.7;
+  opacity: 0.4;
   cursor: not-allowed;
+  background: var(--bg-tertiary, #2d2d2d);
+  color: var(--text-secondary, #8b8b8b);
 }
 
 .btn-stop.stopping {
   background: var(--warning-color, #cca700);
+}
+
+.btn-stop.throbbing {
+  animation: throb 1.5s ease-in-out infinite;
+}
+
+@keyframes throb {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(241, 76, 76, 0.4);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 6px rgba(241, 76, 76, 0);
+  }
 }
 
 .btn-stop .icon {

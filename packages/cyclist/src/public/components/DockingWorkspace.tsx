@@ -18,6 +18,7 @@
  */
 
 import React, { useState, useCallback, useRef, KeyboardEvent, ComponentType, DragEvent } from 'react';
+import { ErrorBoundary } from './ErrorBoundary';
 
 // =============================================================================
 // Panel Inventory - All available panels in Cyclist
@@ -389,7 +390,11 @@ function Sidebar({
             hidden={!isActive}
             className={`panel panel-${panelId}`}
           >
-            {Component ? <Component /> : null}
+            {Component ? (
+              <ErrorBoundary panelName={getPanelConfig(panelId).title}>
+                <Component />
+              </ErrorBoundary>
+            ) : null}
           </div>
         );
       })}
@@ -770,9 +775,11 @@ export function DockingWorkspace({
           role="tabpanel"
           className="panel panel-message"
         >
-          {panelComponents[PANEL_INVENTORY.MESSAGE]
-            ? React.createElement(panelComponents[PANEL_INVENTORY.MESSAGE])
-            : null}
+          {panelComponents[PANEL_INVENTORY.MESSAGE] ? (
+            <ErrorBoundary panelName="Message">
+              {React.createElement(panelComponents[PANEL_INVENTORY.MESSAGE])}
+            </ErrorBoundary>
+          ) : null}
         </div>
       </div>
 
