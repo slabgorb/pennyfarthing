@@ -10,6 +10,14 @@ interface ContextData {
   used?: number;
   total?: number;
   percent?: number;
+  /** System prompt overhead (first turn tokens) */
+  baseline?: number;
+  /** Tokens used by conversation (total - baseline) */
+  usableTokens?: number;
+  /** Conversation usage as % of available capacity */
+  usablePercent?: number;
+  /** Available capacity (max - baseline) */
+  available?: number;
 }
 
 export function DebugPanel(): React.ReactElement {
@@ -52,6 +60,16 @@ export function DebugPanel(): React.ReactElement {
             {context.used?.toLocaleString()} / {context.total?.toLocaleString()} tokens
             ({context.percent || 0}%)
           </span>
+          {context.baseline != null && (
+            <dl className="context-breakdown">
+              <dt>System Prompt</dt>
+              <dd>{context.baseline.toLocaleString()} tokens</dd>
+              <dt>Conversation</dt>
+              <dd>{context.usableTokens?.toLocaleString() ?? '—'} tokens</dd>
+              <dt>Available</dt>
+              <dd>{context.available?.toLocaleString() ?? '—'} tokens</dd>
+            </dl>
+          )}
         </div>
       ) : (
         <div className="placeholder">No context data</div>

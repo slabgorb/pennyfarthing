@@ -468,6 +468,22 @@
   font-size: 1.25rem;
 }
 
+/* Thinking/streaming indicator - portrait throbs */
+@keyframes avatar-throb {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 var(--accent-color, #007acc);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 8px 2px var(--accent-color, #007acc);
+  }
+}
+
+.avatar-thinking {
+  animation: avatar-throb 1.2s ease-in-out infinite;
+}
+
 .message-avatar.avatar-fallback::after {
   content: '🤖';
   font-size: 1.25rem;
@@ -550,6 +566,9 @@
   background: var(--bg-secondary, #252526);
   border-radius: 8px;
   border: 1px solid var(--border-color, #3c3c3c);
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
 }
 
 .quick-actions-content {
@@ -566,19 +585,20 @@
 
 .quick-action-btn {
   padding: 8px 16px;
-  background: var(--bg-tertiary, #2d2d2d);
-  border: 1px solid var(--border-color, #3c3c3c);
+  background: var(--accent-color, #007acc);
+  border: 1px solid var(--accent-color, #007acc);
   border-radius: 6px;
-  color: var(--text-primary, #d4d4d4);
+  color: #fff;
   font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .quick-action-btn:hover:not(:disabled) {
-  background: var(--accent-color, #007acc);
-  border-color: var(--accent-color, #007acc);
-  color: #fff;
+  background: var(--accent-hover, #0098ff);
+  border-color: var(--accent-hover, #0098ff);
+  filter: brightness(1.1);
 }
 
 .quick-action-btn:disabled {
@@ -1366,6 +1386,26 @@
 
 .debug-panel .token-stats dd {
   color: var(--text-primary, #d4d4d4);
+  text-align: right;
+  margin: 0;
+}
+
+.debug-panel .context-breakdown {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 12px;
+  font-size: 0.7rem;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-color, #3d3d3d);
+}
+
+.debug-panel .context-breakdown dt {
+  color: var(--text-tertiary, #6b6b6b);
+}
+
+.debug-panel .context-breakdown dd {
+  color: var(--text-secondary, #8b8b8b);
   text-align: right;
   margin: 0;
 }
