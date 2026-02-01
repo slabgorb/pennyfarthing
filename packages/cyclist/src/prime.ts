@@ -162,3 +162,81 @@ export function selectContextTier(
   // Same agent, early conversation - refresh dynamic state
   return 'REFRESH';
 }
+
+// =============================================================================
+// MSSCI-12798: Tier Integration
+// =============================================================================
+
+/**
+ * Build the Python prime command string
+ *
+ * This is exported for testing - allows verification of command format
+ * without actually executing the command.
+ *
+ * @param agentName - Agent name (sm, tea, dev, reviewer, etc.)
+ * @param tier - Optional context tier (FULL, REFRESH, HANDOFF, MINIMAL)
+ * @returns Command string for executing Python prime script
+ */
+export function buildPrimeCommand(agentName: string, tier?: ContextTier): string {
+  let command = `python3 -m pennyfarthing_scripts.cli agent start "${agentName}" --quiet`;
+
+  if (tier !== undefined) {
+    command += ` --tier ${tier}`;
+  }
+
+  return command;
+}
+
+/**
+ * Get the prime context for an agent with tier support
+ *
+ * Like getPrimeContext but accepts a tier parameter to control
+ * how much context is loaded. This is used by the tiered context
+ * injection system (MSSCI-12793) to reduce token overhead.
+ *
+ * @param agentName - Agent name (sm, tea, dev, reviewer, etc.)
+ * @param projectDir - Project directory to run from
+ * @param tier - Context tier (FULL, REFRESH, HANDOFF, MINIMAL)
+ * @returns Prime context string, or null if failed
+ */
+export function getPrimeContextWithTier(
+  agentName: string,
+  projectDir: string,
+  tier: ContextTier
+): string | null {
+  const packageRoot = findPennyfarthingScripts(projectDir);
+  if (!packageRoot) {
+    console.warn('[prime] Could not find pennyfarthing_scripts');
+    return null;
+  }
+
+  try {
+    // Set PYTHONPATH so Python can find pennyfarthing_scripts
+    const env = {
+      ...process.env,
+      PYTHONPATH: `${packageRoot}:${process.env.PYTHONPATH || ''}`,
+    };
+
+    // Build command with tier argument
+    const command = buildPrimeCommand(agentName, tier);
+
+    const result = execSync(command, {
+      cwd: projectDir,
+      env,
+      encoding: 'utf-8',
+      timeout: 10000, // 10 second timeout
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+
+    if (result && result.trim().length > 0) {
+      console.log(`[prime] Got context for agent "${agentName}" tier=${tier} (${result.length} chars)`);
+      return result;
+    }
+
+    console.warn(`[prime] Empty output for agent "${agentName}" tier=${tier}`);
+    return null;
+  } catch (error) {
+    console.error(`[prime] Failed to get context for agent "${agentName}" tier=${tier}:`, error);
+    return null;
+  }
+}
