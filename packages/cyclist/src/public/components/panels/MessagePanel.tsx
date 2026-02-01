@@ -11,6 +11,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import MessageView from '../MessageView';
 import Editor, { PastedImage } from '../Editor';
 import { ControlBar, useControlBar } from '../ControlBar';
+import PersonaHeader from '../PersonaHeader';
 
 // =============================================================================
 // Types
@@ -40,6 +41,9 @@ interface SDKMessage {
   input?: Record<string, unknown>;
   output?: string;
   is_error?: boolean;
+  parent_tool_use_id?: string | null;
+  subagent_type?: string;
+  subagent_name?: string;
 }
 
 // =============================================================================
@@ -48,6 +52,10 @@ interface SDKMessage {
 
 function transformMessage(sdkMessage: SDKMessage): MessageData | null {
   const timestamp = Date.now();
+  // Map parent_tool_use_id to parent_id for subagent grouping
+  const parent_id = sdkMessage.parent_tool_use_id || undefined;
+  const subagent_type = sdkMessage.subagent_type;
+  const subagent_name = sdkMessage.subagent_name;
 
   // Handle assistant/message type
   if (sdkMessage.type === 'assistant' || sdkMessage.type === 'message') {
@@ -73,6 +81,9 @@ function transformMessage(sdkMessage: SDKMessage): MessageData | null {
       content,
       timestamp,
       isStreaming: true,
+      parent_id,
+      subagent_type,
+      subagent_name,
     };
   }
 
@@ -97,6 +108,9 @@ function transformMessage(sdkMessage: SDKMessage): MessageData | null {
       type: 'user',
       content,
       timestamp,
+      parent_id,
+      subagent_type,
+      subagent_name,
     };
   }
 
@@ -108,6 +122,9 @@ function transformMessage(sdkMessage: SDKMessage): MessageData | null {
       tool_id: sdkMessage.tool_id,
       input: sdkMessage.input,
       timestamp,
+      parent_id,
+      subagent_type,
+      subagent_name,
     };
   }
 
@@ -118,6 +135,9 @@ function transformMessage(sdkMessage: SDKMessage): MessageData | null {
       tool_id: sdkMessage.tool_id,
       content: typeof sdkMessage.output === 'string' ? sdkMessage.output : '',
       timestamp,
+      parent_id,
+      subagent_type,
+      subagent_name,
     };
   }
 
@@ -205,6 +225,7 @@ export function MessagePanel(): React.ReactElement {
 
   return (
     <div className="message-panel" data-testid="message-panel">
+      <PersonaHeader />
       <div className="message-panel-content">
         <MessageView messages={messages} />
       </div>

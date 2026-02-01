@@ -10,7 +10,7 @@ import Message from './Message';
 import ToolCallBlock from './ToolCallBlock';
 
 interface SubagentMessage {
-  type: 'assistant' | 'tool_use' | 'tool_result';
+  type: 'user' | 'assistant' | 'tool_use' | 'tool_result';
   content?: string;
   parent_id: string;
   timestamp: number;
@@ -64,6 +64,20 @@ export default function SubagentSpan({ type, name, messages, defaultCollapsed = 
     if (msg.type === 'tool_result') {
       // Skip tool_result - it's rendered with tool_use
       return null;
+    }
+
+    // Subagent prompts (user messages within subagent) get special styling
+    if (msg.type === 'user') {
+      return (
+        <div
+          key={`subagent-prompt-${index}`}
+          data-testid="subagent-prompt"
+          className="message message-subagent-prompt"
+        >
+          <div className="message-avatar">📋</div>
+          <div className="message-content">{msg.content}</div>
+        </div>
+      );
     }
 
     return (

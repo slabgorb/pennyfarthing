@@ -16,6 +16,7 @@ export interface PersonaData {
   character: string | null;
   theme: string | null;
   role: string | null;
+  slug: string | null;
 }
 
 interface UsePersonaResult {

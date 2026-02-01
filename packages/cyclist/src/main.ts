@@ -1056,20 +1056,20 @@ export function setupClaudeIPCHandlers(ipcMain: {
                   const input = block.input as { file_path: string; old_string: string; new_string: string };
                   broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, {
                     id: block.id || `edit-${Date.now()}`,
-                    filePath: input.file_path,
-                    oldContent: input.old_string,
-                    newContent: input.new_string,
-                    toolType: 'Edit',
+                    path: input.file_path,
+                    original: input.old_string,
+                    modified: input.new_string,
+                    toolName: 'Edit',
                     timestamp: Date.now(),
                   });
                 } else if (block.name === 'Write') {
                   const input = block.input as { file_path: string; content: string };
                   broadcastToRenderer(IPC_DIFF_CHANNELS.DIFF_UPDATE, {
                     id: block.id || `write-${Date.now()}`,
-                    filePath: input.file_path,
-                    oldContent: '',
-                    newContent: input.content,
-                    toolType: 'Write',
+                    path: input.file_path,
+                    original: '',
+                    modified: input.content,
+                    toolName: 'Write',
                     timestamp: Date.now(),
                     isNewFile: true,
                   });

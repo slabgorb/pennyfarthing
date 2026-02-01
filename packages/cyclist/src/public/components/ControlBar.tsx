@@ -84,28 +84,26 @@ export function ControlBar({
 
   return (
     <div className="control-bar" data-testid="control-bar">
-      {/* Stop button - only visible when running */}
-      {isRunning && (
-        <button
-          type="button"
-          className={`btn-stop danger ${isStopping ? 'stopping' : ''}`}
-          data-testid="stop-button"
-          onClick={onStop}
-          disabled={isStopping}
-          aria-busy={isStopping}
-          aria-label="Stop Claude"
-        >
-          <span data-icon="stop" className="icon" />
-          {isStopping ? (
-            <>
-              <span className="spinner" data-loading />
-              Stopping...
-            </>
-          ) : (
-            'Stop'
-          )}
-        </button>
-      )}
+      {/* Stop button - always visible, disabled when not running */}
+      <button
+        type="button"
+        className={`btn-stop danger ${isStopping ? 'stopping' : ''} ${isRunning && !isStopping ? 'throbbing' : ''}`}
+        data-testid="stop-button"
+        onClick={onStop}
+        disabled={!isRunning || isStopping}
+        aria-busy={isStopping}
+        aria-label="Stop Claude"
+      >
+        <span data-icon="stop" className="icon" />
+        {isStopping ? (
+          <>
+            <span className="spinner" data-loading />
+            Stopping...
+          </>
+        ) : (
+          'Stop'
+        )}
+      </button>
 
       {/* Reset button - always visible */}
       <button
@@ -174,7 +172,8 @@ export function useControlBar(): UseControlBarResult {
   const handleStop = useCallback(async () => {
     setIsStopping(true);
     try {
-      await window.electronAPI?.claude?.interrupt?.();
+      // Use abort() - SIGINT doesn't reliably stop Claude CLI
+      await window.electronAPI?.claude?.abort?.();
     } catch (err) {
       console.error('[ControlBar] Stop failed:', err);
     }
