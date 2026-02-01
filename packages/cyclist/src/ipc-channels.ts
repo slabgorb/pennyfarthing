@@ -50,6 +50,8 @@ export const IPC_CLAUDE_CHANNELS = {
   CLAUDE_GET_MODE: 'claude:getMode',
   CLAUDE_ABORT: 'claude:abort',
   CLAUDE_CLEAR: 'claude:clear',
+  CLAUDE_SET_SYSTEM_PROMPT: 'claude:setSystemPrompt',
+  CLAUDE_GET_SYSTEM_PROMPT: 'claude:getSystemPrompt',
 } as const;
 
 /**
@@ -57,6 +59,7 @@ export const IPC_CLAUDE_CHANNELS = {
  */
 export const IPC_AGENT_CHANNELS = {
   AGENT_LAUNCH: 'agent:launch',
+  AGENT_LOAD_CONTEXT: 'agent:loadContext',
 } as const;
 
 /**

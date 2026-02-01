@@ -355,11 +355,36 @@ export class ClaudeService extends EventEmitter {
   /** Default environment variables to pass to spawned Claude process */
   private defaultEnv?: Record<string, string>;
 
-  constructor(options?: { cwd?: string; spawner?: ClaudeSpawner; env?: Record<string, string> }) {
+  /** System prompt to append (persona/agent context) */
+  private appendSystemPrompt?: string;
+
+  constructor(options?: { cwd?: string; spawner?: ClaudeSpawner; env?: Record<string, string>; systemPrompt?: string }) {
     super();
     this.defaultCwd = options?.cwd;
     this.spawner = options?.spawner ?? spawn;
     this.defaultEnv = options?.env;
+    this.appendSystemPrompt = options?.systemPrompt;
+  }
+
+  /**
+   * Set or update the system prompt (persona/agent context).
+   * This will be passed via --append-system-prompt on next process spawn.
+   * If a process is already running, it will be killed and restarted.
+   */
+  setSystemPrompt(prompt: string): void {
+    this.appendSystemPrompt = prompt;
+    // If process is running, we need to restart it for the new prompt to take effect
+    if (this.currentProcess && !this.processExited) {
+      console.log('[ClaudeService] System prompt updated, restarting process...');
+      this.abort();
+    }
+  }
+
+  /**
+   * Get the current system prompt
+   */
+  getSystemPrompt(): string | undefined {
+    return this.appendSystemPrompt;
   }
 
   /**
@@ -779,6 +804,12 @@ export class ClaudeService extends EventEmitter {
     // Resume session if we have a session ID
     if (this.sessionId) {
       args.push('--resume', this.sessionId);
+    }
+
+    // Append system prompt for persona/agent context
+    // This makes personas behave the same as in CLI mode
+    if (this.appendSystemPrompt) {
+      args.push('--append-system-prompt', this.appendSystemPrompt);
     }
 
     return args;

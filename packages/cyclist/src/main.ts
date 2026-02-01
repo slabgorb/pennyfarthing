@@ -38,6 +38,7 @@ import {
   completeBackgroundTask,
 } from './otlp-receiver.js';
 import { ClaudeService, SDKMessage } from './claude-service.js';
+import { getPrimeContext } from './prime.js';
 import { isTodoWriteMessage, extractTodos, type TodoItem } from './todos.js';
 // Story 36-8: Import for capturing tool inputs for OTEL enrichment
 import { storePendingToolInput } from './span-correlation.js';
@@ -1193,10 +1194,25 @@ export function setupClaudeIPCHandlers(ipcMain: {
     return true;
   });
 
+  // System prompt handlers - set/get persona context for --append-system-prompt
+  ipcMain.handle(IPC_CLAUDE_CHANNELS.CLAUDE_SET_SYSTEM_PROMPT, async (_event: unknown, ...args: unknown[]) => {
+    const prompt = args[0] as string;
+    const service = getClaudeService();
+    console.log(`[main] Setting system prompt (${prompt.length} chars)`);
+    service.setSystemPrompt(prompt);
+    return true;
+  });
+
+  ipcMain.handle(IPC_CLAUDE_CHANNELS.CLAUDE_GET_SYSTEM_PROMPT, async () => {
+    const service = getClaudeService();
+    return service.getSystemPrompt();
+  });
+
   // Clear and reload handler - clears session and loads new agent (MSSCI-11840)
   ipcMain.handle(IPC_CONTEXT_CLEAR_CHANNELS.CLEAR_AND_LOAD, async (_event: unknown, ...args: unknown[]) => {
     const agent = args[0] as string;
     const service = getClaudeService();
+    const projectDir = getProjectDirectory();
     console.log(`[main] Context clear and reload: ${agent}`);
 
     // Clear session state and WAIT for process to fully exit
@@ -1218,11 +1234,47 @@ export function setupClaudeIPCHandlers(ipcMain: {
     broadcastToRenderer(IPC_DATA_CHANNELS.CONTEXT_UPDATE, { percent: 0, contextWindow: 0 });
     broadcastToRenderer(IPC_DATA_CHANNELS.PERSONA_UPDATE, null);
 
+    // Load prime context for the agent (persona, behavior guide, etc.)
+    // and set it as the system prompt so personas behave as in CLI mode
+    if (projectDir) {
+      // Extract agent name from command (e.g., "/dev" -> "dev")
+      const agentName = agent.startsWith('/') ? agent.slice(1) : agent;
+      const primeContext = getPrimeContext(agentName, projectDir);
+      if (primeContext) {
+        service.setSystemPrompt(primeContext);
+        console.log(`[main] Set system prompt for agent "${agentName}" (${primeContext.length} chars)`);
+      }
+    }
+
     // Launch the new agent via the agent launch event
     broadcastToRenderer(IPC_AGENT_CHANNELS.AGENT_LAUNCH, agent);
 
     console.log(`Session cleared and agent launch triggered: ${agent}`);
     return true;
+  });
+
+  // Load agent context handler - loads prime context and sets system prompt
+  // Can be called explicitly when starting a new agent session
+  ipcMain.handle(IPC_AGENT_CHANNELS.AGENT_LOAD_CONTEXT, async (_event: unknown, ...args: unknown[]) => {
+    const agent = args[0] as string;
+    const projectDir = getProjectDirectory();
+    if (!projectDir) {
+      console.warn('[main] Cannot load agent context: no project directory');
+      return false;
+    }
+
+    // Extract agent name from command (e.g., "/dev" -> "dev")
+    const agentName = agent.startsWith('/') ? agent.slice(1) : agent;
+    const primeContext = getPrimeContext(agentName, projectDir);
+    if (primeContext) {
+      const service = getClaudeService();
+      service.setSystemPrompt(primeContext);
+      console.log(`[main] Loaded context for agent "${agentName}" (${primeContext.length} chars)`);
+      return true;
+    }
+
+    console.warn(`[main] Failed to load context for agent "${agentName}"`);
+    return false;
   });
 
   console.log('Claude SDK IPC handlers registered');

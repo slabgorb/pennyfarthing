@@ -1,0 +1,113 @@
+/**
+ * Prime Module - Get agent/persona context for system prompt
+ *
+ * Calls the Pennyfarthing prime script to get the full agent context
+ * (agent definition, persona, behavior guide, sprint context, etc.)
+ * which is then passed via --append-system-prompt to make personas
+ * behave the same as in CLI mode.
+ */
+
+import { execSync } from 'child_process';
+import { join, dirname } from 'path';
+import { existsSync } from 'fs';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+/**
+ * Find the Pennyfarthing scripts directory
+ * Handles both dev mode and installed mode
+ */
+function findPennyfarthingScripts(projectDir: string): string | null {
+  // 1. Check node_modules in project
+  const nodeModulesPath = join(projectDir, 'node_modules', '@pennyfarthing', 'core', 'pennyfarthing_scripts');
+  if (existsSync(nodeModulesPath)) {
+    return dirname(nodeModulesPath); // Return package root
+  }
+
+  // 2. Check .pennyfarthing symlink (resolves to node_modules)
+  const dotPennyfarthing = join(projectDir, '.pennyfarthing', 'scripts');
+  if (existsSync(dotPennyfarthing)) {
+    // Walk up from scripts to find package root
+    const packageRoot = join(dotPennyfarthing, '..', '..');
+    if (existsSync(join(packageRoot, 'pennyfarthing_scripts'))) {
+      return packageRoot;
+    }
+  }
+
+  // 3. Dev mode: Check relative to Cyclist source
+  const devPath = join(__dirname, '..', '..', '..', 'pennyfarthing_scripts');
+  if (existsSync(devPath)) {
+    return join(__dirname, '..', '..', '..'); // Return package root
+  }
+
+  return null;
+}
+
+/**
+ * Get the prime context for an agent
+ *
+ * Calls `python -m pennyfarthing_scripts.cli agent start <name> --quiet`
+ * and returns the output, which includes:
+ * - Agent definition
+ * - Persona (character, style, traits)
+ * - Behavior guide
+ * - Sprint context
+ * - Session context
+ * - Sidecar memory
+ *
+ * @param agentName - Agent name (sm, tea, dev, reviewer, etc.)
+ * @param projectDir - Project directory to run from
+ * @returns Prime context string, or null if failed
+ */
+export function getPrimeContext(agentName: string, projectDir: string): string | null {
+  const packageRoot = findPennyfarthingScripts(projectDir);
+  if (!packageRoot) {
+    console.warn('[prime] Could not find pennyfarthing_scripts');
+    return null;
+  }
+
+  try {
+    // Set PYTHONPATH so Python can find pennyfarthing_scripts
+    const env = {
+      ...process.env,
+      PYTHONPATH: `${packageRoot}:${process.env.PYTHONPATH || ''}`,
+    };
+
+    // Call prime with --quiet to suppress headers (cleaner system prompt)
+    const result = execSync(
+      `python3 -m pennyfarthing_scripts.cli agent start "${agentName}" --quiet`,
+      {
+        cwd: projectDir,
+        env,
+        encoding: 'utf-8',
+        timeout: 10000, // 10 second timeout
+        stdio: ['pipe', 'pipe', 'pipe'],
+      }
+    );
+
+    if (result && result.trim().length > 0) {
+      console.log(`[prime] Got context for agent "${agentName}" (${result.length} chars)`);
+      return result;
+    }
+
+    console.warn(`[prime] Empty output for agent "${agentName}"`);
+    return null;
+  } catch (error) {
+    console.error(`[prime] Failed to get context for agent "${agentName}":`, error);
+    return null;
+  }
+}
+
+/**
+ * Async version of getPrimeContext
+ */
+export async function getPrimeContextAsync(agentName: string, projectDir: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    // Run in next tick to not block
+    setImmediate(() => {
+      resolve(getPrimeContext(agentName, projectDir));
+    });
+  });
+}

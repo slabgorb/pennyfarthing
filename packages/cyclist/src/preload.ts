@@ -74,6 +74,17 @@ export interface ElectronClaudeAPI {
   getMode: () => Promise<'default' | 'plan' | 'acceptEdits' | 'dangerouslySkipPermissions'>;
 
   /**
+   * Set the system prompt (persona/agent context)
+   * This is passed via --append-system-prompt to make personas behave as in CLI
+   */
+  setSystemPrompt: (prompt: string) => Promise<void>;
+
+  /**
+   * Get the current system prompt
+   */
+  getSystemPrompt: () => Promise<string | undefined>;
+
+  /**
    * Subscribe to streamed messages from ClaudeService
    */
   onMessage: (callback: (message: unknown) => void) => void;
@@ -105,6 +116,12 @@ export interface ElectronAgentAPI {
    * Receives the slash command (e.g., '/sm', '/tea', '/new-work')
    */
   onLaunch: (callback: (event: unknown, command: string) => void) => void;
+
+  /**
+   * Load context for an agent (persona, behavior guide, etc.)
+   * Sets the system prompt via --append-system-prompt
+   */
+  loadContext: (agent: string) => Promise<boolean>;
 }
 
 /**
@@ -581,6 +598,8 @@ function createElectronAPI(): ElectronAPI {
         clearAndReload: (agent: string) => ipcRenderer.invoke('context:clearAndLoad', agent),
         setMode: (mode: 'default' | 'plan' | 'acceptEdits' | 'dangerouslySkipPermissions') => ipcRenderer.invoke('claude:setMode', mode),
         getMode: () => ipcRenderer.invoke('claude:getMode') as Promise<'default' | 'plan' | 'acceptEdits' | 'dangerouslySkipPermissions'>,
+        setSystemPrompt: (prompt: string) => ipcRenderer.invoke('claude:setSystemPrompt', prompt),
+        getSystemPrompt: () => ipcRenderer.invoke('claude:getSystemPrompt') as Promise<string | undefined>,
         onMessage: (callback: (message: unknown) => void) => {
           ipcRenderer.on('claude:message', (_event: unknown, msg: unknown) => callback(msg));
         },
@@ -596,6 +615,7 @@ function createElectronAPI(): ElectronAPI {
         onLaunch: (callback: (event: unknown, command: string) => void) => {
           ipcRenderer.on('agent:launch', callback);
         },
+        loadContext: (agent: string) => ipcRenderer.invoke('agent:loadContext', agent),
       },
       // Diff viewer API (E8-2)
       diff: {
@@ -760,6 +780,8 @@ function createElectronAPI(): ElectronAPI {
         clearAndReload: (_agent: string) => Promise.resolve(),
         setMode: (_mode: 'default' | 'plan' | 'acceptEdits' | 'dangerouslySkipPermissions') => Promise.resolve(),
         getMode: () => Promise.resolve('default' as const),
+        setSystemPrompt: (_prompt: string) => Promise.resolve(),
+        getSystemPrompt: () => Promise.resolve(undefined),
         onMessage: (_callback: (message: unknown) => void) => {
           // No-op in test environment
         },
@@ -775,6 +797,7 @@ function createElectronAPI(): ElectronAPI {
         onLaunch: (_callback: (event: unknown, command: string) => void) => {
           // No-op in test environment
         },
+        loadContext: (_agent: string) => Promise.resolve(false),
       },
       // Diff viewer API (E8-2) - test stub
       diff: {
