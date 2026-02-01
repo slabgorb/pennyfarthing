@@ -4,16 +4,26 @@
  * Story MSSCI-12717 - React Migration
  * Updated to match actual config.local.yaml structure
  * Story MSSCI-12817 - Added Color Palette section with ThemePalette
+ * Story MSSCI-12769 - Added Fonts section with FontPicker
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ThemePalette } from '../ThemePalette';
+import { FontPicker, FontSizePicker } from '../FontPicker';
 import {
   applyPreset,
   savePresetToProject,
   loadPresetFromProject,
   DEFAULT_PRESET,
 } from '../../js/color-presets.js';
+import {
+  loadFontSettings,
+  saveFontSettings,
+  applyFontSettings,
+  DEFAULT_FONT_SETTINGS,
+  FontSettings,
+  FontSize,
+} from '../../js/font-presets.js';
 
 interface Settings {
   workflow?: {
@@ -49,6 +59,7 @@ export function SettingsPanel(): React.ReactElement {
   const [themes, setThemes] = useState<ThemeMetadata[]>([]);
   const [saving, setSaving] = useState(false);
   const [colorPreset, setColorPreset] = useState<string>(DEFAULT_PRESET);
+  const [fontSettings, setFontSettings] = useState<FontSettings>(DEFAULT_FONT_SETTINGS);
 
   useEffect(() => {
     const api = window.electronAPI;
@@ -73,6 +84,12 @@ export function SettingsPanel(): React.ReactElement {
     // Load color preset from project config
     loadPresetFromProject().then(presetId => {
       setColorPreset(presetId);
+    });
+
+    // Load font settings
+    loadFontSettings().then(settings => {
+      setFontSettings(settings);
+      applyFontSettings(settings);
     });
   }, []);
 
@@ -130,6 +147,43 @@ export function SettingsPanel(): React.ReactElement {
     }
   }, []);
 
+  const handleFontChange = useCallback(async (
+    type: 'ui' | 'code',
+    presetId: string,
+    customFamily?: string
+  ) => {
+    setSaving(true);
+    try {
+      const updated: FontSettings = {
+        ...fontSettings,
+        [type === 'ui' ? 'uiFont' : 'codeFont']: presetId,
+        ...(presetId === 'custom' && customFamily
+          ? { [type === 'ui' ? 'customUiFont' : 'customCodeFont']: customFamily }
+          : {}),
+      };
+      applyFontSettings(updated);
+      await saveFontSettings(updated);
+      setFontSettings(updated);
+    } finally {
+      setSaving(false);
+    }
+  }, [fontSettings]);
+
+  const handleFontSizeChange = useCallback(async (type: 'ui' | 'code', size: FontSize) => {
+    setSaving(true);
+    try {
+      const updated: FontSettings = {
+        ...fontSettings,
+        [type === 'ui' ? 'uiFontSize' : 'codeFontSize']: size,
+      };
+      applyFontSettings(updated);
+      await saveFontSettings(updated);
+      setFontSettings(updated);
+    } finally {
+      setSaving(false);
+    }
+  }, [fontSettings]);
+
   if (!settings) {
     return (
       <div className="settings-panel loading" data-testid="settings-panel">
@@ -162,6 +216,36 @@ export function SettingsPanel(): React.ReactElement {
           currentPreset={colorPreset}
           onSelect={handleColorPresetChange}
         />
+      </section>
+
+      <section className="settings-section">
+        <h4>Fonts</h4>
+        <div className="font-setting">
+          <label>UI Font</label>
+          <FontPicker
+            type="ui"
+            currentFont={fontSettings.uiFont}
+            customFont={fontSettings.customUiFont}
+            onSelect={(id, custom) => handleFontChange('ui', id, custom)}
+          />
+          <FontSizePicker
+            currentSize={fontSettings.uiFontSize}
+            onSelect={(size) => handleFontSizeChange('ui', size)}
+          />
+        </div>
+        <div className="font-setting">
+          <label>Code Font</label>
+          <FontPicker
+            type="code"
+            currentFont={fontSettings.codeFont}
+            customFont={fontSettings.customCodeFont}
+            onSelect={(id, custom) => handleFontChange('code', id, custom)}
+          />
+          <FontSizePicker
+            currentSize={fontSettings.codeFontSize}
+            onSelect={(size) => handleFontSizeChange('code', size)}
+          />
+        </div>
       </section>
 
       <section className="settings-section">
