@@ -195,6 +195,8 @@ export function useControlBar(): UseControlBarResult {
   const [bellMode, setBellMode] = useState(false);
   const [relayMode, setRelayMode] = useState(false);
 
+  // Permission mode is now managed by Editor component
+
   // Load initial settings and listen for changes
   useEffect(() => {
     const api = window.electronAPI;

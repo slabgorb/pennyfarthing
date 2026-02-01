@@ -12,11 +12,12 @@
 .mode-switch {
   display: flex;
   position: relative;
-  background: var(--bg-tertiary, rgba(255, 255, 255, 0.05));
+  background: var(--bg-tertiary, rgba(0, 0, 0, 0.3));
   border-radius: 6px;
   padding: 2px;
   gap: 0;
   width: fit-content;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .mode-switch--disabled {
@@ -41,14 +42,17 @@
 /* Highlight colors based on mode */
 .mode-switch__highlight[data-mode="plan"] {
   background: var(--color-plan, #14b8a6);
+  box-shadow: 0 0 8px rgba(20, 184, 166, 0.4);
 }
 
 .mode-switch__highlight[data-mode="manual"] {
   background: var(--color-manual, #6b7280);
+  box-shadow: 0 0 8px rgba(107, 114, 128, 0.3);
 }
 
 .mode-switch__highlight[data-mode="accept"] {
   background: var(--color-accept, #a78bfa);
+  box-shadow: 0 0 8px rgba(167, 139, 250, 0.4);
 }
 
 /* Mode option buttons */
@@ -70,8 +74,21 @@
   text-align: center;
 }
 
+/* Subtle color hints for inactive options */
+.mode-option[data-mode="plan"]:not(.active) {
+  color: rgba(20, 184, 166, 0.7);
+}
+
+.mode-option[data-mode="manual"]:not(.active) {
+  color: rgba(156, 163, 175, 0.8);
+}
+
+.mode-option[data-mode="accept"]:not(.active) {
+  color: rgba(167, 139, 250, 0.7);
+}
+
 .mode-option:hover:not(.active):not(:disabled) {
-  color: var(--text-primary, rgba(255, 255, 255, 0.9));
+  filter: brightness(1.3);
 }
 
 .mode-option.active {
@@ -103,6 +120,11 @@
 
 .mode-switch__highlight[data-mode="accept"] ~ .mode-option[data-mode="accept"].active {
   color: #1a1a2e;
+}
+
+/* Editor-specific positioning */
+.editor-mode-switch {
+  margin-bottom: 8px;
 }
 
 /* Screen reader only text */
