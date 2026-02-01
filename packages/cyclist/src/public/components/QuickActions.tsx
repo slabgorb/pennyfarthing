@@ -11,7 +11,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useMarkerActions, useStrippedContent } from '../hooks/useMarkerActions';
-import { stripMarkers } from '@pennyfarthing/shared';
+import { stripMarkers } from '@pennyfarthing/shared/browser';
 
 interface MessageData {
   type: 'user' | 'assistant' | 'tool_use' | 'tool_result';

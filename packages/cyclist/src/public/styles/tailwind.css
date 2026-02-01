@@ -1,8 +1,6 @@
 /* Tailwind CSS for Cyclist React components */
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 /* =============================================================================
    Docking Workspace Styles
@@ -659,22 +657,6 @@
   font-size: 0.875rem;
 }
 
-/* Streaming cursor for assistant messages */
-.streaming-cursor {
-  display: inline;
-}
-
-.cursor-blink {
-  display: inline-block;
-  color: var(--accent-color, #007acc);
-  animation: blink 1s step-end infinite;
-  font-weight: normal;
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
 
 /* =============================================================================
    Editor Component Styles
