@@ -40,14 +40,8 @@ if [[ -z "$STORY_ID" ]]; then
   exit 1
 fi
 
-# PROJECT_ROOT should be set by find-root.sh, but find it if not
-if [[ -z "${PROJECT_ROOT:-}" ]]; then
-  d="$PWD"
-  while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do
-    d="$(dirname "$d")"
-  done
-  PROJECT_ROOT="$d"
-fi
+# Find project root
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/find-root.sh"
 
 SESSION_FILE="$PROJECT_ROOT/.session/${STORY_ID}-session.md"
 SPRINT_FILE="$PROJECT_ROOT/sprint/current-sprint.yaml"

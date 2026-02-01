@@ -7,14 +7,8 @@
 
 set -euo pipefail
 
-# PROJECT_ROOT should be set by find-root.sh, but find it if not
-if [[ -z "${PROJECT_ROOT:-}" ]]; then
-  d="$PWD"
-  while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do
-    d="$(dirname "$d")"
-  done
-  PROJECT_ROOT="$d"
-fi
+# Find project root
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/find-root.sh"
 
 WORKFLOWS_DIR="$PROJECT_ROOT/.pennyfarthing/workflows"
 SESSION_DIR="$PROJECT_ROOT/.session"

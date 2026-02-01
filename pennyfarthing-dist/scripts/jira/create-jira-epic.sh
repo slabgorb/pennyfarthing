@@ -19,13 +19,7 @@ if [[ -z "$EPIC_ID" ]]; then
 fi
 
 # Find project root
-if [[ -z "${PROJECT_ROOT:-}" ]]; then
-  d="$PWD"
-  while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do
-    d="$(dirname "$d")"
-  done
-  PROJECT_ROOT="$d"
-fi
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/find-root.sh"
 
 SPRINT_FILE="$PROJECT_ROOT/sprint/current-sprint.yaml"
 SCRIPTS_DIR="$PROJECT_ROOT/.pennyfarthing/scripts"

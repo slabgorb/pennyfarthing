@@ -8,6 +8,9 @@
 
 set -e
 
+# Self-locate: derive paths from this script's position
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd -P)"
+
 # Load environment
 if [ -f "$PROJECT_ROOT/.env" ]; then
     set -a; source "$PROJECT_ROOT/.env"; set +a
@@ -20,7 +23,7 @@ fi
 
 # Source repo utilities (handles repos.yaml or legacy env vars)
 REPO_UTILS_LAZY=1  # Don't auto-load, we'll do it after validation
-source "$PROJECT_ROOT/scripts/repo-utils.sh"
+source "$SCRIPT_DIR/../misc/repo-utils.sh"
 
 WORKTREE_ROOT="${WORKTREE_ROOT:-$PROJECT_ROOT/worktrees}"
 WORKTREE_PORT_OFFSET="${WORKTREE_PORT_OFFSET:-100}"
