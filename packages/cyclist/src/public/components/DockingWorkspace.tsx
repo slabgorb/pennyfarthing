@@ -270,6 +270,7 @@ interface SidebarProps {
   region: 'left' | 'right';
   panels: string[];
   collapsed: boolean;
+  width: number;
   activePanel: string;
   onPanelChange: (panelId: string) => void;
   onCollapseToggle: () => void;
@@ -290,6 +291,7 @@ function Sidebar({
   region,
   panels,
   collapsed,
+  width,
   activePanel,
   onPanelChange,
   onCollapseToggle,
@@ -332,7 +334,7 @@ function Sidebar({
       data-testid={`sidebar-${region}-dropzone`}
       data-drop-valid={isDropZoneActive ? 'true' : undefined}
       className={`sidebar sidebar-${region} ${isDropZoneActive ? 'drop-zone-active' : ''}`}
-      style={{ width: collapsed ? 0 : 300 }}
+      style={{ width: collapsed ? 0 : width }}
       onDragEnter={onDragEnter}
       onDragLeave={onDragLeave}
       onDragOver={onDragOver}
@@ -416,14 +418,51 @@ function Sidebar({
 
 interface ResizeHandleProps {
   position: 'left' | 'right';
+  currentWidth: number;
+  onResizeStart: () => void;
+  onResizeMove: (newWidth: number) => void;
+  onResizeEnd: () => void;
 }
 
-function ResizeHandle({ position }: ResizeHandleProps) {
+function ResizeHandle({ position, currentWidth, onResizeStart, onResizeMove, onResizeEnd }: ResizeHandleProps) {
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = currentWidth;
+
+    onResizeStart();
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const delta = moveEvent.clientX - startX;
+      // For left handle, positive delta = wider left sidebar
+      // For right handle, positive delta = narrower right sidebar (so negate)
+      const adjustedDelta = position === 'left' ? delta : -delta;
+      const minWidth = 150;
+      const maxWidth = 600;
+      const newWidth = Math.min(maxWidth, Math.max(minWidth, startWidth + adjustedDelta));
+      onResizeMove(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      onResizeEnd();
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, [position, currentWidth, onResizeStart, onResizeMove, onResizeEnd]);
+
   return (
     <div
       data-testid={`resize-handle-${position}`}
       className="resize-handle cursor-col-resize"
       style={{ cursor: 'col-resize' }}
+      onMouseDown={handleMouseDown}
     />
   );
 }
@@ -512,6 +551,33 @@ export function DockingWorkspace({
     setRightCollapsed(newValue);
     onRightCollapseChange?.(newValue);
   }, [rightCollapsed, onRightCollapseChange]);
+
+  // ==========================================================================
+  // Resize Handlers
+  // ==========================================================================
+
+  const handleLeftResizeMove = useCallback((newWidth: number) => {
+    setLayout(prev => ({
+      ...prev,
+      leftSidebar: { ...prev.leftSidebar, width: newWidth }
+    }));
+  }, []);
+
+  const handleRightResizeMove = useCallback((newWidth: number) => {
+    setLayout(prev => ({
+      ...prev,
+      rightSidebar: { ...prev.rightSidebar, width: newWidth }
+    }));
+  }, []);
+
+  const handleResizeEnd = useCallback(() => {
+    // Notify parent of final layout on resize end
+    onLayoutChange?.(layout);
+  }, [layout, onLayoutChange]);
+
+  const handleResizeStart = useCallback(() => {
+    // Could add visual feedback here if needed
+  }, []);
 
   // ==========================================================================
   // Drag Handlers
@@ -742,6 +808,7 @@ export function DockingWorkspace({
         region="left"
         panels={layout.leftSidebar.panels}
         collapsed={leftCollapsed}
+        width={layout.leftSidebar.width}
         activePanel={leftActivePanel}
         onPanelChange={setLeftActivePanel}
         onCollapseToggle={handleLeftCollapseToggle}
@@ -758,7 +825,13 @@ export function DockingWorkspace({
         draggingPanelId={draggingPanelId}
       />
 
-      <ResizeHandle position="left" />
+      <ResizeHandle
+        position="left"
+        currentWidth={layout.leftSidebar.width}
+        onResizeStart={handleResizeStart}
+        onResizeMove={handleLeftResizeMove}
+        onResizeEnd={handleResizeEnd}
+      />
 
       <div
         data-testid="center-region"
@@ -783,12 +856,19 @@ export function DockingWorkspace({
         </div>
       </div>
 
-      <ResizeHandle position="right" />
+      <ResizeHandle
+        position="right"
+        currentWidth={layout.rightSidebar.width}
+        onResizeStart={handleResizeStart}
+        onResizeMove={handleRightResizeMove}
+        onResizeEnd={handleResizeEnd}
+      />
 
       <Sidebar
         region="right"
         panels={layout.rightSidebar.panels}
         collapsed={rightCollapsed}
+        width={layout.rightSidebar.width}
         activePanel={rightActivePanel}
         onPanelChange={setRightActivePanel}
         onCollapseToggle={handleRightCollapseToggle}
