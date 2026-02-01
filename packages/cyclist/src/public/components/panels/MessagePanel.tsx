@@ -158,11 +158,13 @@ export function MessagePanel(): React.ReactElement {
     isStopping,
     bellMode,
     relayMode,
+    permissionMode,
     handleStop,
     handleForceStop,
     handleReset,
     handleBellModeChange,
     handleRelayModeChange,
+    handlePermissionModeChange,
   } = useControlBar();
 
   // Message queue hook for turn complete handling
@@ -214,9 +216,16 @@ export function MessagePanel(): React.ReactElement {
       return;
     }
 
-    claude.onMessage(handleSDKMessage);
-    claude.onComplete(handleComplete);
-    claude.onError(handleError);
+    const cleanupMessage = claude.onMessage(handleSDKMessage);
+    const cleanupComplete = claude.onComplete(handleComplete);
+    const cleanupError = claude.onError(handleError);
+
+    // Cleanup listeners on unmount or dependency change to prevent duplicates
+    return () => {
+      cleanupMessage();
+      cleanupComplete();
+      cleanupError();
+    };
   }, [handleSDKMessage, handleComplete, handleError]);
 
   // Handle editor submit
@@ -270,8 +279,10 @@ export function MessagePanel(): React.ReactElement {
             onReset={handleReset}
             bellMode={bellMode}
             relayMode={relayMode}
+            permissionMode={permissionMode}
             onBellModeChange={handleBellModeChange}
             onRelayModeChange={handleRelayModeChange}
+            onPermissionModeChange={handlePermissionModeChange}
           />
         </div>
       </div>

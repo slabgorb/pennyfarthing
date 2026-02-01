@@ -16,6 +16,7 @@
  */
 
 import React, { useEffect, useRef, useCallback, useState } from 'react';
+import { ModeSwitch, Mode, useModeSync, useModeSwitchShortcuts } from './ModeSwitch';
 
 // =============================================================================
 // Types
@@ -36,10 +37,14 @@ export interface ControlBarProps {
   bellMode?: boolean;
   /** Relay mode state (auto-handoff to next agent) */
   relayMode?: boolean;
+  /** Permission mode state */
+  permissionMode?: Mode;
   /** Called when bell mode toggle clicked */
   onBellModeChange?: (enabled: boolean) => void;
   /** Called when relay mode toggle clicked */
   onRelayModeChange?: (enabled: boolean) => void;
+  /** Called when permission mode changes */
+  onPermissionModeChange?: (mode: Mode) => void;
 }
 
 // =============================================================================
@@ -54,8 +59,10 @@ export function ControlBar({
   onReset,
   bellMode = false,
   relayMode = false,
+  permissionMode = 'manual',
   onBellModeChange,
   onRelayModeChange,
+  onPermissionModeChange,
 }: ControlBarProps): React.ReactElement {
   const lastEscapeTime = useRef<number>(0);
   const DOUBLE_PRESS_THRESHOLD = 500; // ms
@@ -100,6 +107,12 @@ export function ControlBar({
 
   return (
     <div className="control-bar" data-testid="control-bar">
+      {/* Permission Mode Switch */}
+      <ModeSwitch
+        mode={permissionMode}
+        onModeChange={onPermissionModeChange}
+      />
+
       {/* Mode toggles - Bell and Relay */}
       <div className="control-bar-toggles">
         {/* Bell Mode Toggle */}
@@ -177,6 +190,8 @@ interface UseControlBarResult {
   bellMode: boolean;
   /** Relay mode state */
   relayMode: boolean;
+  /** Permission mode state */
+  permissionMode: Mode;
   /** Handle stop action */
   handleStop: () => void;
   /** Handle force stop action (SIGKILL) */
@@ -187,6 +202,8 @@ interface UseControlBarResult {
   handleBellModeChange: (enabled: boolean) => void;
   /** Handle relay mode toggle */
   handleRelayModeChange: (enabled: boolean) => void;
+  /** Handle permission mode change */
+  handlePermissionModeChange: (mode: Mode) => void;
 }
 
 export function useControlBar(): UseControlBarResult {
@@ -194,6 +211,12 @@ export function useControlBar(): UseControlBarResult {
   const [isStopping, setIsStopping] = useState(false);
   const [bellMode, setBellMode] = useState(false);
   const [relayMode, setRelayMode] = useState(false);
+
+  // Permission mode synced with Claude backend
+  const { mode: permissionMode, setMode: setPermissionMode } = useModeSync();
+
+  // Register Cmd+1/2/3 shortcuts for mode switching
+  useModeSwitchShortcuts(setPermissionMode);
 
   // Load initial settings and listen for changes
   useEffect(() => {
@@ -310,16 +333,22 @@ export function useControlBar(): UseControlBarResult {
     }
   }, []);
 
+  const handlePermissionModeChange = useCallback((mode: Mode) => {
+    setPermissionMode(mode);
+  }, [setPermissionMode]);
+
   return {
     isRunning,
     isStopping,
     bellMode,
     relayMode,
+    permissionMode,
     handleStop,
     handleForceStop,
     handleReset,
     handleBellModeChange,
     handleRelayModeChange,
+    handlePermissionModeChange,
   };
 }
 
