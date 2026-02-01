@@ -16,10 +16,15 @@ function TodoItemView({ todo }: { todo: TodoItem }): React.ReactElement {
 
   const statusClass = `todo-item todo-${todo.status}`;
 
+  // Use activeForm for in_progress (more descriptive), content for others
+  const displayText = todo.status === 'in_progress' && todo.activeForm
+    ? todo.activeForm
+    : todo.content;
+
   return (
     <div className={statusClass} data-testid={`todo-${todo.id}`}>
       <span className="todo-status">{statusIcon}</span>
-      <span className="todo-subject">{todo.subject}</span>
+      <span className="todo-subject">{displayText}</span>
       {todo.blockedBy && todo.blockedBy.length > 0 && (
         <span className="todo-blocked" title={`Blocked by: ${todo.blockedBy.join(', ')}`}>
           (blocked)

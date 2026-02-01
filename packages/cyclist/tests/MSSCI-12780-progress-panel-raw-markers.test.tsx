@@ -285,13 +285,14 @@ describe('MSSCI-12780: Progress Panel Shows Raw Markers Instead of Content', () 
   describe('Data model compatibility', () => {
 
     it('should work with TodoItem data containing content property', () => {
+      // For pending items, content is displayed (not activeForm)
       mockUseTodos.mockReturnValue({
         todos: [
           {
             id: '1',
             content: 'Task from content field',
             activeForm: 'Working on task from content field',
-            status: 'in_progress',
+            status: 'pending',
           },
         ],
         isLoading: false,
@@ -300,7 +301,7 @@ describe('MSSCI-12780: Progress Panel Shows Raw Markers Instead of Content', () 
 
       render(<ProgressPanel />);
 
-      // The component should display content from the content field
+      // The component should display content for pending items
       expect(screen.getByText('Task from content field')).toBeInTheDocument();
     });
 
@@ -370,10 +371,10 @@ describe('MSSCI-12780: Progress Panel Shows Raw Markers Instead of Content', () 
       // Progress bar should show 1/4 (1 completed out of 4)
       expect(screen.getByText('1/4')).toBeInTheDocument();
 
-      // In Progress section should show the in_progress task
-      expect(screen.getByText('Implement API')).toBeInTheDocument();
+      // In Progress section should show the in_progress task (uses activeForm)
+      expect(screen.getByText('Implementing API')).toBeInTheDocument();
 
-      // Pending section should show pending tasks
+      // Pending section should show pending tasks (uses content)
       expect(screen.getByText('Write tests')).toBeInTheDocument();
       expect(screen.getByText('Deploy to staging')).toBeInTheDocument();
     });
