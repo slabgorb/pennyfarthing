@@ -144,13 +144,14 @@ describe('marker constants', () => {
       assert.ok(VALID_MARKER_TYPES instanceof Set);
     });
 
-    it('should contain all 5 marker types', () => {
-      assert.strictEqual(VALID_MARKER_TYPES.size, 5);
+    it('should contain all 6 marker types', () => {
+      assert.strictEqual(VALID_MARKER_TYPES.size, 6);
       assert.ok(VALID_MARKER_TYPES.has('handoff'));
       assert.ok(VALID_MARKER_TYPES.has('context_clear'));
       assert.ok(VALID_MARKER_TYPES.has('invoke'));
       assert.ok(VALID_MARKER_TYPES.has('question'));
       assert.ok(VALID_MARKER_TYPES.has('choices'));
+      assert.ok(VALID_MARKER_TYPES.has('continue'));
     });
 
     it('should match MARKER_TYPES values', () => {
