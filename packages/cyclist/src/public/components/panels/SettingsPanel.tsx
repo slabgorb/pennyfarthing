@@ -3,9 +3,17 @@
  *
  * Story MSSCI-12717 - React Migration
  * Updated to match actual config.local.yaml structure
+ * Story MSSCI-12817 - Added Color Palette section with ThemePalette
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { ThemePalette } from '../ThemePalette';
+import {
+  applyPreset,
+  savePresetToProject,
+  loadPresetFromProject,
+  DEFAULT_PRESET,
+} from '../../js/color-presets.js';
 
 interface Settings {
   workflow?: {
@@ -40,6 +48,7 @@ export function SettingsPanel(): React.ReactElement {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [themes, setThemes] = useState<ThemeMetadata[]>([]);
   const [saving, setSaving] = useState(false);
+  const [colorPreset, setColorPreset] = useState<string>(DEFAULT_PRESET);
 
   useEffect(() => {
     const api = window.electronAPI;
@@ -59,6 +68,11 @@ export function SettingsPanel(): React.ReactElement {
     // Subscribe to changes
     api.settings.onChanged?.((data) => {
       setSettings(data as Settings);
+    });
+
+    // Load color preset from project config
+    loadPresetFromProject().then(presetId => {
+      setColorPreset(presetId);
     });
   }, []);
 
@@ -105,6 +119,17 @@ export function SettingsPanel(): React.ReactElement {
     }
   }, [settings]);
 
+  const handleColorPresetChange = useCallback(async (presetId: string) => {
+    setSaving(true);
+    try {
+      applyPreset(presetId);
+      await savePresetToProject(presetId);
+      setColorPreset(presetId);
+    } finally {
+      setSaving(false);
+    }
+  }, []);
+
   if (!settings) {
     return (
       <div className="settings-panel loading" data-testid="settings-panel">
@@ -129,6 +154,14 @@ export function SettingsPanel(): React.ReactElement {
             </option>
           ))}
         </select>
+      </section>
+
+      <section className="settings-section">
+        <h4>Color Palette</h4>
+        <ThemePalette
+          currentPreset={colorPreset}
+          onSelect={handleColorPresetChange}
+        />
       </section>
 
       <section className="settings-section">
