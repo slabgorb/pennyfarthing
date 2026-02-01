@@ -21,7 +21,7 @@ Never manually edit `sprint/current-sprint.yaml`. Use the scripts below for dete
 Show current sprint status with story counts and points.
 
 <run>
-.pennyfarthing/scripts sprint/sprint-status.sh [filter]
+.pennyfarthing/scripts/sprint/sprint-status.sh [filter]
 </run>
 
 <args>
@@ -31,10 +31,10 @@ Show current sprint status with story counts and points.
 </args>
 
 <example>
-.pennyfarthing/scripts sprint/sprint-status.sh           # All stories
-.pennyfarthing/scripts sprint/sprint-status.sh todo      # Backlog only
-.pennyfarthing/scripts sprint/sprint-status.sh in-progress  # WIP only
-.pennyfarthing/scripts sprint/sprint-status.sh done      # Completed only
+.pennyfarthing/scripts/sprint/sprint-status.sh           # All stories
+.pennyfarthing/scripts/sprint/sprint-status.sh todo      # Backlog only
+.pennyfarthing/scripts/sprint/sprint-status.sh in-progress  # WIP only
+.pennyfarthing/scripts/sprint/sprint-status.sh done      # Completed only
 </example>
 
 <output>
@@ -49,7 +49,7 @@ When filtered, only shows epics with matching stories.
 Show available stories grouped by epic with Jira context.
 
 <run>
-.pennyfarthing/scripts sprint/available-stories.sh
+.pennyfarthing/scripts/sprint/available-stories.sh
 </run>
 
 <output>
@@ -82,7 +82,7 @@ Shows backlog, user selects story, then proceeds to setup.
 #### With story ID: Direct start
 
 <run>
-.pennyfarthing/scripts sprint/check-story.sh <story-id>
+.pennyfarthing/scripts/sprint/check-story.sh <story-id>
 </run>
 
 <args>
@@ -97,14 +97,14 @@ Shows backlog, user selects story, then proceeds to setup.
 </output>
 
 <example>
-.pennyfarthing/scripts sprint/check-story.sh MSSCI-12038
+.pennyfarthing/scripts/sprint/check-story.sh MSSCI-12038
 # Returns: {"type": "story", "available": true, "title": "...", ...}
 </example>
 
 #### With epic ID: Start first available story in epic
 
 <run>
-.pennyfarthing/scripts sprint/check-story.sh <epic-id>
+.pennyfarthing/scripts/sprint/check-story.sh <epic-id>
 </run>
 
 <output>
@@ -113,14 +113,14 @@ Action: Automatically start work on `first_story` if available.
 </output>
 
 <example>
-.pennyfarthing/scripts sprint/check-story.sh MSSCI-11952
+.pennyfarthing/scripts/sprint/check-story.sh MSSCI-11952
 # Returns: {"type": "epic", "first_story": {"id": "MSSCI-11954", ...}, ...}
 </example>
 
 #### With `next`: Auto-select highest priority story
 
 <run>
-.pennyfarthing/scripts sprint/check-story.sh next
+.pennyfarthing/scripts/sprint/check-story.sh next
 </run>
 
 <output>
@@ -129,7 +129,7 @@ Action: Automatically start work on returned story.
 </output>
 
 <example>
-.pennyfarthing/scripts sprint/check-story.sh next
+.pennyfarthing/scripts/sprint/check-story.sh next
 # Returns: {"type": "next", "story": {"id": "MSSCI-11950", "priority": "P1", ...}}
 </example>
 
@@ -140,7 +140,7 @@ Action: Automatically start work on returned story.
 Archive a completed story to the sprint archive file.
 
 <run>
-.pennyfarthing/scripts sprint/archive-story.sh <story-id> [pr-number] [--apply]
+.pennyfarthing/scripts/sprint/archive-story.sh <story-id> [pr-number] [--apply]
 </run>
 
 <args>
@@ -153,10 +153,10 @@ Archive a completed story to the sprint archive file.
 
 <example>
 # Archive only (manual removal needed)
-.pennyfarthing/scripts sprint/archive-story.sh 35-2 368
+.pennyfarthing/scripts/sprint/archive-story.sh 35-2 368
 
 # Archive and remove atomically (recommended)
-.pennyfarthing/scripts sprint/archive-story.sh 35-2 368 --apply
+.pennyfarthing/scripts/sprint/archive-story.sh 35-2 368 --apply
 </example>
 
 <output>
@@ -173,7 +173,7 @@ Archive a completed story to the sprint archive file.
 Initialize a new sprint from template.
 
 <run>
-.pennyfarthing/scripts sprint/new-sprint.sh <yyww> <jira-id> <start> <end> "<goal>"
+.pennyfarthing/scripts/sprint/new-sprint.sh <yyww> <jira-id> <start> <end> "<goal>"
 </run>
 
 <args>
@@ -187,7 +187,7 @@ Initialize a new sprint from template.
 </args>
 
 <example>
-.pennyfarthing/scripts sprint/new-sprint.sh 2605 277 2026-02-03 2026-02-16 "Polish and stabilization"
+.pennyfarthing/scripts/sprint/new-sprint.sh 2605 277 2026-02-03 2026-02-16 "Polish and stabilization"
 </example>
 
 <output>
@@ -205,7 +205,7 @@ Warning: Prompts for confirmation if current sprint is still active.
 Show future work initiatives and epics available for promotion.
 
 <run>
-.pennyfarthing/scripts sprint/list-future.sh [--epic EPIC_ID]
+.pennyfarthing/scripts/sprint/list-future.sh [--epic EPIC_ID]
 </run>
 
 <args>
@@ -229,10 +229,10 @@ With `--epic`:
 
 <example>
 # Show all future work
-.pennyfarthing/scripts sprint/list-future.sh
+.pennyfarthing/scripts/sprint/list-future.sh
 
 # Show details for specific epic
-.pennyfarthing/scripts sprint/list-future.sh --epic epic-55
+.pennyfarthing/scripts/sprint/list-future.sh --epic epic-55
 </example>
 
 ---
@@ -242,7 +242,7 @@ With `--epic`:
 Move an epic from `future.yaml` to `current-sprint.yaml`.
 
 <run>
-.pennyfarthing/scripts sprint/promote-epic.sh <epic-id>
+.pennyfarthing/scripts/sprint/promote-epic.sh <epic-id>
 </run>
 
 <args>
@@ -252,7 +252,7 @@ Move an epic from `future.yaml` to `current-sprint.yaml`.
 </args>
 
 <example>
-.pennyfarthing/scripts sprint/promote-epic.sh epic-41
+.pennyfarthing/scripts/sprint/promote-epic.sh epic-41
 </example>
 
 <output>
@@ -278,7 +278,7 @@ These scripts read sprint YAML without modifying it. Use these instead of direct
 ### Get Story Field
 
 <run>
-.pennyfarthing/scripts sprint/get-story-field.sh <story-id> <field>
+.pennyfarthing/scripts/sprint/get-story-field.sh <story-id> <field>
 </run>
 
 <args>
@@ -289,9 +289,9 @@ These scripts read sprint YAML without modifying it. Use these instead of direct
 </args>
 
 <example>
-.pennyfarthing/scripts sprint/get-story-field.sh 35-2 workflow   # Returns: tdd
-.pennyfarthing/scripts sprint/get-story-field.sh 35-2 jira       # Returns: MSSCI-12345
-.pennyfarthing/scripts sprint/get-story-field.sh 35-2 status     # Returns: in_progress
+.pennyfarthing/scripts/sprint/get-story-field.sh 35-2 workflow   # Returns: tdd
+.pennyfarthing/scripts/sprint/get-story-field.sh 35-2 jira       # Returns: MSSCI-12345
+.pennyfarthing/scripts/sprint/get-story-field.sh 35-2 status     # Returns: in_progress
 </example>
 
 <output>
@@ -303,7 +303,7 @@ Field value or "null" if not found. Common fields: `workflow`, `status`, `jira`,
 ### Get Epic Field
 
 <run>
-.pennyfarthing/scripts sprint/get-epic-field.sh <epic-id> <field>
+.pennyfarthing/scripts/sprint/get-epic-field.sh <epic-id> <field>
 </run>
 
 <args>
@@ -314,8 +314,8 @@ Field value or "null" if not found. Common fields: `workflow`, `status`, `jira`,
 </args>
 
 <example>
-.pennyfarthing/scripts sprint/get-epic-field.sh epic-35 jira    # Returns: MSSCI-11234
-.pennyfarthing/scripts sprint/get-epic-field.sh 35 title        # Returns: Epic title
+.pennyfarthing/scripts/sprint/get-epic-field.sh epic-35 jira    # Returns: MSSCI-11234
+.pennyfarthing/scripts/sprint/get-epic-field.sh 35 title        # Returns: Epic title
 </example>
 
 <output>
@@ -347,7 +347,7 @@ When `/sprint work` (or `/new-work`) starts a story:
 <agent-activation>
 Load SM persona first:
 ```bash
-d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts" core/agent-session.sh start "sm"
+d="$PWD"; while [[ ! -d "$d/.claude" ]] && [[ "$d" != "/" ]]; do d="$(dirname "$d")"; done; "$d/.pennyfarthing/scripts/core/agent-session.sh" start "sm"
 ```
 </agent-activation>
 

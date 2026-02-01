@@ -32,14 +32,8 @@ if [[ ! "$EPIC_ID" =~ ^epic- ]]; then
   EPIC_ID="epic-$EPIC_ID"
 fi
 
-# PROJECT_ROOT should be set by find-root.sh
-if [[ -z "${PROJECT_ROOT:-}" ]]; then
-  d="$PWD"
-  while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do
-    d="$(dirname "$d")"
-  done
-  PROJECT_ROOT="$d"
-fi
+# Find project root
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/find-root.sh"
 
 SPRINT_FILE="$PROJECT_ROOT/sprint/current-sprint.yaml"
 
