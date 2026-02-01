@@ -141,7 +141,7 @@ export function SettingsPanel(): React.ReactElement {
             disabled={saving}
           />
           Bell Mode
-          <span className="setting-description">Play sound on agent completion</span>
+          <span className="setting-description">Inject queued messages via PostToolUse hook instead of waiting</span>
         </label>
         <label className="toggle-setting">
           <input

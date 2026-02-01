@@ -7,12 +7,13 @@
  * component for the docking workspace center region.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import MessageView from '../MessageView';
 import Editor, { PastedImage } from '../Editor';
 import { ControlBar, useControlBar } from '../ControlBar';
 import PersonaHeader from '../PersonaHeader';
 import StatsStrip from '../StatsStrip';
+import { useMessageQueue, QueuedMessage } from '../../hooks/useMessageQueue';
 
 // =============================================================================
 // Types
@@ -155,10 +156,20 @@ export function MessagePanel(): React.ReactElement {
   const {
     isRunning,
     isStopping,
+    bellMode,
+    relayMode,
     handleStop,
     handleForceStop,
     handleReset,
+    handleBellModeChange,
+    handleRelayModeChange,
   } = useControlBar();
+
+  // Message queue hook for turn complete handling
+  const { handleTurnComplete, pauseQueue } = useMessageQueue();
+
+  // Ref to track the submit function for turn complete
+  const submitRef = useRef<(text: string, images: QueuedMessage['images']) => void>();
 
   // Handle incoming SDK message
   const handleSDKMessage = useCallback((sdkMessage: SDKMessage) => {
@@ -177,7 +188,13 @@ export function MessagePanel(): React.ReactElement {
         ? { ...msg, isStreaming: false }
         : msg
     ));
-  }, []);
+
+    // MSSCI-12450: Process queued messages on turn complete
+    // Uses the submit function via ref to send queued messages
+    if (submitRef.current) {
+      handleTurnComplete(submitRef.current);
+    }
+  }, [handleTurnComplete]);
 
   // Handle SDK error
   const handleError = useCallback((error: string) => {
@@ -219,6 +236,17 @@ export function MessagePanel(): React.ReactElement {
     }
   }, []);
 
+  // Update submit ref for turn complete
+  useEffect(() => {
+    submitRef.current = handleSubmit;
+  }, [handleSubmit]);
+
+  // Pause queue on stop (prevent auto-advance after abort)
+  const handleStopWithPause = useCallback(() => {
+    pauseQueue();
+    handleStop();
+  }, [pauseQueue, handleStop]);
+
   return (
     <div className="message-panel" data-testid="message-panel">
       <PersonaHeader />
@@ -237,9 +265,13 @@ export function MessagePanel(): React.ReactElement {
           <ControlBar
             isRunning={isRunning || isProcessing}
             isStopping={isStopping}
-            onStop={handleStop}
+            onStop={handleStopWithPause}
             onForceStop={handleForceStop}
             onReset={handleReset}
+            bellMode={bellMode}
+            relayMode={relayMode}
+            onBellModeChange={handleBellModeChange}
+            onRelayModeChange={handleRelayModeChange}
           />
         </div>
       </div>
