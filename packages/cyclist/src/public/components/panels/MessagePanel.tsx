@@ -12,6 +12,7 @@ import MessageView from '../MessageView';
 import Editor, { PastedImage } from '../Editor';
 import { ControlBar, useControlBar } from '../ControlBar';
 import PersonaHeader from '../PersonaHeader';
+import StatsStrip from '../StatsStrip';
 
 // =============================================================================
 // Types
@@ -247,6 +248,7 @@ export function MessagePanel(): React.ReactElement {
           />
         </div>
       </div>
+      <StatsStrip />
     </div>
   );
 }
