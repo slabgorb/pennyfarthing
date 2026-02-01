@@ -35,6 +35,42 @@ export const MODE_DESCRIPTIONS: Record<Mode, string> = {
   accept: 'Auto-accept file edits',
 };
 
+// =============================================================================
+// Mode Mapping (UI ↔ Claude CLI)
+// =============================================================================
+
+/** Map UI mode names to Claude CLI mode names */
+export const MODE_TO_CLAUDE: Record<Mode, string> = {
+  plan: 'plan',
+  manual: 'default',
+  accept: 'acceptEdits',
+};
+
+/** Map Claude CLI mode names back to UI mode names */
+export const CLAUDE_TO_MODE: Record<string, Mode> = {
+  plan: 'plan',
+  default: 'manual',
+  acceptEdits: 'accept',
+};
+
+// =============================================================================
+// Keyboard Shortcuts (AC6)
+// =============================================================================
+
+/** Cmd+1/2/3 shortcuts to switch modes */
+export const MODE_SHORTCUTS: Record<string, Mode> = {
+  '1': 'plan',
+  '2': 'manual',
+  '3': 'accept',
+};
+
+// =============================================================================
+// Tooltip Support (AC7)
+// =============================================================================
+
+/** Flag indicating tooltips are enabled via title attribute */
+export const TOOLTIP_ENABLED = true;
+
 export interface ModeSwitchProps {
   /** Current active mode */
   mode?: Mode;
@@ -92,6 +128,82 @@ export function useModeSwitch(initialMode: Mode = 'manual'): UseModesSwitchResul
   }, [mode]);
 
   return { mode, setMode, nextMode, prevMode };
+}
+
+// =============================================================================
+// useModeSwitchShortcuts Hook (AC6)
+// =============================================================================
+
+/**
+ * Hook to register Cmd+1/2/3 keyboard shortcuts for mode switching
+ */
+export function useModeSwitchShortcuts(onModeChange: (mode: Mode) => void): void {
+  useEffect(() => {
+    const handler = (e: globalThis.KeyboardEvent) => {
+      // Check for Cmd (Mac) or Ctrl (Windows/Linux)
+      if ((e.metaKey || e.ctrlKey) && MODE_SHORTCUTS[e.key]) {
+        e.preventDefault();
+        onModeChange(MODE_SHORTCUTS[e.key]);
+      }
+    };
+
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onModeChange]);
+}
+
+// =============================================================================
+// useModeSync Hook (Backend Integration)
+// =============================================================================
+
+interface UseModeSyncResult {
+  mode: Mode;
+  setMode: (mode: Mode) => void;
+  isLoading: boolean;
+}
+
+/**
+ * Hook to sync UI mode state with Claude backend via IPC
+ */
+export function useModeSync(): UseModeSyncResult {
+  const [mode, setModeState] = useState<Mode>('manual');
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load initial mode from Claude backend
+  useEffect(() => {
+    const api = (window as { electronAPI?: { claude?: { getMode?: () => Promise<string> } } }).electronAPI?.claude;
+    if (!api?.getMode) {
+      setIsLoading(false);
+      return;
+    }
+
+    api.getMode().then((claudeMode: string) => {
+      setModeState(CLAUDE_TO_MODE[claudeMode] || 'manual');
+      setIsLoading(false);
+    }).catch(() => {
+      setIsLoading(false);
+    });
+  }, []);
+
+  // Set mode on Claude backend
+  const setMode = useCallback(async (newMode: Mode) => {
+    const api = (window as { electronAPI?: { claude?: { setMode?: (mode: string) => Promise<void> } } }).electronAPI?.claude;
+    if (!api?.setMode) {
+      setModeState(newMode);
+      return;
+    }
+
+    const claudeMode = MODE_TO_CLAUDE[newMode];
+    try {
+      await api.setMode(claudeMode);
+      setModeState(newMode);
+      console.log('[ModeSwitch] Mode set to:', newMode, '→', claudeMode);
+    } catch (err) {
+      console.error('[ModeSwitch] Failed to set mode:', err);
+    }
+  }, []);
+
+  return { mode, setMode, isLoading };
 }
 
 // =============================================================================
@@ -206,6 +318,7 @@ export function ModeSwitch({
             role="radio"
             aria-checked={isActive}
             aria-label={`${MODE_LABELS[m]} mode: ${MODE_DESCRIPTIONS[m]}`}
+            title={MODE_DESCRIPTIONS[m]}
             onClick={() => handleModeChange(m)}
             disabled={disabled}
           >
