@@ -50,6 +50,29 @@ let gitCoalesceTimer: ReturnType<typeof setTimeout> | null = null;
 const STORY_DEBOUNCE_MS = 100; // AC1: 100ms debounce for story
 const GIT_COALESCE_MS = 500;   // AC2: 500ms coalesce for git
 
+// Callbacks for IPC broadcast bridge (MSSCI-12782 fix)
+// These allow main.ts to receive updates for Electron IPC broadcast
+type StoryUpdateCallback = (storyInfo: ReturnType<typeof getStoryInfo>) => void;
+type GitUpdateCallback = (reposInfo: Awaited<ReturnType<typeof getAllReposGitInfoAsync>>) => void;
+let storyUpdateCallback: StoryUpdateCallback | null = null;
+let gitUpdateCallback: GitUpdateCallback | null = null;
+
+/**
+ * Register callback to receive story updates for IPC broadcast
+ * Called by main.ts to bridge WebSocket updates to Electron IPC
+ */
+export function setStoryUpdateCallback(callback: StoryUpdateCallback): void {
+  storyUpdateCallback = callback;
+}
+
+/**
+ * Register callback to receive git updates for IPC broadcast
+ * Called by main.ts to bridge WebSocket updates to Electron IPC
+ */
+export function setGitUpdateCallback(callback: GitUpdateCallback): void {
+  gitUpdateCallback = callback;
+}
+
 // Export client getters for external use
 export function getStoryClients(): Set<WebSocket> {
   return storyClients;
@@ -637,6 +660,10 @@ function broadcastStoryUpdate(storyInfo: ReturnType<typeof getStoryInfo>): void 
       client.send(message);
     }
   }
+  // Bridge to Electron IPC for panel updates
+  if (storyUpdateCallback) {
+    storyUpdateCallback(storyInfo);
+  }
 }
 
 // MSSCI-11943: Broadcast git update to all connected clients (multi-repo)
@@ -646,6 +673,10 @@ function broadcastGitUpdate(allReposInfo: Awaited<ReturnType<typeof getAllReposG
     if (client.readyState === WebSocket.OPEN) {
       client.send(message);
     }
+  }
+  // Bridge to Electron IPC for panel updates
+  if (gitUpdateCallback) {
+    gitUpdateCallback(allReposInfo);
   }
 }
 

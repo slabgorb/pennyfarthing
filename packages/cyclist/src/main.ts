@@ -62,6 +62,7 @@ import {
   type SettingsInput,
 } from './settings.js';
 import { broadcastBackgroundTaskEvent } from './api/background-tasks.js';
+import { setStoryUpdateCallback, setGitUpdateCallback } from './websocket.js';
 import { initializeGrants, setGrantsPersistCallback } from './settings-store.js';
 // Story 33-7: Import approval gate functions for tool execution pipeline
 import {
@@ -950,6 +951,18 @@ export function startProjectWatchers(): void {
     console.log(`Background task completed: ${task.subagentType} (${task.success ? 'success' : 'failed'})`);
   });
   console.log('Background task callbacks registered for OTLP broadcasts');
+
+  // Register story update callback to bridge WebSocket to Electron IPC
+  // This fixes panels not updating without page reload
+  setStoryUpdateCallback((storyInfo) => {
+    broadcastToRenderer(IPC_DATA_CHANNELS.STORY_UPDATE, storyInfo);
+  });
+
+  // Register git update callback to bridge WebSocket to Electron IPC
+  setGitUpdateCallback((reposInfo) => {
+    broadcastToRenderer(IPC_DATA_CHANNELS.GIT_UPDATE, reposInfo);
+  });
+  console.log('Story and git update callbacks registered for IPC broadcasts');
 
   // Start watching for agent changes
   if (detectPennyfarthingProject(projectDir)) {

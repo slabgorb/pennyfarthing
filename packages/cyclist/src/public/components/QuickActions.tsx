@@ -222,8 +222,7 @@ declare global {
     electronAPI?: {
       claude?: {
         send: (text: string, images: unknown[]) => void;
-        onMessage?: (callback: (message: unknown) => void) => void;
-        offMessage?: (callback: (message: unknown) => void) => void;
+        onMessage?: (callback: (message: unknown) => void) => () => void;
       };
       settings?: {
         get: () => Promise<{ workflow?: { relay_mode?: boolean } }>;

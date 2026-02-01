@@ -22,8 +22,7 @@ interface UseMessageStreamResult {
 
 interface ElectronAPI {
   claude: {
-    onMessage: (callback: (message: Message) => void) => void;
-    offMessage: (callback: (message: Message) => void) => void;
+    onMessage: (callback: (message: Message) => void) => () => void;
   };
 }
 
@@ -54,18 +53,15 @@ export function useMessageStream(): UseMessageStreamResult {
       return;
     }
 
+    let cleanup: (() => void) | undefined;
     try {
-      api.claude.onMessage(handleMessage);
+      cleanup = api.claude.onMessage(handleMessage);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Connection failed'));
     }
 
     return () => {
-      try {
-        api.claude.offMessage(handleMessage);
-      } catch {
-        // Ignore cleanup errors
-      }
+      cleanup?.();
     };
   }, [handleMessage]);
 
