@@ -28,8 +28,11 @@ interface QuickActionsProps {
  * Send a message to Claude via electronAPI
  */
 function sendMessage(text: string): void {
+  console.log('[QuickActions] sendMessage called:', text, 'electronAPI available:', !!window.electronAPI?.claude?.send);
   if (window.electronAPI?.claude?.send) {
     window.electronAPI.claude.send(text, []);
+  } else {
+    console.warn('[QuickActions] electronAPI.claude.send not available');
   }
 }
 
@@ -60,6 +63,17 @@ export default function QuickActions({
   // Check relay mode on mount
   useEffect(() => {
     getRelayMode().then(setRelayMode);
+  }, []);
+
+  // Clear QuickActions when user submits any message
+  useEffect(() => {
+    const handleUserSubmit = () => {
+      setIsDisabled(true);
+    };
+    window.addEventListener('cyclist:user-submit', handleUserSubmit);
+    return () => {
+      window.removeEventListener('cyclist:user-submit', handleUserSubmit);
+    };
   }, []);
 
   // Auto-execute handoff when relay mode is ON
@@ -96,6 +110,7 @@ export default function QuickActions({
   }, [actions]);
 
   const handleButtonClick = useCallback((response: string) => {
+    console.log('[QuickActions] Button clicked:', response);
     setIsDisabled(true);
     sendMessage(response);
     onAction?.(response);
@@ -142,6 +157,7 @@ export default function QuickActions({
         <div className="quick-actions-buttons">
           {actions.responses.map((response) => (
             <button
+              type="button"
               key={response}
               className="quick-action-btn"
               onClick={() => handleButtonClick(response)}
@@ -157,6 +173,7 @@ export default function QuickActions({
       {actions.type === 'yesno' && (
         <div className="quick-actions-buttons">
           <button
+            type="button"
             className="quick-action-btn"
             onClick={() => handleButtonClick('Yes')}
             disabled={isDisabled}
@@ -164,6 +181,7 @@ export default function QuickActions({
             Yes
           </button>
           <button
+            type="button"
             className="quick-action-btn"
             onClick={() => handleButtonClick('No')}
             disabled={isDisabled}
@@ -178,6 +196,7 @@ export default function QuickActions({
         <div className="quick-actions-buttons">
           {actions.choices.map((choice) => (
             <button
+              type="button"
               key={choice.number}
               className="quick-action-btn"
               onClick={() => handleButtonClick(choice.text)}
