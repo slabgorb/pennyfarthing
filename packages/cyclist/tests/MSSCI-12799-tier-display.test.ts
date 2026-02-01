@@ -89,6 +89,8 @@ describe('MSSCI-12799: AC2 - DebugPanel displays tier badge', () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
+    // Default mock for tokenStats to prevent undefined errors
+    mockElectronAPI.tokenStats.get.mockResolvedValue({});
     (window as unknown as { electronAPI: typeof mockElectronAPI }).electronAPI = mockElectronAPI;
   });
 
@@ -199,6 +201,8 @@ describe('MSSCI-12799: AC3 - Shows potential token savings', () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
+    // Default mock for tokenStats to prevent undefined errors
+    mockElectronAPI.tokenStats.get.mockResolvedValue({});
     (window as unknown as { electronAPI: typeof mockElectronAPI }).electronAPI = mockElectronAPI;
   });
 
@@ -307,6 +311,8 @@ describe('MSSCI-12799: AC4 - Badge colors distinguish tiers', () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
+    // Default mock for tokenStats to prevent undefined errors
+    mockElectronAPI.tokenStats.get.mockResolvedValue({});
     (window as unknown as { electronAPI: typeof mockElectronAPI }).electronAPI = mockElectronAPI;
   });
 
@@ -412,6 +418,8 @@ describe('MSSCI-12799: AC5 - Tier updates on context change', () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
+    // Default mock for tokenStats to prevent undefined errors
+    mockElectronAPI.tokenStats.get.mockResolvedValue({});
     (window as unknown as { electronAPI: typeof mockElectronAPI }).electronAPI = mockElectronAPI;
   });
 

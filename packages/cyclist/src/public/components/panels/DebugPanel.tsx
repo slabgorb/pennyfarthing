@@ -2,9 +2,13 @@
  * DebugPanel - Placeholder for debug/diagnostic info
  *
  * Story MSSCI-12717 - React Migration
+ * Story MSSCI-12799 - Tier display
  */
 
 import React, { useState, useEffect } from 'react';
+
+/** Context tier type */
+type ContextTier = 'FULL' | 'REFRESH' | 'HANDOFF' | 'MINIMAL';
 
 interface ContextData {
   used?: number;
@@ -18,6 +22,34 @@ interface ContextData {
   usablePercent?: number;
   /** Available capacity (max - baseline) */
   available?: number;
+  /** Current context tier */
+  tier?: ContextTier;
+}
+
+/**
+ * Calculate token savings percentage for a given tier vs FULL
+ *
+ * Token estimates:
+ * - FULL: ~4000 tokens (baseline)
+ * - REFRESH: ~600 tokens (85% savings)
+ * - HANDOFF: ~700 tokens (82% savings)
+ * - MINIMAL: ~200 tokens (95% savings)
+ */
+export function calculateTierSavings(tier: ContextTier | undefined): number {
+  if (!tier) return 0;
+
+  switch (tier) {
+    case 'FULL':
+      return 0;
+    case 'REFRESH':
+      return 85;
+    case 'HANDOFF':
+      return 82;
+    case 'MINIMAL':
+      return 95;
+    default:
+      return 0;
+  }
 }
 
 export function DebugPanel(): React.ReactElement {
@@ -45,11 +77,28 @@ export function DebugPanel(): React.ReactElement {
     });
   }, []);
 
+  // Compute tier-specific CSS class
+  const tierClass = context?.tier ? `tier-${context.tier.toLowerCase()}` : '';
+  const tierSavings = calculateTierSavings(context?.tier);
+
   return (
     <div className="debug-panel" data-testid="debug-panel">
       <h4>Context Usage</h4>
       {context ? (
         <div className="context-info">
+          {context.tier && (
+            <div className="tier-display">
+              <span
+                className={`tier-badge ${tierClass}`}
+                data-testid="tier-badge"
+              >
+                {context.tier}
+              </span>
+              <span className="tier-savings" data-testid="tier-savings">
+                {tierSavings}% savings
+              </span>
+            </div>
+          )}
           <div className="context-bar">
             <div
               className="context-fill"

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { execSync } from 'child_process';
 import { existsSync } from 'fs';
 import { join } from 'path';
+import type { ContextTier } from '../prime.js';
 
 /**
  * Context usage information from check-context.sh
@@ -20,6 +21,8 @@ export interface ContextInfo {
   usablePercent: number | null;
   /** Available capacity (max - baseline) */
   available: number | null;
+  /** Current context tier (FULL, REFRESH, HANDOFF, MINIMAL) */
+  tier?: ContextTier;
 }
 
 /**
