@@ -1079,6 +1079,119 @@
   color: var(--text-secondary, #8b8b8b);
 }
 
+/* Git panel - stacked multi-repo view */
+.git-panel.stacked {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.git-panel .repo-status {
+  padding: 8px;
+  background: var(--bg-tertiary, #2d2d2d);
+  border-radius: 4px;
+  border-left: 3px solid var(--accent-color, #007acc);
+}
+
+.git-panel .repo-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.git-panel .repo-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary, #8b8b8b);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.git-panel .repo-status .branch-info {
+  margin-bottom: 4px;
+}
+
+.git-panel .repo-status .sync-status {
+  margin-bottom: 4px;
+}
+
+.git-panel .repo-status .file-status {
+  gap: 6px;
+}
+
+/* File status toggle button */
+.git-panel .file-status-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 4px 0;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+
+.git-panel .file-status-toggle:hover {
+  opacity: 0.8;
+}
+
+.git-panel .toggle-icon {
+  font-size: 0.6rem;
+  color: var(--text-secondary, #8b8b8b);
+  transition: transform 0.15s ease;
+}
+
+.git-panel .toggle-icon.open {
+  transform: rotate(90deg);
+}
+
+/* File list dropdown */
+.git-panel .file-list {
+  list-style: none;
+  margin: 8px 0 0 0;
+  padding: 0;
+  border-top: 1px solid var(--border-color, #404040);
+  padding-top: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.git-panel .file-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+  font-size: 0.75rem;
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+}
+
+.git-panel .file-status-icon {
+  width: 14px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.git-panel .file-item.staged .file-status-icon {
+  color: var(--success-color, #4ec9b0);
+}
+
+.git-panel .file-item.modified .file-status-icon {
+  color: var(--warning-color, #cca700);
+}
+
+.git-panel .file-item.untracked .file-status-icon {
+  color: var(--text-secondary, #8b8b8b);
+}
+
+.git-panel .file-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary, #d4d4d4);
+}
+
 /* Progress panel */
 .progress-panel {
   padding: 8px;
