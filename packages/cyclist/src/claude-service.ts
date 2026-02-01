@@ -317,6 +317,25 @@ export interface ModeState {
 }
 
 /**
+ * Session context state for tiered context injection
+ * MSSCI-12795: Foundation for the tiered context injection system (MSSCI-12793)
+ *
+ * Tracks session state to determine which context tier to use:
+ * - FULL (~4000 tokens): First turn of new session
+ * - REFRESH (~600 tokens): Resumed session, same agent
+ * - HANDOFF (~700 tokens): Resumed session, different agent
+ * - MINIMAL (~200 tokens): Deep conversation (turn 3+), same agent
+ */
+export interface SessionContextState {
+  /** Last agent that received context injection (e.g., 'dev', 'tea', 'sm') */
+  lastAgent: string | null;
+  /** Number of messages sent in the current session */
+  turnCount: number;
+  /** Components already injected this session (e.g., 'persona', 'skills', 'guides') */
+  injectedComponents: string[];
+}
+
+/**
  * ClaudeService - Wrapper for Claude Code CLI programmatic mode
  *
  * Uses child_process with stdin pipe for NDJSON streaming programmatic control
@@ -357,6 +376,13 @@ export class ClaudeService extends EventEmitter {
 
   /** System prompt to append (persona/agent context) */
   private appendSystemPrompt?: string;
+
+  /** MSSCI-12795: Session context state for tiered context injection */
+  private contextState: SessionContextState = {
+    lastAgent: null,
+    turnCount: 0,
+    injectedComponents: [],
+  };
 
   constructor(options?: { cwd?: string; spawner?: ClaudeSpawner; env?: Record<string, string>; systemPrompt?: string }) {
     super();
@@ -583,6 +609,8 @@ export class ClaudeService extends EventEmitter {
 
       // 'result' message marks end of turn - stop yielding but keep process alive
       if (msg.type === 'result') {
+        // MSSCI-12795: Increment turn count on successful turn completion
+        this.contextState.turnCount++;
         console.log('[ClaudeService] Turn complete (result message received), process stays alive');
         break;
       }
@@ -650,6 +678,70 @@ export class ClaudeService extends EventEmitter {
     };
   }
 
+  // ===========================================================================
+  // MSSCI-12795: Session Context State Methods
+  // ===========================================================================
+
+  /**
+   * Get the current session context state
+   * Returns an immutable copy to prevent external mutation
+   */
+  getContextState(): SessionContextState {
+    return {
+      lastAgent: this.contextState.lastAgent,
+      turnCount: this.contextState.turnCount,
+      injectedComponents: [...this.contextState.injectedComponents],
+    };
+  }
+
+  /**
+   * Set the last agent that received context injection
+   * @param agent - Agent name (e.g., 'dev', 'tea') or null to clear
+   */
+  setLastAgent(agent: string | null): void {
+    this.contextState.lastAgent = agent;
+  }
+
+  /**
+   * Add a component to the list of injected components
+   * Prevents duplicates - only adds if not already present
+   * @param component - Component name (e.g., 'persona', 'skills', 'guides')
+   */
+  addInjectedComponent(component: string): void {
+    if (!this.contextState.injectedComponents.includes(component)) {
+      this.contextState.injectedComponents.push(component);
+    }
+  }
+
+  /**
+   * Check if a component has been injected this session
+   * @param component - Component name to check
+   * @returns true if the component has been injected
+   */
+  hasInjectedComponent(component: string): boolean {
+    return this.contextState.injectedComponents.includes(component);
+  }
+
+  /**
+   * Clear all injected components (but keep lastAgent and turnCount)
+   * Useful when agent changes but session continues
+   */
+  clearInjectedComponents(): void {
+    this.contextState.injectedComponents = [];
+  }
+
+  /**
+   * Reset context state to initial values
+   * Called internally by resetSession() and clearSession()
+   */
+  private resetContextState(): void {
+    this.contextState = {
+      lastAgent: null,
+      turnCount: 0,
+      injectedComponents: [],
+    };
+  }
+
   /**
    * Interrupt Claude's current turn (like pressing Escape in CLI)
    * Stops the current response but keeps session alive for new prompts
@@ -702,6 +794,7 @@ export class ClaudeService extends EventEmitter {
   /**
    * Reset the session (clear session ID and kill process)
    * B-10: Also clears activeMode since no query has run in new session
+   * MSSCI-12795: Also clears context state for fresh session
    * Background agent fix: Kill process to start fresh
    */
   resetSession(): void {
@@ -714,6 +807,8 @@ export class ClaudeService extends EventEmitter {
     this.processExited = true;
     this.sessionId = null;
     this.activeMode = undefined;
+    // MSSCI-12795: Reset context state for new session
+    this.resetContextState();
     // Clear any pending message resolvers
     for (const resolve of this.messageResolvers) {
       resolve(null);
