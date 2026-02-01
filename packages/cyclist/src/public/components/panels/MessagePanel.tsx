@@ -158,13 +158,11 @@ export function MessagePanel(): React.ReactElement {
     isStopping,
     bellMode,
     relayMode,
-    permissionMode,
     handleStop,
     handleForceStop,
     handleReset,
     handleBellModeChange,
     handleRelayModeChange,
-    handlePermissionModeChange,
   } = useControlBar();
 
   // Message queue hook for turn complete handling
@@ -279,10 +277,8 @@ export function MessagePanel(): React.ReactElement {
             onReset={handleReset}
             bellMode={bellMode}
             relayMode={relayMode}
-            permissionMode={permissionMode}
             onBellModeChange={handleBellModeChange}
             onRelayModeChange={handleRelayModeChange}
-            onPermissionModeChange={handlePermissionModeChange}
           />
         </div>
       </div>
