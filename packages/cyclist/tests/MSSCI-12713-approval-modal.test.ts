@@ -366,9 +366,11 @@ describe('MSSCI-12713: ApprovalModal Component', () => {
       const { handleOverlayClick } = module;
 
       const onDismiss = vi.fn();
+      // Same object reference for both target and currentTarget (simulates clicking overlay directly)
+      const overlayElement = { dataset: { testid: 'approval-modal-overlay' } };
       const event = {
-        target: { dataset: { testid: 'approval-modal-overlay' } },
-        currentTarget: { dataset: { testid: 'approval-modal-overlay' } },
+        target: overlayElement,
+        currentTarget: overlayElement,
       } as unknown as React.MouseEvent;
 
       handleOverlayClick(event, onDismiss);
