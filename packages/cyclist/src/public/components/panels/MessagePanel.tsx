@@ -171,17 +171,12 @@ export function MessagePanel(): React.ReactElement {
   // Handle query completion
   const handleComplete = useCallback(() => {
     setIsProcessing(false);
-    // Mark last assistant message as no longer streaming
-    setMessages(prev => {
-      const updated = [...prev];
-      for (let i = updated.length - 1; i >= 0; i--) {
-        if (updated[i].type === 'assistant' && updated[i].isStreaming) {
-          updated[i] = { ...updated[i], isStreaming: false };
-          break;
-        }
-      }
-      return updated;
-    });
+    // Mark ALL assistant messages as no longer streaming
+    setMessages(prev => prev.map(msg =>
+      msg.type === 'assistant' && msg.isStreaming
+        ? { ...msg, isStreaming: false }
+        : msg
+    ));
   }, []);
 
   // Handle SDK error

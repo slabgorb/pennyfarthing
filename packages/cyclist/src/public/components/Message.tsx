@@ -54,7 +54,7 @@ export default function Message({ message }: MessageProps): React.ReactElement {
           {message.type === 'user' ? '👤' : <AssistantAvatar />}
         </div>
         <div className="message-content">
-          <StreamingContent content={message.content || ''} isStreaming={true} />
+          <StreamingContent content={message.content || ''} isStreaming={message.isStreaming ?? false} />
         </div>
       </div>
     );

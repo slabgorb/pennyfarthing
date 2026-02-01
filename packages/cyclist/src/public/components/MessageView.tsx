@@ -18,6 +18,7 @@ import MessageList, { MessageListHandle } from './MessageList';
 import Message from './Message';
 import ToolCallBlock from './ToolCallBlock';
 import SubagentSpan from './SubagentSpan';
+import QuickActions from './QuickActions';
 
 interface MessageData {
   type: 'user' | 'assistant' | 'tool_use' | 'tool_result';
@@ -54,6 +55,16 @@ export default function MessageView({ messages }: MessageViewProps): React.React
   const handleScrollToBottom = useCallback(() => {
     messageListRef.current?.scrollToBottom('smooth');
   }, []);
+
+  // Find the last assistant message for QuickActions
+  const lastAssistantMessage = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].type === 'assistant' && !messages[i].isStreaming) {
+        return messages[i];
+      }
+    }
+    return null;
+  }, [messages]);
 
   // Group messages by subagent parent_id
   const groupedContent = useMemo(() => {
@@ -168,6 +179,11 @@ export default function MessageView({ messages }: MessageViewProps): React.React
       >
         {groupedContent.items.map((item, index) => renderItem(item, index))}
       </MessageList>
+
+      {/* Quick Actions - dedicated area outside message scroll */}
+      {lastAssistantMessage && (
+        <QuickActions message={lastAssistantMessage} />
+      )}
 
       {/* Auto-scroll indicator */}
       <div

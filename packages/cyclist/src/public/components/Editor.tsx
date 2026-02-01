@@ -213,6 +213,18 @@ export function Editor({ onSubmit, isProcessing = false, placeholder }: EditorPr
     });
   }, []);
 
+  // Listen for suggested prompts from QuickActions
+  useEffect(() => {
+    const handleSuggestPrompt = (e: CustomEvent<{ prompt: string }>) => {
+      setValue(e.detail.prompt);
+      textareaRef.current?.focus();
+    };
+    window.addEventListener('cyclist:suggest-prompt', handleSuggestPrompt as EventListener);
+    return () => {
+      window.removeEventListener('cyclist:suggest-prompt', handleSuggestPrompt as EventListener);
+    };
+  }, []);
+
   // ==========================================================================
   // Image Handling
   // ==========================================================================
