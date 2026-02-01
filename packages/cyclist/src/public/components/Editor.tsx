@@ -345,6 +345,10 @@ export function Editor({ onSubmit, isProcessing = false, placeholder }: EditorPr
     // Add to history and submit
     addToHistory(trimmed);
     resetNavigation();
+
+    // Dispatch event to clear QuickActions (Reflector questions)
+    window.dispatchEvent(new CustomEvent('cyclist:user-submit'));
+
     onSubmit(trimmed, pendingImages);
     setValue('');
     setPendingImages([]);
