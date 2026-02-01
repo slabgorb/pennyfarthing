@@ -42,7 +42,7 @@ from pennyfarthing_scripts.prime.persona import (
     load_persona,
 )
 from pennyfarthing_scripts.prime.session import cleanup_old_sessions, register_session
-from pennyfarthing_scripts.prime.tiers import ContextTier, tier_from_string
+from pennyfarthing_scripts.prime.tiers import ContextTier, tier_from_string, load_tier_components
 from pennyfarthing_scripts.prime.workflow import check_redirect, detect_workflow_state
 
 
@@ -145,9 +145,12 @@ def _prime_tiered(
             print("<!-- Minimal context: see conversation history for full agent context -->")
 
         if json_output:
-            output = result.to_dict()
-            output["tier"] = tier.value
-            print(json.dumps(output, indent=2))
+            # Get token counts from load_tier_components
+            components = load_tier_components(tier, agent_name or "", root)
+            result.tier = tier.value
+            result.token_counts = components.get("token_counts", {})
+            result.total_tokens = components.get("total_tokens", 0)
+            print(json.dumps(result.to_dict(), indent=2))
 
         return 0
 
@@ -173,9 +176,12 @@ def _prime_tiered(
             print("<!-- Full context already in conversation history -->")
 
         if json_output:
-            output = result.to_dict()
-            output["tier"] = tier.value
-            print(json.dumps(output, indent=2))
+            # Get token counts from load_tier_components
+            components = load_tier_components(tier, agent_name or "", root)
+            result.tier = tier.value
+            result.token_counts = components.get("token_counts", {})
+            result.total_tokens = components.get("total_tokens", 0)
+            print(json.dumps(result.to_dict(), indent=2))
 
         return 0
 
@@ -219,9 +225,12 @@ def _prime_tiered(
             print("=" * 60)
 
         if json_output:
-            output = result.to_dict()
-            output["tier"] = tier.value
-            print(json.dumps(output, indent=2))
+            # Get token counts from load_tier_components
+            components = load_tier_components(tier, agent_name or "", root)
+            result.tier = tier.value
+            result.token_counts = components.get("token_counts", {})
+            result.total_tokens = components.get("total_tokens", 0)
+            print(json.dumps(result.to_dict(), indent=2))
 
         return 0
 
@@ -441,6 +450,16 @@ def prime(
     # JSON output
     # ==========================================================================
     if json_output:
+        # Get token counts for FULL tier
+        tier_value = context_tier.value if context_tier else "FULL"
+        components = load_tier_components(
+            context_tier or ContextTier.FULL,
+            agent_name or "",
+            root,
+        )
+        result.tier = tier_value
+        result.token_counts = components.get("token_counts", {})
+        result.total_tokens = components.get("total_tokens", 0)
         print(json.dumps(result.to_dict(), indent=2))
 
     return 0
