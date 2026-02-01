@@ -86,18 +86,21 @@ export interface ElectronClaudeAPI {
 
   /**
    * Subscribe to streamed messages from ClaudeService
+   * Returns cleanup function to remove the listener
    */
-  onMessage: (callback: (message: unknown) => void) => void;
+  onMessage: (callback: (message: unknown) => void) => () => void;
 
   /**
    * Subscribe to query completion signal
+   * Returns cleanup function to remove the listener
    */
-  onComplete: (callback: () => void) => void;
+  onComplete: (callback: () => void) => () => void;
 
   /**
    * Subscribe to error signals
+   * Returns cleanup function to remove the listener
    */
-  onError: (callback: (error: string) => void) => void;
+  onError: (callback: (error: string) => void) => () => void;
 }
 
 /**
@@ -601,13 +604,19 @@ function createElectronAPI(): ElectronAPI {
         setSystemPrompt: (prompt: string) => ipcRenderer.invoke('claude:setSystemPrompt', prompt),
         getSystemPrompt: () => ipcRenderer.invoke('claude:getSystemPrompt') as Promise<string | undefined>,
         onMessage: (callback: (message: unknown) => void) => {
-          ipcRenderer.on('claude:message', (_event: unknown, msg: unknown) => callback(msg));
+          const handler = (_event: unknown, msg: unknown) => callback(msg);
+          ipcRenderer.on('claude:message', handler);
+          return () => ipcRenderer.removeListener('claude:message', handler);
         },
         onComplete: (callback: () => void) => {
-          ipcRenderer.on('claude:complete', () => callback());
+          const handler = () => callback();
+          ipcRenderer.on('claude:complete', handler);
+          return () => ipcRenderer.removeListener('claude:complete', handler);
         },
         onError: (callback: (error: string) => void) => {
-          ipcRenderer.on('claude:error', (_event: unknown, err: unknown) => callback(err as string));
+          const handler = (_event: unknown, err: unknown) => callback(err as string);
+          ipcRenderer.on('claude:error', handler);
+          return () => ipcRenderer.removeListener('claude:error', handler);
         },
       },
       // Agent launcher API (B-23)
@@ -783,13 +792,16 @@ function createElectronAPI(): ElectronAPI {
         setSystemPrompt: (_prompt: string) => Promise.resolve(),
         getSystemPrompt: () => Promise.resolve(undefined),
         onMessage: (_callback: (message: unknown) => void) => {
-          // No-op in test environment
+          // No-op in test environment - return cleanup function
+          return () => {};
         },
         onComplete: (_callback: () => void) => {
-          // No-op in test environment
+          // No-op in test environment - return cleanup function
+          return () => {};
         },
         onError: (_callback: (error: string) => void) => {
-          // No-op in test environment
+          // No-op in test environment - return cleanup function
+          return () => {};
         },
       },
       // Agent launcher API (B-23) - test stub
