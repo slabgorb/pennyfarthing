@@ -121,6 +121,64 @@ export async function getPrimeContextAsync(agentName: string, projectDir: string
 // MSSCI-12796: Tiered Context Injection
 // =============================================================================
 
+// =============================================================================
+// MSSCI-12800: Token Counting Types and Parsing
+// =============================================================================
+
+/**
+ * Parsed result from prime JSON output
+ */
+export interface PrimeOutput {
+  /** Context content string */
+  context?: string;
+  /** Context tier used */
+  tier?: ContextTier;
+  /** Agent name */
+  agentName?: string;
+  /** Per-component token counts */
+  tokenCounts?: Record<string, number>;
+  /** Total tokens across all components */
+  totalTokens?: number;
+}
+
+/**
+ * Parse prime command output (JSON or plain text)
+ *
+ * Handles both JSON output (from --json flag) and plain text output.
+ * For JSON output, extracts tier, token_counts, and total_tokens fields.
+ *
+ * @param output - Raw output from prime command
+ * @returns Parsed prime output with token data if available
+ */
+export function parsePrimeOutput(output: string): PrimeOutput {
+  // Try to parse as JSON first
+  try {
+    const trimmed = output.trim();
+    if (trimmed.startsWith('{')) {
+      const data = JSON.parse(trimmed);
+      return {
+        // Extract context field if present, otherwise use the raw output
+        context: data.context ?? trimmed,
+        tier: data.tier as ContextTier | undefined,
+        agentName: data.agent_name,
+        tokenCounts: data.token_counts,
+        totalTokens: data.total_tokens,
+      };
+    }
+  } catch {
+    // Not JSON, fall through to plain text handling
+  }
+
+  // Plain text output - just return as context
+  return {
+    context: output,
+    tier: undefined,
+    agentName: undefined,
+    tokenCounts: undefined,
+    totalTokens: undefined,
+  };
+}
+
 /**
  * Context tier for determining how much context to inject
  *

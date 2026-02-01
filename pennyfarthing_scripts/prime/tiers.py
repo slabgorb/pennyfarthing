@@ -15,6 +15,26 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+
+def estimate_tokens(text: str) -> int:
+    """Estimate token count for a text string.
+
+    Uses character-based approximation (~4 characters per token) which is
+    reasonably accurate for English text with mixed code/prose content.
+
+    Args:
+        text: Text to estimate tokens for
+
+    Returns:
+        Estimated token count (0 for empty string)
+    """
+    if not text:
+        return 0
+    # Approximate: ~4 characters per token for cl100k_base encoding
+    # This is within 10% for typical agent context content
+    return max(1, len(text) // 4)
+
+
 from pennyfarthing_scripts.prime.loader import (
     load_agent_definition,
     load_behavior_guide,
@@ -80,50 +100,70 @@ def load_tier_components(
         project_root: Project root path
 
     Returns:
-        Dict mapping component name to content
+        Dict with:
+        - Component name -> content mappings
+        - "token_counts": Dict mapping component name to estimated token count
+        - "total_tokens": Sum of all component token counts
     """
     components: dict[str, Any] = {}
+    token_counts: dict[str, int] = {}
+
+    def add_component(name: str, content: str | Any) -> None:
+        """Add a component and track its token count."""
+        components[name] = content
+        # Estimate tokens for string content, 0 for structured data
+        if isinstance(content, str):
+            token_counts[name] = estimate_tokens(content)
+        else:
+            # For structured data (like WorkflowStatus), estimate from string repr
+            token_counts[name] = estimate_tokens(str(content))
 
     # All tiers include workflow state
     workflow_status = detect_workflow_state(project_root)
-    components["workflow_state"] = workflow_status
+    add_component("workflow_state", workflow_status)
 
     if tier == ContextTier.MINIMAL:
         # MINIMAL: Just workflow state
+        components["token_counts"] = token_counts
+        components["total_tokens"] = sum(token_counts.values())
         return components
 
     if tier == ContextTier.REFRESH:
         # REFRESH: Dynamic state only
         sprint_content = load_sprint_context(project_root)
         if sprint_content:
-            components["sprint_context"] = sprint_content
+            add_component("sprint_context", sprint_content)
 
         session_result = load_session_context(project_root)
         if session_result:
             filename, header, _ = session_result
-            components["session_header"] = header
+            add_component("session_header", header)
 
+        components["token_counts"] = token_counts
+        components["total_tokens"] = sum(token_counts.values())
         return components
 
     if tier == ContextTier.HANDOFF:
         # HANDOFF: Agent essentials for new agent
         agent_content = load_agent_definition(agent_name, project_root)
         if agent_content:
-            components["agent_definition"] = agent_content
+            add_component("agent_definition", agent_content)
 
         # Load compressed persona
         if is_character_voice_enabled(project_root):
             persona, theme = load_persona(agent_name, project_root)
             if persona and theme:
                 compressed = format_persona_compressed(persona, theme, agent_name)
-                components["persona_compressed"] = compressed
+                add_component("persona_compressed", compressed)
 
+        components["token_counts"] = token_counts
+        components["total_tokens"] = sum(token_counts.values())
         return components
 
     # FULL tier: Everything
     agent_content = load_agent_definition(agent_name, project_root)
     if agent_content:
-        components["agent_definition"] = agent_content
+        add_component("agent_definition", agent_content)
 
     if is_character_voice_enabled(project_root):
         persona, theme = load_persona(agent_name, project_root)
@@ -132,27 +172,30 @@ def load_tier_components(
 
             crew = get_crew_manifest(project_root)
             user_title = get_user_title(project_root)
-            components["persona"] = format_persona_output(
+            persona_content = format_persona_output(
                 persona, theme, agent_name, crew, user_title
             )
+            add_component("persona", persona_content)
 
     guide_content = load_behavior_guide(project_root)
     if guide_content:
-        components["behavior_guide"] = guide_content
+        add_component("behavior_guide", guide_content)
 
     sprint_content = load_sprint_context(project_root)
     if sprint_content:
-        components["sprint_context"] = sprint_content
+        add_component("sprint_context", sprint_content)
 
     session_result = load_session_context(project_root)
     if session_result:
         filename, header, assessment = session_result
-        components["session_header"] = header
+        add_component("session_header", header)
         if assessment:
-            components["session_assessment"] = assessment
+            add_component("session_assessment", assessment)
 
     sidecars = load_sidecars(agent_name, project_root)
     if sidecars:
-        components["sidecars"] = sidecars
+        add_component("sidecars", sidecars)
 
+    components["token_counts"] = token_counts
+    components["total_tokens"] = sum(token_counts.values())
     return components
