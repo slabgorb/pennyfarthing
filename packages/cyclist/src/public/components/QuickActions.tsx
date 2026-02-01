@@ -2,16 +2,16 @@
  * QuickActions Component
  *
  * Renders action buttons based on CYCLIST markers detected in assistant messages.
- * Supports handoff buttons, yes/no questions, open text input, choices, and continue.
+ * Supports handoff buttons, yes/no questions, choices, and continue.
+ *
+ * For open questions with suggestions (<!-- CYCLIST:QUESTION:open:suggested text -->),
+ * pre-fills the editor via 'cyclist:suggest-prompt' event instead of showing buttons.
  *
  * Story: MSSCI-12787 - Implement CYCLIST Marker Parsing and Action Buttons
- *
- * @see sprint/context/MSSCI-12787-reference/quick-actions.js.deleted
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { useMarkerActions, useStrippedContent } from '../hooks/useMarkerActions';
-import { stripMarkers } from '@pennyfarthing/shared/browser';
+import { useMarkerActions } from '../hooks/useMarkerActions';
 
 interface MessageData {
   type: 'user' | 'assistant' | 'tool_use' | 'tool_result';
@@ -53,11 +53,9 @@ export default function QuickActions({
   onAction,
 }: QuickActionsProps): React.ReactElement | null {
   const [isDisabled, setIsDisabled] = useState(false);
-  const [inputValue, setInputValue] = useState('');
   const [relayMode, setRelayMode] = useState(false);
 
   const actions = useMarkerActions(message.content);
-  const strippedContent = useStrippedContent(message.content);
 
   // Check relay mode on mount
   useEffect(() => {
@@ -87,28 +85,29 @@ export default function QuickActions({
     }
   }, [actions, relayMode, onAction]);
 
+  // Pre-fill editor with suggested prompt for open questions
+  useEffect(() => {
+    if (actions?.type === 'open' && actions.responses && actions.responses.length > 0) {
+      const suggestion = actions.responses[0];
+      window.dispatchEvent(new CustomEvent('cyclist:suggest-prompt', {
+        detail: { prompt: suggestion }
+      }));
+    }
+  }, [actions]);
+
   const handleButtonClick = useCallback((response: string) => {
     setIsDisabled(true);
     sendMessage(response);
     onAction?.(response);
   }, [onAction]);
 
-  const handleInputSubmit = useCallback(() => {
-    if (!inputValue.trim()) return;
-    setIsDisabled(true);
-    sendMessage(inputValue);
-    onAction?.(inputValue);
-  }, [inputValue, onAction]);
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleInputSubmit();
-    }
-  }, [handleInputSubmit]);
-
   // No actions to render
   if (!actions) {
+    return null;
+  }
+
+  // Open questions - no buttons needed, editor is pre-filled via useEffect
+  if (actions.type === 'open') {
     return null;
   }
 
@@ -132,13 +131,6 @@ export default function QuickActions({
 
   return (
     <div className="quick-actions">
-      {/* Display stripped message content */}
-      {strippedContent && (
-        <div className="quick-actions-content">
-          {strippedContent}
-        </div>
-      )}
-
       {/* Handoff buttons */}
       {actions.type === 'handoff' && actions.responses && (
         <div className="quick-actions-buttons">
@@ -171,27 +163,6 @@ export default function QuickActions({
             disabled={isDisabled}
           >
             No
-          </button>
-        </div>
-      )}
-
-      {/* Open text input */}
-      {actions.type === 'open' && (
-        <div className="quick-actions-input">
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={isDisabled}
-            placeholder="Type your response..."
-          />
-          <button
-            className="quick-action-btn"
-            onClick={handleInputSubmit}
-            disabled={isDisabled || !inputValue.trim()}
-          >
-            Send
           </button>
         </div>
       )}

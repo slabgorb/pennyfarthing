@@ -178,12 +178,12 @@ export default function MessageView({ messages }: MessageViewProps): React.React
         autoScroll={isAtBottom}
       >
         {groupedContent.items.map((item, index) => renderItem(item, index))}
-
-        {/* Quick Actions for last assistant message */}
-        {lastAssistantMessage && (
-          <QuickActions message={lastAssistantMessage} />
-        )}
       </MessageList>
+
+      {/* Quick Actions - dedicated area outside message scroll */}
+      {lastAssistantMessage && (
+        <QuickActions message={lastAssistantMessage} />
+      )}
 
       {/* Auto-scroll indicator */}
       <div
