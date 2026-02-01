@@ -117,7 +117,20 @@ function processMarkers(
           responses: ['Yes', 'No'],
         };
       }
-      if (primaryMarker.value === 'open') {
+      // Handle open questions - may have suggested prompt: "open" or "open:suggested text"
+      if (primaryMarker.value?.startsWith('open')) {
+        // Check for suggested prompt after "open:"
+        const colonIndex = primaryMarker.value.indexOf(':');
+        if (colonIndex !== -1) {
+          const suggestion = primaryMarker.value.substring(colonIndex + 1).trim();
+          if (suggestion) {
+            return {
+              type: 'open',
+              responses: [suggestion],
+            };
+          }
+        }
+        // Plain open question without suggestion
         return {
           type: 'open',
         };
