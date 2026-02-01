@@ -12,14 +12,9 @@
 
 set -uo pipefail
 
-# Find project root
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# Handle both direct execution and symlink from .git/hooks
-if [[ "$SCRIPT_DIR" == *".git/hooks"* ]]; then
-    PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-else
-    PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
-fi
+# Find project root (resolve symlink first for .git/hooks/ symlinks)
+REAL_SCRIPT="$(readlink -f "${BASH_SOURCE[0]:-$0}" 2>/dev/null || realpath "${BASH_SOURCE[0]:-$0}" 2>/dev/null || echo "${BASH_SOURCE[0]:-$0}")"
+source "$(dirname "$REAL_SCRIPT")/../lib/find-root.sh"
 
 # =============================================================================
 # Check 1: Branch Protection
