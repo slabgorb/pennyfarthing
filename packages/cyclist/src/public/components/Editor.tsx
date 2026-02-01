@@ -179,34 +179,7 @@ function ImagePreview({ images, onRemove }: ImagePreviewProps) {
   );
 }
 
-// =============================================================================
-// Mode Toolbar - Uses ModeSwitch component
-// =============================================================================
-
-import { ModeSwitch, Mode, MODE_TO_CLAUDE, CLAUDE_TO_MODE } from './ModeSwitch';
-
-interface ModeToolbarProps {
-  mode: PermissionMode;
-  onModeChange: (mode: PermissionMode) => void;
-}
-
-function ModeToolbar({ mode, onModeChange }: ModeToolbarProps) {
-  // Convert Claude mode to UI mode for ModeSwitch
-  const uiMode: Mode = CLAUDE_TO_MODE[mode] || 'manual';
-
-  // Convert UI mode back to Claude mode on change
-  const handleUIModeChange = (newMode: Mode) => {
-    const claudeMode = MODE_TO_CLAUDE[newMode] as PermissionMode;
-    onModeChange(claudeMode);
-  };
-
-  return (
-    <ModeSwitch
-      mode={uiMode}
-      onModeChange={handleUIModeChange}
-    />
-  );
-}
+// ModeSwitch is now in ControlBar - removed duplicate ModeToolbar
 
 // =============================================================================
 // Editor Component
@@ -574,8 +547,6 @@ export function Editor({ onSubmit, isProcessing = false, placeholder }: EditorPr
 
   return (
     <div className="editor-container" data-testid="editor-container">
-      <ModeToolbar mode={mode} onModeChange={handleModeChange} />
-
       <div className="editor-wrapper" id="editor-wrapper">
         <ImagePreview images={pendingImages} onRemove={removeImage} />
 
