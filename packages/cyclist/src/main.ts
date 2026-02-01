@@ -13,7 +13,7 @@ import { Server, createServer as createHttpServer, IncomingMessage, ServerRespon
 import { fileURLToPath } from 'url';
 import { dirname, join, basename } from 'path';
 import { getCurrentPersona, detectPennyfarthingProject, watchAgentChanges } from './pennyfarthing.js';
-import { getStoryInfo, getAllReposGitInfo, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig, writeApprovalPortFile, cleanupApprovalPortFile } from './server.js';
+import { getStoryInfo, getAllReposGitInfoAsync, writePortFile, cleanupPortFile, writePidFile, cleanupPidFile, readPidFile, isProcessRunning, getOtelConfig, writeApprovalPortFile, cleanupApprovalPortFile } from './server.js';
 import { parseToolStats, ToolStats, createEmptyStats } from './tool-stats.js';
 import {
   getTokenStats,
@@ -805,10 +805,11 @@ export function setupDataIPCHandlers(ipcMain: {
   });
 
   // Git handler - returns git status for all repos (multi-repo support)
+  // Uses async version to avoid blocking event loop and git lock conflicts
   ipcMain.handle(IPC_DATA_CHANNELS.GIT_GET, async () => {
     const projectDir = getProjectDirectory();
     if (!projectDir) return null;
-    return { repos: getAllReposGitInfo(projectDir) };
+    return { repos: await getAllReposGitInfoAsync(projectDir) };
   });
 
   // Tool stats handler - returns current tool stats (E5-2)

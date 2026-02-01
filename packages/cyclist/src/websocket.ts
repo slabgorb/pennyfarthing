@@ -16,7 +16,7 @@ import { ClaudeService, type PermissionMode } from './claude-service.js';
 import { publicDir } from './paths.js';
 import { getOtelConfig } from './server.js';
 import { getStoryInfo } from './story-parser.js';
-import { getAllReposGitInfoAsync } from './api/git.js';
+import { getAllReposGitInfoAsync, getReposFromConfig } from './api/git.js';
 
 // WebSocket message types for Claude communication
 interface ClaudeWebSocketMessage {
@@ -461,9 +461,14 @@ export function setupWebSocketServers(
     }
   }
 
-  // Set up git file watchers (MSSCI-11943: AC2 - broadcast on .git/HEAD and .git/index changes)
-  const gitDir = join(projectDir, '.git');
-  if (existsSync(gitDir)) {
+  // Set up git file watchers for all configured repos
+  // (MSSCI-11943: AC2 - broadcast on .git/HEAD and .git/index changes)
+  const repos = getReposFromConfig(projectDir);
+  for (const repo of repos) {
+    const repoPath = join(projectDir, repo.path);
+    const gitDir = join(repoPath, '.git');
+    if (!existsSync(gitDir)) continue;
+
     try {
       // Watch .git/HEAD for branch switches
       const headPath = join(gitDir, 'HEAD');
@@ -483,7 +488,7 @@ export function setupWebSocketServers(
         });
       }
     } catch (err) {
-      console.error('[WebSocket] Failed to set up git file watchers:', err);
+      console.error(`[WebSocket] Failed to set up git file watchers for ${repo.name}:`, err);
     }
   }
 
