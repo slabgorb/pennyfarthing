@@ -59,9 +59,38 @@ export function DebugPanel(): React.ReactElement {
 
       <h4>Token Stats</h4>
       {tokenStats ? (
-        <pre className="token-stats">
-          {JSON.stringify(tokenStats, null, 2)}
-        </pre>
+        <dl className="token-stats">
+          {tokenStats.inputTokens !== undefined && (
+            <>
+              <dt>Input</dt>
+              <dd>{Number(tokenStats.inputTokens).toLocaleString()}</dd>
+            </>
+          )}
+          {tokenStats.outputTokens !== undefined && (
+            <>
+              <dt>Output</dt>
+              <dd>{Number(tokenStats.outputTokens).toLocaleString()}</dd>
+            </>
+          )}
+          {tokenStats.cacheReadTokens !== undefined && (
+            <>
+              <dt>Cache Read</dt>
+              <dd>{Number(tokenStats.cacheReadTokens).toLocaleString()}</dd>
+            </>
+          )}
+          {tokenStats.cacheCreationTokens !== undefined && (
+            <>
+              <dt>Cache Write</dt>
+              <dd>{Number(tokenStats.cacheCreationTokens).toLocaleString()}</dd>
+            </>
+          )}
+          {tokenStats.totalCostUsd !== undefined && Number(tokenStats.totalCostUsd) > 0 && (
+            <>
+              <dt>Cost</dt>
+              <dd>${Number(tokenStats.totalCostUsd).toFixed(4)}</dd>
+            </>
+          )}
+        </dl>
       ) : (
         <div className="placeholder">No token stats</div>
       )}

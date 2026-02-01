@@ -1265,13 +1265,25 @@
 }
 
 .debug-panel .token-stats {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
   font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   background: var(--bg-tertiary, #2d2d2d);
-  padding: 8px;
+  padding: 8px 12px;
   border-radius: 4px;
-  overflow: auto;
-  max-height: 200px;
+  margin: 0;
+}
+
+.debug-panel .token-stats dt {
+  color: var(--text-secondary, #8b8b8b);
+}
+
+.debug-panel .token-stats dd {
+  color: var(--text-primary, #d4d4d4);
+  text-align: right;
+  margin: 0;
 }
 
 /* Settings panel */
