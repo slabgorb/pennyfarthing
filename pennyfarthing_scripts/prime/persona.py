@@ -310,4 +310,20 @@ def format_persona_compressed(
     Returns:
         Compressed persona XML string (~100 tokens)
     """
-    raise NotImplementedError("format_persona_compressed not implemented")
+    lines = [f'<persona agent="{agent_name}" character="{persona.character}">']
+
+    # Voice from style (primary behavioral descriptor)
+    if persona.style:
+        lines.append(f"  <voice>{persona.style}</voice>")
+
+    # Catchphrase from quote
+    if persona.quote:
+        lines.append(f"  <catchphrase>{persona.quote}</catchphrase>")
+
+    # Style from role (short descriptor)
+    if persona.role:
+        lines.append(f"  <style>{persona.role}</style>")
+
+    lines.append("</persona>")
+
+    return "\n".join(lines)
