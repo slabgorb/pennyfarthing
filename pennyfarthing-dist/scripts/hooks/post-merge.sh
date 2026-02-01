@@ -14,18 +14,11 @@
 
 set -uo pipefail
 
-# Self-locate and set up PROJECT_ROOT
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd -P)"
-source "$SCRIPT_DIR/../lib/find-root.sh"
+# Self-locate (resolve symlink first for .git/hooks/ symlinks)
+REAL_SCRIPT="$(readlink -f "${BASH_SOURCE[0]:-$0}" 2>/dev/null || realpath "${BASH_SOURCE[0]:-$0}" 2>/dev/null || echo "${BASH_SOURCE[0]:-$0}")"
+source "$(dirname "$REAL_SCRIPT")/../lib/find-root.sh"
 
-# Initialize paths
-PROJECT_ROOT="$(find_project_root 2>/dev/null || echo "")"
-if [[ -z "$PROJECT_ROOT" ]]; then
-    # Not in a pennyfarthing project, silently exit
-    exit 0
-fi
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+# PROJECT_ROOT is now set by find-root.sh
 SESSION_DIR="$PROJECT_ROOT/.session"
 SPRINT_FILE="$PROJECT_ROOT/sprint/current-sprint.yaml"
 
