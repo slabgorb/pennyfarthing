@@ -5,9 +5,14 @@
  * (agent definition, persona, behavior guide, sprint context, etc.)
  * which is then passed via --append-system-prompt to make personas
  * behave the same as in CLI mode.
+ *
+ * Also provides tier selection logic for the tiered context injection system
+ * (MSSCI-12793) which reduces token overhead by selecting appropriate context
+ * tiers based on session state.
  */
 
 import { execSync } from 'child_process';
+import type { SessionContextState } from './claude-service.js';
 import { join, dirname } from 'path';
 import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -110,4 +115,50 @@ export async function getPrimeContextAsync(agentName: string, projectDir: string
       resolve(getPrimeContext(agentName, projectDir));
     });
   });
+}
+
+// =============================================================================
+// MSSCI-12796: Tiered Context Injection
+// =============================================================================
+
+/**
+ * Context tier for determining how much context to inject
+ *
+ * | Tier     | Tokens | When Used                              |
+ * |----------|--------|----------------------------------------|
+ * | FULL     | ~4000  | First turn of new session (no lastAgent) |
+ * | REFRESH  | ~600   | Resumed session, same agent, turns 0-3 |
+ * | HANDOFF  | ~700   | Resumed session, different agent       |
+ * | MINIMAL  | ~200   | Deep conversation (turn > 3), same agent |
+ */
+export type ContextTier = 'FULL' | 'REFRESH' | 'HANDOFF' | 'MINIMAL';
+
+/**
+ * Select the appropriate context tier based on session state
+ *
+ * Decision logic (in priority order):
+ * 1. No lastAgent (new session) → FULL
+ * 2. Different agent (handoff) → HANDOFF
+ * 3. Same agent, turnCount > 3 → MINIMAL
+ * 4. Otherwise → REFRESH
+ *
+ * @param agentName - Current agent requesting context (e.g., 'dev', 'tea')
+ * @param state - Current session context state from ClaudeService
+ * @returns The appropriate context tier
+ */
+export function selectContextTier(
+  agentName: string,
+  state: SessionContextState
+): ContextTier {
+  // New session - need everything (explicitly check for null, not just falsy)
+  if (state.lastAgent === null) return 'FULL';
+
+  // Different agent - need agent def + persona
+  if (state.lastAgent !== agentName) return 'HANDOFF';
+
+  // Same agent, deep conversation - just workflow state
+  if (state.turnCount > 3) return 'MINIMAL';
+
+  // Same agent, early conversation - refresh dynamic state
+  return 'REFRESH';
 }
