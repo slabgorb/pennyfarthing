@@ -1944,3 +1944,188 @@
 .stats-context-meter.level-danger .context-fill {
   background: var(--color-danger, #ef4444);
 }
+
+/* =============================================================================
+   Queue Display Component Styles (MSSCI-12275)
+   ============================================================================= */
+
+.queue-display {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-tertiary, #2d2d2d);
+  border-radius: 4px;
+  margin-top: 8px;
+  max-height: 150px;
+  overflow: hidden;
+}
+
+.queue-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--bg-secondary, #252526);
+  border-bottom: 1px solid var(--border-color, #3c3c3c);
+}
+
+.queue-display .queue-count {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #8b8b8b);
+}
+
+.queue-mode-badge {
+  font-size: 0.7rem;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--bg-primary, #1e1e1e);
+}
+
+.queue-mode-badge.bell-mode {
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--color-warning, #f59e0b);
+}
+
+.queue-clear-btn {
+  margin-left: auto;
+  padding: 2px 8px;
+  background: transparent;
+  border: 1px solid var(--border-color, #3c3c3c);
+  border-radius: 3px;
+  color: var(--text-secondary, #8b8b8b);
+  cursor: pointer;
+  font-size: 0.7rem;
+}
+
+.queue-clear-btn:hover {
+  color: var(--text-primary, #d4d4d4);
+  border-color: var(--text-secondary, #8b8b8b);
+}
+
+.queue-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  max-height: 100px;
+}
+
+.queue-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border-color, #3c3c3c);
+  font-size: 0.75rem;
+}
+
+.queue-item:last-child {
+  border-bottom: none;
+}
+
+.queue-item-text {
+  flex: 1;
+  color: var(--text-primary, #d4d4d4);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.queue-image-indicator {
+  color: var(--accent-color, #007acc);
+  font-size: 0.7rem;
+  flex-shrink: 0;
+}
+
+.queue-item-remove {
+  padding: 0 4px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary, #8b8b8b);
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.queue-item-remove:hover {
+  color: var(--error-color, #f14c4c);
+}
+
+/* =============================================================================
+   Bell/Relay Toggle Styles (MSSCI-12275, MSSCI-12395)
+   ============================================================================= */
+
+.control-bar-toggles {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.btn-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 28px;
+  padding: 0;
+  background: var(--bg-tertiary, #2d2d2d);
+  border: 1px solid var(--border-color, #3c3c3c);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-toggle:hover {
+  background: var(--bg-hover, #3c3c3c);
+  border-color: var(--text-secondary, #8b8b8b);
+}
+
+.btn-toggle .toggle-icon {
+  font-size: 1rem;
+  line-height: 1;
+  filter: grayscale(100%) opacity(0.5);
+  transition: filter 0.15s ease;
+}
+
+.btn-toggle:hover .toggle-icon {
+  filter: grayscale(50%) opacity(0.8);
+}
+
+/* Bell mode active */
+.btn-toggle.bell-toggle.active {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: var(--color-warning, #f59e0b);
+}
+
+.btn-toggle.bell-toggle.active .toggle-icon {
+  filter: none;
+}
+
+/* Relay mode active */
+.btn-toggle.relay-toggle.active {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: var(--color-purple, #8b5cf6);
+}
+
+.btn-toggle.relay-toggle.active .toggle-icon {
+  filter: none;
+}
+
+/* Pulse animation for active toggles */
+@keyframes toggle-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 currentColor;
+  }
+  50% {
+    box-shadow: 0 0 4px 1px currentColor;
+  }
+}
+
+.btn-toggle.bell-toggle.active {
+  animation: toggle-pulse 2s ease-in-out infinite;
+  color: var(--color-warning, #f59e0b);
+}
+
+.btn-toggle.relay-toggle.active {
+  animation: toggle-pulse 2s ease-in-out infinite;
+  color: var(--color-purple, #8b5cf6);
+}
