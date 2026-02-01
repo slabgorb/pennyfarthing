@@ -21,37 +21,42 @@ interface MessageProps {
   message: MessageData;
 }
 
-function AssistantAvatar(): React.ReactElement {
+interface AssistantAvatarProps {
+  isStreaming?: boolean;
+}
+
+function AssistantAvatar({ isStreaming }: AssistantAvatarProps): React.ReactElement {
   const { persona } = usePersona();
   const [imageError, setImageError] = useState(false);
 
   const slug = persona?.slug;
   const theme = persona?.theme;
+  const avatarClass = isStreaming ? 'avatar-portrait avatar-thinking' : 'avatar-portrait';
 
   if (slug && theme && !imageError) {
     return (
       <img
         src={`/portraits/${theme}/small/${slug}.png`}
         alt={persona?.character || 'Agent'}
-        className="avatar-portrait"
+        className={avatarClass}
         onError={() => setImageError(true)}
       />
     );
   }
 
-  return <span className="avatar-emoji">🤖</span>;
+  return <span className={isStreaming ? 'avatar-emoji avatar-thinking' : 'avatar-emoji'}>🤖</span>;
 }
 
 export default function Message({ message }: MessageProps): React.ReactElement {
   const roleClass = `message-${message.type}`;
   const testId = `message-${message.type}`;
 
-  // For streaming assistant messages, use StreamingContent
+  // For streaming assistant messages, use StreamingContent with throbbing avatar
   if (message.type === 'assistant' && message.isStreaming) {
     return (
       <div data-testid={testId} className={`message ${roleClass}`}>
         <div data-testid="avatar" className="message-avatar">
-          {message.type === 'user' ? '👤' : <AssistantAvatar />}
+          <AssistantAvatar isStreaming={true} />
         </div>
         <div className="message-content">
           <StreamingContent content={message.content || ''} isStreaming={message.isStreaming ?? false} />

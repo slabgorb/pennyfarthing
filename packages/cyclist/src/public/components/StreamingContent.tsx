@@ -13,20 +13,12 @@ interface StreamingContentProps {
   isStreaming: boolean;
 }
 
-export default function StreamingContent({ content, isStreaming }: StreamingContentProps): React.ReactElement {
+export default function StreamingContent({ content }: StreamingContentProps): React.ReactElement {
   const html = parseMarkdown(content);
 
   return (
     <div data-testid="streaming-content" className="streaming-content">
       <div dangerouslySetInnerHTML={{ __html: html }} />
-      {isStreaming && (
-        <span
-          data-testid="streaming-indicator"
-          className="inline text-[var(--accent-color,#007acc)] animate-pulse"
-        >
-          ▌
-        </span>
-      )}
     </div>
   );
 }
