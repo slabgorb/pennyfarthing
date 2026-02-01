@@ -25,6 +25,7 @@ import React, {
 import { useCommandHistory } from '../hooks/useCommandHistory';
 import { useTabCompletion } from '../hooks/useTabCompletion';
 import { useMessageQueue, QueuedMessage } from '../hooks/useMessageQueue';
+import { ModeSwitch, Mode, useModeSync, useModeSwitchShortcuts } from './ModeSwitch';
 
 // =============================================================================
 // Types
@@ -42,7 +43,7 @@ export interface EditorProps {
   placeholder?: string;
 }
 
-type PermissionMode = 'default' | 'plan' | 'acceptEdits' | 'dangerouslySkipPermissions';
+// PermissionMode type moved to ModeSwitch component
 
 // Supported image types for paste
 const SUPPORTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
@@ -180,46 +181,6 @@ function ImagePreview({ images, onRemove }: ImagePreviewProps) {
 }
 
 // =============================================================================
-// Mode Toolbar Component
-// =============================================================================
-
-interface ModeToolbarProps {
-  mode: PermissionMode;
-  onModeChange: (mode: PermissionMode) => void;
-}
-
-function ModeToolbar({ mode, onModeChange }: ModeToolbarProps) {
-  return (
-    <div className="mode-toolbar" data-testid="mode-toolbar">
-      <button
-        type="button"
-        className={`mode-button ${mode === 'default' ? 'active' : ''}`}
-        onClick={() => onModeChange('default')}
-        title="Manual mode - ask for permission (Cmd+1)"
-      >
-        Manual
-      </button>
-      <button
-        type="button"
-        className={`mode-button ${mode === 'plan' ? 'active' : ''}`}
-        onClick={() => onModeChange('plan')}
-        title="Plan mode - read-only exploration (Cmd+2)"
-      >
-        Plan
-      </button>
-      <button
-        type="button"
-        className={`mode-button ${mode === 'acceptEdits' ? 'active' : ''}`}
-        onClick={() => onModeChange('acceptEdits')}
-        title="Auto-accept edits (Cmd+3)"
-      >
-        Accept
-      </button>
-    </div>
-  );
-}
-
-// =============================================================================
 // Editor Component
 // =============================================================================
 
@@ -227,7 +188,12 @@ export function Editor({ onSubmit, isProcessing = false, placeholder }: EditorPr
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [value, setValue] = useState('');
   const [pendingImages, setPendingImages] = useState<PastedImage[]>([]);
-  const [mode, setMode] = useState<PermissionMode>('default');
+
+  // Mode state synced with Claude backend
+  const { mode, setMode } = useModeSync();
+
+  // Register Cmd+1/2/3 shortcuts for mode switching
+  useModeSwitchShortcuts(setMode);
 
   // Hooks
   const { addToHistory, navigateUp, navigateDown, resetNavigation } = useCommandHistory();
@@ -257,12 +223,7 @@ export function Editor({ onSubmit, isProcessing = false, placeholder }: EditorPr
     setProcessing(isProcessing);
   }, [isProcessing, setProcessing]);
 
-  // Load initial mode from API
-  useEffect(() => {
-    window.electronAPI?.claude?.getMode?.().then(m => {
-      if (m) setMode(m);
-    });
-  }, []);
+  // Mode initialization is now handled by useModeSync hook
 
   // Listen for suggested prompts from QuickActions
   useEffect(() => {
@@ -410,37 +371,11 @@ export function Editor({ onSubmit, isProcessing = false, placeholder }: EditorPr
   }, [value, pendingImages, isProcessing, queueMessage, addToHistory, resetNavigation, resumeQueue, onSubmit]);
 
   // ==========================================================================
-  // Mode Change
-  // ==========================================================================
-
-  const handleModeChange = useCallback((newMode: PermissionMode) => {
-    setMode(newMode);
-    window.electronAPI?.claude?.setMode?.(newMode);
-  }, []);
-
-  // ==========================================================================
   // Event Handlers
   // ==========================================================================
 
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
-    // Mode shortcuts (Cmd+1/2/3)
-    if (e.metaKey || e.ctrlKey) {
-      if (e.key === '1') {
-        e.preventDefault();
-        handleModeChange('default');
-        return;
-      }
-      if (e.key === '2') {
-        e.preventDefault();
-        handleModeChange('plan');
-        return;
-      }
-      if (e.key === '3') {
-        e.preventDefault();
-        handleModeChange('acceptEdits');
-        return;
-      }
-    }
+    // Mode shortcuts are now handled globally by useModeSwitchShortcuts
 
     // Tab - trigger or select completion
     if (e.key === 'Tab' && !e.shiftKey && !e.ctrlKey && !e.altKey) {
@@ -516,7 +451,7 @@ export function Editor({ onSubmit, isProcessing = false, placeholder }: EditorPr
       }
     }
   }, [
-    handleModeChange, isCompletionVisible, selectCurrent, replaceSlashPrefix,
+    isCompletionVisible, selectCurrent, replaceSlashPrefix,
     getSlashPrefix, showCompletion, hideCompletion, handleSubmit,
     completionUp, completionDown, navigateUp, navigateDown, value
   ]);
@@ -585,8 +520,11 @@ export function Editor({ onSubmit, isProcessing = false, placeholder }: EditorPr
 
   return (
     <div className="editor-container" data-testid="editor-container">
-      <ModeToolbar mode={mode} onModeChange={handleModeChange} />
-
+      <ModeSwitch
+        mode={mode}
+        onModeChange={setMode}
+        className="editor-mode-switch"
+      />
       <div className="editor-wrapper" id="editor-wrapper">
         <ImagePreview images={pendingImages} onRemove={removeImage} />
 
