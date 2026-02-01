@@ -1398,15 +1398,24 @@
 
 .settings-panel .toggle-setting {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  padding: 4px 0;
+  padding: 6px 0;
   font-size: 0.8rem;
   cursor: pointer;
 }
 
 .settings-panel .toggle-setting input {
   accent-color: var(--accent-color, #007acc);
+}
+
+.settings-panel .setting-description {
+  width: 100%;
+  font-size: 0.7rem;
+  color: var(--text-secondary, #8b8b8b);
+  margin-left: 24px;
+  margin-top: -4px;
 }
 
 /* Changed panel (FileTree) */

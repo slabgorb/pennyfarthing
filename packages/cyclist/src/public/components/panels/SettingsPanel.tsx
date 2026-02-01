@@ -1,15 +1,18 @@
 /**
- * SettingsPanel - Placeholder for settings/preferences
+ * SettingsPanel - Settings/preferences panel
  *
  * Story MSSCI-12717 - React Migration
+ * Updated to match actual config.local.yaml structure
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 interface Settings {
   workflow?: {
-    auto_handoff?: boolean;
-    handoff_confirm?: boolean;
+    permission_mode?: 'plan' | 'manual' | 'accept';
+    bell_mode?: boolean;
+    relay_mode?: boolean;
+    handoff_mode?: string;
   };
   display?: {
     show_flow?: boolean;
@@ -24,9 +27,18 @@ interface Settings {
   };
 }
 
+interface ThemeMetadata {
+  id: string;
+  name: string;
+  tier: 'S' | 'A' | 'B' | 'U';
+}
+
+// Tier sort order: S=0, A=1, B=2, U=3
+const TIER_ORDER: Record<string, number> = { S: 0, A: 1, B: 2, U: 3 };
+
 export function SettingsPanel(): React.ReactElement {
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [themes, setThemes] = useState<string[]>([]);
+  const [themes, setThemes] = useState<ThemeMetadata[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -38,9 +50,10 @@ export function SettingsPanel(): React.ReactElement {
       setSettings(data as Settings);
     });
 
-    // Load available themes
-    api.settings.getAvailableThemes?.().then(data => {
-      setThemes(data);
+    // Load theme metadata (includes name, tier)
+    api.settings.getThemeMetadata?.().then(data => {
+      const themeData = (data || []) as ThemeMetadata[];
+      setThemes(themeData);
     });
 
     // Subscribe to changes
@@ -48,6 +61,15 @@ export function SettingsPanel(): React.ReactElement {
       setSettings(data as Settings);
     });
   }, []);
+
+  // Sort themes: by tier (S > A > B > U), then alphabetically by name
+  const sortedThemes = useMemo(() => {
+    return [...themes].sort((a, b) => {
+      const tierDiff = (TIER_ORDER[a.tier] ?? 3) - (TIER_ORDER[b.tier] ?? 3);
+      if (tierDiff !== 0) return tierDiff;
+      return a.name.localeCompare(b.name);
+    });
+  }, [themes]);
 
   const handleThemeChange = useCallback(async (theme: string) => {
     const api = window.electronAPI;
@@ -99,9 +121,12 @@ export function SettingsPanel(): React.ReactElement {
           value={settings.pennyfarthing?.theme || ''}
           onChange={(e) => handleThemeChange(e.target.value)}
           disabled={saving}
+          className="theme-select"
         >
-          {themes.map(theme => (
-            <option key={theme} value={theme}>{theme}</option>
+          {sortedThemes.map(theme => (
+            <option key={theme.id} value={theme.id}>
+              [{theme.tier}] {theme.name}
+            </option>
           ))}
         </select>
       </section>
@@ -111,20 +136,22 @@ export function SettingsPanel(): React.ReactElement {
         <label className="toggle-setting">
           <input
             type="checkbox"
-            checked={settings.workflow?.auto_handoff || false}
-            onChange={(e) => handleToggle('workflow', 'auto_handoff', e.target.checked)}
+            checked={settings.workflow?.bell_mode || false}
+            onChange={(e) => handleToggle('workflow', 'bell_mode', e.target.checked)}
             disabled={saving}
           />
-          Auto handoff
+          Bell Mode
+          <span className="setting-description">Play sound on agent completion</span>
         </label>
         <label className="toggle-setting">
           <input
             type="checkbox"
-            checked={settings.workflow?.handoff_confirm || false}
-            onChange={(e) => handleToggle('workflow', 'handoff_confirm', e.target.checked)}
+            checked={settings.workflow?.relay_mode || false}
+            onChange={(e) => handleToggle('workflow', 'relay_mode', e.target.checked)}
             disabled={saving}
           />
-          Confirm handoffs
+          Relay Mode
+          <span className="setting-description">Auto-handoff to next agent</span>
         </label>
       </section>
 
