@@ -286,3 +286,28 @@ def is_character_voice_enabled(project_root: Path | None = None) -> bool:
 
     # Default to enabled
     return True
+
+
+def format_persona_compressed(
+    persona: Persona,
+    theme: str,
+    agent_name: str,
+) -> str:
+    """Format persona as compressed XML for reduced token usage.
+
+    Compressed format (~100 tokens vs ~300 for full):
+    <persona agent="dev" character="Rosie the Riveter">
+      <voice>Can-do wartime spirit, practical, determined</voice>
+      <catchphrase>"We Can Do It!"</catchphrase>
+      <style>Direct, encouraging, efficiency-focused</style>
+    </persona>
+
+    Args:
+        persona: Persona to format
+        theme: Theme name
+        agent_name: Agent name
+
+    Returns:
+        Compressed persona XML string (~100 tokens)
+    """
+    raise NotImplementedError("format_persona_compressed not implemented")
