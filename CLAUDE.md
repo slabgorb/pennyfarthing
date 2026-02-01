@@ -25,10 +25,11 @@ pnpm run lint      # ESLint
 ```
 pennyfarthing-dist/      # Published package content (single source of truth)
 ├── agents/              # 19 agent definitions
-├── commands/            # 45 slash commands
+├── commands/            # 46 slash commands
 ├── guides/              # Behavior guides
 ├── skills/              # 22 knowledge domains
-├── personas/            # Themed agent personas (102 themes)
+├── personas/            # Themed agent personas
+│   └── themes/          # 102 persona themes
 ├── workflows/           # Workflow definitions
 └── scripts/             # Utility scripts
 
@@ -36,8 +37,8 @@ packages/
 ├── core/                # Main package (@pennyfarthing/core)
 │   └── src/cli/         # CLI commands (init, update, doctor, etc.)
 └── cyclist/             # Visual terminal (Electron app)
-    ├── src/public/js/   # Frontend components
-    └── tests/           # Vitest tests (B-*.test.ts naming)
+    ├── src/             # Electron main/renderer + React components
+    └── tests/           # Vitest tests (story-ID naming: 17-1-*.test.ts)
 
 tests/                   # Framework tests
 docs/                    # Framework documentation (not ADRs - those are in orchestrator)
@@ -108,7 +109,6 @@ Pennyfarthing provides full BMAD 6.0 workflow import support:
 - Stepped workflows with tri-modal execution (create/validate/edit)
 - Custom mode support beyond standard three
 - Migration script: `pennyfarthing-dist/scripts/migrate-bmad-workflow.mjs`
-- See `docs/bmad-compatibility-matrix.md` for details
 
 ## Script Organization
 
@@ -210,7 +210,7 @@ If `PROJECT_ROOT` is already set (by Claude or explicitly), it's respected as an
 | `.pennyfarthing/config.local.yaml` | Theme selection (use `/theme` skill) |
 | `sprint/current-sprint.yaml` | Active sprint and story tracking |
 | `.session/{story-id}-session.md` | Active work context |
-| `pennyfarthing-dist/scripts/utils/` | Resilience utilities (retry.sh, checkpoint.sh, repo-scan.sh) |
+| `pennyfarthing-dist/scripts/utils/` | Utility scripts (generate-skill-docs.sh) |
 
 ## CLI Commands (for users)
 
