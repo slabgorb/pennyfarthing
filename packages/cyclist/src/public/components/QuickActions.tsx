@@ -60,6 +60,11 @@ export default function QuickActions({
 
   const actions = useMarkerActions(message.content);
 
+  // Reset disabled state when message changes (new assistant response)
+  useEffect(() => {
+    setIsDisabled(false);
+  }, [message.timestamp]);
+
   // Check relay mode on mount
   useEffect(() => {
     getRelayMode().then(setRelayMode);
