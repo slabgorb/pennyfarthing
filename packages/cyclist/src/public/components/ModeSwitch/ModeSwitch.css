@@ -65,7 +65,7 @@
   background: transparent;
   color: var(--text-secondary, rgba(255, 255, 255, 0.6));
   font-size: 12px;
-  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, sans-serif);
+  font-family: var(--font-ui, -apple-system, BlinkMacSystemFont, sans-serif);
   font-weight: 500;
   cursor: pointer;
   transition: color 0.15s ease;

@@ -2,12 +2,13 @@
  * Root React component for Cyclist
  * Story MSSCI-12717 - React Migration
  * Story MSSCI-12706 - Layout Persistence
+ * Story MSSCI-12769 - Font Customization
  *
  * Renders the DockingWorkspace with all panels registered.
  * Persists layout changes to config.local.yaml.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   DockingWorkspace,
   registerPanelComponent,
@@ -15,6 +16,7 @@ import {
 } from './components/DockingWorkspace';
 import { CommandPaletteProvider } from './components/CommandPalette';
 import { useLayoutPersistence } from './hooks/useLayoutPersistence';
+import { loadFontSettings, applyFontSettings } from './js/font-presets.js';
 
 // Import all panel components
 import {
@@ -55,6 +57,13 @@ registerPanelComponent(PANEL_INVENTORY.SETTINGS, SettingsPanel);
 
 export default function App(): React.ReactElement {
   const { layout, isLoading, saveLayout } = useLayoutPersistence();
+
+  // Load and apply font settings on startup (MSSCI-12769)
+  useEffect(() => {
+    loadFontSettings().then(settings => {
+      applyFontSettings(settings);
+    });
+  }, []);
 
   // Show nothing while loading to avoid flash of default layout
   if (isLoading || !layout) {
