@@ -180,8 +180,10 @@ function ImagePreview({ images, onRemove }: ImagePreviewProps) {
 }
 
 // =============================================================================
-// Mode Toolbar Component
+// Mode Toolbar - Uses ModeSwitch component
 // =============================================================================
+
+import { ModeSwitch, Mode, MODE_TO_CLAUDE, CLAUDE_TO_MODE } from './ModeSwitch';
 
 interface ModeToolbarProps {
   mode: PermissionMode;
@@ -189,33 +191,20 @@ interface ModeToolbarProps {
 }
 
 function ModeToolbar({ mode, onModeChange }: ModeToolbarProps) {
+  // Convert Claude mode to UI mode for ModeSwitch
+  const uiMode: Mode = CLAUDE_TO_MODE[mode] || 'manual';
+
+  // Convert UI mode back to Claude mode on change
+  const handleUIModeChange = (newMode: Mode) => {
+    const claudeMode = MODE_TO_CLAUDE[newMode] as PermissionMode;
+    onModeChange(claudeMode);
+  };
+
   return (
-    <div className="mode-toolbar" data-testid="mode-toolbar">
-      <button
-        type="button"
-        className={`mode-button ${mode === 'default' ? 'active' : ''}`}
-        onClick={() => onModeChange('default')}
-        title="Manual mode - ask for permission (Cmd+1)"
-      >
-        Manual
-      </button>
-      <button
-        type="button"
-        className={`mode-button ${mode === 'plan' ? 'active' : ''}`}
-        onClick={() => onModeChange('plan')}
-        title="Plan mode - read-only exploration (Cmd+2)"
-      >
-        Plan
-      </button>
-      <button
-        type="button"
-        className={`mode-button ${mode === 'acceptEdits' ? 'active' : ''}`}
-        onClick={() => onModeChange('acceptEdits')}
-        title="Auto-accept edits (Cmd+3)"
-      >
-        Accept
-      </button>
-    </div>
+    <ModeSwitch
+      mode={uiMode}
+      onModeChange={handleUIModeChange}
+    />
   );
 }
 
@@ -423,16 +412,16 @@ export function Editor({ onSubmit, isProcessing = false, placeholder }: EditorPr
   // ==========================================================================
 
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
-    // Mode shortcuts (Cmd+1/2/3)
+    // Mode shortcuts (Cmd+1/2/3) - matches ModeSwitch order: Plan, Manual, Accept
     if (e.metaKey || e.ctrlKey) {
       if (e.key === '1') {
         e.preventDefault();
-        handleModeChange('default');
+        handleModeChange('plan');
         return;
       }
       if (e.key === '2') {
         e.preventDefault();
-        handleModeChange('plan');
+        handleModeChange('default');
         return;
       }
       if (e.key === '3') {
