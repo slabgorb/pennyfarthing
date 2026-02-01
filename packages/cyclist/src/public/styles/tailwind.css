@@ -1318,6 +1318,231 @@
   height: 100%;
 }
 
+/* =============================================================================
+   FileTree Component Styles
+   ============================================================================= */
+
+.filetree {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-family: var(--font-mono, 'SF Mono', Monaco, monospace);
+  font-size: 0.8rem;
+  overflow: hidden;
+}
+
+/* File count badge - positioned at top right */
+.file-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 6px;
+  margin: 8px 8px 0 auto;
+  background: var(--bg-tertiary, #2d2d2d);
+  border: 1px solid var(--border-color, #3c3c3c);
+  border-radius: 10px;
+  color: var(--text-secondary, #8b8b8b);
+  font-size: 0.7rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.file-count-badge:not([title=""]) {
+  background: var(--accent-color, #007acc);
+  border-color: var(--accent-color, #007acc);
+  color: #fff;
+}
+
+/* Empty state */
+.filetree .empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: var(--text-secondary, #8b8b8b);
+  font-size: 0.8rem;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  font-style: italic;
+}
+
+/* Directory sections */
+.directory-section {
+  border-bottom: 1px solid var(--border-color, #3c3c3c);
+}
+
+.directory-section:last-child {
+  border-bottom: none;
+}
+
+/* Directory header (clickable toggle row) */
+.directory-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  background: var(--bg-secondary, #252526);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.1s ease;
+}
+
+.directory-header:hover {
+  background: var(--bg-tertiary, #2d2d2d);
+}
+
+/* Toggle button */
+.directory-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary, #8b8b8b);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.directory-toggle:hover {
+  color: var(--text-primary, #d4d4d4);
+}
+
+.directory-toggle:focus {
+  outline: 1px solid var(--accent-color, #007acc);
+  outline-offset: 1px;
+  border-radius: 2px;
+}
+
+.toggle-icon {
+  font-size: 0.65rem;
+  line-height: 1;
+}
+
+/* Directory name (path) */
+.directory-name {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-primary, #d4d4d4);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Directory file count */
+.directory-count {
+  padding: 1px 6px;
+  background: var(--bg-primary, #1e1e1e);
+  border-radius: 8px;
+  color: var(--text-secondary, #8b8b8b);
+  font-size: 0.65rem;
+  flex-shrink: 0;
+}
+
+/* Container for file items within a directory */
+.directory-files {
+  background: var(--bg-primary, #1e1e1e);
+}
+
+/* Individual file item */
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px 4px 28px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+  border-left: 2px solid transparent;
+}
+
+.file-item:hover {
+  background: var(--bg-tertiary, #2d2d2d);
+}
+
+.file-item.focused,
+.file-item:focus {
+  background: var(--bg-active, #37373d);
+  border-left-color: var(--accent-color, #007acc);
+  outline: none;
+}
+
+/* File status colors - row background tint */
+.file-item.file-created {
+  border-left-color: transparent;
+}
+
+.file-item.file-created:hover,
+.file-item.file-created.focused,
+.file-item.file-created:focus {
+  border-left-color: var(--color-success, #22c55e);
+}
+
+.file-item.file-modified {
+  border-left-color: transparent;
+}
+
+.file-item.file-modified:hover,
+.file-item.file-modified.focused,
+.file-item.file-modified:focus {
+  border-left-color: var(--color-warning, #f59e0b);
+}
+
+.file-item.file-deleted {
+  border-left-color: transparent;
+}
+
+.file-item.file-deleted:hover,
+.file-item.file-deleted.focused,
+.file-item.file-deleted:focus {
+  border-left-color: var(--color-danger, #ef4444);
+}
+
+/* Status icon (+, ~, -) */
+.status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.status-icon.status-created {
+  color: var(--color-success, #22c55e);
+}
+
+.status-icon.status-modified {
+  color: var(--color-warning, #f59e0b);
+}
+
+.status-icon.status-deleted {
+  color: var(--color-danger, #ef4444);
+}
+
+/* File name */
+.file-name {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-primary, #d4d4d4);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Deleted files have muted/strikethrough style */
+.file-item.file-deleted .file-name {
+  color: var(--text-secondary, #8b8b8b);
+  text-decoration: line-through;
+  text-decoration-color: var(--color-danger, #ef4444);
+}
+
 /* Empty and placeholder states */
 .empty,
 .placeholder {
