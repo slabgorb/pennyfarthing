@@ -24,6 +24,35 @@ interface ContextData {
   available?: number;
   /** Current context tier */
   tier?: ContextTier;
+  /** Per-component token counts (MSSCI-12800) */
+  tokenCounts?: Record<string, number>;
+  /** Total tokens across all injected components (MSSCI-12800) */
+  totalTokens?: number;
+}
+
+/**
+ * Format a component name from snake_case to Title Case
+ *
+ * Examples:
+ * - agent_definition → Agent Definition
+ * - behavior_guide → Behavior Guide
+ * - persona_compressed → Persona (Compressed)
+ * - session_header → Session Header
+ *
+ * @param name - Component name in snake_case
+ * @returns Formatted component name in Title Case
+ */
+export function formatComponentName(name: string): string {
+  // Handle special case for compressed persona
+  if (name === 'persona_compressed') {
+    return 'Persona (Compressed)';
+  }
+
+  // Convert snake_case to Title Case
+  return name
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 
 /**
@@ -55,6 +84,7 @@ export function calculateTierSavings(tier: ContextTier | undefined): number {
 export function DebugPanel(): React.ReactElement {
   const [context, setContext] = useState<ContextData | null>(null);
   const [tokenStats, setTokenStats] = useState<Record<string, unknown> | null>(null);
+  const [breakdownExpanded, setBreakdownExpanded] = useState(false);
 
   useEffect(() => {
     const api = window.electronAPI;
@@ -97,6 +127,47 @@ export function DebugPanel(): React.ReactElement {
               <span className="tier-savings" data-testid="tier-savings">
                 {tierSavings}% savings
               </span>
+            </div>
+          )}
+          {context.tokenCounts && Object.keys(context.tokenCounts).length > 0 && (
+            <div className="component-breakdown" data-testid="component-breakdown">
+              <div className="breakdown-header">
+                <button
+                  className="breakdown-toggle"
+                  data-testid="breakdown-toggle"
+                  onClick={() => setBreakdownExpanded(!breakdownExpanded)}
+                  aria-expanded={breakdownExpanded}
+                >
+                  {breakdownExpanded ? '▼' : '▶'} Injected Context
+                </button>
+                <span className="total-tokens" data-testid="total-tokens">
+                  {context.totalTokens?.toLocaleString()} tokens
+                </span>
+              </div>
+              <div
+                className={`component-list ${breakdownExpanded ? 'expanded' : 'collapsed'}`}
+                data-testid="component-list"
+                aria-expanded={breakdownExpanded}
+              >
+                {/* Sort components by token count descending, filter out zero values */}
+                {Object.entries(context.tokenCounts)
+                  .filter(([, count]) => count > 0)
+                  .sort(([, a], [, b]) => b - a)
+                  .map(([name, count]) => (
+                    <div
+                      key={name}
+                      className="component-item"
+                      data-testid={`component-${name}`}
+                    >
+                      <span className="component-name">
+                        {formatComponentName(name)}
+                      </span>
+                      <span className="component-tokens">
+                        {count.toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+              </div>
             </div>
           )}
           <div className="context-bar">

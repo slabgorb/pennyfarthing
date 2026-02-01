@@ -432,8 +432,10 @@ describe('MSSCI-12800: AC3 - DebugPanel collapsible component list', () => {
       // Expand to see order
       fireEvent.click(screen.getByTestId('breakdown-toggle'));
 
-      const items = screen.getAllByTestId(/^component-/);
-      const tokenValues = items.map(item => {
+      // Get only the component items, excluding component-breakdown and component-list
+      const componentList = screen.getByTestId('component-list');
+      const items = componentList.querySelectorAll('.component-item');
+      const tokenValues = Array.from(items).map(item => {
         const match = item.textContent?.match(/(\d+)/);
         return match ? parseInt(match[1], 10) : 0;
       });

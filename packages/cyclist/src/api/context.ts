@@ -23,6 +23,10 @@ export interface ContextInfo {
   available: number | null;
   /** Current context tier (FULL, REFRESH, HANDOFF, MINIMAL) */
   tier?: ContextTier;
+  /** Per-component token counts (MSSCI-12800) */
+  tokenCounts?: Record<string, number>;
+  /** Total tokens across all injected components (MSSCI-12800) */
+  totalTokens?: number;
 }
 
 /**
