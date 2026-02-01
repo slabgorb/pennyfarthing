@@ -111,6 +111,12 @@ export default function QuickActions({
     return null;
   }
 
+  // Continue marker - suppress the generic Continue button entirely
+  // Users can always type to continue; showing a disabled button is confusing
+  if (actions.type === 'continue') {
+    return null;
+  }
+
   // Auto-execute types don't render buttons
   if (actions.type === 'invoke') {
     return (
@@ -180,19 +186,6 @@ export default function QuickActions({
               {choice.text}
             </button>
           ))}
-        </div>
-      )}
-
-      {/* Continue button */}
-      {actions.type === 'continue' && (
-        <div className="quick-actions-buttons">
-          <button
-            className="quick-action-btn"
-            onClick={() => handleButtonClick('Continue')}
-            disabled={isDisabled}
-          >
-            Continue
-          </button>
         </div>
       )}
     </div>
