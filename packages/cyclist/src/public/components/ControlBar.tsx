@@ -1,17 +1,21 @@
 /**
  * ControlBar Component
  *
- * Provides Stop and Reset controls for Claude sessions.
+ * Provides Stop, Reset, Bell Mode, and Relay Mode controls for Claude sessions.
  * Story MSSCI-12729 - Stop/Reset Controls and Escape Key
+ * Story MSSCI-12275 - Bell Mode toggle
+ * Story MSSCI-12395 - Relay Mode toggle
  *
  * Features:
  * - Stop button visible only when Claude is running
  * - Reset button always visible
+ * - Bell mode toggle (inject queued messages via PostToolUse hook)
+ * - Relay mode toggle (auto-handoff to next agent)
  * - Escape key handler for stopping (single press = interrupt, double = force kill)
  * - Visual feedback for "Stopping..." state
  */
 
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 
 // =============================================================================
 // Types
@@ -28,6 +32,14 @@ export interface ControlBarProps {
   onForceStop?: () => void;
   /** Called when reset button clicked */
   onReset: () => void;
+  /** Bell mode state (inject queued messages via hook) */
+  bellMode?: boolean;
+  /** Relay mode state (auto-handoff to next agent) */
+  relayMode?: boolean;
+  /** Called when bell mode toggle clicked */
+  onBellModeChange?: (enabled: boolean) => void;
+  /** Called when relay mode toggle clicked */
+  onRelayModeChange?: (enabled: boolean) => void;
 }
 
 // =============================================================================
@@ -40,6 +52,10 @@ export function ControlBar({
   onStop,
   onForceStop,
   onReset,
+  bellMode = false,
+  relayMode = false,
+  onBellModeChange,
+  onRelayModeChange,
 }: ControlBarProps): React.ReactElement {
   const lastEscapeTime = useRef<number>(0);
   const DOUBLE_PRESS_THRESHOLD = 500; // ms
@@ -84,6 +100,35 @@ export function ControlBar({
 
   return (
     <div className="control-bar" data-testid="control-bar">
+      {/* Mode toggles - Bell and Relay */}
+      <div className="control-bar-toggles">
+        {/* Bell Mode Toggle */}
+        <button
+          type="button"
+          className={`btn-toggle bell-toggle ${bellMode ? 'active' : ''}`}
+          data-testid="bell-toggle"
+          onClick={() => onBellModeChange?.(!bellMode)}
+          aria-pressed={bellMode}
+          aria-label="Bell mode - inject queued messages via hook"
+          title="Bell Mode: Inject queued messages during tool use (Cmd+B)"
+        >
+          <span className="toggle-icon">🔔</span>
+        </button>
+
+        {/* Relay Mode Toggle */}
+        <button
+          type="button"
+          className={`btn-toggle relay-toggle ${relayMode ? 'active' : ''}`}
+          data-testid="relay-toggle"
+          onClick={() => onRelayModeChange?.(!relayMode)}
+          aria-pressed={relayMode}
+          aria-label="Relay mode - auto-handoff to next agent"
+          title="Relay Mode: Auto-handoff to next agent (Cmd+4)"
+        >
+          <span className="toggle-icon">🚲</span>
+        </button>
+      </div>
+
       {/* Stop button - always visible, disabled when not running */}
       <button
         type="button"
@@ -128,17 +173,47 @@ interface UseControlBarResult {
   isRunning: boolean;
   /** Whether stop is in progress */
   isStopping: boolean;
+  /** Bell mode state */
+  bellMode: boolean;
+  /** Relay mode state */
+  relayMode: boolean;
   /** Handle stop action */
   handleStop: () => void;
   /** Handle force stop action (SIGKILL) */
   handleForceStop: () => void;
   /** Handle reset action */
   handleReset: () => void;
+  /** Handle bell mode toggle */
+  handleBellModeChange: (enabled: boolean) => void;
+  /** Handle relay mode toggle */
+  handleRelayModeChange: (enabled: boolean) => void;
 }
 
 export function useControlBar(): UseControlBarResult {
-  const [isRunning, setIsRunning] = React.useState(false);
-  const [isStopping, setIsStopping] = React.useState(false);
+  const [isRunning, setIsRunning] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
+  const [bellMode, setBellMode] = useState(false);
+  const [relayMode, setRelayMode] = useState(false);
+
+  // Load initial settings and listen for changes
+  useEffect(() => {
+    const api = window.electronAPI;
+    if (!api?.settings) return;
+
+    // Load initial settings
+    api.settings.get?.().then((settings: Record<string, unknown>) => {
+      const workflow = settings?.workflow as Record<string, unknown> | undefined;
+      setBellMode(!!workflow?.bell_mode);
+      setRelayMode(!!workflow?.relay_mode);
+    });
+
+    // Subscribe to settings changes
+    api.settings.onChanged?.((settings: Record<string, unknown>) => {
+      const workflow = settings?.workflow as Record<string, unknown> | undefined;
+      setBellMode(!!workflow?.bell_mode);
+      setRelayMode(!!workflow?.relay_mode);
+    });
+  }, []);
 
   // Listen for Claude running state changes
   useEffect(() => {
@@ -199,12 +274,52 @@ export function useControlBar(): UseControlBarResult {
     }
   }, []);
 
+  const handleBellModeChange = useCallback(async (enabled: boolean) => {
+    try {
+      const api = window.electronAPI;
+      if (!api?.settings) return;
+
+      const current = await api.settings.get?.() as Record<string, unknown> || {};
+      const workflow = (current.workflow as Record<string, unknown>) || {};
+      await api.settings.save?.({
+        ...current,
+        workflow: { ...workflow, bell_mode: enabled },
+      });
+      setBellMode(enabled);
+      console.log('[ControlBar] Bell mode set to:', enabled);
+    } catch (err) {
+      console.error('[ControlBar] Failed to toggle bell mode:', err);
+    }
+  }, []);
+
+  const handleRelayModeChange = useCallback(async (enabled: boolean) => {
+    try {
+      const api = window.electronAPI;
+      if (!api?.settings) return;
+
+      const current = await api.settings.get?.() as Record<string, unknown> || {};
+      const workflow = (current.workflow as Record<string, unknown>) || {};
+      await api.settings.save?.({
+        ...current,
+        workflow: { ...workflow, relay_mode: enabled },
+      });
+      setRelayMode(enabled);
+      console.log('[ControlBar] Relay mode set to:', enabled);
+    } catch (err) {
+      console.error('[ControlBar] Failed to toggle relay mode:', err);
+    }
+  }, []);
+
   return {
     isRunning,
     isStopping,
+    bellMode,
+    relayMode,
     handleStop,
     handleForceStop,
     handleReset,
+    handleBellModeChange,
+    handleRelayModeChange,
   };
 }
 

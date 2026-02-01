@@ -80,28 +80,70 @@ function CompletionPopup({ commands, selectedIndex, visible, onSelect }: Complet
 }
 
 // =============================================================================
-// Queue Indicator Component
+// Queue Display Component (MSSCI-12275)
 // =============================================================================
 
-interface QueueIndicatorProps {
-  count: number;
+interface QueueDisplayProps {
+  queue: QueuedMessage[];
+  bellMode: boolean;
+  onRemove: (index: number) => void;
   onClear: () => void;
 }
 
-function QueueIndicator({ count, onClear }: QueueIndicatorProps) {
-  if (count === 0) return null;
+/**
+ * Escape HTML for safe rendering
+ */
+function escapeHtml(str: string): string {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function QueueDisplay({ queue, bellMode, onRemove, onClear }: QueueDisplayProps) {
+  if (queue.length === 0) return null;
 
   return (
-    <div className="queue-indicator" data-testid="queue-indicator">
-      <span className="queue-count">{count} queued</span>
-      <button
-        type="button"
-        className="queue-clear"
-        onClick={onClear}
-        title="Clear queue"
-      >
-        Clear
-      </button>
+    <div className="queue-display" data-testid="queue-display">
+      <div className="queue-header">
+        <span className="queue-count">{queue.length} queued</span>
+        {bellMode && <span className="queue-mode-badge bell-mode" title="Bell mode active - messages inject via hook">🔔</span>}
+        <button
+          type="button"
+          className="queue-clear-btn"
+          onClick={onClear}
+          title="Clear all queued messages"
+        >
+          Clear
+        </button>
+      </div>
+      <ul className="queue-list">
+        {queue.map((msg, index) => {
+          const truncated = msg.text.length > 60 ? msg.text.substring(0, 60) + '...' : msg.text;
+          const hasImages = msg.images && msg.images.length > 0;
+
+          return (
+            <li key={index} className="queue-item" data-testid={`queue-item-${index}`}>
+              <span className="queue-item-text">{escapeHtml(truncated)}</span>
+              {hasImages && (
+                <span className="queue-image-indicator" title={`${msg.images.length} image(s) attached`}>
+                  📎{msg.images.length}
+                </span>
+              )}
+              <button
+                type="button"
+                className="queue-item-remove"
+                onClick={() => onRemove(index)}
+                title="Remove from queue"
+              >
+                ×
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
@@ -199,7 +241,16 @@ export function Editor({ onSubmit, isProcessing = false, placeholder }: EditorPr
     selectCurrent,
     isVisible: isCompletionVisible,
   } = useTabCompletion();
-  const { queue, queueCount, queueMessage, clearQueue, setProcessing } = useMessageQueue();
+  const {
+    queue,
+    queueCount,
+    bellMode,
+    queueMessage,
+    removeFromQueue,
+    clearQueue,
+    setProcessing,
+    resumeQueue,
+  } = useMessageQueue();
 
   // Sync processing state
   useEffect(() => {
@@ -346,6 +397,9 @@ export function Editor({ onSubmit, isProcessing = false, placeholder }: EditorPr
     addToHistory(trimmed);
     resetNavigation();
 
+    // Resume queue if it was paused (e.g., after abort)
+    resumeQueue();
+
     // Dispatch event to clear QuickActions (Reflector questions)
     window.dispatchEvent(new CustomEvent('cyclist:user-submit'));
 
@@ -353,7 +407,7 @@ export function Editor({ onSubmit, isProcessing = false, placeholder }: EditorPr
     setValue('');
     setPendingImages([]);
     textareaRef.current?.focus();
-  }, [value, pendingImages, isProcessing, queueMessage, addToHistory, resetNavigation, onSubmit]);
+  }, [value, pendingImages, isProcessing, queueMessage, addToHistory, resetNavigation, resumeQueue, onSubmit]);
 
   // ==========================================================================
   // Mode Change
@@ -558,7 +612,12 @@ export function Editor({ onSubmit, isProcessing = false, placeholder }: EditorPr
         />
       </div>
 
-      <QueueIndicator count={queueCount} onClear={clearQueue} />
+      <QueueDisplay
+        queue={queue}
+        bellMode={bellMode}
+        onRemove={removeFromQueue}
+        onClear={clearQueue}
+      />
     </div>
   );
 }
