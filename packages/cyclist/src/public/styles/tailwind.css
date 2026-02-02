@@ -20,6 +20,13 @@
   font-size: var(--font-size-ui, 1rem);
 }
 
+/* Main element needs to fill the flex container */
+.cyclist-app > main {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
 .docking-workspace {
   display: flex;
   flex: 1;
@@ -28,12 +35,15 @@
 
 /* Sidebar styling */
 .sidebar {
+  position: relative;
   display: flex;
   flex-direction: column;
   background: var(--bg-secondary, #252526);
   border-color: var(--border-color, #3c3c3c);
   overflow: hidden;
   transition: width 0.2s ease;
+  height: 100%;
+  min-height: 0;
 }
 
 .sidebar-left {
@@ -117,6 +127,7 @@
 /* Panel content */
 .panel {
   flex: 1;
+  min-height: 0; /* Allow flex child to shrink below content size */
   overflow: auto;
   padding: 8px;
 }
@@ -145,6 +156,8 @@
   flex-direction: column;
   background: var(--bg-primary, #1e1e1e);
   overflow: hidden;
+  height: 100%;
+  min-height: 0;
 }
 
 .center-region.drop-zone-rejected {
@@ -1828,7 +1841,10 @@
 
 /* Changed panel (FileTree) */
 .changed-panel {
+  display: flex;
+  flex-direction: column;
   height: 100%;
+  min-height: 0;
 }
 
 /* =============================================================================
