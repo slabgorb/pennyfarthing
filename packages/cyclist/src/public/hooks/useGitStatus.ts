@@ -1,13 +1,14 @@
 /**
  * useGitStatus Hook
  *
- * React hook for subscribing to git status data via electronAPI.
+ * React hook for subscribing to git status data.
+ * Uses electronAPI in Electron mode, falls back to REST API in web mode.
  * Story MSSCI-12717 - React Migration
  * Story MSSCI-12781 - Fixed to handle multi-repo response format
  * Story MSSCI-12798 - Expose full repo array for stacked display
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export interface GitStatusData {
   branch: string;
@@ -159,40 +160,68 @@ interface UseGitStatusResult {
   error: Error | null;
 }
 
+// Fetch git status via REST API (web mode fallback)
+async function fetchGitFromApi(): Promise<GitResponse | null> {
+  const response = await fetch('/api/git/all');
+  if (!response.ok) {
+    throw new Error(`Failed to fetch git status: ${response.status}`);
+  }
+  const repos = await response.json();
+  // API returns array directly, wrap in expected format
+  return { repos };
+}
+
 export function useGitStatus(): UseGitStatusResult {
   const [gitStatus, setGitStatus] = useState<GitStatusData | null>(null);
   const [repos, setRepos] = useState<RepoStatusData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  const fetchGit = useCallback(async () => {
+    try {
+      const response = await fetchGitFromApi();
+      setGitStatus(transformGitResponse(response));
+      setRepos(transformToRepoArray(response));
+      setIsLoading(false);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to fetch git status'));
+      setIsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     const api = window.electronAPI;
-    if (!api?.git) {
-      setError(new Error('electronAPI.git not available'));
-      setIsLoading(false);
-      return;
-    }
 
-    // Initial fetch
-    api.git.get()
-      .then((data) => {
+    // Electron mode: use IPC
+    if (api?.git) {
+      api.git.get()
+        .then((data) => {
+          const response = data as GitResponse | null;
+          setGitStatus(transformGitResponse(response));
+          setRepos(transformToRepoArray(response));
+          setIsLoading(false);
+        })
+        .catch((err) => {
+          setError(err instanceof Error ? err : new Error('Failed to fetch git status'));
+          setIsLoading(false);
+        });
+
+      // Subscribe to updates
+      api.git.onUpdate((_, data) => {
         const response = data as GitResponse | null;
         setGitStatus(transformGitResponse(response));
         setRepos(transformToRepoArray(response));
-        setIsLoading(false);
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err : new Error('Failed to fetch git status'));
-        setIsLoading(false);
       });
+      return;
+    }
 
-    // Subscribe to updates
-    api.git.onUpdate((_, data) => {
-      const response = data as GitResponse | null;
-      setGitStatus(transformGitResponse(response));
-      setRepos(transformToRepoArray(response));
-    });
-  }, []);
+    // Web mode: use REST API with polling
+    fetchGit();
+
+    // Poll for updates every 10 seconds in web mode (git status is heavier)
+    const interval = setInterval(fetchGit, 10000);
+    return () => clearInterval(interval);
+  }, [fetchGit]);
 
   return { gitStatus, repos, isLoading, error };
 }
