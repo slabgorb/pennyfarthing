@@ -168,39 +168,48 @@ Scripts must exist in ONLY ONE location. Build-time validation prevents duplicat
 
 The `/release --bump` command only works from this repo (requires `scripts/deploy.sh`).
 
-### Script Path Resolution (BASH_SOURCE-First)
+### Script Path Resolution
 
-All distributed bash scripts MUST derive paths from `BASH_SOURCE`, not `$PWD`. A script
-knows its position in the directory tree, so it can derive PROJECT_ROOT directly.
+There are TWO patterns depending on script type:
 
-**Standard Pattern:**
+**Pattern 1: Distributed Scripts (pennyfarthing-dist/scripts/)**
+
+Consumer-facing scripts use `.pennyfarthing/` marker discovery:
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Self-locate: derive PROJECT_ROOT from this script's position
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 source "$SCRIPT_DIR/../lib/find-root.sh"
 # PROJECT_ROOT is now set
 ```
 
-**How It Works:**
+`find-root.sh` walks up from `$PWD` looking for `.pennyfarthing/` directory. This works
+because consumer projects always have `.pennyfarthing/` at their root (created by `pennyfarthing init`).
 
-The shared library (`find-root.sh`) uses SCRIPT_DIR to:
-1. Resolve symlinks to find the real script location
-2. Extract the package root from the path (scripts are in `pennyfarthing-dist/scripts/<category>/`)
-3. Determine context: framework dev (package root = project root) vs consumer (walk up from node_modules)
+**Pattern 2: Framework Build Scripts (scripts/)**
 
-**Why This Works:**
+Build-only scripts use BASH_SOURCE-based resolution since they know their position:
 
-- Scripts in `pennyfarthing-dist/scripts/misc/` are always 3 levels below the package root
-- `pwd -P` resolves symlinks, so even when accessed via `.pennyfarthing/scripts/` symlink, we find the real path
-- No reliance on `$PWD` means no confusion from nested repos or working directory
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Framework build script - derive root from script location
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd -P)"
+export PROJECT_ROOT
+```
+
+**Why Two Patterns?**
+
+- Distributed scripts run in consumer projects where `.pennyfarthing/` exists at project root
+- Build scripts run during framework development where there may be no `.pennyfarthing/` in the framework directory (e.g., when framework is inlined in an orchestrator)
 
 **Environment Override:**
 
-If `PROJECT_ROOT` is already set (by Claude or explicitly), it's respected as an override.
+If `PROJECT_ROOT` is already set, `find-root.sh` respects it as an override.
 
 ## Key Files
 
@@ -210,7 +219,7 @@ If `PROJECT_ROOT` is already set (by Claude or explicitly), it's respected as an
 | `.pennyfarthing/config.local.yaml` | Theme selection (use `/theme` skill) |
 | `sprint/current-sprint.yaml` | Active sprint and story tracking |
 | `.session/{story-id}-session.md` | Active work context |
-| `pennyfarthing-dist/scripts/utils/` | Utility scripts (generate-skill-docs.sh) |
+| `scripts/generate-skill-docs.sh` | Framework build script (generates SKILLS.md) |
 
 ## CLI Commands (for users)
 
