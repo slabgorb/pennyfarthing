@@ -17,7 +17,7 @@ List all available workflows with type indicators.
 
 **Run:**
 ```bash
-.pennyfarthing/scripts workflow/list-workflows.sh
+.pennyfarthing/scripts/workflow/list-workflows.sh
 ```
 
 **Output:** Table of workflows with:
@@ -35,7 +35,7 @@ Show workflow details. If no name provided, shows current session's workflow.
 
 **Run:**
 ```bash
-.pennyfarthing/scripts workflow/show-workflow.sh [name]
+.pennyfarthing/scripts/workflow/show-workflow.sh [name]
 ```
 
 **Arguments:**
@@ -45,9 +45,9 @@ Show workflow details. If no name provided, shows current session's workflow.
 
 **Examples:**
 ```bash
-.pennyfarthing/scripts workflow/show-workflow.sh          # Current session workflow
-.pennyfarthing/scripts workflow/show-workflow.sh tdd      # Show TDD workflow
-.pennyfarthing/scripts workflow/show-workflow.sh trivial  # Show trivial workflow
+.pennyfarthing/scripts/workflow/show-workflow.sh          # Current session workflow
+.pennyfarthing/scripts/workflow/show-workflow.sh tdd      # Show TDD workflow
+.pennyfarthing/scripts/workflow/show-workflow.sh trivial  # Show trivial workflow
 ```
 
 **Output:** Workflow description, phase flow diagram, phases table, and trigger conditions.
@@ -63,7 +63,7 @@ Switch to a different workflow mid-session.
 **Steps:**
 1. Verify workflow exists:
    ```bash
-   .pennyfarthing/scripts workflow/show-workflow.sh <name>
+   .pennyfarthing/scripts/workflow/show-workflow.sh <name>
    ```
 
 2. Update the session file's workflow field:
@@ -84,7 +84,7 @@ Start a stepped workflow. Creates a new session and begins at step 1.
 
 **Run:**
 ```bash
-.pennyfarthing/scripts workflow/start-workflow.sh <name> [--mode <mode>]
+.pennyfarthing/scripts/workflow/start-workflow.sh <name> [--mode <mode>]
 ```
 
 **Arguments:**
@@ -107,7 +107,7 @@ Resume an interrupted stepped workflow from the last completed step.
 
 **Run:**
 ```bash
-.pennyfarthing/scripts workflow/resume-workflow.sh [name]
+.pennyfarthing/scripts/workflow/resume-workflow.sh [name]
 ```
 
 **Arguments:**
@@ -129,7 +129,7 @@ Show current stepped workflow progress.
 
 **Run:**
 ```bash
-.pennyfarthing/scripts workflow/workflow-status.sh
+.pennyfarthing/scripts/workflow/workflow-status.sh
 ```
 
 **Output:**
@@ -254,7 +254,7 @@ Fix session file when handoffs didn't update phase tracking properly. This corre
 
 **Run:**
 ```bash
-.pennyfarthing/scripts workflow/fix-session-phase.sh <story-id> <target-phase> [--dry-run]
+.pennyfarthing/scripts/workflow/fix-session-phase.sh <story-id> <target-phase> [--dry-run]
 ```
 
 **Arguments:**
@@ -271,16 +271,16 @@ Fix session file when handoffs didn't update phase tracking properly. This corre
 **Examples:**
 ```bash
 # Preview what would change
-.pennyfarthing/scripts workflow/fix-session-phase.sh 56-1 review --dry-run
+.pennyfarthing/scripts/workflow/fix-session-phase.sh 56-1 review --dry-run
 
 # Fix phase to review (after Dev completed)
-.pennyfarthing/scripts workflow/fix-session-phase.sh 56-1 review
+.pennyfarthing/scripts/workflow/fix-session-phase.sh 56-1 review
 
 # Fix phase to approved (after Reviewer approved)
-.pennyfarthing/scripts workflow/fix-session-phase.sh 56-1 approved
+.pennyfarthing/scripts/workflow/fix-session-phase.sh 56-1 approved
 
 # Using Jira key
-.pennyfarthing/scripts workflow/fix-session-phase.sh MSSCI-12190 approved
+.pennyfarthing/scripts/workflow/fix-session-phase.sh MSSCI-12190 approved
 ```
 
 **Valid phases by workflow:**
