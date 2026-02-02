@@ -3,9 +3,6 @@
  *
  * Story MSSCI-12849 - Missing AC & BikeLane panels in Progress tab
  *
- * STUB: This component exists to allow tests to import it.
- * Dev will implement the actual functionality.
- *
  * Reference: Deleted vanilla JS in commit 9aea4f371
  * - js/sidebar/acceptance-criteria.js
  */
@@ -19,9 +16,70 @@ export interface AcceptanceCriteriaPanelProps {
   onToggle?: () => void;
 }
 
-export function AcceptanceCriteriaPanel(_props: AcceptanceCriteriaPanelProps): React.ReactElement {
-  // STUB: Throw error so tests fail with clear message
-  throw new Error('AcceptanceCriteriaPanel not implemented');
+/**
+ * Individual acceptance criteria item
+ */
+function CriteriaItemView({ item }: { item: CriteriaItem }): React.ReactElement {
+  const statusClass = item.completed ? 'ac-item ac-done' : 'ac-item';
+  const icon = item.completed ? '✓' : '○';
+
+  return (
+    <div className={statusClass}>
+      <span className="ac-icon">{icon}</span>
+      <span className="ac-text">{item.text}</span>
+    </div>
+  );
+}
+
+/**
+ * AcceptanceCriteriaPanel - Displays acceptance criteria checklist with progress
+ */
+export function AcceptanceCriteriaPanel({
+  criteria,
+  collapsed = false,
+  onToggle,
+}: AcceptanceCriteriaPanelProps): React.ReactElement {
+  // Handle empty state
+  if (!criteria || criteria.length === 0) {
+    return (
+      <div className="ac-panel empty" data-testid="ac-panel">
+        <div className="placeholder">No acceptance criteria</div>
+      </div>
+    );
+  }
+
+  // Calculate progress
+  const completedCount = criteria.filter(c => c.completed).length;
+  const totalCount = criteria.length;
+  const progressText = `${completedCount}/${totalCount}`;
+
+  // Handle collapsed state
+  if (collapsed) {
+    return (
+      <div className="ac-panel collapsed" data-testid="ac-panel">
+        <div className="ac-header" onClick={onToggle}>
+          <span className="ac-title">Acceptance Criteria</span>
+          <span className="ac-progress">{progressText}</span>
+          <span className="ac-expand">▶</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="ac-panel" data-testid="ac-panel">
+      <div className="ac-header" onClick={onToggle}>
+        <span className="ac-title">Acceptance Criteria</span>
+        <span className="ac-progress">{progressText}</span>
+        {onToggle && <span className="ac-expand">▼</span>}
+      </div>
+      <div className="ac-list">
+        {criteria.map((item, index) => (
+          <CriteriaItemView key={index} item={item} />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default AcceptanceCriteriaPanel;
