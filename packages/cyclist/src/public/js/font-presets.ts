@@ -287,15 +287,8 @@ declare global {
 }
 
 export function notifyFontChange(type: 'ui' | 'code', presetId: string): void {
-  window.electronAPI?.send?.('font-change', { type, presetId });
-}
-
-async function persistSettings(): Promise<void> {
-  try {
-    await window.electronAPI?.invoke?.('save-font-settings', currentSettings);
-  } catch (err) {
-    console.error('[font-presets] Failed to persist settings:', err);
-  }
+  // Font change is broadcast via settings WebSocket
+  console.log('[font-presets] Font changed:', type, presetId);
 }
 
 // =============================================================================
@@ -305,7 +298,12 @@ async function persistSettings(): Promise<void> {
 export async function saveFontSettings(settings: FontSettings): Promise<void> {
   currentSettings = { ...settings };
   try {
-    await window.electronAPI?.font?.save(settings);
+    // Use REST API to save font settings
+    await fetch('/api/settings', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ display: { fonts: settings } }),
+    });
   } catch (err) {
     console.error('[font-presets] Failed to save settings:', err);
   }
@@ -313,10 +311,14 @@ export async function saveFontSettings(settings: FontSettings): Promise<void> {
 
 export async function loadFontSettings(): Promise<FontSettings> {
   try {
-    const loaded = await window.electronAPI?.font?.load();
-    if (loaded) {
-      currentSettings = { ...loaded };
-      return loaded;
+    // Use REST API to load font settings
+    const response = await fetch('/api/settings');
+    if (response.ok) {
+      const settings = await response.json();
+      if (settings?.display?.fonts) {
+        currentSettings = { ...settings.display.fonts };
+        return currentSettings;
+      }
     }
   } catch (err) {
     console.error('[font-presets] Failed to load settings:', err);

@@ -62,24 +62,57 @@ export function SettingsPanel(): React.ReactElement {
   const [fontSettings, setFontSettings] = useState<FontSettings>(DEFAULT_FONT_SETTINGS);
 
   useEffect(() => {
-    const api = window.electronAPI;
-    if (!api?.settings) return;
+    // Load settings via REST
+    async function loadSettings() {
+      try {
+        console.log('[SettingsPanel] Loading settings via REST');
+        const response = await fetch('/api/settings');
+        if (response.ok) {
+          const data = await response.json();
+          console.log('[SettingsPanel] Settings loaded:', data);
+          setSettings(data as Settings);
+        }
+      } catch (err) {
+        console.error('[SettingsPanel] Failed to load settings:', err);
+      }
+    }
 
-    // Load settings
-    api.settings.get?.().then(data => {
-      setSettings(data as Settings);
-    });
+    // Load theme metadata via REST
+    async function loadThemes() {
+      try {
+        const response = await fetch('/api/settings/themes');
+        if (response.ok) {
+          const data = await response.json();
+          setThemes((data || []) as ThemeMetadata[]);
+        }
+      } catch (err) {
+        console.error('[SettingsPanel] Failed to load themes:', err);
+      }
+    }
 
-    // Load theme metadata (includes name, tier)
-    api.settings.getThemeMetadata?.().then(data => {
-      const themeData = (data || []) as ThemeMetadata[];
-      setThemes(themeData);
-    });
+    loadSettings();
+    loadThemes();
 
-    // Subscribe to changes
-    api.settings.onChanged?.((data) => {
-      setSettings(data as Settings);
-    });
+    // WebSocket subscription for real-time sync
+    console.log('[SettingsPanel] Connecting to /ws/settings for real-time sync');
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${window.location.host}/ws/settings`);
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'init' || data.type === 'update') {
+          console.log('[SettingsPanel] Settings update via WebSocket:', data.settings);
+          setSettings(data.settings as Settings);
+        }
+      } catch (err) {
+        console.error('[SettingsPanel] Failed to parse WebSocket message:', err);
+      }
+    };
+
+    ws.onerror = (err) => {
+      console.error('[SettingsPanel] WebSocket error:', err);
+    };
 
     // Load color preset from project config
     loadPresetFromProject().then(presetId => {
@@ -91,6 +124,8 @@ export function SettingsPanel(): React.ReactElement {
       setFontSettings(settings);
       applyFontSettings(settings);
     });
+
+    return () => ws.close();
   }, []);
 
   // Sort themes: by tier (S > A > B > U), then alphabetically by name
@@ -103,8 +138,7 @@ export function SettingsPanel(): React.ReactElement {
   }, [themes]);
 
   const handleThemeChange = useCallback(async (theme: string) => {
-    const api = window.electronAPI;
-    if (!api?.settings || !settings) return;
+    if (!settings) return;
 
     setSaving(true);
     try {
@@ -112,7 +146,13 @@ export function SettingsPanel(): React.ReactElement {
         ...settings,
         pennyfarthing: { ...settings.pennyfarthing, theme },
       };
-      await api.settings.save?.(updated);
+
+      // Use REST API
+      await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pennyfarthing: { theme } }),
+      });
       setSettings(updated);
     } finally {
       setSaving(false);
@@ -120,16 +160,24 @@ export function SettingsPanel(): React.ReactElement {
   }, [settings]);
 
   const handleToggle = useCallback(async (section: string, key: string, value: boolean) => {
-    const api = window.electronAPI;
-    if (!api?.settings || !settings) return;
+    if (!settings) return;
 
+    console.log(`[SettingsPanel] Toggle ${section}.${key} = ${value}`);
     setSaving(true);
     try {
       const updated = {
         ...settings,
         [section]: { ...(settings as Record<string, Record<string, unknown>>)[section], [key]: value },
       };
-      await api.settings.save?.(updated);
+
+      // Use REST API
+      console.log('[SettingsPanel] Saving via REST');
+      await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [section]: { [key]: value } }),
+      });
+      console.log('[SettingsPanel] Save complete, updating local state');
       setSettings(updated);
     } finally {
       setSaving(false);

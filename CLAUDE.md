@@ -7,6 +7,44 @@ This file provides guidance to Claude Code when working on the Pennyfarthing fra
 Pennyfarthing is a Claude Code agent orchestration framework with customizable BikeLane workflows and themed personas. This repo contains the framework source code - for using Pennyfarthing, see the orchestrator repo.
 
 **Version:** 8.1.0
+
+## Dogfooding Architecture
+
+The orchestrator (`pennyfarthing-orchestrator`) **dogfoods** the framework by:
+
+1. **Inlining the framework** - This repo lives at `pennyfarthing/` inside the orchestrator
+2. **Being a Pennyfarthing project itself** - The orchestrator has `.pennyfarthing/` at its root
+3. **Using the framework for its own development** - Agents, workflows, and Cyclist run from the orchestrator
+
+```
+pennyfarthing-orchestrator/          # The orchestrator (pf-2)
+├── .pennyfarthing/                  # Pennyfarthing installation (symlinks to node_modules)
+│   ├── config.local.yaml            # Theme selection, settings
+│   ├── agents/ → node_modules/...   # Symlinked content
+│   └── ...
+├── pennyfarthing/                   # THIS REPO (inlined framework source)
+│   ├── pennyfarthing-dist/          # Framework content (source of truth)
+│   ├── packages/cyclist/            # Cyclist source code
+│   └── ...
+├── sprint/                          # Sprint tracking (orchestrator-level)
+└── .session/                        # Work sessions (orchestrator-level)
+```
+
+**Key insight:** The `.pennyfarthing/` directory is at the **orchestrator root**, not inside the `pennyfarthing/` subdirectory. This means:
+
+- **Project root for Cyclist:** `/path/to/pennyfarthing-orchestrator` (where `.pennyfarthing/` exists)
+- **NOT:** `/path/to/pennyfarthing-orchestrator/pennyfarthing` (no `.pennyfarthing/` here)
+
+### Running Cyclist in Web Mode (for debugging)
+
+When debugging Cyclist UI from the framework source:
+
+```bash
+cd pennyfarthing/packages/cyclist
+CYCLIST_PROJECT_DIR=/path/to/pennyfarthing-orchestrator npm run dev:web
+```
+
+The `CYCLIST_PROJECT_DIR` must point to the **orchestrator root** where `.pennyfarthing/` exists, not the `pennyfarthing/` subdirectory. Otherwise, `detectPennyfarthingProject()` will fail and APIs will return 404
 **Node:** >=18.0.0
 **Type:** ES module with TypeScript (pnpm monorepo)
 

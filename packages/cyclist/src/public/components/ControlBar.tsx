@@ -16,6 +16,7 @@
  */
 
 import React, { useEffect, useRef, useCallback, useState, FocusEvent } from 'react';
+import { useClaudeContext } from '../contexts/ClaudeContext';
 
 // =============================================================================
 // Focus Tracking Hook
@@ -220,32 +221,66 @@ export function useControlBar(): UseControlBarResult {
   const [bellMode, setBellMode] = useState(false);
   const [relayMode, setRelayMode] = useState(false);
 
-  // Permission mode is now managed by Editor component
+  // Claude context for WebSocket communication
+  const { abort, clear, onMessage, onComplete, onError, isConnected } = useClaudeContext();
 
-  // Load initial settings and listen for changes
+  // Load initial settings and listen for changes (using REST/WebSocket, not IPC)
   useEffect(() => {
-    const api = window.electronAPI;
-    if (!api?.settings) return;
-
-    // Load initial settings
-    api.settings.get?.().then((settings: Record<string, unknown>) => {
+    // Handle settings update from any source
+    function handleSettingsUpdate(settings: Record<string, unknown>) {
       const workflow = settings?.workflow as Record<string, unknown> | undefined;
-      setBellMode(!!workflow?.bell_mode);
-      setRelayMode(!!workflow?.relay_mode);
-    });
+      const newBellMode = !!workflow?.bell_mode;
+      const newRelayMode = !!workflow?.relay_mode;
+      console.log('[ControlBar] Settings updated:', { bellMode: newBellMode, relayMode: newRelayMode });
+      setBellMode(newBellMode);
+      setRelayMode(newRelayMode);
+    }
 
-    // Subscribe to settings changes
-    api.settings.onChanged?.((settings: Record<string, unknown>) => {
-      const workflow = settings?.workflow as Record<string, unknown> | undefined;
-      setBellMode(!!workflow?.bell_mode);
-      setRelayMode(!!workflow?.relay_mode);
-    });
+    // Load initial settings via REST
+    async function loadSettings() {
+      try {
+        console.log('[ControlBar] Loading settings via REST');
+        const response = await fetch('/api/settings');
+        if (response.ok) {
+          const settings = await response.json();
+          handleSettingsUpdate(settings);
+        }
+      } catch (err) {
+        console.error('[ControlBar] Failed to load settings:', err);
+      }
+    }
+
+    console.log('[ControlBar] useEffect mount - loading settings');
+    loadSettings();
+
+    // WebSocket subscription for real-time sync
+    console.log('[ControlBar] Connecting to /ws/settings for real-time sync');
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${window.location.host}/ws/settings`);
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'init' || data.type === 'update') {
+          handleSettingsUpdate(data.settings);
+        }
+      } catch (err) {
+        console.error('[ControlBar] Failed to parse WebSocket message:', err);
+      }
+    };
+
+    ws.onerror = (err) => {
+      console.error('[ControlBar] WebSocket error:', err);
+    };
+
+    return () => {
+      ws.close();
+    };
   }, []);
 
-  // Listen for Claude running state changes
+  // Listen for Claude running state changes via WebSocket context
   useEffect(() => {
-    const api = window.electronAPI;
-    if (!api?.claude) return;
+    if (!isConnected) return;
 
     // Track when Claude starts/completes
     const handleMessage = () => {
@@ -263,54 +298,54 @@ export function useControlBar(): UseControlBarResult {
       setIsStopping(false);
     };
 
-    // Subscribe to events
-    api.claude.onMessage?.(handleMessage);
-    api.claude.onComplete?.(handleComplete);
-    api.claude.onError?.(handleError);
+    // Subscribe to events via context
+    const cleanupMessage = onMessage(handleMessage);
+    const cleanupComplete = onComplete(handleComplete);
+    const cleanupError = onError(handleError);
 
-    // Cleanup handled by electronAPI internally
-  }, []);
+    return () => {
+      cleanupMessage();
+      cleanupComplete();
+      cleanupError();
+    };
+  }, [isConnected, onMessage, onComplete, onError]);
 
-  const handleStop = useCallback(async () => {
+  const handleStop = useCallback(() => {
     setIsStopping(true);
     try {
-      // Use abort() - SIGINT doesn't reliably stop Claude CLI
-      await window.electronAPI?.claude?.abort?.();
+      // Use abort() via WebSocket
+      abort();
     } catch (err) {
       console.error('[ControlBar] Stop failed:', err);
     }
-  }, []);
+  }, [abort]);
 
-  const handleForceStop = useCallback(async () => {
+  const handleForceStop = useCallback(() => {
     setIsStopping(true);
     try {
-      await window.electronAPI?.claude?.abort?.();
+      abort();
     } catch (err) {
       console.error('[ControlBar] Force stop failed:', err);
     }
-  }, []);
+  }, [abort]);
 
-  const handleReset = useCallback(async () => {
+  const handleReset = useCallback(() => {
     try {
-      await window.electronAPI?.claude?.clear?.();
-      await window.electronAPI?.messages?.clear?.();
+      clear();
       setIsRunning(false);
       setIsStopping(false);
     } catch (err) {
       console.error('[ControlBar] Reset failed:', err);
     }
-  }, []);
+  }, [clear]);
 
   const handleBellModeChange = useCallback(async (enabled: boolean) => {
     try {
-      const api = window.electronAPI;
-      if (!api?.settings) return;
-
-      const current = await api.settings.get?.() as Record<string, unknown> || {};
-      const workflow = (current.workflow as Record<string, unknown>) || {};
-      await api.settings.save?.({
-        ...current,
-        workflow: { ...workflow, bell_mode: enabled },
+      // Use REST API for settings
+      await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workflow: { bell_mode: enabled } }),
       });
       setBellMode(enabled);
       console.log('[ControlBar] Bell mode set to:', enabled);
@@ -321,14 +356,11 @@ export function useControlBar(): UseControlBarResult {
 
   const handleRelayModeChange = useCallback(async (enabled: boolean) => {
     try {
-      const api = window.electronAPI;
-      if (!api?.settings) return;
-
-      const current = await api.settings.get?.() as Record<string, unknown> || {};
-      const workflow = (current.workflow as Record<string, unknown>) || {};
-      await api.settings.save?.({
-        ...current,
-        workflow: { ...workflow, relay_mode: enabled },
+      // Use REST API for settings
+      await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workflow: { relay_mode: enabled } }),
       });
       setRelayMode(enabled);
       console.log('[ControlBar] Relay mode set to:', enabled);

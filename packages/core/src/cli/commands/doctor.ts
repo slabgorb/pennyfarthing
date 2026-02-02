@@ -1054,8 +1054,11 @@ export function checkLegacyFiles(projectRoot: string): CheckResult[] {
 }
 
 /**
- * Check if settings.local.json has a legacy statusline path.
- * Returns result with fix function to update to canonical path.
+ * Check if settings.local.json has statusline configured.
+ * The statusLine config is a TOP-LEVEL key (not inside hooks), with structure:
+ * { "statusLine": { "type": "command", "command": "path/to/script" } }
+ *
+ * Returns result with fix function to update to canonical path if needed.
  */
 export function checkLegacyStatuslinePath(projectRoot: string): CheckResult {
   const settingsPath = join(projectRoot, '.claude/settings.local.json');
@@ -1080,49 +1083,63 @@ export function checkLegacyStatuslinePath(projectRoot: string): CheckResult {
     };
   }
 
-  const hooks = settings.hooks as Record<string, string> | undefined;
-  if (!hooks || !hooks.StatusLine) {
-    // No statusline hook configured
+  // statusLine is a TOP-LEVEL key, not inside hooks
+  // Format: { type: "command", command: "..." }
+  const statusLine = settings.statusLine as { type?: string; command?: string } | undefined;
+  if (!statusLine || !statusLine.command) {
+    // No statusline configured
     return {
       name: 'settings/statusline-path',
       status: 'pass',
-      detail: 'No statusline hook configured'
+      detail: 'No statusline configured'
     };
   }
 
-  const currentPath = hooks.StatusLine;
+  // Extract the path from the command (may have $CLAUDE_PROJECT_DIR prefix)
+  const command = statusLine.command;
+  // Match patterns like "$CLAUDE_PROJECT_DIR"/.pennyfarthing/scripts/misc/statusline.sh
+  // or plain paths like .pennyfarthing/scripts/misc/statusline.sh
+  const pathMatch = command.match(/(?:\"\$CLAUDE_PROJECT_DIR\"\/)?([^\s"]+)/);
+  const currentPath = pathMatch ? pathMatch[1] : command;
 
-  // Check if it's the canonical path
-  if (currentPath === CANONICAL_STATUSLINE_PATH) {
+  // Check if it contains the canonical path
+  if (currentPath.includes('misc/statusline.sh') || command.includes('misc/statusline.sh')) {
     return {
       name: 'settings/statusline-path',
       status: 'pass',
-      detail: undefined
+      detail: 'Configured'
     };
   }
 
   // Check if it's a known legacy path
-  if (LEGACY_STATUSLINE_PATHS.includes(currentPath as typeof LEGACY_STATUSLINE_PATHS[number])) {
+  const isLegacy = LEGACY_STATUSLINE_PATHS.some(legacyPath =>
+    currentPath.includes(legacyPath) || command.includes(legacyPath)
+  );
+
+  if (isLegacy) {
     // Check if proper statusline exists before offering fix
     const properStatusline = join(projectRoot, CANONICAL_STATUSLINE_PATH);
     if (pathExists(properStatusline)) {
       return {
         name: 'settings/statusline-path',
         status: 'warn',
-        detail: `Legacy path: ${currentPath}`,
+        detail: `Legacy path in command`,
         fix: () => {
           const updatedSettings = { ...settings };
-          (updatedSettings.hooks as Record<string, string>).StatusLine = CANONICAL_STATUSLINE_PATH;
+          (updatedSettings.statusLine as { type: string; command: string }) = {
+            type: 'command',
+            command: `"$CLAUDE_PROJECT_DIR"/${CANONICAL_STATUSLINE_PATH}`
+          };
           writeFileSync(settingsPath, JSON.stringify(updatedSettings, null, 2));
         }
       };
     }
   }
 
-  // Unknown path - pass (user may have custom setup)
+  // Has statusline configured (custom or valid)
   return {
     name: 'settings/statusline-path',
     status: 'pass',
-    detail: `Custom path: ${currentPath}`
+    detail: 'Configured'
   };
 }

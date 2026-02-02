@@ -87,18 +87,34 @@ export function useMessageQueue(): UseMessageQueueResult {
 
   // Load bell mode from settings on mount
   useEffect(() => {
-    window.electronAPI?.settings?.get?.().then((settings: Record<string, unknown>) => {
-      const workflow = settings?.workflow as Record<string, unknown> | undefined;
-      if (workflow?.bell_mode) {
-        setBellModeState(true);
-      }
-    });
+    // Load via REST
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then((settings: Record<string, unknown>) => {
+        const workflow = settings?.workflow as Record<string, unknown> | undefined;
+        if (workflow?.bell_mode) {
+          setBellModeState(true);
+        }
+      })
+      .catch(err => console.debug('[MessageQueue] Failed to load settings:', err));
 
-    // Subscribe to settings changes
-    window.electronAPI?.settings?.onChanged?.((settings: Record<string, unknown>) => {
-      const workflow = settings?.workflow as Record<string, unknown> | undefined;
-      setBellModeState(!!workflow?.bell_mode);
-    });
+    // Subscribe to settings changes via WebSocket
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${window.location.host}/ws/settings`);
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'init' || data.type === 'update') {
+          const workflow = data.settings?.workflow as Record<string, unknown> | undefined;
+          setBellModeState(!!workflow?.bell_mode);
+        }
+      } catch {
+        // Ignore parse errors
+      }
+    };
+
+    return () => ws.close();
   }, []);
 
   // Listen for bell-consumed WebSocket events

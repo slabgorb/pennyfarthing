@@ -16,10 +16,12 @@ import {
   PANEL_INVENTORY,
 } from './components/DockingWorkspace';
 import { CommandPaletteProvider } from './components/CommandPalette';
+import { ClaudeProvider } from './contexts/ClaudeContext';
 import { useLayoutPersistence } from './hooks/useLayoutPersistence';
 import { loadFontSettings, applyFontSettings } from './js/font-presets.js';
 
 // Import all panel components
+// Note: AC and BikeLane are now integrated into ProgressPanel (UX consolidation)
 import {
   MessagePanel,
   SprintPanel,
@@ -30,8 +32,6 @@ import {
   DiffsPanel,
   DebugPanel,
   SettingsPanel,
-  ConnectedAcceptanceCriteriaPanel,
-  ConnectedBikeLanePanel,
 } from './components/panels';
 
 // =============================================================================
@@ -48,10 +48,9 @@ registerPanelComponent(PANEL_INVENTORY.DIFFS, DiffsPanel);
 registerPanelComponent(PANEL_INVENTORY.DEBUG, DebugPanel);
 
 // Right sidebar panels
+// Note: AC and BikeLane are now internal tabs within ProgressPanel
 registerPanelComponent(PANEL_INVENTORY.SPRINT, SprintPanel);
 registerPanelComponent(PANEL_INVENTORY.PROGRESS, ProgressPanel);
-registerPanelComponent(PANEL_INVENTORY.ACCEPTANCE_CRITERIA, ConnectedAcceptanceCriteriaPanel);
-registerPanelComponent(PANEL_INVENTORY.BIKELANE, ConnectedBikeLanePanel);
 registerPanelComponent(PANEL_INVENTORY.BACKGROUND, BackgroundPanel);
 registerPanelComponent(PANEL_INVENTORY.GIT, GitPanel);
 registerPanelComponent(PANEL_INVENTORY.SETTINGS, SettingsPanel);
@@ -135,8 +134,9 @@ export default function App(): React.ReactElement {
   }, []);
 
   return (
-    <CommandPaletteProvider>
-      <div className="cyclist-app">
+    <ClaudeProvider>
+      <CommandPaletteProvider>
+        <div className="cyclist-app">
         {/* Skip links for keyboard navigation (AC7) - always render first */}
         <SkipLink href="#main-content">Skip to main content</SkipLink>
         <SkipLink href="#message-input">Skip to input</SkipLink>
@@ -164,7 +164,8 @@ export default function App(): React.ReactElement {
 
         {/* Message input target (for skip link) */}
         <div id="message-input" tabIndex={-1} style={{ display: 'contents' }} aria-hidden="true" />
-      </div>
-    </CommandPaletteProvider>
+        </div>
+      </CommandPaletteProvider>
+    </ClaudeProvider>
   );
 }

@@ -16,7 +16,17 @@ import { ClaudeService, type PermissionMode } from './claude-service.js';
 import { publicDir } from './paths.js';
 import { getOtelConfig } from './server.js';
 import { getStoryInfo } from './story-parser.js';
-import { getAllReposGitInfoAsync, getReposFromConfig } from './api/git.js';
+import { getReposFromConfig, type RepoGitInfo } from './api/git.js';
+import {
+  getCachedGitStatus,
+  invalidateGitCache,
+  forceRefreshGitCache,
+  onGitCacheRefresh,
+  hasFreshCache,
+  getCachedGitStatusSync,
+} from './git-cache.js';
+import { getSettingsForWebSocket } from './api/settings.js';
+import { getContextUsage, type ContextInfo } from './api/context.js';
 
 // WebSocket message types for Claude communication
 interface ClaudeWebSocketMessage {
@@ -40,6 +50,26 @@ const gitClients = new Set<WebSocket>();
 // Spans WebSocket clients (real-time debugging)
 const spansClients = new Set<WebSocket>();
 
+// Settings WebSocket clients (bidirectional sync between ControlBar and SettingsPanel)
+const settingsClients = new Set<WebSocket>();
+
+// Context WebSocket clients (Phase 2: context usage percentage)
+const contextClients = new Set<WebSocket>();
+
+// Diffs WebSocket clients (Phase 2: Edit/Write tool diffs)
+const diffsClients = new Set<WebSocket>();
+
+// In-memory diff store (for initial send on connection)
+interface DiffData {
+  id: string;
+  path: string;
+  original: string;
+  modified: string;
+  toolName: string;
+  timestamp: number;
+}
+const diffStore: DiffData[] = [];
+
 // Debounce timer for livereload
 let livereloadDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 const LIVERELOAD_DEBOUNCE_MS = 100;
@@ -47,13 +77,17 @@ const LIVERELOAD_DEBOUNCE_MS = 100;
 // Debounce timers for story and git (MSSCI-11943)
 let storyDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let gitCoalesceTimer: ReturnType<typeof setTimeout> | null = null;
+let settingsDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let contextDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 const STORY_DEBOUNCE_MS = 100; // AC1: 100ms debounce for story
 const GIT_COALESCE_MS = 500;   // AC2: 500ms coalesce for git
+const SETTINGS_DEBOUNCE_MS = 100; // Settings debounce for config.local.yaml changes
+const CONTEXT_DEBOUNCE_MS = 2000; // Context debounce (expensive operation)
 
 // Callbacks for IPC broadcast bridge (MSSCI-12782 fix)
 // These allow main.ts to receive updates for Electron IPC broadcast
 type StoryUpdateCallback = (storyInfo: ReturnType<typeof getStoryInfo>) => void;
-type GitUpdateCallback = (reposInfo: Awaited<ReturnType<typeof getAllReposGitInfoAsync>>) => void;
+type GitUpdateCallback = (reposInfo: RepoGitInfo[]) => void;
 let storyUpdateCallback: StoryUpdateCallback | null = null;
 let gitUpdateCallback: GitUpdateCallback | null = null;
 
@@ -84,6 +118,18 @@ export function getGitClients(): Set<WebSocket> {
 
 export function getSpansClients(): Set<WebSocket> {
   return spansClients;
+}
+
+export function getSettingsClients(): Set<WebSocket> {
+  return settingsClients;
+}
+
+export function getContextClients(): Set<WebSocket> {
+  return contextClients;
+}
+
+export function getDiffsClients(): Set<WebSocket> {
+  return diffsClients;
 }
 
 // Setup WebSocket servers for stats and persona updates
@@ -126,6 +172,15 @@ export function setupWebSocketServers(
 
   // WebSocket server for hook requests at /ws/hooks (MSSCI-12409)
   const hooksWss = new WebSocketServer({ noServer: true });
+
+  // WebSocket server for settings at /ws/settings (bidirectional sync)
+  const settingsWss = new WebSocketServer({ noServer: true });
+
+  // WebSocket server for context at /ws/context (Phase 2: context usage)
+  const contextWss = new WebSocketServer({ noServer: true });
+
+  // WebSocket server for diffs at /ws/diffs (Phase 2: Edit/Write diffs)
+  const diffsWss = new WebSocketServer({ noServer: true });
 
   // Handle upgrade requests
   server.on('upgrade', (request, socket, head) => {
@@ -178,6 +233,18 @@ export function setupWebSocketServers(
     } else if (pathname === '/ws/hooks') {
       hooksWss.handleUpgrade(request, socket, head, (ws) => {
         hooksWss.emit('connection', ws, request);
+      });
+    } else if (pathname === '/ws/settings') {
+      settingsWss.handleUpgrade(request, socket, head, (ws) => {
+        settingsWss.emit('connection', ws, request);
+      });
+    } else if (pathname === '/ws/context') {
+      contextWss.handleUpgrade(request, socket, head, (ws) => {
+        contextWss.emit('connection', ws, request);
+      });
+    } else if (pathname === '/ws/diffs') {
+      diffsWss.handleUpgrade(request, socket, head, (ws) => {
+        diffsWss.emit('connection', ws, request);
       });
     } else {
       // Reject connections to other paths
@@ -304,14 +371,24 @@ export function setupWebSocketServers(
 
   // Handle git WebSocket connections (MSSCI-11943)
   // Updated to send multi-repo data for sidebar REPOS section
+  // Now uses git-cache to prevent lock conflicts
   gitWss.on('connection', async (ws: WebSocket) => {
     // Add client to broadcast set
     gitClients.add(ws);
 
-    // Send initial git data on connection (multi-repo) - async to avoid blocking
+    // Send initial git data on connection (multi-repo) - uses cache to avoid lock conflicts
     const projectDir = getProjectDir();
-    const allReposInfo = await getAllReposGitInfoAsync(projectDir);
-    console.log('[Git WS] New connection, sending init with', allReposInfo.length, 'repos');
+
+    // If we have fresh cache, send it immediately; otherwise fetch
+    let allReposInfo;
+    if (hasFreshCache(projectDir)) {
+      allReposInfo = getCachedGitStatusSync(projectDir);
+      console.log('[Git WS] New connection, sending cached init with', allReposInfo.length, 'repos');
+    } else {
+      allReposInfo = await getCachedGitStatus(projectDir);
+      console.log('[Git WS] New connection, sending fresh init with', allReposInfo.length, 'repos');
+    }
+
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ type: 'init', repos: allReposInfo }));
     }
@@ -407,8 +484,96 @@ export function setupWebSocketServers(
     });
   });
 
+  // Handle settings WebSocket connections (bidirectional sync)
+  settingsWss.on('connection', async (ws: WebSocket) => {
+    console.log('[WebSocket] Settings client connected');
+    settingsClients.add(ws);
+
+    // Send initial settings on connection
+    try {
+      const settings = await getSettingsForWebSocket(getProjectDir());
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'init', settings }));
+      }
+    } catch (err) {
+      console.error('[WebSocket] Error fetching initial settings:', err);
+    }
+
+    // Remove client on disconnect
+    ws.on('close', () => {
+      console.log('[WebSocket] Settings client disconnected');
+      settingsClients.delete(ws);
+    });
+
+    // Handle errors gracefully
+    ws.on('error', () => {
+      settingsClients.delete(ws);
+    });
+  });
+
+  // Handle context WebSocket connections (Phase 2: context usage)
+  contextWss.on('connection', (ws: WebSocket) => {
+    console.log('[WebSocket] Context client connected');
+    contextClients.add(ws);
+
+    // Send initial context on connection
+    const projectDir = getProjectDir();
+    const context = getContextUsage(projectDir);
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'init', context }));
+    }
+
+    // Remove client on disconnect
+    ws.on('close', () => {
+      console.log('[WebSocket] Context client disconnected');
+      contextClients.delete(ws);
+    });
+
+    // Handle errors gracefully
+    ws.on('error', () => {
+      contextClients.delete(ws);
+    });
+  });
+
+  // Handle diffs WebSocket connections (Phase 2: Edit/Write diffs)
+  diffsWss.on('connection', (ws: WebSocket) => {
+    console.log('[WebSocket] Diffs client connected');
+    diffsClients.add(ws);
+
+    // Send existing diffs on connection
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'init', diffs: diffStore }));
+    }
+
+    // Handle clear message from client
+    ws.on('message', (data: Buffer) => {
+      try {
+        const msg = JSON.parse(data.toString());
+        if (msg.type === 'clear') {
+          // Clear diff store (client requested clear)
+          diffStore.length = 0;
+        }
+      } catch {
+        // Ignore parse errors
+      }
+    });
+
+    // Remove client on disconnect
+    ws.on('close', () => {
+      console.log('[WebSocket] Diffs client disconnected');
+      diffsClients.delete(ws);
+    });
+
+    // Handle errors gracefully
+    ws.on('error', () => {
+      diffsClients.delete(ws);
+    });
+  });
+
   // Set up tool event listener to broadcast new spans to WebSocket clients
   // Also track pwd from Bash commands for stats-strip display
+  // Also trigger context updates when tool events arrive
+  // Also invalidate git cache on tool completion (PostToolUse)
   addToolEventListener((event: ToolEvent) => {
     // Broadcast span to spans WebSocket clients
     const message = JSON.stringify({ type: 'span', span: event });
@@ -421,6 +586,51 @@ export function setupWebSocketServers(
     // Track pwd from Bash tool completions
     if (event.toolName === 'Bash' && event.workingDirectory) {
       updatePwd(event.workingDirectory);
+    }
+
+    // Invalidate git cache on tool completion - this replaces the .git/index watcher
+    // Tools that modify files (Edit, Write, Bash) may change git status
+    // The cache will debounce and refresh after a delay to avoid lock conflicts
+    if (event.toolName === 'Edit' || event.toolName === 'Write' || event.toolName === 'Bash') {
+      const projectDir = getProjectDir();
+      invalidateGitCache(projectDir);
+    }
+
+    // Trigger debounced context update when tool events arrive
+    // This indicates Claude activity that may change context usage
+    if (contextClients.size > 0) {
+      if (contextDebounceTimer) {
+        clearTimeout(contextDebounceTimer);
+      }
+      contextDebounceTimer = setTimeout(() => {
+        const projectDir = getProjectDir();
+        const context = getContextUsage(projectDir);
+        broadcastContextUpdate(context);
+        contextDebounceTimer = null;
+      }, CONTEXT_DEBOUNCE_MS);
+    }
+
+    // Broadcast diffs for Edit/Write tool events
+    if ((event.toolName === 'Edit' || event.toolName === 'Write') && event.filePath) {
+      const diff: DiffData = {
+        id: event.spanId || `${event.toolName.toLowerCase()}-${Date.now()}`,
+        path: event.filePath,
+        original: event.diffOriginal || '',
+        modified: event.diffModified || '',
+        toolName: event.toolName,
+        timestamp: event.timestamp,
+      };
+
+      // Store diff for new connections
+      const existingIndex = diffStore.findIndex(d => d.path === diff.path);
+      if (existingIndex >= 0) {
+        diffStore[existingIndex] = diff;
+      } else {
+        diffStore.push(diff);
+      }
+
+      // Broadcast to connected clients
+      broadcastDiff(diff);
     }
   });
 
@@ -485,7 +695,9 @@ export function setupWebSocketServers(
   }
 
   // Set up git file watchers for all configured repos
-  // (MSSCI-11943: AC2 - broadcast on .git/HEAD and .git/index changes)
+  // (MSSCI-11943: AC2 - broadcast on .git/HEAD changes only)
+  // NOTE: .git/index watcher REMOVED to prevent lock conflicts with Claude's git operations
+  // Git status is now invalidated via tool events instead (see git-cache.ts)
   const repos = getReposFromConfig(projectDir);
   for (const repo of repos) {
     const repoPath = join(projectDir, repo.path);
@@ -493,25 +705,55 @@ export function setupWebSocketServers(
     if (!existsSync(gitDir)) continue;
 
     try {
-      // Watch .git/HEAD for branch switches
+      // Watch .git/HEAD for branch switches (infrequent, safe to force refresh)
       const headPath = join(gitDir, 'HEAD');
       if (existsSync(headPath)) {
-        watch(headPath, (eventType) => {
+        watch(headPath, async (eventType) => {
           if (eventType !== 'change') return;
-          triggerGitUpdate(projectDir);
+          // Branch switch - force immediate refresh
+          console.log(`[Git Cache] Branch switch detected in ${repo.name}`);
+          await forceRefreshGitCache(projectDir);
         });
       }
 
-      // Watch .git/index for staging changes
-      const indexPath = join(gitDir, 'index');
-      if (existsSync(indexPath)) {
-        watch(indexPath, (eventType) => {
-          if (eventType !== 'change') return;
-          triggerGitUpdate(projectDir);
-        });
-      }
+      // .git/index watcher REMOVED - was causing lock conflicts
+      // Git status now invalidated via PostToolUse events instead
     } catch (err) {
       console.error(`[WebSocket] Failed to set up git file watchers for ${repo.name}:`, err);
+    }
+  }
+
+  // Register git cache refresh callback to broadcast updates
+  onGitCacheRefresh((allReposInfo) => {
+    broadcastGitUpdate(allReposInfo);
+  });
+
+  // Set up settings file watcher for config.local.yaml changes
+  // This enables real-time bidirectional sync between ControlBar and SettingsPanel
+  const configLocalPath = join(projectDir, '.pennyfarthing', 'config.local.yaml');
+  if (existsSync(join(projectDir, '.pennyfarthing'))) {
+    try {
+      watch(join(projectDir, '.pennyfarthing'), { recursive: false }, (eventType, filename) => {
+        if (!filename || filename !== 'config.local.yaml') return;
+
+        // Debounce rapid changes
+        if (settingsDebounceTimer) {
+          clearTimeout(settingsDebounceTimer);
+        }
+
+        settingsDebounceTimer = setTimeout(async () => {
+          try {
+            const settings = await getSettingsForWebSocket(projectDir);
+            broadcastSettingsUpdate(settings);
+          } catch (err) {
+            console.error('[WebSocket] Failed to broadcast settings update:', err);
+          }
+          settingsDebounceTimer = null;
+        }, SETTINGS_DEBOUNCE_MS);
+      });
+      console.log('[WebSocket] Settings file watcher set up for config.local.yaml');
+    } catch (err) {
+      console.error('[WebSocket] Failed to set up settings file watcher:', err);
     }
   }
 
@@ -667,7 +909,7 @@ function broadcastStoryUpdate(storyInfo: ReturnType<typeof getStoryInfo>): void 
 }
 
 // MSSCI-11943: Broadcast git update to all connected clients (multi-repo)
-function broadcastGitUpdate(allReposInfo: Awaited<ReturnType<typeof getAllReposGitInfoAsync>>): void {
+function broadcastGitUpdate(allReposInfo: RepoGitInfo[]): void {
   const message = JSON.stringify({ type: 'update', repos: allReposInfo });
   for (const client of gitClients) {
     if (client.readyState === WebSocket.OPEN) {
@@ -681,15 +923,51 @@ function broadcastGitUpdate(allReposInfo: Awaited<ReturnType<typeof getAllReposG
 }
 
 // MSSCI-11943: Trigger git update with coalescing (500ms per AC2)
-// Now async to avoid blocking the event loop during git commands
+// Now uses git-cache to prevent lock conflicts
+// NOTE: This is now only called for .git/HEAD changes (branch switches)
+// File changes are handled via tool event invalidation in git-cache.ts
 function triggerGitUpdate(projectDir: string): void {
   if (gitCoalesceTimer) {
     clearTimeout(gitCoalesceTimer);
   }
 
   gitCoalesceTimer = setTimeout(async () => {
-    const allReposInfo = await getAllReposGitInfoAsync(projectDir);
-    broadcastGitUpdate(allReposInfo);
+    // Use cache - it will refresh if stale
+    await getCachedGitStatus(projectDir);
+    // Broadcast happens via the onGitCacheRefresh callback
     gitCoalesceTimer = null;
   }, GIT_COALESCE_MS);
+}
+
+// Broadcast settings update to all connected clients
+// Exported for use by settings API after PATCH
+export function broadcastSettingsUpdate(settings: unknown): void {
+  const message = JSON.stringify({ type: 'update', settings });
+  for (const client of settingsClients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  }
+}
+
+// Broadcast context update to all connected clients
+// Exported for use by OTLP receiver after tool events
+export function broadcastContextUpdate(context: ContextInfo): void {
+  const message = JSON.stringify({ type: 'update', context });
+  for (const client of contextClients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  }
+}
+
+// Broadcast diff update to all connected clients
+// Called when Edit/Write tool events are processed
+export function broadcastDiff(diff: DiffData): void {
+  const message = JSON.stringify({ type: 'diff', diff });
+  for (const client of diffsClients) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  }
 }
