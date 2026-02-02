@@ -1,0 +1,100 @@
+# Step 3: Fix Issues
+
+<step-meta>
+number: 3
+name: fix
+gate: false
+</step-meta>
+
+## Purpose
+
+Work through identified issues one by one, making fixes and verifying them in the browser.
+
+## Mandatory Execution Rules
+
+- FIX one issue at a time
+- VERIFY each fix in the browser before moving on
+- TRACK all changes made for the final commit
+- CONSULT UX Designer perspective on visual fixes
+
+## Issue Triage
+
+Present the issues found:
+
+```
+## Issues to Fix
+
+| # | Issue | Severity | Type |
+|---|-------|----------|------|
+| 1 | [description] | High/Med/Low | Visual/Interaction/UX |
+| 2 | [description] | High/Med/Low | Visual/Interaction/UX |
+...
+
+Which issue should we tackle first?
+```
+
+## Fix Loop
+
+For each issue:
+
+### 1. Analyze
+
+- **Reproduce** - Use Playwright to show the bug
+- **Locate** - Find the source file(s) responsible
+- **Understand** - Why is this happening?
+
+### 2. Consult UX Designer
+
+For visual/UX issues, apply UX Designer thinking:
+
+- Is this a one-off fix or a pattern problem?
+- Does the fix align with design system?
+- Are there accessibility implications?
+- Will this fix break other states (hover, focus, mobile)?
+
+### 3. Implement Fix
+
+- Make the code change
+- Keep changes minimal and focused
+
+### 4. Verify
+
+- Use Playwright to navigate back to the affected area
+- Take a screenshot showing the fix
+- Confirm with user:
+
+```
+## Fixed: [Issue Description]
+
+**Before:** [screenshot or description]
+**After:** [screenshot]
+**Files Changed:** [list]
+
+Does this look right?
+- **[Y] Yes** - Mark fixed, next issue
+- **[N] No** - Needs adjustment
+- **[R] Revert** - Undo this change
+```
+
+### 5. Track
+
+Maintain a running list:
+
+```
+## Changes Made
+
+- [ ] `src/components/Panel.css` - Fixed overflow on main panel
+- [ ] `src/components/Button.tsx` - Added missing click handler
+...
+```
+
+## Collaboration Menu
+
+- **[N] Next issue** - Move to the next issue
+- **[A] Add issue** - Found another issue while fixing
+- **[V] Verify all** - Re-check all fixes together
+- **[C] Commit** - All issues fixed, ready to commit
+
+## Next Step
+
+When all issues are fixed and verified, proceed to commit.

@@ -109,11 +109,37 @@ export function SettingsPanel(): React.ReactElement {
     loadSettings();
     loadThemes();
 
-    // Subscribe to changes (Electron only - no WebSocket equivalent yet)
+    // Subscribe to changes
     if (api?.settings?.onChanged) {
+      // Electron IPC subscription
       api.settings.onChanged((data) => {
         setSettings(data as Settings);
       });
+    } else {
+      // Web mode: WebSocket subscription for real-time sync
+      console.log('[SettingsPanel] Connecting to /ws/settings for real-time sync');
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const ws = new WebSocket(`${protocol}//${window.location.host}/ws/settings`);
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'init' || data.type === 'update') {
+            console.log('[SettingsPanel] Settings update via WebSocket:', data.settings);
+            setSettings(data.settings as Settings);
+          }
+        } catch (err) {
+          console.error('[SettingsPanel] Failed to parse WebSocket message:', err);
+        }
+      };
+
+      ws.onerror = (err) => {
+        console.error('[SettingsPanel] WebSocket error:', err);
+      };
+
+      return () => {
+        ws.close();
+      };
     }
 
     // Load color preset from project config

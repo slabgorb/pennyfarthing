@@ -226,6 +226,16 @@ export function useControlBar(): UseControlBarResult {
   useEffect(() => {
     const api = window.electronAPI;
 
+    // Handle settings update from any source
+    function handleSettingsUpdate(settings: Record<string, unknown>) {
+      const workflow = settings?.workflow as Record<string, unknown> | undefined;
+      const newBellMode = !!workflow?.bell_mode;
+      const newRelayMode = !!workflow?.relay_mode;
+      console.log('[ControlBar] Settings updated:', { bellMode: newBellMode, relayMode: newRelayMode });
+      setBellMode(newBellMode);
+      setRelayMode(newRelayMode);
+    }
+
     // Load initial settings - try IPC first, then REST fallback
     async function loadSettings() {
       try {
@@ -244,12 +254,7 @@ export function useControlBar(): UseControlBarResult {
         }
 
         if (settings) {
-          const workflow = settings.workflow as Record<string, unknown> | undefined;
-          const newBellMode = !!workflow?.bell_mode;
-          const newRelayMode = !!workflow?.relay_mode;
-          console.log('[ControlBar] Settings loaded:', { bellMode: newBellMode, relayMode: newRelayMode });
-          setBellMode(newBellMode);
-          setRelayMode(newRelayMode);
+          handleSettingsUpdate(settings);
         }
       } catch (err) {
         console.error('[ControlBar] Failed to load settings:', err);
@@ -259,18 +264,35 @@ export function useControlBar(): UseControlBarResult {
     console.log('[ControlBar] useEffect mount - loading settings');
     loadSettings();
 
-    // Poll for settings changes in web mode (no WebSocket subscription available)
-    if (!api?.settings?.onChanged) {
-      const interval = setInterval(loadSettings, 5000);
-      return () => clearInterval(interval);
-    }
+    // Subscribe to settings changes
+    if (api?.settings?.onChanged) {
+      // Electron IPC subscription
+      api.settings.onChanged(handleSettingsUpdate);
+    } else {
+      // Web mode: WebSocket subscription for real-time sync
+      console.log('[ControlBar] Connecting to /ws/settings for real-time sync');
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const ws = new WebSocket(`${protocol}//${window.location.host}/ws/settings`);
 
-    // Subscribe to settings changes (Electron only)
-    api.settings.onChanged((settings: Record<string, unknown>) => {
-      const workflow = settings?.workflow as Record<string, unknown> | undefined;
-      setBellMode(!!workflow?.bell_mode);
-      setRelayMode(!!workflow?.relay_mode);
-    });
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'init' || data.type === 'update') {
+            handleSettingsUpdate(data.settings);
+          }
+        } catch (err) {
+          console.error('[ControlBar] Failed to parse WebSocket message:', err);
+        }
+      };
+
+      ws.onerror = (err) => {
+        console.error('[ControlBar] WebSocket error:', err);
+      };
+
+      return () => {
+        ws.close();
+      };
+    }
   }, []);
 
   // Listen for Claude running state changes

@@ -1,0 +1,41 @@
+# Interactive Debug Workflow - BikeLane Stepped Workflow
+#
+# Connect to a running frontend (or launch one), use Playwright MCP for
+# browser automation, hunt bugs collaboratively with UX Designer, fix them,
+# and roll up into a chore commit.
+#
+# Prerequisites:
+#   - Playwright MCP configured in Claude settings
+#   - Project has a dev server command
+#
+# Purpose: Interactive visual debugging session that produces committed fixes
+# Role: UX Designer leads visual inspection, Dev fixes issues
+# Output: Chore commit with all bug fixes rolled up
+
+workflow:
+  name: interactive-debug
+  description: |
+    Interactive debugging workflow that connects to your frontend via Playwright MCP,
+    collaboratively identifies bugs with UX Designer, fixes them, and commits as a chore.
+  version: "1.0.0"
+  type: stepped
+
+  # Step configuration
+  steps:
+    path: ./steps/
+    pattern: step-*.md
+
+  # Variables available in step files
+  variables:
+    project_root: .
+    dev_command: npm run dev
+    dev_port: 3000
+    dev_url: http://localhost:3000
+
+  # Agent assignment - UX Designer leads visual debugging
+  agent: ux-designer
+
+  # Triggers - when to suggest this workflow
+  triggers:
+    types: [interactive-debug, debug-ui, visual-debug, bug-hunt]
+    tags: [debug, visual, playwright, ux, bug-fix]
