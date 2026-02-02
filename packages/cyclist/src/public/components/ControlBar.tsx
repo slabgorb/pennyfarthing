@@ -15,7 +15,27 @@
  * - Visual feedback for "Stopping..." state
  */
 
-import React, { useEffect, useRef, useCallback, useState } from 'react';
+import React, { useEffect, useRef, useCallback, useState, FocusEvent } from 'react';
+
+// =============================================================================
+// Focus Tracking Hook
+// =============================================================================
+
+function useFocusTracking() {
+  const [focusedId, setFocusedId] = useState<string | null>(null);
+
+  const handleFocus = useCallback((id: string) => (e: FocusEvent<HTMLButtonElement>) => {
+    setFocusedId(id);
+  }, []);
+
+  const handleBlur = useCallback(() => {
+    setFocusedId(null);
+  }, []);
+
+  const isFocused = useCallback((id: string) => focusedId === id, [focusedId]);
+
+  return { handleFocus, handleBlur, isFocused };
+}
 
 // =============================================================================
 // Types
@@ -59,6 +79,7 @@ export function ControlBar({
 }: ControlBarProps): React.ReactElement {
   const lastEscapeTime = useRef<number>(0);
   const DOUBLE_PRESS_THRESHOLD = 500; // ms
+  const { handleFocus, handleBlur, isFocused } = useFocusTracking();
 
   // Global Escape key handler
   const handleKeyDown = useCallback(
@@ -106,7 +127,7 @@ export function ControlBar({
         <button
           type="button"
           className={`btn-toggle bell-toggle ${bellMode ? 'active' : ''}`}
-          data-testid="bell-toggle"
+          data-testid="bell-mode-toggle"
           onClick={() => onBellModeChange?.(!bellMode)}
           aria-pressed={bellMode}
           aria-label="Bell mode - inject queued messages via hook"
@@ -132,12 +153,14 @@ export function ControlBar({
       {/* Stop button - always visible, disabled when not running */}
       <button
         type="button"
-        className={`btn-stop danger ${isStopping ? 'stopping' : ''} ${isRunning && !isStopping ? 'throbbing' : ''}`}
+        className={`btn-stop danger ${isStopping ? 'stopping' : ''} ${isRunning && !isStopping ? 'throbbing' : ''} ${isFocused('stop') ? 'focused focus-visible' : ''}`}
         data-testid="stop-button"
         onClick={onStop}
         disabled={!isRunning || isStopping}
         aria-busy={isStopping}
         aria-label="Stop Claude"
+        onFocus={handleFocus('stop')}
+        onBlur={handleBlur}
       >
         <span data-icon="stop" className="icon" />
         {isStopping ? (
@@ -153,10 +176,12 @@ export function ControlBar({
       {/* Reset button - always visible */}
       <button
         type="button"
-        className="btn-reset"
+        className={`btn-reset ${isFocused('reset') ? 'focused focus-visible' : ''}`}
         data-testid="reset-button"
         onClick={onReset}
         aria-label="Reset session"
+        onFocus={handleFocus('reset')}
+        onBlur={handleBlur}
       >
         Reset
       </button>
