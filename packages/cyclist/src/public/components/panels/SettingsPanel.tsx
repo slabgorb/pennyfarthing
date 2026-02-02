@@ -62,44 +62,28 @@ export function SettingsPanel(): React.ReactElement {
   const [fontSettings, setFontSettings] = useState<FontSettings>(DEFAULT_FONT_SETTINGS);
 
   useEffect(() => {
-    const api = window.electronAPI;
-
-    // Load settings - try IPC first, then REST fallback
+    // Load settings via REST
     async function loadSettings() {
       try {
-        if (api?.settings?.get) {
-          console.log('[SettingsPanel] Loading settings via IPC');
-          const data = await api.settings.get();
-          console.log('[SettingsPanel] Settings loaded (IPC):', data);
+        console.log('[SettingsPanel] Loading settings via REST');
+        const response = await fetch('/api/settings');
+        if (response.ok) {
+          const data = await response.json();
+          console.log('[SettingsPanel] Settings loaded:', data);
           setSettings(data as Settings);
-        } else {
-          // REST fallback for web mode
-          console.log('[SettingsPanel] Loading settings via REST (web mode)');
-          const response = await fetch('/api/settings');
-          if (response.ok) {
-            const data = await response.json();
-            console.log('[SettingsPanel] Settings loaded (REST):', data);
-            setSettings(data as Settings);
-          }
         }
       } catch (err) {
         console.error('[SettingsPanel] Failed to load settings:', err);
       }
     }
 
-    // Load theme metadata - try IPC first, then REST fallback
+    // Load theme metadata via REST
     async function loadThemes() {
       try {
-        if (api?.settings?.getThemeMetadata) {
-          const data = await api.settings.getThemeMetadata();
+        const response = await fetch('/api/settings/themes');
+        if (response.ok) {
+          const data = await response.json();
           setThemes((data || []) as ThemeMetadata[]);
-        } else {
-          // REST fallback for web mode
-          const response = await fetch('/api/settings/themes');
-          if (response.ok) {
-            const data = await response.json();
-            setThemes((data || []) as ThemeMetadata[]);
-          }
         }
       } catch (err) {
         console.error('[SettingsPanel] Failed to load themes:', err);
@@ -109,38 +93,26 @@ export function SettingsPanel(): React.ReactElement {
     loadSettings();
     loadThemes();
 
-    // Subscribe to changes
-    if (api?.settings?.onChanged) {
-      // Electron IPC subscription
-      api.settings.onChanged((data) => {
-        setSettings(data as Settings);
-      });
-    } else {
-      // Web mode: WebSocket subscription for real-time sync
-      console.log('[SettingsPanel] Connecting to /ws/settings for real-time sync');
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const ws = new WebSocket(`${protocol}//${window.location.host}/ws/settings`);
+    // WebSocket subscription for real-time sync
+    console.log('[SettingsPanel] Connecting to /ws/settings for real-time sync');
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${window.location.host}/ws/settings`);
 
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === 'init' || data.type === 'update') {
-            console.log('[SettingsPanel] Settings update via WebSocket:', data.settings);
-            setSettings(data.settings as Settings);
-          }
-        } catch (err) {
-          console.error('[SettingsPanel] Failed to parse WebSocket message:', err);
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'init' || data.type === 'update') {
+          console.log('[SettingsPanel] Settings update via WebSocket:', data.settings);
+          setSettings(data.settings as Settings);
         }
-      };
+      } catch (err) {
+        console.error('[SettingsPanel] Failed to parse WebSocket message:', err);
+      }
+    };
 
-      ws.onerror = (err) => {
-        console.error('[SettingsPanel] WebSocket error:', err);
-      };
-
-      return () => {
-        ws.close();
-      };
-    }
+    ws.onerror = (err) => {
+      console.error('[SettingsPanel] WebSocket error:', err);
+    };
 
     // Load color preset from project config
     loadPresetFromProject().then(presetId => {
@@ -152,6 +124,8 @@ export function SettingsPanel(): React.ReactElement {
       setFontSettings(settings);
       applyFontSettings(settings);
     });
+
+    return () => ws.close();
   }, []);
 
   // Sort themes: by tier (S > A > B > U), then alphabetically by name
@@ -173,17 +147,12 @@ export function SettingsPanel(): React.ReactElement {
         pennyfarthing: { ...settings.pennyfarthing, theme },
       };
 
-      const api = window.electronAPI;
-      if (api?.settings?.save) {
-        await api.settings.save(updated);
-      } else {
-        // REST fallback for web mode
-        await fetch('/api/settings', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pennyfarthing: { theme } }),
-        });
-      }
+      // Use REST API
+      await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pennyfarthing: { theme } }),
+      });
       setSettings(updated);
     } finally {
       setSaving(false);
@@ -201,19 +170,13 @@ export function SettingsPanel(): React.ReactElement {
         [section]: { ...(settings as Record<string, Record<string, unknown>>)[section], [key]: value },
       };
 
-      const api = window.electronAPI;
-      if (api?.settings?.save) {
-        console.log('[SettingsPanel] Saving via IPC');
-        await api.settings.save(updated);
-      } else {
-        // REST fallback for web mode
-        console.log('[SettingsPanel] Saving via REST (web mode)');
-        await fetch('/api/settings', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ [section]: { [key]: value } }),
-        });
-      }
+      // Use REST API
+      console.log('[SettingsPanel] Saving via REST');
+      await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [section]: { [key]: value } }),
+      });
       console.log('[SettingsPanel] Save complete, updating local state');
       setSettings(updated);
     } finally {

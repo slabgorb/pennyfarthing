@@ -514,8 +514,13 @@ export async function savePresetToProject(presetId: string): Promise<boolean> {
   }
 
   try {
-    await window.electronAPI?.config?.saveProjectConfig('colorPreset', presetId);
-    return true;
+    // Use REST API to save color preset to settings
+    const response = await fetch('/api/settings', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ display: { colorPreset: presetId } }),
+    });
+    return response.ok;
   } catch (err) {
     console.error('[color-presets] Failed to save preset:', err);
     return false;
@@ -524,8 +529,14 @@ export async function savePresetToProject(presetId: string): Promise<boolean> {
 
 export async function loadPresetFromProject(): Promise<string> {
   try {
-    const presetId = await window.electronAPI?.config?.loadProjectConfig('colorPreset');
-    return presetId && getPreset(presetId) ? presetId : DEFAULT_PRESET;
+    // Use REST API to load color preset from settings
+    const response = await fetch('/api/settings');
+    if (response.ok) {
+      const settings = await response.json();
+      const presetId = settings?.display?.colorPreset;
+      return presetId && getPreset(presetId) ? presetId : DEFAULT_PRESET;
+    }
+    return DEFAULT_PRESET;
   } catch (err) {
     console.error('[color-presets] Failed to load preset:', err);
     return DEFAULT_PRESET;
@@ -533,21 +544,33 @@ export async function loadPresetFromProject(): Promise<string> {
 }
 
 // =============================================================================
-// Window Sync (IPC)
+// Window Sync (WebSocket)
 // =============================================================================
 
 export function subscribeToPresetChanges(
   callback: (presetId: string) => void
 ): () => void {
-  if (!window.electronAPI?.theme?.onPresetChanged) {
-    return () => {};
-  }
+  // Connect to settings WebSocket for real-time sync
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const ws = new WebSocket(`${protocol}//${window.location.host}/ws/settings`);
 
-  return window.electronAPI.theme.onPresetChanged(callback);
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      if ((data.type === 'init' || data.type === 'update') && data.settings?.display?.colorPreset) {
+        callback(data.settings.display.colorPreset);
+      }
+    } catch {
+      // Ignore parse errors
+    }
+  };
+
+  return () => ws.close();
 }
 
 export function broadcastPresetChange(presetId: string): void {
-  window.electronAPI?.theme?.broadcastPreset(presetId);
+  // Broadcast is handled by the settings API - when we PATCH, it broadcasts via WebSocket
+  console.log('[color-presets] Preset changed:', presetId);
 }
 
 export function initPresetSync(): void {

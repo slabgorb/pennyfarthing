@@ -25,8 +25,6 @@ export function useSubagentHelper(): UseSubagentHelperResult {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const api = window.electronAPI;
-
     const fetchHelper = async (role: string) => {
       try {
         const helperData = await getAgentHelper(role);
@@ -38,33 +36,28 @@ export function useSubagentHelper(): UseSubagentHelperResult {
       }
     };
 
-    if (api?.persona) {
-      // Fetch initial persona and helper
-      api.persona.get()
-        .then((data) => {
-          const persona = data as { role?: string } | null;
-          if (persona?.role) {
-            return fetchHelper(persona.role);
-          }
-          setIsLoading(false);
-        })
-        .catch((err) => {
-          setError(err instanceof Error ? err : new Error('Failed to fetch persona'));
-          setIsLoading(false);
-        });
+    // Connect to persona WebSocket for real-time updates
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${window.location.host}/ws/persona`);
 
-      // Subscribe to persona updates (follows usePersona pattern) - capture cleanup function
-      const cleanup = api.persona.onUpdate((_, data) => {
-        const persona = data as { role?: string } | null;
+    ws.onmessage = (event) => {
+      try {
+        const persona = JSON.parse(event.data) as { role?: string } | null;
         if (persona?.role) {
           fetchHelper(persona.role);
         }
-      });
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Failed to parse persona'));
+        setIsLoading(false);
+      }
+    };
 
-      return cleanup;
-    } else {
+    ws.onerror = () => {
+      setError(new Error('WebSocket connection failed'));
       setIsLoading(false);
-    }
+    };
+
+    return () => ws.close();
   }, []);
 
   return { helper, isLoading, error };

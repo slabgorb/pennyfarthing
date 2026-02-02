@@ -14,6 +14,8 @@ import { ControlBar, useControlBar } from '../ControlBar';
 import PersonaHeader from '../PersonaHeader';
 import StatsStrip from '../StatsStrip';
 import { useMessageQueue, QueuedMessage } from '../../hooks/useMessageQueue';
+import { useClaudeContext } from '../../contexts/ClaudeContext';
+import type { ClaudeMessage } from '../../hooks/useClaude';
 
 // =============================================================================
 // Types
@@ -165,6 +167,9 @@ export function MessagePanel(): React.ReactElement {
     handleRelayModeChange,
   } = useControlBar();
 
+  // Claude context for WebSocket communication
+  const { send, onMessage, onComplete, onError, isConnected } = useClaudeContext();
+
   // Message queue hook for turn complete handling
   const { handleTurnComplete, pauseQueue } = useMessageQueue();
 
@@ -172,8 +177,8 @@ export function MessagePanel(): React.ReactElement {
   const submitRef = useRef<(text: string, images: QueuedMessage['images']) => void>();
 
   // Handle incoming SDK message
-  const handleSDKMessage = useCallback((sdkMessage: SDKMessage) => {
-    const transformed = transformMessage(sdkMessage);
+  const handleSDKMessage = useCallback((sdkMessage: ClaudeMessage) => {
+    const transformed = transformMessage(sdkMessage as SDKMessage);
     if (transformed) {
       setMessages(prev => [...prev, transformed]);
     }
@@ -206,25 +211,24 @@ export function MessagePanel(): React.ReactElement {
     }]);
   }, []);
 
-  // Connect to SDK events
+  // Connect to Claude events via WebSocket context
   useEffect(() => {
-    const claude = window.electronAPI?.claude;
-    if (!claude) {
-      console.log('[MessagePanel] Claude SDK not available');
+    if (!isConnected) {
+      console.log('[MessagePanel] Claude WebSocket not connected');
       return;
     }
 
-    const cleanupMessage = claude.onMessage?.(handleSDKMessage);
-    const cleanupComplete = claude.onComplete?.(handleComplete);
-    const cleanupError = claude.onError?.(handleError);
+    const cleanupMessage = onMessage(handleSDKMessage);
+    const cleanupComplete = onComplete(handleComplete);
+    const cleanupError = onError(handleError);
 
     // Cleanup listeners on unmount or dependency change to prevent duplicates
     return () => {
-      if (typeof cleanupMessage === 'function') cleanupMessage();
-      if (typeof cleanupComplete === 'function') cleanupComplete();
-      if (typeof cleanupError === 'function') cleanupError();
+      cleanupMessage();
+      cleanupComplete();
+      cleanupError();
     };
-  }, [handleSDKMessage, handleComplete, handleError]);
+  }, [isConnected, onMessage, onComplete, onError, handleSDKMessage, handleComplete, handleError]);
 
   // Handle editor submit
   const handleSubmit = useCallback((text: string, images: PastedImage[]) => {
@@ -237,11 +241,9 @@ export function MessagePanel(): React.ReactElement {
 
     setIsProcessing(true);
 
-    // Send to Claude SDK
-    if (window.electronAPI?.claude?.send) {
-      window.electronAPI.claude.send(text, images);
-    }
-  }, []);
+    // Send to Claude via WebSocket
+    send(text, images);
+  }, [send]);
 
   // Update submit ref for turn complete
   useEffect(() => {
