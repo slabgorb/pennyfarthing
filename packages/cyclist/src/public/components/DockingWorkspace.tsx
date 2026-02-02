@@ -3,6 +3,7 @@
  *
  * Story 70-1: Docking System Foundation
  * Story 70-2: Panel Drag-and-Drop (MSSCI-12705)
+ * Story MSSCI-12770: Responsive Breakpoints
  *
  * Features:
  * - Three-region layout (left sidebar, center, right sidebar)
@@ -15,10 +16,13 @@
  * - Tab reordering within sidebars
  * - Ghost preview during drag
  * - Drop zone highlighting
+ * - Responsive breakpoints (auto-collapse at <1024px, expand at >1440px)
+ * - Minimum dimension warning (800x600)
  */
 
-import React, { useState, useCallback, useRef, KeyboardEvent, ComponentType, DragEvent } from 'react';
+import React, { useState, useCallback, useRef, useEffect, KeyboardEvent, ComponentType, DragEvent } from 'react';
 import { ErrorBoundary } from './ErrorBoundary';
+import { useResponsiveLayout, MIN_DIMENSIONS, SIDEBAR_WIDTHS } from '../hooks/useResponsiveLayout';
 
 // =============================================================================
 // Panel Inventory - All available panels in Cyclist
@@ -285,6 +289,7 @@ interface SidebarProps {
   onTabDragOver: (e: DragEvent, index: number) => void;
   onTabDrop: (e: DragEvent, index: number) => void;
   draggingPanelId: string | null;
+  responsiveCollapsed?: boolean;
 }
 
 function Sidebar({
@@ -306,6 +311,7 @@ function Sidebar({
   onTabDragOver,
   onTabDrop,
   draggingPanelId,
+  responsiveCollapsed,
 }: SidebarProps) {
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -331,6 +337,7 @@ function Sidebar({
     <div
       data-region={region}
       data-collapsed={collapsed ? 'true' : undefined}
+      data-responsive-collapsed={responsiveCollapsed ? 'true' : undefined}
       data-testid={`sidebar-${region}-dropzone`}
       data-drop-valid={isDropZoneActive ? 'true' : undefined}
       className={`sidebar sidebar-${region} ${isDropZoneActive ? 'drop-zone-active' : ''}`}
@@ -499,6 +506,8 @@ export interface DockingWorkspaceProps {
   onRightCollapseChange?: (collapsed: boolean) => void;
   onDropRejected?: () => void;
   onLayoutChange?: (layout: WorkspaceLayoutConfig) => void;
+  /** Enable responsive behavior (auto-collapse at small, expand at large). Default: true */
+  responsive?: boolean;
 }
 
 export function DockingWorkspace({
@@ -509,13 +518,35 @@ export function DockingWorkspace({
   onRightCollapseChange,
   onDropRejected,
   onLayoutChange,
+  responsive = true,
 }: DockingWorkspaceProps) {
   const [layout, setLayout] = useState(() => initialLayout ?? createWorkspaceLayout());
 
-  const [leftCollapsed, setLeftCollapsed] = useState(leftCollapsedProp ?? false);
-  const [rightCollapsed, setRightCollapsed] = useState(rightCollapsedProp ?? false);
+  // Responsive layout detection
+  const responsiveState = useResponsiveLayout();
+  const { breakpoint, isSmall, isLarge, sidebarWidth: responsiveSidebarWidth, isBelowMinimum } = responsiveState;
+
+  // Track user manual overrides for collapse state
+  const [leftUserOverride, setLeftUserOverride] = useState(false);
+  const [rightUserOverride, setRightUserOverride] = useState(false);
+
+  // Determine effective collapsed state
+  const shouldAutoCollapse = responsive && isSmall;
+  const effectiveLeftCollapsed = leftCollapsedProp !== undefined
+    ? leftCollapsedProp
+    : (shouldAutoCollapse && !leftUserOverride);
+  const effectiveRightCollapsed = rightCollapsedProp !== undefined
+    ? rightCollapsedProp
+    : (shouldAutoCollapse && !rightUserOverride);
+
+  const [leftCollapsed, setLeftCollapsed] = useState(effectiveLeftCollapsed);
+  const [rightCollapsed, setRightCollapsed] = useState(effectiveRightCollapsed);
   const [leftActivePanel, setLeftActivePanel] = useState(layout.leftSidebar.panels[0]);
   const [rightActivePanel, setRightActivePanel] = useState(layout.rightSidebar.panels[0]);
+
+  // Track whether current collapse is due to responsive behavior
+  const [leftResponsiveCollapsed, setLeftResponsiveCollapsed] = useState(false);
+  const [rightResponsiveCollapsed, setRightResponsiveCollapsed] = useState(false);
 
   // Drag state
   const [draggingPanelId, setDraggingPanelId] = useState<string | null>(null);
@@ -528,29 +559,78 @@ export function DockingWorkspace({
   const [rightDropPosition, setRightDropPosition] = useState<number | null>(null);
 
   // Sync with props
-  React.useEffect(() => {
+  useEffect(() => {
     if (leftCollapsedProp !== undefined) {
       setLeftCollapsed(leftCollapsedProp);
     }
   }, [leftCollapsedProp]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (rightCollapsedProp !== undefined) {
       setRightCollapsed(rightCollapsedProp);
     }
   }, [rightCollapsedProp]);
 
+  // Responsive auto-collapse effect
+  useEffect(() => {
+    if (!responsive) return;
+
+    if (isSmall && !leftUserOverride) {
+      setLeftCollapsed(true);
+      setLeftResponsiveCollapsed(true);
+    } else if (!isSmall && leftResponsiveCollapsed) {
+      setLeftCollapsed(false);
+      setLeftResponsiveCollapsed(false);
+    }
+
+    if (isSmall && !rightUserOverride) {
+      setRightCollapsed(true);
+      setRightResponsiveCollapsed(true);
+    } else if (!isSmall && rightResponsiveCollapsed) {
+      setRightCollapsed(false);
+      setRightResponsiveCollapsed(false);
+    }
+  }, [responsive, isSmall, leftUserOverride, rightUserOverride, leftResponsiveCollapsed, rightResponsiveCollapsed]);
+
+  // Update sidebar widths based on breakpoint
+  useEffect(() => {
+    if (!responsive) return;
+
+    const newWidth = isLarge ? SIDEBAR_WIDTHS.large : SIDEBAR_WIDTHS.medium;
+    setLayout(prev => ({
+      ...prev,
+      leftSidebar: { ...prev.leftSidebar, width: newWidth },
+      rightSidebar: { ...prev.rightSidebar, width: newWidth },
+    }));
+  }, [responsive, isLarge]);
+
   const handleLeftCollapseToggle = useCallback(() => {
     const newValue = !leftCollapsed;
     setLeftCollapsed(newValue);
+    // If user expands while in small breakpoint, mark as user override
+    if (responsive && isSmall && !newValue) {
+      setLeftUserOverride(true);
+    } else if (!isSmall) {
+      // Reset override when not in small breakpoint
+      setLeftUserOverride(false);
+    }
+    setLeftResponsiveCollapsed(false);
     onLeftCollapseChange?.(newValue);
-  }, [leftCollapsed, onLeftCollapseChange]);
+  }, [leftCollapsed, onLeftCollapseChange, responsive, isSmall]);
 
   const handleRightCollapseToggle = useCallback(() => {
     const newValue = !rightCollapsed;
     setRightCollapsed(newValue);
+    // If user expands while in small breakpoint, mark as user override
+    if (responsive && isSmall && !newValue) {
+      setRightUserOverride(true);
+    } else if (!isSmall) {
+      // Reset override when not in small breakpoint
+      setRightUserOverride(false);
+    }
+    setRightResponsiveCollapsed(false);
     onRightCollapseChange?.(newValue);
-  }, [rightCollapsed, onRightCollapseChange]);
+  }, [rightCollapsed, onRightCollapseChange, responsive, isSmall]);
 
   // ==========================================================================
   // Resize Handlers
@@ -803,7 +883,38 @@ export function DockingWorkspace({
   const bothCollapsed = leftCollapsed && rightCollapsed;
 
   return (
-    <div data-testid="docking-workspace" className="docking-workspace">
+    <div
+      data-testid="docking-workspace"
+      data-breakpoint={responsive ? breakpoint : undefined}
+      className="docking-workspace"
+    >
+      {/* Minimum size warning overlay */}
+      {responsive && isBelowMinimum && (
+        <div
+          data-testid="minimum-size-warning"
+          className="minimum-size-warning"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            color: 'white',
+            zIndex: 9999,
+            padding: '20px',
+            textAlign: 'center',
+          }}
+        >
+          <div>
+            <p>Window too small</p>
+            <p>Minimum size: {MIN_DIMENSIONS.width}x{MIN_DIMENSIONS.height}</p>
+          </div>
+        </div>
+      )}
       <Sidebar
         region="left"
         panels={layout.leftSidebar.panels}
@@ -823,6 +934,7 @@ export function DockingWorkspace({
         onTabDragOver={(e, index) => handleTabDragOver(e, index, 'left')}
         onTabDrop={(e, index) => handleTabDrop(e, index, 'left')}
         draggingPanelId={draggingPanelId}
+        responsiveCollapsed={leftResponsiveCollapsed}
       />
 
       <ResizeHandle
@@ -883,9 +995,17 @@ export function DockingWorkspace({
         onTabDragOver={(e, index) => handleTabDragOver(e, index, 'right')}
         onTabDrop={(e, index) => handleTabDrop(e, index, 'right')}
         draggingPanelId={draggingPanelId}
+        responsiveCollapsed={rightResponsiveCollapsed}
       />
     </div>
   );
+}
+
+/**
+ * ResponsiveDockingWorkspace - Pre-configured responsive wrapper
+ */
+export function ResponsiveDockingWorkspace(props: Omit<DockingWorkspaceProps, 'responsive'>) {
+  return <DockingWorkspace {...props} responsive={true} />;
 }
 
 export default DockingWorkspace;
