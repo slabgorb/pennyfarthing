@@ -13,7 +13,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import React from 'react';
 
 import ToolCallBlock from '../src/public/components/ToolCallBlock';
@@ -293,18 +293,24 @@ describe('AC4: Copy to clipboard button', () => {
     render(<ToolCallBlock toolUse={mockToolUse} result={shortResult} />);
 
     const copyButton = screen.getByTestId('tool-result-copy');
-    fireEvent.click(copyButton);
 
-    await waitFor(() => {
-      expect(copyButton).toHaveClass('copied');
+    // Click and wait for async clipboard operation
+    await act(async () => {
+      fireEvent.click(copyButton);
+      // Allow Promise.resolve() to complete
+      await Promise.resolve();
     });
 
-    // Advance timers by 2 seconds
-    vi.advanceTimersByTime(2000);
+    // Should now have copied class
+    expect(copyButton).toHaveClass('copied');
 
-    await waitFor(() => {
-      expect(copyButton).not.toHaveClass('copied');
+    // Advance timers by 2 seconds to trigger reset
+    await act(async () => {
+      vi.advanceTimersByTime(2000);
     });
+
+    // Should no longer have copied class
+    expect(copyButton).not.toHaveClass('copied');
 
     vi.useRealTimers();
   });
@@ -317,15 +323,19 @@ describe('AC4: Copy to clipboard button', () => {
   });
 
   it('should copy full content even when display is truncated', async () => {
+    vi.useFakeTimers();
     render(<ToolCallBlock toolUse={mockToolUse} result={largeResult} />);
 
     const copyButton = screen.getByTestId('tool-result-copy');
     fireEvent.click(copyButton);
 
-    await waitFor(() => {
-      // Should copy ALL 100 lines, not just the visible 50
-      expect(mockWriteText).toHaveBeenCalledWith(largeResult.content);
-    });
+    // Run all pending promises
+    await vi.runAllTimersAsync();
+
+    // Should copy ALL 100 lines, not just the visible 50
+    expect(mockWriteText).toHaveBeenCalledWith(largeResult.content);
+
+    vi.useRealTimers();
   });
 });
 
@@ -369,6 +379,7 @@ describe('Edge cases', () => {
   });
 
   it('should handle clipboard API failure gracefully', async () => {
+    vi.useFakeTimers();
     mockWriteText.mockRejectedValueOnce(new Error('Clipboard failed'));
 
     render(<ToolCallBlock toolUse={mockToolUse} result={shortResult} />);
@@ -376,9 +387,12 @@ describe('Edge cases', () => {
     const copyButton = screen.getByTestId('tool-result-copy');
     fireEvent.click(copyButton);
 
+    // Run all pending promises including the rejected one
+    await vi.runAllTimersAsync();
+
     // Should not throw, should show error state
-    await waitFor(() => {
-      expect(copyButton).toHaveClass('copy-error');
-    });
+    expect(copyButton).toHaveClass('copy-error');
+
+    vi.useRealTimers();
   });
 });
