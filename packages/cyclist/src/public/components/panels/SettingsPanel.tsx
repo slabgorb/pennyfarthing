@@ -63,23 +63,54 @@ export function SettingsPanel(): React.ReactElement {
 
   useEffect(() => {
     const api = window.electronAPI;
-    if (!api?.settings) return;
 
-    // Load settings
-    api.settings.get?.().then(data => {
-      setSettings(data as Settings);
-    });
+    // Load settings - try IPC first, then REST fallback
+    async function loadSettings() {
+      try {
+        if (api?.settings?.get) {
+          const data = await api.settings.get();
+          setSettings(data as Settings);
+        } else {
+          // REST fallback for web mode
+          const response = await fetch('/api/settings');
+          if (response.ok) {
+            const data = await response.json();
+            setSettings(data as Settings);
+          }
+        }
+      } catch (err) {
+        console.error('[SettingsPanel] Failed to load settings:', err);
+      }
+    }
 
-    // Load theme metadata (includes name, tier)
-    api.settings.getThemeMetadata?.().then(data => {
-      const themeData = (data || []) as ThemeMetadata[];
-      setThemes(themeData);
-    });
+    // Load theme metadata - try IPC first, then REST fallback
+    async function loadThemes() {
+      try {
+        if (api?.settings?.getThemeMetadata) {
+          const data = await api.settings.getThemeMetadata();
+          setThemes((data || []) as ThemeMetadata[]);
+        } else {
+          // REST fallback for web mode
+          const response = await fetch('/api/settings/themes');
+          if (response.ok) {
+            const data = await response.json();
+            setThemes((data || []) as ThemeMetadata[]);
+          }
+        }
+      } catch (err) {
+        console.error('[SettingsPanel] Failed to load themes:', err);
+      }
+    }
 
-    // Subscribe to changes
-    api.settings.onChanged?.((data) => {
-      setSettings(data as Settings);
-    });
+    loadSettings();
+    loadThemes();
+
+    // Subscribe to changes (Electron only - no WebSocket equivalent yet)
+    if (api?.settings?.onChanged) {
+      api.settings.onChanged((data) => {
+        setSettings(data as Settings);
+      });
+    }
 
     // Load color preset from project config
     loadPresetFromProject().then(presetId => {
@@ -103,8 +134,7 @@ export function SettingsPanel(): React.ReactElement {
   }, [themes]);
 
   const handleThemeChange = useCallback(async (theme: string) => {
-    const api = window.electronAPI;
-    if (!api?.settings || !settings) return;
+    if (!settings) return;
 
     setSaving(true);
     try {
@@ -112,7 +142,18 @@ export function SettingsPanel(): React.ReactElement {
         ...settings,
         pennyfarthing: { ...settings.pennyfarthing, theme },
       };
-      await api.settings.save?.(updated);
+
+      const api = window.electronAPI;
+      if (api?.settings?.save) {
+        await api.settings.save(updated);
+      } else {
+        // REST fallback for web mode
+        await fetch('/api/settings', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pennyfarthing: { theme } }),
+        });
+      }
       setSettings(updated);
     } finally {
       setSaving(false);
@@ -120,8 +161,7 @@ export function SettingsPanel(): React.ReactElement {
   }, [settings]);
 
   const handleToggle = useCallback(async (section: string, key: string, value: boolean) => {
-    const api = window.electronAPI;
-    if (!api?.settings || !settings) return;
+    if (!settings) return;
 
     setSaving(true);
     try {
@@ -129,7 +169,18 @@ export function SettingsPanel(): React.ReactElement {
         ...settings,
         [section]: { ...(settings as Record<string, Record<string, unknown>>)[section], [key]: value },
       };
-      await api.settings.save?.(updated);
+
+      const api = window.electronAPI;
+      if (api?.settings?.save) {
+        await api.settings.save(updated);
+      } else {
+        // REST fallback for web mode
+        await fetch('/api/settings', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [section]: { [key]: value } }),
+        });
+      }
       setSettings(updated);
     } finally {
       setSaving(false);

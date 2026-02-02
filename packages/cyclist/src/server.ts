@@ -29,6 +29,7 @@ import {
   createSpansRouter,
   createHookRequestRouter,
   createIdentityRouter,
+  createTodosRouter,
 } from './api/index.js';
 
 // Settings initialization (35-6: required for font settings persistence)
@@ -115,6 +116,8 @@ app.use('/api/spans', createSpansRouter());
 app.use('/api/hook-request', createHookRequestRouter());
 // MSSCI-12469: Identity API for stats strip
 app.use('/api/identity', createIdentityRouter());
+// Todos API for web mode fallback
+app.use('/api/todos', createTodosRouter());
 
 // Welcome message endpoint (triggered by SessionStart hook)
 // Broadcasts welcome message to /ws/welcome channel for Cyclist display
