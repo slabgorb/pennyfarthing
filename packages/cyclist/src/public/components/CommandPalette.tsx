@@ -45,6 +45,7 @@ export const COMMAND_CATEGORIES = ['Panels', 'Navigation', 'Settings', 'Agents']
 
 export const MODAL_OVERLAY_CLASS = 'command-palette-overlay';
 export const SEARCH_INPUT_ID = 'command-palette-search';
+export const RESULTS_LIST_ID = 'command-palette-results';
 export const CATEGORY_HEADER_CLASS = 'command-palette-category-header';
 export const SHORTCUT_DISPLAY_CLASS = 'command-palette-shortcut';
 export const RECENT_SECTION_CLASS = 'command-palette-recent';
@@ -464,22 +465,33 @@ interface CommandPaletteProps {
   commands: Command[];
   onClose: () => void;
   onExecute: (cmd: Command) => void;
+  isOpen?: boolean;
 }
 
-export default function CommandPalette({
+function CommandPalette({
   query,
   setQuery,
   commands,
   onClose,
   onExecute,
+  isOpen = true,
 }: CommandPaletteProps): React.ReactElement {
   const inputRef = useRef<HTMLInputElement>(null);
+  const previousActiveElement = useRef<HTMLElement | null>(null);
   const platform = detectPlatform();
   const recentIds = getRecentCommands();
 
-  // Focus input on mount
+  // Store previously focused element and focus input on mount
   useEffect(() => {
+    previousActiveElement.current = document.activeElement as HTMLElement;
     inputRef.current?.focus();
+
+    // Return focus on unmount
+    return () => {
+      if (previousActiveElement.current && document.contains(previousActiveElement.current)) {
+        previousActiveElement.current.focus();
+      }
+    };
   }, []);
 
   // Handle keyboard navigation
@@ -528,21 +540,29 @@ export default function CommandPalette({
       onClick={handleOverlayClick}
       onKeyDown={handleKeyDown}
       data-testid="command-palette"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Command palette"
     >
       <div className="command-palette-dialog">
         <input
           ref={inputRef}
           id={SEARCH_INPUT_ID}
           type="text"
+          role="combobox"
           className="command-palette-search"
           placeholder="Type a command..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           autoComplete="off"
           autoFocus
+          aria-label="Search commands"
+          aria-controls={RESULTS_LIST_ID}
+          aria-expanded={commands.length > 0}
+          aria-activedescendant={commands.length > 0 ? `command-item-${getSelectedIndex()}` : undefined}
         />
 
-        <div className="command-palette-results">
+        <div id={RESULTS_LIST_ID} className="command-palette-results" role="listbox">
           {/* Recent Section */}
           {recentCommands.length > 0 && !query && (
             <div className={RECENT_SECTION_CLASS}>
@@ -612,8 +632,11 @@ interface CommandItemProps {
 function CommandItem({ command, index, isSelected, platform, query, onClick }: CommandItemProps) {
   return (
     <div
+      id={`command-item-${index}`}
       className={`command-palette-item ${isSelected ? 'selected' : ''}`}
       data-command-index={index}
+      role="option"
+      aria-selected={isSelected}
       onClick={onClick}
     >
       <span
@@ -628,3 +651,7 @@ function CommandItem({ command, index, isSelected, platform, query, onClick }: C
     </div>
   );
 }
+
+// Named and default exports
+export { CommandPalette };
+export default CommandPalette;
