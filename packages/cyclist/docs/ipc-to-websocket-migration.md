@@ -8,9 +8,10 @@ Deprecate Electron IPC in favor of WebSockets for all renderer ↔ server commun
 
 ### Existing WebSocket Endpoints (websocket.ts)
 Already have WebSocket support:
-- `/ws/stats` - Stats strip data
+- `/ws/stats` - Stats strip data (model, status, pwd)
 - `/ws/persona` - Agent persona
 - `/ws/token-stats` - Token usage
+- `/ws/context` - Context usage percentage (added 2026-02-02)
 - `/ws/claude` - Claude streaming (web mode)
 - `/ws/background-tasks` - Background task notifications
 - `/ws/story` - Sprint/story updates
@@ -19,7 +20,7 @@ Already have WebSocket support:
 - `/ws/spans` - OTEL span debugging
 - `/ws/welcome` - Welcome messages
 - `/ws/hooks` - Hook approval requests
-- `/ws/settings` - Settings sync (just added)
+- `/ws/settings` - Settings sync
 - `/ws/livereload` - Dev hot reload
 
 ### IPC Channels to Migrate (preload.ts)
@@ -78,7 +79,7 @@ Components that already have both IPC and WebSocket - just remove IPC branch.
 **Files to update:**
 - `ControlBar.tsx` - settings (DONE)
 - `SettingsPanel.tsx` - settings (DONE)
-- `useStatsStrip.ts` - use /ws/stats (DEFERRED - needs /ws/context endpoint, Phase 2)
+- `useStatsStrip.ts` - use /ws/context + /ws/stats (DONE - 2026-02-02)
 - `usePersona.ts` - use /ws/persona (DONE - 2026-02-02)
 - `useStory.ts` - use /ws/story (DONE - 2026-02-02)
 - `useGitStatus.ts` - use /ws/git (DONE - 2026-02-02)
@@ -171,17 +172,16 @@ For Electron menu → renderer events (agent:launch, theme:showQuickSwitcher, et
 2. **Persona/Story/Git** - DONE (2026-02-02, removed IPC branches)
 3. **Background Tasks** - DONE (2026-02-02, removed IPC branch)
 4. **Approvals** - DONE (2026-02-02, ApprovalModal migrated to /ws/hooks)
-5. **Stats** - DEFERRED (needs /ws/context for context percentage)
-6. **Context** - TODO: Add /ws/context endpoint
-7. **Layout** - TODO: Add /ws/layout endpoint
-8. **Diffs** - TODO: Add /ws/diffs endpoint
-9. **Rest** - As needed
+5. **Stats/Context** - DONE (2026-02-02, added /ws/context, migrated useStatsStrip)
+6. **Layout** - TODO: Add /ws/layout endpoint
+7. **Diffs** - TODO: Add /ws/diffs endpoint
+8. **Rest** - As needed
 
 ## Success Criteria
 
 - [x] Phase 1 hooks migrated: usePersona, useStory, useGitStatus, useBackgroundTasks (2026-02-02)
 - [x] ApprovalModal migrated to /ws/hooks (2026-02-02)
-- [ ] useStatsStrip migrated (blocked on /ws/context endpoint)
+- [x] useStatsStrip migrated with /ws/context endpoint (2026-02-02)
 - [ ] All React components use WebSocket only (no IPC branches)
 - [ ] Web mode fully functional (feature parity with Electron)
 - [ ] preload.ts reduced to <100 lines (menu events + native dialogs only)
