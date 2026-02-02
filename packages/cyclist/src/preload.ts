@@ -74,19 +74,33 @@ export interface ElectronClaudeAPI {
   getMode: () => Promise<'default' | 'plan' | 'acceptEdits' | 'dangerouslySkipPermissions'>;
 
   /**
-   * Subscribe to streamed messages from ClaudeService
+   * Set the system prompt (persona/agent context)
+   * This is passed via --append-system-prompt to make personas behave as in CLI
    */
-  onMessage: (callback: (message: unknown) => void) => void;
+  setSystemPrompt: (prompt: string) => Promise<void>;
+
+  /**
+   * Get the current system prompt
+   */
+  getSystemPrompt: () => Promise<string | undefined>;
+
+  /**
+   * Subscribe to streamed messages from ClaudeService
+   * Returns cleanup function to remove the listener
+   */
+  onMessage: (callback: (message: unknown) => void) => () => void;
 
   /**
    * Subscribe to query completion signal
+   * Returns cleanup function to remove the listener
    */
-  onComplete: (callback: () => void) => void;
+  onComplete: (callback: () => void) => () => void;
 
   /**
    * Subscribe to error signals
+   * Returns cleanup function to remove the listener
    */
-  onError: (callback: (error: string) => void) => void;
+  onError: (callback: (error: string) => void) => () => void;
 }
 
 /**
@@ -105,6 +119,12 @@ export interface ElectronAgentAPI {
    * Receives the slash command (e.g., '/sm', '/tea', '/new-work')
    */
   onLaunch: (callback: (event: unknown, command: string) => void) => void;
+
+  /**
+   * Load context for an agent (persona, behavior guide, etc.)
+   * Sets the system prompt via --append-system-prompt
+   */
+  loadContext: (agent: string) => Promise<boolean>;
 }
 
 /**
@@ -384,13 +404,15 @@ export interface ElectronToolsAPI {
 }
 
 /**
- * Background Task type (35-16)
+ * Background Task type (35-16, MSSCI-12784)
  */
 interface BackgroundTaskData {
   taskId: string;
   description: string;
   subagentType: string;
   startedAt: number;
+  completedAt?: number;
+  durationMs?: number;
   status: 'pending' | 'completed';
   success?: boolean;
   output?: string;
@@ -399,10 +421,16 @@ interface BackgroundTaskData {
 }
 
 /**
- * Background Task API interface (31-15, 35-16)
+ * Background Task API interface (31-15, 35-16, MSSCI-12784)
  * Provides IPC channels for background task notifications
  */
 export interface ElectronBackgroundTaskAPI {
+  /**
+   * Get all current background tasks (MSSCI-12784)
+   * Used to fetch accurate state when Background tab opens
+   */
+  getAll: () => Promise<BackgroundTaskData[]>;
+
   /**
    * Subscribe to background task start events (35-16)
    * Triggered when a Task with run_in_background: true is registered
@@ -458,6 +486,58 @@ export interface ElectronSkillAPI {
   onClear: (callback: () => void) => void;
 }
 
+/**
+ * Layout API interface (MSSCI-12706)
+ * Provides IPC channels for saving/restoring workspace layout
+ */
+export interface ElectronLayoutAPI {
+  /**
+   * Get current layout from config.local.yaml
+   */
+  get: () => Promise<unknown>;
+
+  /**
+   * Save layout to config.local.yaml
+   */
+  save: (layout: unknown) => Promise<{ success: boolean }>;
+
+  /**
+   * Subscribe to layout update events
+   */
+  onUpdate: (callback: (event: unknown, layout: unknown) => void) => void;
+}
+
+/**
+ * Avatar API interface (MSSCI-12777)
+ * Provides IPC channels for user avatar fetching and caching
+ */
+export interface ElectronAvatarAPI {
+  /**
+   * Get user avatar (uses full fallback chain on main process)
+   */
+  get: () => Promise<string>;
+
+  /**
+   * Fetch avatar from GitHub via gh CLI
+   */
+  fetchFromGitHub: () => Promise<{ avatar_url: string } | null>;
+
+  /**
+   * Get cached avatar URL
+   */
+  getCached: () => Promise<string | null>;
+
+  /**
+   * Cache avatar URL
+   */
+  setCached: (url: string) => Promise<void>;
+
+  /**
+   * Clear avatar cache
+   */
+  clearCache: () => Promise<void>;
+}
+
 export interface ElectronAPI {
   stats: ElectronDataAPI;
   persona: ElectronDataAPI;
@@ -483,6 +563,8 @@ export interface ElectronAPI {
   tools: ElectronToolsAPI; // Tool panel toggle
   backgroundTask: ElectronBackgroundTaskAPI; // 31-15: Background task notifications
   skill: ElectronSkillAPI; // 35-12: Skill invocation tracking
+  layout: ElectronLayoutAPI; // MSSCI-12706: Layout persistence
+  avatar: ElectronAvatarAPI; // MSSCI-12777: User avatar
 }
 
 // Check if we're running in Electron (has contextBridge available)
@@ -559,14 +641,22 @@ function createElectronAPI(): ElectronAPI {
         clearAndReload: (agent: string) => ipcRenderer.invoke('context:clearAndLoad', agent),
         setMode: (mode: 'default' | 'plan' | 'acceptEdits' | 'dangerouslySkipPermissions') => ipcRenderer.invoke('claude:setMode', mode),
         getMode: () => ipcRenderer.invoke('claude:getMode') as Promise<'default' | 'plan' | 'acceptEdits' | 'dangerouslySkipPermissions'>,
+        setSystemPrompt: (prompt: string) => ipcRenderer.invoke('claude:setSystemPrompt', prompt),
+        getSystemPrompt: () => ipcRenderer.invoke('claude:getSystemPrompt') as Promise<string | undefined>,
         onMessage: (callback: (message: unknown) => void) => {
-          ipcRenderer.on('claude:message', (_event: unknown, msg: unknown) => callback(msg));
+          const handler = (_event: unknown, msg: unknown) => callback(msg);
+          ipcRenderer.on('claude:message', handler);
+          return () => ipcRenderer.removeListener('claude:message', handler);
         },
         onComplete: (callback: () => void) => {
-          ipcRenderer.on('claude:complete', () => callback());
+          const handler = () => callback();
+          ipcRenderer.on('claude:complete', handler);
+          return () => ipcRenderer.removeListener('claude:complete', handler);
         },
         onError: (callback: (error: string) => void) => {
-          ipcRenderer.on('claude:error', (_event: unknown, err: unknown) => callback(err as string));
+          const handler = (_event: unknown, err: unknown) => callback(err as string);
+          ipcRenderer.on('claude:error', handler);
+          return () => ipcRenderer.removeListener('claude:error', handler);
         },
       },
       // Agent launcher API (B-23)
@@ -574,6 +664,7 @@ function createElectronAPI(): ElectronAPI {
         onLaunch: (callback: (event: unknown, command: string) => void) => {
           ipcRenderer.on('agent:launch', callback);
         },
+        loadContext: (agent: string) => ipcRenderer.invoke('agent:loadContext', agent),
       },
       // Diff viewer API (E8-2)
       diff: {
@@ -681,8 +772,9 @@ function createElectronAPI(): ElectronAPI {
           ipcRenderer.on('tools:toggleToolPanel', () => callback());
         },
       },
-      // Background Task API (31-15, 35-16)
+      // Background Task API (31-15, 35-16, MSSCI-12784)
       backgroundTask: {
+        getAll: () => ipcRenderer.invoke('backgroundTask:getAll') as Promise<BackgroundTaskData[]>,
         onStarted: (callback: (event: unknown, task: BackgroundTaskData) => void) => {
           ipcRenderer.on('backgroundTask:started', callback);
         },
@@ -700,6 +792,22 @@ function createElectronAPI(): ElectronAPI {
         onClear: (callback: () => void) => {
           ipcRenderer.on('skill:clear', () => callback());
         },
+      },
+      // Layout API (MSSCI-12706)
+      layout: {
+        get: () => ipcRenderer.invoke('layout:get'),
+        save: (layout: unknown) => ipcRenderer.invoke('layout:save', layout) as Promise<{ success: boolean }>,
+        onUpdate: (callback: (event: unknown, layout: unknown) => void) => {
+          ipcRenderer.on('layout:update', callback);
+        },
+      },
+      // Avatar API (MSSCI-12777)
+      avatar: {
+        get: () => ipcRenderer.invoke('avatar:get') as Promise<string>,
+        fetchFromGitHub: () => ipcRenderer.invoke('avatar:fetchFromGitHub') as Promise<{ avatar_url: string } | null>,
+        getCached: () => ipcRenderer.invoke('avatar:getCached') as Promise<string | null>,
+        setCached: (url: string) => ipcRenderer.invoke('avatar:setCached', url),
+        clearCache: () => ipcRenderer.invoke('avatar:clearCache'),
       },
     };
   } else {
@@ -730,14 +838,19 @@ function createElectronAPI(): ElectronAPI {
         clearAndReload: (_agent: string) => Promise.resolve(),
         setMode: (_mode: 'default' | 'plan' | 'acceptEdits' | 'dangerouslySkipPermissions') => Promise.resolve(),
         getMode: () => Promise.resolve('default' as const),
+        setSystemPrompt: (_prompt: string) => Promise.resolve(),
+        getSystemPrompt: () => Promise.resolve(undefined),
         onMessage: (_callback: (message: unknown) => void) => {
-          // No-op in test environment
+          // No-op in test environment - return cleanup function
+          return () => {};
         },
         onComplete: (_callback: () => void) => {
-          // No-op in test environment
+          // No-op in test environment - return cleanup function
+          return () => {};
         },
         onError: (_callback: (error: string) => void) => {
-          // No-op in test environment
+          // No-op in test environment - return cleanup function
+          return () => {};
         },
       },
       // Agent launcher API (B-23) - test stub
@@ -745,6 +858,7 @@ function createElectronAPI(): ElectronAPI {
         onLaunch: (_callback: (event: unknown, command: string) => void) => {
           // No-op in test environment
         },
+        loadContext: (_agent: string) => Promise.resolve(false),
       },
       // Diff viewer API (E8-2) - test stub
       diff: {
@@ -858,8 +972,9 @@ function createElectronAPI(): ElectronAPI {
           // No-op in test environment
         },
       },
-      // Background Task API (31-15, 35-16) - test stub
+      // Background Task API (31-15, 35-16, MSSCI-12784) - test stub
       backgroundTask: {
+        getAll: () => Promise.resolve([]),
         onStarted: (_callback: (event: unknown, task: BackgroundTaskData) => void) => {
           // No-op in test environment
         },
@@ -877,6 +992,22 @@ function createElectronAPI(): ElectronAPI {
         onClear: (_callback: () => void) => {
           // No-op in test environment
         },
+      },
+      // Layout API (MSSCI-12706) - test stub
+      layout: {
+        get: () => Promise.resolve(null),
+        save: (_layout: unknown) => Promise.resolve({ success: true }),
+        onUpdate: (_callback: (event: unknown, layout: unknown) => void) => {
+          // No-op in test environment
+        },
+      },
+      // Avatar API (MSSCI-12777) - test stub
+      avatar: {
+        get: () => Promise.resolve('data:image/svg+xml;base64,PHN2Zz4='),
+        fetchFromGitHub: () => Promise.resolve(null),
+        getCached: () => Promise.resolve(null),
+        setCached: (_url: string) => Promise.resolve(),
+        clearCache: () => Promise.resolve(),
       },
     };
   }

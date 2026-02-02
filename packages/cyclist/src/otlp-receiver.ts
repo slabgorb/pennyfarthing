@@ -145,6 +145,8 @@ export interface BackgroundTask {
   description: string;
   subagentType: string;
   startedAt: number;
+  completedAt?: number;
+  durationMs?: number;
   status: 'pending' | 'completed';
   success?: boolean;
   output?: string;
@@ -195,6 +197,14 @@ export function getBackgroundTasks(): BackgroundTask[] {
 }
 
 /**
+ * Get a background task by its tool_use_id (taskId)
+ * Used to enrich messages with subagent context (MSSCI-12776)
+ */
+export function getBackgroundTaskByToolId(toolId: string): BackgroundTask | null {
+  return backgroundTasks.find(t => t.taskId === toolId) ?? null;
+}
+
+/**
  * Reset background task store
  */
 export function resetBackgroundTasks(): void {
@@ -213,7 +223,10 @@ export function completeBackgroundTask(
 ): BackgroundTask | null {
   const task = backgroundTasks.find(t => t.taskId === taskId);
   if (task && task.status === 'pending') {
+    const completedAt = Date.now();
     task.status = 'completed';
+    task.completedAt = completedAt;
+    task.durationMs = completedAt - task.startedAt;
     task.success = success;
     task.output = output;
     task.error = error;

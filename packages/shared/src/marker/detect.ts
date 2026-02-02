@@ -53,7 +53,7 @@ export function detectMarkers(text: string): Marker[] | null {
 
     markers.push({
       type: rawType as MarkerType,
-      value: match[2].trim(),
+      value: match[2]?.trim() ?? '',
       source: 'structured_marker',
     });
   }

@@ -76,7 +76,7 @@ just cyclist-web /path/to/project
 Or with environment variable:
 
 ```bash
-CYCLIST_PROJECT_DIR=/path/to/project npm run dev:web
+CYCLIST_PROJECT_DIR=/path/to/project pnpm run dev:web
 ```
 
 Access at http://localhost:1898 (auto-increments if port in use).
@@ -209,12 +209,12 @@ Cyclist automatically finds the next available port (1899, 1900, etc.). Check co
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Electron with hot reload |
-| `npm run dev:web` | Web mode with hot reload |
-| `npm run build` | Compile TypeScript |
-| `npm run build:electron` | Package for distribution |
-| `npm test` | Run tests |
-| `npm start` | Production server |
+| `pnpm run dev` | Electron with hot reload |
+| `pnpm run dev:web` | Web mode with hot reload |
+| `pnpm run build` | Compile TypeScript |
+| `pnpm run build:electron` | Package for distribution |
+| `pnpm test` | Run tests |
+| `pnpm start` | Production server |
 
 ## Environment Variables
 

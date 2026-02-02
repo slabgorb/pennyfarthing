@@ -12,13 +12,7 @@
 set -euo pipefail
 
 # Find project root
-if [[ -z "${PROJECT_ROOT:-}" ]]; then
-  d="$PWD"
-  while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do
-    d="$(dirname "$d")"
-  done
-  PROJECT_ROOT="$d"
-fi
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/find-root.sh"
 
 SIDECAR_DIR="$PROJECT_ROOT/.pennyfarthing/sidecars"
 FIX_MODE="${1:-}"

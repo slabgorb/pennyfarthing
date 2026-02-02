@@ -14,13 +14,7 @@ if [[ -z "$WORKFLOW" || -z "$PHASE" ]]; then
 fi
 
 # Find project root
-if [[ -z "${PROJECT_ROOT:-}" ]]; then
-  d="$PWD"
-  while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do
-    d="$(dirname "$d")"
-  done
-  PROJECT_ROOT="$d"
-fi
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/find-root.sh"
 
 WORKFLOW_FILE="$PROJECT_ROOT/.pennyfarthing/workflows/${WORKFLOW}.yaml"
 

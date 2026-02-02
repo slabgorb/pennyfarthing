@@ -28,8 +28,9 @@ mkdir -p "$TEST_DIR/scripts"
 
 # Copy core scripts (including agent-session.sh)
 mkdir -p "$TEST_DIR/scripts/core"
+mkdir -p "$TEST_DIR/scripts/lib"
 cp "$PROJECT_ROOT/scripts/core/agent-session.sh" "$TEST_DIR/scripts/core/"
-cp "$PROJECT_ROOT/scripts/core/run.sh" "$TEST_DIR/scripts/"
+cp "$PROJECT_ROOT/scripts/lib/find-root.sh" "$TEST_DIR/scripts/lib/"
 
 # Create minimal theme file
 cat > "$TEST_DIR/.pennyfarthing/personas/themes/test-theme.yaml" << 'EOF'

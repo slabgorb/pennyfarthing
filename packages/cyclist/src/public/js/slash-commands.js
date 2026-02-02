@@ -134,6 +134,10 @@ export const SLASH_COMMANDS = [
     "description": "Switch Claude model"
   },
   {
+    "name": "/new-work",
+    "description": "Start the next available story from the sprint backlog"
+  },
+  {
     "name": "/orchestrator",
     "description": "Orchestrator - Coordinator of all agents and meta operations"
   },

@@ -144,6 +144,9 @@ class PrimeResult:
         redirect_reason: Reason for redirect
         session_id: Session ID (if registered)
         crew: List of crew members for handoff reference
+        tier: Context tier used (FULL, REFRESH, HANDOFF, MINIMAL)
+        token_counts: Per-component token estimates
+        total_tokens: Sum of all component token counts
     """
 
     agent_name: str
@@ -154,6 +157,9 @@ class PrimeResult:
     redirect_reason: str | None = None
     session_id: str | None = None
     crew: list[CrewMember] = field(default_factory=list)
+    tier: str | None = None
+    token_counts: dict[str, int] = field(default_factory=dict)
+    total_tokens: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -166,4 +172,7 @@ class PrimeResult:
             "redirect_reason": self.redirect_reason,
             "session_id": self.session_id,
             "crew": [{"role": c.role, "character": c.character} for c in self.crew],
+            "tier": self.tier,
+            "token_counts": self.token_counts,
+            "total_tokens": self.total_tokens,
         }

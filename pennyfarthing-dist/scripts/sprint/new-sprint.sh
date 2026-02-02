@@ -27,14 +27,8 @@ if [[ -z "$SPRINT_YYWW" || -z "$JIRA_ID" || -z "$START_DATE" || -z "$END_DATE" |
   exit 1
 fi
 
-# PROJECT_ROOT should be set by find-root.sh, but find it if not
-if [[ -z "${PROJECT_ROOT:-}" ]]; then
-  d="$PWD"
-  while [[ ! -d "$d/.pennyfarthing" ]] && [[ "$d" != "/" ]]; do
-    d="$(dirname "$d")"
-  done
-  PROJECT_ROOT="$d"
-fi
+# Find project root
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/find-root.sh"
 TEMPLATE_FILE="$PROJECT_ROOT/sprint/sprint-template.yaml"
 SPRINT_FILE="$PROJECT_ROOT/sprint/current-sprint.yaml"
 ARCHIVE_FILE="$PROJECT_ROOT/sprint/archive/sprint-${SPRINT_YYWW}-completed.yaml"

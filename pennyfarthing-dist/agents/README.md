@@ -284,7 +284,7 @@ When running in Cyclist, background tasks are automatically tracked:
 Use the background task tracking utilities to manage session file entries:
 
 ```bash
-source .pennyfarthing/scripts/utils/background-tasks.sh
+source .pennyfarthing/scripts/lib/background-tasks.sh
 SESSION_FILE=".session/${STORY_ID}-session.md"
 
 # After spawning, record the task:

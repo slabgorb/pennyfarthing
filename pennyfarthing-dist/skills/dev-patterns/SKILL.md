@@ -381,7 +381,7 @@ TaskOutput tool:
 Use the background task tracking utilities to manage session file entries:
 
 ```bash
-source $CLAUDE_PROJECT_DIR/scripts/utils/background-tasks.sh
+source $CLAUDE_PROJECT_DIR/.pennyfarthing/scripts/lib/background-tasks.sh
 SESSION_FILE="$CLAUDE_PROJECT_DIR/.session/${STORY_ID}-session.md"
 
 # After spawning background task, record it:

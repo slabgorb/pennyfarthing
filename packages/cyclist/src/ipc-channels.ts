@@ -50,6 +50,8 @@ export const IPC_CLAUDE_CHANNELS = {
   CLAUDE_GET_MODE: 'claude:getMode',
   CLAUDE_ABORT: 'claude:abort',
   CLAUDE_CLEAR: 'claude:clear',
+  CLAUDE_SET_SYSTEM_PROMPT: 'claude:setSystemPrompt',
+  CLAUDE_GET_SYSTEM_PROMPT: 'claude:getSystemPrompt',
 } as const;
 
 /**
@@ -57,6 +59,7 @@ export const IPC_CLAUDE_CHANNELS = {
  */
 export const IPC_AGENT_CHANNELS = {
   AGENT_LAUNCH: 'agent:launch',
+  AGENT_LOAD_CONTEXT: 'agent:loadContext',
 } as const;
 
 /**
@@ -116,9 +119,10 @@ export const IPC_COMMAND_CHANNELS = {
 } as const;
 
 /**
- * IPC channel names for background task notifications (31-15, 35-16)
+ * IPC channel names for background task notifications (31-15, 35-16, MSSCI-12784)
  */
 export const IPC_BACKGROUND_TASK_CHANNELS = {
+  TASK_GET_ALL: 'backgroundTask:getAll',    // MSSCI-12784: Fetch all on tab open
   TASK_STARTED: 'backgroundTask:started',   // Story 35-16
   TASK_COMPLETED: 'backgroundTask:completed',
 } as const;
@@ -142,4 +146,26 @@ export const IPC_SKILL_CHANNELS = {
 export const IPC_CONTEXT_CLEAR_CHANNELS = {
   CLEAR: 'context:clear',
   CLEAR_AND_LOAD: 'context:clearAndLoad',
+} as const;
+
+/**
+ * IPC channel names for layout persistence (MSSCI-12706)
+ * Used for saving/restoring workspace layout to config.local.yaml
+ */
+export const IPC_LAYOUT_CHANNELS = {
+  GET: 'layout:get',
+  SAVE: 'layout:save',
+  UPDATE: 'layout:update',
+} as const;
+
+/**
+ * IPC channel names for user avatar (MSSCI-12777)
+ * Used for fetching and caching user avatars from GitHub
+ */
+export const IPC_AVATAR_CHANNELS = {
+  GET: 'avatar:get',
+  FETCH_FROM_GITHUB: 'avatar:fetchFromGitHub',
+  GET_CACHED: 'avatar:getCached',
+  SET_CACHED: 'avatar:setCached',
+  CLEAR_CACHE: 'avatar:clearCache',
 } as const;
