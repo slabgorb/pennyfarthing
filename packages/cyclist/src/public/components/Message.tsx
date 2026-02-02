@@ -3,12 +3,14 @@
  *
  * Renders a single message with avatar and content.
  * Story MSSCI-12698 - MessageView Component with Streaming
+ * Story MSSCI-12777 - User Avatar from GitHub
  */
 
 import React, { useState } from 'react';
 import { parseMarkdown } from '../js/components/message-view/markdown-parser.js';
 import StreamingContent from './StreamingContent';
 import { usePersona } from '../hooks/usePersona';
+import { useUserAvatar } from '../hooks/useUserAvatar';
 
 interface MessageData {
   type: 'user' | 'assistant' | 'tool_use' | 'tool_result';
@@ -47,6 +49,28 @@ function AssistantAvatar({ isStreaming }: AssistantAvatarProps): React.ReactElem
   return <span className={isStreaming ? 'avatar-emoji avatar-thinking' : 'avatar-emoji'}>🤖</span>;
 }
 
+function UserAvatar(): React.ReactElement {
+  const { avatarUrl, isLoading } = useUserAvatar();
+  const [imageError, setImageError] = useState(false);
+
+  if (isLoading) {
+    return <span className="avatar-emoji">👤</span>;
+  }
+
+  if (avatarUrl && !imageError) {
+    return (
+      <img
+        src={avatarUrl}
+        alt="User"
+        className="avatar-portrait"
+        onError={() => setImageError(true)}
+      />
+    );
+  }
+
+  return <span className="avatar-emoji">👤</span>;
+}
+
 export default function Message({ message }: MessageProps): React.ReactElement {
   const roleClass = `message-${message.type}`;
   const testId = `message-${message.type}`;
@@ -71,7 +95,7 @@ export default function Message({ message }: MessageProps): React.ReactElement {
   return (
     <div data-testid={testId} className={`message ${roleClass}`}>
       <div data-testid="avatar" className="message-avatar">
-        {message.type === 'user' ? '👤' : <AssistantAvatar />}
+        {message.type === 'user' ? <UserAvatar /> : <AssistantAvatar />}
       </div>
       <div className="message-content" dangerouslySetInnerHTML={{ __html: html }} />
     </div>

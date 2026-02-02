@@ -499,6 +499,37 @@ export interface ElectronLayoutAPI {
   onUpdate: (callback: (event: unknown, layout: unknown) => void) => void;
 }
 
+/**
+ * Avatar API interface (MSSCI-12777)
+ * Provides IPC channels for user avatar fetching and caching
+ */
+export interface ElectronAvatarAPI {
+  /**
+   * Get user avatar (uses full fallback chain on main process)
+   */
+  get: () => Promise<string>;
+
+  /**
+   * Fetch avatar from GitHub via gh CLI
+   */
+  fetchFromGitHub: () => Promise<{ avatar_url: string } | null>;
+
+  /**
+   * Get cached avatar URL
+   */
+  getCached: () => Promise<string | null>;
+
+  /**
+   * Cache avatar URL
+   */
+  setCached: (url: string) => Promise<void>;
+
+  /**
+   * Clear avatar cache
+   */
+  clearCache: () => Promise<void>;
+}
+
 export interface ElectronAPI {
   stats: ElectronDataAPI;
   persona: ElectronDataAPI;
@@ -525,6 +556,7 @@ export interface ElectronAPI {
   backgroundTask: ElectronBackgroundTaskAPI; // 31-15: Background task notifications
   skill: ElectronSkillAPI; // 35-12: Skill invocation tracking
   layout: ElectronLayoutAPI; // MSSCI-12706: Layout persistence
+  avatar: ElectronAvatarAPI; // MSSCI-12777: User avatar
 }
 
 // Check if we're running in Electron (has contextBridge available)
@@ -760,6 +792,14 @@ function createElectronAPI(): ElectronAPI {
           ipcRenderer.on('layout:update', callback);
         },
       },
+      // Avatar API (MSSCI-12777)
+      avatar: {
+        get: () => ipcRenderer.invoke('avatar:get') as Promise<string>,
+        fetchFromGitHub: () => ipcRenderer.invoke('avatar:fetchFromGitHub') as Promise<{ avatar_url: string } | null>,
+        getCached: () => ipcRenderer.invoke('avatar:getCached') as Promise<string | null>,
+        setCached: (url: string) => ipcRenderer.invoke('avatar:setCached', url),
+        clearCache: () => ipcRenderer.invoke('avatar:clearCache'),
+      },
     };
   } else {
     // Running in Node (tests) - return testable structure
@@ -950,6 +990,14 @@ function createElectronAPI(): ElectronAPI {
         onUpdate: (_callback: (event: unknown, layout: unknown) => void) => {
           // No-op in test environment
         },
+      },
+      // Avatar API (MSSCI-12777) - test stub
+      avatar: {
+        get: () => Promise.resolve('data:image/svg+xml;base64,PHN2Zz4='),
+        fetchFromGitHub: () => Promise.resolve(null),
+        getCached: () => Promise.resolve(null),
+        setCached: (_url: string) => Promise.resolve(),
+        clearCache: () => Promise.resolve(),
       },
     };
   }
