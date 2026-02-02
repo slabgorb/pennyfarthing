@@ -13,3 +13,5 @@ export { ChangedPanel } from './ChangedPanel';
 export { DiffsPanel } from './DiffsPanel';
 export { DebugPanel } from './DebugPanel';
 export { SettingsPanel } from './SettingsPanel';
+export { AcceptanceCriteriaPanel } from './AcceptanceCriteriaPanel';
+export { BikeLanePanel } from './BikeLanePanel';
