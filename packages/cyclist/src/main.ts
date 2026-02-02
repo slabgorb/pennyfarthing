@@ -1024,20 +1024,9 @@ export function startProjectWatchers(): void {
         broadcastToRenderer(IPC_DATA_CHANNELS.PERSONA_UPDATE, { ...persona, projectName });
       }
 
-      // Load tiered context for the new agent
-      try {
-        const service = getClaudeService();
-        const state = service.getContextState();
-        const tier = selectContextTier(agentRole, state);
-        const primeContext = getPrimeContextWithTier(agentRole, projectDir, tier);
-        if (primeContext) {
-          service.setSystemPrompt(primeContext);
-          console.log(`[main] Loaded context for agent "${agentRole}" tier=${tier} (${primeContext.length} chars)`);
-        }
-      } catch (error) {
-        // ClaudeService may not be initialized yet on first agent change
-        console.warn('[main] Could not load agent context:', error);
-      }
+      // Note: Agent context is injected via the message stream when the user
+      // runs an agent command (e.g., /dev). We don't inject it here via
+      // setSystemPrompt because that kills the running process.
     });
     console.log('Agent change watcher started for:', projectDir);
 
