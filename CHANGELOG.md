@@ -11,6 +11,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [9.0.2] - 2026-02-02
+
+### Added
+
+- **Tool Intent Summarizer** (Story 74-1) - Human-readable summaries for tool use display
+  - `generateToolIntentSummary()` utility for converting tool name + input to readable text
+  - Smart detection for Bash commands (install, test, build, lint, format)
+  - Graceful fallback for unknown tools with truncated JSON
+  - 59 unit tests covering all acceptance criteria
+
+### Fixed
+
+- **Agent Change Restart Loop** - Removed `setSystemPrompt()` from agent watcher that was killing the Claude process on every agent change, causing a SIGKILL restart loop especially after context clear
+
+---
+
 ## [9.0.1] - 2026-02-02
 
 ### Cyclist IPC to WebSocket Migration
